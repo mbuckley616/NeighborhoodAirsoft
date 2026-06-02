@@ -1409,6 +1409,7 @@
     <span id="stanceStand">STAND</span> · <span id="stanceSprint">SPRINT</span> · <span id="stanceCrouch">CROUCH</span> · <span id="stanceSlide">SLIDE</span> · <span id="stanceAir">AIR</span> · <span id="stanceAds">ADS</span>
   </div>
   <div id="interactPrompt"></div>
+  <div id="laserDiagHud" style="position:absolute;left:8px;top:8px;background:rgba(0,0,0,0.8);color:#9f9;border:1px solid #3a3;padding:8px 10px;border-radius:3px;font:12px monospace;white-space:pre;display:none;z-index:9999;pointer-events:none;"></div>
   <div id="bedroomHud">
     <div class="cash-line"><span class="cash-label">CASH</span> <span id="cashAmount">$25</span></div>
     <div class="bag-line"><span class="bag-label">BBs</span> <span id="bedroomBag">15</span></div>
@@ -1421,8 +1422,9 @@
 <div class="menu-overlay active" id="titleScreen">
   <div class="title">NEIGHBORHOOD AIRSOFT</div>
   <div class="subtitle">SUMMER · 2003</div>
+  <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.27c</div>
+  <div class="version">v1.37</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -1529,9 +1531,9 @@
         <div class="marker"></div>
         <div class="label">Northcliff / Martins Landing · locked</div>
       </div>
-      <div class="pin locked" style="left: 61%; top: 24%;" data-scenario="locked">
+      <div class="pin" style="left: 40%; top: 87%;" data-scenario="hollow">
         <div class="marker"></div>
-        <div class="label">East Roswell · locked</div>
+        <div class="label">Battleground · Chattahoochee River</div>
       </div>
     </div>
     <div class="scenario-info empty" id="scenarioInfo">Click a pin to see scenario details.</div>
@@ -1962,7 +1964,7 @@ const Game = {
       armor: { chest_light: false, chest_heavy: false, knee_pads: false, elbow_pads: false },
       // v1.28: attachments are now COUNTS of how many copies you own (you can
       // buy multiples so the same kind mounts on more than one gun at once).
-      attachments: { red_dot: 0, scope: 0, laser: 0, flashlight: 0 },
+      attachments: { red_dot: 0, scope: 0, laser: 0, laser_green: 0, flashlight: 0 },
     },
     // v1.28: accessory INSTANCES the player owns. Each physical copy is one
     // entry: { id (unique), type (ATTACHMENTS key), placement }. placement is
@@ -1984,6 +1986,113 @@ const Game = {
     completed: {},
   },
 };
+
+// =====================================================================
+// SAVE SYSTEM (v1.37) — persist progress to localStorage
+// =====================================================================
+// The entire player profile lives in Game.persist (cash, BBs, owned guns/mags,
+// speed loaders, consumables, equipped gear, owned equipment, accessory
+// instances, BB colors, loadout slots, completed scenarios). It was designed
+// to be plain serializable data, so a save is just JSON.stringify(persist)
+// plus the accessory-instance id counter (so new buys after a load don't
+// collide with loaded instance ids). Loading deep-merges the saved data onto a
+// FRESH default profile, so a save written by an older build that's missing
+// newer fields still boots with sane defaults for those fields.
+const SAVE_KEY = 'neighborhood_airsoft_save_v1';
+const SAVE_VERSION = 1;
+
+// A pristine copy of the starting profile, captured ONCE at load time before
+// the player touches anything. Used as the merge base on load and by New Game.
+const DEFAULT_PERSIST = JSON.parse(JSON.stringify(Game.persist));
+
+// Deep-merge `src` onto a deep clone of `base`. Plain objects merge key-by-key;
+// arrays and primitives from src REPLACE the base value wholesale (we don't try
+// to merge array contents — loadoutSlots/accessories/speedLoaders are saved and
+// restored as complete arrays). Keys present in base but absent in src keep the
+// default (forward-compat for older saves); keys in src but not base are still
+// copied (so nothing the player owned is silently dropped).
+function _deepMergePersist(base, src) {
+  const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+  const out = Array.isArray(base) ? base.slice() : (isObj(base) ? { ...base } : base);
+  if (!isObj(src)) return src;
+  if (!isObj(out)) return src;
+  for (const k in src) {
+    if (!Object.prototype.hasOwnProperty.call(src, k)) continue;
+    if (isObj(src[k]) && isObj(out[k])) out[k] = _deepMergePersist(out[k], src[k]);
+    else out[k] = src[k];   // arrays + primitives replace
+  }
+  return out;
+}
+
+function hasSaveGame() {
+  try { return !!localStorage.getItem(SAVE_KEY); }
+  catch (e) { return false; }   // localStorage blocked (private mode / file://)
+}
+
+// Serialize the current profile to localStorage. Returns {ok, reason?}.
+function saveGame() {
+  try {
+    const payload = {
+      version: SAVE_VERSION,
+      savedAt: Date.now(),
+      accSeq: _accInstanceSeq,            // restore the instance-id counter
+      persist: Game.persist,              // the whole profile
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    Game._saveEnabled = true;   // player has opted into persistence this session
+    return { ok: true };
+  } catch (e) {
+    // QuotaExceeded, disabled storage, etc. — surface a reason, never throw.
+    return { ok: false, reason: (e && e.name) || 'unknown' };
+  }
+}
+
+// Load the saved profile into Game.persist. Returns {ok, reason?}.
+function loadGame() {
+  let raw;
+  try { raw = localStorage.getItem(SAVE_KEY); }
+  catch (e) { return { ok: false, reason: 'storage-blocked' }; }
+  if (!raw) return { ok: false, reason: 'no-save' };
+  let payload;
+  try { payload = JSON.parse(raw); }
+  catch (e) { return { ok: false, reason: 'corrupt' }; }
+  if (!payload || !payload.persist) return { ok: false, reason: 'corrupt' };
+
+  // Merge saved profile onto a pristine default so missing/newer fields are sane.
+  const fresh = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
+  Game.persist = _deepMergePersist(fresh, payload.persist);
+
+  // Restore the accessory-instance id counter. If the save predates it (or it's
+  // bogus), recompute a safe value from the highest id actually present so new
+  // buys never collide with loaded instances.
+  let seq = (typeof payload.accSeq === 'number' && payload.accSeq > 0) ? payload.accSeq : 1;
+  if (Array.isArray(Game.persist.accessories)) {
+    for (const a of Game.persist.accessories) {
+      const m = a && typeof a.id === 'string' && a.id.match(/^acc_(\d+)_/);
+      if (m) seq = Math.max(seq, parseInt(m[1], 10) + 1);
+    }
+  }
+  _accInstanceSeq = seq;
+  Game._saveEnabled = true;   // loading a save opts into auto-save this session
+  return { ok: true };
+}
+
+// Auto-save silently, but ONLY once the player has opted into persistence this
+// session (by loading a save or sleeping in the bed at least once). This keeps
+// a fresh NEW GAME run from silently clobbering an existing save the player
+// might still want — their first deliberate sleep is what commits them.
+function autoSave() {
+  if (!Game._saveEnabled) return { ok: false, reason: 'not-enabled' };
+  return saveGame();
+}
+
+// Wipe the save and reset the in-memory profile to a fresh start.
+function deleteSaveAndReset() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
+  _accInstanceSeq = 1;
+  Game._saveEnabled = false;   // back to "haven't opted in" until next deliberate save
+}
 
 // ---------------------------------------------------------------------
 // INVENTORY HELPERS
@@ -2082,7 +2191,8 @@ const SHOES = {
 const ATTACHMENTS = {
   red_dot:    { id:'red_dot', name:'Red-Dot Sight', slot:'sight', price:35, hipSpreadMult:0.85, desc:'Tightens hipfire spread ~15% and shows a glowing red reticle when you aim. Sits in the sight slot of any gun.' },
   scope:      { id:'scope',  name:'4× Scope', slot:'sight', price:55, hipSpreadMult:0.8, adsZoomBonus:0.5, desc:'A magnified optic for the sight slot. Tightens hipfire ~20% and zooms further when you aim. One per gun.' },
-  laser:      { id:'laser',  name:'Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
+  laser:      { id:'laser',  name:'Red Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, laserColor:'red', desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
+  laser_green:{ id:'laser_green', name:'Green Laser Sight', slot:'rail', price:34, hipSpreadMult:0.9, laserColor:'green', desc:'Rail-mounted green beam — brighter and easier to see than red, especially at night. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   flashlight: { id:'flashlight', name:'Tactical Flashlight', slot:'rail', price:18, hipSpreadMult:1.0, desc:'Rail-mounted working light that casts a real beam. Goes on a left or right rail.' },
 };
 
@@ -2869,7 +2979,7 @@ const CHARACTERS = {
     name: 'Ryan', neighborhood: 'sentinel', street: 'bunratty_ct',
     height: 'tall', build: 'skinny', hairStyle: 'short', glasses: false,
     hairColor: 0x4a3018, skinColor: 0xe6bf95, shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a,
-    aggression: 0.75, fireRate: 1.1, accuracy: 0.6, headshotBias: 0.1, hp: 1, moveSpeed: 1.1,
+    aggression: 0.75, fireRate: 1.1, accuracy: 0.6, headshotBias: 0.1, hp: 1, moveSpeed: 0.9,
     flavor: { hit: '"Hah! Okay, okay — that\'s one."', win: 'Ryan grins at his brother. "Told you I\'d flush him out."' },
   },
   mitchell: {
@@ -2886,7 +2996,7 @@ const CHARACTERS = {
     name: 'Priya', neighborhood: 'sentinel', street: 'bunratty_ct',
     height: 'average', build: 'skinny', hairStyle: 'long', glasses: false,
     hairColor: 0x1a1208, skinColor: 0xc18a5c, shirtColor: 0x3a7a6a, pantsColor: 0x2a2a30,
-    aggression: 0.6, fireRate: 1.0, accuracy: 0.7, headshotBias: 0.18, hp: 1, moveSpeed: 1.15,
+    aggression: 0.6, fireRate: 1.0, accuracy: 0.7, headshotBias: 0.18, hp: 1, moveSpeed: 0.98,
     flavor: { hit: '"Yep — flanked you."', win: 'Priya is already three steps to your left. "You never check your sides."' },
   },
   // Owen — the immovable anchor. Slow, heavy, very accurate; he plants behind
@@ -3084,9 +3194,29 @@ const VOICE_LINES_DEFAULT = {
   },
 };
 
+// v1.36h: INFECTION barks — kids pretending to be zombies while playing tag.
+// Goofy, kid-appropriate, NOT scary. Used by taggers (no per-character variants;
+// every tagger draws from this shared pool). Kept short for the TTS rate.
+const INFECTION_BARKS = [
+  "We're gonna get you, dude!",
+  "Oooh, I'm a zombie!",
+  "Braaains... just kidding, you're it!",
+  "You can't run forever!",
+  "Here we come!",
+  "One touch and you're one of us!",
+  "Get him! Get him!",
+  "Rrraaah! Zombie!",
+  "You're gonna be infected!",
+  "We're coming for youuu!",
+];
+
 // Pull a random line for (charId, category). Falls back to the aggression-band
 // default if the kid doesn't have bespoke lines for that category.
 function pickVoiceLine(charId, category) {
+  // Infection barks are a shared pool (no per-kid variants) — every tagger uses it.
+  if (category === 'infection') {
+    return INFECTION_BARKS[Math.floor(Math.random() * INFECTION_BARKS.length)];
+  }
   const personal = VOICE_LINES[charId]?.[category];
   if (personal && personal.length > 0) return personal[Math.floor(Math.random() * personal.length)];
   const ch = CHARACTERS[charId];
@@ -3250,7 +3380,7 @@ const REGIONS = {
   },
   east_roswell: {
     name: 'East Roswell',
-    streets: { ridgestone_ct: 'Ridgestone Court' },
+    streets: { ridgestone_ct: 'Ridgestone Court', the_hollow: 'Battleground - Chattahoochee River' },
     direction: 'east',
   },
   northcliff: {
@@ -3898,6 +4028,228 @@ const SCENARIOS = {
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 48, lose: 12 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // ===================================================================
+  // THE HOLLOW (East Roswell) — the woods battleground. Big team battles
+  // drawn from the whole neighborhood roster. Player fights for TEAM B
+  // (south fort, blue) vs TEAM A (north fort, red). 2–3 auto-gunners/side.
+  // ===================================================================
+
+  // --- On-ramp: 3v3 skirmish (You + Eric + Rebecca vs Seth + Sean + Ryan) ---
+  hollow_skirmish_3v3: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'First Time in the Woods',
+    desc: "Everyone hikes out to the spot in the woods east of the river — pallet forts at both ends, a creek down the middle, and barely any sun under the canopy. You're with Eric and Rebecca against Seth's crew. Three a side, everyone's got five lives and respawns at their fort, so it's a real grind. Work the pallet walls, watch the open lanes, and let Eric rush while you and Rebecca hold an angle.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      // Your team (south, spawn near you)
+      { charId: 'eric',    weapon: 'mp5',    anchor: 'b_left',   team: 'player' },
+      { charId: 'rebecca', weapon: 'pistol', anchor: 'b_right',  team: 'player' },
+      // Enemy team (north fort)
+      { charId: 'seth',    weapon: 'ump',    anchor: 'a_center' },
+      { charId: 'sean',    weapon: 'ak47',   anchor: 'a_left'   },
+      { charId: 'ryan',    weapon: 'pistol', anchor: 'a_right'  },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 55, lose: 14 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Flagship: 5v5 last team standing, 5 lives, multiple auto-gunners ---
+  hollow_big_battle: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'The Big Game',
+    desc: "The whole neighborhood showed up. Five on five in the woods, five lives each, last team standing wins — this is the one everybody talks about. You're on blue with Eric, Rebecca, Sean, and Brooke; red's got Seth, Ryan, Mitchell, Mason, and Devon dug in at the north fort. Three guns on each side are full-auto, so the lanes get hot fast — use the creek and the pallet clusters, push as a team, and don't try to trade in the open. First fort to run out of lives loses.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      // Your team — blue, south fort. Two autos (Eric MP5, Sean AK), Brooke sniper, Rebecca pistol.
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_left',   team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',   anchor: 'b_center', team: 'player' },
+      { charId: 'brooke',   weapon: 'sniper', anchor: 'b_right',  team: 'player' },
+      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_creek',  team: 'player' },
+      // Enemy team — red, north fort. Three autos (Seth UMP, Mitchell AK, Devon MP5).
+      { charId: 'seth',     weapon: 'ump',    anchor: 'a_center' },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_left'   },
+      { charId: 'devon',    weapon: 'mp5',    anchor: 'a_right'  },
+      { charId: 'mason',    weapon: 'sniper', anchor: 'a_fort'   },
+      { charId: 'ryan',     weapon: 'shotgun',anchor: 'a_creek'  },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 95, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Night 5v5 — same big battle, after dark under the canopy ---
+  hollow_night_battle: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Night Game in the Woods',
+    desc: "Same woods, same five-on-five, but now it's pitch dark under the canopy and the whole crew came loaded for night. Red's dug into the north fort and most of them are running lights — flashlight beams swinging through the trees and red laser dots crisscrossing the dark. The beams tell you where they're pushing, but they'll see you too. You've got Eric, Sean, Brooke, and Rebecca on blue. Five lives each, last fort standing. Move between the pallet walls, use the dark, and don't silhouette yourself crossing the creek.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_left',   team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',   anchor: 'b_center', team: 'player' },
+      { charId: 'brooke',   weapon: 'sniper', anchor: 'b_right',  team: 'player' },
+      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_creek',  team: 'player' },
+      { charId: 'seth',     weapon: 'ump',    anchor: 'a_center' },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_left'   },
+      { charId: 'devon',    weapon: 'mp5',    anchor: 'a_right'  },
+      { charId: 'mason',    weapon: 'sniper', anchor: 'a_fort'   },
+      { charId: 'ryan',     weapon: 'shotgun',anchor: 'a_creek'  },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 110, lose: 26 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 2v4 Night Team Deathmatch: You + Sean vs 4 ---
+  hollow_2v4_night: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Two of Us, Four of Them (Night)',
+    desc: "Just you and Sean out in the dark woods against four of them — Seth, Devon, Ryan, and Mason are dug into the north fort and you're outnumbered two to one. Everyone's got five lives and respawns at their fort, so it's a long, ugly grind in the dark. They came loaded for night — flashlight beams and red laser dots sweeping the trees; let the lights tell you where they're pushing. Stick tight with Sean, trade smart, and don't get caught in the open.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'sean',   weapon: 'ak47',    anchor: 'b_center', team: 'player' },
+      { charId: 'seth',   weapon: 'ump',     anchor: 'a_center' },
+      { charId: 'devon',  weapon: 'mp5',     anchor: 'a_left'   },
+      { charId: 'ryan',   weapon: 'pistol',  anchor: 'a_right'  },
+      { charId: 'mason',  weapon: 'sniper',  anchor: 'a_fort'   },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 85, lose: 20 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 5v2 Juggernaut: You + 4 (spring guns) vs 2 AK juggernauts (3 lives each) ---
+  hollow_juggernaut: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Juggernauts',
+    desc: "Mitchell and Ryan went full juggernaut — each one's carrying a full-auto AK and takes THREE tags to put down for good. It's the five of you against the two of them, but they hit way harder than you do: your whole squad's on spring pistols (grab whatever you like) while they spray. Numbers and angles are your only edge — swarm them from multiple sides, make every shot count, and don't try to trade head-on with an AK. Put three on each and it's over.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      // Your squad — spring weapons, default lives.
+      { charId: 'eric',     weapon: 'pistol', anchor: 'b_left',   team: 'player' },
+      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_right',  team: 'player' },
+      { charId: 'brooke',   weapon: 'pistol', anchor: 'b_center', team: 'player' },
+      { charId: 'sean',     weapon: 'pistol', anchor: 'b_creek',  team: 'player' },
+      // The two juggernauts — AK + 3 lives each (per-kid override).
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_center', lives: 3 },
+      { charId: 'ryan',     weapon: 'ak47',   anchor: 'a_fort',   lives: 3 },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 1,
+    rewards: { win: 90, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 10-way FFA, 5 lives each ---
+  hollow_ffa: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Ten-Way Free-for-All',
+    desc: "Ten kids in the woods, no teams, everyone against everyone — and this one runs long: every other kid has FIVE lives, so you'll be putting some of them down again and again. You get your usual one life (plus whatever your gear gives you), so you can't afford to get reckless. Use the trees and the creek to break lines, never stand still, and outlast all nine of them.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'midfield',
+    ffa: true,
+    enemySetup: [
+      { charId: 'seth',     weapon: 'pistol',  anchor: 'a_fort'    },
+      { charId: 'eric',     weapon: 'mp5',     anchor: 'a_left'    },
+      { charId: 'rebecca',  weapon: 'pistol',  anchor: 'a_right'   },
+      { charId: 'devon',    weapon: 'shotgun', anchor: 'scatter_nw' },
+      { charId: 'mason',    weapon: 'sniper',  anchor: 'scatter_ne' },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'b_fort'    },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'scatter_sw' },
+      { charId: 'priya',    weapon: 'mp5',     anchor: 'scatter_se' },
+      { charId: 'brooke',   weapon: 'sniper',  anchor: 'b_center'  },
+    ],
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 120, lose: 28 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Infection (Night), 9 taggers ---
+  hollow_infection_night: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Infection in the Dark',
+    desc: "Infection tag, out in the pitch-black woods. Nine kids, no guns — arms stretched out like zombies, hollering 'we're gonna get you!' as they come. One touch and you're it (game over). You've got your blaster: tag one and they drop, but they're back up in ten seconds. Most run about your speed, a couple are FASTER than your sprint, and it's DARK — you'll hear them yelling before you see them. Keep moving, use the trees and the forts to break their line, and survive 90 seconds.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'defend',
+    playerSpawn: 'midfield',
+    enemySetup: [
+      { charId: 'eric',     behavior: 'tagger', anchor: 'a_fort',    zombieSprinter: true },
+      { charId: 'priya',    behavior: 'tagger', anchor: 'b_fort',    zombieSprinter: true },
+      { charId: 'seth',     behavior: 'tagger', anchor: 'a_left'    },
+      { charId: 'rebecca',  behavior: 'tagger', anchor: 'a_right'   },
+      { charId: 'sean',     behavior: 'tagger', anchor: 'scatter_nw' },
+      { charId: 'ryan',     behavior: 'tagger', anchor: 'scatter_ne' },
+      { charId: 'mason',    behavior: 'tagger', anchor: 'scatter_sw' },
+      { charId: 'devon',    behavior: 'tagger', anchor: 'scatter_se' },
+      { charId: 'brooke',   behavior: 'tagger', anchor: 'b_center'  },
+    ],
+    winCondition: 'survive_untagged',
+    timerSec: 90,
+    rewards: { win: 100, lose: 24 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 5v5 Full-Auto Mayhem (Night) — EVERY NPC on full auto, 5 lives ---
+  hollow_full_auto_mayhem: {
+    region: 'east_roswell', street: 'the_hollow',
+    name: 'Chattahoochee River', scenarioName: 'Full-Auto Mayhem (Night)',
+    desc: "The gloves are off: ten kids in the dark woods and EVERY single one of them is running full-auto — AKs, MP5s, UMPs, MAC-10s, the works. Five on five, five lives each, last team standing. The air's going to be solid with BBs, flashlight beams, and red laser dots. You're on blue with Eric, Sean, Brooke, and Rebecca; red's got the whole rest of the crew dug into the north fort. There's no trading at range in this one — pick your moments between the strings, use the trees and the creek, and push as a unit or get shredded.",
+    builderFn: 'buildHollowScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      // Blue (you) — all auto.
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_left',   team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',   anchor: 'b_center', team: 'player' },
+      { charId: 'brooke',   weapon: 'ump',    anchor: 'b_right',  team: 'player' },
+      { charId: 'rebecca',  weapon: 'mac10',  anchor: 'b_creek',  team: 'player' },
+      // Red — all auto.
+      { charId: 'seth',     weapon: 'ump',    anchor: 'a_center' },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_left'   },
+      { charId: 'devon',    weapon: 'mp5',    anchor: 'a_right'  },
+      { charId: 'mason',    weapon: 'mac10',  anchor: 'a_fort'   },
+      { charId: 'ryan',     weapon: 'ak47',   anchor: 'a_creek'  },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 5,
+    rewards: { win: 130, lose: 30 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -5768,6 +6120,17 @@ function buildBedroomScene() {
       'You don\'t need to use the bathroom right now! (Will have a use in future versions — crafting? smoke bombs?)'),
   });
 
+  // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
+  // Fits the kid-bedroom framing and matches the original hub design pillar
+  // ("Save, gear, world map"). Trigger box covers the whole bed footprint.
+  Game.interactables.push({
+    type: 'bed',
+    box: new THREE.Box3().setFromObject(bedGroup),
+    pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
+    prompt: 'Sleep (save your game)',
+    action: () => openSaveMenu(),
+  });
+
   // ============================================================
   // SPAWN + BOUNDS + OBSTACLES
   // ============================================================
@@ -6234,7 +6597,7 @@ function addSuburbanTree(scene, x, z, opts = {}) {
   const trunkH = opts.trunkH ?? (3.0 + Math.random() * 1.5);
   const leafR  = opts.leafR  ?? (1.8 + Math.random() * 0.7);
   const baseY  = opts.baseY ?? 0;   // v1.8: terrain ground height at (x,z)
-  const leafY  = trunkH + leafR * 0.5;
+  const shape  = opts.shape ?? 'round';   // 'round' (deciduous sphere) | 'pine' (conifer)
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(trunkR * 0.85, trunkR, trunkH, 8),
     new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 0.95 })
@@ -6243,13 +6606,35 @@ function addSuburbanTree(scene, x, z, opts = {}) {
   trunk.castShadow = trunk.receiveShadow = true;
   scene.add(trunk);
   const leafColor = opts.leafColor ?? (Math.random() < 0.5 ? 0x3a5a2a : 0x4a6a35);
-  const leaves = new THREE.Mesh(
-    new THREE.SphereGeometry(leafR, 10, 8),
-    new THREE.MeshStandardMaterial({ color: leafColor, roughness: 1.0 })
-  );
-  leaves.position.set(x, baseY + leafY, z);
-  leaves.castShadow = true;
-  scene.add(leaves);
+  const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 1.0 });
+  if (shape === 'pine') {
+    // Conifer — 3 stacked cones tapering upward (loblolly/Eastern white pine,
+    // the classic North-Georgia riverside evergreen). v1.36e: the SKIRT now
+    // starts high up the trunk (≥2.6m, clear above a 1.5m player's eye) so the
+    // cone base no longer hangs at eye level blocking sightlines. The canopy
+    // also sits taller relative to the trunk.
+    const tiers = 3;
+    // Skirt begins at 72% of the trunk but never below 2.6m — keeps the lower
+    // trunk a clean, see-through pole at player height.
+    const startY = baseY + Math.max(trunkH * 0.72, 2.6);
+    const foliageH = trunkH * 1.15;            // tall canopy above the skirt
+    for (let i = 0; i < tiers; i++) {
+      const t = i / tiers;
+      const r = leafR * (1.1 - t * 0.7);         // wider at the bottom
+      const coneH = foliageH / tiers * 1.5;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(r, coneH, 8), leafMat);
+      cone.position.set(x, startY + t * (foliageH / tiers) + coneH * 0.25, z);
+      cone.castShadow = true;
+      scene.add(cone);
+    }
+  } else {
+    // Deciduous — single round crown (unchanged default for the street maps).
+    const leafY = trunkH + leafR * 0.5;
+    const leaves = new THREE.Mesh(new THREE.SphereGeometry(leafR, 10, 8), leafMat);
+    leaves.position.set(x, baseY + leafY, z);
+    leaves.castShadow = true;
+    scene.add(leaves);
+  }
   // Trunk hitbox (small) — BBs hit a 1m-radius cylinder approximation as AABB
   return {
     minX: x - trunkR - 0.05, maxX: x + trunkR + 0.05,
@@ -6891,8 +7276,10 @@ function applyTimeOfDay(scene, timeOfDay, palette) {
   scene.fog = new THREE.Fog(nightBg, nfog[0], nfog[1]);
 
   // Cool, dim "moonlight" key from high up — still casts shadows so geometry
-  // reads, but low intensity so streetlamps/flashlights matter.
-  const moon = new THREE.DirectionalLight(0x9fb6e0, 0.30);
+  // reads, but low intensity so streetlamps/flashlights matter. v1.38: dropped
+  // 0.30 → 0.16 so the unlit night is genuinely dark and lamp/flashlight pools
+  // pop. Still enough rim to read silhouettes and shadow direction.
+  const moon = new THREE.DirectionalLight(0x9fb6e0, 0.16);
   const mp = P.moonPos || [-18, 40, -20];
   moon.position.set(mp[0], mp[1], mp[2]);
   moon.castShadow = true;
@@ -6906,9 +7293,12 @@ function applyTimeOfDay(scene, timeOfDay, palette) {
   moon.shadow.bias = -0.0005;
   scene.add(moon);
   // Very low cool ambient + hemisphere so the unlit areas aren't pure black
-  // (you can still navigate, but it's clearly night).
-  scene.add(new THREE.AmbientLight(0x2a3550, 0.38));
-  scene.add(new THREE.HemisphereLight(0x35415f, 0x0a0e16, 0.32));
+  // (you can still just navigate, but it's clearly deep night). v1.38: ambient
+  // 0.38 → 0.18 and hemi 0.32 → 0.16 — roughly halved so artificial lights
+  // (streetlamps, flashlights, laser dots) carry the scene instead of a flat
+  // blue wash. Tuned to stay above pitch-black so you're not fully blind.
+  scene.add(new THREE.AmbientLight(0x2a3550, 0.18));
+  scene.add(new THREE.HemisphereLight(0x35415f, 0x0a0e16, 0.16));
 
   // Moon disc + soft halo.
   const moonDir = new THREE.Vector3(mp[0], mp[1], mp[2]).normalize();
@@ -7005,7 +7395,10 @@ function addStreetlamp(scene, x, z, groundYFn, lit) {
     // flood. Lower intensity + shorter reach keeps each pool distinct and the
     // street between lamps appropriately dim. Gentle decay (1.0) still feathers
     // the edge; positioned a bit below the head so the pool reads on the ground.
-    const lampLight = new THREE.PointLight(0xffdca0, 1.8, 15, 1.1);
+    // v1.38: bumped 1.8 → 2.2 to pair with the darker night ambient — the pools
+    // now read as bright, inviting islands against real gloom rather than a
+    // marginal lift over a flat blue wash. Reach kept at 15m so pools stay distinct.
+    const lampLight = new THREE.PointLight(0xffdca0, 2.2, 15, 1.1);
     lampLight.position.set(headX, poleH - 1.6, 0);
     g.add(lampLight);
     // Soft additive glow ball at the lens so the source reads as bright.
@@ -7078,8 +7471,10 @@ function attachKidFlashlight(kid) {
 
   // Real SpotLight casting forward (+Z) — the actual illumination, brighter and
   // softer-edged (high penumbra) so there's no hard rim. Target is a child so it
-  // rotates with the kid; no per-frame aiming needed.
-  const spot = new THREE.SpotLight(0xfff3d0, 4.5, 22, _spotAngle, 0.9, 1.0);
+  // rotates with the kid; no per-frame aiming needed. v1.38: 4.5 → 5.5 so a
+  // sweeping enemy flashlight clearly lights surfaces against the darker night
+  // and reads as a real tell of where they're pushing.
+  const spot = new THREE.SpotLight(0xfff3d0, 5.5, 22, _spotAngle, 0.9, 1.0);
   spot.position.set(0, 0, 0.08);
   const tgt = new THREE.Object3D();
   tgt.position.set(0, 0, 8);
@@ -7091,6 +7486,193 @@ function attachKidFlashlight(kid) {
   gg.add(unit);
   kid._hasFlashlight = true;
   kid._flashlightUnit = unit;
+}
+
+// ----------------------------------------------------------------------
+// attachKidLaser: gives an enemy kid a visible third-person laser sight,
+// mounted on the gun so it projects where they aim (the gunGroup faces local
+// +Z, the kid's forward). Adds a tiny emitter body + a thin additive beam + a
+// bright dot at the far end. Purely cosmetic — no SpotLight, no lighting, no
+// gameplay effect — it's there to make the night maps read as a tangle of
+// crisscrossing beams. v1.36i: `color` selects RED (default) or GREEN, and the
+// beam now runs LONG (60m) and is CLIPPED to obstacles each frame by
+// updateKidLaser() — so the dot lands on real geometry instead of a phantom
+// 16m wall. Stores beam/dot refs + length on kid._laserUnit for that update.
+// Sets kid._hasLaser.
+// ----------------------------------------------------------------------
+const KID_LASER_COLORS = {
+  red:   { beam: 0xff1a1a, dot: 0xff5555, emitter: 0xff2a2a, emissive: 0xff0000 },
+  green: { beam: 0x33ff44, dot: 0x99ff99, emitter: 0x2aff3a, emissive: 0x00ff10 },
+};
+function attachKidLaser(kid, color = 'red') {
+  if (!kid || !kid.gunGroup || kid._hasLaser) return;
+  const pal = KID_LASER_COLORS[color] || KID_LASER_COLORS.red;
+  const gg = kid.gunGroup;
+  const unit = new THREE.Group();
+  // Sit it just above and forward of the muzzle line; the gun mesh faces +Z.
+  unit.position.set(0, 0.03, 0.16);
+
+  // Small emitter housing.
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.026, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.5, metalness: 0.6 })
+  );
+  unit.add(body);
+  const emitter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.006, 0.006, 0.01, 8),
+    new THREE.MeshStandardMaterial({ color: pal.emitter, emissive: pal.emissive, emissiveIntensity: 0.9, roughness: 0.3, fog: false })
+  );
+  emitter.rotation.x = Math.PI / 2;
+  emitter.position.set(0, 0, 0.035);
+  unit.add(emitter);
+
+  // The beam: a thin additive cylinder running out along +Z. Built LONG (60m so
+  // it can reach across the map); updateKidLaser() rescales it each frame to the
+  // first surface hit so it doesn't punch through trees/forts or stop at a
+  // phantom wall. Cylinder height runs along local Y; rotated so that maps to +Z.
+  const beamLen = 60.0;
+  const beam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.004, 0.004, beamLen, 6),
+    new THREE.MeshBasicMaterial({ color: pal.beam, transparent: true, opacity: 0.5,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false })
+  );
+  beam.rotation.x = Math.PI / 2;
+  beam.position.set(0, 0, 0.04 + beamLen / 2);   // +Z forward (full length until clipped)
+  unit.add(beam);
+
+  // Bright dot at the far end.
+  const dot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 8, 8),
+    new THREE.MeshBasicMaterial({ color: pal.dot, transparent: true, opacity: 0.95,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false })
+  );
+  dot.position.set(0, 0, 0.04 + beamLen);          // +Z forward
+  unit.add(dot);
+
+  gg.add(unit);
+  kid._hasLaser = true;
+  kid._laserColor = color;
+  kid._laserUnit = unit;
+  // Refs + length for the per-frame clip (mirrors the FP laser's beam/dot model).
+  unit.userData.beam = beam;
+  unit.userData.dot = dot;
+  unit.userData.beamLen = beamLen;
+}
+
+// updateKidLaser: aim a kid's laser at what it's shooting toward, then clip the
+// beam to the first obstacle along that world-space line so the dot lands on
+// real geometry — mirroring the player's surface-clipping FP laser.
+//
+// v1.37x: rewritten to work entirely in WORLD space and remove the earlier
+// lookAt/parent-matrix fragility. We force a full world-matrix flush of the
+// kid's whole group (so the emitter's world position reflects this frame's
+// position/rotation), take the emitter world origin, build the ray direction
+// straight from origin → aim point, raycast with those explicit values, then
+// orient + size the beam from the SAME ray. Because the direction is
+// origin→target (not the gun's offset axis), it reliably strikes the cover the
+// kid is actually fighting around instead of slipping past it. The beam is then
+// pointed exactly down the ray we raycast, so the rendered length matches the
+// clip with no orientation mismatch.
+const _kidLaserTgt = new THREE.Vector3();
+const _kidLaserOrigin = new THREE.Vector3();
+const _kidLaserDir = new THREE.Vector3();
+// Diagnostic state (always populated; read window.__laserDiag or press backtick).
+//   runs       — total updateKidLaser executions since load
+//   lasered    — # of lasered enemies seen in the most recent enemy-loop frame
+//   ran        — # of those that actually reached updateKidLaser this frame
+//   last       — the most recent clip result object
+const LASER_DIAG = { runs: 0, lasered: 0, ran: 0, lastRun: 0, last: null };
+function updateKidLaser(enemy, obstacles, aimPoint) {
+  // attachKidLaser() was called with the enemy's MESH, so the laser unit + flags
+  // live on enemy.mesh — NOT on the enemy object. (This mismatch was the bug:
+  // the per-frame clip checked enemy._laserUnit, which was always undefined, so
+  // the beam never got clipped and ran full-length through everything.)
+  const mesh = (enemy && enemy.mesh) ? enemy.mesh : enemy;
+  const unit = mesh && mesh._laserUnit;
+  if (!unit || !unit.userData || !unit.userData.beam) return;
+  const beamLen = unit.userData.beamLen || 60.0;
+
+  // Force the whole kid chain's world matrices current (position/rotation were
+  // set this frame). updateMatrixWorld(true) on the root rebuilds the subtree.
+  if (mesh && mesh.group) mesh.group.updateMatrixWorld(true);
+  else unit.updateWorldMatrix(true, false);
+
+  // Emitter world origin.
+  unit.getWorldPosition(_kidLaserOrigin);
+
+  // Ray direction: straight at the aim point in world space if we have one;
+  // else fall back to the gun's own world-forward (+Z).
+  if (aimPoint) {
+    _kidLaserDir.copy(aimPoint).sub(_kidLaserOrigin);
+    if (_kidLaserDir.lengthSq() < 1e-6) _kidLaserDir.set(0, 0, 1);
+    _kidLaserDir.normalize();
+  } else {
+    _kidLaserDir.set(0, 0, 1).transformDirection(unit.matrixWorld).normalize();
+  }
+
+  // Clip to the first obstacle along that world ray.
+  let dist = beamLen;
+  if (obstacles) {
+    dist = raycastObstacles(
+      _kidLaserOrigin.x, _kidLaserOrigin.y, _kidLaserOrigin.z,
+      _kidLaserDir.x, _kidLaserDir.y, _kidLaserDir.z,
+      beamLen, obstacles
+    );
+  }
+  dist = Math.max(0.4, Math.min(beamLen, dist));
+
+  // Point the unit's local +Z exactly down the world ray we just cast (lookAt a
+  // point along the ray), so the child beam/dot align with the clip distance.
+  _kidLaserTgt.copy(_kidLaserOrigin).addScaledVector(_kidLaserDir, 10);
+  unit.lookAt(_kidLaserTgt);
+
+  const L = Math.max(0.01, dist - 0.04);
+  unit.userData.beam.scale.y = L / beamLen;
+  unit.userData.beam.position.set(0, 0, 0.04 + L / 2);
+  unit.userData.dot.position.set(0, 0, 0.04 + L);
+
+  // Diagnostic: always record the last clip result so it's inspectable even
+  // without flipping a flag first. Read `window.__laserDiag` in the console, or
+  // press the backtick (`) key in a scenario for an on-screen readout. Shows
+  // whether the raycast found an obstacle (clipped), the obstacle count it
+  // tested, and the world origin/direction.
+  LASER_DIAG.lastRun = (typeof performance !== 'undefined') ? performance.now() : 0;
+  LASER_DIAG.runs++;
+  LASER_DIAG.last = {
+    char: (enemy && enemy.charId) || '?',
+    obstacleCount: obstacles ? obstacles.length : -1,
+    origin: [+_kidLaserOrigin.x.toFixed(2), +_kidLaserOrigin.y.toFixed(2), +_kidLaserOrigin.z.toFixed(2)],
+    dir: [+_kidLaserDir.x.toFixed(2), +_kidLaserDir.y.toFixed(2), +_kidLaserDir.z.toFixed(2)],
+    dist: +dist.toFixed(2),
+    beamLen: beamLen,
+    clipped: dist < beamLen,
+  };
+  if (typeof window !== 'undefined') window.__laserDiag = LASER_DIAG.last;
+}
+
+// Diagnostic HUD refresh — shows whether the enemy-laser clip is running and
+// finding geometry. Toggled with the backtick (`) key. Hidden by default.
+function updateLaserDiagHud() {
+  const hud = document.getElementById('laserDiagHud');
+  if (!hud || hud.style.display === 'none') return;
+  const d = LASER_DIAG.last;
+  let txt = 'LASER DIAG  (` to hide)\n';
+  txt += 'lasered enemies: ' + LASER_DIAG.lasered + '\n';
+  txt += 'reached clip:    ' + LASER_DIAG.ran + '\n';
+  txt += 'total clip runs: ' + LASER_DIAG.runs + '\n';
+  txt += 'had aim point:   ' + (LASER_DIAG.hadAim ? 'yes' : 'NO') + '\n';
+  if (d) {
+    txt += '-- last clip --\n';
+    txt += 'char:     ' + d.char + '\n';
+    txt += 'obstacles:' + d.obstacleCount + '\n';
+    txt += 'origin:   ' + d.origin.join(', ') + '\n';
+    txt += 'dir:      ' + d.dir.join(', ') + '\n';
+    txt += 'dist:     ' + d.dist + ' / ' + d.beamLen + '\n';
+    txt += 'CLIPPED:  ' + (d.clipped ? 'YES (hit)' : 'no (full length)');
+  } else {
+    txt += '(no clip has run yet)';
+  }
+  hud.textContent = txt;
 }
 
 // ----------------------------------------------------------------------
@@ -8969,6 +9551,781 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
 // Thin wrapper for the SCENARIOS table (mirrors the Winnmark wrappers).
 function buildBunrattyCourtSceneDefault(_v, tod) { return buildBunrattyCourtScene('default', tod); }
 
+// ===================================================================
+// v1.36 — THE HOLLOW (East Roswell woods battleground)
+// ===================================================================
+// A large, flat-ish wooded clearing south of and between Winnmark and
+// Bunratty. Closed dark canopy (barely any sun), a NON-crossable river on
+// the WEST with visible far-bank land + treeline, a CROSSABLE fork creek
+// through the center, ~30 trees densified into a canopy, ~14 pallet-wall
+// cover clusters (L/T shapes per the design sketch), two asymmetric pallet
+// BUNKER forts at the north (Team A) and south (Team B) spawns, and a couple
+// of open redoubts mid-field. Built for big 5v5 last_team_standing battles.
+//
+// Follows the Bunratty builder contract exactly: groundY single-source-of-
+// truth, sinkObs/groundNormal/layOnSlope, displaced ground, obstacle AABBs,
+// placements + playerSpawns tables, and the standard scene return object.
+function buildHollowScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+
+  // === Lighting / sky — CLOSED DARK CANOPY ===
+  // Unlike the two street maps (clear blue day skies), the Hollow is a deep-
+  // woods clearing, lit for a BRIGHT SUNNY HIGH-NOON look (v1.36d). Sun nearly
+  // overhead → short shadows pooled under the trees; bright blue sky; fog kept
+  // (reads as river haze). Ambient nudged up a touch vs the raking-sun version
+  // since noon light is flatter and we don't want the short shadows pitch-black.
+  const _night = (timeOfDay === 'night');
+  const { sun } = applyTimeOfDay(scene, timeOfDay, {
+    // Bright clear blue sky; fog gives gentle river haze in the distance.
+    dayBg: 0x8fc4ec, dayFog: [40, 120],
+    // HIGH NOON: sun almost straight overhead, bright and near-white-warm.
+    sunColor: 0xfff6e0, sunInt: 2.0, sunPos: [6, 48, 10],
+    // Slightly higher fill than the raking version (noon shadows are short).
+    dayAmbColor: 0x9fb0c8, dayAmbInt: 0.34, dayHemiColor: 0xbcd4f0, dayHemiInt: 0.30,
+    // Night unchanged.
+    nightBg: 0x080d14, nightFog: [14, 58], moonPos: [-18, 36, -14],
+    // High-res shadow map for crisp dapple; extent covers the clearing.
+    shadow: { size: 4096, extent: 56, far: 120 },
+  });
+
+  const rng = (min, max) => min + Math.random() * (max - min);
+
+  // ===================================================================
+  // TERRAIN — a gently rolling hollow. Mostly flat so the big team fight
+  // reads cleanly, with a shallow bowl toward the center creek (the land
+  // dips to the water) and a low rise along the EAST treeline. Total relief
+  // is small (~3m) — this is a flat clearing, not a graded street.
+  // Playable box: x∈[-46,46], z∈[-40,40]. River runs N–S off the WEST edge.
+  // ===================================================================
+  // Distance from (x,z) to the creek CENTERLINE — a fork that now RUNS TO THE
+  // RIVER on the west (x≈-42) so the creek visibly drains into it, plus two
+  // offshoots. Used to carve the ground channel AND to drive the water surface,
+  // so the two always agree. Point-to-segment distance, min over the segments.
+  function segDist(px, pz, ax, az, bx, bz) {
+    const dx = bx - ax, dz = bz - az;
+    const len2 = dx * dx + dz * dz || 1;
+    let t = ((px - ax) * dx + (pz - az) * dz) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cz = az + t * dz;
+    return Math.hypot(px - cx, pz - cz);
+  }
+  // Main run mouth-to-east: (-42,0) → (21,0). NW offshoot, SE offshoot.
+  const CREEK_MAIN = [-42, 0, 21, 0];
+  const CREEK_NW = [-6, -15, -6, -1];
+  const CREEK_SE = [16, 2, 16, 18];
+  function creekDist(x, z) {
+    return Math.min(
+      segDist(x, z, CREEK_MAIN[0], CREEK_MAIN[1], CREEK_MAIN[2], CREEK_MAIN[3]),
+      segDist(x, z, CREEK_NW[0], CREEK_NW[1], CREEK_NW[2], CREEK_NW[3]),
+      segDist(x, z, CREEK_SE[0], CREEK_SE[1], CREEK_SE[2], CREEK_SE[3])
+    );
+  }
+
+  function hollowGroundY(x, z) {
+    let h = 0;
+    // West→east: the far WEST (x≈-46, the riverbank) sits a touch LOW (the
+    // land falls to the water); a gentle rise toward the EAST treeline.
+    const xW = -46, xE = 46;
+    let u = (x - xW) / (xE - xW);             // 0 west bank, 1 east treeline
+    u = Math.max(0, Math.min(1, u));
+    h += 1.6 * (u * u * (3 - 2 * u));         // +0 west, +1.6 east (smoothstep)
+    // CARVED CREEK CHANNEL — v1.36c: a deeper, cleaner U-channel. Distance to
+    // the fork centerline drives a smooth scoop (~1.8m at the centerline, easing
+    // to grade by ~4m out). The micro-relief below is SUPPRESSED inside the
+    // channel so the floor is smooth and the water sits flat in it (no wobble
+    // poking through the surface). Ground mesh, physics, BBs, AI all read this.
+    const dToCreek = creekDist(x, z);
+    const creekW = 4.0;
+    let inChannel = 0;                            // 0 outside, →1 at centerline
+    if (dToCreek < creekW) {
+      const k = 1 - dToCreek / creekW;
+      inChannel = k * k * (3 - 2 * k);            // smoothstep
+      h -= 1.8 * inChannel;
+    }
+    // Riverbank lip: the last few meters before the WEST river drop dip down.
+    if (x < -38) {
+      const k = (-38 - x) / 8;                    // 0 at -38, 1 at -46
+      h -= 1.4 * Math.max(0, Math.min(1, k));
+    }
+    // Gentle natural micro-relief — FADED OUT inside the creek channel so the
+    // streambed stays smooth (water clipping came from this wobble).
+    h += 0.28 * (1 - inChannel) * Math.sin(x * 0.12 + 0.6) * Math.cos(z * 0.10 - 1.1);
+    return h;
+  }
+  const groundY = hollowGroundY;
+
+  // --- Terrain placement helpers (mirrors Bunratty exactly) ---
+  function sinkObs(obs, gx, gz) {
+    if (!obs) return obs;
+    const cx = (gx != null) ? gx : (obs.minX + obs.maxX) / 2;
+    const cz = (gz != null) ? gz : (obs.minZ + obs.maxZ) / 2;
+    let gy = groundY(cx, cz);
+    const hw = (obs.maxX - obs.minX) / 2, hd = (obs.maxZ - obs.minZ) / 2;
+    if (hw > 0.4 || hd > 0.4) {
+      for (const sx of [-hw, 0, hw]) for (const sz of [-hd, 0, hd]) {
+        gy = Math.min(gy, groundY(cx + sx, cz + sz));
+      }
+    }
+    obs.baseY = gy;
+    if (obs.mesh && obs.mesh.position) obs.mesh.position.y += gy;
+    return obs;
+  }
+  function sinkObsList(list, gx, gz) { for (const o of list) sinkObs(o, gx, gz); return list; }
+
+  function groundNormal(x, z) {
+    const e = 0.75;
+    const dx = (groundY(x + e, z) - groundY(x - e, z)) / (2 * e);
+    const dz = (groundY(x, z + e) - groundY(x, z - e)) / (2 * e);
+    const len = Math.hypot(-dx, 1, -dz) || 1;
+    return { nx: -dx / len, ny: 1 / len, nz: -dz / len };
+  }
+  const _UP_Z = new THREE.Vector3(0, 0, 1);
+  function layOnSlope(mesh, x, z, lift = 0.02) {
+    const n = groundNormal(x, z);
+    mesh.position.set(x, groundY(x, z) + lift, z);
+    mesh.quaternion.setFromUnitVectors(_UP_Z, new THREE.Vector3(n.nx, n.ny, n.nz));
+    return mesh;
+  }
+
+  // === Ground — forest floor, DISPLACED plane ===
+  const groundGeo = new THREE.PlaneGeometry(150, 150, 96, 96);
+  {
+    const pos = groundGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const lx = pos.getX(i);
+      const ly = pos.getY(i);
+      pos.setZ(i, groundY(lx, -ly));
+    }
+    pos.needsUpdate = true;
+    groundGeo.computeVertexNormals();
+  }
+  // Dark earthy forest-floor green (dirt-and-leaf-litter, not lawn).
+  const ground = new THREE.Mesh(
+    groundGeo,
+    new THREE.MeshStandardMaterial({ color: 0x3a4a2a, roughness: 1.0 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Scatter a few darker dirt patches (flat decals laid on the slope) for the
+  // worn-clearing look — cosmetic only.
+  {
+    const patchMat = new THREE.MeshStandardMaterial({ color: 0x2e3a22, roughness: 1.0 });
+    for (let i = 0; i < 10; i++) {
+      const px = rng(-38, 40), pz = rng(-34, 34);
+      const patch = new THREE.Mesh(new THREE.CircleGeometry(rng(1.6, 3.2), 16), patchMat);
+      layOnSlope(patch, px, pz, 0.015);
+      patch.receiveShadow = true;
+      scene.add(patch);
+    }
+  }
+
+  // === Map bounds ===
+  // Player can walk right up to the river's edge on the WEST (x≈-39) where a
+  // blocker stops them at the bank; the river + far bank are visual beyond it.
+  const bounds = { minX: -38, maxX: 44, minZ: -36, maxZ: 36 };
+  const P = (x, z) => new THREE.Vector3(x, groundY(x, z), z);
+
+  // ===================================================================
+  // WEST RIVER — non-crossable, visible, FED BY THE CREEK. v1.36c: pulled the
+  // near edge right up to the playable bank (x≈-39) and raised the surface so
+  // it's clearly visible from shore (the old river sat ~18m past the wall and
+  // ~1.7m down → invisible). The creek main run drains into it at the mouth.
+  // ===================================================================
+  const RIVER_Y = -1.0;                 // river surface height (world Y)
+  const treeObs = [];   // collidable trunks (river treeline is scenic, not pushed)
+  {
+    // Main river body — vivid blue, wide, surface clearly above the channel bed.
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x2f6f9e, roughness: 0.22, metalness: 0.18,
+      transparent: true, opacity: 0.95,
+    });
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(30, 170), waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(-54, RIVER_Y, 0);          // body extends far west
+    water.receiveShadow = true;
+    scene.add(water);
+    // Near-edge shallows strip right at the bank (brighter blue-green), reaching
+    // in to x≈-39 so it's visible the moment you crest the bank.
+    const shallowMat = new THREE.MeshStandardMaterial({
+      color: 0x3f97b0, roughness: 0.28, metalness: 0.12, transparent: true, opacity: 0.92,
+    });
+    const shallow = new THREE.Mesh(new THREE.PlaneGeometry(8, 170), shallowMat);
+    shallow.rotation.x = -Math.PI / 2;
+    shallow.position.set(-42, RIVER_Y + 0.05, 0);
+    scene.add(shallow);
+    // Near bank lip — a sloped dark mud strip from grass (x≈-38) down to water.
+    const bankMat = new THREE.MeshStandardMaterial({ color: 0x3a2f1e, roughness: 1.0 });
+    const bank = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 170), bankMat);
+    bank.rotation.x = -Math.PI / 2;
+    bank.rotation.z = 0;
+    bank.position.set(-38.5, RIVER_Y + 0.45, 0);
+    scene.add(bank);
+    // Far-side LAND strip (other side of the river) — raised a touch.
+    const farLand = new THREE.Mesh(
+      new THREE.PlaneGeometry(34, 170),
+      new THREE.MeshStandardMaterial({ color: 0x32421f, roughness: 1.0 })
+    );
+    farLand.rotation.x = -Math.PI / 2;
+    farLand.position.set(-78, RIVER_Y + 1.0, 0);
+    scene.add(farLand);
+    // Far-side DENSE tree wall (scenic only, no collision — player can't reach).
+    for (let i = 0; i < 26; i++) {
+      const fx = rng(-92, -68);
+      const fz = -80 + i * 6.3 + rng(-1.5, 1.5);
+      const fsh = Math.random() < 0.5 ? 'pine' : 'round';
+      addSuburbanTree(scene, fx, fz, {
+        shape: fsh, leafR: rng(2.2, 3.4), trunkH: rng(3.8, 6.5),
+        leafColor: fsh === 'pine' ? (Math.random() < 0.5 ? 0x254526 : 0x2c5230)
+                                  : (Math.random() < 0.5 ? 0x34521f : 0x3e5e26),
+        baseY: RIVER_Y + 1.0,
+      });
+      // (intentionally NOT pushed to treeObs — unreachable backdrop)
+    }
+    // Hard blocker so the player can't enter the water/cross.
+    // (Pushed into obstacles list at the end.)
+    scene._riverBlocker = { minX: -120, maxX: -38.5, minZ: -90, maxZ: 90, h: 10, baseY: -4, surface: 'hard' };
+  }
+
+  // ===================================================================
+  // PERIMETER TREELINES — N, S, E hard walls of trees (collidable trunks).
+  // v1.36d: mixed deciduous (round) + pine (conifer) with WIDE height variation
+  // — North-Georgia riverside forest is heavy loblolly/white pine over hardwood.
+  // ===================================================================
+  // North-Atlanta riverside mix: ~50% pine. Varied heights (understory → canopy).
+  function treeShape() { return Math.random() < 0.5 ? 'pine' : 'round'; }
+  function pineColor() { return Math.random() < 0.5 ? 0x274a2a : 0x305c33; }   // bluer green
+  function leafColorDecid() { return Math.random() < 0.5 ? 0x3a5e28 : 0x4a6a30; }
+  function makeTree(x, z, sizeBias) {
+    const sh = treeShape();
+    // sizeBias 0..1 nudges toward taller; add big natural spread.
+    const tall = Math.random() < (0.30 + 0.4 * (sizeBias ?? 0.4));
+    // v1.36e: PINES run taller (5–11m) — even "short" pines clear eye level so
+    // the high skirt sits well overhead. Round/deciduous keep the wider spread.
+    let trunkH;
+    if (sh === 'pine') trunkH = tall ? rng(8.0, 11.5) : rng(5.0, 7.5);
+    else               trunkH = tall ? rng(5.0, 8.5)  : rng(2.6, 4.6);
+    const leafR = sh === 'pine'
+      ? (tall ? rng(2.4, 3.4) : rng(1.8, 2.6))
+      : (tall ? rng(2.8, 4.0) : rng(1.8, 2.8));
+    return addSuburbanTree(scene, x, z, {
+      shape: sh, trunkH, leafR,
+      trunkR: tall ? rng(0.36, 0.5) : rng(0.26, 0.36),
+      leafColor: sh === 'pine' ? pineColor() : leafColorDecid(),
+      baseY: groundY(x, z),
+    });
+  }
+  function treeRow(x1, z1, x2, z2, count, jitter, sizeBias) {
+    for (let i = 0; i < count; i++) {
+      const t = count <= 1 ? 0 : i / (count - 1);
+      const x = x1 + (x2 - x1) * t + rng(-jitter, jitter);
+      const z = z1 + (z2 - z1) * t + rng(-jitter, jitter);
+      treeObs.push(makeTree(x, z, sizeBias));
+    }
+  }
+  // Three staggered ranks each side; outer ranks taller (canopy backdrop).
+  treeRow(-42, -38, 44, -38, 30, 1.2, 0.4);
+  treeRow(-42, -41, 44, -41, 26, 1.4, 0.6);
+  treeRow(-42, -44, 44, -44, 22, 1.6, 0.85);
+  treeRow(-42, 38, 44, 38, 30, 1.2, 0.4);
+  treeRow(-42, 41, 44, 41, 26, 1.4, 0.6);
+  treeRow(-42, 44, 44, 44, 22, 1.6, 0.85);
+  treeRow(46, -42, 46, 42, 26, 1.2, 0.5);
+  treeRow(49, -42, 49, 42, 22, 1.4, 0.7);
+  treeRow(52, -42, 52, 42, 18, 1.6, 0.9);
+
+  // ===================================================================
+  // INTERIOR TREES — v1.36d: DOUBLED again (~110 interior trunks) with the same
+  // pine/round mix + wide height variation. Procedural min-spacing scatter with
+  // keep-out around forts and the creek channel. Each casts a shadow under the
+  // high-noon sun (the trees ARE the shadow layer now).
+  // ===================================================================
+  {
+    const anchorSpots = [
+      [-30, -24], [-18, -28], [-8, -20], [-34, -10], [-24, -2], [-14, -12],
+      [-32, 12], [-22, 20], [-10, 16], [-30, 26], [-16, 30],
+      [12, -26], [24, -18], [34, -24], [18, -8], [30, -6], [40, -14],
+      [14, 22], [26, 16], [36, 24], [20, 30], [38, 6], [10, 8],
+    ];
+    const placed = [];
+    function blockedSpot(x, z) {
+      if (Math.hypot(x - (-2), z - (-30)) < 7) return true;  // north fort
+      if (Math.hypot(x - 2, z - 30) < 7) return true;        // south fort
+      if (creekDist(x, z) < 4.5) return true;                // creek channel
+      return false;
+    }
+    function tryPlace(x, z, minSep, sizeBias) {
+      if (x < -40 || x > 44 || z < -35 || z > 35) return false;
+      if (blockedSpot(x, z)) return false;
+      for (const p of placed) if (Math.hypot(p[0] - x, p[1] - z) < minSep) return false;
+      placed.push([x, z]);
+      treeObs.push(makeTree(x, z, sizeBias));
+      return true;
+    }
+    // 1) Anchor cover trees (the ones you fight around) — moderate size.
+    for (const [tx, tz] of anchorSpots) {
+      tryPlace(tx + rng(-1.2, 1.2), tz + rng(-1.2, 1.2), 2.8, 0.45);
+    }
+    // 2) Dense fill — ~110 more, min 3.2m apart (tighter than before = doubled
+    //    density) so it reads as real forest while still passable between trunks.
+    let attempts = 0, added = 0;
+    while (added < 110 && attempts < 1400) {
+      attempts++;
+      const x = rng(-39, 43), z = rng(-34, 34);
+      if (tryPlace(x, z, 3.2, Math.random())) added++;
+    }
+  }
+
+  // (v1.36d: removed the floating high "canopy shadow layer" — those detached
+  // crowns read as green blobs hovering with no trunk. With doubled tree density
+  // and the high-noon sun, the actual trees cast all the shadow now.)
+
+  // ===================================================================
+  // CROSSABLE FORK CREEK — water that FOLLOWS the carved channel floor (v1.36c).
+  // The old version laid ONE flat plane per segment at the segment's center
+  // height, so on the sloping streambed it floated at the low end and sank at
+  // the high end (the "blue rectangle hovering" bug). Now each segment is built
+  // as a RIBBON of small quads stepped along the centerline; each quad sits at
+  // the local water level = channel-floor + shallow fill, blended toward the
+  // RIVER surface near the western mouth so the creek visibly drains into the
+  // river. Width is kept just inside the 4m carve so blue never spills onto grass.
+  // ===================================================================
+  const creekObs = [];
+  {
+    const creekMat = new THREE.MeshStandardMaterial({
+      color: 0x2f6f9e, roughness: 0.22, metalness: 0.16,
+      transparent: true, opacity: 0.92, side: THREE.DoubleSide,
+    });
+    // Water-surface level at a creek point: floor + fill, but eased to the
+    // river level over the last ~10m before the mouth (x≈-42) for a seamless join.
+    function creekWaterY(x, z) {
+      const floor = groundY(x, z);
+      let lvl = floor + 0.4;
+      if (x < -30) {
+        const t = Math.max(0, Math.min(1, (-30 - x) / 12));  // 0 at -30 → 1 at -42
+        lvl = lvl * (1 - t) + (RIVER_Y) * t;
+      }
+      return lvl;
+    }
+    // Build a ribbon along a straight centerline (ax,az)->(bx,bz), width w.
+    function creekRibbon(ax, az, bx, bz, w) {
+      const len = Math.hypot(bx - ax, bz - az);
+      const steps = Math.max(2, Math.ceil(len / 1.5));
+      // unit perpendicular in XZ
+      const dx = (bx - ax) / len, dz = (bz - az) / len;
+      const px = -dz, pz = dx;                       // perpendicular
+      const positions = [];
+      for (let i = 0; i < steps; i++) {
+        const t0 = i / steps, t1 = (i + 1) / steps;
+        const cx0 = ax + (bx - ax) * t0, cz0 = az + (bz - az) * t0;
+        const cx1 = ax + (bx - ax) * t1, cz1 = az + (bz - az) * t1;
+        const hw = w / 2;
+        // four corners of this quad (left/right of centerline at t0 and t1)
+        const L0 = [cx0 + px * hw, creekWaterY(cx0, cz0), cz0 + pz * hw];
+        const R0 = [cx0 - px * hw, creekWaterY(cx0, cz0), cz0 - pz * hw];
+        const L1 = [cx1 + px * hw, creekWaterY(cx1, cz1), cz1 + pz * hw];
+        const R1 = [cx1 - px * hw, creekWaterY(cx1, cz1), cz1 - pz * hw];
+        // two triangles (L0,R0,L1) (R0,R1,L1)
+        positions.push(...L0, ...R0, ...L1, ...R0, ...R1, ...L1);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, creekMat);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      // crossable zone AABB (for the future wade hook; NOT in physics obstacles)
+      creekObs.push({
+        minX: Math.min(ax, bx) - w / 2, maxX: Math.max(ax, bx) + w / 2,
+        minZ: Math.min(az, bz) - w / 2, maxZ: Math.max(az, bz) + w / 2,
+        h: 0.0, baseY: groundY((ax + bx) / 2, (az + bz) / 2), surface: 'water', crossable: true,
+      });
+    }
+    // The fork — coords MATCH the carve centerlines exactly. Main run reaches
+    // the river mouth at x=-42; widths just under the 4m carve.
+    creekRibbon(CREEK_MAIN[0], CREEK_MAIN[1], CREEK_MAIN[2], CREEK_MAIN[3], 3.4);
+    creekRibbon(CREEK_NW[0], CREEK_NW[1], CREEK_NW[2], CREEK_NW[3], 3.0);
+    creekRibbon(CREEK_SE[0], CREEK_SE[1], CREEK_SE[2], CREEK_SE[3], 3.0);
+    // Wet creek-bed rocks at the crossings (seated on the carved floor).
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x4a4640, roughness: 1.0 });
+    for (const [sx, sz] of [[2, 0], [12, 0], [-6, -4], [16, 6], [-18, 0], [18, 0]]) {
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.5, 8), stoneMat);
+      st.position.set(sx, groundY(sx, sz) + 0.18, sz);
+      st.castShadow = st.receiveShadow = true;
+      scene.add(st);
+    }
+  }
+
+  // ===================================================================
+  // PALLET WALLS — the authored cover (orange in the sketch). Thin wood
+  // panels, ~1.2m tall (stand-cover), in straight / L / T clusters. BBs
+  // ricochet (surface:'hard'). Each returns an AABB obstacle.
+  // ===================================================================
+  const coverList = [];
+  const palletMat = new THREE.MeshStandardMaterial({ color: 0x9a6f3a, roughness: 0.95 });
+  const palletMatDark = new THREE.MeshStandardMaterial({ color: 0x7d5a2e, roughness: 0.95 });
+  // One pallet panel centered at (x,z), length `len` along `axis` ('x'|'z'),
+  // height h, thickness th. Slats drawn for the pallet look.
+  function palletPanel(x, z, len, axis, h = 1.2, th = 0.22) {
+    const w = axis === 'x' ? len : th;
+    const d = axis === 'x' ? th : len;
+    const grp = new THREE.Group();
+    // Back board
+    const board = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), palletMat);
+    board.position.y = h / 2;
+    board.castShadow = board.receiveShadow = true;
+    grp.add(board);
+    // Horizontal slat lines (3 darker slats) for the pallet read.
+    for (let i = 0; i < 3; i++) {
+      const sy = h * (0.22 + i * 0.28);
+      const slat = new THREE.Mesh(
+        new THREE.BoxGeometry(axis === 'x' ? len * 0.98 : th + 0.04, h * 0.16, axis === 'x' ? th + 0.04 : len * 0.98),
+        palletMatDark
+      );
+      slat.position.y = sy;
+      grp.add(slat);
+    }
+    grp.position.set(x, 0, z);
+    grp.castShadow = grp.receiveShadow = true;
+    scene.add(grp);
+    const obs = {
+      minX: x - w / 2 - 0.04, maxX: x + w / 2 + 0.04,
+      minZ: z - d / 2 - 0.04, maxZ: z + d / 2 + 0.04,
+      h, surface: 'hard', mesh: grp, baseY: 0,
+    };
+    sinkObs(obs, x, z);
+    return obs;
+  }
+  // Cluster helpers: straight, L, T. Push panels into coverList.
+  function palletStraight(x, z, len, axis) { coverList.push(palletPanel(x, z, len, axis)); }
+  function palletL(x, z, lenA, lenB) {
+    // Corner at (x,z): one X-run east, one Z-run north, meeting at the corner.
+    coverList.push(palletPanel(x + lenA / 2, z, lenA, 'x'));
+    coverList.push(palletPanel(x, z + lenB / 2, lenB, 'z'));
+  }
+  function palletT(x, z, span, stem) {
+    // Crossbar along X centered at (x,z); stem along Z going +z.
+    coverList.push(palletPanel(x, z, span, 'x'));
+    coverList.push(palletPanel(x, z + stem / 2, stem, 'z'));
+  }
+  // Placements mirror the sketch's distribution (north field, mid, south field).
+  // -- North half (Team A approach) --
+  palletStraight(-26, -16, 4.0, 'x');
+  palletL(-12, -22, 3.6, 3.0);
+  palletStraight(8, -14, 3.8, 'x');
+  palletT(28, -12, 4.2, 3.0);
+  palletStraight(-32, -4, 3.4, 'z');
+  palletL(34, -4, 3.0, 3.4);
+  // -- Mid (around the creek; the meat grinder) --
+  palletStraight(-2, -6, 3.6, 'x');
+  palletStraight(20, 4, 3.8, 'x');
+  palletL(-16, 4, 3.4, 3.0);
+  // -- South half (Team B approach) --
+  palletT(-18, 16, 4.2, 3.2);
+  palletStraight(6, 14, 3.8, 'x');
+  palletL(24, 14, 3.4, 3.2);
+  palletStraight(-26, 26, 3.6, 'x');
+  palletStraight(30, 24, 3.4, 'x');
+
+  // ===================================================================
+  // OPEN REDOUBTS (Concept B) — a couple of mid-field advanced positions:
+  // a chest-high pallet ring (crouch cover) with tires + a sandbag stack.
+  // ===================================================================
+  const redoubtObs = [];
+  const tireMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 1.0 });
+  const sandbagMat = new THREE.MeshStandardMaterial({ color: 0x8a7d54, roughness: 1.0 });
+  function addRedoubt(cx, cz) {
+    const h = 0.85;  // chest-high (crouch-safe, head exposed standing)
+    // 3 short pallet panels in a loose horseshoe opening toward nearest spawn.
+    redoubtObs.push(palletPanelLow(cx - 1.8, cz, 3.0, 'z', h));
+    redoubtObs.push(palletPanelLow(cx + 1.8, cz, 3.0, 'z', h));
+    redoubtObs.push(palletPanelLow(cx, cz - 1.8, 3.4, 'x', h));
+    // Tire on its side as low cover.
+    const tire = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.22, 8, 16), tireMat);
+    tire.rotation.x = Math.PI / 2;
+    tire.position.set(cx + 1.0, groundY(cx + 1.0, cz + 1.4) + 0.24, cz + 1.4);
+    tire.castShadow = true; scene.add(tire);
+    // Sandbag stack (two stacked boxes).
+    for (let i = 0; i < 2; i++) {
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.6), sandbagMat);
+      bag.position.set(cx - 1.0, groundY(cx - 1.0, cz + 1.2) + 0.2 + i * 0.42, cz + 1.2);
+      bag.castShadow = bag.receiveShadow = true; scene.add(bag);
+    }
+    redoubtObs.push(sinkObs({
+      minX: cx - 1.7, maxX: cx - 0.3, minZ: cz + 0.9, maxZ: cz + 1.5,
+      h: 0.84, surface: 'soft', baseY: 0,
+    }, cx - 1.0, cz + 1.2));
+  }
+  // A simplified low pallet panel (no slats) for redoubts.
+  function palletPanelLow(x, z, len, axis, h) {
+    const th = 0.2;
+    const w = axis === 'x' ? len : th;
+    const d = axis === 'x' ? th : len;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), palletMat);
+    board.position.set(x, h / 2, z);
+    board.castShadow = board.receiveShadow = true;
+    scene.add(board);
+    const obs = {
+      minX: x - w / 2 - 0.04, maxX: x + w / 2 + 0.04,
+      minZ: z - d / 2 - 0.04, maxZ: z + d / 2 + 0.04,
+      h, surface: 'hard', mesh: board, baseY: 0,
+    };
+    sinkObs(obs, x, z);
+    return obs;
+  }
+  addRedoubt(-14, 8);    // NW of the creek, clear of the channel
+  addRedoubt(26, -8);    // NE, clear of the SE offshoot and main run
+
+  // ===================================================================
+  // FORTS (Concept A) — a pallet-walled bunker at each spawn: walls on three
+  // sides with a firing PORT in the front wall, a back LOOKOUT platform, a
+  // partial plywood ROOF, and a team FLAG. Asymmetric: Team A (north) = RED
+  // flag, lookout LEFT, tire stack out front; Team B (south) = BLUE flag,
+  // lookout RIGHT, plywood lean-to. Returns a list of obstacle AABBs.
+  // ===================================================================
+  const fortObs = [];
+  const plywoodMat = new THREE.MeshStandardMaterial({ color: 0x8a6f43, roughness: 0.95 });
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x5a4528, roughness: 1.0 });
+  // Build a fort centered at (cx,cz). `facing` = +1 if the OPEN front faces
+  // +z (south, Team A looking toward midfield), -1 if it faces -z (Team B).
+  function addFort(cx, cz, opts) {
+    const o = opts || {};
+    const facing = o.facing || 1;            // +1: front (port) toward +z
+    const flagColor = o.flagColor || 0xc0392b;
+    const lookoutSide = o.lookoutSide || -1;  // -1 left (−x), +1 right (+x)
+    const W = 7.0, D = 6.0, wallH = 2.0, th = 0.3;  // footprint + wall height
+    const list = [];
+    const grp = new THREE.Group();
+    const backZ = cz - facing * (D / 2);   // back wall opposite the open front
+    // Add a wall box in WORLD coords; record its AABB obstacle.
+    function worldWall(wx, wz, w, h, d, mat) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat || palletMat);
+      m.position.set(wx, h / 2, wz);
+      m.castShadow = m.receiveShadow = true;
+      grp.add(m);
+      list.push({
+        minX: wx - w / 2 - 0.04, maxX: wx + w / 2 + 0.04,
+        minZ: wz - d / 2 - 0.04, maxZ: wz + d / 2 + 0.04,
+        h, surface: 'hard', baseY: 0,
+      });
+    }
+    const frontZ = cz + facing * (D / 2);
+    const leftX = cx - W / 2, rightX = cx + W / 2;
+    // A WALL WITH FIRING WINDOWS (v1.36b). Built as a solid LOWER band (0..winB,
+    // blocks movement + gives crouch cover) plus an UPPER band (winT..wallH)
+    // split into segments that leave `nWin` window GAPS. The gaps have no
+    // geometry between winB and winT, so BBs and your line of sight pass
+    // straight through at standing/shoulder height — you stand at the wall and
+    // shoot out the window. Movement is still fully blocked by the lower band.
+    // axis 'x' = wall runs along X (front/back walls); 'z' = along Z (sides).
+    function windowedWall(cxw, czw, span, axis, nWin) {
+      const winB = 1.0, winT = 1.6;          // window opening from 1.0m to 1.6m
+      const lowMat = palletMat;
+      // Lower solid band (full span).
+      const lowW = axis === 'x' ? span : th, lowD = axis === 'x' ? th : span;
+      const low = new THREE.Mesh(new THREE.BoxGeometry(lowW, winB, lowD), lowMat);
+      low.position.set(cxw, winB / 2, czw);
+      low.castShadow = low.receiveShadow = true; grp.add(low);
+      list.push({ minX: cxw - lowW / 2 - 0.04, maxX: cxw + lowW / 2 + 0.04,
+                  minZ: czw - lowD / 2 - 0.04, maxZ: czw + lowD / 2 + 0.04,
+                  h: winB, surface: 'hard', baseY: 0 });
+      // Top band above the windows (full span, winT..wallH).
+      const topH = wallH - winT;
+      const top = new THREE.Mesh(new THREE.BoxGeometry(lowW, topH, lowD), lowMat);
+      top.position.set(cxw, winT + topH / 2, czw);
+      top.castShadow = true; grp.add(top);
+      list.push({ minX: cxw - lowW / 2 - 0.04, maxX: cxw + lowW / 2 + 0.04,
+                  minZ: czw - lowD / 2 - 0.04, maxZ: czw + lowD / 2 + 0.04,
+                  h: topH, surface: 'hard', baseY: winT });
+      // Mid band (winB..winT) split into POSTS leaving nWin window gaps. With
+      // nWin windows there are nWin+1 posts. Window width ~0.9m, posts fill rest.
+      const winW = 0.9;
+      const totalWin = nWin * winW;
+      const postSpan = (span - totalWin) / (nWin + 1);
+      const along = axis === 'x' ? cxw - span / 2 : czw - span / 2;
+      let cursor = along;
+      for (let i = 0; i <= nWin; i++) {
+        // post
+        const pCenter = cursor + postSpan / 2;
+        const pW = axis === 'x' ? postSpan : th, pD = axis === 'x' ? th : postSpan;
+        const px = axis === 'x' ? pCenter : cxw, pz = axis === 'x' ? czw : pCenter;
+        if (postSpan > 0.05) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(pW, winT - winB, pD), palletMatDark);
+          post.position.set(px, (winB + winT) / 2, pz);
+          post.castShadow = true; grp.add(post);
+          list.push({ minX: px - pW / 2 - 0.04, maxX: px + pW / 2 + 0.04,
+                      minZ: pz - pD / 2 - 0.04, maxZ: pz + pD / 2 + 0.04,
+                      h: winT - winB, surface: 'hard', baseY: winB });
+        }
+        cursor += postSpan + winW;   // skip the window gap
+      }
+    }
+    // Back wall — 2 windows. Side walls — 2 windows each. (Three shooting walls.)
+    windowedWall(cx, backZ, W, 'x', 2);
+    windowedWall(leftX, cz, D, 'z', 2);
+    windowedWall(rightX, cz, D, 'z', 2);
+    // Front wall with a PORT: two short segments leaving a wide doorway gap.
+    // (v1.36a: widened 2.2→2.8 so there's comfortable clearance past the AABB
+    // padding — you can walk through without hugging the exact center.)
+    const portGap = 2.8, segW = (W - portGap) / 2;
+    worldWall(cx - (portGap / 2 + segW / 2), frontZ, segW, wallH, th);
+    worldWall(cx + (portGap / 2 + segW / 2), frontZ, segW, wallH, th);
+    // A header beam across the TOP of the port (a doorframe lintel) so the
+    // opening reads as a built doorway — but NO collision, so it's a true
+    // walk-through. (v1.36a: the old waist-high sill had a 0.5m collision AABB
+    // that walled off the only exit — feet-level obstacles block movement.)
+    const header = new THREE.Mesh(new THREE.BoxGeometry(portGap, 0.28, th), palletMatDark);
+    header.position.set(cx, wallH - 0.14, frontZ);   // tucked under the wall top
+    header.castShadow = true; grp.add(header);
+    // LOOKOUT platform along the back, on `lookoutSide`. A raised deck (~1.1m)
+    // with two posts and a low rail. Cosmetic deck (no walk-up in v1; it's a
+    // visual perch) — gives the fort its silhouette.
+    const loX = cx + lookoutSide * (W / 2 - 1.4);
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 2.0), plywoodMat);
+    deck.position.set(loX, 1.1, backZ + facing * 0.9);
+    deck.castShadow = deck.receiveShadow = true; grp.add(deck);
+    for (const px of [loX - 1.1, loX + 1.1]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 6), postMat);
+      post.position.set(px, 0.55, backZ + facing * 0.9);
+      grp.add(post);
+    }
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.1, 0.1), palletMatDark);
+    rail.position.set(loX, 1.55, backZ + facing * 1.8);
+    grp.add(rail);
+    // Partial plywood ROOF over the back half.
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(W - 0.4, 0.14, D * 0.5), plywoodMat);
+    roof.position.set(cx, wallH + 0.15, backZ + facing * (D * 0.25));
+    roof.rotation.x = facing * 0.12;           // slight pitch
+    roof.castShadow = true; grp.add(roof);
+    // Asymmetric extra: Team A gets a tire stack out front; Team B a lean-to.
+    if (o.frontTires) {
+      for (let i = 0; i < 3; i++) {
+        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.2, 8, 14), tireMat);
+        tire.position.set(cx - 1.6, 0.2 + i * 0.42, frontZ + facing * 1.2);
+        tire.rotation.x = Math.PI / 2; grp.add(tire);
+      }
+      list.push({ minX: cx - 2.1, maxX: cx - 1.1, minZ: frontZ + facing * 1.2 - 0.5,
+                  maxZ: frontZ + facing * 1.2 + 0.5, h: 1.1, surface: 'hard', baseY: 0 });
+    }
+    if (o.leanTo) {
+      const lean = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 2.4), plywoodMat);
+      lean.position.set(rightX + 0.9, 1.3, cz);
+      lean.rotation.z = 0.5; lean.castShadow = true; grp.add(lean);
+      const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 6), postMat);
+      lp.position.set(rightX + 1.8, 0.8, cz); grp.add(lp);
+    }
+    // FLAG — pole + triangular pennant in the team color, at the back corner.
+    const flagX = cx - lookoutSide * (W / 2 - 0.6);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.6, 6), postMat);
+    pole.position.set(flagX, 1.8, backZ);
+    grp.add(pole);
+    const pennant = new THREE.Mesh(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0), new THREE.Vector3(1.4, -0.25, 0), new THREE.Vector3(0, -0.9, 0),
+      ]),
+      new THREE.MeshStandardMaterial({ color: flagColor, roughness: 0.9, side: THREE.DoubleSide })
+    );
+    pennant.geometry.setIndex([0, 1, 2]);
+    pennant.geometry.computeVertexNormals();
+    pennant.position.set(flagX + 0.06, 3.3, backZ);
+    grp.add(pennant);
+    // Seat the whole fort group on terrain (use the back-center ground height).
+    // v1.36b: ADD fortGy to each AABB's LOCAL baseY (was overwriting it, which
+    // flattened the layered window bands to a single height and erased the
+    // shoot-through gaps). Now local [0, winB, winT] bands lift together.
+    const fortGy = groundY(cx, backZ);
+    grp.position.y += fortGy;
+    for (const ob of list) ob.baseY = (ob.baseY || 0) + fortGy;
+    scene.add(grp);
+    return list;
+  }
+  // Team A fort — NORTH end (z≈-30), front/port faces SOUTH (+z toward midfield),
+  // RED flag, lookout LEFT, tires out front.
+  fortObs.push(...addFort(-2, -30, { facing: 1, flagColor: 0xc0392b, lookoutSide: -1, frontTires: true }));
+  // Team B fort — SOUTH end (z≈30), front/port faces NORTH (-z toward midfield),
+  // BLUE flag, lookout RIGHT, plywood lean-to.
+  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1, leanTo: true }));
+
+  // ===================================================================
+  // ANCHORS & SPAWNS
+  // ===================================================================
+  // Fighting anchors spread across the field for a 5v5: each team gets a
+  // base anchor (at its fort) plus forward positions at pallet clusters.
+  const placements = {
+    // Team A (north) anchors
+    a_fort:       { pos: P(-2, -27),  cover: fortObs[0] },
+    a_left:       { pos: P(-26, -16), cover: coverList[0] },
+    a_right:      { pos: P(28, -12),  cover: coverList[3] },
+    a_center:     { pos: P(-2, -6),   cover: coverList[6] },
+    a_creek:      { pos: P(20, 4),    cover: coverList[7] },
+    // Team B (south) anchors
+    b_fort:       { pos: P(2, 27),    cover: fortObs[0] },
+    b_left:       { pos: P(-18, 16),  cover: coverList[9] },
+    b_right:      { pos: P(24, 14),   cover: coverList[11] },
+    b_center:     { pos: P(6, 14),    cover: coverList[10] },
+    b_creek:      { pos: P(-16, 4),   cover: coverList[8] },
+    // Redoubts (neutral mid cover) — positions match the v1.36d relocation.
+    redoubt_w:    { pos: P(-14, 8),   cover: redoubtObs[0] },
+    redoubt_e:    { pos: P(26, -8),   cover: redoubtObs[0] },
+    // Extra scatter anchors for big 10-player modes (FFA / Infection).
+    scatter_nw:   { pos: P(-34, -22), cover: null },
+    scatter_ne:   { pos: P(36, -20),  cover: null },
+    scatter_sw:   { pos: P(-32, 24),  cover: null },
+    scatter_se:   { pos: P(34, 22),   cover: null },
+    scatter_w:    { pos: P(-30, 0),   cover: null },
+    scatter_e:    { pos: P(38, 0),    cover: null },
+    // Staging clusters (one per team end)
+    cluster_north: { pos: P(0, -33),  cover: null },
+    cluster_south: { pos: P(0, 33),   cover: null },
+  };
+
+  const playerSpawns = {
+    team_a:  { pos: P(-2, -28), yaw: 0 },           // in the north fort, facing south (+z)
+    team_b:  { pos: P(2, 28),   yaw: Math.PI },      // in the south fort, facing north (-z)
+    midfield:{ pos: P(0, 0),    yaw: 0 },
+  };
+
+  // === Legacy return scaffolding ===
+  let enemies = [];
+  let spawn = playerSpawns.team_b.pos.clone();   // default: player on Team B (south)
+  let spawnYaw = playerSpawns.team_b.yaw;
+  let name = 'Chattahoochee River', scenarioName = '', desc = '';
+
+  // === Base markers (drawn by the generic team-battle path after spawns
+  // resolve, same as the street maps — nothing to do here). ===
+
+  // === Collect obstacles ===
+  // (Creek segments are intentionally excluded — cosmetic + freely crossable.)
+  const obstacles = [
+    ...treeObs, ...coverList, ...redoubtObs, ...fortObs,
+    scene._riverBlocker,
+  ];
+
+  return {
+    scene,
+    spawn, spawnYaw, bounds,
+    cover: coverList,
+    obstacles,
+    enemies,
+    name, scenarioName, desc,
+    placements,
+    playerSpawns,
+    groundY,
+    creekZones: creekObs,   // future wade-slow hook (not yet in physics)
+    // v1.36f: explicit team-base positions at the two FORTS, so the colored
+    // ground markers line up with the fort the team actually spawns/fights in
+    // (the generic enemy marker uses the anchor centroid, which on this map
+    // lands out in the field in front of the north fort). Player default-spawns
+    // Team B (south fort); enemies hold Team A (north fort).
+    teamBases: { player: { x: 2, z: 30 }, enemy: { x: -2, z: -30 } },
+  };
+}
+
+// Thin wrapper for the SCENARIOS table (mirrors the street-map wrappers).
+function buildHollowSceneDefault(_v, tod) { return buildHollowScene('default', tod); }
+
+
 
 // ---------------------------------------------------------------------
 // ENEMY FACTORY — turn a CHARACTERS entry + scenario context into a live enemy
@@ -10366,7 +11723,7 @@ function ensureFPGunAccessory(group, gunType) {
   flashUnit.visible = false;
   group.add(flashUnit);
 
-  group.userData.accessories = { laserUnit, laserBeam, laserDot, flashUnit, flashLight,
+  group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight,
     railX: mount.railX || 0.024, railY, railZ };
   return group.userData.accessories;
 }
@@ -10378,7 +11735,9 @@ function updateFPGunAccessory(group, gunType) {
   if (!group) return;
   const acc = ensureFPGunAccessory(group, gunType);
   const mounted = getMountedAccessories(gunType);
-  const laserPl = mounted.find(a => a.type === 'laser');
+  // v1.36i: either laser variant (red or green) shows the FP laser rig; the
+  // mounted attachment's `laserColor` recolors the beam/dot/emitter.
+  const laserPl = mounted.find(a => a.type === 'laser' || a.type === 'laser_green');
   const flashPl = mounted.find(a => a.type === 'flashlight');
   // Map placement → X offset (left rail = +X toward the off-hand side here;
   // 'left'/'right' are the player's rail labels). railX is the half-spread.
@@ -10388,10 +11747,25 @@ function updateFPGunAccessory(group, gunType) {
     return 0.004;   // fallback (shouldn't happen for rail items)
   };
   acc.laserUnit.visible = !!laserPl;
-  if (laserPl) acc.laserUnit.position.x = xFor(laserPl.placement);
+  if (laserPl) {
+    acc.laserUnit.position.x = xFor(laserPl.placement);
+    // v1.36i: recolor the FP beam/dot/emitter to the equipped laser's color.
+    const lc = (ATTACHMENTS[laserPl.type] && ATTACHMENTS[laserPl.type].laserColor) || 'red';
+    const FP_LASER_PAL = {
+      red:   { beam: 0xff1a1a, dot: 0xff5555, emitter: 0xff2a2a, emissive: 0xff0000 },
+      green: { beam: 0x33ff44, dot: 0x99ff99, emitter: 0x2aff3a, emissive: 0x00ff10 },
+    };
+    const pal = FP_LASER_PAL[lc] || FP_LASER_PAL.red;
+    if (acc.laserBeam) acc.laserBeam.material.color.setHex(pal.beam);
+    if (acc.laserDot)  acc.laserDot.material.color.setHex(pal.dot);
+    if (acc.laserEmitter) {
+      acc.laserEmitter.material.color.setHex(pal.emitter);
+      acc.laserEmitter.material.emissive.setHex(pal.emissive);
+    }
+  }
   acc.flashUnit.visible = !!flashPl;
   if (flashPl) acc.flashUnit.position.x = xFor(flashPl.placement);
-  acc.flashLight.intensity = flashPl ? 2.6 : 0.0;
+  acc.flashLight.intensity = flashPl ? 3.4 : 0.0;   // v1.38: 2.6 → 3.4 to matter in the darker night
   // Red-dot / scope have no under-barrel rig; sights render as a reticle/zoom.
 }
 
@@ -10866,6 +12240,9 @@ function enterBedroom() {
 
   hideAllMenus();
   showPauseHint();
+  // v1.37: auto-save on returning home (after a scenario, cash/BBs are settled).
+  // No-op until the player has opted into persistence (loaded a save or slept).
+  autoSave();
   // Start bedroom music (only takes effect after the audio context is unlocked,
   // which happens on the player's first click — startMusic guards against missing ctx)
   startMusic('bedroom');
@@ -11179,6 +12556,10 @@ function enterScenario(scenarioId) {
           enemy.flankSide = 0;
           enemy.state = 'chasing';
           enemy._spawnPos = spawnPos.clone();
+          // v1.36h: taggers are playing INFECTION — no guns. Hide the gun mesh
+          // entirely (one-time). The zombie arm pose is reapplied every frame in
+          // the tagger AI block, because setKidCrouch(.,0) resets arm Y each tick.
+          if (enemy.mesh && enemy.mesh.gunGroup) enemy.mesh.gunGroup.visible = false;
           built.enemies.push(enemy);
           setupIdx++;
           continue;
@@ -11214,10 +12595,17 @@ function enterScenario(scenarioId) {
         }
         // v1.34: TEAM BATTLES give every NPC (allies and enemies alike) a lives
         // pool — default 3 — so a tagged kid respawns at its base until the pool
-        // is spent. FFA kids are deliberately one-and-done (no lives field), and
-        // other modes keep their existing health-only behavior.
+        // is spent. v1.36g: FFA may ALSO opt into a lives pool via `npcLives`
+        // (e.g. a 5-life FFA). A per-kid `lives` on the enemySetup entry overrides
+        // everything — used for JUGGERNAUTS (a couple of high-life enemies among
+        // default-life allies). Modes without any of these keep health-only.
         const _isTeamBattle = (sc.winCondition === 'last_team_standing') && !sc.ffa;
-        if (_isTeamBattle) {
+        const _ffaWithLives = sc.ffa && (typeof sc.npcLives === 'number');
+        const _perKidLives = (typeof es.lives === 'number') ? es.lives : null;
+        if (_perKidLives !== null) {
+          enemy.lives = _perKidLives;
+          enemy.maxLives = _perKidLives;
+        } else if (_isTeamBattle || _ffaWithLives) {
           const lv = (typeof sc.npcLives === 'number') ? sc.npcLives : 3;
           enemy.lives = lv;
           enemy.maxLives = lv;
@@ -11228,11 +12616,15 @@ function enterScenario(scenarioId) {
     }
   }
 
-  // === v1.35: NIGHT flashlight — on night maps, at least one enemy carries a
-  // working flashlight (a real beam + SpotLight on their gun, pointing where
-  // they aim). Skipped in Infection (survive_untagged: taggers have no guns to
-  // mount it on, and the mode is its own thing). Only ENEMY-team gunners are
-  // eligible (not the player's allies). We light ~1 per 3 enemies, minimum 1.
+  // === v1.35: NIGHT flashlight — on night maps, enemy gunners carry working
+  // flashlights (a real beam + SpotLight on their gun, pointing where they aim).
+  // v1.36h: MORE light. Bumped from ~1-in-3 to ~2-in-3 carrying a flashlight,
+  // and a separate ~half of the eligible gunners also get a cosmetic red laser
+  // (independent roll), so the night woods read as a busy crisscross of beams.
+  // Skipped in Infection (survive_untagged: taggers have no guns to mount on,
+  // and the mode is its own thing). Only ENEMY-team gunners are eligible (not
+  // the player's allies — but on team-vs-team night maps "enemy" is the red
+  // team, which is what we want lit up downrange).
   if (_tod === 'night' && sc.winCondition !== 'survive_untagged') {
     const eligible = built.enemies.filter(e =>
       e && e.mesh && e.mesh.gunGroup &&
@@ -11240,9 +12632,21 @@ function enterScenario(scenarioId) {
       (e.team || 'enemy') !== 'player'      // not the player's allies
     );
     if (eligible.length > 0) {
-      const nLit = Math.max(1, Math.floor(eligible.length / 3));
-      for (let i = 0; i < nLit && i < eligible.length; i++) {
+      // Flashlights: ~2 of every 3 eligible gunners, minimum 1.
+      const nFlash = Math.max(1, Math.round(eligible.length * 2 / 3));
+      for (let i = 0; i < nFlash && i < eligible.length; i++) {
         attachKidFlashlight(eligible[i].mesh);
+      }
+      // Lasers: ~half the eligible gunners, minimum 1 (when there's more than
+      // one enemy). Offset the start index so the same kids don't always get
+      // both — spreads the two accessories across the squad. A kid CAN end up
+      // with both (flashlight + laser), which looks great in the dark.
+      // v1.36i: alternate RED / GREEN beams so the night reads as a mix.
+      const nLaser = Math.max(1, Math.round(eligible.length / 2));
+      const off = Math.floor(eligible.length / 3);   // start partway in
+      for (let k = 0; k < nLaser && k < eligible.length; k++) {
+        const col = (k % 2 === 0) ? 'red' : 'green';
+        attachKidLaser(eligible[(k + off) % eligible.length].mesh, col);
       }
     }
   }
@@ -11274,17 +12678,31 @@ function enterScenario(scenarioId) {
       const gfn = built.groundY || ((x, z) => 0);
       const PLAYER_BLUE = 0x3d7bd6;   // friendly
       const ENEMY_RED   = 0xd6453d;   // opposing
-      // Player base at the player's spawn point.
-      addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn);
-      // Enemy base = centroid of enemy-team kids' fighting anchors (far end).
-      let ex = 0, ez = 0, en = 0;
-      for (const e of built.enemies) {
-        if ((e.team || 'enemy') === 'player') continue;   // skip allies
-        const a = e._deployAnchor || e.anchorPos || e.pos;
-        if (a) { ex += a.x; ez += a.z; en++; }
-      }
-      if (en > 0) {
-        addBaseMarker(built.scene, ex / en, ez / en, ENEMY_RED, gfn);
+      if (built.teamBases && built.teamBases.player && built.teamBases.enemy) {
+        // v1.36f: builder gave explicit base positions (e.g. the two forts).
+        // Assign by proximity to the ACTUAL player spawn so it's correct
+        // regardless of which side the scenario puts the player on.
+        const ps = built.spawn;
+        const tb = built.teamBases;
+        const dP = Math.hypot(tb.player.x - ps.x, tb.player.z - ps.z);
+        const dE = Math.hypot(tb.enemy.x - ps.x, tb.enemy.z - ps.z);
+        const playerBase = dP <= dE ? tb.player : tb.enemy;
+        const enemyBase  = dP <= dE ? tb.enemy : tb.player;
+        addBaseMarker(built.scene, playerBase.x, playerBase.z, PLAYER_BLUE, gfn);
+        addBaseMarker(built.scene, enemyBase.x, enemyBase.z, ENEMY_RED, gfn);
+      } else {
+        // Player base at the player's spawn point.
+        addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn);
+        // Enemy base = centroid of enemy-team kids' fighting anchors (far end).
+        let ex = 0, ez = 0, en = 0;
+        for (const e of built.enemies) {
+          if ((e.team || 'enemy') === 'player') continue;   // skip allies
+          const a = e._deployAnchor || e.anchorPos || e.pos;
+          if (a) { ex += a.x; ez += a.z; en++; }
+        }
+        if (en > 0) {
+          addBaseMarker(built.scene, ex / en, ez / en, ENEMY_RED, gfn);
+        }
       }
     }
   }
@@ -11618,9 +13036,99 @@ function showModal(title, body) {
 }
 function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
+  document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
+
+// === SAVE MENU (v1.37) === — opened from the bed. Saves immediately and shows
+// a summary, plus a button to wipe the save (with confirm). Uses the modal
+// shell but injects rich HTML into the body and rebinds the close button.
+function profileSummaryHTML() {
+  const p = Game.persist;
+  const ownedGuns = ['pistol','shotgun','ar','sniper','ak47','mp5','ump','mac10']
+    .filter(g => p.owned[g]).length;
+  const completed = Object.values(p.completed || {}).filter(Boolean).length;
+  const accessories = Array.isArray(p.accessories) ? p.accessories.length : 0;
+  const row = (label, val) =>
+    `<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;">
+       <span style="opacity:0.75;">${label}</span><span style="font-weight:bold;">${val}</span>
+     </div>`;
+  return `<div style="text-align:left;font-size:13px;line-height:1.5;">
+    ${row('Cash', '$' + (p.cash|0))}
+    ${row('BBs at home', (p.bag|0))}
+    ${row('Guns owned', ownedGuns)}
+    ${row('Accessories owned', accessories)}
+    ${row('Scenarios cleared', completed)}
+  </div>`;
+}
+
+function openSaveMenu() {
+  const res = saveGame();
+  const titleEl = document.getElementById('modalTitle');
+  const bodyEl  = document.getElementById('modalBody');
+  const closeEl = document.getElementById('modalCloseBtn');
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+
+  if (res.ok) {
+    titleEl.textContent = 'Saved — sleep tight';
+    bodyEl.style.whiteSpace = 'normal';
+    bodyEl.innerHTML =
+      `<div style="margin-bottom:12px;">Your progress is saved to this browser. It'll be here next time you open the game.</div>` +
+      profileSummaryHTML() +
+      `<div style="margin-top:16px;">` +
+        `<button id="saveDeleteBtn" style="background:transparent;border:1px solid var(--ui-border);` +
+        `color:#c88;padding:5px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">` +
+        `DELETE SAVE</button>` +
+      `</div>`;
+    closeEl.textContent = 'OK';
+    // Rebind the delete button each open (it's freshly injected).
+    const del = document.getElementById('saveDeleteBtn');
+    if (del) del.addEventListener('click', () => confirmDeleteSave());
+  } else {
+    // Storage blocked (private browsing, file:// in some browsers, quota).
+    titleEl.textContent = "Couldn't save";
+    bodyEl.style.whiteSpace = 'normal';
+    bodyEl.innerHTML =
+      `<div>This browser is blocking local storage (often the case in private/incognito windows, ` +
+      `or when the file is opened directly off disk). Your progress still works for this session, ` +
+      `but it can't be written to disk here.</div>` +
+      `<div style="margin-top:8px;opacity:0.6;font-size:11px;">(${res.reason})</div>`;
+    closeEl.textContent = 'OK';
+  }
+  document.getElementById('modalScreen').classList.add('active');
+}
+
+// Two-step delete: first click swaps the modal into a confirm state.
+function confirmDeleteSave() {
+  const titleEl = document.getElementById('modalTitle');
+  const bodyEl  = document.getElementById('modalBody');
+  titleEl.textContent = 'Delete your save?';
+  bodyEl.style.whiteSpace = 'normal';
+  bodyEl.innerHTML =
+    `<div style="margin-bottom:14px;">This wipes your saved cash, guns, gear, and cleared scenarios from this browser. ` +
+    `It can't be undone.</div>` +
+    `<div style="display:flex;gap:10px;justify-content:center;">` +
+      `<button id="saveDelYes" style="background:#a33;border:none;color:#fff;padding:6px 16px;` +
+      `font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;font-weight:bold;">DELETE</button>` +
+      `<button id="saveDelNo" style="background:transparent;border:1px solid var(--ui-border);color:inherit;` +
+      `padding:6px 16px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">KEEP</button>` +
+    `</div>`;
+  document.getElementById('modalCloseBtn').textContent = 'CANCEL';
+  const yes = document.getElementById('saveDelYes');
+  const no  = document.getElementById('saveDelNo');
+  if (yes) yes.addEventListener('click', () => {
+    deleteSaveAndReset();
+    titleEl.textContent = 'Save deleted';
+    bodyEl.innerHTML = `<div>Your save has been wiped and your profile reset to a fresh start. ` +
+      `Anything you do from here is a brand-new game.</div>`;
+    document.getElementById('modalCloseBtn').textContent = 'OK';
+  });
+  if (no) no.addEventListener('click', () => openSaveMenu());
+}
+
 function openMap() {
   document.getElementById('worldMap').classList.add('active');
   Game.prevMode = Game.mode;
@@ -12387,6 +13895,17 @@ document.addEventListener('pointerlockchange', () => {
 // INPUT
 // ---------------------------------------------------------------------
 document.addEventListener('keydown', e => {
+  // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
+  if (e.code === 'Backquote' && !e.repeat) {
+    const hud = document.getElementById('laserDiagHud');
+    if (hud) {
+      const showing = hud.style.display !== 'none';
+      hud.style.display = showing ? 'none' : 'block';
+      window.__LASER_DBG = !showing;
+    }
+    e.preventDefault();
+    return;
+  }
   // Jump (scenario only)
   if (e.code === 'Space' && Game.mode === 'scenario' && !e.repeat) {
     if (Game.player.onGround && !Game.player.sliding) {
@@ -13450,7 +14969,8 @@ function updateRosterHud() {
   // so it isn't dead). Elsewhere the roster shows health pips as before.
   const teamBattle = (Game.scenario.winCondition === 'last_team_standing') && !Game.scenario.ffa;
   for (const e of Game.scenario.enemies) {
-    const usesLives = teamBattle && typeof e.lives === 'number';
+    // v1.36g: lives pips also when an FFA kid carries a lives pool (multi-life FFA).
+    const usesLives = (teamBattle || Game.scenario.ffa) && typeof e.lives === 'number';
     const dead = usesLives ? (e.lives <= 0) : (e.health <= 0);
     const dx = Game.player.pos.x - e.pos.x;
     const dz = Game.player.pos.z - e.pos.z;
@@ -14358,10 +15878,13 @@ function checkEnemyHit(enemy, bbPos) {
 function eliminateEnemy(e) {
   const isDefend = Game.scenario.scenarioType === 'defend';
   // A team battle is last_team_standing with real teams (someone is allied to
-  // the player). FFA also uses last_team_standing but every kid is a lone team,
-  // so we gate the lives pool on "not FFA".
+  // the player). FFA also uses last_team_standing but every kid is a lone team.
+  // v1.36g: a lives pool now also applies in FFA when the scenario set npcLives
+  // (a multi-life FFA) — a downed kid burns a life and redeploys at its own
+  // scattered anchor instead of dropping out, until the pool is spent.
   const isTeamBattle = (Game.scenario.winCondition === 'last_team_standing') && !Game.scenario.ffa;
-  if (isTeamBattle && typeof e.lives === 'number' && e.lives > 1) {
+  const livesRespawn = (isTeamBattle || Game.scenario.ffa) && typeof e.lives === 'number' && e.lives > 1;
+  if (livesRespawn) {
     // Burn a life and respawn (retreat → redeploy). Still in the fight.
     e.lives--;
     updateRosterHud();
@@ -14914,6 +16437,12 @@ function updateTeamFocus() {
 function updateEnemies(dt) {
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
+  // Diagnostic: count lasered enemies this frame, and how many reach the clip.
+  LASER_DIAG.lasered = 0;
+  LASER_DIAG.ran = 0;
+  for (const e of Game.scenario.enemies) {
+    if (e && e.mesh && e.mesh._hasLaser) LASER_DIAG.lasered++;
+  }
   for (const e of Game.scenario.enemies) {
     e._lastDt = dt;   // so getTarget's re-eval cadence timer can tick
     if (e.health <= 0) {
@@ -15015,8 +16544,30 @@ function updateEnemies(dt) {
     // so we set x/z here and fall through to that block via a guarded continue.
     if (e.behavior === 'tagger') {
       setKidCrouch(e.mesh, 0);
+      // v1.36h: ZOMBIE POSE — both arms straight out front, "I'm gonna get you"
+      // reaching. setKidCrouch(.,0) above just reset arm/hand Y to base, so we
+      // re-pose every frame: rotate the shoulders -90° about X (down-at-side →
+      // forward along +Z), lift and push them forward, hands reaching past.
+      const _po = e.mesh.pose;
+      if (_po) {
+        const reach = -Math.PI / 2;
+        _po.armL.rotation.x = reach;  _po.armR.rotation.x = reach;
+        _po.armL.position.z = 0.18;   _po.armR.position.z = 0.18;
+        _po.armL.position.y += 0.16;  _po.armR.position.y += 0.16;
+        _po.handL.position.z = 0.42;  _po.handR.position.z = 0.42;
+        _po.handL.position.y += 0.24; _po.handR.position.y += 0.24;
+      }
       e.mesh.group.position.y = 0;  // overwritten by terrain plant at loop exit
-      // Tag check — contact infects the player → instant loss.
+      // v1.36h: INFECTION barks — periodically yell a goofy zombie taunt while
+      // chasing. tryNpcSpeak handles global/per-kid cooldowns + positional
+      // attenuation, so distant taggers stay quiet and the soundscape doesn't
+      // turn into a babble festival. Per-tagger jittered interval on top.
+      if (e._infBark === undefined) e._infBark = 2 + Math.random() * 5;
+      e._infBark -= dt;
+      if (e._infBark <= 0) {
+        e._infBark = 5 + Math.random() * 7;
+        tryNpcSpeak(e, 'infection');
+      }
       if (distToPlayer <= ZOMBIE_TAG_RANGE && Game.mode === 'scenario' && !Game.player._infected) {
         Game.player._infected = true;
         tryNpcSpeak(e, 'playerHit');
@@ -15147,7 +16698,10 @@ function updateEnemies(dt) {
         e._lastSeenPos = { x: tgt.pos.x, y: tgt.pos.y, z: tgt.pos.z };
       }
       // recentlySpotted = saw the player within the last RECENT_SPOT_WINDOW sec.
-      const RECENT_SPOT_WINDOW = 1.8;
+      // v1.36e: extended 1.8 → 3.2s so a kid who's seen you keeps pressuring the
+      // cover you ducked behind (covering fire) for a meaningful beat instead of
+      // relaxing the moment you break their line.
+      const RECENT_SPOT_WINDOW = 3.2;
       e._recentlySpotted = e._lastSawPlayer && ((performance.now() / 1000) - e._lastSawPlayer) < RECENT_SPOT_WINDOW;
       e._hasLOSNow = losMem;
     }
@@ -15292,7 +16846,7 @@ function updateEnemies(dt) {
           // a kid who just saw you reacts almost instantly (covering fire / fast
           // re-engage) instead of doing a full lazy peek wind-up.
           let baseWindup = (0.35 + Math.random() * 0.35) * (1.3 - aggression * 0.6);
-          if (e._recentlySpotted) baseWindup *= 0.5;  // snap reaction when freshly spotted
+          if (e._recentlySpotted) baseWindup *= 0.35;  // snap reaction when freshly spotted
           if (inLongRange) baseWindup *= 1.8;
           e.nextStateChange = baseWindup;
         }
@@ -15575,7 +17129,13 @@ function updateEnemies(dt) {
           e.stateTime = 0;
           // v1.21: shooting recovery shortened so engagements aren't gappy.
           // Baseline 0.7..1.6s → at fireRate=1.5 becomes 0.47..1.07s; at 0.8 → 0.88..2.0s.
-          e.nextStateChange = (0.7 + Math.random() * 0.9) / fireRate;
+          // v1.36e: when the kid has RECENTLY SEEN the player (actively engaged),
+          // cut the recovery hard (×0.45) so a kid who's locked onto you keeps
+          // shooting at a real rhythm instead of long lulls — even firing at the
+          // cover you ducked behind. Disengaged kids keep the relaxed cadence.
+          let recovery = (0.7 + Math.random() * 0.9) / fireRate;
+          if (e._recentlySpotted) recovery *= 0.45;
+          e.nextStateChange = recovery;
 
           // Reposition chance — aggression scales it directly. Base 0.30 at agg=0, up to 0.75 at agg=1.
           // v1.21: baseline raised 0.20 → 0.30 (kids move more between shots — less staring).
@@ -15773,6 +17333,25 @@ function updateEnemies(dt) {
       e.mesh.group.position.y = gY;
     }
 
+    // v1.36i: clip this kid's laser beam (if any) to the first obstacle it hits,
+    // so the dot lands on real geometry instead of a phantom fixed-distance wall.
+    // v1.36j: also AIM it at the kid's target (chest height) first, so it
+    // converges on what the kid is shooting at and reliably strikes cover the
+    // kid is fighting around — instead of running parallel down the gun's own
+    // offset axis and slipping past trunks (the "penetrates everything" bug).
+    // Done here after the terrain plant so the gunGroup world matrix is current.
+    if (e.mesh && e.mesh._hasLaser) {
+      LASER_DIAG.ran++;
+      let aimPt = null;
+      const _lt = (typeof tgt !== 'undefined' && tgt) ? tgt : null;
+      if (_lt && _lt.pos) {
+        const _ty = (_lt.pos.y != null ? _lt.pos.y : 0) + 1.0;   // ~chest height
+        aimPt = new THREE.Vector3(_lt.pos.x, _ty, _lt.pos.z);
+      }
+      LASER_DIAG.hadAim = !!aimPt;
+      updateKidLaser(e, (Game.player && Game.player.obstacles) || null, aimPt);
+    }
+
     // Hit flash tint
     if (e.hitFlash > 0) {
       const flashAmt = e.hitFlash / 0.6;
@@ -15821,6 +17400,7 @@ function tick() {
     updateStuckBBs(dt);
     updateFragments(dt);
     updateEnemies(dt);
+    updateLaserDiagHud();
     updateStanceHud();
     updateProgressBars();
     updateLoadoutHud();
@@ -15842,10 +17422,39 @@ function tick() {
 // ---------------------------------------------------------------------
 // UI WIRING
 // ---------------------------------------------------------------------
-document.getElementById('startBtn').addEventListener('click', () => {
-  initAudio();
-  enterBedroom();
-});
+// v1.37: title-screen entry points. If a save exists, show CONTINUE (load it,
+// then enter) and relabel the primary button to NEW GAME (which starts fresh
+// WITHOUT touching the save on disk — the save is only overwritten when the
+// player next sleeps in the bed, so a misclick can't nuke their progress).
+(function setupTitleButtons() {
+  const startBtn = document.getElementById('startBtn');
+  const continueBtn = document.getElementById('continueBtn');
+  if (hasSaveGame()) {
+    continueBtn.style.display = '';
+    startBtn.textContent = 'NEW GAME';
+    continueBtn.addEventListener('click', () => {
+      initAudio();
+      const r = loadGame();
+      if (!r.ok) {
+        // Corrupt/blocked — fall back to a fresh start rather than dead-ending.
+        showModal('Save not loaded',
+          "Couldn't read your save (" + r.reason + "), so we're starting fresh. Your old save is left alone.");
+      }
+      enterBedroom();
+    });
+  }
+  startBtn.addEventListener('click', () => {
+    initAudio();
+    // NEW GAME from a profile that already has a save → reset the in-memory
+    // profile so the player actually starts fresh (don't carry a half-loaded
+    // state). The on-disk save is untouched until they sleep again.
+    if (hasSaveGame()) {
+      Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
+      _accInstanceSeq = 1;
+    }
+    enterBedroom();
+  });
+})();
 
 document.getElementById('mapCloseBtn').addEventListener('click', closeMap);
 
@@ -15894,6 +17503,17 @@ const PIN_SCENARIO_GROUPS = {
     'bunratty_team_4v4',
     'bunratty_night_lane',
     'bunratty_night_team_2v2',
+  ],
+  // The Hollow (East Roswell) — woods battleground, big team battles (v1.36).
+  hollow: [
+    'hollow_skirmish_3v3',
+    'hollow_big_battle',
+    'hollow_night_battle',
+    'hollow_2v4_night',
+    'hollow_juggernaut',
+    'hollow_ffa',
+    'hollow_infection_night',
+    'hollow_full_auto_mayhem',
   ],
 };
 
@@ -15949,9 +17569,12 @@ document.querySelectorAll('#worldMap .pin').forEach(pin => {
       const ids = PIN_SCENARIO_GROUPS[sc];
       const regionName = REGIONS[SCENARIOS[ids[0]]?.region]?.name || '';
       const streetName = REGIONS[SCENARIOS[ids[0]]?.region]?.streets?.[SCENARIOS[ids[0]]?.street] || '';
+      // The river battleground is its own named place, not a street in a
+      // residential region — show its label alone, without the region suffix.
+      const headerName = /^Battleground/.test(streetName) ? streetName : `${streetName} · ${regionName}`;
       info.className = 'scenario-info';
       info.innerHTML = `
-        <div class="sc-name">${streetName} · ${regionName}</div>
+        <div class="sc-name">${headerName}</div>
         <div class="sc-list">${ids.map(renderScenarioRow).join('')}</div>
       `;
       info.querySelectorAll('.sc-go').forEach(btn => {
