@@ -1743,7 +1743,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.61f</div>
+  <div class="version">v1.61g</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2025,6 +2025,14 @@
 <script>
 // =====================================================================
 // NEIGHBORHOOD AIRSOFT
+// VERSION: 1.61g — TTS voice fix (macOS "droideka/whisper" bug). macOS ships
+//          novelty voices tagged en-US (Zarvox=robot, Whisper=unintelligible,
+//          Bells, Bad News, Trinoids, Albert, Fred, ...) that passed the en-US
+//          filter and got hashed onto NPCs, so half of them sounded insane.
+//          Added (a) a novelty-voice blacklist applied at every selection tier,
+//          (b) a preference for known natural US voices (Samantha/Alex/Tom/...),
+//          and (c) a cache fix so the SHORT partial voice list Safari returns on
+//          first call gets replaced by the fuller async list (voiceschanged).
 // VERSION: 1.61f — Sean now carries his AK-47 in ALL Bunratty (Sentinel) gunner
 //          scenarios, matching the lore note ("he carries his AK-47 everywhere on
 //          this street"). Four Bunratty entries that had him on a pistol
@@ -3904,23 +3912,44 @@ const VOICE = {
 
 function ttsGetVoices() {
   if (typeof speechSynthesis === 'undefined') return [];
-  if (!VOICE.voicesCache || VOICE.voicesCache.length === 0) {
-    VOICE.voicesCache = speechSynthesis.getVoices() || [];
+  // v1.61g: on macOS/Safari getVoices() often returns a SHORT partial list on
+  // first call, then fills in via voiceschanged. Always poll the live list and
+  // keep whichever is longer, so we don't lock onto the partial set (which could
+  // miss the good natural voices and leave only novelty ones in range).
+  let live = [];
+  try { live = speechSynthesis.getVoices() || []; } catch (e) { live = []; }
+  if (!VOICE.voicesCache || live.length > VOICE.voicesCache.length) {
+    VOICE.voicesCache = live;
   }
-  return VOICE.voicesCache;
+  return VOICE.voicesCache || [];
 }
 
 // Deterministically map charId to a voice index (so each NPC has a stable voice).
 // v1.23: prefer AMERICAN English voices (en-US). The kids are suburban-US, so
 // British-sounding TTS broke the tone. Fallback chain: en-US → name looks
 // US/American → any en* → any voice.
+// v1.61g: macOS ships a pile of NOVELTY voices tagged en-US (Zarvox = robot,
+// Whisper = unintelligible, Bells, Bad News, Boing, Cellos, Trinoids, Wobble,
+// Bahh, etc.). They passed the en-US filter and got hashed onto kids, making
+// half of them sound like droidekas. We now (a) hard-EXCLUDE those novelty
+// voices at every tier, and (b) PREFER the known-good natural macOS voices
+// (Samantha, Alex, Tom, Aaron, Nicky, ...) when present, before falling back.
+const TTS_NOVELTY_VOICES = /^(zarvox|whisper|bells|bad news|good news|boing|bubbles|cellos|deranged|hysterical|pipe organ|trinoids|wobble|bahh|albert|jester|organ|superstar|junior|kathy|fred|ralph|princess|grandma|grandpa|reed|rocko|sandy|shelley|flo|eddy|wobble|bells)/i;
+// Natural, intelligible US voices that ship on macOS / iOS — preferred when found.
+const TTS_PREFERRED_NAMES = /\b(Samantha|Alex|Tom|Aaron|Nicky|Allison|Ava|Susan|Vicki|Victoria|Evan|Nathan|Joelle|Zoe)\b/i;
+function _ttsUsable(v) {
+  // Exclude novelty / non-speech voices by name.
+  return v && v.name && !TTS_NOVELTY_VOICES.test(v.name.trim());
+}
 function voiceForCharId(charId) {
-  const voices = ttsGetVoices();
+  const voices = ttsGetVoices().filter(_ttsUsable);   // novelty voices removed up front
   if (voices.length === 0) return null;
+  // 0) Best case: a known natural US voice (Samantha/Alex/etc.).
+  let pool = voices.filter(v => TTS_PREFERRED_NAMES.test(v.name) && /^en/i.test(v.lang));
   // 1) Explicit en-US locale.
-  let pool = voices.filter(v => /^en[-_]US/i.test(v.lang));
-  // 2) Some platforms tag US voices only by name (e.g. "Samantha", "Alex",
-  //    "Google US English", "Microsoft David - English (United States)").
+  if (pool.length === 0) pool = voices.filter(v => /^en[-_]US/i.test(v.lang));
+  // 2) Some platforms tag US voices only by name (e.g. "Google US English",
+  //    "Microsoft David - English (United States)").
   if (pool.length === 0) {
     pool = voices.filter(v =>
       /US English|United States|\(US\)|American/i.test(v.name) ||
@@ -3933,7 +3962,7 @@ function voiceForCharId(charId) {
   }
   // 4) Any English voice at all.
   if (pool.length === 0) pool = voices.filter(v => /^en/i.test(v.lang));
-  // 5) Anything.
+  // 5) Anything (still novelty-filtered).
   if (pool.length === 0) pool = voices;
   let h = 0;
   for (let i = 0; i < charId.length; i++) h = (h * 31 + charId.charCodeAt(i)) >>> 0;
