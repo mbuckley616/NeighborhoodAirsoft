@@ -2379,3 +2379,1064 @@ Bunratty's daytime palette was a hazy greenish set (`dayBg 0x8aa898`, green ambi
 - Parse clean throughout (`node --check` on the extracted inline script after each change).
 - Real-three.js r128 checks: flashlight cone orientation (narrow→wide), cone/SpotLight angle match, brick mailbox construction at all facings, `layOnSlope` normal-alignment across the Winnmark slope.
 - Math/static checks: lamp falloff (local pools, no stacking flood), Bunratty mailbox placement off the road over 200 randomized layouts.
+
+## v1.36 — The Hollow (East Roswell woods battleground)
+
+The first new ZONE since the two street maps. A large wooded clearing east of the river, built as the game's flagship team-battle map. New `buildHollowScene(variant, timeOfDay)` follows the Bunratty builder contract exactly (groundY single-source, sinkObs/groundNormal/layOnSlope, displaced ground, obstacle AABBs, placements + playerSpawns, standard return object). Spliced after the Bunratty wrapper.
+
+### Map
+- **Closed dark canopy** via the `applyTimeOfDay` DAY palette only (no engine change): dark green-gray bg `0x2c3a24`, tight fog [14,52], low warm raking sun (int 0.62), dim GREEN ambient/hemisphere. Plus an overhead canopy layer — 30 flattened translucent crown blobs at y≈8 that cast shadow (dappled light shafts). Cosmetic, no collision.
+- **West river** — non-crossable, visible: water plane + near bank + far-side LAND strip + a 26-tree scenic far treeline (NOT pushed to treeObs — unreachable backdrop). Hard `_riverBlocker` AABB at x≈-43.5 keeps the player out but they can walk to the bank and shoot across.
+- **Fork creek** — crossable central stream (sketch's sideways fork: main E–W run + vertical offshoots). Rendered as slope-laid water planes. INTENTIONALLY cosmetic + freely crossable: the engine only knows hard/soft/metal surfaces and has no wade-slow system. creekObs exported as `creekZones` for a future wade/splash hook — kept OUT of the physics `obstacles` list (a zero-h entry would mis-fire BB collision because `o.h || 5` treats 0 as falsy → a phantom 5m BB wall).
+- **Cover**: ~50 trees total (N/S/E double-rank perimeter treelines + 23 interior trunks, all collidable hard cylinders), 14 pallet-wall clusters (straight/L/T builders, ~1.2m stand-cover, surface:'hard'), 2 open redoubts (chest-high pallet ring + tire + sandbag stack).
+- **Two forts** (Concept A): pallet bunkers at each spawn — 3 walls, a firing PORT with a waist-high sill, a back lookout platform (cosmetic perch), a partial plywood roof, and a team flag. Asymmetric: Team A (north) = RED flag, lookout left, front tire stack; Team B (south) = BLUE flag, lookout right, plywood lean-to.
+- **Terrain**: gently rolling hollow, ~3m relief — flat enough to read a big fight. Shallow central bowl draining to the creek; low rise along the east treeline; riverbank lip dips west.
+
+### Scenarios (East Roswell → new "The Hollow" street; world-map pin activated, repositioned to 50%/36% between the neighborhoods near the river)
+- `hollow_skirmish_3v3` "First Time in the Woods" — on-ramp 3v3, You+Eric+Rebecca vs Seth+Sean+Ryan.
+- `hollow_big_battle` "The Big Game" — flagship 5v5 last_team_standing, npcLives:5, 3 auto-gunners/side (blue: Eric MP5, Sean AK, Brooke sniper, Rebecca pistol; red: Seth UMP, Mitchell AK, Devon MP5, Mason sniper, Ryan shotgun).
+- `hollow_night_battle` "Night Game in the Woods" — same 5v5 after dark under the canopy.
+All three use the existing v1.34 team-lives/base-flag system and the existing auto-weapon AI (no new combat code written this session). Base markers auto-draw blue@south-fort / red@north-fort. Added to `PIN_SCENARIO_GROUPS.hollow`.
+
+### Dev approach this session (design-first, per standing style)
+Worked the design before any code: confirmed zone (East Roswell), terrain (woods over park — more on-pillar, better close-range cover, lower asset cost), pulled a bird's-eye reference + legend from the user, A/B/C fort sketches (chose A bunker + B redoubts, held C perch), and locked the 5v5 / 5-lives / auto-gunner spec. Verified full-auto already existed (AK/MP5/UMP/MAC-10 with cyclicRPM + pendingBurst AI) before relying on it — no new combat system needed.
+
+### Verified
+- Full-file parse clean (`node --check` on extracted inline script). File 16008 → 16712 lines (~700 net).
+- Builder smoke test (real three.js r128): 39/39 — day+night build, all obstacle AABBs valid & seated on terrain, river blocker present + west, creek crossable zones exist + excluded from physics obstacles, NO zero/neg-height physics obstacles (phantom-wall guard), both forts have walls + red/blue flags, all 14 anchors resolve on terrain, team_a/team_b spawns, groundY finite & bounded across the box.
+- Content harness (against the live HTML): 47/47 — east_roswell.the_hollow street, pin group wired, all charIds valid, all anchors resolve against the real built map, enemySpawnCluster + playerSpawn resolve, 3v3/5v5 comps with correct auto-gunner counts (ally 2+, enemy 3), npcLives:5, playerLives:1, day/night flags, reward scaling, no duplicate same-team anchors.
+- Integration audits: weapons (mp5/ump/ak47/sniper/shotgun/pistol) all have gun configs; `makeEnemyFromCharacter` accepts weapon+team; `npcLives` read at spawn (`enemy.lives = lv`, default 3 overridden to 5); base markers draw for last_team_standing.
+
+### Deferred / future
+- **Creek wade-slow / splash** movement (geometry ready in `creekZones`) — currently free to cross, visual only.
+- **Canopy is the playtest watch item**: went dark+dense per the "barely any sunlight" call; with a 10-body fight it may read too murky. Knobs: `dayAmbInt` 0.42 / `dayHemiInt` 0.30 / `sunInt` 0.62, or thin the 30 crowns / drop 0.92 opacity.
+- Lookout platforms are cosmetic perches (no walk-up); Concept-C raised perch held for a later pass.
+- AI pathing through the tighter fort/pallet cover — v1.23a anti-wedge bail should cover it; flag any frozen kid.
+- Eric+Rebecca are the East Roswell home pair but the fiction is "everyone hikes to the woods spot," so both teams mix neighborhoods. A future per-region home slate (more East Roswell-only matchups) is open.
+
+## v1.36a — Chattahoochee River fixes (playtest)
+
+- **Fort doorway was impassable (the real bug).** The firing PORT had a waist-high (0.5m) "sill" bar with a collision AABB across the only opening — and feet-level obstacles block movement (their vertical span overlaps the player body), so the sill walled players AND teammates inside both forts. Fix: removed the sill's collision entirely and moved the cosmetic bar to the TOP of the port as a doorframe HEADER beam (at wall-top, no collision). The port is now a true walk-through doorway. Also widened the gap 2.2→2.8m so there's comfortable clearance past the AABB padding (you don't have to thread the exact center). New `test_doorway.mjs` walks the doorway corridor port→midfield on BOTH forts and confirms: corridor walkable, opening ≥1.6m clear, wall segments beside the port still block, both spawns clear → 8/8.
+- **Renamed the zone** "The Hollow" → **"Battleground - Chattahoochee River."** Updated the street display label, the three scenarios' `name` fields ("Chattahoochee River"), the builder's name, and the world-map pin label. Internal keys (`the_hollow`, `east_roswell`, `hollow` group) left untouched to preserve wiring. Picker header special-cased: a street label starting with "Battleground" shows alone, without the "· East Roswell" region suffix (it's its own named place on the river, not a residential street).
+- **Moved the world-map pin** down onto the river (50%/36% → 40%/87%), into the spot the playtest screenshot circled.
+- Verified: full-file parse clean; builder smoke 39/39, content harness 47/47, doorway 8/8.
+
+## v1.36b — Chattahoochee River visual + structural pass (playtest round 2)
+
+Five playtest notes addressed. The headline is a lighting rebalance that trades the flat green haze for real foliage shadows.
+
+### Lighting — foliage shadows instead of green haze
+The murk was a lighting BALANCE problem, not a missing feature: shadows were already enabled (renderer PCFSoftShadowMap; the day sun already casts), but the sun was dim (0.62) and the green ambient/hemisphere fill was high, so shadows had no contrast and everything read as even green wash. Flipped it:
+- Sun intensity 0.62 → **1.85**, warmer, from a moderate angle (sunPos [-30,34,26]) so trees throw long, crisp dappled shadows across the clearing. The day sun disc (already built by applyTimeOfDay) now reads as a real point of light in the sky.
+- Ambient 0.42 → **0.20**, hemisphere 0.30 → **0.18** — shadows now read dark.
+- Sky brighter/clearer (`0x2c3a24` → `0x5a7048`), fog loosened ([14,52] → [30,95]) so it conveys depth, not gloom.
+- Shadow map 2048 → **4096**, extent 52→56 for sharp dapple across the whole field. **Cost note**: shadow cost scales with map resolution + camera extent, NOT with tree count — so tripling the trees is cheap; the 4096 map is the only real perf knob and is fine for this low-poly scene.
+- Canopy layer reworked from a near-opaque dark CEILING (which was killing the sun) to 22 scattered HIGH crowns (y≈11) whose job is to cast dappled shadow; lighter tint, more sky between them.
+
+### Trees — tripled
+Interior trees went from 23 hand-placed to **~80** via rejection-sampling scatter (min 4.5m spacing) with keep-out zones around both forts, the creek channel, and spawns; the original 24 sketch positions are kept as guaranteed anchor cover. Perimeter treelines went from 2 ranks to **3 ranks** each side with higher counts (≈90 perimeter trunks). Total collidable trunks now 130+ (was ~45). Each casts shadow.
+
+### River — now unmistakably blue
+Was a dark teal (`0x2a4a5a`) sitting 1.4m below grade → read as dark grass under green light. Now vivid blue (`0x2f6f9e`) + a brighter blue-green shallows strip, wider (22m), and raised closer to grade so it's clearly water from player height.
+
+### Creek — carved into a real ditch
+The creek was a flat blue plane on flat ground ("strip of blue paint"). Added a `creekDist(x,z)` (distance to the fork centerline: main E–W run + NW + SE offshoots) and a carve term in `hollowGroundY` that scoops a smooth ~1.35m U-channel within 3.6m of the centerline. Because the displaced ground mesh, player physics, BBs, and AI all read groundY, the whole world follows the ditch — you walk DOWN into the creek bed and back up. Water surface re-laid flat near the channel floor in vivid blue; added wet creek-bed rocks. Verified the channel walls are smooth (max step <0.5m, no cliffs) so movement/AI never trap.
+
+### Fort windows — shoot from inside
+Back + both side walls of each fort now have firing WINDOWS. New `windowedWall()` builds each wall as a solid LOWER band (0–1.0m, blocks movement + crouch cover) + an UPPER band (1.6–2.0m) + a mid band (1.0–1.6m) split into posts leaving 2 window gaps. The gaps have no geometry at window height, so BBs and line-of-sight pass through while the lower band still fully encloses you — stand at the wall and shoot out. (Front wall keeps its walk-through doorway port from v1.36a.)
+- **Bug fixed along the way**: fort seating was doing `ob.baseY = fortGy` (overwrite), which flattened the layered window-band heights and erased the gaps. Changed to `ob.baseY = (ob.baseY||0) + fortGy` so local [0, winB, winT] bands lift together.
+
+### Verified
+- Full-file parse clean. All harnesses green: builder smoke 39/39, content 47/47, doorway 8/8, new feature test `test_hollow_v36b.mjs` 12/12 (tree count ≥130, creek carved ≥0.8m below bank + smooth walls, fort window solid-at-foot / open-at-window-height / solid-above, blue river present, sun≥1.5 + ambient≤0.25 + shadow-casting, doorways still walkable after carve).
+
+### Still open / playtest watch
+- Eyeball the new lighting in a live firefight — if the dapple is too busy or too dark in spots, sun/ambient are one-line tweaks.
+- Creek is still freely crossable (no wade-slow); now you at least drop into the ditch physically. Wade-slow remains a future hook (`creekZones`).
+- Fort windows are at standing height — crouching drops you behind the solid lower band (intentional: peek up to shoot, crouch to hide).
+
+## v1.36c — River visibility + creek-as-real-water (playtest round 3)
+
+Three water issues from the screenshots, which turned out to be one coherent problem: the creek and river were modeled as independent flat planes that didn't track the carved ground.
+
+### River was invisible
+Root cause: the river body sat at x≈-54 (the playable bound was x=-40, and a blocker at -43.5), i.e. ~14m PAST the wall the player could reach, AND ~1.7m below grade — so from the bank you saw fog and a sliver, reading as more grass. Fixes:
+- Pulled the playable west bound in to **x=-38** and moved the blocker to **x=-38.5**, so the player walks right up to the water's edge.
+- Raised the surface to a fixed **RIVER_Y = -1.0** (clearly visible from the bank ground ~0), brighter blue, wider body, with a bright shallows strip reaching in to the bank and a dark mud bank lip. Far-bank land + scenic treeline pushed out to match.
+
+### Creek showed as a floating blue rectangle
+Root cause: each creek segment was ONE flat plane at the segment-center height. The carved streambed SLOPES along its length, so a flat plane floated at the low end and sank at the high end. Fix: rebuilt creek water as **channel-following ribbons** — each segment is a strip of small quads stepped along the centerline, every vertex placed at the local water level (`channel floor + 0.4m fill`). The water now hugs the bed the whole way (verified: 0 floating/buried quads). Also deepened the carve to **1.8m** and **suppressed the ground micro-relief inside the channel** so the bed is smooth and the surface doesn't get poked through by terrain wobble.
+
+### Creek didn't connect to the river
+The main run stopped at x=-9, ~33m short of the river. Extended the main run west to the **river mouth at x=-42** (the carve, the centerline, and the water ribbon all share `CREEK_MAIN/NW/SE` consts now, so they can't drift apart), and the ribbon's water level **eases to RIVER_Y over the last ~12m** so the creek visibly drains into the river with no seam.
+
+### Knock-on fixes
+- **Redoubts moved off the creek** ((-8,2)/(22,-2) → (-14,8)/(26,-8)) — they were sitting on the channel slope, which is what "water intersecting bases" showed.
+- Tree keep-out switched to `creekDist(x,z) < 4.5` (was hardcoded bands) so no trunks spawn in the now-longer channel.
+
+### Verified
+- Parse clean. All harnesses green: smoke 39/39, content 47/47, doorway 8/8, v36b features 12/12, new v36c 13/13 (creek carved + continuous mouth→east, river reachable/visible from bank + large blue body present, creek water hugs the bed with zero floating quads, creek mouth water level matches river within tolerance, redoubts clear of channel).
+
+### Still open
+- Wade-slow on creek crossing still a future hook (`creekZones`); you physically drop into the ditch now.
+- Eyeball the creek↔river join and water color in-engine; RIVER_Y and the fill depth are one-line tweaks if the join looks off.
+
+## v1.36d — High-noon sky, pine/hardwood mix, doubled trees, removed floating canopy
+
+Atmosphere + foliage pass for the Chattahoochee battleground.
+
+### Lighting — bright sunny high noon
+- Sun moved nearly overhead (sunPos [-30,34,26] → **[6,48,10]**) for a high-noon look: short shadows pooled under the trees instead of long raking dapple. Intensity 1.85 → **2.0**.
+- Sky changed from the dark green canopy tone to **bright clear blue** (`0x5a7048` → `0x8fc4ec`). Fog kept (reads as river haze) but pushed out ([30,95] → [40,120]) for a brighter, deeper sunny day.
+- Ambient/hemisphere nudged up (0.20/0.18 → 0.34/0.30) since overhead noon light is flatter and the short shadows shouldn't go pitch-black. Sun still dominates ambient ~6:1 so shadows read.
+
+### Trees — pine/hardwood mix, doubled, varied heights
+- `addSuburbanTree` gained an opt-in `shape:'pine'` (3 stacked tapering cones = loblolly/white-pine conifer). Default `'round'` unchanged, so Winnmark/Bunratty deciduous trees are untouched.
+- The Hollow now mixes **~50% pine / 50% round** with bluer-green conifer tints — matches a North-Georgia riverside forest.
+- New `makeTree()` helper gives **wide height variation**: ~30–70% chance of a tall canopy tree (5–8.5m, thicker trunk, bigger crown) vs short understory (2.6–4.6m). Perimeter ranks bias taller toward the outside for a layered canopy backdrop.
+- Interior density **doubled** (~55 → ~110 fill trees, min-spacing 4.5m → 3.2m) plus the 24 anchor cover trees; perimeter unchanged in count but now mixed/varied. Far-bank scenic treeline also mixed. Total collidable trunks now 250+.
+
+### Removed the floating canopy
+Deleted the high detached "canopy shadow layer" crowns (green blobs hovering with no trunk). With doubled real trees + the noon sun, the trees themselves cast all the shadow now.
+
+### Verified
+- Parse clean. All harnesses green: smoke 39/39, content 47/47, doorway 8/8, v36b 12/12, v36c 13/13, new v36d 10/10 (trees ≥250, pine cones + round crowns both present, height spread ≥3.5m with tall ≥6m and short ≤3.5m, ZERO orphan/floating foliage, sun overhead with Y≥3×horizontal, bright blue sky, fog retained).
+- `shape:'pine'` is opt-in; confirmed the street maps' tree calls don't pass it, so their look is unchanged.
+
+### Still open
+- Eyeball noon shadow length / blue-sky tone in-engine; sunPos and ambient are one-line tweaks.
+- Creek wade-slow still a future hook.
+
+## v1.36e — Pine height, Ryan/Priya speed, enemy fire frequency
+
+### Pines were blocking sightlines
+The conifer skirt started at trunkH×0.45 — on a short pine that's ~1.35m, exactly eye level, so the cone base hung in your face. Fixes:
+- Skirt now starts at `max(trunkH×0.72, 2.6m)` — never below 2.6m, so the lower trunk is a clean see-through pole at player height.
+- Pines run TALLER overall: short pines 5.0–7.5m (was 2.6–4.6 shared), tall pines 8.0–11.5m. Round/deciduous trees keep the original 2.6–8.5 spread. Verified pine skirts all start ≥2.5m above ground.
+
+### Ryan & Priya too fast
+- Ryan moveSpeed 1.1 → **0.9** (his high aggression 0.75 made him reposition constantly AND fast — he was the standout).
+- Priya moveSpeed 1.15 → **0.98** (she was the fastest on the roster). Both still within the 0.85–1.15 roster band, just no longer outliers.
+
+### Enemies shoot more often when engaged
+Player report: enemies approach without shooting enough, even when they've clearly seen you. Tightened the engaged-fire loop (all gated on `_recentlySpotted` so DISengaged kids keep the relaxed cadence — this only speeds up a kid who's actively locked onto you):
+- Recently-spotted window 1.8s → **3.2s** — a kid keeps pressuring the cover you ducked behind (covering fire) much longer after you break their line.
+- Post-shot recovery ×**0.45** when recently-spotted (was full `(0.7..1.6)/fireRate`) — the big lever; an engaged kid re-fires at a real rhythm instead of long lulls.
+- Peek wind-up when recently-spotted ×0.5 → ×**0.35** — snappier re-peek.
+Net: an engaged enemy's shot interval drops from ~2.2s to ~1s, and they keep firing at your cover for 3.2s after losing line of sight. Marginal-range commit (already fire-not-peek when spotted) unchanged.
+
+### Verified
+- Parse clean. All harnesses green: smoke 39/39, content 47/47, doorway 8/8, v36b 12/12, v36c 13/13, v36d 10/10, new v36e 10/10 (pine skirt ≥2.5m, Ryan/Priya moveSpeed lowered but reasonable, recent-spot window ≥3.0s, recovery ×0.45 + wind-up ×0.35 present).
+- AI changes are global (all maps) but only affect the engaged/recently-spotted state, so idle/patrol behavior is unchanged.
+
+### Still open
+- Playtest the new fire frequency — if engaged enemies now feel too relentless, the recovery multiplier (0.45) and spot window (3.2s) are the dials.
+
+## v1.36f — Red base marker aligned to the fort
+
+Player report: the red (enemy) spawn-zone ring didn't line up with the north fort — it sat out in the field in front of it.
+
+Root cause: the generic team-battle marker code draws the BLUE marker at the player's exact spawn (which is the south fort, so it lined up) but the RED marker at the CENTROID of the enemy team's fighting anchors. On this map those anchors (`a_fort`, `a_left`, `a_right`, `a_center`, `a_creek`) are spread across the north half, so the centroid landed at ~(3.6, -11.4) — about 19m in front of the actual fort at (-2, -30).
+
+Fix (non-breaking, generic): a builder can now export `teamBases: { player:{x,z}, enemy:{x,z} }`. When present, the marker code places both markers at those positions and assigns player/enemy by proximity to the real player spawn (so it's correct no matter which side a scenario puts the player on). When absent, the old spawn/centroid logic is unchanged — the street maps are unaffected. The Hollow exports its two fort centers, so both rings now sit on their forts.
+
+### Verified
+- Parse clean. All harnesses green: smoke 39/39, content 47/47, doorway 8/8, v36b 12/12, v36c 13/13, v36d 10/10, v36e 10/10, new v36f 8/8 (teamBases exported at the two forts; red marker resolves to the north fort z=-30, within 3m of fort center; confirmed the old centroid was >10m off).
+
+## v1.36g — Five new Chattahoochee scenarios (+ FFA lives, per-kid lives)
+
+Added five scenarios to the Chattahoochee battleground (pin group now 8), plus two small engine extensions to support them.
+
+### Engine extensions (non-breaking)
+- **FFA lives pool**: FFA NPCs were hard one-and-done. Now if a FFA scenario sets `npcLives`, each FFA kid gets a lives pool and respawns at its own scattered anchor until spent. Touched: spawn-loop assignment (`_ffaWithLives`), `eliminateEnemy` respawn gate (`livesRespawn` now includes FFA), and the roster HUD lives-pips (FFA-aware). `npcInFight` already handled `lives` generically.
+- **Per-kid lives override**: an `enemySetup` entry can carry `lives: N` to override the scenario `npcLives` — used for juggernauts (high-life enemies among default-life allies).
+- Fixed stale `redoubt_w/redoubt_e` anchor positions (still pointed at the pre-v1.36d spots) and added six `scatter_*` anchors for the 10-player FFA/Infection modes.
+
+### The five scenarios
+- **`hollow_2v4_night`** "Two of Us, Four of Them (Night)" — 2v4 night TDM, You+Sean vs 4, last_team_standing, 5 lives.
+- **`hollow_juggernaut`** "Juggernauts" — 5v2: you + 4 allies on spring pistols vs Mitchell & Ryan, each with a full-auto AK and **3 lives** (per-kid override); allies/you default 1 life.
+- **`hollow_ffa`** "Ten-Way Free-for-All" — 10-way FFA, every opponent has **5 lives**, player gets default treatment (playerLives 1 + gear bonus).
+- **`hollow_infection_night`** "Infection in the Dark" — night Infection vs 9 gunless taggers (2 sprinters), survive 90s.
+- **`hollow_full_auto_mayhem`** "Full-Auto Mayhem (Night)" — night 5v5, EVERY NPC on a full-auto weapon (AK/MP5/UMP/MAC-10), 5 lives/team.
+
+### Verified
+- Parse clean. All 9 harnesses green: smoke 39/39, content 47/47, doorway 8/8, v36b 12/12, v36c 13/13, v36d 10/10, v36e 10/10, v36f 8/8, new v36g 52/52 (all 5 scenarios: charIds/anchors/weapons valid, correct team comps, juggernaut per-kid lives:3 + npcLives:1, FFA 9-opp + npcLives:5 + player default, infection 9 taggers/2 sprinters/timer, mayhem all-auto 5v5; plus engine-support assertions and scatter anchors).
+- mac10 confirmed present in GUN_SPECS (used by mayhem + juggernaut allies—correction: mayhem only).
+
+### Still open
+- Playtest the juggernaut + mayhem balance — both are intentionally brutal; per-kid lives and the auto loadouts are easy dials.
+- FFA respawn retreats toward each kid's scattered spawn anchor (no central base), which is the intended FFA behavior; watch for any odd redeploy spots in playtest.
+
+## v1.36h — More night beams (flashlights + lasers) + Infection zombie behavior
+
+### More lights on night maps
+Player wanted the night modes to read as a busier tangle of beams.
+- **Flashlights bumped ~1-in-3 → ~2-in-3** of eligible enemy gunners (`Math.round(eligible.length*2/3)`, min 1). The existing `attachKidFlashlight` (real SpotLight + haze cone) is unchanged.
+- **New `attachKidLaser(kid)`**: cosmetic-only third-person red laser sight on the gun — emitter housing + thin additive red beam (16m, `0xff1a1a`) + bright far dot, all `fog:false`, no SpotLight, no gameplay effect. Mounted on the gunGroup so it projects along the kid's aim (+Z) and tracks for free.
+- **Lasers given to ~half** the eligible gunners (`Math.round(eligible.length/2)`, min 1), start index offset by `floor(len/3)` so the same kids don't always get both — though a kid CAN end up with flashlight + laser, which looks great in the dark.
+- Both still gated to ENEMY-team gunners (not the player's allies) on night maps, and still skipped in Infection (no guns to mount on).
+- Updated the night Chattahoochee descriptions (5v5 night, 2v4 night, full-auto mayhem) to mention the crisscrossing flashlight beams + red laser dots.
+
+### Infection — kids now act like zombies (ALL Infection modes, global)
+Keyed off `behavior === 'tagger'`, so it covers both Infection scenarios (Bunratty Cul-de-Sac + Chattahoochee Night) automatically.
+- **No guns**: `gunGroup.visible = false` once at spawn for any tagger.
+- **Zombie arm pose**: both arms rotated -90° about X (down-at-side → straight out front along +Z), lifted + pushed forward at the shoulder, hands reaching past. Reapplied EVERY frame in the tagger AI block because `setKidCrouch(.,0)` (called each tick on taggers) resets arm/hand Y to base — so the pose uses `+=` on the freshly-reset Y and rotation/z persist. Net: a stable "I'm gonna get you" reach.
+- **Infection barks**: new shared `INFECTION_BARKS` pool (10 goofy, kid-appropriate lines — "We're gonna get you, dude!", "Oooh, I'm a zombie!", etc.). `pickVoiceLine` short-circuits the `'infection'` category to this pool (no per-kid variants). Taggers yell on a jittered 5–12s per-kid timer during the chase, routed through `tryNpcSpeak` so global/per-kid cooldowns + positional attenuation still apply (distant taggers stay quiet, no babble festival).
+
+### Verified
+- Parse clean. Static wiring checks (19) all green: attachKidLaser defined/red-beam/sets _hasLaser, night pass calls it, flashlight 2/3 + laser 1/2 math present; tagger gun hidden; per-frame arm rotation -PI/2 + forward z + hand reach in the AI block; INFECTION_BARKS pool + pickVoiceLine routing + tryNpcSpeak('infection') + _infBark timer; all four description updates present.
+
+### Still open
+- Eyeball the laser beam opacity/length in-engine — `0.5` opacity / 16m is a one-line tweak if it's too hot or too long under the night fog.
+- Playtest the infection barks cadence; the 5–12s jitter + tryNpcSpeak cooldowns are the dials if it's too chatty or too sparse.
+
+## v1.36i — Laser fixes: longer/clipped enemy beams + Green Laser variant
+
+### Enemy lasers were hitting a phantom wall
+The v1.36h kid laser drew a FIXED 16m additive beam capped by a dot at exactly 16m, regardless of geometry — so on the Chattahoochee night maps every laser dot landed on the same invisible 16m plane (the row of dots floating in front of the trailer in the player's screenshot).
+- **Beam runs LONG now** (16m → 60m, enough to cross the whole battleground; forts sit ~55m apart).
+- **New `updateKidLaser(kid, obstacles)`**: per-frame, raycasts from the emitter along the laser unit's world +Z (it's parented to the gunGroup, so that's already the kid's aim) using the same `raycastObstacles` AABB-slab routine the FP laser uses, then rescales the beam cylinder + repositions the end dot to the hit distance. So the dot lands on real trees/forts/trailers, and over open ground the beam just runs long (correct laser behavior) instead of stopping at a wall.
+- Called in the per-enemy loop right after the terrain plant (gunGroup world matrix is current there), gated on `e._hasLaser` so it's one cheap raycast per lasered kid per frame.
+- `attachKidLaser` now stores `userData.beam/dot/beamLen` for that update.
+
+### Green Laser — purchasable + used by enemies
+- **`attachKidLaser(kid, color)`** takes `'red'` (default) or `'green'`, driven by a small `KID_LASER_COLORS` palette (green = `0x33ff44` beam / `0x99ff99` dot, deliberately brighter/higher-luminance than red, matching how green lasers actually read brighter than red).
+- **Night accessory pass alternates red/green** across the lasered gunners, so the dark woods now show a mix of beam colors.
+- **New `laser_green` attachment** in `ATTACHMENTS` ($34, RAIL slot, same ~10% hipfire-spread tighten as the red). Red renamed "Red Laser Sight" for clarity; both carry a `laserColor` field. The Accessories shop tab and the Workbench iterate `ATTACHMENTS`/owned-counts generically, so the green one appears, is buyable per-gun, and mounts on a rail with no extra plumbing.
+- **FP viewmodel is color-aware**: `updateFPGunAccessory` now matches either laser type and recolors the beam/dot/emitter materials from a matching `FP_LASER_PAL`. Stored a `laserEmitter` ref on `userData.accessories` for the recolor. The workbench preview reuses `updateFPGunAccessory`, so it shows the right color too.
+- Added `laser_green: 0` to the `ownedEquipment.attachments` init (the `|| 0` fallbacks made it harmless either way; added for cleanliness).
+
+### Verified
+- Parse clean. Static wiring checks (18) all green: kid beam 60m + ref storage; `updateKidLaser` defined/raycasts/rescales; per-frame clip call gated on `_hasLaser`; `KID_LASER_COLORS` green; `attachKidLaser(color)`; night pass red/green alternation; `laser_green` in ATTACHMENTS (rail, laserColor); FP detects both types + recolors beam + green palette + emitter ref; owned-init updated.
+
+### Still open
+- Eyeball beam length/opacity in-engine — 60m / 0.5 opacity are one-line dials if beams read too long or too hot under the night fog.
+- Over fully open downhill ground a 60m beam could visually skim the terrain (terrain isn't a raycast obstacle, same as the existing FP laser) — hasn't been an issue for the FP beam at 18m; watch for it at 60m and clamp length if needed.
+
+## v1.36j — Enemy laser now converges on target (fixes beam penetrating cover)
+
+### The penetration bug
+v1.36i clipped the enemy beam with `raycastObstacles` (correct routine, correct obstacle list including trunks) but aimed it straight down the gun's own local +Z. The enemy gun sits offset ~0.27m to the kid's side and the beam had ZERO pitch, so it ran *parallel* to the kid's line of sight rather than along it — exactly the problem the player's FP laser solved in v1.27b with convergence "zeroing." Against a narrow trunk the kid was shooting around, the offset beam slipped right past the trunk's AABB (raycast returned no hit → full 60m beam), so it looked like it punched through everything. Confirmed in a faithful three.js transform sim: straight-axis beam = NO-HIT (60m), convergence-aimed beam = HIT trunk at 8.8m.
+
+### Fix
+- `updateKidLaser(kid, obstacles, aimPoint)` now takes an aim point and, when present, `lookAt`s it (orienting the unit's local +Z at the target) before raycasting — same convergence approach as the FP laser. Re-refreshes the world matrix after the re-orient, then clips along the true world-forward.
+- Call site builds the aim point from the kid's resolved target (`getTarget(e)` → `tgt.pos`) at ~chest height (`+1.0`), so the beam converges on whatever the kid is shooting at and reliably strikes the cover between them. Falls back to the gun's own forward when there's no target.
+- Removed the temporary diagnostic logging that was briefly added while tracking this down.
+
+### Verified
+- Parse clean. Static checks green: `updateKidLaser` takes `aimPoint`, `lookAt` + matrix re-refresh present, still raycasts/clips, call passes `aimPt` at chest height, no debug code left. All v1.36i laser features (60m beam, red/green palette, `laser_green` purchasable, FP recolor) regression-checked intact.
+- three.js transform sim (r128, faithful group→gunGroup→unit chain): old straight-axis beam misses an off-axis trunk (penetrates); new aimed beam clips on it.
+
+### Still open
+- In-engine eyeball: with convergence aim the beam should now stop on trunks/forts/trailers the kid fights around, like the player's. If any beam still reads as passing through something, check whether that object is in the scene's `obstacles` list (scenic far-bank treeline is intentionally non-collidable) — those won't clip by design.
+
+## v1.37 — Save system (localStorage)
+
+Players can now save progress — cash, BBs, owned guns/mags, speed loaders, consumables, equipped gear, owned equipment, accessory instances, BB colors, loadout slots, and cleared scenarios — and resume later. Single HTML file, no backend, so it's localStorage-backed.
+
+### Why this shape
+`Game.persist` was always the complete, plain-serializable player profile (per the architecture notes). So a save is just `JSON.stringify(persist)` plus the accessory-instance id counter (`_accInstanceSeq`), so new buys after a load don't collide with restored instance ids. No new save schema to maintain — the profile IS the schema.
+
+### Core module (new, after the Game object)
+- `SAVE_KEY` / `SAVE_VERSION`; `DEFAULT_PERSIST` = a pristine deep clone of the starting profile captured once at load (merge base + New Game reset source).
+- `saveGame()` / `loadGame()` / `hasSaveGame()` / `deleteSaveAndReset()` / `autoSave()`.
+- `_deepMergePersist(base, src)`: loads by merging the saved profile onto a FRESH default — objects merge key-by-key, arrays/primitives replace wholesale. Forward-compatible: a save from an older build missing newer fields (e.g. `laser_green`, `bbColor`) boots with sane defaults for those, while keeping everything the player owned. Verified.
+- All storage access wrapped in try/catch — private/incognito windows and `file://` (where localStorage can be blocked) surface a friendly "couldn't save" message instead of throwing.
+- On load, the instance-id counter is restored from the save, then bumped past the highest `acc_<n>_` id actually present (belt-and-suspenders against collisions).
+
+### How players use it
+- **Bed = save.** New bedroom interactable on the bed ("Sleep (save your game)") — matches the kid-bedroom framing and the original hub design pillar ("Save, gear, world map"). Saving shows a modal summary (cash / BBs / guns / accessories / scenarios cleared) and a DELETE SAVE button (two-step confirm).
+- **Title screen.** If a save exists, a CONTINUE button appears (loads then enters) and the primary button becomes NEW GAME. NEW GAME starts fresh in memory but does NOT touch the on-disk save — it's only overwritten when the player next sleeps, so a misclick can't nuke progress.
+- **Auto-save** fires on returning to the bedroom (after a scenario, once cash/BBs are settled) — but ONLY after the player has opted into persistence this session (loaded a save, or slept at least once). This keeps a fresh NEW GAME run from silently clobbering an existing save. `deleteSaveAndReset()` turns auto-save back off until the next deliberate save.
+
+### Verified
+- Parse clean. Functional end-to-end test (mock localStorage, faithfully extracted save module + Game profile + `makeAccessoryInstance`): 24/24 — round-trips cash/BBs/guns/equipped/bbColor/completed/accessory instances; restores the id counter so post-load buys get unique ids; old-save forward-compat defaults missing fields while keeping owned data; corrupt-save returns not-ok (no throw); delete wipes + resets + disables auto-save; auto-save no-ops when not opted in.
+- Static wiring checks 17/17: module fns, bed interactable + prompt, save/delete modal flow, Continue/New Game title wiring, bedroom-entry auto-save, modal close-button reset, version bump.
+
+### Still open
+- In-engine: confirm the bed prompt triggers from the walkable (west) side — proximity uses the interactable's point `pos` (bed center ~1m from the open side, within the 1.5m radius), not its box.
+- Single save slot by design. Multiple named slots would be a straightforward extension (key suffix + a slot picker) if wanted later.
+- No cloud/cross-device sync (localStorage is per-browser) — expected for a single-file build.
+
+## v1.37x — Enemy laser clip, world-space rewrite (penetration, pass 3)
+
+Player reports enemy laser beams still pass through obstacles. v1.36j's convergence-aim fix was correct in isolated sim but the in-game beam was still penetrating, so this pass rebuilds the clip to remove every remaining fragility rather than tweak the old path.
+
+### What changed
+`updateKidLaser` now works entirely in WORLD space:
+- Forces a full `kid.mesh.group.updateMatrixWorld(true)` so the emitter's world position/rotation reflect this frame's mutations (belt-and-suspenders over the prior `updateWorldMatrix(true,false)`).
+- Takes the emitter world origin, then builds the ray direction **directly as `aimPoint − origin` (normalized)** — the true line from the muzzle to what the kid is shooting at. The old code raycast down the gun's parented local +Z, which carries the gun's ~0.27 m lateral offset and zero pitch; against narrow cover the kid was fighting around, that offset axis slipped *past* the obstacle's AABB and the raycast returned no hit (full-length beam = looked like penetration). Demonstrated in a faithful three.js sim: gun-axis ray = NO-HIT, origin→target ray = HIT at 8.8 m.
+- Raycasts with those explicit world origin/dir values, then orients the beam by `lookAt`-ing a point along the SAME ray, so the rendered beam direction and the clip distance can't disagree.
+- Verified in sim: clips on a tall trunk AND on low (h 1.2) pallet cover that sit on the kid→player line; the no-aim fallback still produces a sane forward.
+
+### Diagnostic (off by default)
+Left a guarded readout: set `__LASER_DBG = true` in the console and read `__laserDiag` to see the live per-frame clip result (origin, dir, dist, whether it hit, obstacle count). Costs nothing when off. If beams still penetrate in-engine, this tells us immediately whether the raycast is finding geometry — the remaining unknowns would then be on the obstacle-list or render-depth side, not the math.
+
+### Verified
+- Parse clean. Static checks 9/9 (world-space vectors, full matrix flush, dir=aim−origin, raycast uses world origin+dir, beam pointed down the cast ray, diagnostic window-guarded, call site intact).
+- three.js transform sim: tall trunk HIT, low pallet HIT, fallback sane. Beam materials confirmed identical to the working FP laser (additive, depthWrite:false, depthTest on) so depth/occlusion behavior matches.
+
+### Still open
+- Needs an in-engine confirm. If any beam still reads as passing through a mesh, flip `__LASER_DBG` on and check whether `clipped` is true while looking at the offending beam — that isolates math vs. obstacle-coverage (e.g. scenic far-bank treeline is intentionally non-collidable) vs. parallax (a correctly-clipped beam can still visually overlap a trunk it passes beside, from the camera's angle).
+
+## v1.37y — Enemy laser penetration: ROOT CAUSE found (object-reference mismatch)
+
+The diagnostic HUD (added this session, toggle with backtick) immediately exposed it: in a night match full of lasered enemies, the readout showed `lasered enemies: 0` and `total clip runs: 0`. The clip code was never running.
+
+### Root cause
+`attachKidLaser(kid)` sets `kid._hasLaser` / `kid._laserUnit` on its argument. The night pass calls it as `attachKidLaser(eligible[i].mesh, col)` — i.e. it stamps those flags on `enemy.MESH`. But the per-frame loop checked `enemy._hasLaser` and `updateKidLaser` read `enemy._laserUnit` — on the ENEMY object, which never received them. So `_hasLaser` was always `undefined`, the clip silently never ran, and every enemy beam stayed at its built 60 m full length and punched through all geometry.
+
+This is why every prior pass passed in isolated sims but failed in-game: the sims attached and read from the same object, masking the mismatch. The flashlight was unaffected because it's fire-and-forget (an auto-tracking SpotLight, no per-frame enemy-keyed update).
+
+### Fix
+- `updateKidLaser(enemy, …)` now resolves the laser unit from `enemy.mesh._laserUnit` (with a fallback if handed a mesh directly), flushes matrices via `enemy.mesh.group`, and reads `charId` from the enemy.
+- The loop's laser counter and the clip-gate now both test `e.mesh._hasLaser`.
+- Night attach pass unchanged (it correctly targets `.mesh`).
+
+### Verified
+- Parse clean. Faithful three.js sim reproducing the exact game wiring (attach on `enemy.mesh`, clip via `enemy`): 6/6 — confirms the flag lands on the mesh not the enemy, the fixed counter sees it, the clip now runs, and the beam clips on a trunk between enemy and player at the right distance (~8.8 m). Static checks 8/8 — all read sites use `e.mesh._hasLaser`, no stale `e._hasLaser` reads remain.
+
+### Diagnostic HUD (kept)
+Backtick (`) toggles an on-screen readout in scenarios: lasered-enemy count, how many reached the clip, total runs, whether an aim point was present, and the last clip result (origin/dir/dist/clipped). Off by default, no cost when hidden — handy if anything laser-related needs checking again.
+
+### Still open
+- In-engine confirm: with the fix, the HUD should now show `lasered enemies` > 0, `reached clip` matching it, and `CLIPPED: YES` when a beam crosses cover. The beams should terminate on trunks/forts instead of passing through.
+
+## v1.38 — Darker nights, so lamps & flashlights matter
+
+Player wanted the night modes darker so streetlamps and flashlights have real impact. Widened the contrast ratio from both ends: cut the flat ambient fills ~half, and boosted the artificial light sources.
+
+### Ambient fills cut (applyTimeOfDay, night branch)
+- Moon directional key: 0.30 → **0.16** (still casts shadows for silhouette/shape reading, just no longer lifts the whole scene).
+- AmbientLight (`0x2a3550`): 0.38 → **0.18**.
+- HemisphereLight: 0.32 → **0.16**.
+Net: unlit areas are genuinely dark (but still navigable — kept above pitch-black on purpose), so lit pools are islands rather than a marginal lift over a blue wash.
+
+### Artificial lights boosted to pop
+- Streetlamp PointLight: 1.8 → **2.2** (reach kept 15m so pools stay distinct, not a flood).
+- Enemy/kid flashlight SpotLight: 4.5 → **5.5** — a sweeping enemy beam now clearly lights surfaces and reads as a real "where are they pushing" tell.
+- Player FP flashlight: 2.6 → **3.4** so your own light is worth carrying in the dark.
+
+### Bonus
+Laser beams/dots and the moon/stars are emissive/additive + `fog:false`, so they're untouched by the ambient cut and read even more vividly against the darker backdrop — reinforces the night mood for free.
+
+### Verified
+- Parse clean. Static checks 8/8: moon 0.16, ambient 0.18, hemi 0.16, lamp 2.2, kid-flash 5.5, player-flash 3.4; no stale prior values remain.
+- Day lighting untouched (all edits are inside the night branch / night-only light builders).
+
+### Still open
+- Pure in-engine taste call: if it's now *too* dark to navigate between pools, the ambient (0.18) and moon (0.16) are the two dials to nudge up a hair; if lit pools blow out, lamp 2.2 / flash 5.5 come back down. All one-line tweaks.
+
+## v1.40 — Aim feel: per-gun reticles, sway/bob, movement spread
+
+Three connected systems so movement and weapon choice actually read on screen.
+
+### Per-gun SVG reticles + aim bloom
+- `#crosshair > #reticleSvg` (viewBox -50..50), rebuilt per gun from `RETICLE_SPECS` (pistol ring+ticks, shotgun big circle, ar dot+cross, sniper fine cross, ak47/mp5/ump circle+cross, mac10 wide ticks).
+- `updateReticleBloom()`: the outer marks scale with `Game.player.sway` (`1 + sway*0.42`) and opacity lifts when tight (ADS), so the reticle visibly opens up as you move and snaps crisp when you settle.
+
+### Aim sway + viewmodel bob
+- `Game.player.sway`: smoothed instability — ~0.18 standing, ~0.8 jog, ~1.35 sprint; crouch ×0.55, ADS ×0.3. Computed in updatePlayer after camera roll.
+- Drives a viewmodel bob applied to `fpGun` position + rotation in updateHeldMesh, so the gun mesh physically sways. Step cadence 1.6 idle / 8 walk / 13 sprint. Every rail-mounted accessory is a child of the gun, so they inherit the sway for free.
+
+### Movement-based fire spread
+- `fireBB()` adds a dedicated cone term `moveSpread = sway * MOVE_SPREAD_K(0.10) * muzzleVelocity` (scaled to muzzle velocity so it's the same angular bloom on every gun), ADS-damped.
+- Earlier attempt multiplied the tiny base jitter (`1 + sway*0.5`) — far too subtle to read. The separate additive cone fixed that. Resulting cone at 10 m (pistol): ~16 cm standing, ~12 cm crouched, ~47 cm walking, ~74 cm just after sprinting, near-zero ADS.
+
+### Verified
+- Parse clean. Spread-cone sim against the shipped formula confirmed the standing→post-sprint progression (~6.5× spread) and ADS tightening. Reticle bloom reads the same `sway` value so visual and actual cone agree.
+
+## v1.40c–m — Rail accessory mounting: the long road, and the root cause
+
+A multi-pass saga getting rail-mounted lasers/flashlights to sit and behave correctly. Logging the whole arc because the *real* bug hid behind a string of plausible-but-wrong fixes.
+
+### What "correct" means (player spec, MP5)
+- Side rails (left/right) are children of the gun mesh, attached to the handguard sides.
+- Each accessory: a mount mechanism that slides onto the rail, with the actual hardware (laser/flashlight) on top of the mount.
+- Treating the rail as laid flat: mount sits on top of the rail, hardware on top of the mount, hardware center-mass over the mount, always pointed down the barrel.
+
+### The chain of fixes (build side — all correct, all necessary)
+- **Side rails matching the data model.** Rebuilt from a single hardcoded under-barrel rail to per-`GUN_ACCESSORY_CAP` side rails: slot 0 = left, slot 1 = right. Accessories parent onto the rail anchor matching their `placement`.
+- **Per-gun rail geometry** (`FP_GUN_MOUNT`: `barrelY`/`sideX`/`railZ`/`railLen`) so rails sit flush on each gun's handguard and don't overhang.
+- **Two-level optic** (v1.40f): a fixed clamp bolted to the rail + a child that aims, so the mount never spins off the rail.
+- **Outboard mount chain** (v1.40k): rail outer face → mount (+side) → hardware (+side), centered on rail height. Verified via a self-rendered PNG (orthographic projector + painter's algo, no WebGL — `gl` won't compile here) that the body sits proud on the outer face and L/R mirror.
+- **-Z-native laser build** (v1.40j): rebuilt the laser to fire down -Z like the flashlight (lens front, body back) so it uses identical mount/offset logic and needs no 180° flip.
+- **Split laser** (v1.40l): laser HARDWARE (body+lens) in a fixed `laserBodyGroup` positioned exactly like the flashlight body; only the thin beam+dot live in `beamPivot`, which takes the convergence zero. Previously the body shared the rotating pivot, so converging the beam toward the reticle dragged the body inboard.
+
+### ROOT CAUSE (v1.40m) — why none of the above showed up
+Every screenshot was from **The Workbench**, which has its own display path. `refreshWorkbenchAccessoryVisuals()` ran stale code: `acc.laserUnit.rotation.set(0, Math.PI, 0)` — a 180° spin of the *entire* laser unit. With the body now mounted outboard, a 180° Y-rotation flipped it to the **inboard** side, silently overriding every structural fix. The flashlight had no such override, which is exactly why it always looked right and the laser never did, no matter what the build code said.
+
+Fix: removed the 180° unit-flip and the old `+Z`/`0.03` beam positioning from the bench. The bench now lets `updateFPGunAccessory` mount everything correctly and only sets a display-only beam straight down -Z (no live FP camera to zero against). Same correct structure everywhere.
+
+Lesson (same shape as v1.37y): a downstream consumer re-applied a transform from an obsolete structure right before render. Geometry sims kept passing because they exercised the build path, never the bench's override. When a fix "does nothing," check for a second code path touching the same object after the fix.
+
+### Laser-follows-gun (kept from earlier in the arc)
+The beam is zeroed ONCE when the gun is steady (captures a fixed local quaternion via `setFromUnitVectors`, no `lookAt` roll) then locked rigid — so it inherits 100% of the gun's transform (pose, ADS, sway) and moves only when the gun moves, instead of re-aiming per frame.
+
+### Verified
+- Parse clean throughout. Self-render PNGs at each structural step confirmed body position/orientation and L/R mirror against a stand-in MP5. Final: green laser proud outboard on the left rail mirroring the flashlight on the right, both forward-facing.
+
+### Still open
+- All placement uses estimated per-gun `FP_GUN_MOUNT` values against a simplified box-MP5 in the renderer. The relationship (mount on rail, hardware on mount, outboard, parallel, mirrored) is verified, but final 2–3 mm placement on each real gun mesh may want a nudge — one number per gun in `FP_GUN_MOUNT`.
+
+## v1.41 — Glow-in-the-dark BBs + per-NPC BB colors
+
+Two cosmetic-but-tactical BB features: a glowing player round, and per-kid round colors so you can read whose fire is whose.
+
+### Glow-in-the-dark BBs (player)
+- New `BB_COLOR_SHOP` entry `glow` ($150), pale-green `#caffb0`, flagged `glow:true`. `BB_GLOW_COLORS` set drives the behavior; added to `BB_COLORS` too.
+- `spawnBBMesh(pos, color, glow)`: glow rounds crank emissive (1.6 vs 0.18), set `emissive:color`, and `fog:false` so they stay vivid through night fog. A small child `PointLight(color, 0.9, 3.5, 2)` is parented to the BB mesh — so it inherits position and is disposed automatically by every existing `Game.scene.remove(bb.mesh)` despawn path. Mesh tagged `_glow`.
+- Shop swatch for glow gets a radial-gradient + box-shadow treatment so it reads as glowing in the picker, not just a pale dot.
+
+### WebGL light-cap handling (the non-obvious bit)
+WebGL/MeshStandardMaterial only handles a handful of dynamic lights before shader recompiles/dropped lights. A firefight's worth of glow rounds — in flight AND littered/stuck — would blow past that. Fix: `demoteGlowLight(mesh)` strips the child `PointLight` once a round stops flying (bounce-to-rest, `applyBounce`, `applyStick`) but KEEPS a strong emissive (1.1) so landed rounds still glow as dots without being real light sources. Net: only airborne glow rounds cost a light, which is naturally few (fire-rate + short flight time). Non-glow rounds still grey out to spent (`0xb8b8b8` / `0xc8b878`) as before — all three grey-out sites now guard on `_glow`.
+
+### Per-NPC BB colors
+- `NPC_BB_PALETTE` (8 colors, deliberately excludes white and the player's glow, so a glowing streak always = the player). `npcBBColorHex(charId)` hashes charId → palette: stable, so "same kid → same color" across scenarios (littered piles stay legible), and auto-covers future roster additions with no per-character data entry.
+- Stored as `bbColorHex` on the enemy object in `makeEnemyFromCharacter`. `makeBB` reads `enemyRef.bbColorHex` (falls back to the hash, then to red for the generic `charId:null` Opponent).
+- `assignScenarioBBColors(enemies)` runs once at scenario finalize (right after `Game.scenario.enemies = built.enemies`): de-collides ENEMY-team rounds so up to 8 hostiles in one battle are guaranteed distinct (clashes bump to the nearest free palette slot). Allies (team `player`) are skipped — they're not shooting you, so their collisions don't matter and they don't consume slots. Past 8 hostiles the palette repeats gracefully.
+
+### Bonus housekeeping
+- Bumped the stale `VERSION` const (was `1.27c`, never updated through the cosmetic rebuilds) to `1.41`. It's internal-only — shown nowhere user-facing; the devlog remains the real version record.
+
+### Verified
+- Parse clean (single script block parses via vm.Script).
+- Color sim 9/9: hash determinism; palette spread; NPC never gets glow/white; glow-flag resolution (white=false, glow=true); glow light present in flight; demote removes the light but keeps emissive glow; demote is a safe no-op on non-glow meshes.
+- De-collision sim 5/5: the previously-colliding Winnmark trio (trey/brooke/jamie) now distinct; 6 enemies all distinct; 10 enemies use the full 8-color palette then repeat; allies ignored while hostiles stay distinct; stable on re-run.
+
+### Still open
+- Pure in-engine taste: glow `PointLight` range (3.5 m) / intensity (0.9) and the landed emissive (1.1) are the dials if glow rounds light the scene too much or too little at night — all one-line tweaks in `spawnBBMesh` / `demoteGlowLight`. Daylight is unaffected (emissive reads as a bright tint, no scene contribution worth noting).
+
+## v1.41a — Glow BB stutter fix: light-count churn → fixed light pool
+
+Player reported a momentary freeze on every glow-BB shot. Root cause: `MeshStandardMaterial` bakes the scene's light count into its compiled shader. v1.41 added a child `PointLight` to each glow BB on spawn and removed it on landing — so every shot CHANGED the light count, forcing three.js to recompile every standard-material shader in the scene. That synchronous recompile is the stutter; rapid fire made it near-constant (spawn recompile + land recompile per round).
+
+The v1.41 "light cap" reasoning was right that too many simultaneous lights is bad, but it missed that *changing the count at all* is the expensive event, not the steady-state count.
+
+### Fix — `GlowLightPool`
+- A fixed pool of 6 `PointLight`s is created once per scene and lives there permanently. The scene's light count never changes as glow BBs come and go, so shaders compile once (one tiny first-glow-shot hitch per scenario as the pool is lazily added; then silent).
+- Glow BBs no longer carry a child light — `spawnBBMesh` just sets the bright emissive material (`_glow` marker). `demoteGlowLight` now only eases emissive down and sets `_glowLanded` (no light to strip).
+- `GlowLightPool.update()` runs once per frame at the end of `updateBBs`: collect airborne (`_glow && !_glowLanded`) BBs, sort nearest-to-camera, snap a pooled light onto the closest 6 (copy position + color, intensity 0.9), park the rest far below the map at intensity 0. So the tracers you can actually see get real light; overflow rounds keep their emissive look without a light.
+- Scene is rebuilt per scenario, so the pool re-binds when `Game.scene` changes (tracked via `_scene`); old lights are GC'd with the discarded scene.
+
+### Verified
+- Parse clean. Pool sim 9/9: pool created once (6 lights); all parked when no tracers; **no new lights added when firing** (the fix); exactly the airborne tracers lit (landed + non-glow excluded); nearest-first selection correct; overflow (8 airborne) lights exactly the nearest 6 with no count change; re-binds on scene swap.
+
+### Still open
+- Pool size (6), light range (3.5 m), and intensity (0.9) are the dials if night tracers feel under/over-lit — all constants in `GlowLightPool` / its `update`. The single first-shot compile hitch per scenario could be removed entirely by building the 6 pool lights at scene-construction time, at the cost of 6 always-on (parked) lights in every scenario regardless of glow use — not done, since one tiny hitch per scenario load is a fair trade for keeping non-glow scenarios lean.
+
+## v1.42 — Fort front-wall windows, roster panel rework, player lives → 1
+
+Three requested changes.
+
+### Chattahoochee fort front-wall windows
+The Hollow's `addFort` builder gave the back and both side walls firing windows (`windowedWall`) but left the FRONT wall as two solid segments flanking the doorway port — so you couldn't shoot out the front without standing in the open doorway. Now both front segments are `windowedWall(... 'x', 1)`: each ~2.1m segment gets one 0.9m shoulder-height window (opening 1.0–1.6m) flanked by two 0.6m posts. The lower solid band (0–1.0m) still blocks movement; the central 2.8m walk-through port is untouched. Shared builder, so this lands on every Chattahoochee scenario at both forts.
+
+### Roster panel ("Players on the Field")
+- Renamed the HUD label "Opposing Players" → "Players on the Field". The panel lists `Game.scenario.enemies`, which in team battles also includes allies (team `player`), so "Opposing" was wrong.
+- Allies now render GREEN pips, not red. `updateRosterHud` computes `ally = !ffa && (e.team === playerTeam)` and adds an `ally` class to the pip (`#4caf64`) and the row. Empty ally pips get a dim green outline (`.r-pip.ally.empty`) so a spent ally life still reads friendly. FFA has no allies by definition, so everyone stays red there.
+
+### Player lives → 1 on every scenario
+Per request: ONLY player lives, NPC lives left exactly as-is. Two scenarios were the only outliers (the code default and every other scenario were already 1): Winnmark "Every Kid for Themselves" FFA (`playerLives: 2 → 1`) and Bunratty "Last Kid Standing" FFA (`playerLives: 3 → 1`). All `npcLives` (seven scenarios at 5, one FFA at 1) and the per-kid `lives: 3` on the Juggernauts pair are untouched — the 5-life Chattahoochee grinds and the Juggernaut boss still play as before; you just have one life in them now.
+
+### Verified
+- Parse clean. Grep confirms every `playerLives` is now 1 (only the doc-comment mentions another number) and all `npcLives`/per-kid `lives` are unchanged.
+- Window geometry sim: front segment 2.1m wide, one 0.9m window + two 0.6m posts (posts > 0.05m buildable threshold), doorway port still 2.8m clear.
+- Roster sim 5/5: ally gets green pip; enemy stays red; missing team field defaults to enemy/red; FFA produces no allies; ally+empty pip class composes correctly.
+
+### Still open
+- Front-wall windows use the same 1.0–1.6m opening as the other walls; if crouch-firing out the front feels off versus the wider side windows, the per-segment `nWin` (currently 1) or the shared `winB`/`winT` band are the dials.
+
+## v1.43 — Chattahoochee attack/defend fort scenarios
+
+The Hollow had only team battles + FFA; nothing used the two pallet forts as objectives. Added four scenarios that do, now that the forts have firing windows on all four walls (v1.42).
+
+### New scenarios (all single-life per current default)
+- **Storm the North Fort** (day, attack, `kill_all`): player pushes from the south end (`team_b` spawn) against 3 defenders dug into the north fort — Mitchell sniping from the lookout (`a_fort`), Seth (AR, `a_center`) and Ryan (shotgun, `a_left`) on the windows.
+- **Night Assault on the Fort** (night, attack, `kill_all`): same fort, 4 defenders with lasers/lights — Devon sniper, Seth UMP, Mason MP5, Ryan shotgun across `a_fort`/`a_center`/`a_left`/`a_right`.
+- **Hold the South Fort** (day, defend, `survive_timer` 90s): player holds the south fort (`team_b`), 3 attackers cluster from `cluster_north` and push the front port + creek flank — Seth AR, Ryan shotgun, Devon sniper at `b_center`/`b_left`/`b_creek`.
+- **Hold the Fort (Night)** (night, defend, `survive_timer` 90s): 4-kid full-auto night push on the south fort — Seth UMP, Mitchell AK, Mason MP5, Ryan shotgun, attacking `b_center`/`b_left`/`b_right`/`b_creek` from `cluster_north`.
+
+Registered in the `hollow` menu list interleaved after the 3v3 on-ramp (day attack, day defend, night attack, night defend) so they sit before the big 5v5 grinds. All reuse the existing `buildHollowScene` builder and its `placements`/`playerSpawns` tables — no map changes needed; the fort windows from v1.42 are what make holding/storming read well.
+
+### Verified
+- Parse clean. Validation script confirms for all 4: every `anchor` is a real Hollow placement key, `playerSpawn` is a valid spawn (`team_b`), `enemySpawnCluster` (`cluster_north`, defends only) is valid, every charId exists, every weapon is real, and each ID is both defined in SCENARIOS and registered in the menu. Attacks use `kill_all`; defends use `survive_timer` 90s. Per-scenario body check confirms none carry `npcLives` (single-life, matching the v1.42 player-lives policy and leaving these as one-hit tags).
+
+### Still open
+- In-engine taste: defender anchor spread (lookout sniper + window guards) and the attacker push lanes are first-pass; if the day attack reads too easy or the night defend too punishing, the dials are defender/attacker count, weapon mix, and `timerSec` (90s). Defenders use the front windows now — if they cluster oddly at the port, their anchors (`a_center`/`a_left`/`a_right`) are the nudge.
+
+## v1.44 — Fort scenario fixes: defenders hold, more enemies, infection mislabel
+
+Three playtest issues from the v1.43 fort scenarios.
+
+### BUG: defenders didn't hold the fort (spawned mid-map)
+In an ATTACK scenario the enemies are DEFENDERS who should start dug in at the fort. But the spawn system clusters any 2+ enemy-team setup into a huddle on the mid-map road spine, then "deploys" them outward — the squad-push model. That's right for attackers, wrong for defenders, so the fort's defenders spawned in the middle of the map and walked in. Fix (`enterScenario` spawn logic): defenders are now excluded from BOTH the cluster-membership test (`joinsEnemyHuddle`) AND the centroid subset (`enemyTeamSetup`), so they fall through to the plain spawn-at-anchor branch and hold their fort position from t=0. Attackers and roleless kids still cluster exactly as before. Verified: 5 logic tests — attack defenders all spawn-at-anchor with no cluster; defend attackers all huddle-deploy; a mixed defender+attacker setup routes each correctly; roleless team battles unchanged (no regression).
+
+### Too easy — more enemies
+- ATTACK day "Storm the North Fort": 3 → 5 defenders (added Sean AK + Mason MP5, spread across the fort windows). Reward 55→70.
+- ATTACK night: 4 → 6 defenders (added Mitchell + Sean). Reward 80→100.
+- DEFEND day "Hold the South Fort": 3 → 5 attackers (added Sean + Mitchell). Reward 55→70.
+- DEFEND night: 4 → 6 attackers (added Devon + Sean). Reward 85→110.
+Note: ATTACK scenarios are `kill_all`, which has no NPC respawn pool (lives only respawn in team-battle/FFA), so the lever there is defender COUNT, not lives — more bodies to clear.
+
+### DEFEND respawn pacing — closer stage
+The long walk-back was making defends easy: attackers respawned by jogging all the way to the far `cluster_north` (z≈-33) then back. Both defend scenarios now stage from `redoubt_e` (mid-map, z≈-8) instead, so a tagged attacker is back in the fight far sooner — sustained pressure instead of a lull every time you tag someone. (The walk-back-then-redeploy mechanic itself is unchanged; only the stage point moved closer.)
+
+### Infection double-label fixed
+Both infection scenarios (Hollow + Bunratty) carried `scenarioType: 'defend'`, which rendered a 🛡 DEFEND badge on top of their infection identity — a pre-existing mislabel, surfaced now that real DEFEND scenarios exist alongside them. The type did nothing mechanically: tagger respawn is keyed on `behavior === 'tagger'` + `ZOMBIE_REVIVE_SEC`, and the win logic is `survive_untagged` — neither reads `scenarioType`. Removed `scenarioType: 'defend'` from both; the badge is gone and behavior is identical.
+
+### Verified
+- Parse clean. Scenario validation: all four fort scenarios have the expected counts (5/6/5/6), valid anchors/weapons/roles/chars, correct win conditions; both infection scenarios no longer carry a scenarioType. Spawn-logic sim 5/5 (above).
+
+### Still open
+- The two attackers sharing `b_center` in the night defend will path to the same fighting spot; the AI cover spread + `findClearSpawn` separate them, but if they read as stacked, give the 6th attacker its own anchor (e.g. `b_left` is free after the others deploy). In-engine taste call.
+- Difficulty is now first-pass-plus-one; if the 6-enemy night variants are too hard at one player life, the levers are count, the 90s timer, or weapon mix.
+
+## v1.45 — Fort walls lowered/windowed for real trades, more field cover
+
+### Fort wall sill drop (the "Sean can't hit me across the wall" bug)
+Playtest: a standing enemy directly across a fort wall couldn't land a shot — its ~1.05m muzzle sat right at the bottom edge of the 1.0–1.6m window band, so shots clipped the solid lower band instead of passing through. Fixes in `addFort`:
+- `wallH` 2.0 → **1.8** (slightly shorter overall).
+- Window sill `winB` 1.0 → **0.75**, top `winT` 1.6 → **1.55**. The opening is now 0.8m tall (was 0.6m) and a standing muzzle clears the lower band by ~30cm, sitting mid-window. Two combatants standing across a fort wall can now actually trade through the windows.
+- Lower band (0–0.75m) still blocks movement and crouched bodies, so the fort is still genuine cover — you just can't both stand and be immune across a single wall. All four walls inherit this (back/sides from v1.36b, front segments from v1.42). Header lintel (wallH−0.14 = 1.66m) still sits above the window. `topH = wallH−winT = 0.25m` stays positive.
+
+### More field cover (8 new pallet clusters)
+The Hollow had ~14 clusters and too much open lane, especially mid-field. Added 8 more, offset from the existing ones to create new sightline breaks rather than doubling up: two on the north approach (`14,-24` straight; `-20,-10` L), four through the mid-field meat-grinder (`2,0` T dead-center on the road spine; `-28,2` and `32,-2` far flanks; `10,6` L south of the creek), and two on the south approach (`-8,22` straight; `18,24` T). All chest-high (1.2m default).
+
+### Verified
+- Parse clean. Fort geometry sim: window now contains the 1.05m standing muzzle, 0.8m opening (up from 0.6), top band positive (0.25m), lower band still ≥0.5m so it blocks movement, muzzle clears the lower band by 30cm. Cover placement sim: all 8 new clusters clear of both forts (>5m) and the river (z<31). Band math confirmed to flow entirely from the two updated constants — no stale 1.0/1.6 values remain.
+
+### Still open
+- The mid-field `2,0` T sits on the road spine where the enemy auto-cluster also stages for centroid scenarios; it's chest-high cover so it shouldn't trap a huddle, but if kids snag on it at spawn, nudge it a couple meters off-spine. In-engine taste.
+- If standing trades across the wall now feel TOO easy (fort no longer protective enough), winB can come back up toward 0.85 — one number.
+
+## v1.46 — NPC sniper fire rate floored to bolt-action cadence
+
+Playtest: enemy snipers fired far too fast — punishing, and wrong for a bolt-action. The NPC shooting recovery is a shared `(0.7 + rand*0.9) / fireRate`, further cut ×0.45 when the kid has recently spotted the player. For a sniper that yielded sub-second gaps when locked on, reading like a semi-auto from a kid who rarely misses.
+
+Fix (the `shooting` state recovery in the enemy AI): for `e.weapon === 'sniper'`, override the computed recovery with a flat **2.0–3.0s** cycle, ignoring both the fireRate divisor and the recently-spotted cut — a bolt gun has to be re-cocked between every shot, so seeing you doesn't speed it up. It's the only weapon with a hard floor; all others keep the aggression/fireRate-driven cadence. Snipers are `fireMode: 'semi'`, so they never used the auto-burst path anyway — this single recovery floor governs their full rate.
+
+### Verified
+- Parse clean. Cadence sim: sniper recovery is 2.00–3.00s across 5000 samples even at high fireRate + recently-spotted (the old worst case), and ignores the recently-spotted cut. AR (representative non-sniper) unchanged at 0.70–1.60s.
+
+### Still open
+- 2-3s is tuned to the current bolt-action `cockTime: 1.1`. If a future semi-auto/DMR sniper is added, this flat floor would over-slow it — at that point gate the floor on `cockType === 'bolt'` (the spec already carries it) rather than weapon name.
+
+## v1.47 — Fort walls raised back up (fix low doorway from v1.45)
+
+The v1.45 wall drop (2.0→1.8, to let standing muzzles clear the window sill) had a side effect: it pulled the whole fort top — and the doorway header at `wallH-0.14` — down to head height, so walking through the port felt like ducking, and the interior read as shallow.
+
+The two concerns were conflated. The cross-wall-trade fix was really about the window SILL being low (winB 0.75), not the wall being short. So:
+- `wallH` 1.8 → **2.6** (taller than the original 2.0). Doorway lintel is now at 2.46m (bottom 2.32m) — 82cm of clearance over the player's 1.5m head. The partial roof (`wallH+0.15` = 2.75m) and top band rise with it; the back lookout deck is a fixed 1.1m perch and intentionally doesn't scale.
+- Window top `winT` 1.55 → **1.85**, sill `winB` kept at 0.75 — a taller 1.1m firing slot (was 0.8m). Standing muzzle (1.05m) still sits mid-opening, top band `wallH-winT` = 0.75m stays solid, lower band 0–0.75m still blocks movement/crouched bodies.
+
+### Verified
+- Parse clean. Geometry sim: doorway bottom (2.32m) clears the 1.5m player head with 82cm headroom; roof clears head; window now 1.1m tall (> the 0.8m of v1.45); standing muzzle still inside the window; top band positive (0.75m); lower band still ≥0.5m. No stale 1.8/1.55 geometry values remain (only the unrelated lookout rail at y=1.55 and the changelog comments).
+
+### Still open
+- wallH 2.6 is now taller than the pre-v1.45 original (2.0); if the forts read as too tall/boxy on the field, anything in the 2.2–2.6 range keeps the doorway clear of the 1.5m head — one number.
+
+## v1.48 — Zone & scenario progression (campaign ladder)
+
+The world map was a flat list — every scenario in every zone playable from a fresh save. Added a strict progression spine so the neighborhood opens up as you win.
+
+### The ladder (single source of truth: `ZONE_LADDER`)
+Ordered zones: **Winnmark → Bunratty → The Hollow (Chattahoochee) → Northcliff**. Each entry maps to its existing `PIN_SCENARIO_GROUPS` key, so the ordered scenario lists already in the file *are* the chains — no scenario data duplicated. Northcliff is a real ladder node with `comingSoon:true` and no scenario list yet (its map/scenarios land later); it shows as a locked teaser pin.
+
+### Gating rules
+- **Within a zone — strict chain.** The Nth scenario unlocks only when the (N−1)th is in `Game.persist.completed`. First scenario of zone 1 is always open. An already-completed scenario is always replayable (order-robust).
+- **Between zones — capstone gate.** A zone unlocks when the PRIOR zone's *capstone* (its last listed scenario) is completed. Winnmark capstone = `winnmark_night_team_2v2`; Bunratty = `bunratty_night_team_2v2`; Hollow = `hollow_full_auto_mayhem`.
+
+Two pure helpers do all the work and everything downstream reads them — no gating logic duplicated: `isScenarioUnlocked(id)`, `isZoneUnlocked(zoneKey)`, plus `scenarioLockReason(id)` for the greyed-row requirement text, and `zoneCapstoneId` / `zoneLadderIndex`.
+
+### Five enforcement points (no back door)
+1. **`renderScenarioRow`** — locked rows render greyed with 🔒, the matchup line, and the unlock requirement ("Beat *X* to unlock" / "Clear *Zone* to unlock this area"); START is replaced by a disabled LOCKED button.
+2. **Pin click handler** — a locked *zone* pin shows a greyed header + requirement instead of its (all-locked) list; the Northcliff `locked` pin shows its teaser blurb + "coming soon, not yet playable."
+3. **`refreshMapPinStates()`** (called from `openMap`) — locked zone pins get the grey `.locked` marker + "· locked" label suffix; unlocked ones clear it; Northcliff flips to "· coming soon" once the Hollow capstone is cleared.
+4. **Result-screen Next button** — only enabled if the *next* scenario is actually unlocked. Winning marks the current scenario completed before the result renders, so a win unlocks Next; a loss leaves it disabled with a "win this one first" tooltip. Resolved ids are stashed on `dataset.go` so the click can't navigate to a locked id.
+5. **`enterScenario` launch guard** — a hard `isScenarioUnlocked` check at the very top shows a Locked modal and bails. Every launch path (brief modal, result-nav replay/prev/next) funnels through here, so it's the last line of defense behind the greyed UI.
+
+### Save compatibility
+Free — `completed` already persisted and `_deepMergePersist` handles older saves. A pre-progression save with cleared scenarios correctly shows those zones/scenarios already unlocked on load.
+
+### Verified
+- Parse clean. Progression logic harness 30/30 against the REAL extracted `PIN_SCENARIO_GROUPS` + `ZONE_LADDER` + gating-fn sources: fresh save opens only the first Winnmark scenario; strict chain advances one at a time; each capstone unlocks the next zone (Bunratty→Hollow→Northcliff); completed scenarios stay replayable even out of order; legacy/unknown ids ungated; ladder order is exactly Winnmark→Bunratty→Hollow→Northcliff; comingSoon zone has no list; capstone helper returns the last id (null for the empty zone).
+- Static wiring: all five enforcement points present; CSS for `.sc-row.locked` / `.sc-row-lock` / `.sc-go.locked` / dimmed locked-pin label present; only `.sc-go:not(.locked)` rows get a launch listener; VERSION bumped 1.41→1.48.
+
+### Still open
+- In-engine: confirm the greyed rows + lock copy read clearly, and that the Hollow pin (Chattahoochee) sits as the 3rd rung now that it's chain-gated behind Bunratty's capstone (previously always-open).
+- Northcliff is a teaser pin only — its `buildNorthcliffScene` + scenarios are the next content drop; when added, append its ids to a new `PIN_SCENARIO_GROUPS.northcliff` and the ladder picks it up automatically (the `comingSoon` flag comes off and its pin starts honoring `isZoneUnlocked`).
+- Reward scaling is unchanged; if the strict chain makes early cash feel tight (you can't cherry-pick the high-reward grinds anymore), the per-scenario `rewards` are the dial.
+
+## v1.49 — Speed loader rework: pours down, continuous feed, partial fills
+
+Player feedback on speed loaders, all addressed:
+
+### 1. Orientation — now pours DOWN into the mag
+The FP loader was held like a barrel, nozzle pointing forward (as if firing BBs out in front). A speed loader uses gravity to push BBs into a magazine, so it should point down. Reoriented the held group to `rotation (-1.4, 0.35, 0.15)` at `position (0.07, -0.16, -0.26)` — the loading nozzle now sits at the bottom, the plunger up top where the thumb pushes. Verified by transform math AND an SVG camera-projection: nozzle world-Y −0.123 vs plunger +0.093 (clearly below), tube near-vertical (dy 0.216 ≫ dz 0.035); on screen the nozzle renders ~246px lower than the plunger.
+
+### 2 & 3. Continuous feed (mag up, loader down, in lockstep)
+Replaced the all-at-once "fill when the bar finishes" model with a per-frame transfer. While LMB is held, BBs move from the loader into the mag at **40 BBs/sec** (fractional accumulator, so the rate is frame-rate independent and never creates/loses a BB). The mag count rises and the loader count falls together, live. A soft reload tick plays ~every 90ms as they rattle in, and the loader's visible BB column drains to match its remaining fill.
+
+### 4. Stops at full / empty, with a clear indicator
+Feeding halts the instant `Game.gun.ammo` reaches `maxAmmo` OR the loader hits 0 — no overfill, no negative loader. The bar turns **green with a "MAG FULL · N BBs LEFT IN LOADER"** label when topped, or grey **"LOADER EMPTY"** when drained, while the button stays held. The pumping animation settles when feeding can't continue.
+
+### 5. Partial fills
+Because the transfer is live and incremental, releasing LMB at any moment simply stops it — whatever's already in the mag stays, the rest stays in the loader. No commit step, no minimum.
+
+### HUD bar redesign
+The old left-to-right "FEEDING BBs…" progress fill was conceptually backwards. The bar now shows **BBs REMAINING in the loader** (drains right-to-empty as you feed), with a live `MAG x/max · LOADER n` readout. Spare-mag swaps are unchanged (still a 0.4s timed slap-in with its own progress fill).
+
+### Verified
+- Parse clean. Feed-logic harness 14/14 (faithful re-impl of the per-frame step): conservation of total BBs; mag stops exactly at max with the remainder kept in the loader; loader drains to 0 giving the mag only what was available; partial fill on mid-feed release with no movement after; ~40 BBs/sec rate; already-full mag is a no-op; fractional accumulator conserves totals under odd dt.
+- Orientation: math + SVG projection confirm nozzle-down / vertical pour.
+- `_feedingActive` reset added at all use-cancel sites (release, slot switch, scenario enter/exit) so the pump animation never carries a stale frame.
+
+### Still open
+- FEED_RATE (40/s), the ~90ms tick cadence, and the pumping bob amplitude are one-line dials if the feel wants tuning in-engine.
+- The BB-column drain scales symmetrically from center (the cylinder's rotation makes an end-anchored drain fiddly); reads fine as "emptying," but if you want it to visibly empty from the nozzle end specifically, that's a small geometry-offset follow-up.
+
+## v1.49a — Speed loader orientation fix (nozzle was pointing up)
+
+Player screenshot showed the loader held with the nozzle end (dark cap + red ring) pointing UP-and-out to the top-right — i.e. inverted from the intended gravity-feed pose. The v1.49 pitch of `x:-1.4` was wrong-signed in practice: in-engine it rotated the nozzle to the TOP, not the bottom.
+
+Caveat worth recording: the isolated transform sim (exact three.js XYZ Euler matrix) said `-1.4` put the nozzle DOWN, but the live render disagreed — the sim has an axis/sign mismatch I couldn't fully resolve without a WebGL context (unavailable in this env; `gl` won't compile, same constraint noted back in v1.40). So this fix trusts the screenshot over the sim.
+
+### Fix
+- `baseRot.x` flipped `-1.4 → +1.4` (and `z` `0.15 → -0.15` to keep the lateral lean consistent after the flip). This drops the nozzle end toward the mag in-engine.
+- `basePos.y` raised `-0.16 → -0.13` so the now-lower body stays comfortably in frame.
+- The feed animation reads `baseRot`/`basePos` from `userData`, so the pump bob and plunger-toward-nozzle motion carry over unchanged (they're geometry-relative, not world-relative).
+
+### Verified
+- Parse clean. Functional feed logic unchanged from v1.49 (still 14/14 — this is a pose-only change).
+
+### Still open
+- **Needs an in-engine eyeball** — because the sim disagreed with reality, I can't fully verify the pose offline. If the nozzle still isn't pointing cleanly down, the single dial is `baseRot.x` in `buildFPLoader` (try values in the 1.3–1.6 range; sign is now correct, it's just how far past vertical). `baseRot.y` (0.35) is the sideways tilt and `basePos.y` (-0.13) raises/lowers it in frame.
+
+## v1.50 — Speed loaders refill from the bag (reusable gear, not consumables)
+
+Player report: a speed loader drains and never refills — no way to reload it. It was behaving like a one-time consumable. Fixed so it's reusable gear that fills from the home bag between rounds, mirroring how the gun mag is filled/unloaded.
+
+### The model (mirrors the mag)
+- **Scenario start:** the gun mag fills from the bag first (unchanged), then every EQUIPPED speed loader tops off from whatever's left in the bag, up to its capacity. The mag has first claim; loaders split the remainder in slot order. The bag floors at 0 — a loader only takes what's actually available (partial fill if the bag is low).
+- **Scenario end:** the mag returns its BBs to the bag (unchanged), and every equipped loader returns its remaining BBs to the bag and empties. So nothing is lost between rounds and each loader refills cleanly next start.
+- **Unequip:** clicking an equipped loader in the loadout to remove it now returns its remaining BBs to the bag (no stranded BBs).
+
+### Three helpers (near `getUnequippedSpeedLoaders`)
+- `returnSpeedLoaderToBag(sl)` — adds one loader's BBs to the bag, empties it.
+- `refillEquippedSpeedLoadersFromBag()` — tops off all equipped loaders from the bag, capacity-capped, bag-floored. Called at scenario start AFTER the mag fill.
+- `returnEquippedSpeedLoadersToBag()` — returns all equipped loaders' BBs to the bag. Called at scenario end.
+
+### Economy fix: loaders now ship EMPTY
+`buySpeedLoader` previously set `currentBBs: tier.capacity` ("ships full"). With the new refill-from-bag loop that would be a free capacity of BBs (they'd get banked into your bag after the first round). New loaders now ship at `currentBBs: 0` so every BB traces to the bag you paid for. (A pre-v1.50 save with an old full loader just banks those BBs to the bag on its first round end — harmless, self-correcting, no migration needed.)
+
+### Verified
+- Parse clean. Lifecycle harness 12/12 against the real extracted helpers + `SPEED_LOADER_TIERS`: empty loader fills to capacity and debits the bag; partial fill when the bag can't cover it (bag floors at 0, never negative); end empties the loader and banks the remainder; full two-round round-trip conserves total BBs (bag + loader + fed-to-mag == start); already-full loader is a start no-op; unequip returns remaining BBs; multiple equipped loaders fill in slot order with the bag flooring; an OWNED-but-UNEQUIPPED loader is correctly left untouched by the equipped-only helpers.
+- Wiring confirmed live: refill at scenario start (after mag fill, mag-first ordering), return at scenario end, return on unequip; no stale ships-full code remains.
+
+### Still open
+- Loaders fill in loadout-slot order; if you run two loaders and a low bag, the earlier slot fills first. That's predictable and matches the "mag first, then loaders in order" mental model, but if you'd prefer an even split across loaders when the bag is short, that's a small change to the refill loop.
+
+## v1.51 — Street lamps now have collision (pole blocks BBs + movement)
+
+Player report: you can walk and shoot straight through street lamps. They were built as purely cosmetic geometry — the v1.35 code even noted "no collision obstacle … never blocks BBs or movement, like the flag markers." Fixed.
+
+### Fix
+- `addStreetlamp` now builds a collision AABB for the POLE and attaches it at `group.userData.obstacle`. It's a slim box (±0.34m, covering the base collar r≈0.32) centered on the pole, full pole height (6.2m), `baseY` at the lamp's ground seat, `surface:'hard'` so BBs ricochet off the metal post.
+- The overhanging arm and cobra head (~5.8m up) stay cosmetic — no obstacle there. A ray above the pole's 6.2m top passes freely, so there's no invisible mid-air blocker where the arm reaches over the road.
+- Both builders that place lamps (the Winnmark/Bunratty street builder and the wooded-lane builder — the only two callers) now collect the returned obstacles into a `lampObs` array and spread it into their `obstacles` list.
+
+### Why this covers all three systems
+Player movement collision (`updateMovement`), BB physics (the `for (const o of Game.player.obstacles)` hit loop), and enemy line-of-sight all read the same `Game.player.obstacles` (= the builder's `obstacles`). Feeding the lamp poles into that one array fixes walk-through, shoot-through, AND lets the poles block enemy sightlines — kids can't see or shoot through a lamp post either, which is correct.
+
+### Verified
+- Parse clean. Collision harness 11/11 using the REAL `raycastObstacles`: the lamp AABB is centered on the pole (±0.34) at full height seated on ground, surface hard; a chest-height ray into the pole clips at ~5.66m; a ray 1m to the side passes the full distance; a head-height ray still clips; a ray above the 6.2m pole top passes (arm/head zone clear); close-range shots register; the footprint blocks the pole center while 0.5m out stays walkable.
+- Confirmed only two `addStreetlamp` call sites exist and both now collect `lampObs`.
+
+### Still open
+- The collision box is square (±0.34) rather than round; against a ~0.22m-diameter pole that's a hair generous, so a BB grazing the very edge may ricochet off "air" within ~12cm of the post. Tightening `half` toward 0.24 would hug the pole more closely at the cost of occasional clean-look pass-throughs at the corners — left generous so shots reliably register. One number in `addStreetlamp`.
+- Other maps (the Hollow, bedroom) don't use `addStreetlamp`, so nothing else needed touching; if a future map adds lamps, collect `lamp.userData.obstacle` the same way.
+
+## v1.52 — Street lamps: metal surface (ping) + arm & head collision
+
+Two follow-ups to v1.51's pole collision.
+
+### Metal surface (high-pitched ping)
+The pole was tagged `surface:'hard'` (generic wood/fence ricochet, no ping). Changed all lamp collision to `surface:'metal'`, so BBs trigger `playImpactMetal` — the same high-frequency tink the trash cans and bins use — and get the metal bounce profile (pBounce 0.88, energy 0.55) instead of hard's 0.85/0.45. Matches the pole's metallic material (`metalness:0.6`) and reads like pinging off a car.
+
+### Arm + head collision (was still pass-through)
+v1.51 only blocked the pole; the overhanging arm and cobra head were still shoot/walk-through (they're up at ~5.8–6.0m, but you could still put BBs through them). Added two more AABBs:
+- **Arm**: a horizontal bar from the pole out to the head along the overhang direction, at the arm's height band (~5.75–6.25m), thin in the cross-axis.
+- **Head**: the cobra housing box at the arm's end (~5.68–6.10m), sized to the 0.7×0.34 housing + lens.
+
+The tricky part is that the lamp group is Y-rotated ±90° so the arm overhangs the road (local +X → world ∓Z, depending on which shoulder the lamp sits on). The obstacle AABBs are built in world space with `armDirZ = (z<0)?+1:-1` to match that rotation. `addStreetlamp` now exposes `userData.obstacles` (array of pole+arm+head); both callers spread it into their obstacle lists. (`userData.obstacle` kept as a back-compat single-pole ref.)
+
+### Verified
+- Parse clean. Arm/head harness 16/16: independently computed the ARM and HEAD MESH world positions after the group's Y-rotation and confirmed each falls inside its obstacle AABB (footprint + height band) for BOTH a north-shoulder (z<0) and south-shoulder (z>0) lamp; confirmed the arm/head reach toward the road spine in each orientation; a shot at head height clips the head/arm; the pole still blocks at chest height; all three pieces are `metal`. Pole harness re-run 11/11 (surface now metal). 
+- Live wiring: both builders collect `lamp.userData.obstacles` (plural); no stale `surface:'hard'` remains on lamps.
+
+### Still open
+- The arm/head boxes are slightly boxier than the round arm tube / housing (same generous-corner tradeoff as the pole) — dials are the ±0.08/±0.12 (arm) and ±0.20/±0.38 (head) half-extents in `addStreetlamp`.
+- The arm collision is a single straight bar; the real arm has a slight curve near the pole, so a BB threaded right at the curve's inside might pass where the straight box doesn't cover. Negligible at gameplay ranges/heights; could be a 2-segment arm if it ever matters.
+
+## v1.53 — Geometrically true collision: cylinders for round props, trimmed padding for boxy ones
+
+Player feedback: collision felt loose. Two root causes, both fixed.
+
+### Cause 1 — square AABBs around round props (the big one)
+A square box around a cylinder over-extends ~41% at the diagonal corners, so you'd snag on (or shoot into) "air" near a trunk/pole/can. Fixed by adding opt-in **cylinder collision**: round obstacles now carry `shape:'cylinder'`, `radius`, and a center (`cx,cz`). Two shared helpers do the geometry, and all FOUR collision consumers were taught to use them:
+- `obsOverlapsXZ(o,x,z,r)` — circle-vs-circle for cylinders, circle-vs-AABB otherwise. Used by player/kid **movement** (`collidesObstacles`) and the **BB hit** test.
+- `obsRayDist(o, origin,dir, maxDist)` — ray-circle for cylinders, slab method otherwise. Used by **`raycastObstacles`** (BB/laser clip) and **`hasLineOfSight`** (AI sightlines), so movement, BBs, AND the AI all agree on the same true silhouette.
+
+The obstacle's AABB min/max are still maintained as a conservative broad-phase bound, so any code path not yet cylinder-aware stays safe (just slightly loose, as before) — nothing can fall through.
+
+Round props converted to cylinders: **trees** (radius = trunkR; was trunkR+0.05 square), **trash cans** (r 0.37), **lamp poles** (r 0.18; was a ±0.34 box — much tighter now), **trampolines** (round frame), and the standalone decorative **trunk**. Lamp arm/head stay AABB (they're boxy), bushes stay AABB (they're ellipsoid, not circular — a square is already close and they're soft cover), cars/cardboard/houses/walls stay AABB (genuinely boxy).
+
+### Cause 2 — deliberate padding on boxy props
+Several boxes were built larger than their mesh. Trimmed: **mailbox** (−0.05 Z pad → 0), **curbside bins** (−0.05 all-round → 0), **fences** (±0.1 → ±0.04; still a hair proud of the 0.08 board so bodies don't tunnel through the thin wall, but much tighter).
+
+### Verified
+- Parse clean. Collision-shape harness 21/21 against the REAL extracted helpers: the key corner case is proven both ways — a point/ray/sightline in an AABB's corner zone collides with the old box but correctly MISSES the cylinder; face-on hits and disc overlaps still register; the diagonal player approach that the box wrongly blocked now clears; ray-circle clips at the true radius and misses just past it; the Y band is still respected; AABB obstacles (walls) behave exactly as before. Lamp arm/head harness re-run 16/16 (pole now cylinder), lamp collision 11/11.
+- Every cylinder obstacle confirmed to also carry full AABB bounds + cx/cz + radius (broad-phase fallback intact).
+
+### Still open
+- BB **bounce reflection** off a cylinder still uses the AABB-face normal (`computeHitAxis`), not the true radial normal — so the ricochet *direction* off a trunk/pole is approximate (the *hit detection* is now exact, which is what was loose). Radial-normal reflection for cylinders is a contained follow-up if bounce angles off poles ever look off.
+- Bushes left as AABB (ellipsoid footprint would need an ellipse test); they're soft, low cover so it's not where looseness was felt.
+- The Hollow's pallet-fort walls and big battle cover are already tight boxes (genuinely rectangular), so they were left alone.
+
+## v1.54 — Cars: split collision (lower body + upper cabin), no ghost box over hood/trunk
+
+Player report (with screenshot): aiming over the front/back of a car, BBs hit nothing — the single tall AABB enclosed the WHOLE car up to cabin height (~1.7m) across the full 3.6m length, so the empty air above the hood and trunk was solid "ghost" collision.
+
+### Fix — two boxes instead of one
+`addCar` now returns the lower BODY box (full len×width, ground → body top ~1.15m) with the upper CABIN box riding along on `_stacked` (cabinLen×cabinW, ~1.15→1.70m, offset back by the cabin's local −0.15). Aiming over the hood or trunk now clears the car; the cabin still blocks. The body box also remains the AI's cover reference (kids crouch behind the body, which is correct).
+
+- Both boxes respect the car's `orientation`: the body footprint swaps len/width when sideways, and the cabin's −0.15 local offset is rotated into world (cx,cz) so it lands over the right part of the car for any facing.
+- `sinkObs` (all three copies) now propagates its ground-sink offset to `_stacked.baseY`, so on a slope the cabin stays correctly stacked on the (lowered/raised) body.
+- New `pushCarObs(list, carObs)` helper pushes both boxes; all seven `addCar` call sites updated (four via the helper for the cul-de-sac/bulb/driveway cars, two road-cover loops push `cobj._stacked` after their existing push).
+
+### Verified
+- Parse clean. Car-collision harness 17/17 (headless THREE stub, real `addCar`/`raycastObstacles`): pushCarObs adds both boxes; body 0→1.15, cabin 1.15→1.70; body full ±1.8 length, cabin len 2.0 centered at −0.15. **The screenshot case proven**: the front/rear overhang volume is SOLID at body height (y=1.0) but EMPTY above the body (y=1.4, y=1.7) — the ghost collision is gone — while directly over the cabin stays solid at y=1.4. Orientation: a +Z-facing car swaps its footprint (long axis 3.6 along Z, narrow 1.55 along X) and the cabin center offsets to z=9.85 as expected. Slope: a 0.4 ground sink lifts both boxes and keeps the cabin stacked at 1.55.
+- Regression: collision-shapes 21/21, lamp-arm 16/16, lamp-collision 11/11, loader-refill 12/12 — all still green.
+
+### Still open
+- The cabin box is a plain rectangle; the real cabin is slightly tapered (windshield/rear glass rake). A BB skimming the very top corner of the slanted glass may pass where the box says solid, or vice-versa, by a few cm — negligible at play ranges. A tapered cabin would need an angled/extra box.
+- BB bounce reflection off the split boxes uses AABB-face normals (same as all box obstacles), unchanged.
+
+## v1.54a — Cars: oriented collision boxes (fix angled-car rear-corner pass-through)
+
+Player report (screenshot): the rear-left of a car showed no collision — BBs passed through — while the rest of the car worked. Root cause: cars are placed at ANGLES (orientation 0.2, random `atan2±0.3`, etc.), but v1.54's boxes were axis-aligned with only a binary len/width "sideways" swap — no actual rotation. A car tilted even 0.2 rad has its rotated mesh corners poke ~0.34m outside the axis-aligned AABB (confirmed numerically), so the rear corners sat in a collision gap.
+
+### Fix — oriented boxes (`shape:'obox'`)
+Added an oriented-box shape alongside the v1.53 cylinder. An obox carries center (cx,cz), local half-extents (hx,hz), and yaw `angle`. Both collision helpers handle it by transforming the query into the box's local frame:
+- `obsOverlapsXZ` (movement + BB hit): rotate the point by −angle, then circle-vs-rect against ±hx/±hz.
+- `obsRayDist` (BB/laser raycast + AI line-of-sight): rotate the ray origin+dir by −angle, then the standard slab method. The Y axis is unaffected by yaw, so the height band is unchanged.
+
+`addCar` now emits both the body and cabin as oriented boxes via a new `makeObox(cx,cz,hx,hz,angle,baseY,h,mesh,surface)` helper, which also stores an axis-aligned min/max ENVELOPE (the rotated box's bounding rect) as a conservative broad-phase fallback — so `sinkObs` footprint sampling, the AI `coverStandPos`, and any untaught path keep working. The v1.54 split (lower body + upper cabin on `_stacked`) and all the over-the-hood behavior are preserved; the boxes are simply rotated now.
+
+### Verified
+- Parse clean. Car-obox harness 15/15: the body is an obox with the car's angle and correct local half-extents; a point just inside the angled car's rear-left corner now COLLIDES, and the SAME corner is explicitly shown to have been MISSED by the old axis-aligned box (the bug, proven both directions); a point just past the corner is correctly clear (not over-tight); a BB ray into the rear-left clips the body; over-the-hood at body height is solid but empty above (v1.54 behavior preserved); straight cars (orientation 0) still correct; the broad-phase envelope contains the rotated corners.
+- Regression: collision-shapes 21/21, lamp-arm 16/16, lamp-collision 11/11 still green. (The v1.54 straight-only car test was superseded by the obox test and removed.)
+
+### Still open
+- The cabin obox is still a plain (oriented) rectangle; the slight windshield/rear-glass rake is unmodeled (same few-cm note as v1.54).
+- AI `coverStandPos` uses the axis-aligned envelope, so for a steeply-angled car a kid may stand a touch further off the true face than necessary — cosmetic to the AI's cover hugging, not a collision gap.
+
+## v1.54b — Car collision: anchor boxes to the mesh transform (fix the v1.54a sign bug)
+
+Player report: collision got WORSE after v1.54a, and asked why the boxes aren't just children of / anchored to the meshes so they can't drift. Both the diagnosis and the suggested fix were right.
+
+### What was wrong (v1.54a)
+The car mesh rotates via `group.rotation.y = orientation` — THREE.js Y-rotation, whose matrix maps local (lx,lz) to world `(lx·cos + lz·sin, -lx·sin + lz·cos)`. The v1.54a obox hand-computed its world center and its local-frame transform with the STANDARD 2D rotation (opposite sign on the off-diagonal). So the collision box was rotated the wrong way — mirrored across the car's long axis. Measured: a car at 0.2 rad had its rear-left collision corner ~0.7m away from the actual mesh corner. That's why it felt worse, not better.
+
+### The fix — anchor to the mesh, don't re-derive
+Per the player's instinct, the box is now tied to the mesh transform instead of baked from a re-passed angle:
+- `makeObox(mesh, offX, offZ, hx, hz, baseYLocal, h, surface)` stores the mesh + a LOCAL offset + local half-extents. It bakes no world coords.
+- `resolveObox(o)` computes the live world center, angle, base, and AABB envelope FROM the mesh's own `position` + `rotation.y`, using THREE's exact convention. So the box's angle literally IS the mesh's yaw — they can't disagree.
+- Both collision helpers (`obsOverlapsXZ`, `obsRayDist`) transform the query into the box frame with the correct THREE INVERSE (`lx = wx·cos - wz·sin`, `lz = wx·sin + wz·cos`) — the actual source of the v1.54a error, now fixed and matched on both the placement and query sides.
+- `sinkObs` (all 3 copies) now raises the mesh first, THEN re-resolves the obox (and its stacked cabin) so their world base/center follow the mesh — collision stays glued to it on slopes.
+
+### Verified
+- Parse clean. Car-anchored harness 16/16: the obox corner EXACTLY equals the mesh corner (to 1e-9) using THREE's convention; points just inside all four corners (rear-left included — the reported bug) collide, points just outside are clear; the base follows when the mesh is raised (body 0→0.4, cabin →1.55); over-the-hood preserved (solid at body height, empty above); holds for negative angles. The v1.54a hand-trig boxes are gone.
+- Regression: collision-shapes 21/21, lamp-arm 16/16, lamp-collision 11/11, loader-refill 12/12 — all green. (v1.54a's obox test superseded by the anchored test and removed.)
+
+### Note
+The boxes aren't literally THREE.js child objects (the collision system is a plain obstacle list, not the scene graph), but they're now ANCHORED to the mesh transform and resolved from it live — functionally the same guarantee: move/rotate the mesh and the collision follows, no hand-maintained duplicate of the rotation math.
+
+### Still open
+- Cabin rake unmodeled (few-cm, as before). AI cover-stand uses the AABB envelope (cosmetic to AI hugging).
+
+## v1.54c — Fix BBs getting trapped/pinging inside oriented car boxes
+
+Player report: from many angles the car "absorbs" BBs — they enter the mesh, ping around inside, and die in there. Some faces still worked.
+
+### Cause
+The hit detection (obox, v1.54b) was correct, but the BOUNCE was still axis-aligned. `computeHitAxis` chose a world X/Z face from the AABB envelope, and `applyBounce` reflected a world velocity component and snapped `bb.pos.x = oldPos.x` (a world-axis snap). For a rotated box that often left the BB INSIDE the true (rotated) faces, so it bounced around the interior between mismatched world-axis reflections until it ran out of bounces. The faces that "worked" were the ones where the box happened to align near a world axis.
+
+### Fix — reflect in the box's local frame
+- `computeHitAxis` now routes oboxes to `computeHitAxisObox`, which transforms the swept segment into the box's local frame and returns the true local face: `'lx'` (local X), `'lz'` (local Z), or `'y'`.
+- `applyBounce` handles `'lx'/'lz'`: convert the BB velocity to local, negate the struck local component (keep the energy-scaled tangential + Y), then EJECT the BB to just outside that local face, and convert position + velocity back to world. So the reflection normal is the real face normal and the BB always lands outside.
+- `applyStick` given the same local-face treatment (cars are metal=never-stick, but correct now for any future soft obox).
+- Added `_oboxToLocal` / `_oboxToWorld` helpers (THREE Y-rotation forward/inverse) shared by detection and response so the convention can't drift.
+
+### Verified
+- Parse clean. Obox-bounce harness 10/10: a BB driven through the long (local-Z) face is detected as `'lz'`, bounced, and ends up OUTSIDE the box with its local-Z velocity pointing back out and reduced speed; same for the short (local-X) face; and a **fuzz test of 200 bounces at random angles and entry points trapped ZERO BBs inside** (the bug, now provably gone).
+- Regression: car-anchored 16/16, collision-shapes 21/21, lamp-arm 16/16, lamp-collision 11/11, loader-refill 12/12 — all green.
+
+### Still open
+- The bounce reflects off the flat local faces (correct for a box-shaped car). Round props (trees/poles/cans) still bounce off their AABB-face normal rather than the true radial normal — separate, pre-existing, and only affects ricochet *direction* off cylinders, not whether the hit registers. Contained follow-up if cylinder bounce angles ever look off.
+
+## v1.55 — Fix "Defend the Treehouse" attackers snagging behind Seth's house
+
+Player report: the two enemies on the Treehouse defend level always get stuck behind the house. Asked to fix it by moving spawns rather than touching the AI.
+
+### Cause
+`winnmark_defend_treehouse` has 2 attackers (Marcus + Jamie), and the spawn pipeline huddles any 2+ enemy scenario at its `enemySpawnCluster` before deploying out to per-enemy anchors. That cluster was `cluster_road_east` at (31, 0, 0) — the far east road mouth. But the player defends from Seth's backyard fort at (21, -25), and Seth's house (center 24,-15, width 9 / depth 7 → footprint x∈[19.5,28.5], z∈[-18.5,-11.5]) sits squarely between the road-east staging and the fort. So both kids spawned EAST of the house and every path to the player had to wrap its SW corner, where they jammed. The old deploy anchors (road_east_north/south at x=28) were also east of the house, reinforcing the bad approach.
+
+### Fix — pure spawn geometry, no AI changes
+- New cluster `cluster_treehouse` at (17, 0, -6): staging just WEST of the house's east face, already up the driveway, with a clear straight lane north into the backyard toward the fort. The deploy huddle ring (r=1.4) stays inside x≈[15.6, 18.4] — clear of the x=19.5 footprint edge.
+- New deploy anchors `treehouse_push_e` (18, 0, -8) and `treehouse_push_w` (15, 0, -4), replacing road_east_north/south for this scenario. Both are west of the house and SOUTH of the x=16 backyard fence (which runs z∈[-19,-31]), so the lane from staging up to the fort never crosses that fence — it passes just east of the fence's x=16 line.
+- `winnmark_defend_treehouse` repointed: `enemySpawnCluster: 'cluster_treehouse'`, anchors swapped to the two new push anchors. The other Winnmark defend scenarios (Hold the Fort, etc.) still use `cluster_road_east` and are untouched.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Geometry hand-checked: cluster, huddle ring, and both anchors all clear of Seth's house AABB and the x=16 fence span; lane from (17,-6) to the fort at (21,-25) is unobstructed.
+
+### Still open
+- Behavioral check pending an in-game playtest — confirm both kids now push straight up into the backyard and actually pressure the fort within the 90s timer.
+
+## v1.56 — Treehouse defend, take two: swap the fort and the enemies
+
+v1.55 relocated the attacker staging but they still jammed — one kid would wander around, both kept getting stuck on Seth's house corner and the car parked in the driveway. Player's read: stop fighting the backyard geometry. Reverse the level so there are effectively two forts on the street (player's fort at one end, enemies pushing from where the player's fort used to be) instead of one fort tucked in a backyard.
+
+Considered the literal swap (Option A) vs. reusing the existing bulb fort (Option B). Player chose A — B was too close to the existing "Hold the Fort" scenario, and keeping this level distinct mattered more.
+
+### The two things that made A risky, and how each is handled
+1. **The east mouth is an exposed gap.** The road-cover loop deliberately skips x>27 (the tree-gap entry), so a fort there would sit bare. Mitigated by placing the fort just inside the gap at (33,0) facing west, where it's its own cover, and the road's staggered bounding cover leads right up to it for the attackers' approach.
+2. **The driveway car pinch.** A random car spawns mid-driveway at each house (60% chance). Seth's (house 0) sat at the throat of the only backyard→road lane — that plus the house corner was the jam. The builder only knows `variant`, not which scenario is running, so I couldn't suppress it for just this level. Instead the car loop now skips Seth's driveway entirely (`hc.x===24 && hc.z===-15`). No other house's driveway is on an active push lane, so it costs nothing elsewhere.
+
+### Changes
+- **Fort moved**: Seth's backyard (21,-25, faceDir E) → east road mouth (33,0, faceDir W). Fort footprint x∈[31.8,34.2], z∈[-1.9,1.9] — inside the |z|<5 tree gap, clear of the x=38 tree wall.
+- **New player spawn** `east_fort` at (35.5,0,0), yaw -π/2 (facing west, the attack direction). 1.8m behind the fort back wall, 2.5m off the trees. Mirrors `bulb_center`.
+- **Attacker staging reversed**: `cluster_treehouse` → (20,-23), deep in Seth's now-empty backyard. Deploy anchors `treehouse_push_e`/`_w` → (18,-4)/(16,-8), on the open WEST side of the house footprint (x<19.5), so the huddle rounds the house on its clear side and spills onto the road heading east.
+- **Driveway car at Seth's suppressed** (see above).
+- **Description rewritten**: player holds the plank fort at the mouth of the street; Marcus + Jamie cut through Seth's backyard to flush them out.
+- Field-map preview + behind-the-panel preview both read live resolved positions (`playerSpawnPos`, `built.enemies[]._spawnPos`), so the swap renders correctly with no preview-code change: You marker at the east end, two enemies clustered in the backyard.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Geometry hand-checked: fort clear of tree wall + within entry gap; player spawn clear of fort and trees; staging cluster + deploy anchors clear of Seth's house AABB; Seth's driveway car gone.
+
+### Still open
+- Playtest the reversed flow: do both kids now actually leave the backyard, round the house, and pressure the east fort within 90s? The west-side route is open, but want eyes on whether the AI picks it cleanly or still favors the house line. If one still hugs the corner, next lever is nudging the deploy anchors further west (x≈14) or widening the cluster.
+
+## v1.57 — Winnmark FFA spawn spread + a guided tutorial first level
+
+Two requests this session: (A) the FFA enemies were shooting each other immediately, and (B) add a tutorial as Winnmark's first level (Medium hands-on: Seth coaches + static dummies, a few in-world objective beats).
+
+### A. FFA spawn spread
+The four FFA kids used anchors house2/trey/brooke/house6 backyards — all packed into the middle two-thirds of the street with clear backyard sightlines across the road, so they opened fire on each other the instant the round started (and the whole east half of the map sat empty). Reassigned to the four CORNERS: seth_backyard (NE), trey_backyard (NW), house4_backyard (SE), house7_backyard (SW). Each kid now starts behind its own house with no initial line of sight to the others, so the FFA develops instead of resolving in three seconds. Pure anchor swap; FFA kids spawn directly at anchors (no huddle), so this is exactly where they start.
+
+### B. Tutorial — "Backyard Basics"
+New scenario `winnmark_tutorial`, inserted at the front of the `winnmark_court` order list, so it's the genuine first level and everything downstream unlocks from beating it (the existing strict-chain progression handles this with no special-casing).
+
+**Self-contained Tutorial module** (added before tick()). It's a no-op unless the active scenario has `tutorial: true`, so it can't touch any other level. Five beats, shown in a top-center coaching banner (new #tutorialHud + CSS) with a step label, instruction line (with <kbd> keys), and a progress-dot row:
+1. MOVE — walk to a glowing ground marker (ring + beacon mesh, pulses); completes on distance check to the marker.
+2. AIM — hold RMB; completes when `Game.player.ads > 0.6`.
+3. COCK & FIRE — completes on the first shot (doFire() calls `Tutorial.notify('fired')`).
+4. TAG — tag all 3 practice targets; eliminateEnemy() calls `Tutorial.notify('tagged')`, banner shows live X/3.
+5. RELOAD — press R; completes when `Game.gun.ammo` rises above the baseline captured when the beat showed.
+Then a brief "you're ready" flash, the banner fades, and the kill_all win resolves (all 3 targets are down by the time you finish the tag beat).
+
+The marker spot is computed in startScenario as 45% of the way from the player spawn toward the hostile-dummy centroid, so walking to it brings the targets into view down range.
+
+**Coach + targets.** Seth spawns as a friendly ally coach (`team:'player'`) on the north shoulder, near-passive. trey/brooke/jamie are the three static targets. Both use a new per-enemy `statsOverride` threaded through makeEnemyFromCharacter — it clones the CHARACTERS profile (`Object.assign({}, base, override)`) so the shared entry every other scenario uses is never mutated. Targets get aggression/fireRate/accuracy/moveSpeed ≈ 0 (genuinely still, effectively never fire), and `role:'defender'` so they spawn at their own anchors instead of joining the attack huddle (which, with moveSpeed 0, would have stranded them clustered at the centroid). Player gets 5 lives here so a stray pellet from a dummy can't end the lesson. New anchors tut_dummy_1/2/3 + tut_coach added to the Winnmark builder placements.
+
+### C. Supporting fixes
+- **kill_all excludes allies** (latent bug): the win counted every enemy with health>0, including allies. A coach/teammate would have had to be shot to win, and the round would never end. Now filters `e.team !== 'player'`. Fixes the tutorial and any future kill_all-with-ally skirmish.
+- Tutorial's dummy count + marker centroid both filter to hostiles only, so Seth doesn't inflate the 3/3 counter or pull the marker toward the shoulder.
+- Row label shows "TUTORIAL" (not a "2v3" matchup); objective shows "Learn the ropes — tag the practice targets".
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Wiring audited: HUD ids (tutStep/tutInstr/tutDots) match the module's queries; begin/end/update/notify all called; doFire + eliminateEnemy hooks in place; scenario exists with tutorial:true and is first in the order list; tut_* anchors live in the builder used (cul_de_sac). Tutorial is a top-level const evaluated before any gameplay call that references it.
+
+### Still open
+- Playtest the full flow end to end: does each beat advance cleanly (esp. the reload baseline if the player reloads early, and the move-marker radius feeling right)? The marker uses a 2.5m radius and a 250ms anti-instant-complete grace.
+- The dummies sit on the road spine where street cover spawns; findClearSpawn nudges them out if a piece lands on one, but worth confirming none end up awkwardly behind cover where they're hard to tag.
+- If a player reloads during an earlier beat, the reload beat still requires another ammo rise (baseline is captured when that beat shows) — fine, but watch that it doesn't feel redundant if they're already full (a full mag means R does little; may want to accept a keypress there).
+
+## v1.58 — Tutorial polish from the first playtest
+
+Three fixes off the first run-through.
+
+### 1. Dummies no longer get a shot off
+Reported: you get shot once when you first approach the targets. The statsOverride set fireRate to 0.01, but fireRate is a *multiplier on time-between-shots*, not a probability — it makes a dummy fire very rarely, not never, and the kid still enters the shooting state and can squeeze off one BB when LOS first opens. Tuning stats lower would never be a guarantee.
+
+Fix: a hard `noFire` boolean on the enemy, checked as the very first line of `spawnEnemyBB` (the single chokepoint every enemy shot routes through). A flagged enemy returns before any BB is created, so it's provably zero shots regardless of state, fireRate, or LOS. Threaded scenario→`makeEnemyFromCharacter`→enemy object exactly like statsOverride, and set `noFire:true` on the coach and all three targets. (Kept the statsOverride too so they also don't reposition/aim — belt and suspenders.)
+
+### 2. Fire-beat instruction was wrong
+The gun starts cocked, so the first shot is a single left-click — but beat 3 said "hold to cock the spring, then release to fire," which only describes the *re-cock* that happens after a shot. New flow:
+- Beat 3 "Take Your First Shot": "Your gun starts cocked and ready. Click LMB to fire a shot down range."
+- Beat 4 "Re-cock & Tag": "After each shot the spring is spent. Hold LMB to pull it back, release at the top to fire again. Tag all three targets." (live X/3 counter wording updated to match.)
+This matches the actual semi-auto cock mechanic in onLmbDown (cocked+click = immediate fire, then un-cocks; must release and hold again to re-cock).
+
+### 3. "&amp;" leak in the step header
+The banner step label showed "COCK &AMP; FIRE". Labels are assigned via textContent (not innerHTML), so the HTML entity rendered literally. Switched the label to a literal "&". (Instruction lines still use innerHTML for the <kbd> tags — those are fine.)
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- noFire wiring confirmed end to end: scenario flags → factory param → enemy.noFire → early return in spawnEnemyBB.
+
+### Still open
+- Re-confirm on playtest that zero BBs come from the dummies now, and that the reworded fire/tag beats read clearly in sequence.
+
+## v1.59 — Field-map facing arrow + two backwards-spawn bugs it caught
+
+QoL ask: add an arrow to the player's dot on the intro field-map preview so you can tell which way you're facing relative to enemies/allies.
+
+### The arrow
+drawIntroFieldMap now draws a small triangle just outside the player's ring, pointing along the spawn facing. Player forward in world space is (-sin(yaw), -cos(yaw)) — confirmed against both startSlide and the WASD movement basis (pressing W gives exactly that vector). The map's toPx maps world-x → canvas-x and world-z → canvas-y, so the same (fx, fy) components are the on-canvas heading with no extra transform. Uses built.spawnYaw, which enterScenario overrides from sc.playerSpawn (line 13719) before the draw call (13819), so it's correct per-scenario.
+
+### Two bugs the arrow exposed
+Sanity-checking the math against known spawns showed two whose yaw pointed away from the fight:
+- **east_fort** (Treehouse defender, v1.56): yaw was -PI/2 → forward (+1,0) = east, i.e. looking out the back of the fort, away from the attackers pushing up from the west. The "faces west" comment and the actual yaw disagreed. Corrected to +PI/2 (forward (-1,0) = west).
+- **bulb_center**: yaw was +PI/2 → forward (-1,0) = west, but the bulb is at the far west (x=-31.5) and attackers come from the east. Comment said "facing east (the attack direction)" — the yaw didn't match. Corrected to -PI/2 (forward (+1,0) = east).
+- road_east (yaw +PI/2 → west, player on the east end) was already correct; it's the reference that confirmed the convention.
+
+These went unnoticed because the player just spins the mouse at the start, but spawning faced-correct is the intended behavior and now the map shows it honestly. The Bunratty builder has its own bulb_center (different layout, self-consistent "facing west" comment) — left untouched pending a dedicated check rather than risk a new mismatch.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Arrow direction validated numerically for road_east/east_fort/bulb_center against intended facings.
+
+### Still open
+- Eyeball the arrow on a few scenarios to confirm it reads clearly at the dot's scale (tip 18px out, 9px base).
+- Decide whether the Bunratty bulb_center wants the same audit.
+
+## v1.60 — Loadout screen rework (gun swap + mag filtering) and a loadout-weight system
+
+Two asks: the closet loadout was awkward with multiple guns (couldn't really swap, and every mag for every gun showed up), and a request for a weight metric that scales movement speed.
+
+### A. Gun swapping actually works now
+The slot-0 gun picker existed but only enumerated pistol/shotgun/ar/sniper — the four auto guns (ak47/mp5/ump/mac10) were never listed, so if you owned an MP5 you couldn't pick it from the closet. Now uses a new canonical helper getOwnedGunTypes() (pistol always + any owned), matching the list the world-map progression already uses.
+
+### B. Mag pool filtered to the equipped gun
+getAvailableSlotItems() listed every spare mag you owned across all guns. Since a mismatched mag just dry-clicks in-match (the MAG_GUN_FIT check in the feed handler), surfacing all of them was pure noise. The pool now skips any mag whose MAG_GUN_FIT doesn't match equipped.gun. Promoted MAG_GUN_FIT from a function-local object to a shared top-level const so the pool filter and the in-match feed read one source of truth. Also: swapping guns now auto-clears any equipped spare-mag slots that don't fit the new gun (they'd be dead weight) — speed loaders are gun-agnostic so they stay.
+
+### C. Loadout weight → movement speed (new system)
+Config: GUN_WEIGHT (pistol 2 … sniper 10), MAG_WEIGHT per refId (0.6–3.2), speedLoaderWeight(tier) = 0.8 + cap/100, ARMOR_WEIGHT (0.8–6). computeLoadoutWeight() returns { gunW, gearW, total, parts }.
+
+Speed coupling: the GUN already scales movement via its playerSpeedMult (tuned/tested per class), so weight does NOT re-tax the gun — only CARRIED GEAR (mags + loaders + armor) adds a penalty: loadoutWeightSpeedMult() = 1 - min(0.20, gearW * 0.012). Snapshotted once at startScenario as Game.scenario.weightSpeedMult (loadout is fixed mid-match) and multiplied into the movement speed right after the gun mult. The gun's weight still counts toward the displayed TOTAL so the number reflects the whole kit.
+
+Readout: new #loWeightBar at the top of the closet shows total lb, a Light/Medium/Heavy/Very-Heavy tier (color-coded), a fill bar (relative to a 24 lb reference), and a note breaking out gun vs gear lb and the resulting % slow. renderLoadoutWeight() is called from renderLoadoutManager(), and every gear/armor/gun toggle already re-renders the manager, so it updates live.
+
+Sanity numbers: pistol + 1 mag = 2.8 lb Light, ~1% slow. MP5 + 200 mag + foam chest + SL100 = 11.3 lb Medium, ~8%. Sniper + full armor + drum = 21 lb Very Heavy, ~13% gear penalty (floored at 20%), and stacked on the sniper's 0.75 handling that's a genuinely heavy, sluggish build — the intended tradeoff.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Weight math validated numerically across light/medium/heavy loadouts.
+- Mag filter + gun list confirmed against MAG_GUN_FIT and getOwnedGunTypes.
+
+### Still open
+- Playtest the feel: is 0.012/lb noticeable-but-fair? Tune the coefficient or cap if heavy kits feel too free or too punishing.
+- The weight bar's 24 lb fill reference is a guess at a "full kit" ceiling; adjust if real maxed loadouts run higher.
+- Consider showing the weight (or just the tier) on the in-match HUD too, not only the closet — deferred unless wanted.
+- Worn shoes affect stamina but aren't in the weight total (kept out to avoid double-dipping with their stamina role); revisit if it feels inconsistent.
+
+## v1.61 — Top-rail optics get real meshes + a scoped sight picture
+
+The sight slot (red-dot, 4× scope) had all the systems — spread/zoom bonuses, the HUD dot, the slot model — but no geometry on the gun. The comment literally said "sights render as a reticle/zoom." This session gave them meshes and a real ADS look.
+
+### Meshes
+`buildRedDotOptic()` and `buildScopeOptic()`, built once in `ensureFPGunAccessory` and parented to a new top-rail `sightAnchor`, toggled by the mounted sight in `updateFPGunAccessory` (same flow as laser/flashlight, so they show on both the viewmodel and the workbench turntable). Per-gun `sightY`/`sightZ`/`sightScale` added to `FP_GUN_MOUNT`.
+
+### ADS
+Red-dot keeps the glowing center dot + light vignette. Scope got a dedicated `#scopeOverlay` (black mask, circular eyepiece cutout, fine crosshair + center dot) that fades in with ADS and replaces the generic vignette. Both hide the iron crosshair; both reset paths clear the overlay.
+
+## v1.61b — Optic revision from first playtest (tested on the sniper)
+
+Four issues from the screenshots:
+
+### 1. Red-dot was a mini-scope, should be an open reflex (C-More style)
+Rebuilt as a flat baseplate + a front L-arm carrying a single round lens in a ring, open at the rear — no tube. Red dot floats on the (slightly back-canted) lens. Reference was a C-More railway sight.
+
+### 2. Both optics sat sunk into the receiver
+Root cause: the old builders put the local origin at the GLASS CENTER, so the body extended *down* from there and straddled the receiver. Rebuilt both with the **foot at local y=0** so everything stands UP from the rail. `sightY` retuned from "glass height" to "receiver/rail TOP" per gun (sniper 0.060→0.040 = its actual receiver top at 0.037). Added a visible short Picatinny top rail on the anchor so the optic has something to perch on and the height reads as intentional. `userData.sightLineY` exposes the dot/bore height above the foot. Verified the perch with a side-view schematic built from the actual builder geometry: foot lands flush at receiver top (gaps −0.002..+0.006 m across all 8 guns), lens/tube stands ~4cm above.
+
+### 3. Red-dot ADS: the dot should BE the reticle (dead center)
+The in-world lens dot now fades out as ADS rises (gone by ads≈0.5) while the screen-centered `#redDotReticle` HUD dot fades in — so at full aim the dot sits exactly where the crosshair was. Iron crosshair hidden whenever the red-dot dot shows.
+
+### 4. Scope ADS: stronger zoom + hide the gun
+adsZoomBonus 0.5→0.8 and the FOV floor 28°→16° (4× scope now reaches ~24° vs the old 41°). The whole `fpGun` hides once `ads > 0.55` with a scope equipped, so the full-screen scope overlay is the entire sight picture instead of a viewmodel floating behind the lens.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Optic geometry + foot-on-rail heights validated numerically and via a rendered side-view schematic for both optics on the sniper.
+
+### Still open
+- Only tested on the sniper. The other 7 guns' `sightY`/`sightZ` are derived from mesh positions — eyeball each when mounting; low-receiver guns (MP5, MAC-10) most likely to want a nudge.
+- Red-dot aim alignment relies on the centered HUD dot, not the gun's pose putting the physical lens behind center. If the lens visibly misaligns with the dot at partial ADS, add a per-gun sight-line pose offset so the lens height lands on center.
+- Scope cutout radius / zoom strength are first guesses — tune the `.scope-mask` gradient stops and adsZoomBonus to taste.
+- Consider whether the red-dot wants the light vignette at all, or a cleaner unobstructed view.
+
+## v1.61c — Red-dot fixes from playtest (scope confirmed good)
+
+Two bugs on the red-dot from workbench + in-game shots:
+
+### 1. Black column through the lens
+The front upright arm carrying the lens ring rose to lens-center height and sat just behind the glass, so it cut straight down the middle of the sight picture. Replaced it with a HOOD support: a short strut whose TOP meets the lens BOTTOM (lineY − lensR) and bottom meets the baseplate, sitting at the front. The sight line above lens-bottom is now completely clear — verified with a head-on schematic.
+
+### 2. Rim disappeared when looking through it (ADS)
+The lens ring was a `CylinderGeometry(..., openEnded=true)` — just a thin wall. Looked at edge-on (i.e. straight down the bore when aiming), that wall has no facing surface and vanished, leaving only the floating dot (seen on the shotgun ADS shot). Swapped it for a `TorusGeometry` bezel, which has a circular tube profile visible from every angle including dead-behind. Both `RingGeometry` and `TorusGeometry` are already used elsewhere in the game, so they're safe in the r128 build.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Rebuilt the side + head-on schematics from the actual geometry: head-on shows a clean bezel ring, tinted lens, centered dot, emitter at the bottom, hood entirely below the sight line. Hood height positive (0.015) and its top lands exactly on the lens bottom.
+
+### Still open (carried from 1.61b)
+- Per-gun `sightY`/`sightZ` still only eyeballed on the sniper + shotgun; check the rest when mounting.
+- Red-dot aim still leans on the centered HUD dot rather than a pose offset that puts the physical lens behind center.
+
+## v1.61d — Optic ADS alignment (lens centers on the dot)
+
+Shotgun + red-dot shot showed the centered HUD dot sitting correctly at screen center, but the gun mesh and the bezel ring rode HIGH — the lens ended up below the dot. Cause: the per-gun `adsPos.y` was tuned to bring the IRON sights to center, and an optic's dot sits higher (on top of the rail), so the gun rode up by that difference.
+
+### Fix
+A sight-line correction in `updateHeldMesh`: when a red-dot or scope is mounted, compute the dot's height above the gun origin (`sightAnchor.position.y + optic.userData.sightLineY * anchor.scale.y`) and set the ADS gun Y so the dot lands at camera-Y 0 (screen center) at full ADS — `baseY(full) = -dotLocalY`. Blended in with ADS so the hip pose is untouched; the convergence rotation already zeroes at full ADS so it doesn't fight the correction. Verified numerically: dot lands at camera-center (0.0000) for all 8 guns with the red-dot. Applies to the scope too, though it only matters during the blend since the scope hides the gun at full aim.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Dot camera-Y = 0 confirmed across all guns for the red-dot sight-line heights.
+
+### Still open
+- The gun now tucks ~1–1.5cm lower at ADS (correct — you drop the gun to look through a higher optic), so a bit more receiver shows at the screen bottom. Reduce per-gun if any look too low.
+- Per-gun `sightY`/`sightZ` lateral/forward placement still only spot-checked; the Y alignment is now formula-driven and gun-agnostic.
+
+## v1.61e — Side-rail placement pass (all 8 guns)
+
+The accessory side rails (laser/flashlight mounts) were placed loosely — several hung in empty space off the gun, the shotgun's sat on top of the moving pump, and others overhung the handguard front. All fixed in `FP_GUN_MOUNT` via sideX (lateral offset from centerline), railZ (fore/aft center), railLen (length), checked against each gun's real handguard/barrel geometry.
+
+Per gun:
+- **Sniper**: sideX 0.022→0.016 (pull in to touch the forend/barrel), railZ -0.23→-0.19 (back off the muzzle overhang).
+- **Shotgun**: railZ -0.20→-0.12 + len 0.11→0.07 + sideX 0.024→0.016 — moved OFF the pump (which slides) onto the fixed receiver/barrel junction.
+- **AR**: sideX 0.024→0.016, railZ -0.21→-0.185, len 0.12→0.10 — pulled in, slid back, trimmed off the front empty space.
+- **AK47**: sideX 0.024→0.017, railZ -0.23→-0.185, len 0.10→0.085 — same, onto the wood handguard.
+- **UMP**: sideX 0.022→0.015, railZ -0.16→-0.155, len 0.085→0.06 — shortened onto the shroud.
+- **MP5**: sideX 0.022→0.016 (pull in to the round handguard), railZ -0.17→-0.16, len 0.085→0.07.
+- **MAC10**: sideX 0.020→0.016, railZ -0.10→-0.065, len 0.060→0.05 — slid back off the front, onto the lower body/barrel.
+- **Pistol**: railZ -0.15→-0.115 (slid back along the slide), sideX 0.020→0.019.
+
+Verified: parse clean (extracted module, node --check, rc 0). Generated top-view schematics from the real mount values for sniper/shotgun/MP5/AR — rails now sit flush against the gun body and on fixed (non-moving) surfaces.
+
+Still open: schematic body-widths are approximate (not all in the geometry dump), so confirm the touch/flush look in the workbench; the rail-to-support placement itself is driven by real values.
+
+## v1.61f — Sean carries the AK on all Bunratty scenarios
+
+The bunratty_sean intro lore says Sean "carries his AK-47 everywhere on this street," but four Bunratty scenarios still had him spawning with a pistol. Switched all four to ak47:
+- `bunratty_nick` (2v1), `bunratty_storm_the_court` (2v2), `bunratty_ffa`, `bunratty_night_lane`.
+
+Left alone:
+- His `bunratty_infection` entry uses `behavior: 'tagger'` — taggers are gun-less by design (infect on contact), so an AK there would break the mode.
+- Non-Bunratty Sean spawns (the Hollow battles in East Roswell, etc.) are a different neighborhood and outside the request; untouched, including a pistol entry in `hollow_juggernaut`.
+
+Verified: parse clean; confirmed every Bunratty (street: bunratty_ct) Sean gunner entry now reads ak47, and post-Bunratty entries are unchanged.
