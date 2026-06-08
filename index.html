@@ -412,6 +412,69 @@
     font-size: 13px;
     display: none;
   }
+
+  /* v1.62 — floating bedroom labels. A DOM overlay layer; each interactable
+     gets a billboarded marker whose screen position is updated every frame by
+     projecting the interactable's 3D world position through the camera. */
+  #bedroomLabels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    display: none;
+  }
+  #bedroomLabels .br-label {
+    position: absolute;
+    transform: translate(-50%, -100%);   /* anchor the tip at the world point */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    will-change: left, top, opacity;
+    transition: opacity 0.18s ease, filter 0.18s ease;
+    text-align: center;
+    /* opacity is driven per-frame by JS (distance fade); start hidden */
+    opacity: 0;
+  }
+  #bedroomLabels .br-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ui-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: 14px;
+    padding: 4px 10px 4px 6px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  }
+  #bedroomLabels .br-icon {
+    width: 18px; height: 18px;
+    flex: 0 0 18px;
+    display: block;
+  }
+  #bedroomLabels .br-icon svg { width: 100%; height: 100%; display: block; }
+  #bedroomLabels .br-name {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--ui-text);
+    text-transform: uppercase;
+  }
+  /* little downward pointer connecting the chip to the world point */
+  #bedroomLabels .br-stem {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--ui-border);
+    margin-top: -1px;
+  }
+  /* the focused (nearest, interactable) label gets the accent treatment */
+  #bedroomLabels .br-label.focused .br-chip {
+    border-color: var(--ui-accent);
+    background: rgba(40, 28, 18, 0.95);
+  }
+  #bedroomLabels .br-label.focused .br-stem { border-top-color: var(--ui-accent); }
+  #bedroomLabels .br-label.focused .br-name { color: var(--ui-accent); font-weight: bold; }
+  #bedroomLabels .br-label.focused .br-icon svg [stroke] { stroke: var(--ui-accent); }
   #interactPrompt kbd {
     background: var(--ui-accent);
     color: #000;
@@ -1729,6 +1792,7 @@
     <div class="tut-dots" id="tutDots"></div>
   </div>
   <div id="laserDiagHud" style="position:absolute;left:8px;top:8px;background:rgba(0,0,0,0.8);color:#9f9;border:1px solid #3a3;padding:8px 10px;border-radius:3px;font:12px monospace;white-space:pre;display:none;z-index:9999;pointer-events:none;"></div>
+  <div id="bedroomLabels"></div>
   <div id="bedroomHud">
     <div class="cash-line"><span class="cash-label">CASH</span> <span id="cashAmount">$25</span></div>
     <div class="bag-line"><span class="bag-label">BBs</span> <span id="bedroomBag">15</span></div>
@@ -1743,7 +1807,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.61g</div>
+  <div class="version">v1.85</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2025,6 +2089,493 @@
 <script>
 // =====================================================================
 // NEIGHBORHOOD AIRSOFT
+// VERSION: 1.85 — Fix the v1.84 "no laser at all" regression (wrong scene).
+//          v1.84 moved the beam into a scene-level group to escape the kid's
+//          non-uniform-scale shear — correct fix, but it added the group to the
+//          global Game.scene. During enterScenario, attachKidLaser runs BEFORE
+//          Game.scene is repointed at the scenario scene, so the beam group landed
+//          in the stale bedroom scene and never rendered (no beam at all).
+//          FIX: add the beam group to the SAME scene the kid lives in (walk the
+//          kid's group ancestry to its scene root), and additionally SELF-HEAL each
+//          frame in updateKidLaser — if the beam group's parent scene ever differs
+//          from the kid's, re-parent it. So the beam always renders in the right
+//          scene regardless of attach-time ordering, and still carries no scale
+//          (no shear). Net: laser both shows AND points correctly.
+//
+// VERSION: 1.84 — Enemy laser vertical beam: THE ACTUAL root cause (scale shear).
+//          v1.83's diag exposed the real contradiction: the aim DIRECTION logged
+//          correct (mostly horizontal, pointing at the player) yet the BEAM
+//          rendered vertical. That can only happen if the rendered beam doesn't
+//          follow the computed direction — and it didn't, because the beam was a
+//          child of the kid mesh, which carries a NON-UNIFORM scale (height scaleY
+//          ∈ {0.88,1.0,1.12} vs build scaleXZ ∈ {0.88,1.0,1.18}, set
+//          independently — a tall-skinny kid is 1.12y / 0.88xz). A non-uniform
+//          parent scale SHEARS directions: a horizontal aim, expressed through the
+//          sheared parent frame, tilts UP in world space. lookAt and explicit
+//          quaternion aims BOTH failed because the shear is in the parent chain,
+//          ABOVE the beam — nothing done to the beam's own local transform can
+//          undo a parent shear. (Verified headlessly: a horizontal aim rendered at
+//          dir.y 0.16 → 0.20 under 0.88/1.12 scale.)
+//          FIX: the beam + dot now live in a SCENE-LEVEL group (kid._laserBeamGroup
+//          on Game.scene), NOT under the kid. The emitter housing stays bolted to
+//          the gun (for the muzzle origin), but the beam is placed + oriented in
+//          pure WORLD space each frame — position = emitter origin, quaternion =
+//          local +Z → world ray. No inherited scale, no shear: rendered direction
+//          now matches the aim exactly (err 0.0000 even at 0.88/1.12 scale) and the
+//          dot lands on the target. The diag HUD also now prints renderDir so any
+//          future divergence from dir is visible at a glance.
+//
+// VERSION: 1.83 — Enemy laser "to the sky": beam overshoot clamp.
+//          The v1.82 diagnostics nailed it. The diag showed aim tgt: PLAYER, a
+//          correct mostly-horizontal dir (-0.99, 0.17, 0), and the beam CLIPPED at
+//          56.83m. The aim math was right all along — the beam was simply 60m long
+//          and only clipped on COVER meshes, never on the target. When a kid aimed
+//          across open ground at the player (no cover between them), the beam sailed
+//          the full ~57m, overshooting the player by ~28m and continuing up the
+//          slope into the air. Because that bearing ran roughly toward the camera
+//          (player up/down-hill of the shooter), the ~28m of overshoot projected to
+//          a near-vertical streak climbing into the night sky — exactly the
+//          "gradually higher above my head with the height gap" report (a bigger
+//          height gap = a steeper bearing = more of the overshoot pointing up).
+//          FIX: updateKidLaser now also clamps the beam length to the distance to
+//          the AIM POINT (+0.15m so the dot sits on the target), so the laser
+//          terminates ON whatever it's aiming at instead of overshooting. A laser
+//          aimed at the player now lands a dot on the player rather than a 60m
+//          beam into the sky behind them.
+//
+// VERSION: 1.82 — Enemy laser "to the sky" hardening + diagnostics.
+//          The beam math (origin → aim → lookAt) was verified correct for slope
+//          geometry (a chest-aimed beam tilts only ~5-12° even on Bunratty's 9m
+//          grade), so a near-vertical beam can only come from (a) the no-aim-point
+//          fallback shooting the gun's world-forward when the pose tilts the gun
+//          up, or (b) the laser correctly tracking a target that is genuinely
+//          uphill (e.g. another kid in a night fight). Fixes:
+//          - NO STRAY FALLBACK BEAM. updateKidLaser no longer falls back to the
+//            gun's world +Z when it has no aim point — it HIDES the beam that frame
+//            instead. A target-less kid can no longer paint a vertical beam.
+//          - AIM AT LIVE CHEST. The aim now uses the target's chestY getter (live
+//            terrain-planted pos.y) instead of a hand-rolled pos.y + 1.0, so the
+//            dot stays locked to the actual chest on slopes.
+//          - DIAGNOSTICS. The ` (backtick) laser-diag HUD now reports whether the
+//            aim target is the PLAYER or another kid, plus shooterFeetY / tgtFeetY
+//            / aimY and the dir vector — so if an up-beam recurs we can tell at a
+//            glance whether it's a real uphill target or a bug.
+//
+// VERSION: 1.81 — Hands snap to real grip points + correct elbow bend direction.
+//          Playtest of v1.80 showed the hands floating near the gun (not ON it),
+//          the gun looking held "from the top," the off-arm cutting through the
+//          torso, and the resting elbow bending the wrong way. Fixes:
+//          - GRIP-SNAP. Added gunGripLocal() — the firing-hand grip point on the
+//            gun mesh (the pistol grip, at gun-local (0,-0.08,-0.01)). The hands
+//            now target the gun's ACTUAL grip / near-handguard world points
+//            (gunGroup position + local offset) instead of arbitrary offsets, so
+//            they land on the weapon. The gun is positioned by its mount with the
+//            grip below, so the hand-on-grip reads as held at the grip (body above)
+//            rather than "from the top."
+//          - BEND DIRECTION. solveArm now takes an explicit bend-hint vector. The
+//            firing (right) arm's elbow kicks OUT to the right (-X) and down, so
+//            the forearm angles back IN to the grip (the requested aiming
+//            geometry); the off (left) arm's elbow kicks out-left (+X) and down.
+//            (v1.80 forced every elbow forward, which inverted the rest pose.)
+//          - REACH-AWARE TARGETS. The arm is 0.45m and a hanging hand only reaches
+//            down to ~0.60, so targets are tuned to stay reachable: small guns ride
+//            higher (gun ~0.74 rest → ~0.88 aim) so the hand meets the grip; large
+//            guns are carried CENTERED across the chest at rest (a patrol carry —
+//            the off-hand can't cross-reach a foregrip tucked at the far shoulder)
+//            and tuck only to center-RIGHT (x~-0.10) on aim. All grips validated to
+//            land within arm reach (err≈0; large off-hand ~3cm at full extension).
+//          - The gun being forward of the torso (rest) keeps the off-arm from
+//            cutting through the body.
+//
+// VERSION: 1.80 — Elbow joints + exaggerated firing raise (2-bone IK).
+//          Replaced the single-box arms with a TWO-SEGMENT ELBOW RIG: each arm is
+//          a shoulder pivot Group → upper-arm box → elbow pivot Group → forearm
+//          box → hand (upper 0.24m + fore 0.21m). setKidGunHold now runs a proper
+//          2-bone IK: it computes the ELBOW point geometrically (segment-sphere
+//          intersection, pushed toward a forward/down bend hint so elbows kick
+//          forward into a natural shooting stance), then aims the shoulder
+//          S→elbow and the elbow elbow→H. The forearm tip lands on the hand
+//          target for any reachable pose — no more stiff straight-plank arms.
+//          Raised the firing pose per request:
+//            - SMALL guns (pistol/mac10): on aim the gun pushes well FORWARD
+//              (z+0.30, was +0.18) and rises to CHEST height (y+0.24, was +0.10),
+//              both hands gripping out in front of the body.
+//            - LARGE guns: on aim the gun rises to the RIGHT ARMPIT (tucked just
+//              below the shoulder) with the off-hand reaching across to the
+//              handguard IN FRONT OF CENTER (not all the way to the firing
+//              shoulder, which is past comfortable reach), slight forward lean.
+//          Supporting: createKid builds the rigs + exposes pose.rigR/rigL and new
+//          base anchors (shoulder_y, U_LEN, F_LEN, shoulderR/L_x); setKidCrouch
+//          resets both rigs to a clean hanging base and drops the shoulder pivots
+//          by hipDrop; setKidHitPose raises the gun arm via the shoulder pivot +
+//          slight elbow bend; the zombie reach rotates the shoulders forward with
+//          a grasp bend; IK scratch math hoisted to module scope (_IK_*) to avoid
+//          per-frame allocation. Arm HITBOXES are unchanged (checkEnemyHit uses
+//          fixed local AABBs, independent of the visual rig).
+//
+// VERSION: 1.79 — Shoulder-anchored NPC arms (fixes the off-hand slide).
+//          The v1.78 two-handed holds reached across by TRANSLATING the arm
+//          box's X — but the arm is a center-pivot box, so moving its X dragged
+//          the SHOULDER end inward toward mid-body (the visible "left shoulder
+//          slides to center" report). Rewrote anchorArm to model the arm as a
+//          box that SPANS shoulder→hand: center at the midpoint, quaternion
+//          orienting local -Y along the shoulder→hand direction, scale.y stretched
+//          to cover the reach. Both ends now land EXACTLY on their targets, so the
+//          shoulder is truly pinned (verified 0.0000m drift for every reach case)
+//          for any combination of cross-body and forward reach.
+//          - setKidCrouch now resets each arm to a clean euler base (identity
+//            quaternion, scale.y=1, X/Z to base) at the top, so anchorArm is the
+//            sole quaternion authority each frame and the hit/zombie euler poses
+//            (which run without anchorArm) never fight a stale quaternion/stretch.
+//          - Walk anim no longer touches the arms (they're quaternion-driven and
+//            committed to the weapon); it swings the legs + adds the torso bob only.
+//
+// VERSION: 1.78 — NPC rig overhaul: handedness + two-handed holds + walk anim.
+//          (1) HANDEDNESS. The gun + gun-arm/hand sat on local +X, which reads
+//              as LEFT-handed from the player's view. Moved the gun mesh and the
+//              gun-side limbs (armR/handR) to local -X (the kid's RIGHT); the
+//              off-hand (armL/handL) now lives on +X and reaches across. Pose
+//              code still calls the gun side "R" — only the X sign changed. Base
+//              X/Z anchors (gun_x, gun_z, arm/hand _x/_z) were added to the pose
+//              base record so every pose restores cleanly regardless of side.
+//          (2) TWO-HANDED HOLDS. New setKidGunHold(kid, weapon, t, lift) is the
+//              single authority for gun + both hands, layered on the crouch base:
+//                - SMALL guns (pistol, mac10): one-handed at rest, off-hand at the
+//                  side; on firing/aiming BOTH hands push the gun straight out in
+//                  front of the chest (gun slides to center, arms forward).
+//                - LARGE guns (everything else): two-handed ALWAYS — off-hand rests
+//                  across on the weapon's foregrip even at idle (per-weapon grip Z
+//                  via gunForegripZ); on firing the gun tucks into the right
+//                  shoulder with the off-hand still across and a slight forward
+//                  lean down the sights.
+//              The over-cover lift (v1.77) folded into this as a `lift` param,
+//              replacing the standalone setKidAdsTall.
+//          (3) WALK ANIM. New setKidWalk(kid, phase, intensity) adds a SUBTLE
+//              opposed leg swing + small off-arm counter-swing + faint torso bob
+//              while a kid actually moves. The gun arm/hand stay planted on the
+//              weapon so the hold never breaks. Intensity is eased from the kid's
+//              real per-frame displacement; the gait phase only advances while
+//              moving, so a stopped kid freezes in a clean stance.
+//          (4) UNIFIED POSE PASS. updateEnemies now runs one self-contained pass
+//              after the terrain plant: idempotent crouch re-assert (no drift) →
+//              aim-ramp + over-cover lift → setKidGunHold → setKidWalk. An _aimHold
+//              timer (armed on every shot) keeps the shouldered/forward hold across
+//              a burst and eases back to the rest hold after the last round.
+//
+// VERSION: 1.77 — Car slope-tilt fix + enemy laser/cover-fire polish.
+//          (1) CAR SLOPE TILT. addCar's world→local normal transform used a
+//              FLIPPED inverse-yaw (both sign terms wrong), which cross-fed the
+//              pitch component into roll and vice versa — parked cars on a grade
+//              leaned sideways far too much. Corrected to the proper THREE
+//              Y-rotation inverse: localX = nx·cosθ + nz·sinθ, localZ =
+//              -nx·sinθ + nz·cosθ. Flat ground → 0 tilt; slope → the car now
+//              pitches along its length and rolls across its width correctly.
+//          (2) DOWNED-KID LASER. A tagged kid runs the "I'm hit" pose (gun ~90°
+//              skyward) then `continue`s, skipping updateKidLaser — so its stale
+//              laser unit rode the raised gun and fired a vertical red beam
+//              straight up out of an out-of-play kid (the "lasers point way too
+//              high" report; it self-corrected only because a live kid getting
+//              close was a DIFFERENT, still-aimed kid). Now the beam+dot are
+//              hidden while a kid is down, and re-shown on any live re-aim, so a
+//              respawn/revive restores them automatically.
+//          (3) FIRING OVER COVER. A kid tucked right behind a bin/wall/car shot
+//              its BB straight into the back of that cover (spawn at ~1.05m
+//              shoulder height, cover top taller → BB buried in the mesh). New
+//              coverInFrontTop() probe (one cheap pass, AABB+cylinder, honors
+//              slope baseY) finds cover just ahead along the firing bearing; if
+//              its top is above the muzzle, spawnEnemyBB lifts the BB spawn to
+//              just over the lip (capped +0.7m → believable lean, not levitation)
+//              and flags _firingOverCover.
+//          (4) ADS-TALL POSE. To sell the lifted spawn, setKidAdsTall raises the
+//              gun toward an eye-line shouldered hold and tips the upper body
+//              forward for ~0.45s around the shot (decaying timer driven each
+//              frame), easing back to the normal hold. Skipped while crouched so
+//              it never fights the crouch pose; self-restores head/gun rotation
+//              on its final amount-0 frame.
+//
+// VERSION: 1.76 — Deterministic scenario layouts + map-prop polish pass.
+//          (1) DETERMINISTIC LAYOUTS. The builders used unseeded Math.random for
+//              all cover placement, so every load of a scenario rerolled the board
+//              — frustrating on replay. enterScenario now builds under a seeded
+//              mulberry32 RNG (seed = scenarioId + builderArg) via withSeededRandom,
+//              which temporarily swaps Math.random for the builder call then
+//              restores it (finally-guarded). Same scenario = same board every
+//              load; different scenarios on a map still differ. Runtime randomness
+//              (AI, BB curve) runs later, outside the wrapper, so it stays random.
+//          (2) FORT CORNER BINS + TALLER WALLS. buildKidFort now drops a wheelie
+//              bin at all 4 corners (taller than the wall → real vertical cover the
+//              kids "dragged over") and raised walls 0.95 → 1.12m (still below the
+//              1.35 standing eye, so peek-over-while-standing / duck-when-crouched
+//              still hold). Both Winnmark forts + the Bunratty fort; the slope-seat
+//              paths lift the bins (own mesh groups) alongside the shared wall group.
+//              Addresses defenders getting picked apart after the v1.73/74 range work.
+//          (3) MAILBOX FACING (Winnmark). addMailbox gained a `facing` param; the
+//              Winnmark loop now yaws each box toward the road (atan2 of the road-
+//              ward vector), fixing south-side boxes that faced the house. (Bunratty
+//              brick boxes already faced the road.)
+//          (4) WINNMARK DRIVEWAYS reach the street. The pad stopped at the straight
+//              z=±3.5 while the road is a curved bezier, leaving a grass gap. Pads
+//              now extend to the ACTUAL road edge sampled from the centerline at
+//              each house's X (overshooting 0.5m for a clean join).
+//          (5) PARKED CARS. (a) Winnmark driveway cars were centered 1m past the
+//              house front but are 3.6m long, so the rear clipped ~0.8m INTO the
+//              house — now placed front(3.5)+halfLen(1.8)+margin(0.3)=5.6m out so
+//              the rear clears. (b) addCar gained an optional groundNormalFn; cars
+//              now tilt onto the grade (pitch+roll via 'YXZ' euler so rotation.y
+//              stays the pure yaw the obox collision reads) → all 4 tires touch on
+//              slopes instead of floating/burying. Applied to all Winnmark + Bunratty
+//              cars (driveway, bulb, road-cover).
+//          (6) STREETLAMPS off the pavement. Poles were at a fixed z=±6; on the
+//              curved roads that could drift onto asphalt. Now placed relative to
+//              the actual road edge (centerline sample at the lamp's X) + a grass
+//              margin, X's kept in the house-gaps so they miss driveway pads. Arm
+//              still overhangs the street. Both maps.
+// VERSION: 1.75 — ACTUAL whistle-persistence fix + AK closing un-root.
+//          (1) WHISTLE PERSISTENCE (the real cause this time). BB physics runs in
+//              a sub-step `while` loop in tick(); Game.mode is checked once at the
+//              top, not per sub-step. When the player's final life is taken, the
+//              hitting BB calls endScenario() mid-substep — which flips mode to
+//              'result' and stops all whistles + resets the count. But the loop
+//              kept sub-stepping, so updateBBs re-entered and RESTARTED the whistle
+//              on a BB still buzzing past; with no further updateBBs next frame
+//              (mode is 'result'), that loop droned forever — surviving the return
+//              to the bedroom. v1.68/71/72 hardened bbWhistleStop but never stopped
+//              the RESTART. Fix: (a) break the sub-step loop the instant mode !=
+//              'scenario'; (b) guard bbWhistleStart behind `Game.mode==='scenario'`
+//              so the in-progress updateBBs for-loop pass can't spin one up either.
+//          (2) AK ROOTED AT 50m. v1.74 let the AK plant+burst from its NEAR band
+//              and biased reposition DIRECTION toward the player, but the reposition
+//              CHANCE (~0.55 for Sean) and small hop size left it lingering at the
+//              back of its range. Now a ranged auto beyond its PUSH reposition-
+//              chances to ≥0.8 and takes bigger forward hops (scaling with how far
+//              out it still is, up to 22m) — so it bursts, moves up, bursts, closes
+//              in ~3 cycles, then reverts to the normal brawl shuffle inside PUSH.
+// VERSION: 1.74 — AK (auto-rifle) "pepper from range, then close" fix.
+//          Player report: Sean (AK, Bunratty) only goes full-auto inside ~20m,
+//          and throws lone pistol-like shots beyond that. Two root causes, both
+//          fixed without raising the AK's deliberately-low PUSH (it should still
+//          close and brawl):
+//          (1) HOLD-AND-FIRE GATE keyed on insidePushDist, so beyond ~PUSH (20m)
+//              the kid never entered the peek→shoot→BURST cycle — only single
+//              suppressing rounds while marching. New `insideFireHold`: for ranged
+//              autos (ak47/ar) the stop-and-fire band is NEAR (AK 50m), not PUSH,
+//              so they plant and string full-auto from 40m+ while still advancing
+//              when they lack a clean line. Other guns unchanged (still PUSH).
+//          (2) ON-THE-MOVE SUPPRESSION was a single BB (the "pistol" look). New
+//              queueSuppressionBurst(): auto guns fire a 3-4 round burst at the
+//              last-known spot while marching/bounding (semis still single). BB
+//              burst entries can now carry a fixed `aim` + loose `spread`.
+//          (3) RANGED-AUTO CLOSING: between bursts, an AK/AR still beyond its PUSH
+//              repositions toward the player (closest cover) regardless of its mid
+//              aggression — the "get in the mix" half of the behavior. Inside PUSH
+//              it reverts to its normal aggression-driven shuffle.
+// VERSION: 1.73 — Fences see/shoot-through + route-around-ends pathing;
+//          per-weapon engagement-range pass; AR ironsight ADS drop.
+//          (1) FENCE LOS: hasLineOfSight now skips `bbPass` obstacles (the
+//              wrought-iron picket fences). BBs already pass through the gaps,
+//              but LOS treated the fence as a solid 1.4m wall — so a kid with a
+//              clear target across a fence never fired even though the BB would
+//              sail through. Now they see AND shoot through pickets; bodies still
+//              blocked (collidesObstacles ignores the flag).
+//          (2) FENCE PATHING: new fenceDetourWaypoint() — when a mover wedges on
+//              a long thin fence, it steers to the NEARER END of that fence and
+//              rounds it, instead of the blind alternating sidestep that just
+//              jittered mid-span. Wired into the advancing direct-push, tagger,
+//              and deploy movers (the bound mover falls through to direct-push).
+//          (3) ENGAGEMENT RANGE PASS: NEAR/FAR/PUSH are now table-driven per
+//              weapon (PUSH no longer derived from NEAR). New bands —
+//              shotgun 6/8/25, pistol 8/12/30, mac10 7/14/24, ump 15/35/50,
+//              mp5 12/35/50, ar 15/40/60, ak47 20/50/100, sniper 40/100/200
+//              (PUSH/NEAR/FAR). AK is the aggressive ranged gun: fires from way
+//              out (NEAR 50) but low PUSH (20) keeps it closing and brawling. A
+//              future LMG is the high-PUSH hold-the-line gun.
+//          (4) AR IRONSIGHT ADS: iron adsPos.y -0.075 → -0.087 so the front-post
+//              tip lands on the centered reticle instead of riding above it.
+//              Optic path (adsYCorr) overrides this when a red-dot/scope is up.
+//          (5) AR IRON DECLUTTER: the tall front-sight post/tower now hides while
+//              an optic is mounted (was crowding the red-dot lens), reappears when
+//              the optic is removed.
+// VERSION: 1.72 — Whistle tune + fix: stuck/looping whistle on final-life death.
+//          (1) Whistle range 1m → 2m and peak volume 0.05 → 0.075 (1m/0.05 was
+//          barely noticeable in playtest).
+//          (2) STUCK-WHISTLE FIX. If the player's last life was taken while a BB
+//          was buzzing past, that BB's whistle could lock on and loop forever
+//          until the tab was closed/refreshed. Cause: bbWhistleStop ramped the
+//          gain and stopped the oscillator/noise source in ONE try-block, gain
+//          first — and at scenario-end the audio-param scheduling can throw, the
+//          catch swallowed it, and src.stop()/tone.stop() never ran, so the
+//          looping nodes droned on. FIX: stop the sound sources in their OWN
+//          guarded calls BEFORE the gain fade (so a gain throw can't prevent the
+//          stop), hard-silence the gain, and re-issue stop+disconnect in the
+//          deferred cleanup. endScenario also resets the voice count. Verified by
+//          executing bbWhistleStop with a gain mock that throws: both sources
+//          still stop, count returns to 0.
+// VERSION: 1.71 — Whistle retune + fix: tagged NPCs not returning to respawn.
+//          (1) BB WHISTLE retuned per playtest: detection range 7m → 1m (only a
+//          round passing within ~1m of the player whistles now), peak volume
+//          0.09 → 0.05 (BB_WHISTLE_VOL), and higher pitch (tone 2400→3400 Hz,
+//          bandpass 3200→4200 Hz). It's now a brief, quiet, high "tss" only when
+//          a BB genuinely buzzes your head.
+//          (2) RESPAWN-CANCEL FIX. In multi-life modes, a kid tagged WHILE moving
+//          (repositioning/in the open) burned a life but kept fighting instead of
+//          running back to respawn. Cause: eliminateEnemy correctly set the kid to
+//          'retreating', but the v1.67 incoming-fire reaction ran before the state
+//          switch and its interrupt guard didn't exclude 'retreating' — a retreat-
+//          ing kid runs in the open right where the player is still shooting, so a
+//          near-miss flipped it to repositioning/hiding and CANCELLED the respawn
+//          run (life already spent). FIX: retreat and deploy are now uninterrupt-
+//          ible — the reaction skips kids in those committed states. Verified the
+//          guard truth-table: retreating/deploying = never interruptible (both
+//          timid and brave); all other states unchanged.
+// VERSION: 1.70 — Fix: NPCs phasing into cover / standing in car centers.
+//          Two bugs behind the reported "kids take cover in the dead center of
+//          cars, ignoring collision" + "phase through cover while moving to it":
+//          (1) coverStandPos used only the loose axis-aligned envelope
+//          (cover.minX..maxZ) for ALL shapes. Cars are ORIENTED boxes (obox); for
+//          an angled car the envelope is a bigger non-aligned rectangle, so the
+//          "outside the face" point landed INSIDE the real car body. Rewrote it
+//          shape-aware: obox works in the box's local frame and pushes outside the
+//          true face; cylinders (trees) place on the ring on the far side; AABBs
+//          keep the old face logic. A final overlap nudge (findClearSpawn)
+//          guarantees the spot is walkable. (2) The 'repositioning' mover did a
+//          RAW straight-line step with NO collision check — so a kid relocating to
+//          cover walked straight THROUGH any obstacle, including the cover itself.
+//          Now it uses the same collision-slide (diagonal → X-only → Z-only) as
+//          the deploying/advancing movers, plus a 0.6s anti-wedge bail.
+//          NB: this is the AUTOMATIC, geometry-derived version of the anchored
+//          "cover slot" idea — slots are computed from each mesh's collision shape
+//          so they always match what's drawn, with no per-mesh hand placement.
+//          Verified by EXECUTING coverStandPos against obox/cylinder/AABB mocks:
+//          every stand point lands outside the cover with the cover between kid
+//          and player.
+// VERSION: 1.69 — ACTUAL FREEZE FIX: ReferenceError in pickBoundCover.
+//          The real cause of the firing-triggered freeze (console caught it):
+//          "Uncaught ReferenceError: ex is not defined" at pickBoundCover, thrown
+//          from updateEnemies → tick. During the v1.67 edits that added the
+//          teammateCrowding helper just above pickBoundCover, an earlier
+//          str_replace dropped the function's `const ex = e.pos.x, ez = e.pos.z;`
+//          line — but the four refs to ex/ez remained. That's a RUNTIME error, not
+//          a syntax one, so every `node --check` parse pass stayed green and missed
+//          it. It only throws when an NPC actually runs pickBoundCover (i.e. a
+//          flanker bounding while fighting), which is why it presented as "freezes
+//          when guns fire": the throw escaped tick() and killed the rAF loop.
+//          FIX: restored the ex/ez declaration. Verified by EXECUTING the function
+//          (not just parsing): pickBoundCover + the v1.67 reaction helpers now run
+//          without error against mock data. (The v1.68 audio hardening — shared
+//          noise buffer, 6-voice cap, try/catch — is kept: not the freeze cause,
+//          but a real robustness win.)
+// VERSION: 1.68 — FREEZE FIX attempt: BB whistle Web Audio hardening (kept, but
+//          Symptom: game randomly froze when a gun fired (player or NPC). Cause:
+//          the v1.67 BB whistle created a fresh ~22,000-sample noise buffer AND a
+//          new looping bufferSource + oscillator for EVERY BB that came within 7m
+//          of the player. Every player shot spawns its BB at the muzzle (well
+//          inside 7m), so each shot ran the 22k-iteration fill and spun up looping
+//          nodes; auto guns, NPC bursts, and v1.67's new suppressing fire piled
+//          voices up fast. Web Audio under that churn could stall or throw on node
+//          creation mid-frame — and because updateBBs runs inside the tick's
+//          sub-step while-loop, a throw there killed the requestAnimationFrame
+//          loop = hard freeze. FIX: (1) ONE shared noise buffer reused by all
+//          whistles (no per-shot fill); (2) hard cap of 6 concurrent whistle
+//          voices (_bbWhistleCount); (3) try/catch around every node operation so
+//          audio can never crash the game loop; (4) authoritative voice-count
+//          reset on scenario start. Verified the cap + counter hold at 0 leak
+//          under a 20k-frame chaotic-firefight simulation.
+// VERSION: 1.67 — Combat-feel wrinkles: 4 features.
+//          (1) SUPPRESSING FIRE ON THE MOVE. Marching kids (direct-push) now
+//          throw sporadic rounds toward the target's last-known spot even while
+//          out of effective range and walking — cooldown-gated, looser spread,
+//          aggression scales the rate. Mirrors the bounding kids' suppression so
+//          a push reads as "laying down fire," not a silent sprint. Works vs the
+//          player OR an NPC target.
+//          (2) DEFEND ANTI-CROWDING. In defend scenarios, cover selection (both
+//          bound-pick scoring and the reposition candidate pool) now avoids cover
+//          already occupied by a living teammate, via teammateCrowding(), so the
+//          attacking squad fans across different cover instead of stacking. Only
+//          narrows to the un-crowded subset when one exists (won't freeze on a
+//          tight map).
+//          (3) REACT TO INCOMING FIRE. updateBBs stamps a kid with the incoming
+//          bearing when a live BB whizzes within 2.5m (near-miss). The AI reacts,
+//          scaled by aggression as "bravery": shielded by current cover → crouch
+//          & hold (brave kids favor this, snap back fast); in cover but exposed
+//          to that bearing → relocate to cover that blocks it; fully in the open
+//          → fire a suppressing round back down the bearing WHILE breaking for
+//          the nearest shielding cover. Timid kids let it interrupt an active
+//          advance ("running scared"); brave kids only react from holding states.
+//          All gun NPCs, every scenario. (~2.5m ≈ 1.5 car-widths.)
+//          (4) BB WHISTLE. A faint air-rush hiss + high whistle tone for any BB
+//          passing within 7m of the player, panned + attenuated by distance,
+//          pitch rising as it nears. Force-stopped the instant the BB makes first
+//          impact (object bounce/stick, ground, body) or leaves earshot/despawns.
+//          Cleaned up on scenario start AND end so no node is orphaned.
+// VERSION: 1.66 — Fix: pistol flankers stall far from the fort after a respawn.
+//          Follow-up to v1.65. With the spawn-wedge gone, Seth (a LEFT-flanker
+//          pistol in Hold the Fort) redeployed to his anchor ~40m from the bulb
+//          and then PARKED there — not advancing, not shooting — while Trey (AR)
+//          kept pushing. Root cause: bounding-overwatch (v1.25) ran for any
+//          flanker at rawD > 10 regardless of weapon range. A pistol's
+//          ENGAGE_FAR is 30m, so at 40m the kid could neither SUPPRESS (needs
+//          <ENGAGE_FAR+8 = 38m) nor COMMIT to a static engage (bound-commit needs
+//          <ENGAGE_NEAR = 14m) — a silent dead zone — and the bound re-pick could
+//          drift laterally (flank-side score) instead of closing. Trey's AR
+//          (FAR 48) covers the whole approach, so he suppressed + bounded the
+//          whole way and looked fine — which is why ONLY the pistol kid looked
+//          dead. FIX: bounding now only runs inside the kid's suppressing band
+//          (rawD < ENGAGE_FAR); beyond it the kid falls to DIRECT PUSH to close
+//          the gap first, then bounds for the final stretch where it's meaningful.
+//          No change to AR/sniper behavior. (Not a cover-density problem — the
+//          road has staggered cover the whole way; the issue was the range gate.)
+// VERSION: 1.65 — Fix: Seth wedged in a phantom fort + defend objective text.
+//          (1) SETH NEVER PUSHED (Hold the Fort & other cul-de-sac defends). The
+//          east "treehouse" kid-fort (x≈33, built v1.56) was created
+//          UNCONDITIONALLY in buildWinnmarkCourtScene, but it sits right on the
+//          `cluster_road_east` (x=31) attacker spawn that every cul-de-sac defend
+//          uses. The huddle-ring angle for the FIRST kid in the setup (Seth) lands
+//          at +x/+z = (32.3, 0.55) — inside that U-shaped fort. He spawned boxed
+//          by the back wall + wings and couldn't path out west, so he jittered in
+//          place ("sits in the enemy fort"). Trey/Devon got ring angles that put
+//          them west of the wall, in the open, so they pushed fine — which is why
+//          only Seth looked broken despite Trey's longer gun. findClearSpawn
+//          didn't save him: from inside the U it pushes along the smallest axis,
+//          deeper in, not out the west mouth. FIX: gate the east fort to a new
+//          'treehouse' variant (the ONLY scenario that uses it — player spawns
+//          behind it via playerSpawn 'east_fort', attackers come from the far west
+//          cluster_treehouse). All other Winnmark scenarios no longer build it, so
+//          the road-east spawn is clear. Root-cause fix, no AI tuning touched.
+//          (2) DEFEND OBJECTIVE TEXT. survive_timer read "Survive 90s (or tag
+//          everyone)" — but defend attackers respawn forever (unlimited lives), so
+//          you can't tag them all out. Now reads "Hold out for 90s — they respawn,
+//          so just survive" to match the actual outlast win condition.
+// VERSION: 1.64 — Swim goggles: opaque surround + no bridge (playtest tweak).
+//          The swim frame was still see-through (raw periphery bled around the
+//          lenses) and had a dark nose bridge. Now: (1) new opaqueSurround flag —
+//          swim fills everything OUTSIDE the two lens holes solid (like a mask),
+//          so all peripheral vision is cut; (2) the two lenses now OVERLAP across
+//          center (cx 38/62, rx 34) so the opening is continuous with no dark
+//          column; (3) removed the bridge + side-strap rects. Canvas-filter
+//          decision still keys off the (unchanged) mask-only path, so swim's look
+//          continues to come from its in-lens blue tint, not a full-screen filter.
+// VERSION: 1.63 — Eyewear rebalance + player footsteps.
+//          (1) EYEWEAR: Clear Safety Glasses are now a premium pick — $28, +1
+//          defense (real protection, near-zero view cost). Renamed "Amber
+//          Lo-Light Goggles" → "Ski Goggles", now +2 defense at $50. NEW
+//          Swimming Goggles ($14, +1): heavy dark-blue tint + a new 'swim' frame
+//          style with smaller, more separated lenses so the band crowds the
+//          periphery (deliberately rough side vision). New goggles_swim key added
+//          to the owned-equipment defaults (old saves deep-merge it as unowned).
+//          (2) FOOTSTEPS: new playPlayerFootstep() Web Audio synth (low-passed noise
+//          scuff + a low tonal thump, per-step pitch/level jitter). Triggered from
+//          updatePlayer on a movement-only step accumulator that fires once per
+//          stride half-cycle, synced to the visual bob; sprint steps are faster +
+//          heavier. Routed direct to destination so the music mute (M) leaves
+//          footsteps audible.
+// VERSION: 1.62 — Bedroom wayfinding labels. Playtesters got "stuck" in the
+//          bedroom because nothing told them where to go. Added a billboarded
+//          floating-label layer (#bedroomLabels): each interactable now shows a
+//          chip with a glyph + short name (COMPUTER / MAP / LOADOUT / WORKBENCH /
+//          BATHROOM / SAVE), projected to screen space every frame, distance-faded,
+//          hidden when off-screen or behind the camera, and accent-highlighted when
+//          it's the one currently in E-range. Built in buildBedroomScene(), updated
+//          in updateBedroomLabels(), shown/hidden alongside #bedroomHud.
 // VERSION: 1.61g — TTS voice fix (macOS "droideka/whisper" bug). macOS ships
 //          novelty voices tagged en-US (Zarvox=robot, Whisper=unintelligible,
 //          Bells, Bad News, Trinoids, Albert, Fred, ...) that passed the en-US
@@ -2309,7 +2860,7 @@
 //          brain merges the marker's pan with the (centered) words. Not true
 //          stereo TTS, but the closest approximation the platform allows.
 // =====================================================================
-const VERSION = '1.60';
+const VERSION = '1.72';
 
 // ---------------------------------------------------------------------
 // GLOBAL GAME STATE
@@ -2365,6 +2916,7 @@ const Game = {
     // together with player movement.
     sway: 0,
     swayPhase: 0,
+    _stepPhase: 0,          // v1.63: accumulator for footstep cadence (decoupled from swayPhase)
     bobPosX: 0, bobPosY: 0, bobPosZ: 0,
     bobRotX: 0, bobRotY: 0, bobRotZ: 0,
   },
@@ -2483,7 +3035,7 @@ const Game = {
     },
     // v1.26: owned equipment sets (separate from `owned` gun/mag flags)
     ownedEquipment: {
-      eyewear: { glasses_clear: false, goggles_smoke: false, goggles_amber: false, mesh_mask: false },
+      eyewear: { glasses_clear: false, goggles_smoke: false, goggles_swim: false, goggles_amber: false, mesh_mask: false },
       shoes: { trail_shoes: false, track_spikes: false, cushioned: false },
       armor: { chest_light: false, chest_heavy: false, knee_pads: false, elbow_pads: false },
       // v1.28: attachments are now COUNTS of how many copies you own (you can
@@ -2703,11 +3255,19 @@ function getGunDisplayName(gunType) {
 //   'glasses' (thin twin lens), 'goggle' (chunky twin oval), 'mask' (full-face).
 const EYEWEAR = {
   none:        { id:'none', name:'No Eye Pro', price:0, hp:0, view:null, owned:()=>true },
-  glasses_clear:{ id:'glasses_clear', name:'Clear Safety Glasses', price:10, hp:0,
+  // v1.63: bumped to a premium item — real protection with almost no view cost,
+  // so it earns a defense rating and a higher price.
+  glasses_clear:{ id:'glasses_clear', name:'Clear Safety Glasses', price:28, hp:1,
                   view:{ tint:'rgba(225,235,255,0.05)', lensTint:'rgba(220,232,255,0.10)', vignette:0.10, filter:'contrast(1.04) brightness(1.02)', frameStyle:'glasses', frameColor:'#2a2d33', label:'Clear' } },
   goggles_smoke:{ id:'goggles_smoke', name:'Smoke Goggles', price:22, hp:1,
                   view:{ tint:'rgba(30,32,46,0.20)', lensTint:'rgba(26,28,40,0.40)', vignette:0.22, filter:'brightness(0.82) saturate(0.8) contrast(1.05)', frameStyle:'goggle', frameColor:'#1c1d22', label:'Smoke' } },
-  goggles_amber:{ id:'goggles_amber', name:'Amber Lo-Light Goggles', price:26, hp:1,
+  // v1.63: NEW — pool goggles pressed into airsoft duty. Rough, intrusive
+  // peripheral frame (the 'swim' style draws smaller, more separated lenses so
+  // the band crowds in) and a heavy dark-blue tint.
+  goggles_swim:{ id:'goggles_swim', name:'Swimming Goggles', price:14, hp:1,
+                  view:{ tint:'rgba(18,40,96,0.22)', lensTint:'rgba(20,46,110,0.48)', vignette:0.30, filter:'brightness(0.9) saturate(1.1) contrast(1.04) hue-rotate(8deg)', frameStyle:'swim', frameColor:'#101826', label:'Blue Tint' } },
+  // v1.63: renamed Amber → Ski Goggles, bumped defense to +2 and price to $50.
+  goggles_amber:{ id:'goggles_amber', name:'Ski Goggles', price:50, hp:2,
                   view:{ tint:'rgba(200,140,40,0.16)', lensTint:'rgba(208,138,36,0.34)', vignette:0.18, filter:'brightness(1.18) saturate(1.25) sepia(0.25) hue-rotate(-12deg)', frameStyle:'goggle', frameColor:'#3a2a14', label:'Amber' } },
   mesh_mask:   { id:'mesh_mask', name:'Full Mesh Mask', price:40, hp:2,
                   view:{ tint:'rgba(15,15,18,0.16)', vignette:0.42, filter:'brightness(0.9) contrast(1.06)', mesh:true, frameStyle:'mask', frameColor:'#15151a', label:'Mesh' } },
@@ -4120,7 +4680,7 @@ function scaledReward(v) { return Math.ceil((v || 0) / 10); }
 function describeWinCondition(sc) {
   if (sc.tutorial) return 'Learn the ropes — tag the practice targets';   // v1.57
   switch (sc.winCondition) {
-    case 'survive_timer':    return `Survive ${sc.timerSec || 90}s (or tag everyone)`;
+    case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
     case 'last_team_standing': return sc.ffa ? 'Last kid standing' : 'Last team standing';
     case 'kill_all':
@@ -4372,7 +4932,7 @@ const SCENARIOS = {
     name: 'Winnmark Court', scenarioName: 'Defend the Treehouse',
     desc: "You grabbed the plank fort by the woods at the mouth of the street first — best spot on Winnmark, and you're not giving it up. Marcus is back from his cousin's and brought Jamie, and they're cutting through Seth's backyard to flush you out. Hold the fort for 90 seconds before their moms call them in.",
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'treehouse',
     scenarioType: 'defend',
     playerSpawn: 'east_fort',
     enemySpawnCluster: 'cluster_treehouse',
@@ -5579,6 +6139,52 @@ function playSnare(time) {
   osc.connect(og).connect(Music.masterGain);
   osc.start(time); osc.stop(time + 0.08);
 }
+
+// === PLAYER FOOTSTEP (v1.63) ===
+// A soft, short scuff: filtered noise burst (the "shh" of a foot on ground)
+// plus a low tonal thump for body. Centered (it's the player's own feet) and
+// jittered per step (pitch + level + filter) so a run doesn't sound like a
+// metronome. `heavy` (sprint) makes it a touch louder and lower. Routed direct
+// to ctx.destination so the music master mute (M) doesn't silence footsteps.
+// NOTE: distinct from playFootstep(srcX,srcZ) below, which is the POSITIONAL
+// footstep used for other characters; this one is the local player's own steps.
+function playPlayerFootstep(heavy) {
+  if (!Game.audio?.ctx) return;
+  const ctx = Game.audio.ctx;
+  const t = ctx.currentTime;
+  const jitter = 0.85 + Math.random() * 0.3;     // 0.85..1.15 per-step variation
+  const baseVol = (heavy ? 0.075 : 0.045) * jitter;
+  // Noise scuff — short, low-passed so it's a muffled "thud/scuff" not a hiss.
+  const dur = heavy ? 0.13 : 0.10;
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) {
+    // fast attack, quick decay envelope baked into the buffer
+    d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'lowpass';
+  filt.frequency.value = (heavy ? 520 : 700) * jitter;
+  filt.Q.value = 0.7;
+  const ng = ctx.createGain();
+  ng.gain.value = baseVol;
+  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.start(t);
+  // Low tonal thump — gives the step weight (heel contact).
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  const f0 = (heavy ? 95 : 120) * jitter;
+  osc.frequency.setValueAtTime(f0, t);
+  osc.frequency.exponentialRampToValueAtTime(f0 * 0.55, t + 0.07);
+  const og = ctx.createGain();
+  og.gain.setValueAtTime(baseVol * 1.1, t);
+  og.gain.exponentialRampToValueAtTime(0.0008, t + 0.10);
+  osc.connect(og).connect(ctx.destination);
+  osc.start(t); osc.stop(t + 0.12);
+}
+
 function playShot(srcX, srcZ) {
   if (!Game.audio?.ctx) return;
   const ctx = Game.audio.ctx;
@@ -5687,6 +6293,95 @@ function playFootstep(srcX, srcZ) {
   }
   src.start(t);
 }
+
+// === BB WHISTLE (v1.67; hardened v1.68) ===
+// A faint airy "hiss/whistle" for a BB passing near the listener (the player).
+// v1.68 freeze fix: the original allocated a fresh ~22k-sample noise buffer AND
+// a new oscillator + bufferSource for EVERY BB that came within earshot. Every
+// player shot spawns a BB right at the muzzle (<7m), so each shot ran a 22k-iter
+// fill and spun up looping nodes; rapid fire (auto guns, NPC bursts, the new
+// suppressing fire) piled up nodes fast and could exhaust/stall Web Audio mid-
+// frame — and since updateBBs runs inside the tick sub-step loop, a throw there
+// killed the rAF loop = freeze. Hardened: ONE shared noise buffer reused by all
+// whistles, a hard cap on concurrent whistles, and try/catch around all node
+// work so audio can never crash the game loop.
+const BB_WHISTLE_RANGE = 2;     // v1.72: metres — BBs passing within ~2m of the player whistle
+const BB_WHISTLE_VOL = 0.075;   // v1.72: peak gain (1m/0.05 was barely noticeable; bumped back up)
+const BB_WHISTLE_MAX = 6;       // hard cap on simultaneous whistle voices
+let _bbWhistleCount = 0;
+let _bbNoiseBuf = null;
+function _bbNoiseBuffer(ctx) {
+  // Built once, reused by every whistle (it's just white noise; sharing is fine).
+  if (_bbNoiseBuf && _bbNoiseBuf.sampleRate === ctx.sampleRate) return _bbNoiseBuf;
+  const len = Math.ceil(ctx.sampleRate * 0.5);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+  _bbNoiseBuf = buf;
+  return buf;
+}
+function bbWhistleStart(bb) {
+  if (!Game.audio?.ctx || bb._whistle) return;
+  if (_bbWhistleCount >= BB_WHISTLE_MAX) return;   // cap reached — stay silent, never allocate
+  const ctx = Game.audio.ctx;
+  try {
+    const src = ctx.createBufferSource();
+    src.buffer = _bbNoiseBuffer(ctx); src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 4200; bp.Q.value = 1.4;
+    const tone = ctx.createOscillator();
+    tone.type = 'sine'; tone.frequency.value = 3400;
+    const toneGain = ctx.createGain(); toneGain.gain.value = 0.18;
+    const gain = ctx.createGain(); gain.gain.value = 0;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    src.connect(bp).connect(gain);
+    tone.connect(toneGain).connect(gain);
+    if (pan) gain.connect(pan).connect(ctx.destination);
+    else     gain.connect(ctx.destination);
+    const t = ctx.currentTime;
+    src.start(t); tone.start(t);
+    bb._whistle = { src, tone, gain, pan, bp };
+    _bbWhistleCount++;
+  } catch (e) { bb._whistle = null; /* audio under pressure — skip silently */ }
+}
+function bbWhistleUpdate(bb, pan, vol) {
+  const w = bb._whistle; if (!w || !Game.audio?.ctx) return;
+  try {
+    const ctx = Game.audio.ctx, t = ctx.currentTime;
+    w.gain.gain.setTargetAtTime(Math.max(0, Math.min(BB_WHISTLE_VOL, vol)), t, 0.04);
+    if (w.pan) w.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), t, 0.04);
+    const closeFrac = Math.max(0, Math.min(1, vol / BB_WHISTLE_VOL));
+    w.tone.frequency.setTargetAtTime(3400 + closeFrac * 700, t, 0.05);
+    w.bp.frequency.setTargetAtTime(4200 + closeFrac * 800, t, 0.05);
+  } catch (e) { /* ignore */ }
+}
+function bbWhistleStop(bb) {
+  const w = bb._whistle; if (!w) return;
+  bb._whistle = null;
+  _bbWhistleCount = Math.max(0, _bbWhistleCount - 1);
+  if (!Game.audio?.ctx) return;
+  const ctx = Game.audio.ctx, t = ctx.currentTime;
+  // v1.72: stop the SOUND SOURCES first, in their own guarded calls, BEFORE the
+  // gain fade. The old order ramped the gain first and stopped sources in the
+  // same try-block — so if a gain call threw (which can happen if the scenario
+  // ends mid-buzz and the audio param scheduling collides), the catch swallowed
+  // it and src.stop()/tone.stop() never ran, leaving a looping oscillator droning
+  // forever (the "whistle locks on when the final life is taken" bug). Each stop
+  // is now independent; nothing can prevent the sources from being stopped.
+  try { w.src.stop(t); } catch (e) { /* already stopped */ }
+  try { w.tone.stop(t); } catch (e) { /* already stopped */ }
+  try {
+    w.gain.gain.cancelScheduledValues(t);
+    w.gain.gain.setValueAtTime(0, t);   // hard silence now (sources are already stopping)
+  } catch (e) { /* ignore */ }
+  // Belt-and-suspenders: re-issue stop + disconnect shortly after, each guarded.
+  setTimeout(() => {
+    try { w.src.stop(); } catch (e) {}
+    try { w.tone.stop(); } catch (e) {}
+    try { w.gain.disconnect(); w.src.disconnect(); w.tone.disconnect(); if (w.pan) w.pan.disconnect(); if (w.bp) w.bp.disconnect(); } catch (e) {}
+  }, 60);
+}
+
 function playReloadClick() {
   if (!Game.audio?.ctx) return;
   const ctx = Game.audio.ctx;
@@ -7007,6 +7702,7 @@ function buildBedroomScene() {
     box: new THREE.Box3().setFromObject(compGroup),
     pos: new THREE.Vector3(AL_X, 1.0, -BR_D/2 - AL_DEPTH + 0.35),
     prompt: 'Use the computer (open airsoft.com)',
+    label: 'Shop', icon: 'computer', labelY: 1.85,
     action: () => openShop(),
   });
 
@@ -7016,6 +7712,7 @@ function buildBedroomScene() {
     box: new THREE.Box3().setFromObject(mapTableGroup),
     pos: new THREE.Vector3(-BR_W/2 + 0.45, 0.8, 0),
     prompt: 'Open the neighborhood map',
+    label: 'Map', icon: 'map', labelY: 1.7,
     action: () => openMap(),
   });
 
@@ -7029,6 +7726,7 @@ function buildBedroomScene() {
     ),
     pos: new THREE.Vector3(BCL_DOORWAY_X, 1.0, BR_D/2 - 0.4),
     prompt: 'Manage your loadout',
+    label: 'Loadout', icon: 'loadout', labelY: 2.05,
     action: () => openLoadout(),
   });
 
@@ -7041,6 +7739,7 @@ function buildBedroomScene() {
     ),
     pos: new THREE.Vector3(HALL_W/2 - 0.4, 1.0, hclDoorZ),
     prompt: 'Open the workbench (customize guns)',
+    label: 'Workbench', icon: 'workbench', labelY: 2.05,
     action: () => openWorkbench(),
   });
 
@@ -7053,6 +7752,7 @@ function buildBedroomScene() {
     ),
     pos: new THREE.Vector3(-HALL_W/2 + 0.4, 1.0, bathDoorZ),
     prompt: 'Open bathroom door',
+    label: 'Bathroom', icon: 'bathroom', labelY: 2.05,
     action: () => showModal('Bathroom',
       'You don\'t need to use the bathroom right now! (Will have a use in future versions — crafting? smoke bombs?)'),
   });
@@ -7065,6 +7765,7 @@ function buildBedroomScene() {
     box: new THREE.Box3().setFromObject(bedGroup),
     pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
     prompt: 'Sleep (save your game)',
+    label: 'Save', icon: 'bed', labelY: 1.5,
     action: () => openSaveMenu(),
   });
 
@@ -7611,13 +8312,18 @@ function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0
 // an arm, and a floating flag — all jumbled in playtest. This is a simple,
 // readable American curbside mailbox: straight post, a tunnel box centered ON
 // TOP of the post, a clean side flag, a small cap. No filigree.
-function addMailbox(scene, x, z) {
+function addMailbox(scene, x, z, opts = {}) {
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, roughness: 0.55, metalness: 0.45 });
   const doorMat  = new THREE.MeshStandardMaterial({ color: 0x303034, roughness: 0.5, metalness: 0.4 });
   const flagMat  = new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: 0.6 });
 
   const group = new THREE.Group();
   group.position.set(x, 0, z);
+  // v1.76: `facing` (yaw radians) rotates the whole mailbox so its door (+Z in
+  // local space) points toward the road. Without it the door always faced +Z, so
+  // south-side Winnmark boxes (road to their -Z) faced the house, not the street.
+  const facing = opts.facing ?? 0;
+  group.rotation.y = facing;
 
   const postH = 1.0;       // post height (box base sits on top)
   const mbLen = 0.42;      // front-to-back depth (box length, along Z)
@@ -8022,6 +8728,32 @@ function addCar(scene, x, z, opts = {}) {
 
   group.position.set(x, 0, z);
   group.rotation.y = orientation;
+  // v1.76: SLOPE FIT. On a sloped street a car built flat leaves the downhill
+  // tires floating and the uphill tires buried. If the caller passes a ground-
+  // normal fn, pitch+roll the car onto that normal so all four wheels sit on the
+  // grade. We use 'YXZ' euler order so rotation.y stays the pure yaw — the obox
+  // collision reads rotation.y and must not see the tilt (collision stays upright,
+  // which is correct; only the visual tilts). Tilt is derived by expressing the
+  // ground normal in the car's yawed local frame, then taking small-angle pitch
+  // (along car length, local X) and roll (along width, local Z).
+  if (typeof opts.groundNormalFn === 'function') {
+    const n = opts.groundNormalFn(x, z);   // {nx, ny, nz} unit ground normal
+    // Rotate the world normal into the car's local (post-yaw) frame.
+    // v1.77: the inverse-yaw signs were flipped, which cross-fed the pitch
+    // component into roll (and vice versa) — the "leaning sideways too much"
+    // report. For a THREE Y-rotation by θ, the world→local map is:
+    //   localX =  nx·cosθ + nz·sinθ      localZ = -nx·sinθ + nz·cosθ
+    const cy = Math.cos(orientation), sy = Math.sin(orientation);
+    const lnx =  n.nx * cy + n.nz * sy;    // component along car's local +X (length)
+    const lnz = -n.nx * sy + n.nz * cy;    // component along car's local +Z (width)
+    const ny  =  Math.max(0.2, n.ny);
+    // Pitch (nose up/down) tilts about local Z; roll (lean side) about local X.
+    const pitch = Math.atan2(lnx, ny);     // + when uphill is toward +X
+    const roll  = Math.atan2(lnz, ny);
+    group.rotation.order = 'YXZ';
+    group.rotation.x = -roll;              // lean with the cross-slope
+    group.rotation.z = -pitch;             // nose follows the grade
+  }
   scene.add(group);
 
   // v1.54/v1.54a: TWO collision boxes instead of one tall box over the whole
@@ -8124,8 +8856,18 @@ function buildKidFort(scene, x, z, opts = {}) {
   const faceDir = opts.faceDir || 'E';
   const W = opts.width ?? 3.6;
   const D = opts.depth ?? 2.2;
-  const H = opts.h ?? 0.95;  // v1.23a: chest-high so the player can peek+shoot over while standing (eye=1.35), duck fully when crouched (eye=0.8)
+  // v1.76: walls raised 0.95 → 1.12. Playtest after the v1.73/74 firing-range
+  // tuning: defenders were getting picked apart over the old chest-high wall. At
+  // 1.12 the wall covers more torso while still sitting below the standing eye
+  // (1.35), so the player can peek+shoot over it standing and duck fully when
+  // crouched (eye 0.8). The corner bins (below) add the real vertical cover.
+  const H = opts.h ?? 1.12;
   const t = 0.18; // plywood thickness
+  // v1.76: add a wheelie bin at each of the 4 corners for believable, taller
+  // vertical cover (kids dragging the neighborhood bins over to shore up their
+  // fort). On by default; opts.cornerBins:false disables. Returned as extra
+  // obstacles so they collide + count as cover like the walls.
+  const cornerBins = opts.cornerBins !== false;
 
   const plyMat   = new THREE.MeshStandardMaterial({ color: 0xc4a06a, roughness: 0.92 });
   const plyMat2  = new THREE.MeshStandardMaterial({ color: 0xb89058, roughness: 0.92 });
@@ -8209,8 +8951,44 @@ function buildKidFort(scene, x, z, opts = {}) {
   const backObs  = worldAABB(back);
   const wingLObs = worldAABB(wingL);
   const wingRObs = worldAABB(wingR);
-  // Return back wall first (primary cover ref for the anchor), then wings.
-  return [backObs, wingLObs, wingRObs];
+
+  // v1.76: corner bins. Local corners are at (±W/2, ±D/2). Nudge each bin a little
+  // INWARD from the exact corner so it tucks against the fort rather than floating
+  // off the edge, then transform the local point into world space with the same
+  // 90°-multiple rotation used for the walls. Alternate garbage/recycle around the
+  // four corners, each facing outward-ish (toward the back/attacker side reads
+  // best). These are added AFTER the walls in the return array.
+  const binObs = [];
+  if (cornerBins) {
+    const inset = 0.34;                       // pull bins in from the corner
+    const cornersLocal = [
+      { lx: -W / 2 + inset, lz: -D / 2 + inset },  // back-left
+      { lx:  W / 2 - inset, lz: -D / 2 + inset },  // back-right
+      { lx: -W / 2 + inset, lz:  D / 2 - inset },  // front-left
+      { lx:  W / 2 - inset, lz:  D / 2 - inset },  // front-right
+    ];
+    let bi = 0;
+    for (const c of cornersLocal) {
+      const wx = x + c.lx * cos + c.lz * sin;
+      const wz = z - c.lx * sin + c.lz * cos;
+      const variant = (bi % 2 === 0) ? 'garbage' : 'recycle';
+      // Face the bin's door roughly outward from the fort center.
+      const facing = Math.atan2(wx - x, wz - z);
+      const bin = addCurbsideBin(scene, wx, wz, { variant, facing });
+      // Seat the bin's MESH at the fort's local floor (the caller lifts the fort
+      // group via seatFortOnSlope / fortGY by tagging baseY on each returned obs;
+      // the bin mesh is its own group, so we tag baseY and let the caller lift the
+      // mesh the same way it lifts walls). Mark so callers can recognize fort bins.
+      bin._fortBin = true;
+      binObs.push(bin);
+      bi++;
+    }
+  }
+
+  // Return back wall first (primary cover ref for the anchor), then wings, then
+  // the four corner bins (if any). Callers that lift the fort onto a slope iterate
+  // the whole array tagging baseY / shifting mesh.position.y, so bins ride along.
+  return [backObs, wingLObs, wingRObs, ...binObs];
 }
 
 // ======================================================================
@@ -8228,6 +9006,52 @@ function buildKidFort(scene, x, z, opts = {}) {
 //     dayAmbColor, dayAmbInt, dayHemiColor, dayHemiInt, shadow:{size,extent,far}
 // }
 // Returns { sun (the shadow-casting DirectionalLight), isNight }.
+// ----------------------------------------------------------------------
+// v1.76: DETERMINISTIC MAP LAYOUTS (seeded RNG).
+// The map builders use Math.random() heavily for cover placement (bins, boxes,
+// parked cars, jitter, facing, NPC homeCover). That made every load of a scenario
+// reroll the layout — frustrating when you replay a scenario to beat it and the
+// cover keeps moving. We now make each SCENARIO's layout deterministic: the same
+// scenario id always produces the same board, but different scenarios on the same
+// map still differ.
+//
+// Rather than thread a seed through hundreds of call sites, we temporarily swap
+// the global Math.random for a seeded mulberry32 PRNG for the duration of a
+// builder call, then restore it. Everything inside the builder (including helpers
+// like addCurbsideBin) transparently becomes deterministic.
+function _hashStringToSeed(str) {
+  // FNV-1a 32-bit — stable across loads, good spread for short scenario ids.
+  let h = 0x811c9dc5;
+  const s = String(str == null ? 'default' : str);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+function _mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// Run `fn` with Math.random seeded by `seedKey`, then restore the real RNG.
+// Restoration is in a finally so a throw inside the builder can't leave the global
+// RNG patched. Returns whatever fn returns.
+function withSeededRandom(seedKey, fn) {
+  const realRandom = Math.random;
+  const prng = _mulberry32(_hashStringToSeed(seedKey));
+  Math.random = prng;
+  try {
+    return fn();
+  } finally {
+    Math.random = realRandom;
+  }
+}
+
 // ----------------------------------------------------------------------
 function applyTimeOfDay(scene, timeOfDay, palette) {
   const isNight = (timeOfDay === 'night');
@@ -8599,16 +9423,39 @@ function attachKidLaser(kid, color = 'red') {
     new THREE.MeshBasicMaterial({ color: pal.dot, transparent: true, opacity: 0.95,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false })
   );
-  dot.position.set(0, 0, 0.04 + beamLen);          // +Z forward
-  unit.add(dot);
 
-  gg.add(unit);
+  gg.add(unit);   // emitter housing stays bolted to the gun (for the muzzle origin)
   kid._hasLaser = true;
   kid._laserColor = color;
   kid._laserUnit = unit;
+  // v1.84: the beam + dot live in a SCENE-LEVEL group, NOT under the kid. Kids
+  // carry a non-uniform scale (height scaleY vs build scaleXZ), which a child beam
+  // inherits — and non-uniform scale SHEARS the beam direction off-axis (the
+  // persistent "laser tilts to the sky" bug; lookAt and quaternion aims both
+  // failed because the shear is in the parent chain, above the unit). Parenting
+  // the beam to the scene root gives it a clean, unscaled world frame so we can
+  // place + orient it in pure world space. updateKidLaser positions this group at
+  // the emitter origin each frame and aims it down the world ray.
+  const beamGroup = new THREE.Group();
+  beam.rotation.set(0, 0, 0);
+  beam.position.set(0, 0, 0);          // re-zeroed; world placement done per-frame
+  dot.position.set(0, 0, 0);
+  beamGroup.add(beam);
+  beamGroup.add(dot);
+  // v1.85: add the beam group to the SAME scene the kid lives in — NOT the global
+  // Game.scene, which during enterScenario is still the previous (bedroom) scene
+  // and isn't rendered in the scenario (that was the "no laser at all" regression).
+  // Walk up the kid's group ancestry to its root (the scene); fall back to the gun.
+  let sceneRoot = kid.group || gg;
+  while (sceneRoot.parent) sceneRoot = sceneRoot.parent;
+  if (sceneRoot && sceneRoot.isScene) sceneRoot.add(beamGroup);
+  else if (Game.scene) Game.scene.add(beamGroup);
+  else gg.add(beamGroup);
+  kid._laserBeamGroup = beamGroup;
   // Refs + length for the per-frame clip (mirrors the FP laser's beam/dot model).
   unit.userData.beam = beam;
   unit.userData.dot = dot;
+  unit.userData.beamGroup = beamGroup;
   unit.userData.beamLen = beamLen;
 }
 
@@ -8626,7 +9473,6 @@ function attachKidLaser(kid, color = 'red') {
 // kid is actually fighting around instead of slipping past it. The beam is then
 // pointed exactly down the ray we raycast, so the rendered length matches the
 // clip with no orientation mismatch.
-const _kidLaserTgt = new THREE.Vector3();
 const _kidLaserOrigin = new THREE.Vector3();
 const _kidLaserDir = new THREE.Vector3();
 // Diagnostic state (always populated; read window.__laserDiag or press backtick).
@@ -8645,6 +9491,17 @@ function updateKidLaser(enemy, obstacles, aimPoint) {
   if (!unit || !unit.userData || !unit.userData.beam) return;
   const beamLen = unit.userData.beamLen || 60.0;
 
+  // v1.85: self-heal the beam group's parent scene. attachKidLaser may have run
+  // before Game.scene was pointed at the scenario scene, so make sure the beam
+  // group lives in the SAME scene as the kid (walk the kid's ancestry to its
+  // scene root). Cheap pointer compares; re-parents only if they diverge.
+  const bgrp = unit.userData.beamGroup;
+  if (bgrp && mesh.group) {
+    let root = mesh.group;
+    while (root.parent) root = root.parent;
+    if (root && root.isScene && bgrp.parent !== root) root.add(bgrp);
+  }
+
   // Force the whole kid chain's world matrices current (position/rotation were
   // set this frame). updateMatrixWorld(true) on the root rebuilds the subtree.
   if (mesh && mesh.group) mesh.group.updateMatrixWorld(true);
@@ -8653,14 +9510,20 @@ function updateKidLaser(enemy, obstacles, aimPoint) {
   // Emitter world origin.
   unit.getWorldPosition(_kidLaserOrigin);
 
-  // Ray direction: straight at the aim point in world space if we have one;
-  // else fall back to the gun's own world-forward (+Z).
+  // Ray direction: straight at the aim point in world space if we have one.
+  // v1.82: if there is NO aim point, do NOT fall back to the gun's world-forward —
+  // a non-aiming kid whose gun pose happens to tilt up would shoot a stray vertical
+  // beam (the "laser to the sky" report). Instead hide the beam this frame; a real
+  // aim next frame re-shows it. (updateEnemies always passes an aim point for a
+  // live target, so this only suppresses genuinely target-less frames.)
   if (aimPoint) {
     _kidLaserDir.copy(aimPoint).sub(_kidLaserOrigin);
     if (_kidLaserDir.lengthSq() < 1e-6) _kidLaserDir.set(0, 0, 1);
     _kidLaserDir.normalize();
   } else {
-    _kidLaserDir.set(0, 0, 1).transformDirection(unit.matrixWorld).normalize();
+    unit.userData.beam.visible = false;
+    unit.userData.dot.visible = false;
+    return;
   }
 
   // Clip to the first obstacle along that world ray.
@@ -8672,17 +9535,48 @@ function updateKidLaser(enemy, obstacles, aimPoint) {
       beamLen, obstacles
     );
   }
+  // v1.83: also terminate the beam AT the aim target. Previously the beam only
+  // clipped on cover meshes, so when a kid aimed across open ground at the player
+  // the beam sailed the full 60m PAST the player and kept going — and when the
+  // shot bearing ran toward the camera (player downhill of an uphill aim, or vice
+  // versa) that 60m overshoot projected to a near-vertical streak climbing off
+  // into the sky (the "laser to the sky" report). A real laser dot lands ON the
+  // target, so clamp the length to the distance to the aim point (a hair past, so
+  // the dot sits on the target, not floating in front of it).
+  const aimDist = _kidLaserOrigin.distanceTo(aimPoint) + 0.15;
+  dist = Math.min(dist, aimDist);
   dist = Math.max(0.4, Math.min(beamLen, dist));
 
-  // Point the unit's local +Z exactly down the world ray we just cast (lookAt a
-  // point along the ray), so the child beam/dot align with the clip distance.
-  _kidLaserTgt.copy(_kidLaserOrigin).addScaledVector(_kidLaserDir, 10);
-  unit.lookAt(_kidLaserTgt);
+  // v1.84: the beam + dot live in a SCENE-LEVEL group (no kid scale to shear the
+  // direction). Place that group at the emitter origin and orient it down the world
+  // ray with a clean world quaternion, then lay the beam/dot out along the group's
+  // local +Z at the clipped length. Pure world space — no parent shear, no lookAt
+  // up-vector ambiguity.
+  const bg = unit.userData.beamGroup;
+  const beam = unit.userData.beam;
+  const dot = unit.userData.dot;
+  if (bg) {
+    bg.position.copy(_kidLaserOrigin);
+    bg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), _kidLaserDir);
+    const L = Math.max(0.01, dist - 0.04);
+    // beam cylinder length runs local Y → map to +Z via rotation.x, scale to L.
+    beam.rotation.set(Math.PI / 2, 0, 0);
+    beam.scale.set(1, L / beamLen, 1);
+    beam.position.set(0, 0, 0.04 + L / 2);
+    dot.position.set(0, 0, 0.04 + L);
+    beam.visible = true;
+    dot.visible = true;
+  }
 
-  const L = Math.max(0.01, dist - 0.04);
-  unit.userData.beam.scale.y = L / beamLen;
-  unit.userData.beam.position.set(0, 0, 0.04 + L / 2);
-  unit.userData.dot.position.set(0, 0, 0.04 + L);
+  // v1.84 diag: record the ACTUAL rendered beam direction (origin → dot world pos)
+  // so any divergence from the intended dir is visible at a glance.
+  if (bg) {
+    bg.updateWorldMatrix(true, false);
+    const _dotW = new THREE.Vector3();
+    dot.getWorldPosition(_dotW);
+    const _renderDir = _dotW.sub(_kidLaserOrigin).normalize();
+    LASER_DIAG.renderDir = [+_renderDir.x.toFixed(2), +_renderDir.y.toFixed(2), +_renderDir.z.toFixed(2)];
+  }
 
   // Diagnostic: always record the last clip result so it's inspectable even
   // without flipping a flag first. Read `window.__laserDiag` in the console, or
@@ -8717,9 +9611,13 @@ function updateLaserDiagHud() {
   if (d) {
     txt += '-- last clip --\n';
     txt += 'char:     ' + d.char + '\n';
+    txt += 'aim tgt:  ' + (LASER_DIAG.aimTargetIsPlayer ? 'PLAYER' : 'other kid') + '\n';
+    txt += 'shooterY: ' + LASER_DIAG.shooterFeetY + '  tgtFeetY: ' + LASER_DIAG.tgtFeetY + '\n';
+    txt += 'aimY:     ' + LASER_DIAG.aimY + '\n';
     txt += 'obstacles:' + d.obstacleCount + '\n';
     txt += 'origin:   ' + d.origin.join(', ') + '\n';
-    txt += 'dir:      ' + d.dir.join(', ') + '\n';
+    txt += 'dir:      ' + d.dir.join(', ') + '  (dir.y high = beam up)\n';
+    if (LASER_DIAG.renderDir) txt += 'renderDir:' + LASER_DIAG.renderDir.join(', ') + '  (should match dir)\n';
     txt += 'dist:     ' + d.dist + ' / ' + d.beamLen + '\n';
     txt += 'CLIPPED:  ' + (d.clipped ? 'YES (hit)' : 'no (full length)');
   } else {
@@ -8822,9 +9720,19 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     if (!walls || !walls.length) return walls;
     let gy = groundY(gx, gz);
     for (const sx of [-2.2, 0, 2.2]) for (const sz of [-1.5, 0, 1.5]) gy = Math.min(gy, groundY(gx + sx, gz + sz));
+    // The wall obstacles share ONE mesh group (the fort), so lift it once. v1.76:
+    // the corner bins (_fortBin) each have their OWN mesh group, so lift those
+    // individually instead of relying on the shared-group lift. All get baseY=gy.
     const grp = walls[0].mesh;
     if (grp && grp.position) grp.position.y += gy;
-    for (const w of walls) w.baseY = gy;
+    const seenMeshes = new Set([grp]);
+    for (const w of walls) {
+      if (w._fortBin && w.mesh && w.mesh.position && !seenMeshes.has(w.mesh)) {
+        w.mesh.position.y += gy;
+        seenMeshes.add(w.mesh);
+      }
+      w.baseY = gy;
+    }
     return walls;
   }
 
@@ -9111,16 +10019,25 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -17, z: 19, side: 'south' },
   ];
   for (const hc of houseCenters) {
-    // Driveway runs from road shoulder to house front (now longer — houses are
-    // further back). v1.15: wider pad (4m) to match the bigger frontage.
-    const roadZ = 0;
+    // Driveway runs from the house front all the way to the ACTUAL road edge.
+    // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
+    // at a fixed z=0±3.5 — it's at (roadCenterlineZ at this house's X) ± half-
+    // width. The old code stopped the pad at the straight-line z=±3.5, leaving a
+    // green gap between the driveway end and the curved pavement. Sample the
+    // centerline nearest this house's X to find the true edge, and overshoot it
+    // slightly so the pad tucks UNDER the road edge with no seam.
+    let roadCZ = 0, bestDX = Infinity;
+    for (const p of roadCenterline) {
+      const dxp = Math.abs(p.x - hc.x);
+      if (dxp < bestDX) { bestDX = dxp; roadCZ = p.z; }
+    }
+    const ROAD_HALF_W = 3.5;
     const houseFront = hc.side === 'north' ? hc.z + 3.5 : hc.z - 3.5;
-    const minZ = hc.side === 'north' ? houseFront : roadZ + 3.5;
-    const maxZ = hc.side === 'north' ? roadZ - 3.5 : houseFront;
-    // v1.35c: tile the driveway along its length with short slope-aligned pads
-    // (layOnSlope quaternion) instead of one long flat plane that only touches
-    // the grade at its center. Each segment lies flush on the local slope so the
-    // pad follows the hill cleanly (matches the rebuilt road).
+    // Road edge nearest this house, overshot 0.5m into the asphalt for a clean join.
+    const roadEdge = hc.side === 'north' ? (roadCZ - ROAD_HALF_W - 0.5)
+                                         : (roadCZ + ROAD_HALF_W + 0.5);
+    const minZ = hc.side === 'north' ? houseFront : roadEdge;
+    const maxZ = hc.side === 'north' ? roadEdge : houseFront;
     const z0 = Math.min(minZ, maxZ), z1 = Math.max(minZ, maxZ);
     const span = z1 - z0;
     const segLen = 2.0;
@@ -9362,7 +10279,11 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const sideSign = (Math.random() < 0.5 ? -1 : 1);
     const mbX = baseX + perpX * 2.2 * sideSign;
     const mbZ = baseZ + perpZ * 2.2 * sideSign;
-    bushObs.push(sinkObs(addMailbox(scene, mbX, mbZ), mbX, mbZ));
+    // v1.76: face the door toward the ROAD. The door is local +Z; the road lies in
+    // the −(dirX,dirZ) direction (dir points road→house), so yaw = atan2 of the
+    // road-ward vector. Fixes south-side Winnmark boxes that faced the house.
+    const mbFacing = Math.atan2(-dirX, -dirZ);
+    bushObs.push(sinkObs(addMailbox(scene, mbX, mbZ, { facing: mbFacing }), mbX, mbZ));
   }
 
   // === Cover collections ===
@@ -9475,13 +10396,19 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     // driveway sits on an active push lane, so this costs nothing elsewhere.
     if (hc.x === 24 && hc.z === -15) continue;
     const towardRoad = hc.side === 'north' ? +1 : -1;
-    // Position: roughly midway between house and road along the driveway
-    const carX = hc.x + rng(-1.5, 1.5);
-    const carZ = hc.z + towardRoad * 4.5;
+    // Position along the driveway. v1.76: the car is 3.6m long (half = 1.8m) and
+    // points along Z. The old offset (4.5m) put the car's REAR ~0.8m inside the
+    // house front (at hc.z±3.5) — the "car parked partly inside the house" bug.
+    // Place the center so the rear clears the front by ~0.3m: front(3.5) + half
+    // length(1.8) + margin(0.3) = 5.6m out toward the road. Keep a little lateral
+    // jitter only (no Z jitter, so the clearance is guaranteed).
+    const carX = hc.x + rng(-1.2, 1.2);
+    const carZ = hc.z + towardRoad * 5.6;
     // Orientation: car length along Z (facing road)
     const orientation = hc.side === 'north' ? Math.PI / 2 : -Math.PI / 2;
     const color = carColors[Math.floor(Math.random() * carColors.length)];
-    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color }), carX, carZ);
+    // v1.76: pass groundNormal so the car tilts onto the grade (all 4 tires touch).
+    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal }), carX, carZ);
     pushCarObs(driveCars, carObs);
   }
 
@@ -9492,10 +10419,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the AI can use them when scenarios place a kid near the bulb.
   {
     // Car at the curb just inside the bulb (bulb now at x=-30)
-    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8 }), -30, -3.5);
+    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), -30, -3.5);
     pushCarObs(coverList, carObs);
     // A second car at the south curb of the bulb
-    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030 }), -27, 5);
+    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), -27, 5);
     pushCarObs(coverList, carObs2);
     // v1.28k: a proper U-shaped plywood kid-fort in the cul-de-sac bulb.
     // Attackers come from the EAST (road entry x=34), so the fort's solid back
@@ -9503,8 +10430,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     // incoming push. Moved forward from x=-33 (which buried it in the west tree
     // line, "too far back/inside the trees") to x=-29, so it sits IN the bulb
     // as the focal point rather than behind it.
-    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2, h: 0.95 });
-    seatFortOnSlope(fortWalls, -29, 0);   // v1.28l: lift the shared group once, tag baseY on each wall
+    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2 });  // v1.76: taller default walls + corner bins
+    seatFortOnSlope(fortWalls, -29, 0);   // v1.28l: lift the shared group once, tag baseY on each wall (+ corner bins, v1.76)
     for (const w of fortWalls) coverList.push(w);
     // Stash references for placements table below
     var culDeSacCar1Obs = carObs;
@@ -9522,8 +10449,16 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // below) gives both sides things to use along the way.
   // Old position was (21,-25, faceDir E); flavor is now "you grabbed the spot by
   // the woods at the mouth of the street first."
-  {
-    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4, h: 0.95 });
+  // v1.65: GATED to the treehouse variant. This fort sits at x≈33, right on top
+  // of the `cluster_road_east` (x=31) attacker spawn used by every OTHER defend
+  // scenario (Hold the Fort, etc.). It was built unconditionally, so in those
+  // scenarios the first kid in the spawn huddle (Seth, whose ring angle lands at
+  // +x/+z) materialized INSIDE this U-shaped fort and wedged against its back
+  // wall — "Seth never pushes." It belongs only to the treehouse defend, where
+  // the player actually spawns behind it (playerSpawn 'east_fort') and attackers
+  // come from the far west cluster, nowhere near x=33.
+  if (variant === 'treehouse') {
+    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4 });  // v1.76: taller walls + corner bins
     seatFortOnSlope(fw, 33, 0);
     for (const w of fw) coverList.push(w);
   }
@@ -9579,7 +10514,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const gyp = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor }), cxp, czp);
+        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal }), cxp, czp);
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
         cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) }), cxp, czp);
@@ -9694,7 +10629,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       homeCover: sethCover[Math.floor(Math.random() * sethCover.length)],
       scene,
     }));
-  } else if (variant === 'cul_de_sac') {
+  } else if (variant === 'cul_de_sac' || variant === 'treehouse') {
     // Player spawns at the eastern entry looking west — has to push through
     // the whole street with 3 hostiles waiting.
     spawn = new THREE.Vector3(32, 0, 0);
@@ -9725,19 +10660,34 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   }
 
   // === v1.35: Streetlamps — 4 tall black lamps between the houses, overhanging
-  // the road. Lit at night, dark props by day. Placed on the grass shoulder
-  // just off the road spine (z≈±6), at the gaps between house pairs along X.
+  // the road. Lit at night, dark props by day. v1.76: the pole is placed relative
+  // to the ACTUAL curved road edge (sampled from the centerline) so it sits on the
+  // GRASS shoulder, never on the asphalt or on a driveway. The X positions sit in
+  // the gaps BETWEEN house pairs, which keeps them clear of the driveway pads (at
+  // the house X's). `side` says which shoulder; the arm overhangs toward the road.
   // v1.51: poles are now collision obstacles (collected into lampObs below).
   const lampObs = [];
   {
-    const lampSpots = [
-      { x: 16, z: -6 },   // between Seth(24) & house1(8), north shoulder
-      { x:  0, z:  6 },   // between house1(8) & house2(-8), south shoulder
-      { x: -13, z: -6 },  // between house2(-8) & house3(-18), north shoulder
-      { x: 30, z:  6 },   // near the east entry, south shoulder
+    const ROAD_HALF_LAMP = 3.5;
+    const LAMP_GRASS = 1.6;   // pole sits this far onto the grass beyond the pavement
+    const lampSpotsXSide = [
+      { x: 16, side: 'north' },  // between Seth(24) & house1(8)
+      { x:  0, side: 'south' },  // between house1(8) & house2(-8)
+      { x: -13, side: 'north' }, // between house2(-8) & house3(-18)
+      { x: 30, side: 'south' },  // near the east entry
     ];
-    for (const s of lampSpots) {
-      const lamp = addStreetlamp(scene, s.x, s.z, groundY, _night);
+    for (const s of lampSpotsXSide) {
+      // Road centerline Z nearest this lamp's X (road bulges south, so this varies).
+      let roadCZ = 0, bestDX = Infinity;
+      for (const p of roadCenterline) {
+        const dxp = Math.abs(p.x - s.x);
+        if (dxp < bestDX) { bestDX = dxp; roadCZ = p.z; }
+      }
+      // North shoulder is at smaller Z (road edge − half − grass); south is larger.
+      const lampZ = (s.side === 'north')
+        ? roadCZ - ROAD_HALF_LAMP - LAMP_GRASS
+        : roadCZ + ROAD_HALF_LAMP + LAMP_GRASS;
+      const lamp = addStreetlamp(scene, s.x, lampZ, groundY, _night);
       if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
     }
   }
@@ -10513,20 +11463,29 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // === Cul-de-sac bulb cover (always built — general-purpose battlefield cover) ===
   // Two parked cars + a plank fort make the EAST bulb the natural focal point.
   {
-    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8 }), BULB.x + 1, BULB.z - 3.5);
+    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), BULB.x + 1, BULB.z - 3.5);
     pushCarObs(coverList, carObs);
-    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030 }), BULB.x + 3.5, BULB.z + 3);
+    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), BULB.x + 3.5, BULB.z + 3);
     pushCarObs(coverList, carObs2);
     // v1.23: U-shaped plywood kid-fort. Attackers push up the lane from the
     // WEST (entry x=-38), so the fort sits on the WEST side of the bulb with its
     // solid back wall facing WEST toward the incoming push. (Was a thin plank at
     // BULB.x+5 — EAST of the bulb, i.e. behind the defenders, facing away.)
     const fortX = BULB.x - 4, fortZ = BULB.z;
-    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2, h: 0.95 });
-    // v1.8: all three walls share ONE group mesh — lift it once, tag baseY on each.
+    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2 });  // v1.76: taller walls + corner bins
+    // v1.8: the three walls share ONE group mesh — lift it once, tag baseY on each.
+    // v1.76: the corner bins each have their OWN mesh group, so lift those
+    // individually (the shared-group lift below only moves the walls).
     const fortGY = groundY(fortX, fortZ);
     if (fortWalls[0]?.mesh) fortWalls[0].mesh.position.y += fortGY;
-    for (const w of fortWalls) { w.baseY = fortGY; coverList.push(w); }
+    const _seenFortMesh = new Set([fortWalls[0]?.mesh]);
+    for (const w of fortWalls) {
+      if (w._fortBin && w.mesh && w.mesh.position && !_seenFortMesh.has(w.mesh)) {
+        w.mesh.position.y += fortGY;
+        _seenFortMesh.add(w.mesh);
+      }
+      w.baseY = fortGY; coverList.push(w);
+    }
     var bulbCar1Obs = carObs;
     var bulbCar2Obs = carObs2;
     var bulbPlankObs = fortWalls[0]; // back wall is the primary cover ref
@@ -10559,7 +11518,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const sgy = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor });
+        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal });
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
         cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) });
@@ -10629,19 +11588,30 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   //  enemySetup path.)
 
   // === v1.35: Streetlamps — 4 tall black lamps along the wooded lane, between
-  // the houses and overhanging the road. Lit at night, dark props by day. The
-  // lane wiggles but its spine is near z≈0; place lamps on the grass shoulder
-  // just off it at the gaps between house pairs. v1.51: poles now collide.
+  // the houses and overhanging the road. Lit at night, dark props by day. v1.76:
+  // pole placed relative to the ACTUAL S-curving road edge (sampled from the
+  // centerline) so it sits on the grass shoulder, never on asphalt or a driveway.
+  // X positions sit in the gaps between house pairs (clear of the driveway pads).
   const lampObs = [];
   {
-    const lampSpots = [
-      { x: -19, z: -6 },  // between house0(-28) & house1(-6), north shoulder
-      { x:  -7, z:  6 },  // mid-lane, south shoulder
-      { x:  10, z: -6 },  // between house1(-6) & house2(16), north shoulder
-      { x:  24, z:  6 },  // approaching the east bulb, south shoulder
+    const ROAD_HALF_LAMP = 3.5;
+    const LAMP_GRASS = 1.6;
+    const lampSpotsXSide = [
+      { x: -19, side: 'north' },  // between house0(-28) & house1(-6)
+      { x:  -7, side: 'south' },  // mid-lane
+      { x:  10, side: 'north' },  // between house1(-6) & house2(16)
+      { x:  24, side: 'south' },  // approaching the east bulb
     ];
-    for (const s of lampSpots) {
-      const lamp = addStreetlamp(scene, s.x, s.z, groundY, _night);
+    for (const s of lampSpotsXSide) {
+      let roadCZ = 0, bestDX = Infinity;
+      for (const p of roadCenterline) {
+        const dxp = Math.abs(p.x - s.x);
+        if (dxp < bestDX) { bestDX = dxp; roadCZ = p.z; }
+      }
+      const lampZ = (s.side === 'north')
+        ? roadCZ - ROAD_HALF_LAMP - LAMP_GRASS
+        : roadCZ + ROAD_HALF_LAMP + LAMP_GRASS;
+      const lamp = addStreetlamp(scene, s.x, lampZ, groundY, _night);
       if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
     }
   }
@@ -11552,6 +12522,44 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // group oriented to point along +Z (the kid's facing). Kept low-poly; the
 // player sees these at range, not up close. Origin ~ the grip/hand.
 // ---------------------------------------------------------------------
+// v1.78: weapon-handling classification for the two-handed NPC holds.
+//   - SMALL guns (pistol, mac10): one-handed at rest; the off-hand only comes to
+//     the gun while firing/aiming, where both hands push the weapon straight out
+//     in front of the chest.
+//   - everything else (shotgun/ar/sniper/ak47/mp5/ump): two-handed always — the
+//     off-hand rests on the foregrip even at idle, and on firing the gun tucks
+//     into the right shoulder with the off-hand still across on the foregrip.
+// gunForegripZ returns the local +Z (forward) distance from the gun mount to a
+// sensible support-hand grip point for that weapon, so the off-hand lands on the
+// handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
+function isSmallGun(weapon) {
+  return weapon === 'pistol' || weapon === 'mac10' || !weapon;
+}
+function gunForegripZ(weapon) {
+  switch (weapon) {
+    case 'sniper':  return 0.26;   // long barrel — hand well forward
+    case 'shotgun': return 0.18;   // pump fore-grip
+    case 'ar':
+    case 'ak47':    return 0.16;   // handguard ahead of the mag
+    case 'mp5':
+    case 'ump':     return 0.12;   // compact body
+    case 'mac10':   return 0.06;
+    case 'pistol':
+    default:        return 0.10;
+  }
+}
+// v1.81: exact grip points ON the gun mesh, in the gunGroup's LOCAL frame (origin
+// at the gun mount, barrel along +Z). The buildEnemyGunMesh grip() sits at
+// (0,-0.08,0) — that's the trigger/pistol grip the FIRING hand wraps. The support
+// hand goes on the foregrip: forward by gunForegripZ, and at the gun's body line
+// (slightly below the barrel for the underhand grip). Returned offsets are added
+// to the gunGroup's world position to get the hand targets, so the hands SNAP to
+// the actual weapon instead of floating near it.
+function gunGripLocal(weapon) {
+  // Firing-hand grip: at the pistol grip, a hair below + behind the mount.
+  return { x: 0, y: -0.08, z: -0.01 };
+}
+
 function buildEnemyGunMesh(weapon) {
   const g = new THREE.Group();
   const black = new THREE.MeshStandardMaterial({ color: 0x232326, roughness: 0.5, metalness: 0.3 });
@@ -11671,17 +12679,45 @@ function createKid(profile, weapon = 'pistol') {
   const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.24), shirt);
   torso.position.set(0, 0.8, 0); torso.castShadow = true; group.add(torso);
 
-  // Arms
-  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.45, 0.14), shirt);
-  armL.position.set(-0.27, 0.82, 0); armL.castShadow = true; group.add(armL);
-  const armR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.45, 0.14), shirt);
-  armR.position.set(0.27, 0.82, 0); armR.castShadow = true; group.add(armR);
-
-  // Hands
-  const handL = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.12), skin);
-  handL.position.set(-0.27, 0.56, 0); handL.castShadow = true; group.add(handL);
-  const handR = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.1, 0.12), skin);
-  handR.position.set(0.27, 0.56, 0); handR.castShadow = true; group.add(handR);
+  // Arms — v1.80: TWO-SEGMENT ELBOW RIG. Each arm is now a shoulder pivot Group
+  // (positioned at the shoulder anchor) containing an upper-arm box that hangs
+  // down to an elbow pivot Group, which contains a forearm box ending in the
+  // hand. setKidGunHold runs 2-bone IK on the shoulder+elbow rotations so the
+  // hand reaches its target with a natural bend (no more stiff straight plank).
+  // The gun arm (R) is on the kid's RIGHT (-X); the off arm (L) on +X reaches
+  // across. Builder helper returns { shoulder, upper, elbow, fore, hand }.
+  // Lengths: upper 0.24m + fore 0.21m = 0.45m total (matches the old arm).
+  const U_LEN = 0.24, F_LEN = 0.21;
+  const SHOULDER_Y = 1.045;   // old arm top (arm center 0.82 + half 0.225)
+  function buildArm(sx) {
+    const shoulder = new THREE.Group();
+    shoulder.position.set(sx, SHOULDER_Y, 0);
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.11, U_LEN, 0.13), shirt);
+    upper.position.set(0, -U_LEN / 2, 0);   // hangs DOWN from the shoulder pivot
+    upper.castShadow = true;
+    shoulder.add(upper);
+    const elbow = new THREE.Group();
+    elbow.position.set(0, -U_LEN, 0);        // at the bottom of the upper arm
+    shoulder.add(elbow);
+    const fore = new THREE.Mesh(new THREE.BoxGeometry(0.10, F_LEN, 0.115), skin);
+    fore.position.set(0, -F_LEN / 2, 0);     // hangs DOWN from the elbow pivot
+    fore.castShadow = true;
+    elbow.add(fore);
+    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), skin);
+    hand.position.set(0, -F_LEN, 0);         // at the end of the forearm
+    hand.castShadow = true;
+    elbow.add(hand);
+    group.add(shoulder);
+    return { shoulder, upper, elbow, fore, hand };
+  }
+  const armRig_R = buildArm(-0.27);   // gun arm (kid's right)
+  const armRig_L = buildArm(0.27);    // off arm (kid's left)
+  // Back-compat aliases: pose code historically referenced armR/handR etc. We now
+  // point those at the SHOULDER pivot (armR/armL) and the HAND mesh (handR/handL),
+  // so any leftover reads resolve to a sensible node. The IK in setKidGunHold uses
+  // the full rigs (kid.pose.rigR/rigL).
+  const armR = armRig_R.shoulder, armL = armRig_L.shoulder;
+  const handR = armRig_R.hand,    handL = armRig_L.hand;
 
   // Neck
   const neck = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.1), skin);
@@ -11780,7 +12816,7 @@ function createKid(profile, weapon = 'pistol') {
   // Gun in right hand (oriented to point along +Z when group faces +Z).
   // v1.28e: silhouette now matches the enemy's actual weapon class.
   const gunGroup = buildEnemyGunMesh(weapon);
-  gunGroup.position.set(0.27, 0.62, 0.1);
+  gunGroup.position.set(-0.27, 0.62, 0.1);   // v1.78: kid's RIGHT side (was +0.27, read left-handed)
   group.add(gunGroup);
 
   return {
@@ -11792,15 +12828,23 @@ function createKid(profile, weapon = 'pistol') {
     pose: {
       legL, legR, shoeL, shoeR, torso, armL, armR, handL, handR, neck, head, gunGroup,
       hair: hairMesh, eyeL, eyeR,
+      // v1.80: full two-segment rigs for the IK in setKidGunHold.
+      rigR: armRig_R, rigL: armRig_L,
       // v1.14c: all extra head-attached meshes (hair strands/puffs/fringe,
       // glasses) + their base Y, so the crouch pose lowers them with the head.
       headExtras: headExtras.map(m => ({ mesh: m, baseY: m.position.y })),
       base: {
         legL_y: legL.position.y, legR_y: legR.position.y,
         shoeL_z: shoeL.position.z, shoeR_z: shoeR.position.z,
-        torso_y: torso.position.y, armL_y: armL.position.y, armR_y: armR.position.y,
-        handL_y: handL.position.y, handR_y: handR.position.y,
+        torso_y: torso.position.y,
         neck_y: neck.position.y, head_y: head.position.y, gun_y: gunGroup.position.y,
+        // v1.78: base X/Z so poses can move limbs and restore them exactly,
+        // independent of the handedness sign (gun + gun arm now on -X).
+        gun_x: gunGroup.position.x, gun_z: gunGroup.position.z,
+        // v1.80: elbow-rig anchors. The shoulder pivots live at the shoulder
+        // anchor (SHOULDER_Y); the IK resolves shoulder/elbow rotations from these.
+        shoulderR_x: armRig_R.shoulder.position.x, shoulderL_x: armRig_L.shoulder.position.x,
+        shoulder_y: SHOULDER_Y, U_LEN, F_LEN,
         hair_y: hairMesh ? hairMesh.position.y : 0,
         eyeL_y: eyeL.position.y, eyeR_y: eyeR.position.y,
         legScaleY: legL.scale.y,
@@ -11826,6 +12870,23 @@ function setKidCrouch(kid, amount) {
   po.crouch = amount;
   const b = po.base;
 
+  // v1.80: reset both ELBOW RIGS to a clean hanging base each frame so (a) the
+  // pose pass's IK starts fresh, and (b) euler poses that run WITHOUT the IK (hit
+  // pose, zombie reach) drive known nodes. A rest arm hangs straight down: shoulder
+  // pivot at its anchor (X + SHOULDER_Y, dropped by hipDrop below), identity
+  // rotations on shoulder + elbow, segment scales 1, elbow back at -U_LEN.
+  for (const rig of [po.rigR, po.rigL]) {
+    if (!rig) continue;
+    rig.shoulder.rotation.set(0, 0, 0);
+    rig.shoulder.quaternion.set(0, 0, 0, 1);
+    rig.elbow.rotation.set(0, 0, 0);
+    rig.elbow.quaternion.set(0, 0, 0, 1);
+    rig.elbow.position.set(0, -b.U_LEN, 0);
+    rig.upper.scale.set(1, 1, 1);
+    rig.fore.scale.set(1, 1, 1);
+    rig.hand.position.set(0, -b.F_LEN, 0);
+  }
+
   // Legs: squash vertically (knees bend) so their TOP drops while feet stay put.
   // A leg centered at y=0.275 with height 0.55 has its base at 0; scaling Y about
   // the mesh center would lift the foot, so we also re-lower the center to keep
@@ -11847,10 +12908,9 @@ function setKidCrouch(kid, amount) {
 
   // Everything from the torso up lowers by hipDrop (feet planted, body sinks down).
   po.torso.position.y = b.torso_y - hipDrop;
-  po.armL.position.y  = b.armL_y  - hipDrop;
-  po.armR.position.y  = b.armR_y  - hipDrop;
-  po.handL.position.y = b.handL_y - hipDrop;
-  po.handR.position.y = b.handR_y - hipDrop;
+  // v1.80: drop the SHOULDER PIVOTS by hipDrop (the whole arm rig follows).
+  po.rigR.shoulder.position.set(b.shoulderR_x, b.shoulder_y - hipDrop, 0);
+  po.rigL.shoulder.position.set(b.shoulderL_x, b.shoulder_y - hipDrop, 0);
   po.neck.position.y  = b.neck_y  - hipDrop;
   po.head.position.y  = b.head_y  - hipDrop;
   po.gunGroup.position.y = b.gun_y - hipDrop;
@@ -11881,25 +12941,191 @@ function setKidHitPose(kid, amount) {
   if (!po) return;
   amount = Math.max(0, Math.min(1, amount));
   const b = po.base;
-  // Make sure any crouch is released first so the body stands tall.
+  // Make sure any crouch is released first so the body stands tall (this also
+  // resets both rigs to a clean hanging base via setKidCrouch).
   if ((po.crouch ?? 0) > 0) setKidCrouch(kid, 0);
-  // Right arm rotates back/up at the shoulder so it points skyward. The arm box
-  // pivots at its center, so we also lift it and shift it slightly so the hand
-  // ends up above the shoulder rather than swinging out behind.
+  // v1.80: the gun arm now pivots at the SHOULDER group. Rotate the right shoulder
+  // about X so the whole (straight) arm swings up & back to point skyward — a
+  // clear "I'm hit!" signal — with a slight elbow bend so it doesn't read stiff.
   const raise = amount;
-  po.armR.rotation.x = -2.5 * raise;                 // swing up & back toward vertical-overhead
-  po.armR.position.y = b.armR_y + 0.18 * raise;      // lift so the elbow clears the shoulder
-  po.armR.position.z = 0.02 * raise;
-  // Hand rides up to the top of the raised arm.
-  po.handR.position.y = b.handR_y + 0.55 * raise;
-  po.handR.position.z = 0.0;
+  po.rigR.shoulder.rotation.x = -2.6 * raise;   // swing arm overhead
+  po.rigR.elbow.rotation.x = 0.4 * raise;        // slight elbow bend
   // Gun lifts overhead and points UP (its barrel runs +Z locally; rotate so +Z
-  // faces +Y → muzzle to the sky, a clear "hit" signal).
+  // faces +Y → muzzle to the sky). The gun is still parented to the body group
+  // (not the hand), so drive it directly to ride above the raised arm.
   po.gunGroup.position.y = b.gun_y + 0.62 * raise;
-  po.gunGroup.position.x = 0.27;
-  po.gunGroup.position.z = 0.0;
+  po.gunGroup.position.x = b.gun_x;
+  po.gunGroup.position.z = b.gun_z;
   po.gunGroup.rotation.x = -Math.PI / 2 * raise;     // tip the muzzle up
   po._hitRaise = amount;
+}
+
+// ---------------------------------------------------------------------
+// GUN HOLD (v1.78) — handedness-correct one/two-handed holds
+// ---------------------------------------------------------------------
+// Single authority for where the gun + both hands sit, layered on top of the
+// crouch base each frame. The gun lives on the kid's RIGHT (armR/handR/gunGroup,
+// local -X); the off-hand (armL/handL, +X) reaches across for two-handed holds.
+//
+//   mode 'rest' : not firing.
+//       - small gun (pistol/mac10): gun at the right hip-ish, off-hand at side.
+//       - large gun: off-hand rests across on the foregrip (always two-handed).
+//   mode 'aim'  : firing / aiming.
+//       - small gun: BOTH hands push the gun straight out in front of the chest
+//         (centered, arms forward).
+//       - large gun: gun tucks into the right shoulder, off-hand across on the
+//         foregrip, slight forward lean down the sights.
+//   `t` 0..1 eases rest→aim (the caller ramps it). `lift` adds extra muzzle
+//   height for the over-cover case (replaces the old setKidAdsTall lift).
+//
+// Composes after setKidCrouch (which resets limbs to base ∓ hipDrop): we read
+// the CURRENT arm/hand/gun Y (post-crouch) as the anchor so a crouched kid still
+// holds the gun correctly. Rotations and X/Z are set absolutely from base.
+// v1.80: module-level scratch math for the 2-bone IK in setKidGunHold (avoids
+// allocating a dozen Vector3/Quaternion per kid per frame).
+const _IK_Sv = new THREE.Vector3(), _IK_Hv = new THREE.Vector3(), _IK_axis = new THREE.Vector3();
+const _IK_up = new THREE.Vector3(0, -1, 0);
+const _IK_elbow = new THREE.Vector3(), _IK_perp = new THREE.Vector3(), _IK_hint = new THREE.Vector3();
+const _IK_qS = new THREE.Quaternion(), _IK_qSinv = new THREE.Quaternion();
+const _IK_segUp = new THREE.Vector3(), _IK_segFore = new THREE.Vector3();
+function setKidGunHold(kid, weapon, t = 0, lift = 0) {
+  const po = kid.pose;
+  if (!po) return;
+  t = Math.max(0, Math.min(1, t));
+  const b = po.base;
+  const small = isSmallGun(weapon);
+  // Crouch drop: the shoulder pivots were lowered by hipDrop in setKidCrouch; the
+  // IK targets must use the same drop so the hands meet the (also-dropped) gun.
+  const c = po.crouch || 0;
+  const hipDrop = 0.55 * (0.45 * c);
+  const SY = b.shoulder_y - hipDrop;            // shoulder pivot height this frame
+  const U = b.U_LEN, F = b.F_LEN;
+
+  // v1.81: 2-BONE IK with an explicit BEND HINT. Given a shoulder pivot at S and a
+  // hand target H, compute the ELBOW point (two-bone solution: the point at dist U
+  // from S and F from H), pushed off the S→H axis toward `hint` so the joint kicks
+  // the way a real elbow would. Then orient the shoulder S→elbow and the elbow
+  // elbow→H so the forearm tip lands exactly on H. The hint is the fix for the
+  // "elbow bends the wrong way" report: the gun (right) arm bends OUT to the right
+  // (-X) and down; the off (left) arm bends OUT to the left (+X) and down; resting
+  // arms bend gently backward (-Z) so they hang naturally.
+  function solveArm(rig, hx, hy, hz, hintX, hintY, hintZ) {
+    const _Sv = _IK_Sv, _Hv = _IK_Hv, _axis = _IK_axis, _up = _IK_up,
+          _elbow = _IK_elbow, _perp = _IK_perp, _hint = _IK_hint,
+          _qS = _IK_qS, _qSinv = _IK_qSinv, _segUp = _IK_segUp, _segFore = _IK_segFore;
+    _Sv.set(rig.shoulder.position.x, rig.shoulder.position.y, rig.shoulder.position.z);
+    _Hv.set(hx, hy, hz);
+    _axis.subVectors(_Hv, _Sv);
+    let d = _axis.length();
+    const maxR = (U + F) * 0.999, minR = Math.abs(U - F) + 0.02;
+    d = Math.max(minR, Math.min(maxR, d));
+    if (_axis.lengthSq() < 1e-9) _axis.set(0, -1, 0);
+    _axis.normalize();
+    _Hv.copy(_Sv).addScaledVector(_axis, d);    // clamped hand point
+    const along = (U * U - F * F + d * d) / (2 * d);
+    const h = Math.sqrt(Math.max(0, U * U - along * along));   // elbow off-axis dist
+    _hint.set(hintX, hintY, hintZ).normalize();
+    _perp.copy(_hint).addScaledVector(_axis, -_hint.dot(_axis));   // perpendicularize
+    if (_perp.lengthSq() < 1e-6) { _perp.set(0, -1, 0).addScaledVector(_axis, -_axis.y * -1); }
+    _perp.normalize();
+    _elbow.copy(_Sv).addScaledVector(_axis, along).addScaledVector(_perp, h);
+    _segUp.subVectors(_elbow, _Sv).normalize();
+    _qS.setFromUnitVectors(_up, _segUp);
+    rig.shoulder.quaternion.copy(_qS);
+    _segFore.subVectors(_Hv, _elbow).normalize();
+    _qSinv.copy(_qS).invert();
+    _segFore.applyQuaternion(_qSinv);
+    rig.elbow.quaternion.setFromUnitVectors(_up, _segFore);
+  }
+
+  // Helper: world hand target from a gun-local grip offset (gun barrel is +Z).
+  // The gun has no Y-rotation in local space (it inherits the kid's yaw via the
+  // group), so gun-local maps directly to kid-local: add the offset to the gun
+  // group position. Returns [x,y,z].
+  function gripPoint(gx, gy, gz, off) {
+    return [gx + off.x, gy + off.y, gz + off.z];
+  }
+
+  if (small) {
+    // ---- SMALL GUN (pistol, mac10) ----
+    // The grip sits 0.08 below the gun origin, and a hanging hand only reaches down
+    // to ~0.60 (shoulder 1.045 − arm 0.45), so the gun must ride fairly HIGH for the
+    // hand to actually meet the grip. Rest: gun at the right side, ~waist/chest, the
+    // firing hand on the grip, off-hand at its side. Aim: gun centers, rises, pushes
+    // forward; BOTH hands grip it. All targets kept within arm reach (~0.42m).
+    const restX = b.gun_x, aimX = 0.0;
+    const gunX = restX * (1 - t) + aimX * t;        // -0.27 → 0 (centers)
+    const gunY = 0.74 * (1 - t) + 0.88 * t;         // ride high enough to reach the grip
+    const gunZ = 0.13 * (1 - t) + 0.18 * t;         // forward, off the body
+    po.gunGroup.position.set(gunX, gunY, gunZ);
+    po.gunGroup.rotation.x = 0;
+    const grip = gunGripLocal(weapon);
+    const gp = gripPoint(gunX, gunY, gunZ, grip);   // firing-hand grip world point
+    // Firing (right) hand: always on the grip. Elbow bends out-right (-X) + down.
+    solveArm(po.rigR, gp[0], gp[1], gp[2], -1, -0.5, -0.2);
+    // Off (left) hand: hangs at its side at rest, comes to the grip on aim.
+    const restLX = 0.27, restLY = SY - (U + F) * 0.94, restLZ = 0.06;
+    const oLX = restLX * (1 - t) + gp[0] * t;
+    const oLY = restLY * (1 - t) + gp[1] * t;
+    const oLZ = restLZ * (1 - t) + (gp[2] - 0.02) * t;
+    solveArm(po.rigL, oLX, oLY, oLZ, 1, -0.5, -0.2);
+  } else {
+    // ---- LARGE GUN: two-handed ALWAYS ----
+    // The off-hand (left shoulder) reaching a foregrip is the binding constraint:
+    // it can only reach a grip near body-CENTER, never one tucked off at the right
+    // shoulder AND forward. So:
+    //   REST: rifle carried CENTERED across the front of the body at chest height
+    //     (a patrol/low-ready carry) — both hands on it, gun forward of the torso
+    //     so the off-arm doesn't cut through the body.
+    //   AIM: gun rises and tucks toward center-RIGHT (x~-0.10, the furthest right
+    //     the off-hand can still cross-reach), with a slight forward lean.
+    const aimX = -0.10, aimY = SY - 0.06, aimZ = b.gun_z + 0.06;   // tucked right, armpit-ish
+    const restX = 0.0,  restY = SY - 0.18, restZ = b.gun_z + 0.10; // centered chest carry
+    const gunX = restX * (1 - t) + aimX * t;
+    const gunY = (restY * (1 - t) + aimY * t) + lift * t + lift * (1 - t) * 0.5;
+    const gunZ = restZ * (1 - t) + aimZ * t;
+    po.gunGroup.position.set(gunX, gunY, gunZ);
+    po.gunGroup.rotation.x = 0;
+    const grip = gunGripLocal(weapon);
+    const gp = gripPoint(gunX, gunY, gunZ, grip);          // firing-hand grip
+    // Off-hand grabs the NEAR handguard (reduced forward Z so the cross-reach stays
+    // within arm length).
+    const foreZ = gunZ + Math.min(gunForegripZ(weapon), 0.13);
+    const fp = [gunX, gunY - 0.05, foreZ];
+    // Firing (right) hand on the grip; elbow OUT right (-X) + down → forearm angles
+    // back IN to the grip.
+    solveArm(po.rigR, gp[0], gp[1], gp[2], -1, -0.45, -0.25);
+    // Off (left) hand on the foregrip; elbow out-left (+X) + down.
+    solveArm(po.rigL, fp[0], fp[1], fp[2], 1, -0.4, 0.05);
+    // Slight forward lean down the sights when aiming.
+    po.torso.rotation.x = (po.torso.rotation.x || 0) + 0.10 * t;
+    po.head.rotation.x = 0.08 * t;
+  }
+}
+
+// ---------------------------------------------------------------------
+// WALK ANIMATION (v1.78, revised v1.79) — subtle locomotion swing
+// ---------------------------------------------------------------------
+// Adds a gentle opposed LEG swing + faint torso bob while a kid actually moves.
+// v1.79: the arms are now governed entirely by setKidGunHold via quaternions
+// (shoulder-anchored), so walk no longer touches the arms — swinging the off-arm
+// would either break the two-handed hold or fight the quaternion. Legs are
+// independent center-pivot boxes, so a small rotation.x swing reads fine. `phase`
+// advances only while moving; `intensity` is eased from real displacement so a
+// stopped kid settles. At intensity ~0 we early-out (legs keep their crouch base).
+function setKidWalk(kid, phase, intensity) {
+  const po = kid.pose;
+  if (!po) return;
+  intensity = Math.max(0, Math.min(1, intensity));
+  if (intensity <= 0.02) return;   // settled — base/hold stance stands
+  const s = Math.sin(phase) * intensity;
+  // Legs swing in opposition (subtle).
+  const legSwing = 0.24 * s;
+  po.legL.rotation.x = (po.legL.rotation.x || 0) + legSwing;
+  po.legR.rotation.x = (po.legR.rotation.x || 0) - legSwing;
+  // Faint vertical bob from the gait.
+  const bob = Math.abs(Math.cos(phase)) * 0.012 * intensity;
+  po.torso.position.y += bob;
 }
 
 // ---------------------------------------------------------------------
@@ -12230,9 +13456,11 @@ function buildFPAR() {
 
   const fsTower = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.04, 0.022), handlerMat);
   fsTower.position.set(0, 0.06, -0.245);
+  fsTower.userData.ironSight = true;   // v1.73: hidden when an optic is mounted
   group.add(fsTower);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.004), accentMat);
   fsPost.position.set(0, 0.085, -0.245);
+  fsPost.userData.ironSight = true;    // v1.73: hidden when an optic is mounted
   group.add(fsPost);
 
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.024, 10), orangeMat);
@@ -13210,6 +14438,13 @@ function updateFPGunAccessory(group, gunType) {
   const sightPl = mounted.find(a => a.type === 'red_dot' || a.type === 'scope');
   if (acc.redDotOptic) acc.redDotOptic.visible = !!sightPl && sightPl.type === 'red_dot';
   if (acc.scopeOptic)  acc.scopeOptic.visible  = !!sightPl && sightPl.type === 'scope';
+  // v1.73: fold down the iron FRONT sight when an optic is mounted. On the AR the
+  // tall front post sits right in the red-dot's lens view (playtest: "ironsight
+  // gets in the way"). Tagged meshes (userData.ironSight) hide while an optic is
+  // up and reappear when it's removed. Other guns have no tagged irons, so this
+  // is a no-op for them.
+  const opticUp = !!sightPl;
+  group.traverse(m => { if (m.userData && m.userData.ironSight) m.visible = !opticUp; });
 }
 
 // v1.27b/v1.40c: laser zero target, pinned to the camera at screen-center,
@@ -13716,7 +14951,7 @@ function enterBedroom() {
   // its own (mode !== 'scenario') guard clear the SVG + canvas filter.
   updateEyewearOverlay();
   { const ip = document.getElementById('interactPrompt'); if (ip) ip.style.display = 'none'; }
-  if (fpGun) fpGun.visible = false;
+  buildBedroomLabels();   // v1.62 — floating wayfinding labels for each interactable
   for (const key in fpGuns) {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
@@ -13863,7 +15098,12 @@ function enterScenario(scenarioId) {
     }
     // Builder may accept a string variant arg (legacy) — pass scenario's builderArg if present.
     // A second arg carries time-of-day.
-    built = builder(sc.builderArg || undefined, _tod);
+    // v1.76: build under a seed derived from the scenario id, so a given scenario's
+    // cover layout is the SAME every load (learnable/replayable) while different
+    // scenarios on the same map still differ. The seed also folds in builderArg so
+    // two scenarios sharing a builder+variant but different ids still diverge.
+    const _seedKey = scenarioId + '|' + (sc.builderArg || 'default');
+    built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');
     return;
@@ -14231,6 +15471,10 @@ function enterScenario(scenarioId) {
   Game.scenario.cover = built.cover;
   Game.scenario.bounds = built.bounds;
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
+  // v1.67: silence any whistles still attached to BBs from a prior run before we
+  // drop the array, so no audio node is orphaned and left droning.
+  if (Game.scenario.bbs) for (const ob of Game.scenario.bbs) { if (ob._whistle) bbWhistleStop(ob); }
+  _bbWhistleCount = 0;   // v1.68: authoritative reset — clears any drift from edge-case removals
   Game.scenario.bbs = [];
   Game.scenario.stuckBBs = [];
   Game.scenario.fragments = [];
@@ -14523,6 +15767,7 @@ function startScenario(built) {
   // — updateInteractables only runs in the bedroom branch, so a prompt visible at
   // launch used to linger into the match.
   { const ip = document.getElementById('interactPrompt'); if (ip) ip.style.display = 'none'; }
+  hideBedroomLabels();   // v1.62 — clear floating labels when leaving the bedroom
   Game.focusedInteractable = null;
   // Build/select the FP gun mesh based on equipped gun type.
   // Hide all previously-built gun meshes (in case the player changed guns since last match)
@@ -14576,6 +15821,15 @@ function startScenario(built) {
 
 function endScenario(outcome) {
   Game.mode = 'result';
+  // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
+  // updateBBs stops running in result mode, so without this a mid-swell whistle
+  // would drone (notably when the player's FINAL life is taken while a BB is
+  // buzzing past). bbWhistleStop now stops the sound sources unconditionally, and
+  // we reset the voice count so accounting stays clean even if a node leaked.
+  if (Game.scenario && Game.scenario.bbs) {
+    for (const bb of Game.scenario.bbs) { try { if (bb._whistle) bbWhistleStop(bb); } catch (e) {} }
+  }
+  _bbWhistleCount = 0;
   if (Tutorial.active) Tutorial.end();   // v1.57: tear down the coaching banner
   // v1.21: cancel any in-flight TTS so finished-scenario taunts don't bleed into the result screen.
   try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) {}
@@ -16235,6 +17489,21 @@ function updatePlayer(dt) {
     const moving = hspeed > 0.1;
     const cadence = sprintActive ? 13.0 : (moving ? 8.0 : 1.6);
     p.swayPhase += dt * cadence;
+
+    // v1.63: FOOTSTEPS. Advance a dedicated step accumulator only while actually
+    // moving on the ground (so idle drift and airtime make no sound), and fire a
+    // footstep each time it crosses PI — i.e. once per stride half-cycle, in sync
+    // with the visual bob's heel-strike. Sprinting steps are faster + heavier.
+    if (inScenario && moving && p.onGround && !p.sliding) {
+      const stepCadence = sprintActive ? 13.0 : 8.0;
+      const prevStep = p._stepPhase;
+      p._stepPhase += dt * stepCadence;
+      if (Math.floor(p._stepPhase / Math.PI) > Math.floor(prevStep / Math.PI)) {
+        playPlayerFootstep(sprintActive);
+      }
+    } else {
+      p._stepPhase = 0;   // reset between movements so the next step lands promptly
+    }
     // Bob amplitude scales with sway. These are camera-space metres on the gun.
     const amp = p.sway;
     p.bobPosX = Math.cos(p.swayPhase * 0.5) * 0.018 * amp;
@@ -16440,6 +17709,99 @@ function collidesObstacles(x, z, r) {
 // ---------------------------------------------------------------------
 // INTERACTABLES (bedroom)
 // ---------------------------------------------------------------------
+
+// v1.62 — FLOATING BEDROOM LABELS
+// Wayfinding aid: playtesters couldn't tell what was interactable or where to
+// go. Each interactable's `icon` key maps to one of these inline SVG glyphs.
+// Strokes use var(--ui-text) so the .focused CSS rule (which retargets [stroke])
+// can recolor them to the accent on the in-range label.
+const BR_LABEL_ICONS = {
+  // CRT monitor — the shop computer
+  computer: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="13" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M9 21h6M12 17v4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  // folded map — the neighborhood map table
+  map: '<svg viewBox="0 0 24 24" fill="none"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
+  // backpack — loadout
+  loadout: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9z" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 9V7a3 3 0 0 1 6 0v2M9 14h6" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  // wrench — workbench / gun customization
+  workbench: '<svg viewBox="0 0 24 24" fill="none"><path d="M15.5 4.5a4 4 0 0 0-5 5L4 16l4 4 6.5-6.5a4 4 0 0 0 5-5l-2.8 2.8-2.2-.5-.5-2.2 2.5-2.6z" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+  // door — bathroom
+  bathroom: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><circle cx="14.5" cy="12" r="1" fill="#f4e9d8"/></svg>',
+  // bed — save game
+  bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
+};
+
+// Build one DOM marker per interactable and stash a back-reference on each
+// interactable (it._labelEl). Called once per bedroom entry, after the
+// interactables array is populated.
+function buildBedroomLabels() {
+  const layer = document.getElementById('bedroomLabels');
+  if (!layer) return;
+  layer.innerHTML = '';
+  for (const it of Game.interactables) {
+    if (!it.label) continue;   // skip any interactable without label metadata
+    const el = document.createElement('div');
+    el.className = 'br-label';
+    const iconSvg = BR_LABEL_ICONS[it.icon] || '';
+    el.innerHTML =
+      `<div class="br-chip"><span class="br-icon">${iconSvg}</span>` +
+      `<span class="br-name">${it.label}</span></div>` +
+      `<div class="br-stem"></div>`;
+    layer.appendChild(el);
+    it._labelEl = el;
+    // anchor point in world space: the interactable's footprint + labelY height
+    it._labelWorld = new THREE.Vector3(it.pos.x, it.labelY != null ? it.labelY : 1.8, it.pos.z);
+  }
+  layer.style.display = 'block';
+}
+
+function hideBedroomLabels() {
+  const layer = document.getElementById('bedroomLabels');
+  if (layer) layer.style.display = 'none';
+}
+
+// Project every label's world anchor to screen space each frame and position
+// the DOM chip. Off-screen / behind-camera labels are hidden; nearer ones fade
+// in; the focused (in-range) one gets the accent class.
+const _brLabelProj = new THREE.Vector3();
+function updateBedroomLabels() {
+  if (Game.mode !== 'bedroom') return;
+  const cam = Game.camera;
+  if (!cam) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  for (const it of Game.interactables) {
+    const el = it._labelEl;
+    if (!el) continue;
+    _brLabelProj.copy(it._labelWorld).project(cam);
+    // z > 1 means the point is behind the camera's far plane / behind us
+    const behind = _brLabelProj.z > 1;
+    if (behind) { el.style.opacity = '0'; continue; }
+    const sx = (_brLabelProj.x * 0.5 + 0.5) * w;
+    const sy = (-_brLabelProj.y * 0.5 + 0.5) * h;
+    // cull a little outside the viewport so labels don't cling to the edges
+    if (sx < -120 || sx > w + 120 || sy < -80 || sy > h + 80) {
+      el.style.opacity = '0';
+      continue;
+    }
+    el.style.left = sx + 'px';
+    el.style.top  = sy + 'px';
+    // distance fade: full strength out to ~6m, gone by ~11m, so the room
+    // doesn't read as cluttered when you're standing in the middle of it.
+    const dx = it.pos.x - Game.player.pos.x;
+    const dz = it.pos.z - Game.player.pos.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    let op = 1;
+    if (dist > 6) op = Math.max(0, 1 - (dist - 6) / 5);
+    el.style.opacity = op.toFixed(2);
+    // focused highlight
+    if (Game.focusedInteractable === it) {
+      el.classList.add('focused');
+      el.style.opacity = '1';   // always fully visible when in range
+    } else {
+      el.classList.remove('focused');
+    }
+  }
+}
+
 function updateInteractables() {
   if (Game.mode !== 'bedroom') {
     document.getElementById('interactPrompt').style.display = 'none';
@@ -16693,7 +18055,11 @@ function updateHeldMesh(dt) {
       hipRotY = 0.10; hipRotX = -0.05;
     } else if (gunType === 'ar') {
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
-      adsPos  = { x: 0.0,  y: -0.075, z: -0.28 };
+      // v1.73: drop iron ADS Y -0.075 → -0.087 so the front-sight post TIP
+      // (gun-local Y ≈ 0.085) lands on the centered reticle instead of riding
+      // above it (playtest: "ironsight too high"). The optic path overrides this
+      // via adsYCorr when a red-dot/scope is mounted, so this only affects irons.
+      adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'sniper') {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
@@ -17301,8 +18667,13 @@ function buildEyewearFrameSVG(view) {
   // See-through frames (goggles/glasses) leave the periphery as raw, untinted
   // 3D view. Masks wrap the whole face, so everything outside stays opaque.
   const seeThrough = (style !== 'mask');
+  // v1.64: whether the surround OUTSIDE the lens holes is filled opaquely. Masks
+  // always are; swim goggles now are too (no peripheral vision). Glasses/goggles
+  // keep their raw, open periphery (only a band hugs the lenses).
+  const opaqueSurround = (style === 'mask' || style === 'swim');
   // For see-through frames we drop the canvas filter (handled in updateEyewearOverlay)
   // so the lens look comes from a richer in-lens tint; masks keep the flat tint.
+  // (swim is see-through for the FILTER decision but opaque for the SURROUND.)
   const tint = seeThrough ? (view.lensTint || view.tint || 'transparent') : (view.tint || 'transparent');
 
   // Lens shapes WITHOUT fill (reused as the aperture mask, clip, and rim).
@@ -17323,6 +18694,16 @@ function buildEyewearFrameSVG(view) {
     // Stroke is centered on the path and masked to outside the lenses, so only
     // its outer half shows — double the values for the intended visible band.
     rimW = 5; bandW = 10;
+  } else if (style === 'swim') {
+    // v1.63 — Swimming goggles. v1.64: the surround is now FULLY OPAQUE (like a
+    // mask) so ALL peripheral vision is cut off — only the two lens holes show
+    // the world. The two ovals OVERLAP across the center (cx 38/62, rx 34) so the
+    // union is one continuous opening with NO dark bridge between the eyes.
+    shapes = [
+      `<ellipse cx="38" cy="50" rx="34" ry="36"/>`,
+      `<ellipse cx="62" cy="50" rx="34" ry="36"/>`,
+    ];
+    rimW = 6; bandW = 16;
   } else { // glasses — slightly smaller overlapping ovals, thinner rim + temples
     shapes = [
       `<ellipse cx="37" cy="50" rx="36" ry="38"/>`,
@@ -17345,13 +18726,16 @@ function buildEyewearFrameSVG(view) {
   // OUTSIDE the lens interiors. Where the two ovals overlap, each lens's inner
   // rim falls inside the other lens and is clipped away — leaving just the outer
   // perimeter of the union, with the center fully open and no bridge.
-  const frameBody = seeThrough
+  const frameBody = !opaqueSurround
     ? `<g mask="url(#ew-aperture)"><g fill="none" stroke="${col}" stroke-width="${bandW}" stroke-linejoin="round">${rim}</g></g>`
     : `<rect x="-2" y="-2" width="104" height="104" fill="${col}" mask="url(#ew-aperture)"/>`;
-  // Rim seat/highlight strokes also masked to the outer perimeter for see-through.
-  const rimSeat = seeThrough
-    ? `<g mask="url(#ew-aperture)"><g fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="${rimW}">${rim}</g></g>`
-    : `<g fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="${rimW}">${rim}</g>`;
+  // Rim seat/highlight strokes. Open (see-through) frames mask the rim to the
+  // outer perimeter. Swim (opaque surround) also masks it so the stroke doesn't
+  // cut across the open center where its two lenses overlap (v1.64). The full
+  // mask keeps its original unmasked oval seat.
+  const rimSeat = (opaqueSurround && style !== 'swim')
+    ? `<g fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="${rimW}">${rim}</g>`
+    : `<g mask="url(#ew-aperture)"><g fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="${rimW}">${rim}</g></g>`;
 
   return `
   <svg class="ew-svg" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -17547,6 +18931,44 @@ function makeBB(pos, vel, owner, enemyRef, gunSpec, team) {
   };
 }
 
+// v1.77: COVER-CLEARANCE PROBE. A kid tucked right behind a bin/wall/car was
+// firing its BB straight into the back of that cover (the round spawned at
+// shoulder height ~1.05m but the cover top was taller, so it buried into the
+// mesh — "Sean firing the AK into the top of the recycling bin"). This finds the
+// nearest cover the kid is firing OVER: a cover obstacle whose footprint sits
+// just in front of the kid (within `reach`) along the firing bearing, and whose
+// world-top rises above the kid's normal muzzle. Returns { top } (world Y of the
+// cover top) or null. Cheap: one pass over the scenario cover list, only the
+// ones close + roughly ahead are measured. Works for AABB and cylinder cover;
+// honors baseY (the slope-seated base) so it's correct on Winnmark/Bunratty.
+function coverInFrontTop(enemy, dirX, dirZ, reach = 1.6) {
+  const cover = Game.scenario && Game.scenario.cover;
+  if (!cover) return null;
+  const ex = enemy.pos.x, ez = enemy.pos.z;
+  const dl = Math.hypot(dirX, dirZ) || 1;
+  const ux = dirX / dl, uz = dirZ / dl;
+  let bestTop = -Infinity;
+  for (const c of cover) {
+    const h = c.h || 0;
+    if (h < 0.4) continue;                         // low stuff never blocks a shoulder shot
+    // Cover center (AABB or cylinder both expose a center via min/max or cx/cz).
+    const cx = (c.cx != null) ? c.cx : ((c.minX + c.maxX) / 2);
+    const cz = (c.cz != null) ? c.cz : ((c.minZ + c.maxZ) / 2);
+    const tx = cx - ex, tz = cz - ez;
+    const along = tx * ux + tz * uz;               // distance along the firing bearing
+    if (along <= 0 || along > reach) continue;      // must be just AHEAD of the kid
+    const perp = Math.abs(tx * (-uz) + tz * ux);    // lateral offset from the bearing
+    // Footprint half-width (broad): AABB diagonal-ish, or cylinder radius.
+    const halfW = (c.radius != null)
+      ? c.radius
+      : Math.max((c.maxX - c.minX), (c.maxZ - c.minZ)) / 2;
+    if (perp > halfW + 0.4) continue;               // bearing doesn't cross this cover
+    const top = (c.baseY || 0) + h;
+    if (top > bestTop) bestTop = top;
+  }
+  return (bestTop > -Infinity) ? { top: bestTop } : null;
+}
+
 function spawnEnemyBB(enemy, targetPos) {
   // v1.58: a hard "never fires" gate. Tutorial practice dummies set noFire so they
   // are truly inert targets — low fireRate alone still let one early shot slip out
@@ -17572,6 +18994,27 @@ function spawnEnemyBB(enemy, targetPos) {
   // Offset to gun-hand side
   const right = new THREE.Vector3(Math.cos(enemy.yaw), 0, -Math.sin(enemy.yaw));
   muzzlePos.add(right.multiplyScalar(0.25));
+
+  // v1.77: CLEAR THE COVER. If the kid is tucked right behind a bin/wall/car (so
+  // its shoulder-height muzzle would punch the BB straight into the cover mesh),
+  // raise the spawn point to just over the cover's top. Capped at +0.7m above the
+  // normal muzzle so a kid behind a car (~1.15m top) lifts to a believable "leaning
+  // over the hood" line rather than levitating. We flag the kid so the per-frame
+  // pose pass can show it ADS/peeking-tall, so the higher BB origin reads right.
+  const _coverAhead = coverInFrontTop(enemy, targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z);
+  if (_coverAhead) {
+    const clearY = _coverAhead.top + 0.12;          // just over the lip
+    const maxLift = muzzlePos.y + 0.7;              // believable lean-over ceiling
+    const wantY = Math.min(clearY, maxLift);
+    if (wantY > muzzlePos.y) {
+      muzzlePos.y = wantY;
+      enemy._firingOverCover = 0.45;                // seconds the over-cover lift holds
+    }
+  }
+  // v1.78: arm the aim-hold so the two-handed shouldered/forward hold persists
+  // across a burst and for a short beat after the last round (the pose pass eases
+  // it back to the rest hold once this decays).
+  enemy._aimHold = Math.max(enemy._aimHold || 0, 0.3);
 
   // v1.9: enemy fires their own weapon's spec, not the player's gun
   const weaponType = enemy.weapon || 'pistol';
@@ -17814,6 +19257,32 @@ function updateBBs(dt) {
     bb.pos.z += bb.vel.z * dt;
     bb.mesh.position.copy(bb.pos);
 
+    // v1.67: BB whistle. While the BB is airborne and near the player, maintain a
+    // faint air-rush hiss panned + attenuated by distance. Only live (canDamage)
+    // BBs whistle — a bounced/spent BB skipping along the ground shouldn't. The
+    // whistle is force-stopped on every removal/impact path below (and here when
+    // it leaves earshot) so it terminates the instant the BB hits something.
+    if (bb.canDamage) {
+      const wdx = bb.pos.x - Game.player.pos.x;
+      const wdy = bb.pos.y - (Game.player.pos.y + Game.player.eyeOffset);
+      const wdz = bb.pos.z - Game.player.pos.z;
+      const wdist = Math.sqrt(wdx*wdx + wdy*wdy + wdz*wdz);
+      // v1.74: never (re)start a whistle once we've left scenario mode. A BB hit
+      // can flip to 'result' mid-loop via endScenario; the rest of this same loop
+      // pass must not spin up a fresh looping oscillator that nothing will stop.
+      if (wdist < BB_WHISTLE_RANGE && Game.mode === 'scenario') {
+        if (!bb._whistle) bbWhistleStart(bb);
+        const { pan } = positionalAudio(bb.pos.x, bb.pos.z, BB_WHISTLE_RANGE);
+        // Volume rises sharply as it closes (inverse), capped in the synth.
+        const vol = BB_WHISTLE_VOL * Math.max(0, 1 - wdist / BB_WHISTLE_RANGE);
+        bbWhistleUpdate(bb, pan, vol);
+      } else if (bb._whistle) {
+        bbWhistleStop(bb);
+      }
+    } else if (bb._whistle) {
+      bbWhistleStop(bb);
+    }
+
     let removed = false;
 
     // Out of bounds / age
@@ -17922,12 +19391,14 @@ function updateBBs(dt) {
 
           if (outcome === 'bounce') {
             applyBounce(bb, oldPos, hitAxis, bounceEnergy, o);
+            bbWhistleStop(bb);   // v1.67: first impact on an object ends the whistle
             // Bounce sound depends on what was hit
             if (surface === 'metal') playImpactMetal(bb.pos);
             else if (surface === 'soft') playImpactCardboard(bb.pos);
             else playImpactWood(bb.pos);
           } else if (outcome === 'stick') {
             applyStick(bb, oldPos, hitAxis, o);
+            bbWhistleStop(bb);   // v1.67: first impact — kill the whistle now
             // Stick is almost always cardboard — soft thump
             if (surface === 'soft') playImpactCardboard(bb.pos);
             else if (surface === 'metal') playImpactMetal(bb.pos);  // rare metal dud
@@ -17961,7 +19432,31 @@ function updateBBs(dt) {
       }
     }
 
+    // v1.67: ENEMY NEAR-MISS DETECTION. A live BB whizzing within ~2.5m of a
+    // kid (that it could legally hit — different team, alive, fighting) registers
+    // as "being fired upon." We stamp the kid with the time and the DIRECTION the
+    // fire came FROM (reverse of the BB's travel), so the AI can decide whether
+    // its cover is between it and that threat. Cheap: only runs on live BBs that
+    // didn't just hit someone, and skips kids already stamped in the last 0.25s.
+    if (!removed && bb.canDamage) {
+      const NEAR_MISS_R2 = 2.5 * 2.5;
+      const now = performance.now() / 1000;
+      for (const e of Game.scenario.enemies) {
+        if (e.health <= 0 || e.state === 'retreating') continue;
+        if ((e.team || 'enemy') === bb.team) continue;       // own team's round
+        if (e._lastNearMiss && (now - e._lastNearMiss) < 0.25) continue;
+        const dxm = bb.pos.x - e.pos.x, dzm = bb.pos.z - e.pos.z;
+        const dym = bb.pos.y - ((e.pos.y || 0) + 1.0);       // ~chest height
+        if (dxm*dxm + dzm*dzm + dym*dym > NEAR_MISS_R2) continue;
+        // Direction the shot came FROM = opposite the BB's horizontal travel.
+        const vlen = Math.hypot(bb.vel.x, bb.vel.z) || 1;
+        e._incomingDir = { x: -bb.vel.x / vlen, z: -bb.vel.z / vlen };
+        e._lastNearMiss = now;
+      }
+    }
+
     if (removed) {
+      bbWhistleStop(bb);   // v1.67: kill the whistle the instant the BB is gone
       Game.scene.remove(bb.mesh);
       bb.mesh.material.dispose();
       Game.scenario.bbs.splice(i, 1);
@@ -18529,6 +20024,13 @@ function hasLineOfSight(fromX, fromY, fromZ, toX, toY, toZ, obstacles) {
     // boxes, trash cans, plywood stacks. They CAN'T see over fences (1.4m),
     // houses (5m), trees (2.8+m), cars (1.55m).
     if ((o.h || 0) <= 1.0) continue;
+    // v1.73: skip `bbPass` obstacles (wrought-iron picket fences). Their pickets
+    // have wide gaps, so a kid can both SEE and SHOOT through them — a BB sails
+    // through (handled in updateBBs) and so does the sight line. Previously these
+    // blocked LOS as solid 1.4m walls, so a kid with a clear target across a fence
+    // would never take the shot even though the BB would pass cleanly. Bodies are
+    // still stopped by the fence (collidesObstacles ignores this flag).
+    if (o.bbPass) continue;
     // v1.53: shape-aware blocker test (cylinder → ray-circle, box → slabs).
     // A hit strictly between the endpoints (0 < t < segLen) blocks sight.
     const t = obsRayDist(o, fromX, fromY, fromZ, ux, uy, uz, segLen);
@@ -18537,12 +20039,73 @@ function hasLineOfSight(fromX, fromY, fromZ, toX, toY, toZ, obstacles) {
   return true;
 }
 
-// v1.27c: nearest ray/AABB hit distance, for clipping the laser beam to solid
-// objects. Returns the distance (along a UNIT dir) to the first obstacle hit
-// within maxDist, or maxDist if nothing is hit. Mirrors the slab method in
-// hasLineOfSight but keeps the entry-t. Only obstacles taller than `minH` count
-// (so the beam doesn't clip on tiny ground clutter); houses/cars/bins/fences/
-// trees all qualify.
+// v1.73: FENCE-DETOUR WAYPOINT. NPCs path with a slide + perpendicular
+// wall-follow mover (good for houses/cars), but a long thin fence line is a
+// pathological case: a kid marching straight at a target on the far side wedges
+// mid-span and the alternating sidestep just jitters it back and forth instead
+// of committing to walk to the END of the fence and around. This helper detects
+// that case and returns a temporary waypoint just past the nearer fence end on
+// the kid's side, so the mover has a concrete "go around here" goal.
+//
+// Returns {x, z} to steer toward, or null if no fence is actually between the
+// kid and its goal. Only considers `bbPass` obstacles (the picket fences); other
+// cover is handled fine by the existing wall-follow.
+function fenceDetourWaypoint(fromX, fromZ, toX, toZ, obstacles, kidRadius = 0.35) {
+  if (!obstacles) return null;
+  const dx = toX - fromX, dz = toZ - fromZ;
+  const segLen = Math.hypot(dx, dz);
+  if (segLen < 1e-3) return null;
+  const ux = dx / segLen, uz = dz / segLen;
+  for (const o of obstacles) {
+    if (!o.bbPass) continue;                      // fences only
+    // Does the straight path actually cross this fence? Ray vs the fence AABB in
+    // XZ (ignore Y — fences are full-height for bodies). Use a 2D slab test.
+    const minX = o.minX, maxX = o.maxX, minZ = o.minZ, maxZ = o.maxZ;
+    let t0 = 0, t1 = segLen;
+    // X slab
+    if (Math.abs(ux) < 1e-6) {
+      if (fromX < minX || fromX > maxX) continue; // parallel & outside → no cross
+    } else {
+      let ta = (minX - fromX) / ux, tb = (maxX - fromX) / ux;
+      if (ta > tb) { const s = ta; ta = tb; tb = s; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+    }
+    // Z slab
+    if (Math.abs(uz) < 1e-6) {
+      if (fromZ < minZ || fromZ > maxZ) continue;
+    } else {
+      let ta = (minZ - fromZ) / uz, tb = (maxZ - fromZ) / uz;
+      if (ta > tb) { const s = ta; ta = tb; tb = s; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+    }
+    if (t0 > t1 || t1 < 0 || t0 > segLen) continue; // no crossing within the segment
+
+    // This fence is in the way. Find its long axis and the two ends, then steer
+    // toward whichever end is nearer the kid, pushed out past it by a margin so
+    // the kid clears the post rather than re-wedging on the corner.
+    const spanX = maxX - minX, spanZ = maxZ - minZ;
+    const margin = kidRadius + 0.6;
+    let endA, endB;
+    if (spanX >= spanZ) {
+      // Fence runs along X — ends are at minX and maxX, at the fence's Z center.
+      const cz = (minZ + maxZ) / 2;
+      endA = { x: minX - margin, z: cz };
+      endB = { x: maxX + margin, z: cz };
+    } else {
+      // Fence runs along Z — ends are at minZ and maxZ, at the fence's X center.
+      const cx = (minX + maxX) / 2;
+      endA = { x: cx, z: minZ - margin };
+      endB = { x: cx, z: maxZ + margin };
+    }
+    // Nearer end to the kid wins.
+    const dA = Math.hypot(endA.x - fromX, endA.z - fromZ);
+    const dB = Math.hypot(endB.x - fromX, endB.z - fromZ);
+    return dA <= dB ? endA : endB;
+  }
+  return null;
+}
+
+
 function raycastObstacles(ox, oy, oz, dx, dy, dz, maxDist, obstacles, minH = 0.25) {
   if (!obstacles) return maxDist;
   let nearest = maxDist;
@@ -18565,34 +20128,72 @@ function raycastObstacles(ox, oy, oz, dx, dy, dz, maxDist, obstacles, minH = 0.2
 // We pick the side of the AABB that's furthest from the player (so the kid
 // uses the cover as a shield), then place the stand position just outside
 // that face with a kid-radius + small-margin buffer.
+// v1.70: SHAPE-AWARE cover stand position. Returns a point just OUTSIDE the
+// cover's real collision geometry, on the side away from `playerPos`, so the
+// cover sits between the kid and the player. Previously this used only the loose
+// axis-aligned envelope (cover.minX..maxZ) for ALL shapes — fine for a square
+// box, but for an oriented car box (obox) the envelope is a larger non-aligned
+// rectangle, so "outside the envelope face" often landed INSIDE the angled car
+// body (the "kids phase into car centers" bug). Now each shape is handled in its
+// own frame. A final overlap nudge guarantees the spot is actually walkable.
 function coverStandPos(cover, playerPos, kidRadius = 0.35) {
-  const cx = (cover.minX + cover.maxX) / 2;
-  const cz = (cover.minZ + cover.maxZ) / 2;
-  // Vector from player to cover center
-  const dxAway = cx - playerPos.x;
-  const dzAway = cz - playerPos.z;
-  // Pick the cover face that's farthest from player: whichever axis
-  // (X or Z) has the larger away-component dominates the "back face."
-  const hx = (cover.maxX - cover.minX) / 2;
-  const hz = (cover.maxZ - cover.minZ) / 2;
-  const buffer = kidRadius + 0.15;
+  const buffer = kidRadius + 0.2;
   let standX, standZ;
-  if (Math.abs(dxAway) > Math.abs(dzAway)) {
-    // X-axis is the dominant away direction → put kid on +X or -X face
-    if (dxAway > 0) {
-      standX = cover.maxX + buffer;     // east face
+
+  if (cover.shape === 'obox') {
+    // Work in the box's LOCAL frame. Player direction → which of the 4 real faces
+    // is most "away" → push out past that face's half-extent + buffer.
+    const c = obsCenter(cover);
+    const cos = Math.cos(cover.angle), sin = Math.sin(cover.angle);
+    // world→local (THREE inverse, matching obsOverlapsXZ)
+    const px = playerPos.x - c.x, pz = playerPos.z - c.z;
+    const lpx = px * cos - pz * sin;       // player, in box-local
+    const lpz = px * sin + pz * cos;
+    // Choose the dominant local axis pointing AWAY from the player.
+    let lsx = 0, lsz = 0;
+    if (Math.abs(lpx) * cover.hz >= Math.abs(lpz) * cover.hx) {
+      // X face dominates: stand on the -sign(player) X side.
+      lsx = (lpx >= 0 ? -1 : 1) * (cover.hx + buffer);
+      lsz = Math.max(-cover.hz, Math.min(lpz, cover.hz)) * 0.0; // centered on face
     } else {
-      standX = cover.minX - buffer;     // west face
+      lsz = (lpz >= 0 ? -1 : 1) * (cover.hz + buffer);
+      lsx = 0;
     }
-    standZ = cz;
+    // local → world (THREE forward)
+    standX = c.x + (lsx * cos + lsz * sin);
+    standZ = c.z + (-lsx * sin + lsz * cos);
+  } else if (cover.shape === 'cylinder') {
+    // Round prop (tree, etc.): stand on the ring, on the far side from the player.
+    const c = obsCenter(cover);
+    let dx = c.x - playerPos.x, dz = c.z - playerPos.z;
+    const d = Math.hypot(dx, dz) || 1;
+    dx /= d; dz /= d;                       // unit, player→cover (the "away" dir)
+    const r = (cover.radius || 0.4) + buffer;
+    standX = c.x + dx * r;
+    standZ = c.z + dz * r;
   } else {
-    // Z-axis dominant → put on +Z or -Z face
-    if (dzAway > 0) {
-      standZ = cover.maxZ + buffer;     // south face
+    // Axis-aligned box (boxes, fort walls, houses): original face logic.
+    const cx = (cover.minX + cover.maxX) / 2;
+    const cz = (cover.minZ + cover.maxZ) / 2;
+    const dxAway = cx - playerPos.x, dzAway = cz - playerPos.z;
+    if (Math.abs(dxAway) > Math.abs(dzAway)) {
+      standX = dxAway > 0 ? cover.maxX + buffer : cover.minX - buffer;
+      standZ = cz;
     } else {
-      standZ = cover.minZ - buffer;     // north face
+      standZ = dzAway > 0 ? cover.maxZ + buffer : cover.minZ - buffer;
+      standX = cx;
     }
-    standX = cx;
+  }
+
+  // v1.70: safety — if the computed spot still overlaps anything (a neighbouring
+  // obstacle, or the cover itself on a tight angle), nudge it to clear space so
+  // the kid never targets a point inside geometry. findClearSpawn is the same
+  // unstick used at spawn time.
+  if (typeof collidesObstacles === 'function' && Game.player && Game.player.obstacles) {
+    if (collidesObstacles(standX, standZ, kidRadius)) {
+      const clear = findClearSpawn(standX, standZ, Game.player.obstacles, kidRadius);
+      standX = clear.x; standZ = clear.z;
+    }
   }
   return new THREE.Vector3(standX, 0, standZ);
 }
@@ -18606,6 +20207,73 @@ function coverStandPos(cover, playerPos, kidRadius = 0.35) {
 // toward the kid's flank side (so left-lane kids hop cover on the player's
 // left), reachable, and not the cover they're already at. Returns the chosen
 // cover obstacle or null if nothing good is ahead (caller then pushes direct).
+// v1.67: is kid `e` currently sheltered behind its homeCover? True when it has a
+// homeCover and sits within ~2m of that cover's center. Used by the
+// incoming-fire reaction.
+function kidInCover(e) {
+  if (!e.homeCover) return false;
+  const cx = (e.homeCover.minX + e.homeCover.maxX) / 2;
+  const cz = (e.homeCover.minZ + e.homeCover.maxZ) / 2;
+  return Math.hypot(cx - e.pos.x, cz - e.pos.z) < 2.0;
+}
+
+// v1.67: does cover `c` sit between kid at `ePos` and a threat coming FROM unit
+// direction `dir` (pointing toward the shooter)? True when the cover center is
+// roughly along that bearing from the kid — so tucking behind it shields the kid.
+function coverShieldsFrom(c, ePos, dir) {
+  if (!c || !dir) return false;
+  const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+  const tx = cx - ePos.x, tz = cz - ePos.z;
+  const tl = Math.hypot(tx, tz) || 1;
+  const dot = (tx / tl) * dir.x + (tz / tl) * dir.z;   // >0: cover toward threat
+  return dot > 0.35;   // within ~70° of the threat bearing
+}
+
+// v1.67: nearest suitable cover (height ≥ 0.5) within `maxDist` that would
+// shield the kid from threat direction `dir`; falls back to nearest cover at all
+// if none specifically shields (moving beats standing exposed).
+function nearestShieldingCover(e, dir, maxDist = 14) {
+  const cover = Game.scenario && Game.scenario.cover;
+  if (!cover) return null;
+  let best = null, bestD = Infinity, bestAny = null, bestAnyD = Infinity;
+  for (const c of cover) {
+    if ((c.h || 0) < 0.5 || c === e.homeCover) continue;
+    const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+    const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
+    if (d > maxDist) continue;
+    if (d < bestAnyD) { bestAnyD = d; bestAny = c; }
+    if (coverShieldsFrom(c, e.pos, dir) && d < bestD) { bestD = d; best = c; }
+  }
+  return best || bestAny;
+}
+
+// v1.67: TEAMMATE CROWDING PENALTY. Returns a positive penalty that grows the
+// closer a candidate cover (cx,cz) sits to a LIVING teammate of `e` — used to
+// spread a defending/attacking squad across DIFFERENT cover instead of three
+// kids stacking on the same car. Only counts same-team combatants that are
+// actually fighting (not retreating/dead) and skips `e` itself. Scoped by the
+// caller (we apply it in defend scenarios). A teammate "occupies" its homeCover
+// center if it has one, else its current position.
+function teammateCrowding(e, cx, cz, radius = 6) {
+  let penalty = 0;
+  const enemies = Game.scenario && Game.scenario.enemies;
+  if (!enemies) return 0;
+  const myTeam = e.team || 'enemy';
+  for (const o of enemies) {
+    if (o === e || o.health <= 0) continue;
+    if ((o.team || 'enemy') !== myTeam) continue;
+    if (o.state === 'retreating') continue;
+    let ox, oz;
+    if (o.homeCover) {
+      ox = (o.homeCover.minX + o.homeCover.maxX) / 2;
+      oz = (o.homeCover.minZ + o.homeCover.maxZ) / 2;
+    } else { ox = o.pos.x; oz = o.pos.z; }
+    const d = Math.hypot(cx - ox, cz - oz);
+    if (d < radius) penalty += (radius - d) / radius;   // 0 at edge → 1 right on top
+  }
+  return penalty;
+}
+
 function pickBoundCover(e, coverList, playerPos) {
   if (!coverList || !coverList.length) return null;
   const ex = e.pos.x, ez = e.pos.z;
@@ -18634,6 +20302,9 @@ function pickBoundCover(e, coverList, playerPos) {
     let score = forward * 1.4 + Math.max(0, lateral) * 1.0 - hop * 0.25;
     if (distCoverToPlayer < 7) score -= 6;              // avoid bounding into knife range
     if (side === 0) score += Math.max(0, -Math.abs(lateral)) ; // center kids: straightish
+    // v1.67: in DEFEND scenarios, spread the squad — penalize cover near a
+    // living teammate so attackers don't all bound onto the same piece.
+    if (Game.scenario.scenarioType === 'defend') score -= teammateCrowding(e, cx, cz) * 3.0;
     if (score > bestScore) { bestScore = score; best = c; }
   }
   return best;
@@ -18860,6 +20531,25 @@ function updateTeamFocus() {
   }
 }
 
+// v1.74: queue a short SUPPRESSION BURST for an auto-gun kid firing on the move.
+// Marching/bounding auto-gunners previously threw a single BB per suppression
+// tick, which read as "holding a pistol" for the AK et al. This fires one BB now
+// (at `aimPt`) and queues a few cyclic follow-ups so the on-the-move pressure
+// looks like the auto weapon it is. Semi guns just fire the single round (no
+// queue). `aimPt` is a THREE.Vector3 at the spot to suppress. Returns nothing.
+function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
+  spawnEnemyBB(e, aimPt);                          // the immediate round
+  const spec = GUN_SPECS[e.weapon] || GUN_SPECS.pistol;
+  if (spec.fireMode !== 'auto') return;            // semis: single round only
+  const cycle = 60 / Math.max(1, spec.cyclicRPM);
+  // Shorter than a committed peek burst (2..3 follow-ups) — it's pressure while
+  // moving, not a full string. Wider spread (passed through the burst entry).
+  const followUps = 2 + Math.floor(Math.random() * 2);
+  for (let k = 1; k <= followUps; k++) {
+    e.pendingBurst.push({ dueIn: k * cycle, aim: aimPt.clone(), spread: looseSpread });
+  }
+}
+
 function updateEnemies(dt) {
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
@@ -18901,6 +20591,17 @@ function updateEnemies(dt) {
       setKidHitPose(e.mesh, e._hitRaise);
       e.mesh.group.rotation.z = 0;
       e.mesh.group.position.y = scenarioGroundY(e.pos.x, e.pos.z);
+      // v1.77: a downed kid's laser is no longer re-aimed (we `continue` below,
+      // skipping updateKidLaser). The hit pose pitches the gun ~90° skyward, and
+      // the stale laser unit rides that raised gun — leaving a vertical red beam
+      // shooting straight up out of an out-of-play kid. Hide the beam + dot while
+      // the kid is down; attachKidLaser keeps the refs, so a respawn just shows
+      // them again and the next live-frame re-aims normally.
+      if (e.mesh._laserUnit && e.mesh._laserUnit.userData) {
+        const lu = e.mesh._laserUnit.userData;
+        if (lu.beam) lu.beam.visible = false;
+        if (lu.dot)  lu.dot.visible  = false;
+      }
       continue;
     }
 
@@ -18970,18 +20671,20 @@ function updateEnemies(dt) {
     // so we set x/z here and fall through to that block via a guarded continue.
     if (e.behavior === 'tagger') {
       setKidCrouch(e.mesh, 0);
-      // v1.36h: ZOMBIE POSE — both arms straight out front, "I'm gonna get you"
-      // reaching. setKidCrouch(.,0) above just reset arm/hand Y to base, so we
-      // re-pose every frame: rotate the shoulders -90° about X (down-at-side →
-      // forward along +Z), lift and push them forward, hands reaching past.
+      // v1.36h / v1.80: ZOMBIE POSE — both arms reaching forward, "I'm gonna get
+      // you." With the elbow rig (v1.80) we just rotate each SHOULDER group forward
+      // ~90° (so the whole arm swings from hanging-down to reaching-out along +Z)
+      // and add a slight elbow bend so the reach reads as grasping, not a stiff
+      // plank. setKidCrouch(.,0) above already reset both rigs to a clean hanging
+      // base, so this re-poses cleanly every frame. The hands ride along (parented
+      // to the elbow), so no separate hand placement is needed.
       const _po = e.mesh.pose;
-      if (_po) {
-        const reach = -Math.PI / 2;
-        _po.armL.rotation.x = reach;  _po.armR.rotation.x = reach;
-        _po.armL.position.z = 0.18;   _po.armR.position.z = 0.18;
-        _po.armL.position.y += 0.16;  _po.armR.position.y += 0.16;
-        _po.handL.position.z = 0.42;  _po.handR.position.z = 0.42;
-        _po.handL.position.y += 0.24; _po.handR.position.y += 0.24;
+      if (_po && _po.rigL && _po.rigR) {
+        const reach = -Math.PI / 2 + 0.15;       // shoulders swing forward to horizontal-ish
+        _po.rigL.shoulder.rotation.set(reach, 0, 0);
+        _po.rigR.shoulder.rotation.set(reach, 0, 0);
+        _po.rigL.elbow.rotation.set(-0.4, 0, 0);  // slight grasp bend
+        _po.rigR.elbow.rotation.set(-0.4, 0, 0);
       }
       e.mesh.group.position.y = 0;  // overwritten by terrain plant at loop exit
       // v1.36h: INFECTION barks — periodically yell a goofy zombie taunt while
@@ -19021,6 +20724,17 @@ function updateEnemies(dt) {
       // Wall-follow when wedged (same idea as the advancing state).
       if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
         e._zStuck = (e._zStuck || 0) + dt;
+        // v1.73: walk around a wedging fence's nearer end instead of jittering.
+        const zdet = fenceDetourWaypoint(e.pos.x, e.pos.z, tgt.pos.x, tgt.pos.z, Game.player.obstacles, kidRadius);
+        if (zdet) {
+          const zdx = zdet.x - e.pos.x, zdz = zdet.z - e.pos.z;
+          const zl = Math.hypot(zdx, zdz) || 1;
+          const zs = speed * dt;
+          const fx = e.pos.x + (zdx / zl) * zs, fz = e.pos.z + (zdz / zl) * zs;
+          if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
+          else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
+          else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
+        } else {
         let px = -dzP / d, pz = dxP / d;
         if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
         if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
@@ -19030,6 +20744,7 @@ function updateEnemies(dt) {
         if (!collidesObstacles(sx, sz, kidRadius)) { e.pos.x = sx; e.pos.z = sz; }
         else if (!collidesObstacles(sx, e.pos.z, kidRadius)) e.pos.x = sx;
         else if (!collidesObstacles(e.pos.x, sz, kidRadius)) e.pos.z = sz;
+        }
       } else e._zStuck = 0;
       // Plant on terrain (mirror of the shared loop-exit logic) and finish.
       e.pos.y = scenarioGroundY(e.pos.x, e.pos.z);
@@ -19053,14 +20768,19 @@ function updateEnemies(dt) {
       for (let k = e.pendingBurst.length - 1; k >= 0; k--) {
         e.pendingBurst[k].dueIn -= dt;
         if (e.pendingBurst[k].dueIn <= 0) {
-          // Re-aim at target position now, with a small accumulated dispersion
-          // that grows by the order of this shot in the burst.
-          const target = tgt.pos.clone();
-          const headshotBias = ch.headshotBias ?? 0.1;
-          const aimFrac = 0.65 + headshotBias * 0.30;
-          target.y += tgt.height * aimFrac;
+          const entry = e.pendingBurst[k];
+          // v1.74: a burst entry may carry a fixed `aim` point (suppression bursts
+          // fired on the move target the last-known spot, not the live position).
+          // Without one, re-aim at the live target as before.
+          const target = entry.aim ? entry.aim.clone() : tgt.pos.clone();
+          if (!entry.aim) {
+            const headshotBias = ch.headshotBias ?? 0.1;
+            const aimFrac = 0.65 + headshotBias * 0.30;
+            target.y += tgt.height * aimFrac;
+          }
           // Add a touch of dispersion that scales with how far into the burst we are.
-          const burstSpread = 0.04 * (1 + k * 0.15);
+          // Suppression bursts use a wider, looser spread (set in `spread`).
+          const burstSpread = (entry.spread != null ? entry.spread : 0.04) * (1 + k * 0.15);
           target.x += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
           target.y += (Math.random() - 0.5) * burstSpread * 0.6;
           target.z += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
@@ -19070,40 +20790,59 @@ function updateEnemies(dt) {
       }
     }
 
-    // Engagement range — per-weapon. v1.23: ranges WIDENED substantially so the
-    // map doesn't feel safe to stroll across. The "far" cap is the absolute max
-    // a kid will fire at; between near and far they lay down covering fire.
-    //   pistol:  near 14m / far 30m   (SMGs share this — close/mid spray)
-    //   shotgun: near  8m / far 18m   (still wants to close, but harasses further)
-    //   ar/ak:   near 22m / far 48m   (rifles reach down the whole street)
-    //   sniper:  near 40m / far 999m  (open LOS = a shot, anywhere on the map)
-    // SMGs (mp5/ump/mac10) read as pistols for range (short/mid weapons).
-    let ENGAGE_NEAR = 14, ENGAGE_FAR = 30;
-    if (e.weapon === 'shotgun')                              { ENGAGE_NEAR =  8; ENGAGE_FAR = 18; }
-    else if (e.weapon === 'ar' || e.weapon === 'ak47')       { ENGAGE_NEAR = 22; ENGAGE_FAR = 48; }
-    else if (e.weapon === 'sniper')                          { ENGAGE_NEAR = 40; ENGAGE_FAR = 999; }
-    // SMGs explicitly share the pistol band (light, short/mid).
-    else if (e.weapon === 'mp5' || e.weapon === 'ump' || e.weapon === 'mac10') { ENGAGE_NEAR = 14; ENGAGE_FAR = 30; }
+    // Engagement range — per-weapon. v1.73: full per-weapon pass. Three dials:
+    //   NEAR = inner edge of the kid's COMFORTABLE zone (snappy peeks, confident
+    //          fire). FAR = absolute firing ceiling (won't fire past it). PUSH =
+    //          how close it WANTS to be before it stops advancing and digs in.
+    //   Invariant kept per row: PUSH <= NEAR <= FAR.
+    //   shotgun:  near  8 / far  25 / push  6   (wants to be right on top of you)
+    //   pistol:   near 12 / far  30 / push  8   (close/mid)
+    //   mac10:    near 14 / far  24 / push  7   (short hoser — BBs wobble at 7m)
+    //   ump:      near 35 / far  50 / push 15   (controllable SMG, holds further)
+    //   mp5:      near 35 / far  50 / push 12   (faster spray, crowds a touch more)
+    //   ar:       near 40 / far  60 / push 15   (reaches far, still wants the mix)
+    //   ak47:     near 50 / far 100 / push 20   (AGGRESSIVE ranged: fires from way
+    //             out, but low push = still closes and brawls. A future LMG is the
+    //             hold-the-back-line gun with a high push.)
+    //   sniper:   near 100 / far 200 / push 40  (open LOS anywhere = a shot)
+    let ENGAGE_NEAR = 12, ENGAGE_FAR = 30, ENGAGE_PUSH_BASE = 8;  // default ≈ pistol
+    if (e.weapon === 'shotgun')        { ENGAGE_NEAR =   8; ENGAGE_FAR =  25; ENGAGE_PUSH_BASE =  6; }
+    else if (e.weapon === 'mac10')     { ENGAGE_NEAR =  14; ENGAGE_FAR =  24; ENGAGE_PUSH_BASE =  7; }
+    else if (e.weapon === 'ump')       { ENGAGE_NEAR =  35; ENGAGE_FAR =  50; ENGAGE_PUSH_BASE = 15; }
+    else if (e.weapon === 'mp5')       { ENGAGE_NEAR =  35; ENGAGE_FAR =  50; ENGAGE_PUSH_BASE = 12; }
+    else if (e.weapon === 'ar')        { ENGAGE_NEAR =  40; ENGAGE_FAR =  60; ENGAGE_PUSH_BASE = 15; }
+    else if (e.weapon === 'ak47')      { ENGAGE_NEAR =  50; ENGAGE_FAR = 100; ENGAGE_PUSH_BASE = 20; }
+    else if (e.weapon === 'sniper')    { ENGAGE_NEAR = 100; ENGAGE_FAR = 200; ENGAGE_PUSH_BASE = 40; }
+    // (pistol + any unset weapon fall through to the 12/30/8 default.)
     const inFullRange    = distToPlayer < ENGAGE_NEAR;
     const inMarginalRange = distToPlayer >= ENGAGE_NEAR && distToPlayer < ENGAGE_FAR;
     const inLongRange    = distToPlayer >= ENGAGE_FAR;
 
     // v1.28h: PUSH DISTANCE — how close a kid actively WANTS to be before it
-    // settles in to fight. Short-range weapons (shotgun/SMG/pistol/MAC-10) should
-    // CLOSE the gap, not park at the edge of their marginal band laying weak
-    // covering fire. While a kid is beyond ENGAGE_PUSH it keeps advancing even
-    // with LOS; only inside it does it hold and peek/harass. Rifles/snipers keep
-    // their long standoff (push ≈ their near band) so they still hold and reach.
+    // settles in to fight. While a kid is beyond ENGAGE_PUSH it keeps advancing
+    // even with LOS; only inside it does it hold and peek/harass. v1.73: PUSH is
+    // now table-driven per weapon (above) rather than derived from NEAR, so each
+    // gun's "fire from range vs. close and brawl" character is tuned directly.
     // Defenders are exempt entirely (they hold their fort by design).
-    let ENGAGE_PUSH = ENGAGE_NEAR * 0.7;                 // default: get well inside near band
-    if (e.weapon === 'shotgun')                              ENGAGE_PUSH = 6;   // shotguns want to be RIGHT there
-    else if (e.weapon === 'mp5' || e.weapon === 'ump' || e.weapon === 'mac10' || e.weapon === 'pistol' || !e.weapon)
-                                                             ENGAGE_PUSH = 9;   // SMGs/pistols crowd in close
-    else if (e.weapon === 'ar' || e.weapon === 'ak47')       ENGAGE_PUSH = 18;  // rifles close to a solid mid range
-    else if (e.weapon === 'sniper')                          ENGAGE_PUSH = 40;  // snipers happy at distance
-    // Aggressive kids push a little closer still.
-    ENGAGE_PUSH *= (1.15 - aggression * 0.3);            // ~0.85x at max aggression
+    // Aggressive kids push a little closer still (~0.85x at max aggression).
+    let ENGAGE_PUSH = ENGAGE_PUSH_BASE * (1.15 - aggression * 0.3);
     const insidePushDist = distToPlayer <= ENGAGE_PUSH;
+
+    // v1.74: RANGED AUTO-RIFLE "fire while you close." The AK (and spring AR) are
+    // meant to PEPPER from well out — full-auto strings, not the lone pistol-like
+    // suppressing round you get while marching. But their PUSH is deliberately low
+    // (AK 20) so they still close and brawl. Those two goals conflicted: the
+    // hold-and-fire gate below keyed on insidePushDist, so beyond ~PUSH the kid
+    // never entered the peek→shoot→burst cycle and only threw single suppressing
+    // BBs. Fix: for these guns, the kid is allowed to STOP-AND-FIRE a real burst
+    // anywhere inside its NEAR band with LOS, while STILL preferring to advance
+    // when it lacks a clean line. Net effect: bursts from 40m+, but it keeps
+    // pushing in between strings. `fireHoldDist` is the distance inside which a
+    // clean shot is worth planting for; for ranged autos that's NEAR, otherwise
+    // it stays the old PUSH behaviour.
+    const isRangedAuto = (e.weapon === 'ak47' || e.weapon === 'ar');
+    const fireHoldDist = isRangedAuto ? ENGAGE_NEAR : ENGAGE_PUSH;
+    const insideFireHold = distToPlayer <= fireHoldDist;
 
     // v1.23: SPOTTED MEMORY. Track when this kid last had a clear line to the
     // player. Once recently spotted, they keep shooting at the last-known spot
@@ -19135,6 +20874,77 @@ function updateEnemies(dt) {
     // v1.9: shotgun kids want to *push closer* if the player is past their near range.
     // We achieve this through repositioning bias below (target cover that's closer to
     // player). Sniper kids want to *hold* and won't push.
+
+    // ── v1.67: REACT TO INCOMING FIRE ────────────────────────────────────────
+    // A fresh near-miss (stamped by updateBBs within the last ~0.4s) makes the
+    // kid respond, scaled by aggression as a "bravery" factor:
+    //   • In cover AND that cover shields the threat bearing → CROUCH and hold
+    //     (use the cover better). Brave kids strongly favor this.
+    //   • In cover but EXPOSED to the threat bearing → relocate to cover that
+    //     actually blocks that direction.
+    //   • Fully in the open → fire a suppressing burst back down the threat
+    //     bearing WHILE moving to the nearest (ideally shielding) cover.
+    // Bravery gate: timid kids (low aggression) let this interrupt even an active
+    // advance ("running scared"); brave kids only react from holding states so a
+    // committed push/shot isn't broken (the "Moderate" end the player described).
+    {
+      const now67 = performance.now() / 1000;
+      const fresh = e._incomingDir && e._lastNearMiss && (now67 - e._lastNearMiss) < 0.4;
+      const reactCdOk = !e._reactCd || (now67 - e._reactCd) > (1.4 - aggression * 0.6); // brave kids re-react sooner
+      // v1.71: NEVER interrupt a committed retreat/redeploy. A tagged kid running
+      // back to respawn (state 'retreating') or jogging back out to its anchor
+      // ('deploying') is in the open and very likely to catch a near-miss BB — and
+      // before this guard, the reaction below would flip it to repositioning/hiding,
+      // CANCELLING the respawn run. Symptom: kid burns a life on the hit but never
+      // leaves, just keeps engaging. Retreat/deploy are uninterruptible.
+      const committed = (e.state === 'retreating' || e.state === 'deploying');
+      // Brave kids won't let it interrupt an active advance/peek/shoot; timid kids will.
+      const interruptible = !committed && ((aggression < 0.5) ||
+        (e.state !== 'advancing' && e.state !== 'peeking' && e.state !== 'shooting'));
+      if (fresh && reactCdOk && interruptible && e.weapon !== 'sniper') {
+        e._reactCd = now67;
+        const dir = e._incomingDir;
+        const inCover = kidInCover(e);
+        const shielded = inCover && coverShieldsFrom(e.homeCover, e.pos, dir);
+        if (shielded) {
+          // Already protected → hunker down and keep using this cover.
+          e.state = 'hiding';
+          e.stateTime = 0;
+          setKidCrouch(e.mesh, 1);
+          // Brave kids snap back to fighting fast; timid kids stay tucked longer.
+          e.nextStateChange = (1.1 - aggression * 0.5) + Math.random() * 0.4;
+        } else {
+          // Exposed (in the open, or cover doesn't block this bearing) → relocate
+          // to cover that shields the threat. If fully in the open, also throw a
+          // suppressing round back down the bearing as we break for cover.
+          if (!inCover) {
+            e._suppressCd = (e._suppressCd || 0) - dt;
+            if (e._suppressCd <= 0) {
+              // Aim a round back along the incoming bearing (toward the shooter),
+              // chest height, with spread — pressure, not precision.
+              const aimPt = new THREE.Vector3(
+                e.pos.x + dir.x * 14 + (Math.random()-0.5)*2.5,
+                (e.pos.y || 0) + 1.0,
+                e.pos.z + dir.z * 14 + (Math.random()-0.5)*2.5
+              );
+              spawnEnemyBB(e, aimPt);
+              e._suppressCd = (1.6 - aggression * 0.6) + Math.random()*0.5;
+            }
+          }
+          const newCover = nearestShieldingCover(e, dir, 14);
+          if (newCover) {
+            e.state = 'repositioning';
+            e.stateTime = 0;
+            e.targetPos = coverStandPos(newCover, { x: e.pos.x - dir.x, z: e.pos.z - dir.z }, 0.35);
+            e.homeCover = newCover;
+            if (!e.coverMemory) e.coverMemory = [];
+            e.coverMemory.push(newCover);
+            if (e.coverMemory.length > 2) e.coverMemory.shift();
+          }
+        }
+        e._incomingDir = null;   // consume the signal
+      }
+    }
 
     // State logic
     switch (e.state) {
@@ -19207,7 +21017,22 @@ function updateEnemies(dt) {
         // handoff). Prevents the "frozen after respawn" stall when the redeploy
         // path is blocked. Measures ACTUAL displacement, not slide-assignment.
         const deployMovedDist = Math.hypot(e.pos.x - beforeDX, e.pos.z - beforeDZ);
-        e._deployStuck = (deployMovedDist > 0.02) ? 0 : (e._deployStuck || 0) + dt;
+        // v1.73: if a fence is the thing wedging the redeploy, walk around its
+        // nearer end toward the anchor instead of burning the full watchdog second.
+        if (deployMovedDist <= 0.02) {
+          const ddet = fenceDetourWaypoint(e.pos.x, e.pos.z, dest.x, dest.z, Game.player.obstacles, kidRadius);
+          if (ddet) {
+            const ex = ddet.x - e.pos.x, ez = ddet.z - e.pos.z;
+            const el = Math.hypot(ex, ez) || 1;
+            const es = deploySpeed * dt;
+            const fx = e.pos.x + (ex / el) * es, fz = e.pos.z + (ez / el) * es;
+            if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
+            else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
+            else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
+          }
+        }
+        const deployMovedFinal = Math.hypot(e.pos.x - beforeDX, e.pos.z - beforeDZ);
+        e._deployStuck = (deployMovedFinal > 0.02) ? 0 : (e._deployStuck || 0) + dt;
         if (e._deployStuck > 1.0) {
           e._deployStuck = 0;
           e.state = 'advancing';
@@ -19246,11 +21071,13 @@ function updateEnemies(dt) {
           // 16m > its push distance, it keeps ADVANCING to close the gap and only
           // settles in once it's actually close. Rifles/snipers have a large push
           // distance so they still hold and harass from range as before.
-          const hasShotFromHere = e._hasLOSNow && (inFullRange || inMarginalRange) && insidePushDist;
+          const hasShotFromHere = e._hasLOSNow && (inFullRange || inMarginalRange) && insideFireHold;
           // Recently-spotted kids also stay put to keep firing at the last-known
           // spot (covering fire) — but again only if they're already close enough;
-          // otherwise they push toward the last-known position.
-          const canEngageNow = hasShotFromHere || (e._recentlySpotted && insidePushDist && !inLongRange);
+          // otherwise they push toward the last-known position. v1.74: ranged autos
+          // use the wider fire-hold band here too (insideFireHold) so an AK gunner
+          // keeps stringing bursts at the cover you ducked behind from range.
+          const canEngageNow = hasShotFromHere || (e._recentlySpotted && insideFireHold && !inLongRange);
           if (!canEngageNow) {
             // Either can't see the player, or they're farther than this weapon
             // wants to fight from → march in to close the distance.
@@ -19299,8 +21126,16 @@ function updateEnemies(dt) {
           const rawD = Math.hypot(rawDx, rawDz) || 1;
 
           // --- v1.25 bounding overwatch (flankers, still at range) ---
+          // v1.66: ONLY bound when the kid is close enough to actually suppress
+          // during the bounds (within ENGAGE_FAR). Beyond that, bounding cover-to-
+          // cover is silent AND can drift laterally without closing — a pistol
+          // flanker (ENGAGE_FAR 30) redeploying to a ~40m anchor would park out
+          // there, never suppressing (needs <38m) and never committing (bound
+          // commit needs <ENGAGE_NEAR), looking dead. Trey's AR (FAR 48) covers
+          // the whole approach so he bounds the whole way as before. Beyond the
+          // band, fall through to direct push to close the gap first.
           let usingBound = false;
-          if (e.flankSide && rawD > 10 && e.weapon !== 'sniper') {
+          if (e.flankSide && rawD > 10 && rawD < ENGAGE_FAR && e.weapon !== 'sniper') {
             // Arrived at current bound cover? (within ~1.5m of its stand pos)
             let needNew = !e._boundCover;
             if (e._boundCover) {
@@ -19324,7 +21159,8 @@ function updateEnemies(dt) {
               if (losSup && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 8)) {
                 const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
                 aimPt.x += (Math.random()-0.5)*1.2; aimPt.z += (Math.random()-0.5)*1.2;
-                spawnEnemyBB(e, aimPt);
+                // v1.74: bounding auto-gunners suppress with a short burst too.
+                queueSuppressionBurst(e, aimPt, 1.2);
                 tryNpcSpeak(e, 'taunt');
                 e._suppressCd = 1.4 + Math.random()*0.8;   // burst pacing
               }
@@ -19362,6 +21198,41 @@ function updateEnemies(dt) {
 
           // --- direct push (center lanes, close range, or no bound cover) ---
           if (!usingBound) {
+          // v1.67: SUPPRESSING FIRE ON THE MOVE. A marching kid throws the
+          // occasional round toward the target's last-known spot even while out
+          // of effective range and walking — it reads as "laying down fire as I
+          // advance" instead of a silent sprint, and matches the bounding kids'
+          // suppression. Gated by the same cooldown so it's sporadic, not a
+          // stream, and requires a rough LOS to where the target was. Aggressive
+          // kids suppress a touch more often. Works for player OR NPC targets
+          // (uses the generic tgt/_lastSeenPos), so advancing kids harass an
+          // enemy NPC they're closing on too, not just the player.
+          {
+            e._suppressCd = (e._suppressCd || 0) - dt;
+            const lastSeen = e._lastSeenPos || (tgt && tgt.pos);
+            if (lastSeen && e.weapon !== 'sniper') {
+              const sYs = e.mesh.scaleY ?? 1.0;
+              const losSupM = hasLineOfSight(
+                e.pos.x, (e.pos.y||0)+1.05*sYs, e.pos.z,
+                lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z,
+                tgt.obstacles
+              );
+              // March-suppression reaches a bit past the weapon's far band — the
+              // point is morale/pressure, not accuracy. Wider miss spread than a
+              // committed shot since they're moving and the target may have moved.
+              if (losSupM && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 10)) {
+                const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
+                const spread = 1.6 + rawD * 0.02;   // looser the farther/faster they are
+                aimPt.x += (Math.random()-0.5)*spread;
+                aimPt.z += (Math.random()-0.5)*spread;
+                // v1.74: auto guns spit a short burst here (not a lone round) so a
+                // marching AK/AR peppers from range instead of reading as a pistol.
+                queueSuppressionBurst(e, aimPt, 1.4);
+                // Cooldown shrinks with aggression: brave kids suppress more.
+                e._suppressCd = (1.8 - aggression * 0.7) + Math.random()*0.7;
+              }
+            }
+          }
           // v1.24a FLANK WAYPOINT (geometric fallback): offset perpendicular,
           // decaying to 0 by 9m so flankers still arc in when no cover is around.
           let tgtX = tgt.pos.x, tgtZ = tgt.pos.z;
@@ -19402,6 +21273,19 @@ function updateEnemies(dt) {
             const advMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
             if (advMoved < 0.02) {
               e._advStuck = (e._advStuck || 0) + dt;
+              // v1.73: if a FENCE is what's wedging us, commit to walking around
+              // its nearer END rather than blindly alternating sides mid-span.
+              const detour = fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
+              if (detour) {
+                const ddx = detour.x - e.pos.x, ddz = detour.z - e.pos.z;
+                const dlen = Math.hypot(ddx, ddz) || 1;
+                const fstep = speed * dt;
+                const fx = e.pos.x + (ddx / dlen) * fstep;
+                const fz = e.pos.z + (ddz / dlen) * fstep;
+                if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
+                else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
+                else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
+              } else {
               // perpendicular to the player direction
               let px = -dz / d, pz = dx / d;
               if (!e._advSide) e._advSide = (Math.random() < 0.5 ? 1 : -1);
@@ -19416,6 +21300,7 @@ function updateEnemies(dt) {
                 e.pos.x = sx;
               } else if (!collidesObstacles(e.pos.x, sz, kidRadius)) {
                 e.pos.z = sz;
+              }
               }
             } else {
               e._advStuck = 0;
@@ -19580,6 +21465,14 @@ function updateEnemies(dt) {
           let repositionChance = 0.30 + aggression * 0.45;
           if (e.weapon === 'sniper') repositionChance *= 0.3;
           if (e.role === 'defender') repositionChance *= 0.5;
+          // v1.74: a ranged auto (AK/AR) firing from beyond its PUSH should keep
+          // MOVING UP between bursts rather than rooting at the back of its range.
+          // Lift the chance hard so most recovery beats end in a forward hop. (The
+          // direction is already biased to closest cover via rangedAutoClosing.)
+          // Once inside PUSH this flag is false and it reverts to normal cadence.
+          const rangedAutoClosingNow = (e.weapon === 'ak47' || e.weapon === 'ar')
+            && e.role !== 'defender' && distToPlayer > ENGAGE_PUSH;
+          if (rangedAutoClosingNow) repositionChance = Math.max(repositionChance, 0.8);
           if (Math.random() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
@@ -19588,9 +21481,13 @@ function updateEnemies(dt) {
             // Snipers, if they do reposition, take smaller steps.
             let maxRepositionDist = 6 + aggression * 6; // 6m..12m
             if (e.weapon === 'shotgun') maxRepositionDist = 4 + aggression * 6;  // 4..10m, more aggressive close
+            // v1.74: ranged autos closing from a long standoff take bigger forward
+            // hops so they actually close the 50m gap instead of inching. Scales
+            // with how far out they still are.
+            if (rangedAutoClosingNow) maxRepositionDist = Math.max(maxRepositionDist, Math.min(22, 10 + (distToPlayer - ENGAGE_PUSH) * 0.4));
             if (e.weapon === 'sniper')  maxRepositionDist = 3 + aggression * 3;  // 3..6m, small lateral moves
             if (e.role === 'defender')  maxRepositionDist = Math.min(maxRepositionDist, 5); // never abandon zone
-            const candidates = Game.scenario.cover.filter(c => {
+            let candidates = Game.scenario.cover.filter(c => {
               if (e.coverMemory.includes(c) || c === e.homeCover) return false;
               const cx = (c.minX + c.maxX) / 2;
               const cz = (c.minZ + c.maxZ) / 2;
@@ -19599,6 +21496,17 @@ function updateEnemies(dt) {
               const distFromRef = Math.sqrt((cx - distRef.x)**2 + (cz - distRef.z)**2);
               return distFromRef <= maxRepositionDist;
             });
+            // v1.67: DEFEND anti-crowding. Prefer candidates that aren't already
+            // occupied by a teammate, so the squad fans out across different cover
+            // instead of stacking. Only narrow to the un-crowded subset if it's
+            // non-empty — on a tight map we'd rather double up than freeze.
+            if (Game.scenario.scenarioType === 'defend' && candidates.length > 1) {
+              const uncrowded = candidates.filter(c => {
+                const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+                return teammateCrowding(e, cx, cz, 5) < 0.25;   // ~<4m of a mate
+              });
+              if (uncrowded.length > 0) candidates = uncrowded;
+            }
             if (candidates.length > 0) {
               // v1.10: aggression drives reposition direction
               //   • agg ≥ 0.7: pick the candidate closest to player (push)
@@ -19607,10 +21515,17 @@ function updateEnemies(dt) {
               //           cover, timid ones more likely to pick far cover
               // Defenders skip directional bias (they're shuffling laterally in their
               // zone — closest-to-player would push them out of their zone).
+              // v1.74: a RANGED AUTO (AK/AR) that's still beyond its PUSH closes
+              // between bursts — it reads as "pepper from range, then move up." We
+              // treat it as push-direction (closest cover) regardless of its mid
+              // aggression, but only while it's farther than it ultimately wants to
+              // be (distToPlayer > ENGAGE_PUSH). Inside PUSH it falls back to its
+              // normal aggression-driven shuffle so it doesn't over-crowd.
+              const rangedAutoClosing = isRangedAuto && e.role !== 'defender' && distToPlayer > ENGAGE_PUSH;
               let newCover;
               if (e.role === 'defender') {
                 newCover = candidates[Math.floor(Math.random() * candidates.length)];
-              } else if (aggression >= 0.7) {
+              } else if (aggression >= 0.7 || rangedAutoClosing) {
                 // Aggressive: closest to player wins
                 let bestDist = Infinity;
                 for (const c of candidates) {
@@ -19671,16 +21586,41 @@ function updateEnemies(dt) {
           const dx = e.targetPos.x - e.pos.x;
           const dz = e.targetPos.z - e.pos.z;
           const d = Math.sqrt(dx*dx + dz*dz);
-          if (d < 0.15) {
+          if (d < 0.2) {
             e.state = 'hiding';
             e.stateTime = 0;
             e.nextStateChange = 0.5 + Math.random() * 0.8;
             e.targetPos = null;
           } else {
+            // v1.70: COLLISION-SLIDE (was a raw straight-line move that phased the
+            // kid through obstacles — including the cover it was relocating to).
+            // Mirror the deploying/advancing movers: try the diagonal step, else
+            // slide on X-only then Z-only, with a short anti-wedge bail.
             const baseSpeed = 2.5;
             const speed = baseSpeed * (ch.moveSpeed ?? 1.0);
-            e.pos.x += (dx / d) * speed * dt;
-            e.pos.z += (dz / d) * speed * dt;
+            const kidRadius = 0.35;
+            const stepX = (dx / d) * speed * dt;
+            const stepZ = (dz / d) * speed * dt;
+            const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
+            const bX = e.pos.x, bZ = e.pos.z;
+            if (!collidesObstacles(nX, nZ, kidRadius)) {
+              e.pos.x = nX; e.pos.z = nZ;
+            } else {
+              if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
+              if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
+            }
+            // Anti-wedge: if the slide made no real progress for ~0.6s (e.g. the
+            // target spot is tucked against geometry it can't quite reach), accept
+            // the current spot and settle — better than vibrating against a wall.
+            const moved = Math.hypot(e.pos.x - bX, e.pos.z - bZ);
+            e._repoStuck = (moved > 0.02) ? 0 : (e._repoStuck || 0) + dt;
+            if (e._repoStuck > 0.6) {
+              e._repoStuck = 0;
+              e.state = 'hiding';
+              e.stateTime = 0;
+              e.nextStateChange = 0.4 + Math.random() * 0.6;
+              e.targetPos = null;
+            }
             e.mesh.group.position.x = e.pos.x;
             e.mesh.group.position.z = e.pos.z;
           }
@@ -19769,6 +21709,59 @@ function updateEnemies(dt) {
       e.mesh.group.position.y = gY;
     }
 
+    // v1.78: UNIFIED POSE PASS — handedness-correct gun hold + subtle walk anim
+    // + over-cover lift, composed after the terrain plant (so the gunGroup world
+    // matrix is current for the laser block that follows). Order matters:
+    //   1) the state machine above already set crouch (0/1) which reset limbs to
+    //      base ∓ hipDrop;
+    //   2) setKidGunHold layers the one/two-handed hold (gun on the right, off-
+    //      hand across for large guns / on aim for small guns), reading the post-
+    //      crouch Y so a crouched kid still holds correctly;
+    //   3) setKidWalk adds a gentle leg + off-arm swing scaled by how much the kid
+    //      actually moved this frame.
+    // Skipped entirely for down/zombie kids (handled in their own branches above).
+    {
+      // Idempotent base reset: re-apply the current crouch so every limb is at a
+      // clean base ∓ hipDrop before we layer the hold + walk. This makes the pose
+      // pass self-contained — even if a state branch forgot to call setKidCrouch
+      // this frame, the hold/walk can't accumulate drift.
+      if (e.mesh.pose) setKidCrouch(e.mesh, e.mesh.pose.crouch || 0);
+
+      // Aim ramp: hold toward 'aim' while the kid is actively engaging. A short
+      // _aimHold timer (re-armed each time it fires, see spawnEnemyBB) keeps the
+      // shouldered hold across a burst and eases out after the last round.
+      const engaging = (e.state === 'shooting' || e.state === 'peeking');
+      if (engaging) e._aimHold = Math.max(e._aimHold || 0, 0.25);
+      if (e._aimHold > 0) e._aimHold = Math.max(0, e._aimHold - dt);
+      // Smooth the aim amount so rest↔aim eases rather than snaps.
+      const aimTarget = (engaging || e._aimHold > 0) ? 1 : 0;
+      e._aimAmt = (e._aimAmt == null) ? aimTarget
+        : e._aimAmt + (aimTarget - e._aimAmt) * Math.min(1, dt * 8);
+
+      // Over-cover lift: decays like before; folds into the hold as extra muzzle
+      // height instead of a separate competing pose.
+      let lift = 0;
+      if (e._firingOverCover > 0) {
+        e._firingOverCover = Math.max(0, e._firingOverCover - dt);
+        lift = 0.34 * Math.min(1, e._firingOverCover / 0.45);
+      }
+
+      // Movement intensity from this frame's actual displacement (footstep code
+      // above computed `moved` = metres this frame). Normalize to a typical step
+      // and ease so stops settle. Stationary firing kids get ~0 → still stance.
+      const moveThisFrame = (typeof moved === 'number') ? moved : 0;
+      const speedNorm = Math.min(1, (moveThisFrame / Math.max(dt, 1e-3)) / 3.0); // ~3 m/s = full
+      e._walkInt = (e._walkInt == null) ? speedNorm
+        : e._walkInt + (speedNorm - e._walkInt) * Math.min(1, dt * 6);
+      // Advance the gait phase only while moving (so a stopped kid freezes mid-stance).
+      e._walkPhase = (e._walkPhase || 0) + e._walkInt * dt * 8.0;
+
+      if ((e.mesh.pose?.crouch ?? 0) <= 0.98) {
+        setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
+      }
+      setKidWalk(e.mesh, e._walkPhase, e._walkInt);
+    }
+
     // v1.36i: clip this kid's laser beam (if any) to the first obstacle it hits,
     // so the dot lands on real geometry instead of a phantom fixed-distance wall.
     // v1.36j: also AIM it at the kid's target (chest height) first, so it
@@ -19781,8 +21774,25 @@ function updateEnemies(dt) {
       let aimPt = null;
       const _lt = (typeof tgt !== 'undefined' && tgt) ? tgt : null;
       if (_lt && _lt.pos) {
-        const _ty = (_lt.pos.y != null ? _lt.pos.y : 0) + 1.0;   // ~chest height
-        aimPt = new THREE.Vector3(_lt.pos.x, _ty, _lt.pos.z);
+        // v1.84: aim at the target's ACTUAL CHEST in world space. For an enemy kid,
+        // read its torso mesh world position directly (no pos.y / terrain math to go
+        // stale). For the player (no body mesh), use the live eye/camera world
+        // position dropped to chest. This is the "just point at the chest mesh" fix.
+        aimPt = new THREE.Vector3();
+        if (!_lt.isPlayer && _lt.ref && _lt.ref.mesh && _lt.ref.mesh.parts && _lt.ref.mesh.parts.torso) {
+          _lt.ref.mesh.parts.torso.getWorldPosition(aimPt);
+        } else if (_lt.isPlayer && Game.camera) {
+          Game.camera.getWorldPosition(aimPt);
+          aimPt.y -= 0.35;   // eye → chest
+        } else {
+          const _ty = (typeof _lt.chestY === 'number') ? _lt.chestY
+                    : ((_lt.pos.y != null ? _lt.pos.y : 0) + 0.98);
+          aimPt.set(_lt.pos.x, _ty, _lt.pos.z);
+        }
+        LASER_DIAG.aimTargetIsPlayer = !!_lt.isPlayer;
+        LASER_DIAG.aimY = +aimPt.y.toFixed(2);
+        LASER_DIAG.tgtFeetY = +(_lt.pos.y != null ? _lt.pos.y : 0).toFixed(2);
+        LASER_DIAG.shooterFeetY = +(e.pos.y || 0).toFixed(2);
       }
       LASER_DIAG.hadAim = !!aimPt;
       updateKidLaser(e, (Game.player && Game.player.obstacles) || null, aimPt);
@@ -20013,6 +22023,7 @@ function tick() {
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
     updateInteractables();
+    updateBedroomLabels();   // v1.62 — project floating labels to screen each frame
     // Ambient bedroom animations
     if (Game.scene && Game.scene.userData) {
       if (Game.scene.userData.fanBlades) {
@@ -20031,11 +22042,19 @@ function tick() {
     updateGun(dt);
     // Sub-step BB physics: BBs at 30+ m/s can skip through thin obstacles
     // in a single 16ms frame. Run physics at ~5ms steps.
+    // v1.74: a BB hit can call endScenario() mid-substep (final-life loss), which
+    // flips Game.mode to 'result' and stops all BB whistles. If we kept sub-
+    // stepping, updateBBs would re-enter and RESTART the whistle on a BB still
+    // buzzing past the player — and with no further updateBBs calls next frame
+    // (mode is now 'result'), that restarted loop droned forever (the "whistle
+    // persists after losing the last life, even back in the bedroom" bug). So we
+    // break out the instant the mode is no longer 'scenario'.
     const BB_STEP = 1 / 200;
     let remaining = dt;
     while (remaining > 0.0001) {
       const step = Math.min(BB_STEP, remaining);
       updateBBs(step);
+      if (Game.mode !== 'scenario') break;   // endScenario fired mid-substep
       remaining -= step;
     }
     updateStuckBBs(dt);
