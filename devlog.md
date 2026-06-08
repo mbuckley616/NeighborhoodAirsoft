@@ -3440,3 +3440,1207 @@ Left alone:
 - Non-Bunratty Sean spawns (the Hollow battles in East Roswell, etc.) are a different neighborhood and outside the request; untouched, including a pistol entry in `hollow_juggernaut`.
 
 Verified: parse clean; confirmed every Bunratty (street: bunratty_ct) Sean gunner entry now reads ak47, and post-Bunratty entries are unchanged.
+
+## v1.61g — TTS voice fix (macOS droideka/whisper voices)
+
+Opened the deployed build on a Mac and half the NPC voices sounded like droidekas or unintelligible whispering.
+
+### Cause
+macOS/iOS ship a set of NOVELTY voices that are tagged `en-US` / `en_US` — Zarvox (robot), Whisper (the unintelligible one), Bells, Bad News, Trinoids, Albert, Fred, Cellos, etc. The voice picker (`voiceForCharId`) filtered for en-US to keep an American tone, but had no exclusion for novelty voices, so the deterministic per-character hash happily assigned Zarvox/Whisper to some kids. Windows/Chrome/Linux don't have these voices, which is why it only showed up on the Mac.
+
+### Fix
+- `TTS_NOVELTY_VOICES` regex blacklist, applied at the top of `voiceForCharId` (filters the whole pool before any tier) so novelty voices can never be selected on any platform.
+- New tier 0: prefer known-good natural US voices by name (`Samantha`, `Alex`, `Tom`, `Aaron`, `Nicky`, ...) when present, before the generic en-US fallbacks. macOS gets Samantha/Alex; other platforms fall through to the existing en-US logic unchanged.
+- `ttsGetVoices()` now polls the live `getVoices()` every call and keeps whichever list is LONGER. Safari returns a short partial list on first call then fills it via `voiceschanged`; the old cache locked onto the first non-empty result, which could miss the good voices. Now it upgrades to the fuller list automatically.
+- Failure mode if a system somehow has only novelty voices: the pool empties → returns null → NPC uses the browser default or stays silent. Silence beats droideka.
+
+### Verified
+- Parse clean (extracted module, node --check, rc 0).
+- Regex checked: catches Zarvox/Whisper/Bad News/Trinoids/Albert/Fred/etc.; does NOT catch Samantha/Alex/Tom/Aaron or "Google US English"/"Microsoft David"; no conflict with the preferred-name list.
+
+### Still open
+- Couldn't audition actual macOS voices from here; confirm on the Mac that the kids now sound like normal Samantha/Alex-style voices. If any specific voice still sounds off, add its name to TTS_NOVELTY_VOICES.
+
+## v1.62 — Floating bedroom labels (wayfinding for playtesters)
+
+Multiple playtesters got "stuck" in the bedroom — they couldn't tell what was interactable or where they were supposed to go, so leaving the room (into the map / first scenario) was a guessing game. Added a floating-label layer that names each interactable in world space.
+
+### What it does
+Each interactable now has a billboarded chip — a glyph + a short uppercase name — anchored above its physical object and projected to screen space every frame:
+- **Shop** (CRT monitor glyph) — the desk computer
+- **Map** (folded-map glyph) — the map table
+- **Loadout** (backpack glyph) — the big closet
+- **Workbench** (wrench glyph) — the hall closet
+- **Bathroom** (door glyph) — the bathroom door
+- **Save** (bed glyph) — the bed
+
+Behavior:
+- Labels fade in by distance (full out to ~6m, gone by ~11m) so standing in the middle of the room doesn't read as cluttered.
+- Hidden when behind the camera or culled outside the viewport.
+- The one currently in E-range gets the accent treatment (orange chip + stem + bold name + recolored glyph) and is forced fully opaque, so it visually agrees with the existing centered `E …` prompt.
+
+### Implementation
+- New CSS: `#bedroomLabels` overlay layer + `.br-label` / `.br-chip` / `.br-icon` / `.br-name` / `.br-stem`, with a `.focused` variant using `--ui-accent`. Inline SVG glyphs stroke with `--ui-text` so the `.focused [stroke]` rule can retint them.
+- `BR_LABEL_ICONS` map holds the six inline SVGs.
+- Each interactable in `buildBedroomScene()` gained `label`, `icon`, and `labelY` (chip height in world units, tuned per object).
+- `buildBedroomLabels()` — builds one DOM marker per labeled interactable, stashes `it._labelEl` + `it._labelWorld`; called from `enterBedroom()`.
+- `updateBedroomLabels()` — projects each `_labelWorld` through `Game.camera` every frame, positions/fades/highlights; called in the bedroom branch of `tick()` right after `updateInteractables()`.
+- `hideBedroomLabels()` — hides the layer on scenario start. Menus (shop/map/loadout/workbench/save) sit at `z-index:100` and cover the un-updated layer, and returning from a menu just sets `Game.mode='bedroom'` (no scene rebuild), so the markers and their refs persist correctly — no rebuild needed on menu close.
+
+### Version
+Bumped in all three spots: header comment block, `const VERSION`, and the title-screen `.version` div. (Note: `const VERSION` had drifted to `1.60` while the title div read `1.61g`; both now read `1.62`.)
+
+### Verified
+- Parse clean (extracted main script block, `new Function(js)`, rc 0).
+- Six label entries confirmed present; all three call sites wired (build in `enterBedroom`, update in `tick`, hide on scenario start).
+
+### Still open
+- Couldn't run it live from here — confirm in-browser that chip heights (`labelY`) sit nicely above each object and that the distance fade feels right. The closet/workbench/bathroom `labelY` values (2.05) are estimates above the doorways; nudge if a chip clips the ceiling or floats too high.
+- Optional follow-up if it still reads busy: only show labels for objects the player is roughly facing, or add a one-time "look around" beat to the tutorial.
+
+## v1.63 — Eyewear rebalance + player footsteps
+
+### Eyewear
+Reworked the eye-pro lineup so price tracks quality and there's a clear progression:
+- **Clear Safety Glasses** — was $10 / +0. Now **$28 / +1**. They offer real protection with almost no view penalty, so they're now a premium pick rather than the cheap default. (The `view` tint/filter is unchanged — still the near-clear look.)
+- **Swimming Goggles** — NEW. **$14 / +1**. Pool goggles pressed into airsoft duty: a heavy dark-blue tint and deliberately *rough peripherals*. Implemented as a new `swim` frame style in `buildEyewearFrameSVG` — two smaller, more-separated lens ovals (rx 29 vs the open goggle's 40) so the frame band crowds inward and the corners stay obstructed, plus a thick rubbery band, a hard nose bridge, and side straps. Higher vignette (0.30) reinforces the tunnel feel.
+- **Ski Goggles** — renamed from "Amber Lo-Light Goggles". Now **$50 / +2** (was $26 / +1). Same amber view; repositioned as the top see-through option, sitting alongside the Mesh Mask (+2) at the high end.
+
+Both the shop (`renderEquipmentTab`) and the closet gear manager iterate `for (const id in EYEWEAR)` and auto-derive the description from `hp` + `view.label`, so the new item and the rebalanced stats appear everywhere with no UI edits. Added `goggles_swim:false` to the `ownedEquipment.eyewear` defaults; old saves deep-merge it in as unowned, so nothing breaks.
+
+Resulting eye-pro ladder: No Eye Pro (0) → Swimming $14 (+1) → Smoke $22 (+1) → Clear $28 (+1) → Mesh Mask $40 (+2) → Ski $50 (+2). The three +1s differentiate on *view* (clear vision vs smoke vs blue-tint-with-bad-peripherals) rather than protection, which is the intended tradeoff.
+
+### Player footsteps
+New `playPlayerFootstep(heavy)` Web Audio synth: a low-passed noise scuff (the "shh" of foot-on-ground) plus a short low sine thump for heel weight, with per-step pitch/level/filter jitter so a run doesn't sound like a metronome. Sprint steps (`heavy`) are louder, lower, and slightly longer. Routed straight to `ctx.destination` (not the music master) so toggling music with **M** leaves footsteps audible.
+
+Triggering: a dedicated `player._stepPhase` accumulator in `updatePlayer` advances only while actually moving on the ground in a scenario (idle drift and airtime are silent), and fires one step each time it crosses π — once per stride half-cycle, synced to the existing visual bob's heel-strike. Cadence is 13/s sprinting, 8/s walking. The accumulator resets when you stop so the next step lands promptly instead of mid-phase.
+
+Naming note: there was already a `playFootstep(srcX, srcZ)` from v1.21 — that's the *positional* footstep used for enemy/NPC steps (still called from the AI update). The new player-local one is deliberately named `playPlayerFootstep` to avoid shadowing it. (Caught a near-miss during this pass where the first draft collided with that name and orphaned `playShot`'s body — fixed and re-parsed clean.)
+
+### Version
+Bumped in all three spots (header comment, `const VERSION`, title `.version` div) to 1.63.
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0).
+- All four changes confirmed present: Clear $28/+1, Swimming Goggles added, Amber→Ski $50/+2, footstep synth + trigger wired.
+
+### Still open
+- Couldn't audition in-browser from here — confirm the footstep volume sits right under gunfire/music and the cadence feels matched to the visual bob (the 8/13 numbers mirror the bob cadence but the ear is the judge). Easy knobs: `baseVol`, the `stepCadence` values, and the lowpass cutoff.
+- The `swim` peripheral roughness is geometric (smaller lenses) — verify in a match that it reads as "bad side vision" and not just "smaller goggles". If it needs to bite harder, raise `bandW` or drop the lens `rx`.
+- Optional: footsteps currently don't vary by surface (grass vs pavement vs indoor) or by equipped shoes — both are natural future hooks (SHOES already exists; surface would need a material lookup at the player's feet).
+
+## v1.64 — Swim goggles: opaque surround + no bridge
+
+Playtest feedback on the v1.63 swim goggles (screenshot): the frame was still see-through, so raw peripheral view bled all around the two lenses, and there was a dark nose-bridge bump intruding into center vision. Both wanted gone — the goggles should cut ALL peripheral vision and leave the center clear.
+
+### Changes
+- **Opaque surround.** New `opaqueSurround` flag in `buildEyewearFrameSVG` (`style === 'mask' || style === 'swim'`). `frameBody` now fills everything outside the lens holes with a solid `col` rect (the same masked-rect technique the full mesh mask uses) instead of the see-through band stroke. Result: no peripheral view at all — only the two lens holes show the world.
+- **Lenses overlap, no bridge.** Lens ovals moved from cx 33/67 rx 29 (barely meeting) to **cx 38/62 rx 34** so the union is one continuous opening across the center. Removed the `bridge` rect and the side-strap `temples` rects from the swim branch entirely (`bridge`/`temples` just stay `''`).
+- **Rim seat.** Swim's rim-highlight stroke is now masked to outside the holes (like the open frames) so it doesn't draw a seam across the open center; the full mask keeps its original unmasked oval seat. The visible result is two lens-edge outlines meeting at the overlap — reads as goggle rims, consistent with the existing goggle/glasses styles, with the wide center open.
+
+The canvas-filter decision was left keyed on the unchanged `seeThrough` (mask-only) path, so swim's look still comes from its in-lens dark-blue tint rather than a full-screen filter — only the surround changed, not the tint behavior.
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0).
+- Rendered the swim aperture/mask/rim SVG standalone (cairosvg) to confirm: surround opaque to all four edges, lenses form one continuous center opening, no solid bridge. Confirmed visually.
+- Version bumped in all three spots → 1.64.
+
+### Still open
+- In-engine confirm that the opaque surround sits flush to the real (stretched) screen edges at various aspect ratios — `preserveAspectRatio="none"` stretches the 100×100 viewBox, and the surround rect overhangs to -2..102, so it should always cover, but worth an eyeball on an ultrawide.
+- The lens-edge rims still meet with a faint crossing at the overlap points (same as the goggle style). If you want the center totally seamless, the move is to union the two ovals into a single `<path>` for the rim instead of stroking two separate ellipses.
+
+## v1.65 — Fix: Seth wedged in a phantom east fort (+ defend objective text)
+
+### The bug (playtester: "Seth always just sits inside the enemy fort and never pushes")
+Diagnosed from the observation that Seth stayed at spawn while **Trey pushed fine despite a longer-range gun** — which pointed at spawn/geometry, not AI tuning.
+
+Root cause: the east "treehouse" kid-fort (`buildKidFort(scene, 33, 0, {faceDir:'W', width:3.8, depth:2.4})`, added v1.56) was being built **unconditionally** in `buildWinnmarkCourtScene`. But it sits at x≈33, and every cul-de-sac defend scenario (Hold the Fort, Last Stand, etc.) spawns its attackers from `cluster_road_east` at **x=31** — right at the fort's mouth.
+
+The attacker huddle ring places kid *i* at `ang = (i/n)*2π + 0.4`, radius 1.4, around the cluster center. Worked the math:
+- **Seth** (setup index 0): ang 0.4 → spawn **(32.29, 0.55)** — squarely *inside* the U-shaped fort (interior x∈[31.9,34.2], z∈[-1.8,1.8]), boxed by the back wall (x≈31.8) to his west and the two wings north/south.
+- **Trey** (index 1): ang ≈2.49 → **(29.88, 0.84)** — west of the back wall, in the open.
+- **Devon** (index 2): ang ≈4.59 → **(30.83, -1.39)** — also in the open.
+
+So Seth, and only Seth, spawned trapped. His deploy/advance path goes west toward the player, straight into the back wall; the slide/anti-wedge couldn't find the narrow west opening, so he jittered in place. `findClearSpawn` didn't rescue him because from deep inside the U it pushes along the smallest-penetration axis (deeper in / sideways into a wing), never out the mouth.
+
+### Fix (root cause, zero AI changes)
+Gated the east fort to a new `'treehouse'` builder variant. That fort exists for exactly one scenario — `winnmark_defend_treehouse` — where the **player** spawns behind it (`playerSpawn: 'east_fort'`) and the attackers come from the far-west `cluster_treehouse` (20,-23), nowhere near x=33. Changes:
+- East fort build wrapped in `if (variant === 'treehouse')`.
+- `winnmark_defend_treehouse` now passes `builderArg: 'treehouse'` (was `'cul_de_sac'`).
+- The builder's `else if (variant === 'cul_de_sac')` spawn/placement branch now also accepts `'treehouse'`, so that scenario keeps identical geometry/spawn defaults — the *only* difference between the two variants is whether the east fort is built. (The inline-enemy block there is dead code anyway for these scenarios, since they use `enemySetup`.)
+
+Verified with a standalone reproduction of the huddle-ring math + the fort's rotated AABBs: pre-fix Seth's point is inside the fort interior and overlaps the back-wall margin box; post-fix none of the three spawns touch any fort geometry in Hold the Fort. The treehouse scenario still gets its fort (player spawns behind it as before).
+
+### Also: defend objective text
+`survive_timer` objectives read "Survive 90s (or tag everyone)". But defend attackers respawn forever (`respawns = isDefend && role === 'attacker'`), so tagging them all out permanently isn't possible — it's purely an outlast. Reworded to "Hold out for 90s — they respawn, so just survive."
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0).
+- Spawn-math simulation confirms the collision and its removal.
+- Version bumped in all three spots → 1.65.
+
+### Still open
+- This was the *literal* "stuck in fort" bug. Separately, even when free, pistol attackers settle at ~9m push distance and trade fire rather than overrunning the fort — that's the AI-tuning question we set aside. If, after testing this fix, the defends still feel too passive, that's the next lever (defend-attacker push distance / reposition bias), and it's a deliberate design choice rather than a bug.
+- Worth a quick scan of OTHER builders (Bunratty etc.) for the same pattern — an unconditional structure overlapping a spawn cluster. The Bunratty `bulb_center` defends use a different builder; haven't audited them here.
+
+## v1.66 — Fix: pistol flankers stall far from the fort after a respawn
+
+### Symptom (follow-up to v1.65)
+With the spawn-wedge fixed, a new flavor of "Seth won't push" appeared: after being tagged once, Seth redeploys to his anchor (~40m from the bulb) and **parks there — not advancing, not shooting**. Trey often kept pushing. Same scenario, same respawn path, different weapon.
+
+### Root cause: bounding-overwatch dead zone for short-range weapons
+Bounding overwatch (v1.25) runs for any flanker at `rawD > 10` (`e.flankSide && rawD > 10 && weapon !== 'sniper'`). In Hold the Fort the flank lanes are assigned by setup order (`['L','R','C'][idx%3]`): Seth=L, Trey=R, Devon=C. So Seth bounds.
+
+The trap is the interaction with per-weapon ranges:
+- **Suppressing fire** during a bound needs `rawD < ENGAGE_FAR + 8`.
+- **Committing** to a static engage from a bound needs `newDist < ENGAGE_NEAR` (the `usingBound` clause on `commitEngage`).
+- Pistol: `ENGAGE_NEAR 14`, `ENGAGE_FAR 30`. At ~40m from the bulb, Seth is past suppress range (38m) AND past commit range (14m) → he bounds **silently** and never commits. Worse, the bound re-pick scores candidates partly on flank-side lateral offset, so with no strong forward winner he can drift sideways along the tree line instead of closing — parking at 30–44m.
+- Trey's AR: `ENGAGE_FAR 48`, so suppression works across the whole approach and he reads as actively pushing. That asymmetry is exactly why only the pistol kid looked dead.
+
+### Fix
+Bounding now only runs inside the kid's suppressing band:
+```
+if (e.flankSide && rawD > 10 && rawD < ENGAGE_FAR && e.weapon !== 'sniper') { …bound… }
+```
+Beyond `ENGAGE_FAR`, `usingBound` stays false and the kid falls through to **direct push**, closing the gap until bounding/suppression actually does something, then bounds the final stretch and commits at push distance. Net behavior:
+- Pistol (Seth): 40m → direct-push to <30m → bound + suppress 30→ → commit <14m. Closes and fights.
+- AR (Trey): 40m < 48m → bounds the whole way as before. Unchanged.
+- Sniper (Devon): excluded from bounding already. Unchanged.
+
+### Not a cover problem
+Checked the question directly: the road has staggered bounding cover the entire way from the east mouth to the bulb (placed ~6m apart, skipping only x<-23 bulb and x>27 mouth), plus the two bulb cars at commit range. The stall wasn't a cover gap — it was the range gate on bounding. Cover density is fine.
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0).
+- Traced all three Hold-the-Fort attackers through redeploy: pistol now closes, AR/sniper unchanged.
+- Version bumped in all three spots → 1.66.
+
+### Still open
+- In-engine confirm Seth now closes and engages after a tag, and that the direct-push approach doesn't read as a mindless straight-line conga (the last-stretch bounding should keep it tactical). If the open approach feels too exposed, the lever is lowering the bound-band entry or widening the flank waypoint offset.
+- The lateral-drift in `pickBoundCover` (forward gate is only `forward < 2.0`) is now mostly moot since bounding only runs in-band, but if a mid-range flanker ever still slides sideways, tightening that forward requirement is the follow-up.
+
+## v1.67 — Combat-feel wrinkles (4 features)
+
+Four requested behaviors to make firefights read better.
+
+### 1. Suppressing fire on the move
+Marching kids in the direct-push branch of `advancing` now throw the occasional round toward the target's last-known position (`_lastSeenPos`, falling back to `tgt.pos`) even while out of effective range and walking — provided a rough LOS to that spot. Cooldown-gated (shares `_suppressCd` with the bounding-overwatch suppression, so a kid can't double-fire from both paths) and the cooldown shrinks with aggression (`1.8 - aggression*0.7`). Spread is looser than a committed shot (`1.6 + rawD*0.02`) since they're moving and the target may have moved — it's pressure, not precision. Reaches a touch past the weapon's far band (`rawD < ENGAGE_FAR + 10`). Targets the generic `tgt`, so an advancing kid harasses an enemy NPC it's closing on, not just the player. Snipers excluded.
+
+### 2. Defend anti-crowding
+New `teammateCrowding(e, cx, cz, radius)` returns a 0→1-per-mate penalty that grows as a candidate cover nears a living, fighting same-team kid (measured from that kid's `homeCover` center, else its position). Applied in two places, **defend scenarios only**:
+- `pickBoundCover` scoring: `score -= teammateCrowding(...) * 3.0`.
+- Reposition candidate pool: after the normal distance filter, narrow to the subset that isn't crowded (`teammateCrowding(...,5) < 0.25`, ~<4m of a mate) — but only if that subset is non-empty, so a tight map doesn't freeze the kid. The three downstream pick branches (closest/furthest/weighted) are untouched; they just operate on the spread-out pool.
+
+Result: the attacking squad fans across different cover instead of three kids stacking the same car.
+
+### 3. React to incoming fire (aggression-scaled)
+**Detection** (`updateBBs`): a live BB whizzing within 2.5m of a kid it could legally hit stamps `e._incomingDir` (unit vector pointing back toward the shooter = reverse of BB travel) and `e._lastNearMiss`. Cheap — skips kids stamped in the last 0.25s. (~2.5m ≈ 1.5 car-widths; chosen over the initial "tight" 1.5m because NPC accuracy means most player misses clear 1.5m, which would rarely trigger.)
+
+**Reaction** (before the state switch): on a fresh stamp (<0.4s) past a per-kid react cooldown, with `aggression` as bravery:
+- **Shielded** (in cover, and `coverShieldsFrom` says that cover is on the threat bearing) → crouch and hold; brave kids snap back to fighting faster (`nextStateChange = 1.1 - aggression*0.5`).
+- **In cover but exposed** to the bearing → relocate to `nearestShieldingCover(dir)`.
+- **In the open** → fire a suppressing round back down the bearing AND break for the nearest shielding cover.
+- **Bravery gate:** timid kids (`aggression < 0.5`) let this interrupt even an active advance/peek/shoot ("running scared"); brave kids only react from holding states, so a committed push isn't broken (the "Moderate" end). Snipers excluded. New helpers: `kidInCover`, `coverShieldsFrom`, `nearestShieldingCover`.
+
+The reposition target uses `coverStandPos(cover, {x:e.pos.x - dir.x, z:e.pos.z - dir.z})` — a synthetic "threat-side" point — so the kid ends up on the far side of the new cover *from the threat*, not from the player.
+
+### 4. BB whistle
+`bbWhistleStart/Update/Stop` build a per-BB looped band-passed noise (air rush) + a quiet high sine (whistle tone) routed straight to `ctx.destination` (independent of the music master). In `updateBBs`, any **live** BB within `BB_WHISTLE_RANGE` (7m) of the player gets a whistle, panned via `positionalAudio` and volume-ramped by proximity; tone + band pitch rise slightly as it closes (Doppler-ish). It is **force-stopped the instant the BB makes first impact** — obstacle bounce, stick, ground absorb (via the `canDamage` guard), body hit, despawn, or leaving earshot. Also cleaned up on scenario start and end so no node is orphaned droning.
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0) — checked after each feature.
+- All defs/call-sites confirmed wired: whistle stopped at all 6 termination/cleanup points; 4 reaction helpers defined+called; near-miss stamp/consume cycle complete.
+- `spawnEnemyBB` honors `noFire`, so the new suppress paths don't make tutorial dummies shoot.
+- Version bumped in all three spots → 1.67.
+
+### Still open
+- In-engine tuning pass: whistle volume/range vs gunfire; suppression fire-rate (could feel spammy with several advancing kids — `_suppressCd` floors are the lever); reaction frequency at 2.5m (drop to 1.5m if it triggers too often, or widen if too rare). All are single-constant changes.
+- The reaction relocate doesn't path-validate the new cover (no LOS/reachability check beyond distance) — usually fine since it picks the *nearest*, but on a walled map a kid could pick cover it can't reach directly and lean on the existing reposition wedge-handling. Worth watching.
+- Suppressing fire while moving consumes the kid's effective fire budget via the shared cooldown; if committed engagements feel weaker as a result, split `_suppressCd` from the commit fire path.
+
+## v1.68 — FREEZE FIX: BB whistle was allocating unbounded Web Audio
+
+### Symptom
+Game randomly froze when a gun fired — reproducible by the player shooting, and also on NPC fire.
+
+### Diagnosis
+The freeze is tied to firing, which pointed at the v1.67 code on the BB/fire path. Walked the candidates:
+- Ruled out infinite loops (auto-fire `while`, stuck-BB trim, sub-step loop all bounded).
+- Ruled out the near-miss scan and reaction block (bounded, no mutation-during-iteration, signal consumed).
+- Landed on the **BB whistle**. `bbWhistleStart` did two expensive things *per BB that entered earshot*: filled a fresh `ceil(sampleRate*0.5)` ≈ 22–24k-sample noise buffer in a JS loop, and created a looping `BufferSource` + `Oscillator` (+ filters/gains/panner). Every **player** shot spawns its BB at the muzzle, which is inside the 7m whistle radius, so *every shot* paid the 22k fill and spun up looping nodes. Auto guns, NPC bursts, and — compounding it — v1.67's new suppressing fire (more BBs in the air) stacked voices quickly.
+
+Web Audio under that allocation churn can stall the audio thread or throw on node creation. The kicker: `updateBBs` runs inside the tick's `while (remaining > 0.0001)` sub-step loop, so a throw there propagates out of `tick()` and **kills the requestAnimationFrame loop** — i.e. a hard freeze, intermittent because it depends on how many voices happened to be live.
+
+### Fix
+Rewrote the whistle to be allocation-light and bounded:
+1. **Shared noise buffer** — built once (`_bbNoiseBuffer`), reused by every whistle. No more per-shot 22k fill.
+2. **Hard cap** of `BB_WHISTLE_MAX = 6` concurrent voices via `_bbWhistleCount`; past the cap, `bbWhistleStart` is a cheap no-op (stays silent, allocates nothing).
+3. **try/catch around every node operation** in start/update/stop, so audio pressure can never throw into the game loop again.
+4. **Authoritative count reset** on scenario start, so any drift from an edge-case removal self-heals.
+5. Stop now also disconnects `src`/`tone` (not just `gain`) for a clean teardown.
+
+### Verified
+- Full `<script>` block parses clean (`node --check`, rc 0).
+- Simulated 20,000 frames of a chaotic firefight (constant BB spawn/despawn, random in/out of range): peak concurrent whistle voices held at exactly 6, final voice count returned to 0 (no leak), ~24k start attempts correctly blocked by the cap.
+
+### Note
+This was diagnosed by reading + reasoning + a node-accounting simulation, not a live browser repro (can't run the browser here). The unbounded-allocation-on-every-shot path is a clear and sufficient cause for an intermittent firing-triggered freeze, and the fix removes it entirely. If a freeze somehow persists after this, the next suspects would be the per-frame `spawnEnemyBB` volume from the new suppression (BB-count growth) — but those are cooldown-gated and bounded — or an unrelated pre-existing path.
+
+## v1.69 — ACTUAL freeze fix: ReferenceError in pickBoundCover
+
+The v1.68 audio hardening was a real robustness improvement but **not** the freeze cause. The player grabbed the console output, which named it exactly:
+
+```
+Uncaught ReferenceError: ex is not defined
+    at pickBoundCover (…:19184)
+    at updateEnemies (…:19979)
+    at tick (…:20735)
+```
+
+### Cause
+When v1.67 added the `teammateCrowding` helper immediately above `pickBoundCover`, one of the `str_replace` edits to that area dropped the function's first line — `const ex = e.pos.x, ez = e.pos.z;` — while leaving the four `ex`/`ez` references in the body intact. That's a **runtime** ReferenceError, not a syntax error, so every `node --check` parse pass stayed green and never caught it. It only throws when an NPC actually calls `pickBoundCover` — i.e. a flanker bounding cover-to-cover while fighting — so it surfaced as "freezes when guns fire." The throw propagates out of `updateEnemies` → `tick()` and kills the requestAnimationFrame loop = hard freeze.
+
+This is also why v1.68 "fixed" nothing: I was chasing the wrong cause (audio) by reasoning, when the actual fault was a dropped declaration that only a runtime exercise — or the console — would reveal.
+
+### Fix
+Restored `const ex = e.pos.x, ez = e.pos.z;` at the top of `pickBoundCover`.
+
+### Verification method change (the real lesson)
+Parse-checking can't catch a valid-syntax/undefined-at-runtime bug. So this time I **executed** the suspect functions, not just parsed them: extracted `pickBoundCover`, `teammateCrowding`, `kidInCover`, `coverShieldsFrom`, and `nearestShieldingCover` from the file and ran them against mock scene/enemy data via `new Function`. All now run without error and return sensible results (left-flanker picks forward-left cover; crowding penalty ~0.9 next to a teammate, 0 far away; shield test true on the threat bearing, false opposite). Going forward, new AI helpers get a runtime smoke-test, not just a parse pass.
+
+### Kept from v1.68
+The shared noise buffer, 6-voice whistle cap, and try/catch around audio nodes stay in — they're a genuine improvement (no per-shot 22k-sample fill, no unbounded node growth) even though they weren't the freeze.
+
+### Verified
+- Full `<script>` block parses clean.
+- `pickBoundCover` + all v1.67 reaction helpers execute without ReferenceError against mock data.
+- All nine new v1.67/1.68 functions confirmed present.
+- Version bumped in all three spots → 1.69.
+
+## v1.70 — Fix: NPCs phasing into cover / standing in car centers
+
+Player report: kids take cover in the dead center of cars (ignoring collision), and visibly phase through cover while moving to it. Player suggested an anchored "cover slot" system. Two distinct bugs were behind it, and the fix is the automatic, geometry-derived version of that idea.
+
+### Bug 1 — coverStandPos ignored real (oriented) geometry
+`coverStandPos` computed the stand point from the loose **axis-aligned envelope** (`cover.minX..maxZ`) for every shape. Cars (and other angled props) are oriented boxes (`shape:'obox'`) whose envelope is a larger non-aligned rectangle around the rotated body. So "just outside the envelope's X/Z face" frequently landed **inside the actual angled car**, which is the "stand in the center of the car" symptom.
+
+Rewrote `coverStandPos` to be shape-aware:
+- **obox**: transform the player into the box's local frame, choose the dominant local axis pointing away from the player, push out to `±(half-extent + buffer)` on that face, transform back to world. Stand point hugs the true face at the true angle.
+- **cylinder** (trees, round props): place on the ring, `radius + buffer`, on the far side from the player.
+- **AABB** (boxes, fort walls, houses): unchanged face logic.
+- **Safety net**: if the computed spot still collides with anything, `findClearSpawn` nudges it to walkable space — so the AI never targets a point inside geometry.
+
+This is effectively the requested per-mesh cover slots, but derived from each mesh's collision shape at query time, so the slots always match what's drawn and need no hand placement.
+
+### Bug 2 — repositioning mover had no collision check
+Every other mover (deploying/advancing/retreating) steps with `collidesObstacles` + axis slide. The `repositioning` state alone did a raw `e.pos.x += (dx/d)*speed*dt` straight-line move — so a kid relocating to cover walked **straight through** whatever was between it and the target, including the cover piece itself. That's the visible phasing.
+
+Fixed: repositioning now uses the same collision-slide (try diagonal, else X-only then Z-only) and adds a 0.6s anti-wedge bail (settle to `hiding` if it can't make progress, rather than vibrating against geometry). Arrival threshold relaxed 0.15→0.2 to match the slightly larger stand-off buffer.
+
+### Verified
+- Full `<script>` parses clean.
+- **Runtime-executed** `coverStandPos` (extracted with `obsCenter`/`obsOverlapsXZ`) against AABB, obox@45°, and cylinder covers from multiple player angles: every returned stand point is OUTSIDE the cover (`insideCover=false`) with the cover between player and kid (`shielding=true`). The obox@45° case — the bug — now returns a corner-hugging point, not the center.
+- Version bumped in all three spots → 1.70.
+
+### Note / still open
+- Diagnosed + fixed by reading and runtime-testing the helpers in isolation, not a live browser pass. The geometry math checks out; worth an in-engine look to confirm kids visibly tuck against angled cars now and the slide doesn't make them hesitate at cover edges.
+- `coverStandPos` picks ONE face (the most-away). It doesn't yet spread multiple kids across different faces of the same big cover — that's the v1.67 teammateCrowding penalty's job at the cover-selection level, but per-face slotting on a single large cover (e.g. 3 kids along one side of the house) could be a future refinement if stacking on one face is still visible.
+
+## v1.71 — Whistle retune + fix: tagged NPCs not returning to respawn
+
+(Note: working file had drifted to a stale v1.66 copy at the start of this turn; re-synced from the authoritative v1.70 in outputs before editing.)
+
+### 1. BB whistle retune (playtest feedback)
+- Detection range **7m → 1m** (`BB_WHISTLE_RANGE`): only a BB passing within ~1m of the player whistles now — a genuine "past your head" cue, not ambient.
+- Peak volume **0.09 → 0.05** (new `BB_WHISTLE_VOL` constant, used by both the synth clamp and the per-frame volume calc so they stay in sync).
+- Higher pitch: tone **2400 → 3400 Hz**, bandpass **3200 → 4200 Hz** (and the proximity pitch-rise bases moved to match).
+
+Net: a brief, quiet, high "tss" only on a close pass. (At 1m the audible window is very short since the BB crosses it fast — intended.)
+
+### 2. Respawn-cancel fix
+**Symptom:** in multi-life modes, an NPC tagged *while moving* (relocating/in the open) burned a life and registered the hit but kept engaging instead of running back to its respawn point.
+
+**Cause:** `eliminateEnemy` does the right thing on a tag with lives left — sets `state='retreating'`, clears `targetPos`/`homeCover`, burns the life. But the v1.67 **incoming-fire reaction** runs *before* the state switch each frame, and its `interruptible` guard only excluded `advancing`/`peeking`/`shooting` (for brave kids). It did **not** exclude `retreating`. A retreating kid runs through the open exactly where the player is still firing, so a near-miss BB triggered the reaction, which flipped the kid to `repositioning`/`hiding` — cancelling the retreat. The life was already spent, so it read as "lost a life but never left."
+
+**Fix:** retreat and deploy are now **uninterruptible**. Added a `committed = (state==='retreating' || state==='deploying')` check; the reaction skips committed kids entirely. `deploying` (jogging back out after respawn) is included for the same reason. This was the only pre-switch transition that could touch a retreating kid; the state switch itself routes `retreating` to its own case (only ever → `deploying` on arrival), so retreats are now safe end to end.
+
+### Verified
+- Full `<script>` parses clean.
+- Guard truth-table executed: `retreating`/`deploying` = not interruptible for BOTH timid (0.2) and brave (0.85); `advancing`/`peeking`/`shooting` interruptible only for timid; `hiding`/`repositioning` interruptible for both — i.e. exactly the intended matrix, with the respawn states locked.
+- Version bumped in all three spots → 1.71.
+
+### Process note
+Caught that `/home/claude/airsoft_v1.html` had reverted to v1.66 between turns while `/mnt/user-data/outputs/` held the real v1.70. Re-synced from outputs first. Going forward, outputs is the source of truth across turns; verify version before editing.
+
+## v1.72 — Whistle tune + fix: stuck/looping whistle on final-life death
+
+### 1. Whistle tune (playtest: "barely noticeable now")
+- Range **1m → 2m** (`BB_WHISTLE_RANGE`).
+- Peak volume **0.05 → 0.075** (`BB_WHISTLE_VOL`) — between the original 0.09 and the too-quiet 0.05.
+
+### 2. Stuck-whistle fix (whistle locks on, loops until tab refresh)
+**Symptom:** if the player's final life was taken while a BB was buzzing past, that BB's whistle would lock on and play indefinitely until the window was closed/refreshed. Less noticeable after the v1.71 range cut, but still present.
+
+**Cause:** `bbWhistleStop` did the gain fade and the source stops in a *single* try-block, gain first:
+```
+w.gain.gain.cancelScheduledValues(t);
+w.gain.gain.setValueAtTime(w.gain.gain.value, t);
+w.gain.gain.linearRampToValueAtTime(0, t+0.03);
+w.src.stop(t+0.05); w.tone.stop(t+0.05);   // <- never reached if a gain call threw
+```
+When the scenario ends mid-buzz (final hit → endScenario → bbWhistleStop), the audio-param scheduling on the gain can throw (cancel/set/ramp colliding with the per-frame `setTargetAtTime` automation). The `catch` swallowed it, so `src.stop()`/`tone.stop()` never ran — and the looping noise source + oscillator droned forever. The deferred `disconnect()` doesn't reliably stop an already-playing looping source.
+
+**Fix:** stop the sound sources FIRST, each in its own guarded call, *before* touching the gain — so nothing about the gain can prevent the stop. Then hard-silence the gain (`setValueAtTime(0)` instead of a ramp). The deferred cleanup re-issues `stop()` and disconnects everything (src/tone/gain/pan/bp), each guarded. `endScenario` also resets `_bbWhistleCount = 0` so accounting is clean even if a node leaked.
+
+### Verified
+- Full `<script>` parses clean.
+- Executed `bbWhistleStop` with a gain mock whose `cancelScheduledValues`/`setValueAtTime` THROW (simulating the end-of-scenario collision): both `src.stop()` and `tone.stop()` were still called, and the voice count returned to 0. No drone possible.
+- Version bumped in all three spots → 1.72.
+
+## v1.73 — Fence see/shoot-through + route-around pathing; engagement-range pass; AR ironsight ADS
+
+Three playtest items from the player: (1) fences behave oddly for NPCs — pathing
+gets stuck on them and kids won't shoot through them even with a clear target;
+(2) the Spring AR's ironsight ADS rides too high (post sits above the reticle),
+and the iron front post crowds the red-dot lens; (3) automatic-rifle NPCs (the
+AK in particular) only open up when much too close, when an AK should engage from
+nearly sniper range — but NOT all autos (MAC-10 stays short, SMGs in between).
+
+### 1. Fence LOS — see and shoot through pickets
+**Cause:** the wrought-iron fences are flagged `bbPass: true` (BBs fly through the
+picket gaps; `updateBBs` honors it). But `hasLineOfSight` blocked on anything
+taller than 1.0m, so the 1.4m fence read as a solid sight wall. An NPC across a
+fence from the player therefore had no LOS and never fired — even though its BB
+would have passed cleanly through the gaps. The pickets are visually open, so a
+kid can both *see* and *shoot* through them.
+
+**Fix:** `hasLineOfSight` now `continue`s past any `o.bbPass` obstacle. Bodies are
+still stopped — `collidesObstacles` doesn't consult the flag — so fences remain
+impassable to movement while becoming transparent to sight and fire.
+
+### 2. Fence pathing — route around the nearer END
+**Cause:** the NPC mover is slide + perpendicular wall-follow, which is correct for
+houses/cars but pathological on a long thin fence line. A kid marching straight at
+a target on the far side wedges mid-span, and the existing wall-follow just
+alternates sides every ~0.5s — jittering against the fence instead of committing
+to walk to the end and around.
+
+**Fix:** new helper `fenceDetourWaypoint(fromX,fromZ, toX,toZ, obstacles, r)`. It
+ray-tests the straight path against each `bbPass` fence AABB (2D slab test in XZ);
+if the path crosses one, it finds the fence's long axis, computes both ends pushed
+out by `r + 0.6`, and returns the nearer end as a temporary waypoint. Returns null
+when no fence is actually in the way (so non-fence cover is untouched and uses the
+existing wall-follow). Wired into three movers at their wedge points:
+- **advancing direct-push** (the main case) — replaces the blind sidestep when a
+  detour exists.
+- **tagger/zombie chase** — same treatment so taggers round fences too.
+- **deploy** (match-start jog to anchor) — detours toward the anchor before the
+  1.0s watchdog bail, so a redeploy doesn't burn a full second wedged.
+The **bound mover** wasn't touched directly: when it wedges it drops the bound and
+hands off to direct-push next frame, which now carries the detour.
+
+**Verified:** isolated runtime test of the helper against a Winnmark-style fence
+(runs along Z at x=16, z −19→−31): a head-on crossing returns the nearer Z-end
+(x=16, z≈−18.15, just past the post); same-side and parallel-clear paths return
+null; a non-`bbPass` obstacle of identical geometry is ignored.
+
+### 3. Engagement-range pass (NEAR / FAR / PUSH now table-driven)
+Reframed the three dials for the player so the values are intentional:
+- **NEAR** = inner edge of the comfortable zone (snappy peeks, confident fire).
+- **FAR** = absolute firing ceiling (won't fire beyond it).
+- **PUSH** = how close the kid *wants* to be before it stops advancing and digs
+  in. This was the actual cause of "AK only fires up close": the AK shared the
+  AR's PUSH 18, so even with a clear 40m shot it kept marching to ~18m before
+  settling. PUSH was previously derived (`NEAR * 0.7` with per-weapon overrides);
+  it's now a direct per-weapon `ENGAGE_PUSH_BASE`, still scaled by aggression
+  (~0.85–1.15×).
+
+New table (PUSH ≤ NEAR ≤ FAR held on every row):
+
+| Weapon | NEAR | FAR | PUSH |
+|--------|------|-----|------|
+| Shotgun | 8 | 25 | 6 |
+| Pistol | 12 | 30 | 8 |
+| MAC-10 | 14 | 24 | 7 |
+| UMP | 35 | 50 | 15 |
+| MP5 | 35 | 50 | 12 |
+| AR (spring) | 40 | 60 | 15 |
+| AK-47 | 50 | 100 | 20 |
+| Sniper | 100 | 200 | 40 |
+
+Design intent (player's call): the **AK is the aggressive ranged gun** — fires from
+way out (NEAR 50, FAR 100) but a deliberately low PUSH (20) keeps it closing and
+"getting in the mix" rather than hiding at the back. The hold-the-back-line,
+high-PUSH suppressor role is reserved for a future **LMG**. MAC-10 is the short
+hoser (BBs wobble at 7m, so FAR 24); UMP/MP5 sit between pistol and AK, with the
+slower/steadier UMP holding a touch further than the faster MP5.
+
+(Values are the player's, except MAC-10 which we agreed to pull in to 14/24/7 to
+match its early-wobble physics; the player held their other numbers.)
+
+### 4. AR ironsight ADS drop
+**Cause:** the optic Y-correction (`adsYCorr`) only runs when a red-dot/scope is
+mounted; with default irons the raw `adsPos.y = -0.075` governed, placing the gun
+origin slightly high so the front post (gun-local Y ≈ 0.085) rendered above the
+centered reticle.
+
+**Fix:** AR iron `adsPos.y` −0.075 → −0.087, bringing the post tip onto center.
+Only affects irons (the optic path still overrides via `adsYCorr`).
+
+### 5. AR iron declutter under optics
+The AR front-sight post + tower (`userData.ironSight`) now hide whenever an optic
+is mounted (they were intruding into the red-dot lens) and reappear when it's
+removed. Done via a `group.traverse` in `updateFPGunAccessory`. Other guns have no
+tagged irons, so it's a no-op for them. The rear carry handle is left visible (it
+reads as structure, not just a sight, and sits behind the optic).
+
+### Verified
+- Full `<script>` parses clean (`node --check` on the extracted block).
+- Engagement invariant `PUSH ≤ NEAR ≤ FAR` confirmed for all 8 rows.
+- `fenceDetourWaypoint` runtime-tested (see item 2).
+- All five edits confirmed present in the file; the two `bbPass` references are
+  the existing BB-physics one (unchanged) and the new LOS skip.
+- Version bumped in all spots → 1.73.
+
+### Still open
+- Detour uses the fence's full AABB ends; for an L-shaped or near-touching pair of
+  fences it routes to one fence's end at a time (fine in practice on the current
+  maps, where fences are isolated spans between yards). Revisit if a map ever
+  places two fences end-to-end with a narrow gap.
+
+## v1.74 — AK auto-rifle "pepper from range, then close"
+
+Player report (Bunratty, 1v1 vs Sean w/ AK): Sean is tentative to use full-auto
+until ~20m, and beyond that range only fires single shots "as if holding a
+pistol." Both observations trace to the firing *behavior* system, not the
+engagement bands tuned in v1.73 — those decide WHETHER he fights from a distance;
+these decide HOW he fires once committed.
+
+### Root causes
+1. **Full-auto only inside ~20m.** Auto-bursts (4-7 cyclic follow-ups) only fire
+   from the `shooting` state, which is reached via `hiding → peeking → shooting`.
+   That cycle is gated in the `marchEligible` block by `insidePushDist`
+   (`hasShotFromHere = LOS && in-range && insidePushDist`). The AK's PUSH is 20
+   (deliberately low so it closes and brawls), so beyond ~20m the kid never
+   entered the peek-shoot cycle — it stayed in `advancing`. The ~20m the player
+   saw is exactly the AK's PUSH distance.
+2. **Single "pistol" shots far out.** While `advancing`, the only fire is the
+   on-the-move SUPPRESSION round (march + bounding-overwatch sites), each a single
+   `spawnEnemyBB`. That lone round at range is the "holding a pistol" look.
+
+### Fixes (all preserve the AK's low-PUSH close-and-brawl character)
+1. **`insideFireHold` decouples stop-and-fire from PUSH for ranged autos.** New:
+   `isRangedAuto = (weapon==='ak47'||'ar')`; `fireHoldDist = isRangedAuto ? NEAR :
+   PUSH`. The `hasShotFromHere` / `canEngageNow` gates now use `insideFireHold`
+   instead of `insidePushDist`. Net: an AK gunner PLANTS and strings full-auto
+   anywhere inside NEAR (50m) with LOS, but still ADVANCES when it lacks a clean
+   line. Verified by simulation: Sean (agg 0.55) plants+bursts at 10–50m, advances
+   beyond 50m; a pistol kid (agg 0.55) is unchanged (still gated by PUSH ~8m).
+2. **`queueSuppressionBurst(e, aimPt, spread)`** replaces the single-BB suppression
+   at the march and bounding sites. Fires the immediate round, then (auto guns
+   only) queues 2-3 cyclic follow-ups aimed at the last-known spot with a loose
+   spread. Semis fire a single round (unchanged). `pendingBurst` entries gained an
+   optional `aim` (fixed point) and `spread` (looser for suppression); the
+   processor honors both. The incoming-fire PANIC reaction site was left single —
+   it's a defensive "shoot back as I break for cover," fires for all weapons incl.
+   pistols, and shouldn't become a burst.
+3. **Ranged-auto closing bias.** Between bursts, an AK/AR still beyond its PUSH
+   now repositions toward the player (closest-cover, the push direction) regardless
+   of mid aggression — this is the "get in the mix" half. Inside PUSH it reverts to
+   the normal aggression-weighted shuffle so it doesn't over-crowd.
+
+Net arc: AK gunner peppers full-auto bursts from 50m+ (planting when it has a line,
+burst-suppressing while it closes), then brawls inside its PUSH — instead of the
+old "silent advance with occasional single shots until 20m, then full-auto."
+
+### Verified
+- Full `<script>` parses clean (`node --check`).
+- Gate simulation: AK plants 10–50m / advances beyond; pistol unchanged.
+- All edits present: `queueSuppressionBurst` def + 2 call sites (bound, march);
+  `insideFireHold`/`isRangedAuto`/`fireHoldDist`; burst `aim`/`spread`;
+  `rangedAutoClosing`.
+- Version bumped → 1.74.
+
+### Still open / to playtest
+- Sean is agg 0.55, so between bursts he alternates re-bursting from his spot and
+  closing via cover — should read as "pepper, advance, pepper." If he feels like he
+  roots at 50m, the closing bias can be strengthened (or his aggression nudged).
+- The AR (spring, semi) shares `isRangedAuto`, so it now also plants and fires from
+  its NEAR (40m) — but as a semi it fires single aimed shots there, no burst. This
+  is intended (it's a rifle, should reach), but worth confirming it doesn't feel
+  too sniper-like from a semi.
+
+## v1.75 — ACTUAL whistle-persistence fix; AK closing un-root
+
+Two items: the BB-whistle that locks on when the final life is lost (still present
+after v1.68/1.71/1.72), and the v1.74 AK still getting rooted at ~50m.
+
+### 1. Whistle persistence — found the real cause
+Previous passes (v1.68/71/72) all hardened `bbWhistleStop` — making the STOP
+robust against throwing audio params, reordering the source-stop before the gain
+fade, adding a deferred re-stop. All real improvements, but they fixed the wrong
+half: the bug isn't a stop that fails, it's a **restart after the stop**.
+
+`tick()` runs BB physics in a sub-step loop:
+```
+while (remaining > 0.0001) { updateBBs(step); remaining -= step; }
+```
+`Game.mode` is read once at the top of `tick()`, not per sub-step. Sequence on
+final-life loss:
+1. A whistler BB is buzzing past the player.
+2. On some sub-step the *hitting* BB → `applyBBHit` → `endScenario('lose')`, which
+   sets `Game.mode='result'`, stops every whistle in `Game.scenario.bbs`, and
+   resets `_bbWhistleCount=0`.
+3. The `while` loop **keeps going** (mode only re-checked next frame). `updateBBs`
+   re-enters; the surviving whistler is still `canDamage` and in range → line
+   ~18429 calls `bbWhistleStart` again. Cap is 0 so nothing blocks it.
+4. Next frame mode is 'result', so `updateBBs` never runs again → the restarted
+   looping oscillator never gets stopped. It drones through the result screen and
+   back into the bedroom until tab refresh.
+
+**Fix (two guards):**
+- `tick()` sub-step loop now `break`s the instant `Game.mode !== 'scenario'`
+  (i.e. right after a mid-substep `endScenario`).
+- `updateBBs` whistle block only starts a whistle when `Game.mode === 'scenario'`,
+  so the continuation of the *same* for-loop pass after `endScenario` can't spin
+  one up either (it falls to the `else if (bb._whistle) bbWhistleStop` branch,
+  which is idempotent). The v1.72 stop hardening is kept — it's still correct.
+
+### 2. AK rooted at 50m
+v1.74 fixed the AK firing from range (plant+burst inside NEAR) and biased
+reposition DIRECTION toward the player, but the reposition CHANCE (0.30 + agg*0.45
+≈ 0.55 for Sean) plus default 6–12m hops meant it lingered at the back of its band
+— bursting in place more often than advancing. Now, for a ranged auto (AK/AR)
+still beyond its PUSH:
+- reposition chance is lifted to ≥0.8 (most recovery beats end in a forward hop),
+- max reposition distance scales with remaining standoff: `min(22, 10 + (dist −
+  PUSH)*0.4)` — ~22m hops at 50m, tapering to ~11m near PUSH so it doesn't
+  overshoot.
+Inside PUSH both revert (the `rangedAutoClosingNow` flag goes false), so it brawls
+with its normal aggression-driven shuffle. Monte-carlo: closes 50m → PUSH in ~3
+burst-and-advance cycles.
+
+### Verified
+- Full `<script>` parses clean.
+- Closing-cadence simulation: chance 0.8 / hops 22→11m beyond PUSH, normal inside;
+  ~3 cycles to close from 50m.
+- Whistle: the restart path is now gated twice (loop break + start guard); the
+  stop path is unchanged from v1.72.
+- Version bumped → 1.75.
+
+### Note
+The whistle fix is structural (the restart can't happen out of scenario mode), so
+it also covers any other mid-substep end-of-scenario trigger (timer win, team
+wipe), not just final-life loss.
+
+## v1.76 — Deterministic scenario layouts + map-prop polish
+
+Player report: cover placement on Winnmark/Bunratty felt randomly generated each
+load (it was), which is maddening when replaying a scenario to beat it. Plus a
+batch of prop-fidelity asks: fort cover, mailbox/lamp/car/driveway placement.
+
+### 1. Deterministic layouts (the headline)
+The map builders use Math.random() throughout for cover (bins, boxes, parked cars,
+jitter, facing, NPC homeCover). Unseeded, so every scenario load rerolled the
+board. Chose **Option B**: deterministic PER SCENARIO — same scenario id always
+the same board, different scenarios on a map still differ.
+
+Implementation avoids threading a seed through hundreds of call sites: a seeded
+mulberry32 PRNG (seed = FNV-1a hash of `scenarioId + '|' + builderArg`) temporarily
+replaces the global `Math.random` for the duration of the builder call, restored
+in a `finally` so a throw can't leave it patched. `withSeededRandom(key, fn)`.
+Wired in `enterScenario`. Runtime randomness (AI decisions, BB curve) runs later,
+outside the wrapper, so gameplay variety is untouched — only the static build is
+fixed. Verified: same key → identical sequence; different key → different.
+
+### 2. Fort corner bins + taller walls
+buildKidFort now (a) raises walls 0.95 → 1.12m (still < 1.35 standing eye, so the
+peek-over-standing / duck-when-crouched contract holds) and (b) drops a wheelie bin
+at all 4 corners — taller than the wall, so real vertical cover that reads as kids
+dragging the neighborhood bins over to shore up the fort. Bins alternate
+garbage/recycle and face outward. Returned appended to the walls array.
+
+Slope-seating fix: the three walls share ONE mesh group (lifted once), but each
+corner bin has its OWN group. Updated Winnmark's `seatFortOnSlope` and Bunratty's
+inline seat to lift each fort-bin (`_fortBin`) mesh individually while tagging all
+baseY. Without this the bins would float at y=0 on the sloped bulbs.
+
+Motivation: after the v1.73/74 engagement-range tuning, defenders over the old
+chest-high wall were getting picked apart with little incentive to hold the fort.
+
+### 3. Mailbox facing (Winnmark)
+addMailbox gained `facing` (yaw); the door is local +Z. The Winnmark placement
+loop now sets facing = atan2(-dirX,-dirZ) (the road-ward direction), so south-side
+boxes face the street instead of the house. Bunratty's brick boxes already did this.
+
+### 4. Winnmark driveways reach the street
+The pad ran to the straight-line road edge (z=±3.5), but the road is a curved
+bezier (bulges south), so a grass gap opened between the driveway end and the real
+pavement. Each driveway now samples the road centerline nearest the house's X and
+extends to that true edge (overshooting 0.5m into the asphalt for a seamless join).
+
+### 5. Parked cars
+- **Inside-the-house clip (Winnmark driveway cars):** car center was hc.z ± 4.5 but
+  the car is 3.6m long, so the rear sat ~0.8m inside the house front (hc.z ± 3.5).
+  Now placed at hc.z ± 5.6 (front 3.5 + half-length 1.8 + 0.3 margin) so the rear
+  clears; removed Z jitter so the clearance is guaranteed.
+- **Floating tires on slopes:** addCar gained `groundNormalFn`. When passed, the car
+  pitches+rolls onto the ground normal so all four wheels sit on the grade. Uses
+  'YXZ' euler order so `rotation.y` stays the pure yaw that the obox collision
+  (`resolveObox`) reads — collision stays upright (correct), only the visual tilts.
+  Applied to every Winnmark + Bunratty car (driveway, bulb, road-cover). Verified:
+  flat normal → 0 tilt; sloped normal → nonzero lean in the car's local frame.
+
+### 6. Streetlamps off the pavement
+Poles were at a fixed z=±6; on the curved roads that could land on asphalt or near
+driveways. Now each pole is placed relative to the ACTUAL road edge (centerline Z
+sampled at the lamp's X) + a 1.6m grass margin, with X's kept in the house-gaps so
+they clear the driveway pads. The arm still overhangs toward the road spine. Both
+maps. Pole on grass, arm over street, nothing on the driveways.
+
+### Verified
+- Full `<script>` parses clean (`node --check`). (Caught and fixed a mid-pass slip
+  where the seeded-RNG insert had clobbered the applyTimeOfDay header.)
+- Seeded RNG: same scenario id identical across loads; different ids differ.
+- Car tilt math: flat → 0; slope → correct lean.
+- All six edit groups confirmed present.
+- Version bumped → 1.76.
+
+### Still open / to playtest
+- Fort wall at 1.12m + corner bins is a noticeable buff to defenders; if defend
+  scenarios now feel too easy to hold, the wall can come back down a touch (the
+  bins alone may be enough).
+- The car slope-tilt is small-angle; on the steepest part of the Winnmark east
+  entry (~3m drop) confirm the tilt reads natural and no wheel clips the pad.
+- Determinism is keyed on scenarioId+builderArg. If two scenarios intentionally
+  want to SHARE a layout, they'd need the same key; currently each id is unique so
+  each gets its own board (the desired behavior).
+
+---
+
+## v1.77 — Car slope-tilt fix + enemy laser/cover-fire polish
+
+Four fixes this session, all from playtest observation on Winnmark/Bunratty.
+
+### 1. Cars leaning sideways too much (slope tilt)
+addCar's world→local ground-normal transform used a FLIPPED inverse-yaw — both
+sign terms were wrong (`nx·cy - nz·sy` / `nx·sy + nz·cy`). That cross-fed the
+pitch component into the roll axis and vice versa, so a car on a grade leaned
+sideways far more than the slope warranted. Corrected to the proper THREE
+Y-rotation inverse:
+  localX =  nx·cosθ + nz·sinθ      (along car length → pitch)
+  localZ = -nx·sinθ + nz·cosθ      (across car width → roll)
+Verified: flat normal → 0 tilt; sloped normal → correct lean decomposition.
+The collision obox still reads only rotation.y (pure yaw), unchanged.
+
+### 2. Downed-kid laser fired a vertical beam (the "lasers point too high")
+Root cause was NOT the aim math (a terrain probe confirmed the live aim tilts
+slightly DOWN toward a downhill target, never up). When a kid is tagged, the
+`e.health <= 0` branch in updateEnemies runs setKidHitPose (gun pitched ~90°
+skyward) then `continue`s — which SKIPS updateKidLaser. The laser unit, last
+oriented by lookAt while the kid was alive, now rides the raised gun and shoots
+a vertical red beam straight up out of an out-of-play kid. It "self-corrected
+when a kid got close" only because that nearby kid was a DIFFERENT, still-living,
+still-aimed one. Fix: hide beam+dot while a kid is down (in the hit-pose branch),
+and re-show them in updateKidLaser on any live re-aim, so respawn/revive restores
+them with no extra bookkeeping.
+
+### 3. NPCs firing BBs straight into their own cover
+A kid tucked right behind a bin/wall/car spawned its BB at ~1.05m shoulder
+height; cover tops are taller (wheelie bin top = 1.11m, car body ~1.15m), so the
+round buried into the cover mesh (Sean's AK into the recycling-bin lid). New
+helper coverInFrontTop(enemy, dirX, dirZ, reach=1.6): one cheap pass over
+Game.scenario.cover, measuring only cover that sits just AHEAD of the kid along
+the firing bearing (along ∈ (0,1.6], lateral offset within footprint half-width
++0.4) and is ≥0.4m tall. Honors baseY so it's correct on the sloped maps; handles
+AABB and cylinder footprints. spawnEnemyBB raises the BB spawn to coverTop+0.12
+(just over the lip), capped at +0.7m above the normal muzzle so a kid behind a
+car reads as leaning over the hood rather than levitating. baseDir re-derives
+from the raised muzzle automatically. Measured lift: bin 0.18m, car 0.22m — small
+and believable.
+
+### 4. ADS-tall over-cover pose (so the higher BB origin doesn't look odd)
+spawnEnemyBB sets enemy._firingOverCover = 0.45 (a seconds timer) whenever the
+spawn was lifted. New setKidAdsTall(kid, amount) raises the gun toward an
+eye-line shouldered hold (gun +0.34y, +0.08z, level), brings both arms/hands up
+to keep the hold together, and tips torso/head forward — reading as the kid
+rising up / leaning over the cover. Driven each frame from the decaying timer
+(normalized amount), applied after the terrain plant (so the lifted gunGroup is
+also current for the laser block). Skipped while crouch>0.05 so it never fights
+the crouch pose; the shooting→hiding transition's setKidCrouch(.,1) overwrites it
+cleanly. At amount 0 every term evaluates to base/zero, so the final decay frame
+self-restores the head/gun rotations setKidCrouch doesn't touch (no stuck tilt).
+
+### Verified
+- Full `<script>` parses clean (node --check via parsecheck.js).
+- Car tilt math: flat → 0, slope → correct pitch/roll separation.
+- Cover-clearance math: bin (top 1.11) → muzzle 1.05→1.23 clears by 0.12;
+  car (top 1.15) → 1.27, both under the +0.7 lean cap.
+- Game.scenario.cover confirmed to contain cars, fort walls, bins, cans, boxes
+  (same list pickBoundCover uses).
+- Version bumped → 1.77 (header + on-screen tag).
+
+### Still open / to playtest
+- The over-cover muzzle lift uses reach=1.6m; if a kid sometimes fires while
+  ~2m back from its cover (mid-peek), the lift won't engage — watch whether any
+  into-cover shots remain at that range and bump reach if so.
+- ADS-tall hold-time is fixed at 0.45s; against autos firing a burst, confirm the
+  pose reads continuously across the string rather than flickering per-BB (the
+  burst BBs come from pendingBurst, which re-calls spawnEnemyBB and re-arms the
+  timer each round, so it should stay raised — verify in the all-auto night map).
+- Car tilt is small-angle; re-confirm on the steep Winnmark east entry that the
+  corrected roll reads natural and no wheel clips the driveway pad.
+
+---
+
+## v1.78 — NPC rig overhaul: handedness + two-handed holds + walk anim
+
+Triggered by playtest of the v1.77 over-cover pose, which exposed three rig
+issues at once. Scope this session: RIG ONLY (per the user). The two remaining
+bugs — cars still sinking into the ground, and the laser-to-sky recurrence on
+Bunratty — are deferred to next session.
+
+### 1. Handedness (gun was in the wrong hand)
+The gun mesh + gun-arm/hand were mounted on local +X. With the kid facing +Z and
+turning to face the player, +X reads as the LEFT hand from the player's view (the
+user's empirical report is ground truth here). Moved the gun mesh and the gun-side
+limbs (armR/handR) to local -X = the kid's RIGHT; the off-hand (armL/handL) now
+sits on +X and reaches across. Kept the pose code calling the gun side "R" — only
+the X sign moved, so no downstream renaming churn. Added base X/Z anchors to the
+pose base record (gun_x, gun_z, armL/R_x, handL/R_x, armL/R_z, handL/R_z) so every
+pose restores its limbs exactly regardless of which side the gun is on. Fixed the
+hit pose, which had hardcoded gunGroup.position.x = 0.27 / z = 0 — now snaps to
+b.gun_x / b.gun_z. The laser + flashlight units are children of gunGroup, so they
+rode to the right side automatically (this matches the user's note that the
+flashlight still pointed correctly down the barrel — only the laser desyncs, and
+that's the separate down-kid bug, next session).
+
+### 2. Two-handed holds (setKidGunHold)
+New single authority for gun + both hands, layered on the crouch base each frame:
+  - SMALL guns (pistol, mac10): one-handed at rest with the off-hand at the side;
+    on firing/aiming, BOTH hands bring the gun to CENTER-FRONT of the chest and
+    push it forward (gun_x → 0, arms forward). "Held straight out in front."
+  - LARGE guns (shotgun/ar/sniper/ak47/mp5/ump): two-handed ALWAYS. The off-hand
+    rests across on the weapon's foregrip even at idle; per-weapon grip distance
+    via gunForegripZ() (sniper 0.26 → mac10 0.06) lands the hand on the actual
+    handguard. On firing the gun tucks up into the right shoulder, off-hand stays
+    across, slight forward lean down the sights.
+Anchors Y off BASE minus the crouch-derived hipDrop (not the live position) so
+repeated frames can't accumulate the hold's lift. The v1.77 over-cover lift folded
+in as a `lift` param, replacing the standalone setKidAdsTall (deleted).
+
+Headless math check (t=0 rest / t=1 aim):
+  pistol: gun -0.27→center 0.00, both hands meet at center, pushed to z0.28.
+  ak47/sniper: gun stays right, off-hand reaches across to x-0.21 on the foregrip
+    (z 0.16/0.26), shoulder tuck + 0.10rad lean on aim. No NaN any case.
+
+### 3. Walk animation (setKidWalk)
+Subtle, opposed leg swing (~14° max) + a small off-arm counter-swing + a faint
+torso bob, scaled by how far the kid actually moved this frame. The GUN arm/hand
+stay planted on the weapon so the two-handed hold never breaks mid-stride. The
+gait phase advances only while moving, so a stopped kid freezes in a clean stance
+rather than T-posing or sliding. Per the user: subtle/realistic, not a parade march.
+
+### 4. Unified pose pass (updateEnemies)
+One self-contained pass after the terrain plant, replacing the v1.77 over-cover-only
+block:
+  a) idempotent setKidCrouch(current crouch) — re-bases every limb so the hold +
+     walk can't drift even if a state branch skipped its own crouch call;
+  b) aim ramp (_aimAmt eased toward 1 while shooting/peeking or _aimHold > 0) +
+     over-cover lift decay;
+  c) setKidGunHold(weapon, aimAmt, lift);
+  d) setKidWalk(phase, intensity).
+_aimHold is armed (0.3s) on every spawnEnemyBB, so the shouldered/forward hold
+persists across an auto burst and eases back to the rest hold after the last round.
+Taggers (zombie mode) `continue` before this pass, so their reaching pose is
+untouched and they carry no gun to hold.
+
+### Verified
+- Full <script> parses clean (parsecheck.js).
+- Gun + gun limbs confirmed on -X; off-hand on +X; base anchors present.
+- Hold math sane + NaN-free for pistol/ak47/sniper at rest and aim, plus the
+  over-cover lift case.
+- No live references to the deleted setKidAdsTall (only version-history comments).
+- Version bumped → 1.78 (header + on-screen tag).
+
+### Still open / next session
+- CARS STILL SINK INTO THE GROUND. The v1.77 fix corrected the TILT decomposition
+  but the sink is a separate seating issue — the car's vertical placement on the
+  slope (sinkObs / groundNormalFn seat height) is dropping the body below grade.
+  Needs its own pass: re-derive the car's base Y from the LOWEST wheel contact on
+  the actual normal, not the center sample.
+- LASER-TO-SKY on Bunratty recurs. The v1.77 fix hid the beam for health<=0 kids,
+  but the user reports it on a LIVING kid whose flashlight still aims correctly at
+  them — so this is a DIFFERENT path than the down-kid hit pose. Likely the laser
+  unit's lookAt is fighting the new gun-hold gunGroup transform on a specific
+  state, or a kid in a non-shooting state whose aimPt resolves degenerate. Needs a
+  targeted repro on Bunratty with the ` laser-diag HUD.
+- Walk intensity uses last-frame displacement (one-frame lag); fine when smoothed,
+  but if any kid teleports (anti-wedge watchdog) confirm the big delta doesn't pop
+  a one-frame sprint-swing — may want to clamp moved when a teleport flag is set.
+
+---
+
+## v1.79 — Shoulder-anchored NPC arms (off-hand slide fix)
+
+Playtest of v1.78 showed the off-hand arm sliding inward to mid-body when holding
+a weapon (the shoulder wasn't staying at the shoulder).
+
+### Root cause
+The v1.78 holds reached the off-hand across by translating `armL.position.x`
+toward the gun. The arm is a center-pivot box, so moving its X moved the WHOLE
+box — including the shoulder (top) end — inboard. Result: the shoulder visibly
+detached from the torso edge and crept toward the body center.
+
+### Fix — anchorArm rewritten to span shoulder→hand
+Instead of translating, the arm box is now placed to SPAN from the shoulder
+anchor S to the hand target H:
+  - center = midpoint(S, H)
+  - quaternion = rotation taking local -Y (down the arm) to normalize(H - S)
+  - scale.y = |H - S| / armLength  (stretch to cover the reach)
+With this, the box's top-center lands exactly on S and its bottom-center exactly
+on H for ANY direction — cross-body, forward, or both at once. Verified
+numerically: shoulder drift 0.0000m and hand error 0.0000m across the sniper
+aim, ak rest, small-gun center, and gun-hand-own-side cases (the old closed-form
+roll+pitch approach drifted the shoulder up to 0.37m when roll and pitch combined,
+because XYZ-order euler composition doesn't keep the top pinned — the span model
+sidesteps that entirely). The arm stretches modestly (scaleY ~0.6–1.27); for
+blocky kids a slightly longer/shorter arm reads fine and beats a sliding shoulder.
+
+### Supporting changes
+- setKidCrouch (the per-frame idempotent base reset, also called by the hit pose
+  and zombie reach) now resets each arm to a clean euler base at the top: identity
+  quaternion, scale.y = 1, position X/Z back to base, hand X/Z back to base. This
+  makes anchorArm the SOLE quaternion authority each frame, and guarantees the
+  euler-only poses that run WITHOUT anchorArm (hit pose's raised gun arm, zombie
+  reach) aren't left fighting a stale quaternion or a stretched arm from a prior
+  frame.
+- setKidWalk no longer rotates the off-arm. The arms are now fully governed by the
+  quaternion hold and committed to the weapon, so an euler `+=` on the arm would
+  either fight the quaternion or break the two-handed hold. Walk now swings the
+  legs (independent center-pivot boxes) + the faint torso bob only.
+
+### Verified
+- Full <script> parses clean (parsecheck.js).
+- anchorArm span math: both shoulder and hand pinned to 0.0000m for all reach cases.
+- No arm `.position.x` reach translation remains in the hold (only the gun group
+  intentionally slides to center for small-gun aim).
+- Version bumped → 1.79 (header + on-screen tag).
+
+### Still open (carried from v1.78)
+- Cars still sink into the ground (separate seating issue; needs lowest-wheel-
+  contact base Y).
+- Laser-to-sky on Bunratty recurs on a LIVING kid (different path than the down-
+  kid hit pose fixed in v1.77); needs a targeted repro with the laser-diag HUD.
+
+---
+
+## v1.80 — Elbow joints + exaggerated firing raise (2-bone IK)
+
+The user asked to push the firing raise further (small guns out + to chest height,
+large guns up to the right armpit) and asked whether elbow joints would help. They
+would — a single rigid arm box reaching a high/forward hand reads as a stiff plank.
+So: added real elbows and rebuilt the hold on a 2-bone IK.
+
+### Elbow rig
+Each arm replaced by: shoulder pivot Group → upper-arm box (0.24m) → elbow pivot
+Group → forearm box (0.21m) → hand. Built in createKid via a buildArm(sx) helper;
+the rigs are exposed as pose.rigR / pose.rigL. New base anchors: shoulder_y
+(1.045), U_LEN, F_LEN, shoulderR_x/shoulderL_x. The old armR/handR aliases now
+point at the shoulder pivot / hand mesh for any leftover reads, but the pose code
+drives the rigs directly.
+
+### 2-bone IK (solveArm)
+Given the shoulder anchor S and a hand target H: clamp the reach to [|U-F|, U+F],
+compute the ELBOW point geometrically (the point at distance U from S and F from H,
+offset off the S→H axis toward a forward/down "bend hint" so the joint kicks
+forward), then orient the shoulder so its local -Y points S→elbow and the elbow
+so its local -Y points elbow→H. Computing the elbow explicitly (instead of an aim
++ rotateOnAxis, which twisted the bend plane for combined lateral+forward targets
+and undershot) makes the forearm tip land exactly on H. Validated with real
+three.module.js transforms: err=0.000m for every in-reach target; the only residual
+is the small-gun full-aim hands at ~0.04m (target is right at max extension — an
+acceptable few-cm gap on blocky kids; trimmed the push/rise slightly to keep it
+small). Elbows verified to bend forward (+Z) in all firing poses. IK scratch math
+hoisted to module scope (_IK_*) so we don't allocate ~11 Vector3/Quaternion per
+kid per frame.
+
+### Raised firing poses (per request)
+- SMALL (pistol, mac10): aim pushes the gun forward z+0.30 (was +0.18) and up to
+  chest y+0.24 (was +0.10); gun centers, both hands grip out front.
+- LARGE: aim raises the gun to the RIGHT ARMPIT (SY-0.10, tucked just under the
+  shoulder pivot); gun hand grips slightly inboard+forward of the dead-on shoulder
+  (avoids an over-folded knot); off-hand reaches across to the handguard IN FRONT
+  OF CENTER (~x-0.05 at full aim — reachable; the firing-shoulder line was past
+  comfortable extension and undershot). Slight forward lean retained.
+
+### Supporting changes
+- setKidCrouch resets both rigs to a clean hanging base each frame (shoulder +
+  elbow identity rotations, segment scales 1, elbow/hand back to local rest) and
+  drops the shoulder PIVOTS by hipDrop so a crouched kid's arms follow the body.
+- setKidHitPose ("I'm hit" raise) now swings the gun arm up via the shoulder pivot
+  with a slight elbow bend, instead of translating a single box.
+- Zombie reach rotates both shoulders forward (~horizontal) with a grasp-bend
+  elbow; hands ride along (parented), no separate hand placement.
+- Arm HITBOXES untouched: checkEnemyHit uses fixed local AABBs at ±0.27, fully
+  independent of the visual rig, so reparenting the arms changed nothing about
+  hit detection.
+
+### Verified
+- Full <script> parses clean (parsecheck.js).
+- IK reaches all firing/rest targets (err≈0; small-gun full-aim ~0.04m at max reach).
+- Rig builds + rest hand hangs at (sx, 0.59, 0); segment scales stay 1 (bend, not stretch).
+- No stale references to the removed single-box base fields (armR_y/handR_x/etc.).
+- Version bumped → 1.80 (header + on-screen tag).
+
+### Still open (carried)
+- Cars still sink into the ground (needs lowest-wheel-contact base Y).
+- Laser-to-sky on Bunratty recurs on a LIVING kid (different path than the down-
+  kid hit pose); needs a targeted repro with the laser-diag HUD.
+- Small-gun full-aim hands sit ~4cm off the grip at max extension; if it reads
+  off, shorten the forward push a touch more or nudge chest height down.
+
+---
+
+## v1.81 — Hands snap to grip points + correct elbow bend direction
+
+Playtest of v1.80's elbow rig surfaced four issues, all about the hands/elbows not
+connecting to the actual weapon: hands floated near (not on) the gun, the gun read
+as held "from the top," the off-arm cut through the torso, and the resting elbow
+bent the wrong way (inverse).
+
+### Grip-snap
+The hands were targeting arbitrary offsets near the gun. Added gunGripLocal() —
+the real firing-hand grip point on the gun mesh (the pistol grip, gun-local
+(0,-0.08,-0.01)). setKidGunHold now derives both hand targets from the gun's LIVE
+position + that local offset (and the near-handguard for the support hand), so the
+hands land ON the weapon. Because the gun is positioned by its mount with the grip
+0.08 below, hand-on-grip reads as gripped at the grip with the body above — not
+"from the top."
+
+### Bend direction (explicit hint)
+solveArm gained a bend-hint vector argument. v1.80 forced every elbow toward +Z
+(forward), which inverted the resting arm. Now: the firing (right) arm's elbow
+kicks OUT to the right (-X) and down, so the forearm angles back IN to the grip —
+exactly the aiming geometry requested ("upper right arm out & down, forearm angles
+back to the handle"). The off (left) arm's elbow kicks out-left (+X) and down.
+Validated: right-arm elbow lands at x-0.18→-0.29 (outboard of the -0.27 shoulder)
+and below shoulder height in all firing poses.
+
+### Reach-aware targets (the hard constraint)
+The arm is 0.45m and a hanging hand only reaches down to ~0.60 (shoulder 1.045 −
+0.45). Two consequences drove the layout:
+  - SMALL guns must ride HIGH enough for the hand to meet the grip: gun ~0.74 at
+    rest (right side, one-handed) → ~0.88 centered on aim (both hands on the grip,
+    pistols held two-handed). All within reach (err≈0).
+  - LARGE guns: the off-hand (left shoulder) physically CANNOT cross-reach a
+    foregrip tucked at the far-right shoulder AND forward (always >0.47m). So the
+    rest pose is a CENTERED chest/patrol carry (gun at x≈0, both hands on it, gun
+    forward of the torso so the off-arm doesn't cut through the body), and the aim
+    pose tucks only to center-RIGHT (x≈-0.10 — the furthest right the off-hand can
+    still reach) with the support hand on the NEAR handguard (reduced forward Z).
+    This reads as "shouldered to the right" while staying anatomically reachable.
+Everything validated against real three.module.js transforms: hand error ≈0 for
+all rest/aim poses (large off-hand ~3cm at full extension).
+
+### Verified
+- Full <script> parses clean (parsecheck.js).
+- All four poses (small rest/aim, large rest/aim) reach their grip targets (err≈0).
+- Elbows bend outward+down (gun arm to the right, off arm to the left) — not the
+  inverted forward bend of v1.80.
+- Removed the unused gunForegripLocal helper + gunYNow var.
+- Version bumped → 1.81 (header + on-screen tag).
+
+### Notes / possible follow-ups
+- The large-gun rest is a centered patrol carry rather than a one-side hold,
+  because the off-hand can't reach across to a side-tucked foregrip — this is a
+  hard arm-length constraint, not a tuning choice. If a more bladed/one-side stance
+  is wanted, the whole torso would need to rotate (blade the body) so the support
+  shoulder comes forward — a bigger change, flagged for discussion.
+- Cars sinking + living-kid laser-to-sky on Bunratty still open.
+
+---
+
+## v1.82 — Enemy laser "to the sky": hardening + diagnostics
+
+The user reports an enemy laser climbing further above their head as the height
+gap grows while ascending the Bunratty hill.
+
+### What I could prove
+Simulated the exact beam path (emitter ≈ enemy gun at terrain+1.0, aim at player
+feet+1.0) against the real bunrattyGroundY across the 9m grade: a correctly
+chest-aimed beam tilts only ~5-12°, never vertical, and the dot lands on the
+player's chest. So the aim math is sound — a near-vertical beam can only come from:
+  (a) the no-aim-point fallback (updateKidLaser used the gun's world +Z when given
+      no aim point; if a pose tilts the gun up, that paints a vertical beam), or
+  (b) the laser correctly tracking a target that is genuinely UPHILL (another kid
+      in the night fight), which from the player's downhill view reads as "above
+      my head."
+A chest aim (≈ pos.y + 0.98) is BELOW the player's eye (pos.y + 1.35), so a beam
+appearing ABOVE the player's head cannot be aimed at the player's chest — it's
+aimed at something higher, i.e. case (b), unless the fallback (a) fired.
+
+### Fixes
+- NO STRAY FALLBACK BEAM: updateKidLaser now HIDES the beam/dot on a frame with no
+  aim point instead of shooting the gun's world-forward. Kills any vertical beam
+  from a target-less kid whose gun pose happens to tilt up.
+- AIM AT LIVE CHEST: aim uses the target's chestY getter (reads the live
+  terrain-planted pos.y) rather than a hand-rolled pos.y + 1.0.
+- DIAGNOSTICS: the ` laser-diag HUD now shows aim target (PLAYER vs other kid),
+  shooterFeetY, tgtFeetY, aimY, and the dir vector — so a recurrence can be
+  classified instantly (real uphill target vs bug) without guesswork.
+
+### Needs a confirming read
+If the up-beam persists, press ` (backtick) in the scenario and check "aim tgt":
+  - "other kid" + high tgtFeetY ⇒ working as intended (beam tracks an uphill kid).
+  - "PLAYER" with aimY ≈ playerFeet+1.0 but the beam still reads high ⇒ a real bug
+    in the origin/render to chase next, with the exact numbers in hand.
+
+### Verified
+- Full <script> parses clean.
+- Beam-path simulation: chest aim ≤12° pitch on the Bunratty grade (no vertical).
+- Version bumped → 1.82 (header + on-screen tag).
+
+### Still open
+- Cars sinking into the ground (separate seating issue).
+- Confirm the laser up-beam classification via the diag HUD on the next Bunratty run.
+
+---
+
+## v1.83 — Enemy laser "to the sky": ROOT CAUSE found + fixed
+
+The v1.82 diagnostics cracked it. Reading the ` HUD on Bunratty showed:
+  aim tgt: PLAYER, dir -0.99/0.17/0 (mostly horizontal, ~10° up), CLIPPED at 56.83m.
+
+So the aim was correct and the beam direction was correct — the beam was just far
+too LONG. The kid laser is built 60m long and only clipped on COVER meshes, never
+on the target itself. When a kid aimed across open ground at the player (no cover
+on the line), raycastObstacles returned the full 60m, so the beam shot ~57m —
+overshooting the player (who was ~28m out) by another ~28m and continuing up the
+slope into the air. Because that firing bearing ran roughly toward the camera
+(player up/down-hill of the shooter), the ~28m of overshoot foreshortened into a
+near-vertical streak climbing into the night sky. The "more height gap = higher
+beam" pattern follows directly: a bigger elevation gap → steeper bearing → more of
+the (fixed-length) overshoot projects upward on screen.
+
+Numbers from the diag frame: origin (16.67,4.75,-10.33), player aimY 9.52, dir
+(-0.99,0.17,0) → aim point ≈ (-11.1, 9.5, -10.3), aimDist ≈ 28.2m. The beam clipped
+at 56.83m — a 28.6m overshoot straight along the up-and-away bearing.
+
+### Fix
+updateKidLaser now clamps dist to the distance to the AIM POINT (+0.15m so the dot
+sits on the target):
+    const aimDist = _kidLaserOrigin.distanceTo(aimPoint) + 0.15;
+    dist = Math.min(dist, aimDist);
+The beam terminates ON whatever the kid is aiming at (cover OR the target, whichever
+is nearer) instead of sailing 60m past it. A laser trained on the player now puts a
+red dot on the player — a nice "you're being lit up" cue — rather than a beam into
+the sky behind them.
+
+### Why earlier passes missed it
+v1.77 fixed a genuinely separate case (downed kids' raised-gun beams). The aim math
+was always correct, so simulating the aim never reproduced a vertical beam — the bug
+was purely in beam LENGTH/termination, which only shows when the bearing happens to
+run toward the camera. The v1.82 diagnostics (CLIPPED at 56.83m with a horizontal
+dir) are what made the overshoot obvious.
+
+### Verified
+- Full <script> parses clean (parsecheck.js).
+- Reproduced the overshoot from the live diag numbers: 56.83m clip vs 28.2m aimDist
+  = 28.6m of beam past the player, along the exact bearing that projects upward.
+- lookAt orientation re-verified against the full live parent chain (kid yaw +
+  posed gunGroup): beam direction matches the intended dir — confirming the bug was
+  length, not orientation.
+- Version bumped → 1.83 (header + on-screen tag).
+
+### Still open
+- Cars sinking into the ground (separate seating issue — next).
+
+---
+
+## v1.84 — Enemy laser vertical beam: THE actual root cause (non-uniform scale shear)
+
+You were right that this should be simple, and I owe you the real reason it wasn't:
+I kept fixing the aim MATH, but the aim math was never wrong. v1.83's diagnostic
+made the true contradiction undeniable — the aim DIRECTION logged correct (mostly
+horizontal, pointing at the player) while the BEAM still rendered vertical. If the
+direction is right but the render is wrong, the bug is in how the beam inherits its
+transform, not in the aim.
+
+### Root cause: non-uniform parent scale shears the beam
+The laser beam was a child of the kid mesh group. Kids carry a NON-UNIFORM scale:
+height scaleY ∈ {0.88, 1.0, 1.12} and build scaleXZ ∈ {0.88, 1.0, 1.18}, set
+INDEPENDENTLY — so a tall-skinny kid is scaled 1.12 in Y and 0.88 in X/Z. A
+non-uniform scale anywhere in the parent chain SHEARS directions: a perfectly
+horizontal aim direction, when realized through that sheared frame, tilts upward in
+world space. The bigger the Y-vs-XZ mismatch, the bigger the tilt — which is why it
+looked worse for some kids and scaled with the engagement. Crucially, lookAt AND
+the explicit-quaternion aim I tried both failed identically, because the shear lives
+in the parent chain ABOVE the beam; nothing applied to the beam's own local
+transform can undo a parent shear. (Headless proof: horizontal aim dir.y 0.16
+rendered as 0.20 under a 0.88/1.12 scale — tilted up, exactly the symptom.)
+
+### Fix: render the beam in scene world space, not under the kid
+attachKidLaser now puts the beam + dot in a scene-level group (kid._laserBeamGroup,
+added to Game.scene). The little emitter housing stays bolted to the gun so the
+muzzle origin is still read from the actual gun position. Each frame updateKidLaser:
+  - reads the emitter world origin (from the gun, as before),
+  - builds the world ray origin→aimPoint, clips it (cover + the v1.83 aim-distance
+    clamp),
+  - positions the beamGroup AT the origin and sets its quaternion to map local +Z
+    onto the world ray, then lays the beam/dot along +Z at the clipped length.
+Because the beamGroup has no inherited scale, there's no shear: rendered direction
+matches the aim exactly (err 0.0000 even at 0.88/1.12 scale) and the dot lands on
+the target. Verified headlessly with the real non-uniform scale and the live diag
+numbers.
+
+### Also
+- Aim now targets the target's ACTUAL chest world position (enemy torso mesh
+  getWorldPosition; player → camera world pos − 0.35), per the "just point at the
+  chest mesh" request — robust against any pos.y/terrain staleness.
+- Diag HUD prints renderDir alongside dir so a future divergence is obvious.
+- Removed the now-unused _kidLaserTgt scratch (lookAt is gone).
+- Downed-kid beam-hide still works (same mesh refs, just reparented).
+
+### Verified
+- Full <script> parses clean.
+- Headless: scene-level beam under 0.88/1.12 kid scale → rendered dir == aim dir
+  (err 0.0000), dot lands 0.15m from target (the intended +0.15 dot offset).
+- Version bumped → 1.84.
+
+### Lesson for next time
+A correct logged direction + a wrong rendered direction = a transform-inheritance
+problem (scale/shear/parenting), not an aim problem. Should have checked the kid's
+scale the moment the diag showed a correct dir with a wrong-looking beam.
+
+### Still open
+- Cars sinking into the ground (next).
+
+---
+
+## v1.85 — Fix the v1.84 "no laser at all" regression (beam in wrong scene)
+
+v1.84's diagnosis + fix were right (the beam was shearing because it inherited the
+kid's non-uniform scale; the cure is a scene-level, unscaled beam group). But the
+fix added the beam group to the global Game.scene — and during enterScenario,
+attachKidLaser runs BEFORE Game.scene is repointed at the scenario scene. So the
+beam group was added to the stale bedroom scene and never rendered: no beam at all.
+
+### Fix
+- attachKidLaser now adds the beam group to the scene the KID actually lives in —
+  it walks the kid group's ancestry up to its scene root (isScene) and adds there,
+  falling back to Game.scene / the gun only if no scene root is found.
+- updateKidLaser SELF-HEALS each frame: if the beam group's parent isn't the kid's
+  current scene root, it re-parents it. Cheap pointer compares; re-parents only on
+  divergence. This makes the beam robust to any attach-time ordering and to scene
+  swaps, while still living in an unscaled group (no shear).
+
+### Verified
+- Full <script> parses clean.
+- Headless: a beam group mistakenly added to the wrong (bedroom) scene is re-parented
+  by the self-heal to the kid's scenario scene, and carries scale (1,1,1) — renders
+  AND no shear.
+- Version bumped → 1.85.
+
+### Still open
+- Cars sinking into the ground (next).
