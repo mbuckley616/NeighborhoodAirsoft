@@ -4644,3 +4644,31 @@ beam group was added to the stale bedroom scene and never rendered: no beam at a
 
 ### Still open
 - Cars sinking into the ground (next).
+
+---
+
+## v1.86 — The repo gets a team: tests, CLAUDE.md, backlog, three routines
+
+Michael asked for a lighter version of The Old Gates' setup here: a builder, a critic and a producer running as
+cloud routines, talking in Slack #neighborhood-airsoft, with him deciding. That needs a repo an agent can work
+without being told the house rules each time, so this session added them and changed one thing in the game.
+
+The game change: `tick()` did the simulation step and the render in one function, which left a test no way to
+advance the game except real frames (a few per second on software GL). The step is now `stepGame(dt)` and `tick()`
+calls it and renders. Behaviour is identical; the tests call `stepGame(1/60)` in a loop.
+
+Added: `CLAUDE.md` (conventions, code map, the team, the room), `docs/design_brief.md` (the pillars and scope copied
+from the top of this devlog), `docs/backlog.md` (seeded from this devlog's "Still open" lists and the one itch.io
+comment), `docs/decisions.md`, `scripts/parsecheck.mjs` and `scripts/tag.mjs` (Node, not Python: Michael's machine
+has Node), a Playwright harness `tests/lib/game.mjs` with `boot / bedroom / scenario / spin / shot`, a smoke suite,
+a GitHub Actions check, and the cloud-session setup hook. three.js r128 is vendored under `tests/vendor/` so the
+tests don't need the CDN.
+
+### Verified
+- `node scripts/parsecheck.mjs`: the one inline block (1.03 MB) parses.
+- `npm test` (smoke): title up; NEW GAME reaches the bedroom; the tutorial starts past its intro, runs 600 fixed
+  steps with 4 kids on the field; no page errors. 16 s on a laptop. Screenshot shows the Winnmark street, HUD and gun.
+
+### Still open
+- Nothing in play changed; a quick playtest of v1.86 should feel exactly like v1.85.
+- Cars sinking into the ground (next, now backlog B.1).

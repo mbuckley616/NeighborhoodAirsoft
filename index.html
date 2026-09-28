@@ -1807,7 +1807,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.85</div>
+  <div class="version">v1.86</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22017,9 +22017,9 @@ const Tutorial = {
   // The reload beat baseline is captured in _renderStep when that beat shows.
 };
 
-function tick() {
-  const dt = Math.min(0.05, Game.clock.getDelta());
-
+// v1.86: one simulation step, split out of tick() so the headless tests can drive
+// the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
+function stepGame(dt) {
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
     updateInteractables();
@@ -22074,6 +22074,11 @@ function tick() {
   } else if (Game.mode === 'workbench') {
     updateWorkbench(dt);
   }
+}
+
+function tick() {
+  const dt = Math.min(0.05, Game.clock.getDelta());
+  stepGame(dt);
 
   if (Game.scene) {
     Game.renderer.render(Game.scene, Game.camera);
