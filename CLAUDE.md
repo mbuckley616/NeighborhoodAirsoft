@@ -43,6 +43,10 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 - **Producer** — `auto/producer`, daily. Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
   files his Slack notes into the backlog, and says which branches are ready to merge.
 
+**The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
+(decisions, merges, blockers, to-dos), Inbox, Roadmap, Team and Ideas. The producer keeps it in step with the repo
+and Slack through `ArtifactData`; he can answer and approve either there or in Slack.
+
 None of them pushes `main`. Code reaches `main` only after Michael approves in Slack; docs-only branches (critic,
 producer) may be merged once green without asking. Cloud sessions commit to their branch and open or update their PR.
 
