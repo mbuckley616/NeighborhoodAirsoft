@@ -37,10 +37,11 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 ```
 
 ## The team (cloud routines, all Opus, each on its own branch with one quiet PR labelled `auto`)
-- **Builder** — `auto/build`, twice a day. Works `docs/backlog.md` top-down, one item a run.
-- **Critic** — `auto/critic`, daily. Plays headless, reads the itch.io comments, writes `docs/critic.md`, files bugs
+Times are Michael's (Central, set for CDT; the crons are UTC). Runs land when he is at his desk on weekdays; weekends are phone checks.
+- **Builder** — `auto/build`, weekdays 10am and 2pm, weekends noon (a second routine, "builder (weekend)"). Works `docs/backlog.md` top-down, one item a run.
+- **Critic** — `auto/critic`, weekdays 6am. Plays headless, reads the itch.io comments, writes `docs/critic.md`, files bugs
   under backlog section `## Found in play`, at most two ideas in `docs/proposals.md` (Michael promotes them, nobody else).
-- **Producer** — `auto/producer`, daily. Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
+- **Producer** — `auto/producer`, daily 8am. Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
   files his Slack notes into the backlog, and says which branches are ready to merge.
 
 **The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
