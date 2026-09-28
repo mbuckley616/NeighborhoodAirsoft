@@ -21,3 +21,7 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
+- v1.86 — Result flips from YOU'RE OUT to YOU GOT THEM and pays both: `checkWinCondition`'s `setTimeout(endScenario('win'), 600)` (and the timer win in `updateScenarioTimer`) don't check `Game.mode`; a BB in flight inside that 600 ms tags the player → lose, then win. Steps: `g.scenario('bunratty_sean')`; `Sean.health=0; checkWinCondition(); applyBBHit({}, Game.player)`; wait 1 s — cash +$1 then +$3. Seen naturally on Night Lane.
+- v1.86 — World map: the locked Battleground pin's hit box covers the Winnmark label; clicking "Winnmark Ct · Horseshoe Bend" on a new save shows the Battleground lock. Steps: NEW GAME → map table → click the Winnmark label text.
+- v1.86 — 1v1 win result shows doubled quotes (`Sean flinches. ""Ow! Yeah, that's a hit.""`): `flavor.hit` strings already carry quotes and the template adds more. Steps: win any 1v1.
+- v1.86 — Result grammar: "Mitchell come walking out" (Night Lane win, one name, plural verb); "…Sean, and Ryan, regroup near the road" (Hollow 3v3 loss, stray comma, allies listed with enemies).
