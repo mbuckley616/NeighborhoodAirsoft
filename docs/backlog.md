@@ -11,8 +11,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 ## B. Bugs
 1. ~~Cars sink into the ground on slopes. Re-derive the car's base Y from the lowest wheel contact on the ground
    normal, not the centre sample (devlog v1.78–v1.85).~~ — done, v1.87
-2. Walk-anim intensity uses last-frame displacement: an anti-wedge teleport may pop a one-frame sprint swing.
-   Clamp it when a teleport happens (v1.78).
+2. ~~Walk-anim intensity uses last-frame displacement: an anti-wedge teleport may pop a one-frame sprint swing.
+   Clamp it when a teleport happens (v1.78).~~ — done, v1.89
 
 ## C. Check in play (from the devlog's "Still open")
 1. Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.

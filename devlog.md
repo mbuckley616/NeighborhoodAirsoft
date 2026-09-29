@@ -4750,3 +4750,30 @@ locked one (`z-index` 2 over 1), so where they still overlap, the pin you can ac
 - The Battleground's marker and the end of the Winnmark label are still close on the map (a few px at 1280 wide).
   Clicks now resolve correctly, but moving the pins apart would be a design change to the map drawing, so it's
   left alone.
+
+---
+
+## v1.89 — A teleport isn't a stride
+
+Backlog B.2. The kids' walk anim (v1.78) scales its leg swing by how far the kid moved since the last frame, read
+from the footstep tracker. When a kid is moved in one frame rather than walked (the retreat anti-wedge sends a
+stuck kid straight home), that jump read as a full-speed stride. Intensity eased up by its per-frame maximum, the
+gait phase stepped, and the footstep counter overflowed and played a step at the spot the kid had just left.
+
+The footstep tracker now treats any jump bigger than `max(0.3 m, 15 m/s × dt)` as a teleport and counts it as no
+movement. That is 18 m/s at 60 fps; the fastest kid measured in normal play moved 10.3 m/s. The anim and the
+footsteps both read the clamped value. The kid also records `_animSpeed`, the speed the anim saw, so a test can
+read it.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/walk-anim.test.mjs` (new), Bunratty FFA with the player unkillable. 600 steps of normal play: the anim
+  sees up to 10.3 m/s over 3600 kid-frames, so walking still animates. Then each of the 6 kids is moved 25 m in
+  one frame. After the change, walk intensity changes by −0.071 to 0, and no footstep fires.
+  The same test on v1.88: the four kids standing still (hiding, shooting, peeking) got +0.10 intensity from the
+  teleport, and all four played a footstep. The two advancing kids showed nothing, because their move for that
+  frame overwrote the jump.
+- `npm test`: 4/4 suites green, no page errors.
+
+### Still open
+- The retreat teleport happens off-screen by design, so a player would rarely have seen this; nothing to eyeball.

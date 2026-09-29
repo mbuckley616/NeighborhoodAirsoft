@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.88</div>
+  <div class="version">v1.89</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20695,7 +20695,12 @@ function updateEnemies(dt) {
     if (!e._prevPosForFootstep) e._prevPosForFootstep = { x: e.pos.x, z: e.pos.z };
     const fdx = e.pos.x - e._prevPosForFootstep.x;
     const fdz = e.pos.z - e._prevPosForFootstep.z;
-    const moved = Math.sqrt(fdx * fdx + fdz * fdz);
+    // v1.89: a jump no kid can run in one frame (the anti-wedge teleport home, a
+    // respawn) is a teleport, not a stride: count it as standing still, so it
+    // neither pops a one-frame sprint swing in the walk anim nor plays a footstep.
+    const rawMoved = Math.sqrt(fdx * fdx + fdz * fdz);
+    const moved = (rawMoved > Math.max(0.3, dt * 15)) ? 0 : rawMoved;
+    e._animSpeed = moved / Math.max(dt, 1e-3);   // m/s the walk anim reads (tests)
     e._footstepDist = (e._footstepDist || 0) + moved;
     if (e._footstepDist >= 0.6) {
       e._footstepDist = 0;
