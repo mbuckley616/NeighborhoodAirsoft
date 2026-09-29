@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.97</div>
+  <div class="version">v1.98</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20858,10 +20858,16 @@ function updateEnemies(dt) {
         if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
       }
       // Wall-follow when wedged (same idea as the advancing state).
+      if (e._zDetourBan > 0) e._zDetourBan -= dt;
       if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
         e._zStuck = (e._zStuck || 0) + dt;
         // v1.73: walk around a wedging fence's nearer end instead of jittering.
-        const zdet = fenceDetourWaypoint(e.pos.x, e.pos.z, tgt.pos.x, tgt.pos.z, Game.player.obstacles, kidRadius);
+        // v1.98: only while that gets somewhere. A fence further along the line
+        // still yields a waypoint when the kid is actually wedged on something
+        // else (Infection's Mitchell, on a backyard box that also blocks the step
+        // to the waypoint), and he jittered in place all round. After 0.4 s of
+        // detour without progress, wall-follow instead for 1.5 s.
+        const zdet = (e._zDetourBan > 0) ? null : fenceDetourWaypoint(e.pos.x, e.pos.z, tgt.pos.x, tgt.pos.z, Game.player.obstacles, kidRadius);
         if (zdet) {
           const zdx = zdet.x - e.pos.x, zdz = zdet.z - e.pos.z;
           const zl = Math.hypot(zdx, zdz) || 1;
@@ -20870,6 +20876,10 @@ function updateEnemies(dt) {
           if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
           else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
           else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
+          if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
+            e._zDetourFail = (e._zDetourFail || 0) + dt;
+            if (e._zDetourFail > 0.4) { e._zDetourBan = 1.5; e._zDetourFail = 0; e._zStuck = 0; }
+          } else e._zDetourFail = 0;
         } else {
         let px = -dzP / d, pz = dxP / d;
         if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;

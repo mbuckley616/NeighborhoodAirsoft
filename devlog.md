@@ -5130,3 +5130,34 @@ sniper at full aim, from 1.2 m and 2 m, show the hand on the handguard with no d
 ### Still open
 - Nothing owed on C.5. If a real playtest at arm's length ever shows a gap, the fix is to pull the large-gun aim
   point ~3 cm toward the off shoulder.
+
+---
+
+## v1.98 — Infection's Mitchell gets out of his backyard
+
+Found in play (critic, v1.86): in Bunratty Infection, Mitchell stayed behind the house3 backyard fence all round.
+He moved 3 m in 90 s and was always `chasing`. Headless on v1.97 he moves 0.5 m in 30 s.
+
+What wedges him isn't the fence. He spawns up against a 1 m backyard box (1.2 × 0.9 m) that sits between him and
+the player. His straight step and both axis slides hit it, so the tagger's wedge code runs. That code first asks the
+v1.73 `fenceDetourWaypoint` for a way round a fence, and there is one: the side fence at x = −19, further along the
+same line. It returns that fence's end, (−19, 28), as a waypoint. The step toward the waypoint hits the same box,
+so he moves nowhere. The perpendicular wall-follow that would have taken him round the box only runs when there's
+no fence waypoint, so it never did.
+
+The fence detour now has to make progress. If the kid is still stuck after 0.4 s of detouring, he wall-follows
+instead for 1.5 s, then the detour is tried again. A fence that really is in the way still gets walked round its
+end as before; the detour only gives way when it isn't working.
+
+### Verified
+- `tests/taggers.test.mjs` (new): Infection, the player made untaggable and standing at spawn, 30 s in 1 s chunks.
+  Mitchell walks 71–73 m, ends 61–67 m from his spawn and 0–5.6 m from the player (three runs). On the v1.97 build
+  the same test fails: 0.5 m walked, 66.5 m from the player.
+- `npm test`: all suites green.
+
+### Still open
+- Filed under Found in play (builder): two more tagger traps the new test shows, both on v1.97 as well.
+  **Marcus on a tree**: in 3 of 6 runs he stops for good against a tree at (16.4, 22.8), oscillating round it; the
+  wall-follow flips side every 0.5 s of stuck time and never gets past. **The spawn planter**: the player's
+  Infection spawn (`bulb_center`) is inside a 1.1 m planter wall; taggers from the west stop 5.6 m away against it
+  while the player stands still. A moving player breaks both, so a real round may hide them.
