@@ -5089,10 +5089,16 @@ bedroom → scenario → bedroom (or a theme change) hits it. `one-ending` does 
 there. The fix: `stopMusic` keeps a reference to the gain it faded, disconnects only that one, and nulls
 `Music.masterGain` only if it is still that gain. No version bump: this lands with v1.96, which hasn't shipped.
 
+The same CI run also failed `cover-fire` on one page error: `A user gesture is required to request Pointer Lock.`
+In CI's Chromium, `requestPointerLock()` returns a promise, and when there's no fresh user gesture (BEGIN clicked
+from script, or `startScenario` reached some other way) the promise is rejected. Nothing handled the rejection, so
+it became a page error. `requestPointerLock()` now catches it; the next click in the scene takes the lock, as before.
+
 ### Verified
 - New `tests/music.test.mjs`: stop + restart inside 400 ms, with the captured 400 ms timer fired by hand. On the old
   code the new theme's gain is lost and `musicScheduler` throws the CI error. With the fix, the gain is kept and
   nothing throws.
+- Smoke: a stubbed rejecting `requestPointerLock` raised the CI page error on the old code and raises none now.
 - `npm test`: 11/11.
 
 ### Still open

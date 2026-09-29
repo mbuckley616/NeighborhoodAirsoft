@@ -17022,7 +17022,11 @@ function showPauseHint() {
 // POINTER LOCK
 // ---------------------------------------------------------------------
 function requestPointerLock() {
-  Game.renderer.domElement.requestPointerLock?.();
+  // v1.96 fix-up: newer Chromium returns a promise and rejects it when there's no fresh
+  // user gesture (e.g. startScenario reached from a script-driven BEGIN). The rejection
+  // was unhandled and surfaced as a page error; the next click in the scene locks anyway.
+  const p = Game.renderer.domElement.requestPointerLock?.();
+  if (p && typeof p.catch === 'function') p.catch(() => {});
 }
 function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
