@@ -5075,3 +5075,25 @@ its own.
 - In Infection, "the last one's out… come walking out" and "regroup near the road" were written for tag
   battles and read oddly for a zombie round. Infection's own outcome (TAGGED!) is right; its win and lose lines
   could use their own wording (a writing call, not a bug).
+
+---
+
+## v1.96 fix-up — a quick music restart no longer kills the new theme
+
+CI failed on the merged head with four page errors in `one-ending.test.mjs`: `Failed to execute 'connect' on
+'AudioNode'`. `stopMusic` fades the master gain and, 400 ms later, disconnects and nulls `Music.masterGain`. That
+means whatever gain is current when the timer fires. A `startMusic` inside those 400 ms makes a new master gain,
+and the stale timer killed that one instead. The theme stayed "playing" with no gain, its notes threw on
+`connect(null)`, and the music was silent. `startMusic` calls `stopMusic` itself on a theme switch, so any quick
+bedroom → scenario → bedroom (or a theme change) hits it. `one-ending` does that between its cases, so it surfaced
+there. The fix: `stopMusic` keeps a reference to the gain it faded, disconnects only that one, and nulls
+`Music.masterGain` only if it is still that gain. No version bump: this lands with v1.96, which hasn't shipped.
+
+### Verified
+- New `tests/music.test.mjs`: stop + restart inside 400 ms, with the captured 400 ms timer fired by hand. On the old
+  code the new theme's gain is lost and `musicScheduler` throws the CI error. With the fix, the gain is kept and
+  nothing throws.
+- `npm test`: 11/11.
+
+### Still open
+- By ear: going bedroom → scenario → bedroom quickly should leave the bedroom theme playing.

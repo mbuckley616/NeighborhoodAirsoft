@@ -5854,9 +5854,14 @@ function stopMusic() {
     g.setValueAtTime(g.value, ctx.currentTime);
     g.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
     // Disconnect later
+    // v1.96 fix-up: only the gain faded out here. A startMusic inside the 400 ms (a theme
+    // switch, or bedroom -> scenario -> bedroom in quick succession) makes a new
+    // master gain, and this timer used to disconnect and null THAT one: the new
+    // theme went silent and its notes threw on connect(null).
+    const faded = Music.masterGain;
     setTimeout(() => {
-      try { Music.masterGain.disconnect(); } catch(e) {}
-      Music.masterGain = null;
+      try { faded.disconnect(); } catch(e) {}
+      if (Music.masterGain === faded) Music.masterGain = null;
     }, 400);
   }
   Music.playing = false;
