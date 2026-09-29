@@ -35,6 +35,19 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    a grocery store battle. (Michael, 2026-09-28) **(design)**
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
+3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
+   **(design)**
+4. We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**
+5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
+   what they have equipped on each part of the body; unique meshes for each item). The online shop is a bit wonky: see
+   if the tabs / item groupings make sense, but do NOT lose the early 2000s website aesthetic. The loadout unlocks are
+   something you wouldn't 'buy'... maybe rename it to like 'Holster' or 'Utility Belt' and the description informs what
+   it unlocks for you. (Michael, 2026-09-29) **(design)**
+6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
+   style, etc. (Michael, 2026-09-29) **(design)**
+7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
+   with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
+   need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
