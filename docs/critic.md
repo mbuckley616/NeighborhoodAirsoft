@@ -93,8 +93,8 @@ through the end of a round has to break the spin into chunks and yield between t
 never ends. I ran everything below in 30-step chunks with a real wait in between.
 
 Results, first-timer loadout (1 life, 10 BBs, no reload): Treehouse lost at 18 s (10 shots at ~28 m, none landed).
-Night Prowl: the bot tagged Devon and then ran dry, and the round couldn't end (it's `kill_all`); in a separate run a
-player standing at spawn was tagged at ~38 m inside 10 s. Two in the Yards lost at 1.3 s (below). Brothers lost at 15 s, Attack North Fort at 7 s (1 of 5 tagged),
+Night Prowl: the bot tagged Devon and then ran dry, and then Seth froze (problem 5). In a separate run, a player
+standing at spawn was tagged at ~38 m inside 10 s. Two in the Yards lost at 1.3 s (below). Brothers lost at 15 s, Attack North Fort at 7 s (1 of 5 tagged),
 Defend South Fort at 3.4 s against five attackers. Infection won (MOM CALLED THEM IN!) by running to the east end of
 the court. The bag started at 25 BBs, and each match start refills the mag from it, so by the fourth match Hold the
 Fort began with **1 BB** in the mag. The HUD said so honestly ("MAG EMPTY · F TO FORFEIT"), and so did the result
@@ -133,15 +133,23 @@ fighting. The scenario's own comment calls this the "mid-difficulty step" betwee
 `hiding` when the BB lands, so he never has to show himself first. South Fort also went in 3.4 s, but that's five attackers on a defend; this
 is a 2v1 billed as the gentle step up. I'd call it a balance bug rather than a design question. Filed.
 
+**5. Night Prowl: Seth freezes in `advancing` behind a car.** I walked the player up the street toward him and stopped
+at 14 m (the bot's rule), at about (5, −2). Seth then sat at (−5.3, −10.6) in state `advancing`, behind the dark car
+in front of the brick house, from 12 s until the run ended at 60 s, and 120 s in the longer run. He didn't move or
+fire. It reproduced in all three runs where the player came within ~14 m (the synchronous run, and two chunked runs
+with the player unkillable). Seen from the player, he stays hidden behind the car the whole time. If you've used your
+10 BBs by then, there is no way to finish the round except F to forfeit. The same kid roams 186 m in 120 s when the
+player stays back at spawn, so it's the approach that wedges him.
+
 **4. More result grammar** (the same family as yesterday's line): Defend South Fort lose: "Seth and Ryan, Devon, Sean,
 and Mitchell take the fort". Infection win: "Ryan, Marcus, Sean, Nick, and Mitchell starts trudging home" (a singular
 verb). The Brothers lose: "Ryan, Mitchell, regroup near the road" (the comma before the verb again).
 
 ### What worked
 Hold-the-line wins end on the right card with the right flavour. Taggers (except Mitchell) reach a player who stands
-still at the far end of Bunratty inside 15 s, which feels right. On Night Prowl, Seth works the whole map (186 m in
-120 s, through advancing, peeking, hiding and repositioning) while Devon holds a sniper nest (7.6 m), which is a
-readable pair. Step cost: 0.3–0.8 ms average on Winnmark and Bunratty and 1.7 ms on the Hollow's Attack North Fort.
+still at the far end of Bunratty inside 15 s, which feels right. On Night Prowl, with the player hanging back, Seth works
+the whole map (186 m in 120 s, through advancing, peeking, hiding and repositioning) while Devon holds a sniper nest
+(7.6 m), which is a readable pair. Step cost: 0.3–0.8 ms average on Winnmark and Bunratty and 1.7 ms on the Hollow's Attack North Fort.
 The worst single step was 25 ms, in Infection. Scenario loads took 0.7–3.8 s headless.
 
 ### itch.io
