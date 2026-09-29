@@ -2,7 +2,7 @@
 // the timer win, the tagger's infection) used to fire even after the round had already ended another
 // way, so the result flipped YOU'RE OUT → YOU GOT THEM and paid both. Each case sets up the race the
 // critic found and counts endScenario calls and payouts.
-// The delays are the game's own setTimeouts (wall-clock), so this test waits real time for them.
+// The delays are the game's own setTimeouts; the test captures them and fires them by hand (see race()).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -15,11 +15,21 @@ async function race(id, setup) {
     window.endScenario = function (o) { window.__ends.push({ o, mode: Game.mode }); return orig.apply(this, arguments); };
     window.__cash0 = Game.persist.cash;
   });
-  await page.evaluate(setup);
-  await g.page.waitForTimeout(1200);
-  const r = await page.evaluate(() => ({
-    ends: window.__ends.map(e => e.o), paid: Game.persist.cash - window.__cash0,
-    outcome: document.getElementById('outcomeText').textContent.trim(), mode: Game.mode }));
+  // The delayed endings are the game's own setTimeouts. Capture the ones that end the round and fire them
+  // by hand, in delay order, instead of waiting wall-clock time: on CI the real frame loop and timer
+  // timing differ from a laptop and made this flaky. `late` counts the delayed endings the setup scheduled.
+  await page.evaluate(setup => {
+    const st = window.setTimeout; window.__late = [];
+    window.setTimeout = (fn, ms, ...a) => (typeof fn === 'function' && /endScenario/.test(String(fn)))
+      ? (window.__late.push({ fn, ms }), 0) : st(fn, ms, ...a);
+    try { (0, eval)('(' + setup + ')')(); } finally { window.setTimeout = st; }
+  }, setup.toString());
+  const r = await page.evaluate(() => {
+    const late = window.__late.sort((a, b) => a.ms - b.ms);
+    for (const t of late) t.fn();
+    return { late: late.map(t => t.ms), ends: window.__ends.map(e => e.o), paid: Game.persist.cash - window.__cash0,
+      outcome: document.getElementById('outcomeText').textContent.trim(), mode: Game.mode };
+  });
   await page.evaluate(() => { window.endScenario = window.__origEnd; });
   return r;
 }

@@ -4907,5 +4907,20 @@ load speed. No version bump: v1.90 hasn't shipped.
 - The rewritten case 5 fails on v1.90 as pushed (`{"timers":1,"mode":"result"}`) and passes with the fix
   (`"mode":"scenario"`). `npm test`: 5/5 suites green.
 
+Two more CI flakes, both from tests measuring timing or the wrong target:
+- `one-ending.test.mjs` case 2 (Infection) failed once on CI with no ending at all (`ends: []`). All four race
+  cases waited 1200 ms of wall-clock time for the game's own `setTimeout`s. `race()` now captures the delayed
+  `endScenario` timers the setup schedules and fires them by hand in delay order, and reports them (`late`).
+- `laser.test.mjs` (v1.91) failed 1 run in 3 locally: "beam running past its target", 3 of 360 samples on
+  Bunratty 2v2. It measured every beam against the distance to the *player*, but in a team match kids also laser
+  the player's ally, who can be farther away. The test now wraps `updateKidLaser` to record each kid's own aim
+  point and measures against that. No game change: the beam is already clamped to its aim point + 0.15 m.
+
+### Verified (flakes)
+- Without the `endScenarioLater` guard, cases 1–4 fail (double endings, double pay), so the tests still catch the bug.
+- Laser: 4 runs, 0 overshoots against the kid's own aim, with 65–235 samples per run aimed at the ally in the 2v2.
+  With the aim clamp removed, both maps fail (301 and 13 overshoots).
+- `npm test` 7/7, three runs in a row.
+
 ### Still open
 - Nothing new.
