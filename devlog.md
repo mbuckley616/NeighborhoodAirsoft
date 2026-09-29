@@ -4892,6 +4892,9 @@ before firing, or a lift that reads every obstacle), not a one-line fault.
   `Game.player.obstacles` for the first 3 m. If it's blocked, lift over the blocker's top, as now but for any
   obstacle; if the lift would pass the 0.7 m cap, hold fire and reposition. Measure with this test (target: under
   3% of shots into cover).
+
+---
+
 ## v1.90 fix-up — a forfeited round's delayed win no longer ends the next round
 
 CI went red on v1.90: `one-ending.test.mjs` case 5 timed out waiting for the next round to start. v1.90's
@@ -4913,14 +4916,125 @@ Two more CI flakes, both from tests measuring timing or the wrong target:
   `endScenario` timers the setup schedules and fires them by hand in delay order, and reports them (`late`).
 - `laser.test.mjs` (v1.91) failed 1 run in 3 locally: "beam running past its target", 3 of 360 samples on
   Bunratty 2v2. It measured every beam against the distance to the *player*, but in a team match kids also laser
-  the player's ally, who can be farther away. The test now wraps `updateKidLaser` to record each kid's own aim
-  point and measures against that. No game change: the beam is already clamped to its aim point + 0.15 m.
+  the player's ally, who can be farther away. No game change: the beam is already clamped to its aim point
+  + 0.15 m. The other builder session fixed the same test at the same time (1c8ed91, measuring against
+  `e._targetRef`); on merging, its version is kept.
 
 ### Verified (flakes)
 - Without the `endScenarioLater` guard, cases 1–4 fail (double endings, double pay), so the tests still catch the bug.
-- Laser: 4 runs, 0 overshoots against the kid's own aim, with 65–235 samples per run aimed at the ally in the 2v2.
-  With the aim clamp removed, both maps fail (301 and 13 overshoots).
+- Laser, measured against each kid's own aim point: 4 runs, 0 overshoots, with 65–235 samples per run aimed at
+  the ally in the 2v2. With the aim clamp removed, both maps fail (301 and 13 overshoots).
 - `npm test` 7/7, three runs in a row.
 
 ### Still open
 - Nothing new.
+
+---
+
+## v1.93 — Kids look before they shoot
+
+Backlog B.3, filed by v1.92's measurement: about a quarter of enemy BBs hit an obstacle within 3 m, before the
+target. v1.77's over-cover lift read only the cover list (not fences, walls or fort sides), and measured each
+piece from its centre (missing the near end of a car).
+
+`spawnEnemyBB` now checks the line it's about to fire. It casts from the muzzle toward the target against every
+map obstacle, over the first 3 m (or up to 0.3 m short of the target, if closer). If the line is blocked, it
+raises the muzzle in 10 cm steps up to the same +0.7 m cap until the line clears, and sets the same over-cover
+pose flag as v1.77. If nothing within the cap clears it, the kid holds fire that trigger pull: no BB, no shot
+sound. Typically that's a kid tucked right behind something taller than a lean-over, like the 1.1 m blocks on the
+Hollow slope, which stand ~1.8 m above a kid downhill of them. For the player the result is the same (that BB
+was going into the wall anyway), minus the BB thudding into it. The v1.77 lift still runs first; the new check
+starts from whatever height it chose.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/cover-fire.test.mjs` is now a gate: under 5% of enemy BBs may hit an obstacle within 3 m, and under 25% of
+  trigger pulls may be held. The same four 60 s matches, three runs:
+
+  | | shots | hit an obstacle within 3 m | trigger pulls held |
+  |---|---|---|---|
+  | v1.92, run 1 | 563 | 148 (26%) | 0 |
+  | v1.92, run 2 | 631 | 150 (24%) | 0 |
+  | v1.93, run 1 | 726 | 16 (2.2%) | not counted yet |
+  | v1.93, run 2 | 582 | 11 (1.9%) | 71 of 598 |
+  | v1.93, run 3 (`npm test`) | 742 | 3 (0.4%) | 18 of 710 |
+
+  What still hits is aim spread, which the check doesn't model: it clears the aimed line, and spread moves the
+  BB off it. Most held pulls were Hollow 3v3 in run 2 (62 of 285), with Sean and Seth crouched 0.4 m behind the
+  tall slope blocks.
+- Merged the v1.90 fix-up (another session's `Game.roundSeq` fix, below v1.92) into this branch. One test fix
+  came with it: v1.91's laser test measured overshoot against the player, but in Night 2v2 kids also aim at the
+  player's teammate. A beam 19.7 m long toward a teammate failed it. The check now uses each kid's own
+  `_targetRef`.
+- Harness: `g.bedroom()` now clicks ENTER MIKE'S ROOM from inside the page. v1.91 noted Playwright's click
+  sometimes hanging for its full 30 s; with seven suites that crashed two in one run here. Six smoke runs in a
+  row and the full suite are clean since.
+- `npm test`: 7/7 suites green, no page errors.
+
+### Still open
+- Eyes on it: a kid behind tall cover now goes quiet instead of plinking the wall. If that reads as a frozen kid
+  (compare the critic's Night Prowl Seth), the next step is AI, not aim: a held kid should peek or reposition.
+  That's a design call if it comes up.
+- Kids lift up to 0.7 m more often now (131 lifted shots of 582, against ~50 of 563 before). The v1.77 pose shows a
+  shouldered, over-the-top hold for those, but a 0.7 m lift is more than that pose's 0.34 m visual raise. Worth a
+  look to see whether BBs appear to leave from above the gun.
+
+---
+
+## v1.94 — The burst hold, checked, and a v1.93 slip fixed
+
+Backlog C.3 asks whether the ADS-tall hold stays steady through an auto burst on the all-auto night map. The critic
+judged it once (2026-09-29): 68 of 71 over-cover strings kept their lift. This run makes that a standing test, and
+the test caught a regression from v1.93 on its first pass.
+
+`tests/burst-pose.test.mjs` (new) plays Full-Auto Mayhem (Night) for 90 s with the player unkillable. A burst is
+a run of trigger pulls from one kid no more than 0.35 s apart. For every string of 3+ pulls it follows, frame by
+frame, the kid's shouldered-hold amount (`_aimAmt`) and its over-cover lift (`_firingOverCover`).
+
+On the v1.93 build the hold eased back out in the middle of 32 of 116 bursts: 102 of 669 frames were falling,
+and 3 of 27 over-cover strings lost the lift partway. The cause was v1.93's hold-fire. A kid that can't see past
+its cover returns from `spawnEnemyBB` before the line that re-arms `_aimHold`. So a kid pulling the trigger with
+no clear line let its shouldered hold ease back out, mid-burst, while still "firing". The re-arm now comes
+before the clear-line check, so a kid waiting for a line keeps the gun up. That is what a kid looking for the
+shot would do anyway.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/burst-pose.test.mjs`, after the fix, two runs:
+  - Run 1: 175 bursts, 0 falling frames in 1154. 64 of 64 over-cover strings held the lift throughout.
+  - Run 2 (`npm test`): 0 falling frames in 777. 34 of 34 over-cover strings held.
+- The hold still eases *in* over the first ~11 frames of a string that starts from rest (it did before; it's the
+  v1.78 ease). The test counts falling frames, not low ones, for that reason.
+- `npm test`: 8/8 suites green, no page errors.
+
+### Still open
+- Whether the pose reads as steady on a real screen: the numbers say it no longer dips.
+
+---
+
+## v1.95 — Hands on the grip, measured
+
+Backlog C.4 (from v1.80): at full aim with a small gun (pistol, MAC-10), the kids' hands sat ~4 cm off the grip,
+because the target was right at the arm's full extension. No game code changed. The version is bumped to keep
+one version per backlog item.
+
+`tests/grip.test.mjs` (new) poses one kid with every weapon (pistol, MAC-10, AK, MP5, UMP, shotgun, sniper, AR) at
+rest and at full aim, standing and crouched. In the kid's own frame, it measures the firing hand to the gun's
+grip, and the off hand to the point `setKidGunHold` sends it to.
+
+Small guns: 0.0 cm for both hands in every case. The v1.81 IK rework and pose trim left every small-gun target
+4.7 cm (standing) to 13 cm (crouched) inside the arm's 0.45 m reach, and the IK lands exactly inside reach. The
+~4 cm gap is gone.
+
+A new finding: the firing hand is on the grip for every gun (0.0 cm), but on the large guns the off hand sits 2.7
+to 3.5 cm short of its foregrip point. That's 2.7 cm for the MP5/UMP and 3.3–3.5 cm for the AK, shotgun, sniper
+and AR, in every pose. It's the same order as the old small-gun gap. It's filed as backlog C.5 for a look in play
+rather than changed: v1.80 placed that off-hand target deliberately at the edge of a comfortable cross-reach.
+
+### Verified
+- `npm test`: 9/9 suites green, no page errors. The grip suite gates small guns at ≤ 1 cm, firing hands at
+  ≤ 2 cm and off hands at ≤ 4 cm (today's level, so it catches a regression).
+
+### Still open
+- C.5: does a ~3 cm gap between the off hand and a rifle's handguard show on screen? If it does, pull the large-gun
+  aim point ~3 cm toward the off shoulder, or lengthen the off-hand reach.

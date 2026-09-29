@@ -10,11 +10,7 @@ for (const id of ['bunratty_night_lane', 'bunratty_night_team_2v2']) {
 await page.evaluate(() => { const hit = window.__origHit = window.__origHit || applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
   const r = await page.evaluate(() => {
     const V = THREE.Vector3, o = new V(), d = new V();
-    const s = { samples: 0, lasered: 0, aboveHead: 0, steep: 0, overshoot: 0, atAlly: 0, maxPitch: 0, maxLen: 0, worst: null };
-    // Kids aim at whoever they're fighting: in a team match that can be the player's ally, farther away
-    // than the player. Record each kid's actual aim point so overshoot is measured against its own target.
-    const aims = new Map(), upd = window.__origUKL = window.__origUKL || updateKidLaser;
-    window.updateKidLaser = (e, obs, aim) => { aims.set(e, aim ? aim.clone() : null); return upd(e, obs, aim); };
+    const s = { samples: 0, lasered: 0, aboveHead: 0, steep: 0, overshoot: 0, maxPitch: 0, maxLen: 0, worst: null };
     for (let step = 0; step < 5400 && Game.mode === 'scenario'; step++) {
       stepGame(1 / 60);
       if (step % 15) continue;
@@ -25,25 +21,25 @@ await page.evaluate(() => { const hit = window.__origHit = window.__origHit || a
         if (!(e.health > 0) || !u.userData.dot.visible) continue;
         u.getWorldPosition(o); u.userData.dot.getWorldPosition(d);
         const len = o.distanceTo(d), pitch = Math.asin(Math.max(-1, Math.min(1, (d.y - o.y) / Math.max(len, 1e-6)))) * 180 / Math.PI;
-        const toPlayer = Math.hypot(Game.player.pos.x - o.x, Game.player.pos.z - o.z);
+        // the kid's own target (teammates of the player are targets too in the team maps)
+        const tp = (e._targetRef && e._targetRef.pos) || Game.player.pos;
+        const tH = e._targetRef && e._targetRef !== Game.player ? tp.y + 1.6 : head;
+        const toTgt = Math.hypot(tp.x - o.x, tp.z - o.z);
         s.samples++;
         if (d.y > Math.max(head, o.y + 0.5)) s.aboveHead++;
         if (pitch > 30 && len > 3) s.steep++;
-        const aim = aims.get(e);
-        if (aim && Math.hypot(aim.x - Game.player.pos.x, aim.z - Game.player.pos.z) > 1) s.atAlly++;
-        if (aim ? len > o.distanceTo(aim) + 1.0 : len > Math.hypot(toPlayer, head - o.y) + 1.0) s.overshoot++;
+        if (len > Math.hypot(toTgt, Math.max(Math.abs(tH - o.y), Math.abs(tp.y - o.y))) + 1.0) { s.overshoot++; s.over = s.over || { kid: e.name, len: +len.toFixed(2), toTgt: +toTgt.toFixed(2), tgt: e._targetRef && e._targetRef.name }; }
         if (pitch > s.maxPitch) { s.maxPitch = pitch; s.worst = { kid: e.name, state: e.state, pitch: +pitch.toFixed(1), len: +len.toFixed(2), dotY: +d.y.toFixed(2), head: +head.toFixed(2) }; }
         s.maxLen = Math.max(s.maxLen, len);
       }
     }
-    window.updateKidLaser = upd;
     s.maxPitch = +s.maxPitch.toFixed(1); s.maxLen = +s.maxLen.toFixed(1); s.mode = Game.mode;
     return s;
   });
   check(`${id}: beams sampled`, r.samples > 50, r);
   check(`${id}: no dot above the player's head (or 0.5 m above the emitter)`, r.aboveHead === 0, r);
   check(`${id}: no beam longer than 3 m pitched over 30°`, r.steep === 0, r);
-  check(`${id}: no beam running past its own aim point`, r.overshoot === 0, r);
+  check(`${id}: no beam running past its target`, r.overshoot === 0, r);
   if (await g.mode() === 'scenario') await page.evaluate(() => endScenario('lose'));
   await page.evaluate(() => enterBedroom && enterBedroom());
   await g.spin(5);
