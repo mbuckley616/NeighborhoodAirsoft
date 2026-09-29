@@ -1,0 +1,37 @@
+name: itch
+# Uploads the game to https://mbuckley616.itch.io/neighborhood-airsoft whenever index.html changes on main.
+# Needs the repo secret BUTLER_API_KEY (an itch.io API key, created at https://itch.io/user/settings/api-keys);
+# until Michael adds it, the job skips itself rather than failing.
+on:
+  push:
+    branches: [main]
+    paths: [index.html]
+  workflow_dispatch:
+concurrency: itch
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+    steps:
+      - name: Skip until the itch key is set
+        if: env.BUTLER_API_KEY == ''
+        run: echo "BUTLER_API_KEY is not set; nothing uploaded."
+      - uses: actions/checkout@v4
+        if: env.BUTLER_API_KEY != ''
+      - uses: actions/setup-node@v4
+        if: env.BUTLER_API_KEY != ''
+        with: { node-version: '22' }
+      - name: Parse check
+        if: env.BUTLER_API_KEY != ''
+        run: node scripts/parsecheck.mjs
+      - name: Install butler
+        if: env.BUTLER_API_KEY != ''
+        run: |
+          curl -sSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d butler && chmod +x butler/butler && ./butler/butler -V
+      - name: Push to itch.io
+        if: env.BUTLER_API_KEY != ''
+        run: |
+          mkdir -p dist && cp index.html dist/index.html
+          ./butler/butler push dist mbuckley616/neighborhood-airsoft:html5 --userversion "$(node scripts/tag.mjs)"

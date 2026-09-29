@@ -6,7 +6,8 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 
 ## The files
 - `index.html` — the whole game. ~22k lines. Players get it from itch.io (https://mbuckley616.itch.io/neighborhood-airsoft),
-  which Michael uploads by hand: **merging to `main` does not ship to players**. He uploads after merges he's happy with.
+  **Merging to `main` ships to players**: `.github/workflows/itch.yml` pushes index.html to itch.io with butler on every
+  main change (once Michael has added the `BUTLER_API_KEY` secret; until then it skips and he uploads by hand).
 - `devlog.md` — one entry per session, appended at the end. Never rewrite old entries.
 - `docs/design_brief.md` — the pillars and scope. Every proposal argues from it.
 - `docs/backlog.md` — the open work, `~~strikethrough~~ — done, v1.NN` when finished.
@@ -48,8 +49,11 @@ Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs 
 (decisions, merges, blockers, to-dos), Inbox, Roadmap, Team and Ideas. The producer keeps it in step with the repo
 and Slack through `ArtifactData`; he can answer and approve either there or in Slack.
 
-None of them pushes `main`. Code reaches `main` only after Michael approves in Slack; docs-only branches (critic,
-producer) may be merged once green without asking. Cloud sessions commit to their branch and open or update their PR.
+None of them pushes `main`. Code reaches `main` only after Michael approves (the control room's Approve button or ✅ in
+Slack), and the producer then merges **exactly the commit he approved** (`approved_sha` on the card) through GitHub, never
+anything the builder pushed after; later work gets a fresh Approve card. No local chat is needed to merge (Michael,
+29 Sep 2026). Docs-only branches (critic, producer) may be merged once green without asking. Cloud sessions commit to
+their branch and open or update their PR.
 
 ## The room — Slack #neighborhood-airsoft (channel id C0C50EAJKRC)
 Through the Slack connector (tools named `slack_*`; load them with ToolSearch).
