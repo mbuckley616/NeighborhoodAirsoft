@@ -5022,3 +5022,40 @@ rather than changed: v1.80 placed that off-hand target deliberately at the edge 
 ### Still open
 - C.5: does a ~3 cm gap between the off hand and a rifle's handguard show on screen? If it does, pull the large-gun
   aim point ~3 cm toward the off shoulder, or lengthen the off-hand reach.
+
+---
+
+## v1.96 — The result line reads right
+
+Found in play (critic, v1.86, three entries): the flavor line under the result had bad text.
+- **Doubled quotes** on every 1v1 win: `Sean flinches. ""Ow! Yeah, that's a hit.""`. Most characters' `flavor.hit`
+  lines are stored with their own quote marks, and the template adds a second pair.
+- **Plural verb for one name**: "Mitchell come walking out".
+- **Stray commas and double-joined lists**: "…Sean, and Ryan, regroup"; "Seth and Ryan, Devon, Sean, and
+  Mitchell take the fort"; "Ryan, Mitchell, regroup".
+- **Wrong verb number**: "…Nick, and Mitchell starts trudging home".
+- **Allies named with the other side**: team maps keep the player's allies in `Game.scenario.enemies`.
+
+`endScenario` now names only the other side's kids (team not the player's), and takes the primary kid and its
+flavor bank from that list too. Every multi-kid line uses one plural list, `allStr` ("Seth, Trey, and Devon sit
+on the curb"), instead of gluing the primary name onto the rest with its own punctuation. The timer-win line
+picks "starts" or "start" by how many trudge home, and the 1v1 hit line strips the stored quotes before adding
+its own.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/result-text.test.mjs` (new) ends eight scenarios four ways each (win, timer win, lose, forfeit) and prints
+  all 32 lines. The eight: Sean, Seth's house, Night Lane, Brothers, Hollow 3v3, South Fort defend, cul-de-sac
+  defend, Infection. None has a doubled quote, a comma before the verb or a twice-joined list, and none names
+  an ally. For example: `Sean flinches. "Ow! Yeah, that's a hit." — they're out.` /
+  `They got through. Seth, Ryan, Devon, Sean, and Mitchell take the fort.` / `…and Mitchell starts trudging home.`
+- `npm test`: 10/10 suites green.
+
+### Still open
+- Filed under Found in play: on one of three runs of this suite, 12 page errors
+  `Failed to execute 'connect' on 'AudioNode': Overload resolution failed` came up at once. That was after many
+  quick scenario entries with repeated result screens, and never in any other suite. The suite reports them rather
+  than failing, until they're run down.
+- In Infection, "the last one's out… come walking out" and "regroup near the road" were written for tag
+  battles and read oddly for a zombie round. Infection's own outcome (TAGGED!) is right; its win and lose lines
+  could use their own wording (a writing call, not a bug).

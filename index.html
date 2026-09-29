@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.95</div>
+  <div class="version">v1.96</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -15958,13 +15958,17 @@ function endScenario(outcome) {
 
   // Pull flavor lines from the primary enemy's character entry (first enemy in
   // the list). For multi-enemy scenarios we use slightly more aggregate wording.
-  const primary = Game.scenario.enemies && Game.scenario.enemies[0];
+  // v1.96: only the OTHER side's kids are named. Team maps put the player's allies in
+  // the enemies list too, and naming them read as "…Sean, and Ryan, regroup".
+  const _pTeam = (typeof combatantTeam === 'function') ? combatantTeam(Game.player) : 'player';
+  const foes = (Game.scenario.enemies || []).filter(e => e.team !== 'player' && (e.team || 'enemy') !== _pTeam);
+  const primary = foes[0] || (Game.scenario.enemies && Game.scenario.enemies[0]);
   const flavorBank = primary?.character?.flavor || {};
   const primaryName = primary?.name || 'They';
-  const multi = (Game.scenario.enemies?.length || 0) > 1;
-  const otherNames = multi
-    ? Game.scenario.enemies.slice(1).map(e => e.name)
-    : [];
+  const multi = foes.length > 1;
+  const otherNames = multi ? foes.slice(1).map(e => e.name) : [];
+  // v1.96: flavor lines are stored with their own quote marks; the templates add them.
+  const unquote = str => String(str).replace(/^["\u201c](.*)["\u201d]$/s, '$1');
   // "Trey and Brooke" / "Sean, Nick, and Andrew" style oxford join
   function joinNames(list) {
     if (list.length === 0) return '';
@@ -15973,6 +15977,7 @@ function endScenario(outcome) {
     return list.slice(0, -1).join(', ') + ', and ' + list[list.length - 1];
   }
   const othersStr = joinNames(otherNames);
+  const allStr = joinNames(foes.length ? foes.map(e => e.name) : [primaryName]);   // v1.96: plural subject
 
   const card = document.getElementById('resultScreen');
   const outcomeEl = document.getElementById('outcomeText');
@@ -15987,23 +15992,23 @@ function endScenario(outcome) {
       outcomeEl.textContent = 'MOM CALLED THEM IN!';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Distant screen doors slam. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} starts trudging home. You held the line.`
+        ? `Distant screen doors slam. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} ${otherNames.length > 1 ? 'start' : 'starts'} trudging home. You held the line.`
         : `A distant screen door slams. ${primaryName} groans — "Aw, COME ON!" — and trudges home. You held the line.`;
     } else if (wasDefend) {
       // Defender kill-all win: you held the position
       outcomeEl.textContent = 'YOU HELD IT';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Last one's out. ${primaryName}${othersStr ? ' and ' + othersStr : ''} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
+        ? `Last one's out. ${allStr} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
         : `${primaryName}'s out. They sit on the curb, defeated. "Yeah okay, that was a good fort."`;
     } else {
       outcomeEl.textContent = 'YOU GOT THEM';
       outcomeEl.className = 'outcome win';
       if (multi) {
-        flavorEl.textContent = `The last one's out. ${othersStr ? othersStr + ' come walking out from behind cover. ' : ''}"Alright, alright — that was nuts."`;
+        flavorEl.textContent = `The last one's out. ${allStr} come walking out from behind cover. "Alright, alright — that was nuts."`;
       } else {
         flavorEl.textContent = flavorBank.hit
-          ? `${primaryName} flinches. "${flavorBank.hit}" — they're out.`
+          ? `${primaryName} flinches. "${unquote(flavorBank.hit)}" — they're out.`
           : `${primaryName} flinches and yells "AH, OKAY OKAY, you got me!" — they're out.`;
       }
     }
@@ -16011,7 +16016,7 @@ function endScenario(outcome) {
     outcomeEl.textContent = 'FORFEITED';
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = multi
-      ? `You called it. "I'm out — I gotta go." ${othersStr} and ${primaryName} drop their guns, half-disappointed.`
+      ? `You called it. "I'm out — I gotta go." ${allStr} drop their guns, half-disappointed.`
       : `You called it. "I'm out — gotta go get more BBs." ${primaryName} shrugs from behind cover.`;
   } else if (outcome === 'infected') {
     // v1.25 zombie mode loss — you got tagged.
@@ -16024,10 +16029,10 @@ function endScenario(outcome) {
     if (wasDefend) {
       // Lost a defend — they overran your position
       flavorEl.textContent = multi
-        ? `They got through. ${primaryName}${othersStr ? ' and ' + othersStr : ''} take the fort. "Our turn, dude."`
+        ? `They got through. ${allStr} take the fort. "Our turn, dude."`
         : `They got through. ${primaryName} takes the fort. "Our turn, dude."`;
     } else if (multi) {
-      flavorEl.textContent = `Too many angles, not enough cover. ${primaryName}${othersStr ? ', ' + othersStr + ',' : ''} regroup near the road. "Run it back?"`;
+      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup near the road. "Run it back?"`;
     } else {
       flavorEl.textContent = flavorBank.win
         ? flavorBank.win
