@@ -37,11 +37,11 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 ```
 
 ## The team (cloud routines, all Opus, each on its own branch with one quiet PR labelled `auto`)
-Times are Michael's (Central, set for CDT; the crons are UTC). Runs land when he is at his desk on weekdays; weekends are phone checks.
-- **Builder** — `auto/build`, weekdays 10am and 2pm, weekends noon (a second routine, "builder (weekend)"). Works `docs/backlog.md` top-down, one item a run.
+Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs round the clock (Michael asked for faster progress, 29 Sep); the producer follows each builder run and keeps Slack quiet 10pm-7am.
+- **Builder** — `auto/build`, every 3 hours, every day (1:10am, 4:10, 7:10, 10:10, 1:10pm, 4:10, 7:10, 10:10). Each run works `docs/backlog.md` top-down for up to ~90 minutes, one committed version per item, and reads Michael's answers straight from the control room.
 - **Critic** — `auto/critic`, weekdays 6am. Plays headless, reads the itch.io comments, writes `docs/critic.md`, files bugs
   under backlog section `## Found in play`, at most two ideas in `docs/proposals.md` (Michael promotes them, nobody else).
-- **Producer** — `auto/producer`, daily 8am. Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
+- **Producer** — `auto/producer`, every 3 hours at :55 UTC, about 1 hour 45 minutes after each builder run starts (quick exit when nothing changed; no Slack posts 10pm-7am Central, at most one summary per 6 hours). Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
   files his Slack notes into the backlog, and says which branches are ready to merge.
 
 **The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
