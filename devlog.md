@@ -5161,3 +5161,32 @@ end as before; the detour only gives way when it isn't working.
   wall-follow flips side every 0.5 s of stuck time and never gets past. **The spawn planter**: the player's
   Infection spawn (`bulb_center`) is inside a 1.1 m planter wall; taggers from the west stop 5.6 m away against it
   while the player stands still. A moving player breaks both, so a real round may hide them.
+
+---
+
+## v1.99 — Night Prowl's Seth stops freezing behind the car
+
+Found in play (critic, v1.86): on Night Prowl, once the player closes to about 14 m, Seth stands at (−5.3, −10.6)
+in state `advancing` for 45–110 s, neither moving nor firing. The critic saw it in 3 of 3 runs. With the ten BBs
+spent, only a forfeit ends the round.
+
+Seth is a pistol flanker. Between 10 m and his far range, a flanker bounds from cover to cover instead of walking
+straight in. On the way to his next cover he wedges on a tree trunk next to the car. The bounding code saw that: after
+0.6 s without progress it drops the bound "and lets the direct push's wall-follow handle it next frame". But next
+frame, with no bound cover, it picks one again: the same cover, by the same rule. So the direct push never ran, and
+he wedged on the same tree for the rest of the round. His firing is part of the bounding cycle too, so he went quiet.
+
+A wedged bound now rests bounding for 1.5 s. The direct push runs in that time, and its wall-follow sidesteps the
+tree. Once he's clear, he goes back to bounding as before.
+
+### Verified
+- `tests/night-prowl.test.mjs` (new) walks an untaggable player from spawn toward (5, −2), stopping within 14 m of
+  Seth, as the critic did, then plays 60 s. Three runs on v1.99: Seth's longest stand-still in `advancing` is 0.6 s;
+  he walks 91–101 m and fires 3–25 times. On the v1.97 build: 53.3 s wedged at (−5.3, −10.6), 12.9 m walked,
+  one shot.
+- `npm test`: 12 of 13 on the first pass; the 13th, the new night-prowl suite, lost its browser while booting
+  (`Target page, context or browser has been closed` in `g.bedroom`, before any test ran) and passed on its re-run.
+
+### Still open
+- The tagger version of this (Marcus on a tree in Infection, v1.98's Still open) is a different code path, still
+  open under Found in play.
