@@ -4811,3 +4811,35 @@ live, so a BB landing after the result is up changes nothing.
 - Design, not a bug: when the last kill and your own tag-out land within 600 ms, you now lose. The BB was
   already in flight and the round was still on, which fits the rules, but Michael may prefer that the last kill
   wins.
+
+---
+
+## v1.91 — Lasers checked: none to the sky
+
+Backlog C.1: confirm the enemy laser-to-sky bug is fixed on Bunratty with living kids after v1.83–v1.85. The critic
+judged it fixed from a one-off script (538 samples, 2026-09-28). This run turns that check into a standing test,
+so a later change to the kid rig or the aim code can't bring it back unseen. No game code changed. The version
+is bumped only to keep one version per backlog item.
+
+`tests/laser.test.mjs` plays Bunratty Night Lane and Night 2v2 for 90 s each with the player unkillable. It samples
+every visible kid beam every 15 steps, reading the emitter and dot world positions, and fails if:
+- a dot ends above the player's head, or more than 0.5 m above its own emitter;
+- a beam longer than 3 m is pitched up more than 30°;
+- a beam runs more than 1 m past the player.
+
+Two lessons for the harness, both in the tests now. Making the player unkillable with
+`Game.player.maxHits = 1e9` hangs the page on the first hit, because `updateHealthHud` builds one DOM pip per
+max hit. The tests drop BB hits on the player instead, with a wrapped `applyBBHit`. The v1.89 walk-anim test
+used the maxHits trick too and is switched over. And `g.bedroom()`'s click on ENTER MIKE'S ROOM timed out at 30 s
+twice this run, out of about fifteen boots. A rerun passed both times.
+
+### Verified
+- Night Lane: 360 beam samples. None above the head, none steep, none overshooting. Steepest 21.4°, which was
+  Ryan, a 1.58 m beam from a kid crouched near the player. Longest 40.7 m.
+- Night 2v2: 222 samples, all clean. Steepest 10°.
+- `npm test`: 6/6 suites green, no page errors.
+
+### Still open
+- How the beams look on a real screen, which headless can't judge.
+- The occasional 30 s time-out on the title click, which is a harness flake to watch. If it recurs, give
+  `g.bedroom()` a retry or a longer wait.
