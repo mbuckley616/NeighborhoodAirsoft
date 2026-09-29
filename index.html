@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.92</div>
+  <div class="version">v1.93</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19074,6 +19074,38 @@ function spawnEnemyBB(enemy, targetPos) {
     if (wantY > muzzlePos.y) {
       muzzlePos.y = wantY;
       enemy._firingOverCover = 0.45;                // seconds the over-cover lift holds
+    }
+  }
+  // v1.93: CLEAR LINE. The v1.77 lift only knows the cover list and measures each
+  // piece from its centre, so kids still put ~a quarter of their BBs into a fence,
+  // a wall or the near end of a car within 3 m (tests/cover-fire). Cast the shot's
+  // first 3 m (or up to just short of the target) against every obstacle; if it's
+  // blocked, raise the muzzle in 10 cm steps up to the same +0.7 m cap until the
+  // line clears. If nothing clears it (a house wall, a tall fence), the kid holds
+  // fire: no BB, no sound. It's the same outcome for the player, minus a BB in the wall.
+  {
+    const obs = Game.player && Game.player.obstacles;
+    if (obs && obs.length) {
+      const baseY = enemy.pos.y + baseMuzzleY * sY;
+      const capY = baseY + 0.7;
+      const tdx = targetPos.x - muzzlePos.x, tdz = targetPos.z - muzzlePos.z;
+      const flat = Math.hypot(tdx, tdz);
+      const reach = Math.min(3.0, flat - 0.3);
+      if (reach > 0.2) {
+        let y = muzzlePos.y, clear = false;
+        for (; y <= capY + 1e-6; y += 0.1) {
+          const dx = tdx, dy = targetPos.y - y, dz = tdz;
+          const dl = Math.hypot(dx, dy, dz) || 1;
+          // reach is a horizontal distance; convert to distance along the ray
+          const rayReach = reach * dl / (flat || 1);
+          if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
+        }
+        if (!clear) return;                          // can't see past it: hold fire
+        if (y > muzzlePos.y + 1e-6) {
+          muzzlePos.y = y;
+          enemy._firingOverCover = 0.45;
+        }
+      }
     }
   }
   // v1.78: arm the aim-hold so the two-handed shouldered/forward hold persists

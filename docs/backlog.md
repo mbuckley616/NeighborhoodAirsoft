@@ -13,10 +13,10 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    normal, not the centre sample (devlog v1.78–v1.85).~~ — done, v1.87
 2. ~~Walk-anim intensity uses last-frame displacement: an anti-wedge teleport may pop a one-frame sprint swing.
    Clamp it when a teleport happens (v1.78).~~ — done, v1.89
-3. Kids fire into obstacles right in front of them: about a quarter of enemy BBs hit something within 3 m, before
+3. ~~Kids fire into obstacles right in front of them: about a quarter of enemy BBs hit something within 3 m, before
    the target (v1.92, `tests/cover-fire.test.mjs`). The v1.77 lift reads only `Game.scenario.cover`, not fences,
    walls or houses, and measures cover from its centre. Check the shot's first 3 m against every obstacle and lift
-   over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.
+   over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.~~ — done, v1.93 (0.4–2.2% now)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)

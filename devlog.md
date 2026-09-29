@@ -4892,3 +4892,46 @@ before firing, or a lift that reads every obstacle), not a one-line fault.
   `Game.player.obstacles` for the first 3 m. If it's blocked, lift over the blocker's top, as now but for any
   obstacle; if the lift would pass the 0.7 m cap, hold fire and reposition. Measure with this test (target: under
   3% of shots into cover).
+
+---
+
+## v1.93 — Kids look before they shoot
+
+Backlog B.3, filed by v1.92's measurement: about a quarter of enemy BBs hit an obstacle within 3 m, before the
+target. v1.77's over-cover lift read only the cover list (not fences, walls or fort sides), and measured each
+piece from its centre (missing the near end of a car).
+
+`spawnEnemyBB` now checks the line it's about to fire. It casts from the muzzle toward the target against every
+map obstacle, over the first 3 m (or up to 0.3 m short of the target, if closer). If the line is blocked, it
+raises the muzzle in 10 cm steps up to the same +0.7 m cap until the line clears, and sets the same over-cover
+pose flag as v1.77. If nothing within the cap clears it, the kid holds fire that trigger pull: no BB, no shot
+sound. Typically that's a kid tucked right behind something taller than a lean-over, like the 1.1 m blocks on the
+Hollow slope, which stand ~1.8 m above a kid downhill of them. For the player the result is the same (that BB
+was going into the wall anyway), minus the BB thudding into it. The v1.77 lift still runs first; the new check
+starts from whatever height it chose.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/cover-fire.test.mjs` is now a gate: under 5% of enemy BBs may hit an obstacle within 3 m, and under 25% of
+  trigger pulls may be held. The same four 60 s matches, three runs:
+
+  | | shots | hit an obstacle within 3 m | trigger pulls held |
+  |---|---|---|---|
+  | v1.92, run 1 | 563 | 148 (26%) | 0 |
+  | v1.92, run 2 | 631 | 150 (24%) | 0 |
+  | v1.93, run 1 | 726 | 16 (2.2%) | not counted yet |
+  | v1.93, run 2 | 582 | 11 (1.9%) | 71 of 598 |
+  | v1.93, run 3 (`npm test`) | 742 | 3 (0.4%) | 18 of 710 |
+
+  What still hits is aim spread, which the check doesn't model: it clears the aimed line, and spread moves the
+  BB off it. Most held pulls were Hollow 3v3 in run 2 (62 of 285), with Sean and Seth crouched 0.4 m behind the
+  tall slope blocks.
+- `npm test`: 7/7 suites green, no page errors.
+
+### Still open
+- Eyes on it: a kid behind tall cover now goes quiet instead of plinking the wall. If that reads as a frozen kid
+  (compare the critic's Night Prowl Seth), the next step is AI, not aim: a held kid should peek or reposition.
+  That's a design call if it comes up.
+- Kids lift up to 0.7 m more often now (131 lifted shots of 582, against ~50 of 563 before). The v1.77 pose shows a
+  shouldered, over-the-top hold for those, but a 0.7 m lift is more than that pose's 0.34 m visual raise. Worth a
+  look to see whether BBs appear to leave from above the gun.

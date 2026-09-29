@@ -1,11 +1,12 @@
-// Backlog C.2 (v1.77): a kid behind cover lifts its BB over the lip, but only for cover within 1.6 m
-// ahead. Does a kid 1.6–3 m back still fire into its own cover? Plays cover-heavy matches with the
-// player unkillable and, for every enemy BB, casts its first 4 m against the map's obstacles.
+// Backlog C.2 / B.3 (v1.92, v1.93): kids shouldn't fire into the obstacle in front of them. Plays
+// cover-heavy matches with the player unkillable and, for every enemy BB, casts its first 4 m against
+// the map's obstacles. v1.92 measured ~26% of shots buried within 3 m; v1.93's clear-line check lifts
+// the muzzle over whatever blocks the line, or holds fire.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 const IDS = ['bunratty_team_2v2', 'winnmark_defend_culdesac', 'hollow_skirmish_3v3', 'bunratty_hold_the_fort'];
-const all = { shots: 0, lifted: 0, near: 0, mid: 0, far: 0, why: {} };
+const all = { held: 0, calls: 0, shots: 0, lifted: 0, near: 0, mid: 0, far: 0, why: {} };
 for (const id of IDS) {
   await g.scenario(id);
   const r = await page.evaluate(() => {
@@ -14,10 +15,14 @@ for (const id of IDS) {
     const mk = window.__origMake = window.__origMake || makeBB;
     const shots = [];
     window.makeBB = function (pos, vel, owner, enemyRef) {
+      if (owner === 'enemy' && enemyRef) made++;
       if (owner === 'enemy' && enemyRef) shots.push({ p: pos.clone(), v: vel.clone(), e: enemyRef, lifted: (enemyRef._firingOverCover || 0) >= 0.449 });
       return mk.apply(this, arguments);
     };
-    const s = { shots: 0, lifted: 0, near: 0, mid: 0, far: 0, midKids: {}, examples: [] };
+    const sp = window.__origSpawn = window.__origSpawn || spawnEnemyBB;
+    let calls = 0, held = 0, made = 0;
+    window.spawnEnemyBB = function () { calls++; const m0 = made; const r = sp.apply(this, arguments); if (made === m0) held++; return r; };
+    const s = { calls: 0, shots: 0, lifted: 0, near: 0, mid: 0, far: 0, midKids: {}, examples: [] };
     for (let step = 0; step < 3600 && Game.mode === 'scenario'; step++) {
       stepGame(1 / 60);
       while (shots.length) {
@@ -51,17 +56,21 @@ for (const id of IDS) {
         else s.far++;
       }
     }
-    window.makeBB = mk; window.applyBBHit = hit;
+    window.makeBB = mk; window.applyBBHit = hit; window.spawnEnemyBB = sp;
+    s.calls = calls; s.held = held;
     return s;
   });
   console.log(`  ${id}: ${JSON.stringify(r)}`);
-  for (const k of ['shots', 'lifted', 'near', 'mid', 'far']) all[k] += r[k];
+  for (const k of ['held', 'calls', 'shots', 'lifted', 'near', 'mid', 'far']) all[k] += r[k];
   for (const [k, n] of Object.entries(r.why || {})) all.why[k] = (all.why[k] || 0) + n;
   if (await g.mode() === 'scenario') await page.evaluate(() => endScenario('forfeit'));
   await page.evaluate(() => enterBedroom()); await g.spin(5);
 }
 check('enemy shots sampled', all.shots > 100, all);
-// Reported, not asserted: how many shots bury in cover inside 1.6 m (the lift's reach) vs 1.6–3 m back.
 console.log('  into-cover shots: <1.6 m ' + all.near + ', 1.6–3 m ' + all.mid + ', 3–4 m ' + all.far + ' of ' + all.shots + '; causes ' + JSON.stringify(all.why));
+const within3 = (all.near + all.mid) / all.shots;
+check('under 5% of enemy shots hit an obstacle within 3 m', within3 < 0.05, { pct: +(within3 * 100).toFixed(1) });
+// shotguns fire several pellets a call, so compare trigger pulls with pulls that made any BB
+check('kids still shoot (under 25% of trigger pulls held)', all.held / Math.max(1, all.calls) < 0.25, { calls: all.calls, held: all.held });
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
