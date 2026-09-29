@@ -4672,3 +4672,438 @@ tests don't need the CDN.
 ### Still open
 - Nothing in play changed; a quick playtest of v1.86 should feel exactly like v1.85.
 - Cars sinking into the ground (next, now backlog B.1).
+
+---
+
+## v1.87 — Cars sit on their tyres
+
+Backlog B.1: parked cars sink into the ground on slopes (the critic measured Bunratty tyres buried 10–55 cm). A new
+headless test measured every tyre on the two maps with cars (the Hollow has none). For each wheel it samples the
+tread circle in world space against the map's `groundY`. Before the fix, 134 of 144 Winnmark tyres and 40 of 48
+Bunratty tyres were buried, as deep as 21 cm and 59 cm, and a few Bunratty tyres floated 8 cm.
+
+There were two faults. `sinkObs` drops every prop to the lowest ground under its footprint box. That's right for a
+flat-bottomed bin, but a car has already been pitched onto the grade about its centre, so the whole car went down by
+the full drop across its length. The first fix alone (seat on the tread points instead) stopped the burying but left
+tyres hovering up to 56 cm. That exposed the second fault: `addCar`'s tilt. It took one finite-difference normal at
+the car's centre, which misfits on curved ground like the Bunratty bulb dimple, and its roll sign was inverted
+(`rotation.x > 0` lowers local +Z, so a car on a cross-slope leaned into the hill). Flipping only the roll sign back
+in the fixed code puts the hover back at 25 cm and 56 cm, which confirms it.
+
+The fix is a new `carSeatY(obs, groundY)`, called from all three map builders' `sinkObs` when the obstacle is a car
+(`_wheelContacts`, which `addCar` now records: the lower tread arc of each wheel, both edges). It re-fits pitch and
+roll to the ground under the four wheel centres (the least-squares plane through them), then returns the height at
+which the most demanding tread point just touches the ground. Yaw is untouched, so the oriented collision boxes are
+unchanged in plan. Their base now starts where the car actually sits, up to ~0.5 m higher on the downhill cars than
+before. `addCar`'s own roll sign is corrected too, for any future caller that skips `sinkObs`.
+
+Housekeeping: CLAUDE.md says `index.html` has CRLF endings, but git and the working tree both have LF. The edits
+match the file (LF).
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/cars.test.mjs`, 4 builds of each map (car cover is random): Winnmark 34 cars / 136 tyres, gap 0.000–0.005 m;
+  Bunratty 20 cars / 80 tyres, gap 0.000–0.016 m (worst is in the bulb dimple at (35, −1.5)). None buried, none over
+  3 cm. Car bellies clear the ground by at least 0.27 m.
+- `npm test`: 2/2 suites green, no page errors.
+
+### Still open
+- Eyes on it: cars on the Bunratty lane and in the bulb should now read as parked on the hill. On the steepest
+  stretch the tilt is bigger than before (the old roll leaned the wrong way), so check it doesn't look too steep.
+- Kids using a downhill car as cover now have its real height (the collision box moved up with the car). Worth
+  a glance that peeking over those cars still looks right.
+
+---
+
+## v1.88 — The front door goes outside
+
+Backlog A.1, Michael's answer A. The one itch.io complaint on record says new players "cant go outside". They spawn
+at the south end of the hall with their back to the suite's entry door, which was scenery: no prompt, and walking
+into it just fills the screen with paint. The way out was the MAP table in the bedroom, which nothing points to. At
+spawn the nearest prompt was "Open the workbench".
+
+The entry door is now an interactable (`type: 'front_door'`) with the prompt "Go outside", a floating OUTSIDE chip
+with a new door-and-arrow icon, and `openMap()` as its action. The map table is unchanged, so there are two ways to
+the map. The trigger point sits 0.3 m inside the door, so at spawn the door is the nearest interactable and "Go
+outside" is the first prompt a new player sees. The hall closet keeps its prompt when you step up to it.
+
+The map fix, from the same answer: each pin was an absolutely placed box as wide as its label, and the Battleground
+pin (drawn last, so on top) covered the right half of the Winnmark label. Measured at 1280×720, a click on the
+centre of "Winnmark Ct · Horseshoe Bend" landed on the Battleground pin, which on a new save is locked. Pins now
+take clicks only on their marker and label (`pointer-events: none` on the pin box). An open pin also sits above a
+locked one (`z-index` 2 over 1), so where they still overlap, the pin you can actually play wins.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/front-door.test.mjs` (new): at spawn (0, 4.4) the focused interactable is the front door, the prompt
+  reads "Go outside" and the chip reads Outside. Before the change, the same spot focused the hall closet. From
+  the top of the hall facing south, the chip is on screen at (592, 155). E at spawn gives `Game.mode === 'map'`,
+  and closing the map returns to the bedroom. The hall closet still focuses from beside it.
+- The same test clicks every pin's label and marker, with positions read fresh before each click, at 1280×720,
+  1920×1080 and 1024×640. The Winnmark label opens Winnmark, the Bunratty label opens the locked Bunratty, and the
+  Battleground marker opens the locked Battleground, at all three sizes.
+- `npm test`: 3/3 suites green, no page errors.
+
+### Still open
+- Eyes on it: whether a first-timer turns round and reads the OUTSIDE chip. At spawn it's behind you, but the
+  prompt shows at once. Standing right under the door, the chip is above the view; from the hall it's in plain sight.
+- The Battleground's marker and the end of the Winnmark label are still close on the map (a few px at 1280 wide).
+  Clicks now resolve correctly, but moving the pins apart would be a design change to the map drawing, so it's
+  left alone.
+
+---
+
+## v1.89 — A teleport isn't a stride
+
+Backlog B.2. The kids' walk anim (v1.78) scales its leg swing by how far the kid moved since the last frame, read
+from the footstep tracker. When a kid is moved in one frame rather than walked (the retreat anti-wedge sends a
+stuck kid straight home), that jump read as a full-speed stride. Intensity eased up by its per-frame maximum, the
+gait phase stepped, and the footstep counter overflowed and played a step at the spot the kid had just left.
+
+The footstep tracker now treats any jump bigger than `max(0.3 m, 15 m/s × dt)` as a teleport and counts it as no
+movement. That is 18 m/s at 60 fps; the fastest kid measured in normal play moved 10.3 m/s. The anim and the
+footsteps both read the clamped value. The kid also records `_animSpeed`, the speed the anim saw, so a test can
+read it.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/walk-anim.test.mjs` (new), Bunratty FFA with the player unkillable. 600 steps of normal play: the anim
+  sees up to 10.3 m/s over 3600 kid-frames, so walking still animates. Then each of the 6 kids is moved 25 m in
+  one frame. After the change, walk intensity changes by −0.071 to 0, and no footstep fires.
+  The same test on v1.88: the four kids standing still (hiding, shooting, peeking) got +0.10 intensity from the
+  teleport, and all four played a footstep. The two advancing kids showed nothing, because their move for that
+  frame overwrote the jump.
+- `npm test`: 4/4 suites green, no page errors.
+
+### Still open
+- The retreat teleport happens off-screen by design, so a player would rarely have seen this; nothing to eyeball.
+
+---
+
+## v1.90 — A round ends once
+
+Found in play (critic, v1.86, filed twice): the result could flip from YOU'RE OUT to YOU GOT THEM and pay out both.
+Every win is delayed on purpose so the last hit lands on screen first: 600 ms after the last kill, 400 ms after the
+survive timer runs out, 200 ms after a tagger reaches you in Infection. None of those delayed calls checked
+whether the round was still on. A BB already in the air inside that window tags the player out, `endScenario('lose')`
+runs at once, and then the delayed win runs anyway. It paid the win too and marked the scenario completed, which
+can unlock the next one off a loss.
+
+All six delayed endings (kill_all, survive_timer's early finish, last_team_standing, the timer win, the Infection
+tag, the tutorial's no-target close) now go through one helper, `endScenarioLater(outcome, ms)`. It remembers the
+round it was scheduled in and fires only if that round is still being played. The first ending stands. For the
+critic's cases that means the in-flight BB's YOU'RE OUT holds. `applyBBHit` also ends the round only while it's
+live, so a BB landing after the result is up changes nothing.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/one-ending.test.mjs` (new) sets up each race the critic found and counts `endScenario` calls and cash paid.
+  The delays are the game's own `setTimeout`s, so this one test waits wall-clock time (1.2 s) for them. On v1.89:
+  - 1v1: `["lose","win"]`, $4 paid, screen says YOU GOT THEM.
+  - Infection, timer and tag together: `["infected","win"]`, $10 paid, MOM CALLED THEM IN!.
+  - Hollow 3v3, wipe then tagged out: `["lose","win"]`, $8 paid.
+
+  On v1.90 each case has one ending: lose $1, infected $2, lose $2. A plain last kill still wins after its delay
+  ($3). A delayed win from a forfeited round doesn't end the next round.
+- `npm test`: 5/5 suites green, no page errors.
+
+### Still open
+- Design, not a bug: when the last kill and your own tag-out land within 600 ms, you now lose. The BB was
+  already in flight and the round was still on, which fits the rules, but Michael may prefer that the last kill
+  wins.
+
+---
+
+## v1.91 — Lasers checked: none to the sky
+
+Backlog C.1: confirm the enemy laser-to-sky bug is fixed on Bunratty with living kids after v1.83–v1.85. The critic
+judged it fixed from a one-off script (538 samples, 2026-09-28). This run turns that check into a standing test,
+so a later change to the kid rig or the aim code can't bring it back unseen. No game code changed. The version
+is bumped only to keep one version per backlog item.
+
+`tests/laser.test.mjs` plays Bunratty Night Lane and Night 2v2 for 90 s each with the player unkillable. It samples
+every visible kid beam every 15 steps, reading the emitter and dot world positions, and fails if:
+- a dot ends above the player's head, or more than 0.5 m above its own emitter;
+- a beam longer than 3 m is pitched up more than 30°;
+- a beam runs more than 1 m past the player.
+
+Two lessons for the harness, both in the tests now. Making the player unkillable with
+`Game.player.maxHits = 1e9` hangs the page on the first hit, because `updateHealthHud` builds one DOM pip per
+max hit. The tests drop BB hits on the player instead, with a wrapped `applyBBHit`. The v1.89 walk-anim test
+used the maxHits trick too and is switched over. And `g.bedroom()`'s click on ENTER MIKE'S ROOM timed out at 30 s
+twice this run, out of about fifteen boots. A rerun passed both times.
+
+### Verified
+- Night Lane: 360 beam samples. None above the head, none steep, none overshooting. Steepest 21.4°, which was
+  Ryan, a 1.58 m beam from a kid crouched near the player. Longest 40.7 m.
+- Night 2v2: 222 samples, all clean. Steepest 10°.
+- `npm test`: 6/6 suites green, no page errors.
+
+### Still open
+- How the beams look on a real screen, which headless can't judge.
+- The occasional 30 s time-out on the title click, which is a harness flake to watch. If it recurs, give
+  `g.bedroom()` a retry or a longer wait.
+
+---
+
+## v1.92 — Checked: kids still fire into cover, and not mostly for the reason asked
+
+Backlog C.2 asked whether v1.77's over-cover lift is long enough. It lifts a kid's BB over cover only when the cover
+is within 1.6 m ahead. Does a kid standing ~2 m back still fire into its own cover? No game code changed. The
+version is bumped to keep one version per backlog item.
+
+`tests/cover-fire.test.mjs` (new) plays four cover-heavy matches for 60 s each with the player unkillable: Bunratty
+2v2, Winnmark cul-de-sac defend, Hollow 3v3 and Bunratty Hold the Fort. It records every enemy BB at spawn and
+casts its first 4 m against the map's obstacles. A shot counts as into cover if it hits an obstacle before
+4 m and before its target. The test also names the obstacle it hits and why the lift missed it.
+
+The answer to the question is yes, about 7% of enemy shots. The bigger share, about 18%, bury in something
+inside 1.6 m, where the lift is supposed to work. Two runs:
+
+| | run 1 | run 2 |
+|---|---|---|
+| shots | 563 | 631 |
+| into cover inside 1.6 m | 106 | 111 |
+| into cover at 1.6–3 m | 42 | 39 |
+| into cover at 3–4 m | 6 | 3 |
+
+The causes, from the test's classification:
+- **Not cover at all** (about half the near misses: 51, then 63). The obstacle isn't in `Game.scenario.cover`:
+  fences, house walls and fort walls are collision obstacles only, and `coverInFrontTop` reads only the cover list.
+- **Measured from the centre.** `coverInFrontTop` measures the cover's *centre* along the bearing. A car's
+  centre can be 2 m ahead while its near side is 0.5 m ahead, and the lift misses it. That gave 12 and 8 near,
+  12 and 8 mid.
+- **Unexplained** (43 and 40 near, 13 and 26 mid). Cover in the list, centre in reach, bearing across it, yet no
+  lift. Likely candidates: the check runs from the kid's centre while the muzzle sits 0.25 m to the gun side;
+  aim spread; or a cover top already below the muzzle but crossed by a downhill shot. Not pinned down this run.
+
+Mostly it's one kid, Sean. In Bunratty 2v2 he fired 21 of 23 mid-range buried shots, "hiding" 1.7–1.8 m behind
+something 14 m from his target.
+
+Filed as backlog B.3 rather than fixed here. It's a change to how the AI decides to shoot (a clear-line check
+before firing, or a lift that reads every obstacle), not a one-line fault.
+
+### Verified
+- `npm test`: 7/7 suites green, no page errors. The cover-fire suite prints its numbers and asserts only that it
+  sampled at least 100 shots. It's a measuring stick for B.3, not a gate.
+
+### Still open
+- B.3 (new): the fix. Suggested shape, for whoever picks it up: in `spawnEnemyBB`, cast the shot against
+  `Game.player.obstacles` for the first 3 m. If it's blocked, lift over the blocker's top, as now but for any
+  obstacle; if the lift would pass the 0.7 m cap, hold fire and reposition. Measure with this test (target: under
+  3% of shots into cover).
+
+---
+
+## v1.90 fix-up — a forfeited round's delayed win no longer ends the next round
+
+CI went red on v1.90: `one-ending.test.mjs` case 5 timed out waiting for the next round to start. v1.90's
+`endScenarioLater` told rounds apart with `Game.scenario === sc`, but `Game.scenario` is one object reused every
+round, so the check was always true. A delayed win from a forfeited round could still end the next round. It only
+passed locally because the next scenario takes longer than 600 ms to load here, so the timer fired during the intro
+and the mode guard caught it. CI loads faster, so the timer fired after BEGIN and ended the new round. The fix: a
+round counter, `Game.roundSeq`, bumped in `startScenario` and checked in `endScenarioLater`. The test's case 5 now
+captures the old round's 600 ms timer and fires it by hand once the new round is on, so it no longer depends on
+load speed. No version bump: v1.90 hasn't shipped.
+
+### Verified
+- The rewritten case 5 fails on v1.90 as pushed (`{"timers":1,"mode":"result"}`) and passes with the fix
+  (`"mode":"scenario"`). `npm test`: 5/5 suites green.
+
+Two more CI flakes, both from tests measuring timing or the wrong target:
+- `one-ending.test.mjs` case 2 (Infection) failed once on CI with no ending at all (`ends: []`). All four race
+  cases waited 1200 ms of wall-clock time for the game's own `setTimeout`s. `race()` now captures the delayed
+  `endScenario` timers the setup schedules and fires them by hand in delay order, and reports them (`late`).
+- `laser.test.mjs` (v1.91) failed 1 run in 3 locally: "beam running past its target", 3 of 360 samples on
+  Bunratty 2v2. It measured every beam against the distance to the *player*, but in a team match kids also laser
+  the player's ally, who can be farther away. No game change: the beam is already clamped to its aim point
+  + 0.15 m. The other builder session fixed the same test at the same time (1c8ed91, measuring against
+  `e._targetRef`); on merging, its version is kept.
+
+### Verified (flakes)
+- Without the `endScenarioLater` guard, cases 1–4 fail (double endings, double pay), so the tests still catch the bug.
+- Laser, measured against each kid's own aim point: 4 runs, 0 overshoots, with 65–235 samples per run aimed at
+  the ally in the 2v2. With the aim clamp removed, both maps fail (301 and 13 overshoots).
+- `npm test` 7/7, three runs in a row.
+
+### Still open
+- Nothing new.
+
+---
+
+## v1.93 — Kids look before they shoot
+
+Backlog B.3, filed by v1.92's measurement: about a quarter of enemy BBs hit an obstacle within 3 m, before the
+target. v1.77's over-cover lift read only the cover list (not fences, walls or fort sides), and measured each
+piece from its centre (missing the near end of a car).
+
+`spawnEnemyBB` now checks the line it's about to fire. It casts from the muzzle toward the target against every
+map obstacle, over the first 3 m (or up to 0.3 m short of the target, if closer). If the line is blocked, it
+raises the muzzle in 10 cm steps up to the same +0.7 m cap until the line clears, and sets the same over-cover
+pose flag as v1.77. If nothing within the cap clears it, the kid holds fire that trigger pull: no BB, no shot
+sound. Typically that's a kid tucked right behind something taller than a lean-over, like the 1.1 m blocks on the
+Hollow slope, which stand ~1.8 m above a kid downhill of them. For the player the result is the same (that BB
+was going into the wall anyway), minus the BB thudding into it. The v1.77 lift still runs first; the new check
+starts from whatever height it chose.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/cover-fire.test.mjs` is now a gate: under 5% of enemy BBs may hit an obstacle within 3 m, and under 25% of
+  trigger pulls may be held. The same four 60 s matches, three runs:
+
+  | | shots | hit an obstacle within 3 m | trigger pulls held |
+  |---|---|---|---|
+  | v1.92, run 1 | 563 | 148 (26%) | 0 |
+  | v1.92, run 2 | 631 | 150 (24%) | 0 |
+  | v1.93, run 1 | 726 | 16 (2.2%) | not counted yet |
+  | v1.93, run 2 | 582 | 11 (1.9%) | 71 of 598 |
+  | v1.93, run 3 (`npm test`) | 742 | 3 (0.4%) | 18 of 710 |
+
+  What still hits is aim spread, which the check doesn't model: it clears the aimed line, and spread moves the
+  BB off it. Most held pulls were Hollow 3v3 in run 2 (62 of 285), with Sean and Seth crouched 0.4 m behind the
+  tall slope blocks.
+- Merged the v1.90 fix-up (another session's `Game.roundSeq` fix, below v1.92) into this branch. One test fix
+  came with it: v1.91's laser test measured overshoot against the player, but in Night 2v2 kids also aim at the
+  player's teammate. A beam 19.7 m long toward a teammate failed it. The check now uses each kid's own
+  `_targetRef`.
+- Harness: `g.bedroom()` now clicks ENTER MIKE'S ROOM from inside the page. v1.91 noted Playwright's click
+  sometimes hanging for its full 30 s; with seven suites that crashed two in one run here. Six smoke runs in a
+  row and the full suite are clean since.
+- `npm test`: 7/7 suites green, no page errors.
+
+### Still open
+- Eyes on it: a kid behind tall cover now goes quiet instead of plinking the wall. If that reads as a frozen kid
+  (compare the critic's Night Prowl Seth), the next step is AI, not aim: a held kid should peek or reposition.
+  That's a design call if it comes up.
+- Kids lift up to 0.7 m more often now (131 lifted shots of 582, against ~50 of 563 before). The v1.77 pose shows a
+  shouldered, over-the-top hold for those, but a 0.7 m lift is more than that pose's 0.34 m visual raise. Worth a
+  look to see whether BBs appear to leave from above the gun.
+
+---
+
+## v1.94 — The burst hold, checked, and a v1.93 slip fixed
+
+Backlog C.3 asks whether the ADS-tall hold stays steady through an auto burst on the all-auto night map. The critic
+judged it once (2026-09-29): 68 of 71 over-cover strings kept their lift. This run makes that a standing test, and
+the test caught a regression from v1.93 on its first pass.
+
+`tests/burst-pose.test.mjs` (new) plays Full-Auto Mayhem (Night) for 90 s with the player unkillable. A burst is
+a run of trigger pulls from one kid no more than 0.35 s apart. For every string of 3+ pulls it follows, frame by
+frame, the kid's shouldered-hold amount (`_aimAmt`) and its over-cover lift (`_firingOverCover`).
+
+On the v1.93 build the hold eased back out in the middle of 32 of 116 bursts: 102 of 669 frames were falling,
+and 3 of 27 over-cover strings lost the lift partway. The cause was v1.93's hold-fire. A kid that can't see past
+its cover returns from `spawnEnemyBB` before the line that re-arms `_aimHold`. So a kid pulling the trigger with
+no clear line let its shouldered hold ease back out, mid-burst, while still "firing". The re-arm now comes
+before the clear-line check, so a kid waiting for a line keeps the gun up. That is what a kid looking for the
+shot would do anyway.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/burst-pose.test.mjs`, after the fix, two runs:
+  - Run 1: 175 bursts, 0 falling frames in 1154. 64 of 64 over-cover strings held the lift throughout.
+  - Run 2 (`npm test`): 0 falling frames in 777. 34 of 34 over-cover strings held.
+- The hold still eases *in* over the first ~11 frames of a string that starts from rest (it did before; it's the
+  v1.78 ease). The test counts falling frames, not low ones, for that reason.
+- `npm test`: 8/8 suites green, no page errors.
+
+### Still open
+- Whether the pose reads as steady on a real screen: the numbers say it no longer dips.
+
+---
+
+## v1.95 — Hands on the grip, measured
+
+Backlog C.4 (from v1.80): at full aim with a small gun (pistol, MAC-10), the kids' hands sat ~4 cm off the grip,
+because the target was right at the arm's full extension. No game code changed. The version is bumped to keep
+one version per backlog item.
+
+`tests/grip.test.mjs` (new) poses one kid with every weapon (pistol, MAC-10, AK, MP5, UMP, shotgun, sniper, AR) at
+rest and at full aim, standing and crouched. In the kid's own frame, it measures the firing hand to the gun's
+grip, and the off hand to the point `setKidGunHold` sends it to.
+
+Small guns: 0.0 cm for both hands in every case. The v1.81 IK rework and pose trim left every small-gun target
+4.7 cm (standing) to 13 cm (crouched) inside the arm's 0.45 m reach, and the IK lands exactly inside reach. The
+~4 cm gap is gone.
+
+A new finding: the firing hand is on the grip for every gun (0.0 cm), but on the large guns the off hand sits 2.7
+to 3.5 cm short of its foregrip point. That's 2.7 cm for the MP5/UMP and 3.3–3.5 cm for the AK, shotgun, sniper
+and AR, in every pose. It's the same order as the old small-gun gap. It's filed as backlog C.5 for a look in play
+rather than changed: v1.80 placed that off-hand target deliberately at the edge of a comfortable cross-reach.
+
+### Verified
+- `npm test`: 9/9 suites green, no page errors. The grip suite gates small guns at ≤ 1 cm, firing hands at
+  ≤ 2 cm and off hands at ≤ 4 cm (today's level, so it catches a regression).
+
+### Still open
+- C.5: does a ~3 cm gap between the off hand and a rifle's handguard show on screen? If it does, pull the large-gun
+  aim point ~3 cm toward the off shoulder, or lengthen the off-hand reach.
+
+---
+
+## v1.96 — The result line reads right
+
+Found in play (critic, v1.86, three entries): the flavor line under the result had bad text.
+- **Doubled quotes** on every 1v1 win: `Sean flinches. ""Ow! Yeah, that's a hit.""`. Most characters' `flavor.hit`
+  lines are stored with their own quote marks, and the template adds a second pair.
+- **Plural verb for one name**: "Mitchell come walking out".
+- **Stray commas and double-joined lists**: "…Sean, and Ryan, regroup"; "Seth and Ryan, Devon, Sean, and
+  Mitchell take the fort"; "Ryan, Mitchell, regroup".
+- **Wrong verb number**: "…Nick, and Mitchell starts trudging home".
+- **Allies named with the other side**: team maps keep the player's allies in `Game.scenario.enemies`.
+
+`endScenario` now names only the other side's kids (team not the player's), and takes the primary kid and its
+flavor bank from that list too. Every multi-kid line uses one plural list, `allStr` ("Seth, Trey, and Devon sit
+on the curb"), instead of gluing the primary name onto the rest with its own punctuation. The timer-win line
+picks "starts" or "start" by how many trudge home, and the 1v1 hit line strips the stored quotes before adding
+its own.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/result-text.test.mjs` (new) ends eight scenarios four ways each (win, timer win, lose, forfeit) and prints
+  all 32 lines. The eight: Sean, Seth's house, Night Lane, Brothers, Hollow 3v3, South Fort defend, cul-de-sac
+  defend, Infection. None has a doubled quote, a comma before the verb or a twice-joined list, and none names
+  an ally. For example: `Sean flinches. "Ow! Yeah, that's a hit." — they're out.` /
+  `They got through. Seth, Ryan, Devon, Sean, and Mitchell take the fort.` / `…and Mitchell starts trudging home.`
+- `npm test`: 10/10 suites green.
+
+### Still open
+- Filed under Found in play: on one of three runs of this suite, 12 page errors
+  `Failed to execute 'connect' on 'AudioNode': Overload resolution failed` came up at once. That was after many
+  quick scenario entries with repeated result screens, and never in any other suite. The suite reports them rather
+  than failing, until they're run down.
+- In Infection, "the last one's out… come walking out" and "regroup near the road" were written for tag
+  battles and read oddly for a zombie round. Infection's own outcome (TAGGED!) is right; its win and lose lines
+  could use their own wording (a writing call, not a bug).
+
+---
+
+## v1.96 fix-up — a quick music restart no longer kills the new theme
+
+CI failed on the merged head with four page errors in `one-ending.test.mjs`: `Failed to execute 'connect' on
+'AudioNode'`. `stopMusic` fades the master gain and, 400 ms later, disconnects and nulls `Music.masterGain`. That
+means whatever gain is current when the timer fires. A `startMusic` inside those 400 ms makes a new master gain,
+and the stale timer killed that one instead. The theme stayed "playing" with no gain, its notes threw on
+`connect(null)`, and the music was silent. `startMusic` calls `stopMusic` itself on a theme switch, so any quick
+bedroom → scenario → bedroom (or a theme change) hits it. `one-ending` does that between its cases, so it surfaced
+there. The fix: `stopMusic` keeps a reference to the gain it faded, disconnects only that one, and nulls
+`Music.masterGain` only if it is still that gain. No version bump: this lands with v1.96, which hasn't shipped.
+
+The same CI run also failed `cover-fire` on one page error: `A user gesture is required to request Pointer Lock.`
+In CI's Chromium, `requestPointerLock()` returns a promise, and when there's no fresh user gesture (BEGIN clicked
+from script, or `startScenario` reached some other way) the promise is rejected. Nothing handled the rejection, so
+it became a page error. `requestPointerLock()` now catches it; the next click in the scene takes the lock, as before.
+The next CI run hit the other form of refusal in `result-text`: `Too many pointer lock requests in a short window
+of time`, which scenario after scenario in quick succession triggers. `requestPointerLock()` now also wraps the call
+in try/catch, so a refusal is handled whether it comes as a throw or a rejected promise.
+
+### Verified
+- New `tests/music.test.mjs`: stop + restart inside 400 ms, with the captured 400 ms timer fired by hand. On the old
+  code the new theme's gain is lost and `musicScheduler` throws the CI error. With the fix, the gain is kept and
+  nothing throws.
+- Smoke: a stubbed rejecting `requestPointerLock` raised the CI page error on the old code and raises none now. A
+  stubbed throwing one escaped `requestPointerLock()` before the try/catch and is caught now.
+- `npm test`: 11/11.
+
+### Still open
+- By ear: going bedroom → scenario → bedroom quickly should leave the bedroom theme playing.

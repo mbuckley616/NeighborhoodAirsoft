@@ -770,7 +770,14 @@
     transform: translate(-50%, -100%);
     cursor: pointer;
     text-align: center;
+    /* v1.88: only the marker and the label take clicks, not the pin's whole box
+       (the Battleground pin's box covered the Winnmark label), and an open pin
+       sits above a locked one where they still overlap. */
+    pointer-events: none;
+    z-index: 2;
   }
+  #worldMap .pin .marker, #worldMap .pin .label { pointer-events: auto; }
+  #worldMap .pin.locked { z-index: 1; }
   #worldMap .pin .marker {
     width: 28px; height: 28px;
     background: var(--ui-danger);
@@ -1807,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.86</div>
+  <div class="version">v1.96</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5847,9 +5854,14 @@ function stopMusic() {
     g.setValueAtTime(g.value, ctx.currentTime);
     g.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
     // Disconnect later
+    // v1.96 fix-up: only the gain faded out here. A startMusic inside the 400 ms (a theme
+    // switch, or bedroom -> scenario -> bedroom in quick succession) makes a new
+    // master gain, and this timer used to disconnect and null THAT one: the new
+    // theme went silent and its notes threw on connect(null).
+    const faded = Music.masterGain;
     setTimeout(() => {
-      try { Music.masterGain.disconnect(); } catch(e) {}
-      Music.masterGain = null;
+      try { faded.disconnect(); } catch(e) {}
+      if (Music.masterGain === faded) Music.masterGain = null;
     }, 400);
   }
   Music.playing = false;
@@ -7743,6 +7755,20 @@ function buildBedroomScene() {
     action: () => openWorkbench(),
   });
 
+  // v1.88: the hall's entry door goes outside (backlog A.1, Michael chose A). The one
+  // itch.io complaint was "cant go outside": the door you spawn with your back to was a
+  // wall with no prompt. It now opens the world map, same as the map table (which stays).
+  // Its trigger sits just inside the door, so at spawn it is the nearest interactable
+  // and "Go outside" is the first prompt a new player sees.
+  Game.interactables.push({
+    type: 'front_door',
+    box: new THREE.Box3().setFromObject(entryDoor),
+    pos: new THREE.Vector3(HALL_X, 1.0, hallSouthZ - 0.3),
+    prompt: 'Go outside',
+    label: 'Outside', icon: 'outside', labelY: 2.0,
+    action: () => openMap(),
+  });
+
   // Bathroom door → placeholder
   Game.interactables.push({
     type: 'bathroom',
@@ -8718,12 +8744,18 @@ function addCar(scene, x, z, opts = {}) {
   }
   // Wheels — 4 of them
   const wheelGeom = new THREE.CylinderGeometry(wheelR, wheelR, 0.22, 12);
+  const wheelContacts = [];   // v1.87: car-local tread points, for seating on a slope (carSeatY)
   for (const [wx, wz] of [[-1.2, -0.7], [-1.2, 0.7], [1.2, -0.7], [1.2, 0.7]]) {
     const wheel = new THREE.Mesh(wheelGeom, wheelMat);
     wheel.rotation.x = Math.PI / 2;
     wheel.position.set(wx, wheelR, wz * (width/2 + 0.05) / 0.7);
     wheel.castShadow = true;
     group.add(wheel);
+    // v1.87: the lower arc of the tread (±60° about the bottom), on both edges.
+    for (const t of [-0.11, 0.11]) for (let k = -4; k <= 4; k++) {
+      const a = k * Math.PI / 12;
+      wheelContacts.push({ x: wx + wheelR * Math.sin(a), y: wheelR - wheelR * Math.cos(a), z: wheel.position.z + t });
+    }
   }
 
   group.position.set(x, 0, z);
@@ -8751,7 +8783,7 @@ function addCar(scene, x, z, opts = {}) {
     const pitch = Math.atan2(lnx, ny);     // + when uphill is toward +X
     const roll  = Math.atan2(lnz, ny);
     group.rotation.order = 'YXZ';
-    group.rotation.x = -roll;              // lean with the cross-slope
+    group.rotation.x = roll;               // v1.87: was -roll, which leaned INTO the hill (rotation.x > 0 lowers +Z)
     group.rotation.z = -pitch;             // nose follows the grade
   }
   scene.add(group);
@@ -8773,7 +8805,40 @@ function addCar(scene, x, z, opts = {}) {
   // Primary return is the body (so sinkObs chaining + mesh-sink is unchanged);
   // the cabin rides along on `_stacked` and is collected by car callers.
   bodyObs._stacked = cabinObs;
+  bodyObs._wheelContacts = wheelContacts;   // v1.87: sinkObs seats a car by its tyres
   return bodyObs;
+}
+
+// v1.87: SEAT A CAR BY ITS TYRES. Two faults buried or floated cars on a slope:
+//  1. sinkObs dropped every prop to the lowest ground under its footprint box; a
+//     car already tilted onto the grade about its centre went down by the whole
+//     drop across its length (tyres buried 10-60cm on Bunratty's lane).
+//  2. addCar's tilt came from one finite-difference normal at the car's centre,
+//     which misfits on curved ground (the bulb dimple), and its roll sign was
+//     inverted: rotation.x > 0 LOWERS local +Z, so the car leaned into the hill.
+// Here, called from sinkObs: re-fit pitch and roll to the ground under the four
+// wheels (the least-squares plane through them), then return the group Y at which
+// the most demanding tread point just touches the ground. No tyre goes below the
+// ground; the others clear it only by the twist of the ground between them.
+const _carSeatV = new THREE.Vector3();
+function carSeatY(obs, groundY) {
+  const grp = obs.mesh;
+  const yaw = grp.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const px = grp.position.x, pz = grp.position.z;
+  const gAt = (lx, lz) => groundY(px + lx * cy + lz * sy, pz - lx * sy + lz * cy);
+  const WX = 1.2, WZ = 0.825;   // wheel centres, car-local (addCar: ±1.2, ±(width/2+0.05))
+  const fL = gAt(WX, -WZ), fR = gAt(WX, WZ), rL = gAt(-WX, -WZ), rR = gAt(-WX, WZ);
+  const slopeX = ((fL + fR) - (rL + rR)) / (4 * WX);   // rise per metre toward the nose
+  const slopeZ = ((fR + rR) - (fL + rL)) / (4 * WZ);   // rise per metre toward local +Z
+  grp.rotation.order = 'YXZ';
+  grp.rotation.z = Math.atan(slopeX);    // + raises the nose
+  grp.rotation.x = -Math.atan(slopeZ);   // - raises the +Z side
+  let y = -Infinity;
+  for (const p of obs._wheelContacts) {
+    _carSeatV.set(p.x, p.y, p.z).applyEuler(grp.rotation);
+    y = Math.max(y, groundY(px + _carSeatV.x, pz + _carSeatV.z) - _carSeatV.y);
+  }
+  return y;
 }
 
 // v1.54b: build an oriented-box obstacle ANCHORED to a mesh. Instead of baking
@@ -9699,6 +9764,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.
@@ -10845,6 +10911,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.
@@ -11757,6 +11824,7 @@ function buildHollowScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.
@@ -15668,6 +15736,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 
 function startScenario(built) {
   Game.mode = 'scenario';
+  Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -15894,13 +15963,17 @@ function endScenario(outcome) {
 
   // Pull flavor lines from the primary enemy's character entry (first enemy in
   // the list). For multi-enemy scenarios we use slightly more aggregate wording.
-  const primary = Game.scenario.enemies && Game.scenario.enemies[0];
+  // v1.96: only the OTHER side's kids are named. Team maps put the player's allies in
+  // the enemies list too, and naming them read as "…Sean, and Ryan, regroup".
+  const _pTeam = (typeof combatantTeam === 'function') ? combatantTeam(Game.player) : 'player';
+  const foes = (Game.scenario.enemies || []).filter(e => e.team !== 'player' && (e.team || 'enemy') !== _pTeam);
+  const primary = foes[0] || (Game.scenario.enemies && Game.scenario.enemies[0]);
   const flavorBank = primary?.character?.flavor || {};
   const primaryName = primary?.name || 'They';
-  const multi = (Game.scenario.enemies?.length || 0) > 1;
-  const otherNames = multi
-    ? Game.scenario.enemies.slice(1).map(e => e.name)
-    : [];
+  const multi = foes.length > 1;
+  const otherNames = multi ? foes.slice(1).map(e => e.name) : [];
+  // v1.96: flavor lines are stored with their own quote marks; the templates add them.
+  const unquote = str => String(str).replace(/^["\u201c](.*)["\u201d]$/s, '$1');
   // "Trey and Brooke" / "Sean, Nick, and Andrew" style oxford join
   function joinNames(list) {
     if (list.length === 0) return '';
@@ -15909,6 +15982,7 @@ function endScenario(outcome) {
     return list.slice(0, -1).join(', ') + ', and ' + list[list.length - 1];
   }
   const othersStr = joinNames(otherNames);
+  const allStr = joinNames(foes.length ? foes.map(e => e.name) : [primaryName]);   // v1.96: plural subject
 
   const card = document.getElementById('resultScreen');
   const outcomeEl = document.getElementById('outcomeText');
@@ -15923,23 +15997,23 @@ function endScenario(outcome) {
       outcomeEl.textContent = 'MOM CALLED THEM IN!';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Distant screen doors slam. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} starts trudging home. You held the line.`
+        ? `Distant screen doors slam. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} ${otherNames.length > 1 ? 'start' : 'starts'} trudging home. You held the line.`
         : `A distant screen door slams. ${primaryName} groans — "Aw, COME ON!" — and trudges home. You held the line.`;
     } else if (wasDefend) {
       // Defender kill-all win: you held the position
       outcomeEl.textContent = 'YOU HELD IT';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Last one's out. ${primaryName}${othersStr ? ' and ' + othersStr : ''} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
+        ? `Last one's out. ${allStr} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
         : `${primaryName}'s out. They sit on the curb, defeated. "Yeah okay, that was a good fort."`;
     } else {
       outcomeEl.textContent = 'YOU GOT THEM';
       outcomeEl.className = 'outcome win';
       if (multi) {
-        flavorEl.textContent = `The last one's out. ${othersStr ? othersStr + ' come walking out from behind cover. ' : ''}"Alright, alright — that was nuts."`;
+        flavorEl.textContent = `The last one's out. ${allStr} come walking out from behind cover. "Alright, alright — that was nuts."`;
       } else {
         flavorEl.textContent = flavorBank.hit
-          ? `${primaryName} flinches. "${flavorBank.hit}" — they're out.`
+          ? `${primaryName} flinches. "${unquote(flavorBank.hit)}" — they're out.`
           : `${primaryName} flinches and yells "AH, OKAY OKAY, you got me!" — they're out.`;
       }
     }
@@ -15947,7 +16021,7 @@ function endScenario(outcome) {
     outcomeEl.textContent = 'FORFEITED';
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = multi
-      ? `You called it. "I'm out — I gotta go." ${othersStr} and ${primaryName} drop their guns, half-disappointed.`
+      ? `You called it. "I'm out — I gotta go." ${allStr} drop their guns, half-disappointed.`
       : `You called it. "I'm out — gotta go get more BBs." ${primaryName} shrugs from behind cover.`;
   } else if (outcome === 'infected') {
     // v1.25 zombie mode loss — you got tagged.
@@ -15960,10 +16034,10 @@ function endScenario(outcome) {
     if (wasDefend) {
       // Lost a defend — they overran your position
       flavorEl.textContent = multi
-        ? `They got through. ${primaryName}${othersStr ? ' and ' + othersStr : ''} take the fort. "Our turn, dude."`
+        ? `They got through. ${allStr} take the fort. "Our turn, dude."`
         : `They got through. ${primaryName} takes the fort. "Our turn, dude."`;
     } else if (multi) {
-      flavorEl.textContent = `Too many angles, not enough cover. ${primaryName}${othersStr ? ', ' + othersStr + ',' : ''} regroup near the road. "Run it back?"`;
+      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup near the road. "Run it back?"`;
     } else {
       flavorEl.textContent = flavorBank.win
         ? flavorBank.win
@@ -16948,7 +17022,15 @@ function showPauseHint() {
 // POINTER LOCK
 // ---------------------------------------------------------------------
 function requestPointerLock() {
-  Game.renderer.domElement.requestPointerLock?.();
+  // v1.96 fix-up: newer Chromium returns a promise and rejects it when there's no fresh
+  // user gesture (e.g. startScenario reached from a script-driven BEGIN). The rejection
+  // was unhandled and surfaced as a page error; the next click in the scene locks anyway.
+  // It can also refuse at once ("Too many pointer lock requests in a short window"), as a throw
+  // or a rejection depending on the build, so both are handled.
+  try {
+    const p = Game.renderer.domElement.requestPointerLock?.();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  } catch (e) {}
 }
 function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
@@ -17726,6 +17808,8 @@ const BR_LABEL_ICONS = {
   workbench: '<svg viewBox="0 0 24 24" fill="none"><path d="M15.5 4.5a4 4 0 0 0-5 5L4 16l4 4 6.5-6.5a4 4 0 0 0 5-5l-2.8 2.8-2.2-.5-.5-2.2 2.5-2.6z" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/></svg>',
   // door — bathroom
   bathroom: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><circle cx="14.5" cy="12" r="1" fill="#f4e9d8"/></svg>',
+  // v1.88: door with an arrow out — the front door (goes outside to the map)
+  outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
@@ -19013,8 +19097,42 @@ function spawnEnemyBB(enemy, targetPos) {
   }
   // v1.78: arm the aim-hold so the two-handed shouldered/forward hold persists
   // across a burst and for a short beat after the last round (the pose pass eases
-  // it back to the rest hold once this decays).
+  // it back to the rest hold once this decays). v1.94: armed BEFORE the clear-line
+  // check, so a kid holding fire keeps its hold instead of easing out mid-burst.
   enemy._aimHold = Math.max(enemy._aimHold || 0, 0.3);
+
+  // v1.93: CLEAR LINE. The v1.77 lift only knows the cover list and measures each
+  // piece from its centre, so kids still put ~a quarter of their BBs into a fence,
+  // a wall or the near end of a car within 3 m (tests/cover-fire). Cast the shot's
+  // first 3 m (or up to just short of the target) against every obstacle; if it's
+  // blocked, raise the muzzle in 10 cm steps up to the same +0.7 m cap until the
+  // line clears. If nothing clears it (a house wall, a tall fence), the kid holds
+  // fire: no BB, no sound. It's the same outcome for the player, minus a BB in the wall.
+  {
+    const obs = Game.player && Game.player.obstacles;
+    if (obs && obs.length) {
+      const baseY = enemy.pos.y + baseMuzzleY * sY;
+      const capY = baseY + 0.7;
+      const tdx = targetPos.x - muzzlePos.x, tdz = targetPos.z - muzzlePos.z;
+      const flat = Math.hypot(tdx, tdz);
+      const reach = Math.min(3.0, flat - 0.3);
+      if (reach > 0.2) {
+        let y = muzzlePos.y, clear = false;
+        for (; y <= capY + 1e-6; y += 0.1) {
+          const dx = tdx, dy = targetPos.y - y, dz = tdz;
+          const dl = Math.hypot(dx, dy, dz) || 1;
+          // reach is a horizontal distance; convert to distance along the ray
+          const rayReach = reach * dl / (flat || 1);
+          if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
+        }
+        if (!clear) return;                          // can't see past it: hold fire
+        if (y > muzzlePos.y + 1e-6) {
+          muzzlePos.y = y;
+          enemy._firingOverCover = 0.45;
+        }
+      }
+    }
+  }
 
   // v1.9: enemy fires their own weapon's spec, not the player's gun
   const weaponType = enemy.weapon || 'pistol';
@@ -19213,7 +19331,8 @@ function applyBBHit(bb, c) {
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     flashDamage();
     updateHealthHud();
-    if (Game.player.hitsTaken >= Game.player.maxHits) {
+    // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
+    if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
       endScenario('lose');
     }
   } else {
@@ -19892,6 +20011,18 @@ function eliminateEnemy(e) {
   }
 }
 
+// v1.90: every delayed round end goes through here. The delay lets the last hit land
+// on screen, but the round can end another way inside it (a BB already in flight tags
+// the player out; the tagger and the timer both fire in Infection). The first ending
+// stands: a late one for a round that is over, or for a different round, is dropped.
+// Before this the result could flip YOU'RE OUT → YOU GOT THEM and pay out twice.
+// Game.scenario is one object reused every round, so the round is told apart by
+// Game.roundSeq (bumped in startScenario), not by the object.
+function endScenarioLater(outcome, ms) {
+  const round = Game.roundSeq;
+  setTimeout(() => { if (Game.mode === 'scenario' && Game.roundSeq === round) endScenario(outcome); }, ms);
+}
+
 function checkWinCondition() {
   // Skip if scenario isn't active (e.g., already ended)
   if (Game.mode !== 'scenario') return;
@@ -19903,13 +20034,13 @@ function checkWinCondition() {
   if (winCondition === 'kill_all') {
     // Standard: kill everyone wins
     if (alive === 0) {
-      setTimeout(() => endScenario('win'), 600);
+      endScenarioLater('win', 600);
     }
   } else if (winCondition === 'survive_timer') {
     // Survive: timer counts down, win at 0. Also: if you happen to kill all
     // attackers anyway, that's a win too (early finish).
     if (alive === 0) {
-      setTimeout(() => endScenario('win'), 600);
+      endScenarioLater('win', 600);
     }
     // Timer-hit-zero is handled by updateScenarioTimer below.
   } else if (winCondition === 'last_team_standing') {
@@ -19933,7 +20064,7 @@ function checkWinCondition() {
       const playerAlive = Game.player.hitsTaken < Game.player.maxHits;
       // Player's team is the lone survivor (player alive, or an ally of theirs is).
       const playerTeamSurvives = teamsAlive.has(playerTeam) && (playerAlive || hasLivingAlly(playerTeam));
-      setTimeout(() => endScenario(playerTeamSurvives ? 'win' : 'lose'), 600);
+      endScenarioLater(playerTeamSurvives ? 'win' : 'lose', 600);
     }
   }
   // v1.25 survive_untagged (zombie mode): you can't "kill" taggers (they revive),
@@ -19970,7 +20101,7 @@ function updateScenarioTimer(dt) {
     Game.scenario.timerRemaining = 0;
     // Mark as a timer-win so endScenario can show the right flavor
     Game.scenario.winByTimer = true;
-    setTimeout(() => endScenario('win'), 400);
+    endScenarioLater('win', 400);
     // Prevent re-firing
     Game.scenario.winCondition = '__finished__';
   }
@@ -20630,7 +20761,12 @@ function updateEnemies(dt) {
     if (!e._prevPosForFootstep) e._prevPosForFootstep = { x: e.pos.x, z: e.pos.z };
     const fdx = e.pos.x - e._prevPosForFootstep.x;
     const fdz = e.pos.z - e._prevPosForFootstep.z;
-    const moved = Math.sqrt(fdx * fdx + fdz * fdz);
+    // v1.89: a jump no kid can run in one frame (the anti-wedge teleport home, a
+    // respawn) is a teleport, not a stride: count it as standing still, so it
+    // neither pops a one-frame sprint swing in the walk anim nor plays a footstep.
+    const rawMoved = Math.sqrt(fdx * fdx + fdz * fdz);
+    const moved = (rawMoved > Math.max(0.3, dt * 15)) ? 0 : rawMoved;
+    e._animSpeed = moved / Math.max(dt, 1e-3);   // m/s the walk anim reads (tests)
     e._footstepDist = (e._footstepDist || 0) + moved;
     if (e._footstepDist >= 0.6) {
       e._footstepDist = 0;
@@ -20705,7 +20841,7 @@ function updateEnemies(dt) {
         e.mesh.group.position.x = e.pos.x;
         e.mesh.group.position.z = e.pos.z;
         e.mesh.group.position.y = e.pos.y;
-        setTimeout(() => endScenario('infected'), 200);
+        endScenarioLater('infected', 200);
         continue;
       }
       // Chase speed: sprinters run down the player; joggers match a jog.
@@ -21964,7 +22100,7 @@ const Tutorial = {
       if (this.dummiesTagged >= this.dummiesTotal && this.dummiesTotal > 0) {
         if (typeof checkWinCondition === 'function') checkWinCondition();
       } else if (this.dummiesTotal === 0) {
-        setTimeout(() => { if (Game.mode === 'scenario') endScenario('win'); }, 600);
+        endScenarioLater('win', 600);
       }
       return;
     }
