@@ -7,7 +7,8 @@ const g = await boot(); const { page } = g;
 await g.bedroom();
 await g.scenario('bunratty_ffa');
 await g.spin(10);
-await page.evaluate(() => { Game.player.maxHits = 1e9; });
+// unkillable: BB hits on the player are dropped (raising maxHits instead would build that many HUD pips)
+await page.evaluate(() => { const hit = window.__origHit = window.__origHit || applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
 // normal play: the anim sees movement
 const walk = await page.evaluate(() => {
   let maxSpeed = 0, frames = 0;

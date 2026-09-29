@@ -15,7 +15,7 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    Clamp it when a teleport happens (v1.78).~~ — done, v1.89
 
 ## C. Check in play (from the devlog's "Still open")
-1. Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.
+1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
 2. Over-cover muzzle lift reach 1.6 m: any into-cover shots from ~2 m back? (v1.77)
 3. ADS-tall hold 0.45 s: pose steady through an auto burst on the all-auto night map? (v1.77)
 4. Small-gun full-aim hands sit ~4 cm off the grip at max extension (v1.80).
