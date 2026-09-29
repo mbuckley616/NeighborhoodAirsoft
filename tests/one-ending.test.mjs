@@ -64,12 +64,19 @@ r = await race('bunratty_sean', () => {
 check('a plain last kill still wins after the delay', r.ends.length === 1 && r.ends[0] === 'win' && r.mode === 'result' && r.paid > 0, r);
 await home();
 
-// 5. a stale delayed win doesn't end the NEXT round: forfeit inside the delay, start again at once
+// 5. a stale delayed win doesn't end the NEXT round: forfeit inside the delay, start again, then let the
+// old round's timer fire. The timer is captured and fired by hand once the new round is on, so the test
+// doesn't depend on whether the next scenario loads faster or slower than 600 ms (CI loads faster).
 await g.scenario('bunratty_sean');
-await page.evaluate(() => { for (const e of Game.scenario.enemies) if (e.team !== 'player') e.health = 0; checkWinCondition(); forfeitScenario(); });
+await page.evaluate(() => {
+  const st = window.setTimeout; window.__late = [];
+  window.setTimeout = (fn, ms, ...a) => { if (ms === 600) { window.__late.push(fn); return 0; } return st(fn, ms, ...a); };
+  try { for (const e of Game.scenario.enemies) if (e.team !== 'player') e.health = 0; checkWinCondition(); forfeitScenario(); }
+  finally { window.setTimeout = st; }
+});
 await home();
 await g.scenario('bunratty_sean');
-await g.page.waitForTimeout(1200);
-check('a delayed win from a forfeited round doesn\'t end the next one', await g.mode() === 'scenario', await g.mode());
+const stale = await page.evaluate(() => { const n = window.__late.length; window.__late.forEach(f => f()); return { timers: n, mode: Game.mode }; });
+check('a delayed win from a forfeited round doesn\'t end the next one', stale.timers === 1 && stale.mode === 'scenario', stale);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

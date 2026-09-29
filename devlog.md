@@ -4811,3 +4811,23 @@ live, so a BB landing after the result is up changes nothing.
 - Design, not a bug: when the last kill and your own tag-out land within 600 ms, you now lose. The BB was
   already in flight and the round was still on, which fits the rules, but Michael may prefer that the last kill
   wins.
+
+---
+
+## v1.90 fix-up — a forfeited round's delayed win no longer ends the next round
+
+CI went red on v1.90: `one-ending.test.mjs` case 5 timed out waiting for the next round to start. v1.90's
+`endScenarioLater` told rounds apart with `Game.scenario === sc`, but `Game.scenario` is one object reused every
+round, so the check was always true. A delayed win from a forfeited round could still end the next round. It only
+passed locally because the next scenario takes longer than 600 ms to load here, so the timer fired during the intro
+and the mode guard caught it. CI loads faster, so the timer fired after BEGIN and ended the new round. The fix: a
+round counter, `Game.roundSeq`, bumped in `startScenario` and checked in `endScenarioLater`. The test's case 5 now
+captures the old round's 600 ms timer and fires it by hand once the new round is on, so it no longer depends on
+load speed. No version bump: v1.90 hasn't shipped.
+
+### Verified
+- The rewritten case 5 fails on v1.90 as pushed (`{"timers":1,"mode":"result"}`) and passes with the fix
+  (`"mode":"scenario"`). `npm test`: 5/5 suites green.
+
+### Still open
+- Nothing new.
