@@ -1807,7 +1807,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.86</div>
+  <div class="version">v1.87</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8718,12 +8718,18 @@ function addCar(scene, x, z, opts = {}) {
   }
   // Wheels — 4 of them
   const wheelGeom = new THREE.CylinderGeometry(wheelR, wheelR, 0.22, 12);
+  const wheelContacts = [];   // v1.87: car-local tread points, for seating on a slope (carSeatY)
   for (const [wx, wz] of [[-1.2, -0.7], [-1.2, 0.7], [1.2, -0.7], [1.2, 0.7]]) {
     const wheel = new THREE.Mesh(wheelGeom, wheelMat);
     wheel.rotation.x = Math.PI / 2;
     wheel.position.set(wx, wheelR, wz * (width/2 + 0.05) / 0.7);
     wheel.castShadow = true;
     group.add(wheel);
+    // v1.87: the lower arc of the tread (±60° about the bottom), on both edges.
+    for (const t of [-0.11, 0.11]) for (let k = -4; k <= 4; k++) {
+      const a = k * Math.PI / 12;
+      wheelContacts.push({ x: wx + wheelR * Math.sin(a), y: wheelR - wheelR * Math.cos(a), z: wheel.position.z + t });
+    }
   }
 
   group.position.set(x, 0, z);
@@ -8751,7 +8757,7 @@ function addCar(scene, x, z, opts = {}) {
     const pitch = Math.atan2(lnx, ny);     // + when uphill is toward +X
     const roll  = Math.atan2(lnz, ny);
     group.rotation.order = 'YXZ';
-    group.rotation.x = -roll;              // lean with the cross-slope
+    group.rotation.x = roll;               // v1.87: was -roll, which leaned INTO the hill (rotation.x > 0 lowers +Z)
     group.rotation.z = -pitch;             // nose follows the grade
   }
   scene.add(group);
@@ -8773,7 +8779,40 @@ function addCar(scene, x, z, opts = {}) {
   // Primary return is the body (so sinkObs chaining + mesh-sink is unchanged);
   // the cabin rides along on `_stacked` and is collected by car callers.
   bodyObs._stacked = cabinObs;
+  bodyObs._wheelContacts = wheelContacts;   // v1.87: sinkObs seats a car by its tyres
   return bodyObs;
+}
+
+// v1.87: SEAT A CAR BY ITS TYRES. Two faults buried or floated cars on a slope:
+//  1. sinkObs dropped every prop to the lowest ground under its footprint box; a
+//     car already tilted onto the grade about its centre went down by the whole
+//     drop across its length (tyres buried 10-60cm on Bunratty's lane).
+//  2. addCar's tilt came from one finite-difference normal at the car's centre,
+//     which misfits on curved ground (the bulb dimple), and its roll sign was
+//     inverted: rotation.x > 0 LOWERS local +Z, so the car leaned into the hill.
+// Here, called from sinkObs: re-fit pitch and roll to the ground under the four
+// wheels (the least-squares plane through them), then return the group Y at which
+// the most demanding tread point just touches the ground. No tyre goes below the
+// ground; the others clear it only by the twist of the ground between them.
+const _carSeatV = new THREE.Vector3();
+function carSeatY(obs, groundY) {
+  const grp = obs.mesh;
+  const yaw = grp.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const px = grp.position.x, pz = grp.position.z;
+  const gAt = (lx, lz) => groundY(px + lx * cy + lz * sy, pz - lx * sy + lz * cy);
+  const WX = 1.2, WZ = 0.825;   // wheel centres, car-local (addCar: ±1.2, ±(width/2+0.05))
+  const fL = gAt(WX, -WZ), fR = gAt(WX, WZ), rL = gAt(-WX, -WZ), rR = gAt(-WX, WZ);
+  const slopeX = ((fL + fR) - (rL + rR)) / (4 * WX);   // rise per metre toward the nose
+  const slopeZ = ((fR + rR) - (fL + rL)) / (4 * WZ);   // rise per metre toward local +Z
+  grp.rotation.order = 'YXZ';
+  grp.rotation.z = Math.atan(slopeX);    // + raises the nose
+  grp.rotation.x = -Math.atan(slopeZ);   // - raises the +Z side
+  let y = -Infinity;
+  for (const p of obs._wheelContacts) {
+    _carSeatV.set(p.x, p.y, p.z).applyEuler(grp.rotation);
+    y = Math.max(y, groundY(px + _carSeatV.x, pz + _carSeatV.z) - _carSeatV.y);
+  }
+  return y;
 }
 
 // v1.54b: build an oriented-box obstacle ANCHORED to a mesh. Instead of baking
@@ -9699,6 +9738,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.
@@ -10845,6 +10885,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.
@@ -11757,6 +11798,7 @@ function buildHollowScene(variant, timeOfDay) {
         gy = Math.min(gy, groundY(cx + sx, cz + sz));
       }
     }
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);   // v1.87: cars sit on their tyres
     // v1.54b: raise the mesh first, THEN re-resolve any mesh-anchored obox so its
     // world baseY/center reflect the new mesh position (collision stays glued to
     // the mesh). Plain AABBs keep the simple baseY = gy + stacked-offset path.

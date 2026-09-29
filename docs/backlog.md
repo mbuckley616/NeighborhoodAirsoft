@@ -8,8 +8,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    to play. Find what a new player sees between NEW GAME and the first scenario, and propose the fix **(design)**.
 
 ## B. Bugs
-1. Cars sink into the ground on slopes. Re-derive the car's base Y from the lowest wheel contact on the ground
-   normal, not the centre sample (devlog v1.78–v1.85).
+1. ~~Cars sink into the ground on slopes. Re-derive the car's base Y from the lowest wheel contact on the ground
+   normal, not the centre sample (devlog v1.78–v1.85).~~ — done, v1.87
 2. Walk-anim intensity uses last-frame displacement: an anti-wedge teleport may pop a one-frame sprint swing.
    Clamp it when a teleport happens (v1.78).
 

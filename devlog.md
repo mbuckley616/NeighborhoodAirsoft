@@ -4672,3 +4672,43 @@ tests don't need the CDN.
 ### Still open
 - Nothing in play changed; a quick playtest of v1.86 should feel exactly like v1.85.
 - Cars sinking into the ground (next, now backlog B.1).
+
+---
+
+## v1.87 — Cars sit on their tyres
+
+Backlog B.1: parked cars sink into the ground on slopes (the critic measured Bunratty tyres buried 10–55 cm). A new
+headless test measured every tyre on the two maps with cars (the Hollow has none). For each wheel it samples the
+tread circle in world space against the map's `groundY`. Before the fix, 134 of 144 Winnmark tyres and 40 of 48
+Bunratty tyres were buried, as deep as 21 cm and 59 cm, and a few Bunratty tyres floated 8 cm.
+
+There were two faults. `sinkObs` drops every prop to the lowest ground under its footprint box. That's right for a
+flat-bottomed bin, but a car has already been pitched onto the grade about its centre, so the whole car went down by
+the full drop across its length. The first fix alone (seat on the tread points instead) stopped the burying but left
+tyres hovering up to 56 cm. That exposed the second fault: `addCar`'s tilt. It took one finite-difference normal at
+the car's centre, which misfits on curved ground like the Bunratty bulb dimple, and its roll sign was inverted
+(`rotation.x > 0` lowers local +Z, so a car on a cross-slope leaned into the hill). Flipping only the roll sign back
+in the fixed code puts the hover back at 25 cm and 56 cm, which confirms it.
+
+The fix is a new `carSeatY(obs, groundY)`, called from all three map builders' `sinkObs` when the obstacle is a car
+(`_wheelContacts`, which `addCar` now records: the lower tread arc of each wheel, both edges). It re-fits pitch and
+roll to the ground under the four wheel centres (the least-squares plane through them), then returns the height at
+which the most demanding tread point just touches the ground. Yaw is untouched, so the oriented collision boxes are
+unchanged in plan. Their base now starts where the car actually sits, up to ~0.5 m higher on the downhill cars than
+before. `addCar`'s own roll sign is corrected too, for any future caller that skips `sinkObs`.
+
+Housekeeping: CLAUDE.md says `index.html` has CRLF endings, but git and the working tree both have LF. The edits
+match the file (LF).
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/cars.test.mjs`, 4 builds of each map (car cover is random): Winnmark 34 cars / 136 tyres, gap 0.000–0.005 m;
+  Bunratty 20 cars / 80 tyres, gap 0.000–0.016 m (worst is in the bulb dimple at (35, −1.5)). None buried, none over
+  3 cm. Car bellies clear the ground by at least 0.27 m.
+- `npm test`: 2/2 suites green, no page errors.
+
+### Still open
+- Eyes on it: cars on the Bunratty lane and in the bulb should now read as parked on the hill. On the steepest
+  stretch the tilt is bigger than before (the old roll leaned the wrong way), so check it doesn't look too steep.
+- Kids using a downhill car as cover now have its real height (the collision box moved up with the car). Worth
+  a glance that peeking over those cars still looks right.
