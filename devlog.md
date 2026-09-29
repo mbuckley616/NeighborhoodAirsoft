@@ -5107,3 +5107,26 @@ in try/catch, so a refusal is handled whether it comes as a throw or a rejected 
 
 ### Still open
 - By ear: going bedroom → scenario → bedroom quickly should leave the bedroom theme playing.
+
+---
+
+## v1.97 — The rifle off hand, looked at
+
+Backlog C.5 (from v1.95): on the large guns the off hand stops 2.7–3.5 cm short of the point `setKidGunHold` aims
+it at, because that point sits just past the arm's reach. The question was whether that shows on screen. No game
+code changed; the version is bumped to keep one version per backlog item.
+
+It doesn't show. The aim point is a spot 5 cm under the handguard's centre line, and the hand is a 11 × 10 × 12 cm
+box, so a hand 3 cm short of it is still wrapped round the gun. Headless close-ups of Sean holding the AK and the
+sniper at full aim, from 1.2 m and 2 m, show the hand on the handguard with no daylight between them. As a number:
+`tests/grip.test.mjs` now measures from the off hand's centre to the gun body's box, in the gun's own frame.
+
+### Verified
+- Off-hand centre to the gun body: AK and AR 0 cm at rest and 0.8 cm at full aim, MP5/UMP 0–0.4 cm, shotgun 0–0.2
+  cm, sniper 0.8–1.8 cm, standing and crouched. Every figure is well inside the hand's 5 cm half-size, so the hand
+  overlaps the gun. The new check gates it under 5 cm (pistol and MAC-10 at full aim: 3.0–3.2 cm, on the grip).
+- `npm test`: all suites green.
+
+### Still open
+- Nothing owed on C.5. If a real playtest at arm's length ever shows a gap, the fix is to pull the large-gun aim
+  point ~3 cm toward the off shoulder.

@@ -26,7 +26,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    after fixing a v1.93 slip (hold-fire skipped the aim-hold re-arm); standing test `tests/burst-pose.test.mjs`
 4. ~~Small-gun full-aim hands sit ~4 cm off the grip at max extension (v1.80).~~ — checked, v1.95: 0.0 cm now, standing
    and crouched (`tests/grip.test.mjs`)
-5. Large-gun off hand sits 2.7–3.5 cm short of its foregrip in every pose (v1.95). Does it show on screen?
+5. ~~Large-gun off hand sits 2.7–3.5 cm short of its foregrip in every pose (v1.95). Does it show on screen?~~ — checked,
+   v1.97: no; the hand's centre is 0–1.8 cm from the gun body, so the hand box wraps it (`tests/grip.test.mjs`)
 
 ## D. Michael's ideas
 <!-- the producer files Michael's notes here, in his words, with the date -->
