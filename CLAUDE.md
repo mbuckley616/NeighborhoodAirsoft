@@ -7,7 +7,8 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 ## The files
 - `index.html` — the whole game. ~22k lines. Players get it from itch.io (https://mbuckley616.itch.io/neighborhood-airsoft),
   **Merging to `main` ships to players**: `.github/workflows/itch.yml` pushes index.html to itch.io with butler on every
-  main change (once Michael has added the `BUTLER_API_KEY` secret; until then it skips and he uploads by hand).
+  main change (the `BUTLER_API_KEY` secret is set). itch has no API for devlog posts, so after each release the producer drafts
+  player-facing notes in the control room (`devlogs`) and Michael pastes them into an itch devlog post.
 - `devlog.md` — one entry per session, appended at the end. Never rewrite old entries.
 - `docs/design_brief.md` — the pillars and scope. Every proposal argues from it.
 - `docs/backlog.md` — the open work, `~~strikethrough~~ — done, v1.NN` when finished.
@@ -19,7 +20,7 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 ## A session
 1. Read the last devlog entry and the backlog before touching code.
 2. One feature or bug per session. Ask before building anything whose design is open (raise it in `docs/decisions.md`).
-3. Edit `index.html` with targeted edits. It has CRLF line endings and literal Unicode (’ — ·) in strings; match both.
+3. Edit `index.html` with targeted edits. It is stored with LF line endings (a Windows checkout may show CRLF; match the file) and has literal Unicode (’ — ·) in strings; match both.
    Mark new code with a `// v1.NN:` comment the way the file already does.
 4. `node scripts/parsecheck.mjs` after every edit batch.
 5. Verify in headless Chromium, not by reading the code: add or extend a test in `tests/`. Drive time with
