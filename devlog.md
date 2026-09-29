@@ -4993,3 +4993,32 @@ shot would do anyway.
 
 ### Still open
 - Whether the pose reads as steady on a real screen: the numbers say it no longer dips.
+
+---
+
+## v1.95 — Hands on the grip, measured
+
+Backlog C.4 (from v1.80): at full aim with a small gun (pistol, MAC-10), the kids' hands sat ~4 cm off the grip,
+because the target was right at the arm's full extension. No game code changed. The version is bumped to keep
+one version per backlog item.
+
+`tests/grip.test.mjs` (new) poses one kid with every weapon (pistol, MAC-10, AK, MP5, UMP, shotgun, sniper, AR) at
+rest and at full aim, standing and crouched. In the kid's own frame, it measures the firing hand to the gun's
+grip, and the off hand to the point `setKidGunHold` sends it to.
+
+Small guns: 0.0 cm for both hands in every case. The v1.81 IK rework and pose trim left every small-gun target
+4.7 cm (standing) to 13 cm (crouched) inside the arm's 0.45 m reach, and the IK lands exactly inside reach. The
+~4 cm gap is gone.
+
+A new finding: the firing hand is on the grip for every gun (0.0 cm), but on the large guns the off hand sits 2.7
+to 3.5 cm short of its foregrip point. That's 2.7 cm for the MP5/UMP and 3.3–3.5 cm for the AK, shotgun, sniper
+and AR, in every pose. It's the same order as the old small-gun gap. It's filed as backlog C.5 for a look in play
+rather than changed: v1.80 placed that off-hand target deliberately at the edge of a comfortable cross-reach.
+
+### Verified
+- `npm test`: 9/9 suites green, no page errors. The grip suite gates small guns at ≤ 1 cm, firing hands at
+  ≤ 2 cm and off hands at ≤ 4 cm (today's level, so it catches a regression).
+
+### Still open
+- C.5: does a ~3 cm gap between the off hand and a rifle's handguard show on screen? If it does, pull the large-gun
+  aim point ~3 cm toward the off shoulder, or lengthen the off-hand reach.
