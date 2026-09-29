@@ -19,6 +19,14 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 3. ADS-tall hold 0.45 s: pose steady through an auto burst on the all-auto night map? (v1.77)
 4. Small-gun full-aim hands sit ~4 cm off the grip at max extension (v1.80).
 
+## D. Michael's ideas
+<!-- the producer files Michael's notes here, in his words, with the date -->
+1. More maps, locations and scenarios, based on real places around where the game sits (East Roswell / Chattahoochee
+   River): e.g. a Centennial High School level, a parking lot skirmish, Horseshoe Bend Country Club pool / golf course,
+   a grocery store battle. (Michael, 2026-09-28) **(design)**
+2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
+   Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
+
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
 - v1.86 — Result flips from YOU'RE OUT to YOU GOT THEM and pays both: `checkWinCondition`'s `setTimeout(endScenario('win'), 600)` (and the timer win in `updateScenarioTimer`) don't check `Game.mode`; a BB in flight inside that 600 ms tags the player → lose, then win. Steps: `g.scenario('bunratty_sean')`; `Sean.health=0; checkWinCondition(); applyBBHit({}, Game.player)`; wait 1 s — cash +$1 then +$3. Seen naturally on Night Lane.
