@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.89</div>
+  <div class="version">v1.90</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19278,7 +19278,8 @@ function applyBBHit(bb, c) {
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     flashDamage();
     updateHealthHud();
-    if (Game.player.hitsTaken >= Game.player.maxHits) {
+    // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
+    if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
       endScenario('lose');
     }
   } else {
@@ -19957,6 +19958,16 @@ function eliminateEnemy(e) {
   }
 }
 
+// v1.90: every delayed round end goes through here. The delay lets the last hit land
+// on screen, but the round can end another way inside it (a BB already in flight tags
+// the player out; the tagger and the timer both fire in Infection). The first ending
+// stands: a late one for a round that is over, or for a different round, is dropped.
+// Before this the result could flip YOU'RE OUT → YOU GOT THEM and pay out twice.
+function endScenarioLater(outcome, ms) {
+  const sc = Game.scenario;
+  setTimeout(() => { if (Game.mode === 'scenario' && Game.scenario === sc) endScenario(outcome); }, ms);
+}
+
 function checkWinCondition() {
   // Skip if scenario isn't active (e.g., already ended)
   if (Game.mode !== 'scenario') return;
@@ -19968,13 +19979,13 @@ function checkWinCondition() {
   if (winCondition === 'kill_all') {
     // Standard: kill everyone wins
     if (alive === 0) {
-      setTimeout(() => endScenario('win'), 600);
+      endScenarioLater('win', 600);
     }
   } else if (winCondition === 'survive_timer') {
     // Survive: timer counts down, win at 0. Also: if you happen to kill all
     // attackers anyway, that's a win too (early finish).
     if (alive === 0) {
-      setTimeout(() => endScenario('win'), 600);
+      endScenarioLater('win', 600);
     }
     // Timer-hit-zero is handled by updateScenarioTimer below.
   } else if (winCondition === 'last_team_standing') {
@@ -19998,7 +20009,7 @@ function checkWinCondition() {
       const playerAlive = Game.player.hitsTaken < Game.player.maxHits;
       // Player's team is the lone survivor (player alive, or an ally of theirs is).
       const playerTeamSurvives = teamsAlive.has(playerTeam) && (playerAlive || hasLivingAlly(playerTeam));
-      setTimeout(() => endScenario(playerTeamSurvives ? 'win' : 'lose'), 600);
+      endScenarioLater(playerTeamSurvives ? 'win' : 'lose', 600);
     }
   }
   // v1.25 survive_untagged (zombie mode): you can't "kill" taggers (they revive),
@@ -20035,7 +20046,7 @@ function updateScenarioTimer(dt) {
     Game.scenario.timerRemaining = 0;
     // Mark as a timer-win so endScenario can show the right flavor
     Game.scenario.winByTimer = true;
-    setTimeout(() => endScenario('win'), 400);
+    endScenarioLater('win', 400);
     // Prevent re-firing
     Game.scenario.winCondition = '__finished__';
   }
@@ -20775,7 +20786,7 @@ function updateEnemies(dt) {
         e.mesh.group.position.x = e.pos.x;
         e.mesh.group.position.z = e.pos.z;
         e.mesh.group.position.y = e.pos.y;
-        setTimeout(() => endScenario('infected'), 200);
+        endScenarioLater('infected', 200);
         continue;
       }
       // Chase speed: sprinters run down the player; joggers match a jog.
@@ -22034,7 +22045,7 @@ const Tutorial = {
       if (this.dummiesTagged >= this.dummiesTotal && this.dummiesTotal > 0) {
         if (typeof checkWinCondition === 'function') checkWinCondition();
       } else if (this.dummiesTotal === 0) {
-        setTimeout(() => { if (Game.mode === 'scenario') endScenario('win'); }, 600);
+        endScenarioLater('win', 600);
       }
       return;
     }

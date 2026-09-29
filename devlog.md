@@ -4777,3 +4777,37 @@ read it.
 
 ### Still open
 - The retreat teleport happens off-screen by design, so a player would rarely have seen this; nothing to eyeball.
+
+---
+
+## v1.90 — A round ends once
+
+Found in play (critic, v1.86, filed twice): the result could flip from YOU'RE OUT to YOU GOT THEM and pay out both.
+Every win is delayed on purpose so the last hit lands on screen first: 600 ms after the last kill, 400 ms after the
+survive timer runs out, 200 ms after a tagger reaches you in Infection. None of those delayed calls checked
+whether the round was still on. A BB already in the air inside that window tags the player out, `endScenario('lose')`
+runs at once, and then the delayed win runs anyway. It paid the win too and marked the scenario completed, which
+can unlock the next one off a loss.
+
+All six delayed endings (kill_all, survive_timer's early finish, last_team_standing, the timer win, the Infection
+tag, the tutorial's no-target close) now go through one helper, `endScenarioLater(outcome, ms)`. It remembers the
+round it was scheduled in and fires only if that round is still being played. The first ending stands. For the
+critic's cases that means the in-flight BB's YOU'RE OUT holds. `applyBBHit` also ends the round only while it's
+live, so a BB landing after the result is up changes nothing.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/one-ending.test.mjs` (new) sets up each race the critic found and counts `endScenario` calls and cash paid.
+  The delays are the game's own `setTimeout`s, so this one test waits wall-clock time (1.2 s) for them. On v1.89:
+  - 1v1: `["lose","win"]`, $4 paid, screen says YOU GOT THEM.
+  - Infection, timer and tag together: `["infected","win"]`, $10 paid, MOM CALLED THEM IN!.
+  - Hollow 3v3, wipe then tagged out: `["lose","win"]`, $8 paid.
+
+  On v1.90 each case has one ending: lose $1, infected $2, lose $2. A plain last kill still wins after its delay
+  ($3). A delayed win from a forfeited round doesn't end the next round.
+- `npm test`: 5/5 suites green, no page errors.
+
+### Still open
+- Design, not a bug: when the last kill and your own tag-out land within 600 ms, you now lose. The BB was
+  already in flight and the round was still on, which fits the rules, but Michael may prefer that the last kill
+  wins.
