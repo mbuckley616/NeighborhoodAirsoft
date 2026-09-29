@@ -21,4 +21,10 @@ await page.evaluate(() => { const el = Game.renderer.domElement, orig = el.reque
   try { requestPointerLock(); } finally { el.requestPointerLock = orig; } });
 await g.spin(10); await page.evaluate(() => new Promise(r => requestAnimationFrame(() => r())));
 check('a refused pointer lock is not a page error', g.errs.length === errs0, g.errs.slice(errs0));
+// ...nor one refused by a synchronous throw ("Too many pointer lock requests in a short window of time")
+const threw = await page.evaluate(() => { const el = Game.renderer.domElement, orig = el.requestPointerLock;
+  el.requestPointerLock = () => { throw new DOMException('Too many pointer lock requests in a short window of time.', 'InvalidStateError'); };
+  try { requestPointerLock(); return null; } catch (e) { return e.message; } finally { el.requestPointerLock = orig; } });
+await g.spin(10);
+check('a pointer lock refused by a throw is caught too', threw === null && g.errs.length === errs0, { threw, errs: g.errs.slice(errs0) });
 await g.close();

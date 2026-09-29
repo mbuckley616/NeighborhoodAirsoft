@@ -5093,12 +5093,16 @@ The same CI run also failed `cover-fire` on one page error: `A user gesture is r
 In CI's Chromium, `requestPointerLock()` returns a promise, and when there's no fresh user gesture (BEGIN clicked
 from script, or `startScenario` reached some other way) the promise is rejected. Nothing handled the rejection, so
 it became a page error. `requestPointerLock()` now catches it; the next click in the scene takes the lock, as before.
+The next CI run hit the other form of refusal in `result-text`: `Too many pointer lock requests in a short window
+of time`, which scenario after scenario in quick succession triggers. `requestPointerLock()` now also wraps the call
+in try/catch, so a refusal is handled whether it comes as a throw or a rejected promise.
 
 ### Verified
 - New `tests/music.test.mjs`: stop + restart inside 400 ms, with the captured 400 ms timer fired by hand. On the old
   code the new theme's gain is lost and `musicScheduler` throws the CI error. With the fix, the gain is kept and
   nothing throws.
-- Smoke: a stubbed rejecting `requestPointerLock` raised the CI page error on the old code and raises none now.
+- Smoke: a stubbed rejecting `requestPointerLock` raised the CI page error on the old code and raises none now. A
+  stubbed throwing one escaped `requestPointerLock()` before the try/catch and is caught now.
 - `npm test`: 11/11.
 
 ### Still open

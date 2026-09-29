@@ -17025,8 +17025,12 @@ function requestPointerLock() {
   // v1.96 fix-up: newer Chromium returns a promise and rejects it when there's no fresh
   // user gesture (e.g. startScenario reached from a script-driven BEGIN). The rejection
   // was unhandled and surfaced as a page error; the next click in the scene locks anyway.
-  const p = Game.renderer.domElement.requestPointerLock?.();
-  if (p && typeof p.catch === 'function') p.catch(() => {});
+  // It can also refuse at once ("Too many pointer lock requests in a short window"), as a throw
+  // or a rejection depending on the build, so both are handled.
+  try {
+    const p = Game.renderer.domElement.requestPointerLock?.();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  } catch (e) {}
 }
 function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
