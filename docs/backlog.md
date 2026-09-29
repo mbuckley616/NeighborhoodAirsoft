@@ -13,10 +13,15 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    normal, not the centre sample (devlog v1.78–v1.85).~~ — done, v1.87
 2. ~~Walk-anim intensity uses last-frame displacement: an anti-wedge teleport may pop a one-frame sprint swing.
    Clamp it when a teleport happens (v1.78).~~ — done, v1.89
+3. Kids fire into obstacles right in front of them: about a quarter of enemy BBs hit something within 3 m, before
+   the target (v1.92, `tests/cover-fire.test.mjs`). The v1.77 lift reads only `Game.scenario.cover`, not fences,
+   walls or houses, and measures cover from its centre. Check the shot's first 3 m against every obstacle and lift
+   over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
-2. Over-cover muzzle lift reach 1.6 m: any into-cover shots from ~2 m back? (v1.77)
+2. ~~Over-cover muzzle lift reach 1.6 m: any into-cover shots from ~2 m back? (v1.77)~~ — checked, v1.92: yes, ~7% of enemy
+   shots; worse, ~18% bury inside 1.6 m. Now B.3.
 3. ADS-tall hold 0.45 s: pose steady through an auto burst on the all-auto night map? (v1.77)
 4. Small-gun full-aim hands sit ~4 cm off the grip at max extension (v1.80).
 

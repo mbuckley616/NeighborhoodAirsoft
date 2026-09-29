@@ -4843,3 +4843,52 @@ twice this run, out of about fifteen boots. A rerun passed both times.
 - How the beams look on a real screen, which headless can't judge.
 - The occasional 30 s time-out on the title click, which is a harness flake to watch. If it recurs, give
   `g.bedroom()` a retry or a longer wait.
+
+---
+
+## v1.92 — Checked: kids still fire into cover, and not mostly for the reason asked
+
+Backlog C.2 asked whether v1.77's over-cover lift is long enough. It lifts a kid's BB over cover only when the cover
+is within 1.6 m ahead. Does a kid standing ~2 m back still fire into its own cover? No game code changed. The
+version is bumped to keep one version per backlog item.
+
+`tests/cover-fire.test.mjs` (new) plays four cover-heavy matches for 60 s each with the player unkillable: Bunratty
+2v2, Winnmark cul-de-sac defend, Hollow 3v3 and Bunratty Hold the Fort. It records every enemy BB at spawn and
+casts its first 4 m against the map's obstacles. A shot counts as into cover if it hits an obstacle before
+4 m and before its target. The test also names the obstacle it hits and why the lift missed it.
+
+The answer to the question is yes, about 7% of enemy shots. The bigger share, about 18%, bury in something
+inside 1.6 m, where the lift is supposed to work. Two runs:
+
+| | run 1 | run 2 |
+|---|---|---|
+| shots | 563 | 631 |
+| into cover inside 1.6 m | 106 | 111 |
+| into cover at 1.6–3 m | 42 | 39 |
+| into cover at 3–4 m | 6 | 3 |
+
+The causes, from the test's classification:
+- **Not cover at all** (about half the near misses: 51, then 63). The obstacle isn't in `Game.scenario.cover`:
+  fences, house walls and fort walls are collision obstacles only, and `coverInFrontTop` reads only the cover list.
+- **Measured from the centre.** `coverInFrontTop` measures the cover's *centre* along the bearing. A car's
+  centre can be 2 m ahead while its near side is 0.5 m ahead, and the lift misses it. That gave 12 and 8 near,
+  12 and 8 mid.
+- **Unexplained** (43 and 40 near, 13 and 26 mid). Cover in the list, centre in reach, bearing across it, yet no
+  lift. Likely candidates: the check runs from the kid's centre while the muzzle sits 0.25 m to the gun side;
+  aim spread; or a cover top already below the muzzle but crossed by a downhill shot. Not pinned down this run.
+
+Mostly it's one kid, Sean. In Bunratty 2v2 he fired 21 of 23 mid-range buried shots, "hiding" 1.7–1.8 m behind
+something 14 m from his target.
+
+Filed as backlog B.3 rather than fixed here. It's a change to how the AI decides to shoot (a clear-line check
+before firing, or a lift that reads every obstacle), not a one-line fault.
+
+### Verified
+- `npm test`: 7/7 suites green, no page errors. The cover-fire suite prints its numbers and asserts only that it
+  sampled at least 100 shots. It's a measuring stick for B.3, not a gate.
+
+### Still open
+- B.3 (new): the fix. Suggested shape, for whoever picks it up: in `spawnEnemyBB`, cast the shot against
+  `Game.player.obstacles` for the first 3 m. If it's blocked, lift over the blocker's top, as now but for any
+  obstacle; if the lift would pass the 0.7 m cap, hold fire and reposition. Measure with this test (target: under
+  3% of shots into cover).
