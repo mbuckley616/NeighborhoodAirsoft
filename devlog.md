@@ -4712,3 +4712,41 @@ match the file (LF).
   stretch the tilt is bigger than before (the old roll leaned the wrong way), so check it doesn't look too steep.
 - Kids using a downhill car as cover now have its real height (the collision box moved up with the car). Worth
   a glance that peeking over those cars still looks right.
+
+---
+
+## v1.88 — The front door goes outside
+
+Backlog A.1, Michael's answer A. The one itch.io complaint on record says new players "cant go outside". They spawn
+at the south end of the hall with their back to the suite's entry door, which was scenery: no prompt, and walking
+into it just fills the screen with paint. The way out was the MAP table in the bedroom, which nothing points to. At
+spawn the nearest prompt was "Open the workbench".
+
+The entry door is now an interactable (`type: 'front_door'`) with the prompt "Go outside", a floating OUTSIDE chip
+with a new door-and-arrow icon, and `openMap()` as its action. The map table is unchanged, so there are two ways to
+the map. The trigger point sits 0.3 m inside the door, so at spawn the door is the nearest interactable and "Go
+outside" is the first prompt a new player sees. The hall closet keeps its prompt when you step up to it.
+
+The map fix, from the same answer: each pin was an absolutely placed box as wide as its label, and the Battleground
+pin (drawn last, so on top) covered the right half of the Winnmark label. Measured at 1280×720, a click on the
+centre of "Winnmark Ct · Horseshoe Bend" landed on the Battleground pin, which on a new save is locked. Pins now
+take clicks only on their marker and label (`pointer-events: none` on the pin box). An open pin also sits above a
+locked one (`z-index` 2 over 1), so where they still overlap, the pin you can actually play wins.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/front-door.test.mjs` (new): at spawn (0, 4.4) the focused interactable is the front door, the prompt
+  reads "Go outside" and the chip reads Outside. Before the change, the same spot focused the hall closet. From
+  the top of the hall facing south, the chip is on screen at (592, 155). E at spawn gives `Game.mode === 'map'`,
+  and closing the map returns to the bedroom. The hall closet still focuses from beside it.
+- The same test clicks every pin's label and marker, with positions read fresh before each click, at 1280×720,
+  1920×1080 and 1024×640. The Winnmark label opens Winnmark, the Bunratty label opens the locked Bunratty, and the
+  Battleground marker opens the locked Battleground, at all three sizes.
+- `npm test`: 3/3 suites green, no page errors.
+
+### Still open
+- Eyes on it: whether a first-timer turns round and reads the OUTSIDE chip. At spawn it's behind you, but the
+  prompt shows at once. Standing right under the door, the chip is above the view; from the hall it's in plain sight.
+- The Battleground's marker and the end of the Winnmark label are still close on the map (a few px at 1280 wide).
+  Clicks now resolve correctly, but moving the pins apart would be a design change to the map drawing, so it's
+  left alone.

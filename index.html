@@ -770,7 +770,14 @@
     transform: translate(-50%, -100%);
     cursor: pointer;
     text-align: center;
+    /* v1.88: only the marker and the label take clicks, not the pin's whole box
+       (the Battleground pin's box covered the Winnmark label), and an open pin
+       sits above a locked one where they still overlap. */
+    pointer-events: none;
+    z-index: 2;
   }
+  #worldMap .pin .marker, #worldMap .pin .label { pointer-events: auto; }
+  #worldMap .pin.locked { z-index: 1; }
   #worldMap .pin .marker {
     width: 28px; height: 28px;
     background: var(--ui-danger);
@@ -1807,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.87</div>
+  <div class="version">v1.88</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7741,6 +7748,20 @@ function buildBedroomScene() {
     prompt: 'Open the workbench (customize guns)',
     label: 'Workbench', icon: 'workbench', labelY: 2.05,
     action: () => openWorkbench(),
+  });
+
+  // v1.88: the hall's entry door goes outside (backlog A.1, Michael chose A). The one
+  // itch.io complaint was "cant go outside": the door you spawn with your back to was a
+  // wall with no prompt. It now opens the world map, same as the map table (which stays).
+  // Its trigger sits just inside the door, so at spawn it is the nearest interactable
+  // and "Go outside" is the first prompt a new player sees.
+  Game.interactables.push({
+    type: 'front_door',
+    box: new THREE.Box3().setFromObject(entryDoor),
+    pos: new THREE.Vector3(HALL_X, 1.0, hallSouthZ - 0.3),
+    prompt: 'Go outside',
+    label: 'Outside', icon: 'outside', labelY: 2.0,
+    action: () => openMap(),
   });
 
   // Bathroom door → placeholder
@@ -17768,6 +17789,8 @@ const BR_LABEL_ICONS = {
   workbench: '<svg viewBox="0 0 24 24" fill="none"><path d="M15.5 4.5a4 4 0 0 0-5 5L4 16l4 4 6.5-6.5a4 4 0 0 0 5-5l-2.8 2.8-2.2-.5-.5-2.2 2.5-2.6z" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/></svg>',
   // door — bathroom
   bathroom: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><circle cx="14.5" cy="12" r="1" fill="#f4e9d8"/></svg>',
+  // v1.88: door with an arrow out — the front door (goes outside to the map)
+  outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
