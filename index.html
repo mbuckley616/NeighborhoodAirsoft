@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.99</div>
+  <div class="version">v1.100</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20852,15 +20852,23 @@ function updateEnemies(dt) {
       const kidRadius = 0.35;
       const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
       const bX = e.pos.x, bZ = e.pos.z;
-      if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
+      // v1.100: while committed to a wall-follow sidestep (below), skip the
+      // straight step: its slide pulled the kid straight back to the spot he
+      // wedged on, so a tagger round a tree or along a low wall went nowhere.
+      const sideCommitted = e._zSideT > 0;
+      if (sideCommitted) e._zSideT -= dt;
+      else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
       else {
         if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
         if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
       }
+      if (e._zWedgeT > 0) e._zWedgeT -= dt; else e._zWedges = 0;
       // Wall-follow when wedged (same idea as the advancing state).
       if (e._zDetourBan > 0) e._zDetourBan -= dt;
       if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
-        e._zStuck = (e._zStuck || 0) + dt;
+        // v1.100: committed sidestep frames skip the straight step, so they
+        // don't count toward the 0.5 s side flip (a blocked sidestep flips below).
+        if (!sideCommitted) e._zStuck = (e._zStuck || 0) + dt;
         // v1.73: walk around a wedging fence's nearer end instead of jittering.
         // v1.98: only while that gets somewhere. A fence further along the line
         // still yields a waypoint when the kid is actually wedged on something
@@ -20890,6 +20898,14 @@ function updateEnemies(dt) {
         if (!collidesObstacles(sx, sz, kidRadius)) { e.pos.x = sx; e.pos.z = sz; }
         else if (!collidesObstacles(sx, e.pos.z, kidRadius)) e.pos.x = sx;
         else if (!collidesObstacles(e.pos.x, sz, kidRadius)) e.pos.z = sz;
+        if (sideCommitted && Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.01) { e._zSide *= -1; e._zSideT = 0; }
+        // v1.100: a fresh sidestep commits for 0.35 s (~1.2 m), longer each time
+        // he wedges again within 3 s (up to 1.4 s), so he clears the wall's end.
+        if (!sideCommitted) {
+          e._zWedges = Math.min(4, (e._zWedges || 0) + 1);
+          e._zWedgeT = 3;
+          e._zSideT = 0.35 * e._zWedges;
+        }
         }
       } else e._zStuck = 0;
       // Plant on terrain (mirror of the shared loop-exit logic) and finish.

@@ -5190,3 +5190,36 @@ tree. Once he's clear, he goes back to bounding as before.
 ### Still open
 - The tagger version of this (Marcus on a tree in Infection, v1.98's Still open) is a different code path, still
   open under Found in play.
+
+---
+
+## v1.100 — Infection taggers get round trees and walls
+
+Found in play (builder, v1.98): the new Infection test showed two more places taggers stop for good, both on the
+v1.97 build as well. Marcus hung on a tree at (16.4, 22.8) in 3 of 6 runs. The player's spawn (`bulb_center`) sits
+inside a 1.1 m planter wall, and taggers from the west stopped 5.6 m away against it for the rest of the round.
+
+Both have the same cause. When a tagger's straight step makes no progress, the wall-follow sidesteps him a few cm
+along the obstacle. On the next frame the straight step runs again, and its slide along the obstacle pulls him
+straight back to the spot he wedged on. That frame counts as progress, so the stuck timer resets. He jittered a few
+cm either way, forever.
+
+A sidestep now commits. The first time a tagger wedges he sidesteps for 0.35 s (about 1.2 m) without trying the
+straight step. If he wedges again within 3 s, the next commitment is longer: 0.7 s, then 1.05 s, up to 1.4 s. That
+takes him round a tree the first time and off the end of a longer wall within a few tries. During a commitment, a
+sidestep that is itself blocked turns him round at once. Committed frames no longer count toward the old 0.5 s side
+flip, which had been turning Mitchell back mid-commit along a house wall.
+
+### Verified
+- `tests/taggers.test.mjs` now also requires every tagger to reach the standing, untaggable player (within 2 m) in
+  30 s. v1.100, five runs: all six do, Marcus at 8–9 s, Sean 11 s, Nick 12 s, Priya 15 s, Ryan 17 s, Mitchell
+  24–26 s; Mitchell walks 76–78 m. v1.99, three runs: only 2–4 of 6 do; the rest stop 5.6–5.7 m away at the planter,
+  or Marcus at 27.8 m on his tree.
+- `npm test`: all suites green.
+
+### Still open
+- For a player who stands still, Infection is harder now: the planter used to keep the western half of the pack off
+  a player who stayed at spawn. That's how the mode is meant to work ("one touch means you're it"), but it's worth
+  a feel in play.
+- Only the tagger's wall-follow changed. The gunner states have their own wall-follow (`advancing`, flip every
+  0.5 s of stuck time) with the same shape, and no wedge has been reported there since v1.99.
