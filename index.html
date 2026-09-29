@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.93</div>
+  <div class="version">v1.94</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19077,6 +19077,12 @@ function spawnEnemyBB(enemy, targetPos) {
       enemy._firingOverCover = 0.45;                // seconds the over-cover lift holds
     }
   }
+  // v1.78: arm the aim-hold so the two-handed shouldered/forward hold persists
+  // across a burst and for a short beat after the last round (the pose pass eases
+  // it back to the rest hold once this decays). v1.94: armed BEFORE the clear-line
+  // check, so a kid holding fire keeps its hold instead of easing out mid-burst.
+  enemy._aimHold = Math.max(enemy._aimHold || 0, 0.3);
+
   // v1.93: CLEAR LINE. The v1.77 lift only knows the cover list and measures each
   // piece from its centre, so kids still put ~a quarter of their BBs into a fence,
   // a wall or the near end of a car within 3 m (tests/cover-fire). Cast the shot's
@@ -19109,10 +19115,6 @@ function spawnEnemyBB(enemy, targetPos) {
       }
     }
   }
-  // v1.78: arm the aim-hold so the two-handed shouldered/forward hold persists
-  // across a burst and for a short beat after the last round (the pose pass eases
-  // it back to the rest hold once this decays).
-  enemy._aimHold = Math.max(enemy._aimHold || 0, 0.3);
 
   // v1.9: enemy fires their own weapon's spec, not the player's gun
   const weaponType = enemy.weapon || 'pistol';

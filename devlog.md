@@ -4962,3 +4962,34 @@ starts from whatever height it chose.
 - Kids lift up to 0.7 m more often now (131 lifted shots of 582, against ~50 of 563 before). The v1.77 pose shows a
   shouldered, over-the-top hold for those, but a 0.7 m lift is more than that pose's 0.34 m visual raise. Worth a
   look to see whether BBs appear to leave from above the gun.
+
+---
+
+## v1.94 — The burst hold, checked, and a v1.93 slip fixed
+
+Backlog C.3 asks whether the ADS-tall hold stays steady through an auto burst on the all-auto night map. The critic
+judged it once (2026-09-29): 68 of 71 over-cover strings kept their lift. This run makes that a standing test, and
+the test caught a regression from v1.93 on its first pass.
+
+`tests/burst-pose.test.mjs` (new) plays Full-Auto Mayhem (Night) for 90 s with the player unkillable. A burst is
+a run of trigger pulls from one kid no more than 0.35 s apart. For every string of 3+ pulls it follows, frame by
+frame, the kid's shouldered-hold amount (`_aimAmt`) and its over-cover lift (`_firingOverCover`).
+
+On the v1.93 build the hold eased back out in the middle of 32 of 116 bursts: 102 of 669 frames were falling,
+and 3 of 27 over-cover strings lost the lift partway. The cause was v1.93's hold-fire. A kid that can't see past
+its cover returns from `spawnEnemyBB` before the line that re-arms `_aimHold`. So a kid pulling the trigger with
+no clear line let its shouldered hold ease back out, mid-burst, while still "firing". The re-arm now comes
+before the clear-line check, so a kid waiting for a line keeps the gun up. That is what a kid looking for the
+shot would do anyway.
+
+### Verified
+- `node scripts/parsecheck.mjs`: parses.
+- `tests/burst-pose.test.mjs`, after the fix, two runs:
+  - Run 1: 175 bursts, 0 falling frames in 1154. 64 of 64 over-cover strings held the lift throughout.
+  - Run 2 (`npm test`): 0 falling frames in 777. 34 of 34 over-cover strings held.
+- The hold still eases *in* over the first ~11 frames of a string that starts from rest (it did before; it's the
+  v1.78 ease). The test counts falling frames, not low ones, for that reason.
+- `npm test`: 8/8 suites green, no page errors.
+
+### Still open
+- Whether the pose reads as steady on a real screen: the numbers say it no longer dips.

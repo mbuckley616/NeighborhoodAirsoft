@@ -22,7 +22,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
 2. ~~Over-cover muzzle lift reach 1.6 m: any into-cover shots from ~2 m back? (v1.77)~~ — checked, v1.92: yes, ~7% of enemy
    shots; worse, ~18% bury inside 1.6 m. Now B.3.
-3. ADS-tall hold 0.45 s: pose steady through an auto burst on the all-auto night map? (v1.77)
+3. ~~ADS-tall hold 0.45 s: pose steady through an auto burst on the all-auto night map? (v1.77)~~ — checked, v1.94: yes
+   after fixing a v1.93 slip (hold-fire skipped the aim-hold re-arm); standing test `tests/burst-pose.test.mjs`
 4. Small-gun full-aim hands sit ~4 cm off the grip at max extension (v1.80).
 
 ## D. Michael's ideas
