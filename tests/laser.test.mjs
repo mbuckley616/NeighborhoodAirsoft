@@ -21,11 +21,14 @@ await page.evaluate(() => { const hit = window.__origHit = window.__origHit || a
         if (!(e.health > 0) || !u.userData.dot.visible) continue;
         u.getWorldPosition(o); u.userData.dot.getWorldPosition(d);
         const len = o.distanceTo(d), pitch = Math.asin(Math.max(-1, Math.min(1, (d.y - o.y) / Math.max(len, 1e-6)))) * 180 / Math.PI;
-        const toPlayer = Math.hypot(Game.player.pos.x - o.x, Game.player.pos.z - o.z);
+        // the kid's own target (teammates of the player are targets too in the team maps)
+        const tp = (e._targetRef && e._targetRef.pos) || Game.player.pos;
+        const tH = e._targetRef && e._targetRef !== Game.player ? tp.y + 1.6 : head;
+        const toTgt = Math.hypot(tp.x - o.x, tp.z - o.z);
         s.samples++;
         if (d.y > Math.max(head, o.y + 0.5)) s.aboveHead++;
         if (pitch > 30 && len > 3) s.steep++;
-        if (len > Math.hypot(toPlayer, head - o.y) + 1.0) s.overshoot++;
+        if (len > Math.hypot(toTgt, Math.max(Math.abs(tH - o.y), Math.abs(tp.y - o.y))) + 1.0) { s.overshoot++; s.over = s.over || { kid: e.name, len: +len.toFixed(2), toTgt: +toTgt.toFixed(2), tgt: e._targetRef && e._targetRef.name }; }
         if (pitch > s.maxPitch) { s.maxPitch = pitch; s.worst = { kid: e.name, state: e.state, pitch: +pitch.toFixed(1), len: +len.toFixed(2), dotY: +d.y.toFixed(2), head: +head.toFixed(2) }; }
         s.maxLen = Math.max(s.maxLen, len);
       }

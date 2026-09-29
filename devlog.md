@@ -4895,6 +4895,26 @@ before firing, or a lift that reads every obstacle), not a one-line fault.
 
 ---
 
+## v1.90 fix-up — a forfeited round's delayed win no longer ends the next round
+
+CI went red on v1.90: `one-ending.test.mjs` case 5 timed out waiting for the next round to start. v1.90's
+`endScenarioLater` told rounds apart with `Game.scenario === sc`, but `Game.scenario` is one object reused every
+round, so the check was always true. A delayed win from a forfeited round could still end the next round. It only
+passed locally because the next scenario takes longer than 600 ms to load here, so the timer fired during the intro
+and the mode guard caught it. CI loads faster, so the timer fired after BEGIN and ended the new round. The fix: a
+round counter, `Game.roundSeq`, bumped in `startScenario` and checked in `endScenarioLater`. The test's case 5 now
+captures the old round's 600 ms timer and fires it by hand once the new round is on, so it no longer depends on
+load speed. No version bump: v1.90 hasn't shipped.
+
+### Verified
+- The rewritten case 5 fails on v1.90 as pushed (`{"timers":1,"mode":"result"}`) and passes with the fix
+  (`"mode":"scenario"`). `npm test`: 5/5 suites green.
+
+### Still open
+- Nothing new.
+
+---
+
 ## v1.93 — Kids look before they shoot
 
 Backlog B.3, filed by v1.92's measurement: about a quarter of enemy BBs hit an obstacle within 3 m, before the
@@ -4926,6 +4946,13 @@ starts from whatever height it chose.
   What still hits is aim spread, which the check doesn't model: it clears the aimed line, and spread moves the
   BB off it. Most held pulls were Hollow 3v3 in run 2 (62 of 285), with Sean and Seth crouched 0.4 m behind the
   tall slope blocks.
+- Merged the v1.90 fix-up (another session's `Game.roundSeq` fix, below v1.92) into this branch. One test fix
+  came with it: v1.91's laser test measured overshoot against the player, but in Night 2v2 kids also aim at the
+  player's teammate. A beam 19.7 m long toward a teammate failed it. The check now uses each kid's own
+  `_targetRef`.
+- Harness: `g.bedroom()` now clicks ENTER MIKE'S ROOM from inside the page. v1.91 noted Playwright's click
+  sometimes hanging for its full 30 s; with seven suites that crashed two in one run here. Six smoke runs in a
+  row and the full suite are clean since.
 - `npm test`: 7/7 suites green, no page errors.
 
 ### Still open

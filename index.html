@@ -15731,6 +15731,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 
 function startScenario(built) {
   Game.mode = 'scenario';
+  Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -19995,9 +19996,11 @@ function eliminateEnemy(e) {
 // the player out; the tagger and the timer both fire in Infection). The first ending
 // stands: a late one for a round that is over, or for a different round, is dropped.
 // Before this the result could flip YOU'RE OUT → YOU GOT THEM and pay out twice.
+// Game.scenario is one object reused every round, so the round is told apart by
+// Game.roundSeq (bumped in startScenario), not by the object.
 function endScenarioLater(outcome, ms) {
-  const sc = Game.scenario;
-  setTimeout(() => { if (Game.mode === 'scenario' && Game.scenario === sc) endScenario(outcome); }, ms);
+  const round = Game.roundSeq;
+  setTimeout(() => { if (Game.mode === 'scenario' && Game.roundSeq === round) endScenario(outcome); }, ms);
 }
 
 function checkWinCondition() {

@@ -48,7 +48,9 @@ export async function boot(opts = {}) {
   const g = { page, browser, errs };
   g.mode = () => page.evaluate(() => Game.mode);
   g.bedroom = async () => {
-    await page.click('#startBtn');
+    // v1.93: click from inside the page. page.click() sometimes sat in "performing click action" for its
+    // full 30 s here (about 1 boot in 8), which crashed the suite before it ran; the mode wait below is the real gate.
+    await page.evaluate(() => document.getElementById('startBtn').click());
     await page.waitForFunction(() => Game.mode === 'bedroom', null, { timeout: 60000 });
   };
   g.scenario = async (id) => {
