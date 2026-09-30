@@ -1,7 +1,7 @@
 // v1.102: the Riverside Market lot, the parking-lot zone (backlog D.1, Michael: B). Checks the zone sits on the
 // ladder after The Hollow and before Northcliff, its map pin doesn't overlap another, both scenarios build with
 // every kid and the player clear of obstacles, and a round plays: kids move, nobody wedges, both sides trade hits.
-// The player is untaggable and stands at the spawn, so the round runs the full 60 s.
+// The player is untaggable and stands at the spawn, so the round runs at least 60 s (up to 120 s, see below).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
@@ -62,8 +62,14 @@ for (const id of ladder.ids) {
     // Wedged: seconds in a row in 'advancing' with under 0.25 m of net movement per second. Net, not per frame: a
     // kid jittering between two bumpers moves a few mm every frame and still goes nowhere (v1.103).
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z] }));
-    const hp0 = kids.map(k => k.health);
-    for (let f = 1; f <= 60 * 60 && Game.mode === 'scenario'; f++) {
+    // 60 s, then on (to 120 s) until both sides have lost a life: with three or four shooters a side, a clean
+    // first minute for one side happens by chance (CI, v1.102: 0 enemy lives lost in 60 s; locally 1 run in 5).
+    // v1.103: team battles only; the other lot scenarios stop at 60 s.
+    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
+    const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing' && !scd.ffa;
+    let f = 1;
+    for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
+      if (f > 60 * 60 && (!team || (livesLost('enemy') > 0 && livesLost('player') > 0))) break;
       const prev = kids.map(k => [k.pos.x, k.pos.z]);
       stepGame(1 / 60);
       kids.forEach((k, i) => {
@@ -76,17 +82,15 @@ for (const id of ladder.ids) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
-    const sc = SCENARIOS[Game.scenario.active] || {};
     const hurt = kids.filter(k => k.lives < k.maxLives || k.health <= 0).length;
-    return { team: sc.winCondition === 'last_team_standing' && !sc.ffa, hurt, shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
+    return { team, hurt, secs: Math.round((f - 1) / 60), shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
       kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
-  console.log(`  ${id}, 60 s:`, JSON.stringify(r));
+  console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > 10, r.shots);
   // A kid holding one spot (a sniper, a pistol peeking over a bonnet) still has to shoot from it.
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  if (r.team) check(`${id}: both sides lose lives`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
   if (id === 'lot_ffa') check(`${id}: the kids tag each other`, r.hurt >= 2 || r.mode === 'result', r);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await g.shot(id);
