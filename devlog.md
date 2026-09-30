@@ -5322,3 +5322,50 @@ picket fences, which BBs fly through (`updateBBs` skips them); it now skips them
   the same before v1.100; it needs a stride-relative test that keeps 60 fps behaviour.
 - Kids hold fire a little more often behind low cover. In play that should show as a lean-over that waits for a clean
   line rather than plinking the lip.
+
+---
+
+## v1.102 — A new zone: the Riverside Market lot
+
+Michael answered the open D questions on the control room this morning. For D.1 (maps from real places) he chose B, a
+parking-lot skirmish zone first. A zone is a scene builder, anchors, cover and a few scenarios, about two or three
+sessions' work. This is the first part: the lot itself, on the map and on the ladder, with two scenarios that play.
+
+The lot is flat asphalt, about 76 × 56 m. A long brick grocery store with a glass front, a green awning and a
+RIVERSIDE MARKET sign closes the north side. A box truck is parked at its loading end and two dumpsters at the other.
+Three double rows of parked cars cross the lot east to west, with a drive aisle about 7 m wide between each pair of
+rows. The lamp islands down the middle and the tree islands at the ends split each row. A grass verge and the road
+close the south side. Cars are the cover and the aisles are long, open lanes, so the fight goes car to car. The
+layout is fixed (a seeded pattern, 3 corrals and 3 stray carts), so the AI's cover and the tests see the same lot every
+round; only the car colours vary. Nobody said yet whether real business names can go on screen, so the store is a
+made-up one.
+
+It sits fourth on the ladder, after The Hollow. Clearing The Hollow's capstone opens it, and Northcliff (still
+"coming soon") now waits on the lot's capstone; its teaser says so. The map pin sits by the 140 shield off Holcomb
+Bridge Rd, clear of every other pin. Two scenarios:
+- **Aisle Wars**: 3v3, you with Eric (MP5) and Brooke (sniper) against Marcus (AK), Jamie (UMP) and Tyler (shotgun),
+  three lives each, last team standing.
+- **After Close** (night, the zone capstone for now): 4v4, you with Eric, Sean and Rebecca against Seth, Mitchell,
+  Devon (sniper, by the truck) and Mason, four lives each. The three lot lamps are the only light.
+
+On the first screenshot, the player spawned facing the road. The lot's `team_b` spawn had copied the Hollow's
+`yaw: Math.PI`, but yaw 0 is the one that faces −z. It now faces the store. The Hollow has the same slip: its players
+open facing the back wall of their own fort. That's filed under Found in play rather than fixed here.
+
+### Verified
+- New `tests/market-lot.test.mjs`. Ladder: the lot is locked on a new save; clearing The Hollow opens only Aisle Wars;
+  Northcliff opens only after both lot scenarios. The lot pin overlaps no other pin on the map (two older pairs do,
+  Winnmark/Battleground and Bunratty/Northcliff, as they did before v1.88 made them click-safe).
+- Both scenarios: the player and every kid spawn clear of all 170 obstacles. Over 60 s with the player untaggable at
+  spawn, kids fire 215–343 BBs. Every kid walks or shoots: the snipers and Rebecca hold a car and fire 9–20 times,
+  and the rest walk 34–186 m. No kid stands still in `advancing` for more than 1.0 s. Both sides lose lives (Aisle
+  Wars 2 enemy, 6 ally; After Close 6 and 6).
+- Screenshots by eye (tests/out): the store, the rows, the lamp and tree islands and the corrals read at the spawn
+  and from the south-west corner.
+- `npm test`: 15 of 15 suites green.
+
+### Still open
+- 2–3 more lot scenarios (a 1v1 opener, a defend at the store front, a free-for-all), then Northcliff (A).
+- In Aisle Wars your side loses lives three times as fast in the first minute (6 to 2). Brooke's sniper spot at the
+  road end gives her little to shoot. Whether the 3v3 is too hard needs a real playtest.
+- Whether the store can carry a real name (Kroger, a real Roswell plaza) is still Michael's call.

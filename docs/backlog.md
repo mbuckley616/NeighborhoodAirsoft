@@ -33,7 +33,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 <!-- the producer files Michael's notes here, in his words, with the date -->
 1. More maps, locations and scenarios, based on real places around where the game sits (East Roswell / Chattahoochee
    River): e.g. a Centennial High School level, a parking lot skirmish, Horseshoe Bend Country Club pool / golf course,
-   a grocery store battle. (Michael, 2026-09-28) **(design)**
+   a grocery store battle. (Michael, 2026-09-28) **(design)** — Michael: **B**, a parking-lot zone first (control room,
+   30 Sep). First part done, v1.102: the Riverside Market lot, fourth on the ladder, with two scenarios (Aisle Wars 3v3,
+   After Close night 4v4). Still owed: 2–3 more lot scenarios (a 1v1 opener, a defend, a free-for-all); then Northcliff (A).
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
@@ -63,3 +65,4 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 - ~~v1.86 — Night Prowl: Seth wedges in state `advancing` at (−5.3, −10.6) behind the car for 45–110 s, neither moving nor firing, once the player closes to ~14 m. With the mag empty, only a forfeit ends the round. Steps: `g.scenario('winnmark_night_prowl')`, walk the player to about (5, −2), spin 60 s in chunks, read Seth's `state`/`pos`. Seen 3 of 3 runs.~~ — done, v1.99 (a wedged bound re-picked the same cover every frame; it now rests bounding 1.5 s)
 - ~~v1.96 (builder) — Intermittent page errors `Failed to execute 'connect' on 'AudioNode': Overload resolution failed` (12 at once), seen once in three runs of `tests/result-text.test.mjs` (8 scenario entries, each ended four times). Not seen in any other suite. Something calls `connect()` with an undefined node; find which.~~ — done, v1.96 fix-up (`stopMusic`'s 400 ms cleanup nulled a restarted theme's master gain; `tests/music.test.mjs`)
 - ~~v1.98 (builder) — Infection tagger traps, both on v1.97 too (`tests/taggers.test.mjs`, player untaggable at spawn): Marcus stops for good against the tree at (16.4, 22.8) in 3 of 6 runs; the tagger wall-follow flips side after every 0.5 s of stuck time and oscillates round it. And the player's `bulb_center` spawn sits inside a 1.1 m planter wall: taggers from the west stop 5.6 m away against it while the player stands still.~~ — done, v1.100 (a wall-follow sidestep now commits 0.35–1.4 s; all six taggers reach the player)
+- v1.102 (builder) — The Hollow: the player spawns facing the back wall of the south fort. `buildHollowScene`'s `team_b` spawn has `yaw: Math.PI`, but yaw 0 faces −z (the field); every Hollow scenario that spawns on `team_b` opens looking at the flag pole. Steps: `g.scenario('hollow_skirmish_3v3')`, spin 2, screenshot.
