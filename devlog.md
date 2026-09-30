@@ -5609,3 +5609,24 @@ only; no game change, no version bump.
 ### Verified
 - With 15 s of play before the walk: the old test fails at −8 in all 3 runs; the new one stops at −11.17 in `scenario`.
 - `npm test`: all suites green.
+
+---
+
+## v1.107 fix-up 2 — player-walking tests don't depend on the browser granting pointer lock
+
+Both CI runs on v1.106 (6218812) failed `tests/jump.test.mjs` on Winnmark: every climb check had the player exactly
+where the test put him, never moving and never landing, while the same checks on Bunratty passed. The round was still
+on (the suite already makes the player untaggable). The real gate is `updatePlayer`: it returns at once unless
+`Game.mouse.locked`, so the player moves only while the page holds pointer lock. CI's headless Chromium sometimes
+refuses the lock (the "user gesture required" and "too many requests" refusals that v1.96 made harmless), and locally
+it's always granted. Forcing `Game.mouse.locked = false` locally gives CI's exact numbers (u −21.26, y 3.04).
+
+That is most likely the houses failure fixed above, too. A tag ending the round also leaves the player at z −8, so
+that guard stays, but the lock is the likelier cause in CI. `jump` and `houses` are the only suites that walk the
+player with keys; both now set `Game.mouse.locked = true` inside each walk. Test only; no game change.
+
+### Verified
+- With the lock forced off: the old `jump` fails its four Winnmark climb checks with CI's numbers; the fixed `jump`
+  and `houses` pass with no failures.
+- `npm test`: 19 of 20 on the first pass; `cover-fire` lost its browser while booting (before any test ran) and passed
+  on its re-run.
