@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Real place names on screen (D.1 follow-up; producer, 2026-09-30).** The D.1 answer (B, the parking lot) left open
   whether real business and school names can appear in the game. The builder named the new store "Riverside Market",
   made up, and the maps already use real road names (Holcomb Bridge Rd). Options:
@@ -13,8 +15,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Real roads and neighborhoods, made-up names for stores, schools and clubs (as the game does now).
   Producer recommends **C**: it keeps the place recognizable to people who live there without putting a real
   company's or school's name on a game you publish.
-
-## Answered
+  Michael: **C — Real roads, made-up stores and schools**. (2026-09-30)
 
 - **D.1, maps from real places (Michael, 2026-09-28; builder, 2026-09-30).** Which new zone first? A) Northcliff /
   Martin's Landing; B) a grocery store parking lot; C) Centennial High School grounds; D) Horseshoe Bend pool and golf
