@@ -5,6 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.
+  v1.104 rebuilt Winnmark's eight houses: hip roofs with even eaves and gutters, a gable over the door with a round
+  vent, framed windows with shutters, a panelled door under a hood, a chimney (screenshots: `tests/out/wm-after-*.png`
+  from `tests/houses.test.mjs`; in game, any Winnmark match). Bunratty still has the old house. Options:
+  A) Good, go on to step 2 (Winnmark's cars, then trees and hedges, the fort and yard props, the road and kerbs).
+  B) A, and give Bunratty the new house now too.
+  C) Change the houses first (say what in a note).
+  Builder recommends **A**: finish Winnmark, then carry every piece to the other maps at once.
+
 - **Real place names on screen (D.1 follow-up; producer, 2026-09-30).** The D.1 answer (B, the parking lot) left open
   whether real business and school names can appear in the game. The builder named the new store "Riverside Market",
   made up, and the maps already use real road names (Holcomb Bridge Rd). Options:
