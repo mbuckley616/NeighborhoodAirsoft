@@ -5223,3 +5223,34 @@ flip, which had been turning Mitchell back mid-commit along a house wall.
   a feel in play.
 - Only the tagger's wall-follow changed. The gunner states have their own wall-follow (`advancing`, flip every
   0.5 s of stuck time) with the same shape, and no wedge has been reported there since v1.99.
+
+---
+
+## v1.101 — A 2.5 s opening hold: no kid fires until the round has started
+
+Found in play (critic, v1.86), then Michael's call on the question I raised: in Two in the Yards Devon (sniper) has a
+line to the player's spawn from the first frame, 37 m off, and fired 0.75–0.98 s after BEGIN. It's one life, so a
+first-timer still reading the HUD could lose at 1.3 s without moving. Michael chose A (control room, 29 Sep): one rule
+for every kid on every map, no shot in the first 2.5 s after BEGIN; they still move, peek and aim.
+
+The game had no round clock that the tests' fixed steps drive (`Game.scenario.startTime` is wall time), so
+`startScenario` now zeroes `Game.scenario.roundTime` and `stepGame` adds each step's dt to it. `inOpeningHold()` is true
+for the first `OPENING_HOLD_SEC` (2.5) of it. Three places read it. The peek-and-shoot state stays up and aimed rather
+than firing, so its shot and its recovery aren't spent on a round that never leaves; it fires the moment the hold
+lifts. `queueSuppressionBurst` queues nothing. And `spawnEnemyBB`, the single emission point, returns early, which
+catches the reaction and suppression rounds that don't go through the shooting state. Allies are kids too and hold
+the same way. Infection taggers don't shoot and are unaffected.
+
+### Verified
+- New `tests/opening-hold.test.mjs`: the player stands at spawn for 6 s; it reads the round clock at the first kid BB
+  and at the first hit. Two in the Yards, five runs. v1.100: Devon's first BB at 0.75–0.98 s, the player hit at 1.30
+  and 1.53 s in 2 of 5. v1.101: the first BB at 2.52 s in all five, first hit 3.07 s at the earliest (2 of 5 by 3.1 s).
+- The same test on Bunratty 1v1 (Sean), Night Prowl, Full-Auto Mayhem and the Bunratty free-for-all: before, the
+  mayhem and free-for-all kids fired at 0.02–0.08 s; now no map has a kid BB before 2.52 s.
+- `npm test`: all suites green.
+
+### Still open
+- The hold buys time, not safety. Devon still has his line at 2.5 s, and a player who stays put is tagged at about
+  3.1 s in 2 of 5 runs. Moving his start out of sight (option C) would go with A if that still feels harsh in play.
+- In the big battles every kid opens fire on the same frame at 2.5 s. Whether that volley reads well, or needs a
+  small per-kid stagger, only a real playtest can say.
