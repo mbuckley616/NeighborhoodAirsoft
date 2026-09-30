@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.103</div>
+  <div class="version">v1.104</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8193,6 +8193,181 @@ function buildSethBackyardScene() {
 // dimensions, accent color, and roof color. Returns the house's AABB
 // obstacle entry so the player/BBs collide with it as a single big box.
 // (Houses are exterior-only this build — see Q&A from session.)
+// v1.104 (backlog D.3, Michael: D — Winnmark end to end, step 1: the houses). A detailed house front
+// for buildSuburbanHouse({ detail: true }): a real hip roof with even eaves and a fascia board, a
+// cross gable over the entry, framed windows with muntins, sills and shutters, a panelled door
+// under a small hood, a water-table band, corner boards, gutters with downspouts and a chimney.
+// Everything is built in a front-facing local frame (front at +z), bucketed by material and merged
+// into one mesh per material, so a house costs about eight draw calls. Collision is unchanged.
+function _houseMergeParts(parts) {
+  // parts: [{ geo, m: Matrix4 }] -> one non-indexed BufferGeometry (position + normal)
+  let n = 0;
+  const flat = parts.map(p => { const g = (p.geo.index ? p.geo.toNonIndexed() : p.geo.clone()); g.applyMatrix4(p.m); n += g.attributes.position.count; return g; });
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
+  let o = 0;
+  for (const g of flat) {
+    if (!g.attributes.normal) g.computeVertexNormals();
+    pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
+    o += g.attributes.position.count; g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  return out;
+}
+function buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, trimColor, roofColor, x, z }) {
+  const ew = (faceDir === 'east' || faceDir === 'west');
+  const fl = ew ? depth : width;          // length of the front face
+  const fd = ew ? width / 2 : depth / 2;  // half-depth, front face at local z = +fd
+  const sl = ew ? width : depth;          // side length
+  const yaw = { south: 0, north: Math.PI, east: Math.PI / 2, west: -Math.PI / 2 }[faceDir];
+  // deterministic per-house accents (the same street every round)
+  const hsh = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const shutterColor = [0x2a3a2a, 0x1e2630, 0x3a2a24, 0x26344a, 0x2b2b2b][Math.floor(hsh * 5)];
+  const doorColor = [0x3a2515, 0x5a1e1e, 0x1e2e44, 0x2a3a2a][Math.floor(hsh * 17) % 4];
+  const mats = {
+    roof:  new THREE.MeshStandardMaterial({ color: roofColor, roughness: 0.88, side: THREE.DoubleSide }),
+    trim:  new THREE.MeshStandardMaterial({ color: trimColor, roughness: 0.6 }),
+    shut:  new THREE.MeshStandardMaterial({ color: shutterColor, roughness: 0.7 }),
+    door:  new THREE.MeshStandardMaterial({ color: doorColor, roughness: 0.6 }),
+    win:   new THREE.MeshStandardMaterial({ color: 0x5a82a4, roughness: 0.25, metalness: 0.2, emissive: 0x1a2a3a, emissiveIntensity: 0.35 }),
+    band:  new THREE.MeshStandardMaterial({ color: new THREE.Color(brickColor).multiplyScalar(0.72), roughness: 0.95 }),
+    metal: new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.5, metalness: 0.2 }),
+    brass: new THREE.MeshStandardMaterial({ color: 0xc8a050, roughness: 0.35, metalness: 0.6 }),
+    brick: new THREE.MeshStandardMaterial({ color: brickColor, roughness: 0.92 }),
+  };
+  const buckets = {}; for (const k in mats) buckets[k] = [];
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(1, 1, 1);
+  function add(key, geo, px, py, pz, ry = 0, rx = 0, rz = 0) {
+    _e.set(rx, ry, rz); _q.setFromEuler(_e);
+    buckets[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), _q, _s) });
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+
+  // --- Hip roof: even 0.45 m eaves all round, ridge along the long side, same pitch on all four faces.
+  const ov = 0.45, rH = 2.3;
+  const hx = width / 2 + ov, hz = depth / 2 + ov;              // world-aligned (roof is symmetric)
+  const along = (width >= depth);
+  const inset = Math.min(hx, hz);
+  const rx = along ? hx - inset : 0, rz = along ? 0 : hz - inset;
+  const v = [
+    [-hx, 0, -hz], [hx, 0, -hz], [hx, 0, hz], [-hx, 0, hz],   // eave corners
+    [-rx, rH, -rz], [rx, rH, rz],                             // ridge ends
+  ];
+  const tris = along
+    ? [[3, 2, 5], [3, 5, 4], [1, 0, 4], [1, 4, 5], [2, 1, 5], [0, 3, 4], [0, 1, 2], [0, 2, 3]]
+    : [[0, 3, 4], [3, 5, 4], [2, 1, 5], [1, 4, 5], [3, 2, 5], [1, 0, 4], [0, 1, 2], [0, 2, 3]];
+  const rp = [];
+  for (const t of tris) for (const i of t) rp.push(...v[i]);
+  const roofGeo = new THREE.BufferGeometry();
+  roofGeo.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
+  roofGeo.computeVertexNormals();
+  // the roof is world-aligned, so it goes in unrotated: undo the front-frame yaw when merging
+  const roofMesh = new THREE.Mesh(roofGeo, mats.roof);
+  roofMesh.position.y = wallH + 0.12; roofMesh.castShadow = true; roofMesh.receiveShadow = true;
+  group.add(roofMesh);
+  // fascia board and gutter all round the eaves, soffit, downspouts and chimney: world-aligned, as the roof
+  const wb = {}; for (const k in mats) wb[k] = [];
+  const addW = (key, geo, px, py, pz) => wb[key].push({ geo, m: new THREE.Matrix4().makeTranslation(px, py, pz) });
+  for (const [w, d, px, pz] of [[2 * hx, 0.05, 0, hz], [2 * hx, 0.05, 0, -hz], [0.05, 2 * hz, hx, 0], [0.05, 2 * hz, -hx, 0]]) {
+    addW('trim', box(w + 0.05, 0.22, d + 0.05), px, wallH + 0.06, pz);
+    addW('metal', box(w + (d > 1 ? 0.1 : 0.02), 0.1, d + (w > 1 ? 0.1 : 0.02)),
+      px * (1 + 0.05 / (Math.abs(px) || 1)), wallH - 0.02, pz * (1 + 0.05 / (Math.abs(pz) || 1)));
+  }
+  addW('trim', box(2 * hx, 0.03, 2 * hz), 0, wallH - 0.03, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) addW('metal', box(0.08, wallH, 0.08), sx * (width / 2 + 0.06), wallH / 2, sz * (depth / 2 + 0.06));
+  // chimney on one side, rising through the roof's end slope
+  {
+    const cSide = hsh < 0.5 ? -1 : 1;
+    const cx = along ? cSide * (width / 2 - 0.5) : cSide * 0.6, cz = along ? -0.6 : cSide * (depth / 2 - 0.5);
+    addW('brick', box(0.9, rH + 1.4, 0.7), cx, wallH + (rH + 1.4) / 2, cz);
+    addW('band', box(1.02, 0.1, 0.82), cx, wallH + rH + 1.45, cz);
+  }
+  for (const k in wb) {
+    if (!wb[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(wb[k]), mats[k]);
+    m.castShadow = (k === 'brick' || k === 'trim'); m.receiveShadow = true;
+    group.add(m);
+  }
+
+  // --- everything below is in the front frame (front face at local +z = fd)
+  const front = new THREE.Group(); front.rotation.y = yaw; group.add(front);
+  // water-table band and corner boards
+  add('band', box(fl + 0.06, 0.45, 0.06), 0, 0.22, fd + 0.02);
+  add('band', box(fl + 0.06, 0.45, 0.06), 0, 0.22, -fd - 0.02);
+  add('band', box(0.06, 0.45, sl + 0.06), fl / 2 + 0.02, 0.22, 0);
+  add('band', box(0.06, 0.45, sl + 0.06), -fl / 2 - 0.02, 0.22, 0);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add('trim', box(0.16, wallH - 0.45, 0.16), sx * fl / 2, 0.45 + (wallH - 0.45) / 2, sz * fd);
+  // a belt course between the storeys
+  add('trim', box(fl + 0.04, 0.1, 0.05), 0, 2.72, fd + 0.03);
+
+  // cross gable over the entry: a roofed prism with a trim-clad gable end and a round vent
+  const gw = Math.min(3.6, fl * 0.42), gH = 1.55, gL = Math.min(fd + ov, 3.2);
+  {
+    const sh = new THREE.Shape(); sh.moveTo(-gw / 2 - 0.25, 0); sh.lineTo(gw / 2 + 0.25, 0); sh.lineTo(0, gH + 0.12); sh.lineTo(-gw / 2 - 0.25, 0);
+    const pr = new THREE.ExtrudeGeometry(sh, { depth: gL, bevelEnabled: false });
+    add('roof', pr, 0, wallH + 0.1, fd + ov - gL);
+    const tri = new THREE.Shape(); tri.moveTo(-gw / 2, 0); tri.lineTo(gw / 2, 0); tri.lineTo(0, gH - 0.1); tri.lineTo(-gw / 2, 0);
+    add('trim', new THREE.ShapeGeometry(tri), 0, wallH + 0.1, fd + ov + 0.01);
+    add('win', new THREE.CircleGeometry(0.22, 12), 0, wallH + 0.62, fd + ov + 0.02);
+    add('band', new THREE.RingGeometry(0.22, 0.3, 12), 0, wallH + 0.62, fd + ov + 0.025);
+  }
+
+  // door: panelled slab, casing, transom, hood on brackets, knob, stoop step, porch light
+  const dW = 0.95, dH = 2.1;
+  add('door', box(dW, dH, 0.07), 0, dH / 2 + 0.12, fd + 0.04);
+  for (const py of [0.55, 1.35]) for (const px of [-0.2, 0.2]) add('door', box(0.3, 0.55, 0.03), px, py + 0.12, fd + 0.09);
+  add('trim', box(0.12, dH + 0.55, 0.08), -dW / 2 - 0.06, (dH + 0.55) / 2 + 0.12, fd + 0.05);
+  add('trim', box(0.12, dH + 0.55, 0.08), dW / 2 + 0.06, (dH + 0.55) / 2 + 0.12, fd + 0.05);
+  add('trim', box(dW + 0.36, 0.14, 0.1), 0, dH + 0.12 + 0.55 + 0.07, fd + 0.06);
+  add('win', box(dW, 0.4, 0.04), 0, dH + 0.12 + 0.28, fd + 0.03);
+  add('trim', box(dW, 0.06, 0.06), 0, dH + 0.12 + 0.04, fd + 0.05);
+  add('roof', box(dW + 1.0, 0.1, 0.9), 0, dH + 0.95, fd + 0.45, 0, 0.12);
+  add('trim', box(dW + 1.04, 0.14, 0.06), 0, dH + 0.87, fd + 0.9);
+  for (const s of [-1, 1]) add('trim', box(0.1, 0.4, 0.5), s * (dW / 2 + 0.4), dH + 0.66, fd + 0.28);
+  add('brass', new THREE.SphereGeometry(0.045, 8, 6), dW / 2 - 0.13, 1.07, fd + 0.11);
+  add('band', box(1.6, 0.14, 0.4), 0, 0.19, fd + 0.2);
+  add('brass', box(0.14, 0.26, 0.1), dW / 2 + 0.36, 1.95, fd + 0.08);
+
+  // windows: glass, casing, muntin cross, sill, head cap, and shutters on the front
+  function win(px, py, pz, w, h, shutters, ry = 0) {
+    // local helper frame: the window lies in the plane z = pz facing +z (after ry)
+    const c = Math.cos(ry), s = Math.sin(ry);
+    const at = (lx, ly, lz) => [px + lx * c + lz * s, py + ly, pz - lx * s + lz * c];
+    const put = (key, geo, lx, ly, lz) => { const p = at(lx, ly, lz); add(key, geo, p[0], p[1], p[2], ry); };
+    put('win', box(w, h, 0.05), 0, 0, 0.0);
+    put('trim', box(w + 0.2, 0.1, 0.07), 0, h / 2 + 0.05, 0.02);
+    put('trim', box(0.1, h, 0.07), -w / 2 - 0.05, 0, 0.02);
+    put('trim', box(0.1, h, 0.07), w / 2 + 0.05, 0, 0.02);
+    put('trim', box(w + 0.34, 0.08, 0.18), 0, -h / 2 - 0.04, 0.07);
+    put('trim', box(w + 0.3, 0.1, 0.12), 0, h / 2 + 0.14, 0.04);
+    put('trim', box(0.045, h, 0.05), 0, 0, 0.035);
+    put('trim', box(w, 0.045, 0.05), 0, 0, 0.035);
+    if (shutters) for (const sd of [-1, 1]) {
+      put('shut', box(w * 0.42, h + 0.06, 0.04), sd * (w / 2 + 0.12 + w * 0.21), 0, 0.03);
+      for (const ly of [-h / 4, h / 4]) put('shut', box(w * 0.34, 0.03, 0.03), sd * (w / 2 + 0.12 + w * 0.21), ly, 0.055);
+    }
+  }
+  const wo = fl * 0.28;
+  for (const sd of [-1, 1]) {
+    win(sd * wo, 1.5, fd + 0.03, 1.0, 1.2, true);
+    win(sd * wo, 3.95, fd + 0.03, 1.0, 1.1, true);
+    win(sd * wo, 1.5, -fd - 0.03, 0.9, 1.0, false, Math.PI);
+    win(sd * wo, 3.95, -fd - 0.03, 0.9, 1.0, false, Math.PI);
+    win(sd * (fl / 2 + 0.03), 1.5, 0, 0.8, 1.0, false, sd * Math.PI / 2);
+    win(sd * (fl / 2 + 0.03), 3.95, 0, 0.8, 1.0, false, sd * Math.PI / 2);
+  }
+  // a small window over the door, under the gable
+  win(0, 3.95, fd + 0.03, 0.8, 0.9, false);
+
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = (k === 'roof' || k === 'trim'); m.receiveShadow = true;
+    front.add(m);
+  }
+}
+
 function buildSuburbanHouse(scene, {
   x, z,                      // center of footprint
   width = 8, depth = 7,      // footprint
@@ -8203,6 +8378,7 @@ function buildSuburbanHouse(scene, {
                              //   'south' | 'north' | 'east' | 'west'
   porch = true,              // whether to add a small entry porch
   skirt = 0,                 // v1.24a: foundation depth below y=0 (sinks into a slope)
+  detail = false,            // v1.104: the detailed Winnmark house (buildHouseDetail)
 }) {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
@@ -8243,6 +8419,9 @@ function buildSuburbanHouse(scene, {
     group.add(found);
   }
 
+  const frontDepth = (faceDir === 'east' || faceDir === 'west') ? width/2 : depth/2;
+  if (detail) buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, trimColor, roofColor, x, z });
+  if (!detail) {   // v1.104: the original house front (Bunratty still builds this one)
   // Roof — pyramidal / hip roof. ConeGeometry with 4 segments rotated 45° = a hip.
   // Scale to match footprint (slightly larger so it overhangs).
   const roofH = 2.6;
@@ -8275,7 +8454,6 @@ function buildSuburbanHouse(scene, {
   const doorW = 0.95, doorH = 2.1;
   const door = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.06), doorMat);
   // Compute front-face center
-  const frontDepth = (faceDir === 'east' || faceDir === 'west') ? width/2 : depth/2;
   door.position.set(faceVec.x * (frontDepth + 0.04), doorH/2, faceVec.z * (frontDepth + 0.04));
   // Rotate door to lie flat against the face
   if (faceDir === 'east' || faceDir === 'west') door.rotation.y = Math.PI / 2;
@@ -8288,6 +8466,8 @@ function buildSuburbanHouse(scene, {
   dTrim.position.z -= faceVec.z * 0.005;
   if (faceDir === 'east' || faceDir === 'west') dTrim.rotation.y = Math.PI / 2;
   group.add(dTrim);
+
+  }
 
   // Front porch slab (concrete pad)
   if (porch) {
@@ -8305,6 +8485,7 @@ function buildSuburbanHouse(scene, {
     group.add(pad);
   }
 
+  if (!detail) {   // v1.104
   // Windows — 2 on front face (flanking door) at story 1, 2 at story 2
   // For front face, we want them spread along the face — perpendicular to faceVec.
   const rightVec = { x: -faceVec.z, z: faceVec.x }; // 90° clockwise of faceVec
@@ -8361,6 +8542,7 @@ function buildSuburbanHouse(scene, {
   }
   addSideWin(-1, 1); addSideWin(1, 1);
   addSideWin(-1, 2); addSideWin(1, 2);
+  }
 
   scene.add(group);
 
@@ -10153,36 +10335,36 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // North side (north of road; faces SOUTH toward road)
   houseObs.push(buildSuburbanHouse(scene, {
     x: 24, z: -15, width: 9, depth: 7,
-    brickColor: 0xb8634a, roofColor: 0x4a3a2a, faceDir: 'south',
+    brickColor: 0xb8634a, roofColor: 0x4a3a2a, faceDir: 'south', detail: true,
   })); // Seth's (625 Winnmark Ct)
   houseObs.push(buildSuburbanHouse(scene, {
     x:  8, z: -16, width: 8, depth: 7,
-    brickColor: 0xa05238, roofColor: 0x5a4838, faceDir: 'south',
+    brickColor: 0xa05238, roofColor: 0x5a4838, faceDir: 'south', detail: true,
   }));
   houseObs.push(buildSuburbanHouse(scene, {
     x: -8, z: -16, width: 8, depth: 7,
-    brickColor: 0xc4a47a, roofColor: 0x5a3a2a, faceDir: 'south',
+    brickColor: 0xc4a47a, roofColor: 0x5a3a2a, faceDir: 'south', detail: true,
   }));
   houseObs.push(buildSuburbanHouse(scene, {
     x: -18, z: -15, width: 8, depth: 7,
-    brickColor: 0x945030, roofColor: 0x3a2a1a, faceDir: 'south',
+    brickColor: 0x945030, roofColor: 0x3a2a1a, faceDir: 'south', detail: true,
   })); // lakeside corner-ish (pulled east to clear the cul-de-sac bulb)
   // South side (south of road; faces NORTH toward road)
   houseObs.push(buildSuburbanHouse(scene, {
     x: 22, z: 19, width: 8, depth: 7,
-    brickColor: 0xa05a3a, roofColor: 0x4a3828, faceDir: 'north',
+    brickColor: 0xa05a3a, roofColor: 0x4a3828, faceDir: 'north', detail: true,
   }));
   houseObs.push(buildSuburbanHouse(scene, {
     x:  7, z: 20, width: 9, depth: 7,
-    brickColor: 0xc8a075, roofColor: 0x5a3825, faceDir: 'north',
+    brickColor: 0xc8a075, roofColor: 0x5a3825, faceDir: 'north', detail: true,
   }));
   houseObs.push(buildSuburbanHouse(scene, {
     x: -9, z: 20, width: 8, depth: 7,
-    brickColor: 0xb86848, roofColor: 0x4a3a2a, faceDir: 'north',
+    brickColor: 0xb86848, roofColor: 0x4a3a2a, faceDir: 'north', detail: true,
   }));
   houseObs.push(buildSuburbanHouse(scene, {
     x: -17, z: 19, width: 8, depth: 7,
-    brickColor: 0xa48468, roofColor: 0x5a4838, faceDir: 'north',
+    brickColor: 0xa48468, roofColor: 0x5a4838, faceDir: 'north', detail: true,
   })); // lakeside south corner (pulled east to clear the cul-de-sac bulb)
   // v1.28l: seat every house on the slope (sinks to the lowest footprint corner
   // so the uphill side buries into the grade like a real foundation, no float).

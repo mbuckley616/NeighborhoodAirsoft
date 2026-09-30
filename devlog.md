@@ -5443,3 +5443,47 @@ Both flips are the critic's Whole Block report (v1.101, filed on the critic's br
 - The `advancing` commitment isn't sub-stepped the way the taggers' is (v1.101 fix-up 2), so on slow frames it may
   steer differently. CI's mixed-step runs will show it if so.
 - The Whole Block line is on the critic's branch (PR #9). When that merges, it can be struck with v1.103.
+
+---
+
+## v1.104 — Winnmark's houses, first step of the polish pass
+
+Michael's answer to D.3 (mesh polish) was D: one map end to end, Winnmark first, and each step shown to him before
+the next. This is the first step: the eight houses on Winnmark Ct, which fill most of every frame there.
+
+The old house was a brick box under a square four-sided cone, which on an 8 × 7 m footprint gave uneven eaves (0.5 m
+at the sides, 1 m at the front), with a small pyramid for a front gable, flat window panes with a trim strip each
+side, and a door slab. The new one, `buildHouseDetail`, keeps the same box and the same collision, and replaces the
+rest:
+- A real hip roof with even 0.45 m eaves all round, the ridge along the long side, the same pitch on all four faces,
+  and a fascia board, soffit and gutter along every eave, with a downspout at each corner.
+- A cross gable over the entry, with a trim-clad gable end and a round vent.
+- Windows with a casing, a muntin cross, a sill and a head cap, and louvred shutters on the front ones. A small
+  window over the door, under the gable. Back and side windows get the casing and sill, no shutters.
+- A panelled door with a casing, a transom light, a hood on brackets, a knob, a porch light and a stoop step.
+- A darker water-table band at the base, corner boards, a belt course between the storeys and a brick chimney.
+Shutter and door colours come from the house's position, so the street looks the same every round, and differ house
+to house (five shutter colours, four door colours).
+
+All of it is merged into one mesh per material, so a house is now 14 meshes, against 26 before, though it has about
+2,200 triangles. Bunratty builds the same house function and keeps the old front until this step is approved: the
+new front is behind a `detail` option that only Winnmark passes.
+
+### Verified
+- New `tests/houses.test.mjs`: Winnmark builds eight detailed houses, 14 meshes each; their collision boxes keep their
+  8–9 × 7 m footprints and 5.5 m height; walking into Seth's front wall stops the player at z −11.17 (the wall is at
+  −11.5, the player's radius 0.33); Bunratty's seven houses are still the old build; no page errors. Looking at
+  Seth's house from the street the scene draws in 625 calls.
+- Screenshots by eye, day and Night Prowl (tests/out/houses-winnmark-seth.png and the wm-after/wm-night shots): the
+  roofs, gables, windows and doors read at the spawn, down the street and close up.
+- `npm test`: all suites green. One run of `cover-fire` came in at 25.4% of trigger pulls held against its 25% gate
+  (141 of them in Bunratty's Hold the Fort, which this change doesn't touch); six reruns passed, the last four at
+  5.6–14.5% held, with Hold the Fort holding 1–15 pulls.
+
+### Still open
+- Michael's look before the next step. The rest of Winnmark, in the order I'd take it: the cars, the trees and
+  hedges, the kids' fort and the yard props (bins, mailboxes, lamps), then the road and kerbs.
+- Whether Bunratty (and the lot's store, later) should take the new house now or after all of Winnmark is done.
+- `cover-fire`: one run in seven had a Hold the Fort kid holding 141 pulls, against 1–15 in the others. Something
+  there, probably a kid behind a low wall whose clear line never clears (v1.101 fix-up 2's lip margin), can hold a
+  whole round; it can turn CI red. Not chased in this item; worth a look with the per-kid hold counts.
