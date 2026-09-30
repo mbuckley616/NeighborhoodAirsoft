@@ -27,14 +27,17 @@ for (const id of IDS) {
       stepGame(1 / 60);
       while (shots.length) {
         const sh = shots.shift(), d = sh.v.clone().normalize();
-        const t = raycastObstacles(sh.p.x, sh.p.y, sh.p.z, d.x, d.y, d.z, 4, Game.player.obstacles);
+        // v1.101: BBs fly through `bbPass` picket fences (updateBBs skips them), so the cast skips them too;
+        // counting them made this suite swing 0.4–8.9% run to run on Sean's shots through the Bunratty fences.
+        const solid = Game.player.obstacles.filter(o => !o.bbPass);
+        const t = raycastObstacles(sh.p.x, sh.p.y, sh.p.z, d.x, d.y, d.z, 4, solid);
         const tgt = sh.e._targetRef && sh.e._targetRef.pos ? sh.e._targetRef.pos : Game.player.pos;
         const toTgt = Math.hypot(tgt.x - sh.p.x, tgt.z - sh.p.z);
         s.shots++; if (sh.lifted) s.lifted++;
         if (t >= 4 || t >= toTgt) continue;             // clear for 4 m, or reached the target first
         // which obstacle, and why the v1.77 lift didn't clear it
         let ob = null, bt = 99;
-        for (const o of Game.player.obstacles) { if ((o.h || 0) < 0.25) continue; const u = obsRayDist(o, sh.p.x, sh.p.y, sh.p.z, d.x, d.y, d.z, 4); if (u >= 0 && u < bt) { bt = u; ob = o; } }
+        for (const o of solid) { if ((o.h || 0) < 0.25) continue; const u = obsRayDist(o, sh.p.x, sh.p.y, sh.p.z, d.x, d.y, d.z, 4); if (u >= 0 && u < bt) { bt = u; ob = o; } }
         let why = 'other';
         const cov = Game.scenario.cover || [];
         const c = ob && cov.find(c => c === ob || (c.minX === ob.minX && c.maxX === ob.maxX && c.minZ === ob.minZ && c.maxZ === ob.maxZ && c.cx === ob.cx && c.cz === ob.cz));
