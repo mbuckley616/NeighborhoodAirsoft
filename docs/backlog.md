@@ -58,8 +58,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,
-   glasses; saved). Part 2 next: a new save opens on the mirror once, the hands take skin and shirt colours, height
-   moves the eye height a little. Eye colour and clothing style wait on new face and clothing meshes.
+   glasses; saved). ~~Part 2~~ — done, v1.108 (NEW GAME opens on the mirror once; height moves the eye line and
+   hitbox ±8 cm). Eye colour and clothing style wait on new face and clothing meshes.
 7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
    with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
    need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**

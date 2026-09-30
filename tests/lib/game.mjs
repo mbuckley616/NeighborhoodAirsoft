@@ -51,6 +51,9 @@ export async function boot(opts = {}) {
     // v1.93: click from inside the page. page.click() sometimes sat in "performing click action" for its
     // full 30 s here (about 1 boot in 8), which crashed the suite before it ran; the mode wait below is the real gate.
     await page.evaluate(() => document.getElementById('startBtn').click());
+    // v1.108: NEW GAME opens the bathroom mirror first (D.6); DONE there goes on to the bedroom
+    await page.waitForFunction(() => Game.mode === 'bedroom' || Game.mode === 'mirror', null, { timeout: 60000 });
+    await page.evaluate(() => { if (Game.mode === 'mirror') document.getElementById('mirrorDoneBtn').click(); });
     await page.waitForFunction(() => Game.mode === 'bedroom', null, { timeout: 60000 });
   };
   g.scenario = async (id) => {
