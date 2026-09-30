@@ -5107,3 +5107,218 @@ in try/catch, so a refusal is handled whether it comes as a throw or a rejected 
 
 ### Still open
 - By ear: going bedroom → scenario → bedroom quickly should leave the bedroom theme playing.
+
+---
+
+## v1.97 — The rifle off hand, looked at
+
+Backlog C.5 (from v1.95): on the large guns the off hand stops 2.7–3.5 cm short of the point `setKidGunHold` aims
+it at, because that point sits just past the arm's reach. The question was whether that shows on screen. No game
+code changed; the version is bumped to keep one version per backlog item.
+
+It doesn't show. The aim point is a spot 5 cm under the handguard's centre line, and the hand is a 11 × 10 × 12 cm
+box, so a hand 3 cm short of it is still wrapped round the gun. Headless close-ups of Sean holding the AK and the
+sniper at full aim, from 1.2 m and 2 m, show the hand on the handguard with no daylight between them. As a number:
+`tests/grip.test.mjs` now measures from the off hand's centre to the gun body's box, in the gun's own frame.
+
+### Verified
+- Off-hand centre to the gun body: AK and AR 0 cm at rest and 0.8 cm at full aim, MP5/UMP 0–0.4 cm, shotgun 0–0.2
+  cm, sniper 0.8–1.8 cm, standing and crouched. Every figure is well inside the hand's 5 cm half-size, so the hand
+  overlaps the gun. The new check gates it under 5 cm (pistol and MAC-10 at full aim: 3.0–3.2 cm, on the grip).
+- `npm test`: all suites green.
+
+### Still open
+- Nothing owed on C.5. If a real playtest at arm's length ever shows a gap, the fix is to pull the large-gun aim
+  point ~3 cm toward the off shoulder.
+
+---
+
+## v1.98 — Infection's Mitchell gets out of his backyard
+
+Found in play (critic, v1.86): in Bunratty Infection, Mitchell stayed behind the house3 backyard fence all round.
+He moved 3 m in 90 s and was always `chasing`. Headless on v1.97 he moves 0.5 m in 30 s.
+
+What wedges him isn't the fence. He spawns up against a 1 m backyard box (1.2 × 0.9 m) that sits between him and
+the player. His straight step and both axis slides hit it, so the tagger's wedge code runs. That code first asks the
+v1.73 `fenceDetourWaypoint` for a way round a fence, and there is one: the side fence at x = −19, further along the
+same line. It returns that fence's end, (−19, 28), as a waypoint. The step toward the waypoint hits the same box,
+so he moves nowhere. The perpendicular wall-follow that would have taken him round the box only runs when there's
+no fence waypoint, so it never did.
+
+The fence detour now has to make progress. If the kid is still stuck after 0.4 s of detouring, he wall-follows
+instead for 1.5 s, then the detour is tried again. A fence that really is in the way still gets walked round its
+end as before; the detour only gives way when it isn't working.
+
+### Verified
+- `tests/taggers.test.mjs` (new): Infection, the player made untaggable and standing at spawn, 30 s in 1 s chunks.
+  Mitchell walks 71–73 m, ends 61–67 m from his spawn and 0–5.6 m from the player (three runs). On the v1.97 build
+  the same test fails: 0.5 m walked, 66.5 m from the player.
+- `npm test`: all suites green.
+
+### Still open
+- Filed under Found in play (builder): two more tagger traps the new test shows, both on v1.97 as well.
+  **Marcus on a tree**: in 3 of 6 runs he stops for good against a tree at (16.4, 22.8), oscillating round it; the
+  wall-follow flips side every 0.5 s of stuck time and never gets past. **The spawn planter**: the player's
+  Infection spawn (`bulb_center`) is inside a 1.1 m planter wall; taggers from the west stop 5.6 m away against it
+  while the player stands still. A moving player breaks both, so a real round may hide them.
+
+---
+
+## v1.99 — Night Prowl's Seth stops freezing behind the car
+
+Found in play (critic, v1.86): on Night Prowl, once the player closes to about 14 m, Seth stands at (−5.3, −10.6)
+in state `advancing` for 45–110 s, neither moving nor firing. The critic saw it in 3 of 3 runs. With the ten BBs
+spent, only a forfeit ends the round.
+
+Seth is a pistol flanker. Between 10 m and his far range, a flanker bounds from cover to cover instead of walking
+straight in. On the way to his next cover he wedges on a tree trunk next to the car. The bounding code saw that: after
+0.6 s without progress it drops the bound "and lets the direct push's wall-follow handle it next frame". But next
+frame, with no bound cover, it picks one again: the same cover, by the same rule. So the direct push never ran, and
+he wedged on the same tree for the rest of the round. His firing is part of the bounding cycle too, so he went quiet.
+
+A wedged bound now rests bounding for 1.5 s. The direct push runs in that time, and its wall-follow sidesteps the
+tree. Once he's clear, he goes back to bounding as before.
+
+### Verified
+- `tests/night-prowl.test.mjs` (new) walks an untaggable player from spawn toward (5, −2), stopping within 14 m of
+  Seth, as the critic did, then plays 60 s. Three runs on v1.99: Seth's longest stand-still in `advancing` is 0.6 s;
+  he walks 91–101 m and fires 3–25 times. On the v1.97 build: 53.3 s wedged at (−5.3, −10.6), 12.9 m walked,
+  one shot.
+- `npm test`: 12 of 13 on the first pass; the 13th, the new night-prowl suite, lost its browser while booting
+  (`Target page, context or browser has been closed` in `g.bedroom`, before any test ran) and passed on its re-run.
+
+### Still open
+- The tagger version of this (Marcus on a tree in Infection, v1.98's Still open) is a different code path, still
+  open under Found in play.
+
+---
+
+## v1.100 — Infection taggers get round trees and walls
+
+Found in play (builder, v1.98): the new Infection test showed two more places taggers stop for good, both on the
+v1.97 build as well. Marcus hung on a tree at (16.4, 22.8) in 3 of 6 runs. The player's spawn (`bulb_center`) sits
+inside a 1.1 m planter wall, and taggers from the west stopped 5.6 m away against it for the rest of the round.
+
+Both have the same cause. When a tagger's straight step makes no progress, the wall-follow sidesteps him a few cm
+along the obstacle. On the next frame the straight step runs again, and its slide along the obstacle pulls him
+straight back to the spot he wedged on. That frame counts as progress, so the stuck timer resets. He jittered a few
+cm either way, forever.
+
+A sidestep now commits. The first time a tagger wedges he sidesteps for 0.35 s (about 1.2 m) without trying the
+straight step. If he wedges again within 3 s, the next commitment is longer: 0.7 s, then 1.05 s, up to 1.4 s. That
+takes him round a tree the first time and off the end of a longer wall within a few tries. During a commitment, a
+sidestep that is itself blocked turns him round at once. Committed frames no longer count toward the old 0.5 s side
+flip, which had been turning Mitchell back mid-commit along a house wall.
+
+### Verified
+- `tests/taggers.test.mjs` now also requires every tagger to reach the standing, untaggable player (within 2 m) in
+  30 s. v1.100, five runs: all six do, Marcus at 8–9 s, Sean 11 s, Nick 12 s, Priya 15 s, Ryan 17 s, Mitchell
+  24–26 s; Mitchell walks 76–78 m. v1.99, three runs: only 2–4 of 6 do; the rest stop 5.6–5.7 m away at the planter,
+  or Marcus at 27.8 m on his tree.
+- `npm test`: all suites green.
+
+### Still open
+- For a player who stands still, Infection is harder now: the planter used to keep the western half of the pack off
+  a player who stayed at spawn. That's how the mode is meant to work ("one touch means you're it"), but it's worth
+  a feel in play.
+- Only the tagger's wall-follow changed. The gunner states have their own wall-follow (`advancing`, flip every
+  0.5 s of stuck time) with the same shape, and no wedge has been reported there since v1.99.
+
+---
+
+## v1.101 — A 2.5 s opening hold: no kid fires until the round has started
+
+Found in play (critic, v1.86), then Michael's call on the question I raised: in Two in the Yards Devon (sniper) has a
+line to the player's spawn from the first frame, 37 m off, and fired 0.75–0.98 s after BEGIN. It's one life, so a
+first-timer still reading the HUD could lose at 1.3 s without moving. Michael chose A (control room, 29 Sep): one rule
+for every kid on every map, no shot in the first 2.5 s after BEGIN; they still move, peek and aim.
+
+The game had no round clock that the tests' fixed steps drive (`Game.scenario.startTime` is wall time), so
+`startScenario` now zeroes `Game.scenario.roundTime` and `stepGame` adds each step's dt to it. `inOpeningHold()` is true
+for the first `OPENING_HOLD_SEC` (2.5) of it. Three places read it. The peek-and-shoot state stays up and aimed rather
+than firing, so its shot and its recovery aren't spent on a round that never leaves; it fires the moment the hold
+lifts. `queueSuppressionBurst` queues nothing. And `spawnEnemyBB`, the single emission point, returns early, which
+catches the reaction and suppression rounds that don't go through the shooting state. Allies are kids too and hold
+the same way. Infection taggers don't shoot and are unaffected.
+
+### Verified
+- New `tests/opening-hold.test.mjs`: the player stands at spawn for 6 s; it reads the round clock at the first kid BB
+  and at the first hit. Two in the Yards, five runs. v1.100: Devon's first BB at 0.75–0.98 s, the player hit at 1.30
+  and 1.53 s in 2 of 5. v1.101: the first BB at 2.52 s in all five, first hit 3.07 s at the earliest (2 of 5 by 3.1 s).
+- The same test on Bunratty 1v1 (Sean), Night Prowl, Full-Auto Mayhem and the Bunratty free-for-all: before, the
+  mayhem and free-for-all kids fired at 0.02–0.08 s; now no map has a kid BB before 2.52 s.
+- `npm test`: all suites green.
+
+### Still open
+- The hold buys time, not safety. Devon still has his line at 2.5 s, and a player who stays put is tagged at about
+  3.1 s in 2 of 5 runs. Moving his start out of sight (option C) would go with A if that still feels harsh in play.
+- In the big battles every kid opens fire on the same frame at 2.5 s. Whether that volley reads well, or needs a
+  small per-kid stagger, only a real playtest can say.
+
+---
+
+## v1.100 fix-up — Mitchell at the end of the side fence
+
+CI's second `headless` run on the v1.100 head failed `taggers.test.mjs`: Mitchell walked 14.3 m and stopped 56 m
+from the player, at the south end of the house3 side fence (−19.5, 20.1). Locally, fixed 1/60 steps passed 40 of 40
+seeded runs, but CI's page also runs its own frame loop, whose steps go up to 0.05 s on a slow runner. With every
+third step 0.05 s, Mitchell stuck there in 14 of 20 runs. Low-frame-rate players take the same big steps.
+
+Two helpers were pulling him opposite ways. `fenceDetourWaypoint` asks whether the line from the kid's centre to his
+target crosses a fence, and ignores his 0.35 m body. Just south of the fence end, his centre line clears it but his
+body doesn't. So there was no detour, and the wall-follow committed him north, up the fence. A few cm north, the
+line crosses the fence, and the detour sent him south to its end. The big steps kept landing him on either side of
+that line.
+
+The detour's crossing test now widens the fence by the kid's radius, so a body that would clip the end gets the
+detour. The end waypoints move out by the same 0.35 m (1.3 m past the post instead of 0.95 m). This is the shared
+helper, so gunners in `advancing` get it too. No version bump: it lands with v1.101 (the other run's opening hold,
+merged in here), which hasn't shipped either.
+
+### Verified
+- Mixed steps (every third 0.05 s), 20 seeded runs: Mitchell reaches the player in all 20 (28.6–34.9 s), against 6 of
+  20 before.
+- `tests/taggers.test.mjs` now plays the round twice, on fixed 1/60 steps and on the mixed pattern, over 45 s instead
+  of 30 s: Mitchell's 66 m route takes 25–35 s, and the 30 s window had been tight even on 1/60 steps. On the pushed
+  v1.100 the mixed pass fails (Mitchell 13 m walked); with the fix, 3 runs out of 3, all six taggers reach the player
+  on both passes.
+- `npm test` on the merge with v1.101: all suites green.
+
+### Still open
+- The gunners' own wall-follow in `advancing` still flips side every 0.5 s of stuck time and has no sidestep
+  commitment. Nothing reported there since v1.99.
+
+---
+
+## v1.101 fix-up 2 — taggers steer the same at any frame rate; a lip margin on the clear line
+
+CI's run on the previous fix-up (55dffbe) failed two suites.
+
+**Taggers.** The mixed-step pass failed: Mitchell walked 64 m and ended 18 m short. The fix-up's radius-widened
+detour had cured the fence end, but a wider sweep showed the tagger's steering still depends on step size. With
+steps of random length up to 0.05 s, or a steady 0.05 s, Mitchell stuck in new places: his spawn box, a house
+corner, a house wall. The wedge handling steers on per-step distances ("moved under 2 cm") and timers. On 1/60 s
+steps, 40 seeded runs out of 40 get him home. So tagger movement now runs in sub-steps of at most 1/60 s: a 0.05 s
+frame moves in three. I first also scaled the 2 cm "no progress" test to the stride, for high frame rates, but that
+changed the 1/60 behaviour and he stuck on the house wall in 10 of 12 runs. So it stays 2 cm per sub-step.
+
+**Cover fire.** `cover-fire` came in at 5.8% against its 5% gate. Measured locally it swings a lot: v1.100 0.9–4.2%
+(8 runs), v1.101 1.8–8.9% (6 runs), this branch 0.4–4.8% (6 runs). Nearly all of it is Sean, the player's ally in the
+Bunratty 2v2, putting BBs into a 1.1 m metal bin 1.7–3 m ahead while shooting at Mitchell. v1.93's clear-line check
+lifts the muzzle until the aimed line clears the obstacle, sometimes by a centimetre. The BB then leaves with its aim
+spread, 6–12 cm up or down at 3 m, and a share of those shots hit the bin's lip. The check now also needs a line 10 cm
+lower to clear, so a lifted shot passes with a hand's width to spare. Separately, the suite's cast counted `bbPass`
+picket fences, which BBs fly through (`updateBBs` skips them); it now skips them too.
+
+### Verified
+- Tagger sweep: Mitchell from spawn to the standing player, 4 seeds × 4 step patterns (1/60, random 1/60–0.05 s,
+  0.05 s, mixed): 16 of 16 arrive, in 25–30 s. Before (55dffbe), on random, 0.05 s and mixed steps: 11 of 18.
+- `cover-fire`, six local runs: 0–1.1% of enemy shots into an obstacle within 3 m, down from 0.4–4.8%. Kids hold fire
+  on 7–15% of trigger pulls, up from about 6% (the suite's limit is 25%).
+- `npm test`: all suites green.
+
+### Still open
+- Above ~200 fps a tagger's whole sub-step is under 2 cm, so he reads as stuck every frame and wall-follows. It did
+  the same before v1.100; it needs a stride-relative test that keeps 60 fps behaviour.
+- Kids hold fire a little more often behind low cover. In play that should show as a lean-over that waits for a clean
+  line rather than plinking the lip.
