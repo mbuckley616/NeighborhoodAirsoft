@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.105</div>
+  <div class="version">v1.106</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4046,12 +4046,14 @@ const SHOP_CATALOG = [
     isOwned:()=>false, isLocked:()=>false, apply:()=>{Game.persist.bag+=5000;}, buttonLabel:()=>'BUY' },
 
   // === Loadout: slot unlocks ===
-  { id:'slot_3', category:'Loadout', name:'3rd Loadout Slot', price:30,
-    desc:'Unlock equipment slot #3 (key "3"). Carry a third item.',
+  // v1.106 (backlog D.5, Michael: A): the slot unlocks are gear you'd actually buy, a belt and a holster, and
+  // the text says what each one unlocks. Ids and save flags are unchanged (slot_3, slot_4).
+  { id:'slot_3', category:'Loadout', name:'Utility Belt', price:30,
+    desc:'A web belt with a pouch on each hip. Unlocks loadout slot 3 (key "3"): carry a third item into a match, like a speed loader or a spare mag.',
     isOwned:()=>Game.persist.owned.slot_3, isLocked:()=>false,
     apply:()=>{Game.persist.owned.slot_3=true;}, buttonLabel:()=>Game.persist.owned.slot_3?'OWNED':'BUY' },
-  { id:'slot_4', category:'Loadout', name:'4th Loadout Slot', price:80,
-    desc:'Unlock equipment slot #4 (key "4"). Requires 3rd slot.',
+  { id:'slot_4', category:'Loadout', name:'Drop-Leg Holster', price:80,
+    desc:'Straps to your thigh, below the belt. Unlocks loadout slot 4 (key "4"): a fourth item in a match. Needs the Utility Belt first.',
     isOwned:()=>Game.persist.owned.slot_4, isLocked:()=>!Game.persist.owned.slot_3,
     apply:()=>{Game.persist.owned.slot_4=true;},
     buttonLabel:()=>{ if(Game.persist.owned.slot_4)return 'OWNED'; if(!Game.persist.owned.slot_3)return 'LOCKED'; return 'BUY'; } },
@@ -16896,7 +16898,9 @@ function renderLoadoutManager() {
     div.className = 'lo-slot' + (locked ? ' locked' : '') + (isGun ? ' gun' : '') + (!slot && !locked && !isGun ? ' empty' : '');
     const keyEl = `<span class="lo-slot-key">${i+1}</span>`;
     if (locked) {
-      div.innerHTML = `${keyEl}<span class="lo-slot-icon">·</span><div class="lo-slot-info"><div class="lo-slot-name">Locked</div><div class="lo-slot-desc">Unlock at airsoft.com</div></div>`;
+      // v1.106: say which piece of gear opens the slot
+      const needs = i === 2 ? 'the Utility Belt' : 'the Drop-Leg Holster';
+      div.innerHTML = `${keyEl}<span class="lo-slot-icon">·</span><div class="lo-slot-info"><div class="lo-slot-name">Locked</div><div class="lo-slot-desc">Needs ${needs}, at airsoft.com</div></div>`;
     } else if (isGun) {
       // Slot 0 — gun. Clicking opens a picker of owned guns so the player can swap.
       div.innerHTML = `${keyEl}<span class="lo-slot-icon">${desc.icon}</span><div class="lo-slot-info"><div class="lo-slot-name">${desc.name}</div><div class="lo-slot-desc">${desc.desc} — click to swap</div></div>`;
@@ -17265,7 +17269,8 @@ function renderCatalogTab(c, category) {
   if (category === 'Loadout') {
     const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
     const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
-    if (slots.length)   { c.appendChild(shopSectionHeader('Loadout Slots', 'Carry more items into a match')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
+    // v1.106: the slot unlocks are a belt and a holster (D.5)
+    if (slots.length)   { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
     if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
     return;
   }

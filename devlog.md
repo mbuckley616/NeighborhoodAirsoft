@@ -5527,3 +5527,33 @@ The player's hitbox and the kids' aim already followed `pos.y`, so a player on a
 - A player on a bin or box sees over cover the kids were placed to hide behind. Some scenarios may need a look.
 - Nothing lets a kid follow him up; a kid who can't reach him keeps shooting from the ground, which may be enough.
 - There's no vault (option B) and no step-up: a 0.2 m ledge still stops a walk and needs a hop.
+
+---
+
+## v1.106 — The Utility Belt and the Drop-Leg Holster
+
+Michael's D.5 note was three things; his answer was A first: the loadout unlocks are something you wouldn't buy, so
+rename them as gear (he suggested "Holster" or "Utility Belt") and let the description say what each unlocks. The
+shop's two "3rd Loadout Slot" and "4th Loadout Slot" rows are now:
+- **Utility Belt** ($30): "A web belt with a pouch on each hip. Unlocks loadout slot 3 (key "3"): carry a third item
+  into a match, like a speed loader or a spare mag."
+- **Drop-Leg Holster** ($80): "Straps to your thigh, below the belt. Unlocks loadout slot 4 (key "4"): a fourth item
+  in a match. Needs the Utility Belt first."
+Their section header reads BELT & HOLSTER, "Gear that opens more loadout slots". On the Loadout screen a locked slot
+used to say "Unlock at airsoft.com"; slot 3 now says "Needs the Utility Belt, at airsoft.com", and slot 4 names the
+holster. Prices, the order (holster locked until the belt is bought), the save flags (`slot_3`, `slot_4`) and the
+in-match HUD are unchanged, so existing saves keep their slots. The shop keeps its look; the tab is still called
+Loadout, since the tabs and groupings are D.5's option B.
+
+### Verified
+- New `tests/utility-belt.test.mjs`: in the shop's Loadout tab the two rows are the Utility Belt and the Drop-Leg
+  Holster, no row says "Loadout Slot", the header is BELT & HOLSTER, the texts name slots 3 and 4, and the holster
+  reads LOCKED. The Loadout screen's locked slots name the belt and the holster. Buying both with clicks on the BUY
+  buttons costs $110, opens four slots and turns both rows OWNED; the Loadout screen then has no locked slot.
+- Screenshot by eye (tests/out/shop-belt.png): the airsoft.com page reads as before, with the new names.
+- `npm test`: 19 of 19 suites green.
+
+### Still open
+- D.5 B (re-sort the shop's tabs and groupings) and C (the Loadout screen with a 3D kid) are still to come, each
+  as its own version. B would come to Michael as a list first.
+- The belt and holster still use the shop's gear icon (⚙); their own icons would go with C.

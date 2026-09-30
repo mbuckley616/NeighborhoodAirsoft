@@ -52,7 +52,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    what they have equipped on each part of the body; unique meshes for each item). The online shop is a bit wonky: see
    if the tabs / item groupings make sense, but do NOT lose the early 2000s website aesthetic. The loadout unlocks are
    something you wouldn't 'buy'... maybe rename it to like 'Holster' or 'Utility Belt' and the description informs what
-   it unlocks for you. (Michael, 2026-09-29) **(design)**
+   it unlocks for you. (Michael, 2026-09-29) **(design)** — Michael: **A** first (control room, 30 Sep). ~~A, the Utility Belt~~ — done,
+   v1.106 (slot 3 is the Utility Belt, slot 4 the Drop-Leg Holster; texts say what each unlocks). B (re-sort the shop,
+   as a list for Michael first) and C (Loadout screen with a 3D kid) still to come.
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)**
 7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
