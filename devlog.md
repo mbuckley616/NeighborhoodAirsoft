@@ -5702,3 +5702,16 @@ the player's facing and the enemy kids' centroid, so any map with the same slip 
 
 ### Still open
 - The intro preview behind the BEGIN card now looks at the field too; worth a glance in play that it frames well.
+
+---
+
+## v1.109 fix-up — a slow screenshot no longer crashes a suite
+
+CI's `headless` run on v1.109 (f70d007) failed `tests/smoke.test.mjs` after all its checks had passed. The suite's
+closing `g.shot('smoke-tutorial')` hit Playwright's 30 s screenshot timeout (software GL on a slow runner, drawing the
+heavier scenes since v1.104), and the uncaught error failed the suite. Screenshots in the harness are for looking at,
+never a check. `g.shot` now waits up to 60 s and, if the capture still times out, logs it and carries on; any other
+error still throws. Test harness only.
+
+### Verified
+- `npm test`: all suites green.
