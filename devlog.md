@@ -5487,3 +5487,43 @@ new front is behind a `detail` option that only Winnmark passes.
 - `cover-fire`: one run in seven had a Hold the Fort kid holding 141 pulls, against 1–15 in the others. Something
   there, probably a kid behind a low wall whose clear line never clears (v1.101 fix-up 2's lip margin), can hold a
   whole round; it can turn CI red. Not chased in this item; worth a look with the per-kid hold counts.
+
+---
+
+## v1.105 — Jump onto and over low things
+
+Michael's answer to D.4 was A: height-aware collision, so that anything the feet clear is passed over and anything
+under about 1 m can be landed on and stood on. Kids stay on the ground.
+
+The player could already jump (4.2 m/s, about 0.72 m of rise), but `collidesObstacles` measured the body from the
+terrain under it, not from the feet, so a 0.5 m box stopped a player in mid-air as it stopped one on the ground.
+Now the player's own movement passes his foot height (`Game.player.pos.y`), and the vertical test runs from there:
+an obstacle whose top is under the feet (5 cm of slack) doesn't block. Kids call the same function without a foot
+height and get the terrain foot, as before.
+
+`playerSupportY` is the new ground under the player: the terrain, or the top of a standable obstacle his body
+overlaps whose top is at or just below his feet. Standable means no taller than 1.05 m (`STAND_MAX_H`) and not a
+picket fence that BBs fly through. It's measured with the same radius as the collision test, so there's no spot at
+an edge that neither holds him up nor lets him in. The jump physics use it in place of the terrain height: a
+falling player lands on the top; a grounded one follows it; walking off an edge more than 0.35 m high starts a fall,
+as stepping off a slope already did.
+
+What that gives in play: boxes, bins, crates and low planters (0.4–0.7 m) can be jumped onto and walked across; a
+0.45 m kerb can be cleared with a running jump; things from 0.75 to 1.05 m high can be
+stood on but only reached from something lower next to them; cars (1.15 m body) and 1.1 m walls still stop a jump.
+The player's hitbox and the kids' aim already followed `pos.y`, so a player on a box is shot at where he stands.
+
+### Verified
+- New `tests/jump.test.mjs`, on Winnmark and Bunratty (sloped) with a real Space keydown and W held: walking into a
+  0.55 m box stops at its face; a jump from 1.4 m back lands on top (Winnmark: feet 0.54 m above the road, rise
+  0.72 m; Bunratty 0.53 m, rise 0.67 m) and he stays there 90 steps; walking on drops him to the ground past the far
+  side. A jump into a 1.12 m wall leaves him on the near side, on the ground. The box still blocks a kid-sized body
+  (no foot height passed). On the lot, a 0.45 m kerb laid across the middle aisle stops a walk, and a running jump
+  lands 4 m past it.
+- `npm test`: 18 of 18 suites green (`cover-fire` rerun alone after its first run lost its browser at boot, when I
+  bumped the version tag mid-run; 18.0% of pulls held).
+
+### Still open
+- A player on a bin or box sees over cover the kids were placed to hide behind. Some scenarios may need a look.
+- Nothing lets a kid follow him up; a kid who can't reach him keeps shooting from the ground, which may be enough.
+- There's no vault (option B) and no step-up: a 0.2 m ledge still stops a walk and needs a hop.

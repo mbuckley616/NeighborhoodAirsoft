@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.104</div>
+  <div class="version">v1.105</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -17900,6 +17900,12 @@ const PLAYER_GRAVITY = 12.0;       // a bit stronger than world gravity for snap
 const SLIDE_INITIAL_SPEED = 7.5;   // m/s — fast launch
 const SLIDE_END_SPEED = 2.5;       // m/s — what it decays to at end of slide
 const JUMP_VEL = 4.2;
+// v1.105 (backlog D.4, Michael: A): height-aware collision. The player's feet are at Game.player.pos.y, not the
+// terrain: an obstacle whose top the feet clear is passed over, and one no taller than STAND_MAX_H can be landed
+// on and stood on (boxes, bins, low walls). A jump rises about 0.74 m, so a 1 m wall needs a step up first.
+// Kids stay on the ground (they call collidesObstacles without a foot height).
+const STAND_MAX_H = 1.05;
+function isStandable(o) { return !o.bbPass && !o.noStand && (o.h ?? 5) <= STAND_MAX_H; }
 
 // v1.26 STAMINA tuning (seconds). Base values; shoes scale these.
 const STAMINA_MAX_BASE = 6.0;       // seconds of continuous sprint at base
@@ -18063,8 +18069,9 @@ function updatePlayer(dt) {
     nx = Math.max(b.minX, Math.min(b.maxX, nx));
     nz = Math.max(b.minZ, Math.min(b.maxZ, nz));
   }
-  const collidedX = collidesObstacles(nx, Game.player.pos.z, r);
-  const collidedZ = collidesObstacles(Game.player.pos.x, nz, r);
+  const footNow = inScenario ? Game.player.pos.y : null;   // v1.105: collide from the feet, not the terrain
+  const collidedX = collidesObstacles(nx, Game.player.pos.z, r, footNow);
+  const collidedZ = collidesObstacles(Game.player.pos.x, nz, r, footNow);
   if (!collidedX) Game.player.pos.x = nx;
   if (!collidedZ) Game.player.pos.z = nz;
   // Cancel slide if it hits a wall hard
@@ -18078,7 +18085,8 @@ function updatePlayer(dt) {
   // v1.8: ground height is terrain-driven. The player walks up/down slopes
   // (foot snaps to groundY when grounded) and lands on the slope when airborne.
   if (inScenario) {
-    const gY = scenarioGroundY(Game.player.pos.x, Game.player.pos.z);
+    // v1.105: the ground is the terrain or the top of a low obstacle under the feet
+    const gY = playerSupportY(Game.player.pos.x, Game.player.pos.z, Game.player.pos.y, r);
     if (!Game.player.onGround) {
       Game.player.velY -= PLAYER_GRAVITY * dt;
       Game.player.pos.y += Game.player.velY * dt;
@@ -18357,27 +18365,43 @@ function obsRayDist(o, ox, oy, oz, dx, dy, dz, maxDist) {
   return (tMin >= 0) ? tMin : Infinity;
 }
 
-function collidesObstacles(x, z, r) {
+function collidesObstacles(x, z, r, footYOverride = null) {
   const obs = Game.player.obstacles || [];
   // v1.8: the player's feet are at terrain height; their body occupies
   // [footY, footY + standHeight]. An obstacle blocks only if its vertical span
   // [baseY, baseY+h] overlaps the player's body — so you can stand on a low
   // ledge below you, or walk under a high deck, without a horizontal-only AABB
   // falsely blocking. Obstacles without baseY (flat maps) default to baseY 0.
-  const footY = scenarioGroundY(x, z);
+  // v1.105: the player passes his own foot height, so what he has jumped above (or stands on) doesn't block;
+  // the test then runs on flat maps too. Kids pass none and keep the terrain foot.
+  const footY = (footYOverride != null) ? Math.max(footYOverride, scenarioGroundY(x, z)) : scenarioGroundY(x, z);
   const headY = footY + (Game.player.height ?? 1.5);
   for (const o of obs) {
     if (obsOverlapsXZ(o, x, z, r)) {
       const oBase = o.baseY ?? 0;
       const oTop = oBase + (o.h ?? 5);
       // Vertical overlap test (skip when no terrain so behaviour is unchanged).
-      if (Game.scenario.groundY) {
+      if (Game.scenario.groundY || footYOverride != null) {
         if (oTop <= footY + 0.05 || oBase >= headY) continue; // below feet / above head
       }
       return true;
     }
   }
   return false;
+}
+
+// v1.105 (D.4): what the player's feet rest on at (x, z): the terrain, or the top of a standable obstacle his
+// body overlaps whose top is at or just below his feet (within 0.1 m, so a landing from any fall speed catches it).
+// The radius is the collision radius, so there is never a spot that neither holds him up nor lets him in.
+function playerSupportY(x, z, footY, r) {
+  let y = scenarioGroundY(x, z);
+  for (const o of (Game.player.obstacles || [])) {
+    if (!isStandable(o)) continue;
+    const top = (o.baseY ?? 0) + (o.h ?? 5);
+    if (top <= y || top > footY + 0.1) continue;
+    if (obsOverlapsXZ(o, x, z, r)) y = top;
+  }
+  return y;
 }
 
 // ---------------------------------------------------------------------

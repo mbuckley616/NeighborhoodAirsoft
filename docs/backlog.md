@@ -46,7 +46,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    the next (control room, 30 Sep). ~~Step 1, Winnmark's houses~~ — done, v1.104 (hip roofs with eaves, cross gable,
    framed and shuttered windows, panelled door, gutters, chimney; Winnmark only). **Waiting on Michael's look** before
    step 2 (cars, then trees and hedges, the fort and yard props, the road and kerbs).
-4. We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**
+4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
+   — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
    what they have equipped on each part of the body; unique meshes for each item). The online shop is a bit wonky: see
    if the tabs / item groupings make sense, but do NOT lose the early 2000s website aesthetic. The loadout unlocks are
