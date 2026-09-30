@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.112</div>
+  <div class="version">v1.113</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8566,12 +8566,88 @@ function buildSuburbanHouse(scene, {
 // --- Shared neighborhood-tree builder ---
 // Big leafy tree — trunk + spherical canopy. Returns trunk obstacle (BBs hit
 // the trunk but can pass over/under the canopy bulk).
+// v1.113 (backlog D.3 step 2, Winnmark's trees and bushes). addSuburbanTree({ detail: true }) and
+// addBush(..., { detail: true }) build a low-poly tree and shrub in place of the ball on a stick: a
+// tapered trunk with a root flare and three limbs reaching into the crown, and a crown of five or six
+// lumpy, flat-shaded clumps; a shrub is three or four clumps. The lumps come from a hash of each
+// vertex's position, so clumps don't crack and the same tree looks the same every round. Each tree is
+// still two meshes (bark, leaves) and each shrub one; materials are shared. Collision is unchanged.
+const _plantMats = {};
+function _plantMat(color, flat) {
+  const k = color + (flat ? 'f' : '');
+  return _plantMats[k] || (_plantMats[k] = new THREE.MeshStandardMaterial({ color, roughness: flat ? 1.0 : 0.95, flatShading: !!flat }));
+}
+function _lumpyClump(r, seed, amt = 0.12) {
+  const geo = new THREE.IcosahedronGeometry(r, 1);
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const h = Math.abs(Math.sin(Math.round(x * 97) * 12.9898 + Math.round(y * 97) * 78.233 + Math.round(z * 97) * 37.719 + seed) * 43758.5453) % 1;
+    const s = 1 + (h - 0.5) * 2 * amt;
+    p.setXYZ(i, x * s, y * s, z * s);
+  }
+  return geo;
+}
+function _buildTreeDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor }) {
+  const seed = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const M = (geo, px, py, pz, q) => ({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), q || new THREE.Quaternion(), new THREE.Vector3(1, 1, 1)) });
+  // bark: trunk, root flare, three limbs (local to the trunk's centre)
+  const bark = [
+    M(new THREE.CylinderGeometry(trunkR * 0.72, trunkR, trunkH, 8), 0, 0, 0),
+    M(new THREE.CylinderGeometry(trunkR * 0.98, trunkR * 1.5, 0.4, 8), 0, -trunkH / 2 + 0.2, 0),
+  ];
+  const up = new THREE.Vector3(0, 1, 0);
+  for (let k = 0; k < 3; k++) {
+    const az = (seed + k / 3) * Math.PI * 2, tilt = 0.75 + 0.2 * ((seed * (k + 3) * 7) % 1);
+    const dir = new THREE.Vector3(Math.sin(tilt) * Math.cos(az), Math.cos(tilt), Math.sin(tilt) * Math.sin(az));
+    const bl = leafR * 0.85, y0 = trunkH / 2 - 0.35 - k * 0.3;
+    bark.push(M(new THREE.CylinderGeometry(trunkR * 0.18, trunkR * 0.36, bl, 6),
+      dir.x * bl / 2, y0 + dir.y * bl / 2, dir.z * bl / 2, new THREE.Quaternion().setFromUnitVectors(up, dir)));
+  }
+  const trunk = new THREE.Mesh(_houseMergeParts(bark), _plantMat(0x4a3018));
+  trunk.position.set(x, baseY + trunkH / 2, z);
+  trunk.castShadow = trunk.receiveShadow = true;
+  scene.add(trunk);
+  // crown: a core clump, a ring of four or five, and a crown top (local to the old sphere's centre)
+  const leaves = [M(_lumpyClump(leafR * 0.78, seed), 0, 0, 0)];
+  const ring = 4 + (seed > 0.5 ? 1 : 0);
+  for (let k = 0; k < ring; k++) {
+    const az = (seed * 3 + k / ring) * Math.PI * 2, hk = ((seed * 11 + k * 0.37) % 1);
+    leaves.push(M(_lumpyClump(leafR * (0.5 + 0.12 * hk), seed + k + 1),
+      Math.cos(az) * leafR * 0.52, leafR * (-0.2 + 0.3 * hk), Math.sin(az) * leafR * 0.52));
+  }
+  leaves.push(M(_lumpyClump(leafR * 0.5, seed + 9), leafR * 0.08, leafR * 0.5, -leafR * 0.05));
+  const crown = new THREE.Mesh(_houseMergeParts(leaves), _plantMat(leafColor, true));
+  crown.position.set(x, baseY + trunkH + leafR * 0.5, z);
+  crown.castShadow = true;
+  scene.add(crown);
+  trunk.userData.crown = crown;
+  return trunk;
+}
+function _buildBushDetail(x, z) {
+  const seed = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const parts = [{ geo: _lumpyClump(0.5, seed, 0.15), m: new THREE.Matrix4() }];
+  const n = 2 + (seed > 0.4 ? 1 : 0);
+  for (let k = 0; k < n; k++) {
+    const az = (seed + k / n) * Math.PI * 2;
+    parts.push({ geo: _lumpyClump(0.36, seed + k + 1, 0.15), m: new THREE.Matrix4().makeTranslation(Math.cos(az) * 0.26, -0.12 + 0.1 * k, Math.sin(az) * 0.22) });
+  }
+  return _houseMergeParts(parts);
+}
+
 function addSuburbanTree(scene, x, z, opts = {}) {
   const trunkR = opts.trunkR ?? 0.32;
   const trunkH = opts.trunkH ?? (3.0 + Math.random() * 1.5);
   const leafR  = opts.leafR  ?? (1.8 + Math.random() * 0.7);
   const baseY  = opts.baseY ?? 0;   // v1.8: terrain ground height at (x,z)
   const shape  = opts.shape ?? 'round';   // 'round' (deciduous sphere) | 'pine' (conifer)
+  if (opts.detail && shape === 'round') {   // v1.113: the low-poly tree (Winnmark)
+    const leafColor = opts.leafColor ?? (Math.random() < 0.5 ? 0x3a5a2a : 0x4a6a35);
+    const trunk = _buildTreeDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor });
+    trunk.userData.plantDetail = true;
+    return { minX: x - trunkR, maxX: x + trunkR, minZ: z - trunkR, maxZ: z + trunkR,
+      shape: 'cylinder', cx: x, cz: z, radius: trunkR, h: trunkH, surface: 'hard', mesh: trunk, baseY };
+  }
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(trunkR * 0.85, trunkR, trunkH, 8),
     new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 0.95 })
@@ -8623,12 +8699,15 @@ function addSuburbanTree(scene, x, z, opts = {}) {
 // --- Shared neighborhood-bush builder ---
 // Low bush — a small ovoid. Player can walk around it; BBs at low height
 // hit it (great for crouch-cover or peeking).
-function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0) {
+function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0, opts = {}) {
   const c = color ?? (Math.random() < 0.5 ? 0x3e5a30 : 0x4a6a3a);
-  const bush = new THREE.Mesh(
+  const bush = opts.detail   // v1.113: the clumped shrub (Winnmark)
+    ? new THREE.Mesh(_buildBushDetail(x, z), _plantMat(c, true))
+    : new THREE.Mesh(
     new THREE.SphereGeometry(0.6, 10, 8),
     new THREE.MeshStandardMaterial({ color: c, roughness: 1.0 })
   );
+  if (opts.detail) bush.userData.plantDetail = true;
   bush.scale.set(w, h, d);
   bush.position.set(x, baseY + h * 0.5, z);
   bush.castShadow = bush.receiveShadow = true;
@@ -10359,7 +10438,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const z = -52 + (Math.random() - 0.5) * 3;
     const trunkH = 3.5 + Math.random() * 1.5;
     const leafR = 2.2 + Math.random() * 0.6;
-    addSuburbanTree(scene, x, z, { trunkH, leafR });
+    addSuburbanTree(scene, x, z, { trunkH, leafR, detail: true });
   }
 
   // === Road — a curving asphalt strip approximated by many segment quads ===
@@ -10650,7 +10729,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(bx, bz)) {
         const fx = bx + rng(-0.5, 0.5), fz = bz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, fx, fz,
-          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(fx, fz) }));
+          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(fx, fz), detail: true }));
       }
       // Back row, offset perpendicular + half a step along the line (stagger)
       const sx = bx + ux * (spacing / 2) + px * (opts.outwardSign ?? 1) * rowGap;
@@ -10658,7 +10737,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(sx, sz)) {
         const jx = sx + rng(-0.5, 0.5), jz = sz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, jx, jz,
-          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(jx, jz) }));
+          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(jx, jz), detail: true }));
       }
     }
   }
@@ -10685,7 +10764,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const x = -44 + i * 4.2 + rng(-0.6, 0.6);
     const z = -60 + rng(-1, 1);
     treeObs.push(addSuburbanTree(scene, x, z,
-      { leafR: rng(1.8, 2.6), trunkH: rng(3.2, 4.8), baseY: groundY(x, z) }));
+      { leafR: rng(1.8, 2.6), trunkH: rng(3.2, 4.8), baseY: groundY(x, z), detail: true }));
   }
 
   // West-of-lake backdrop trees (beyond the water, frames the view west).
@@ -10693,7 +10772,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const z = -34 + i * 6.2 + rng(-0.8, 0.8);
     const x = rng(-58, -54);
     treeObs.push(addSuburbanTree(scene, x, z,
-      { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.5), baseY: groundY(x, z) }));
+      { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.5), baseY: groundY(x, z), detail: true }));
   }
 
   // Scattered front-yard ornamental trees (smaller) — unchanged flavor.
@@ -10702,7 +10781,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     if (Math.random() < 0.6) {
       const tx = hc.x + rng(-4, 4), tz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, tx, tz,
-        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(tx, tz) }));
+        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(tx, tz), detail: true }));
     }
   }
   // A few scattered trees within the deeper backyards for cover/texture (not a
@@ -10714,7 +10793,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const tz = hc.z + backSign * rng(8, 15);
       const tx = hc.x + rng(-5, 5);
       treeObs.push(addSuburbanTree(scene, tx, tz,
-        { leafR: rng(1.4, 2.0), trunkH: rng(2.6, 3.6), baseY: groundY(tx, tz) }));
+        { leafR: rng(1.4, 2.0), trunkH: rng(2.6, 3.6), baseY: groundY(tx, tz), detail: true }));
     }
   }
 
@@ -10723,12 +10802,12 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   for (const hc of houseCenters) {
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const frontZ = hc.z + towardRoad * 4.0;
-    bushObs.push(addBush(scene, hc.x - 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.6, frontZ)));
-    bushObs.push(addBush(scene, hc.x + 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.6, frontZ)));
+    bushObs.push(addBush(scene, hc.x - 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.6, frontZ), { detail: true }));
+    bushObs.push(addBush(scene, hc.x + 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.6, frontZ), { detail: true }));
     if (Math.random() < 0.6) {
       const ex = hc.x + rng(-3, 3), ez = frontZ + towardRoad * rng(0.2, 0.8);
       bushObs.push(addBush(scene, ex, ez,
-        rng(0.8, 1.2), rng(0.5, 0.8), rng(0.8, 1.1), null, groundY(ex, ez)));
+        rng(0.8, 1.2), rng(0.5, 0.8), rng(0.8, 1.1), null, groundY(ex, ez), { detail: true }));
     }
   }
 

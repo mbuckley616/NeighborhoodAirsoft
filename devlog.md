@@ -5805,3 +5805,30 @@ box car until Winnmark is done, as with the houses.
 - Michael's eye on the shape in play; it is one sedan in the street's paint colours, no second body style yet
   (a van or pickup would need a taller cabin box).
 - Step 2 goes on: trees and hedges, the fort and yard props, the road and kerbs.
+
+## v1.113 — Winnmark's trees and bushes
+
+D.3 step 2, second part (Michael: A). Winnmark's ~245 trees were a smooth ball on an eight-sided post, and its
+foundation bushes a squashed ball. `addSuburbanTree` and `addBush` now take `detail: true`, and every tree and bush
+on Winnmark passes it: the tree has a tapered trunk with a root flare and three limbs reaching up into the crown, and
+the crown is a core clump, a ring of four or five and a top clump, each a low-poly ball with lumps pushed in and out
+and drawn flat-shaded, so it reads as foliage from the street and still matches the game's hard-edged look. A shrub is
+three or four such clumps. The lumps come from a hash of each vertex's position, so neighbouring faces move together
+(no cracks) and the same tree looks the same every round. Each tree is still two meshes (bark, leaves) and each bush
+one, so draw calls don't rise; the materials are shared across plants rather than one pair per tree. The trunk's
+collision cylinder, the tree's height and the bush's soft box are unchanged. Bunratty keeps the old tree and bush
+until Winnmark is done.
+
+The first run of the new suite sat for ten minutes: the test never closed its browser. Separately, calling
+`buildHollowScene` with no variant hangs the page (the Hollow is always built through a scenario, which passes one),
+so the suite checks Bunratty, not the Hollow, as the unchanged map.
+
+### Verified
+- New `tests/winnmark-trees.test.mjs`: all 245 Winnmark trees are the low-poly tree with its crown, all 20 foundation
+  bushes the clumped shrub; Bunratty's 219 trees and 14 bushes are unchanged. Screenshot `tests/out/winnmark-trees.png`.
+- `npm test`: 24/25 in the full run; `smoke.test.mjs` stalled in `g.bedroom()` after NEW GAME (the harness stall
+  filed under Found in play, the fourth one) and passed alone.
+
+### Still open
+- Michael's eye on the tree shape; a denser or darker crown is a one-line change.
+- Step 2 goes on: the fort and yard props, then the road and kerbs.
