@@ -5,18 +5,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Devon's opening shot in Two in the Yards (Found in play, critic v1.86; builder, 2026-09-29).** Devon (sniper,
-  `brooke_backyard`) has a clear line to the player's `road_east` spawn from the first frame, 37 m off, and fires at
-  0.77–0.93 s after BEGIN in every headless run; the critic saw a standing player tagged at ~1.5 s in 3 of 9. Nothing
-  in the game holds a kid's fire at the start of a round. Options:
-  A) An opening hold for every gunner kid in every scenario: no shot in the first 2.5 s after BEGIN (they still move
-     and peek). Fixes this and any other spawn-in-sight start.
-  B) Sniper only: the first shot waits a full bolt cycle, 2–3 s after BEGIN, the same floor v1.46 puts between shots.
-  C) Move Devon's start anchor to a backyard with no line to the road, so he has to come find you, as the scenario
-     blurb says ("he'll let Jamie flush you out").
-  D) Leave it: a sniper that punishes standing still is the lesson.
-  Builder recommends **A**: one rule, every map, and a first-timer reading the HUD gets 2.5 s. C also fits the blurb
-  and could go with it.
+- **Real place names on screen (D.1 follow-up; producer, 2026-09-30).** The D.1 answer (B, the parking lot) left open
+  whether real business and school names can appear in the game. The builder named the new store "Riverside Market",
+  made up, and the maps already use real road names (Holcomb Bridge Rd). Options:
+  A) Real names everywhere: Kroger, Centennial High School, Horseshoe Bend.
+  B) Made-up names everywhere, including roads and neighborhoods.
+  C) Real roads and neighborhoods, made-up names for stores, schools and clubs (as the game does now).
+  Producer recommends **C**: it keeps the place recognizable to people who live there without putting a real
+  company's or school's name on a game you publish.
 
 - **D.4, jumping onto and over things (Michael, 2026-09-29; builder, 2026-09-30).** The player can already jump
   (4.2 m/s up, about 0.74 m of rise), but collision is flat: `collidesObstacles` blocks by footprint alone, so a
@@ -89,6 +85,36 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   fairness, say so and height becomes cosmetic only.
 
 ## Answered
+
+- **D.1, maps from real places (Michael, 2026-09-28; builder, 2026-09-30).** Which new zone first? A) Northcliff /
+  Martin's Landing; B) a grocery store parking lot; C) Centennial High School grounds; D) Horseshoe Bend pool and golf
+  course. Builder recommended B, then A.
+  Michael: **B — Grocery store parking lot**. (2026-09-30) Real names on screen: not answered; asked under Pending.
+
+- **D.2, online play (Michael, 2026-09-28; builder, 2026-09-30).** A) title screen only, Campaign / Online (greyed) /
+  Options; B) A plus a 1v1 invite-code prototype; C) hold all of it until the v2 zones are done. Builder recommended A.
+  Michael: **C — Hold all of it until the v2 zones are done**. (2026-09-30)
+
+- **D.3, mesh polish pass (Michael, 2026-09-29; builder, 2026-09-30).** A) houses first; B) kids first; C) cars and
+  trees first; D) one map end to end, Winnmark. Builder recommended D, each step shown to Michael before the next.
+  Michael: **D — One map end to end: Winnmark**. (2026-09-30)
+
+- **D.4, jumping onto and over things (Michael, 2026-09-29; builder, 2026-09-30).** A) height-aware collision, stand on
+  anything under ~1 m; B) A plus a sprint vault; C) vault only. Builder recommended A.
+  Michael: **A — Jump onto and over low things**. (2026-09-30)
+
+- **D.5, loadout, shop and unlock screens (Michael, 2026-09-29; builder, 2026-09-30).** Which first? A) Utility Belt
+  rename and re-describe; B) re-sort the shop; C) Loadout screen with a 3D kid. Builder recommended A, then B, then C.
+  Michael: **A — Utility Belt: rename and re-describe unlocks**. (2026-09-30)
+
+- **D.6, character creator (Michael, 2026-09-29; builder, 2026-09-30).** A) at NEW GAME; B) at a mirror in the bedroom;
+  C) both, the mirror, and a new save opens on it once. Builder recommended C.
+  Michael: **C — Both: the mirror, and a new save opens on it once**. (2026-09-30)
+
+- **D.7, towers, ladders and ramps (Michael, 2026-09-29; builder, 2026-09-30).** A) a treehouse with a ladder, new map
+  only; B) the same on the existing Treehouse map; C) park it until D.4 has landed and been played. Builder
+  recommended C.
+  Michael: **C — Park it until D.4 has landed and been played**. (2026-09-30)
 
 - **Devon's opening shot in Two in the Yards (Found in play, critic v1.86; builder, 2026-09-29).** Devon (sniper,
   `brooke_backyard`) has a clear line to the player's `road_east` spawn from the first frame, 37 m off, and fires at

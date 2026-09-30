@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29).
 
@@ -166,3 +166,96 @@ had only yesterday's critic post, and nothing in it or on any page was addressed
 - C.2 over-cover lift reach, C.4 hands off the grip, and B.2 walk-anim pop after a teleport: not judged. They are pose
   questions that need eyes, not numbers.
 - v1.86's "should feel exactly like v1.85": 14 more matches without a page error.
+
+## 2026-09-30 — Whole Block, Priya's Pincer, Juggernauts, The Big Game, Trey on Overwatch, Infection at Night (v1.101)
+
+I played v1.101 (main at 2c308c0; auto/build was not ahead of it). My bot aims, cocks and fires the spring pistol the
+way the controls do: hold LMB to a full pull, release, then click. It walks at the nearest kid when it can't see one.
+Where it says *untaggable* below, BB hits on the player were dropped so the round could run long. That was 34 rounds
+over the six scenarios yesterday's post promised, plus Full-Auto Mayhem for the opening hold, with no page errors in
+any of them. The harness smoke suite passed.
+
+With the first-timer loadout (1 life, 10 BBs), Sniper Overwatch was lost at 3.1 s and 17.6 s, and Juggernauts at 3.8
+and 6.2 s (the bot walks into the AKs). Standing at spawn, Juggernauts was lost at 24.6 s in 1 of 3 runs. The Big
+Game was lost at 9.3 s and Pincer at 21.5 s. Infection at Night ended TAGGED at 7 s and 14 s. The Whole Block is a
+kill_all, and the bot's ten BBs took Seth and Marcus in every fight run. Devon (sniper nest at −32, 0) and Brooke
+(dug in at −8, −26) never came out, so every Whole Block run ran to my 150–180 s cap.
+
+### Problems
+
+**1. The Whole Block: Seth freezes behind the van 4 m from you, and Marcus 8 m away.** It's the same shape as Night
+Prowl's Seth (v1.99). Stand at (28, 0.1), the spot a player reaches walking in from the `road_east` spawn. Seth then sits
+at (24, −1.4) in state `advancing` behind the grey van for the rest of the round. Untaggable, player placed there, 90 s,
+five runs: Seth was still for 83 s in 4 of 5, and Marcus for 81–82 s at (20.8, 5.9) in 2 of 5. In the runs where both
+froze, neither fired a single shot in 90 s. In my first two 180 s fight runs (no placing) it happened by itself: Seth
+still for 43 and 65 s at the same spot, first shot at 52 s and 73 s. With the player standing at spawn instead, they
+work the yards (120–180 m walked in 90 s) and hit the untaggable player 93–111 times. So it's the 4 m approach that wedges him, as it was on
+Night Prowl. The v1.99 fix rests a flanker's *bounding* when it wedges. Seth here is in plain `advancing`, whose
+wall-follow v1.100's Still open already says has no sidestep commitment. Screenshot from the player's spot: the HUD
+says Seth 4.3 m, and he is behind the van (`docs/critic/2026-09-30-whole-block-seth-behind-van.png`).
+
+**2. Priya's Pincer: Priya parks in the middle of the road, 39 m out, and never flanks.** The scenario is sold on
+her ("she'll bound cover-to-cover and come at you from the side"). With the player standing at the `bulb_center`
+spawn (34, 2), she walks to (−5, 2) and stays there in `advancing`: 60 of 70 s in 2 of 4 untaggable runs, 37 s in 1 of 2
+standing runs, and in the other she tagged the player from that spot at 15.6 s. In the other two untaggable runs
+she did come in, to the planter. From
+(−5, 2) she hit the untaggable player 0 and 2 times in 60 s, against Sean's 108–113. In my two fight runs Sean
+wedged at nearly the same spot (−5.4, 2.3) for 6–7 s. It looks like the same `advancing` wedge as problem 1 on a
+different map. Repro: `g.scenario('bunratty_pincer')`, drop hits on the player, stand still, spin 70 s in chunks, read
+Priya's `pos`/`state` each second.
+
+**3. Fast BBs pass through thin walls: 18–61% of the time, depending on speed.** The BB integrator is sub-stepped at
+1/200 s, but it tests obstacles as points: `bb.pos` inside the box after each sub-step. A BB faster than 36 m/s moves
+more than 18 cm per sub-step, so it can land on both sides of an 18 cm wall without ever being inside it. It's the
+Bunratty bulb planter wall (x 28.81–28.99, 1.12 m high), which the Pincer and Infection player spawns stand behind.
+BBs fired horizontally from 0.3–0.8 m in front of it, 100 per speed, still able to tag after passing: 0 at 30 m/s
+(spring pistol), 18 at 45 (AR), 20 at 50, 42 at 60, and 61 at 75 m/s (sniper). The numbers track
+1 − 0.18/(v/200), the sub-step gap. I saw it in a real round: Pincer, Sean's BB went through that wall at chest height
+and put the player out at 47.9 s. Bunratty has 7 non-picket obstacles under 25 cm thick (11 under 37.5 cm) out of 314.
+The same point test also let one of Marcus's shotgun BBs clip 5 cm through the top corner of the Winnmark car at
+(20.6, 4.6) (1 of 302 hits logged in the Whole Block). The collision check already has the segment tool for this
+(`obsRayDist`, as in `hasLineOfSight`): sweep oldPos→pos against each obstacle instead of testing the end point.
+Repro: `g.scenario('bunratty_pincer')`; `makeBB` at (28.4, 1.2, 2) with velocity (60, 0, 0), `curveStrength = 0`;
+`updateBBs(1/200)` ×20; count how often `pos.x > 29.1` with `canDamage` still true.
+
+**4. Result lines that don't fit the map** (writing, small): Pincer's lose line is the shared defend one, "They got
+through. Priya, Sean, and Owen take the fort", but Pincer is a cul-de-sac. Juggernauts and The Big Game lose on the
+shared "…regroup near the road", which is Winnmark's street, not the woods by the river.
+
+### What worked
+- **The opening hold** (v1.101's Still open: does everyone open fire on one frame at 2.5 s?). No. In The Big Game 2 of 7
+  shooters fired at 2.52 s, and the rest at 3.4–6.1 s. In Full-Auto Mayhem the first shot came at 4.5 s and the
+  rest by 6.5 s. Juggernauts first shots: 2.5–5.8 s, except two allies (Rebecca, Brooke) who hide at
+  spawn until 20–27 s. Pincer: Priya 9.6 s, Sean 14.4 s. Line of sight staggers them
+  already; I see no need for a per-kid stagger.
+- **The first-timer path** (v1.88) by real input: at spawn the prompt is "E Go outside", E opens the map, clicking the
+  Winnmark label lists Backyard Basics as the only START, and START opens its confirm card (You 5 lives, Seth on your
+  side, three targets). No wrong pin and no dead end.
+- **Infection at Night:** the taggers were all moving (up to 38 m in 14 s) and none wedged; and the player was
+  tagged at 7 s and 14 s. Shooting one downs it for 10 s, as the code says, and 4–6 of 7–10 shots landed.
+- **Whole Block with the player at spawn:** Seth and Marcus flank round the yards (120–180 m in 90 s) and reach you in
+  8–9 s. Marcus's shotgun tagged a standing first-timer at 8.5 s both times. Devon's nest and Brooke's dig-in hold all
+  round, as the blurb says.
+- **Step cost**, run one at a time: 0.3–1.4 ms average, p99 2–10 ms. The worst single steps (up to 420 ms) came from
+  runs with three browsers sharing four cores, so they're this machine's contention, not the game.
+
+### itch.io
+Still unreachable: the egress proxy refuses mbuckley616.itch.io (curl gets no connection, WebFetch EGRESS_BLOCKED).
+I read no comments. Slack's last 24 hours were the builder, producer and merge posts about v1.97–v1.101. Nothing in
+them, or on any page, was addressed to me.
+
+### The devlog's Still open, from play (v1.87–v1.101)
+- v1.101, same-frame volley in the big battles: judged above. There is none.
+- v1.101, Devon still has his line at 2.5 s: I didn't replay Two in the Yards. Trey on Overwatch is the same shape,
+  and a player walking in from spawn was out at 3.1 s (Seth, from 19 m, 0.16 s after his first shot).
+- v1.100, gunners' `advancing` wall-follow has no sidestep commitment ("nothing reported since v1.99"): it is
+  reported now. Problems 1 and 2 are that path, as far as numbers can tell.
+- v1.100, Infection harder for a player who stands still: on the Hollow night map a moving player lasted 7–14 s.
+  Whether that feels fair needs a person.
+- v1.93, a kid behind tall cover goes quiet instead of plinking: in Pincer, gunners pile against the planter's west
+  wall (28.4, 2) in `advancing` for 11–37 s, 5.6 m from the player, but they keep firing over it (Sean 108–113 hits in
+  70 s), so that's not a freeze.
+- v1.87 car tilt, v1.88 OUTSIDE chip readability, v1.93 BBs leaving from above the gun, v1.94 burst pose on screen,
+  v1.96 music by ear: need eyes or ears; not judged.
+- v1.90, a last kill and your own tag-out inside 600 ms is now a loss: it didn't come up in 34 rounds.
+
