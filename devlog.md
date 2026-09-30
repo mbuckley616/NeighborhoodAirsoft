@@ -5595,6 +5595,23 @@ build, short brown hair, blue shirt, dark pants, no glasses).
 
 ---
 
+## v1.107 fix-up — the houses test keeps its player in the round
+
+CI's `headless` run on v1.105 (4680e8a) failed `tests/houses.test.mjs` › "walking north into Seth's house stops at its
+front wall": the player ended at z −8, exactly where the test puts him, so he hadn't moved at all. It isn't v1.105's
+collision change. The suite plays `winnmark_seth_house`, a one-life 1v1. While it inspects the eight houses, the page's
+own frame loop keeps the round going in real time. On a slow runner that is long enough for Seth's opening hold to lift
+and for him to tag the player. The round ends, and a player on the result screen doesn't walk. Locally it's fast enough
+to pass. With 15 s of play before the walk, the old test fails 3 runs in 3 with the same −8. The suite now makes the
+player untaggable as soon as the round starts, and the walk check also requires the mode to still be `scenario`. Test
+only; no game change, no version bump.
+
+### Verified
+- With 15 s of play before the walk: the old test fails at −8 in all 3 runs; the new one stops at −11.17 in `scenario`.
+- `npm test`: all suites green.
+
+---
+
 ## v1.108 — A new save opens on the mirror; height sets the eye line
 
 The rest of Michael's C on D.6: a new save opens on the mirror once. NEW GAME now goes to the bedroom and opens the

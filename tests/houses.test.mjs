@@ -22,6 +22,9 @@ async function houses() {
 }
 
 await g.scenario('winnmark_seth_house');
+// The page's own frame loop keeps the round running while the houses are inspected; on a slow CI runner that is
+// long enough for Seth to tag a one-life player, the round ends, and the walk below goes nowhere (CI, v1.105: -8).
+await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 await g.spin(10);
 const wm = await houses();
 console.log('  winnmark', JSON.stringify(wm));
@@ -36,9 +39,9 @@ const stop = await page.evaluate(() => {
   const kd = new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }); document.dispatchEvent(kd);
   for (let i = 0; i < 240; i++) stepGame(1 / 60);
   const ku = new KeyboardEvent('keyup', { code: 'KeyW', key: 'w' }); document.dispatchEvent(ku);
-  return +Game.player.pos.z.toFixed(2);
+  return { z: +Game.player.pos.z.toFixed(2), mode: Game.mode };
 });
-check('walking north into Seth\'s house stops at its front wall (z −11.5)', stop > -11.5 && stop < -10.5, stop);
+check('walking north into Seth\'s house stops at its front wall (z −11.5)', stop.mode === 'scenario' && stop.z > -11.5 && stop.z < -10.5, stop);
 
 await page.evaluate(() => { Game.player.pos.x = 24; Game.player.pos.z = -4; Game.player.yaw = 0; Game.player.pitch = 0.15; stepGame(1 / 60); Game.player.pitch = 0.15; });
 await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
