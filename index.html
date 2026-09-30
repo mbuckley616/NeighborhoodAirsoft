@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.111</div>
+  <div class="version">v1.112</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8994,6 +8994,109 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
 //
 //   orientation: 0 = car facing +X, π/2 = car facing +Z. Affects body footprint AABB.
 //   color: hex (default neutral blue-gray)
+// v1.112 (backlog D.3, Michael: A on step 1 — go on to step 2, Winnmark's cars first). A detailed car for
+// addCar({ detail: true }): a side-profile body with a sloped hood and trunk, wheel arches and a soft
+// bevel, a glass greenhouse with roof, A/B/C pillars, bumpers, grille, head and tail lights, plates,
+// door seams and handles, mirrors and hubcaps. Same footprint as the box car (3.6 × 1.55 m, beltline
+// 1.15 m, cabin 1.15–1.70 m over x −1.15…0.85), so the two collision boxes still match what's drawn.
+// The tyres stay separate meshes (cars.test.mjs and carSeatY read them); the rest merges into one
+// mesh per material, as the v1.104 houses do.
+function buildCarDetail(group, { carMat, winMat, len, width, wheelR, color }) {
+  const mats = {
+    body: carMat,
+    glass: winMat,
+    dark: new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.8 }),
+    chrome: new THREE.MeshStandardMaterial({ color: 0xd4d8dc, roughness: 0.35, metalness: 0.3 }),   // no env map: high metalness renders black
+    head: new THREE.MeshStandardMaterial({ color: 0xfff8e0, roughness: 0.2, emissive: 0x302a18, emissiveIntensity: 0.4 }),
+    tail: new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: 0.4, emissive: 0x3a0a0a, emissiveIntensity: 0.3 }),
+    plate: new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: 0.6 }),
+  };
+  const buckets = {}; for (const k in mats) buckets[k] = [];
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(1, 1, 1);
+  function add(key, geo, px, py, pz, rx = 0, ry = 0, rz = 0) {
+    _e.set(rx, ry, rz); _q.setFromEuler(_e);
+    buckets[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), _q, _s) });
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const L = len / 2, W = width / 2;          // 1.8, 0.775
+  const bev = 0.04;
+
+  // --- body: side profile (x forward, y up), extruded across the width with a small bevel
+  const arc = 0.37, sill = 0.25, a0 = Math.asin((sill - wheelR) / arc);   // arch meets the sill
+  const sh = new THREE.Shape();
+  sh.moveTo(-L + bev, 0.42);
+  sh.lineTo(-L + bev, 0.95);
+  sh.quadraticCurveTo(-L + bev, 1.1, -L + 0.18, 1.11);     // rear deck edge
+  sh.lineTo(-1.15, 1.15 - bev);                           // trunk lid up to the rear glass
+  sh.lineTo(0.85, 1.15 - bev);                            // beltline under the cabin
+  sh.quadraticCurveTo(1.45, 1.13 - bev, L - 0.14, 1.04);  // hood falls to the nose
+  sh.quadraticCurveTo(L - bev, 1.02, L - bev, 0.9);
+  sh.lineTo(L - bev, 0.42);
+  sh.lineTo(L - 0.2, sill);
+  sh.absarc(1.2, wheelR, arc, a0, Math.PI - a0, false);   // front wheel arch
+  sh.lineTo(-1.2 + arc * Math.cos(a0), sill);
+  sh.absarc(-1.2, wheelR, arc, a0, Math.PI - a0, false);  // rear wheel arch
+  sh.lineTo(-L + 0.2, sill);
+  sh.lineTo(-L + bev, 0.42);
+  const bodyGeo = new THREE.ExtrudeGeometry(sh, { depth: width - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 8 });
+  add('body', bodyGeo, 0, 0, -(W - bev));
+
+  // --- greenhouse: glass trapezoid, roof panel, pillars
+  const gb0 = -1.12, gb1 = 0.82, gt0 = -0.8, gt1 = 0.25, gy0 = 1.1, gy1 = 1.64, gw = 1.36;
+  const gs = new THREE.Shape();
+  gs.moveTo(gb0, gy0); gs.lineTo(gb1, gy0); gs.lineTo(gt1, gy1); gs.lineTo(gt0, gy1); gs.lineTo(gb0, gy0);
+  add('glass', new THREE.ExtrudeGeometry(gs, { depth: gw, bevelEnabled: false }), 0, 0, -gw / 2);
+  add('body', box(gt1 - gt0 + 0.08, 0.05, gw + 0.04), (gt0 + gt1) / 2, gy1 + 0.02, 0);
+  const pillar = (x0, y0, x1, y1, t, z) => {
+    const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy);
+    add('body', box(l, t, 0.05), (x0 + x1) / 2, (y0 + y1) / 2, z, 0, 0, Math.atan2(dy, dx));
+  };
+  for (const s of [-1, 1]) {
+    const z = s * (gw / 2 + 0.005);
+    pillar(gb1, gy0 + 0.04, gt1, gy1, 0.07, z);          // A
+    pillar(gb0, gy0 + 0.04, gt0, gy1, 0.2, z);           // C, wider
+    add('body', box(0.09, gy1 - gy0, 0.05), -0.2, (gy0 + gy1) / 2, z);   // B
+    add('chrome', box(gb1 - gb0 - 0.1, 0.025, 0.03), (gb0 + gb1) / 2 - 0.02, gy0 + 0.03, s * (gw / 2 + 0.02));   // window line
+  }
+
+  // --- bumpers, grille, lights, plates
+  for (const s of [-1, 1]) add('dark', box(0.16, 0.2, width + 0.04), s * (L - 0.02), 0.47, 0);
+  add('dark', box(0.03, 0.16, 0.66), L + 0.005, 0.84, 0);
+  for (const zs of [-1, 1]) {
+    add('chrome', box(0.02, 0.02, 0.62), L + 0.02, 0.84 + zs * 0.04, 0);
+    add('head', box(0.05, 0.12, 0.3), L - 0.02, 0.86, zs * 0.53);
+    add('tail', box(0.05, 0.14, 0.34), -L + 0.02, 0.9, zs * 0.55);
+    add('head', box(0.03, 0.05, 0.1), -L + 0.01, 0.9, zs * 0.3);   // reversing lamp
+  }
+  add('plate', box(0.02, 0.12, 0.32), L + 0.07, 0.5, 0);
+  add('plate', box(0.02, 0.14, 0.34), -L - 0.07, 0.72, 0);
+  add('chrome', new THREE.CylinderGeometry(0.035, 0.035, 0.14, 8), -L + 0.01, 0.33, 0.45, 0, 0, Math.PI / 2);   // exhaust
+
+  // --- sides: door seams, handles, mirrors, a rub strip
+  for (const s of [-1, 1]) {
+    const z = s * (W + 0.004);
+    for (const x of [0.78, -0.2, -1.08]) add('dark', box(0.015, x === -1.08 ? 0.5 : 0.72, 0.012), x, x === -1.08 ? 0.86 : 0.75, z);
+    for (const x of [0.4, -0.58]) add('chrome', box(0.14, 0.03, 0.03), x, 0.98, s * (W + 0.01));
+    add('dark', box(2.2, 0.05, 0.02), -0.1, 0.62, s * (W + 0.008));
+    add('body', box(0.1, 0.1, 0.16), 0.72, 1.2, s * (W + 0.07));
+    add('dark', box(0.04, 0.02, 0.1), 0.74, 1.14, s * (W + 0.03));
+  }
+
+  // --- hubcaps on the wheel faces (wheels at ±1.2, z ±(W + 0.05))
+  for (const wx of [-1.2, 1.2]) for (const s of [-1, 1]) {
+    add('chrome', new THREE.CylinderGeometry(0.17, 0.17, 0.02, 14), wx, wheelR, s * (W + 0.05 + 0.115), Math.PI / 2);
+    add('dark', new THREE.CylinderGeometry(0.05, 0.05, 0.03, 8), wx, wheelR, s * (W + 0.05 + 0.12), Math.PI / 2);
+  }
+
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = (k === 'body' || k === 'glass'); m.receiveShadow = (k === 'body');
+    group.add(m);
+  }
+  group.userData.carDetail = true;
+}
+
 function addCar(scene, x, z, opts = {}) {
   const orientation = opts.orientation ?? 0; // radians
   const color = opts.color ?? 0x6a8aa8;
@@ -9010,6 +9113,8 @@ function addCar(scene, x, z, opts = {}) {
   const wheelR = 0.30;
 
   const group = new THREE.Group();
+  if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
+  else {   // v1.112: the original box car (Bunratty and the lot still build this one)
   // Body — sits with bottom at wheel-axle height
   const body = new THREE.Mesh(new THREE.BoxGeometry(len, bodyH, width), carMat);
   body.position.set(0, wheelR + bodyH/2, 0);
@@ -9049,6 +9154,7 @@ function addCar(scene, x, z, opts = {}) {
     const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.25), tlMat);
     tl.position.set(-len/2 + 0.025, wheelR + bodyH * 0.65, zSign * width * 0.3);
     group.add(tl);
+  }
   }
   // Wheels — 4 of them
   const wheelGeom = new THREE.CylinderGeometry(wheelR, wheelR, 0.22, 12);
@@ -10782,7 +10888,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const orientation = hc.side === 'north' ? Math.PI / 2 : -Math.PI / 2;
     const color = carColors[Math.floor(Math.random() * carColors.length)];
     // v1.76: pass groundNormal so the car tilts onto the grade (all 4 tires touch).
-    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal }), carX, carZ);
+    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal, detail: true }), carX, carZ);
     pushCarObs(driveCars, carObs);
   }
 
@@ -10793,10 +10899,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the AI can use them when scenarios place a kid near the bulb.
   {
     // Car at the curb just inside the bulb (bulb now at x=-30)
-    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), -30, -3.5);
+    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal, detail: true }), -30, -3.5);
     pushCarObs(coverList, carObs);
     // A second car at the south curb of the bulb
-    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), -27, 5);
+    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal, detail: true }), -27, 5);
     pushCarObs(coverList, carObs2);
     // v1.28k: a proper U-shaped plywood kid-fort in the cul-de-sac bulb.
     // Attackers come from the EAST (road entry x=34), so the fort's solid back
@@ -10888,7 +10994,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const gyp = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal }), cxp, czp);
+        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true }), cxp, czp);
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
         cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) }), cxp, czp);

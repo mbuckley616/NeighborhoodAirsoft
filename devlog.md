@@ -5775,3 +5775,33 @@ twice and fails on an 8 s stall more than 20 m out, or if she hasn't closed to 1
 ### Still open
 - The other half of the report: "never flanks". Priya comes down the lane at z 2–6 against a player at z 2, so the
   pincer from the side barely shows here. Whether the flank should swing wider is for Michael's eye in play, not a bug.
+
+## v1.112 — Winnmark's cars
+
+Michael answered A on D.3 step 1 (the houses are good, go on to step 2: Winnmark's cars, then trees and hedges, the
+fort and yard props, the road and kerbs). This is the cars. Every car on Winnmark (the driveway cars, the two in the
+bulb and the ones parked at an angle down the street as cover) was two boxes with glass slabs on it. `addCar` now
+takes `detail: true`, and `buildCarDetail` draws a sedan in its place: a side profile extruded across the width with a
+small bevel, the hood falling to the nose and the trunk lid to the tail, cut-out wheel arches over the tyres; a glass
+greenhouse with a roof panel, A, B and C pillars and a chrome window line; black bumpers, a grille with two chrome
+bars, head, tail and reversing lights, front and rear plates, an exhaust; door seams, handles, a rub strip and wing
+mirrors; hubcaps. The shape is the old car's footprint (3.6 × 1.55 m, beltline 1.15 m, cabin 1.15–1.70 m over the
+same span), so the two collision boxes still fit what's drawn and nothing about cover, sliding or seating on slopes
+changes. The tyres stay four separate meshes (`carSeatY` and `tests/cars.test.mjs` read them); the rest merges into
+one mesh per material like the v1.104 houses. The chrome is only lightly metallic: with no environment map in the
+scene, a high-metalness hubcap renders black (the first screenshot had black wheels). Bunratty and the lot keep the
+box car until Winnmark is done, as with the houses.
+
+### Verified
+- New `tests/winnmark-cars.test.mjs`, three builds of each map: all 18 Winnmark cars are the detailed car, 11 meshes each
+  (the box car was 14), 1,820 triangles, four separate tyres; the cabin box is unchanged (offset −0.15, 1.0 × 0.7 m,
+  1.15–1.70 m). The drawn car stays inside its boxes: ±1.88 m long (plates), 0–1.694 m tall, ±0.96 m wide (mirrors,
+  hubcaps). Bunratty's and the lot's cars are still the box car.
+- `tests/cars.test.mjs` on the new car: Winnmark's 128 tyres sit 0–0.5 cm off the ground, none buried.
+- Screenshot `tests/out/winnmark-cars-bulb.png` (the bulb cars from the road).
+- `npm test`: 24/24 green.
+
+### Still open
+- Michael's eye on the shape in play; it is one sedan in the street's paint colours, no second body style yet
+  (a van or pickup would need a taller cabin box).
+- Step 2 goes on: trees and hedges, the fort and yard props, the road and kerbs.

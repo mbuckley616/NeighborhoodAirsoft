@@ -44,8 +44,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
    **(design)** — Michael: **D**, one map end to end, Winnmark first, each step shown to him before
    the next (control room, 30 Sep). ~~Step 1, Winnmark's houses~~ — done, v1.104 (hip roofs with eaves, cross gable,
-   framed and shuttered windows, panelled door, gutters, chimney; Winnmark only). **Waiting on Michael's look** before
-   step 2 (cars, then trees and hedges, the fort and yard props, the road and kerbs).
+   framed and shuttered windows, panelled door, gutters, chimney; Winnmark only). Step 2 (Michael: A, go on): ~~cars~~
+   — done, v1.112 (a profiled sedan with arches, glass, pillars, lights, plates, mirrors, hubcaps; same collision);
+   then trees and hedges, the fort and yard props, the road and kerbs.
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
