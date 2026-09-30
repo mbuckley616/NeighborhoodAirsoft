@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.107</div>
+  <div class="version">v1.108</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16363,6 +16363,7 @@ function startScenario(built) {
   Game.player.sprinting = false;
   Game.player.ads = 0;
   Game.player.adsTarget = 0;
+  applyPlayerLook();   // v1.108: the mirror's height sets the eye height and hitbox
   Game.player.eyeOffset = Game.player.eyeOffsetStand;
   Game.player.velY = 0;
   Game.player.onGround = true;
@@ -16945,6 +16946,15 @@ function renderMirrorPreview() {
   MIRROR.kid.group.rotation.y = 0.35;
   MIRROR.scene.add(MIRROR.kid.group);
   MIRROR.renderer.render(MIRROR.scene, MIRROR.camera);
+}
+// v1.108 (D.6 part 2): height is not only cosmetic. A short Mike's eyes and hitbox sit 8 cm lower, a tall one's
+// 8 cm higher (the kid mesh differs more; the game keeps the spread small so no choice is a real edge).
+const LOOK_HEIGHT_DELTA = { short: -0.08, average: 0, tall: 0.08 };
+function applyPlayerLook() {
+  const d = LOOK_HEIGHT_DELTA[(Game.persist.look || {}).height] || 0;
+  Game.player.eyeOffsetStand = 1.35 + d;
+  Game.player.eyeOffsetCrouch = 0.8 + d * 0.6;
+  Game.player.height = 1.5 + d;
 }
 function openMirror() {
   ensureMirrorScreen().classList.add('active');
@@ -23072,6 +23082,7 @@ function tick() {
       _accInstanceSeq = 1;
     }
     enterBedroom();
+    openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
   });
 })();
 

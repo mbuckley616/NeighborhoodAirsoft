@@ -5592,3 +5592,39 @@ build, short brown hair, blue shirt, dark pants, no glasses).
 - Eye colour isn't offered: the kid mesh's eyes are dark boxes with no colour of their own. It comes with the face
   work in D.3's pass on the kids.
 - Clothing style (hoodie, cap, shorts vs pants) needs new mesh parts; only colours for now.
+
+---
+
+## v1.108 — A new save opens on the mirror; height sets the eye line
+
+The rest of Michael's C on D.6: a new save opens on the mirror once. NEW GAME now goes to the bedroom and opens the
+mirror straight away; DONE leaves Mike in his room as before. CONTINUE from a save goes straight to the bedroom,
+and the mirror stays in the bathroom for any change later.
+
+Height is no longer cosmetic only. My question on D.6 said height would move the eye line and hitbox a little unless
+he wanted it fixed, and he didn't say so. `applyPlayerLook` runs at every scenario start: a short Mike stands with
+his eyes at 1.27 m and his hitbox top 8 cm lower than average, a tall one 8 cm higher (1.43 m eyes); crouching moves
+60% as much. The kid mesh in the mirror differs more (1.29 to 1.65 m), but in play the spread stays small, so no
+choice is a real edge.
+
+A correction to v1.107's Still open: it said the viewmodel hands keep their skin and sleeve colours. There are no
+hands in the first-person view, only the gun, so nothing there takes the look.
+
+The test harness's `g.bedroom()` clicks NEW GAME, so it now presses DONE on the mirror when it opens.
+
+### Verified
+- `tests/mirror.test.mjs` now starts with a real NEW GAME click: the mode is `mirror`, and DONE goes to the bedroom.
+  In a Winnmark match the eye height is 1.27 / 1.35 / 1.43 m for short / average / tall (the camera sits at the
+  same height above the feet), the crouch eye 0.752 / 0.8 / 0.848 m, and the hitbox height 1.42 / 1.5 / 1.58 m.
+  After a save and a page reload, CONTINUE goes straight to the bedroom. The v1.107 checks all still pass.
+- `npm test`: 19 of 20 on the first run. `result-text` lost its browser on the NEW GAME click ("Target page, context
+  or browser has been closed", `tests/lib/game.mjs:53`) before any check ran; alone, it passed 3 runs of 3.
+
+### Still open
+- Whether the mirror should say something on its first opening ("That's you. Change it any time at the bathroom
+  mirror."). It opens with no words now.
+- Eye colour and clothing style (D.6) wait on new face and clothing meshes.
+- The headless browser died on the first click of a suite twice in six full runs this session: `cover-fire` on the
+  v1.105 run (before the mirror existed) and `result-text` here. Both at the same line, both clean on rerun. It looks
+  like the machine rather than the game, but if CI shows it, the harness should retry the boot once.
+- Whether height should affect play at all: 8 cm of hitbox and eye line either way. Easy to set to zero.

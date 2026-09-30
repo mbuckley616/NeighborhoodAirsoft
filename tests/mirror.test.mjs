@@ -1,9 +1,15 @@
-// v1.107 (backlog D.6, Michael: C — part 1): the bathroom door is the mirror now. E there opens the character
+// v1.107 (backlog D.6, Michael: C — part 1): the bathroom door is the mirror now.
+// v1.108 (part 2): NEW GAME opens on the mirror once (CONTINUE doesn't), and height moves the eye and hitbox. E there opens the character
 // screen with Mike in 3D; clicking choices changes Game.persist.look and rebuilds the preview; DONE goes back to
 // the bedroom; the look survives a save and load, and an old save without one gets the default look.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
-await g.bedroom();
+// NEW GAME, clicked as the player would: the mirror comes first, DONE goes to the bedroom
+await page.evaluate(() => document.getElementById('startBtn').click());
+await page.waitForFunction(() => Game.mode === 'bedroom' || Game.mode === 'mirror', null, { timeout: 60000 });
+check('NEW GAME opens on the mirror', await g.mode() === 'mirror', await g.mode());
+await page.evaluate(() => document.getElementById('mirrorDoneBtn').click());
+check('its DONE goes on to the bedroom', await g.mode() === 'bedroom');
 const it = await page.evaluate(() => { const i = Game.interactables.find(i => i.type === 'bathroom'); return { prompt: i.prompt, label: i.label }; });
 check('the bathroom door reads "Look in the bathroom mirror", label Mirror', /mirror/i.test(it.prompt) && it.label === 'Mirror', it);
 
@@ -54,5 +60,24 @@ const rt = await page.evaluate(() => {
 });
 check('the look survives a save and load', rt.same);
 check('a save from before v1.107 loads with the default look', rt.old && rt.old.height === 'average' && rt.old.hairStyle === 'short', rt.old);
+// height moves the eye and the hitbox top, by 8 cm either way
+const eyes = {};
+for (const h of ['short', 'average', 'tall']) {
+  await page.evaluate(h => { Game.persist.look.height = h; }, h);
+  await g.scenario('winnmark_seth_house');
+  eyes[h] = await page.evaluate(() => ({ eye: +Game.player.eyeOffsetStand.toFixed(2), crouch: +Game.player.eyeOffsetCrouch.toFixed(3), height: +Game.player.height.toFixed(2), cam: +(Game.camera.position.y - Game.player.pos.y).toFixed(2) }));
+  await page.evaluate(() => endScenario('lose'));
+}
+console.log('  ', JSON.stringify(eyes));
+check('eye height: short 1.27, average 1.35, tall 1.43', eyes.short.eye === 1.27 && eyes.average.eye === 1.35 && eyes.tall.eye === 1.43, eyes);
+check('hitbox height: short 1.42, average 1.5, tall 1.58', eyes.short.height === 1.42 && eyes.average.height === 1.5 && eyes.tall.height === 1.58, eyes);
+
+// CONTINUE from a save goes straight to the bedroom, no mirror
+await page.evaluate(() => saveGame());
+await page.reload();
+await page.waitForFunction(() => typeof Game !== 'undefined' && document.getElementById('continueBtn') && document.getElementById('continueBtn').style.display !== 'none', null, { timeout: 60000 });
+await page.evaluate(() => document.getElementById('continueBtn').click());
+await page.waitForFunction(() => Game.mode !== 'title', null, { timeout: 60000 });
+check('CONTINUE goes straight to the bedroom', await g.mode() === 'bedroom', await g.mode());
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
