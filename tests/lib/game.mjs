@@ -64,7 +64,13 @@ export async function boot(opts = {}) {
     await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 30000 });
   };
   g.spin = (frames, dt = 1 / 60) => page.evaluate(([n, dt]) => { for (let i = 0; i < n && Game.mode !== 'title'; i++) stepGame(dt); return Game.mode; }, [frames, dt]);
-  g.shot = async (name) => { fs.mkdirSync(OUT, { recursive: true }); const f = path.join(OUT, name + '.png'); await page.screenshot({ path: f }); return f; };
+  // Screenshots are for looking at, not assertions. Software GL on a slow CI runner can take longer than
+  // Playwright's 30 s to capture a heavy scene (smoke, v1.109): wait up to 60 s, then log and carry on.
+  g.shot = async (name) => {
+    fs.mkdirSync(OUT, { recursive: true }); const f = path.join(OUT, name + '.png');
+    try { await page.screenshot({ path: f, timeout: 60000 }); return f; }
+    catch (e) { if (e.name !== 'TimeoutError') throw e; console.log(`  (screenshot ${name} timed out; skipped)`); return null; }
+  };
   g.close = () => browser.close();
   return g;
 }
