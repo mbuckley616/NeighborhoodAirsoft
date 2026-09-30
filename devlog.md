@@ -5754,3 +5754,24 @@ when a second passes without getting 0.3 m closer to the cover's stand spot.
   costs the suite's 10-minute timeout, and CI would count it as a failure. Not yet run down.
 - Ricochets now come off thin walls that fast BBs used to pass through. A player standing behind a planter may hear
   more pings.
+
+## v1.111 — Priya's Pincer: Priya comes on (standing test)
+
+The critic (v1.101, Found in play) saw Priya park in 'advancing' at about (−5, 2), 39 m from the `bulb_center` spawn,
+for 37–60 s, never flanking, in 3 of 6 runs. I couldn't reproduce it on this branch: nine 70 s rounds with the player
+standing at spawn and untaggable, four on v1.109 and five on v1.110, and she never stalled more than 1 s. She crosses
+that spot at about 10–11 s (usually in her v1.99 bound rest) and is within 15 m by 20–21 s. The v1.103 fix to the
+bounding flips (a kid stepping toward and away from cover he already stood at, every frame) matches what the critic
+saw and landed after the report, so it is the likely cure. No game change. New `tests/pincer.test.mjs` plays the round
+twice and fails on an 8 s stall more than 20 m out, or if she hasn't closed to 15 m by 40 s.
+
+### Verified
+- 9 of 9 probe rounds (v1.109 and v1.110): longest stall 0–1 s; closest approach 0–1 m.
+- `tests/pincer.test.mjs`: longest stall 0 and 1 s; within 15 m at 19.9 and 21.1 s.
+- `npm test`: 23/23 green. The first eleven suites ran in one full run. That run stalled in `music.test.mjs`'s
+  `g.bedroom()` (the third such stall this session; Chromium logged SSL handshake failures just before it). The other
+  twelve then passed one by one.
+
+### Still open
+- The other half of the report: "never flanks". Priya comes down the lane at z 2–6 against a player at z 2, so the
+  pincer from the side barely shows here. Whether the flank should swing wider is for Michael's eye in play, not a bug.
