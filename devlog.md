@@ -5666,3 +5666,20 @@ player with keys; both now set `Game.mouse.locked = true` inside each walk. Test
   and `houses` pass with no failures.
 - `npm test` on the merge with v1.108: 19 of 20 on the first pass; `smoke` lost its browser while booting (before any
   test ran), as `cover-fire` had on the run before, and passed on its re-run.
+
+---
+
+## v1.108 fix-up 2 — cover-fire's "held" count leaves out the opening hold
+
+CI's `headless` run on 45a49a7 failed `tests/cover-fire.test.mjs` › "kids still shoot": 195 of 736 trigger pulls made no
+BB (26.5%, limit 25%), almost all in Hollow 3v3 (102/292) and Hold the Fort (84/209). The suite counts a
+`spawnEnemyBB` call that makes no BB as a kid holding fire at cover. Since v1.101, calls in the first 2.5 s of a round
+also make none (the opening hold), and Hold the Fort's opening volley alone went from 0–1 held on v1.100 to up to 54.
+Calls made during the opening hold no longer count. I also tried relaxing v1.101's 10 cm lip margin to the old
+centre-line rule when the lift cap leaves no room; it didn't lower the count (Hold the Fort 30–54), so the game code
+stays as it was. Test only.
+
+### Verified
+- Three runs on the current build: 40/594, 41/650 and 61/700 held (6–9%), Hold the Fort 4–16. Shots into cover
+  0.3–0.8%.
+- `npm test`: all suites green.
