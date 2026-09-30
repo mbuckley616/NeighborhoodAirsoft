@@ -992,7 +992,7 @@
   }
 
   /* === LOADOUT SCREEN === */
-  #loadoutScreen .loadout-card {
+  #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
     pointer-events: auto;
     background: var(--ui-bg);
     border: 1px solid var(--ui-border);
@@ -1003,7 +1003,7 @@
     overflow: auto;
     padding: 24px 28px;
   }
-  #loadoutScreen .loadout-header {
+  #loadoutScreen .loadout-header, #mirrorScreen .loadout-header {   /* v1.107: the mirror shares the card */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1011,12 +1011,12 @@
     padding-bottom: 10px;
     margin-bottom: 16px;
   }
-  #loadoutScreen .loadout-title {
+  #loadoutScreen .loadout-title, #mirrorScreen .loadout-title {   /* v1.107: the mirror shares the card */
     font-family: 'Georgia', serif;
     font-size: 22px;
     color: var(--ui-accent);
   }
-  #loadoutScreen .loadout-close {
+  #loadoutScreen .loadout-close, #mirrorScreen .loadout-close {   /* v1.107: the mirror shares the card */
     background: var(--ui-accent);
     color: #1a1a1a;
     border: none;
@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.106</div>
+  <div class="version">v1.107</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2997,6 +2997,10 @@ const Game = {
 
   // Persistent state — survives across scenarios (resets on page refresh)
   persist: {
+    // v1.107 (backlog D.6, Michael: C): how Mike looks, set at the bathroom mirror. createKid's profile fields;
+    // old saves get these defaults through loadGame's merge.
+    look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
+            shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false },
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -7899,10 +7903,10 @@ function buildBedroomScene() {
       new THREE.Vector3(0.4, 2.0, bathDoorW + 0.3)
     ),
     pos: new THREE.Vector3(-HALL_W/2 + 0.4, 1.0, bathDoorZ),
-    prompt: 'Open bathroom door',
-    label: 'Bathroom', icon: 'bathroom', labelY: 2.05,
-    action: () => showModal('Bathroom',
-      'You don\'t need to use the bathroom right now! (Will have a use in future versions — crafting? smoke bombs?)'),
+    // v1.107 (D.6): the bathroom door was a placeholder; it's where the mirror is now
+    prompt: 'Look in the bathroom mirror',
+    label: 'Mirror', icon: 'bathroom', labelY: 2.05,
+    action: () => openMirror(),
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
@@ -16859,6 +16863,100 @@ function openShop() {
 
 function closeShop() {
   document.getElementById('shopScreen').classList.remove('active');
+  Game.mode = 'bedroom';
+  updateBedroomHud();
+  showPauseHint();
+}
+
+// === v1.107 (backlog D.6, Michael: C): THE MIRROR — the character creator ===
+// The bathroom mirror opens a screen with Mike in 3D (the kids' own createKid mesh) and a row of choices for each
+// part of his look. Every click re-builds the preview and writes Game.persist.look; DONE saves if saving is on.
+const LOOK_OPTIONS = [
+  { key: 'height',    label: 'Height', kind: 'text', opts: [['short', 'Short'], ['average', 'Average'], ['tall', 'Tall']] },
+  { key: 'build',     label: 'Build',  kind: 'text', opts: [['skinny', 'Skinny'], ['average', 'Average'], ['heavy', 'Heavy']] },
+  { key: 'hairStyle', label: 'Hair',   kind: 'text', opts: [['short', 'Short'], ['wavy', 'Wavy'], ['curly', 'Curly'], ['long', 'Long']] },
+  { key: 'hairColor', label: 'Hair colour', kind: 'swatch', opts: [0x1a1410, 0x3a2818, 0x6a4a28, 0xa0703a, 0xd4b870, 0xb04a2a] },
+  { key: 'skinColor', label: 'Skin',   kind: 'swatch', opts: [0xf0d0b0, 0xe6bf95, 0xe0b090, 0xc89870, 0xa87050, 0x7a4a30, 0x5a3420] },
+  { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
+  { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
+  { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
+];
+const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
+function _hexCss(n) { return '#' + n.toString(16).padStart(6, '0'); }
+function ensureMirrorScreen() {
+  let el = document.getElementById('mirrorScreen');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'menu-overlay'; el.id = 'mirrorScreen';
+  el.innerHTML = `<div class="loadout-card" style="max-width:860px">
+    <div class="loadout-header"><div class="loadout-title">The Mirror</div><button class="loadout-close" id="mirrorDoneBtn">DONE</button></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+      <canvas id="mirrorCanvas" width="300" height="400" style="width:300px;height:400px;border-radius:6px;background:#2a2f38;flex:none"></canvas>
+      <div id="mirrorOptions" style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px"></div>
+    </div></div>`;
+  document.body.appendChild(el);
+  el.querySelector('#mirrorDoneBtn').addEventListener('click', closeMirror);
+  return el;
+}
+function renderMirrorOptions() {
+  const box = document.getElementById('mirrorOptions');
+  box.innerHTML = '';
+  const look = Game.persist.look;
+  for (const row of LOOK_OPTIONS) {
+    const r = document.createElement('div');
+    r.className = 'mirror-row'; r.dataset.key = row.key;
+    r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">${row.label}</div>`;
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+    for (const o of row.opts) {
+      const val = row.kind === 'swatch' ? o : o[0];
+      const on = look[row.key] === val;
+      const b = document.createElement('button');
+      b.className = 'mirror-opt' + (on ? ' on' : '');
+      b.dataset.value = JSON.stringify(val);
+      if (row.kind === 'swatch') {
+        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(val)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
+        b.title = _hexCss(val);
+      } else {
+        b.textContent = o[1];
+        b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;
+      }
+      b.addEventListener('click', () => { Game.persist.look[row.key] = val; renderMirrorOptions(); renderMirrorPreview(); });
+      btns.appendChild(b);
+    }
+    r.appendChild(btns);
+    box.appendChild(r);
+  }
+}
+function renderMirrorPreview() {
+  const canvas = document.getElementById('mirrorCanvas');
+  if (!MIRROR.renderer) {
+    MIRROR.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    MIRROR.renderer.setSize(300, 400, false);
+    MIRROR.scene = new THREE.Scene();
+    MIRROR.scene.background = new THREE.Color(0x2a2f38);
+    MIRROR.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.9));
+    const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(1.5, 3, 2.5); MIRROR.scene.add(d);
+    MIRROR.camera = new THREE.PerspectiveCamera(30, 300 / 400, 0.1, 20);
+    MIRROR.camera.position.set(0.9, 1.15, 3.6); MIRROR.camera.lookAt(0, 0.85, 0);
+  }
+  if (MIRROR.kid) MIRROR.scene.remove(MIRROR.kid.group);
+  MIRROR.kid = createKid(Object.assign({}, Game.persist.look), 'pistol');
+  MIRROR.kid.group.rotation.y = 0.35;
+  MIRROR.scene.add(MIRROR.kid.group);
+  MIRROR.renderer.render(MIRROR.scene, MIRROR.camera);
+}
+function openMirror() {
+  ensureMirrorScreen().classList.add('active');
+  Game.prevMode = Game.mode;
+  Game.mode = 'mirror';
+  exitPointerLock();
+  renderMirrorOptions();
+  renderMirrorPreview();
+}
+function closeMirror() {
+  document.getElementById('mirrorScreen').classList.remove('active');
+  autoSave();   // the look is part of the save (only once the player has opted in, as everywhere)
   Game.mode = 'bedroom';
   updateBedroomHud();
   showPauseHint();

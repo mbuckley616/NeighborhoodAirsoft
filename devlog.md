@@ -5557,3 +5557,38 @@ Loadout, since the tabs and groupings are D.5's option B.
 - D.5 B (re-sort the shop's tabs and groupings) and C (the Loadout screen with a 3D kid) are still to come, each
   as its own version. B would come to Michael as a list first.
 - The belt and holster still use the shop's gear icon (⚙); their own icons would go with C.
+
+---
+
+## v1.107 — The bathroom mirror: the character creator, part 1
+
+Michael's D.6 note asked for a character creator: height, shape, hair, eyes, skin, clothing colour and style. His
+answer was C: both a mirror in the bedroom you can walk up to any time between matches, and a new save that opens on
+it once. This is the first part, the mirror.
+
+The bathroom door off the hall was a placeholder ("You don't need to use the bathroom right now!"). It's now the
+mirror: the prompt reads "Look in the bathroom mirror", the floating label MIRROR. E there opens a screen in the same
+card as Your Loadout: Mike in 3D on the left, built with the kids' own `createKid` mesh, and a row of choices on the
+right. Height (short, average, tall), build (skinny, average, heavy), hair (short, wavy, curly, long), hair colour
+(6), skin (7), shirt (8), pants (6) and glasses. Each click writes `Game.persist.look` and rebuilds the preview. DONE
+goes back to the bedroom and auto-saves if the player has already saved this session, as the rest of the game
+does. `look` is part of the save; a save from before this version loads with the default look (average height and
+build, short brown hair, blue shirt, dark pants, no glasses).
+
+### Verified
+- New `tests/mirror.test.mjs`: the bathroom door's prompt and label; standing at it, it's the focused interactable
+  and E opens the mirror (mode `mirror`) with the eight rows and a kid mesh in the preview. One click in each row
+  lands in the look, one choice per row is lit, and the preview rebuilds (tall Mike 1.65 m, short 1.29 m). DONE goes
+  back to the bedroom. The look survives a save and load, and a save with no `look` loads the defaults. No page
+  errors.
+- Screenshot by eye (tests/out/mirror.png): the card, the preview and the rows read cleanly.
+- `npm test`: 20 of 20 suites green.
+
+### Still open
+- The look shows only in the mirror so far: the game is first person, and the viewmodel hands keep their skin and
+  sleeve colours. Next part: a new save opens on the mirror once (the rest of Michael's C), the hands take the skin
+  and shirt colours, and height moves the eye height (and the hitbox with it) a little, since Michael didn't ask for
+  it to stay cosmetic.
+- Eye colour isn't offered: the kid mesh's eyes are dark boxes with no colour of their own. It comes with the face
+  work in D.3's pass on the kids.
+- Clothing style (hoodie, cap, shorts vs pants) needs new mesh parts; only colours for now.
