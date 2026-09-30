@@ -5702,3 +5702,42 @@ the player's facing and the enemy kids' centroid, so any map with the same slip 
 
 ### Still open
 - The intro preview behind the BEGIN card now looks at the field too; worth a glance in play that it frames well.
+
+## v1.110 — Fast BBs stop at thin walls
+
+The critic (v1.101, Found in play) measured BBs passing through Bunratty's 18 cm planter wall: 0% at 30 m/s, 18% at
+45, 61% at 75, and one real Pincer loss came through it. `updateBBs` sub-steps at 1/200 s but tested obstacles only at
+each sub-step's end point, so a BB moving further than a wall's thickness per sub-step (36 m/s for that wall) could
+land past it. Before that end-point test, each sub-step now sweeps the path oldPos→pos against every obstacle near it
+(`obsRayDist`, the ray test the kids' line-of-sight already uses) and, if the path enters one the end point is
+already past, moves the BB 1 cm inside that obstacle's entry face. The ordinary surface outcome then runs on it
+(bounce, stick or shatter), so a wall reacts to a fast BB exactly as it does to a slow one. Obstacles the BB starts
+inside (a ricochet leaving) and `bbPass` fences are skipped, as before.
+
+The first full run went red on `market-lot.test.mjs`: Priya "wedged in advancing" 4 s in the lot free-for-all (2 of 3
+runs). The same probe on v1.109 found her at 3 s too, so the wedge was already there and the new ricochets only tipped
+it over: she was bounding to a car's cover and sliding along a bumper at 0.2 m/s, and the bound's wedge check (under
+2 cm a frame for 0.6 s) never fired because a slide still moves. A bound now also drops (with the v1.99 1.5 s rest)
+when a second passes without getting 0.3 m closer to the cover's stand spot.
+
+### Verified
+- New `tests/bb-sweep.test.mjs`, 200 BBs per speed at the planter wall with a random start: before, through at 45 / 60
+  / 75 / 90 / 120 / 150 m/s was 16.5 / 23.5 / 57 / 47.5 / 60.5 / 60%; after, 0% at every speed from 30 to 150 m/s.
+  The player standing behind it takes 48 of 100 BBs at 90 m/s before, 0 after; with the wall made BB-transparent the
+  same shots tag 100 of 100, so the check measures the wall.
+- The game's fastest gun fires 75 m/s; the 45–55 m/s guns were the ones skipping thin walls in play.
+- Lot free-for-all, 4 runs of 60 s: Priya's longest stall 0–1 s (3 s on v1.109). `market-lot.test.mjs` green in
+  3 of 3 runs after the fix (red in 2 of 3 before it).
+- `npm test`: 22 suites. First run on this build: 21/22, `cover-fire.test.mjs` "kids still shoot" red at 212 of 786 trigger
+  pulls held (27%, limit 25%), 199 of them in Hollow 3v3. Two reruns: green, 59/606 and 20/707. The same suite on
+  v1.109 held 20 and 101 in Hollow 3v3 in two runs, so the spread was already there (filed below). Also in the
+  earlier run, `front-door.test.mjs` hung inside `g.bedroom()` before its first check, as `utility-belt` did for
+  v1.109; alone, it passed.
+
+### Still open
+- Hollow 3v3's held trigger pulls swing from 19 to 199 a minute between runs of the same build. Some kid there pulls
+  the trigger again and again with a wall inside 3 m. Filed under Found in play.
+- Two suites stalled this session in `g.bedroom()` after NEW GAME (the page stopped answering). Once in a full run
+  costs the suite's 10-minute timeout, and CI would count it as a failure. Not yet run down.
+- Ricochets now come off thin walls that fast BBs used to pass through. A player standing behind a planter may hear
+  more pings.

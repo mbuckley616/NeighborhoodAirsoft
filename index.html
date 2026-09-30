@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.109</div>
+  <div class="version">v1.110</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20183,6 +20183,35 @@ function updateBBs(dt) {
       }
     }
 
+    // v1.110: swept test. The loop below checks only where the BB ends the sub-step, so one moving more than a
+    // wall's thickness per 1/200 s (36 m/s for an 18 cm planter wall) could skip it and tag whoever stood behind.
+    // Find the nearest obstacle the path oldPos→pos enters and, if the end point sits past it, move the BB to
+    // just inside its entry face, so the ordinary surface outcome below (bounce / stick / shatter) runs on it.
+    if (!removed) {
+      const sx = bb.pos.x - oldPos.x, sy = bb.pos.y - oldPos.y, sz = bb.pos.z - oldPos.z;
+      const segLen = Math.sqrt(sx * sx + sy * sy + sz * sz);
+      if (segLen > 0.05) {
+        const ux = sx / segLen, uy = sy / segLen, uz = sz / segLen;
+        const mx = oldPos.x + sx * 0.5, mz = oldPos.z + sz * 0.5, reach = segLen * 0.5 + 0.01;
+        let tHit = Infinity, endInside = false;
+        for (const o of Game.player.obstacles) {
+          if (o.bbPass || !obsOverlapsXZ(o, mx, mz, reach)) continue;
+          const oBase = o.baseY ?? 0, oTop = oBase + (o.h || 5);
+          if (oldPos.y > oBase && oldPos.y < oTop && obsOverlapsXZ(o, oldPos.x, oldPos.z, 0)) continue;   // leaving it
+          const t = obsRayDist(o, oldPos.x, oldPos.y, oldPos.z, ux, uy, uz, segLen);
+          if (t < tHit) {
+            tHit = t;
+            endInside = bb.pos.y > oBase && bb.pos.y < oTop && obsOverlapsXZ(o, bb.pos.x, bb.pos.z, 0);
+          }
+        }
+        if (tHit < Infinity && !endInside) {
+          const tIn = Math.min(segLen, tHit + 0.01);
+          bb.pos.set(oldPos.x + ux * tIn, oldPos.y + uy * tIn, oldPos.z + uz * tIn);
+          bb.mesh.position.copy(bb.pos);
+        }
+      }
+    }
+
     // Cover/obstacle collision with surface-aware outcome
     if (!removed) {
       for (const o of Game.player.obstacles) {
@@ -22132,6 +22161,14 @@ function updateEnemies(dt) {
                 e._boundStuck = (e._boundStuck || 0) + dt;
                 if (e._boundStuck > 0.6) { e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
               } else e._boundStuck = 0;
+              // v1.110: a slide along a bumper still moves a few cm a frame, so the check above never fired and the
+              // lot's Priya crept 0.2 m/s along a car for 3–4 s in 'advancing'. Also drop the bound when a second
+              // goes by without getting 0.3 m closer to the cover's stand spot.
+              if (e._boundCover) {
+                const bdNow = Math.hypot(sp.x - e.pos.x, sp.z - e.pos.z);
+                if (e._boundFor !== e._boundCover || bdNow < e._boundBest - 0.3) { e._boundFor = e._boundCover; e._boundBest = bdNow; e._boundNoGain = 0; }
+                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
+              }
             }
           } else {
             // Within knife range / center lane / sniper → clear bound state.
