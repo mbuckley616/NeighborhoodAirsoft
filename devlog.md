@@ -5287,3 +5287,38 @@ merged in here), which hasn't shipped either.
 ### Still open
 - The gunners' own wall-follow in `advancing` still flips side every 0.5 s of stuck time and has no sidestep
   commitment. Nothing reported there since v1.99.
+
+---
+
+## v1.101 fix-up 2 — taggers steer the same at any frame rate; a lip margin on the clear line
+
+CI's run on the previous fix-up (55dffbe) failed two suites.
+
+**Taggers.** The mixed-step pass failed: Mitchell walked 64 m and ended 18 m short. The fix-up's radius-widened
+detour had cured the fence end, but a wider sweep showed the tagger's steering still depends on step size. With
+steps of random length up to 0.05 s, or a steady 0.05 s, Mitchell stuck in new places: his spawn box, a house
+corner, a house wall. The wedge handling steers on per-step distances ("moved under 2 cm") and timers. On 1/60 s
+steps, 40 seeded runs out of 40 get him home. So tagger movement now runs in sub-steps of at most 1/60 s: a 0.05 s
+frame moves in three. I first also scaled the 2 cm "no progress" test to the stride, for high frame rates, but that
+changed the 1/60 behaviour and he stuck on the house wall in 10 of 12 runs. So it stays 2 cm per sub-step.
+
+**Cover fire.** `cover-fire` came in at 5.8% against its 5% gate. Measured locally it swings a lot: v1.100 0.9–4.2%
+(8 runs), v1.101 1.8–8.9% (6 runs), this branch 0.4–4.8% (6 runs). Nearly all of it is Sean, the player's ally in the
+Bunratty 2v2, putting BBs into a 1.1 m metal bin 1.7–3 m ahead while shooting at Mitchell. v1.93's clear-line check
+lifts the muzzle until the aimed line clears the obstacle, sometimes by a centimetre. The BB then leaves with its aim
+spread, 6–12 cm up or down at 3 m, and a share of those shots hit the bin's lip. The check now also needs a line 10 cm
+lower to clear, so a lifted shot passes with a hand's width to spare. Separately, the suite's cast counted `bbPass`
+picket fences, which BBs fly through (`updateBBs` skips them); it now skips them too.
+
+### Verified
+- Tagger sweep: Mitchell from spawn to the standing player, 4 seeds × 4 step patterns (1/60, random 1/60–0.05 s,
+  0.05 s, mixed): 16 of 16 arrive, in 25–30 s. Before (55dffbe), on random, 0.05 s and mixed steps: 11 of 18.
+- `cover-fire`, six local runs: 0–1.1% of enemy shots into an obstacle within 3 m, down from 0.4–4.8%. Kids hold fire
+  on 7–15% of trigger pulls, up from about 6% (the suite's limit is 25%).
+- `npm test`: all suites green.
+
+### Still open
+- Above ~200 fps a tagger's whole sub-step is under 2 cm, so he reads as stuck every frame and wall-follows. It did
+  the same before v1.100; it needs a stride-relative test that keeps 60 fps behaviour.
+- Kids hold fire a little more often behind low cover. In play that should show as a lean-over that waits for a clean
+  line rather than plinking the lip.

@@ -19134,7 +19134,11 @@ function spawnEnemyBB(enemy, targetPos) {
           const dl = Math.hypot(dx, dy, dz) || 1;
           // reach is a horizontal distance; convert to distance along the ray
           const rayReach = reach * dl / (flat || 1);
-          if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
+          // v1.101: and with a 10 cm margin under it. The BB leaves with its aim
+          // spread (6–12 cm up or down at 3 m), so a line that just skimmed a bin's
+          // lip still put a share of shots into it (Sean in the Bunratty 2v2).
+          if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach &&
+              raycastObstacles(muzzlePos.x, y - 0.1, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
         }
         if (!clear) return;                          // can't see past it: hold fire
         if (y > muzzlePos.y + 1e-6) {
@@ -20860,69 +20864,79 @@ function updateEnemies(dt) {
         continue;
       }
       // Chase speed: sprinters run down the player; joggers match a jog.
-      const speed = (e.zombieSprinter ? ZOMBIE_SPRINT_SPEED : ZOMBIE_JOG_SPEED) * (ch.moveSpeed ?? 1.0);
-      const d = distToPlayer || 1;
-      const stepX = (dxP / d) * speed * dt;
-      const stepZ = (dzP / d) * speed * dt;
-      const kidRadius = 0.35;
-      const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
-      const bX = e.pos.x, bZ = e.pos.z;
-      // v1.100: while committed to a wall-follow sidestep (below), skip the
-      // straight step: its slide pulled the kid straight back to the spot he
-      // wedged on, so a tagger round a tree or along a low wall went nowhere.
-      const sideCommitted = e._zSideT > 0;
-      if (sideCommitted) e._zSideT -= dt;
-      else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
-      else {
-        if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
-        if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
+      // v1.101: moved in sub-steps of at most 1/60 s. The wedge handling below
+      // steers on per-step distances and timers, and with a slow frame's 0.05 s
+      // steps it found new places to stick (Mitchell at a fence end or a house
+      // corner) that it never does at 60 fps. Sub-steps make every frame rate
+      // steer the way 60 fps does.
+      const zSteps = Math.max(1, Math.ceil(dt * 60 - 1e-6)), zdt = dt / zSteps;
+      for (let zi = 0; zi < zSteps; zi++) {
+        const speed = (e.zombieSprinter ? ZOMBIE_SPRINT_SPEED : ZOMBIE_JOG_SPEED) * (ch.moveSpeed ?? 1.0);
+        const zdxP = tgt.pos.x - e.pos.x, zdzP = tgt.pos.z - e.pos.z;
+        const d = Math.hypot(zdxP, zdzP) || 1;
+        const stepX = (zdxP / d) * speed * zdt;
+        const stepZ = (zdzP / d) * speed * zdt;
+        const kidRadius = 0.35;
+        const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
+        const bX = e.pos.x, bZ = e.pos.z;
+        const zStuckD = 0.02;   // "no progress" per sub-step (tuned at 1/60 s)
+        // v1.100: while committed to a wall-follow sidestep (below), skip the
+        // straight step: its slide pulled the kid straight back to the spot he
+        // wedged on, so a tagger round a tree or along a low wall went nowhere.
+        const sideCommitted = e._zSideT > 0;
+        if (sideCommitted) e._zSideT -= zdt;
+        else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
+        else {
+          if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
+          if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
+        }
+        if (e._zWedgeT > 0) e._zWedgeT -= zdt; else e._zWedges = 0;
+        // Wall-follow when wedged (same idea as the advancing state).
+        if (e._zDetourBan > 0) e._zDetourBan -= zdt;
+        if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+          // v1.100: committed sidestep frames skip the straight step, so they
+          // don't count toward the 0.5 s side flip (a blocked sidestep flips below).
+          if (!sideCommitted) e._zStuck = (e._zStuck || 0) + zdt;
+          // v1.73: walk around a wedging fence's nearer end instead of jittering.
+          // v1.98: only while that gets somewhere. A fence further along the line
+          // still yields a waypoint when the kid is actually wedged on something
+          // else (Infection's Mitchell, on a backyard box that also blocks the step
+          // to the waypoint), and he jittered in place all round. After 0.4 s of
+          // detour without progress, wall-follow instead for 1.5 s.
+          const zdet = (e._zDetourBan > 0) ? null : fenceDetourWaypoint(e.pos.x, e.pos.z, tgt.pos.x, tgt.pos.z, Game.player.obstacles, kidRadius);
+          if (zdet) {
+            const zdx = zdet.x - e.pos.x, zdz = zdet.z - e.pos.z;
+            const zl = Math.hypot(zdx, zdz) || 1;
+            const zs = speed * zdt;
+            const fx = e.pos.x + (zdx / zl) * zs, fz = e.pos.z + (zdz / zl) * zs;
+            if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
+            else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
+            else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
+            if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+              e._zDetourFail = (e._zDetourFail || 0) + zdt;
+              if (e._zDetourFail > 0.4) { e._zDetourBan = 1.5; e._zDetourFail = 0; e._zStuck = 0; }
+            } else e._zDetourFail = 0;
+          } else {
+          let px = -zdzP / d, pz = zdxP / d;
+          if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
+          if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
+          px *= e._zSide; pz *= e._zSide;
+          const ss = speed * zdt;
+          const sx = e.pos.x + px * ss, sz = e.pos.z + pz * ss;
+          if (!collidesObstacles(sx, sz, kidRadius)) { e.pos.x = sx; e.pos.z = sz; }
+          else if (!collidesObstacles(sx, e.pos.z, kidRadius)) e.pos.x = sx;
+          else if (!collidesObstacles(e.pos.x, sz, kidRadius)) e.pos.z = sz;
+          if (sideCommitted && Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD * 0.5) { e._zSide *= -1; e._zSideT = 0; }
+          // v1.100: a fresh sidestep commits for 0.35 s (~1.2 m), longer each time
+          // he wedges again within 3 s (up to 1.4 s), so he clears the wall's end.
+          if (!sideCommitted) {
+            e._zWedges = Math.min(4, (e._zWedges || 0) + 1);
+            e._zWedgeT = 3;
+            e._zSideT = 0.35 * e._zWedges;
+          }
+          }
+        } else e._zStuck = 0;
       }
-      if (e._zWedgeT > 0) e._zWedgeT -= dt; else e._zWedges = 0;
-      // Wall-follow when wedged (same idea as the advancing state).
-      if (e._zDetourBan > 0) e._zDetourBan -= dt;
-      if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
-        // v1.100: committed sidestep frames skip the straight step, so they
-        // don't count toward the 0.5 s side flip (a blocked sidestep flips below).
-        if (!sideCommitted) e._zStuck = (e._zStuck || 0) + dt;
-        // v1.73: walk around a wedging fence's nearer end instead of jittering.
-        // v1.98: only while that gets somewhere. A fence further along the line
-        // still yields a waypoint when the kid is actually wedged on something
-        // else (Infection's Mitchell, on a backyard box that also blocks the step
-        // to the waypoint), and he jittered in place all round. After 0.4 s of
-        // detour without progress, wall-follow instead for 1.5 s.
-        const zdet = (e._zDetourBan > 0) ? null : fenceDetourWaypoint(e.pos.x, e.pos.z, tgt.pos.x, tgt.pos.z, Game.player.obstacles, kidRadius);
-        if (zdet) {
-          const zdx = zdet.x - e.pos.x, zdz = zdet.z - e.pos.z;
-          const zl = Math.hypot(zdx, zdz) || 1;
-          const zs = speed * dt;
-          const fx = e.pos.x + (zdx / zl) * zs, fz = e.pos.z + (zdz / zl) * zs;
-          if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
-          else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
-          else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
-          if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.02) {
-            e._zDetourFail = (e._zDetourFail || 0) + dt;
-            if (e._zDetourFail > 0.4) { e._zDetourBan = 1.5; e._zDetourFail = 0; e._zStuck = 0; }
-          } else e._zDetourFail = 0;
-        } else {
-        let px = -dzP / d, pz = dxP / d;
-        if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
-        if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
-        px *= e._zSide; pz *= e._zSide;
-        const ss = speed * dt;
-        const sx = e.pos.x + px * ss, sz = e.pos.z + pz * ss;
-        if (!collidesObstacles(sx, sz, kidRadius)) { e.pos.x = sx; e.pos.z = sz; }
-        else if (!collidesObstacles(sx, e.pos.z, kidRadius)) e.pos.x = sx;
-        else if (!collidesObstacles(e.pos.x, sz, kidRadius)) e.pos.z = sz;
-        if (sideCommitted && Math.hypot(e.pos.x - bX, e.pos.z - bZ) < 0.01) { e._zSide *= -1; e._zSideT = 0; }
-        // v1.100: a fresh sidestep commits for 0.35 s (~1.2 m), longer each time
-        // he wedges again within 3 s (up to 1.4 s), so he clears the wall's end.
-        if (!sideCommitted) {
-          e._zWedges = Math.min(4, (e._zWedges || 0) + 1);
-          e._zWedgeT = 3;
-          e._zSideT = 0.35 * e._zWedges;
-        }
-        }
-      } else e._zStuck = 0;
       // Plant on terrain (mirror of the shared loop-exit logic) and finish.
       e.pos.y = scenarioGroundY(e.pos.x, e.pos.z);
       e.mesh.group.position.x = e.pos.x;
