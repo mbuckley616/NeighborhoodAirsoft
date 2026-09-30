@@ -20191,7 +20191,10 @@ function fenceDetourWaypoint(fromX, fromZ, toX, toZ, obstacles, kidRadius = 0.35
     if (!o.bbPass) continue;                      // fences only
     // Does the straight path actually cross this fence? Ray vs the fence AABB in
     // XZ (ignore Y — fences are full-height for bodies). Use a 2D slab test.
-    const minX = o.minX, maxX = o.maxX, minZ = o.minZ, maxZ = o.maxZ;
+    // v1.100: widened by the kid's radius. A centre line that just clears the
+    // fence's end still clips it with the body; that returned no detour, the
+    // wall-follow sent the kid the other way, and he looped at the fence end.
+    const minX = o.minX - kidRadius, maxX = o.maxX + kidRadius, minZ = o.minZ - kidRadius, maxZ = o.maxZ + kidRadius;
     let t0 = 0, t1 = segLen;
     // X slab
     if (Math.abs(ux) < 1e-6) {

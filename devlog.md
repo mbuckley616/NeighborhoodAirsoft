@@ -5223,3 +5223,35 @@ flip, which had been turning Mitchell back mid-commit along a house wall.
   a feel in play.
 - Only the tagger's wall-follow changed. The gunner states have their own wall-follow (`advancing`, flip every
   0.5 s of stuck time) with the same shape, and no wedge has been reported there since v1.99.
+
+---
+
+## v1.100 fix-up — Mitchell at the end of the side fence
+
+CI's second `headless` run on the v1.100 head failed `taggers.test.mjs`: Mitchell walked 14.3 m and stopped 56 m
+from the player, at the south end of the house3 side fence (−19.5, 20.1). Locally, fixed 1/60 steps passed 40 of 40
+seeded runs, but CI's page also runs its own frame loop, whose steps go up to 0.05 s on a slow runner. With every
+third step 0.05 s, Mitchell stuck there in 14 of 20 runs. Low-frame-rate players take the same big steps.
+
+Two helpers were pulling him opposite ways. `fenceDetourWaypoint` asks whether the line from the kid's centre to his
+target crosses a fence, and ignores his 0.35 m body. Just south of the fence end, his centre line clears it but his
+body doesn't. So there was no detour, and the wall-follow committed him north, up the fence. A few cm north, the
+line crosses the fence, and the detour sent him south to its end. The big steps kept landing him on either side of
+that line.
+
+The detour's crossing test now widens the fence by the kid's radius, so a body that would clip the end gets the
+detour. The end waypoints move out by the same 0.35 m (1.3 m past the post instead of 0.95 m). This is the shared
+helper, so gunners in `advancing` get it too. No version bump: this lands with v1.100, which hasn't shipped.
+
+### Verified
+- Mixed steps (every third 0.05 s), 20 seeded runs: Mitchell reaches the player in all 20 (28.6–34.9 s), against 6 of
+  20 before.
+- `tests/taggers.test.mjs` now plays the round twice, on fixed 1/60 steps and on the mixed pattern, over 45 s instead
+  of 30 s: Mitchell's 66 m route takes 25–35 s, and the 30 s window had been tight even on 1/60 steps. On the pushed
+  v1.100 the mixed pass fails (Mitchell 13 m walked); with the fix, 3 runs out of 3, all six taggers reach the player
+  on both passes.
+- `npm test`: all suites green.
+
+### Still open
+- The gunners' own wall-follow in `advancing` still flips side every 0.5 s of stuck time and has no sidestep
+  commitment. Nothing reported there since v1.99.
