@@ -5806,6 +5806,27 @@ box car until Winnmark is done, as with the houses.
   (a van or pickup would need a taller cabin box).
 - Step 2 goes on: trees and hedges, the fort and yard props, the road and kerbs.
 
+---
+
+## v1.112 fix-up — a held shot lets go of the trigger
+
+CI's `headless` run on v1.112 (758c503) failed `tests/cover-fire.test.mjs` › "kids still shoot" again: 275 of 821
+calls held (33%), and 239 of 403 in Hollow 3v3 alone. Locally Hollow holds 12–23% on every build from v1.109 to
+v1.112, so no version made it worse; the spread is wide. What makes it so wide: when an auto-gunner's first round is
+held (v1.93's clear line is blocked and no lift clears it), the 4–7 follow-ups the trigger pull queued stay queued.
+Each one re-checks the same blocked line and is held again, and each counts as another held shot. One AK behind a fort
+wall can put hundreds on the tally.
+
+A held shot now also clears the kid's queued burst: he lets go of the trigger. It changes nothing a player sees (a held
+follow-up fired no BB either). But the kid's next shot is a fresh trigger pull at the next cadence, and the count
+measures what it says, trigger pulls.
+
+### Verified
+- Hollow 3v3, three runs: 24/253, 33/215, 27/287 held (9–15%, from 12–23% on the same build without it); Winnmark
+  defend 0–1. Shots into cover 0–0.4%.
+- `npm test`: 23 of 24 on the first pass; `walk-anim` lost its browser while booting (before any test ran) and
+  passed on its re-run.
+
 ## v1.113 — Winnmark's trees and bushes
 
 D.3 step 2, second part (Michael: A). Winnmark's ~245 trees were a smooth ball on an eight-sided post, and its

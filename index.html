@@ -20054,7 +20054,9 @@ function spawnEnemyBB(enemy, targetPos) {
           if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach &&
               raycastObstacles(muzzlePos.x, y - 0.1, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
         }
-        if (!clear) return;                          // can't see past it: hold fire
+        // can't see past it: hold fire. v1.112: and let go of the trigger, so an
+        // auto's queued follow-ups don't each try the same blocked line again.
+        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; return; }
         if (y > muzzlePos.y + 1e-6) {
           muzzlePos.y = y;
           enemy._firingOverCover = 0.45;
