@@ -1,7 +1,7 @@
 // v1.102: the Riverside Market lot, the parking-lot zone (backlog D.1, Michael: B). Checks the zone sits on the
 // ladder after The Hollow and before Northcliff, its map pin doesn't overlap another, both scenarios build with
 // every kid and the player clear of obstacles, and a round plays: kids move, nobody wedges, both sides trade hits.
-// The player is untaggable and stands at the spawn, so the round runs the full 60 s.
+// The player is untaggable and stands at the spawn, so the round runs at least 60 s (up to 120 s, see below).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
@@ -58,7 +58,12 @@ for (const id of ['lot_team_3v3', 'lot_night_4v4']) {
     const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
     const st = kids.map(() => ({ from: null, longest: 0, path: 0, hitsTaken: 0 }));
     const hp0 = kids.map(k => k.health);
-    for (let f = 1; f <= 60 * 60 && Game.mode === 'scenario'; f++) {
+    // 60 s, then on (to 120 s) until both sides have lost a life: with three or four shooters a side, a clean
+    // first minute for one side happens by chance (CI, v1.102: 0 enemy lives lost in 60 s; locally 1 run in 5).
+    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
+    let f = 1;
+    for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
+      if (f > 60 * 60 && livesLost('enemy') > 0 && livesLost('player') > 0) break;
       const prev = kids.map(k => [k.pos.x, k.pos.z]);
       stepGame(1 / 60);
       kids.forEach((k, i) => {
@@ -68,15 +73,14 @@ for (const id of ['lot_team_3v3', 'lot_night_4v4']) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
-    return { shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
+    return { secs: Math.round((f - 1) / 60), shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
       kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: +(st[i].longest / 60).toFixed(1) })) };
   });
-  console.log(`  ${id}, 60 s:`, JSON.stringify(r));
+  console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > 20, r.shots);
   // A kid holding one spot (a sniper, a pistol peeking over a bonnet) still has to shoot from it.
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  check(`${id}: both sides lose lives`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
   check(`${id}: no kid stands still in advancing for 3 s or more`, r.kids.every(k => k.wedged < 3), r.kids);
   await g.shot(id);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
