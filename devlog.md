@@ -5322,3 +5322,326 @@ picket fences, which BBs fly through (`updateBBs` skips them); it now skips them
   the same before v1.100; it needs a stride-relative test that keeps 60 fps behaviour.
 - Kids hold fire a little more often behind low cover. In play that should show as a lean-over that waits for a clean
   line rather than plinking the lip.
+
+---
+
+## v1.102 — A new zone: the Riverside Market lot
+
+Michael answered the open D questions on the control room this morning. For D.1 (maps from real places) he chose B, a
+parking-lot skirmish zone first. A zone is a scene builder, anchors, cover and a few scenarios, about two or three
+sessions' work. This is the first part: the lot itself, on the map and on the ladder, with two scenarios that play.
+
+The lot is flat asphalt, about 76 × 56 m. A long brick grocery store with a glass front, a green awning and a
+RIVERSIDE MARKET sign closes the north side. A box truck is parked at its loading end and two dumpsters at the other.
+Three double rows of parked cars cross the lot east to west, with a drive aisle about 7 m wide between each pair of
+rows. The lamp islands down the middle and the tree islands at the ends split each row. A grass verge and the road
+close the south side. Cars are the cover and the aisles are long, open lanes, so the fight goes car to car. The
+layout is fixed (a seeded pattern, 3 corrals and 3 stray carts), so the AI's cover and the tests see the same lot every
+round; only the car colours vary. Nobody said yet whether real business names can go on screen, so the store is a
+made-up one.
+
+It sits fourth on the ladder, after The Hollow. Clearing The Hollow's capstone opens it, and Northcliff (still
+"coming soon") now waits on the lot's capstone; its teaser says so. The map pin sits by the 140 shield off Holcomb
+Bridge Rd, clear of every other pin. Two scenarios:
+- **Aisle Wars**: 3v3, you with Eric (MP5) and Brooke (sniper) against Marcus (AK), Jamie (UMP) and Tyler (shotgun),
+  three lives each, last team standing.
+- **After Close** (night, the zone capstone for now): 4v4, you with Eric, Sean and Rebecca against Seth, Mitchell,
+  Devon (sniper, by the truck) and Mason, four lives each. The three lot lamps are the only light.
+
+On the first screenshot, the player spawned facing the road. The lot's `team_b` spawn had copied the Hollow's
+`yaw: Math.PI`, but yaw 0 is the one that faces −z. It now faces the store. The Hollow has the same slip: its players
+open facing the back wall of their own fort. That's filed under Found in play rather than fixed here.
+
+### Verified
+- New `tests/market-lot.test.mjs`. Ladder: the lot is locked on a new save; clearing The Hollow opens only Aisle Wars;
+  Northcliff opens only after both lot scenarios. The lot pin overlaps no other pin on the map (two older pairs do,
+  Winnmark/Battleground and Bunratty/Northcliff, as they did before v1.88 made them click-safe).
+- Both scenarios: the player and every kid spawn clear of all 170 obstacles. Over 60 s with the player untaggable at
+  spawn, kids fire 215–343 BBs. Every kid walks or shoots: the snipers and Rebecca hold a car and fire 9–20 times,
+  and the rest walk 34–186 m. No kid stands still in `advancing` for more than 1.0 s. Both sides lose lives (Aisle
+  Wars 2 enemy, 6 ally; After Close 6 and 6).
+- Screenshots by eye (tests/out): the store, the rows, the lamp and tree islands and the corrals read at the spawn
+  and from the south-west corner.
+- `npm test`: 15 of 15 suites green.
+
+### Still open
+- 2–3 more lot scenarios (a 1v1 opener, a defend at the store front, a free-for-all), then Northcliff (A).
+- In Aisle Wars your side loses lives three times as fast in the first minute (6 to 2). Brooke's sniper spot at the
+  road end gives her little to shoot. Whether the 3v3 is too hard needs a real playtest.
+- Whether the store can carry a real name (Kroger, a real Roswell plaza) is still Michael's call.
+
+---
+
+## v1.102 fix-up — the lot test's "both sides lose lives" waits for chance to settle
+
+CI's `headless` run on the v1.102 head failed one check in `tests/market-lot.test.mjs`: in Aisle Wars the player's
+side took no enemy life in the 60 s (enemy 0, ally 3). Eric fired once that run, 8–87 times in others. Five local
+runs gave the same kind of miss once (ally 0 lost). With three shooters a side, a clean first minute for one side is
+chance, not a fault, so the check was flaky as written. The round now runs at least the same 60 s and goes on, up to
+120 s, until both sides have lost a life; the log line gives the time. Test only; no game change, no version bump.
+
+### Verified
+- Six local runs of the suite: both scenarios trade lives inside the first 60 s every time (Aisle Wars enemy 1–4 /
+  ally 2–3; After Close 4–10 / 1–7). `npm test`: all suites green.
+
+### Still open
+- The v1.102 entry's point stands: Aisle Wars' allies are the weaker side (Brooke never moves; Eric's fire varies a
+  lot). Tyler (shotgun) walks 156–186 m a minute and fires 3–4 times; he pushes but rarely gets inside his range.
+
+---
+
+## v1.103 — Three more lot scenarios, and two ways a kid froze while still moving
+
+This finishes the lot half of D.1. There are three more scenarios, so the zone runs 1v1, 3v3, defend, free-for-all,
+then night 4v4:
+- **Cart Return** (the opener): 1v1 with Marcus and a pistol, one hit each.
+- **Hold the Doors**: defend the store front for 90 s. Jamie, Tyler and Owen come up from the road, and a tagged
+  kid walks back to the road and comes again.
+- **Everybody for Themselves**: a seven-kid free-for-all. You start in the middle aisle.
+
+Playing them showed kids stuck for 35–50 s at a time, and the stand-still check didn't catch it. The v1.102 test only
+counted frames with no movement, and these kids moved a few cm every frame. The test now counts net movement: a
+second in `advancing` with under 0.25 m of net movement counts toward the wedge. There were three causes.
+
+**The rows were walls.** The two halves of a double row park nose to nose, so a row was a solid 65 m barrier with
+gaps only where both halves happened to be empty. Every third stall (i = 1, 4, 7, …) is now empty in both halves,
+which gives a 3.85 m walk-through every 8.1 m. One corral moved a stall to keep out of a walk-through.
+
+**The gunners' wall-follow never committed.** This is the `advancing` side of v1.100 (Still open since then). The
+straight push and the 0.5 s side flip pulled a kid back to the spot he wedged on; Tyler did it in a row passage for
+35 s. The tagger's commitment is ported as it is: the sidestep holds for 0.35 s, longer each time he wedges again
+within 3 s (up to 1.4 s), and a blocked sidestep turns round.
+
+**Two bounding flips.** A flanker bounding cover to cover, in two different ways, flipped between two moves on
+alternate frames:
+- On reaching a cover, the re-pick left out only that one cover. With nothing else worth a bound, the next frame
+  (no bound) picked the cover he stood at again (or the car's other box), so he stepped 6 cm toward it, then 6 cm
+  back on the direct push. `pickBoundCover` now skips any cover whose stand spot is inside the 1.6 m "reached"
+  radius. That was Priya on a bumper in the free-for-all.
+- A kid standing at exactly 10 m from his target bounded in, which took him under 10 m, so the direct push's
+  sidestep took over and took him back out. The 10 m line now has hysteresis: once inside it he stays on the direct
+  push until he's past 12 m.
+
+Both flips are the critic's Whole Block report (v1.101, filed on the critic's branch). Seth froze behind the van for
+83 s without a shot in 4 of 5 runs, and Marcus in 2 of 5.
+
+### Verified
+- `tests/market-lot.test.mjs` now plays all five scenarios for 60 s each and fails a kid wedged 4 s or more. Run
+  against the v1.103 index.html without its every-third-stall walk-throughs: Jamie and Owen are wedged 35 s in Hold
+  the Doors, and Eric 9 s, Mason 8 s and Priya 5 s elsewhere. With the walk-throughs but before the two bounding
+  fixes: Tyler 35 s (3v3) and Priya 51–52 s (free-for-all), in 2 of 3 runs. Final build, 7 runs × 5 scenarios: no kid
+  over 3 s, most 0–1 s.
+- New `tests/whole-block.test.mjs`, the critic's steps (player held at (28, 0.1), untaggable, 90 s). v1.102: Seth
+  wedged 82 s in 3 of 3 with no shot, and Marcus 81 s in 1–2 of 3. v1.103, 9 runs: both 0 s. Seth fires 30–66
+  times, Marcus 33–42.
+- `npm test`: 16 of 16 suites green (Night Prowl's Seth still 0.6 s, taggers and cover-fire unchanged).
+
+### Still open
+- Hold the Doors and the free-for-all haven't had a real playtest. In the free-for-all, four of the six kids are
+  usually out inside the first 10 s, because the aisles are long and open and everyone starts in sight of someone.
+  It may need starts behind cars.
+- The `advancing` commitment isn't sub-stepped the way the taggers' is (v1.101 fix-up 2), so on slow frames it may
+  steer differently. CI's mixed-step runs will show it if so.
+- The Whole Block line is on the critic's branch (PR #9). When that merges, it can be struck with v1.103.
+
+---
+
+## v1.104 — Winnmark's houses, first step of the polish pass
+
+Michael's answer to D.3 (mesh polish) was D: one map end to end, Winnmark first, and each step shown to him before
+the next. This is the first step: the eight houses on Winnmark Ct, which fill most of every frame there.
+
+The old house was a brick box under a square four-sided cone, which on an 8 × 7 m footprint gave uneven eaves (0.5 m
+at the sides, 1 m at the front), with a small pyramid for a front gable, flat window panes with a trim strip each
+side, and a door slab. The new one, `buildHouseDetail`, keeps the same box and the same collision, and replaces the
+rest:
+- A real hip roof with even 0.45 m eaves all round, the ridge along the long side, the same pitch on all four faces,
+  and a fascia board, soffit and gutter along every eave, with a downspout at each corner.
+- A cross gable over the entry, with a trim-clad gable end and a round vent.
+- Windows with a casing, a muntin cross, a sill and a head cap, and louvred shutters on the front ones. A small
+  window over the door, under the gable. Back and side windows get the casing and sill, no shutters.
+- A panelled door with a casing, a transom light, a hood on brackets, a knob, a porch light and a stoop step.
+- A darker water-table band at the base, corner boards, a belt course between the storeys and a brick chimney.
+Shutter and door colours come from the house's position, so the street looks the same every round, and differ house
+to house (five shutter colours, four door colours).
+
+All of it is merged into one mesh per material, so a house is now 14 meshes, against 26 before, though it has about
+2,200 triangles. Bunratty builds the same house function and keeps the old front until this step is approved: the
+new front is behind a `detail` option that only Winnmark passes.
+
+### Verified
+- New `tests/houses.test.mjs`: Winnmark builds eight detailed houses, 14 meshes each; their collision boxes keep their
+  8–9 × 7 m footprints and 5.5 m height; walking into Seth's front wall stops the player at z −11.17 (the wall is at
+  −11.5, the player's radius 0.33); Bunratty's seven houses are still the old build; no page errors. Looking at
+  Seth's house from the street the scene draws in 625 calls.
+- Screenshots by eye, day and Night Prowl (tests/out/houses-winnmark-seth.png and the wm-after/wm-night shots): the
+  roofs, gables, windows and doors read at the spawn, down the street and close up.
+- `npm test`: all suites green. One run of `cover-fire` came in at 25.4% of trigger pulls held against its 25% gate
+  (141 of them in Bunratty's Hold the Fort, which this change doesn't touch); six reruns passed, the last four at
+  5.6–14.5% held, with Hold the Fort holding 1–15 pulls.
+
+### Still open
+- Michael's look before the next step. The rest of Winnmark, in the order I'd take it: the cars, the trees and
+  hedges, the kids' fort and the yard props (bins, mailboxes, lamps), then the road and kerbs.
+- Whether Bunratty (and the lot's store, later) should take the new house now or after all of Winnmark is done.
+- `cover-fire`: one run in seven had a Hold the Fort kid holding 141 pulls, against 1–15 in the others. Something
+  there, probably a kid behind a low wall whose clear line never clears (v1.101 fix-up 2's lip margin), can hold a
+  whole round; it can turn CI red. Not chased in this item; worth a look with the per-kid hold counts.
+
+---
+
+## v1.105 — Jump onto and over low things
+
+Michael's answer to D.4 was A: height-aware collision, so that anything the feet clear is passed over and anything
+under about 1 m can be landed on and stood on. Kids stay on the ground.
+
+The player could already jump (4.2 m/s, about 0.72 m of rise), but `collidesObstacles` measured the body from the
+terrain under it, not from the feet, so a 0.5 m box stopped a player in mid-air as it stopped one on the ground.
+Now the player's own movement passes his foot height (`Game.player.pos.y`), and the vertical test runs from there:
+an obstacle whose top is under the feet (5 cm of slack) doesn't block. Kids call the same function without a foot
+height and get the terrain foot, as before.
+
+`playerSupportY` is the new ground under the player: the terrain, or the top of a standable obstacle his body
+overlaps whose top is at or just below his feet. Standable means no taller than 1.05 m (`STAND_MAX_H`) and not a
+picket fence that BBs fly through. It's measured with the same radius as the collision test, so there's no spot at
+an edge that neither holds him up nor lets him in. The jump physics use it in place of the terrain height: a
+falling player lands on the top; a grounded one follows it; walking off an edge more than 0.35 m high starts a fall,
+as stepping off a slope already did.
+
+What that gives in play: boxes, bins, crates and low planters (0.4–0.7 m) can be jumped onto and walked across; a
+0.45 m kerb can be cleared with a running jump; things from 0.75 to 1.05 m high can be
+stood on but only reached from something lower next to them; cars (1.15 m body) and 1.1 m walls still stop a jump.
+The player's hitbox and the kids' aim already followed `pos.y`, so a player on a box is shot at where he stands.
+
+### Verified
+- New `tests/jump.test.mjs`, on Winnmark and Bunratty (sloped) with a real Space keydown and W held: walking into a
+  0.55 m box stops at its face; a jump from 1.4 m back lands on top (Winnmark: feet 0.54 m above the road, rise
+  0.72 m; Bunratty 0.53 m, rise 0.67 m) and he stays there 90 steps; walking on drops him to the ground past the far
+  side. A jump into a 1.12 m wall leaves him on the near side, on the ground. The box still blocks a kid-sized body
+  (no foot height passed). On the lot, a 0.45 m kerb laid across the middle aisle stops a walk, and a running jump
+  lands 4 m past it.
+- `npm test`: 18 of 18 suites green (`cover-fire` rerun alone after its first run lost its browser at boot, when I
+  bumped the version tag mid-run; 18.0% of pulls held).
+
+### Still open
+- A player on a bin or box sees over cover the kids were placed to hide behind. Some scenarios may need a look.
+- Nothing lets a kid follow him up; a kid who can't reach him keeps shooting from the ground, which may be enough.
+- There's no vault (option B) and no step-up: a 0.2 m ledge still stops a walk and needs a hop.
+
+---
+
+## v1.106 — The Utility Belt and the Drop-Leg Holster
+
+Michael's D.5 note was three things; his answer was A first: the loadout unlocks are something you wouldn't buy, so
+rename them as gear (he suggested "Holster" or "Utility Belt") and let the description say what each unlocks. The
+shop's two "3rd Loadout Slot" and "4th Loadout Slot" rows are now:
+- **Utility Belt** ($30): "A web belt with a pouch on each hip. Unlocks loadout slot 3 (key "3"): carry a third item
+  into a match, like a speed loader or a spare mag."
+- **Drop-Leg Holster** ($80): "Straps to your thigh, below the belt. Unlocks loadout slot 4 (key "4"): a fourth item
+  in a match. Needs the Utility Belt first."
+Their section header reads BELT & HOLSTER, "Gear that opens more loadout slots". On the Loadout screen a locked slot
+used to say "Unlock at airsoft.com"; slot 3 now says "Needs the Utility Belt, at airsoft.com", and slot 4 names the
+holster. Prices, the order (holster locked until the belt is bought), the save flags (`slot_3`, `slot_4`) and the
+in-match HUD are unchanged, so existing saves keep their slots. The shop keeps its look; the tab is still called
+Loadout, since the tabs and groupings are D.5's option B.
+
+### Verified
+- New `tests/utility-belt.test.mjs`: in the shop's Loadout tab the two rows are the Utility Belt and the Drop-Leg
+  Holster, no row says "Loadout Slot", the header is BELT & HOLSTER, the texts name slots 3 and 4, and the holster
+  reads LOCKED. The Loadout screen's locked slots name the belt and the holster. Buying both with clicks on the BUY
+  buttons costs $110, opens four slots and turns both rows OWNED; the Loadout screen then has no locked slot.
+- Screenshot by eye (tests/out/shop-belt.png): the airsoft.com page reads as before, with the new names.
+- `npm test`: 19 of 19 suites green.
+
+### Still open
+- D.5 B (re-sort the shop's tabs and groupings) and C (the Loadout screen with a 3D kid) are still to come, each
+  as its own version. B would come to Michael as a list first.
+- The belt and holster still use the shop's gear icon (⚙); their own icons would go with C.
+
+---
+
+## v1.107 — The bathroom mirror: the character creator, part 1
+
+Michael's D.6 note asked for a character creator: height, shape, hair, eyes, skin, clothing colour and style. His
+answer was C: both a mirror in the bedroom you can walk up to any time between matches, and a new save that opens on
+it once. This is the first part, the mirror.
+
+The bathroom door off the hall was a placeholder ("You don't need to use the bathroom right now!"). It's now the
+mirror: the prompt reads "Look in the bathroom mirror", the floating label MIRROR. E there opens a screen in the same
+card as Your Loadout: Mike in 3D on the left, built with the kids' own `createKid` mesh, and a row of choices on the
+right. Height (short, average, tall), build (skinny, average, heavy), hair (short, wavy, curly, long), hair colour
+(6), skin (7), shirt (8), pants (6) and glasses. Each click writes `Game.persist.look` and rebuilds the preview. DONE
+goes back to the bedroom and auto-saves if the player has already saved this session, as the rest of the game
+does. `look` is part of the save; a save from before this version loads with the default look (average height and
+build, short brown hair, blue shirt, dark pants, no glasses).
+
+### Verified
+- New `tests/mirror.test.mjs`: the bathroom door's prompt and label; standing at it, it's the focused interactable
+  and E opens the mirror (mode `mirror`) with the eight rows and a kid mesh in the preview. One click in each row
+  lands in the look, one choice per row is lit, and the preview rebuilds (tall Mike 1.65 m, short 1.29 m). DONE goes
+  back to the bedroom. The look survives a save and load, and a save with no `look` loads the defaults. No page
+  errors.
+- Screenshot by eye (tests/out/mirror.png): the card, the preview and the rows read cleanly.
+- `npm test`: 20 of 20 suites green.
+
+### Still open
+- The look shows only in the mirror so far: the game is first person, and the viewmodel hands keep their skin and
+  sleeve colours. Next part: a new save opens on the mirror once (the rest of Michael's C), the hands take the skin
+  and shirt colours, and height moves the eye height (and the hitbox with it) a little, since Michael didn't ask for
+  it to stay cosmetic.
+- Eye colour isn't offered: the kid mesh's eyes are dark boxes with no colour of their own. It comes with the face
+  work in D.3's pass on the kids.
+- Clothing style (hoodie, cap, shorts vs pants) needs new mesh parts; only colours for now.
+
+---
+
+## v1.107 fix-up — the houses test keeps its player in the round
+
+CI's `headless` run on v1.105 (4680e8a) failed `tests/houses.test.mjs` › "walking north into Seth's house stops at its
+front wall": the player ended at z −8, exactly where the test puts him, so he hadn't moved at all. It isn't v1.105's
+collision change. The suite plays `winnmark_seth_house`, a one-life 1v1. While it inspects the eight houses, the page's
+own frame loop keeps the round going in real time. On a slow runner that is long enough for Seth's opening hold to lift
+and for him to tag the player. The round ends, and a player on the result screen doesn't walk. Locally it's fast enough
+to pass. With 15 s of play before the walk, the old test fails 3 runs in 3 with the same −8. The suite now makes the
+player untaggable as soon as the round starts, and the walk check also requires the mode to still be `scenario`. Test
+only; no game change, no version bump.
+
+### Verified
+- With 15 s of play before the walk: the old test fails at −8 in all 3 runs; the new one stops at −11.17 in `scenario`.
+- `npm test`: all suites green.
+
+---
+
+## v1.108 — A new save opens on the mirror; height sets the eye line
+
+The rest of Michael's C on D.6: a new save opens on the mirror once. NEW GAME now goes to the bedroom and opens the
+mirror straight away; DONE leaves Mike in his room as before. CONTINUE from a save goes straight to the bedroom,
+and the mirror stays in the bathroom for any change later.
+
+Height is no longer cosmetic only. My question on D.6 said height would move the eye line and hitbox a little unless
+he wanted it fixed, and he didn't say so. `applyPlayerLook` runs at every scenario start: a short Mike stands with
+his eyes at 1.27 m and his hitbox top 8 cm lower than average, a tall one 8 cm higher (1.43 m eyes); crouching moves
+60% as much. The kid mesh in the mirror differs more (1.29 to 1.65 m), but in play the spread stays small, so no
+choice is a real edge.
+
+A correction to v1.107's Still open: it said the viewmodel hands keep their skin and sleeve colours. There are no
+hands in the first-person view, only the gun, so nothing there takes the look.
+
+The test harness's `g.bedroom()` clicks NEW GAME, so it now presses DONE on the mirror when it opens.
+
+### Verified
+- `tests/mirror.test.mjs` now starts with a real NEW GAME click: the mode is `mirror`, and DONE goes to the bedroom.
+  In a Winnmark match the eye height is 1.27 / 1.35 / 1.43 m for short / average / tall (the camera sits at the
+  same height above the feet), the crouch eye 0.752 / 0.8 / 0.848 m, and the hitbox height 1.42 / 1.5 / 1.58 m.
+  After a save and a page reload, CONTINUE goes straight to the bedroom. The v1.107 checks all still pass.
+- `npm test`: 19 of 20 on the first run. `result-text` lost its browser on the NEW GAME click ("Target page, context
+  or browser has been closed", `tests/lib/game.mjs:53`) before any check ran; alone, it passed 3 runs of 3.
+
+### Still open
+- Whether the mirror should say something on its first opening ("That's you. Change it any time at the bathroom
+  mirror."). It opens with no words now.
+- Eye colour and clothing style (D.6) wait on new face and clothing meshes.
+- The headless browser died on the first click of a suite twice in six full runs this session: `cover-fire` on the
+  v1.105 run (before the mirror existed) and `result-text` here. Both at the same line, both clean on rerun. It looks
+  like the machine rather than the game, but if CI shows it, the harness should retry the boot once.
+- Whether height should affect play at all: 8 cm of hitbox and eye line either way. Easy to set to zero.
