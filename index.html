@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.108</div>
+  <div class="version">v1.109</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -12790,8 +12790,9 @@ function buildHollowScene(variant, timeOfDay) {
   };
 
   const playerSpawns = {
-    team_a:  { pos: P(-2, -28), yaw: 0 },           // in the north fort, facing south (+z)
-    team_b:  { pos: P(2, 28),   yaw: Math.PI },      // in the south fort, facing north (-z)
+    // v1.109: yaw 0 faces -z; these two were swapped, so a team_b start looked at the south fort's back wall
+    team_a:  { pos: P(-2, -28), yaw: Math.PI },     // in the north fort, facing south (+z)
+    team_b:  { pos: P(2, 28),   yaw: 0 },           // in the south fort, facing north (-z)
     midfield:{ pos: P(0, 0),    yaw: 0 },
   };
 

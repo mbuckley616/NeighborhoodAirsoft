@@ -5683,3 +5683,22 @@ stays as it was. Test only.
 - Three runs on the current build: 40/594, 41/650 and 61/700 held (6–9%), Hold the Fort 4–16. Shots into cover
   0.3–0.8%.
 - `npm test`: all suites green.
+
+## v1.109 — The Hollow's fort starts face the field
+
+The critic (v1.102, Found in play) saw the player open every Hollow team match looking at the south fort's flag
+pole. `buildHollowScene`'s player spawns had their yaws swapped: yaw 0 faces −z, but `team_b` (the south fort, where
+every Hollow team scenario puts the player) had `Math.PI`, and `team_a` (the north fort, no scenario uses it yet) had
+0. Swapped them back. A new suite, `tests/spawn-facing.test.mjs`, enters every scenario and measures the angle between
+the player's facing and the enemy kids' centroid, so any map with the same slip shows up.
+
+### Verified
+- Before: ten Hollow scenarios opened 144–178° off the enemy (the fort's back wall); after: 2–8° for the team and
+  attack matches, 34–36° for the two south-fort defends. The free-for-all and night Infection (`midfield`) stay at 56°.
+- Every other scenario on every map opens within 70° of the enemy kids (most 0–5°); none over 120°.
+- `npm test`: 21/21 suites green. `utility-belt.test.mjs` hung once in the full run inside `g.bedroom()` (the page
+  stopped answering after NEW GAME, before the test body) and passed alone; the v1.93 note about the start click
+  sitting for 30 s looks like the same harness stall.
+
+### Still open
+- The intro preview behind the BEGIN card now looks at the field too; worth a glance in play that it frames well.
