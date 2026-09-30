@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.102</div>
+  <div class="version">v1.103</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5767,6 +5767,23 @@ const SCENARIOS = {
   // Michael: B). Car-to-car team fights across three rows of parked cars.
   // ===================================================================
 
+  // --- v1.103: the zone's opener, 1v1 with Marcus ---
+  lot_1v1_marcus: {
+    region: 'east_roswell', street: 'riverside_market',
+    name: 'Riverside Market', scenarioName: 'Cart Return',
+    desc: "Marcus's mom is inside doing the big shop, which gives you two about forty minutes. He's somewhere by the store doors with his pistol; you're out by the road. It's rows of parked cars all the way across — crouch behind a bumper, never cross an aisle where he can see down it, and let him come to you. One hit each.",
+    builderFn: 'buildMarketLotScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'pistol', anchor: 'a_store_w', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 40, lose: 10 },
+    playerLives: 1, armorMult: 1,
+  },
+
   // --- On-ramp: 3v3 across the rows ---
   lot_team_3v3: {
     region: 'east_roswell', street: 'riverside_market',
@@ -5790,7 +5807,51 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
-  // --- Capstone (for now): 4v4 after closing, under the lot lights ---
+  // --- v1.103: hold the store front for 90 s against a push from the road ---
+  lot_defend_store: {
+    region: 'east_roswell', street: 'riverside_market',
+    name: 'Riverside Market', scenarioName: 'Hold the Doors',
+    desc: "You called the store front, so now you have to keep it. Jamie, Tyler and Owen come up from the road, row by row, and a tagged kid walks back to the road and comes again. The truck and the dumpsters are your cover; the first row of cars is theirs. Watch both ends of the fire lane, not just the middle. Survive 90 seconds.",
+    builderFn: 'buildMarketLotScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    playerSpawn: 'team_a',
+    enemySpawnCluster: 'cluster_south',
+    enemySetup: [
+      { charId: 'jamie', weapon: 'ump',     anchor: 'b_road_w', role: 'attacker', flank: 'L' },
+      { charId: 'tyler', weapon: 'shotgun', anchor: 'b_road',   role: 'attacker', flank: 'C' },
+      { charId: 'owen',  weapon: 'ar',      anchor: 'b_road_e', role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 80, lose: 20 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.103: free-for-all across the whole lot ---
+  lot_ffa: {
+    region: 'east_roswell', street: 'riverside_market',
+    name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
+    desc: "No teams. Seven kids spread out over the whole lot, from the dumpsters to the road, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
+    builderFn: 'buildMarketLotScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'midfield',
+    ffa: true,
+    enemySetup: [
+      { charId: 'marcus',  weapon: 'ak47',    anchor: 'scatter_nw' },
+      { charId: 'jamie',   weapon: 'ump',     anchor: 'scatter_ne' },
+      { charId: 'tyler',   weapon: 'shotgun', anchor: 'scatter_sw' },
+      { charId: 'priya',   weapon: 'mp5',     anchor: 'scatter_se' },
+      { charId: 'owen',    weapon: 'ar',      anchor: 'scatter_w'  },
+      { charId: 'brooke',  weapon: 'pistol',  anchor: 'scatter_e'  },
+    ],
+    winCondition: 'last_team_standing',
+    rewards: { win: 90, lose: 20 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Capstone: 4v4 after closing, under the lot lights ---
   lot_night_4v4: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'After Close',
@@ -12686,10 +12747,15 @@ function buildMarketLotScene(variant, timeOfDay) {
   for (let k = 12; k >= 1; k--) spotXs.push(-k * SPOT);
   for (let k = 1; k <= 12; k++) spotXs.push(k * SPOT);
   const carObsList = [];
-  const CORRAL_SPOTS = [[-10.8, -1.9], [13.5, 12.1], [-24.3, -12.1]];   // stalls the cart corrals take
+  const CORRAL_SPOTS = [[-10.8, -1.9], [16.2, 12.1], [-24.3, -12.1]];   // stalls the cart corrals take
   for (const row of ROWS) {
     spotXs.forEach((x, i) => {
       if (row.pat[i] !== 'C') return;
+      // v1.103: every third stall (i = 1, 4, 7, …) stays empty in BOTH halves of a
+      // double row, so the row has a 3.85 m walk-through every 8.1 m. Without them
+      // a double row was a solid 65 m wall (the halves park nose to nose), and a
+      // kid pushing across it slid along the bumpers and wedged for 40 s+.
+      if (i % 3 === 1) return;
       if (Math.abs(x) > 18.5 && Math.abs(x) < 19.5) return;   // tree islands at x = ±18.9
       if (CORRAL_SPOTS.some(([sx, sz]) => Math.abs(sx - x) < 0.1 && Math.abs(sz - row.z) < 0.1)) return;
       // Nose into the row's centre line (car-local +X is the nose; yaw -π/2 points it +z),
@@ -20778,6 +20844,17 @@ function pickBoundCover(e, coverList, playerPos) {
   let best = null, bestScore = -Infinity;
   for (const c of coverList) {
     if (c === e._boundCover) continue;                  // not the one we're at
+    // v1.103: nor any cover we're already at (its stand spot inside the 1.6 m
+    // "reached" radius). Reaching a cover re-picks without it; with nothing else
+    // worth a bound the pick came back null, and the next frame (no bound) picked
+    // the cover he stood at again (or a car's other box), so he stepped 6 cm
+    // toward it, then 6 cm back on the direct push, every frame for 50–80 s: the
+    // lot's Priya on a bumper, Whole Block's Seth and Marcus by the van. Each
+    // frame moved, so no wedge check ever fired.
+    {
+      const sp = coverStandPos(c, playerPos);
+      if (Math.hypot(sp.x - ex, sp.z - ez) < 1.6) continue;
+    }
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const ch2 = c.h || 0;
     if (ch2 < 0.5) continue;                            // too low to hide behind
@@ -21671,7 +21748,13 @@ function updateEnemies(dt) {
           let usingBound = false;
           // v1.99: after a wedged bound, rest from bounding for a beat (below).
           if (e._boundRest > 0) e._boundRest -= dt;
-          if (e.flankSide && rawD > 10 && rawD < ENGAGE_FAR && e.weapon !== 'sniper' && !(e._boundRest > 0)) {
+          // v1.103: hysteresis on the 10 m close-in line. A flanker standing at
+          // 10.0 m bounded one step in (under 10 m), the direct push's sidestep took
+          // him back out, and he flipped between the two every frame for 80 s
+          // (Whole Block's Marcus by the van). Inside 10 m he now stays on the
+          // direct push until he is past 12 m again.
+          if (rawD < 10) e._boundClose = true; else if (rawD > 12) e._boundClose = false;
+          if (e.flankSide && !e._boundClose && rawD < ENGAGE_FAR && e.weapon !== 'sniper' && !(e._boundRest > 0)) {
             // Arrived at current bound cover? (within ~1.5m of its stand pos)
             let needNew = !e._boundCover;
             if (e._boundCover) {
@@ -21792,7 +21875,16 @@ function updateEnemies(dt) {
             const newX = e.pos.x + stepX;
             const newZ = e.pos.z + stepZ;
             const beforeAX = e.pos.x, beforeAZ = e.pos.z;
-            if (!collidesObstacles(newX, newZ, kidRadius)) {
+            // v1.103: the tagger's v1.100 sidestep commitment, ported. While
+            // committed, skip the straight push: its slide pulled the kid back to
+            // the spot he wedged on, and with the 0.5 s side flip he jittered
+            // between two parked cars for 35 s (the market lot's row passages).
+            const advCommitted = e._advSideT > 0;
+            if (advCommitted) e._advSideT -= dt;
+            if (e._advWedgeT > 0) e._advWedgeT -= dt; else e._advWedges = 0;
+            if (advCommitted) {
+              // no straight step this frame
+            } else if (!collidesObstacles(newX, newZ, kidRadius)) {
               e.pos.x = newX;
               e.pos.z = newZ;
             } else {
@@ -21811,7 +21903,7 @@ function updateEnemies(dt) {
             // displacement, not slide-assignment.
             const advMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
             if (advMoved < 0.02) {
-              e._advStuck = (e._advStuck || 0) + dt;
+              if (!advCommitted) e._advStuck = (e._advStuck || 0) + dt;
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
               const detour = fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
@@ -21839,6 +21931,15 @@ function updateEnemies(dt) {
                 e.pos.x = sx;
               } else if (!collidesObstacles(e.pos.x, sz, kidRadius)) {
                 e.pos.z = sz;
+              }
+              // v1.103: a committed sidestep that is itself blocked turns round now;
+              // a fresh one commits 0.35 s, longer each time he wedges again within
+              // 3 s (up to 1.4 s), as the taggers do since v1.100.
+              if (advCommitted && Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ) < 0.01) { e._advSide *= -1; e._advSideT = 0; }
+              if (!advCommitted) {
+                e._advWedges = Math.min(4, (e._advWedges || 0) + 1);
+                e._advWedgeT = 3;
+                e._advSideT = 0.35 * e._advWedges;
               }
               }
             } else {
@@ -22731,7 +22832,10 @@ const PIN_SCENARIO_GROUPS = {
   ],
   // v1.102: Riverside Market lot (East Roswell) — the parking-lot zone (D.1).
   market_lot: [
+    'lot_1v1_marcus',    // v1.103
     'lot_team_3v3',
+    'lot_defend_store',  // v1.103
+    'lot_ffa',           // v1.103
     'lot_night_4v4',
   ],
 };

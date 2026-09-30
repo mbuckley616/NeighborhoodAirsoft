@@ -5369,3 +5369,59 @@ open facing the back wall of their own fort. That's filed under Found in play ra
 - In Aisle Wars your side loses lives three times as fast in the first minute (6 to 2). Brooke's sniper spot at the
   road end gives her little to shoot. Whether the 3v3 is too hard needs a real playtest.
 - Whether the store can carry a real name (Kroger, a real Roswell plaza) is still Michael's call.
+
+---
+
+## v1.103 — Three more lot scenarios, and two ways a kid froze while still moving
+
+This finishes the lot half of D.1. There are three more scenarios, so the zone runs 1v1, 3v3, defend, free-for-all,
+then night 4v4:
+- **Cart Return** (the opener): 1v1 with Marcus and a pistol, one hit each.
+- **Hold the Doors**: defend the store front for 90 s. Jamie, Tyler and Owen come up from the road, and a tagged
+  kid walks back to the road and comes again.
+- **Everybody for Themselves**: a seven-kid free-for-all. You start in the middle aisle.
+
+Playing them showed kids stuck for 35–50 s at a time, and the stand-still check didn't catch it. The v1.102 test only
+counted frames with no movement, and these kids moved a few cm every frame. The test now counts net movement: a
+second in `advancing` with under 0.25 m of net movement counts toward the wedge. There were three causes.
+
+**The rows were walls.** The two halves of a double row park nose to nose, so a row was a solid 65 m barrier with
+gaps only where both halves happened to be empty. Every third stall (i = 1, 4, 7, …) is now empty in both halves,
+which gives a 3.85 m walk-through every 8.1 m. One corral moved a stall to keep out of a walk-through.
+
+**The gunners' wall-follow never committed.** This is the `advancing` side of v1.100 (Still open since then). The
+straight push and the 0.5 s side flip pulled a kid back to the spot he wedged on; Tyler did it in a row passage for
+35 s. The tagger's commitment is ported as it is: the sidestep holds for 0.35 s, longer each time he wedges again
+within 3 s (up to 1.4 s), and a blocked sidestep turns round.
+
+**Two bounding flips.** A flanker bounding cover to cover, in two different ways, flipped between two moves on
+alternate frames:
+- On reaching a cover, the re-pick left out only that one cover. With nothing else worth a bound, the next frame
+  (no bound) picked the cover he stood at again (or the car's other box), so he stepped 6 cm toward it, then 6 cm
+  back on the direct push. `pickBoundCover` now skips any cover whose stand spot is inside the 1.6 m "reached"
+  radius. That was Priya on a bumper in the free-for-all.
+- A kid standing at exactly 10 m from his target bounded in, which took him under 10 m, so the direct push's
+  sidestep took over and took him back out. The 10 m line now has hysteresis: once inside it he stays on the direct
+  push until he's past 12 m.
+
+Both flips are the critic's Whole Block report (v1.101, filed on the critic's branch). Seth froze behind the van for
+83 s without a shot in 4 of 5 runs, and Marcus in 2 of 5.
+
+### Verified
+- `tests/market-lot.test.mjs` now plays all five scenarios for 60 s each and fails a kid wedged 4 s or more. Run
+  against the v1.103 index.html without its every-third-stall walk-throughs: Jamie and Owen are wedged 35 s in Hold
+  the Doors, and Eric 9 s, Mason 8 s and Priya 5 s elsewhere. With the walk-throughs but before the two bounding
+  fixes: Tyler 35 s (3v3) and Priya 51–52 s (free-for-all), in 2 of 3 runs. Final build, 7 runs × 5 scenarios: no kid
+  over 3 s, most 0–1 s.
+- New `tests/whole-block.test.mjs`, the critic's steps (player held at (28, 0.1), untaggable, 90 s). v1.102: Seth
+  wedged 82 s in 3 of 3 with no shot, and Marcus 81 s in 1–2 of 3. v1.103, 9 runs: both 0 s. Seth fires 30–66
+  times, Marcus 33–42.
+- `npm test`: 16 of 16 suites green (Night Prowl's Seth still 0.6 s, taggers and cover-fire unchanged).
+
+### Still open
+- Hold the Doors and the free-for-all haven't had a real playtest. In the free-for-all, four of the six kids are
+  usually out inside the first 10 s, because the aisles are long and open and everyone starts in sight of someone.
+  It may need starts behind cars.
+- The `advancing` commitment isn't sub-stepped the way the taggers' is (v1.101 fix-up 2), so on slow frames it may
+  steer differently. CI's mixed-step runs will show it if so.
+- The Whole Block line is on the critic's branch (PR #9). When that merges, it can be struck with v1.103.

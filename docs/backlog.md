@@ -34,8 +34,11 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 1. More maps, locations and scenarios, based on real places around where the game sits (East Roswell / Chattahoochee
    River): e.g. a Centennial High School level, a parking lot skirmish, Horseshoe Bend Country Club pool / golf course,
    a grocery store battle. (Michael, 2026-09-28) **(design)** — Michael: **B**, a parking-lot zone first (control room,
-   30 Sep). First part done, v1.102: the Riverside Market lot, fourth on the ladder, with two scenarios (Aisle Wars 3v3,
-   After Close night 4v4). Still owed: 2–3 more lot scenarios (a 1v1 opener, a defend, a free-for-all); then Northcliff (A).
+   30 Sep). ~~The lot zone~~ — done, v1.102–v1.103: the Riverside Market lot, fourth on the ladder, five scenarios
+   (Cart Return 1v1, Aisle Wars 3v3, Hold the Doors defend, Everybody for Themselves FFA, After Close night 4v4). v1.103 also fixed
+   three ways kids froze while moving (solid car rows, the gunners' wall-follow, two bounding flips; also the critic's
+   Whole Block report). Next
+   zone, when this item comes round again: Northcliff (A).
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
