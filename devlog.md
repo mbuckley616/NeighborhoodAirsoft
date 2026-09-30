@@ -5226,6 +5226,37 @@ flip, which had been turning Mitchell back mid-commit along a house wall.
 
 ---
 
+## v1.101 — A 2.5 s opening hold: no kid fires until the round has started
+
+Found in play (critic, v1.86), then Michael's call on the question I raised: in Two in the Yards Devon (sniper) has a
+line to the player's spawn from the first frame, 37 m off, and fired 0.75–0.98 s after BEGIN. It's one life, so a
+first-timer still reading the HUD could lose at 1.3 s without moving. Michael chose A (control room, 29 Sep): one rule
+for every kid on every map, no shot in the first 2.5 s after BEGIN; they still move, peek and aim.
+
+The game had no round clock that the tests' fixed steps drive (`Game.scenario.startTime` is wall time), so
+`startScenario` now zeroes `Game.scenario.roundTime` and `stepGame` adds each step's dt to it. `inOpeningHold()` is true
+for the first `OPENING_HOLD_SEC` (2.5) of it. Three places read it. The peek-and-shoot state stays up and aimed rather
+than firing, so its shot and its recovery aren't spent on a round that never leaves; it fires the moment the hold
+lifts. `queueSuppressionBurst` queues nothing. And `spawnEnemyBB`, the single emission point, returns early, which
+catches the reaction and suppression rounds that don't go through the shooting state. Allies are kids too and hold
+the same way. Infection taggers don't shoot and are unaffected.
+
+### Verified
+- New `tests/opening-hold.test.mjs`: the player stands at spawn for 6 s; it reads the round clock at the first kid BB
+  and at the first hit. Two in the Yards, five runs. v1.100: Devon's first BB at 0.75–0.98 s, the player hit at 1.30
+  and 1.53 s in 2 of 5. v1.101: the first BB at 2.52 s in all five, first hit 3.07 s at the earliest (2 of 5 by 3.1 s).
+- The same test on Bunratty 1v1 (Sean), Night Prowl, Full-Auto Mayhem and the Bunratty free-for-all: before, the
+  mayhem and free-for-all kids fired at 0.02–0.08 s; now no map has a kid BB before 2.52 s.
+- `npm test`: all suites green.
+
+### Still open
+- The hold buys time, not safety. Devon still has his line at 2.5 s, and a player who stays put is tagged at about
+  3.1 s in 2 of 5 runs. Moving his start out of sight (option C) would go with A if that still feels harsh in play.
+- In the big battles every kid opens fire on the same frame at 2.5 s. Whether that volley reads well, or needs a
+  small per-kid stagger, only a real playtest can say.
+
+---
+
 ## v1.100 fix-up — Mitchell at the end of the side fence
 
 CI's second `headless` run on the v1.100 head failed `taggers.test.mjs`: Mitchell walked 14.3 m and stopped 56 m
@@ -5241,7 +5272,8 @@ that line.
 
 The detour's crossing test now widens the fence by the kid's radius, so a body that would clip the end gets the
 detour. The end waypoints move out by the same 0.35 m (1.3 m past the post instead of 0.95 m). This is the shared
-helper, so gunners in `advancing` get it too. No version bump: this lands with v1.100, which hasn't shipped.
+helper, so gunners in `advancing` get it too. No version bump: it lands with v1.101 (the other run's opening hold,
+merged in here), which hasn't shipped either.
 
 ### Verified
 - Mixed steps (every third 0.05 s), 20 seeded runs: Mitchell reaches the player in all 20 (28.6–34.9 s), against 6 of
@@ -5250,7 +5282,7 @@ helper, so gunners in `advancing` get it too. No version bump: this lands with v
   of 30 s: Mitchell's 66 m route takes 25–35 s, and the 30 s window had been tight even on 1/60 steps. On the pushed
   v1.100 the mixed pass fails (Mitchell 13 m walked); with the fix, 3 runs out of 3, all six taggers reach the player
   on both passes.
-- `npm test`: all suites green.
+- `npm test` on the merge with v1.101: all suites green.
 
 ### Still open
 - The gunners' own wall-follow in `advancing` still flips side every 0.5 s of stuck time and has no sidestep

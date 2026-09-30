@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.100</div>
+  <div class="version">v1.101</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -15737,6 +15737,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
+  Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -19053,12 +19054,22 @@ function coverInFrontTop(enemy, dirX, dirZ, reach = 1.6) {
   return (bestTop > -Infinity) ? { top: bestTop } : null;
 }
 
+// v1.101: OPENING HOLD (Michael, decision on Devon's opening shot: A). No kid fires
+// in the first 2.5 s after BEGIN, on any map; they still move, peek and aim. A kid
+// with a line to the spawn (Devon in Two in the Yards, 37 m) had been tagging a
+// player who hadn't moved yet at ~1.5 s, in a one-life match.
+const OPENING_HOLD_SEC = 2.5;
+function inOpeningHold() {
+  return Game.mode === 'scenario' && (Game.scenario.roundTime || 0) < OPENING_HOLD_SEC;
+}
+
 function spawnEnemyBB(enemy, targetPos) {
   // v1.58: a hard "never fires" gate. Tutorial practice dummies set noFire so they
   // are truly inert targets — low fireRate alone still let one early shot slip out
   // when the player first approached. This is the single emission chokepoint, so
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
+  if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
   // updateEnemies (so they shoot OVER the cover, not into it). We mirror that
   // here by adding the current mesh.group.position.y to the base muzzle height.
@@ -20672,6 +20683,7 @@ function updateTeamFocus() {
 // looks like the auto weapon it is. Semi guns just fire the single round (no
 // queue). `aimPt` is a THREE.Vector3 at the spot to suppress. Returns nothing.
 function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
+  if (inOpeningHold()) return;                     // v1.101: no queued follow-ups either
   spawnEnemyBB(e, aimPt);                          // the immediate round
   const spec = GUN_SPECS[e.weapon] || GUN_SPECS.pistol;
   if (spec.fireMode !== 'auto') return;            // semis: single round only
@@ -21568,7 +21580,9 @@ function updateEnemies(dt) {
           setKidCrouch(e.mesh, 0);
           e.mesh.group.position.y = 0;
         }
-        if (e.stateTime > e.nextStateChange) {
+        // v1.101: during the opening hold a kid stays up and aimed rather than
+        // spending the shot (and its recovery) on a round that never leaves.
+        if (e.stateTime > e.nextStateChange && !inOpeningHold()) {
           // Aim point: lerp from upper chest (0.65) to head (0.95) by headshotBias.
           // Previously chest-low (0.55) which combined with low muzzle made BBs land at
           // ankles; with the muzzle raised to shoulder height (in spawnEnemyBB), aiming
@@ -22229,6 +22243,7 @@ function stepGame(dt) {
     }
     updateStuckBBs(dt);
     updateFragments(dt);
+    Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     updateEnemies(dt);
     updateLaserDiagHud();
     updateStanceHud();

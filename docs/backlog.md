@@ -36,6 +36,19 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    a grocery store battle. (Michael, 2026-09-28) **(design)**
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
+3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
+   **(design)**
+4. We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**
+5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
+   what they have equipped on each part of the body; unique meshes for each item). The online shop is a bit wonky: see
+   if the tabs / item groupings make sense, but do NOT lose the early 2000s website aesthetic. The loadout unlocks are
+   something you wouldn't 'buy'... maybe rename it to like 'Holster' or 'Utility Belt' and the description informs what
+   it unlocks for you. (Michael, 2026-09-29) **(design)**
+6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
+   style, etc. (Michael, 2026-09-29) **(design)**
+7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
+   with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
+   need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
@@ -45,7 +58,7 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 - ~~v1.86 — Result grammar: "Mitchell come walking out" (Night Lane win, one name, plural verb); "…Sean, and Ryan, regroup near the road" (Hollow 3v3 loss, stray comma, allies listed with enemies).~~ — done, v1.96
 - ~~v1.86 — The YOU'RE OUT → YOU GOT THEM double payout has two more paths: the tagger's `setTimeout(endScenario('infected'), 200)` against the timer win's 400 ms (Infection: +$2 then +$8), and `last_team_standing`'s 600 ms timeout (Hollow 3v3: +$2 then +$6). Guard all five delayed `endScenario` calls on `Game.mode === 'scenario'`. Steps: `g.scenario('bunratty_infection')`, `timerRemaining = 0.05`, 2 steps, tagger 0.5 m from player, 1 step, wait 1 s.~~ — done, v1.90
 - ~~v1.86 — Bunratty Infection: Mitchell (spawn −29, 25) is stuck behind the backyard fence the whole round: 3 m moved in 90 s, 66 m from the player, always `chasing`. Steps: `g.scenario('bunratty_infection')`, player unkillable, spin 90 s in chunks, read Mitchell's `pos`.~~ — done, v1.98 (a box, not the fence: the fence detour now gives way to the wall-follow when it makes no progress)
-- v1.86 — Two in the Yards: Devon (sniper) fires 0.75–0.97 s after BEGIN from 37 m at the spawn and tags a standing player at ~1.5 s in 3 of 9 runs; one life, so the match can end before the player has moved. Steps: `g.scenario('winnmark_two_in_the_yards')`, stand still, spin 120.
+- ~~v1.86 — Two in the Yards: Devon (sniper) fires 0.75–0.97 s after BEGIN from 37 m at the spawn and tags a standing player at ~1.5 s in 3 of 9 runs; one life, so the match can end before the player has moved. Steps: `g.scenario('winnmark_two_in_the_yards')`, stand still, spin 120.~~ — done, v1.101 (Michael: A — no kid fires in the first 2.5 s after BEGIN, any map)
 - ~~v1.86 — More result grammar: "Seth and Ryan, Devon, Sean, and Mitchell take the fort" (South Fort lose); "…Nick, and Mitchell starts trudging home" (Infection win); "Ryan, Mitchell, regroup" (Brothers lose).~~ — done, v1.96
 - ~~v1.86 — Night Prowl: Seth wedges in state `advancing` at (−5.3, −10.6) behind the car for 45–110 s, neither moving nor firing, once the player closes to ~14 m. With the mag empty, only a forfeit ends the round. Steps: `g.scenario('winnmark_night_prowl')`, walk the player to about (5, −2), spin 60 s in chunks, read Seth's `state`/`pos`. Seen 3 of 3 runs.~~ — done, v1.99 (a wedged bound re-picked the same cover every frame; it now rests bounding 1.5 s)
 - ~~v1.96 (builder) — Intermittent page errors `Failed to execute 'connect' on 'AudioNode': Overload resolution failed` (12 at once), seen once in three runs of `tests/result-text.test.mjs` (8 scenario entries, each ended four times). Not seen in any other suite. Something calls `connect()` with an undefined node; find which.~~ — done, v1.96 fix-up (`stopMusic`'s 400 ms cleanup nulled a restarted theme's master gain; `tests/music.test.mjs`)
