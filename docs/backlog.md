@@ -64,13 +64,14 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    something you wouldn't 'buy'... maybe rename it to like 'Holster' or 'Utility Belt' and the description informs what
    it unlocks for you. (Michael, 2026-09-29) **(design)** — Michael: **A** first (control room, 30 Sep). ~~A, the Utility Belt~~ — done,
    v1.106 (slot 3 is the Utility Belt, slot 4 the Drop-Leg Holster; texts say what each unlocks). B (re-sort the shop,
-   as a list for Michael first) and C (Loadout screen with a 3D kid) still to come.
+   as a list for Michael first; the list is in decisions, 1 Oct) and C (Loadout screen with a 3D kid) still to come.
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,
    glasses; saved). ~~Part 2~~ — done, v1.108 (NEW GAME opens on the mirror once; height moves the eye line and
    hitbox ±8 cm). Eye colour and clothing style wait on new face and clothing meshes (built in v1.118–v1.120: the face
-   takes `eyeColor`; the mirror rows for it are not added yet).
+   takes `eyeColor`). ~~The mirror rows for eye colour and shirt front~~ — done, v1.123 (Eyes: brown, hazel, green, blue,
+   gray; Shirt front: plain, stripe, pocket; saved, old saves get brown and plain).
 7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
    with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
    need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**

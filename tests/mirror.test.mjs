@@ -1,6 +1,7 @@
 // v1.107 (backlog D.6, Michael: C — part 1): the bathroom door is the mirror now.
 // v1.108 (part 2): NEW GAME opens on the mirror once (CONTINUE doesn't), and height moves the eye and hitbox. E there opens the character
 // screen with Mike in 3D; clicking choices changes Game.persist.look and rebuilds the preview; DONE goes back to
+// v1.123: eye colour and shirt front rows; the iris and the chest trim follow them.
 // the bedroom; the look survives a save and load, and an old save without one gets the default look.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -24,13 +25,13 @@ check('at the bathroom door the mirror is the focused interactable', focus === '
 await page.keyboard.press('KeyE');
 const open = await page.evaluate(() => ({ mode: Game.mode, rows: [...document.querySelectorAll('#mirrorOptions .mirror-row')].map(r => r.dataset.key), kid: !!(MIRROR.kid && MIRROR.kid.group.children.length) }));
 check('E opens the mirror screen', open.mode === 'mirror', open.mode);
-check('it offers height, build, hair, hair colour, skin, shirt, pants and glasses', open.rows.join() === 'height,build,hairStyle,hairColor,skinColor,shirtColor,pantsColor,glasses', open.rows);
+check('it offers height, build, hair, hair colour, skin, shirt, pants, glasses, eyes and shirt front', open.rows.join() === 'height,build,hairStyle,hairColor,skinColor,shirtColor,pantsColor,glasses,eyeColor,shirtFront', open.rows);
 check('the preview has Mike\'s kid mesh in it', open.kid);
 
 // click one choice in each row (the last option), as a player would
 const picked = await page.evaluate(() => {
   const out = {};
-  for (const key of ['height', 'build', 'hairStyle', 'hairColor', 'skinColor', 'shirtColor', 'pantsColor', 'glasses']) {
+  for (const key of ['height', 'build', 'hairStyle', 'hairColor', 'skinColor', 'shirtColor', 'pantsColor', 'glasses', 'eyeColor', 'shirtFront']) {
     const btns = document.querySelectorAll(`#mirrorOptions .mirror-row[data-key="${key}"] .mirror-opt`);
     btns[btns.length - 1].click();
     out[key] = Game.persist.look[key];
@@ -40,7 +41,30 @@ const picked = await page.evaluate(() => {
 });
 console.log('  ', JSON.stringify(picked));
 check('each click lands in the look', picked.look.height === 'tall' && picked.look.build === 'heavy' && picked.look.hairStyle === 'long' && picked.look.glasses === true && picked.look.skinColor === 0x5a3420, picked.look);
-check('one choice is lit per row', picked.onCount === 8, picked.onCount);
+check('one choice is lit per row', picked.onCount === 10, picked.onCount);
+check('the last eye and shirt-front choices are gray and pocket', picked.look.eyeColor === 'gray' && picked.look.shirtFront === 'pocket', picked.look);
+// the preview follows: iris colour, and the chest trim's size (stripe wraps the torso, pocket is a small patch, plain has neither)
+const preview = await page.evaluate(() => {
+  const out = {};
+  const read = () => {
+    let iris = null, trimW = 0;
+    MIRROR.kid.group.traverse(m => {
+      if (!m.isMesh || !m.material || !m.material.color) return;
+      if (KID_EYE_COLORS && Object.values(KID_EYE_COLORS).includes(m.material.color.getHex()) && iris === null) iris = m.material.color.getHex();
+    });
+    let trim = null; MIRROR.kid.group.traverse(o => { if (o.userData && o.userData.kidClothes) trim = o; });
+    let tris = 0; trim.traverse(m => { if (m.isMesh) tris += (m.geometry.index ? m.geometry.index.count : m.geometry.attributes.position.count) / 3; });
+    return { iris, tris };
+  };
+  const click = (key, val) => [...document.querySelectorAll(`#mirrorOptions .mirror-row[data-key="${key}"] .mirror-opt`)].find(b => JSON.parse(b.dataset.value) === val).click();
+  for (const e of ['brown', 'blue', 'green']) { click('eyeColor', e); out[e] = read().iris; }
+  for (const f of ['plain', 'stripe', 'pocket']) { click('shirtFront', f); out[f] = read().tris; }
+  return out;
+});
+console.log('  ', JSON.stringify(preview));
+check('the preview iris takes the eye colour (brown, blue, green)', preview.brown === 0x5a3a1e && preview.blue === 0x3a6a9a && preview.green === 0x3e6e44, preview);
+check('the shirt front changes the chest trim: plain, then a stripe (one band), then a pocket (patch and flap)', preview.stripe > preview.plain && preview.pocket > preview.stripe, preview);
+await page.evaluate(() => [...document.querySelectorAll('#mirrorOptions .mirror-row[data-key="shirtFront"] .mirror-opt')].pop().click());
 const shortH = await page.evaluate(() => { document.querySelector('#mirrorOptions .mirror-row[data-key="height"] .mirror-opt').click(); return +new THREE.Box3().setFromObject(MIRROR.kid.group).getSize(new THREE.Vector3()).y.toFixed(2); });
 check('the preview re-builds: short Mike is shorter than tall Mike', shortH < picked.kidH, { shortH, tallH: picked.kidH });
 await g.shot('mirror');
@@ -59,7 +83,7 @@ const rt = await page.evaluate(() => {
   return { same: before === after, old: Game.persist.look };
 });
 check('the look survives a save and load', rt.same);
-check('a save from before v1.107 loads with the default look', rt.old && rt.old.height === 'average' && rt.old.hairStyle === 'short', rt.old);
+check('a save from before v1.107 loads with the default look', rt.old && rt.old.height === 'average' && rt.old.hairStyle === 'short' && rt.old.eyeColor === 'brown' && rt.old.shirtFront === 'plain', rt.old);
 // height moves the eye and the hitbox top, by 8 cm either way
 const eyes = {};
 for (const h of ['short', 'average', 'tall']) {

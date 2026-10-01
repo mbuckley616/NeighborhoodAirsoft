@@ -6133,3 +6133,33 @@ once he has a line.
 On 3320b4b one of the two `headless` runs was cancelled at exactly 30 minutes, the job's `timeout-minutes`; the other
 passed in 28. With 33 suites the run takes 25–28 minutes on a hosted runner before the Chromium install, so the limit
 was about to cut runs off for no fault in the code. `.github/workflows/check.yml` now gives the job 45 minutes. CI only.
+
+---
+
+
+## v1.123 — Eye colour and shirt front at the mirror
+
+Backlog D.6 (Michael: C, the mirror) listed eyes and clothing style among the choices, and they waited on meshes that
+could show them. v1.118 gave every kid irises (`KID_EYE_COLORS`, read from the profile's `eyeColor`) and v1.120 gave
+every shirt a chest stripe, a pocket or nothing, picked from a hash of the kid's colours. The mirror now has two more
+rows under Glasses: **Eyes** (brown, hazel, green, blue, gray, as swatches) and **Shirt front** (plain, stripe,
+pocket). The shirt front is a new profile field, `shirtFront`; `buildKidClothes` uses it when a profile has one and
+falls back to the colour hash otherwise, so every other kid still wears the shirt he wore yesterday. Mike's look gets
+`eyeColor: 'brown'` and `shirtFront: 'plain'` by default, and older saves pick them up through `loadGame`'s merge.
+The pending D.3 question offered these rows as option B; they were already-answered D.6 work, so they are built and
+B now reads the same as A.
+
+### Verified
+- `tests/mirror.test.mjs` extended: the screen has ten rows ending in eyeColor and shirtFront; clicking the last of
+  each sets gray and pocket, ten choices lit. In the preview the iris material follows the row (brown 0x5a3a1e, blue
+  0x3a6a9a, green 0x3e6e44) and the chest trim grows from 72 triangles plain to 84 with the stripe and 96 with the
+  pocket. A save from before v1.107 loads with brown and plain. Screenshot `tests/out/mirror.png`.
+- `tests/pocket.test.mjs` failed its last three runs in 2 of 4 full runs this session, on this build and (by chance
+  less often) the last one: the round had ended between runs (`endScenario('lose')` from `applyBBHit` under `tick`).
+  The test took its player-can't-be-tagged stub off after each run, and the page's own render loop keeps stepping
+  between `page.evaluate` calls, so a BB already in flight tagged the player and the later runs stepped nothing. The
+  stub now stays on for the whole suite: 3 of 3 runs green.
+- `npm test`: 33/33 suites green.
+
+### Still open
+- The preview camera stands 3.6 m back, so the eyes are a few pixels; Michael may want a closer look or a zoom.

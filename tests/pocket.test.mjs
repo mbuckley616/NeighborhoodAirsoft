@@ -8,8 +8,11 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
 await g.scenario('winnmark_seth_house');
+// v1.123: the player can't be tagged for the whole suite. The stub used to come off after each run, and the page's own
+// tick() keeps stepping between evaluate calls, so a BB in flight could end the round there and leave the next runs
+// with nothing to step (seen 3 runs in 8: escapedAt null, 0 frames).
+await page.evaluate(() => { const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); }; });
 const run = (flank, pocket) => page.evaluate(([flank, pocket]) => {
-  const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
   const P = Game.player.pos, k = Game.scenario.enemies[0], cx = 0, cz = 10;
   const box = (minX, maxX, minZ, maxZ) => ({ minX, maxX, minZ, maxZ, h: 6, baseY: scenarioGroundY(minX, minZ) - 1 });
   Game.player.obstacles = pocket ? [box(cx - 1.5, cx + 1.5, cz - 1.2, cz - 1.0), box(cx - 1.5, cx - 1.3, cz - 1.2, cz + 1.5), box(cx + 1.3, cx + 1.5, cz - 1.2, cz + 1.5)] : [];
@@ -24,7 +27,7 @@ const run = (flank, pocket) => page.evaluate(([flank, pocket]) => {
     if (k._advBackT > 0) backFrames++;
     if (escapedAt == null && k.pos.z < cz - 1.6) escapedAt = +(f / 60).toFixed(2);
   }
-  applyBBHit = orig;
+  if (Game.mode !== 'scenario') return { flank, mode: Game.mode };
   return { flank, escapedAt, backFrames, advFrames, end: [+k.pos.x.toFixed(2), +k.pos.z.toFixed(2)], state: k.state };
 }, [flank, pocket]);
 for (const flank of [0, 1, -1]) {

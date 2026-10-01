@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.122</div>
+  <div class="version">v1.123</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3000,7 +3000,8 @@ const Game = {
     // v1.107 (backlog D.6, Michael: C): how Mike looks, set at the bathroom mirror. createKid's profile fields;
     // old saves get these defaults through loadGame's merge.
     look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
-            shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false },
+            shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
+            eyeColor: 'brown', shirtFront: 'plain' },   // v1.123: eye colour and shirt front (mirror rows)
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -13929,6 +13930,7 @@ function kidClothesGeometry() {
   _kidClothesGeo = { torso: _houseMergeParts(t), upper: _houseMergeParts(u), leg: _houseMergeParts(l), shoe: _houseMergeParts(s), sole: _houseMergeParts(so) };
   return _kidClothesGeo;
 }
+const KID_SHIRT_FRONTS = ['stripe', 'pocket', 'plain'];   // v1.123: buildKidClothes' styles 0, 1, 2
 function _kidHash(p) {
   const n = ((p.shirtColor | 0) * 31 + (p.pantsColor | 0) * 17 + (p.hairColor | 0)) >>> 0;
   return (Math.abs(Math.sin(n * 12.9898) * 43758.5453)) % 1;
@@ -13951,7 +13953,8 @@ function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
   for (const [w, d, x, z] of [[0.17, 0.024, 0, 0.061], [0.17, 0.024, 0, -0.061], [0.024, 0.1, 0.073, 0], [0.024, 0.1, -0.073, 0]])
     add('trim', box(w, 0.012, d), x, 0.266, z);
   // a chest stripe, a pocket, or plain, by kid
-  const style = Math.floor(h * 3);
+  // v1.123: a profile's shirtFront (Mike's, from the mirror) picks it; other kids keep the one their colours give
+  const style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
   if (style === 0) add('trim', box(0.424, 0.05, 0.244), 0, 0.06, 0);
   else if (style === 1) { add('trim', box(0.08, 0.085, 0.006), 0.1, 0.1, 0.116); add('trim', box(0.084, 0.01, 0.008), 0.1, 0.14, 0.117); }
   // belt round the waist with a buckle at the front
@@ -17592,6 +17595,9 @@ const LOOK_OPTIONS = [
   { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
+  // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
+  { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
+  { key: 'shirtFront', label: 'Shirt front', kind: 'text', opts: [['plain', 'Plain'], ['stripe', 'Stripe'], ['pocket', 'Pocket']] },
 ];
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
 function _hexCss(n) { return '#' + n.toString(16).padStart(6, '0'); }
@@ -17627,8 +17633,9 @@ function renderMirrorOptions() {
       b.className = 'mirror-opt' + (on ? ' on' : '');
       b.dataset.value = JSON.stringify(val);
       if (row.kind === 'swatch') {
-        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(val)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
-        b.title = _hexCss(val);
+        const hex = typeof val === 'string' ? KID_EYE_COLORS[val] : val;   // v1.123: the eye row names its colours
+        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(hex)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
+        b.title = typeof val === 'string' ? val : _hexCss(val);
       } else {
         b.textContent = o[1];
         b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;

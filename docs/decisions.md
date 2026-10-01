@@ -15,6 +15,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   B) A, and first give the mirror rows for eye colour and shirt front (stripe, pocket, plain) now the meshes exist.
   C) Change the kids first (say what in a note).
   Builder recommends **B**: the mirror rows are a short job on what is already built, and D.6 was waiting on them.
+  (Builder, v1.123: the mirror rows were D.6 work already answered, so they are built: Eyes and Shirt front. B now
+  means the same as A.)
+
+- **D.5 B, re-sorting the shop: the list first (builder, 2026-10-01).** Your note asked whether the tabs and groupings
+  make sense, keeping the early-2000s look. Today's five tabs: **BBs** (four restock packs; seven BB colours),
+  **Loadout** (Utility Belt, Drop-Leg Holster; three speed loaders), **Guns** (eight guns; each gun's page holds its
+  magazines and spare mags), **Accessories** (red dot, 4× scope, two lasers, flashlight), **Equipment** (six eyewear,
+  four armour pieces, four shoes). What doesn't fit: "Loadout" mixes the belt and holster (gear you wear) with speed
+  loaders (ammo you use up), and the name clashes with the Loadout screen. Options:
+  A) Four tabs by what it's for: **Guns** (unchanged, mags inside), **Ammo** (BB packs, speed loaders, BB colours),
+     **Gear** (Belt & Holster, eyewear, armour, shoes), **Mods** (sights, lasers, flashlight). Same rows and look.
+  B) Keep the five tabs, move the two misfits: speed loaders to BBs, Belt & Holster to Equipment; the Loadout tab goes.
+  C) Leave the tabs; only rename "Loadout" to "Belt & Holster" and move the speed loaders to BBs.
+  Builder recommends **A**: four tabs a kid can guess from the name, nothing lost, nothing new to learn on the rows.
 
 ## Answered
 
