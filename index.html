@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.108</div>
+  <div class="version">v1.117</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5254,6 +5254,7 @@ const SCENARIOS = {
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'defend',
+    resultHold: 'the cul-de-sac',   // v1.117: the lose line names what was held
     playerSpawn: 'bulb_center',
     enemySpawnCluster: 'cluster_lane_west',
     enemySetup: [
@@ -5821,6 +5822,7 @@ const SCENARIOS = {
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'defend',
+    resultHold: 'the doors',   // v1.117: the lose line names what was held
     playerSpawn: 'team_a',
     enemySpawnCluster: 'cluster_south',
     enemySetup: [
@@ -8566,12 +8568,88 @@ function buildSuburbanHouse(scene, {
 // --- Shared neighborhood-tree builder ---
 // Big leafy tree — trunk + spherical canopy. Returns trunk obstacle (BBs hit
 // the trunk but can pass over/under the canopy bulk).
+// v1.113 (backlog D.3 step 2, Winnmark's trees and bushes). addSuburbanTree({ detail: true }) and
+// addBush(..., { detail: true }) build a low-poly tree and shrub in place of the ball on a stick: a
+// tapered trunk with a root flare and three limbs reaching into the crown, and a crown of five or six
+// lumpy, flat-shaded clumps; a shrub is three or four clumps. The lumps come from a hash of each
+// vertex's position, so clumps don't crack and the same tree looks the same every round. Each tree is
+// still two meshes (bark, leaves) and each shrub one; materials are shared. Collision is unchanged.
+const _plantMats = {};
+function _plantMat(color, flat) {
+  const k = color + (flat ? 'f' : '');
+  return _plantMats[k] || (_plantMats[k] = new THREE.MeshStandardMaterial({ color, roughness: flat ? 1.0 : 0.95, flatShading: !!flat }));
+}
+function _lumpyClump(r, seed, amt = 0.12) {
+  const geo = new THREE.IcosahedronGeometry(r, 1);
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const h = Math.abs(Math.sin(Math.round(x * 97) * 12.9898 + Math.round(y * 97) * 78.233 + Math.round(z * 97) * 37.719 + seed) * 43758.5453) % 1;
+    const s = 1 + (h - 0.5) * 2 * amt;
+    p.setXYZ(i, x * s, y * s, z * s);
+  }
+  return geo;
+}
+function _buildTreeDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor }) {
+  const seed = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const M = (geo, px, py, pz, q) => ({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), q || new THREE.Quaternion(), new THREE.Vector3(1, 1, 1)) });
+  // bark: trunk, root flare, three limbs (local to the trunk's centre)
+  const bark = [
+    M(new THREE.CylinderGeometry(trunkR * 0.72, trunkR, trunkH, 8), 0, 0, 0),
+    M(new THREE.CylinderGeometry(trunkR * 0.98, trunkR * 1.5, 0.4, 8), 0, -trunkH / 2 + 0.2, 0),
+  ];
+  const up = new THREE.Vector3(0, 1, 0);
+  for (let k = 0; k < 3; k++) {
+    const az = (seed + k / 3) * Math.PI * 2, tilt = 0.75 + 0.2 * ((seed * (k + 3) * 7) % 1);
+    const dir = new THREE.Vector3(Math.sin(tilt) * Math.cos(az), Math.cos(tilt), Math.sin(tilt) * Math.sin(az));
+    const bl = leafR * 0.85, y0 = trunkH / 2 - 0.35 - k * 0.3;
+    bark.push(M(new THREE.CylinderGeometry(trunkR * 0.18, trunkR * 0.36, bl, 6),
+      dir.x * bl / 2, y0 + dir.y * bl / 2, dir.z * bl / 2, new THREE.Quaternion().setFromUnitVectors(up, dir)));
+  }
+  const trunk = new THREE.Mesh(_houseMergeParts(bark), _plantMat(0x4a3018));
+  trunk.position.set(x, baseY + trunkH / 2, z);
+  trunk.castShadow = trunk.receiveShadow = true;
+  scene.add(trunk);
+  // crown: a core clump, a ring of four or five, and a crown top (local to the old sphere's centre)
+  const leaves = [M(_lumpyClump(leafR * 0.78, seed), 0, 0, 0)];
+  const ring = 4 + (seed > 0.5 ? 1 : 0);
+  for (let k = 0; k < ring; k++) {
+    const az = (seed * 3 + k / ring) * Math.PI * 2, hk = ((seed * 11 + k * 0.37) % 1);
+    leaves.push(M(_lumpyClump(leafR * (0.5 + 0.12 * hk), seed + k + 1),
+      Math.cos(az) * leafR * 0.52, leafR * (-0.2 + 0.3 * hk), Math.sin(az) * leafR * 0.52));
+  }
+  leaves.push(M(_lumpyClump(leafR * 0.5, seed + 9), leafR * 0.08, leafR * 0.5, -leafR * 0.05));
+  const crown = new THREE.Mesh(_houseMergeParts(leaves), _plantMat(leafColor, true));
+  crown.position.set(x, baseY + trunkH + leafR * 0.5, z);
+  crown.castShadow = true;
+  scene.add(crown);
+  trunk.userData.crown = crown;
+  return trunk;
+}
+function _buildBushDetail(x, z) {
+  const seed = Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1;
+  const parts = [{ geo: _lumpyClump(0.5, seed, 0.15), m: new THREE.Matrix4() }];
+  const n = 2 + (seed > 0.4 ? 1 : 0);
+  for (let k = 0; k < n; k++) {
+    const az = (seed + k / n) * Math.PI * 2;
+    parts.push({ geo: _lumpyClump(0.36, seed + k + 1, 0.15), m: new THREE.Matrix4().makeTranslation(Math.cos(az) * 0.26, -0.12 + 0.1 * k, Math.sin(az) * 0.22) });
+  }
+  return _houseMergeParts(parts);
+}
+
 function addSuburbanTree(scene, x, z, opts = {}) {
   const trunkR = opts.trunkR ?? 0.32;
   const trunkH = opts.trunkH ?? (3.0 + Math.random() * 1.5);
   const leafR  = opts.leafR  ?? (1.8 + Math.random() * 0.7);
   const baseY  = opts.baseY ?? 0;   // v1.8: terrain ground height at (x,z)
   const shape  = opts.shape ?? 'round';   // 'round' (deciduous sphere) | 'pine' (conifer)
+  if (opts.detail && shape === 'round') {   // v1.113: the low-poly tree (Winnmark)
+    const leafColor = opts.leafColor ?? (Math.random() < 0.5 ? 0x3a5a2a : 0x4a6a35);
+    const trunk = _buildTreeDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor });
+    trunk.userData.plantDetail = true;
+    return { minX: x - trunkR, maxX: x + trunkR, minZ: z - trunkR, maxZ: z + trunkR,
+      shape: 'cylinder', cx: x, cz: z, radius: trunkR, h: trunkH, surface: 'hard', mesh: trunk, baseY };
+  }
   const trunk = new THREE.Mesh(
     new THREE.CylinderGeometry(trunkR * 0.85, trunkR, trunkH, 8),
     new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 0.95 })
@@ -8623,12 +8701,15 @@ function addSuburbanTree(scene, x, z, opts = {}) {
 // --- Shared neighborhood-bush builder ---
 // Low bush — a small ovoid. Player can walk around it; BBs at low height
 // hit it (great for crouch-cover or peeking).
-function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0) {
+function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0, opts = {}) {
   const c = color ?? (Math.random() < 0.5 ? 0x3e5a30 : 0x4a6a3a);
-  const bush = new THREE.Mesh(
+  const bush = opts.detail   // v1.113: the clumped shrub (Winnmark)
+    ? new THREE.Mesh(_buildBushDetail(x, z), _plantMat(c, true))
+    : new THREE.Mesh(
     new THREE.SphereGeometry(0.6, 10, 8),
     new THREE.MeshStandardMaterial({ color: c, roughness: 1.0 })
   );
+  if (opts.detail) bush.userData.plantDetail = true;
   bush.scale.set(w, h, d);
   bush.position.set(x, baseY + h * 0.5, z);
   bush.castShadow = bush.receiveShadow = true;
@@ -8850,6 +8931,8 @@ function addCurbsideBin(scene, x, z, opts = {}) {
   // by stacking two boxes (wider top, narrower bottom). The hard-plastic feel comes
   // from the lower roughness and the lid color contrast.
   const W = 0.62, H = 1.05, D = 0.7;
+  if (opts.detail) buildBinDetail(group, { W, H, D, isRecycle, bodyMat, lidMat, wheelMat, decalMat });   // v1.115 (Winnmark)
+  else {
 
   // Lower body (narrower at bottom)
   const bodyLower = new THREE.Mesh(new THREE.BoxGeometry(W * 0.85, H * 0.4, D * 0.9), bodyMat);
@@ -8903,6 +8986,7 @@ function addCurbsideBin(scene, x, z, opts = {}) {
     sym.rotation.z = Math.PI;
     group.add(sym);
   }
+  }
 
   // Position & rotation
   group.position.set(x, 0, z);
@@ -8951,6 +9035,7 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
   group.position.set(x, 0, z);
   group.rotation.y = facing;
 
+  if (opts.detail) { buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }); scene.add(group); return { minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2, h, mesh: group, surface: 'soft' }; }   // v1.115 (Winnmark)
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cardboardMat);
   body.position.y = h/2;
   body.castShadow = body.receiveShadow = true;
@@ -8987,6 +9072,138 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
   };
 }
 
+// v1.115 (backlog D.3 step 2, the yard props on Winnmark). addCurbsideBin({ detail: true }) and
+// addHomeDepotBox({ detail: true }), and Winnmark's plywood stacks (buildPlyStack). The bin is a moulded cart: a body
+// that tapers to the base, a rim, a lid with a front grab lip and hinge knuckles, the pull handle across the back, two
+// tyres with hubs on an axle, a kick bar, and the label (and the recycle mark) set on the sloped front. The box gets two
+// top flaps, packing tape over the seam and down both faces, and hand holes in the ends. The stack is sheets of mixed
+// plywood on two 2x4 sleepers with a folding lawn chair (tube frame, woven webbing) laid on top. Every prop keeps its
+// collision box; each merges into one mesh per material.
+function _propMerge(group, buckets, mats) {
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = true; m.receiveShadow = true;
+    group.add(m);
+  }
+}
+function _propAdder(buckets) {
+  const _s = new THREE.Vector3(1, 1, 1);
+  return (key, geo, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+    (buckets[key] || (buckets[key] = [])).push({ geo,
+      m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) });
+  };
+}
+function buildBinDetail(group, { W, H, D, isRecycle, bodyMat, lidMat, wheelMat, decalMat }) {
+  const mats = { body: bodyMat, lid: lidMat, wheel: wheelMat, decal: decalMat,
+    hub: new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 0.6 }),
+    ink: new THREE.MeshStandardMaterial({ color: isRecycle ? 0x2a8a3a : 0x2a2a2e, roughness: 0.6 }) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const y0 = 0.05, y1 = H - 0.05, kb = 0.86;          // body runs y0..y1, the base kb of the top's size
+  // body: a box whose bottom face is pulled in (the cart tapers to the base)
+  const bodyGeo = box(1, 1, 1);
+  const pa = bodyGeo.attributes.position;
+  for (let i = 0; i < pa.count; i++) {
+    const top = pa.getY(i) > 0, k = top ? 1 : kb;
+    pa.setXYZ(i, pa.getX(i) * W * k, top ? y1 : y0, pa.getZ(i) * D * k);
+  }
+  bodyGeo.computeVertexNormals();
+  add('body', bodyGeo, 0, 0, 0);
+  add('body', box(W + 0.03, 0.05, D + 0.03), 0, y1 + 0.005, 0);                       // rim
+  add('lid', box(W + 0.05, 0.035, D + 0.06), 0, H + 0.0175 - 0.01, 0.005);            // lid
+  add('lid', box(W * 0.55, 0.055, 0.03), 0, H - 0.02, D / 2 + 0.045);                 // front grab lip
+  for (const hx of [-W * 0.32, 0, W * 0.32]) add('lid', new THREE.CylinderGeometry(0.025, 0.025, 0.1, 8), hx, H - 0.005, -D / 2 - 0.03, 0, 0, Math.PI / 2);   // hinge knuckles
+  // pull handle across the back, on two brackets
+  add('body', new THREE.CylinderGeometry(0.022, 0.022, W * 0.9, 8), 0, H - 0.06, -D / 2 - 0.08, 0, 0, Math.PI / 2);
+  for (const ux of [-W * 0.4, W * 0.4]) add('body', box(0.04, 0.05, 0.1), ux, H - 0.06, -D / 2 - 0.035);
+  // wheels: tyres, hubs, axle; a kick bar between them
+  const wx = W * kb / 2 + 0.045, wy = 0.13, wz = -D / 2 + 0.07;
+  for (const sx of [-1, 1]) {
+    add('wheel', new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), sx * wx, wy, wz, 0, 0, Math.PI / 2);
+    add('hub', new THREE.CylinderGeometry(0.06, 0.06, 0.075, 10), sx * wx, wy, wz, 0, 0, Math.PI / 2);
+  }
+  add('hub', new THREE.CylinderGeometry(0.015, 0.015, 2 * wx, 6), 0, wy, wz, 0, 0, Math.PI / 2);
+  add('body', box(W * kb * 0.8, 0.06, 0.06), 0, 0.08, -D * kb / 2 - 0.01);
+  // the sloped front: label and mark lie on it
+  const lean = Math.atan2(D * (1 - kb) / 2, y1 - y0);
+  const fz = (yy) => D * (kb + (1 - kb) * (yy - y0) / (y1 - y0)) / 2;
+  const ly = H * 0.66;
+  add('decal', box(W * 0.55, H * 0.2, 0.01), 0, ly, fz(ly) + 0.006, -lean);
+  if (isRecycle) add('ink', new THREE.RingGeometry(0.05, 0.08, 3), 0, H * 0.4, fz(H * 0.4) + 0.008, -lean, 0, Math.PI);
+  else for (const [lw, lyy] of [[0.24, ly + 0.03], [0.16, ly - 0.03]]) add('ink', box(lw, 0.025, 0.004), 0, lyy, fz(lyy) + 0.012, -lean);
+  // two moulded ribs down each side
+  for (const sx of [-1, 1]) for (const rz of [-0.12, 0.12]) {
+    const mid = (y0 + y1) / 2, xs = W * (kb + (1 - kb) * 0.5) / 2;
+    add('body', box(0.012, (y1 - y0) * 0.8, 0.03), sx * (xs + 0.004), mid, rz, 0, 0, sx * Math.atan2(W * (1 - kb) / 2, y1 - y0));
+  }
+  if (b.ink && isRecycle) mats.ink.side = THREE.DoubleSide;
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'bin';
+}
+function buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }) {
+  const mats = { card: cardboardMat, orange: orangeMat, white: whiteMat,
+    tape: new THREE.MeshStandardMaterial({ color: 0xc8a46a, roughness: 0.35 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: 1.0 }) };
+  const b = {}; const add = _propAdder(b);
+  const box = (bw, bh, bd) => new THREE.BoxGeometry(bw, bh, bd);
+  const ft = 0.012;
+  add('card', box(w, h - ft, d), 0, (h - ft) / 2, 0);
+  for (const sx of [-1, 1]) add('card', box(w / 2 - 0.004, ft, d), sx * (w / 4 + 0.001), h - ft / 2, 0, 0, 0, sx * -0.012);   // top flaps, a little proud at the seam
+  add('dark', box(0.006, 0.004, d - 0.01), 0, h - ft - 0.001, 0);
+  // packing tape over the seam and down both faces
+  add('tape', box(0.07, 0.003, d + 0.004), 0, h + 0.001, 0);
+  for (const sz of [-1, 1]) add('tape', box(0.07, 0.16, 0.003), 0, h - 0.08, sz * (d / 2 + 0.002));
+  // hand holes in the ends
+  for (const sx of [-1, 1]) add('dark', box(0.004, 0.045, 0.13), sx * (w / 2 + 0.001), h * 0.8, 0);
+  // the store stripe and logo blocks, front and back
+  for (const sz of [-1, 1]) {
+    add('orange', box(w * 0.96, h * 0.22, 0.008), 0, h * 0.58, sz * (d / 2 + 0.004));
+    add('white', box(w * 0.32, h * 0.14, 0.01), -w * 0.2, h * 0.58, sz * (d / 2 + 0.006));
+    add('white', box(w * 0.36, h * 0.08, 0.01), w * 0.15, h * 0.58, sz * (d / 2 + 0.006));
+  }
+  // corner edges a shade darker (worn corrugated corners)
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add('dark', box(0.012, h - ft - 0.01, 0.012), sx * (w / 2 - 0.004), (h - ft) / 2, sz * (d / 2 - 0.004));
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'box';
+}
+function buildPlyStack(cx, gy, cz, seed) {
+  const group = new THREE.Group();
+  group.position.set(cx, gy, cz);
+  const tones = [0xc8a878, 0xbf9c68, 0xd2b488, 0xb8945e];
+  const mats = { s0: null, s1: null, s2: null, s3: null,
+    lumber: new THREE.MeshStandardMaterial({ color: 0x9a7a52, roughness: 0.95 }),
+    tube: new THREE.MeshStandardMaterial({ color: 0xc0c4c8, roughness: 0.4, metalness: 0.3 }),
+    webA: new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 }),
+    webB: new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: 0.85 }) };
+  tones.forEach((c, i) => { mats['s' + i] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 }); });
+  const b = {}; const add = _propAdder(b);
+  const box = (bw, bh, bd) => new THREE.BoxGeometry(bw, bh, bd);
+  let r = seed;
+  const rnd = () => (r = (r * 9301 + 49297) % 233280 / 233280);
+  for (const sx of [-0.55, 0.55]) add('lumber', box(0.09, 0.09, 0.88), sx, 0.045, 0);           // sleepers
+  const n = 9, th = (0.5 - 0.09) / n;
+  for (let i = 0; i < n; i++) {
+    const ox = (rnd() - 0.5) * 0.03, oz = (rnd() - 0.5) * 0.03;
+    add('s' + Math.floor(rnd() * 4), box(1.565, th - 0.003, 0.865), ox, 0.09 + th * (i + 0.5), oz, 0, (rnd() - 0.5) * 0.012, 0);
+  }
+  // folding lawn chair laid on top: tube frame, woven webbing
+  const cy = 0.53, tilt = 0.2;
+  const chair = [];
+  for (const sz of [-0.53, 0.53]) chair.push(['tube', new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6), 0, 0, sz, 0, 0, Math.PI / 2]);
+  for (const sx of [-0.24, 0.24]) chair.push(['tube', new THREE.CylinderGeometry(0.012, 0.012, 1.08, 6), sx, 0, 0, Math.PI / 2, 0, 0]);
+  for (let i = 0; i < 9; i++) chair.push([i % 2 ? 'webB' : 'webA', box(0.47, 0.008, 0.09), 0, 0.004, -0.46 + i * 0.115]);
+  for (let i = 0; i < 3; i++) chair.push([i % 2 ? 'webA' : 'webB', box(0.07, 0.009, 1.02), -0.16 + i * 0.16, 0.006, 0]);
+  const cm = new THREE.Matrix4().compose(new THREE.Vector3(0.1, cy, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tilt)), new THREE.Vector3(1, 1, 1));
+  for (const [k, geo, px, py, pz, rx = 0, ry = 0, rz = 0] of chair) {
+    add(k, geo, px, py, pz, rx, ry, rz);
+    const last = b[k][b[k].length - 1]; last.m.premultiply(cm);
+  }
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'plystack';
+  return group;
+}
+
 // --- Parked car ---
 // A boxy stylized car. Smaller than the placeholder I had — modeled around
 // real sedan-ish dimensions (~3.6m long × 1.5m wide × 1.4m tall total).
@@ -8994,6 +9211,109 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
 //
 //   orientation: 0 = car facing +X, π/2 = car facing +Z. Affects body footprint AABB.
 //   color: hex (default neutral blue-gray)
+// v1.112 (backlog D.3, Michael: A on step 1 — go on to step 2, Winnmark's cars first). A detailed car for
+// addCar({ detail: true }): a side-profile body with a sloped hood and trunk, wheel arches and a soft
+// bevel, a glass greenhouse with roof, A/B/C pillars, bumpers, grille, head and tail lights, plates,
+// door seams and handles, mirrors and hubcaps. Same footprint as the box car (3.6 × 1.55 m, beltline
+// 1.15 m, cabin 1.15–1.70 m over x −1.15…0.85), so the two collision boxes still match what's drawn.
+// The tyres stay separate meshes (cars.test.mjs and carSeatY read them); the rest merges into one
+// mesh per material, as the v1.104 houses do.
+function buildCarDetail(group, { carMat, winMat, len, width, wheelR, color }) {
+  const mats = {
+    body: carMat,
+    glass: winMat,
+    dark: new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.8 }),
+    chrome: new THREE.MeshStandardMaterial({ color: 0xd4d8dc, roughness: 0.35, metalness: 0.3 }),   // no env map: high metalness renders black
+    head: new THREE.MeshStandardMaterial({ color: 0xfff8e0, roughness: 0.2, emissive: 0x302a18, emissiveIntensity: 0.4 }),
+    tail: new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: 0.4, emissive: 0x3a0a0a, emissiveIntensity: 0.3 }),
+    plate: new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: 0.6 }),
+  };
+  const buckets = {}; for (const k in mats) buckets[k] = [];
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(1, 1, 1);
+  function add(key, geo, px, py, pz, rx = 0, ry = 0, rz = 0) {
+    _e.set(rx, ry, rz); _q.setFromEuler(_e);
+    buckets[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), _q, _s) });
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const L = len / 2, W = width / 2;          // 1.8, 0.775
+  const bev = 0.04;
+
+  // --- body: side profile (x forward, y up), extruded across the width with a small bevel
+  const arc = 0.37, sill = 0.25, a0 = Math.asin((sill - wheelR) / arc);   // arch meets the sill
+  const sh = new THREE.Shape();
+  sh.moveTo(-L + bev, 0.42);
+  sh.lineTo(-L + bev, 0.95);
+  sh.quadraticCurveTo(-L + bev, 1.1, -L + 0.18, 1.11);     // rear deck edge
+  sh.lineTo(-1.15, 1.15 - bev);                           // trunk lid up to the rear glass
+  sh.lineTo(0.85, 1.15 - bev);                            // beltline under the cabin
+  sh.quadraticCurveTo(1.45, 1.13 - bev, L - 0.14, 1.04);  // hood falls to the nose
+  sh.quadraticCurveTo(L - bev, 1.02, L - bev, 0.9);
+  sh.lineTo(L - bev, 0.42);
+  sh.lineTo(L - 0.2, sill);
+  sh.absarc(1.2, wheelR, arc, a0, Math.PI - a0, false);   // front wheel arch
+  sh.lineTo(-1.2 + arc * Math.cos(a0), sill);
+  sh.absarc(-1.2, wheelR, arc, a0, Math.PI - a0, false);  // rear wheel arch
+  sh.lineTo(-L + 0.2, sill);
+  sh.lineTo(-L + bev, 0.42);
+  const bodyGeo = new THREE.ExtrudeGeometry(sh, { depth: width - 2 * bev, bevelEnabled: true, bevelThickness: bev, bevelSize: bev, bevelSegments: 2, curveSegments: 8 });
+  add('body', bodyGeo, 0, 0, -(W - bev));
+
+  // --- greenhouse: glass trapezoid, roof panel, pillars
+  const gb0 = -1.12, gb1 = 0.82, gt0 = -0.8, gt1 = 0.25, gy0 = 1.1, gy1 = 1.64, gw = 1.36;
+  const gs = new THREE.Shape();
+  gs.moveTo(gb0, gy0); gs.lineTo(gb1, gy0); gs.lineTo(gt1, gy1); gs.lineTo(gt0, gy1); gs.lineTo(gb0, gy0);
+  add('glass', new THREE.ExtrudeGeometry(gs, { depth: gw, bevelEnabled: false }), 0, 0, -gw / 2);
+  add('body', box(gt1 - gt0 + 0.08, 0.05, gw + 0.04), (gt0 + gt1) / 2, gy1 + 0.02, 0);
+  const pillar = (x0, y0, x1, y1, t, z) => {
+    const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy);
+    add('body', box(l, t, 0.05), (x0 + x1) / 2, (y0 + y1) / 2, z, 0, 0, Math.atan2(dy, dx));
+  };
+  for (const s of [-1, 1]) {
+    const z = s * (gw / 2 + 0.005);
+    pillar(gb1, gy0 + 0.04, gt1, gy1, 0.07, z);          // A
+    pillar(gb0, gy0 + 0.04, gt0, gy1, 0.2, z);           // C, wider
+    add('body', box(0.09, gy1 - gy0, 0.05), -0.2, (gy0 + gy1) / 2, z);   // B
+    add('chrome', box(gb1 - gb0 - 0.1, 0.025, 0.03), (gb0 + gb1) / 2 - 0.02, gy0 + 0.03, s * (gw / 2 + 0.02));   // window line
+  }
+
+  // --- bumpers, grille, lights, plates
+  for (const s of [-1, 1]) add('dark', box(0.16, 0.2, width + 0.04), s * (L - 0.02), 0.47, 0);
+  add('dark', box(0.03, 0.16, 0.66), L + 0.005, 0.84, 0);
+  for (const zs of [-1, 1]) {
+    add('chrome', box(0.02, 0.02, 0.62), L + 0.02, 0.84 + zs * 0.04, 0);
+    add('head', box(0.05, 0.12, 0.3), L - 0.02, 0.86, zs * 0.53);
+    add('tail', box(0.05, 0.14, 0.34), -L + 0.02, 0.9, zs * 0.55);
+    add('head', box(0.03, 0.05, 0.1), -L + 0.01, 0.9, zs * 0.3);   // reversing lamp
+  }
+  add('plate', box(0.02, 0.12, 0.32), L + 0.07, 0.5, 0);
+  add('plate', box(0.02, 0.14, 0.34), -L - 0.07, 0.72, 0);
+  add('chrome', new THREE.CylinderGeometry(0.035, 0.035, 0.14, 8), -L + 0.01, 0.33, 0.45, 0, 0, Math.PI / 2);   // exhaust
+
+  // --- sides: door seams, handles, mirrors, a rub strip
+  for (const s of [-1, 1]) {
+    const z = s * (W + 0.004);
+    for (const x of [0.78, -0.2, -1.08]) add('dark', box(0.015, x === -1.08 ? 0.5 : 0.72, 0.012), x, x === -1.08 ? 0.86 : 0.75, z);
+    for (const x of [0.4, -0.58]) add('chrome', box(0.14, 0.03, 0.03), x, 0.98, s * (W + 0.01));
+    add('dark', box(2.2, 0.05, 0.02), -0.1, 0.62, s * (W + 0.008));
+    add('body', box(0.1, 0.1, 0.16), 0.72, 1.2, s * (W + 0.07));
+    add('dark', box(0.04, 0.02, 0.1), 0.74, 1.14, s * (W + 0.03));
+  }
+
+  // --- hubcaps on the wheel faces (wheels at ±1.2, z ±(W + 0.05))
+  for (const wx of [-1.2, 1.2]) for (const s of [-1, 1]) {
+    add('chrome', new THREE.CylinderGeometry(0.17, 0.17, 0.02, 14), wx, wheelR, s * (W + 0.05 + 0.115), Math.PI / 2);
+    add('dark', new THREE.CylinderGeometry(0.05, 0.05, 0.03, 8), wx, wheelR, s * (W + 0.05 + 0.12), Math.PI / 2);
+  }
+
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = (k === 'body' || k === 'glass'); m.receiveShadow = (k === 'body');
+    group.add(m);
+  }
+  group.userData.carDetail = true;
+}
+
 function addCar(scene, x, z, opts = {}) {
   const orientation = opts.orientation ?? 0; // radians
   const color = opts.color ?? 0x6a8aa8;
@@ -9010,6 +9330,8 @@ function addCar(scene, x, z, opts = {}) {
   const wheelR = 0.30;
 
   const group = new THREE.Group();
+  if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
+  else {   // v1.112: the original box car (Bunratty and the lot still build this one)
   // Body — sits with bottom at wheel-axle height
   const body = new THREE.Mesh(new THREE.BoxGeometry(len, bodyH, width), carMat);
   body.position.set(0, wheelR + bodyH/2, 0);
@@ -9049,6 +9371,7 @@ function addCar(scene, x, z, opts = {}) {
     const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 0.25), tlMat);
     tl.position.set(-len/2 + 0.025, wheelR + bodyH * 0.65, zSign * width * 0.3);
     group.add(tl);
+  }
   }
   // Wheels — 4 of them
   const wheelGeom = new THREE.CylinderGeometry(wheelR, wheelR, 0.22, 12);
@@ -9250,10 +9573,12 @@ function buildKidFort(scene, x, z, opts = {}) {
   // are to the -Z side / "north"), wings run toward +Z, then rotate the whole
   // group so the back wall faces the requested attack direction.
   const group = new THREE.Group();
+  const detail = !!opts.detail;   // v1.114: Winnmark's forts are the built-up fort (buildFortDetail)
 
   // Helper: a plywood panel of given full-size, centered at local (lx, lz),
   // with its long axis along X (spanX=true) or Z (spanX=false).
   function panel(lx, lz, length, spanX, mat) {
+    if (detail) return { lx, lz, length, spanX };
     const geo = spanX
       ? new THREE.BoxGeometry(length, H, t)
       : new THREE.BoxGeometry(t, H, length);
@@ -9280,6 +9605,8 @@ function buildKidFort(scene, x, z, opts = {}) {
   // Two side wings: span Z, at local x = ±W/2, running from back to rear.
   const wingL = panel(-W / 2, 0, D, false, plyMat2);
   const wingR = panel( W / 2, 0, D, false, plyMat2);
+
+  if (detail) buildFortDetail(group, { W, D, H, t, back, wingL, wingR, seed: Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1 });
 
   // (v1.28k: removed the knee-high front "lip" pallet — it read as a stray brown
   // bar with no gameplay purpose and cluttered the fort's open side.)
@@ -9347,7 +9674,7 @@ function buildKidFort(scene, x, z, opts = {}) {
       const variant = (bi % 2 === 0) ? 'garbage' : 'recycle';
       // Face the bin's door roughly outward from the fort center.
       const facing = Math.atan2(wx - x, wz - z);
-      const bin = addCurbsideBin(scene, wx, wz, { variant, facing });
+      const bin = addCurbsideBin(scene, wx, wz, { variant, facing, detail });   // v1.115: the moulded cart with the built-up fort
       // Seat the bin's MESH at the fort's local floor (the caller lifts the fort
       // group via seatFortOnSlope / fortGY by tagging baseY on each returned obs;
       // the bin mesh is its own group, so we tag baseY and let the caller lift the
@@ -9362,6 +9689,108 @@ function buildKidFort(scene, x, z, opts = {}) {
   // the four corner bins (if any). Callers that lift the fort onto a slope iterate
   // the whole array tagging baseY / shifting mesh.position.y, so bins ride along.
   return [backObs, wingLObs, wingRObs, ...binObs];
+}
+
+// v1.114 (backlog D.3 step 2, the fort and yard props: Winnmark's kid fort). buildKidFort({ detail: true }) draws each
+// wall as a real kid build instead of a solid slab: 4-ft plywood sheets of mismatched tones skinned on both faces of a
+// 2x4 frame, a dark gap at each sheet joint, screw heads along the studs, a flat top plate, 2x4 rails and a diagonal
+// brace on the inside, a post at every corner and wing end, and KEEP OUT sprayed on the attackers' face. Everything stays
+// inside the three wall boxes (same footprint, top at H), so cover, collision and BBs don't change. One mesh per
+// material, as the v1.104 houses.
+let _fortPaintTex = null;
+function _fortPaint() {
+  if (_fortPaintTex) return _fortPaintTex;
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 160;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#c3281e'; c.strokeStyle = '#c3281e';
+  c.font = 'bold 92px Impact, "Arial Black", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.save(); c.translate(256, 70); c.rotate(-0.04); c.fillText('KEEP OUT', 0, 0); c.restore();
+  // drips under the letters, and an underline swipe
+  const drips = [70, 118, 171, 236, 290, 352, 410, 452];
+  drips.forEach((dx, i) => { c.fillRect(dx, 104, 5, 14 + ((i * 37) % 30)); c.beginPath(); c.arc(dx + 2.5, 118 + ((i * 37) % 30), 4, 0, Math.PI * 2); c.fill(); });
+  c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(60, 140); c.quadraticCurveTo(256, 128, 455, 146); c.stroke();
+  _fortPaintTex = new THREE.CanvasTexture(cv);
+  return _fortPaintTex;
+}
+function buildFortDetail(group, { W, D, H, t, back, wingL, wingR, seed }) {
+  const plyTones = [0xc4a06a, 0xb89058, 0xcfae7c];
+  const mats = {
+    ply0: new THREE.MeshStandardMaterial({ color: plyTones[0], roughness: 0.92 }),
+    ply1: new THREE.MeshStandardMaterial({ color: plyTones[1], roughness: 0.92 }),
+    ply2: new THREE.MeshStandardMaterial({ color: plyTones[2], roughness: 0.92 }),
+    lumber: new THREE.MeshStandardMaterial({ color: 0xa8865a, roughness: 0.95 }),
+    post: new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.95 }),
+    gap: new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 1.0 }),
+    screw: new THREE.MeshStandardMaterial({ color: 0x8a8a86, roughness: 0.5, metalness: 0.3 }),
+  };
+  const buckets = {}; for (const k in mats) buckets[k] = [];
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(1, 1, 1);
+  // A panel's frame: u along the wall, y up, n outward (toward the attackers for the back wall).
+  function frame(p) {
+    const yaw = p === back ? Math.PI : (p.lx < 0 ? -Math.PI / 2 : Math.PI / 2);
+    return new THREE.Matrix4().compose(new THREE.Vector3(p.lx, 0, p.lz), _q.setFromEuler(_e.set(0, yaw, 0)), _s);
+  }
+  function add(key, geo, base, u, y, n, rz = 0) {
+    const m = new THREE.Matrix4().compose(new THREE.Vector3(u, y, n), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, rz)), _s);
+    buckets[key].push({ geo, m: base ? new THREE.Matrix4().multiplyMatrices(base, m) : m });
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const skin = 0.025, plate = 0.04, sheetTop = H - plate;
+  let r = seed;
+  const rnd = () => (r = (r * 9301 + 49297) % 233280 / 233280);
+
+  for (const p of [back, wingL, wingR]) {
+    const base = frame(p);
+    // the back wall runs post to post; a wing runs from the back wall's inner face to its end post (u is +z on the
+    // left wing, −z on the right)
+    let u0 = -p.length / 2 + t / 2, u1 = p.length / 2 - t / 2;
+    if (p === wingL) { u0 = -D / 2 + t / 2; u1 = D / 2 - t; }
+    if (p === wingR) { u0 = -(D / 2 - t); u1 = D / 2 - t / 2; }
+    const n = Math.max(1, Math.ceil((u1 - u0) / 1.22)), sw = (u1 - u0) / n;
+    for (let i = 0; i < n; i++) {
+      const uc = u0 + sw * (i + 0.5);
+      for (const side of [1, -1]) {   // outer skin, inner skin
+        const tone = 'ply' + Math.floor(rnd() * 3);
+        add(tone, box(sw - 0.012, sheetTop, skin), base, uc, sheetTop / 2, side * (t / 2 - skin / 2));
+      }
+      if (i > 0) {   // the joint: a dark gap outside, a 2x4 stud over it inside
+        add('gap', box(0.012, sheetTop - 0.02, t - 2 * skin + 0.004), base, u0 + sw * i, sheetTop / 2, 0);
+        add('lumber', box(0.09, sheetTop - 0.04, 0.04), base, u0 + sw * i, sheetTop / 2, -(t / 2 + 0.02));
+      }
+      // screw heads in two stud lines per sheet
+      for (const su of [-sw / 2 + 0.08, sw / 2 - 0.08]) for (let k = 0; k < 4; k++) {
+        add('screw', box(0.018, 0.018, 0.006), base, uc + su, 0.14 + k * (sheetTop - 0.28) / 3, t / 2 + 0.002);
+      }
+    }
+    // the top plate closes the hollow between the skins
+    add('lumber', box(u1 - u0, plate, t), base, (u0 + u1) / 2, H - plate / 2, 0);
+    // inside: a rail at hip height and a diagonal brace (the inside 2x4s stand 4 cm proud on the defender's side,
+    // as the old studs did)
+    add('lumber', box(u1 - u0 - 0.02, 0.09, 0.04), base, (u0 + u1) / 2, 0.55, -(t / 2 + 0.02));
+    const bu = Math.min(1.1, (u1 - u0) * 0.5), bh = sheetTop - 0.25, bl = Math.hypot(bu, bh);
+    add('lumber', box(bl, 0.08, 0.035), base, (u0 + u1) / 2, 0.12 + bh / 2, -(t / 2 + 0.0575), (p === wingR ? -1 : 1) * Math.atan2(bh, bu));
+    if (p === back) {
+      // KEEP OUT on the attackers' face (kept on its own mesh: it carries a texture)
+      const paint = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.6, W * 0.72), Math.min(2.6, W * 0.72) * 0.3125),
+        new THREE.MeshStandardMaterial({ map: _fortPaint(), transparent: true, alphaTest: 0.3, roughness: 0.9, depthWrite: false }));
+      paint.applyMatrix4(new THREE.Matrix4().multiplyMatrices(base, new THREE.Matrix4().makeTranslation(-0.1, H * 0.58, t / 2 + 0.004)));
+      paint.userData.fortPaint = true;
+      group.add(paint);
+    }
+  }
+  // posts: the two back corners and the two wing ends, each a t-square post inside the wall boxes
+  for (const sx of [-1, 1]) for (const pz of [-D / 2, D / 2 - t / 2]) {
+    add('post', box(t, H, t), null, sx * W / 2, H / 2, pz);
+    add('post', box(t, 0.02, t), null, sx * W / 2, H - 0.01, pz);
+  }
+
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = (k !== 'screw' && k !== 'gap'); m.receiveShadow = k.startsWith('ply') || k === 'lumber';
+    group.add(m);
+  }
+  group.userData.fortDetail = true;
 }
 
 // ======================================================================
@@ -10253,7 +10682,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const z = -52 + (Math.random() - 0.5) * 3;
     const trunkH = 3.5 + Math.random() * 1.5;
     const leafR = 2.2 + Math.random() * 0.6;
-    addSuburbanTree(scene, x, z, { trunkH, leafR });
+    addSuburbanTree(scene, x, z, { trunkH, leafR, detail: true });
   }
 
   // === Road — a curving asphalt strip approximated by many segment quads ===
@@ -10288,37 +10717,141 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // and the quaternion tilt lays every disc flat against the hill. (Matches the
   // clean Bunratty road.) roadCenterline above stays at 56 for the placement/AI
   // systems that sample it.
-  const roadFine = [];
-  for (let i = 0; i <= 96; i++) roadFine.push(_wmRoadPoint(i / 96));
-  for (const p of roadFine) {
-    const segment = new THREE.Mesh(new THREE.CircleGeometry(3.7, 16), roadMat);
-    layOnSlope(segment, p.x, p.z, 0.06);
-    segment.receiveShadow = true;
-    scene.add(segment);
-  }
-  // Cul-de-sac bulb at the west end. v1.35c: the bulb sits where the slope
-  // flattens but still has cross-roll, so a single flat disc clips. Tile it with
-  // overlapping slope-aligned discs (same as Bunratty's bulb).
-  {
-    const BULBW = { x: -30, z: 0, r: 6 };
-    const lay = (cx, cz, r) => {
-      const d = new THREE.Mesh(new THREE.CircleGeometry(r, 16), roadMat);
-      layOnSlope(d, cx, cz, 0.05);
-      d.receiveShadow = true;
-      scene.add(d);
+  // v1.116 (backlog D.3 step 2, the road and kerbs): the pavement was 96 overlapping asphalt discs down the bezier and
+  // 19 more tiling the bulb (scalloped edges, ~115 draw calls). It is now one ribbon mesh that follows the curve and
+  // the ground (every vertex on groundY, so the cross-roll shows), one polar mesh for the bulb, and a concrete gutter
+  // pan and rolled kerb along both edges and round the bulb that drop flat across each driveway and open where the
+  // road meets the bulb; plus two manholes, two storm-drain grates, crack sealing and a patch. Visual only: the kerb
+  // is 9 cm and rolled, and has no collision, as before (the discs had none). roadCenterline is unchanged, so every
+  // placement and the AI that sample it are untouched. Built once houseCenters exists (the driveway drops need it).
+  function buildWinnmarkRoad(houseCenters) {
+    const ASPH = 3.45, BULB_C = { x: -30, z: 0 }, BULB_R = 6.3;
+    const LIFT = 0.06;
+    const asphMat = roadMat;
+    const concMat = new THREE.MeshStandardMaterial({ color: 0x96928a, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const markMat = (c, r = 0.9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+    const deriv = (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) });
+    const frameAt = (t) => { const p = _wmRoadPoint(t), d = deriv(t), l = Math.hypot(d.x, d.z); return { p, tx: d.x / l, tz: d.z / l, nx: -d.z / l, nz: d.x / l }; };
+    const dBulb = (x, z) => Math.hypot(x - BULB_C.x, z - BULB_C.z);
+    // the road ends inside the bulb; find the t where its centre is 5 m from the bulb's centre
+    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(_wmRoadPoint(t).x, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
+    const T0 = -0.13, NS = 170;   // t < 0 runs the road out through the tree-wall gap at the east entry
+    const meshes = [];
+    // --- asphalt ribbon (indexed, smooth)
+    {
+      const cols = 9, pos = [], idx = [];
+      for (let i = 0; i <= NS; i++) {
+        const f = frameAt(T0 + (tEnd - T0) * i / NS);
+        for (let j = 0; j < cols; j++) {
+          const o = -ASPH + 2 * ASPH * j / (cols - 1);   // edge vertices shared with the gutter's (an overlap stair-stepped over it)
+          const x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+          pos.push(x, groundY(x, z) + LIFT, z);
+        }
+        if (i) for (let j = 0; j < cols - 1; j++) { const a = (i - 1) * cols + j, b = a + cols; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'asphalt'; meshes.push(m);
+    }
+    // --- bulb (polar, indexed); a hair lower than the ribbon where they overlap
+    {
+      const rings = [0, 1.6, 3.2, 4.8, BULB_R], segs = 56, pos = [], idx = [];
+      for (let r = 0; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+        const a = k / segs * Math.PI * 2, x = BULB_C.x + Math.cos(a) * rings[r], z = BULB_C.z + Math.sin(a) * rings[r];
+        pos.push(x, groundY(x, z) + LIFT - 0.008, z);
+      }
+      for (let r = 1; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+        const a = (r - 1) * segs + k, b = (r - 1) * segs + (k + 1) % segs, c = r * segs + k, d = r * segs + (k + 1) % segs;
+        idx.push(a, c, b, b, c, d);
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'bulb'; meshes.push(m);
+    }
+    // --- gutter pan and rolled kerb: a profile (offset from the asphalt edge, height) swept along each edge
+    const PROF = [[0, 0], [0.35, 0], [0.55, 0.09], [0.67, 0.09], [0.71, 0.01]];
+    const conc = [];   // non-indexed triangles
+    const kerbH = (x, z, zRoad) => {   // 1 = full kerb, 0 = dropped (driveway apron), eased over 0.5 m
+      let k = 1;
+      for (const hc of houseCenters) {
+        const onSide = hc.side === 'north' ? z < zRoad : z > zRoad;
+        if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - hc.x) - 2.1) / 0.5)));
+      }
+      return k;
     };
-    lay(BULBW.x, BULBW.z, 3.0);
-    for (let ring = 1; ring <= 2; ring++) {
-      const rr = ring * 2.4;
-      const n = 6 * ring;
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + ring * 0.4;
-        const cx = BULBW.x + Math.cos(a) * rr;
-        const cz = BULBW.z + Math.sin(a) * rr;
-        if (Math.hypot(cx - BULBW.x, cz - BULBW.z) > BULBW.r + 0.5) continue;
-        lay(cx, cz, 2.3);
+    const quad = (a, b, c, d) => conc.push(...a, ...b, ...d, ...a, ...d, ...c);   // a b / c d as two rows
+    const nearRoad = (x, z) => {   // lateral distance from the road's centreline (t 0.6..tEnd), for the bulb's mouth
+      let best = 1e9; for (let t = 0.6; t <= tEnd + 1e-6; t += 0.01) { const p = _wmRoadPoint(t); best = Math.min(best, Math.hypot(x - p.x, z - p.z)); }
+      return best;
+    };
+    for (const side of [-1, 1]) {
+      let prev = null;
+      for (let i = 0; i <= NS; i++) {
+        const f = frameAt(T0 + (tEnd - T0) * i / NS);
+        const row = PROF.map(([o, h]) => {
+          const off = side * (ASPH + o), x = f.p.x + f.nx * off, z = f.p.z + f.nz * off;
+          return [x, z, h];
+        });
+        const k = kerbH(row[2][0], row[2][1], f.p.z);
+        const pts = row.map(([x, z, h]) => [x, groundY(x, z) + LIFT + h * k, z]);
+        const inBulb = dBulb(row[0][0], row[0][1]) < BULB_R + 0.3;
+        if (prev && !inBulb && !prev.inBulb) for (let j = 0; j < pts.length - 1; j++) {
+          if (side > 0) quad(prev.pts[j], prev.pts[j + 1], pts[j], pts[j + 1]); else quad(prev.pts[j + 1], prev.pts[j], pts[j + 1], pts[j]);
+        }
+        prev = { pts, inBulb };
       }
     }
+    {
+      const segs = 72; let prev = null;
+      for (let k = 0; k <= segs; k++) {
+        const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+        const pts = PROF.map(([o, h]) => { const r = BULB_R + o, x = BULB_C.x + ca * r, z = BULB_C.z + sa * r; return [x, groundY(x, z) + LIFT + h, z]; });
+        const mouth = nearRoad(BULB_C.x + ca * (BULB_R + 0.3), BULB_C.z + sa * (BULB_R + 0.3)) < ASPH + 0.75;
+        if (prev && !mouth && !prev.mouth) for (let j = 0; j < pts.length - 1; j++) quad(pts[j], pts[j + 1], prev.pts[j], prev.pts[j + 1]);
+        prev = { pts, mouth };
+      }
+    }
+    {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(conc, 3)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, concMat); m.receiveShadow = true; m.userData.wmRoad = 'kerb'; meshes.push(m);
+    }
+    // --- the furniture: manholes, storm drains in the gutter, crack sealing, a patch (merged per material, laid on the slope)
+    const parts = { dark: [], iron: [], patch: [] };
+    const _up = new THREE.Vector3(0, 0, 1);
+    const place = (key, geo, x, z, ang, lift) => {
+      const n = groundNormal(x, z);
+      const q = new THREE.Quaternion().setFromUnitVectors(_up, new THREE.Vector3(n.nx, n.ny, n.nz));
+      const rz = new THREE.Quaternion().setFromAxisAngle(_up, ang);
+      parts[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + LIFT + lift, z), q.multiply(rz), new THREE.Vector3(1, 1, 1)) });
+    };
+    const along = (f) => Math.atan2(-f.tz, f.tx);
+    for (const [t, o] of [[0.22, -0.6], [0.58, 0.9]]) {   // manholes
+      const f = frameAt(t), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+      place('iron', new THREE.CircleGeometry(0.42, 18), x, z, 0, 0.004);
+      place('dark', new THREE.RingGeometry(0.42, 0.48, 18), x, z, 0, 0.004);
+      for (const d of [-0.18, 0, 0.18]) {   // a cast grid on the lid
+        place('dark', new THREE.PlaneGeometry(0.025, 0.6), x + f.tx * d, z + f.tz * d, along(f), 0.006);
+        place('dark', new THREE.PlaneGeometry(0.6, 0.025), x + f.nx * d, z + f.nz * d, along(f), 0.006);
+      }
+    }
+    for (const [t, side] of [[0.34, 1], [0.7, -1]]) {   // storm drain grates in the gutter pan
+      const f = frameAt(t), o = side * (ASPH + 0.18), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+      place('dark', new THREE.PlaneGeometry(0.95, 0.32), x, z, along(f), 0.004);
+      for (let k = -4; k <= 4; k++) place('iron', new THREE.PlaneGeometry(0.035, 0.28), x + f.tx * k * 0.1, z + f.tz * k * 0.1, along(f), 0.006);
+    }
+    for (const [t, len, skew] of [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]]) {   // crack sealing across the road
+      const f = frameAt(t);
+      for (let k = 0; k < 4; k++) {
+        const s0 = -len / 2 + len * k / 4, s1 = s0 + len / 4, w = (k % 2 ? 1 : -1) * 0.25;
+        const xa = f.p.x + f.nx * s0 + f.tx * (skew * s0 / len), za = f.p.z + f.nz * s0 + f.tz * (skew * s0 / len);
+        const xb = f.p.x + f.nx * s1 + f.tx * (skew * s1 / len + w * 0.3), zb = f.p.z + f.nz * s1 + f.tz * (skew * s1 / len + w * 0.3);
+        const l = Math.hypot(xb - xa, zb - za);
+        place('dark', new THREE.PlaneGeometry(l, 0.05), (xa + xb) / 2, (za + zb) / 2, Math.atan2(-(zb - za), xb - xa), 0.003);
+      }
+    }
+    { const f = frameAt(0.4); place('patch', new THREE.PlaneGeometry(2.6, 1.7), f.p.x + f.nx * 1.4, f.p.z + f.nz * 1.4, along(f) + 0.04, 0.002); }
+    const pm = { dark: markMat(0x1c1c1e, 0.8), iron: markMat(0x4a4a48, 0.6), patch: markMat(0x323234, 0.95) };
+    for (const k in parts) if (parts[k].length) { const m = new THREE.Mesh(_houseMergeParts(parts[k]), pm[k]); m.receiveShadow = true; m.userData.wmRoad = 'marks'; meshes.push(m); }
+    for (const m of meshes) scene.add(m);
+    return meshes;
   }
 
   // === Houses — 8 of them, placed on either side of the road ===
@@ -10392,6 +10925,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -9, z: 20, side: 'south' },
     { x: -17, z: 19, side: 'south' },
   ];
+  buildWinnmarkRoad(houseCenters);   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
   for (const hc of houseCenters) {
     // Driveway runs from the house front all the way to the ACTUAL road edge.
     // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
@@ -10544,7 +11078,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(bx, bz)) {
         const fx = bx + rng(-0.5, 0.5), fz = bz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, fx, fz,
-          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(fx, fz) }));
+          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(fx, fz), detail: true }));
       }
       // Back row, offset perpendicular + half a step along the line (stagger)
       const sx = bx + ux * (spacing / 2) + px * (opts.outwardSign ?? 1) * rowGap;
@@ -10552,7 +11086,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(sx, sz)) {
         const jx = sx + rng(-0.5, 0.5), jz = sz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, jx, jz,
-          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(jx, jz) }));
+          { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.6), baseY: groundY(jx, jz), detail: true }));
       }
     }
   }
@@ -10579,7 +11113,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const x = -44 + i * 4.2 + rng(-0.6, 0.6);
     const z = -60 + rng(-1, 1);
     treeObs.push(addSuburbanTree(scene, x, z,
-      { leafR: rng(1.8, 2.6), trunkH: rng(3.2, 4.8), baseY: groundY(x, z) }));
+      { leafR: rng(1.8, 2.6), trunkH: rng(3.2, 4.8), baseY: groundY(x, z), detail: true }));
   }
 
   // West-of-lake backdrop trees (beyond the water, frames the view west).
@@ -10587,7 +11121,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const z = -34 + i * 6.2 + rng(-0.8, 0.8);
     const x = rng(-58, -54);
     treeObs.push(addSuburbanTree(scene, x, z,
-      { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.5), baseY: groundY(x, z) }));
+      { leafR: rng(1.8, 2.6), trunkH: rng(3.0, 4.5), baseY: groundY(x, z), detail: true }));
   }
 
   // Scattered front-yard ornamental trees (smaller) — unchanged flavor.
@@ -10596,7 +11130,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     if (Math.random() < 0.6) {
       const tx = hc.x + rng(-4, 4), tz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, tx, tz,
-        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(tx, tz) }));
+        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(tx, tz), detail: true }));
     }
   }
   // A few scattered trees within the deeper backyards for cover/texture (not a
@@ -10608,7 +11142,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const tz = hc.z + backSign * rng(8, 15);
       const tx = hc.x + rng(-5, 5);
       treeObs.push(addSuburbanTree(scene, tx, tz,
-        { leafR: rng(1.4, 2.0), trunkH: rng(2.6, 3.6), baseY: groundY(tx, tz) }));
+        { leafR: rng(1.4, 2.0), trunkH: rng(2.6, 3.6), baseY: groundY(tx, tz), detail: true }));
     }
   }
 
@@ -10617,12 +11151,12 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   for (const hc of houseCenters) {
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const frontZ = hc.z + towardRoad * 4.0;
-    bushObs.push(addBush(scene, hc.x - 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.6, frontZ)));
-    bushObs.push(addBush(scene, hc.x + 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.6, frontZ)));
+    bushObs.push(addBush(scene, hc.x - 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.6, frontZ), { detail: true }));
+    bushObs.push(addBush(scene, hc.x + 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.6, frontZ), { detail: true }));
     if (Math.random() < 0.6) {
       const ex = hc.x + rng(-3, 3), ez = frontZ + towardRoad * rng(0.2, 0.8);
       bushObs.push(addBush(scene, ex, ez,
-        rng(0.8, 1.2), rng(0.5, 0.8), rng(0.8, 1.1), null, groundY(ex, ez)));
+        rng(0.8, 1.2), rng(0.5, 0.8), rng(0.8, 1.1), null, groundY(ex, ez), { detail: true }));
     }
   }
 
@@ -10683,8 +11217,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const facing = hc.side === 'north' ? Math.PI : 0; // label toward road
     // Garbage on one side, recycle on the other, in random order
     const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
-    const bin1 = sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing }), binBaseX - 0.4, binZ);
-    const bin2 = sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing }), binBaseX + 0.4, binZ);
+    const bin1 = sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ);
+    const bin2 = sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ);
     curbsideBins.push(bin1);
     curbsideBins.push(bin2);
   }
@@ -10717,31 +11251,22 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         // Home Depot moving box — varied dimensions, random facing.
         const w = rng(0.9, 1.3), h = rng(0.85, 1.1), d = rng(0.85, 1.1);
         cobj = sinkObs(addHomeDepotBox(scene, cx, cz, {
-          w, h, d, facing: rng(-Math.PI, Math.PI),
+          w, h, d, facing: rng(-Math.PI, Math.PI), detail: true,   // v1.115
         }), cx, cz);
       } else if (kind < 0.75) {
         // Wheeled curbside bin — randomly garbage or recycle, ~15% chance tipped.
         const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
         const tipped = Math.random() < 0.15;
         cobj = sinkObs(addCurbsideBin(scene, cx, cz, {
-          variant, tipped, facing: rng(-Math.PI, Math.PI),
+          variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true,   // v1.115
         }), cx, cz);
       } else {
         // Stacked plywood sheets — proper kid-fort building material.
         // A solid grounded block; folded chair leaned on top for visual interest.
         // Hitbox is the plywood stack (BBs hit it, players walk around it).
-        const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
-        const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.9), plyMat);
-        stack.position.set(cx, gy + 0.25, cz);   // seated on the slope
-        stack.castShadow = stack.receiveShadow = true;
+        // v1.115: sheets on sleepers with a folding lawn chair on top (buildPlyStack), was one slab and a flat box
+        const stack = buildPlyStack(cx, gy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
         scene.add(stack);
-        // Folded lawn chair on top — angled flat box for visual flavor
-        const chairMat = new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 });
-        const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.1), chairMat);
-        chair.position.set(cx + 0.1, gy + 0.55, cz);
-        chair.rotation.z = 0.2;
-        chair.castShadow = true;
-        scene.add(chair);
         cobj = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, baseY: gy, mesh: stack, surface: 'hard' };
       }
       coverList.push(cobj);
@@ -10782,7 +11307,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const orientation = hc.side === 'north' ? Math.PI / 2 : -Math.PI / 2;
     const color = carColors[Math.floor(Math.random() * carColors.length)];
     // v1.76: pass groundNormal so the car tilts onto the grade (all 4 tires touch).
-    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal }), carX, carZ);
+    const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal, detail: true }), carX, carZ);
     pushCarObs(driveCars, carObs);
   }
 
@@ -10793,10 +11318,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the AI can use them when scenarios place a kid near the bulb.
   {
     // Car at the curb just inside the bulb (bulb now at x=-30)
-    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), -30, -3.5);
+    const carObs = sinkObs(addCar(scene, -30, -3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal, detail: true }), -30, -3.5);
     pushCarObs(coverList, carObs);
     // A second car at the south curb of the bulb
-    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), -27, 5);
+    const carObs2 = sinkObs(addCar(scene, -27, 5, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal, detail: true }), -27, 5);
     pushCarObs(coverList, carObs2);
     // v1.28k: a proper U-shaped plywood kid-fort in the cul-de-sac bulb.
     // Attackers come from the EAST (road entry x=34), so the fort's solid back
@@ -10804,7 +11329,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     // incoming push. Moved forward from x=-33 (which buried it in the west tree
     // line, "too far back/inside the trees") to x=-29, so it sits IN the bulb
     // as the focal point rather than behind it.
-    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2 });  // v1.76: taller default walls + corner bins
+    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });  // v1.76: taller default walls + corner bins; v1.114: the built-up fort
     seatFortOnSlope(fortWalls, -29, 0);   // v1.28l: lift the shared group once, tag baseY on each wall (+ corner bins, v1.76)
     for (const w of fortWalls) coverList.push(w);
     // Stash references for placements table below
@@ -10832,7 +11357,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the player actually spawns behind it (playerSpawn 'east_fort') and attackers
   // come from the far west cluster, nowhere near x=33.
   if (variant === 'treehouse') {
-    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4 });  // v1.76: taller walls + corner bins
+    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4, detail: true });  // v1.76: taller walls + corner bins; v1.114: the built-up fort
     seatFortOnSlope(fw, 33, 0);
     for (const w of fw) coverList.push(w);
   }
@@ -10888,13 +11413,13 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const gyp = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal }), cxp, czp);
+        cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true }), cxp, czp);
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
-        cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) }), cxp, czp);
+        cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else if (kind < 0.85) {
         const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI) }), cxp, czp);
+        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else {
         // plywood stack + chair (grounded waist-high)
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
@@ -12790,8 +13315,9 @@ function buildHollowScene(variant, timeOfDay) {
   };
 
   const playerSpawns = {
-    team_a:  { pos: P(-2, -28), yaw: 0 },           // in the north fort, facing south (+z)
-    team_b:  { pos: P(2, 28),   yaw: Math.PI },      // in the south fort, facing north (-z)
+    // v1.109: yaw 0 faces -z; these two were swapped, so a team_b start looked at the south fort's back wall
+    team_a:  { pos: P(-2, -28), yaw: Math.PI },     // in the north fort, facing south (+z)
+    team_b:  { pos: P(2, 28),   yaw: 0 },           // in the south fort, facing north (-z)
     midfield:{ pos: P(0, 0),    yaw: 0 },
   };
 
@@ -16590,6 +17116,12 @@ function endScenario(outcome) {
   // v1.9: detect timer-based win vs kill-em-all win for flavor variation
   const wonByTimer = outcome === 'win' && Game.scenario.winByTimer;
   const wasDefend = scDef?.scenarioType === 'defend';
+  // v1.117 (Found in play, v1.101): the place words fit the map. A defend that isn't a fort says what was held
+  // (scenario resultHold), and the woods have no road or curb (map defaults by builder).
+  const _place = { buildHollowScene: { regroup: 'back in the trees', sit: 'sit down in the leaves' } }[scDef?.builderFn] || {};
+  const holdPlace = scDef?.resultHold || 'the fort';
+  const regroupAt = scDef?.resultRegroup || _place.regroup || 'near the road';
+  const sitDown = _place.sit || 'sit on the curb';
   if (outcome === 'win') {
     if (wonByTimer) {
       // Survive-timer win: the attackers' moms called them in
@@ -16603,8 +17135,8 @@ function endScenario(outcome) {
       outcomeEl.textContent = 'YOU HELD IT';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Last one's out. ${allStr} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
-        : `${primaryName}'s out. They sit on the curb, defeated. "Yeah okay, that was a good fort."`;
+        ? `Last one's out. ${allStr} ${sitDown}, defeated. "Yeah okay, we couldn't crack it."`
+        : `${primaryName}'s out. They ${sitDown}, defeated. "Yeah okay, that was a good fort."`;
     } else {
       outcomeEl.textContent = 'YOU GOT THEM';
       outcomeEl.className = 'outcome win';
@@ -16633,10 +17165,10 @@ function endScenario(outcome) {
     if (wasDefend) {
       // Lost a defend — they overran your position
       flavorEl.textContent = multi
-        ? `They got through. ${allStr} take the fort. "Our turn, dude."`
-        : `They got through. ${primaryName} takes the fort. "Our turn, dude."`;
+        ? `They got through. ${allStr} take ${holdPlace}. "Our turn, dude."`
+        : `They got through. ${primaryName} takes ${holdPlace}. "Our turn, dude."`;
     } else if (multi) {
-      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup near the road. "Run it back?"`;
+      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup ${regroupAt}. "Run it back?"`;
     } else {
       flavorEl.textContent = flavorBank.win
         ? flavorBank.win
@@ -19868,7 +20400,9 @@ function spawnEnemyBB(enemy, targetPos) {
           if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach &&
               raycastObstacles(muzzlePos.x, y - 0.1, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
         }
-        if (!clear) return;                          // can't see past it: hold fire
+        // can't see past it: hold fire. v1.112: and let go of the trigger, so an
+        // auto's queued follow-ups don't each try the same blocked line again.
+        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; return; }
         if (y > muzzlePos.y + 1e-6) {
           muzzlePos.y = y;
           enemy._firingOverCover = 0.45;
@@ -20179,6 +20713,35 @@ function updateBBs(dt) {
         }
       } else {
         removed = true;
+      }
+    }
+
+    // v1.110: swept test. The loop below checks only where the BB ends the sub-step, so one moving more than a
+    // wall's thickness per 1/200 s (36 m/s for an 18 cm planter wall) could skip it and tag whoever stood behind.
+    // Find the nearest obstacle the path oldPos→pos enters and, if the end point sits past it, move the BB to
+    // just inside its entry face, so the ordinary surface outcome below (bounce / stick / shatter) runs on it.
+    if (!removed) {
+      const sx = bb.pos.x - oldPos.x, sy = bb.pos.y - oldPos.y, sz = bb.pos.z - oldPos.z;
+      const segLen = Math.sqrt(sx * sx + sy * sy + sz * sz);
+      if (segLen > 0.05) {
+        const ux = sx / segLen, uy = sy / segLen, uz = sz / segLen;
+        const mx = oldPos.x + sx * 0.5, mz = oldPos.z + sz * 0.5, reach = segLen * 0.5 + 0.01;
+        let tHit = Infinity, endInside = false;
+        for (const o of Game.player.obstacles) {
+          if (o.bbPass || !obsOverlapsXZ(o, mx, mz, reach)) continue;
+          const oBase = o.baseY ?? 0, oTop = oBase + (o.h || 5);
+          if (oldPos.y > oBase && oldPos.y < oTop && obsOverlapsXZ(o, oldPos.x, oldPos.z, 0)) continue;   // leaving it
+          const t = obsRayDist(o, oldPos.x, oldPos.y, oldPos.z, ux, uy, uz, segLen);
+          if (t < tHit) {
+            tHit = t;
+            endInside = bb.pos.y > oBase && bb.pos.y < oTop && obsOverlapsXZ(o, bb.pos.x, bb.pos.z, 0);
+          }
+        }
+        if (tHit < Infinity && !endInside) {
+          const tIn = Math.min(segLen, tHit + 0.01);
+          bb.pos.set(oldPos.x + ux * tIn, oldPos.y + uy * tIn, oldPos.z + uz * tIn);
+          bb.mesh.position.copy(bb.pos);
+        }
       }
     }
 
@@ -22131,6 +22694,14 @@ function updateEnemies(dt) {
                 e._boundStuck = (e._boundStuck || 0) + dt;
                 if (e._boundStuck > 0.6) { e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
               } else e._boundStuck = 0;
+              // v1.110: a slide along a bumper still moves a few cm a frame, so the check above never fired and the
+              // lot's Priya crept 0.2 m/s along a car for 3–4 s in 'advancing'. Also drop the bound when a second
+              // goes by without getting 0.3 m closer to the cover's stand spot.
+              if (e._boundCover) {
+                const bdNow = Math.hypot(sp.x - e.pos.x, sp.z - e.pos.z);
+                if (e._boundFor !== e._boundCover || bdNow < e._boundBest - 0.3) { e._boundFor = e._boundCover; e._boundBest = bdNow; e._boundNoGain = 0; }
+                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
+              }
             }
           } else {
             // Within knife range / center lane / sniper → clear bound state.

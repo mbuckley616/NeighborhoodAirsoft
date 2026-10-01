@@ -35,6 +35,7 @@ check('collision boxes keep their footprints (8–9 × 7 m, 5.5 m tall)', wm.eve
 
 // the player can't walk into a house: pushed against Seth's front wall, he stops at it
 const stop = await page.evaluate(() => {
+  Game.mouse.locked = true;   // updatePlayer moves no one without it; CI's Chromium may refuse the real pointer lock
   Game.player.pos.x = 24; Game.player.pos.z = -8; Game.player.yaw = 0;
   const kd = new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }); document.dispatchEvent(kd);
   for (let i = 0; i < 240; i++) stepGame(1 / 60);

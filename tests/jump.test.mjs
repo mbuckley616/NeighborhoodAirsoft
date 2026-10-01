@@ -34,6 +34,7 @@ const pick = (want) => page.evaluate((want) => {
 // stand at (x, z) facing north (−z); hold W for `walk` steps, optionally pressing Space after `jumpAt` steps
 const run = (o, u, walk, jumpAt = -1, sprint = false) => page.evaluate(([o, u, walk, jumpAt, sprint]) => {
   const p = Game.player;
+  Game.mouse.locked = true;   // updatePlayer moves no one without it; CI's Chromium may refuse the real lock
   const x = o.ax === 'z' ? o.c : u, z = o.ax === 'z' ? u : o.c;
   p.pos.x = x; p.pos.z = z; p.pos.y = scenarioGroundY(x, z); p.velY = 0; p.onGround = true; p.yaw = o.ax === 'z' ? 0 : Math.PI / 2; p.pitch = 0;
   Game.keys = Game.keys || {}; Game.keys['KeyW'] = walk > 0; Game.keys['ShiftLeft'] = sprint;
@@ -46,13 +47,15 @@ const run = (o, u, walk, jumpAt = -1, sprint = false) => page.evaluate(([o, u, w
   Game.keys['KeyW'] = false; Game.keys['ShiftLeft'] = false;
   return { u: +(o.ax === 'z' ? p.pos.z : p.pos.x).toFixed(2), y: +p.pos.y.toFixed(3), ground: +scenarioGroundY(p.pos.x, p.pos.z).toFixed(3), onGround: p.onGround, rise: +maxY.toFixed(2) };
 }, [o, u, walk, jumpAt, sprint]);
-const idle = (n) => page.evaluate((n) => { const p = Game.player; for (let i = 0; i < n; i++) stepGame(1 / 60); return { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), y: +p.pos.y.toFixed(3), onGround: p.onGround }; }, n);
-const walkOn = (o, n) => page.evaluate(([o, n]) => { const p = Game.player; Game.keys['KeyW'] = true; for (let i = 0; i < n; i++) stepGame(1 / 60); Game.keys['KeyW'] = false;
+const idle = (n) => page.evaluate((n) => { const p = Game.player; Game.mouse.locked = true; for (let i = 0; i < n; i++) stepGame(1 / 60); return { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), y: +p.pos.y.toFixed(3), onGround: p.onGround }; }, n);
+const walkOn = (o, n) => page.evaluate(([o, n]) => { const p = Game.player; Game.mouse.locked = true; Game.keys['KeyW'] = true; for (let i = 0; i < n; i++) stepGame(1 / 60); Game.keys['KeyW'] = false;
   return { u: +(o.ax === 'z' ? p.pos.z : p.pos.x).toFixed(2), y: +p.pos.y.toFixed(3), ground: +scenarioGroundY(p.pos.x, p.pos.z).toFixed(3), onGround: p.onGround }; }, [o, n]);
 
 for (const id of ['winnmark_seth_house', 'bunratty_sean']) {
   await g.scenario(id);
   await page.evaluate(() => { Game.player.invuln = true; applyBBHit = () => {}; });   // nothing ends the round while we climb
+  // v1.107 fix-up: CI failed every Winnmark climb on v1.106 with the player never moving: updatePlayer returns at once
+  // unless Game.mouse.locked, and CI's headless Chromium sometimes refuses pointer lock. Each walk sets it itself.
   await g.spin(5);
   console.log(`  -- ${id}`);
   const box = await pick({ hMin: 0.45, hMax: 0.72, wMin: 0.7, dMin: 0.6, dMax: 2.0 });

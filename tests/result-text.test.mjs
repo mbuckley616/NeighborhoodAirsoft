@@ -1,11 +1,13 @@
 // v1.96 (Found in play, v1.86): the result screen's flavor line. Flavor quotes were doubled (""Ow!""), and the
 // multi-kid lines had a stray comma, named the player's own allies, and used a plural verb for one name. Ends
-// several scenarios every way and checks the sentence.
+// several scenarios every way and checks the sentence. v1.117: and the place words fit the map.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 const IDS = ['bunratty_sean', 'winnmark_seth_house', 'bunratty_night_lane', 'bunratty_brothers', 'hollow_skirmish_3v3',
-             'hollow_defend_south_fort', 'winnmark_defend_culdesac', 'bunratty_infection'];
+             'hollow_defend_south_fort', 'winnmark_defend_culdesac', 'bunratty_infection',
+             // v1.117: the place words fit the map (Found in play, v1.101)
+             'bunratty_pincer', 'lot_defend_store', 'hollow_juggernaut', 'hollow_big_battle'];
 const lines = [];
 for (const id of IDS) {
   await g.scenario(id);
@@ -31,6 +33,13 @@ check('no "X and Y, Z" list (a name list joined twice)', bad(/\b[A-Z]\w+ and [A-
 const allyNamed = lines.filter(l => l.allies.some(a => new RegExp('\\b' + a + '\\b').test(l.text)));
 check("the player's allies aren't named as the other side", allyNamed.length === 0, allyNamed.map(l => `${l.id} ${l.o}: ${l.text} [allies ${l.allies}]`));
 check('one name never takes "come walking out"', bad(/^The last one's out\. [A-Z]\w+ come\b/).length === 0, bad(/^The last one's out\. [A-Z]\w+ come\b/));
+// v1.117: no fort where there isn't one, no road or curb in the woods; and the forts still say fort
+const of = (id, o) => lines.filter(l => l.id === id && (!o || l.o === o)).map(l => l.text);
+check('Pincer loses the cul-de-sac, not a fort', of('bunratty_pincer', 'lose').every(t => /take the cul-de-sac/.test(t)), of('bunratty_pincer', 'lose'));
+check('Hold the Doors loses the doors', of('lot_defend_store', 'lose').every(t => /take the doors/.test(t)), of('lot_defend_store', 'lose'));
+const woods = lines.filter(l => /^hollow_/.test(l.id) && /\b(road|curb)\b/.test(l.text)).map(l => `${l.id} ${l.o}: ${l.text}`);
+check('no road or curb in the Hollow (Juggernauts, The Big Game, 3v3, the south fort)', woods.length === 0, woods);
+check('the forts still lose the fort', ['hollow_defend_south_fort', 'winnmark_defend_culdesac'].every(id => of(id, 'lose').every(t => /take the fort/.test(t))), ['hollow_defend_south_fort', 'winnmark_defend_culdesac'].map(id => of(id, 'lose')));
 // An intermittent "Failed to execute 'connect' on 'AudioNode'" showed up once in three runs of this suite
 // (12 at once, never in the other suites). It's filed in the backlog (Found in play, v1.96) and reported
 // here, not failed on, until it's run down; any other page error fails.

@@ -21,7 +21,9 @@ for (const id of IDS) {
     };
     const sp = window.__origSpawn = window.__origSpawn || spawnEnemyBB;
     let calls = 0, held = 0, made = 0;
-    window.spawnEnemyBB = function () { calls++; const m0 = made; const r = sp.apply(this, arguments); if (made === m0) held++; return r; };
+    // v1.108: a call inside v1.101's 2.5 s opening hold makes no BB by design; it isn't a kid holding fire at cover,
+    // so it doesn't count (Hold the Fort's opening volley pushed the held share past 25% in CI).
+    window.spawnEnemyBB = function () { if (inOpeningHold()) return sp.apply(this, arguments); calls++; const m0 = made; const r = sp.apply(this, arguments); if (made === m0) held++; return r; };
     const s = { calls: 0, shots: 0, lifted: 0, near: 0, mid: 0, far: 0, midKids: {}, examples: [] };
     for (let step = 0; step < 3600 && Game.mode === 'scenario'; step++) {
       stepGame(1 / 60);
