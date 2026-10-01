@@ -5957,3 +5957,232 @@ Every fort scenario and both cul-de-sac maps read as before.
 ### Still open
 - The timer win still has "distant screen doors slam" in the Hollow; it reads as moms calling from the houses past
   the trees, so it stays unless Michael says otherwise.
+
+## v1.118 — The kids' faces
+
+D.3 step 3 (Michael: A on the control room, 1 Oct: the kids next, faces, hands, clothes). This is the faces. A kid's
+head was a plain 0.28 m skin cube with two 3 cm black squares for eyes, and a kid with glasses wore two solid black
+lens boxes over them, so the eyes vanished. The head is now the same cube with its edges rounded (4 cm radius, the
+rows crowded toward the edges so the rounding is smooth, normals taken from the rounding so no seams show).
+`buildKidFace` puts a face on it: eye whites, an iris (brown by default; `eyeColor` in a profile picks hazel, green,
+blue or grey, for the mirror later) and a pupil, set toward the nose; brows in the kid's hair colour, tipped in a
+little; a nose that narrows at the bridge, with a tip; ears with an inner fold; a mouth line with the corners turned
+up and a lip tone under it, darker than the skin. Glasses are open rims round each eye, a bridge and temple arms back
+to the ears, so the eyes show through. The face is a child of the head, so it rides the crouch drop and now also the
+small forward tilt when a kid aims (the old eyes stayed level while the head tipped). It is merged into one mesh per
+material: 6 meshes a kid (was 2 for the eyes), 7 with glasses (was 7). Nothing reaches more than 2.7 cm past the old
+head box (nose and ears), and the hitboxes are fixed numbers in `checkEnemyHit`, so hits are unchanged. It is every
+kid on every map at once, and the mirror preview.
+
+### Verified
+- New `tests/kid-face.test.mjs`, over all 24 kids in `CHARACTERS`: the head geometry spans exactly ±0.14 m; the face is
+  on the head, 6–7 meshes, reaching 2.7 cm past the cube; a ray from 1 m in front at the left eye hits the pupil, for the
+  three kids with glasses too; at full crouch the eye drops exactly as far as the head (0.218, 0.248 or 0.277 m by height).
+  `checkEnemyHit` still hits at the head centre and 2 cm in front of the old face and misses 6 cm out. Screenshot
+  `tests/out/kid-faces.png` (three kids close up, one in glasses).
+- `npm test`: 29/29 green.
+
+### Still open
+- Michael's eye on the faces; the smile, the brow tilt and the eye size are one-number changes.
+- The hair caps are still the old boxes; they sit on the rounded top fine, but a rounded cap would match.
+- Next in step 3: hands, then clothes.
+
+## v1.119 — The kids' hands
+
+D.3 step 3, second part (Michael: A): the hands. Each hand was a 0.11 × 0.10 × 0.12 skin block at the end of the
+forearm, wider than the 0.10 m forearm itself, so the arm ended in a lump. `kidHandGeometry` builds a loose fist inside
+the same box: the back of the hand and palm, a knuckle ridge, four fingers curled under with a few millimetres between
+them and their tips tucked toward the palm, and a thumb laid along the front of the fingers on the side toward the
+body (mirrored for the left hand). It is about 3 cm thinner than the forearm, so the wrist reads. It is merged into one
+geometry per side and shared by every kid, so a hand is still one mesh and one draw call. The hand node, its place at
+the end of the forearm and the IK are untouched, so the grips and every pose are where they were.
+
+### Verified
+- New `tests/kid-hands.test.mjs`: each hand is one mesh with no children, 156 triangles (the block was 12), inside the
+  old block (x −0.036 to 0.048 on the right hand, mirrored on the left; y −0.051 to 0.049, z −0.051 to 0.060 m); the thumb sits on the body side for both hands;
+  the node is at the forearm's end (y −0.21) as before; all 24 kids share the two geometries. Screenshot
+  `tests/out/kid-hands.png` (a rifle and a pistol held at aim).
+- `tests/grip.test.mjs` unchanged and green: firing hand within 2 cm of the grip in every hold, off hand touching the gun.
+- `npm test`: 28/30 in the full run. `market-lot` and `walk-anim` lost their browser in `g.bedroom()` right after NEW
+  GAME, before any test ran (the harness stall under Found in play, twice in one run this time); both passed alone.
+
+### Still open
+- Michael's eye on the hands; they are small at play distance, so this mostly shows in the mirror and up close.
+- Next in step 3: clothes (sleeves, collar and hem, a belt, jeans seams, sneakers with soles).
+
+## v1.120 — The kids' clothes
+
+D.3 step 3, last part (Michael: A): the clothes. A kid's shirt, sleeves, legs and shoes were plain boxes in flat
+colours. Each keeps its box and node (the hitboxes are fixed numbers in `checkEnemyHit`, and the crouch, walk and IK
+move, scale and rotate these same nodes) and gets a shape inside it, built once in `kidClothesGeometry` and shared by
+every kid. The shirt is tucked in: a body set in from the box, a shoulder yoke at full width, and a crew collar
+rising 2 cm round the neck. The sleeves have a hem at the elbow end. The jeans have front pocket seams, side seams, a
+waist seam and a turned-up cuff. The sneaker upper dips toward the toe and heel and sits on a white sole with a rubber
+toe cap and laces. `buildKidClothes` adds per-kid trim to the torso, taken from the kid's own colours so the same kid
+always dresses the same: a collar rib in a darker shade of the shirt, then a chest stripe, a chest pocket or a plain
+front, and a belt (dark brown, brown or black) with a buckle. Sneakers come in black, navy, grey, red or white. The
+shirt, legs, sleeves and shoe uppers are still one mesh each; the trim adds 3 meshes and each sole 1. The hit flash
+still lights the shirt (the trim stays its colour).
+
+### Verified
+- New `tests/kid-clothes.test.mjs`, over all 24 kids: everyone has the torso trim (2–3 meshes); the shirt, trim and belt
+  stay within 7.5 mm of the old torso box (the buckle) with only the collar above it, 2.2 cm; jeans, sleeves and
+  sneaker uppers are inside their old boxes, the sleeve spanning the old upper arm exactly (±0.12 m about its node); the
+  sole is inside the shoe box but for the laces (5 mm over) and its bottom is at the ground (0.000). The same kid built
+  twice dresses the same; across the 24 there are 3 shirt fronts and 5 sneaker colours; the shirt material is still the
+  one the hit flash drives, and in Seth's House a tagged kid's shirt flashes (emissive 0.81). Screenshot
+  `tests/out/kid-clothes.png` (four kids, full length).
+- `tests/grip.test.mjs`, `tests/burst-pose.test.mjs` and `tests/walk-anim.test.mjs` unchanged and green.
+- `npm test`: 30/31 in the full run. `winnmark-trees` lost its browser in `g.bedroom()` after NEW GAME before any test
+  ran (the harness stall; three times across this session's last two runs, always at that step), and passed alone.
+
+### Still open
+- Michael's eye on the kids as a whole (faces, hands, clothes). Step 3 is done; B (Winnmark's pieces to the other
+  maps) is next by his recommended order, unless he wants changes first.
+- The mirror could now offer eye colour and a shirt front (stripe, pocket, plain); D.6 left them for these meshes.
+
+## v1.121 — Kids back out of pockets
+
+Found in play (builder, v1.112): an advancing kid could be pinned in a pocket. CI failed on Night Prowl's Seth standing
+8.8 s between a parked sedan and a post; v1.113's tree pass moved the cars and that pocket went, but the cause stayed.
+`advancing` has had a committed sidestep since v1.103; what it lacked was a way out of a pocket. With a wall ahead
+and both sides blocked, the committed sidestep walks to one side wall, turns round, walks to the other, and turns
+round again, for good; a flanker, whose sidestep runs at a slant to the wall, slides along a side wall and back
+instead. Each frame moves him a few centimetres, so nothing counted him as stuck. Two triggers now start a back-off:
+two blocked turn-rounds within 3 s, or a progress window (2.5 s without getting 0.5 m closer to where he is going,
+while wall-following). The window keeps the side axis it started on and how far along it he has been either way. The
+back-off walks him away from his target until a sidestep has room 0.6 m past the furthest he got on that side (the
+whole way there clear, with 10 cm to spare), then commits to that side long enough to get there; it ends after
+1.5 s, or at once if the way back is blocked too. The window runs on a new scenario clock, `Game.scenario.aiClock`,
+counted in `updateEnemies`, so it restarts cleanly after he has been in other states.
+
+### Verified
+- New `tests/pocket.test.mjs`: a U of 6 m walls round an advancing kid (3 m wide, 2.7 m deep, open at the back), the
+  target 15 m past its closed end. On v1.120 he never got out in 20 s, head-on or flanking either side (he shuttled
+  side to side, or along a side wall and back). Now he is past the wall at 4.5 s head-on and 6.7 and 9.7 s
+  flanking. In the open he walks straight in with no back-off (0 frames).
+- `night-prowl`, `whole-block`, `pincer`, `taggers`, `market-lot` green on this build alone: Seth's longest stand
+  in Night Prowl 0 s, 26 shots; no Whole Block kid wedged; Priya closes to 15 m in both Pincer runs; all six taggers reach the player.
+- `npm test`: 32/32 green (that run's later suites also carried part of v1.122; the AI suites above were rerun on
+  v1.121 alone).
+
+### Still open
+- The flanking escape is slower (up to 9.7 s): the flank point moves sideways as he backs off, so the window has to
+  run twice. A kid that never visited the far side of a pocket can still pick it on the first back-off.
+- The original Night Prowl pocket is gone from the map (v1.113), so this is shown on a built pocket, not that one.
+
+## v1.122 — No more firing into the fort wall
+
+Found in play (builder, v1.110): in `tests/cover-fire.test.mjs`'s Hollow 3v3 the held trigger pulls (a kid pulls with
+a wall inside 3 m, so no BB) swung from 19 to 199 a run on the same build. Logging each held pull by kid and spot
+found it is one kid a run, parked at a fort wall. Rebecca, an ally, spawns inside the north fort. When fire comes
+in, `nearestShieldingCover` sends her to the nearest cover within 14 m, and from her spawn the only one is a log at
+(−8, 22), past the fort's back wall. She walks straight at it, wedges in the fort's south-west corner (−0.93, 27.55),
+settles there, and from then on her muzzle line runs into the wall: 35–60 held pulls a minute in 2 runs of 4. Sean
+did the same in the south fort less often. The 'shooting' state's own reposition has the same blind spot.
+Kids now only take cover they can walk to in a straight line (`kidWalkClear`: rays at shin and chest height, down
+the centre and both shoulders, against every obstacle, low ones too). With no such cover in reach, the incoming-fire
+reaction leaves the kid where he is, which inside a fort is cover anyway. A kid whose pull is held three times running
+(`_lineHolds`) also repositions after his next shot instead of rolling for it.
+The new test turned up a crash on the old build: a held pull empties the burst queue (v1.112), and the burst loop
+then read a missing entry and threw ("reading 'dueIn'"), skipping the rest of that frame's enemy update. The loop
+now stops when the queue is empty.
+
+### Verified
+- New `tests/hollow-held.test.mjs`, four 60 s Hollow 3v3 rounds, player untaggable: held pulls 2.3% of 1864 in the
+  full run (3.4% of 1158 alone), no kid over 10 from one spot, Rebecca never in the corner. On v1.121 its first round
+  already had Rebecca holding 15 times from (−5, 25), and the second threw the 'dueIn' error. A queue emptied by a
+  held pull mid-burst now ends cleanly.
+- With the logging probe, held pulls a round: 12–62 on v1.121 (4 rounds, Rebecca in the corner in 2); 11–40 with only
+  the three-holds rule (6 rounds, in the corner in 5: no cover in reach of the corner either); 4–41 with the walkable
+  rule too (6 rounds, never the corner).
+- `tests/cover-fire.test.mjs`: 6 held of 1020 pulls over its four maps (27 of 713 on v1.121); into-cover shots within
+  3 m 0 of 1107.
+- `npm test`: 32/33 in the full run. `cars` lost its browser in `g.bedroom()` after NEW GAME ("Target page, context
+  or browser has been closed"; the harness stall, this time as a closed browser rather than a hang) and passed alone.
+
+### Still open
+- With no walkable cover in reach, a kid under fire now stays where he is. Kids have no pathfinding: cover round a
+  corner (out the fort's door and along the wall) is never picked. Worth watching for kids who stand in the open
+  under fire on the busier maps.
+- Seth in the south fort still holds up to 10 pulls from one spot in some rounds (a window line), under the test's 20.
+
+---
+
+## v1.122 fix-up — a kid with no walkable cover pushes out instead of pulling into the wall
+
+CI's `headless` run on v1.122 (822b576) failed its new `tests/hollow-held.test.mjs`: Rebecca held fire 20 times from one
+spot (3, 30). Locally it failed 3 runs in 5, Sean at (1, −28) with 28–39. Both spots are inside the Hollow forts.
+v1.122 forces a reposition after three held pulls in a row, and it filters cover to spots the kid can walk a straight
+line to. Inside a fort every cover lies past a wall, so the forced move found no candidate, nothing happened, and the
+kid went back to pulling into the wall.
+
+When a move forced by held pulls finds no walkable cover, the kid now switches to `advancing`. That pushes toward his
+target with its wall-follow, which takes him out through the fort's opening, and it drops back to hiding and shooting
+once he has a line.
+
+### Verified
+- `tests/hollow-held.test.mjs`, five runs: all pass; the most held pulls from one spot in any round is 6 (was 28–39 in
+  3 runs of 5).
+- `npm test`: all suites green.
+
+---
+
+## v1.122 fix-up 2 — the headless CI job gets 45 minutes
+
+On 3320b4b one of the two `headless` runs was cancelled at exactly 30 minutes, the job's `timeout-minutes`; the other
+passed in 28. With 33 suites the run takes 25–28 minutes on a hosted runner before the Chromium install, so the limit
+was about to cut runs off for no fault in the code. `.github/workflows/check.yml` now gives the job 45 minutes. CI only.
+
+---
+
+
+## v1.123 — Eye colour and shirt front at the mirror
+
+Backlog D.6 (Michael: C, the mirror) listed eyes and clothing style among the choices, and they waited on meshes that
+could show them. v1.118 gave every kid irises (`KID_EYE_COLORS`, read from the profile's `eyeColor`) and v1.120 gave
+every shirt a chest stripe, a pocket or nothing, picked from a hash of the kid's colours. The mirror now has two more
+rows under Glasses: **Eyes** (brown, hazel, green, blue, gray, as swatches) and **Shirt front** (plain, stripe,
+pocket). The shirt front is a new profile field, `shirtFront`; `buildKidClothes` uses it when a profile has one and
+falls back to the colour hash otherwise, so every other kid still wears the shirt he wore yesterday. Mike's look gets
+`eyeColor: 'brown'` and `shirtFront: 'plain'` by default, and older saves pick them up through `loadGame`'s merge.
+The pending D.3 question offered these rows as option B; they were already-answered D.6 work, so they are built and
+B now reads the same as A.
+
+### Verified
+- `tests/mirror.test.mjs` extended: the screen has ten rows ending in eyeColor and shirtFront; clicking the last of
+  each sets gray and pocket, ten choices lit. In the preview the iris material follows the row (brown 0x5a3a1e, blue
+  0x3a6a9a, green 0x3e6e44) and the chest trim grows from 72 triangles plain to 84 with the stripe and 96 with the
+  pocket. A save from before v1.107 loads with brown and plain. Screenshot `tests/out/mirror.png`.
+- `tests/pocket.test.mjs` failed its last three runs in 2 of 4 full runs this session, on this build and (by chance
+  less often) the last one: the round had ended between runs (`endScenario('lose')` from `applyBBHit` under `tick`).
+  The test took its player-can't-be-tagged stub off after each run, and the page's own render loop keeps stepping
+  between `page.evaluate` calls, so a BB already in flight tagged the player and the later runs stepped nothing. The
+  stub now stays on for the whole suite: 3 of 3 runs green.
+- `npm test`: 33/33 suites green.
+
+### Still open
+- The preview camera stands 3.6 m back, so the eyes are a few pixels; Michael may want a closer look or a zoom.
+
+---
+
+
+## v1.123 note — where the harness stall hangs
+
+Not a version: a look at the Found-in-play harness stall (a suite sits forever in `g.bedroom()` after NEW GAME). It
+had never shown on demand. Booting and entering the bedroom in a loop, six Node processes at once so the machine is
+as loaded as a CI runner, it did: 2 of 120 boots, then 6 of 150. Calling NEW GAME's three steps as separate
+evaluates (`initAudio`, `enterBedroom`, `openMirror`), every placed hang was in `enterBedroom` (3 of 3); the other
+three were at page load, before the game existed. During a hang, a Chrome DevTools `Debugger.pause` gets no reply
+and neither does a screenshot. A JS infinite loop would pause, so the page's main thread is stuck in native code,
+most likely a WebGL call waiting on SwiftShader's GPU process. Building the bedroom is the heaviest burst of new
+geometry and materials in a suite's first seconds, which is why it shows up there. No change made: the next step is
+Chromium launch flags in `tests/lib/game.mjs` (`--in-process-gpu` first), measured against the same loop (boot,
+`g.bedroom()` under a 75 s race, then pause/probe; 6 × 25 boots in parallel, about 10 minutes).
+
+### Verified
+- 270 boots in the loop: 8 hangs, 3 in `enterBedroom`, 3 at page load, 2 in the NEW GAME click (before the split).
+- `npm test`: 33/33 (v1.123's run).
+
+### Still open
+- The fix itself, and whether CI's runner sees the same rate.
