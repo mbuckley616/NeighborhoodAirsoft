@@ -6392,3 +6392,35 @@ name falls back to it.
 ### Still open
 - D.5 C, the Loadout screen with a 3D kid, is the last part of D.5; it has its own question in decisions.
 - Whether Guns is the right tab to open on, or Ammo (BBs are the thing a returning player buys most).
+
+
+---
+
+
+## v1.129 — The test harness restarts a hung NEW GAME
+
+Found in play since v1.110: now and then a suite stalls in `g.bedroom()` right after NEW GAME and sits until
+run.mjs's 10-minute timeout, or dies with "browser has been closed" (v1.126 lost two suites of one full run to it).
+v1.123 placed it in `enterBedroom()` with the renderer's main thread blocked in native code, about 2–4% of boots under
+load; v1.124 showed `--in-process-gpu` doesn't cure it. Since the cause is in SwiftShader rather than the game,
+the harness now recovers from it instead: a Node-side watchdog gives NEW GAME 75 s (a healthy one takes 2–20 s;
+Playwright's own timeouts never fire while the main thread is blocked), and on a stall or a dead browser it closes that
+browser, boots a fresh one and goes again, once; a second failure still fails the suite. Suites hold
+`const { page } = g` from before `g.bedroom()`, so `g.page` is now a stand-in that forwards every call to the live page,
+and `g.errs` is the fresh page's. `g.bedroom.retries` counts restarts. No game code changed; the version moves so the
+title screen matches the branch.
+
+Before that, I tried the fix the critic's report suggested for the lot free-for-all (starts behind cars). It is not a
+plain fix, so it is a question in decisions instead (Riverside Market free-for-all), with the numbers.
+
+### Verified
+- New `tests/harness.test.mjs`: with the first page's main thread hung in a loop and a 10 s watchdog, `g.bedroom()`
+  restarts once and reaches the bedroom in 17 s, the suite's `page` is the new one, a scenario runs on it, a healthy
+  boot never restarts, and the suite exits (the hung browser doesn't keep Node alive).
+- The v1.123 loop, six processes booting 20 times each in parallel: 120 of 120 reached the bedroom. One boot stalled
+  for real, was restarted and got there in 90.8 s in all; the healthy boots took at most 30 s, so 75 s leaves room.
+- `npm test`: 39/39 suites green. One real stall happened in it, in `kid-face` at NEW GAME, and was restarted; before
+  this, that suite would have sat for 10 minutes and failed.
+### Still open
+- The stall itself (SwiftShader under load) is not fixed, only survived. If CI logs show "starting a fresh browser"
+  often, try `--disable-gpu-compositing` next.
