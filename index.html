@@ -23156,7 +23156,13 @@ function updateEnemies(dt) {
               (e.weapon === 'shotgun' || e.weapon === 'mp5' || e.weapon === 'ump' ||
                e.weapon === 'mac10' || e.weapon === 'pistol' || !e.weapon);
             const pushSatisfied = !wantsToPush || newDist <= ENGAGE_PUSH;
-            const commitEngage = losNow && newDist < ENGAGE_FAR && pushSatisfied &&
+            // v1.128 fix-up: moved on by held pulls (v1.122), he doesn't commit again until 1.5 m from the spot
+            // (or 4 s on). His eye line to the player is clear there but the muzzle's first 3 m are not, so
+            // he stopped at once and held again (Rebecca at her fort wall: 25 held a round, tests/hollow-held).
+            if (e._holdSpot) {
+              if ((Game.scenario.roundTime || 0) > e._holdSpot.until || Math.hypot(e.pos.x - e._holdSpot.x, e.pos.z - e._holdSpot.z) > 1.5) e._holdSpot = null;
+            }
+            const commitEngage = losNow && newDist < ENGAGE_FAR && pushSatisfied && !e._holdSpot &&
               (!usingBound || newDist < ENGAGE_NEAR);
             if (commitEngage) {
               e.homeCover = e._boundCover || null;   // hold at the cover we bounded to
@@ -23252,8 +23258,12 @@ function updateEnemies(dt) {
             if (eSpec.fireMode === 'auto') {
               const cycle = 60 / Math.max(1, eSpec.cyclicRPM);
               const burstLen = 4 + Math.floor(Math.random() * 4); // 4..7 follow-ups
+              // v1.128 fix-up: firing at the last-known spot (no line), the follow-ups go there too. They
+              // re-aimed at the live target behind the wall, so every burst after the first BB was held
+              // (Sean in the Hollow 3v3: 20–27 held a round from one spot, tests/hollow-held).
+              const burstAim = (e._hasLOSNow || !e._lastSeenPos) ? null : targetPos.clone();
               for (let k = 1; k <= burstLen; k++) {
-                e.pendingBurst.push({ dueIn: k * cycle });
+                e.pendingBurst.push(burstAim ? { dueIn: k * cycle, aim: burstAim, spread: 0.04 } : { dueIn: k * cycle });
               }
             }
           }
@@ -23409,6 +23419,8 @@ function updateEnemies(dt) {
               // Without this he stayed and pulled into the wall 28–39 times a round (tests/hollow-held).
               e.state = 'advancing';
               e.stateTime = 0;
+              // v1.128 fix-up: and he engages again only once he's off that spot (below).
+              e._holdSpot = { x: e.pos.x, z: e.pos.z, until: (Game.scenario.roundTime || 0) + 4 };
             }
           }
         }

@@ -6424,3 +6424,27 @@ plain fix, so it is a question in decisions instead (Riverside Market free-for-a
 ### Still open
 - The stall itself (SwiftShader under load) is not fixed, only survived. If CI logs show "starting a fresh browser"
   often, try `--disable-gpu-compositing` next.
+
+## v1.129 fix-up — Hollow kids stop pulling into walls from one spot
+CI failed Builder sessions on v1.127 in `tests/hollow-held.test.mjs`: Sean held fire 24 times from one spot,
+(−10, −23), against a limit of 20. A local probe ran 30 rounds of the Hollow 3v3 and logged every pull's state,
+caller and outcome. Two rounds went over the limit, by two separate causes:
+- **Rebecca at her fort wall (1, 34): 25 held pulls.** After three held pulls in a row, v1.122 moves a kid on, and
+  with no cover she can walk to, she goes `advancing`. But `advancing` commits to an engagement on line of sight from
+  eye height, and from that spot her eye line to the player is clear while the muzzle's first 3 m run into the wall.
+  She stopped again at once and held three more. Now a kid moved on by held pulls doesn't commit to an engagement
+  again until she is 1.5 m from that spot, or 4 s later.
+- **Sean: 27 held pulls, one per burst.** Each burst's opening shot went out at the player's last-known spot (v1.23:
+  no tracking through walls), but the queued follow-ups re-aimed at the player's live position behind the wall, so
+  the first follow-up was held every cycle. Now, when the opening shot goes at the last-known spot, the follow-ups
+  aim there too, with the normal burst spread.
+
+### Verified
+- Probe, 30 rounds of `hollow_skirmish_3v3` with the player untaggable: the worst spot per round is 3–10 held pulls
+  (median 4). Before, two rounds reached 25 and 27, and five more were 10–13.
+- `npm test`: 38/38. In `hollow-held`, the worst spots were 3–6 held pulls and 6.1% of pulls were held (limit 10%).
+  `cover-fire` held 16 of 1003 pulls.
+
+### Still open
+- Sean's follow-ups that track a live target (he has a line) still hold one shot now and then at his south-fort
+  spot (−5, −29): 4–10 a round, every one a single trimmed burst, not a stuck kid.
