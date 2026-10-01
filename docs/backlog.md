@@ -52,7 +52,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    kerbs~~ — done, v1.116 (one road mesh on the ground, gutter and rolled kerb dropped at driveways, manholes, drains).
    Step 2 is complete. Step 3 (Michael: A, the kids next: faces, hands, clothes; control room, 1 Oct): ~~faces~~ — done,
    v1.118 (rounded head; eye whites, irises, pupils, brows, nose, ears, mouth; open glasses frames; every kid, every map).
-   Hands and clothes next; then B, Winnmark's pieces to the other maps.
+   ~~Hands~~ — done, v1.119 (a fist with a thumb, curled fingers and a wrist step, same node and grips). Clothes
+   next; then B, Winnmark's pieces to the other maps.
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and

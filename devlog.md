@@ -5986,3 +5986,26 @@ kid on every map at once, and the mirror preview.
 - Michael's eye on the faces; the smile, the brow tilt and the eye size are one-number changes.
 - The hair caps are still the old boxes; they sit on the rounded top fine, but a rounded cap would match.
 - Next in step 3: hands, then clothes.
+
+## v1.119 — The kids' hands
+
+D.3 step 3, second part (Michael: A): the hands. Each hand was a 0.11 × 0.10 × 0.12 skin block at the end of the
+forearm, wider than the 0.10 m forearm itself, so the arm ended in a lump. `kidHandGeometry` builds a loose fist inside
+the same box: the back of the hand and palm, a knuckle ridge, four fingers curled under with a few millimetres between
+them and their tips tucked toward the palm, and a thumb laid along the front of the fingers on the side toward the
+body (mirrored for the left hand). It is about 3 cm thinner than the forearm, so the wrist reads. It is merged into one
+geometry per side and shared by every kid, so a hand is still one mesh and one draw call. The hand node, its place at
+the end of the forearm and the IK are untouched, so the grips and every pose are where they were.
+
+### Verified
+- New `tests/kid-hands.test.mjs`: each hand is one mesh with no children, 156 triangles (the block was 12), inside the
+  old block (x −0.036 to 0.048 on the right hand, mirrored on the left; y −0.051 to 0.049, z −0.051 to 0.060 m); the thumb sits on the body side for both hands;
+  the node is at the forearm's end (y −0.21) as before; all 24 kids share the two geometries. Screenshot
+  `tests/out/kid-hands.png` (a rifle and a pistol held at aim).
+- `tests/grip.test.mjs` unchanged and green: firing hand within 2 cm of the grip in every hold, off hand touching the gun.
+- `npm test`: 28/30 in the full run. `market-lot` and `walk-anim` lost their browser in `g.bedroom()` right after NEW
+  GAME, before any test ran (the harness stall under Found in play, twice in one run this time); both passed alone.
+
+### Still open
+- Michael's eye on the hands; they are small at play distance, so this mostly shows in the mirror and up close.
+- Next in step 3: clothes (sleeves, collar and hem, a belt, jeans seams, sneakers with soles).

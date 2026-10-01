@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.118</div>
+  <div class="version">v1.119</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13852,6 +13852,34 @@ function kidHeadGeometry() {
   _kidHeadGeo = g;
   return g;
 }
+// v1.119 (backlog D.3 step 3, the kids: hands). The hand was a 0.11 × 0.10 × 0.12 skin block, wider than the forearm. It
+// is now a loose fist, narrower than the forearm so the wrist reads, inside the old box, merged into one geometry (still one mesh, one draw call): the back of the hand and palm, four
+// fingers curled under with a knuckle ridge across them and a hair's gap between each, and a thumb on the side toward
+// the body, laid along the fingers. The hand's local frame is the forearm's: -y runs to the fingertips, +z is the front.
+// `inSide` is +1 when the body's midline is at +x (the right arm) and -1 for the left. The node, its position and the
+// IK are untouched, so the grips and the poses are where they were.
+const _kidHandGeo = {};
+function kidHandGeometry(inSide) {
+  if (_kidHandGeo[inSide]) return _kidHandGeo[inSide];
+  const parts = []; const _s = new THREE.Vector3(1, 1, 1);
+  const add = (geo, px, py, pz, rx = 0, ry = 0, rz = 0) => parts.push({ geo,
+    m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) });
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  add(box(0.066, 0.064, 0.098), 0, 0.016, 0);                    // back of the hand and the palm
+  add(box(0.058, 0.014, 0.086), 0, 0.042, 0);                    // the wrist, a touch narrower
+  add(box(0.072, 0.018, 0.102), 0, -0.018, 0);                   // knuckle ridge
+  // four fingers, curled under: each a short bar from the knuckles toward the palm side, with a 3 mm gap between
+  for (let i = 0; i < 4; i++) {
+    const z = -0.0375 + i * 0.025, len = i === 0 || i === 3 ? 0.02 : 0.022;
+    add(box(0.06, 0.03, len), -inSide * 0.004, -0.036, z);
+    add(box(0.026, 0.022, len), inSide * 0.02, -0.027, z, 0, 0, inSide * 0.35);   // fingertips tucked toward the palm
+  }
+  // thumb: on the body side, from the heel of the hand down along the fingers' front
+  add(box(0.024, 0.05, 0.026), inSide * 0.032, -0.006, 0.04, 0.25, 0, inSide * 0.18);
+  add(box(0.02, 0.024, 0.022), inSide * 0.034, -0.036, 0.046, 0.25, 0, 0);
+  _kidHandGeo[inSide] = _houseMergeParts(parts);
+  return _kidHandGeo[inSide];
+}
 const _kidFaceMats = {};
 function _kidFaceMat(key, color, rough = 0.6) {
   const k = key + ':' + color;
@@ -13979,7 +14007,7 @@ function createKid(profile, weapon = 'pistol') {
     fore.position.set(0, -F_LEN / 2, 0);     // hangs DOWN from the elbow pivot
     fore.castShadow = true;
     elbow.add(fore);
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), skin);
+    const hand = new THREE.Mesh(kidHandGeometry(sx < 0 ? 1 : -1), skin);   // v1.119: a hand, not a block (thumb toward the body)
     hand.position.set(0, -F_LEN, 0);         // at the end of the forearm
     hand.castShadow = true;
     elbow.add(hand);
