@@ -6106,3 +6106,22 @@ now stops when the queue is empty.
   corner (out the fort's door and along the wall) is never picked. Worth watching for kids who stand in the open
   under fire on the busier maps.
 - Seth in the south fort still holds up to 10 pulls from one spot in some rounds (a window line), under the test's 20.
+
+---
+
+## v1.122 fix-up — a kid with no walkable cover pushes out instead of pulling into the wall
+
+CI's `headless` run on v1.122 (822b576) failed its new `tests/hollow-held.test.mjs`: Rebecca held fire 20 times from one
+spot (3, 30). Locally it failed 3 runs in 5, Sean at (1, −28) with 28–39. Both spots are inside the Hollow forts.
+v1.122 forces a reposition after three held pulls in a row, and it filters cover to spots the kid can walk a straight
+line to. Inside a fort every cover lies past a wall, so the forced move found no candidate, nothing happened, and the
+kid went back to pulling into the wall.
+
+When a move forced by held pulls finds no walkable cover, the kid now switches to `advancing`. That pushes toward his
+target with its wall-follow, which takes him out through the fort's opening, and it drops back to hiding and shooting
+once he has a line.
+
+### Verified
+- `tests/hollow-held.test.mjs`, five runs: all pass; the most held pulls from one spot in any round is 6 (was 28–39 in
+  3 runs of 5).
+- `npm test`: all suites green.

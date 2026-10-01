@@ -23269,7 +23269,8 @@ function updateEnemies(dt) {
           if (rangedAutoClosingNow) repositionChance = Math.max(repositionChance, 0.8);
           // v1.122: three pulls in a row held at a blocked line (tests/cover-fire's Hollow 3v3: one kid in a
           // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
-          if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; }
+          let movedByHolds = false;
+          if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
           if (Math.random() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
@@ -23374,6 +23375,13 @@ function updateEnemies(dt) {
               e.homeCover = newCover;
               e.coverMemory.push(newCover);
               if (e.coverMemory.length > 2) e.coverMemory.shift();
+            } else if (movedByHolds) {
+              // v1.122 fix-up: no cover he can walk straight to (a kid inside a Hollow fort: every
+              // cover lies past a wall) and his line keeps hitting a wall. Push toward the target
+              // instead; the advancing wall-follow walks him out, and he engages once he has a line.
+              // Without this he stayed and pulled into the wall 28–39 times a round (tests/hollow-held).
+              e.state = 'advancing';
+              e.stateTime = 0;
             }
           }
         }
