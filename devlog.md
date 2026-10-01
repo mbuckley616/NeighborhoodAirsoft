@@ -6163,3 +6163,26 @@ B now reads the same as A.
 
 ### Still open
 - The preview camera stands 3.6 m back, so the eyes are a few pixels; Michael may want a closer look or a zoom.
+
+---
+
+
+## v1.123 note — where the harness stall hangs
+
+Not a version: a look at the Found-in-play harness stall (a suite sits forever in `g.bedroom()` after NEW GAME). It
+had never shown on demand. Booting and entering the bedroom in a loop, six Node processes at once so the machine is
+as loaded as a CI runner, it did: 2 of 120 boots, then 6 of 150. Calling NEW GAME's three steps as separate
+evaluates (`initAudio`, `enterBedroom`, `openMirror`), every placed hang was in `enterBedroom` (3 of 3); the other
+three were at page load, before the game existed. During a hang, a Chrome DevTools `Debugger.pause` gets no reply
+and neither does a screenshot. A JS infinite loop would pause, so the page's main thread is stuck in native code,
+most likely a WebGL call waiting on SwiftShader's GPU process. Building the bedroom is the heaviest burst of new
+geometry and materials in a suite's first seconds, which is why it shows up there. No change made: the next step is
+Chromium launch flags in `tests/lib/game.mjs` (`--in-process-gpu` first), measured against the same loop (boot,
+`g.bedroom()` under a 75 s race, then pause/probe; 6 × 25 boots in parallel, about 10 minutes).
+
+### Verified
+- 270 boots in the loop: 8 hangs, 3 in `enterBedroom`, 3 at page load, 2 in the NEW GAME click (before the split).
+- `npm test`: 33/33 (v1.123's run).
+
+### Still open
+- The fix itself, and whether CI's runner sees the same rate (CI has failed on it at most once in its history).
