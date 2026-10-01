@@ -22,7 +22,8 @@ const OUT = path.join(here, '..', 'out');
 
 export function localBuild(src = path.join(ROOT, 'index.html')) {
   fs.mkdirSync(TMP, { recursive: true });
-  const out = path.join(TMP, 'index.local.html');
+  // v1.126: one file per process, so two suites booting different builds at once can't overwrite each other's copy
+  const out = path.join(TMP, `index.local.${process.pid}.html`);
   const html = fs.readFileSync(src, 'utf8').replace(
     /https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/three\.js\/r128\/three\.min\.js/,
     '../vendor/three.min.js');
@@ -71,7 +72,7 @@ export async function boot(opts = {}) {
     try { await page.screenshot({ path: f, timeout: 60000 }); return f; }
     catch (e) { if (e.name !== 'TimeoutError') throw e; console.log(`  (screenshot ${name} timed out; skipped)`); return null; }
   };
-  g.close = () => browser.close();
+  g.close = async () => { await browser.close(); try { fs.unlinkSync(file); } catch {} };
   return g;
 }
 

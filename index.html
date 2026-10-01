@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.125</div>
+  <div class="version">v1.126</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9332,7 +9332,7 @@ function addCar(scene, x, z, opts = {}) {
 
   const group = new THREE.Group();
   if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
-  else {   // v1.112: the original box car (the lot still builds this one)
+  else {   // v1.112: the original box car (no map builds it since v1.126)
   // Body — sits with bottom at wheel-axle height
   const body = new THREE.Mesh(new THREE.BoxGeometry(len, bodyH, width), carMat);
   body.position.set(0, wheelR + bodyH/2, 0);
@@ -12775,7 +12775,7 @@ function buildHollowScene(variant, timeOfDay) {
         shape: fsh, leafR: rng(2.2, 3.4), trunkH: rng(3.8, 6.5),
         leafColor: fsh === 'pine' ? (Math.random() < 0.5 ? 0x254526 : 0x2c5230)
                                   : (Math.random() < 0.5 ? 0x34521f : 0x3e5e26),
-        baseY: RIVER_Y + 1.0,
+        baseY: RIVER_Y + 1.0, detail: true,   // v1.126: the round ones are Winnmark's low-poly tree
       });
       // (intentionally NOT pushed to treeObs — unreachable backdrop)
     }
@@ -12809,7 +12809,7 @@ function buildHollowScene(variant, timeOfDay) {
       shape: sh, trunkH, leafR,
       trunkR: tall ? rng(0.36, 0.5) : rng(0.26, 0.36),
       leafColor: sh === 'pine' ? pineColor() : leafColorDecid(),
-      baseY: groundY(x, z),
+      baseY: groundY(x, z), detail: true,   // v1.126: round trees are Winnmark's low-poly tree; pines stay
     });
   }
   function treeRow(x1, z1, x2, z2, count, jitter, sizeBias) {
@@ -13476,7 +13476,7 @@ function buildMarketLotScene(variant, timeOfDay) {
       const orient = (row.z < zc ? -1 : 1) * (Math.PI / 2) + (rnd() - 0.5) * 0.08;
       const cx = x + (rnd() - 0.5) * 0.3, cz = row.z + (rnd() - 0.5) * 0.2;
       const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
-      const carObs = addCar(scene, cx, cz, { orientation: orient, color });
+      const carObs = addCar(scene, cx, cz, { orientation: orient, color, detail: true });   // v1.126: Winnmark's car (D.3 step 4)
       const seated = carSeatY(carObs, groundY);
       carObs.mesh.position.y += seated;
       resolveObox(carObs); resolveObox(carObs._stacked);
@@ -13509,11 +13509,11 @@ function buildMarketLotScene(variant, timeOfDay) {
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
     for (const tx of [-18.9, 18.9, -35.2, 35.2]) {
       island(tx, rz, 2.4, 7.4);
-      treeObs.push(addSuburbanTree(scene, tx, rz, { trunkH: 2.6, leafR: 1.7, baseY: 0.15 }));
+      treeObs.push(addSuburbanTree(scene, tx, rz, { trunkH: 2.6, leafR: 1.7, baseY: 0.15, detail: true }));   // v1.126
     }
   }
   // South verge trees, past the last aisle.
-  for (const tx of [-30, -16, 16, 30]) treeObs.push(addSuburbanTree(scene, tx, 27.5, { baseY: 0 }));
+  for (const tx of [-30, -16, 16, 30]) treeObs.push(addSuburbanTree(scene, tx, 27.5, { baseY: 0, detail: true }));   // v1.126
 
   // === CART CORRALS and strays — metal rails you can crouch behind ===
   const railMat = new THREE.MeshStandardMaterial({ color: 0x8a9096, roughness: 0.4, metalness: 0.7 });

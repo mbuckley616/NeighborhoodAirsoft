@@ -6251,3 +6251,45 @@ straight street and bulb, and porting it to the S-curve is its own job. The Holl
 ### Still open
 - Bunratty's road and kerbs (the S-curve lane); the Hollow's trees; the lot's cars and trees.
 - Whether the detailed house reads well on Bunratty's downhill walk-out side (the podium and deck are unchanged).
+
+
+---
+
+
+## v1.126 — The lot's cars and trees, and the Hollow's hardwoods, are Winnmark's
+
+D.3 step 4 goes on (Michael: A). The Riverside Market lot's 44 parked cars are now Winnmark's detailed sedan
+(profiled body, arches, glass and pillars, lights, plates, mirrors, hubcaps), and its 16 island and verge trees the
+low-poly tree. The Hollow's woods are about half pine and half hardwood: the hardwoods (the perimeter ranks, the
+inner stands and the far-bank wall over the river) are the low-poly tree now, and the pines stay the three-cone pine,
+since Winnmark's tree is a round crown and the pines were already faceted. The lot's car seat-to-ground fit
+(`carSeatY`) and both collision boxes per car are unchanged, so the walk-throughs between stalls are where they were.
+With this the box car and the ball-on-a-stick round tree are no longer built on any map.
+
+### Verified
+- New `tests/lot-hollow-polish.test.mjs`: the lot has 44 of 44 detailed cars, every one with the cabin box at
+  −0.15, 1.0 × 0.7 m, 1.15–1.70 m, and 16 of 16 low-poly trees; the Hollow 170–172 of 354 trees low-poly (the rest
+  pines). The lot scene has 816 meshes against 948 before; draw calls looking down an aisle 753 against 863 on v1.125.
+  20 s of Aisle Wars and of the Hollow 3v3 with the player untaggable: kids walk 14–63 m and 15–56 m, one camper
+  each standing still (Brooke on the lot and Rebecca in the Hollow, as on v1.125: 0 m and 0–5 m).
+  Screenshots `tests/out/lot-cars.png`, `hollow-trees.png`.
+- `tests/winnmark-cars.test.mjs` now asks for the detailed car on the lot.
+- Harness: `tests/lib/game.mjs` copied every build it boots to one shared `tests/tmp/index.local.html`, so two suites
+  booting different builds at once (a probe against an old build beside `npm test`) overwrote each other's page. Each
+  process now gets its own copy, removed at `g.close()`. A correction to v1.125: its "8–113 m on v1.124" comparison
+  ran beside the new build and may have booted it, so read that figure as unconfirmed. The lot and Hollow comparisons
+  above ran alone.
+- `npm test` (run alone): **33/36, not green.** Two suites (bunratty-polish, burst-pose) died at `g.bedroom()` with
+  "browser has been closed", the known harness stall; both pass re-run alone. The third is real and comes from
+  v1.125, not this version: `tests/taggers.test.mjs` fails its low-frame-rate pass because Bunratty Infection's
+  Mitchell is held for the whole 45 s at (−26.8, 25.3), against a bin, a moving box and a plywood stack in his
+  backyard. Boards are seeded per scenario (`withSeededRandom`), and v1.125's detailed builders draw from the seeded
+  RNG in a different order, so Infection got a new backyard layout with that pocket in it. Probes: v1.126 failed 1 of
+  3 runs plus this one; v1.124 0 of 3. The collision boxes are the same as before; the layout is what changed.
+  An attempt to keep 3 m clear round each backyard start changed nothing (the three props are not the ones next to
+  his start), so I took it out. Filed at the top of Found in play.
+
+### Still open
+- The Infection pocket (above): Builder sessions should not merge until it is fixed.
+- Bunratty's S-curve road and kerbs, the last piece of step 4.
+- Whether the lot's long rows of sedans read better or busier than the box cars from the store doors.
