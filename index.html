@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.129</div>
+  <div class="version">v1.130</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -1917,9 +1917,10 @@
         <div class="marker"></div>
         <div class="label">Bunratty Ct · Sentinel</div>
       </div>
-      <div class="pin locked" style="left: 22%; top: 44%;" data-scenario="locked">
+      <!-- v1.130: Northcliff is playable (Northcliff Trace); was the locked "coming soon" teaser pin -->
+      <div class="pin locked" style="left: 22%; top: 44%;" data-scenario="northcliff">
         <div class="marker"></div>
-        <div class="label">Northcliff / Martin's Landing · locked</div>
+        <div class="label">Northcliff Trace · Northcliff</div>
       </div>
       <div class="pin" style="left: 40%; top: 87%;" data-scenario="hollow">
         <div class="marker"></div>
@@ -5883,6 +5884,51 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 120, lose: 28 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // ===================================================================
+  // v1.130: NORTHCLIFF TRACE (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A). Houses on a hill
+  // above a creek: uphill yards, downhill yards, a bulb fort at the west end, the twins' fort on the creek bank.
+  // ===================================================================
+
+  // --- Opener: 1v1 with Evan down by the creek ---
+  northcliff_1v1_evan: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Down by the Creek',
+    desc: "First time up in Northcliff, and Evan says he'll show you how they play it here. The street runs along the side of a hill: the yards on the right climb to the woods, the ones on the left drop away to the creek. He's somewhere in the low yards with a pistol. Bigger yards than you're used to, and longer looks across them — don't cross one standing up. One hit each.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'evan', weapon: 'pistol', anchor: 'yard_s2', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 50, lose: 12 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Capstone (for now): 3v3 against the Stoneglen twins ---
+  northcliff_twins_3v3: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'The Stoneglen Twins',
+    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Andrew and Alex are with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives each, last team standing.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'andrew',   weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
+      { charId: 'alex',     weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
+      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n' },
+      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s' },
+      { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3'   },
+    ],
+    enemySpawnCluster: 'cluster_bulb',
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 130, lose: 30 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -13649,6 +13695,275 @@ function buildMarketLotScene(variant, timeOfDay) {
   };
 }
 function buildMarketLotSceneDefault(_v, tod) { return buildMarketLotScene('default', tod); }
+
+// =====================================================================
+// v1.130: NORTHCLIFF TRACE (Northcliff / Martin's Landing) — the fifth zone (backlog D.1, Michael: A, control room
+// 1 Oct). Houses on a hill above a creek, built from the polished street pieces (detailed houses, cars, trees, bins,
+// boxes, plywood stacks, kid forts, buildStreetRoad). The hill falls NORTH to SOUTH: the uphill row's backyards climb
+// to a tree wall at z = -34 (about 4 m above the road), the downhill row's backyards drop to a wooded creek bank at
+// z = 33. The road runs along the slope from the east entry (x = 36) to a cul-de-sac bulb at the west (x = -28).
+// Six houses, 20 m apart, and no backyard fences: bigger yards and longer sightlines than Winnmark (the teaser's
+// promise), so the uphill yards are the sniper's ground. Layout draws from the scenario's seeded Math.random.
+// Playable box: x∈[-35,39], z∈[-33,33].
+// =====================================================================
+function buildNorthcliffScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x8eb0cc, dayFog: [40, 110],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-18, 34, 20],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.48, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
+    nightFog: [20, 66], moonPos: [18, 36, -20],
+    shadow: { size: 2048, extent: 46, far: 90 },
+  });
+
+  // --- the hill: high at the north tree wall, smooth down to the road and on down to the creek bank ---
+  function groundY(x, z) {
+    let u = (z + 36) / (32 + 36);
+    u = Math.max(0, Math.min(1, u));
+    let h = 4.2 * (1 - u * u * (3 - 2 * u));
+    if (z > 32) h -= Math.min(2.2, (z - 32) * 0.4);     // the creek bank
+    h += 0.2 * Math.sin(x * 0.11 + 0.7) * Math.cos(z * 0.09);
+    return h;
+  }
+  function groundNormal(x, z) {
+    const e = 0.6;
+    const nx = groundY(x - e, z) - groundY(x + e, z), nz = groundY(x, z - e) - groundY(x, z + e), ny = 2 * e;
+    const l = Math.hypot(nx, ny, nz) || 1;
+    return { nx: nx / l, ny: ny / l, nz: nz / l };
+  }
+  const _UP_Z = new THREE.Vector3(0, 0, 1);
+  function layOnSlope(mesh, x, z, lift = 0.04) {
+    const n = groundNormal(x, z);
+    mesh.position.set(x, groundY(x, z) + lift, z);
+    mesh.quaternion.setFromUnitVectors(_UP_Z, new THREE.Vector3(n.nx, n.ny, n.nz));
+    return mesh;
+  }
+  // Seat a flat-built obstacle on the slope (the lowest ground under its footprint), as Winnmark's sinkObs.
+  function sinkObs(obs, gx, gz) {
+    if (!obs) return obs;
+    const cx = gx ?? (obs.minX + obs.maxX) / 2, cz = gz ?? (obs.minZ + obs.maxZ) / 2;
+    let gy = groundY(cx, cz);
+    const hw = (obs.maxX - obs.minX) / 2, hd = (obs.maxZ - obs.minZ) / 2;
+    if (hw > 0.4 || hd > 0.4) for (const sx of [-hw, 0, hw]) for (const sz of [-hd, 0, hd]) gy = Math.min(gy, groundY(cx + sx, cz + sz));
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);
+    if (obs.mesh && obs.mesh.position) obs.mesh.position.y += gy;
+    if (obs.shape === 'obox') { resolveObox(obs); if (obs._stacked && obs._stacked.shape === 'obox') resolveObox(obs._stacked); }
+    else { obs.baseY = gy; if (obs._stacked) obs._stacked.baseY = (obs._stacked.baseY || 0) + gy; }
+    return obs;
+  }
+  function seatFort(walls, gx, gz) {   // the fort's walls share one group: lift it once (corner bins have their own)
+    let gy = groundY(gx, gz);
+    for (const sx of [-2.2, 0, 2.2]) for (const sz of [-1.5, 0, 1.5]) gy = Math.min(gy, groundY(gx + sx, gz + sz));
+    const seen = new Set();
+    for (const w of walls) {
+      if (w.mesh && w.mesh.position && !seen.has(w.mesh)) { w.mesh.position.y += gy; seen.add(w.mesh); }
+      w.baseY = gy;
+    }
+    return walls;
+  }
+  const rng = (a, b) => a + Math.random() * (b - a);
+
+  // --- ground (displaced), the creek and its far bank ---
+  {
+    const g = new THREE.PlaneGeometry(150, 150, 100, 100), pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setZ(i, groundY(pos.getX(i), -pos.getY(i)));
+    pos.needsUpdate = true; g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x58803e, roughness: 1.0 }));
+    m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(140, 5), new THREE.MeshStandardMaterial({ color: 0x3a5a6a, roughness: 0.25, metalness: 0.2 }));
+    water.rotation.x = -Math.PI / 2; water.position.set(0, groundY(0, 39) - 0.15 + 0.12, 39.5); scene.add(water);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7468, roughness: 0.95 });
+    for (let i = 0; i < 26; i++) {   // creek stones along the near bank
+      const x = -60 + i * 4.8 + rng(-1, 1), z = 37 + rng(-0.6, 0.6), r = rng(0.3, 0.7);
+      const s = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rockMat);
+      s.position.set(x, groundY(x, z) + r * 0.3, z); s.rotation.set(rng(0, 3), rng(0, 3), 0); s.scale.y = 0.6; scene.add(s);
+    }
+  }
+
+  // --- the road: east entry → west bulb, along the slope ---
+  const RA = { x: 37, z: 1 }, RC = { x: 4, z: -5 }, RB = { x: -28, z: 0 };
+  const roadPoint = (t) => ({ x: (1 - t) * (1 - t) * RA.x + 2 * (1 - t) * t * RC.x + t * t * RB.x,
+                              z: (1 - t) * (1 - t) * RA.z + 2 * (1 - t) * t * RC.z + t * t * RB.z });
+  const roadDeriv = (t) => ({ x: 2 * (1 - t) * (RC.x - RA.x) + 2 * t * (RB.x - RC.x), z: 2 * (1 - t) * (RC.z - RA.z) + 2 * t * (RB.z - RC.z) });
+  const roadCenterline = [];
+  for (let i = 0; i <= 56; i++) roadCenterline.push(roadPoint(i / 56));
+  const roadZAt = (x) => { let bz = 0, bd = Infinity; for (const p of roadCenterline) { const d = Math.abs(p.x - x); if (d < bd) { bd = d; bz = p.z; } } return bz; };
+  const tAtX = (x) => { let bt = 0, bd = Infinity; for (let t = 0; t <= 1; t += 0.002) { const d = Math.abs(roadPoint(t).x - x); if (d < bd) { bd = d; bt = t; } } return bt; };
+
+  // --- houses: three up the hill (north row, facing south), three down it (south row, facing north) ---
+  const HOUSES = [
+    { x: 24, z: -17, side: 'north', w: 10, brick: 0xb8a48a, roof: 0x4a3a2a },
+    { x: 4, z: -18, side: 'north', w: 10, brick: 0xa05a3e, roof: 0x3a3028 },
+    { x: -16, z: -17, side: 'north', w: 9, brick: 0xd0c4b0, roof: 0x4a4038 },
+    { x: 22, z: 18, side: 'south', w: 9, brick: 0x9a5a40, roof: 0x4a3828 },
+    { x: 2, z: 19, side: 'south', w: 10, brick: 0xc8b090, roof: 0x5a4030 },
+    { x: -17, z: 18, side: 'south', w: 9, brick: 0xa86a50, roof: 0x3a2a1a },
+  ];
+  const houseObs = HOUSES.map(h => sinkObs(buildSuburbanHouse(scene, {
+    x: h.x, z: h.z, width: h.w, depth: 8, brickColor: h.brick, roofColor: h.roof,
+    faceDir: h.side === 'north' ? 'south' : 'north', detail: true,
+  })));
+  const houseCenters = HOUSES.map(h => ({ x: h.x, z: h.z, side: h.side }));
+  buildStreetRoad(scene, {
+    point: roadPoint, deriv: roadDeriv, groundY, groundNormal, houseCenters,
+    asphMat: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    ASPH: 3.45, bulb: { x: RB.x, z: RB.z, r: 6.3 }, T0: -0.12, NS: 170,
+    manholes: [[0.3, 0.8], [0.66, -0.7]], drains: [[0.18, -1], [0.52, 1], [0.84, -1]],
+    cracks: [[0.1, 5.2, 0.4], [0.44, 6.0, -0.3], [0.76, 5.0, 0.25]], patch: 0.56,
+  });
+  // driveways, from the house front to the road edge, laid on the slope in 2 m pieces
+  {
+    const dMat = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.95 });
+    for (const hc of houseCenters) {
+      const rz = roadZAt(hc.x), front = hc.side === 'north' ? hc.z + 4 : hc.z - 4;
+      const edge = hc.side === 'north' ? rz - 4 : rz + 4;
+      const z0 = Math.min(front, edge), z1 = Math.max(front, edge), n = Math.max(1, Math.ceil((z1 - z0) / 2)), st = (z1 - z0) / n;
+      for (let s = 0; s < n; s++) {
+        const seg = new THREE.Mesh(new THREE.PlaneGeometry(4, st + 0.4), dMat);
+        layOnSlope(seg, hc.x, z0 + st * (s + 0.5), 0.018); seg.receiveShadow = true; scene.add(seg);
+      }
+    }
+  }
+
+  // --- anchors first, so the random yard cover keeps clear of them ---
+  const P = (x, z) => new THREE.Vector3(x, 0, z);
+  const ANCH = {
+    bulb_fort: [-30.5, 0], bulb_car_n: [-27.5, -5.8], bulb_car_s: [-24.5, 6.6],
+    yard_n1: [22, -28], yard_n2: [5, -29], yard_n3: [-15, -28],
+    yard_s1: [21, 28.5], yard_s2: [3, 29], yard_s3: [-16, 28.5],
+    creek_fort: [-6, 31.2],
+    road_e_n: [28, -3.2], road_e_s: [29, 4.8], road_mid_n: [-6, -6.5], road_mid_s: [12, 3.5],
+    cluster_bulb: [-31, 0], cluster_east: [34, 1],
+  };
+  const keepClear = (x, z, r = 2.2) => Object.values(ANCH).some(([ax, az]) => Math.hypot(ax - x, az - z) < r)
+    || Math.hypot(x - 35, z - 1) < 3;   // the player's road_east spawn
+
+  const coverList = [], coverByHouse = [], bushObs = [], curbBins = [], driveCars = [];
+  // mailboxes at the foot of each driveway
+  for (const hc of houseCenters) {
+    const rz = roadZAt(hc.x), dir = hc.side === 'north' ? -1 : 1;
+    const mx = hc.x + (Math.random() < 0.5 ? -2.3 : 2.3), mz = rz + dir * 4.6;
+    bushObs.push(sinkObs(addMailbox(scene, mx, mz, { facing: hc.side === 'north' ? 0 : Math.PI }), mx, mz));
+  }
+  // bins out on trash day at half the houses (player cover, not AI cover, as Winnmark)
+  for (const hc of houseCenters) {
+    if (Math.random() < 0.5) continue;
+    const dir = hc.side === 'north' ? -1 : 1, bz = roadZAt(hc.x) + dir * 4.9, bx = hc.x + (Math.random() < 0.5 ? 3.4 : -3.4);
+    const facing = hc.side === 'north' ? Math.PI : 0;
+    curbBins.push(sinkObs(addCurbsideBin(scene, bx - 0.4, bz, { variant: 'garbage', facing, detail: true }), bx - 0.4, bz));
+    curbBins.push(sinkObs(addCurbsideBin(scene, bx + 0.4, bz, { variant: 'recycle', facing, detail: true }), bx + 0.4, bz));
+  }
+  // backyard cover: 3–4 pieces a yard, spread wide (the yards are deep)
+  houseCenters.forEach((hc, i) => {
+    const back = hc.side === 'north' ? -1 : 1, yz = hc.z + back * 10.5;
+    coverByHouse[i] = [];
+    const n = 3 + Math.floor(Math.random() * 2);
+    for (let j = 0; j < n; j++) {
+      const cx = hc.x + rng(-6.5, 6.5), cz = yz + rng(-4, 3.5) * back;
+      if (keepClear(cx, cz) || Math.abs(cz) > 31.5) continue;
+      const k = Math.random(), gy = groundY(cx, cz);
+      let o;
+      if (k < 0.4) o = sinkObs(addHomeDepotBox(scene, cx, cz, { w: rng(0.9, 1.3), h: rng(0.85, 1.1), d: rng(0.85, 1.1), facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
+      else if (k < 0.72) o = sinkObs(addCurbsideBin(scene, cx, cz, { variant: Math.random() < 0.55 ? 'garbage' : 'recycle', tipped: Math.random() < 0.15, facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
+      else {
+        const st = buildPlyStack(cx, gy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
+        scene.add(st);
+        o = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, baseY: gy, mesh: st, surface: 'hard' };
+      }
+      coverList.push(o); coverByHouse[i].push(o);
+    }
+  });
+  // anchor cover for the yard anchors: one box beside each (so every yard anchor has something to hide behind)
+  const anchorCover = {};
+  for (const [key, side] of [['yard_n1', -1], ['yard_n2', -1], ['yard_n3', -1], ['yard_s1', 1], ['yard_s2', 1], ['yard_s3', 1]]) {
+    const [ax, az] = ANCH[key], cz = az - side * 1.3;   // between the anchor and the road
+    const o = sinkObs(addHomeDepotBox(scene, ax, cz, { w: 1.3, h: 1.05, d: 1.0, facing: 0, detail: true }), ax, cz);
+    coverList.push(o); anchorCover[key] = o;
+  }
+  // cars: about half the driveways (collision, not AI cover); two in the bulb and four along the kerb (AI cover)
+  const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x3a5a3a, 0xb09a6a, 0x2a3e6a];
+  const pickColor = () => CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  for (const hc of houseCenters) {
+    if (Math.random() < 0.45) continue;
+    const dir = hc.side === 'north' ? -1 : 1, cz = roadZAt(hc.x) + dir * 7.6;
+    driveCars.push(sinkObs(addCar(scene, hc.x, cz, { orientation: dir < 0 ? Math.PI / 2 : -Math.PI / 2, color: pickColor(), groundNormalFn: groundNormal, detail: true }), hc.x, cz));
+  }
+  const kerbCar = (x, z, orient) => { const o = sinkObs(addCar(scene, x, z, { orientation: orient, color: pickColor(), groundNormalFn: groundNormal, detail: true }), x, z); pushCarObs(coverList, o); return o; };
+  const bulbCarN = kerbCar(-27.5, -3.6, 0.15), bulbCarS = kerbCar(-24.5, 4.6, -0.2);
+  for (const [tx, side] of [[14, 1], [31, -1], [-8, -1]]) {   // side 1 is the north kerb (the road runs west)
+    const t = tAtX(tx), p = roadPoint(t), d = roadDeriv(t), l = Math.hypot(d.x, d.z), nx = -d.z / l, nz = d.x / l;
+    kerbCar(p.x + nx * side * 2.3, p.z + nz * side * 2.3, Math.atan2(-d.z, d.x));
+  }
+  // kid forts: one in the bulb facing the street, the twins' one on the creek bank facing up the hill
+  const bulbFort = seatFort(buildKidFort(scene, -28, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true }), -28, 0);
+  const creekFort = seatFort(buildKidFort(scene, -6, 29.4, { faceDir: 'N', width: 3.8, depth: 2.2, detail: true }), -6, 29.4);
+  for (const w of [...bulbFort, ...creekFort]) coverList.push(w);
+
+  // --- trees: a wall round three sides, a line along the creek bank, big oaks in the yards ---
+  const treeObs = [];
+  const tree = (x, z, o = {}) => treeObs.push(addSuburbanTree(scene, x, z, { detail: true, baseY: groundY(x, z), ...o }));
+  const wall = (x1, z1, x2, z2, skip) => {
+    const len = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.floor(len / 3.2)), px = -(z2 - z1) / len, pz = (x2 - x1) / len;
+    for (let i = 0; i <= n; i++) {
+      const bx = x1 + (x2 - x1) * i / n, bz = z1 + (z2 - z1) * i / n;
+      if (skip && skip(bx, bz)) continue;
+      tree(bx + rng(-0.5, 0.5), bz + rng(-0.5, 0.5));
+      if (i < n) tree(bx + (x2 - x1) / n / 2 + px * 2.4, bz + (z2 - z1) / n / 2 + pz * 2.4);
+    }
+  };
+  wall(-37, -35, 41, -35);                                 // the hilltop
+  wall(-37, 34, -37, -35);                                 // the west woods behind the bulb
+  wall(41, -35, 41, 34, (x, z) => Math.abs(z - 1) < 5.5);  // the east side, open where the road comes in
+  for (let x = -34; x <= 38; x += 5.5) tree(x + rng(-1, 1), 34.8 + rng(-0.4, 0.4), { trunkH: rng(4, 5.5), leafR: rng(2.2, 2.8) });   // the creek bank
+  for (const [x, z] of [[14, -27], [-5, -26], [-26, -24], [31, -26], [12, 26], [-7, 24], [-26, 22], [32, 25]]) {   // yard oaks
+    const xx = x + rng(-1.5, 1.5), zz = z + rng(-1.5, 1.5);
+    if (!keepClear(xx, zz, 2.6)) tree(xx, zz, { trunkH: rng(3.8, 5), leafR: rng(2.4, 3.0), trunkR: 0.42 });
+  }
+  for (const hc of houseCenters) for (const s of [-1, 1]) {   // a shrub either side of each front step
+    const bx = hc.x + s * 2.6, bz = hc.z + (hc.side === 'north' ? 4.6 : -4.6);
+    bushObs.push(addBush(scene, bx, bz, 1.2, 0.8, 1.0, null, groundY(bx, bz), { detail: true }));
+  }
+
+  // --- streetlamps on the grass between the houses ---
+  const lampObs = [];
+  for (const [x, side] of [[14, 1], [-6, -1], [-24, 1], [33, -1]]) {
+    const lz = roadZAt(x) + side * 5.1;
+    const lamp = addStreetlamp(scene, x, lz, groundY, _night);
+    if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
+  }
+
+  const bounds = { minX: -35, maxX: 39, minZ: -33, maxZ: 33 };
+  const edge = [
+    { minX: -60, maxX: 60, minZ: 33.6, maxZ: 70, h: 6, baseY: -3, surface: 'hard' },   // the creek bank
+    { minX: 39.6, maxX: 70, minZ: -60, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },    // past the east entry
+  ];
+
+  const A = (key, cover) => ({ pos: P(ANCH[key][0], ANCH[key][1]), cover: cover || null });
+  const placements = {
+    bulb_fort: A('bulb_fort', bulbFort[0]), bulb_car_n: A('bulb_car_n', bulbCarN), bulb_car_s: A('bulb_car_s', bulbCarS),
+    yard_n1: A('yard_n1', anchorCover.yard_n1), yard_n2: A('yard_n2', anchorCover.yard_n2), yard_n3: A('yard_n3', anchorCover.yard_n3),
+    yard_s1: A('yard_s1', anchorCover.yard_s1), yard_s2: A('yard_s2', anchorCover.yard_s2), yard_s3: A('yard_s3', anchorCover.yard_s3),
+    creek_fort: A('creek_fort', creekFort[0]),
+    road_e_n: A('road_e_n'), road_e_s: A('road_e_s'), road_mid_n: A('road_mid_n'), road_mid_s: A('road_mid_s'),
+    cluster_bulb: A('cluster_bulb'), cluster_east: A('cluster_east'),
+  };
+  const playerSpawns = {
+    road_east:   { pos: P(35, 1), yaw: Math.PI / 2 },     // the east entry, facing west down the street (yaw 0 faces -z)
+    bulb_center: { pos: P(-31.5, 0), yaw: -Math.PI / 2 }, // behind the bulb fort, facing east
+  };
+  return {
+    scene,
+    spawn: playerSpawns.road_east.pos.clone(), spawnYaw: playerSpawns.road_east.yaw, bounds,
+    cover: coverList,
+    obstacles: [...houseObs, ...treeObs, ...bushObs, ...coverList, ...curbBins, ...driveCars, ...lampObs, ...edge],
+    enemies: [],
+    name: 'Northcliff Trace', scenarioName: '', desc: '',
+    placements, playerSpawns, groundY,
+    teamBases: { player: { x: 34, z: 1 }, enemy: { x: -31, z: 0 } },
+  };
+}
+function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('default', tod); }
 
 
 
@@ -24045,6 +24360,11 @@ const PIN_SCENARIO_GROUPS = {
     'lot_ffa',           // v1.103
     'lot_night_4v4',
   ],
+  // v1.130: Northcliff Trace (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A).
+  northcliff: [
+    'northcliff_1v1_evan',
+    'northcliff_twins_3v3',
+  ],
 };
 
 // =====================================================================
@@ -24059,8 +24379,8 @@ const PIN_SCENARIO_GROUPS = {
 //     listed scenario) is completed. Zone 1 is always unlocked.
 //   - The first scenario of zones 2+ additionally requires the prior zone's
 //     capstone (it can't be open before its own zone is).
-// Northcliff is a real ladder node with no scenarios yet (comingSoon) — it
-// shows as a locked teaser pin until its map/scenarios are built.
+// Northcliff was a ladder node with no scenarios (comingSoon), shown as a locked
+// teaser pin; since v1.130 it is a playable zone (Northcliff Trace).
 // Everything downstream (pin state, row render, result nav, launch guard)
 // reads from these functions — no gating logic is duplicated.
 // =====================================================================
@@ -24069,8 +24389,7 @@ const ZONE_LADDER = [
   { key: 'bunratty_court', pin: 'bunratty_court', name: 'Bunratty Court',                 region: 'sentinel' },
   { key: 'hollow',         pin: 'hollow',         name: 'The Hollow · Chattahoochee',     region: 'east_roswell' },
   { key: 'market_lot',     pin: 'market_lot',     name: 'Riverside Market',               region: 'east_roswell' },   // v1.102
-  { key: 'northcliff',     pin: 'locked',         name: "Northcliff / Martin's Landing",  region: 'northcliff',
-    comingSoon: true,
+  { key: 'northcliff',     pin: 'northcliff',     name: "Northcliff / Martin's Landing",  region: 'northcliff',   // v1.130: playable (Northcliff Trace)
     teaser: "A new neighborhood is opening up north — Northcliff Trace, Stoneglen Close, and Bellfield Court. Bigger yards, longer sightlines, and the toughest kids on the river. Clear the Riverside Market lot to prove you're ready." },
 ];
 

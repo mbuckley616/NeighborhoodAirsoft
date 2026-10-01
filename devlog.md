@@ -6448,3 +6448,65 @@ caller and outcome. Two rounds went over the limit, by two separate causes:
 ### Still open
 - Sean's follow-ups that track a live target (he has a line) still hold one shot now and then at his south-fort
   spot (−5, −29): 4–10 a round, every one a single trimmed burst, not a stuck kid.
+
+
+---
+
+
+## v1.130 — Northcliff Trace: the fifth zone opens
+
+Backlog D.1. Michael answered the next-zone question on the control room (A, Northcliff / Martin's Landing). Northcliff
+has been on the ladder since v1.48 as a locked "coming soon" pin with nine kids already written and no map. This is the
+first part, the same shape as v1.102 was for the lot: the street itself, on the map and the ladder, with two scenarios
+that play.
+
+**Northcliff Trace** (`buildNorthcliffScene`) is houses on a hill above a creek. The ground falls north to south:
+the uphill yards climb about 2 m above the road to a tree wall, and the downhill yards drop about 2 m below it to a
+wooded bank, with a creek and its stones beyond. The road runs along the slope from the east entry to a cul-de-sac
+bulb at the west. It is the shared `buildStreetRoad`, so it has its kerb, gutter, drains, manholes, crack sealing and a
+patch. Every piece is the polished set from D.3: six detailed houses, 20 m apart (Winnmark's are 16 m), with driveways,
+mailboxes and shrubs, cars in about half the driveways, bins out at about half the kerbs, boxes, bins and plywood stacks
+in the yards, the low-poly trees, four streetlamps and two kid forts: one in the bulb facing up the street, and the
+twins' fort on the creek bank facing up the hill. There are no backyard fences. That gives the bigger yards and longer
+sightlines the teaser promised, and it makes the uphill yards the sniper's ground. Like the other street maps, the layout
+draws from the scenario's seeded random numbers, so each scenario sees the same street every round.
+
+Two scenarios:
+- **Down by the Creek** (the opener): 1v1 against Evan with a pistol, starting in the low yards, one hit each.
+- **The Stoneglen Twins** (the zone capstone for now): 3v3. You, Andrew (MP5) and Alex (AK) start at the top of the
+  street. Haden and Connor (UMPs) hold the bulb, and Fernando has the rifle in the high yard by it. Three lives each,
+  last team standing.
+
+The map pin that was the locked teaser (`data-scenario="locked"`) is now a zone pin like the others (`northcliff`),
+labelled "Northcliff Trace · Northcliff". Clicking it on a locked save says to clear Riverside Market. `ZONE_LADDER`
+drops `comingSoon`, and nothing on the ladder is "coming soon" any more. The old teaser code paths still exist, but
+no pin reaches them now. The names follow Michael's C on place names: Northcliff and the street names were already in
+the game, and nothing new is a business or a school.
+
+### Verified
+- New `tests/northcliff.test.mjs`:
+  - Ladder and map: Northcliff is last on the ladder, after the market lot, and locked on a new save. Clearing the
+    lot's capstone opens the opener only, and the opener opens the twins. The pin is locked on a new save and names
+    Riverside Market. Once the lot is cleared it lists both scenarios with the opener playable. The old `locked` pin
+    is gone.
+  - Both scenarios: the player and every kid spawn clear of all obstacles (245 and 239), with the player's feet on
+    the ground. The hill measures 4.0 m at the north tree wall, 2.2 m at the road, −0.1 m on the bank and −2.3 m at
+    the creek.
+  - Down by the Creek, 60 s with the player untaggable at the spawn: Evan walks 59 m up from the creek, fires 49 times
+    and is never wedged.
+  - The Stoneglen Twins, 60 s: 272 BBs fired, both sides lose lives (enemy 8, ally 4), every kid walks 40–198 m and
+    fires 17–164 times, and the longest stall in `advancing` is 2 s.
+  - Screenshots `tests/out/northcliff-street.png`, `northcliff-creek.png` and `northcliff-uphill.png`, checked by eye.
+- `tests/front-door.test.mjs` now clicks the Northcliff pin by its new key, and its label opens Northcliff at all three
+  window sizes.
+- `npm test`: 39/40 on the full run. `laser` failed once in `bunratty_night_team_2v2`: 3 of 215 samples had the dot
+  above the player's head, from Ryan in `deploying` with a 15 m beam. That map, its kids and the laser code are
+  unchanged here, the suite passed on the same run before this change, and it passed twice more on its own on v1.130.
+  It is filed under Found in play.
+### Still open
+- More Northcliff scenarios, as v1.103 gave the lot: a defend at the creek fort, a night match, the Bellfield kids.
+  Stoneglen Close and Bellfield Court are still only names in `REGIONS`.
+- Whether Fernando's high-yard rifle is too much from the spawn needs a real playtest. Your side lost 4 lives to the
+  enemy's 8 in the first minute, so the twins don't look too hard.
+- The slope runs across the road (about 1 m over the road's width at the steepest). It reads fine in the
+  screenshots, but how it feels to walk is for a playtest.
