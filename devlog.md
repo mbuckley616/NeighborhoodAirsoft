@@ -6063,9 +6063,46 @@ counted in `updateEnemies`, so it restarts cleanly after he has been in other st
   flanking. In the open he walks straight in with no back-off (0 frames).
 - `night-prowl`, `whole-block`, `pincer`, `taggers`, `market-lot` green on this build alone: Seth's longest stand
   in Night Prowl 0 s, 26 shots; no Whole Block kid wedged; Priya closes to 15 m in both Pincer runs; all six taggers reach the player.
-- `npm test`: 32/32 green.
+- `npm test`: 32/32 green (that run's later suites also carried part of v1.122; the AI suites above were rerun on
+  v1.121 alone).
 
 ### Still open
 - The flanking escape is slower (up to 9.7 s): the flank point moves sideways as he backs off, so the window has to
   run twice. A kid that never visited the far side of a pocket can still pick it on the first back-off.
 - The original Night Prowl pocket is gone from the map (v1.113), so this is shown on a built pocket, not that one.
+
+## v1.122 — No more firing into the fort wall
+
+Found in play (builder, v1.110): in `tests/cover-fire.test.mjs`'s Hollow 3v3 the held trigger pulls (a kid pulls with
+a wall inside 3 m, so no BB) swung from 19 to 199 a run on the same build. Logging each held pull by kid and spot
+found it is one kid a run, parked at a fort wall. Rebecca, an ally, spawns inside the north fort. When fire comes
+in, `nearestShieldingCover` sends her to the nearest cover within 14 m, and from her spawn the only one is a log at
+(−8, 22), past the fort's back wall. She walks straight at it, wedges in the fort's south-west corner (−0.93, 27.55),
+settles there, and from then on her muzzle line runs into the wall: 35–60 held pulls a minute in 2 runs of 4. Sean
+did the same in the south fort less often. The 'shooting' state's own reposition has the same blind spot.
+Kids now only take cover they can walk to in a straight line (`kidWalkClear`: rays at shin and chest height, down
+the centre and both shoulders, against every obstacle, low ones too). With no such cover in reach, the incoming-fire
+reaction leaves the kid where he is, which inside a fort is cover anyway. A kid whose pull is held three times running
+(`_lineHolds`) also repositions after his next shot instead of rolling for it.
+The new test turned up a crash on the old build: a held pull empties the burst queue (v1.112), and the burst loop
+then read a missing entry and threw ("reading 'dueIn'"), skipping the rest of that frame's enemy update. The loop
+now stops when the queue is empty.
+
+### Verified
+- New `tests/hollow-held.test.mjs`, four 60 s Hollow 3v3 rounds, player untaggable: held pulls 2.3% of 1864 in the
+  full run (3.4% of 1158 alone), no kid over 10 from one spot, Rebecca never in the corner. On v1.121 its first round
+  already had Rebecca holding 15 times from (−5, 25), and the second threw the 'dueIn' error. A queue emptied by a
+  held pull mid-burst now ends cleanly.
+- With the logging probe, held pulls a round: 12–62 on v1.121 (4 rounds, Rebecca in the corner in 2); 11–40 with only
+  the three-holds rule (6 rounds, in the corner in 5: no cover in reach of the corner either); 4–41 with the walkable
+  rule too (6 rounds, never the corner).
+- `tests/cover-fire.test.mjs`: 6 held of 1020 pulls over its four maps (27 of 713 on v1.121); into-cover shots within
+  3 m 0 of 1107.
+- `npm test`: 32/33 in the full run. `cars` lost its browser in `g.bedroom()` after NEW GAME ("Target page, context
+  or browser has been closed"; the harness stall, this time as a closed browser rather than a hang) and passed alone.
+
+### Still open
+- With no walkable cover in reach, a kid under fire now stays where he is. Kids have no pathfinding: cover round a
+  corner (out the fort's door and along the wall) is never picked. Worth watching for kids who stand in the open
+  under fire on the busier maps.
+- Seth in the south fort still holds up to 10 pulls from one spot in some rounds (a window line), under the test's 20.

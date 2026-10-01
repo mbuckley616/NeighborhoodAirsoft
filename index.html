@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.121</div>
+  <div class="version">v1.122</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20581,7 +20581,9 @@ function spawnEnemyBB(enemy, targetPos) {
         }
         // can't see past it: hold fire. v1.112: and let go of the trigger, so an
         // auto's queued follow-ups don't each try the same blocked line again.
-        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; return; }
+        // v1.122: count blocked pulls in a row; the 'shooting' state moves a kid on after three.
+        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; enemy._lineHolds = (enemy._lineHolds || 0) + 1; return; }
+        enemy._lineHolds = 0;
         if (y > muzzlePos.y + 1e-6) {
           muzzlePos.y = y;
           enemy._firingOverCover = 0.45;
@@ -21755,6 +21757,19 @@ function raycastObstacles(ox, oy, oz, dx, dy, dz, maxDist, obstacles, minH = 0.2
 // rectangle, so "outside the envelope face" often landed INSIDE the angled car
 // body (the "kids phase into car centers" bug). Now each shape is handled in its
 // own frame. A final overlap nudge guarantees the spot is actually walkable.
+// v1.122: can a kid walk a straight line from where he stands to (x, z)? Rays at shin and chest height, down his
+// centre and both shoulders, against every obstacle (low ones too: a kid can't step over them).
+function kidWalkClear(e, x, z) {
+  const dx = x - e.pos.x, dz = z - e.pos.z, d = Math.hypot(dx, dz);
+  if (d < 0.05) return true;
+  const ux = dx / d, uz = dz / d, obs = Game.player.obstacles || [];
+  for (const side of [0, -0.3, 0.3]) for (const h of [0.25, 1.0]) {
+    const ox = e.pos.x - uz * side, oz = e.pos.z + ux * side;
+    if (raycastObstacles(ox, (e.pos.y || 0) + h, oz, ux, 0, uz, d, obs, 0) < d) return false;
+  }
+  return true;
+}
+
 function coverStandPos(cover, playerPos, kidRadius = 0.35) {
   const buffer = kidRadius + 0.2;
   let standX, standZ;
@@ -21854,16 +21869,26 @@ function coverShieldsFrom(c, ePos, dir) {
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
-  let best = null, bestD = Infinity, bestAny = null, bestAnyD = Infinity;
+  // v1.122: only cover he can walk straight to (the caller's stand spot); with none, he stays put. Rebecca in the
+  // Hollow 3v3 ran from inside her fort for the one cover in reach, past its back wall, wedged in the corner, and
+  // held fire into the wall from there for the rest of the round.
+  let bestW = null, bestWD = Infinity, bestAnyW = null, bestAnyWD = Infinity;
+  const threat = { x: e.pos.x - dir.x, z: e.pos.z - dir.z };
   for (const c of cover) {
     if ((c.h || 0) < 0.5 || c === e.homeCover) continue;
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
     if (d > maxDist) continue;
-    if (d < bestAnyD) { bestAnyD = d; bestAny = c; }
-    if (coverShieldsFrom(c, e.pos, dir) && d < bestD) { bestD = d; best = c; }
+    const shields = coverShieldsFrom(c, e.pos, dir);
+    if (d < bestAnyWD || (shields && d < bestWD)) {
+      const sp = coverStandPos(c, threat, 0.35);
+      if (kidWalkClear(e, sp.x, sp.z)) {
+        if (d < bestAnyWD) { bestAnyWD = d; bestAnyW = c; }
+        if (shields && d < bestWD) { bestWD = d; bestW = c; }
+      }
+    }
   }
-  return best || bestAny;
+  return bestW || bestAnyW;
 }
 
 // v1.67: TEAMMATE CROWDING PENALTY. Returns a positive penalty that grows the
@@ -22459,6 +22484,9 @@ function updateEnemies(dt) {
           target.y += (Math.random() - 0.5) * burstSpread * 0.6;
           target.z += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
           spawnEnemyBB(e, target);
+          // v1.122: a held pull empties the queue (v1.112); the next pass of this loop then read a missing entry
+          // and threw ("reading 'dueIn'"), which skipped the rest of the frame's enemy update.
+          if (e.pendingBurst.length === 0) break;
           e.pendingBurst.splice(k, 1);
         }
       }
@@ -23239,6 +23267,9 @@ function updateEnemies(dt) {
           const rangedAutoClosingNow = (e.weapon === 'ak47' || e.weapon === 'ar')
             && e.role !== 'defender' && distToPlayer > ENGAGE_PUSH;
           if (rangedAutoClosingNow) repositionChance = Math.max(repositionChance, 0.8);
+          // v1.122: three pulls in a row held at a blocked line (tests/cover-fire's Hollow 3v3: one kid in a
+          // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
+          if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; }
           if (Math.random() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
@@ -23262,6 +23293,10 @@ function updateEnemies(dt) {
               const distFromRef = Math.sqrt((cx - distRef.x)**2 + (cz - distRef.z)**2);
               return distFromRef <= maxRepositionDist;
             });
+            // v1.122: only cover he can walk straight to. A kid inside a Hollow fort picked cover beyond its back
+            // wall, wedged in the corner on the way, and held fire there at the wall for the rest of the round
+            // (tests/cover-fire: up to 62 held pulls a minute).
+            candidates = candidates.filter(c => { const sp = coverStandPos(c, tgt.pos, 0.35); return kidWalkClear(e, sp.x, sp.z); });
             // v1.67: DEFEND anti-crowding. Prefer candidates that aren't already
             // occupied by a teammate, so the squad fans out across different cover
             // instead of stacking. Only narrow to the un-crowded subset if it's
