@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
   trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
   a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`
@@ -15,8 +17,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Change something on Winnmark first (say what in a note).
   Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
   pieces are settled.
-
-## Answered
+  Michael: **A — The kids next**. (2026-10-01)
 
 - **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.
   v1.104 rebuilt Winnmark's eight houses: hip roofs with even eaves and gutters, a gable over the door with a round
