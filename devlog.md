@@ -6363,3 +6363,32 @@ done: every map has Winnmark's pieces, except the Hollow's pines, which stay pin
 - Whether the lane's kerb reads right where the S-curve is tightest; the driveways are where they were (v1.24a pads).
 - Bunratty's curbside bins still stand in the road 1.5 m off the centreline (since v1.35b; trash-day flavour, and moving
   them would change cover and the seeded boards), now with a kerb behind them.
+
+
+---
+
+
+## v1.128 — The shop's four tabs: Guns, Ammo, Gear, Mods
+
+Backlog D.5 B (Michael: A, control room and decisions, 1 Oct). The shop had five tabs, BBs · Loadout · Guns ·
+Accessories · Equipment, and "Loadout" mixed the belt and holster (gear you wear) with speed loaders (ammo you use up),
+and clashed by name with the Loadout screen. It now has four, named for what a thing is for, in Michael's order:
+**Guns** (unchanged: the eight guns, each gun's page with its mags and spares), **Ammo** (the four BB packs, then the
+three speed loaders, then the seven BB colours), **Gear** (Belt & Holster, then eyewear, body armour and shoes) and
+**Mods** (red dot, 4× scope, both lasers, flashlight; the section header reads "Gun Mods", was "Gun Accessories").
+Every row, price, button and the airsoft.com look are as they were; only the tab they sit on moved. The catalog
+entries keep their internal category (`Loadout` for the belt, holster and loaders), so their icons and purchase
+code are untouched. The shop opens on Guns, the first tab, as it used to open on its first tab (BBs); a stale tab
+name falls back to it.
+
+### Verified
+- New `tests/shop-tabs.test.mjs`, clicking each tab: four tabs in the order Guns, Ammo, Gear, Mods; the shop opens on
+  Guns; Guns shows its 8 guns, Ammo its sections Restock BBs, Speed Loaders, BB Color (7 rows, 7 colours), Gear Belt &
+  Holster, Eyewear, Body Armor, Shoes (16 rows), Mods its 5 mods. Every catalog row, mod, eyewear, armour piece and
+  shoe shows on exactly one tab, every BB colour on Ammo. A speed loader bought from Ammo ($15, one more loader) and a
+  red dot from Mods with real clicks. Screenshots `tests/out/shop-guns.png`, `shop-ammo.png`, `shop-gear.png`, `shop-mods.png`.
+- `tests/utility-belt.test.mjs` now finds the belt and holster on Gear.
+- `npm test`: 38/38 suites green.
+### Still open
+- D.5 C, the Loadout screen with a 3D kid, is the last part of D.5; it has its own question in decisions.
+- Whether Guns is the right tab to open on, or Ammo (BBs are the thing a returning player buys most).

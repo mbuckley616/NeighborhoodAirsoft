@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.127</div>
+  <div class="version">v1.128</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -17559,18 +17559,20 @@ function closeMap() {
 }
 
 // === SHOP === (v1.26 rework: tabs + gun drill-in + equipment)
-// Tabs: BBs · Loadout · Guns · Accessories · Equipment
+// Tabs: Guns · Ammo · Gear · Mods (v1.128, backlog D.5 B, Michael: A — four tabs by what it's for; was BBs · Loadout ·
+// Guns · Accessories · Equipment). Ammo is the BB packs, speed loaders and BB colours; Gear the Belt & Holster, eyewear,
+// armour and shoes; Mods the sights, lasers and flashlight. The rows, prices and look are unchanged; only where they sit.
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
-const SHOP_TABS = ['BBs', 'Loadout', 'Guns', 'Accessories', 'Equipment'];
-let shopState = { activeTab: 'BBs', view: 'list', detailGun: null, flash: null };
+const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods'];
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
   Game.prevMode = Game.mode;
   Game.mode = 'shop';
   exitPointerLock();
-  if (!SHOP_TABS.includes(shopState.activeTab)) shopState.activeTab = 'BBs';
+  if (!SHOP_TABS.includes(shopState.activeTab)) shopState.activeTab = SHOP_TABS[0];
   shopState.view = 'list';
   shopState.detailGun = null;
   renderShop();
@@ -18041,11 +18043,10 @@ function renderShop() {
   // Route to the right renderer.
   if (shopState.view === 'gun' && shopState.detailGun) { renderGunDetail(c, shopState.detailGun); return; }
   switch (shopState.activeTab) {
-    case 'BBs':         renderBBsTab(c); break;
-    case 'Loadout':     renderCatalogTab(c, 'Loadout'); break;
-    case 'Guns':        renderGunsTab(c); break;
-    case 'Accessories': renderAccessoriesTab(c); break;
-    case 'Equipment':   renderEquipmentTab(c); break;
+    case 'Guns': renderGunsTab(c); break;
+    case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
+    case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
+    case 'Mods': renderAccessoriesTab(c); break;
   }
 }
 
@@ -18090,22 +18091,22 @@ function shopSectionHeader(text, sub) {
   return h;
 }
 
-function renderCatalogTab(c, category) {
-  // Loadout gets section headers to break up the long list (v1.26).
-  if (category === 'Loadout') {
-    const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
-    const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
-    // v1.106: the slot unlocks are a belt and a holster (D.5)
-    if (slots.length)   { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
-    if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
-    return;
-  }
-  SHOP_CATALOG.filter(x => x.category === category).forEach(i => c.appendChild(shopCatalogRow(i)));
+// v1.128: the old Loadout tab's two sections, now on Gear (belt & holster) and Ammo (speed loaders). The catalog
+// entries keep category 'Loadout' (their id and icon); only the tab they show on moved.
+function renderBeltAndHolster(c) {
+  // v1.106: the slot unlocks are a belt and a holster (D.5)
+  const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
+  if (slots.length) { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
+}
+function renderSpeedLoaders(c) {
+  const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
+  if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
 }
 
-function renderBBsTab(c) {
+function renderBBsTab(c, between) {
   c.appendChild(shopSectionHeader('Restock BBs', 'Adds to your home stash'));
   SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => c.appendChild(shopCatalogRow(i)));
+  if (between) between(c);   // v1.128: the Ammo tab puts the speed loaders between the packs and the colours
   // BB color picker
   c.appendChild(shopSectionHeader('BB Color', 'Cosmetic — tint the BBs you fire'));
   const grid = document.createElement('div');
@@ -18298,7 +18299,7 @@ function gunBlurb(gt) {
 }
 
 function renderAccessoriesTab(c) {
-  c.appendChild(shopSectionHeader('Gun Accessories',
+  c.appendChild(shopSectionHeader('Gun Mods',
     'Buy a copy per gun you want it on — each copy mounts on one gun at a time. Assign them at The Workbench (hall closet).'));
   for (const aid in ATTACHMENTS) {
     const a = ATTACHMENTS[aid];

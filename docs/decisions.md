@@ -5,6 +5,37 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.3 step 4 is done: every map has Winnmark's pieces (builder, 2026-10-01).** Your A (carry Winnmark's pieces to
+  the other maps) is built: Bunratty's houses, cars, trees, props and fort (v1.125), the lot's cars and trees and the
+  Hollow's hardwoods (v1.126), and Bunratty's S-curve road with a gutter and kerb (v1.127). The Hollow's pines stay
+  the old three-cone pine. Collision is unchanged everywhere. Screenshots in `tests/out/` (bunratty-houses,
+  lot-cars, hollow-trees, bunratty-road); in game once Builder sessions is merged. Options:
+  A) D.3 is done; the builder moves on down the backlog.
+  B) One more piece first: a new low-poly pine for the Hollow, to match the hardwoods.
+  C) Change something on the other maps first (say what in a note).
+  Builder recommends **A**: your list (houses, cars, people, trees, roads) is covered on every map; the pine can wait
+  for a look in play.
+
+- **D.5 C, the Loadout screen with a 3D kid (builder, 2026-10-01).** Your note: the Loadout screen should show a
+  character model and what is equipped on each part of the body, with its own mesh for each item. Today it is three
+  text lists (slots 1–4, items you own, worn gear). The bathroom mirror already renders your kid turning in a panel.
+  Options:
+  A) Your kid turns in a panel on the Loadout screen, wearing what is equipped (eyewear, armour pieces, shoes, belt and
+     holster, the slot-1 gun in hand), each piece its own mesh, with a label from each body part to its item; the
+     lists stay beside it. Built in steps: the kid, gun and labels first, then the gear meshes a group at a time.
+  B) The kid and gun only, worn gear as labels on the body; no new gear meshes yet.
+  C) Hold C until you have played the new shop tabs (v1.128).
+  Builder recommends **A**, in steps, each shown to you like D.3.
+
+- **D.1, the next zone (builder, 2026-10-01).** The backlog says Northcliff comes next "when this item comes round
+  again", but the D.1 answer only chose the parking lot first; the order after it was the builder's recommendation,
+  not yours, and D.2 (online) waits until "the v2 zones are done". Options:
+  A) Northcliff / Martin's Landing next (houses on a hill above a creek).
+  B) A high school's grounds (made-up name, per your C on names): fields, bleachers, portables.
+  C) A country-club pool and golf course (made-up name).
+  D) No new zone for now; finish D.5 and the found-in-play bugs first.
+  Builder recommends **A**: it is another street, so it reuses every polished piece, and it was next on the list.
+
 ## Answered
 
 - **D.3 step 3, the kids are done (builder, 2026-10-01).** Your A (control room, 1 Oct) is built, on every kid on

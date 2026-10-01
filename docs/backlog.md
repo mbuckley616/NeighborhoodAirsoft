@@ -67,8 +67,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    if the tabs / item groupings make sense, but do NOT lose the early 2000s website aesthetic. The loadout unlocks are
    something you wouldn't 'buy'... maybe rename it to like 'Holster' or 'Utility Belt' and the description informs what
    it unlocks for you. (Michael, 2026-09-29) **(design)** — Michael: **A** first (control room, 30 Sep). ~~A, the Utility Belt~~ — done,
-   v1.106 (slot 3 is the Utility Belt, slot 4 the Drop-Leg Holster; texts say what each unlocks). B (re-sort the shop,
-   as a list for Michael first; the list is in decisions, 1 Oct) and C (Loadout screen with a 3D kid) still to come.
+   v1.106 (slot 3 is the Utility Belt, slot 4 the Drop-Leg Holster; texts say what each unlocks). ~~B, re-sort the shop~~ —
+   done, v1.128 (Michael: A — four tabs: Guns, Ammo, Gear, Mods; `tests/shop-tabs.test.mjs`). C (Loadout screen with a
+   3D kid) still to come; its question is in decisions (1 Oct).
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,

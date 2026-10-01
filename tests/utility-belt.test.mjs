@@ -4,7 +4,7 @@
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
-await page.evaluate(() => { Game.persist.cash = 500; openShop(); shopState.activeTab = 'Loadout'; renderShop(); });
+await page.evaluate(() => { Game.persist.cash = 500; openShop(); shopState.activeTab = 'Gear'; renderShop(); });
 const tab = () => page.evaluate(() => {
   const el = document.getElementById('shopScreen');
   return {
@@ -15,7 +15,7 @@ const tab = () => page.evaluate(() => {
 let t = await tab();
 console.log('  ', JSON.stringify(t.rows.slice(0, 2)));
 const belt = t.rows.find(r => r.name === 'Utility Belt'), holster = t.rows.find(r => r.name === 'Drop-Leg Holster');
-check('the Loadout tab lists the Utility Belt and the Drop-Leg Holster', belt && holster, t.rows.map(r => r.name));
+check('the Gear tab (Loadout before v1.128) lists the Utility Belt and the Drop-Leg Holster', belt && holster, t.rows.map(r => r.name));
 check('no row is called a "Loadout Slot" any more', !t.rows.some(r => /Loadout Slot/.test(r.name)));
 check('their section is "Belt & Holster"', t.headers.includes('Belt & Holster'), t.headers);
 check('the belt says it unlocks slot 3', /slot 3/.test(belt.desc) && /third item/.test(belt.desc), belt.desc);
@@ -31,7 +31,7 @@ check('and the holster on locked slot 4', /Needs the Drop-Leg Holster/.test(lo[3
 for (const name of ['Utility Belt', 'Drop-Leg Holster']) {
   await page.evaluate((name) => {
     if (Game.mode !== 'shop') { openShop(); }
-    shopState.activeTab = 'Loadout'; renderShop();
+    shopState.activeTab = 'Gear'; renderShop();
     const row = [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent === name);
     row.querySelector('.shop-item-buy').click();
   }, name);
