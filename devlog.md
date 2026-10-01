@@ -6185,4 +6185,4 @@ Chromium launch flags in `tests/lib/game.mjs` (`--in-process-gpu` first), measur
 - `npm test`: 33/33 (v1.123's run).
 
 ### Still open
-- The fix itself, and whether CI's runner sees the same rate (CI has failed on it at most once in its history).
+- The fix itself, and whether CI's runner sees the same rate.
