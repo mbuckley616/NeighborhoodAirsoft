@@ -6009,3 +6009,34 @@ the end of the forearm and the IK are untouched, so the grips and every pose are
 ### Still open
 - Michael's eye on the hands; they are small at play distance, so this mostly shows in the mirror and up close.
 - Next in step 3: clothes (sleeves, collar and hem, a belt, jeans seams, sneakers with soles).
+
+## v1.120 — The kids' clothes
+
+D.3 step 3, last part (Michael: A): the clothes. A kid's shirt, sleeves, legs and shoes were plain boxes in flat
+colours. Each keeps its box and node (the hitboxes are fixed numbers in `checkEnemyHit`, and the crouch, walk and IK
+move, scale and rotate these same nodes) and gets a shape inside it, built once in `kidClothesGeometry` and shared by
+every kid. The shirt is tucked in: a body set in from the box, a shoulder yoke at full width, and a crew collar
+rising 2 cm round the neck. The sleeves have a hem at the elbow end. The jeans have front pocket seams, side seams, a
+waist seam and a turned-up cuff. The sneaker upper dips toward the toe and heel and sits on a white sole with a rubber
+toe cap and laces. `buildKidClothes` adds per-kid trim to the torso, taken from the kid's own colours so the same kid
+always dresses the same: a collar rib in a darker shade of the shirt, then a chest stripe, a chest pocket or a plain
+front, and a belt (dark brown, brown or black) with a buckle. Sneakers come in black, navy, grey, red or white. The
+shirt, legs, sleeves and shoe uppers are still one mesh each; the trim adds 3 meshes and each sole 1. The hit flash
+still lights the shirt (the trim stays its colour).
+
+### Verified
+- New `tests/kid-clothes.test.mjs`, over all 24 kids: everyone has the torso trim (2–3 meshes); the shirt, trim and belt
+  stay within 7.5 mm of the old torso box (the buckle) with only the collar above it, 2.2 cm; jeans, sleeves and
+  sneaker uppers are inside their old boxes, the sleeve spanning the old upper arm exactly (±0.12 m about its node); the
+  sole is inside the shoe box but for the laces (5 mm over) and its bottom is at the ground (0.000). The same kid built
+  twice dresses the same; across the 24 there are 3 shirt fronts and 5 sneaker colours; the shirt material is still the
+  one the hit flash drives, and in Seth's House a tagged kid's shirt flashes (emissive 0.81). Screenshot
+  `tests/out/kid-clothes.png` (four kids, full length).
+- `tests/grip.test.mjs`, `tests/burst-pose.test.mjs` and `tests/walk-anim.test.mjs` unchanged and green.
+- `npm test`: 30/31 in the full run. `winnmark-trees` lost its browser in `g.bedroom()` after NEW GAME before any test
+  ran (the harness stall; three times across this session's last two runs, always at that step), and passed alone.
+
+### Still open
+- Michael's eye on the kids as a whole (faces, hands, clothes). Step 3 is done; B (Winnmark's pieces to the other
+  maps) is next by his recommended order, unless he wants changes first.
+- The mirror could now offer eye colour and a shirt front (stripe, pocket, plain); D.6 left them for these meshes.

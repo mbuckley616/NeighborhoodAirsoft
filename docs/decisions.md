@@ -16,6 +16,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
   pieces are settled.
 
+- **D.3 step 3, the kids are done (builder, 2026-10-01).** Your A (control room, 1 Oct) is built, on every kid on
+  every map: faces (v1.118: rounded head, eye whites and irises, brows, nose, ears, a smile; glasses you can see the
+  eyes through), hands (v1.119: a fist with a thumb and fingers), clothes (v1.120: tucked shirts with a collar and a
+  chest stripe or pocket, belts, jeans with seams and cuffs, sneakers on white soles). Hitboxes unchanged. Screenshots
+  in `tests/out/` (kid-faces, kid-hands, kid-clothes); in game, any match or the bathroom mirror once Builder sessions
+  is merged. Options:
+  A) Good, go on: carry Winnmark's houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
+  B) A, and first give the mirror rows for eye colour and shirt front (stripe, pocket, plain) now the meshes exist.
+  C) Change the kids first (say what in a note).
+  Builder recommends **B**: the mirror rows are a short job on what is already built, and D.6 was waiting on them.
+
 ## Answered
 
 - **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.

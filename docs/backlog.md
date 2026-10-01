@@ -52,8 +52,10 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    kerbs~~ — done, v1.116 (one road mesh on the ground, gutter and rolled kerb dropped at driveways, manholes, drains).
    Step 2 is complete. Step 3 (Michael: A, the kids next: faces, hands, clothes; control room, 1 Oct): ~~faces~~ — done,
    v1.118 (rounded head; eye whites, irises, pupils, brows, nose, ears, mouth; open glasses frames; every kid, every map).
-   ~~Hands~~ — done, v1.119 (a fist with a thumb, curled fingers and a wrist step, same node and grips). Clothes
-   next; then B, Winnmark's pieces to the other maps.
+   ~~Hands~~ — done, v1.119 (a fist with a thumb, curled fingers and a wrist step, same node and grips). ~~Clothes~~
+   — done, v1.120 (tucked shirt with yoke and collar, sleeve hems, jeans seams and cuffs, belt, sneakers on white soles,
+   per-kid chest stripe or pocket and shoe colour). Step 3 is complete: Michael's look at the kids, then B, Winnmark's
+   pieces to the other maps (his recommended order in decisions).
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
@@ -67,7 +69,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,
    glasses; saved). ~~Part 2~~ — done, v1.108 (NEW GAME opens on the mirror once; height moves the eye line and
-   hitbox ±8 cm). Eye colour and clothing style wait on new face and clothing meshes.
+   hitbox ±8 cm). Eye colour and clothing style wait on new face and clothing meshes (built in v1.118–v1.120: the face
+   takes `eyeColor`; the mirror rows for it are not added yet).
 7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
    with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
    need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**
@@ -91,5 +94,5 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
 - ~~v1.101 — BBs faster than 36 m/s pass through thin walls: `updateBBs` tests obstacles only at each 1/200 s sub-step's end point, so a BB moving more than a wall's thickness per sub-step skips it. Bunratty planter wall (18 cm): 0% through at 30 m/s, 18% at 45, 42% at 60, 61% at 75, still able to tag; a real Pincer loss came through it. Sweep oldPos→pos (`obsRayDist`) instead. Steps: `g.scenario('bunratty_pincer')`; `makeBB` at (28.4, 1.2, 2), velocity (60, 0, 0), `curveStrength = 0`; `updateBBs(1/200)` ×20; count `pos.x > 29.1` with `canDamage`.~~ — done, v1.110 (the sub-step now sweeps oldPos→pos; 0% through at 30–150 m/s, `tests/bb-sweep.test.mjs`)
 - ~~v1.101 — Result lines that don't fit the map: Pincer's lose reads "…take the fort" (a cul-de-sac); Juggernauts and The Big Game lose on "…regroup near the road" (the woods). Steps: lose any of the three.~~ — done, v1.117 (Pincer takes the cul-de-sac, Hold the Doors the doors; the Hollow regroups back in the trees and sits down in the leaves)
 - v1.110 (builder) — Hollow 3v3 in `tests/cover-fire.test.mjs`: held trigger pulls (a kid pulls with a wall inside 3 m, so no BB) swing from 19 to 199 per run on the same build (v1.109: 20 and 101). At 199 the suite's 25% limit fails. Find which kid is holding over and over, and where. Steps: `node tests/cover-fire.test.mjs` a few times; log `held` per kid in hollow_skirmish_3v3.
-- v1.110 (builder) — Harness: a suite now and then stalls in `g.bedroom()` right after NEW GAME. The page stops answering `page.evaluate` and the suite sits until run.mjs's 10-minute timeout (utility-belt, front-door and music once each, 30 Sep; each passed alone; Chromium logged SSL handshake failures just before the music stall). CI would count it as a failure.
+- v1.110 (builder) — Harness: a suite now and then stalls in `g.bedroom()` right after NEW GAME. The page stops answering `page.evaluate` and the suite sits until run.mjs's 10-minute timeout (utility-belt, front-door and music once each, 30 Sep; each passed alone; Chromium logged SSL handshake failures just before the music stall). CI would count it as a failure. (Builder, 1 Oct: three more in two full runs, market-lot, walk-anim, winnmark-trees, each at `g.bedroom()`'s first evaluate after NEW GAME; all passed alone.)
 - v1.112 (builder) — Gunner wall-follow can pin a kid in a pocket: on the v1.112 Winnmark layout, Night Prowl's Seth stood still in `advancing` for 8.8 s (1 run in 6; 2.1 s in 3 more) at (22.3, 6.1), between a parked sedan's collision box and a 1.25 m post; CI failed `tests/night-prowl.test.mjs` on it (3.0 s) at 4117ad3. v1.113's tree pass moved the cars and the pocket went (0 s in 15 runs), but the cause stands: `advancing`'s wall-follow flips side every 0.5 s of stuck time and oscillates in a pocket, the shape v1.100 fixed for taggers (commit to a sidestep, longer on repeat wedges). Port that to `advancing`; reproduce with `git show 4117ad3:index.html` and the Night Prowl walk. (Builder, v1.117: `advancing` already has the commitment since v1.103, in the direct-push wall-follow; what it lacks is a way out of a pocket. With both sides blocked, a committed sidestep that can't move turns round at once, and the 0.5 s `_advStuck` flip still runs. Likely fix: after two blocked turn-rounds, back off along −(to target) for ~0.5 s before sidestepping again.)

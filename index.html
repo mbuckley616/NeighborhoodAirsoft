@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.119</div>
+  <div class="version">v1.120</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13880,6 +13880,90 @@ function kidHandGeometry(inSide) {
   _kidHandGeo[inSide] = _houseMergeParts(parts);
   return _kidHandGeo[inSide];
 }
+// v1.120 (backlog D.3 step 3, the kids: clothes). The body was five plain boxes. Each keeps its box (the hitboxes are
+// fixed numbers in checkEnemyHit, and the poses scale and move these same nodes) and gets a shape inside it, merged into
+// one geometry shared by every kid, so the shirt, legs and shoes are still one mesh each:
+//   shirt: a body a little in from the box, tucked in, with a shoulder yoke at full width and a crew collar;
+//   sleeve: the upper arm with a hem band at the elbow end; jeans: a leg with front pocket seams, a side seam and a cuff;
+//   sneaker: an upper that rounds down at the toe and heel, on a sole (the sole, toe cap and laces are a child mesh).
+// buildKidClothes adds per-kid trim on the torso: a darker collar rib, a chest stripe or pocket or nothing
+// (from the kid's colours, so the same kid always wears the same shirt), and a belt with a buckle.
+let _kidClothesGeo = null;
+function kidClothesGeometry() {
+  if (_kidClothesGeo) return _kidClothesGeo;
+  const _s = new THREE.Vector3(1, 1, 1);
+  const mk = () => { const parts = []; parts.add = (geo, px, py, pz, rx = 0, ry = 0, rz = 0) => parts.push({ geo,
+    m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) }); return parts; };
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  // shirt (torso box 0.42 × 0.5 × 0.24, centre 0)
+  const t = mk();
+  t.add(box(0.404, 0.44, 0.226), 0, 0.01, 0);           // body, in from the box so the yoke and belt stand proud (tucked in)
+  t.add(box(0.42, 0.04, 0.24), 0, 0.23, 0);             // shoulder yoke
+  for (const [w, d, x, z] of [[0.16, 0.022, 0, 0.06], [0.16, 0.022, 0, -0.06], [0.022, 0.1, 0.07, 0], [0.022, 0.1, -0.07, 0]])
+    t.add(box(w, 0.02, d), x, 0.258, z);                // crew collar, a ring round the neck
+  // sleeve (upper arm 0.11 × 0.24 × 0.13, centre 0; the mesh hangs half its length below the shoulder)
+  const u = mk();
+  u.add(box(0.104, 0.205, 0.124), 0, 0.0175, 0);
+  u.add(box(0.11, 0.035, 0.13), 0, -0.1025, 0);         // hem at the elbow end
+  // jeans (leg 0.16 × 0.55 × 0.18, centre 0)
+  const l = mk();
+  l.add(box(0.154, 0.5, 0.174), 0, 0.025, 0);
+  l.add(box(0.16, 0.05, 0.18), 0, -0.25, 0);            // turned-up cuff
+  l.add(box(0.16, 0.012, 0.18), 0, 0.269, 0);           // waist seam at the top
+  for (const sx of [-1, 1]) l.add(box(0.05, 0.006, 0.006), sx * 0.04, 0.2, 0.0855, 0, 0, sx * 0.6);   // front pocket seams
+  l.add(box(0.006, 0.44, 0.006), 0.0765, 0.0, 0); l.add(box(0.006, 0.44, 0.006), -0.0765, 0.0, 0);   // side seams
+  // sneaker upper (shoe 0.18 × 0.08 × 0.26, centre 0): the top edges pulled in at the toe and heel
+  const sh = box(0.16, 0.06, 0.24, 1, 1, 8);
+  const pa = sh.attributes.position;
+  for (let i = 0; i < pa.count; i++) {
+    const z = pa.getZ(i), y = pa.getY(i);
+    if (y > 0) { const k = Math.min(1, Math.abs(z) / 0.12); const pull = z > 0 ? 0.55 : 0.25; pa.setY(i, y - 0.04 * Math.pow(k, 3) * (z > 0 ? 1 : 0.5)); pa.setZ(i, z * (1 - pull * Math.pow(k, 4) * 0.2)); }
+  }
+  sh.computeVertexNormals();
+  const s = mk(); s.add(sh, 0, 0.01, -0.005);
+  // sole, toe cap and laces (white), as one child
+  const so = mk();
+  so.add(box(0.18, 0.025, 0.26), 0, -0.0275, 0);
+  so.add(box(0.15, 0.02, 0.05), 0, -0.005, 0.105);       // rubber toe cap
+  for (const [y, z] of [[0.037, 0.055], [0.041, 0.025], [0.042, -0.005], [0.042, -0.035]]) so.add(box(0.07, 0.006, 0.012), 0, y, z);   // laces
+  _kidClothesGeo = { torso: _houseMergeParts(t), upper: _houseMergeParts(u), leg: _houseMergeParts(l), shoe: _houseMergeParts(s), sole: _houseMergeParts(so) };
+  return _kidClothesGeo;
+}
+function _kidHash(p) {
+  const n = ((p.shirtColor | 0) * 31 + (p.pantsColor | 0) * 17 + (p.hairColor | 0)) >>> 0;
+  return (Math.abs(Math.sin(n * 12.9898) * 43758.5453)) % 1;
+}
+function kidShoeColor(p) {
+  return [0x1a1a1a, 0x1a1a1a, 0x26324a, 0x5a5a60, 0x7a2222, 0xd8d8d0][Math.floor(_kidHash(p) * 6)];
+}
+function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
+  const cg = kidClothesGeometry();
+  const h = _kidHash(p);
+  const trimColor = new THREE.Color(p.shirtColor ?? 0x5a7a4a).multiplyScalar(0.7).getHex();
+  const mats = {
+    trim: _kidFaceMat('trim', trimColor, 0.85),
+    belt: _kidFaceMat('belt', [0x2a1c12, 0x3a2614, 0x141414][Math.floor(h * 13) % 3], 0.6),
+    buckle: _kidFaceMat('buckle', 0x9a9a92, 0.35),
+  };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  // the collar rib in the darker trim colour, just proud of the shirt
+  for (const [w, d, x, z] of [[0.17, 0.024, 0, 0.061], [0.17, 0.024, 0, -0.061], [0.024, 0.1, 0.073, 0], [0.024, 0.1, -0.073, 0]])
+    add('trim', box(w, 0.012, d), x, 0.266, z);
+  // a chest stripe, a pocket, or plain, by kid
+  const style = Math.floor(h * 3);
+  if (style === 0) add('trim', box(0.424, 0.05, 0.244), 0, 0.06, 0);
+  else if (style === 1) { add('trim', box(0.08, 0.085, 0.006), 0.1, 0.1, 0.116); add('trim', box(0.084, 0.01, 0.008), 0.1, 0.14, 0.117); }
+  // belt round the waist with a buckle at the front
+  add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
+  add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  const trim = new THREE.Group(); trim.userData.kidClothes = true;
+  _propMerge(trim, b, mats);
+  trim.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  torso.add(trim);
+  for (const sh of [shoeL, shoeR]) { const so = new THREE.Mesh(cg.sole, _kidFaceMat('sole', 0xe8e6de, 0.8)); so.castShadow = true; sh.add(so); }
+  return trim;
+}
 const _kidFaceMats = {};
 function _kidFaceMat(key, color, rough = 0.6) {
   const k = key + ':' + color;
@@ -13962,25 +14046,26 @@ function createKid(profile, weapon = 'pistol') {
   const shirt = new THREE.MeshStandardMaterial({ color: p.shirtColor, roughness: 0.85 });
   const pants = new THREE.MeshStandardMaterial({ color: p.pantsColor, roughness: 0.85 });
   const hair  = new THREE.MeshStandardMaterial({ color: p.hairColor,  roughness: 0.95 });
-  const shoes = new THREE.MeshStandardMaterial({ color: 0x1a1a1a,     roughness: 0.7  });
+  const shoes = new THREE.MeshStandardMaterial({ color: kidShoeColor(p), roughness: 0.7  });   // v1.120: not every kid in black
 
   // === BODY (all dimensions in "average kid" local space; group.scale handles variants) ===
   // Kid baseline is 1.5m tall in local space (Y=0 at feet → Y=1.5 at top of hair).
 
   // Legs
-  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.18), pants);
+  const cl = kidClothesGeometry();   // v1.120: shaped shirt, jeans, sleeves and sneakers (same boxes; buildKidClothes adds trim)
+  const legL = new THREE.Mesh(cl.leg, pants);
   legL.position.set(-0.1, 0.275, 0); legL.castShadow = true; group.add(legL);
-  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.18), pants);
+  const legR = new THREE.Mesh(cl.leg, pants);
   legR.position.set(0.1, 0.275, 0); legR.castShadow = true; group.add(legR);
 
   // Shoes
-  const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.26), shoes);
+  const shoeL = new THREE.Mesh(cl.shoe, shoes);
   shoeL.position.set(-0.1, 0.04, 0.04); shoeL.castShadow = true; group.add(shoeL);
-  const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.26), shoes);
+  const shoeR = new THREE.Mesh(cl.shoe, shoes);
   shoeR.position.set(0.1, 0.04, 0.04); shoeR.castShadow = true; group.add(shoeR);
 
   // Torso
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.24), shirt);
+  const torso = new THREE.Mesh(cl.torso, shirt);
   torso.position.set(0, 0.8, 0); torso.castShadow = true; group.add(torso);
 
   // Arms — v1.80: TWO-SEGMENT ELBOW RIG. Each arm is now a shoulder pivot Group
@@ -13996,7 +14081,7 @@ function createKid(profile, weapon = 'pistol') {
   function buildArm(sx) {
     const shoulder = new THREE.Group();
     shoulder.position.set(sx, SHOULDER_Y, 0);
-    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.11, U_LEN, 0.13), shirt);
+    const upper = new THREE.Mesh(cl.upper, shirt);   // v1.120: a t-shirt sleeve with a hem
     upper.position.set(0, -U_LEN / 2, 0);   // hangs DOWN from the shoulder pivot
     upper.castShadow = true;
     shoulder.add(upper);
@@ -14103,6 +14188,8 @@ function createKid(profile, weapon = 'pistol') {
   const gunGroup = buildEnemyGunMesh(weapon);
   gunGroup.position.set(-0.27, 0.62, 0.1);   // v1.78: kid's RIGHT side (was +0.27, read left-handed)
   group.add(gunGroup);
+
+  buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
 
   return {
     group, head, torso, eyeL, eyeR, gunGroup,
