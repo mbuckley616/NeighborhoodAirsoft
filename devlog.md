@@ -6186,3 +6186,39 @@ Chromium launch flags in `tests/lib/game.mjs` (`--in-process-gpu` first), measur
 
 ### Still open
 - The fix itself, and whether CI's runner sees the same rate.
+
+
+---
+
+
+## v1.124 — Storm the North Fort starts inside the fort, not in its doorway
+
+The critic's 1 Oct report (on `auto/critic`, filed under Found in play) found the Hollow's `team_b` player spawn at
+(2, 28), which is the south fort's front doorway: the front wall is at z 27 and its port runs x 0.6–3.4. On Storm the
+North Fort and Night Assault, Mitchell and Devon have sniper lines from the north fort straight down that port, so a
+player standing still was tagged inside 18 s in 18 of 20 rounds (Night Assault 10 of 10, median 6 s, four of them at
+3.3 s, the sniper's first shot after the opening hold). The code's own comment said the spawn was "in the south fort",
+so this was a misplaced point, not a design call. I tried six spots standing still for 18 s, 5–8 rounds each, day and
+night: the middle of the fort (2, 31.5) was tagged 1 of 5, its front corners 5 of 5 (the side windows), behind the
+fort 0 of 11 but looking at its back wall. The back of the fort beside the lookout (2.6, 32.3) gave 0 of 16 in the
+probe but 3 of 8 in the suite's first full run, one at 3.4 s: every one was Devon from the north fort's `a_fort`
+anchor (−2, −27), 59 m, because that spot is still on his line through the port. At (0.5, 32.3), the back-left of the
+fort under the roof, that line crosses the front wall at x 0.3, on the inner post beside the port (x 0–0.6), which is
+solid at every height; from there you still look out through the port at the field. 0 of 20 standing rounds tagged
+(10 day, 10 night). It is the new `team_b` spawn. It is the only place `team_b` is used for the player, so the Hold
+the South Fort defends start there too, which suits a defend.
+
+### Verified
+- New `tests/fort-spawn.test.mjs`: the spawn is inside the fort's walls, and standing still for 18 s on Storm the
+  North Fort and Night Assault, four rounds each, at most 3 of 8 rounds are tagged and none before 6 s. At (0.5, 32.3):
+  0 of 8. The doorway gave 9 of 11 in my probe (3.3–9.7 s).
+- `tests/spawn-facing.test.mjs` still passes: every Hollow match starts facing the enemy kids.
+- `npm test` with the spawn at (2.6, 32.3): 33/34, the one red the new suite (Devon's line, above). After the move to
+  (0.5, 32.3) I re-ran the nine suites that enter Hollow scenarios or every scenario (burst-pose, cover-fire,
+  fort-spawn, hollow-held, market-lot, one-ending, opening-hold, result-text, spawn-facing; front-door passed in the
+  full run and doesn't use the spawn): all green. The other 24 suites never load the Hollow.
+
+### Still open
+- Allies in the Hollow team matches still form up at the `b_fort` anchor (2, 27), the doorway; they move off at BEGIN,
+  so I left it.
+- Whether the walk out of the fort feels like the start of an attack; the scenario text says you come up from the south end.
