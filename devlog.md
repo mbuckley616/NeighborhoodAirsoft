@@ -5936,3 +5936,24 @@ untouched. Bunratty keeps its disc road.
 - Michael's eye on the street as a whole. Step 2 is done; what comes next for D.3 is asked in decisions (the kids,
   or carrying Winnmark's pieces to the other maps).
 - The driveway pads are still the old flat strips; their grass edge steps a little on the grade.
+
+## v1.117 — Result lines that fit the map
+
+The critic (v1.101, Found in play) read lose lines that don't fit their maps: Priya's Pincer ends with the kids
+taking "the fort", but the player holds a cul-de-sac, and Juggernauts and The Big Game end with them regrouping
+"near the road", in the woods. The result screen had one place word for every map. It now takes them from the
+scenario, then the map, then the old default. A defend can name what was held (`resultHold`): Pincer is "the
+cul-de-sac", and the lot's Hold the Doors (which also said fort) is "the doors". The Hollow's kids regroup "back in
+the trees" and, after a lost defend, "sit down in the leaves" rather than on a curb, since the woods have neither.
+Every fort scenario and both cul-de-sac maps read as before.
+
+### Verified
+- `tests/result-text.test.mjs` now ends Pincer, Hold the Doors, Juggernauts and The Big Game as well, four ways each.
+  Pincer's lose line reads "…take the cul-de-sac", Hold the Doors "…take the doors", Juggernauts and The Big Game
+  "…regroup back in the trees". None of the Hollow's 16 lines (four scenarios) says road or curb. The south fort and
+  Winnmark's bulb fort still say "take the fort". The v1.96 grammar checks still pass on all 48 lines.
+- `npm test`: 28/28 green.
+
+### Still open
+- The timer win still has "distant screen doors slam" in the Hollow; it reads as moms calling from the houses past
+  the trees, so it stays unless Michael says otherwise.

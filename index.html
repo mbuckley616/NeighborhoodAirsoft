@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.116</div>
+  <div class="version">v1.117</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5254,6 +5254,7 @@ const SCENARIOS = {
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'defend',
+    resultHold: 'the cul-de-sac',   // v1.117: the lose line names what was held
     playerSpawn: 'bulb_center',
     enemySpawnCluster: 'cluster_lane_west',
     enemySetup: [
@@ -5821,6 +5822,7 @@ const SCENARIOS = {
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'defend',
+    resultHold: 'the doors',   // v1.117: the lose line names what was held
     playerSpawn: 'team_a',
     enemySpawnCluster: 'cluster_south',
     enemySetup: [
@@ -17114,6 +17116,12 @@ function endScenario(outcome) {
   // v1.9: detect timer-based win vs kill-em-all win for flavor variation
   const wonByTimer = outcome === 'win' && Game.scenario.winByTimer;
   const wasDefend = scDef?.scenarioType === 'defend';
+  // v1.117 (Found in play, v1.101): the place words fit the map. A defend that isn't a fort says what was held
+  // (scenario resultHold), and the woods have no road or curb (map defaults by builder).
+  const _place = { buildHollowScene: { regroup: 'back in the trees', sit: 'sit down in the leaves' } }[scDef?.builderFn] || {};
+  const holdPlace = scDef?.resultHold || 'the fort';
+  const regroupAt = scDef?.resultRegroup || _place.regroup || 'near the road';
+  const sitDown = _place.sit || 'sit on the curb';
   if (outcome === 'win') {
     if (wonByTimer) {
       // Survive-timer win: the attackers' moms called them in
@@ -17127,8 +17135,8 @@ function endScenario(outcome) {
       outcomeEl.textContent = 'YOU HELD IT';
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = multi
-        ? `Last one's out. ${allStr} sit on the curb, defeated. "Yeah okay, we couldn't crack it."`
-        : `${primaryName}'s out. They sit on the curb, defeated. "Yeah okay, that was a good fort."`;
+        ? `Last one's out. ${allStr} ${sitDown}, defeated. "Yeah okay, we couldn't crack it."`
+        : `${primaryName}'s out. They ${sitDown}, defeated. "Yeah okay, that was a good fort."`;
     } else {
       outcomeEl.textContent = 'YOU GOT THEM';
       outcomeEl.className = 'outcome win';
@@ -17157,10 +17165,10 @@ function endScenario(outcome) {
     if (wasDefend) {
       // Lost a defend — they overran your position
       flavorEl.textContent = multi
-        ? `They got through. ${allStr} take the fort. "Our turn, dude."`
-        : `They got through. ${primaryName} takes the fort. "Our turn, dude."`;
+        ? `They got through. ${allStr} take ${holdPlace}. "Our turn, dude."`
+        : `They got through. ${primaryName} takes ${holdPlace}. "Our turn, dude."`;
     } else if (multi) {
-      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup near the road. "Run it back?"`;
+      flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup ${regroupAt}. "Run it back?"`;
     } else {
       flavorEl.textContent = flavorBank.win
         ? flavorBank.win
