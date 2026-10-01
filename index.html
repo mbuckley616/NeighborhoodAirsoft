@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.120</div>
+  <div class="version">v1.121</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22182,6 +22182,8 @@ function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
 }
 
 function updateEnemies(dt) {
+  // v1.121: a clock for the kids' progress windows (scenario time, counted here)
+  Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
   // Diagnostic: count lasered enemies this frame, and how many reach the clip.
@@ -22951,7 +22953,52 @@ function updateEnemies(dt) {
             const advCommitted = e._advSideT > 0;
             if (advCommitted) e._advSideT -= dt;
             if (e._advWedgeT > 0) e._advWedgeT -= dt; else e._advWedges = 0;
-            if (advCommitted) {
+            if (e._advTurnT > 0) e._advTurnT -= dt; else e._advTurns = 0;
+            // v1.121: a progress window. Each time he gets 0.5 m closer to where he is going it starts again;
+            // it keeps the side axis it started with and how far either way along it he has been. Over 2.5 s
+            // with no such gain while wall-following, he is in a pocket (also after 2 blocked turn-rounds).
+            const clk = Game.scenario.aiClock || 0;
+            if (!(d < e._advBestD - 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
+              const lat = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
+              e._advLatLo = Math.min(e._advLatLo, lat); e._advLatHi = Math.max(e._advLatHi, lat);
+            } else {
+              e._advBestD = d; e._advProg0 = clk; e._advWF = 0;
+              e._advPerpX = -dz / d; e._advPerpZ = dx / d;
+              e._advLatLo = e._advLatHi = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
+            }
+            e._advProgAt = clk;
+            if (!(e._advBackT > 0) && clk - e._advProg0 > 2.5 && e._advWF > 0.3) e._advBackT = 1.5;
+            if (e._advBackT > 0) {
+              // v1.121: backing out of a pocket (see the turn-round count below). Walk away from the target
+              // until a sidestep has room past both places he turned round (0.6 m beyond them, the whole way
+              // there clear), then commit to that side long enough to get there. Ends after 1.5 s, or at once
+              // if the way back is blocked too.
+              e._advBackT -= dt;
+              const bx = e.pos.x - stepX, bz = e.pos.z - stepZ;
+              if (!collidesObstacles(bx, bz, kidRadius)) { e.pos.x = bx; e.pos.z = bz; }
+              else if (!collidesObstacles(bx, e.pos.z, kidRadius)) e.pos.x = bx;
+              else if (!collidesObstacles(e.pos.x, bz, kidRadius)) e.pos.z = bz;
+              const bpx = e._advPerpX, bpz = e._advPerpZ, s0 = e._advSide || 1;
+              const lat = e.pos.x * bpx + e.pos.z * bpz;
+              let freeSide = 0, freeL = 0;
+              for (const sd of [s0, -s0]) {
+                const L = Math.max(0.6, sd > 0 ? (e._advLatHi ?? lat) + 0.6 - lat : lat - ((e._advLatLo ?? lat) - 0.6));
+                let clear = true;
+                for (let t = 0.25; clear && t < L + 0.25; t += 0.25) {
+                  const tt = Math.min(t, L);
+                  if (collidesObstacles(e.pos.x + bpx * sd * tt, e.pos.z + bpz * sd * tt, kidRadius + 0.1)) clear = false;
+                }
+                if (clear) { freeSide = sd; freeL = L; break; }
+              }
+              const backMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
+              if (freeSide || backMoved < 0.005 || e._advBackT <= 0) {
+                e._advBackT = 0;
+                if (freeSide) e._advSide = freeSide;
+                e._advSideT = freeSide ? freeL / Math.max(0.5, speed) + 0.1 : 0.35;
+                e._advStuck = 0; e._advTurns = 0;
+                e._advBestD = Infinity;   // a fresh window after the way out
+              }
+            } else if (advCommitted) {
               // no straight step this frame
             } else if (!collidesObstacles(newX, newZ, kidRadius)) {
               e.pos.x = newX;
@@ -22972,6 +23019,7 @@ function updateEnemies(dt) {
             // displacement, not slide-assignment.
             const advMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
             if (advMoved < 0.02) {
+              e._advWF += dt;   // v1.121: wall-following time in this progress window
               if (!advCommitted) e._advStuck = (e._advStuck || 0) + dt;
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
@@ -23004,7 +23052,14 @@ function updateEnemies(dt) {
               // v1.103: a committed sidestep that is itself blocked turns round now;
               // a fresh one commits 0.35 s, longer each time he wedges again within
               // 3 s (up to 1.4 s), as the taggers do since v1.100.
-              if (advCommitted && Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ) < 0.01) { e._advSide *= -1; e._advSideT = 0; }
+              if (advCommitted && Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ) < 0.01) {
+                e._advSide *= -1; e._advSideT = 0;
+                // v1.121: in a pocket (a wall ahead, both sides blocked) the committed sidestep turns round at
+                // each side wall and the kid shuttles across it for good (Night Prowl's Seth between a sedan and
+                // a post, v1.112). The second turn-round within 3 s backs him out instead.
+                e._advTurns = (e._advTurns || 0) + 1; e._advTurnT = 3;
+                if (e._advTurns >= 2) { e._advTurns = 0; e._advBackT = 1.5; }
+              }
               if (!advCommitted) {
                 e._advWedges = Math.min(4, (e._advWedges || 0) + 1);
                 e._advWedgeT = 3;

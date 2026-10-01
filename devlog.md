@@ -6040,3 +6040,32 @@ still lights the shirt (the trim stays its colour).
 - Michael's eye on the kids as a whole (faces, hands, clothes). Step 3 is done; B (Winnmark's pieces to the other
   maps) is next by his recommended order, unless he wants changes first.
 - The mirror could now offer eye colour and a shirt front (stripe, pocket, plain); D.6 left them for these meshes.
+
+## v1.121 — Kids back out of pockets
+
+Found in play (builder, v1.112): an advancing kid could be pinned in a pocket. CI failed on Night Prowl's Seth standing
+8.8 s between a parked sedan and a post; v1.113's tree pass moved the cars and that pocket went, but the cause stayed.
+`advancing` has had a committed sidestep since v1.103; what it lacked was a way out of a pocket. With a wall ahead
+and both sides blocked, the committed sidestep walks to one side wall, turns round, walks to the other, and turns
+round again, for good; a flanker, whose sidestep runs at a slant to the wall, slides along a side wall and back
+instead. Each frame moves him a few centimetres, so nothing counted him as stuck. Two triggers now start a back-off:
+two blocked turn-rounds within 3 s, or a progress window (2.5 s without getting 0.5 m closer to where he is going,
+while wall-following). The window keeps the side axis it started on and how far along it he has been either way. The
+back-off walks him away from his target until a sidestep has room 0.6 m past the furthest he got on that side (the
+whole way there clear, with 10 cm to spare), then commits to that side long enough to get there; it ends after
+1.5 s, or at once if the way back is blocked too. The window runs on a new scenario clock, `Game.scenario.aiClock`,
+counted in `updateEnemies`, so it restarts cleanly after he has been in other states.
+
+### Verified
+- New `tests/pocket.test.mjs`: a U of 6 m walls round an advancing kid (3 m wide, 2.7 m deep, open at the back), the
+  target 15 m past its closed end. On v1.120 he never got out in 20 s, head-on or flanking either side (he shuttled
+  side to side, or along a side wall and back). Now he is past the wall at 4.5 s head-on and 6.7 and 9.7 s
+  flanking. In the open he walks straight in with no back-off (0 frames).
+- `night-prowl`, `whole-block`, `pincer`, `taggers`, `market-lot` green on this build alone: Seth's longest stand
+  in Night Prowl 0 s, 26 shots; no Whole Block kid wedged; Priya closes to 15 m in both Pincer runs; all six taggers reach the player.
+- `npm test`: 32/32 green.
+
+### Still open
+- The flanking escape is slower (up to 9.7 s): the flank point moves sideways as he backs off, so the window has to
+  run twice. A kid that never visited the far side of a pocket can still pick it on the first back-off.
+- The original Night Prowl pocket is gone from the map (v1.113), so this is shown on a built pocket, not that one.
