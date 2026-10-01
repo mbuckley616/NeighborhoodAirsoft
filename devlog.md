@@ -6125,3 +6125,11 @@ once he has a line.
 - `tests/hollow-held.test.mjs`, five runs: all pass; the most held pulls from one spot in any round is 6 (was 28–39 in
   3 runs of 5).
 - `npm test`: all suites green.
+
+---
+
+## v1.122 fix-up 2 — the headless CI job gets 45 minutes
+
+On 3320b4b one of the two `headless` runs was cancelled at exactly 30 minutes, the job's `timeout-minutes`; the other
+passed in 28. With 33 suites the run takes 25–28 minutes on a hosted runner before the Chromium install, so the limit
+was about to cut runs off for no fault in the code. `.github/workflows/check.yml` now gives the job 45 minutes. CI only.
