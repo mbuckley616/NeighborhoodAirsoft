@@ -5645,3 +5645,315 @@ The test harness's `g.bedroom()` clicks NEW GAME, so it now presses DONE on the 
   v1.105 run (before the mirror existed) and `result-text` here. Both at the same line, both clean on rerun. It looks
   like the machine rather than the game, but if CI shows it, the harness should retry the boot once.
 - Whether height should affect play at all: 8 cm of hitbox and eye line either way. Easy to set to zero.
+
+---
+
+## v1.108 fix-up — player-walking tests don't depend on the browser granting pointer lock
+
+Both CI runs on v1.106 (6218812) failed `tests/jump.test.mjs` on Winnmark: every climb check had the player exactly
+where the test put him, never moving and never landing, while the same checks on Bunratty passed. The round was still
+on (the suite already makes the player untaggable). The real gate is `updatePlayer`: it returns at once unless
+`Game.mouse.locked`, so the player moves only while the page holds pointer lock. CI's headless Chromium sometimes
+refuses the lock (the "user gesture required" and "too many requests" refusals that v1.96 made harmless), and locally
+it's always granted. Forcing `Game.mouse.locked = false` locally gives CI's exact numbers (u −21.26, y 3.04).
+
+That is most likely the houses failure fixed above, too. A tag ending the round also leaves the player at z −8, so
+that guard stays, but the lock is the likelier cause in CI. `jump` and `houses` are the only suites that walk the
+player with keys; both now set `Game.mouse.locked = true` inside each walk. Test only; no game change.
+
+### Verified
+- With the lock forced off: the old `jump` fails its four Winnmark climb checks with CI's numbers; the fixed `jump`
+  and `houses` pass with no failures.
+- `npm test` on the merge with v1.108: 19 of 20 on the first pass; `smoke` lost its browser while booting (before any
+  test ran), as `cover-fire` had on the run before, and passed on its re-run.
+
+---
+
+## v1.108 fix-up 2 — cover-fire's "held" count leaves out the opening hold
+
+CI's `headless` run on 45a49a7 failed `tests/cover-fire.test.mjs` › "kids still shoot": 195 of 736 trigger pulls made no
+BB (26.5%, limit 25%), almost all in Hollow 3v3 (102/292) and Hold the Fort (84/209). The suite counts a
+`spawnEnemyBB` call that makes no BB as a kid holding fire at cover. Since v1.101, calls in the first 2.5 s of a round
+also make none (the opening hold), and Hold the Fort's opening volley alone went from 0–1 held on v1.100 to up to 54.
+Calls made during the opening hold no longer count. I also tried relaxing v1.101's 10 cm lip margin to the old
+centre-line rule when the lift cap leaves no room; it didn't lower the count (Hold the Fort 30–54), so the game code
+stays as it was. Test only.
+
+### Verified
+- Three runs on the current build: 40/594, 41/650 and 61/700 held (6–9%), Hold the Fort 4–16. Shots into cover
+  0.3–0.8%.
+- `npm test`: all suites green.
+
+## v1.109 — The Hollow's fort starts face the field
+
+The critic (v1.102, Found in play) saw the player open every Hollow team match looking at the south fort's flag
+pole. `buildHollowScene`'s player spawns had their yaws swapped: yaw 0 faces −z, but `team_b` (the south fort, where
+every Hollow team scenario puts the player) had `Math.PI`, and `team_a` (the north fort, no scenario uses it yet) had
+0. Swapped them back. A new suite, `tests/spawn-facing.test.mjs`, enters every scenario and measures the angle between
+the player's facing and the enemy kids' centroid, so any map with the same slip shows up.
+
+### Verified
+- Before: ten Hollow scenarios opened 144–178° off the enemy (the fort's back wall); after: 2–8° for the team and
+  attack matches, 34–36° for the two south-fort defends. The free-for-all and night Infection (`midfield`) stay at 56°.
+- Every other scenario on every map opens within 70° of the enemy kids (most 0–5°); none over 120°.
+- `npm test`: 21/21 suites green. `utility-belt.test.mjs` hung once in the full run inside `g.bedroom()` (the page
+  stopped answering after NEW GAME, before the test body) and passed alone; the v1.93 note about the start click
+  sitting for 30 s looks like the same harness stall.
+
+### Still open
+- The intro preview behind the BEGIN card now looks at the field too; worth a glance in play that it frames well.
+
+---
+
+## v1.109 fix-up — a slow screenshot no longer crashes a suite
+
+CI's `headless` run on v1.109 (f70d007) failed `tests/smoke.test.mjs` after all its checks had passed. The suite's
+closing `g.shot('smoke-tutorial')` hit Playwright's 30 s screenshot timeout (software GL on a slow runner, drawing the
+heavier scenes since v1.104), and the uncaught error failed the suite. Screenshots in the harness are for looking at,
+never a check. `g.shot` now waits up to 60 s and, if the capture still times out, logs it and carries on; any other
+error still throws. Test harness only.
+
+### Verified
+- `npm test`: all suites green.
+
+## v1.110 — Fast BBs stop at thin walls
+
+The critic (v1.101, Found in play) measured BBs passing through Bunratty's 18 cm planter wall: 0% at 30 m/s, 18% at
+45, 61% at 75, and one real Pincer loss came through it. `updateBBs` sub-steps at 1/200 s but tested obstacles only at
+each sub-step's end point, so a BB moving further than a wall's thickness per sub-step (36 m/s for that wall) could
+land past it. Before that end-point test, each sub-step now sweeps the path oldPos→pos against every obstacle near it
+(`obsRayDist`, the ray test the kids' line-of-sight already uses) and, if the path enters one the end point is
+already past, moves the BB 1 cm inside that obstacle's entry face. The ordinary surface outcome then runs on it
+(bounce, stick or shatter), so a wall reacts to a fast BB exactly as it does to a slow one. Obstacles the BB starts
+inside (a ricochet leaving) and `bbPass` fences are skipped, as before.
+
+The first full run went red on `market-lot.test.mjs`: Priya "wedged in advancing" 4 s in the lot free-for-all (2 of 3
+runs). The same probe on v1.109 found her at 3 s too, so the wedge was already there and the new ricochets only tipped
+it over: she was bounding to a car's cover and sliding along a bumper at 0.2 m/s, and the bound's wedge check (under
+2 cm a frame for 0.6 s) never fired because a slide still moves. A bound now also drops (with the v1.99 1.5 s rest)
+when a second passes without getting 0.3 m closer to the cover's stand spot.
+
+### Verified
+- New `tests/bb-sweep.test.mjs`, 200 BBs per speed at the planter wall with a random start: before, through at 45 / 60
+  / 75 / 90 / 120 / 150 m/s was 16.5 / 23.5 / 57 / 47.5 / 60.5 / 60%; after, 0% at every speed from 30 to 150 m/s.
+  The player standing behind it takes 48 of 100 BBs at 90 m/s before, 0 after; with the wall made BB-transparent the
+  same shots tag 100 of 100, so the check measures the wall.
+- The game's fastest gun fires 75 m/s; the 45–55 m/s guns were the ones skipping thin walls in play.
+- Lot free-for-all, 4 runs of 60 s: Priya's longest stall 0–1 s (3 s on v1.109). `market-lot.test.mjs` green in
+  3 of 3 runs after the fix (red in 2 of 3 before it).
+- `npm test`: 22 suites. First run on this build: 21/22, `cover-fire.test.mjs` "kids still shoot" red at 212 of 786 trigger
+  pulls held (27%, limit 25%), 199 of them in Hollow 3v3. Two reruns: green, 59/606 and 20/707. The same suite on
+  v1.109 held 20 and 101 in Hollow 3v3 in two runs, so the spread was already there (filed below). Also in the
+  earlier run, `front-door.test.mjs` hung inside `g.bedroom()` before its first check, as `utility-belt` did for
+  v1.109; alone, it passed.
+
+### Still open
+- Hollow 3v3's held trigger pulls swing from 19 to 199 a minute between runs of the same build. Some kid there pulls
+  the trigger again and again with a wall inside 3 m. Filed under Found in play.
+- Two suites stalled this session in `g.bedroom()` after NEW GAME (the page stopped answering). Once in a full run
+  costs the suite's 10-minute timeout, and CI would count it as a failure. Not yet run down.
+- Ricochets now come off thin walls that fast BBs used to pass through. A player standing behind a planter may hear
+  more pings.
+
+## v1.111 — Priya's Pincer: Priya comes on (standing test)
+
+The critic (v1.101, Found in play) saw Priya park in 'advancing' at about (−5, 2), 39 m from the `bulb_center` spawn,
+for 37–60 s, never flanking, in 3 of 6 runs. I couldn't reproduce it on this branch: nine 70 s rounds with the player
+standing at spawn and untaggable, four on v1.109 and five on v1.110, and she never stalled more than 1 s. She crosses
+that spot at about 10–11 s (usually in her v1.99 bound rest) and is within 15 m by 20–21 s. The v1.103 fix to the
+bounding flips (a kid stepping toward and away from cover he already stood at, every frame) matches what the critic
+saw and landed after the report, so it is the likely cure. No game change. New `tests/pincer.test.mjs` plays the round
+twice and fails on an 8 s stall more than 20 m out, or if she hasn't closed to 15 m by 40 s.
+
+### Verified
+- 9 of 9 probe rounds (v1.109 and v1.110): longest stall 0–1 s; closest approach 0–1 m.
+- `tests/pincer.test.mjs`: longest stall 0 and 1 s; within 15 m at 19.9 and 21.1 s.
+- `npm test`: 23/23 green. The first eleven suites ran in one full run. That run stalled in `music.test.mjs`'s
+  `g.bedroom()` (the third such stall this session; Chromium logged SSL handshake failures just before it). The other
+  twelve then passed one by one.
+
+### Still open
+- The other half of the report: "never flanks". Priya comes down the lane at z 2–6 against a player at z 2, so the
+  pincer from the side barely shows here. Whether the flank should swing wider is for Michael's eye in play, not a bug.
+
+## v1.112 — Winnmark's cars
+
+Michael answered A on D.3 step 1 (the houses are good, go on to step 2: Winnmark's cars, then trees and hedges, the
+fort and yard props, the road and kerbs). This is the cars. Every car on Winnmark (the driveway cars, the two in the
+bulb and the ones parked at an angle down the street as cover) was two boxes with glass slabs on it. `addCar` now
+takes `detail: true`, and `buildCarDetail` draws a sedan in its place: a side profile extruded across the width with a
+small bevel, the hood falling to the nose and the trunk lid to the tail, cut-out wheel arches over the tyres; a glass
+greenhouse with a roof panel, A, B and C pillars and a chrome window line; black bumpers, a grille with two chrome
+bars, head, tail and reversing lights, front and rear plates, an exhaust; door seams, handles, a rub strip and wing
+mirrors; hubcaps. The shape is the old car's footprint (3.6 × 1.55 m, beltline 1.15 m, cabin 1.15–1.70 m over the
+same span), so the two collision boxes still fit what's drawn and nothing about cover, sliding or seating on slopes
+changes. The tyres stay four separate meshes (`carSeatY` and `tests/cars.test.mjs` read them); the rest merges into
+one mesh per material like the v1.104 houses. The chrome is only lightly metallic: with no environment map in the
+scene, a high-metalness hubcap renders black (the first screenshot had black wheels). Bunratty and the lot keep the
+box car until Winnmark is done, as with the houses.
+
+### Verified
+- New `tests/winnmark-cars.test.mjs`, three builds of each map: all 18 Winnmark cars are the detailed car, 11 meshes each
+  (the box car was 14), 1,820 triangles, four separate tyres; the cabin box is unchanged (offset −0.15, 1.0 × 0.7 m,
+  1.15–1.70 m). The drawn car stays inside its boxes: ±1.88 m long (plates), 0–1.694 m tall, ±0.96 m wide (mirrors,
+  hubcaps). Bunratty's and the lot's cars are still the box car.
+- `tests/cars.test.mjs` on the new car: Winnmark's 128 tyres sit 0–0.5 cm off the ground, none buried.
+- Screenshot `tests/out/winnmark-cars-bulb.png` (the bulb cars from the road).
+- `npm test`: 24/24 green.
+
+### Still open
+- Michael's eye on the shape in play; it is one sedan in the street's paint colours, no second body style yet
+  (a van or pickup would need a taller cabin box).
+- Step 2 goes on: trees and hedges, the fort and yard props, the road and kerbs.
+
+---
+
+## v1.112 fix-up — a held shot lets go of the trigger
+
+CI's `headless` run on v1.112 (758c503) failed `tests/cover-fire.test.mjs` › "kids still shoot" again: 275 of 821
+calls held (33%), and 239 of 403 in Hollow 3v3 alone. Locally Hollow holds 12–23% on every build from v1.109 to
+v1.112, so no version made it worse; the spread is wide. What makes it so wide: when an auto-gunner's first round is
+held (v1.93's clear line is blocked and no lift clears it), the 4–7 follow-ups the trigger pull queued stay queued.
+Each one re-checks the same blocked line and is held again, and each counts as another held shot. One AK behind a fort
+wall can put hundreds on the tally.
+
+A held shot now also clears the kid's queued burst: he lets go of the trigger. It changes nothing a player sees (a held
+follow-up fired no BB either). But the kid's next shot is a fresh trigger pull at the next cadence, and the count
+measures what it says, trigger pulls.
+
+### Verified
+- Hollow 3v3, three runs: 24/253, 33/215, 27/287 held (9–15%, from 12–23% on the same build without it); Winnmark
+  defend 0–1. Shots into cover 0–0.4%.
+- `npm test`: 23 of 24 on the first pass; `walk-anim` lost its browser while booting (before any test ran) and
+  passed on its re-run.
+
+## v1.113 — Winnmark's trees and bushes
+
+D.3 step 2, second part (Michael: A). Winnmark's ~245 trees were a smooth ball on an eight-sided post, and its
+foundation bushes a squashed ball. `addSuburbanTree` and `addBush` now take `detail: true`, and every tree and bush
+on Winnmark passes it: the tree has a tapered trunk with a root flare and three limbs reaching up into the crown, and
+the crown is a core clump, a ring of four or five and a top clump, each a low-poly ball with lumps pushed in and out
+and drawn flat-shaded, so it reads as foliage from the street and still matches the game's hard-edged look. A shrub is
+three or four such clumps. The lumps come from a hash of each vertex's position, so neighbouring faces move together
+(no cracks) and the same tree looks the same every round. Each tree is still two meshes (bark, leaves) and each bush
+one, so draw calls don't rise; the materials are shared across plants rather than one pair per tree. The trunk's
+collision cylinder, the tree's height and the bush's soft box are unchanged. Bunratty keeps the old tree and bush
+until Winnmark is done.
+
+The first run of the new suite sat for ten minutes: the test never closed its browser. Separately, calling
+`buildHollowScene` with no variant hangs the page (the Hollow is always built through a scenario, which passes one),
+so the suite checks Bunratty, not the Hollow, as the unchanged map.
+
+### Verified
+- New `tests/winnmark-trees.test.mjs`: all 245 Winnmark trees are the low-poly tree with its crown, all 20 foundation
+  bushes the clumped shrub; Bunratty's 219 trees and 14 bushes are unchanged. Screenshot `tests/out/winnmark-trees.png`.
+- `npm test`: 24/25 in the full run; `smoke.test.mjs` stalled in `g.bedroom()` after NEW GAME (the harness stall
+  filed under Found in play, the fourth one) and passed alone.
+
+### Still open
+- Michael's eye on the tree shape; a denser or darker crown is a one-line change.
+- Step 2 goes on: the fort and yard props, then the road and kerbs.
+
+## v1.114 — Winnmark's kid fort
+
+D.3 step 2, third part (Michael: A): the fort. Both Winnmark forts (the plank fort in the bulb and the treehouse-defend
+fort at the east mouth) were three solid tan slabs with a few studs stuck to the inside. `buildKidFort` now takes
+`detail: true`, and `buildFortDetail` draws each wall the way a kid would build it: 4-ft plywood sheets in three
+mismatched tones skinned on both faces of a frame, a dark gap at each sheet joint with a 2x4 over it on the inside,
+screw heads in two stud lines per sheet, a flat top plate closing the wall, a 2x4 rail at hip height and a diagonal
+brace on the inside, a post at each back corner and wing end, and KEEP OUT sprayed in red (with drips) on the
+attackers' face of the back wall. Everything sits inside the three wall boxes and under the 1.12 m top, so cover,
+collision, BB hits and the kids' cover picks are unchanged. The posts at the wing ends first stood 9 cm past the wing
+boxes; they now sit inside them. The inside 2x4s stand 4 cm proud on the defender's side, as the old studs did. The
+corner bins are untouched here (they are the yard props, next). One mesh per material: the fort is 6 meshes, was 12.
+Bunratty keeps the slab fort.
+
+### Verified
+- New `tests/winnmark-fort.test.mjs`: the slab fort and the detailed fort, built side by side with the same arguments,
+  have identical wall and bin boxes (both Winnmark forts). Nothing drawn reaches past the footprint except the screw heads
+  and paint, 5 mm proud; the top is 1.12 m, the wall height. 6 meshes (was 12), 1,142 triangles. The Winnmark cul-de-sac
+  build has 1 detailed fort, the treehouse build 2 of 2; Bunratty's fort is still the slab. Screenshot
+  `tests/out/winnmark-fort.png` (the bulb fort from the attackers' side).
+- `npm test`: 26/26 green.
+
+### Still open
+- Michael's eye on the fort; the sign's wording is a one-line change.
+- Step 2 goes on: the yard props (bins, boxes, plywood stacks, mailboxes), then the road and kerbs.
+
+## v1.115 — Winnmark's yard props
+
+D.3 step 2, fourth part (Michael: A): the yard props. On Winnmark the wheelie bins (curbside pairs, backyard cover,
+street cover and the fort's corner bins), the moving boxes and the plywood stacks were stacked boxes and one slab with
+a flat box for a chair. `addCurbsideBin` and `addHomeDepotBox` take `detail: true`, and the backyard stack is now
+`buildPlyStack`. The bin is a moulded cart: a body that tapers toward the base, a rim, a lid with a front grab lip and
+hinge knuckles, the pull handle across the back on two brackets, two tyres with grey hubs on an axle, a kick bar,
+moulded ribs down the sides, and the label (lettering on garbage, the recycle mark on recycling) laid on the sloped
+front. The box gets two top flaps meeting at a seam, packing tape over the seam and down both faces, hand holes in the
+ends and darker worn corners, with the store stripe as before. The stack is nine sheets of mixed plywood, each a little
+off square, on two 2x4 sleepers, with a folding lawn chair (tube frame, blue and white webbing) laid on top where the
+flat box was. Collision boxes are unchanged; each prop merges into one mesh per material (bin 6 meshes, was 9–10; box
+5, was 8). The mailboxes were already shaped (v1.76) and stay. Bunratty, the Hollow and the lot keep the old props.
+
+### Verified
+- New `tests/winnmark-props.test.mjs`: the old and detailed garbage, recycle, tipped and box props built side by side
+  have identical collision boxes and surfaces; each draws within 4 cm of the old drawing. The box's labels stand
+  1.1 cm past its box (the old ones 1.5 cm). The stack stays inside 1.6 × 0.9 m with its top at 0.59 m. Over three
+  builds Winnmark has 73 bins, 33 boxes and 17 stacks, all detailed and none old; Bunratty's 118 props are all the old
+  ones. Screenshot `tests/out/winnmark-props.png` (a backyard box and bin).
+- `tests/winnmark-fort.test.mjs` still finds the fort's corner bins in the same boxes.
+- `npm test`: 27/27 green.
+
+### Still open
+- Michael's eye on the props in play.
+- Step 2's last part: the road and kerbs.
+
+## v1.116 — Winnmark's road and kerbs
+
+D.3 step 2, last part (Michael: A): the road and kerbs. Winnmark's road was 96 asphalt discs laid down the bezier, plus
+19 more tiling the bulb, each tilted onto the slope. That made a scalloped edge, no kerb, and about 115 meshes.
+`buildWinnmarkRoad` replaces them with one ribbon mesh that follows the curve. Every vertex sits on `groundY`, so the
+cross-roll shows instead of a flat disc clipping it. It runs from out past the east tree gap to inside the bulb. The
+bulb is one polar mesh. A concrete gutter pan and a 9 cm rolled kerb run along both edges and round the bulb. They
+drop flat across each driveway (eased over half a metre) and open where the road meets the bulb. On the asphalt: two
+manholes with a cast grid, two storm-drain grates in the gutter, three runs of crack sealing and a patch, merged per
+material. The first look showed the asphalt stair-stepping over the gutter: the ribbon overlapped the gutter by 5 cm,
+and between its 0.9 m columns it is linear while the gutter follows the curved ground. The ribbon's edge vertices are
+now the gutter's own, and the seam is clean. As before, the road has no collision (the discs had none, and a rolled
+kerb is walked over). `roadCenterline` is unchanged, so the mailboxes, bins, street cover and AI that sample it are
+untouched. Bunratty keeps its disc road.
+
+### Verified
+- New `tests/winnmark-road.test.mjs`: Winnmark's road is 6 meshes (asphalt, bulb, kerb, 3 for the marks) and no
+  discs are left. 1,056 downward raycasts over the old road (centreline ±3.4 m from t 0 to 1, and the bulb out to
+  6 m) all hit the asphalt, 5.2–6.0 cm over the ground. 200 kerb-top samples away from driveways stand 8.5–9.0 cm
+  over the gutter; 82 across driveways stand 0–0.9 cm. Bunratty still has its 92 discs. Screenshot
+  `tests/out/winnmark-road.png`.
+- The same view down the street (x 12, the bulb ahead): 2,228 meshes on v1.115, 2,103 now.
+- `npm test`: 27/28 in the full run. `mirror.test.mjs` lost its browser while booting, before any test ran (the
+  harness stall under Found in play), and passed alone.
+
+### Still open
+- Michael's eye on the street as a whole. Step 2 is done; what comes next for D.3 is asked in decisions (the kids,
+  or carrying Winnmark's pieces to the other maps).
+- The driveway pads are still the old flat strips; their grass edge steps a little on the grade.
+
+## v1.117 — Result lines that fit the map
+
+The critic (v1.101, Found in play) read lose lines that don't fit their maps: Priya's Pincer ends with the kids
+taking "the fort", but the player holds a cul-de-sac, and Juggernauts and The Big Game end with them regrouping
+"near the road", in the woods. The result screen had one place word for every map. It now takes them from the
+scenario, then the map, then the old default. A defend can name what was held (`resultHold`): Pincer is "the
+cul-de-sac", and the lot's Hold the Doors (which also said fort) is "the doors". The Hollow's kids regroup "back in
+the trees" and, after a lost defend, "sit down in the leaves" rather than on a curb, since the woods have neither.
+Every fort scenario and both cul-de-sac maps read as before.
+
+### Verified
+- `tests/result-text.test.mjs` now ends Pincer, Hold the Doors, Juggernauts and The Big Game as well, four ways each.
+  Pincer's lose line reads "…take the cul-de-sac", Hold the Doors "…take the doors", Juggernauts and The Big Game
+  "…regroup back in the trees". None of the Hollow's 16 lines (four scenarios) says road or curb. The south fort and
+  Winnmark's bulb fort still say "take the fort". The v1.96 grammar checks still pass on all 48 lines.
+- `npm test`: 28/28 green.
+
+### Still open
+- The timer win still has "distant screen doors slam" in the Hollow; it reads as moms calling from the houses past
+  the trees, so it stays unless Michael says otherwise.

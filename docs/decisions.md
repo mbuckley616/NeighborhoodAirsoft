@@ -7,10 +7,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
+  trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
+  a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`
+  (winnmark-cars-bulb, winnmark-trees, winnmark-fort, winnmark-props, winnmark-road); in game, any Winnmark match
+  once Builder sessions is merged. Your note also listed people. Options:
+  A) The kids next (faces, hands, clothes). They're the last thing in your list, and they show on every map at once.
+  B) Carry Winnmark's new houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
+  C) Change something on Winnmark first (say what in a note).
+  Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
+  pieces are settled.
+  Michael: **A — The kids next**. (2026-10-01)
+
 - **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.
   v1.104 rebuilt Winnmark's eight houses: hip roofs with even eaves and gutters, a gable over the door with a round
-  vent, framed windows with shutters, a panelled door under a hood, a chimney (screenshots: `tests/out/wm-after-*.png`
-  from `tests/houses.test.mjs`; in game, any Winnmark match). Bunratty still has the old house. Options:
+  vent, framed windows with shutters, a panelled door under a hood, a chimney (`tests/houses.test.mjs` writes a close-up
+  to `tests/out/houses-winnmark-seth.png`; in game, any Winnmark match). Bunratty keeps the old house. Options:
   A) Good, go on to step 2 (Winnmark's cars, then trees and hedges, the fort and yard props, the road and kerbs).
   B) A, and give Bunratty the new house now too.
   C) Change the houses first (say what in a note).
