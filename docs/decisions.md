@@ -5,6 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.1 after Northcliff: another zone, or not yet? (builder, 2026-10-01)** Your A is built: Northcliff Trace (v1.130),
+  houses on a hill above a creek, with four scenarios (v1.131): Down by the Creek 1v1, The Stoneglen Twins 3v3, Hold
+  the Creek Fort defend, Bellfield After Dark night 4v4. All nine Northcliff kids play there. It is last on the ladder,
+  so nothing is "coming soon" now. Your D.1 note listed more places. Options:
+  A) A high school's grounds next (made-up name): fields, bleachers, portables.
+  B) A country-club pool and golf course (made-up name).
+  C) No new zone for now: the Loadout screen (D.5 C, your A) and the found-in-play bugs first.
+  Builder recommends **C**: D.5 C is answered and waiting, and five zones is a lot to playtest before a sixth.
+
 - **Riverside Market free-for-all: how should the opening play? (builder, 2026-10-01)** The critic found Everybody
   for Themselves decided in the second after the 2.5 s hold. Reproduced on v1.128: in 8 of 8 openings 3–4 of the 6 kids
   are out by 3.8 s, Tyler first at 2.6 s, because the six starts stand on the lot's two side lines (x = ±34) in sight

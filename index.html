@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.130</div>
+  <div class="version">v1.131</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5923,12 +5923,60 @@ const SCENARIOS = {
       { charId: 'alex',     weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
       { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n' },
       { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s' },
-      { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3'   },
+      { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },   // v1.131: holds the high yard (was: huddled at the bulb and stayed)
     ],
     enemySpawnCluster: 'cluster_bulb',
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 130, lose: 30 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.131: defend the twins' creek fort, 90 s ---
+  northcliff_defend_creek: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Hold the Creek Fort',
+    desc: "The twins built their fort on the creek bank, and now it's yours to hold. Haden, Connor and Diego come down the hill from the street, yard by yard, and a tagged kid walks back up to the road and comes again. They have the high ground and you have the walls. Watch the yards either side of the fort, not just the slope in front of it. Survive 90 seconds.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the creek fort',
+    playerSpawn: 'creek_fort',
+    enemySpawnCluster: 'cluster_road',
+    enemySetup: [
+      { charId: 'haden',  weapon: 'ump',     anchor: 'road_w',     role: 'attacker', flank: 'L' },
+      { charId: 'connor', weapon: 'shotgun', anchor: 'road_mid_n', role: 'attacker', flank: 'C' },
+      { charId: 'diego',  weapon: 'mp5',     anchor: 'road_mid_s', role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 90, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.131: the zone capstone, 4v4 at night against Bellfield Court ---
+  northcliff_night_4v4: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Bellfield After Dark',
+    desc: "The Bellfield Court kids walked over after dinner: Mason, Christian, Diego, and Fernando with his rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives each. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'andrew',    weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
+      { charId: 'alex',      weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
+      { charId: 'evan',      weapon: 'ump',    anchor: 'yard_n1',   team: 'player' },
+      { charId: 'mason',     weapon: 'ak47',   anchor: 'bulb_car_n' },
+      { charId: 'christian', weapon: 'shotgun',anchor: 'bulb_car_s' },
+      { charId: 'diego',     weapon: 'mp5',    anchor: 'bulb_fort'  },
+      { charId: 'fernando',  weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_bulb',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 150, lose: 34 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -13834,7 +13882,8 @@ function buildNorthcliffScene(variant, timeOfDay) {
     yard_s1: [21, 28.5], yard_s2: [3, 29], yard_s3: [-16, 28.5],
     creek_fort: [-6, 31.2],
     road_e_n: [28, -3.2], road_e_s: [29, 4.8], road_mid_n: [-6, -6.5], road_mid_s: [12, 3.5],
-    cluster_bulb: [-31, 0], cluster_east: [34, 1],
+    road_w: [-18, 3.6],   // v1.131: the creek-fort defend's west attacker
+    cluster_bulb: [-31, 0], cluster_east: [34, 1], cluster_road: [-4, -2.5],   // v1.131: cluster_road, the defend's attackers
   };
   const keepClear = (x, z, r = 2.2) => Object.values(ANCH).some(([ax, az]) => Math.hypot(ax - x, az - z) < r)
     || Math.hypot(x - 35, z - 1) < 3;   // the player's road_east spawn
@@ -13946,11 +13995,13 @@ function buildNorthcliffScene(variant, timeOfDay) {
     yard_s1: A('yard_s1', anchorCover.yard_s1), yard_s2: A('yard_s2', anchorCover.yard_s2), yard_s3: A('yard_s3', anchorCover.yard_s3),
     creek_fort: A('creek_fort', creekFort[0]),
     road_e_n: A('road_e_n'), road_e_s: A('road_e_s'), road_mid_n: A('road_mid_n'), road_mid_s: A('road_mid_s'),
+    road_w: A('road_w'), cluster_road: A('cluster_road'),   // v1.131
     cluster_bulb: A('cluster_bulb'), cluster_east: A('cluster_east'),
   };
   const playerSpawns = {
     road_east:   { pos: P(35, 1), yaw: Math.PI / 2 },     // the east entry, facing west down the street (yaw 0 faces -z)
     bulb_center: { pos: P(-31.5, 0), yaw: -Math.PI / 2 }, // behind the bulb fort, facing east
+    creek_fort:  { pos: P(-6, 30.4), yaw: 0 },            // v1.131: inside the twins' creek fort, facing up the hill
   };
   return {
     scene,
@@ -24364,6 +24415,8 @@ const PIN_SCENARIO_GROUPS = {
   northcliff: [
     'northcliff_1v1_evan',
     'northcliff_twins_3v3',
+    'northcliff_defend_creek',   // v1.131
+    'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
 };
 

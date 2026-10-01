@@ -21,7 +21,8 @@ const ladder = await page.evaluate(() => {
 });
 check('ladder ends with Northcliff, after the market lot',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff', ladder.keys);
-check('Northcliff runs the 1v1 opener, then the twins 3v3', ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3', ladder.ids);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -46,8 +47,9 @@ const pin = await page.evaluate(() => {
 });
 check('the old locked teaser pin is gone', !pin.oldPin);
 check('the Northcliff pin is locked on a new save and says what opens it', pin.lockedNew && /Riverside Market/.test(pin.lockedInfo), pin);
-check('after the lot, the pin is live and lists both scenarios, the opener playable',
-  !pin.lockedAfter && pin.rows.length === 2 && pin.rows[0].id === 'northcliff_1v1_evan' && !pin.rows[0].locked && pin.rows[1].locked, pin);
+check('after the lot, the pin is live and lists every scenario, only the opener playable',
+  !pin.lockedAfter && pin.rows.length === ladder.ids.length && pin.rows[0].id === 'northcliff_1v1_evan' && !pin.rows[0].locked
+  && pin.rows.slice(1).every(r => r.locked), pin);
 
 for (const id of ladder.ids) {
   await g.scenario(id);
@@ -58,9 +60,12 @@ for (const id of ladder.ids) {
     // the hill: north tree wall high, road in between, creek bank low
     const hill = { top: +gy(0, -32).toFixed(2), road: +gy(0, -2).toFixed(2), bank: +gy(0, 32).toFixed(2), creek: +gy(0, 38).toFixed(2) };
     const p = Game.player;
-    return { player: inside(p.pos.x, p.pos.z), feet: +(p.pos.y - gy(p.pos.x, p.pos.z)).toFixed(2), kids, hill, obstacles: p.obstacles.length };
+    // v1.131: the defend starts between the creek fort's wings, behind its back wall (fort at (-6, 29.4), faces N)
+    const inFort = Math.abs(p.pos.x + 6) < 1.9 && p.pos.z > 28.3 && p.pos.z < 31.6;
+    return { inFort, player: inside(p.pos.x, p.pos.z), feet: +(p.pos.y - gy(p.pos.x, p.pos.z)).toFixed(2), kids, hill, obstacles: p.obstacles.length };
   });
   check(`${id}: the player spawns clear of every obstacle`, !start.player, start);
+  if (id === 'northcliff_defend_creek') check(`${id}: the player starts inside the creek fort's walls`, start.inFort, start);
   check(`${id}: every kid spawns clear of every obstacle`, start.kids.every(k => !k.stuck), start.kids.filter(k => k.stuck));
   check(`${id}: the hill falls north to south (top > road > bank > creek)`,
     start.hill.top > start.hill.road + 1.5 && start.hill.road > start.hill.bank + 1 && start.hill.bank > start.hill.creek, start.hill);
@@ -93,6 +98,11 @@ for (const id of ladder.ids) {
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
   if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  if (id === 'northcliff_defend_creek') check(`${id}: an attacker comes down past the road into the low yards (z > 8)`,
+    r.kids.filter(k => k.t !== 'player').some(k => k.at[1] > 8), r.kids);
+  // v1.131: Fernando's rifle holds the high yard by the bulb, (-15, -28), as the briefings say
+  const fern = r.kids.find(k => k.n === 'Fernando');
+  if (fern) check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);

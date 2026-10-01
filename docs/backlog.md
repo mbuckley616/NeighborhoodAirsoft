@@ -39,8 +39,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    three ways kids froze while moving (solid car rows, the gunners' wall-follow, two bounding flips; also the critic's
    Whole Block report). Next zone (Michael: **A**, Northcliff, control room 1 Oct): ~~Northcliff Trace~~ — done,
    v1.130 (houses on a hill above a creek from the polished pieces; the pin is live; Down by the Creek 1v1 and The
-   Stoneglen Twins 3v3; `tests/northcliff.test.mjs`). Still to come: more Northcliff scenarios (a creek-fort defend, a
-   night match, the Bellfield kids).
+   Stoneglen Twins 3v3; `tests/northcliff.test.mjs`). ~~More Northcliff scenarios~~ — done, v1.131 (Hold the Creek
+   Fort defend, Bellfield After Dark night 4v4 capstone; Fernando's rifle holds the high yard). Northcliff is complete
+   at four scenarios. Stoneglen Close and Bellfield Court have no maps of their own; another zone is a new question.
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)

@@ -6510,3 +6510,41 @@ the game, and nothing new is a business or a school.
   enemy's 8 in the first minute, so the twins don't look too hard.
 - The slope runs across the road (about 1 m over the road's width at the steepest). It reads fine in the
   screenshots, but how it feels to walk is for a playtest.
+
+
+---
+
+
+## v1.131 — Northcliff: the creek-fort defend and Bellfield After Dark
+
+The rest of what v1.130 left open on D.1, the way v1.103 rounded out the lot. Northcliff now runs four scenarios:
+1v1, 3v3, defend, then a night 4v4, the same arc as the lot's.
+- **Hold the Creek Fort** (defend, 90 s): you start inside the twins' fort on the creek bank, facing up the hill.
+  Haden (UMP), Connor (shotgun) and Diego (MP5) come down from the street on three flanks, and a tagged kid walks back
+  up and comes again. They have the high ground and you have the walls. The scene gains a `creek_fort` player spawn,
+  a `road_w` anchor and a `cluster_road` staging point on the road above the fort. The lose line says "the creek fort".
+- **Bellfield After Dark** (night 4v4, the new zone capstone): you with Andrew, Alex and Evan at the top of the street
+  against the Bellfield Court kids, Mason (AK), Christian (shotgun), Diego (MP5) and Fernando (rifle), four lives each,
+  with the street's four lamps the only light. So all nine Northcliff kids now play here.
+
+Fixed while checking both team matches: Fernando, the rifle in The Stoneglen Twins (v1.130) and in the new night
+match, never reached the high yard the briefings put him in. He spawned in the bulb huddle with the others and stayed
+there (3–20 m walked in 60 s, at (−30, 2)). He is now `role: 'defender'`, the way Bunratty's and the Hollow's riflemen
+hold a spot: he starts at his anchor, the high yard at (−15, −28), and shoots from it.
+
+### Verified
+- `tests/northcliff.test.mjs` extended: the zone runs opener, twins, defend, night; after the lot only the opener is
+  playable and the other three show locked. The defend's player starts between the creek fort's wings, clear of every
+  obstacle.
+- Hold the Creek Fort, 60 s with the player untaggable: the three attackers walk 56–168 m and fire 544 BBs, and all
+  three come down past the road to the fort.
+- Fernando in both team matches ends 1–2 m from the high-yard anchor, having fired 11 and 20 times (before: in the bulb).
+- Bellfield After Dark, 60 s: 623 BBs, enemy 5 lives lost and ally 7, every kid moves or fires, longest stall in
+  `advancing` 2 s. The Stoneglen Twins with the change: enemy 6, ally 6.
+- `npm test`: 40/40 suites green, `laser` among them.
+### Still open
+- In the defend, with the player untaggable, all three attackers end the minute pressed against the fort's west wing
+  at (−8.5, 29.6), 2.5 m from you. In a real round that is three kids closing on your wall together, which may be the
+  point of a defend. Whether 90 s against them is fair is for a playtest.
+- Whether another zone follows Northcliff is a new question in decisions (builder recommends C: the Loadout screen
+  and the found-in-play bugs first).
