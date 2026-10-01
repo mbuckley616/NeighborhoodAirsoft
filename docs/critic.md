@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -259,3 +259,95 @@ them, or on any page, was addressed to me.
   v1.96 music by ear: need eyes or ears; not judged.
 - v1.90, a last kill and your own tag-out inside 600 ms is now a loss: it didn't come up in 34 rounds.
 
+## 2026-10-01 — The new save, the Riverside Market lot, Last Stand, Squad Up, Four on Four, the Hollow night forts (v1.123)
+
+I played the builder's tip, `auto/build` at 05c9497 (v1.123: the kids' faces, hands and clothes, eye colour and
+shirt front at the mirror, kids backing out of pockets). Main is at v1.117. I compared against main, and against v1.101,
+wherever a problem might be older than the tip. This time I covered what no earlier run had: a new save through the
+mirror to the front door, all five Riverside Market lot matches, Last Stand at the Fort, Squad Up, Bunratty's Four on
+Four, and the Hollow's Storm the North Fort (day and night) and Hold the Fort (Night). I used the same aim-cock-fire bot as
+before, now in two styles: one that pushes to 15 m, and one that holds its spot and shoots what it can see. I also
+watched rounds with hits on the player dropped, and timed the first tag on a player standing at spawn. In all, 21 bot
+rounds, 9 watched rounds, 50 first-tag rounds and 5 free-for-all openings, over 37 browser boots. There were no page
+errors in any of them, and `node tests/run.mjs smoke` passes.
+
+**A new save, as a first-timer.** NEW GAME opens the mirror with ten rows (height, build, hair, hair colour, skin,
+shirt, pants, glasses, eyes, shirt front), and every click shows on the kid at once. In the preview, green eyes are
+about 6 px across at 1280×720: you can see them, but only just (screenshot
+`docs/critic/2026-10-01-mirror-new-save.png`). DONE puts you in the hall, and the first prompt is "E Go outside", from
+the front door behind you. E opens the map with one open pin, Winnmark. There's no dead end anywhere on that path.
+
+**Problem 1 — the lot's free-for-all is decided the moment the opening hold lifts.** In five openings of
+`lot_ffa`, with the player made untaggable, 3 or 4 of the 6 kids were out between 2.6 s and 3.6 s every time.
+Tyler was out first in all five, at 2.6–2.8 s. Brooke went at 2.8–3.0 s and Owen at 3.2–3.6 s. The 2.5 s hold
+(v1.101) stops the first shot, but every kid starts in sight of somebody, so the first volley clears most of the
+field. After that it's the player against Marcus and maybe Priya. Both of my bot rounds lost to one of those two, at
+9 and 17 s. v1.103's Still open guessed "four of six out inside the first 10 s". It's quicker than that: the round is
+settled in about one second of shooting. To see it: `g.scenario('lot_ffa')`, drop hits on the player, and step
+until each kid's `health` hits 0.
+
+**Problem 2 — Storm the North Fort: you spawn in the south fort's doorway.** The `team_b` spawn is (2, 28). The south fort's front wall
+(z 26.8–27.2) has an opening from x 0.64 to 3.36, so the player stands in the gap. At spawn the door posts frame the screen on
+both sides (screenshot `docs/critic/2026-10-01-storm-north-fort-spawn-in-doorway.png`). Standing still there,
+the player was tagged inside 18 s in 18 of 20 rounds on v1.123, and 20 of 20 on main.
+Night Assault was worst: 10 of 10, median 6 s, mostly Devon's sniper from 55 m, and 4 of 10 at 3.3 s, his first
+shot after the hold. It isn't new. v1.101 gave 10 of 10 too, and on 29 Sep I logged "Attack North Fort at 7 s". That's
+the Two in the Yards problem again (a sniper with a line on the spawn), on a map with one life and 55 m of field to cross.
+Hold the Fort (Night) spawns at the same point. There, the first tag came at 4.9–14.9 s, from 14–36 m, by kids who had already
+crossed the field. That's fair for a defend. Steps: `g.scenario('hollow_attack_north_fort_night')`, stand still, and step
+until `hitsTaken` is 1. Note the time and `bb.enemyRef`.
+
+**Problem 3 — Squad Up's last kids park out of range, and nothing ends the round.** In `winnmark_team_3v3` the
+player's two allies were out by 90–210 s in 4 of 4 watched rounds. In every one of those, the enemies left standing
+(Brooke and/or Jamie) then sat 32–50 m from the player in `hiding`/`peeking` for the rest of the 240–300 s. They didn't
+move. One run's Jamie fired his last shot at 210 s and the next-best at 90 s; after that, nothing hit the player.
+They're skirmishers with `aggression` 0.35 and 0.4, below the 0.45 march threshold, so they never advance. This is a
+`last_team_standing` round with no timer, so a player who holds back faces a round with no end. It's the
+same in Four on Four: Mitchell (0.4) and Owen (0.2) held the east end at (30–32, 0–3) for 150–195 s. Eight of the
+roster sit below 0.45: Brooke, Jamie, Devon, Nick, Mitchell, Owen, Rebecca and Christian. I'm filing this as a
+proposal, not a bug, because a camper kid is a fair character and the player can always go and get them.
+
+**What worked.**
+- **The lot's 1v1 (Marcus):** won with one shot at 30 s. The lose and win lines fit the lot ("take the doors" in Hold
+  the Doors).
+- **Last Stand:** the timer counts 120 → 0 at real time on all three defends, and the result screen leaves the clock
+  readable behind it. Tagged out at 21 and 30 s, both with the attackers already in the bulb.
+- **Four on Four:** played out to YOU GOT THEM at 225 s with the player standing still. The allies carried it, and the
+  win line names all four.
+- **Stuck kids:** in 30 rounds I saw no kid stuck for more than 2 s in `advancing`/`chasing`/`repositioning`. The one
+  exception was the start, while kids wait their turn to leave the spawn huddle. v1.121–v1.122's pocket fixes hold
+  here. Kids stand on the ground on every map, including on Bunratty's hill (allies at y 5.1–5.8 m on 5.1–5.8 m of
+  ground).
+- **Step cost**, one browser alone, 30 s each: lot 3v3 1.2 ms average (p95 4.8), lot night 4v4 1.1, Bunratty 4v4
+  2.6, Night Assault 3.4, Squad Up 1.4. The 300–400 ms worst steps in some bot rounds came with six browsers
+  sharing the machine.
+- **Harness stall (v1.110, v1.123 note):** none in 37 boots, run three to six at a time. That doesn't say it's
+  gone. The builder's loop found 8 in 270.
+- **Aisle Wars (v1.102 Still open):** in two watched rounds our side was not the weaker one. At 90 s the allies had lost 3
+  and 4 lives and the enemies 7 and 5. Brooke on our side stood at (3, 25) without moving for 90 s in one round and moved 9 m in the other.
+  The builder already noted she barely moves. I'd call that a look for Michael, not a bug.
+
+**A harness note.** My first timer check read 0:00 for 110 s with the round still open, because the timer win
+is a `setTimeout` and one long synchronous evaluate never lets it fire. That's the 29 Sep note again. In chunks it ends
+on time, so the game is fine.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io, and curl gets no connection. I read no
+comments. In Slack's last day there were the builder posts for v1.104–v1.117, the producer's posts, two merge cards
+and two decisions, all answered. Nothing in them was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.102–v1.123)
+- v1.103, free-for-all kids out in 10 s: confirmed, and faster (problem 1). v1.103's "starts behind cars" looks like
+  the fix.
+- v1.102 / fix-up, Aisle Wars allies weaker, Brooke never moves: see above. In 2 rounds the enemies lost more
+  lives than we did, and Brooke stays put. Hard to judge from the bot.
+- v1.123, the mirror preview's eyes are a few pixels: about 6 px, visible but small (screenshot). A closer camera
+  would show them.
+- v1.122, kids standing in the open under fire on the busy maps: I didn't count it. With the player untaggable in
+  Squad Up and Four on Four, I saw nobody stuck in the open. The kids who stay in one place (problem 3) do it from cover.
+- v1.117, "distant screen doors slam" in the Hollow: still in Hold the Fort (Night)'s win line. It's Michael's call.
+- v1.105 jumping onto bins to see over cover; v1.109 the Hollow intro preview; v1.112–v1.120 every look at cars,
+  trees, forts, props, road, faces, hands and clothes: these need eyes, so I didn't judge them. The kids read as kids at 8 m in the
+  Bunratty shot.
+- v1.108, an opening line at the mirror: there are no words now. A first-timer does find DONE, but nothing says the
+  mirror is there to come back to.

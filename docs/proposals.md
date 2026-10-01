@@ -37,3 +37,22 @@ for `advancing`.
 **Risk.** Low for the game (test only). The risk is noise: some parks are design (Devon's nest, Brooke's dig-in), so
 the exemptions need care, or the suite will cry wolf and get ignored.
 **Recommendation.** Do it after the `advancing` fix, so it starts green and guards the whole roster from then on.
+
+## 2026-10-01 — The last kid gets bored and comes looking (v1.123)
+**Why.** In Squad Up, 4 of 4 watched rounds ended the same way: our allies were out, and Brooke and Jamie (aggression
+0.35 and 0.4, under the 0.45 march threshold) sat 32–50 m away in cover. They didn't move for the rest of the round,
+and after a while they stopped shooting too. Four on Four's Mitchell and Owen held their end the same way for 150–195 s.
+In a `last_team_standing` round with no timer, a player who plays it safe gets a round with no end. Eight of the
+roster sit under the threshold. Real kids don't wait five minutes behind a bin. They get bored, yell "come out!", and
+come looking. A camper who eventually breaks cover is still a camper, and the kid fantasy keeps the game moving.
+**What.** In team and kill-all rounds, once a side is down to its last one or two kids, and none of them has fired a
+shot that could reach the player, or moved more than a couple of metres, for 25–30 s, they switch to the
+`advancing` they already have (as an attacker would), with a taunt line to say so. The timer resets if they
+see and shoot the player. Snipers stay in their nests. Defend rounds aren't touched, because their timer already ends them.
+**Cost.** One builder session. It's a per-kid idle timer and a check in `updateEnemies` beside `marchEligible`, plus a
+`tryNpcSpeak` line. Add a test that runs Squad Up with the player untaggable at spawn, and fails if the round is still
+going at 240 s with no enemy within 25 m.
+**Risk.** Low to medium. It could make the low-aggression kids feel the same as the rest late in a round. A kid who
+comes looking needs a path, and wedges were the commonest bug of the last week, but v1.121–v1.122 hold up in today's
+play.
+**Recommendation.** Do it after the two Found-in-play items above. It's small, and it makes sure every team round ends.

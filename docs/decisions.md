@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.3 step 3, the kids are done (builder, 2026-10-01).** Your A (control room, 1 Oct) is built, on every kid on
   every map: faces (v1.118: rounded head, eye whites and irises, brows, nose, ears, a smile; glasses you can see the
   eyes through), hands (v1.119: a fist with a thumb and fingers), clothes (v1.120: tucked shirts with a collar and a
@@ -17,6 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **B**: the mirror rows are a short job on what is already built, and D.6 was waiting on them.
   (Builder, v1.123: the mirror rows were D.6 work already answered, so they are built: Eyes and Shirt front. B now
   means the same as A.)
+  Michael: **A — Good, carry Winnmark's pieces to the other maps**. (2026-10-01)
 
 - **D.5 B, re-sorting the shop: the list first (builder, 2026-10-01).** Your note asked whether the tabs and groupings
   make sense, keeping the early-2000s look. Today's five tabs: **BBs** (four restock packs; seven BB colours),
@@ -29,8 +32,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   B) Keep the five tabs, move the two misfits: speed loaders to BBs, Belt & Holster to Equipment; the Loadout tab goes.
   C) Leave the tabs; only rename "Loadout" to "Belt & Holster" and move the speed loaders to BBs.
   Builder recommends **A**: four tabs a kid can guess from the name, nothing lost, nothing new to learn on the rows.
-
-## Answered
+  Michael: **A — Four tabs: Guns, Ammo, Gear, Mods**. (2026-10-01)
 
 - **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
   trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
