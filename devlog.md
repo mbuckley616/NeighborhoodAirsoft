@@ -5906,3 +5906,33 @@ flat box was. Collision boxes are unchanged; each prop merges into one mesh per 
 ### Still open
 - Michael's eye on the props in play.
 - Step 2's last part: the road and kerbs.
+
+## v1.116 — Winnmark's road and kerbs
+
+D.3 step 2, last part (Michael: A): the road and kerbs. Winnmark's road was 96 asphalt discs laid down the bezier, plus
+19 more tiling the bulb, each tilted onto the slope. That made a scalloped edge, no kerb, and about 115 meshes.
+`buildWinnmarkRoad` replaces them with one ribbon mesh that follows the curve. Every vertex sits on `groundY`, so the
+cross-roll shows instead of a flat disc clipping it. It runs from out past the east tree gap to inside the bulb. The
+bulb is one polar mesh. A concrete gutter pan and a 9 cm rolled kerb run along both edges and round the bulb. They
+drop flat across each driveway (eased over half a metre) and open where the road meets the bulb. On the asphalt: two
+manholes with a cast grid, two storm-drain grates in the gutter, three runs of crack sealing and a patch, merged per
+material. The first look showed the asphalt stair-stepping over the gutter: the ribbon overlapped the gutter by 5 cm,
+and between its 0.9 m columns it is linear while the gutter follows the curved ground. The ribbon's edge vertices are
+now the gutter's own, and the seam is clean. As before, the road has no collision (the discs had none, and a rolled
+kerb is walked over). `roadCenterline` is unchanged, so the mailboxes, bins, street cover and AI that sample it are
+untouched. Bunratty keeps its disc road.
+
+### Verified
+- New `tests/winnmark-road.test.mjs`: Winnmark's road is 6 meshes (asphalt, bulb, kerb, 3 for the marks) and no
+  discs are left. 1,056 downward raycasts over the old road (centreline ±3.4 m from t 0 to 1, and the bulb out to
+  6 m) all hit the asphalt, 5.2–6.0 cm over the ground. 200 kerb-top samples away from driveways stand 8.5–9.0 cm
+  over the gutter; 82 across driveways stand 0–0.9 cm. Bunratty still has its 92 discs. Screenshot
+  `tests/out/winnmark-road.png`.
+- The same view down the street (x 12, the bulb ahead): 2,228 meshes on v1.115, 2,103 now.
+- `npm test`: 27/28 in the full run. `mirror.test.mjs` lost its browser while booting, before any test ran (the
+  harness stall under Found in play), and passed alone.
+
+### Still open
+- Michael's eye on the street as a whole. Step 2 is done; what comes next for D.3 is asked in decisions (the kids,
+  or carrying Winnmark's pieces to the other maps).
+- The driveway pads are still the old flat strips; their grass edge steps a little on the grade.

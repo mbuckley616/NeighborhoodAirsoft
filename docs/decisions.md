@@ -5,6 +5,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
+  trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
+  a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`
+  (winnmark-cars-bulb, winnmark-trees, winnmark-fort, winnmark-props, winnmark-road); in game, any Winnmark match
+  once Builder sessions is merged. Your note also listed people. Options:
+  A) The kids next (faces, hands, clothes). They're the last thing in your list, and they show on every map at once.
+  B) Carry Winnmark's new houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
+  C) Change something on Winnmark first (say what in a note).
+  Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
+  pieces are settled.
+
 ## Answered
 
 - **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.

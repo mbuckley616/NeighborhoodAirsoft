@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.115</div>
+  <div class="version">v1.116</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -10715,37 +10715,141 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // and the quaternion tilt lays every disc flat against the hill. (Matches the
   // clean Bunratty road.) roadCenterline above stays at 56 for the placement/AI
   // systems that sample it.
-  const roadFine = [];
-  for (let i = 0; i <= 96; i++) roadFine.push(_wmRoadPoint(i / 96));
-  for (const p of roadFine) {
-    const segment = new THREE.Mesh(new THREE.CircleGeometry(3.7, 16), roadMat);
-    layOnSlope(segment, p.x, p.z, 0.06);
-    segment.receiveShadow = true;
-    scene.add(segment);
-  }
-  // Cul-de-sac bulb at the west end. v1.35c: the bulb sits where the slope
-  // flattens but still has cross-roll, so a single flat disc clips. Tile it with
-  // overlapping slope-aligned discs (same as Bunratty's bulb).
-  {
-    const BULBW = { x: -30, z: 0, r: 6 };
-    const lay = (cx, cz, r) => {
-      const d = new THREE.Mesh(new THREE.CircleGeometry(r, 16), roadMat);
-      layOnSlope(d, cx, cz, 0.05);
-      d.receiveShadow = true;
-      scene.add(d);
+  // v1.116 (backlog D.3 step 2, the road and kerbs): the pavement was 96 overlapping asphalt discs down the bezier and
+  // 19 more tiling the bulb (scalloped edges, ~115 draw calls). It is now one ribbon mesh that follows the curve and
+  // the ground (every vertex on groundY, so the cross-roll shows), one polar mesh for the bulb, and a concrete gutter
+  // pan and rolled kerb along both edges and round the bulb that drop flat across each driveway and open where the
+  // road meets the bulb; plus two manholes, two storm-drain grates, crack sealing and a patch. Visual only: the kerb
+  // is 9 cm and rolled, and has no collision, as before (the discs had none). roadCenterline is unchanged, so every
+  // placement and the AI that sample it are untouched. Built once houseCenters exists (the driveway drops need it).
+  function buildWinnmarkRoad(houseCenters) {
+    const ASPH = 3.45, BULB_C = { x: -30, z: 0 }, BULB_R = 6.3;
+    const LIFT = 0.06;
+    const asphMat = roadMat;
+    const concMat = new THREE.MeshStandardMaterial({ color: 0x96928a, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const markMat = (c, r = 0.9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+    const deriv = (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) });
+    const frameAt = (t) => { const p = _wmRoadPoint(t), d = deriv(t), l = Math.hypot(d.x, d.z); return { p, tx: d.x / l, tz: d.z / l, nx: -d.z / l, nz: d.x / l }; };
+    const dBulb = (x, z) => Math.hypot(x - BULB_C.x, z - BULB_C.z);
+    // the road ends inside the bulb; find the t where its centre is 5 m from the bulb's centre
+    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(_wmRoadPoint(t).x, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
+    const T0 = -0.13, NS = 170;   // t < 0 runs the road out through the tree-wall gap at the east entry
+    const meshes = [];
+    // --- asphalt ribbon (indexed, smooth)
+    {
+      const cols = 9, pos = [], idx = [];
+      for (let i = 0; i <= NS; i++) {
+        const f = frameAt(T0 + (tEnd - T0) * i / NS);
+        for (let j = 0; j < cols; j++) {
+          const o = -ASPH + 2 * ASPH * j / (cols - 1);   // edge vertices shared with the gutter's (an overlap stair-stepped over it)
+          const x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+          pos.push(x, groundY(x, z) + LIFT, z);
+        }
+        if (i) for (let j = 0; j < cols - 1; j++) { const a = (i - 1) * cols + j, b = a + cols; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'asphalt'; meshes.push(m);
+    }
+    // --- bulb (polar, indexed); a hair lower than the ribbon where they overlap
+    {
+      const rings = [0, 1.6, 3.2, 4.8, BULB_R], segs = 56, pos = [], idx = [];
+      for (let r = 0; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+        const a = k / segs * Math.PI * 2, x = BULB_C.x + Math.cos(a) * rings[r], z = BULB_C.z + Math.sin(a) * rings[r];
+        pos.push(x, groundY(x, z) + LIFT - 0.008, z);
+      }
+      for (let r = 1; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+        const a = (r - 1) * segs + k, b = (r - 1) * segs + (k + 1) % segs, c = r * segs + k, d = r * segs + (k + 1) % segs;
+        idx.push(a, c, b, b, c, d);
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'bulb'; meshes.push(m);
+    }
+    // --- gutter pan and rolled kerb: a profile (offset from the asphalt edge, height) swept along each edge
+    const PROF = [[0, 0], [0.35, 0], [0.55, 0.09], [0.67, 0.09], [0.71, 0.01]];
+    const conc = [];   // non-indexed triangles
+    const kerbH = (x, z, zRoad) => {   // 1 = full kerb, 0 = dropped (driveway apron), eased over 0.5 m
+      let k = 1;
+      for (const hc of houseCenters) {
+        const onSide = hc.side === 'north' ? z < zRoad : z > zRoad;
+        if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - hc.x) - 2.1) / 0.5)));
+      }
+      return k;
     };
-    lay(BULBW.x, BULBW.z, 3.0);
-    for (let ring = 1; ring <= 2; ring++) {
-      const rr = ring * 2.4;
-      const n = 6 * ring;
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + ring * 0.4;
-        const cx = BULBW.x + Math.cos(a) * rr;
-        const cz = BULBW.z + Math.sin(a) * rr;
-        if (Math.hypot(cx - BULBW.x, cz - BULBW.z) > BULBW.r + 0.5) continue;
-        lay(cx, cz, 2.3);
+    const quad = (a, b, c, d) => conc.push(...a, ...b, ...d, ...a, ...d, ...c);   // a b / c d as two rows
+    const nearRoad = (x, z) => {   // lateral distance from the road's centreline (t 0.6..tEnd), for the bulb's mouth
+      let best = 1e9; for (let t = 0.6; t <= tEnd + 1e-6; t += 0.01) { const p = _wmRoadPoint(t); best = Math.min(best, Math.hypot(x - p.x, z - p.z)); }
+      return best;
+    };
+    for (const side of [-1, 1]) {
+      let prev = null;
+      for (let i = 0; i <= NS; i++) {
+        const f = frameAt(T0 + (tEnd - T0) * i / NS);
+        const row = PROF.map(([o, h]) => {
+          const off = side * (ASPH + o), x = f.p.x + f.nx * off, z = f.p.z + f.nz * off;
+          return [x, z, h];
+        });
+        const k = kerbH(row[2][0], row[2][1], f.p.z);
+        const pts = row.map(([x, z, h]) => [x, groundY(x, z) + LIFT + h * k, z]);
+        const inBulb = dBulb(row[0][0], row[0][1]) < BULB_R + 0.3;
+        if (prev && !inBulb && !prev.inBulb) for (let j = 0; j < pts.length - 1; j++) {
+          if (side > 0) quad(prev.pts[j], prev.pts[j + 1], pts[j], pts[j + 1]); else quad(prev.pts[j + 1], prev.pts[j], pts[j + 1], pts[j]);
+        }
+        prev = { pts, inBulb };
       }
     }
+    {
+      const segs = 72; let prev = null;
+      for (let k = 0; k <= segs; k++) {
+        const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+        const pts = PROF.map(([o, h]) => { const r = BULB_R + o, x = BULB_C.x + ca * r, z = BULB_C.z + sa * r; return [x, groundY(x, z) + LIFT + h, z]; });
+        const mouth = nearRoad(BULB_C.x + ca * (BULB_R + 0.3), BULB_C.z + sa * (BULB_R + 0.3)) < ASPH + 0.75;
+        if (prev && !mouth && !prev.mouth) for (let j = 0; j < pts.length - 1; j++) quad(pts[j], pts[j + 1], prev.pts[j], prev.pts[j + 1]);
+        prev = { pts, mouth };
+      }
+    }
+    {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(conc, 3)); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, concMat); m.receiveShadow = true; m.userData.wmRoad = 'kerb'; meshes.push(m);
+    }
+    // --- the furniture: manholes, storm drains in the gutter, crack sealing, a patch (merged per material, laid on the slope)
+    const parts = { dark: [], iron: [], patch: [] };
+    const _up = new THREE.Vector3(0, 0, 1);
+    const place = (key, geo, x, z, ang, lift) => {
+      const n = groundNormal(x, z);
+      const q = new THREE.Quaternion().setFromUnitVectors(_up, new THREE.Vector3(n.nx, n.ny, n.nz));
+      const rz = new THREE.Quaternion().setFromAxisAngle(_up, ang);
+      parts[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + LIFT + lift, z), q.multiply(rz), new THREE.Vector3(1, 1, 1)) });
+    };
+    const along = (f) => Math.atan2(-f.tz, f.tx);
+    for (const [t, o] of [[0.22, -0.6], [0.58, 0.9]]) {   // manholes
+      const f = frameAt(t), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+      place('iron', new THREE.CircleGeometry(0.42, 18), x, z, 0, 0.004);
+      place('dark', new THREE.RingGeometry(0.42, 0.48, 18), x, z, 0, 0.004);
+      for (const d of [-0.18, 0, 0.18]) {   // a cast grid on the lid
+        place('dark', new THREE.PlaneGeometry(0.025, 0.6), x + f.tx * d, z + f.tz * d, along(f), 0.006);
+        place('dark', new THREE.PlaneGeometry(0.6, 0.025), x + f.nx * d, z + f.nz * d, along(f), 0.006);
+      }
+    }
+    for (const [t, side] of [[0.34, 1], [0.7, -1]]) {   // storm drain grates in the gutter pan
+      const f = frameAt(t), o = side * (ASPH + 0.18), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+      place('dark', new THREE.PlaneGeometry(0.95, 0.32), x, z, along(f), 0.004);
+      for (let k = -4; k <= 4; k++) place('iron', new THREE.PlaneGeometry(0.035, 0.28), x + f.tx * k * 0.1, z + f.tz * k * 0.1, along(f), 0.006);
+    }
+    for (const [t, len, skew] of [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]]) {   // crack sealing across the road
+      const f = frameAt(t);
+      for (let k = 0; k < 4; k++) {
+        const s0 = -len / 2 + len * k / 4, s1 = s0 + len / 4, w = (k % 2 ? 1 : -1) * 0.25;
+        const xa = f.p.x + f.nx * s0 + f.tx * (skew * s0 / len), za = f.p.z + f.nz * s0 + f.tz * (skew * s0 / len);
+        const xb = f.p.x + f.nx * s1 + f.tx * (skew * s1 / len + w * 0.3), zb = f.p.z + f.nz * s1 + f.tz * (skew * s1 / len + w * 0.3);
+        const l = Math.hypot(xb - xa, zb - za);
+        place('dark', new THREE.PlaneGeometry(l, 0.05), (xa + xb) / 2, (za + zb) / 2, Math.atan2(-(zb - za), xb - xa), 0.003);
+      }
+    }
+    { const f = frameAt(0.4); place('patch', new THREE.PlaneGeometry(2.6, 1.7), f.p.x + f.nx * 1.4, f.p.z + f.nz * 1.4, along(f) + 0.04, 0.002); }
+    const pm = { dark: markMat(0x1c1c1e, 0.8), iron: markMat(0x4a4a48, 0.6), patch: markMat(0x323234, 0.95) };
+    for (const k in parts) if (parts[k].length) { const m = new THREE.Mesh(_houseMergeParts(parts[k]), pm[k]); m.receiveShadow = true; m.userData.wmRoad = 'marks'; meshes.push(m); }
+    for (const m of meshes) scene.add(m);
+    return meshes;
   }
 
   // === Houses — 8 of them, placed on either side of the road ===
@@ -10819,6 +10923,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -9, z: 20, side: 'south' },
     { x: -17, z: 19, side: 'south' },
   ];
+  buildWinnmarkRoad(houseCenters);   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
   for (const hc of houseCenters) {
     // Driveway runs from the house front all the way to the ACTUAL road edge.
     // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
