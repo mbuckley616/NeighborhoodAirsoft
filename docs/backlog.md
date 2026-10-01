@@ -47,8 +47,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    framed and shuttered windows, panelled door, gutters, chimney; Winnmark only). Step 2 (Michael: A, go on): ~~cars~~
    — done, v1.112 (a profiled sedan with arches, glass, pillars, lights, plates, mirrors, hubcaps; same collision);
    ~~trees and hedges~~ — done, v1.113 (low-poly trees with limbs and clumped crowns, clumped shrubs); ~~the kid fort~~
-   — done, v1.114 (plywood sheets on a frame, posts, bracing, KEEP OUT; same wall boxes); then the yard props (bins,
-   boxes, plywood stacks, mailboxes), the road and kerbs.
+   — done, v1.114 (plywood sheets on a frame, posts, bracing, KEEP OUT; same wall boxes); ~~the yard props~~ — done,
+   v1.115 (moulded wheelie bins, taped moving boxes, plywood stacks with a lawn chair; same collision; mailboxes kept); then the road
+   and kerbs.
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and

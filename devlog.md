@@ -5879,3 +5879,30 @@ Bunratty keeps the slab fort.
 ### Still open
 - Michael's eye on the fort; the sign's wording is a one-line change.
 - Step 2 goes on: the yard props (bins, boxes, plywood stacks, mailboxes), then the road and kerbs.
+
+## v1.115 — Winnmark's yard props
+
+D.3 step 2, fourth part (Michael: A): the yard props. On Winnmark the wheelie bins (curbside pairs, backyard cover,
+street cover and the fort's corner bins), the moving boxes and the plywood stacks were stacked boxes and one slab with
+a flat box for a chair. `addCurbsideBin` and `addHomeDepotBox` take `detail: true`, and the backyard stack is now
+`buildPlyStack`. The bin is a moulded cart: a body that tapers toward the base, a rim, a lid with a front grab lip and
+hinge knuckles, the pull handle across the back on two brackets, two tyres with grey hubs on an axle, a kick bar,
+moulded ribs down the sides, and the label (lettering on garbage, the recycle mark on recycling) laid on the sloped
+front. The box gets two top flaps meeting at a seam, packing tape over the seam and down both faces, hand holes in the
+ends and darker worn corners, with the store stripe as before. The stack is nine sheets of mixed plywood, each a little
+off square, on two 2x4 sleepers, with a folding lawn chair (tube frame, blue and white webbing) laid on top where the
+flat box was. Collision boxes are unchanged; each prop merges into one mesh per material (bin 6 meshes, was 9–10; box
+5, was 8). The mailboxes were already shaped (v1.76) and stay. Bunratty, the Hollow and the lot keep the old props.
+
+### Verified
+- New `tests/winnmark-props.test.mjs`: the old and detailed garbage, recycle, tipped and box props built side by side
+  have identical collision boxes and surfaces; each draws within 4 cm of the old drawing. The box's labels stand
+  1.1 cm past its box (the old ones 1.5 cm). The stack stays inside 1.6 × 0.9 m with its top at 0.59 m. Over three
+  builds Winnmark has 73 bins, 33 boxes and 17 stacks, all detailed and none old; Bunratty's 118 props are all the old
+  ones. Screenshot `tests/out/winnmark-props.png` (a backyard box and bin).
+- `tests/winnmark-fort.test.mjs` still finds the fort's corner bins in the same boxes.
+- `npm test`: 27/27 green.
+
+### Still open
+- Michael's eye on the props in play.
+- Step 2's last part: the road and kerbs.

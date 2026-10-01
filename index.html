@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.114</div>
+  <div class="version">v1.115</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8929,6 +8929,8 @@ function addCurbsideBin(scene, x, z, opts = {}) {
   // by stacking two boxes (wider top, narrower bottom). The hard-plastic feel comes
   // from the lower roughness and the lid color contrast.
   const W = 0.62, H = 1.05, D = 0.7;
+  if (opts.detail) buildBinDetail(group, { W, H, D, isRecycle, bodyMat, lidMat, wheelMat, decalMat });   // v1.115 (Winnmark)
+  else {
 
   // Lower body (narrower at bottom)
   const bodyLower = new THREE.Mesh(new THREE.BoxGeometry(W * 0.85, H * 0.4, D * 0.9), bodyMat);
@@ -8982,6 +8984,7 @@ function addCurbsideBin(scene, x, z, opts = {}) {
     sym.rotation.z = Math.PI;
     group.add(sym);
   }
+  }
 
   // Position & rotation
   group.position.set(x, 0, z);
@@ -9030,6 +9033,7 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
   group.position.set(x, 0, z);
   group.rotation.y = facing;
 
+  if (opts.detail) { buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }); scene.add(group); return { minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2, h, mesh: group, surface: 'soft' }; }   // v1.115 (Winnmark)
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cardboardMat);
   body.position.y = h/2;
   body.castShadow = body.receiveShadow = true;
@@ -9064,6 +9068,138 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
     minZ: z - d/2, maxZ: z + d/2,
     h, mesh: group, surface: 'soft',
   };
+}
+
+// v1.115 (backlog D.3 step 2, the yard props on Winnmark). addCurbsideBin({ detail: true }) and
+// addHomeDepotBox({ detail: true }), and Winnmark's plywood stacks (buildPlyStack). The bin is a moulded cart: a body
+// that tapers to the base, a rim, a lid with a front grab lip and hinge knuckles, the pull handle across the back, two
+// tyres with hubs on an axle, a kick bar, and the label (and the recycle mark) set on the sloped front. The box gets two
+// top flaps, packing tape over the seam and down both faces, and hand holes in the ends. The stack is sheets of mixed
+// plywood on two 2x4 sleepers with a folding lawn chair (tube frame, woven webbing) laid on top. Every prop keeps its
+// collision box; each merges into one mesh per material.
+function _propMerge(group, buckets, mats) {
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = true; m.receiveShadow = true;
+    group.add(m);
+  }
+}
+function _propAdder(buckets) {
+  const _s = new THREE.Vector3(1, 1, 1);
+  return (key, geo, px, py, pz, rx = 0, ry = 0, rz = 0) => {
+    (buckets[key] || (buckets[key] = [])).push({ geo,
+      m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) });
+  };
+}
+function buildBinDetail(group, { W, H, D, isRecycle, bodyMat, lidMat, wheelMat, decalMat }) {
+  const mats = { body: bodyMat, lid: lidMat, wheel: wheelMat, decal: decalMat,
+    hub: new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 0.6 }),
+    ink: new THREE.MeshStandardMaterial({ color: isRecycle ? 0x2a8a3a : 0x2a2a2e, roughness: 0.6 }) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const y0 = 0.05, y1 = H - 0.05, kb = 0.86;          // body runs y0..y1, the base kb of the top's size
+  // body: a box whose bottom face is pulled in (the cart tapers to the base)
+  const bodyGeo = box(1, 1, 1);
+  const pa = bodyGeo.attributes.position;
+  for (let i = 0; i < pa.count; i++) {
+    const top = pa.getY(i) > 0, k = top ? 1 : kb;
+    pa.setXYZ(i, pa.getX(i) * W * k, top ? y1 : y0, pa.getZ(i) * D * k);
+  }
+  bodyGeo.computeVertexNormals();
+  add('body', bodyGeo, 0, 0, 0);
+  add('body', box(W + 0.03, 0.05, D + 0.03), 0, y1 + 0.005, 0);                       // rim
+  add('lid', box(W + 0.05, 0.035, D + 0.06), 0, H + 0.0175 - 0.01, 0.005);            // lid
+  add('lid', box(W * 0.55, 0.055, 0.03), 0, H - 0.02, D / 2 + 0.045);                 // front grab lip
+  for (const hx of [-W * 0.32, 0, W * 0.32]) add('lid', new THREE.CylinderGeometry(0.025, 0.025, 0.1, 8), hx, H - 0.005, -D / 2 - 0.03, 0, 0, Math.PI / 2);   // hinge knuckles
+  // pull handle across the back, on two brackets
+  add('body', new THREE.CylinderGeometry(0.022, 0.022, W * 0.9, 8), 0, H - 0.06, -D / 2 - 0.08, 0, 0, Math.PI / 2);
+  for (const ux of [-W * 0.4, W * 0.4]) add('body', box(0.04, 0.05, 0.1), ux, H - 0.06, -D / 2 - 0.035);
+  // wheels: tyres, hubs, axle; a kick bar between them
+  const wx = W * kb / 2 + 0.045, wy = 0.13, wz = -D / 2 + 0.07;
+  for (const sx of [-1, 1]) {
+    add('wheel', new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), sx * wx, wy, wz, 0, 0, Math.PI / 2);
+    add('hub', new THREE.CylinderGeometry(0.06, 0.06, 0.075, 10), sx * wx, wy, wz, 0, 0, Math.PI / 2);
+  }
+  add('hub', new THREE.CylinderGeometry(0.015, 0.015, 2 * wx, 6), 0, wy, wz, 0, 0, Math.PI / 2);
+  add('body', box(W * kb * 0.8, 0.06, 0.06), 0, 0.08, -D * kb / 2 - 0.01);
+  // the sloped front: label and mark lie on it
+  const lean = Math.atan2(D * (1 - kb) / 2, y1 - y0);
+  const fz = (yy) => D * (kb + (1 - kb) * (yy - y0) / (y1 - y0)) / 2;
+  const ly = H * 0.66;
+  add('decal', box(W * 0.55, H * 0.2, 0.01), 0, ly, fz(ly) + 0.006, -lean);
+  if (isRecycle) add('ink', new THREE.RingGeometry(0.05, 0.08, 3), 0, H * 0.4, fz(H * 0.4) + 0.008, -lean, 0, Math.PI);
+  else for (const [lw, lyy] of [[0.24, ly + 0.03], [0.16, ly - 0.03]]) add('ink', box(lw, 0.025, 0.004), 0, lyy, fz(lyy) + 0.012, -lean);
+  // two moulded ribs down each side
+  for (const sx of [-1, 1]) for (const rz of [-0.12, 0.12]) {
+    const mid = (y0 + y1) / 2, xs = W * (kb + (1 - kb) * 0.5) / 2;
+    add('body', box(0.012, (y1 - y0) * 0.8, 0.03), sx * (xs + 0.004), mid, rz, 0, 0, sx * Math.atan2(W * (1 - kb) / 2, y1 - y0));
+  }
+  if (b.ink && isRecycle) mats.ink.side = THREE.DoubleSide;
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'bin';
+}
+function buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }) {
+  const mats = { card: cardboardMat, orange: orangeMat, white: whiteMat,
+    tape: new THREE.MeshStandardMaterial({ color: 0xc8a46a, roughness: 0.35 }),
+    dark: new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: 1.0 }) };
+  const b = {}; const add = _propAdder(b);
+  const box = (bw, bh, bd) => new THREE.BoxGeometry(bw, bh, bd);
+  const ft = 0.012;
+  add('card', box(w, h - ft, d), 0, (h - ft) / 2, 0);
+  for (const sx of [-1, 1]) add('card', box(w / 2 - 0.004, ft, d), sx * (w / 4 + 0.001), h - ft / 2, 0, 0, 0, sx * -0.012);   // top flaps, a little proud at the seam
+  add('dark', box(0.006, 0.004, d - 0.01), 0, h - ft - 0.001, 0);
+  // packing tape over the seam and down both faces
+  add('tape', box(0.07, 0.003, d + 0.004), 0, h + 0.001, 0);
+  for (const sz of [-1, 1]) add('tape', box(0.07, 0.16, 0.003), 0, h - 0.08, sz * (d / 2 + 0.002));
+  // hand holes in the ends
+  for (const sx of [-1, 1]) add('dark', box(0.004, 0.045, 0.13), sx * (w / 2 + 0.001), h * 0.8, 0);
+  // the store stripe and logo blocks, front and back
+  for (const sz of [-1, 1]) {
+    add('orange', box(w * 0.96, h * 0.22, 0.008), 0, h * 0.58, sz * (d / 2 + 0.004));
+    add('white', box(w * 0.32, h * 0.14, 0.01), -w * 0.2, h * 0.58, sz * (d / 2 + 0.006));
+    add('white', box(w * 0.36, h * 0.08, 0.01), w * 0.15, h * 0.58, sz * (d / 2 + 0.006));
+  }
+  // corner edges a shade darker (worn corrugated corners)
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add('dark', box(0.012, h - ft - 0.01, 0.012), sx * (w / 2 - 0.004), (h - ft) / 2, sz * (d / 2 - 0.004));
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'box';
+}
+function buildPlyStack(cx, gy, cz, seed) {
+  const group = new THREE.Group();
+  group.position.set(cx, gy, cz);
+  const tones = [0xc8a878, 0xbf9c68, 0xd2b488, 0xb8945e];
+  const mats = { s0: null, s1: null, s2: null, s3: null,
+    lumber: new THREE.MeshStandardMaterial({ color: 0x9a7a52, roughness: 0.95 }),
+    tube: new THREE.MeshStandardMaterial({ color: 0xc0c4c8, roughness: 0.4, metalness: 0.3 }),
+    webA: new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 }),
+    webB: new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: 0.85 }) };
+  tones.forEach((c, i) => { mats['s' + i] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 }); });
+  const b = {}; const add = _propAdder(b);
+  const box = (bw, bh, bd) => new THREE.BoxGeometry(bw, bh, bd);
+  let r = seed;
+  const rnd = () => (r = (r * 9301 + 49297) % 233280 / 233280);
+  for (const sx of [-0.55, 0.55]) add('lumber', box(0.09, 0.09, 0.88), sx, 0.045, 0);           // sleepers
+  const n = 9, th = (0.5 - 0.09) / n;
+  for (let i = 0; i < n; i++) {
+    const ox = (rnd() - 0.5) * 0.03, oz = (rnd() - 0.5) * 0.03;
+    add('s' + Math.floor(rnd() * 4), box(1.565, th - 0.003, 0.865), ox, 0.09 + th * (i + 0.5), oz, 0, (rnd() - 0.5) * 0.012, 0);
+  }
+  // folding lawn chair laid on top: tube frame, woven webbing
+  const cy = 0.53, tilt = 0.2;
+  const chair = [];
+  for (const sz of [-0.53, 0.53]) chair.push(['tube', new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6), 0, 0, sz, 0, 0, Math.PI / 2]);
+  for (const sx of [-0.24, 0.24]) chair.push(['tube', new THREE.CylinderGeometry(0.012, 0.012, 1.08, 6), sx, 0, 0, Math.PI / 2, 0, 0]);
+  for (let i = 0; i < 9; i++) chair.push([i % 2 ? 'webB' : 'webA', box(0.47, 0.008, 0.09), 0, 0.004, -0.46 + i * 0.115]);
+  for (let i = 0; i < 3; i++) chair.push([i % 2 ? 'webA' : 'webB', box(0.07, 0.009, 1.02), -0.16 + i * 0.16, 0.006, 0]);
+  const cm = new THREE.Matrix4().compose(new THREE.Vector3(0.1, cy, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tilt)), new THREE.Vector3(1, 1, 1));
+  for (const [k, geo, px, py, pz, rx = 0, ry = 0, rz = 0] of chair) {
+    add(k, geo, px, py, pz, rx, ry, rz);
+    const last = b[k][b[k].length - 1]; last.m.premultiply(cm);
+  }
+  _propMerge(group, b, mats);
+  group.userData.propDetail = 'plystack';
+  return group;
 }
 
 // --- Parked car ---
@@ -9536,7 +9672,7 @@ function buildKidFort(scene, x, z, opts = {}) {
       const variant = (bi % 2 === 0) ? 'garbage' : 'recycle';
       // Face the bin's door roughly outward from the fort center.
       const facing = Math.atan2(wx - x, wz - z);
-      const bin = addCurbsideBin(scene, wx, wz, { variant, facing });
+      const bin = addCurbsideBin(scene, wx, wz, { variant, facing, detail });   // v1.115: the moulded cart with the built-up fort
       // Seat the bin's MESH at the fort's local floor (the caller lifts the fort
       // group via seatFortOnSlope / fortGY by tagging baseY on each returned obs;
       // the bin mesh is its own group, so we tag baseY and let the caller lift the
@@ -10974,8 +11110,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const facing = hc.side === 'north' ? Math.PI : 0; // label toward road
     // Garbage on one side, recycle on the other, in random order
     const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
-    const bin1 = sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing }), binBaseX - 0.4, binZ);
-    const bin2 = sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing }), binBaseX + 0.4, binZ);
+    const bin1 = sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ);
+    const bin2 = sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ);
     curbsideBins.push(bin1);
     curbsideBins.push(bin2);
   }
@@ -11008,31 +11144,22 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         // Home Depot moving box — varied dimensions, random facing.
         const w = rng(0.9, 1.3), h = rng(0.85, 1.1), d = rng(0.85, 1.1);
         cobj = sinkObs(addHomeDepotBox(scene, cx, cz, {
-          w, h, d, facing: rng(-Math.PI, Math.PI),
+          w, h, d, facing: rng(-Math.PI, Math.PI), detail: true,   // v1.115
         }), cx, cz);
       } else if (kind < 0.75) {
         // Wheeled curbside bin — randomly garbage or recycle, ~15% chance tipped.
         const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
         const tipped = Math.random() < 0.15;
         cobj = sinkObs(addCurbsideBin(scene, cx, cz, {
-          variant, tipped, facing: rng(-Math.PI, Math.PI),
+          variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true,   // v1.115
         }), cx, cz);
       } else {
         // Stacked plywood sheets — proper kid-fort building material.
         // A solid grounded block; folded chair leaned on top for visual interest.
         // Hitbox is the plywood stack (BBs hit it, players walk around it).
-        const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
-        const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.9), plyMat);
-        stack.position.set(cx, gy + 0.25, cz);   // seated on the slope
-        stack.castShadow = stack.receiveShadow = true;
+        // v1.115: sheets on sleepers with a folding lawn chair on top (buildPlyStack), was one slab and a flat box
+        const stack = buildPlyStack(cx, gy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
         scene.add(stack);
-        // Folded lawn chair on top — angled flat box for visual flavor
-        const chairMat = new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 });
-        const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.1), chairMat);
-        chair.position.set(cx + 0.1, gy + 0.55, cz);
-        chair.rotation.z = 0.2;
-        chair.castShadow = true;
-        scene.add(chair);
         cobj = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, baseY: gy, mesh: stack, surface: 'hard' };
       }
       coverList.push(cobj);
@@ -11182,10 +11309,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true }), cxp, czp);
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
-        cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) }), cxp, czp);
+        cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else if (kind < 0.85) {
         const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI) }), cxp, czp);
+        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else {
         // plywood stack + chair (grounded waist-high)
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
