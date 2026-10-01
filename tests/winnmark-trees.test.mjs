@@ -29,7 +29,8 @@ check('every Winnmark tree is the low-poly tree, with its crown', wm.treeDetail 
 check('every Winnmark foundation bush is the clumped shrub', wm.bushes > 10 && wm.bushDetail === wm.bushes, wm);
 for (const fn of ['buildBunrattyCourtScene']) {
   const r = res[fn];
-  check(`${fn.replace(/^build|Scene$/g, '')} keeps the old tree and bush`, r.trees > 0 && r.treeDetail === 0 && r.bushDetail === 0, r);
+  // v1.125 (D.3 step 4): Bunratty's trees and bushes are Winnmark's
+  check(`${fn.replace(/^build|Scene$/g, '')} builds the low-poly tree and the clumped shrub`, r.trees > 50 && r.treeDetail === r.trees && r.withCrown === r.trees && r.bushes > 10 && r.bushDetail === r.bushes, r);
 }
 
 // a look down the street, and the draw-call cost

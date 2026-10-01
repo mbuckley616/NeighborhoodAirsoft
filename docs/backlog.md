@@ -54,8 +54,10 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    v1.118 (rounded head; eye whites, irises, pupils, brows, nose, ears, mouth; open glasses frames; every kid, every map).
    ~~Hands~~ — done, v1.119 (a fist with a thumb, curled fingers and a wrist step, same node and grips). ~~Clothes~~
    — done, v1.120 (tucked shirt with yoke and collar, sleeve hems, jeans seams and cuffs, belt, sneakers on white soles,
-   per-kid chest stripe or pocket and shoe colour). Step 3 is complete: Michael's look at the kids, then B, Winnmark's
-   pieces to the other maps (his recommended order in decisions).
+   per-kid chest stripe or pocket and shoe colour). Step 3 is complete. Step 4 (Michael: A, carry Winnmark's pieces
+   to the other maps; control room, 1 Oct): ~~Bunratty~~ — done, v1.125 (houses, cars, trees and bushes, bins, boxes,
+   plywood stacks, the bulb fort; same collision; `tests/bunratty-polish.test.mjs`). Still to come: the Hollow's
+   trees, the lot's cars and trees, Bunratty's S-curve road and kerbs.
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and

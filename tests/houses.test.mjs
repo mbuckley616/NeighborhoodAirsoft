@@ -54,6 +54,8 @@ await page.evaluate(() => endScenario('lose'));
 await g.scenario('bunratty_sean');
 await g.spin(10);
 const br = await houses();
-check('Bunratty still builds the original house (no detail yet)', br.length > 0 && br.every(h => !h.detail), br.map(h => h.detail));
+// v1.125 (D.3 step 4): Bunratty builds Winnmark's house too, with the same footprints
+check('Bunratty builds the detailed house', br.length > 0 && br.every(h => h.detail), br.map(h => h.detail));
+check('Bunratty houses cost at most 20 meshes each', br.every(h => h.meshes <= 20), br.map(h => h.meshes));
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

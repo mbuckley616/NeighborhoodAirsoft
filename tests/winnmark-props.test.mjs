@@ -60,7 +60,8 @@ const st = res.cmp.stack;
 check('plywood stack: inside its 1.6 × 0.9 m box up to the chair, on the ground', st.detail === 'plystack' && st.minX >= -0.8 && st.maxX <= 0.8 && st.minZ >= -0.56 && st.maxZ <= 0.56 && st.bottom >= -0.001 && st.top <= 0.68, st);
 const wm = res.winnmark;
 check('Winnmark: bins, boxes and plywood stacks are all the detailed props', wm.bin > 20 && wm.box > 3 && wm.plystack > 0 && wm.old === 0, wm);
-check('Bunratty keeps the old props', res.bunratty.bin + res.bunratty.box + res.bunratty.plystack === 0 && res.bunratty.old > 0, res.bunratty);
+// v1.125 (D.3 step 4): Bunratty's props are Winnmark's
+check('Bunratty: bins, boxes and plywood stacks are all the detailed props', res.bunratty.bin > 10 && res.bunratty.box > 3 && res.bunratty.plystack > 0 && res.bunratty.old === 0, res.bunratty);
 
 // a look at a backyard
 await g.scenario('winnmark_seth_house');

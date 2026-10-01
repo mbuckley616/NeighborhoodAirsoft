@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.124</div>
+  <div class="version">v1.125</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8430,7 +8430,7 @@ function buildSuburbanHouse(scene, {
 
   const frontDepth = (faceDir === 'east' || faceDir === 'west') ? width/2 : depth/2;
   if (detail) buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, trimColor, roofColor, x, z });
-  if (!detail) {   // v1.104: the original house front (Bunratty still builds this one)
+  if (!detail) {   // v1.104: the original house front (no map builds it since v1.125)
   // Roof — pyramidal / hip roof. ConeGeometry with 4 segments rotated 45° = a hip.
   // Scale to match footprint (slightly larger so it overhangs).
   const roofH = 2.6;
@@ -9332,7 +9332,7 @@ function addCar(scene, x, z, opts = {}) {
 
   const group = new THREE.Group();
   if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
-  else {   // v1.112: the original box car (Bunratty and the lot still build this one)
+  else {   // v1.112: the original box car (the lot still builds this one)
   // Body — sits with bottom at wheel-axle height
   const body = new THREE.Mesh(new THREE.BoxGeometry(len, bodyH, width), carMat);
   body.position.set(0, wheelR + bodyH/2, 0);
@@ -11847,7 +11847,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   for (let i = 0; i < 16; i++) {
     const x = -40 + i * 6 + rng(-1.2, 1.2);
     // Sit on the far (lower) bank level via baseY so trunk AND canopy drop together.
-    addSuburbanTree(scene, x, 66 + rng(-2, 2), { leafR: rng(2.2, 3.0), trunkH: rng(4.0, 5.6), baseY: riverY });
+    addSuburbanTree(scene, x, 66 + rng(-2, 2), { leafR: rng(2.2, 3.0), trunkH: rng(4.0, 5.6), baseY: riverY, detail: true });   // v1.125
     // (We don't push these to obstacles — they're unreachable backdrop.)
   }
 
@@ -11997,7 +11997,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const obs = buildSuburbanHouse(scene, {
       x: hd.x, z: hd.z, width: hd.w, depth: hd.d,
       brickColor: brick, roofColor: roof, trimColor: 0xeae0d0,
-      faceDir: hd.faceDir, skirt: skirtDepth,
+      faceDir: hd.faceDir, skirt: skirtDepth, detail: true,   // v1.125: Winnmark's house (D.3 step 4)
     });
     houseObs.push(obs);
     houseCenters.push({ x: hd.x, z: hd.z, side: hd.side, hero: !!hd.hero });
@@ -12156,14 +12156,14 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(bx, bz)) {
         const tx = bx + rng(-0.5, 0.5), tz = bz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, tx, tz,
-          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(tx, tz) }));
+          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(tx, tz), detail: true }));   // v1.125
       }
       const sx = bx + ux * (spacing / 2) + px * (opts.outwardSign ?? 1) * rowGap;
       const sz = bz + uz * (spacing / 2) + pz * (opts.outwardSign ?? 1) * rowGap;
       if (!skipFn || !skipFn(sx, sz)) {
         const jx = sx + rng(-0.5, 0.5), jz = sz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, jx, jz,
-          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(jx, jz) }));
+          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(jx, jz), detail: true }));   // v1.125
       }
     }
   }
@@ -12199,20 +12199,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (x > h.minX - 2 && x < h.maxX + 2 && z > h.minZ - 2 && z < h.maxZ + 2) { inHouse = true; break; }
     }
     if (inHouse) continue;
-    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z) }));
+    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z), detail: true }));   // v1.125
   }
 
   // Front-yard ornamentals + foundation bushes (lots of plantings in the photos).
   for (const hc of houseCenters) {
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const frontZ = hc.z + towardRoad * 4.0;
-    bushObs.push(addBush(scene, hc.x - 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.8, frontZ)));
-    bushObs.push(addBush(scene, hc.x + 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.8, frontZ)));
+    bushObs.push(addBush(scene, hc.x - 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.8, frontZ), { detail: true }));   // v1.125
+    bushObs.push(addBush(scene, hc.x + 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.8, frontZ), { detail: true }));
     if (Math.random() < 0.6) {
       const off = hc.side === 'north' ? +6 : -6;
       const ox = hc.x + rng(-4, 4), oz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, ox, oz,
-        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(ox, oz) }));
+        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(ox, oz), detail: true }));   // v1.125
     }
   }
 
@@ -12266,8 +12266,8 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const binBaseX = hc.x + (Math.random() < 0.5 ? 1.6 : -1.6);
     const facing = hc.side === 'north' ? Math.PI : 0;
     const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
-    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing }), binBaseX - 0.4, binZ));
-    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing }), binBaseX + 0.4, binZ));
+    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ));
+    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ));
   }
 
   // Backyard cover — same mix as Winnmark (boxes / bins / plywood). AI uses these.
@@ -12285,21 +12285,15 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const cgy = groundY(cx, cz);
       if (kind < 0.4) {
         const w = rng(0.9, 1.3), h = rng(0.85, 1.1), d = rng(0.85, 1.1);
-        cobj = addHomeDepotBox(scene, cx, cz, { w, h, d, facing: rng(-Math.PI, Math.PI) });
+        cobj = addHomeDepotBox(scene, cx, cz, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else if (kind < 0.75) {
         const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
         const tipped = Math.random() < 0.15;
-        cobj = addCurbsideBin(scene, cx, cz, { variant, tipped, facing: rng(-Math.PI, Math.PI) });
+        cobj = addCurbsideBin(scene, cx, cz, { variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else {
-        const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
-        const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.9), plyMat);
-        stack.position.set(cx, cgy + 0.25, cz);
-        stack.castShadow = stack.receiveShadow = true;
+        // v1.125: Winnmark's plywood stack (sheets on sleepers, a lawn chair on top), was one slab and a flat box
+        const stack = buildPlyStack(cx, cgy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
         scene.add(stack);
-        const chairMat = new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 });
-        const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.1), chairMat);
-        chair.position.set(cx + 0.1, cgy + 0.55, cz); chair.rotation.z = 0.2; chair.castShadow = true;
-        scene.add(chair);
         cobj = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, mesh: stack, surface: 'hard', baseY: cgy };
       }
       // Box/bin variants are group-based → sink via helper (plywood already placed).
@@ -12364,16 +12358,16 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // === Cul-de-sac bulb cover (always built — general-purpose battlefield cover) ===
   // Two parked cars + a plank fort make the EAST bulb the natural focal point.
   {
-    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), BULB.x + 1, BULB.z - 3.5);
+    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal, detail: true }), BULB.x + 1, BULB.z - 3.5);
     pushCarObs(coverList, carObs);
-    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), BULB.x + 3.5, BULB.z + 3);
+    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal, detail: true }), BULB.x + 3.5, BULB.z + 3);
     pushCarObs(coverList, carObs2);
     // v1.23: U-shaped plywood kid-fort. Attackers push up the lane from the
     // WEST (entry x=-38), so the fort sits on the WEST side of the bulb with its
     // solid back wall facing WEST toward the incoming push. (Was a thin plank at
     // BULB.x+5 — EAST of the bulb, i.e. behind the defenders, facing away.)
     const fortX = BULB.x - 4, fortZ = BULB.z;
-    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2 });  // v1.76: taller walls + corner bins
+    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2, detail: true });  // v1.76: taller walls + corner bins; v1.125: the built-up fort
     // v1.8: the three walls share ONE group mesh — lift it once, tag baseY on each.
     // v1.76: the corner bins each have their OWN mesh group, so lift those
     // individually (the shared-group lift below only moves the walls).
@@ -12419,13 +12413,13 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const sgy = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal });
+        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true });   // v1.125
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
-        cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) });
+        cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });
       } else if (kind < 0.85) {
         const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI) });
+        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true });
       } else {
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
         const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 0.9), plyMat);

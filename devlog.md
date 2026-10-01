@@ -6222,3 +6222,32 @@ the South Fort defends start there too, which suits a defend.
 - Allies in the Hollow team matches still form up at the `b_fort` anchor (2, 27), the doorway; they move off at BEGIN,
   so I left it.
 - Whether the walk out of the fort feels like the start of an attack; the scenario text says you come up from the south end.
+
+
+---
+
+
+## v1.125 — Bunratty gets Winnmark's houses, cars, trees, props and fort
+
+Backlog D.3 step 4 (Michael: A, carry Winnmark's pieces to the other maps, control room 1 Oct). Every Winnmark piece
+from steps 1–2 was built behind a `detail` option on the shared builders, so Bunratty's calls now pass it: the seven
+houses (`buildSuburbanHouse`, hip roofs, gable, framed and shuttered windows, panelled door, chimney), the bulb and
+lane cars (`addCar`), every tree and front bush, including the far-bank silhouettes over the river, the curbside
+and backyard bins and moving boxes, the backyard plywood stacks (Bunratty built its own slab-and-chair inline; it now
+calls Winnmark's `buildPlyStack` with the same 1.6 × 0.9 m, 0.55 m box), and the bulb fort. Each of those builders
+keeps the old collision box (checked per piece in v1.104 and v1.112–v1.115), so cover, line of sight and the kids'
+paths are what they were. Bunratty's road stays the wiggling disc lane for now: Winnmark's road mesh is built for its
+straight street and bulb, and porting it to the S-curve is its own job. The Hollow and the lot come next.
+
+### Verified
+- New `tests/bunratty-polish.test.mjs`: one Bunratty build has 7 of 7 detailed houses, 4–7 of 4–7 detailed cars,
+  215–218 of 215–218 low-poly trees, 14 of 14 shrubs, 23–26 bins, 8–15 boxes and 5–10 plywood stacks all detailed,
+  3 detailed fort pieces. Four on Four for 30 s with the player untaggable: every kid walks (Owen, a camper, 11 m;
+  the rest 26–104 m), against 8–113 m on v1.124 in the same probe. Draw calls looking at the bulb: 259–300.
+  Screenshots `tests/out/bunratty-houses.png`, `bunratty-bulb.png`.
+- The step-1/2 suites' "Bunratty keeps the old …" checks now ask for the detailed piece, and the Bunratty car keeps
+  its cabin box (−0.15, 1.0 × 0.7 m, 1.15–1.70 m).
+- `npm test`: 35/35 suites green.
+### Still open
+- Bunratty's road and kerbs (the S-curve lane); the Hollow's trees; the lot's cars and trees.
+- Whether the detailed house reads well on Bunratty's downhill walk-out side (the podium and deck are unchanged).
