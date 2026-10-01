@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.117</div>
+  <div class="version">v1.118</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13828,6 +13828,91 @@ function buildEnemyGunMesh(weapon) {
 const KID_HEIGHT_SCALE = { short: 0.88, average: 1.0, tall: 1.12 };
 const KID_BUILD_SCALE  = { skinny: 0.88, average: 1.0, heavy: 1.18 };
 
+// v1.118 (backlog D.3 step 3, Michael: A — the kids: faces, hands, clothes; this is the faces). The head is the same
+// 0.28 m cube with its edges rounded (r 4 cm); the face is built in the head's own frame (front at +z, centre 0) and
+// merged into one mesh per material, so it rides the head through the crouch drop and the aim tilt. Nothing reaches
+// more than 3 cm past the head box (nose, ears), well inside the BB hit forgiveness; the hitboxes are untouched.
+const KID_EYE_COLORS = { brown: 0x5a3a1e, hazel: 0x7a6a34, green: 0x3e6e44, blue: 0x3a6a9a, gray: 0x6a7480 };
+let _kidHeadGeo = null;
+function kidHeadGeometry() {
+  if (_kidHeadGeo) return _kidHeadGeo;
+  const h = 0.14, r = 0.04, seg = 6;
+  const g = new THREE.BoxGeometry(2 * h, 2 * h, 2 * h, seg, seg, seg);
+  const pa = g.attributes.position, na = g.attributes.normal;
+  const v = new THREE.Vector3(), inner = new THREE.Vector3(), n = new THREE.Vector3();
+  const spread = u => Math.sign(u) * Math.pow(Math.abs(u), 0.55);   // crowd the rows toward the edges, where the rounding is
+  for (let i = 0; i < pa.count; i++) {
+    v.set(spread(pa.getX(i) / h) * h, spread(pa.getY(i) / h) * h, spread(pa.getZ(i) / h) * h);
+    inner.set(Math.max(-(h - r), Math.min(h - r, v.x)), Math.max(-(h - r), Math.min(h - r, v.y)), Math.max(-(h - r), Math.min(h - r, v.z)));
+    n.subVectors(v, inner);
+    if (n.lengthSq() < 1e-12) n.set(na.getX(i), na.getY(i), na.getZ(i)); else n.normalize();
+    v.copy(inner).addScaledVector(n, r);
+    pa.setXYZ(i, v.x, v.y, v.z); na.setXYZ(i, n.x, n.y, n.z);
+  }
+  _kidHeadGeo = g;
+  return g;
+}
+const _kidFaceMats = {};
+function _kidFaceMat(key, color, rough = 0.6) {
+  const k = key + ':' + color;
+  return _kidFaceMats[k] || (_kidFaceMats[k] = new THREE.MeshStandardMaterial({ color, roughness: rough }));
+}
+function buildKidFace(head, p, skin, hair) {
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const F = 0.14;                         // the face plane (head front)
+  const EY = 0.012, EX = 0.058;           // eye centre height and half-spacing, head frame
+  const mats = {
+    skin, brow: hair,
+    white: _kidFaceMat('white', 0xf2eee6, 0.5),
+    iris: _kidFaceMat('iris', KID_EYE_COLORS[p.eyeColor] ?? KID_EYE_COLORS.brown, 0.4),
+    dark: _kidFaceMat('dark', 0x141414, 0.4),
+    lip: _kidFaceMat('lip', new THREE.Color(p.skinColor ?? 0xe0b090).multiplyScalar(0.62).getHex(), 0.7),
+    frame: _kidFaceMat('frame', 0x0a0a0a, 0.4),
+  };
+  // eyes: white, iris and pupil stacked 1–5 mm proud, merged with the rest; eyeL/eyeR stay as empty anchors at each eye
+  const eyes = [];
+  for (const sx of [-1, 1]) {
+    const eg = new THREE.Object3D(); eg.position.set(sx * EX, EY, F); head.add(eg); eyes.push(eg);
+    add('white', box(0.058, 0.04, 0.008), sx * EX, EY, F + 0.001);
+    add('iris', box(0.028, 0.034, 0.008), sx * (EX - 0.004), EY - 0.001, F + 0.003);
+    add('dark', box(0.013, 0.016, 0.008), sx * (EX - 0.004), EY - 0.001, F + 0.005);
+  }
+  // brows in the hair colour, tipped a touch toward the nose
+  for (const sx of [-1, 1]) add('brow', box(0.062, 0.014, 0.012), sx * EX, EY + 0.04, F + 0.003, 0, 0, sx * -0.12);
+  // nose: a short wedge (a box narrowed at the bridge) and the tip
+  const nose = box(0.034, 0.06, 0.03);
+  const pa = nose.attributes.position;
+  for (let i = 0; i < pa.count; i++) if (pa.getY(i) > 0) { pa.setX(i, pa.getX(i) * 0.55); pa.setZ(i, pa.getZ(i) * 0.4 - 0.009); }
+  nose.computeVertexNormals();
+  add('skin', nose, 0, -0.022, F + 0.012);
+  add('skin', box(0.042, 0.02, 0.026), 0, -0.048, F + 0.012);
+  // ears: a shell and a darker inner fold read as one block with a lip
+  for (const sx of [-1, 1]) {
+    add('skin', box(0.026, 0.07, 0.05), sx * (F + 0.006), 0.0, -0.01);
+    add('lip', box(0.006, 0.04, 0.026), sx * (F + 0.019), 0.0, -0.006);
+  }
+  // mouth: a dark line with corners turned up, the lip colour under it
+  add('dark', box(0.05, 0.01, 0.006), 0, -0.078, F + 0.001);
+  for (const sx of [-1, 1]) add('dark', box(0.016, 0.009, 0.006), sx * 0.03, -0.074, F + 0.001, 0, 0, sx * 0.45);
+  add('lip', box(0.044, 0.01, 0.004), 0, -0.088, F + 0.0005);
+  // glasses: open rims round each eye (the eye shows through), a bridge, temple arms to the ears
+  if (p.glasses) {
+    for (const sx of [-1, 1]) {
+      const cx = sx * EX, z = F + 0.014, W = 0.074, H = 0.058, t = 0.008;
+      add('frame', box(W, t, t), cx, EY + H / 2, z); add('frame', box(W, t, t), cx, EY - H / 2, z);
+      add('frame', box(t, H, t), cx - W / 2, EY, z); add('frame', box(t, H, t), cx + W / 2, EY, z);
+      add('frame', box(0.008, 0.008, 0.15), sx * (F + 0.006), EY + 0.02, F - 0.06);
+    }
+    add('frame', box(0.034, 0.008, 0.008), 0, EY + 0.016, F + 0.014);
+  }
+  const face = new THREE.Group(); face.userData.kidFace = true;
+  _propMerge(face, b, mats);
+  face.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  head.add(face);
+  return { eyeL: eyes[0], eyeR: eyes[1], face };
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -13915,7 +14000,8 @@ function createKid(profile, weapon = 'pistol') {
   neck.position.set(0, 1.08, 0); group.add(neck);
 
   // Head
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), skin);
+  // v1.118: a rounded head (same 0.28 m cube, edges rounded 4 cm) carrying the face as its children (buildKidFace).
+  const head = new THREE.Mesh(kidHeadGeometry(), skin);
   head.position.set(0, 1.26, 0); head.castShadow = true; group.add(head);
 
   // === HAIR — varies by style ===
@@ -13980,30 +14066,10 @@ function createKid(profile, weapon = 'pistol') {
     }
   }
 
-  // Eyes
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
-  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), eyeMat);
-  eyeL.position.set(-0.06, 1.27, 0.145); group.add(eyeL);
-  const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), eyeMat);
-  eyeR.position.set(0.06, 1.27, 0.145); group.add(eyeR);
-
-  // Glasses — dark frame bridging both eyes
-  if (p.glasses) {
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.4 });
-    // Two lens rims (small flat boxes), a bridge, and two tiny temple arms.
-    const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.01), frameMat);
-    lensL.position.set(-0.06, 1.27, 0.152); group.add(lensL);
-    const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.01), frameMat);
-    lensR.position.set(0.06, 1.27, 0.152); group.add(lensR);
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.01), frameMat);
-    bridge.position.set(0, 1.28, 0.152); group.add(bridge);
-    const templeL = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.14), frameMat);
-    templeL.position.set(-0.105, 1.28, 0.08); group.add(templeL);
-    const templeR = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.14), frameMat);
-    templeR.position.set(0.105, 1.28, 0.08); group.add(templeR);
-    headExtras.push(lensL, lensR, bridge, templeL, templeR);
-  }
-
+  // v1.118 (backlog D.3 step 3, the kids: faces): the two black squares became a face on the head: eye whites, irises
+  // and pupils, brows in the hair colour, a nose, ears and a mouth, and open glasses frames the eyes show through. It
+  // is parented to the head, so it follows the crouch drop and the aim tilt; eyeL/eyeR are anchors at the eyes.
+  const { eyeL, eyeR } = buildKidFace(head, p, skin, hair);
   // Gun in right hand (oriented to point along +Z when group faces +Z).
   // v1.28e: silhouette now matches the enemy's actual weapon class.
   const gunGroup = buildEnemyGunMesh(weapon);
@@ -14106,8 +14172,6 @@ function setKidCrouch(kid, amount) {
   po.head.position.y  = b.head_y  - hipDrop;
   po.gunGroup.position.y = b.gun_y - hipDrop;
   if (po.hair) po.hair.position.y = b.hair_y - hipDrop;
-  po.eyeL.position.y  = b.eyeL_y  - hipDrop;
-  po.eyeR.position.y  = b.eyeR_y  - hipDrop;
   // v1.14c: lower every extra head-attached mesh (hair strands/puffs/fringe,
   // glasses) by the same hipDrop so nothing stays floating at standing height.
   if (po.headExtras) {

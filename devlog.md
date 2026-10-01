@@ -5957,3 +5957,32 @@ Every fort scenario and both cul-de-sac maps read as before.
 ### Still open
 - The timer win still has "distant screen doors slam" in the Hollow; it reads as moms calling from the houses past
   the trees, so it stays unless Michael says otherwise.
+
+## v1.118 — The kids' faces
+
+D.3 step 3 (Michael: A on the control room, 1 Oct: the kids next, faces, hands, clothes). This is the faces. A kid's
+head was a plain 0.28 m skin cube with two 3 cm black squares for eyes, and a kid with glasses wore two solid black
+lens boxes over them, so the eyes vanished. The head is now the same cube with its edges rounded (4 cm radius, the
+rows crowded toward the edges so the rounding is smooth, normals taken from the rounding so no seams show).
+`buildKidFace` puts a face on it: eye whites, an iris (brown by default; `eyeColor` in a profile picks hazel, green,
+blue or grey, for the mirror later) and a pupil, set toward the nose; brows in the kid's hair colour, tipped in a
+little; a nose that narrows at the bridge, with a tip; ears with an inner fold; a mouth line with the corners turned
+up and a lip tone under it, darker than the skin. Glasses are open rims round each eye, a bridge and temple arms back
+to the ears, so the eyes show through. The face is a child of the head, so it rides the crouch drop and now also the
+small forward tilt when a kid aims (the old eyes stayed level while the head tipped). It is merged into one mesh per
+material: 6 meshes a kid (was 2 for the eyes), 7 with glasses (was 7). Nothing reaches more than 2.7 cm past the old
+head box (nose and ears), and the hitboxes are fixed numbers in `checkEnemyHit`, so hits are unchanged. It is every
+kid on every map at once, and the mirror preview.
+
+### Verified
+- New `tests/kid-face.test.mjs`, over all 24 kids in `CHARACTERS`: the head geometry spans exactly ±0.14 m; the face is
+  on the head, 6–7 meshes, reaching 2.7 cm past the cube; a ray from 1 m in front at the left eye hits the pupil, for the
+  three kids with glasses too; at full crouch the eye drops exactly as far as the head (0.218, 0.248 or 0.277 m by height).
+  `checkEnemyHit` still hits at the head centre and 2 cm in front of the old face and misses 6 cm out. Screenshot
+  `tests/out/kid-faces.png` (three kids close up, one in glasses).
+- `npm test`: 29/29 green.
+
+### Still open
+- Michael's eye on the faces; the smile, the brow tilt and the eye size are one-number changes.
+- The hair caps are still the old boxes; they sit on the rounded top fine, but a rounded cap would match.
+- Next in step 3: hands, then clothes.
