@@ -5853,3 +5853,29 @@ so the suite checks Bunratty, not the Hollow, as the unchanged map.
 ### Still open
 - Michael's eye on the tree shape; a denser or darker crown is a one-line change.
 - Step 2 goes on: the fort and yard props, then the road and kerbs.
+
+## v1.114 — Winnmark's kid fort
+
+D.3 step 2, third part (Michael: A): the fort. Both Winnmark forts (the plank fort in the bulb and the treehouse-defend
+fort at the east mouth) were three solid tan slabs with a few studs stuck to the inside. `buildKidFort` now takes
+`detail: true`, and `buildFortDetail` draws each wall the way a kid would build it: 4-ft plywood sheets in three
+mismatched tones skinned on both faces of a frame, a dark gap at each sheet joint with a 2x4 over it on the inside,
+screw heads in two stud lines per sheet, a flat top plate closing the wall, a 2x4 rail at hip height and a diagonal
+brace on the inside, a post at each back corner and wing end, and KEEP OUT sprayed in red (with drips) on the
+attackers' face of the back wall. Everything sits inside the three wall boxes and under the 1.12 m top, so cover,
+collision, BB hits and the kids' cover picks are unchanged. The posts at the wing ends first stood 9 cm past the wing
+boxes; they now sit inside them. The inside 2x4s stand 4 cm proud on the defender's side, as the old studs did. The
+corner bins are untouched here (they are the yard props, next). One mesh per material: the fort is 6 meshes, was 12.
+Bunratty keeps the slab fort.
+
+### Verified
+- New `tests/winnmark-fort.test.mjs`: the slab fort and the detailed fort, built side by side with the same arguments,
+  have identical wall and bin boxes (both Winnmark forts). Nothing drawn reaches past the footprint except the screw heads
+  and paint, 5 mm proud; the top is 1.12 m, the wall height. 6 meshes (was 12), 1,142 triangles. The Winnmark cul-de-sac
+  build has 1 detailed fort, the treehouse build 2 of 2; Bunratty's fort is still the slab. Screenshot
+  `tests/out/winnmark-fort.png` (the bulb fort from the attackers' side).
+- `npm test`: 26/26 green.
+
+### Still open
+- Michael's eye on the fort; the sign's wording is a one-line change.
+- Step 2 goes on: the yard props (bins, boxes, plywood stacks, mailboxes), then the road and kerbs.

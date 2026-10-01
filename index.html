@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.113</div>
+  <div class="version">v1.114</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9435,10 +9435,12 @@ function buildKidFort(scene, x, z, opts = {}) {
   // are to the -Z side / "north"), wings run toward +Z, then rotate the whole
   // group so the back wall faces the requested attack direction.
   const group = new THREE.Group();
+  const detail = !!opts.detail;   // v1.114: Winnmark's forts are the built-up fort (buildFortDetail)
 
   // Helper: a plywood panel of given full-size, centered at local (lx, lz),
   // with its long axis along X (spanX=true) or Z (spanX=false).
   function panel(lx, lz, length, spanX, mat) {
+    if (detail) return { lx, lz, length, spanX };
     const geo = spanX
       ? new THREE.BoxGeometry(length, H, t)
       : new THREE.BoxGeometry(t, H, length);
@@ -9465,6 +9467,8 @@ function buildKidFort(scene, x, z, opts = {}) {
   // Two side wings: span Z, at local x = ±W/2, running from back to rear.
   const wingL = panel(-W / 2, 0, D, false, plyMat2);
   const wingR = panel( W / 2, 0, D, false, plyMat2);
+
+  if (detail) buildFortDetail(group, { W, D, H, t, back, wingL, wingR, seed: Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1 });
 
   // (v1.28k: removed the knee-high front "lip" pallet — it read as a stray brown
   // bar with no gameplay purpose and cluttered the fort's open side.)
@@ -9547,6 +9551,108 @@ function buildKidFort(scene, x, z, opts = {}) {
   // the four corner bins (if any). Callers that lift the fort onto a slope iterate
   // the whole array tagging baseY / shifting mesh.position.y, so bins ride along.
   return [backObs, wingLObs, wingRObs, ...binObs];
+}
+
+// v1.114 (backlog D.3 step 2, the fort and yard props: Winnmark's kid fort). buildKidFort({ detail: true }) draws each
+// wall as a real kid build instead of a solid slab: 4-ft plywood sheets of mismatched tones skinned on both faces of a
+// 2x4 frame, a dark gap at each sheet joint, screw heads along the studs, a flat top plate, 2x4 rails and a diagonal
+// brace on the inside, a post at every corner and wing end, and KEEP OUT sprayed on the attackers' face. Everything stays
+// inside the three wall boxes (same footprint, top at H), so cover, collision and BBs don't change. One mesh per
+// material, as the v1.104 houses.
+let _fortPaintTex = null;
+function _fortPaint() {
+  if (_fortPaintTex) return _fortPaintTex;
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 160;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#c3281e'; c.strokeStyle = '#c3281e';
+  c.font = 'bold 92px Impact, "Arial Black", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.save(); c.translate(256, 70); c.rotate(-0.04); c.fillText('KEEP OUT', 0, 0); c.restore();
+  // drips under the letters, and an underline swipe
+  const drips = [70, 118, 171, 236, 290, 352, 410, 452];
+  drips.forEach((dx, i) => { c.fillRect(dx, 104, 5, 14 + ((i * 37) % 30)); c.beginPath(); c.arc(dx + 2.5, 118 + ((i * 37) % 30), 4, 0, Math.PI * 2); c.fill(); });
+  c.lineWidth = 9; c.lineCap = 'round'; c.beginPath(); c.moveTo(60, 140); c.quadraticCurveTo(256, 128, 455, 146); c.stroke();
+  _fortPaintTex = new THREE.CanvasTexture(cv);
+  return _fortPaintTex;
+}
+function buildFortDetail(group, { W, D, H, t, back, wingL, wingR, seed }) {
+  const plyTones = [0xc4a06a, 0xb89058, 0xcfae7c];
+  const mats = {
+    ply0: new THREE.MeshStandardMaterial({ color: plyTones[0], roughness: 0.92 }),
+    ply1: new THREE.MeshStandardMaterial({ color: plyTones[1], roughness: 0.92 }),
+    ply2: new THREE.MeshStandardMaterial({ color: plyTones[2], roughness: 0.92 }),
+    lumber: new THREE.MeshStandardMaterial({ color: 0xa8865a, roughness: 0.95 }),
+    post: new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.95 }),
+    gap: new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 1.0 }),
+    screw: new THREE.MeshStandardMaterial({ color: 0x8a8a86, roughness: 0.5, metalness: 0.3 }),
+  };
+  const buckets = {}; for (const k in mats) buckets[k] = [];
+  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s = new THREE.Vector3(1, 1, 1);
+  // A panel's frame: u along the wall, y up, n outward (toward the attackers for the back wall).
+  function frame(p) {
+    const yaw = p === back ? Math.PI : (p.lx < 0 ? -Math.PI / 2 : Math.PI / 2);
+    return new THREE.Matrix4().compose(new THREE.Vector3(p.lx, 0, p.lz), _q.setFromEuler(_e.set(0, yaw, 0)), _s);
+  }
+  function add(key, geo, base, u, y, n, rz = 0) {
+    const m = new THREE.Matrix4().compose(new THREE.Vector3(u, y, n), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, rz)), _s);
+    buckets[key].push({ geo, m: base ? new THREE.Matrix4().multiplyMatrices(base, m) : m });
+  }
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const skin = 0.025, plate = 0.04, sheetTop = H - plate;
+  let r = seed;
+  const rnd = () => (r = (r * 9301 + 49297) % 233280 / 233280);
+
+  for (const p of [back, wingL, wingR]) {
+    const base = frame(p);
+    // the back wall runs post to post; a wing runs from the back wall's inner face to its end post (u is +z on the
+    // left wing, −z on the right)
+    let u0 = -p.length / 2 + t / 2, u1 = p.length / 2 - t / 2;
+    if (p === wingL) { u0 = -D / 2 + t / 2; u1 = D / 2 - t; }
+    if (p === wingR) { u0 = -(D / 2 - t); u1 = D / 2 - t / 2; }
+    const n = Math.max(1, Math.ceil((u1 - u0) / 1.22)), sw = (u1 - u0) / n;
+    for (let i = 0; i < n; i++) {
+      const uc = u0 + sw * (i + 0.5);
+      for (const side of [1, -1]) {   // outer skin, inner skin
+        const tone = 'ply' + Math.floor(rnd() * 3);
+        add(tone, box(sw - 0.012, sheetTop, skin), base, uc, sheetTop / 2, side * (t / 2 - skin / 2));
+      }
+      if (i > 0) {   // the joint: a dark gap outside, a 2x4 stud over it inside
+        add('gap', box(0.012, sheetTop - 0.02, t - 2 * skin + 0.004), base, u0 + sw * i, sheetTop / 2, 0);
+        add('lumber', box(0.09, sheetTop - 0.04, 0.04), base, u0 + sw * i, sheetTop / 2, -(t / 2 + 0.02));
+      }
+      // screw heads in two stud lines per sheet
+      for (const su of [-sw / 2 + 0.08, sw / 2 - 0.08]) for (let k = 0; k < 4; k++) {
+        add('screw', box(0.018, 0.018, 0.006), base, uc + su, 0.14 + k * (sheetTop - 0.28) / 3, t / 2 + 0.002);
+      }
+    }
+    // the top plate closes the hollow between the skins
+    add('lumber', box(u1 - u0, plate, t), base, (u0 + u1) / 2, H - plate / 2, 0);
+    // inside: a rail at hip height and a diagonal brace (the inside 2x4s stand 4 cm proud on the defender's side,
+    // as the old studs did)
+    add('lumber', box(u1 - u0 - 0.02, 0.09, 0.04), base, (u0 + u1) / 2, 0.55, -(t / 2 + 0.02));
+    const bu = Math.min(1.1, (u1 - u0) * 0.5), bh = sheetTop - 0.25, bl = Math.hypot(bu, bh);
+    add('lumber', box(bl, 0.08, 0.035), base, (u0 + u1) / 2, 0.12 + bh / 2, -(t / 2 + 0.0575), (p === wingR ? -1 : 1) * Math.atan2(bh, bu));
+    if (p === back) {
+      // KEEP OUT on the attackers' face (kept on its own mesh: it carries a texture)
+      const paint = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.6, W * 0.72), Math.min(2.6, W * 0.72) * 0.3125),
+        new THREE.MeshStandardMaterial({ map: _fortPaint(), transparent: true, alphaTest: 0.3, roughness: 0.9, depthWrite: false }));
+      paint.applyMatrix4(new THREE.Matrix4().multiplyMatrices(base, new THREE.Matrix4().makeTranslation(-0.1, H * 0.58, t / 2 + 0.004)));
+      paint.userData.fortPaint = true;
+      group.add(paint);
+    }
+  }
+  // posts: the two back corners and the two wing ends, each a t-square post inside the wall boxes
+  for (const sx of [-1, 1]) for (const pz of [-D / 2, D / 2 - t / 2]) {
+    add('post', box(t, H, t), null, sx * W / 2, H / 2, pz);
+    add('post', box(t, 0.02, t), null, sx * W / 2, H - 0.01, pz);
+  }
+
+  for (const k in buckets) {
+    if (!buckets[k].length) continue;
+    const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
+    m.castShadow = (k !== 'screw' && k !== 'gap'); m.receiveShadow = k.startsWith('ply') || k === 'lumber';
+    group.add(m);
+  }
+  group.userData.fortDetail = true;
 }
 
 // ======================================================================
@@ -10989,7 +11095,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     // incoming push. Moved forward from x=-33 (which buried it in the west tree
     // line, "too far back/inside the trees") to x=-29, so it sits IN the bulb
     // as the focal point rather than behind it.
-    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2 });  // v1.76: taller default walls + corner bins
+    const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });  // v1.76: taller default walls + corner bins; v1.114: the built-up fort
     seatFortOnSlope(fortWalls, -29, 0);   // v1.28l: lift the shared group once, tag baseY on each wall (+ corner bins, v1.76)
     for (const w of fortWalls) coverList.push(w);
     // Stash references for placements table below
@@ -11017,7 +11123,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the player actually spawns behind it (playerSpawn 'east_fort') and attackers
   // come from the far west cluster, nowhere near x=33.
   if (variant === 'treehouse') {
-    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4 });  // v1.76: taller walls + corner bins
+    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4, detail: true });  // v1.76: taller walls + corner bins; v1.114: the built-up fort
     seatFortOnSlope(fw, 33, 0);
     for (const w of fw) coverList.push(w);
   }
