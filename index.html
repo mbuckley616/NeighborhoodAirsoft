@@ -1027,9 +1027,16 @@
     letter-spacing: 1.5px;
     font-weight: bold;
   }
+  /* v1.132 (D.5 C step 1): the kid panel sits left of the two lists, so the card is wider */
+  #loadoutScreen .loadout-card { width: 1040px; }
+  #loadoutScreen .lo-kid-col { position: relative; width: 280px; height: 380px; }
+  #loadoutScreen #loKidCanvas { width: 280px; height: 380px; border-radius: 6px; background: #2a2f38; display: block; }
+  #loadoutScreen #loKidLabels { position: absolute; left: 0; top: 0; width: 280px; height: 380px; pointer-events: none; overflow: visible; }
+  #loadoutScreen #loKidLabels text { font: 10px monospace; fill: #f4e9d8; }
+  #loadoutScreen #loKidLabels text.part { fill: #9a8; font-size: 8px; letter-spacing: 1px; }
   #loadoutScreen .loadout-cols {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 280px 1fr 1fr;
     gap: 16px;
     margin-bottom: 14px;
   }
@@ -1814,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.131</div>
+  <div class="version">v1.132</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2002,6 +2009,11 @@
       <div class="lo-weight-note" id="loWeightNote"></div>
     </div>
     <div class="loadout-cols">
+      <!-- v1.132 (D.5 C step 1): your kid, turning, holding the slot-1 gun; a line from each body part to what it wears -->
+      <div class="loadout-col lo-kid-col" id="loKidCol">
+        <canvas id="loKidCanvas" width="280" height="380"></canvas>
+        <svg id="loKidLabels" viewBox="0 0 280 380"></svg>
+      </div>
       <div class="loadout-col">
         <div class="col-title">Equipment Slots (1-4)</div>
         <div id="loSlotsList"></div>
@@ -18061,6 +18073,81 @@ function closeMirror() {
 // === LOADOUT MANAGEMENT SCREEN ===
 let loadoutPickerSlot = -1;
 
+// v1.132 (backlog D.5 C step 1, Michael: A): the Loadout screen shows your kid (the mirror's look, createKid) turning
+// slowly in a panel with the slot-1 gun in hand, and a leader line from each body part to what is equipped there: eye
+// pro, chest, arms, legs, feet, belt and holster, the gun. The worn gear has no meshes on the kid yet (step 2, a group
+// at a time); the lines name it. Part points are in the average kid's local frame (createKid's group scale applies).
+const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0 };
+const LOADOUT_KID_PARTS = [
+  { key: 'eyes',  part: 'EYES',  p: [0, 1.27, 0.15],      side: 'L' },   // the kid faces +z; eyes at 1.27 (head top 1.47)
+  { key: 'chest', part: 'CHEST', p: [0, 0.92, 0.13],      side: 'L' },
+  { key: 'arms',  part: 'ARMS',  p: [0.25, 0.85, 0.02],   side: 'R' },
+  { key: 'belt',  part: 'BELT',  p: [0, 0.62, 0.13],      side: 'L' },
+  { key: 'gun',   part: 'HANDS', p: [-0.27, 0.56, 0.2],   side: 'L' },   // the gun hangs at the right hip (screen left), pointing +z
+  { key: 'legs',  part: 'KNEES', p: [-0.08, 0.32, 0.09],  side: 'R' },
+  { key: 'feet',  part: 'FEET',  p: [-0.08, 0.04, 0.12],  side: 'R' },
+];
+function loadoutKidItems() {
+  const eq = Game.persist.equipped, own = Game.persist.owned || {};
+  const armor = (zone) => { const id = eq.armor && eq.armor[zone]; return id && ARMOR[id] ? ARMOR[id].name : 'nothing'; };
+  const belt = getUnlockedSlotCount() >= 4 ? 'Belt & Holster' : getUnlockedSlotCount() >= 3 ? 'Utility Belt' : 'nothing';
+  return {
+    eyes: (EYEWEAR[eq.eyewear] || EYEWEAR.none).name, chest: armor('chest'), arms: armor('arms'), legs: armor('legs'),
+    feet: (SHOES[eq.shoes] || SHOES.none).name, belt, gun: getGunDisplayName(eq.gun),
+  };
+}
+function renderLoadoutKid() {
+  const canvas = document.getElementById('loKidCanvas');
+  if (!canvas) return;
+  const L = LOADOUT_KID;
+  if (!L.renderer) {
+    L.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    L.renderer.setSize(280, 380, false);
+    L.scene = new THREE.Scene();
+    L.scene.background = new THREE.Color(0x2a2f38);
+    L.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.9));
+    const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(1.5, 3, 2.5); L.scene.add(d);
+    L.camera = new THREE.PerspectiveCamera(30, 280 / 380, 0.1, 20);
+    L.camera.position.set(0, 0.95, 4.0); L.camera.lookAt(0, 0.8, 0);
+  }
+  const gun = Game.persist.equipped.gun;
+  if (L.kid) L.scene.remove(L.kid.group);
+  L.kid = createKid(Object.assign({}, Game.persist.look), gun);
+  L.gun = gun;
+  L.scene.add(L.kid.group);
+  drawLoadoutKid();
+}
+// Turn the kid (called each step while the screen is open), render, and re-place the labels on the projected parts.
+function updateLoadoutKid(dt) {
+  if (!LOADOUT_KID.kid) return;
+  LOADOUT_KID.yaw += dt * 0.35;
+  drawLoadoutKid();
+}
+function drawLoadoutKid() {
+  const L = LOADOUT_KID;
+  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw);   // swings between three-quarter views, gun side and front to camera
+  L.kid.group.updateMatrixWorld(true);
+  L.renderer.render(L.scene, L.camera);
+  const items = loadoutKidItems(), svg = document.getElementById('loKidLabels');
+  const rows = { L: 0, R: 0 };
+  let html = '';
+  L.labels = [];
+  for (const pt of LOADOUT_KID_PARTS) {
+    const v = new THREE.Vector3(...pt.p).applyMatrix4(L.kid.group.matrixWorld).project(L.camera);
+    const x = (v.x + 1) / 2 * 280, y = (1 - v.y) / 2 * 380;
+    const i = rows[pt.side]++;
+    const lx = pt.side === 'L' ? 6 : 274, ly = 40 + i * 50 + (pt.side === 'R' ? 150 : 0);
+    const anchor = pt.side === 'L' ? 'start' : 'end';
+    const none = items[pt.key] === 'nothing';
+    html += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(pt.side === 'L' ? lx + 52 : lx - 52)}" y2="${ly + 4}" stroke="${none ? 'rgba(255,255,255,.25)' : '#ff8c42'}" stroke-width="1"/>`
+      + `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${none ? '#888' : '#ff8c42'}"/>`
+      + `<text class="part" x="${lx}" y="${ly - 6}" text-anchor="${anchor}">${pt.part}</text>`
+      + `<text x="${lx}" y="${ly + 7}" text-anchor="${anchor}" data-key="${pt.key}" opacity="${none ? 0.55 : 1}">${items[pt.key]}</text>`;
+    L.labels.push({ key: pt.key, x, y, lx, ly, text: items[pt.key] });
+  }
+  svg.innerHTML = html;
+}
+
 function openLoadout() {
   document.getElementById('loadoutScreen').classList.add('active');
   Game.prevMode = Game.mode;
@@ -18068,6 +18155,7 @@ function openLoadout() {
   loadoutPickerSlot = -1;
   exitPointerLock();
   renderLoadoutManager();
+  renderLoadoutKid();   // v1.132
 }
 
 function closeLoadout() {
@@ -18216,6 +18304,8 @@ function renderLoadoutManager() {
 
   renderClosetWornGear();
   renderLoadoutWeight();
+  // v1.132: a gun swap re-builds the kid (the gun is in its hands); a gear change only re-labels
+  if (LOADOUT_KID.kid && Game.mode === 'loadoutMgr') { if (LOADOUT_KID.gun !== Game.persist.equipped.gun) renderLoadoutKid(); else drawLoadoutKid(); }
 }
 
 // v1.60: paint the weight readout. Shows total lb, a light/medium/heavy tier,
@@ -24234,6 +24324,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
     updateInteractables();

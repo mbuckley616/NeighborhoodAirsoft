@@ -6548,3 +6548,43 @@ hold a spot: he starts at his anchor, the high yard at (−15, −28), and shoot
   point of a defend. Whether 90 s against them is fair is for a playtest.
 - Whether another zone follows Northcliff is a new question in decisions (builder recommends C: the Loadout screen
   and the found-in-play bugs first).
+
+
+---
+
+
+## v1.132 — The Loadout screen shows your kid
+
+Backlog D.5 C, step 1. Michael answered A on the control room (1 Oct): the Loadout screen shows your kid turning in a
+panel, wearing what is equipped, with a label from each body part to its item and the lists kept beside it, built in
+steps. This step is the kid, the gun and the labels; the gear meshes come next, a group at a time.
+
+The Loadout card is wider (1040 px, was 760) and opens with a 280 × 380 panel left of the two lists. In it is your kid,
+built the same way the mirror builds it (`createKid` with your saved look), holding the slot-1 gun at the hip. The
+kid swings slowly between two three-quarter views, with the gun side and the face kept toward you, as the game steps.
+Over the canvas, an SVG draws a dot on each of seven body parts and a leader line from it to a label: EYES, CHEST,
+BELT and HANDS on the left, ARMS, KNEES and FEET on the right. Each label names what is equipped there (eye pro, chest,
+arm and knee armour, shoes, the belt and holster unlock, the gun). An empty part shows "nothing", greyed. The dots
+follow the kid as it turns. Equipping or removing gear in the lists re-labels at once. Swapping the gun re-builds the
+kid with the new gun in its hands. The worn gear is not on the kid yet: the labels name it, and step 2 gives each group
+its own mesh.
+
+On the first screenshot the kid stood side-on with the gun hidden behind it, and two points missed: EYES landed on the
+hair and HANDS in the air. `createKid` faces +z with the gun at the right hip, so the points were measured off a built
+kid (eyes at 1.27 m, gun at x −0.27), and the turn was moved to keep that side toward the camera.
+
+### Verified
+- New `tests/loadout-kid.test.mjs`:
+  - The screen opens with the 280 × 380 panel, and the kid holds the slot-1 gun.
+  - Seven lines and seven labels. A new save reads No Eye Pro, nothing, nothing, nothing, Spring Pistol, nothing,
+    Sneakers (default), and every body point lands on the canvas.
+  - 2 s of `stepGame` turns the kid 0.22 rad, and the chest line moves 5 px with it.
+  - Ski Goggles, Foam Chest Rig, Knee Pads and Trail Runners show on their parts after equipping them.
+  - All eight guns: the kid is re-built holding each one, and HANDS names it.
+  - Screenshot `tests/out/loadout-kid.png`, checked by eye.
+- `npm test`: 41/41 suites green.
+### Still open
+- Step 2 of D.5 C: the gear on the kid (eye pro, chest rig and vest, elbow and knee pads, shoes, belt and holster),
+  a group at a time, each shown to Michael.
+- The card is now 1040 px wide. Below about 1100 px of window it fills 95% of the width, and the lists get narrower.
+  Whether it reads well on a laptop is for a look in play.

@@ -72,7 +72,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    it unlocks for you. (Michael, 2026-09-29) **(design)** — Michael: **A** first (control room, 30 Sep). ~~A, the Utility Belt~~ — done,
    v1.106 (slot 3 is the Utility Belt, slot 4 the Drop-Leg Holster; texts say what each unlocks). ~~B, re-sort the shop~~ —
    done, v1.128 (Michael: A — four tabs: Guns, Ammo, Gear, Mods; `tests/shop-tabs.test.mjs`). C (Loadout screen with a
-   3D kid) still to come; its question is in decisions (1 Oct).
+   3D kid; Michael: **A**, in steps, control room 1 Oct): ~~step 1, the kid, gun and labels~~ — done, v1.132 (your kid
+   turns in a panel holding the slot-1 gun, a line from each body part to its item; `tests/loadout-kid.test.mjs`).
+   Step 2: the gear meshes on the kid, a group at a time (eye pro, armour, shoes, belt and holster).
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,
