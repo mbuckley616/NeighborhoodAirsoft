@@ -5,17 +5,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
-  trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
-  a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`
-  (winnmark-cars-bulb, winnmark-trees, winnmark-fort, winnmark-props, winnmark-road); in game, any Winnmark match
-  once Builder sessions is merged. Your note also listed people. Options:
-  A) The kids next (faces, hands, clothes). They're the last thing in your list, and they show on every map at once.
-  B) Carry Winnmark's new houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
-  C) Change something on Winnmark first (say what in a note).
-  Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
-  pieces are settled.
-
 - **D.3 step 3, the kids are done (builder, 2026-10-01).** Your A (control room, 1 Oct) is built, on every kid on
   every map: faces (v1.118: rounded head, eye whites and irises, brows, nose, ears, a smile; glasses you can see the
   eyes through), hands (v1.119: a fist with a thumb and fingers), clothes (v1.120: tucked shirts with a collar and a
@@ -28,6 +17,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **B**: the mirror rows are a short job on what is already built, and D.6 was waiting on them.
 
 ## Answered
+
+- **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
+  trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
+  a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`
+  (winnmark-cars-bulb, winnmark-trees, winnmark-fort, winnmark-props, winnmark-road); in game, any Winnmark match
+  once Builder sessions is merged. Your note also listed people. Options:
+  A) The kids next (faces, hands, clothes). They're the last thing in your list, and they show on every map at once.
+  B) Carry Winnmark's new houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
+  C) Change something on Winnmark first (say what in a note).
+  Builder recommends **A**, then B: it finishes Winnmark end to end as you asked, and B is mostly wiring once the
+  pieces are settled.
+  Michael: **A — The kids next**. (2026-10-01)
 
 - **D.3 step 1, Winnmark's houses (builder, 2026-09-30).** Your D answer asked to see each step before the next.
   v1.104 rebuilt Winnmark's eight houses: hip roofs with even eaves and gutters, a gable over the door with a round
