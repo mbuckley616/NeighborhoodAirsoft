@@ -6326,3 +6326,40 @@ difference once the slide was fixed, so I took it out.
 ### Still open
 - `hollow-held` runs close to its 10% limit since the Hollow got v1.126's hardwoods (5–10% across six runs). If it
   starts failing more often, look at which trees the held shots stop on.
+
+
+---
+
+
+## v1.127 — Bunratty's lane gets Winnmark's road and kerbs
+
+The last piece of D.3 step 4 (Michael: A, carry Winnmark's pieces to the other maps). Bunratty's road was still the
+v1.24a pavement: 73 overlapping asphalt discs down the S-curve and 19 more tiling the bulb, with scalloped edges and
+no kerb. Winnmark's v1.116 road builder lived inside `buildWinnmarkCourtScene` and took its bezier from there, so I
+lifted it out as `buildStreetRoad(scene, opts)`: the centreline and its tangent, the ground, the houses (for the
+driveway drops), the bulb, and where the manholes, drains, crack sealing and patch go. Winnmark calls it with its own
+numbers and comes out identical. Bunratty calls it with its cubic bezier and the 6.5 m bulb: one asphalt ribbon on
+the ground, a polar bulb, a gutter pan and 9 cm rolled kerb along both edges and round the bulb, dropped flat across
+each driveway, with three drains, two manholes, crack sealing and a patch. The road runs out through the west
+tree-wall gap. One change to the shared builder: the bulb's kerb now drops for a driveway too, because Bunratty's hero
+house (235) drives straight off its bulb; Winnmark has no driveway there, so its bulb is unchanged. The road is visual
+only, as before: no collision, and it draws no random numbers, so the seeded boards (the v1.125 lesson) stay as they
+were. `roadCenterline` is unchanged, so the placements and the AI that sample it are too. With this, D.3 step 4 is
+done: every map has Winnmark's pieces, except the Hollow's pines, which stay pines (v1.126).
+
+### Verified
+- New `tests/bunratty-road.test.mjs`: Bunratty has one asphalt ribbon, one bulb, one kerb and three road-mark meshes
+  and no discs; 963 raycasts over the old road (centreline ±3.4 m along the lane, and the bulb) all hit asphalt, 5.2–6.5 cm
+  over the ground; the road reaches past the west tree wall; the kerb stands 7.9–9.0 cm over the gutter away from the
+  driveways (328 samples) and 0–0.4 cm across them (81); round the bulb 8.2–9.1 cm (176), and 0–1.3 cm across the hero
+  house's drive (29). Winnmark's road through the shared builder has the same vertex counts as v1.126 (a probe matched
+  the vertex positions too, by checksum). Screenshots `tests/out/bunratty-road.png` (up the lane from the west entry)
+  and `bunratty-bulb-road.png`.
+- Bunratty scene: 1,883 meshes against 1,946 on v1.126; draw calls 1,306 against 1,365 looking up the lane from the west
+  entry, 243 against 262 looking into the bulb (same views, same build otherwise).
+- `tests/winnmark-road.test.mjs` now asks Bunratty for the new road instead of its discs.
+- `npm test`: 37/37 suites green (the full run, with the four suites that booted before the change re-run on it, and the new suite).
+### Still open
+- Whether the lane's kerb reads right where the S-curve is tightest; the driveways are where they were (v1.24a pads).
+- Bunratty's curbside bins still stand in the road 1.5 m off the centreline (since v1.35b; trash-day flavour, and moving
+  them would change cover and the seeded boards), now with a kerb behind them.

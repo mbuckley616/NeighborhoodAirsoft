@@ -57,8 +57,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    per-kid chest stripe or pocket and shoe colour). Step 3 is complete. Step 4 (Michael: A, carry Winnmark's pieces
    to the other maps; control room, 1 Oct): ~~Bunratty~~ — done, v1.125 (houses, cars, trees and bushes, bins, boxes,
    plywood stacks, the bulb fort; same collision; `tests/bunratty-polish.test.mjs`). ~~The lot's cars and trees, the
-   Hollow's hardwoods~~ — done, v1.126 (pines stay pines; `tests/lot-hollow-polish.test.mjs`). Still to come:
-   Bunratty's S-curve road and kerbs.
+   Hollow's hardwoods~~ — done, v1.126 (pines stay pines; `tests/lot-hollow-polish.test.mjs`). ~~Bunratty's S-curve
+   road and kerbs~~ — done, v1.127 (Winnmark's road builder shared as `buildStreetRoad`; `tests/bunratty-road.test.mjs`).
+   Step 4 is complete.
 4. ~~We should add the ability to jump on / over objects. Maybe even a 'vault' ability. (Michael, 2026-09-29) **(design)**~~
    — done, v1.105 (Michael: A — jump onto and over low things; stand on anything up to 1.05 m; no vault)
 5. Revisit some of the interfaces, like the 'Your Loadout' interface (should probably show a character mesh/model, and
