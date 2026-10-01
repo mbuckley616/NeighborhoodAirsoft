@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.117</div>
+  <div class="version">v1.123</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3000,7 +3000,8 @@ const Game = {
     // v1.107 (backlog D.6, Michael: C): how Mike looks, set at the bathroom mirror. createKid's profile fields;
     // old saves get these defaults through loadGame's merge.
     look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
-            shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false },
+            shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
+            eyeColor: 'brown', shirtFront: 'plain' },   // v1.123: eye colour and shirt front (mirror rows)
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -13828,6 +13829,205 @@ function buildEnemyGunMesh(weapon) {
 const KID_HEIGHT_SCALE = { short: 0.88, average: 1.0, tall: 1.12 };
 const KID_BUILD_SCALE  = { skinny: 0.88, average: 1.0, heavy: 1.18 };
 
+// v1.118 (backlog D.3 step 3, Michael: A — the kids: faces, hands, clothes; this is the faces). The head is the same
+// 0.28 m cube with its edges rounded (r 4 cm); the face is built in the head's own frame (front at +z, centre 0) and
+// merged into one mesh per material, so it rides the head through the crouch drop and the aim tilt. Nothing reaches
+// more than 3 cm past the head box (nose, ears), well inside the BB hit forgiveness; the hitboxes are untouched.
+const KID_EYE_COLORS = { brown: 0x5a3a1e, hazel: 0x7a6a34, green: 0x3e6e44, blue: 0x3a6a9a, gray: 0x6a7480 };
+let _kidHeadGeo = null;
+function kidHeadGeometry() {
+  if (_kidHeadGeo) return _kidHeadGeo;
+  const h = 0.14, r = 0.04, seg = 6;
+  const g = new THREE.BoxGeometry(2 * h, 2 * h, 2 * h, seg, seg, seg);
+  const pa = g.attributes.position, na = g.attributes.normal;
+  const v = new THREE.Vector3(), inner = new THREE.Vector3(), n = new THREE.Vector3();
+  const spread = u => Math.sign(u) * Math.pow(Math.abs(u), 0.55);   // crowd the rows toward the edges, where the rounding is
+  for (let i = 0; i < pa.count; i++) {
+    v.set(spread(pa.getX(i) / h) * h, spread(pa.getY(i) / h) * h, spread(pa.getZ(i) / h) * h);
+    inner.set(Math.max(-(h - r), Math.min(h - r, v.x)), Math.max(-(h - r), Math.min(h - r, v.y)), Math.max(-(h - r), Math.min(h - r, v.z)));
+    n.subVectors(v, inner);
+    if (n.lengthSq() < 1e-12) n.set(na.getX(i), na.getY(i), na.getZ(i)); else n.normalize();
+    v.copy(inner).addScaledVector(n, r);
+    pa.setXYZ(i, v.x, v.y, v.z); na.setXYZ(i, n.x, n.y, n.z);
+  }
+  _kidHeadGeo = g;
+  return g;
+}
+// v1.119 (backlog D.3 step 3, the kids: hands). The hand was a 0.11 × 0.10 × 0.12 skin block, wider than the forearm. It
+// is now a loose fist, narrower than the forearm so the wrist reads, inside the old box, merged into one geometry (still one mesh, one draw call): the back of the hand and palm, four
+// fingers curled under with a knuckle ridge across them and a hair's gap between each, and a thumb on the side toward
+// the body, laid along the fingers. The hand's local frame is the forearm's: -y runs to the fingertips, +z is the front.
+// `inSide` is +1 when the body's midline is at +x (the right arm) and -1 for the left. The node, its position and the
+// IK are untouched, so the grips and the poses are where they were.
+const _kidHandGeo = {};
+function kidHandGeometry(inSide) {
+  if (_kidHandGeo[inSide]) return _kidHandGeo[inSide];
+  const parts = []; const _s = new THREE.Vector3(1, 1, 1);
+  const add = (geo, px, py, pz, rx = 0, ry = 0, rz = 0) => parts.push({ geo,
+    m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) });
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  add(box(0.066, 0.064, 0.098), 0, 0.016, 0);                    // back of the hand and the palm
+  add(box(0.058, 0.014, 0.086), 0, 0.042, 0);                    // the wrist, a touch narrower
+  add(box(0.072, 0.018, 0.102), 0, -0.018, 0);                   // knuckle ridge
+  // four fingers, curled under: each a short bar from the knuckles toward the palm side, with a 3 mm gap between
+  for (let i = 0; i < 4; i++) {
+    const z = -0.0375 + i * 0.025, len = i === 0 || i === 3 ? 0.02 : 0.022;
+    add(box(0.06, 0.03, len), -inSide * 0.004, -0.036, z);
+    add(box(0.026, 0.022, len), inSide * 0.02, -0.027, z, 0, 0, inSide * 0.35);   // fingertips tucked toward the palm
+  }
+  // thumb: on the body side, from the heel of the hand down along the fingers' front
+  add(box(0.024, 0.05, 0.026), inSide * 0.032, -0.006, 0.04, 0.25, 0, inSide * 0.18);
+  add(box(0.02, 0.024, 0.022), inSide * 0.034, -0.036, 0.046, 0.25, 0, 0);
+  _kidHandGeo[inSide] = _houseMergeParts(parts);
+  return _kidHandGeo[inSide];
+}
+// v1.120 (backlog D.3 step 3, the kids: clothes). The body was five plain boxes. Each keeps its box (the hitboxes are
+// fixed numbers in checkEnemyHit, and the poses scale and move these same nodes) and gets a shape inside it, merged into
+// one geometry shared by every kid, so the shirt, legs and shoes are still one mesh each:
+//   shirt: a body a little in from the box, tucked in, with a shoulder yoke at full width and a crew collar;
+//   sleeve: the upper arm with a hem band at the elbow end; jeans: a leg with front pocket seams, a side seam and a cuff;
+//   sneaker: an upper that rounds down at the toe and heel, on a sole (the sole, toe cap and laces are a child mesh).
+// buildKidClothes adds per-kid trim on the torso: a darker collar rib, a chest stripe or pocket or nothing
+// (from the kid's colours, so the same kid always wears the same shirt), and a belt with a buckle.
+let _kidClothesGeo = null;
+function kidClothesGeometry() {
+  if (_kidClothesGeo) return _kidClothesGeo;
+  const _s = new THREE.Vector3(1, 1, 1);
+  const mk = () => { const parts = []; parts.add = (geo, px, py, pz, rx = 0, ry = 0, rz = 0) => parts.push({ geo,
+    m: new THREE.Matrix4().compose(new THREE.Vector3(px, py, pz), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), _s) }); return parts; };
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  // shirt (torso box 0.42 × 0.5 × 0.24, centre 0)
+  const t = mk();
+  t.add(box(0.404, 0.44, 0.226), 0, 0.01, 0);           // body, in from the box so the yoke and belt stand proud (tucked in)
+  t.add(box(0.42, 0.04, 0.24), 0, 0.23, 0);             // shoulder yoke
+  for (const [w, d, x, z] of [[0.16, 0.022, 0, 0.06], [0.16, 0.022, 0, -0.06], [0.022, 0.1, 0.07, 0], [0.022, 0.1, -0.07, 0]])
+    t.add(box(w, 0.02, d), x, 0.258, z);                // crew collar, a ring round the neck
+  // sleeve (upper arm 0.11 × 0.24 × 0.13, centre 0; the mesh hangs half its length below the shoulder)
+  const u = mk();
+  u.add(box(0.104, 0.205, 0.124), 0, 0.0175, 0);
+  u.add(box(0.11, 0.035, 0.13), 0, -0.1025, 0);         // hem at the elbow end
+  // jeans (leg 0.16 × 0.55 × 0.18, centre 0)
+  const l = mk();
+  l.add(box(0.154, 0.5, 0.174), 0, 0.025, 0);
+  l.add(box(0.16, 0.05, 0.18), 0, -0.25, 0);            // turned-up cuff
+  l.add(box(0.16, 0.012, 0.18), 0, 0.269, 0);           // waist seam at the top
+  for (const sx of [-1, 1]) l.add(box(0.05, 0.006, 0.006), sx * 0.04, 0.2, 0.0855, 0, 0, sx * 0.6);   // front pocket seams
+  l.add(box(0.006, 0.44, 0.006), 0.0765, 0.0, 0); l.add(box(0.006, 0.44, 0.006), -0.0765, 0.0, 0);   // side seams
+  // sneaker upper (shoe 0.18 × 0.08 × 0.26, centre 0): the top edges pulled in at the toe and heel
+  const sh = box(0.16, 0.06, 0.24, 1, 1, 8);
+  const pa = sh.attributes.position;
+  for (let i = 0; i < pa.count; i++) {
+    const z = pa.getZ(i), y = pa.getY(i);
+    if (y > 0) { const k = Math.min(1, Math.abs(z) / 0.12); const pull = z > 0 ? 0.55 : 0.25; pa.setY(i, y - 0.04 * Math.pow(k, 3) * (z > 0 ? 1 : 0.5)); pa.setZ(i, z * (1 - pull * Math.pow(k, 4) * 0.2)); }
+  }
+  sh.computeVertexNormals();
+  const s = mk(); s.add(sh, 0, 0.01, -0.005);
+  // sole, toe cap and laces (white), as one child
+  const so = mk();
+  so.add(box(0.18, 0.025, 0.26), 0, -0.0275, 0);
+  so.add(box(0.15, 0.02, 0.05), 0, -0.005, 0.105);       // rubber toe cap
+  for (const [y, z] of [[0.037, 0.055], [0.041, 0.025], [0.042, -0.005], [0.042, -0.035]]) so.add(box(0.07, 0.006, 0.012), 0, y, z);   // laces
+  _kidClothesGeo = { torso: _houseMergeParts(t), upper: _houseMergeParts(u), leg: _houseMergeParts(l), shoe: _houseMergeParts(s), sole: _houseMergeParts(so) };
+  return _kidClothesGeo;
+}
+const KID_SHIRT_FRONTS = ['stripe', 'pocket', 'plain'];   // v1.123: buildKidClothes' styles 0, 1, 2
+function _kidHash(p) {
+  const n = ((p.shirtColor | 0) * 31 + (p.pantsColor | 0) * 17 + (p.hairColor | 0)) >>> 0;
+  return (Math.abs(Math.sin(n * 12.9898) * 43758.5453)) % 1;
+}
+function kidShoeColor(p) {
+  return [0x1a1a1a, 0x1a1a1a, 0x26324a, 0x5a5a60, 0x7a2222, 0xd8d8d0][Math.floor(_kidHash(p) * 6)];
+}
+function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
+  const cg = kidClothesGeometry();
+  const h = _kidHash(p);
+  const trimColor = new THREE.Color(p.shirtColor ?? 0x5a7a4a).multiplyScalar(0.7).getHex();
+  const mats = {
+    trim: _kidFaceMat('trim', trimColor, 0.85),
+    belt: _kidFaceMat('belt', [0x2a1c12, 0x3a2614, 0x141414][Math.floor(h * 13) % 3], 0.6),
+    buckle: _kidFaceMat('buckle', 0x9a9a92, 0.35),
+  };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  // the collar rib in the darker trim colour, just proud of the shirt
+  for (const [w, d, x, z] of [[0.17, 0.024, 0, 0.061], [0.17, 0.024, 0, -0.061], [0.024, 0.1, 0.073, 0], [0.024, 0.1, -0.073, 0]])
+    add('trim', box(w, 0.012, d), x, 0.266, z);
+  // a chest stripe, a pocket, or plain, by kid
+  // v1.123: a profile's shirtFront (Mike's, from the mirror) picks it; other kids keep the one their colours give
+  const style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
+  if (style === 0) add('trim', box(0.424, 0.05, 0.244), 0, 0.06, 0);
+  else if (style === 1) { add('trim', box(0.08, 0.085, 0.006), 0.1, 0.1, 0.116); add('trim', box(0.084, 0.01, 0.008), 0.1, 0.14, 0.117); }
+  // belt round the waist with a buckle at the front
+  add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
+  add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  const trim = new THREE.Group(); trim.userData.kidClothes = true;
+  _propMerge(trim, b, mats);
+  trim.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  torso.add(trim);
+  for (const sh of [shoeL, shoeR]) { const so = new THREE.Mesh(cg.sole, _kidFaceMat('sole', 0xe8e6de, 0.8)); so.castShadow = true; sh.add(so); }
+  return trim;
+}
+const _kidFaceMats = {};
+function _kidFaceMat(key, color, rough = 0.6) {
+  const k = key + ':' + color;
+  return _kidFaceMats[k] || (_kidFaceMats[k] = new THREE.MeshStandardMaterial({ color, roughness: rough }));
+}
+function buildKidFace(head, p, skin, hair) {
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const F = 0.14;                         // the face plane (head front)
+  const EY = 0.012, EX = 0.058;           // eye centre height and half-spacing, head frame
+  const mats = {
+    skin, brow: hair,
+    white: _kidFaceMat('white', 0xf2eee6, 0.5),
+    iris: _kidFaceMat('iris', KID_EYE_COLORS[p.eyeColor] ?? KID_EYE_COLORS.brown, 0.4),
+    dark: _kidFaceMat('dark', 0x141414, 0.4),
+    lip: _kidFaceMat('lip', new THREE.Color(p.skinColor ?? 0xe0b090).multiplyScalar(0.62).getHex(), 0.7),
+    frame: _kidFaceMat('frame', 0x0a0a0a, 0.4),
+  };
+  // eyes: white, iris and pupil stacked 1–5 mm proud, merged with the rest; eyeL/eyeR stay as empty anchors at each eye
+  const eyes = [];
+  for (const sx of [-1, 1]) {
+    const eg = new THREE.Object3D(); eg.position.set(sx * EX, EY, F); head.add(eg); eyes.push(eg);
+    add('white', box(0.058, 0.04, 0.008), sx * EX, EY, F + 0.001);
+    add('iris', box(0.028, 0.034, 0.008), sx * (EX - 0.004), EY - 0.001, F + 0.003);
+    add('dark', box(0.013, 0.016, 0.008), sx * (EX - 0.004), EY - 0.001, F + 0.005);
+  }
+  // brows in the hair colour, tipped a touch toward the nose
+  for (const sx of [-1, 1]) add('brow', box(0.062, 0.014, 0.012), sx * EX, EY + 0.04, F + 0.003, 0, 0, sx * -0.12);
+  // nose: a short wedge (a box narrowed at the bridge) and the tip
+  const nose = box(0.034, 0.06, 0.03);
+  const pa = nose.attributes.position;
+  for (let i = 0; i < pa.count; i++) if (pa.getY(i) > 0) { pa.setX(i, pa.getX(i) * 0.55); pa.setZ(i, pa.getZ(i) * 0.4 - 0.009); }
+  nose.computeVertexNormals();
+  add('skin', nose, 0, -0.022, F + 0.012);
+  add('skin', box(0.042, 0.02, 0.026), 0, -0.048, F + 0.012);
+  // ears: a shell and a darker inner fold read as one block with a lip
+  for (const sx of [-1, 1]) {
+    add('skin', box(0.026, 0.07, 0.05), sx * (F + 0.006), 0.0, -0.01);
+    add('lip', box(0.006, 0.04, 0.026), sx * (F + 0.019), 0.0, -0.006);
+  }
+  // mouth: a dark line with corners turned up, the lip colour under it
+  add('dark', box(0.05, 0.01, 0.006), 0, -0.078, F + 0.001);
+  for (const sx of [-1, 1]) add('dark', box(0.016, 0.009, 0.006), sx * 0.03, -0.074, F + 0.001, 0, 0, sx * 0.45);
+  add('lip', box(0.044, 0.01, 0.004), 0, -0.088, F + 0.0005);
+  // glasses: open rims round each eye (the eye shows through), a bridge, temple arms to the ears
+  if (p.glasses) {
+    for (const sx of [-1, 1]) {
+      const cx = sx * EX, z = F + 0.014, W = 0.074, H = 0.058, t = 0.008;
+      add('frame', box(W, t, t), cx, EY + H / 2, z); add('frame', box(W, t, t), cx, EY - H / 2, z);
+      add('frame', box(t, H, t), cx - W / 2, EY, z); add('frame', box(t, H, t), cx + W / 2, EY, z);
+      add('frame', box(0.008, 0.008, 0.15), sx * (F + 0.006), EY + 0.02, F - 0.06);
+    }
+    add('frame', box(0.034, 0.008, 0.008), 0, EY + 0.016, F + 0.014);
+  }
+  const face = new THREE.Group(); face.userData.kidFace = true;
+  _propMerge(face, b, mats);
+  face.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  head.add(face);
+  return { eyeL: eyes[0], eyeR: eyes[1], face };
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -13849,25 +14049,26 @@ function createKid(profile, weapon = 'pistol') {
   const shirt = new THREE.MeshStandardMaterial({ color: p.shirtColor, roughness: 0.85 });
   const pants = new THREE.MeshStandardMaterial({ color: p.pantsColor, roughness: 0.85 });
   const hair  = new THREE.MeshStandardMaterial({ color: p.hairColor,  roughness: 0.95 });
-  const shoes = new THREE.MeshStandardMaterial({ color: 0x1a1a1a,     roughness: 0.7  });
+  const shoes = new THREE.MeshStandardMaterial({ color: kidShoeColor(p), roughness: 0.7  });   // v1.120: not every kid in black
 
   // === BODY (all dimensions in "average kid" local space; group.scale handles variants) ===
   // Kid baseline is 1.5m tall in local space (Y=0 at feet → Y=1.5 at top of hair).
 
   // Legs
-  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.18), pants);
+  const cl = kidClothesGeometry();   // v1.120: shaped shirt, jeans, sleeves and sneakers (same boxes; buildKidClothes adds trim)
+  const legL = new THREE.Mesh(cl.leg, pants);
   legL.position.set(-0.1, 0.275, 0); legL.castShadow = true; group.add(legL);
-  const legR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.55, 0.18), pants);
+  const legR = new THREE.Mesh(cl.leg, pants);
   legR.position.set(0.1, 0.275, 0); legR.castShadow = true; group.add(legR);
 
   // Shoes
-  const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.26), shoes);
+  const shoeL = new THREE.Mesh(cl.shoe, shoes);
   shoeL.position.set(-0.1, 0.04, 0.04); shoeL.castShadow = true; group.add(shoeL);
-  const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.26), shoes);
+  const shoeR = new THREE.Mesh(cl.shoe, shoes);
   shoeR.position.set(0.1, 0.04, 0.04); shoeR.castShadow = true; group.add(shoeR);
 
   // Torso
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.24), shirt);
+  const torso = new THREE.Mesh(cl.torso, shirt);
   torso.position.set(0, 0.8, 0); torso.castShadow = true; group.add(torso);
 
   // Arms — v1.80: TWO-SEGMENT ELBOW RIG. Each arm is now a shoulder pivot Group
@@ -13883,7 +14084,7 @@ function createKid(profile, weapon = 'pistol') {
   function buildArm(sx) {
     const shoulder = new THREE.Group();
     shoulder.position.set(sx, SHOULDER_Y, 0);
-    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.11, U_LEN, 0.13), shirt);
+    const upper = new THREE.Mesh(cl.upper, shirt);   // v1.120: a t-shirt sleeve with a hem
     upper.position.set(0, -U_LEN / 2, 0);   // hangs DOWN from the shoulder pivot
     upper.castShadow = true;
     shoulder.add(upper);
@@ -13894,7 +14095,7 @@ function createKid(profile, weapon = 'pistol') {
     fore.position.set(0, -F_LEN / 2, 0);     // hangs DOWN from the elbow pivot
     fore.castShadow = true;
     elbow.add(fore);
-    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), skin);
+    const hand = new THREE.Mesh(kidHandGeometry(sx < 0 ? 1 : -1), skin);   // v1.119: a hand, not a block (thumb toward the body)
     hand.position.set(0, -F_LEN, 0);         // at the end of the forearm
     hand.castShadow = true;
     elbow.add(hand);
@@ -13915,7 +14116,8 @@ function createKid(profile, weapon = 'pistol') {
   neck.position.set(0, 1.08, 0); group.add(neck);
 
   // Head
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), skin);
+  // v1.118: a rounded head (same 0.28 m cube, edges rounded 4 cm) carrying the face as its children (buildKidFace).
+  const head = new THREE.Mesh(kidHeadGeometry(), skin);
   head.position.set(0, 1.26, 0); head.castShadow = true; group.add(head);
 
   // === HAIR — varies by style ===
@@ -13980,35 +14182,17 @@ function createKid(profile, weapon = 'pistol') {
     }
   }
 
-  // Eyes
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
-  const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), eyeMat);
-  eyeL.position.set(-0.06, 1.27, 0.145); group.add(eyeL);
-  const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), eyeMat);
-  eyeR.position.set(0.06, 1.27, 0.145); group.add(eyeR);
-
-  // Glasses — dark frame bridging both eyes
-  if (p.glasses) {
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.4 });
-    // Two lens rims (small flat boxes), a bridge, and two tiny temple arms.
-    const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.01), frameMat);
-    lensL.position.set(-0.06, 1.27, 0.152); group.add(lensL);
-    const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.01), frameMat);
-    lensR.position.set(0.06, 1.27, 0.152); group.add(lensR);
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.01), frameMat);
-    bridge.position.set(0, 1.28, 0.152); group.add(bridge);
-    const templeL = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.14), frameMat);
-    templeL.position.set(-0.105, 1.28, 0.08); group.add(templeL);
-    const templeR = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.012, 0.14), frameMat);
-    templeR.position.set(0.105, 1.28, 0.08); group.add(templeR);
-    headExtras.push(lensL, lensR, bridge, templeL, templeR);
-  }
-
+  // v1.118 (backlog D.3 step 3, the kids: faces): the two black squares became a face on the head: eye whites, irises
+  // and pupils, brows in the hair colour, a nose, ears and a mouth, and open glasses frames the eyes show through. It
+  // is parented to the head, so it follows the crouch drop and the aim tilt; eyeL/eyeR are anchors at the eyes.
+  const { eyeL, eyeR } = buildKidFace(head, p, skin, hair);
   // Gun in right hand (oriented to point along +Z when group faces +Z).
   // v1.28e: silhouette now matches the enemy's actual weapon class.
   const gunGroup = buildEnemyGunMesh(weapon);
   gunGroup.position.set(-0.27, 0.62, 0.1);   // v1.78: kid's RIGHT side (was +0.27, read left-handed)
   group.add(gunGroup);
+
+  buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
 
   return {
     group, head, torso, eyeL, eyeR, gunGroup,
@@ -14106,8 +14290,6 @@ function setKidCrouch(kid, amount) {
   po.head.position.y  = b.head_y  - hipDrop;
   po.gunGroup.position.y = b.gun_y - hipDrop;
   if (po.hair) po.hair.position.y = b.hair_y - hipDrop;
-  po.eyeL.position.y  = b.eyeL_y  - hipDrop;
-  po.eyeR.position.y  = b.eyeR_y  - hipDrop;
   // v1.14c: lower every extra head-attached mesh (hair strands/puffs/fringe,
   // glasses) by the same hipDrop so nothing stays floating at standing height.
   if (po.headExtras) {
@@ -17413,6 +17595,9 @@ const LOOK_OPTIONS = [
   { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
+  // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
+  { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
+  { key: 'shirtFront', label: 'Shirt front', kind: 'text', opts: [['plain', 'Plain'], ['stripe', 'Stripe'], ['pocket', 'Pocket']] },
 ];
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
 function _hexCss(n) { return '#' + n.toString(16).padStart(6, '0'); }
@@ -17448,8 +17633,9 @@ function renderMirrorOptions() {
       b.className = 'mirror-opt' + (on ? ' on' : '');
       b.dataset.value = JSON.stringify(val);
       if (row.kind === 'swatch') {
-        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(val)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
-        b.title = _hexCss(val);
+        const hex = typeof val === 'string' ? KID_EYE_COLORS[val] : val;   // v1.123: the eye row names its colours
+        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(hex)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
+        b.title = typeof val === 'string' ? val : _hexCss(val);
       } else {
         b.textContent = o[1];
         b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;
@@ -20402,7 +20588,9 @@ function spawnEnemyBB(enemy, targetPos) {
         }
         // can't see past it: hold fire. v1.112: and let go of the trigger, so an
         // auto's queued follow-ups don't each try the same blocked line again.
-        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; return; }
+        // v1.122: count blocked pulls in a row; the 'shooting' state moves a kid on after three.
+        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; enemy._lineHolds = (enemy._lineHolds || 0) + 1; return; }
+        enemy._lineHolds = 0;
         if (y > muzzlePos.y + 1e-6) {
           muzzlePos.y = y;
           enemy._firingOverCover = 0.45;
@@ -21576,6 +21764,19 @@ function raycastObstacles(ox, oy, oz, dx, dy, dz, maxDist, obstacles, minH = 0.2
 // rectangle, so "outside the envelope face" often landed INSIDE the angled car
 // body (the "kids phase into car centers" bug). Now each shape is handled in its
 // own frame. A final overlap nudge guarantees the spot is actually walkable.
+// v1.122: can a kid walk a straight line from where he stands to (x, z)? Rays at shin and chest height, down his
+// centre and both shoulders, against every obstacle (low ones too: a kid can't step over them).
+function kidWalkClear(e, x, z) {
+  const dx = x - e.pos.x, dz = z - e.pos.z, d = Math.hypot(dx, dz);
+  if (d < 0.05) return true;
+  const ux = dx / d, uz = dz / d, obs = Game.player.obstacles || [];
+  for (const side of [0, -0.3, 0.3]) for (const h of [0.25, 1.0]) {
+    const ox = e.pos.x - uz * side, oz = e.pos.z + ux * side;
+    if (raycastObstacles(ox, (e.pos.y || 0) + h, oz, ux, 0, uz, d, obs, 0) < d) return false;
+  }
+  return true;
+}
+
 function coverStandPos(cover, playerPos, kidRadius = 0.35) {
   const buffer = kidRadius + 0.2;
   let standX, standZ;
@@ -21675,16 +21876,26 @@ function coverShieldsFrom(c, ePos, dir) {
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
-  let best = null, bestD = Infinity, bestAny = null, bestAnyD = Infinity;
+  // v1.122: only cover he can walk straight to (the caller's stand spot); with none, he stays put. Rebecca in the
+  // Hollow 3v3 ran from inside her fort for the one cover in reach, past its back wall, wedged in the corner, and
+  // held fire into the wall from there for the rest of the round.
+  let bestW = null, bestWD = Infinity, bestAnyW = null, bestAnyWD = Infinity;
+  const threat = { x: e.pos.x - dir.x, z: e.pos.z - dir.z };
   for (const c of cover) {
     if ((c.h || 0) < 0.5 || c === e.homeCover) continue;
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
     if (d > maxDist) continue;
-    if (d < bestAnyD) { bestAnyD = d; bestAny = c; }
-    if (coverShieldsFrom(c, e.pos, dir) && d < bestD) { bestD = d; best = c; }
+    const shields = coverShieldsFrom(c, e.pos, dir);
+    if (d < bestAnyWD || (shields && d < bestWD)) {
+      const sp = coverStandPos(c, threat, 0.35);
+      if (kidWalkClear(e, sp.x, sp.z)) {
+        if (d < bestAnyWD) { bestAnyWD = d; bestAnyW = c; }
+        if (shields && d < bestWD) { bestWD = d; bestW = c; }
+      }
+    }
   }
-  return best || bestAny;
+  return bestW || bestAnyW;
 }
 
 // v1.67: TEAMMATE CROWDING PENALTY. Returns a positive penalty that grows the
@@ -22003,6 +22214,8 @@ function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
 }
 
 function updateEnemies(dt) {
+  // v1.121: a clock for the kids' progress windows (scenario time, counted here)
+  Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
   // Diagnostic: count lasered enemies this frame, and how many reach the clip.
@@ -22278,6 +22491,9 @@ function updateEnemies(dt) {
           target.y += (Math.random() - 0.5) * burstSpread * 0.6;
           target.z += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
           spawnEnemyBB(e, target);
+          // v1.122: a held pull empties the queue (v1.112); the next pass of this loop then read a missing entry
+          // and threw ("reading 'dueIn'"), which skipped the rest of the frame's enemy update.
+          if (e.pendingBurst.length === 0) break;
           e.pendingBurst.splice(k, 1);
         }
       }
@@ -22772,7 +22988,52 @@ function updateEnemies(dt) {
             const advCommitted = e._advSideT > 0;
             if (advCommitted) e._advSideT -= dt;
             if (e._advWedgeT > 0) e._advWedgeT -= dt; else e._advWedges = 0;
-            if (advCommitted) {
+            if (e._advTurnT > 0) e._advTurnT -= dt; else e._advTurns = 0;
+            // v1.121: a progress window. Each time he gets 0.5 m closer to where he is going it starts again;
+            // it keeps the side axis it started with and how far either way along it he has been. Over 2.5 s
+            // with no such gain while wall-following, he is in a pocket (also after 2 blocked turn-rounds).
+            const clk = Game.scenario.aiClock || 0;
+            if (!(d < e._advBestD - 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
+              const lat = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
+              e._advLatLo = Math.min(e._advLatLo, lat); e._advLatHi = Math.max(e._advLatHi, lat);
+            } else {
+              e._advBestD = d; e._advProg0 = clk; e._advWF = 0;
+              e._advPerpX = -dz / d; e._advPerpZ = dx / d;
+              e._advLatLo = e._advLatHi = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
+            }
+            e._advProgAt = clk;
+            if (!(e._advBackT > 0) && clk - e._advProg0 > 2.5 && e._advWF > 0.3) e._advBackT = 1.5;
+            if (e._advBackT > 0) {
+              // v1.121: backing out of a pocket (see the turn-round count below). Walk away from the target
+              // until a sidestep has room past both places he turned round (0.6 m beyond them, the whole way
+              // there clear), then commit to that side long enough to get there. Ends after 1.5 s, or at once
+              // if the way back is blocked too.
+              e._advBackT -= dt;
+              const bx = e.pos.x - stepX, bz = e.pos.z - stepZ;
+              if (!collidesObstacles(bx, bz, kidRadius)) { e.pos.x = bx; e.pos.z = bz; }
+              else if (!collidesObstacles(bx, e.pos.z, kidRadius)) e.pos.x = bx;
+              else if (!collidesObstacles(e.pos.x, bz, kidRadius)) e.pos.z = bz;
+              const bpx = e._advPerpX, bpz = e._advPerpZ, s0 = e._advSide || 1;
+              const lat = e.pos.x * bpx + e.pos.z * bpz;
+              let freeSide = 0, freeL = 0;
+              for (const sd of [s0, -s0]) {
+                const L = Math.max(0.6, sd > 0 ? (e._advLatHi ?? lat) + 0.6 - lat : lat - ((e._advLatLo ?? lat) - 0.6));
+                let clear = true;
+                for (let t = 0.25; clear && t < L + 0.25; t += 0.25) {
+                  const tt = Math.min(t, L);
+                  if (collidesObstacles(e.pos.x + bpx * sd * tt, e.pos.z + bpz * sd * tt, kidRadius + 0.1)) clear = false;
+                }
+                if (clear) { freeSide = sd; freeL = L; break; }
+              }
+              const backMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
+              if (freeSide || backMoved < 0.005 || e._advBackT <= 0) {
+                e._advBackT = 0;
+                if (freeSide) e._advSide = freeSide;
+                e._advSideT = freeSide ? freeL / Math.max(0.5, speed) + 0.1 : 0.35;
+                e._advStuck = 0; e._advTurns = 0;
+                e._advBestD = Infinity;   // a fresh window after the way out
+              }
+            } else if (advCommitted) {
               // no straight step this frame
             } else if (!collidesObstacles(newX, newZ, kidRadius)) {
               e.pos.x = newX;
@@ -22793,6 +23054,7 @@ function updateEnemies(dt) {
             // displacement, not slide-assignment.
             const advMoved = Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ);
             if (advMoved < 0.02) {
+              e._advWF += dt;   // v1.121: wall-following time in this progress window
               if (!advCommitted) e._advStuck = (e._advStuck || 0) + dt;
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
@@ -22825,7 +23087,14 @@ function updateEnemies(dt) {
               // v1.103: a committed sidestep that is itself blocked turns round now;
               // a fresh one commits 0.35 s, longer each time he wedges again within
               // 3 s (up to 1.4 s), as the taggers do since v1.100.
-              if (advCommitted && Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ) < 0.01) { e._advSide *= -1; e._advSideT = 0; }
+              if (advCommitted && Math.hypot(e.pos.x - beforeAX, e.pos.z - beforeAZ) < 0.01) {
+                e._advSide *= -1; e._advSideT = 0;
+                // v1.121: in a pocket (a wall ahead, both sides blocked) the committed sidestep turns round at
+                // each side wall and the kid shuttles across it for good (Night Prowl's Seth between a sedan and
+                // a post, v1.112). The second turn-round within 3 s backs him out instead.
+                e._advTurns = (e._advTurns || 0) + 1; e._advTurnT = 3;
+                if (e._advTurns >= 2) { e._advTurns = 0; e._advBackT = 1.5; }
+              }
               if (!advCommitted) {
                 e._advWedges = Math.min(4, (e._advWedges || 0) + 1);
                 e._advWedgeT = 3;
@@ -23005,6 +23274,10 @@ function updateEnemies(dt) {
           const rangedAutoClosingNow = (e.weapon === 'ak47' || e.weapon === 'ar')
             && e.role !== 'defender' && distToPlayer > ENGAGE_PUSH;
           if (rangedAutoClosingNow) repositionChance = Math.max(repositionChance, 0.8);
+          // v1.122: three pulls in a row held at a blocked line (tests/cover-fire's Hollow 3v3: one kid in a
+          // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
+          let movedByHolds = false;
+          if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
           if (Math.random() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
@@ -23028,6 +23301,10 @@ function updateEnemies(dt) {
               const distFromRef = Math.sqrt((cx - distRef.x)**2 + (cz - distRef.z)**2);
               return distFromRef <= maxRepositionDist;
             });
+            // v1.122: only cover he can walk straight to. A kid inside a Hollow fort picked cover beyond its back
+            // wall, wedged in the corner on the way, and held fire there at the wall for the rest of the round
+            // (tests/cover-fire: up to 62 held pulls a minute).
+            candidates = candidates.filter(c => { const sp = coverStandPos(c, tgt.pos, 0.35); return kidWalkClear(e, sp.x, sp.z); });
             // v1.67: DEFEND anti-crowding. Prefer candidates that aren't already
             // occupied by a teammate, so the squad fans out across different cover
             // instead of stacking. Only narrow to the un-crowded subset if it's
@@ -23105,6 +23382,13 @@ function updateEnemies(dt) {
               e.homeCover = newCover;
               e.coverMemory.push(newCover);
               if (e.coverMemory.length > 2) e.coverMemory.shift();
+            } else if (movedByHolds) {
+              // v1.122 fix-up: no cover he can walk straight to (a kid inside a Hollow fort: every
+              // cover lies past a wall) and his line keeps hitting a wall. Push toward the target
+              // instead; the advancing wall-follow walks him out, and he engages once he has a line.
+              // Without this he stayed and pulled into the wall 28–39 times a round (tests/hollow-held).
+              e.state = 'advancing';
+              e.stateTime = 0;
             }
           }
         }

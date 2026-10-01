@@ -7,6 +7,33 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.3 step 3, the kids are done (builder, 2026-10-01).** Your A (control room, 1 Oct) is built, on every kid on
+  every map: faces (v1.118: rounded head, eye whites and irises, brows, nose, ears, a smile; glasses you can see the
+  eyes through), hands (v1.119: a fist with a thumb and fingers), clothes (v1.120: tucked shirts with a collar and a
+  chest stripe or pocket, belts, jeans with seams and cuffs, sneakers on white soles). Hitboxes unchanged. Screenshots
+  in `tests/out/` (kid-faces, kid-hands, kid-clothes); in game, any match or the bathroom mirror once Builder sessions
+  is merged. Options:
+  A) Good, go on: carry Winnmark's houses, cars, trees, fort, props and road to Bunratty, the Hollow and the lot.
+  B) A, and first give the mirror rows for eye colour and shirt front (stripe, pocket, plain) now the meshes exist.
+  C) Change the kids first (say what in a note).
+  Builder recommends **B**: the mirror rows are a short job on what is already built, and D.6 was waiting on them.
+  (Builder, v1.123: the mirror rows were D.6 work already answered, so they are built: Eyes and Shirt front. B now
+  means the same as A.)
+  Michael: **A — Good, carry Winnmark's pieces to the other maps**. (2026-10-01)
+
+- **D.5 B, re-sorting the shop: the list first (builder, 2026-10-01).** Your note asked whether the tabs and groupings
+  make sense, keeping the early-2000s look. Today's five tabs: **BBs** (four restock packs; seven BB colours),
+  **Loadout** (Utility Belt, Drop-Leg Holster; three speed loaders), **Guns** (eight guns; each gun's page holds its
+  magazines and spare mags), **Accessories** (red dot, 4× scope, two lasers, flashlight), **Equipment** (six eyewear,
+  four armour pieces, four shoes). What doesn't fit: "Loadout" mixes the belt and holster (gear you wear) with speed
+  loaders (ammo you use up), and the name clashes with the Loadout screen. Options:
+  A) Four tabs by what it's for: **Guns** (unchanged, mags inside), **Ammo** (BB packs, speed loaders, BB colours),
+     **Gear** (Belt & Holster, eyewear, armour, shoes), **Mods** (sights, lasers, flashlight). Same rows and look.
+  B) Keep the five tabs, move the two misfits: speed loaders to BBs, Belt & Holster to Equipment; the Loadout tab goes.
+  C) Leave the tabs; only rename "Loadout" to "Belt & Holster" and move the speed loaders to BBs.
+  Builder recommends **A**: four tabs a kid can guess from the name, nothing lost, nothing new to learn on the rows.
+  Michael: **A — Four tabs: Guns, Ammo, Gear, Mods**. (2026-10-01)
+
 - **D.3 after step 2: Winnmark's street is done (builder, 2026-10-01).** Step 2 (your A) is built: the cars (v1.112),
   trees and bushes (v1.113), the kid forts (v1.114), the bins, boxes and plywood stacks (v1.115), and the road with
   a gutter and rolled kerb (v1.116), all on Winnmark only, with collision unchanged. Screenshots in `tests/out/`

@@ -10,7 +10,7 @@ jobs:
       - run: node scripts/parsecheck.mjs
   headless:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45   # 33 suites take 25–28 min on a hosted runner (v1.122); 30 cut one run off
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
