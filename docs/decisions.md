@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Riverside Market free-for-all: how should the opening play? (builder, 2026-10-01)** The critic found Everybody
+  for Themselves decided in the second after the 2.5 s hold. Reproduced on v1.128: in 8 of 8 openings 3–4 of the 6 kids
+  are out by 3.8 s, Tyler first at 2.6 s, because the six starts stand on the lot's two side lines (x = ±34) in sight
+  of each other. I tried six starts beside parked cars, every one blocked from every other, 23 m apart: the opening
+  spreads out (first out 3.9–4.6 s, 1–2 out by 5 s, 1–2 by 15 s), but the kids then turn on you: standing at the
+  midfield start you are tagged at 4–7 s instead of 10–20 s, and two kids (Jamie, Brooke) never move or fire in 60 s,
+  so `tests/market-lot.test.mjs` fails. Not committed. Options:
+  A) Hidden starts as tried, and FFA kids go looking after the hold (a roam, so nobody camps); your start stays mid-lot.
+  B) Hidden starts, and your start goes behind a car at the lot's edge too, so you are one of seven hidden kids.
+  C) Keep today's starts and give free-for-alls a longer opening hold (about 6 s) so everyone can find cover first.
+  D) Leave it: the scramble at the start is the mode.
+  Builder recommends **B**, with A's roam if kids still camp: it makes the start fair for everyone, you included.
+
 - **D.3 step 4 is done: every map has Winnmark's pieces (builder, 2026-10-01).** Your A (carry Winnmark's pieces to
   the other maps) is built: Bunratty's houses, cars, trees, props and fort (v1.125), the lot's cars and trees and the
   Hollow's hardwoods (v1.126), and Bunratty's S-curve road with a gutter and kerb (v1.127). The Hollow's pines stay
