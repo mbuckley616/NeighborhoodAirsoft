@@ -22397,15 +22397,29 @@ function updateEnemies(dt) {
         // wedged on, so a tagger round a tree or along a low wall went nowhere.
         const sideCommitted = e._zSideT > 0;
         if (sideCommitted) e._zSideT -= zdt;
-        else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
-        else {
+        else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; e._zDetourOn = false; }
+        // v1.125 fix-up: while a fence detour is moving him, no slide: on Mitchell's
+        // backyard bin the straight step's slide (south) cancelled the detour's (north)
+        // to the millimetre, and he stood at the bin's west face for seconds at a time.
+        else if (!e._zDetourOn) {
           if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
           if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
         }
         if (e._zWedgeT > 0) e._zWedgeT -= zdt; else e._zWedges = 0;
         // Wall-follow when wedged (same idea as the advancing state).
         if (e._zDetourBan > 0) e._zDetourBan -= zdt;
-        if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+        // v1.125 fix-up: also wedged when he makes no NET progress. Boxed in by
+        // v1.125's backyard props, Mitchell slid ~0.02 m a step and was pushed
+        // back, every step just over zStuckD, so the wall-follow never ran.
+        // Over each 0.5 s window, under 0.3 m net (a free tagger covers ~1.7 m)
+        // counts as stuck for the next window.
+        e._zWin = (e._zWin || 0) + zdt;
+        if (!e._zAnchor) e._zAnchor = { x: bX, z: bZ };
+        if (e._zWin >= 0.5) {
+          e._zNetStuck = Math.hypot(e.pos.x - e._zAnchor.x, e.pos.z - e._zAnchor.z) < 0.3;
+          e._zAnchor.x = e.pos.x; e._zAnchor.z = e.pos.z; e._zWin = 0;
+        }
+        if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD || e._zNetStuck) {
           // v1.100: committed sidestep frames skip the straight step, so they
           // don't count toward the 0.5 s side flip (a blocked sidestep flips below).
           if (!sideCommitted) e._zStuck = (e._zStuck || 0) + zdt;
@@ -22424,11 +22438,16 @@ function updateEnemies(dt) {
             if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
             else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
             else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
-            if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+            // v1.125 fix-up: any real movement counts here. Sliding along a prop toward the
+            // waypoint moves only one component of the step (0.0197 m a sub-step for Mitchell),
+            // under zStuckD, and a detour that was getting him out was banned as failed.
+            e._zDetourOn = Math.hypot(e.pos.x - bX, e.pos.z - bZ) >= 0.005;
+            if (!e._zDetourOn) {
               e._zDetourFail = (e._zDetourFail || 0) + zdt;
               if (e._zDetourFail > 0.4) { e._zDetourBan = 1.5; e._zDetourFail = 0; e._zStuck = 0; }
             } else e._zDetourFail = 0;
           } else {
+          e._zDetourOn = false;
           let px = -zdzP / d, pz = zdxP / d;
           if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
           if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }

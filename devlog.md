@@ -6293,3 +6293,36 @@ With this the box car and the ball-on-a-stick round tree are no longer built on 
 - The Infection pocket (above): Builder sessions should not merge until it is fixed.
 - Bunratty's S-curve road and kerbs, the last piece of step 4.
 - Whether the lot's long rows of sedans read better or busier than the box cars from the store doors.
+
+## v1.126 fix-up — Mitchell gets out of his backyard pocket
+CI failed Builder sessions on v1.125 (`tests/taggers.test.mjs`, low-frame-rate pass: Mitchell walked 10 m, ended
+2 m from his start and 65 m from the player), and v1.126 filed it at the top of Found in play. A collision map of
+the pocket showed it is open to the north and west. He wedges at the corner where the 1.09 m bin's west face meets
+the 0.55 m plywood stack's north face, with the player to the east-south-east. Three things kept him there:
+- The fence detour points north-east, the right way out. But each sub-step, the straight step slid him south along
+  the bin by as much as the detour slid him north (−0.35 against +0.36 of a step). He stood at (−26.8, 25.4) for
+  seconds at a time.
+- When the detour did move him, it moved only one component of its step, 0.0197 m. That is under the 0.02 m
+  "no progress" line, so a detour that was working was banned as failed for 1.5 s.
+- The slide back and forth moved him just over 0.02 m a step, so he never counted as wedged and the wall-follow
+  never ran.
+
+The fixes:
+- While a detour is moving him, the straight step is taken whole or not at all, with no slide.
+- The detour counts as failed only under 5 mm a sub-step.
+- Under 0.3 m net in a 0.5 s window counts as wedged for the next window. A free tagger covers about 1.7 m in that time.
+
+I also tried a v1.121-style back-out (0.5 s away from the target after 1.5 s without net progress). It made no
+difference once the slide was fixed, so I took it out.
+
+### Verified
+- Probe (10 rounds of Bunratty Infection, every third step 0.05 s, 45 s each): Mitchell reaches the player in 10 of 10
+  rounds; before, 4 of 6, and 6 of 10 with only the net-progress and detour-threshold changes.
+- `tests/taggers.test.mjs` 3 of 3 runs green, both passes. Mixed pass: Mitchell walks 87 m and reaches the player at 27–29 s.
+- `npm test`: 35/36. The one failure is `tests/hollow-held.test.mjs` at 10.3% of trigger pulls held (limit 10%),
+  which is Hollow gunners and has no taggers in it. Re-runs: 5.0% and 7.1% on this build, and 8.4%, 6.4% and 5.2% on
+  v1.126 without this change. That is within chance near the limit, not caused by this change.
+
+### Still open
+- `hollow-held` runs close to its 10% limit since the Hollow got v1.126's hardwoods (5–10% across six runs). If it
+  starts failing more often, look at which trees the held shots stop on.
