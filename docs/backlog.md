@@ -93,6 +93,13 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    Treehouse, third in Northcliff; `tests/treehouse.test.mjs`). Kids cannot climb yet, so a defend on the platform
    would leave attackers standing under it; no climb prompt on screen yet.
 
+8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
+   scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
+   updated in style. (Michael, 2026-10-02) **(design)**
+9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
+   https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
+   (Michael, 2026-10-02) **(design)**
+
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
 - ~~**v1.126 (builder) — fix before Builder sessions merges.** Since v1.125, Bunratty Infection's Mitchell can spend the whole round at (−26.8, 25.3), held by a bin (−26.4…−25.2, 24.8…25.8), a moving box and a plywood stack in his backyard; `tests/taggers.test.mjs` fails its low-frame-rate pass (every third step 0.05 s) in about half the runs (v1.124: 0 of 3). v1.125's detailed props have the same collision boxes, but they draw from the per-scenario seeded RNG (`withSeededRandom`) in a different order, so the board changed. Either fix the tagger's way out of a three-prop pocket (v1.121 gave gunners a back-out after two blocked turn-rounds; taggers have only v1.100's sidestep commitment), or make the detailed builders draw the same random numbers as the old ones so every board stays as it was. Steps: `g.scenario('bunratty_infection')`, `Game.player._infected = true`, 45 s of `stepGame(f % 3 ? 1/60 : 0.05)`, read Mitchell's `pos`.~~ — done, v1.126 fix-up (the straight step's slide cancelled the fence detour's to the millimetre at the bin's west face; while a detour moves him there is no slide, a detour that slides one component is no longer banned as failed, and under 0.3 m net in 0.5 s counts as wedged; 10 of 10 mixed-step rounds reach the player)
