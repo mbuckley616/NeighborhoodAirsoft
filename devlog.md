@@ -6769,3 +6769,21 @@ uphill of Ryan, and Ryan is held on Sean.
 ### Still open
 - That one rough-rule sample above Sean's head was not caught again. If the new rule trips, the log now names the
   kid, his state and target, and the target's head.
+
+## v1.137 — The harness's healthy-boot check stops timing slow boots
+Found in play (builder, v1.134): `tests/harness.test.mjs` failed once in a full run on "a healthy boot never
+restarts". Its second boot, the healthy one, ran with the same 10 s watchdog as the staged stall. On a loaded runner
+NEW GAME took over 10 s, so the harness restarted it, and the check read 1. That was a slow boot, not a stall. On the
+same day, healthy boots here took 4–6 s alone and up to about 70 s under heavy load (v1.124).
+
+The healthy boot now runs with the real 75 s watchdog. A real stall (2–4% of boots under load, v1.123) can still land
+on it, and the harness restarting after 75 s is then doing its job. So the check is now that the watchdog never fires
+early: no restart, or one only after the full 75 s. The boot's time is logged. The staged stall keeps its 10 s.
+### Verified
+- `tests/harness.test.mjs` alone: the staged stall recovered in 24.2 s with 1 restart; healthy boot 6.4 s, 0 restarts.
+- `npm test`, one full run on this run's three changes: 44/44 suites green. Harness: staged stall recovered in 15.9 s,
+  healthy boot 4.2 s, 0 restarts. `car-side-fire`, `laser` (staged: 33 of 33 on Sean's chest) and `cover-fire` pass.
+  The baseline run before any change was 43/43.
+### Still open
+- The stall itself is survived, not cured (v1.129). Probes this run, run beside a full `npm test`, hit the 75 s
+  restart 3 times in about 10 boots, so heavy load makes it much more likely.
