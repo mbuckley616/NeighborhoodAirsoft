@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.137</div>
+  <div class="version">v1.138</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5991,6 +5991,24 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 150, lose: 34 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.138: the twins' treehouse at Stoneglen Close (D.7, Michael: A) ---
+  stoneglen_treehouse: {
+    region: 'northcliff', street: 'stoneglen_close',
+    name: 'Stoneglen Close', scenarioName: 'King of the Treehouse',
+    desc: "The twins have a real treehouse: a platform up in the big oak in their backyard, with a plywood rail and a ladder. Connor has it, and from up there he can see the whole yard. Haden starts at the fort by the west fence and comes looking for you. Get to the ladder and climb it (W at the foot, looking at it; S to climb down), or tag Connor from the ground. Jumping off the platform is quicker than the ladder, but the drop takes all your stamina. One hit each.",
+    builderFn: 'buildTreehouseYardScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'side_gate',
+    enemySetup: [
+      { charId: 'connor', weapon: 'mp5',    anchor: 'treehouse', perch: 'treehouse', role: 'defender' },
+      { charId: 'haden',  weapon: 'pistol', anchor: 'fort', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 70, lose: 16 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -14041,6 +14059,191 @@ function buildNorthcliffScene(variant, timeOfDay) {
 }
 function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('default', tod); }
 
+// =====================================================================
+// v1.138: STONEGLEN CLOSE — the twins' backyard and its treehouse (backlog D.7, Michael: A, control room 2 Oct).
+// A small fenced yard behind a house with a big oak in the middle. The treehouse is a 3.4 x 3.2 m platform 2.6 m
+// up on the oak, with a plywood rail and a gap over the ladder on its south side. Climbing: `built.ladders` (see
+// updateLadder); a kid can hold the platform: `built.perches` (enemySetup `perch`, see kidGroundY).
+// =====================================================================
+const TREEHOUSE_TOP = 2.6;   // the platform's floor top: where feet stand up there
+function buildTreehouseYardScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x9ab8d0, dayFog: [36, 90],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-14, 30, 16],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
+    nightFog: [16, 50], moonPos: [14, 32, -16],
+    shadow: { size: 2048, extent: 30, far: 70 },
+  });
+  // Flat, but a ground fn all the same: with one, kids' and the player's collision is height-aware (v1.8), so the
+  // platform 2.45 m up is walked under, not into.
+  const groundY = () => 0;
+  const rng = (a, b) => a + Math.random() * (b - a);
+  const obstacles = [], cover = [];
+  const box = (minX, maxX, minZ, maxZ, h, baseY = 0, extra = {}) => ({ minX, maxX, minZ, maxZ, h, baseY, surface: 'hard', ...extra });
+
+  // --- the lawn, a patio slab behind the house ---
+  {
+    const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: 0x5a8a40, roughness: 1.0 }));
+    lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn);
+    const patio = new THREE.Mesh(new THREE.BoxGeometry(12, 0.06, 4), new THREE.MeshStandardMaterial({ color: 0xb8b0a4, roughness: 0.95 }));
+    patio.position.set(0, 0.03, 15); patio.receiveShadow = true; scene.add(patio);
+  }
+  // --- the house at the south end, back to the yard ---
+  obstacles.push(buildSuburbanHouse(scene, { x: 0, z: 21, width: 13, depth: 8, brickColor: 0xc8b090, roofColor: 0x4a3a2a, faceDir: 'south', detail: true }));
+
+  // --- a 1.8 m board fence round the other three sides (and the house's flanks) ---
+  {
+    const boardMat = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: 0.95 });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x6a5038, roughness: 0.95 });
+    const run = (x1, z1, x2, z2) => {
+      const alongX = Math.abs(x2 - x1) > Math.abs(z2 - z1), len = alongX ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
+      const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, g = new THREE.Group();
+      const boards = new THREE.Mesh(new THREE.BoxGeometry(alongX ? len : 0.05, 1.8, alongX ? 0.05 : len), boardMat);
+      boards.position.set(cx, 0.9, cz); boards.castShadow = boards.receiveShadow = true; g.add(boards);
+      for (const y of [0.35, 1.45]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(alongX ? len : 0.09, 0.09, alongX ? 0.09 : len), railMat);
+        rail.position.set(cx + (alongX ? 0 : (cx > 0 ? -0.07 : 0.07)), y, cz + (alongX ? (cz > 0 ? -0.07 : 0.07) : 0)); g.add(rail);
+      }
+      for (let s = 0; s <= len; s += 2.4) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), railMat);
+        post.position.set(alongX ? Math.min(x1, x2) + s : cx, 0.95, alongX ? cz : Math.min(z1, z2) + s); g.add(post);
+      }
+      scene.add(g);
+      obstacles.push(box(Math.min(x1, x2) - 0.06, Math.max(x1, x2) + 0.06, Math.min(z1, z2) - 0.06, Math.max(z1, z2) + 0.06, 1.8, 0, { mesh: g }));
+    };
+    run(-17.5, -15.5, 17.5, -15.5);   // the back
+    run(-17.5, -15.5, -17.5, 17);     // west
+    run(17.5, -15.5, 17.5, 17);       // east
+    run(-17.5, 17, -6.5, 17);         // the house's flanks
+    run(6.5, 17, 17.5, 17);
+  }
+
+  // --- the oak and the treehouse ---
+  const TH = { x: 0, z: -6 };                                   // the platform's centre
+  const P0 = { minX: TH.x - 1.7, maxX: TH.x + 1.7, minZ: TH.z - 1.6, maxZ: TH.z + 1.6 };
+  const top = TREEHOUSE_TOP, floorT = 0.15, railH = 0.9;
+  const oak = addSuburbanTree(scene, TH.x, P0.minZ - 0.5, { detail: true, trunkR: 0.45, trunkH: 6.6, leafR: 3.6, leafColor: 0x3e6030 });
+  obstacles.push(oak);
+  const thObs = [];
+  {
+    const wood = new THREE.MeshStandardMaterial({ color: 0x9a7650, roughness: 0.9 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.95 });
+    const ply = new THREE.MeshStandardMaterial({ color: 0xc4a06a, roughness: 0.92 });
+    const g = new THREE.Group();
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+    const W = P0.maxX - P0.minX, D = P0.maxZ - P0.minZ;
+    // floor boards across a pair of joists
+    for (let i = 0; i < 9; i++) add(new THREE.BoxGeometry(W, 0.05, D / 9 - 0.015), i % 3 ? wood : dark, TH.x, top - 0.025, P0.minZ + D * (i + 0.5) / 9);
+    for (const dx of [-1.2, 0, 1.2]) add(new THREE.BoxGeometry(0.1, 0.1, D), dark, TH.x + dx, top - 0.1, TH.z);
+    // four posts, each with a knee brace
+    for (const [px, pz] of [[P0.minX + 0.15, P0.minZ + 0.15], [P0.maxX - 0.15, P0.minZ + 0.15], [P0.minX + 0.15, P0.maxZ - 0.15], [P0.maxX - 0.15, P0.maxZ - 0.15]]) {
+      add(new THREE.BoxGeometry(0.16, top - floorT, 0.16), dark, px, (top - floorT) / 2, pz);
+      const br = add(new THREE.BoxGeometry(0.08, 0.9, 0.08), dark, px + (px < TH.x ? 0.3 : -0.3), top - 0.55, pz);
+      br.rotation.z = px < TH.x ? -0.7 : 0.7;
+      thObs.push(box(px - 0.08, px + 0.08, pz - 0.08, pz + 0.08, top - floorT));
+    }
+    // the rail: plywood sheets on three sides, two short ones either side of the ladder gap on the south
+    const GAP = 0.6;
+    const rails = [
+      [P0.minX, P0.minX + 0.08, P0.minZ, P0.maxZ], [P0.maxX - 0.08, P0.maxX, P0.minZ, P0.maxZ], [P0.minX, P0.maxX, P0.minZ, P0.minZ + 0.08],
+      [P0.minX, TH.x - GAP, P0.maxZ - 0.08, P0.maxZ], [TH.x + GAP, P0.maxX, P0.maxZ - 0.08, P0.maxZ],
+    ];
+    for (const [a, b, c, d] of rails) {
+      add(new THREE.BoxGeometry(b - a, railH, d - c), ply, (a + b) / 2, top + railH / 2, (c + d) / 2);
+      add(new THREE.BoxGeometry(Math.max(0.1, b - a + 0.04), 0.06, Math.max(0.1, d - c + 0.04)), dark, (a + b) / 2, top + railH + 0.03, (c + d) / 2);   // cap
+      thObs.push(box(a, b, c, d, railH, top, { noStand: true, treehouseRail: true }));
+    }
+    // the floor itself: stood on from above, walked under from below, stops BBs both ways
+    thObs.push(box(P0.minX, P0.maxX, P0.minZ, P0.maxZ, floorT, top - floorT, { treehouseFloor: true }));
+    // the ladder: two rails leaning from the grass up to the gap, rungs every 30 cm (no collision: the ladder zone
+    // below is what you climb)
+    const footZ = P0.maxZ + 0.35, len = Math.hypot(top + 0.9, footZ - P0.maxZ), lean = Math.atan2(footZ - P0.maxZ, top + 0.9);
+    const lad = new THREE.Group();
+    lad.position.set(TH.x, 0, footZ); lad.rotation.x = -lean;
+    for (const sx of [-0.24, 0.24]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.06, len, 0.08), dark); r.position.set(sx, len / 2, 0); r.castShadow = true; lad.add(r); }
+    for (let y = 0.3; y < len - 0.1; y += 0.3) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.05, 0.05), wood); r.position.set(0, y, 0); lad.add(r); }
+    g.add(lad);
+    // a sign on the north rail
+    const sign = add(new THREE.BoxGeometry(1.1, 0.32, 0.03), new THREE.MeshStandardMaterial({ color: 0xe8e0c8, roughness: 0.9 }), TH.x + 0.4, top + 0.55, P0.minZ - 0.03);
+    sign.rotation.z = 0.06;
+    scene.add(g);
+    for (const o of thObs) { o.mesh = g; obstacles.push(o); }
+  }
+  // the climb zone: stand at the ladder's foot (or in the rail's gap up top). W climbs, S climbs down.
+  const ladders = [{
+    minX: TH.x - 0.45, maxX: TH.x + 0.45, minZ: P0.maxZ - 0.2, maxZ: P0.maxZ + 1.0,
+    x: TH.x, z: P0.maxZ + 0.6,             // where the climber hangs: on the yard side of the ladder
+    top, edgeZ: P0.maxZ, dirZ: -1,          // stepping off at the top moves toward −z, onto the floor
+  }];
+  // where a kid holding the platform may stand (the floor inside the rail, less a kid's radius)
+  const perches = { treehouse: { y: top, minX: P0.minX + 0.45, maxX: P0.maxX - 0.45, minZ: P0.minZ + 0.45, maxZ: P0.maxZ - 0.45 } };
+
+  // --- yard cover: a shed, the twins' fort, boxes, bins, a ply stack, a picnic table ---
+  {
+    const shedMat = new THREE.MeshStandardMaterial({ color: 0x7a8a6a, roughness: 0.9 }), roofMat = new THREE.MeshStandardMaterial({ color: 0x4a4038, roughness: 0.9 });
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 2.4), shedMat); body.position.set(11, 1.1, -11); body.castShadow = body.receiveShadow = true; g.add(body);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.12, 2.8), roofMat); roof.position.set(11, 2.3, -11); roof.rotation.x = 0.12; roof.castShadow = true; g.add(roof);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.04), new THREE.MeshStandardMaterial({ color: 0x5a6a4a, roughness: 0.9 })); door.position.set(11, 0.9, -9.78); g.add(door);
+    scene.add(g);
+    const shed = box(9.4, 12.6, -12.2, -9.8, 2.3, 0, { mesh: g });
+    obstacles.push(shed); cover.push(shed);
+  }
+  const fort = buildKidFort(scene, -10, -2, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });
+  for (const w of fort) { obstacles.push(w); cover.push(w); }
+  const coverAt = (o) => { obstacles.push(o); cover.push(o); return o; };
+  const boxE = coverAt(addHomeDepotBox(scene, 9, 2, { w: 1.3, h: 1.05, d: 1.0, facing: 0.2, detail: true }));
+  coverAt(addHomeDepotBox(scene, 9.8, 3.3, { w: 1.0, h: 0.9, d: 0.9, facing: -0.3, detail: true }));
+  const boxW = coverAt(addHomeDepotBox(scene, -5, 7, { w: 1.2, h: 1.0, d: 1.0, facing: 0.5, detail: true }));
+  coverAt(addHomeDepotBox(scene, 4.5, -11, { w: 1.2, h: 1.0, d: 1.0, facing: -0.4, detail: true }));
+  for (const [bx, bz, v] of [[-13.6, 12.5, 'garbage'], [-12.8, 12.5, 'recycle'], [13.2, 9, 'garbage']]) coverAt(addCurbsideBin(scene, bx, bz, { variant: v, facing: Math.PI, detail: true }));
+  {
+    const st = buildPlyStack(4, 0, 6, 0.37); scene.add(st);
+    coverAt({ minX: 3.2, maxX: 4.8, minZ: 5.55, maxZ: 6.45, h: 0.55, baseY: 0, mesh: st, surface: 'hard' });
+  }
+  {   // a picnic table on the patio: standable (0.75 m)
+    const wood = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: 0.92 }), g = new THREE.Group();
+    const top_ = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.8), wood); top_.position.set(4, 0.75, 13.5); top_.castShadow = true; g.add(top_);
+    for (const sz of [-0.6, 0.6]) { const b = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.28), wood); b.position.set(4, 0.45, 13.5 + sz); g.add(b); }
+    for (const sx of [-0.75, 0.75]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.75, 1.4), wood); l.position.set(4 + sx, 0.37, 13.5); g.add(l); }
+    scene.add(g);
+    obstacles.push({ minX: 3.05, maxX: 4.95, minZ: 13.1, maxZ: 13.9, h: 0.78, baseY: 0, mesh: g, surface: 'hard', bbPass: false });
+  }
+  // shrubs along the fences and two smaller trees in the corners
+  for (const [x, z] of [[-16, -8], [-16, 6], [16, -3], [16, 4], [-6, -14.5], [7, -14.5]]) obstacles.push(addBush(scene, x, z, 1.3, 0.9, 1.1, null, 0, { detail: true }));
+  for (const [x, z] of [[-14.5, -13], [14.5, 13]]) obstacles.push(addSuburbanTree(scene, x + rng(-0.3, 0.3), z + rng(-0.3, 0.3), { detail: true, trunkH: rng(3.6, 4.4), leafR: rng(2.2, 2.6) }));
+  // trees beyond the fence, so the yard is in the woods
+  for (let x = -24; x <= 24; x += 4.5) addSuburbanTree(scene, x + rng(-1, 1), -19.5 + rng(-1, 1), { detail: true, trunkH: rng(4, 5.5), leafR: rng(2.4, 3) });
+  for (let z = -15; z <= 12; z += 4.5) for (const sx of [-1, 1]) addSuburbanTree(scene, sx * (21 + rng(-1, 1)), z + rng(-1, 1), { detail: true, trunkH: rng(4, 5.5), leafR: rng(2.4, 3) });
+  if (_night) addStreetlamp(scene, -3, 16.2, groundY, true);   // a porch light's worth
+
+  const V = (x, z) => new THREE.Vector3(x, 0, z);
+  const placements = {
+    treehouse: { pos: V(TH.x, TH.z - 0.4), cover: thObs.find(o => o.treehouseRail && o.minZ > TH.z) },
+    shed: { pos: V(11, -8.4), cover: obstacles.find(o => o.h === 2.3) },
+    fort: { pos: V(-11, -2), cover: fort[0] },
+    boxes_e: { pos: V(10, 0.6), cover: boxE },
+    boxes_w: { pos: V(-5.2, 5.6), cover: boxW },
+    back_fence: { pos: V(-4, -13), cover: null },
+    cluster_back: { pos: V(2, -13), cover: null },
+  };
+  const playerSpawns = {
+    side_gate: { pos: V(-13, 14.4), yaw: -0.55 },                 // by the bins at the west side of the patio, facing up the yard toward the oak
+    treehouse: { pos: V(TH.x + 0.6, TH.z - 0.6), yaw: Math.PI, y: top },   // on the platform, facing the house
+  };
+  return {
+    scene,
+    spawn: playerSpawns.side_gate.pos.clone(), spawnYaw: playerSpawns.side_gate.yaw,
+    bounds: { minX: -17, maxX: 17, minZ: -15, maxZ: 16.4 },
+    cover, obstacles, enemies: [],
+    name: 'Stoneglen Close', scenarioName: '', desc: '',
+    placements, playerSpawns, groundY, ladders, perches,
+    teamBases: { player: { x: -13, z: 14 }, enemy: { x: 0, z: -6 } },
+  };
+}
+
 
 
 // ---------------------------------------------------------------------
@@ -16741,7 +16944,7 @@ function enterBedroom() {
 // exit axis, then re-checks; bails after a few iterations and returns the best
 // effort. Operates on the builder's obstacle list directly (Game.player.obstacles
 // isn't wired up yet during enterScenario).
-function findClearSpawn(x, z, obstacles, radius = 0.4) {
+function findClearSpawn(x, z, obstacles, radius = 0.4, footY = null) {
   if (!obstacles || obstacles.length === 0) return { x, z };
   // v1.26: use a roomier effective radius than the kid's collision radius so a
   // spawned enemy ends up with breathing room around cover, not flush against
@@ -16753,6 +16956,8 @@ function findClearSpawn(x, z, obstacles, radius = 0.4) {
   for (let iter = 0; iter < 16; iter++) {
     let hit = null;
     for (const o of obstacles) {
+      // v1.138: a spawn up in the treehouse (footY) ignores what is under its feet or over its head
+      if (footY != null && ((o.baseY ?? 0) + (o.h ?? 5) <= footY + 0.05 || (o.baseY ?? 0) >= footY + 1.5)) continue;
       if (px + margin > o.minX && px - margin < o.maxX &&
           pz + margin > o.minZ && pz - margin < o.maxZ) { hit = o; break; }
     }
@@ -17032,10 +17237,13 @@ function enterScenario(scenarioId) {
         spawnPos = placement.pos.clone();
       }
 
+      // v1.138: a kid set to hold a perch (the treehouse) spawns up there, on his anchor
+      const perch = (es.perch && built.perches) ? built.perches[es.perch] || null : null;
+      if (perch) { spawnPos = placement.pos.clone(); deployTarget = null; startState = null; }
       // v1.23: never spawn a kid stuck inside cover (cars/boxes/bins/fences) —
       // that produced the "enemy that never moves or shoots" bug. Nudge out.
       {
-        const clear = findClearSpawn(spawnPos.x, spawnPos.z, built.obstacles, 0.4);
+        const clear = findClearSpawn(spawnPos.x, spawnPos.z, built.obstacles, 0.4, perch ? perch.y : null);
         spawnPos.x = clear.x; spawnPos.z = clear.z;
       }
 
@@ -17059,6 +17267,7 @@ function enterScenario(scenarioId) {
         noFire: !!es.noFire,                        // v1.58: hard never-fire flag
       });
       if (enemy) {
+        if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -17166,13 +17375,14 @@ function enterScenario(scenarioId) {
     const ps = built.playerSpawns[sc.playerSpawn];
     built.spawn = ps.pos.clone();
     built.spawnYaw = ps.yaw;
+    if (ps.y != null) built.spawn.y = ps.y;   // v1.138: a spawn up in the treehouse
   }
   // v1.28k: nudge the PLAYER spawn out of any obstacle it overlaps, same as we
   // already do for enemies. Backyard cover is placed randomly each load, so a
   // fixed spawn could land inside a bin/box/pile and trap the player ("stuck in
   // random obstacles that change every time"). findClearSpawn pushes to clear air.
   if (built.spawn && built.obstacles) {
-    const cleared = findClearSpawn(built.spawn.x, built.spawn.z, built.obstacles, 0.4);
+    const cleared = findClearSpawn(built.spawn.x, built.spawn.z, built.obstacles, 0.4, built.spawn.y > 0.01 ? built.spawn.y : null);
     built.spawn.x = cleared.x;
     built.spawn.z = cleared.z;
   }
@@ -17235,6 +17445,8 @@ function enterScenario(scenarioId) {
   Game.scenario.cover = built.cover;
   Game.scenario.bounds = built.bounds;
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
+  Game.scenario.ladders = built.ladders || null;   // v1.138: climb zones (the treehouse ladder)
+  Game.player.climbing = null;
   // v1.67: silence any whistles still attached to BBs from a prior run before we
   // drop the array, so no audio node is orphaned and left droning.
   if (Game.scenario.bbs) for (const ob of Game.scenario.bbs) { if (ob._whistle) bbWhistleStop(ob); }
@@ -19102,7 +19314,13 @@ document.addEventListener('keydown', e => {
   }
   // Jump (scenario only)
   if (e.code === 'Space' && Game.mode === 'scenario' && !e.repeat) {
-    if (Game.player.onGround && !Game.player.sliding) {
+    if (Game.player.climbing) {
+      // v1.138: Space on a ladder lets go: he drops from where he hangs (a long drop empties his stamina)
+      Game.player.climbing = null;
+      Game.player.velY = 0;
+      Game.player.onGround = false;
+      Game.player._lastGroundY = Game.player.pos.y;
+    } else if (Game.player.onGround && !Game.player.sliding) {
       Game.player.velY = 4.2;
       Game.player.onGround = false;
       // v1.26: remember if we launched while sprinting so the leap keeps sprint
@@ -19372,6 +19590,47 @@ const ZOMBIE_TAG_RANGE   = 1.3;    // contact distance that infects the player
 const ZOMBIE_JOG_SPEED   = 3.55;   // ~ player jog (3.6) — most taggers
 const ZOMBIE_SPRINT_SPEED = 5.2;   // faster than player sprint — the 1-2 runners
 
+// v1.138 (backlog D.7, Michael: A): LADDERS and the drop penalty. A scenario's `ladders` are climb zones (the
+// treehouse's). At a ladder's foot, looking at it, W climbs; S climbs down; at the top he steps off onto the floor.
+// From the floor, backing into the rail's gap with S takes the ladder down; walking off the edge is a drop.
+// Space lets go. Any drop of FALL_PENALTY_DROP or more (off the platform, off the ladder) empties his stamina and
+// locks sprint out as an empty sprint does. A jump off a 1.05 m box drops about 1.05 m, so it costs nothing.
+const LADDER_CLIMB_SPEED = 1.7;   // m/s: the 2.6 m treehouse in about 1.5 s
+const FALL_PENALTY_DROP = 1.5;
+function ladderAt(x, z) {
+  for (const L of (Game.scenario.ladders || [])) if (x >= L.minX && x <= L.maxX && z >= L.minZ && z <= L.maxZ) return L;
+  return null;
+}
+// Returns true while he is on a ladder (updatePlayer then moves him no other way).
+function updateLadder(dt) {
+  const p = Game.player, k = Game.keys || {};
+  const up = !!k['KeyW'], down = !!k['KeyS'];
+  let L = p.climbing;
+  if (!L) {
+    const at = ladderAt(p.pos.x, p.pos.z);
+    if (!at || !p.onGround || p.sliding) return false;
+    // either way he faces the ladder (yaw 0 faces −z): W at the foot climbs, S at the top backs him into the gap
+    const facing = -Math.cos(p.yaw) * at.dirZ;
+    const atTop = p.pos.y >= at.top - 0.1;
+    if (facing < 0.3 || !(atTop ? down : up)) return false;
+    p.climbing = L = at;
+    p.crouching = false; p.sprinting = false; p.airSprint = false;
+    p.pos.x = L.x; p.pos.z = L.z; p.velY = 0; p.onGround = false;
+  }
+  const dy = (up ? 1 : 0) - (down ? 1 : 0);
+  p.pos.y += dy * LADDER_CLIMB_SPEED * dt;
+  p._lastGroundY = p.pos.y;
+  const gY = scenarioGroundY(p.pos.x, p.pos.z);
+  if (p.pos.y >= L.top) {
+    // over the top: step onto the floor, clear of the rail's gap
+    p.pos.y = L.top; p.pos.z = L.edgeZ + L.dirZ * 0.45;
+    p.climbing = null; p.onGround = true; p.velY = 0;
+  } else if (p.pos.y <= gY) {
+    p.pos.y = gY; p.climbing = null; p.onGround = true; p.velY = 0;
+  }
+  return true;
+}
+
 function updatePlayer(dt) {
   if (!Game.mouse.locked) {
     Game.mouse.dx = 0; Game.mouse.dy = 0;
@@ -19459,6 +19718,9 @@ function updatePlayer(dt) {
   // Ease ADS and eye height
   easeStanceAndAds(dt);
 
+  // v1.138: on a ladder, the ladder moves him (updateLadder); nothing below moves him
+  const onLadder = inScenario && updateLadder(dt);
+
   // Look — sensitivity reduces with ADS
   const sensMult = 1 - Game.player.ads * (1 - ADS_SENS_MULT);
   Game.player.yaw -= Game.mouse.dx * MOUSE_SENS * sensMult;
@@ -19469,7 +19731,9 @@ function updatePlayer(dt) {
   // === Horizontal movement ===
   let wx = 0, wz = 0;
   let movingForwardish = false;
-  if (Game.player.sliding) {
+  if (onLadder) {
+    // v1.138: held by the ladder
+  } else if (Game.player.sliding) {
     // Slide: locked direction, decaying speed
     wx = Game.player.slideDir.x * Game.player.slideSpeed;
     wz = Game.player.slideDir.z * Game.player.slideSpeed;
@@ -19536,13 +19800,22 @@ function updatePlayer(dt) {
   // === Vertical motion (jump physics) ===
   // v1.8: ground height is terrain-driven. The player walks up/down slopes
   // (foot snaps to groundY when grounded) and lands on the slope when airborne.
-  if (inScenario) {
+  if (onLadder) {
+    // v1.138: held by the ladder (updateLadder set his height)
+  } else if (inScenario) {
     // v1.105: the ground is the terrain or the top of a low obstacle under the feet
     const gY = playerSupportY(Game.player.pos.x, Game.player.pos.z, Game.player.pos.y, r);
     if (!Game.player.onGround) {
       Game.player.velY -= PLAYER_GRAVITY * dt;
       Game.player.pos.y += Game.player.velY * dt;
       if (Game.player.pos.y <= gY) {
+        // v1.138: a drop of FALL_PENALTY_DROP or more (off the treehouse) empties his stamina
+        const p = Game.player;
+        if ((p._lastGroundY ?? gY) - gY >= FALL_PENALTY_DROP) {
+          p.stamina = 0; p.exhausted = true; p.sprinting = false;
+          p._rechargeWait = STAMINA_RECHARGE_DELAY;
+          p._dropPenalties = (p._dropPenalties || 0) + 1;
+        }
         Game.player.pos.y = gY;
         Game.player.velY = 0;
         Game.player.onGround = true;
@@ -19560,6 +19833,7 @@ function updatePlayer(dt) {
         Game.player.pos.y = gY;
       }
     }
+    if (Game.player.onGround) Game.player._lastGroundY = Game.player.pos.y;   // v1.138: where a drop is measured from
   } else {
     Game.player.pos.y = 0;
     Game.player.onGround = true;
@@ -19701,6 +19975,10 @@ function easeStanceAndAds(dt) {
 function scenarioGroundY(x, z) {
   const fn = Game.scenario && Game.scenario.groundY;
   return fn ? fn(x, z) : 0;
+}
+// v1.138: where a kid's feet are: the terrain, or the floor of the perch he holds (the treehouse platform)
+function kidGroundY(e) {
+  return e.perch ? e.perch.y : scenarioGroundY(e.pos.x, e.pos.z);
 }
 
 // v1.53: shared obstacle-shape helpers. Round props (trees, poles, cans,
@@ -22889,7 +23167,7 @@ function updateEnemies(dt) {
       e._hitRaise = Math.min(1, (e._hitRaise || 0) + dt * 4);
       setKidHitPose(e.mesh, e._hitRaise);
       e.mesh.group.rotation.z = 0;
-      e.mesh.group.position.y = scenarioGroundY(e.pos.x, e.pos.z);
+      e.mesh.group.position.y = kidGroundY(e);
       // v1.77: a downed kid's laser is no longer re-aimed (we `continue` below,
       // skipping updateKidLaser). The hit pose pitches the gun ~90° skyward, and
       // the stale laser unit rides that raised gun — leaving a vertical red beam
@@ -22965,7 +23243,7 @@ function updateEnemies(dt) {
     // computed at ~1.05m above y=0 (underground on the high end), and enemy BBs
     // spawned in the dirt and dribbled forward. Planting pos.y early fixes the
     // shot origin for every state's spawnEnemyBB call this frame.
-    e.pos.y = scenarioGroundY(e.pos.x, e.pos.z);
+    e.pos.y = kidGroundY(e);
 
     // === v1.25 ZOMBIE MODE — tagger chase (no guns, tag-on-contact) ===
     // Taggers ignore the entire gun state machine: they just chase the player at
@@ -23213,7 +23491,7 @@ function updateEnemies(dt) {
     // peek/shoot/advance cases can all read it.
     {
       const sYmem = e.mesh.scaleY ?? 1.0;
-      const muzzleYmem = 1.05 * sYmem;
+      const muzzleYmem = (e.perch ? e.perch.y : 0) + 1.05 * sYmem;   // v1.138: from the perch (the ground's own height is still left out here)
       const playerChestYmem = tgt.chestY;
       const losMem = hasLineOfSight(
         e.pos.x, muzzleYmem, e.pos.z,
@@ -23328,7 +23606,7 @@ function updateEnemies(dt) {
         // Reactive bail: if a real shot presents itself mid-deploy, take it.
         {
           const sY = e.mesh.scaleY ?? 1.0;
-          const muzzleY = 1.05 * sY;
+          const muzzleY = (e.perch ? e.perch.y : 0) + 1.05 * sY;   // v1.138: from the perch
           const playerChestY = tgt.chestY;
           const losNow = hasLineOfSight(
             e.pos.x, muzzleY, e.pos.z,
@@ -24195,7 +24473,12 @@ function updateEnemies(dt) {
     // e.pos.y), and hit detection (checkEnemyHit reads group.position.y as the
     // hitbox base) all sit at the correct ground level on the slope.
     {
-      const gY = scenarioGroundY(e.pos.x, e.pos.z);
+      // v1.138: a kid holding a perch stays on it: whatever the states above asked, his feet are kept on the floor
+      if (e.perch) {
+        e.pos.x = Math.max(e.perch.minX, Math.min(e.perch.maxX, e.pos.x));
+        e.pos.z = Math.max(e.perch.minZ, Math.min(e.perch.maxZ, e.pos.z));
+      }
+      const gY = kidGroundY(e);
       e.pos.y = gY;
       e.mesh.group.position.y = gY;
     }
@@ -24693,6 +24976,7 @@ const PIN_SCENARIO_GROUPS = {
   northcliff: [
     'northcliff_1v1_evan',
     'northcliff_twins_3v3',
+    'stoneglen_treehouse',       // v1.138: the twins' backyard treehouse (D.7)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
