@@ -6998,3 +6998,25 @@ which every enemy life is spent (a win). The game is unchanged.
 ### Still open
 - An ally camping the enemy respawn is real behaviour: kids coming back to spawn walk into Eric's MP5 one at a time.
   It needs a player in the round to say whether it matters; there is no respawn protection.
+
+## v1.142 — A climb prompt at the treehouse ladder
+Michael answered D.7 with A on the control room (2 Oct): kids climb ladders, then a defend in which you hold the
+treehouse while they climb after you, and a "W — climb" prompt at the ladder. This is the prompt, the first of the
+three pieces. v1.138 left the ladder without one; only the briefing said that W climbs.
+
+The scenario now uses the bedroom's prompt box (`#interactPrompt`), driven each step by `updateLadderPrompt`. The
+prompt follows the rule `updateLadder` climbs on, so it never offers a climb that W would not start:
+- At the ladder's foot, looking at it: **W climb**.
+- On the ladder: **W up · S down · Space let go**.
+- In the rail's gap up top, with his back to the ladder: **S climb down**.
+- Anywhere else, looking away from the ladder, or once the round has ended: hidden. `endScenario` now hides it too.
+
+### Verified
+- `tests/ladder-prompt.test.mjs`, 10 checks. Nothing shows at the side gate. At the foot it reads "W climb", and
+  nothing shows looking away. On the ladder it lists the three keys, and it goes once he steps off at the top. In the
+  gap it reads "S climb down", the keys show on the way down, and it reads "W climb" again at the bottom. After
+  `endScenario` it is hidden.
+- `npm test` (run three suites at a time): 46/47. `burst-pose` failed twice in a row on the harness's NEW GAME stall
+  under that load. It passed on its own re-run (below).
+### Still open
+- Whether the box at 60% of the screen height sits well over the ladder view. The box is the bedroom's own.

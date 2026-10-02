@@ -95,7 +95,9 @@ Fable card on the control room and Michael starts it from there.
    Close, the twins' fenced backyard: a platform 2.6 m up an oak with a rail and a ladder; W at the foot climbs, S
    climbs down, Space lets go; a drop of 1.5 m or more empties your stamina; Connor holds the platform in King of the
    Treehouse, third in Northcliff; `tests/treehouse.test.mjs`). Kids cannot climb yet, so a defend on the platform
-   would leave attackers standing under it; no climb prompt on screen yet.
+   would leave attackers standing under it; no climb prompt on screen yet. Next (Michael: A, kids climb, then a defend, and
+   the prompt; control room, 2 Oct): ~~the climb prompt~~ — done, v1.142 ("W climb" at the foot, the three keys on the
+   ladder, "S climb down" in the gap; `tests/ladder-prompt.test.mjs`).
 
 8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
    scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /

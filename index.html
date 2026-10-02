@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.141</div>
+  <div class="version">v1.142</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -17813,6 +17813,7 @@ function endScenario(outcome) {
   }
   _bbWhistleCount = 0;
   if (Tutorial.active) Tutorial.end();   // v1.57: tear down the coaching banner
+  { const ip = document.getElementById('interactPrompt'); if (ip) ip.style.display = 'none'; }   // v1.142: the ladder prompt
   // v1.21: cancel any in-flight TTS so finished-scenario taunts don't bleed into the result screen.
   try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) {}
   document.getElementById('ammoHud').style.display = 'none';
@@ -19631,6 +19632,25 @@ function updateLadder(dt) {
     p.pos.y = gY; p.climbing = null; p.onGround = true; p.velY = 0;
   }
   return true;
+}
+
+// v1.142 (backlog D.7, Michael: A): the ladder prompt. At a ladder's foot, looking at it: "W — climb"; up top in
+// the rail's gap: "S — climb down"; on the ladder: the three keys. Uses the bedroom's #interactPrompt box.
+function ladderPromptText() {
+  const p = Game.player;
+  if (!Game.scenario || !Game.scenario.ladders) return null;
+  if (p.climbing) return '<kbd>W</kbd> &nbsp;up &nbsp;·&nbsp; <kbd>S</kbd> &nbsp;down &nbsp;·&nbsp; <kbd>Space</kbd> &nbsp;let go';
+  const at = ladderAt(p.pos.x, p.pos.z);
+  if (!at || !p.onGround || p.sliding) return null;
+  if (-Math.cos(p.yaw) * at.dirZ < 0.3) return null;   // the same facing rule updateLadder climbs on
+  return (p.pos.y >= at.top - 0.1) ? '<kbd>S</kbd> &nbsp; climb down' : '<kbd>W</kbd> &nbsp; climb';
+}
+function updateLadderPrompt() {
+  const el = document.getElementById('interactPrompt');
+  if (!el) return;
+  const t = ladderPromptText();
+  if (t) { if (el.innerHTML !== t) el.innerHTML = t; el.style.display = 'block'; }
+  else if (el.style.display !== 'none') el.style.display = 'none';
 }
 
 function updatePlayer(dt) {
@@ -24873,6 +24893,7 @@ function stepGame(dt) {
     }
   } else if (Game.mode === 'scenario') {
     updatePlayer(dt);
+    updateLadderPrompt();   // v1.142
     updateGun(dt);
     // Sub-step BB physics: BBs at 30+ m/s can skip through thin obstacles
     // in a single 16ms frame. Run physics at ~5ms steps.
