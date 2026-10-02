@@ -45,10 +45,11 @@ Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs 
   under backlog section `## Found in play`, at most two ideas in `docs/proposals.md` (Michael promotes them, nobody else).
 - **Producer** — `auto/producer`, every 3 hours at :55 UTC, about 1 hour 45 minutes after each builder run starts (quick exit when nothing changed; no Slack posts 10pm-7am Central, at most one summary per 6 hours). Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
   files his Slack notes into the backlog, and says which branches are ready to merge.
-- **Fable session** — `auto/fable-<id>`, on demand (the routine "Airsoft — Fable session (on demand)", model Fable). One
-  cross-cutting item per card: the producer proposes a `fable/<id>` card on the control room once the item’s design is answered,
-  Michael taps Start, the producer fires it. It raises its questions in `docs/decisions.md` and stops until they are answered;
-  its PR `Fable: <title>` is approved like any other.
+- **Fable session** — `auto/fable-<id>`, model Fable, an hourly check at :35 that ends in a minute unless a `fable/<id>` card on
+  the control room is queued, paused or answered (a cloud routine cannot fire another one, so nothing fires it: the schedule
+  does). One cross-cutting item per card: the producer proposes the card once the item’s design is answered, Michael taps Start,
+  the next check takes it. It raises its questions in `docs/decisions.md` and stops until they are answered; its PR
+  `Fable: <title>` is approved like any other.
 
 **The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
 (decisions, merges, blockers, to-dos), Inbox, Roadmap, Team and Ideas. The producer keeps it in step with the repo
@@ -77,8 +78,8 @@ Through the Slack connector (tools named `slack_*`; load them with ToolSearch).
 - Cross-cutting rewrites (online play, a voice pipeline over every line, a new map screen that touches every scenario entry,
   splitting `index.html`) are **Fable sessions**, marked **(Fable)** in the backlog: the builder skips them. Contained features
   and bug hunts are the builder’s (Opus).
-- While an open GitHub issue’s title begins `FREEZE:`, the builder ends its run at once and takes nothing. The producer opens it
-  when a Fable card that rewrites shared files (`freeze: true`) is fired, and closes it when that PR merges. A FREEZE with no
+- While an open GitHub issue’s title begins `FREEZE:`, the builder ends its run at once and takes nothing. The Fable session opens it
+  when it takes a card that rewrites shared files (`freeze: true`); the producer closes it when that PR merges. A FREEZE with no
   Fable card behind it for two hours is closed by the producer.
 
 ## Code map (line numbers drift; grep for the names)
