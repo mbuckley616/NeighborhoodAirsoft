@@ -6881,3 +6881,89 @@ How the pieces work:
 - Two of the gunners' line-of-sight checks start 1.05 m above y = 0, not above the ground they stand on. The perch
   now adds its height, but on sloped maps (Northcliff rises 4 m) a kid's sight line still starts low. Not changed
   here; it would move AI on every hill.
+
+## v1.139 — You slide along a car parked at an angle instead of stopping dead
+The critic found it on v1.137 (Found in play): on Northcliff's road start, holding W in the facing you're given
+stopped you dead at (29.5, 1) after 2 s, against a parked car at an angle (an obox at (30.6, 2.3), 2.99 rad) that
+sits out of view below-left while the road on screen looks open. All three road-start matches. The player's move
+tests the x step and the z step apart, which slides along a wall that runs along x or z, but against a sloped face
+both steps go into it, so neither is taken and you stop.
+
+Now, when the x/z split gets less than half the step, the move finds what blocks it (`blockingObstacle`, the test
+`collidesObstacles` always ran, now returning the obstacle), takes the direction away from its nearest point
+(`obsAwayNormal`, for boxes, angled boxes and cylinders alike), drops the part of the step that goes into it and
+takes the rest along the face, if that is clear and goes further than the split did. If you were touching closer
+than your radius (the split can leave you a fraction of a millimetre in), the slide also eases you back out to it.
+Walking square into a face leaves nothing to slide with, so you still stop. Players only; the kids keep their own
+movement. Trees and other round things now let you slide round them the same way.
+
+### Verified
+- `tests/road-slide.test.mjs` (new): the three Northcliff road starts, each held W for 4 s at the critic's five
+  facings (0°, 3° and 9° left, 9° right, 17° left): all 15 get past the car (x 18.5–23.2, from 35); on v1.138
+  0°, 3° and 9° left stopped at 29.5–32.3. 0 of 3,600 frames inside an obstacle. Square into the car's long side
+  for 3 s: 0.17 m along it, never inside.
+- The first cut stopped at 9° left: the split had left him 0.6 mm inside the car's face, so the slide's own clear
+  test failed every step. The ease-out fixed it; its first version pushed to 2 mm off and let him creep 0.92 m along
+  a face he walked square into, so it now pushes back only to his radius.
+- `npm test`: 46/46 suites green (the baseline before the change had passed its first 17 when it was stopped).
+### Still open
+- How sliding along cars and round trees feels needs a real playtest; corners now ease you round rather than catching you.
+
+## v1.140 — The lot free-for-all starts you looking down the aisle, not at a windshield
+The critic's second v1.134 report: in Everybody for Themselves on the Riverside Market lot, the start v1.134 hid
+behind the last car of the north row faced west, straight into that car, with its windshield 0.9 m away filling the
+screen. The cars in that row are parked nose-in along z, so the row runs north–south past your shoulder. The start
+now faces south (yaw π), down the east aisle along the row, with 40 m of open asphalt ahead and the car along your
+right. Turning that way keeps the kids' centroid 73° off your facing, inside the 120° the spawn suite allows, and the
+start's position and its cover from the other six are unchanged.
+
+### Verified
+- `tests/spawn-facing.test.mjs` now also measures, for every scenario, how far you see straight ahead at eye height
+  (±10°) before an obstacle, and fails under 2 m. Before the change only `lot_ffa` failed it (0.9 m); the next
+  closest are Bunratty Infection and Pincer at 2.7 m. With the change `lot_ffa` reads 26.5 m (the ±10° rays catch a
+  tree down the aisle; 40.6 m dead ahead).
+- Looked at the start at three facings in screenshots (west, 165°, south) before picking south.
+- `npm test`: 46/46 suites green (the harness recovered one real NEW GAME stall in a fresh browser).
+### Still open
+- Nothing for a playtest to judge beyond whether the aisle view is the one Michael wants to open on.
+
+## v1.139 fix-up — road-slide sets the pointer lock itself
+CI failed Builder sessions on v1.139 in its new `tests/road-slide.test.mjs`: "holding W for 4 s gets him past the car"
+failed with the player ending exactly where he started, (35, 1).
+
+`updatePlayer` moves no one unless `Game.mouse.locked` is set, and CI's headless Chromium sometimes refuses the real
+pointer lock. This is the same cause as the houses, jump and laser fix-ups. Both walk loops now set
+`Game.mouse.locked` each step. Test change only; no game change.
+
+### Verified
+- With the lock forced off: every angle fails with the player at (35, 1), as in CI.
+- With the fix: 2 of 2 runs green.
+
+### Still open
+- The same CI run also failed `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s at (−4.1, −23.3). Locally,
+  Mason reached 3 s in 1 of 10 rounds, shuttling north–south at x −17.3, with his sidestep timer not counting down.
+  So that movement comes from a path other than the direct push my v1.134 fix-up covered. Under investigation.
+
+## v1.139 fix-up — a bound cover dropped as failed isn't picked again straight away
+CI failed Builder sessions on v1.139 in `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s. A probe
+traced which movement branch ran on each frame and caught him alternating along a wall at x −17.3:
+- About 1 s on the bound mover, heading for a cover's stand spot and wedging at (−17.27, −14.22). v1.99 drops a bound
+  wedged for 0.6 s and rests from bounding for 1.5 s.
+- About 1 s on the direct push, whose wall-follow took him back along the wall.
+
+When the rest ran out he picked the same cover again. Each mode undid the other, and neither ran long enough for
+v1.121's pocket back-out to fire.
+
+A cover dropped as failed, by v1.99's wedge or v1.110's no-gain rule, is now skipped by `pickBoundCover` for 6 s of
+scenario time. The direct push gets him round the wall before that cover can be picked again.
+
+### Verified
+- Probe, 40 rounds of `lot_night_4v4`: the longest stand-still in `advancing` is 2 s (before: 3 s in about 1 round in
+  10, and 4 s in CI).
+- `market-lot` 4 of 4 runs green. `npm test`: 45/46. The one failure is `market-lot`'s team 3v3 "both sides lose lives",
+  9–0 in 120 s. It is not from this change: the same check failed 1 of 4 runs on the build without it, also 9–0.
+
+### Still open
+- Lot team 3v3 one-sided rounds. In about 1 run in 4, one side's kids never leave their end (here enemy Marcus at his
+  start and Tyler still `deploying`). The other side's pusher picks them off, so nobody on his side loses a life in
+  120 s. The d7e44da CI failure was the mirror case, with allied Brooke at her start. Being investigated.
