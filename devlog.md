@@ -6908,3 +6908,20 @@ movement. Trees and other round things now let you slide round them the same way
 - `npm test`: 46/46 suites green (the baseline before the change had passed its first 17 when it was stopped).
 ### Still open
 - How sliding along cars and round trees feels needs a real playtest; corners now ease you round rather than catching you.
+
+## v1.139 fix-up — road-slide sets the pointer lock itself
+CI failed Builder sessions on v1.139 in its new `tests/road-slide.test.mjs`: "holding W for 4 s gets him past the car"
+failed with the player ending exactly where he started, (35, 1).
+
+`updatePlayer` moves no one unless `Game.mouse.locked` is set, and CI's headless Chromium sometimes refuses the real
+pointer lock. This is the same cause as the houses, jump and laser fix-ups. Both walk loops now set
+`Game.mouse.locked` each step. Test change only; no game change.
+
+### Verified
+- With the lock forced off: every angle fails with the player at (35, 1), as in CI.
+- With the fix: 2 of 2 runs green.
+
+### Still open
+- The same CI run also failed `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s at (−4.1, −23.3). Locally,
+  Mason reached 3 s in 1 of 10 rounds, shuttling north–south at x −17.3, with his sidestep timer not counting down.
+  So that movement comes from a path other than the direct push my v1.134 fix-up covered. Under investigation.

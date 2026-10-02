@@ -25,6 +25,7 @@ for (const id of ids) {
       Game.keys.KeyW = true;
       let inside = 0, minX = p.pos.x;
       for (let i = 0; i < 240; i++) {
+        Game.mouse.locked = true;   // updatePlayer moves no one without it; CI's Chromium may refuse the real pointer lock
         stepGame(1 / 60);
         if (Game.mode !== 'scenario') break;
         if (collidesObstacles(p.pos.x, p.pos.z, p.radius * 0.9, p.pos.y)) inside++;
@@ -59,7 +60,7 @@ const head = await page.evaluate(() => {
   const sx = p.pos.x, sz = p.pos.z;
   Game.keys.KeyW = true;
   let inside = 0;
-  for (let i = 0; i < 180; i++) { stepGame(1 / 60); if (collidesObstacles(p.pos.x, p.pos.z, p.radius * 0.9, p.pos.y)) inside++; }
+  for (let i = 0; i < 180; i++) { Game.mouse.locked = true; stepGame(1 / 60); if (collidesObstacles(p.pos.x, p.pos.z, p.radius * 0.9, p.pos.y)) inside++; }
   Game.keys.KeyW = false;
   const along = (p.pos.x - sx) * nz - (p.pos.z - sz) * nx;   // movement along the side
   return { angle: +car.angle.toFixed(2), along: +along.toFixed(2), inside };
