@@ -17,6 +17,27 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
   ladder code already moves the player, so kids can share it.
 
+- **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
+  92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
+  you see one or two scenarios at a time. Five zones now hold 28 scenarios.
+  A) Full-window two columns: the map on the left at full height, the chosen zone's scenarios as a scrolling list of
+     cards on the right (name, type, lives, locked/done), same parchment style, map redrawn cleaner *(recommended)*
+  B) Keep the map as a small header; below it, every zone's scenarios as tabbed card rows across the full width
+  C) Drop the map for a zone ladder: one row per zone, each a strip of scenario cards; the map becomes a picture only
+  D) Only widen the panel and let the scenario list scroll; no restyle yet
+  Builder recommends A: it shows a whole zone at once and keeps the map as the way you pick where to go.
+
+- **Better voices and more lines (D.9): how? (builder, 2026-10-02)** The kids talk through the browser's own speech
+  (`speechSynthesis`), so the voice depends on the player's computer and browser. VoiceStudio is an app that runs AI
+  voice models on your own machine; the cloud sessions can't run it, and the game is one HTML file with no audio files.
+  A) More and more varied lines now, with the browser voices; recorded voices later *(recommended)*
+  B) Pre-recorded lines: you generate a voice pack with VoiceStudio from a script the builder writes, the clips ship
+     next to index.html on itch (a zip), with the browser voice as the fallback
+  C) Both: the lines first (A), then the script and loader for your VoiceStudio pack (B)
+  D) Leave voices as they are
+  Builder recommends A, then C if the new lines land: B only works once you run VoiceStudio yourself, and every new
+  line would need a fresh recording.
+
 ## Answered
 
 - **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
