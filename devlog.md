@@ -6881,3 +6881,30 @@ How the pieces work:
 - Two of the gunners' line-of-sight checks start 1.05 m above y = 0, not above the ground they stand on. The perch
   now adds its height, but on sloped maps (Northcliff rises 4 m) a kid's sight line still starts low. Not changed
   here; it would move AI on every hill.
+
+## v1.139 — You slide along a car parked at an angle instead of stopping dead
+The critic found it on v1.137 (Found in play): on Northcliff's road start, holding W in the facing you're given
+stopped you dead at (29.5, 1) after 2 s, against a parked car at an angle (an obox at (30.6, 2.3), 2.99 rad) that
+sits out of view below-left while the road on screen looks open. All three road-start matches. The player's move
+tests the x step and the z step apart, which slides along a wall that runs along x or z, but against a sloped face
+both steps go into it, so neither is taken and you stop.
+
+Now, when the x/z split gets less than half the step, the move finds what blocks it (`blockingObstacle`, the test
+`collidesObstacles` always ran, now returning the obstacle), takes the direction away from its nearest point
+(`obsAwayNormal`, for boxes, angled boxes and cylinders alike), drops the part of the step that goes into it and
+takes the rest along the face, if that is clear and goes further than the split did. If you were touching closer
+than your radius (the split can leave you a fraction of a millimetre in), the slide also eases you back out to it.
+Walking square into a face leaves nothing to slide with, so you still stop. Players only; the kids keep their own
+movement. Trees and other round things now let you slide round them the same way.
+
+### Verified
+- `tests/road-slide.test.mjs` (new): the three Northcliff road starts, each held W for 4 s at the critic's five
+  facings (0°, 3° and 9° left, 9° right, 17° left): all 15 get past the car (x 18.5–23.2, from 35); on v1.138
+  0°, 3° and 9° left stopped at 29.5–32.3. 0 of 3,600 frames inside an obstacle. Square into the car's long side
+  for 3 s: 0.17 m along it, never inside.
+- The first cut stopped at 9° left: the split had left him 0.6 mm inside the car's face, so the slide's own clear
+  test failed every step. The ease-out fixed it; its first version pushed to 2 mm off and let him creep 0.92 m along
+  a face he walked square into, so it now pushes back only to his radius.
+- `npm test`: 46/46 suites green (the baseline before the change had passed its first 17 when it was stopped).
+### Still open
+- How sliding along cars and round trees feels needs a real playtest; corners now ease you round rather than catching you.
