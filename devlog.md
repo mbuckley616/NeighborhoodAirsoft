@@ -6967,3 +6967,34 @@ scenario time. The direct push gets him round the wall before that cover can be 
 - Lot team 3v3 one-sided rounds. In about 1 run in 4, one side's kids never leave their end (here enemy Marcus at his
   start and Tyler still `deploying`). The other side's pusher picks them off, so nobody on his side loses a life in
   120 s. The d7e44da CI failure was the mirror case, with allied Brooke at her start. Being investigated.
+
+## v1.141 — The lot 3v3 check counts the hits on the player, and a clean sweep
+The builder filed it on v1.140 (Found in play): `tests/market-lot.test.mjs`'s team 3v3 check "both sides lose lives
+(within 120 s)" failed one-sided about 1 run in 4, and CI saw the mirror case. The test makes the player untaggable,
+leaves him standing at his spawn, and counted only the kids' lives. Two probes, 50 full rounds of `lot_team_3v3`
+between them, logged every kid's state, position and target, and every final tag with who made it and from where.
+Two different things fail the check, and neither is a game fault:
+- The enemy kids spend much of each round aiming at the player (up to 2,029 hits on him in one round), and Brooke,
+  the allied sniper, holds her spot at the road end as her role says. With the player standing still and unhittable,
+  his side is two kids against three. In the lopsided rounds the two allies were out of lives by 30–40 s while the
+  enemy had lost one, and the enemy then shot the player for the rest of the round. In a real round the first of
+  those hits ends it.
+- The 9–0 case is the other way round: the allies win clean. In the full run that failed, Eric pushed to the enemy's
+  end, (0.8, −18.1), and tagged all three as they came back to their spawn to redeploy; every enemy life was spent
+  and nobody on the player's side lost one. The round was over, but the test steps the game inside one
+  `page.evaluate`, so the 600 ms delayed `endScenario` never runs and the loop went on to 120 s.
+No kid stayed at his spawn in any logged round.
+
+The check now counts a hit on the player as a life lost on his side (it is, with one life), and passes a round in
+which every enemy life is spent (a win). The game is unchanged.
+
+### Verified
+- Probes, 58 rounds on v1.140: the enemy side lost 1–9 lives in every round. Counting the player's hits (0–2,029),
+  his side lost at least one life in every round, the fewest 1 (a 9–1 win with no hit on him).
+- The full `npm test` run before the second half of the change: 45/46, the one failure the clean sweep above
+  (`lostEnemy` 9, `lostAlly` 0, `playerHits` 0). It now passes that result.
+- `npm test` on the final change: 46/46 suites green. `node tests/run.mjs market-lot` 3 of 3 runs green; night 4v4 reads 6 lost by the enemy, 18 by the player's side (13 of them
+  hits on the player).
+### Still open
+- An ally camping the enemy respawn is real behaviour: kids coming back to spawn walk into Eric's MP5 one at a time.
+  It needs a player in the round to say whether it matters; there is no respawn protection.
