@@ -23638,11 +23638,16 @@ function updateEnemies(dt) {
             // it keeps the side axis it started with and how far either way along it he has been. Over 2.5 s
             // with no such gain while wall-following, he is in a pocket (also after 2 blocked turn-rounds).
             const clk = Game.scenario.aiClock || 0;
-            if (!(d < e._advBestD - 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
+            // v1.134 fix-up: "closer" is his own walk toward the target, not the distance closing. Chasing a kid who
+            // walked toward him, the window restarted every 0.5 m the other kid came, so the 2.5 s pocket rule never
+            // fired and a back-out found its side clear at once (Northcliff Night: Diego shuttled 5–7 s inside the
+            // west fort, whose closed wall faces the player).
+            const advGain = e._advP0x == null ? Infinity : ((e.pos.x - e._advP0x) * dx + (e.pos.z - e._advP0z) * dz) / d;
+            if (!(advGain > 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
               const lat = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
               e._advLatLo = Math.min(e._advLatLo, lat); e._advLatHi = Math.max(e._advLatHi, lat);
             } else {
-              e._advBestD = d; e._advProg0 = clk; e._advWF = 0;
+              e._advP0x = e.pos.x; e._advP0z = e.pos.z; e._advProg0 = clk; e._advWF = 0;
               e._advPerpX = -dz / d; e._advPerpZ = dx / d;
               e._advLatLo = e._advLatHi = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
             }
@@ -23676,7 +23681,7 @@ function updateEnemies(dt) {
                 if (freeSide) e._advSide = freeSide;
                 e._advSideT = freeSide ? freeL / Math.max(0.5, speed) + 0.1 : 0.35;
                 e._advStuck = 0; e._advTurns = 0;
-                e._advBestD = Infinity;   // a fresh window after the way out
+                e._advP0x = null;   // a fresh window after the way out
               }
             } else if (advCommitted) {
               // no straight step this frame

@@ -6686,3 +6686,30 @@ already started in sight, so it only matters there once a kid loses everyone.
 - Whether the lot's free-for-all now feels slow is for a playtest. The first tag comes at about 5–7 s, and you can
   stand at your start for about 20 s.
 - The starts are fixed points. If the lot's parking pattern changes, rerun the sight checks in the new test.
+
+## v1.134 fix-up — Northcliff Night's Diego gets out of the west fort
+CI failed Builder sessions on v1.134 in `tests/northcliff.test.mjs`: in Night 4v4, Diego stood in `advancing` for 7 s.
+A 60-round probe of Night 4v4 caught him twice, for 5 and 6 s, in one of two places:
+- inside the west fort, whose closed east wall faces the player;
+- in the gap between a parked car and the fort's corner.
+
+Each time he shuttled along the wall in his v1.103 sidestep commitment, turning round at each end.
+
+v1.121's pocket rule (2.5 s without 0.5 m of progress while wall-following, then back out) should have caught this,
+but its "progress" was the distance to the target closing. Diego's target was an allied kid walking toward him, so the
+window restarted every time that kid came 0.5 m closer. In one trace the best distance fell from 61.6 to 47.5 m while
+Diego stayed put, and the 2.5 s never ran out. The restarts also cleared the record of where he had turned round. So
+when two turn-rounds did start a back-out, the check that a sidestep is clear past those points passed at once, and
+the back-out ended after one frame.
+
+Progress is now his own walk toward the target, his displacement since the window began projected on the line to it,
+so a target that moves no longer restarts the window.
+
+### Verified
+- Probe (40 rounds of `northcliff_night_4v4`, the player untaggable): the longest stand-still in `advancing` is 3 s
+  once and 2 s otherwise. Before the change, 60 rounds gave 5 s and 6 s once each.
+- `tests/pocket.test.mjs` (v1.121's own), `night-prowl` and `market-lot` pass. `npm test`: 43/43.
+
+### Still open
+- Whether Northcliff's west fort, open only to the west, reads as a trap for the kids who spawn behind it. Diego now
+  backs out and goes round, but he spends a second or two finding the open side.
