@@ -103,7 +103,12 @@ Fable card on the control room and Michael starts it from there.
 9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
    (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
-   voices, which lines, how the audio ships inside one HTML file) goes to Michael first.
+   voices, which lines, how the audio ships inside one HTML file) goes to Michael first. Michael: **A**, more and more
+   varied lines now with the browser voices, recorded voices later (control room, 2 Oct). ~~The lines~~ — done, v1.150
+   (Fable: every one of the 24 kids has his own lines in all four situations, 544 lines where there were 162, a
+   per-kid memory so no line repeats within four, teammates talk to you instead of taunting you;
+   `tests/voices.test.mjs`); v1.151 adds a kid calling a tag on another kid and a start call when the opening hold
+   lifts. Recorded voices (B/C: a script for VoiceStudio and a clip loader) are a later card.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

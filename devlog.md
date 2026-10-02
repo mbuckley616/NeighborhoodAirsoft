@@ -6881,3 +6881,94 @@ How the pieces work:
 - Two of the gunners' line-of-sight checks start 1.05 m above y = 0, not above the ground they stand on. The perch
   now adds its height, but on sloped maps (Northcliff rises 4 m) a kid's sight line still starts low. Not changed
   here; it would move AI on every hill.
+
+## v1.150 — Every kid has his own lines, and none of them repeats himself
+Michael's D.9 note asked for better voices (VoiceStudio) and more, more varied lines. The builder put the
+question to him with four options and he answered A on the control room (2 Oct, 19:59 UTC): more and more varied
+lines now, with the browser voices; recorded voices later. This is the first Fable session, and the first half of
+that answer. (This branch's versions start at v1.150 so they cannot collide with the builder's, which is at
+v1.141 on auto/build and climbing.)
+
+What the kids had: four situations a kid speaks in (he tagged you, he got tagged, he peeked out on you, a taunt
+every 12 to 30 s or with a covering burst), plus the Infection barks. Nine of the 24 kids had their own lines,
+three or four a situation; the other fifteen shared three generic lines a situation by aggression band, so Priya,
+Owen, the twins and all of Northcliff sounded like the same kid. Each line was drawn at random with no memory, so a
+kid could say the same line twice running, and in a long round a three-line taunt pool came round every minute.
+Two smaller things: the speech cooldowns ran on wall-clock time, and a kid on your own team ran the same taunt
+timer as the enemy, so Seth beside you would yell "Stop hiding!" at nobody.
+
+What changed, all in the voice tables and `tryNpcSpeak`:
+- Every kid in CHARACTERS has his own lines in all four situations, four or five each, written to the character
+  notes already in the file: Priya talks about your sides, Owen barely talks, the twins yell for each other,
+  Christian is thrilled to hit anything, Rebecca is unbothered. The three band defaults are six a situation now.
+  A kid's pool for a situation is his own lines plus his band's, about ten, and the picker takes his own 7 in 10.
+  Early-2000s suburban kids: trash talk, nothing mean, no profanity, no real brands or schools. Eight words at
+  most (TTS runs about three words a second), and the table has 544 lines where it had 162.
+- A memory: each kid keeps his last three lines and the game keeps the last two anyone said; those are left out
+  while anything else remains, so a kid never says the same line twice running and two kids do not echo each other.
+- A `teammate` pool (ten lines: "Push up with me!", "Cover me, I'm moving!"): a kid on your team, outside a
+  free-for-all, draws from it when his taunt timer fires, instead of taunting you.
+- The cooldowns (1.5 s between anyone's lines, 4 s between one kid's) now run on the round clock, not wall time,
+  and the global one resets at BEGIN. In play that is the same thing; a backgrounded tab and the headless tests
+  now pace the kids the way play does. A line counts as said (cooldowns, and a `VOICE.log` of the last 64 lines
+  for the tests) before the browser is asked to speak it, so a browser with no voices paces the kids the same way.
+Nothing else moved: the voice per kid, the pitch by height, the distance cutoff at 24 m and the positional chirp
+are as they were.
+
+### Verified
+- `tests/voices.test.mjs` (new), 44 checks. The tables: 24 kids, every one with at least 4 own lines in each of
+  the 4 situations; 6 a situation in each band; no pool holds a line twice (16 bespoke lines that matched their
+  band's defaults were rewritten); no line over 8 words; nothing from a short rude-word list. The picker: 96
+  (kid, situation) pairs, 300 draws each, never the last line, never any of the last three, at least 4 distinct
+  lines from every pool, own lines 50 to 90% of the draws. Headless rounds with the player untaggable at spawn:
+  the Winnmark 3v3 (13 to 40 lines in 90 s from 4 or 5 kids), the whole block (35 lines, Marcus and Seth, the two
+  within earshot), Infection (4 to 6 barks from the pool), the 1v1 and the lot free-for-all (1 to 5 lines; Sean and
+  the free-for-all kids fight past the 24 m range of a player who stands still). In every round no kid said the
+  same line twice running, every gap was at least 4 s per kid and 1.5 s overall, and every line came from the
+  speaker's pool for that situation. Allies' taunt timers gave teammate lines ("Go, go, I'll cover you!", "Stay
+  low, stay low!") and never a taunt; by hand, 4 of 4 ally taunts came out as teammate lines and 4 of 4 hostile
+  ones as taunts. No page errors.
+- `npm test`: see the PR comment for the full run on this build.
+
+### Still open
+- Only a real playtest can judge the lines themselves, and whether 7 in 10 own lines is the right mix; the band
+  lines are there so the pools are deep, not because they are better.
+- Recorded voices (options B and C) wait on Michael: the script and the loader are a later card.
+- A kid's memory is three lines; the taunt pools are about ten, so over a long round a line does come back, just
+  never within four of a kid's lines.
+
+## v1.151 — A kid calls a tag on another kid, and the nearest kid calls the start
+The second half of the D.9 inventory. The card listed the situations a kid speaks in, and two on the list had no
+line: "tagged someone" only covered tagging you (a kid who tagged your teammate said nothing), and nothing was said
+at the start of a round. Both are small and sit on hooks the code already had, so they are in; Michael can veto the
+start call if it is one voice too many at BEGIN.
+
+- A kid who tags another kid calls it the way he calls a tag on you, from the same pool ("Got him! Easy.", "SETH!
+  Did you see that?"). The tagged kid still speaks first, and the 1.5 s global cooldown then usually keeps the
+  shooter quiet, so his call fills in when the tagged kid was out of earshot or on his own cooldown: you hear
+  whichever of the two is nearer.
+- When the 2.5 s opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls the
+  start, once a round, from a pool by aggression band (six each: "Game on! Let's go!", "Spread out, spread out!",
+  "Everybody find a spot."). Taggers bark on their own and tutorial dummies never speak. A kid who has already
+  called you out inside the hold is on his 4 s cooldown and is passed over.
+
+Two bugs of v1.150's found by the new checks and fixed here: the once-a-round flag lived on `Game.scenario`, which
+persists between rounds, so the start call would have fired only in the first round of a session (it resets at
+BEGIN now); and a line was picked, and so entered the kid's recent-lines memory, before the earshot gate, so a kid
+out of range filled his memory with lines nobody heard and a heard line could come round again (Trey said "Watch the
+left side!" twice running in a 3v3). The pick now comes after the gate.
+
+### Verified
+- `tests/voices.test.mjs`, now 54 checks, green 3 of 3 runs. New: the band tables carry six start lines each with no
+  duplicates and under the 8-word cap (562 lines in the tables now). By hand in the Winnmark 3v3 and the lot
+  free-for-all with a hostile kid 6 m from spawn: one start call, at 2.52 s, from that kid; with every kid 40 m
+  off, no call and the flag spent; in Infection, no call. A tag on another kid by hand: with the tagged kid free
+  to speak, one line (his npcHit) and the shooter held by the global cooldown; with the tagged kid on cooldown,
+  one line, the shooter's, from his own tag pool. The five headless rounds and the picker checks of v1.150 hold.
+- `npm test`: the full run on this build is in the PR comment.
+
+### Still open
+- The start call is the one new spoken moment a player hears every match; whether it earns its place is a
+  playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
+- The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
+  lines with names in them (templates), which this card did not ask for.

@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.138</div>
+  <div class="version">v1.151</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4359,102 +4359,239 @@ const CHARACTERS = {
 };
 
 // ---------------------------------------------------------------------
-// VOICE LINES (v1.21) — per-character TTS catalogs, 4 categories each.
+// VOICE LINES (v1.21; v1.150 every kid, deeper pools, a recent-lines memory)
 // ---------------------------------------------------------------------
-// Categories:
-//   playerHit     — kid taunts the player AFTER hitting them ("ooh, I bet that stings!")
-//   npcHit        — kid reacts to being hit ("ow! stop stop, I'm hit!")
-//   playerSpotted — kid yells when they spot the player ("there he is!")
-//   taunt         — random interjection between actions ("come and get me!")
+// Categories (the situations a kid speaks in):
+//   playerHit     — the kid just tagged you ("ooh, I bet that stings!"); v1.151: or tagged another kid
+//   roundStart    — v1.151: the nearest hostile kid within earshot calls the start when the opening hold lifts
+//   npcHit        — the kid just got tagged ("ow! okay, I'm hit!")
+//   playerSpotted — the kid peeks out on a target in range ("there he is!")
+//   taunt         — a random interjection between actions, and a bounding kid's covering burst
+//   teammate      — v1.150: what a kid on YOUR side says instead of a taunt ("push up with me!")
+//   infection     — the shared zombie-tag pool (INFECTION_BARKS below)
 //
-// Currently-played kids (Sentinel + Horseshoe Bend) have 3-5 unique lines per
-// category that fit their personality. The rest fall through to the DEFAULT
-// catalog, which has aggression-banded variants (so a 0.8-agg kid still sounds
-// more pushy than a 0.3-agg kid even with no bespoke lines).
-//
-// Keep lines SHORT — TTS rate is ~3 words/sec, so 4-7 words is the sweet spot
-// for the audio to play out before the next state transition.
+// v1.150 (D.9, Michael: A): every kid in CHARACTERS has bespoke lines in every category, at least four,
+// and the three aggression bands' defaults are deeper. A kid's pool for a category is his own lines plus
+// his band's; the picker prefers his own (7 in 10) and never repeats what he said last (a per-speaker
+// memory of his last three lines) nor what anyone said in the last two lines. Early-2000s suburban kids:
+// trash talk, nothing mean, no profanity, no real brands or schools. Lines stay at eight words or fewer
+// (TTS runs ~3 words a second, so a line is out before the next thing happens); tests/voices.test.mjs
+// walks these tables.
+const VOICE_LINE_WORD_CAP = 8;   // v1.150: the longest line, in words (tests/voices.test.mjs)
 const VOICE_LINES = {
   // === Horseshoe Bend (Winnmark Ct) ===
+  // Seth: the ringleader, hosts the games, friendly trash talk.
   seth: {
-    playerHit:     ["Oh that's gotta sting!", "Hit! Eat that!", "Right in the chest!"],
-    npcHit:        ["Augh, okay you got me!", "Ow, fine, FINE!", "Nice shot!"],
-    playerSpotted: ["There he is!", "Got eyes on him!", "Behind the box, get him!"],
-    taunt:         ["Where you hiding, man?", "Come on out!", "I see you back there!"],
+    playerHit:     ["Oh that's gotta sting!", "Hit! Eat that!", "Right in the chest!", "Welcome to my yard!", "Yes! Did you see that?"],
+    npcHit:        ["Augh, okay you got me!", "Ow, fine, FINE!", "Nice shot!", "Okay, okay, I'm out!", "Dude, my own yard!"],
+    playerSpotted: ["Yo, there he is!", "Got eyes on him!", "Behind the box, get him!", "Yo, he's by the fence!", "Found him, found him!"],
+    taunt:         ["Where you hiding, man?", "Come on out, I'm bored!", "I see you back there!", "My yard, my rules!", "You're not even close, dude."],
   },
+  // Trey: cocky, laughs when you walk into it.
   trey: {
-    playerHit:     ["Got 'em! Easy.", "Walked right into that one.", "Boom, headshot."],
-    npcHit:        ["Dude! Ugh.", "Aw come ON.", "That was lucky!"],
-    playerSpotted: ["Found you!", "Hey, target!", "On him on him!"],
-    taunt:         ["You're so dead, dude.", "Pop out, I dare you.", "Where'd you go?"],
+    playerHit:     ["Got 'em! Easy.", "Walked right into that one.", "Boom, headshot.", "Too easy, dude.", "Ha! Called it."],
+    npcHit:        ["Dude! Ugh.", "Aw come ON.", "That was lucky!", "Whatever, that barely counted.", "Fine. FINE. I'm hit."],
+    playerSpotted: ["Found you!", "Hey, target!", "On him on him!", "Peekaboo, dude!", "Yep, I see you."],
+    taunt:         ["You're so dead, dude.", "Pop out, I dare you.", "Where'd you go?", "Scared? You should be.", "I could do this all day."],
   },
+  // Brooke: the smirk, the best shot on the court, sorry not sorry.
   brooke: {
-    playerHit:     ["Got him! Did you see that?", "Sorry not sorry!", "Right on target!"],
-    npcHit:        ["Oof, okay!", "Got me, fair!", "Ahh, dang it!"],
-    playerSpotted: ["I see him!", "Over here, over here!", "Got him in my sights!"],
-    taunt:         ["Hellooo?", "You can't hide forever!", "I can hear you breathing!"],
+    playerHit:     ["Got him! Did you see that?", "Sorry not sorry!", "Right on target!", "Told you I'd get you first.", "That's what you get!"],
+    npcHit:        ["Oof, okay!", "Got me, fair!", "Ahh, dang it!", "Whatever. Reset.", "Okay, that one counts."],
+    playerSpotted: ["I see him!", "Over here, over here!", "Got him in my sights!", "Don't move. Too late.", "There you are!"],
+    taunt:         ["Hellooo?", "You can't hide forever!", "I can hear you breathing!", "Come on, I'm bored!", "You're gonna miss anyway."],
   },
+  // Jamie: the new kid on the block, steady, doesn't talk trash.
+  jamie: {
+    playerHit:     ["Got you. Good game.", "Nice try, though.", "That one landed.", "Okay, tagged."],
+    npcHit:        ["Nice. Good shot.", "Yep, that's a hit.", "Okay, I'm out.", "Fair. Nice one."],
+    playerSpotted: ["I see him.", "Okay, there he is.", "Got him, by the fence.", "He's moving. Watch left."],
+    taunt:         ["Still here.", "Take your time, I'm fine.", "You can come out, you know.", "Nothing personal."],
+  },
+  // Marcus: Seth's cousin, visiting for the summer. Loud, pushy, doesn't know the yards.
   marcus: {
-    playerHit:     ["Tagged!", "Bam, got him.", "That's how it's done!"],
-    npcHit:        ["Augh, lucky!", "Ugh, FINE.", "Yeah, yeah, okay."],
-    playerSpotted: ["He's right there!", "Get him, get him!", "Right side!"],
-    taunt:         ["Stop running, dude!", "Come fight me!", "You're scared!"],
+    playerHit:     ["Tagged!", "Bam, got him.", "That's how it's done!", "SETH! Did you see that?", "Lights out, dude!"],
+    npcHit:        ["Augh, lucky!", "Ugh, FINE.", "Yeah, yeah, okay.", "COME ON. That barely hit me!", "Whatever, man!"],
+    playerSpotted: ["He's RIGHT there, guys!", "Get him, get him!", "Right side!", "Wait, which yard is this?", "Found him! Go go go!"],
+    taunt:         ["Stop running, dude!", "Come fight me, dude!", "You're scared!", "I'm coming through the yard!", "Y'all have too many fences!"],
   },
+  // Devon: the careful one. Patient, plays sniper, doesn't fall for fakes.
   devon: {
-    playerHit:     ["Long shot, baby!", "Saw you coming.", "Patience pays."],
-    npcHit:        ["Tch. Nice one.", "Got me clean.", "Yeah, okay, point taken."],
-    playerSpotted: ["I've got him.", "Don't move, target.", "He's in my scope."],
-    taunt:         ["Take your time.", "I'll wait.", "I see everything."],
+    playerHit:     ["Long shot, baby!", "Saw you coming a mile off.", "Patience pays.", "You stood still too long.", "Mm. Well played, but no."],
+    npcHit:        ["Tch. Nice one.", "Got me clean.", "Yeah, okay, point taken.", "Well played.", "Didn't see that angle."],
+    playerSpotted: ["I've got him.", "Don't move, target.", "He's in my scope.", "Hold still for me.", "There. Got him lined up."],
+    taunt:         ["Take your time. I'm comfortable.", "I'll wait.", "I see everything.", "Every peek is a mistake.", "Go ahead, run for it."],
+  },
+  // Tyler (Wayt Rd): laid back, tall, 'aight'.
+  tyler: {
+    playerHit:     ["Aight, got him.", "Yep. Tagged.", "Nice and easy.", "Better luck next time.", "That's a hit, man."],
+    npcHit:        ["Aight, that was a good one.", "Okay, I'm hit.", "Cool. You got me.", "Yeah, I felt that."],
+    playerSpotted: ["Yeah, I see him.", "Over there, by the car.", "Got him. Chill.", "Hey, there he goes."],
+    taunt:         ["Take it easy out there.", "No rush, man.", "Still hiding? Aight.", "Come on, let's go already."],
   },
 
   // === Sentinel (Bunratty Ct) ===
+  // Sean: the AK, spray and pray, loud.
   sean: {
-    playerHit:     ["Got him! Sprayed him good.", "Bullet hose, baby!", "AK go BRRRRT!", "Caught him in the open!"],
-    npcHit:        ["Ow! Cheap shot!", "Augh, fine!", "Lucky, dude.", "Hey, no fair!"],
-    playerSpotted: ["There he is! Light him up!", "Spray and pray!", "Eyes on, full auto!", "Brother get over here!"],
-    taunt:         ["Come on, peek out!", "I got plenty of BBs!", "Sit still for me!", "You can't outrun the AK!"],
+    playerHit:     ["Got him! Sprayed him good.", "Bullet hose, baby!", "AK go BRRRRT!", "Caught him in the open!", "Can't dodge all of them!"],
+    npcHit:        ["Ow! Cheap shot!", "Augh, fine!", "Lucky, dude.", "Hey, no fair!", "Okay okay, I'm hit!"],
+    playerSpotted: ["There he is! Light him up!", "Spray and pray!", "Eyes on, full auto!", "Brother get over here!", "Target! Dump the mag!"],
+    taunt:         ["Come on, peek out!", "I got plenty of BBs!", "Sit still for me!", "You can't outrun the AK!", "Still got half a mag!"],
   },
+  // Nick: big, calm, 'keep moving'.
   nick: {
-    playerHit:     ["Got him. Told you to keep moving.", "Stationary target, easy.", "Patience pays, dude."],
-    npcHit:        ["Augh. Good shot.", "Yeah, alright.", "Hmph. Nice."],
-    playerSpotted: ["I see him.", "Got him.", "Standing right there."],
-    taunt:         ["I'm not going anywhere.", "Come to me.", "You're gonna run out of cover, dude."],
+    playerHit:     ["Got him. Told you to keep moving.", "Stationary target, easy.", "Patience pays, dude.", "Yep. You stopped.", "That's what standing still gets you."],
+    npcHit:        ["Augh. Good shot.", "Yeah, alright.", "Hmph. Nice.", "Okay. That's me done.", "Fair enough, man."],
+    playerSpotted: ["I see him.", "Got him.", "Standing right there.", "There. By the bins.", "He's out in the open."],
+    taunt:         ["Not going anywhere, dude.", "Come to me.", "You're gonna run out of cover, dude.", "Keep moving, man.", "I've got all afternoon."],
   },
+  // Ryan: the quick flanker, Mitchell's brother, hyped.
   ryan: {
-    playerHit:     ["HA! Flushed him out!", "Told you I'd get him!", "Mitchell did you see that?!", "Right between the eyes!"],
-    npcHit:        ["Hah! Okay, okay, that's one!", "Lucky! Lucky!", "Aw what! Come on!", "Fair, fair."],
-    playerSpotted: ["Mitchell I got him!", "Pushing him, pushing him!", "Right side, right side!", "He's mine!"],
-    taunt:         ["Stop hiding, scaredy!", "I'm coming around!", "Mitchell, cover me!", "Open up, dude!"],
+    playerHit:     ["HA! Flushed him out!", "Told you I'd get him!", "Mitchell did you see that?!", "Right between the eyes!", "Got him! Got him!"],
+    npcHit:        ["Hah! Okay, okay, that's one!", "Lucky! Lucky!", "Aw what! Come on!", "Fair, fair.", "Mitchell, he got me!"],
+    playerSpotted: ["Mitchell I got him!", "Pushing him, pushing him!", "Right side, right side!", "He's mine!", "Going around! Going around!"],
+    taunt:         ["Stop hiding, scaredy!", "I'm coming around!", "Mitchell, cover me!", "Open up, dude!", "You can't watch both sides!"],
   },
+  // Mitchell: the steady marksman, Ryan's brother, calm.
   mitchell: {
-    playerHit:     ["Mm. Nice shot.", "Got him. Clean.", "Patience, man. That's the whole game."],
-    npcHit:        ["Mm. Nice shot.", "Yeah, fair.", "Got me."],
-    playerSpotted: ["I have him.", "He's exposed.", "Ryan, hold him there."],
-    taunt:         ["Take your time.", "I can wait all day.", "He'll show himself."],
+    playerHit:     ["Mm. Nice shot.", "Got him. Clean.", "Patience, man. That's the whole game.", "Told you, Ryan.", "One shot. That's it."],
+    npcHit:        ["Mm. Nice shot.", "Yeah, fair.", "Got me. Clean.", "Okay. Ryan, he's yours.", "Good angle."],
+    playerSpotted: ["I have him.", "He's exposed.", "Ryan, hold him there.", "Lined up.", "He's by the planter."],
+    taunt:         ["Take your time.", "I can wait all day.", "He'll show himself.", "Ryan, stop yelling.", "Still breathing out there?"],
+  },
+  // Priya: the cleverest flanker on the street, comes at you from the side.
+  priya: {
+    playerHit:     ["Yep. Flanked you.", "You never check your sides.", "Told you. Sides.", "From the left, by the way.", "Didn't even see me."],
+    npcHit:        ["Okay, okay. Good.", "Hm. You checked.", "Fine. That's one.", "Nice. Didn't expect that."],
+    playerSpotted: ["Got him. Going wide.", "There. Watch me.", "Found him. Flanking.", "He's looking the wrong way."],
+    taunt:         ["Which side am I on?", "Keep watching the front.", "I'm already past you.", "Check your left. Or right."],
+  },
+  // Owen: the immovable anchor. Slow, heavy, very accurate; he just waits.
+  owen: {
+    playerHit:     ["Hm. Good. You moved.", "Yep.", "Told you. I just wait.", "Walked into it."],
+    npcHit:        ["Hm.", "Okay. Fair.", "Good. You moved.", "That's a hit. Fine."],
+    playerSpotted: ["There.", "Have him.", "He's in my lane.", "Got him. Holding."],
+    taunt:         ["I just wait.", "Not moving.", "Come to me.", "Still here. Still waiting."],
+  },
+
+  // === East Roswell (Ridgestone Ct) ===
+  // Eric: short, fast, fires a lot, 'again?'.
+  eric: {
+    playerHit:     ["Got him! Again?", "Ha! Too slow!", "Yes! Yes!", "Tagged! Run it back!", "Can't catch me!"],
+    npcHit:        ["FINE. You got lucky.", "Ugh, whatever!", "Okay okay okay!", "That's cheap!", "Fine, I'm hit!"],
+    playerSpotted: ["There! There!", "Found him! Go!", "He's right there, dude!", "On him! Moving!"],
+    taunt:         ["Come on, come on!", "Too slow, dude!", "Can't hit me!", "Let's go, let's go!", "Catch me if you can!"],
+  },
+  // Rebecca: unbothered, accurate, 'predictable'.
+  rebecca: {
+    playerHit:     ["That counts. Reset.", "Predictable.", "Yep. Saw that coming.", "Called it.", "Next."],
+    npcHit:        ["That counts. Reset.", "Okay. Fine.", "Hm. Good.", "Noted."],
+    playerSpotted: ["There he is.", "Got him.", "Right there. Predictable.", "I see you."],
+    taunt:         ["Any day now.", "You always go left.", "Still waiting.", "This again?"],
+  },
+
+  // === Northcliff (Northcliff Trace) ===
+  // Andrew: big, friendly, a thumbs up for a good play.
+  andrew: {
+    playerHit:     ["Yep. That's me.", "Got him! Solid.", "Big hit! Haha!", "That's a tag, buddy!", "Down the hill, bud!"],
+    npcHit:        ["Yep. That's me.", "Good one!", "Ha, solid play.", "Okay! You got me!", "Fair hit, fair hit."],
+    playerSpotted: ["There he is! Alex!", "Got him, down the hill!", "Found him! Go, go!", "He's by the creek!"],
+    taunt:         ["Come on up the hill!", "I'm not hard to find!", "Let's go, buddy!", "Alex, push with me!", "Big yard, nowhere to hide!"],
+  },
+  // Alex: Andrew's buddy, the smart aleck, 'told you he'd try that'.
+  alex: {
+    playerHit:     ["Told you he'd try that.", "OK, OK, got him.", "Saw that a mile away.", "Called it. Called it.", "Every time, dude."],
+    npcHit:        ["OK, OK, you got it.", "Ugh. Fine.", "Andrew, he got me.", "Alright, alright.", "Didn't see that one."],
+    playerSpotted: ["Andrew, there!", "Yep, he's doing it.", "Got him. Called it.", "Up the hill, right side!"],
+    taunt:         ["I know what you're doing.", "Try it. Go on.", "So predictable, dude.", "Andrew, he's going left again.", "Come on, surprise me."],
+  },
+  // Evan: the good sport, 'best of three?'.
+  evan: {
+    playerHit:     ["Got you! Best of three?", "Nice! That's one.", "Ha, got him clean!", "Tag! Rematch after?"],
+    npcHit:        ["Got me clean.", "Okay, good one!", "Best of three?", "Fair. Nice shot."],
+    playerSpotted: ["Hey, there he is!", "Got him, got him!", "Okay, I see you!", "Over by the creek!"],
+    taunt:         ["Come on, let's play already!", "You can come out!", "I'll give you a head start!", "Where'd you go, man?"],
+  },
+  // Haden and Connor (Stoneglen Close): the twins, loud, yelling for each other.
+  haden: {
+    playerHit:     ["OW! Wait, no, I got HIM!", "CONNOR! Did you SEE that?", "Got him! Got him!", "Yes! Twin power!", "Ha! Take that!"],
+    npcHit:        ["OW. Connor, get him!", "Connor! He got me!", "Augh! Avenge me!", "No fair! Connor!", "OW. Okay. Ow."],
+    playerSpotted: ["Connor, there he is!", "He's in the yard!", "Got him! Get him!", "There! By the shed!"],
+    taunt:         ["Connor, where is he?", "Come out, come out!", "You're in OUR yard!", "Connor, cover me!", "I'm gonna get you!"],
+  },
+  connor: {
+    playerHit:     ["Got him! Haden, did you see?", "Yes! YES!", "Treehouse rules!", "Tagged! Ha ha!", "From up here, dude!"],
+    npcHit:        ["Haden, AVENGE ME.", "Augh! Haden!", "No way! Haden, he got me!", "OW. Okay. That's one.", "He got me! Get him!"],
+    playerSpotted: ["Haden! He's right there!", "I see him, I see him!", "There! By the fort!", "Got him from up here!"],
+    taunt:         ["Haden, go around!", "You can't climb up here!", "This is OUR treehouse!", "Come on, I dare you!", "Haden, where'd he go?"],
+  },
+  // Bellfield Court: Mason the sportsman, Christian the excitable one, Fernando and Diego the pair.
+  mason: {
+    playerHit:     ["Clean shot. That's a tag.", "Got him. Respect.", "Nice try, though.", "Tagged. Good round.", "Yep. That one's mine."],
+    npcHit:        ["Clean shot. Respect.", "Good hit.", "Okay. You earned that.", "Fair. I'm out.", "Nice angle."],
+    playerSpotted: ["There he is.", "Got him. Pushing.", "Eyes on, left side.", "Found him. Let's go."],
+    taunt:         ["Want to try again?", "Come on, let's play it straight.", "I'm right here.", "No hiding. Let's go.", "Any time."],
+  },
+  christian: {
+    playerHit:     ["I GOT HIM! I got him!", "Did you SEE that?", "Yes! Finally!", "Ha! Got you!", "That one hit! It hit!"],
+    npcHit:        ["AGH. Fine, fine.", "Ow! Not again!", "I'll get you next round!", "Aw, come on!", "Fine! Fine! Fine!"],
+    playerSpotted: ["There! There! There!", "He's right there, guys!", "Found him! Somebody get him!", "Over there! Look!"],
+    taunt:         ["I'll get you this time!", "Come on, come on!", "Where are you? Come out!", "I'm gonna hit you this time!", "Hold still so I can hit you!"],
+  },
+  fernando: {
+    playerHit:     ["Got him. Diego, your turn.", "Easy. Next.", "That's a tag. Move up!", "Got him! Push, push!", "One down."],
+    npcHit:        ["You got me, you got me.", "Okay. Diego, go.", "Fine. Nice shot.", "Yeah, that's a hit.", "Diego, he's yours."],
+    playerSpotted: ["Diego, right there!", "Got him! Moving up!", "There he is. Go!", "Found him. Flank him!"],
+    taunt:         ["Diego, your turn.", "Come on, let's finish this.", "Keep moving, keep moving!", "We've got you boxed in!", "No way out, man."],
+  },
+  diego: {
+    playerHit:     ["Tch. Got him.", "Told you.", "Yep. That's a hit.", "Fernando, told you.", "Easy."],
+    npcHit:        ["Tch. Nice shot.", "Okay. That counts.", "Fernando, he got me.", "Hm. Fine.", "Good one."],
+    playerSpotted: ["Fernando, there.", "Got him.", "He's right there. Go.", "See him. Left side."],
+    taunt:         ["Any day now.", "Fernando, he's hiding again.", "Come on. Let's go.", "We know where you are.", "Told you he'd hide."],
   },
 };
 
-// Default catalogs by aggression band, for kids without bespoke lines.
+// Default catalogs by aggression band. v1.150: deeper (six a category), and every kid draws from his band's
+// pool as well as his own, so the pools are about ten lines a category.
 const VOICE_LINES_DEFAULT = {
   high_agg: { // aggression >= 0.65
-    playerHit:     ["Got him!", "Easy!", "Eat that!"],
-    npcHit:        ["Ugh, fine!", "Aw come on!", "Lucky shot!"],
-    playerSpotted: ["There he is!", "Get him!", "Push push push!"],
-    taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!"],
+    playerHit:     ["Got him!", "Easy!", "Eat that!", "Boom! Tagged!", "Too easy, dude!", "Ha! Got you!"],
+    npcHit:        ["Ugh, fine!", "Aw come on!", "Lucky shot!", "Whatever, I'm hit!", "No way! Okay, okay!", "That was cheap!"],
+    playerSpotted: ["There he is!", "Get him!", "Push push push!", "Found him! Go!", "On him! Move!", "He's right there!"],
+    taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!", "Let's go already!", "You can't hide from me!", "Come on, chicken!"],
+    roundStart:    ["Game on! Let's go!", "Here we come!", "Go go go!", "Let's get him!", "Rush him! Rush him!", "It's on, dude!"],   // v1.151
   },
   mid_agg: { // 0.4..0.65
-    playerHit:     ["Got him!", "Hit!", "That's one."],
-    npcHit:        ["Augh, okay!", "Fine, fair!", "Got me."],
-    playerSpotted: ["I see him!", "On him!", "Right there!"],
-    taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!"],
+    playerHit:     ["Got him!", "Hit!", "That's one.", "Tagged you!", "Nice, that landed.", "Got you, dude!"],
+    npcHit:        ["Augh, okay!", "Fine, fair!", "Got me.", "Okay, that's a hit.", "Ow! Alright.", "Dang it. Fine."],
+    playerSpotted: ["I see him!", "On him!", "Right there!", "There he is!", "Got him in sight!", "Over there, over there!"],
+    taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!", "I know you're there.", "Come on, let's play!", "Any time now."],
+    roundStart:    ["Game on!", "Okay, here we go!", "Let's play!", "Alright, let's do this.", "Ready or not!", "Spread out, spread out!"],   // v1.151
   },
   low_agg: { // < 0.4
-    playerHit:     ["Got him.", "Nice.", "Tagged."],
-    npcHit:        ["Mm, okay.", "Yeah, fair.", "Got me."],
-    playerSpotted: ["I have him.", "He's there.", "Got eyes."],
-    taunt:         ["Take your time.", "I can wait.", "He'll show himself."],
+    playerHit:     ["Got him.", "Nice.", "Tagged.", "Yep. That's a hit.", "Saw you coming.", "Mm. Got you."],
+    npcHit:        ["Mm, okay.", "Yeah, fair.", "Got me.", "Good shot.", "Okay. I'm out.", "Fair enough."],
+    playerSpotted: ["I have him.", "He's there.", "Got eyes.", "There he is.", "Got him lined up.", "He's in the open."],
+    taunt:         ["Take your time.", "I can wait.", "He'll show himself.", "Still here.", "No rush.", "I'm not going anywhere."],
+    roundStart:    ["Game on.", "Okay. Here we go.", "Everybody find a spot.", "Eyes open.", "Take it slow.", "Nice and easy."],   // v1.151
   },
 };
+
+// v1.150: a kid on YOUR team (team 'player', not a free-for-all) is talking to you, not hunting you, so his
+// taunt timer draws from this pool instead. Shared by every ally.
+const VOICE_LINES_TEAMMATE = [
+  "Push up with me!",
+  "I got your back!",
+  "Cover me, I'm moving!",
+  "Watch the left side!",
+  "Stay low, stay low!",
+  "They're over there somewhere.",
+  "Go, go, I'll cover you!",
+  "Stick with me, dude.",
+  "You see any of them?",
+  "Let's flank around the house.",
+];
 
 // v1.36h: INFECTION barks — kids pretending to be zombies while playing tag.
 // Goofy, kid-appropriate, NOT scary. Used by taggers (no per-character variants;
@@ -4470,24 +4607,49 @@ const INFECTION_BARKS = [
   "Rrraaah! Zombie!",
   "You're gonna be infected!",
   "We're coming for youuu!",
+  "Zombie arms! Zombie arms!",
+  "Tag, you're dead! Just kidding!",
 ];
 
-// Pull a random line for (charId, category). Falls back to the aggression-band
-// default if the kid doesn't have bespoke lines for that category.
-function pickVoiceLine(charId, category) {
-  // Infection barks are a shared pool (no per-kid variants) — every tagger uses it.
-  if (category === 'infection') {
-    return INFECTION_BARKS[Math.floor(Math.random() * INFECTION_BARKS.length)];
-  }
-  const personal = VOICE_LINES[charId]?.[category];
-  if (personal && personal.length > 0) return personal[Math.floor(Math.random() * personal.length)];
+// v1.150: the pools a (charId, category) draws from: the kid's own lines and his band's defaults.
+function voiceLinePools(charId, category) {
+  if (category === 'infection') return { own: [], band: INFECTION_BARKS };
+  if (category === 'teammate') return { own: [], band: VOICE_LINES_TEAMMATE };
+  const own = VOICE_LINES[charId]?.[category] || [];
   const ch = CHARACTERS[charId];
-  if (!ch) return null;
-  const agg = ch.aggression ?? 0.5;
-  const band = agg >= 0.65 ? 'high_agg' : agg < 0.4 ? 'low_agg' : 'mid_agg';
-  const fallback = VOICE_LINES_DEFAULT[band][category];
-  if (!fallback || fallback.length === 0) return null;
-  return fallback[Math.floor(Math.random() * fallback.length)];
+  const agg = ch ? (ch.aggression ?? 0.5) : 0.5;
+  const bandKey = agg >= 0.65 ? 'high_agg' : agg < 0.4 ? 'low_agg' : 'mid_agg';
+  const band = VOICE_LINES_DEFAULT[bandKey]?.[category] || [];
+  return { own, band };
+}
+
+// Pull a line for (charId, category). v1.150: `speaker` (the enemy object, or any object in the tests) carries
+// `_recentLines`, the last three lines it said; those and the last two lines anyone said (VOICE.recentLines)
+// are left out while anything else remains, so a kid never says the same line twice running and two kids
+// don't echo each other. The kid's own lines are preferred 7 in 10 over his band's.
+const VOICE_RECENT_PER_SPEAKER = 3;
+const VOICE_RECENT_GLOBAL = 2;
+function pickVoiceLine(charId, category, speaker) {
+  const { own, band } = voiceLinePools(charId, category);
+  if (own.length + band.length === 0) return null;
+  const recent = new Set([...(speaker?._recentLines || []), ...(VOICE.recentLines || [])]);
+  let ownOk = own.filter(l => !recent.has(l));
+  let bandOk = band.filter(l => !recent.has(l));
+  if (ownOk.length + bandOk.length === 0) {
+    // Every line is in memory (a pool this small is a test table): only the last line said is barred.
+    const last = speaker?._recentLines?.[0];
+    ownOk = own.filter(l => l !== last); bandOk = band.filter(l => l !== last);
+    if (ownOk.length + bandOk.length === 0) { ownOk = own; bandOk = band; }
+  }
+  let pool;
+  if (ownOk.length && bandOk.length) pool = Math.random() < 0.7 ? ownOk : bandOk;
+  else pool = ownOk.length ? ownOk : bandOk;
+  const line = pool[Math.floor(Math.random() * pool.length)];
+  if (speaker) {
+    speaker._recentLines = [line, ...(speaker._recentLines || [])].slice(0, VOICE_RECENT_PER_SPEAKER);
+  }
+  VOICE.recentLines = [line, ...(VOICE.recentLines || [])].slice(0, VOICE_RECENT_GLOBAL);
+  return line;
 }
 
 // ---------------------------------------------------------------------
@@ -4498,8 +4660,10 @@ function pickVoiceLine(charId, category) {
 //   - GLOBAL cooldown — at most one NPC speaks every 1.5s (no babble festival).
 //   - PER-ENEMY cooldown — same kid can't repeat in <4s.
 const VOICE = {
-  globalCooldownUntil: 0,
+  globalCooldownUntil: 0,   // v1.150: on the round clock (Game.scenario.roundTime), reset by startScenario
   voicesCache: null,
+  recentLines: [],          // v1.150: the last two lines anyone said (pickVoiceLine)
+  log: [],                  // v1.150: the last 64 lines spoken, {t, charId, name, category, line} (tests)
 };
 
 function ttsGetVoices() {
@@ -4562,13 +4726,14 @@ function voiceForCharId(charId) {
 }
 
 function tryNpcSpeak(enemy, category) {
-  if (typeof speechSynthesis === 'undefined') return;
-  const now = performance.now() / 1000;
+  // v1.150: the cooldowns run on the round clock, not wall time, so a backgrounded tab or the headless
+  // tests (which step a round far faster than real time) keep the same spacing as play.
+  const now = Game.scenario?.roundTime || 0;
   if (now < VOICE.globalCooldownUntil) return;
   if (enemy._voiceCooldownUntil && now < enemy._voiceCooldownUntil) return;
-  const line = pickVoiceLine(enemy.charId, category);
-  if (!line) return;
-
+  // v1.150: a kid on your side is talking to you, not hunting you: his taunt timer draws teammate lines.
+  if (category === 'taunt' && !Game.scenario?.ffa &&
+      (enemy.team || 'enemy') === ((Game.player && Game.player.team) || 'player')) category = 'teammate';
   // v1.22: positional TTS treatment.
   //   (A) Volume attenuated by distance via positionalAudio().
   //   (B) If volume would be too low to hear cleanly, skip the line entirely —
@@ -4581,6 +4746,18 @@ function tryNpcSpeak(enemy, category) {
   const VOICE_AUDIBLE_RANGE = 24;   // meters — past this we just don't speak
   const { vol: posVol } = positionalAudio(enemy.pos.x, enemy.pos.z, VOICE_AUDIBLE_RANGE);
   if (posVol < 0.12) return;        // too quiet to bother → don't speak (Option B; ~25m cutoff)
+  // v1.151: the line is picked after the earshot gate, so a kid's recent-lines memory holds only lines he was
+  // heard to say (a pick for a kid out of range used to fill it, and a heard line could come round again).
+  const line = pickVoiceLine(enemy.charId, category, enemy);
+  if (!line) return;
+
+  // v1.150: the line counts as said from here: cooldowns and the log are set before the browser is asked
+  // to speak, so headless Chromium (no voices, silent) and a real browser pace the kids the same way.
+  VOICE.globalCooldownUntil = now + 1.5;
+  enemy._voiceCooldownUntil = now + 4.0;
+  VOICE.log.push({ t: +now.toFixed(2), charId: enemy.charId, name: enemy.name || enemy.character?.name, category, line });
+  if (VOICE.log.length > 64) VOICE.log.shift();
+  if (typeof speechSynthesis === 'undefined') return;
 
   try {
     // (3) Positional voice-marker chirp — short blip from the NPC's location.
@@ -4611,8 +4788,6 @@ function tryNpcSpeak(enemy, category) {
     // then scale by the same positional vol curve as audio cues.
     u.volume = 0.5 * posVol;
     speechSynthesis.speak(u);
-    VOICE.globalCooldownUntil = now + 1.5;
-    enemy._voiceCooldownUntil = now + 4.0;
   } catch (e) { /* TTS unavailable — ignore */ }
 }
 
@@ -17647,6 +17822,8 @@ function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
+  VOICE.globalCooldownUntil = 0; VOICE.recentLines = [];   // v1.150: the speech cooldown runs on the round clock
+  Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -21714,6 +21891,10 @@ function applyBBHit(bb, c) {
     }
   } else {
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
+    // v1.151: the shooter calls a tag on another kid the way he calls one on you. The tagged kid speaks first;
+    // the 1.5 s global cooldown then usually keeps the shooter quiet, so his call fills in when the tagged kid
+    // was out of earshot or on his own cooldown.
+    if (bb.enemyRef && bb.enemyRef !== c && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
   }
@@ -23130,6 +23311,24 @@ function updateEnemies(dt) {
   Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
+  // v1.151: when the opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls
+  // the start (once a round; tryNpcSpeak's 24 m cutoff keeps a far kid quiet, and a kid who has just called you
+  // out inside the hold is still on his 4 s cooldown, so he is passed over). Taggers bark on their own; tutorial
+  // dummies never speak.
+  if (!Game.scenario._startCalled && (Game.scenario.roundTime || 0) >= OPENING_HOLD_SEC) {
+    Game.scenario._startCalled = true;
+    const myTeam = (Game.player && Game.player.team) || 'player';
+    const now = Game.scenario.roundTime || 0;
+    let best = null, bestD = Infinity;
+    for (const e of Game.scenario.enemies) {
+      if (!e || e.health <= 0 || e.noFire || e.behavior === 'tagger') continue;
+      if (e._voiceCooldownUntil && now < e._voiceCooldownUntil) continue;
+      if (!Game.scenario.ffa && (e.team || 'enemy') === myTeam) continue;
+      const d = Math.hypot(e.pos.x - Game.player.pos.x, e.pos.z - Game.player.pos.z);
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    if (best) tryNpcSpeak(best, 'roundStart');
+  }
   // Diagnostic: count lasered enemies this frame, and how many reach the clip.
   LASER_DIAG.lasered = 0;
   LASER_DIAG.ran = 0;
