@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -351,3 +351,91 @@ and two decisions, all answered. Nothing in them was addressed to me, and nothin
   Bunratty shot.
 - v1.108, an opening line at the mirror: there are no words now. A first-timer does find DONE, but nothing says the
   mirror is there to come back to.
+
+## 2026-10-02 — Northcliff Trace, all four matches; the lot free-for-all's hidden starts; the Loadout kid (v1.137)
+
+I played the builder's tip, `auto/build` at 9907e67 (v1.137; main is at v1.129). Everything new since my last run is
+there: Northcliff Trace (v1.130–v1.131), the Loadout screen's kid and gear (v1.132–v1.133) and the lot free-for-all's
+hidden starts (v1.134). I played 17 bot rounds: Northcliff's 1v1 four times, the twins 3v3 three times, the creek-fort
+defend four times, Bellfield After Dark three times and the lot free-for-all three times. I also watched six
+free-for-all rounds with hits on the player dropped and timed 44 first tags on a player standing at spawn. On top of
+that, I ran 15 walk probes from Northcliff's road spawn. There were no page errors anywhere, and `node tests/run.mjs
+smoke` passes. The bot is the same as before: it aims, cocks, and fires at the nearest kid it can see. One version
+pushes to 15 m and the other holds its spot. I changed it this time to step one second per evaluate. My first batch
+ran each round in one long evaluate, so the game's `setTimeout` round ends never fired, and a 90 s defend "lost" at
+94.7 s. That was the harness, not the game. I threw that batch out.
+
+**Problem 1: Northcliff's road spawn walks you into a parked car you can't see.** All three road matches (Down by the
+Creek, The Stoneglen Twins, Bellfield After Dark) start you at (35, 1), facing straight down the road. If you hold W
+from there, you stop dead at (29.5, 1) after 5.5 m and 2 s. The screen shows open road all the way to the bulb, and the
+car is below and left of the view (screenshot `docs/critic/2026-10-02-northcliff-road-spawn-stopped-by-car.png`). The
+car is parked across the kerb at an angle (obox at (30.6, 2.3), angle 2.99 rad, about 9° off the road). Its near corner
+reaches z 1.23, inside the player's 0.3 m radius at z 1. The player's movement tests x and z separately
+(`collidesObstacles` at ~19525), so a push along x into a sloped face blocks x and has no z to slide on. You don't
+slide past it. You stick. The results were the same in all three scenarios: turned 0°, 3° or 9° left, stuck at 1.5–2 s;
+17° left or 9° right, through. A first-timer's first move on a new map is to hold W, and here the kid freezes for no
+reason they can see. It's the axis-split slide, so any car at an angle can do this, but this is the one placed on the
+spawn line. Steps: `g.scenario('northcliff_1v1_evan')`, `Game.keys.KeyW = true`, spin 240, read `Game.player.pos`.
+
+**Problem 2 (small): the lot free-for-all opens with a windshield filling the screen.** v1.134 puts you at the east edge
+"behind the last car, facing the lot". You actually face the car, close enough that its glass and pillars fill the
+middle of the screen (screenshot `docs/critic/2026-10-02-lot-ffa-start-facing-windshield.png`). You have to turn to see
+anything. It's hidden, as Michael asked, but a first-timer reads it as a wall. Turning the start yaw about 90° along
+the row would keep the start hidden and show the aisle.
+
+**The lot free-for-all now.** In six watched rounds, the first kid was out at 4.5–6.8 s (it was 2.6 s), with 4 of 6 out
+by 10–17 s and 5 of 6 by 13–25 s (one round's Marcus lasted to 70 s). The last kid standing was **Jamie in 6 of 6**.
+Jamie walked 93–152 m (the others 4–90 m), finished 2–3 m from your start, and was the first to hit you in every round,
+at 36–109 s. So the opening is no longer settled in a second, and you can stand at your start for 36 s or more. But the
+round ends the same way every time: the field clears itself in about 20 s and Jamie comes round to your car. The
+holding bot won 3 of 3 that way, at 53 s, 81 s and late. Whether "Jamie always wins the scramble" is fine is a playtest
+call. I'm not filing it as a bug.
+
+**Northcliff, the rest.**
+- **Down by the Creek (1v1, Evan):** 2 won with one shot each and 2 tagged at 15 s while pushing. Fair for an opener.
+- **Fernando's high-yard rifle (v1.130 Still open):** I don't see it hurting a player who stays at spawn. In 20 standing
+  rounds (twins 3v3 and Bellfield, 30 s each) the player was tagged in 5. Every tag came from a kid who had walked up
+  the road: Haden or Connor at 13–19 m, Diego at 22 m, and once Mason at 60 m. None came from Fernando, who sat in
+  `hiding`/`peeking` at (−15, −28) for the whole of each watched round. That's a defender doing his job.
+- **The twins 3v3 and Bellfield, pushing:** the push bot was out at 8–17 s (twins) and 6.5–10 s (Bellfield) in all 6
+  rounds. It walks down the middle of the road into the kids coming up, so that's my bot's fault, not the game's.
+- **Hold the Creek Fort (v1.131 Still open):** this is the hardest defend I've played. Standing at the spawn (−6, 30.4),
+  the player was tagged in 8 of 8 rounds at 3.9–11.8 s (median about 7 s). Connor's shotgun did it four times, once from
+  26 m at 3.9 s down the slope. In the last four rounds the shot came from 2–3 m, with Haden or Connor already at the
+  west wing (−8, 31), as the builder saw. The bot that fires back held the full 90 s in 1 of 4 rounds and was out at 17,
+  31 and 31 s in the others. Winnmark's Last Stand gave 21 and 30 s against the same bot. The win line works ("Distant
+  screen doors slam. Haden groans — "Aw, COME ON!" — and Connor and Diego start trudging home."). Whether one life
+  against three kids with the high ground is fair over 90 s is for Michael's hands. From here it looks steep for a
+  zone's second match.
+- **Stuck kids:** in the Northcliff rounds I watched, none stood still in a moving state for more than a couple of
+  seconds. Diego's west-fort fix (v1.134 fix-up) held.
+- **Step cost**, one browser alone, 30 s each with the player untaggable: Bellfield After Dark 2.3 ms average (p95 4.4,
+  worst 14), the twins 1.3, the creek defend 0.9, the lot free-for-all 0.4.
+
+**The Loadout kid (v1.132–v1.133).** On a new save, the kid stands in the panel with seven labels, every one in place.
+Two things to check by eye. "HANDS Spring Pistol" runs into the kid's hand and gun, the only label that overlaps the
+model. The card is 762 px tall inside. At 1280×720 the Worn Gear section starts at the bottom edge, and the
+shoes row needs about 100 px of scrolling (57 px at 1366×768, 175 px at 1024×640). The card scrolls, so nothing is
+lost. On a laptop, though, the gear you pick sits below the fold, away from the kid wearing it.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io. I read no comments. In the last day of Slack
+there were builder posts for v1.121–v1.137, the producer's posts, one merge card (v1.124–v1.129, merged) and four
+decisions. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.124–v1.137)
+- v1.130, Fernando from the spawn: no, see above (0 of 25 first tags).
+- v1.130, the slope across Northcliff's road: I can't judge how it feels to walk. The walk probes didn't snag on it.
+- v1.131, the three attackers pressed against the creek fort's west wing: confirmed (2–3 m, 4 of 8 rounds), and the
+  defend is steep (above).
+- v1.132, the Loadout card on a laptop: it scrolls, and the worn gear is below the fold at 1280×720 (above).
+- v1.133, the gear on the Loadout kid: it needs eyes. With nothing bought, I saw only the default kid.
+- v1.134, whether the free-for-all feels slow: it doesn't. It's settled in 13–25 s, and Jamie wins it (above).
+- v1.134 fix-up, Diego finding the west fort's open side: not seen stuck.
+- v1.124, allies forming up in the Hollow's doorway; v1.125–v1.127, how the carried-over pieces look; v1.128, Guns vs
+  Ammo as the shop's first tab: these need eyes or a real player, so I didn't judge them.
+- v1.129 / v1.137, the harness stall: 0 restarts in 20 boots, run up to six at a time. At eight, `page.goto`'s 30 s limit
+  timed out five times at page load. That's the v1.124 note again (load, not a hang).
+- v1.137, shotgun pellets beside cover: not measured.
+
+I have no proposal today. The three from earlier runs are still open in `docs/proposals.md`.
