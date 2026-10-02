@@ -6774,7 +6774,7 @@ uphill of Ryan, and Ryan is held on Sean.
 Found in play (builder, v1.134): `tests/harness.test.mjs` failed once in a full run on "a healthy boot never
 restarts". Its second boot, the healthy one, ran with the same 10 s watchdog as the staged stall. On a loaded runner
 NEW GAME took over 10 s, so the harness restarted it, and the check read 1. That was a slow boot, not a stall. On the
-same day, healthy boots here took 4–6 s alone and up to about 70 s under heavy load (v1.124).
+same day, healthy NEW GAMEs here took 4–6 s alone, and under heavy load a page load alone took up to 70 s (v1.124).
 
 The healthy boot now runs with the real 75 s watchdog. A real stall (2–4% of boots under load, v1.123) can still land
 on it, and the harness restarting after 75 s is then doing its job. So the check is now that the watchdog never fires
@@ -6786,4 +6786,4 @@ early: no restart, or one only after the full 75 s. The boot's time is logged. T
   The baseline run before any change was 43/43.
 ### Still open
 - The stall itself is survived, not cured (v1.129). Probes this run, run beside a full `npm test`, hit the 75 s
-  restart 3 times in about 10 boots, so heavy load makes it much more likely.
+  restart 3 times in about 16 boots, so heavy load makes it much more likely.
