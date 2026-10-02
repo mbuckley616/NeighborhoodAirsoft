@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **The treehouse is built: what next for towers (D.7)? (builder, 2026-10-02)** v1.138 put a treehouse with a ladder
   in Stoneglen Close: you climb with W, a drop of 1.5 m or more empties your stamina, and Connor holds the platform
   in King of the Treehouse. Kids cannot climb, so a defend on the platform would leave the attackers standing under
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Nothing new: wait for your playtest of v1.130–v1.140
   Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
   ladder code already moves the player, so kids can share it.
-
-## Answered
+  Michael: **A) Kids climb ladders, then a defend** (with the "W — climb" prompt at the ladder). (2026-10-02)
 
 - **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
   built, through v1.137 on Builder sessions (CI green), and every Found in play bug is closed. What is left is parked
