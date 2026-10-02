@@ -6738,3 +6738,34 @@ with the clear line switched off it puts 63 of 6,048 BBs into the car.
 ### Still open
 - If cover-fire trips over 5% again, its log names the kid and spot; rerun the sweep with that spot and the target's
   height.
+
+## v1.136 — The night 2v2 laser report was the test's rule, not the game
+Found in play (builder, v1.130): `tests/laser.test.mjs` failed once in a full run. In `bunratty_night_team_2v2`,
+3 of 215 samples had a dot "above the player's head". The note asked which rule tripped and whether a deploying kid's
+laser should aim at the player at all.
+
+The log's "worst" sample (Ryan deploying, dot at 6.32) was the steepest beam, not one of the failing samples. A probe
+logged every failing sample instead, and caught one in 10 rounds: Ryan aiming at Sean, the player's teammate. The dot
+was at y 11.00, on Sean's chest (his feet at 10.19), and the player's head was at 10.98. The game is right: a kid's
+beam is clamped to his own target's chest (v1.83–v1.84), and Ryan aims at Sean in 40–90% of samples. But the test
+measured every dot against the player's head, so whenever Sean stood uphill of the player it read as a laser in the
+sky. The overshoot check already used the kid's own target; this rule now does too, with the head of whoever he is
+aiming at (the player's head for the player, a kid's head mesh plus 0.2 m otherwise).
+
+So a deploying kid's laser points at his target, which is right, and in the 2v2 that is often Sean, not you. The
+night 2v2 case is now staged every run, not left to one round in ten. The player stands low on the east lane, Sean
+uphill of Ryan, and Ryan is held on Sean.
+### Verified
+- Probe, 10 rounds of the night 2v2: one sample tripped the old rule (Ryan on Sean, dot 11.00, player's head 10.98).
+  Over 16 probe rounds, 1,925 samples had Ryan aiming at Sean. One of them (in the first 6 rounds, details not logged)
+  put the dot higher than Sean's feet + 1.75 m, the probe's rough head height; the next 10 rounds had none. The test's
+  rule uses his head mesh instead.
+- `tests/laser.test.mjs`, new staged part: 36 of 36 samples with the dot above the player's head (1.58 m), which is
+  what the old rule failed on. All 36 are on Sean's chest within 0.5 m, at most 0.15 m past it (the code's own
+  margin), and none is above his head (6.33). At Sean's first spot (8, −2) a 6.2 m lamp post stopped the beam 2.15 m
+  short, so he stands at (8, 1).
+- The two played maps still pass: night lane 360 samples, night 2v2 207, nothing above a head, steep or overshooting.
+- `npm test`: see v1.137.
+### Still open
+- That one rough-rule sample above Sean's head was not caught again. If the new rule trips, the log now names the
+  kid, his state and target, and the target's head.
