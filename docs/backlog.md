@@ -1,7 +1,9 @@
 # Backlog
 
 Worked top-down by the builder, one item a run. `~~done~~ — v1.NN` when finished. Michael reorders freely.
-Items marked **(design)** need his call in `docs/decisions.md` before code.
+Items marked **(design)** need his call in `docs/decisions.md` before code. Items marked **(Fable)** are cross-cutting
+rewrites for a Fable session (CLAUDE.md, Roles): the builder skips them; once their design is answered the producer proposes a
+Fable card on the control room and Michael starts it from there.
 
 ## A. Players (itch.io)
 1. ~~First-time players may not find how to start a match. itch.io comment (July 2026) complains they "cant go outside"
@@ -44,6 +46,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    at four scenarios. Stoneglen Close and Bellfield Court have no maps of their own; another zone is a new question.
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
+   **(Fable)** — networking, a session model and the title screen touch every scenario; held by Michael’s C (30 Sep) until the
+   v2 zones are done.
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
    **(design)** — Michael: **D**, one map end to end, Winnmark first, each step shown to him before
    the next (control room, 30 Sep). ~~Step 1, Winnmark's houses~~ — done, v1.104 (hip roofs with eaves, cross gable,
@@ -98,7 +102,8 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    updated in style. (Michael, 2026-10-02) **(design)**
 9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
-   (Michael, 2026-10-02) **(design)**
+   (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
+   voices, which lines, how the audio ships inside one HTML file) goes to Michael first.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
