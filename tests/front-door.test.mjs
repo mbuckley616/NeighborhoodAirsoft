@@ -50,7 +50,8 @@ async function clickAll(w, h) {
   await page.evaluate(() => openMap());
   // positions are read fresh before each click: the info panel grows and can shift the map
   const res = [];
-  for (const sc of ['winnmark_court', 'bunratty_court', 'locked', 'hollow']) for (const part of ['label', 'marker']) {
+  for (const sc of ['winnmark_court', 'bunratty_court', 'northcliff', 'hollow'])   // v1.130: Northcliff's pin was 'locked'
+  for (const part of ['label', 'marker']) {
     const p = await page.evaluate(([sc, part]) => {
       const r = document.querySelector(`#worldMap .pin[data-scenario="${sc}"] .${part}`).getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -71,6 +72,8 @@ for (const [w, h] of [[1280, 720], [1920, 1080], [1024, 640]]) {
   check(`${w}x${h}: the Battleground marker still opens the Battleground`, /Battleground/.test(hm.name), hm.name);
   const bl = res.find(r => r.sc === 'bunratty_court' && r.part === 'label');
   check(`${w}x${h}: the Bunratty label opens Bunratty`, /Bunratty/.test(bl.name), bl.name);
+  const nl = res.find(r => r.sc === 'northcliff' && r.part === 'label');   // v1.130
+  check(`${w}x${h}: the Northcliff label opens Northcliff`, /Northcliff/.test(nl.name), nl.name);
 }
 await page.setViewportSize({ width: 1280, height: 720 });
 check('no page errors', g.errs.length === 0, g.errs);

@@ -6448,3 +6448,378 @@ caller and outcome. Two rounds went over the limit, by two separate causes:
 ### Still open
 - Sean's follow-ups that track a live target (he has a line) still hold one shot now and then at his south-fort
   spot (−5, −29): 4–10 a round, every one a single trimmed burst, not a stuck kid.
+
+
+---
+
+
+## v1.130 — Northcliff Trace: the fifth zone opens
+
+Backlog D.1. Michael answered the next-zone question on the control room (A, Northcliff / Martin's Landing). Northcliff
+has been on the ladder since v1.48 as a locked "coming soon" pin with nine kids already written and no map. This is the
+first part, the same shape as v1.102 was for the lot: the street itself, on the map and the ladder, with two scenarios
+that play.
+
+**Northcliff Trace** (`buildNorthcliffScene`) is houses on a hill above a creek. The ground falls north to south:
+the uphill yards climb about 2 m above the road to a tree wall, and the downhill yards drop about 2 m below it to a
+wooded bank, with a creek and its stones beyond. The road runs along the slope from the east entry to a cul-de-sac
+bulb at the west. It is the shared `buildStreetRoad`, so it has its kerb, gutter, drains, manholes, crack sealing and a
+patch. Every piece is the polished set from D.3: six detailed houses, 20 m apart (Winnmark's are 16 m), with driveways,
+mailboxes and shrubs, cars in about half the driveways, bins out at about half the kerbs, boxes, bins and plywood stacks
+in the yards, the low-poly trees, four streetlamps and two kid forts: one in the bulb facing up the street, and the
+twins' fort on the creek bank facing up the hill. There are no backyard fences. That gives the bigger yards and longer
+sightlines the teaser promised, and it makes the uphill yards the sniper's ground. Like the other street maps, the layout
+draws from the scenario's seeded random numbers, so each scenario sees the same street every round.
+
+Two scenarios:
+- **Down by the Creek** (the opener): 1v1 against Evan with a pistol, starting in the low yards, one hit each.
+- **The Stoneglen Twins** (the zone capstone for now): 3v3. You, Andrew (MP5) and Alex (AK) start at the top of the
+  street. Haden and Connor (UMPs) hold the bulb, and Fernando has the rifle in the high yard by it. Three lives each,
+  last team standing.
+
+The map pin that was the locked teaser (`data-scenario="locked"`) is now a zone pin like the others (`northcliff`),
+labelled "Northcliff Trace · Northcliff". Clicking it on a locked save says to clear Riverside Market. `ZONE_LADDER`
+drops `comingSoon`, and nothing on the ladder is "coming soon" any more. The old teaser code paths still exist, but
+no pin reaches them now. The names follow Michael's C on place names: Northcliff and the street names were already in
+the game, and nothing new is a business or a school.
+
+### Verified
+- New `tests/northcliff.test.mjs`:
+  - Ladder and map: Northcliff is last on the ladder, after the market lot, and locked on a new save. Clearing the
+    lot's capstone opens the opener only, and the opener opens the twins. The pin is locked on a new save and names
+    Riverside Market. Once the lot is cleared it lists both scenarios with the opener playable. The old `locked` pin
+    is gone.
+  - Both scenarios: the player and every kid spawn clear of all obstacles (245 and 239), with the player's feet on
+    the ground. The hill measures 4.0 m at the north tree wall, 2.2 m at the road, −0.1 m on the bank and −2.3 m at
+    the creek.
+  - Down by the Creek, 60 s with the player untaggable at the spawn: Evan walks 59 m up from the creek, fires 49 times
+    and is never wedged.
+  - The Stoneglen Twins, 60 s: 272 BBs fired, both sides lose lives (enemy 8, ally 4), every kid walks 40–198 m and
+    fires 17–164 times, and the longest stall in `advancing` is 2 s.
+  - Screenshots `tests/out/northcliff-street.png`, `northcliff-creek.png` and `northcliff-uphill.png`, checked by eye.
+- `tests/front-door.test.mjs` now clicks the Northcliff pin by its new key, and its label opens Northcliff at all three
+  window sizes.
+- `npm test`: 39/40 on the full run. `laser` failed once in `bunratty_night_team_2v2`: 3 of 215 samples had the dot
+  above the player's head, from Ryan in `deploying` with a 15 m beam. That map, its kids and the laser code are
+  unchanged here, the suite passed on the same run before this change, and it passed twice more on its own on v1.130.
+  It is filed under Found in play.
+### Still open
+- More Northcliff scenarios, as v1.103 gave the lot: a defend at the creek fort, a night match, the Bellfield kids.
+  Stoneglen Close and Bellfield Court are still only names in `REGIONS`.
+- Whether Fernando's high-yard rifle is too much from the spawn needs a real playtest. Your side lost 4 lives to the
+  enemy's 8 in the first minute, so the twins don't look too hard.
+- The slope runs across the road (about 1 m over the road's width at the steepest). It reads fine in the
+  screenshots, but how it feels to walk is for a playtest.
+
+
+---
+
+
+## v1.131 — Northcliff: the creek-fort defend and Bellfield After Dark
+
+The rest of what v1.130 left open on D.1, the way v1.103 rounded out the lot. Northcliff now runs four scenarios:
+1v1, 3v3, defend, then a night 4v4, the same arc as the lot's.
+- **Hold the Creek Fort** (defend, 90 s): you start inside the twins' fort on the creek bank, facing up the hill.
+  Haden (UMP), Connor (shotgun) and Diego (MP5) come down from the street on three flanks, and a tagged kid walks back
+  up and comes again. They have the high ground and you have the walls. The scene gains a `creek_fort` player spawn,
+  a `road_w` anchor and a `cluster_road` staging point on the road above the fort. The lose line says "the creek fort".
+- **Bellfield After Dark** (night 4v4, the new zone capstone): you with Andrew, Alex and Evan at the top of the street
+  against the Bellfield Court kids, Mason (AK), Christian (shotgun), Diego (MP5) and Fernando (rifle), four lives each,
+  with the street's four lamps the only light. So all nine Northcliff kids now play here.
+
+Fixed while checking both team matches: Fernando, the rifle in The Stoneglen Twins (v1.130) and in the new night
+match, never reached the high yard the briefings put him in. He spawned in the bulb huddle with the others and stayed
+there (3–20 m walked in 60 s, at (−30, 2)). He is now `role: 'defender'`, the way Bunratty's and the Hollow's riflemen
+hold a spot: he starts at his anchor, the high yard at (−15, −28), and shoots from it.
+
+### Verified
+- `tests/northcliff.test.mjs` extended: the zone runs opener, twins, defend, night; after the lot only the opener is
+  playable and the other three show locked. The defend's player starts between the creek fort's wings, clear of every
+  obstacle.
+- Hold the Creek Fort, 60 s with the player untaggable: the three attackers walk 56–168 m and fire 544 BBs, and all
+  three come down past the road to the fort.
+- Fernando in both team matches ends 1–2 m from the high-yard anchor, having fired 11 and 20 times (before: in the bulb).
+- Bellfield After Dark, 60 s: 623 BBs, enemy 5 lives lost and ally 7, every kid moves or fires, longest stall in
+  `advancing` 2 s. The Stoneglen Twins with the change: enemy 6, ally 6.
+- `npm test`: 40/40 suites green, `laser` among them.
+### Still open
+- In the defend, with the player untaggable, all three attackers end the minute pressed against the fort's west wing
+  at (−8.5, 29.6), 2.5 m from you. In a real round that is three kids closing on your wall together, which may be the
+  point of a defend. Whether 90 s against them is fair is for a playtest.
+- Whether another zone follows Northcliff is a new question in decisions (builder recommends C: the Loadout screen
+  and the found-in-play bugs first).
+
+
+---
+
+
+## v1.132 — The Loadout screen shows your kid
+
+Backlog D.5 C, step 1. Michael answered A on the control room (1 Oct): the Loadout screen shows your kid turning in a
+panel, wearing what is equipped, with a label from each body part to its item and the lists kept beside it, built in
+steps. This step is the kid, the gun and the labels; the gear meshes come next, a group at a time.
+
+The Loadout card is wider (1040 px, was 760) and opens with a 280 × 380 panel left of the two lists. In it is your kid,
+built the same way the mirror builds it (`createKid` with your saved look), holding the slot-1 gun at the hip. The
+kid swings slowly between two three-quarter views, with the gun side and the face kept toward you, as the game steps.
+Over the canvas, an SVG draws a dot on each of seven body parts and a leader line from it to a label: EYES, CHEST,
+BELT and HANDS on the left, ARMS, KNEES and FEET on the right. Each label names what is equipped there (eye pro, chest,
+arm and knee armour, shoes, the belt and holster unlock, the gun). An empty part shows "nothing", greyed. The dots
+follow the kid as it turns. Equipping or removing gear in the lists re-labels at once. Swapping the gun re-builds the
+kid with the new gun in its hands. The worn gear is not on the kid yet: the labels name it, and step 2 gives each group
+its own mesh.
+
+On the first screenshot the kid stood side-on with the gun hidden behind it, and two points missed: EYES landed on the
+hair and HANDS in the air. `createKid` faces +z with the gun at the right hip, so the points were measured off a built
+kid (eyes at 1.27 m, gun at x −0.27), and the turn was moved to keep that side toward the camera.
+
+### Verified
+- New `tests/loadout-kid.test.mjs`:
+  - The screen opens with the 280 × 380 panel, and the kid holds the slot-1 gun.
+  - Seven lines and seven labels. A new save reads No Eye Pro, nothing, nothing, nothing, Spring Pistol, nothing,
+    Sneakers (default), and every body point lands on the canvas.
+  - 2 s of `stepGame` turns the kid 0.22 rad, and the chest line moves 5 px with it.
+  - Ski Goggles, Foam Chest Rig, Knee Pads and Trail Runners show on their parts after equipping them.
+  - All eight guns: the kid is re-built holding each one, and HANDS names it.
+  - Screenshot `tests/out/loadout-kid.png`, checked by eye.
+- `npm test`: 41/41 suites green.
+### Still open
+- Step 2 of D.5 C: the gear on the kid (eye pro, chest rig and vest, elbow and knee pads, shoes, belt and holster),
+  a group at a time, each shown to Michael.
+- The card is now 1040 px wide. Below about 1100 px of window it fills 95% of the width, and the lists get narrower.
+  Whether it reads well on a laptop is for a look in play.
+
+
+---
+
+
+## v1.133 — The Loadout kid wears its gear
+
+Backlog D.5 C, step 2 (Michael: A, control room 1 Oct). v1.132 put your kid in a panel on the Loadout screen with a
+line from each body part to what is equipped there. The lines named the gear, but the kid didn't wear it. Now it does.
+Every piece has its own mesh, on the part of the body it belongs to:
+- **Eye pro**, on the head: Clear Safety Glasses are a clear wraparound shield with a brow bar and arms. Smoke and Ski
+  Goggles are a chunky foam frame with one tinted lens (smoke or amber) and a strap round the head. Swimming Goggles
+  are two small blue cups with a nose bridge and a thin strap. The Full Mesh Mask covers the face with a dark mesh,
+  a rim and two straps.
+- **Chest**, on the torso: the Foam Chest Rig is a front panel with three pouches, shoulder straps and a strap round
+  the back. The Plate-Carrier Vest has olive front and back plates, side cummerbunds, three pouches and a patch panel.
+- **Elbow Pads** on each elbow and **Knee Pads** on each knee, a pad with a band round the limb.
+- **Shoes**: Trail Runners are tan with lugs on the sole, Track Spikes orange with spikes under the toe, and the
+  Cushioned Cross-Trainers grey on a thick white sole with a blue flash. Each pair has a side stripe. Default
+  sneakers stay the kid's own.
+- **Belt and holster**, at the waist: the Utility Belt is webbing over the jeans' belt with a buckle and three
+  pouches, and the Drop-Leg Holster adds a strap down the right thigh (the gun side), a holster with a grip in it,
+  and two leg straps.
+
+Each group is parented to the part it sits on (head, torso, elbows, legs, shoes) so a pose would carry it, and the
+belt sits in the kid's frame. `buildKidGear` is separate from `createKid`, so the kids in matches don't change. A change
+in the lists rebuilds the kid only when the gun or the gear has changed. Any other refresh just re-labels it, as before.
+On the first screenshot the knee pads were black on black jeans and didn't show, so the pads are now dark grey with
+darker bands.
+
+### Verified
+- New `tests/loadout-gear.test.mjs`. Each piece is measured in the kid's own frame, with the turn and the
+  height/build scale taken out:
+  - A new save wears no gear meshes.
+  - All five eye pros sit on the head, across the eyes (y 1.27), and stand 1.5–3.6 cm proud of the face. Taking
+    them off removes them.
+  - The Foam Chest Rig is on the torso and stands to z 0.19 (the shirt front is 0.12). The Plate-Carrier Vest has a
+    plate front and back (z 0.22 and −0.17).
+  - Elbow Pads: two, at y 0.75–0.85, on the elbow nodes. Knee Pads: two, at y 0.24–0.37, in front of the leg.
+  - Each of the three shoe pairs changes the upper's colour and adds its sole on the shoe nodes. Sneakers add
+    nothing and keep the kid's own colour.
+  - No belt with two slots. The Utility Belt sits at y 0.51–0.59. With the holster, the gear runs down to y 0.29 on
+    the right thigh (x −0.23).
+  - With a full kit, a refresh that changes nothing keeps the same kid, all seven labels name the kit, and every
+    point stays on the canvas through 1.5 s of turning.
+  - Screenshots `tests/out/loadout-gear-kid.png` (Ski Goggles, plate carrier, pads, trail runners, belt and holster)
+    and `loadout-gear-kid2.png` (mesh mask, chest rig, spikes), checked by eye.
+- `tests/loadout-kid.test.mjs` (v1.132) still passes.
+- `npm test`: 42/42 suites green.
+### Still open
+- Michael's look at the gear (the screenshots, or the Loadout screen once Builder sessions is merged). D.5 C is
+  complete if he's happy with it.
+- The gear shows only on the Loadout kid. The mirror and the kids in matches don't wear it.
+
+
+---
+
+
+## v1.134 — Riverside Market's free-for-all starts hidden
+
+Found in play (critic, v1.123), Michael: B on the control room (1 Oct). Everybody for Themselves was decided in the
+second after the 2.5 s opening hold. The six kids started on the lot's two side lines in sight of each other, and
+3–4 were out by 3.8 s, Tyler first at 2.6 s. Michael chose B: hidden starts, with yours behind a car at the lot's edge
+too, so you are one of seven hidden kids.
+
+The seven starts (`ffa_1`–`ffa_6`, and the player's `ffa_edge`) were found by a search over the lot's parking pattern,
+which is fixed (only a few cm of parking slop is random). Each start is beside a parked car or the dumpsters. No start
+can see another by the kids' own sight rule (muzzle 1.05 m to chest 0.95 m, cars block, low stuff doesn't). They are
+at least 19 m apart. The first search only asked for that, and kids walk during the opening hold, so Marcus stepped
+5 m out and was firing on Jamie at 2 s. The search now also keeps the ground 3–6 m round each start out of sight of
+the others. Your start is at the east end of the north row, behind the last car, facing the lot.
+
+The hidden starts brought back the problem v1.128 hit when trying this: cautious kids (Jamie 0.4, Owen 0.2 and
+Brooke 0.35 aggression, under the 0.45 that sends a skirmisher marching) hid and peeked at nobody for the whole minute.
+The builder's recommendation on this decision was B, with A's roam if kids still camped, and they did, so the roam is
+in: in a free-for-all, a skirmisher who has had no line to anyone for 5 s marches like a bold one (`ffaRoam`).
+Building it turned up a latent bug: `Game.scenario.ffa` was read in three places (the roster, the lives respawn and now
+the roam) but never set. It is now set when a scenario starts. The roster and respawn give the same results either
+way, since every free-for-all kid is on a team of its own. The roam reaches all four free-for-alls. The other three
+already started in sight, so it only matters there once a kid loses everyone.
+
+### Verified
+- New `tests/lot-ffa-opening.test.mjs`:
+  - Seven starts, all clear of obstacles. No start sees any other (0 of 42 directed pairs). The nearest two are
+    19.0 m apart, and yours is at (34, −12).
+  - Three openings with the player untaggable: nobody out by 4 s in any round (was 3–4 of 6 by 3.8 s). First out at
+    5.3, 6.9 and 6.8 s, and 5 of 6 kids tagged within 60 s in each round.
+  - Standing still at your start, first tagged at 20.9 s (the midfield start was 10–20 s).
+  - The Winnmark, Bunratty and Hollow free-for-alls, 30 s each: `ffa` is set, and every kid moves or fires.
+- `tests/market-lot.test.mjs`, lot_ffa over 60 s: 391 BBs (7 before the roam). Every kid moves or fires; Jamie walked
+  150 m, where before the roam three kids walked 0 m and never fired.
+- `npm test`: 42/43 on the full run. `harness` failed its "a healthy boot never restarts" check once: under a 10 s
+  limit, a healthy NEW GAME took more than 10 s and was restarted. That suite and the harness are unchanged here, it
+  passed twice more on its own, and it is filed under Found in play.
+### Still open
+- Whether the lot's free-for-all now feels slow is for a playtest. The first tag comes at about 5–7 s, and you can
+  stand at your start for about 20 s.
+- The starts are fixed points. If the lot's parking pattern changes, rerun the sight checks in the new test.
+
+## v1.134 fix-up — Northcliff Night's Diego gets out of the west fort
+CI failed Builder sessions on v1.134 in `tests/northcliff.test.mjs`: in Night 4v4, Diego stood in `advancing` for 7 s.
+A 60-round probe of Night 4v4 caught him twice, for 5 and 6 s, in one of two places:
+- inside the west fort, whose closed east wall faces the player;
+- in the gap between a parked car and the fort's corner.
+
+Each time he shuttled along the wall in his v1.103 sidestep commitment, turning round at each end.
+
+v1.121's pocket rule (2.5 s without 0.5 m of progress while wall-following, then back out) should have caught this,
+but its "progress" was the distance to the target closing. Diego's target was an allied kid walking toward him, so the
+window restarted every time that kid came 0.5 m closer. In one trace the best distance fell from 61.6 to 47.5 m while
+Diego stayed put, and the 2.5 s never ran out. The restarts also cleared the record of where he had turned round. So
+when two turn-rounds did start a back-out, the check that a sidestep is clear past those points passed at once, and
+the back-out ended after one frame.
+
+Progress is now his own walk toward the target, his displacement since the window began projected on the line to it,
+so a target that moves no longer restarts the window.
+
+### Verified
+- Probe (40 rounds of `northcliff_night_4v4`, the player untaggable): the longest stand-still in `advancing` is 3 s
+  once and 2 s otherwise. Before the change, 60 rounds gave 5 s and 6 s once each.
+- `tests/pocket.test.mjs` (v1.121's own), `night-prowl` and `market-lot` pass. `npm test`: 43/43.
+
+### Still open
+- Whether Northcliff's west fort, open only to the west, reads as a trap for the kids who spawn behind it. Diego now
+  backs out and goes round, but he spends a second or two finding the open side.
+
+## v1.135 — The Bunratty lane car: checked, not reproduced
+Found in play (builder, v1.126): `tests/cover-fire.test.mjs` failed once at 5.3% (limit 5%). In Bunratty Hold the
+Fort, a kid hiding at (18.7, 6.8) put 51 BBs within 1.6 m into the cabin box of the lane car at (20.9, 6.9).
+
+It does not happen on v1.134. The car is still there on every load, because the board is seeded per scenario, and
+its cabin box is at x 20.5–21.7, z 6.4–7.4. Eight rounds of Hold the Fort with the player untaggable gave 0 shots
+into anything within 1.6 m (2,227 BBs; 7 at 1.6–3 m, 0.31% within 3 m). Since the report needs a kid in one spot, I
+also fired `spawnEnemyBB` directly from Sean standing at four points beside the car. The targets went all round the
+east side, 5–30 m out and 1.5 m below to 3.5 m above him, with his yaw off the bearing by up to ±180° so the muzzle's
+side offset swings round. In 19,620 BBs, 9 hit something within 1.6 m (0.05%), and none came from a muzzle inside the
+box. The v1.93 clear line, with its v1.101 10 cm margin, lifts over the cabin or holds fire.
+
+The 5.3% was one round's 51 BBs. Something between v1.126 and v1.134 may have changed it, or it was a chance spot
+and target height the probes did not hit. No game code changed. The sweep is now a standing test, and it can fail:
+with the clear line switched off it puts 63 of 6,048 BBs into the car.
+### Verified
+- New `tests/car-side-fire.test.mjs`: the car is parked at (21.1, 6.9). 6,048 trigger pulls from the four spots,
+  5,978 BBs, 0 into anything within 1.6 m, 70 pulls held (1.2%). With the clear line off: 63 BBs into the car (1.04%),
+  and the suite fails.
+- `cover-fire` in the baseline run: 1.3% within 3 m, 0 within 1.6 m.
+- `npm test`: see v1.137 (one full run covers this run's three versions; tests only, no game change).
+### Still open
+- If cover-fire trips over 5% again, its log names the kid and spot; rerun the sweep with that spot and the target's
+  height.
+
+## v1.136 — The night 2v2 laser report was the test's rule, not the game
+Found in play (builder, v1.130): `tests/laser.test.mjs` failed once in a full run. In `bunratty_night_team_2v2`,
+3 of 215 samples had a dot "above the player's head". The note asked which rule tripped and whether a deploying kid's
+laser should aim at the player at all.
+
+The log's "worst" sample (Ryan deploying, dot at 6.32) was the steepest beam, not one of the failing samples. A probe
+logged every failing sample instead, and caught one in 10 rounds: Ryan aiming at Sean, the player's teammate. The dot
+was at y 11.00, on Sean's chest (his feet at 10.19), and the player's head was at 10.98. The game is right: a kid's
+beam is clamped to his own target's chest (v1.83–v1.84), and Ryan aims at Sean in 40–90% of samples. But the test
+measured every dot against the player's head, so whenever Sean stood uphill of the player it read as a laser in the
+sky. The overshoot check already used the kid's own target; this rule now does too, with the head of whoever he is
+aiming at (the player's head for the player, a kid's head mesh plus 0.2 m otherwise).
+
+So a deploying kid's laser points at his target, which is right, and in the 2v2 that is often Sean, not you. The
+night 2v2 case is now staged every run, not left to one round in ten. The player stands low on the east lane, Sean
+uphill of Ryan, and Ryan is held on Sean.
+### Verified
+- Probe, 10 rounds of the night 2v2: one sample tripped the old rule (Ryan on Sean, dot 11.00, player's head 10.98).
+  Over 16 probe rounds, 1,925 samples had Ryan aiming at Sean. One of them (in the first 6 rounds, details not logged)
+  put the dot higher than Sean's feet + 1.75 m, the probe's rough head height; the next 10 rounds had none. The test's
+  rule uses his head mesh instead.
+- `tests/laser.test.mjs`, new staged part: 36 of 36 samples with the dot above the player's head (1.58 m), which is
+  what the old rule failed on. All 36 are on Sean's chest within 0.5 m, at most 0.15 m past it (the code's own
+  margin), and none is above his head (6.33). At Sean's first spot (8, −2) a 6.2 m lamp post stopped the beam 2.15 m
+  short, so he stands at (8, 1).
+- The two played maps still pass: night lane 360 samples, night 2v2 207, nothing above a head, steep or overshooting.
+- `npm test`: see v1.137.
+### Still open
+- That one rough-rule sample above Sean's head was not caught again. If the new rule trips, the log now names the
+  kid, his state and target, and the target's head.
+
+## v1.137 — The harness's healthy-boot check stops timing slow boots
+Found in play (builder, v1.134): `tests/harness.test.mjs` failed once in a full run on "a healthy boot never
+restarts". Its second boot, the healthy one, ran with the same 10 s watchdog as the staged stall. On a loaded runner
+NEW GAME took over 10 s, so the harness restarted it, and the check read 1. That was a slow boot, not a stall. On the
+same day, healthy NEW GAMEs here took 4–6 s alone, and under heavy load a page load alone took up to 70 s (v1.124).
+
+The healthy boot now runs with the real 75 s watchdog. A real stall (2–4% of boots under load, v1.123) can still land
+on it, and the harness restarting after 75 s is then doing its job. So the check is now that the watchdog never fires
+early: no restart, or one only after the full 75 s. The boot's time is logged. The staged stall keeps its 10 s.
+### Verified
+- `tests/harness.test.mjs` alone: the staged stall recovered in 24.2 s with 1 restart; healthy boot 6.4 s, 0 restarts.
+- `npm test`, one full run on this run's three changes: 44/44 suites green. Harness: staged stall recovered in 15.9 s,
+  healthy boot 4.2 s, 0 restarts. `car-side-fire`, `laser` (staged: 33 of 33 on Sean's chest) and `cover-fire` pass.
+  The baseline run before any change was 43/43.
+### Still open
+- The stall itself is survived, not cured (v1.129). Probes this run, run beside a full `npm test`, hit the 75 s
+  restart 3 times in about 16 boots, so heavy load makes it much more likely.
+
+## v1.137 fix-up — no BB swings sideways into what the kid stands beside
+CI failed Builder sessions on v1.137 in v1.135's `tests/car-side-fire.test.mjs`: 1 BB of 5978 went into the lane
+car's cabin within 1.6 m of the muzzle. The test expects none.
+
+The v1.93 clear line, with v1.101's 10 cm margin, checks the aim line and a line 10 cm under it. The BB is then
+fired with a random spread, up to about ±0.04–0.12 rad sideways depending on the kid and the gun, that nothing
+checks. Rarely, the spread takes a BB into the corner of the thing the kid is beside.
+
+Each BB's own first metres (the clear line's reach: up to 3 m, stopping 0.3 m short of the target) are now cast
+against the map. One that would hit something redraws its spread. After four tries it goes down the aim line, which
+the clear line has already passed. A kid's spread at the target is unchanged except for those few BBs.
+
+### Verified
+- `tests/car-side-fire.test.mjs` 3 of 3 runs: 0 near BBs and 0 into the car in each run of about 5975.
+- `tests/cover-fire.test.mjs`: 0 of 866 enemy BBs hit an obstacle within 3 m.
+- `npm test`: 44/44.
+
+### Still open
+- Shotgun pellets use the same redraw. Their wider spread means more redraws beside cover, a slightly tighter group
+  there. Not measured.
+
+## v1.137 fix-up — the staged laser case doesn't depend on CI granting pointer lock
+CI failed Builder sessions on 22e06cf, a docs-only commit on top of 6f53f8d, which had passed. The failure was in
+v1.136's staged case in `tests/laser.test.mjs`: "the dot is above the player's head" saw the player's head at
+y 10.98, against a dot at 5.69.
+
+The case moves the player to the low east lane each step and reads his head height from the camera. `updatePlayer`,
+which puts the player and the camera on the ground, returns early unless `Game.mouse.locked` is set, and CI's headless
+Chromium sometimes refuses the real pointer lock. When it did, the camera stayed at the spawn on the hill. This is the
+same cause as the houses and jump fix-ups. Forcing the lock off locally reproduces the failure exactly (head 10.98, dot
+5.68). The case now sets `Game.mouse.locked` each step, as those tests do. Test change only; no game change.
+
+### Verified
+- With the lock forced off: the failure, as in CI. With the fix: 3 of 3 runs green, head 1.58, the dot above it in
+  36 of 36 samples, on Sean's chest in 36 of 36.
