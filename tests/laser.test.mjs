@@ -61,6 +61,9 @@ const st = await page.evaluate(() => {
   const ryan = by('Ryan'), sean = by('Sean');
   const s = { samples: 0, overPlayerHead: 0, overSeanHead: 0, maxPastChest: -99, onChest: 0, dotY: null, playerHead: null, seanHead: null };
   for (let step = 0; step < 240 && Game.mode === 'scenario'; step++) {
+    // updatePlayer (which puts the player and camera on the low lane) moves no one without the lock; CI's Chromium
+    // may refuse the real pointer lock, and the camera then stayed at the spawn on the hill (head 10.98, dot 5.69).
+    Game.mouse.locked = true;
     Game.player.pos.x = 35; Game.player.pos.z = 5;
     ryan.pos.x = 20; ryan.pos.z = 0; sean.pos.x = 8; sean.pos.z = 1;
     ryan.health = sean.health = 99;

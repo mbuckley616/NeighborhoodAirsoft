@@ -6808,3 +6808,18 @@ the clear line has already passed. A kid's spread at the target is unchanged exc
 ### Still open
 - Shotgun pellets use the same redraw. Their wider spread means more redraws beside cover, a slightly tighter group
   there. Not measured.
+
+## v1.137 fix-up — the staged laser case doesn't depend on CI granting pointer lock
+CI failed Builder sessions on 22e06cf, a docs-only commit on top of 6f53f8d, which had passed. The failure was in
+v1.136's staged case in `tests/laser.test.mjs`: "the dot is above the player's head" saw the player's head at
+y 10.98, against a dot at 5.69.
+
+The case moves the player to the low east lane each step and reads his head height from the camera. `updatePlayer`,
+which puts the player and the camera on the ground, returns early unless `Game.mouse.locked` is set, and CI's headless
+Chromium sometimes refuses the real pointer lock. When it did, the camera stayed at the spawn on the hill. This is the
+same cause as the houses and jump fix-ups. Forcing the lock off locally reproduces the failure exactly (head 10.98, dot
+5.68). The case now sets `Game.mouse.locked` each step, as those tests do. Test change only; no game change.
+
+### Verified
+- With the lock forced off: the failure, as in CI. With the fix: 3 of 3 runs green, head 1.58, the dot above it in
+  36 of 36 samples, on Sean's chest in 36 of 36.
