@@ -1,7 +1,7 @@
 // v1.116 (backlog D.3 step 2, the road and kerbs on Winnmark). The road is one ribbon mesh on the ground plus a polar bulb,
 // with a concrete gutter and rolled kerb along both edges and round the bulb, dropped at the driveways; the ~115 asphalt
 // discs are gone. Raycasts check the asphalt covers the old road (centreline ±3.4 m and the bulb), sits 3–9 cm over the
-// ground, and that the kerb stands ~9 cm over the gutter except across a driveway. Bunratty keeps its disc road.
+// ground, and that the kerb stands ~9 cm over the gutter except across a driveway. (Bunratty got the same road in v1.127.)
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -60,7 +60,7 @@ const res = await page.evaluate(() => {
   const stat = a => a.length ? { n: a.length, min: +Math.min(...a).toFixed(3), max: +Math.max(...a).toFixed(3) } : { n: 0 };
   out.kerbFull = stat(full); out.kerbDropped = stat(dropped);
   built.scene.traverse(m => { m.geometry && m.geometry.dispose && m.geometry.dispose(); });
-  // Bunratty keeps its disc road
+  // Bunratty: the disc road until v1.127, the same builder since
   const bn = buildBunrattyCourtScene(undefined, 'day'); let bd = 0, bk = 0;
   bn.scene.traverse(m => { if (m.isMesh && m.geometry.type === 'CircleGeometry' && m.geometry.parameters.radius >= 2.3) bd++; if (m.userData && m.userData.wmRoad) bk++; });
   out.bunratty = { discs: bd, wmRoad: bk };
@@ -74,7 +74,7 @@ check('the asphalt covers the old road (centreline ±3.4 m, and the bulb) with n
 check('the asphalt sits 3–9 cm over the ground everywhere', res.cover.lo >= 0.03 && res.cover.hi <= 0.09, res.cover);
 check('the kerb stands 6–12 cm over the gutter away from the driveways', res.kerbFull.n > 100 && res.kerbFull.min >= 0.06 && res.kerbFull.max <= 0.12, res.kerbFull);
 check('the kerb drops flat (under 2 cm) across each driveway', res.kerbDropped.n > 20 && res.kerbDropped.max <= 0.02, res.kerbDropped);
-check('Bunratty keeps its disc road', res.bunratty.discs > 50 && res.bunratty.wmRoad === 0, res.bunratty);
+check('Bunratty has the same road since v1.127 (no discs; tests/bunratty-road.test.mjs checks it)', res.bunratty.discs === 0 && res.bunratty.wmRoad >= 4, res.bunratty);
 
 // a look down the street
 await g.scenario('winnmark_seth_house');

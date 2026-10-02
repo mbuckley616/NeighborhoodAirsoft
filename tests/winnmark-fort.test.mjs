@@ -46,7 +46,7 @@ for (const [i, c] of res.cmp.entries()) {
 }
 check('Winnmark cul-de-sac: the bulb fort is the detailed fort', res.wm_culdesac.forts >= 1 && res.wm_culdesac.detail === res.wm_culdesac.forts, res.wm_culdesac);
 check('Winnmark treehouse: both forts are the detailed fort', res.wm_treehouse.forts >= 2 && res.wm_treehouse.detail === res.wm_treehouse.forts, res.wm_treehouse);
-check('Bunratty keeps the slab fort', res.bunratty.forts >= 1 && res.bunratty.detail === 0, res.bunratty);
+check('Bunratty: the bulb fort is the detailed fort (v1.125)', res.bunratty.forts >= 1 && res.bunratty.detail === res.bunratty.forts, res.bunratty);
 
 // a look at the bulb fort from the attackers' side
 await g.scenario('winnmark_defend_culdesac');
