@@ -6186,3 +6186,265 @@ Chromium launch flags in `tests/lib/game.mjs` (`--in-process-gpu` first), measur
 
 ### Still open
 - The fix itself, and whether CI's runner sees the same rate.
+
+
+---
+
+
+## v1.124 — Storm the North Fort starts inside the fort, not in its doorway
+
+The critic's 1 Oct report (on `auto/critic`, filed under Found in play) found the Hollow's `team_b` player spawn at
+(2, 28), which is the south fort's front doorway: the front wall is at z 27 and its port runs x 0.6–3.4. On Storm the
+North Fort and Night Assault, Mitchell and Devon have sniper lines from the north fort straight down that port, so a
+player standing still was tagged inside 18 s in 18 of 20 rounds (Night Assault 10 of 10, median 6 s, four of them at
+3.3 s, the sniper's first shot after the opening hold). The code's own comment said the spawn was "in the south fort",
+so this was a misplaced point, not a design call. I tried six spots standing still for 18 s, 5–8 rounds each, day and
+night: the middle of the fort (2, 31.5) was tagged 1 of 5, its front corners 5 of 5 (the side windows), behind the
+fort 0 of 11 but looking at its back wall. The back of the fort beside the lookout (2.6, 32.3) gave 0 of 16 in the
+probe but 3 of 8 in the suite's first full run, one at 3.4 s: every one was Devon from the north fort's `a_fort`
+anchor (−2, −27), 59 m, because that spot is still on his line through the port. At (0.5, 32.3), the back-left of the
+fort under the roof, that line crosses the front wall at x 0.3, on the inner post beside the port (x 0–0.6), which is
+solid at every height; from there you still look out through the port at the field. 0 of 20 standing rounds tagged
+(10 day, 10 night). It is the new `team_b` spawn. It is the only place `team_b` is used for the player, so the Hold
+the South Fort defends start there too, which suits a defend.
+
+### Verified
+- New `tests/fort-spawn.test.mjs`: the spawn is inside the fort's walls, and standing still for 18 s on Storm the
+  North Fort and Night Assault, four rounds each, at most 3 of 8 rounds are tagged and none before 6 s. At (0.5, 32.3):
+  0 of 8. The doorway gave 9 of 11 in my probe (3.3–9.7 s).
+- `tests/spawn-facing.test.mjs` still passes: every Hollow match starts facing the enemy kids.
+- `npm test` with the spawn at (2.6, 32.3): 33/34, the one red the new suite (Devon's line, above). After the move to
+  (0.5, 32.3) I re-ran the nine suites that enter Hollow scenarios or every scenario (burst-pose, cover-fire,
+  fort-spawn, hollow-held, market-lot, one-ending, opening-hold, result-text, spawn-facing; front-door passed in the
+  full run and doesn't use the spawn): all green. The other 24 suites never load the Hollow.
+
+### Still open
+- Allies in the Hollow team matches still form up at the `b_fort` anchor (2, 27), the doorway; they move off at BEGIN,
+  so I left it.
+- Whether the walk out of the fort feels like the start of an attack; the scenario text says you come up from the south end.
+
+
+---
+
+
+## v1.125 — Bunratty gets Winnmark's houses, cars, trees, props and fort
+
+Backlog D.3 step 4 (Michael: A, carry Winnmark's pieces to the other maps, control room 1 Oct). Every Winnmark piece
+from steps 1–2 was built behind a `detail` option on the shared builders, so Bunratty's calls now pass it: the seven
+houses (`buildSuburbanHouse`, hip roofs, gable, framed and shuttered windows, panelled door, chimney), the bulb and
+lane cars (`addCar`), every tree and front bush, including the far-bank silhouettes over the river, the curbside
+and backyard bins and moving boxes, the backyard plywood stacks (Bunratty built its own slab-and-chair inline; it now
+calls Winnmark's `buildPlyStack` with the same 1.6 × 0.9 m, 0.55 m box), and the bulb fort. Each of those builders
+keeps the old collision box (checked per piece in v1.104 and v1.112–v1.115), so cover, line of sight and the kids'
+paths are what they were. Bunratty's road stays the wiggling disc lane for now: Winnmark's road mesh is built for its
+straight street and bulb, and porting it to the S-curve is its own job. The Hollow and the lot come next.
+
+### Verified
+- New `tests/bunratty-polish.test.mjs`: one Bunratty build has 7 of 7 detailed houses, 4–7 of 4–7 detailed cars,
+  215–218 of 215–218 low-poly trees, 14 of 14 shrubs, 23–26 bins, 8–15 boxes and 5–10 plywood stacks all detailed,
+  3 detailed fort pieces. Four on Four for 30 s with the player untaggable: every kid walks (Owen, a camper, 11 m;
+  the rest 26–104 m), against 8–113 m on v1.124 in the same probe. Draw calls looking at the bulb: 259–300.
+  Screenshots `tests/out/bunratty-houses.png`, `bunratty-bulb.png`.
+- The step-1/2 suites' "Bunratty keeps the old …" checks now ask for the detailed piece, and the Bunratty car keeps
+  its cabin box (−0.15, 1.0 × 0.7 m, 1.15–1.70 m).
+- `npm test`: 35/35 suites green.
+### Still open
+- Bunratty's road and kerbs (the S-curve lane); the Hollow's trees; the lot's cars and trees.
+- Whether the detailed house reads well on Bunratty's downhill walk-out side (the podium and deck are unchanged).
+
+
+---
+
+
+## v1.126 — The lot's cars and trees, and the Hollow's hardwoods, are Winnmark's
+
+D.3 step 4 goes on (Michael: A). The Riverside Market lot's 44 parked cars are now Winnmark's detailed sedan
+(profiled body, arches, glass and pillars, lights, plates, mirrors, hubcaps), and its 16 island and verge trees the
+low-poly tree. The Hollow's woods are about half pine and half hardwood: the hardwoods (the perimeter ranks, the
+inner stands and the far-bank wall over the river) are the low-poly tree now, and the pines stay the three-cone pine,
+since Winnmark's tree is a round crown and the pines were already faceted. The lot's car seat-to-ground fit
+(`carSeatY`) and both collision boxes per car are unchanged, so the walk-throughs between stalls are where they were.
+With this the box car and the ball-on-a-stick round tree are no longer built on any map.
+
+### Verified
+- New `tests/lot-hollow-polish.test.mjs`: the lot has 44 of 44 detailed cars, every one with the cabin box at
+  −0.15, 1.0 × 0.7 m, 1.15–1.70 m, and 16 of 16 low-poly trees; the Hollow 170–172 of 354 trees low-poly (the rest
+  pines). The lot scene has 816 meshes against 948 before; draw calls looking down an aisle 753 against 863 on v1.125.
+  20 s of Aisle Wars and of the Hollow 3v3 with the player untaggable: kids walk 14–63 m and 15–56 m, one camper
+  each standing still (Brooke on the lot and Rebecca in the Hollow, as on v1.125: 0 m and 0–5 m).
+  Screenshots `tests/out/lot-cars.png`, `hollow-trees.png`.
+- `tests/winnmark-cars.test.mjs` now asks for the detailed car on the lot.
+- Harness: `tests/lib/game.mjs` copied every build it boots to one shared `tests/tmp/index.local.html`, so two suites
+  booting different builds at once (a probe against an old build beside `npm test`) overwrote each other's page. Each
+  process now gets its own copy, removed at `g.close()`. A correction to v1.125: its "8–113 m on v1.124" comparison
+  ran beside the new build and may have booted it, so read that figure as unconfirmed. The lot and Hollow comparisons
+  above ran alone.
+- `npm test` (run alone): **33/36, not green.** Two suites (bunratty-polish, burst-pose) died at `g.bedroom()` with
+  "browser has been closed", the known harness stall; both pass re-run alone. The third is real and comes from
+  v1.125, not this version: `tests/taggers.test.mjs` fails its low-frame-rate pass because Bunratty Infection's
+  Mitchell is held for the whole 45 s at (−26.8, 25.3), against a bin, a moving box and a plywood stack in his
+  backyard. Boards are seeded per scenario (`withSeededRandom`), and v1.125's detailed builders draw from the seeded
+  RNG in a different order, so Infection got a new backyard layout with that pocket in it. Probes: v1.126 failed 1 of
+  3 runs plus this one; v1.124 0 of 3. The collision boxes are the same as before; the layout is what changed.
+  An attempt to keep 3 m clear round each backyard start changed nothing (the three props are not the ones next to
+  his start), so I took it out. Filed at the top of Found in play.
+
+### Still open
+- The Infection pocket (above): Builder sessions should not merge until it is fixed.
+- Bunratty's S-curve road and kerbs, the last piece of step 4.
+- Whether the lot's long rows of sedans read better or busier than the box cars from the store doors.
+
+## v1.126 fix-up — Mitchell gets out of his backyard pocket
+CI failed Builder sessions on v1.125 (`tests/taggers.test.mjs`, low-frame-rate pass: Mitchell walked 10 m, ended
+2 m from his start and 65 m from the player), and v1.126 filed it at the top of Found in play. A collision map of
+the pocket showed it is open to the north and west. He wedges at the corner where the 1.09 m bin's west face meets
+the 0.55 m plywood stack's north face, with the player to the east-south-east. Three things kept him there:
+- The fence detour points north-east, the right way out. But each sub-step, the straight step slid him south along
+  the bin by as much as the detour slid him north (−0.35 against +0.36 of a step). He stood at (−26.8, 25.4) for
+  seconds at a time.
+- When the detour did move him, it moved only one component of its step, 0.0197 m. That is under the 0.02 m
+  "no progress" line, so a detour that was working was banned as failed for 1.5 s.
+- The slide back and forth moved him just over 0.02 m a step, so he never counted as wedged and the wall-follow
+  never ran.
+
+The fixes:
+- While a detour is moving him, the straight step is taken whole or not at all, with no slide.
+- The detour counts as failed only under 5 mm a sub-step.
+- Under 0.3 m net in a 0.5 s window counts as wedged for the next window. A free tagger covers about 1.7 m in that time.
+
+I also tried a v1.121-style back-out (0.5 s away from the target after 1.5 s without net progress). It made no
+difference once the slide was fixed, so I took it out.
+
+### Verified
+- Probe (10 rounds of Bunratty Infection, every third step 0.05 s, 45 s each): Mitchell reaches the player in 10 of 10
+  rounds; before, 4 of 6, and 6 of 10 with only the net-progress and detour-threshold changes.
+- `tests/taggers.test.mjs` 3 of 3 runs green, both passes. Mixed pass: Mitchell walks 87 m and reaches the player at 27–29 s.
+- `npm test`: 35/36. The one failure is `tests/hollow-held.test.mjs` at 10.3% of trigger pulls held (limit 10%),
+  which is Hollow gunners and has no taggers in it. Re-runs: 5.0% and 7.1% on this build, and 8.4%, 6.4% and 5.2% on
+  v1.126 without this change. That is within chance near the limit, not caused by this change.
+
+### Still open
+- `hollow-held` runs close to its 10% limit since the Hollow got v1.126's hardwoods (5–10% across six runs). If it
+  starts failing more often, look at which trees the held shots stop on.
+
+
+---
+
+
+## v1.127 — Bunratty's lane gets Winnmark's road and kerbs
+
+The last piece of D.3 step 4 (Michael: A, carry Winnmark's pieces to the other maps). Bunratty's road was still the
+v1.24a pavement: 73 overlapping asphalt discs down the S-curve and 19 more tiling the bulb, with scalloped edges and
+no kerb. Winnmark's v1.116 road builder lived inside `buildWinnmarkCourtScene` and took its bezier from there, so I
+lifted it out as `buildStreetRoad(scene, opts)`: the centreline and its tangent, the ground, the houses (for the
+driveway drops), the bulb, and where the manholes, drains, crack sealing and patch go. Winnmark calls it with its own
+numbers and comes out identical. Bunratty calls it with its cubic bezier and the 6.5 m bulb: one asphalt ribbon on
+the ground, a polar bulb, a gutter pan and 9 cm rolled kerb along both edges and round the bulb, dropped flat across
+each driveway, with three drains, two manholes, crack sealing and a patch. The road runs out through the west
+tree-wall gap. One change to the shared builder: the bulb's kerb now drops for a driveway too, because Bunratty's hero
+house (235) drives straight off its bulb; Winnmark has no driveway there, so its bulb is unchanged. The road is visual
+only, as before: no collision, and it draws no random numbers, so the seeded boards (the v1.125 lesson) stay as they
+were. `roadCenterline` is unchanged, so the placements and the AI that sample it are too. With this, D.3 step 4 is
+done: every map has Winnmark's pieces, except the Hollow's pines, which stay pines (v1.126).
+
+### Verified
+- New `tests/bunratty-road.test.mjs`: Bunratty has one asphalt ribbon, one bulb, one kerb and three road-mark meshes
+  and no discs; 963 raycasts over the old road (centreline ±3.4 m along the lane, and the bulb) all hit asphalt, 5.2–6.5 cm
+  over the ground; the road reaches past the west tree wall; the kerb stands 7.9–9.0 cm over the gutter away from the
+  driveways (328 samples) and 0–0.4 cm across them (81); round the bulb 8.2–9.1 cm (176), and 0–1.3 cm across the hero
+  house's drive (29). Winnmark's road through the shared builder has the same vertex counts as v1.126 (a probe matched
+  the vertex positions too, by checksum). Screenshots `tests/out/bunratty-road.png` (up the lane from the west entry)
+  and `bunratty-bulb-road.png`.
+- Bunratty scene: 1,883 meshes against 1,946 on v1.126; draw calls 1,306 against 1,365 looking up the lane from the west
+  entry, 243 against 262 looking into the bulb (same views, same build otherwise).
+- `tests/winnmark-road.test.mjs` now asks Bunratty for the new road instead of its discs.
+- `npm test`: 37/37 suites green (the full run, with the four suites that booted before the change re-run on it, and the new suite).
+### Still open
+- Whether the lane's kerb reads right where the S-curve is tightest; the driveways are where they were (v1.24a pads).
+- Bunratty's curbside bins still stand in the road 1.5 m off the centreline (since v1.35b; trash-day flavour, and moving
+  them would change cover and the seeded boards), now with a kerb behind them.
+
+
+---
+
+
+## v1.128 — The shop's four tabs: Guns, Ammo, Gear, Mods
+
+Backlog D.5 B (Michael: A, control room and decisions, 1 Oct). The shop had five tabs, BBs · Loadout · Guns ·
+Accessories · Equipment, and "Loadout" mixed the belt and holster (gear you wear) with speed loaders (ammo you use up),
+and clashed by name with the Loadout screen. It now has four, named for what a thing is for, in Michael's order:
+**Guns** (unchanged: the eight guns, each gun's page with its mags and spares), **Ammo** (the four BB packs, then the
+three speed loaders, then the seven BB colours), **Gear** (Belt & Holster, then eyewear, body armour and shoes) and
+**Mods** (red dot, 4× scope, both lasers, flashlight; the section header reads "Gun Mods", was "Gun Accessories").
+Every row, price, button and the airsoft.com look are as they were; only the tab they sit on moved. The catalog
+entries keep their internal category (`Loadout` for the belt, holster and loaders), so their icons and purchase
+code are untouched. The shop opens on Guns, the first tab, as it used to open on its first tab (BBs); a stale tab
+name falls back to it.
+
+### Verified
+- New `tests/shop-tabs.test.mjs`, clicking each tab: four tabs in the order Guns, Ammo, Gear, Mods; the shop opens on
+  Guns; Guns shows its 8 guns, Ammo its sections Restock BBs, Speed Loaders, BB Color (7 rows, 7 colours), Gear Belt &
+  Holster, Eyewear, Body Armor, Shoes (16 rows), Mods its 5 mods. Every catalog row, mod, eyewear, armour piece and
+  shoe shows on exactly one tab, every BB colour on Ammo. A speed loader bought from Ammo ($15, one more loader) and a
+  red dot from Mods with real clicks. Screenshots `tests/out/shop-guns.png`, `shop-ammo.png`, `shop-gear.png`, `shop-mods.png`.
+- `tests/utility-belt.test.mjs` now finds the belt and holster on Gear.
+- `npm test`: 38/38 suites green.
+### Still open
+- D.5 C, the Loadout screen with a 3D kid, is the last part of D.5; it has its own question in decisions.
+- Whether Guns is the right tab to open on, or Ammo (BBs are the thing a returning player buys most).
+
+
+---
+
+
+## v1.129 — The test harness restarts a hung NEW GAME
+
+Found in play since v1.110: now and then a suite stalls in `g.bedroom()` right after NEW GAME and sits until
+run.mjs's 10-minute timeout, or dies with "browser has been closed" (v1.126 lost two suites of one full run to it).
+v1.123 placed it in `enterBedroom()` with the renderer's main thread blocked in native code, about 2–4% of boots under
+load; v1.124 showed `--in-process-gpu` doesn't cure it. Since the cause is in SwiftShader rather than the game,
+the harness now recovers from it instead: a Node-side watchdog gives NEW GAME 75 s (a healthy one takes 2–20 s;
+Playwright's own timeouts never fire while the main thread is blocked), and on a stall or a dead browser it closes that
+browser, boots a fresh one and goes again, once; a second failure still fails the suite. Suites hold
+`const { page } = g` from before `g.bedroom()`, so `g.page` is now a stand-in that forwards every call to the live page,
+and `g.errs` is the fresh page's. `g.bedroom.retries` counts restarts. No game code changed; the version moves so the
+title screen matches the branch.
+
+Before that, I tried the fix the critic's report suggested for the lot free-for-all (starts behind cars). It is not a
+plain fix, so it is a question in decisions instead (Riverside Market free-for-all), with the numbers.
+
+### Verified
+- New `tests/harness.test.mjs`: with the first page's main thread hung in a loop and a 10 s watchdog, `g.bedroom()`
+  restarts once and reaches the bedroom in 17 s, the suite's `page` is the new one, a scenario runs on it, a healthy
+  boot never restarts, and the suite exits (the hung browser doesn't keep Node alive).
+- The v1.123 loop, six processes booting 20 times each in parallel: 120 of 120 reached the bedroom. One boot stalled
+  for real, was restarted and got there in 90.8 s in all; the healthy boots took at most 30 s, so 75 s leaves room.
+- `npm test`: 39/39 suites green. One real stall happened in it, in `kid-face` at NEW GAME, and was restarted; before
+  this, that suite would have sat for 10 minutes and failed.
+### Still open
+- The stall itself (SwiftShader under load) is not fixed, only survived. If CI logs show "starting a fresh browser"
+  often, try `--disable-gpu-compositing` next.
+
+## v1.129 fix-up — Hollow kids stop pulling into walls from one spot
+CI failed Builder sessions on v1.127 in `tests/hollow-held.test.mjs`: Sean held fire 24 times from one spot,
+(−10, −23), against a limit of 20. A local probe ran 30 rounds of the Hollow 3v3 and logged every pull's state,
+caller and outcome. Two rounds went over the limit, by two separate causes:
+- **Rebecca at her fort wall (1, 34): 25 held pulls.** After three held pulls in a row, v1.122 moves a kid on, and
+  with no cover she can walk to, she goes `advancing`. But `advancing` commits to an engagement on line of sight from
+  eye height, and from that spot her eye line to the player is clear while the muzzle's first 3 m run into the wall.
+  She stopped again at once and held three more. Now a kid moved on by held pulls doesn't commit to an engagement
+  again until she is 1.5 m from that spot, or 4 s later.
+- **Sean: 27 held pulls, one per burst.** Each burst's opening shot went out at the player's last-known spot (v1.23:
+  no tracking through walls), but the queued follow-ups re-aimed at the player's live position behind the wall, so
+  the first follow-up was held every cycle. Now, when the opening shot goes at the last-known spot, the follow-ups
+  aim there too, with the normal burst spread.
+
+### Verified
+- Probe, 30 rounds of `hollow_skirmish_3v3` with the player untaggable: the worst spot per round is 3–10 held pulls
+  (median 4). Before, two rounds reached 25 and 27, and five more were 10–13.
+- `npm test`: 38/38. In `hollow-held`, the worst spots were 3–6 held pulls and 6.1% of pulls were held (limit 10%).
+  `cover-fire` held 16 of 1003 pulls.
+
+### Still open
+- Sean's follow-ups that track a live target (he has a line) still hold one shot now and then at his south-fort
+  spot (−5, −29): 4–10 a round, every one a single trimmed burst, not a stuck kid.

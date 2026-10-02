@@ -58,10 +58,12 @@ check('drawn roof within the cabin box (≤ 1.71 m)', b.y1 <= 1.71, b.y1);
 check('drawn width within the body box (+20 cm for mirrors and hubcaps)', b.z0 >= -0.98 && b.z1 <= 0.98, b);
 check('nothing drawn below the tyres', b.y0 >= -0.001, b.y0);
 check('more shape than the box car (> 1,000 triangles)', wm.every(c => c.tris > 1000), wm.map(c => c.tris));
-for (const fn of ['buildBunrattyCourtScene', 'buildMarketLotScene']) {
-  const cs = res[fn];
-  check(`${fn.replace(/^build|Scene$/g, '')} still builds the box car`, cs.length > 0 && cs.every(c => !c.detail), cs.map(c => c.detail));
-}
+// v1.125 (D.3 step 4): Bunratty builds the detailed car too
+const bn = res.buildBunrattyCourtScene;
+check('Bunratty builds the detailed car, cabin box unchanged', bn.length > 0 && bn.every(c => c.detail && c.wheels === 4 && JSON.stringify(c.cabin) === JSON.stringify([-0.15, 1, 0.7, 1.15, 0.55])), bn.map(c => [c.detail, c.cabin]));
+// v1.126: and so does the lot
+const lt = res.buildMarketLotScene;
+check('the lot builds the detailed car, cabin box unchanged', lt.length > 0 && lt.every(c => c.detail && c.wheels === 4 && JSON.stringify(c.cabin) === JSON.stringify([-0.15, 1, 0.7, 1.15, 0.55])), lt.map(c => [c.detail, c.cabin]));
 
 // a look at the bulb cars in a real match, and the draw-call cost
 await g.scenario('winnmark_seth_house');

@@ -1814,7 +1814,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.123</div>
+  <div class="version">v1.129</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8430,7 +8430,7 @@ function buildSuburbanHouse(scene, {
 
   const frontDepth = (faceDir === 'east' || faceDir === 'west') ? width/2 : depth/2;
   if (detail) buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, trimColor, roofColor, x, z });
-  if (!detail) {   // v1.104: the original house front (Bunratty still builds this one)
+  if (!detail) {   // v1.104: the original house front (no map builds it since v1.125)
   // Roof — pyramidal / hip roof. ConeGeometry with 4 segments rotated 45° = a hip.
   // Scale to match footprint (slightly larger so it overhangs).
   const roofH = 2.6;
@@ -9332,7 +9332,7 @@ function addCar(scene, x, z, opts = {}) {
 
   const group = new THREE.Group();
   if (opts.detail) buildCarDetail(group, { carMat, winMat, len, width, wheelR, color });   // v1.112
-  else {   // v1.112: the original box car (Bunratty and the lot still build this one)
+  else {   // v1.112: the original box car (no map builds it since v1.126)
   // Body — sits with bottom at wheel-axle height
   const body = new THREE.Mesh(new THREE.BoxGeometry(len, bodyH, width), carMat);
   body.position.set(0, wheelR + bodyH/2, 0);
@@ -10429,6 +10429,144 @@ function updateLaserDiagHud() {
   hud.textContent = txt;
 }
 
+// v1.127 (backlog D.3 step 4, Bunratty's road): Winnmark's v1.116 road builder, lifted out of buildWinnmarkCourtScene
+// so Bunratty's S-curve lane gets the same pieces: one asphalt ribbon that follows the centreline and the ground, a
+// polar bulb, a gutter pan and 9 cm rolled kerb along both edges and round the bulb (dropped flat across each
+// driveway, open where the road meets the bulb), and manholes, drains, crack sealing and a patch. o.point(t)/o.deriv(t)
+// give the centreline and its tangent; houseCenters ({x, side}) place the driveway drops, on the edges and, since
+// v1.127, round the bulb too (Bunratty's hero house drives off its bulb). Visual only: no collision, no Math.random,
+// so the seeded boards are untouched.
+function buildStreetRoad(scene, opt) {
+  const { point, deriv, groundY, groundNormal, houseCenters } = opt;
+  const ASPH = opt.ASPH, BULB_C = { x: opt.bulb.x, z: opt.bulb.z }, BULB_R = opt.bulb.r;
+  const LIFT = 0.06;
+  const asphMat = opt.asphMat;
+  const concMat = new THREE.MeshStandardMaterial({ color: 0x96928a, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const markMat = (c, r = 0.9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+  const frameAt = (t) => { const p = point(t), d = deriv(t), l = Math.hypot(d.x, d.z); return { p, tx: d.x / l, tz: d.z / l, nx: -d.z / l, nz: d.x / l }; };
+  const dBulb = (x, z) => Math.hypot(x - BULB_C.x, z - BULB_C.z);
+  // the road ends inside the bulb; find the t where its centre is 5 m from the bulb's centre
+  let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(point(t).x, point(t).z) < 5) { tEnd = t; break; }
+  const T0 = opt.T0, NS = opt.NS;   // t < 0 runs the road out through the tree-wall gap at the entry
+  const meshes = [];
+  // --- asphalt ribbon (indexed, smooth)
+  {
+    const cols = 9, pos = [], idx = [];
+    for (let i = 0; i <= NS; i++) {
+      const f = frameAt(T0 + (tEnd - T0) * i / NS);
+      for (let j = 0; j < cols; j++) {
+        const o = -ASPH + 2 * ASPH * j / (cols - 1);   // edge vertices shared with the gutter's (an overlap stair-stepped over it)
+        const x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+        pos.push(x, groundY(x, z) + LIFT, z);
+      }
+      if (i) for (let j = 0; j < cols - 1; j++) { const a = (i - 1) * cols + j, b = a + cols; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'asphalt'; meshes.push(m);
+  }
+  // --- bulb (polar, indexed); a hair lower than the ribbon where they overlap
+  {
+    const rings = [0, 1.6, 3.2, 4.8, BULB_R], segs = 56, pos = [], idx = [];
+    for (let r = 0; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+      const a = k / segs * Math.PI * 2, x = BULB_C.x + Math.cos(a) * rings[r], z = BULB_C.z + Math.sin(a) * rings[r];
+      pos.push(x, groundY(x, z) + LIFT - 0.008, z);
+    }
+    for (let r = 1; r < rings.length; r++) for (let k = 0; k < segs; k++) {
+      const a = (r - 1) * segs + k, b = (r - 1) * segs + (k + 1) % segs, c = r * segs + k, d = r * segs + (k + 1) % segs;
+      idx.push(a, c, b, b, c, d);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'bulb'; meshes.push(m);
+  }
+  // --- gutter pan and rolled kerb: a profile (offset from the asphalt edge, height) swept along each edge
+  const PROF = [[0, 0], [0.35, 0], [0.55, 0.09], [0.67, 0.09], [0.71, 0.01]];
+  const conc = [];   // non-indexed triangles
+  const kerbH = (x, z, zRoad) => {   // 1 = full kerb, 0 = dropped (driveway apron), eased over 0.5 m
+    let k = 1;
+    for (const hc of houseCenters) {
+      const onSide = hc.side === 'north' ? z < zRoad : z > zRoad;
+      if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - hc.x) - 2.1) / 0.5)));
+    }
+    return k;
+  };
+  const quad = (a, b, c, d) => conc.push(...a, ...b, ...d, ...a, ...d, ...c);   // a b / c d as two rows
+  const nearRoad = (x, z) => {   // lateral distance from the road's centreline (t 0.6..tEnd), for the bulb's mouth
+    let best = 1e9; for (let t = 0.6; t <= tEnd + 1e-6; t += 0.01) { const p = point(t); best = Math.min(best, Math.hypot(x - p.x, z - p.z)); }
+    return best;
+  };
+  for (const side of [-1, 1]) {
+    let prev = null;
+    for (let i = 0; i <= NS; i++) {
+      const f = frameAt(T0 + (tEnd - T0) * i / NS);
+      const row = PROF.map(([o, h]) => {
+        const off = side * (ASPH + o), x = f.p.x + f.nx * off, z = f.p.z + f.nz * off;
+        return [x, z, h];
+      });
+      const k = kerbH(row[2][0], row[2][1], f.p.z);
+      const pts = row.map(([x, z, h]) => [x, groundY(x, z) + LIFT + h * k, z]);
+      const inBulb = dBulb(row[0][0], row[0][1]) < BULB_R + 0.3;
+      if (prev && !inBulb && !prev.inBulb) for (let j = 0; j < pts.length - 1; j++) {
+        if (side > 0) quad(prev.pts[j], prev.pts[j + 1], pts[j], pts[j + 1]); else quad(prev.pts[j + 1], prev.pts[j], pts[j + 1], pts[j]);
+      }
+      prev = { pts, inBulb };
+    }
+  }
+  {
+    const segs = 72; let prev = null;
+    for (let k = 0; k <= segs; k++) {
+      const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+      const kb = kerbH(BULB_C.x + ca * (BULB_R + 0.61), BULB_C.z + sa * (BULB_R + 0.61), BULB_C.z);   // v1.127: a driveway off the bulb drops it too
+      const pts = PROF.map(([o, h]) => { const r = BULB_R + o, x = BULB_C.x + ca * r, z = BULB_C.z + sa * r; return [x, groundY(x, z) + LIFT + h * kb, z]; });
+      const mouth = nearRoad(BULB_C.x + ca * (BULB_R + 0.3), BULB_C.z + sa * (BULB_R + 0.3)) < ASPH + 0.75;
+      if (prev && !mouth && !prev.mouth) for (let j = 0; j < pts.length - 1; j++) quad(pts[j], pts[j + 1], prev.pts[j], prev.pts[j + 1]);
+      prev = { pts, mouth };
+    }
+  }
+  {
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(conc, 3)); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, concMat); m.receiveShadow = true; m.userData.wmRoad = 'kerb'; meshes.push(m);
+  }
+  // --- the furniture: manholes, storm drains in the gutter, crack sealing, a patch (merged per material, laid on the slope)
+  const parts = { dark: [], iron: [], patch: [] };
+  const _up = new THREE.Vector3(0, 0, 1);
+  const place = (key, geo, x, z, ang, lift) => {
+    const n = groundNormal(x, z);
+    const q = new THREE.Quaternion().setFromUnitVectors(_up, new THREE.Vector3(n.nx, n.ny, n.nz));
+    const rz = new THREE.Quaternion().setFromAxisAngle(_up, ang);
+    parts[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + LIFT + lift, z), q.multiply(rz), new THREE.Vector3(1, 1, 1)) });
+  };
+  const along = (f) => Math.atan2(-f.tz, f.tx);
+  for (const [t, o] of opt.manholes) {   // manholes
+    const f = frameAt(t), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+    place('iron', new THREE.CircleGeometry(0.42, 18), x, z, 0, 0.004);
+    place('dark', new THREE.RingGeometry(0.42, 0.48, 18), x, z, 0, 0.004);
+    for (const d of [-0.18, 0, 0.18]) {   // a cast grid on the lid
+      place('dark', new THREE.PlaneGeometry(0.025, 0.6), x + f.tx * d, z + f.tz * d, along(f), 0.006);
+      place('dark', new THREE.PlaneGeometry(0.6, 0.025), x + f.nx * d, z + f.nz * d, along(f), 0.006);
+    }
+  }
+  for (const [t, side] of opt.drains) {   // storm drain grates in the gutter pan
+    const f = frameAt(t), o = side * (ASPH + 0.18), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
+    place('dark', new THREE.PlaneGeometry(0.95, 0.32), x, z, along(f), 0.004);
+    for (let k = -4; k <= 4; k++) place('iron', new THREE.PlaneGeometry(0.035, 0.28), x + f.tx * k * 0.1, z + f.tz * k * 0.1, along(f), 0.006);
+  }
+  for (const [t, len, skew] of opt.cracks) {   // crack sealing across the road
+    const f = frameAt(t);
+    for (let k = 0; k < 4; k++) {
+      const s0 = -len / 2 + len * k / 4, s1 = s0 + len / 4, w = (k % 2 ? 1 : -1) * 0.25;
+      const xa = f.p.x + f.nx * s0 + f.tx * (skew * s0 / len), za = f.p.z + f.nz * s0 + f.tz * (skew * s0 / len);
+      const xb = f.p.x + f.nx * s1 + f.tx * (skew * s1 / len + w * 0.3), zb = f.p.z + f.nz * s1 + f.tz * (skew * s1 / len + w * 0.3);
+      const l = Math.hypot(xb - xa, zb - za);
+      place('dark', new THREE.PlaneGeometry(l, 0.05), (xa + xb) / 2, (za + zb) / 2, Math.atan2(-(zb - za), xb - xa), 0.003);
+    }
+  }
+  { const f = frameAt(opt.patch); place('patch', new THREE.PlaneGeometry(2.6, 1.7), f.p.x + f.nx * 1.4, f.p.z + f.nz * 1.4, along(f) + 0.04, 0.002); }
+  const pm = { dark: markMat(0x1c1c1e, 0.8), iron: markMat(0x4a4a48, 0.6), patch: markMat(0x323234, 0.95) };
+  for (const k in parts) if (parts[k].length) { const m = new THREE.Mesh(_houseMergeParts(parts[k]), pm[k]); m.receiveShadow = true; m.userData.wmRoad = 'marks'; meshes.push(m); }
+  for (const m of meshes) scene.add(m);
+  return meshes;
+}
+
 // ----------------------------------------------------------------------
 // Winnmark Court main scene builder.
 //   variant: 'seth_house'   → 1v1 vs Seth in his backyard (compact spawn)
@@ -10726,133 +10864,15 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // is 9 cm and rolled, and has no collision, as before (the discs had none). roadCenterline is unchanged, so every
   // placement and the AI that sample it are untouched. Built once houseCenters exists (the driveway drops need it).
   function buildWinnmarkRoad(houseCenters) {
-    const ASPH = 3.45, BULB_C = { x: -30, z: 0 }, BULB_R = 6.3;
-    const LIFT = 0.06;
-    const asphMat = roadMat;
-    const concMat = new THREE.MeshStandardMaterial({ color: 0x96928a, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-    const markMat = (c, r = 0.9) => new THREE.MeshStandardMaterial({ color: c, roughness: r, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-    const deriv = (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) });
-    const frameAt = (t) => { const p = _wmRoadPoint(t), d = deriv(t), l = Math.hypot(d.x, d.z); return { p, tx: d.x / l, tz: d.z / l, nx: -d.z / l, nz: d.x / l }; };
-    const dBulb = (x, z) => Math.hypot(x - BULB_C.x, z - BULB_C.z);
-    // the road ends inside the bulb; find the t where its centre is 5 m from the bulb's centre
-    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(_wmRoadPoint(t).x, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
-    const T0 = -0.13, NS = 170;   // t < 0 runs the road out through the tree-wall gap at the east entry
-    const meshes = [];
-    // --- asphalt ribbon (indexed, smooth)
-    {
-      const cols = 9, pos = [], idx = [];
-      for (let i = 0; i <= NS; i++) {
-        const f = frameAt(T0 + (tEnd - T0) * i / NS);
-        for (let j = 0; j < cols; j++) {
-          const o = -ASPH + 2 * ASPH * j / (cols - 1);   // edge vertices shared with the gutter's (an overlap stair-stepped over it)
-          const x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
-          pos.push(x, groundY(x, z) + LIFT, z);
-        }
-        if (i) for (let j = 0; j < cols - 1; j++) { const a = (i - 1) * cols + j, b = a + cols; idx.push(a, a + 1, b, a + 1, b + 1, b); }
-      }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'asphalt'; meshes.push(m);
-    }
-    // --- bulb (polar, indexed); a hair lower than the ribbon where they overlap
-    {
-      const rings = [0, 1.6, 3.2, 4.8, BULB_R], segs = 56, pos = [], idx = [];
-      for (let r = 0; r < rings.length; r++) for (let k = 0; k < segs; k++) {
-        const a = k / segs * Math.PI * 2, x = BULB_C.x + Math.cos(a) * rings[r], z = BULB_C.z + Math.sin(a) * rings[r];
-        pos.push(x, groundY(x, z) + LIFT - 0.008, z);
-      }
-      for (let r = 1; r < rings.length; r++) for (let k = 0; k < segs; k++) {
-        const a = (r - 1) * segs + k, b = (r - 1) * segs + (k + 1) % segs, c = r * segs + k, d = r * segs + (k + 1) % segs;
-        idx.push(a, c, b, b, c, d);
-      }
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'bulb'; meshes.push(m);
-    }
-    // --- gutter pan and rolled kerb: a profile (offset from the asphalt edge, height) swept along each edge
-    const PROF = [[0, 0], [0.35, 0], [0.55, 0.09], [0.67, 0.09], [0.71, 0.01]];
-    const conc = [];   // non-indexed triangles
-    const kerbH = (x, z, zRoad) => {   // 1 = full kerb, 0 = dropped (driveway apron), eased over 0.5 m
-      let k = 1;
-      for (const hc of houseCenters) {
-        const onSide = hc.side === 'north' ? z < zRoad : z > zRoad;
-        if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - hc.x) - 2.1) / 0.5)));
-      }
-      return k;
-    };
-    const quad = (a, b, c, d) => conc.push(...a, ...b, ...d, ...a, ...d, ...c);   // a b / c d as two rows
-    const nearRoad = (x, z) => {   // lateral distance from the road's centreline (t 0.6..tEnd), for the bulb's mouth
-      let best = 1e9; for (let t = 0.6; t <= tEnd + 1e-6; t += 0.01) { const p = _wmRoadPoint(t); best = Math.min(best, Math.hypot(x - p.x, z - p.z)); }
-      return best;
-    };
-    for (const side of [-1, 1]) {
-      let prev = null;
-      for (let i = 0; i <= NS; i++) {
-        const f = frameAt(T0 + (tEnd - T0) * i / NS);
-        const row = PROF.map(([o, h]) => {
-          const off = side * (ASPH + o), x = f.p.x + f.nx * off, z = f.p.z + f.nz * off;
-          return [x, z, h];
-        });
-        const k = kerbH(row[2][0], row[2][1], f.p.z);
-        const pts = row.map(([x, z, h]) => [x, groundY(x, z) + LIFT + h * k, z]);
-        const inBulb = dBulb(row[0][0], row[0][1]) < BULB_R + 0.3;
-        if (prev && !inBulb && !prev.inBulb) for (let j = 0; j < pts.length - 1; j++) {
-          if (side > 0) quad(prev.pts[j], prev.pts[j + 1], pts[j], pts[j + 1]); else quad(prev.pts[j + 1], prev.pts[j], pts[j + 1], pts[j]);
-        }
-        prev = { pts, inBulb };
-      }
-    }
-    {
-      const segs = 72; let prev = null;
-      for (let k = 0; k <= segs; k++) {
-        const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
-        const pts = PROF.map(([o, h]) => { const r = BULB_R + o, x = BULB_C.x + ca * r, z = BULB_C.z + sa * r; return [x, groundY(x, z) + LIFT + h, z]; });
-        const mouth = nearRoad(BULB_C.x + ca * (BULB_R + 0.3), BULB_C.z + sa * (BULB_R + 0.3)) < ASPH + 0.75;
-        if (prev && !mouth && !prev.mouth) for (let j = 0; j < pts.length - 1; j++) quad(pts[j], pts[j + 1], prev.pts[j], prev.pts[j + 1]);
-        prev = { pts, mouth };
-      }
-    }
-    {
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(conc, 3)); g.computeVertexNormals();
-      const m = new THREE.Mesh(g, concMat); m.receiveShadow = true; m.userData.wmRoad = 'kerb'; meshes.push(m);
-    }
-    // --- the furniture: manholes, storm drains in the gutter, crack sealing, a patch (merged per material, laid on the slope)
-    const parts = { dark: [], iron: [], patch: [] };
-    const _up = new THREE.Vector3(0, 0, 1);
-    const place = (key, geo, x, z, ang, lift) => {
-      const n = groundNormal(x, z);
-      const q = new THREE.Quaternion().setFromUnitVectors(_up, new THREE.Vector3(n.nx, n.ny, n.nz));
-      const rz = new THREE.Quaternion().setFromAxisAngle(_up, ang);
-      parts[key].push({ geo, m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + LIFT + lift, z), q.multiply(rz), new THREE.Vector3(1, 1, 1)) });
-    };
-    const along = (f) => Math.atan2(-f.tz, f.tx);
-    for (const [t, o] of [[0.22, -0.6], [0.58, 0.9]]) {   // manholes
-      const f = frameAt(t), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
-      place('iron', new THREE.CircleGeometry(0.42, 18), x, z, 0, 0.004);
-      place('dark', new THREE.RingGeometry(0.42, 0.48, 18), x, z, 0, 0.004);
-      for (const d of [-0.18, 0, 0.18]) {   // a cast grid on the lid
-        place('dark', new THREE.PlaneGeometry(0.025, 0.6), x + f.tx * d, z + f.tz * d, along(f), 0.006);
-        place('dark', new THREE.PlaneGeometry(0.6, 0.025), x + f.nx * d, z + f.nz * d, along(f), 0.006);
-      }
-    }
-    for (const [t, side] of [[0.34, 1], [0.7, -1]]) {   // storm drain grates in the gutter pan
-      const f = frameAt(t), o = side * (ASPH + 0.18), x = f.p.x + f.nx * o, z = f.p.z + f.nz * o;
-      place('dark', new THREE.PlaneGeometry(0.95, 0.32), x, z, along(f), 0.004);
-      for (let k = -4; k <= 4; k++) place('iron', new THREE.PlaneGeometry(0.035, 0.28), x + f.tx * k * 0.1, z + f.tz * k * 0.1, along(f), 0.006);
-    }
-    for (const [t, len, skew] of [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]]) {   // crack sealing across the road
-      const f = frameAt(t);
-      for (let k = 0; k < 4; k++) {
-        const s0 = -len / 2 + len * k / 4, s1 = s0 + len / 4, w = (k % 2 ? 1 : -1) * 0.25;
-        const xa = f.p.x + f.nx * s0 + f.tx * (skew * s0 / len), za = f.p.z + f.nz * s0 + f.tz * (skew * s0 / len);
-        const xb = f.p.x + f.nx * s1 + f.tx * (skew * s1 / len + w * 0.3), zb = f.p.z + f.nz * s1 + f.tz * (skew * s1 / len + w * 0.3);
-        const l = Math.hypot(xb - xa, zb - za);
-        place('dark', new THREE.PlaneGeometry(l, 0.05), (xa + xb) / 2, (za + zb) / 2, Math.atan2(-(zb - za), xb - xa), 0.003);
-      }
-    }
-    { const f = frameAt(0.4); place('patch', new THREE.PlaneGeometry(2.6, 1.7), f.p.x + f.nx * 1.4, f.p.z + f.nz * 1.4, along(f) + 0.04, 0.002); }
-    const pm = { dark: markMat(0x1c1c1e, 0.8), iron: markMat(0x4a4a48, 0.6), patch: markMat(0x323234, 0.95) };
-    for (const k in parts) if (parts[k].length) { const m = new THREE.Mesh(_houseMergeParts(parts[k]), pm[k]); m.receiveShadow = true; m.userData.wmRoad = 'marks'; meshes.push(m); }
-    for (const m of meshes) scene.add(m);
-    return meshes;
+    // v1.127: the builder is shared with Bunratty's lane (buildStreetRoad); Winnmark passes its bezier and furniture.
+    return buildStreetRoad(scene, {
+      point: _wmRoadPoint,
+      deriv: (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) }),
+      groundY, groundNormal, asphMat: roadMat, houseCenters,
+      ASPH: 3.45, bulb: { x: -30, z: 0, r: 6.3 }, T0: -0.13, NS: 170,
+      manholes: [[0.22, -0.6], [0.58, 0.9]], drains: [[0.34, 1], [0.7, -1]],
+      cracks: [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]], patch: 0.4,
+    });
   }
 
   // === Houses — 8 of them, placed on either side of the road ===
@@ -11847,7 +11867,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   for (let i = 0; i < 16; i++) {
     const x = -40 + i * 6 + rng(-1.2, 1.2);
     // Sit on the far (lower) bank level via baseY so trunk AND canopy drop together.
-    addSuburbanTree(scene, x, 66 + rng(-2, 2), { leafR: rng(2.2, 3.0), trunkH: rng(4.0, 5.6), baseY: riverY });
+    addSuburbanTree(scene, x, 66 + rng(-2, 2), { leafR: rng(2.2, 3.0), trunkH: rng(4.0, 5.6), baseY: riverY, detail: true });   // v1.125
     // (We don't push these to obstacles — they're unreachable backdrop.)
   }
 
@@ -11920,42 +11940,17 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   }
   const roadCenterline = [];
   for (let i = 0; i <= 36; i++) roadCenterline.push(roadPoint(i / 36));
-  // v1.24a: denser, slope-aligned pavement. Each circle is TILTED onto the
-  // terrain normal (layOnSlope) so it lies flat against the hill instead of
-  // staying horizontal — a horizontal disc only touches the slope at its center
-  // and reads as a thin sliver / gap edge-on. More samples → guaranteed overlap.
-  const roadFine = [];
-  for (let i = 0; i <= 72; i++) roadFine.push(roadPoint(i / 72));
-  for (const p of roadFine) {
-    const segment = new THREE.Mesh(new THREE.CircleGeometry(3.6, 16), roadMat);
-    layOnSlope(segment, p.x, p.z, 0.04);
-    segment.receiveShadow = true;
-    scene.add(segment);
-  }
-  // Cul-de-sac bulb at the EAST end. v1.24a: the bulb sits in a basin dimple, so
-  // a single flat disc would clip. Tile it with overlapping slope-aligned discs.
-  const BULB = { x: 34, z: 2, r: 6.5 };
-  {
-    // center disc + two rings of smaller discs covering the bulb radius
-    const lay = (cx, cz, r) => {
-      const d = new THREE.Mesh(new THREE.CircleGeometry(r, 16), roadMat);
-      layOnSlope(d, cx, cz, 0.05);
-      d.receiveShadow = true;
-      scene.add(d);
+  // v1.127 (backlog D.3 step 4): the 73 overlapping asphalt discs down the lane and the 19 tiling the bulb (v1.24a) are
+  // gone; buildStreetRoad lays Winnmark's ribbon, bulb, gutter and rolled kerb along the S-curve instead (built below,
+  // once houseCenters exists for the driveway drops). roadCenterline is unchanged, so placements and the AI are too.
+  const roadDeriv = (t) => {
+    const mt = 1 - t;
+    return {
+      x: 3*mt*mt*(RC1.x - RA.x) + 6*mt*t*(RC2.x - RC1.x) + 3*t*t*(RB.x - RC2.x),
+      z: 3*mt*mt*(RC1.z - RA.z) + 6*mt*t*(RC2.z - RC1.z) + 3*t*t*(RB.z - RC2.z),
     };
-    lay(BULB.x, BULB.z, 3.0);
-    for (let ring = 1; ring <= 2; ring++) {
-      const rr = ring * 2.6;
-      const n = 6 * ring;
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + ring * 0.4;
-        const cx = BULB.x + Math.cos(a) * rr;
-        const cz = BULB.z + Math.sin(a) * rr;
-        if (Math.hypot(cx - BULB.x, cz - BULB.z) > BULB.r + 0.5) continue;
-        lay(cx, cz, 2.4);
-      }
-    }
-  }
+  };
+  const BULB = { x: 34, z: 2, r: 6.5 };
 
   // === Houses — 7, irregular placement (not tidy rows) ===
   // French-eclectic stucco+stone palette: cream/tan stucco bodies, warm brown
@@ -11997,7 +11992,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const obs = buildSuburbanHouse(scene, {
       x: hd.x, z: hd.z, width: hd.w, depth: hd.d,
       brickColor: brick, roofColor: roof, trimColor: 0xeae0d0,
-      faceDir: hd.faceDir, skirt: skirtDepth,
+      faceDir: hd.faceDir, skirt: skirtDepth, detail: true,   // v1.125: Winnmark's house (D.3 step 4)
     });
     houseObs.push(obs);
     houseCenters.push({ x: hd.x, z: hd.z, side: hd.side, hero: !!hd.hero });
@@ -12045,6 +12040,14 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       scene.add(rail);
     }
   }
+
+  // v1.127: the road, the bulb and the kerbs (Winnmark's builder; the hero house's drive drops the bulb's kerb)
+  buildStreetRoad(scene, {
+    point: roadPoint, deriv: roadDeriv, groundY, groundNormal, asphMat: roadMat, houseCenters,
+    ASPH: 3.45, bulb: { x: BULB.x, z: BULB.z, r: BULB.r }, T0: -0.06, NS: 190,
+    manholes: [[0.18, 0.7], [0.62, -0.8]], drains: [[0.3, -1], [0.55, 1], [0.83, -1]],
+    cracks: [[0.09, 5.2, 0.4], [0.42, 6.0, -0.3], [0.74, 5.0, 0.25]], patch: 0.5,
+  });
 
   // === Driveways — pale concrete pad from lane to each house front ===
   const drivewayMat = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.95 });
@@ -12156,14 +12159,14 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (!skipFn || !skipFn(bx, bz)) {
         const tx = bx + rng(-0.5, 0.5), tz = bz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, tx, tz,
-          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(tx, tz) }));
+          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(tx, tz), detail: true }));   // v1.125
       }
       const sx = bx + ux * (spacing / 2) + px * (opts.outwardSign ?? 1) * rowGap;
       const sz = bz + uz * (spacing / 2) + pz * (opts.outwardSign ?? 1) * rowGap;
       if (!skipFn || !skipFn(sx, sz)) {
         const jx = sx + rng(-0.5, 0.5), jz = sz + rng(-0.5, 0.5);
         treeObs.push(addSuburbanTree(scene, jx, jz,
-          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(jx, jz) }));
+          { leafR: rng(2.0, 2.8), trunkH: rng(3.4, 5.0), baseY: groundY(jx, jz), detail: true }));   // v1.125
       }
     }
   }
@@ -12199,20 +12202,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (x > h.minX - 2 && x < h.maxX + 2 && z > h.minZ - 2 && z < h.maxZ + 2) { inHouse = true; break; }
     }
     if (inHouse) continue;
-    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z) }));
+    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z), detail: true }));   // v1.125
   }
 
   // Front-yard ornamentals + foundation bushes (lots of plantings in the photos).
   for (const hc of houseCenters) {
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const frontZ = hc.z + towardRoad * 4.0;
-    bushObs.push(addBush(scene, hc.x - 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.8, frontZ)));
-    bushObs.push(addBush(scene, hc.x + 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.8, frontZ)));
+    bushObs.push(addBush(scene, hc.x - 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.8, frontZ), { detail: true }));   // v1.125
+    bushObs.push(addBush(scene, hc.x + 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.8, frontZ), { detail: true }));
     if (Math.random() < 0.6) {
       const off = hc.side === 'north' ? +6 : -6;
       const ox = hc.x + rng(-4, 4), oz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, ox, oz,
-        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(ox, oz) }));
+        { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(ox, oz), detail: true }));   // v1.125
     }
   }
 
@@ -12266,8 +12269,8 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const binBaseX = hc.x + (Math.random() < 0.5 ? 1.6 : -1.6);
     const facing = hc.side === 'north' ? Math.PI : 0;
     const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
-    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing }), binBaseX - 0.4, binZ));
-    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing }), binBaseX + 0.4, binZ));
+    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ));
+    curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ));
   }
 
   // Backyard cover — same mix as Winnmark (boxes / bins / plywood). AI uses these.
@@ -12285,21 +12288,15 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const cgy = groundY(cx, cz);
       if (kind < 0.4) {
         const w = rng(0.9, 1.3), h = rng(0.85, 1.1), d = rng(0.85, 1.1);
-        cobj = addHomeDepotBox(scene, cx, cz, { w, h, d, facing: rng(-Math.PI, Math.PI) });
+        cobj = addHomeDepotBox(scene, cx, cz, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else if (kind < 0.75) {
         const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
         const tipped = Math.random() < 0.15;
-        cobj = addCurbsideBin(scene, cx, cz, { variant, tipped, facing: rng(-Math.PI, Math.PI) });
+        cobj = addCurbsideBin(scene, cx, cz, { variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else {
-        const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
-        const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.9), plyMat);
-        stack.position.set(cx, cgy + 0.25, cz);
-        stack.castShadow = stack.receiveShadow = true;
+        // v1.125: Winnmark's plywood stack (sheets on sleepers, a lawn chair on top), was one slab and a flat box
+        const stack = buildPlyStack(cx, cgy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
         scene.add(stack);
-        const chairMat = new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.85 });
-        const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.1), chairMat);
-        chair.position.set(cx + 0.1, cgy + 0.55, cz); chair.rotation.z = 0.2; chair.castShadow = true;
-        scene.add(chair);
         cobj = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, mesh: stack, surface: 'hard', baseY: cgy };
       }
       // Box/bin variants are group-based → sink via helper (plywood already placed).
@@ -12364,16 +12361,16 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // === Cul-de-sac bulb cover (always built — general-purpose battlefield cover) ===
   // Two parked cars + a plank fort make the EAST bulb the natural focal point.
   {
-    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal }), BULB.x + 1, BULB.z - 3.5);
+    const carObs = sinkObs(addCar(scene, BULB.x + 1, BULB.z - 3.5, { orientation: 0, color: 0x6a8aa8, groundNormalFn: groundNormal, detail: true }), BULB.x + 1, BULB.z - 3.5);
     pushCarObs(coverList, carObs);
-    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal }), BULB.x + 3.5, BULB.z + 3);
+    const carObs2 = sinkObs(addCar(scene, BULB.x + 3.5, BULB.z + 3, { orientation: 0.2, color: 0x8a4030, groundNormalFn: groundNormal, detail: true }), BULB.x + 3.5, BULB.z + 3);
     pushCarObs(coverList, carObs2);
     // v1.23: U-shaped plywood kid-fort. Attackers push up the lane from the
     // WEST (entry x=-38), so the fort sits on the WEST side of the bulb with its
     // solid back wall facing WEST toward the incoming push. (Was a thin plank at
     // BULB.x+5 — EAST of the bulb, i.e. behind the defenders, facing away.)
     const fortX = BULB.x - 4, fortZ = BULB.z;
-    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2 });  // v1.76: taller walls + corner bins
+    const fortWalls = buildKidFort(scene, fortX, fortZ, { faceDir: 'W', width: 3.6, depth: 2.2, detail: true });  // v1.76: taller walls + corner bins; v1.125: the built-up fort
     // v1.8: the three walls share ONE group mesh — lift it once, tag baseY on each.
     // v1.76: the corner bins each have their OWN mesh group, so lift those
     // individually (the shared-group lift below only moves the walls).
@@ -12419,13 +12416,13 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const sgy = groundY(cxp, czp);
       if (kind < 0.30) {
         const carColor = carColors[Math.floor(Math.random() * carColors.length)];
-        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal });
+        cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true });   // v1.125
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
-        cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI) });
+        cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });
       } else if (kind < 0.85) {
         const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI) });
+        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true });
       } else {
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
         const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 0.9), plyMat);
@@ -12781,7 +12778,7 @@ function buildHollowScene(variant, timeOfDay) {
         shape: fsh, leafR: rng(2.2, 3.4), trunkH: rng(3.8, 6.5),
         leafColor: fsh === 'pine' ? (Math.random() < 0.5 ? 0x254526 : 0x2c5230)
                                   : (Math.random() < 0.5 ? 0x34521f : 0x3e5e26),
-        baseY: RIVER_Y + 1.0,
+        baseY: RIVER_Y + 1.0, detail: true,   // v1.126: the round ones are Winnmark's low-poly tree
       });
       // (intentionally NOT pushed to treeObs — unreachable backdrop)
     }
@@ -12815,7 +12812,7 @@ function buildHollowScene(variant, timeOfDay) {
       shape: sh, trunkH, leafR,
       trunkR: tall ? rng(0.36, 0.5) : rng(0.26, 0.36),
       leafColor: sh === 'pine' ? pineColor() : leafColorDecid(),
-      baseY: groundY(x, z),
+      baseY: groundY(x, z), detail: true,   // v1.126: round trees are Winnmark's low-poly tree; pines stay
     });
   }
   function treeRow(x1, z1, x2, z2, count, jitter, sizeBias) {
@@ -13318,7 +13315,10 @@ function buildHollowScene(variant, timeOfDay) {
   const playerSpawns = {
     // v1.109: yaw 0 faces -z; these two were swapped, so a team_b start looked at the south fort's back wall
     team_a:  { pos: P(-2, -28), yaw: Math.PI },     // in the north fort, facing south (+z)
-    team_b:  { pos: P(2, 28),   yaw: 0 },           // in the south fort, facing north (-z)
+    // v1.124: (2, 28) stood in the south fort's front doorway (port x 0.6–3.4, wall z 27), in the sniper's line from
+    // the north fort (a_fort, -2, -27). The back-left of the fort, under the roof, puts the front wall's inner post
+    // (x 0–0.6) on that line and still looks out through the port.
+    team_b:  { pos: P(0.5, 32.3), yaw: 0 },         // in the south fort, facing north (-z)
     midfield:{ pos: P(0, 0),    yaw: 0 },
   };
 
@@ -13479,7 +13479,7 @@ function buildMarketLotScene(variant, timeOfDay) {
       const orient = (row.z < zc ? -1 : 1) * (Math.PI / 2) + (rnd() - 0.5) * 0.08;
       const cx = x + (rnd() - 0.5) * 0.3, cz = row.z + (rnd() - 0.5) * 0.2;
       const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
-      const carObs = addCar(scene, cx, cz, { orientation: orient, color });
+      const carObs = addCar(scene, cx, cz, { orientation: orient, color, detail: true });   // v1.126: Winnmark's car (D.3 step 4)
       const seated = carSeatY(carObs, groundY);
       carObs.mesh.position.y += seated;
       resolveObox(carObs); resolveObox(carObs._stacked);
@@ -13512,11 +13512,11 @@ function buildMarketLotScene(variant, timeOfDay) {
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
     for (const tx of [-18.9, 18.9, -35.2, 35.2]) {
       island(tx, rz, 2.4, 7.4);
-      treeObs.push(addSuburbanTree(scene, tx, rz, { trunkH: 2.6, leafR: 1.7, baseY: 0.15 }));
+      treeObs.push(addSuburbanTree(scene, tx, rz, { trunkH: 2.6, leafR: 1.7, baseY: 0.15, detail: true }));   // v1.126
     }
   }
   // South verge trees, past the last aisle.
-  for (const tx of [-30, -16, 16, 30]) treeObs.push(addSuburbanTree(scene, tx, 27.5, { baseY: 0 }));
+  for (const tx of [-30, -16, 16, 30]) treeObs.push(addSuburbanTree(scene, tx, 27.5, { baseY: 0, detail: true }));   // v1.126
 
   // === CART CORRALS and strays — metal rails you can crouch behind ===
   const railMat = new THREE.MeshStandardMaterial({ color: 0x8a9096, roughness: 0.4, metalness: 0.7 });
@@ -17559,18 +17559,20 @@ function closeMap() {
 }
 
 // === SHOP === (v1.26 rework: tabs + gun drill-in + equipment)
-// Tabs: BBs · Loadout · Guns · Accessories · Equipment
+// Tabs: Guns · Ammo · Gear · Mods (v1.128, backlog D.5 B, Michael: A — four tabs by what it's for; was BBs · Loadout ·
+// Guns · Accessories · Equipment). Ammo is the BB packs, speed loaders and BB colours; Gear the Belt & Holster, eyewear,
+// armour and shoes; Mods the sights, lasers and flashlight. The rows, prices and look are unchanged; only where they sit.
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
-const SHOP_TABS = ['BBs', 'Loadout', 'Guns', 'Accessories', 'Equipment'];
-let shopState = { activeTab: 'BBs', view: 'list', detailGun: null, flash: null };
+const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods'];
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
   Game.prevMode = Game.mode;
   Game.mode = 'shop';
   exitPointerLock();
-  if (!SHOP_TABS.includes(shopState.activeTab)) shopState.activeTab = 'BBs';
+  if (!SHOP_TABS.includes(shopState.activeTab)) shopState.activeTab = SHOP_TABS[0];
   shopState.view = 'list';
   shopState.detailGun = null;
   renderShop();
@@ -18041,11 +18043,10 @@ function renderShop() {
   // Route to the right renderer.
   if (shopState.view === 'gun' && shopState.detailGun) { renderGunDetail(c, shopState.detailGun); return; }
   switch (shopState.activeTab) {
-    case 'BBs':         renderBBsTab(c); break;
-    case 'Loadout':     renderCatalogTab(c, 'Loadout'); break;
-    case 'Guns':        renderGunsTab(c); break;
-    case 'Accessories': renderAccessoriesTab(c); break;
-    case 'Equipment':   renderEquipmentTab(c); break;
+    case 'Guns': renderGunsTab(c); break;
+    case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
+    case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
+    case 'Mods': renderAccessoriesTab(c); break;
   }
 }
 
@@ -18090,22 +18091,22 @@ function shopSectionHeader(text, sub) {
   return h;
 }
 
-function renderCatalogTab(c, category) {
-  // Loadout gets section headers to break up the long list (v1.26).
-  if (category === 'Loadout') {
-    const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
-    const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
-    // v1.106: the slot unlocks are a belt and a holster (D.5)
-    if (slots.length)   { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
-    if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
-    return;
-  }
-  SHOP_CATALOG.filter(x => x.category === category).forEach(i => c.appendChild(shopCatalogRow(i)));
+// v1.128: the old Loadout tab's two sections, now on Gear (belt & holster) and Ammo (speed loaders). The catalog
+// entries keep category 'Loadout' (their id and icon); only the tab they show on moved.
+function renderBeltAndHolster(c) {
+  // v1.106: the slot unlocks are a belt and a holster (D.5)
+  const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
+  if (slots.length) { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
+}
+function renderSpeedLoaders(c) {
+  const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
+  if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
 }
 
-function renderBBsTab(c) {
+function renderBBsTab(c, between) {
   c.appendChild(shopSectionHeader('Restock BBs', 'Adds to your home stash'));
   SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => c.appendChild(shopCatalogRow(i)));
+  if (between) between(c);   // v1.128: the Ammo tab puts the speed loaders between the packs and the colours
   // BB color picker
   c.appendChild(shopSectionHeader('BB Color', 'Cosmetic — tint the BBs you fire'));
   const grid = document.createElement('div');
@@ -18298,7 +18299,7 @@ function gunBlurb(gt) {
 }
 
 function renderAccessoriesTab(c) {
-  c.appendChild(shopSectionHeader('Gun Accessories',
+  c.appendChild(shopSectionHeader('Gun Mods',
     'Buy a copy per gun you want it on — each copy mounts on one gun at a time. Assign them at The Workbench (hall closet).'));
   for (const aid in ATTACHMENTS) {
     const a = ATTACHMENTS[aid];
@@ -22400,15 +22401,29 @@ function updateEnemies(dt) {
         // wedged on, so a tagger round a tree or along a low wall went nowhere.
         const sideCommitted = e._zSideT > 0;
         if (sideCommitted) e._zSideT -= zdt;
-        else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; }
-        else {
+        else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; e._zDetourOn = false; }
+        // v1.125 fix-up: while a fence detour is moving him, no slide: on Mitchell's
+        // backyard bin the straight step's slide (south) cancelled the detour's (north)
+        // to the millimetre, and he stood at the bin's west face for seconds at a time.
+        else if (!e._zDetourOn) {
           if (!collidesObstacles(nX, e.pos.z, kidRadius)) e.pos.x = nX;
           if (!collidesObstacles(e.pos.x, nZ, kidRadius)) e.pos.z = nZ;
         }
         if (e._zWedgeT > 0) e._zWedgeT -= zdt; else e._zWedges = 0;
         // Wall-follow when wedged (same idea as the advancing state).
         if (e._zDetourBan > 0) e._zDetourBan -= zdt;
-        if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+        // v1.125 fix-up: also wedged when he makes no NET progress. Boxed in by
+        // v1.125's backyard props, Mitchell slid ~0.02 m a step and was pushed
+        // back, every step just over zStuckD, so the wall-follow never ran.
+        // Over each 0.5 s window, under 0.3 m net (a free tagger covers ~1.7 m)
+        // counts as stuck for the next window.
+        e._zWin = (e._zWin || 0) + zdt;
+        if (!e._zAnchor) e._zAnchor = { x: bX, z: bZ };
+        if (e._zWin >= 0.5) {
+          e._zNetStuck = Math.hypot(e.pos.x - e._zAnchor.x, e.pos.z - e._zAnchor.z) < 0.3;
+          e._zAnchor.x = e.pos.x; e._zAnchor.z = e.pos.z; e._zWin = 0;
+        }
+        if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD || e._zNetStuck) {
           // v1.100: committed sidestep frames skip the straight step, so they
           // don't count toward the 0.5 s side flip (a blocked sidestep flips below).
           if (!sideCommitted) e._zStuck = (e._zStuck || 0) + zdt;
@@ -22427,11 +22442,16 @@ function updateEnemies(dt) {
             if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
             else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
             else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
-            if (Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD) {
+            // v1.125 fix-up: any real movement counts here. Sliding along a prop toward the
+            // waypoint moves only one component of the step (0.0197 m a sub-step for Mitchell),
+            // under zStuckD, and a detour that was getting him out was banned as failed.
+            e._zDetourOn = Math.hypot(e.pos.x - bX, e.pos.z - bZ) >= 0.005;
+            if (!e._zDetourOn) {
               e._zDetourFail = (e._zDetourFail || 0) + zdt;
               if (e._zDetourFail > 0.4) { e._zDetourBan = 1.5; e._zDetourFail = 0; e._zStuck = 0; }
             } else e._zDetourFail = 0;
           } else {
+          e._zDetourOn = false;
           let px = -zdzP / d, pz = zdxP / d;
           if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
           if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
@@ -23136,7 +23156,13 @@ function updateEnemies(dt) {
               (e.weapon === 'shotgun' || e.weapon === 'mp5' || e.weapon === 'ump' ||
                e.weapon === 'mac10' || e.weapon === 'pistol' || !e.weapon);
             const pushSatisfied = !wantsToPush || newDist <= ENGAGE_PUSH;
-            const commitEngage = losNow && newDist < ENGAGE_FAR && pushSatisfied &&
+            // v1.129 fix-up: moved on by held pulls (v1.122), he doesn't commit again until 1.5 m from the spot
+            // (or 4 s on). His eye line to the player is clear there but the muzzle's first 3 m are not, so
+            // he stopped at once and held again (Rebecca at her fort wall: 25 held a round, tests/hollow-held).
+            if (e._holdSpot) {
+              if ((Game.scenario.roundTime || 0) > e._holdSpot.until || Math.hypot(e.pos.x - e._holdSpot.x, e.pos.z - e._holdSpot.z) > 1.5) e._holdSpot = null;
+            }
+            const commitEngage = losNow && newDist < ENGAGE_FAR && pushSatisfied && !e._holdSpot &&
               (!usingBound || newDist < ENGAGE_NEAR);
             if (commitEngage) {
               e.homeCover = e._boundCover || null;   // hold at the cover we bounded to
@@ -23232,8 +23258,12 @@ function updateEnemies(dt) {
             if (eSpec.fireMode === 'auto') {
               const cycle = 60 / Math.max(1, eSpec.cyclicRPM);
               const burstLen = 4 + Math.floor(Math.random() * 4); // 4..7 follow-ups
+              // v1.129 fix-up: firing at the last-known spot (no line), the follow-ups go there too. They
+              // re-aimed at the live target behind the wall, so every burst after the first BB was held
+              // (Sean in the Hollow 3v3: 20–27 held a round from one spot, tests/hollow-held).
+              const burstAim = (e._hasLOSNow || !e._lastSeenPos) ? null : targetPos.clone();
               for (let k = 1; k <= burstLen; k++) {
-                e.pendingBurst.push({ dueIn: k * cycle });
+                e.pendingBurst.push(burstAim ? { dueIn: k * cycle, aim: burstAim, spread: 0.04 } : { dueIn: k * cycle });
               }
             }
           }
@@ -23389,6 +23419,8 @@ function updateEnemies(dt) {
               // Without this he stayed and pulled into the wall 28–39 times a round (tests/hollow-held).
               e.state = 'advancing';
               e.stateTime = 0;
+              // v1.129 fix-up: and he engages again only once he's off that spot (below).
+              e._holdSpot = { x: e.pos.x, z: e.pos.z, until: (Game.scenario.roundTime || 0) + 4 };
             }
           }
         }

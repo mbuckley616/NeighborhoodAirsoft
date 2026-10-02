@@ -5,6 +5,50 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Riverside Market free-for-all: how should the opening play? (builder, 2026-10-01)** The critic found Everybody
+  for Themselves decided in the second after the 2.5 s hold. Reproduced on v1.128: in 8 of 8 openings 3–4 of the 6 kids
+  are out by 3.8 s, Tyler first at 2.6 s, because the six starts stand on the lot's two side lines (x = ±34) in sight
+  of each other. I tried six starts beside parked cars, every one blocked from every other, 23 m apart: the opening
+  spreads out (first out 3.9–4.6 s, 1–2 out by 5 s, 1–2 by 15 s), but the kids then turn on you: standing at the
+  midfield start you are tagged at 4–7 s instead of 10–20 s, and two kids (Jamie, Brooke) never move or fire in 60 s,
+  so `tests/market-lot.test.mjs` fails. Not committed. Options:
+  A) Hidden starts as tried, and FFA kids go looking after the hold (a roam, so nobody camps); your start stays mid-lot.
+  B) Hidden starts, and your start goes behind a car at the lot's edge too, so you are one of seven hidden kids.
+  C) Keep today's starts and give free-for-alls a longer opening hold (about 6 s) so everyone can find cover first.
+  D) Leave it: the scramble at the start is the mode.
+  Builder recommends **B**, with A's roam if kids still camp: it makes the start fair for everyone, you included.
+
+- **D.3 step 4 is done: every map has Winnmark's pieces (builder, 2026-10-01).** Your A (carry Winnmark's pieces to
+  the other maps) is built: Bunratty's houses, cars, trees, props and fort (v1.125), the lot's cars and trees and the
+  Hollow's hardwoods (v1.126), and Bunratty's S-curve road with a gutter and kerb (v1.127). The Hollow's pines stay
+  the old three-cone pine. Collision is unchanged everywhere. Screenshots in `tests/out/` (bunratty-houses,
+  lot-cars, hollow-trees, bunratty-road); in game once Builder sessions is merged. Options:
+  A) D.3 is done; the builder moves on down the backlog.
+  B) One more piece first: a new low-poly pine for the Hollow, to match the hardwoods.
+  C) Change something on the other maps first (say what in a note).
+  Builder recommends **A**: your list (houses, cars, people, trees, roads) is covered on every map; the pine can wait
+  for a look in play.
+
+- **D.5 C, the Loadout screen with a 3D kid (builder, 2026-10-01).** Your note: the Loadout screen should show a
+  character model and what is equipped on each part of the body, with its own mesh for each item. Today it is three
+  text lists (slots 1–4, items you own, worn gear). The bathroom mirror already renders your kid turning in a panel.
+  Options:
+  A) Your kid turns in a panel on the Loadout screen, wearing what is equipped (eyewear, armour pieces, shoes, belt and
+     holster, the slot-1 gun in hand), each piece its own mesh, with a label from each body part to its item; the
+     lists stay beside it. Built in steps: the kid, gun and labels first, then the gear meshes a group at a time.
+  B) The kid and gun only, worn gear as labels on the body; no new gear meshes yet.
+  C) Hold C until you have played the new shop tabs (v1.128).
+  Builder recommends **A**, in steps, each shown to you like D.3.
+
+- **D.1, the next zone (builder, 2026-10-01).** The backlog says Northcliff comes next "when this item comes round
+  again", but the D.1 answer only chose the parking lot first; the order after it was the builder's recommendation,
+  not yours, and D.2 (online) waits until "the v2 zones are done". Options:
+  A) Northcliff / Martin's Landing next (houses on a hill above a creek).
+  B) A high school's grounds (made-up name, per your C on names): fields, bleachers, portables.
+  C) A country-club pool and golf course (made-up name).
+  D) No new zone for now; finish D.5 and the found-in-play bugs first.
+  Builder recommends **A**: it is another street, so it reuses every polished piece, and it was next on the list.
+
 ## Answered
 
 - **D.1 after Northcliff: another zone, or not yet? (builder, 2026-10-01)** Your A is built: Northcliff Trace (v1.130),
