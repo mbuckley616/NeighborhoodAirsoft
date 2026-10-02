@@ -98,7 +98,9 @@ Fable card on the control room and Michael starts it from there.
    would leave attackers standing under it; no climb prompt on screen yet. Next (Michael: A, kids climb, then a defend, and
    the prompt; control room, 2 Oct): ~~the climb prompt~~ — done, v1.142 ("W climb" at the foot, the three keys on the
    ladder, "S climb down" in the gap; `tests/ladder-prompt.test.mjs`). ~~Kids climb~~ — done, v1.143 (a kid whose target is up walks to the foot by a distance
-   field, climbs, fights from the floor, climbs down when the target leaves; `tests/kid-climb.test.mjs`).
+   field, climbs, fights from the floor, climbs down when the target leaves; `tests/kid-climb.test.mjs`). ~~The defend~~ — done, v1.144 (Hold the Treehouse, fourth in Northcliff: 90 s on the
+   platform while Haden and Connor climb after you and Evan shoots from the shed; `tests/treehouse-hold.test.mjs`).
+   D.7 A is complete pending Michael's playtest of the climb and the defend's balance.
 
 8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
    scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
