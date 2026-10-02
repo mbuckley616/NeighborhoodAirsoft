@@ -86,7 +86,19 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    gray; Shirt front: plain, stripe, pocket; saved, old saves get brown and plain).
 7. Towers / ladders / elevated structures. Climb a ladder / walk up a ramp to elevated ground; you can jump off, but
    with a penalty like zeroing out your stamina instead of fall damage. Good setups for NPCs in scenarios. They don't
-   need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)**
+   need to be overlaid on the existing maps; a note for future builds. (Michael, 2026-09-29) **(design)** — Michael: **A**,
+   a treehouse with a ladder on a small new map first (control room, 2 Oct). ~~The treehouse~~ — done, v1.138 (Stoneglen
+   Close, the twins' fenced backyard: a platform 2.6 m up an oak with a rail and a ladder; W at the foot climbs, S
+   climbs down, Space lets go; a drop of 1.5 m or more empties your stamina; Connor holds the platform in King of the
+   Treehouse, third in Northcliff; `tests/treehouse.test.mjs`). Kids cannot climb yet, so a defend on the platform
+   would leave attackers standing under it; no climb prompt on screen yet.
+
+8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
+   scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
+   updated in style. (Michael, 2026-10-02) **(design)**
+9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
+   https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
+   (Michael, 2026-10-02) **(design)**
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
