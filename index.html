@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.139</div>
+  <div class="version">v1.140</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13768,7 +13768,9 @@ function buildMarketLotScene(variant, timeOfDay) {
     team_b:  { pos: P(2, 23),  yaw: 0 },         // at the road side, facing the store (yaw 0 faces -z)
     team_a:  { pos: P(-2, -25), yaw: Math.PI },
     midfield:{ pos: P(0, 7.5), yaw: 0 },
-    ffa_edge:{ pos: P(34, -12), yaw: Math.PI / 2 },   // v1.134: behind the last car at the north row's east end, facing the lot
+    // v1.134: behind the last car at the north row's east end. v1.140: facing down the east aisle (+z, 40 m clear) along
+    // the row, not west into that car's windshield 0.9 m off (Found in play, critic v1.134)
+    ffa_edge:{ pos: P(34, -12), yaw: Math.PI },
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
