@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.142</div>
+  <div class="version">v1.143</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -14178,6 +14178,7 @@ function buildTreehouseYardScene(variant, timeOfDay) {
     minX: TH.x - 0.45, maxX: TH.x + 0.45, minZ: P0.maxZ - 0.2, maxZ: P0.maxZ + 1.0,
     x: TH.x, z: P0.maxZ + 0.6,             // where the climber hangs: on the yard side of the ladder
     top, edgeZ: P0.maxZ, dirZ: -1,          // stepping off at the top moves toward −z, onto the floor
+    perch: 'treehouse',                     // v1.143: the perch a kid who climbs it holds (kidLadderStep)
   }];
   // where a kid holding the platform may stand (the floor inside the rail, less a kid's radius)
   const perches = { treehouse: { y: top, minX: P0.minX + 0.45, maxX: P0.maxX - 0.45, minZ: P0.minZ + 0.45, maxZ: P0.maxZ - 0.45 } };
@@ -17270,6 +17271,7 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
+        if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -17448,6 +17450,7 @@ function enterScenario(scenarioId) {
   Game.scenario.bounds = built.bounds;
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
   Game.scenario.ladders = built.ladders || null;   // v1.138: climb zones (the treehouse ladder)
+  Game.scenario.perches = built.perches || null;   // v1.143: what a kid who climbs a ladder holds (kidLadderStep)
   Game.player.climbing = null;
   // v1.67: silence any whistles still attached to BBs from a prior run before we
   // drop the array, so no audio node is orphaned and left droning.
@@ -20023,7 +20026,10 @@ function scenarioGroundY(x, z) {
 }
 // v1.138: where a kid's feet are: the terrain, or the floor of the perch he holds (the treehouse platform)
 function kidGroundY(e) {
-  return e.perch ? e.perch.y : scenarioGroundY(e.pos.x, e.pos.z);
+  if (e._lad && e._lad.phase !== 'toFoot') return e._lad.y;   // v1.143: on a ladder, or walking to its top
+  const gY = scenarioGroundY(e.pos.x, e.pos.z);
+  if (e._dropY != null) return Math.max(gY, e._dropY);           // v1.143: a tagged climber dropping to the grass
+  return e.perch ? e.perch.y : gY;
 }
 
 // v1.53: shared obstacle-shape helpers. Round props (trees, poles, cans,
@@ -23204,6 +23210,180 @@ function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
   }
 }
 
+// v1.143 (backlog D.7, Michael: A): KIDS CLIMB LADDERS. A kid whose target is up on a ladder's perch (the
+// treehouse platform), or on the ladder, walks to its foot and climbs; at the top he steps onto the floor and
+// holds it as a perched kid (e.perch, v1.138), fighting with the usual states. When his target has been down
+// for KID_LADDER_DOWN_SEC he walks back to the gap and climbs down. One kid on a ladder at a time; the next waits
+// at the foot. A kid placed on a perch by the scenario (Connor) never leaves it; `climb: false` keeps a kid down.
+// Tagged on the ladder, or (in a defend) on the platform he climbed, he drops to the grass and runs back.
+const KID_CLIMB_SPEED = 1.5;       // m/s (the player climbs at 1.7)
+const KID_LADDER_DOWN_SEC = 2.0;
+function ladderPerch(L) { return (L.perch && Game.scenario.perches) ? Game.scenario.perches[L.perch] || null : null; }
+// is t (a target view or a combatant) up there: on the perch's floor, or on its ladder?
+function onLadderPerch(t, L) {
+  if (!t || !t.pos) return false;
+  const P = ladderPerch(L);
+  if (!P) return false;
+  if (t === Game.player || t.ref === Game.player || t.isPlayer) { if (Game.player.climbing === L) return true; }
+  return t.pos.y >= P.y - 0.4 && t.pos.x >= P.minX - 1 && t.pos.x <= P.maxX + 1 && t.pos.z >= P.minZ - 1 && t.pos.z <= P.maxZ + 1;
+}
+// The walk to a ladder's foot: a distance field over the scenario's bounds in 0.5 m cells, built once per ladder by
+// a breadth-first fill from the foot through cells a kid fits in. A kid steps toward the lowest neighbouring cell,
+// so he finds the way out of a fort or round the oak that a straight push would wedge on.
+const LADDER_CELL = 0.5;
+function ladderField(L) {
+  if (L._field) return L._field;
+  const b = Game.scenario.bounds || { minX: -40, maxX: 40, minZ: -40, maxZ: 40 }, c = LADDER_CELL;
+  const nx = Math.ceil((b.maxX - b.minX) / c) + 1, nz = Math.ceil((b.maxZ - b.minZ) / c) + 1;
+  const dist = new Float32Array(nx * nz).fill(Infinity), free = new Uint8Array(nx * nz);
+  for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) free[i * nz + k] = collidesObstacles(b.minX + i * c, b.minZ + k * c, 0.33) ? 0 : 1;
+  const fi = Math.round((L.x - b.minX) / c), fk = Math.round((L.z - b.minZ) / c);
+  const q = [fi * nz + fk]; dist[q[0]] = 0; free[q[0]] = 1;
+  for (let h = 0; h < q.length; h++) {
+    const cur = q[h], i = (cur / nz) | 0, k = cur % nz;
+    for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
+      if (!di && !dk) continue;
+      const ii = i + di, kk = k + dk;
+      if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+      const n = ii * nz + kk;
+      if (!free[n] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;   // no cutting a corner
+      const nd = dist[cur] + (di && dk ? 1.414 : 1);
+      if (nd < dist[n]) { dist[n] = nd; q.push(n); }
+    }
+  }
+  return (L._field = { b, nx, nz, dist });
+}
+// the point to walk toward from (x, z): the centre of the nearest-to-the-foot cell around his own
+function ladderFieldNext(L, x, z) {
+  const F = ladderField(L), c = LADDER_CELL;
+  const i0 = Math.round((x - F.b.minX) / c), k0 = Math.round((z - F.b.minZ) / c);
+  let best = null, bd = Infinity;
+  for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
+    const i = i0 + di, k = k0 + dk;
+    if (i < 0 || k < 0 || i >= F.nx || k >= F.nz) continue;
+    const d = F.dist[i * F.nz + k];
+    if (d < bd) { bd = d; best = { x: F.b.minX + i * c, z: F.b.minZ + k * c }; }
+  }
+  return best;
+}
+function kidLadderFall(e, dt) {
+  // a kid tagged on the ladder, or tagged in a defend up on the platform he climbed, lets go and drops
+  if ((e.health <= 0 || e.state === 'retreating') && (e._lad || e._climbed)) {
+    const L = e._lad ? e._lad.L : e._climbed;
+    const y0 = e._lad ? e._lad.y : (e.perch ? e.perch.y : 0);
+    // off the ladder he drops straight down; off the platform, over its edge by the ladder
+    if (!e._lad && e.state === 'retreating') { e.pos.x = L.x; e.pos.z = L.z; }
+    if (e._lad || e.state === 'retreating') {
+      e._lad = null; e._climbed = null; e.perch = null;
+      e._dropY = y0; e._dropV = 0;
+    }
+  }
+  if (e._dropY != null) {
+    e._dropV += 9.8 * dt; e._dropY -= e._dropV * dt;
+    if (e._dropY <= scenarioGroundY(e.pos.x, e.pos.z)) { e._dropY = null; e._dropV = 0; }
+  }
+}
+function kidLadderStep(e, tgt, dt) {
+  if (e.noClimb || e.noFire || (e.perch && !e._climbed) || e.state === 'retreating' || e._dropY != null) return false;
+  const lad = e._lad;
+  if (!lad) {
+    if (e._ladBan > 0) { e._ladBan -= dt; return false; }
+    if (e._climbed) {
+      // up there: climb down once his target has been off the platform a while
+      if (onLadderPerch(tgt, e._climbed)) { e._ladDownT = 0; return false; }
+      e._ladDownT = (e._ladDownT || 0) + dt;
+      if (e._ladDownT < KID_LADDER_DOWN_SEC) return false;
+      e._lad = { L: e._climbed, phase: 'toGap', y: e.perch.y, t: 0 };
+    } else {
+      const L = (Game.scenario.ladders || []).find(L => onLadderPerch(tgt, L));
+      if (!L) return false;
+      e._lad = { L, phase: 'toFoot', y: 0, t: 0, stuck: 0, side: 0, sideT: 0, away: 0 };
+    }
+  }
+  const s = e._lad, L = s.L, ch = e.character || {};
+  s.t += dt;
+  let walking = false, faceYaw = null;
+  const otherOnLadder = () => Game.scenario.enemies.some(o => o !== e && o.health > 0 && o._lad && o._lad.L === L && (o._lad.phase === 'up' || o._lad.phase === 'down'));
+  if (s.phase === 'toFoot') {
+    // give up when his target has come down (the states take him back), or after 12 s without reaching the foot
+    if (!onLadderPerch(tgt, L)) { s.away += dt; if (s.away > 1.0) { e._lad = null; return false; } } else s.away = 0;
+    if (s.t > 12) { e._lad = null; e._ladBan = 4; return false; }
+    const dx = L.x - e.pos.x, dz = L.z - e.pos.z, d = Math.hypot(dx, dz);
+    if (d < 0.2) {
+      if (otherOnLadder()) { faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0); }
+      else { e.pos.x = L.x; e.pos.z = L.z; s.phase = 'up'; s.y = scenarioGroundY(L.x, L.z); }
+    } else {
+      const sp = Math.min(d, 2.6 * (ch.moveSpeed ?? 1.0) * dt), r = 0.33;
+      const bx = e.pos.x, bz = e.pos.z;
+      let ux = dx / d, uz = dz / d;
+      if (d > 1.2) {   // far from the foot: follow the field (near it, straight in)
+        const w = ladderFieldNext(L, e.pos.x, e.pos.z);
+        if (w) { const wx = w.x - e.pos.x, wz = w.z - e.pos.z, wl = Math.hypot(wx, wz); if (wl > 0.05) { ux = wx / wl; uz = wz / wl; } }
+      }
+      if (s.sideT > 0) { s.sideT -= dt; const t = ux; ux = -uz * s.side; uz = t * s.side; }
+      const nx = e.pos.x + ux * sp, nz = e.pos.z + uz * sp;
+      if (!collidesObstacles(nx, nz, r)) { e.pos.x = nx; e.pos.z = nz; }
+      else {
+        if (!collidesObstacles(nx, e.pos.z, r)) e.pos.x = nx;
+        if (!collidesObstacles(e.pos.x, nz, r)) e.pos.z = nz;
+      }
+      const m = Math.hypot(e.pos.x - bx, e.pos.z - bz);
+      s.stuck = (m < sp * 0.3) ? s.stuck + dt : 0;
+      if (s.stuck > 0.4) { s.side = s.side ? -s.side : (Math.random() < 0.5 ? -1 : 1); s.sideT = 0.7; s.stuck = 0; }
+      walking = m > 1e-4;
+      faceYaw = Math.atan2(ux, uz);
+    }
+    s.y = scenarioGroundY(e.pos.x, e.pos.z);
+  } else if (s.phase === 'up') {
+    s.y += KID_CLIMB_SPEED * dt; walking = true;
+    faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0);
+    const P = ladderPerch(L);
+    if (s.y >= L.top) {
+      // over the top: onto the floor, clear of the gap; from here the states fight from the perch
+      e._lad = null; e._climbed = L; e.perch = P; e._ladDownT = 0;
+      e.pos.x = Math.max(P.minX, Math.min(P.maxX, L.x)); e.pos.z = Math.max(P.minZ, Math.min(P.maxZ, L.edgeZ + L.dirZ * 0.6));
+      e.pos.y = P.y;
+      e.state = 'shooting'; e.stateTime = 0; e.targetPos = null; e.homeCover = null;
+      return false;
+    }
+  } else if (s.phase === 'toGap') {
+    // on the floor, to the gap over the ladder, then down
+    if (onLadderPerch(tgt, L)) { e._lad = null; e._ladDownT = 0; return false; }
+    const gx = L.x, gz = L.edgeZ + L.dirZ * 0.5, dx = gx - e.pos.x, dz = gz - e.pos.z, d = Math.hypot(dx, dz);
+    if (d < 0.15) {
+      if (otherOnLadder()) faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0);
+      else { e.perch = null; e._climbed = null; e.pos.x = L.x; e.pos.z = L.z; s.phase = 'down'; s.y = L.top; }
+    } else {
+      const sp = Math.min(d, 2.0 * dt);
+      e.pos.x += dx / d * sp; e.pos.z += dz / d * sp; walking = true; faceYaw = Math.atan2(dx, dz);
+    }
+  } else if (s.phase === 'down') {
+    s.y -= KID_CLIMB_SPEED * dt; walking = true;
+    faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0);
+    const gY = scenarioGroundY(e.pos.x, e.pos.z);
+    if (s.y <= gY) {
+      e._lad = null; e.pos.y = gY;
+      e.state = 'advancing'; e.stateTime = 0; e.targetPos = null; e.homeCover = null;
+      return false;
+    }
+  }
+  // he is moved here, not by the states: place and pose him as the loop's end would
+  e.pos.y = kidGroundY(e);
+  if (faceYaw != null) { e.yaw = faceYaw; e.mesh.group.rotation.y = faceYaw; }
+  e.mesh.group.position.set(e.pos.x, e.pos.y, e.pos.z);
+  e.mesh.group.rotation.z = 0;
+  setKidCrouch(e.mesh, 0);
+  setKidGunHold(e.mesh, e.weapon, 0, 0);
+  e._walkPhase = (e._walkPhase || 0) + (walking ? dt * 8.0 : 0);
+  setKidWalk(e.mesh, e._walkPhase, walking ? 0.8 : 0);
+  if (e.mesh._laserUnit && e.mesh._laserUnit.userData) {
+    const lu = e.mesh._laserUnit.userData;
+    if (lu.beam) lu.beam.visible = false;
+    if (lu.dot) lu.dot.visible = false;
+  }
+  return true;
+}
+
 function updateEnemies(dt) {
   // v1.121: a clock for the kids' progress windows (scenario time, counted here)
   Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
@@ -23246,6 +23426,7 @@ function updateEnemies(dt) {
       e._hitRaise = Math.min(1, (e._hitRaise || 0) + dt * 4);
       setKidHitPose(e.mesh, e._hitRaise);
       e.mesh.group.rotation.z = 0;
+      kidLadderFall(e, dt);   // v1.143: tagged on the ladder or the platform he climbed: he drops to the grass
       e.mesh.group.position.y = kidGroundY(e);
       // v1.77: a downed kid's laser is no longer re-aimed (we `continue` below,
       // skipping updateKidLaser). The hit pose pitches the gun ~90° skyward, and
@@ -23323,6 +23504,11 @@ function updateEnemies(dt) {
     // spawned in the dirt and dribbled forward. Planting pos.y early fixes the
     // shot origin for every state's spawnEnemyBB call this frame.
     e.pos.y = kidGroundY(e);
+
+    // v1.143 (backlog D.7, Michael: A): LADDERS. With his target up on a perch (the treehouse), a kid walks to the
+    // ladder and climbs it; this moves him instead of the states below, which never see the ladder.
+    kidLadderFall(e, dt);
+    if (Game.scenario.ladders && e.behavior !== 'tagger' && kidLadderStep(e, tgt, dt)) continue;
 
     // === v1.25 ZOMBIE MODE — tagger chase (no guns, tag-on-contact) ===
     // Taggers ignore the entire gun state machine: they just chase the player at

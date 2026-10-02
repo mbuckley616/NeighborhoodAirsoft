@@ -7020,3 +7020,45 @@ prompt follows the rule `updateLadder` climbs on, so it never offers a climb tha
   under that load. It passed on its own re-run (below).
 ### Still open
 - Whether the box at 60% of the screen height sits well over the ladder view. The box is the bedroom's own.
+
+## v1.143 — Kids climb the treehouse ladder
+This is D.7 A's second piece. Before it, a kid whose target stood on the Stoneglen platform pushed toward the player's
+x and z, which put him under the platform with the floor between them. Only Connor, placed on the platform by the
+scenario, ever got up there.
+
+`kidLadderStep` now runs ahead of the state machine for any gun kid in a scenario with ladders. When his target is on
+a ladder's perch (the platform, within a metre of it) or on the ladder itself, he walks to the ladder's foot and climbs
+at 1.5 m/s (the player climbs at 1.7). At the top he steps onto the floor and becomes a perched kid (v1.138's
+`e.perch`), so he fights with the usual states, kept inside the rail. Once his target has been off the platform for
+2 s, he walks back to the gap and climbs down. The rules:
+- One kid on a ladder at a time; the next waits at the foot.
+- A kid placed on a perch by the scenario (Connor in King of the Treehouse) never leaves it.
+- A scenario can keep a kid on the ground with `climb: false`.
+- A kid tagged on the ladder lets go and falls to the grass under gravity.
+- In a defend, a kid tagged up on the platform he climbed drops off by the ladder and runs back to redeploy. The
+  game had no way down for him: the perch clamp held him on the floor while his retreat pulled him toward the patio.
+
+A straight push to the foot wedged Haden in his fort, whose east side is closed. He stood against the wall for the
+whole round. The walk now follows a distance field: a breadth-first fill from the foot over the scenario's bounds, in
+0.5 m cells a kid fits in, built once per ladder. He steps toward the lowest neighbouring cell until he is 1.2 m from
+the foot, then goes straight in.
+
+### Verified
+- `tests/kid-climb.test.mjs`, 13 checks:
+  - With the player on the platform, Haden leaves the fort and is up at 7.3 s in 3 of 3 rounds, never standing
+    still on the way. On the ladder his body rises from 0 to 2.6 m.
+  - Up there he stays on the floor (0 steps off) and fires 19–20 BBs. When the player drops to the far side of the
+    yard he is back on the grass at 4.3 s.
+  - From five other corners of the yard (behind the shed, the back fence, the patio, north of the oak, the west
+    bins) he is up in 5.1–10.1 s.
+  - Connor never leaves the platform. With the player at the side gate nobody heads for the ladder (10 s); with the
+    player on the ladder Haden does.
+  - Tagged 1.5 m up, he falls to the grass and stays there. `climb: false` keeps him down. Winnmark has no ladders,
+    and no kid there takes one.
+- `tests/treehouse.test.mjs` (v1.138) still passes: Connor holds the platform, and Haden walks and fires with the
+  player at the gate.
+- On this build: `kid-climb`, `treehouse`, `northcliff` and `ladder-prompt` all green. The full `npm test` ran on
+  v1.144, which carries this change unaltered (see there).
+### Still open
+- How a climb looks: the kid keeps his walk animation on the rungs, with no climbing pose.
+- A kid on the platform and the player standing on the same spot can overlap. Nothing pushes them apart up there.
