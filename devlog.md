@@ -6871,3 +6871,13 @@ How the pieces work:
 - In a fresh round with the player at the gate, Haden walks 17.8 m and fires 65 BBs in 60 s.
 - `tests/northcliff.test.mjs`: Northcliff's chain now lists the treehouse third. Its per-scenario loop (hill, kids,
   fire) keeps to Northcliff Trace's own scenarios; the treehouse has its own suite.
+- `npm test`: 45/45 suites green on the final build. The baseline before any change was 43/44 (the one failure was the
+  Northcliff suite looping over the new map halfway through the run, fixed above).
+### Still open
+- Only a real playtest can judge the climb's feel: 1.7 m/s, the step off at the top, and backing down with S.
+  There is no prompt on screen at the ladder yet; the briefing says W climbs.
+- Kids cannot climb. A defend on the platform would leave attackers standing under it, where the floor stops both
+  sides' BBs, so this run built only the attack. Kids climbing, or a ramp, is the next question for D.7.
+- Two of the gunners' line-of-sight checks start 1.05 m above y = 0, not above the ground they stand on. The perch
+  now adds its height, but on sloped maps (Northcliff rises 4 m) a kid's sight line still starts low. Not changed
+  here; it would move AI on every hill.
