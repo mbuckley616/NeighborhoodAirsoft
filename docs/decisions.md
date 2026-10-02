@@ -19,7 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 - **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
   92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
-  you see one or two scenarios at a time. Five zones now hold 28 scenarios.
+  you see one or two scenarios at a time. Five zones now hold 52 scenarios (Winnmark alone has 16).
   A) Full-window two columns: the map on the left at full height, the chosen zone's scenarios as a scrolling list of
      cards on the right (name, type, lives, locked/done), same parchment style, map redrawn cleaner *(recommended)*
   B) Keep the map as a small header; below it, every zone's scenarios as tabbed card rows across the full width
