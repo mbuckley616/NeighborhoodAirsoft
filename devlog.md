@@ -6713,3 +6713,28 @@ so a target that moves no longer restarts the window.
 ### Still open
 - Whether Northcliff's west fort, open only to the west, reads as a trap for the kids who spawn behind it. Diego now
   backs out and goes round, but he spends a second or two finding the open side.
+
+## v1.135 — The Bunratty lane car: checked, not reproduced
+Found in play (builder, v1.126): `tests/cover-fire.test.mjs` failed once at 5.3% (limit 5%). In Bunratty Hold the
+Fort, a kid hiding at (18.7, 6.8) put 51 BBs within 1.6 m into the cabin box of the lane car at (20.9, 6.9).
+
+It does not happen on v1.134. The car is still there on every load, because the board is seeded per scenario, and
+its cabin box is at x 20.5–21.7, z 6.4–7.4. Eight rounds of Hold the Fort with the player untaggable gave 0 shots
+into anything within 1.6 m (2,227 BBs; 7 at 1.6–3 m, 0.31% within 3 m). Since the report needs a kid in one spot, I
+also fired `spawnEnemyBB` directly from Sean standing at four points beside the car. The targets went all round the
+east side, 5–30 m out and 1.5 m below to 3.5 m above him, with his yaw off the bearing by up to ±180° so the muzzle's
+side offset swings round. In 19,620 BBs, 9 hit something within 1.6 m (0.05%), and none came from a muzzle inside the
+box. The v1.93 clear line, with its v1.101 10 cm margin, lifts over the cabin or holds fire.
+
+The 5.3% was one round's 51 BBs. Something between v1.126 and v1.134 may have changed it, or it was a chance spot
+and target height the probes did not hit. No game code changed. The sweep is now a standing test, and it can fail:
+with the clear line switched off it puts 63 of 6,048 BBs into the car.
+### Verified
+- New `tests/car-side-fire.test.mjs`: the car is parked at (21.1, 6.9). 6,048 trigger pulls from the four spots,
+  5,978 BBs, 0 into anything within 1.6 m, 70 pulls held (1.2%). With the clear line off: 63 BBs into the car (1.04%),
+  and the suite fails.
+- `cover-fire` in the baseline run: 1.3% within 3 m, 0 within 1.6 m.
+- `npm test`: see v1.137 (one full run covers this run's three versions; tests only, no game change).
+### Still open
+- If cover-fire trips over 5% again, its log names the kid and spot; rerun the sweep with that spot and the target's
+  height.
