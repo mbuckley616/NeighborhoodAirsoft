@@ -22904,6 +22904,10 @@ function pickBoundCover(e, coverList, playerPos) {
   let best = null, bestScore = -Infinity;
   for (const c of coverList) {
     if (c === e._boundCover) continue;                  // not the one we're at
+    // v1.139 fix-up: nor, for 6 s, one dropped as failed (wedged, or no gain) on the way to it. After the 1.5 s rest
+    // he picked it again, slid back into the same wedge, and with the direct push between the two (each undoing the
+    // other) stood 3–4 s along one wall in 'advancing' (the lot at night: Mason at (−17.3, −14.2)).
+    if (c === e._boundBanCover && (Game.scenario.aiClock || 0) < (e._boundBanUntil || 0)) continue;
     // v1.103: nor any cover we're already at (its stand spot inside the 1.6 m
     // "reached" radius). Reaching a cover re-picks without it; with nothing else
     // worth a bound the pick came back null, and the next frame (no bound) picked
@@ -23899,7 +23903,7 @@ function updateEnemies(dt) {
               // Night Prowl's Seth stood on a tree in 'advancing' for 80+ s.
               if (Math.hypot(e.pos.x - bAX, e.pos.z - bAZ) < 0.02) {
                 e._boundStuck = (e._boundStuck || 0) + dt;
-                if (e._boundStuck > 0.6) { e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
+                if (e._boundStuck > 0.6) { e._boundBanCover = e._boundCover; e._boundBanUntil = (Game.scenario.aiClock || 0) + 6; e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
               } else e._boundStuck = 0;
               // v1.110: a slide along a bumper still moves a few cm a frame, so the check above never fired and the
               // lot's Priya crept 0.2 m/s along a car for 3–4 s in 'advancing'. Also drop the bound when a second
@@ -23907,7 +23911,7 @@ function updateEnemies(dt) {
               if (e._boundCover) {
                 const bdNow = Math.hypot(sp.x - e.pos.x, sp.z - e.pos.z);
                 if (e._boundFor !== e._boundCover || bdNow < e._boundBest - 0.3) { e._boundFor = e._boundCover; e._boundBest = bdNow; e._boundNoGain = 0; }
-                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
+                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundBanCover = e._boundCover; e._boundBanUntil = (Game.scenario.aiClock || 0) + 6; e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
               }
             }
           } else {

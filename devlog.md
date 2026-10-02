@@ -6943,3 +6943,27 @@ pointer lock. This is the same cause as the houses, jump and laser fix-ups. Both
 - The same CI run also failed `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s at (−4.1, −23.3). Locally,
   Mason reached 3 s in 1 of 10 rounds, shuttling north–south at x −17.3, with his sidestep timer not counting down.
   So that movement comes from a path other than the direct push my v1.134 fix-up covered. Under investigation.
+
+## v1.139 fix-up — a bound cover dropped as failed isn't picked again straight away
+CI failed Builder sessions on v1.139 in `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s. A probe
+traced which movement branch ran on each frame and caught him alternating along a wall at x −17.3:
+- About 1 s on the bound mover, heading for a cover's stand spot and wedging at (−17.27, −14.22). v1.99 drops a bound
+  wedged for 0.6 s and rests from bounding for 1.5 s.
+- About 1 s on the direct push, whose wall-follow took him back along the wall.
+
+When the rest ran out he picked the same cover again. Each mode undid the other, and neither ran long enough for
+v1.121's pocket back-out to fire.
+
+A cover dropped as failed, by v1.99's wedge or v1.110's no-gain rule, is now skipped by `pickBoundCover` for 6 s of
+scenario time. The direct push gets him round the wall before that cover can be picked again.
+
+### Verified
+- Probe, 40 rounds of `lot_night_4v4`: the longest stand-still in `advancing` is 2 s (before: 3 s in about 1 round in
+  10, and 4 s in CI).
+- `market-lot` 4 of 4 runs green. `npm test`: 45/46. The one failure is `market-lot`'s team 3v3 "both sides lose lives",
+  9–0 in 120 s. It is not from this change: the same check failed 1 of 4 runs on the build without it, also 9–0.
+
+### Still open
+- Lot team 3v3 one-sided rounds. In about 1 run in 4, one side's kids never leave their end (here enemy Marcus at his
+  start and Tyler still `deploying`). The other side's pusher picks them off, so nobody on his side loses a life in
+  120 s. The d7e44da CI failure was the mirror case, with allied Brooke at her start. Being investigated.
