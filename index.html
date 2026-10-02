@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.143</div>
+  <div class="version">v1.144</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6009,6 +6009,28 @@ const SCENARIOS = {
     ],
     winCondition: 'kill_all',
     rewards: { win: 70, lose: 16 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.144: hold the treehouse while the twins climb up after you (D.7, Michael: A) ---
+  stoneglen_hold_treehouse: {
+    region: 'northcliff', street: 'stoneglen_close',
+    name: 'Stoneglen Close', scenarioName: 'Hold the Treehouse',
+    desc: "This time the treehouse is yours, and the twins want it back. Haden and Connor come out of the house and climb the ladder after you, one at a time; a tagged twin drops off and walks back to the patio to come again. Evan stays down by the shed and shoots at anything above the rail. Keep low behind the plywood, watch the gap over the ladder, and don't let them over the top. Survive 90 seconds.",
+    builderFn: 'buildTreehouseYardScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the treehouse',
+    playerSpawn: 'treehouse',
+    enemySpawnCluster: 'cluster_patio',
+    enemySetup: [
+      { charId: 'haden',  weapon: 'ump',     anchor: 'boxes_w', role: 'attacker', flank: 'L' },
+      { charId: 'connor', weapon: 'shotgun', anchor: 'boxes_e', role: 'attacker', flank: 'R' },
+      { charId: 'evan',   weapon: 'mp5',     anchor: 'shed',    role: 'defender', climb: false },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 80, lose: 20 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -14231,6 +14253,7 @@ function buildTreehouseYardScene(variant, timeOfDay) {
     boxes_w: { pos: V(-5.2, 5.6), cover: boxW },
     back_fence: { pos: V(-4, -13), cover: null },
     cluster_back: { pos: V(2, -13), cover: null },
+    cluster_patio: { pos: V(2, 12.5), cover: null },   // v1.144: the twins come out of the house
   };
   const playerSpawns = {
     side_gate: { pos: V(-13, 14.4), yaw: -0.55 },                 // by the bins at the west side of the patio, facing up the yard toward the oak
@@ -25243,6 +25266,7 @@ const PIN_SCENARIO_GROUPS = {
     'northcliff_1v1_evan',
     'northcliff_twins_3v3',
     'stoneglen_treehouse',       // v1.138: the twins' backyard treehouse (D.7)
+    'stoneglen_hold_treehouse',  // v1.144: hold it while they climb (D.7)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],

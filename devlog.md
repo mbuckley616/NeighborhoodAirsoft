@@ -7062,3 +7062,26 @@ the foot, then goes straight in.
 ### Still open
 - How a climb looks: the kid keeps his walk animation on the rungs, with no climbing pose.
 - A kid on the platform and the player standing on the same spot can overlap. Nothing pushes them apart up there.
+
+## v1.144 — Hold the Treehouse
+This is D.7 A's third piece, the defend. **Hold the Treehouse** is Northcliff's fourth match, after King of the
+Treehouse. You start on the Stoneglen platform and hold it for 90 s:
+- Haden (UMP) and Connor (shotgun) come out of the house from the patio and climb the ladder after you, one at a time.
+- A tagged twin drops off and walks back to the patio to come again.
+- Evan (MP5) holds by the shed (`climb: false`) and shoots at anything above the rail.
+
+The briefing tells you to keep low behind the plywood and watch the gap over the ladder. The result lines name the
+treehouse.
+
+### Verified
+- `tests/treehouse-hold.test.mjs`, 11 checks. You start on the floor at 2.6 m. It is a 90 s defend, right after King
+  of the Treehouse. In 60 s with the player untaggable, every twin who had been up for 1.5 s was tagged (as you would).
+  The twins reached the platform at 8.6 and 10.3 s, then about every 15 s, 4 times each. Every tagged twin fell
+  2.6 m to the grass in 0.73 s. Evan never left the ground. He hit a standing player 35 times, and a crouched one
+  0 times. When the timer runs out you win ("Haden groans … You held the line.").
+- `tests/northcliff.test.mjs` now expects six Northcliff matches in order.
+- `npm test` (three suites at a time): 49/49 green.
+### Still open
+- The balance needs Michael's hands. With the twins arriving one at a time through a 1.2 m gap, the round may be easy
+  for a player who crouches and aims at the gap, or hard if a twin who steps off at close range shoots first.
+- Each twin's first trip from the patio to the top takes 8.6–10.3 s. That may leave the opening quiet.
