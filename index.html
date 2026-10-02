@@ -21237,13 +21237,26 @@ function spawnEnemyBB(enemy, targetPos) {
   const pelletCount = enemySpec.pelletsPerShot ? enemySpec.pelletsPerShot() : 1;
   const pelletSpreadBoost = pelletCount > 1 ? 1.6 : 1.0;
 
+  // v1.137 fix-up: the clear line (above) checks the aim line and 10 cm under it, but the spread drawn here can
+  // still swing a BB sideways into the near corner of what the kid is beside (tests/car-side-fire: 1 BB in 5978
+  // into the lane car's cabin). Each BB's own first metres are cast too: one that would hit something redraws its
+  // spread, and after four tries goes down the aim line, which the clear line has already passed.
+  const nearObs = Game.player && Game.player.obstacles;
+  const nearReach = Math.min(3.0, Math.hypot(targetPos.x - muzzlePos.x, targetPos.z - muzzlePos.z) - 0.3);
   for (let i = 0; i < pelletCount; i++) {
-    const dir = baseDir.clone();
-    const s = baseSpread * pelletSpreadBoost;
-    dir.x += (Math.random() - 0.5) * s;
-    dir.y += (Math.random() - 0.5) * (s * 0.6);
-    dir.z += (Math.random() - 0.5) * s;
-    dir.normalize();
+    let dir;
+    for (let tries = 0; ; tries++) {
+      if (tries >= 4) { dir = baseDir.clone(); break; }
+      dir = baseDir.clone();
+      const s = baseSpread * pelletSpreadBoost;
+      dir.x += (Math.random() - 0.5) * s;
+      dir.y += (Math.random() - 0.5) * (s * 0.6);
+      dir.z += (Math.random() - 0.5) * s;
+      dir.normalize();
+      if (!nearObs || !nearObs.length || nearReach <= 0.2) break;
+      const rr = nearReach / Math.max(0.05, Math.hypot(dir.x, dir.z));
+      if (raycastObstacles(muzzlePos.x, muzzlePos.y, muzzlePos.z, dir.x, dir.y, dir.z, rr, nearObs) >= rr) break;
+    }
     const vel = dir.multiplyScalar(enemySpec.muzzleVelocity * 0.9);
     const bb = makeBB(muzzlePos.clone(), vel, 'enemy', enemy, enemySpec, combatantView(enemy).team);
     // Ship C: record who this shot was aimed at, so that combatant can detect

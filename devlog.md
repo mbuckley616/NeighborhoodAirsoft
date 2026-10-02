@@ -6787,3 +6787,24 @@ early: no restart, or one only after the full 75 s. The boot's time is logged. T
 ### Still open
 - The stall itself is survived, not cured (v1.129). Probes this run, run beside a full `npm test`, hit the 75 s
   restart 3 times in about 16 boots, so heavy load makes it much more likely.
+
+## v1.137 fix-up — no BB swings sideways into what the kid stands beside
+CI failed Builder sessions on v1.137 in v1.135's `tests/car-side-fire.test.mjs`: 1 BB of 5978 went into the lane
+car's cabin within 1.6 m of the muzzle. The test expects none.
+
+The v1.93 clear line, with v1.101's 10 cm margin, checks the aim line and a line 10 cm under it. The BB is then
+fired with a random spread, up to about ±0.04–0.12 rad sideways depending on the kid and the gun, that nothing
+checks. Rarely, the spread takes a BB into the corner of the thing the kid is beside.
+
+Each BB's own first metres (the clear line's reach: up to 3 m, stopping 0.3 m short of the target) are now cast
+against the map. One that would hit something redraws its spread. After four tries it goes down the aim line, which
+the clear line has already passed. A kid's spread at the target is unchanged except for those few BBs.
+
+### Verified
+- `tests/car-side-fire.test.mjs` 3 of 3 runs: 0 near BBs and 0 into the car in each run of about 5975.
+- `tests/cover-fire.test.mjs`: 0 of 866 enemy BBs hit an obstacle within 3 m.
+- `npm test`: 44/44.
+
+### Still open
+- Shotgun pellets use the same redraw. Their wider spread means more redraws beside cover, a slightly tighter group
+  there. Not measured.
