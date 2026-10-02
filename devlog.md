@@ -6823,3 +6823,48 @@ same cause as the houses and jump fix-ups. Forcing the lock off locally reproduc
 ### Verified
 - With the lock forced off: the failure, as in CI. With the fix: 3 of 3 runs green, head 1.58, the dot above it in
   36 of 36 samples, on Sean's chest in 36 of 36.
+
+## v1.138 — The Stoneglen treehouse: a ladder, a platform, and a drop that costs your stamina
+The backlog was clear, and the builder asked what next. Michael answered A on the control room (2 Oct): D.7's first
+piece, a treehouse with a ladder on a small new map. You climb with W at the ladder, jumping off empties your
+stamina, and a kid can hold the platform.
+
+The map is Stoneglen Close, the twins' backyard, which had a name on the region but no map of its own. It is a fenced
+yard about 34 × 31 m behind a house, with a big oak in the middle. The treehouse is a 3.4 × 3.2 m platform 2.6 m up
+the oak, on four posts with knee braces. It has a 0.9 m plywood rail with a cap, a gap in the south rail over the
+ladder, and a sign. The yard also has a shed, a kid fort by the west fence, Home Depot boxes, bins by the side gate,
+a ply stack and a picnic table on the patio. The scenario is King of the Treehouse: Connor holds the platform with
+an MP5, Haden holds the fort with a pistol, one hit each, kill all. You start by the bins at the side gate. It sits
+third in Northcliff, after the twins 3v3 and before the creek-fort defend. Northcliff (v1.130) is not on itch yet,
+so moving the chain changes no player's save.
+
+How the pieces work:
+- The platform is ordinary obstacles at height. The floor is a 0.15 m box with its base at 2.45 m. You stand on it
+  from above (v1.105's standing rule, since its own height is under 1.05 m), you walk under it, and it stops BBs
+  both ways. The rails have their base at 2.6 m, so they stop you up there and nobody on the ground. Ground
+  collision was already height-aware once a map has a ground function, so this flat yard gets one (`() => 0`).
+- Ladders are climb zones a map can return (`built.ladders`). At the foot, looking at the ladder, W climbs at
+  1.7 m/s, about 1.5 s to the top. At the top you step onto the floor, clear of the gap. From the floor, S backs you
+  into the gap and down the ladder. Space lets go. While you are on the ladder, nothing else moves you.
+- The drop: a fall of 1.5 m or more below where your feet last stood empties your stamina and locks sprint out, the
+  same lockout as running dry. You need 40% back to sprint again, about 4 s. A 1.05 m box (the tallest you can stand
+  on) or a jump in place costs nothing.
+- A perch is a floor area a kid can hold (`built.perches`, enemySetup `perch`). The kid spawns on it, his feet stay
+  at its height (`kidGroundY`), and whatever his states ask, he is kept inside it. His line-of-sight checks start
+  from the perch. Two of them started at 1.05 m above y = 0 whatever the ground, so from up there they ran under
+  the floor.
+
+### Verified
+- `tests/treehouse.test.mjs` (new), 25 checks: Connor starts at 2.6 m (feet and body) and stays on the platform for
+  20 s (0 steps off it). He fires 135 BBs at the side gate, every one starting above 3 m (lowest 3.92). Climbing:
+  W at the foot reaches the floor after 91 steps on the ladder (1.5 s). S from the ground, or W looking away, never
+  climbs. The west rail stops you at x −1.27 on the floor. S into the gap takes you down with no stamina cost.
+  Walking off through the gap: 1 penalty, stamina 0.35 a few steps after landing, exhausted, and no sprint. A jump
+  in place up there lands back on the floor with no penalty. Letting go 2.0 m up costs the stamina; 1.0 m up and
+  stepping off the 0.78 m picnic table cost nothing. You walk under the platform between the posts on the grass,
+  kids do too, and the posts stop them. The floor stops a BB 0.95 m above a shot from below and 1.4 m below one
+  from above. A BB at Connor's chest hits him; one at ground chest height under him doesn't. No page errors.
+  Screenshots: `tests/out/treehouse-yard.png`, `tests/out/treehouse-platform.png`.
+- Probe: Connor's BBs against his own rail and floor within 3 m of the muzzle, the player standing at four spots
+  round the yard for 30 s each: 0 of 805.
+- `tests/northcliff.test.mjs`: Northcliff's chain now lists the treehouse third.

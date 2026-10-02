@@ -21,8 +21,8 @@ const ladder = await page.evaluate(() => {
 });
 check('ladder ends with Northcliff, after the market lot',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff', ladder.keys);
-check('Northcliff runs the 1v1 opener, the twins 3v3, the creek-fort defend, then the night 4v4 (v1.131)',
-  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138), the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
