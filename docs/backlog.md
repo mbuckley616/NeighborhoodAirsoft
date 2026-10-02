@@ -107,7 +107,8 @@ Fable card on the control room and Michael starts it from there.
    varied lines now with the browser voices, recorded voices later (control room, 2 Oct). ~~The lines~~ — done, v1.150
    (Fable: every one of the 24 kids has his own lines in all four situations, 544 lines where there were 162, a
    per-kid memory so no line repeats within four, teammates talk to you instead of taunting you;
-   `tests/voices.test.mjs`). Recorded voices (B/C: a script for VoiceStudio and a clip loader) are a later card.
+   `tests/voices.test.mjs`); v1.151 adds a kid calling a tag on another kid and a start call when the opening hold
+   lifts. Recorded voices (B/C: a script for VoiceStudio and a clip loader) are a later card.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

@@ -6936,3 +6936,39 @@ are as they were.
 - Recorded voices (options B and C) wait on Michael: the script and the loader are a later card.
 - A kid's memory is three lines; the taunt pools are about ten, so over a long round a line does come back, just
   never within four of a kid's lines.
+
+## v1.151 — A kid calls a tag on another kid, and the nearest kid calls the start
+The second half of the D.9 inventory. The card listed the situations a kid speaks in, and two on the list had no
+line: "tagged someone" only covered tagging you (a kid who tagged your teammate said nothing), and nothing was said
+at the start of a round. Both are small and sit on hooks the code already had, so they are in; Michael can veto the
+start call if it is one voice too many at BEGIN.
+
+- A kid who tags another kid calls it the way he calls a tag on you, from the same pool ("Got him! Easy.", "SETH!
+  Did you see that?"). The tagged kid still speaks first, and the 1.5 s global cooldown then usually keeps the
+  shooter quiet, so his call fills in when the tagged kid was out of earshot or on his own cooldown: you hear
+  whichever of the two is nearer.
+- When the 2.5 s opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls the
+  start, once a round, from a pool by aggression band (six each: "Game on! Let's go!", "Spread out, spread out!",
+  "Everybody find a spot."). Taggers bark on their own and tutorial dummies never speak. A kid who has already
+  called you out inside the hold is on his 4 s cooldown and is passed over.
+
+Two bugs of v1.150's found by the new checks and fixed here: the once-a-round flag lived on `Game.scenario`, which
+persists between rounds, so the start call would have fired only in the first round of a session (it resets at
+BEGIN now); and a line was picked, and so entered the kid's recent-lines memory, before the earshot gate, so a kid
+out of range filled his memory with lines nobody heard and a heard line could come round again (Trey said "Watch the
+left side!" twice running in a 3v3). The pick now comes after the gate.
+
+### Verified
+- `tests/voices.test.mjs`, now 54 checks, green 3 of 3 runs. New: the band tables carry six start lines each with no
+  duplicates and under the 8-word cap (562 lines in the tables now). By hand in the Winnmark 3v3 and the lot
+  free-for-all with a hostile kid 6 m from spawn: one start call, at 2.52 s, from that kid; with every kid 40 m
+  off, no call and the flag spent; in Infection, no call. A tag on another kid by hand: with the tagged kid free
+  to speak, one line (his npcHit) and the shooter held by the global cooldown; with the tagged kid on cooldown,
+  one line, the shooter's, from his own tag pool. The five headless rounds and the picker checks of v1.150 hold.
+- `npm test`: the full run on this build is in the PR comment.
+
+### Still open
+- The start call is the one new spoken moment a player hears every match; whether it earns its place is a
+  playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
+- The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
+  lines with names in them (templates), which this card did not ask for.

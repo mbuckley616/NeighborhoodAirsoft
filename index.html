@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.150</div>
+  <div class="version">v1.151</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4362,7 +4362,8 @@ const CHARACTERS = {
 // VOICE LINES (v1.21; v1.150 every kid, deeper pools, a recent-lines memory)
 // ---------------------------------------------------------------------
 // Categories (the situations a kid speaks in):
-//   playerHit     — the kid just tagged you ("ooh, I bet that stings!")
+//   playerHit     — the kid just tagged you ("ooh, I bet that stings!"); v1.151: or tagged another kid
+//   roundStart    — v1.151: the nearest hostile kid within earshot calls the start when the opening hold lifts
 //   npcHit        — the kid just got tagged ("ow! okay, I'm hit!")
 //   playerSpotted — the kid peeks out on a target in range ("there he is!")
 //   taunt         — a random interjection between actions, and a bounding kid's covering burst
@@ -4559,18 +4560,21 @@ const VOICE_LINES_DEFAULT = {
     npcHit:        ["Ugh, fine!", "Aw come on!", "Lucky shot!", "Whatever, I'm hit!", "No way! Okay, okay!", "That was cheap!"],
     playerSpotted: ["There he is!", "Get him!", "Push push push!", "Found him! Go!", "On him! Move!", "He's right there!"],
     taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!", "Let's go already!", "You can't hide from me!", "Come on, chicken!"],
+    roundStart:    ["Game on! Let's go!", "Here we come!", "Go go go!", "Let's get him!", "Rush him! Rush him!", "It's on, dude!"],   // v1.151
   },
   mid_agg: { // 0.4..0.65
     playerHit:     ["Got him!", "Hit!", "That's one.", "Tagged you!", "Nice, that landed.", "Got you, dude!"],
     npcHit:        ["Augh, okay!", "Fine, fair!", "Got me.", "Okay, that's a hit.", "Ow! Alright.", "Dang it. Fine."],
     playerSpotted: ["I see him!", "On him!", "Right there!", "There he is!", "Got him in sight!", "Over there, over there!"],
     taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!", "I know you're there.", "Come on, let's play!", "Any time now."],
+    roundStart:    ["Game on!", "Okay, here we go!", "Let's play!", "Alright, let's do this.", "Ready or not!", "Spread out, spread out!"],   // v1.151
   },
   low_agg: { // < 0.4
     playerHit:     ["Got him.", "Nice.", "Tagged.", "Yep. That's a hit.", "Saw you coming.", "Mm. Got you."],
     npcHit:        ["Mm, okay.", "Yeah, fair.", "Got me.", "Good shot.", "Okay. I'm out.", "Fair enough."],
     playerSpotted: ["I have him.", "He's there.", "Got eyes.", "There he is.", "Got him lined up.", "He's in the open."],
     taunt:         ["Take your time.", "I can wait.", "He'll show himself.", "Still here.", "No rush.", "I'm not going anywhere."],
+    roundStart:    ["Game on.", "Okay. Here we go.", "Everybody find a spot.", "Eyes open.", "Take it slow.", "Nice and easy."],   // v1.151
   },
 };
 
@@ -4730,9 +4734,6 @@ function tryNpcSpeak(enemy, category) {
   // v1.150: a kid on your side is talking to you, not hunting you: his taunt timer draws teammate lines.
   if (category === 'taunt' && !Game.scenario?.ffa &&
       (enemy.team || 'enemy') === ((Game.player && Game.player.team) || 'player')) category = 'teammate';
-  const line = pickVoiceLine(enemy.charId, category, enemy);
-  if (!line) return;
-
   // v1.22: positional TTS treatment.
   //   (A) Volume attenuated by distance via positionalAudio().
   //   (B) If volume would be too low to hear cleanly, skip the line entirely —
@@ -4745,6 +4746,10 @@ function tryNpcSpeak(enemy, category) {
   const VOICE_AUDIBLE_RANGE = 24;   // meters — past this we just don't speak
   const { vol: posVol } = positionalAudio(enemy.pos.x, enemy.pos.z, VOICE_AUDIBLE_RANGE);
   if (posVol < 0.12) return;        // too quiet to bother → don't speak (Option B; ~25m cutoff)
+  // v1.151: the line is picked after the earshot gate, so a kid's recent-lines memory holds only lines he was
+  // heard to say (a pick for a kid out of range used to fill it, and a heard line could come round again).
+  const line = pickVoiceLine(enemy.charId, category, enemy);
+  if (!line) return;
 
   // v1.150: the line counts as said from here: cooldowns and the log are set before the browser is asked
   // to speak, so headless Chromium (no voices, silent) and a real browser pace the kids the same way.
@@ -17818,6 +17823,7 @@ function startScenario(built) {
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
   VOICE.globalCooldownUntil = 0; VOICE.recentLines = [];   // v1.150: the speech cooldown runs on the round clock
+  Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -21885,6 +21891,10 @@ function applyBBHit(bb, c) {
     }
   } else {
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
+    // v1.151: the shooter calls a tag on another kid the way he calls one on you. The tagged kid speaks first;
+    // the 1.5 s global cooldown then usually keeps the shooter quiet, so his call fills in when the tagged kid
+    // was out of earshot or on his own cooldown.
+    if (bb.enemyRef && bb.enemyRef !== c && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
   }
@@ -23301,6 +23311,24 @@ function updateEnemies(dt) {
   Game.scenario.aiClock = (Game.scenario.aiClock || 0) + dt;
   // Ship C: refresh per-team focus-fire targets once before per-enemy work.
   updateTeamFocus();
+  // v1.151: when the opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls
+  // the start (once a round; tryNpcSpeak's 24 m cutoff keeps a far kid quiet, and a kid who has just called you
+  // out inside the hold is still on his 4 s cooldown, so he is passed over). Taggers bark on their own; tutorial
+  // dummies never speak.
+  if (!Game.scenario._startCalled && (Game.scenario.roundTime || 0) >= OPENING_HOLD_SEC) {
+    Game.scenario._startCalled = true;
+    const myTeam = (Game.player && Game.player.team) || 'player';
+    const now = Game.scenario.roundTime || 0;
+    let best = null, bestD = Infinity;
+    for (const e of Game.scenario.enemies) {
+      if (!e || e.health <= 0 || e.noFire || e.behavior === 'tagger') continue;
+      if (e._voiceCooldownUntil && now < e._voiceCooldownUntil) continue;
+      if (!Game.scenario.ffa && (e.team || 'enemy') === myTeam) continue;
+      const d = Math.hypot(e.pos.x - Game.player.pos.x, e.pos.z - Game.player.pos.z);
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    if (best) tryNpcSpeak(best, 'roundStart');
+  }
   // Diagnostic: count lasered enemies this frame, and how many reach the clip.
   LASER_DIAG.lasered = 0;
   LASER_DIAG.ran = 0;
