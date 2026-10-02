@@ -6909,6 +6909,24 @@ movement. Trees and other round things now let you slide round them the same way
 ### Still open
 - How sliding along cars and round trees feels needs a real playtest; corners now ease you round rather than catching you.
 
+## v1.140 — The lot free-for-all starts you looking down the aisle, not at a windshield
+The critic's second v1.134 report: in Everybody for Themselves on the Riverside Market lot, the start v1.134 hid
+behind the last car of the north row faced west, straight into that car, with its windshield 0.9 m away filling the
+screen. The cars in that row are parked nose-in along z, so the row runs north–south past your shoulder. The start
+now faces south (yaw π), down the east aisle along the row, with 40 m of open asphalt ahead and the car along your
+right. Turning that way keeps the kids' centroid 73° off your facing, inside the 120° the spawn suite allows, and the
+start's position and its cover from the other six are unchanged.
+
+### Verified
+- `tests/spawn-facing.test.mjs` now also measures, for every scenario, how far you see straight ahead at eye height
+  (±10°) before an obstacle, and fails under 2 m. Before the change only `lot_ffa` failed it (0.9 m); the next
+  closest are Bunratty Infection and Pincer at 2.7 m. With the change `lot_ffa` reads 26.5 m (the ±10° rays catch a
+  tree down the aisle; 40.6 m dead ahead).
+- Looked at the start at three facings in screenshots (west, 165°, south) before picking south.
+- `npm test`: 46/46 suites green (the harness recovered one real NEW GAME stall in a fresh browser).
+### Still open
+- Nothing for a playtest to judge beyond whether the aisle view is the one Michael wants to open on.
+
 ## v1.139 fix-up — road-slide sets the pointer lock itself
 CI failed Builder sessions on v1.139 in its new `tests/road-slide.test.mjs`: "holding W for 4 s gets him past the car"
 failed with the player ending exactly where he started, (35, 1).
