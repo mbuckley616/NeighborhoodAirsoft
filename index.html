@@ -1027,9 +1027,16 @@
     letter-spacing: 1.5px;
     font-weight: bold;
   }
+  /* v1.132 (D.5 C step 1): the kid panel sits left of the two lists, so the card is wider */
+  #loadoutScreen .loadout-card { width: 1040px; }
+  #loadoutScreen .lo-kid-col { position: relative; width: 280px; height: 380px; }
+  #loadoutScreen #loKidCanvas { width: 280px; height: 380px; border-radius: 6px; background: #2a2f38; display: block; }
+  #loadoutScreen #loKidLabels { position: absolute; left: 0; top: 0; width: 280px; height: 380px; pointer-events: none; overflow: visible; }
+  #loadoutScreen #loKidLabels text { font: 10px monospace; fill: #f4e9d8; }
+  #loadoutScreen #loKidLabels text.part { fill: #9a8; font-size: 8px; letter-spacing: 1px; }
   #loadoutScreen .loadout-cols {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 280px 1fr 1fr;
     gap: 16px;
     margin-bottom: 14px;
   }
@@ -1814,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.129</div>
+  <div class="version">v1.137</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -1917,9 +1924,10 @@
         <div class="marker"></div>
         <div class="label">Bunratty Ct · Sentinel</div>
       </div>
-      <div class="pin locked" style="left: 22%; top: 44%;" data-scenario="locked">
+      <!-- v1.130: Northcliff is playable (Northcliff Trace); was the locked "coming soon" teaser pin -->
+      <div class="pin locked" style="left: 22%; top: 44%;" data-scenario="northcliff">
         <div class="marker"></div>
-        <div class="label">Northcliff / Martin's Landing · locked</div>
+        <div class="label">Northcliff Trace · Northcliff</div>
       </div>
       <div class="pin" style="left: 40%; top: 87%;" data-scenario="hollow">
         <div class="marker"></div>
@@ -2001,6 +2009,11 @@
       <div class="lo-weight-note" id="loWeightNote"></div>
     </div>
     <div class="loadout-cols">
+      <!-- v1.132 (D.5 C step 1): your kid, turning, holding the slot-1 gun; a line from each body part to what it wears -->
+      <div class="loadout-col lo-kid-col" id="loKidCol">
+        <canvas id="loKidCanvas" width="280" height="380"></canvas>
+        <svg id="loKidLabels" viewBox="0 0 280 380"></svg>
+      </div>
       <div class="loadout-col">
         <div class="col-title">Equipment Slots (1-4)</div>
         <div id="loSlotsList"></div>
@@ -5841,19 +5854,21 @@ const SCENARIOS = {
   lot_ffa: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
-    desc: "No teams. Seven kids spread out over the whole lot, from the dumpsters to the road, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
+    desc: "No teams. Seven kids start hidden over the whole lot, each behind a car or the dumpsters, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'midfield',
+    // v1.134 (Michael: B): seven hidden starts, yours behind a car at the lot's east edge (was mid-lot, with the six
+    // kids on the side lines in sight of each other, so 3–4 were out a second after the opening hold)
+    playerSpawn: 'ffa_edge',
     ffa: true,
     enemySetup: [
-      { charId: 'marcus',  weapon: 'ak47',    anchor: 'scatter_nw' },
-      { charId: 'jamie',   weapon: 'ump',     anchor: 'scatter_ne' },
-      { charId: 'tyler',   weapon: 'shotgun', anchor: 'scatter_sw' },
-      { charId: 'priya',   weapon: 'mp5',     anchor: 'scatter_se' },
-      { charId: 'owen',    weapon: 'ar',      anchor: 'scatter_w'  },
-      { charId: 'brooke',  weapon: 'pistol',  anchor: 'scatter_e'  },
+      { charId: 'marcus',  weapon: 'ak47',    anchor: 'ffa_1' },
+      { charId: 'jamie',   weapon: 'ump',     anchor: 'ffa_2' },
+      { charId: 'tyler',   weapon: 'shotgun', anchor: 'ffa_3' },
+      { charId: 'priya',   weapon: 'mp5',     anchor: 'ffa_4' },
+      { charId: 'owen',    weapon: 'ar',      anchor: 'ffa_5' },
+      { charId: 'brooke',  weapon: 'pistol',  anchor: 'ffa_6' },
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 90, lose: 20 },
@@ -5883,6 +5898,99 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 120, lose: 28 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // ===================================================================
+  // v1.130: NORTHCLIFF TRACE (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A). Houses on a hill
+  // above a creek: uphill yards, downhill yards, a bulb fort at the west end, the twins' fort on the creek bank.
+  // ===================================================================
+
+  // --- Opener: 1v1 with Evan down by the creek ---
+  northcliff_1v1_evan: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Down by the Creek',
+    desc: "First time up in Northcliff, and Evan says he'll show you how they play it here. The street runs along the side of a hill: the yards on the right climb to the woods, the ones on the left drop away to the creek. He's somewhere in the low yards with a pistol. Bigger yards than you're used to, and longer looks across them — don't cross one standing up. One hit each.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'evan', weapon: 'pistol', anchor: 'yard_s2', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 50, lose: 12 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- Capstone (for now): 3v3 against the Stoneglen twins ---
+  northcliff_twins_3v3: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'The Stoneglen Twins',
+    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Andrew and Alex are with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives each, last team standing.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'andrew',   weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
+      { charId: 'alex',     weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
+      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n' },
+      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s' },
+      { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },   // v1.131: holds the high yard (was: huddled at the bulb and stayed)
+    ],
+    enemySpawnCluster: 'cluster_bulb',
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 130, lose: 30 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.131: defend the twins' creek fort, 90 s ---
+  northcliff_defend_creek: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Hold the Creek Fort',
+    desc: "The twins built their fort on the creek bank, and now it's yours to hold. Haden, Connor and Diego come down the hill from the street, yard by yard, and a tagged kid walks back up to the road and comes again. They have the high ground and you have the walls. Watch the yards either side of the fort, not just the slope in front of it. Survive 90 seconds.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the creek fort',
+    playerSpawn: 'creek_fort',
+    enemySpawnCluster: 'cluster_road',
+    enemySetup: [
+      { charId: 'haden',  weapon: 'ump',     anchor: 'road_w',     role: 'attacker', flank: 'L' },
+      { charId: 'connor', weapon: 'shotgun', anchor: 'road_mid_n', role: 'attacker', flank: 'C' },
+      { charId: 'diego',  weapon: 'mp5',     anchor: 'road_mid_s', role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 90, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.131: the zone capstone, 4v4 at night against Bellfield Court ---
+  northcliff_night_4v4: {
+    region: 'northcliff', street: 'northcliff_trace',
+    name: 'Northcliff Trace', scenarioName: 'Bellfield After Dark',
+    desc: "The Bellfield Court kids walked over after dinner: Mason, Christian, Diego, and Fernando with his rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives each. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
+    builderFn: 'buildNorthcliffScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    enemySetup: [
+      { charId: 'andrew',    weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
+      { charId: 'alex',      weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
+      { charId: 'evan',      weapon: 'ump',    anchor: 'yard_n1',   team: 'player' },
+      { charId: 'mason',     weapon: 'ak47',   anchor: 'bulb_car_n' },
+      { charId: 'christian', weapon: 'shotgun',anchor: 'bulb_car_s' },
+      { charId: 'diego',     weapon: 'mp5',    anchor: 'bulb_fort'  },
+      { charId: 'fernando',  weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_bulb',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 150, lose: 34 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -13627,11 +13735,22 @@ function buildMarketLotScene(variant, timeOfDay) {
     scatter_e:  { pos: P(34, -7),   cover: null },
     cluster_north: { pos: P(0, -26), cover: null },
     cluster_south: { pos: P(0, 24),  cover: null },
+    // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts. Each stands beside a parked car or the
+    // dumpsters, out of sight of the other six and of the player's start (muzzle 1.05 m to chest 0.95 m, the kids' own
+    // sight rule), and at least 19 m from every one of them. Found by a search over the lot's fixed parking pattern that also kept
+    // the ground 3–6 m round each start out of sight of the others, since kids move during the 2.5 s opening hold.
+    ffa_1: { pos: P(6.5, -14.5), cover: null },
+    ffa_2: { pos: P(22.5, 16.5), cover: null },
+    ffa_3: { pos: P(-34, -17),   cover: null },
+    ffa_4: { pos: P(-12.5, -12), cover: null },
+    ffa_5: { pos: P(-25.5, 15.5), cover: null },
+    ffa_6: { pos: P(-6.5, 15),   cover: null },
   };
   const playerSpawns = {
     team_b:  { pos: P(2, 23),  yaw: 0 },         // at the road side, facing the store (yaw 0 faces -z)
     team_a:  { pos: P(-2, -25), yaw: Math.PI },
     midfield:{ pos: P(0, 7.5), yaw: 0 },
+    ffa_edge:{ pos: P(34, -12), yaw: Math.PI / 2 },   // v1.134: behind the last car at the north row's east end, facing the lot
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
@@ -13649,6 +13768,278 @@ function buildMarketLotScene(variant, timeOfDay) {
   };
 }
 function buildMarketLotSceneDefault(_v, tod) { return buildMarketLotScene('default', tod); }
+
+// =====================================================================
+// v1.130: NORTHCLIFF TRACE (Northcliff / Martin's Landing) — the fifth zone (backlog D.1, Michael: A, control room
+// 1 Oct). Houses on a hill above a creek, built from the polished street pieces (detailed houses, cars, trees, bins,
+// boxes, plywood stacks, kid forts, buildStreetRoad). The hill falls NORTH to SOUTH: the uphill row's backyards climb
+// to a tree wall at z = -34 (about 4 m above the road), the downhill row's backyards drop to a wooded creek bank at
+// z = 33. The road runs along the slope from the east entry (x = 36) to a cul-de-sac bulb at the west (x = -28).
+// Six houses, 20 m apart, and no backyard fences: bigger yards and longer sightlines than Winnmark (the teaser's
+// promise), so the uphill yards are the sniper's ground. Layout draws from the scenario's seeded Math.random.
+// Playable box: x∈[-35,39], z∈[-33,33].
+// =====================================================================
+function buildNorthcliffScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x8eb0cc, dayFog: [40, 110],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-18, 34, 20],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.48, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
+    nightFog: [20, 66], moonPos: [18, 36, -20],
+    shadow: { size: 2048, extent: 46, far: 90 },
+  });
+
+  // --- the hill: high at the north tree wall, smooth down to the road and on down to the creek bank ---
+  function groundY(x, z) {
+    let u = (z + 36) / (32 + 36);
+    u = Math.max(0, Math.min(1, u));
+    let h = 4.2 * (1 - u * u * (3 - 2 * u));
+    if (z > 32) h -= Math.min(2.2, (z - 32) * 0.4);     // the creek bank
+    h += 0.2 * Math.sin(x * 0.11 + 0.7) * Math.cos(z * 0.09);
+    return h;
+  }
+  function groundNormal(x, z) {
+    const e = 0.6;
+    const nx = groundY(x - e, z) - groundY(x + e, z), nz = groundY(x, z - e) - groundY(x, z + e), ny = 2 * e;
+    const l = Math.hypot(nx, ny, nz) || 1;
+    return { nx: nx / l, ny: ny / l, nz: nz / l };
+  }
+  const _UP_Z = new THREE.Vector3(0, 0, 1);
+  function layOnSlope(mesh, x, z, lift = 0.04) {
+    const n = groundNormal(x, z);
+    mesh.position.set(x, groundY(x, z) + lift, z);
+    mesh.quaternion.setFromUnitVectors(_UP_Z, new THREE.Vector3(n.nx, n.ny, n.nz));
+    return mesh;
+  }
+  // Seat a flat-built obstacle on the slope (the lowest ground under its footprint), as Winnmark's sinkObs.
+  function sinkObs(obs, gx, gz) {
+    if (!obs) return obs;
+    const cx = gx ?? (obs.minX + obs.maxX) / 2, cz = gz ?? (obs.minZ + obs.maxZ) / 2;
+    let gy = groundY(cx, cz);
+    const hw = (obs.maxX - obs.minX) / 2, hd = (obs.maxZ - obs.minZ) / 2;
+    if (hw > 0.4 || hd > 0.4) for (const sx of [-hw, 0, hw]) for (const sz of [-hd, 0, hd]) gy = Math.min(gy, groundY(cx + sx, cz + sz));
+    if (obs._wheelContacts && obs.mesh) gy = carSeatY(obs, groundY);
+    if (obs.mesh && obs.mesh.position) obs.mesh.position.y += gy;
+    if (obs.shape === 'obox') { resolveObox(obs); if (obs._stacked && obs._stacked.shape === 'obox') resolveObox(obs._stacked); }
+    else { obs.baseY = gy; if (obs._stacked) obs._stacked.baseY = (obs._stacked.baseY || 0) + gy; }
+    return obs;
+  }
+  function seatFort(walls, gx, gz) {   // the fort's walls share one group: lift it once (corner bins have their own)
+    let gy = groundY(gx, gz);
+    for (const sx of [-2.2, 0, 2.2]) for (const sz of [-1.5, 0, 1.5]) gy = Math.min(gy, groundY(gx + sx, gz + sz));
+    const seen = new Set();
+    for (const w of walls) {
+      if (w.mesh && w.mesh.position && !seen.has(w.mesh)) { w.mesh.position.y += gy; seen.add(w.mesh); }
+      w.baseY = gy;
+    }
+    return walls;
+  }
+  const rng = (a, b) => a + Math.random() * (b - a);
+
+  // --- ground (displaced), the creek and its far bank ---
+  {
+    const g = new THREE.PlaneGeometry(150, 150, 100, 100), pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setZ(i, groundY(pos.getX(i), -pos.getY(i)));
+    pos.needsUpdate = true; g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x58803e, roughness: 1.0 }));
+    m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(140, 5), new THREE.MeshStandardMaterial({ color: 0x3a5a6a, roughness: 0.25, metalness: 0.2 }));
+    water.rotation.x = -Math.PI / 2; water.position.set(0, groundY(0, 39) - 0.15 + 0.12, 39.5); scene.add(water);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7468, roughness: 0.95 });
+    for (let i = 0; i < 26; i++) {   // creek stones along the near bank
+      const x = -60 + i * 4.8 + rng(-1, 1), z = 37 + rng(-0.6, 0.6), r = rng(0.3, 0.7);
+      const s = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rockMat);
+      s.position.set(x, groundY(x, z) + r * 0.3, z); s.rotation.set(rng(0, 3), rng(0, 3), 0); s.scale.y = 0.6; scene.add(s);
+    }
+  }
+
+  // --- the road: east entry → west bulb, along the slope ---
+  const RA = { x: 37, z: 1 }, RC = { x: 4, z: -5 }, RB = { x: -28, z: 0 };
+  const roadPoint = (t) => ({ x: (1 - t) * (1 - t) * RA.x + 2 * (1 - t) * t * RC.x + t * t * RB.x,
+                              z: (1 - t) * (1 - t) * RA.z + 2 * (1 - t) * t * RC.z + t * t * RB.z });
+  const roadDeriv = (t) => ({ x: 2 * (1 - t) * (RC.x - RA.x) + 2 * t * (RB.x - RC.x), z: 2 * (1 - t) * (RC.z - RA.z) + 2 * t * (RB.z - RC.z) });
+  const roadCenterline = [];
+  for (let i = 0; i <= 56; i++) roadCenterline.push(roadPoint(i / 56));
+  const roadZAt = (x) => { let bz = 0, bd = Infinity; for (const p of roadCenterline) { const d = Math.abs(p.x - x); if (d < bd) { bd = d; bz = p.z; } } return bz; };
+  const tAtX = (x) => { let bt = 0, bd = Infinity; for (let t = 0; t <= 1; t += 0.002) { const d = Math.abs(roadPoint(t).x - x); if (d < bd) { bd = d; bt = t; } } return bt; };
+
+  // --- houses: three up the hill (north row, facing south), three down it (south row, facing north) ---
+  const HOUSES = [
+    { x: 24, z: -17, side: 'north', w: 10, brick: 0xb8a48a, roof: 0x4a3a2a },
+    { x: 4, z: -18, side: 'north', w: 10, brick: 0xa05a3e, roof: 0x3a3028 },
+    { x: -16, z: -17, side: 'north', w: 9, brick: 0xd0c4b0, roof: 0x4a4038 },
+    { x: 22, z: 18, side: 'south', w: 9, brick: 0x9a5a40, roof: 0x4a3828 },
+    { x: 2, z: 19, side: 'south', w: 10, brick: 0xc8b090, roof: 0x5a4030 },
+    { x: -17, z: 18, side: 'south', w: 9, brick: 0xa86a50, roof: 0x3a2a1a },
+  ];
+  const houseObs = HOUSES.map(h => sinkObs(buildSuburbanHouse(scene, {
+    x: h.x, z: h.z, width: h.w, depth: 8, brickColor: h.brick, roofColor: h.roof,
+    faceDir: h.side === 'north' ? 'south' : 'north', detail: true,
+  })));
+  const houseCenters = HOUSES.map(h => ({ x: h.x, z: h.z, side: h.side }));
+  buildStreetRoad(scene, {
+    point: roadPoint, deriv: roadDeriv, groundY, groundNormal, houseCenters,
+    asphMat: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    ASPH: 3.45, bulb: { x: RB.x, z: RB.z, r: 6.3 }, T0: -0.12, NS: 170,
+    manholes: [[0.3, 0.8], [0.66, -0.7]], drains: [[0.18, -1], [0.52, 1], [0.84, -1]],
+    cracks: [[0.1, 5.2, 0.4], [0.44, 6.0, -0.3], [0.76, 5.0, 0.25]], patch: 0.56,
+  });
+  // driveways, from the house front to the road edge, laid on the slope in 2 m pieces
+  {
+    const dMat = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.95 });
+    for (const hc of houseCenters) {
+      const rz = roadZAt(hc.x), front = hc.side === 'north' ? hc.z + 4 : hc.z - 4;
+      const edge = hc.side === 'north' ? rz - 4 : rz + 4;
+      const z0 = Math.min(front, edge), z1 = Math.max(front, edge), n = Math.max(1, Math.ceil((z1 - z0) / 2)), st = (z1 - z0) / n;
+      for (let s = 0; s < n; s++) {
+        const seg = new THREE.Mesh(new THREE.PlaneGeometry(4, st + 0.4), dMat);
+        layOnSlope(seg, hc.x, z0 + st * (s + 0.5), 0.018); seg.receiveShadow = true; scene.add(seg);
+      }
+    }
+  }
+
+  // --- anchors first, so the random yard cover keeps clear of them ---
+  const P = (x, z) => new THREE.Vector3(x, 0, z);
+  const ANCH = {
+    bulb_fort: [-30.5, 0], bulb_car_n: [-27.5, -5.8], bulb_car_s: [-24.5, 6.6],
+    yard_n1: [22, -28], yard_n2: [5, -29], yard_n3: [-15, -28],
+    yard_s1: [21, 28.5], yard_s2: [3, 29], yard_s3: [-16, 28.5],
+    creek_fort: [-6, 31.2],
+    road_e_n: [28, -3.2], road_e_s: [29, 4.8], road_mid_n: [-6, -6.5], road_mid_s: [12, 3.5],
+    road_w: [-18, 3.6],   // v1.131: the creek-fort defend's west attacker
+    cluster_bulb: [-31, 0], cluster_east: [34, 1], cluster_road: [-4, -2.5],   // v1.131: cluster_road, the defend's attackers
+  };
+  const keepClear = (x, z, r = 2.2) => Object.values(ANCH).some(([ax, az]) => Math.hypot(ax - x, az - z) < r)
+    || Math.hypot(x - 35, z - 1) < 3;   // the player's road_east spawn
+
+  const coverList = [], coverByHouse = [], bushObs = [], curbBins = [], driveCars = [];
+  // mailboxes at the foot of each driveway
+  for (const hc of houseCenters) {
+    const rz = roadZAt(hc.x), dir = hc.side === 'north' ? -1 : 1;
+    const mx = hc.x + (Math.random() < 0.5 ? -2.3 : 2.3), mz = rz + dir * 4.6;
+    bushObs.push(sinkObs(addMailbox(scene, mx, mz, { facing: hc.side === 'north' ? 0 : Math.PI }), mx, mz));
+  }
+  // bins out on trash day at half the houses (player cover, not AI cover, as Winnmark)
+  for (const hc of houseCenters) {
+    if (Math.random() < 0.5) continue;
+    const dir = hc.side === 'north' ? -1 : 1, bz = roadZAt(hc.x) + dir * 4.9, bx = hc.x + (Math.random() < 0.5 ? 3.4 : -3.4);
+    const facing = hc.side === 'north' ? Math.PI : 0;
+    curbBins.push(sinkObs(addCurbsideBin(scene, bx - 0.4, bz, { variant: 'garbage', facing, detail: true }), bx - 0.4, bz));
+    curbBins.push(sinkObs(addCurbsideBin(scene, bx + 0.4, bz, { variant: 'recycle', facing, detail: true }), bx + 0.4, bz));
+  }
+  // backyard cover: 3–4 pieces a yard, spread wide (the yards are deep)
+  houseCenters.forEach((hc, i) => {
+    const back = hc.side === 'north' ? -1 : 1, yz = hc.z + back * 10.5;
+    coverByHouse[i] = [];
+    const n = 3 + Math.floor(Math.random() * 2);
+    for (let j = 0; j < n; j++) {
+      const cx = hc.x + rng(-6.5, 6.5), cz = yz + rng(-4, 3.5) * back;
+      if (keepClear(cx, cz) || Math.abs(cz) > 31.5) continue;
+      const k = Math.random(), gy = groundY(cx, cz);
+      let o;
+      if (k < 0.4) o = sinkObs(addHomeDepotBox(scene, cx, cz, { w: rng(0.9, 1.3), h: rng(0.85, 1.1), d: rng(0.85, 1.1), facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
+      else if (k < 0.72) o = sinkObs(addCurbsideBin(scene, cx, cz, { variant: Math.random() < 0.55 ? 'garbage' : 'recycle', tipped: Math.random() < 0.15, facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
+      else {
+        const st = buildPlyStack(cx, gy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
+        scene.add(st);
+        o = { minX: cx - 0.8, maxX: cx + 0.8, minZ: cz - 0.45, maxZ: cz + 0.45, h: 0.55, baseY: gy, mesh: st, surface: 'hard' };
+      }
+      coverList.push(o); coverByHouse[i].push(o);
+    }
+  });
+  // anchor cover for the yard anchors: one box beside each (so every yard anchor has something to hide behind)
+  const anchorCover = {};
+  for (const [key, side] of [['yard_n1', -1], ['yard_n2', -1], ['yard_n3', -1], ['yard_s1', 1], ['yard_s2', 1], ['yard_s3', 1]]) {
+    const [ax, az] = ANCH[key], cz = az - side * 1.3;   // between the anchor and the road
+    const o = sinkObs(addHomeDepotBox(scene, ax, cz, { w: 1.3, h: 1.05, d: 1.0, facing: 0, detail: true }), ax, cz);
+    coverList.push(o); anchorCover[key] = o;
+  }
+  // cars: about half the driveways (collision, not AI cover); two in the bulb and four along the kerb (AI cover)
+  const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x3a5a3a, 0xb09a6a, 0x2a3e6a];
+  const pickColor = () => CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  for (const hc of houseCenters) {
+    if (Math.random() < 0.45) continue;
+    const dir = hc.side === 'north' ? -1 : 1, cz = roadZAt(hc.x) + dir * 7.6;
+    driveCars.push(sinkObs(addCar(scene, hc.x, cz, { orientation: dir < 0 ? Math.PI / 2 : -Math.PI / 2, color: pickColor(), groundNormalFn: groundNormal, detail: true }), hc.x, cz));
+  }
+  const kerbCar = (x, z, orient) => { const o = sinkObs(addCar(scene, x, z, { orientation: orient, color: pickColor(), groundNormalFn: groundNormal, detail: true }), x, z); pushCarObs(coverList, o); return o; };
+  const bulbCarN = kerbCar(-27.5, -3.6, 0.15), bulbCarS = kerbCar(-24.5, 4.6, -0.2);
+  for (const [tx, side] of [[14, 1], [31, -1], [-8, -1]]) {   // side 1 is the north kerb (the road runs west)
+    const t = tAtX(tx), p = roadPoint(t), d = roadDeriv(t), l = Math.hypot(d.x, d.z), nx = -d.z / l, nz = d.x / l;
+    kerbCar(p.x + nx * side * 2.3, p.z + nz * side * 2.3, Math.atan2(-d.z, d.x));
+  }
+  // kid forts: one in the bulb facing the street, the twins' one on the creek bank facing up the hill
+  const bulbFort = seatFort(buildKidFort(scene, -28, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true }), -28, 0);
+  const creekFort = seatFort(buildKidFort(scene, -6, 29.4, { faceDir: 'N', width: 3.8, depth: 2.2, detail: true }), -6, 29.4);
+  for (const w of [...bulbFort, ...creekFort]) coverList.push(w);
+
+  // --- trees: a wall round three sides, a line along the creek bank, big oaks in the yards ---
+  const treeObs = [];
+  const tree = (x, z, o = {}) => treeObs.push(addSuburbanTree(scene, x, z, { detail: true, baseY: groundY(x, z), ...o }));
+  const wall = (x1, z1, x2, z2, skip) => {
+    const len = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.floor(len / 3.2)), px = -(z2 - z1) / len, pz = (x2 - x1) / len;
+    for (let i = 0; i <= n; i++) {
+      const bx = x1 + (x2 - x1) * i / n, bz = z1 + (z2 - z1) * i / n;
+      if (skip && skip(bx, bz)) continue;
+      tree(bx + rng(-0.5, 0.5), bz + rng(-0.5, 0.5));
+      if (i < n) tree(bx + (x2 - x1) / n / 2 + px * 2.4, bz + (z2 - z1) / n / 2 + pz * 2.4);
+    }
+  };
+  wall(-37, -35, 41, -35);                                 // the hilltop
+  wall(-37, 34, -37, -35);                                 // the west woods behind the bulb
+  wall(41, -35, 41, 34, (x, z) => Math.abs(z - 1) < 5.5);  // the east side, open where the road comes in
+  for (let x = -34; x <= 38; x += 5.5) tree(x + rng(-1, 1), 34.8 + rng(-0.4, 0.4), { trunkH: rng(4, 5.5), leafR: rng(2.2, 2.8) });   // the creek bank
+  for (const [x, z] of [[14, -27], [-5, -26], [-26, -24], [31, -26], [12, 26], [-7, 24], [-26, 22], [32, 25]]) {   // yard oaks
+    const xx = x + rng(-1.5, 1.5), zz = z + rng(-1.5, 1.5);
+    if (!keepClear(xx, zz, 2.6)) tree(xx, zz, { trunkH: rng(3.8, 5), leafR: rng(2.4, 3.0), trunkR: 0.42 });
+  }
+  for (const hc of houseCenters) for (const s of [-1, 1]) {   // a shrub either side of each front step
+    const bx = hc.x + s * 2.6, bz = hc.z + (hc.side === 'north' ? 4.6 : -4.6);
+    bushObs.push(addBush(scene, bx, bz, 1.2, 0.8, 1.0, null, groundY(bx, bz), { detail: true }));
+  }
+
+  // --- streetlamps on the grass between the houses ---
+  const lampObs = [];
+  for (const [x, side] of [[14, 1], [-6, -1], [-24, 1], [33, -1]]) {
+    const lz = roadZAt(x) + side * 5.1;
+    const lamp = addStreetlamp(scene, x, lz, groundY, _night);
+    if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
+  }
+
+  const bounds = { minX: -35, maxX: 39, minZ: -33, maxZ: 33 };
+  const edge = [
+    { minX: -60, maxX: 60, minZ: 33.6, maxZ: 70, h: 6, baseY: -3, surface: 'hard' },   // the creek bank
+    { minX: 39.6, maxX: 70, minZ: -60, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },    // past the east entry
+  ];
+
+  const A = (key, cover) => ({ pos: P(ANCH[key][0], ANCH[key][1]), cover: cover || null });
+  const placements = {
+    bulb_fort: A('bulb_fort', bulbFort[0]), bulb_car_n: A('bulb_car_n', bulbCarN), bulb_car_s: A('bulb_car_s', bulbCarS),
+    yard_n1: A('yard_n1', anchorCover.yard_n1), yard_n2: A('yard_n2', anchorCover.yard_n2), yard_n3: A('yard_n3', anchorCover.yard_n3),
+    yard_s1: A('yard_s1', anchorCover.yard_s1), yard_s2: A('yard_s2', anchorCover.yard_s2), yard_s3: A('yard_s3', anchorCover.yard_s3),
+    creek_fort: A('creek_fort', creekFort[0]),
+    road_e_n: A('road_e_n'), road_e_s: A('road_e_s'), road_mid_n: A('road_mid_n'), road_mid_s: A('road_mid_s'),
+    road_w: A('road_w'), cluster_road: A('cluster_road'),   // v1.131
+    cluster_bulb: A('cluster_bulb'), cluster_east: A('cluster_east'),
+  };
+  const playerSpawns = {
+    road_east:   { pos: P(35, 1), yaw: Math.PI / 2 },     // the east entry, facing west down the street (yaw 0 faces -z)
+    bulb_center: { pos: P(-31.5, 0), yaw: -Math.PI / 2 }, // behind the bulb fort, facing east
+    creek_fort:  { pos: P(-6, 30.4), yaw: 0 },            // v1.131: inside the twins' creek fort, facing up the hill
+  };
+  return {
+    scene,
+    spawn: playerSpawns.road_east.pos.clone(), spawnYaw: playerSpawns.road_east.yaw, bounds,
+    cover: coverList,
+    obstacles: [...houseObs, ...treeObs, ...bushObs, ...coverList, ...curbBins, ...driveCars, ...lampObs, ...edge],
+    enemies: [],
+    name: 'Northcliff Trace', scenarioName: '', desc: '',
+    placements, playerSpawns, groundY,
+    teamBases: { player: { x: 34, z: 1 }, enemy: { x: -31, z: 0 } },
+  };
+}
+function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('default', tod); }
 
 
 
@@ -16858,6 +17249,7 @@ function enterScenario(scenarioId) {
   // For survive_timer wins, stash the timer state on Game.scenario so updateScenarioTimer
   // can tick it down and check for win.
   Game.scenario.winCondition = sc.winCondition || 'kill_all';
+  Game.scenario.ffa = !!sc.ffa;   // v1.134: read by the roster, the lives respawn and the free-for-all roam; was never set
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
@@ -17695,6 +18087,228 @@ function closeMirror() {
 // === LOADOUT MANAGEMENT SCREEN ===
 let loadoutPickerSlot = -1;
 
+// v1.132 (backlog D.5 C step 1, Michael: A): the Loadout screen shows your kid (the mirror's look, createKid) turning
+// slowly in a panel with the slot-1 gun in hand, and a leader line from each body part to what is equipped there: eye
+// pro, chest, arms, legs, feet, belt and holster, the gun. The worn gear has no meshes on the kid yet (step 2, a group
+// at a time); the lines name it. Part points are in the average kid's local frame (createKid's group scale applies).
+const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '' };
+const LOADOUT_KID_PARTS = [
+  { key: 'eyes',  part: 'EYES',  p: [0, 1.27, 0.15],      side: 'L' },   // the kid faces +z; eyes at 1.27 (head top 1.47)
+  { key: 'chest', part: 'CHEST', p: [0, 0.92, 0.13],      side: 'L' },
+  { key: 'arms',  part: 'ARMS',  p: [0.25, 0.85, 0.02],   side: 'R' },
+  { key: 'belt',  part: 'BELT',  p: [0, 0.62, 0.13],      side: 'L' },
+  { key: 'gun',   part: 'HANDS', p: [-0.27, 0.56, 0.2],   side: 'L' },   // the gun hangs at the right hip (screen left), pointing +z
+  { key: 'legs',  part: 'KNEES', p: [-0.08, 0.32, 0.09],  side: 'R' },
+  { key: 'feet',  part: 'FEET',  p: [-0.08, 0.04, 0.12],  side: 'R' },
+];
+function loadoutKidItems() {
+  const eq = Game.persist.equipped, own = Game.persist.owned || {};
+  const armor = (zone) => { const id = eq.armor && eq.armor[zone]; return id && ARMOR[id] ? ARMOR[id].name : 'nothing'; };
+  const belt = getUnlockedSlotCount() >= 4 ? 'Belt & Holster' : getUnlockedSlotCount() >= 3 ? 'Utility Belt' : 'nothing';
+  return {
+    eyes: (EYEWEAR[eq.eyewear] || EYEWEAR.none).name, chest: armor('chest'), arms: armor('arms'), legs: armor('legs'),
+    feet: (SHOES[eq.shoes] || SHOES.none).name, belt, gun: getGunDisplayName(eq.gun),
+  };
+}
+// v1.133 (backlog D.5 C step 2): what is equipped is worn on the Loadout kid, a mesh group per body part: eye pro on
+// the head, the chest rig or plate carrier on the torso, elbow pads on the elbows, knee pads on the legs, the shoe pair
+// (a colour and a sole of its own), and the Utility Belt with pouches and the Drop-Leg Holster on the right thigh.
+// Each piece is parented to the node it sits on (head, torso, elbow, leg, shoe), so a pose would carry it. Sneakers
+// (default) and "nothing" add no mesh. Returns the meshes added by group, for the test.
+const LOADOUT_GEAR_SHOES = {
+  trail_shoes:  { upper: 0x7a6a48, sole: 0x3a3228, lugs: true },
+  track_spikes: { upper: 0xf06a1a, sole: 0x1a1a1a, spikes: true },
+  cushioned:    { upper: 0xd8dade, sole: 0xf4f4f0, accent: 0x2a6ad8, thick: true },
+};
+const _gearLensMats = {};
+function _gearLensMat(color, opacity) {
+  const k = color + ':' + opacity;
+  return _gearLensMats[k] || (_gearLensMats[k] = new THREE.MeshStandardMaterial({ color, roughness: 0.15, metalness: 0.1, transparent: true, opacity }));
+}
+function loadoutKidGearKeys() {
+  const eq = Game.persist.equipped, a = eq.armor || {};
+  return { eyewear: EYEWEAR[eq.eyewear] ? eq.eyewear : 'none', chest: a.chest || null, arms: a.arms || null, legs: a.legs || null,
+    shoes: SHOES[eq.shoes] ? eq.shoes : 'none', belt: getUnlockedSlotCount() };
+}
+function buildKidGear(kid, gear) {
+  const po = kid.pose, out = { eyewear: [], chest: [], arms: [], legs: [], shoes: [], belt: [] };
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const merge = (parent, group, b, mats) => {
+    const gg = new THREE.Group(); gg.userData.kidGear = group;
+    _propMerge(gg, b, mats); parent.add(gg); gg.traverse(m => { if (m.isMesh) out[group].push(m); });
+  };
+  // eye pro, in the head's frame (face plane z 0.14, eyes at y 0.012, the head 0.28 across)
+  if (gear.eyewear && gear.eyewear !== 'none') {
+    const def = EYEWEAR[gear.eyewear], F = 0.14, EY = 0.012;
+    const b = {}; const add = _propAdder(b);
+    const mats = { frame: _kidFaceMat('gframe', new THREE.Color(def.view.frameColor).getHex(), 0.5),
+      strap: _kidFaceMat('gstrap', 0x1a1a1e, 0.8) };
+    const strap = (y, t) => {   // a band round the head at height y
+      add('strap', box(0.296, t, 0.012), 0, y, -0.148); add('strap', box(0.012, t, 0.29), -0.148, y, 0); add('strap', box(0.012, t, 0.29), 0.148, y, 0);
+    };
+    if (gear.eyewear === 'glasses_clear') {
+      mats.lens = _gearLensMat(0xdfe8ff, 0.3);
+      add('lens', box(0.2, 0.06, 0.006), 0, EY - 0.004, F + 0.022);             // one wraparound shield
+      for (const sx of [-1, 1]) add('lens', box(0.006, 0.05, 0.05), sx * 0.103, EY - 0.004, F - 0.002);
+      add('frame', box(0.21, 0.01, 0.012), 0, EY + 0.03, F + 0.022);           // brow bar
+      for (const sx of [-1, 1]) add('frame', box(0.008, 0.01, 0.17), sx * 0.146, EY + 0.025, F - 0.07);   // temple arms
+    } else if (gear.eyewear === 'goggles_swim') {
+      mats.lens = _gearLensMat(0x1a3a9a, 0.65);
+      for (const sx of [-1, 1]) {
+        add('frame', box(0.07, 0.048, 0.016), sx * 0.058, EY, F + 0.012);
+        add('lens', box(0.058, 0.036, 0.006), sx * 0.058, EY, F + 0.022);
+      }
+      add('frame', box(0.03, 0.008, 0.008), 0, EY + 0.004, F + 0.014);         // nose bridge
+      strap(EY, 0.012);
+    } else if (gear.eyewear === 'mesh_mask') {
+      mats.mesh = _gearLensMat(0x202024, 0.72);
+      add('frame', box(0.26, 0.016, 0.03), 0, EY + 0.045, F + 0.02);           // rim: brow, chin, sides
+      add('frame', box(0.22, 0.02, 0.04), 0, -0.118, F + 0.012);
+      for (const sx of [-1, 1]) add('frame', box(0.016, 0.18, 0.05), sx * 0.124, -0.035, F + 0.008);
+      add('mesh', box(0.236, 0.15, 0.006), 0, -0.035, F + 0.03);              // the mesh over the whole face
+      for (let i = 0; i < 5; i++) add('frame', box(0.236, 0.003, 0.004), 0, EY + 0.03 - i * 0.035, F + 0.034);   // grid rows
+      strap(EY + 0.03, 0.016); strap(-0.07, 0.016);
+    } else {
+      // goggles: a chunky foam frame and one tinted lens, smoke or amber
+      mats.lens = gear.eyewear === 'goggles_amber' ? _gearLensMat(0xe0a020, 0.6) : _gearLensMat(0x23252e, 0.7);
+      add('frame', box(0.25, 0.085, 0.036), 0, EY, F + 0.012);
+      add('lens', box(0.22, 0.062, 0.006), 0, EY, F + 0.032);
+      add('frame', box(0.05, 0.03, 0.04), 0, EY - 0.04, F + 0.016);            // nose notch
+      strap(EY, 0.03);
+    }
+    merge(po.head, 'eyewear', b, mats);
+  }
+  // chest, in the torso's frame (0.42 × 0.5 × 0.24, centre 0, the shirt's yoke at 0.23)
+  if (gear.chest) {
+    const heavy = gear.chest === 'chest_heavy';
+    const b = {}; const add = _propAdder(b);
+    const mats = { body: _kidFaceMat('gvest', heavy ? 0x4a5236 : 0x24262a, 0.85), pouch: _kidFaceMat('gpouch', heavy ? 0x3c4430 : 0x3a3c40, 0.85),
+      buckle: _kidFaceMat('gbuckle', 0x101010, 0.5) };
+    if (heavy) {
+      add('body', box(0.36, 0.36, 0.05), 0, 0.03, 0.145); add('body', box(0.36, 0.36, 0.05), 0, 0.03, -0.145);   // front and back plates
+      for (const sx of [-1, 1]) {
+        add('body', box(0.06, 0.03, 0.31), sx * 0.12, 0.262, 0);              // shoulder straps
+        add('body', box(0.035, 0.18, 0.26), sx * 0.22, -0.06, 0);             // cummerbund
+      }
+      for (const px of [-0.11, 0, 0.11]) { add('pouch', box(0.09, 0.12, 0.05), px, -0.08, 0.19); add('buckle', box(0.05, 0.02, 0.006), px, -0.03, 0.216); }
+      add('pouch', box(0.24, 0.06, 0.012), 0, 0.15, 0.176);                   // the patch panel
+    } else {
+      add('body', box(0.32, 0.2, 0.035), 0, 0.0, 0.135);                       // foam front panel
+      for (const sx of [-1, 1]) add('body', box(0.05, 0.022, 0.27), sx * 0.11, 0.255, 0);   // shoulder straps
+      for (const sx of [-1, 1]) add('body', box(0.05, 0.25, 0.022), sx * 0.11, 0.13, -0.13);
+      add('body', box(0.44, 0.04, 0.26), 0, -0.06, 0);                         // the strap round the back
+      for (const px of [-0.09, 0, 0.09]) add('pouch', box(0.07, 0.11, 0.04), px, -0.01, 0.17);
+    }
+    merge(po.torso, 'chest', b, mats);
+  }
+  // elbow pads, on each elbow (the forearm hangs −y from it, the back of the arm is −z)
+  if (gear.arms) {
+    const mats = { pad: _kidFaceMat('gpad', 0x4a4c52, 0.7), band: _kidFaceMat('gband', 0x202024, 0.9) };
+    for (const rig of [po.rigR, po.rigL]) {
+      const b = {}; const add = _propAdder(b);
+      add('pad', box(0.1, 0.1, 0.04), 0, -0.01, -0.068);
+      add('band', box(0.124, 0.07, 0.136), 0, 0.0, 0);
+      merge(rig.elbow, 'arms', b, mats);
+    }
+  }
+  // knee pads, on each leg (0.16 × 0.55 × 0.18, centre at 0.275, so the knee is near local y 0.03)
+  if (gear.legs) {
+    const mats = { pad: _kidFaceMat('gpad', 0x4a4c52, 0.7), band: _kidFaceMat('gband', 0x202024, 0.9) };
+    for (const leg of [po.legL, po.legR]) {
+      const b = {}; const add = _propAdder(b);
+      add('pad', box(0.13, 0.13, 0.04), 0, 0.03, 0.1);
+      add('band', box(0.172, 0.03, 0.192), 0, 0.075, 0); add('band', box(0.172, 0.03, 0.192), 0, -0.02, 0);
+      merge(leg, 'legs', b, mats);
+    }
+  }
+  // shoes: the pair's colour on the uppers and a sole of its own (lugs, spikes, a thick cushion)
+  const sd = LOADOUT_GEAR_SHOES[gear.shoes];
+  if (sd) {
+    const upper = new THREE.MeshStandardMaterial({ color: sd.upper, roughness: 0.7 });
+    for (const sh of [po.shoeL, po.shoeR]) {
+      sh.material = upper;
+      const b = {}; const add = _propAdder(b);
+      const mats = { sole: _kidFaceMat('gsole', sd.sole, 0.8), accent: _kidFaceMat('gaccent', sd.accent || sd.sole, 0.6) };
+      if (sd.thick) { add('sole', box(0.19, 0.035, 0.27), 0, -0.035, 0); add('accent', box(0.192, 0.012, 0.1), 0, -0.03, -0.06); }
+      if (sd.lugs) for (let i = 0; i < 5; i++) add('sole', box(0.17, 0.014, 0.025), 0, -0.047, -0.1 + i * 0.05);
+      if (sd.spikes) for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) add('accent', box(0.012, 0.025, 0.012), sx * 0.05, -0.052, 0.03 + i * 0.035);
+      for (const sx of [-1, 1]) add('accent', box(0.006, 0.03, 0.2), sx * 0.081, 0.005, 0);   // a stripe down each side
+      merge(sh, 'shoes', b, mats);
+    }
+  }
+  // the Utility Belt (slot 3) over the jeans' belt with two pouches, and the Drop-Leg Holster (slot 4) on the right
+  // thigh (the kid's right is −x, the gun side), in the kid's group frame
+  if (gear.belt >= 3) {
+    const b = {}; const add = _propAdder(b);
+    const mats = { web: _kidFaceMat('gweb', 0x3a3a2e, 0.85), pouch: _kidFaceMat('gbpouch', 0x55553f, 0.85), buckle: _kidFaceMat('gbuckle', 0x101010, 0.5) };
+    add('web', box(0.44, 0.05, 0.26), 0, 0.568, 0);
+    add('buckle', box(0.06, 0.04, 0.012), 0, 0.568, 0.134);
+    for (const sx of [-1, 1]) add('pouch', box(0.06, 0.08, 0.07), sx * 0.15, 0.548, -0.12);
+    add('pouch', box(0.05, 0.07, 0.08), 0.225, 0.55, 0.0);
+    if (gear.belt >= 4) {
+      add('web', box(0.04, 0.12, 0.03), -0.2, 0.5, 0.0);                     // the drop strap from the belt
+      add('pouch', box(0.04, 0.17, 0.1), -0.205, 0.37, 0.0);                  // the holster platform
+      add('buckle', box(0.03, 0.06, 0.04), -0.21, 0.47, 0.025);               // a pistol grip in it
+      for (const y of [0.42, 0.32]) add('web', box(0.17, 0.025, 0.19), -0.1, y, 0);   // the leg straps round the thigh
+    }
+    merge(kid.group, 'belt', b, mats);
+  }
+  return out;
+}
+function renderLoadoutKid() {
+  const canvas = document.getElementById('loKidCanvas');
+  if (!canvas) return;
+  const L = LOADOUT_KID;
+  if (!L.renderer) {
+    L.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    L.renderer.setSize(280, 380, false);
+    L.scene = new THREE.Scene();
+    L.scene.background = new THREE.Color(0x2a2f38);
+    L.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.9));
+    const d = new THREE.DirectionalLight(0xffffff, 0.8); d.position.set(1.5, 3, 2.5); L.scene.add(d);
+    L.camera = new THREE.PerspectiveCamera(30, 280 / 380, 0.1, 20);
+    L.camera.position.set(0, 0.95, 4.0); L.camera.lookAt(0, 0.8, 0);
+  }
+  const gun = Game.persist.equipped.gun;
+  if (L.kid) L.scene.remove(L.kid.group);
+  L.kid = createKid(Object.assign({}, Game.persist.look), gun);
+  L.gun = gun;
+  const gk = loadoutKidGearKeys();   // v1.133: and wears what is equipped
+  L.gear = buildKidGear(L.kid, gk); L.gearSig = JSON.stringify(gk);
+  L.scene.add(L.kid.group);
+  drawLoadoutKid();
+}
+// Turn the kid (called each step while the screen is open), render, and re-place the labels on the projected parts.
+function updateLoadoutKid(dt) {
+  if (!LOADOUT_KID.kid) return;
+  LOADOUT_KID.yaw += dt * 0.35;
+  drawLoadoutKid();
+}
+function drawLoadoutKid() {
+  const L = LOADOUT_KID;
+  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw);   // swings between three-quarter views, gun side and front to camera
+  L.kid.group.updateMatrixWorld(true);
+  L.renderer.render(L.scene, L.camera);
+  const items = loadoutKidItems(), svg = document.getElementById('loKidLabels');
+  const rows = { L: 0, R: 0 };
+  let html = '';
+  L.labels = [];
+  for (const pt of LOADOUT_KID_PARTS) {
+    const v = new THREE.Vector3(...pt.p).applyMatrix4(L.kid.group.matrixWorld).project(L.camera);
+    const x = (v.x + 1) / 2 * 280, y = (1 - v.y) / 2 * 380;
+    const i = rows[pt.side]++;
+    const lx = pt.side === 'L' ? 6 : 274, ly = 40 + i * 50 + (pt.side === 'R' ? 150 : 0);
+    const anchor = pt.side === 'L' ? 'start' : 'end';
+    const none = items[pt.key] === 'nothing';
+    html += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(pt.side === 'L' ? lx + 52 : lx - 52)}" y2="${ly + 4}" stroke="${none ? 'rgba(255,255,255,.25)' : '#ff8c42'}" stroke-width="1"/>`
+      + `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${none ? '#888' : '#ff8c42'}"/>`
+      + `<text class="part" x="${lx}" y="${ly - 6}" text-anchor="${anchor}">${pt.part}</text>`
+      + `<text x="${lx}" y="${ly + 7}" text-anchor="${anchor}" data-key="${pt.key}" opacity="${none ? 0.55 : 1}">${items[pt.key]}</text>`;
+    L.labels.push({ key: pt.key, x, y, lx, ly, text: items[pt.key] });
+  }
+  svg.innerHTML = html;
+}
+
 function openLoadout() {
   document.getElementById('loadoutScreen').classList.add('active');
   Game.prevMode = Game.mode;
@@ -17702,6 +18316,7 @@ function openLoadout() {
   loadoutPickerSlot = -1;
   exitPointerLock();
   renderLoadoutManager();
+  renderLoadoutKid();   // v1.132
 }
 
 function closeLoadout() {
@@ -17850,6 +18465,11 @@ function renderLoadoutManager() {
 
   renderClosetWornGear();
   renderLoadoutWeight();
+  // v1.132: a gun swap re-builds the kid (the gun is in its hands); a gear change only re-labels
+  // v1.133: a gear change re-builds it too, since the kid now wears the gear
+  if (LOADOUT_KID.kid && Game.mode === 'loadoutMgr') {
+    if (LOADOUT_KID.gun !== Game.persist.equipped.gun || LOADOUT_KID.gearSig !== JSON.stringify(loadoutKidGearKeys())) renderLoadoutKid(); else drawLoadoutKid();
+  }
 }
 
 // v1.60: paint the weight readout. Shows total lb, a light/medium/heavy tier,
@@ -20617,13 +21237,26 @@ function spawnEnemyBB(enemy, targetPos) {
   const pelletCount = enemySpec.pelletsPerShot ? enemySpec.pelletsPerShot() : 1;
   const pelletSpreadBoost = pelletCount > 1 ? 1.6 : 1.0;
 
+  // v1.137 fix-up: the clear line (above) checks the aim line and 10 cm under it, but the spread drawn here can
+  // still swing a BB sideways into the near corner of what the kid is beside (tests/car-side-fire: 1 BB in 5978
+  // into the lane car's cabin). Each BB's own first metres are cast too: one that would hit something redraws its
+  // spread, and after four tries goes down the aim line, which the clear line has already passed.
+  const nearObs = Game.player && Game.player.obstacles;
+  const nearReach = Math.min(3.0, Math.hypot(targetPos.x - muzzlePos.x, targetPos.z - muzzlePos.z) - 0.3);
   for (let i = 0; i < pelletCount; i++) {
-    const dir = baseDir.clone();
-    const s = baseSpread * pelletSpreadBoost;
-    dir.x += (Math.random() - 0.5) * s;
-    dir.y += (Math.random() - 0.5) * (s * 0.6);
-    dir.z += (Math.random() - 0.5) * s;
-    dir.normalize();
+    let dir;
+    for (let tries = 0; ; tries++) {
+      if (tries >= 4) { dir = baseDir.clone(); break; }
+      dir = baseDir.clone();
+      const s = baseSpread * pelletSpreadBoost;
+      dir.x += (Math.random() - 0.5) * s;
+      dir.y += (Math.random() - 0.5) * (s * 0.6);
+      dir.z += (Math.random() - 0.5) * s;
+      dir.normalize();
+      if (!nearObs || !nearObs.length || nearReach <= 0.2) break;
+      const rr = nearReach / Math.max(0.05, Math.hypot(dir.x, dir.z));
+      if (raycastObstacles(muzzlePos.x, muzzlePos.y, muzzlePos.z, dir.x, dir.y, dir.z, rr, nearObs) >= rr) break;
+    }
     const vel = dir.multiplyScalar(enemySpec.muzzleVelocity * 0.9);
     const bb = makeBB(muzzlePos.clone(), vel, 'enemy', enemy, enemySpec, combatantView(enemy).team);
     // Ship C: record who this shot was aimed at, so that combatant can detect
@@ -22598,6 +23231,8 @@ function updateEnemies(dt) {
       const RECENT_SPOT_WINDOW = 3.2;
       e._recentlySpotted = e._lastSawPlayer && ((performance.now() / 1000) - e._lastSawPlayer) < RECENT_SPOT_WINDOW;
       e._hasLOSNow = losMem;
+      // v1.134: seconds without a line to anyone, for the free-for-all roam below
+      e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
     }
 
     // v1.9: shotgun kids want to *push closer* if the player is past their near range.
@@ -22786,9 +23421,12 @@ function updateEnemies(dt) {
         //   (3) shooting-recovery cycle in `shooting` case below: 1.2-2.7s → 0.7-1.6s.
         //   (4) repositionChance baseline 0.20 → 0.30 (kids move more between shots).
         // Snipers + defenders still hold position by their existing modifiers.
+        // v1.134 (Michael: B on the lot free-for-all): with every start hidden, a cautious kid (aggression under 0.45)
+        // hid and peeked at nobody all round. In a free-for-all, 5 s without seeing anyone sends any skirmisher looking.
+        const ffaRoam = Game.scenario.ffa && (e._unseenTime || 0) > 5;
         const marchEligible = (
           e.role === 'attacker' ||
-          (e.role === 'skirmisher' && aggression >= 0.45)
+          (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam))
         ) && e.weapon !== 'sniper' && e.role !== 'defender';
 
         if (marchEligible) {
@@ -23013,11 +23651,16 @@ function updateEnemies(dt) {
             // it keeps the side axis it started with and how far either way along it he has been. Over 2.5 s
             // with no such gain while wall-following, he is in a pocket (also after 2 blocked turn-rounds).
             const clk = Game.scenario.aiClock || 0;
-            if (!(d < e._advBestD - 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
+            // v1.134 fix-up: "closer" is his own walk toward the target, not the distance closing. Chasing a kid who
+            // walked toward him, the window restarted every 0.5 m the other kid came, so the 2.5 s pocket rule never
+            // fired and a back-out found its side clear at once (Northcliff Night: Diego shuttled 5–7 s inside the
+            // west fort, whose closed wall faces the player).
+            const advGain = e._advP0x == null ? Infinity : ((e.pos.x - e._advP0x) * dx + (e.pos.z - e._advP0z) * dz) / d;
+            if (!(advGain > 0.5) && clk - (e._advProgAt ?? -1) < 0.1 && clk - e._advProg0 < 6) {
               const lat = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
               e._advLatLo = Math.min(e._advLatLo, lat); e._advLatHi = Math.max(e._advLatHi, lat);
             } else {
-              e._advBestD = d; e._advProg0 = clk; e._advWF = 0;
+              e._advP0x = e.pos.x; e._advP0z = e.pos.z; e._advProg0 = clk; e._advWF = 0;
               e._advPerpX = -dz / d; e._advPerpZ = dx / d;
               e._advLatLo = e._advLatHi = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
             }
@@ -23051,7 +23694,7 @@ function updateEnemies(dt) {
                 if (freeSide) e._advSide = freeSide;
                 e._advSideT = freeSide ? freeL / Math.max(0.5, speed) + 0.1 : 0.35;
                 e._advStuck = 0; e._advTurns = 0;
-                e._advBestD = Infinity;   // a fresh window after the way out
+                e._advP0x = null;   // a fresh window after the way out
               }
             } else if (advCommitted) {
               // no straight step this frame
@@ -23868,6 +24511,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
     updateInteractables();
@@ -24045,6 +24689,13 @@ const PIN_SCENARIO_GROUPS = {
     'lot_ffa',           // v1.103
     'lot_night_4v4',
   ],
+  // v1.130: Northcliff Trace (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A).
+  northcliff: [
+    'northcliff_1v1_evan',
+    'northcliff_twins_3v3',
+    'northcliff_defend_creek',   // v1.131
+    'northcliff_night_4v4',      // v1.131: the zone capstone
+  ],
 };
 
 // =====================================================================
@@ -24059,8 +24710,8 @@ const PIN_SCENARIO_GROUPS = {
 //     listed scenario) is completed. Zone 1 is always unlocked.
 //   - The first scenario of zones 2+ additionally requires the prior zone's
 //     capstone (it can't be open before its own zone is).
-// Northcliff is a real ladder node with no scenarios yet (comingSoon) — it
-// shows as a locked teaser pin until its map/scenarios are built.
+// Northcliff was a ladder node with no scenarios (comingSoon), shown as a locked
+// teaser pin; since v1.130 it is a playable zone (Northcliff Trace).
 // Everything downstream (pin state, row render, result nav, launch guard)
 // reads from these functions — no gating logic is duplicated.
 // =====================================================================
@@ -24069,8 +24720,7 @@ const ZONE_LADDER = [
   { key: 'bunratty_court', pin: 'bunratty_court', name: 'Bunratty Court',                 region: 'sentinel' },
   { key: 'hollow',         pin: 'hollow',         name: 'The Hollow · Chattahoochee',     region: 'east_roswell' },
   { key: 'market_lot',     pin: 'market_lot',     name: 'Riverside Market',               region: 'east_roswell' },   // v1.102
-  { key: 'northcliff',     pin: 'locked',         name: "Northcliff / Martin's Landing",  region: 'northcliff',
-    comingSoon: true,
+  { key: 'northcliff',     pin: 'northcliff',     name: "Northcliff / Martin's Landing",  region: 'northcliff',   // v1.130: playable (Northcliff Trace)
     teaser: "A new neighborhood is opening up north — Northcliff Trace, Stoneglen Close, and Bellfield Court. Bigger yards, longer sightlines, and the toughest kids on the river. Clear the Riverside Market lot to prove you're ready." },
 ];
 
