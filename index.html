@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.132</div>
+  <div class="version">v1.133</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18077,7 +18077,7 @@ let loadoutPickerSlot = -1;
 // slowly in a panel with the slot-1 gun in hand, and a leader line from each body part to what is equipped there: eye
 // pro, chest, arms, legs, feet, belt and holster, the gun. The worn gear has no meshes on the kid yet (step 2, a group
 // at a time); the lines name it. Part points are in the average kid's local frame (createKid's group scale applies).
-const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0 };
+const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '' };
 const LOADOUT_KID_PARTS = [
   { key: 'eyes',  part: 'EYES',  p: [0, 1.27, 0.15],      side: 'L' },   // the kid faces +z; eyes at 1.27 (head top 1.47)
   { key: 'chest', part: 'CHEST', p: [0, 0.92, 0.13],      side: 'L' },
@@ -18095,6 +18095,151 @@ function loadoutKidItems() {
     eyes: (EYEWEAR[eq.eyewear] || EYEWEAR.none).name, chest: armor('chest'), arms: armor('arms'), legs: armor('legs'),
     feet: (SHOES[eq.shoes] || SHOES.none).name, belt, gun: getGunDisplayName(eq.gun),
   };
+}
+// v1.133 (backlog D.5 C step 2): what is equipped is worn on the Loadout kid, a mesh group per body part: eye pro on
+// the head, the chest rig or plate carrier on the torso, elbow pads on the elbows, knee pads on the legs, the shoe pair
+// (a colour and a sole of its own), and the Utility Belt with pouches and the Drop-Leg Holster on the right thigh.
+// Each piece is parented to the node it sits on (head, torso, elbow, leg, shoe), so a pose would carry it. Sneakers
+// (default) and "nothing" add no mesh. Returns the meshes added by group, for the test.
+const LOADOUT_GEAR_SHOES = {
+  trail_shoes:  { upper: 0x7a6a48, sole: 0x3a3228, lugs: true },
+  track_spikes: { upper: 0xf06a1a, sole: 0x1a1a1a, spikes: true },
+  cushioned:    { upper: 0xd8dade, sole: 0xf4f4f0, accent: 0x2a6ad8, thick: true },
+};
+const _gearLensMats = {};
+function _gearLensMat(color, opacity) {
+  const k = color + ':' + opacity;
+  return _gearLensMats[k] || (_gearLensMats[k] = new THREE.MeshStandardMaterial({ color, roughness: 0.15, metalness: 0.1, transparent: true, opacity }));
+}
+function loadoutKidGearKeys() {
+  const eq = Game.persist.equipped, a = eq.armor || {};
+  return { eyewear: EYEWEAR[eq.eyewear] ? eq.eyewear : 'none', chest: a.chest || null, arms: a.arms || null, legs: a.legs || null,
+    shoes: SHOES[eq.shoes] ? eq.shoes : 'none', belt: getUnlockedSlotCount() };
+}
+function buildKidGear(kid, gear) {
+  const po = kid.pose, out = { eyewear: [], chest: [], arms: [], legs: [], shoes: [], belt: [] };
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const merge = (parent, group, b, mats) => {
+    const gg = new THREE.Group(); gg.userData.kidGear = group;
+    _propMerge(gg, b, mats); parent.add(gg); gg.traverse(m => { if (m.isMesh) out[group].push(m); });
+  };
+  // eye pro, in the head's frame (face plane z 0.14, eyes at y 0.012, the head 0.28 across)
+  if (gear.eyewear && gear.eyewear !== 'none') {
+    const def = EYEWEAR[gear.eyewear], F = 0.14, EY = 0.012;
+    const b = {}; const add = _propAdder(b);
+    const mats = { frame: _kidFaceMat('gframe', new THREE.Color(def.view.frameColor).getHex(), 0.5),
+      strap: _kidFaceMat('gstrap', 0x1a1a1e, 0.8) };
+    const strap = (y, t) => {   // a band round the head at height y
+      add('strap', box(0.296, t, 0.012), 0, y, -0.148); add('strap', box(0.012, t, 0.29), -0.148, y, 0); add('strap', box(0.012, t, 0.29), 0.148, y, 0);
+    };
+    if (gear.eyewear === 'glasses_clear') {
+      mats.lens = _gearLensMat(0xdfe8ff, 0.3);
+      add('lens', box(0.2, 0.06, 0.006), 0, EY - 0.004, F + 0.022);             // one wraparound shield
+      for (const sx of [-1, 1]) add('lens', box(0.006, 0.05, 0.05), sx * 0.103, EY - 0.004, F - 0.002);
+      add('frame', box(0.21, 0.01, 0.012), 0, EY + 0.03, F + 0.022);           // brow bar
+      for (const sx of [-1, 1]) add('frame', box(0.008, 0.01, 0.17), sx * 0.146, EY + 0.025, F - 0.07);   // temple arms
+    } else if (gear.eyewear === 'goggles_swim') {
+      mats.lens = _gearLensMat(0x1a3a9a, 0.65);
+      for (const sx of [-1, 1]) {
+        add('frame', box(0.07, 0.048, 0.016), sx * 0.058, EY, F + 0.012);
+        add('lens', box(0.058, 0.036, 0.006), sx * 0.058, EY, F + 0.022);
+      }
+      add('frame', box(0.03, 0.008, 0.008), 0, EY + 0.004, F + 0.014);         // nose bridge
+      strap(EY, 0.012);
+    } else if (gear.eyewear === 'mesh_mask') {
+      mats.mesh = _gearLensMat(0x202024, 0.72);
+      add('frame', box(0.26, 0.016, 0.03), 0, EY + 0.045, F + 0.02);           // rim: brow, chin, sides
+      add('frame', box(0.22, 0.02, 0.04), 0, -0.118, F + 0.012);
+      for (const sx of [-1, 1]) add('frame', box(0.016, 0.18, 0.05), sx * 0.124, -0.035, F + 0.008);
+      add('mesh', box(0.236, 0.15, 0.006), 0, -0.035, F + 0.03);              // the mesh over the whole face
+      for (let i = 0; i < 5; i++) add('frame', box(0.236, 0.003, 0.004), 0, EY + 0.03 - i * 0.035, F + 0.034);   // grid rows
+      strap(EY + 0.03, 0.016); strap(-0.07, 0.016);
+    } else {
+      // goggles: a chunky foam frame and one tinted lens, smoke or amber
+      mats.lens = gear.eyewear === 'goggles_amber' ? _gearLensMat(0xe0a020, 0.6) : _gearLensMat(0x23252e, 0.7);
+      add('frame', box(0.25, 0.085, 0.036), 0, EY, F + 0.012);
+      add('lens', box(0.22, 0.062, 0.006), 0, EY, F + 0.032);
+      add('frame', box(0.05, 0.03, 0.04), 0, EY - 0.04, F + 0.016);            // nose notch
+      strap(EY, 0.03);
+    }
+    merge(po.head, 'eyewear', b, mats);
+  }
+  // chest, in the torso's frame (0.42 × 0.5 × 0.24, centre 0, the shirt's yoke at 0.23)
+  if (gear.chest) {
+    const heavy = gear.chest === 'chest_heavy';
+    const b = {}; const add = _propAdder(b);
+    const mats = { body: _kidFaceMat('gvest', heavy ? 0x4a5236 : 0x24262a, 0.85), pouch: _kidFaceMat('gpouch', heavy ? 0x3c4430 : 0x3a3c40, 0.85),
+      buckle: _kidFaceMat('gbuckle', 0x101010, 0.5) };
+    if (heavy) {
+      add('body', box(0.36, 0.36, 0.05), 0, 0.03, 0.145); add('body', box(0.36, 0.36, 0.05), 0, 0.03, -0.145);   // front and back plates
+      for (const sx of [-1, 1]) {
+        add('body', box(0.06, 0.03, 0.31), sx * 0.12, 0.262, 0);              // shoulder straps
+        add('body', box(0.035, 0.18, 0.26), sx * 0.22, -0.06, 0);             // cummerbund
+      }
+      for (const px of [-0.11, 0, 0.11]) { add('pouch', box(0.09, 0.12, 0.05), px, -0.08, 0.19); add('buckle', box(0.05, 0.02, 0.006), px, -0.03, 0.216); }
+      add('pouch', box(0.24, 0.06, 0.012), 0, 0.15, 0.176);                   // the patch panel
+    } else {
+      add('body', box(0.32, 0.2, 0.035), 0, 0.0, 0.135);                       // foam front panel
+      for (const sx of [-1, 1]) add('body', box(0.05, 0.022, 0.27), sx * 0.11, 0.255, 0);   // shoulder straps
+      for (const sx of [-1, 1]) add('body', box(0.05, 0.25, 0.022), sx * 0.11, 0.13, -0.13);
+      add('body', box(0.44, 0.04, 0.26), 0, -0.06, 0);                         // the strap round the back
+      for (const px of [-0.09, 0, 0.09]) add('pouch', box(0.07, 0.11, 0.04), px, -0.01, 0.17);
+    }
+    merge(po.torso, 'chest', b, mats);
+  }
+  // elbow pads, on each elbow (the forearm hangs −y from it, the back of the arm is −z)
+  if (gear.arms) {
+    const mats = { pad: _kidFaceMat('gpad', 0x4a4c52, 0.7), band: _kidFaceMat('gband', 0x202024, 0.9) };
+    for (const rig of [po.rigR, po.rigL]) {
+      const b = {}; const add = _propAdder(b);
+      add('pad', box(0.1, 0.1, 0.04), 0, -0.01, -0.068);
+      add('band', box(0.124, 0.07, 0.136), 0, 0.0, 0);
+      merge(rig.elbow, 'arms', b, mats);
+    }
+  }
+  // knee pads, on each leg (0.16 × 0.55 × 0.18, centre at 0.275, so the knee is near local y 0.03)
+  if (gear.legs) {
+    const mats = { pad: _kidFaceMat('gpad', 0x4a4c52, 0.7), band: _kidFaceMat('gband', 0x202024, 0.9) };
+    for (const leg of [po.legL, po.legR]) {
+      const b = {}; const add = _propAdder(b);
+      add('pad', box(0.13, 0.13, 0.04), 0, 0.03, 0.1);
+      add('band', box(0.172, 0.03, 0.192), 0, 0.075, 0); add('band', box(0.172, 0.03, 0.192), 0, -0.02, 0);
+      merge(leg, 'legs', b, mats);
+    }
+  }
+  // shoes: the pair's colour on the uppers and a sole of its own (lugs, spikes, a thick cushion)
+  const sd = LOADOUT_GEAR_SHOES[gear.shoes];
+  if (sd) {
+    const upper = new THREE.MeshStandardMaterial({ color: sd.upper, roughness: 0.7 });
+    for (const sh of [po.shoeL, po.shoeR]) {
+      sh.material = upper;
+      const b = {}; const add = _propAdder(b);
+      const mats = { sole: _kidFaceMat('gsole', sd.sole, 0.8), accent: _kidFaceMat('gaccent', sd.accent || sd.sole, 0.6) };
+      if (sd.thick) { add('sole', box(0.19, 0.035, 0.27), 0, -0.035, 0); add('accent', box(0.192, 0.012, 0.1), 0, -0.03, -0.06); }
+      if (sd.lugs) for (let i = 0; i < 5; i++) add('sole', box(0.17, 0.014, 0.025), 0, -0.047, -0.1 + i * 0.05);
+      if (sd.spikes) for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) add('accent', box(0.012, 0.025, 0.012), sx * 0.05, -0.052, 0.03 + i * 0.035);
+      for (const sx of [-1, 1]) add('accent', box(0.006, 0.03, 0.2), sx * 0.081, 0.005, 0);   // a stripe down each side
+      merge(sh, 'shoes', b, mats);
+    }
+  }
+  // the Utility Belt (slot 3) over the jeans' belt with two pouches, and the Drop-Leg Holster (slot 4) on the right
+  // thigh (the kid's right is −x, the gun side), in the kid's group frame
+  if (gear.belt >= 3) {
+    const b = {}; const add = _propAdder(b);
+    const mats = { web: _kidFaceMat('gweb', 0x3a3a2e, 0.85), pouch: _kidFaceMat('gbpouch', 0x55553f, 0.85), buckle: _kidFaceMat('gbuckle', 0x101010, 0.5) };
+    add('web', box(0.44, 0.05, 0.26), 0, 0.568, 0);
+    add('buckle', box(0.06, 0.04, 0.012), 0, 0.568, 0.134);
+    for (const sx of [-1, 1]) add('pouch', box(0.06, 0.08, 0.07), sx * 0.15, 0.548, -0.12);
+    add('pouch', box(0.05, 0.07, 0.08), 0.225, 0.55, 0.0);
+    if (gear.belt >= 4) {
+      add('web', box(0.04, 0.12, 0.03), -0.2, 0.5, 0.0);                     // the drop strap from the belt
+      add('pouch', box(0.04, 0.17, 0.1), -0.205, 0.37, 0.0);                  // the holster platform
+      add('buckle', box(0.03, 0.06, 0.04), -0.21, 0.47, 0.025);               // a pistol grip in it
+      for (const y of [0.42, 0.32]) add('web', box(0.17, 0.025, 0.19), -0.1, y, 0);   // the leg straps round the thigh
+    }
+    merge(kid.group, 'belt', b, mats);
+  }
+  return out;
 }
 function renderLoadoutKid() {
   const canvas = document.getElementById('loKidCanvas');
@@ -18114,6 +18259,8 @@ function renderLoadoutKid() {
   if (L.kid) L.scene.remove(L.kid.group);
   L.kid = createKid(Object.assign({}, Game.persist.look), gun);
   L.gun = gun;
+  const gk = loadoutKidGearKeys();   // v1.133: and wears what is equipped
+  L.gear = buildKidGear(L.kid, gk); L.gearSig = JSON.stringify(gk);
   L.scene.add(L.kid.group);
   drawLoadoutKid();
 }
@@ -18305,7 +18452,10 @@ function renderLoadoutManager() {
   renderClosetWornGear();
   renderLoadoutWeight();
   // v1.132: a gun swap re-builds the kid (the gun is in its hands); a gear change only re-labels
-  if (LOADOUT_KID.kid && Game.mode === 'loadoutMgr') { if (LOADOUT_KID.gun !== Game.persist.equipped.gun) renderLoadoutKid(); else drawLoadoutKid(); }
+  // v1.133: a gear change re-builds it too, since the kid now wears the gear
+  if (LOADOUT_KID.kid && Game.mode === 'loadoutMgr') {
+    if (LOADOUT_KID.gun !== Game.persist.equipped.gun || LOADOUT_KID.gearSig !== JSON.stringify(loadoutKidGearKeys())) renderLoadoutKid(); else drawLoadoutKid();
+  }
 }
 
 // v1.60: paint the weight readout. Shows total lb, a light/medium/heavy tier,

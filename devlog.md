@@ -6588,3 +6588,56 @@ kid (eyes at 1.27 m, gun at x −0.27), and the turn was moved to keep that side
   a group at a time, each shown to Michael.
 - The card is now 1040 px wide. Below about 1100 px of window it fills 95% of the width, and the lists get narrower.
   Whether it reads well on a laptop is for a look in play.
+
+
+---
+
+
+## v1.133 — The Loadout kid wears its gear
+
+Backlog D.5 C, step 2 (Michael: A, control room 1 Oct). v1.132 put your kid in a panel on the Loadout screen with a
+line from each body part to what is equipped there. The lines named the gear, but the kid didn't wear it. Now it does.
+Every piece has its own mesh, on the part of the body it belongs to:
+- **Eye pro**, on the head: Clear Safety Glasses are a clear wraparound shield with a brow bar and arms. Smoke and Ski
+  Goggles are a chunky foam frame with one tinted lens (smoke or amber) and a strap round the head. Swimming Goggles
+  are two small blue cups with a nose bridge and a thin strap. The Full Mesh Mask covers the face with a dark mesh,
+  a rim and two straps.
+- **Chest**, on the torso: the Foam Chest Rig is a front panel with three pouches, shoulder straps and a strap round
+  the back. The Plate-Carrier Vest has olive front and back plates, side cummerbunds, three pouches and a patch panel.
+- **Elbow Pads** on each elbow and **Knee Pads** on each knee, a pad with a band round the limb.
+- **Shoes**: Trail Runners are tan with lugs on the sole, Track Spikes orange with spikes under the toe, and the
+  Cushioned Cross-Trainers grey on a thick white sole with a blue flash. Each pair has a side stripe. Default
+  sneakers stay the kid's own.
+- **Belt and holster**, at the waist: the Utility Belt is webbing over the jeans' belt with a buckle and three
+  pouches, and the Drop-Leg Holster adds a strap down the right thigh (the gun side), a holster with a grip in it,
+  and two leg straps.
+
+Each group is parented to the part it sits on (head, torso, elbows, legs, shoes) so a pose would carry it, and the
+belt sits in the kid's frame. `buildKidGear` is separate from `createKid`, so the kids in matches don't change. A change
+in the lists rebuilds the kid only when the gun or the gear has changed. Any other refresh just re-labels it, as before.
+On the first screenshot the knee pads were black on black jeans and didn't show, so the pads are now dark grey with
+darker bands.
+
+### Verified
+- New `tests/loadout-gear.test.mjs`. Each piece is measured in the kid's own frame, with the turn and the
+  height/build scale taken out:
+  - A new save wears no gear meshes.
+  - All five eye pros sit on the head, across the eyes (y 1.27), and stand 1.5–3.6 cm proud of the face. Taking
+    them off removes them.
+  - The Foam Chest Rig is on the torso and stands to z 0.19 (the shirt front is 0.12). The Plate-Carrier Vest has a
+    plate front and back (z 0.22 and −0.17).
+  - Elbow Pads: two, at y 0.75–0.85, on the elbow nodes. Knee Pads: two, at y 0.24–0.37, in front of the leg.
+  - Each of the three shoe pairs changes the upper's colour and adds its sole on the shoe nodes. Sneakers add
+    nothing and keep the kid's own colour.
+  - No belt with two slots. The Utility Belt sits at y 0.51–0.59. With the holster, the gear runs down to y 0.29 on
+    the right thigh (x −0.23).
+  - With a full kit, a refresh that changes nothing keeps the same kid, all seven labels name the kit, and every
+    point stays on the canvas through 1.5 s of turning.
+  - Screenshots `tests/out/loadout-gear-kid.png` (Ski Goggles, plate carrier, pads, trail runners, belt and holster)
+    and `loadout-gear-kid2.png` (mesh mask, chest rig, spikes), checked by eye.
+- `tests/loadout-kid.test.mjs` (v1.132) still passes.
+- `npm test`: 42/42 suites green.
+### Still open
+- Michael's look at the gear (the screenshots, or the Loadout screen once Builder sessions is merged). D.5 C is
+  complete if he's happy with it.
+- The gear shows only on the Loadout kid. The mirror and the kids in matches don't wear it.

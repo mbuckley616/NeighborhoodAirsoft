@@ -74,7 +74,9 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    done, v1.128 (Michael: A — four tabs: Guns, Ammo, Gear, Mods; `tests/shop-tabs.test.mjs`). C (Loadout screen with a
    3D kid; Michael: **A**, in steps, control room 1 Oct): ~~step 1, the kid, gun and labels~~ — done, v1.132 (your kid
    turns in a panel holding the slot-1 gun, a line from each body part to its item; `tests/loadout-kid.test.mjs`).
-   Step 2: the gear meshes on the kid, a group at a time (eye pro, armour, shoes, belt and holster).
+   ~~Step 2, the gear meshes on the kid~~ — done, v1.133 (eye pro, chest rig and plate carrier, elbow and knee pads,
+   three shoe pairs, Utility Belt and Drop-Leg Holster, each its own mesh on its body part;
+   `tests/loadout-gear.test.mjs`). D.5 C is complete pending Michael's look.
 6. A character creator at the start of the game. Choose your height, shape, hair, eyes, skin color, clothing color /
    style, etc. (Michael, 2026-09-29) **(design)** — Michael: **C**, the mirror, and a new save opens on it once (control room,
    30 Sep). ~~Part 1, the bathroom mirror~~ — done, v1.107 (height, build, hair, hair colour, skin, shirt, pants,
