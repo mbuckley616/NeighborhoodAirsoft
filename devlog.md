@@ -6834,7 +6834,8 @@ yard about 34 × 31 m behind a house, with a big oak in the middle. The treehous
 the oak, on four posts with knee braces. It has a 0.9 m plywood rail with a cap, a gap in the south rail over the
 ladder, and a sign. The yard also has a shed, a kid fort by the west fence, Home Depot boxes, bins by the side gate,
 a ply stack and a picnic table on the patio. The scenario is King of the Treehouse: Connor holds the platform with
-an MP5, Haden holds the fort with a pistol, one hit each, kill all. You start by the bins at the side gate. It sits
+an MP5, Haden starts at the fort with a pistol and comes looking for you, one hit each, kill all. (As a fort
+defender, Haden neither moved nor fired in 60 s of the Northcliff suite's round, so he is a skirmisher.) You start by the bins at the side gate. It sits
 third in Northcliff, after the twins 3v3 and before the creek-fort defend. Northcliff (v1.130) is not on itch yet,
 so moving the chain changes no player's save.
 
@@ -6867,4 +6868,6 @@ How the pieces work:
   Screenshots: `tests/out/treehouse-yard.png`, `tests/out/treehouse-platform.png`.
 - Probe: Connor's BBs against his own rail and floor within 3 m of the muzzle, the player standing at four spots
   round the yard for 30 s each: 0 of 805.
-- `tests/northcliff.test.mjs`: Northcliff's chain now lists the treehouse third.
+- In a fresh round with the player at the gate, Haden walks 17.8 m and fires 65 BBs in 60 s.
+- `tests/northcliff.test.mjs`: Northcliff's chain now lists the treehouse third. Its per-scenario loop (hill, kids,
+  fire) keeps to Northcliff Trace's own scenarios; the treehouse has its own suite.

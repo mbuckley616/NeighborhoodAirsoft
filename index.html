@@ -5998,14 +5998,14 @@ const SCENARIOS = {
   stoneglen_treehouse: {
     region: 'northcliff', street: 'stoneglen_close',
     name: 'Stoneglen Close', scenarioName: 'King of the Treehouse',
-    desc: "The twins have a real treehouse: a platform up in the big oak in their backyard, with a plywood rail and a ladder. Connor has it, and from up there he can see the whole yard. Haden's holding the fort by the west fence. Get to the ladder and climb it (W at the foot, looking at it; S to climb down), or tag Connor from the ground. Jumping off the platform is quicker than the ladder, but the drop takes all your stamina. One hit each.",
+    desc: "The twins have a real treehouse: a platform up in the big oak in their backyard, with a plywood rail and a ladder. Connor has it, and from up there he can see the whole yard. Haden starts at the fort by the west fence and comes looking for you. Get to the ladder and climb it (W at the foot, looking at it; S to climb down), or tag Connor from the ground. Jumping off the platform is quicker than the ladder, but the drop takes all your stamina. One hit each.",
     builderFn: 'buildTreehouseYardScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'side_gate',
     enemySetup: [
       { charId: 'connor', weapon: 'mp5',    anchor: 'treehouse', perch: 'treehouse', role: 'defender' },
-      { charId: 'haden',  weapon: 'pistol', anchor: 'fort', role: 'defender' },
+      { charId: 'haden',  weapon: 'pistol', anchor: 'fort', role: 'skirmisher' },
     ],
     winCondition: 'kill_all',
     rewards: { win: 70, lose: 16 },

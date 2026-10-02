@@ -51,7 +51,8 @@ check('after the lot, the pin is live and lists every scenario, only the opener 
   !pin.lockedAfter && pin.rows.length === ladder.ids.length && pin.rows[0].id === 'northcliff_1v1_evan' && !pin.rows[0].locked
   && pin.rows.slice(1).every(r => r.locked), pin);
 
-for (const id of ladder.ids) {
+// v1.138: the Stoneglen treehouse is its own flat backyard map (tests/treehouse.test.mjs); these are Northcliff Trace's
+for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   await g.scenario(id);
   const start = await page.evaluate(() => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);

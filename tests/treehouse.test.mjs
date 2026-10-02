@@ -31,6 +31,18 @@ const hold = await page.evaluate(() => {
 check('over 20 s Connor never leaves the platform (0 steps off its floor, feet at 2.6)', hold.off === 0 && hold.minY === 2.6 && hold.maxY === 2.6, hold);
 check('he fires at the player at the side gate, from up there (every BB starts above 3 m)', hold.shots > 0 && hold.minShotY > 3, hold);
 
+// a fresh round, the player at the gate: Haden comes for him or shoots (v1.138: as a fort defender he did neither in 60 s)
+await g.scenario('stoneglen_treehouse');
+const haden60 = await page.evaluate(() => {
+  applyBBHit = () => {};
+  const h = Game.scenario.enemies.find(e => !e.perch), o = spawnEnemyBB; let fired = 0, walked = 0;
+  spawnEnemyBB = (e, t) => { if (e === h) fired++; return o(e, t); };
+  for (let i = 0; i < 3600; i++) { const px = h.pos.x, pz = h.pos.z; stepGame(1 / 60); const m = Math.hypot(h.pos.x - px, h.pos.z - pz); if (m < 1.5) walked += m; }
+  spawnEnemyBB = o;
+  return { fired, walked: +walked.toFixed(1), at: [+h.pos.x.toFixed(1), +h.pos.z.toFixed(1)], state: h.state };
+});
+check('in 60 s Haden walks over 5 m and fires', haden60.walked > 5 && haden60.fired > 0, haden60);
+
 // helpers: place the player, hold keys for n steps
 const run = (o) => page.evaluate((o) => {
   const p = Game.player; Game.mouse.locked = true;
