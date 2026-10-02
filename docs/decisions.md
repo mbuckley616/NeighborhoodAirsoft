@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
+  built, through v1.137 on Builder sessions (CI green), and every Found in play bug is closed. What is left is parked
+  by your own calls: D.1 no new zone yet (C, 1 Oct), D.2 online held until the v2 zones are done (C, 30 Sep), D.7
+  towers parked until jumping has been played (C, 30 Sep). Jumping (v1.105) has been on itch since 30 Sep.
+  Options:
+  A) D.7's first piece: a treehouse with a ladder on a small new map. Climb with W at the ladder, jumping off empties
+     your stamina, a kid can hold the platform.
+  B) D.2's first piece only: the title screen offers Campaign, Online (greyed, "coming soon") and Options, with the
+     settings moved into Options. No networking.
+  C) The next zone after all: a high school's grounds (made-up name): fields, bleachers, portables.
+  D) Nothing new: the builder waits for your playtest of v1.130–v1.137 (Northcliff, the Loadout kid, the lot
+     free-for-all) and the critic's reports.
+  Builder recommends **A**: it is the one parked item whose condition (jumping in play) is met, and it adds a new
+  kind of fight without a new zone to playtest.
+
 - **D.1 after Northcliff: another zone, or not yet? (builder, 2026-10-01)** Your A is built: Northcliff Trace (v1.130),
   houses on a hill above a creek, with four scenarios (v1.131): Down by the Creek 1v1, The Stoneglen Twins 3v3, Hold
   the Creek Fort defend, Bellfield After Dark night 4v4. All nine Northcliff kids play there. It is last on the ladder,
