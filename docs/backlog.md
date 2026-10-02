@@ -93,6 +93,13 @@ Items marked **(design)** need his call in `docs/decisions.md` before code.
    Treehouse, third in Northcliff; `tests/treehouse.test.mjs`). Kids cannot climb yet, so a defend on the platform
    would leave attackers standing under it; no climb prompt on screen yet.
 
+8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
+   scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
+   updated in style. (Michael, 2026-10-02) **(design)**
+9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
+   https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
+   (Michael, 2026-10-02) **(design)**
+
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
 - v1.140 (builder) — `tests/market-lot.test.mjs`'s team 3v3 "both sides lose lives (within 120 s)" can fail one-sided. Locally it was 9–0 in 1 of 4 runs on v1.140, and CI on d7e44da was the mirror case. In those rounds one side's kids stay at their spawn end and the other side's pusher picks them off from about 10 m. Part of it may be the test, not the game: it makes the player untaggable and counts only the kids' lives, but the enemy kids aim at the player a great deal (16 full 120 s rounds: the player was their target in 160–530 of their half-second samples, and took 0–1361 ignored hits). A hit on him would be a life lost on the player's side in a real round. Either count hits on the player toward the player's side, or find why one side sometimes never leaves its spawn. Steps: `g.scenario('lot_team_3v3')`, the test's 120 s loop, log `livesLost` per side, each kid's `_targetRef` and the hits on the player.
