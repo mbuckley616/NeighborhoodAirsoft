@@ -6641,3 +6641,48 @@ darker bands.
 - Michael's look at the gear (the screenshots, or the Loadout screen once Builder sessions is merged). D.5 C is
   complete if he's happy with it.
 - The gear shows only on the Loadout kid. The mirror and the kids in matches don't wear it.
+
+
+---
+
+
+## v1.134 — Riverside Market's free-for-all starts hidden
+
+Found in play (critic, v1.123), Michael: B on the control room (1 Oct). Everybody for Themselves was decided in the
+second after the 2.5 s opening hold. The six kids started on the lot's two side lines in sight of each other, and
+3–4 were out by 3.8 s, Tyler first at 2.6 s. Michael chose B: hidden starts, with yours behind a car at the lot's edge
+too, so you are one of seven hidden kids.
+
+The seven starts (`ffa_1`–`ffa_6`, and the player's `ffa_edge`) were found by a search over the lot's parking pattern,
+which is fixed (only a few cm of parking slop is random). Each start is beside a parked car or the dumpsters. No start
+can see another by the kids' own sight rule (muzzle 1.05 m to chest 0.95 m, cars block, low stuff doesn't). They are
+at least 19 m apart. The first search only asked for that, and kids walk during the opening hold, so Marcus stepped
+5 m out and was firing on Jamie at 2 s. The search now also keeps the ground 3–6 m round each start out of sight of
+the others. Your start is at the east end of the north row, behind the last car, facing the lot.
+
+The hidden starts brought back the problem v1.128 hit when trying this: cautious kids (Jamie 0.4, Owen 0.2 and
+Brooke 0.35 aggression, under the 0.45 that sends a skirmisher marching) hid and peeked at nobody for the whole minute.
+The builder's recommendation on this decision was B, with A's roam if kids still camped, and they did, so the roam is
+in: in a free-for-all, a skirmisher who has had no line to anyone for 5 s marches like a bold one (`ffaRoam`).
+Building it turned up a latent bug: `Game.scenario.ffa` was read in three places (the roster, the lives respawn and now
+the roam) but never set. It is now set when a scenario starts. The roster and respawn give the same results either
+way, since every free-for-all kid is on a team of its own. The roam reaches all four free-for-alls. The other three
+already started in sight, so it only matters there once a kid loses everyone.
+
+### Verified
+- New `tests/lot-ffa-opening.test.mjs`:
+  - Seven starts, all clear of obstacles. No start sees any other (0 of 42 directed pairs). The nearest two are
+    19.0 m apart, and yours is at (34, −12).
+  - Three openings with the player untaggable: nobody out by 4 s in any round (was 3–4 of 6 by 3.8 s). First out at
+    5.3, 6.9 and 6.8 s, and 5 of 6 kids tagged within 60 s in each round.
+  - Standing still at your start, first tagged at 20.9 s (the midfield start was 10–20 s).
+  - The Winnmark, Bunratty and Hollow free-for-alls, 30 s each: `ffa` is set, and every kid moves or fires.
+- `tests/market-lot.test.mjs`, lot_ffa over 60 s: 391 BBs (7 before the roam). Every kid moves or fires; Jamie walked
+  150 m, where before the roam three kids walked 0 m and never fired.
+- `npm test`: 42/43 on the full run. `harness` failed its "a healthy boot never restarts" check once: under a 10 s
+  limit, a healthy NEW GAME took more than 10 s and was restarted. That suite and the harness are unchanged here, it
+  passed twice more on its own, and it is filed under Found in play.
+### Still open
+- Whether the lot's free-for-all now feels slow is for a playtest. The first tag comes at about 5–7 s, and you can
+  stand at your start for about 20 s.
+- The starts are fixed points. If the lot's parking pattern changes, rerun the sight checks in the new test.

@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.133</div>
+  <div class="version">v1.134</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5854,19 +5854,21 @@ const SCENARIOS = {
   lot_ffa: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
-    desc: "No teams. Seven kids spread out over the whole lot, from the dumpsters to the road, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
+    desc: "No teams. Seven kids start hidden over the whole lot, each behind a car or the dumpsters, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'midfield',
+    // v1.134 (Michael: B): seven hidden starts, yours behind a car at the lot's east edge (was mid-lot, with the six
+    // kids on the side lines in sight of each other, so 3–4 were out a second after the opening hold)
+    playerSpawn: 'ffa_edge',
     ffa: true,
     enemySetup: [
-      { charId: 'marcus',  weapon: 'ak47',    anchor: 'scatter_nw' },
-      { charId: 'jamie',   weapon: 'ump',     anchor: 'scatter_ne' },
-      { charId: 'tyler',   weapon: 'shotgun', anchor: 'scatter_sw' },
-      { charId: 'priya',   weapon: 'mp5',     anchor: 'scatter_se' },
-      { charId: 'owen',    weapon: 'ar',      anchor: 'scatter_w'  },
-      { charId: 'brooke',  weapon: 'pistol',  anchor: 'scatter_e'  },
+      { charId: 'marcus',  weapon: 'ak47',    anchor: 'ffa_1' },
+      { charId: 'jamie',   weapon: 'ump',     anchor: 'ffa_2' },
+      { charId: 'tyler',   weapon: 'shotgun', anchor: 'ffa_3' },
+      { charId: 'priya',   weapon: 'mp5',     anchor: 'ffa_4' },
+      { charId: 'owen',    weapon: 'ar',      anchor: 'ffa_5' },
+      { charId: 'brooke',  weapon: 'pistol',  anchor: 'ffa_6' },
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 90, lose: 20 },
@@ -13733,11 +13735,22 @@ function buildMarketLotScene(variant, timeOfDay) {
     scatter_e:  { pos: P(34, -7),   cover: null },
     cluster_north: { pos: P(0, -26), cover: null },
     cluster_south: { pos: P(0, 24),  cover: null },
+    // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts. Each stands beside a parked car or the
+    // dumpsters, out of sight of the other six and of the player's start (muzzle 1.05 m to chest 0.95 m, the kids' own
+    // sight rule), and at least 19 m from every one of them. Found by a search over the lot's fixed parking pattern that also kept
+    // the ground 3–6 m round each start out of sight of the others, since kids move during the 2.5 s opening hold.
+    ffa_1: { pos: P(6.5, -14.5), cover: null },
+    ffa_2: { pos: P(22.5, 16.5), cover: null },
+    ffa_3: { pos: P(-34, -17),   cover: null },
+    ffa_4: { pos: P(-12.5, -12), cover: null },
+    ffa_5: { pos: P(-25.5, 15.5), cover: null },
+    ffa_6: { pos: P(-6.5, 15),   cover: null },
   };
   const playerSpawns = {
     team_b:  { pos: P(2, 23),  yaw: 0 },         // at the road side, facing the store (yaw 0 faces -z)
     team_a:  { pos: P(-2, -25), yaw: Math.PI },
     midfield:{ pos: P(0, 7.5), yaw: 0 },
+    ffa_edge:{ pos: P(34, -12), yaw: Math.PI / 2 },   // v1.134: behind the last car at the north row's east end, facing the lot
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
@@ -17236,6 +17249,7 @@ function enterScenario(scenarioId) {
   // For survive_timer wins, stash the timer state on Game.scenario so updateScenarioTimer
   // can tick it down and check for win.
   Game.scenario.winCondition = sc.winCondition || 'kill_all';
+  Game.scenario.ffa = !!sc.ffa;   // v1.134: read by the roster, the lives respawn and the free-for-all roam; was never set
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
@@ -23204,6 +23218,8 @@ function updateEnemies(dt) {
       const RECENT_SPOT_WINDOW = 3.2;
       e._recentlySpotted = e._lastSawPlayer && ((performance.now() / 1000) - e._lastSawPlayer) < RECENT_SPOT_WINDOW;
       e._hasLOSNow = losMem;
+      // v1.134: seconds without a line to anyone, for the free-for-all roam below
+      e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
     }
 
     // v1.9: shotgun kids want to *push closer* if the player is past their near range.
@@ -23392,9 +23408,12 @@ function updateEnemies(dt) {
         //   (3) shooting-recovery cycle in `shooting` case below: 1.2-2.7s → 0.7-1.6s.
         //   (4) repositionChance baseline 0.20 → 0.30 (kids move more between shots).
         // Snipers + defenders still hold position by their existing modifiers.
+        // v1.134 (Michael: B on the lot free-for-all): with every start hidden, a cautious kid (aggression under 0.45)
+        // hid and peeked at nobody all round. In a free-for-all, 5 s without seeing anyone sends any skirmisher looking.
+        const ffaRoam = Game.scenario.ffa && (e._unseenTime || 0) > 5;
         const marchEligible = (
           e.role === 'attacker' ||
-          (e.role === 'skirmisher' && aggression >= 0.45)
+          (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam))
         ) && e.weapon !== 'sniper' && e.role !== 'defender';
 
         if (marchEligible) {
