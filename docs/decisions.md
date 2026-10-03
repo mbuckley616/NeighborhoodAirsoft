@@ -13,6 +13,31 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   B) A Fable card, like D.9
   Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
 
+- **The map screen's layout (D.8 step 1): look before the cards? (builder, 2026-10-03)** v1.146 is step 1: the map
+  screen fills the window, the map on the left at its true shape (it was stretched), the chosen zone's list on the
+  right, scrolling, and it opens on your furthest zone instead of "Click a pin". At 1280×720 you see 7 Winnmark
+  matches at once (0 before). The rows are the old ones; step 2 makes them cards. On a 16:9 screen the map leaves a
+  band of parchment above and below it until step 3 redraws it taller. Screenshot: `tests/out/map-screen-1280.png`
+  after `node tests/run.mjs map-screen`.
+  A) Good, go on to step 2: the scenarios as cards (name, type, matchup, lives, locked/done) *(recommended)*
+  B) A, and make the map column wider (or narrower) first (say which in a note)
+  C) Change the layout first (say what in a note)
+  Builder recommends A: the layout does what you asked, and the cards are where most of the screen's look is.
+
+- **Walkie-talkie callouts (D.10): what to build now? (builder, 2026-10-03)** Your note: teammate callouts in plain
+  voice when in earshot, over a walkie otherwise, and a walkie the player carries; push-to-talk for online. Today a
+  kid more than ~24 m away says nothing at all (v1.22's earshot cut-off), so a teammate across the map is silent. The
+  kids speak through the browser's voice, which Web Audio can't filter, so a walkie is heard as a squelch click and a
+  burst of static (made in Web Audio) around the line, with the line at full volume and not placed in space. The
+  teammate lines come from the Fable voices work (v1.150–v1.151, PR #22), so this is built once that is on main.
+  A) Teammates out of earshot come over the walkie (click, static, the line, click); a walkie clipped to your kid's
+     belt, seen in first person and on the Loadout kid; push-to-talk waits for online (D.2) *(recommended)*
+  B) A, and enemies' callouts to each other over their own walkies, faint, when you are near one of them
+  C) Only the walkie callouts; no walkie on your kid yet
+  D) Hold all of it for online play
+  Builder recommends A: it gives team matches a voice across the map at once, and the carried walkie is where
+  push-to-talk will live later.
+
 ## Answered
 
 - **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at

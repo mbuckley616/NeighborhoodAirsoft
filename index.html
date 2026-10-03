@@ -725,13 +725,15 @@
     pointer-events: auto;
     background: #f4e9d8;
     color: #2a2520;
-    padding: 32px 40px;
+    padding: 20px 28px 24px;
     border-radius: 4px;
     border: 2px solid #8b6f47;
     box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-    max-width: 720px;
-    width: 90%;
-    max-height: 92vh;
+    /* v1.146 (D.8 step 1): the whole window, was a 720 px panel capped at 92% height */
+    box-sizing: border-box;
+    width: calc(100vw - 32px);
+    height: calc(100vh - 32px);
+    max-width: 1800px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -751,16 +753,54 @@
     color: #8b6f47;
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 20px;
+  }
+  /* v1.146 (D.8 step 1): header row, then the map column and the scenario column side by side */
+  #worldMap .map-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  #worldMap .map-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    gap: 22px;
+  }
+  #worldMap .map-left {
+    flex: 1 1 60%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    container-type: size;     /* the map fits the column at the drawing's 700:380 */
+  }
+  #worldMap .map-right {
+    flex: 1 1 40%;
+    min-width: 280px;
+    max-width: 640px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   #worldMap .map-area {
     position: relative;
-    height: 380px;
+    width: min(100cqw, 100cqh * 700 / 380);
+    height: min(100cqh, 100cqw * 380 / 700);
     flex-shrink: 0;
     background: #ede0c8;
     border: 1px dashed #8b6f47;
-    margin-bottom: 16px;
+    box-sizing: border-box;
     overflow: hidden;
+  }
+  /* a narrow or tall window stacks them: the map on top, the list under it */
+  @media (max-width: 820px), (max-aspect-ratio: 1/1) {
+    #worldMap .map-body { flex-direction: column; gap: 14px; }
+    #worldMap .map-left { flex: 0 0 auto; height: 42%; }
+    #worldMap .map-right { flex: 1 1 auto; max-width: none; min-width: 0; }
   }
   #worldMap .map-area svg {
     width: 100%; height: 100%;
@@ -802,6 +842,15 @@
   #worldMap .pin:hover .marker {
     transform: rotate(-45deg) scale(1.15);
   }
+  /* v1.146: the zone whose scenarios the right column shows */
+  #worldMap .pin.selected { z-index: 3; }
+  #worldMap .pin.selected .marker {
+    box-shadow: 0 0 0 2px #f4e9d8, 2px 4px 6px rgba(0,0,0,0.45);
+  }
+  #worldMap .pin.selected .label {
+    font-weight: bold;
+    border-color: #2a2520;
+  }
   #worldMap .map-close {
     pointer-events: auto;
     background: #2a2520;
@@ -818,7 +867,6 @@
     background: rgba(42,37,32,0.08);
     border-left: 3px solid var(--ui-danger);
     padding: 10px 14px;
-    margin-bottom: 12px;
     font-size: 13px;
     line-height: 1.5;
     min-height: 0;
@@ -1821,14 +1869,23 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.145</div>
+  <div class="version">v1.146</div>
 </div>
 
 <!-- === WORLD MAP === -->
 <div class="menu-overlay" id="worldMap">
   <div class="map-content">
-    <div class="map-title">The Neighborhood</div>
-    <div class="map-subtitle">Choose your battlefield</div>
+    <!-- v1.146 (D.8 step 1, Michael: A): full window, two columns. The header carries the title and the way back;
+         the map fills the left column at its own aspect, the chosen zone's scenarios scroll in the right one. -->
+    <div class="map-head">
+      <div>
+        <div class="map-title">The Neighborhood</div>
+        <div class="map-subtitle">Choose your battlefield</div>
+      </div>
+      <button class="map-close" id="mapCloseBtn">← BACK TO ROOM</button>
+    </div>
+    <div class="map-body">
+    <div class="map-left" id="mapLeft">
     <div class="map-area" id="mapArea">
       <!-- Regional map of the four neighborhoods, traced from the real
            Roswell/Martins Landing geography: the Chattahoochee River winds
@@ -1939,8 +1996,11 @@
         <div class="label">Riverside Market · Lot</div>
       </div>
     </div>
-    <div class="scenario-info empty" id="scenarioInfo">Click a pin to see scenario details.</div>
-    <button class="map-close" id="mapCloseBtn">← BACK TO ROOM</button>
+    </div>
+    <div class="map-right" id="mapRight">
+      <div class="scenario-info empty" id="scenarioInfo">Click a pin to see scenario details.</div>
+    </div>
+    </div>
   </div>
 </div>
 
@@ -18156,10 +18216,17 @@ function openMap() {
   Game.mode = 'map';
   exitPointerLock();
   refreshMapPinStates();   // v1.48: grey locked zones, label Northcliff
-  // Reset scenario info
-  const info = document.getElementById('scenarioInfo');
-  info.className = 'scenario-info empty';
-  info.textContent = 'Click a pin to see scenario details.';
+  // v1.146 (D.8 step 1): the right column is never empty. It opens on the zone you last looked at, else the
+  // furthest zone you have reached (where your next match is); was "Click a pin to see scenario details."
+  selectMapZone(mapDefaultZone());
+}
+// v1.146: the zone the map opens on. The last pin clicked this session if it is still a zone, else the last
+// unlocked zone on the ladder.
+function mapDefaultZone() {
+  if (Game._mapZone && PIN_SCENARIO_GROUPS[Game._mapZone]) return Game._mapZone;
+  let key = ZONE_LADDER[0].key;
+  for (const z of ZONE_LADDER) if (PIN_SCENARIO_GROUPS[z.key] && isZoneUnlocked(z.key)) key = z.key;
+  return key;
 }
 
 // v1.48: reflect progression on the map pins. A zone pin whose zone is locked
@@ -25439,11 +25506,13 @@ function openScenarioBrief(scenarioId) {
   });
 }
 
-let selectedPin = null;
-document.querySelectorAll('#worldMap .pin').forEach(pin => {
-  pin.addEventListener('click', () => {
-    const sc = pin.dataset.scenario;
+// v1.146 (D.8 step 1): a pin click and openMap both show a zone through here; the chosen pin is marked
+// `.selected` and the right column scrolls back to its top.
+function selectMapZone(sc) {
+    document.querySelectorAll('#worldMap .pin').forEach(p => p.classList.toggle('selected', p.dataset.scenario === sc));
     const info = document.getElementById('scenarioInfo');
+    info.scrollTop = 0;
+    if (PIN_SCENARIO_GROUPS[sc]) Game._mapZone = sc;
     if (sc === 'locked') {
       // v1.48: the locked pin is Northcliff — show its teaser blurb.
       const nc = ZONE_LADDER.find(z => z.pin === 'locked');
@@ -25499,7 +25568,9 @@ document.querySelectorAll('#worldMap .pin').forEach(pin => {
         openScenarioBrief(sc);
       });
     }
-  });
+}
+document.querySelectorAll('#worldMap .pin').forEach(pin => {
+  pin.addEventListener('click', () => selectMapZone(pin.dataset.scenario));
 });
 
 // v1.39: shared teardown of the just-finished scenario scene. Used by the
