@@ -6967,3 +6967,150 @@ scenario time. The direct push gets him round the wall before that cover can be 
 - Lot team 3v3 one-sided rounds. In about 1 run in 4, one side's kids never leave their end (here enemy Marcus at his
   start and Tyler still `deploying`). The other side's pusher picks them off, so nobody on his side loses a life in
   120 s. The d7e44da CI failure was the mirror case, with allied Brooke at her start. Being investigated.
+
+## v1.141 — The lot 3v3 check counts the hits on the player, and a clean sweep
+The builder filed it on v1.140 (Found in play): `tests/market-lot.test.mjs`'s team 3v3 check "both sides lose lives
+(within 120 s)" failed one-sided about 1 run in 4, and CI saw the mirror case. The test makes the player untaggable,
+leaves him standing at his spawn, and counted only the kids' lives. Two probes, 50 full rounds of `lot_team_3v3`
+between them, logged every kid's state, position and target, and every final tag with who made it and from where.
+Two different things fail the check, and neither is a game fault:
+- The enemy kids spend much of each round aiming at the player (up to 2,029 hits on him in one round), and Brooke,
+  the allied sniper, holds her spot at the road end as her role says. With the player standing still and unhittable,
+  his side is two kids against three. In the lopsided rounds the two allies were out of lives by 30–40 s while the
+  enemy had lost one, and the enemy then shot the player for the rest of the round. In a real round the first of
+  those hits ends it.
+- The 9–0 case is the other way round: the allies win clean. In the full run that failed, Eric pushed to the enemy's
+  end, (0.8, −18.1), and tagged all three as they came back to their spawn to redeploy; every enemy life was spent
+  and nobody on the player's side lost one. The round was over, but the test steps the game inside one
+  `page.evaluate`, so the 600 ms delayed `endScenario` never runs and the loop went on to 120 s.
+No kid stayed at his spawn in any logged round.
+
+The check now counts a hit on the player as a life lost on his side (it is, with one life), and passes a round in
+which every enemy life is spent (a win). The game is unchanged.
+
+### Verified
+- Probes, 58 rounds on v1.140: the enemy side lost 1–9 lives in every round. Counting the player's hits (0–2,029),
+  his side lost at least one life in every round, the fewest 1 (a 9–1 win with no hit on him).
+- The full `npm test` run before the second half of the change: 45/46, the one failure the clean sweep above
+  (`lostEnemy` 9, `lostAlly` 0, `playerHits` 0). It now passes that result.
+- `npm test` on the final change: 46/46 suites green. `node tests/run.mjs market-lot` 3 of 3 runs green; night 4v4 reads 6 lost by the enemy, 18 by the player's side (13 of them
+  hits on the player).
+### Still open
+- An ally camping the enemy respawn is real behaviour: kids coming back to spawn walk into Eric's MP5 one at a time.
+  It needs a player in the round to say whether it matters; there is no respawn protection.
+
+## v1.142 — A climb prompt at the treehouse ladder
+Michael answered D.7 with A on the control room (2 Oct): kids climb ladders, then a defend in which you hold the
+treehouse while they climb after you, and a "W — climb" prompt at the ladder. This is the prompt, the first of the
+three pieces. v1.138 left the ladder without one; only the briefing said that W climbs.
+
+The scenario now uses the bedroom's prompt box (`#interactPrompt`), driven each step by `updateLadderPrompt`. The
+prompt follows the rule `updateLadder` climbs on, so it never offers a climb that W would not start:
+- At the ladder's foot, looking at it: **W climb**.
+- On the ladder: **W up · S down · Space let go**.
+- In the rail's gap up top, with his back to the ladder: **S climb down**.
+- Anywhere else, looking away from the ladder, or once the round has ended: hidden. `endScenario` now hides it too.
+
+### Verified
+- `tests/ladder-prompt.test.mjs`, 10 checks. Nothing shows at the side gate. At the foot it reads "W climb", and
+  nothing shows looking away. On the ladder it lists the three keys, and it goes once he steps off at the top. In the
+  gap it reads "S climb down", the keys show on the way down, and it reads "W climb" again at the bottom. After
+  `endScenario` it is hidden.
+- `npm test` (run three suites at a time): 46/47. `burst-pose` failed twice in a row on the harness's NEW GAME stall
+  under that load. It passed on its own re-run (below).
+### Still open
+- Whether the box at 60% of the screen height sits well over the ladder view. The box is the bedroom's own.
+
+## v1.143 — Kids climb the treehouse ladder
+This is D.7 A's second piece. Before it, a kid whose target stood on the Stoneglen platform pushed toward the player's
+x and z, which put him under the platform with the floor between them. Only Connor, placed on the platform by the
+scenario, ever got up there.
+
+`kidLadderStep` now runs ahead of the state machine for any gun kid in a scenario with ladders. When his target is on
+a ladder's perch (the platform, within a metre of it) or on the ladder itself, he walks to the ladder's foot and climbs
+at 1.5 m/s (the player climbs at 1.7). At the top he steps onto the floor and becomes a perched kid (v1.138's
+`e.perch`), so he fights with the usual states, kept inside the rail. Once his target has been off the platform for
+2 s, he walks back to the gap and climbs down. The rules:
+- One kid on a ladder at a time; the next waits at the foot.
+- A kid placed on a perch by the scenario (Connor in King of the Treehouse) never leaves it.
+- A scenario can keep a kid on the ground with `climb: false`.
+- A kid tagged on the ladder lets go and falls to the grass under gravity.
+- In a defend, a kid tagged up on the platform he climbed drops off by the ladder and runs back to redeploy. The
+  game had no way down for him: the perch clamp held him on the floor while his retreat pulled him toward the patio.
+
+A straight push to the foot wedged Haden in his fort, whose east side is closed. He stood against the wall for the
+whole round. The walk now follows a distance field: a breadth-first fill from the foot over the scenario's bounds, in
+0.5 m cells a kid fits in, built once per ladder. He steps toward the lowest neighbouring cell until he is 1.2 m from
+the foot, then goes straight in.
+
+### Verified
+- `tests/kid-climb.test.mjs`, 13 checks:
+  - With the player on the platform, Haden leaves the fort and is up at 7.3 s in 3 of 3 rounds, never standing
+    still on the way. On the ladder his body rises from 0 to 2.6 m.
+  - Up there he stays on the floor (0 steps off) and fires 19–20 BBs. When the player drops to the far side of the
+    yard he is back on the grass at 4.3 s.
+  - From five other corners of the yard (behind the shed, the back fence, the patio, north of the oak, the west
+    bins) he is up in 5.1–10.1 s.
+  - Connor never leaves the platform. With the player at the side gate nobody heads for the ladder (10 s); with the
+    player on the ladder Haden does.
+  - Tagged 1.5 m up, he falls to the grass and stays there. `climb: false` keeps him down. Winnmark has no ladders,
+    and no kid there takes one.
+- `tests/treehouse.test.mjs` (v1.138) still passes: Connor holds the platform, and Haden walks and fires with the
+  player at the gate.
+- On this build: `kid-climb`, `treehouse`, `northcliff` and `ladder-prompt` all green. The full `npm test` ran on
+  v1.144, which carries this change unaltered (see there).
+### Still open
+- How a climb looks: the kid keeps his walk animation on the rungs, with no climbing pose.
+- A kid on the platform and the player standing on the same spot can overlap. Nothing pushes them apart up there.
+
+## v1.144 — Hold the Treehouse
+This is D.7 A's third piece, the defend. **Hold the Treehouse** is Northcliff's fourth match, after King of the
+Treehouse. You start on the Stoneglen platform and hold it for 90 s:
+- Haden (UMP) and Connor (shotgun) come out of the house from the patio and climb the ladder after you, one at a time.
+- A tagged twin drops off and walks back to the patio to come again.
+- Evan (MP5) holds by the shed (`climb: false`) and shoots at anything above the rail.
+
+The briefing tells you to keep low behind the plywood and watch the gap over the ladder. The result lines name the
+treehouse.
+
+### Verified
+- `tests/treehouse-hold.test.mjs`, 11 checks. You start on the floor at 2.6 m. It is a 90 s defend, right after King
+  of the Treehouse. In 60 s with the player untaggable, every twin who had been up for 1.5 s was tagged (as you would).
+  The twins reached the platform at 8.6 and 10.3 s, then about every 15 s, 4 times each. Every tagged twin fell
+  2.6 m to the grass in 0.73 s. Evan never left the ground. He hit a standing player 35 times, and a crouched one
+  0 times. When the timer runs out you win ("Haden groans … You held the line.").
+- `tests/northcliff.test.mjs` now expects six Northcliff matches in order.
+- `npm test` (three suites at a time): 49/49 green.
+### Still open
+- The balance needs Michael's hands. With the twins arriving one at a time through a 1.2 m gap, the round may be easy
+  for a player who crouches and aims at the gap, or hard if a twin who steps off at close range shoots first.
+- Each twin's first trip from the patio to the top takes 8.6–10.3 s. That may leave the opening quiet.
+
+## v1.145 — CI runs the suites in four parallel jobs
+Backlog B.4, from the producer. Since 2 Oct about half of CI's headless runs were cancelled at the job's 45-minute
+limit. The job ran all 49 suites one after another, and passing runs took 30–40 min, so a slow runner or one
+75 s harness restart pushed it over. Merges then waited on re-runs. Raising the limit would only have made every run
+slower to fail, so the suites are split instead.
+
+- `tests/run.mjs --shard k/n` runs the k-th of n parts. Each suite's run time is listed in `run.mjs`, measured on this
+  run's baseline. The longest go first, each onto the lightest part so far. The split depends only on the file list,
+  so every job agrees on it. A new suite counts as 60 s until it gets a time. `--list` prints a part without running it.
+- `.github/workflows/check.yml` runs four `headless-shard` jobs in parallel (`fail-fast: false`, so one red shard
+  doesn't hide the others), each with a 30-minute limit. A small job still named `headless` goes green only when all
+  four do, so anything that waits on the old check name still works.
+- `npm test` and `node tests/run.mjs smoke` work as before. CLAUDE.md notes the new flag.
+
+Nothing in the game changes. The title screen reads v1.145.
+
+### Verified
+- `tests/shard.test.mjs`, 17 checks, no browser. For 1, 2, 3, 4 and 7 parts, every suite lands in exactly one part
+  and no part is empty. check.yml asks for 4 parts. Every suite has a measured time, and the four CI parts weigh 604–607 s.
+  The same part lists the same suites twice, a bad `--shard` exits 2, and a prefix still picks one suite.
+- Before the change, all 49 suites passed three at a time (13.6 min). After it, the four shards ran at once on the
+  4-core container (11 + 13 + 13 + 13 suites): 50/50 green in 13 min wall time. The slowest suites were spawn-facing
+  at 273 s and result-text at 204 s.
+### Still open
+- The real CI time per shard. On a hosted runner a quarter should take about 8–10 min of tests, plus about 2 min for
+  the Playwright install each job repeats. The first CI run on this push will show it.
+- If the branch protection on `main` names the old `headless` check, the new aggregate job keeps it satisfied. If it
+  names nothing, nothing changes.

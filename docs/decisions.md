@@ -5,6 +5,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
+  room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
+  not mark D.8 (Fable), but CLAUDE.md names "a new map screen that touches every scenario entry" as Fable work, so the
+  builder has not started it.
+  A) The builder builds it, in steps shown to you (the layout first, then the cards, then the map's restyle) *(recommended)*
+  B) A Fable card, like D.9
+  Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
+
 ## Answered
 
 - **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control

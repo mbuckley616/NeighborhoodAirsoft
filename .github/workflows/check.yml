@@ -8,13 +8,27 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: node scripts/parsecheck.mjs
-  headless:
+  headless-shard:
     runs-on: ubuntu-latest
-    timeout-minutes: 45   # 33 suites take 25–28 min on a hosted runner (v1.122); 30 cut one run off
+    # v1.145 (backlog B.4): 49 suites took 30–45+ min in one job and half the runs hit the 45-min limit. Four jobs
+    # run a quarter each in parallel (`run.mjs --shard`); a shard takes ~10 min, so 30 leaves room for a 10-min hang.
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: headless (${{ matrix.shard }}/4)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: node tests/run.mjs
+      - run: node tests/run.mjs --shard ${{ matrix.shard }}/4
+  headless:
+    # v1.145: one check named `headless` as before, green only when all four shards are.
+    needs: headless-shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.headless-shard.result }}" = success
