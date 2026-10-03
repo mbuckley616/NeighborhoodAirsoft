@@ -7159,3 +7159,87 @@ the zones, locks or briefings changed.
 - On a 16:9 window the map leaves a band of parchment above and below it, 100 px at 1280×720. The drawing is 700:380,
   wider than its column. Step 3 redraws the map, and can draw it taller to fill the column.
 - At 1024×640 the list shows 5 rows. The cards in step 2 should be more compact than today's three-line rows.
+
+## v1.147 — The map screen's matches are cards (D.8 step 2)
+D.8 step 2, Michael's A on the v1.146 layout (control room, 3 Oct): "go on to step 2, the scenarios as cards". The right
+column held the old three-line rows, one per line: a locked row spent a whole line on "Beat “Every Kid for
+Themselves” to unlock." and a LOCKED button, and nothing said which match was yours to play next.
+
+- The zone's matches are cards in a grid, as many across as fit 155 px: two at 1024×640 to 1366×768, three at
+  1920×1080, four in a portrait window where the list runs full width. Under the zone's name, a count: "2 of 16 won".
+- Each card has its number in the zone, the matchup (TUTORIAL, 1V1, 3V3, 5-WAY FFA), badges for ⚔ ATTACK, 🛡 DEFEND,
+  🌙 NIGHT and a survive timer (⏱ 90s), the name, the place and your lives (the briefing's count, armour included),
+  then the pay and START.
+- A match you have won has a green top and ✓ DONE. The first open match you haven't won is NEXT, on a lighter card. A
+  locked card is greyed, has no button, and says which card opens it: "Win #3 to unlock". (A whole locked zone still
+  shows its one "Clear … to unlock this area" line.)
+- A click anywhere on an open card opens the briefing, as START did. A locked card does nothing.
+
+`renderScenarioCard` replaces `renderScenarioRow` and `scenarioMatchup` is split out of it. The pins, locks, zones
+and briefing are unchanged. `tests/northcliff.test.mjs` now reads the cards for its locked list.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 50 checks (36 before). Winnmark cards in view on a new save:
+
+  | Window    | List        | Across | Cards in view (v1.146 rows) |
+  |-----------|-------------|--------|-----------------------------|
+  | 1280×720  | 466×578     | 2      | 10 of 16 (7)                |
+  | 1366×768  | 501×626     | 2      | 12 (7)                      |
+  | 1920×1080 | 640×938     | 3      | 16, all (11)                |
+  | 1024×640  | 364×498     | 2      | 6 (5)                       |
+  | 800×1000  | 708×484     | 4      | 12 (stacked under the map)  |
+
+- With the first two Winnmark matches won: the cards follow the zone order numbered 1–16, "2 of 16 won", two DONE,
+  one NEXT (Seth's Got a Shotgun), 13 locked, each with "Win #N to unlock" for the card before it and no START. A
+  night match shows 🌙 NIGHT and a defend 🛡 DEFEND. A click on a locked card opens nothing, a click on an open
+  card's text opens its briefing, and a real mouse click on START still does.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14). `northcliff` also passed alone. A baseline
+  run before the change lost winnmark-trees to `page.goto`'s 30 s load limit under four-shard load (the v1.124
+  note); it passed in the run on v1.147.
+### Still open
+- How the cards look to Michael. Step 3, the map's restyle (drawn taller to fill its column, a cleaner style), waits
+  on his look, in decisions.
+- The card's lives are the briefing's, armour included, so they change when you put on a plate carrier. The match's
+  own count is in the briefing.
+
+## v1.148 — The map is redrawn to fill its column (D.8 step 3)
+D.8 step 3, Michael's A on the v1.147 cards (control room, 3 Oct): "go on to step 3: redraw the map taller", in a
+cleaner style. The drawing was 700:380, wider than its column, so on a 16:9 window it left a band of parchment above
+and below it: at 1280×720 the map covered 66% of its column. It was also drawn in see-through washes over the
+parchment, with roads as single grey strokes and no names but the 140 shield.
+
+- The map is drawn again at 700:560 (5:4), the shape of its column on a laptop or desktop. It now covers 97% of its
+  column at 1280×720, 96% at 1366×768, 92% at 1920×1080 and 88% at 1024×640. The CSS sizes it the v1.146 way, by
+  container units at the drawing's own shape, and the SVG keeps its aspect (`xMidYMid meet`, was `none`).
+- The layout is the old one drawn taller, so every pin keeps its percentage place: the Hollow above the river, the
+  lot off Holcomb Bridge Rd by the 140 shield, Winnmark down Steeplechase Dr near the bend.
+- The style: flat parks with no outlines; the Chattahoochee as water between darker banks with a pale channel and
+  its name set in the water; every road a dark edge under a pale fill, named along its line (Holcomb Bridge Rd, Eves
+  Rd, Steeplechase Dr, Nesbit Ferry Rd); a cul-de-sac bulb at Winnmark, Bunratty and Northcliff; small even house
+  blocks along the streets; two-tone tree dots; the market's store and striped lot; EAST ROSWELL set faint in the
+  middle; a compass, a ½ mile bar and a double neatline. The map's frame is solid, no longer dashed.
+
+Only the drawing and the map's two sizing lines changed; the pins, cards, zones and briefings are as in v1.147.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 60 checks (50 before):
+
+  | Window    | Map (v1.147) | Column covered (v1.147) |
+  |-----------|--------------|-------------------------|
+  | 1280×720  | 700×560 (700×380)   | 97% (66%)        |
+  | 1366×768  | 751×601 (751×408)   | 96%              |
+  | 1920×1080 | 1078×862 (1078×585) | 92%              |
+  | 1024×640  | 546×437 (546×296)   | 88%              |
+  | 800×1000  | 450×360, stacked above the list | —    |
+
+  At every size the map is 1.25:1, every pin sits on it, and no two pin labels overlap. The drawing's viewBox is
+  `0 0 700 560`, it is not stretched, and the river and four roads carry their names. The card counts are unchanged
+  (10 of 16 Winnmark cards in view at 1280×720).
+- Screenshots at 1280×720 and 1920×1080 read by eye: no road name or house block sits under a pin label; Northcliff's
+  street was moved below its label after the first look.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14).
+### Still open
+- How it looks to Michael, and whether D.8 is done (in decisions).
+- In a portrait window the map is 450×360 in a 708 px wide column, a band at each side; the stacked layout gives the
+  map 42% of the height, and a 5:4 map is narrower there than the old one (664×360).
+- The pins sit on a schematic drawing, not on each zone's own streets; drawing those is a choice in decisions (C).

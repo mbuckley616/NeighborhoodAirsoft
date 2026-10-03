@@ -109,8 +109,12 @@ Fable card on the control room and Michael starts it from there.
    chosen zone's scenarios as scrolling cards on the right; built by the builder, in steps shown to him (layout, then
    the cards, then the map's restyle) (control room, 2 Oct). ~~Step 1, the layout~~ — done, v1.146 (the whole window
    in two columns, the map at its true 700:380 on the left, the zone's list scrolling on the right; it opens on your
-   furthest zone; 7 Winnmark rows in view at 1280×720, was 0; `tests/map-screen.test.mjs`). Step 2, the cards, waits
-   on Michael's look at the layout.
+   furthest zone; 7 Winnmark rows in view at 1280×720, was 0; `tests/map-screen.test.mjs`). ~~Step 2, the cards~~ (Michael:
+   A, go on; control room, 3 Oct) — done, v1.147 (numbered cards two or three across: matchup, attack/defend/night/timer
+   badges, place, your lives, pay, DONE and NEXT stamps, "Win #3 to unlock"; the whole card opens the briefing; 10
+   Winnmark cards in view at 1280×720). Step 3 (Michael: A, go on; control room, 3 Oct) — done, v1.148 (the map
+   redrawn at 700:560 to fill its column, 88–97% of it, was 66%; flat parks, the river with banks, cased and named roads,
+   neatline, compass, scale bar). D.8 is complete pending Michael's look.
 9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
    (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
