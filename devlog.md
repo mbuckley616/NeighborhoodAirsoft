@@ -7222,7 +7222,7 @@ parchment, with roads as single grey strokes and no names but the 140 shield.
 Only the drawing and the map's two sizing lines changed; the pins, cards, zones and briefings are as in v1.147.
 
 ### Verified
-- `tests/map-screen.test.mjs`, now 61 checks (50 before):
+- `tests/map-screen.test.mjs`, now 60 checks (50 before):
 
   | Window    | Map (v1.147) | Column covered (v1.147) |
   |-----------|--------------|-------------------------|
