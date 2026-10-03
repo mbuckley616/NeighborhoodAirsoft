@@ -7201,3 +7201,45 @@ and briefing are unchanged. `tests/northcliff.test.mjs` now reads the cards for 
   on his look, in decisions.
 - The card's lives are the briefing's, armour included, so they change when you put on a plate carrier. The match's
   own count is in the briefing.
+
+## v1.148 — The map is redrawn to fill its column (D.8 step 3)
+D.8 step 3, Michael's A on the v1.147 cards (control room, 3 Oct): "go on to step 3: redraw the map taller", in a
+cleaner style. The drawing was 700:380, wider than its column, so on a 16:9 window it left a band of parchment above
+and below it: at 1280×720 the map covered 66% of its column. It was also drawn in see-through washes over the
+parchment, with roads as single grey strokes and no names but the 140 shield.
+
+- The map is drawn again at 700:560 (5:4), the shape of its column on a laptop or desktop. It now covers 97% of its
+  column at 1280×720, 96% at 1366×768, 92% at 1920×1080 and 88% at 1024×640. The CSS sizes it the v1.146 way, by
+  container units at the drawing's own shape, and the SVG keeps its aspect (`xMidYMid meet`, was `none`).
+- The layout is the old one drawn taller, so every pin keeps its percentage place: the Hollow above the river, the
+  lot off Holcomb Bridge Rd by the 140 shield, Winnmark down Steeplechase Dr near the bend.
+- The style: flat parks with no outlines; the Chattahoochee as water between darker banks with a pale channel and
+  its name set in the water; every road a dark edge under a pale fill, named along its line (Holcomb Bridge Rd, Eves
+  Rd, Steeplechase Dr, Nesbit Ferry Rd); a cul-de-sac bulb at Winnmark, Bunratty and Northcliff; small even house
+  blocks along the streets; two-tone tree dots; the market's store and striped lot; EAST ROSWELL set faint in the
+  middle; a compass, a ½ mile bar and a double neatline. The map's frame is solid, no longer dashed.
+
+Only the drawing and the map's two sizing lines changed; the pins, cards, zones and briefings are as in v1.147.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 61 checks (50 before):
+
+  | Window    | Map (v1.147) | Column covered (v1.147) |
+  |-----------|--------------|-------------------------|
+  | 1280×720  | 700×560 (700×380)   | 97% (66%)        |
+  | 1366×768  | 751×601 (751×408)   | 96%              |
+  | 1920×1080 | 1078×862 (1078×585) | 92%              |
+  | 1024×640  | 546×437 (546×296)   | 88%              |
+  | 800×1000  | 450×360, stacked above the list | —    |
+
+  At every size the map is 1.25:1, every pin sits on it, and no two pin labels overlap. The drawing's viewBox is
+  `0 0 700 560`, it is not stretched, and the river and four roads carry their names. The card counts are unchanged
+  (10 of 16 Winnmark cards in view at 1280×720).
+- Screenshots at 1280×720 and 1920×1080 read by eye: no road name or house block sits under a pin label; Northcliff's
+  street was moved below its label after the first look.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14).
+### Still open
+- How it looks to Michael, and whether D.8 is done (in decisions).
+- In a portrait window the map is 450×360 in a 708 px wide column, a band at each side; the stacked layout gives the
+  map 42% of the height, and a 5:4 map is narrower there than the old one (664×360).
+- The pins sit on a schematic drawing, not on each zone's own streets; drawing those is a choice in decisions (C).

@@ -5,6 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The map screen's restyle (D.8 step 3): is D.8 done? (builder, 2026-10-03)** v1.148 is step 3, your A on the cards:
+  the map is redrawn at 700:560, so it fills its column (97% of it at 1280×720, was 66%, with a band of parchment
+  above and below). The style is cleaner: flat parks, the Chattahoochee with its banks and its name in the water,
+  roads drawn as a dark edge with a pale fill and named (Holcomb Bridge Rd, Eves Rd, Steeplechase Dr, Nesbit Ferry
+  Rd), small even house blocks, a cul-de-sac at each neighborhood, the market's lot, a compass, a ½ mile bar and a
+  double border. The pins are where they were. Screenshot: `tests/out/map-screen-1280.png` after
+  `node tests/run.mjs map-screen`.
+  A) Good, D.8 is done *(recommended)*
+  B) Change the map (say what in a note: colours, more or less detail, labels)
+  C) Go further: draw each zone's own streets on the map, so the pin sits on its real cul-de-sac
+  Builder recommends A: the screen now does what D.8 asked, and C is a bigger drawing job better judged in play.
+
 - **The map screen's cards (D.8 step 2): look before the map's restyle? (builder, 2026-10-03)** v1.147 is step 2, your
   A on the layout: the zone's matches are numbered cards, two across at 1280×720 (three on a 1920 screen). Each card
   shows its matchup (1V1, 3V3, 5-WAY FFA), badges for attack, defend, night and a survive timer, the name, the place

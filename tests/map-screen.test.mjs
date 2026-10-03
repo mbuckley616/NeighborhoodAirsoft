@@ -4,6 +4,8 @@
 // four laptop/desktop sizes and one portrait window, where the two stack.
 // v1.147 (D.8 step 2): the rows are cards in a grid, two or more across; at least 10 Winnmark cards in view at
 // 1280x720 (7 rows in v1.146), and each card says its place, matchup, lives and whether it is done, next or locked.
+// v1.148 (D.8 step 3): the drawing is 700:560 (was 700:380) and fills at least 85% of its column at every landscape
+// size (66% at 1280x720 before); the pin labels don't overlap one another, and the river and roads are named.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -21,7 +23,12 @@ const measure = () => page.evaluate(() => {
     return cx > area.l && cx < area.r && cy > area.t && cy < area.b;
   });
   const cols = new Set(rows.map(x => Math.round(x.l))).size;
-  return { cols, vw: innerWidth, vh: innerHeight, content, area, left, info: ir, rows: rows.length, visible, pinsIn,
+  const labels = [...document.querySelectorAll('#worldMap .pin .label')].map(r);
+  const clash = [];
+  labels.forEach((a, i) => labels.slice(i + 1).forEach(b => {
+    if (a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b) clash.push([a, b]);
+  }));
+  return { cols, clash, fill: (area.w * area.h) / (left.w * left.h), vw: innerWidth, vh: innerHeight, content, area, left, info: ir, rows: rows.length, visible, pinsIn,
     scroll: info.scrollHeight > info.clientHeight + 1,
     selected: [...document.querySelectorAll('#worldMap .pin.selected')].map(p => p.dataset.scenario),
     name: (info.querySelector('.sc-name') || {}).textContent || '', empty: info.classList.contains('empty') };
@@ -33,9 +40,11 @@ for (const [w, h] of [[1280, 720], [1366, 768], [1920, 1080], [1024, 640]]) {
   await page.evaluate(() => { Game._mapZone = null; openMap(); });
   const m = await measure();
   const ratio = m.area.w / m.area.h;
-  console.log(`   ${w}x${h}: panel ${Math.round(m.content.w)}x${Math.round(m.content.h)}, map ${Math.round(m.area.w)}x${Math.round(m.area.h)}, list ${Math.round(m.info.w)}x${Math.round(m.info.h)}, ${m.visible} of ${m.rows} cards in view, ${m.cols} across`);
+  console.log(`   ${w}x${h}: panel ${Math.round(m.content.w)}x${Math.round(m.content.h)}, map ${Math.round(m.area.w)}x${Math.round(m.area.h)}, list ${Math.round(m.info.w)}x${Math.round(m.info.h)}, ${m.visible} of ${m.rows} cards in view, ${m.cols} across, map fills ${Math.round(m.fill * 100)}% of its column`);
   check(`${w}x${h}: the panel fills the window`, m.content.w >= Math.min(w - 40, 1800) && m.content.h >= h - 40, m.content);
-  check(`${w}x${h}: the map keeps the drawing's 700:380`, Math.abs(ratio - 700 / 380) < 0.02, +ratio.toFixed(3));
+  check(`${w}x${h}: the map keeps the drawing's 700:560`, Math.abs(ratio - 700 / 560) < 0.02, +ratio.toFixed(3));
+  check(`${w}x${h}: the map fills at least 85% of its column (66% at 1280x720 in v1.147)`, m.fill >= 0.85, +m.fill.toFixed(3));
+  check(`${w}x${h}: no two pin labels overlap`, m.clash.length === 0, m.clash);
   check(`${w}x${h}: the map fills its column one way`, m.area.w >= m.left.w - 2 || m.area.h >= m.left.h - 2, { area: m.area, left: m.left });
   check(`${w}x${h}: map left, scenarios right`, m.area.r <= m.info.l && m.info.t < m.area.b, { area: m.area, info: m.info });
   check(`${w}x${h}: every pin sits on the map`, m.pinsIn);
@@ -47,12 +56,21 @@ for (const [w, h] of [[1280, 720], [1366, 768], [1920, 1080], [1024, 640]]) {
   await page.evaluate(() => closeMap());
 }
 
+// The drawing itself: 700:560, never stretched, the river and four roads named.
+const drawing = await page.evaluate(() => {
+  const svg = document.querySelector('#mapArea svg');
+  return { vb: svg.getAttribute('viewBox'), par: svg.getAttribute('preserveAspectRatio'),
+    names: [...svg.querySelectorAll('textPath')].map(t => t.textContent) };
+});
+check('the drawing is 700:560 and not stretched', drawing.vb === '0 0 700 560' && drawing.par !== 'none', drawing);
+check('the river and the four roads are named on the map', ['Chattahoochee River', 'Holcomb Bridge Rd', 'Eves Rd', 'Steeplechase Dr', 'Nesbit Ferry Rd'].every(n => drawing.names.includes(n)), drawing.names);
+
 // Portrait: the two stack, the map on top at full width.
 await page.setViewportSize({ width: 800, height: 1000 });
 await page.evaluate(() => openMap());
 const p = await measure();
 console.log(`   800x1000: map ${Math.round(p.area.w)}x${Math.round(p.area.h)}, list ${Math.round(p.info.w)}x${Math.round(p.info.h)}, ${p.visible} rows in view`);
-check('portrait: the map sits above the list', p.area.b <= p.info.t && Math.abs(p.area.w / p.area.h - 700 / 380) < 0.02, p);
+check('portrait: the map sits above the list', p.area.b <= p.info.t && Math.abs(p.area.w / p.area.h - 700 / 560) < 0.02, p);
 check('portrait: the list is as wide as the panel', p.info.w > p.content.w * 0.8, p);
 await g.shot('map-screen-portrait');
 await page.evaluate(() => closeMap());
