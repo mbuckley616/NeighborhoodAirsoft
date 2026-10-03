@@ -7243,3 +7243,36 @@ Only the drawing and the map's two sizing lines changed; the pins, cards, zones 
 - In a portrait window the map is 450×360 in a 708 px wide column, a band at each side; the stacked layout gives the
   map 42% of the height, and a 5:4 map is narrower there than the old one (664×360).
 - The pins sit on a schematic drawing, not on each zone's own streets; drawing those is a choice in decisions (C).
+
+## v1.149 — Your kid carries a walkie-talkie (D.10, first part)
+D.10, Michael's A on the control room (3 Oct): teammates out of earshot come over the walkie, and "a walkie clipped to
+your kid's belt, seen in first person and on the Loadout kid"; push-to-talk waits for online (D.2). The callouts are
+built on the teammate lines from the Fable voices work (D.9, PR #22), which is not on main yet, and touching the speech
+code now would collide with it. The walkie itself touches none of it, so this run builds that half.
+
+- Every kid carries a yellow walkie, clipped to the jeans' belt on the left hip (the gun is on the right): a body with
+  a little green screen, a speaker grille, a talk button on the side, a channel knob, a stubby antenna and a red
+  transmit light. It is not bought and takes no slot.
+- On the Loadout screen the kid wears it in front of where the Utility Belt's side pouch sits, and an eighth label,
+  HIP, reads Walkie-Talkie.
+- In a match it hangs at your hip, about 57% of your eye height down (the kid's belt under his eyes), a hand forward
+  and to the left. It follows where you stand and which way you face, but not where you look, so it is out of view
+  looking ahead and in view when you look down; crouching brings it lower with you.
+
+`addWalkieParts` builds it (shared by the Loadout kid and the match), `buildFPWalkie`/`updateFPWalkie` place it in
+the match's own scene beside the camera. Nothing about speech, the HUD or the loadout slots changed.
+
+### Verified
+- `tests/walkie.test.mjs`, 13 checks. On the Loadout kid, a new save: the walkie spans x 0.116–0.177 (left hip),
+  y 0.468–0.642 (the belt is at 0.57), z 0.13–0.17 (the front of the hips), the same with the Utility Belt and
+  holster on; the HIP label is on the canvas. In Bunratty 1v1: standing, its centre is 0.16 m left, 0.115 m forward
+  and 0.585 m up; looking ahead 0 of its 8 corners are on screen, looking down (pitch −1.45) all 8, turned to yaw 2.2
+  still 0.16 m left and in view; crouched it drops to 0.348 m up and stays in view; after a 1.27 m walk it is 0.197 m
+  from where you stand. Screenshots `tests/out/walkie-look-down.png` and `loadout-kid.png` read by eye.
+- `tests/loadout-kid.test.mjs` counts eight labelled parts (was seven); `loadout-gear` unchanged and green.
+- `npm test` as four shards at once: 50 of 52 suites passed; laser and winnmark-trees died at `page.goto`'s 30 s load
+  limit under four-shard load before any check ran (the v1.124 note). Run alone, both passed, so 52/52 are green.
+### Still open
+- The callouts over it (a click, static, the line, a click for a teammate out of earshot) wait on PR #22 reaching main.
+- There is no body in first person, so the walkie hangs on its own when you look down. Whether that reads as "at my
+  hip" or as a toy floating over the road is for Michael's eye.
