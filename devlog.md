@@ -7276,3 +7276,17 @@ the match's own scene beside the camera. Nothing about speech, the HUD or the lo
 - The callouts over it (a click, static, the line, a click for a teammate out of earshot) wait on PR #22 reaching main.
 - There is no body in first person, so the walkie hangs on its own when you look down. Whether that reads as "at my
   hip" or as a toy floating over the road is for Michael's eye.
+
+## v1.149 fix-up — the walkie test keeps the round alive
+CI failed Builder sessions on v1.149 in its new `tests/walkie.test.mjs`: "walking 1.5 s, the walkie stays at your
+hip" saw the player move 0 m (offset 0.197). Locally he walks 1.21–1.27 m.
+
+The suite enters `bunratty_sean` and takes several page steps before the walk. On CI's slow runner, the page's own
+frames between those steps give Sean real time, and he can tag the player and end the round. In the result screen
+nobody moves. Ending the round just before the walk reproduces CI's numbers exactly (moved 0, offset 0.197). The suite
+now makes the player untaggable, as the other combat suites do, and the check also requires the round to still be on.
+Test change only; no game change.
+
+### Verified
+- With the round ended before the walk: the CI failure, exactly. With the fix: 2 of 2 runs green, moved 1.27 m in
+  `scenario`.

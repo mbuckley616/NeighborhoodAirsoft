@@ -39,6 +39,9 @@ check('with the belt and holster on it is still worn, in front of the side pouch
 
 // in a match
 await g.scenario('bunratty_sean');
+// Sean mustn't end the round under us: on CI's slow runner the page's own frames between these steps can give him
+// time to tag the player, and in the result screen the walk below moved 0 m (v1.149 CI).
+await page.evaluate(() => { const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
 const at = (pitch, yaw, crouch) => page.evaluate(([pitch, yaw, crouch]) => {
   const P = Game.player; P.pitch = pitch; P.yaw = yaw; P.crouching = !!crouch;
   for (let i = 0; i < 60; i++) stepGame(1 / 60);
@@ -84,9 +87,9 @@ const walked = await page.evaluate(() => {
   Game.keys['KeyW'] = false;
   fpWalkie.updateMatrixWorld(true);
   const c = new THREE.Box3().setFromObject(fpWalkie.userData.walkie).getCenter(new THREE.Vector3());
-  return { moved: +Math.hypot(P.pos.x - x0, P.pos.z - z0).toFixed(2), off: +Math.hypot(c.x - P.pos.x, c.z - P.pos.z).toFixed(3) };
+  return { mode: Game.mode, moved: +Math.hypot(P.pos.x - x0, P.pos.z - z0).toFixed(2), off: +Math.hypot(c.x - P.pos.x, c.z - P.pos.z).toFixed(3) };
 });
-check('walking 1.5 s, the walkie stays at your hip', walked.moved > 1 && walked.off < 0.3, walked);
+check('walking 1.5 s, the walkie stays at your hip', walked.mode === 'scenario' && walked.moved > 1 && walked.off < 0.3, walked);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
