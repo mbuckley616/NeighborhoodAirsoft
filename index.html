@@ -1821,7 +1821,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.138</div>
+  <div class="version">v1.140</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13768,7 +13768,9 @@ function buildMarketLotScene(variant, timeOfDay) {
     team_b:  { pos: P(2, 23),  yaw: 0 },         // at the road side, facing the store (yaw 0 faces -z)
     team_a:  { pos: P(-2, -25), yaw: Math.PI },
     midfield:{ pos: P(0, 7.5), yaw: 0 },
-    ffa_edge:{ pos: P(34, -12), yaw: Math.PI / 2 },   // v1.134: behind the last car at the north row's east end, facing the lot
+    // v1.134: behind the last car at the north row's east end. v1.140: facing down the east aisle (+z, 40 m clear) along
+    // the row, not west into that car's windshield 0.9 m off (Found in play, critic v1.134)
+    ffa_edge:{ pos: P(34, -12), yaw: Math.PI },
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
@@ -19788,8 +19790,31 @@ function updatePlayer(dt) {
   const footNow = inScenario ? Game.player.pos.y : null;   // v1.105: collide from the feet, not the terrain
   const collidedX = collidesObstacles(nx, Game.player.pos.z, r, footNow);
   const collidedZ = collidesObstacles(Game.player.pos.x, nz, r, footNow);
+  const ox0 = Game.player.pos.x, oz0 = Game.player.pos.z;
   if (!collidedX) Game.player.pos.x = nx;
   if (!collidedZ) Game.player.pos.z = nz;
+  // v1.139: the x/z split can't slide along an angled box (a parked car at 2.99 rad held him dead on Northcliff's
+  // road). When it gets under half the step, drop the part of the step that goes into what blocks him and take
+  // the rest along its face, if that is clear and goes further.
+  if ((collidedX || collidedZ) && inScenario) {
+    const mvx = nx - ox0, mvz = nz - oz0;
+    const want = Math.hypot(mvx, mvz);
+    const got = Math.hypot(Game.player.pos.x - ox0, Game.player.pos.z - oz0);
+    const o = want > 1e-6 && got < want * 0.5 ? blockingObstacle(nx, nz, r, footNow) : null;
+    const n = o ? obsAwayNormal(o, ox0, oz0) : null;
+    if (n) {
+      const into = mvx * n.x + mvz * n.z;
+      if (into < 0) {
+        const out = n.d < r ? r + 0.0005 - n.d : 0;   // and back out to his radius, if he was touching closer
+        let sx = ox0 + mvx + (out - into) * n.x, sz = oz0 + mvz + (out - into) * n.z;
+        if (b) { sx = Math.max(b.minX, Math.min(b.maxX, sx)); sz = Math.max(b.minZ, Math.min(b.maxZ, sz)); }
+        if (Math.hypot(sx - ox0, sz - oz0) > got && !collidesObstacles(sx, sz, r, footNow)) {
+          Game.player.pos.x = sx; Game.player.pos.z = sz;
+          Game.player._slides = (Game.player._slides || 0) + 1;
+        }
+      }
+    }
+  }
   // Cancel slide if it hits a wall hard
   if (Game.player.sliding && (collidedX || collidedZ)) {
     Game.player.sliding = false;
@@ -20096,6 +20121,36 @@ function obsRayDist(o, ox, oy, oz, dx, dy, dz, maxDist) {
 }
 
 function collidesObstacles(x, z, r, footYOverride = null) {
+  return blockingObstacle(x, z, r, footYOverride) !== null;
+}
+
+// v1.139: the unit vector on the ground from obstacle o's nearest point to (x, z), pointing away from it, and d,
+// how far (x, z) is from o's surface (null when (x, z) is inside it). The player's face slide uses it to drop
+// the part of a step that goes into o.
+function obsAwayNormal(o, x, z) {
+  let dx, dz;
+  if (o.shape === 'cylinder') {
+    const c = obsCenter(o);
+    dx = x - c.x; dz = z - c.z;
+  } else if (o.shape === 'obox') {
+    const c = obsCenter(o);
+    const cos = Math.cos(o.angle), sin = Math.sin(o.angle);
+    const px = x - c.x, pz = z - c.z;
+    const lx = px * cos - pz * sin, lz = px * sin + pz * cos;
+    const ldx = lx - Math.max(-o.hx, Math.min(lx, o.hx));
+    const ldz = lz - Math.max(-o.hz, Math.min(lz, o.hz));
+    dx = ldx * cos + ldz * sin;      // local → world (THREE convention, as obsOverlapsXZ)
+    dz = -ldx * sin + ldz * cos;
+  } else {
+    dx = x - Math.max(o.minX, Math.min(x, o.maxX));
+    dz = z - Math.max(o.minZ, Math.min(z, o.maxZ));
+  }
+  const len = Math.hypot(dx, dz);
+  return len > 1e-6 ? { x: dx / len, z: dz / len, d: len - (o.shape === 'cylinder' ? (o.radius || 0) : 0) } : null;
+}
+
+// v1.139: the first obstacle that blocks a disc of radius r at (x, z), or null (collidesObstacles' test).
+function blockingObstacle(x, z, r, footYOverride = null) {
   const obs = Game.player.obstacles || [];
   // v1.8: the player's feet are at terrain height; their body occupies
   // [footY, footY + standHeight]. An obstacle blocks only if its vertical span
@@ -20114,10 +20169,10 @@ function collidesObstacles(x, z, r, footYOverride = null) {
       if (Game.scenario.groundY || footYOverride != null) {
         if (oTop <= footY + 0.05 || oBase >= headY) continue; // below feet / above head
       }
-      return true;
+      return o;
     }
   }
-  return false;
+  return null;
 }
 
 // v1.105 (D.4): what the player's feet rest on at (x, z): the terrain, or the top of a standable obstacle his
@@ -22849,6 +22904,10 @@ function pickBoundCover(e, coverList, playerPos) {
   let best = null, bestScore = -Infinity;
   for (const c of coverList) {
     if (c === e._boundCover) continue;                  // not the one we're at
+    // v1.139 fix-up: nor, for 6 s, one dropped as failed (wedged, or no gain) on the way to it. After the 1.5 s rest
+    // he picked it again, slid back into the same wedge, and with the direct push between the two (each undoing the
+    // other) stood 3–4 s along one wall in 'advancing' (the lot at night: Mason at (−17.3, −14.2)).
+    if (c === e._boundBanCover && (Game.scenario.aiClock || 0) < (e._boundBanUntil || 0)) continue;
     // v1.103: nor any cover we're already at (its stand spot inside the 1.6 m
     // "reached" radius). Reaching a cover re-picks without it; with nothing else
     // worth a bound the pick came back null, and the next frame (no bound) picked
@@ -23844,7 +23903,7 @@ function updateEnemies(dt) {
               // Night Prowl's Seth stood on a tree in 'advancing' for 80+ s.
               if (Math.hypot(e.pos.x - bAX, e.pos.z - bAZ) < 0.02) {
                 e._boundStuck = (e._boundStuck || 0) + dt;
-                if (e._boundStuck > 0.6) { e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
+                if (e._boundStuck > 0.6) { e._boundBanCover = e._boundCover; e._boundBanUntil = (Game.scenario.aiClock || 0) + 6; e._boundCover = null; e._boundStuck = 0; e._boundRest = 1.5; }
               } else e._boundStuck = 0;
               // v1.110: a slide along a bumper still moves a few cm a frame, so the check above never fired and the
               // lot's Priya crept 0.2 m/s along a car for 3–4 s in 'advancing'. Also drop the bound when a second
@@ -23852,7 +23911,7 @@ function updateEnemies(dt) {
               if (e._boundCover) {
                 const bdNow = Math.hypot(sp.x - e.pos.x, sp.z - e.pos.z);
                 if (e._boundFor !== e._boundCover || bdNow < e._boundBest - 0.3) { e._boundFor = e._boundCover; e._boundBest = bdNow; e._boundNoGain = 0; }
-                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
+                else if ((e._boundNoGain = (e._boundNoGain || 0) + dt) > 1.0) { e._boundBanCover = e._boundCover; e._boundBanUntil = (Game.scenario.aiClock || 0) + 6; e._boundCover = null; e._boundFor = null; e._boundNoGain = 0; e._boundRest = 1.5; }
               }
             }
           } else {

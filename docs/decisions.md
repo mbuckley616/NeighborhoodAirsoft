@@ -7,6 +7,42 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
+  92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
+  you see one or two scenarios at a time. Five zones now hold 52 scenarios (Winnmark alone has 16).
+  A) Full-window two columns: the map on the left at full height, the chosen zone's scenarios as a scrolling list of
+     cards on the right (name, type, lives, locked/done), same parchment style, map redrawn cleaner *(recommended)*
+  B) Keep the map as a small header; below it, every zone's scenarios as tabbed card rows across the full width
+  C) Drop the map for a zone ladder: one row per zone, each a strip of scenario cards; the map becomes a picture only
+  D) Only widen the panel and let the scenario list scroll; no restyle yet
+  Builder recommends A: it shows a whole zone at once and keeps the map as the way you pick where to go.
+  Michael: **A) Full-window two columns: the map on the left, the chosen zone’s scenarios as cards on the right**. (2026-10-02)
+
+- **Better voices and more lines (D.9): how? (builder, 2026-10-02)** The kids talk through the browser's own speech
+  (`speechSynthesis`), so the voice depends on the player's computer and browser. VoiceStudio is an app that runs AI
+  voice models on your own machine; the cloud sessions can't run it, and the game is one HTML file with no audio files.
+  A) More and more varied lines now, with the browser voices; recorded voices later *(recommended)*
+  B) Pre-recorded lines: you generate a voice pack with VoiceStudio from a script the builder writes, the clips ship
+     next to index.html on itch (a zip), with the browser voice as the fallback
+  C) Both: the lines first (A), then the script and loader for your VoiceStudio pack (B)
+  D) Leave voices as they are
+  Builder recommends A, then C if the new lines land: B only works once you run VoiceStudio yourself, and every new
+  line would need a fresh recording.
+  Michael: **A) More and more varied lines now, with the browser voices; recorded voices later**. (2026-10-02; built by the Fable session as v1.150–v1.151, PR #22)
+
+- **The treehouse is built: what next for towers (D.7)? (builder, 2026-10-02)** v1.138 put a treehouse with a ladder
+  in Stoneglen Close: you climb with W, a drop of 1.5 m or more empties your stamina, and Connor holds the platform
+  in King of the Treehouse. Kids cannot climb, so a defend on the platform would leave the attackers standing under
+  it, and there is no prompt at the ladder yet (the briefing says W climbs). With v1.139–v1.140 every bug found in
+  play is closed, so this is the only open work.
+  A) Kids climb ladders, then a defend: you hold the treehouse while kids climb up after you; a "W — climb" prompt at the ladder too *(recommended)*
+  B) A ramp tower instead: a raised deck kids reach by walking up a ramp, so no climbing AI; plus the prompt
+  C) Only the "W — climb" prompt for now, and wait for your playtest of the climb
+  D) Nothing new: wait for your playtest of v1.130–v1.140
+  Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
+  ladder code already moves the player, so kids can share it.
+  Michael: **A) Kids climb ladders, then a defend** (with the "W — climb" prompt at the ladder). (2026-10-02)
+
 - **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
   built, through v1.137 on Builder sessions (CI green), and every Found in play bug is closed. What is left is parked
   by your own calls: D.1 no new zone yet (C, 1 Oct), D.2 online held until the v2 zones are done (C, 30 Sep), D.7
