@@ -7114,3 +7114,48 @@ Nothing in the game changes. The title screen reads v1.145.
   the Playwright install each job repeats. The first CI run on this push will show it.
 - If the branch protection on `main` names the old `headless` check, the new aggregate job keeps it satisfied. If it
   names nothing, nothing changes.
+
+## v1.146 — The map screen fills the window (D.8 step 1)
+D.8, Michael's A: the map full-height on the left, the chosen zone's scenarios in a scrolling column on the right, built
+by the builder in steps he sees (layout, then the cards, then the map's restyle). This is the layout.
+
+Before it, the map was a 720 px parchment panel capped at 92% of the window. The 380 px map took the top, and the
+scenario list squeezed into whatever was left below. At 1280×720 not one Winnmark row fitted whole in view (1 at
+1366×768, 5 at 1920×1080), and the list stayed empty until you clicked a pin. The 700:380 drawing was also stretched to
+636 px wide (`preserveAspectRatio="none"`), so the river and the 140 shield were squashed by about 10%.
+
+- The panel is the whole window, less a 16 px margin, up to 1800 px wide. The title and BACK TO ROOM share one row
+  at the top.
+- The map takes the left column (60%). It is sized by container units to the largest box at the drawing's own 700:380
+  that fits, so the pins stay where they were on the drawing and nothing is stretched.
+- The right column (40%, 280–640 px) holds the zone's list. It is the same rows as before, which become cards in
+  step 2, and it scrolls on its own.
+- The map opens on a zone, never on "Click a pin": the zone you last looked at this session, or else the furthest
+  zone you have unlocked, where your next match is. The chosen pin gets a pale ring and a bold label.
+- In a narrow or portrait window (820 px wide or less, or taller than wide) the two stack, the map on top.
+
+`selectMapZone(key)` is the old pin-click handler as a function, shared by the pins and `openMap`. Nothing else about
+the zones, locks or briefings changed.
+
+### Verified
+- `tests/map-screen.test.mjs`, 36 checks, Winnmark on a new save:
+
+  | Window    | Map         | List        | Winnmark rows in view (was) |
+  |-----------|-------------|-------------|-----------------------------|
+  | 1280×720  | 700×380     | 466×578     | 7 of 16 (0)                 |
+  | 1366×768  | 751×408     | 501×626     | 7 (1)                       |
+  | 1920×1080 | 1078×585    | 640×938     | 11 (5)                      |
+  | 1024×640  | 546×296     | 364×498     | 5 (0)                       |
+
+  At every size the map is 1.842:1 (700/380 = 1.842), every pin sits on it, and the list scrolls. At 800×1000 the
+  map (664×360) stacks above a full-width list.
+- It opens on Winnmark on a new save and on the lot once The Hollow is cleared. It reopens on Bunratty after you click
+  Bunratty, and a locked Northcliff still says what opens it. A real click on START opens the briefing.
+- `front-door`, `northcliff` and `market-lot`, which click the pins, still pass. `run.mjs` gives the new suite 25 s.
+- `npm test` as four shards at once: 44 suites passed. Seven died at `page.goto`'s 30 s load limit with 4 shards
+  loading pages at once (the v1.124 note: load, not a hang). Run alone, all seven passed, so 51/51 are green.
+### Still open
+- How it looks to Michael. Step 2 (the scenarios as cards) waits on his look, in decisions.
+- On a 16:9 window the map leaves a band of parchment above and below it, 100 px at 1280×720. The drawing is 700:380,
+  wider than its column. Step 3 redraws the map, and can draw it taller to fill the column.
+- At 1024×640 the list shows 5 rows. The cards in step 2 should be more compact than today's three-line rows.

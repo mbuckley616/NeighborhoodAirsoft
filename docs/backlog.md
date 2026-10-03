@@ -107,7 +107,10 @@ Fable card on the control room and Michael starts it from there.
    scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
    updated in style. (Michael, 2026-10-02) **(design)** — Michael: **A**, the map full-height on the left and the
    chosen zone's scenarios as scrolling cards on the right; built by the builder, in steps shown to him (layout, then
-   the cards, then the map's restyle) (control room, 2 Oct).
+   the cards, then the map's restyle) (control room, 2 Oct). ~~Step 1, the layout~~ — done, v1.146 (the whole window
+   in two columns, the map at its true 700:380 on the left, the zone's list scrolling on the right; it opens on your
+   furthest zone; 7 Winnmark rows in view at 1280×720, was 0; `tests/map-screen.test.mjs`). Step 2, the cards, waits
+   on Michael's look at the layout.
 9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
    (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
