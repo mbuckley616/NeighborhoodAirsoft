@@ -40,7 +40,8 @@ const pin = await page.evaluate(() => {
   const lockedAfter = p.classList.contains('locked');
   p.click();
   const info = document.getElementById('scenarioInfo');
-  const rows = [...info.querySelectorAll('.sc-go')].map(b => ({ id: b.dataset.launch, locked: b.classList.contains('locked') }));
+  // v1.147: the rows are cards; a locked card has no START
+  const rows = [...info.querySelectorAll('.sc-card')].map(b => ({ id: b.dataset.id, locked: b.classList.contains('locked') && !b.querySelector('.sc-go') }));
   delete Game.persist.completed[zoneCapstoneId('market_lot')];
   closeMap();
   return { lockedNew, label, lockedInfo, lockedAfter, rows, oldPin: !!document.querySelector('#worldMap .pin[data-scenario="locked"]') };

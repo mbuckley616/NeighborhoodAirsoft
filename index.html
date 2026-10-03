@@ -776,7 +776,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    container-type: size;     /* the map fits the column at the drawing's 700:380 */
+    container-type: size;     /* the map fits the column at the drawing's 700:560 (v1.148; 700:380 before) */
   }
   #worldMap .map-right {
     flex: 1 1 40%;
@@ -788,11 +788,11 @@
   }
   #worldMap .map-area {
     position: relative;
-    width: min(100cqw, 100cqh * 700 / 380);
-    height: min(100cqh, 100cqw * 380 / 700);
+    width: min(100cqw, 100cqh * 700 / 560);
+    height: min(100cqh, 100cqw * 560 / 700);
     flex-shrink: 0;
-    background: #ede0c8;
-    border: 1px dashed #8b6f47;
+    background: #efe5cf;
+    border: 1px solid #8b6f47;   /* v1.148: solid, the drawing carries its own neatline */
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -888,42 +888,83 @@
     letter-spacing: 1px;
     text-transform: uppercase;
   }
+  /* v1.147 (D.8 step 2): the zone's scenarios as cards, as many columns as fit 155 px */
+  #worldMap .scenario-info .sc-zone-count {
+    font-size: 11px;
+    color: #8b6f47;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
   #worldMap .scenario-info .sc-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 8px;
     margin-top: 8px;
   }
-  #worldMap .scenario-info .sc-row {
-    background: rgba(255,255,255,0.6);
-    border-left: 3px solid var(--ui-danger);
-    padding: 8px 10px 8px 12px;
+  #worldMap .scenario-info .sc-card {
+    pointer-events: auto;
+    cursor: pointer;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid rgba(139,111,71,0.45);
+    border-top: 3px solid var(--ui-danger);
+    padding: 6px 8px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    box-shadow: 1px 2px 3px rgba(42,37,32,0.12);
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  #worldMap .scenario-info .sc-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 2px 4px 7px rgba(42,37,32,0.22);
+  }
+  #worldMap .scenario-info .sc-card.done { border-top-color: #2a6a3a; }
+  #worldMap .scenario-info .sc-card.next { background: #fffaf0; border-color: #8b6f47; border-top-color: var(--ui-danger); }
+  #worldMap .scenario-info .sc-card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+  #worldMap .scenario-info .sc-card-num {
+    background: #2a2520;
+    color: #f4e9d8;
+    min-width: 16px;
+    text-align: center;
+    padding: 1px 3px;
+    font-weight: bold;
+  }
+  #worldMap .scenario-info .sc-card-match { font-weight: bold; color: #2a2520; }
+  #worldMap .scenario-info .sc-card-badge { color: #8b3a2a; font-weight: bold; }
+  #worldMap .scenario-info .sc-card-stamp {
+    margin-left: auto;
+    font-weight: bold;
+    padding: 0 4px;
+    border: 1px solid currentColor;
+  }
+  #worldMap .scenario-info .sc-card-stamp.done { color: #2a6a3a; }
+  #worldMap .scenario-info .sc-card-stamp.next { color: var(--ui-danger); }
+  #worldMap .scenario-info .sc-card-title {
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  #worldMap .scenario-info .sc-card-meta {
+    font-size: 11px;
+    color: #5a5048;
+  }
+  #worldMap .scenario-info .sc-card-foot {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    margin-top: 3px;
   }
-  #worldMap .scenario-info .sc-row .sc-row-text {
-    flex: 1;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-title {
-    font-weight: bold;
-    font-size: 13px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-desc {
-    font-size: 11px;
-    color: #5a5048;
-    margin-top: 1px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-type {
-    color: #8b3a2a;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-reward {
-    font-size: 11px;
+  #worldMap .scenario-info .sc-card-pay {
+    font-size: 10px;
     color: #2a6a3a;
-    margin-top: 1px;
     font-weight: bold;
   }
   #worldMap .scenario-info .sc-go {
@@ -931,7 +972,7 @@
     background: var(--ui-danger);
     color: #fff;
     border: none;
-    padding: 6px 10px;
+    padding: 3px 9px;
     font-family: inherit;
     font-size: 11px;
     cursor: pointer;
@@ -939,27 +980,22 @@
     text-transform: uppercase;
     flex-shrink: 0;
   }
-  /* v1.48 — progression-locked scenario rows */
-  #worldMap .scenario-info .sc-row.locked {
+  /* v1.48 — progression-locked scenarios */
+  #worldMap .scenario-info .sc-card.locked {
+    cursor: default;
     background: rgba(180,175,165,0.35);
-    border-left-color: #9a948a;
+    border-top-color: #9a948a;
     opacity: 0.8;
+    box-shadow: none;
+    transform: none;
   }
-  #worldMap .scenario-info .sc-row.locked .sc-row-title {
-    color: #6a655d;
-    font-weight: bold;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-lock {
+  #worldMap .scenario-info .sc-card.locked .sc-card-title { color: #6a655d; }
+  #worldMap .scenario-info .sc-card.locked .sc-card-num { background: #9a948a; }
+  #worldMap .scenario-info .sc-row-lock, #worldMap .scenario-info .sc-card-lock {
     font-size: 11px;
     color: #8a5a2a;
-    margin-top: 2px;
     font-style: italic;
-  }
-  #worldMap .scenario-info .sc-go.locked {
-    background: #9a948a;
-    color: #efece4;
-    cursor: not-allowed;
-    pointer-events: none;
+    line-height: 1.3;
   }
   /* dim the locked pin's label so it reads as not-yet-available */
   #worldMap .pin.locked .label {
@@ -1869,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.146</div>
+  <div class="version">v1.148</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -1894,81 +1930,148 @@
            diagonal, Eves Rd drops vertically through the center-left. Four
            park/greenspaces sit center and bottom. Pin positions (the HTML
            .pin divs below) line up with the four labeled regions. -->
-      <svg viewBox="0 0 700 380" preserveAspectRatio="none">
-        <!-- Land base wash (subtle warm parchment, lets bg show through) -->
-        <rect x="0" y="0" width="700" height="380" fill="#ede0c8"/>
+      <!-- v1.148 (D.8 step 3, Michael: A): redrawn at 700:560 so the map fills its column (it was 700:380, with a band
+           of parchment above and below it), in a cleaner style: flat parks, the river with its banks, roads cased and
+           named, a neatline, compass and scale bar. The layout is the old one drawn taller, so the pins keep their
+           place (Hollow by the river, the lot off Holcomb Bridge Rd by the 140 shield). -->
+      <svg viewBox="0 0 700 560" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <path id="mapLblRiver" d="M 112 534 Q 200 516 312 526"/>
+          <path id="mapLblHolcomb" d="M 392 36 Q 468 76 556 96"/>
+          <path id="mapLblEves" d="M 266 196 Q 280 118 286 40"/>
+          <path id="mapLblSteeple" d="M 482 352 Q 506 280 520 196"/>
+          <path id="mapLblNesbit" d="M 630 372 Q 656 300 694 222"/>
+        </defs>
+        <!-- Land -->
+        <rect x="0" y="0" width="700" height="560" fill="#efe5cf"/>
 
-        <!-- ===== Green spaces (parks + river corridor) ===== -->
-        <!-- Central park belt (East Roswell Park area, center) -->
-        <path d="M 300 40 Q 360 90 350 170 Q 345 240 300 270 Q 360 250 400 180 Q 410 100 380 40 Z"
-              fill="#c2d3a8" opacity="0.75"/>
-        <!-- Lower-center green (between Sentinel and Horseshoe Bend) -->
-        <path d="M 250 250 Q 320 240 380 280 Q 420 310 400 360 L 230 360 Q 220 300 250 250 Z"
-              fill="#c2d3a8" opacity="0.7"/>
-        <!-- River-corridor greenway, west edge -->
-        <path d="M 0 150 Q 50 200 40 280 Q 35 340 80 380 L 0 380 Z"
-              fill="#bdd0a2" opacity="0.6"/>
-
-        <!-- ===== Chattahoochee River ===== -->
-        <!-- Winds down the west side, then sweeps east across the bottom.
-             Drawn as a wide soft-blue ribbon with a lighter centerline. -->
-        <path d="M 60 -10 Q 30 60 55 130 Q 85 210 45 270 Q 20 330 70 380"
-              stroke="#9ec8e0" stroke-width="22" fill="none" stroke-linecap="round" opacity="0.85"/>
-        <path d="M 70 380 Q 160 350 250 360 Q 360 372 470 350 Q 600 322 700 350"
-              stroke="#9ec8e0" stroke-width="22" fill="none" stroke-linecap="round" opacity="0.85"/>
-        <!-- River centerline highlight -->
-        <path d="M 60 -10 Q 30 60 55 130 Q 85 210 45 270 Q 20 330 70 380"
-              stroke="#cfe6f2" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.7"/>
-        <path d="M 70 380 Q 160 350 250 360 Q 360 372 470 350 Q 600 322 700 350"
-              stroke="#cfe6f2" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.7"/>
-
-        <!-- ===== Major roads ===== -->
-        <!-- Holcomb Bridge Rd — broad diagonal across the top -->
-        <path d="M 330 -10 Q 470 50 560 70 Q 640 86 720 70"
-              stroke="#b8b2a6" stroke-width="11" fill="none" opacity="0.9"/>
-        <!-- Steeplechase Dr — the long right-side diagonal -->
-        <path d="M 540 60 Q 520 180 470 290 Q 440 350 380 380"
-              stroke="#c6c0b4" stroke-width="8" fill="none" opacity="0.9"/>
-        <!-- Nesbit Ferry Rd — far-right diagonal -->
-        <path d="M 700 120 Q 640 200 600 300 Q 575 360 540 380"
-              stroke="#c6c0b4" stroke-width="7" fill="none" opacity="0.85"/>
-        <!-- Eves Rd — vertical through center-left, curving to meet Holcomb -->
-        <path d="M 300 -10 Q 290 80 270 160 Q 250 240 300 300"
-              stroke="#c6c0b4" stroke-width="8" fill="none" opacity="0.85"/>
-        <!-- Steeplechase lower spur into Horseshoe Bend -->
-        <path d="M 470 290 Q 430 320 400 360"
-              stroke="#cdc7bb" stroke-width="6" fill="none" opacity="0.8"/>
-        <!-- A couple of minor connector streets for texture -->
-        <path d="M 270 160 Q 360 150 460 160" stroke="#cdc7bb" stroke-width="4" fill="none" opacity="0.6"/>
-        <path d="M 300 300 Q 360 280 410 290" stroke="#cdc7bb" stroke-width="4" fill="none" opacity="0.6"/>
-
-        <!-- ===== Hwy 140 shield (near East Roswell) ===== -->
-        <rect x="498" y="118" width="22" height="16" rx="3" fill="#f4e9d8" stroke="#5a4a30" stroke-width="1.5"/>
-        <text x="509" y="130" font-family="Georgia" font-size="9" fill="#2a2520" text-anchor="middle" font-weight="bold">140</text>
-
-        <!-- ===== Scattered house/building flecks for lived-in texture ===== -->
-        <g fill="#c4a47a" stroke="#5a4a30" stroke-width="1" opacity="0.8">
-          <rect x="150" y="120" width="12" height="12"/>
-          <rect x="180" y="150" width="12" height="10"/>
-          <rect x="600" y="100" width="12" height="12"/>
-          <rect x="630" y="150" width="11" height="11"/>
-          <rect x="560" y="200" width="12" height="11"/>
-          <rect x="200" y="320" width="12" height="11"/>
-          <rect x="160" y="290" width="11" height="11"/>
-          <rect x="640" y="250" width="12" height="11"/>
-          <rect x="430" y="100" width="12" height="11"/>
+        <!-- ===== Green spaces: flat, no outline ===== -->
+        <g fill="#cddbb2">
+          <!-- central park belt (East Roswell Park) -->
+          <path d="M 300 59 Q 360 133 350 251 Q 345 354 300 398 Q 360 368 400 265 Q 410 147 380 59 Z"/>
+          <!-- lower green between Sentinel and Horseshoe Bend -->
+          <path d="M 250 368 Q 320 354 380 413 Q 420 457 400 520 L 230 520 Q 220 442 250 368 Z"/>
+          <!-- river greenway, west edge -->
+          <path d="M 0 221 Q 50 295 40 413 Q 35 500 80 560 L 0 560 Z"/>
+          <!-- east woods by Nesbit Ferry -->
+          <path d="M 640 380 Q 690 360 700 330 L 700 470 Q 660 470 640 440 Q 625 410 640 380 Z"/>
         </g>
 
-        <!-- ===== Tree clusters ===== -->
-        <g fill="#5a7048" opacity="0.65">
-          <circle cx="120" cy="80" r="10"/>
-          <circle cx="100" cy="100" r="8"/>
-          <circle cx="660" cy="60" r="9"/>
-          <circle cx="100" cy="330" r="11"/>
-          <circle cx="240" cy="60" r="9"/>
-          <circle cx="500" cy="330" r="10"/>
-          <circle cx="350" cy="350" r="9"/>
+        <!-- ===== Chattahoochee River: bank, water, a lighter channel ===== -->
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M 60 -15 Q 30 88 55 192 Q 85 309 45 398 Q 22 480 80 528 Q 160 506 250 520 Q 360 538 450 512 Q 520 490 560 500 Q 640 520 715 494"
+                stroke="#86b3cc" stroke-width="27"/>
+          <path d="M 60 -15 Q 30 88 55 192 Q 85 309 45 398 Q 22 480 80 528 Q 160 506 250 520 Q 360 538 450 512 Q 520 490 560 500 Q 640 520 715 494"
+                stroke="#aed3e6" stroke-width="22"/>
+          <path d="M 60 -15 Q 30 88 55 192 Q 85 309 45 398 Q 22 480 80 528 Q 160 506 250 520 Q 360 538 450 512 Q 520 490 560 500 Q 640 520 715 494"
+                stroke="#cbe4f0" stroke-width="5" opacity="0.8"/>
         </g>
+
+        <!-- ===== Roads: a dark casing under a pale fill ===== -->
+        <g fill="none" stroke-linecap="round" stroke="#8f8574">
+          <path d="M 330 -15 Q 470 74 560 103 Q 640 127 715 103" stroke-width="13"/>
+          <path d="M 548 98 Q 522 265 472 410 Q 450 470 430 520" stroke-width="10"/>
+          <path d="M 715 170 Q 640 295 606 442 Q 594 490 580 515" stroke-width="9"/>
+          <path d="M 300 -15 Q 290 118 270 236 Q 250 354 300 442" stroke-width="10"/>
+          <path d="M 270 236 Q 360 221 462 236" stroke-width="6"/>
+          <path d="M 300 442 Q 360 413 412 427" stroke-width="6"/>
+          <path d="M 472 410 Q 446 408 424 404" stroke-width="6"/>
+          <path d="M 262 296 Q 210 284 156 276" stroke-width="6"/>
+          <path d="M 548 210 Q 580 200 605 186" stroke-width="6"/>
+        </g>
+        <g fill="none" stroke-linecap="round" stroke="#fbf6ea">
+          <path d="M 330 -15 Q 470 74 560 103 Q 640 127 715 103" stroke-width="9"/>
+          <path d="M 548 98 Q 522 265 472 410 Q 450 470 430 520" stroke-width="6.5"/>
+          <path d="M 715 170 Q 640 295 606 442 Q 594 490 580 515" stroke-width="5.5"/>
+          <path d="M 300 -15 Q 290 118 270 236 Q 250 354 300 442" stroke-width="6.5"/>
+          <path d="M 270 236 Q 360 221 462 236" stroke-width="3.5"/>
+          <path d="M 300 442 Q 360 413 412 427" stroke-width="3.5"/>
+          <path d="M 472 410 Q 446 408 424 404" stroke-width="3.5"/>
+          <path d="M 262 296 Q 210 284 156 276" stroke-width="3.5"/>
+          <path d="M 548 210 Q 580 200 605 186" stroke-width="3.5"/>
+        </g>
+        <!-- cul-de-sac bulbs: Winnmark, Bunratty, Northcliff -->
+        <g fill="#fbf6ea" stroke="#8f8574" stroke-width="1.5">
+          <circle cx="420" cy="403" r="6"/>
+          <circle cx="414" cy="427" r="5"/>
+          <circle cx="156" cy="276" r="5"/>
+        </g>
+
+        <!-- ===== Riverside Market: the store and its lot ===== -->
+        <rect x="606" y="168" width="40" height="15" fill="#d9c3a0" stroke="#6b5a40" stroke-width="1"/>
+        <rect x="600" y="186" width="52" height="26" fill="#ddd6c8" stroke="#8f8574" stroke-width="1"/>
+        <g stroke="#fbf6ea" stroke-width="1">
+          <path d="M 610 189 V 209 M 620 189 V 209 M 630 189 V 209 M 640 189 V 209"/>
+        </g>
+
+        <!-- ===== Hwy 140 shield on Holcomb Bridge Rd ===== -->
+        <rect x="609" y="107" width="24" height="17" rx="3" fill="#fbf6ea" stroke="#4a3e2a" stroke-width="1.5"/>
+        <text x="621" y="119.5" font-family="Georgia" font-size="9.5" fill="#2a2520" text-anchor="middle" font-weight="bold">140</text>
+
+        <!-- ===== Houses: small even blocks along the streets ===== -->
+        <g fill="#dcc6a2" stroke="#8b6f47" stroke-width="0.8">
+          <rect x="400" y="385" width="7" height="7"/><rect x="412" y="380" width="7" height="7"/>
+          <rect x="430" y="388" width="7" height="7"/><rect x="438" y="414" width="7" height="7"/>
+          <rect x="392" y="412" width="7" height="7"/><rect x="452" y="392" width="7" height="7"/>
+          <rect x="318" y="222" width="7" height="7"/><rect x="334" y="218" width="7" height="7"/>
+          <rect x="356" y="236" width="7" height="7"/><rect x="372" y="236" width="7" height="7"/>
+          <rect x="420" y="221" width="7" height="7"/><rect x="436" y="240" width="7" height="7"/>
+          <rect x="146" y="284" width="7" height="7"/><rect x="170" y="266" width="7" height="7"/>
+          <rect x="190" y="288" width="7" height="7"/><rect x="214" y="276" width="7" height="7"/>
+          <rect x="576" y="148" width="7" height="7"/><rect x="640" y="146" width="7" height="7"/>
+          <rect x="560" y="296" width="7" height="7"/><rect x="574" y="314" width="7" height="7"/>
+          <rect x="628" y="232" width="7" height="7"/><rect x="190" y="440" width="7" height="7"/>
+          <rect x="172" y="426" width="7" height="7"/><rect x="430" y="146" width="7" height="7"/>
+          <rect x="446" y="150" width="7" height="7"/><rect x="150" y="150" width="7" height="7"/>
+          <rect x="170" y="168" width="7" height="7"/>
+        </g>
+
+        <!-- ===== Trees: two-tone dots ===== -->
+        <g fill="#7d9663">
+          <circle cx="120" cy="118" r="7"/><circle cx="104" cy="138" r="6"/><circle cx="128" cy="140" r="5"/>
+          <circle cx="240" cy="88" r="7"/><circle cx="226" cy="104" r="5"/>
+          <circle cx="660" cy="66" r="7"/><circle cx="676" cy="80" r="5"/>
+          <circle cx="198" cy="498" r="7"/><circle cx="216" cy="504" r="6"/><circle cx="340" cy="500" r="6"/>
+          <circle cx="356" cy="506" r="7"/><circle cx="104" cy="480" r="7"/><circle cx="118" cy="494" r="5"/>
+          <circle cx="660" cy="400" r="7"/><circle cx="676" cy="420" r="6"/><circle cx="654" cy="428" r="5"/>
+          <circle cx="330" cy="120" r="6"/><circle cx="372" cy="300" r="6"/><circle cx="360" cy="318" r="5"/>
+        </g>
+        <g fill="#5f784a">
+          <circle cx="122" cy="120" r="3"/><circle cx="242" cy="90" r="3"/><circle cx="662" cy="68" r="3"/>
+          <circle cx="200" cy="500" r="3"/><circle cx="358" cy="508" r="3"/><circle cx="106" cy="482" r="3"/>
+          <circle cx="662" cy="402" r="3"/><circle cx="332" cy="122" r="2.5"/><circle cx="374" cy="302" r="2.5"/>
+        </g>
+
+        <!-- ===== Names: the river in its water, the roads beside them ===== -->
+        <g font-family="Georgia, serif" font-style="italic" font-size="11">
+          <text fill="#3f6f8c" letter-spacing="1.5"><textPath href="#mapLblRiver">Chattahoochee River</textPath></text>
+          <g fill="#6b5a40" stroke="#efe5cf" stroke-width="3" paint-order="stroke" font-size="10">
+            <text><textPath href="#mapLblHolcomb">Holcomb Bridge Rd</textPath></text>
+            <text><textPath href="#mapLblEves">Eves Rd</textPath></text>
+            <text><textPath href="#mapLblSteeple">Steeplechase Dr</textPath></text>
+            <text><textPath href="#mapLblNesbit">Nesbit Ferry Rd</textPath></text>
+          </g>
+        </g>
+        <text x="410" y="196" font-family="Georgia, serif" font-size="13" letter-spacing="5" fill="#ad9a7e"
+              text-anchor="middle">EAST ROSWELL</text>
+
+        <!-- ===== Compass and scale ===== -->
+        <g transform="translate(662 44)" font-family="Georgia, serif">
+          <circle r="17" fill="#f6eedd" stroke="#8b6f47" stroke-width="1"/>
+          <path d="M 0 -14 L 5 0 L 0 -3 L -5 0 Z" fill="#2a2520"/>
+          <path d="M 0 14 L 5 0 L 0 3 L -5 0 Z" fill="#b8a888"/>
+          <text y="-20" font-size="10" text-anchor="middle" fill="#2a2520" font-weight="bold">N</text>
+        </g>
+        <g transform="translate(108 28)" font-family="Georgia, serif" font-size="9" fill="#6b5a40">
+          <rect x="0" y="0" width="30" height="4" fill="#2a2520"/>
+          <rect x="30" y="0" width="30" height="4" fill="#f6eedd" stroke="#2a2520" stroke-width="0.8"/>
+          <text x="0" y="14">0</text>
+          <text x="60" y="14" text-anchor="middle">½ mi</text>
+        </g>
+
+        <!-- ===== Neatline ===== -->
+        <rect x="5" y="5" width="690" height="550" fill="none" stroke="#8b6f47" stroke-width="1.5"/>
+        <rect x="9" y="9" width="682" height="542" fill="none" stroke="#8b6f47" stroke-width="0.5"/>
       </svg>
       <!-- Scenario pins — positioned over the four labeled regions, matching
            the real geography. Winnmark Court (Horseshoe Bend) is the only
@@ -25410,57 +25513,53 @@ function scenarioLockReason(scenarioId) {
   return `Beat “${prevName}” to unlock.`;
 }
 
-function renderScenarioRow(scenarioId) {
+// v1.147 (D.8 step 2, Michael: A): each scenario is a card in the map's right column, two or three across: its place
+// in the zone, the matchup, the badges (attack, defend, night, timer), the name, where it is, your lives, the pay, and
+// whether it is done, next or locked (a locked card says which card opens it, "Win #3 to unlock", and has no button). The whole card opens the
+// briefing; START is kept for the eye and the keyboard.
+function scenarioMatchup(sc) {
+  // Legacy scenarios use `enemies`; new ones use `enemySetup` with team tags (allies / teams / FFA).
+  if (sc.tutorial) return 'TUTORIAL';                                  // v1.57: not a real matchup
+  if (sc.ffa && sc.enemySetup) return (sc.enemySetup.length + 1) + '-WAY FFA';   // +1 for the player
+  if (sc.enemySetup) {
+    const allies = sc.enemySetup.filter(es => es.team === 'player').length;
+    const foes   = sc.enemySetup.filter(es => (es.team || 'enemy') !== 'player').length;
+    return (allies + 1) + 'V' + foes;                                  // +1 for the player
+  }
+  return ((sc.enemies && sc.enemies.length) || 1) + 'V1';
+}
+function renderScenarioCard(scenarioId, num, isNext) {
   const sc = SCENARIOS[scenarioId];
   if (!sc) return '';
   const completed = !!Game.persist.completed[scenarioId];
-  const checkmark = completed ? ' ✓' : '';
-  // Matchup label. Legacy scenarios use `enemies`; new ones use `enemySetup`
-  // with team tags. Ship C: reflect allies / teams / FFA instead of always "Nv1".
-  let matchup;
-  if (sc.tutorial) {
-    matchup = 'TUTORIAL';                                  // v1.57: not a real matchup
-  } else if (sc.ffa && sc.enemySetup) {
-    matchup = (sc.enemySetup.length + 1) + '-way FFA';   // +1 for the player
-  } else if (sc.enemySetup) {
-    const allies = sc.enemySetup.filter(es => es.team === 'player').length;
-    const foes   = sc.enemySetup.filter(es => (es.team || 'enemy') !== 'player').length;
-    matchup = (allies + 1) + 'v' + foes;                 // +1 for the player
-  } else {
-    const enemyCount = (sc.enemies && sc.enemies.length) || 1;
-    matchup = enemyCount + 'v1';
-  }
-  // Scenario type badge (v1.9)
-  const typeBadge = sc.scenarioType === 'attack'  ? '⚔ ATTACK'
-                  : sc.scenarioType === 'defend'  ? '🛡 DEFEND'
-                  : '';
-  const typeStr = typeBadge ? `<span class="sc-row-type">${typeBadge}</span> · ` : '';
-  // v1.35: night badge so day/night variants are distinguishable at a glance.
-  const nightStr = (sc.timeOfDay === 'night') ? `<span class="sc-row-type">🌙 NIGHT</span> · ` : '';
-  // v1.48: progression gating. A locked scenario shows greyed, with a lock
-  // icon and the unlock requirement, and has no START button.
-  const locked = !isScenarioUnlocked(scenarioId);
-  if (locked) {
-    const reason = scenarioLockReason(scenarioId);
-    return `
-    <div class="sc-row locked">
-      <div class="sc-row-text">
-        <div class="sc-row-title">🔒 ${sc.scenarioName}</div>
-        <div class="sc-row-desc">${nightStr}${typeStr}${sc.name} · ${matchup}</div>
-        <div class="sc-row-lock">${reason}</div>
-      </div>
-      <button class="sc-go locked" disabled>LOCKED</button>
-    </div>
-  `;
-  }
+  const locked = !isScenarioUnlocked(scenarioId);               // v1.48: progression gating
+  const badges = [];
+  if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
+  if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
+  if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
+  const brief = getScenarioBriefing(scenarioId);
+  const lives = brief ? brief.player.lives : 1;
+  const stamp = locked ? '' : completed ? '<span class="sc-card-stamp done">✓ DONE</span>'
+              : isNext ? '<span class="sc-card-stamp next">NEXT</span>' : '';
+  const cls = 'sc-card' + (locked ? ' locked' : '') + (completed ? ' done' : '') + (isNext && !locked ? ' next' : '');
+  const foot = locked
+    ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + (num - 1) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
+    : `<div class="sc-card-foot">
+        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}</span>
+        <button class="sc-go" data-launch="${scenarioId}">START</button>
+      </div>`;
   return `
-    <div class="sc-row">
-      <div class="sc-row-text">
-        <div class="sc-row-title">${sc.scenarioName}${checkmark}</div>
-        <div class="sc-row-desc">${nightStr}${typeStr}${sc.name} · ${matchup}</div>
-        <div class="sc-row-reward">WIN +$${scaledReward(sc.rewards.win)}  ·  LOSE +$${scaledReward(sc.rewards.lose)}</div>
+    <div class="${cls}" data-id="${scenarioId}">
+      <div class="sc-card-top">
+        <span class="sc-card-num">${num}</span>
+        <span class="sc-card-match">${scenarioMatchup(sc)}</span>
+        ${badges.map(t => `<span class="sc-card-badge">${t}</span>`).join('')}
+        ${stamp}
       </div>
-      <button class="sc-go" data-launch="${scenarioId}">START</button>
+      <div class="sc-card-title">${locked ? '🔒 ' : ''}${sc.scenarioName}</div>
+      <div class="sc-card-meta">${sc.name} · ♥ ${lives} ${lives === 1 ? 'life' : 'lives'}</div>
+      ${foot}
     </div>
   `;
 }
@@ -25543,15 +25642,16 @@ function selectMapZone(sc) {
         `;
         return;
       }
+      // v1.147 (D.8 step 2): cards, with a count of the zone's done matches; the first one not yet won is NEXT
+      const nextId = ids.find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+      const doneN = ids.filter(id => Game.persist.completed[id]).length;
       info.innerHTML = `
         <div class="sc-name">${headerName}</div>
-        <div class="sc-list">${ids.map(renderScenarioRow).join('')}</div>
+        <div class="sc-zone-count">${doneN} of ${ids.length} won</div>
+        <div class="sc-list">${ids.map((id, i) => renderScenarioCard(id, i + 1, id === nextId)).join('')}</div>
       `;
-      info.querySelectorAll('.sc-go:not(.locked)').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.launch;
-          openScenarioBrief(id);
-        });
+      info.querySelectorAll('.sc-card:not(.locked)').forEach(card => {
+        card.addEventListener('click', () => openScenarioBrief(card.dataset.id));
       });
       return;
     }
