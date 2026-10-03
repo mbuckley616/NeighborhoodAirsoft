@@ -100,11 +100,18 @@ Fable card on the control room and Michael starts it from there.
 
 8. The overworld map / selecting locations is not optimized for playing in the browser - you can only see 1-2
    scenarios at a time, max. We need to redesign this interface. The map itself could probably be a bit cleaner as well /
-   updated in style. (Michael, 2026-10-02) **(design)**
+   updated in style. (Michael, 2026-10-02) **(design)** — Michael: **A**, the map full-height on the left and the
+   chosen zone's scenarios as scrolling cards on the right; built by the builder, in steps shown to him (layout, then
+   the cards, then the map's restyle) (control room, 2 Oct).
 9. Can we try using this app / repo from Github to have better quality voices in-game? https://voicestudio.sh/ ,
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
    (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
    voices, which lines, how the audio ships inside one HTML file) goes to Michael first.
+10. "Potentially flagging for online, but could make sense for regular gameplay too - teammate callouts can be regular
+   voice when in earshot, but otherwise should come in as walkie talkie callouts. I also think we should add walkie
+   talkies as something the player carries. This could be a very fun and lighthearted feature for online play, if we
+   added a push to talk mechanism to compliment that." (Michael, 2026-10-02) **(design)** — the walkie callouts can come
+   now for teammate lines (D.9's teammate voices); push-to-talk belongs with online play (D.2, held).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
