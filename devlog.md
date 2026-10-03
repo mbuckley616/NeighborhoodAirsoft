@@ -7159,3 +7159,45 @@ the zones, locks or briefings changed.
 - On a 16:9 window the map leaves a band of parchment above and below it, 100 px at 1280×720. The drawing is 700:380,
   wider than its column. Step 3 redraws the map, and can draw it taller to fill the column.
 - At 1024×640 the list shows 5 rows. The cards in step 2 should be more compact than today's three-line rows.
+
+## v1.147 — The map screen's matches are cards (D.8 step 2)
+D.8 step 2, Michael's A on the v1.146 layout (control room, 3 Oct): "go on to step 2, the scenarios as cards". The right
+column held the old three-line rows, one per line: a locked row spent a whole line on "Beat “Every Kid for
+Themselves” to unlock." and a LOCKED button, and nothing said which match was yours to play next.
+
+- The zone's matches are cards in a grid, as many across as fit 155 px: two at 1024×640 to 1366×768, three at
+  1920×1080, four in a portrait window where the list runs full width. Under the zone's name, a count: "2 of 16 won".
+- Each card has its number in the zone, the matchup (TUTORIAL, 1V1, 3V3, 5-WAY FFA), badges for ⚔ ATTACK, 🛡 DEFEND,
+  🌙 NIGHT and a survive timer (⏱ 90s), the name, the place and your lives (the briefing's count, armour included),
+  then the pay and START.
+- A match you have won has a green top and ✓ DONE. The first open match you haven't won is NEXT, on a lighter card. A
+  locked card is greyed, has no button, and says which card opens it: "Win #3 to unlock". (A whole locked zone still
+  shows its one "Clear … to unlock this area" line.)
+- A click anywhere on an open card opens the briefing, as START did. A locked card does nothing.
+
+`renderScenarioCard` replaces `renderScenarioRow` and `scenarioMatchup` is split out of it. The pins, locks, zones
+and briefing are unchanged. `tests/northcliff.test.mjs` now reads the cards for its locked list.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 50 checks (36 before). Winnmark cards in view on a new save:
+
+  | Window    | List        | Across | Cards in view (v1.146 rows) |
+  |-----------|-------------|--------|-----------------------------|
+  | 1280×720  | 466×578     | 2      | 10 of 16 (7)                |
+  | 1366×768  | 501×626     | 2      | 12 (7)                      |
+  | 1920×1080 | 640×938     | 3      | 16, all (11)                |
+  | 1024×640  | 364×498     | 2      | 6 (5)                       |
+  | 800×1000  | 708×484     | 4      | 12 (stacked under the map)  |
+
+- With the first two Winnmark matches won: the cards follow the zone order numbered 1–16, "2 of 16 won", two DONE,
+  one NEXT (Seth's Got a Shotgun), 13 locked, each with "Win #N to unlock" for the card before it and no START. A
+  night match shows 🌙 NIGHT and a defend 🛡 DEFEND. A click on a locked card opens nothing, a click on an open
+  card's text opens its briefing, and a real mouse click on START still does.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14). `northcliff` also passed alone. A baseline
+  run before the change lost winnmark-trees to `page.goto`'s 30 s load limit under four-shard load (the v1.124
+  note); it passed in the run on v1.147.
+### Still open
+- How the cards look to Michael. Step 3, the map's restyle (drawn taller to fill its column, a cleaner style), waits
+  on his look, in decisions.
+- The card's lives are the briefing's, armour included, so they change when you put on a plate carrier. The match's
+  own count is in the briefing.

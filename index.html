@@ -888,42 +888,83 @@
     letter-spacing: 1px;
     text-transform: uppercase;
   }
+  /* v1.147 (D.8 step 2): the zone's scenarios as cards, as many columns as fit 155 px */
+  #worldMap .scenario-info .sc-zone-count {
+    font-size: 11px;
+    color: #8b6f47;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
   #worldMap .scenario-info .sc-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 8px;
     margin-top: 8px;
   }
-  #worldMap .scenario-info .sc-row {
-    background: rgba(255,255,255,0.6);
-    border-left: 3px solid var(--ui-danger);
-    padding: 8px 10px 8px 12px;
+  #worldMap .scenario-info .sc-card {
+    pointer-events: auto;
+    cursor: pointer;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid rgba(139,111,71,0.45);
+    border-top: 3px solid var(--ui-danger);
+    padding: 6px 8px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    box-shadow: 1px 2px 3px rgba(42,37,32,0.12);
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  #worldMap .scenario-info .sc-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 2px 4px 7px rgba(42,37,32,0.22);
+  }
+  #worldMap .scenario-info .sc-card.done { border-top-color: #2a6a3a; }
+  #worldMap .scenario-info .sc-card.next { background: #fffaf0; border-color: #8b6f47; border-top-color: var(--ui-danger); }
+  #worldMap .scenario-info .sc-card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+  #worldMap .scenario-info .sc-card-num {
+    background: #2a2520;
+    color: #f4e9d8;
+    min-width: 16px;
+    text-align: center;
+    padding: 1px 3px;
+    font-weight: bold;
+  }
+  #worldMap .scenario-info .sc-card-match { font-weight: bold; color: #2a2520; }
+  #worldMap .scenario-info .sc-card-badge { color: #8b3a2a; font-weight: bold; }
+  #worldMap .scenario-info .sc-card-stamp {
+    margin-left: auto;
+    font-weight: bold;
+    padding: 0 4px;
+    border: 1px solid currentColor;
+  }
+  #worldMap .scenario-info .sc-card-stamp.done { color: #2a6a3a; }
+  #worldMap .scenario-info .sc-card-stamp.next { color: var(--ui-danger); }
+  #worldMap .scenario-info .sc-card-title {
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  #worldMap .scenario-info .sc-card-meta {
+    font-size: 11px;
+    color: #5a5048;
+  }
+  #worldMap .scenario-info .sc-card-foot {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    margin-top: 3px;
   }
-  #worldMap .scenario-info .sc-row .sc-row-text {
-    flex: 1;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-title {
-    font-weight: bold;
-    font-size: 13px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-desc {
-    font-size: 11px;
-    color: #5a5048;
-    margin-top: 1px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-type {
-    color: #8b3a2a;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-reward {
-    font-size: 11px;
+  #worldMap .scenario-info .sc-card-pay {
+    font-size: 10px;
     color: #2a6a3a;
-    margin-top: 1px;
     font-weight: bold;
   }
   #worldMap .scenario-info .sc-go {
@@ -931,7 +972,7 @@
     background: var(--ui-danger);
     color: #fff;
     border: none;
-    padding: 6px 10px;
+    padding: 3px 9px;
     font-family: inherit;
     font-size: 11px;
     cursor: pointer;
@@ -939,27 +980,22 @@
     text-transform: uppercase;
     flex-shrink: 0;
   }
-  /* v1.48 — progression-locked scenario rows */
-  #worldMap .scenario-info .sc-row.locked {
+  /* v1.48 — progression-locked scenarios */
+  #worldMap .scenario-info .sc-card.locked {
+    cursor: default;
     background: rgba(180,175,165,0.35);
-    border-left-color: #9a948a;
+    border-top-color: #9a948a;
     opacity: 0.8;
+    box-shadow: none;
+    transform: none;
   }
-  #worldMap .scenario-info .sc-row.locked .sc-row-title {
-    color: #6a655d;
-    font-weight: bold;
-  }
-  #worldMap .scenario-info .sc-row .sc-row-lock {
+  #worldMap .scenario-info .sc-card.locked .sc-card-title { color: #6a655d; }
+  #worldMap .scenario-info .sc-card.locked .sc-card-num { background: #9a948a; }
+  #worldMap .scenario-info .sc-row-lock, #worldMap .scenario-info .sc-card-lock {
     font-size: 11px;
     color: #8a5a2a;
-    margin-top: 2px;
     font-style: italic;
-  }
-  #worldMap .scenario-info .sc-go.locked {
-    background: #9a948a;
-    color: #efece4;
-    cursor: not-allowed;
-    pointer-events: none;
+    line-height: 1.3;
   }
   /* dim the locked pin's label so it reads as not-yet-available */
   #worldMap .pin.locked .label {
@@ -1869,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.146</div>
+  <div class="version">v1.147</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -25410,57 +25446,53 @@ function scenarioLockReason(scenarioId) {
   return `Beat “${prevName}” to unlock.`;
 }
 
-function renderScenarioRow(scenarioId) {
+// v1.147 (D.8 step 2, Michael: A): each scenario is a card in the map's right column, two or three across: its place
+// in the zone, the matchup, the badges (attack, defend, night, timer), the name, where it is, your lives, the pay, and
+// whether it is done, next or locked (a locked card says which card opens it, "Win #3 to unlock", and has no button). The whole card opens the
+// briefing; START is kept for the eye and the keyboard.
+function scenarioMatchup(sc) {
+  // Legacy scenarios use `enemies`; new ones use `enemySetup` with team tags (allies / teams / FFA).
+  if (sc.tutorial) return 'TUTORIAL';                                  // v1.57: not a real matchup
+  if (sc.ffa && sc.enemySetup) return (sc.enemySetup.length + 1) + '-WAY FFA';   // +1 for the player
+  if (sc.enemySetup) {
+    const allies = sc.enemySetup.filter(es => es.team === 'player').length;
+    const foes   = sc.enemySetup.filter(es => (es.team || 'enemy') !== 'player').length;
+    return (allies + 1) + 'V' + foes;                                  // +1 for the player
+  }
+  return ((sc.enemies && sc.enemies.length) || 1) + 'V1';
+}
+function renderScenarioCard(scenarioId, num, isNext) {
   const sc = SCENARIOS[scenarioId];
   if (!sc) return '';
   const completed = !!Game.persist.completed[scenarioId];
-  const checkmark = completed ? ' ✓' : '';
-  // Matchup label. Legacy scenarios use `enemies`; new ones use `enemySetup`
-  // with team tags. Ship C: reflect allies / teams / FFA instead of always "Nv1".
-  let matchup;
-  if (sc.tutorial) {
-    matchup = 'TUTORIAL';                                  // v1.57: not a real matchup
-  } else if (sc.ffa && sc.enemySetup) {
-    matchup = (sc.enemySetup.length + 1) + '-way FFA';   // +1 for the player
-  } else if (sc.enemySetup) {
-    const allies = sc.enemySetup.filter(es => es.team === 'player').length;
-    const foes   = sc.enemySetup.filter(es => (es.team || 'enemy') !== 'player').length;
-    matchup = (allies + 1) + 'v' + foes;                 // +1 for the player
-  } else {
-    const enemyCount = (sc.enemies && sc.enemies.length) || 1;
-    matchup = enemyCount + 'v1';
-  }
-  // Scenario type badge (v1.9)
-  const typeBadge = sc.scenarioType === 'attack'  ? '⚔ ATTACK'
-                  : sc.scenarioType === 'defend'  ? '🛡 DEFEND'
-                  : '';
-  const typeStr = typeBadge ? `<span class="sc-row-type">${typeBadge}</span> · ` : '';
-  // v1.35: night badge so day/night variants are distinguishable at a glance.
-  const nightStr = (sc.timeOfDay === 'night') ? `<span class="sc-row-type">🌙 NIGHT</span> · ` : '';
-  // v1.48: progression gating. A locked scenario shows greyed, with a lock
-  // icon and the unlock requirement, and has no START button.
-  const locked = !isScenarioUnlocked(scenarioId);
-  if (locked) {
-    const reason = scenarioLockReason(scenarioId);
-    return `
-    <div class="sc-row locked">
-      <div class="sc-row-text">
-        <div class="sc-row-title">🔒 ${sc.scenarioName}</div>
-        <div class="sc-row-desc">${nightStr}${typeStr}${sc.name} · ${matchup}</div>
-        <div class="sc-row-lock">${reason}</div>
-      </div>
-      <button class="sc-go locked" disabled>LOCKED</button>
-    </div>
-  `;
-  }
+  const locked = !isScenarioUnlocked(scenarioId);               // v1.48: progression gating
+  const badges = [];
+  if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
+  if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
+  if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
+  const brief = getScenarioBriefing(scenarioId);
+  const lives = brief ? brief.player.lives : 1;
+  const stamp = locked ? '' : completed ? '<span class="sc-card-stamp done">✓ DONE</span>'
+              : isNext ? '<span class="sc-card-stamp next">NEXT</span>' : '';
+  const cls = 'sc-card' + (locked ? ' locked' : '') + (completed ? ' done' : '') + (isNext && !locked ? ' next' : '');
+  const foot = locked
+    ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + (num - 1) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
+    : `<div class="sc-card-foot">
+        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}</span>
+        <button class="sc-go" data-launch="${scenarioId}">START</button>
+      </div>`;
   return `
-    <div class="sc-row">
-      <div class="sc-row-text">
-        <div class="sc-row-title">${sc.scenarioName}${checkmark}</div>
-        <div class="sc-row-desc">${nightStr}${typeStr}${sc.name} · ${matchup}</div>
-        <div class="sc-row-reward">WIN +$${scaledReward(sc.rewards.win)}  ·  LOSE +$${scaledReward(sc.rewards.lose)}</div>
+    <div class="${cls}" data-id="${scenarioId}">
+      <div class="sc-card-top">
+        <span class="sc-card-num">${num}</span>
+        <span class="sc-card-match">${scenarioMatchup(sc)}</span>
+        ${badges.map(t => `<span class="sc-card-badge">${t}</span>`).join('')}
+        ${stamp}
       </div>
-      <button class="sc-go" data-launch="${scenarioId}">START</button>
+      <div class="sc-card-title">${locked ? '🔒 ' : ''}${sc.scenarioName}</div>
+      <div class="sc-card-meta">${sc.name} · ♥ ${lives} ${lives === 1 ? 'life' : 'lives'}</div>
+      ${foot}
     </div>
   `;
 }
@@ -25543,15 +25575,16 @@ function selectMapZone(sc) {
         `;
         return;
       }
+      // v1.147 (D.8 step 2): cards, with a count of the zone's done matches; the first one not yet won is NEXT
+      const nextId = ids.find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+      const doneN = ids.filter(id => Game.persist.completed[id]).length;
       info.innerHTML = `
         <div class="sc-name">${headerName}</div>
-        <div class="sc-list">${ids.map(renderScenarioRow).join('')}</div>
+        <div class="sc-zone-count">${doneN} of ${ids.length} won</div>
+        <div class="sc-list">${ids.map((id, i) => renderScenarioCard(id, i + 1, id === nextId)).join('')}</div>
       `;
-      info.querySelectorAll('.sc-go:not(.locked)').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.launch;
-          openScenarioBrief(id);
-        });
+      info.querySelectorAll('.sc-card:not(.locked)').forEach(card => {
+        card.addEventListener('click', () => openScenarioBrief(card.dataset.id));
       });
       return;
     }
