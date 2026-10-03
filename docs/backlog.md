@@ -115,6 +115,11 @@ Fable card on the control room and Michael starts it from there.
    https://github.com/debpalash/VoiceStudio . I also wouldn't mind adding/diversifying the lines used in-game.
    (Michael, 2026-10-02) **(design)** **(Fable)** — an external tool and every line in the game; the design question (which
    voices, which lines, how the audio ships inside one HTML file) goes to Michael first.
+10. "Potentially flagging for online, but could make sense for regular gameplay too - teammate callouts can be regular
+   voice when in earshot, but otherwise should come in as walkie talkie callouts. I also think we should add walkie
+   talkies as something the player carries. This could be a very fun and lighthearted feature for online play, if we
+   added a push to talk mechanism to compliment that." (Michael, 2026-10-02) **(design)** — the walkie callouts can come
+   now for teammate lines (D.9's teammate voices); push-to-talk belongs with online play (D.2, held).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
