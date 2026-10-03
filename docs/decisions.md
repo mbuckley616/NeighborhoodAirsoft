@@ -5,16 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **The map screen's layout (D.8 step 1): look before the cards? (builder, 2026-10-03)** v1.146 is step 1: the map
-  screen fills the window, the map on the left at its true shape (it was stretched), the chosen zone's list on the
-  right, scrolling, and it opens on your furthest zone instead of "Click a pin". At 1280×720 you see 7 Winnmark
-  matches at once (0 before). The rows are the old ones; step 2 makes them cards. On a 16:9 screen the map leaves a
-  band of parchment above and below it until step 3 redraws it taller. Screenshot: `tests/out/map-screen-1280.png`
+- **The map screen's cards (D.8 step 2): look before the map's restyle? (builder, 2026-10-03)** v1.147 is step 2, your
+  A on the layout: the zone's matches are numbered cards, two across at 1280×720 (three on a 1920 screen). Each card
+  shows its matchup (1V1, 3V3, 5-WAY FFA), badges for attack, defend, night and a survive timer, the name, the place
+  and your lives, the pay, and a START. Your won matches say ✓ DONE, the first one you haven't won says NEXT, and a
+  locked one is greyed with "Win #3 to unlock" and no button. A click anywhere on an open card opens the briefing.
+  At 1280×720 10 Winnmark cards are in view (7 rows in v1.146, 0 before). Screenshot: `tests/out/map-screen-1280.png`
   after `node tests/run.mjs map-screen`.
-  A) Good, go on to step 2: the scenarios as cards (name, type, matchup, lives, locked/done) *(recommended)*
-  B) A, and make the map column wider (or narrower) first (say which in a note)
-  C) Change the layout first (say what in a note)
-  Builder recommends A: the layout does what you asked, and the cards are where most of the screen's look is.
+  A) Good, go on to step 3: redraw the map taller to fill its column, in a cleaner style *(recommended)*
+  B) A, but change the cards first (say what in a note: bigger, smaller, more or less on each)
+  C) Stop here; the map stays as drawn
+  Builder recommends A: the band of parchment above and below the map is the last thing that looks unfinished.
+
+## Answered
 
 - **Walkie-talkie callouts (D.10): what to build now? (builder, 2026-10-03)** Your note: teammate callouts in plain
   voice when in earshot, over a walkie otherwise, and a walkie the player carries; push-to-talk for online. Today a
@@ -29,20 +32,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Hold all of it for online play
   Builder recommends A: it gives team matches a voice across the map at once, and the carried walkie is where
   push-to-talk will live later.
+  Michael: **A) Teammates out of earshot come over the walkie; a walkie on your kid's belt** (control room). (2026-10-03)
 
-- **The map screen's cards (D.8 step 2): look before the map's restyle? (builder, 2026-10-03)** v1.147 is step 2, your
-  A on the layout: the zone's matches are numbered cards, two across at 1280×720 (three on a 1920 screen). Each card
-  shows its matchup (1V1, 3V3, 5-WAY FFA), badges for attack, defend, night and a survive timer, the name, the place
-  and your lives, the pay, and a START. Your won matches say ✓ DONE, the first one you haven't won says NEXT, and a
-  locked one is greyed with "Win #3 to unlock" and no button. A click anywhere on an open card opens the briefing.
-  At 1280×720 10 Winnmark cards are in view (7 rows in v1.146, 0 before). Screenshot: `tests/out/map-screen-1280.png`
+- **The map screen's layout (D.8 step 1): look before the cards? (builder, 2026-10-03)** v1.146 is step 1: the map
+  screen fills the window, the map on the left at its true shape (it was stretched), the chosen zone's list on the
+  right, scrolling, and it opens on your furthest zone instead of "Click a pin". At 1280×720 you see 7 Winnmark
+  matches at once (0 before). The rows are the old ones; step 2 makes them cards. On a 16:9 screen the map leaves a
+  band of parchment above and below it until step 3 redraws it taller. Screenshot: `tests/out/map-screen-1280.png`
   after `node tests/run.mjs map-screen`.
-  A) Good, go on to step 3: redraw the map taller to fill its column, in a cleaner style *(recommended)*
-  B) A, but change the cards first (say what in a note: bigger, smaller, more or less on each)
-  C) Stop here; the map stays as drawn
-  Builder recommends A: the band of parchment above and below the map is the last thing that looks unfinished.
-
-## Answered
+  A) Good, go on to step 2: the scenarios as cards (name, type, matchup, lives, locked/done) *(recommended)*
+  B) A, and make the map column wider (or narrower) first (say which in a note)
+  C) Change the layout first (say what in a note)
+  Builder recommends A: the layout does what you asked, and the cards are where most of the screen's look is.
+  Michael: **A) Good, go on to step 2: the scenarios as cards** (control room). (2026-10-03)
 
 - **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
   room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
