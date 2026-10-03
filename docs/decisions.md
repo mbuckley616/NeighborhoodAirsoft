@@ -31,6 +31,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **The map screen's cards (D.8 step 2): look before the map's restyle? (builder, 2026-10-03)** v1.147 is step 2, your
+  A on the layout: the zone's matches are numbered cards, two across at 1280×720 (three on a 1920 screen). Each card
+  shows its matchup (1V1, 3V3, 5-WAY FFA), badges for attack, defend, night and a survive timer, the name, the place
+  and your lives, the pay, and a START. Your won matches say ✓ DONE, the first one you haven't won says NEXT, and a
+  locked one is greyed with "Win #3 to unlock" and no button. At 1280×720 10 Winnmark cards are in view.
+  A) Good, go on to step 3: redraw the map taller to fill its column, in a cleaner style *(recommended)*
+  B) A, but change the cards first (say what in a note: bigger, smaller, more or less on each)
+  C) Stop here; the map stays as drawn
+  Builder recommends A: the band of parchment above and below the map is the last thing that looks unfinished.
+  Michael: **A) Good, go on to step 3: redraw the map taller** (control room). (2026-10-03)
+
 - **Walkie-talkie callouts (D.10): what to build now? (builder, 2026-10-03)** Your note: teammate callouts in plain
   voice when in earshot, over a walkie otherwise, and a walkie the player carries; push-to-talk for online. Today a
   kid more than ~24 m away says nothing at all (v1.22's earshot cut-off), so a teammate across the map is silent. The
