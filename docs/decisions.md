@@ -7,6 +7,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
+  room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
+  not mark D.8 (Fable), but CLAUDE.md names "a new map screen that touches every scenario entry" as Fable work, so the
+  builder has not started it.
+  A) The builder builds it, in steps shown to you (the layout first, then the cards, then the map's restyle) *(recommended)*
+  B) A Fable card, like D.9
+  Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
+  Michael: **A — The builder builds it, in steps shown to you**. (2026-10-03)
+
 - **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
   92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
   you see one or two scenarios at a time. Five zones now hold 52 scenarios (Winnmark alone has 16).
