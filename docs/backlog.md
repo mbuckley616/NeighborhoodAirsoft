@@ -19,7 +19,7 @@ Fable card on the control room and Michael starts it from there.
    the target (v1.92, `tests/cover-fire.test.mjs`). The v1.77 lift reads only `Game.scenario.cover`, not fences,
    walls or houses, and measures cover from its centre. Check the shot's first 3 m against every obstacle and lift
    over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.~~ — done, v1.93 (0.4–2.2% now)
-4. CI's headless job runs into its 45-minute limit: since 2 Oct about half the runs are cancelled at 45 min (passing runs take 30–40 min with 46–49 suites), so merges wait on re-runs. Raise `timeout-minutes` in `.github/workflows/check.yml` or split the suites across jobs (producer, 2026-10-02).
+4. ~~CI's headless job runs into its 45-minute limit: since 2 Oct about half the runs are cancelled at 45 min (passing runs take 30–40 min with 46–49 suites), so merges wait on re-runs. Raise `timeout-minutes` in `.github/workflows/check.yml` or split the suites across jobs (producer, 2026-10-02).~~ — done, v1.145 (four parallel shard jobs, `run.mjs --shard k/4`, balanced by measured suite times, 30 min each; a `headless` job collects them; `tests/shard.test.mjs`)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)

@@ -7085,3 +7085,32 @@ treehouse.
 - The balance needs Michael's hands. With the twins arriving one at a time through a 1.2 m gap, the round may be easy
   for a player who crouches and aims at the gap, or hard if a twin who steps off at close range shoots first.
 - Each twin's first trip from the patio to the top takes 8.6–10.3 s. That may leave the opening quiet.
+
+## v1.145 — CI runs the suites in four parallel jobs
+Backlog B.4, from the producer. Since 2 Oct about half of CI's headless runs were cancelled at the job's 45-minute
+limit. The job ran all 49 suites one after another, and passing runs took 30–40 min, so a slow runner or one
+75 s harness restart pushed it over. Merges then waited on re-runs. Raising the limit would only have made every run
+slower to fail, so the suites are split instead.
+
+- `tests/run.mjs --shard k/n` runs the k-th of n parts. Each suite's run time is listed in `run.mjs`, measured on this
+  run's baseline. The longest go first, each onto the lightest part so far. The split depends only on the file list,
+  so every job agrees on it. A new suite counts as 60 s until it gets a time. `--list` prints a part without running it.
+- `.github/workflows/check.yml` runs four `headless-shard` jobs in parallel (`fail-fast: false`, so one red shard
+  doesn't hide the others), each with a 30-minute limit. A small job still named `headless` goes green only when all
+  four do, so anything that waits on the old check name still works.
+- `npm test` and `node tests/run.mjs smoke` work as before. CLAUDE.md notes the new flag.
+
+Nothing in the game changes. The title screen reads v1.145.
+
+### Verified
+- `tests/shard.test.mjs`, 17 checks, no browser. For 1, 2, 3, 4 and 7 parts, every suite lands in exactly one part
+  and no part is empty. check.yml asks for 4 parts. Every suite has a measured time, and the four CI parts weigh 604–607 s.
+  The same part lists the same suites twice, a bad `--shard` exits 2, and a prefix still picks one suite.
+- Before the change, all 49 suites passed three at a time (13.6 min). After it, the four shards ran at once on the
+  4-core container (11 + 13 + 13 + 13 suites): 50/50 green in 13 min wall time. The slowest suites were spawn-facing
+  at 273 s and result-text at 204 s.
+### Still open
+- The real CI time per shard. On a hosted runner a quarter should take about 8–10 min of tests, plus about 2 min for
+  the Playwright install each job repeats. The first CI run on this push will show it.
+- If the branch protection on `main` names the old `headless` check, the new aggregate job keeps it satisfied. If it
+  names nothing, nothing changes.
