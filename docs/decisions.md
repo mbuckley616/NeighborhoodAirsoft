@@ -5,17 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **The treehouse is built: what next for towers (D.7)? (builder, 2026-10-02)** v1.138 put a treehouse with a ladder
-  in Stoneglen Close: you climb with W, a drop of 1.5 m or more empties your stamina, and Connor holds the platform
-  in King of the Treehouse. Kids cannot climb, so a defend on the platform would leave the attackers standing under
-  it, and there is no prompt at the ladder yet (the briefing says W climbs). With v1.139–v1.140 every bug found in
-  play is closed, so this is the only open work.
-  A) Kids climb ladders, then a defend: you hold the treehouse while kids climb up after you; a "W — climb" prompt at the ladder too *(recommended)*
-  B) A ramp tower instead: a raised deck kids reach by walking up a ramp, so no climbing AI; plus the prompt
-  C) Only the "W — climb" prompt for now, and wait for your playtest of the climb
-  D) Nothing new: wait for your playtest of v1.130–v1.140
-  Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
-  ladder code already moves the player, so kids can share it.
+- **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
+  room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
+  not mark D.8 (Fable), but CLAUDE.md names "a new map screen that touches every scenario entry" as Fable work, so the
+  builder has not started it.
+  A) The builder builds it, in steps shown to you (the layout first, then the cards, then the map's restyle) *(recommended)*
+  B) A Fable card, like D.9
+  Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
+
+## Answered
 
 - **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
   92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
@@ -26,6 +24,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Drop the map for a zone ladder: one row per zone, each a strip of scenario cards; the map becomes a picture only
   D) Only widen the panel and let the scenario list scroll; no restyle yet
   Builder recommends A: it shows a whole zone at once and keeps the map as the way you pick where to go.
+  Michael: **A) Full-window two columns: the map on the left, the chosen zone’s scenarios as cards on the right**. (2026-10-02)
 
 - **Better voices and more lines (D.9): how? (builder, 2026-10-02)** The kids talk through the browser's own speech
   (`speechSynthesis`), so the voice depends on the player's computer and browser. VoiceStudio is an app that runs AI
@@ -37,16 +36,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Leave voices as they are
   Builder recommends A, then C if the new lines land: B only works once you run VoiceStudio yourself, and every new
   line would need a fresh recording.
+  Michael: **A) More and more varied lines now, with the browser voices; recorded voices later**. (2026-10-02; built by the Fable session as v1.150–v1.151, PR #22)
 
-- **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
-  room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
-  not mark D.8 (Fable), but CLAUDE.md names "a new map screen that touches every scenario entry" as Fable work, so the
-  builder has not started it.
-  A) The builder builds it, in steps shown to you (the layout first, then the cards, then the map's restyle) *(recommended)*
-  B) A Fable card, like D.9
-  Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
-
-## Answered
+- **The treehouse is built: what next for towers (D.7)? (builder, 2026-10-02)** v1.138 put a treehouse with a ladder
+  in Stoneglen Close: you climb with W, a drop of 1.5 m or more empties your stamina, and Connor holds the platform
+  in King of the Treehouse. Kids cannot climb, so a defend on the platform would leave the attackers standing under
+  it, and there is no prompt at the ladder yet (the briefing says W climbs). With v1.139–v1.140 every bug found in
+  play is closed, so this is the only open work.
+  A) Kids climb ladders, then a defend: you hold the treehouse while kids climb up after you; a "W — climb" prompt at the ladder too *(recommended)*
+  B) A ramp tower instead: a raised deck kids reach by walking up a ramp, so no climbing AI; plus the prompt
+  C) Only the "W — climb" prompt for now, and wait for your playtest of the climb
+  D) Nothing new: wait for your playtest of v1.130–v1.140
+  Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
+  ladder code already moves the player, so kids can share it.
+  Michael: **A) Kids climb ladders, then a defend** (with the "W — climb" prompt at the ladder). (2026-10-02)
 
 - **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
   built, through v1.137 on Builder sessions (CI green), and every Found in play bug is closed. What is left is parked
