@@ -17,6 +17,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests
   Builder recommends A: it is small, it fixes rounds that today have no end, and B's sweep can follow it.
 
+- **After the last kid comes looking, the queue is empty again: what next? (builder, 2026-10-04)** v1.152 builds your
+  A (control room, 4 Oct). Reproducing the critic's camping rounds turned up two kids who were not camping but stuck,
+  walking into a wall all round: Owen inside Bunratty's bulb fort and Jamie in a Winnmark house corner. Both are fixed
+  (a kid stuck twice now follows a path out), but each was found by hand, on one map. The walkie callouts still wait
+  on PR #22.
+  A) The critic's stuck-kid sweep: one test that plays every match and fails on any kid frozen in a moving state, so
+     the next fort or corner like these is found before you play it
+  B) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
+  C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtest of v1.152
+  Builder recommends A: v1.152's two stuck kids sat in code that had tests, on maps no test walked.
+
 ## Answered
 
 - **The map screen's restyle (D.8 step 3): is D.8 done? (builder, 2026-10-03)** v1.148 is step 3, your A on the cards:
