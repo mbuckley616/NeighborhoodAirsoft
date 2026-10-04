@@ -7336,3 +7336,47 @@ v1.152: the voices work on PR #22 already carries v1.150–v1.151.)
 - The field route only starts on a second pocket in 10 s; a kid in a pocket wastes about 5 s first.
 - The critic's stuck-kid sweep over every scenario (option B) would catch the next pocket like these two; it stays a
   proposal until Michael promotes it.
+
+## v1.153 — The stuck-kid sweep
+Michael's A on "after the last kid comes looking" (control room, 4 Oct): the critic's stuck-kid sweep (proposals,
+30 Sep). Every kid found frozen so far was found by hand on one map (v1.98–v1.100, v1.103, and v1.152's bulb fort and
+house corner), and each fix came with a test for its own map only. Now one test walks them all.
+
+- Every match but the tutorial (52) is played for 60 s with BB hits on the player dropped, twice: the player standing
+  at his spawn, and the player first walked up to 10 m toward the nearest enemy with W held (so the kids react to
+  someone coming at them). A tagger's touch is ignored too, as `tests/taggers` does.
+- Every half second each living kid, on either side, is checked: in a moving state (`advancing`, `repositioning`,
+  `chasing`, `deploying`, `retreating`), more than 2.5 m from the player, and still within 1 m of where the run
+  started, his clock goes on; anything else restarts it. Over 15 s fails, and the line printed is a backlog line:
+  match, which way, kid, side, role, seconds, state, spot and shots in that time. Holding states (`hiding`, `peeking`,
+  `shooting`, a sniper's nest) are left alone, since they are still on purpose.
+- The 2.5 m rule came from the first pass: in both Infection rounds the taggers who had reached the untaggable player
+  stood on him in `chasing` for 40–60 s. They had arrived, not stuck.
+- It takes about 22 minutes of one browser, so it is four suites, `tests/stuck-sweep-1…4.test.mjs`, each every fourth
+  match over `tests/lib/stuck-sweep.mjs`, with measured times in `run.mjs` so each CI shard gets one (the shard check
+  reads 971, 970, 966, 956 s). `ONLY=<id>`, `SECS=` and `LIMIT=` run it by hand.
+
+It found one. In Bunratty's free-for-all, with the player walked toward the kids, Nick stood in `advancing` within 1 m
+of (5.5, −28.2), by house 2's backyard, for 15.5 s without firing; again for 7 s in one of four more runs, the same
+spot. That is filed under Found in play as the next builder item. There wasn't time to fix it in this run, and a
+suite that goes red one run in four would block merges, so the sweep carries a `KNOWN` list: a match, a kid and a spot
+(within 2 m) printed as KNOWN instead of failing. Nick's is its one line, to be deleted with the fix. Any other kid,
+or Nick anywhere else, still fails.
+
+### Verified
+- The four parts over all 52 matches, twice each: nothing else over 15 s. The longest otherwise were 7.5 s (Sean
+  `retreating` in Bunratty's night 2v2), 7 s and 6.5 s; most matches' worst kid held
+  a spot 0.5–3 s. Part times alone 341–441 s with the other three shards beside it.
+- With `LIMIT=0.4` on two matches the check fails and prints each kid as a line, so the failing path works.
+- `tests/shard.test.mjs`: 57 suites, each in one shard for 1, 2, 3, 4 and 7 shards; the four CI shards even.
+- `npm test` as four shards at once, with the sweep: 50 of 57 passed. Five died at `page.goto`'s 30 s load limit
+  (houses, ladder-prompt, mirror, winnmark-cars, and stuck-sweep-4) under four browsers each running a minutes-long
+  in-page loop, and hollow-held's "holds fire 20 times" saw Sean at 23 once (no game change this run). Each passed run
+  alone, stuck-sweep-4 too (13 matches, none over 15 s); part 2 failed on Nick, now KNOWN. The baseline before the
+  change was 53/53 (kid-hands' load timeout passed alone).
+### Still open
+- Nick's pocket in the Bunratty free-for-all (Found in play).
+- The sweep adds about 6 minutes to each CI shard (about 16 minutes each now, against a 30-minute limit). If CI's
+  runners are much slower than this container, `SECS` can come down to 45; the 15 s line still fits in that.
+- 60 s per way catches kids who stall early in a round. A kid who only wedges late, or only where the player goes
+  somewhere other than spawn or 10 m toward the nearest enemy, is still found by hand.
