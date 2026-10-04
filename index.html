@@ -23931,6 +23931,21 @@ function updateEnemies(dt) {
         // v1.100: while committed to a wall-follow sidestep (below), skip the
         // straight step: its slide pulled the kid straight back to the spot he
         // wedged on, so a tagger round a tree or along a low wall went nowhere.
+        if (e._zTurnT > 0) e._zTurnT -= zdt;
+        if (e._zBackT > 0) {
+          // v1.154 fix-up: backing out of a pocket (the turn-round count below)
+          // straight away from the target, or 45° / 90° off it when that is shut (Devon backed into the tree that
+          // closed the pocket); the side that last worked is tried first, so he doesn't zigzag
+          e._zBackT -= zdt;
+          const sg = e._zBackSg || 1;
+          for (const a of [0, sg * 0.7854, -sg * 0.7854, sg * 1.5708, -sg * 1.5708]) {
+            const c = Math.cos(a), sn = Math.sin(a);
+            const ox = e.pos.x - stepX * c + stepZ * sn, oz = e.pos.z - stepX * sn - stepZ * c;
+            if (!collidesObstacles(ox, oz, kidRadius)) { e.pos.x = ox; e.pos.z = oz; if (a) e._zBackSg = Math.sign(a); break; }
+          }
+          if (e._zBackT <= 0) { e._zSideT = 0; e._zWedges = 0; }
+          continue;
+        }
         const sideCommitted = e._zSideT > 0;
         if (sideCommitted) e._zSideT -= zdt;
         else if (!collidesObstacles(nX, nZ, kidRadius)) { e.pos.x = nX; e.pos.z = nZ; e._zDetourOn = false; }
@@ -23993,7 +24008,14 @@ function updateEnemies(dt) {
           if (!collidesObstacles(sx, sz, kidRadius)) { e.pos.x = sx; e.pos.z = sz; }
           else if (!collidesObstacles(sx, e.pos.z, kidRadius)) e.pos.x = sx;
           else if (!collidesObstacles(e.pos.x, sz, kidRadius)) e.pos.z = sz;
-          if (sideCommitted && Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD * 0.5) { e._zSide *= -1; e._zSideT = 0; }
+          if (sideCommitted && Math.hypot(e.pos.x - bX, e.pos.z - bZ) < zStuckD * 0.5) {
+            e._zSide *= -1; e._zSideT = 0;
+            // v1.154 fix-up: v1.121's pocket rule, ported from the gunners. A second blocked turn-round within 3 s means
+            // both sidesteps are shut (Hollow Infection Night: Devon between a fort's two walls and a tree, open only on
+            // the far side, shuttled 21 s); back away from the target for 0.8 s, then sidestep from there.
+            e._zTurns = (e._zTurnT > 0 ? (e._zTurns || 0) : 0) + 1; e._zTurnT = 3;
+            if (e._zTurns >= 2) { e._zTurns = 0; e._zBackT = 0.8; }
+          }
           // v1.100: a fresh sidestep commits for 0.35 s (~1.2 m), longer each time
           // he wedges again within 3 s (up to 1.4 s), so he clears the wall's end.
           if (!sideCommitted) {

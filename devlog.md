@@ -7424,3 +7424,24 @@ whenever a frame of the direct push is missed, and every bound missed some, so i
 - The pocket rule still needs about 7 s here: a 2.5 s window, a 1.5 s back-out, a second window. In play that reads as
   a kid fidgeting by a fence for a few seconds rather than standing there all round.
 - Nothing left on the sweep's known list; what the builder takes next is a question in decisions.
+
+## v1.154 fix-up — taggers back out of a pocket
+The stuck-kid sweep's first CI run in eighths (78cea3a, part 4) caught a tagger. In Hollow Infection Night, with the
+player walked 8 m toward the nearest enemy, Devon stood 21 s in `chasing` within 1 m of (10.5, 6.9).
+
+He was inside a fort corner: a north–south wall to his west (x 9.85–10.15, z 5.96–9.24), an east–west wall to his
+south (x 9.96–13.04, z 5.85–6.15), and, on loads where the trees fall that way, a tree at (11.18, 8.01) whose trunk
+leaves no gap to the wall's north end. Trees differ from load to load, which is why most runs pass. The pocket is
+open only to the east, away from the player. A tagger's sidestep runs at right angles to the player, here north or
+south, so he shuttled between the south wall and the tree: each committed sidestep turned round at a block, about
+twice a second.
+
+Gunners in `advancing` have had a way out of exactly this since v1.121; taggers had none. Now a second blocked
+turn-round within 3 s backs a tagger away from his target for 0.8 s, then he sidesteps again from there. If straight
+back is shut, as here where the tree is due east of the north end of his shuttle, he tries 45° and then 90° either
+side of it, starting with the side that last worked so he doesn't zigzag.
+
+### Verified
+- Probe, 30 rounds of `hollow_infection_night` with the player walked 8.1 m and Devon placed at (11, 6.9): before,
+  12 of 30 stayed 24–30 s in the corner; after, 30 of 30 get out, the longest stand-still 1 s.
+- `npm test`: 62/62, all eight stuck-sweep parts and `taggers` included.
