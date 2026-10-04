@@ -128,6 +128,11 @@ Fable card on the control room and Michael starts it from there.
    ~~The walkie on your kid~~ — done, v1.149 (a yellow walkie on the left hip of the Loadout kid, labelled HIP, and at
    your hip in a match, seen when you look down; `tests/walkie.test.mjs`). The callouts over it wait on the voices
    build (D.9, PR #22) reaching main.
+11. ~~What next after the walkie (builder, 3 Oct). Michael: **A**, the critic's "last kid comes looking" (proposals,
+   1 Oct; control room, 4 Oct).~~ — done, v1.152 (in team and kill-all rounds the last one or two kids of a side who
+   neither move 2 m nor fire with a line for 25–30 s march to find you; an advancing kid stuck in a pocket twice
+   follows a distance field out, so Bunratty's fort and a Winnmark house corner no longer hold kids all round;
+   `tests/last-kid.test.mjs`). The critic's stuck-kid sweep (option B) is still a proposal.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
