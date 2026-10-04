@@ -7539,3 +7539,19 @@ defend, then a night 4v4. That is the same arc as the lot's and Northcliff's.
 - Rebecca keeps to the bleachers' end in most rounds and fires from there (207–412 shots). She is a camper by
   her numbers, so that is her.
 - Hollins Ridge High is complete at four scenarios. More school kids, or another zone, is Michael's call.
+
+## v1.156 fix-up — the school team-round check counts a wipe
+CI failed `headless (3/4)` on 5354d9f with one check in `high-school`: "school_portables_3v3: both sides lose lives
+(within 120 s)". In that round Eric pushed up the side and the allies took all nine enemy lives (three each) without
+losing one. Ryan, Mitchell and Priya fired 57 shots between them. That is a legitimate result, a flawless win, not a
+broken round. Locally it is a tail case: 102 sampled rounds always traded lives, and one more took all nine enemy
+lives, with the allies' first loss coming only at 80 s. Two things made it fail. The check demanded both sides lose a
+life. And the game ends a decided team round on a 600 ms `setTimeout`, which can never fire inside the test's
+synchronous `stepGame` loop, so the loop ran on to 120 s and reported the wipe as a stalled round. The loop now stops
+when a whole team is out (`npcInFight` false for every kid on it), as the game does. The check passes if both sides
+lose lives, or if one side is wiped out while it fired back. The game is unchanged.
+### Verified
+`node tests/run.mjs high-school` passed 5/5 runs. The 3v3 still breaks at 60 s with lives traded (3/2 in the logged
+run). The night 4v4 now stops at 47 s, when the allies are all out (12 lives), instead of running on to 60 s.
+### Still open
+- Nothing for play. Whether a flawless 3v3 win by the AI allies is too easy is a playtest call; it was 1 in about 100.

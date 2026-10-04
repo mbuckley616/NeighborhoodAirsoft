@@ -86,10 +86,14 @@ for (const id of ladder.ids) {
     const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9 }));
     const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
+    const wiped = () => ['enemy', 'player'].find(t => kids.filter(k => k.team === t).every(k => !npcInFight(k))) || null;
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
     let f = 1;
     for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
       if (f > 60 * 60 && (!team || (livesLost('enemy') > 0 && livesLost('player') > 0))) break;
+      // v1.156 fix-up: a team that is all out has lost the round; the game ends it on a 600 ms timer that cannot fire
+      // inside this loop, so stop here (CI once saw the allies take all nine enemy lives without losing one)
+      if (team && wiped()) break;
       const prev = kids.map(k => [k.pos.x, k.pos.z]);
       stepGame(1 / 60);
       kids.forEach((k, i) => {
@@ -103,13 +107,15 @@ for (const id of ladder.ids) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    return { team, secs: Math.round((f - 1) / 60), shots, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
+    return { team, secs: Math.round((f - 1) / 60), shots, wiped: team ? wiped() : null, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
       kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, nearest: +st[i].minD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  // v1.156 fix-up: or the round is decided, one side all out while the other side fired back at it
+  if (r.team) check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
+    (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
   // v1.156: the defend's attackers cross the field to the portables (x < -8) and come within 6 m of the player
   else if (id === 'school_defend_portables') check(`${id}: an attacker reaches the portables and closes on the player`,
     r.kids.some(k => k.at[0] < -8 || k.nearest < 6) && Math.min(...r.kids.map(k => k.nearest)) < 6, r.kids);
