@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.148</div>
+  <div class="version">v1.149</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -17061,6 +17061,49 @@ function buildFPMag() {
   return group;
 }
 
+// === v1.149: THE WALKIE-TALKIE (backlog D.10, Michael: A) ===
+// A kid's yellow walkie, clipped to the belt on the left hip: a body with a screen and a speaker grille, a talk button
+// on the side, a knob and a stubby antenna. Built in its own frame (the clip's origin, the face toward +z, up +y), at
+// (ox, oy, oz). The Loadout kid wears it; in a match it hangs at your hip, where you see it when you look down. The
+// callouts over it wait on the voices build (D.9, PR #22) reaching main.
+function walkieMats() {
+  return { body: _kidFaceMat('wbody', 0xf0c020, 0.55), dark: _kidFaceMat('wdark', 0x1c1c20, 0.7),
+    screen: _kidFaceMat('wscreen', 0x9cc48a, 0.3), led: _kidFaceMat('wled', 0xe02a1a, 0.4) };
+}
+function addWalkieParts(add, ox, oy, oz) {
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  add('dark', box(0.03, 0.05, 0.006), ox, oy, oz);                              // the belt clip
+  add('body', box(0.055, 0.105, 0.03), ox, oy - 0.035, oz + 0.018);             // the body
+  add('screen', box(0.036, 0.016, 0.003), ox, oy - 0.008, oz + 0.0345);         // a little screen
+  add('dark', box(0.042, 0.04, 0.003), ox, oy - 0.05, oz + 0.0345);             // the speaker grille
+  for (let i = 0; i < 3; i++) add('body', box(0.036, 0.004, 0.002), ox, oy - 0.038 - i * 0.012, oz + 0.0365);   // its slots
+  add('dark', box(0.006, 0.03, 0.014), ox - 0.0305, oy - 0.02, oz + 0.018);     // the talk button on the side
+  add('dark', box(0.01, 0.07, 0.01), ox + 0.017, oy + 0.052, oz + 0.018);       // the antenna
+  add('dark', box(0.013, 0.014, 0.013), ox - 0.012, oy + 0.024, oz + 0.018);    // the channel knob
+  add('led', box(0.006, 0.004, 0.006), ox, oy + 0.019, oz + 0.026);             // the transmit light
+}
+let fpWalkie = null;
+function buildFPWalkie() {
+  const hip = new THREE.Group();          // follows the player's feet and yaw, not the camera's pitch
+  const w = new THREE.Group();
+  const b = {}; const add = _propAdder(b);
+  addWalkieParts(add, 0, 0, 0);
+  _propMerge(w, b, walkieMats());
+  w.rotation.set(0.25, Math.PI - 0.35, 0);   // faces forward (the view looks down −z), tipped out from the hip
+  hip.add(w);
+  hip.userData.walkie = w;
+  return hip;
+}
+// Each step after the camera is placed: the hip sits under the eye and swings with the yaw. The clip is at about 57%
+// of the eye height down (belt 0.57 under eyes 1.27 on a kid), left of centre and a hand forward.
+function updateFPWalkie(bobY) {
+  if (!fpWalkie) return;
+  const P = Game.player;
+  fpWalkie.position.set(P.pos.x, P.pos.y + P.eyeOffset + (bobY || 0), P.pos.z);
+  fpWalkie.rotation.set(0, P.yaw, 0);
+  fpWalkie.userData.walkie.position.set(-0.17, -P.eyeOffset * 0.57, -0.1);
+}
+
 function forfeitScenario() {
   if (Game.mode !== 'scenario') return;
   endScenario('forfeit');
@@ -17959,6 +18002,9 @@ function startScenario(built) {
 
   // Move camera to scenario scene
   built.scene.add(Game.camera);
+  if (!fpWalkie) fpWalkie = buildFPWalkie();   // v1.149: the walkie at your hip lives in the match's scene (D.10)
+  built.scene.add(fpWalkie);
+  updateFPWalkie(0);
   showPauseHint();
 
   // v1.57: arm the guided tutorial only for tutorial scenarios; otherwise make
@@ -18511,6 +18557,7 @@ const LOADOUT_KID_PARTS = [
   { key: 'gun',   part: 'HANDS', p: [-0.27, 0.56, 0.2],   side: 'L' },   // the gun hangs at the right hip (screen left), pointing +z
   { key: 'legs',  part: 'KNEES', p: [-0.08, 0.32, 0.09],  side: 'R' },
   { key: 'feet',  part: 'FEET',  p: [-0.08, 0.04, 0.12],  side: 'R' },
+  { key: 'walkie', part: 'HIP',  p: [0.15, 0.51, 0.165],   side: 'R' },   // v1.149: the walkie on the left hip (D.10)
 ];
 function loadoutKidItems() {
   const eq = Game.persist.equipped, own = Game.persist.owned || {};
@@ -18518,7 +18565,7 @@ function loadoutKidItems() {
   const belt = getUnlockedSlotCount() >= 4 ? 'Belt & Holster' : getUnlockedSlotCount() >= 3 ? 'Utility Belt' : 'nothing';
   return {
     eyes: (EYEWEAR[eq.eyewear] || EYEWEAR.none).name, chest: armor('chest'), arms: armor('arms'), legs: armor('legs'),
-    feet: (SHOES[eq.shoes] || SHOES.none).name, belt, gun: getGunDisplayName(eq.gun),
+    feet: (SHOES[eq.shoes] || SHOES.none).name, belt, gun: getGunDisplayName(eq.gun), walkie: 'Walkie-Talkie',
   };
 }
 // v1.133 (backlog D.5 C step 2): what is equipped is worn on the Loadout kid, a mesh group per body part: eye pro on
@@ -18542,7 +18589,7 @@ function loadoutKidGearKeys() {
     shoes: SHOES[eq.shoes] ? eq.shoes : 'none', belt: getUnlockedSlotCount() };
 }
 function buildKidGear(kid, gear) {
-  const po = kid.pose, out = { eyewear: [], chest: [], arms: [], legs: [], shoes: [], belt: [] };
+  const po = kid.pose, out = { eyewear: [], chest: [], arms: [], legs: [], shoes: [], belt: [], walkie: [] };
   const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
   const merge = (parent, group, b, mats) => {
     const gg = new THREE.Group(); gg.userData.kidGear = group;
@@ -18663,6 +18710,13 @@ function buildKidGear(kid, gear) {
       for (const y of [0.42, 0.32]) add('web', box(0.17, 0.025, 0.19), -0.1, y, 0);   // the leg straps round the thigh
     }
     merge(kid.group, 'belt', b, mats);
+  }
+  // v1.149 (backlog D.10, Michael: A): every kid carries a walkie, clipped to the jeans' belt on the left hip (+x),
+  // in front of the Utility Belt's side pouch; no slot, nothing to buy
+  {
+    const b = {}; const add = _propAdder(b);
+    addWalkieParts(add, 0.15, 0.555, 0.133);
+    merge(kid.group, 'walkie', b, walkieMats());
   }
   return out;
 }
@@ -19867,6 +19921,7 @@ function updatePlayer(dt) {
     Game.camera.rotation.y = Game.player.yaw;
     Game.camera.rotation.x = Game.player.pitch;
     Game.camera.rotation.z = 0;
+    updateFPWalkie(0);   // v1.149
     return;
   }
 
@@ -20104,6 +20159,7 @@ function updatePlayer(dt) {
   let roll = bobX * 0.08;
   if (Game.player.sliding) roll += 0.08;
   Game.camera.rotation.z = roll;
+  updateFPWalkie(bobY);   // v1.149
 
   // === v1.40: AIM SWAY + VIEWMODEL BOB ===
   // One smoothed "instability" value (Game.player.sway) feeds the reticle bloom

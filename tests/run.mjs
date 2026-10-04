@@ -23,7 +23,7 @@ const WEIGHTS = {
   'pincer.test.mjs': 37, 'pocket.test.mjs': 17, 'result-text.test.mjs': 204, 'road-slide.test.mjs': 78,
   'shard.test.mjs': 1, 'shop-tabs.test.mjs': 26, 'smoke.test.mjs': 20, 'spawn-facing.test.mjs': 273,
   'taggers.test.mjs': 24, 'treehouse-hold.test.mjs': 21, 'treehouse.test.mjs': 34, 'utility-belt.test.mjs': 21,
-  'walk-anim.test.mjs': 30, 'whole-block.test.mjs': 24, 'winnmark-cars.test.mjs': 38, 'winnmark-fort.test.mjs': 47,
+  'walk-anim.test.mjs': 30, 'walkie.test.mjs': 25, 'whole-block.test.mjs': 24, 'winnmark-cars.test.mjs': 38, 'winnmark-fort.test.mjs': 47,
   'winnmark-props.test.mjs': 38, 'winnmark-road.test.mjs': 35, 'winnmark-trees.test.mjs': 40
 };
 
