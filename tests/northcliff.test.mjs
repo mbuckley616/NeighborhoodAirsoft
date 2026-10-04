@@ -19,8 +19,8 @@ const ladder = await page.evaluate(() => {
   delete done[zoneCapstoneId('market_lot')]; delete done[ids[0]];
   return { keys, ids, before, after, afterFirst, coming: ZONE_LADDER.some(z => z.comingSoon) };
 });
-check('ladder ends with Northcliff, after the market lot',
-  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff', ladder.keys);
+check('Northcliff comes after the market lot (v1.155: and before Hollins Ridge High)',
+  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school', ladder.keys);
 check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138) and its defend (v1.144), the creek-fort defend, then the night 4v4 (v1.131)',
   ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);

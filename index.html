@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.154</div>
+  <div class="version">v1.155</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2004,6 +2004,15 @@
           <path d="M 610 189 V 209 M 620 189 V 209 M 630 189 V 209 M 640 189 V 209"/>
         </g>
 
+        <!-- ===== v1.155: Hollins Ridge High: the school, its portables, the practice field ===== -->
+        <rect x="566" y="262" width="40" height="11" fill="#d9c3a0" stroke="#6b5a40" stroke-width="1"/>
+        <g fill="#e6dccb" stroke="#8f8574" stroke-width="0.7">
+          <rect x="566" y="277" width="6" height="4"/><rect x="574" y="277" width="6" height="4"/>
+          <rect x="566" y="284" width="6" height="4"/><rect x="574" y="284" width="6" height="4"/>
+        </g>
+        <rect x="584" y="277" width="26" height="17" rx="2" fill="#b9cf9a" stroke="#8f8574" stroke-width="0.8"/>
+        <path d="M 597 277 V 294" stroke="#fbf6ea" stroke-width="0.8"/>
+
         <!-- ===== Hwy 140 shield on Holcomb Bridge Rd ===== -->
         <rect x="609" y="107" width="24" height="17" rx="3" fill="#fbf6ea" stroke="#4a3e2a" stroke-width="1.5"/>
         <text x="621" y="119.5" font-family="Georgia" font-size="9.5" fill="#2a2520" text-anchor="middle" font-weight="bold">140</text>
@@ -2097,6 +2106,11 @@
       <div class="pin" style="left: 76%; top: 30%;" data-scenario="market_lot">
         <div class="marker"></div>
         <div class="label">Riverside Market · Lot</div>
+      </div>
+      <!-- v1.155: Hollins Ridge High, between Holcomb Bridge Rd and Nesbit Ferry Rd -->
+      <div class="pin locked" style="left: 84%; top: 52%;" data-scenario="high_school">
+        <div class="marker"></div>
+        <div class="label">Hollins Ridge High · School</div>
       </div>
     </div>
     </div>
@@ -4826,7 +4840,7 @@ const REGIONS = {
   },
   east_roswell: {
     name: 'East Roswell',
-    streets: { ridgestone_ct: 'Ridgestone Court', the_hollow: 'Battleground - Chattahoochee River', riverside_market: 'Riverside Market' },   // v1.102: + the market lot
+    streets: { ridgestone_ct: 'Ridgestone Court', the_hollow: 'Battleground - Chattahoochee River', riverside_market: 'Riverside Market', hollins_ridge_high: 'Hollins Ridge High' },   // v1.102: + the market lot; v1.155: + the high school
     direction: 'east',
   },
   northcliff: {
@@ -6194,6 +6208,51 @@ const SCENARIOS = {
     winCondition: 'survive_timer',
     timerSec: 90,
     rewards: { win: 80, lose: 20 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // ===================================================================
+  // v1.155: HOLLINS RIDGE HIGH (East Roswell) — the sixth zone (D.1, Michael: A, control room 4 Oct). A made-up
+  // high school: the brick front and the staff row, six portables, the practice field, the home bleachers.
+  // ===================================================================
+
+  // --- Opener: 1v1 with Tyler after school ---
+  school_1v1_tyler: {
+    region: 'east_roswell', street: 'hollins_ridge_high',
+    name: 'Hollins Ridge High', scenarioName: 'After the Bell',
+    desc: "The last bell's gone and the grounds are empty. Tyler says the portables are his: six trailer classrooms in two rows, with gaps between them you can see straight down. You start at the end of the home bleachers. He's in among the portables with his pistol, and he knows every corner. Cross the field and you're in the open the whole way. One hit each.",
+    builderFn: 'buildHighSchoolScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'tyler', weapon: 'pistol', anchor: 'a_port_e', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 55, lose: 13 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 3v3: the Bunratty kids at the portables ---
+  school_portables_3v3: {
+    region: 'east_roswell', street: 'hollins_ridge_high',
+    name: 'Hollins Ridge High', scenarioName: 'The Portables',
+    desc: "Ryan, Mitchell and Priya came over from Bunratty and took the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Mitchell will sit back and pick; Priya will come round the side. Three lives each, last team standing.",
+    builderFn: 'buildHighSchoolScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',     weapon: 'mp5',  anchor: 'b_bleach_w', team: 'player' },
+      { charId: 'rebecca',  weapon: 'ak47', anchor: 'b_stand',    team: 'player' },
+      { charId: 'ryan',     weapon: 'ump',  anchor: 'a_port_e' },
+      { charId: 'mitchell', weapon: 'ak47', anchor: 'a_doors' },
+      { charId: 'priya',    weapon: 'mp5',  anchor: 'a_cars_e' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 140, lose: 32 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -14432,6 +14491,296 @@ function buildTreehouseYardScene(variant, timeOfDay) {
     teamBases: { player: { x: -13, z: 14 }, enemy: { x: 0, z: -6 } },
   };
 }
+
+// =====================================================================
+// v1.155: HOLLINS RIDGE HIGH (East Roswell) — the sixth zone (backlog D.1, Michael: A, control room 4 Oct: a high
+// school's grounds, made-up name, with fields, bleachers and portables). A made-up school, per his C on place names.
+// Flat. The school's brick front closes the NORTH (z = -30) with a staff row of cars along it; six portable
+// classrooms stand in two columns in the WEST; the practice field fills the EAST with goalposts and tackling sleds;
+// the home bleachers face it from the SOUTH, beside the concession stand and a blacktop court. Team A (enemies) start
+// at the school doors, team B (player) behind the bleachers. Layout is fixed, so the AI's cover and the tests see the
+// same grounds every round; only car colours vary.
+// Playable box: x∈[-40,40], z∈[-28,29].
+// =====================================================================
+function buildHighSchoolScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x9ec6e6, dayFog: [55, 150],
+    sunColor: 0xfff1d8, sunInt: 1.9, sunPos: [24, 40, 16],
+    dayAmbColor: 0xa8b4c8, dayAmbInt: 0.36, dayHemiColor: 0xc4d8f0, dayHemiInt: 0.30,
+    nightBg: 0x0a0e16, nightFog: [16, 64], moonPos: [-20, 36, -16],
+    shadow: { size: 4096, extent: 52, far: 120 },
+  });
+
+  const groundY = () => 0;     // graded school grounds: flat
+  const P = (x, z) => new THREE.Vector3(x, 0, z);
+  const bounds = { minX: -40, maxX: 40, minZ: -28, maxZ: 29 };
+  let _seed = 11;
+  const rnd = () => { _seed = (_seed * 16807) % 2147483647; return (_seed - 1) / 2147483646; };
+  const std = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.9, ...extra });
+  const flat = (w, d, color, x, z, y = 0.01) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), std(color, { roughness: 1.0 }));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; scene.add(m);
+    return m;
+  };
+  const mesh = (geo, mat, x, y, z, shadow = true) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+    if (shadow) m.castShadow = m.receiveShadow = true;
+    scene.add(m); return m;
+  };
+  const obstacles = [], coverList = [];
+  const box = (minX, maxX, minZ, maxZ, h, surface = 'hard', baseY = 0) => {
+    const o = { minX, maxX, minZ, maxZ, h, surface, baseY }; obstacles.push(o); return o;
+  };
+
+  // Ground: mown lawn, the practice field's brighter turf, the walks and the blacktop.
+  flat(200, 200, 0x5a6e48, 0, 0, 0);
+  flat(38, 36, 0x41703a, 20, -1, 0.006);                   // practice field x∈[1,39], z∈[-19,17]
+  flat(86, 3.2, 0x9a968c, -3, -28.6, 0.012);              // front walk along the school
+  flat(4, 46, 0x9a968c, -7.5, -4, 0.012);                  // the walk from the doors to the court
+  flat(30, 12, _night ? 0x26272a : 0x37383c, -24, 22.5, 0.008);   // blacktop court x∈[-39,-9], z∈[16.5,28.5]
+  flat(46, 6, _night ? 0x2c2d30 : 0x3d3e42, 17, -25, 0.008);       // staff lot x∈[-6,40], z∈[-28,-22]
+  // Field lines: sidelines, end lines and a line every 4.5 m across.
+  {
+    const lineMat = std(0xf2f0e8);
+    const line = (w, d, x, z) => { const l = new THREE.Mesh(new THREE.PlaneGeometry(w, d), lineMat); l.rotation.x = -Math.PI / 2; l.position.set(x, 0.014, z); scene.add(l); };
+    line(36, 0.15, 20, -18); line(36, 0.15, 20, 16);
+    for (let x = 2; x <= 38.01; x += 4.5) line(x === 2 || x > 37.9 ? 0.25 : 0.12, 34, x, -1);
+  }
+
+  // === THE SCHOOL — two storeys of brick along the north, the main doors facing the grounds ===
+  {
+    const W = 86, D = 14, H = 8, cx = -3, frontZ = -30;
+    mesh(new THREE.BoxGeometry(W, H, D), std(0x9a5a46, { roughness: 0.95 }), cx, H / 2, frontZ - D / 2);
+    mesh(new THREE.BoxGeometry(W + 0.4, 0.5, 0.6), std(0xd8d0c0, { roughness: 0.8 }), cx, H + 0.25, frontZ - 0.1, false);
+    mesh(new THREE.BoxGeometry(W, 0.25, 0.2), std(0xd8d0c0), cx, 4.05, frontZ + 0.08, false);   // the storey band
+    const glassMat = std(0x2a3a4c, { roughness: 0.25, metalness: 0.3, emissive: _night ? 0xfff0c8 : 0x0a0f15, emissiveIntensity: _night ? 0.4 : 0.2 });
+    const frameMat = std(0xe8e4d8);
+    for (let x = cx - W / 2 + 4; x <= cx + W / 2 - 3; x += 5) {
+      if (Math.abs(x - -7.5) < 4) continue;   // the doors
+      for (const y of [2.0, 6.0]) {
+        mesh(new THREE.BoxGeometry(2.6, 1.7, 0.12), frameMat, x, y, frontZ + 0.04, false);
+        mesh(new THREE.BoxGeometry(2.3, 1.45, 0.14), glassMat, x, y, frontZ + 0.06, false);
+      }
+    }
+    // Main doors under a flat canopy on two columns, at the end of the walk.
+    mesh(new THREE.BoxGeometry(4.4, 2.6, 0.14), glassMat, -7.5, 1.3, frontZ + 0.06, false);
+    mesh(new THREE.BoxGeometry(0.1, 2.6, 0.16), frameMat, -7.5, 1.3, frontZ + 0.08, false);
+    mesh(new THREE.BoxGeometry(7, 0.3, 3.2), std(0xd8d0c0), -7.5, 3.3, frontZ + 1.6);
+    for (const px of [-10.6, -4.4]) { mesh(new THREE.CylinderGeometry(0.16, 0.16, 3.2, 10), frameMat, px, 1.6, frontZ + 2.9); box(px - 0.18, px + 0.18, frontZ + 2.72, frontZ + 3.08, 3.2); }
+    // The name over the doors (a made-up school).
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64;
+    const c2 = cv.getContext('2d');
+    c2.fillStyle = '#e8e2d2'; c2.fillRect(0, 0, 512, 64);
+    c2.fillStyle = '#5a2a22'; c2.font = 'bold 40px Georgia'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillText('HOLLINS RIDGE HIGH', 256, 34);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(14, 1.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
+    sign.position.set(-7.5, 4.9, frontZ + 0.1); scene.add(sign);
+    box(cx - W / 2, cx + W / 2, frontZ - D, frontZ, H);
+  }
+
+  // === THE PORTABLES — six trailer classrooms in two columns, raised on a skirt, a step and landing at each door ===
+  // Each is 11 m (x) by 7 m (z); the columns stand 3.5 m apart, the rows 6 m apart.
+  const PORTABLE_X = [-31, -16.5], PORTABLE_Z = [-18, -5, 8];
+  {
+    const sideMat = std(0xd8ccb0), trimMat = std(0x7a5a3a), skirtMat = std(0x6e6a62), roofMat = std(0x9a9890, { roughness: 0.6, metalness: 0.3 });
+    const winMat = std(0x2a3a4c, { roughness: 0.3, metalness: 0.2, emissive: _night ? 0xffe8b8 : 0x000000, emissiveIntensity: _night ? 0.35 : 0 });
+    const doorMat = std(0x8a3a2a), deckMat = std(0x8a7a5a);
+    let n = 0;
+    for (const px of PORTABLE_X) for (const pz of PORTABLE_Z) {
+      n++;
+      mesh(new THREE.BoxGeometry(11, 0.6, 7), skirtMat, px, 0.3, pz);
+      mesh(new THREE.BoxGeometry(11, 2.9, 7), sideMat, px, 0.6 + 1.45, pz);
+      mesh(new THREE.BoxGeometry(11.3, 0.18, 7.3), roofMat, px, 3.59, pz);
+      mesh(new THREE.BoxGeometry(11.06, 0.12, 7.06), trimMat, px, 3.45, pz, false);
+      // the AC unit on the east end
+      mesh(new THREE.BoxGeometry(0.6, 0.9, 1.0), std(0xb8b4aa), px + 5.8, 2.0, pz - 1.6);
+      // two windows a side, the door on the south side, a number by it
+      for (const wx of [-3.6, 0.2]) for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(1.6, 1.0, 0.08), winMat, px + wx, 2.3, pz + s * 3.52, false);
+      mesh(new THREE.BoxGeometry(1.0, 2.1, 0.08), doorMat, px + 3.2, 0.6 + 1.05, pz + 3.53, false);
+      const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
+      const c2 = cv.getContext('2d'); c2.fillStyle = '#f4efe2'; c2.fillRect(0, 0, 64, 64);
+      c2.fillStyle = '#2a2520'; c2.font = 'bold 34px Georgia'; c2.textAlign = 'center'; c2.textBaseline = 'middle'; c2.fillText('P' + n, 32, 34);
+      const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv) }));
+      tag.position.set(px + 4.2, 2.4, pz + 3.56); scene.add(tag);
+      // wooden landing and two steps down to the grass (you can step and stand on it; kids walk round)
+      mesh(new THREE.BoxGeometry(1.8, 0.6, 1.3), deckMat, px + 3.2, 0.3, pz + 3.5 + 0.65);
+      mesh(new THREE.BoxGeometry(1.8, 0.3, 0.5), deckMat, px + 3.2, 0.15, pz + 3.5 + 1.55);
+      const o = box(px - 5.5, px + 5.5, pz - 3.5, pz + 3.5, 3.6);
+      coverList.push(o);
+      box(px + 2.3, px + 4.1, pz + 3.5, pz + 4.8, 0.6, 'wood');
+    }
+  }
+
+  // === THE STAFF ROW — teachers' cars nosed in along the school front, gaps between for walking through ===
+  const carObsList = [];
+  {
+    const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x6e7478, 0x3a5a3a, 0xb09a6a, 0x9a2a2a, 0x2a3e6a];
+    for (const x of [2, 5, 11, 14, 20, 26, 29]) {
+      const orient = Math.PI / 2 + (rnd() - 0.5) * 0.08;   // nose north, toward the school
+      const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+      const carObs = addCar(scene, x + (rnd() - 0.5) * 0.3, -25.4 + (rnd() - 0.5) * 0.2, { orientation: orient, color, detail: true });
+      carObs.mesh.position.y += carSeatY(carObs, groundY);
+      resolveObox(carObs); resolveObox(carObs._stacked);
+      pushCarObs(obstacles, carObs);
+      coverList.push(carObs); carObsList.push(carObs);
+    }
+    const lineMat = std(0xe8e4d8);
+    for (let x = 0.5; x <= 37; x += 3) { const ln = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 4.6), lineMat); ln.rotation.x = -Math.PI / 2; ln.position.set(x, 0.014, -25.4); scene.add(ln); }
+  }
+
+  // === THE PRACTICE FIELD — goalposts at both ends, tackling sleds, a ball cart, the team bench ===
+  {
+    const postMat = std(0xe8d040, { roughness: 0.5, metalness: 0.2 });
+    for (const gx of [2, 38]) {
+      mesh(new THREE.CylinderGeometry(0.12, 0.14, 3.0, 10), postMat, gx, 1.5, -1);
+      mesh(new THREE.BoxGeometry(0.16, 0.16, 5.6), postMat, gx, 3.0, -1);
+      for (const s of [-1, 1]) mesh(new THREE.CylinderGeometry(0.07, 0.07, 6, 8), postMat, gx, 6.0, -1 + s * 2.8);
+      box(gx - 0.16, gx + 0.16, -1.16, -0.84, 3.0, 'metal');
+    }
+    const padMat = std(0x7a1e1e), frameMat = std(0x3a3a3a, { roughness: 0.5, metalness: 0.6 });
+    for (const [sx, sz] of [[13, -8], [24, 5], [30, -11]]) {
+      mesh(new THREE.BoxGeometry(2.8, 0.12, 1.4), frameMat, sx, 0.06, sz);
+      for (const dx of [-0.8, 0.8]) mesh(new THREE.BoxGeometry(0.9, 1.0, 0.5), padMat, sx + dx, 0.55, sz - 0.35);
+      coverList.push(box(sx - 1.4, sx + 1.4, sz - 0.7, sz + 0.7, 1.05, 'soft'));
+    }
+    // ball cart and the water table by the bench
+    mesh(new THREE.BoxGeometry(1.3, 1.0, 0.9), std(0x2a3a5a), 18, 0.5, 10);
+    coverList.push(box(17.35, 18.65, 9.55, 10.45, 1.0, 'metal'));
+    mesh(new THREE.BoxGeometry(2.4, 0.8, 0.8), std(0xc8c4bc), 8, 0.4, -20.5);
+    for (const wx of [7.3, 8.0, 8.7]) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 10), std(0xd06a20), wx, 1.05, -20.5);
+    coverList.push(box(6.8, 9.2, -20.9, -20.1, 1.3, 'hard'));
+    mesh(new THREE.BoxGeometry(8, 0.45, 0.5), std(0x5a6a7a, { metalness: 0.4 }), 16, 0.45, -20.4);
+    box(12, 20, -20.65, -20.15, 0.5, 'metal');
+  }
+
+  // === THE HOME BLEACHERS — five aluminium tiers facing the field, open frame behind ===
+  // Tier k (0..4) is a 1 m deep strip, 0.45 m higher than the one in front; collision follows the steps.
+  {
+    const x0 = 8, x1 = 32, z0 = 18.5;
+    const plankMat = std(0xc8ccd0, { roughness: 0.45, metalness: 0.15 }), frameMat = std(0x9aa0a6, { roughness: 0.5, metalness: 0.2 });
+    for (let k = 0; k < 5; k++) {
+      const h = 0.45 * (k + 1), zc = z0 + k + 0.5;
+      mesh(new THREE.BoxGeometry(x1 - x0, 0.06, 0.9), plankMat, (x0 + x1) / 2, h, zc - 0.05);          // seat
+      mesh(new THREE.BoxGeometry(x1 - x0, 0.42, 0.04), frameMat, (x0 + x1) / 2, h - 0.22, zc - 0.5, false);   // riser
+      box(x0, x1, z0 + k, z0 + k + 1, h, 'metal');
+    }
+    for (let x = x0; x <= x1 + 0.01; x += 4) {
+      mesh(new THREE.BoxGeometry(0.1, 2.3, 0.1), frameMat, x, 1.15, z0 + 4.95);
+      const brace = mesh(new THREE.BoxGeometry(0.08, 0.08, 5.4), frameMat, x, 1.15, z0 + 2.5, false);
+      brace.rotation.x = -Math.atan2(2.25, 5);
+    }
+    // the back rail
+    mesh(new THREE.BoxGeometry(x1 - x0, 0.06, 0.06), frameMat, (x0 + x1) / 2, 3.15, z0 + 4.95, false);
+    for (let x = x0; x <= x1 + 0.01; x += 2) mesh(new THREE.BoxGeometry(0.05, 0.9, 0.05), frameMat, x, 2.7, z0 + 4.95, false);
+  }
+
+  // === THE CONCESSION STAND, the storage container and the court ===
+  {
+    mesh(new THREE.BoxGeometry(6, 3, 5), std(0xc8b89a), -3, 1.5, 21);
+    mesh(new THREE.BoxGeometry(6.6, 0.2, 5.6), std(0x7a1e1e), -3, 3.1, 21);
+    mesh(new THREE.BoxGeometry(3.4, 1.0, 0.1), std(0x2a2a2a), -3, 1.6, 18.46, false);   // the shutter
+    coverList.push(box(-6, 0, 18.5, 23.5, 3.0));
+    // a steel storage container on the lawn between the portables and the field
+    mesh(new THREE.BoxGeometry(6, 2.6, 2.4), std(0x2f5a7a, { roughness: 0.6, metalness: 0.4 }), -2.5, 1.3, -3);
+    for (let x = -5.3; x <= 0.31; x += 0.4) mesh(new THREE.BoxGeometry(0.06, 2.5, 2.46), std(0x2a5070, { metalness: 0.4 }), x, 1.3, -3, false);
+    coverList.push(box(-5.5, 0.5, -4.2, -1.8, 2.6, 'metal'));
+    // basketball hoops at each end of the court, a picnic table between the portables and the doors
+    for (const hx of [-37.5, -10.5]) {
+      mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.4, 8), std(0x3a3a3a, { metalness: 0.6 }), hx, 1.7, 22.5);
+      mesh(new THREE.BoxGeometry(0.06, 1.0, 1.6), std(0xf2f0e8), hx + (hx < -20 ? 0.5 : -0.5), 3.3, 22.5);
+      box(hx - 0.12, hx + 0.12, 22.38, 22.62, 3.4, 'metal');
+    }
+    for (const [tx, tz] of [[-4, -22], [-14, -24.5], [-28, 15]]) {
+      mesh(new THREE.BoxGeometry(1.8, 0.08, 0.8), std(0x8a6a3a), tx, 0.75, tz);
+      for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(1.8, 0.06, 0.3), std(0x8a6a3a), tx, 0.45, tz + s * 0.6);
+      coverList.push(box(tx - 0.9, tx + 0.9, tz - 0.75, tz + 0.75, 0.78, 'wood'));
+    }
+    // dumpsters by the east end of the school
+    for (const dx of [37, 39.4]) {
+      mesh(new THREE.BoxGeometry(2.2, 1.5, 1.6), std(0x2c5a3a, { metalness: 0.3 }), dx - 1.2, 0.75, -27.6);
+    }
+    coverList.push(box(34.7, 39.3, -28.4, -26.8, 1.5, 'metal'));
+  }
+
+  // Trees: a line along the court's north edge and a few on the lawn.
+  const treeObs = [];
+  for (const [tx, tz] of [[-36, 13.5], [-20, 13.5], [-4, 9], [-4, 13.5], [-38.5, 0], [-8, 28], [38.5, 24]]) {
+    treeObs.push(addSuburbanTree(scene, tx, tz, { trunkH: 2.8, leafR: 2.0, detail: true }));
+  }
+  const lampObs = [];
+  for (const [lx, lz] of [[-7.5, 14], [6, -21]]) {
+    const lamp = addStreetlamp(scene, lx, lz, groundY, _night);
+    if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
+  }
+
+  // A chain-link fence along the south and east edges (cosmetic posts and a fabric plane; the edge blocks).
+  {
+    const fenceMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, roughness: 0.5, metalness: 0.6, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+    const postMat = std(0x8a9096, { metalness: 0.6 });
+    const fz = 29.6, fx = 40.6;
+    const s1 = new THREE.Mesh(new THREE.PlaneGeometry(82, 1.8), fenceMat); s1.position.set(0, 0.9, fz); scene.add(s1);
+    const s2 = new THREE.Mesh(new THREE.PlaneGeometry(58, 1.8), fenceMat); s2.rotation.y = Math.PI / 2; s2.position.set(fx, 0.9, 0.6); scene.add(s2);
+    for (let x = -40; x <= 40; x += 4) mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.9, 6), postMat, x, 0.95, fz, false);
+    for (let z = -28; z <= 29; z += 4) mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.9, 6), postMat, fx, 0.95, z, false);
+  }
+  const edge = [
+    { minX: -60, maxX: -40.6, minZ: -60, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },
+    { minX: 40.6, maxX: 60, minZ: -60, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },
+    { minX: -60, maxX: 60, minZ: 29.6, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },
+  ];
+
+  // === ANCHORS & SPAWNS ===
+  const nearestCover = (x, z) => {
+    let best = null, bd = Infinity;
+    for (const c of coverList) {
+      const d = Math.hypot((c.minX + c.maxX) / 2 - x, (c.minZ + c.maxZ) / 2 - z);
+      if (d < bd) { bd = d; best = c; }
+    }
+    return best;
+  };
+  const A = (x, z) => ({ pos: P(x, z), cover: nearestCover(x, z) });
+  const placements = {
+    // Team A — the school side
+    a_doors:     A(-2, -24),
+    a_cars_w:    A(10.5, -21.5),
+    a_cars_e:    A(26, -20.5),
+    a_port_w:    A(-31, -11.5),
+    a_port_e:    A(-16.5, -11.5),
+    a_port_gap:  A(-23.7, -5),
+    a_container: A(-2.5, -6),
+    a_sled:      A(30, -13),
+    // Team B — the bleachers side
+    b_bleach_w:  A(4, 23),
+    b_bleach_e:  A(34.5, 26),
+    b_stand:     A(-3, 26),
+    b_court:     A(-24, 25),
+    b_port_s:    A(-23.7, 14.5),
+    b_sled:      A(24, 7.5),
+    cluster_north: { pos: P(-6, -25.5), cover: null },
+    cluster_south: { pos: P(5, 27),     cover: null },
+  };
+  const playerSpawns = {
+    team_b: { pos: P(5, 26.5), yaw: -0.35 },       // at the west end of the home bleachers, looking up the field's west sideline (yaw 0 faces -z, the school)
+    team_a: { pos: P(-7.5, -25), yaw: Math.PI },
+  };
+
+  const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
+  return {
+    scene,
+    spawn: playerSpawns.team_b.pos.clone(), spawnYaw: playerSpawns.team_b.yaw, bounds,
+    cover: coverList,
+    obstacles: allObs,
+    enemies: [],
+    name: 'Hollins Ridge High', scenarioName: '', desc: '',
+    placements,
+    playerSpawns,
+    groundY,
+    teamBases: { player: { x: 5, z: 26.5 }, enemy: { x: -6, z: -25 } },
+  };
+}
+function buildHighSchoolSceneDefault(_v, tod) { return buildHighSchoolScene('default', tod); }
 
 
 
@@ -25658,6 +26007,11 @@ const PIN_SCENARIO_GROUPS = {
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
+  // v1.155: Hollins Ridge High (East Roswell) — the sixth zone (D.1, Michael: A).
+  high_school: [
+    'school_1v1_tyler',
+    'school_portables_3v3',
+  ],
 };
 
 // =====================================================================
@@ -25684,6 +26038,7 @@ const ZONE_LADDER = [
   { key: 'market_lot',     pin: 'market_lot',     name: 'Riverside Market',               region: 'east_roswell' },   // v1.102
   { key: 'northcliff',     pin: 'northcliff',     name: "Northcliff / Martin's Landing",  region: 'northcliff',   // v1.130: playable (Northcliff Trace)
     teaser: "A new neighborhood is opening up north — Northcliff Trace, Stoneglen Close, and Bellfield Court. Bigger yards, longer sightlines, and the toughest kids on the river. Clear the Riverside Market lot to prove you're ready." },
+  { key: 'high_school',    pin: 'high_school',    name: 'Hollins Ridge High',             region: 'east_roswell' },   // v1.155
 ];
 
 // Index of a zone in the ladder (by its PIN_SCENARIO_GROUPS key).

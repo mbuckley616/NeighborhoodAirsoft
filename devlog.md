@@ -7445,3 +7445,64 @@ side of it, starting with the side that last worked so he doesn't zigzag.
 - Probe, 30 rounds of `hollow_infection_night` with the player walked 8.1 m and Devon placed at (11, 6.9): before,
   12 of 30 stayed 24–30 s in the corner; after, 30 of 30 get out, the longest stand-still 1 s.
 - `npm test`: 62/62, all eight stuck-sweep parts and `taggers` included.
+
+## v1.155 — Hollins Ridge High: the sixth zone opens
+Michael's A on "after Nick's fix, what next" (control room, 4 Oct): the next zone, a high school's grounds with a
+made-up name, with fields, bleachers and portables. It follows his C on place names: real roads, made-up schools.
+This is the first part, shaped like v1.130 was for Northcliff: the grounds, on the map and the ladder, with two
+scenarios that play.
+
+**Hollins Ridge High** (`buildHighSchoolScene`) is flat, 80 × 57 m inside a chain-link fence.
+- The school's two-storey brick front closes the north, with its name over the main doors under a canopy. A staff
+  row of seven cars stands nosed in along it, with gaps to walk through.
+- Six portable classrooms stand in two columns in the west, numbered P1–P6. Each is 11 × 7 m on a skirt, with an AC
+  unit, windows, and a door with a wooden landing and steps you can stand on. The columns are 3.5 m apart, which
+  gives one long sightline down the middle; the rows are 6 m apart.
+- The practice field fills the east. It has lines every 4.5 m, a goalpost at each end, three tackling sleds (1.05 m,
+  crouch cover), a ball cart, a water table and the team bench.
+- The home bleachers face the field from the south: five aluminium tiers, each 0.45 m above the one in front.
+  Collision follows the steps, so the front tiers are low cover and the back is a 2.25 m wall.
+- Between the court and the bleachers: a concession stand. On the lawn between the portables and the field: a steel
+  storage container. There is also a blacktop court with two hoops, picnic tables, dumpsters, trees and two lamps.
+- The layout is fixed, as the lot's is. Only car colours vary.
+
+Two scenarios, sixth on the ladder after Northcliff and in East Roswell's region (`hollins_ridge_high`):
+- **After the Bell** (the opener): 1v1 against Tyler with a pistol. He starts among the portables and you start at
+  the west end of the home bleachers. One hit each.
+- **The Portables** (the zone capstone for now): 3v3. You, Eric (MP5) and Rebecca (AK) at the bleachers. Ryan (UMP),
+  Mitchell (AK) and Priya (MP5) start from the school doors and deploy to the portables, the doors and the staff
+  cars. Three lives each, last team standing. The kids are ones already in the game, from Bunratty and Ridgestone;
+  the school draws from every street.
+
+The map gets a new pin, "Hollins Ridge High · School", between Holcomb Bridge Rd and Nesbit Ferry Rd, with the
+school, four portables and the field drawn under it. It is locked until Northcliff's capstone is won.
+
+At first the team start was behind the middle of the bleachers. There Rebecca (aggression 0.4, a camper) hid for the
+whole minute in 2 of 2 rounds, firing 1–82 times at nothing she could reach. The start is now the bleachers' west
+end, which looks up the field's west sideline. There she walks 0–68 m and fires 207–379 times.
+
+### Verified
+- `tests/high-school.test.mjs` (new), 21 checks:
+  - The ladder ends Northcliff, then the school. The school is locked on a new save. Winning Northcliff's capstone
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Northcliff. It sits inside the map and covers no other pin's marker or
+    label. Once Northcliff is cleared, it lists both cards with only the opener playable.
+  - Every anchor and player spawn on the grounds is clear of obstacles, and so are the player and every kid at the
+    start. The grounds hold six 11 × 7 m portables, five bleacher tiers (0.45 to 2.25 m), two goalposts and the
+    school front.
+  - After the Bell, 60 s with the player untaggable at the spawn: Tyler walks 41–92 m out of the portables, comes to
+    within 7.4–7.9 m and fires 37–56 times.
+  - The Portables, 60 s: 262–463 BBs. Both sides lose lives (enemy 1–5, ally 1–6). Every kid moves or fires. The
+    longest stall in `advancing` is 3 s.
+  - Screenshots `tests/out/high-school-{field,portables,front,bleachers,map}.png`, checked by eye.
+- The stuck-kid sweep picks the two new matches up by itself (it walks `SCENARIOS`). `ONLY=` on them, 3 runs each
+  way: worst kid 4 s (Eric at the concession stand's corner), against the 15 s line.
+- `tests/market-lot.test.mjs` and `tests/northcliff.test.mjs` had the ladder spelled out, and now include the school.
+- `npm test` as four shards at once: 61 of 63 passed (15 + 15 + 16 + 15). Two died at `page.goto`'s 30 s load limit
+  (road-slide and stuck-sweep-5, the v1.124 note) and passed alone. Stuck-sweep-5 now holds After the Bell: worst
+  kid 0.5 s either way. The Portables falls in part 6, which passed in its shard.
+### Still open
+- More school scenarios, as v1.131 gave Northcliff: a defend (the portables or the bleachers), a night match under
+  the two lamps, and a capstone. No school kids of their own yet; the kids are borrowed from other streets.
+- Whether the bleachers' stepped collision feels right to climb and fight from is for a playtest. The field is
+  meant to be dangerous to cross, and whether the sleds give enough cover is for a playtest too.
