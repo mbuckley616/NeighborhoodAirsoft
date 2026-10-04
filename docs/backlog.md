@@ -136,7 +136,7 @@ Fable card on the control room and Michael starts it from there.
 12. ~~After the last kid comes looking, what next (builder, 4 Oct). Michael: **A**, the critic's stuck-kid sweep
    (proposals, 30 Sep; control room, 4 Oct).~~ — done, v1.153 (every match but the tutorial, 60 s twice, the player at
    spawn and walked 10 m toward the nearest enemy; fails on any kid of either side, away from the player, holding a
-   moving state within 1 m for over 15 s, and prints a backlog line; four suites `tests/stuck-sweep-1…4`, one per CI
+   moving state within 1 m for over 15 s, and prints a backlog line; eight suites `tests/stuck-sweep-1…8` (four until the v1.153 fix-up), two per CI
    shard). Its first runs found one: Bunratty free-for-all's Nick (below, Found in play); every other kid on every map
    held a spot 7.5 s at most.
 

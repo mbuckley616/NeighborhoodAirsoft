@@ -7380,3 +7380,19 @@ or Nick anywhere else, still fails.
   runners are much slower than this container, `SECS` can come down to 45; the 15 s line still fits in that.
 - 60 s per way catches kids who stall early in a round. A kid who only wedges late, or only where the player goes
   somewhere other than spawn or 10 m toward the nearest enemy, is still found by hand.
+
+## v1.153 fix-up — the stuck-kid sweep runs in eighths
+CI failed Builder sessions on v1.153 in shard 1/4, in both runs: `stuck-sweep-1` died with "page.evaluate: Target page,
+context or browser has been closed" after about 10 minutes (16:31:14 to 16:41:16). `tests/run.mjs` stops any suite
+after 10 minutes (`spawnSync`'s `timeout: 600000`), and stopping it takes the browser down mid-sweep. Part 1 of four
+(330 s here) carries the long Hollow battles and ran past that limit on CI's slower runner.
+
+Rather than raise the 10-minute limit, which is what catches a hung suite, the sweep now runs as eight suites,
+`stuck-sweep-1` to `-8`, each every eighth match (`PARTS` in `tests/lib/stuck-sweep.mjs`). They weigh 165 s each in
+`run.mjs`'s shard table, so the shards still balance. The sweep's checks and limits are unchanged, and `ONLY=` still
+sweeps any named match. Test change only; no game change.
+
+### Verified
+- `stuck-sweep-1` (now 7 matches, both ways): 129 s here, green. `SECS=5` runs of parts 1 and 8 also pass.
+- `run.mjs --shard k/4 --list`: parts 6 and 5 go to shards 1 and 2; parts 1, 3 and 7 to shard 3; parts 2, 4 and 8
+  to shard 4.

@@ -5,8 +5,8 @@
 // either side, more than 2.5 m from the player, who holds a moving state (advancing, repositioning, chasing, deploying,
 // retreating) within 1 m of one spot for more than 15 s, and prints the kid, map, spot, state and seconds, a
 // ready-made backlog line. Sniper nests, `hiding`, `peeking` and `shooting` are holding still on purpose.
-// The sweep takes about 20 minutes of one browser, so it runs as four suites, stuck-sweep-1 … -4, each every fourth
-// match, one per CI shard. `ONLY=<id>[,<id>]` sweeps just those; `SECS=` shortens the watch, `LIMIT=` moves the line.
+// The sweep takes about 20 minutes of one browser, so it runs as eight suites, stuck-sweep-1 … -8, each every eighth
+// match, two per CI shard (v1.153 fix-up: four parts ran past run.mjs's 10-minute limit on CI). `ONLY=<id>[,<id>]` sweeps just those; `SECS=` shortens the watch, `LIMIT=` moves the line.
 import { boot, check } from './game.mjs';
 
 // Found by the sweep and filed under docs/backlog.md's Found in play, not yet fixed: printed as KNOWN, not failed.
@@ -15,6 +15,7 @@ const KNOWN = [
   { id: 'bunratty_ffa', kid: 'nick', at: [5.5, -28.2] },   // v1.153: 7-15.5 s in advancing, 2 of 5 walked runs
 ];
 
+export const PARTS = 8;
 export async function sweep(part) {
   const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
   await g.bedroom();
@@ -23,7 +24,9 @@ export async function sweep(part) {
   const SECS = +(process.env.SECS || 60), LIMIT = +(process.env.LIMIT || 15);
   let ids = await page.evaluate(() => Object.keys(SCENARIOS).filter(id => id !== 'winnmark_tutorial'));
   if (process.env.ONLY) ids = process.env.ONLY.split(',');
-  else ids = ids.filter((_, i) => i % 4 === part - 1);
+  // v1.153 fix-up: eight parts, not four. Part 1 of four took over 10 min on CI (330 s here), run.mjs stopped it at its
+  // 10-minute limit, and the browser closed under the sweep. Eighths take half that, two to a CI shard.
+  else ids = ids.filter((_, i) => i % PARTS === part - 1);
 
   const SWEEP = (walk) => page.evaluate(({ walk, SECS, LIMIT }) => {
     Game.player._infected = true;   // a tagger's touch doesn't end the round either (as tests/taggers does)

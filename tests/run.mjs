@@ -22,7 +22,8 @@ const WEIGHTS = {
   'night-prowl.test.mjs': 25, 'northcliff.test.mjs': 99, 'one-ending.test.mjs': 55, 'opening-hold.test.mjs': 93,
   'pincer.test.mjs': 37, 'pocket.test.mjs': 17, 'result-text.test.mjs': 204, 'road-slide.test.mjs': 78,
   'shard.test.mjs': 1, 'shop-tabs.test.mjs': 26, 'smoke.test.mjs': 20, 'spawn-facing.test.mjs': 273,
-  'stuck-sweep-1.test.mjs': 330, 'stuck-sweep-2.test.mjs': 330, 'stuck-sweep-3.test.mjs': 330, 'stuck-sweep-4.test.mjs': 330,
+  'stuck-sweep-1.test.mjs': 165, 'stuck-sweep-2.test.mjs': 165, 'stuck-sweep-3.test.mjs': 165, 'stuck-sweep-4.test.mjs': 165,
+  'stuck-sweep-5.test.mjs': 165, 'stuck-sweep-6.test.mjs': 165, 'stuck-sweep-7.test.mjs': 165, 'stuck-sweep-8.test.mjs': 165,
   'taggers.test.mjs': 24, 'treehouse-hold.test.mjs': 21, 'treehouse.test.mjs': 34, 'utility-belt.test.mjs': 21,
   'walk-anim.test.mjs': 30, 'walkie.test.mjs': 25, 'whole-block.test.mjs': 24, 'winnmark-cars.test.mjs': 38, 'winnmark-fort.test.mjs': 47,
   'winnmark-props.test.mjs': 38, 'winnmark-road.test.mjs': 35, 'winnmark-trees.test.mjs': 40
