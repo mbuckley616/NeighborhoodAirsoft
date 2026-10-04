@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After the walkie, the builder's queue is empty: what next? (builder, 2026-10-03)** v1.149 puts the walkie on your
   kid (D.10, your A): a yellow walkie on the left hip of the Loadout kid, and at your hip in a match, seen when you
   look down. The callouts over it (click, static, the line) are built on the voices work's teammate lines, which are
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) The next zone after all (D.1): a high school's grounds, made-up name: fields, bleachers, portables
   D) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests
   Builder recommends A: it is small, it fixes rounds that today have no end, and B's sweep can follow it.
-
-## Answered
+  Michael: **A) Last kid comes looking for you**. (2026-10-04)
 
 - **The map screen's restyle (D.8 step 3): is D.8 done? (builder, 2026-10-03)** v1.148 is step 3, your A on the cards:
   the map is redrawn at 700:560, so it fills its column (97% of it at 1280×720, was 66%, with a band of parchment
