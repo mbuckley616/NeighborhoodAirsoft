@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.149</div>
+  <div class="version">v1.152</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -21745,6 +21745,8 @@ function spawnEnemyBB(enemy, targetPos) {
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
   if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
+  // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
+  if (enemy._hasLOSNow) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
   // updateEnemies (so they shoot OVER the cover, not into it). We mirror that
   // here by adding the current mesh.group.position.y to the base muzzle height.
@@ -22818,6 +22820,44 @@ function npcInFight(e) {
   return e.health > 0;
 }
 
+// v1.152: the "last kid comes looking" clock (called once a frame per live kid from updateEnemies). `_boredT` counts
+// seconds he has stayed within 2 m of `_boredAt` without firing with a line (spawnEnemyBB zeroes it); past his
+// `_boredAfter` (25-30 s) he is `_bored` and the hiding case marches him. Only the last one or two of a side get bored.
+const BORED_MOVE_M = 2;
+function updateKidBoredom(e, dt) {
+  const sc = Game.scenario;
+  const wc = sc.winCondition || 'kill_all';
+  const eligible = (wc === 'kill_all' || wc === 'last_team_standing') && !sc.ffa &&
+    sc.scenarioType !== 'defend' && combatantTeam(e) !== combatantTeam(Game.player) &&
+    e.weapon !== 'sniper' && e.role !== 'defender' && e.behavior !== 'tagger' && !e.noFire &&
+    e.state !== 'retreating' && e.state !== 'deploying' && !inOpeningHold();
+  if (!e._boredAt || !eligible) {
+    e._boredAt = { x: e.pos.x, z: e.pos.z };
+    e._boredT = 0;
+    if (!eligible) e._bored = false;
+    return;
+  }
+  if (e._boredAfter == null) e._boredAfter = 25 + Math.random() * 5;
+  if (Math.hypot(e.pos.x - e._boredAt.x, e.pos.z - e._boredAt.z) > BORED_MOVE_M) {
+    e._boredAt.x = e.pos.x; e._boredAt.z = e.pos.z;
+    e._boredT = 0;
+  } else {
+    e._boredT += dt;
+  }
+  if (e._bored || e._boredT < e._boredAfter) return;
+  const side = combatantTeam(e);
+  const sideLeft = sc.enemies.filter(k => npcInFight(k) && combatantTeam(k) === side).length;
+  if (sideLeft > 2) return;
+  e._bored = true;
+  e._boredCount = (e._boredCount || 0) + 1;
+  tryNpcSpeak(e, 'taunt');
+  if (e.state === 'hiding' || e.state === 'peeking') {
+    e.state = 'advancing';
+    e.stateTime = 0;
+    e.advanceCheckTimer = 0;
+  }
+}
+
 // True if any living enemy-list combatant is on the given team (an ally of it).
 function hasLivingAlly(team) {
   if (!Game.scenario || !Game.scenario.enemies) return false;
@@ -23515,6 +23555,73 @@ function ladderFieldNext(L, x, z) {
   }
   return best;
 }
+// v1.152: the same fill toward any point, for an advancing kid stuck in a pocket whose way out is not straight
+// back (a fort whose closed wall faces his target, a house corner behind a fence). The cells a kid fits in are
+// worked out once a round (the obstacles don't move); a fill from his target's cell then costs about a millisecond.
+function kidFreeCells() {
+  const obs = Game.player.obstacles, b = Game.scenario.bounds || { minX: -40, maxX: 40, minZ: -40, maxZ: 40 };
+  const C = Game.scenario._kidCells;
+  if (C && C.obs === obs && C.b === b && C.n === obs.length) return C;
+  const c = LADDER_CELL, nx = Math.ceil((b.maxX - b.minX) / c) + 1, nz = Math.ceil((b.maxZ - b.minZ) / c) + 1;
+  const free = new Uint8Array(nx * nz);
+  for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) free[i * nz + k] = collidesObstacles(b.minX + i * c, b.minZ + k * c, 0.33) ? 0 : 1;
+  return (Game.scenario._kidCells = { obs, b, n: obs.length, nx, nz, free });
+}
+function kidFieldTo(gx, gz) {
+  const { b, nx, nz, free } = kidFreeCells(), c = LADDER_CELL;
+  const dist = new Float32Array(nx * nz).fill(Infinity);
+  const fi = Math.max(0, Math.min(nx - 1, Math.round((gx - b.minX) / c))), fk = Math.max(0, Math.min(nz - 1, Math.round((gz - b.minZ) / c)));
+  const q = [fi * nz + fk]; dist[q[0]] = 0;
+  for (let h = 0; h < q.length; h++) {
+    const cur = q[h], i = (cur / nz) | 0, k = cur % nz;
+    for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
+      if (!di && !dk) continue;
+      const ii = i + di, kk = k + dk;
+      if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+      const n = ii * nz + kk;
+      if (!free[n] || (di && dk && (!free[ii * nz + k] || !free[i * nz + kk]))) continue;
+      const nd = dist[cur] + (di && dk ? 1.414 : 1);
+      if (nd < dist[n]) { dist[n] = nd; q.push(n); }
+    }
+  }
+  return { b, nx, nz, dist };
+}
+// An advancing kid's pocket rule (v1.121) fired: the second time within 10 s and 3 m, the back-out has not got him
+// out, so route him by the field to his target for 5 s instead. Returns true when he is routed.
+function kidPocketRoute(e, tgt) {
+  const clk = Game.scenario.aiClock || 0, p = e._advPocket;
+  if (p && clk - p.t < 10 && Math.hypot(e.pos.x - p.x, e.pos.z - p.z) < 3) p.n++;
+  else e._advPocket = { t: clk, x: e.pos.x, z: e.pos.z, n: 1 };
+  if (e._advPocket.n < 2) return false;
+  e._advPocket = null;
+  const F = kidFieldTo(tgt.pos.x, tgt.pos.z);
+  if (!kidFieldNext(F, e.pos.x, e.pos.z)) return false;
+  e._advRoute = { F, until: clk + 5 };
+  e._advRoutes = (e._advRoutes || 0) + 1;
+  return true;
+}
+// where to walk from (x, z): of the cells up to two away, the one nearest the goal that he can walk to in a straight
+// line (a 0.5 m grid's next cell can be free while the line to it clips a post's corner); null where the fill never
+// reached him or no cell is open
+function kidFieldNext(F, x, z) {
+  const c = LADDER_CELL, i0 = Math.round((x - F.b.minX) / c), k0 = Math.round((z - F.b.minZ) / c);
+  const cand = [];
+  for (let di = -2; di <= 2; di++) for (let dk = -2; dk <= 2; dk++) {
+    const i = i0 + di, k = k0 + dk;
+    if (i < 0 || k < 0 || i >= F.nx || k >= F.nz) continue;
+    const d = F.dist[i * F.nz + k];
+    if (d < Infinity) cand.push({ d, x: F.b.minX + i * c, z: F.b.minZ + k * c });
+  }
+  cand.sort((a, b) => a.d - b.d);
+  for (const w of cand) {
+    const L = Math.hypot(w.x - x, w.z - z);
+    if (L < 0.05) continue;
+    let clear = true;
+    for (let t = 0.1; clear && t <= L; t += 0.1) if (collidesObstacles(x + (w.x - x) * t / L, z + (w.z - z) * t / L, 0.33)) clear = false;
+    if (clear) return w;
+  }
+  return null;
+}
 function kidLadderFall(e, dt) {
   // a kid tagged on the ladder, or tagged in a defend up on the platform he climbed, lets go and drops
   if ((e.health <= 0 || e.state === 'retreating') && (e._lad || e._climbed)) {
@@ -24027,6 +24134,13 @@ function updateEnemies(dt) {
       e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
     }
 
+    // v1.152 (Michael: A, the critic's "last kid comes looking"): in team and kill-all rounds a cautious kid (aggression
+    // under 0.45) who held cover out of sight hid and peeked at nobody for the rest of the round, so a round with no
+    // timer had no end. Once his side is down to its last one or two, a kid who has neither moved 2 m nor fired with a
+    // line on his target for 25-30 s gets bored: a taunt, and he marches like a skirmisher (the `hiding` case below)
+    // until he next fires with a line. Snipers, defenders, taggers and defend or timer rounds are left as they were.
+    updateKidBoredom(e, dt);
+
     // v1.9: shotgun kids want to *push closer* if the player is past their near range.
     // We achieve this through repositioning bias below (target cover that's closer to
     // player). Sniper kids want to *hold* and won't push.
@@ -24218,7 +24332,8 @@ function updateEnemies(dt) {
         const ffaRoam = Game.scenario.ffa && (e._unseenTime || 0) > 5;
         const marchEligible = (
           e.role === 'attacker' ||
-          (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam))
+          (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam)) ||
+          e._bored   // v1.152: a bored last kid comes looking
         ) && e.weapon !== 'sniper' && e.role !== 'defender';
 
         if (marchEligible) {
@@ -24423,7 +24538,27 @@ function updateEnemies(dt) {
           const dx = tgtX - e.pos.x;
           const dz = tgtZ - e.pos.z;
           const d = Math.sqrt(dx*dx + dz*dz);
-          if (d > 0.1) {
+          // v1.152: on a route out of a pocket (kidPocketRoute), walk the field toward the target instead of the
+          // straight push below, for up to 5 s; the engagement check further down still stops him once he has a shot.
+          let routed = false;
+          if (e._advRoute) {
+            const w = (Game.scenario.aiClock || 0) < e._advRoute.until ? kidFieldNext(e._advRoute.F, e.pos.x, e.pos.z) : null;
+            if (!w) e._advRoute = null;
+            else {
+              routed = true;
+              const wx = w.x - e.pos.x, wz = w.z - e.pos.z, wl = Math.hypot(wx, wz);
+              const rx = e.pos.x, rz = e.pos.z;
+              if (wl > 0.02) {
+                const st = Math.min(wl, speed * dt), nx = e.pos.x + wx / wl * st, nz = e.pos.z + wz / wl * st;
+                if (!collidesObstacles(nx, nz, 0.33)) { e.pos.x = nx; e.pos.z = nz; }
+                else if (!collidesObstacles(nx, e.pos.z, 0.33)) e.pos.x = nx;
+                else if (!collidesObstacles(e.pos.x, nz, 0.33)) e.pos.z = nz;
+              }
+              e._advP0x = null; e._advBackT = 0; e._advSideT = 0; e._advStuck = 0;
+              if (Math.hypot(e.pos.x - rx, e.pos.z - rz) < 0.005) e._advRoute = null;   // a blocked step ends the route
+            }
+          }
+          if (d > 0.1 && !routed) {
             // Slide along obstacles (try X and Z components separately).
             const stepX = (dx / d) * speed * dt;
             const stepZ = (dz / d) * speed * dt;
@@ -24457,7 +24592,7 @@ function updateEnemies(dt) {
               e._advLatLo = e._advLatHi = e.pos.x * e._advPerpX + e.pos.z * e._advPerpZ;
             }
             e._advProgAt = clk;
-            if (!(e._advBackT > 0) && clk - e._advProg0 > 2.5 && e._advWF > 0.3) e._advBackT = 1.5;
+            if (!(e._advBackT > 0) && clk - e._advProg0 > 2.5 && e._advWF > 0.3 && !kidPocketRoute(e, tgt)) e._advBackT = 1.5;
             if (e._advBackT > 0) {
               // v1.121: backing out of a pocket (see the turn-round count below). Walk away from the target
               // until a sidestep has room past both places he turned round (0.6 m beyond them, the whole way
@@ -24548,7 +24683,7 @@ function updateEnemies(dt) {
                 // each side wall and the kid shuttles across it for good (Night Prowl's Seth between a sedan and
                 // a post, v1.112). The second turn-round within 3 s backs him out instead.
                 e._advTurns = (e._advTurns || 0) + 1; e._advTurnT = 3;
-                if (e._advTurns >= 2) { e._advTurns = 0; e._advBackT = 1.5; }
+                if (e._advTurns >= 2) { e._advTurns = 0; if (!kidPocketRoute(e, tgt)) e._advBackT = 1.5; }
               }
               if (!advCommitted) {
                 e._advWedges = Math.min(4, (e._advWedges || 0) + 1);

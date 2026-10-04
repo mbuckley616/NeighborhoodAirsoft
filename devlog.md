@@ -7290,3 +7290,49 @@ Test change only; no game change.
 ### Verified
 - With the round ended before the walk: the CI failure, exactly. With the fix: 2 of 2 runs green, moved 1.27 m in
   `scenario`.
+
+## v1.152 — The last kid comes looking
+Michael's A on "what next after the walkie" (control room, 4 Oct): the critic's "last kid gets bored and comes
+looking" (proposals, 1 Oct). In Squad Up the critic watched Brooke and Jamie (aggression 0.35 and 0.4, under the 0.45
+line where a kid marches) sit 32–50 m off in cover once our allies were out; Four on Four's Mitchell and Owen held
+their end for 150–195 s. A team round has no timer, so a player who plays it safe got a round with no end. (Numbered
+v1.152: the voices work on PR #22 already carries v1.150–v1.151.)
+
+- In team and kill-all rounds, once a side is down to its last one or two kids, a kid who has neither moved 2 m nor
+  fired with a line on his target for 25–30 s gets bored: he taunts and marches as a keen skirmisher does. A shot with a
+  line settles him back into his own way of fighting, and the clock starts again. Snipers, defenders, taggers,
+  free-for-alls (they roam since v1.134) and defend or timer rounds are left as they were. `updateKidBoredom`.
+- Reproducing it with the player tucked in a backyard turned up a second stall the clock alone couldn't cure: two of
+  the four campers weren't hiding at all. They were in `advancing`, walking into a wall all round. Owen was inside
+  Bunratty's bulb fort, whose closed wall faces the player. Jamie was in the corner of a house and a fence post. v1.121's
+  pocket rule backs a kid out and sidesteps, but the fort gave him a sidestep at once and he walked back into the same
+  wall; behind Jamie the way back was blocked too. Now, when the pocket rule fires a second time within 10 s and 3 m,
+  the kid follows a distance field to his target for 5 s instead: the v1.143 ladder walk's fill, aimed at any point
+  (`kidFieldTo`), steering to the nearest-to-goal cell within two cells that he can walk to in a straight line. The
+  cells a kid fits in are worked out once a round.
+
+### Verified
+- `tests/last-kid.test.mjs`, 11 checks. The player stands untaggable and never fires; his allies and the enemy's keener
+  kids are knocked out.
+
+  | Round (player hides in)              | Last kids          | Nearest each came, v1.149 | v1.152       |
+  |--------------------------------------|--------------------|---------------------------|--------------|
+  | Squad Up (Trey's backyard), 150 s ×2 | Brooke, Jamie      | 2.3 / **38.3** m; 4.6 / 22.9 | 2.3 / 6.5; 4.4 / 22.9 |
+  | Four on Four (Sean's backyard), ×2   | Mitchell, Owen     | **67.7 / 64** m, 0 shots on him | 21.9 / 2.9 m, 116–117 shots |
+
+  In Four on Four Mitchell gets bored at 31.6–31.8 s (none on v1.149). With all three Squad Up enemies in, nobody gets
+  bored in 45 s; in Last Stand at the Fort (defend) nobody in 40 s. The clock alone: not bored at 24 s still, bored at
+  26 s and switched to `advancing`, and a shot with a line clears it. v1.149 fails four of the checks.
+- `pocket`, `whole-block`, `night-prowl`, `pincer`, `market-lot`, `hollow-held`, `cover-fire`, `kid-climb` and
+  `treehouse-hold` each passed alone on the change.
+- `npm test` as four shards at once: 53/53 green (12 + 13 + 14 + 14). An earlier four-shard run on the change lost
+  `harness` at `page.goto`'s 30 s load limit (the v1.124 note; passed alone) and `market-lot` once: ally Eric
+  "wedged in advancing" 5 s in the lot 3v3. That passed in 4 more runs and in 12 probe rounds on each build (longest
+  wedge 1 s either way), so it is not shown to be this change; but a routed step that was blocked could have held a kid
+  for the route's whole 5 s, so a blocked routed step now ends the route at once.
+### Still open
+- Whether a camper who breaks cover after 25–30 s feels right in play, or makes the cautious kids too like the rest.
+  The bored kid's taunt is cut past 24 m like every line (v1.22), so a far one comes without a word.
+- The field route only starts on a second pocket in 10 s; a kid in a pocket wastes about 5 s first.
+- The critic's stuck-kid sweep over every scenario (option B) would catch the next pocket like these two; it stays a
+  proposal until Michael promotes it.
