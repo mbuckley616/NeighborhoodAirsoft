@@ -7396,3 +7396,31 @@ sweeps any named match. Test change only; no game change.
 - `stuck-sweep-1` (now 7 matches, both ways): 129 s here, green. `SECS=5` runs of parts 1 and 8 also pass.
 - `run.mjs --shard k/4 --list`: parts 6 and 5 go to shards 1 and 2; parts 1, 3 and 7 to shard 3; parts 2, 4 and 8
   to shard 4.
+
+## v1.154 — Nick gets off the fence
+The stuck-kid sweep's one finding (v1.153, Found in play): in Bunratty's free-for-all Nick stood in `advancing`
+within 1 m of (5.5, −28.2), by house 2's backyard, for 15–23 s without a shot. Logged every quarter second, he was
+neither hiding nor walking into a wall for good. He pushed toward his target along the fence there for about 1.5 s,
+sliding 0.4 m north. Then his flanker's bounding picked a cover behind him and walked him 0.4 m back south. The bound
+was dropped, and the push began again, a 2 s cycle. v1.121's pocket rule backs a kid out (and v1.152's routes him on
+a second pocket) once he has made no 0.5 m of progress in 2.5 s of wall-following. But that progress window restarts
+whenever a frame of the direct push is missed, and every bound missed some, so it never reached 2.5 s.
+
+- A bound that leaves him within 1.5 m of where his progress window began now keeps the window open. On the next
+  push the pocket rule fires as it would have: he backs out, and on the second pocket follows the distance field out.
+  A real bound carries a kid well past 1.5 m in under a second and lets the window lapse as before.
+- Nick's line is off the sweep's `KNOWN` list, so the sweep fails on him again if he comes back.
+
+### Verified
+- `tests/fence-bound.test.mjs` (new), 10 checks: the other kids out, Nick put on the spot advancing on a flank, the
+  player held at (−24.8, −12.1). On v1.153 he holds the spot 23.5–30 s of 30 and never gets 3 m clear (6 of 6
+  rounds; the suite fails 6 checks). On v1.154 he is 3 m clear at 6.9–8.1 s, his longest hold is 5.5–6 s, and he
+  ends the 30 s 2–5 m from the player.
+- The natural round, the sweep's walk then 60 s, 12 times: Nick's longest hold 0.5–5 s (v1.153: 23.5 s in 1 of 6).
+- `npm test` as four shards at once: 62/62 green (15 + 16 + 15 + 16), the eight sweep parts with nothing over 15 s
+  and no KNOWN line; in Bunratty's free-for-all the sweep's worst kid held a spot 1 s (Nick, walked) and 0.5 s (at spawn).
+  A baseline run at the start, beside the probes, lost 10 suites to `page.goto`'s 30 s load limit, none to a check.
+### Still open
+- The pocket rule still needs about 7 s here: a 2.5 s window, a 1.5 s back-out, a second window. In play that reads as
+  a kid fidgeting by a fence for a few seconds rather than standing there all round.
+- Nothing left on the sweep's known list; what the builder takes next is a question in decisions.

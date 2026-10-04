@@ -12,7 +12,7 @@ import { boot, check } from './game.mjs';
 // Found by the sweep and filed under docs/backlog.md's Found in play, not yet fixed: printed as KNOWN, not failed.
 // Each names the match, the kid and the spot (within 2 m); delete the line with the fix, so the sweep guards it again.
 const KNOWN = [
-  { id: 'bunratty_ffa', kid: 'nick', at: [5.5, -28.2] },   // v1.153: 7-15.5 s in advancing, 2 of 5 walked runs
+  // v1.154: Bunratty free-for-all's Nick by house 2's backyard, fixed (tests/fence-bound.test.mjs)
 ];
 
 export const PARTS = 8;

@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.153</div>
+  <div class="version">v1.154</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24489,6 +24489,11 @@ function updateEnemies(dt) {
             e._boundCover = null;
           }
 
+          // v1.154: a bound that keeps him within 1.5 m of where his progress window began does not end the window.
+          // Bunratty free-for-all's Nick pushed a fence for 1.5 s, bounded 0.5 m back to a cover behind him, pushed
+          // again, for 15-23 s by house 2's backyard; each bound restarted the window, so v1.121's 2.5 s pocket rule
+          // never fired. A real bound moves him further than that and lets the window lapse as before.
+          if (usingBound && e._advP0x != null && Math.hypot(e.pos.x - e._advP0x, e.pos.z - e._advP0z) < 1.5) e._advProgAt = Game.scenario.aiClock || 0;
           // --- direct push (center lanes, close range, or no bound cover) ---
           if (!usingBound) {
           // v1.67: SUPPRESSING FIRE ON THE MOVE. A marching kid throws the
