@@ -15,7 +15,7 @@ const WEIGHTS = {
   'bb-sweep.test.mjs': 45, 'bunratty-polish.test.mjs': 56, 'bunratty-road.test.mjs': 79, 'burst-pose.test.mjs': 35,
   'car-side-fire.test.mjs': 26, 'cars.test.mjs': 11, 'cover-fire.test.mjs': 58, 'fort-spawn.test.mjs': 72,
   'front-door.test.mjs': 16, 'grip.test.mjs': 28, 'harness.test.mjs': 57, 'hollow-held.test.mjs': 55,
-  'houses.test.mjs': 57, 'jump.test.mjs': 28, 'kid-climb.test.mjs': 41, 'kid-clothes.test.mjs': 41,
+  'houses.test.mjs': 57, 'jump.test.mjs': 28, 'kid-climb.test.mjs': 41, 'last-kid.test.mjs': 70, 'kid-clothes.test.mjs': 41,
   'kid-face.test.mjs': 17, 'kid-hands.test.mjs': 16, 'ladder-prompt.test.mjs': 24, 'laser.test.mjs': 50,
   'loadout-gear.test.mjs': 56, 'loadout-kid.test.mjs': 23, 'lot-ffa-opening.test.mjs': 63,
   'lot-hollow-polish.test.mjs': 46, 'map-screen.test.mjs': 25, 'market-lot.test.mjs': 76, 'mirror.test.mjs': 46, 'music.test.mjs': 21,
