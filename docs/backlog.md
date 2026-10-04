@@ -123,7 +123,11 @@ Fable card on the control room and Michael starts it from there.
    voice when in earshot, but otherwise should come in as walkie talkie callouts. I also think we should add walkie
    talkies as something the player carries. This could be a very fun and lighthearted feature for online play, if we
    added a push to talk mechanism to compliment that." (Michael, 2026-10-02) **(design)** — the walkie callouts can come
-   now for teammate lines (D.9's teammate voices); push-to-talk belongs with online play (D.2, held).
+   now for teammate lines (D.9's teammate voices); push-to-talk belongs with online play (D.2, held). Michael: **A**, teammates
+   out of earshot over the walkie, a walkie on your kid's belt; push-to-talk waits for online (control room, 3 Oct).
+   ~~The walkie on your kid~~ — done, v1.149 (a yellow walkie on the left hip of the Loadout kid, labelled HIP, and at
+   your hip in a match, seen when you look down; `tests/walkie.test.mjs`). The callouts over it wait on the voices
+   build (D.9, PR #22) reaching main.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
