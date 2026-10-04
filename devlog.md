@@ -7506,3 +7506,36 @@ end, which looks up the field's west sideline. There she walks 0–68 m and fire
   the two lamps, and a capstone. No school kids of their own yet; the kids are borrowed from other streets.
 - Whether the bleachers' stepped collision feels right to climb and fight from is for a playtest. The field is
   meant to be dangerous to cross, and whether the sleds give enough cover is for a playtest too.
+
+## v1.156 — Hollins Ridge High: the portables defend and Friday Night Lights
+The rest of what v1.155 left open, as v1.131 rounded out Northcliff. The school now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's and Northcliff's.
+- **Hold the Portables** (defend, 90 s). You start in the lane between the middle and south rows, facing the field.
+  Marcus (UMP), Jamie (shotgun) and Trey (MP5) stage on the field (`cluster_field`, by the sleds) and come on three
+  flanks: the north end by the container, straight in, and down past the court to the south row. A tagged kid walks
+  back and comes again. The lose line says "the portables". New `portables` player spawn.
+- **Friday Night Lights** (night 4v4, the new capstone). You with Eric, Rebecca and Brooke at the bleachers, against
+  Ryan, Mitchell and Priya, with Owen's rifle as a defender by the staff cars looking down the field. Four lives
+  each. Two more lamps light the night: at the field's south-east corner and in front of the school's west wing. Both
+  also stand in the day matches as poles.
+
+### Verified
+- `tests/high-school.test.mjs`, extended to the four scenarios:
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts in the lane. Every anchor (with `cluster_field`) and spawn is clear of obstacles,
+    the new lamps included.
+  - Hold the Portables, 60 s with the player untaggable: the three attackers walk 42–64 m and fire 712 BBs. Jamie
+    comes into the portables to 2.6 m of the player, and Trey reaches the container's west side.
+  - Friday Night Lights, 60 s: 790 BBs, enemy 10 lives lost and ally 5. Every kid moves or fires, Owen holds the
+    cars and fires 16 times, and no kid stalls in `advancing`.
+  - Screenshots `high-school-night.png` and `high-school-defend.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 3 s (Eric in the night match), against the 15 s line.
+- `npm test` as four shards at once: 57 of 63 passed. Six died at `page.goto`'s 30 s load limit with no check failed:
+  lot-ffa-opening, stuck-sweep-1, -2 and -8, fort-spawn and kid-face. A container restart had cut the first run short,
+  so these ran beside the rerun. Each passed alone or two at a time.
+### Still open
+- Whether 90 s in the lane against three kids is fair. As in the creek-fort defend, it's for a playtest; at the
+  start you can see along the lane to the field and nowhere else.
+- Rebecca keeps to the bleachers' end in most rounds and fires from there (207–412 shots). She is a camper by
+  her numbers, so that is her.
+- Hollins Ridge High is complete at four scenarios. More school kids, or another zone, is Michael's call.

@@ -48,8 +48,10 @@ Fable card on the control room and Michael starts it from there.
    Next zone (Michael: **A**, a high school's grounds, made-up name: fields, bleachers, portables; control room 4 Oct):
    ~~Hollins Ridge High~~ — done, v1.155 (sixth on the ladder after Northcliff, East Roswell: the school's brick front
    and staff row, six portables, the practice field with goalposts and sleds, five-tier home bleachers, the concession
-   stand and court; After the Bell 1v1 with Tyler and The Portables 3v3; `tests/high-school.test.mjs`). More school
-   scenarios (a defend, a night match, a capstone) to follow, as v1.131 did for Northcliff.
+   stand and court; After the Bell 1v1 with Tyler and The Portables 3v3; `tests/high-school.test.mjs`). ~~More school
+   scenarios~~ — done, v1.156 (Hold the Portables defend, Friday Night Lights night 4v4 capstone; two more lamps).
+   Hollins Ridge High is complete at four scenarios; its kids are borrowed from other streets. Another zone, or school
+   kids of its own, is a new question.
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
    **(Fable)** — networking, a session model and the title screen touch every scenario; held by Michael’s C (30 Sep) until the

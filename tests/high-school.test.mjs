@@ -20,7 +20,8 @@ const ladder = await page.evaluate(() => {
   return { keys, ids, before, after, afterFirst, region: REGIONS.east_roswell.streets.hollins_ridge_high };
 });
 check('the ladder ends with Hollins Ridge High, after Northcliff', ladder.keys.slice(-2).join() === 'northcliff,high_school', ladder.keys);
-check('the school runs the 1v1 opener, then the portables 3v3', ladder.ids.join() === 'school_1v1_tyler,school_portables_3v3', ladder.ids);
+check('the school runs the 1v1 opener, the portables 3v3, then the portables defend and the night 4v4 (v1.156)',
+  ladder.ids.join() === 'school_1v1_tyler,school_portables_3v3,school_defend_portables,school_night_4v4', ladder.ids);
 check('its street is in East Roswell', ladder.region === 'Hollins Ridge High', ladder.region);
 check('the school is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing Northcliff opens the opener only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -50,8 +51,9 @@ const pin = await page.evaluate(() => {
 });
 check('the school pin is locked on a new save and says to clear Northcliff', pin.lockedNew && /Northcliff/.test(pin.lockedInfo), pin);
 check('the pin sits inside the map and covers no other pin', pin.inside && pin.overlaps === 0, pin);
-check('after Northcliff the pin is live and lists both scenarios, only the opener playable',
-  !pin.lockedAfter && pin.rows.length === 2 && pin.rows[0].id === 'school_1v1_tyler' && !pin.rows[0].locked && pin.rows[1].locked, pin);
+check('after Northcliff the pin is live and lists every scenario, only the opener playable',
+  !pin.lockedAfter && pin.rows.length === ladder.ids.length && pin.rows[0].id === 'school_1v1_tyler' && !pin.rows[0].locked
+  && pin.rows.slice(1).every(r => r.locked), pin);
 await g.shot('high-school-map');
 await page.evaluate(() => { delete Game.persist.completed[zoneCapstoneId('northcliff')]; closeMap(); });
 
@@ -69,11 +71,13 @@ for (const id of ladder.ids) {
     const portables = obs.filter(o => Math.abs(o.maxX - o.minX - 11) < 0.01 && Math.abs(o.maxZ - o.minZ - 7) < 0.01 && o.h === 3.6).length;
     const tiers = obs.filter(o => o.minX === 8 && o.maxX === 32 && o.minZ >= 18.5 && o.maxZ <= 23.5).map(o => o.h);
     const posts = obs.filter(o => o.h === 3.0 && o.maxX - o.minX < 0.4 && Math.abs(o.minZ + 1.16) < 0.01).length;
-    return { kids, badAnchors, badSpawns, portables, tiers, posts, player: inside(p.pos.x, p.pos.z), feet: +p.pos.y.toFixed(2),
+    const inPortables = Math.abs(p.pos.x + 19) < 0.6 && Math.abs(p.pos.z - 1.5) < 0.6;
+    return { inPortables, night: SCENARIOS[sc.active].timeOfDay === 'night', kids, badAnchors, badSpawns, portables, tiers, posts, player: inside(p.pos.x, p.pos.z), feet: +p.pos.y.toFixed(2),
       scene: built.name, school: obs.some(o => o.maxZ === -30 && o.maxX - o.minX > 80) };
   });
   check(`${id}: every anchor and player spawn on the grounds is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
   check(`${id}: the player and every kid spawn clear of obstacles`, !start.player && start.kids.every(k => !k.stuck), start);
+  if (id === 'school_defend_portables') check(`${id}: the player starts in the lane between the portables`, start.inPortables, start);
   check(`${id}: the grounds have six portables, five stepped bleacher tiers, two goalposts and the school front`,
     start.portables === 6 && start.tiers.join() === '0.45,0.9,1.35,1.8,2.25' && start.posts === 2 && start.school, start);
   const r = await page.evaluate(() => {
@@ -106,6 +110,9 @@ for (const id of ladder.ids) {
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
   if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  // v1.156: the defend's attackers cross the field to the portables (x < -8) and come within 6 m of the player
+  else if (id === 'school_defend_portables') check(`${id}: an attacker reaches the portables and closes on the player`,
+    r.kids.some(k => k.at[0] < -8 || k.nearest < 6) && Math.min(...r.kids.map(k => k.nearest)) < 6, r.kids);
   else check(`${id}: Tyler comes out of the portables to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
@@ -120,5 +127,14 @@ await view(36, 25, Math.PI * 0.2); await g.shot('high-school-field');
 await view(-23.7, 15, 0); await g.shot('high-school-portables');
 await view(14, -10, Math.PI * 0.25); await g.shot('high-school-front');
 await view(-6, 8, -Math.PI * 0.62); await g.shot('high-school-bleachers');
+// v1.156: the night match from the bleachers' west end, and the defend's start looking out at the field
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('school_night_4v4');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
+await view(5, 26.5, -0.35); await g.shot('high-school-night');
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('school_defend_portables');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; stepGame(1 / 60); });
+await g.shot('high-school-defend');
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

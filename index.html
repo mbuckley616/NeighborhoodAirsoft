@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.155</div>
+  <div class="version">v1.156</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6253,6 +6253,54 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 140, lose: 32 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.156: hold the portables for 90 s against a push from the field ---
+  school_defend_portables: {
+    region: 'east_roswell', street: 'hollins_ridge_high',
+    name: 'Hollins Ridge High', scenarioName: 'Hold the Portables',
+    desc: "Marcus, Jamie and Trey want the portables, and you're in the lane between the rows. They come across the field from the sleds: one round the north end by the container, one straight at you, one down past the court to the south row. A tagged kid walks back to the field and comes again. Every gap between two portables is a door they can come through, so don't watch just one. Survive 90 seconds.",
+    builderFn: 'buildHighSchoolScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the portables',
+    playerSpawn: 'portables',
+    enemySpawnCluster: 'cluster_field',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'ump',     anchor: 'a_container', role: 'attacker', flank: 'L' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_port_e',    role: 'attacker', flank: 'C' },
+      { charId: 'trey',   weapon: 'mp5',     anchor: 'b_port_s',    role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 100, lose: 24 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.156: the zone capstone, 4v4 at night ---
+  school_night_4v4: {
+    region: 'east_roswell', street: 'hollins_ridge_high',
+    name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
+    desc: "No game tonight, so the field's yours. Ryan, Mitchell and Priya are back, and they've brought Owen, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives each. Stay off the field when you can, and out of the lamplight.",
+    builderFn: 'buildHighSchoolScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
+      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_stand',    team: 'player' },
+      { charId: 'brooke',   weapon: 'ump',    anchor: 'b_court',    team: 'player' },
+      { charId: 'ryan',     weapon: 'ump',    anchor: 'a_port_e' },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_doors' },
+      { charId: 'priya',    weapon: 'mp5',    anchor: 'a_cars_e' },
+      { charId: 'owen',     weapon: 'sniper', anchor: 'a_cars_w', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 160, lose: 36 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -14710,7 +14758,7 @@ function buildHighSchoolScene(variant, timeOfDay) {
     treeObs.push(addSuburbanTree(scene, tx, tz, { trunkH: 2.8, leafR: 2.0, detail: true }));
   }
   const lampObs = [];
-  for (const [lx, lz] of [[-7.5, 14], [6, -21]]) {
+  for (const [lx, lz] of [[-7.5, 14], [6, -21], [30, 17.2], [-24, -24.5]]) {   // v1.156: + the field's south-east corner and the school front, for the night match
     const lamp = addStreetlamp(scene, lx, lz, groundY, _night);
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
   }
@@ -14760,10 +14808,12 @@ function buildHighSchoolScene(variant, timeOfDay) {
     b_sled:      A(24, 7.5),
     cluster_north: { pos: P(-6, -25.5), cover: null },
     cluster_south: { pos: P(5, 27),     cover: null },
+    cluster_field: { pos: P(28, -2),    cover: null },   // v1.156: the defend's attackers stage on the field
   };
   const playerSpawns = {
     team_b: { pos: P(5, 26.5), yaw: -0.35 },       // at the west end of the home bleachers, looking up the field's west sideline (yaw 0 faces -z, the school)
     team_a: { pos: P(-7.5, -25), yaw: Math.PI },
+    portables: { pos: P(-19, 1.5), yaw: -Math.PI / 2 },   // v1.156: the defend, in the lane between the middle and south rows, facing the field (east)
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
@@ -26011,6 +26061,8 @@ const PIN_SCENARIO_GROUPS = {
   high_school: [
     'school_1v1_tyler',
     'school_portables_3v3',
+    'school_defend_portables',   // v1.156
+    'school_night_4v4',          // v1.156: the zone capstone
   ],
 };
 
