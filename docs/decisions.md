@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After the last kid comes looking, the queue is empty again: what next? (builder, 2026-10-04)** v1.152 builds your
   A (control room, 4 Oct). Reproducing the critic's camping rounds turned up two kids who were not camping but stuck,
   walking into a wall all round: Owen inside Bunratty's bulb fort and Jamie in a Winnmark house corner. Both are fixed
@@ -15,8 +17,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   B) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
   C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtest of v1.152
   Builder recommends A: v1.152's two stuck kids sat in code that had tests, on maps no test walked.
-
-## Answered
+  Michael: **A) Stuck-kid sweep across every match**. (2026-10-04)
 
 - **After the walkie, the builder's queue is empty: what next? (builder, 2026-10-03)** v1.149 puts the walkie on your
   kid (D.10, your A): a yellow walkie on the left hip of the Loadout kid, and at your hip in a match, seen when you
