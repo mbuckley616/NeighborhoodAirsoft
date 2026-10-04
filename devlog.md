@@ -7415,7 +7415,7 @@ whenever a frame of the direct push is missed, and every bound missed some, so i
 - `tests/fence-bound.test.mjs` (new), 10 checks: the other kids out, Nick put on the spot advancing on a flank, the
   player held at (−24.8, −12.1). On v1.153 he holds the spot 23.5–30 s of 30 and never gets 3 m clear (6 of 6
   rounds; the suite fails 6 checks). On v1.154 he is 3 m clear at 6.9–8.1 s, his longest hold is 5.5–6 s, and he
-  ends the 30 s 2–5 m from the player.
+  ends the 30 s 2–6 m from the player.
 - The natural round, the sweep's walk then 60 s, 12 times: Nick's longest hold 0.5–5 s (v1.153: 23.5 s in 1 of 6).
 - `npm test` as four shards at once: 62/62 green (15 + 16 + 15 + 16), the eight sweep parts with nothing over 15 s
   and no KNOWN line; in Bunratty's free-for-all the sweep's worst kid held a spot 1 s (Nick, walked) and 0.5 s (at spawn).
