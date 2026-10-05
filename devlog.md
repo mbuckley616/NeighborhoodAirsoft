@@ -7336,3 +7336,324 @@ v1.152: the voices work on PR #22 already carries v1.150–v1.151.)
 - The field route only starts on a second pocket in 10 s; a kid in a pocket wastes about 5 s first.
 - The critic's stuck-kid sweep over every scenario (option B) would catch the next pocket like these two; it stays a
   proposal until Michael promotes it.
+
+## v1.153 — The stuck-kid sweep
+Michael's A on "after the last kid comes looking" (control room, 4 Oct): the critic's stuck-kid sweep (proposals,
+30 Sep). Every kid found frozen so far was found by hand on one map (v1.98–v1.100, v1.103, and v1.152's bulb fort and
+house corner), and each fix came with a test for its own map only. Now one test walks them all.
+
+- Every match but the tutorial (52) is played for 60 s with BB hits on the player dropped, twice: the player standing
+  at his spawn, and the player first walked up to 10 m toward the nearest enemy with W held (so the kids react to
+  someone coming at them). A tagger's touch is ignored too, as `tests/taggers` does.
+- Every half second each living kid, on either side, is checked: in a moving state (`advancing`, `repositioning`,
+  `chasing`, `deploying`, `retreating`), more than 2.5 m from the player, and still within 1 m of where the run
+  started, his clock goes on; anything else restarts it. Over 15 s fails, and the line printed is a backlog line:
+  match, which way, kid, side, role, seconds, state, spot and shots in that time. Holding states (`hiding`, `peeking`,
+  `shooting`, a sniper's nest) are left alone, since they are still on purpose.
+- The 2.5 m rule came from the first pass: in both Infection rounds the taggers who had reached the untaggable player
+  stood on him in `chasing` for 40–60 s. They had arrived, not stuck.
+- It takes about 22 minutes of one browser, so it is four suites, `tests/stuck-sweep-1…4.test.mjs`, each every fourth
+  match over `tests/lib/stuck-sweep.mjs`, with measured times in `run.mjs` so each CI shard gets one (the shard check
+  reads 971, 970, 966, 956 s). `ONLY=<id>`, `SECS=` and `LIMIT=` run it by hand.
+
+It found one. In Bunratty's free-for-all, with the player walked toward the kids, Nick stood in `advancing` within 1 m
+of (5.5, −28.2), by house 2's backyard, for 15.5 s without firing; again for 7 s in one of four more runs, the same
+spot. That is filed under Found in play as the next builder item. There wasn't time to fix it in this run, and a
+suite that goes red one run in four would block merges, so the sweep carries a `KNOWN` list: a match, a kid and a spot
+(within 2 m) printed as KNOWN instead of failing. Nick's is its one line, to be deleted with the fix. Any other kid,
+or Nick anywhere else, still fails.
+
+### Verified
+- The four parts over all 52 matches, twice each: nothing else over 15 s. The longest otherwise were 7.5 s (Sean
+  `retreating` in Bunratty's night 2v2), 7 s and 6.5 s; most matches' worst kid held
+  a spot 0.5–3 s. Part times alone 341–441 s with the other three shards beside it.
+- With `LIMIT=0.4` on two matches the check fails and prints each kid as a line, so the failing path works.
+- `tests/shard.test.mjs`: 57 suites, each in one shard for 1, 2, 3, 4 and 7 shards; the four CI shards even.
+- `npm test` as four shards at once, with the sweep: 50 of 57 passed. Five died at `page.goto`'s 30 s load limit
+  (houses, ladder-prompt, mirror, winnmark-cars, and stuck-sweep-4) under four browsers each running a minutes-long
+  in-page loop, and hollow-held's "holds fire 20 times" saw Sean at 23 once (no game change this run). Each passed run
+  alone, stuck-sweep-4 too (13 matches, none over 15 s); part 2 failed on Nick, now KNOWN. The baseline before the
+  change was 53/53 (kid-hands' load timeout passed alone).
+### Still open
+- Nick's pocket in the Bunratty free-for-all (Found in play).
+- The sweep adds about 6 minutes to each CI shard (about 16 minutes each now, against a 30-minute limit). If CI's
+  runners are much slower than this container, `SECS` can come down to 45; the 15 s line still fits in that.
+- 60 s per way catches kids who stall early in a round. A kid who only wedges late, or only where the player goes
+  somewhere other than spawn or 10 m toward the nearest enemy, is still found by hand.
+
+## v1.153 fix-up — the stuck-kid sweep runs in eighths
+CI failed Builder sessions on v1.153 in shard 1/4, in both runs: `stuck-sweep-1` died with "page.evaluate: Target page,
+context or browser has been closed" after about 10 minutes (16:31:14 to 16:41:16). `tests/run.mjs` stops any suite
+after 10 minutes (`spawnSync`'s `timeout: 600000`), and stopping it takes the browser down mid-sweep. Part 1 of four
+(330 s here) carries the long Hollow battles and ran past that limit on CI's slower runner.
+
+Rather than raise the 10-minute limit, which is what catches a hung suite, the sweep now runs as eight suites,
+`stuck-sweep-1` to `-8`, each every eighth match (`PARTS` in `tests/lib/stuck-sweep.mjs`). They weigh 165 s each in
+`run.mjs`'s shard table, so the shards still balance. The sweep's checks and limits are unchanged, and `ONLY=` still
+sweeps any named match. Test change only; no game change.
+
+### Verified
+- `stuck-sweep-1` (now 7 matches, both ways): 129 s here, green. `SECS=5` runs of parts 1 and 8 also pass.
+- `run.mjs --shard k/4 --list`: parts 6 and 5 go to shards 1 and 2; parts 1, 3 and 7 to shard 3; parts 2, 4 and 8
+  to shard 4.
+
+## v1.154 — Nick gets off the fence
+The stuck-kid sweep's one finding (v1.153, Found in play): in Bunratty's free-for-all Nick stood in `advancing`
+within 1 m of (5.5, −28.2), by house 2's backyard, for 15–23 s without a shot. Logged every quarter second, he was
+neither hiding nor walking into a wall for good. He pushed toward his target along the fence there for about 1.5 s,
+sliding 0.4 m north. Then his flanker's bounding picked a cover behind him and walked him 0.4 m back south. The bound
+was dropped, and the push began again, a 2 s cycle. v1.121's pocket rule backs a kid out (and v1.152's routes him on
+a second pocket) once he has made no 0.5 m of progress in 2.5 s of wall-following. But that progress window restarts
+whenever a frame of the direct push is missed, and every bound missed some, so it never reached 2.5 s.
+
+- A bound that leaves him within 1.5 m of where his progress window began now keeps the window open. On the next
+  push the pocket rule fires as it would have: he backs out, and on the second pocket follows the distance field out.
+  A real bound carries a kid well past 1.5 m in under a second and lets the window lapse as before.
+- Nick's line is off the sweep's `KNOWN` list, so the sweep fails on him again if he comes back.
+
+### Verified
+- `tests/fence-bound.test.mjs` (new), 10 checks: the other kids out, Nick put on the spot advancing on a flank, the
+  player held at (−24.8, −12.1). On v1.153 he holds the spot 23.5–30 s of 30 and never gets 3 m clear (6 of 6
+  rounds; the suite fails 6 checks). On v1.154 he is 3 m clear at 6.9–8.1 s, his longest hold is 5.5–6 s, and he
+  ends the 30 s 2–6 m from the player.
+- The natural round, the sweep's walk then 60 s, 12 times: Nick's longest hold 0.5–5 s (v1.153: 23.5 s in 1 of 6).
+- `npm test` as four shards at once: 62/62 green (15 + 16 + 15 + 16), the eight sweep parts with nothing over 15 s
+  and no KNOWN line; in Bunratty's free-for-all the sweep's worst kid held a spot 1 s (Nick, walked) and 0.5 s (at spawn).
+  A baseline run at the start, beside the probes, lost 10 suites to `page.goto`'s 30 s load limit, none to a check.
+### Still open
+- The pocket rule still needs about 7 s here: a 2.5 s window, a 1.5 s back-out, a second window. In play that reads as
+  a kid fidgeting by a fence for a few seconds rather than standing there all round.
+- Nothing left on the sweep's known list; what the builder takes next is a question in decisions.
+
+## v1.154 fix-up — taggers back out of a pocket
+The stuck-kid sweep's first CI run in eighths (78cea3a, part 4) caught a tagger. In Hollow Infection Night, with the
+player walked 8 m toward the nearest enemy, Devon stood 21 s in `chasing` within 1 m of (10.5, 6.9).
+
+He was inside a fort corner: a north–south wall to his west (x 9.85–10.15, z 5.96–9.24), an east–west wall to his
+south (x 9.96–13.04, z 5.85–6.15), and, on loads where the trees fall that way, a tree at (11.18, 8.01) whose trunk
+leaves no gap to the wall's north end. Trees differ from load to load, which is why most runs pass. The pocket is
+open only to the east, away from the player. A tagger's sidestep runs at right angles to the player, here north or
+south, so he shuttled between the south wall and the tree: each committed sidestep turned round at a block, about
+twice a second.
+
+Gunners in `advancing` have had a way out of exactly this since v1.121; taggers had none. Now a second blocked
+turn-round within 3 s backs a tagger away from his target for 0.8 s, then he sidesteps again from there. If straight
+back is shut, as here where the tree is due east of the north end of his shuttle, he tries 45° and then 90° either
+side of it, starting with the side that last worked so he doesn't zigzag.
+
+### Verified
+- Probe, 30 rounds of `hollow_infection_night` with the player walked 8.1 m and Devon placed at (11, 6.9): before,
+  12 of 30 stayed 24–30 s in the corner; after, 30 of 30 get out, the longest stand-still 1 s.
+- `npm test`: 62/62, all eight stuck-sweep parts and `taggers` included.
+
+## v1.155 — Hollins Ridge High: the sixth zone opens
+Michael's A on "after Nick's fix, what next" (control room, 4 Oct): the next zone, a high school's grounds with a
+made-up name, with fields, bleachers and portables. It follows his C on place names: real roads, made-up schools.
+This is the first part, shaped like v1.130 was for Northcliff: the grounds, on the map and the ladder, with two
+scenarios that play.
+
+**Hollins Ridge High** (`buildHighSchoolScene`) is flat, 80 × 57 m inside a chain-link fence.
+- The school's two-storey brick front closes the north, with its name over the main doors under a canopy. A staff
+  row of seven cars stands nosed in along it, with gaps to walk through.
+- Six portable classrooms stand in two columns in the west, numbered P1–P6. Each is 11 × 7 m on a skirt, with an AC
+  unit, windows, and a door with a wooden landing and steps you can stand on. The columns are 3.5 m apart, which
+  gives one long sightline down the middle; the rows are 6 m apart.
+- The practice field fills the east. It has lines every 4.5 m, a goalpost at each end, three tackling sleds (1.05 m,
+  crouch cover), a ball cart, a water table and the team bench.
+- The home bleachers face the field from the south: five aluminium tiers, each 0.45 m above the one in front.
+  Collision follows the steps, so the front tiers are low cover and the back is a 2.25 m wall.
+- Between the court and the bleachers: a concession stand. On the lawn between the portables and the field: a steel
+  storage container. There is also a blacktop court with two hoops, picnic tables, dumpsters, trees and two lamps.
+- The layout is fixed, as the lot's is. Only car colours vary.
+
+Two scenarios, sixth on the ladder after Northcliff and in East Roswell's region (`hollins_ridge_high`):
+- **After the Bell** (the opener): 1v1 against Tyler with a pistol. He starts among the portables and you start at
+  the west end of the home bleachers. One hit each.
+- **The Portables** (the zone capstone for now): 3v3. You, Eric (MP5) and Rebecca (AK) at the bleachers. Ryan (UMP),
+  Mitchell (AK) and Priya (MP5) start from the school doors and deploy to the portables, the doors and the staff
+  cars. Three lives each, last team standing. The kids are ones already in the game, from Bunratty and Ridgestone;
+  the school draws from every street.
+
+The map gets a new pin, "Hollins Ridge High · School", between Holcomb Bridge Rd and Nesbit Ferry Rd, with the
+school, four portables and the field drawn under it. It is locked until Northcliff's capstone is won.
+
+At first the team start was behind the middle of the bleachers. There Rebecca (aggression 0.4, a camper) hid for the
+whole minute in 2 of 2 rounds, firing 1–82 times at nothing she could reach. The start is now the bleachers' west
+end, which looks up the field's west sideline. There she walks 0–68 m and fires 207–379 times.
+
+### Verified
+- `tests/high-school.test.mjs` (new), 21 checks:
+  - The ladder ends Northcliff, then the school. The school is locked on a new save. Winning Northcliff's capstone
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Northcliff. It sits inside the map and covers no other pin's marker or
+    label. Once Northcliff is cleared, it lists both cards with only the opener playable.
+  - Every anchor and player spawn on the grounds is clear of obstacles, and so are the player and every kid at the
+    start. The grounds hold six 11 × 7 m portables, five bleacher tiers (0.45 to 2.25 m), two goalposts and the
+    school front.
+  - After the Bell, 60 s with the player untaggable at the spawn: Tyler walks 41–92 m out of the portables, comes to
+    within 7.4–7.9 m and fires 37–56 times.
+  - The Portables, 60 s: 262–463 BBs. Both sides lose lives (enemy 1–5, ally 1–6). Every kid moves or fires. The
+    longest stall in `advancing` is 3 s.
+  - Screenshots `tests/out/high-school-{field,portables,front,bleachers,map}.png`, checked by eye.
+- The stuck-kid sweep picks the two new matches up by itself (it walks `SCENARIOS`). `ONLY=` on them, 3 runs each
+  way: worst kid 4 s (Eric at the concession stand's corner), against the 15 s line.
+- `tests/market-lot.test.mjs` and `tests/northcliff.test.mjs` had the ladder spelled out, and now include the school.
+- `npm test` as four shards at once: 61 of 63 passed (15 + 15 + 16 + 15). Two died at `page.goto`'s 30 s load limit
+  (road-slide and stuck-sweep-5, the v1.124 note) and passed alone. Stuck-sweep-5 now holds After the Bell: worst
+  kid 0.5 s either way. The Portables falls in part 6, which passed in its shard.
+### Still open
+- More school scenarios, as v1.131 gave Northcliff: a defend (the portables or the bleachers), a night match under
+  the two lamps, and a capstone. No school kids of their own yet; the kids are borrowed from other streets.
+- Whether the bleachers' stepped collision feels right to climb and fight from is for a playtest. The field is
+  meant to be dangerous to cross, and whether the sleds give enough cover is for a playtest too.
+
+## v1.156 — Hollins Ridge High: the portables defend and Friday Night Lights
+The rest of what v1.155 left open, as v1.131 rounded out Northcliff. The school now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's and Northcliff's.
+- **Hold the Portables** (defend, 90 s). You start in the lane between the middle and south rows, facing the field.
+  Marcus (UMP), Jamie (shotgun) and Trey (MP5) stage on the field (`cluster_field`, by the sleds) and come on three
+  flanks: the north end by the container, straight in, and down past the court to the south row. A tagged kid walks
+  back and comes again. The lose line says "the portables". New `portables` player spawn.
+- **Friday Night Lights** (night 4v4, the new capstone). You with Eric, Rebecca and Brooke at the bleachers, against
+  Ryan, Mitchell and Priya, with Owen's rifle as a defender by the staff cars looking down the field. Four lives
+  each. Two more lamps light the night: at the field's south-east corner and in front of the school's west wing. Both
+  also stand in the day matches as poles.
+
+### Verified
+- `tests/high-school.test.mjs`, extended to the four scenarios:
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts in the lane. Every anchor (with `cluster_field`) and spawn is clear of obstacles,
+    the new lamps included.
+  - Hold the Portables, 60 s with the player untaggable: the three attackers walk 42–64 m and fire 712 BBs. Jamie
+    comes into the portables to 2.6 m of the player, and Trey reaches the container's west side.
+  - Friday Night Lights, 60 s: 790 BBs, enemy 10 lives lost and ally 5. Every kid moves or fires, Owen holds the
+    cars and fires 16 times, and no kid stalls in `advancing`.
+  - Screenshots `high-school-night.png` and `high-school-defend.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 3 s (Eric in the night match), against the 15 s line.
+- `npm test` as four shards at once: 57 of 63 passed. Six died at `page.goto`'s 30 s load limit with no check failed:
+  lot-ffa-opening, stuck-sweep-1, -2 and -8, fort-spawn and kid-face. A container restart had cut the first run short,
+  so these ran beside the rerun. Each passed alone or two at a time.
+### Still open
+- Whether 90 s in the lane against three kids is fair. As in the creek-fort defend, it's for a playtest; at the
+  start you can see along the lane to the field and nowhere else.
+- Rebecca keeps to the bleachers' end in most rounds and fires from there (207–412 shots). She is a camper by
+  her numbers, so that is her.
+- Hollins Ridge High is complete at four scenarios. More school kids, or another zone, is Michael's call.
+
+## v1.156 fix-up — the school team-round check counts a wipe
+CI failed `headless (3/4)` on 5354d9f with one check in `high-school`: "school_portables_3v3: both sides lose lives
+(within 120 s)". In that round Eric pushed up the side and the allies took all nine enemy lives (three each) without
+losing one. Ryan, Mitchell and Priya fired 57 shots between them. That is a legitimate result, a flawless win, not a
+broken round. Locally it is a tail case: 102 sampled rounds always traded lives, and one more took all nine enemy
+lives, with the allies' first loss coming only at 80 s. Two things made it fail. The check demanded both sides lose a
+life. And the game ends a decided team round on a 600 ms `setTimeout`, which can never fire inside the test's
+synchronous `stepGame` loop, so the loop ran on to 120 s and reported the wipe as a stalled round. The loop now stops
+when a whole team is out (`npcInFight` false for every kid on it), as the game does. The check passes if both sides
+lose lives, or if one side is wiped out while it fired back. The game is unchanged.
+### Verified
+`node tests/run.mjs high-school` passed 5/5 runs. The 3v3 still breaks at 60 s with lives traded (3/2 in the logged
+run). The night 4v4 now stops at 47 s, when the allies are all out (12 lives), instead of running on to 60 s.
+### Still open
+- Nothing for play. Whether a flawless 3v3 win by the AI allies is too easy is a playtest call; it was 1 in about 100.
+
+## v1.157 — Willow Bend Country Club: the seventh zone opens
+Michael's A on "after Hollins Ridge High, what next" (control room, 4 Oct): the next place on his D.1 list, the
+country-club pool and golf course, with a made-up club name per his C on place names. Shaped like v1.155 was for the
+school: the grounds, on the map and the ladder, with two scenarios that play.
+
+**Willow Bend Country Club** (`buildCountryClubScene`) is flat, 80 × 57 m, fenced in club green.
+- The white clubhouse closes the north. It has a green roof, a covered veranda on white posts with planters by the
+  doors, and the club's name over them. The cart barn stands at the north-east, with three carts parked in front.
+- The pool fills the north-west: 16 × 7 m with lane ropes, a diving board and a lifeguard chair. A lounger row runs
+  along each long side (0.5 m, crouch cover), with umbrellas between them. The pool house stands against the west fence.
+  A 1.1 m hedge closes the deck's south and east sides, each with a gap to walk through.
+- **The water stops a body but not a BB** (`bbPass`, `noStand`, the picket-fence flags). You can shoot across the pool
+  and the pond but can't walk or jump onto them, so the pool is a wall with a window in it. Kids path round it.
+- The 18th green fills the east, with its flag, the fringe, two greenside bunkers and a fairway bunker. The fairway
+  runs south in mown stripes, with a 5 m pond and fountain on it. Two more carts stand on the cart path, which runs
+  from the barn to the south fence.
+- On the south lawn: the halfway hut, the putting green, a gazebo you can stand in, a low stone wall in two runs, and
+  willows and hardwoods.
+- The layout is fixed, as the school's is. Only cart colours vary.
+
+Two scenarios, seventh on the ladder after the school, in Horseshoe Bend's region (`willow_bend_cc`), since the
+club is Winnmark's neighbour:
+- **Pool's Closed** (the opener): 1v1 against Brooke with a pistol. She starts on the pool deck and you start by
+  the halfway hut. One hit each.
+- **The Eighteenth** (the zone capstone for now): 3v3. You, Sean (MP5) and Trey (AK) on the south lawn. Seth (AK),
+  Marcus (UMP) and Jamie (shotgun) start from the veranda and deploy to it, the barn and the pool. Three lives each,
+  last team standing. The kids are Winnmark's, from over the back fence.
+
+The map gets a new pin, "Willow Bend · Country Club", south-east of Winnmark, between Steeplechase Dr and the river.
+Under it are drawn the clubhouse, the pool and the green. It is locked until the school's capstone is won.
+
+The first draft put the diving board's stand in the 2.4 m lane between the pool's deep end and the pool house. Sean
+wedged against it in `advancing` for 5 s. The stand is now inside the pool's own footprint.
+The first pin sat where its label hid Winnmark's marker, and at 1024 × 640 it hid the Battleground label.
+`tests/map-screen.test.mjs` caught both. It now stands at the drawing's east edge, clear at all four sizes.
+
+### Verified
+- `tests/country-club.test.mjs` (new), 30 checks:
+  - The ladder ends with the school, then the club. The club is locked on a new save. Winning Friday Night Lights
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Hollins Ridge High. It sits inside the map and covers no other pin's
+    marker or label. Once the school is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The
+    grounds hold the clubhouse front, the pool and the pond as water, five carts and the cart barn.
+  - The water, walked into: the player stops at the pool's edge (z −7.67 against the edge at −8). Jumping doesn't
+    put him on it, and he stops at the pond's rim. A BB fired at 1 m across the pool's 16 m keeps going, past x = 2.
+  - Pool's Closed, 60 s with the player untaggable at the spawn: Brooke walks 59–66 m off the deck, comes within
+    7.2–8 m and fires 11–13 times.
+  - The Eighteenth, 52–60 s, 3 runs: 433–676 BBs, with lives traded (enemy 3–8 lost, allies 1–6). Every kid moves or
+    fires. No kid stands in the water at any step, and the longest stall in `advancing` is 2 s.
+  - Screenshots `tests/out/country-club-{pool,green,front,start,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (parts 1 and 2). `ONLY=` on them, both ways: worst kid 2 s (Sean by the
+  putting green, Marcus at the barn), against the 15 s line.
+- `tests/high-school.test.mjs`, `market-lot.test.mjs` and `northcliff.test.mjs` spell out the ladder and now include
+  the club. All three pass, as do `map-screen`, `spawn-facing` (the club's start has 57 m clear ahead) and `taggers`.
+- `npm test` as four shards at once, before the club, mid-edit: 62 of 63 passed. `taggers` died at `page.goto`'s 30 s
+  load limit (the v1.124 note) and passed alone on the new build.
+### Still open
+- The club's defend and a night match, as v1.156 gave the school.
+- Whether the pool as "a wall with a window in it" plays well is for a playtest. Kids go round it and shoot across it,
+  and so can you.
+
+## v1.158 — Willow Bend: Hold the Gazebo and Night Swim
+The rest of what v1.157 left open, as v1.156 rounded out the school. The club now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's, Northcliff's and the school's.
+- **Hold the Gazebo** (defend, 90 s). You start inside the gazebo on the south lawn, facing out of its open east
+  side toward the course. Its rails are now real: 0.9 m walls between the posts on the other seven sides (oriented
+  boxes, one per side). They cover you crouched and stop a body, and you can see over them standing. Marcus (UMP),
+  Jamie (shotgun) and Trey (MP5) stage on the lawn below the veranda (`cluster_course`). They come on three flanks:
+  along the pool deck to the stone wall, straight across the putting green, and round by the halfway hut. A tagged
+  kid walks back and comes again. The lose line says "the gazebo". New `gazebo` player spawn.
+- **Night Swim** (night 4v4, the new capstone). You, Sean, Trey and Brooke at the halfway hut, against Seth, Marcus
+  and Jamie, with Devon's rifle as a defender on the veranda's east end looking down the lawn. Four lives each. The
+  pool's water glows at night (v1.157's emissive). Three more lamps light it: on the pool deck, on the fairway and on
+  the south lawn. They also stand in the day matches as poles.
+
+The defend's first start faced the south fence, a sign error in the yaw. Its second faced a gazebo post 2.4 m away.
+It now looks out through the open side, with 16.7 m clear.
+
+### Verified
+- `tests/country-club.test.mjs`, extended to the four scenarios (48 checks):
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts inside the gazebo. Every anchor and spawn is clear of obstacles, the new lamps
+    included. The gazebo has six rails, and the player walking west inside it stops at one (0.6 m from the posts'
+    ring).
+  - Hold the Gazebo, 60 s with the player untaggable, 3 runs: the attackers walk 40–69 m and fire 708–712 BBs. Jamie
+    comes to 6 m, and Marcus and Trey shoot from 11–13 m.
+  - Night Swim, 60 s, 3 runs: 652–771 BBs, enemy 4–8 lives lost and ally 4–6. Every kid moves or fires. Devon holds
+    the veranda and fires 19–20 times. No kid stalls 2 s or more in `advancing`, and none stands in the water.
+  - Screenshots `country-club-{defend,night,night-pool}.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 2.5 s (Marcus in the night match), against 15 s.
+- `spawn-facing`: the club's four starts have 16.7–57.1 m clear ahead.
+- `npm test` as four shards at once on this build: 64 of 64 passed (16 + 16 + 16 + 16).
+### Still open
+- Whether 90 s in the gazebo against three kids is fair is for a playtest. The rails cover a crouch, but the
+  attackers fire about 700 BBs a minute at it.
+- Jamie, the shotgun, hangs back by the pool in both team matches. He fired 0–4 times in two of three night rounds
+  and once in one 3v3, from 35–54 m away. That is a shotgun with nobody in range. Whether he should push is for the
+  playtest.
+- Willow Bend is complete at four scenarios. What comes next is Michael's call (in decisions: A the grocery store
+  inside Riverside Market, B kids of their own, C widen the sweep, D wait; builder recommends A).

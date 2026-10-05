@@ -13,8 +13,8 @@ const only = args[0];
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
   'bb-sweep.test.mjs': 45, 'bunratty-polish.test.mjs': 56, 'bunratty-road.test.mjs': 79, 'burst-pose.test.mjs': 35,
-  'car-side-fire.test.mjs': 26, 'cars.test.mjs': 11, 'cover-fire.test.mjs': 58, 'fort-spawn.test.mjs': 72,
-  'front-door.test.mjs': 16, 'grip.test.mjs': 28, 'harness.test.mjs': 57, 'hollow-held.test.mjs': 55,
+  'car-side-fire.test.mjs': 26, 'cars.test.mjs': 11, 'country-club.test.mjs': 60, 'cover-fire.test.mjs': 58, 'fence-bound.test.mjs': 30, 'fort-spawn.test.mjs': 72,
+  'front-door.test.mjs': 16, 'grip.test.mjs': 28, 'harness.test.mjs': 57, 'high-school.test.mjs': 200, 'hollow-held.test.mjs': 55,
   'houses.test.mjs': 57, 'jump.test.mjs': 28, 'kid-climb.test.mjs': 41, 'last-kid.test.mjs': 70, 'kid-clothes.test.mjs': 41,
   'kid-face.test.mjs': 17, 'kid-hands.test.mjs': 16, 'ladder-prompt.test.mjs': 24, 'laser.test.mjs': 50,
   'loadout-gear.test.mjs': 56, 'loadout-kid.test.mjs': 23, 'lot-ffa-opening.test.mjs': 63,
@@ -22,6 +22,8 @@ const WEIGHTS = {
   'night-prowl.test.mjs': 25, 'northcliff.test.mjs': 99, 'one-ending.test.mjs': 55, 'opening-hold.test.mjs': 93,
   'pincer.test.mjs': 37, 'pocket.test.mjs': 17, 'result-text.test.mjs': 204, 'road-slide.test.mjs': 78,
   'shard.test.mjs': 1, 'shop-tabs.test.mjs': 26, 'smoke.test.mjs': 20, 'spawn-facing.test.mjs': 273,
+  'stuck-sweep-1.test.mjs': 165, 'stuck-sweep-2.test.mjs': 165, 'stuck-sweep-3.test.mjs': 165, 'stuck-sweep-4.test.mjs': 165,
+  'stuck-sweep-5.test.mjs': 165, 'stuck-sweep-6.test.mjs': 165, 'stuck-sweep-7.test.mjs': 165, 'stuck-sweep-8.test.mjs': 165,
   'taggers.test.mjs': 24, 'treehouse-hold.test.mjs': 21, 'treehouse.test.mjs': 34, 'utility-belt.test.mjs': 21,
   'walk-anim.test.mjs': 30, 'walkie.test.mjs': 25, 'whole-block.test.mjs': 24, 'winnmark-cars.test.mjs': 38, 'winnmark-fort.test.mjs': 47,
   'winnmark-props.test.mjs': 38, 'winnmark-road.test.mjs': 35, 'winnmark-trees.test.mjs': 40

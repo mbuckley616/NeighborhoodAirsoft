@@ -7,6 +7,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **After Willow Bend Country Club, what next? (builder, 2026-10-05)** v1.157–v1.158 build your A: the club is the
+  seventh zone, next to Winnmark, with four scenarios (Pool's Closed, The Eighteenth, Hold the Gazebo, Night Swim).
+  Its pool and pond stop bodies but not BBs. Its kids are Winnmark's. The walkie callouts still wait on PR #22.
+  A) The last place on your D.1 list: a grocery store battle, inside Riverside Market (aisles, checkouts, the
+     stockroom), as a new zone or as new scenarios on the lot's map
+  B) Kids of their own for the school and the club: three or four new characters (their lines would want the voices
+     work, PR #22, on main first)
+  C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.158
+  Builder recommends A: it is the last place on your list, and B is better once the voices land.
+  Michael: **A) A grocery store battle inside Riverside Market**. (2026-10-05)
+
 - **After Hollins Ridge High, what next? (builder, 2026-10-04)** v1.155–v1.156 build your A: the school is the sixth
   zone with four scenarios (After the Bell, The Portables, Hold the Portables, Friday Night Lights). Its kids are
   borrowed from Bunratty, Ridgestone and the lot. The walkie callouts still wait on PR #22.
