@@ -7770,3 +7770,27 @@ club's.
   aisle 3 only, so how much the rifle matters is for the playtest.
 - Inside Riverside Market is complete, and so is Michael's D.1 list. What next is in decisions: A kids of their own,
   B widen the sweep, C a new place, D wait. The builder recommends B.
+
+## v1.159 fix-up — a blocked fence detour falls through to the sidestep
+CI failed `headless (4/4)` on 1b821b9 with one check in `country-club`: "club_eighteenth_3v3: no kid is wedged in
+advancing for 4 s or more" (ally Trey, 4 s). The club 3v3 did this in about 7 rounds in 40 locally: Trey against a
+golf cart, Sean at the end of a hedge (Marcus too, by a rail, twice). Each stood
+completely still in 'advancing' for 4-5 s. When the direct push wedges, the wall-follow asks `fenceDetourWaypoint`
+for a fence on the straight line to the target and walks to its nearer end. That fence can be far along the line,
+while the thing actually in his way is a cart or the corner of another hedge right beside him, which blocks every
+step toward the waypoint. The side flip and the v1.103 committed sidestep only ran when there was no detour. The
+progress window never saw wall-following time long enough to back him out either. Now a detour step that moves him
+nowhere falls through to the sidestep in the same frame. A detour that moves him is unchanged.
+### Verified
+- The club 3v3 was sampled at 120 s per round. Before the fix, 7 of 40 rounds had a kid wedged in advancing for 4 s
+  or more. After it, 0 of 48 had one.
+- A probe at the wedge showed the cause: the detour waypoint was the end of a far fence, e.g. (-14.7, -11.5) for
+  Trey at (6.1, 15.5). All three step tries were blocked by the cart at x 4.58-5.82, z 12.75-15.25.
+- The full suite was run locally in four parallel shards: 62 of 65 suites passed. The three that failed
+  (shop-tabs, stuck-sweep-8, harness) were page-load timeouts at load average 15. All three passed when rerun
+  alone on v1.160, as did country-club and grocery-store.
+### Still open
+- Nothing for play beyond the usual: kids should no longer stand frozen beside a cart or a hedge end while
+  advancing.
+- One wedge probed before the fix had no detour behind it (Marcus at 5.7, -20.4, 3 s). It did not recur in the 48
+  rounds after the fix, but its cause was not traced.

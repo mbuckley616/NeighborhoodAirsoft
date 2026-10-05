@@ -25953,16 +25953,22 @@ function updateEnemies(dt) {
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
               const detour = fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
+              // v1.159 fix-up: a detour step that goes nowhere falls through to the sidestep below. The waypoint is
+              // the end of a fence further along his line, so a cart or a hedge beside him can block every step
+              // toward it; the side flip lives in the sidestep, and he stood still in 'advancing' for 4-5 s (the
+              // club's 18th: Trey against a golf cart, Sean at the end of a hedge).
+              let detoured = false;
               if (detour) {
                 const ddx = detour.x - e.pos.x, ddz = detour.z - e.pos.z;
                 const dlen = Math.hypot(ddx, ddz) || 1;
                 const fstep = speed * dt;
                 const fx = e.pos.x + (ddx / dlen) * fstep;
                 const fz = e.pos.z + (ddz / dlen) * fstep;
-                if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
-                else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
-                else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
-              } else {
+                if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; detoured = true; }
+                else if (!collidesObstacles(fx, e.pos.z, kidRadius)) { e.pos.x = fx; detoured = true; }
+                else if (!collidesObstacles(e.pos.x, fz, kidRadius)) { e.pos.z = fz; detoured = true; }
+              }
+              if (!detoured) {
               // perpendicular to the player direction
               let px = -dz / d, pz = dx / d;
               if (!e._advSide) e._advSide = (Math.random() < 0.5 ? 1 : -1);
