@@ -22,7 +22,8 @@ const ladder = await page.evaluate(() => {
   return { keys, ids, before, after, afterFirst, region: REGIONS.east_roswell.streets.riverside_market_inside };
 });
 check('the ladder ends with the store, after Willow Bend', ladder.keys.slice(-2).join() === 'country_club,grocery_store', ladder.keys);
-check('the store runs the 1v1 opener, then the 3v3', ladder.ids.join() === 'store_1v1_tyler,store_price_check_3v3', ladder.ids);
+check('the store runs the 1v1 opener, the 3v3, then the desk defend and the night 4v4 (v1.160)',
+  ladder.ids.join() === 'store_1v1_tyler,store_price_check_3v3,store_defend_desk,store_night_4v4', ladder.ids);
 check('its street is in East Roswell', ladder.region === 'Inside Riverside Market', ladder.region);
 check('the store is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the club opens the opener only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -76,13 +77,15 @@ for (const id of ladder.ids) {
     const backWall = obs.filter(o => o.minZ === -18.6 && o.maxZ === -18.0).length;   // four pieces = three doorways
     const pallets = obs.filter(o => o.minZ < -18.6 && o.surface === 'wood').length;
     const racks = obs.filter(o => o.h === 3.2 && o.surface === 'metal').length;
-    return { kids, badAnchors, badSpawns, shelves, counters, tables, freezers, backWall, pallets, racks,
+    const atDesk = Math.hypot(p.pos.x - 24, p.pos.z - 13.5) < 0.6;   // v1.160: the defend's player behind the service desk
+    return { kids, badAnchors, badSpawns, shelves, counters, tables, freezers, backWall, pallets, racks, atDesk,
       player: inside(p.pos.x, p.pos.z), scene: built.name, indoor: !!built.indoor };
   });
   check(`${id}: every anchor and player spawn in the store is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
   check(`${id}: the player and every kid spawn clear of obstacles`, !start.player && start.kids.every(k => !k.stuck), start);
   check(`${id}: the store has 12 shelf runs, 6 checkouts, 8 produce tables, 4 freezers, 3 stockroom doorways, pallets and racking`,
     start.shelves === 12 && start.counters === 6 && start.tables === 8 && start.freezers === 4 && start.backWall === 4 && start.pallets >= 6 && start.racks === 3, start);
+  if (id === 'store_defend_desk') check(`${id}: the player starts behind the service desk`, start.atDesk, start);
   const r = await page.evaluate(() => {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
@@ -121,7 +124,13 @@ for (const id of ladder.ids) {
     check(`${id}: the stockroom kids come through the back wall onto the floor`, r.kids.filter(k => k.t !== 'player').some(k => k.front), r.kids);
     check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
       (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
-  } else check(`${id}: Tyler comes out of the back to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
+  // v1.160: the defend's attackers come out of the stockroom to within 10 m of the desk
+  } else if (id === 'store_defend_desk') check(`${id}: an attacker comes out of the back to within 10 m of the desk`,
+    Math.min(...r.kids.map(k => k.nearest)) < 10, r.kids);
+  else check(`${id}: Tyler comes out of the back to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
+  // v1.160: Devon holds the centre doorway in the night match and fires
+  if (id === 'store_night_4v4') { const d = r.kids.find(k => k.n === 'Devon');
+    check(`${id}: Devon holds the stockroom's centre doorway and fires`, d && Math.hypot(d.at[0] + 1, d.at[1] + 20) < 4 && d.fired > 0, d); }
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
@@ -197,6 +206,16 @@ await view(10, 6, Math.PI * 0.72); await g.shot('grocery-store-checkouts');
 await view(0, -10, 0); await g.shot('grocery-store-stockroom');
 await view(-14, 9, Math.PI * 0.3); await g.shot('grocery-store-produce');
 await view(10, -6, -Math.PI * 0.5); await g.shot('grocery-store-freezers');
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+// v1.160: the night match (the ceiling dark, the coolers and the night lights on) and the defend's start
+await g.scenario('store_night_4v4');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
+await view(11, 14.8, 0.06); await g.shot('grocery-store-night');
+await view(-1.75, -14, 0); await g.shot('grocery-store-night-dairy');
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('store_defend_desk');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; stepGame(1 / 60); });
+await g.shot('grocery-store-defend');
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

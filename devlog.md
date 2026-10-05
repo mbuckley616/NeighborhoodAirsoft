@@ -7733,3 +7733,40 @@ The first draft had three faults, each caught by the new test:
   the cross aisle and the open ends. The 3v3's opening is mostly long shots down the aisles: Marcus fired 278–312
   times in two of the runs.
 - Brooke spends the 3v3 near the west checkouts and fires from there, about 30 m walked a round.
+
+## v1.160 — Inside Riverside Market: Customer Service and Lights Out
+The rest of what v1.159 left open, as v1.156 and v1.158 rounded out the school and the club. The store now runs four
+scenarios: 1v1, 3v3, defend, then a night 4v4. That is the same arc as the lot's, Northcliff's, the school's and the
+club's.
+- **Customer Service** (defend, 90 s). You start in the corner behind the service desk, inside the front doors. The
+  1.1 m counter covers you on its north and west sides, and the way in runs along the east wall past the deli. Marcus
+  (UMP), Jamie (shotgun) and Tyler (MP5) stage in the stockroom (`cluster_north`). They come on three flanks: down the
+  deli wall (`b_deli_s`, new), through the freezers (`b_frozen_s`, new) and round by the checkouts to the doors. A
+  tagged kid walks back and comes again. The lose line says "the service desk". New `desk` player spawn, facing up
+  the east wall.
+- **Lights Out** (night 4v4, the new capstone). You, Eric, Brooke and Rebecca at the checkouts, against Marcus, Jamie
+  and Tyler, with Devon's rifle as a defender in the stockroom's centre doorway (`a_door_c`, new), looking straight
+  down aisle 3. Four lives each. The ceiling is dark. The coolers glow down the back aisle, the exit signs are red, and
+  eight night lights hang over the floor (all built in v1.159, now used).
+
+### Verified
+- `tests/grocery-store.test.mjs`, extended to the four scenarios (52 checks):
+  - The ladder order is opener, 3v3, defend, night.
+  - The defend's player starts behind the service desk. Every anchor and spawn is clear of obstacles, the three new
+    anchors included.
+  - Customer Service, 60 s with the player untaggable: the attackers walk 40–106 m and fire 718 BBs. Jamie comes to
+    3.3 m and Tyler to 3.6 m, both at the desk's corner, and Marcus shoots from 13 m.
+  - Lights Out, 60 s: 719 BBs, enemy 8 lives lost and ally 3. Every kid moves or fires. Devon holds the doorway and
+    fires 19 times. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `grocery-store-{night,night-dairy,defend}.png`, checked by eye.
+- The stuck-kid sweep, over all four store matches both ways, in the full run: worst kid 3 s (Jamie in the stockroom
+  in the defend), against 15 s.
+- `npm test` as four shards at once on this build: the container restarted with 42 of 65 suites done and none
+  failed. The other 23 ran in four lanes on the same build and all passed, so all 65 passed.
+### Still open
+- Whether 90 s behind the desk is fair is for a playtest. Jamie and Tyler reach the desk's corner at 3–4 m, and the
+  attackers fire about 700 BBs a minute.
+- In the night match the allies lose fewer lives than the enemy (8 to 3 in the logged round). Devon's doorway covers
+  aisle 3 only, so how much the rifle matters is for the playtest.
+- Inside Riverside Market is complete, and so is Michael's D.1 list. What next is in decisions: A kids of their own,
+  B widen the sweep, C a new place, D wait. The builder recommends B.

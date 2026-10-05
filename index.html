@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.159</div>
+  <div class="version">v1.160</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6456,6 +6456,54 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 155, lose: 35 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.160: hold the service desk for 90 s against a push out of the stockroom ---
+  store_defend_desk: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Customer Service',
+    desc: "You've got the service desk, the corner behind the counter by the front doors. The counter comes up to your chest on two sides; the way in is along the east wall, past the deli. Marcus, Jamie and Tyler come out of the stockroom: one down the deli wall, one through the freezers, one round by the checkouts. A tagged kid walks back to the stockroom and comes again. Crouch and the counter covers you; stand and you can see over it. Survive 90 seconds.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the service desk',
+    playerSpawn: 'desk',
+    enemySpawnCluster: 'cluster_north',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'ump',     anchor: 'b_deli_s',  role: 'attacker', flank: 'L' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_frozen_s', role: 'attacker', flank: 'C' },
+      { charId: 'tyler',  weapon: 'mp5',     anchor: 'b_doors',   role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 115, lose: 27 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.160: the zone capstone, 4v4 with the lights off ---
+  store_night_4v4: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Lights Out',
+    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Marcus, Jamie and Tyler are back, and they've brought Devon, who's set up with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. You've got Eric, Brooke and Rebecca at the checkouts. Four a side, four lives each.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',    weapon: 'mp5',     anchor: 'b_lane_w',  team: 'player' },
+      { charId: 'brooke',  weapon: 'ump',     anchor: 'b_service', team: 'player' },
+      { charId: 'rebecca', weapon: 'ak47',    anchor: 'b_produce', team: 'player' },
+      { charId: 'marcus',  weapon: 'ak47',    anchor: 'a_stock_w' },
+      { charId: 'jamie',   weapon: 'shotgun', anchor: 'a_dairy' },
+      { charId: 'tyler',   weapon: 'ump',     anchor: 'a_frozen' },
+      { charId: 'devon',   weapon: 'sniper',  anchor: 'a_door_c', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 175, lose: 40 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -15626,6 +15674,7 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     a_dairy:    A(-6, -15),
     a_deli:     A(24.6, -6),
     a_frozen:   A(17.25, -7),
+    a_door_c:   A(-1, -20),         // v1.160: the stockroom side of the centre doorway, looking straight down aisle 3
     // Team B — the checkouts and the front of the store
     b_lane_w:   A(-18.75, 13.5),
     b_lane_c:   A(-5.25, 13.5),
@@ -15633,12 +15682,15 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     b_produce:  A(-20.5, 8.5),
     b_doors:    A(8, 16.4),
     b_endcap:   A(-1.75, 11.2),
+    b_deli_s:   A(24.4, 4),         // v1.160: the defend's attack spots near the desk: the deli wall's south end,
+    b_frozen_s: A(17.25, 8.5),      //   the freezers' south end
     cluster_north: { pos: P(0, -26), cover: null },
     cluster_south: { pos: P(8, 16), cover: null },
   };
   const playerSpawns = {
     team_b: { pos: P(11, 14.8), yaw: 0.06 },          // inside the doors, looking up the floor past the freezers (yaw 0 faces -z); allies start 2 m either side in z
     team_a: { pos: P(0, -26), yaw: Math.PI },
+    desk:   { pos: P(24, 13.5), yaw: Math.PI * 0.08 },   // v1.160: the defend, in the corner behind the service desk, facing up the east wall
   };
 
   const allObs = [...obstacles];
@@ -26901,6 +26953,8 @@ const PIN_SCENARIO_GROUPS = {
   grocery_store: [
     'store_1v1_tyler',
     'store_price_check_3v3',
+    'store_defend_desk',     // v1.160
+    'store_night_4v4',       // v1.160: the zone capstone
   ],
 };
 
