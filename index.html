@@ -25964,7 +25964,17 @@ function updateEnemies(dt) {
               if (!advCommitted) e._advStuck = (e._advStuck || 0) + dt;
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
-              const detour = fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
+              // v1.161 fix-up: a detour that slides him without getting him nearer its waypoint is dropped for 1.5 s,
+              // as the taggers' is (v1.125). On the club's 18th Marcus slid 3 cm a frame along a bench toward the
+              // waypoint, into its corner, then the sidestep threw him back out: 4 s and more in 'advancing', and
+              // he moved every frame, so neither v1.159's fall-through nor the pocket rule caught it.
+              if (e._advDetBan > 0) e._advDetBan -= dt;
+              const detour = (e._advDetBan > 0) ? null : fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
+              if (detour) {
+                const dd = Math.hypot(detour.x - e.pos.x, detour.z - e.pos.z);
+                if (e._advDetFor !== detour.x + ',' + detour.z || dd < e._advDetBest - 0.3) { e._advDetFor = detour.x + ',' + detour.z; e._advDetBest = dd; e._advDetT = 0; }
+                else if ((e._advDetT = (e._advDetT || 0) + dt) > 0.8) { e._advDetBan = 1.5; e._advDetT = 0; e._advDetFor = null; }
+              }
               // v1.159 fix-up: a detour step that goes nowhere falls through to the sidestep below. The waypoint is
               // the end of a fence further along his line, so a cart or a hedge beside him can block every step
               // toward it; the side flip lives in the sidestep, and he stood still in 'advancing' for 4-5 s (the

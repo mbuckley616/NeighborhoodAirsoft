@@ -7890,3 +7890,25 @@ is shared AI, so it applies to every flanker on every map.
 ### Still open
 - Flankers bound a little less wherever a long cover lies end-on to their target. They push straight instead. Whether
   that is visible in play is for a playtest.
+
+## v1.161 fix-up — an advancing kid drops a detour that is not getting him nearer
+CI failed `headless (3/6)` on 6ae6329: "club_eighteenth_3v3: no kid is wedged in advancing for 4 s or more"
+(Marcus, 4 s). That is the v1.159 fix-up's check, with that fix already in. A 4 s threshold probe found 5-7 such rounds
+in 120, all but two of them Marcus at the south-east corner of the bench at x 13-15, z -4.3 to -3.7, chasing the
+player to the north-north-west. Hooking writes to his position showed the loop. The fence detour (the bench lets BBs
+pass, so it counts as a fence) slid him along x 3 cm a frame toward its waypoint, into the corner, for four frames.
+On the fifth every step toward the waypoint was blocked, v1.159's fall-through ran the sidestep, and that threw him
+12 cm back east. He moved every frame, so v1.159's "goes nowhere" test never caught the detour. The pocket rule's
+back-out found a free side after one step and handed straight back to the same slide. Advancing kids now do what the
+taggers have done since v1.125: if 0.8 s of detour steps gets him no 0.3 m nearer the waypoint, detours are dropped
+for 1.5 s, and the ordinary wall-follow (side flips, committed sidesteps, the pocket back-out) takes over. A detour
+that is working gains 0.3 m in well under 0.8 s and is untouched.
+### Verified
+- The club 3v3, probed at 4 s or more in 'advancing': 5-7 rounds in about 120 before, 0 in about 96 after (one
+  probe browser timed out under load).
+- The full suite was run locally in six shards, three at a time: 63 of 66 suites passed. treehouse and utility-belt
+  were page-load timeouts under load. northcliff_twins_3v3 had one round with no enemy life lost in 120 s; that
+  round sampled 10 times with and without the change took enemy lives every time. All three suites, plus
+  country-club and grocery-store, passed when rerun alone on v1.163.
+### Still open
+- A tried change, ending a blocked pocket route in a back-out, did not help (7 rounds in 120) and was reverted.
