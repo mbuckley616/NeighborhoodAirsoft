@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.160</div>
+  <div class="version">v1.161</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -15690,7 +15690,7 @@ function buildGroceryStoreScene(variant, timeOfDay) {
   const playerSpawns = {
     team_b: { pos: P(11, 14.8), yaw: 0.06 },          // inside the doors, looking up the floor past the freezers (yaw 0 faces -z); allies start 2 m either side in z
     team_a: { pos: P(0, -26), yaw: Math.PI },
-    desk:   { pos: P(24, 13.5), yaw: Math.PI * 0.08 },   // v1.160: the defend, in the corner behind the service desk, facing up the east wall
+    desk:   { pos: P(19.5, 13.8), yaw: Math.PI * 0.08 }, // v1.160: the defend, behind the service desk, facing up the east wall; v1.161: inside the counter's L (was (24, 13.5), in the open gap east of it)
   };
 
   const allObs = [...obstacles];

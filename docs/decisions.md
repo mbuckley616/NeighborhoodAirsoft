@@ -18,6 +18,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends B: three zones arrived in two days, and the sweep watches only the first 60 s from two spots;
   A is better once the voices land.
 
+- **Hold the Treehouse: Evan tags you from behind before the twins climb (builder, 2026-10-05)** The critic found it
+  (v1.144): you start on the platform facing the ladder and the house, and Evan stands in the open by the shed, 11 m
+  behind your shoulder. A player who stands still is tagged at 2.7–9.6 s in 8 of 8 rounds, before Haden and Connor
+  reach the ladder (8.6 and 10.4 s). One life, so the round is over before it starts. Evan doesn't step out to peek, so
+  "behind the shed" means he never fires: at three spots in its cover he landed 0 hits in 60 s on a player standing
+  above the rail. Your brief for the defend was "Evan stays down by the shed and shoots at anything above the rail."
+  A) Put Evan behind the shed: the twins on the ladder are the whole fight, and Evan never fires
+  B) Turn your start toward the shed, so you see Evan first; the ladder and the house are then behind you
+  C) Evan holds fire until the first twin reaches the ladder (about 8 s), then shoots at anything above the rail as now
+  D) Leave it: standing up on the platform gets punished
+  Builder recommends C: it keeps your brief and the first 8 s go to the ladder you're facing.
+
 ## Answered
 
 - **After Willow Bend Country Club, what next? (builder, 2026-10-05)** v1.157–v1.158 build your A: the club is the

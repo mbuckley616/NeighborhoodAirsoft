@@ -7811,3 +7811,25 @@ shard is. The weights in `tests/run.mjs` are now the per-suite times measured in
 - CLAUDE.md still says CI runs four shards. That file is Michael's, so it is left for him or the producer.
 - If `main`'s branch protection names the old `headless (k/4)` checks rather than `headless`, it needs updating. This
   session cannot read it (403).
+
+## v1.161 — Customer Service starts you behind the desk
+The critic's first bug from the store (Found in play, v1.160). Customer Service is meant to start you in the corner
+behind the service desk, and its briefing says so. The start was at (24, 13.5), which is east of the desk's arm, in the
+3.3 m gap between the counter's end and the east wall. That spot is open to the whole east aisle, the way the
+attackers come in. The critic stood a player there in 17 rounds and all 17 were tagged, at 7.6–14.3 s, crouched or
+not, mostly by Marcus from 13 m. The start is now inside the counter's L, at (19.5, 13.8). The desk's front (x 16.5–22.5,
+z 11–12) covers it from the north and the arm (x 21.5–22.5) from the east. The facing is unchanged, up the east wall.
+
+The run also took the critic's Hold the Treehouse report, where Evan by the shed tags you from behind before the twins
+climb. It reproduced (8 of 8 standing rounds, at 2.7–9.6 s). Evan doesn't step out to peek, though. At three spots in
+the shed's cover he landed 0 hits in 60 s on a player standing above the rail, against Michael's brief that he "shoots
+at anything above the rail". The fix is a choice between those, so it is in decisions (builder recommends C: Evan holds
+fire until the first twin reaches the ladder). The code was put back as it was.
+### Verified
+- `tests/desk-start.test.mjs` (new): 6 rounds standing still at the start for 20 s. 1 round was tagged, at 19.6 s.
+  The same suite on v1.160 failed: the start was outside the L, and all 6 rounds were tagged at 10.7–13.8 s.
+- `tests/grocery-store.test.mjs` passes with its start check moved inside the L. Customer Service's attackers still
+  come out of the back to within 10 m of the desk. `spawn-facing` passes.
+### Still open
+- Whether 90 s behind the desk is now too easy is for a playtest. The critic saw 21–70 s to the first tag from this
+  spot, and 1 of 6 rounds held the full 90 s.
