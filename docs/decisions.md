@@ -5,6 +5,34 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.14 More guns and attachments: which first? (builder, 2026-10-05)** Your note: more gun variety and attachments,
+  but kid-toned, not military LARPing. Today there are 8 guns (spring pistol, shotgun, sniper and assault rifle, then
+  MP5, UMP, MAC-10, AK-47) and 5 attachments (red dot, 4× scope, red and green laser, flashlight), on a sight slot and
+  one or two side rails. Each option below is one or two builder runs, shown to you before the next.
+  A) Backyard guns: four new guns kids actually own, each with its own feel: a pump-up "Thunder" air shotgun (pump
+     between shots, wide spread), a revolver-style six-shooter (fast cock, six-round cylinder), a hopper-fed electric
+     "bucket gun" (huge mag, weak and slow BBs), and a long-barrel bolt pistol (accurate, slow). Shop's Guns tab
+  B) Homemade attachments: a new under-barrel slot and four parts with real trade-offs, not straight upgrades: a
+     duct-taped second mag (faster reload, heavier), a sling (faster swap and sprint), a foregrip (less spread while
+     moving, slower aim), a cardboard barrel extension (straighter BBs, slower handling). Mods tab and the workbench
+  C) Paint and stickers: per-gun colour (orange tip stays), camo tape and stickers on the workbench; cosmetic only
+  D) A then B: guns first, then the under-barrel parts for them
+  Builder recommends D: new guns change matches most, and the parts then have more guns to sit on. Each piece is its own
+  version and test; nothing is military in name or look.
+
+- **D.15 A new match type: which, and where? (builder, 2026-10-05)** Your note: one or two new scenario types, e.g. VIP,
+  where each side's VIP has one life and the rest respawn. Today every match is one of: eliminate (1v1s,
+  free-for-alls), team last-standing (3v3, 4v4, Juggernaut), hold-out defends, and Infection.
+  A) VIP, as you described: each team guards one VIP kid (one life, pistol only, a cap on his head); everyone else
+     respawns. Tag their VIP to win, lose yours and you lose. Your side's VIP is an ally kid you escort. Two matches
+     first: Bunratty day 4v4 and a night one at the market lot
+  B) VIP with you as the VIP: one life, pistol only, your allies respawn round you. The same two matches
+  C) Capture the Flag (kid style: a bandana on a fence post), unlimited respawns, first to 2 captures, 3v3 on The Hollow
+     and the school's practice field
+  D) A and C: VIP now, Capture the Flag after, two matches each
+  Builder recommends A: it is the one you named, it uses the respawn and ally AI that already work, and B's one-life
+  player is close to what defends already are. C needs new carry-and-return AI and is bigger.
+
 - **Hold the Treehouse: Evan tags you from behind before the twins climb (builder, 2026-10-05)** The critic found it
   (v1.144): you start on the platform facing the ladder and the house, and Evan stands in the open by the shed, 11 m
   behind your shoulder. A player who stands still is tagged at 2.7–9.6 s in 8 of 8 rounds, before Haden and Connor
