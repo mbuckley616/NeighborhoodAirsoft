@@ -21,6 +21,7 @@ Fable card on the control room and Michael starts it from there.
    over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.~~ — done, v1.93 (0.4–2.2% now)
 4. ~~CI's headless job runs into its 45-minute limit: since 2 Oct about half the runs are cancelled at 45 min (passing runs take 30–40 min with 46–49 suites), so merges wait on re-runs. Raise `timeout-minutes` in `.github/workflows/check.yml` or split the suites across jobs (producer, 2026-10-02).~~ — done, v1.145 (four parallel shard jobs, `run.mjs --shard k/4`, balanced by measured suite times, 30 min each; a `headless` job collects them; `tests/shard.test.mjs`)
 5. ~~Northcliff twins 3v3: ally Andrew held `retreating` within 1 m of (-6.3, -1) for 17 s with 0 shots, with the player walked 10 m toward the enemy. The stuck-kid sweep caught it once in CI on the v1.160 merge (PR #33, shard 1/6, 5 Oct 14:06 UTC); the same code passed on rerun and on the branch, so it is intermittent (producer, 2026-10-05).~~ — done, v1.164 (a retreating kid is sent home after 1.2 s without getting 0.3 m nearer it, not 1.2 s without moving; he was creeping 3–5 cm along a wall about once a second; `tests/retreat-progress.test.mjs`)
+6. NPCs are sometimes holding guns awkwardly. We should take a pass at ensuring guns are anchored properly and that the held positions are not awkward. (Michael, control room, 2026-10-05)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
@@ -170,6 +171,8 @@ Fable card on the control room and Michael starts it from there.
    neighborhood kids. (Michael, control room, 2026-10-05) **(design)**
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
    that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)**
+16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
+   2026-10-05)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
