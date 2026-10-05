@@ -77,7 +77,7 @@ for (const id of ladder.ids) {
     const backWall = obs.filter(o => o.minZ === -18.6 && o.maxZ === -18.0).length;   // four pieces = three doorways
     const pallets = obs.filter(o => o.minZ < -18.6 && o.surface === 'wood').length;
     const racks = obs.filter(o => o.h === 3.2 && o.surface === 'metal').length;
-    const atDesk = Math.hypot(p.pos.x - 24, p.pos.z - 13.5) < 0.6;   // v1.160: the defend's player behind the service desk
+    const atDesk = p.pos.x > 16.5 && p.pos.x < 21.5 && p.pos.z > 12 && p.pos.z < 15.5;   // v1.160: the defend's player behind the service desk; v1.161: inside the counter's L (front x 16.5–22.5 at z 11–12, arm at x 21.5–22.5)
     return { kids, badAnchors, badSpawns, shelves, counters, tables, freezers, backWall, pallets, racks, atDesk,
       player: inside(p.pos.x, p.pos.z), scene: built.name, indoor: !!built.indoor };
   });

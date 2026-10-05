@@ -7811,3 +7811,177 @@ shard is. The weights in `tests/run.mjs` are now the per-suite times measured in
 - CLAUDE.md still says CI runs four shards. That file is Michael's, so it is left for him or the producer.
 - If `main`'s branch protection names the old `headless (k/4)` checks rather than `headless`, it needs updating. This
   session cannot read it (403).
+
+## v1.161 — Customer Service starts you behind the desk
+The critic's first bug from the store (Found in play, v1.160). Customer Service is meant to start you in the corner
+behind the service desk, and its briefing says so. The start was at (24, 13.5), which is east of the desk's arm, in the
+3.3 m gap between the counter's end and the east wall. That spot is open to the whole east aisle, the way the
+attackers come in. The critic stood a player there in 17 rounds and all 17 were tagged, at 7.6–14.3 s, crouched or
+not, mostly by Marcus from 13 m. The start is now inside the counter's L, at (19.5, 13.8). The desk's front (x 16.5–22.5,
+z 11–12) covers it from the north and the arm (x 21.5–22.5) from the east. The facing is unchanged, up the east wall.
+
+The run also took the critic's Hold the Treehouse report, where Evan by the shed tags you from behind before the twins
+climb. It reproduced (8 of 8 standing rounds, at 2.7–9.6 s). Evan doesn't step out to peek, though. At three spots in
+the shed's cover he landed 0 hits in 60 s on a player standing above the rail, against Michael's brief that he "shoots
+at anything above the rail". The fix is a choice between those, so it is in decisions (builder recommends C: Evan holds
+fire until the first twin reaches the ladder). The code was put back as it was.
+### Verified
+- `tests/desk-start.test.mjs` (new): 6 rounds standing still at the start for 20 s. 1 round was tagged, at 19.6 s.
+  The same suite on v1.160 failed: the start was outside the L, and all 6 rounds were tagged at 10.7–13.8 s.
+- `tests/grocery-store.test.mjs` passes with its start check moved inside the L. Customer Service's attackers still
+  come out of the back to within 10 m of the desk. `spawn-facing` passes.
+### Still open
+- Whether 90 s behind the desk is now too easy is for a playtest. The critic saw 21–70 s to the first tag from this
+  spot, and 1 of 6 rounds held the full 90 s.
+
+## v1.162 — The store's result lines are indoor lines
+The critic's second store bug (Found in play, v1.160). The result screen's place words come from a small table in
+`endScenario`, and that table knew only the Hollow. Every other map got the street's words. In the store, a Price
+Check or Lights Out loss read "…regroup near the road". Holding the desk for 90 s read "Distant screen doors slam",
+inside a supermarket. The store now has its own entry:
+- Team losses: "…regroup back in the stockroom", where the other side starts.
+- A defend won by killing everyone: "…slide down against the shelves, defeated."
+- A defend won on the timer keeps its heading, MOM CALLED THEM IN!, but the line is now "Their phones buzz all at
+  once. Marcus groans — "Aw, COME ON!" — and Jamie and Tyler head for the doors." The one-kid form is ready too.
+Customer Service's loss already said "take the service desk" (v1.160's `resultHold`).
+### Verified
+- `tests/result-text.test.mjs` now ends Price Check, Customer Service and Lights Out every way (win, timer win, lose,
+  forfeit). No store line names a road, curb or screen door, both team losses regroup in the stockroom, the timer win
+  has the phones, and the defend loses the service desk. The suite's old checks (quotes, commas, allies, the Hollow,
+  the forts) still pass.
+### Still open
+- Nothing for play. Only the Hollow and the store have their own words. The school and the club still use the
+  street's road and curb, which fit outdoors well enough. Nobody has flagged them.
+
+## v1.161 fix-up — the desk-start check sits under the measured tag times
+CI failed `headless (6/6)` on 6ae6329 with one check in v1.161's `desk-start`: "standing at the start, at most 2 of
+6 rounds are tagged inside 20 s". Three rounds were tagged, at 19.3, 19.4 and 19.5 s. Locally, a player standing at
+the new start inside the service desk's L is tagged in every round, at 19.3-23.7 s (40 rounds). 14 of the 40 fall
+just under 20 s, so with six rounds the check failed about a third of the time. The start is fine: the old one was
+tagged at 7.6-14.3 s, and nothing now comes close to that. Only the line was in the middle of the new spread. The
+check is now that no round is tagged inside 18 s. The "no tag before 10 s" check stays. The game is unchanged.
+### Verified
+- 40 sampled rounds, standing at the start, were tagged at 19.3-23.7 s.
+- `node tests/run.mjs desk-start` passed 3/3 runs.
+### Still open
+- Whether about 20 s of cover at the desk feels right is for the playtest.
+
+## v1.163 — A bound has to gain ground where he'll stand
+The critic's last store bug (Found in play, v1.159). In Price Check your ally Eric stood in `advancing` within 1 m of
+(17.2, −2.4) for 6–15 s in 3 of 10 rounds. That spot is the 2.5 m gap between the four chest freezers. A probe showed
+he was bounding the whole time. Marcus was 20 m north, and the two north freezers are 8 m long, end-on to him.
+`pickBoundCover` measures how much a cover gains by its centre, which is 4–5 m nearer Marcus. But a kid walks to the
+cover's stand spot, which for those freezers is their south end, level with the gap. So Eric reached the west
+freezer's end, was offered the east freezer's end 2 m across the gap, and walked to it. As Marcus moved, the spot moved
+too, so the 1 s no-gain check kept resetting. Then he was offered the west one again. Now a cover is offered only if
+its stand spot is itself at least 1 m nearer the target. The centre test (2 m) and everything else are unchanged. This
+is shared AI, so it applies to every flanker on every map.
+### Verified
+- `tests/bound-forward.test.mjs` (new):
+  - The pick from Eric's spot in the gap, against Marcus at four places along the stockroom: on v1.162 it offered the
+    east freezer's end every time, 0.1–0.8 m farther from the target. It now offers nothing, so he takes the direct
+    push.
+  - 6 rounds of Price Check, 120 s each, the player untaggable. Eric's longest stay within 1 m spent mostly advancing
+    was 0.8–2.8 s. On v1.162 the same suite failed, with 8.7 s in one round.
+- A 16-round probe at 150 s: Eric spent at most 3.5 s in the gap in any round. His long stays were all hiding or
+  shooting. Before the fix it was 11.3 s, and 3 of 8 rounds had a stay of 4 s or more.
+- `npm test` as four shards at once on this build: 67 of 67 suites passed (16 + 17 + 17 + 17), the eight stuck-kid
+  sweeps and the cover-fire, pocket and last-kid suites included.
+### Still open
+- Flankers bound a little less wherever a long cover lies end-on to their target. They push straight instead. Whether
+  that is visible in play is for a playtest.
+
+## v1.161 fix-up — an advancing kid drops a detour that is not getting him nearer
+CI failed `headless (3/6)` on 6ae6329: "club_eighteenth_3v3: no kid is wedged in advancing for 4 s or more"
+(Marcus, 4 s). That is the v1.159 fix-up's check, with that fix already in. A 4 s threshold probe found 5-7 such rounds
+in 120, all but two of them Marcus at the south-east corner of the bench at x 13-15, z -4.3 to -3.7, chasing the
+player to the north-north-west. Hooking writes to his position showed the loop. The fence detour (the bench lets BBs
+pass, so it counts as a fence) slid him along x 3 cm a frame toward its waypoint, into the corner, for four frames.
+On the fifth every step toward the waypoint was blocked, v1.159's fall-through ran the sidestep, and that threw him
+12 cm back east. He moved every frame, so v1.159's "goes nowhere" test never caught the detour. The pocket rule's
+back-out found a free side after one step and handed straight back to the same slide. Advancing kids now do what the
+taggers have done since v1.125: if 0.8 s of detour steps gets him no 0.3 m nearer the waypoint, detours are dropped
+for 1.5 s, and the ordinary wall-follow (side flips, committed sidesteps, the pocket back-out) takes over. A detour
+that is working gains 0.3 m in well under 0.8 s and is untouched.
+### Verified
+- The club 3v3, probed at 4 s or more in 'advancing': 5-7 rounds in about 120 before, 0 in about 96 after (one
+  probe browser timed out under load).
+- The full suite was run locally in six shards, three at a time: 63 of 66 suites passed. treehouse and utility-belt
+  were page-load timeouts under load. northcliff_twins_3v3 had one round with no enemy life lost in 120 s; that
+  round sampled 10 times with and without the change took enemy lives every time. All three suites, plus
+  country-club and grocery-store, passed when rerun alone on v1.163.
+### Still open
+- A tried change, ending a blocked pocket route in a back-out, did not help (7 rounds in 120) and was reverted.
+
+## v1.164 — A retreating kid who isn't getting home is sent home
+Backlog B.5, from the producer: in one CI run the stuck-kid sweep caught Northcliff twins 3v3's ally Andrew in
+`retreating` within 1 m of (-6.3, -1) for 17 s, with the player walked toward the enemy. It passed on rerun. A probe
+of 8 rounds found it twice: Andrew once at that spot for 11 s, and Connor on the other side, at (-7.9, 1.4), for 11 s.
+A kid with lives left who is tagged jogs back to his spawn to come out again (`retreating`). Since v1.23 a watchdog
+sends him straight home if he is stuck for 1.2 s, but "stuck" meant "moved under 2 cm this frame". Pressed into a wall
+on the way, Andrew slid 3-5 cm about once a second. Each slide reset the watchdog, so it never fired. The watchdog now
+counts ground gained toward spawn instead: 1.2 s without getting 0.3 m nearer home and he is home and redeploying. A
+kid on a clear run gains 0.3 m in a tenth of a second, so only a wedged retreat is affected. While retreating a kid is
+out of the fight, so nothing a player sees changes except that he comes back out sooner. This is shared AI: every
+team match and every defend with respawning attackers.
+### Verified
+- `tests/retreat-progress.test.mjs` (new):
+  - Staged: Andrew retreating at (-6.4, -0.95), every step blocked except a 5 cm creep every 50 frames. He is home and
+    deploying at 1.23 s. On v1.163 he was still retreating after 10 s.
+  - Six rounds of the twins 3v3, 90 s each, the player walked 10 m toward the nearest enemy: no kid held `retreating`
+    within 1 m for more than 1 s. On v1.163 the same run had Andrew at 10.5 s in one round.
+- A 10-round probe at 120 s: the longest retreat in one spot was 2 s (Haden, by his spawn). Before, 2 of 8 rounds
+  had 11 s.
+- `northcliff`, `treehouse` and `treehouse-hold` pass.
+### Still open
+- Nothing for play. The sweep's 15 s line would not have caught an 11 s stall; widening it is next.
+
+## v1.165 — Evan waits for the ladder
+Michael's C on Hold the Treehouse (control room, 5 Oct), from the critic's v1.144 bug. You start on the platform
+facing the ladder and the house. Evan stands in the open by the shed, 11 m behind your shoulder, and tagged a player
+standing at the start at 2.7–9.6 s in 8 of 8 rounds. That was before Haden and Connor had climbed, in a one-life
+match. Now Evan holds his fire until the first twin reaches the foot of the ladder. From then on he shoots at
+anything above the rail, as the brief says. The hold is a flag on his line in the scenario (`holdUntilLadder`), checked
+at `spawnEnemyBB`, the one place every kid's BB comes from. It is cleared by the first kid to start up any ladder.
+No other match sets it. The match's description now says Evan shoots "once a twin is on the ladder".
+### Verified
+- `tests/treehouse-evan.test.mjs` (new):
+  - Six rounds, the player standing at the start with one life and real hits. The first twin reached the ladder at
+    6.9–7.0 s every round. The player was tagged at 7.5–11.0 s: three times by Evan, three by Haden. None came before
+    the first twin was on the ladder.
+  - Run against v1.164, the same suite fails. Evan tagged the player at 5.2 and 5.4 s in 2 of 6 rounds, before any
+    twin reached the ladder. He fired 205 BBs in 30 s before the ladder, against none now. After the ladder he fired
+    162.
+- `treehouse-hold` (Evan still hits a player standing above the rail, 55 hits in 60 s, and none on a crouched one)
+  and `treehouse` pass.
+### Still open
+- The first 7 s are now quiet. Whether the platform should still feel watched in that time is for a playtest.
+
+## v1.166 — The stuck-kid sweep, wider
+Michael's B on "after Inside Riverside Market" (control room, 5 Oct): widen the stuck-kid sweep. Since v1.153 it
+played every match for its first 60 s, twice: the player at his spawn, and the player walked 10 m toward the nearest
+enemy. Two gaps were left open. A kid who wedges late was missed, and so was one who wedges only when the player goes
+somewhere else. Both are now covered:
+- Each match is watched for its whole round, up to 90 s. That is the full timer of every defend, and most other
+  matches end sooner with the player's hits dropped and the allies fighting.
+- A third way: the player strafes 10 m sideways across the line to the nearest enemy, still facing him, so the
+  kids are drawn round from a new angle. 1v1s and defends otherwise looked the same from both earlier ways.
+- The check is unchanged: any living kid of either side, more than 2.5 m from the player, who holds a moving state
+  within 1 m of one spot for over 15 s, fails, and is printed as a backlog line. `WAYS=spawn,toward,side`, `SECS=`,
+  `LIMIT=` and `ONLY=` still run it by hand.
+It is about 2.2 times the work, so it runs as sixteen suites, `stuck-sweep-1` to `-16`, each every sixteenth match.
+Each part stays well under run.mjs's 10-minute limit. CI goes from six shards to eight (`check.yml`), with each part
+weighted at 1.6 times its time here, so every shard reads about 20 min (1176-1181 s). Test and CI change only; no game
+change.
+### Verified
+- `npm test` as four local shards at once on v1.165 + this: 77 of 77 suites passed (19 + 20 + 20 + 18). That
+  includes v1.165's `treehouse-evan` and v1.164's `retreat-progress`.
+- The sweep covered all 64 matches, three ways each: 192 runs with no kid over 15 s. The longest stays were 5.5 s
+  (Ryan, `advancing`, at (24.7, −9.2)) and 4.5 s (Nick `chasing`; Mitchell and Devon). The parts took 86-296 s here.
+- `tests/shard.test.mjs`: 77 suites, each in exactly one shard for 1, 2, 3, 7 and 8 shards, and the eight CI shards even.
+- v1.164 alone: 68 of 68 suites passed, as four shards, before it was pushed.
+### Still open
+- CI's sweep times are estimated (1.6 times local). If a CI shard runs near its 30-minute limit, re-measure the
+  weights from the shard jobs, as v1.160's fix-up did.
+- The sweep now catches a kid who wedges late in a round or off the sideways walk. A kid who wedges only past 90 s, or
+  only where a real player goes, is still found by hand.

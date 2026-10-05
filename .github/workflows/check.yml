@@ -14,19 +14,21 @@ jobs:
     # run a quarter each in parallel (`run.mjs --shard`); a shard takes ~10 min, so 30 leaves room for a 10-min hang.
     # v1.160 fix-up: the suites now take 101 min on CI, 25 a shard in four, and shard 4 was cancelled at the 30-min
     # limit with all its suites passed. Six shards run ~17 min each.
+    # v1.166: the stuck-kid sweep is now about 2.2 times the work (whole rounds up to 90 s, three ways; Michael: B),
+    # about 55 more minutes in all. Eight shards keep each one near 20 min.
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
-    name: headless (${{ matrix.shard }}/6)
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    name: headless (${{ matrix.shard }}/8)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: node tests/run.mjs --shard ${{ matrix.shard }}/6
+      - run: node tests/run.mjs --shard ${{ matrix.shard }}/8
   headless:
     # v1.145: one check named `headless` as before, green only when every shard is.
     needs: headless-shard
