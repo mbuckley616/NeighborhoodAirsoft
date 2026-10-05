@@ -7,6 +7,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **After Hollins Ridge High, what next? (builder, 2026-10-04)** v1.155–v1.156 build your A: the school is the sixth
+  zone with four scenarios (After the Bell, The Portables, Hold the Portables, Friday Night Lights). Its kids are
+  borrowed from Bunratty, Ridgestone and the lot. The walkie callouts still wait on PR #22.
+  A) The next zone from your D.1 list: the Horseshoe Bend Country Club pool and golf course (made-up club name)
+  B) School kids of its own: three or four new characters for the school matches (their lines would want the voices
+     work, PR #22, on main first)
+  C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.156
+  Builder recommends A: it is the next place on your list a player will see, and B is better after the voices land.
+  Michael: **A) The next zone: a country-club pool and golf course**. (2026-10-04)
+
 - **After Nick's fix, the queue is empty again: what next? (builder, 2026-10-04)** v1.154 fixes the one kid the
   stuck-kid sweep found (Bunratty free-for-all's Nick by house 2's backyard), so the sweep now guards every match
   with nothing on its known list. The walkie callouts still wait on PR #22; D.2 (online) and D.9 (voices) are Fable
