@@ -13,21 +13,24 @@ const only = args[0];
 // 875210d, 5 Oct), where the stuck sweeps take 250-455 s and not the 165 s guessed for them.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
-  'bb-sweep.test.mjs': 30, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
+  'bb-sweep.test.mjs': 30, 'bound-forward.test.mjs': 150, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
   'car-side-fire.test.mjs': 26, 'cars.test.mjs': 5, 'country-club.test.mjs': 139, 'cover-fire.test.mjs': 111,
-  'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
+  'desk-start.test.mjs': 45, 'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
   'grocery-store.test.mjs': 139, 'harness.test.mjs': 37, 'high-school.test.mjs': 120, 'hollow-held.test.mjs': 85,
   'houses.test.mjs': 54, 'jump.test.mjs': 27, 'kid-climb.test.mjs': 44, 'kid-clothes.test.mjs': 43,
   'kid-face.test.mjs': 14, 'kid-hands.test.mjs': 8, 'ladder-prompt.test.mjs': 12, 'laser.test.mjs': 72,
   'last-kid.test.mjs': 160, 'loadout-gear.test.mjs': 34, 'loadout-kid.test.mjs': 9, 'lot-ffa-opening.test.mjs': 89,
   'lot-hollow-polish.test.mjs': 87, 'map-screen.test.mjs': 33, 'market-lot.test.mjs': 159, 'mirror.test.mjs': 48,
   'music.test.mjs': 3, 'night-prowl.test.mjs': 30, 'northcliff.test.mjs': 168, 'one-ending.test.mjs': 53,
-  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95,
+  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95, 'retreat-progress.test.mjs': 110,
   'road-slide.test.mjs': 104, 'shard.test.mjs': 1, 'shop-tabs.test.mjs': 39, 'smoke.test.mjs': 43,
-  'spawn-facing.test.mjs': 304, 'stuck-sweep-1.test.mjs': 411, 'stuck-sweep-2.test.mjs': 302,
-  'stuck-sweep-3.test.mjs': 256, 'stuck-sweep-4.test.mjs': 252, 'stuck-sweep-5.test.mjs': 316,
-  'stuck-sweep-6.test.mjs': 305, 'stuck-sweep-7.test.mjs': 275, 'stuck-sweep-8.test.mjs': 455,
-  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'utility-belt.test.mjs': 6,
+  'spawn-facing.test.mjs': 304,
+  // v1.166: the sweep in sixteenths, measured here in the v1.166 run (86-296 s, four browsers at once) and scaled by 1.6 for CI
+  'stuck-sweep-1.test.mjs': 453, 'stuck-sweep-2.test.mjs': 203, 'stuck-sweep-3.test.mjs': 381, 'stuck-sweep-4.test.mjs': 272,
+  'stuck-sweep-5.test.mjs': 451, 'stuck-sweep-6.test.mjs': 138, 'stuck-sweep-7.test.mjs': 392, 'stuck-sweep-8.test.mjs': 451,
+  'stuck-sweep-9.test.mjs': 474, 'stuck-sweep-10.test.mjs': 224, 'stuck-sweep-11.test.mjs': 299, 'stuck-sweep-12.test.mjs': 306,
+  'stuck-sweep-13.test.mjs': 237, 'stuck-sweep-14.test.mjs': 403, 'stuck-sweep-15.test.mjs': 432, 'stuck-sweep-16.test.mjs': 467,
+  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6,
   'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
   'winnmark-fort.test.mjs': 55, 'winnmark-props.test.mjs': 46, 'winnmark-road.test.mjs': 53,
   'winnmark-trees.test.mjs': 60
