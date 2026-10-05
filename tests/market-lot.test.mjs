@@ -19,8 +19,8 @@ const ladder = await page.evaluate(() => {
   delete done[zoneCapstoneId('hollow')]; delete done[ids[ids.length - 1]];
   return { keys, ids, before, afterHollow, afterLot };
 });
-check('ladder: Winnmark, Bunratty, The Hollow, the market lot, Northcliff',
-  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff', ladder.keys);
+check('ladder: Winnmark, Bunratty, The Hollow, the market lot, Northcliff, Hollins Ridge High (v1.155), Willow Bend (v1.157)',
+  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club', ladder.keys);
 check('the lot runs 1v1, 3v3, defend, free-for-all, night 4v4 (v1.103)',
   ladder.ids.join() === 'lot_1v1_marcus,lot_team_3v3,lot_defend_store,lot_ffa,lot_night_4v4', ladder.ids);
 check('the lot is locked on a new save', !ladder.before.lot && !ladder.before.first, ladder.before);
