@@ -172,7 +172,7 @@ Fable card on the control room and Michael starts it from there.
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
    that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A VIP with an ally VIP, B you as VIP, C capture the flag, D A then C)
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
-   2026-10-05)
+   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

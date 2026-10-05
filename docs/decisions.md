@@ -33,6 +33,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends A: it is the one you named, it uses the respawn and ally AI that already work, and B's one-life
   player is close to what defends already are. C needs new carry-and-return AI and is bigger.
 
+- **D.16 Kids' movement looks stiff and floaty: which fix first? (builder, 2026-10-05)** Your note: NPC movement is
+  a little stiff/floaty. What the code does today: a walking kid swings his legs ±14° about 1.3 times a second, which
+  carries a foot about 0.66 m/s. The kids move at 2.5–3.5 m/s, so their feet slide over the ground at four to five
+  times their step. That is the float. The body bobs 1.2 cm, the knees never bend, he starts and stops at full speed,
+  and his body snaps to face his target every frame, even while he walks sideways. That is the stiffness. His arms stay on his gun, which is right for a kid carrying one.
+  A) Planted feet: stride and cadence follow his real speed, so the feet stop sliding; knees bend on the step, a
+     bigger bob and a little hip sway. One run, with a test that the feet stay planted
+  B) Weight: he speeds up and slows down over a few tenths of a second, leans into a start or a turn, and turns his
+     body over about 0.2 s instead of snapping. This changes how fast kids react, so tests are re-checked
+  C) Both, A first, then B, each shown to you before the next
+  D) A and a run/jog difference: a sprinting kid (rushing, retreating) runs with a longer stride and leans forward;
+     a kid advancing between covers jogs low
+  Builder recommends C: A is pose only and fixes the float at no cost to the fight; B changes timing, so it goes
+  second, after you've seen A.
+
 - **Hold the Treehouse: Evan tags you from behind before the twins climb (builder, 2026-10-05)** The critic found it
   (v1.144): you start on the platform facing the ladder and the house, and Evan stands in the open by the shed, 11 m
   behind your shoulder. A player who stands still is tagged at 2.7–9.6 s in 8 of 8 rounds, before Haden and Connor
