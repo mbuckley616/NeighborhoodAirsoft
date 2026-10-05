@@ -7852,3 +7852,28 @@ Customer Service's loss already said "take the service desk" (v1.160's `resultHo
 ### Still open
 - Nothing for play. Only the Hollow and the store have their own words. The school and the club still use the
   street's road and curb, which fit outdoors well enough. Nobody has flagged them.
+
+## v1.163 — A bound has to gain ground where he'll stand
+The critic's last store bug (Found in play, v1.159). In Price Check your ally Eric stood in `advancing` within 1 m of
+(17.2, −2.4) for 6–15 s in 3 of 10 rounds. That spot is the 2.5 m gap between the four chest freezers. A probe showed
+he was bounding the whole time. Marcus was 20 m north, and the two north freezers are 8 m long, end-on to him.
+`pickBoundCover` measures how much a cover gains by its centre, which is 4–5 m nearer Marcus. But a kid walks to the
+cover's stand spot, which for those freezers is their south end, level with the gap. So Eric reached the west
+freezer's end, was offered the east freezer's end 2 m across the gap, and walked to it. As Marcus moved, the spot moved
+too, so the 1 s no-gain check kept resetting. Then he was offered the west one again. Now a cover is offered only if
+its stand spot is itself at least 1 m nearer the target. The centre test (2 m) and everything else are unchanged. This
+is shared AI, so it applies to every flanker on every map.
+### Verified
+- `tests/bound-forward.test.mjs` (new):
+  - The pick from Eric's spot in the gap, against Marcus at four places along the stockroom: on v1.162 it offered the
+    east freezer's end every time, 0.1–0.8 m farther from the target. It now offers nothing, so he takes the direct
+    push.
+  - 6 rounds of Price Check, 120 s each, the player untaggable. Eric's longest stay within 1 m spent mostly advancing
+    was 0.8–2.8 s. On v1.162 the same suite failed, with 8.7 s in one round.
+- A 16-round probe at 150 s: Eric spent at most 3.5 s in the gap in any round. His long stays were all hiding or
+  shooting. Before the fix it was 11.3 s, and 3 of 8 rounds had a stay of 4 s or more.
+- `npm test` as four shards at once on this build: 67 of 67 suites passed (16 + 17 + 17 + 17), the eight stuck-kid
+  sweeps and the cover-fire, pocket and last-kid suites included.
+### Still open
+- Flankers bound a little less wherever a long cover lies end-on to their target. They push straight instead. Whether
+  that is visible in play is for a playtest.

@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.162</div>
+  <div class="version">v1.163</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24516,10 +24516,13 @@ function pickBoundCover(e, coverList, playerPos) {
     // toward it, then 6 cm back on the direct push, every frame for 50–80 s: the
     // lot's Priya on a bumper, Whole Block's Seth and Marcus by the van. Each
     // frame moved, so no wedge check ever fired.
-    {
-      const sp = coverStandPos(c, playerPos);
-      if (Math.hypot(sp.x - ex, sp.z - ez) < 1.6) continue;
-    }
+    const sp = coverStandPos(c, playerPos);
+    if (Math.hypot(sp.x - ex, sp.z - ez) < 1.6) continue;
+    // v1.163 (Found in play, critic v1.159): and the spot he would stand at must itself be nearer the target. "Forward"
+    // below is the cover's centre, but he walks to its stand spot; for a long cover end-on to the target the centre is
+    // metres nearer and the spot is level with him. Price Check's Eric reached the south end of one 8 m freezer, picked
+    // its neighbour's south end 2 m across the gap, and went back and forth in 'advancing' for up to 15 s.
+    if (distNowToPlayer - Math.hypot(playerPos.x - sp.x, playerPos.z - sp.z) < 1.0) continue;
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const ch2 = c.h || 0;
     if (ch2 < 0.5) continue;                            // too low to hide behind

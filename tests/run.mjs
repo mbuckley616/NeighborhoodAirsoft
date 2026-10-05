@@ -13,7 +13,7 @@ const only = args[0];
 // 875210d, 5 Oct), where the stuck sweeps take 250-455 s and not the 165 s guessed for them.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
-  'bb-sweep.test.mjs': 30, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
+  'bb-sweep.test.mjs': 30, 'bound-forward.test.mjs': 150, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
   'car-side-fire.test.mjs': 26, 'cars.test.mjs': 5, 'country-club.test.mjs': 139, 'cover-fire.test.mjs': 111,
   'desk-start.test.mjs': 45, 'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
   'grocery-store.test.mjs': 139, 'harness.test.mjs': 37, 'high-school.test.mjs': 120, 'hollow-held.test.mjs': 85,
