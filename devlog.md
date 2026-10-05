@@ -7617,3 +7617,43 @@ The first pin sat where its label hid Winnmark's marker, and at 1024 × 640 it h
 - The club's defend and a night match, as v1.156 gave the school.
 - Whether the pool as "a wall with a window in it" plays well is for a playtest. Kids go round it and shoot across it,
   and so can you.
+
+## v1.158 — Willow Bend: Hold the Gazebo and Night Swim
+The rest of what v1.157 left open, as v1.156 rounded out the school. The club now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's, Northcliff's and the school's.
+- **Hold the Gazebo** (defend, 90 s). You start inside the gazebo on the south lawn, facing out of its open east
+  side toward the course. Its rails are now real: 0.9 m walls between the posts on the other seven sides (oriented
+  boxes, one per side). They cover you crouched and stop a body, and you can see over them standing. Marcus (UMP),
+  Jamie (shotgun) and Trey (MP5) stage on the lawn below the veranda (`cluster_course`). They come on three flanks:
+  along the pool deck to the stone wall, straight across the putting green, and round by the halfway hut. A tagged
+  kid walks back and comes again. The lose line says "the gazebo". New `gazebo` player spawn.
+- **Night Swim** (night 4v4, the new capstone). You, Sean, Trey and Brooke at the halfway hut, against Seth, Marcus
+  and Jamie, with Devon's rifle as a defender on the veranda's east end looking down the lawn. Four lives each. The
+  pool's water glows at night (v1.157's emissive). Three more lamps light it: on the pool deck, on the fairway and on
+  the south lawn. They also stand in the day matches as poles.
+
+The defend's first start faced the south fence, a sign error in the yaw. Its second faced a gazebo post 2.4 m away.
+It now looks out through the open side, with 16.7 m clear.
+
+### Verified
+- `tests/country-club.test.mjs`, extended to the four scenarios (48 checks):
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts inside the gazebo. Every anchor and spawn is clear of obstacles, the new lamps
+    included. The gazebo has six rails, and the player walking west inside it stops at one (0.6 m from the posts'
+    ring).
+  - Hold the Gazebo, 60 s with the player untaggable, 3 runs: the attackers walk 40–69 m and fire 708–712 BBs. Jamie
+    comes to 6 m, and Marcus and Trey shoot from 11–13 m.
+  - Night Swim, 60 s, 3 runs: 652–771 BBs, enemy 4–8 lives lost and ally 4–6. Every kid moves or fires. Devon holds
+    the veranda and fires 19–20 times. No kid stalls 2 s or more in `advancing`, and none stands in the water.
+  - Screenshots `country-club-{defend,night,night-pool}.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 2.5 s (Marcus in the night match), against 15 s.
+- `spawn-facing`: the club's four starts have 16.7–57.1 m clear ahead.
+- `npm test` as four shards at once on this build: 64 of 64 passed (16 + 16 + 16 + 16).
+### Still open
+- Whether 90 s in the gazebo against three kids is fair is for a playtest. The rails cover a crouch, but the
+  attackers fire about 700 BBs a minute at it.
+- Jamie, the shotgun, hangs back by the pool in both team matches. He fired 0–4 times in two of three night rounds
+  and once in one 3v3, from 35–54 m away. That is a shotgun with nobody in range. Whether he should push is for the
+  playtest.
+- Willow Bend is complete at four scenarios. What comes next is Michael's call (in decisions: A the grocery store
+  inside Riverside Market, B kids of their own, C widen the sweep, D wait; builder recommends A).

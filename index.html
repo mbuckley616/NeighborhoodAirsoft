@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.157</div>
+  <div class="version">v1.158</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6359,6 +6359,54 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 150, lose: 34 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.158: hold the gazebo for 90 s against a push from the clubhouse lawn ---
+  club_defend_gazebo: {
+    region: 'horseshoe_bend', street: 'willow_bend_cc',
+    name: 'Willow Bend Country Club', scenarioName: 'Hold the Gazebo',
+    desc: "Marcus, Jamie and Trey want the gazebo, and you're in it. Its rails come up to your waist on every side but the east, where the steps are. They come down from the clubhouse lawn: one along the pool deck and the stone wall, one straight across the putting green, one round by the pond and the halfway hut. A tagged kid walks back up the lawn and comes again. Crouch and the rails cover you; stand and you can see. Survive 90 seconds.",
+    builderFn: 'buildCountryClubScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the gazebo',
+    playerSpawn: 'gazebo',
+    enemySpawnCluster: 'cluster_course',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'ump',     anchor: 'b_wall',  role: 'attacker', flank: 'L' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_putt',  role: 'attacker', flank: 'C' },
+      { charId: 'trey',   weapon: 'mp5',     anchor: 'b_hut',   role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 110, lose: 26 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.158: the zone capstone, 4v4 at night ---
+  club_night_4v4: {
+    region: 'horseshoe_bend', street: 'willow_bend_cc',
+    name: 'Willow Bend Country Club', scenarioName: 'Night Swim',
+    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. You've got Sean, Trey and Brooke by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives each.",
+    builderFn: 'buildCountryClubScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'sean',   weapon: 'mp5',     anchor: 'b_hut',     team: 'player' },
+      { charId: 'trey',   weapon: 'ak47',    anchor: 'b_putt',    team: 'player' },
+      { charId: 'brooke', weapon: 'ump',     anchor: 'b_fairway', team: 'player' },
+      { charId: 'seth',   weapon: 'ak47',    anchor: 'a_porch' },
+      { charId: 'marcus', weapon: 'ump',     anchor: 'a_barn' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_pool_n' },
+      { charId: 'devon',  weapon: 'sniper',  anchor: 'a_porch_e', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 170, lose: 38 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -15113,8 +15161,18 @@ function buildCountryClubScene(variant, timeOfDay) {
         if (k === 0) continue;   // the way in, on the east
         const a = k * Math.PI / 4, x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r;
         mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.9, 8), std(0xffffff), x, 1.45, z);
-        mesh(new THREE.BoxGeometry(0.06, 0.9, 1.9), std(0xffffff), gx + Math.cos(a + Math.PI / 8) * r * 0.92, 0.55, gz + Math.sin(a + Math.PI / 8) * r * 0.92, false).rotation.y = -(a + Math.PI / 8);
         box(x - 0.12, x + 0.12, z - 0.12, z + 0.12, 2.9);
+      }
+      // v1.158: the rails are real, 0.9 m, between the posts on every side but the east (cover for the defend)
+      for (let k = 1; k < 7; k++) {
+        const a0 = k * Math.PI / 4, a1 = (k + 1) * Math.PI / 4;
+        const x0 = gx + Math.cos(a0) * r, z0 = gz + Math.sin(a0) * r, x1 = gx + Math.cos(a1) * r, z1 = gz + Math.sin(a1) * r;
+        const len = Math.hypot(x1 - x0, z1 - z0), mx = (x0 + x1) / 2, mz = (z0 + z1) / 2;
+        const rail = mesh(new THREE.BoxGeometry(len, 0.9, 0.08), std(0xffffff), mx, 0.45, mz);
+        rail.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+        const ex = Math.abs(x1 - x0) / 2 + 0.06, ez = Math.abs(z1 - z0) / 2 + 0.06;   // the AABB round the slanted rail
+        obstacles.push({ minX: mx - ex, maxX: mx + ex, minZ: mz - ez, maxZ: mz + ez, shape: 'obox', cx: mx, cz: mz,
+          hx: len / 2, hz: 0.06, angle: rail.rotation.y, h: 0.9, baseY: 0, surface: 'wood', gazeboRail: true });
       }
     }
     // a low stone wall in the lawn between the pool and the putting green, in two runs
@@ -15132,7 +15190,7 @@ function buildCountryClubScene(variant, timeOfDay) {
     treeObs.push(addSuburbanTree(scene, tx, tz, { trunkH: 3.0, leafR: r, detail: true, leafColor: tz > 5 && tx > 5 && tx < 25 ? 0x5a7a35 : undefined }));
   }
   const lampObs = [];
-  for (const [lx, lz] of [[-9, -24], [6, -20]]) {
+  for (const [lx, lz] of [[-9, -24], [6, -20], [-30, -23.5], [22, 3], [-18, 27]]) {   // v1.158: + the pool deck, the fairway and the south lawn, for the night match
     const lamp = addStreetlamp(scene, lx, lz, groundY, _night);
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
   }
@@ -15181,8 +15239,10 @@ function buildCountryClubScene(variant, timeOfDay) {
     b_cart:      A(7.5, 14),
     cluster_north: { pos: P(-12, -25.5), cover: null },
     cluster_south: { pos: P(4, 26), cover: null },
+    cluster_course: { pos: P(-1, -10), cover: null },   // v1.158: the defend's attackers stage on the lawn below the veranda
   };
   const playerSpawns = {
+    gazebo: { pos: P(-31, 22), yaw: -Math.PI / 2 },   // v1.158: the defend, inside the gazebo, facing out of the way in (east), toward the course
     team_b: { pos: P(5.5, 27), yaw: 0.12 },        // beside the halfway hut, looking up the cart path toward the clubhouse (yaw 0 faces -z)
     team_a: { pos: P(-12, -25.5), yaw: Math.PI },
   };
@@ -26439,6 +26499,8 @@ const PIN_SCENARIO_GROUPS = {
   country_club: [
     'club_1v1_brooke',
     'club_eighteenth_3v3',
+    'club_defend_gazebo',    // v1.158
+    'club_night_4v4',        // v1.158: the zone capstone
   ],
 };
 

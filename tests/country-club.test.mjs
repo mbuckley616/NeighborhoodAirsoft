@@ -20,7 +20,8 @@ const ladder = await page.evaluate(() => {
   return { keys, ids, before, after, afterFirst, region: REGIONS.horseshoe_bend.streets.willow_bend_cc };
 });
 check('the ladder ends with Willow Bend, after Hollins Ridge High', ladder.keys.slice(-2).join() === 'high_school,country_club', ladder.keys);
-check('the club runs the 1v1 opener, then the 3v3', ladder.ids.join() === 'club_1v1_brooke,club_eighteenth_3v3', ladder.ids);
+check('the club runs the 1v1 opener, the 3v3, then the gazebo defend and the night 4v4 (v1.158)',
+  ladder.ids.join() === 'club_1v1_brooke,club_eighteenth_3v3,club_defend_gazebo,club_night_4v4', ladder.ids);
 check('its street is in Horseshoe Bend', ladder.region === 'Willow Bend Country Club', ladder.region);
 check('the club is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the school opens the opener only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -71,13 +72,17 @@ for (const id of ladder.ids) {
     const pond = water.some(o => o.shape === 'cylinder' && o.radius === 5);
     const carts = obs.filter(o => o.h === 1.2 && o.surface === 'metal').length;
     const barn = obs.some(o => o.minX === 22 && o.maxX === 38 && o.h === 3.6);
-    return { kids, badAnchors, badSpawns, pool, pond, carts, barn, player: inside(p.pos.x, p.pos.z),
+    // v1.158: the gazebo's six rails (0.9 m), and the defend's player inside it
+    const rails = obs.filter(o => o.gazeboRail && o.h === 0.9).length;
+    const inGazebo = Math.hypot(p.pos.x + 31, p.pos.z - 22) < 0.6;
+    return { kids, badAnchors, badSpawns, pool, pond, carts, barn, rails, inGazebo, player: inside(p.pos.x, p.pos.z),
       scene: built.name, clubhouse: obs.some(o => o.maxZ === -30 && o.maxX - o.minX > 50) };
   });
   check(`${id}: every anchor and player spawn on the grounds is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
   check(`${id}: the player and every kid spawn clear of obstacles`, !start.player && start.kids.every(k => !k.stuck), start);
   check(`${id}: the grounds have the clubhouse, the pool and the pond as water, five carts and the cart barn`,
-    start.clubhouse && start.pool && start.pond && start.carts === 5 && start.barn, start);
+    start.clubhouse && start.pool && start.pond && start.carts === 5 && start.barn && start.rails === 6, start);
+  if (id === 'club_defend_gazebo') check(`${id}: the player starts inside the gazebo`, start.inGazebo, start);
   const r = await page.evaluate(() => {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
@@ -114,6 +119,9 @@ for (const id of ladder.ids) {
   check(`${id}: no kid ever stands in the pool or the pond`, r.kids.every(k => k.wet === 0), r.kids);
   if (r.team) check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
     (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
+  // v1.158: the defend's attackers come down the lawn to within 10 m of the gazebo
+  else if (id === 'club_defend_gazebo') check(`${id}: an attacker comes down the lawn to within 10 m of the gazebo`,
+    Math.min(...r.kids.map(k => k.nearest)) < 10, r.kids);
   else check(`${id}: Brooke comes off the pool deck to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
@@ -157,5 +165,22 @@ await view(-12, -3, Math.PI * 0.32); await g.shot('country-club-pool');
 await view(30, 4, Math.PI * 0.1); await g.shot('country-club-green');
 await view(2, -12, Math.PI * 0.1); await g.shot('country-club-front');
 await view(5.5, 27, 0.12); await g.shot('country-club-start');
+// v1.158: the gazebo's rails stop a body (the player walks west across it and stops at a rail), and the night match
+const rail = await page.evaluate(() => {
+  const P = Game.player; P.pos.set(-31, 0, 22); P.yaw = Math.PI / 2; P.pitch = 0;   // yaw π/2 faces -x, the west rail
+  for (let f = 0; f < 120; f++) { Game.keys.KeyW = true; stepGame(1 / 60); }
+  Game.keys.KeyW = false;
+  return { x: +P.pos.x.toFixed(2), z: +P.pos.z.toFixed(2) };
+});
+check('walking west inside the gazebo stops at its rail (inside r 2.6)', Math.hypot(rail.x + 31, rail.z - 22) < 2.6, rail);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('club_night_4v4');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
+await view(5.5, 27, 0.12); await g.shot('country-club-night');
+await view(-12, -3, Math.PI * 0.32); await g.shot('country-club-night-pool');
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('club_defend_gazebo');
+await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; stepGame(1 / 60); });
+await g.shot('country-club-defend');
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
