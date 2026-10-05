@@ -7833,3 +7833,22 @@ fire until the first twin reaches the ladder). The code was put back as it was.
 ### Still open
 - Whether 90 s behind the desk is now too easy is for a playtest. The critic saw 21–70 s to the first tag from this
   spot, and 1 of 6 rounds held the full 90 s.
+
+## v1.162 — The store's result lines are indoor lines
+The critic's second store bug (Found in play, v1.160). The result screen's place words come from a small table in
+`endScenario`, and that table knew only the Hollow. Every other map got the street's words. In the store, a Price
+Check or Lights Out loss read "…regroup near the road". Holding the desk for 90 s read "Distant screen doors slam",
+inside a supermarket. The store now has its own entry:
+- Team losses: "…regroup back in the stockroom", where the other side starts.
+- A defend won by killing everyone: "…slide down against the shelves, defeated."
+- A defend won on the timer keeps its heading, MOM CALLED THEM IN!, but the line is now "Their phones buzz all at
+  once. Marcus groans — "Aw, COME ON!" — and Jamie and Tyler head for the doors." The one-kid form is ready too.
+Customer Service's loss already said "take the service desk" (v1.160's `resultHold`).
+### Verified
+- `tests/result-text.test.mjs` now ends Price Check, Customer Service and Lights Out every way (win, timer win, lose,
+  forfeit). No store line names a road, curb or screen door, both team losses regroup in the stockroom, the timer win
+  has the phones, and the defend loses the service desk. The suite's old checks (quotes, commas, allies, the Hollow,
+  the forts) still pass.
+### Still open
+- Nothing for play. Only the Hollow and the store have their own words. The school and the club still use the
+  street's road and curb, which fit outdoors well enough. Nobody has flagged them.

@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.161</div>
+  <div class="version">v1.162</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19419,7 +19419,12 @@ function endScenario(outcome) {
   const wasDefend = scDef?.scenarioType === 'defend';
   // v1.117 (Found in play, v1.101): the place words fit the map. A defend that isn't a fort says what was held
   // (scenario resultHold), and the woods have no road or curb (map defaults by builder).
-  const _place = { buildHollowScene: { regroup: 'back in the trees', sit: 'sit down in the leaves' } }[scDef?.builderFn] || {};
+  // v1.162 (Found in play, critic v1.160): the store is indoors, so its kids regroup in the stockroom, sit against the
+  // shelves, and are called home by their phones rather than by screen doors.
+  const _place = {
+    buildHollowScene: { regroup: 'back in the trees', sit: 'sit down in the leaves' },
+    buildGroceryStoreScene: { regroup: 'back in the stockroom', sit: 'slide down against the shelves', called: 'phones' },
+  }[scDef?.builderFn] || {};
   const holdPlace = scDef?.resultHold || 'the fort';
   const regroupAt = scDef?.resultRegroup || _place.regroup || 'near the road';
   const sitDown = _place.sit || 'sit on the curb';
@@ -19428,7 +19433,11 @@ function endScenario(outcome) {
       // Survive-timer win: the attackers' moms called them in
       outcomeEl.textContent = 'MOM CALLED THEM IN!';
       outcomeEl.className = 'outcome win';
-      flavorEl.textContent = multi
+      flavorEl.textContent = _place.called === 'phones'
+        ? (multi
+          ? `Their phones buzz all at once. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} ${otherNames.length > 1 ? 'head' : 'heads'} for the doors. You held the line.`
+          : `${primaryName}'s phone buzzes. A groan — "Aw, COME ON!" — and they head for the doors. You held the line.`)
+        : multi
         ? `Distant screen doors slam. ${primaryName} groans — "Aw, COME ON!" — and ${othersStr} ${otherNames.length > 1 ? 'start' : 'starts'} trudging home. You held the line.`
         : `A distant screen door slams. ${primaryName} groans — "Aw, COME ON!" — and trudges home. You held the line.`;
     } else if (wasDefend) {
