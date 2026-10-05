@@ -7657,3 +7657,79 @@ It now looks out through the open side, with 16.7 m clear.
   playtest.
 - Willow Bend is complete at four scenarios. What comes next is Michael's call (in decisions: A the grocery store
   inside Riverside Market, B kids of their own, C widen the sweep, D wait; builder recommends A).
+
+## v1.159 — Inside Riverside Market: the eighth zone opens
+Michael's A on "after Willow Bend, what next" (control room, 5 Oct): the last place on his D.1 list, a grocery store
+battle inside Riverside Market. The option left open whether it would be a new zone or new matches on the lot's map.
+It is a new zone, because the lot is outdoors and a store interior is a different map with a roof. It sits eighth on
+the ladder after the club, opened by Night Swim, as each zone before it was. As v1.155 and v1.157 did, this version
+builds the store, its place on the map and the ladder, and two scenarios.
+
+**Inside Riverside Market** (`buildGroceryStoreScene`) is one room, 52 × 48 m inside, under a 5.6 m roof.
+- The front wall closes the south. It is glass, with the automatic doors and an ENTER · EXIT sign. Inside it are six
+  checkout lanes (1.0 m counters, numbered lane lights, impulse racks), the service desk, a nested row of carts and two
+  loose carts.
+- The sales floor has five aisles of 2.1 m shelving, signed 1–5 (Bread · Cereal through Paper · Cleaning). A cross
+  aisle cuts them halfway down, and a soda end-cap stands at aisle 3. Each run of shelving is one box with a drawn wall
+  of products on its long faces. The shelves stop a body and a BB, and you can't see over them or jump onto them, so
+  every aisle is a corridor.
+- On the west, eight produce tables (0.9 m, crouch cover) and the misted wall case. On the east, four chest freezers
+  (0.9 m) and the deli's glass case (1.25 m) against the wall, with room behind it.
+- The dairy coolers line the back aisle. The back wall has three doorways, marked EMPLOYEES ONLY, into the stockroom.
+- The stockroom has three runs of 3.2 m racking, eight pallets of stock (1.0–1.3 m), the baler, a parked forklift and
+  the loading-dock door.
+- The lighting is indoor: a high, soft light with more ambient, light panels in the ceiling, and a darker tile floor
+  than the first draft, which was washed out to white. Point lights and exit signs are built for a night match, but no
+  scenario uses it yet.
+
+Two scenarios, in East Roswell (`riverside_market_inside`). The kids are the lot's.
+- **Cleanup on Aisle Five** (opener): 1v1 against Tyler with a pistol. He starts by the dairy coolers and you start
+  inside the front doors. One hit each.
+- **Price Check** (3v3): you, Eric (MP5) and Brooke (UMP) at the checkouts. Marcus (AK), Jamie (shotgun) and Tyler
+  (UMP) start in the stockroom and deploy through the doorways: Marcus to the stockroom's west, Jamie to the dairy
+  aisle, Tyler to the freezers. Three lives each, last team standing.
+
+The map gets a new pin, "Riverside Market · Inside", above the lot's pin toward the store's drawing. It is locked until
+the club's capstone is won.
+
+The first draft had three faults, each caught by the new test:
+- The player started 1.6 m inside the front wall. Allies start 2 m either side of the player in z, so Brooke was pushed
+  out through the glass and stood outside all round. The start is now at z 14.8, with both allies inside.
+- Jamie was sent to an anchor beside his spawn in the stockroom. He hid there all round, out of sight. He now goes to
+  the dairy aisle.
+- The pin's first spot at (88%, 24%) ran off the map's edge at 1280 × 720 and 1024 × 640 and covered the lot's label.
+  `map-screen` caught it too.
+
+### Verified
+- `tests/grocery-store.test.mjs` (new), 33 checks, passed in two runs:
+  - The ladder ends with the club, then the store. The store is locked on a new save. Winning Night Swim opens the
+    opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Willow Bend. It sits inside the map and covers no other pin's marker or
+    label. Once the club is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The store
+    holds 12 runs of shelving, 6 checkout counters, 8 produce tables, 4 freezers, 3 doorways in the back wall, 8
+    pallets and 3 racks.
+  - Shelves: walking into one stops the player at its face (x −7.59 against the face at −7.9). A jump at a shelf rises
+    0.7 m and doesn't put him on it, and the same jump doesn't clear a 1.0 m counter. A BB fired into a shelf at 60 m/s
+    never comes out the far side.
+  - The room is closed: 288 rays from six points inside (level, up and steeply up) all meet a wall or the roof within
+    60 m.
+  - Cleanup on Aisle Five, 60 s with the player untaggable, 3 runs: Tyler walks 46–55 m out of the back, comes within
+    6.7–7.3 m and fires 49 times.
+  - Price Check, 60 s, 3 runs: 369–557 BBs, enemy 2–4 lives lost and ally 2–3. Every kid moves or fires, and the
+    stockroom kids come through the back wall. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `tests/out/grocery-store-{start,aisle,checkouts,stockroom,produce,freezers,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (part 1). With `ONLY=` on them, both ways, the worst kid stalled 2 s
+  (Jamie in the stockroom, and Tyler), against the 15 s line.
+- `market-lot`, `northcliff`, `high-school` and `country-club` spell out the ladder and now include the store.
+  `map-screen` passes with the new pin. `spawn-facing` passes: both store starts face 12–26° off the nearest enemy, with
+  8 m clear ahead.
+- `npm test` as four shards at once on this build: 63 of 65 passed. `spawn-facing` lost its browser and `stuck-sweep-3`
+  hit the 30 s `page.goto` limit under load (the v1.124 note). Both passed alone on the same build.
+### Still open
+- The store's defend and a night match, as v1.156 and v1.158 gave the school and the club. The night lighting is
+  built and untested.
+- Whether the aisles play well is for a playtest. A shelf is a wall, so fights are down an aisle's length or across
+  the cross aisle and the open ends. The 3v3's opening is mostly long shots down the aisles: Marcus fired 278–312
+  times in two of the runs.
+- Brooke spends the 3v3 near the west checkouts and fires from there, about 30 m walked a round.
