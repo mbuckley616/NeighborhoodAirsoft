@@ -160,6 +160,10 @@ Fable card on the control room and Michael starts it from there.
    moving state within 1 m for over 15 s, and prints a backlog line; eight suites `tests/stuck-sweep-1…8` (four until the v1.153 fix-up), two per CI
    shard). Its first runs found one: Bunratty free-for-all's Nick (below, Found in play); every other kid on every map
    held a spot 7.5 s at most.
+13. ~~After Inside Riverside Market, what next (builder, 5 Oct). Michael: **B**, widen the stuck-kid sweep (control room,
+   5 Oct).~~ — done, v1.166 (each match is watched for its whole round, up to 90 s, three ways: the player at spawn,
+   walked 10 m toward the nearest enemy, and walked 10 m sideways across that line; sixteen suites
+   `tests/stuck-sweep-1…16`, CI in eight shards; 64 matches, 192 runs, no kid over 5.5 s)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

@@ -7956,3 +7956,32 @@ No other match sets it. The match's description now says Evan shoots "once a twi
   and `treehouse` pass.
 ### Still open
 - The first 7 s are now quiet. Whether the platform should still feel watched in that time is for a playtest.
+
+## v1.166 — The stuck-kid sweep, wider
+Michael's B on "after Inside Riverside Market" (control room, 5 Oct): widen the stuck-kid sweep. Since v1.153 it
+played every match for its first 60 s, twice: the player at his spawn, and the player walked 10 m toward the nearest
+enemy. Two gaps were left open. A kid who wedges late was missed, and so was one who wedges only when the player goes
+somewhere else. Both are now covered:
+- Each match is watched for its whole round, up to 90 s. That is the full timer of every defend, and most other
+  matches end sooner with the player's hits dropped and the allies fighting.
+- A third way: the player strafes 10 m sideways across the line to the nearest enemy, still facing him, so the
+  kids are drawn round from a new angle. 1v1s and defends otherwise looked the same from both earlier ways.
+- The check is unchanged: any living kid of either side, more than 2.5 m from the player, who holds a moving state
+  within 1 m of one spot for over 15 s, fails, and is printed as a backlog line. `WAYS=spawn,toward,side`, `SECS=`,
+  `LIMIT=` and `ONLY=` still run it by hand.
+It is about 2.2 times the work, so it runs as sixteen suites, `stuck-sweep-1` to `-16`, each every sixteenth match.
+Each part stays well under run.mjs's 10-minute limit. CI goes from six shards to eight (`check.yml`), with each part
+weighted at 1.6 times its time here, so every shard reads about 20 min (1176-1181 s). Test and CI change only; no game
+change.
+### Verified
+- `npm test` as four local shards at once on v1.165 + this: 77 of 77 suites passed (19 + 20 + 20 + 18). That
+  includes v1.165's `treehouse-evan` and v1.164's `retreat-progress`.
+- The sweep covered all 64 matches, three ways each: 192 runs with no kid over 15 s. The longest stays were 5.5 s
+  (Ryan, `advancing`, at (24.7, −9.2)) and 4.5 s (Nick `chasing`; Mitchell and Devon). The parts took 86-296 s here.
+- `tests/shard.test.mjs`: 77 suites, each in exactly one shard for 1, 2, 3, 7 and 8 shards, and the eight CI shards even.
+- v1.164 alone: 68 of 68 suites passed, as four shards, before it was pushed.
+### Still open
+- CI's sweep times are estimated (1.6 times local). If a CI shard runs near its 30-minute limit, re-measure the
+  weights from the shard jobs, as v1.160's fix-up did.
+- The sweep now catches a kid who wedges late in a round or off the sideways walk. A kid who wedges only past 90 s, or
+  only where a real player goes, is still found by hand.
