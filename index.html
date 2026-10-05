@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.163</div>
+  <div class="version">v1.164</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24001,6 +24001,7 @@ function eliminateEnemy(e) {
     e._recentlySpotted = false;
     e._lastSawPlayer = 0;
     e._retreatStuck = 0;
+    e._retreatBest = null;   // v1.164: fresh retreat, fresh progress mark
     if ((e.mesh.pose?.crouch ?? 0) > 0) setKidCrouch(e.mesh, 0);
     e.mesh.group.position.y = 0;
     e.mesh.group.rotation.z = 0;
@@ -24019,6 +24020,7 @@ function eliminateEnemy(e) {
     e._recentlySpotted = false;
     e._lastSawPlayer = 0;
     e._retreatStuck = 0;           // fresh retreat — clear any stale wedge counter
+    e._retreatBest = null;         // v1.164: and its progress mark
     // Un-crouch so they read as standing/turning to run.
     if ((e.mesh.pose?.crouch ?? 0) > 0) setKidCrouch(e.mesh, 0);
     e.mesh.group.position.y = 0;
@@ -26410,7 +26412,6 @@ function updateEnemies(dt) {
         const stepZ = (dzb / db) * retreatSpeed * dt;
         const kidRadius = 0.35;
         const nX = e.pos.x + stepX, nZ = e.pos.z + stepZ;
-        const beforeX = e.pos.x, beforeZ = e.pos.z;
         if (!collidesObstacles(nX, nZ, kidRadius)) {
           e.pos.x = nX; e.pos.z = nZ;
         } else {
@@ -26424,11 +26425,15 @@ function updateEnemies(dt) {
         // retreat used to stall forever with no bail. We measure ACTUAL
         // displacement (not whether a slide-assignment ran), since sliding
         // straight into a wall produces a near-zero step that still "succeeds".
-        const movedDist = Math.hypot(e.pos.x - beforeX, e.pos.z - beforeZ);
-        e._retreatStuck = (movedDist > 0.02) ? 0 : (e._retreatStuck || 0) + dt;
+        // v1.164 (backlog B.5): measured as ground gained toward spawn, not movement. Northcliff's ally Andrew crept
+        // 3-5 cm along a wall about once a second; each creep reset the old "moved over 2 cm this frame" test, and he
+        // held 'retreating' in one spot for 11-17 s. Now 1.2 s without getting 0.3 m nearer home sends him home.
+        const dNow = Math.hypot(back.x - e.pos.x, back.z - e.pos.z);
+        if (e._retreatBest == null || dNow < e._retreatBest - 0.3) { e._retreatBest = dNow; e._retreatStuck = 0; }
+        else e._retreatStuck = (e._retreatStuck || 0) + dt;
         if (e._retreatStuck > 1.2) {
           e.pos.x = back.x; e.pos.z = back.z;
-          e._retreatStuck = 0;
+          e._retreatStuck = 0; e._retreatBest = null;
           // fall through to the db<1.2 arrival next frame → redeploy
         }
         e.mesh.group.position.x = e.pos.x;

@@ -7912,3 +7912,26 @@ that is working gains 0.3 m in well under 0.8 s and is untouched.
   country-club and grocery-store, passed when rerun alone on v1.163.
 ### Still open
 - A tried change, ending a blocked pocket route in a back-out, did not help (7 rounds in 120) and was reverted.
+
+## v1.164 — A retreating kid who isn't getting home is sent home
+Backlog B.5, from the producer: in one CI run the stuck-kid sweep caught Northcliff twins 3v3's ally Andrew in
+`retreating` within 1 m of (-6.3, -1) for 17 s, with the player walked toward the enemy. It passed on rerun. A probe
+of 8 rounds found it twice: Andrew once at that spot for 11 s, and Connor on the other side, at (-7.9, 1.4), for 11 s.
+A kid with lives left who is tagged jogs back to his spawn to come out again (`retreating`). Since v1.23 a watchdog
+sends him straight home if he is stuck for 1.2 s, but "stuck" meant "moved under 2 cm this frame". Pressed into a wall
+on the way, Andrew slid 3-5 cm about once a second. Each slide reset the watchdog, so it never fired. The watchdog now
+counts ground gained toward spawn instead: 1.2 s without getting 0.3 m nearer home and he is home and redeploying. A
+kid on a clear run gains 0.3 m in a tenth of a second, so only a wedged retreat is affected. While retreating a kid is
+out of the fight, so nothing a player sees changes except that he comes back out sooner. This is shared AI: every
+team match and every defend with respawning attackers.
+### Verified
+- `tests/retreat-progress.test.mjs` (new):
+  - Staged: Andrew retreating at (-6.4, -0.95), every step blocked except a 5 cm creep every 50 frames. He is home and
+    deploying at 1.23 s. On v1.163 he was still retreating after 10 s.
+  - Six rounds of the twins 3v3, 90 s each, the player walked 10 m toward the nearest enemy: no kid held `retreating`
+    within 1 m for more than 1 s. On v1.163 the same run had Andrew at 10.5 s in one round.
+- A 10-round probe at 120 s: the longest retreat in one spot was 2 s (Haden, by his spawn). Before, 2 of 8 rounds
+  had 11 s.
+- `northcliff`, `treehouse` and `treehouse-hold` pass.
+### Still open
+- Nothing for play. The sweep's 15 s line would not have caught an 11 s stall; widening it is next.

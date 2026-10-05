@@ -22,7 +22,7 @@ const WEIGHTS = {
   'last-kid.test.mjs': 160, 'loadout-gear.test.mjs': 34, 'loadout-kid.test.mjs': 9, 'lot-ffa-opening.test.mjs': 89,
   'lot-hollow-polish.test.mjs': 87, 'map-screen.test.mjs': 33, 'market-lot.test.mjs': 159, 'mirror.test.mjs': 48,
   'music.test.mjs': 3, 'night-prowl.test.mjs': 30, 'northcliff.test.mjs': 168, 'one-ending.test.mjs': 53,
-  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95,
+  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95, 'retreat-progress.test.mjs': 110,
   'road-slide.test.mjs': 104, 'shard.test.mjs': 1, 'shop-tabs.test.mjs': 39, 'smoke.test.mjs': 43,
   'spawn-facing.test.mjs': 304, 'stuck-sweep-1.test.mjs': 411, 'stuck-sweep-2.test.mjs': 302,
   'stuck-sweep-3.test.mjs': 256, 'stuck-sweep-4.test.mjs': 252, 'stuck-sweep-5.test.mjs': 316,
