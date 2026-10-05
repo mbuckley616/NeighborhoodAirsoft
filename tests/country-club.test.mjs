@@ -19,7 +19,7 @@ const ladder = await page.evaluate(() => {
   delete done[zoneCapstoneId('high_school')]; delete done[ids[0]];
   return { keys, ids, before, after, afterFirst, region: REGIONS.horseshoe_bend.streets.willow_bend_cc };
 });
-check('the ladder ends with Willow Bend, after Hollins Ridge High', ladder.keys.slice(-2).join() === 'high_school,country_club', ladder.keys);
+check('Willow Bend comes after Hollins Ridge High (v1.159: and before the store)', ladder.keys.slice(-3).join() === 'high_school,country_club,grocery_store', ladder.keys);
 check('the club runs the 1v1 opener, the 3v3, then the gazebo defend and the night 4v4 (v1.158)',
   ladder.ids.join() === 'club_1v1_brooke,club_eighteenth_3v3,club_defend_gazebo,club_night_4v4', ladder.ids);
 check('its street is in Horseshoe Bend', ladder.region === 'Willow Bend Country Club', ladder.region);

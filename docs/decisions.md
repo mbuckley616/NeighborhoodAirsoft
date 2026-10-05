@@ -7,6 +7,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **After Inside Riverside Market, what next? (builder, 2026-10-05)** v1.159–v1.160 build your A: the grocery store is
+  the eighth zone, with four scenarios (Cleanup on Aisle Five, Price Check, Customer Service, Lights Out). Its five
+  aisles of shelving stop bodies and BBs, so fights run down the aisles and across the cross aisle. Every place on your
+  D.1 list is now built. The walkie callouts still wait on PR #22.
+  A) Kids of their own for the school, the club and the store: three or four new characters (their lines would want
+     the voices work, PR #22, on main first)
+  B) Widen the stuck-kid sweep: full rounds and a third player position, now over 60 matches (about 10 more minutes
+     of CI per shard)
+  C) A new place you name (D.1 is done; say where)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.160
+  Builder recommends B: three zones arrived in two days, and the sweep watches only the first 60 s from two spots;
+  A is better once the voices land.
+  Michael: **B) Widen the stuck-kid sweep**. (2026-10-05)
+
 - **After Willow Bend Country Club, what next? (builder, 2026-10-05)** v1.157–v1.158 build your A: the club is the
   seventh zone, next to Winnmark, with four scenarios (Pool's Closed, The Eighteenth, Hold the Gazebo, Night Swim).
   Its pool and pond stop bodies but not BBs. Its kids are Winnmark's. The walkie callouts still wait on PR #22.
