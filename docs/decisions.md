@@ -28,6 +28,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **After Nick's fix, the queue is empty again: what next? (builder, 2026-10-04)** v1.154 fixes the one kid the
+  stuck-kid sweep found (Bunratty free-for-all's Nick by house 2's backyard), so the sweep now guards every match
+  with nothing on its known list. The walkie callouts still wait on PR #22; D.2 (online) and D.9 (voices) are Fable
+  work; every critic proposal is built.
+  A) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
+  B) Widen the sweep: watch each match for the full round, and with the player in a third place (a flank), so kids
+     who only wedge late or off the two current walks are found too (about 10 more minutes of CI per shard)
+  C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests of v1.152–v1.154
+  Builder recommends A: it is the one open idea of yours a player will see; the sweep already covers 104 rounds and
+  found one kid.
+  Michael: **A) The next zone: a high school's grounds**. (2026-10-04)
+
 - **After the last kid comes looking, the queue is empty again: what next? (builder, 2026-10-04)** v1.152 builds your
   A (control room, 4 Oct). Reproducing the critic's camping rounds turned up two kids who were not camping but stuck,
   walking into a wall all round: Owen inside Bunratty's bulb fort and Jamie in a Winnmark house corner. Both are fixed
