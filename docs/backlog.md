@@ -165,6 +165,12 @@ Fable card on the control room and Michael starts it from there.
    walked 10 m toward the nearest enemy, and walked 10 m sideways across that line; sixteen suites
    `tests/stuck-sweep-1…16`, CI in eight shards; 64 matches, 192 runs, no kid over 5.5 s)
 
+14. Let’s add more gun diversity and attachments. I would love to get far more varied for customization flexibility, but
+   want to be mindful of the tone of the game and not going hardcore / military LARPing. It’s still meant to be
+   neighborhood kids. (Michael, control room, 2026-10-05) **(design)**
+15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
+   that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)**
+
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
 - ~~v1.153 (builder, the stuck-kid sweep) — Bunratty Everybody for Themselves: Nick sits in `advancing` within 1 m of (5.5, −28.2), by house 2's backyard, for 7–15.5 s without a shot, in 2 of 5 runs with the player walked 10 m toward him (over the sweep's 15 s line in 1). It is the sweep's only finding, listed in `KNOWN` in `tests/lib/stuck-sweep.mjs` so CI stays green; delete that line with the fix. Steps: `ONLY=bunratty_ffa node tests/stuck-sweep-2.test.mjs`, a few times; watch Nick's `state` and `pos` after the player's walk.~~ — done, v1.154 (each 0.5 m bound back to a cover behind him restarted the pocket rule's 2.5 s window; a bound that keeps him within 1.5 m of where the window began no longer does; staged on the spot he leaves at 6.9–8.1 s, was never in 30 s; off the sweep's `KNOWN` list; `tests/fence-bound.test.mjs`)
