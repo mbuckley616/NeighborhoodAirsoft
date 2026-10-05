@@ -27,7 +27,7 @@ const WEIGHTS = {
   'spawn-facing.test.mjs': 304, 'stuck-sweep-1.test.mjs': 411, 'stuck-sweep-2.test.mjs': 302,
   'stuck-sweep-3.test.mjs': 256, 'stuck-sweep-4.test.mjs': 252, 'stuck-sweep-5.test.mjs': 316,
   'stuck-sweep-6.test.mjs': 305, 'stuck-sweep-7.test.mjs': 275, 'stuck-sweep-8.test.mjs': 455,
-  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'utility-belt.test.mjs': 6,
+  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6,
   'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
   'winnmark-fort.test.mjs': 55, 'winnmark-props.test.mjs': 46, 'winnmark-road.test.mjs': 53,
   'winnmark-trees.test.mjs': 60

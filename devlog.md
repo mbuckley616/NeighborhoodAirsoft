@@ -7935,3 +7935,24 @@ team match and every defend with respawning attackers.
 - `northcliff`, `treehouse` and `treehouse-hold` pass.
 ### Still open
 - Nothing for play. The sweep's 15 s line would not have caught an 11 s stall; widening it is next.
+
+## v1.165 — Evan waits for the ladder
+Michael's C on Hold the Treehouse (control room, 5 Oct), from the critic's v1.144 bug. You start on the platform
+facing the ladder and the house. Evan stands in the open by the shed, 11 m behind your shoulder, and tagged a player
+standing at the start at 2.7–9.6 s in 8 of 8 rounds. That was before Haden and Connor had climbed, in a one-life
+match. Now Evan holds his fire until the first twin reaches the foot of the ladder. From then on he shoots at
+anything above the rail, as the brief says. The hold is a flag on his line in the scenario (`holdUntilLadder`), checked
+at `spawnEnemyBB`, the one place every kid's BB comes from. It is cleared by the first kid to start up any ladder.
+No other match sets it. The match's description now says Evan shoots "once a twin is on the ladder".
+### Verified
+- `tests/treehouse-evan.test.mjs` (new):
+  - Six rounds, the player standing at the start with one life and real hits. The first twin reached the ladder at
+    6.9–7.0 s every round. The player was tagged at 7.5–11.0 s: three times by Evan, three by Haden. None came before
+    the first twin was on the ladder.
+  - Run against v1.164, the same suite fails. Evan tagged the player at 5.2 and 5.4 s in 2 of 6 rounds, before any
+    twin reached the ladder. He fired 205 BBs in 30 s before the ladder, against none now. After the ladder he fired
+    162.
+- `treehouse-hold` (Evan still hits a player standing above the rail, 55 hits in 60 s, and none on a crouched one)
+  and `treehouse` pass.
+### Still open
+- The first 7 s are now quiet. Whether the platform should still feel watched in that time is for a playtest.

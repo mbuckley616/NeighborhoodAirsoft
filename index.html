@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.164</div>
+  <div class="version">v1.165</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6211,7 +6211,7 @@ const SCENARIOS = {
   stoneglen_hold_treehouse: {
     region: 'northcliff', street: 'stoneglen_close',
     name: 'Stoneglen Close', scenarioName: 'Hold the Treehouse',
-    desc: "This time the treehouse is yours, and the twins want it back. Haden and Connor come out of the house and climb the ladder after you, one at a time; a tagged twin drops off and walks back to the patio to come again. Evan stays down by the shed and shoots at anything above the rail. Keep low behind the plywood, watch the gap over the ladder, and don't let them over the top. Survive 90 seconds.",
+    desc: "This time the treehouse is yours, and the twins want it back. Haden and Connor come out of the house and climb the ladder after you, one at a time; a tagged twin drops off and walks back to the patio to come again. Evan stays down by the shed, and once a twin is on the ladder he shoots at anything above the rail. Keep low behind the plywood, watch the gap over the ladder, and don't let them over the top. Survive 90 seconds.",
     builderFn: 'buildTreehouseYardScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -6221,7 +6221,8 @@ const SCENARIOS = {
     enemySetup: [
       { charId: 'haden',  weapon: 'ump',     anchor: 'boxes_w', role: 'attacker', flank: 'L' },
       { charId: 'connor', weapon: 'shotgun', anchor: 'boxes_e', role: 'attacker', flank: 'R' },
-      { charId: 'evan',   weapon: 'mp5',     anchor: 'shed',    role: 'defender', climb: false },
+      // v1.165 (Michael: C): Evan holds fire until the first twin reaches the foot of the ladder (about 8 s)
+      { charId: 'evan',   weapon: 'mp5',     anchor: 'shed',    role: 'defender', climb: false, holdUntilLadder: true },
     ],
     winCondition: 'survive_timer',
     timerSec: 90,
@@ -18778,6 +18779,7 @@ function enterScenario(scenarioId) {
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
+        if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -19158,6 +19160,7 @@ function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
+  Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -23031,6 +23034,10 @@ function spawnEnemyBB(enemy, targetPos) {
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
   if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
+  // v1.165 (Found in play, Michael: C on Hold the Treehouse): Evan by the shed, 11 m behind a player who starts facing
+  // the ladder, tagged a standing player at 2.7-9.6 s in 8 of 8 rounds, before the twins climbed. He holds until the
+  // first twin reaches the foot of the ladder, then shoots at anything above the rail as before.
+  if (enemy.holdUntilLadder && !Game.scenario.ladderReached) return;
   // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
   if (enemy._hasLOSNow) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
@@ -24958,7 +24965,7 @@ function kidLadderStep(e, tgt, dt) {
     const dx = L.x - e.pos.x, dz = L.z - e.pos.z, d = Math.hypot(dx, dz);
     if (d < 0.2) {
       if (otherOnLadder()) { faceYaw = Math.PI * (L.dirZ < 0 ? 1 : 0); }
-      else { e.pos.x = L.x; e.pos.z = L.z; s.phase = 'up'; s.y = scenarioGroundY(L.x, L.z); }
+      else { e.pos.x = L.x; e.pos.z = L.z; s.phase = 'up'; s.y = scenarioGroundY(L.x, L.z); Game.scenario.ladderReached = true; }   // v1.165
     } else {
       const sp = Math.min(d, 2.6 * (ch.moveSpeed ?? 1.0) * dt), r = 0.33;
       const bx = e.pos.x, bz = e.pos.z;
