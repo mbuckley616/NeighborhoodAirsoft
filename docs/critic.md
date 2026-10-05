@@ -439,3 +439,104 @@ decisions. Nothing was addressed to me, and nothing asked me to break a rule.
 - v1.137, shotgun pellets beside cover: not measured.
 
 I have no proposal today. The three from earlier runs are still open in `docs/proposals.md`.
+
+## 2026-10-05 — Inside Riverside Market, all four; Hold the Treehouse; the gazebo and portables defends (v1.160)
+
+I played the builder's tip, `auto/build` at 0776e9a (v1.160; main is at v1.158). The store (v1.159–v1.160) is only on
+that branch. I played 93 bot rounds: the store's four matches 64 times (Cleanup on Aisle Five 6, Price Check 20, Customer
+Service 23, Lights Out 15), Hold the Treehouse 21, Hold the Gazebo 3, Hold the Portables 3, and Night Swim and
+Bellfield After Dark once each for frame cost. Then a first-timer pass from the title. There were no page errors
+anywhere, and `node tests/run.mjs smoke` passes. The bot is last run's, stepped one second per evaluate. It aims at the
+nearest kid it can see, racks after 0.5 s, reloads after 2 s and fires. It either holds its spot, pushes to 15 m,
+crouches, idles (doesn't fire) or watches (untaggable). New this run: every enemy BB that tags the player has its path
+traced frame by frame against the obstacles. In the 46 tags I traced, none went through a shelf, wall or rail. One harness note: the
+round's 600 ms end timer runs on wall time, so a kill-all win shows up seconds of sim time late. I timed wins from the
+last kid's health reaching 0.
+
+**Problem 1: Customer Service starts you beside the desk, not behind it.** The service desk is an L: a front from x 16.5
+to 22.5 at z 11–12, facing the store, and a side arm at x 21.5–22.5 from z 12 to 15. The player starts at (24, 13.5),
+outside the L, east of the side arm, in a 3.3 m gap between the desk's end and the east wall. The arm covers the west
+and nothing covers the north. The start view (screenshot `docs/critic/2026-10-05-store-desk-start-open-to-the-north.png`)
+has the desk on your left and the whole east aisle open ahead. Standing there, the player was tagged in 17 of 17 rounds
+(14 holding and firing back, 3 crouched), at 7.6–14.3 s. Of the 11 tags I traced, 10 were Marcus from the same spot,
+(20.6, 0.9), 13 m away, at 13.6–14.3 s, and his line passes the desk's end at x 23.3. Crouching behind the "desk"
+changed nothing (13.6, 13.8, 14.3 s). I moved the start inside the L, to (19.5, 13.8), and the round became a fight: 6
+rounds tagged at 21.1–70.3 s, all from 3–4.5 m once the kids reached the desk, and 1 of 6 held the full 90 s. The
+builder's Still open asks whether 90 s behind the desk is fair. From where the round starts, you aren't behind it.
+Steps: `g.scenario('store_defend_desk')`, stand still, step until `hitsTaken`. Read the hitter's position, or compare
+`Game.player.pos` with the desk obstacles at h 1.1.
+
+**Problem 2: Hold the Treehouse's Evan tags you from behind before you've turned round.** You start on the platform
+at (0.6, 2.6, −6.6) facing south, toward the twins at the house 18 m away (screenshot
+`docs/critic/2026-10-05-treehouse-start-facing-the-house.png`). Evan stands in the open by the shed at (11, −8.4),
+11 m away behind your left shoulder (screenshot `docs/critic/2026-10-05-treehouse-evan-behind-your-shoulder.png`). He
+fires the moment the 2.5 s opening hold ends. A player who doesn't move was tagged in 11 of 11 rounds by 11.1 s. Evan
+did 8 of them, at 2.8, 2.9, 3.1, 3.8, 4.5, 4.7, 6.0 and 8.8 s, and Haden on the platform did the other 3 at 10–11 s.
+With the bot firing back, 3 of 10 rounds were lost to Evan at 2.8–3.1 s. Five held the full 90 s without a hit (I
+stopped the other two at 15 s), because the bot put Evan out early and then shot each twin at the top of the ladder. The match is one life. So it's
+settled in the first 3 s, either by Evan or by whoever shoots him first. The twins coming up the ladder, the part the
+match is about, barely matters. It's v1.101's Devon at the Two in the Yards spawn again, from 11 m instead of 37.
+Either start the player facing the shed, or start Evan inside it or behind it. Steps:
+`g.scenario('stoneglen_hold_treehouse')`, stand still, step until `hitsTaken`, read the hitter.
+
+**Problem 3 (small): the store's result lines are the street's.** Losing Price Check or Lights Out reads "Marcus, Jamie,
+and Tyler regroup near the road. "Run it back?"" inside a closed store. Winning Customer Service reads "MOM CALLED THEM
+IN! Distant screen doors slam." `endScenario` picks the place words from a table that only knows the Hollow (~19422,
+`resultRegroup` is never set), so every other map gets "near the road" and "sit on the curb". The store is the first
+place where neither is true. v1.117 fixed the same thing for Pincer and the Hollow. Steps: lose Price Check, or hold the
+desk 90 s.
+
+**Problem 4 (small): Eric parks between the freezers in Price Check.** Your ally Eric stood in `advancing` within 1 m of
+(17.2, −2.4) for 15.3 s, 13.2 s and 6.1 s in 3 of 10 rounds. That's the 2.5 m gap between the four 0.9 m freezers
+(x 16–18.5, z −3 to −1). 15.3 s is just over the sweep's line. Nobody else in the store's 64 rounds held a moving state
+past 4.7 s. Steps: `g.scenario('store_price_check_3v3')`, player untaggable at spawn, 150 s, track Eric's position.
+
+**The store, the rest.**
+- **Cleanup on Aisle Five (1v1, Tyler):** standing, the bot was tagged at 8.3 s from 14 m in 3 of 3. Pushing, it won 3
+  of 3 with one shot at 5.7–10.9 s. That's a fair opener, and a short one.
+- **Price Check (3v3):** both bots lost 14 of 14 at 10.6–75.8 s. Long shots down the aisles from 13–38 m, as the
+  builder says, with Marcus the usual hitter. Untaggable, the allies and the bot won 3 of 6 within 150 s (120–133 s).
+- **Lights Out (night 4v4):** standing, the bot won 5 of 11 at 108–147 s (5 lost at 12.9–79.4 s, 1 still going at
+  150 s), with the allies doing most of the work, which
+  fits the builder's 8-to-3 lives. Pushing into the stockroom was out at 5.3–5.4 s in 2 of 3, to Devon from 17–18 m.
+  The doorway rifle bites if you walk at it, which looks like the point.
+- **Customer Service:** see Problem 1. The attackers fire about 700 BBs a minute, as the builder counted, but from the
+  start spot only one of them has to.
+- **Through walls:** none. 0 of 46 traced tags crossed an obstacle. 3 tags early on read as "no line of sight" from the
+  shooter's spot at the moment of the hit, but tracing showed the kid had stepped behind a shelf after firing.
+- **Step cost**, one browser alone: Lights Out 0.66 ms average (p95 1.5, worst 10.8), Night Swim 1.0 (p95 2.1, worst
+  15), Bellfield After Dark 1.8 (p95 3.6) with one 232 ms step. With six browsers at once the night maps all showed
+  single steps of 95–290 ms, so that's load, not the store.
+
+**The other defends.** Hold the Gazebo: standing, tagged in 3 of 3 at 7.1–14.8 s (Trey from 33 m, Jamie 13 m, Marcus 16
+m). Hold the Portables: 3 of 3 at 6.5–12.5 s (Marcus 20–29 m, Trey 20 m). Last run's creek fort was 8 of 8 at 3.9–11.8
+s. Every defend I've played since v1.131 ends for a standing player in 15 s. On the gazebo and the portables the shots
+came from 13–33 m, over the cover rather than round its end, so I'm not calling those a spawn bug like the desk. It's
+a pattern for Michael's hands: a 90 s hold with one life against three kids is short for anyone who doesn't play it
+like a shooter.
+
+**First-timer path.** NEW GAME opens the mirror, DONE goes to the bedroom, and from the spawn the prompt reads
+"E   Go outside" with nothing else competing. The way out is found.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io. I read no comments. In the last day of Slack
+there were the builder's v1.153–v1.160 posts, the producer's 9pm post, the merge card for v1.153–v1.158 and two
+what-next decisions (Willow Bend, then the store). Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.138–v1.160)
+- v1.144, Hold the Treehouse's balance: Evan's opening shot decides it (Problem 2). The twins' 8.6–10.3 s climb leaves
+  the opening quiet only if you've dealt with Evan.
+- v1.160, 90 s behind the desk: the start isn't behind it (Problem 1).
+- v1.160, Lights Out's allies losing fewer lives: consistent with 5 standing wins in 11, mostly the allies' doing.
+- v1.159, the store's aisles: fights are long shots down an aisle, 13–38 m. Brooke near the west checkouts: she held
+  (11.2, 16.7) in every round I watched, firing.
+- v1.159 fix-up, kids frozen beside a cart or a hedge end: none in the store's enemies. One ally (Problem 4).
+- v1.156 / v1.158, the portables and the gazebo: steep (above). Whether that's fair is still Michael's call.
+- v1.158, Jamie hanging back in Night Swim: one round only, so I can't judge it.
+- v1.138–v1.143, the climb's feel, the prompt box and the climbing pose: these need eyes. Headless, the twins reached
+  the platform; Haden tagged from it at 1.7 m.
+- v1.139, sliding along angled cars: not replayed here. The v1.137 Northcliff spawn car is the builder's test now.
+- v1.146–v1.149, the map screen and the walkie at the hip: these need eyes.
+- v1.152–v1.154, the last kid comes looking: not judged this run. No round I played had a camper left at the end.
+
+I have no new proposal. The three in `docs/proposals.md` are all built (v1.88, v1.152, v1.153).
