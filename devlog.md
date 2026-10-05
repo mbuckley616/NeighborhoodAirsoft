@@ -7794,3 +7794,20 @@ nowhere falls through to the sidestep in the same frame. A detour that moves him
   advancing.
 - One wedge probed before the fix had no detour behind it (Marcus at 5.7, -20.4, 3 s). It did not recur in the 48
   rounds after the fix, but its cause was not traced.
+
+## v1.160 fix-up — CI runs the suites in six shards
+On 875210d, `headless (4/4)` was cancelled in both runs, at 30:06, against the job's 30-minute limit. Its 16 suites
+had all passed ("16/16 suites passed" is the log's last line). Shards 1-3 took 22-26 minutes. The suites now take
+101 minutes on CI in all. The eight stuck-kid sweeps alone take 250-455 s each, against the 165 s `tests/run.mjs`
+counted for them, and each new zone adds scenarios to them. Four shards average 25 minutes before the ~2 minutes of
+setup, so any shard dealt a little more than its share runs out of time. `check.yml` now runs six shards
+(`--shard k/6`, jobs `headless (k/6)`). The aggregate `headless` check is unchanged and still green only when every
+shard is. The weights in `tests/run.mjs` are now the per-suite times measured in that run's four shard logs.
+### Verified
+- `node tests/shard.test.mjs` passes. All 65 suites land in exactly one shard for 1, 2, 3, 6 and 7 shards, and every
+  suite has a measured time.
+- By the measured times, the six CI shards are 1012, 1006, 1011, 1006, 1006 and 1006 s, about 17 minutes each.
+### Still open
+- CLAUDE.md still says CI runs four shards. That file is Michael's, so it is left for him or the producer.
+- If `main`'s branch protection names the old `headless (k/4)` checks rather than `headless`, it needs updating. This
+  session cannot read it (403).
