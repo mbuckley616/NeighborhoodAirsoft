@@ -51,7 +51,11 @@ Fable card on the control room and Michael starts it from there.
    stand and court; After the Bell 1v1 with Tyler and The Portables 3v3; `tests/high-school.test.mjs`). ~~More school
    scenarios~~ — done, v1.156 (Hold the Portables defend, Friday Night Lights night 4v4 capstone; two more lamps).
    Hollins Ridge High is complete at four scenarios; its kids are borrowed from other streets. Another zone, or school
-   kids of its own, is a new question.
+   kids of its own, is a new question. Next (Michael: **A**, the country-club pool and golf course, made-up name; control room, 4 Oct):
+   ~~Willow Bend Country Club~~ — done, v1.157 (seventh on the ladder after the school, Horseshoe Bend: the clubhouse
+   and veranda, the pool with its deck, loungers and pool house, the 18th green, the fairway, a pond, the cart barn and
+   carts, the south lawn's gazebo and putting green; the pool and pond stop bodies, not BBs; Pool's Closed 1v1 with
+   Brooke and The Eighteenth 3v3; `tests/country-club.test.mjs`). More club scenarios (a defend and a night match).
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
    **(Fable)** — networking, a session model and the title screen touch every scenario; held by Michael’s C (30 Sep) until the

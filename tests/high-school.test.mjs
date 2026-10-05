@@ -19,7 +19,7 @@ const ladder = await page.evaluate(() => {
   delete done[zoneCapstoneId('northcliff')]; delete done[ids[0]];
   return { keys, ids, before, after, afterFirst, region: REGIONS.east_roswell.streets.hollins_ridge_high };
 });
-check('the ladder ends with Hollins Ridge High, after Northcliff', ladder.keys.slice(-2).join() === 'northcliff,high_school', ladder.keys);
+check('Hollins Ridge High comes after Northcliff (v1.157: and before Willow Bend)', ladder.keys.slice(-3).join() === 'northcliff,high_school,country_club', ladder.keys);
 check('the school runs the 1v1 opener, the portables 3v3, then the portables defend and the night 4v4 (v1.156)',
   ladder.ids.join() === 'school_1v1_tyler,school_portables_3v3,school_defend_portables,school_night_4v4', ladder.ids);
 check('its street is in East Roswell', ladder.region === 'Hollins Ridge High', ladder.region);

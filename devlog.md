@@ -7555,3 +7555,65 @@ lose lives, or if one side is wiped out while it fired back. The game is unchang
 run). The night 4v4 now stops at 47 s, when the allies are all out (12 lives), instead of running on to 60 s.
 ### Still open
 - Nothing for play. Whether a flawless 3v3 win by the AI allies is too easy is a playtest call; it was 1 in about 100.
+
+## v1.157 — Willow Bend Country Club: the seventh zone opens
+Michael's A on "after Hollins Ridge High, what next" (control room, 4 Oct): the next place on his D.1 list, the
+country-club pool and golf course, with a made-up club name per his C on place names. Shaped like v1.155 was for the
+school: the grounds, on the map and the ladder, with two scenarios that play.
+
+**Willow Bend Country Club** (`buildCountryClubScene`) is flat, 80 × 57 m, fenced in club green.
+- The white clubhouse closes the north. It has a green roof, a covered veranda on white posts with planters by the
+  doors, and the club's name over them. The cart barn stands at the north-east, with three carts parked in front.
+- The pool fills the north-west: 16 × 7 m with lane ropes, a diving board and a lifeguard chair. A lounger row runs
+  along each long side (0.5 m, crouch cover), with umbrellas between them. The pool house stands against the west fence.
+  A 1.1 m hedge closes the deck's south and east sides, each with a gap to walk through.
+- **The water stops a body but not a BB** (`bbPass`, `noStand`, the picket-fence flags). You can shoot across the pool
+  and the pond but can't walk or jump onto them, so the pool is a wall with a window in it. Kids path round it.
+- The 18th green fills the east, with its flag, the fringe, two greenside bunkers and a fairway bunker. The fairway
+  runs south in mown stripes, with a 5 m pond and fountain on it. Two more carts stand on the cart path, which runs
+  from the barn to the south fence.
+- On the south lawn: the halfway hut, the putting green, a gazebo you can stand in, a low stone wall in two runs, and
+  willows and hardwoods.
+- The layout is fixed, as the school's is. Only cart colours vary.
+
+Two scenarios, seventh on the ladder after the school, in Horseshoe Bend's region (`willow_bend_cc`), since the
+club is Winnmark's neighbour:
+- **Pool's Closed** (the opener): 1v1 against Brooke with a pistol. She starts on the pool deck and you start by
+  the halfway hut. One hit each.
+- **The Eighteenth** (the zone capstone for now): 3v3. You, Sean (MP5) and Trey (AK) on the south lawn. Seth (AK),
+  Marcus (UMP) and Jamie (shotgun) start from the veranda and deploy to it, the barn and the pool. Three lives each,
+  last team standing. The kids are Winnmark's, from over the back fence.
+
+The map gets a new pin, "Willow Bend · Country Club", south-east of Winnmark, between Steeplechase Dr and the river.
+Under it are drawn the clubhouse, the pool and the green. It is locked until the school's capstone is won.
+
+The first draft put the diving board's stand in the 2.4 m lane between the pool's deep end and the pool house. Sean
+wedged against it in `advancing` for 5 s. The stand is now inside the pool's own footprint.
+The first pin sat where its label hid Winnmark's marker, and at 1024 × 640 it hid the Battleground label.
+`tests/map-screen.test.mjs` caught both. It now stands at the drawing's east edge, clear at all four sizes.
+
+### Verified
+- `tests/country-club.test.mjs` (new), 30 checks:
+  - The ladder ends with the school, then the club. The club is locked on a new save. Winning Friday Night Lights
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Hollins Ridge High. It sits inside the map and covers no other pin's
+    marker or label. Once the school is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The
+    grounds hold the clubhouse front, the pool and the pond as water, five carts and the cart barn.
+  - The water, walked into: the player stops at the pool's edge (z −7.67 against the edge at −8). Jumping doesn't
+    put him on it, and he stops at the pond's rim. A BB fired at 1 m across the pool's 16 m keeps going, past x = 2.
+  - Pool's Closed, 60 s with the player untaggable at the spawn: Brooke walks 59–66 m off the deck, comes within
+    7.2–8 m and fires 11–13 times.
+  - The Eighteenth, 52–60 s, 3 runs: 433–676 BBs, with lives traded (enemy 3–8 lost, allies 1–6). Every kid moves or
+    fires. No kid stands in the water at any step, and the longest stall in `advancing` is 2 s.
+  - Screenshots `tests/out/country-club-{pool,green,front,start,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (parts 1 and 2). `ONLY=` on them, both ways: worst kid 2 s (Sean by the
+  putting green, Marcus at the barn), against the 15 s line.
+- `tests/high-school.test.mjs`, `market-lot.test.mjs` and `northcliff.test.mjs` spell out the ladder and now include
+  the club. All three pass, as do `map-screen`, `spawn-facing` (the club's start has 57 m clear ahead) and `taggers`.
+- `npm test` as four shards at once, before the club, mid-edit: 62 of 63 passed. `taggers` died at `page.goto`'s 30 s
+  load limit (the v1.124 note) and passed alone on the new build.
+### Still open
+- The club's defend and a night match, as v1.156 gave the school.
+- Whether the pool as "a wall with a window in it" plays well is for a playtest. Kids go round it and shoot across it,
+  and so can you.
