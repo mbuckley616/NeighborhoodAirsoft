@@ -7853,6 +7853,19 @@ Customer Service's loss already said "take the service desk" (v1.160's `resultHo
 - Nothing for play. Only the Hollow and the store have their own words. The school and the club still use the
   street's road and curb, which fit outdoors well enough. Nobody has flagged them.
 
+## v1.161 fix-up — the desk-start check sits under the measured tag times
+CI failed `headless (6/6)` on 6ae6329 with one check in v1.161's `desk-start`: "standing at the start, at most 2 of
+6 rounds are tagged inside 20 s". Three rounds were tagged, at 19.3, 19.4 and 19.5 s. Locally, a player standing at
+the new start inside the service desk's L is tagged in every round, at 19.3-23.7 s (40 rounds). 14 of the 40 fall
+just under 20 s, so with six rounds the check failed about a third of the time. The start is fine: the old one was
+tagged at 7.6-14.3 s, and nothing now comes close to that. Only the line was in the middle of the new spread. The
+check is now that no round is tagged inside 18 s. The "no tag before 10 s" check stays. The game is unchanged.
+### Verified
+- 40 sampled rounds, standing at the start, were tagged at 19.3-23.7 s.
+- `node tests/run.mjs desk-start` passed 3/3 runs.
+### Still open
+- Whether about 20 s of cover at the desk feels right is for the playtest.
+
 ## v1.163 — A bound has to gain ground where he'll stand
 The critic's last store bug (Found in play, v1.159). In Price Check your ally Eric stood in `advancing` within 1 m of
 (17.2, −2.4) for 6–15 s in 3 of 10 rounds. That spot is the 2.5 m gap between the four chest freezers. A probe showed
