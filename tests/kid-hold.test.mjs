@@ -14,9 +14,12 @@ for (const id of MATCHES) {
     const V = THREE.Vector3, a = new V(), b = new V();
     const r = { n: 0, crouched: 0, small: 0, worstR: 0, worstL: 0, worstAt: null, hitN: 0, worstHit: 0 };
     for (let f = 0; f < 40 * 60 && Game.mode === 'scenario'; f++) {
-      stepGame(1 / 60);
       // one kid a round is tagged the real way at 10 s and 25 s, so the hit pose is sampled in play
+      // v1.167 fix-up: before the step, as a BB's hit lands in updateBBs ahead of updateEnemies. Tagged after it, a
+      // crouched kid with a life to spare was sampled between eliminateEnemy's stand-up (which resets the arms) and
+      // the next hold: Eric, retreating, 21-30 cm from his grip in about one run in six (CI, 5 Oct).
       if (f === 600 || f === 1500) { const v = Game.scenario.enemies.find(e => e.health > 0 && e.mesh && e.mesh.group.visible); if (v) applyBBHit({}, v); }
+      stepGame(1 / 60);
       if (f % 6) continue;
       for (const e of Game.scenario.enemies) {
         const k = e.mesh; if (!k || !k.pose || !k.group.visible) continue;

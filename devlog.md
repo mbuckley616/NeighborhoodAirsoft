@@ -8018,3 +8018,17 @@ Pose only: no hitbox, muzzle or AI change. A hiding kid's gun is now in front of
 ### Still open
 - Whether a crouched kid's chest-high carry reads well behind low cover (the gun may peek over a 0.9 m wall) is for
   a playtest. The two-handed off hand still sits 3–7 cm short of its foregrip point, inside the hand box (v1.97).
+
+## v1.167 fix-up — kid-hold tags its kid before the step, as a BB does
+CI failed `headless (6/8)` on b28cb6a with v1.167's `kid-hold`: Eric, 'retreating', had his firing hand 29 cm from
+his grip and his off hand 37 cm from the foregrip. It failed about one run in six locally. Every bad sample was at
+frame 600 or 1500, the frames where the test tags a kid with `applyBBHit` itself, and it tagged him after
+`stepGame`, then sampled that same frame. A crouched kid with a life to spare goes through `eliminateEnemy`, whose
+stand-up (`setKidCrouch(…, 0)`) resets his arms; the hold comes back in the next `updateEnemies`. In play a BB's hit
+lands in `updateBBs`, which runs before `updateEnemies` in the same step, so the hold is back before the frame is
+drawn. The test now tags before the step. The game is unchanged.
+### Verified
+`node tests/run.mjs kid-hold` passed 8/8 runs. An instrumented copy showed the failing sample at f = 1500, Eric
+crouched before the tag, with his shoulder and gun at rest (both rotations 0).
+### Still open
+- Nothing for play.
