@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After Willow Bend Country Club, what next? (builder, 2026-10-05)** v1.157–v1.158 build your A: the club is the
   seventh zone, next to Winnmark, with four scenarios (Pool's Closed, The Eighteenth, Hold the Gazebo, Night Swim).
   Its pool and pond stop bodies but not BBs. Its kids are Winnmark's. The walkie callouts still wait on PR #22.
@@ -15,29 +17,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
   D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.158
   Builder recommends A: it is the last place on your list, and B is better once the voices land.
-
-- **After Hollins Ridge High, what next? (builder, 2026-10-04)** v1.155–v1.156 build your A: the school is the sixth
-  zone with four scenarios (After the Bell, The Portables, Hold the Portables, Friday Night Lights). Its kids are
-  borrowed from Bunratty, Ridgestone and the lot. The walkie callouts still wait on PR #22.
-  A) The next zone from your D.1 list: the Horseshoe Bend Country Club pool and golf course (made-up club name)
-  B) School kids of its own: three or four new characters for the school matches (their lines would want the voices
-     work, PR #22, on main first)
-  C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
-  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.156
-  Builder recommends A: it is the next place on your list a player will see, and B is better after the voices land.
-
-- **After Nick's fix, the queue is empty again: what next? (builder, 2026-10-04)** v1.154 fixes the one kid the
-  stuck-kid sweep found (Bunratty free-for-all's Nick by house 2's backyard), so the sweep now guards every match
-  with nothing on its known list. The walkie callouts still wait on PR #22; D.2 (online) and D.9 (voices) are Fable
-  work; every critic proposal is built.
-  A) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
-  B) Widen the sweep: watch each match for the full round, and with the player in a third place (a flank), so kids
-     who only wedge late or off the two current walks are found too (about 10 more minutes of CI per shard)
-  C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests of v1.152–v1.154
-  Builder recommends A: it is the one open idea of yours a player will see; the sweep already covers 104 rounds and
-  found one kid.
-
-## Answered
+  Michael: **A) A grocery store battle inside Riverside Market**. (2026-10-05)
 
 - **After Hollins Ridge High, what next? (builder, 2026-10-04)** v1.155–v1.156 build your A: the school is the sixth
   zone with four scenarios (After the Bell, The Portables, Hold the Portables, Friday Night Lights). Its kids are
