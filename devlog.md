@@ -7657,3 +7657,157 @@ It now looks out through the open side, with 16.7 m clear.
   playtest.
 - Willow Bend is complete at four scenarios. What comes next is Michael's call (in decisions: A the grocery store
   inside Riverside Market, B kids of their own, C widen the sweep, D wait; builder recommends A).
+
+## v1.159 — Inside Riverside Market: the eighth zone opens
+Michael's A on "after Willow Bend, what next" (control room, 5 Oct): the last place on his D.1 list, a grocery store
+battle inside Riverside Market. The option left open whether it would be a new zone or new matches on the lot's map.
+It is a new zone, because the lot is outdoors and a store interior is a different map with a roof. It sits eighth on
+the ladder after the club, opened by Night Swim, as each zone before it was. As v1.155 and v1.157 did, this version
+builds the store, its place on the map and the ladder, and two scenarios.
+
+**Inside Riverside Market** (`buildGroceryStoreScene`) is one room, 52 × 48 m inside, under a 5.6 m roof.
+- The front wall closes the south. It is glass, with the automatic doors and an ENTER · EXIT sign. Inside it are six
+  checkout lanes (1.0 m counters, numbered lane lights, impulse racks), the service desk, a nested row of carts and two
+  loose carts.
+- The sales floor has five aisles of 2.1 m shelving, signed 1–5 (Bread · Cereal through Paper · Cleaning). A cross
+  aisle cuts them halfway down, and a soda end-cap stands at aisle 3. Each run of shelving is one box with a drawn wall
+  of products on its long faces. The shelves stop a body and a BB, and you can't see over them or jump onto them, so
+  every aisle is a corridor.
+- On the west, eight produce tables (0.9 m, crouch cover) and the misted wall case. On the east, four chest freezers
+  (0.9 m) and the deli's glass case (1.25 m) against the wall, with room behind it.
+- The dairy coolers line the back aisle. The back wall has three doorways, marked EMPLOYEES ONLY, into the stockroom.
+- The stockroom has three runs of 3.2 m racking, eight pallets of stock (1.0–1.3 m), the baler, a parked forklift and
+  the loading-dock door.
+- The lighting is indoor: a high, soft light with more ambient, light panels in the ceiling, and a darker tile floor
+  than the first draft, which was washed out to white. Point lights and exit signs are built for a night match, but no
+  scenario uses it yet.
+
+Two scenarios, in East Roswell (`riverside_market_inside`). The kids are the lot's.
+- **Cleanup on Aisle Five** (opener): 1v1 against Tyler with a pistol. He starts by the dairy coolers and you start
+  inside the front doors. One hit each.
+- **Price Check** (3v3): you, Eric (MP5) and Brooke (UMP) at the checkouts. Marcus (AK), Jamie (shotgun) and Tyler
+  (UMP) start in the stockroom and deploy through the doorways: Marcus to the stockroom's west, Jamie to the dairy
+  aisle, Tyler to the freezers. Three lives each, last team standing.
+
+The map gets a new pin, "Riverside Market · Inside", above the lot's pin toward the store's drawing. It is locked until
+the club's capstone is won.
+
+The first draft had three faults, each caught by the new test:
+- The player started 1.6 m inside the front wall. Allies start 2 m either side of the player in z, so Brooke was pushed
+  out through the glass and stood outside all round. The start is now at z 14.8, with both allies inside.
+- Jamie was sent to an anchor beside his spawn in the stockroom. He hid there all round, out of sight. He now goes to
+  the dairy aisle.
+- The pin's first spot at (88%, 24%) ran off the map's edge at 1280 × 720 and 1024 × 640 and covered the lot's label.
+  `map-screen` caught it too.
+
+### Verified
+- `tests/grocery-store.test.mjs` (new), 33 checks, passed in two runs:
+  - The ladder ends with the club, then the store. The store is locked on a new save. Winning Night Swim opens the
+    opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Willow Bend. It sits inside the map and covers no other pin's marker or
+    label. Once the club is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The store
+    holds 12 runs of shelving, 6 checkout counters, 8 produce tables, 4 freezers, 3 doorways in the back wall, 8
+    pallets and 3 racks.
+  - Shelves: walking into one stops the player at its face (x −7.59 against the face at −7.9). A jump at a shelf rises
+    0.7 m and doesn't put him on it, and the same jump doesn't clear a 1.0 m counter. A BB fired into a shelf at 60 m/s
+    never comes out the far side.
+  - The room is closed: 288 rays from six points inside (level, up and steeply up) all meet a wall or the roof within
+    60 m.
+  - Cleanup on Aisle Five, 60 s with the player untaggable, 3 runs: Tyler walks 46–55 m out of the back, comes within
+    6.7–7.3 m and fires 49 times.
+  - Price Check, 60 s, 3 runs: 369–557 BBs, enemy 2–4 lives lost and ally 2–3. Every kid moves or fires, and the
+    stockroom kids come through the back wall. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `tests/out/grocery-store-{start,aisle,checkouts,stockroom,produce,freezers,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (part 1). With `ONLY=` on them, both ways, the worst kid stalled 2 s
+  (Jamie in the stockroom, and Tyler), against the 15 s line.
+- `market-lot`, `northcliff`, `high-school` and `country-club` spell out the ladder and now include the store.
+  `map-screen` passes with the new pin. `spawn-facing` passes: both store starts face 12–26° off the nearest enemy, with
+  8 m clear ahead.
+- `npm test` as four shards at once on this build: 63 of 65 passed. `spawn-facing` lost its browser and `stuck-sweep-3`
+  hit the 30 s `page.goto` limit under load (the v1.124 note). Both passed alone on the same build.
+### Still open
+- The store's defend and a night match, as v1.156 and v1.158 gave the school and the club. The night lighting is
+  built and untested.
+- Whether the aisles play well is for a playtest. A shelf is a wall, so fights are down an aisle's length or across
+  the cross aisle and the open ends. The 3v3's opening is mostly long shots down the aisles: Marcus fired 278–312
+  times in two of the runs.
+- Brooke spends the 3v3 near the west checkouts and fires from there, about 30 m walked a round.
+
+## v1.160 — Inside Riverside Market: Customer Service and Lights Out
+The rest of what v1.159 left open, as v1.156 and v1.158 rounded out the school and the club. The store now runs four
+scenarios: 1v1, 3v3, defend, then a night 4v4. That is the same arc as the lot's, Northcliff's, the school's and the
+club's.
+- **Customer Service** (defend, 90 s). You start in the corner behind the service desk, inside the front doors. The
+  1.1 m counter covers you on its north and west sides, and the way in runs along the east wall past the deli. Marcus
+  (UMP), Jamie (shotgun) and Tyler (MP5) stage in the stockroom (`cluster_north`). They come on three flanks: down the
+  deli wall (`b_deli_s`, new), through the freezers (`b_frozen_s`, new) and round by the checkouts to the doors. A
+  tagged kid walks back and comes again. The lose line says "the service desk". New `desk` player spawn, facing up
+  the east wall.
+- **Lights Out** (night 4v4, the new capstone). You, Eric, Brooke and Rebecca at the checkouts, against Marcus, Jamie
+  and Tyler, with Devon's rifle as a defender in the stockroom's centre doorway (`a_door_c`, new), looking straight
+  down aisle 3. Four lives each. The ceiling is dark. The coolers glow down the back aisle, the exit signs are red, and
+  eight night lights hang over the floor (all built in v1.159, now used).
+
+### Verified
+- `tests/grocery-store.test.mjs`, extended to the four scenarios (52 checks):
+  - The ladder order is opener, 3v3, defend, night.
+  - The defend's player starts behind the service desk. Every anchor and spawn is clear of obstacles, the three new
+    anchors included.
+  - Customer Service, 60 s with the player untaggable: the attackers walk 40–106 m and fire 718 BBs. Jamie comes to
+    3.3 m and Tyler to 3.6 m, both at the desk's corner, and Marcus shoots from 13 m.
+  - Lights Out, 60 s: 719 BBs, enemy 8 lives lost and ally 3. Every kid moves or fires. Devon holds the doorway and
+    fires 19 times. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `grocery-store-{night,night-dairy,defend}.png`, checked by eye.
+- The stuck-kid sweep, over all four store matches both ways, in the full run: worst kid 3 s (Jamie in the stockroom
+  in the defend), against 15 s.
+- `npm test` as four shards at once on this build: the container restarted with 42 of 65 suites done and none
+  failed. The other 23 ran in four lanes on the same build and all passed, so all 65 passed.
+### Still open
+- Whether 90 s behind the desk is fair is for a playtest. Jamie and Tyler reach the desk's corner at 3–4 m, and the
+  attackers fire about 700 BBs a minute.
+- In the night match the allies lose fewer lives than the enemy (8 to 3 in the logged round). Devon's doorway covers
+  aisle 3 only, so how much the rifle matters is for the playtest.
+- Inside Riverside Market is complete, and so is Michael's D.1 list. What next is in decisions: A kids of their own,
+  B widen the sweep, C a new place, D wait. The builder recommends B.
+
+## v1.159 fix-up — a blocked fence detour falls through to the sidestep
+CI failed `headless (4/4)` on 1b821b9 with one check in `country-club`: "club_eighteenth_3v3: no kid is wedged in
+advancing for 4 s or more" (ally Trey, 4 s). The club 3v3 did this in about 7 rounds in 40 locally: Trey against a
+golf cart, Sean at the end of a hedge (Marcus too, by a rail, twice). Each stood
+completely still in 'advancing' for 4-5 s. When the direct push wedges, the wall-follow asks `fenceDetourWaypoint`
+for a fence on the straight line to the target and walks to its nearer end. That fence can be far along the line,
+while the thing actually in his way is a cart or the corner of another hedge right beside him, which blocks every
+step toward the waypoint. The side flip and the v1.103 committed sidestep only ran when there was no detour. The
+progress window never saw wall-following time long enough to back him out either. Now a detour step that moves him
+nowhere falls through to the sidestep in the same frame. A detour that moves him is unchanged.
+### Verified
+- The club 3v3 was sampled at 120 s per round. Before the fix, 7 of 40 rounds had a kid wedged in advancing for 4 s
+  or more. After it, 0 of 48 had one.
+- A probe at the wedge showed the cause: the detour waypoint was the end of a far fence, e.g. (-14.7, -11.5) for
+  Trey at (6.1, 15.5). All three step tries were blocked by the cart at x 4.58-5.82, z 12.75-15.25.
+- The full suite was run locally in four parallel shards: 62 of 65 suites passed. The three that failed
+  (shop-tabs, stuck-sweep-8, harness) were page-load timeouts at load average 15. All three passed when rerun
+  alone on v1.160, as did country-club and grocery-store.
+### Still open
+- Nothing for play beyond the usual: kids should no longer stand frozen beside a cart or a hedge end while
+  advancing.
+- One wedge probed before the fix had no detour behind it (Marcus at 5.7, -20.4, 3 s). It did not recur in the 48
+  rounds after the fix, but its cause was not traced.
+
+## v1.160 fix-up — CI runs the suites in six shards
+On 875210d, `headless (4/4)` was cancelled in both runs, at 30:06, against the job's 30-minute limit. Its 16 suites
+had all passed ("16/16 suites passed" is the log's last line). Shards 1-3 took 22-26 minutes. The suites now take
+101 minutes on CI in all. The eight stuck-kid sweeps alone take 250-455 s each, against the 165 s `tests/run.mjs`
+counted for them, and each new zone adds scenarios to them. Four shards average 25 minutes before the ~2 minutes of
+setup, so any shard dealt a little more than its share runs out of time. `check.yml` now runs six shards
+(`--shard k/6`, jobs `headless (k/6)`). The aggregate `headless` check is unchanged and still green only when every
+shard is. The weights in `tests/run.mjs` are now the per-suite times measured in that run's four shard logs.
+### Verified
+- `node tests/shard.test.mjs` passes. All 65 suites land in exactly one shard for 1, 2, 3, 6 and 7 shards, and every
+  suite has a measured time.
+- By the measured times, the six CI shards are 1012, 1006, 1011, 1006, 1006 and 1006 s, about 17 minutes each.
+### Still open
+- CLAUDE.md still says CI runs four shards. That file is Michael's, so it is left for him or the producer.
+- If `main`'s branch protection names the old `headless (k/4)` checks rather than `headless`, it needs updating. This
+  session cannot read it (403).

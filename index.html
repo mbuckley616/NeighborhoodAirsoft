@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.158</div>
+  <div class="version">v1.160</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2124,6 +2124,11 @@
       <div class="pin locked" style="left: 81%; top: 87%;" data-scenario="country_club">
         <div class="marker"></div>
         <div class="label">Willow Bend · Country Club</div>
+      </div>
+      <!-- v1.159: inside Riverside Market, above the lot's pin, toward the store -->
+      <div class="pin locked" style="left: 82%; top: 15%;" data-scenario="grocery_store">
+        <div class="marker"></div>
+        <div class="label">Riverside Market · Inside</div>
       </div>
     </div>
     </div>
@@ -4853,7 +4858,7 @@ const REGIONS = {
   },
   east_roswell: {
     name: 'East Roswell',
-    streets: { ridgestone_ct: 'Ridgestone Court', the_hollow: 'Battleground - Chattahoochee River', riverside_market: 'Riverside Market', hollins_ridge_high: 'Hollins Ridge High' },   // v1.102: + the market lot; v1.155: + the high school
+    streets: { ridgestone_ct: 'Ridgestone Court', the_hollow: 'Battleground - Chattahoochee River', riverside_market: 'Riverside Market', hollins_ridge_high: 'Hollins Ridge High', riverside_market_inside: 'Inside Riverside Market' },   // v1.102: + the market lot; v1.155: + the high school; v1.159: + inside the store
     direction: 'east',
   },
   northcliff: {
@@ -6407,6 +6412,98 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 170, lose: 38 },
+    playerLives: 1, armorMult: 1,
+  },
+  // ===================================================================
+  // v1.159: INSIDE RIVERSIDE MARKET (East Roswell) — the eighth zone (D.1, Michael: A, control room 5 Oct). The grocery
+  // store whose lot is the fourth zone, from the inside: checkouts, five aisles, produce, freezers, the deli, the stockroom.
+  // ===================================================================
+
+  // --- Opener: 1v1 with Tyler in the aisles ---
+  store_1v1_tyler: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Cleanup on Aisle Five',
+    desc: "Tyler's dad is the night manager, so Tyler gets the store before it opens. He's somewhere in the back by the dairy coolers with his pistol; you came in through the front doors. The shelves are taller than you and stop a BB, so every aisle is a corridor and the only way across is the gap halfway down or the open ends. The freezers and the produce tables are waist high: crouch behind them. One hit each.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'tyler', weapon: 'pistol', anchor: 'a_dairy', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 64, lose: 15 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- 3v3: the lot kids, checkouts against the stockroom ---
+  store_price_check_3v3: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Price Check',
+    desc: "Marcus, Jamie and Tyler came in through the loading dock and hold the stockroom. Eric and Brooke are with you at the checkouts. There are three doorways through the back wall, and five aisles between you and them. Jamie's shotgun is made for an aisle; don't race him down one. The counters, the freezers and the produce are your cover out front; the pallets and the forklift are theirs. Three lives each, last team standing.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',   weapon: 'mp5',     anchor: 'b_lane_w', team: 'player' },
+      { charId: 'brooke', weapon: 'ump',     anchor: 'b_service', team: 'player' },
+      { charId: 'marcus', weapon: 'ak47',    anchor: 'a_stock_w' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_dairy' },
+      { charId: 'tyler',  weapon: 'ump',     anchor: 'a_frozen' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 155, lose: 35 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.160: hold the service desk for 90 s against a push out of the stockroom ---
+  store_defend_desk: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Customer Service',
+    desc: "You've got the service desk, the corner behind the counter by the front doors. The counter comes up to your chest on two sides; the way in is along the east wall, past the deli. Marcus, Jamie and Tyler come out of the stockroom: one down the deli wall, one through the freezers, one round by the checkouts. A tagged kid walks back to the stockroom and comes again. Crouch and the counter covers you; stand and you can see over it. Survive 90 seconds.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the service desk',
+    playerSpawn: 'desk',
+    enemySpawnCluster: 'cluster_north',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'ump',     anchor: 'b_deli_s',  role: 'attacker', flank: 'L' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_frozen_s', role: 'attacker', flank: 'C' },
+      { charId: 'tyler',  weapon: 'mp5',     anchor: 'b_doors',   role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 115, lose: 27 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.160: the zone capstone, 4v4 with the lights off ---
+  store_night_4v4: {
+    region: 'east_roswell', street: 'riverside_market_inside',
+    name: 'Inside Riverside Market', scenarioName: 'Lights Out',
+    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Marcus, Jamie and Tyler are back, and they've brought Devon, who's set up with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. You've got Eric, Brooke and Rebecca at the checkouts. Four a side, four lives each.",
+    builderFn: 'buildGroceryStoreScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'eric',    weapon: 'mp5',     anchor: 'b_lane_w',  team: 'player' },
+      { charId: 'brooke',  weapon: 'ump',     anchor: 'b_service', team: 'player' },
+      { charId: 'rebecca', weapon: 'ak47',    anchor: 'b_produce', team: 'player' },
+      { charId: 'marcus',  weapon: 'ak47',    anchor: 'a_stock_w' },
+      { charId: 'jamie',   weapon: 'shotgun', anchor: 'a_dairy' },
+      { charId: 'tyler',   weapon: 'ump',     anchor: 'a_frozen' },
+      { charId: 'devon',   weapon: 'sniper',  anchor: 'a_door_c', role: 'defender' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 175, lose: 40 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -15262,6 +15359,356 @@ function buildCountryClubScene(variant, timeOfDay) {
   };
 }
 function buildCountryClubSceneDefault(_v, tod) { return buildCountryClubScene('default', tod); }
+
+// =====================================================================
+// v1.159: INSIDE RIVERSIDE MARKET (East Roswell) — the eighth zone (backlog D.1, Michael: A, control room 5 Oct: the
+// grocery store battle from his list, inside the made-up store whose lot is the fourth zone). One room under a roof.
+// The front wall and its doors close the SOUTH (z = 18); the checkout lanes and the service desk stand inside them.
+// The sales floor fills the middle: produce tables (waist high) on the WEST, five grocery aisles of 2.1 m shelving,
+// cut by a cross aisle, then the chest freezers and the deli case on the EAST. The dairy coolers line the back aisle;
+// three doorways through the back wall lead to the STOCKROOM in the NORTH, with pallets, racking, the baler and a
+// forklift. Shelves stop a body and a BB and you can't see over them; counters, tables and freezers are crouch cover.
+// Team A (enemies) start in the stockroom, team B (player) at the checkouts. Fixed layout; only product colours vary.
+// Playable box: x∈[-25.6,25.6], z∈[-29.6,17.6].
+// =====================================================================
+function buildGroceryStoreScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  // Indoors: a high, soft "sun" stands in for the ceiling lights, so the shelves throw short shadows; the sun disc
+  // and the sky are behind the walls and the roof.
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0xd6d2c6, dayFog: [40, 130],
+    sunColor: 0xfffaf0, sunInt: 0.9, sunPos: [4, 60, 9],
+    dayAmbColor: 0xe8ecf0, dayAmbInt: 0.5, dayHemiColor: 0xf4f6ff, dayHemiInt: 0.34,
+    nightBg: 0x07090e, nightFog: [12, 52], moonPos: [10, 40, -6],
+    shadow: { size: 4096, extent: 36, far: 110 },
+  });
+
+  const groundY = () => 0;
+  const P = (x, z) => new THREE.Vector3(x, 0, z);
+  const bounds = { minX: -25.6, maxX: 25.6, minZ: -29.6, maxZ: 17.6 };
+  let _seed = 11;
+  const rnd = () => { _seed = (_seed * 16807) % 2147483647; return (_seed - 1) / 2147483646; };
+  const std = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...extra });
+  const mesh = (geo, mat, x, y, z, shadow = true) => {
+    const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+    if (shadow) m.castShadow = m.receiveShadow = true;
+    scene.add(m); return m;
+  };
+  const canvasTex = (w, h, draw) => {
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    draw(cv.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+  };
+  const obstacles = [], coverList = [];
+  const box = (minX, maxX, minZ, maxZ, h, surface = 'hard', extra = {}) => {
+    const o = { minX, maxX, minZ, maxZ, h, surface, baseY: 0, ...extra }; obstacles.push(o); return o;
+  };
+  const H = 5.6;   // the ceiling
+
+  // === FLOOR, WALLS AND ROOF ===
+  {
+    const tiles = canvasTex(256, 256, (c, w) => {
+      c.fillStyle = '#e8e4da'; c.fillRect(0, 0, w, w);
+      c.fillStyle = '#d6d0c2'; c.fillRect(0, 0, w / 2, w / 2); c.fillRect(w / 2, w / 2, w / 2, w / 2);
+      c.strokeStyle = '#bfb8a8'; c.lineWidth = 2; c.strokeRect(0, 0, w, w); c.beginPath(); c.moveTo(w / 2, 0); c.lineTo(w / 2, w); c.moveTo(0, w / 2); c.lineTo(w, w / 2); c.stroke();
+    });
+    tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping; tiles.repeat.set(26, 18);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(52, 36.6), new THREE.MeshStandardMaterial({ map: tiles, roughness: 0.55, color: _night ? 0x8a8a90 : 0xb4b0a6 }));
+    floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0.002, -0.3); floor.receiveShadow = true; scene.add(floor);
+    const conc = new THREE.Mesh(new THREE.PlaneGeometry(52, 12), std(0x8a8884, { roughness: 1 }));
+    conc.rotation.x = -Math.PI / 2; conc.position.set(0, 0.002, -24.6); conc.receiveShadow = true; scene.add(conc);
+    for (const [y, dz] of [[0.004, -18.62]]) {   // the yellow line at the stockroom doors
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(52, 0.12), std(0xd8b020)); l.rotation.x = -Math.PI / 2; l.position.set(0, y, dz); scene.add(l);
+    }
+    // the roof: a ceiling of tiles with rows of light panels (no shadow, so the room stays lit)
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(54, 50), std(0xe6e4dc, { roughness: 1, emissive: _night ? 0x000000 : 0x55534c, emissiveIntensity: 0.6 }));
+    ceil.rotation.x = Math.PI / 2; ceil.position.set(0, H, -6); scene.add(ceil);
+    const panelMat = new THREE.MeshBasicMaterial({ color: _night ? 0x3a4038 : 0xfdfcf4 });
+    for (let x = -21; x <= 21; x += 7) {
+      mesh(new THREE.BoxGeometry(0.5, 0.06, 32), panelMat, x, H - 0.04, 0.5, false);
+      mesh(new THREE.BoxGeometry(0.5, 0.06, 8), panelMat, x, H - 0.04, -24, false);
+    }
+    // walls: block-painted, a band of the store green at the top
+    const wallMat = std(0xe2dccb, { roughness: 0.95 }), bandMat = std(0x2f6a3a);
+    const wall = (x0, x1, z0, z1) => {
+      mesh(new THREE.BoxGeometry(x1 - x0, H, z1 - z0), wallMat, (x0 + x1) / 2, H / 2, (z0 + z1) / 2, false).receiveShadow = true;
+      box(x0, x1, z0, z1, 6);
+    };
+    wall(-26.4, -25.8, -30.4, 18.4); wall(25.8, 26.4, -30.4, 18.4);    // west, east
+    wall(-26.4, 26.4, -30.4, -29.8);                                   // north (the stockroom's back)
+    wall(-26.4, 26.4, 17.8, 18.4);                                     // south, the front (glass drawn on it)
+    // the back wall of the sales floor, with three doorways into the stockroom (x -16.5…-13.5, -1.5…1.5, 13.5…16.5)
+    for (const [x0, x1] of [[-25.8, -16.5], [-13.5, -1.5], [1.5, 13.5], [16.5, 25.8]]) wall(x0, x1, -18.6, -18.0);
+    for (const dx of [-15, 0, 15]) {
+      mesh(new THREE.BoxGeometry(3.4, H - 2.6, 0.6), wallMat, dx, 2.6 + (H - 2.6) / 2, -18.3, false);   // the lintel
+      for (const s of [-1, 1]) {                                                                       // swing doors, propped open
+        const d = mesh(new THREE.BoxGeometry(1.4, 2.1, 0.06), std(0x6a6e72, { metalness: 0.4 }), dx + s * 1.45, 1.05, -18.0 + 0.7, false);
+        d.rotation.y = Math.PI / 2;
+      }
+      const sign = canvasTex(128, 32, (c) => { c.fillStyle = '#c0302a'; c.fillRect(0, 0, 128, 32); c.fillStyle = '#fff'; c.font = 'bold 18px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('EMPLOYEES ONLY', 64, 17); });
+      const sm = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.4), new THREE.MeshBasicMaterial({ map: sign })); sm.position.set(dx, 2.95, -17.98); scene.add(sm);
+    }
+    for (const [z0, z1, x] of [[-29.8, 17.8, -25.79], [-29.8, 17.8, 25.79]]) {
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(z1 - z0, 0.5), bandMat); b.position.set(x, H - 0.45, (z0 + z1) / 2); b.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2; scene.add(b);
+    }
+    // the front: the glass and the automatic doors at x 8…14, daylight (or the dark lot) outside
+    const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4 });
+    for (const [x0, x1] of [[-24, -2], [2, 22]]) mesh(new THREE.BoxGeometry(x1 - x0, 2.6, 0.04), glassMat, (x0 + x1) / 2, 1.5, 17.76, false);
+    for (let x = -24; x <= 22; x += 2) mesh(new THREE.BoxGeometry(0.08, 2.7, 0.08), std(0x8a8c8e, { metalness: 0.5 }), x, 1.45, 17.74, false);
+    mesh(new THREE.BoxGeometry(6, 0.3, 0.3), std(0x2f6a3a), 11, 2.95, 17.6, false);
+    const enter = canvasTex(256, 32, (c) => { c.fillStyle = '#2f6a3a'; c.fillRect(0, 0, 256, 32); c.fillStyle = '#fff'; c.font = 'bold 20px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ENTER  ·  EXIT', 128, 17); });
+    const em = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.28), new THREE.MeshBasicMaterial({ map: enter })); em.position.set(11, 2.95, 17.44); em.rotation.y = Math.PI; scene.add(em);
+    // the store's name on the back wall over the centre doorway, seen from the checkouts
+    const name = canvasTex(512, 80, (c) => { c.fillStyle = '#f4efe2'; c.fillRect(0, 0, 512, 80); c.fillStyle = '#2f6a3a'; c.font = 'bold 46px Georgia'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('RIVERSIDE MARKET', 256, 42); });
+    const nm = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), new THREE.MeshBasicMaterial({ map: name })); nm.position.set(0, 4.3, -17.98); scene.add(nm);
+  }
+
+  // === THE SALES FLOOR — five aisles of shelving between the produce and the freezers ===
+  // Each run of shelving is one box: its long faces carry a drawn wall of products, its ends the store green.
+  const productTex = (k) => canvasTex(512, 256, (c, w, h) => {
+    c.fillStyle = '#9aa0a4'; c.fillRect(0, 0, w, h);
+    const PAL = ['#c0302a', '#e8b030', '#2a6ab0', '#f2f0e8', '#3a8a3a', '#e07a20', '#7a3a8a', '#d8d040', '#2a2a2a', '#b06a3a'];
+    for (let lv = 0; lv < 4; lv++) {
+      const y0 = 8 + lv * 62, sh = 50;
+      c.fillStyle = '#6a7074'; c.fillRect(0, y0 + sh, w, 8);
+      for (let x = 2; x < w;) {
+        const pw = 10 + Math.floor(rnd() * 26), ph = sh * (0.6 + rnd() * 0.4), col = PAL[Math.floor(rnd() * PAL.length)];
+        const n = 1 + Math.floor(rnd() * 4);
+        for (let i = 0; i < n && x < w; i++, x += pw + 1) {
+          c.fillStyle = col; c.fillRect(x, y0 + sh - ph, pw, ph);
+          c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(x + 2, y0 + sh - ph * 0.7, pw - 4, ph * 0.18);
+        }
+        x += 2;
+      }
+    }
+    c.fillStyle = '#d8d0c0'; c.fillRect(0, 0, w, 6);
+    void k;
+  });
+  const PROD = [productTex(0), productTex(1), productTex(2)];
+  const endMat = std(0x2f6a3a), topMat = std(0xb8bcc0, { metalness: 0.3 });
+  const shelf = (x, z0, z1, h = 2.1) => {
+    const len = z1 - z0, t = PROD[Math.floor(rnd() * PROD.length)].clone(); t.needsUpdate = true;
+    t.wrapS = THREE.RepeatWrapping; t.repeat.set(len / 4, 1);
+    const side = new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 });
+    mesh(new THREE.BoxGeometry(1.2, h, len), [side, side, topMat, topMat, endMat, endMat], x, h / 2, (z0 + z1) / 2);
+    return box(x - 0.6, x + 0.6, z0, z1, h, 'wood', { shelf: true });
+  };
+  const AISLE_X = [-13, -8.5, -4, 0.5, 5, 9.5];
+  for (const x of AISLE_X) { shelf(x, -11, -2.5); shelf(x, -0.5, 7); }
+  // the aisle signs, hung over each aisle's mouth at the front
+  const AISLE_NAMES = ['Bread · Cereal', 'Snacks · Soda', 'Canned · Pasta', 'Baking · Spices', 'Paper · Cleaning'];
+  for (let i = 0; i < 5; i++) {
+    const ax = (AISLE_X[i] + AISLE_X[i + 1]) / 2;
+    const t = canvasTex(256, 96, (c) => {
+      c.fillStyle = '#2f6a3a'; c.fillRect(0, 0, 256, 96); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = 'bold 40px Arial'; c.fillText(String(i + 1), 128, 30); c.font = 'bold 22px Arial'; c.fillText(AISLE_NAMES[i], 128, 72);
+    });
+    for (const [z, ry] of [[7.5, 0], [7.5, Math.PI]]) {
+      const s = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.75), new THREE.MeshBasicMaterial({ map: t })); s.position.set(ax, 3.7, z); s.rotation.y = ry; scene.add(s);
+    }
+    mesh(new THREE.BoxGeometry(0.02, 1.3, 0.02), std(0x6a6e72), ax, 4.75, 7.5, false);
+  }
+  // an end-cap display at the front of aisle 3: a pyramid of soda cases (crouch cover)
+  mesh(new THREE.BoxGeometry(1.4, 0.9, 1.0), std(0xc0302a), -1.75, 0.45, 9.6);
+  mesh(new THREE.BoxGeometry(0.9, 0.35, 0.7), std(0x2a6ab0), -1.75, 1.07, 9.6);
+  coverList.push(box(-2.45, -1.05, 9.1, 10.1, 0.9, 'soft'));
+
+  // the produce on the west: wooden tables of fruit and veg, waist high, in two rows
+  {
+    const tableMat = std(0x8a6a3a), FRUIT = [0x3a8a2a, 0xc0302a, 0xe8902a, 0xe8d040, 0x6a9a2a, 0x8a2a5a, 0xd06a2a];
+    for (const tx of [-22.5, -18.5]) for (const tz of [-9.5, -4.5, 0.5, 5.5]) {
+      mesh(new THREE.BoxGeometry(2.2, 0.75, 2.6), tableMat, tx, 0.375, tz);
+      mesh(new THREE.BoxGeometry(2.0, 0.16, 1.2), std(FRUIT[Math.floor(rnd() * FRUIT.length)], { roughness: 0.6 }), tx, 0.83, tz - 0.62);
+      mesh(new THREE.BoxGeometry(2.0, 0.16, 1.2), std(FRUIT[Math.floor(rnd() * FRUIT.length)], { roughness: 0.6 }), tx, 0.83, tz + 0.62);
+      coverList.push(box(tx - 1.1, tx + 1.1, tz - 1.3, tz + 1.3, 0.9, 'wood'));
+    }
+    // the misted wall case along the west wall
+    mesh(new THREE.BoxGeometry(1.0, 1.6, 20), std(0x3a5a3a), -25.3, 0.8, -2);
+    box(-25.8, -24.8, -12, 8, 1.6, 'hard');
+  }
+
+  // the east: chest freezers in two rows and the deli case against the east wall
+  {
+    const frzMat = std(0xf2f2ee, { roughness: 0.4 }), lidMat = std(0x6a9ac0, { roughness: 0.1, metalness: 0.2, emissive: 0x1a3048, emissiveIntensity: _night ? 0.4 : 0.2 });
+    for (const fx of [15.25, 19.25]) for (const [z0, z1] of [[-11, -3], [-1, 6]]) {
+      mesh(new THREE.BoxGeometry(1.5, 0.85, z1 - z0), frzMat, fx, 0.425, (z0 + z1) / 2);
+      mesh(new THREE.BoxGeometry(1.3, 0.06, z1 - z0 - 0.2), lidMat, fx, 0.88, (z0 + z1) / 2, false);
+      coverList.push(box(fx - 0.75, fx + 0.75, z0, z1, 0.9, 'metal'));
+    }
+    // the deli: a lit glass case (1.25 m) with the counter space behind it, and the menu board on the wall
+    mesh(new THREE.BoxGeometry(1.0, 0.8, 12), std(0xe8e4da), 23, 0.4, -6);
+    mesh(new THREE.BoxGeometry(0.9, 0.45, 11.8), new THREE.MeshStandardMaterial({ color: 0xcfe4f0, transparent: true, opacity: 0.45, roughness: 0.1 }), 23, 1.03, -6, false);
+    for (let z = -11.5; z < -0.5; z += 1.1) mesh(new THREE.BoxGeometry(0.6, 0.12, 0.8), std(rnd() < 0.5 ? 0xd88a7a : 0xe8c8a0), 23, 0.86, z, false);
+    coverList.push(box(22.5, 23.5, -12, 0, 1.25, 'hard'));
+    const deli = canvasTex(256, 64, (c) => { c.fillStyle = '#2a2420'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#f4d070'; c.font = 'bold 34px Georgia'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('DELI', 128, 34); });
+    const dm = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshBasicMaterial({ map: deli })); dm.position.set(25.78, 3.2, -6); dm.rotation.y = -Math.PI / 2; scene.add(dm);
+  }
+
+  // the dairy coolers along the back aisle: glass doors lit from inside, against the back wall
+  {
+    const cool = canvasTex(256, 128, (c, w, h) => {
+      c.fillStyle = '#dfe8ee'; c.fillRect(0, 0, w, h);
+      for (let lv = 0; lv < 4; lv++) for (let x = 4; x < w; x += 12) { c.fillStyle = ['#f4f4f0', '#e8d040', '#2a6ab0', '#c0302a'][Math.floor(rnd() * 4)]; c.fillRect(x, 8 + lv * 30, 9, 20); }
+      c.strokeStyle = '#7a8084'; c.lineWidth = 4; for (let x = 0; x <= w; x += 64) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
+    });
+    cool.wrapS = THREE.RepeatWrapping;
+    for (const [x0, x1] of [[-25.8, -17], [-13, -2], [2, 13], [17, 21.5]]) {
+      const t = cool.clone(); t.needsUpdate = true; t.repeat.set((x1 - x0) / 4, 1);
+      const front = new THREE.MeshStandardMaterial({ map: t, roughness: 0.2, emissive: 0x606a70, emissiveIntensity: _night ? 0.5 : 0.25 });
+      const body = std(0xe8e8e4);
+      mesh(new THREE.BoxGeometry(x1 - x0, 2.3, 0.8), [body, body, body, body, front, body], (x0 + x1) / 2, 1.15, -17.6, false).receiveShadow = true;
+      box(x0, x1, -18.0, -17.2, 2.3, 'metal');
+    }
+  }
+
+  // === THE FRONT — six checkout lanes and the service desk inside the doors ===
+  {
+    const beltMat = std(0x1e1e20, { roughness: 0.6 }), bodyMat = std(0x4a5a52), lightMat = new THREE.MeshBasicMaterial({ color: _night ? 0x2a2a2a : 0xf8f0a0 });
+    for (let i = 0; i < 6; i++) {
+      const cx = -21 + i * 4.5;
+      mesh(new THREE.BoxGeometry(0.9, 0.95, 4.2), bodyMat, cx, 0.475, 13.3);
+      mesh(new THREE.BoxGeometry(0.8, 0.04, 2.6), beltMat, cx, 0.97, 12.6, false);
+      mesh(new THREE.BoxGeometry(0.5, 0.3, 0.4), std(0x2a2a2a), cx, 1.1, 14.5);          // the register
+      mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 6), std(0x8a8c8e, { metalness: 0.6 }), cx, 1.6, 15.3, false);
+      const lane = canvasTex(64, 64, (c) => { c.fillStyle = '#2f6a3a'; c.fillRect(0, 0, 64, 64); c.fillStyle = '#fff'; c.font = 'bold 44px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(i + 1), 32, 35); });
+      const lm = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.06), [lightMat, lightMat, lightMat, lightMat, new THREE.MeshBasicMaterial({ map: lane }), new THREE.MeshBasicMaterial({ map: lane })]);
+      lm.position.set(cx, 2.35, 15.3); scene.add(lm);
+      // the impulse rack at the lane's mouth (gum and magazines)
+      mesh(new THREE.BoxGeometry(0.5, 1.2, 0.6), std(0x8a3a3a), cx - 1.0, 0.6, 15.1);
+      coverList.push(box(cx - 0.45, cx + 0.45, 11.2, 15.4, 1.0, 'hard'));
+      box(cx - 1.25, cx - 0.75, 14.8, 15.4, 1.2, 'hard');
+    }
+    // the service desk on the east, with the store's name over it
+    mesh(new THREE.BoxGeometry(6, 1.1, 1.0), std(0x2f6a3a), 19.5, 0.55, 11.5);
+    mesh(new THREE.BoxGeometry(6.2, 0.06, 1.2), std(0xd8d0c0), 19.5, 1.13, 11.5, false);
+    mesh(new THREE.BoxGeometry(1.0, 1.1, 3.0), std(0x2f6a3a), 22.0, 0.55, 13.5);
+    coverList.push(box(16.5, 22.5, 11.0, 12.0, 1.1, 'wood'));
+    box(21.5, 22.5, 12.0, 15.0, 1.1, 'wood');
+    // shopping carts by the doors, nested in a row (waist-high cover), and two loose ones
+    const cartMat = std(0xa8acb0, { metalness: 0.6, roughness: 0.4 }), handle = std(0xc0302a);
+    const cart = (x, z, yaw, n = 1) => {
+      const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw;
+      for (let k = 0; k < n; k++) {
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.9), new THREE.MeshStandardMaterial({ color: 0xa8acb0, metalness: 0.6, roughness: 0.4, wireframe: true }));
+        b.position.set(0, 0.75, k * 0.3); g.add(b);
+        const bt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.85), cartMat); bt.position.set(0, 0.55, k * 0.3); g.add(bt);
+      }
+      const hd = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.05, 0.05), handle); hd.position.set(0, 1.0, (n - 1) * 0.3 + 0.48); g.add(hd);
+      for (const dx of [-0.22, 0.22]) for (const dz of [-0.35, (n - 1) * 0.3 + 0.35]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 8), std(0x1a1a1a)); w.rotation.z = Math.PI / 2; w.position.set(dx, 0.06, dz); g.add(w); }
+      scene.add(g);
+      const len = 0.9 + (n - 1) * 0.3, c = Math.abs(Math.cos(yaw)), s = Math.abs(Math.sin(yaw));
+      const cz = z + Math.cos(yaw) * (n - 1) * 0.15, cxx = x + Math.sin(yaw) * (n - 1) * 0.15;
+      const hx = 0.3 * c + len / 2 * s, hz = 0.3 * s + len / 2 * c;
+      return box(cxx - hx, cxx + hx, cz - hz, cz + hz, 1.0, 'metal');
+    };
+    coverList.push(cart(4.5, 15.2, Math.PI / 2, 8));
+    cart(12.6, 9.5, 0.6); cart(-17.5, 9.0, -0.3);
+  }
+
+  // === THE STOCKROOM — pallets of stock, steel racking, the baler and a forklift ===
+  {
+    const rackMat = std(0xd86a20, { metalness: 0.4 }), beamMat = std(0x2a5a9a, { metalness: 0.4 }), boxMat = std(0xb08a5a), tapeMat = std(0xd8c8a0), palletMat = std(0x9a7a4a);
+    // racking: 3.2 m, solid with stock, along the north wall and one free-standing run
+    const rack = (x0, x1, z0, z1) => {
+      const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0;
+      for (const ux of [x0 + 0.05, x1 - 0.05]) for (const uz of [z0 + 0.05, z1 - 0.05]) mesh(new THREE.BoxGeometry(0.1, 3.2, 0.1), rackMat, ux, 1.6, uz, false);
+      for (const y of [0.1, 1.15, 2.2]) {
+        mesh(new THREE.BoxGeometry(w, 0.1, d), beamMat, cx, y, cz, false);
+        mesh(new THREE.BoxGeometry(w - 0.3, 0.85, d - 0.2), boxMat, cx, y + 0.5, cz);
+      }
+      box(x0, x1, z0, z1, 3.2, 'metal');
+    };
+    rack(-24.5, -12.5, -29.6, -28.4); rack(4, 16, -29.6, -28.4); rack(-9, 3, -24.4, -23.2);
+    // pallets of boxed stock, chest high (crouch cover; you can't see over them crouched)
+    const pallet = (x, z, h = 1.3) => {
+      mesh(new THREE.BoxGeometry(1.2, 0.15, 1.2), palletMat, x, 0.075, z);
+      mesh(new THREE.BoxGeometry(1.1, h - 0.15, 1.1), boxMat, x, 0.15 + (h - 0.15) / 2, z);
+      mesh(new THREE.BoxGeometry(1.12, 0.06, 0.12), tapeMat, x, h - 0.02, z, false);
+      return box(x - 0.6, x + 0.6, z - 0.6, z + 0.6, h, 'wood');
+    };
+    for (const [x, z, h] of [[-21, -22, 1.3], [-19.6, -22, 1.0], [-7, -21, 1.3], [7.5, -21.5, 1.3], [8.9, -21.5, 1.0], [-18, -26, 1.3], [20, -25.5, 1.3], [12, -25, 1.0]]) coverList.push(pallet(x, z, h));
+    // the baler in the north-east corner
+    mesh(new THREE.BoxGeometry(2.4, 2.6, 2.0), std(0x3a6a9a, { metalness: 0.3 }), 22.6, 1.3, -27.8);
+    mesh(new THREE.BoxGeometry(1.6, 0.8, 0.1), std(0xd8c8a0), 22.6, 1.0, -26.76, false);
+    box(21.4, 23.8, -28.8, -26.8, 2.6, 'metal');
+    // a forklift, parked with its forks down (1.2 m body, the overhead guard above)
+    {
+      const fx = 17.5, fz = -21.5;
+      mesh(new THREE.BoxGeometry(1.2, 1.2, 2.2), std(0xe8c020, { roughness: 0.5 }), fx, 0.75, fz);
+      mesh(new THREE.BoxGeometry(1.1, 0.06, 1.3), std(0x2a2a2a), fx, 2.2, fz + 0.2, false);
+      for (const [dx, dz] of [[-0.5, -0.4], [0.5, -0.4], [-0.5, 0.8], [0.5, 0.8]]) mesh(new THREE.BoxGeometry(0.06, 0.9, 0.06), std(0x2a2a2a), fx + dx, 1.75, fz + dz, false);
+      mesh(new THREE.BoxGeometry(1.0, 2.4, 0.12), std(0x3a3a3a), fx, 1.2, fz - 1.15, false);
+      for (const dx of [-0.3, 0.3]) mesh(new THREE.BoxGeometry(0.12, 0.05, 1.1), std(0x3a3a3a), fx + dx, 0.05, fz - 1.75, false);
+      coverList.push(box(fx - 0.62, fx + 0.62, fz - 1.25, fz + 1.12, 1.2, 'metal'));
+    }
+    // the loading-dock door in the north wall
+    const dock = canvasTex(128, 128, (c) => { c.fillStyle = '#9a9c9e'; c.fillRect(0, 0, 128, 128); c.fillStyle = '#7a7c7e'; for (let y = 0; y < 128; y += 8) c.fillRect(0, y, 128, 3); });
+    const dm = new THREE.Mesh(new THREE.PlaneGeometry(4, 3.6), new THREE.MeshStandardMaterial({ map: dock, roughness: 0.6, metalness: 0.3 })); dm.position.set(-4, 1.8, -29.78); scene.add(dm);
+  }
+
+  // At night: the store is shut, the ceiling dark; the coolers, the exit signs and a few night lights glow.
+  if (_night) {
+    for (const [x, z, c, i] of [[0, -16, 0xc8d8f0, 0.9], [-15, -16, 0xc8d8f0, 0.7], [15, -16, 0xc8d8f0, 0.7], [-8, 12, 0xffe8c0, 0.8], [11, 14, 0xffe8c0, 0.8], [0, -25, 0xffd8a0, 0.6], [-22, 0, 0xc8f0c8, 0.5], [21, -4, 0xf0e0c0, 0.6]]) {
+      const L = new THREE.PointLight(c, i, 18, 1.6); L.position.set(x, 4.4, z); scene.add(L);
+    }
+    const exitMat = new THREE.MeshBasicMaterial({ color: 0xff3020 });
+    for (const [x, z] of [[11, 17.5], [-15, -18.7], [15, -18.7], [0, -18.7]]) mesh(new THREE.BoxGeometry(0.6, 0.22, 0.05), exitMat, x, 3.3, z, false);
+  }
+
+  // === ANCHORS & SPAWNS ===
+  const nearestCover = (x, z) => {
+    let best = null, bd = Infinity;
+    for (const c of coverList) {
+      const d = Math.hypot((c.minX + c.maxX) / 2 - x, (c.minZ + c.maxZ) / 2 - z);
+      if (d < bd) { bd = d; best = c; }
+    }
+    return best;
+  };
+  const A = (x, z) => ({ pos: P(x, z), cover: nearestCover(x, z) });
+  const placements = {
+    // Team A — the stockroom and the back of the store
+    a_stock_w:  A(-16, -24),
+    a_stock_c:  A(0, -26.5),
+    a_stock_e:  A(14, -23),
+    a_dairy:    A(-6, -15),
+    a_deli:     A(24.6, -6),
+    a_frozen:   A(17.25, -7),
+    a_door_c:   A(-1, -20),         // v1.160: the stockroom side of the centre doorway, looking straight down aisle 3
+    // Team B — the checkouts and the front of the store
+    b_lane_w:   A(-18.75, 13.5),
+    b_lane_c:   A(-5.25, 13.5),
+    b_service:  A(19.5, 14),
+    b_produce:  A(-20.5, 8.5),
+    b_doors:    A(8, 16.4),
+    b_endcap:   A(-1.75, 11.2),
+    b_deli_s:   A(24.4, 4),         // v1.160: the defend's attack spots near the desk: the deli wall's south end,
+    b_frozen_s: A(17.25, 8.5),      //   the freezers' south end
+    cluster_north: { pos: P(0, -26), cover: null },
+    cluster_south: { pos: P(8, 16), cover: null },
+  };
+  const playerSpawns = {
+    team_b: { pos: P(11, 14.8), yaw: 0.06 },          // inside the doors, looking up the floor past the freezers (yaw 0 faces -z); allies start 2 m either side in z
+    team_a: { pos: P(0, -26), yaw: Math.PI },
+    desk:   { pos: P(24, 13.5), yaw: Math.PI * 0.08 },   // v1.160: the defend, in the corner behind the service desk, facing up the east wall
+  };
+
+  const allObs = [...obstacles];
+  return {
+    scene,
+    spawn: playerSpawns.team_b.pos.clone(), spawnYaw: playerSpawns.team_b.yaw, bounds,
+    cover: coverList,
+    obstacles: allObs,
+    enemies: [],
+    name: 'Inside Riverside Market', scenarioName: '', desc: '',
+    placements,
+    playerSpawns,
+    groundY,
+    indoor: true,
+    teamBases: { player: { x: 8, z: 16 }, enemy: { x: 0, z: -26 } },
+  };
+}
+function buildGroceryStoreSceneDefault(_v, tod) { return buildGroceryStoreScene('default', tod); }
 
 
 
@@ -25506,16 +25953,22 @@ function updateEnemies(dt) {
               // v1.73: if a FENCE is what's wedging us, commit to walking around
               // its nearer END rather than blindly alternating sides mid-span.
               const detour = fenceDetourWaypoint(e.pos.x, e.pos.z, tgtX, tgtZ, Game.player.obstacles, kidRadius);
+              // v1.159 fix-up: a detour step that goes nowhere falls through to the sidestep below. The waypoint is
+              // the end of a fence further along his line, so a cart or a hedge beside him can block every step
+              // toward it; the side flip lives in the sidestep, and he stood still in 'advancing' for 4-5 s (the
+              // club's 18th: Trey against a golf cart, Sean at the end of a hedge).
+              let detoured = false;
               if (detour) {
                 const ddx = detour.x - e.pos.x, ddz = detour.z - e.pos.z;
                 const dlen = Math.hypot(ddx, ddz) || 1;
                 const fstep = speed * dt;
                 const fx = e.pos.x + (ddx / dlen) * fstep;
                 const fz = e.pos.z + (ddz / dlen) * fstep;
-                if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; }
-                else if (!collidesObstacles(fx, e.pos.z, kidRadius)) e.pos.x = fx;
-                else if (!collidesObstacles(e.pos.x, fz, kidRadius)) e.pos.z = fz;
-              } else {
+                if (!collidesObstacles(fx, fz, kidRadius)) { e.pos.x = fx; e.pos.z = fz; detoured = true; }
+                else if (!collidesObstacles(fx, e.pos.z, kidRadius)) { e.pos.x = fx; detoured = true; }
+                else if (!collidesObstacles(e.pos.x, fz, kidRadius)) { e.pos.z = fz; detoured = true; }
+              }
+              if (!detoured) {
               // perpendicular to the player direction
               let px = -dz / d, pz = dx / d;
               if (!e._advSide) e._advSide = (Math.random() < 0.5 ? 1 : -1);
@@ -26502,6 +26955,13 @@ const PIN_SCENARIO_GROUPS = {
     'club_defend_gazebo',    // v1.158
     'club_night_4v4',        // v1.158: the zone capstone
   ],
+  // v1.159: Inside Riverside Market (East Roswell) — the eighth zone (D.1, Michael: A).
+  grocery_store: [
+    'store_1v1_tyler',
+    'store_price_check_3v3',
+    'store_defend_desk',     // v1.160
+    'store_night_4v4',       // v1.160: the zone capstone
+  ],
 };
 
 // =====================================================================
@@ -26530,6 +26990,7 @@ const ZONE_LADDER = [
     teaser: "A new neighborhood is opening up north — Northcliff Trace, Stoneglen Close, and Bellfield Court. Bigger yards, longer sightlines, and the toughest kids on the river. Clear the Riverside Market lot to prove you're ready." },
   { key: 'high_school',    pin: 'high_school',    name: 'Hollins Ridge High',             region: 'east_roswell' },   // v1.155
   { key: 'country_club',   pin: 'country_club',   name: 'Willow Bend Country Club',       region: 'horseshoe_bend' },   // v1.157
+  { key: 'grocery_store',  pin: 'grocery_store',  name: 'Inside Riverside Market',        region: 'east_roswell' },   // v1.159
 ];
 
 // Index of a zone in the ladder (by its PIN_SCENARIO_GROUPS key).

@@ -57,7 +57,14 @@ Fable card on the control room and Michael starts it from there.
    carts, the south lawn's gazebo and putting green; the pool and pond stop bodies, not BBs; Pool's Closed 1v1 with
    Brooke and The Eighteenth 3v3; `tests/country-club.test.mjs`). ~~More club scenarios~~ — done, v1.158 (Hold the
    Gazebo defend inside rails that are now walls, Night Swim night 4v4 capstone with Devon's rifle on the veranda; three
-   more lamps). Willow Bend is complete at four scenarios. What next is in decisions (builder, 5 Oct).
+   more lamps). Willow Bend is complete at four scenarios. Next (Michael: **A**, a grocery store battle inside Riverside Market;
+   control room, 5 Oct): ~~Inside Riverside Market~~ — done, v1.159 (eighth on the ladder after the club, East Roswell: the
+   checkouts and service desk inside the glass front, five aisles of 2.1 m shelving cut by a cross aisle, produce tables,
+   chest freezers and the deli case, the dairy coolers, three doorways into the stockroom with racking, pallets, the
+   baler and a forklift; shelves stop bodies and BBs; Cleanup on Aisle Five 1v1 with Tyler and Price Check 3v3;
+   `tests/grocery-store.test.mjs`). ~~More store scenarios~~ — done, v1.160 (Customer Service defend behind the service
+   desk, Lights Out night 4v4 capstone with Devon's rifle in the stockroom's centre doorway). Inside Riverside Market is
+   complete at four scenarios, and every place on Michael's D.1 list is built. What next is in decisions (builder, 5 Oct).
 2. Online play: local-host sessions others can join, with a list of hosted servers to pick from. Startup offers
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
    **(Fable)** — networking, a session model and the title screen touch every scenario; held by Michael’s C (30 Sep) until the

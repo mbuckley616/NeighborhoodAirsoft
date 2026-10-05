@@ -1,5 +1,5 @@
 // Run every *.test.mjs in this folder, one browser each, and report. `node tests/run.mjs saves` runs one.
-// v1.145: `node tests/run.mjs --shard 2/4` runs the second quarter (CI runs the four in parallel jobs, backlog B.4);
+// v1.145: `node tests/run.mjs --shard 2/4` runs the second quarter (CI runs six in parallel jobs since v1.160, backlog B.4);
 // `--list` prints the files it would run and stops.
 import fs from 'fs'; import path from 'path'; import { spawnSync } from 'child_process'; import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -9,24 +9,28 @@ const shardArg = flag('--shard');
 const listOnly = args.includes('--list'); if (listOnly) args.splice(args.indexOf('--list'), 1);
 const only = args[0];
 
-// Each suite's run time in seconds (a cloud container, three at a time, v1.145), so the shards come out even.
+// Each suite's run time in seconds, so the shards come out even. v1.160 fix-up: re-measured on CI (the shard jobs of
+// 875210d, 5 Oct), where the stuck sweeps take 250-455 s and not the 165 s guessed for them.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
-  'bb-sweep.test.mjs': 45, 'bunratty-polish.test.mjs': 56, 'bunratty-road.test.mjs': 79, 'burst-pose.test.mjs': 35,
-  'car-side-fire.test.mjs': 26, 'cars.test.mjs': 11, 'country-club.test.mjs': 60, 'cover-fire.test.mjs': 58, 'fence-bound.test.mjs': 30, 'fort-spawn.test.mjs': 72,
-  'front-door.test.mjs': 16, 'grip.test.mjs': 28, 'harness.test.mjs': 57, 'high-school.test.mjs': 200, 'hollow-held.test.mjs': 55,
-  'houses.test.mjs': 57, 'jump.test.mjs': 28, 'kid-climb.test.mjs': 41, 'last-kid.test.mjs': 70, 'kid-clothes.test.mjs': 41,
-  'kid-face.test.mjs': 17, 'kid-hands.test.mjs': 16, 'ladder-prompt.test.mjs': 24, 'laser.test.mjs': 50,
-  'loadout-gear.test.mjs': 56, 'loadout-kid.test.mjs': 23, 'lot-ffa-opening.test.mjs': 63,
-  'lot-hollow-polish.test.mjs': 46, 'map-screen.test.mjs': 25, 'market-lot.test.mjs': 76, 'mirror.test.mjs': 46, 'music.test.mjs': 21,
-  'night-prowl.test.mjs': 25, 'northcliff.test.mjs': 99, 'one-ending.test.mjs': 55, 'opening-hold.test.mjs': 93,
-  'pincer.test.mjs': 37, 'pocket.test.mjs': 17, 'result-text.test.mjs': 204, 'road-slide.test.mjs': 78,
-  'shard.test.mjs': 1, 'shop-tabs.test.mjs': 26, 'smoke.test.mjs': 20, 'spawn-facing.test.mjs': 273,
-  'stuck-sweep-1.test.mjs': 165, 'stuck-sweep-2.test.mjs': 165, 'stuck-sweep-3.test.mjs': 165, 'stuck-sweep-4.test.mjs': 165,
-  'stuck-sweep-5.test.mjs': 165, 'stuck-sweep-6.test.mjs': 165, 'stuck-sweep-7.test.mjs': 165, 'stuck-sweep-8.test.mjs': 165,
-  'taggers.test.mjs': 24, 'treehouse-hold.test.mjs': 21, 'treehouse.test.mjs': 34, 'utility-belt.test.mjs': 21,
-  'walk-anim.test.mjs': 30, 'walkie.test.mjs': 25, 'whole-block.test.mjs': 24, 'winnmark-cars.test.mjs': 38, 'winnmark-fort.test.mjs': 47,
-  'winnmark-props.test.mjs': 38, 'winnmark-road.test.mjs': 35, 'winnmark-trees.test.mjs': 40
+  'bb-sweep.test.mjs': 30, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
+  'car-side-fire.test.mjs': 26, 'cars.test.mjs': 5, 'country-club.test.mjs': 139, 'cover-fire.test.mjs': 111,
+  'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
+  'grocery-store.test.mjs': 139, 'harness.test.mjs': 37, 'high-school.test.mjs': 120, 'hollow-held.test.mjs': 85,
+  'houses.test.mjs': 54, 'jump.test.mjs': 27, 'kid-climb.test.mjs': 44, 'kid-clothes.test.mjs': 43,
+  'kid-face.test.mjs': 14, 'kid-hands.test.mjs': 8, 'ladder-prompt.test.mjs': 12, 'laser.test.mjs': 72,
+  'last-kid.test.mjs': 160, 'loadout-gear.test.mjs': 34, 'loadout-kid.test.mjs': 9, 'lot-ffa-opening.test.mjs': 89,
+  'lot-hollow-polish.test.mjs': 87, 'map-screen.test.mjs': 33, 'market-lot.test.mjs': 159, 'mirror.test.mjs': 48,
+  'music.test.mjs': 3, 'night-prowl.test.mjs': 30, 'northcliff.test.mjs': 168, 'one-ending.test.mjs': 53,
+  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95,
+  'road-slide.test.mjs': 104, 'shard.test.mjs': 1, 'shop-tabs.test.mjs': 39, 'smoke.test.mjs': 43,
+  'spawn-facing.test.mjs': 304, 'stuck-sweep-1.test.mjs': 411, 'stuck-sweep-2.test.mjs': 302,
+  'stuck-sweep-3.test.mjs': 256, 'stuck-sweep-4.test.mjs': 252, 'stuck-sweep-5.test.mjs': 316,
+  'stuck-sweep-6.test.mjs': 305, 'stuck-sweep-7.test.mjs': 275, 'stuck-sweep-8.test.mjs': 455,
+  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'utility-belt.test.mjs': 6,
+  'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
+  'winnmark-fort.test.mjs': 55, 'winnmark-props.test.mjs': 46, 'winnmark-road.test.mjs': 53,
+  'winnmark-trees.test.mjs': 60
 };
 
 function shardOf(files, k, n) {
