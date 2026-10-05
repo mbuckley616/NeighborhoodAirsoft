@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.166</div>
+  <div class="version">v1.167</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16377,7 +16377,9 @@ function setKidHitPose(kid, amount) {
   const b = po.base;
   // Make sure any crouch is released first so the body stands tall (this also
   // resets both rigs to a clean hanging base via setKidCrouch).
-  if ((po.crouch ?? 0) > 0) setKidCrouch(kid, 0);
+  // v1.167: always, not only when crouched: a standing kid tagged mid-hold kept the hold's IK quaternions, so the
+  // raise below only overwrote the shoulder's x angle and the off arm went on reaching for the foregrip (backlog B.6).
+  setKidCrouch(kid, 0);
   // v1.80: the gun arm now pivots at the SHOULDER group. Rotate the right shoulder
   // about X so the whole (straight) arm swings up & back to point skyward — a
   // clear "I'm hit!" signal — with a slight elbow bend so it doesn't read stiff.
@@ -16387,10 +16389,14 @@ function setKidHitPose(kid, amount) {
   // Gun lifts overhead and points UP (its barrel runs +Z locally; rotate so +Z
   // faces +Y → muzzle to the sky). The gun is still parented to the body group
   // (not the hand), so drive it directly to ride above the raised arm.
-  po.gunGroup.position.y = b.gun_y + 0.62 * raise;
-  po.gunGroup.position.x = b.gun_x;
-  po.gunGroup.position.z = b.gun_z;
-  po.gunGroup.rotation.x = -Math.PI / 2 * raise;     // tip the muzzle up
+  // v1.167: it rides IN the raised hand: the grip is put on the hand's point in the kid's frame (it sat 16-33 cm
+  // from the hand, beside the arm, before).
+  const th = -Math.PI / 2 * raise;
+  po.gunGroup.rotation.x = th;                       // tip the muzzle up
+  kid.group.updateMatrixWorld(true);
+  const hp = kid.group.worldToLocal(po.rigR.hand.getWorldPosition(new THREE.Vector3()));
+  const gr = gunGripLocal(null), c = Math.cos(th), s = Math.sin(th);
+  po.gunGroup.position.set(hp.x - gr.x, hp.y - (gr.y * c - gr.z * s), hp.z - (gr.y * s + gr.z * c));
   po._hitRaise = amount;
 }
 
@@ -26523,9 +26529,9 @@ function updateEnemies(dt) {
       // Advance the gait phase only while moving (so a stopped kid freezes mid-stance).
       e._walkPhase = (e._walkPhase || 0) + e._walkInt * dt * 8.0;
 
-      if ((e.mesh.pose?.crouch ?? 0) <= 0.98) {
-        setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
-      }
+      // v1.167: the hold runs at every crouch. It used to skip a full crouch (> 0.98), so every kid hiding
+      // behind cover let go of his gun: it floated by his right knee, 21-39 cm from the hand (backlog B.6).
+      setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
       setKidWalk(e.mesh, e._walkPhase, e._walkInt);
     }
 

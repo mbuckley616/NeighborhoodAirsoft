@@ -7985,3 +7985,36 @@ change.
   weights from the shard jobs, as v1.160's fix-up did.
 - The sweep now catches a kid who wedges late in a round or off the sideways walk. A kid who wedges only past 90 s, or
   only where a real player goes, is still found by hand.
+
+## v1.167 — Kids hold their guns
+Backlog B.6, Michael's note (control room, 5 Oct): kids sometimes hold their guns awkwardly. A probe sampled every
+kid's hands against his gun every tenth of a second, in six matches for 60 s each. Two poses were wrong, and every
+other one was right: the firing hand was 0 cm from the grip, and the off hand 3–8 cm from the foregrip.
+- A kid fully crouched behind cover let go of his gun. The pose pass skipped the hold above 0.98 crouch, so the gun
+  stayed at its built spot by his right knee and both arms hung straight down. His hand was 21–39 cm from the grip.
+  That was every hiding kid, about a third of all samples (in Night Prowl, over half). The hold now runs at every
+  crouch. Its crouched geometry was already right: `grip.test` has checked it at full crouch since v1.95, but called
+  the hold directly, past the skip.
+- A tagged kid raising his gun ("I'm hit!") held it beside his hand, 16–33 cm off. A kid tagged while standing also
+  kept his hold's arm angles under the raise, so the off arm went on reaching across for a gun that had gone up. The
+  hit pose now resets both arms first, and puts the gun's grip in the raised hand, muzzle to the sky. The off arm
+  hangs at his side.
+Pose only: no hitbox, muzzle or AI change. A hiding kid's gun is now in front of his chest instead of by his knee.
+### Verified
+- `tests/kid-hold.test.mjs` (new): Hollow 3v3, Hold the Fort and Night Prowl, 40 s each, with two kids tagged the
+  real way in each. In 3,380 living-kid samples (694 fully crouched, 900 with small guns) the firing hand was 0 cm from
+  the grip, and the off hand at most 6.8 cm from the foregrip point. In 618 hit-pose samples the gun was in the hand
+  (0 cm). Staged for pistol, AK and sniper, standing and crouched, the gun is in the hand at 0.3 and full raise. The
+  off hand hangs at (0.27, 0.59), and the muzzle rises 0.34 m over its first 0.3 m.
+- The same suite on v1.166 fails five checks. The firing hand was up to 33.5 cm off, all at full crouch, and the off
+  hand up to 47 cm. The raised gun was 15–30 cm from the hand staged, and up to 28.5 cm in play, and the off arm
+  still reached across.
+- Screenshots, crouched with an AK, a pistol and a shotgun, and the raise with a sniper and a pistol: the gun is held
+  in front of the chest, or overhead in the hand.
+- `npm test` as four local shards: 72 of 77 passed and the other five timed out loading the page, while my probes
+  loaded the same 4 cores. Those five, and 17 more, the ones that ran before the edit landed and the pose suites (among them `grip`,
+  `burst-pose`, `walk-anim`, `laser`, `kid-hands`, `kid-climb` and `treehouse-hold`), passed on rerun.
+  `car-side-fire` hit the known NEW GAME stall (v1.129) twice, then passed alone.
+### Still open
+- Whether a crouched kid's chest-high carry reads well behind low cover (the gun may peek over a 0.9 m wall) is for
+  a playtest. The two-handed off hand still sits 3–7 cm short of its foregrip point, inside the hand box (v1.97).
