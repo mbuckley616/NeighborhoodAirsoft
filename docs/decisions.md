@@ -7,6 +7,16 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Hold the Treehouse: Evan tags you from behind before the twins climb (builder, 2026-10-05)** You start on the
+  platform facing the ladder, and Evan stands in the open by the shed 11 m behind you; a player who stands still is
+  tagged at 2.7–9.6 s in 8 of 8 rounds, before the twins reach the ladder. One life.
+  A) Put Evan behind the shed: the twins on the ladder are the whole fight, and Evan never fires
+  B) Turn your start toward the shed, so you see Evan first
+  C) Evan holds fire until the first twin reaches the ladder (about 8 s), then shoots at anything above the rail as now
+  D) Leave it: standing up on the platform gets punished
+  Builder recommends C.
+  Michael: **C) Evan holds fire until the first twin reaches the ladder**. (2026-10-05)
+
 - **After Inside Riverside Market, what next? (builder, 2026-10-05)** v1.159–v1.160 build your A: the grocery store is
   the eighth zone, with four scenarios (Cleanup on Aisle Five, Price Check, Customer Service, Lights Out). Its five
   aisles of shelving stop bodies and BBs, so fights run down the aisles and across the cross aisle. Every place on your
