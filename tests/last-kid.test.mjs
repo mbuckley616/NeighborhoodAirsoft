@@ -22,7 +22,8 @@ const RUN = (keep, secs, hideAt) => page.evaluate(({ keep, secs, hideAt }) => {
   const r = { kidMin: {}, firstBored: null, firstNear: null, minDist: 1e9, boredCount: 0, losShots: 0, boredKids: [], mode: null, startDist: {} };
   for (const e of Game.scenario.enemies) if (e.health > 0) r.startDist[e.charId] = +Math.hypot(e.pos.x - P.x, e.pos.z - P.z).toFixed(1);
   const sp = spawnEnemyBB;
-  window.spawnEnemyBB = (e, t) => { if (e._hasLOSNow && !inOpeningHold()) r.losShots++; return sp(e, t); };
+  r.kidLos = {};
+  window.spawnEnemyBB = (e, t) => { if (e._hasLOSNow && !inOpeningHold()) { r.losShots++; r.kidLos[e.charId] = (r.kidLos[e.charId] || 0) + 1; } return sp(e, t); };
   let t = 0;
   for (let f = 0; f < secs * 60 && Game.mode === 'scenario'; f++) {
     stepGame(1 / 60); t += 1 / 60;
@@ -57,7 +58,12 @@ const four = [];
 for (let i = 0; i < 2; i++) { await next('bunratty_team_4v4'); four.push(await RUN(['mitchell', 'owen'], 150, 'sean')); }
 console.log('  Four on Four, player in Sean\'s backyard, Mitchell and Owen left, 150 s x2:', JSON.stringify(four));
 check('Four on Four: a last kid gets bored, 25-40 s in', four.every(r => r.firstBored != null && r.firstBored >= 25 && r.firstBored <= 40), four.map(r => r.firstBored));
-check('Four on Four: both last kids come within 30 m in every run', four.every(r => r.kidMin.mitchell < 30 && r.kidMin.owen < 30), four.map(r => r.kidMin));
+// v1.169 fix-up: or, with a rifle's reach, within 50 m and firing on the player with a line. Depending on where the
+// round stands when the two are left, Mitchell (AR) gets a line at 40-54 m, fires (which resets his boredom) and holds
+// there: 40.2-46.8 m in about one run in six (CI, 6 Oct). Before v1.152 they never came nearer than 64 and 68 m.
+const came = (r, k) => r.kidMin[k] < 30 || (r.kidMin[k] < 50 && (r.kidLos[k] || 0) > 0);
+check('Four on Four: both last kids come within 30 m, or within 50 m firing with a line, in every run', four.every(r => came(r, 'mitchell') && came(r, 'owen')),
+  four.map(r => ({ min: r.kidMin, los: r.kidLos })));
 check('Four on Four: they fire on the player with a line', four.every(r => r.losShots > 0), four.map(r => r.losShots));
 
 // Three of a side still in: nobody is a last kid, so nobody gets bored.

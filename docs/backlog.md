@@ -170,18 +170,22 @@ Fable card on the control room and Michael starts it from there.
    want to be mindful of the tone of the game and not going hardcore / military LARPing. It’s still meant to be
    neighborhood kids. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A backyard guns, B homemade attachments, C paint, D A then B). Michael: **D**, guns first, then
    the parts (control room, 5 Oct). ~~A, the backyard guns~~ — done, v1.168 (Thunder Pump, Six-Shooter, Bucket Gun, Bolt Pistol in the
-   shop's Guns tab, each with its own first-person model and trade; `tests/backyard-guns.test.mjs`). Next: B, the under-barrel
-   slot and its four homemade parts.
+   shop's Guns tab, each with its own first-person model and trade; `tests/backyard-guns.test.mjs`). ~~B, the under-barrel
+   slot and its four homemade parts~~ — done, v1.169 (one under-barrel slot on each of the eight long guns, none on the
+   four pistols; Taped Twin Mag, Shoelace Sling, PVC Foregrip, Cardboard Barrel in the Mods tab, mounted at the workbench,
+   each its own mesh and trade; `tests/under-parts.test.mjs`). D.14 D is complete pending Michael's look.
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
    that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A VIP with an ally VIP, B you as VIP, C capture the flag, D A then C). Michael: **A**, VIP with an ally VIP kid (control room, 5 Oct).
-   Builder, 6 Oct (not committed, out of time): built as a team battle with `vip: true` (VIPs one life, pistol, role
-   'defender', a blue or red cap on the head; others 99 lives shown as ∞; the player respawns at his start with 2 s of
-   grace; their VIP tagged wins, ours loses; Protect Ryan at Bunratty and Night Shift VIP at the lot, both before
-   their zone's capstone). Staged checks all passed. In play, the VIPs on the lot's centre line were tagged from
-   40 m at 3–8 s, so they were moved to the corners (Seth by the dumpsters, Rebecca at b_corner_e, both starting on
-   their spot); after that the lot match crashed or hung the headless page on entry. Find that first.
+   — done, v1.170 (Protect Ryan at Bunratty and Night Shift at the lot, each before its zone's capstone: a VIP a side in
+   a blue or red cap, one life, a pistol, holding his spot; everyone else, you too, comes back; their VIP out wins,
+   ours out loses; ★ VIP on the card, the briefing and the roster; `tests/vip.test.mjs`). D.15 A is complete pending
+   Michael's playtest.
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
-   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
+   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference) Michael: **C**, A then B,
+   each shown to him (control room, 6 Oct). ~~Step A, planted feet~~ — done, v1.171 (legs hang from the hip, the stride
+   comes from the kid's velocity in his own frame, a Hermite swing that lands still, one foot always down, the cadence
+   rises so the stride fits the leg; the low foot's slip median 0.014 and 90th percentile 0.36 of the body's travel, was
+   1.00 and 1.00; `tests/gait.test.mjs`). Step B, weight (ease into starts, stops and turns), after Michael has seen A.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
@@ -222,3 +226,4 @@ Fable card on the control room and Michael starts it from there.
 - ~~v1.144 (critic, 5 Oct) — Hold the Treehouse: you start facing the house (yaw π) with Evan in the open by the shed at (11, −8.4), 11 m behind your left shoulder. He tags a standing player at 2.8–8.8 s in 8 of 11 rounds (6 under 5 s), and a bot that fires back in 3 of 10 at 2.8–3.1 s. One life, so it's decided before the twins climb. Face the player toward the shed or start Evan in its cover. Steps: `g.scenario('stoneglen_hold_treehouse')`, stand, step until `hitsTaken`.~~ — done, v1.165 (Michael: C, control room 5 Oct — Evan holds fire until the first twin reaches the foot of the ladder, at 6.9–7 s; a standing player is tagged at 7.5–11 s, never before that twin; `tests/treehouse-evan.test.mjs`)
 - ~~v1.159–v1.160 (auto/build; critic, 5 Oct) — The store's result lines are the street's: Price Check and Lights Out losses read "…regroup near the road", and the desk-defend win reads "Distant screen doors slam". `endScenario`'s `_place` table knows only the Hollow and `resultRegroup` is never set. Steps: lose `store_price_check_3v3`, or hold `store_defend_desk` 90 s.~~ — done, v1.162 (the store's kids regroup back in the stockroom, sit against the shelves, and their phones call them home; `tests/result-text.test.mjs`)
 - ~~v1.159 (auto/build; critic, 5 Oct) — Price Check: ally Eric holds `advancing` within 1 m of (17.2, −2.4), in the gap between the four freezers, for 15.3, 13.2 and 6.1 s in 3 of 10 rounds. Steps: `g.scenario('store_price_check_3v3')`, player untaggable at spawn, 150 s, track Eric.~~ — done, v1.163 (a bound's stand spot must itself be 1 m nearer the target, not just the cover's centre; Eric bounded between two freezers' ends across the gap; worst stay 2.8 s in 6 rounds, was 8.7 s on v1.162; `tests/bound-forward.test.mjs`)
+- v1.169 (builder) — The workbench's floating Sight / Left / Right labels all sit in the viewport's top-left corner: `computeWorkbenchLabelAnchors` builds them from `m.y` and `m.z`, but FP_GUN_MOUNT's fields are `barrelY`, `sideX`, `railZ`, `sightY`, `sightZ` (since v1.40e), so the positions are NaN. Steps: open the workbench on the AR, look at the turning gun; the v1.169 Under label sits right.
