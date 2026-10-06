@@ -144,6 +144,7 @@ const walls = await page.evaluate(() => {
   const P = Game.player, out = {};
   const walk = (x, z, yaw, secs, jump) => {
     P.pos.set(x, 0, z); P.yaw = yaw; P.pitch = 0; if (P.vel) P.vel.set(0, 0, 0);
+    Game.mouse.locked = true;   // v1.169 fix-up: updatePlayer moves no one without it; CI's Chromium may refuse the real lock
     let top = 0;
     for (let f = 0; f < secs * 60; f++) {
       Game.keys.KeyW = true;
