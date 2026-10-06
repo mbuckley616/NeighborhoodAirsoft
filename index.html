@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.171</div>
+  <div class="version">v1.172</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19358,7 +19358,7 @@ function enterScenario(scenarioId) {
         deployTarget = placement.pos.clone();
         startState = 'deploying';
         clusterIdx++;
-      } else if (isAlly && playerSpawnPos) {
+      } else if (isAlly && playerSpawnPos && es.role !== 'defender') {   // v1.172: an ally defender (a VIP) starts on the anchor he holds
         // v1.33: allies start NEXT TO the player so the team begins as a unit and
         // pushes together (instead of jogging in from a far backyard anchor).
         // Fan them out in a small arc ~2–3.5m to the player's side, biased along

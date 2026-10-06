@@ -8276,3 +8276,24 @@ out of lives. The game is unchanged.
 ### Still open
 - With an idle player, the lot 3v3's allies are thin: Brooke spends about 100 of 120 s hiding at her anchor. Whether
   the ally sniper should push or move up is a design call for a playtest.
+
+## v1.172 — Your VIP starts where the briefing puts them
+The critic's report (6 Oct, on `auto/critic`) found that your side's VIP never leaves your spawn. Ryan in Protect Ryan
+and Rebecca in Night Shift are allies, and since v1.33 every ally starts 2–3.5 m beside the player so the team sets
+off together. As defenders they then hold the spot they start on, so Ryan stood in the lane at the player's elbow
+instead of in house 0's backyard, and Rebecca at the player's start instead of on the road side, in line with all
+four enemies. The enemy VIPs started on their anchors. Night Shift's Rebecca was tagged at your start in 6 of 7 of
+the critic's rounds. An ally defender now starts on the anchor he holds, as an enemy defender does. Ally defenders
+appear only in the two VIP matches, so no other match changes.
+### Verified
+- `tests/vip.test.mjs` checks two new things. Both VIPs start on their own anchors (0 m off): Ryan 23.6 m from the player's
+  start, Rebecca 16.1 m (before: 2.3 m, and at the start). Each VIP stays within 6 m of his spot while in the fight
+  (0 m in every played round: they hold and hide).
+- Three played 40 s rounds of each, the player untaggable at his start: Ryan never fell; Rebecca fell once, at 36 s.
+  Seth fell once, at 37.5 s, which won the round. The 8 s check holds.
+- The stuck sweep on both matches, 90 s three ways: worst stays 2.5, 1.5 and 12 s on Protect Ryan (Tyler, an enemy,
+  `deploying` at the far end while the player walked sideways) and 2, 4.5 and 1.5 s on Night Shift, all under the 15 s line.
+- `npm test` as four local shards, run on this and v1.173 together: see the v1.173 entry.
+### Still open
+- VIP balance needs a new playtest now that both VIPs stand where their briefings say. The critic's numbers (Rebecca
+  out in 6 of 7, walking straight at Seth won 5 of 5) were taken with Rebecca at your start.
