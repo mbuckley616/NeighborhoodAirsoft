@@ -8367,3 +8367,17 @@ the bug it guards against held Andrew 17 s. The game is unchanged.
 `node tests/run.mjs retreat-progress` passes. 48 sampled rounds: the longest hold was 1-2 s.
 ### Still open
 - Nothing for play.
+
+## v1.174 fix-up — the CI shard weights re-measured
+CI's `headless (1/8)` was cancelled on 389b051 at 30:19, the job limit, while shards 2-8 finished in 13-22
+minutes. Its suites had passed up to `workbench-labels`, which was still running. It was given 25 minutes of tests
+because `tests/run.mjs`'s weights had drifted. under-parts took 191 s (weighted 65), backyard-guns 174 s (80) and
+stuck-sweep-2 478 s (203), while several stuck sweeps had shrunk (stuck-sweep-8 206 s against 451). The weights are
+now the times measured in that run's eight shard logs (83 of 84 suites; workbench-labels still counts 60 s). The
+suites take about 8,100 s in all.
+### Verified
+`node tests/shard.test.mjs` passes. By the measured times the eight shards are 1012-1016 s each, about 17 minutes
+plus about 3 minutes of setup.
+### Still open
+- The stuck sweeps vary run to run (stuck-sweep-2 took 203 s and 478 s on different runs), so shards stay uneven by a
+  few minutes; there is about 10 minutes of headroom.
