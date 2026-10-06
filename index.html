@@ -16530,6 +16530,7 @@ function createKid(profile, weapon = 'pistol') {
       base: {
         legL_y: legL.position.y, legR_y: legR.position.y,
         shoeL_z: shoeL.position.z, shoeR_z: shoeR.position.z,
+        legL_x: legL.position.x, legR_x: legR.position.x, shoe_y: shoeL.position.y,   // v1.171: the walk moves them
         torso_y: torso.position.y,
         neck_y: neck.position.y, head_y: head.position.y, gun_y: gunGroup.position.y,
         // v1.78: base X/Z so poses can move limbs and restore them exactly,
@@ -16596,6 +16597,15 @@ function setKidCrouch(kid, amount) {
   // just a squash). Subtle — these are blocky kids.
   po.legL.rotation.x = 0.25 * amount;
   po.legR.rotation.x = 0.25 * amount;
+  // v1.171: the walk swings the legs from the hip and carries the shoes with the feet; start each frame from rest
+  if (b.legL_x != null) {
+    po.legL.rotation.z = 0; po.legR.rotation.z = 0;
+    po.legL.position.x = b.legL_x; po.legR.position.x = b.legR_x;
+    po.legL.position.z = 0; po.legR.position.z = 0;
+    po.shoeL.position.set(b.legL_x, b.shoe_y, b.shoeL_z); po.shoeR.position.set(b.legR_x, b.shoe_y, b.shoeR_z);
+    po.shoeL.rotation.x = 0; po.shoeR.rotation.x = 0;
+    po.torso.rotation.z = 0;
+  }
 
   // How far the hips dropped = the lost leg height above the knee line.
   const hipDrop = (0.55 * (1 - legShrink)); // total leg-height lost
@@ -16811,19 +16821,90 @@ function setKidGunHold(kid, weapon, t = 0, lift = 0) {
 // independent center-pivot boxes, so a small rotation.x swing reads fine. `phase`
 // advances only while moving; `intensity` is eased from real displacement so a
 // stopped kid settles. At intensity ~0 we early-out (legs keep their crouch base).
-function setKidWalk(kid, phase, intensity) {
+// v1.171 (backlog D.16 A, Michael: C, A first): planted feet. The legs used to swing ±14° about their middles at a
+// fixed beat while the shoes stayed put under the hips, so at 2.5-3.5 m/s the feet slid along at the kid's full
+// speed. Now each leg hangs from its hip and the gait is laid out from the kid's real velocity in his own frame
+// (vf forward, vs to his left, m/s): a foot in stance goes back under him at exactly his speed, so it stays where it
+// was put on the ground, and sideways or backward steps are planted too. The swing foot lifts on the way forward
+// (the leg is one piece, so it shortens for the knee) and the shoe tips toe-down off the ground and heel-down into
+// it. The hips ride as high as the stance leg allows, which gives the bob, and roll a little over the stance foot.
+// Cadence rises with speed (f = 0.75 + 0.35 v cycles a second); above 1.5 m/s the stance takes less of the cycle
+// (`duty` 0.5 → 0.35 at 3 m/s), the run's longer, quicker stride. `phase` runs 2π a cycle; the right leg is half a
+// cycle behind the left.
+function setKidWalk(kid, phase, intensity, vf, vs, duty) {
   const po = kid.pose;
   if (!po) return;
   intensity = Math.max(0, Math.min(1, intensity));
   if (intensity <= 0.02) return;   // settled — base/hold stance stands
-  const s = Math.sin(phase) * intensity;
-  // Legs swing in opposition (subtle).
-  const legSwing = 0.24 * s;
-  po.legL.rotation.x = (po.legL.rotation.x || 0) + legSwing;
-  po.legR.rotation.x = (po.legR.rotation.x || 0) - legSwing;
-  // Faint vertical bob from the gait.
-  const bob = Math.abs(Math.cos(phase)) * 0.012 * intensity;
-  po.torso.position.y += bob;
+  const b = po.base;
+  if (vf == null) { vf = 2.0 * intensity; vs = 0; }   // a caller with no velocity (the ladder's foot): a plain walk
+  vs = vs || 0;
+  const v = Math.hypot(vf, vs);
+  if (duty == null) duty = kidGaitDuty(v);
+  const f = kidGaitCadence(v);
+  const sxz = kid.scaleXZ || 1;
+  const shrink = po.legL.scale.y / (b.legScaleY || 1);   // the crouch's leg shrink, set this frame
+  const h = 0.55 * shrink;                                 // leg length, hip to sole (local)
+  // half the ground a stance foot covers under the hip, in local units, each way; capped at 0.6 of the leg
+  const cap = 0.6 * h;
+  const Df = Math.max(-cap, Math.min(cap, (vf / sxz) * duty / (2 * f)));
+  const Ds = Math.max(-cap, Math.min(cap, (vs / sxz) * duty / (2 * f)));
+  const liftAmt = Math.min(0.1, 0.03 + 0.02 * v) * shrink;
+  const u0 = ((phase / (2 * Math.PI)) % 1 + 1) % 1;
+  const legs = [
+    { leg: po.legL, shoe: po.shoeL, x: b.legL_x, z0: b.shoeL_z, u: u0 },
+    { leg: po.legR, shoe: po.shoeR, x: b.legR_x, z0: b.shoeR_z, u: (u0 + 0.5) % 1 },
+  ];
+  let H = null, stanceRoll = 0;
+  for (const L of legs) {
+    let k, w;
+    if (L.u < duty) { k = L.u / duty; w = 1 - 2 * k; L.lift = 0; L.stance = true; L.tip = 0; }
+    else {
+      k = (L.u - duty) / (1 - duty); w = -Math.cos(Math.PI * k);
+      L.lift = Math.sin(Math.PI * k) * liftAmt; L.stance = false;
+      L.tip = 0.35 * Math.sin(Math.PI * k) * Math.cos(Math.PI * k) * Math.min(1, v / 2);   // toe down, then heel down
+    }
+    L.oz = Df * w; L.ox = Ds * w;   // the foot's place relative to the hip (+z forward, +x to his left)
+    if (L.stance) {
+      const hh = Math.sqrt(Math.max(0, h * h - L.oz * L.oz - L.ox * L.ox));
+      H = H == null ? hh : Math.min(H, hh);
+      stanceRoll += (L.x < 0 ? 1 : -1);   // +z roll tips the top toward -x
+    }
+  }
+  if (H == null) H = Math.sqrt(Math.max(0, h * h - Df * Df - Ds * Ds));   // between stances: no flight, the low point
+  for (const L of legs) {
+    const y = Math.max(0.05, H - L.lift);
+    const len = Math.min(h, Math.hypot(y, L.ox, L.oz));
+    // the leg's -y runs from the hip to the foot: rotation.z leans it sideways, rotation.x fore and aft
+    L.leg.rotation.z = Math.asin(Math.max(-1, Math.min(1, L.ox / len)));
+    L.leg.rotation.x = Math.atan2(-L.oz, y);
+    L.leg.scale.y = (b.legScaleY || 1) * (len / 0.55);
+    L.leg.position.set(L.x + L.ox / 2, H - y / 2 + (h - H), L.oz / 2);
+    // the shoe sits on the foot; its rest offset from the sole point is (0, shoe_y, shoe_z)
+    L.shoe.position.set(L.x + L.ox, (h - H) + L.lift + b.shoe_y, L.oz + L.z0);
+    L.shoe.rotation.x = L.tip;
+  }
+  // The hips sit at H, not h: everything above them comes down by h - H. The leg tops sit at h above the soles,
+  // so lower the legs and shoes by the same and the whole kid keeps his soles on the ground.
+  const drop = h - H;
+  for (const L of legs) { L.leg.position.y -= drop; L.shoe.position.y -= drop; }
+  kidLowerUpper(po, drop);
+  // a little roll over the stance foot (none when both or neither are down)
+  po.torso.rotation.z = 0.035 * Math.max(-1, Math.min(1, stanceRoll)) * Math.min(1, v / 2) * intensity;
+}
+
+// v1.171: the gait's beat and the share of it a foot spends on the ground, from speed (m/s)
+function kidGaitCadence(v) { return 0.75 + 0.35 * Math.min(4, v); }
+function kidGaitDuty(v) { return 0.5 - 0.15 * Math.max(0, Math.min(1, (v - 1.5) / 1.5)); }
+
+// v1.171: lower everything the crouch lowers (from the torso up) by dy more, local units
+function kidLowerUpper(po, dy) {
+  if (!(dy > 0)) return;
+  po.torso.position.y -= dy;
+  po.rigR.shoulder.position.y -= dy; po.rigL.shoulder.position.y -= dy;
+  po.neck.position.y -= dy; po.head.position.y -= dy; po.gunGroup.position.y -= dy;
+  if (po.hair) po.hair.position.y -= dy;
+  if (po.headExtras) for (const ex of po.headExtras) ex.mesh.position.y -= dy;
 }
 
 // ---------------------------------------------------------------------
@@ -25674,7 +25755,7 @@ function kidLadderStep(e, tgt, dt) {
   e.mesh.group.rotation.z = 0;
   setKidCrouch(e.mesh, 0);
   setKidGunHold(e.mesh, e.weapon, 0, 0);
-  e._walkPhase = (e._walkPhase || 0) + (walking ? dt * 8.0 : 0);
+  e._walkPhase = (e._walkPhase || 0) + (walking ? 2 * Math.PI * kidGaitCadence(1.6) * dt : 0);   // v1.171: the gait's beat
   setKidWalk(e.mesh, e._walkPhase, walking ? 0.8 : 0);
   if (e.mesh._laserUnit && e.mesh._laserUnit.userData) {
     const lu = e.mesh._laserUnit.userData;
@@ -25773,6 +25854,8 @@ function updateEnemies(dt) {
     const rawMoved = Math.sqrt(fdx * fdx + fdz * fdz);
     const moved = (rawMoved > Math.max(0.3, dt * 15)) ? 0 : rawMoved;
     e._animSpeed = moved / Math.max(dt, 1e-3);   // m/s the walk anim reads (tests)
+    // v1.171: and its direction, for the planted-foot gait (none on a teleport)
+    e._animVX = moved ? fdx / Math.max(dt, 1e-3) : 0; e._animVZ = moved ? fdz / Math.max(dt, 1e-3) : 0;
     e._footstepDist = (e._footstepDist || 0) + moved;
     if (e._footstepDist >= 0.6) {
       e._footstepDist = 0;
@@ -27166,13 +27249,24 @@ function updateEnemies(dt) {
       const speedNorm = Math.min(1, (moveThisFrame / Math.max(dt, 1e-3)) / 3.0); // ~3 m/s = full
       e._walkInt = (e._walkInt == null) ? speedNorm
         : e._walkInt + (speedNorm - e._walkInt) * Math.min(1, dt * 6);
-      // Advance the gait phase only while moving (so a stopped kid freezes mid-stance).
-      e._walkPhase = (e._walkPhase || 0) + e._walkInt * dt * 8.0;
+      // v1.171 (D.16 A): the gait reads his velocity in his own frame (eased, so a collision's one-frame jolt doesn't
+      // kick a leg), and the phase runs at the cadence for that speed. It stops when he does (a stopped kid freezes
+      // mid-stance and the stride shrinks to nothing as the eased speed falls).
+      {
+        const yaw = e.mesh.group.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
+        const vx = e._animVX || 0, vz = e._animVZ || 0;
+        const vfNow = vx * sy + vz * cy, vsNow = vx * cy - vz * sy;   // forward (+z local), to his left (+x local)
+        const ease = Math.min(1, dt * 8);
+        e._gaitVF = (e._gaitVF || 0) + (vfNow - (e._gaitVF || 0)) * ease;
+        e._gaitVS = (e._gaitVS || 0) + (vsNow - (e._gaitVS || 0)) * ease;
+      }
+      const gaitV = Math.hypot(e._gaitVF, e._gaitVS);
+      if (gaitV > 0.05) e._walkPhase = (e._walkPhase || 0) + 2 * Math.PI * kidGaitCadence(gaitV) * dt;
 
       // v1.167: the hold runs at every crouch. It used to skip a full crouch (> 0.98), so every kid hiding
       // behind cover let go of his gun: it floated by his right knee, 21-39 cm from the hand (backlog B.6).
       setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
-      setKidWalk(e.mesh, e._walkPhase, e._walkInt);
+      setKidWalk(e.mesh, e._walkPhase || 0, e._walkInt, e._gaitVF, e._gaitVS);
     }
 
     // v1.36i: clip this kid's laser beam (if any) to the first obstacle it hits,
