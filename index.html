@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.166</div>
+  <div class="version">v1.168</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3245,6 +3245,11 @@ const Game = {
       spare_mag_ump_200: 0,
       spare_mag_mac10: 0,
       spare_mag_mac10_100: 0,
+      // v1.168: the backyard guns' spares
+      spare_mag_thunder: 0,
+      spare_mag_sixshooter: 0,
+      spare_mag_bucket: 0,
+      spare_mag_boltpistol: 0,
     },
     equipped: {
       gun: 'pistol',
@@ -3415,10 +3420,15 @@ const MAG_GUN_FIT = {
   spare_mag_ump_200: 'ump',
   spare_mag_mac10: 'mac10',
   spare_mag_mac10_100: 'mac10',
+  spare_mag_thunder: 'thunder',
+  spare_mag_sixshooter: 'sixshooter',
+  spare_mag_bucket: 'bucket',
+  spare_mag_boltpistol: 'boltpistol',
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
-const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10'];
+// v1.168 (backlog D.14 A, Michael: D): the four backyard guns join the end.
+const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol'];
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -3463,6 +3473,11 @@ function getMaxAmmoForGun(gunType) {
     if (Game.persist.owned.mac10_mag_100) return 100;
     return 50;
   }
+  // v1.168: the backyard guns. The six-shooter is six, always: its cylinder is the mag.
+  if (gunType === 'thunder')    return Game.persist.owned.thunder_mag_50 ? 50 : 30;
+  if (gunType === 'sixshooter') return 6;
+  if (gunType === 'bucket')     return Game.persist.owned.bucket_mag_1000 ? 1000 : 600;
+  if (gunType === 'boltpistol') return Game.persist.owned.boltpistol_mag_12 ? 12 : 8;
   return 1;
 }
 
@@ -3542,6 +3557,10 @@ const GUN_ACCESSORY_CAP = {
   mp5:     { sight: 1, rails: 2 },
   ump:     { sight: 1, rails: 2 },
   ak47:    { sight: 1, rails: 2 },
+  thunder: { sight: 1, rails: 2 },     // v1.168
+  sixshooter: { sight: 1, rails: 1 },
+  bucket:  { sight: 1, rails: 2 },
+  boltpistol: { sight: 1, rails: 1 },
 };
 function getGunAccessoryCap(gunType) {
   return GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -3755,8 +3774,33 @@ const GUN_MAGS = {
     mags: [ { flag: 'mac10_mag_100', cap: 100, price: 18 } ],
     spares: [ { key: 'spare_mag_mac10', label: 'Spare MAC-10 Mag (50)', price: 8 } ],
   },
+  // v1.168 (backlog D.14 A, Michael: D): four backyard guns, the kind kids actually own. `blurb` is the shop's line.
+  thunder: {
+    displayName: 'Thunder Pump', baseCap: 30, price: 75, ownFlag: 'thunder',
+    blurb: 'A pump-up air shotgun. Pump it between every shot; it throws four or five BBs in a wide cloud. Hard to miss up close, useless far off.',
+    mags: [ { flag: 'thunder_mag_50', cap: 50, price: 15 } ],
+    spares: [ { key: 'spare_mag_thunder', label: 'Spare Thunder Shell Box (30)', price: 10 } ],
+  },
+  sixshooter: {
+    displayName: 'Six-Shooter', baseCap: 6, price: 70, ownFlag: 'sixshooter',
+    blurb: 'A cap-gun style revolver. Thumb the hammer and it is ready again fast, but the cylinder holds six. Bring spare cylinders.',
+    mags: [],
+    spares: [ { key: 'spare_mag_sixshooter', label: 'Spare Cylinder (6)', price: 3 } ],
+  },
+  bucket: {
+    displayName: 'Bucket Gun', baseCap: 600, price: 110, ownFlag: 'bucket',
+    blurb: 'Battery-powered, with a bucket of BBs on top. It never stops, but the BBs come out slow and soft and drift off past ten metres.',
+    mags: [ { flag: 'bucket_mag_1000', cap: 1000, price: 25 } ],
+    spares: [ { key: 'spare_mag_bucket', label: 'Spare BB Bottle (600)', price: 15 } ],
+  },
+  boltpistol: {
+    displayName: 'Bolt Pistol', baseCap: 8, price: 95, ownFlag: 'boltpistol',
+    blurb: 'A long-barrel pistol you work with a little bolt. Slow to reload each shot, but it puts the BB where you aim.',
+    mags: [ { flag: 'boltpistol_mag_12', cap: 12, price: 14 } ],
+    spares: [ { key: 'spare_mag_boltpistol', label: 'Spare Bolt Pistol Mag (8)', price: 6 } ],
+  },
 };
-const GUN_ORDER = ['pistol','shotgun','ar','sniper','mp5','ump','mac10','ak47'];
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','sniper','bucket','mp5','ump','mac10','ak47'];
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -3895,6 +3939,7 @@ function describeSlot(idx) {
       spare_mag_ump_200: 200,
       spare_mag_mac10: 50,
       spare_mag_mac10_100: 100,
+      spare_mag_thunder: 30, spare_mag_sixshooter: 6, spare_mag_bucket: 600, spare_mag_boltpistol: 8,   // v1.168
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -3910,6 +3955,8 @@ function describeSlot(idx) {
       spare_mag_ump_200: 'Spare 200-rd UMP Mag',
       spare_mag_mac10: 'Spare 50-rd MAC-10 Mag',
       spare_mag_mac10_100: 'Spare 100-rd MAC-10 Mag',
+      spare_mag_thunder: 'Spare Thunder Shell Box (30)', spare_mag_sixshooter: 'Spare Cylinder (6)',   // v1.168
+      spare_mag_bucket: 'Spare BB Bottle (600)', spare_mag_boltpistol: 'Spare 8-rd Bolt Pistol Mag',
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -3941,6 +3988,7 @@ const SPEED_LOADER_TIERS = {
 // =====================================================================
 const GUN_WEIGHT = {
   pistol: 2, mac10: 3, mp5: 5, ump: 5, shotgun: 6, ar: 8, ak47: 8, sniper: 10,
+  sixshooter: 2, boltpistol: 3, thunder: 5, bucket: 6,   // v1.168
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -3950,6 +3998,7 @@ const MAG_WEIGHT = {
   spare_mag_mp5: 1.6, spare_mag_mp5_200: 2.0,
   spare_mag_ump: 1.4, spare_mag_ump_200: 1.8,
   spare_mag_mac10: 0.8, spare_mag_mac10_100: 1.2,
+  spare_mag_thunder: 1.0, spare_mag_sixshooter: 0.3, spare_mag_bucket: 1.6, spare_mag_boltpistol: 0.5,   // v1.168
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -4235,6 +4284,69 @@ const GUN_SPECS = {
     cockTime: 0.6,
     cockType: 'charge',
     displayName: 'MAC-10',
+  },
+
+  // v1.168 (backlog D.14 A, Michael: D): the backyard guns. Each one is a trade, not an upgrade.
+  // Thunder Pump: a pump-up air shotgun. A long pump between shots, then 4-5 BBs in a wide, slow cloud.
+  thunder: {
+    fireMode: 'semi',
+    weightClass: 'medium',
+    playerSpeedMult: 1.0,
+    muzzleVelocity: 27,
+    baseSpread: 1.9,          // the spring shotgun's 0.55: about four times its cloud, a metre wide at 15 m
+    adsSpreadMult: 0.65,      // aiming barely tightens it
+    curveOnsetDistance: 6,
+    curveStrengthMax: 20,
+    pelletsPerShot: () => 4 + Math.floor(Math.random() * 2),  // 4 or 5
+    cockTime: 1.05,           // pumping up the air takes a while
+    cockType: 'pump',
+    displayName: 'Thunder Pump',
+  },
+  // Six-Shooter: a cap-gun revolver. Thumbing the hammer is the fastest re-cock of any gun, but six to a cylinder.
+  sixshooter: {
+    fireMode: 'semi',
+    weightClass: 'light',
+    playerSpeedMult: 1.15,
+    muzzleVelocity: 32,
+    baseSpread: 0.36,
+    adsSpreadMult: 0.4,
+    curveOnsetDistance: 5,
+    curveStrengthMax: 16,
+    pelletsPerShot: () => 1,
+    cockTime: 0.3,
+    cockType: 'hammer',
+    displayName: 'Six-Shooter',
+  },
+  // Bucket Gun: an electric hopper gun. Hundreds of BBs, but slow and soft: they wobble off early.
+  bucket: {
+    fireMode: 'auto',
+    weightClass: 'medium',
+    playerSpeedMult: 0.95,
+    cyclicRPM: 420,           // 7 a second, a toy motor
+    muzzleVelocity: 23,       // the slowest gun
+    baseSpread: 0.45,
+    adsSpreadMult: 0.6,
+    curveOnsetDistance: 5,
+    curveStrengthMax: 22,
+    pelletsPerShot: () => 1,
+    cockTime: 0.4,            // flick the power switch
+    cockType: 'switch',
+    displayName: 'Bucket Gun',
+  },
+  // Bolt Pistol: a long-barrel bolt pistol. Sniper-like accuracy at pistol weight, at a sniper's re-cock.
+  boltpistol: {
+    fireMode: 'semi',
+    weightClass: 'light',
+    playerSpeedMult: 1.1,
+    muzzleVelocity: 52,
+    baseSpread: 0.14,
+    adsSpreadMult: 0.3,
+    curveOnsetDistance: 16,
+    curveStrengthMax: 8,
+    pelletsPerShot: () => 1,
+    cockTime: 1.0,
+    cockType: 'bolt',
+    displayName: 'Bolt Pistol',
   },
 };
 
@@ -15786,7 +15898,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || !weapon;
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || !weapon;   // v1.168
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -15797,6 +15909,8 @@ function gunForegripZ(weapon) {
     case 'mp5':
     case 'ump':     return 0.12;   // compact body
     case 'mac10':   return 0.06;
+    case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
+    case 'bucket':  return 0.12;
     case 'pistol':
     default:        return 0.10;
   }
@@ -15868,6 +15982,38 @@ function buildEnemyGunMesh(weapon) {
       box(0.06, 0.10, 0.16, black, 0, 0, 0.06);          // tiny boxy machine pistol
       box(0.04, 0.11, 0.05, dark, 0, -0.10, 0.03);       // short mag
       grip();
+      break;
+    }
+    // v1.168: the backyard guns, in their toy colours
+    case 'thunder': {
+      const green = new THREE.MeshStandardMaterial({ color: 0x2f7a46, roughness: 0.6 });
+      box(0.05, 0.08, 0.42, green, 0, 0, 0.20);          // receiver + barrel
+      box(0.03, 0.03, 0.16, tan, 0, -0.045, 0.18);       // air tank
+      box(0.045, 0.05, 0.10, dark, 0, -0.05, 0.18);      // pump
+      box(0.05, 0.10, 0.09, green, 0, -0.02, -0.05);     // stock wrist
+      grip(green);
+      break;
+    }
+    case 'sixshooter': {
+      const silver = new THREE.MeshStandardMaterial({ color: 0xb9bdc4, roughness: 0.3, metalness: 0.7 });
+      box(0.045, 0.05, 0.06, silver, 0, 0.01, 0.0);      // cylinder
+      box(0.025, 0.03, 0.17, silver, 0, 0.02, 0.10);     // barrel
+      grip(wood);
+      break;
+    }
+    case 'bucket': {
+      const blue = new THREE.MeshStandardMaterial({ color: 0x2a5fb0, roughness: 0.55 });
+      const pail = new THREE.MeshStandardMaterial({ color: 0xdbe8f0, roughness: 0.2 });
+      box(0.06, 0.08, 0.32, blue, 0, 0, 0.12);           // body + barrel
+      box(0.09, 0.07, 0.09, pail, 0, 0.075, 0.08);       // the bucket on top
+      grip();
+      break;
+    }
+    case 'boltpistol': {
+      box(0.04, 0.05, 0.12, black, 0, 0, 0.04);          // frame
+      box(0.02, 0.02, 0.26, black, 0, 0.02, 0.20);       // long barrel
+      box(0.03, 0.01, 0.01, dark, 0.03, 0.02, -0.01);    // bolt knob
+      grip(wood);
       break;
     }
     case 'pistol':
@@ -16377,7 +16523,9 @@ function setKidHitPose(kid, amount) {
   const b = po.base;
   // Make sure any crouch is released first so the body stands tall (this also
   // resets both rigs to a clean hanging base via setKidCrouch).
-  if ((po.crouch ?? 0) > 0) setKidCrouch(kid, 0);
+  // v1.167: always, not only when crouched: a standing kid tagged mid-hold kept the hold's IK quaternions, so the
+  // raise below only overwrote the shoulder's x angle and the off arm went on reaching for the foregrip (backlog B.6).
+  setKidCrouch(kid, 0);
   // v1.80: the gun arm now pivots at the SHOULDER group. Rotate the right shoulder
   // about X so the whole (straight) arm swings up & back to point skyward — a
   // clear "I'm hit!" signal — with a slight elbow bend so it doesn't read stiff.
@@ -16387,10 +16535,14 @@ function setKidHitPose(kid, amount) {
   // Gun lifts overhead and points UP (its barrel runs +Z locally; rotate so +Z
   // faces +Y → muzzle to the sky). The gun is still parented to the body group
   // (not the hand), so drive it directly to ride above the raised arm.
-  po.gunGroup.position.y = b.gun_y + 0.62 * raise;
-  po.gunGroup.position.x = b.gun_x;
-  po.gunGroup.position.z = b.gun_z;
-  po.gunGroup.rotation.x = -Math.PI / 2 * raise;     // tip the muzzle up
+  // v1.167: it rides IN the raised hand: the grip is put on the hand's point in the kid's frame (it sat 16-33 cm
+  // from the hand, beside the arm, before).
+  const th = -Math.PI / 2 * raise;
+  po.gunGroup.rotation.x = th;                       // tip the muzzle up
+  kid.group.updateMatrixWorld(true);
+  const hp = kid.group.worldToLocal(po.rigR.hand.getWorldPosition(new THREE.Vector3()));
+  const gr = gunGripLocal(null), c = Math.cos(th), s = Math.sin(th);
+  po.gunGroup.position.set(hp.x - gr.x, hp.y - (gr.y * c - gr.z * s), hp.z - (gr.y * s + gr.z * c));
   po._hitRaise = amount;
 }
 
@@ -17420,6 +17572,173 @@ function buildFPMAC10() {
   return group;
 }
 
+// =====================================================================
+// v1.168 (backlog D.14 A, Michael: D) — FP BACKYARD GUNS: Thunder Pump, Six-Shooter, Bucket Gun, Bolt Pistol.
+// Toy-coloured plastic and cap-gun metal, each with the orange tip. Same frame as the others: barrel along -Z, the
+// origin near the grip, cockingParts slide back along +Z. Each iron sight's tip height is its ADS Y (negated) in
+// updateHeldMesh, so the tip sits on the reticle.
+// =====================================================================
+function _fpPart(group, geo, mat, x, y, z, rx) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  if (rx) m.rotation.x = rx;
+  group.add(m);
+  return m;
+}
+function _fpTriggerGuard(group, mat, y, z) {
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.05), mat, 0, y - 0.022, z + 0.01);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.008), mat, 0, y - 0.01, z - 0.015);
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.02, 0.006), mat, 0, y - 0.008, z);
+}
+const _fpOrangeMat = () => new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+
+// Thunder Pump: a chunky green pump-up air shotgun, an air tank under the barrel, a pressure gauge, a flared muzzle.
+function buildFPThunder() {
+  const group = new THREE.Group();
+  const green = new THREE.MeshStandardMaterial({ color: 0x2f7a46, roughness: 0.6, metalness: 0.05 });
+  const dark  = new THREE.MeshStandardMaterial({ color: 0x1a1b1e, roughness: 0.7 });
+  const tank  = new THREE.MeshStandardMaterial({ color: 0x55585e, roughness: 0.4, metalness: 0.5 });
+  const face  = new THREE.MeshStandardMaterial({ color: 0xf2f0e6, roughness: 0.5 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.BoxGeometry(0.05, 0.065, 0.16), green, 0, 0.02, -0.05);                 // receiver
+  const barrel = _fpPart(group, new THREE.CylinderGeometry(0.016, 0.016, 0.22, 12), green, 0, 0.042, -0.23, Math.PI / 2);
+  _fpPart(group, new THREE.CylinderGeometry(0.018, 0.025, 0.03, 12), green, 0, 0.042, -0.355, Math.PI / 2);   // flared muzzle (wide end forward)
+  _fpPart(group, new THREE.CylinderGeometry(0.026, 0.026, 0.016, 12), orange, 0, 0.042, -0.376, Math.PI / 2); // orange tip
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.16, 10), tank, 0, 0.008, -0.2, Math.PI / 2);       // air tank
+  const gauge = _fpPart(group, new THREE.CylinderGeometry(0.012, 0.012, 0.006, 14), face, -0.028, 0.03, -0.06);
+  gauge.rotation.z = Math.PI / 2;
+  const needle = _fpPart(group, new THREE.BoxGeometry(0.002, 0.016, 0.002), dark, -0.032, 0.033, -0.06);
+  needle.rotation.x = 0.7;
+  _fpPart(group, new THREE.SphereGeometry(0.0055, 8, 6), orange, 0, 0.0635, -0.33).userData.frontSight = true;                  // front bead (tip y 0.069)
+  _fpPart(group, new THREE.BoxGeometry(0.022, 0.01, 0.008), dark, 0, 0.058, 0.02);                   // rear notch block
+  // The pump handle slides back along the tank: the cocking part.
+  const pump = new THREE.Group();
+  _fpPart(pump, new THREE.BoxGeometry(0.046, 0.04, 0.09), dark, 0, 0.014, 0);
+  for (let i = 0; i < 6; i++) _fpPart(pump, new THREE.BoxGeometry(0.048, 0.042, 0.003), green, 0, 0.014, 0.035 - i * 0.014);
+  pump.position.set(0, 0, -0.22);
+  pump.userData.baseZ = pump.position.z;
+  group.add(pump);
+  _fpTriggerGuard(group, dark, 0, -0.04);
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.06, 0.08), green, 0, -0.035, 0.015, 0.18);            // wrist
+  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.14), green, 0, -0.005, 0.105, 0.18);            // stock
+  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.012), dark, 0, 0.022, 0.175, 0.18);             // butt pad
+  group.position.set(0.13, -0.21, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [pump];
+  group.userData.cockingOffset = 0.08;
+  group.userData.gunType = 'thunder';
+  Game.camera.add(group);
+  return group;
+}
+
+// Six-Shooter: a silver cap-gun revolver with a wooden bird's-head grip. Thumbing the hammer turns the cylinder.
+function buildFPSixShooter() {
+  const group = new THREE.Group();
+  const silver = new THREE.MeshStandardMaterial({ color: 0xb9bdc4, roughness: 0.3, metalness: 0.75 });
+  const steel  = new THREE.MeshStandardMaterial({ color: 0x6d7178, roughness: 0.35, metalness: 0.7 });
+  const dark   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7 });
+  const wood   = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.75 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.09), silver, 0, 0.02, -0.03);                   // frame
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.1), silver, 0, 0.048, -0.04);                   // top strap
+  // The cylinder, with six chambers on its face. It turns a sixth as the hammer comes back (userData.cockSpin).
+  const cyl = new THREE.Group();
+  _fpPart(cyl, new THREE.CylinderGeometry(0.021, 0.021, 0.044, 12), steel, 0, 0, 0);
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    _fpPart(cyl, new THREE.CylinderGeometry(0.0045, 0.0045, 0.002, 8), dark, Math.cos(a) * 0.012, 0.023, Math.sin(a) * 0.012);
+  }
+  cyl.rotation.x = Math.PI / 2;           // its axis along the barrel; rotation.y then turns it about that axis
+  cyl.position.set(0, 0.024, -0.045);
+  cyl.userData.cockSpin = Math.PI / 3;
+  group.add(cyl);
+  _fpPart(group, new THREE.CylinderGeometry(0.009, 0.009, 0.13, 10), silver, 0, 0.036, -0.135, Math.PI / 2);   // barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.1, 8), silver, 0, 0.022, -0.12, Math.PI / 2);   // ejector rod
+  _fpPart(group, new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 10), orange, 0, 0.036, -0.207, Math.PI / 2); // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.01), silver, 0, 0.05, -0.19).userData.frontSight = true;                 // front blade (tip y 0.056)
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, 0.004);                 // rear notch
+  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, 0.02, -0.45);   // spur under the sight line
+  hammer.userData.baseZ = hammer.position.z;
+  _fpTriggerGuard(group, silver, -0.002, -0.03);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.1, 0.045), wood, 0, -0.045, 0.03, -0.38);             // bird's-head grip
+  _fpPart(group, new THREE.BoxGeometry(0.034, 0.012, 0.05), silver, 0, -0.092, 0.05, -0.38);          // grip cap
+  group.position.set(0.16, -0.18, -0.32);
+  group.rotation.y = 0.12;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [hammer, cyl];
+  group.userData.cockingOffset = 0.016;
+  group.userData.gunType = 'sixshooter';
+  Game.camera.add(group);
+  return group;
+}
+
+// Bucket Gun: a blue electric hopper gun. A see-through bucket of BBs rides on top under a carry-handle sight rail.
+function buildFPBucket() {
+  const group = new THREE.Group();
+  const blue  = new THREE.MeshStandardMaterial({ color: 0x2a5fb0, roughness: 0.55, metalness: 0.05 });
+  const dark  = new THREE.MeshStandardMaterial({ color: 0x18191c, roughness: 0.7 });
+  const clear = new THREE.MeshStandardMaterial({ color: 0xdbe8f0, roughness: 0.15, transparent: true, opacity: 0.45 });
+  const bbs   = new THREE.MeshStandardMaterial({ color: 0xf2ecd2, roughness: 0.4 });
+  const yellow = new THREE.MeshStandardMaterial({ color: 0xf2c632, roughness: 0.5 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.BoxGeometry(0.06, 0.075, 0.26), blue, 0, 0.01, -0.1);                     // body
+  _fpPart(group, new THREE.CylinderGeometry(0.012, 0.012, 0.12, 10), dark, 0, 0.02, -0.29, Math.PI / 2);      // barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), orange, 0, 0.02, -0.355, Math.PI / 2);   // orange tip
+  _fpPart(group, new THREE.CylinderGeometry(0.046, 0.032, 0.06, 16), clear, 0, 0.075, -0.09);        // the bucket
+  _fpPart(group, new THREE.CylinderGeometry(0.038, 0.031, 0.034, 16), bbs, 0, 0.062, -0.09);         // BBs in it
+  _fpPart(group, new THREE.CylinderGeometry(0.048, 0.048, 0.006, 16), yellow, 0, 0.106, -0.09);      // lid
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, 0.02);                    // handle posts
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, -0.21);
+  _fpPart(group, new THREE.BoxGeometry(0.022, 0.016, 0.25), dark, 0, 0.127, -0.095);                 // carry-handle rail
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), dark, 0, 0.142, -0.205).userData.frontSight = true;                // front blade (tip y 0.149)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), dark, 0, 0.138, 0.012);                 // rear notch
+  _fpPart(group, new THREE.BoxGeometry(0.04, 0.06, 0.09), yellow, 0, -0.005, 0.07);                  // battery pack stock
+  // The power switch on the right flank slides back: the cocking part.
+  const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), yellow, 0.033, 0.022, -0.04);
+  sw.userData.baseZ = sw.position.z;
+  _fpTriggerGuard(group, dark, -0.028, -0.03);
+  _fpPart(group, new THREE.BoxGeometry(0.038, 0.11, 0.05), dark, 0, -0.085, 0.0, -0.2);              // grip
+  group.position.set(0.14, -0.21, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [sw];
+  group.userData.cockingOffset = 0.02;
+  group.userData.gunType = 'bucket';
+  Game.camera.add(group);
+  return group;
+}
+
+// Bolt Pistol: a long-barrel target pistol with a little bolt knob on the right and a wooden grip.
+function buildFPBoltPistol() {
+  const group = new THREE.Group();
+  const gun  = new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.45, metalness: 0.4 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.7 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a2e, roughness: 0.7 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.045, 0.12), gun, 0, 0.01, -0.03);                    // frame
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.12, 12), gun, 0, 0.045, -0.03, Math.PI / 2);      // receiver tube
+  _fpPart(group, new THREE.CylinderGeometry(0.009, 0.009, 0.26, 10), gun, 0, 0.045, -0.22, Math.PI / 2);      // long barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.011, 0.011, 0.02, 10), orange, 0, 0.045, -0.36, Math.PI / 2);   // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.01), dark, 0, 0.06, -0.33).userData.frontSight = true;                   // front blade (tip y 0.066)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.008, 0.008), dark, 0, 0.062, 0.02);                  // rear notch
+  // The bolt: a rod and a ball knob out to the right, pulled back to re-cock.
+  const rod  = _fpPart(group, new THREE.BoxGeometry(0.03, 0.006, 0.006), dark, 0.025, 0.048, 0.0);
+  const knob = _fpPart(group, new THREE.SphereGeometry(0.007, 10, 8), dark, 0.042, 0.048, 0.0);
+  rod.userData.baseZ = rod.position.z;
+  knob.userData.baseZ = knob.position.z;
+  _fpTriggerGuard(group, gun, -0.012, -0.04);
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.065, 0.005, -0.2);            // grip
+  group.position.set(0.16, -0.18, -0.32);
+  group.rotation.y = 0.12;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [rod, knob];
+  group.userData.cockingOffset = 0.04;
+  group.userData.gunType = 'boltpistol';
+  Game.camera.add(group);
+  return group;
+}
+
 // === FP GUN REGISTRY ===
 // Map of gun type → built FP mesh. Lazily filled the first time each gun is equipped.
 const fpGuns = {};
@@ -17434,6 +17753,10 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'mp5')     mesh = buildFPMP5();
   else if (gunType === 'ump')     mesh = buildFPUMP();
   else if (gunType === 'mac10')   mesh = buildFPMAC10();
+  else if (gunType === 'thunder') mesh = buildFPThunder();       // v1.168
+  else if (gunType === 'sixshooter') mesh = buildFPSixShooter();
+  else if (gunType === 'bucket')  mesh = buildFPBucket();
+  else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else mesh = buildFPGun();   // fallback
   mesh.visible = false;
   fpGuns[gunType] = mesh;
@@ -17471,6 +17794,11 @@ const FP_GUN_MOUNT = {
   mp5:     { barrelY: 0.010, sideX: 0.016, railZ: -0.16,  railLen: 0.07,  underY: -0.010, sightY: 0.030, sightZ: -0.05,  sightScale: 0.95 },
   ump:     { barrelY: 0.012, sideX: 0.015, railZ: -0.155, railLen: 0.06,  underY: -0.006, sightY: 0.052, sightZ: -0.05,  sightScale: 0.95 },
   mac10:   { barrelY: 0.020, sideX: 0.016, railZ: -0.065, railLen: 0.05,  underY: 0.004, sightY: 0.032, sightZ: -0.04,  sightScale: 0.85 },
+  // v1.168: the backyard guns (the bucket's sight sits on its carry-handle rail, above the hopper)
+  thunder: { barrelY: 0.040, sideX: 0.025, railZ: -0.06,  railLen: 0.07,  underY: 0.008, sightY: 0.0525, sightZ: -0.06, sightScale: 1.0 },
+  sixshooter: { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },
+  bucket:  { barrelY: 0.010, sideX: 0.030, railZ: -0.18,  railLen: 0.08,  underY: -0.028, sightY: 0.135, sightZ: -0.10, sightScale: 1.0 },
+  boltpistol: { barrelY: 0.030, sideX: 0.016, railZ: -0.04, railLen: 0.06, underY: 0.03, sightY: 0.059, sightZ: -0.05, sightScale: 0.85 },
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -18023,6 +18351,10 @@ function buildWorkbenchGun(gunType) {
   else if (gunType === 'mp5')     mesh = buildFPMP5();
   else if (gunType === 'ump')     mesh = buildFPUMP();
   else if (gunType === 'mac10')   mesh = buildFPMAC10();
+  else if (gunType === 'thunder') mesh = buildFPThunder();       // v1.168
+  else if (gunType === 'sixshooter') mesh = buildFPSixShooter();
+  else if (gunType === 'bucket')  mesh = buildFPBucket();
+  else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
@@ -19565,7 +19897,7 @@ function closeModal() {
 // shell but injects rich HTML into the body and rebinds the close button.
 function profileSummaryHTML() {
   const p = Game.persist;
-  const ownedGuns = ['pistol','shotgun','ar','sniper','ak47','mp5','ump','mac10']
+  const ownedGuns = ALL_GUN_TYPES   // v1.168: was its own list of the first eight
     .filter(g => p.owned[g]).length;
   const completed = Object.values(p.completed || {}).filter(Boolean).length;
   const accessories = Array.isArray(p.accessories) ? p.accessories.length : 0;
@@ -20579,7 +20911,7 @@ function renderGunDetail(c, gt) {
   ginfo.className = 'shop-item-info';
   const spec = getGunSpec(gt);
   ginfo.innerHTML = `<div class="shop-item-name">${cfg.displayName}</div>` +
-    `<div class="shop-item-desc">${gunBlurb(gt)}</div>`;
+    `<div class="shop-item-desc">${cfg.blurb ? cfg.blurb + '<br>' : ''}${gunBlurb(gt)}</div>`;   // v1.168: a line of its own
   gunRow.appendChild(ginfo);
   const gbtn = document.createElement('button');
   gbtn.className = 'shop-item-buy';
@@ -20667,7 +20999,8 @@ function renderGunDetail(c, gt) {
 
 function gunBlurb(gt) {
   const s = getGunSpec(gt);
-  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : 'Semi (rack slide)'));
+  // v1.168: the pump and the hammer read as themselves (the spring shotgun said "rack slide")
+  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));
   const weight = ({light:'Light, fast', medium:'Medium', heavy:'Heavy, slower', very_heavy:'Very heavy, slowest'})[s.weightClass] || 'Medium';
   return `${mode} · ${weight} · muzzle ${s.muzzleVelocity} m/s`;
 }
@@ -22130,6 +22463,22 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.078, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
+    } else if (gunType === 'thunder') {        // v1.168: each ADS Y is minus its sight tip's height
+      hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.069, z: -0.28 };
+      hipRotY = 0.10; hipRotX = -0.05;
+    } else if (gunType === 'sixshooter') {
+      hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
+      adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
+      hipRotY = 0.12; hipRotX = -0.05;
+    } else if (gunType === 'bucket') {
+      hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.149, z: -0.27 };
+      hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'boltpistol') {
+      hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
+      adsPos  = { x: 0.0,  y: -0.066, z: -0.29 };
+      hipRotY = 0.12; hipRotX = -0.05;
     } else {
       // pistol (default)
       hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
@@ -22218,6 +22567,8 @@ function updateHeldMesh(dt) {
           part.position.y = part.userData.baseY + bob;
         }
       }
+      // v1.168: the six-shooter's cylinder turns a chamber as the hammer comes back
+      if (part.userData && part.userData.cockSpin) part.rotation.y = cockAmt * part.userData.cockSpin;
     }
   } else if (isLoader) {
     // v1.49: Speed loader pose — nozzle points DOWN into the (implied) mag.
@@ -22575,6 +22926,10 @@ const RETICLE_SPECS = {
   mp5:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },
   ump:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },
   mac10:   { style: 'wide_ticks', baseGap: 13, ringR: 0,  centerDot: 1.5 },
+  thunder: { style: 'big_circle', baseGap: 28, ringR: 30, centerDot: 1.6 },   // v1.168: wider than the spring shotgun
+  sixshooter: { style: 'ring_ticks', baseGap: 9, ringR: 9, centerDot: 1.4 },
+  bucket:  { style: 'wide_ticks', baseGap: 14, ringR: 0,  centerDot: 1.5 },
+  boltpistol: { style: 'fine_cross', baseGap: 7, ringR: 0, centerDot: 1.1 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }
 
@@ -26523,9 +26878,9 @@ function updateEnemies(dt) {
       // Advance the gait phase only while moving (so a stopped kid freezes mid-stance).
       e._walkPhase = (e._walkPhase || 0) + e._walkInt * dt * 8.0;
 
-      if ((e.mesh.pose?.crouch ?? 0) <= 0.98) {
-        setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
-      }
+      // v1.167: the hold runs at every crouch. It used to skip a full crouch (> 0.98), so every kid hiding
+      // behind cover let go of his gun: it floated by his right knee, 21-39 cm from the hand (backlog B.6).
+      setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
       setKidWalk(e.mesh, e._walkPhase, e._walkInt);
     }
 

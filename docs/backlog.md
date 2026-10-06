@@ -21,7 +21,7 @@ Fable card on the control room and Michael starts it from there.
    over it, or hold fire and move, within the 0.7 m cap. Target: under 3% of shots.~~ — done, v1.93 (0.4–2.2% now)
 4. ~~CI's headless job runs into its 45-minute limit: since 2 Oct about half the runs are cancelled at 45 min (passing runs take 30–40 min with 46–49 suites), so merges wait on re-runs. Raise `timeout-minutes` in `.github/workflows/check.yml` or split the suites across jobs (producer, 2026-10-02).~~ — done, v1.145 (four parallel shard jobs, `run.mjs --shard k/4`, balanced by measured suite times, 30 min each; a `headless` job collects them; `tests/shard.test.mjs`)
 5. ~~Northcliff twins 3v3: ally Andrew held `retreating` within 1 m of (-6.3, -1) for 17 s with 0 shots, with the player walked 10 m toward the enemy. The stuck-kid sweep caught it once in CI on the v1.160 merge (PR #33, shard 1/6, 5 Oct 14:06 UTC); the same code passed on rerun and on the branch, so it is intermittent (producer, 2026-10-05).~~ — done, v1.164 (a retreating kid is sent home after 1.2 s without getting 0.3 m nearer it, not 1.2 s without moving; he was creeping 3–5 cm along a wall about once a second; `tests/retreat-progress.test.mjs`)
-6. NPCs are sometimes holding guns awkwardly. We should take a pass at ensuring guns are anchored properly and that the held positions are not awkward. (Michael, control room, 2026-10-05)
+6. ~~NPCs are sometimes holding guns awkwardly. We should take a pass at ensuring guns are anchored properly and that the held positions are not awkward. (Michael, control room, 2026-10-05)~~ — done, v1.167 (a kid fully crouched behind cover, a third of all samples, let go of his gun: it floated by his knee 21–39 cm from his hand; a tagged kid's raised gun sat 16–33 cm from his raised hand and his off arm kept reaching for it. Both now hold it, 0 cm; `tests/kid-hold.test.mjs`)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
@@ -168,11 +168,20 @@ Fable card on the control room and Michael starts it from there.
 
 14. Let’s add more gun diversity and attachments. I would love to get far more varied for customization flexibility, but
    want to be mindful of the tone of the game and not going hardcore / military LARPing. It’s still meant to be
-   neighborhood kids. (Michael, control room, 2026-10-05) **(design)**
+   neighborhood kids. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A backyard guns, B homemade attachments, C paint, D A then B). Michael: **D**, guns first, then
+   the parts (control room, 5 Oct). ~~A, the backyard guns~~ — done, v1.168 (Thunder Pump, Six-Shooter, Bucket Gun, Bolt Pistol in the
+   shop's Guns tab, each with its own first-person model and trade; `tests/backyard-guns.test.mjs`). Next: B, the under-barrel
+   slot and its four homemade parts.
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
-   that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)**
+   that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A VIP with an ally VIP, B you as VIP, C capture the flag, D A then C). Michael: **A**, VIP with an ally VIP kid (control room, 5 Oct).
+   Builder, 6 Oct (not committed, out of time): built as a team battle with `vip: true` (VIPs one life, pistol, role
+   'defender', a blue or red cap on the head; others 99 lives shown as ∞; the player respawns at his start with 2 s of
+   grace; their VIP tagged wins, ours loses; Protect Ryan at Bunratty and Night Shift VIP at the lot, both before
+   their zone's capstone). Staged checks all passed. In play, the VIPs on the lot's centre line were tagged from
+   40 m at 3–8 s, so they were moved to the corners (Seth by the dumpsters, Rebecca at b_corner_e, both starting on
+   their spot); after that the lot match crashed or hung the headless page on entry. Find that first.
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
-   2026-10-05)
+   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
