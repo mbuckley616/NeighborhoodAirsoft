@@ -8276,3 +8276,62 @@ out of lives. The game is unchanged.
 ### Still open
 - With an idle player, the lot 3v3's allies are thin: Brooke spends about 100 of 120 s hiding at her anchor. Whether
   the ally sniper should push or move up is a design call for a playtest.
+
+## v1.172 — Your VIP starts where the briefing puts them
+The critic's report (6 Oct, on `auto/critic`) found that your side's VIP never leaves your spawn. Ryan in Protect Ryan
+and Rebecca in Night Shift are allies, and since v1.33 every ally starts 2–3.5 m beside the player so the team sets
+off together. As defenders they then hold the spot they start on, so Ryan stood in the lane at the player's elbow
+instead of in house 0's backyard, and Rebecca at the player's start instead of on the road side, in line with all
+four enemies. The enemy VIPs started on their anchors. Night Shift's Rebecca was tagged at your start in 6 of 7 of
+the critic's rounds. An ally defender now starts on the anchor he holds, as an enemy defender does. Ally defenders
+appear only in the two VIP matches, so no other match changes.
+### Verified
+- `tests/vip.test.mjs` checks two new things. Both VIPs start on their own anchors (0 m off): Ryan 23.6 m from the player's
+  start, Rebecca 16.1 m (before: 2.3 m, and at the start). Each VIP stays within 6 m of his spot while in the fight
+  (0 m in every played round: they hold and hide).
+- Three played 40 s rounds of each, the player untaggable at his start: Ryan never fell; Rebecca fell once, at 36 s.
+  Seth fell once, at 37.5 s, which won the round. The 8 s check holds.
+- The stuck sweep on both matches, 90 s three ways: worst stays 2.5, 1.5 and 12 s on Protect Ryan (Tyler, an enemy,
+  `deploying` at the far end while the player walked sideways) and 2, 4.5 and 1.5 s on Night Shift, all under the 15 s line.
+- `npm test` as four local shards, run on this and v1.173 together: see the v1.173 entry.
+### Still open
+- VIP balance needs a new playtest now that both VIPs stand where their briefings say. The critic's numbers (Rebecca
+  out in 6 of 7, walking straight at Seth won 5 of 5) were taken with Rebecca at your start.
+
+## v1.173 — The workbench's slot labels sit on the gun
+Found in play (builder, v1.169). On the workbench's turning gun, the floating Sight, Left and Right (or Rail) labels
+all sat in the viewport's top-left corner. `computeWorkbenchLabelAnchors` built their positions from `m.y` and
+`m.z`, but FP_GUN_MOUNT has never had those fields (it has `barrelY`, `sideX`, `railZ`, `sightY`, `sightZ`, since
+v1.40e), so every position was NaN. v1.169's Under label read the real fields and sat right. The labels now read
+the real fields. The sight label floats above the sight, held at least 9.5 cm over the barrel line so it clears the
+rail labels on a low-sighted gun like the sniper. Each rail's label sits 6 cm outside its bar, the left one a little
+high and the right a little low. Placed side by side, the two rails' labels crossed in the bench's opening view
+(turned half a radian), because the bars are only 3–6 cm apart.
+### Verified
+- `tests/workbench-labels.test.mjs` (new) runs on all twelve guns with the turntable held still. Every label is placed at
+  a real position, is shown, and none sits within 30 px of the corner. Each one sits on the gun's box on screen
+  (visible meshes, 40 px to spare). No two labels' boxes overlap, square on or in the opening view. The sight label
+  is above the rail labels, and Left is left of Right. One-rail guns say Rail; two-rail guns say Left and Right.
+- The first layout, with the rail labels side by side, failed the overlap check on all eight two-rail guns in the
+  opening view (the sniper also put Sight on Left). The final one passes. Screenshot `tests/out/workbench-labels-ar.png`.
+- `npm test` as four local shards, on this and v1.172 together: 78 of 82 suites passed. The other four (`desk-start`,
+  `ladder-prompt`, `loadout-kid`, `stuck-sweep-10`) hit the 30 s page-load timeout on the busy box and passed when
+  rerun. `workbench-labels` was written during the run and passes alone.
+### Still open
+- The labels follow the gun as it turns, so at some angles in between, two can still touch. The check covers the
+  opening view and square on.
+
+## v1.172 fix-up — grocery-store's "every kid moves or fires" allows a kid nobody came near
+CI failed `headless (4/8)` on d06754a with `grocery-store`: "store_price_check_3v3: every kid moves or fires"
+(Brooke walked 0, fired 0). It was the second time; 21bfcfb's first run showed it too. Brooke (UMP) is a cautious
+skirmisher (aggression 0.35, under the 0.45 at which a skirmisher marches) holding the service desk. Over 24
+sampled rounds at varied starts she walked 5-38 m and fired 87-247 times in 23. In the other she spent 51 s cycling
+between hiding and peeking while Marcus, Jamie and Tyler stayed in the stockroom 38-46 m off: no line, nobody in reach
+of a UMP. That is the AI as designed, not a stuck kid. The check now also passes a kid that no opponent came within
+30 m of (each kid's nearest opponent is now recorded). The game is unchanged.
+### Verified
+`node tests/run.mjs grocery-store` passes; every scenario's "moves or fires" check is green.
+### Still open
+- A cautious ally far back (Brooke at the service desk) can sit a whole round out when the enemy holds back. The
+  last-kid boredom (v1.152) covers only the last one or two of a side. Whether every kid should go looking after a
+  long spell with nothing to shoot at is a design call.
