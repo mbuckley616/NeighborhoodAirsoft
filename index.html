@@ -192,6 +192,7 @@
     display: flex;
     gap: 2px;
   }
+  #rosterHud .r-inf { font-size: 13px; line-height: 1; color: #ddd; }   /* v1.170: lives that come back */
   #rosterHud .r-pip {
     width: 7px; height: 7px;
     background: #c44a3a;
@@ -5055,6 +5056,7 @@ function scaledReward(v) { return Math.ceil((v || 0) / 10); }
 // ---------------------------------------------------------------------
 function describeWinCondition(sc) {
   if (sc.tutorial) return 'Learn the ropes — tag the practice targets';   // v1.57
+  if (sc.vip) return 'Tag their VIP, keep yours safe — everyone else comes back';   // v1.170
   switch (sc.winCondition) {
     case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
@@ -5091,6 +5093,7 @@ function getScenarioBriefing(scenarioId) {
       gun: getGunDisplayName(es.weapon || 'pistol'),
       gunType: es.weapon || 'pistol',
       lives: setupEntryLives(sc, es),
+      vip: !!es.vip,   // v1.170
     };
     if (es.team === 'player') allies.push(combatant);
     else enemies.push(combatant);
@@ -5104,7 +5107,7 @@ function getScenarioBriefing(scenarioId) {
   let armorBonus = 0;
   try { armorBonus = getArmorBonusHits(); } catch (e) { armorBonus = 0; }
   return {
-    player: { lives: baseLives + armorBonus, baseLives, armorBonus },
+    player: { lives: baseLives + armorBonus, baseLives, armorBonus, respawns: !!sc.vip },   // v1.170: you come back in VIP
     allies, enemies,
     winCondition: sc.winCondition || 'kill_all',
     winConditionText: describeWinCondition(sc),
@@ -5123,10 +5126,10 @@ function getScenarioBriefing(scenarioId) {
 function renderBriefingRosterHTML(brief) {
   if (!brief) return '';
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
-  const lifeStr = n => `${n} ${n === 1 ? 'life' : 'lives'}`;
+  const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
   const row = (c, side) =>
     `<div class="brief-combatant ${side}">
-       <span class="brief-name">${c.name}</span>
+       <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
        <span class="brief-gun">${c.gun}</span>
        <span class="brief-lives">${lifeStr(c.lives)}</span>
      </div>`;
@@ -5137,7 +5140,7 @@ function renderBriefingRosterHTML(brief) {
     <div class="brief-combatant you">
       <span class="brief-name">You</span>
       <span class="brief-gun">${youGun}</span>
-      <span class="brief-lives">${lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
+      <span class="brief-lives">${brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
     </div>
     ${brief.allies.map(c => row(c, 'ally')).join('')}
   </div>`;
@@ -5723,6 +5726,33 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
+  // v1.170 (backlog D.15, Michael: A): VIP. Each side guards one kid in a cap: one life, a pistol, holding his spot.
+  // Everyone else, you included, comes back when tagged (99 lives, shown as ∞; you respawn at your start). Tag their
+  // VIP and you win; lose yours and you lose.
+  bunratty_vip: {
+    region: 'sentinel', street: 'bunratty_ct',
+    name: 'Bunratty Court', scenarioName: 'Protect Ryan',
+    desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Priya's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Mitchell, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Priya.",
+    builderFn: 'buildBunrattyCourtScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'lane_west',
+    vip: true,
+    enemySetup: [
+      { charId: 'ryan',     weapon: 'pistol',  anchor: 'house0_backyard', team: 'player', vip: true, role: 'defender', lives: 1 },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'house1_backyard', team: 'player' },
+      { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
+      { charId: 'priya',    weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },
+      { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
+      { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
+    ],
+    winCondition: 'last_team_standing',
+    npcLives: 99,
+    rewards: { win: 90, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
   // =====================================================================
   // v1.35 — NIGHT scenarios. Same maps, lit by moon + streetlamps, with at
   // least one enemy carrying a flashlight (handled by the night-flashlight
@@ -6242,6 +6272,33 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 120, lose: 28 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // v1.170 (D.15): VIP at night in the lot. Seth guards the dumpsters in the red cap; Rebecca is yours, in blue.
+  lot_vip_night: {
+    region: 'east_roswell', street: 'riverside_market',
+    name: 'Riverside Market', scenarioName: 'Night Shift',
+    desc: "Same dark lot, new rules. Rebecca's in the blue cap — she's your VIP, one tag and it's over. Seth's in the red cap, back by the dumpsters at the store's west corner. Everybody else comes back as many times as it takes, so trading tags gets you nowhere: get a line on Seth, and keep one on whoever's hunting Rebecca.",
+    builderFn: 'buildMarketLotScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    vip: true,
+    enemySetup: [
+      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_road_w',  team: 'player', vip: true, role: 'defender', lives: 1 },
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_road_e',  team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',   anchor: 'b_aisle_w', team: 'player' },
+      { charId: 'seth',     weapon: 'pistol', anchor: 'a_dumpster', vip: true, role: 'defender', lives: 1 },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_store'   },
+      { charId: 'mason',    weapon: 'mp5',    anchor: 'a_store_w' },
+      { charId: 'marcus',   weapon: 'ump',    anchor: 'a_store_e' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 99,
+    rewards: { win: 110, lose: 26 },
     playerLives: 1, armorMult: 1,
   },
 
@@ -15867,6 +15924,24 @@ function buildGroceryStoreSceneDefault(_v, tod) { return buildGroceryStoreScene(
 // ---------------------------------------------------------------------
 // `armorMult` (from the scenario) multiplies the character's HP — supports
 // "Nick wearing a hoodie" / "armor scenario" use cases without touching CHARACTERS.
+// v1.170 (D.15): a VIP's ball cap, blue for your side and red for theirs, parented to the head so it follows the crouch
+// and the aim tilt like the face does. The crown sits over the hair; the brim points forward (+z is the face).
+function addVipCap(kid, ours) {
+  if (!kid || !kid.head) return null;
+  const mat = new THREE.MeshStandardMaterial({ color: ours ? 0x3d7bd6 : 0xd6453d, roughness: 0.7 });
+  const cap = new THREE.Group();
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.165, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  crown.scale.set(1, 0.62, 1.04); crown.position.set(0, 0.115, -0.005); cap.add(crown);
+  const brim = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.014, 0.13), mat);
+  brim.position.set(0, 0.12, 0.2); brim.rotation.x = 0.12; cap.add(brim);
+  const button = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mat);
+  button.position.set(0, 0.22, -0.005); cap.add(button);
+  cap.userData.vipCap = ours ? 'blue' : 'red';
+  kid.head.add(cap);
+  kid.vipCap = cap;
+  return cap;
+}
+
 function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false }) {
   const baseCh = CHARACTERS[charId];
   if (!baseCh) {
@@ -19242,6 +19317,7 @@ function enterScenario(scenarioId) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
+        if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -19437,6 +19513,7 @@ function enterScenario(scenarioId) {
   // can tick it down and check for win.
   Game.scenario.winCondition = sc.winCondition || 'kill_all';
   Game.scenario.ffa = !!sc.ffa;   // v1.134: read by the roster, the lives respawn and the free-for-all roam; was never set
+  Game.scenario.vip = !!sc.vip;   // v1.170
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
@@ -19631,6 +19708,9 @@ function startScenario(built) {
   Game.player.pos.copy(built.spawn);
   Game.player.vel.set(0, 0, 0);
   Game.player.yaw = built.spawnYaw;
+  Game.scenario.playerStart = { pos: built.spawn.clone(), yaw: built.spawnYaw };   // v1.170: where a VIP-match respawn puts you
+  Game.scenario.playerRespawns = 0;
+  Game.player._graceT = 0;
   Game.player.pitch = 0;
   Game.player.hitsTaken = 0;
   // v1.28h: base lives default to 1 (one hit and you're out) — was a flat 3.
@@ -22995,13 +23075,14 @@ function updateRosterHud() {
     const maxPips = usesLives ? (e.maxLives || 1) : (e.maxHealth || 1);
     const remaining = usesLives ? Math.max(0, e.lives) : Math.max(0, e.health);
     let pipsHtml = '';
-    for (let i = 0; i < maxPips; i++) {
+    if (usesLives && maxPips >= 99) pipsHtml = '<span class="r-inf">∞</span>';   // v1.170: a VIP match's respawners
+    else for (let i = 0; i < maxPips; i++) {
       const filled = i < remaining;
       pipsHtml += `<div class="r-pip${ally ? ' ally' : ''}${filled ? '' : ' empty'}"></div>`;
     }
     rows.push(`
       <div class="roster-row${dead ? ' dead' : ''}${ally ? ' ally' : ''}">
-        <div class="r-name">${e.name}</div>
+        <div class="r-name">${e.name}${e.vip ? ' ★' : ''}</div>
         <div class="r-lives">${pipsHtml}</div>
         <div class="r-dist">${distStr}</div>
       </div>
@@ -23853,6 +23934,7 @@ function bbCanTarget(bb, c) {
 // distinct player-hit vs enemy-hit effects exactly as before.
 function applyBBHit(bb, c) {
   if (c === Game.player) {
+    if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
@@ -23861,7 +23943,8 @@ function applyBBHit(bb, c) {
     updateHealthHud();
     // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
     if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
-      endScenario('lose');
+      if (Game.scenario.vip) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters
+      else endScenario('lose');
     }
   } else {
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
@@ -23869,6 +23952,24 @@ function applyBBHit(bb, c) {
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
   }
   return true;
+}
+
+// v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
+// seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
+const VIP_GRACE = 2.0;
+function respawnPlayerVip() {
+  const st = Game.scenario.playerStart;
+  if (!st) return;
+  Game.player.pos.copy(st.pos);
+  Game.player.vel.set(0, 0, 0);
+  Game.player.yaw = st.yaw;
+  Game.player.pitch = 0;
+  Game.player.hitsTaken = 0;
+  Game.player.sliding = false;
+  Game.player.adsTarget = 0;
+  Game.player._graceT = VIP_GRACE;
+  Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
+  updateHealthHud();
 }
 
 function updateBBs(dt) {
@@ -24589,6 +24690,14 @@ function checkWinCondition() {
   // a tutorial coach or a teammate in a skirmish) must not need shooting to win.
   const alive = Game.scenario.enemies.filter(e => e.health > 0 && e.team !== 'player').length;
   const winCondition = Game.scenario.winCondition || 'kill_all';
+  // v1.170 (D.15): a VIP match ends on a VIP, and only on one: theirs out wins, ours out loses
+  if (Game.scenario.vip) {
+    const theirs = Game.scenario.enemies.find(e => e.vip && (e.team || 'enemy') !== 'player');
+    const ours = Game.scenario.enemies.find(e => e.vip && e.team === 'player');
+    if (theirs && !npcInFight(theirs)) endScenarioLater('win', 600);
+    else if (ours && !npcInFight(ours)) endScenarioLater('lose', 600);
+    return;
+  }
 
   if (winCondition === 'kill_all') {
     // Standard: kill everyone wins
@@ -27355,6 +27464,7 @@ function stepGame(dt) {
     updateStuckBBs(dt);
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
+    if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
     updateEnemies(dt);
     updateLaserDiagHud();
     updateStanceHud();
@@ -27467,6 +27577,7 @@ const PIN_SCENARIO_GROUPS = {
     'bunratty_team_2v4',
     'bunratty_team_4v4',
     'bunratty_night_lane',
+    'bunratty_vip',              // v1.170: VIP (D.15), before the capstone
     'bunratty_night_team_2v2',
   ],
   // The Hollow (East Roswell) — woods battleground, big team battles (v1.36).
@@ -27490,6 +27601,7 @@ const PIN_SCENARIO_GROUPS = {
     'lot_team_3v3',
     'lot_defend_store',  // v1.103
     'lot_ffa',           // v1.103
+    'lot_vip_night',     // v1.170: VIP (D.15), before the capstone
     'lot_night_4v4',
   ],
   // v1.130: Northcliff Trace (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A).
@@ -27622,6 +27734,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
   if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
   if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
   const brief = getScenarioBriefing(scenarioId);
   const lives = brief ? brief.player.lives : 1;
@@ -27643,7 +27756,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
         ${stamp}
       </div>
       <div class="sc-card-title">${locked ? '🔒 ' : ''}${sc.scenarioName}</div>
-      <div class="sc-card-meta">${sc.name} · ♥ ${lives} ${lives === 1 ? 'life' : 'lives'}</div>
+      <div class="sc-card-meta">${sc.name} · ♥ ${sc.vip ? '∞' : lives + ' ' + (lives === 1 ? 'life' : 'lives')}</div>
       ${foot}
     </div>
   `;
