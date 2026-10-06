@@ -13,12 +13,12 @@ const only = args[0];
 // 875210d, 5 Oct), where the stuck sweeps take 250-455 s and not the 165 s guessed for them.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
-  'bb-sweep.test.mjs': 30, 'bound-forward.test.mjs': 150, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
+  'backyard-guns.test.mjs': 80, 'bb-sweep.test.mjs': 30, 'bound-forward.test.mjs': 150, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
   'car-side-fire.test.mjs': 26, 'cars.test.mjs': 5, 'country-club.test.mjs': 139, 'cover-fire.test.mjs': 111,
   'desk-start.test.mjs': 45, 'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
   'grocery-store.test.mjs': 139, 'harness.test.mjs': 37, 'high-school.test.mjs': 120, 'hollow-held.test.mjs': 85,
   'houses.test.mjs': 54, 'jump.test.mjs': 27, 'kid-climb.test.mjs': 44, 'kid-clothes.test.mjs': 43,
-  'kid-face.test.mjs': 14, 'kid-hands.test.mjs': 8, 'ladder-prompt.test.mjs': 12, 'laser.test.mjs': 72,
+  'kid-face.test.mjs': 14, 'kid-hands.test.mjs': 8, 'kid-hold.test.mjs': 90, 'ladder-prompt.test.mjs': 12, 'laser.test.mjs': 72,
   'last-kid.test.mjs': 160, 'loadout-gear.test.mjs': 34, 'loadout-kid.test.mjs': 9, 'lot-ffa-opening.test.mjs': 89,
   'lot-hollow-polish.test.mjs': 87, 'map-screen.test.mjs': 33, 'market-lot.test.mjs': 159, 'mirror.test.mjs': 48,
   'music.test.mjs': 3, 'night-prowl.test.mjs': 30, 'northcliff.test.mjs': 168, 'one-ending.test.mjs': 53,
