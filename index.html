@@ -1905,7 +1905,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.168</div>
+  <div class="version">v1.169</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3543,6 +3543,13 @@ const ATTACHMENTS = {
   laser:      { id:'laser',  name:'Red Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, laserColor:'red', desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   laser_green:{ id:'laser_green', name:'Green Laser Sight', slot:'rail', price:34, hipSpreadMult:0.9, laserColor:'green', desc:'Rail-mounted green beam — brighter and easier to see than red, especially at night. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   flashlight: { id:'flashlight', name:'Tactical Flashlight', slot:'rail', price:18, hipSpreadMult:1.0, desc:'Rail-mounted working light that casts a real beam. Goes on a left or right rail.' },
+  // v1.169 (backlog D.14 B, Michael: D): four homemade parts for a new UNDER-barrel slot, one per long gun.
+  // Each one is a trade: it buys one thing and costs another. (The cardboard's 0.68 is a fifth off the cone in degrees:
+  // the jitter is in m/s, so a BB 15% slower would otherwise spread 1/0.85 wider.)
+  taped_mag:  { id:'taped_mag', name:'Taped Twin Mag', slot:'under', price:22, weight:1.2, tapedMag:true, desc:'A second mag duct-taped upside down to the first. It comes loaded from your bag; press R to flip the pair over (0.6 s) and shoot the other one. It’s 1.2 lb more to carry. Long guns only.' },
+  sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, but the strap tugs when you aim: aiming in is slower. Long guns only.' },
+  foregrip:   { id:'foregrip', name:'PVC Foregrip', slot:'under', price:16, weight:0.8, moveSpreadMult:0.65, desc:'A stub of plumbing pipe, hose-clamped under the barrel. Your shots stay a third tighter while you walk, but it’s 0.8 lb more to carry. Long guns only.' },
+  cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'under', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Long guns only.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;
@@ -3551,19 +3558,20 @@ const ATTACHMENTS = {
 const GUN_ACCESSORY_CAP = {
   pistol:  { sight: 1, rails: 1 },
   mac10:   { sight: 1, rails: 1 },
-  shotgun: { sight: 1, rails: 2 },
-  ar:      { sight: 1, rails: 2 },
-  sniper:  { sight: 1, rails: 2 },
-  mp5:     { sight: 1, rails: 2 },
-  ump:     { sight: 1, rails: 2 },
-  ak47:    { sight: 1, rails: 2 },
-  thunder: { sight: 1, rails: 2 },     // v1.168
+  shotgun: { sight: 1, rails: 2, under: 1 },   // v1.169: every long gun has one under-barrel slot
+  ar:      { sight: 1, rails: 2, under: 1 },
+  sniper:  { sight: 1, rails: 2, under: 1 },
+  mp5:     { sight: 1, rails: 2, under: 1 },
+  ump:     { sight: 1, rails: 2, under: 1 },
+  ak47:    { sight: 1, rails: 2, under: 1 },
+  thunder: { sight: 1, rails: 2, under: 1 },     // v1.168
   sixshooter: { sight: 1, rails: 1 },
-  bucket:  { sight: 1, rails: 2 },
+  bucket:  { sight: 1, rails: 2, under: 1 },
   boltpistol: { sight: 1, rails: 1 },
 };
 function getGunAccessoryCap(gunType) {
-  return GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
+  const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
+  return c.under ? c : Object.assign({ under: 0 }, c);   // v1.169: pistols have no under-barrel slot
 }
 
 // =====================================================================
@@ -3597,6 +3605,12 @@ function ensureGunSlots(gunType) {
     const inst = getAccessoryInstance(overflow);
     if (inst) inst.placement = null;
   }
+  // v1.169: the under-barrel slot (null on a gun without one)
+  if (typeof g.under === 'undefined' || !cap.under) {
+    const inst = g.under && getAccessoryInstance(g.under);
+    if (inst) inst.placement = null;
+    g.under = null;
+  }
   return g;
 }
 // Which gun (if any) currently holds this instance.
@@ -3606,6 +3620,7 @@ function findInstanceMount(instId) {
     const g = slots[gt];
     if (!g) continue;
     if (g.sight === instId) return { gunType: gt, slot: 'sight', railIndex: -1 };
+    if (g.under && g.under === instId) return { gunType: gt, slot: 'under', railIndex: -1 };   // v1.169
     if (Array.isArray(g.rails)) {
       const ri = g.rails.indexOf(instId);
       if (ri >= 0) return { gunType: gt, slot: 'rail', railIndex: ri };
@@ -3622,6 +3637,7 @@ function clearGunSlot(gunType, slot, railIndex) {
   const g = ensureGunSlots(gunType);
   let prevId = null;
   if (slot === 'sight') { prevId = g.sight; g.sight = null; }
+  else if (slot === 'under') { prevId = g.under; g.under = null; }   // v1.169
   else { prevId = g.rails[railIndex]; g.rails[railIndex] = null; }
   const prev = prevId && getAccessoryInstance(prevId);
   if (prev) prev.placement = null;
@@ -3637,6 +3653,9 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   if (!def) return { ok:false, reason:'unknown-type' };
   if (slot === 'sight' && def.slot !== 'sight') return { ok:false, reason:'not-a-sight' };
   if (slot === 'rail'  && def.slot !== 'rail')  return { ok:false, reason:'not-a-rail' };
+  if (slot === 'under' && def.slot !== 'under') return { ok:false, reason:'not-an-under' };   // v1.169
+  if (def.slot === 'under' && slot !== 'under') return { ok:false, reason:'under-only' };
+  if (slot === 'under' && !getGunAccessoryCap(gunType).under) return { ok:false, reason:'no-under-slot' };
   ensureGunSlots(gunType);
   // Pull this instance out of wherever it currently sits (no sharing).
   const prevMount = findInstanceMount(instId);
@@ -3645,6 +3664,7 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   clearGunSlot(gunType, slot, railIndex);
   const g = Game.persist.equipped.attachments[gunType];
   if (slot === 'sight') { g.sight = instId; inst.placement = 'sight'; }
+  else if (slot === 'under') { g.under = instId; inst.placement = 'under'; }   // v1.169
   else { g.rails[railIndex] = instId; inst.placement = (railIndex === 0 ? 'left' : 'right'); }
   return { ok:true };
 }
@@ -3662,7 +3682,21 @@ function getMountedAccessories(gunType) {
       if (i) out.push({ type:i.type, slot:'rail', placement: idx===0?'left':'right' });
     });
   }
+  if (g.under) { const i = getAccessoryInstance(g.under); if (i) out.push({ type:i.type, slot:'under', placement:'under' }); }   // v1.169
   return out;
+}
+// v1.169: the homemade part on a gun's under-barrel slot (its ATTACHMENTS def), or null
+function getUnderPart(gunType) {
+  const g = Game.persist?.equipped?.attachments?.[gunType];
+  if (!g || !g.under || !getGunAccessoryCap(gunType).under) return null;
+  const i = getAccessoryInstance(g.under);
+  return (i && ATTACHMENTS[i.type]) || null;
+}
+// v1.169: one number from the equipped gun's under-barrel part (1 when there is none)
+function underPartMult(key) {
+  const gun = Game.persist?.equipped?.gun;
+  const d = gun ? getUnderPart(gun) : null;
+  return (d && typeof d[key] === 'number') ? d[key] : 1;
 }
 function gunHasAccessoryType(gunType, type) {
   return getMountedAccessories(gunType).some(a => a.type === type);
@@ -4032,6 +4066,9 @@ function computeLoadoutWeight() {
     const w = ARMOR_WEIGHT[id] ?? 1;
     gearW += w; parts.push({ label: ARMOR[id]?.name || 'Armor', w });
   }
+  // v1.169: a homemade part on the gun's under-barrel slot (the taped mag, the foregrip) is carried gear too
+  const under = getUnderPart(Game.persist.equipped.gun);
+  if (under && under.weight) { gearW += under.weight; parts.push({ label: under.name, w: under.weight }); }
   return { gunW, gearW, total: gunW + gearW, parts };
 }
 
@@ -17969,6 +18006,8 @@ function ensureFPGunAccessory(group, gunType) {
   const cap = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
   const railMat = new THREE.MeshStandardMaterial({ color: 0x202024, roughness: 0.5, metalness: 0.6 });
   const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x303036, roughness: 0.45, metalness: 0.6 });
+  // v1.169: the under-barrel parts, measured off the bare gun before anything is bolted on
+  const underParts = cap.under ? buildUnderParts(group, mount) : null;
 
   // ---- v1.40e: SIDE RAILS matching the data model. Guns have 1 or 2 rail slots
   // (GUN_ACCESSORY_CAP.rails). Slot 0 = LEFT rail, slot 1 = RIGHT rail. Each is a
@@ -18116,7 +18155,7 @@ function ensureFPGunAccessory(group, gunType) {
   const scopeOptic  = buildScopeOptic();  scopeOptic.visible  = false; sightAnchor.add(scopeOptic);
 
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
-    railAnchors, sightAnchor, redDotOptic, scopeOptic, gunGroup: group };
+    railAnchors, sightAnchor, redDotOptic, scopeOptic, underParts, gunGroup: group };
   return group.userData.accessories;
 }
 
@@ -18207,6 +18246,92 @@ function updateFPGunAccessory(group, gunType) {
   // is a no-op for them.
   const opticUp = !!sightPl;
   group.traverse(m => { if (m.userData && m.userData.ironSight) m.visible = !opticUp; });
+  // v1.169: the homemade part on the under-barrel slot
+  if (acc.underParts) {
+    const underPl = mounted.find(a => a.slot === 'under');
+    for (const k in acc.underParts.meshes) acc.underParts.meshes[k].visible = !!underPl && underPl.type === k;
+  }
+}
+
+// v1.169 (backlog D.14 B): the four homemade under-barrel parts, built once per gun group and hidden. Where they go is
+// read off the bare gun: the underside of whatever is at the rail's middle on the bore line (the handguard), and the
+// front of the barrel. Each part is its own group, named by its ATTACHMENTS key.
+function measureGunForUnder(group, mount) {
+  group.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  let bottom = null, frontZ = 0, frontY = mount.barrelY;
+  group.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.visible) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+    if (b.min.x > 0.004 || b.max.x < -0.004) return;                       // off the centre line
+    if (b.min.z <= mount.railZ + 0.012 && b.max.z >= mount.railZ - 0.012 &&
+        b.min.y <= mount.barrelY + 0.012 && b.max.y >= mount.barrelY - 0.012) {
+      if (bottom === null || b.min.y < bottom) bottom = b.min.y;
+    }
+    if (b.min.y <= mount.barrelY + 0.03 && b.max.y >= mount.barrelY - 0.03 && b.min.z < frontZ) {
+      frontZ = b.min.z; frontY = (b.min.y + b.max.y) / 2;
+    }
+  });
+  return { bottom: bottom === null ? mount.barrelY - 0.022 : bottom, frontZ, frontY };
+}
+function buildUnderParts(group, mount) {
+  const m = measureGunForUnder(group, mount);
+  const meshes = {};
+  const z0 = mount.railZ, y0 = m.bottom;
+  const tapeMat = new THREE.MeshStandardMaterial({ color: 0x9ea3a8, roughness: 0.55, metalness: 0.35 });   // duct tape
+  // Taped twin mag: a spare mag hanging under the handguard, two bands of duct tape round it and the gun
+  {
+    const g = new THREE.Group();
+    const magMat = new THREE.MeshStandardMaterial({ color: 0x2848a0, roughness: 0.4, metalness: 0.2 });
+    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.075, 0.034), magMat);
+    mag.position.set(0, y0 - 0.0375, z0); mag.rotation.x = -0.12; g.add(mag);
+    for (const dz of [-0.011, 0.011]) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.027, 0.03, 0.007), tapeMat);
+      band.position.set(0, y0 - 0.008, z0 + dz); g.add(band);
+    }
+    meshes.taped_mag = g;
+  }
+  // Shoelace sling: a red strap looping down from a knot under the handguard back toward the stock
+  {
+    const g = new THREE.Group();
+    const laceMat = new THREE.MeshStandardMaterial({ color: 0xc8322a, roughness: 0.85 });
+    const r = 0.09;
+    const strap = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0035, 6, 28, Math.PI), laceMat);
+    strap.rotation.set(0, Math.PI / 2, Math.PI);          // a half loop in the y-z plane, hanging down
+    strap.position.set(0, y0, z0 + r); g.add(strap);
+    for (const zz of [z0, z0 + 2 * r]) {
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 6), laceMat);
+      knot.position.set(0, y0 - 0.002, zz); g.add(knot);
+    }
+    meshes.sling = g;
+  }
+  // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
+  {
+    const g = new THREE.Group();
+    const pvcMat = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.5 });
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.062, 14), pvcMat);
+    pipe.position.set(0, y0 - 0.031, z0); g.add(pipe);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.012, 14), pvcMat);
+    cap.position.set(0, y0 - 0.062, z0); g.add(cap);
+    const clamp = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0022, 6, 16), tapeMat);
+    clamp.rotation.x = Math.PI / 2; clamp.position.set(0, y0 - 0.006, z0); g.add(clamp);
+    meshes.foregrip = g;
+  }
+  // Cardboard barrel: a paper-towel tube over the muzzle, with a band of tape where it meets the gun
+  {
+    const g = new THREE.Group();
+    const cardMat = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.95 });
+    const len = 0.13;
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 16, 1, true), cardMat);
+    tube.material.side = THREE.DoubleSide;
+    tube.rotation.x = Math.PI / 2; tube.position.set(0, m.frontY, m.frontZ + 0.02 - len / 2); g.add(tube);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0155, 0.018, 16), tapeMat);
+    band.rotation.x = Math.PI / 2; band.position.set(0, m.frontY, m.frontZ + 0.012); g.add(band);
+    meshes.cardboard_barrel = g;
+  }
+  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.underPart = k; group.add(meshes[k]); }
+  return { meshes, bottom: y0, frontZ: m.frontZ, frontY: m.frontY };
 }
 
 // v1.27b/v1.40c: laser zero target, pinned to the camera at screen-center,
@@ -18411,6 +18536,10 @@ function computeWorkbenchLabelAnchors(gunType) {
     const yOff = (cap.rails === 1) ? -0.02 : 0;
     anchors.push({ slot: 'rail', railIndex: i, pos: new THREE.Vector3(x, m.y - 0.03 + yOff, m.z) });
   }
+  if (cap.under) {   // v1.169: below the handguard
+    const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
+    anchors.push({ slot: 'under', railIndex: -1, pos: new THREE.Vector3(0, (up ? up.bottom : m.barrelY - 0.02) - 0.13, m.railZ) });
+  }
   WB.labelAnchors = anchors;
 }
 
@@ -18458,9 +18587,9 @@ function projectWorkbenchLabels(w, h) {
     el.style.display = behind ? 'none' : 'block';
     el.style.left = x + 'px';
     el.style.top = y + 'px';
-    let mountedId = a.slot === 'sight' ? slots.sight : (slots.rails && slots.rails[a.railIndex]);
+    let mountedId = a.slot === 'sight' ? slots.sight : a.slot === 'under' ? slots.under : (slots.rails && slots.rails[a.railIndex]);
     const inst = mountedId ? getAccessoryInstance(mountedId) : null;
-    const labelName = a.slot === 'sight' ? 'Sight' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
+    const labelName = a.slot === 'sight' ? 'Sight' : a.slot === 'under' ? 'Under' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
     el.textContent = inst ? `${labelName}: ${ATTACHMENTS[inst.type].name}` : `${labelName}: empty`;
     el.className = 'wb-vp-label' + (inst ? '' : ' empty');
   });
@@ -18478,7 +18607,7 @@ function renderWorkbench() {
     div.className = 'wb-gun' + (gt === WB.gunType ? ' active' : '') + (owned ? '' : ' locked');
     const cap = getGunAccessoryCap(gt);
     div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
-      `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}` : 'Not owned'}</div></div>`;
+      `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}` : 'Not owned'}</div></div>`;
     if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
     gl.appendChild(div);
   }
@@ -18508,6 +18637,7 @@ function renderWorkbench() {
     for (let i = 0; i < cap.rails; i++) {
       addSlotRow(cap.rails === 1 ? 'Rail' : (i === 0 ? 'Left rail' : 'Right rail'), 'rail', i, slots.rails[i]);
     }
+    if (cap.under) addSlotRow('Under-barrel', 'under', -1, slots.under);   // v1.169
   } else {
     sl.innerHTML = '<div class="wb-locker-empty">Select a gun to customize.</div>';
   }
@@ -18521,7 +18651,7 @@ function renderWorkbench() {
     return;
   }
   // Group unmounted instances by type; mark compatibility with the selected slot.
-  const selKind = WB.selSlot ? WB.selSlot.slot : null;     // 'sight' | 'rail' | null
+  const selKind = WB.selSlot ? WB.selSlot.slot : null;     // 'sight' | 'rail' | 'under' | null
   const counts = {};
   for (const inst of Game.persist.accessories) {
     if (findInstanceMount(inst.id)) continue;  // mounted somewhere — not in locker
@@ -18537,7 +18667,7 @@ function renderWorkbench() {
     const compat = selKind && compatSlotType === selKind;
     const div = document.createElement('div');
     div.className = 'wb-locker-item ' + (selKind ? (compat ? 'compat' : 'incompat') : '');
-    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : 'RAIL'}</span>` +
+    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : compatSlotType === 'under' ? 'UNDER' : 'RAIL'}</span>` +
       `<span>${def.name}</span><span style="margin-left:auto;color:#888">×${counts[type]}</span>`;
     if (compat) {
       div.addEventListener('click', () => {
@@ -19532,7 +19662,7 @@ function startScenario(built) {
   // Reset gun — load full spec from GUN_SPECS based on equipped gun
   Game.gun.type = Game.persist.equipped.gun;
   const spec = getGunSpec(Game.gun.type);
-  Game.gun.muzzleVelocity = spec.muzzleVelocity;
+  Game.gun.muzzleVelocity = spec.muzzleVelocity * underPartMult('velocityMult');   // v1.169: the cardboard barrel slows the BB
   Game.gun.baseSpread = spec.baseSpread;
   Game.gun.adsSpreadMult = spec.adsSpreadMult;
   Game.gun.curveOnsetDistance = spec.curveOnsetDistance;
@@ -19552,6 +19682,12 @@ function startScenario(built) {
   const startTaken = Math.min(Game.gun.maxAmmo, Game.persist.bag);
   Game.gun.ammo = startTaken;
   Game.persist.bag -= startTaken;
+  // v1.169: a taped twin mag loads next, from what the bag has left, up to the same size
+  Game.gun.tapedMag = !!(getUnderPart(Game.gun.type) || {}).tapedMag;
+  Game.gun.tapedAmmo = Game.gun.tapedMag ? Math.min(Game.gun.maxAmmo, Game.persist.bag) : 0;
+  Game.persist.bag -= Game.gun.tapedAmmo;
+  Game.gun.flipT = 0;
+  Game.gun._rHeld = false;
   // v1.50: then top off any equipped speed loaders from what's left in the bag
   // (mag gets first claim). Loaders are reusable — they arrive full each round.
   refillEquippedSpeedLoadersFromBag();
@@ -19704,6 +19840,9 @@ function endScenario(outcome) {
   // Return remaining mag ammo to bag (you unload between matches)
   Game.persist.bag += Game.gun.ammo;
   Game.gun.ammo = 0;
+  Game.persist.bag += Game.gun.tapedAmmo || 0;   // v1.169: and the taped twin mag's
+  Game.gun.tapedAmmo = 0;
+  Game.gun.flipT = 0;
   // v1.50: also return any BBs still inside equipped speed loaders to the bag,
   // so nothing is lost between rounds and they refill cleanly next start.
   returnEquippedSpeedLoadersToBag();
@@ -20980,14 +21119,14 @@ function renderGunDetail(c, gt) {
   ensureGunSlots(gt);
   const slots = Game.persist.equipped.attachments[gt];
   c.appendChild(shopSectionHeader('Accessory Slots',
-    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''} · customize at The Workbench (hall closet)`));
+    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' + 1 under-barrel' : ''} · customize at The Workbench (hall closet)`));
   const summary = document.createElement('div');
   summary.className = 'shop-item-desc';
   summary.style.padding = '6px 2px';
   const mounted = getMountedAccessories(gt);
   if (mounted.length) {
     const parts = mounted.map(m => {
-      const where = m.slot === 'sight' ? 'sight' : (cap.rails === 1 ? 'rail' : m.placement);
+      const where = m.slot === 'sight' ? 'sight' : m.slot === 'under' ? 'under-barrel' : (cap.rails === 1 ? 'rail' : m.placement);
       return `${ATTACHMENTS[m.type].name} (${where})`;
     });
     summary.textContent = 'Currently mounted: ' + parts.join(', ') + '.';
@@ -21011,7 +21150,7 @@ function renderAccessoriesTab(c) {
   for (const aid in ATTACHMENTS) {
     const a = ATTACHMENTS[aid];
     const owned = Game.persist.ownedEquipment.attachments[aid] || 0;
-    const slotTag = a.slot === 'sight' ? 'SIGHT' : 'RAIL';
+    const slotTag = a.slot === 'sight' ? 'SIGHT' : a.slot === 'under' ? 'UNDER' : 'RAIL';   // v1.169
     const row = document.createElement('div');
     row.className = 'shop-item' + (owned ? ' owned' : '');
     row.innerHTML = `<div class="shop-item-icon">⊹</div>` +
@@ -21293,6 +21432,7 @@ document.addEventListener('contextmenu', e => {
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
   if (Game.gun.jammed) return;
+  if (Game.gun.flipT > 0) return;   // v1.169: no shot while the taped mags are being flipped
   const heldSlot = describeSlot(Game.held.slotIdx);
   if (!heldSlot) return;
   if (heldSlot.kind === 'gun') {
@@ -21438,7 +21578,8 @@ const ADS_MOVE_MULT = 0.7;
 const ADS_SENS_MULT = 0.55;        // mouse sensitivity at full ADS
 const ADS_FOV_TARGET = 55;
 const BASE_FOV = 75;
-const ADS_BLEND_SPEED = 8;         // higher = snappier ADS transition
+const ADS_BLEND_SPEED = 8;
+const TAPED_FLIP_TIME = 0.6;       // v1.169: seconds to flip a taped twin mag         // higher = snappier ADS transition
 const CROUCH_BLEND_SPEED = 10;
 
 const PLAYER_GRAVITY = 12.0;       // a bit stronger than world gravity for snappier feel
@@ -21593,7 +21734,7 @@ function updatePlayer(dt) {
     const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']);
     const draining = inScenario && (Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround)) && pressingMove;
     if (draining) {
-      Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * dt;
+      Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * underPartMult('sprintDrainMult') * dt;   // v1.169: sling
       Game.player._rechargeWait = STAMINA_RECHARGE_DELAY;
       if (Game.player.stamina <= 0) {
         Game.player.stamina = 0;
@@ -21883,7 +22024,9 @@ function easeStanceAndAds(dt) {
   else targetEye = Game.player.eyeOffsetStand;
   Game.player.eyeOffset += (targetEye - Game.player.eyeOffset) * Math.min(1, dt * CROUCH_BLEND_SPEED);
   // ADS blend
-  Game.player.ads += (Game.player.adsTarget - Game.player.ads) * Math.min(1, dt * ADS_BLEND_SPEED);
+  // v1.169: the sling tugs as the gun comes up, so aiming IN is slower; letting go is not
+  const adsK = ADS_BLEND_SPEED * (Game.player.adsTarget > Game.player.ads ? underPartMult('adsSpeedMult') : 1);
+  Game.player.ads += (Game.player.adsTarget - Game.player.ads) * Math.min(1, dt * adsK);
   if (Game.player.ads < 0.001) Game.player.ads = 0;
   if (Game.player.ads > 0.999) Game.player.ads = 1;
 }
@@ -22258,13 +22401,35 @@ function updateGun(dt) {
     }
   }
 
+  // === v1.169: TAPED TWIN MAG. A press of R (not one held over) flips the pair, and the two mags trade places
+  // after TAPED_FLIP_TIME; what was left in the one you were shooting rides along, so nothing is lost.
+  if (Game.gun.tapedMag) {
+    const rDown = !!Game.keys['KeyR'];
+    if (rDown && !Game.gun._rHeld && !Game.gun.jammed && !(Game.gun.flipT > 0) && held && held.kind === 'gun' &&
+        Game.gun.tapedAmmo > 0 && !Game.held.using) {
+      Game.gun.flipT = TAPED_FLIP_TIME;
+      Game.gun.autoFireTimer = 0;
+      updateAmmoHud();
+    }
+    Game.gun._rHeld = rDown;
+    if (Game.gun.flipT > 0) {
+      Game.gun.flipT -= dt;
+      if (Game.gun.flipT <= 0) {
+        Game.gun.flipT = 0;
+        const t = Game.gun.tapedAmmo; Game.gun.tapedAmmo = Game.gun.ammo; Game.gun.ammo = t;
+        playReloadClick();
+        updateAmmoHud();
+      }
+    }
+  }
+
   // === v1.20: AUTO-FIRE cycle ===
   // For auto-mode guns: while LMB is held, gun is cocked, ammo > 0, and not
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
   // between shots. When the mag empties, cocked drops to false → falls through
   // to the normal cock/reload path.
   if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed) {
-    if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0) {
+    if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0 && !(Game.gun.flipT > 0)) {
       const cycle = 60 / Math.max(1, Game.gun.cyclicRPM); // seconds per shot
       Game.gun.autoFireTimer += dt;
       // Allow multiple shots per frame at very high RPMs (MAC-10 at 1100 RPM
@@ -22616,7 +22781,7 @@ function updateHeldMesh(dt) {
 function updateAmmoHud() {
   document.getElementById('gunName').textContent = getGunDisplayName(Game.gun.type);
   document.getElementById('ammoCurrent').textContent = Game.gun.ammo;
-  document.getElementById('ammoMax').textContent = Game.gun.maxAmmo;
+  document.getElementById('ammoMax').textContent = Game.gun.maxAmmo + (Game.gun.tapedMag ? ` · taped ${Game.gun.tapedAmmo || 0}` : '');   // v1.169
   const bagEl = document.getElementById('bagCount');
   bagEl.textContent = Game.persist.bag;
   bagEl.parentElement.classList.toggle('empty', Game.persist.bag === 0);
@@ -22624,6 +22789,12 @@ function updateAmmoHud() {
 
   if (Game.gun.jammed) {
     s.textContent = 'JAMMED';
+    s.className = 'status reloading';
+  } else if (Game.gun.flipT > 0) {
+    s.textContent = 'FLIPPING MAGS…';   // v1.169
+    s.className = 'status reloading';
+  } else if (Game.gun.ammo === 0 && Game.gun.tapedMag && Game.gun.tapedAmmo > 0) {
+    s.textContent = `MAG EMPTY · R TO FLIP (${Game.gun.tapedAmmo})`;   // v1.169
     s.className = 'status reloading';
   } else if (Game.gun.ammo === 0) {
     // Show what they can do — F to forfeit always available
@@ -23192,7 +23363,7 @@ function fireBB() {
   // crouch shrink `sway` upstream AND ADS damps this term further, so aimed shots
   // stay tight. Tunable via MOVE_SPREAD_K.
   const MOVE_SPREAD_K = 0.10;
-  const moveSpread = Game.player.sway * MOVE_SPREAD_K * (Game.gun.muzzleVelocity || 30);
+  const moveSpread = Game.player.sway * MOVE_SPREAD_K * (Game.gun.muzzleVelocity || 30) * underPartMult('moveSpreadMult');   // v1.169: foregrip
   // Multi-pellet support: per-shot pellet count (1 for most guns, 2-3 for shotgun).
   // v1.16: each pellet consumes a BB from the mag, so cap the count to what's
   // actually loaded — a shotgun with 2 BBs left fires 2 pellets, not 3.

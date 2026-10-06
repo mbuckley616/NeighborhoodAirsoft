@@ -8076,3 +8076,53 @@ said "rack slide". The save summary counts all twelve guns.
   BBs, the six-round cylinder. The prices are guesses against the old guns ($60–$240).
 - No kid carries one of the new guns. Giving them to kids in matches would be a new question.
 - Next is D.14 B: the under-barrel slot and its four homemade parts.
+
+## v1.169 — Homemade parts under the barrel
+Backlog D.14 B, Michael's D (control room, 5 Oct): after the guns, the parts. Each long gun (the spring shotgun, AR and
+sniper, the AK, MP5, UMP, Thunder Pump and Bucket Gun) has a new under-barrel slot, under its two side rails; the four
+pistols have none. Four homemade parts go in it, one at a time, each a trade and not an upgrade. They are in the shop's
+Mods tab with an UNDER tag, mount at the workbench (a new Under-barrel row, and an "Under" label on the turning gun), and
+each has its own mesh on the gun in hand, found from the bare gun's handguard and muzzle so it sits right on all eight:
+- **Taped Twin Mag** ($22): a blue mag duct-taped under the handguard. It loads from the bag after the gun's mag, up to
+  the same size. R flips the pair (0.6 s, no shot meanwhile): the mags trade places, and what was left in the one you
+  were shooting rides along. Holding R doesn't flip twice; an empty taped mag isn't flipped to. The HUD reads
+  "25 / 25 · taped 25", and an empty mag says "R TO FLIP (n)". Both mags go back to the bag at the round's end. It
+  weighs 1.2 lb, carried gear like a spare mag.
+- **Shoelace Sling** ($12): a red strap looping under the gun. Sprinting drains stamina at 0.8 times the rate, so a
+  sprint lasts a quarter longer; aiming in runs at 0.7 times the speed (letting go of aim is unchanged).
+- **PVC Foregrip** ($16): a white pipe stub with a hose clamp. The walking part of the cone is 0.65 times as wide; it
+  weighs 0.8 lb.
+- **Cardboard Barrel** ($6): a paper-towel tube taped over the muzzle. The cone is a fifth tighter, but BBs leave at
+  0.85 times the speed, so they fly longer and drop sooner. (The game's jitter is in m/s, so a slower BB spreads wider
+  in degrees; its hip-spread factor is 0.68 so the cone in degrees comes out about 0.8.)
+R did nothing outside a jam before, so the flip has the key to itself. Old saves get an empty under-barrel slot on each
+long gun.
+### Verified
+- `tests/under-parts.test.mjs` (new). Each part bought in the Mods tab with a click, tagged UNDER, for its price. At the
+  workbench the AR shows an Under-barrel row (the pistol none), the row offers the four parts and nothing else, and a
+  click mounts the foregrip, shown on the gun. A part won't go on a rail, a laser won't go under, nothing goes under a
+  pistol. A save and load keeps it.
+- On all eight long guns the mag, sling and foregrip hang from within 1 cm of the handguard's underside to 5–12 cm below
+  it, and the cardboard tube runs 11 cm past the muzzle. In a match the mounted part is the one shown in hand.
+- The AR in Bunratty against Sean, hip-fire, 300 shots each way, against the bare AR:
+
+  | AR with | mags | walk 2 s | sprint lasts | aim in | cone still | cone walking | BB speed |
+  |---|---|---|---|---|---|---|---|
+  | nothing | 25 | 6.12 m | 6.02 s | 0.28 s | 0.14° | 1.10–1.27° | 45.0 m/s |
+  | Taped Twin Mag | 25 + 25 | 6.03 m | 6.02 s | 0.28 s | 0.13–0.15° | 1.16–1.27° | 45.0 |
+  | Shoelace Sling | 25 | 6.12 m | 7.50 s | 0.40 s | 0.14° | 1.05–1.16° | 45.0 |
+  | PVC Foregrip | 25 | 6.06 m | 6.02 s | 0.28 s | 0.14° | 0.71–0.78° | 45.0 |
+  | Cardboard Barrel | 25 | 6.12 m | 6.02 s | 0.28 s | 0.115–0.125° | 1.14–1.20° | 38.3 |
+
+- The flip, with a full AR mag and 20 left in the bag: 25 + 20 loaded; shot down to 7, R flipped in 0.60 s to 20 + 7
+  with no shot fired during it; held R, no second flip; a new press back to 7 + 0; another press, nothing (the taped mag
+  is empty); the round's end put the 7 back in the bag.
+- Screenshots at the workbench of each part on the AR, and in hand.
+- `npm test` as four local shards at once: 80 of 80 suites passed (20 each), `under-parts` among them.
+### Still open
+- Whether each trade is worth its price is for a playtest: the taped mag doubles what you carry for 1.2 lb, which may
+  be too good on the 600-BB Bucket Gun; the sling's slower aim may be felt more than its longer sprint.
+- The parts are the player's; kids' guns have none. The Loadout kid's gun does not show the part either.
+- At the workbench the Sight and rail labels sit in the viewport's top-left corner: `computeWorkbenchLabelAnchors`
+  reads `m.y`/`m.z`, which FP_GUN_MOUNT has never had (since v1.40e). Older than this; the new Under label reads the
+  real handguard and sits right. Filed under Found in play.
