@@ -8381,3 +8381,16 @@ plus about 3 minutes of setup.
 ### Still open
 - The stuck sweeps vary run to run (stuck-sweep-2 took 203 s and 478 s on different runs), so shards stay uneven by a
   few minutes; there is about 10 minutes of headroom.
+
+## v1.174 fix-up — the VIP early-fall check, and Night Shift's balance raised as D.17
+CI failed `headless (8/8)` on 085e505 with `vip`: "in play no VIP falls in the first 8 s" (Night Shift: Rebecca out
+at 7.5 s). The 8 s line was set from rounds sampled before v1.172 moved her to the briefing's anchor at (-14, 21).
+Re-sampled on this build with the player idle, she is tagged within 40 s in 20 of 30 rounds, at 8-36 s (most at
+8-15 s), nearly always by Mason and often while hiding. Seth, their VIP, fell in none. That is a balance question,
+not a test fault. It is raised as D.17 in `docs/decisions.md` (move her, cover her, or leave it); the builder
+recommends cover at the spot. Until it is answered the check guards only against a VIP picked off at once
+(inside 5 s). The game is unchanged.
+### Verified
+`vip` passes. 30 sampled Night Shift rounds: Rebecca tagged in 20, the earliest at 8.0 s; Seth in none.
+### Still open
+- D.17: Night Shift's VIP balance. Once it is answered, raise the check back to 8 s or more.
