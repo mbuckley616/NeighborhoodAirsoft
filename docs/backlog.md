@@ -181,7 +181,11 @@ Fable card on the control room and Michael starts it from there.
    ours out loses; ★ VIP on the card, the briefing and the roster; `tests/vip.test.mjs`). D.15 A is complete pending
    Michael's playtest.
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
-   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
+   2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference) Michael: **C**, A then B,
+   each shown to him (control room, 6 Oct). Builder, 6 Oct, 07:10 UTC run: step A drafted, not run, on branch `wip/gait`
+   ("WIP (not for merge)"). The legs swing from the hip, the stride comes from the kid's velocity in his own frame so a
+   stance foot goes back at his speed, the shoes ride on the feet, the hips drop to the stance leg. Draft test
+   `tests/gait.test.mjs` measures the low foot's slip. Left: run it, measure the old build with `SRC=`, fix, then the full suite.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
