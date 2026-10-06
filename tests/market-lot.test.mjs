@@ -91,7 +91,7 @@ for (const id of ladder.ids.filter(i => !SCENARIOS_VIP.includes(i))) {
     const hurt = kids.filter(k => k.lives < k.maxLives || k.health <= 0).length;
     return { team, hurt, secs: Math.round((f - 1) / 60), shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'), playerHits,
       enemyLives: kids.filter(k => k.team === 'enemy').reduce((a, k) => a + k.maxLives, 0),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, lives: k.lives })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > 10, r.shots);
@@ -99,8 +99,11 @@ for (const id of ladder.ids.filter(i => !SCENARIOS_VIP.includes(i))) {
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
   // v1.141: or the round is decided: every enemy kid is down to his last life with none of the player's side lost.
   // That is an ally camping the enemy respawn (CI on v1.140: Eric at (0.8, −18.1), 9–0); a design question, not a wedge.
-  if (r.team) check(`${id}: both sides lose lives (within 120 s), or the enemy is down to its last lives`,
-    r.lostEnemy > 0 && (r.lostAlly > 0 || r.lostEnemy >= r.enemyLives), r);
+  // v1.171 fix-up: or the other way round, an ally kid is out of lives. CI, 6 Oct (twice): Eric spent his three by
+  // ~34 s, Brooke's rifle held at the road end, and with the player standing idle the enemy lost none in 120 s (locally
+  // every one of 24 rounds took at least one enemy life, two only one).
+  if (r.team) check(`${id}: both sides lose lives (within 120 s), or one side is down to its last lives`,
+    (r.lostEnemy > 0 && (r.lostAlly > 0 || r.lostEnemy >= r.enemyLives)) || r.kids.some(k => k.t === 'player' && k.lives === 0), r);
   if (id === 'lot_ffa') check(`${id}: the kids tag each other`, r.hurt >= 2 || r.mode === 'result', r);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await g.shot(id);

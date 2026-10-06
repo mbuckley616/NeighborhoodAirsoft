@@ -8261,3 +8261,18 @@ builds on the last frame. Turning, starts and stops are unchanged: that is step 
   stride cap (0.6 of the leg) can open up at the cost of a wider split.
 - Step B, weight: easing into starts, stops and turns. Kids still snap to face their target every frame, and a snap
   turn swings both feet round with him.
+
+## v1.171 fix-up — market-lot's team-round check allows a decided round either way
+CI failed `headless (7/8)` on 32935da with `market-lot`: "lot_team_3v3: both sides lose lives (within 120 s), or the
+enemy is down to its last lives" (enemy 0 lives lost in 120 s). It is the same failure as on 21bfcfb on 5 Oct. Eric
+ended the round in 'deploying' having fired 9 times. Traced locally, that is a kid who is out: Eric spends his three
+lives by about 34 s and keeps his last state, 'deploying', with 0 health and 0 lives. Brooke's rifle holds at the
+road end, the player stands idle in the test, and Marcus and Jamie win without losing a life. Locally every one of 24
+rounds at varied starts took at least one enemy life (two of them only one), so it is a rare decided round, the
+mirror of v1.141's exception for an ally camping the enemy respawn. The check now also passes when an ally kid is
+out of lives. The game is unchanged.
+### Verified
+`node tests/run.mjs market-lot` passes. 24 sampled lot 3v3 rounds took 1-9 enemy lives each.
+### Still open
+- With an idle player, the lot 3v3's allies are thin: Brooke spends about 100 of 120 s hiding at her anchor. Whether
+  the ally sniper should push or move up is a design call for a playtest.
