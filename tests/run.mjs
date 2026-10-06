@@ -22,7 +22,7 @@ const WEIGHTS = {
   'last-kid.test.mjs': 160, 'loadout-gear.test.mjs': 34, 'loadout-kid.test.mjs': 9, 'lot-ffa-opening.test.mjs': 89,
   'lot-hollow-polish.test.mjs': 87, 'map-screen.test.mjs': 33, 'market-lot.test.mjs': 159, 'mirror.test.mjs': 48,
   'music.test.mjs': 3, 'night-prowl.test.mjs': 30, 'northcliff.test.mjs': 168, 'one-ending.test.mjs': 53,
-  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'result-text.test.mjs': 95, 'retreat-progress.test.mjs': 110,
+  'opening-hold.test.mjs': 109, 'pincer.test.mjs': 36, 'pocket.test.mjs': 28, 'pointer-lock.test.mjs': 20, 'result-text.test.mjs': 95, 'retreat-progress.test.mjs': 110,
   'road-slide.test.mjs': 104, 'shard.test.mjs': 1, 'shop-tabs.test.mjs': 39, 'smoke.test.mjs': 43,
   'spawn-facing.test.mjs': 304,
   // v1.166: the sweep in sixteenths, measured here in the v1.166 run (86-296 s, four browsers at once) and scaled by 1.6 for CI

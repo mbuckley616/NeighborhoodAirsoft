@@ -8335,3 +8335,23 @@ of a UMP. That is the AI as designed, not a stuck kid. The check now also passes
 - A cautious ally far back (Brooke at the service desk) can sit a whole round out when the enemy holds back. The
   last-kid boredom (v1.152) covers only the last one or two of a side. Whether every kid should go looking after a
   long spell with nothing to shoot at is a design call.
+
+## v1.174 — Every test walks, whether or not Chromium grants the pointer lock
+Backlog B.7 (producer, 6 Oct). CI failed `country-club`'s "walking at the pool stops at its edge" on a docs-only PR
+(#41): the player never left (-24, -2.5). `updatePlayer` moves no one while `Game.mouse.locked` is false, and that
+flag is set only by a real `pointerlockchange`. BEGIN asks for the lock, and CI's headless Chromium sometimes refuses
+it, so a test that holds W stands still. v1.169's fix-up set the flag inside `grocery-store`'s walk; the producer
+asked to check every walking test. Of the suites that drive `Game.keys` in a match, three never set it: the club's
+pool and pond walks, `retreat-progress`'s walk, and the stuck sweep's walks toward and across the enemy (which on a
+refused lock would have swept a player standing at spawn twice over, and passed). Rather than patch each, the harness's
+`g.scenario()` now marks the lock taken once the match starts, since every test drives its input itself; a real
+`pointerlockchange` still overwrites it. The game is unchanged.
+### Verified
+- `tests/pointer-lock.test.mjs` (new) makes the page refuse every lock (no lock, no event), enters Pool's Closed and
+  walks at the pool: the player stops at z -7.67, at the edge, with no real lock held. With the flag cleared, the same
+  walk stays at (-24, -2.5), the CI failure.
+- `npm test` as four local shards: 83 of 84 suites passed (21 each); `stuck-sweep-2` hit the 30 s page-load timeout on
+  the busy box before any test ran and passed when rerun (5 matches, three ways each, worst stay 1.5 s).
+### Still open
+- Nothing in play. If CI's Chromium also drops a granted lock mid-match, that fires `pointerlockchange` and clears the
+  flag again; no suite has shown it.
