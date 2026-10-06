@@ -8032,3 +8032,47 @@ drawn. The test now tags before the step. The game is unchanged.
 crouched before the tag, with his shoulder and gun at rest (both rotations 0).
 ### Still open
 - Nothing for play.
+
+## v1.168 — Four backyard guns
+Backlog D.14, Michael's D (control room, 5 Oct): the guns first, then the parts. This is the guns: four that kids
+actually own, each one a trade rather than an upgrade. They are in the shop's Guns tab between the spring guns, with a
+line of their own on each gun's page, and each has its own first-person model with the orange tip:
+- **Thunder Pump** ($75, 30 BBs, a 50 for $15): a green pump-up air shotgun with an air tank under the barrel, a
+  pressure gauge and a flared muzzle. It throws 4 or 5 BBs a shot (the spring shotgun 2 or 3), in about four times the
+  spring shotgun's cloud, and the pump takes 1.05 s against 0.85.
+- **Six-Shooter** ($70, 6 rounds, always): a silver cap-gun revolver with a wooden bird's-head grip. Thumbing the hammer
+  (0.3 s) is the fastest re-cock in the game, and the cylinder turns a chamber as it comes back. Spare cylinders are $3.
+- **Bucket Gun** ($110, 600 BBs, a 1,000 for $25): a blue electric gun with a see-through bucket of BBs on top and a
+  carry-handle sight above it. Full-auto at 7 a second, but the BBs leave at 23 m/s (the MP5's 50) and wobble off
+  after 5 m.
+- **Bolt Pistol** ($95, 8 rounds, a 12 for $14): a long-barrel pistol with a bolt knob on the right. Nearly sniper
+  accuracy (52 m/s, a tight cone, a late wobble) at pistol weight, at a 1.0 s re-cock.
+The hand pose a kid uses for each (one-handed for the revolver and the bolt pistol), their reticles, rail counts
+(two on the long guns, one on the pistols), weights, spare mags and the workbench all know them. No kid carries one
+yet; they are the player's. The shop's mode line now says "Pump-action" for both shotguns, where the spring shotgun
+said "rack slide". The save summary counts all twelve guns.
+### Verified
+- `tests/backyard-guns.test.mjs` (new). Each new gun is bought from its own page with real clicks, for its price, and
+  equipped. Then a match with each, and with the gun nearest it, 60 hip shots standing still and three real cocks
+  (hold to the full pull, let go):
+
+  | gun | BBs a shot | next shot ready | speed | cone, median / 90% | off line at 15 m | within 0.5 m |
+  |---|---|---|---|---|---|---|
+  | Thunder Pump | 4.4 | 1.43 s | 27 m/s | 2.5° / 3.7° | 0.45 m | 56% |
+  | spring shotgun | 2.6 | 1.25 s | 30 | 0.7° / 0.9° | 0.16 | 98% |
+  | Six-Shooter | 1 | 0.73 s | 32 | 0.26° / 0.38° | 0.16 | 92% |
+  | spring pistol | 1 | 1.10 s | 30 | 0.28° / 0.41° | 0.20 | 85% |
+  | Bucket Gun | 1, 8 in a held second | auto | 23 | 0.43° / 0.61° | 0.30 | 68% |
+  | MP5 | 1, 14 | auto | 50 | 0.15° / 0.20° | 0.03 | 100% |
+  | Bolt Pistol | 1 | 1.38 s | 52 | 0.07° / 0.09° | 0.01 | 100% |
+  | sniper | 1 | 1.48 s | 75 | 0.03° / 0.05° | 0.01 | 100% |
+
+  Aimed with no optic, each new gun's front sight tip is 0.10–0.11° from screen centre. The workbench and a kid's hands
+  build all four with no page error.
+- Screenshots of each aimed: the six-shooter's hammer stood over the front sight in the first one and was lowered under
+  the sight line.
+### Still open
+- Whether each trade feels right in a real match is for a playtest: the Thunder Pump at 10 m, the Bucket Gun's slow
+  BBs, the six-round cylinder. The prices are guesses against the old guns ($60–$240).
+- No kid carries one of the new guns. Giving them to kids in matches would be a new question.
+- Next is D.14 B: the under-barrel slot and its four homemade parts.
