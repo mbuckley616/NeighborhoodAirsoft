@@ -8230,3 +8230,34 @@ The game is unchanged.
   theirs (Seth) in none. With the player defending it plays differently, but it is worth a look in a playtest.
 - `updateHealthHud` draws one slot per hit with no cap. Harmless at real `maxHits`, but a cap would stop a bad value
   freezing the page.
+
+## v1.171 — Kids' feet stay planted when they walk and run
+Backlog D.16, Michael's C (control room, 6 Oct): A first, planted feet, shown to him before B (weight and turning).
+A kid's legs used to swing ±14° about their middles at a fixed beat while his shoes stayed under his hips, so a
+walking or running kid's feet slid along at his whole speed. Over three real rounds (the Bunratty free-for-all, the
+lot 3v3 and the Hollow 3v3) the foot nearest the ground moved as far as his body did in nine frames of ten (slip 1.00)
+on v1.170. Now each leg hangs from its hip and the gait is laid out from his real velocity in his own frame. A foot
+on the ground goes back under him at his speed, so it stays where it was put, stepping sideways and backward too.
+The swing foot lifts, its shoe tips toe-down then heel-down, the hips ride as high as the stance leg allows (the bob)
+and roll a little over the stance foot. The cadence rises with speed.
+The last run's draft (on `wip/gait`) halved the slip on average but not in its tail: nine frames in ten were still
+under 1.12. Three faults were behind it. At 3.4–4 m/s the stride outgrew its cap (0.6 of the leg) and the foot slid
+the rest, so the cadence now rises until the stride fits. The swing was a cosine, which starts and stops dead under
+the hip, so at lift-off and touch-down the foot skidded forward at the kid's speed while still at the ground. It is
+now a Hermite curve that leaves and lands moving back at the stance's own rate. And the run had a flight phase
+(both feet up 30% of a cycle at 3 m/s) with the body not rising, so the low foot skated; a foot is now down 52% of
+the cycle and one is always on the ground. The price is a quick step at a run: about 5 steps a second at 3 m/s
+(2.6 at 1.5 m/s). The crouch now also resets the legs, shoes and the torso's roll each frame, so the walk never
+builds on the last frame. Turning, starts and stops are unchanged: that is step B.
+### Verified
+- `tests/gait.test.mjs` (new), three 30 s rounds, about 11,000 frames of a kid on the move: the low foot's slip, its
+  movement over the body's while it is on the ground, has a median 0.014 and a 90th percentile 0.36 (v1.170: 1.00
+  and 1.00; the draft: 0.06 and 0.94). Sideways steps: 0.016 median. No frame has both feet up (draft 8%). The low
+  shoe sits at its rest height, 3.5–4.5 cm, never under the ground; each shoe stays within 5.4 cm of its leg's end
+  (v1.170: 11 cm). Legs swing up to 0.62 rad (v1.170: 0.24).
+- `npm test` as four local shards: 82 of 82 suites passed (21+20+21+20), the stuck-kid sweep among them.
+### Still open
+- How it looks is for Michael: the quick step at a run, the hip roll and the toe tip. If the step is too quick, the
+  stride cap (0.6 of the leg) can open up at the cost of a wider split.
+- Step B, weight: easing into starts, stops and turns. Kids still snap to face their target every frame, and a snap
+  turn swings both feet round with him.
