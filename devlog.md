@@ -8196,3 +8196,15 @@ his spot.
 - Balance is for a playtest: the lot's Rebecca went down in three of four rounds with the player standing still,
   while Bunratty's Ryan lasted every round. A VIP that holds one spot may be too easy to find, or too easy to guard.
 - VIP kids don't talk about being the VIP, and nothing on the HUD points at them beyond the roster star.
+
+## v1.170 fix-up — high-school's "every kid moves or fires" allows for a quick wipe
+CI failed `headless (2/8)` on 3e0a28d with `high-school`: "school_portables_3v3: every kid moves or fires". Mitchell
+had walked 3 m and fired nothing. The round had ended at 32 s with the allies all out (6 lives against 0): the v1.156
+fix-up stops the loop at a wipe, as the game ends the round. Mitchell is the one who sits back and picks at the school
+doors, 51 m off, and Ryan and Priya had won it before he had moved or fired. Over 24 local rounds at varied starts he
+walked 31-119 m and fired 17-268 times. The check now passes a round that ends in a wipe inside 60 s. The game is
+unchanged.
+### Verified
+`node tests/run.mjs high-school` passes, and every scenario's "moves or fires" check is green.
+### Still open
+- Nothing for play.
