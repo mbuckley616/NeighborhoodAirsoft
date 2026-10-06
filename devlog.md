@@ -8297,3 +8297,26 @@ appear only in the two VIP matches, so no other match changes.
 ### Still open
 - VIP balance needs a new playtest now that both VIPs stand where their briefings say. The critic's numbers (Rebecca
   out in 6 of 7, walking straight at Seth won 5 of 5) were taken with Rebecca at your start.
+
+## v1.173 — The workbench's slot labels sit on the gun
+Found in play (builder, v1.169). On the workbench's turning gun, the floating Sight, Left and Right (or Rail) labels
+all sat in the viewport's top-left corner. `computeWorkbenchLabelAnchors` built their positions from `m.y` and
+`m.z`, but FP_GUN_MOUNT has never had those fields (it has `barrelY`, `sideX`, `railZ`, `sightY`, `sightZ`, since
+v1.40e), so every position was NaN. v1.169's Under label read the real fields and sat right. The labels now read
+the real fields. The sight label floats above the sight, held at least 9.5 cm over the barrel line so it clears the
+rail labels on a low-sighted gun like the sniper. Each rail's label sits 6 cm outside its bar, the left one a little
+high and the right a little low. Placed side by side, the two rails' labels crossed in the bench's opening view
+(turned half a radian), because the bars are only 3–6 cm apart.
+### Verified
+- `tests/workbench-labels.test.mjs` (new) runs on all twelve guns with the turntable held still. Every label is placed at
+  a real position, is shown, and none sits within 30 px of the corner. Each one sits on the gun's box on screen
+  (visible meshes, 40 px to spare). No two labels' boxes overlap, square on or in the opening view. The sight label
+  is above the rail labels, and Left is left of Right. One-rail guns say Rail; two-rail guns say Left and Right.
+- The first layout, with the rail labels side by side, failed the overlap check on all eight two-rail guns in the
+  opening view (the sniper also put Sight on Left). The final one passes. Screenshot `tests/out/workbench-labels-ar.png`.
+- `npm test` as four local shards, on this and v1.172 together: 78 of 82 suites passed. The other four (`desk-start`,
+  `ladder-prompt`, `loadout-kid`, `stuck-sweep-10`) hit the 30 s page-load timeout on the busy box and passed when
+  rerun. `workbench-labels` was written during the run and passes alone.
+### Still open
+- The labels follow the gun as it turns, so at some angles in between, two can still touch. The check covers the
+  opening view and square on.

@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.172</div>
+  <div class="version">v1.173</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18695,13 +18695,15 @@ function refreshWorkbenchAccessoryVisuals() {
 function computeWorkbenchLabelAnchors(gunType) {
   const m = FP_GUN_MOUNT[gunType] || FP_GUN_MOUNT.pistol;
   const cap = getGunAccessoryCap(gunType);
-  const railX = m.railX || 0.024;
+  // v1.172: read the mount's real fields. This read m.y and m.z, which FP_GUN_MOUNT has never had (since v1.40e), so
+  // every label but Under was NaN and sat in the viewport's top-left corner. The sight label floats over the sight,
+  // clear of the rails' labels; each rail's sits beside its bar (slot 0 is the left rail, the only one on a one-rail
+  // gun; buildSideRail).
   const anchors = [];
-  anchors.push({ slot: 'sight', railIndex: -1, pos: new THREE.Vector3(0, m.y + 0.045, m.z) });
+  anchors.push({ slot: 'sight', railIndex: -1, pos: new THREE.Vector3(0, Math.max(m.sightY, m.barrelY + 0.02) + 0.075, m.sightZ) });
   for (let i = 0; i < cap.rails; i++) {
-    const x = (cap.rails === 1) ? 0 : (i === 0 ? -railX : railX);
-    const yOff = (cap.rails === 1) ? -0.02 : 0;
-    anchors.push({ slot: 'rail', railIndex: i, pos: new THREE.Vector3(x, m.y - 0.03 + yOff, m.z) });
+    const side = i === 0 ? -1 : 1;   // the left label a little high, the right a little low, so the two never stack
+    anchors.push({ slot: 'rail', railIndex: i, pos: new THREE.Vector3(side * (m.sideX + 0.06), m.barrelY + (side < 0 ? 0.02 : -0.05), m.railZ) });
   }
   if (cap.under) {   // v1.169: below the handguard
     const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
