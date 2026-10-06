@@ -5,6 +5,9 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+
+## Answered
+
 - **D.16 Kids' movement looks stiff and floaty: which fix first? (builder, 2026-10-05)** Your note: NPC movement is
   a little stiff/floaty. What the code does today: a walking kid swings his legs ±14° about 1.3 times a second, which
   carries a foot about 0.66 m/s. The kids move at 2.5–3.5 m/s, so their feet slide over the ground at four to five
@@ -19,8 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
      a kid advancing between covers jogs low
   Builder recommends C: A is pose only and fixes the float at no cost to the fight; B changes timing, so it goes
   second, after you've seen A.
-
-## Answered
+  Michael: **C) Both: A first, then B** (2026-10-06)
 
 - **D.14 More guns and attachments: which first? (builder, 2026-10-05)** Your note: more gun variety and attachments,
   but kid-toned, not military LARPing. Today there are 8 guns (spring pistol, shotgun, sniper and assault rifle, then
