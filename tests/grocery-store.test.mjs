@@ -90,7 +90,7 @@ for (const id of ladder.ids) {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
     const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
-    const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9, front: false, onTop: 0 }));
+    const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9, front: false, onTop: 0, oppD: 1e9 }));
     const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
     const wiped = () => ['enemy', 'player'].find(t => kids.filter(k => k.team === t).every(k => !npcInFight(k))) || null;
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
@@ -106,6 +106,9 @@ for (const id of ladder.ids) {
         if (k.team !== 'player' && k.pos.z > -17) s.front = true;   // through the back wall onto the sales floor
         if ((k.pos.y || 0) > 1.5) s.onTop++;                        // up on a shelf (2.1 m): never
         s.minD = Math.min(s.minD, Math.hypot(k.pos.x - Game.player.pos.x, k.pos.z - Game.player.pos.z));
+        // v1.172 fix-up: the nearest any opponent came (the player counts for the enemy side)
+        for (const o2 of kids) if (o2.team !== k.team && o2.health > 0) s.oppD = Math.min(s.oppD, Math.hypot(k.pos.x - o2.pos.x, k.pos.z - o2.pos.z));
+        if (k.team !== 'player') s.oppD = Math.min(s.oppD, s.minD);
         if (f % 60 === 0) {
           const net = Math.hypot(k.pos.x - s.mark[0], k.pos.z - s.mark[1]); s.mark = [k.pos.x, k.pos.z];
           if (net < 0.25 && k.state === 'advancing' && k.health > 0) { s.run++; s.longest = Math.max(s.longest, s.run); } else s.run = 0;
@@ -114,11 +117,14 @@ for (const id of ladder.ids) {
     }
     spawnEnemyBB = o; applyBBHit = orig;
     return { team, secs: Math.round((f - 1) / 60), shots, wiped: team ? wiped() : null, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
-  check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
+  // v1.172 fix-up: or no opponent ever came within 30 m. Brooke (UMP, aggression 0.35, under the 0.45 march line) holds
+  // the service desk; in a round where all three stay in the stockroom 38-46 m off she hides and peeks with no line and
+  // nothing in reach (CI, 5 and 6 Oct; locally 1 round in 24).
+  check(`${id}: every kid moves or fires (or no opponent came within 30 m)`, r.kids.every(k => k.walked > 5 || k.fired > 0 || k.opp > 30), r.kids);
   check(`${id}: no kid ever stands on a shelf`, r.kids.every(k => k.onTop === 0), r.kids);
   if (r.team) {
     check(`${id}: the stockroom kids come through the back wall onto the floor`, r.kids.filter(k => k.t !== 'player').some(k => k.front), r.kids);

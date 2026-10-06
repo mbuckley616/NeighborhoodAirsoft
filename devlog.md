@@ -8297,3 +8297,18 @@ appear only in the two VIP matches, so no other match changes.
 ### Still open
 - VIP balance needs a new playtest now that both VIPs stand where their briefings say. The critic's numbers (Rebecca
   out in 6 of 7, walking straight at Seth won 5 of 5) were taken with Rebecca at your start.
+
+## v1.172 fix-up — grocery-store's "every kid moves or fires" allows a kid nobody came near
+CI failed `headless (4/8)` on d06754a with `grocery-store`: "store_price_check_3v3: every kid moves or fires"
+(Brooke walked 0, fired 0). It was the second time; 21bfcfb's first run showed it too. Brooke (UMP) is a cautious
+skirmisher (aggression 0.35, under the 0.45 at which a skirmisher marches) holding the service desk. Over 24
+sampled rounds at varied starts she walked 5-38 m and fired 87-247 times in 23. In the other she spent 51 s cycling
+between hiding and peeking while Marcus, Jamie and Tyler stayed in the stockroom 38-46 m off: no line, nobody in reach
+of a UMP. That is the AI as designed, not a stuck kid. The check now also passes a kid that no opponent came within
+30 m of (each kid's nearest opponent is now recorded). The game is unchanged.
+### Verified
+`node tests/run.mjs grocery-store` passes; every scenario's "moves or fires" check is green.
+### Still open
+- A cautious ally far back (Brooke at the service desk) can sit a whole round out when the enemy holds back. The
+  last-kid boredom (v1.152) covers only the last one or two of a side. Whether every kid should go looking after a
+  long spell with nothing to shoot at is a design call.
