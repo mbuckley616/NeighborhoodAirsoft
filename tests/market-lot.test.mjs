@@ -21,8 +21,9 @@ const ladder = await page.evaluate(() => {
 });
 check('ladder: Winnmark, Bunratty, The Hollow, the market lot, Northcliff, Hollins Ridge High (v1.155), Willow Bend (v1.157)',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club,grocery_store', ladder.keys);
-check('the lot runs 1v1, 3v3, defend, free-for-all, night 4v4 (v1.103)',
-  ladder.ids.join() === 'lot_1v1_marcus,lot_team_3v3,lot_defend_store,lot_ffa,lot_night_4v4', ladder.ids);
+check('the lot runs 1v1, 3v3, defend, free-for-all, VIP (v1.170), night 4v4 (v1.103)',
+  ladder.ids.join() === 'lot_1v1_marcus,lot_team_3v3,lot_defend_store,lot_ffa,lot_vip_night,lot_night_4v4', ladder.ids);
+const SCENARIOS_VIP = ['lot_vip_night'];
 check('the lot is locked on a new save', !ladder.before.lot && !ladder.before.first, ladder.before);
 check('clearing The Hollow opens the lot’s first scenario only', ladder.afterHollow.lot && ladder.afterHollow.first
   && !ladder.afterHollow.second && !ladder.afterHollow.north, ladder.afterHollow);
@@ -46,7 +47,8 @@ const overlaps = pins.filter(p => p !== lotPin && p.rects.some(a => lotPin.rects
 check('the map has a Riverside Market pin, locked on a new save', lotPin && lotPin.locked, lotPin);
 check('the lot pin overlaps no other pin', overlaps.length === 0, overlaps);
 
-for (const id of ladder.ids) {
+// v1.170: the VIP match is played in tests/vip.test.mjs (its VIPs hold a spot by design and the rest come back)
+for (const id of ladder.ids.filter(i => !SCENARIOS_VIP.includes(i))) {
   await g.scenario(id);
   const start = await page.evaluate(() => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);

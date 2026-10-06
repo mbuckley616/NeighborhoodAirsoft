@@ -176,16 +176,10 @@ Fable card on the control room and Michael starts it from there.
    each its own mesh and trade; `tests/under-parts.test.mjs`). D.14 D is complete pending Michael's look.
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
    that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A VIP with an ally VIP, B you as VIP, C capture the flag, D A then C). Michael: **A**, VIP with an ally VIP kid (control room, 5 Oct).
-   Builder, 6 Oct, second run (not on auto/build; saved on branch `wip/vip`, commit "WIP (not for merge)"): rebuilt as
-   a team battle with `vip: true`. Ryan (ours, blue cap) and Priya (theirs, red cap, behind the bulb plank) in Protect
-   Ryan at Bunratty; Rebecca and Seth (by the dumpsters) in Night Shift at the lot. Both sit before their zone's capstone.
-   Each VIP has one life, a pistol and the defender role. Everyone else has 99 lives, shown as ∞. You respawn at your
-   start with 2 s of grace. Their VIP out wins, ours out loses. Map card (★ VIP, ♥ ∞), briefing and roster done. The
-   staged checks in `tests/vip.test.mjs` pass on both maps: kids, caps, respawn, grace, both endings. The earlier "lot
-   hang" was not a hang. A 150 s round inside one `page.evaluate` runs about 2.5 s per game second on a loaded box and
-   outlives the page. Stepped a second at a time, Bunratty ran 150 s without a fault. No VIP fell, and the kids traded
-   tags (Tyler 10 lives, Sean 2). Left: cut the suite under run.mjs's 10 minutes (fewer scenario entries, one
-   30–60 s round), run the full suite (the stuck sweep now covers two more matches), then tag, devlog, commit.
+   — done, v1.170 (Protect Ryan at Bunratty and Night Shift at the lot, each before its zone's capstone: a VIP a side in
+   a blue or red cap, one life, a pistol, holding his spot; everyone else, you too, comes back; their VIP out wins,
+   ours out loses; ★ VIP on the card, the briefing and the roster; `tests/vip.test.mjs`). D.15 A is complete pending
+   Michael's playtest.
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
    2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
 

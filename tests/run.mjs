@@ -30,7 +30,7 @@ const WEIGHTS = {
   'stuck-sweep-5.test.mjs': 451, 'stuck-sweep-6.test.mjs': 138, 'stuck-sweep-7.test.mjs': 392, 'stuck-sweep-8.test.mjs': 451,
   'stuck-sweep-9.test.mjs': 474, 'stuck-sweep-10.test.mjs': 224, 'stuck-sweep-11.test.mjs': 299, 'stuck-sweep-12.test.mjs': 306,
   'stuck-sweep-13.test.mjs': 237, 'stuck-sweep-14.test.mjs': 403, 'stuck-sweep-15.test.mjs': 432, 'stuck-sweep-16.test.mjs': 467,
-  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6,
+  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6, 'vip.test.mjs': 190,
   'under-parts.test.mjs': 65, 'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
   'winnmark-fort.test.mjs': 55, 'winnmark-props.test.mjs': 46, 'winnmark-road.test.mjs': 53,
   'winnmark-trees.test.mjs': 60

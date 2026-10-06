@@ -8159,3 +8159,40 @@ The game is unchanged.
 `backyard-guns` and `grocery-store` both pass locally.
 ### Still open
 - Nothing for play.
+
+## v1.170 — VIP: guard your kid in the cap
+Backlog D.15, Michael's A (control room, 5 Oct): a new match type, VIP, where each side guards an ally kid. Two
+matches, each placed just before its zone's capstone. **Protect Ryan** at Bunratty, by day: Ryan (ours, blue cap)
+starts in house 0's backyard, Priya (theirs, red cap) behind the bulb plank. **Night Shift** at the market lot, by
+night: Rebecca (ours) on the road side, Seth (theirs) by the dumpsters. Each VIP has one life, a pistol and the
+defender role, so he holds his spot. Everyone else has 99 lives, shown as ∞, the player included: tagged out, you
+walk back in at your start with 2 s in which nothing tags you. Tag their VIP and you win; lose yours and you lose,
+whatever else happened. The map card has a ★ VIP badge and ♥ ∞, the briefing marks both VIPs and says who comes
+back, and the roster stars the VIPs. The win line names their VIP ("Priya pulls off the red cap") and a loss says
+THEY GOT RYAN, not the "last one's out" lines, which are wrong when only one kid is out.
+The work was built on the last run and saved on `wip/vip`; this run finished it. The two matches now sit at the end
+of `SCENARIOS`, not in the middle, so the stuck sweep's sixteen parts keep the matches they had and the two new ones
+go to parts 1 and 2. The VIP suite plays each round on from the entry that checked it, and the win from the respawn
+checks' entry: four entries, not seven, with 40 s rounds, about 2 minutes. `market-lot` lists the new match and
+leaves its play to the VIP suite, since its rule that every kid moves or fires is broken by design by a VIP holding
+his spot.
+### Verified
+- `tests/vip.test.mjs` (new): both matches are in their zone's list with the VIP objective; the two VIPs have one
+  life, a pistol, the defender role and a cap on the head (blue ours, red theirs); every other kid has 99 lives and
+  no cap; the roster shows two ★ and five ∞. Tagged out, the player is back at his start (0 m off) with no hits and
+  2 s of grace; a hit inside the grace does nothing; after it, the next tag sends him back again. A tagged non-VIP
+  spends a life and the round goes on. Priya tagged: YOU GOT THEM with her line; Ryan tagged: THEY GOT RYAN.
+- Played rounds, the player untaggable at his start, 40 s: no VIP fell before 15 s in any run. Over four runs of each,
+  Priya fell once (22.7 s) and Ryan never; Rebecca fell in three (17.1, 24.1 and 24.1 s) and Seth never. The kids
+  traded 1–7 tags a round.
+- The stuck sweep on both matches, 90 s three ways: worst stay 4 s on the first build and 3 s on the final one,
+  against the 15 s line.
+- On the final build: `vip` (85 s), `market-lot`, `retreat-progress`, `result-text`, `map-screen` and sweep parts 1
+  and 2 (255 s and 238 s, three browsers at once) all passed.
+- `npm test` as four local shards: 77 of 80 passed with the VIP matches in place. Two were `market-lot`'s old
+  listing and its move-or-fire rule (both changed, above) and one was a renderer crash in `retreat-progress` at
+  `g.scenario` under the four-browser load. The changed suites, then sweep parts 1 and 2, were rerun on the final build (below).
+### Still open
+- Balance is for a playtest: the lot's Rebecca went down in three of four rounds with the player standing still,
+  while Bunratty's Ryan lasted every round. A VIP that holds one spot may be too easy to find, or too easy to guard.
+- VIP kids don't talk about being the VIP, and nothing on the HUD points at them beyond the roster star.
