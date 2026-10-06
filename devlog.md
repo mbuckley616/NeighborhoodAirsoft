@@ -8126,3 +8126,20 @@ long gun.
 - At the workbench the Sight and rail labels sit in the viewport's top-left corner: `computeWorkbenchLabelAnchors`
   reads `m.y`/`m.z`, which FP_GUN_MOUNT has never had (since v1.40e). Older than this; the new Under label reads the
   real handguard and sits right. Filed under Found in play.
+
+## v1.169 fix-up — last-kid lets a rifle kid hold at range when he has a line
+CI failed `headless (3/8)` on 2185f32 with `last-kid`: "Four on Four: both last kids come within 30 m in every run".
+In one of its two runs Mitchell's closest was 46.8 m. Locally, Mitchell's closest was 21.9 m in every one of about 28
+runs, but the test plays in real time between `g.scenario` and its loop. Each extra real-time delay moves the round a
+few frames on before Mitchell and Owen are left, and random delays brought it back: Mitchell at 40 m in 3 of 18. With
+no delay at all it reproduces every time. Traced, he does come looking. He gets bored three times and advances each
+time, but his AR has a line at 53.6 m and then 40.6 m, and he fires from there. That is the rifle's hold-and-reach
+design (its far band is 48 m), and firing with a line resets his boredom. Before v1.152 the two never came nearer than
+64 and 68 m and never fired. The check now passes a last kid who comes within 30 m, or within 50 m while firing on the
+player with a line (counted per kid). The game is unchanged.
+### Verified
+- The case with no delay (Mitchell 40.4 m, firing with a line) passes the new rule.
+- `node tests/run.mjs last-kid` passed 3/3 runs.
+### Still open
+- Whether a bored rifle kid should keep closing rather than hold at 40-50 m once he has a line is a design call. It is
+  left as the game has it.
