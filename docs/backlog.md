@@ -176,12 +176,16 @@ Fable card on the control room and Michael starts it from there.
    each its own mesh and trade; `tests/under-parts.test.mjs`). D.14 D is complete pending Michael's look.
 15. Mixing in 1-2 new scenario types would be awesome if we could. Maybe like a ‘VIP’ mode where each team has a VIP
    that has one life but their henchmen have unlimited, for example. (Michael, control room, 2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A VIP with an ally VIP, B you as VIP, C capture the flag, D A then C). Michael: **A**, VIP with an ally VIP kid (control room, 5 Oct).
-   Builder, 6 Oct (not committed, out of time): built as a team battle with `vip: true` (VIPs one life, pistol, role
-   'defender', a blue or red cap on the head; others 99 lives shown as ∞; the player respawns at his start with 2 s of
-   grace; their VIP tagged wins, ours loses; Protect Ryan at Bunratty and Night Shift VIP at the lot, both before
-   their zone's capstone). Staged checks all passed. In play, the VIPs on the lot's centre line were tagged from
-   40 m at 3–8 s, so they were moved to the corners (Seth by the dumpsters, Rebecca at b_corner_e, both starting on
-   their spot); after that the lot match crashed or hung the headless page on entry. Find that first.
+   Builder, 6 Oct, second run (not on auto/build; saved on branch `wip/vip`, commit "WIP (not for merge)"): rebuilt as
+   a team battle with `vip: true`. Ryan (ours, blue cap) and Priya (theirs, red cap, behind the bulb plank) in Protect
+   Ryan at Bunratty; Rebecca and Seth (by the dumpsters) in Night Shift at the lot. Both sit before their zone's capstone.
+   Each VIP has one life, a pistol and the defender role. Everyone else has 99 lives, shown as ∞. You respawn at your
+   start with 2 s of grace. Their VIP out wins, ours out loses. Map card (★ VIP, ♥ ∞), briefing and roster done. The
+   staged checks in `tests/vip.test.mjs` pass on both maps: kids, caps, respawn, grace, both endings. The earlier "lot
+   hang" was not a hang. A 150 s round inside one `page.evaluate` runs about 2.5 s per game second on a loaded box and
+   outlives the page. Stepped a second at a time, Bunratty ran 150 s without a fault. No VIP fell, and the kids traded
+   tags (Tyler 10 lives, Sean 2). Left: cut the suite under run.mjs's 10 minutes (fewer scenario entries, one
+   30–60 s round), run the full suite (the stuck sweep now covers two more matches), then tag, devlog, commit.
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
    2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference)
 
