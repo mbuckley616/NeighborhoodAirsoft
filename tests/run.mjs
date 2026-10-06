@@ -15,7 +15,7 @@ const only = args[0];
 const WEIGHTS = {
   'backyard-guns.test.mjs': 80, 'bb-sweep.test.mjs': 30, 'bound-forward.test.mjs': 150, 'bunratty-polish.test.mjs': 89, 'bunratty-road.test.mjs': 69, 'burst-pose.test.mjs': 47,
   'car-side-fire.test.mjs': 26, 'cars.test.mjs': 5, 'country-club.test.mjs': 139, 'cover-fire.test.mjs': 111,
-  'desk-start.test.mjs': 45, 'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'grip.test.mjs': 20,
+  'desk-start.test.mjs': 45, 'fence-bound.test.mjs': 39, 'fort-spawn.test.mjs': 77, 'front-door.test.mjs': 26, 'gait.test.mjs': 70, 'grip.test.mjs': 20,
   'grocery-store.test.mjs': 139, 'harness.test.mjs': 37, 'high-school.test.mjs': 120, 'hollow-held.test.mjs': 85,
   'houses.test.mjs': 54, 'jump.test.mjs': 27, 'kid-climb.test.mjs': 44, 'kid-clothes.test.mjs': 43,
   'kid-face.test.mjs': 14, 'kid-hands.test.mjs': 8, 'kid-hold.test.mjs': 90, 'ladder-prompt.test.mjs': 12, 'laser.test.mjs': 72,
@@ -30,8 +30,8 @@ const WEIGHTS = {
   'stuck-sweep-5.test.mjs': 451, 'stuck-sweep-6.test.mjs': 138, 'stuck-sweep-7.test.mjs': 392, 'stuck-sweep-8.test.mjs': 451,
   'stuck-sweep-9.test.mjs': 474, 'stuck-sweep-10.test.mjs': 224, 'stuck-sweep-11.test.mjs': 299, 'stuck-sweep-12.test.mjs': 306,
   'stuck-sweep-13.test.mjs': 237, 'stuck-sweep-14.test.mjs': 403, 'stuck-sweep-15.test.mjs': 432, 'stuck-sweep-16.test.mjs': 467,
-  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6,
-  'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
+  'taggers.test.mjs': 72, 'treehouse-hold.test.mjs': 22, 'treehouse.test.mjs': 47, 'treehouse-evan.test.mjs': 60, 'utility-belt.test.mjs': 6, 'vip.test.mjs': 190,
+  'under-parts.test.mjs': 65, 'walk-anim.test.mjs': 30, 'walkie.test.mjs': 35, 'whole-block.test.mjs': 26, 'winnmark-cars.test.mjs': 58,
   'winnmark-fort.test.mjs': 55, 'winnmark-props.test.mjs': 46, 'winnmark-road.test.mjs': 53,
   'winnmark-trees.test.mjs': 60
 };

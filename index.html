@@ -192,6 +192,7 @@
     display: flex;
     gap: 2px;
   }
+  #rosterHud .r-inf { font-size: 13px; line-height: 1; color: #ddd; }   /* v1.170: lives that come back */
   #rosterHud .r-pip {
     width: 7px; height: 7px;
     background: #c44a3a;
@@ -1905,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.168</div>
+  <div class="version">v1.171</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3543,6 +3544,13 @@ const ATTACHMENTS = {
   laser:      { id:'laser',  name:'Red Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, laserColor:'red', desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   laser_green:{ id:'laser_green', name:'Green Laser Sight', slot:'rail', price:34, hipSpreadMult:0.9, laserColor:'green', desc:'Rail-mounted green beam — brighter and easier to see than red, especially at night. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   flashlight: { id:'flashlight', name:'Tactical Flashlight', slot:'rail', price:18, hipSpreadMult:1.0, desc:'Rail-mounted working light that casts a real beam. Goes on a left or right rail.' },
+  // v1.169 (backlog D.14 B, Michael: D): four homemade parts for a new UNDER-barrel slot, one per long gun.
+  // Each one is a trade: it buys one thing and costs another. (The cardboard's 0.68 is a fifth off the cone in degrees:
+  // the jitter is in m/s, so a BB 15% slower would otherwise spread 1/0.85 wider.)
+  taped_mag:  { id:'taped_mag', name:'Taped Twin Mag', slot:'under', price:22, weight:1.2, tapedMag:true, desc:'A second mag duct-taped upside down to the first. It comes loaded from your bag; press R to flip the pair over (0.6 s) and shoot the other one. It’s 1.2 lb more to carry. Long guns only.' },
+  sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, but the strap tugs when you aim: aiming in is slower. Long guns only.' },
+  foregrip:   { id:'foregrip', name:'PVC Foregrip', slot:'under', price:16, weight:0.8, moveSpreadMult:0.65, desc:'A stub of plumbing pipe, hose-clamped under the barrel. Your shots stay a third tighter while you walk, but it’s 0.8 lb more to carry. Long guns only.' },
+  cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'under', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Long guns only.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;
@@ -3551,19 +3559,20 @@ const ATTACHMENTS = {
 const GUN_ACCESSORY_CAP = {
   pistol:  { sight: 1, rails: 1 },
   mac10:   { sight: 1, rails: 1 },
-  shotgun: { sight: 1, rails: 2 },
-  ar:      { sight: 1, rails: 2 },
-  sniper:  { sight: 1, rails: 2 },
-  mp5:     { sight: 1, rails: 2 },
-  ump:     { sight: 1, rails: 2 },
-  ak47:    { sight: 1, rails: 2 },
-  thunder: { sight: 1, rails: 2 },     // v1.168
+  shotgun: { sight: 1, rails: 2, under: 1 },   // v1.169: every long gun has one under-barrel slot
+  ar:      { sight: 1, rails: 2, under: 1 },
+  sniper:  { sight: 1, rails: 2, under: 1 },
+  mp5:     { sight: 1, rails: 2, under: 1 },
+  ump:     { sight: 1, rails: 2, under: 1 },
+  ak47:    { sight: 1, rails: 2, under: 1 },
+  thunder: { sight: 1, rails: 2, under: 1 },     // v1.168
   sixshooter: { sight: 1, rails: 1 },
-  bucket:  { sight: 1, rails: 2 },
+  bucket:  { sight: 1, rails: 2, under: 1 },
   boltpistol: { sight: 1, rails: 1 },
 };
 function getGunAccessoryCap(gunType) {
-  return GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
+  const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
+  return c.under ? c : Object.assign({ under: 0 }, c);   // v1.169: pistols have no under-barrel slot
 }
 
 // =====================================================================
@@ -3597,6 +3606,12 @@ function ensureGunSlots(gunType) {
     const inst = getAccessoryInstance(overflow);
     if (inst) inst.placement = null;
   }
+  // v1.169: the under-barrel slot (null on a gun without one)
+  if (typeof g.under === 'undefined' || !cap.under) {
+    const inst = g.under && getAccessoryInstance(g.under);
+    if (inst) inst.placement = null;
+    g.under = null;
+  }
   return g;
 }
 // Which gun (if any) currently holds this instance.
@@ -3606,6 +3621,7 @@ function findInstanceMount(instId) {
     const g = slots[gt];
     if (!g) continue;
     if (g.sight === instId) return { gunType: gt, slot: 'sight', railIndex: -1 };
+    if (g.under && g.under === instId) return { gunType: gt, slot: 'under', railIndex: -1 };   // v1.169
     if (Array.isArray(g.rails)) {
       const ri = g.rails.indexOf(instId);
       if (ri >= 0) return { gunType: gt, slot: 'rail', railIndex: ri };
@@ -3622,6 +3638,7 @@ function clearGunSlot(gunType, slot, railIndex) {
   const g = ensureGunSlots(gunType);
   let prevId = null;
   if (slot === 'sight') { prevId = g.sight; g.sight = null; }
+  else if (slot === 'under') { prevId = g.under; g.under = null; }   // v1.169
   else { prevId = g.rails[railIndex]; g.rails[railIndex] = null; }
   const prev = prevId && getAccessoryInstance(prevId);
   if (prev) prev.placement = null;
@@ -3637,6 +3654,9 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   if (!def) return { ok:false, reason:'unknown-type' };
   if (slot === 'sight' && def.slot !== 'sight') return { ok:false, reason:'not-a-sight' };
   if (slot === 'rail'  && def.slot !== 'rail')  return { ok:false, reason:'not-a-rail' };
+  if (slot === 'under' && def.slot !== 'under') return { ok:false, reason:'not-an-under' };   // v1.169
+  if (def.slot === 'under' && slot !== 'under') return { ok:false, reason:'under-only' };
+  if (slot === 'under' && !getGunAccessoryCap(gunType).under) return { ok:false, reason:'no-under-slot' };
   ensureGunSlots(gunType);
   // Pull this instance out of wherever it currently sits (no sharing).
   const prevMount = findInstanceMount(instId);
@@ -3645,6 +3665,7 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   clearGunSlot(gunType, slot, railIndex);
   const g = Game.persist.equipped.attachments[gunType];
   if (slot === 'sight') { g.sight = instId; inst.placement = 'sight'; }
+  else if (slot === 'under') { g.under = instId; inst.placement = 'under'; }   // v1.169
   else { g.rails[railIndex] = instId; inst.placement = (railIndex === 0 ? 'left' : 'right'); }
   return { ok:true };
 }
@@ -3662,7 +3683,21 @@ function getMountedAccessories(gunType) {
       if (i) out.push({ type:i.type, slot:'rail', placement: idx===0?'left':'right' });
     });
   }
+  if (g.under) { const i = getAccessoryInstance(g.under); if (i) out.push({ type:i.type, slot:'under', placement:'under' }); }   // v1.169
   return out;
+}
+// v1.169: the homemade part on a gun's under-barrel slot (its ATTACHMENTS def), or null
+function getUnderPart(gunType) {
+  const g = Game.persist?.equipped?.attachments?.[gunType];
+  if (!g || !g.under || !getGunAccessoryCap(gunType).under) return null;
+  const i = getAccessoryInstance(g.under);
+  return (i && ATTACHMENTS[i.type]) || null;
+}
+// v1.169: one number from the equipped gun's under-barrel part (1 when there is none)
+function underPartMult(key) {
+  const gun = Game.persist?.equipped?.gun;
+  const d = gun ? getUnderPart(gun) : null;
+  return (d && typeof d[key] === 'number') ? d[key] : 1;
 }
 function gunHasAccessoryType(gunType, type) {
   return getMountedAccessories(gunType).some(a => a.type === type);
@@ -4032,6 +4067,9 @@ function computeLoadoutWeight() {
     const w = ARMOR_WEIGHT[id] ?? 1;
     gearW += w; parts.push({ label: ARMOR[id]?.name || 'Armor', w });
   }
+  // v1.169: a homemade part on the gun's under-barrel slot (the taped mag, the foregrip) is carried gear too
+  const under = getUnderPart(Game.persist.equipped.gun);
+  if (under && under.weight) { gearW += under.weight; parts.push({ label: under.name, w: under.weight }); }
   return { gunW, gearW, total: gunW + gearW, parts };
 }
 
@@ -5018,6 +5056,7 @@ function scaledReward(v) { return Math.ceil((v || 0) / 10); }
 // ---------------------------------------------------------------------
 function describeWinCondition(sc) {
   if (sc.tutorial) return 'Learn the ropes — tag the practice targets';   // v1.57
+  if (sc.vip) return 'Tag their VIP, keep yours safe — everyone else comes back';   // v1.170
   switch (sc.winCondition) {
     case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
@@ -5054,6 +5093,7 @@ function getScenarioBriefing(scenarioId) {
       gun: getGunDisplayName(es.weapon || 'pistol'),
       gunType: es.weapon || 'pistol',
       lives: setupEntryLives(sc, es),
+      vip: !!es.vip,   // v1.170
     };
     if (es.team === 'player') allies.push(combatant);
     else enemies.push(combatant);
@@ -5067,7 +5107,7 @@ function getScenarioBriefing(scenarioId) {
   let armorBonus = 0;
   try { armorBonus = getArmorBonusHits(); } catch (e) { armorBonus = 0; }
   return {
-    player: { lives: baseLives + armorBonus, baseLives, armorBonus },
+    player: { lives: baseLives + armorBonus, baseLives, armorBonus, respawns: !!sc.vip },   // v1.170: you come back in VIP
     allies, enemies,
     winCondition: sc.winCondition || 'kill_all',
     winConditionText: describeWinCondition(sc),
@@ -5086,10 +5126,10 @@ function getScenarioBriefing(scenarioId) {
 function renderBriefingRosterHTML(brief) {
   if (!brief) return '';
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
-  const lifeStr = n => `${n} ${n === 1 ? 'life' : 'lives'}`;
+  const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
   const row = (c, side) =>
     `<div class="brief-combatant ${side}">
-       <span class="brief-name">${c.name}</span>
+       <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
        <span class="brief-gun">${c.gun}</span>
        <span class="brief-lives">${lifeStr(c.lives)}</span>
      </div>`;
@@ -5100,7 +5140,7 @@ function renderBriefingRosterHTML(brief) {
     <div class="brief-combatant you">
       <span class="brief-name">You</span>
       <span class="brief-gun">${youGun}</span>
-      <span class="brief-lives">${lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
+      <span class="brief-lives">${brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
     </div>
     ${brief.allies.map(c => row(c, 'ally')).join('')}
   </div>`;
@@ -6617,6 +6657,60 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 175, lose: 40 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // v1.170 (backlog D.15, Michael: A): VIP. Each side guards one kid in a cap: one life, a pistol, holding his spot.
+  // Everyone else, you included, comes back when tagged (99 lives, shown as ∞; you respawn at your start). Tag their
+  // VIP and you win; lose yours and you lose.
+  bunratty_vip: {
+    region: 'sentinel', street: 'bunratty_ct',
+    name: 'Bunratty Court', scenarioName: 'Protect Ryan',
+    desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Priya's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Mitchell, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Priya.",
+    builderFn: 'buildBunrattyCourtScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'lane_west',
+    vip: true,
+    enemySetup: [
+      { charId: 'ryan',     weapon: 'pistol',  anchor: 'house0_backyard', team: 'player', vip: true, role: 'defender', lives: 1 },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'house1_backyard', team: 'player' },
+      { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
+      { charId: 'priya',    weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },
+      { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
+      { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
+    ],
+    winCondition: 'last_team_standing',
+    npcLives: 99,
+    rewards: { win: 90, lose: 22 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // v1.170 (D.15): VIP at night in the lot. Seth guards the dumpsters in the red cap; Rebecca is yours, in blue.
+  lot_vip_night: {
+    region: 'east_roswell', street: 'riverside_market',
+    name: 'Riverside Market', scenarioName: 'Night Shift',
+    desc: "Same dark lot, new rules. Rebecca's in the blue cap — she's your VIP, one tag and it's over. Seth's in the red cap, back by the dumpsters at the store's west corner. Everybody else comes back as many times as it takes, so trading tags gets you nowhere: get a line on Seth, and keep one on whoever's hunting Rebecca.",
+    builderFn: 'buildMarketLotScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'team_b',
+    vip: true,
+    enemySetup: [
+      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_road_w',  team: 'player', vip: true, role: 'defender', lives: 1 },
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_road_e',  team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',   anchor: 'b_aisle_w', team: 'player' },
+      { charId: 'seth',     weapon: 'pistol', anchor: 'a_dumpster', vip: true, role: 'defender', lives: 1 },
+      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_store'   },
+      { charId: 'mason',    weapon: 'mp5',    anchor: 'a_store_w' },
+      { charId: 'marcus',   weapon: 'ump',    anchor: 'a_store_e' },
+    ],
+    enemySpawnCluster: 'cluster_north',
+    winCondition: 'last_team_standing',
+    npcLives: 99,
+    rewards: { win: 110, lose: 26 },
     playerLives: 1, armorMult: 1,
   },
 };
@@ -15830,6 +15924,24 @@ function buildGroceryStoreSceneDefault(_v, tod) { return buildGroceryStoreScene(
 // ---------------------------------------------------------------------
 // `armorMult` (from the scenario) multiplies the character's HP — supports
 // "Nick wearing a hoodie" / "armor scenario" use cases without touching CHARACTERS.
+// v1.170 (D.15): a VIP's ball cap, blue for your side and red for theirs, parented to the head so it follows the crouch
+// and the aim tilt like the face does. The crown sits over the hair; the brim points forward (+z is the face).
+function addVipCap(kid, ours) {
+  if (!kid || !kid.head) return null;
+  const mat = new THREE.MeshStandardMaterial({ color: ours ? 0x3d7bd6 : 0xd6453d, roughness: 0.7 });
+  const cap = new THREE.Group();
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.165, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+  crown.scale.set(1, 0.62, 1.04); crown.position.set(0, 0.115, -0.005); cap.add(crown);
+  const brim = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.014, 0.13), mat);
+  brim.position.set(0, 0.12, 0.2); brim.rotation.x = 0.12; cap.add(brim);
+  const button = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), mat);
+  button.position.set(0, 0.22, -0.005); cap.add(button);
+  cap.userData.vipCap = ours ? 'blue' : 'red';
+  kid.head.add(cap);
+  kid.vipCap = cap;
+  return cap;
+}
+
 function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false }) {
   const baseCh = CHARACTERS[charId];
   if (!baseCh) {
@@ -16418,6 +16530,7 @@ function createKid(profile, weapon = 'pistol') {
       base: {
         legL_y: legL.position.y, legR_y: legR.position.y,
         shoeL_z: shoeL.position.z, shoeR_z: shoeR.position.z,
+        legL_x: legL.position.x, legR_x: legR.position.x, shoe_y: shoeL.position.y,   // v1.171: the walk moves them
         torso_y: torso.position.y,
         neck_y: neck.position.y, head_y: head.position.y, gun_y: gunGroup.position.y,
         // v1.78: base X/Z so poses can move limbs and restore them exactly,
@@ -16484,6 +16597,15 @@ function setKidCrouch(kid, amount) {
   // just a squash). Subtle — these are blocky kids.
   po.legL.rotation.x = 0.25 * amount;
   po.legR.rotation.x = 0.25 * amount;
+  // v1.171: the walk swings the legs from the hip and carries the shoes with the feet; start each frame from rest
+  if (b.legL_x != null) {
+    po.legL.rotation.z = 0; po.legR.rotation.z = 0;
+    po.legL.position.x = b.legL_x; po.legR.position.x = b.legR_x;
+    po.legL.position.z = 0; po.legR.position.z = 0;
+    po.shoeL.position.set(b.legL_x, b.shoe_y, b.shoeL_z); po.shoeR.position.set(b.legR_x, b.shoe_y, b.shoeR_z);
+    po.shoeL.rotation.x = 0; po.shoeR.rotation.x = 0;
+    po.torso.rotation.z = 0;
+  }
 
   // How far the hips dropped = the lost leg height above the knee line.
   const hipDrop = (0.55 * (1 - legShrink)); // total leg-height lost
@@ -16699,19 +16821,101 @@ function setKidGunHold(kid, weapon, t = 0, lift = 0) {
 // independent center-pivot boxes, so a small rotation.x swing reads fine. `phase`
 // advances only while moving; `intensity` is eased from real displacement so a
 // stopped kid settles. At intensity ~0 we early-out (legs keep their crouch base).
-function setKidWalk(kid, phase, intensity) {
+// v1.171 (backlog D.16 A, Michael: C, A first): planted feet. The legs used to swing ±14° about their middles at a
+// fixed beat while the shoes stayed put under the hips, so at 2.5-3.5 m/s the feet slid along at the kid's full
+// speed. Now each leg hangs from its hip and the gait is laid out from the kid's real velocity in his own frame
+// (vf forward, vs to his left, m/s): a foot in stance goes back under him at exactly his speed, so it stays where it
+// was put on the ground, and sideways or backward steps are planted too. The swing foot lifts on the way forward
+// (the leg is one piece, so it shortens for the knee) and the shoe tips toe-down off the ground and heel-down into
+// it. The hips ride as high as the stance leg allows, which gives the bob, and roll a little over the stance foot.
+// Cadence rises with speed (f = 0.75 + 0.35 v cycles a second, quicker still when the stride would outgrow the leg).
+// A foot is down 52% of the cycle, so one is always on the ground: a run with both feet up skated the low foot along
+// at his whole speed. The swing is a Hermite curve that leaves and lands moving back under him at his speed, so the
+// foot is still in the world as it lifts and as it touches down (a cosine swing starts and stops dead under the hip,
+// which skids the foot forward at his speed while it is still at the ground). `phase` runs 2π a cycle; the right leg
+// is half a cycle behind the left.
+function setKidWalk(kid, phase, intensity, vf, vs, duty) {
   const po = kid.pose;
   if (!po) return;
   intensity = Math.max(0, Math.min(1, intensity));
   if (intensity <= 0.02) return;   // settled — base/hold stance stands
-  const s = Math.sin(phase) * intensity;
-  // Legs swing in opposition (subtle).
-  const legSwing = 0.24 * s;
-  po.legL.rotation.x = (po.legL.rotation.x || 0) + legSwing;
-  po.legR.rotation.x = (po.legR.rotation.x || 0) - legSwing;
-  // Faint vertical bob from the gait.
-  const bob = Math.abs(Math.cos(phase)) * 0.012 * intensity;
-  po.torso.position.y += bob;
+  const b = po.base;
+  if (vf == null) { vf = 2.0 * intensity; vs = 0; }   // a caller with no velocity (the ladder's foot): a plain walk
+  vs = vs || 0;
+  const v = Math.hypot(vf, vs);
+  if (duty == null) duty = kidGaitDuty(v);
+  const sxz = kid.scaleXZ || 1;
+  const shrink = po.legL.scale.y / (b.legScaleY || 1);   // the crouch's leg shrink, set this frame
+  const f = kidGaitCadence(v, sxz * shrink);
+  const h = 0.55 * shrink;                                 // leg length, hip to sole (local)
+  // half the ground a stance foot covers under the hip, in local units, each way; capped at 0.6 of the leg
+  const cap = 0.6 * h;
+  const Df = Math.max(-cap, Math.min(cap, (vf / sxz) * duty / (2 * f)));
+  const Ds = Math.max(-cap, Math.min(cap, (vs / sxz) * duty / (2 * f)));
+  const liftAmt = Math.min(0.1, 0.03 + 0.02 * v) * shrink;
+  const u0 = ((phase / (2 * Math.PI)) % 1 + 1) % 1;
+  const legs = [
+    { leg: po.legL, shoe: po.shoeL, x: b.legL_x, z0: b.shoeL_z, u: u0 },
+    { leg: po.legR, shoe: po.shoeR, x: b.legR_x, z0: b.shoeR_z, u: (u0 + 0.5) % 1 },
+  ];
+  let H = null, stanceRoll = 0;
+  for (const L of legs) {
+    let k, w;
+    if (L.u < duty) { k = L.u / duty; w = 1 - 2 * k; L.lift = 0; L.stance = true; L.tip = 0; }
+    else {
+      k = (L.u - duty) / (1 - duty);
+      const m = -2 * (1 - duty) / duty;   // the stance's own rate of travel, at both ends of the swing
+      w = (-4 * k * k * k + 6 * k * k - 1) + m * (2 * k * k * k - 3 * k * k + k);
+      L.lift = Math.sin(Math.PI * k) * liftAmt; L.stance = false;
+      L.tip = 0.35 * Math.sin(Math.PI * k) * Math.cos(Math.PI * k) * Math.min(1, v / 2);   // toe down, then heel down
+    }
+    L.oz = Df * w; L.ox = Ds * w;   // the foot's place relative to the hip (+z forward, +x to his left)
+    if (L.stance) {
+      const hh = Math.sqrt(Math.max(0, h * h - L.oz * L.oz - L.ox * L.ox));
+      H = H == null ? hh : Math.min(H, hh);
+      stanceRoll += (L.x < 0 ? 1 : -1);   // +z roll tips the top toward -x
+    }
+  }
+  if (H == null) H = Math.sqrt(Math.max(0, h * h - Df * Df - Ds * Ds));   // between stances: no flight, the low point
+  for (const L of legs) {
+    const y = Math.max(0.05, H - L.lift);
+    const len = Math.min(h, Math.hypot(y, L.ox, L.oz));
+    // the leg's -y runs from the hip to the foot: rotation.z leans it sideways, rotation.x fore and aft
+    L.leg.rotation.z = Math.asin(Math.max(-1, Math.min(1, L.ox / len)));
+    L.leg.rotation.x = Math.atan2(-L.oz, y);
+    L.leg.scale.y = (b.legScaleY || 1) * (len / 0.55);
+    L.leg.position.set(L.x + L.ox / 2, H - y / 2 + (h - H), L.oz / 2);
+    // the shoe sits on the foot; its rest offset from the sole point is (0, shoe_y, shoe_z)
+    L.shoe.position.set(L.x + L.ox, (h - H) + L.lift + b.shoe_y, L.oz + L.z0);
+    L.shoe.rotation.x = L.tip;
+  }
+  // The hips sit at H, not h: everything above them comes down by h - H. The leg tops sit at h above the soles,
+  // so lower the legs and shoes by the same and the whole kid keeps his soles on the ground.
+  const drop = h - H;
+  for (const L of legs) { L.leg.position.y -= drop; L.shoe.position.y -= drop; }
+  kidLowerUpper(po, drop);
+  // a little roll over the stance foot (none when both or neither are down)
+  po.torso.rotation.z = 0.035 * Math.max(-1, Math.min(1, stanceRoll)) * Math.min(1, v / 2) * intensity;
+}
+
+// v1.171: the gait's beat and the share of it a foot spends on the ground, from speed (m/s). `reach` is the kid's
+// leg against the standard 0.55 m (his width scale times the crouch's leg shrink): a fast or short-legged kid steps
+// quicker, so a stance foot never has to cover more than 90% of the stride cap (above it the foot would slide).
+function kidGaitCadence(v, reach) {
+  const f0 = 0.75 + 0.35 * Math.min(4, v);
+  const fFit = v * kidGaitDuty(v) / (2 * 0.9 * 0.6 * 0.55 * (reach || 1));
+  return Math.min(3.5, Math.max(f0, fFit));
+}
+function kidGaitDuty(v) { return 0.52; }
+
+// v1.171: lower everything the crouch lowers (from the torso up) by dy more, local units
+function kidLowerUpper(po, dy) {
+  if (!(dy > 0)) return;
+  po.torso.position.y -= dy;
+  po.rigR.shoulder.position.y -= dy; po.rigL.shoulder.position.y -= dy;
+  po.neck.position.y -= dy; po.head.position.y -= dy; po.gunGroup.position.y -= dy;
+  if (po.hair) po.hair.position.y -= dy;
+  if (po.headExtras) for (const ex of po.headExtras) ex.mesh.position.y -= dy;
 }
 
 // ---------------------------------------------------------------------
@@ -17969,6 +18173,8 @@ function ensureFPGunAccessory(group, gunType) {
   const cap = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
   const railMat = new THREE.MeshStandardMaterial({ color: 0x202024, roughness: 0.5, metalness: 0.6 });
   const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x303036, roughness: 0.45, metalness: 0.6 });
+  // v1.169: the under-barrel parts, measured off the bare gun before anything is bolted on
+  const underParts = cap.under ? buildUnderParts(group, mount) : null;
 
   // ---- v1.40e: SIDE RAILS matching the data model. Guns have 1 or 2 rail slots
   // (GUN_ACCESSORY_CAP.rails). Slot 0 = LEFT rail, slot 1 = RIGHT rail. Each is a
@@ -18116,7 +18322,7 @@ function ensureFPGunAccessory(group, gunType) {
   const scopeOptic  = buildScopeOptic();  scopeOptic.visible  = false; sightAnchor.add(scopeOptic);
 
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
-    railAnchors, sightAnchor, redDotOptic, scopeOptic, gunGroup: group };
+    railAnchors, sightAnchor, redDotOptic, scopeOptic, underParts, gunGroup: group };
   return group.userData.accessories;
 }
 
@@ -18207,6 +18413,92 @@ function updateFPGunAccessory(group, gunType) {
   // is a no-op for them.
   const opticUp = !!sightPl;
   group.traverse(m => { if (m.userData && m.userData.ironSight) m.visible = !opticUp; });
+  // v1.169: the homemade part on the under-barrel slot
+  if (acc.underParts) {
+    const underPl = mounted.find(a => a.slot === 'under');
+    for (const k in acc.underParts.meshes) acc.underParts.meshes[k].visible = !!underPl && underPl.type === k;
+  }
+}
+
+// v1.169 (backlog D.14 B): the four homemade under-barrel parts, built once per gun group and hidden. Where they go is
+// read off the bare gun: the underside of whatever is at the rail's middle on the bore line (the handguard), and the
+// front of the barrel. Each part is its own group, named by its ATTACHMENTS key.
+function measureGunForUnder(group, mount) {
+  group.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  let bottom = null, frontZ = 0, frontY = mount.barrelY;
+  group.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.visible) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+    if (b.min.x > 0.004 || b.max.x < -0.004) return;                       // off the centre line
+    if (b.min.z <= mount.railZ + 0.012 && b.max.z >= mount.railZ - 0.012 &&
+        b.min.y <= mount.barrelY + 0.012 && b.max.y >= mount.barrelY - 0.012) {
+      if (bottom === null || b.min.y < bottom) bottom = b.min.y;
+    }
+    if (b.min.y <= mount.barrelY + 0.03 && b.max.y >= mount.barrelY - 0.03 && b.min.z < frontZ) {
+      frontZ = b.min.z; frontY = (b.min.y + b.max.y) / 2;
+    }
+  });
+  return { bottom: bottom === null ? mount.barrelY - 0.022 : bottom, frontZ, frontY };
+}
+function buildUnderParts(group, mount) {
+  const m = measureGunForUnder(group, mount);
+  const meshes = {};
+  const z0 = mount.railZ, y0 = m.bottom;
+  const tapeMat = new THREE.MeshStandardMaterial({ color: 0x9ea3a8, roughness: 0.55, metalness: 0.35 });   // duct tape
+  // Taped twin mag: a spare mag hanging under the handguard, two bands of duct tape round it and the gun
+  {
+    const g = new THREE.Group();
+    const magMat = new THREE.MeshStandardMaterial({ color: 0x2848a0, roughness: 0.4, metalness: 0.2 });
+    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.075, 0.034), magMat);
+    mag.position.set(0, y0 - 0.0375, z0); mag.rotation.x = -0.12; g.add(mag);
+    for (const dz of [-0.011, 0.011]) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.027, 0.03, 0.007), tapeMat);
+      band.position.set(0, y0 - 0.008, z0 + dz); g.add(band);
+    }
+    meshes.taped_mag = g;
+  }
+  // Shoelace sling: a red strap looping down from a knot under the handguard back toward the stock
+  {
+    const g = new THREE.Group();
+    const laceMat = new THREE.MeshStandardMaterial({ color: 0xc8322a, roughness: 0.85 });
+    const r = 0.09;
+    const strap = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0035, 6, 28, Math.PI), laceMat);
+    strap.rotation.set(0, Math.PI / 2, Math.PI);          // a half loop in the y-z plane, hanging down
+    strap.position.set(0, y0, z0 + r); g.add(strap);
+    for (const zz of [z0, z0 + 2 * r]) {
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 6), laceMat);
+      knot.position.set(0, y0 - 0.002, zz); g.add(knot);
+    }
+    meshes.sling = g;
+  }
+  // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
+  {
+    const g = new THREE.Group();
+    const pvcMat = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.5 });
+    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.062, 14), pvcMat);
+    pipe.position.set(0, y0 - 0.031, z0); g.add(pipe);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.012, 14), pvcMat);
+    cap.position.set(0, y0 - 0.062, z0); g.add(cap);
+    const clamp = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0022, 6, 16), tapeMat);
+    clamp.rotation.x = Math.PI / 2; clamp.position.set(0, y0 - 0.006, z0); g.add(clamp);
+    meshes.foregrip = g;
+  }
+  // Cardboard barrel: a paper-towel tube over the muzzle, with a band of tape where it meets the gun
+  {
+    const g = new THREE.Group();
+    const cardMat = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.95 });
+    const len = 0.13;
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 16, 1, true), cardMat);
+    tube.material.side = THREE.DoubleSide;
+    tube.rotation.x = Math.PI / 2; tube.position.set(0, m.frontY, m.frontZ + 0.02 - len / 2); g.add(tube);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0155, 0.0155, 0.018, 16), tapeMat);
+    band.rotation.x = Math.PI / 2; band.position.set(0, m.frontY, m.frontZ + 0.012); g.add(band);
+    meshes.cardboard_barrel = g;
+  }
+  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.underPart = k; group.add(meshes[k]); }
+  return { meshes, bottom: y0, frontZ: m.frontZ, frontY: m.frontY };
 }
 
 // v1.27b/v1.40c: laser zero target, pinned to the camera at screen-center,
@@ -18411,6 +18703,10 @@ function computeWorkbenchLabelAnchors(gunType) {
     const yOff = (cap.rails === 1) ? -0.02 : 0;
     anchors.push({ slot: 'rail', railIndex: i, pos: new THREE.Vector3(x, m.y - 0.03 + yOff, m.z) });
   }
+  if (cap.under) {   // v1.169: below the handguard
+    const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
+    anchors.push({ slot: 'under', railIndex: -1, pos: new THREE.Vector3(0, (up ? up.bottom : m.barrelY - 0.02) - 0.13, m.railZ) });
+  }
   WB.labelAnchors = anchors;
 }
 
@@ -18458,9 +18754,9 @@ function projectWorkbenchLabels(w, h) {
     el.style.display = behind ? 'none' : 'block';
     el.style.left = x + 'px';
     el.style.top = y + 'px';
-    let mountedId = a.slot === 'sight' ? slots.sight : (slots.rails && slots.rails[a.railIndex]);
+    let mountedId = a.slot === 'sight' ? slots.sight : a.slot === 'under' ? slots.under : (slots.rails && slots.rails[a.railIndex]);
     const inst = mountedId ? getAccessoryInstance(mountedId) : null;
-    const labelName = a.slot === 'sight' ? 'Sight' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
+    const labelName = a.slot === 'sight' ? 'Sight' : a.slot === 'under' ? 'Under' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
     el.textContent = inst ? `${labelName}: ${ATTACHMENTS[inst.type].name}` : `${labelName}: empty`;
     el.className = 'wb-vp-label' + (inst ? '' : ' empty');
   });
@@ -18478,7 +18774,7 @@ function renderWorkbench() {
     div.className = 'wb-gun' + (gt === WB.gunType ? ' active' : '') + (owned ? '' : ' locked');
     const cap = getGunAccessoryCap(gt);
     div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
-      `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}` : 'Not owned'}</div></div>`;
+      `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}` : 'Not owned'}</div></div>`;
     if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
     gl.appendChild(div);
   }
@@ -18508,6 +18804,7 @@ function renderWorkbench() {
     for (let i = 0; i < cap.rails; i++) {
       addSlotRow(cap.rails === 1 ? 'Rail' : (i === 0 ? 'Left rail' : 'Right rail'), 'rail', i, slots.rails[i]);
     }
+    if (cap.under) addSlotRow('Under-barrel', 'under', -1, slots.under);   // v1.169
   } else {
     sl.innerHTML = '<div class="wb-locker-empty">Select a gun to customize.</div>';
   }
@@ -18521,7 +18818,7 @@ function renderWorkbench() {
     return;
   }
   // Group unmounted instances by type; mark compatibility with the selected slot.
-  const selKind = WB.selSlot ? WB.selSlot.slot : null;     // 'sight' | 'rail' | null
+  const selKind = WB.selSlot ? WB.selSlot.slot : null;     // 'sight' | 'rail' | 'under' | null
   const counts = {};
   for (const inst of Game.persist.accessories) {
     if (findInstanceMount(inst.id)) continue;  // mounted somewhere — not in locker
@@ -18537,7 +18834,7 @@ function renderWorkbench() {
     const compat = selKind && compatSlotType === selKind;
     const div = document.createElement('div');
     div.className = 'wb-locker-item ' + (selKind ? (compat ? 'compat' : 'incompat') : '');
-    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : 'RAIL'}</span>` +
+    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : compatSlotType === 'under' ? 'UNDER' : 'RAIL'}</span>` +
       `<span>${def.name}</span><span style="margin-left:auto;color:#888">×${counts[type]}</span>`;
     if (compat) {
       div.addEventListener('click', () => {
@@ -19112,6 +19409,7 @@ function enterScenario(scenarioId) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
+        if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -19307,6 +19605,7 @@ function enterScenario(scenarioId) {
   // can tick it down and check for win.
   Game.scenario.winCondition = sc.winCondition || 'kill_all';
   Game.scenario.ffa = !!sc.ffa;   // v1.134: read by the roster, the lives respawn and the free-for-all roam; was never set
+  Game.scenario.vip = !!sc.vip;   // v1.170
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
@@ -19501,6 +19800,9 @@ function startScenario(built) {
   Game.player.pos.copy(built.spawn);
   Game.player.vel.set(0, 0, 0);
   Game.player.yaw = built.spawnYaw;
+  Game.scenario.playerStart = { pos: built.spawn.clone(), yaw: built.spawnYaw };   // v1.170: where a VIP-match respawn puts you
+  Game.scenario.playerRespawns = 0;
+  Game.player._graceT = 0;
   Game.player.pitch = 0;
   Game.player.hitsTaken = 0;
   // v1.28h: base lives default to 1 (one hit and you're out) — was a flat 3.
@@ -19532,7 +19834,7 @@ function startScenario(built) {
   // Reset gun — load full spec from GUN_SPECS based on equipped gun
   Game.gun.type = Game.persist.equipped.gun;
   const spec = getGunSpec(Game.gun.type);
-  Game.gun.muzzleVelocity = spec.muzzleVelocity;
+  Game.gun.muzzleVelocity = spec.muzzleVelocity * underPartMult('velocityMult');   // v1.169: the cardboard barrel slows the BB
   Game.gun.baseSpread = spec.baseSpread;
   Game.gun.adsSpreadMult = spec.adsSpreadMult;
   Game.gun.curveOnsetDistance = spec.curveOnsetDistance;
@@ -19552,6 +19854,12 @@ function startScenario(built) {
   const startTaken = Math.min(Game.gun.maxAmmo, Game.persist.bag);
   Game.gun.ammo = startTaken;
   Game.persist.bag -= startTaken;
+  // v1.169: a taped twin mag loads next, from what the bag has left, up to the same size
+  Game.gun.tapedMag = !!(getUnderPart(Game.gun.type) || {}).tapedMag;
+  Game.gun.tapedAmmo = Game.gun.tapedMag ? Math.min(Game.gun.maxAmmo, Game.persist.bag) : 0;
+  Game.persist.bag -= Game.gun.tapedAmmo;
+  Game.gun.flipT = 0;
+  Game.gun._rHeld = false;
   // v1.50: then top off any equipped speed loaders from what's left in the bag
   // (mag gets first claim). Loaders are reusable — they arrive full each round.
   refillEquippedSpeedLoadersFromBag();
@@ -19704,6 +20012,9 @@ function endScenario(outcome) {
   // Return remaining mag ammo to bag (you unload between matches)
   Game.persist.bag += Game.gun.ammo;
   Game.gun.ammo = 0;
+  Game.persist.bag += Game.gun.tapedAmmo || 0;   // v1.169: and the taped twin mag's
+  Game.gun.tapedAmmo = 0;
+  Game.gun.flipT = 0;
   // v1.50: also return any BBs still inside equipped speed loaders to the bag,
   // so nothing is lost between rounds and they refill cleanly next start.
   returnEquippedSpeedLoadersToBag();
@@ -19763,7 +20074,18 @@ function endScenario(outcome) {
   const holdPlace = scDef?.resultHold || 'the fort';
   const regroupAt = scDef?.resultRegroup || _place.regroup || 'near the road';
   const sitDown = _place.sit || 'sit on the curb';
-  if (outcome === 'win') {
+  // v1.170 (D.15): a VIP match is decided by one kid, so its lines name the VIP, not "the last one"
+  const _vipTheirs = Game.scenario.vip ? (Game.scenario.enemies || []).find(e => e.vip && e.team !== 'player') : null;
+  const _vipOurs = Game.scenario.vip ? (Game.scenario.enemies || []).find(e => e.vip && e.team === 'player') : null;
+  if (outcome === 'win' && _vipTheirs) {
+    outcomeEl.textContent = 'YOU GOT THEM';
+    outcomeEl.className = 'outcome win';
+    flavorEl.textContent = `${_vipTheirs.name} pulls off the red cap. "Okay, okay — VIP's down." ${_vipOurs ? _vipOurs.name + ' made it through.' : 'That one counted.'}`;
+  } else if (outcome === 'lose' && _vipOurs) {
+    outcomeEl.textContent = `THEY GOT ${_vipOurs.name.toUpperCase()}`;
+    outcomeEl.className = 'outcome lose';
+    flavorEl.textContent = `${_vipOurs.name} takes one right on the blue cap. "Aw, man — I was the VIP!" ${allStr} regroup ${regroupAt}. "Run it back?"`;
+  } else if (outcome === 'win') {
     if (wonByTimer) {
       // Survive-timer win: the attackers' moms called them in
       outcomeEl.textContent = 'MOM CALLED THEM IN!';
@@ -20980,14 +21302,14 @@ function renderGunDetail(c, gt) {
   ensureGunSlots(gt);
   const slots = Game.persist.equipped.attachments[gt];
   c.appendChild(shopSectionHeader('Accessory Slots',
-    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''} · customize at The Workbench (hall closet)`));
+    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' + 1 under-barrel' : ''} · customize at The Workbench (hall closet)`));
   const summary = document.createElement('div');
   summary.className = 'shop-item-desc';
   summary.style.padding = '6px 2px';
   const mounted = getMountedAccessories(gt);
   if (mounted.length) {
     const parts = mounted.map(m => {
-      const where = m.slot === 'sight' ? 'sight' : (cap.rails === 1 ? 'rail' : m.placement);
+      const where = m.slot === 'sight' ? 'sight' : m.slot === 'under' ? 'under-barrel' : (cap.rails === 1 ? 'rail' : m.placement);
       return `${ATTACHMENTS[m.type].name} (${where})`;
     });
     summary.textContent = 'Currently mounted: ' + parts.join(', ') + '.';
@@ -21011,7 +21333,7 @@ function renderAccessoriesTab(c) {
   for (const aid in ATTACHMENTS) {
     const a = ATTACHMENTS[aid];
     const owned = Game.persist.ownedEquipment.attachments[aid] || 0;
-    const slotTag = a.slot === 'sight' ? 'SIGHT' : 'RAIL';
+    const slotTag = a.slot === 'sight' ? 'SIGHT' : a.slot === 'under' ? 'UNDER' : 'RAIL';   // v1.169
     const row = document.createElement('div');
     row.className = 'shop-item' + (owned ? ' owned' : '');
     row.innerHTML = `<div class="shop-item-icon">⊹</div>` +
@@ -21293,6 +21615,7 @@ document.addEventListener('contextmenu', e => {
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
   if (Game.gun.jammed) return;
+  if (Game.gun.flipT > 0) return;   // v1.169: no shot while the taped mags are being flipped
   const heldSlot = describeSlot(Game.held.slotIdx);
   if (!heldSlot) return;
   if (heldSlot.kind === 'gun') {
@@ -21438,7 +21761,8 @@ const ADS_MOVE_MULT = 0.7;
 const ADS_SENS_MULT = 0.55;        // mouse sensitivity at full ADS
 const ADS_FOV_TARGET = 55;
 const BASE_FOV = 75;
-const ADS_BLEND_SPEED = 8;         // higher = snappier ADS transition
+const ADS_BLEND_SPEED = 8;
+const TAPED_FLIP_TIME = 0.6;       // v1.169: seconds to flip a taped twin mag         // higher = snappier ADS transition
 const CROUCH_BLEND_SPEED = 10;
 
 const PLAYER_GRAVITY = 12.0;       // a bit stronger than world gravity for snappier feel
@@ -21593,7 +21917,7 @@ function updatePlayer(dt) {
     const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']);
     const draining = inScenario && (Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround)) && pressingMove;
     if (draining) {
-      Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * dt;
+      Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * underPartMult('sprintDrainMult') * dt;   // v1.169: sling
       Game.player._rechargeWait = STAMINA_RECHARGE_DELAY;
       if (Game.player.stamina <= 0) {
         Game.player.stamina = 0;
@@ -21883,7 +22207,9 @@ function easeStanceAndAds(dt) {
   else targetEye = Game.player.eyeOffsetStand;
   Game.player.eyeOffset += (targetEye - Game.player.eyeOffset) * Math.min(1, dt * CROUCH_BLEND_SPEED);
   // ADS blend
-  Game.player.ads += (Game.player.adsTarget - Game.player.ads) * Math.min(1, dt * ADS_BLEND_SPEED);
+  // v1.169: the sling tugs as the gun comes up, so aiming IN is slower; letting go is not
+  const adsK = ADS_BLEND_SPEED * (Game.player.adsTarget > Game.player.ads ? underPartMult('adsSpeedMult') : 1);
+  Game.player.ads += (Game.player.adsTarget - Game.player.ads) * Math.min(1, dt * adsK);
   if (Game.player.ads < 0.001) Game.player.ads = 0;
   if (Game.player.ads > 0.999) Game.player.ads = 1;
 }
@@ -22258,13 +22584,35 @@ function updateGun(dt) {
     }
   }
 
+  // === v1.169: TAPED TWIN MAG. A press of R (not one held over) flips the pair, and the two mags trade places
+  // after TAPED_FLIP_TIME; what was left in the one you were shooting rides along, so nothing is lost.
+  if (Game.gun.tapedMag) {
+    const rDown = !!Game.keys['KeyR'];
+    if (rDown && !Game.gun._rHeld && !Game.gun.jammed && !(Game.gun.flipT > 0) && held && held.kind === 'gun' &&
+        Game.gun.tapedAmmo > 0 && !Game.held.using) {
+      Game.gun.flipT = TAPED_FLIP_TIME;
+      Game.gun.autoFireTimer = 0;
+      updateAmmoHud();
+    }
+    Game.gun._rHeld = rDown;
+    if (Game.gun.flipT > 0) {
+      Game.gun.flipT -= dt;
+      if (Game.gun.flipT <= 0) {
+        Game.gun.flipT = 0;
+        const t = Game.gun.tapedAmmo; Game.gun.tapedAmmo = Game.gun.ammo; Game.gun.ammo = t;
+        playReloadClick();
+        updateAmmoHud();
+      }
+    }
+  }
+
   // === v1.20: AUTO-FIRE cycle ===
   // For auto-mode guns: while LMB is held, gun is cocked, ammo > 0, and not
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
   // between shots. When the mag empties, cocked drops to false → falls through
   // to the normal cock/reload path.
   if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed) {
-    if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0) {
+    if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0 && !(Game.gun.flipT > 0)) {
       const cycle = 60 / Math.max(1, Game.gun.cyclicRPM); // seconds per shot
       Game.gun.autoFireTimer += dt;
       // Allow multiple shots per frame at very high RPMs (MAC-10 at 1100 RPM
@@ -22616,7 +22964,7 @@ function updateHeldMesh(dt) {
 function updateAmmoHud() {
   document.getElementById('gunName').textContent = getGunDisplayName(Game.gun.type);
   document.getElementById('ammoCurrent').textContent = Game.gun.ammo;
-  document.getElementById('ammoMax').textContent = Game.gun.maxAmmo;
+  document.getElementById('ammoMax').textContent = Game.gun.maxAmmo + (Game.gun.tapedMag ? ` · taped ${Game.gun.tapedAmmo || 0}` : '');   // v1.169
   const bagEl = document.getElementById('bagCount');
   bagEl.textContent = Game.persist.bag;
   bagEl.parentElement.classList.toggle('empty', Game.persist.bag === 0);
@@ -22624,6 +22972,12 @@ function updateAmmoHud() {
 
   if (Game.gun.jammed) {
     s.textContent = 'JAMMED';
+    s.className = 'status reloading';
+  } else if (Game.gun.flipT > 0) {
+    s.textContent = 'FLIPPING MAGS…';   // v1.169
+    s.className = 'status reloading';
+  } else if (Game.gun.ammo === 0 && Game.gun.tapedMag && Game.gun.tapedAmmo > 0) {
+    s.textContent = `MAG EMPTY · R TO FLIP (${Game.gun.tapedAmmo})`;   // v1.169
     s.className = 'status reloading';
   } else if (Game.gun.ammo === 0) {
     // Show what they can do — F to forfeit always available
@@ -22824,13 +23178,14 @@ function updateRosterHud() {
     const maxPips = usesLives ? (e.maxLives || 1) : (e.maxHealth || 1);
     const remaining = usesLives ? Math.max(0, e.lives) : Math.max(0, e.health);
     let pipsHtml = '';
-    for (let i = 0; i < maxPips; i++) {
+    if (usesLives && maxPips >= 99) pipsHtml = '<span class="r-inf">∞</span>';   // v1.170: a VIP match's respawners
+    else for (let i = 0; i < maxPips; i++) {
       const filled = i < remaining;
       pipsHtml += `<div class="r-pip${ally ? ' ally' : ''}${filled ? '' : ' empty'}"></div>`;
     }
     rows.push(`
       <div class="roster-row${dead ? ' dead' : ''}${ally ? ' ally' : ''}">
-        <div class="r-name">${e.name}</div>
+        <div class="r-name">${e.name}${e.vip ? ' ★' : ''}</div>
         <div class="r-lives">${pipsHtml}</div>
         <div class="r-dist">${distStr}</div>
       </div>
@@ -23192,7 +23547,7 @@ function fireBB() {
   // crouch shrink `sway` upstream AND ADS damps this term further, so aimed shots
   // stay tight. Tunable via MOVE_SPREAD_K.
   const MOVE_SPREAD_K = 0.10;
-  const moveSpread = Game.player.sway * MOVE_SPREAD_K * (Game.gun.muzzleVelocity || 30);
+  const moveSpread = Game.player.sway * MOVE_SPREAD_K * (Game.gun.muzzleVelocity || 30) * underPartMult('moveSpreadMult');   // v1.169: foregrip
   // Multi-pellet support: per-shot pellet count (1 for most guns, 2-3 for shotgun).
   // v1.16: each pellet consumes a BB from the mag, so cap the count to what's
   // actually loaded — a shotgun with 2 BBs left fires 2 pellets, not 3.
@@ -23682,6 +24037,7 @@ function bbCanTarget(bb, c) {
 // distinct player-hit vs enemy-hit effects exactly as before.
 function applyBBHit(bb, c) {
   if (c === Game.player) {
+    if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
@@ -23690,7 +24046,8 @@ function applyBBHit(bb, c) {
     updateHealthHud();
     // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
     if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
-      endScenario('lose');
+      if (Game.scenario.vip) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters
+      else endScenario('lose');
     }
   } else {
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
@@ -23698,6 +24055,24 @@ function applyBBHit(bb, c) {
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
   }
   return true;
+}
+
+// v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
+// seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
+const VIP_GRACE = 2.0;
+function respawnPlayerVip() {
+  const st = Game.scenario.playerStart;
+  if (!st) return;
+  Game.player.pos.copy(st.pos);
+  Game.player.vel.set(0, 0, 0);
+  Game.player.yaw = st.yaw;
+  Game.player.pitch = 0;
+  Game.player.hitsTaken = 0;
+  Game.player.sliding = false;
+  Game.player.adsTarget = 0;
+  Game.player._graceT = VIP_GRACE;
+  Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
+  updateHealthHud();
 }
 
 function updateBBs(dt) {
@@ -24418,6 +24793,14 @@ function checkWinCondition() {
   // a tutorial coach or a teammate in a skirmish) must not need shooting to win.
   const alive = Game.scenario.enemies.filter(e => e.health > 0 && e.team !== 'player').length;
   const winCondition = Game.scenario.winCondition || 'kill_all';
+  // v1.170 (D.15): a VIP match ends on a VIP, and only on one: theirs out wins, ours out loses
+  if (Game.scenario.vip) {
+    const theirs = Game.scenario.enemies.find(e => e.vip && (e.team || 'enemy') !== 'player');
+    const ours = Game.scenario.enemies.find(e => e.vip && e.team === 'player');
+    if (theirs && !npcInFight(theirs)) endScenarioLater('win', 600);
+    else if (ours && !npcInFight(ours)) endScenarioLater('lose', 600);
+    return;
+  }
 
   if (winCondition === 'kill_all') {
     // Standard: kill everyone wins
@@ -25383,7 +25766,7 @@ function kidLadderStep(e, tgt, dt) {
   e.mesh.group.rotation.z = 0;
   setKidCrouch(e.mesh, 0);
   setKidGunHold(e.mesh, e.weapon, 0, 0);
-  e._walkPhase = (e._walkPhase || 0) + (walking ? dt * 8.0 : 0);
+  e._walkPhase = (e._walkPhase || 0) + (walking ? 2 * Math.PI * kidGaitCadence(1.6) * dt : 0);   // v1.171: the gait's beat
   setKidWalk(e.mesh, e._walkPhase, walking ? 0.8 : 0);
   if (e.mesh._laserUnit && e.mesh._laserUnit.userData) {
     const lu = e.mesh._laserUnit.userData;
@@ -25482,6 +25865,8 @@ function updateEnemies(dt) {
     const rawMoved = Math.sqrt(fdx * fdx + fdz * fdz);
     const moved = (rawMoved > Math.max(0.3, dt * 15)) ? 0 : rawMoved;
     e._animSpeed = moved / Math.max(dt, 1e-3);   // m/s the walk anim reads (tests)
+    // v1.171: and its direction, for the planted-foot gait (none on a teleport)
+    e._animVX = moved ? fdx / Math.max(dt, 1e-3) : 0; e._animVZ = moved ? fdz / Math.max(dt, 1e-3) : 0;
     e._footstepDist = (e._footstepDist || 0) + moved;
     if (e._footstepDist >= 0.6) {
       e._footstepDist = 0;
@@ -26875,13 +27260,25 @@ function updateEnemies(dt) {
       const speedNorm = Math.min(1, (moveThisFrame / Math.max(dt, 1e-3)) / 3.0); // ~3 m/s = full
       e._walkInt = (e._walkInt == null) ? speedNorm
         : e._walkInt + (speedNorm - e._walkInt) * Math.min(1, dt * 6);
-      // Advance the gait phase only while moving (so a stopped kid freezes mid-stance).
-      e._walkPhase = (e._walkPhase || 0) + e._walkInt * dt * 8.0;
+      // v1.171 (D.16 A): the gait reads his velocity in his own frame (eased, so a collision's one-frame jolt doesn't
+      // kick a leg), and the phase runs at the cadence for that speed. It stops when he does (a stopped kid freezes
+      // mid-stance and the stride shrinks to nothing as the eased speed falls).
+      {
+        const yaw = e.mesh.group.rotation.y, cy = Math.cos(yaw), sy = Math.sin(yaw);
+        const vx = e._animVX || 0, vz = e._animVZ || 0;
+        const vfNow = vx * sy + vz * cy, vsNow = vx * cy - vz * sy;   // forward (+z local), to his left (+x local)
+        const ease = Math.min(1, dt * 8);
+        e._gaitVF = (e._gaitVF || 0) + (vfNow - (e._gaitVF || 0)) * ease;
+        e._gaitVS = (e._gaitVS || 0) + (vsNow - (e._gaitVS || 0)) * ease;
+      }
+      const gaitV = Math.hypot(e._gaitVF, e._gaitVS);
+      const gaitReach = (e.mesh.scaleXZ || 1) * (e.mesh.pose ? e.mesh.pose.legL.scale.y / (e.mesh.pose.base.legScaleY || 1) : 1);
+      if (gaitV > 0.05) e._walkPhase = (e._walkPhase || 0) + 2 * Math.PI * kidGaitCadence(gaitV, gaitReach) * dt;
 
       // v1.167: the hold runs at every crouch. It used to skip a full crouch (> 0.98), so every kid hiding
       // behind cover let go of his gun: it floated by his right knee, 21-39 cm from the hand (backlog B.6).
       setKidGunHold(e.mesh, e.weapon, e._aimAmt, lift);
-      setKidWalk(e.mesh, e._walkPhase, e._walkInt);
+      setKidWalk(e.mesh, e._walkPhase || 0, e._walkInt, e._gaitVF, e._gaitVS);
     }
 
     // v1.36i: clip this kid's laser beam (if any) to the first obstacle it hits,
@@ -27184,6 +27581,7 @@ function stepGame(dt) {
     updateStuckBBs(dt);
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
+    if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
     updateEnemies(dt);
     updateLaserDiagHud();
     updateStanceHud();
@@ -27296,6 +27694,7 @@ const PIN_SCENARIO_GROUPS = {
     'bunratty_team_2v4',
     'bunratty_team_4v4',
     'bunratty_night_lane',
+    'bunratty_vip',              // v1.170: VIP (D.15), before the capstone
     'bunratty_night_team_2v2',
   ],
   // The Hollow (East Roswell) — woods battleground, big team battles (v1.36).
@@ -27319,6 +27718,7 @@ const PIN_SCENARIO_GROUPS = {
     'lot_team_3v3',
     'lot_defend_store',  // v1.103
     'lot_ffa',           // v1.103
+    'lot_vip_night',     // v1.170: VIP (D.15), before the capstone
     'lot_night_4v4',
   ],
   // v1.130: Northcliff Trace (Northcliff / Martin's Landing) — the fifth zone (D.1, Michael: A).
@@ -27451,6 +27851,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.scenarioType === 'attack') badges.push('⚔ ATTACK');
   if (sc.scenarioType === 'defend') badges.push('🛡 DEFEND');
   if (sc.timeOfDay === 'night') badges.push('🌙 NIGHT');          // v1.35
+  if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
   const brief = getScenarioBriefing(scenarioId);
   const lives = brief ? brief.player.lives : 1;
@@ -27472,7 +27873,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
         ${stamp}
       </div>
       <div class="sc-card-title">${locked ? '🔒 ' : ''}${sc.scenarioName}</div>
-      <div class="sc-card-meta">${sc.name} · ♥ ${lives} ${lives === 1 ? 'life' : 'lives'}</div>
+      <div class="sc-card-meta">${sc.name} · ♥ ${sc.vip ? '∞' : lives + ' ' + (lives === 1 ? 'life' : 'lives')}</div>
       ${foot}
     </div>
   `;
