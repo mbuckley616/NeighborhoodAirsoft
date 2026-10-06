@@ -8355,3 +8355,15 @@ refused lock would have swept a player standing at spawn twice over, and passed)
 ### Still open
 - Nothing in play. If CI's Chromium also drops a granted lock mid-match, that fires `pointerlockchange` and clears the
   flag again; no suite has shown it.
+
+## v1.174 fix-up — retreat-progress allows what the watchdog allows
+CI failed `headless (1/8)` on 8fecf15 with `retreat-progress` (v1.164): "Northcliff twins 3v3, six rounds: no kid
+holds retreating within 1 m of one spot for 3 s or more" (Andrew, 3 s in one round). Locally the longest hold over
+48 rounds at varied starts was 2 s. The watchdog sends a retreating kid home when 1.2 s passes without his getting
+0.3 m nearer spawn. A kid creeping home along a wall at just that rate is making progress by the game's rule, yet
+stays inside 1 m for up to about 4 s. The check asked for a faster pace than the game guarantees. It is now 4 s;
+the bug it guards against held Andrew 17 s. The game is unchanged.
+### Verified
+`node tests/run.mjs retreat-progress` passes. 48 sampled rounds: the longest hold was 1-2 s.
+### Still open
+- Nothing for play.

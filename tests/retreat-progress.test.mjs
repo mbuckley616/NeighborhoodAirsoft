@@ -63,6 +63,9 @@ for (let r = 0; r < 6; r++) {
   }));
   console.log(`  round ${r + 1}: longest retreat in one spot ${worst[r][0]} ${worst[r][1]} s`);
 }
-check('Northcliff twins 3v3, six rounds: no kid holds retreating within 1 m of one spot for 3 s or more', worst.every(w => w[1] < 3), worst);
+// v1.174 fix-up: 4 s, not 3. The watchdog asks 0.3 m nearer home every 1.2 s, so a kid creeping home along a wall
+// at that rate stays inside 1 m for up to about 4 s and is not stuck. CI, 6 Oct: Andrew 3 s once; locally 1-2 s over
+// 48 rounds. The bug this guards against held him 17 s.
+check('Northcliff twins 3v3, six rounds: no kid holds retreating within 1 m of one spot for 4 s or more', worst.every(w => w[1] < 4), worst);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
