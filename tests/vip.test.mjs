@@ -33,7 +33,10 @@ const built = async (id) => {
     updateRosterHud();
     const ks = Game.scenario.enemies.map(e => ({ n: e.name, team: e.team || 'enemy', vip: !!e.vip, lives: e.lives, w: e.weapon, role: e.role,
       cap: e.mesh.vipCap ? e.mesh.vipCap.userData.vipCap : null,
-      capOnHead: !!(e.mesh.vipCap && e.mesh.vipCap.parent === e.mesh.head) }));
+      capOnHead: !!(e.mesh.vipCap && e.mesh.vipCap.parent === e.mesh.head),
+      // v1.172: where he starts, against the anchor he holds and the player's start
+      offAnchor: +Math.hypot(e.pos.x - e.anchorPos.x, e.pos.z - e.anchorPos.z).toFixed(2),
+      offPlayer: +Math.hypot(e.pos.x - Game.player.pos.x, e.pos.z - Game.player.pos.z).toFixed(1) }));
     const roster = document.getElementById('rosterList').textContent.replace(/\s+/g, ' ').trim();
     return { ks, roster, vip: Game.scenario.vip, mode: Game.mode };
   });
@@ -53,7 +56,9 @@ async function play(id) {
       const T = window._vipT, vips = Game.scenario.enemies.filter(e => e.vip);
       for (let i = 0; i < 60 && Game.mode === 'scenario'; i++) {
         stepGame(1 / 60); T.f++;
-        for (const v of vips) { const k = v.team === 'player' ? 'ours' : 'theirs'; if (T[k] == null && !npcInFight(v)) T[k] = +(T.f / 60).toFixed(1); }
+        for (const v of vips) { const k = v.team === 'player' ? 'ours' : 'theirs'; if (T[k] == null && !npcInFight(v)) T[k] = +(T.f / 60).toFixed(1);
+          // v1.172: how far each VIP strays from the anchor he holds while he is in the fight
+          if (T[k] == null) { const d = Math.hypot(v.pos.x - v.anchorPos.x, v.pos.z - v.anchorPos.z); T[k + 'Stray'] = Math.max(T[k + 'Stray'] || 0, +d.toFixed(2)); } }
       }
       return Game.mode;
     });
@@ -63,6 +68,8 @@ async function play(id) {
     spent: Game.scenario.enemies.filter(e => !e.vip).map(e => e.name + ':' + (99 - e.lives)).join(' '),
     shots: Game.scenario.enemies.filter(e => e.vip).map(e => e.name + ' ' + e.state).join(', ') }));
   res.id = id; played.push(res);
+  // v1.172 (critic, 6 Oct): our VIP used to start beside the player (the allies' v1.33 spawn) and hold there
+  check(`${id}: each VIP stays within 6 m of the spot he holds while he is in the fight`, (res.oursStray ?? 0) < 6 && (res.theirsStray ?? 0) < 6, res);
   await page.evaluate(() => { if (window._vipHit) window.applyBBHit = window._vipHit; });
   console.log(`   ${id}, ${LIMIT} s: our VIP out at ${res.ours ?? '-'} s, theirs at ${res.theirs ?? '-'} s (${res.mode}); VIPs now ${res.shots}; tags each kid took: ${res.spent}`);
 }
@@ -76,6 +83,9 @@ for (const id of Object.keys(MATCHES)) {
     vips.find(k => k.team === 'player')?.cap === 'blue' && vips.find(k => k.team !== 'player')?.cap === 'red', vips);
   check(`${id}: everyone else has 99 lives and no cap; the roster shows ∞ and stars the VIPs`,
     b.ks.filter(k => !k.vip).every(k => k.lives === 99 && !k.cap) && (b.roster.match(/★/g) || []).length === 2 && (b.roster.match(/∞/g) || []).length === 5, b.roster);
+  // v1.172 (critic, 6 Oct): Ryan stood 2.3 m from the player in the lane, Rebecca at the player's start
+  check(`${id}: both VIPs start on their own anchors (within 1 m), ours ${'>'} 10 m from the player's start`,
+    vips.every(k => k.offAnchor < 1) && vips.find(k => k.team === 'player').offPlayer > 10, vips.map(k => `${k.n} ${k.offAnchor} m off anchor, ${k.offPlayer} m from player`));
   await g.shot('vip-' + id);
   await play(id);   // v1.170: the played round goes on from this entry, not a fresh one
 }
