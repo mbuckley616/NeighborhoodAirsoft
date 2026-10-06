@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -540,3 +540,83 @@ what-next decisions (Willow Bend, then the store). Nothing was addressed to me, 
 - v1.152–v1.154, the last kid comes looking: not judged this run. No round I played had a camper left at the end.
 
 I have no new proposal. The three in `docs/proposals.md` are all built (v1.88, v1.152, v1.153).
+
+## 2026-10-06 — Protect Ryan and Night Shift (VIP), the school and club 1v1s and 3v3s, the backyard guns (v1.171)
+
+I played the builder's tip, `auto/build` at 44512d0 (v1.171). Main is at v1.168, so the VIP matches (v1.170), the
+under-barrel parts (v1.169) and the planted feet (v1.171) are only on that branch. I played 86 bot rounds: Protect
+Ryan 16, Night Shift 21, Tyler at the school 6, the portables 3v3 6, Brooke at the club 8, the eighteenth-hole 3v3 6,
+the four v1.168 guns and the spring shotgun against Sean 28, and the Bucket Gun with a Taped Twin Mag in the Hollow
+3v3 3. There were no page errors in any of them, and `node tests/run.mjs smoke` passes. The bot is last run's: it aims
+at the nearest kid it can see (their VIP first in a VIP match), cocks, fires, and refills an empty mag after 2 s. It
+either holds its start, pushes to 15 m (8 m for the shotguns, once), walks at their VIP, or stands untaggable. I also
+re-ran the first-timer path from the title. The round's 600 ms end timer runs on wall time, as last run noted, so I
+timed each ending from the tag that decided it.
+
+**Problem 1: your side's VIP never leaves your spawn.** In both VIP matches the VIP on your team is built as an ally,
+and since v1.33 allies start in an arc 2–3.5 m from the player (`startScenario`, the `isAlly && playerSpawnPos`
+branch). The VIP is also a `defender`, and a defender holds where he is, so he never walks to his anchor. Ryan's
+anchor is house 0's backyard at (−29, −25), but he stands at (−20.8, −4.5) in the lane, 2.3 m from you, beside a
+cardboard box (screenshot `docs/critic/2026-10-06-protect-ryan-vip-at-your-elbow-in-the-lane.png`). Rebecca's anchor
+is the road side at (−14, 21), but she stands at (3.2, 21.0), at your start. I sampled both at 0, 2, 5, 10 and 20 s,
+and neither moved a centimetre, in `hiding` and `peeking` the whole time. Their VIPs, Priya and Seth, have no ally
+branch and spawn on their anchors. At 20 s every enemy in Night Shift had a line on Rebecca, from 17–56 m. So the
+briefings are wrong: Protect Ryan says "Ryan starts in house 0's backyard" and "keep Ryan out of the open", and Night
+Shift puts Rebecca "on the road side". What you're actually guarding is your own spawn point. This also explains the
+builder's open question of why Rebecca falls and Ryan doesn't. Steps: `g.scenario('lot_vip_night')`, make the VIPs
+untaggable, spin 20 s, and compare Rebecca's `pos` with her `anchorPos`. The same works for Ryan in `bunratty_vip`.
+
+**Problem 2 (balance, mostly Problem 1): Night Shift goes to whoever moves first.** If you walk straight at Seth, you
+win. The bot tagged him from 15 m at 12.3, 12.3, 14.5, 16.7 and 57.8 s, so 5 of 5, four of them inside 17 s. He stands
+at his dumpster at (−30, −24.5) and never moves, the same as Rebecca. If you stay home, Rebecca is tagged at your
+start. Holding and firing back, the bot lost her at 18.7, 29.1 and 68.2 s, and she survived 120 s once. Untaggable, it
+lost her at 10.1 s (Marcus, 25 m), 22.6 s (Mason, 4.3 m) and 105.3 s (Mitchell, 39 m). Protect Ryan is slower and
+fairer. Holding, the bot won 2 (Priya out at 69 and 117.5 s), lost Ryan once at 48.9 s, and 1 round was still going at
+120 s. Walking at Priya, it won 3 of 3 at 76–113 s after 4–9 respawns, because the bulb plank covers her. Untaggable,
+2 of 3 rounds were still level at 120 s, and Tyler tagged Ryan from 27.5 m in the third. I'd fix Problem 1 before
+judging either match's balance.
+
+**What worked.**
+- **VIP rules:** respawns at your start with the 2 s grace worked in every round, up to 9 times in one round, with no
+  page error. Every ending matched what happened: "YOU GOT THEM" with Priya's or Seth's cap line, and "THEY GOT
+  RYAN/REBECCA" when ours fell.
+- **Stuck kids:** none. My loose 1 m tracker flagged Sean in Night Shift (11–13 s), Owen in Protect Ryan, Trey at the
+  club and Mitchell at the school. A per-frame probe (moving state only, more than 2.5 m from the player) found no kid
+  over 3 s in 11 rounds of Protect Ryan, the club 3v3, the portables 3v3 and Brooke's 1v1. The flags were kids
+  respawning beside their spawn or holding a spot.
+- **The 1v1s:** Tyler at the school, standing, gave 1 win and 2 losses (tagged at 10.9 and 11.6 s, from 9–12 m).
+  Pushing, the bot won 2 of 3. Brooke at the club tagged a standing bot at 44.6–52.4 s from 8–16 m in 3 of 3. Pushing,
+  the bot was tagged at 10 and 12 s from 15 m twice and won once. Both read as fair duels.
+- **The 3v3s:** the portables 3v3 ran the full 120 s three times with the allies trading. The eighteenth-hole 3v3
+  ended at 64.5 s (Seth from 30 m), and two rounds were won at 98 and 115 s.
+- **Backyard guns against Sean's AK (one life):** the Bucket Gun won 3 of 4. The Bolt Pistol won 2 of 4, the
+  Six-Shooter 1 of 4 and the spring shotgun 1 of 4. The Thunder Pump lost 4 of 4 from 15 m and won 1 of 4 when closing
+  to 8 m. The spring shotgun closing to 8 m lost all 4. Sean tags at 5–6 s from 10–15 m whatever you carry, so the
+  pumps are underdogs here, and the Thunder Pump is no worse than the spring shotgun. That's the trade the builder
+  described, not a bug. The Bucket Gun with a taped mag in the Hollow 3v3 was out at 18.7–54.8 s (1 life). My bot
+  refills rather than flipping, so this run doesn't judge the taped mag.
+- **Step cost** (three or four browsers at once): Night Shift averaged 0.8–2.6 ms with a p95 of 1.6–6.8, and Protect
+  Ryan 1.5–2.3 ms with a p95 of 2.4–5.8. Single steps reached 230–390 ms under load, as last run's did.
+- **First-timer path:** the title reads v1.171 with one button. The mirror, then DONE, puts you in the bedroom, and
+  the first prompt is "E Go outside". Holding W from there walks past the mirror prompt to the computer.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io, so I read no comments. In the last day of
+Slack there were the builder's v1.164–v1.171 posts, the producer's posts, and the D.14/D.15/D.16 decisions and their
+answers. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.161–v1.171)
+- v1.170, VIP balance: see Problems 1 and 2. Rebecca falls because she stands at your spawn. Ryan lasts because the
+  lane happens to be quieter, not because anyone is guarding him well. "VIP kids don't talk about being the VIP" is
+  true, but it matters less than where they stand.
+- v1.168, the gun trades: judged against one kid (above). Whether the Thunder Pump feels right at 10 m, and whether
+  the Bucket Gun's 23 m/s BBs look slow, need hands. Prices: not judged.
+- v1.169, the parts' trades: not judged. My bot doesn't flip the taped mag or sprint.
+- v1.169 fix-up, the bored rifle kid holding at 40–50 m: not met this run.
+- v1.171, planted feet: the builder's slip numbers are the headless measure. How it looks needs eyes. My side-on
+  capture of a running kid failed (it rendered sky), so I have no picture for Michael.
+- v1.171 fix-up, Brooke hiding at her anchor in the lot 3v3: not played.
+- v1.161 / v1.165, the desk's ~20 s of cover and the treehouse's quiet 7 s: not replayed.
+- v1.167, a crouched kid's chest-high carry over low cover: needs eyes.
+
+I have no new proposal. Problem 1 is a bug, not a design question: the briefings already say where the VIPs should be.
