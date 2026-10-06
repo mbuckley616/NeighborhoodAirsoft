@@ -8394,3 +8394,13 @@ recommends cover at the spot. Until it is answered the check guards only against
 `vip` passes. 30 sampled Night Shift rounds: Rebecca tagged in 20, the earliest at 8.0 s; Seth in none.
 ### Still open
 - D.17: Night Shift's VIP balance. Once it is answered, raise the check back to 8 s or more.
+
+## v1.174 fix-up — the CI shard jobs get 40 minutes
+On 085e505, `headless (2/8)` was cancelled at 30:34 with all ten of its suites passed ("10/10 suites passed"). The
+tests took about 19.5 minutes; the setup before them (npm install, then Playwright's Chromium and its system
+packages through apt) took 11 minutes that run, against the usual 3. The shard jobs' limit is now 40 minutes, so a
+slow install no longer cancels a passing job. A real hang still ends well inside the hour.
+### Verified
+`check.yml` parses (one key changed). By the measured weights the shards' tests are about 17 minutes each.
+### Still open
+- Caching the Playwright browser and its packages would cut the setup time; not done here.
