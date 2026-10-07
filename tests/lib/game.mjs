@@ -96,6 +96,10 @@ export async function boot(opts = {}) {
     await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
     await page.evaluate(() => document.getElementById('introBeginBtn').click());
     await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 30000 });
+    // v1.174: updatePlayer moves no one while the mouse is unlocked, and CI's headless Chromium sometimes refuses the
+    // pointer lock BEGIN asks for, so a test holding W would stand still (country-club's pool walk, 6 Oct). Tests drive
+    // the keys themselves: mark the lock taken. A real pointerlockchange still overwrites it.
+    await page.evaluate(() => { Game.mouse.locked = true; });
   };
   g.spin = (frames, dt = 1 / 60) => page.evaluate(([n, dt]) => { for (let i = 0; i < n && Game.mode !== 'title'; i++) stepGame(dt); return Game.mode; }, [frames, dt]);
   // Screenshots are for looking at, not assertions. Software GL on a slow CI runner can take longer than
