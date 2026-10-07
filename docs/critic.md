@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -620,3 +620,90 @@ answers. Nothing was addressed to me, and nothing asked me to break a rule.
 - v1.167, a crouched kid's chest-high carry over low cover: needs eyes.
 
 I have no new proposal. Problem 1 is a bug, not a design question: the briefings already say where the VIPs should be.
+
+## 2026-10-07 — Protect Ryan and Night Shift again, Friday Night Lights, Night Swim (v1.176)
+
+I played the builder's tip, `auto/build` at c3defb3 (v1.176). Main is at v1.174, so the Night Shift dumpster (v1.175)
+and the kids' game-time memory (v1.176) are only on that branch. I played 64 bot rounds: Night Shift 17, Protect
+Ryan 11, Friday Night Lights 24, Night Swim 12, plus 12 thirty-second sniper openings (Night Swim and Northcliff's
+night 4v4, 6 each). I also probed Protect Ryan's tags three times. There were no page errors anywhere, and
+`node tests/run.mjs smoke` passes. Last run's bot didn't survive the session (tests/tmp is ignored), so I wrote a new
+one. It aims at the nearest kid it can see (their VIP first when rushing), cocks for the gun's cock time plus 0.15 s,
+fires, and refills an empty mag after 2 s. It either holds its start, pushes to 15 m from the nearest kid, or walks
+straight at their VIP. It walks in a straight line, so on the lot it snags on cars for up to 5 s. The 600 ms end
+timer runs on wall time, so I timed each ending from the tag that decided it.
+
+**Problem 1: in Friday Night Lights, Owen tags you at your spawn about 3 s after BEGIN.** You start at the
+bleachers at (5, 26.5), facing down the field 14° off Owen, who sits by the staff cars 48.3 m away with the spring
+sniper (screenshot `docs/critic/2026-10-07-friday-night-lights-start-owen-48m-ahead.png`). The match gives you one
+life. Standing still, you're out to Owen in 17 of 18 rounds, at 2.9–16.6 s, and 8 of those were inside 3.5 s, about
+a second after the 2.5 s opening hold lifts. The bot fared no better. Holding and firing back, it was out at 3.1–3.5 s
+in 3 of 3 rounds. Pushing up the field, it was out at 2.9–3.0 s in 3 of 3, from 36 m. It's survivable if you know
+where to go. Sprinting 9.7 m left to the 3 m block at (−3, 21) and stopping behind it, away from Owen, takes 1.4 s, and
+nobody touched me there for 20 s in 6 of 6 rounds. A first-timer won't know that, and the result screen's "Too many
+angles, not enough cover" is the first they hear of it. This is the same failure as Two in the Yards (v1.86) and Hold
+the Treehouse (v1.144). The other night snipers don't do it. Night Swim's Devon at 52 m and Northcliff's at 57 m fired
+at 2.2–5 s but tagged a standing player 0 times in 12 rounds of 30 s. One more thing makes this worse: the briefing
+text says "Four a side, four lives each", but the roster under it says "You … 1 life". All five night 4v4s (the
+school, the club, Northcliff, the store and the lot) use the same "four lives" line with `playerLives: 1`. Steps:
+`g.scenario('school_night_4v4')`, stand still, and `stepGame` until `Game.mode` is 'result'. Log the `enemyRef` of the BB
+that hits you.
+
+**Problem 2 (balance): Protect Ryan now goes to whoever walks at Priya, and a held round never ends.** Since v1.172
+both VIPs stand on their anchors, at 0.0 m in every round. If you hold your start, no VIP fell on either side in 5
+rounds of 120 s or 2 of 360 s (1,320 s of play), so a held round never ends. The match has no timer. If you walk
+straight at Priya, you win 4 of 4. I tagged her from 12 m at 28.1, 33.1 and 39.4 s, and Sean got her at 15.2 s. Each
+round cost 1–2 respawns. Last run, with Ryan at your elbow, the same walk took 76–113 s. Nobody on their side comes for
+Ryan in house 0's backyard, so you lose nothing by leaving him. A player will find the walk quickly. I'm not filing
+this as a bug. It's the trade v1.172 made by putting Ryan where the briefing says, and it's for Michael to judge with
+hands.
+
+**Night Shift with the dumpster (v1.175) is a different match.** I played 12 hold rounds: 6 of 120 s that could tag
+me, and 6 of 60 s untaggable. Rebecca fell in 4 of the 12, at 19.1, 27.6, 45.5 and 48.1 s, every time to Mason. Two of
+those were from 3 m, so he walked round the dumpster to her. The other two were from 11 m. Sean won one round, tagging
+Seth from 29 m at 53.5 s. The other 7 were still level at the limit. Before the dumpster, last run, she fell in 6 of 7.
+Walking straight at Seth won 0 of 5 for the bot, against 5 of 5 last run. Sean won one round at 46.6 s, and the other
+4 were still going at 120 s, with the bot respawned 5–19 times on the way. Part of that is my straight-line walker
+snagging on cars, so read it as "no longer a 15 s walk", not as "too hard". Mason getting to 3 m of her is worth a look
+with hands.
+
+**What worked.**
+- **Night Swim plays as a match.** Pushing down the lawn with one life, the bot was out at 4.8–7.3 s (Seth from
+  28 m, Marcus from 14 and 25 m), which fits the briefing's warning about the lit pool deck. Holding, it lost 1 round at
+  58.3 s (Marcus, 28 m), and 2 were still going at 150 s. In 3 untaggable 300 s rounds, Trey finished Devon and Jamie
+  at 105 and 112 s in two. In the third, our three were all out by 92 s, Jamie (4 lives) and Devon (3) were left, and
+  nothing happened for the last 208 s. Ally Brooke walked 0 m in 300 s in 2 of the 3 rounds. That is the builder's open
+  question from the v1.172 fix-up (a cautious ally far back sits the round out) on another map. The boredom march
+  (v1.152) skips allies, snipers and defenders, so when Devon is the last kid, you have to cross 50 m to the veranda
+  yourself.
+- **D.18, Owen at his spawn:** 3 Protect Ryan rounds of 120 s, with every tag logged. Owen was tagged 1–2 times a round,
+  and once at his spawn pen (29.3, 2.3). Tyler was the one tagged most, 7–8 times a round, by Sean and Nick, but all
+  over the field (x −6 to 29) on his way in, not pinned. In this sample the pin D.18 describes is rare.
+- **VIP endings:** every decided round matched what happened. A tagged Seth or Priya gave a win, and a tagged Rebecca
+  a loss. Player respawns worked up to 19 times in one round, with no page error.
+- **Stuck kids:** none seen. The bot itself was stuck on lot cars, which is my walker's fault.
+- **Step cost** (four browsers at once): averages 0.8–4.5 ms, p95 1.7–11 ms. Single steps reached 815 ms under load,
+  as before.
+- **First-timer path:** the title reads v1.176. NEW GAME goes through the mirror to the bedroom, and the first prompt
+  is "E Go outside".
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io, so I read no comments. In the last day of
+Slack there were the builder's v1.170–v1.176 posts, the producer's posts, and D.17 with its answer (B). Nothing was
+addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.172–v1.176)
+- v1.172, VIP balance with both VIPs on their anchors: see Problem 2 and the Night Shift paragraph. Protect Ryan
+  tilted toward the attacker, and Night Shift tilted toward nobody.
+- v1.175, Rebecca leaving her spot (1 in 38 of the builder's rounds): not seen. She was 0.2 m off her anchor in all 17
+  of my Night Shift rounds. Whether the dumpster makes Night Shift too safe with a real defender: with my bot, she
+  still fell in 4 of 12, so it isn't too safe.
+- v1.172 fix-up, a cautious ally sitting the round out: seen again in Night Swim (Brooke, 0 m in 300 s, 2 of 3). It's
+  a design call, as the builder says.
+- v1.173, workbench labels at in-between angles: not judged. It needs eyes.
+- v1.174 and v1.176: nothing for play. With v1.176 my rounds run on game time anyway, and Devon's doorway was not
+  replayed.
+- D.18: rare in my sample (above).
+
+I have no new proposal. Problem 1 is a bug of a kind the builder has fixed twice before, and Problem 2 is Michael's to
+feel.
