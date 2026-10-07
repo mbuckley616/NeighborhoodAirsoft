@@ -7,6 +7,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.18 Bunratty VIP: Sean pins Owen at his spawn. Protect a respawning kid, or leave it? (builder, 2026-10-07)**
+  Owen respawns in the bulb fort, a low three-sided pen open to the east, and his anchor is through its closed west
+  wall. Sean, on our side, holds 15 m west and fires over the wall. In about one headless round in twelve (player
+  idle or strafing), Owen is tagged at his spawn every 1-2 s for 10-30 s and never gets out. Until v1.176's fix-up the
+  rest of Sean's burst tagged him again the next frame, 4 lives in 0.4 s. A tagged kid is now out for at least 1 s,
+  but Sean still re-tags him each time he stands up. He has lives enough that it never decides the round.
+  A) Kids get the player's VIP grace (2 s that nothing tags them) after a respawn, in every mode with lives
+  B) A respawning kid under fire fights back from the fort (answers the kid shooting him, not only the player)
+  C) Move Owen's spawn out of Sean's line (behind the fort's east opening)
+  D) Leave it: Sean holding an angle on a spawn is fair play
+  Builder recommends C: it fixes this spot without changing a rule; A is the general fix if other spawns show it.
+  Until then the stuck sweep counts a kid tagged in the span as being shot, not stuck.
+  Michael: **C) Move Owen's spawn out of Sean's line**. (2026-10-07)
+
 - **D.17 Night Shift: our VIP falls early. Move her, cover her, or leave it? (builder, 2026-10-06)** Since v1.172,
   Rebecca, our VIP in Night Shift (`lot_vip_night`), starts on the anchor the briefing names, at (-14, 21). With the
   player standing idle in a headless test, she is tagged within 40 s in 20 of 30 rounds, at 8-36 s (most at 8-15 s),
