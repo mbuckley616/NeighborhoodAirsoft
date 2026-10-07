@@ -8432,3 +8432,31 @@ the other five lot matches are unchanged. The briefing stays true.
   VIP stays within 6 m could trip on it about once in forty runs.
 - Whether the dumpster makes Night Shift too safe with a real player defending is for play; the lot's other side
   still has the open row east of her that Mason used in the one tag.
+
+## v1.176 — The kids' memory runs on game time
+Found in play (builder, v1.175). In one loaded full run, Lights Out's Devon held the stockroom's centre doorway for 60 s
+and fired 0 shots while an opponent came within 16.9 m. Over 43 rounds on an idle box he fired every time (2–20
+shots), so the failure needed a slow box. The kids' spotted memory was the reason: after a kid loses sight of you he
+keeps firing at the spot where he last saw you for 3.2 s, and that window was measured with `performance.now()`, the
+wall clock. Their near-miss stamps (0.25 s) and their reaction cooldown after a near miss used the same clock. In
+play at a steady 60 fps the wall clock and game time agree. The tests step the game with `g.spin()` faster or
+slower than real time, so on an idle box the memory lasted 10 game seconds or more, and with the wall clock racing
+ahead (a loaded box) it lasted 0.17 s. Faking the clock in a probe, Devon fired most when the wall clock ran slowest
+(4–16 shots a round at 0.2×, 2–8 at 5×). All three timers now read `aiNow()`, the round's simulated time.
+Play at 60 fps is unchanged. The tests now see the kids a player sees: on an idle box they used to keep firing at
+your last spot for longer than in play.
+### Verified
+- `tests/ai-clock.test.mjs` (new): a kid sees the player for one frame and then loses him. The memory lasts 3.22 game
+  seconds with the wall clock frozen, at real speed, and racing 20× ahead. On the old build it lasted 10 s or more
+  (the test's cap) frozen or real, and 0.17 s racing, so all three checks fail there. With the wall clock racing 5×,
+  Lights Out's Devon holds the doorway and fires in all three rounds (4, 3, 9 shots). The old build passes that check
+  too, so it is only a guard.
+- After the fix, Devon fired 2–13 shots in 35 of 36 sampled 60 s Lights Out rounds. In the 36th he spent his four
+  lives at the doorway by 15 s, which is ordinary play, so `grocery-store`'s Devon check now also passes a Devon who is
+  out of the round. (Half of one probe's rounds froze at the start: the fake clock stayed installed across the match
+  change and ran backwards, so `roundTime` began at −60 s. Those rounds are discarded, and the test restores the clock.)
+- `npm test` as four local shards: 84 of 85 suites passed. `stuck-sweep-12` hit the 30 s page-load timeout on the busy
+  box and passed when rerun.
+### Still open
+- Nothing for play. Suites that counted shots on an idle box may now see a little less fire, since the kids no
+  longer keep firing at your last spot for 10 s. All of them pass.

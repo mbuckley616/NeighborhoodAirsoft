@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.175</div>
+  <div class="version">v1.176</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23749,6 +23749,14 @@ function inOpeningHold() {
   return Game.mode === 'scenario' && (Game.scenario.roundTime || 0) < OPENING_HOLD_SEC;
 }
 
+// v1.176: the kids' clock, in simulated seconds (plus 1, so a stamp taken at BEGIN is truthy). Their spotted memory,
+// near-miss stamps and reaction cooldown read performance.now(), the wall clock, so a headless test that steps faster
+// or slower than real time saw them last more or fewer game seconds than a player does (Lights Out's Devon: 0 shots in
+// a loaded full run). At a steady 60 fps the two agree, so play is unchanged.
+function aiNow() {
+  return (Game.scenario && Game.scenario.roundTime || 0) + 1;
+}
+
 function spawnEnemyBB(enemy, targetPos) {
   // v1.58: a hard "never fires" gate. Tutorial practice dummies set noFire so they
   // are truly inert targets — low fireRate alone still let one early shot slip out
@@ -24332,7 +24340,7 @@ function updateBBs(dt) {
     // didn't just hit someone, and skips kids already stamped in the last 0.25s.
     if (!removed && bb.canDamage) {
       const NEAR_MISS_R2 = 2.5 * 2.5;
-      const now = performance.now() / 1000;
+      const now = aiNow();   // v1.176: simulated time, not the wall clock
       for (const e of Game.scenario.enemies) {
         if (e.health <= 0 || e.state === 'retreating') continue;
         if ((e.team || 'enemy') === bb.team) continue;       // own team's round
@@ -26192,7 +26200,7 @@ function updateEnemies(dt) {
         tgt.obstacles
       );
       if (losMem) {
-        e._lastSawPlayer = e.stateTime !== undefined ? performance.now() / 1000 : 0;
+        e._lastSawPlayer = e.stateTime !== undefined ? aiNow() : 0;   // v1.176: simulated time
         e._lastSeenPos = { x: tgt.pos.x, y: tgt.pos.y, z: tgt.pos.z };
       }
       // recentlySpotted = saw the player within the last RECENT_SPOT_WINDOW sec.
@@ -26200,7 +26208,7 @@ function updateEnemies(dt) {
       // cover you ducked behind (covering fire) for a meaningful beat instead of
       // relaxing the moment you break their line.
       const RECENT_SPOT_WINDOW = 3.2;
-      e._recentlySpotted = e._lastSawPlayer && ((performance.now() / 1000) - e._lastSawPlayer) < RECENT_SPOT_WINDOW;
+      e._recentlySpotted = e._lastSawPlayer && (aiNow() - e._lastSawPlayer) < RECENT_SPOT_WINDOW;
       e._hasLOSNow = losMem;
       // v1.134: seconds without a line to anyone, for the free-for-all roam below
       e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
@@ -26230,7 +26238,7 @@ function updateEnemies(dt) {
     // advance ("running scared"); brave kids only react from holding states so a
     // committed push/shot isn't broken (the "Moderate" end the player described).
     {
-      const now67 = performance.now() / 1000;
+      const now67 = aiNow();   // v1.176: simulated time
       const fresh = e._incomingDir && e._lastNearMiss && (now67 - e._lastNearMiss) < 0.4;
       const reactCdOk = !e._reactCd || (now67 - e._reactCd) > (1.4 - aggression * 0.6); // brave kids re-react sooner
       // v1.71: NEVER interrupt a committed retreat/redeploy. A tagged kid running

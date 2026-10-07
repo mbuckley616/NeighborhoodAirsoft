@@ -117,7 +117,7 @@ for (const id of ladder.ids) {
     }
     spawnEnemyBB = o; applyBBHit = orig;
     return { team, secs: Math.round((f - 1) / 60), shots, wiped: team ? wiped() : null, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, out: !npcInFight(k) })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
@@ -134,9 +134,11 @@ for (const id of ladder.ids) {
   } else if (id === 'store_defend_desk') check(`${id}: an attacker comes out of the back to within 10 m of the desk`,
     Math.min(...r.kids.map(k => k.nearest)) < 10, r.kids);
   else check(`${id}: Tyler comes out of the back to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
-  // v1.160: Devon holds the centre doorway in the night match and fires
+  // v1.160: Devon holds the centre doorway in the night match and fires. v1.176: or is out of the round (all four lives
+  // spent at the doorway; 1 round in 36 sampled, out by 15 s). His 0 shots in a loaded run were the wall-clock memory
+  // (tests/ai-clock.test.mjs).
   if (id === 'store_night_4v4') { const d = r.kids.find(k => k.n === 'Devon');
-    check(`${id}: Devon holds the stockroom's centre doorway and fires`, d && Math.hypot(d.at[0] + 1, d.at[1] + 20) < 4 && d.fired > 0, d); }
+    check(`${id}: Devon holds the stockroom's centre doorway and fires (or is out)`, d && Math.hypot(d.at[0] + 1, d.at[1] + 20) < 4 && (d.fired > 0 || d.out), d); }
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
