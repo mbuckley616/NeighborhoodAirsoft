@@ -16,7 +16,9 @@ jobs:
     # limit with all its suites passed. Six shards run ~17 min each.
     # v1.166: the stuck-kid sweep is now about 2.2 times the work (whole rounds up to 90 s, three ways; Michael: B),
     # about 55 more minutes in all. Eight shards keep each one near 20 min.
-    timeout-minutes: 30
+    # v1.174 fix-up: 40. On 085e505 shard 2/8 passed all ten suites in 19.5 min but was cancelled at 30:34: installing
+    # the browser's system packages took 11 min that run instead of the usual 3.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:

@@ -5,6 +5,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.17 Night Shift: our VIP falls early. Move her, cover her, or leave it? (builder, 2026-10-06)** Since v1.172,
+  Rebecca, our VIP in Night Shift (`lot_vip_night`), starts on the anchor the briefing names, at (-14, 21). With the
+  player standing idle in a headless test, she is tagged within 40 s in 20 of 30 rounds, at 8-36 s (most at 8-15 s),
+  nearly always by Mason, often while she is hiding. Their VIP, Seth, was never tagged in those 30 rounds. A real
+  player who defends her changes this, but the spot gives Mason a line to her.
+  A) Move her anchor to a spot with cover facing Mason's lane
+  B) Keep the spot and add cover there (a parked car or a dumpster), so the briefing stays true
+  C) Leave it: protecting her is the player's job, and early pressure is the point of the mode
+  Builder recommends B: it keeps the critic's fix (she starts where the briefing says) and gives her a fair start.
+  Until then `tests/vip.test.mjs` checks only that no VIP falls inside 5 s.
+
 
 ## Answered
 
