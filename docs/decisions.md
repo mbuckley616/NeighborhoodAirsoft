@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.18 Bunratty VIP: Sean pins Owen at his spawn. Protect a respawning kid, or leave it? (builder, 2026-10-07)**
   Owen respawns in the bulb fort, a low three-sided pen open to the east, and his anchor is through its closed west
   wall. Sean, on our side, holds 15 m west and fires over the wall. In about one headless round in twelve (player
@@ -17,8 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Leave it: Sean holding an angle on a spawn is fair play
   Builder recommends C: it fixes this spot without changing a rule; A is the general fix if other spawns show it.
   Until then the stuck sweep counts a kid tagged in the span as being shot, not stuck.
-
-## Answered
+  Michael: **C) Move Owen's spawn out of Sean's line**. (2026-10-07)
 
 - **D.17 Night Shift: our VIP falls early. Move her, cover her, or leave it? (builder, 2026-10-06)** Since v1.172,
   Rebecca, our VIP in Night Shift (`lot_vip_night`), starts on the anchor the briefing names, at (-14, 21). With the
