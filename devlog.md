@@ -8404,3 +8404,144 @@ slow install no longer cancels a passing job. A real hang still ends well inside
 `check.yml` parses (one key changed). By the measured weights the shards' tests are about 17 minutes each.
 ### Still open
 - Caching the Playwright browser and its packages would cut the setup time; not done here.
+
+## v1.175 — Night Shift: a dumpster at Rebecca's spot
+Decisions D.17 (Michael: B, control room 6 Oct). Since v1.172, Rebecca, our VIP in Night Shift, starts on the spot the
+briefing names, the road side at (-14, 21), and with the player idle she was tagged inside 40 s in most rounds, nearly
+always by Mason. The reason is plain on the lot plan: the stalls of the south row's north half from x -17.5 to -9.5 are
+all empty (every third stall is kept open, and the pattern leaves the rest empty), so Mason walked down the x -14 lane
+from the store end and tagged her from 11-25 m while she hid behind nothing; her nearest cover was a car 6 m away.
+Michael chose to keep the spot and add cover there. A dumpster now stands on the aisle just north of her, at
+(-14, 19.6), 2.2 by 1.6 m and 1.5 m tall like the two by the store, with a lid; it is the cover she holds. It is
+Night Shift's alone: the scenario's builder argument is now `vip_night`, which the lot builder reads to add it, so
+the other five lot matches are unchanged. The briefing stays true.
+### Verified
+- Probe, player untaggable and standing at his start, 40 s rounds. Before: Rebecca tagged in 6 of 8, at 12.1-31.6 s,
+  every time by Mason: four from the x -14 lane (11-25 m off), two from x -9.5. After: tagged in 1 of 12, at 22.3 s, by
+  Mason from the east flank at (-4.4, 16.2). Seth, theirs, fell in none either way.
+- `tests/vip.test.mjs` adds: Night Shift has one obstacle there, 1.5 m tall, and it is Rebecca's cover; it blocks her
+  chest-high line to Mason's lane and to his start by the store's west end; Lights Out has nothing there and one obstacle
+  fewer (128 against 129). The early-fall line v1.174 dropped to 5 s is back at 8 s. It passes.
+- `npm test` as four local shards: 82 of 84 suites passed. `pointer-lock` hit the 30 s page-load timeout on the busy box
+  and passed alone. `grocery-store` failed once in Lights Out (store, not lot): Devon held the stockroom doorway 60 s
+  without a shot while an opponent came within 16.9 m; it passed twice alone (Devon fired 9 and 10). Filed under Found
+  in play.
+### Still open
+- In 1 of 38 probe rounds Rebecca left her spot and ended 12 m off it, at (-3.8, 13.7), with nobody tagging her; the other 37
+  held within 0.2 m. The cause was not found (defenders are left out of the v1.152 boredom march). `vip`'s check that a
+  VIP stays within 6 m could trip on it about once in forty runs.
+- Whether the dumpster makes Night Shift too safe with a real player defending is for play; the lot's other side
+  still has the open row east of her that Mason used in the one tag.
+
+## v1.176 — The kids' memory runs on game time
+Found in play (builder, v1.175). In one loaded full run, Lights Out's Devon held the stockroom's centre doorway for 60 s
+and fired 0 shots while an opponent came within 16.9 m. Over 43 rounds on an idle box he fired every time (2–20
+shots), so the failure needed a slow box. The kids' spotted memory was the reason: after a kid loses sight of you he
+keeps firing at the spot where he last saw you for 3.2 s, and that window was measured with `performance.now()`, the
+wall clock. Their near-miss stamps (0.25 s) and their reaction cooldown after a near miss used the same clock. In
+play at a steady 60 fps the wall clock and game time agree. The tests step the game with `g.spin()` faster or
+slower than real time, so on an idle box the memory lasted 10 game seconds or more, and with the wall clock racing
+ahead (a loaded box) it lasted 0.17 s. Faking the clock in a probe, Devon fired most when the wall clock ran slowest
+(4–16 shots a round at 0.2×, 2–8 at 5×). All three timers now read `aiNow()`, the round's simulated time.
+Play at 60 fps is unchanged. The tests now see the kids a player sees: on an idle box they used to keep firing at
+your last spot for longer than in play.
+### Verified
+- `tests/ai-clock.test.mjs` (new): a kid sees the player for one frame and then loses him. The memory lasts 3.22 game
+  seconds with the wall clock frozen, at real speed, and racing 20× ahead. On the old build it lasted 10 s or more
+  (the test's cap) frozen or real, and 0.17 s racing, so all three checks fail there. With the wall clock racing 5×,
+  Lights Out's Devon holds the doorway and fires in all three rounds (4, 3, 9 shots). The old build passes that check
+  too, so it is only a guard.
+- After the fix, Devon fired 2–13 shots in 35 of 36 sampled 60 s Lights Out rounds. In the 36th he spent his four
+  lives at the doorway by 15 s, which is ordinary play, so `grocery-store`'s Devon check now also passes a Devon who is
+  out of the round. (Half of one probe's rounds froze at the start: the fake clock stayed installed across the match
+  change and ran backwards, so `roundTime` began at −60 s. Those rounds are discarded, and the test restores the clock.)
+- `npm test` as four local shards: 84 of 85 suites passed. `stuck-sweep-12` hit the 30 s page-load timeout on the busy
+  box and passed when rerun.
+### Still open
+- Nothing for play. Suites that counted shots on an idle box may now see a little less fire, since the kids no
+  longer keep firing at your last spot for 10 s. All of them pass.
+
+## v1.176 fix-up — under-parts' Cardboard Barrel line sits outside its run-to-run spread
+CI failed `headless (4/8)` on c36f7ec with `under-parts` (v1.169): "Cardboard Barrel: the standing cone is a sixth
+tighter or more". The barrel's median cone was 0.1146° against the bare gun's 0.1344°, a ratio of 0.853; the line was
+0.85. The barrel's ratio is about 0.80, a fifth tighter as its card says, but it ran 0.77-0.84 over six local runs at
+300 shots. Raising the sample to 1200 shots only narrowed it to 0.80-0.83, because most of the spread comes from the
+bare gun's own median moving between measurements. The line is now 0.88 ("an eighth tighter or more"), outside every
+ratio seen; a barrel with no effect would still fail at 1.0. The game is unchanged.
+### Verified
+`node tests/run.mjs under-parts` passes. 12 local runs gave ratios of 0.77-0.84.
+### Still open
+- Nothing for play.
+
+## v1.176 fix-up — a kid tagged at his own spawn is out for a second
+CI failed `stuck-sweep-1` on c36f7ec: "bunratty_vip (player at spawn): owen 19.5 s in advancing within 1 m of
+(29.3,1.9)". Locally, 4 of 16 Bunratty VIP sweeps flagged Owen or Tyler for 8-34 s in the bulb fort, a low pen open
+to the east, with Owen's spawn inside it. He is not wedged. Sean, on our side, holds 15 m west and fires over the
+fort's wall. Owen is tagged where he respawns, so his run back to spawn "arrived" the next frame and he could be hit
+again, and the rest of the same burst tagged him again: 4 lives in 0.4 s, then again each time he stood up. A
+progress watchdog on 'deploying' was tried first and did nothing, because every tag restarted him. Now a tagged kid
+stays out (retreating) for at least 1 s, so one burst costs one life. Sean still re-tags him every 1-2 s while he
+stands at his spawn, which is a design question: D.18 in `docs/decisions.md` (protect a respawning kid, let him fight
+back, move the spawn, or leave it). The stuck sweep looks for kids stuck on the map, so a tag now starts the kid's run
+again: a kid who is being shot is not stuck.
+### Verified
+- Owen probe, 30 rounds, hits on him logged: before, Sean's hits landed 0.1-0.3 s apart in one burst; after, 1-3 s
+  apart, one per burst.
+- `ONLY=bunratty_vip LIMIT=6` (the sweep at a 6 s limit, against CI's 15): 16 of 16 pass, against 12 of 16 before.
+- `retreat-progress`, `vip`, `market-lot`, `lot-ffa-opening`, `stuck-sweep-2`, `smoke` pass.
+### Still open
+- D.18: Owen pinned at his spawn by Sean's angle. It never decides the round (he has lives enough), but it reads
+  badly to a player who sees it.
+
+## v1.176 fix-up — under-parts fires the same shots for every part
+CI failed `headless (4/8)` on ab2079c with `under-parts`: the Cardboard Barrel's standing cone was 0.884 of the bare
+gun's, over the 0.88 line set two fix-ups ago. That line only widened the margin. The cause is the measurement: each
+part's cone is the median of 300 random shots, and the bare gun's median and the barrel's each move a few per cent
+from run to run, so their ratio ran 0.77-0.88. The test now swaps in a seeded random while it fires those shots, so
+every part is measured on the same 300 draws and the same numbers come out every run. The barrel's ratio is then
+0.735, and the line goes back to 0.85. A barrel that did nothing would read 1.0. The game is unchanged.
+### Verified
+`node tests/under-parts.test.mjs`, three runs: identical numbers each time (bare 0.145° standing, barrel 0.107°,
+foregrip walking 0.744° against 1.140°). `node tests/run.mjs under-parts` passes.
+### Still open
+- Nothing for play.
+
+## v1.177 — Friday Night Lights starts behind the concession stand
+Found in play (critic, 7 Oct). In Friday Night Lights, Hollins Ridge High's night 4v4, you started at the west end of
+the home bleachers, (5, 26.5), the same start as the school's day matches. Owen, their sniper, holds the staff cars at
+(10.5, -21.5), 48 m up the field, and nothing stood between the two: the bleachers run from x 8 east, and the start is
+3 m west of them. With one life and the field lamps behind you, a player who stood still was tagged in nearly every
+round, most of them a second or so after the 2.5 s opening hold. The day matches have no sniper, so only the night
+match changes: it now starts behind the concession stand, the 3 m block at x -6 to 0, at (-4, 25.5), where the stand
+covers Owen's line with about 2 m to spare at either face. The start looks east-north-east past the stand's east end,
+toward the bleachers and the field (66° off the enemy's centre, 3.9 m clear ahead), because looking north from there
+is looking at the stand's back wall 2 m away. Eric, Rebecca and Brooke still hold the bleachers and the stand.
+The critic also found the night briefings saying "Four a side, four lives each" when you have one life (the roster
+says so). Every team match's briefing said the same thing, three or five lives as well, thirteen in all. They now say
+"four lives for every kid but you", and the roster still gives your own count, armour included.
+### Verified
+- `tests/night-lights-spawn.test.mjs` (new): the start is behind the stand, and the stand blocks Owen's line to your
+  head at 41.9 m of 49.2. Standing still for 30 s, 0 of 6 rounds tagged. After the Bell and The Portables keep the
+  bleachers start. All 13 briefings that give a lives count are true for the kids and for you. On the old build it
+  fails six checks: tagged in 6 of 6, at 3.2–15.4 s, all by Owen, and 13 briefings wrong.
+- `npm test` as four local shards: 85 of 85 suites passed (the new suite was run alone, above). `spawn-facing`: the
+  start is 66° off the enemy and 3.9 m clear ahead.
+- Probe before the test, 40 s rounds standing still: at the bleachers, tagged in 8 of 8 at 3.2–20.8 s (7 by Owen,
+  1 by Ryan); behind the stand, 0 of 8.
+### Still open
+- Whether the stand start is too safe for a capstone is for play: the other three come down the west side past the
+  portables, and the stand covers you only from the north.
+
+## v1.177 fix-up — night-lights-spawn counts the start, not the advance
+CI failed `headless (2/8)` on 5b5d441 with v1.177's new `night-lights-spawn`: "standing still at the start, at most 2
+of 6 rounds are tagged inside 30 s" saw 3 (22.9, 24.9, 25.1 s). The new start behind the concession stand works:
+Owen tagged nobody, and nobody tagged inside 20 s. But by 20 s Ryan and Priya have walked up to a player who stands
+still and tag him, as they should, and the 30 s window counted those. Seven local runs had 0-3 such rounds of 6, every
+tag at 20.7-27.5 s. The check now counts tags inside 18 s. The bleachers' tags came at about 3 s, so it still catches
+the start the test is about; the checks that nobody tags you before 10 s and that Owen never does are unchanged. The
+game is unchanged.
+### Verified
+`node tests/run.mjs night-lights-spawn` passes on a run with three late tags (21.1, 22.1, 22.2 s) that the old check
+would have failed.
+### Still open
+- Nothing for play.

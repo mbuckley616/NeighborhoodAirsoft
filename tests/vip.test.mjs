@@ -90,6 +90,25 @@ for (const id of Object.keys(MATCHES)) {
   await play(id);   // v1.170: the played round goes on from this entry, not a fresh one
 }
 
+// v1.175 (D.17, Michael: B): Night Shift keeps Rebecca on the briefing's spot at (-14, 21) and puts a dumpster on the
+// aisle just north of it, her cover against the store end. It is Night Shift's alone: the other lot matches are unchanged.
+const dump = async (id) => { await g.scenario(id); return page.evaluate(() => {
+  const at = Game.player.obstacles.filter(o => o.minX < -14 && o.maxX > -14 && o.minZ < 19.6 && o.maxZ > 19.6);
+  const reb = Game.scenario.enemies.find(e => e.name === 'Rebecca');
+  // does the line at chest height from her spot to Mason's lane (x -14, z 4; he tagged her from there before) hit it?
+  const blocks = (tx, tz) => at.some(o => { const n = 40; for (let i = 1; i < n; i++) { const t = i / n, x = -14 + (tx + 14) * t, z = 21 + (tz - 21) * t;
+    if (x > o.minX && x < o.maxX && z > o.minZ && z < o.maxZ && 1.0 < (o.baseY || 0) + o.h) return true; } return false; });
+  return { n: at.length, h: at[0] ? at[0].h : null, rebCover: !!(reb && at.length && reb.homeCover === at[0]),
+    lane: blocks(-14, 4), fromStoreW: blocks(-18, -21), obs: Game.player.obstacles.length };
+}); };
+const dumpVip = await dump('lot_vip_night'), dumpLot = await dump('lot_night_4v4');
+console.log('   Night Shift dumpster:', JSON.stringify(dumpVip), '| Lights Out at that spot:', JSON.stringify(dumpLot));
+check("Night Shift: a dumpster stands just north of Rebecca's spot, 1.5 m tall, and it is the cover she holds",
+  dumpVip.n === 1 && dumpVip.h === 1.5 && dumpVip.rebCover, dumpVip);
+check("Night Shift: it blocks her chest-high line to Mason's lane at x -14 and to his start by the store's west end",
+  dumpVip.lane && dumpVip.fromStoreW, dumpVip);
+check('the other lot night match has nothing there, one obstacle fewer', dumpLot.n === 0 && dumpLot.obs === dumpVip.obs - 1, dumpLot);
+
 // --- the player's respawn, its grace, and the two endings (Bunratty)
 await g.scenario('bunratty_vip');
 const resp = await page.evaluate(() => {
@@ -125,10 +144,10 @@ console.log('   our VIP tagged:', JSON.stringify(loseR));
 check('their VIP tagged: the round is won, and the line names Priya, not "the last one"', winR.mode === 'result' && /YOU GOT THEM/.test(winR.txt) && /Priya pulls off the red cap/.test(winR.txt) && !/last one/i.test(winR.txt), winR.txt);
 check('our VIP tagged: the round is lost, and the result says they got Ryan', loseR.mode === 'result' && /THEY GOT RYAN/.test(loseR.txt) && /I was the VIP/.test(loseR.txt) && !/GOT THEM/.test(loseR.txt), loseR.txt);
 
-// v1.170 fix-up, v1.174: 5 s. Since v1.172 Night Shift's Rebecca starts on the briefing's anchor at (-14, 21) and is
-// tagged at 8-36 s in 20 of 30 sampled rounds (CI, 6 Oct: 7.5 s), mostly by Mason; that is a balance question, raised
-// as D.17 in docs/decisions.md. This guards only against a VIP picked off at once.
-check('in play no VIP falls in the first 5 s', played.every(r => (r.ours == null || r.ours >= 5) && (r.theirs == null || r.theirs >= 5)), played);
+// v1.170 fix-up, v1.174: 5 s. Since v1.172 Night Shift's Rebecca starts on the briefing's anchor at (-14, 21) and was
+// tagged at 8-36 s in 20 of 30 sampled rounds (CI, 6 Oct: 7.5 s), mostly by Mason (D.17). v1.175 (Michael: B): the
+// dumpster at her spot; 1 of 12 sampled rounds tagged her inside 40 s, at 22.3 s, so the line is back at 8 s.
+check('in play no VIP falls in the first 8 s', played.every(r => (r.ours == null || r.ours >= 8) && (r.theirs == null || r.theirs >= 8)), played);
 check('in play the kids trade tags and come back (some kid spent a life)', played.every(r => /:[1-9]/.test(r.spent)), played.map(r => r.spent));
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
