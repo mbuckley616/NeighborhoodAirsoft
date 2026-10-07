@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.177</div>
+  <div class="version">v1.178</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6678,7 +6678,7 @@ const SCENARIOS = {
       { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
       { charId: 'priya',    weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },
       { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
-      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard', spawnAt: [37.5, -1.9] },   // v1.178 (D.18, Michael: C): starts and comes back behind the east car, out of Sean's line (the fort's walls are too low to stop it)
       { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
     ],
     winCondition: 'last_team_standing',
@@ -19361,7 +19361,12 @@ function enterScenario(scenarioId) {
       // v1.44: defenders hold their anchor — they never join the attack huddle.
       const joinsEnemyHuddle = clusterCenter && esTeam === 'enemy' && es.role !== 'defender';
       let spawnPos, deployTarget = null, startState = null;
-      if (joinsEnemyHuddle) {
+      if (es.spawnAt) {
+        // v1.178 (D.18, Michael: C): a kid with his own start spawns (and respawns) there and walks to his anchor
+        spawnPos = new THREE.Vector3(es.spawnAt[0], 0, es.spawnAt[1]);
+        deployTarget = placement.pos.clone();
+        startState = 'deploying';
+      } else if (joinsEnemyHuddle) {
         // Tight ring around the cluster center (~2.8m diameter).
         const n = sc.enemySetup.length;
         const ang = (clusterIdx / Math.max(1, n)) * Math.PI * 2 + 0.4;
