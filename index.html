@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.174</div>
+  <div class="version">v1.175</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6693,7 +6693,7 @@ const SCENARIOS = {
     name: 'Riverside Market', scenarioName: 'Night Shift',
     desc: "Same dark lot, new rules. Rebecca's in the blue cap — she's your VIP, one tag and it's over. Seth's in the red cap, back by the dumpsters at the store's west corner. Everybody else comes back as many times as it takes, so trading tags gets you nowhere: get a line on Seth, and keep one on whoever's hunting Rebecca.",
     builderFn: 'buildMarketLotScene',
-    builderArg: 'default',
+    builderArg: 'vip_night',   // v1.175 (D.17): the default lot plus a dumpster at Rebecca's spot
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
@@ -14378,6 +14378,16 @@ function buildMarketLotScene(variant, timeOfDay) {
   for (const [x, z, yaw] of [[-6, -7.5, 0.6], [9, 7, -1.1], [-20, 21, 2.2]]) {
     scene.add(makeCartMesh(x, z, yaw));
     box(x - 0.45, x + 0.45, z - 0.45, z + 0.45, 1.0, 'metal');
+  }
+  // v1.175 (D.17, Michael: B): Night Shift only. Rebecca holds the road side at (-14, 21), and the stalls north of her
+  // (x -17.5 to -9.5 in the z 15.9 half-row) are all empty, so Mason had a clear line down to her from the store end.
+  // A dumpster on the aisle just north of her spot gives her something to hide behind; the briefing's spot stays true.
+  if (variant === 'vip_night') {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 1.6), new THREE.MeshStandardMaterial({ color: 0x2c5a3a, roughness: 0.8, metalness: 0.3 }));
+    m.position.set(-14, 0.75, 19.6); m.castShadow = m.receiveShadow = true; scene.add(m);
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.08, 1.7), new THREE.MeshStandardMaterial({ color: 0x1e2a22, roughness: 0.7 }));
+    lid.position.set(-14, 1.54, 19.6); scene.add(lid);
+    coverList.push(box(-15.1, -12.9, 18.8, 20.4, 1.5, 'metal'));
   }
 
   // === BY THE STORE — a box truck at the loading end, dumpsters at the west end ===

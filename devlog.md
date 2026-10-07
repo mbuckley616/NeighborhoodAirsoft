@@ -8404,3 +8404,31 @@ slow install no longer cancels a passing job. A real hang still ends well inside
 `check.yml` parses (one key changed). By the measured weights the shards' tests are about 17 minutes each.
 ### Still open
 - Caching the Playwright browser and its packages would cut the setup time; not done here.
+
+## v1.175 — Night Shift: a dumpster at Rebecca's spot
+Decisions D.17 (Michael: B, control room 6 Oct). Since v1.172, Rebecca, our VIP in Night Shift, starts on the spot the
+briefing names, the road side at (-14, 21), and with the player idle she was tagged inside 40 s in most rounds, nearly
+always by Mason. The reason is plain on the lot plan: the stalls of the south row's north half from x -17.5 to -9.5 are
+all empty (every third stall is kept open, and the pattern leaves the rest empty), so Mason walked down the x -14 lane
+from the store end and tagged her from 11-25 m while she hid behind nothing; her nearest cover was a car 6 m away.
+Michael chose to keep the spot and add cover there. A dumpster now stands on the aisle just north of her, at
+(-14, 19.6), 2.2 by 1.6 m and 1.5 m tall like the two by the store, with a lid; it is the cover she holds. It is
+Night Shift's alone: the scenario's builder argument is now `vip_night`, which the lot builder reads to add it, so
+the other five lot matches are unchanged. The briefing stays true.
+### Verified
+- Probe, player untaggable and standing at his start, 40 s rounds. Before: Rebecca tagged in 6 of 8, at 12.1-31.6 s,
+  every time by Mason: four from the x -14 lane (11-25 m off), two from x -9.5. After: tagged in 1 of 12, at 22.3 s, by
+  Mason from the east flank at (-4.4, 16.2). Seth, theirs, fell in none either way.
+- `tests/vip.test.mjs` adds: Night Shift has one obstacle there, 1.5 m tall, and it is Rebecca's cover; it blocks her
+  chest-high line to Mason's lane and to his start by the store's west end; Lights Out has nothing there and one obstacle
+  fewer (128 against 129). The early-fall line v1.174 dropped to 5 s is back at 8 s. It passes.
+- `npm test` as four local shards: 82 of 84 suites passed. `pointer-lock` hit the 30 s page-load timeout on the busy box
+  and passed alone. `grocery-store` failed once in Lights Out (store, not lot): Devon held the stockroom doorway 60 s
+  without a shot while an opponent came within 16.9 m; it passed twice alone (Devon fired 9 and 10). Filed under Found
+  in play.
+### Still open
+- In 1 of 38 probe rounds Rebecca left her spot and ended 12 m off it, at (-3.8, 13.7), with nobody tagging her; the other 37
+  held within 0.2 m. The cause was not found (defenders are left out of the v1.152 boredom march). `vip`'s check that a
+  VIP stays within 6 m could trip on it about once in forty runs.
+- Whether the dumpster makes Night Shift too safe with a real player defending is for play; the lot's other side
+  still has the open row east of her that Mason used in the one tag.
