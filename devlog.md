@@ -8529,3 +8529,17 @@ says so). Every team match's briefing said the same thing, three or five lives a
 ### Still open
 - Whether the stand start is too safe for a capstone is for play: the other three come down the west side past the
   portables, and the stand covers you only from the north.
+
+## v1.177 fix-up — night-lights-spawn counts the start, not the advance
+CI failed `headless (2/8)` on 5b5d441 with v1.177's new `night-lights-spawn`: "standing still at the start, at most 2
+of 6 rounds are tagged inside 30 s" saw 3 (22.9, 24.9, 25.1 s). The new start behind the concession stand works:
+Owen tagged nobody, and nobody tagged inside 20 s. But by 20 s Ryan and Priya have walked up to a player who stands
+still and tag him, as they should, and the 30 s window counted those. Seven local runs had 0-3 such rounds of 6, every
+tag at 20.7-27.5 s. The check now counts tags inside 18 s. The bleachers' tags came at about 3 s, so it still catches
+the start the test is about; the checks that nobody tags you before 10 s and that Owen never does are unchanged. The
+game is unchanged.
+### Verified
+`node tests/run.mjs night-lights-spawn` passes on a run with three late tags (21.1, 22.1, 22.2 s) that the old check
+would have failed.
+### Still open
+- Nothing for play.
