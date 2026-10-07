@@ -8472,3 +8472,23 @@ ratio seen; a barrel with no effect would still fail at 1.0. The game is unchang
 `node tests/run.mjs under-parts` passes. 12 local runs gave ratios of 0.77-0.84.
 ### Still open
 - Nothing for play.
+
+## v1.176 fix-up — a kid tagged at his own spawn is out for a second
+CI failed `stuck-sweep-1` on c36f7ec: "bunratty_vip (player at spawn): owen 19.5 s in advancing within 1 m of
+(29.3,1.9)". Locally, 4 of 16 Bunratty VIP sweeps flagged Owen or Tyler for 8-34 s in the bulb fort, a low pen open
+to the east, with Owen's spawn inside it. He is not wedged. Sean, on our side, holds 15 m west and fires over the
+fort's wall. Owen is tagged where he respawns, so his run back to spawn "arrived" the next frame and he could be hit
+again, and the rest of the same burst tagged him again: 4 lives in 0.4 s, then again each time he stood up. A
+progress watchdog on 'deploying' was tried first and did nothing, because every tag restarted him. Now a tagged kid
+stays out (retreating) for at least 1 s, so one burst costs one life. Sean still re-tags him every 1-2 s while he
+stands at his spawn, which is a design question: D.18 in `docs/decisions.md` (protect a respawning kid, let him fight
+back, move the spawn, or leave it). The stuck sweep looks for kids stuck on the map, so a tag now starts the kid's run
+again: a kid who is being shot is not stuck.
+### Verified
+- Owen probe, 30 rounds, hits on him logged: before, Sean's hits landed 0.1-0.3 s apart in one burst; after, 1-3 s
+  apart, one per burst.
+- `ONLY=bunratty_vip LIMIT=6` (the sweep at a 6 s limit, against CI's 15): 16 of 16 pass, against 12 of 16 before.
+- `retreat-progress`, `vip`, `market-lot`, `lot-ffa-opening`, `stuck-sweep-2`, `smoke` pass.
+### Still open
+- D.18: Owen pinned at his spawn by Sean's angle. It never decides the round (he has lives enough), but it reads
+  badly to a player who sees it.

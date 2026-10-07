@@ -55,9 +55,12 @@ export async function sweep(part) {
       }
       Game.keys[key] = false;
     }
-    const st = kids.map(k => ({ mark: [k.pos.x, k.pos.z], run: 0, worst: 0, at: null, state: null, shots: 0, runShots: 0 }));
-    const sp = spawnEnemyBB;
+    const st = kids.map(k => ({ mark: [k.pos.x, k.pos.z], run: 0, worst: 0, at: null, state: null, shots: 0, runShots: 0, tags: 0, seenTags: 0 }));
+    const sp = spawnEnemyBB, el = eliminateEnemy;
     window.spawnEnemyBB = (e, t) => { const i = kids.indexOf(e); if (i >= 0) st[i].runShots++; return sp(e, t); };
+    // v1.176 fix-up: a kid tagged in the span is being shot, not stuck: the tag starts his run again. Bunratty VIP's Owen,
+    // tagged every second or two at his own spawn by Sean, read as 10-30 s stuck there (docs/decisions.md D.18).
+    window.eliminateEnemy = (e) => { const i = kids.indexOf(e); if (i >= 0) st[i].tags++; return el(e); };
     let t = 0;
     try {
       for (let f = 1; f <= SECS * 60 && Game.mode === 'scenario'; f++) {
@@ -67,13 +70,14 @@ export async function sweep(part) {
           const s = st[i];
           // a kid at the player has arrived, not stuck (Infection's taggers huddle on an untaggable player)
           const atPlayer = Math.hypot(k.pos.x - P.pos.x, k.pos.z - P.pos.z) < 2.5;
-          if (k.health > 0 && MOVING.includes(k.state) && !atPlayer && Math.hypot(k.pos.x - s.mark[0], k.pos.z - s.mark[1]) < 1) {
+          const tagged = s.tags !== s.seenTags; s.seenTags = s.tags;
+          if (k.health > 0 && MOVING.includes(k.state) && !atPlayer && !tagged && Math.hypot(k.pos.x - s.mark[0], k.pos.z - s.mark[1]) < 1) {
             s.run += 0.5;
             if (s.run > s.worst) { s.worst = s.run; s.at = [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)]; s.state = k.state; s.shots = s.runShots; }
           } else { s.run = 0; s.runShots = 0; s.mark = [k.pos.x, k.pos.z]; }
         });
       }
-    } finally { window.spawnEnemyBB = sp; }
+    } finally { window.spawnEnemyBB = sp; window.eliminateEnemy = el; }
     return { t: +t.toFixed(1), mode: Game.mode, walked: +walked.toFixed(1),
       kids: kids.map((k, i) => ({ id: k.charId, team: k.team === 'player' ? 'ally' : 'enemy', role: k.role, worst: st[i].worst, at: st[i].at, state: st[i].state, shots: st[i].shots })) };
   }, { walk, SECS, LIMIT });

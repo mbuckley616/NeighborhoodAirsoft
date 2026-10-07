@@ -27162,6 +27162,10 @@ function updateEnemies(dt) {
         e.yaw = Math.atan2(dxb, dzb);
         e.mesh.group.rotation.y = e.yaw;
         if (db < 1.2) {
+          // v1.176 fix-up: out for a second at least. Tagged at his own spawn, a kid "arrived" the next frame, was a
+          // target again, and the rest of the same burst tagged him again: Bunratty VIP's Owen, in the bulb fort,
+          // lost 4 lives in 0.4 s to one of Sean's bursts over its low wall, and looped there 10-30 s.
+          if (e.stateTime < 1.0) break;
           // Reached spawn → redeploy. Reset health and jog back out to the anchor.
           e.health = e.maxHealth;
           e.coverMemory = [];
