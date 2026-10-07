@@ -8492,3 +8492,16 @@ again: a kid who is being shot is not stuck.
 ### Still open
 - D.18: Owen pinned at his spawn by Sean's angle. It never decides the round (he has lives enough), but it reads
   badly to a player who sees it.
+
+## v1.176 fix-up — under-parts fires the same shots for every part
+CI failed `headless (4/8)` on ab2079c with `under-parts`: the Cardboard Barrel's standing cone was 0.884 of the bare
+gun's, over the 0.88 line set two fix-ups ago. That line only widened the margin. The cause is the measurement: each
+part's cone is the median of 300 random shots, and the bare gun's median and the barrel's each move a few per cent
+from run to run, so their ratio ran 0.77-0.88. The test now swaps in a seeded random while it fires those shots, so
+every part is measured on the same 300 draws and the same numbers come out every run. The barrel's ratio is then
+0.735, and the line goes back to 0.85. A barrel that did nothing would read 1.0. The game is unchanged.
+### Verified
+`node tests/under-parts.test.mjs`, three runs: identical numbers each time (bare 0.145° standing, barrel 0.107°,
+foregrip walking 0.744° against 1.140°). `node tests/run.mjs under-parts` passes.
+### Still open
+- Nothing for play.
