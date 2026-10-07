@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.176</div>
+  <div class="version">v1.177</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5845,7 +5845,7 @@ const SCENARIOS = {
   hollow_big_battle: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'The Big Game',
-    desc: "The whole neighborhood showed up. Five on five in the woods, five lives each, last team standing wins — this is the one everybody talks about. You're on blue with Eric, Rebecca, Sean, and Brooke; red's got Seth, Ryan, Mitchell, Mason, and Devon dug in at the north fort. Three guns on each side are full-auto, so the lanes get hot fast — use the creek and the pallet clusters, push as a team, and don't try to trade in the open. First fort to run out of lives loses.",
+    desc: "The whole neighborhood showed up. Five on five in the woods, five lives for every kid but you, last team standing wins — this is the one everybody talks about. You're on blue with Eric, Rebecca, Sean, and Brooke; red's got Seth, Ryan, Mitchell, Mason, and Devon dug in at the north fort. Three guns on each side are full-auto, so the lanes get hot fast — use the creek and the pallet clusters, push as a team, and don't try to trade in the open. First fort to run out of lives loses.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -5874,7 +5874,7 @@ const SCENARIOS = {
   hollow_night_battle: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Night Game in the Woods',
-    desc: "Same woods, same five-on-five, but now it's pitch dark under the canopy and the whole crew came loaded for night. Red's dug into the north fort and most of them are running lights — flashlight beams swinging through the trees and red laser dots crisscrossing the dark. The beams tell you where they're pushing, but they'll see you too. You've got Eric, Sean, Brooke, and Rebecca on blue. Five lives each, last fort standing. Move between the pallet walls, use the dark, and don't silhouette yourself crossing the creek.",
+    desc: "Same woods, same five-on-five, but now it's pitch dark under the canopy and the whole crew came loaded for night. Red's dug into the north fort and most of them are running lights — flashlight beams swinging through the trees and red laser dots crisscrossing the dark. The beams tell you where they're pushing, but they'll see you too. You've got Eric, Sean, Brooke, and Rebecca on blue. Five lives for every kid but you, last fort standing. Move between the pallet walls, use the dark, and don't silhouette yourself crossing the creek.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -6005,7 +6005,7 @@ const SCENARIOS = {
   hollow_full_auto_mayhem: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Full-Auto Mayhem (Night)',
-    desc: "The gloves are off: ten kids in the dark woods and EVERY single one of them is running full-auto — AKs, MP5s, UMPs, MAC-10s, the works. Five on five, five lives each, last team standing. The air's going to be solid with BBs, flashlight beams, and red laser dots. You're on blue with Eric, Sean, Brooke, and Rebecca; red's got the whole rest of the crew dug into the north fort. There's no trading at range in this one — pick your moments between the strings, use the trees and the creek, and push as a unit or get shredded.",
+    desc: "The gloves are off: ten kids in the dark woods and EVERY single one of them is running full-auto — AKs, MP5s, UMPs, MAC-10s, the works. Five on five, five lives for every kid but you, last team standing. The air's going to be solid with BBs, flashlight beams, and red laser dots. You're on blue with Eric, Sean, Brooke, and Rebecca; red's got the whole rest of the crew dug into the north fort. There's no trading at range in this one — pick your moments between the strings, use the trees and the creek, and push as a unit or get shredded.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -6156,7 +6156,7 @@ const SCENARIOS = {
   lot_team_3v3: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Aisle Wars',
-    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus, Jamie and Tyler set up by the store doors; you've got Eric and Brooke at the road end. Three rows of parked cars between you — every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work down a row behind the bumpers, and let Brooke's rifle cover the crossings. Three lives each, last team standing.",
+    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus, Jamie and Tyler set up by the store doors; you've got Eric and Brooke at the road end. Three rows of parked cars between you — every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work down a row behind the bumpers, and let Brooke's rifle cover the crossings. Three lives for every kid but you, last team standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6226,7 +6226,7 @@ const SCENARIOS = {
   lot_night_4v4: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'After Close',
-    desc: "The store's dark, the lot's empty but for the night-shift cars, and the lamps make three bright islands down the middle. Seth's crew holds the store front with Devon on the rifle by the truck; you've got Eric, Sean and Rebecca at the road. Four a side, four lives each. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",
+    desc: "The store's dark, the lot's empty but for the night-shift cars, and the lamps make three bright islands down the middle. Seth's crew holds the store front with Devon on the rifle by the truck; you've got Eric, Sean and Rebecca at the road. Four a side, four lives for every kid but you. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -6274,7 +6274,7 @@ const SCENARIOS = {
   northcliff_twins_3v3: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'The Stoneglen Twins',
-    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Andrew and Alex are with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives each, last team standing.",
+    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Andrew and Alex are with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives for every kid but you, last team standing.",
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6319,7 +6319,7 @@ const SCENARIOS = {
   northcliff_night_4v4: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'Bellfield After Dark',
-    desc: "The Bellfield Court kids walked over after dinner: Mason, Christian, Diego, and Fernando with his rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives each. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
+    desc: "The Bellfield Court kids walked over after dinner: Mason, Christian, Diego, and Fernando with his rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -6408,7 +6408,7 @@ const SCENARIOS = {
   school_portables_3v3: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'The Portables',
-    desc: "Ryan, Mitchell and Priya came over from Bunratty and took the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Mitchell will sit back and pick; Priya will come round the side. Three lives each, last team standing.",
+    desc: "Ryan, Mitchell and Priya came over from Bunratty and took the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Mitchell will sit back and pick; Priya will come round the side. Three lives for every kid but you, last team standing.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6453,12 +6453,12 @@ const SCENARIOS = {
   school_night_4v4: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
-    desc: "No game tonight, so the field's yours. Ryan, Mitchell and Priya are back, and they've brought Owen, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives each. Stay off the field when you can, and out of the lamplight.",
+    desc: "No game tonight, so the field's yours. Ryan, Mitchell and Priya are back, and they've brought Owen, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     timeOfDay: 'night',
     scenarioType: 'skirmish',
-    playerSpawn: 'team_b',
+    playerSpawn: 'stand',            // v1.177: behind the concession stand, out of Owen's line
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
       { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_stand',    team: 'player' },
@@ -6501,7 +6501,7 @@ const SCENARIOS = {
   club_eighteenth_3v3: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'The Eighteenth',
-    desc: "Seth, Marcus and Jamie came over the back fence from Winnmark and took the clubhouse: the veranda, the pool and the cart barn. Sean and Trey are with you on the south lawn. The fairway's open apart from the willows and the pond, and the carts are the only cover on the green. Jamie will rush with the shotgun; Marcus likes the carts. Three lives each, last team standing.",
+    desc: "Seth, Marcus and Jamie came over the back fence from Winnmark and took the clubhouse: the veranda, the pool and the cart barn. Sean and Trey are with you on the south lawn. The fairway's open apart from the willows and the pond, and the carts are the only cover on the green. Jamie will rush with the shotgun; Marcus likes the carts. Three lives for every kid but you, last team standing.",
     builderFn: 'buildCountryClubScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6546,7 +6546,7 @@ const SCENARIOS = {
   club_night_4v4: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'Night Swim',
-    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. You've got Sean, Trey and Brooke by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives each.",
+    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. You've got Sean, Trey and Brooke by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives for every kid but you.",
     builderFn: 'buildCountryClubScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -6593,7 +6593,7 @@ const SCENARIOS = {
   store_price_check_3v3: {
     region: 'east_roswell', street: 'riverside_market_inside',
     name: 'Inside Riverside Market', scenarioName: 'Price Check',
-    desc: "Marcus, Jamie and Tyler came in through the loading dock and hold the stockroom. Eric and Brooke are with you at the checkouts. There are three doorways through the back wall, and five aisles between you and them. Jamie's shotgun is made for an aisle; don't race him down one. The counters, the freezers and the produce are your cover out front; the pallets and the forklift are theirs. Three lives each, last team standing.",
+    desc: "Marcus, Jamie and Tyler came in through the loading dock and hold the stockroom. Eric and Brooke are with you at the checkouts. There are three doorways through the back wall, and five aisles between you and them. Jamie's shotgun is made for an aisle; don't race him down one. The counters, the freezers and the produce are your cover out front; the pallets and the forklift are theirs. Three lives for every kid but you, last team standing.",
     builderFn: 'buildGroceryStoreScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6638,7 +6638,7 @@ const SCENARIOS = {
   store_night_4v4: {
     region: 'east_roswell', street: 'riverside_market_inside',
     name: 'Inside Riverside Market', scenarioName: 'Lights Out',
-    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Marcus, Jamie and Tyler are back, and they've brought Devon, who's set up with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. You've got Eric, Brooke and Rebecca at the checkouts. Four a side, four lives each.",
+    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Marcus, Jamie and Tyler are back, and they've brought Devon, who's set up with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. You've got Eric, Brooke and Rebecca at the checkouts. Four a side, four lives for every kid but you.",
     builderFn: 'buildGroceryStoreScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -15234,6 +15234,10 @@ function buildHighSchoolScene(variant, timeOfDay) {
     team_b: { pos: P(5, 26.5), yaw: -0.35 },       // at the west end of the home bleachers, looking up the field's west sideline (yaw 0 faces -z, the school)
     team_a: { pos: P(-7.5, -25), yaw: Math.PI },
     portables: { pos: P(-19, 1.5), yaw: -Math.PI / 2 },   // v1.156: the defend, in the lane between the middle and south rows, facing the field (east)
+    // v1.177 (Found in play, critic v1.176): Friday Night Lights starts behind the concession stand, out of Owen's line
+    // from the staff cars (team_b gave him a 48 m shot at a standing player, 8 of 8 rounds tagged, most at 3-12 s),
+    // looking past the stand's east end toward the bleachers and the field
+    stand: { pos: P(-4, 25.5), yaw: -1.2 },
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];

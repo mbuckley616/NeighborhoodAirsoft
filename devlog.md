@@ -8505,3 +8505,27 @@ every part is measured on the same 300 draws and the same numbers come out every
 foregrip walking 0.744° against 1.140°). `node tests/run.mjs under-parts` passes.
 ### Still open
 - Nothing for play.
+
+## v1.177 — Friday Night Lights starts behind the concession stand
+Found in play (critic, 7 Oct). In Friday Night Lights, Hollins Ridge High's night 4v4, you started at the west end of
+the home bleachers, (5, 26.5), the same start as the school's day matches. Owen, their sniper, holds the staff cars at
+(10.5, -21.5), 48 m up the field, and nothing stood between the two: the bleachers run from x 8 east, and the start is
+3 m west of them. With one life and the field lamps behind you, a player who stood still was tagged in nearly every
+round, most of them a second or so after the 2.5 s opening hold. The day matches have no sniper, so only the night
+match changes: it now starts behind the concession stand, the 3 m block at x -6 to 0, at (-4, 25.5), where the stand
+covers Owen's line with about 2 m to spare at either face. The start looks east-north-east past the stand's east end,
+toward the bleachers and the field (69° off the enemy's centre, 7 m clear ahead), because looking north from there
+is looking at the stand's back wall 2 m away. Eric, Rebecca and Brooke still hold the bleachers and the stand.
+The critic also found the night briefings saying "Four a side, four lives each" when you have one life (the roster
+says so). Every team match's briefing said the same thing, three or five lives as well, thirteen in all. They now say
+"four lives for every kid but you", and the roster still gives your own count, armour included.
+### Verified
+- `tests/night-lights-spawn.test.mjs` (new): the start is behind the stand, and the stand blocks Owen's line to your
+  head at 41.9 m of 49.2. Standing still for 30 s, 0 of 6 rounds tagged. After the Bell and The Portables keep the
+  bleachers start. All 13 briefings that give a lives count are true for the kids and for you. On the old build it
+  fails six checks: tagged in 6 of 6, at 3.2–15.4 s, all by Owen, and 13 briefings wrong.
+- Probe before the test, 40 s rounds standing still: at the bleachers, tagged in 8 of 8 at 3.2–20.8 s (7 by Owen,
+  1 by Ryan); behind the stand, 0 of 8.
+### Still open
+- Whether the stand start is too safe for a capstone is for play: the other three come down the west side past the
+  portables, and the stand covers you only from the north.
