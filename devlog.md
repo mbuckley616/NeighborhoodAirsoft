@@ -8460,3 +8460,15 @@ your last spot for longer than in play.
 ### Still open
 - Nothing for play. Suites that counted shots on an idle box may now see a little less fire, since the kids no
   longer keep firing at your last spot for 10 s. All of them pass.
+
+## v1.176 fix-up — under-parts' Cardboard Barrel line sits outside its run-to-run spread
+CI failed `headless (4/8)` on c36f7ec with `under-parts` (v1.169): "Cardboard Barrel: the standing cone is a sixth
+tighter or more". The barrel's median cone was 0.1146° against the bare gun's 0.1344°, a ratio of 0.853; the line was
+0.85. The barrel's ratio is about 0.80, a fifth tighter as its card says, but it ran 0.77-0.84 over six local runs at
+300 shots. Raising the sample to 1200 shots only narrowed it to 0.80-0.83, because most of the spread comes from the
+bare gun's own median moving between measurements. The line is now 0.88 ("an eighth tighter or more"), outside every
+ratio seen; a barrel with no effect would still fail at 1.0. The game is unchanged.
+### Verified
+`node tests/run.mjs under-parts` passes. 12 local runs gave ratios of 0.77-0.84.
+### Still open
+- Nothing for play.

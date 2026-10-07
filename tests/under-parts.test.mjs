@@ -167,7 +167,10 @@ check('Shoelace Sling: a sprint lasts 20% longer or more', S.sprintSecs > B.spri
 check('Shoelace Sling: aiming in takes 30% longer or more', S.adsIn > B.adsIn * 1.3, [S.adsIn, B.adsIn]);
 check('PVC Foregrip: the walking cone is a fifth tighter or more', F.coneWalk < B.coneWalk * 0.8, [F.coneWalk, B.coneWalk]);
 check('PVC Foregrip: standing still, no change; 0.8 lb slows the walk', Math.abs(F.coneStill / B.coneStill - 1) < 0.12 && F.walk2s < B.walk2s * 0.995, [F.coneStill, B.coneStill, F.walk2s, B.walk2s]);
-check('Cardboard Barrel: the standing cone (in degrees) is a sixth tighter or more', C.coneStill < B.coneStill * 0.85, [C.coneStill, B.coneStill]);
+// v1.176 fix-up: 0.88, not 0.85. The barrel's median ratio is about 0.80 (a fifth tighter, as its card says) but runs
+// 0.77-0.85 from run to run (CI, 7 Oct: 0.853); 1200 shots instead of 300 barely narrowed it (0.80-0.83), since the bare
+// gun's own median moves between measurements. A barrel that did nothing would still fail at 1.0.
+check('Cardboard Barrel: the standing cone (in degrees) is an eighth tighter or more', C.coneStill < B.coneStill * 0.88, [C.coneStill, B.coneStill]);
 check('Cardboard Barrel: the BBs leave 15% slower', Math.abs(C.speed / B.speed - 0.85) < 0.02, [C.speed, B.speed]);
 check('Sling, foregrip and cardboard: no weight on the sling or cardboard', S.weightMult === B.weightMult && C.weightMult === B.weightMult, [S.weightMult, C.weightMult, B.weightMult]);
 
