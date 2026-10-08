@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.177</div>
+  <div class="version">v1.179</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6459,9 +6459,10 @@ const SCENARIOS = {
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'stand',            // v1.177: behind the concession stand, out of Owen's line
+    allyDeploy: true,                // v1.179: Eric, Rebecca and Brooke walk from the stand to their posts
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
-      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_stand',    team: 'player' },
+      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_port_s',   team: 'player' },   // v1.179: was b_stand, the start itself
       { charId: 'brooke',   weapon: 'ump',    anchor: 'b_court',    team: 'player' },
       { charId: 'ryan',     weapon: 'ump',    anchor: 'a_port_e' },
       { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_doors' },
@@ -6678,7 +6679,7 @@ const SCENARIOS = {
       { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
       { charId: 'priya',    weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },
       { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
-      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard', spawnAt: [37.5, -1.9] },   // v1.178 (D.18, Michael: C): starts and comes back behind the east car, out of Sean's line (the fort's walls are too low to stop it)
       { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
     ],
     winCondition: 'last_team_standing',
@@ -19361,7 +19362,12 @@ function enterScenario(scenarioId) {
       // v1.44: defenders hold their anchor — they never join the attack huddle.
       const joinsEnemyHuddle = clusterCenter && esTeam === 'enemy' && es.role !== 'defender';
       let spawnPos, deployTarget = null, startState = null;
-      if (joinsEnemyHuddle) {
+      if (es.spawnAt) {
+        // v1.178 (D.18, Michael: C): a kid with his own start spawns (and respawns) there and walks to his anchor
+        spawnPos = new THREE.Vector3(es.spawnAt[0], 0, es.spawnAt[1]);
+        deployTarget = placement.pos.clone();
+        startState = 'deploying';
+      } else if (joinsEnemyHuddle) {
         // Tight ring around the cluster center (~2.8m diameter).
         const n = sc.enemySetup.length;
         const ang = (clusterIdx / Math.max(1, n)) * Math.PI * 2 + 0.4;
@@ -19388,6 +19394,10 @@ function enterScenario(scenarioId) {
           0,
           playerSpawnPos.z + side * ring
         );
+        // v1.179: in a match whose start has no line to the field (Friday Night Lights, behind the concession stand),
+        // the allies break from you and walk to the posts they hold, as a respawned ally already does. Brooke stood
+        // beside you all round with nobody to see (Found in play, v1.178).
+        if (sc.allyDeploy) { deployTarget = placement.pos.clone(); startState = 'deploying'; }
       } else {
         spawnPos = placement.pos.clone();
       }
