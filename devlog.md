@@ -8599,3 +8599,23 @@ day matches keep their posts and their start beside you. A new `allyDeploy` flag
 - Night Swim's Brooke (critic, 7 Oct: 0 m in 300 s in 2 of 3 rounds) is the same cautious ally on another map. The
   flag would fix it the same way, but the general question, whether every ally walks to his post at the start, is
   Michael's (v1.172 fix-up's Still open).
+
+## v1.180 — Kids on raised ground see from where they stand
+Found in play (critic, 8 Oct). Kids on the cul-de-sac's raised bulb never fired. A kid decides whether he can see his
+target, which drives peeking, shooting and his memory of where you were, from a muzzle at the perch's height or 0,
+plus 1.05 m for his size. The ground under him was left out, and on the bulb it is 0.35 m, so the line ran 0.35 m low
+and the plank fort's wall cut it. The shot itself already left from his real height. Storm the Court's sniper Mitchell
+and Protect Ryan's VIP Priya both hold the plank fort (`bulb_plank`), and the critic saw Mitchell fire 0 shots in 12
+rounds and Priya 0 in 4, which is why walking at Priya won Protect Ryan. Both sight checks (the one every kid runs
+each step, and the deploying kid's bail-out when a shot appears) now start from his real height, `pos.y`, which is the
+perch, a ladder rung or the ground under him, as the shot does. Kids on the flat are unchanged (their `pos.y` is 0);
+the change reaches any kid standing on ground above 0, the bulb and Northcliff's hill among them.
+### Verified
+- `tests/bulb-sight.test.mjs` (new), the player untaggable in the open at (18.7, 1.4), 12 m from the bulb, 20 s a
+  round, three rounds each: Mitchell, at y 0.35–0.38, has a line in 40 of 40 half-second samples and fires 6–7 shots;
+  Priya, at y 0.48–0.54, a line in 39 of 40 and fires 15–17. On v1.179 the same rounds gave Mitchell 3 of 40 and 1
+  shot, Priya 1 of 40 and 2–3 shots.
+- `vip`, `vip-spawn`, `northcliff` (the hill) and `treehouse-hold` (the platform) pass on the new build.
+### Still open
+- Storm the Court now has a sniper who shoots back from the fort, and Protect Ryan a VIP who does: whether either is
+  now too hard (the critic won Protect Ryan by walking at Priya) is for play.

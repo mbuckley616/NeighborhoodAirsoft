@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.179</div>
+  <div class="version">v1.180</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -26206,7 +26206,7 @@ function updateEnemies(dt) {
     // peek/shoot/advance cases can all read it.
     {
       const sYmem = e.mesh.scaleY ?? 1.0;
-      const muzzleYmem = (e.perch ? e.perch.y : 0) + 1.05 * sYmem;   // v1.138: from the perch (the ground's own height is still left out here)
+      const muzzleYmem = (e.pos.y || 0) + 1.05 * sYmem;   // v1.180: from his real height (kidGroundY: the perch, or the ground under him, 0.35 m on the bulb); was the perch or 0
       const playerChestYmem = tgt.chestY;
       const losMem = hasLineOfSight(
         e.pos.x, muzzleYmem, e.pos.z,
@@ -26328,7 +26328,7 @@ function updateEnemies(dt) {
         // Reactive bail: if a real shot presents itself mid-deploy, take it.
         {
           const sY = e.mesh.scaleY ?? 1.0;
-          const muzzleY = (e.perch ? e.perch.y : 0) + 1.05 * sY;   // v1.138: from the perch
+          const muzzleY = (e.pos.y || 0) + 1.05 * sY;   // v1.180: from his real height, as the shot itself (was the perch or 0)
           const playerChestY = tgt.chestY;
           const losNow = hasLineOfSight(
             e.pos.x, muzzleY, e.pos.z,
