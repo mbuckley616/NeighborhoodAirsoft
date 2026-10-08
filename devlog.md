@@ -8619,3 +8619,17 @@ the change reaches any kid standing on ground above 0, the bulb and Northcliff's
 ### Still open
 - Storm the Court now has a sniper who shoots back from the fort, and Protect Ryan a VIP who does: whether either is
   now too hard (the critic won Protect Ryan by walking at Priya) is for play.
+
+## v1.181 — Seth's shotgun briefing tells the truth
+Found in play (critic, 8 Oct). Seth's Got a Shotgun's briefing said "past 14m and he can't touch you", but Seth fires
+out to 25 m (the shotgun's far band) and the critic was tagged holding the start from 14.7–17.7 m in 4 of 6 rounds. A
+player who backs off to 15 m on the briefing's word is tagged and doesn't know why. The backlog offered the line or his
+range. I changed the line, so the duel plays as it did (the critic called it fair and fast): "Close in fast or keep
+well back — his pellets spread, and the farther out you are, the fewer of them find you." Held at fixed distances
+there is no clean edge to promise: his pellets reach you at 16 m and, on some runs, at 20–24 m, and thin out past that.
+### Verified
+- `tests/seth-shotgun.test.mjs` (new): the briefing no longer names a safe range; Seth held west of the player in the
+  open for 20 s at 12, 16, 20, 24 and 28 m fires 7–12 shots at each and lands 15, 8, 0, 0 and 0 pellets. An earlier
+  probe of the same setup landed 21, 13, 13, 5, 6, 0, 2, 0, 0 at 12–28 m in 2 m steps, so 20–24 m can still sting.
+### Still open
+- Whether a 1v1 against a shotgun should have a real safe range (a shorter one for Seth) is Michael's, if he wants it.
