@@ -5,6 +5,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.19 A cautious ally can sit the whole round out. Fix Night Swim only, or every match? (builder, 2026-10-08)**
+  In Night Swim (`club_night_4v4`), ally Brooke walked 0 m in 300 s in 2 of the critic's 3 rounds (7 Oct). It is the
+  same thing v1.179 fixed in Friday Night Lights and v1.172 saw in Price Check: in team matches your allies start
+  beside you (v1.33), and a cautious skirmisher (aggression under 0.45) never marches, so with no enemy in sight she
+  hides and peeks all round. The last-kid march (v1.152) skips allies, snipers and defenders. It doesn't decide rounds
+  (your other allies fight), but you are a kid short and she looks broken.
+  A) Night Swim only: its allies walk out to their posts at the start, as Friday Night Lights' do since v1.179
+  B) Every team match: allies walk out to their posts at the start; none starts beside you any more
+  C) Any ally who neither moves 2 m nor fires with a line for 25–30 s goes looking, in every match, as the last kid
+     does today; starts are unchanged
+  D) Leave it: a cautious kid holding back is in character
+  Builder recommends C: it fixes Night Swim and Price Check and any spot not yet seen, without moving any start, and
+  a kid who is fighting never triggers it. A is the smallest change if you'd rather not touch the other matches.
+
 ## Answered
 
 - **D.18 Bunratty VIP: Sean pins Owen at his spawn. Protect a respawning kid, or leave it? (builder, 2026-10-07)**
