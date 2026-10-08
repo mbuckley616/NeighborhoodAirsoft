@@ -8631,5 +8631,8 @@ there is no clean edge to promise: his pellets reach you at 16 m and, on some ru
 - `tests/seth-shotgun.test.mjs` (new): the briefing no longer names a safe range; Seth held west of the player in the
   open for 20 s at 12, 16, 20, 24 and 28 m fires 7–12 shots at each and lands 15, 8, 0, 0 and 0 pellets. An earlier
   probe of the same setup landed 21, 13, 13, 5, 6, 0, 2, 0, 0 at 12–28 m in 2 m steps, so 20–24 m can still sting.
+- `npm test` as four local shards on this build, which holds v1.180: 90 of 90 suites passed. A baseline run on
+  v1.179 before either change failed `lot-ffa-opening` once (two lot starts in sight, 17.8 m apart, the starts drawn
+  among the lot's random cars); it passed in this run.
 ### Still open
 - Whether a 1v1 against a shotgun should have a real safe range (a shorter one for Seth) is Michael's, if he wants it.
