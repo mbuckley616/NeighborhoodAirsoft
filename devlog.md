@@ -8545,3 +8545,57 @@ game is unchanged.
 would have failed.
 ### Still open
 - Nothing for play.
+
+## v1.178 — Protect Ryan's Owen starts behind the east car
+D.18, Michael: C (control room, 7 Oct): move Owen's spawn out of Sean's line. In Protect Ryan, Bunratty's VIP match,
+Owen started and came back in the bulb fort, (30.3, 1.7), and Sean, on our side, now and then held down the road to
+the west and tagged him each time he stood up. The question offered the fort's open east side as the new spot, but the
+fort's walls are too low to stop a BB, and from the six spots Sean was seen shooting Owen from (x 1.5 to 14.7, down
+the road), a spot just outside the opening took more of his shots than the fort did: 35 of 360 against 24. Behind the
+east car, at (37.5, −1.9), the car's body stops all of them: 0 of 360. So Owen now starts and comes back there, 7 m east
+of the fort, and walks to his anchor in house 5's backyard as before. Mitchell, Tyler and Priya are unchanged. The
+setup takes a `spawnAt` for any kid: he starts and respawns there and walks to his anchor.
+### Verified
+- `tests/vip-spawn.test.mjs` (new): Owen starts at the car, `deploying`; tagged at his anchor, he comes back there and
+  redeploys at 1.2 s; Sean's 360 shots reach him 0 times there against 16–24 at the fort (three runs); three played
+  40 s rounds, the player untaggable: Owen leaves his spawn at 3.3–3.5 s and is never tagged near it.
+- Played 60 s rounds before the change, player idle: Owen tagged within 2 m of his spawn in 5 of 36 rounds (8 tags,
+  all Sean's, one run of 3 in 3.2 s). With the car spawn, 1 of 36 (one tag, by Sean at 10 m after he walked up the bulb).
+- The stuck sweep on `bunratty_vip`, all sixteen suites (48 runs of 90 s): Owen's longest stay 2 s, was 8–34 s in 4 of
+  16 runs before v1.176's fix-up; no kid over 7 s.
+- `npm test` as four local shards: 84 of 87 passed with the new suite; stuck-sweep-13 and -15 timed out loading the page
+  under the load and passed alone; `high-school` failed once (below) and passed alone.
+### Still open
+- Whether Owen's longer walk out (about 37 m to his anchor, was 30) changes Protect Ryan’s pace is for play.
+- `high-school`'s Friday Night Lights: ally Brooke, starting beside v1.177's new spot behind the stand, neither moved
+  nor fired for 60 s in one local run. Filed under Found in play.
+
+## v1.179 — Friday Night Lights' allies walk out to their posts
+Found in play (builder, v1.178). In Friday Night Lights, ally Brooke once stood 60 s beside v1.177's start behind the
+concession stand, 0 m walked and 0 shots. The backlog asked whether she can hold there with no target all round: she
+can. In team matches your allies start beside you (v1.33) and only go to their posts after a respawn. Brooke is a
+cautious skirmisher (aggression under 0.45), so she never marches, and from behind the stand she has no line to the
+field. In 8 sampled 60 s rounds she walked 0.1 m or less in 6 and fired 0 times in one. In this match only, the allies
+now break from you at the start and walk to their posts, as a respawned ally already does: Eric to the bleachers' west
+end, Brooke to the court. Rebecca's post was the stand itself, (−3, 26), 1.5 m from your start, so walking there
+changed nothing (0 shots in 4 of 6 rounds with the player untaggable). Her post in this match is now the south
+portable, (−23.7, 14.5), covering the west lane the other side comes down. Of three posts tried over 6 rounds of 90 s
+each, it was the one where she fired every round (8–141 shots), with the lives lost on each side about as before. The
+day matches keep their posts and their start beside you. A new `allyDeploy` flag on a scenario turns this on.
+### Verified
+- `tests/night-lights-allies.test.mjs` (new), 6 rounds of 60 s with the player untaggable: the three allies start
+  beside you, `deploying`; Eric walks 81–195 m and fires 14–56 times, Rebecca 7.5–72 m and 6–133, Brooke 19.6–56 m and
+  12–147. Before the change, Brooke walked 0.1 m or less in 6 of 8 rounds.
+- `night-lights-spawn` passes: standing still behind the stand, nobody tags you inside 30 s in 6 of 6 rounds.
+- `high-school` passes on the final build: in Friday Night Lights Brooke walked 56 m and fired 87 times, and Rebecca
+  16 m and 50 times.
+- `npm test` as four local shards: 85 of 87 passed. The run started before the edit and picked it up partway, so
+  `high-school` ran with the halfway build, Brooke walking out and Rebecca still at the stand (0 m, 0 shots). That is
+  how her post was found. `night-lights-spawn` hit the 30 s page-load timeout on the busy box. Both pass alone on the
+  final build, as does the new suite.
+### Still open
+- Rebecca rarely reaches the portable: she meets the other side on the way and holds 7–21 m short, firing. Whether
+  the west side now feels crowded with two allies on it is for play.
+- Night Swim's Brooke (critic, 7 Oct: 0 m in 300 s in 2 of 3 rounds) is the same cautious ally on another map. The
+  flag would fix it the same way, but the general question, whether every ally walks to his post at the start, is
+  Michael's (v1.172 fix-up's Still open).
