@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07).
 
@@ -707,3 +707,89 @@ addressed to me, and nothing asked me to break a rule.
 
 I have no new proposal. Problem 1 is a bug of a kind the builder has fixed twice before, and Problem 2 is Michael's to
 feel.
+
+## 2026-10-08 — Storm the Court, Seth's Got a Shotgun, Two Against the World; Friday Night Lights and Protect Ryan again (v1.179)
+
+I played main at e9be181 (v1.179). `auto/build` is ahead only by a decisions note (D.19), so main is the newest
+build. I played 52 bot rounds: Friday Night Lights 12, Storm the Court 12, Seth's Got a Shotgun 16, Two Against the
+World 6 and Protect Ryan 4. I also ran five probes. There were no page errors anywhere, and `node tests/run.mjs smoke`
+passes. The bot is new again (tests/tmp doesn't survive). It aims at the nearest kid it can see, cocks for the gun's
+cock time plus 0.15 s, fires, and refills an empty mag after 2 s. It either holds its start, or walks straight at the
+nearest kid until it is 15 m away. One warning for whoever writes the next bot: making the player untaggable with
+`maxHits = 1e9` freezes the page on the first hit, because `updateHealthHud` then builds that many pips. The vip suite
+already says so. It cost me one 15-minute hang before I saw it. The untaggable rounds below ignore hits on the player
+instead.
+
+**Problem 1: kids on the cul-de-sac's raised bulb can't see over the plank fort, so they never fire.** In Storm the
+Court, Mitchell has the sniper on the plank fort (`bulb_plank`, at (30.6, 2.3)), and the briefing says "he does not
+miss". He fired 0 shots in all 12 rounds, and 0 in a 30 s probe where I walked the player from the lane to 12 m from him
+and stopped there in the open. Ryan and Nick, behind the cars, fired 1–9 times a round. The cause is in the kids'
+sight check. The bulb's ground sits at y 0.35, and the check that sets `_hasLOSNow` puts the kid's muzzle at
+`(perch ? perch.y : 0) + 1.05 × scaleY`, which leaves the ground's height out. The code comment at v1.138 says so
+("the ground's own height is still left out here"). For a kid on the bulb, that puts the eye about 0.8 m above his feet
+instead of 1.2 m, which is below the plank's top. Over the same 30 s walk, I sampled his line to the player 53 times.
+`_hasLOSNow`'s formula was clear 0 times, and the same line from his real height was clear 48 times. Priya, Protect
+Ryan's VIP, holds the same anchor. She was clear 0 of 53 times against 40 of 53, and she fired 0 shots in that probe and
+in all 4 of my Protect Ryan rounds, while Sean tagged her from 17–19 m. That explains last run's "walk straight at
+Priya and win 4 of 4": the VIP can't shoot back. Screenshot `docs/critic/2026-10-08-storm-the-court-mitchell-hiding-at-12m.png`
+shows Mitchell's head over the KEEP OUT plank at 12 m, in `hiding`, with 0 shots. So Storm the Court's sniper threat
+doesn't exist, and with it most of the match's reason to "push the lane smart". Still, the straight walker was out in
+6 of 6 rounds at 9.4–11.5 s, to Ryan and Nick from 15–22 m. Two Against the World's Priya (`bunratty_team_2v4`) also
+starts at `bulb_plank`, but she isn't a defender and walks off it. I didn't check other raised ground. Any kid
+standing on ground above y 0 behind cover just over 1 m should show the same thing. Steps: `g.scenario('bunratty_storm_the_court')`,
+ignore hits on the player, walk him to (18.7, 1.4), and step 20 s. Count `spawnEnemyBB` calls from Mitchell, and
+compare `hasLineOfSight` from `1.05 × scaleY` with one from `pos.y + 1.05 × scaleY`.
+
+**Problem 2: Seth's Got a Shotgun's briefing promises "past 14m and he can't touch you", and he can.** When I held the
+start, Seth ended 4 of 6 rounds at 3.5–4.5 s, tagging the player from 14.7, 14.7, 17.7 and 17.7 m. In 4 untaggable
+probes he fired his first shot at 2.8 s from 20.1 m every time, his second from 16.9–17.3 m, and he hit from 15.0–17.7 m
+in 3 of the 4 before closing to 5.7 m. The shotgun's AI bands are 6/8/25 (PUSH/NEAR/FAR), so he engages out to 25 m.
+Either the line or Seth's range is wrong. A player who backs off to 15 m because the briefing told them to gets tagged
+and doesn't know why. The match is otherwise a fair, fast duel: the bot won 4 of 12 (2 holding, 2 pushing), tagging
+him from 5.7–5.8 m, and every round was decided by 8.2 s. Steps: `g.scenario('winnmark_seth_shotgun_duel')`, stand still,
+and log the shooter's distance at each hit on the player.
+
+**Friday Night Lights with the stand start (v1.177) and the allies walking out (v1.179).** Holding behind the stand,
+nobody tagged me before 70 s in 6 of 6 rounds. Owen tagged nobody, and 4 rounds were still going at 120 s. The 2 I lost
+were to Ryan, who walked in, at 70.6 s from 2.5 m and at 107.4 s from 21 m. Pushing up the field, I was out in 6 of 6 at
+12–50 s, 5 of them to Ryan from 11–23 m. So the stand covers the start without making the round safe. Allies: Eric
+walked 189–350 m and was out of lives by 120 s every time. Brooke fired 59–232 shots a round and Rebecca 26–77. Neither
+sat out. But both stopped about 20–50 m from their start and stayed there 85–111 s of the 120: Rebecca at
+(−16.4, 12.2), 7.5 m short of the south portable, and Brooke at (−22.4, 24.9). That matches the builder's v1.179 note.
+They fight from there, so I'm not filing it. Mitchell on their side was the one who did least: 12–36 m walked, 7–50
+shots, and still for 59–104 s in the stockroom corner at (−16, −22).
+
+**Protect Ryan (v1.178).** I ran 4 rounds of 120 s, holding and untaggable. Owen reached his anchor at 18.3–18.4 s in 3
+of them. In the fourth he was tagged on the way and ended up peeking behind the east car, his new spawn, for 61 s. Sean
+tagged Priya at 43.3 and 100.8 s, so a held round now ends in 2 of 4 (last run: 0 of 7). With Problem 1, that's
+because Priya can't shoot Sean back, not because of the spawn move.
+
+**Two Against the World.** I ran 6 rounds holding the lane start with one life. I was out every time, at 9.6–21.7 s:
+Priya twice (18.9 and 37 m), Ryan three times (5.5–14.7 m) and Mitchell once (27 m). Sean lost 1–2 of his 3 lives in
+the same time. The briefing calls it "a real underdog fight", and it is one. I'm not filing it. Whether 10–20 s is
+too short for a player is for hands.
+
+**What worked.**
+- **First-timer path:** the title reads v1.179, and the button says ENTER MIKE'S ROOM. NEW GAME goes through the
+  mirror to the bedroom, and the first prompt is "E Go outside".
+- **Stuck kids:** apart from the holders named above, none. The kids who stood still longest held cover at their
+  posts, peeking and firing, and none of them was wedged on the way to one.
+- **Step cost** (two to four browsers at once): averages 0.3–4.2 ms, p95 0.5–10.6 ms. Single steps reached 826 ms
+  under load. The harness restarted one stalled NEW GAME (the known v1.123 stall).
+
+### itch.io
+Still unreachable: WebFetch can't resolve mbuckley616.itch.io, and curl gets a 403 from the proxy, so I read no
+comments. In the last day of Slack there were the builder's v1.178 and v1.179 posts, the producer's posts, the D.18
+decision, and two merge cards. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.177–v1.179)
+- v1.177, whether the stand start is too safe for a capstone: it isn't. The start is safe from Owen, but Ryan walks in
+  and ends 2 of 6 held rounds (above).
+- v1.178, whether Owen's longer walk changes Protect Ryan's pace: he reaches his anchor at 18.3–18.4 s. I have no
+  earlier number to compare against, and the pace is set by Problem 1 more than by Owen.
+- v1.179, whether the west side feels crowded with two allies on it: the numbers say the two allies stop 7–20 m apart
+  and both fire. How it feels needs hands.
+- v1.179 and D.19, Night Swim's idle Brooke: not replayed. D.19 is with Michael.
+
+I have no proposal. Problem 1 is a one-line kind of bug with a large effect on two matches, and Problem 2 is a line of
+text or a range number. Both are the builder's.
