@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.178</div>
+  <div class="version">v1.179</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6459,9 +6459,10 @@ const SCENARIOS = {
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'stand',            // v1.177: behind the concession stand, out of Owen's line
+    allyDeploy: true,                // v1.179: Eric, Rebecca and Brooke walk from the stand to their posts
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
-      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_stand',    team: 'player' },
+      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_port_s',   team: 'player' },   // v1.179: was b_stand, the start itself
       { charId: 'brooke',   weapon: 'ump',    anchor: 'b_court',    team: 'player' },
       { charId: 'ryan',     weapon: 'ump',    anchor: 'a_port_e' },
       { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_doors' },
@@ -19393,6 +19394,10 @@ function enterScenario(scenarioId) {
           0,
           playerSpawnPos.z + side * ring
         );
+        // v1.179: in a match whose start has no line to the field (Friday Night Lights, behind the concession stand),
+        // the allies break from you and walk to the posts they hold, as a respawned ally already does. Brooke stood
+        // beside you all round with nobody to see (Found in play, v1.178).
+        if (sc.allyDeploy) { deployTarget = placement.pos.clone(); startState = 'deploying'; }
       } else {
         spawnPos = placement.pos.clone();
       }

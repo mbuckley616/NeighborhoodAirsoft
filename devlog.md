@@ -8569,3 +8569,33 @@ setup takes a `spawnAt` for any kid: he starts and respawns there and walks to h
 - Whether Owen's longer walk out (about 37 m to his anchor, was 30) changes Protect Ryan’s pace is for play.
 - `high-school`'s Friday Night Lights: ally Brooke, starting beside v1.177's new spot behind the stand, neither moved
   nor fired for 60 s in one local run. Filed under Found in play.
+
+## v1.179 — Friday Night Lights' allies walk out to their posts
+Found in play (builder, v1.178). In Friday Night Lights, ally Brooke once stood 60 s beside v1.177's start behind the
+concession stand, 0 m walked and 0 shots. The backlog asked whether she can hold there with no target all round: she
+can. In team matches your allies start beside you (v1.33) and only go to their posts after a respawn. Brooke is a
+cautious skirmisher (aggression under 0.45), so she never marches, and from behind the stand she has no line to the
+field. In 8 sampled 60 s rounds she walked 0.1 m or less in 6 and fired 0 times in one. In this match only, the allies
+now break from you at the start and walk to their posts, as a respawned ally already does: Eric to the bleachers' west
+end, Brooke to the court. Rebecca's post was the stand itself, (−3, 26), 1.5 m from your start, so walking there
+changed nothing (0 shots in 4 of 6 rounds with the player untaggable). Her post in this match is now the south
+portable, (−23.7, 14.5), covering the west lane the other side comes down. Of three posts tried over 6 rounds of 90 s
+each, it was the one where she fired every round (8–141 shots), with the lives lost on each side about as before. The
+day matches keep their posts and their start beside you. A new `allyDeploy` flag on a scenario turns this on.
+### Verified
+- `tests/night-lights-allies.test.mjs` (new), 6 rounds of 60 s with the player untaggable: the three allies start
+  beside you, `deploying`; Eric walks 81–195 m and fires 14–56 times, Rebecca 7.5–72 m and 6–133, Brooke 19.6–56 m and
+  12–147. Before the change, Brooke walked 0.1 m or less in 6 of 8 rounds.
+- `night-lights-spawn` passes: standing still behind the stand, nobody tags you inside 30 s in 6 of 6 rounds.
+- `high-school` passes on the final build: in Friday Night Lights Brooke walked 56 m and fired 87 times, and Rebecca
+  16 m and 50 times.
+- `npm test` as four local shards: 85 of 87 passed. The run started before the edit and picked it up partway, so
+  `high-school` ran with the halfway build, Brooke walking out and Rebecca still at the stand (0 m, 0 shots). That is
+  how her post was found. `night-lights-spawn` hit the 30 s page-load timeout on the busy box. Both pass alone on the
+  final build, as does the new suite.
+### Still open
+- Rebecca rarely reaches the portable: she meets the other side on the way and holds 7–21 m short, firing. Whether
+  the west side now feels crowded with two allies on it is for play.
+- Night Swim's Brooke (critic, 7 Oct: 0 m in 300 s in 2 of 3 rounds) is the same cautious ally on another map. The
+  flag would fix it the same way, but the general question, whether every ally walks to his post at the start, is
+  Michael's (v1.172 fix-up's Still open).
