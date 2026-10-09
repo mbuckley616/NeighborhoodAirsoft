@@ -8704,3 +8704,17 @@ down. The turn hold now re-arms `_aimHold` before it returns, as the clear-line 
 - `weight`, `kid-hold` and `laser` pass, and `node tests/run.mjs --shard 4/8` passes 11 of 11.
 ### Still open
 - Nothing new; v1.183's Still open stands.
+
+## v1.183 fix-up 2 — hollow-held counts a turning kid's waiting shot apart
+CI's other run on 0836b37 also failed `hollow-held`: 13.1% of trigger pulls held (limit 12%), and Eric held 25
+times from one spot. Locally, over three runs each, held pulls rose from 4.4–7.5% (v1.182) to 6.3–13.4% (v1.183).
+v1.183's turn hold explains the rise. About a third of the held pulls were kids `advancing` with their target
+0.6–2.8 rad off their facing, waiting the 0.2 s it takes to swing round, which is the weight Michael chose (D.20, A).
+The rest held at v1.182's rate, about 6.4%. The suite guards against a kid pulling into a wall (v1.110, v1.122), so a
+pull held for the turn (`_turnHeld` went up) is now counted apart and reported, and is left out of the spot check
+and the 12% share, numerator and denominator. The game is unchanged.
+### Verified
+- `hollow-held`, three runs: wall-held 7.1%, 4.8% and 4.3%, worst spot 4–7 pulls; turning pulls 2–51 a round.
+- `cover-fire` passes (19 of 606 pulls held, limit 25%).
+### Still open
+- Nothing new.
