@@ -8649,7 +8649,7 @@ before.
 ### Verified
 - `tests/briefing-lives.test.mjs` (new): over all 67 briefings, no match where the player has one life says
   everyone has lives or respawns, and every "N lives for every kid but you" names the lives that match really gives
-  its kids (the six that said it before were already right). The four matches' intro cards show the new lines.
+  its kids (the 13 that said it before were already right). The four matches' intro cards show the new lines.
 - `npm test` as four local shards: 90 of 91 suites passed. `stuck-sweep-16` hit the 30 s page-load timeout on the
   busy box and passed alone.
 ### Still open
