@@ -191,7 +191,10 @@ Fable card on the control room and Michael starts it from there.
    each shown to him (control room, 6 Oct). ~~Step A, planted feet~~ — done, v1.171 (legs hang from the hip, the stride
    comes from the kid's velocity in his own frame, a Hermite swing that lands still, one foot always down, the cadence
    rises so the stride fits the leg; the low foot's slip median 0.014 and 90th percentile 0.36 of the body's travel, was
-   1.00 and 1.00; `tests/gait.test.mjs`). Step B, weight (ease into starts, stops and turns), after Michael has seen A. Asked whether to go on in decisions (D.20, builder, 9 Oct).
+   1.00 and 1.00; `tests/gait.test.mjs`). ~~Step B, weight (Michael: A on D.20, control room 9 Oct)~~ — done, v1.183 (a kid's
+   body turns over about 0.2 s, at most 14 rad/s, was a snap, and holds his shot while more than 0.6 rad off the line; a
+   standing start sets off at 40% pace and reaches it in 0.18 s; he leans into starts, stops and turns, 6° at most;
+   `tests/weight.test.mjs`). D.16 C is complete pending Michael's look.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

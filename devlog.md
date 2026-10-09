@@ -8655,3 +8655,39 @@ before.
 ### Still open
 - Nothing for play here. The critic's other two lines from 9 Oct wait on Michael: King of the Treehouse's 3 s start
   (Pending) and Night Game in the Woods' idle Rebecca (D.19).
+
+## v1.183 — Kids turn, set off and lean with some weight
+Backlog D.16 step B (Michael: A on D.20, go on after step A's planted feet). Kids snapped to face their target every
+frame, set off at full speed from a standstill, and their bodies stayed bolt upright whatever they did. Three changes:
+- **Turning.** A kid's facing (`e.yaw`, which his mesh and his hitboxes both follow) now turns toward where he wants to
+  face, eased and capped at 14 rad/s, so a full about-turn takes about 0.2 s to be on the line and 0.33 s to settle.
+  `spawnEnemyBB` holds the shot while his body is more than 0.6 rad off the line to his target, so a kid you get
+  behind needs about 0.2 s before he can shoot back. This is the "changes how fast they react" the option warned of.
+- **Starts.** A kid who has stood still over 0.12 s sets off at 40% of the pace his state asks and reaches it over
+  0.18 s: this frame's step is scaled back along its own line, which the state has already cleared, so it can't put
+  him in a wall. Teleports (respawns, the anti-wedge) and perches are left alone, and a one-frame stall against cover
+  doesn't reset it.
+- **Lean.** The body (its group, now rotated in YXZ order so the lean is about his own axes) pitches forward into a
+  start and back against a stop, and rolls into a turn (his sideways change of speed plus forward speed times turn
+  rate), eased, about 6 degrees at most. A tagged or downed kid is set upright.
+Stops are not eased in position: carrying a kid past the spot his state stopped him at would take him out of the
+cover he chose. A stop shows as the lean back and the stride settling over about 0.15 s.
+Three suites assumed the old snap. `car-side-fire` turned the kid's body at random all round his target and counted
+held pulls; it now draws his facing within 0.55 rad of the line (he can no longer fire outside 0.6). `vip-spawn` set
+Sean's body facing away from Owen before each shot, and the `last-kid` clock check fired from a kid who never faced the
+player; both now face their target, as a kid in play does.
+### Verified
+- `tests/weight.test.mjs` (new): kids play 30 s of Bunratty free-for-all, the lot 3v3 and the Hollow 3v3 (player
+  untaggable). Turn rate at most 14.0 rad/s (99th percentile 5.6); on v1.182 the same rounds turned at up to 188 rad/s,
+  a snap. Every one of 457 BBs left with the body within 0.55 rad of the line (v1.182: up to 1.38). Of 42 standing
+  starts, the first step is a median 0.40 of the pace a quarter-second later (v1.182: 1.00). Kids lean in 43% of moving
+  frames, at most 0.093 rad (v1.182: never). Sean, with the player put straight behind him, may fire after 0.20 s and
+  faces him at 0.33 s (v1.182: one frame). Shots fired are about the same (457 against 458).
+- `gait` (the planted feet) passes on the new build.
+- `npm test` as four local shards: 86 of 92 suites passed. `car-side-fire`, `vip-spawn` and `last-kid` failed on the
+  snap assumption and pass after their fix (`vip-spawn`'s control: 21 of 360 hits at the old fort spawn, 0 at the
+  new one). `night-prowl`, `result-text` and `stuck-sweep-14` hit the 30 s page-load timeout on the busy box and pass
+  alone.
+### Still open
+- Whether 0.2 s to turn round makes flanking a kid too easy, or the lean reads in play, is for Michael's look. The
+  numbers to tune are `KID_TURN_RATE`, `KID_FIRE_TURN`, `KID_START_MIN` and `KID_START_SEC`.

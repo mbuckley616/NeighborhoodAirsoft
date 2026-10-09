@@ -1,7 +1,7 @@
 // v1.135 (Found in play, v1.126): cover-fire failed once at 5.3% when Sean or Mitchell, hiding at (18.7, 6.8) in
 // Bunratty Hold the Fort, put 51 BBs within 1.6 m into the cabin box of the lane car at (20.9, 6.9). Not reproduced
 // on v1.134 (8 rounds: 0 near shots). This holds the spot: a kid at four points beside that car fires at targets
-// all round the east side (5–30 m out, below and above him, his yaw off the bearing by up to ±180°), and every BB's
+// all round the east side (5–30 m out, below and above him, his yaw off the bearing by up to ±180°; since v1.183, ±0.55 rad), and every BB's
 // first 1.6 m is cast against the map. The v1.93 clear line, with its v1.101 margin, should lift over the cabin or hold.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -21,7 +21,9 @@ const r = await page.evaluate(() => {
       const rad = a * Math.PI / 180, tx = sx + Math.cos(rad) * R, tz = sz + Math.sin(rad) * R;
       const tp = new THREE.Vector3(tx, scenarioGroundY(tx, tz) + up, tz);
       for (let i = 0; i < 6; i++) {
-        e.yaw = Math.atan2(-(tx - sx), -(tz - sz)) + (Math.random() - 0.5) * 2 * Math.PI;
+        // v1.183: a kid's body is within KID_FIRE_TURN of the line when he fires (he holds while turning), so his
+        // facing is drawn from that band, not all round
+        e.yaw = Math.atan2(tx - sx, tz - sz) + (Math.random() - 0.5) * 2 * 0.55;
         e.pendingBurst = null; e._firingOverCover = 0; made.length = 0; calls++;
         spawnEnemyBB(e, tp);
         if (!made.length) { held++; continue; }

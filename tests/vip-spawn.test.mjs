@@ -35,7 +35,7 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
       for (let n = 0; n < 60; n++) {
         sean.pos.set(s[0], 0, s[1]); sean.pos.y = kidGroundY(sean);
         owen.pos.set(at[0], 0, at[1]); owen.pos.y = kidGroundY(owen); owen.health = 100;
-        sean.yaw = Math.atan2(-(owen.pos.x - sean.pos.x), -(owen.pos.z - sean.pos.z));
+        sean.yaw = Math.atan2(owen.pos.x - sean.pos.x, owen.pos.z - sean.pos.z);   // v1.183: facing him, as in play (he holds a shot while turned away)
         const tp = owen.pos.clone(); tp.y += 1.0;
         spawnEnemyBB(sean, tp);
         for (let i = 0; i < 40; i++) updateBBs(1 / 60);

@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.182</div>
+  <div class="version">v1.183</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16378,6 +16378,7 @@ function createKid(profile, weapon = 'pistol') {
   // in the SAME local "average kid" reference frame — much easier to reason about,
   // and lets checkEnemyHit just multiply each part offset by the same scales.
   group.scale.set(scaleXZ, scaleY, scaleXZ);
+  group.rotation.order = 'YXZ';   // v1.183: the lean (x, z) is about his own axes after his facing (y)
 
   const skin  = new THREE.MeshStandardMaterial({ color: p.skinColor,  roughness: 0.9  });
   const shirt = new THREE.MeshStandardMaterial({ color: p.shirtColor, roughness: 0.85 });
@@ -16922,6 +16923,22 @@ function kidGaitCadence(v, reach) {
   return Math.min(3.5, Math.max(f0, fFit));
 }
 function kidGaitDuty(v) { return 0.52; }
+
+// v1.183 (backlog D.16 B, Michael: A on D.20): weight. A kid's body (e.yaw, which his mesh and his hitboxes follow)
+// turns toward where he wants to face over about 0.2 s, capped at 14 rad/s, instead of snapping there every frame;
+// spawnEnemyBB holds the shot while his body is more than KID_FIRE_TURN off the line to his target.
+const KID_TURN_RATE = 14, KID_TURN_EASE = 15, KID_FIRE_TURN = 0.6;
+function kidTurnToward(e, want, dt) {
+  if (typeof e.yaw !== 'number' || !isFinite(e.yaw) || !(dt > 0)) { e.yaw = want; return; }
+  const d = Math.atan2(Math.sin(want - e.yaw), Math.cos(want - e.yaw));
+  if (Math.abs(d) < 0.002) { e.yaw = want; return; }
+  const cap = KID_TURN_RATE * dt;
+  const y = e.yaw + Math.max(-cap, Math.min(cap, d * Math.min(1, dt * KID_TURN_EASE)));
+  e.yaw = Math.atan2(Math.sin(y), Math.cos(y));
+}
+// v1.183: a kid who has stood still a moment sets off at KID_START_MIN of the speed his state asks and reaches it
+// over KID_START_SEC (scaling this frame's step back along its own line, which the state already cleared).
+const KID_START_MIN = 0.4, KID_START_SEC = 0.18;
 
 // v1.171: lower everything the crouch lowers (from the torso up) by dy more, local units
 function kidLowerUpper(po, dy) {
@@ -23778,6 +23795,13 @@ function spawnEnemyBB(enemy, targetPos) {
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
   if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
+  // v1.183 (D.16 B): no shot while his body is still turning onto the line (it turns in about 0.2 s)
+  if (targetPos && typeof enemy.yaw === 'number') {
+    const want = Math.atan2(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z);
+    if (Math.abs(Math.atan2(Math.sin(want - enemy.yaw), Math.cos(want - enemy.yaw))) > KID_FIRE_TURN) {
+      enemy._turnHeld = (enemy._turnHeld || 0) + 1; return;
+    }
+  }
   // v1.165 (Found in play, Michael: C on Hold the Treehouse): Evan by the shed, 11 m behind a player who starts facing
   // the ladder, tagged a standing player at 2.7-9.6 s in 8 of 8 rounds, before the twins climbed. He holds until the
   // first twin reaches the foot of the ladder, then shoots at anything above the rail as before.
@@ -24775,7 +24799,7 @@ function eliminateEnemy(e) {
     e._retreatBest = null;   // v1.164: fresh retreat, fresh progress mark
     if ((e.mesh.pose?.crouch ?? 0) > 0) setKidCrouch(e.mesh, 0);
     e.mesh.group.position.y = 0;
-    e.mesh.group.rotation.z = 0;
+    e.mesh.group.rotation.z = 0; e.mesh.group.rotation.x = 0; e._leanX = e._leanZ = 0;   // v1.183: no lean when out
     tryNpcSpeak(e, 'npcHit');
     return;
   }
@@ -24795,7 +24819,7 @@ function eliminateEnemy(e) {
     // Un-crouch so they read as standing/turning to run.
     if ((e.mesh.pose?.crouch ?? 0) > 0) setKidCrouch(e.mesh, 0);
     e.mesh.group.position.y = 0;
-    e.mesh.group.rotation.z = 0;
+    e.mesh.group.rotation.z = 0; e.mesh.group.rotation.x = 0; e._leanX = e._leanZ = 0;   // v1.183: no lean when out
     tryNpcSpeak(e, 'npcHit');
   } else {
     // Permanent kill.
@@ -25795,7 +25819,8 @@ function kidLadderStep(e, tgt, dt) {
   }
   // he is moved here, not by the states: place and pose him as the loop's end would
   e.pos.y = kidGroundY(e);
-  if (faceYaw != null) { e.yaw = faceYaw; e.mesh.group.rotation.y = faceYaw; }
+  if (faceYaw != null) { kidTurnToward(e, faceYaw, dt); e.mesh.group.rotation.y = e.yaw; }   // v1.183: eased
+  e.mesh.group.rotation.x = 0;
   e.mesh.group.position.set(e.pos.x, e.pos.y, e.pos.z);
   e.mesh.group.rotation.z = 0;
   setKidCrouch(e.mesh, 0);
@@ -25832,6 +25857,7 @@ function updateEnemies(dt) {
         // Slump while down.
         if ((e.mesh.pose?.crouch ?? 0) > 0) setKidCrouch(e.mesh, 0);
         e.mesh.group.rotation.z = Math.min(Math.PI/2, (e.mesh.group.rotation.z || 0) + dt * 3);
+        e.mesh.group.rotation.x = 0;   // v1.183: the slump is sideways only
         const gYz = scenarioGroundY(e.pos.x, e.pos.z);
         const curZ = e.mesh.group.position.y;
         e.mesh.group.position.y = Math.max(gYz - 0.3, (curZ != null ? curZ : gYz) - dt * 0.5);
@@ -25851,7 +25877,7 @@ function updateEnemies(dt) {
       // (which made kids vanish on slopes). Feet stay planted at terrain height.
       e._hitRaise = Math.min(1, (e._hitRaise || 0) + dt * 4);
       setKidHitPose(e.mesh, e._hitRaise);
-      e.mesh.group.rotation.z = 0;
+      e.mesh.group.rotation.z = 0; e.mesh.group.rotation.x = 0;   // v1.183: and no lean
       kidLadderFall(e, dt);   // v1.143: tagged on the ladder or the platform he climbed: he drops to the grass
       e.mesh.group.position.y = kidGroundY(e);
       // v1.77: a downed kid's laser is no longer re-aimed (we `continue` below,
@@ -25876,6 +25902,7 @@ function updateEnemies(dt) {
 
     e.stateTime += dt;
     if (e.hitFlash > 0) e.hitFlash -= dt;
+    e._stepFromX = e.pos.x; e._stepFromZ = e.pos.z;   // v1.183: where this frame's step starts (the start ease)
 
     // v1.21: random TAUNT timer — every 12-30s, kid might interject. Gated by
     // the speech cooldowns in tryNpcSpeak so this doesn't dominate the soundscape.
@@ -25921,7 +25948,8 @@ function updateEnemies(dt) {
     const dxP = tgt.pos.x - e.pos.x;
     const dzP = tgt.pos.z - e.pos.z;
     const distToPlayer = Math.sqrt(dxP*dxP + dzP*dzP);
-    e.yaw = Math.atan2(dxP, dzP);
+    // v1.183: turns over ~0.2 s, not a snap (a retreating kid turns toward home in his state instead)
+    if (e.state !== 'retreating') kidTurnToward(e, Math.atan2(dxP, dzP), dt);
     e.mesh.group.rotation.y = e.yaw;
 
     // v1.28m: plant pos.y on the terrain HERE, at the top of per-enemy work,
@@ -27173,7 +27201,7 @@ function updateEnemies(dt) {
         const dxb = back.x - e.pos.x, dzb = back.z - e.pos.z;
         const db = Math.sqrt(dxb*dxb + dzb*dzb);
         // Face the direction of travel (toward spawn) instead of the player.
-        e.yaw = Math.atan2(dxb, dzb);
+        kidTurnToward(e, Math.atan2(dxb, dzb), dt);   // v1.183: eased
         e.mesh.group.rotation.y = e.yaw;
         if (db < 1.2) {
           // v1.176 fix-up: out for a second at least. Tagged at his own spawn, a kid "arrived" the next frame, was a
@@ -27224,6 +27252,23 @@ function updateEnemies(dt) {
         e.mesh.group.position.x = e.pos.x;
         e.mesh.group.position.z = e.pos.z;
         break;
+      }
+    }
+
+    // v1.183 (D.16 B): ease into a start. This frame's step (what the state just moved him) is scaled back along its
+    // own line by the start ramp; a teleport (anti-wedge, respawn) or a perch is left alone. Brief stalls against a wall
+    // (under 0.12 s) don't reset it, so a kid sliding along cover keeps his pace.
+    if (e._stepFromX != null && !e.perch) {
+      const sx = e.pos.x - e._stepFromX, sz = e.pos.z - e._stepFromZ, sd = Math.hypot(sx, sz);
+      if (e._moveRamp == null) e._moveRamp = 1;
+      if (sd > 1e-4 && sd <= Math.max(0.3, dt * 15)) {
+        const r = e._moveRamp;
+        if (r < 1) { e.pos.x = e._stepFromX + sx * r; e.pos.z = e._stepFromZ + sz * r; }
+        e._moveRamp = Math.min(1, r + dt * (1 - KID_START_MIN) / KID_START_SEC);
+        e._stillT = 0;
+      } else if (sd <= 1e-4) {
+        e._stillT = (e._stillT || 0) + dt;
+        if (e._stillT > 0.12) e._moveRamp = KID_START_MIN;
       }
     }
 
@@ -27306,8 +27351,22 @@ function updateEnemies(dt) {
         const vx = e._animVX || 0, vz = e._animVZ || 0;
         const vfNow = vx * sy + vz * cy, vsNow = vx * cy - vz * sy;   // forward (+z local), to his left (+x local)
         const ease = Math.min(1, dt * 8);
-        e._gaitVF = (e._gaitVF || 0) + (vfNow - (e._gaitVF || 0)) * ease;
-        e._gaitVS = (e._gaitVS || 0) + (vsNow - (e._gaitVS || 0)) * ease;
+        const vf0 = e._gaitVF || 0, vs0 = e._gaitVS || 0;
+        e._gaitVF = vf0 + (vfNow - vf0) * ease;
+        e._gaitVS = vs0 + (vsNow - vs0) * ease;
+        // v1.183 (D.16 B): he leans into a start (forward), back against a stop, and into a turn (toward its inside:
+        // his sideways change of speed plus his forward speed times his turn rate). Eased; about 6 degrees at most.
+        const yawRate = (e._leanYaw == null) ? 0 : Math.atan2(Math.sin(yaw - e._leanYaw), Math.cos(yaw - e._leanYaw)) / Math.max(dt, 1e-3);
+        e._leanYaw = yaw;
+        const aF = (e._gaitVF - vf0) / Math.max(dt, 1e-3);
+        const aS = (e._gaitVS - vs0) / Math.max(dt, 1e-3) + e._gaitVF * yawRate;
+        const pitchT = Math.max(-0.1, Math.min(0.1, aF * 0.012));
+        const rollT = Math.max(-0.08, Math.min(0.08, -aS * 0.01));
+        const le = Math.min(1, dt * 10);
+        e._leanX = (e._leanX || 0) + (pitchT - (e._leanX || 0)) * le;
+        e._leanZ = (e._leanZ || 0) + (rollT - (e._leanZ || 0)) * le;
+        e.mesh.group.rotation.x = e._leanX;
+        e.mesh.group.rotation.z = e._leanZ;
       }
       const gaitV = Math.hypot(e._gaitVF, e._gaitVS);
       const gaitReach = (e.mesh.scaleXZ || 1) * (e.mesh.pose ? e.mesh.pose.legL.scale.y / (e.mesh.pose.base.legScaleY || 1) : 1);
