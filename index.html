@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.183</div>
+  <div class="version">v1.184</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24917,12 +24917,16 @@ function npcInFight(e) {
 // v1.152: the "last kid comes looking" clock (called once a frame per live kid from updateEnemies). `_boredT` counts
 // seconds he has stayed within 2 m of `_boredAt` without firing with a line (spawnEnemyBB zeroes it); past his
 // `_boredAfter` (25-30 s) he is `_bored` and the hiding case marches him. Only the last one or two of a side get bored.
+// v1.184 (decisions D.19, Michael: C): any ally of yours gets bored the same way, in every match and however many are
+// left: a cautious ally beside your start (Night Swim's Brooke, Night Game in the Woods' Rebecca) hid all round. Snipers,
+// defenders and VIPs still hold.
 const BORED_MOVE_M = 2;
 function updateKidBoredom(e, dt) {
   const sc = Game.scenario;
   const wc = sc.winCondition || 'kill_all';
-  const eligible = (wc === 'kill_all' || wc === 'last_team_standing') && !sc.ffa &&
-    sc.scenarioType !== 'defend' && combatantTeam(e) !== combatantTeam(Game.player) &&
+  const ally = combatantTeam(e) === combatantTeam(Game.player);
+  const eligible = (ally ? !sc.ffa && !e.vip
+      : (wc === 'kill_all' || wc === 'last_team_standing') && !sc.ffa && sc.scenarioType !== 'defend') &&
     e.weapon !== 'sniper' && e.role !== 'defender' && e.behavior !== 'tagger' && !e.noFire &&
     e.state !== 'retreating' && e.state !== 'deploying' && !inOpeningHold();
   if (!e._boredAt || !eligible) {
@@ -24941,7 +24945,7 @@ function updateKidBoredom(e, dt) {
   if (e._bored || e._boredT < e._boredAfter) return;
   const side = combatantTeam(e);
   const sideLeft = sc.enemies.filter(k => npcInFight(k) && combatantTeam(k) === side).length;
-  if (sideLeft > 2) return;
+  if (sideLeft > 2 && !ally) return;   // v1.184: an ally needn't be the last
   e._bored = true;
   e._boredCount = (e._boredCount || 0) + 1;
   tryNpcSpeak(e, 'taunt');

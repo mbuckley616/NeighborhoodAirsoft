@@ -8719,6 +8719,31 @@ and the 12% share, numerator and denominator. The game is unchanged.
 ### Still open
 - Nothing new.
 
+## v1.184 — An idle ally goes looking
+Decisions D.19 (Michael: C, control room 9 Oct). In team matches your allies start beside you (v1.33), and a cautious
+skirmisher (aggression under 0.45) never marches: with no enemy in sight she hid and peeked all round. Night Game in
+the Woods' Rebecca walked 0 m in 8 of 8 critic rounds, Night Swim's Brooke 0 m in 2 of 3. The last-kid clock (v1.152)
+already sent the last one or two kids of a side looking after 25-30 s without moving 2 m or firing with a line, but
+only enemies, only in kill-all and team battles, and only the last two. `updateKidBoredom` now runs the same clock
+for every ally of yours in every match but a free-for-all (which has none), however many are left. Snipers, defenders
+and VIPs still hold, as they do for the last kid, and a shot with a line restarts the clock, so a kid who is fighting
+never triggers it. Enemies are unchanged.
+### Verified
+- `tests/idle-ally.test.mjs` (new), the player holding his start, untaggable and never firing, 120 s a round: Night
+  Game's Rebecca gets bored at 30.1 and 30.9 s and walks 34 and 42 m from her start (v1.183: 0 and 13 m, never bored).
+  Night Swim's Brooke held her spot in this round but fired 71 shots with a line, the longest she went idle 10.8 s, so
+  she never got bored; that is the rule working. No ally of ours in any of the three rounds stayed idle past 28.5 s.
+  Night Game's sniper Brooke and both VIPs in Protect Ryan never get bored. In a later run Night Swim's Brooke fought
+  from her spot until about 85 s, then went quiet and got bored at 110 s and walked 32 m: the clock runs from her
+  last shot with a line, not from BEGIN.
+- Merged the two v1.183 fix-ups from the PR's watcher (burst-pose's aim-hold re-arm, hollow-held's turn count);
+  `burst-pose`, `hollow-held`, `weight` and `idle-ally` pass on the merged build.
+- `npm test` as four local shards: 93 of 93 suites passed, the sixteen stuck-kid sweeps among them.
+### Still open
+- Whether a cautious ally walking out after half a minute reads as keen or as wandering off is for play. Night Game's
+  sniper Brooke (0 m in 7 of 8 critic rounds) still holds by the sniper rule; if Michael wants snipers to move too,
+  that is a new call.
+
 ## v1.183 fix-up 3 — vip-spawn's control fires twice the shots
 CI on c635241 failed `vip-spawn`'s control: Sean, firing at Owen standing at the old fort spawn, tagged him 8 times in
 360 shots (the check wants over 10). The control proves the old spawn was exposed. It is noisy at 360 shots: 14–24
