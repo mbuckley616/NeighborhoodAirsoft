@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.181</div>
+  <div class="version">v1.182</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5755,7 +5755,7 @@ const SCENARIOS = {
   winnmark_night_team_2v2: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
     name: 'Winnmark Court', scenarioName: 'Night Game: Two on Two',
-    desc: "Two-on-two, but at night. You and Seth against Trey and Brooke, both teams respawning at their base flags until somebody's wiped out. One of them's running a flashlight — it'll give away their push, but it'll also pin you if you're caught in the open. Fight around the lamps and the dark stretches between them.",
+    desc: "Two-on-two, but at night. You and Seth against Trey and Brooke, three lives for every kid but you, respawning at their base flags until one side's wiped out. One of them's running a flashlight — it'll give away their push, but it'll also pin you if you're caught in the open. Fight around the lamps and the dark stretches between them.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'cul_de_sac',
     timeOfDay: 'night',
@@ -5794,7 +5794,7 @@ const SCENARIOS = {
   bunratty_night_team_2v2: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Night Game: Sean Has Your Back',
-    desc: "You and Sean against the brothers on the dark lane — everyone respawning at their base until one side's out. Ryan and Mitchell fight as a pair and at least one's got a flashlight; let the beam tell you where they're pushing from. Stick with Sean, use the lamp pools, and finish a brother before the other can set up.",
+    desc: "You and Sean against the brothers on the dark lane — three lives for every kid but you, respawning at their base until one side's out. Ryan and Mitchell fight as a pair and at least one's got a flashlight; let the beam tell you where they're pushing from. Stick with Sean, use the lamp pools, and finish a brother before the other can set up.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -5820,7 +5820,7 @@ const SCENARIOS = {
   hollow_skirmish_3v3: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'First Time in the Woods',
-    desc: "Everyone hikes out to the spot in the woods east of the river — pallet forts at both ends, a creek down the middle, and barely any sun under the canopy. You're with Eric and Rebecca against Seth's crew. Three a side, everyone's got five lives and respawns at their fort, so it's a real grind. Work the pallet walls, watch the open lanes, and let Eric rush while you and Rebecca hold an angle.",
+    desc: "Everyone hikes out to the spot in the woods east of the river — pallet forts at both ends, a creek down the middle, and barely any sun under the canopy. You're with Eric and Rebecca against Seth's crew. Three a side, five lives for every kid but you, respawning at their fort, so it's a real grind. Work the pallet walls, watch the open lanes, and let Eric rush while you and Rebecca hold an angle.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -5902,7 +5902,7 @@ const SCENARIOS = {
   hollow_2v4_night: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Two of Us, Four of Them (Night)',
-    desc: "Just you and Sean out in the dark woods against four of them — Seth, Devon, Ryan, and Mason are dug into the north fort and you're outnumbered two to one. Everyone's got five lives and respawns at their fort, so it's a long, ugly grind in the dark. They came loaded for night — flashlight beams and red laser dots sweeping the trees; let the lights tell you where they're pushing. Stick tight with Sean, trade smart, and don't get caught in the open.",
+    desc: "Just you and Sean out in the dark woods against four of them — Seth, Devon, Ryan, and Mason are dug into the north fort and you're outnumbered two to one. Five lives for every kid but you, respawning at their fort, so it's a long, ugly grind in the dark — and one hit puts you out. They came loaded for night — flashlight beams and red laser dots sweeping the trees; let the lights tell you where they're pushing. Stick tight with Sean, trade smart, and don't get caught in the open.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',

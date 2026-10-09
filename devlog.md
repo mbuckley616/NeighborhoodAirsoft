@@ -8636,3 +8636,22 @@ there is no clean edge to promise: his pellets reach you at 16 m and, on some ru
   among the lot's random cars); it passed in this run.
 ### Still open
 - Whether a 1v1 against a shotgun should have a real safe range (a shorter one for Seth) is Michael's, if he wants it.
+
+## v1.182 — Team briefings stop promising you lives
+Found in play (critic, 9 Oct). Four team briefings told the player everyone gets lives: "everyone's got five lives and
+respawns at their fort" (First Time in the Woods, Two of Us Four of Them), "everyone respawning at their base" (Night
+Lane 2v2) and "both teams respawning at their base flags" (Winnmark's night 2v2). The player has one life in each
+(`playerLives: 1`), and the critic was out on the first hit in 6 of 6 Two of Us rounds. The roster already said so.
+Each line now says what the other team battles say: "five lives for every kid but you" in the two Hollow matches,
+"three lives for every kid but you" in the two night 2v2s, which give their kids the team-battle default of three
+(`setupEntryLives`). Two of Us also says "one hit puts you out". Only the words changed; lives and respawns play as
+before.
+### Verified
+- `tests/briefing-lives.test.mjs` (new): over all 67 briefings, no match where the player has one life says
+  everyone has lives or respawns, and every "N lives for every kid but you" names the lives that match really gives
+  its kids (the six that said it before were already right). The four matches' intro cards show the new lines.
+- `npm test` as four local shards: 90 of 91 suites passed. `stuck-sweep-16` hit the 30 s page-load timeout on the
+  busy box and passed alone.
+### Still open
+- Nothing for play here. The critic's other two lines from 9 Oct wait on Michael: King of the Treehouse's 3 s start
+  (Pending) and Night Game in the Woods' idle Rebecca (D.19).
