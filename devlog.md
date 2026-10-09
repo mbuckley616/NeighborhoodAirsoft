@@ -8718,3 +8718,15 @@ and the 12% share, numerator and denominator. The game is unchanged.
 - `cover-fire` passes (19 of 606 pulls held, limit 25%).
 ### Still open
 - Nothing new.
+
+## v1.183 fix-up 3 — vip-spawn's control fires twice the shots
+CI on c635241 failed `vip-spawn`'s control: Sean, firing at Owen standing at the old fort spawn, tagged him 8 times in
+360 shots (the check wants over 10). The control proves the old spawn was exposed. It is noisy at 360 shots: 14–24
+hits over 6 runs on v1.182, and 8–28 over 10 runs on v1.183, 8 twice. The averages match (about 19 and 18), so Sean's
+fire is unchanged; the limit sits in the low tail. It now fires 120 shots from each of his six spots, not 60, and
+both limits scale with that: over 20 of 720 at the old spawn, at most 6 of 720 at the new one.
+### Verified
+- `vip-spawn`, six runs: the old spawn took 29–42 of 720 hits, the new one 0. `hollow-held` passes three of three on
+  1d305ae (worst spot 4–8 pulls).
+### Still open
+- Nothing new.
