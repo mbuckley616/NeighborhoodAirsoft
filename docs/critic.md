@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -793,3 +793,90 @@ decision, and two merge cards. Nothing was addressed to me, and nothing asked me
 
 I have no proposal. Problem 1 is a one-line kind of bug with a large effect on two matches, and Problem 2 is a line of
 text or a range number. Both are the builder's.
+
+## 2026-10-09 — King of the Treehouse, Night Game in the Woods, Two of Us Four of Them (Night); Storm the Court and Protect Ryan after v1.180 (v1.181)
+
+I played main at c02adf8 (v1.181). `auto/build` is ahead only by a decisions note (D.20), so main is the newest
+build. I played 61 bot rounds: King of the Treehouse 14 (8 on v1.181, 3 each on v1.179 and v1.138), Storm the Court
+10, Protect Ryan 8, Night Game in the Woods 9 and Two of Us, Four of Them (Night) 6. I also ran four probes. There were
+no page errors anywhere, and `node tests/run.mjs smoke` passes. The bot is new again. It aims from the camera at the
+nearest kid it can see, holds the trigger to a full pull, releases, and fires when it has a line. It refills an empty
+mag after 2 s. It either holds its start, or walks straight at the nearest kid until it is 15 m away. A note for
+whoever writes the next bot: the win in a VIP or team match comes through a `setTimeout` (v1.90's guarded delays), so a
+bot that runs the whole round inside one `page.evaluate` never sees it end. Step in chunks with an await between them.
+My first VIP rounds showed Priya out with the round still going, and that was the bot's fault, not the game's.
+
+**Problem 1: King of the Treehouse ends about 3 s after BEGIN, whatever the player does.** This is the first time I've
+played it. Connor holds the treehouse platform with an MP5. You start by the bins at the side gate, 24.5 m from him, in
+the open with the platform in full view (screenshot `docs/critic/2026-10-09-king-of-the-treehouse-spawn.png`). The
+v1.101 opening hold ends at 2.5 s, and his first burst (5–9 BBs) tags you at 2.9–3.3 s. That happened in 8 of 8 rounds,
+holding or walking at him, from 17–24.5 m. Then I sprinted for 2.5 s from the start in each of eight directions,
+45° apart, and stopped. He had a line in 55 of 55 samples every time and tagged me at 2.6–3.4 s. That includes the run
+straight under the platform to 6.1 m. In the 2.5 s the hold gives you there is no cover from a kid 2.6 m up, and one
+hit ends the match. It isn't new. v1.138, the build that added the map, gives the same 3.0–3.3 s from 24.5 m in 3 of 3,
+and so does v1.179. The briefing invites you to "get to the ladder and climb it", which takes about 1.5 s once you are
+there. As it plays, a first-timer reads the card, clicks BEGIN and is out before they've found the ladder. It is
+Devon's opening shot in Two in the Yards again, which Michael answered with the opening hold. This time the hold is
+too short, because the shooter sees the whole yard. The fixes are a start out of his sight (behind the shed or the
+house corner), cover between the gate and the oak, or a longer first-shot wait for a perch defender. Which one is a
+design call, so I'm filing it and leaving the choice open. Steps: `g.scenario('stoneglen_treehouse')`, stand still
+or sprint any way, step 8 s, and log the time of the first hit on the player.
+
+**Problem 2: three briefings promise you five lives or respawns, and you get one.** Two of Us, Four of Them (Night) says
+"Everyone's got five lives and respawns at their fort". The Hollow 3v3 (`hollow_skirmish_3v3`) says "everyone's got
+five lives and respawns at their fort". Bunratty's Night Game: Sean Has Your Back (`bunratty_night_team_2v2`) says
+"everyone respawning at their base", and Winnmark's night 2v2 says "both teams respawning at their base flags". All four
+have `playerLives: 1`. The roster under each briefing says "You · 1 life" correctly, so only the prose is wrong
+(screenshot `docs/critic/2026-10-09-two-of-us-briefing-five-lives.png`). In the six Two of Us rounds I was out on the
+first hit every time, at 22.5–79.6 s. The other Hollow and lot battles already say it right ("five lives for every kid
+but you"), so the fix is the same few words in four lines of text.
+
+**Storm the Court after v1.180.** Mitchell shoots back now. Walking down the lane, I was out in 6 of 6 rounds at
+5.6–8.8 s. Mitchell tagged me in all six, from 17.5–30.7 m, with his first or second shot (1–2 shots a round). Last run,
+the same walk was out at 9.4–11.5 s, to Ryan and Nick. Holding the start, nobody fired a shot in 4 rounds of 90 s, and
+none of those rounds ended. Whether a sniper who lands his first shot from 30 m is too hard is v1.180's Still open, and
+it needs hands. A bot walking a straight line down the lane is the worst case. "He does not miss" now holds.
+
+**Protect Ryan after v1.180.** Priya fires back now, 1–51 shots a round (0 in all four rounds last run). Holding the
+start for 120 s, I won 1 of 4, when Sean tagged her at 71 s. The other 3 ran to 120 s. Walking at Priya, I won 3 of 4,
+at 10.0, 82.5 and 105.5 s. I was tagged 1–9 times on the way (you come back in a VIP match), mostly by Mitchell from
+19–26 m. Last run that walk won 4 of 4. It is harder now, but not shut.
+
+**Night Game in the Woods (`hollow_night_battle`).** I played 8 rounds of 150 s. In the four I held, I was out in 3, at
+53, 86 and 89 s, to Ryan from 5.7 and 19.6 m and Seth from 14.7 m. My "push" bot wedged against its own fort wall 4.6 m
+from the start, so the other four rounds were holds too. I was not tagged in any of them, and all four went to 150 s.
+The fight is real. Eric runs out of all 5 lives in 6 of 8 rounds, and Seth and Ryan lose theirs in 4 of 8. Two
+allies stand still. Rebecca (pistol, posted to `b_creek`) stays at (1.7, 35.7) in her own fort in 8 of 8 rounds,
+walks 0 m and fires 0–11 shots in 150 s. Brooke (sniper) walks 0 m in 7 of 8 and fires 18–46. That is D.19's cautious
+ally on a third map, after Night Swim and Price Check. I've added one line under Found in play so whichever answer
+Michael gives can be checked here. Solo, with nothing else running, the match steps at 1.97 ms on average, p95 4.4 ms,
+worst 15.7 ms, with all its lights.
+
+**Two of Us, Four of Them (Night).** I played 6 rounds, out at 22.5–79.6 s, to Ryan from 5.8–9.3 m four times and to
+Seth from 14.7 and 19 m. The enemy sniper Mason walks 1 m a round and fires 2–12 shots from the north fort, which is a
+sniper's job. Sean stays alive (0–2 lives lost) and fires 35–341 shots. Apart from Problem 2, it plays as the briefing
+says.
+
+**What worked.**
+- **First-timer path:** the title reads v1.181, and the button says ENTER MIKE'S ROOM. NEW GAME goes through the mirror
+  to the bedroom, and the first prompt is "E Go outside".
+- **Kids' heights:** on Bunratty and the Hollow, every kid's feet are within 0.00 m of the ground under him, sampled
+  each second for 30 s. Bunratty's west end really is 11.5 m up the hill, so Ryan at y 11.5 is standing on the ground.
+- **Stuck kids:** none, apart from the allies above and the perch and fort defenders, who are meant to hold.
+- **Step cost** (four browsers at once): averages 0.3–5.8 ms, p95 0.8–21.8 ms. Single steps reached 1.06 s under load.
+  Solo figures are above.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io, and curl's CONNECT is refused by the proxy, so I read no
+comments. In the last day of Slack there were the builder's v1.180–v1.181 post, the producer's posts, the merge card,
+D.19 and D.20. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.180–v1.181)
+- v1.180, whether Storm the Court and Protect Ryan are now too hard: I could judge the numbers headless (above). A
+  straight walk down the lane is out in 6–9 s, and walking at Priya still wins 3 of 4. Whether that feels too hard
+  needs hands, and so does whether a player who uses the cars' cover lasts longer.
+- v1.181, whether Seth should have a real safe range: not replayed. That one is Michael's.
+- D.20, the kids' walk: I can't judge it headless.
+
+I have no proposal. Problem 1 needs Michael's choice of fix, which I've put under Pending for the producer. Problem 2
+is the builder's text edit.

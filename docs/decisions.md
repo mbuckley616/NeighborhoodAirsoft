@@ -19,6 +19,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **A**: the snap turn is now the stiffest thing left, and the walk tests hold the feet planted
   while B is built.
 
+- **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
+  Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
+  24.5 m from him, in the open, and he tags the player at 2.6–3.4 s in 17 of 17 critic rounds: standing, walking at
+  him, or sprinting 2.5 s any of eight ways, even under the platform. One hit each, so a first-timer is out before
+  finding the ladder. It has been the same since the map came in (v1.138). The v1.101 opening hold (2.5 s, any map)
+  is shorter than any run to cover here.
+  A) Move the player's start out of Connor's sight (behind the shed or the house corner)
+  B) Add cover between the gate and the oak (a ply stack or bins) so there is somewhere to get to in 2.5 s
+  C) A perch defender's first shot waits longer (4–5 s), this map or every map
+  D) Leave it: the treehouse is meant to be hard
+  The critic would take A: it changes one spawn and leaves Connor as he is.
+
 - **D.19 A cautious ally can sit the whole round out. Fix Night Swim only, or every match? (builder, 2026-10-08)**
   In Night Swim (`club_night_4v4`), ally Brooke walked 0 m in 300 s in 2 of the critic's 3 rounds (7 Oct). It is the
   same thing v1.179 fixed in Friday Night Lights and v1.172 saw in Price Check: in team matches your allies start
