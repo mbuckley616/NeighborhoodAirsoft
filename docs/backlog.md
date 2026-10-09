@@ -191,7 +191,7 @@ Fable card on the control room and Michael starts it from there.
    each shown to him (control room, 6 Oct). ~~Step A, planted feet~~ — done, v1.171 (legs hang from the hip, the stride
    comes from the kid's velocity in his own frame, a Hermite swing that lands still, one foot always down, the cadence
    rises so the stride fits the leg; the low foot's slip median 0.014 and 90th percentile 0.36 of the body's travel, was
-   1.00 and 1.00; `tests/gait.test.mjs`). Step B, weight (ease into starts, stops and turns), after Michael has seen A.
+   1.00 and 1.00; `tests/gait.test.mjs`). Step B, weight (ease into starts, stops and turns), after Michael has seen A. Asked whether to go on in decisions (D.20, builder, 9 Oct).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
