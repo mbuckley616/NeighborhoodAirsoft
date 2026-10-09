@@ -8691,3 +8691,16 @@ player; both now face their target, as a kid in play does.
 ### Still open
 - Whether 0.2 s to turn round makes flanking a kid too easy, or the lean reads in play, is for Michael's look. The
   numbers to tune are `KID_TURN_RATE`, `KID_FIRE_TURN`, `KID_START_MIN` and `KID_START_SEC`.
+
+## v1.183 fix-up — a kid turning onto his target keeps his gun shouldered
+CI failed `headless (4/8)` on 0836b37 with `burst-pose`: "the shouldered hold never eases out mid-burst" (12 of 1159
+frames falling, limit 1%). The cause was v1.183, not a flake. Its new turn hold in `spawnEnemyBB` (no shot while his
+body is more than 0.6 rad off the line) returned before the aim-hold is re-armed, the same slip v1.94 fixed for the
+clear-line hold. A kid swinging onto his target mid-string let his shouldered hold ease out, at times all the way
+down. The turn hold now re-arms `_aimHold` before it returns, as the clear-line hold does.
+### Verified
+- `burst-pose` locally, four runs each side by side: v1.182 0 falling frames (lowest hold 0.51); v1.183 6, 16, 6 and
+  30 (lowest 0, two runs failing); with the fix six runs, 0 falling frames each, lowest hold 0.51.
+- `weight`, `kid-hold` and `laser` pass, and `node tests/run.mjs --shard 4/8` passes 11 of 11.
+### Still open
+- Nothing new; v1.183's Still open stands.

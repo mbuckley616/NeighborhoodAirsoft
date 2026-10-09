@@ -23799,6 +23799,9 @@ function spawnEnemyBB(enemy, targetPos) {
   if (targetPos && typeof enemy.yaw === 'number') {
     const want = Math.atan2(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z);
     if (Math.abs(Math.atan2(Math.sin(want - enemy.yaw), Math.cos(want - enemy.yaw))) > KID_FIRE_TURN) {
+      // v1.183 fix-up: keep the aim-hold armed while he swings onto the line (as v1.94 did for the clear-line hold),
+      // or his shouldered hold eases out mid-burst (tests/burst-pose)
+      enemy._aimHold = Math.max(enemy._aimHold || 0, 0.3);
       enemy._turnHeld = (enemy._turnHeld || 0) + 1; return;
     }
   }
