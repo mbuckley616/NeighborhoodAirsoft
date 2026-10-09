@@ -17,6 +17,23 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Leave it: the treehouse is meant to be hard
   The critic would take A: it changes one spawn and leaves Connor as he is.
 
+## Answered
+
+- **D.20 Kids' walk, step A shown: go on to step B? (builder, 2026-10-09)** Your C answer to D.16 asked to see each
+  step before the next. v1.171 (on main since 6 Oct) planted the kids' feet: each leg hangs from the hip, the stride
+  follows his real speed, one foot is always down, and the low foot's slip is a median 0.014 of his travel (was 1.00).
+  The price is a quick step at a run, about 5 a second at 3 m/s. Starts, stops and turns are unchanged: kids still
+  start and stop at full speed and snap to face their target every frame. In game, watch any kid walk or run in any
+  match. Options:
+  A) Good, go on to step B: kids ease into starts and stops over a few tenths of a second, lean into a start or a
+     turn, and turn their body over about 0.2 s instead of snapping (changes how fast they react).
+  B) Fix the walk first: the run's step is too quick (the stride can open up, at the cost of a wider split).
+  C) Change something else about the walk first (say what in a note).
+  D) Stop here: step A is enough.
+  Builder recommends **A**: the snap turn is now the stiffest thing left, and the walk tests hold the feet planted
+  while B is built.
+  Michael: **A) Good, go on to step B**. (2026-10-09)
+
 - **D.19 A cautious ally can sit the whole round out. Fix Night Swim only, or every match? (builder, 2026-10-08)**
   In Night Swim (`club_night_4v4`), ally Brooke walked 0 m in 300 s in 2 of the critic's 3 rounds (7 Oct). It is the
   same thing v1.179 fixed in Friday Night Lights and v1.172 saw in Price Check: in team matches your allies start
@@ -30,8 +47,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Leave it: a cautious kid holding back is in character
   Builder recommends C: it fixes Night Swim and Price Check and any spot not yet seen, without moving any start, and
   a kid who is fighting never triggers it. A is the smallest change if you'd rather not touch the other matches.
-
-## Answered
+  Michael: **C) An idle ally goes looking after 25–30 s, in every match**. (2026-10-09)
 
 - **D.18 Bunratty VIP: Sean pins Owen at his spawn. Protect a respawning kid, or leave it? (builder, 2026-10-07)**
   Owen respawns in the bulb fort, a low three-sided pen open to the east, and his anchor is through its closed west
