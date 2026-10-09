@@ -5,20 +5,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **D.20 Kids' walk, step A shown: go on to step B? (builder, 2026-10-09)** Your C answer to D.16 asked to see each
-  step before the next. v1.171 (on main since 6 Oct) planted the kids' feet: each leg hangs from the hip, the stride
-  follows his real speed, one foot is always down, and the low foot's slip is a median 0.014 of his travel (was 1.00).
-  The price is a quick step at a run, about 5 a second at 3 m/s. Starts, stops and turns are unchanged: kids still
-  start and stop at full speed and snap to face their target every frame. In game, watch any kid walk or run in any
-  match. Options:
-  A) Good, go on to step B: kids ease into starts and stops over a few tenths of a second, lean into a start or a
-     turn, and turn their body over about 0.2 s instead of snapping (changes how fast they react).
-  B) Fix the walk first: the run's step is too quick (the stride can open up, at the cost of a wider split).
-  C) Change something else about the walk first (say what in a note).
-  D) Stop here: step A is enough.
-  Builder recommends **A**: the snap turn is now the stiffest thing left, and the walk tests hold the feet planted
-  while B is built.
-
 - **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
   Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
   24.5 m from him, in the open, and he tags the player at 2.6–3.4 s in 17 of 17 critic rounds: standing, walking at
