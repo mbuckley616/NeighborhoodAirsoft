@@ -8692,6 +8692,33 @@ player; both now face their target, as a kid in play does.
 - Whether 0.2 s to turn round makes flanking a kid too easy, or the lean reads in play, is for Michael's look. The
   numbers to tune are `KID_TURN_RATE`, `KID_FIRE_TURN`, `KID_START_MIN` and `KID_START_SEC`.
 
+## v1.183 fix-up — a kid turning onto his target keeps his gun shouldered
+CI failed `headless (4/8)` on 0836b37 with `burst-pose`: "the shouldered hold never eases out mid-burst" (12 of 1159
+frames falling, limit 1%). The cause was v1.183, not a flake. Its new turn hold in `spawnEnemyBB` (no shot while his
+body is more than 0.6 rad off the line) returned before the aim-hold is re-armed, the same slip v1.94 fixed for the
+clear-line hold. A kid swinging onto his target mid-string let his shouldered hold ease out, at times all the way
+down. The turn hold now re-arms `_aimHold` before it returns, as the clear-line hold does.
+### Verified
+- `burst-pose` locally, four runs each side by side: v1.182 0 falling frames (lowest hold 0.51); v1.183 6, 16, 6 and
+  30 (lowest 0, two runs failing); with the fix six runs, 0 falling frames each, lowest hold 0.51.
+- `weight`, `kid-hold` and `laser` pass, and `node tests/run.mjs --shard 4/8` passes 11 of 11.
+### Still open
+- Nothing new; v1.183's Still open stands.
+
+## v1.183 fix-up 2 — hollow-held counts a turning kid's waiting shot apart
+CI's other run on 0836b37 also failed `hollow-held`: 13.1% of trigger pulls held (limit 12%), and Eric held 25
+times from one spot. Locally, over three runs each, held pulls rose from 4.4–7.5% (v1.182) to 6.3–13.4% (v1.183).
+v1.183's turn hold explains the rise. About a third of the held pulls were kids `advancing` with their target
+0.6–2.8 rad off their facing, waiting the 0.2 s it takes to swing round, which is the weight Michael chose (D.20, A).
+The rest held at v1.182's rate, about 6.4%. The suite guards against a kid pulling into a wall (v1.110, v1.122), so a
+pull held for the turn (`_turnHeld` went up) is now counted apart and reported, and is left out of the spot check
+and the 12% share, numerator and denominator. The game is unchanged.
+### Verified
+- `hollow-held`, three runs: wall-held 7.1%, 4.8% and 4.3%, worst spot 4–7 pulls; turning pulls 2–51 a round.
+- `cover-fire` passes (19 of 606 pulls held, limit 25%).
+### Still open
+- Nothing new.
+
 ## v1.184 — An idle ally goes looking
 Decisions D.19 (Michael: C, control room 9 Oct). In team matches your allies start beside you (v1.33), and a cautious
 skirmisher (aggression under 0.45) never marches: with no enemy in sight she hid and peeked all round. Night Game in
@@ -8706,7 +8733,11 @@ never triggers it. Enemies are unchanged.
   Game's Rebecca gets bored at 30.1 and 30.9 s and walks 34 and 42 m from her start (v1.183: 0 and 13 m, never bored).
   Night Swim's Brooke held her spot in this round but fired 71 shots with a line, the longest she went idle 10.8 s, so
   she never got bored; that is the rule working. No ally of ours in any of the three rounds stayed idle past 28.5 s.
-  Night Game's sniper Brooke and both VIPs in Protect Ryan never get bored.
+  Night Game's sniper Brooke and both VIPs in Protect Ryan never get bored. In a later run Night Swim's Brooke fought
+  from her spot until about 85 s, then went quiet and got bored at 110 s and walked 32 m: the clock runs from her
+  last shot with a line, not from BEGIN.
+- Merged the two v1.183 fix-ups from the PR's watcher (burst-pose's aim-hold re-arm, hollow-held's turn count);
+  `burst-pose`, `hollow-held`, `weight` and `idle-ally` pass on the merged build.
 - `npm test` as four local shards: 93 of 93 suites passed, the sixteen stuck-kid sweeps among them.
 ### Still open
 - Whether a cautious ally walking out after half a minute reads as keen or as wandering off is for play. Night Game's

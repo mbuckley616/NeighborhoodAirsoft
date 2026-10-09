@@ -14,18 +14,21 @@ for (let run = 0; run < 4; run++) {
     const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
     const mk = makeBB; let made = 0;
     window.makeBB = function (pos, vel, owner, e) { if (owner === 'enemy' && e) made++; return mk.apply(this, arguments); };
-    const sp = spawnEnemyBB; let calls = 0, held = 0; const spot = {};
+    const sp = spawnEnemyBB; let calls = 0, held = 0, turning = 0; const spot = {};
     window.spawnEnemyBB = function (e) {
       if (inOpeningHold()) return sp.apply(this, arguments);
-      calls++; const m0 = made; const r = sp.apply(this, arguments);
-      if (made === m0) { held++; const k = `${e.character?.name} @${e.pos.x.toFixed(0)},${e.pos.z.toFixed(0)}`; spot[k] = (spot[k] || 0) + 1; }
+      calls++; const m0 = made, t0 = e._turnHeld || 0; const r = sp.apply(this, arguments);
+      // v1.183 fix-up: a pull held while his body is still turning onto the line (v1.183's weight) is a shot that
+      // waits about 0.2 s, not a kid pulling into a wall; counted apart, and kept out of the held checks
+      if (made === m0 && (e._turnHeld || 0) > t0) turning++;
+      else if (made === m0) { held++; const k = `${e.character?.name} @${e.pos.x.toFixed(0)},${e.pos.z.toFixed(0)}`; spot[k] = (spot[k] || 0) + 1; }
       return r;
     };
     for (let f = 0; f < 3600 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     window.makeBB = mk; window.applyBBHit = hit; window.spawnEnemyBB = sp;
     const worst = Object.entries(spot).sort((a, b) => b[1] - a[1])[0] || ['none', 0];
     const R = Game.scenario.enemies.find(k => k.character?.name === 'Rebecca');
-    return { calls, held, worst, rebecca: R && [+R.pos.x.toFixed(2), +R.pos.z.toFixed(2)] };
+    return { calls, held, turning, worst, rebecca: R && [+R.pos.x.toFixed(2), +R.pos.z.toFixed(2)] };
   }));
   console.log('  run', run + 1, JSON.stringify(runs[run]));
   if (await g.mode() === 'scenario') await g.page.evaluate(() => endScenario('forfeit'));
@@ -42,12 +45,12 @@ const burst = await page.evaluate(() => {
   return { err, left: e.pendingBurst.length };
 });
 check('a burst emptied by a held pull ends cleanly (no "dueIn" error)', burst.err === null && burst.left === 0, burst);
-const calls = runs.reduce((s, r) => s + r.calls, 0), held = runs.reduce((s, r) => s + r.held, 0);
+const calls = runs.reduce((s, r) => s + r.calls - r.turning, 0), held = runs.reduce((s, r) => s + r.held, 0);   // v1.183 fix-up: turning pulls aside
 check('kids shoot (100+ trigger pulls a round)', runs.every(r => r.calls >= 100), runs.map(r => r.calls));
 check('no kid holds fire 20 times or more from one spot in a round', runs.every(r => r.worst[1] < 20), runs.map(r => r.worst));
 // v1.170 fix-up: 12%, not 10%. Since v1.126's hardwoods it has run 5-10% (devlog v1.126), 4.8-9.0% over four runs on
 // 6 Oct, and CI saw 10.6%. The spot check above is the sharper guard against a kid stuck holding fire.
-check('under 12% of trigger pulls held over the four rounds', held / calls < 0.12, { held, calls, pct: +(100 * held / calls).toFixed(1) });
+check('under 12% of trigger pulls held over the four rounds', held / calls < 0.12, { held, calls, pct: +(100 * held / calls).toFixed(1), turning: runs.map(r => r.turning) });
 check('Rebecca never ends a round in the fort\'s south-west corner', runs.every(r => !r.rebecca || Math.hypot(r.rebecca[0] + 0.93, r.rebecca[1] - 27.55) > 0.3), runs.map(r => r.rebecca));
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
