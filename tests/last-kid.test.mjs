@@ -94,6 +94,8 @@ const unit = await page.evaluate(() => {
   const at24 = j._bored;
   for (let i = 0; i < 8; i++) updateKidBoredom(j, 0.25);
   const at26 = j._bored, state = j.state;
+  // v1.183: he faces the player first (a kid still turning holds his shot)
+  j.yaw = Math.atan2(Game.player.pos.x - j.pos.x, Game.player.pos.z - j.pos.z);
   j._hasLOSNow = true; spawnEnemyBB(j, Game.player.pos.clone());
   return { before, at24, at26, state, afterShot: j._bored, t: j._boredT };
 });

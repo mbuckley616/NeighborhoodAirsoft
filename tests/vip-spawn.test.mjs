@@ -32,10 +32,10 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
     const per = []; let los = 0;
     for (const s of SPOTS) {
       hit = 0; Game.scenario.bbs.length = 0;
-      for (let n = 0; n < 60; n++) {
+      for (let n = 0; n < 120; n++) {   // v1.183 fix-up: 120 a spot, not 60; at 360 the control ran 8-28 hits and failed now and then
         sean.pos.set(s[0], 0, s[1]); sean.pos.y = kidGroundY(sean);
         owen.pos.set(at[0], 0, at[1]); owen.pos.y = kidGroundY(owen); owen.health = 100;
-        sean.yaw = Math.atan2(-(owen.pos.x - sean.pos.x), -(owen.pos.z - sean.pos.z));
+        sean.yaw = Math.atan2(owen.pos.x - sean.pos.x, owen.pos.z - sean.pos.z);   // v1.183: facing him, as in play (he holds a shot while turned away)
         const tp = owen.pos.clone(); tp.y += 1.0;
         spawnEnemyBB(sean, tp);
         for (let i = 0; i < 40; i++) updateBBs(1 / 60);
@@ -49,10 +49,10 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
   window.applyBBHit = real;
   return out;
 }, { OLD, NEW, SPOTS });
-console.log('   Sean, 360 shots from his six spots:', JSON.stringify(fire));
-check('control: Sean tags Owen at the old spawn in the fort (over 10 of 360)', fire.old.hits > 10, fire.old);
+console.log('   Sean, 720 shots from his six spots:', JSON.stringify(fire));
+check('control: Sean tags Owen at the old spawn in the fort (over 20 of 720)', fire.old.hits > 20, fire.old);
 // (los is the kids' sight check, chest-high over the car's roof; the car's body stops every BB, which is what counts)
-check('the new spawn is out of his line: the car stops his fire, at most 3 of 360', fire.new.hits <= 3, fire.new);
+check('the new spawn is out of his line: the car stops his fire, at most 6 of 720', fire.new.hits <= 6, fire.new);
 
 // --- a tagged Owen comes back to the new spawn, from his anchor
 await g.scenario('bunratty_vip');
