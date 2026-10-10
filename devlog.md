@@ -8636,3 +8636,122 @@ there is no clean edge to promise: his pellets reach you at 16 m and, on some ru
   among the lot's random cars); it passed in this run.
 ### Still open
 - Whether a 1v1 against a shotgun should have a real safe range (a shorter one for Seth) is Michael's, if he wants it.
+
+## v1.182 — Team briefings stop promising you lives
+Found in play (critic, 9 Oct). Four team briefings told the player everyone gets lives: "everyone's got five lives and
+respawns at their fort" (First Time in the Woods, Two of Us Four of Them), "everyone respawning at their base" (Night
+Lane 2v2) and "both teams respawning at their base flags" (Winnmark's night 2v2). The player has one life in each
+(`playerLives: 1`), and the critic was out on the first hit in 6 of 6 Two of Us rounds. The roster already said so.
+Each line now says what the other team battles say: "five lives for every kid but you" in the two Hollow matches,
+"three lives for every kid but you" in the two night 2v2s, which give their kids the team-battle default of three
+(`setupEntryLives`). Two of Us also says "one hit puts you out". Only the words changed; lives and respawns play as
+before.
+### Verified
+- `tests/briefing-lives.test.mjs` (new): over all 67 briefings, no match where the player has one life says
+  everyone has lives or respawns, and every "N lives for every kid but you" names the lives that match really gives
+  its kids (the 13 that said it before were already right). The four matches' intro cards show the new lines.
+- `npm test` as four local shards: 90 of 91 suites passed. `stuck-sweep-16` hit the 30 s page-load timeout on the
+  busy box and passed alone.
+### Still open
+- Nothing for play here. The critic's other two lines from 9 Oct wait on Michael: King of the Treehouse's 3 s start
+  (Pending) and Night Game in the Woods' idle Rebecca (D.19).
+
+## v1.183 — Kids turn, set off and lean with some weight
+Backlog D.16 step B (Michael: A on D.20, go on after step A's planted feet). Kids snapped to face their target every
+frame, set off at full speed from a standstill, and their bodies stayed bolt upright whatever they did. Three changes:
+- **Turning.** A kid's facing (`e.yaw`, which his mesh and his hitboxes both follow) now turns toward where he wants to
+  face, eased and capped at 14 rad/s, so a full about-turn takes about 0.2 s to be on the line and 0.33 s to settle.
+  `spawnEnemyBB` holds the shot while his body is more than 0.6 rad off the line to his target, so a kid you get
+  behind needs about 0.2 s before he can shoot back. This is the "changes how fast they react" the option warned of.
+- **Starts.** A kid who has stood still over 0.12 s sets off at 40% of the pace his state asks and reaches it over
+  0.18 s: this frame's step is scaled back along its own line, which the state has already cleared, so it can't put
+  him in a wall. Teleports (respawns, the anti-wedge) and perches are left alone, and a one-frame stall against cover
+  doesn't reset it.
+- **Lean.** The body (its group, now rotated in YXZ order so the lean is about his own axes) pitches forward into a
+  start and back against a stop, and rolls into a turn (his sideways change of speed plus forward speed times turn
+  rate), eased, about 6 degrees at most. A tagged or downed kid is set upright.
+Stops are not eased in position: carrying a kid past the spot his state stopped him at would take him out of the
+cover he chose. A stop shows as the lean back and the stride settling over about 0.15 s.
+Three suites assumed the old snap. `car-side-fire` turned the kid's body at random all round his target and counted
+held pulls; it now draws his facing within 0.55 rad of the line (he can no longer fire outside 0.6). `vip-spawn` set
+Sean's body facing away from Owen before each shot, and the `last-kid` clock check fired from a kid who never faced the
+player; both now face their target, as a kid in play does.
+### Verified
+- `tests/weight.test.mjs` (new): kids play 30 s of Bunratty free-for-all, the lot 3v3 and the Hollow 3v3 (player
+  untaggable). Turn rate at most 14.0 rad/s (99th percentile 5.6); on v1.182 the same rounds turned at up to 188 rad/s,
+  a snap. Every one of 457 BBs left with the body within 0.55 rad of the line (v1.182: up to 1.38). Of 42 standing
+  starts, the first step is a median 0.40 of the pace a quarter-second later (v1.182: 1.00). Kids lean in 43% of moving
+  frames, at most 0.093 rad (v1.182: never). Sean, with the player put straight behind him, may fire after 0.20 s and
+  faces him at 0.33 s (v1.182: one frame). Shots fired are about the same (457 against 458).
+- `gait` (the planted feet) passes on the new build.
+- `npm test` as four local shards: 86 of 92 suites passed. `car-side-fire`, `vip-spawn` and `last-kid` failed on the
+  snap assumption and pass after their fix (`vip-spawn`'s control: 21 of 360 hits at the old fort spawn, 0 at the
+  new one). `night-prowl`, `result-text` and `stuck-sweep-14` hit the 30 s page-load timeout on the busy box and pass
+  alone.
+### Still open
+- Whether 0.2 s to turn round makes flanking a kid too easy, or the lean reads in play, is for Michael's look. The
+  numbers to tune are `KID_TURN_RATE`, `KID_FIRE_TURN`, `KID_START_MIN` and `KID_START_SEC`.
+
+## v1.183 fix-up — a kid turning onto his target keeps his gun shouldered
+CI failed `headless (4/8)` on 0836b37 with `burst-pose`: "the shouldered hold never eases out mid-burst" (12 of 1159
+frames falling, limit 1%). The cause was v1.183, not a flake. Its new turn hold in `spawnEnemyBB` (no shot while his
+body is more than 0.6 rad off the line) returned before the aim-hold is re-armed, the same slip v1.94 fixed for the
+clear-line hold. A kid swinging onto his target mid-string let his shouldered hold ease out, at times all the way
+down. The turn hold now re-arms `_aimHold` before it returns, as the clear-line hold does.
+### Verified
+- `burst-pose` locally, four runs each side by side: v1.182 0 falling frames (lowest hold 0.51); v1.183 6, 16, 6 and
+  30 (lowest 0, two runs failing); with the fix six runs, 0 falling frames each, lowest hold 0.51.
+- `weight`, `kid-hold` and `laser` pass, and `node tests/run.mjs --shard 4/8` passes 11 of 11.
+### Still open
+- Nothing new; v1.183's Still open stands.
+
+## v1.183 fix-up 2 — hollow-held counts a turning kid's waiting shot apart
+CI's other run on 0836b37 also failed `hollow-held`: 13.1% of trigger pulls held (limit 12%), and Eric held 25
+times from one spot. Locally, over three runs each, held pulls rose from 4.4–7.5% (v1.182) to 6.3–13.4% (v1.183).
+v1.183's turn hold explains the rise. About a third of the held pulls were kids `advancing` with their target
+0.6–2.8 rad off their facing, waiting the 0.2 s it takes to swing round, which is the weight Michael chose (D.20, A).
+The rest held at v1.182's rate, about 6.4%. The suite guards against a kid pulling into a wall (v1.110, v1.122), so a
+pull held for the turn (`_turnHeld` went up) is now counted apart and reported, and is left out of the spot check
+and the 12% share, numerator and denominator. The game is unchanged.
+### Verified
+- `hollow-held`, three runs: wall-held 7.1%, 4.8% and 4.3%, worst spot 4–7 pulls; turning pulls 2–51 a round.
+- `cover-fire` passes (19 of 606 pulls held, limit 25%).
+### Still open
+- Nothing new.
+
+## v1.184 — An idle ally goes looking
+Decisions D.19 (Michael: C, control room 9 Oct). In team matches your allies start beside you (v1.33), and a cautious
+skirmisher (aggression under 0.45) never marches: with no enemy in sight she hid and peeked all round. Night Game in
+the Woods' Rebecca walked 0 m in 8 of 8 critic rounds, Night Swim's Brooke 0 m in 2 of 3. The last-kid clock (v1.152)
+already sent the last one or two kids of a side looking after 25-30 s without moving 2 m or firing with a line, but
+only enemies, only in kill-all and team battles, and only the last two. `updateKidBoredom` now runs the same clock
+for every ally of yours in every match but a free-for-all (which has none), however many are left. Snipers, defenders
+and VIPs still hold, as they do for the last kid, and a shot with a line restarts the clock, so a kid who is fighting
+never triggers it. Enemies are unchanged.
+### Verified
+- `tests/idle-ally.test.mjs` (new), the player holding his start, untaggable and never firing, 120 s a round: Night
+  Game's Rebecca gets bored at 30.1 and 30.9 s and walks 34 and 42 m from her start (v1.183: 0 and 13 m, never bored).
+  Night Swim's Brooke held her spot in this round but fired 71 shots with a line, the longest she went idle 10.8 s, so
+  she never got bored; that is the rule working. No ally of ours in any of the three rounds stayed idle past 28.5 s.
+  Night Game's sniper Brooke and both VIPs in Protect Ryan never get bored. In a later run Night Swim's Brooke fought
+  from her spot until about 85 s, then went quiet and got bored at 110 s and walked 32 m: the clock runs from her
+  last shot with a line, not from BEGIN.
+- Merged the two v1.183 fix-ups from the PR's watcher (burst-pose's aim-hold re-arm, hollow-held's turn count);
+  `burst-pose`, `hollow-held`, `weight` and `idle-ally` pass on the merged build.
+- `npm test` as four local shards: 93 of 93 suites passed, the sixteen stuck-kid sweeps among them.
+### Still open
+- Whether a cautious ally walking out after half a minute reads as keen or as wandering off is for play. Night Game's
+  sniper Brooke (0 m in 7 of 8 critic rounds) still holds by the sniper rule; if Michael wants snipers to move too,
+  that is a new call.
+
+## v1.183 fix-up 3 — vip-spawn's control fires twice the shots
+CI on c635241 failed `vip-spawn`'s control: Sean, firing at Owen standing at the old fort spawn, tagged him 8 times in
+360 shots (the check wants over 10). The control proves the old spawn was exposed. It is noisy at 360 shots: 14–24
+hits over 6 runs on v1.182, and 8–28 over 10 runs on v1.183, 8 twice. The averages match (about 19 and 18), so Sean's
+fire is unchanged; the limit sits in the low tail. It now fires 120 shots from each of his six spots, not 60, and
+both limits scale with that: over 20 of 720 at the old spawn, at most 6 of 720 at the new one.
+### Verified
+- `vip-spawn`, six runs: the old spawn took 29–42 of 720 hits, the new one 0. `hollow-held` passes three of three on
+  1d305ae (worst spot 4–8 pulls).
+### Still open
+- Nothing new.
