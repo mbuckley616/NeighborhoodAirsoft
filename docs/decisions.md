@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
   Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
   24.5 m from him, in the open, and he tags the player at 2.6–3.4 s in 17 of 17 critic rounds: standing, walking at
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) A perch defender's first shot waits longer (4–5 s), this map or every map
   D) Leave it: the treehouse is meant to be hard
   The critic would take A: it changes one spawn and leaves Connor as he is.
-
-## Answered
+  Michael: **A) Move the player's start out of Connor's sight** (2026-10-10)
 
 - **D.20 Kids' walk, step A shown: go on to step B? (builder, 2026-10-09)** Your C answer to D.16 asked to see each
   step before the next. v1.171 (on main since 6 Oct) planted the kids' feet: each leg hangs from the hip, the stride
