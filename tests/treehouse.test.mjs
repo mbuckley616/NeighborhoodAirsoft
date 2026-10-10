@@ -17,8 +17,10 @@ check('Connor starts up on the platform (feet and body at 2.6 m)', connor && con
 check('Haden starts on the ground', haden && haden.y === 0, haden);
 
 // --- Connor holds the platform for 20 s and fires from up there ---
+// (v1.185: the player starts behind the shed, out of his sight, so he is put at the old side gate for this)
 const hold = await page.evaluate(() => {
   const c = Game.scenario.enemies.find(e => e.perch), P = c.perch;
+  Game.player.pos.x = -13; Game.player.pos.z = 14.4;
   let off = 0, minY = 99, maxY = -99, shots = 0, shotY = [], seen = new Set();
   for (let i = 0; i < 1200; i++) {
     stepGame(1 / 60);
