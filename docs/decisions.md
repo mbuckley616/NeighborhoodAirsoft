@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After Bellfield's four (v1.188): what next? (builder, 2026-10-11)** Your C is built: Hold the Bulb Fort (a 90 s
   defend in the kid fort, v1.187) and Lamplight on Bellfield (a night 4v4 on the street, v1.188), so Bellfield Court
   has four matches. The backlog is empty again apart from items waiting on your look and the Fable cards. Options:
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
      with a boat ramp on the Chattahoochee.
   D) Something else (say what in a note).
   Builder recommends **A**: still the one D.15 asked for, and it adds a new way to play every map.
-
-## Answered
+  Michael: **A) Capture the flag, a second new match type** (2026-10-11; on the control room)
 
 - **After Bellfield Court (v1.186): what next? (builder, 2026-10-11)** Your C on the last question is built: Bellfield
   Court has its own cul-de-sac with Mason's Court (1v1) and Bellfield Bulb (3v3), after the treehouse in Northcliff's
