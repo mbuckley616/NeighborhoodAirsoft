@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.187</div>
+  <div class="version">v1.188</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6446,6 +6446,35 @@ const SCENARIOS = {
     winCondition: 'survive_timer',
     timerSec: 90,
     rewards: { win: 85, lose: 20 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.188: a night 4v4 on the Bellfield kids' own street (decisions, "After Bellfield Court", Michael: C) ---
+  bellfield_night_4v4: {
+    region: 'northcliff', street: 'bellfield_ct',
+    name: 'Bellfield Court', scenarioName: 'Lamplight on Bellfield',
+    desc: "The twins wanted a rematch on Bellfield's own street, after dark. Haden, Connor and Evan are with you at the bottom of the street. Mason and Christian have the cars at the mouth of the bulb, Diego the island, and Fernando the kid fort at the top of it. No rifle tonight; Fernando says the street's too short for it. Four streetlamps light the street in pools, and everything between them, and the backyards behind both rows, is dark. Four a side, four lives for every kid but you. Don't stand under a lamp.",
+    builderFn: 'buildBellfieldCourtScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'entry',
+    enemySetup: [
+      { charId: 'haden',     weapon: 'ump',     anchor: 'entry_n',      team: 'player' },
+      { charId: 'connor',    weapon: 'mp5',     anchor: 'entry_s',      team: 'player' },
+      { charId: 'evan',      weapon: 'ak47',    anchor: 'cluster_east', team: 'player' },
+      { charId: 'mason',     weapon: 'ak47',    anchor: 'bulb_car_n' },
+      { charId: 'christian', weapon: 'shotgun', anchor: 'bulb_car_s' },
+      { charId: 'diego',     weapon: 'mp5',     anchor: 'bulb_island' },
+      // v1.188: no rifle. From the fort it fired 0-3 shots a round at night; from the north car it tagged a player
+      // standing at the entry 3.08 s after BEGIN in 6 of 8 rounds (the straight street gives it the entry from anywhere).
+      // A UMP, not his 3v3 AK (and Evan the AK): the other way round our side lost 47 lives to their 31 in 4 rounds; this way 38 to 33
+      { charId: 'fernando',  weapon: 'ump',     anchor: 'bulb_fort' },
+    ],
+    enemySpawnCluster: 'cluster_bulb',
+    winCondition: 'last_team_standing',
+    npcLives: 4,
+    rewards: { win: 130, lose: 30 },
     playerLives: 1, armorMult: 1,
   },
 
@@ -28126,6 +28155,7 @@ const PIN_SCENARIO_GROUPS = {
     'bellfield_1v1_mason',       // v1.186: Bellfield Court, the Bellfield kids' own street (Michael: C)
     'bellfield_3v3',             // v1.186
     'bellfield_defend_fort',     // v1.187: hold the bulb fort (Michael: C, more Bellfield Court)
+    'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],

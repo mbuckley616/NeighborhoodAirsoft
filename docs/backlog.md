@@ -52,7 +52,9 @@ Fable card on the control room and Michael starts it from there.
    at the head of the bulb, an island in the bulb, fenced backyards; Mason's Court 1v1 and Bellfield Bulb 3v3, after the
    treehouse in Northcliff's chain; `tests/bellfield.test.mjs`). More Bellfield Court (Michael: **C**, a defend at the bulb's
    fort and a night match; control room, 11 Oct): ~~Hold the Bulb Fort~~ — done, v1.187 (90 s inside the kid fort at the
-   top of the bulb; Mason, Christian and Diego come up from the entry and round to its open back). The night match next.
+   top of the bulb; Mason, Christian and Diego come up from the entry and round to its open back). ~~The night match~~ —
+   done, v1.188 (Lamplight on Bellfield, a night 4v4: you, Haden, Connor and Evan against the four Bellfield kids, no
+   rifle; after the defend, before the creek fort). Bellfield Court is complete at four matches.
    Next zone (Michael: **A**, a high school's grounds, made-up name: fields, bleachers, portables; control room 4 Oct):
    ~~Hollins Ridge High~~ — done, v1.155 (sixth on the ladder after Northcliff, East Roswell: the school's brick front
    and staff row, six portables, the practice field with goalposts and sleds, five-tier home bleachers, the concession

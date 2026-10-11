@@ -8857,3 +8857,39 @@ they come round the sides of the fort.
 - Whether 23 s to the first tag on a player who never shoots back is about right for a defend, and whether the open
   back makes the fort feel unfair, is for play. Nobody uses the backyards here; the night match will say whether a
   dark street changes that.
+
+## v1.188 — Lamplight on Bellfield
+The second half of Michael's C on "After Bellfield Court": a night match on the street, so Bellfield Court has four
+matches like the other maps.
+
+**Lamplight on Bellfield** is a night 4v4 on Bellfield Court: you, Haden (UMP), Connor (MP5) and Evan (AK) from the
+east entry against the four Bellfield kids at home, Mason (AK) and Christian (shotgun) behind the cars at the mouth of
+the bulb, Diego (MP5) at the island and Fernando (UMP) in the kid fort. Four lives for every kid but you, last team
+standing, $130 / $30. The four streetlamps (built in v1.186) light the street in pools and the yards are dark. It sits
+after Hold the Bulb Fort and before Hold the Creek Fort, so Northcliff's chain is now ten: the twins' street, the
+treehouse yard, Bellfield's four, then the creek fort and Bellfield After Dark.
+
+Two lineups were tried and dropped, on numbers:
+- Fernando with his rifle. In the kid fort (behind it, or inside its walls) he fired 0–3 shots a round at night, and
+  the round went our way: they lost 30 lives to our 25 over three 60 s rounds, and 16 to 6 in another. Behind the north car at the bulb's mouth he fired 7–9 a round, but the
+  street is straight, so the rifle has the entry from anywhere down it: a player standing at the start was tagged
+  3.08 s after BEGIN in 6 of 8 rounds, the Friday Night Lights fault (v1.177). v1.186 gave him an AK here for the same
+  reason. So no rifle, and the briefing says so ("the street's too short for it").
+- Fernando on the AK. With Evan on a UMP our side lost 47 lives to their 31 in four 60 s rounds, all three allies out
+  in three of them; with Evan on the AK, they lost 46 to our 33. Fernando on a UMP and Evan on the AK came out 38:33,
+  each round within three lives.
+The 3v3 suite's "nobody fires in the opening hold" counted trigger pulls that `spawnEnemyBB`'s own hold gate drops
+(a kid with a line pulled at 2.42 s and no BB left); it now counts only BBs let out.
+### Verified
+- `tests/bellfield.test.mjs` takes the night match as its fourth: the chain is Hold the Bulb Fort → Lamplight on
+  Bellfield → creek fort, each opening only on the one before. It is night with 4 more point lights than the day 3v3
+  (10 to 6, the lamps). With the player untaggable, 60 s: 407 BBs, the first at 2.83 s, lives lost 8 theirs and 10
+  ours, every kid walked 83–234 m, no wedge over 1 s. A player standing at the entry and never firing, 14 rounds over
+  the suite and a probe: first tagged at 12.5–45.8 s or not in 30 s; Mason from about 42 m most often.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s, eight times over): no kid over 4 s.
+- `northcliff` (its chain lists both new matches), `briefing-lives`, `night-lights-spawn`, `map-screen` and
+  `spawn-facing` pass.
+### Still open
+- Whether the lamps' pools read in play, and whether a night street with no rifle feels like a night match, is for
+  play. Two night 4v4s against the same four kids now sit three matches apart in Northcliff's chain (this one and
+  Bellfield After Dark); if that reads as a repeat, the roster here could change.
