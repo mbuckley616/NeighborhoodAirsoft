@@ -21,8 +21,8 @@ const ladder = await page.evaluate(() => {
 });
 check('Northcliff comes after the market lot (v1.155: then Hollins Ridge High; v1.157: then Willow Bend)',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club,grocery_store', ladder.keys);
-check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138) and its defend (v1.144), Bellfield Court\'s 1v1 and 3v3 (v1.186), the creek-fort defend, then the night 4v4 (v1.131)',
-  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138) and its defend (v1.144), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);

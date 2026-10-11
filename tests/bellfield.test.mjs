@@ -32,7 +32,9 @@ const chain = await page.evaluate((IDS) => {
   done[IDS[2]] = true;
   const afterFort = { night: isScenarioUnlocked(IDS[3]), creek: isScenarioUnlocked('northcliff_defend_creek') };
   done[IDS[3]] = true;
-  const afterNight = { creek: isScenarioUnlocked('northcliff_defend_creek'), reason: scenarioLockReason('northcliff_defend_creek') };
+  const afterNight = { flags: isScenarioUnlocked('bellfield_ctf'), creek: isScenarioUnlocked('northcliff_defend_creek') };
+  done.bellfield_ctf = true;   // v1.189: capture the flag comes between the night match and the creek fort
+  const afterFlags = { creek: isScenarioUnlocked('northcliff_defend_creek'), reason: scenarioLockReason('northcliff_defend_creek') };
   // the map card for the 1v1 names the street
   openMap(); refreshMapPinStates();
   document.querySelector('#worldMap .pin[data-scenario="northcliff"]').click();
@@ -41,14 +43,14 @@ const chain = await page.evaluate((IDS) => {
   closeMap();
   for (const k of Object.keys(done)) delete done[k];
   const street = REGIONS.northcliff.streets[SCENARIOS[IDS[0]].street];
-  return { at, hold: ids.indexOf('stoneglen_hold_treehouse'), creek: ids.indexOf('northcliff_defend_creek'), beforeHold, afterHold, afterMason, afterBulb, afterFort, afterNight, cardText, street };
+  return { at, hold: ids.indexOf('stoneglen_hold_treehouse'), creek: ids.indexOf('northcliff_defend_creek'), beforeHold, afterHold, afterMason, afterBulb, afterFort, afterNight, afterFlags, flagsAt: ids.indexOf('bellfield_ctf'), cardText, street };
 }, IDS);
-check('the four Bellfield matches follow Hold the Treehouse and come before the creek-fort defend',
-  chain.at.every((a, i) => a === chain.hold + 1 + i) && chain.creek === chain.hold + 1 + IDS.length, chain);
+check('the four Bellfield matches follow Hold the Treehouse, then its capture the flag (v1.189), then the creek-fort defend',
+  chain.at.every((a, i) => a === chain.hold + 1 + i) && chain.flagsAt === chain.hold + 1 + IDS.length && chain.creek === chain.flagsAt + 1, chain);
 check("Mason's Court opens once Hold the Treehouse is won, not before", !chain.beforeHold.mason && chain.afterHold.mason && !chain.afterHold.bulb, chain);
 check("the 3v3 opens after Mason's Court, Hold the Bulb Fort after the 3v3, the night match after that, then the creek-fort defend",
   chain.afterMason.bulb && !chain.afterMason.creek && chain.afterBulb.fort && !chain.afterBulb.creek && chain.afterFort.night && !chain.afterFort.creek
-  && chain.afterNight.creek, chain);
+  && chain.afterNight.flags && !chain.afterNight.creek && chain.afterFlags.creek, chain);
 check('the scenarios are on Bellfield Court, and its card says so', chain.street === 'Bellfield Court' && /Bellfield Court/.test(chain.cardText) && /Mason/.test(chain.cardText), chain);
 
 for (const id of IDS) {
