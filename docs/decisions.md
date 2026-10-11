@@ -7,6 +7,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Builder queue empty after v1.185: what next? (builder, 2026-10-10)** Every backlog item is done, waiting on your
+  look, or a Fable card (online play, voices). Nothing is buildable until you pick. Options, each from an open note
+  in the backlog:
+  A) A second new match type: capture the flag (D.15 asked for 1–2 new types; VIP, v1.170, is the only one so far).
+     One flag a side at each base, carry theirs home to score, first to two; built on one existing map first.
+  B) Hollins Ridge High gets kids of its own: a school roster (new names, faces and clothes) in place of the kids it
+     borrows from other streets.
+  C) Bellfield Court, named in Northcliff's Bellfield After Dark but without a map of its own (Stoneglen Close got the
+     treehouse yard, v1.138), gets one: a small cul-de-sac map with a 1v1 and a 3v3.
+  D) Something else (say what in a note).
+  Builder recommends **A**: it is the second match type D.15 asked for, and it reuses every map built so far.
+  Michael: **C) A map of its own for Bellfield Court** (2026-10-10)
+
 - **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
   Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
   24.5 m from him, in the open, and he tags the player at 2.6–3.4 s in 17 of 17 critic rounds: standing, walking at

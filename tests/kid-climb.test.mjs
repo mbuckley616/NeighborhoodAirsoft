@@ -66,14 +66,14 @@ const onLad = await page.evaluate(() => {
   applyBBHit = () => {};
   const h = Game.scenario.enemies.find(e => !e.perch), L = Game.scenario.ladders[0];
   let headed = 0;
-  for (let i = 0; i < 600; i++) { stepGame(1 / 60); if (h._lad) headed++; }   // player at the side gate, 10 s
+  for (let i = 0; i < 600; i++) { stepGame(1 / 60); if (h._lad) headed++; }   // player at the start (behind the shed since v1.185), 10 s
   const p = Game.player; p.climbing = L; p.pos.set(L.x, 1.2, L.z); p.onGround = false;
   Game.mouse.locked = true; Game.keys['KeyW'] = false; Game.keys['KeyS'] = false;
   stepGame(1 / 60);
   const goes = !!h._lad;
   return { headed, goes };
 });
-check('with the player at the side gate, Haden never heads for the ladder (10 s)', onLad.headed === 0, onLad);
+check('with the player at the start, Haden never heads for the ladder (10 s)', onLad.headed === 0, onLad);
 check('with the player on the ladder, Haden heads for it', onLad.goes, onLad);
 
 // tagged on the ladder: he drops to the grass, and (out for good in a skirmish) stays there

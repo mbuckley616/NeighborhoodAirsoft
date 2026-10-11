@@ -8755,3 +8755,29 @@ both limits scale with that: over 20 of 720 at the old spawn, at most 6 of 720 a
   1d305ae (worst spot 4–8 pulls).
 ### Still open
 - Nothing new.
+
+## v1.185 — King of the Treehouse starts behind the shed
+Decisions, King of the Treehouse (critic, 9 Oct; Michael: A on the control room, 10 Oct). Connor holds the platform
+2.6 m up the oak with an MP5, and the player's start at the side gate, 24.5 m off by the patio bins, was in his line
+from the first frame. He tagged the player 2.6–3.4 s after BEGIN in 17 of 17 critic rounds, standing, walking or
+sprinting any way, so a first-timer with one life was out before finding the ladder. The 2.5 s opening hold (v1.101)
+is shorter than any run to cover from there. Michael chose to move the start out of his sight and leave Connor as he
+is. A probe of every half-metre of the yard against 25 spots on the platform found three pockets he can't see: a
+sliver in each far corner behind the corner trees, and the lee of the shed (2.3 m tall, in the north-east), the only
+one with room to stand in. The start is now there, at (14.5, −12), a metre and more inside the pocket every way,
+facing past the shed's south-east corner down the yard. Haden still starts at the fort and comes looking, so standing
+still is not safe, and the way to the ladder is still across open grass under Connor; only the first few seconds
+change. The side gate stays in the builder (it is no other scenario's start) and the treehouse suite puts the player
+there when it needs Connor to fire.
+### Verified
+- `tests/treehouse-start.test.mjs` (new): from all 25 platform spots at four body heights, 0 of 100 lines reach the new
+  start; 25 of 25 reached the side gate. Standing at the start 12 s, 6 rounds: Connor never had a line (0 frames) and
+  never hit; the first hit was always Haden's, at 6.4–8.0 s. Control, the player put back at the side gate: Connor
+  tagged him at 3.0–3.25 s, 3 of 3. Walking out past the shed toward the oak, Connor had a line at 1.2 s and hit at
+  2.8–3.2 s, so the start is cover, not a hiding place.
+- `treehouse`, `treehouse-evan`, `treehouse-hold`, `kid-climb`, `ladder-prompt`, `spawn-facing` and `northcliff` pass.
+- `npm test`: 94 of 94 suites passed. The serial run hit this box's one-hour job limit inside `stuck-sweep-9` with 74
+  suites done and 0 failures; that sweep and the last 19 suites were run directly, all green.
+### Still open
+- Whether the shed start reads as a fair opening, and whether running from it to the ladder (about 15 m in Connor's
+  view, now from the north-east instead of the patio) is too hard or too easy, is for play.
