@@ -20,7 +20,7 @@ const WEIGHTS = {
   'bunratty-polish.test.mjs': 60, 'bunratty-road.test.mjs': 47, 'burst-pose.test.mjs': 45,
   'car-side-fire.test.mjs': 24, 'cars.test.mjs': 3, 'country-club.test.mjs': 155, 'cover-fire.test.mjs': 62,
   'desk-start.test.mjs': 15, 'fence-bound.test.mjs': 44, 'fort-spawn.test.mjs': 42, 'front-door.test.mjs': 18,
-  'gait.test.mjs': 37, 'grip.test.mjs': 23, 'grocery-store.test.mjs': 182, 'harness.test.mjs': 26,
+  'gait.test.mjs': 37, 'grip.test.mjs': 23, 'grocery-store.test.mjs': 182, 'harness.test.mjs': 26, 'bellfield.test.mjs': 100,
   'high-school.test.mjs': 147, 'hollow-held.test.mjs': 101, 'houses.test.mjs': 30, 'jump.test.mjs': 17,
   'kid-climb.test.mjs': 54, 'kid-clothes.test.mjs': 53, 'kid-face.test.mjs': 6, 'kid-hands.test.mjs': 6,
   'kid-hold.test.mjs': 71, 'ladder-prompt.test.mjs': 6, 'laser.test.mjs': 44, 'last-kid.test.mjs': 144,
