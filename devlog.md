@@ -8940,6 +8940,9 @@ speed and range, Mason took ours three times in 150 s and brought it home once, 
 - CI fix-up: `bellfield`'s "nobody fires in the opening hold" failed on the PR (Lamplight, 2.43 s). It timed the first
   shot by its own loop's frames, but the page's own frames between BEGIN and the loop advance the round clock too, so a
   shot the hold had let out at 2.5 s read 2.43. It now reads the round clock the hold itself uses; passes (3.04 s).
+  `treehouse-start` failed on the same PR: "no hit at all before 6 s" read Haden's walk-over tag at 6.0 s (the loop's
+  frames again). It now stamps hits with the round clock, and holds Connor, the platform shooter it guards against
+  (2.6–3.4 s before v1.185), to 6 s and anyone to 5 s; Haden's tags run 6.1–11.6 s. Passes.
 - Every suite passes on v1.189 (98): 67 in the four local shards, which hit this session's 30-minute limit, and the
   other 31 plus all 16 stuck sweeps again (adding a match moves which matches each sweep covers) in four lanes.
 ### Still open
