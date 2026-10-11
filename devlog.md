@@ -8889,6 +8889,8 @@ The 3v3 suite's "nobody fires in the opening hold" counted trigger pulls that `s
 - The stuck-kid sweep on the match (ONLY=, three ways, 90 s, eight times over): no kid over 4 s.
 - `northcliff` (its chain lists both new matches), `briefing-lives`, `night-lights-spawn`, `map-screen` and
   `spawn-facing` pass.
+- `npm test` as four local shards on v1.188 (covering v1.187 too): 94 of 95 suites passed. `mirror` died at its first
+  `page.evaluate` with the harness's "browser has been closed" (before any check) and passed alone.
 ### Still open
 - Whether the lamps' pools read in play, and whether a night street with no rifle feels like a night match, is for
   play. Two night 4v4s against the same four kids now sit three matches apart in Northcliff's chain (this one and
