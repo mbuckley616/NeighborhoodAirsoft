@@ -8937,6 +8937,9 @@ speed and range, Mason took ours three times in 150 s and brought it home once, 
   Screenshot `tests/out/ctf-their-flag.png`.
 - The stuck-kid sweep on the match (ONLY=, three ways, 90 s): no kid over 3 s.
 - `northcliff` and `bellfield` (their chain checks now list the match) pass.
+- CI fix-up: `bellfield`'s "nobody fires in the opening hold" failed on the PR (Lamplight, 2.43 s). It timed the first
+  shot by its own loop's frames, but the page's own frames between BEGIN and the loop advance the round clock too, so a
+  shot the hold had let out at 2.5 s read 2.43. It now reads the round clock the hold itself uses; passes (3.04 s).
 - Every suite passes on v1.189 (98): 67 in the four local shards, which hit this session's 30-minute limit, and the
   other 31 plus all 16 stuck sweeps again (adding a match moves which matches each sweep covers) in four lanes.
 ### Still open
