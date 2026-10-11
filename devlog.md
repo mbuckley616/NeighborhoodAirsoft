@@ -8781,3 +8781,49 @@ there when it needs Connor to fire.
 ### Still open
 - Whether the shed start reads as a fair opening, and whether running from it to the ladder (about 15 m in Connor's
   view, now from the north-east instead of the patio) is too hard or too easy, is for play.
+
+## v1.186 — Bellfield Court gets a street of its own
+Decisions, "Builder queue empty after v1.185: what next?" (builder, 10 Oct; Michael: C on the control room the same
+evening): Bellfield Court, until now a name in Northcliff's REGIONS entry and the street the four kids in Bellfield
+After Dark walk over from, gets a map: a small cul-de-sac with a 1v1 and a 3v3.
+
+The map (`buildBellfieldCourtScene`) is a short, flat dead end built from the polished street pieces. The road comes in
+from the east (x 37) and ends 51 m on in a bulb (r 6.3 m) with a brick planter island and a tree in the middle. Three
+detailed houses a side face the street with short front yards (about 6 m), and a seventh at the head of the bulb faces
+east down it, with a kid fort on its lawn. Behind both rows the backyards run 9–13 m deep to a 1.8 m board fence that
+closes the north, south and west; the east is the woods with the road's gap. So the fight is across the street and the
+bulb, and the backyards are the way round. Cover is fixed (the school's rule, v1.155), so the AI and the tests see the
+same street every round: four kerb cars (two at the bulb's mouth), four in driveways, the fort, boxes, bins and a ply
+stack in the front yards, a box by every backyard anchor and two more pieces a yard, a portable basketball hoop on the
+south kerb, four streetlamps (lit at night, though neither match is a night one). About 71 × 54 m, smaller than
+Northcliff Trace (74 × 66) and flat where it climbs 4 m.
+
+The matches:
+- **Mason's Court** (1v1): Mason with a pistol, starting behind the fort at the top of the bulb, a skirmisher; you
+  start at the east entry. One hit each, $75 / $18.
+- **Bellfield Bulb** (3v3): you, Andrew (MP5) and Evan (UMP) from the entry against Christian (shotgun), Diego (MP5) and
+  Fernando (AK; the rifle stays his in Bellfield After Dark, where he has the high yard; a flat 58 m street has none),
+  three lives each but yours, last team standing, $110 / $26.
+Both sit in Northcliff's chain after Hold the Treehouse and before Hold the Creek Fort, as VIP went in before its
+zones' capstones (v1.170). A save that has won Hold the Treehouse but not the creek fort now plays the two Bellfield
+matches first; anything already won stays open (isScenarioUnlocked's completed rule). Northcliff is not the last zone
+on itch, so no save loses access to a later zone.
+
+### Verified
+- `tests/bellfield.test.mjs` (new): the chain is hold → Mason's Court → Bellfield Bulb → creek fort, each opening only
+  on the one before; the map card reads "Mason's Court · Bellfield Court". Both matches: player and every kid spawn
+  clear of obstacles, the street is flat, a walk down the road's centre first meets the island at x −12.25, the back
+  fence stops at four points on each side, every enemy starts 58–60 m off. Mason's Court, 60 s with the player
+  untaggable at the entry: Mason walked 93 m, came within 7 m, fired 37 BBs, the first at 14.1 s, never wedged.
+  Bellfield Bulb, 60 s: 329 BBs (first at 2.73 s, after the opening hold), enemy lives lost 5, ally 6, every kid walked
+  60–166 m, longest wedge 1 s. No page errors. Screenshots: `tests/out/bellfield-street.png`, `bellfield-bulb.png`,
+  `bellfield-backyards.png`.
+- The stuck-kid sweep on the two matches (ONLY=, three ways, 90 s each): no kid held a moving state over 15 s; worst
+  was Christian, 1.5 s.
+- `northcliff` (its chain check now lists the two) and `map-screen` pass.
+- `npm test`, run as four shards side by side: 94 of 95 suites passed. The one failure, `whole-block`, timed out
+  loading the page (30 s, before any check ran) with four browsers busy; run alone it passed.
+### Still open
+- Whether 58 m of open street reads as fair for a 1-hit 1v1 with a pistol, and whether the backyards get used as the
+  way round, is for play.
+- Fernando lost his rifle here for an AK; if Michael wants it back, the bulb house's lawn is the only long look.
