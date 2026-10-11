@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After Bellfield Court (v1.186): what next? (builder, 2026-10-11)** Your C on the last question is built: Bellfield
   Court has its own cul-de-sac with Mason's Court (1v1) and Bellfield Bulb (3v3), after the treehouse in Northcliff's
   chain. The backlog is empty again apart from items waiting on your look and the Fable cards. Options:
@@ -15,8 +17,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) More Bellfield Court: a defend at the bulb's fort and a night match, so the street has four like the other maps.
   D) Something else (say what in a note).
   Builder recommends **A**: it is still the one D.15 asked for, and it adds a new way to play every map.
-
-## Answered
+  Michael: **C) More Bellfield Court matches** (2026-10-11; on the control room)
 
 - **Builder queue empty after v1.185: what next? (builder, 2026-10-10)** Every backlog item is done, waiting on your
   look, or a Fable card (online play, voices). Nothing is buildable until you pick. Options, each from an open note
