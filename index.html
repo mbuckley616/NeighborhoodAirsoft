@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.184</div>
+  <div class="version">v1.185</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6349,7 +6349,7 @@ const SCENARIOS = {
     builderFn: 'buildTreehouseYardScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'side_gate',
+    playerSpawn: 'behind_shed',   // v1.185: was side_gate, in Connor's sight from the platform (decisions, Michael: A)
     enemySetup: [
       { charId: 'connor', weapon: 'mp5',    anchor: 'treehouse', perch: 'treehouse', role: 'defender' },
       { charId: 'haden',  weapon: 'pistol', anchor: 'fort', role: 'skirmisher' },
@@ -14949,6 +14949,10 @@ function buildTreehouseYardScene(variant, timeOfDay) {
   const playerSpawns = {
     side_gate: { pos: V(-13, 14.4), yaw: -0.55 },                 // by the bins at the west side of the patio, facing up the yard toward the oak
     treehouse: { pos: V(TH.x + 0.6, TH.z - 0.6), yaw: Math.PI, y: top },   // on the platform, facing the house
+    // v1.185 (decisions, Michael: A): King of the Treehouse starts here, in the lee of the shed from the platform; at
+    // the side gate Connor had a line from the first frame and tagged you about 3 s after BEGIN. Faces past the shed's
+    // south-east corner down the yard.
+    behind_shed: { pos: V(14.5, -12), yaw: 2.5 },
   };
   return {
     scene,
