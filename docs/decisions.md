@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Builder queue empty after v1.185: what next? (builder, 2026-10-10)** Every backlog item is done, waiting on your
   look, or a Fable card (online play, voices). Nothing is buildable until you pick. Options, each from an open note
   in the backlog:
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
      treehouse yard, v1.138), gets one: a small cul-de-sac map with a 1v1 and a 3v3.
   D) Something else (say what in a note).
   Builder recommends **A**: it is the second match type D.15 asked for, and it reuses every map built so far.
-
-## Answered
+  Michael: **C) A map of its own for Bellfield Court** (2026-10-10)
 
 - **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
   Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
