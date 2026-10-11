@@ -8755,3 +8755,75 @@ both limits scale with that: over 20 of 720 at the old spawn, at most 6 of 720 a
   1d305ae (worst spot 4–8 pulls).
 ### Still open
 - Nothing new.
+
+## v1.185 — King of the Treehouse starts behind the shed
+Decisions, King of the Treehouse (critic, 9 Oct; Michael: A on the control room, 10 Oct). Connor holds the platform
+2.6 m up the oak with an MP5, and the player's start at the side gate, 24.5 m off by the patio bins, was in his line
+from the first frame. He tagged the player 2.6–3.4 s after BEGIN in 17 of 17 critic rounds, standing, walking or
+sprinting any way, so a first-timer with one life was out before finding the ladder. The 2.5 s opening hold (v1.101)
+is shorter than any run to cover from there. Michael chose to move the start out of his sight and leave Connor as he
+is. A probe of every half-metre of the yard against 25 spots on the platform found three pockets he can't see: a
+sliver in each far corner behind the corner trees, and the lee of the shed (2.3 m tall, in the north-east), the only
+one with room to stand in. The start is now there, at (14.5, −12), a metre and more inside the pocket every way,
+facing past the shed's south-east corner down the yard. Haden still starts at the fort and comes looking, so standing
+still is not safe, and the way to the ladder is still across open grass under Connor; only the first few seconds
+change. The side gate stays in the builder (it is no other scenario's start) and the treehouse suite puts the player
+there when it needs Connor to fire.
+### Verified
+- `tests/treehouse-start.test.mjs` (new): from all 25 platform spots at four body heights, 0 of 100 lines reach the new
+  start; 25 of 25 reached the side gate. Standing at the start 12 s, 6 rounds: Connor never had a line (0 frames) and
+  never hit; the first hit was always Haden's, at 6.4–8.0 s. Control, the player put back at the side gate: Connor
+  tagged him at 3.0–3.25 s, 3 of 3. Walking out past the shed toward the oak, Connor had a line at 1.2 s and hit at
+  2.8–3.2 s, so the start is cover, not a hiding place.
+- `treehouse`, `treehouse-evan`, `treehouse-hold`, `kid-climb`, `ladder-prompt`, `spawn-facing` and `northcliff` pass.
+- `npm test`: 94 of 94 suites passed. The serial run hit this box's one-hour job limit inside `stuck-sweep-9` with 74
+  suites done and 0 failures; that sweep and the last 19 suites were run directly, all green.
+### Still open
+- Whether the shed start reads as a fair opening, and whether running from it to the ladder (about 15 m in Connor's
+  view, now from the north-east instead of the patio) is too hard or too easy, is for play.
+
+## v1.186 — Bellfield Court gets a street of its own
+Decisions, "Builder queue empty after v1.185: what next?" (builder, 10 Oct; Michael: C on the control room the same
+evening): Bellfield Court, until now a name in Northcliff's REGIONS entry and the street the four kids in Bellfield
+After Dark walk over from, gets a map: a small cul-de-sac with a 1v1 and a 3v3.
+
+The map (`buildBellfieldCourtScene`) is a short, flat dead end built from the polished street pieces. The road comes in
+from the east (x 37) and ends 51 m on in a bulb (r 6.3 m) with a brick planter island and a tree in the middle. Three
+detailed houses a side face the street with short front yards (about 6 m), and a seventh at the head of the bulb faces
+east down it, with a kid fort on its lawn. Behind both rows the backyards run 9–13 m deep to a 1.8 m board fence that
+closes the north, south and west; the east is the woods with the road's gap. So the fight is across the street and the
+bulb, and the backyards are the way round. Cover is fixed (the school's rule, v1.155), so the AI and the tests see the
+same street every round: four kerb cars (two at the bulb's mouth), four in driveways, the fort, boxes, bins and a ply
+stack in the front yards, a box by every backyard anchor and two more pieces a yard, a portable basketball hoop on the
+south kerb, four streetlamps (lit at night, though neither match is a night one). About 71 × 54 m, smaller than
+Northcliff Trace (74 × 66) and flat where it climbs 4 m.
+
+The matches:
+- **Mason's Court** (1v1): Mason with a pistol, starting behind the fort at the top of the bulb, a skirmisher; you
+  start at the east entry. One hit each, $75 / $18.
+- **Bellfield Bulb** (3v3): you, Andrew (MP5) and Evan (UMP) from the entry against Christian (shotgun), Diego (MP5) and
+  Fernando (AK; the rifle stays his in Bellfield After Dark, where he has the high yard; a flat 58 m street has none),
+  three lives each but yours, last team standing, $110 / $26.
+Both sit in Northcliff's chain after Hold the Treehouse and before Hold the Creek Fort, as VIP went in before its
+zones' capstones (v1.170). A save that has won Hold the Treehouse but not the creek fort now plays the two Bellfield
+matches first; anything already won stays open (isScenarioUnlocked's completed rule). Northcliff is not the last zone
+on itch, so no save loses access to a later zone.
+
+### Verified
+- `tests/bellfield.test.mjs` (new): the chain is hold → Mason's Court → Bellfield Bulb → creek fort, each opening only
+  on the one before; the map card reads "Mason's Court · Bellfield Court". Both matches: player and every kid spawn
+  clear of obstacles, the street is flat, a walk down the road's centre first meets the island at x −12.25, the back
+  fence stops at four points on each side, every enemy starts 58–60 m off. Mason's Court, 60 s with the player
+  untaggable at the entry: Mason walked 93 m, came within 7 m, fired 37 BBs, the first at 14.1 s, never wedged.
+  Bellfield Bulb, 60 s: 329 BBs (first at 2.73 s, after the opening hold), enemy lives lost 5, ally 6, every kid walked
+  60–166 m, longest wedge 1 s. No page errors. Screenshots: `tests/out/bellfield-street.png`, `bellfield-bulb.png`,
+  `bellfield-backyards.png`.
+- The stuck-kid sweep on the two matches (ONLY=, three ways, 90 s each): no kid held a moving state over 15 s; worst
+  was Christian, 1.5 s.
+- `northcliff` (its chain check now lists the two) and `map-screen` pass.
+- `npm test`, run as four shards side by side: 94 of 95 suites passed. The one failure, `whole-block`, timed out
+  loading the page (30 s, before any check ran) with four browsers busy; run alone it passed.
+### Still open
+- Whether 58 m of open street reads as fair for a 1-hit 1v1 with a pistol, and whether the backyards get used as the
+  way round, is for play.
+- Fernando lost his rifle here for an AK; if Michael wants it back, the bulb house's lawn is the only long look.
