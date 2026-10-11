@@ -47,7 +47,10 @@ Fable card on the control room and Michael starts it from there.
    v1.130 (houses on a hill above a creek from the polished pieces; the pin is live; Down by the Creek 1v1 and The
    Stoneglen Twins 3v3; `tests/northcliff.test.mjs`). ~~More Northcliff scenarios~~ — done, v1.131 (Hold the Creek
    Fort defend, Bellfield After Dark night 4v4 capstone; Fernando's rifle holds the high yard). Northcliff is complete
-   at four scenarios. Stoneglen Close and Bellfield Court have no maps of their own; another zone is a new question.
+   at four scenarios. Stoneglen Close got the treehouse yard (v1.138). Bellfield Court (Michael: **C**, a small cul-de-sac map with a
+   1v1 and a 3v3; control room 10 Oct): ~~Bellfield Court~~ — done, v1.186 (a flat dead end, three houses a side and one
+   at the head of the bulb, an island in the bulb, fenced backyards; Mason's Court 1v1 and Bellfield Bulb 3v3, after the
+   treehouse in Northcliff's chain; `tests/bellfield.test.mjs`). Another zone is a new question.
    Next zone (Michael: **A**, a high school's grounds, made-up name: fields, bleachers, portables; control room 4 Oct):
    ~~Hollins Ridge High~~ — done, v1.155 (sixth on the ladder after Northcliff, East Roswell: the school's brick front
    and staff row, six portables, the practice field with goalposts and sleds, five-tier home bleachers, the concession
