@@ -8827,3 +8827,33 @@ on itch, so no save loses access to a later zone.
 - Whether 58 m of open street reads as fair for a 1-hit 1v1 with a pistol, and whether the backyards get used as the
   way round, is for play.
 - Fernando lost his rifle here for an AK; if Michael wants it back, the bulb house's lawn is the only long look.
+
+## v1.187 — Hold the Bulb Fort
+Decisions, "After Bellfield Court (v1.186): what next?" (builder, 11 Oct; Michael: C on the control room the same
+morning): more Bellfield Court, a defend at the bulb's fort and a night match, so the street has four matches like the
+other maps. This is the defend; the night match is the next version.
+
+**Hold the Bulb Fort** is a 90 s defend inside the kid fort on the head house's lawn at the top of the bulb. You start
+inside its walls at (−21.8, 2.2), facing east over the plywood down the street. Mason (MP5), Christian (shotgun) and
+Diego (UMP) start at the east entry, 54–56 m off, and a tagged kid walks back down there and comes again, as at the
+creek fort. One life, $85 / $20. It sits after Bellfield Bulb and before Hold the Creek Fort in Northcliff's chain.
+The fort's wall faces the street but its back is open, and that is the match: the attackers come up the street and
+round its sides to the open back. The briefing first said the backyards come out behind you, and the attackers were
+first sent to the backyard anchors to flank that way, but they never went: they see you down the open street, go
+straight to `advancing`, and never leave the street (furthest from the centre line 9.6 m in every round). So their
+anchors are now the front yards and the north car at the mouth of the bulb, and the briefing says what happens:
+they come round the sides of the fort.
+### Verified
+- `tests/bellfield.test.mjs` takes the defend as its third match: the chain is Bellfield Bulb → Hold the Bulb Fort →
+  creek fort, each opening only on the one before. The player spawns clear, inside the fort's box, facing east (yaw
+  −π/2), with the wall between a crouched eye and the street. With the player untaggable, the timer runs out at 90 s;
+  the first shot came at 21.5 s, all three attackers got round to the fort's open back (x −23.5 to −23.8, 1.8 m from
+  the player), 1,005 BBs, no kid wedged. A player standing in the fort and never firing was first tagged at 23.3,
+  24.3 and 22.7 s (3 rounds); in probes the tag was Mason's, from the fort's open side. Screenshot
+  `tests/out/bellfield-fort.png`.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s, eight times over): no kid over 2 s.
+- `northcliff` (its chain now lists the defend) and `spawn-facing` pass.
+### Still open
+- Whether 23 s to the first tag on a player who never shoots back is about right for a defend, and whether the open
+  back makes the fort feel unfair, is for play. Nobody uses the backyards here; the night match will say whether a
+  dark street changes that.

@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.186</div>
+  <div class="version">v1.187</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6424,6 +6424,28 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 110, lose: 26 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.187: defend the kid fort at the top of the bulb, 90 s (decisions, "After Bellfield Court", Michael: C) ---
+  bellfield_defend_fort: {
+    region: 'northcliff', street: 'bellfield_ct',
+    name: 'Bellfield Court', scenarioName: 'Hold the Bulb Fort',
+    desc: "You got to the Bellfield kids' fort on the lawn at the top of the bulb before they did, and now they want it back. Mason, Christian and Diego come up the street from the bottom, and a tagged kid walks back down to the entry and comes again. The fort's wall faces the street, but its back is open to the head house's lawn, and they will come round the sides of it to get in. Watch the island and the cars at the mouth of the bulb, and look over your shoulder. Survive 90 seconds.",
+    builderFn: 'buildBellfieldCourtScene',
+    builderArg: 'default',
+    scenarioType: 'defend',
+    resultHold: 'the bulb fort',
+    playerSpawn: 'fort',
+    enemySpawnCluster: 'cluster_east',
+    enemySetup: [
+      { charId: 'mason',     weapon: 'mp5',     anchor: 'front_n',    role: 'attacker', flank: 'L' },
+      { charId: 'christian', weapon: 'shotgun', anchor: 'front_s',    role: 'attacker', flank: 'C' },
+      { charId: 'diego',     weapon: 'ump',     anchor: 'bulb_car_n', role: 'attacker', flank: 'R' },
+    ],
+    winCondition: 'survive_timer',
+    timerSec: 90,
+    rewards: { win: 85, lose: 20 },
     playerLives: 1, armorMult: 1,
   },
 
@@ -15217,6 +15239,7 @@ function buildBellfieldCourtScene(variant, timeOfDay) {
   };
   const playerSpawns = {
     entry: { pos: P(34.5, 0), yaw: Math.PI / 2 },   // the east entry, facing west down the street to the bulb
+    fort: { pos: P(-21.8, 2.2), yaw: -Math.PI / 2 },   // v1.187: inside the bulb fort, facing east over its wall down the street
   };
   return {
     scene,
@@ -28102,6 +28125,7 @@ const PIN_SCENARIO_GROUPS = {
     'stoneglen_hold_treehouse',  // v1.144: hold it while they climb (D.7)
     'bellfield_1v1_mason',       // v1.186: Bellfield Court, the Bellfield kids' own street (Michael: C)
     'bellfield_3v3',             // v1.186
+    'bellfield_defend_fort',     // v1.187: hold the bulb fort (Michael: C, more Bellfield Court)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
