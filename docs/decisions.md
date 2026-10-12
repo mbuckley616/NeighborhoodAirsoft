@@ -18,6 +18,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
   Bellfield and said whether it wants a clock or a second enemy runner.
 
+- **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
+  In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
+  their flag reaches it about once every 3 minutes and is tagged within 1 s of grabbing it, because two of their three
+  kids wait by the fort beside it. A player who fights down the street is tagged every 7 s and never gets there. A
+  round that can't end only pays out if you quit. Options:
+  A) A clock: 5 minutes, most flags wins, and a tie is a draw paid like a loss.
+  B) Thin their defence: only one kid stays within 15 m of their flag, and the other two push, as Andrew and Evan do.
+  C) Both A and B.
+  D) Leave it until you've played it.
+  Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
+  at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
+
 ## Answered
 
 - **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day
