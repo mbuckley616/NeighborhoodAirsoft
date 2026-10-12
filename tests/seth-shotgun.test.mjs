@@ -11,7 +11,9 @@ console.log('   briefing:', desc);
 check('the briefing no longer promises a range he cannot reach', !/14 ?m|can.t touch you/.test(desc), desc);
 
 const rows = [];
-for (const d of [12, 16, 20, 24, 28]) {
+// v1.191 fix-up: three rounds each at 16 and 20 m. A round there is 6-8 shots whose pellets land by chance, and CI twice
+// had 0 hits at both distances with one round each (12 Oct; locally a round at 20 m lands none about 1 time in 4).
+for (const d of [12, 16, 16, 16, 20, 20, 20, 24, 28]) {
   await g.scenario('winnmark_seth_shotgun_duel');
   rows.push(await page.evaluate((d) => {
     const real = applyBBHit, bb0 = spawnEnemyBB; let hits = 0, shots = 0;
@@ -28,7 +30,7 @@ for (const d of [12, 16, 20, 24, 28]) {
 console.log('   Seth held west of the player:', JSON.stringify(rows));
 const near = rows.filter(r => r.d <= 16), far = rows.filter(r => r.d >= 24);
 const rate = rs => rs.reduce((a, r) => a + r.hits, 0) / Math.max(1, rs.reduce((a, r) => a + r.shots, 0));
-check('past 14 m he still fires and reaches the player (the old line was wrong)', rows.filter(r => r.d >= 16 && r.d <= 20).some(r => r.hits > 0), rows);
+check('past 14 m he still fires and reaches the player (the old line was wrong)', rows.filter(r => r.d >= 16 && r.d <= 20).reduce((a, r) => a + r.hits, 0) > 0, rows);
 check('fewer of his pellets find you at 24-28 m than at 12-16 m', rate(far) < rate(near) / 2, { near: rate(near), far: rate(far) });
 
 check('no page errors', g.errs.length === 0, g.errs);

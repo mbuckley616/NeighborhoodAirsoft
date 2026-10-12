@@ -8982,3 +8982,47 @@ it won. Tyler and the others still play on their own streets and at the market.
   `tests/out/school-kids.png` (the six in a row on the field).
 - `high-school` (its play checks run each match 60–120 s: kids fire, move, and are not wedged; both sides lose lives;
   Jordan comes out of the portables) and `night-lights-spawn` (the rifle, now Grant's, still cannot see your start) pass.
+
+## v1.191 — Flags on Bellfield gets a clock and a thinner defence
+Decisions, "Flags on Bellfield never ends" (critic, 12 Oct; Michael: C on the control room the same morning). The critic
+played 8 rounds of 150–240 s and none ended. There was one capture in 1,530 s. A player who reached their flag was
+tagged within a second, because Christian and Fernando both waited by the kid fort beside it, and a round with no clock
+that can't end only pays out if you quit. Michael chose both fixes.
+
+**The clock.** The round is five minutes (`ctf.clock: 300`). First to two still wins at once. When time is up, more
+flags wins ("FLAGS 1–0", paid and counted as a win), fewer loses ("THEY WIN 1–0"), and a tie is a draw ("DRAW 1–1"),
+paid as a loss and not counted as a win, so the next match stays locked. The timer box shows the clock beside the
+score (0 – 0 5:00) and turns red in the last 30 s, as it does while they have our flag. The objective reads "first to
+2, or most flags in 5:00", and the briefing says a tie counts for nothing. Once the round is decided, the flags stop
+for the 0.8 s before the result, so a late capture can't change a score that is already on its way to the screen.
+
+**The defence.** Christian is now a pusher (`ctf: 'push'`), so Fernando is the only one who keeps their flag. A pusher
+who finds himself within 15 m of his own flag runs up the street to a point 24 m out from it (mid-street, about (1,
+−2.6)), using the flag runner's step (`kidFlagRun`): he sprints and shoots on the move at anyone he sees within 18 m.
+Within 3 m of that point, or 20 m from his flag, he hands back to the states and fights from there. Kids come back next
+to their flag (the bulb cluster), so he does this once a life. The 5 s run out from the respawn is the only time he is
+near the flag now. Mason still runs, and Andrew and Evan are unchanged.
+### Verified
+- `tests/ctf-clock.test.mjs` (new). The objective gives "most flags in 5:00", the roles are Mason run, Christian push,
+  and Fernando none, and the briefing names the five minutes and the tie. The HUD reads 0 – 0 5:00 at the start, 1:40
+  (white) at 200 s and 0:20 (red) at 280 s. Scripted time-ups: nothing ends at 299.9 s. 1–0 at 300 s wins (FLAGS 1–0,
+  $12, marked done), 0–1 loses (THEY WIN 1–0, $3) and 1–1 draws (DRAW 1–1, $3, not done).
+- Kids only (the player tagged out and parked), three 120 s rounds with the push and three with it turned off (v1.190).
+  Two of theirs keeping the flag (within 15 m, not walking back from a tag, not on the way out) was 2, 0 and 0 of 120
+  seconds with the push, 1% overall, against 10, 26 and 28 without, 18%. Counting Christian's run out from his respawn,
+  it was 14%. He pushed 5–7 times a round and was never held over 0.4 s on the way. One round run to the clock ended at
+  300 s on THEY WIN 1–0; another, on the first run, ended at 130 s on THEY TOOK IT 2–0.
+- `ctf` (its played rounds: the backyards and the street both used, runners over 150 m, no wedge over 0.6 s),
+  `bellfield`, `northcliff` and the stuck-kid sweep on the match (ONLY=, three ways, 90 s: worst 1.5 s) pass.
+- `npm test` as four local shards: 98 of 99 suites passed. `mirror` died at a `page.evaluate` with the harness's "browser
+  has been closed" (as on v1.188), before any check, and passed alone.
+- CI fix-up: `seth-shotgun`'s "past 14 m he still fires and reaches the player" failed on CI twice (on v1.190 and on
+  this PR's head): one round each at 16 and 20 m, and both landed 0 hits (6–7 shots). No cover is in the line. The
+  pellets land by chance, and locally a round at 20 m lands none in 5 of 22. It now counts the hits over three rounds
+  each at 16 and 20 m. It passed twice, with 25 and 33 hits at 16 m and 19 and 9 at 20 m.
+### Still open
+- Whether a player can now get their flag home is for play. The critic's other finding stands: a player fighting down
+  the street was tagged every ~7 s, once 14 times running by Fernando's AK from 28–38 m as each respawn grace ran out.
+  Fernando is still in the fort with the AK, and nothing here changes how he covers the street.
+- A draw pays as a loss and shows in the lose colour; whether it should read differently is Michael's call once he has
+  seen one.

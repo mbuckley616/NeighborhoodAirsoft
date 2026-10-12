@@ -7,19 +7,70 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
-- **After the school's own kids (v1.190): what next? (builder, 2026-10-12)** Your B is built: Hollins Ridge High
-  has its own six kids (Jordan, Caleb, Nathan, Sophie, Grant and Malik) in all four of its matches, in place of the
-  kids it borrowed from Wayt Road, Bunratty and Winnmark. The backlog is empty again apart from items waiting on your
-  look and the Fable cards. Options:
-  A) Capture the flag on a second map (the school's practice field, end zone to end zone, would suit it).
-  B) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
-     with a boat ramp on the Chattahoochee.
-  C) Riverside Market gets kids of its own: the lot and the store borrow Marcus, Jamie, Tyler, Owen and Devon (Tyler
-     stays, his dad is the night manager).
-  D) Something else (say what in a note).
-  Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
-  Bellfield and said whether it wants a clock or a second enemy runner.
-  Michael: **D** — "I want work to go into imagining how this game can be more fun and elaborate. This progression is fun, but is there a need for a campaign / simple storyline? Do we need more character customization? Should we focus on online play & hosting server rooms? Should we allow for custom games? Do we need to upgrade any interfaces? Let’s imagine a better version of the game and build a healthy backlog." (2026-10-12)
+- **A better game, 1 of 5: a story? (builder, 2026-10-12)** You asked whether the game needs a campaign or a simple
+  storyline. Today the reason to play is the ladder: win a match, the next opens, zone after zone. Nothing says who
+  these kids are to you or why this summer matters. Options:
+  A) A light summer story told in the bedroom, no cutscenes: a wall calendar from the first week of June to the last
+     day of August, each zone a few weeks of it; your friends (Eric, Rebecca, Brooke) text your flip phone between
+     matches, a rival crew is named early, and it ends on the last Saturday of summer with one big match on your own
+     street. Briefings and result lines pick up the thread.
+  B) A as well as a few scripted moments inside matches: a friend pinned down that you go and get, an ambush on the walk
+     home, the rival crew showing up mid-match.
+  C) No story; a reason to replay instead: three stars a match (win; win without being tagged out; a match-specific
+     one like "win with the pump only") and a neighbourhood rank from the stars.
+  D) Neither for now.
+  Builder recommends **A**, then C later: it is the summer-2003 kid fantasy the brief asks for, and it lives in the
+  bedroom, the briefings and the result screen, so no match changes.
+  Michael: **A — A light summer story told in the bedroom**. (2026-10-12)
+
+- **A better game, 2 of 5: more of you (builder, 2026-10-12)** You asked whether the character needs more
+  customisation. The mirror has height, build, hair and its colour, skin, eyes, shirt and its front, pants and glasses
+  (v1.107–v1.123); the Loadout kid wears the gear you bought (v1.133). Options:
+  A) Looks you earn or buy: caps worn forward or backward, bucket hats, bandanas, more hair, shorts, graphic tees, a
+     hoodie, shoes; some bought at the shop's new Clothes tab, some won (the cap from the twins' street once you beat
+     them), all chosen at the mirror.
+  B) Your crew: a crew name and colours your allies wear too (a matching tee), shown on the briefing and the result.
+  C) A then B.
+  D) Enough as it is.
+  Builder recommends **C**: A gives the money you win a second use beyond guns, and B is small once A's clothes exist.
+  Michael: **C — A then B (looks you earn or buy, then your crew)**. (2026-10-12)
+
+- **A better game, 3 of 5: custom games (builder, 2026-10-12)** You asked whether players should make their own
+  games. Every match now is one written into the game. Options:
+  A) A Pickup Game board in the bedroom: choose any zone you have opened, the mode (team, 1v1, free-for-all, VIP,
+     capture the flag, defend, infection), day or night, how many a side and which kids, lives, a clock; it pays a
+     little, so it is for fun, not farming.
+  B) A, and a Match of the Day: one set-up a day, the same for everyone who plays that day, with its own small prize.
+  C) Not now.
+  Builder recommends **A**: it reuses every system the matches already have, gives a player who has finished the
+  ladder something to do, and it is the screen an online host would pick a match from later (question 4).
+  Michael: **A — A Pickup Game board in the bedroom**. (2026-10-12)
+
+- **A better game, 4 of 5: online play now? (builder, 2026-10-12)** You asked whether to focus on online play and
+  hosted rooms (backlog D.2, a Fable item). Your C of 30 Sep held it until the v2 zones were done; they are (Northcliff,
+  Hollins Ridge High, Willow Bend, Inside Riverside Market, Bellfield Court). A browser game with no server of ours
+  needs peers to connect directly (WebRTC), with a small free signalling service to find each other. Options:
+  A) Start it now as a Fable card, in steps: first two friends in one match by a room code (a 1v1 on Winnmark), then
+     teams, then a list of open rooms.
+  B) After the Pickup Game board (question 3, A), so the host sets up the match from that board.
+  C) Keep holding it.
+  Builder recommends **B**: the board is the host's screen, so building it first saves building a second one; online
+  is also the biggest change the game has had, so it is best started from a settled single-player game.
+  Michael: **B — After the Pickup Game board**. (2026-10-12)
+
+- **A better game, 5 of 5: which screen first? (builder, 2026-10-12)** You asked whether any interfaces need an
+  upgrade. The map screen (v1.146–v1.148), the shop's tabs (v1.128) and the Loadout kid (v1.132–v1.133) are recent.
+  What there is not: any settings at all (mouse sensitivity, volume, field of view, keys are fixed), and a result
+  screen that says only who won and the pay. Options:
+  A) A settings screen from the title and the bedroom: mouse sensitivity, aim sensitivity, music and effects volume,
+     field of view, invert look; saved.
+  B) A better result screen: your tags, shots, hits, time and the match's best moment, and what you can now buy or
+     open.
+  C) A then B.
+  D) The bedroom first: a corkboard by the bed with your progress, the next match, and your money.
+  Builder recommends **C**: settings are the first thing a new itch.io player looks for and the game has none, and
+  the result screen is where every match ends.
+  Michael: **C — A then B (a settings screen, then a better result screen)**. (2026-10-12)
 
 - **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
   In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
@@ -32,7 +83,25 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Leave it until you've played it.
   Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
   at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
-  Michael: **C** (both A and B). (2026-10-12)
+  Michael: **C) Both A and B** (2026-10-12; on the control room). Built in v1.191.
+
+- **After the school's own kids (v1.190): what next? (builder, 2026-10-12)** Your B is built: Hollins Ridge High
+  has its own six kids (Jordan, Caleb, Nathan, Sophie, Grant and Malik) in all four of its matches, in place of the
+  kids it borrowed from Wayt Road, Bunratty and Winnmark. The backlog is empty again apart from items waiting on your
+  look and the Fable cards. Options:
+  A) Capture the flag on a second map (the school's practice field, end zone to end zone, would suit it).
+  B) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
+     with a boat ramp on the Chattahoochee.
+  C) Riverside Market gets kids of its own: the lot and the store borrow Marcus, Jamie, Tyler, Owen and Devon (Tyler
+     stays, his dad is the night manager).
+  D) Something else (say what in a note).
+  Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
+  Bellfield and said whether it wants a clock or a second enemy runner.
+  Michael: **D) Something else** (2026-10-12; on the control room): "I want work to go into imagining how this game
+  can be more fun and elaborate. This progression is fun, but is there a need for a campaign / simple storyline? Do we
+  need more character customization? Should we focus on online play & hosting server rooms? Should we allow for custom
+  games? Do we need to upgrade any interfaces? Let’s imagine a better version of the game and build a healthy
+  backlog." The builder's answer is the five questions under Pending ("A better game", 1–5), one per thing he asked.
 
 - **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day
   3v3 capture the flag on Bellfield Court (blue flag by the entry, red at the top of the bulb, first to two, everyone

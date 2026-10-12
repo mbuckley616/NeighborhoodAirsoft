@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.190</div>
+  <div class="version">v1.191</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5105,7 +5105,7 @@ function scaledReward(v) { return Math.ceil((v || 0) / 10); }
 function describeWinCondition(sc) {
   if (sc.tutorial) return 'Learn the ropes — tag the practice targets';   // v1.57
   if (sc.vip) return 'Tag their VIP, keep yours safe — everyone else comes back';   // v1.170
-  if (sc.ctf) return `Carry their flag home to yours — first to ${sc.ctf.toWin || 2}; everyone comes back`;   // v1.189
+  if (sc.ctf) return `Carry their flag home to yours — first to ${sc.ctf.toWin || 2}${sc.ctf.clock ? `, or most flags in ${Math.floor(sc.ctf.clock / 60)}:${String(sc.ctf.clock % 60).padStart(2, '0')}` : ''}; everyone comes back`;   // v1.189; v1.191: the clock
   switch (sc.winCondition) {
     case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
@@ -6533,20 +6533,22 @@ const SCENARIOS = {
   // its own side who touches it sends it home (so does 20 s on the ground). First to two. Everyone comes back when
   // tagged (99 lives, shown as ∞; you respawn at your start), as in VIP. One kid a side (`ctf: 'run'`) goes for the
   // flag; the rest fight as in a team match, and any kid near a loose flag grabs it or sends it home.
+  // v1.191 (decisions "Flags on Bellfield never ends", Michael: C): a 5:00 clock (most flags wins, a tie pays as a loss),
+  // and Christian (`ctf: 'push'`) no longer waits by their flag: only Fernando keeps it.
   bellfield_ctf: {
     region: 'northcliff', street: 'bellfield_ct',
     name: 'Bellfield Court', scenarioName: 'Flags on Bellfield',
-    desc: "Capture the flag on the Bellfield kids' street. Our blue flag is in the road by the entry; theirs is red, on the head house's lawn by the kid fort at the top of the bulb. Walk onto theirs to grab it and bring it back to ours to score; get tagged with it and you drop it where you stand. Andrew goes for their flag and Evan holds the street with you; Mason runs for ours. Everybody comes back when tagged, so trading tags gets you nowhere. First to two flags.",
+    desc: "Capture the flag on the Bellfield kids' street. Our blue flag is in the road by the entry; theirs is red, on the head house's lawn by the kid fort at the top of the bulb. Walk onto theirs to grab it and bring it back to ours to score; get tagged with it and you drop it where you stand. Andrew goes for their flag and Evan holds the street with you; Mason runs for ours. Fernando keeps their flag from the fort; Christian comes down the street at you. Everybody comes back when tagged, so trading tags gets you nowhere. First to two flags, or whoever has more when the five minutes are up; a tie counts for nothing.",
     builderFn: 'buildBellfieldCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'entry',
-    ctf: { ours: [30.5, 0], theirs: [-23, -3.2], toWin: 2, lanes: [[2, -22], [2, 22]] },   // lanes: the backyards, the way round
+    ctf: { ours: [30.5, 0], theirs: [-23, -3.2], toWin: 2, lanes: [[2, -22], [2, 22]], clock: 300 },   // lanes: the backyards, the way round; v1.191: a 5:00 clock
     enemySetup: [
       { charId: 'andrew',    weapon: 'mp5',     anchor: 'entry_n',    team: 'player', ctf: 'run' },
       { charId: 'evan',      weapon: 'ump',     anchor: 'entry_s',    team: 'player' },
       { charId: 'mason',     weapon: 'mp5',     anchor: 'bulb_car_n', ctf: 'run' },
-      { charId: 'christian', weapon: 'shotgun', anchor: 'bulb_car_s' },
+      { charId: 'christian', weapon: 'shotgun', anchor: 'bulb_car_s', ctf: 'push' },   // v1.191: pushes; Fernando alone keeps the flag
       { charId: 'fernando',  weapon: 'ak47',    anchor: 'bulb_fort'  },
     ],
     enemySpawnCluster: 'cluster_bulb',
@@ -20533,6 +20535,22 @@ function endScenario(outcome) {
     outcomeEl.textContent = `THEY GOT ${_vipOurs.name.toUpperCase()}`;
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = `${_vipOurs.name} takes one right on the blue cap. "Aw, man — I was the VIP!" ${allStr} regroup ${regroupAt}. "Run it back?"`;
+  } else if (_ctf && _ctf.timeUp) {
+    // v1.191: the clock ran out: more flags wins; level is a draw, paid as a loss
+    const o = _ctf.score.ours, t = _ctf.score.theirs;
+    if (o > t) {
+      outcomeEl.textContent = `FLAGS ${o}–${t}`;
+      outcomeEl.className = 'outcome win';
+      flavorEl.textContent = `Time. ${primaryName} checks his phone and groans — "${o}–${t}? Fine. You had more."`;
+    } else if (o < t) {
+      outcomeEl.textContent = `THEY WIN ${t}–${o}`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = `Time. They had more flags home. ${allStr} wave our blue flag at you from the top of the bulb. "Run it back?"`;
+    } else {
+      outcomeEl.textContent = `DRAW ${o}–${t}`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = `Time, and it's ${o}–${t}. ${primaryName} shrugs. "A tie doesn't count. Run it back?"`;
+    }
   } else if (_ctf && outcome === 'win' && _ctf.score.ours >= _ctf.toWin) {
     // v1.189: capture the flag is decided by flags, so its lines give the score and who brought the last one home
     const last = _ctf.caps.filter(c => c.side === 'ours').pop();
@@ -24559,6 +24577,11 @@ function respawnPlayerVip() {
 // kid of its own side who touches it there sends it home, and so do CTF_RETURN_SEC on the ground. First to toWin.
 // Everyone comes back when tagged (99 lives; the player respawns as in VIP), so the round ends only on flags.
 const CTF_TOUCH = 1.3, CTF_HOME = 2.5, CTF_RETURN_SEC = 20, CTF_CARRIER_BONUS = 15, CTF_RUN_SPEED = 4.0, CTF_FIRE_RANGE = 18;
+// v1.191 (decisions "Flags on Bellfield never ends", Michael: C): with no clock and two of their three kids by their flag,
+// 8 of 8 critic rounds (150-240 s) never ended. Now `ctf.clock` seconds end the round on the score (more flags wins; a
+// tie is a draw, paid as a loss), and a `ctf: 'push'` kid found within CTF_GUARD_R of his own flag runs to a point
+// CTF_PUSH_D up the street (kidFlagRun, shooting on the move) and fights from there, so one kid a side keeps the flag.
+const CTF_GUARD_R = 15, CTF_PUSH_D = 24;
 function ctfSide(c) { return combatantTeam(c) === combatantTeam(Game.player) ? 'ours' : 'theirs'; }
 function ctfOther(side) { return side === 'ours' ? 'theirs' : 'ours'; }
 function ctfAlive(c) {
@@ -24601,7 +24624,14 @@ function ctfSetup(def, built) {
     flags[side] = { side, base: { x: p.x, z: p.z }, pos: { x: p.x, z: p.z }, carrier: null, dropped: false, dropT: 0, taken: 0, mesh, baseMesh: base };
   }
   const lanes = (def.lanes || []).map(([x, z]) => findClearSpawn(x, z, built.obstacles, 0.5));
-  return { flags, lanes, score: { ours: 0, theirs: 0 }, toWin: def.toWin || 2, caps: [], log: [], msg: null, over: false, fields: new Map(), t: 0 };
+  // v1.191: each side's push point, CTF_PUSH_D from its own base toward the other's
+  const push = {};
+  for (const side of ['ours', 'theirs']) {
+    const a = flags[side].base, b = flags[side === 'ours' ? 'theirs' : 'ours'].base, L = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    push[side] = findClearSpawn(a.x + (b.x - a.x) / L * CTF_PUSH_D, a.z + (b.z - a.z) / L * CTF_PUSH_D, built.obstacles, 0.5);
+  }
+  return { flags, lanes, push, score: { ours: 0, theirs: 0 }, toWin: def.toWin || 2, clock: def.clock || 0, timeUp: false,
+    caps: [], log: [], msg: null, over: false, fields: new Map(), t: 0 };
 }
 function ctfHome(f) {
   f.carrier = null; f.dropped = false; f.dropT = 0;
@@ -24623,6 +24653,7 @@ function updateFlags(dt) {
   if (!C || Game.mode !== 'scenario') return;
   C.t += dt;
   if (C.msg && (C.msg.t -= dt) <= 0) C.msg = null;
+  if (C.over) return;   // v1.191: decided (a second flag or the clock); nothing moves the score in the 0.8 s before the result
   const people = listCombatants();
   const stamp = () => +(Game.scenario.roundTime || 0).toFixed(1);
   for (const side of ['ours', 'theirs']) {
@@ -24662,6 +24693,14 @@ function updateFlags(dt) {
     ctfSay(cs === 'ours' ? `FLAG HOME! ${C.score.ours}–${C.score.theirs}` : `THEY SCORED ${C.score.ours}–${C.score.theirs}`);
     if (C.score[cs] >= C.toWin && !C.over) { C.over = true; endScenarioLater(cs === 'ours' ? 'win' : 'lose', 800); }
   }
+  // v1.191: the clock. Time up, more flags wins; level is a draw, paid as a loss
+  if (C.clock && C.t >= C.clock && !C.over) {
+    C.over = true; C.timeUp = true;
+    const o = C.score.ours, t = C.score.theirs;
+    C.log.push({ ev: 'time', t: stamp() });
+    ctfSay(o > t ? `TIME! ${o}–${t}` : o < t ? `TIME — THEY WIN ${o}–${t}` : `TIME — DRAW ${o}–${t}`);
+    endScenarioLater(o > t ? 'win' : 'lose', 800);
+  }
   // the meshes: on the base or the ground, or on a carrier's back
   for (const f of [C.flags.ours, C.flags.theirs]) {
     const m = f.mesh, c = f.carrier;
@@ -24689,6 +24728,14 @@ function kidFlagGoal(e) {
   if (theirs.carrier === e) { goal = mine.base; kind = 'carry'; }
   else if (mine.dropped && d(mine) < 18) { goal = mine.pos; kind = 'return'; }
   else if (!theirs.carrier && (e.ctfRole === 'run' || (theirs.dropped && d(theirs) < 12))) { goal = theirs.pos; kind = theirs.dropped ? 'loose' : 'fetch'; }
+  else if (e.ctfRole === 'push' && C.push) {
+    // v1.191: a pusher inside CTF_GUARD_R of his own flag (back from a tag, or drawn in by the fight) runs up the street
+    // to his push point; within 3 m of it, or past CTF_GUARD_R + 5 from his flag, he is done and the states take over
+    const pp = C.push[side], dHome = Math.hypot(mine.base.x - e.pos.x, mine.base.z - e.pos.z);
+    if (!e._pushing && dHome < CTF_GUARD_R && !mine.carrier) { e._pushing = true; e._pushes = (e._pushes || 0) + 1; }
+    if (e._pushing && (Math.hypot(pp.x - e.pos.x, pp.z - e.pos.z) < 3 || dHome > CTF_GUARD_R + 5)) e._pushing = false;
+    if (e._pushing) { goal = pp; kind = 'push'; }
+  }
   // a fetch or a carry home picks its way afresh: down the street (three in ten) or round one row's backyards, by a
   // waypoint in them, dropped once he is within 3 m of it or nearer the goal than it is. Straight down the street
   // both runners were tagged 10-12 times in 150 s and never reached a flag.
@@ -24696,7 +24743,7 @@ function kidFlagGoal(e) {
     e._flagKind = kind;
     e._flagWp = null;
     if ((kind === 'fetch' || kind === 'carry') && C.lanes.length && Math.random() >= 0.3) e._flagWp = C.lanes[Math.floor(Math.random() * C.lanes.length)];
-    if (kind) C.log.push({ ev: 'lane', by: e.name, kind, wp: e._flagWp ? (e._flagWp.z < 0 ? 'north' : 'south') : 'street', t: +(Game.scenario.roundTime || 0).toFixed(1) });
+    if (kind && kind !== 'push') C.log.push({ ev: 'lane', by: e.name, kind, wp: e._flagWp ? (e._flagWp.z < 0 ? 'north' : 'south') : 'street', t: +(Game.scenario.roundTime || 0).toFixed(1) });
   }
   const wp = e._flagWp;
   if (goal && wp) {
@@ -24795,9 +24842,12 @@ function updateCtfHud(hud) {
   const lbl = document.getElementById('timerLabel');
   if (lbl) lbl.textContent = status;
   const val = document.getElementById('timerValue');
-  const html = `<span style="color:#6fa0ff">${C.score.ours}</span> – <span style="color:#ff6a5a">${C.score.theirs}</span>`;
+  // v1.191: the clock beside the score
+  const left = C.clock ? Math.max(0, Math.ceil(C.clock - C.t)) : null;
+  const clock = left == null ? '' : ` <span style="font-size:0.7em;opacity:0.85">${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}</span>`;
+  const html = `<span style="color:#6fa0ff">${C.score.ours}</span> – <span style="color:#ff6a5a">${C.score.theirs}</span>${clock}`;
   if (val && val.innerHTML !== html) val.innerHTML = html;
-  hud.classList.toggle('urgent', !!ours.carrier);
+  hud.classList.toggle('urgent', !!ours.carrier || (left != null && left <= 30));
 }
 
 function updateBBs(dt) {
