@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day
   3v3 capture the flag on Bellfield Court (blue flag by the entry, red at the top of the bulb, first to two, everyone
   comes back), after Lamplight on Bellfield in Northcliff. The backlog is empty again apart from items waiting on your
@@ -17,8 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Something else (say what in a note).
   Builder recommends **B**: it needs nothing from a playtest, where A is best built after you have played Flags on
   Bellfield and said whether its balance (a clock, a second enemy runner) is right.
-
-## Answered
+  Michael: **B) Hollins Ridge High gets kids of its own** (2026-10-12; on the control room)
 
 - **After Bellfield's four (v1.188): what next? (builder, 2026-10-11)** Your C is built: Hold the Bulb Fort (a 90 s
   defend in the kid fort, v1.187) and Lamplight on Bellfield (a night 4v4 on the street, v1.188), so Bellfield Court
