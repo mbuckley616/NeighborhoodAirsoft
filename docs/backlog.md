@@ -212,6 +212,9 @@ Fable card on the control room and Michael starts it from there.
    body turns over about 0.2 s, at most 14 rad/s, was a snap, and holds his shot while more than 0.6 rad off the line; a
    standing start sets off at 40% pace and reaches it in 0.18 s; he leans into starts, stops and turns, 6° at most;
    `tests/weight.test.mjs`). D.16 C is complete pending Michael's look.
+17. Imagine a better, more elaborate version of the game and build a healthy backlog from it: a campaign or simple
+   storyline? more character customization? online play and hosted server rooms? custom games? upgraded interfaces?
+   (Michael, control room, 2026-10-12, his D on "After the school's own kids: what next?")
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

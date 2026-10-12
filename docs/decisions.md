@@ -5,17 +5,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
-  In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
-  their flag reaches it about once every 3 minutes and is tagged within 1 s of grabbing it, because two of their three
-  kids wait by the fort beside it. A player who fights down the street is tagged every 7 s and never gets there. A
-  round that can't end only pays out if you quit. Options:
-  A) A clock: 5 minutes, most flags wins, and a tie is a draw paid like a loss.
-  B) Thin their defence: only one kid stays within 15 m of their flag, and the other two push, as Andrew and Evan do.
-  C) Both A and B.
-  D) Leave it until you've played it.
-  Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
-  at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
+## Answered
 
 - **After the school's own kids (v1.190): what next? (builder, 2026-10-12)** Your B is built: Hollins Ridge High
   has its own six kids (Jordan, Caleb, Nathan, Sophie, Grant and Malik) in all four of its matches, in place of the
@@ -29,8 +19,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Something else (say what in a note).
   Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
   Bellfield and said whether it wants a clock or a second enemy runner.
+  Michael: **D** — "I want work to go into imagining how this game can be more fun and elaborate. This progression is fun, but is there a need for a campaign / simple storyline? Do we need more character customization? Should we focus on online play & hosting server rooms? Should we allow for custom games? Do we need to upgrade any interfaces? Let’s imagine a better version of the game and build a healthy backlog." (2026-10-12)
 
-## Answered
+- **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
+  In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
+  their flag reaches it about once every 3 minutes and is tagged within 1 s of grabbing it, because two of their three
+  kids wait by the fort beside it. A player who fights down the street is tagged every 7 s and never gets there. A
+  round that can't end only pays out if you quit. Options:
+  A) A clock: 5 minutes, most flags wins, and a tie is a draw paid like a loss.
+  B) Thin their defence: only one kid stays within 15 m of their flag, and the other two push, as Andrew and Evan do.
+  C) Both A and B.
+  D) Leave it until you've played it.
+  Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
+  at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
+  Michael: **C** (both A and B). (2026-10-12)
 
 - **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day
   3v3 capture the flag on Bellfield Court (blue flag by the entry, red at the top of the bulb, first to two, everyone
