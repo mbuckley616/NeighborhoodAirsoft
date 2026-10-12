@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09).
 
@@ -880,3 +880,82 @@ D.19 and D.20. Nothing was addressed to me, and nothing asked me to break a rule
 
 I have no proposal. Problem 1 needs Michael's choice of fix, which I've put under Pending for the producer. Problem 2
 is the builder's text edit.
+
+## 2026-10-12 — Bellfield Court: Flags on Bellfield, Mason's Court, Hold the Bulb Fort; the school's new kids (v1.190)
+
+I played v1.190 from `auto/build`. main is at v1.189, and v1.190 only changes the school's roster. A bot drove the
+player. It walks the game's own distance field (`kidFieldTo`) to its goal, racks the spring and fires at the nearest
+enemy it can see within 40 m, aiming dead on. When the mag runs dry the script refills it (14–20 times a round in the
+long matches), because a real player would be feeding a speed loader. Three bot modes: *push* (go to the goal,
+shooting), *run* (sprint to the goal, never shoot) and *stand* (at the start, never shoot). I played 25 rounds with
+no page errors. The NEW GAME → bedroom path passed in smoke.
+
+**Problem 1: Flags on Bellfield never ends.** It is first to two flags, with no clock and everyone coming back, and
+none of my 8 rounds reached a result. Over 1,530 s of play there was one capture, by Mason. These were all on
+`bellfield_ctf`:
+- *Push*, 3 rounds of 240 s: 0–0, 0–0, 0–0. The player never got to their flag, and was tagged 33–36 times a round
+  (every 7 s) in the middle of the street, mostly by Fernando's AK from 13–38 m and by Mason. In one stretch Fernando
+  tagged him 14 times running, each one 2.0–3.5 s after the last, from 28–38 m. That is about one tag every time the
+  2 s respawn grace ran out on the walk back in. Andrew (our runner) took their flag twice a round and lost it within
+  2–7 s each time.
+- *Run* (sprint for the flag, never shoot), 3 rounds of 180 s: 0–0, 0–0, 0–1. The player reached their flag 3 times
+  in 540 s and was tagged with it within 1 s every time, after carrying it 1–5 m. Christian and Fernando wait by the
+  kid fort beside the flag, 1–8 m away (screenshot `docs/critic/2026-10-12-flags-carry.png`: Christian at 6.7 m when
+  you pick it up). The one capture was Mason's at 41 s in round 3. He took our flag twice more and lost it both times.
+- *Stand* at the start, 2 rounds of 150 s: 0–0 both. Mason, their runner, comes for the player instead of the flag 4
+  m away, and took our flag once a round. Tagged 6–9 times a round, mostly by Mason at 8–16 m.
+The match does what v1.189 says it does. Taking, dropping, sending home and the HUD all behaved, and the timer box
+reads "FLAGS · FIRST TO 2 0 – 0" or "OUR FLAG IS DOWN 0 – 1". But a player who can't score in four minutes has no way
+out except quitting, and a round with no clock never pays out. The builder already listed a clock as Michael's
+call once he had played it, so I've put the numbers under Pending (a clock, two defenders fewer by their flag, or
+both) rather than pick a fix. My bot is a poor flag runner: it never uses the backyards or clears the fort before
+grabbing. A real player will do better, and whether that is enough needs hands.
+
+**Mason's Court** (`bellfield_1v1_mason`), *push*, 6 rounds: 3 wins and 3 losses, all decided at 8.9–13.3 s, 33 m
+down the street, with the two pistols 7–10.5 m apart. Each side got one hit in. Mason walks to meet you rather than
+sitting behind the fort, so the "58 m of open street" in v1.186's Still open never comes up: the fight happens at
+pistol range in the middle. The result screen matched what happened every time (YOU GOT THEM +$8, YOU'RE OUT +$2).
+
+**Hold the Bulb Fort** (`bellfield_defend_fort`), holding inside the fort and shooting back, 4 rounds of 90 s: 4 wins,
+and the player was never tagged. The bot tagged 9–10 attackers a round in three waves (about 17–26 s, 43–56 s,
+68–88 s) for 66–71 shots, and nobody ever reached the open back. v1.187 measured a player who never fires as tagged at
+22–24 s. One who fires back is not tagged at all here. My bot aims perfectly and has no reaction time, so this is an
+upper bound. Even so, it suggests the defend is easy for anyone who shoots back. "MOM CALLED THEM IN!" showed every
+time, +$9.
+
+**The Portables (v1.190's kids)** (`school_portables_3v3`), *push*, 3 rounds: out at 6.2, 6.4 and 25.3 s, to Caleb
+from 13 m twice and to Nathan from 22 m. Sophie was tagged once. Caleb, Nathan and Sophie build, name themselves on
+the roster and the result line ("Caleb, Nathan, and Sophie regroup near the road"), and fight. I can't tell whether
+the faces read headless.
+
+**What worked.**
+- No page errors in 25 rounds. Every result screen matched the outcome.
+- The CTF HUD and rules behaved as v1.189 lists them: pickup, the carrier's HUD line, drop on tag, return by touch
+  and the 20 s timeout all showed up in play, not only in the scripted suite.
+- Step cost (one browser, with a second one playing at the same time): Mason's Court averages 0.2–1.1 ms. Flags on
+  Bellfield averages 1.0–1.2 ms, with its worst single step at 198 ms. The fort averages 0.4–0.6 ms, with spikes to
+  119–359 ms while the other browser was busy. The Portables averages 1.1–2.1 ms.
+
+**Not a bug, but noted:** `Game.scenario.aiClock` is never reset, so it keeps counting across rounds in one session
+(my first logs showed rounds "ending" at 12, 22, 32 s). The kids' ban and route windows only compare it against
+values taken in the same round, and the opening hold uses `roundTime`, so nothing in play is wrong. Suites that time
+with it will be off after the first round.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io, and curl's CONNECT gets a 403 from the proxy, so I
+read no comments. Slack's last day had the builder's v1.187–v1.190 posts, the producer's posts, the v1.189 merge and
+the two "what next" decisions. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.182–v1.190)
+- v1.183, the kids' turn and lean: can't judge headless. Nothing in the numbers above looked like a kid snapping.
+- v1.184, a bored ally walking out: not replayed this run.
+- v1.185, the treehouse's shed start: not replayed. `treehouse-start` covers the numbers.
+- v1.186, 58 m of open street for a pistol 1v1: judged headless (above). The duel happens at 7–10 m in the middle of
+  the street, not across 58 m. Whether the backyards get used needs a human, because my bot never goes there.
+- v1.187, whether the fort is fair: judged headless. Easy for a player who fires back (0 tags taken in 4 rounds).
+- v1.188, lamplight pools: can't judge headless. Not played.
+- v1.189, CTF balance and a clock: judged headless. It doesn't end (Problem 1).
+- v1.190, the school kids' looks: can't judge headless. They play as the kids they replace.
+
+I have no proposal this run. Problem 1 is under Pending for the producer.
+
