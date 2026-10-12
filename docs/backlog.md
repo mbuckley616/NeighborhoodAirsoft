@@ -212,18 +212,12 @@ Fable card on the control room and Michael starts it from there.
    body turns over about 0.2 s, at most 14 rad/s, was a snap, and holds his shot while more than 0.6 rad off the line; a
    standing start sets off at 40% pace and reaches it in 0.18 s; he leans into starts, stops and turns, 6° at most;
    `tests/weight.test.mjs`). D.16 C is complete pending Michael's look.
-<<<<<<< HEAD
 17. "I want work to go into imagining how this game can be more fun and elaborate. This progression is fun, but is there
    a need for a campaign / simple storyline? Do we need more character customization? Should we focus on online play &
    hosting server rooms? Should we allow for custom games? Do we need to upgrade any interfaces? Let’s imagine a better
    version of the game and build a healthy backlog." (Michael, control room, 2026-10-12, his D on "After the school's
    own kids") **(design)** — five questions in decisions (builder, 12 Oct, "A better game" 1–5): a story, more
    customisation, custom games, online play now, which screen first. Each answer becomes its own item here.
-=======
-17. Imagine a better, more elaborate version of the game and build a healthy backlog from it: a campaign or simple
-   storyline? more character customization? online play and hosted server rooms? custom games? upgraded interfaces?
-   (Michael, control room, 2026-10-12, his D on "After the school's own kids: what next?")
->>>>>>> origin/main
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
