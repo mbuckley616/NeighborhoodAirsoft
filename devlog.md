@@ -9016,6 +9016,10 @@ near the flag now. Mason still runs, and Andrew and Evan are unchanged.
   `bellfield`, `northcliff` and the stuck-kid sweep on the match (ONLY=, three ways, 90 s: worst 1.5 s) pass.
 - `npm test` as four local shards: 98 of 99 suites passed. `mirror` died at a `page.evaluate` with the harness's "browser
   has been closed" (as on v1.188), before any check, and passed alone.
+- CI fix-up: `seth-shotgun`'s "past 14 m he still fires and reaches the player" failed on CI twice (on v1.190 and on
+  this PR's head): one round each at 16 and 20 m, and both landed 0 hits (6–7 shots). No cover is in the line. The
+  pellets land by chance, and locally a round at 20 m lands none in 5 of 22. It now counts the hits over three rounds
+  each at 16 and 20 m. It passed twice, with 25 and 33 hits at 16 m and 19 and 9 at 20 m.
 ### Still open
 - Whether a player can now get their flag home is for play. The critic's other finding stands: a player fighting down
   the street was tagged every ~7 s, once 14 times running by Fernando's AK from 28–38 m as each respawn grace ran out.
