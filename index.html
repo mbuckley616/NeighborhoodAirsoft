@@ -1032,6 +1032,14 @@
     line-height: 1.5;
     font-style: italic;
   }
+  /* v1.193: the match's numbers, best moment and what it opened */
+  #resultScreen .result-stats { margin: -12px 0 18px; text-align: left; }
+  #resultScreen .rs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  #resultScreen .rs-cell { background: rgba(255,255,255,0.05); border: 1px solid rgba(212,165,116,0.35); border-radius: 3px; padding: 6px 4px; text-align: center; }
+  #resultScreen .rs-num { font-size: 20px; font-weight: bold; color: var(--ui-text); font-variant-numeric: tabular-nums; }
+  #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
+  #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
+  #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
     border: 1px solid var(--ui-good);
@@ -1938,7 +1946,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.192</div>
+  <div class="version">v1.193</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2178,6 +2186,7 @@
     <div class="outcome" id="outcomeText">VICTORY</div>
     <div class="flavor" id="flavorText"></div>
     <div class="reward" id="rewardText"></div>
+    <div class="result-stats" id="resultStats"></div>   <!-- v1.193 -->
     <div class="reload-note" id="reloadNote"></div>
     <div class="result-nav" id="resultNav">
       <button class="nav-btn" id="navPrevBtn">◀ Previous</button>
@@ -20332,6 +20341,7 @@ function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
+  Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
@@ -20499,6 +20509,69 @@ function startScenario(built) {
   requestPointerLock();
 }
 
+// === v1.193 (D.17 "A better game" 5, Michael: C — step 2): THE RESULT SCREEN'S NUMBERS ===
+// Each match counts your trigger pulls, your tags (each hit on a kid of the other side puts him out or sends him back),
+// how far each one flew and when, and the hits on you. The result screen shows them with the match's time, picks one
+// best moment, and says what the match opened: the next match it unlocked and any gun its pay put in reach.
+function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0 }; }
+function noteMatchTag(bb, c) {
+  const st = Game.scenario.stats;
+  const from = bb.spawnPos || bb.pos;
+  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+}
+const MATCH_DOUBLE_SEC = 3, MATCH_LONG_TAG_M = 15;
+function matchBestMoment(st, outcome) {
+  const tags = st.tags;
+  // two tags inside MATCH_DOUBLE_SEC: the quickest pair
+  let dbl = null;
+  for (let i = 1; i < tags.length; i++) {
+    const dt = tags[i].t - tags[i - 1].t;
+    if (dt <= MATCH_DOUBLE_SEC && tags[i].name !== tags[i - 1].name && (!dbl || dt < dbl.dt)) dbl = { a: tags[i - 1], b: tags[i], dt };
+  }
+  if (dbl) return `Two in ${dbl.dt.toFixed(1)} s: ${dbl.a.name}, then ${dbl.b.name}.`;
+  const longest = tags.reduce((m, t) => (!m || t.dist > m.dist ? t : m), null);
+  if (longest && longest.dist >= MATCH_LONG_TAG_M) return `A ${Math.round(longest.dist)} m tag on ${longest.name}.`;
+  if (outcome === 'win' && st.hitOnYou === 0) return 'Not a mark on you.';
+  if (longest) return `Your first tag: ${tags[0].name}, from ${Math.round(tags[0].dist)} m.`;
+  return '';
+}
+function fmtMatchTime(sec) {
+  const s = Math.max(0, Math.round(sec));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+// The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened
+const scenarioUnlockedForResult = isScenarioUnlocked;
+function scenariosOpenNow() {
+  return new Set(Object.keys(SCENARIOS).filter(id => findScenarioListContext(id) && scenarioUnlockedForResult(id)));
+}
+function gunsInReach(cashBefore, cashAfter) {
+  return ALL_GUN_TYPES.filter(gt => {
+    const cfg = GUN_MAGS[gt];
+    if (!cfg || !cfg.price || Game.persist.owned[cfg.ownFlag]) return false;
+    return cfg.price > cashBefore && cfg.price <= cashAfter;
+  }).map(gt => `${GUN_MAGS[gt].displayName} ($${GUN_MAGS[gt].price})`);
+}
+function renderMatchStats(outcome, openBefore, cashBefore) {
+  const el = document.getElementById('resultStats');
+  if (!el) return;
+  const st = Game.scenario.stats || newMatchStats();
+  const cell = (n, label) => `<div class="rs-cell"><div class="rs-num">${n}</div><div class="rs-label">${label}</div></div>`;
+  const hitsLabel = st.tags.length === 1 ? 'tag' : 'tags';
+  const shotsLabel = st.shots === 1 ? 'shot' : 'shots';
+  let html = `<div class="rs-grid">${cell(st.tags.length, hitsLabel)}${cell(st.shots, shotsLabel)}` +
+    `${cell(st.hitOnYou, st.hitOnYou === 1 ? 'hit on you' : 'hits on you')}${cell(fmtMatchTime(Game.scenario.roundTime || 0), 'time')}</div>`;
+  const best = matchBestMoment(st, outcome);
+  if (best) html += `<div class="rs-best"><span class="rs-tag">BEST</span> ${best}</div>`;
+  const openNow = scenariosOpenNow();
+  const opened = [...openNow].filter(id => !openBefore.has(id)).map(id => SCENARIOS[id].scenarioName || SCENARIOS[id].name || id);
+  const reach = gunsInReach(cashBefore, Game.persist.cash);
+  for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
+  if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
+  el.innerHTML = html;
+  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
+    time: Game.scenario.roundTime || 0, best, opened, reach };
+}
+
 function endScenario(outcome) {
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
@@ -20568,6 +20641,7 @@ function endScenario(outcome) {
   // shared with the world-map preview so display & payout always agree.
   const scDef = SCENARIOS[Game.scenario.active];
   const reward = (scDef && scDef.rewards) || { win: 10, lose: 3 };
+  const _openBefore = scenariosOpenNow(), _cashBefore = Game.persist.cash;   // v1.193: for "opened" and "in reach"
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
@@ -20719,6 +20793,8 @@ function endScenario(outcome) {
       rewardEl.innerHTML = `<span class="reward-label">NO REWARD</span> <span class="reward-amount">$0</span>`;
     }
   }
+
+  renderMatchStats(outcome, _openBefore, _cashBefore);   // v1.193
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
   const reloadNote = document.getElementById('reloadNote');
@@ -24104,6 +24180,7 @@ function buildEyewearFrameSVG(view) {
 // BB PROJECTILES — the core gimmick (unreliable trajectory past curve onset)
 // ---------------------------------------------------------------------
 function fireBB() {
+  if (Game.scenario.stats) Game.scenario.stats.shots++;   // v1.193: one per trigger pull, pellets or not
   // Spawn at gun muzzle, direction = camera forward
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(Game.camera.rotation);
   const pos = Game.camera.position.clone().add(forward.clone().multiplyScalar(0.4));
@@ -24631,6 +24708,7 @@ function applyBBHit(bb, c) {
   if (c === Game.player) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
+    if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
@@ -24643,6 +24721,7 @@ function applyBBHit(bb, c) {
       else endScenario('lose');
     }
   } else {
+    if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn

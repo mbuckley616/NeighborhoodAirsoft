@@ -222,8 +222,10 @@ Fable card on the control room and Michael starts it from there.
    crew, a last-Saturday match); 2 **C**, looks you earn or buy, then your crew; 3 **A**, a Pickup Game board; 4 **B**,
    online after the board; 5 **C**, settings, then a better result screen. ~~5, step 1: settings~~ — done, v1.192 (a
    SETTINGS screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of view,
-   invert look; saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`). Next: 5, step 2, the result
-   screen; then 1, 2, 3 in that order unless Michael reorders (the producer files each as its own item).
+   invert look; saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`). ~~5, step 2: the result
+   screen~~ — done, v1.193 (your tags, shots, hits on you and the match time; one best moment; the match it opened and any
+   gun its pay put in reach; `tests/result-stats.test.mjs`). D.17 5 C is complete pending Michael's look. Next: 1, 2, 3 in
+   that order unless Michael reorders (the producer files each as its own item).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

@@ -9068,3 +9068,37 @@ volume. The M key still mutes the music.
 - No key rebinding (the option didn't ask for it), and settings can't be opened mid-match: the match keeps running
   while the mouse is free, so a settings screen there would need a pause first.
 - Next on this item: 5's second step, the result screen.
+
+## v1.193 — The result screen tells you about your match
+Decisions, "A better game" 5 (Michael: C, settings then a better result screen; control room, 12 Oct). v1.192 was
+the settings; this is the second half. The result card said who won, a line of flavour and the pay, and nothing
+about how you played or what the win got you.
+
+**The numbers.** Under the pay, four boxes: your tags, your shots, the hits on you, and the match time. A tag is any
+hit of yours on a kid of the other side (each one puts him out or sends him back), and a shot is a trigger pull, so a
+shotgun's pellets count once. The time is the match's simulated seconds since BEGIN (m:ss). The count starts at zero
+at every BEGIN, Play Again included.
+
+**The best moment.** One line, picked in this order: two tags on two different kids inside 3 s ("Two in 1.6 s: Sean,
+then Nick."), else a tag from 15 m or more ("A 23 m tag on Sean."), else a win with no hits on you ("Not a mark on
+you."), else your first tag and its distance. With no tags and a loss there is none. Distance is from where the BB
+left the muzzle to the kid.
+
+**What it opened.** OPENED names each match this result unlocked (worked out with the real unlock rule before and
+after the pay and the win are written), and IN REACH names any gun you don't own whose price the pay just crossed
+("at the shop: Spring Shotgun ($60)"). A replay of a match you have already won opens nothing, so the lines go.
+### Verified
+- `tests/result-stats.test.mjs` (new, 20 checks). Seth's House with only the tutorial done and $59: two trigger pulls
+  count 2 shots; a BB that reaches Seth, fired from 20 m back, counts one tag at 20.0 m and wins. The card has four
+  boxes (1 tag, 2 shots, 0 hits on you, 0:04), "BEST A 20 m tag on Seth.", "OPENED Seth's Got a Shotgun" (locked
+  before), and "IN REACH at the shop: Spring Shotgun ($60)". Play Again starts at 0 / 0 / 0; a loss shows its hit on you,
+  no best moment and nothing opened. The rules: a 1.6 s double beats a 30 m tag, a 4 s gap doesn't count as one, the same
+  kid twice isn't one, an untouched win, the first tag otherwise; 0:00, 1:00 (59.6 s) and 2:05. No page errors. The
+  screenshot fits the card at 1280×720 with Previous / Play Again / Next and the way home still on screen.
+- `npm test` as four local shards: 99 of 102 suites passed (`result-text` among them). Three (`bound-forward`,
+  `stuck-sweep-13`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit under load before any check, as in
+  v1.192, and passed alone.
+### Still open
+- Whether the best-moment thresholds (3 s, 15 m) pick the moment a player would is for play.
+- Hits on your allies' targets and your allies' own tags aren't counted; this is your match. Capture the flag shows
+  the same four boxes, not flags carried, which the score line already gives.
