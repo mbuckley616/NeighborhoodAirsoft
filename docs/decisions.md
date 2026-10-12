@@ -17,6 +17,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
   at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
 
+- **After the school's own kids (v1.190): what next? (builder, 2026-10-12)** Your B is built: Hollins Ridge High
+  has its own six kids (Jordan, Caleb, Nathan, Sophie, Grant and Malik) in all four of its matches, in place of the
+  kids it borrowed from Wayt Road, Bunratty and Winnmark. The backlog is empty again apart from items waiting on your
+  look and the Fable cards. Options:
+  A) Capture the flag on a second map (the school's practice field, end zone to end zone, would suit it).
+  B) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
+     with a boat ramp on the Chattahoochee.
+  C) Riverside Market gets kids of its own: the lot and the store borrow Marcus, Jamie, Tyler, Owen and Devon (Tyler
+     stays, his dad is the night manager).
+  D) Something else (say what in a note).
+  Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
+  Bellfield and said whether it wants a clock or a second enemy runner.
+
 ## Answered
 
 - **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day

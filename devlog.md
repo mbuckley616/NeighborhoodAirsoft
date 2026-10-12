@@ -8952,3 +8952,33 @@ speed and range, Mason took ours three times in 150 s and brought it home once, 
 - Nothing yet lets you see a carried flag of your own (it rides behind your head); the HUD carries that.
 - Capture the flag is on Bellfield Court only. Any map with two ends could take it: a scenario needs `ctf: { ours,
   theirs, toWin, lanes }`, `npcLives: 99` and a `ctf: 'run'` kid a side.
+
+## v1.190 — Hollins Ridge High gets kids of its own
+Decisions, "After capture the flag (v1.189): what next?" (builder, 11 Oct; Michael: B on the control room, 12 Oct): the
+school's four matches borrowed their kids from other streets (Tyler from Wayt Road, Ryan, Mitchell, Priya and Owen from
+Bunratty, Marcus, Jamie and Trey from Winnmark), so the school gets a roster of its own.
+
+Six new kids, all at Hollins Ridge High (East Roswell), each with a look of his or her own and hit and win lines:
+**Jordan** (tall, wavy black hair, maroon shirt, khakis) says the portables are his and is the After the Bell 1v1;
+**Caleb** (blond, blue shirt) is the pusher; **Nathan** (tall, curly hair, glasses, olive shirt) sits back at the doors
+with the AK and picks; **Sophie** (long auburn hair, gold shirt) comes round the side; **Grant** (big, maroon shirt) has
+the rifle by the staff cars at night; **Malik** (grey shirt) brings the shotgun into the portables' lane in the defend.
+The Portables is Caleb, Nathan and Sophie; Hold the Portables is Caleb, Malik and Sophie; Friday Night Lights is those
+three and Grant. Each briefing names them.
+
+Each takes the numbers (aggression, fire rate, accuracy, speed) of the kid he or she replaces: Jordan Tyler's, Caleb
+Ryan's, Nathan Mitchell's, Sophie Priya's, Grant Owen's, Malik Jamie's. The school's matches were tuned around those
+numbers (the night start behind the stand, v1.177, was set against Owen's rifle), so they should play as before, and
+only the faces and names change. The one shift is the defend, where Caleb and Sophie stand in for Marcus and Trey, a
+little slower (0.9 and 0.98 against 1.05). The allies are unchanged: Eric and Rebecca from Ridgestone, and Brooke at
+night, are your friends who came with you. The opener keeps its id, `school_1v1_tyler`, so saves that won it still have
+it won. Tyler and the others still play on their own streets and at the market.
+### Verified
+- `tests/school-kids.test.mjs` (new): the six exist on Hollins Ridge High with their own lines; none matches any other
+  kid's look or shirt colour, and no two of them look alike; each has the replaced kid's numbers; every enemy in the
+  four school matches is a school kid, and they play nowhere else; the allies are Eric and Rebecca (and Brooke at
+  night) as before; no briefing names a borrowed kid and each names its own enemies. In each match the enemies build
+  as the school kids, the roster at the top right names them, and every kid spawns clear. Screenshot
+  `tests/out/school-kids.png` (the six in a row on the field).
+- `high-school` (its play checks run each match 60–120 s: kids fire, move, and are not wedged; both sides lose lives;
+  Jordan comes out of the portables) and `night-lights-spawn` (the rifle, now Grant's, still cannot see your start) pass.

@@ -10,7 +10,7 @@ let first = null;
 for (let r = 0; r < R; r++) {
   await g.scenario('school_night_4v4');
   const res = await page.evaluate(() => {
-    const p = Game.player, owen = Game.scenario.enemies.find(e => e.name === 'Owen');
+    const p = Game.player, owen = Game.scenario.enemies.find(e => e.name === 'Grant');   // v1.190: the rifle is Grant's (was Owen's)
     const start = { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2), yaw: p.yaw };
     // Owen's chest-high line to your head, at the start
     const ox = owen.pos.x, oy = owen.pos.y + 1.3, oz = owen.pos.z;
@@ -43,7 +43,7 @@ const tags = rounds.filter(r => r.tag != null);
 const early = tags.filter(r => r.tag < 18);
 check(`standing still at the start, at most 2 of ${R} rounds are tagged inside 18 s (was 8 of 8 at the bleachers)`, early.length <= 2, rounds.map(r => r.tag));
 check('nobody tags you before 10 s (the bleachers gave Owen 3.2 s)', tags.every(r => r.tag >= 10), tags);
-check('Owen does not tag a player standing at the start', rounds.every(r => r.who !== 'Owen'), rounds.map(r => r.who));
+check('Grant (the rifle) does not tag a player standing at the start', rounds.every(r => r.who !== 'Grant'), rounds.map(r => r.who));
 // the day matches at the school keep the bleachers start
 const day = await page.evaluate(() => ['school_1v1_tyler', 'school_portables_3v3'].map(id => SCENARIOS[id].playerSpawn));
 check('After the Bell and The Portables still start at the bleachers (team_b)', day.every(k => k === 'team_b'), day);
