@@ -193,8 +193,12 @@ Fable card on the control room and Michael starts it from there.
    ~~Protect Ryan's Owen pinned at his spawn by Sean (decisions D.18, Michael: C, control room 7 Oct)~~ — done, v1.178
    (Owen starts and comes back behind the east car at (37.5, −1.9), not in the bulb fort, whose walls are too low to stop
    a BB; from Sean's six firing spots, 0 of 360 shots reach him there against 16–24 at the fort; `tests/vip-spawn.test.mjs`).
-   Next, capture the flag (decisions "After Bellfield's four", Michael: **A**, control room 11 Oct): one flag a side at
-   each base, carry theirs home to score, first to two; built on one existing map first (Bellfield Court's two ends).
+   ~~Capture the flag (decisions "After Bellfield's four", Michael: **A**, control room 11 Oct): one flag a side at
+   each base, carry theirs home to score, first to two; built on one existing map first (Bellfield Court's two ends).~~
+   — done, v1.189 (Flags on Bellfield, a day 3v3 after Lamplight on Bellfield: blue flag by the entry, red on the head
+   house's lawn; a carrier tagged drops it, its own side sends it home or 20 s does; everyone comes back; Andrew and
+   Mason run for the flags by the street or the backyards; `tests/ctf.test.mjs`). D.15 C is complete pending Michael's
+   playtest (balance, a clock, a second enemy runner).
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
    2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference) Michael: **C**, A then B,
    each shown to him (control room, 6 Oct). ~~Step A, planted feet~~ — done, v1.171 (legs hang from the hip, the stride

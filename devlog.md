@@ -8895,3 +8895,60 @@ The 3v3 suite's "nobody fires in the opening hold" counted trigger pulls that `s
 - Whether the lamps' pools read in play, and whether a night street with no rifle feels like a night match, is for
   play. Two night 4v4s against the same four kids now sit three matches apart in Northcliff's chain (this one and
   Bellfield After Dark); if that reads as a repeat, the roster here could change.
+
+## v1.189 — Flags on Bellfield: capture the flag
+Decisions, "After Bellfield's four (v1.188): what next?" (builder, 11 Oct; Michael: A on the control room the same
+afternoon): capture the flag, the second new match type D.15 asked for, on one map first, Bellfield Court's two ends.
+
+**Flags on Bellfield** is a day 3v3 on Bellfield Court: you, Andrew (MP5) and Evan (UMP) from the east entry against
+Mason (MP5), Christian (shotgun) and Fernando (AK) at the bulb, $120 / $28. Our blue flag stands in the road by the entry
+(4 m from your start); their red one on the head house's lawn beside the kid fort, 58 m off. The rules, as the question
+put them: walk onto their flag to pick it up, carry it to within 2.5 m of ours (a ring on the ground marks each base)
+to score, first to two. Ours need not be home to score ("carry theirs home"), which keeps a round from locking up.
+Tagged while carrying, you drop it where you stood; a kid of its own side touching it sends it home, and so do 20 s on
+the ground. Everyone comes back when tagged, as in VIP (99 lives, shown as ∞; you walk back in at your start with the
+2 s grace), so the round ends only on flags. The timer box at the top of the screen shows the score in blue and red and
+what is happening ("YOU HAVE THEIR FLAG — BRING IT HOME", "MASON HAS OUR FLAG", in red while ours is taken). The result
+reads "FLAGS 2–0" or "THEY TOOK IT 2–0". The card has a ⚑ FLAGS badge. It sits after Lamplight on Bellfield and before
+Hold the Creek Fort in Northcliff's chain, as VIP went in before its zones' capstones.
+
+The kids: one a side (Andrew, Mason) is the runner and goes for the flag; the others fight as in a team match, but any
+kid sends his own flag home if it is down within 18 m, grabs theirs if it is down within 12 m, and whoever carries a
+flag draws every gun on the other side (15 m off its threat score). A kid with a flag to fetch, carry or send home is
+moved by a new step, `kidFlagRun`, in place of the states (as the ladder step is): he follows the distance field to the
+flag (`kidFieldTo`, cached per goal), sprints at 4 m/s, and shoots on the move at a target he can see within 18 m,
+slowing to 80%; with a flag on his back he only runs. Each fetch or carry picks a way: the street three times in ten,
+else a waypoint in the north or south backyards (v1.186 built them as the way round). Two earlier versions were
+dropped on numbers: at 3 m/s, shooting out to 35 m, straight down the street, the two runners met mid-street and
+dueled, were tagged 10–12 times each in 150 s and neither reached a flag; with the backyard lanes added but the same
+speed and range, Mason took ours three times in 150 s and brought it home once, and Andrew never took theirs.
+### Verified
+- `tests/ctf.test.mjs` (new): the objective, the ⚑ FLAGS badge and ♥ ∞, 99 lives for every kid and "comes back" for
+  you; the chain is Lamplight → Flags on Bellfield → creek fort, each opening only on the one before. Both flags and
+  both lanes stand on clear ground in the match's scene, ours 4 m from your start, theirs 57.7 m. Scripted, with the
+  kids held aside: walking onto their flag takes it and the HUD says bring it home; it rides on your back; home, it
+  scores 1–0 and goes back to its base; tagged carrying it, you drop it at the spot (0, 3) and walk back in at (34.5, 0);
+  Mason touching it sends it home; Mason taking ours shows "MASON HAS OUR FLAG" in red; tagged, he drops it where he
+  was; left alone it is still down at 19 s and home at 21 s. A second flag home wins ("FLAGS 2–0", "You plant their red
+  flag beside ours"), their second loses ("THEY TOOK IT 2–0"). Two rounds of 150 s with the player out of the fight:
+  round 1 had six takes (Mason four, Andrew two), one capture (Mason, 105 s) and five flags sent home, 0–1 at the end;
+  round 2 had two takes by Mason and none home, 0–0. Every kid walked 195–559 m; no kid on a flag run held within 1 m
+  over 0.7 s. A second run of the suite: 0–1 (two takes, Mason home at 131 s) and 0–0 (seven takes, six sent home).
+  Screenshot `tests/out/ctf-their-flag.png`.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s): no kid over 3 s.
+- `northcliff` and `bellfield` (their chain checks now list the match) pass.
+- CI fix-up: `bellfield`'s "nobody fires in the opening hold" failed on the PR (Lamplight, 2.43 s). It timed the first
+  shot by its own loop's frames, but the page's own frames between BEGIN and the loop advance the round clock too, so a
+  shot the hold had let out at 2.5 s read 2.43. It now reads the round clock the hold itself uses; passes (3.04 s).
+  `treehouse-start` failed on the same PR: "no hit at all before 6 s" read Haden's walk-over tag at 6.0 s (the loop's
+  frames again). It now stamps hits with the round clock, and holds Connor, the platform shooter it guards against
+  (2.6–3.4 s before v1.185), to 6 s and anyone to 5 s; Haden's tags run 6.1–11.6 s. Passes.
+- Every suite passes on v1.189 (98): 67 in the four local shards, which hit this session's 30-minute limit, and the
+  other 31 plus all 16 stuck sweeps again (adding a match moves which matches each sweep covers) in four lanes.
+### Still open
+- Balance is for play. Kids alone took a flag eight times and brought one home once in 300 s, so a round is mostly
+  yours to win: whether Mason should have a second runner, and whether the round wants a clock (none
+  now: it ends only on the second flag), are Michael's calls once he has played it.
+- Nothing yet lets you see a carried flag of your own (it rides behind your head); the HUD carries that.
+- Capture the flag is on Bellfield Court only. Any map with two ends could take it: a scenario needs `ctf: { ours,
+  theirs, toWin, lanes }`, `npcLives: 99` and a `ctf: 'run'` kid a side.

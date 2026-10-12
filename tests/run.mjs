@@ -18,7 +18,7 @@ const only = args[0];
 const WEIGHTS = {
   'backyard-guns.test.mjs': 174, 'bb-sweep.test.mjs': 19, 'bound-forward.test.mjs': 57,
   'bunratty-polish.test.mjs': 60, 'bunratty-road.test.mjs': 47, 'burst-pose.test.mjs': 45,
-  'car-side-fire.test.mjs': 24, 'cars.test.mjs': 3, 'country-club.test.mjs': 155, 'cover-fire.test.mjs': 62,
+  'car-side-fire.test.mjs': 24, 'cars.test.mjs': 3, 'ctf.test.mjs': 100, 'country-club.test.mjs': 155, 'cover-fire.test.mjs': 62,
   'desk-start.test.mjs': 15, 'fence-bound.test.mjs': 44, 'fort-spawn.test.mjs': 42, 'front-door.test.mjs': 18,
   'gait.test.mjs': 37, 'grip.test.mjs': 23, 'grocery-store.test.mjs': 182, 'harness.test.mjs': 26, 'bellfield.test.mjs': 100,
   'high-school.test.mjs': 147, 'hollow-held.test.mjs': 101, 'houses.test.mjs': 30, 'jump.test.mjs': 17,

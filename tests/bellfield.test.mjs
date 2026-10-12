@@ -32,7 +32,9 @@ const chain = await page.evaluate((IDS) => {
   done[IDS[2]] = true;
   const afterFort = { night: isScenarioUnlocked(IDS[3]), creek: isScenarioUnlocked('northcliff_defend_creek') };
   done[IDS[3]] = true;
-  const afterNight = { creek: isScenarioUnlocked('northcliff_defend_creek'), reason: scenarioLockReason('northcliff_defend_creek') };
+  const afterNight = { flags: isScenarioUnlocked('bellfield_ctf'), creek: isScenarioUnlocked('northcliff_defend_creek') };
+  done.bellfield_ctf = true;   // v1.189: capture the flag comes between the night match and the creek fort
+  const afterFlags = { creek: isScenarioUnlocked('northcliff_defend_creek'), reason: scenarioLockReason('northcliff_defend_creek') };
   // the map card for the 1v1 names the street
   openMap(); refreshMapPinStates();
   document.querySelector('#worldMap .pin[data-scenario="northcliff"]').click();
@@ -41,14 +43,14 @@ const chain = await page.evaluate((IDS) => {
   closeMap();
   for (const k of Object.keys(done)) delete done[k];
   const street = REGIONS.northcliff.streets[SCENARIOS[IDS[0]].street];
-  return { at, hold: ids.indexOf('stoneglen_hold_treehouse'), creek: ids.indexOf('northcliff_defend_creek'), beforeHold, afterHold, afterMason, afterBulb, afterFort, afterNight, cardText, street };
+  return { at, hold: ids.indexOf('stoneglen_hold_treehouse'), creek: ids.indexOf('northcliff_defend_creek'), beforeHold, afterHold, afterMason, afterBulb, afterFort, afterNight, afterFlags, flagsAt: ids.indexOf('bellfield_ctf'), cardText, street };
 }, IDS);
-check('the four Bellfield matches follow Hold the Treehouse and come before the creek-fort defend',
-  chain.at.every((a, i) => a === chain.hold + 1 + i) && chain.creek === chain.hold + 1 + IDS.length, chain);
+check('the four Bellfield matches follow Hold the Treehouse, then its capture the flag (v1.189), then the creek-fort defend',
+  chain.at.every((a, i) => a === chain.hold + 1 + i) && chain.flagsAt === chain.hold + 1 + IDS.length && chain.creek === chain.flagsAt + 1, chain);
 check("Mason's Court opens once Hold the Treehouse is won, not before", !chain.beforeHold.mason && chain.afterHold.mason && !chain.afterHold.bulb, chain);
 check("the 3v3 opens after Mason's Court, Hold the Bulb Fort after the 3v3, the night match after that, then the creek-fort defend",
   chain.afterMason.bulb && !chain.afterMason.creek && chain.afterBulb.fort && !chain.afterBulb.creek && chain.afterFort.night && !chain.afterFort.creek
-  && chain.afterNight.creek, chain);
+  && chain.afterNight.flags && !chain.afterNight.creek && chain.afterFlags.creek, chain);
 check('the scenarios are on Bellfield Court, and its card says so', chain.street === 'Bellfield Court' && /Bellfield Court/.test(chain.cardText) && /Mason/.test(chain.cardText), chain);
 
 for (const id of IDS) {
@@ -89,7 +91,7 @@ for (const id of IDS) {
   const r = await page.evaluate(() => {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
-    const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { if (inOpeningHold()) return o(e, t); shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
+    const o = spawnEnemyBB; let shots = 0, firstAt = null; spawnEnemyBB = (e, t) => { if (inOpeningHold()) return o(e, t); shots++; if (firstAt === null) firstAt = +Game.scenario.roundTime.toFixed(2); const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], maxZ: 0, minD: 1e9, minX: 1e9 }));
     const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
@@ -99,7 +101,9 @@ for (const id of IDS) {
       if (!defend && f > 60 * 60 && (!team || (livesLost('enemy') > 0 && livesLost('player') > 0))) break;
       const prev = kids.map(k => [k.pos.x, k.pos.z]);
       stepGame(1 / 60);
-      if (firstShot === null && shots > 0) firstShot = +(f / 60).toFixed(2);
+      // v1.189 fix-up: stamped with the round's own clock (the one the hold reads), not this loop's frames: the page's
+      // own frames between BEGIN and this loop count too, so on CI a shot at 2.5 s read 2.43 here
+      if (firstShot === null && shots > 0) firstShot = firstAt;
       kids.forEach((k, i) => {
         if (k.team !== 'player' && k.health > 0) nearest = Math.min(nearest, Math.hypot(k.pos.x - Game.player.pos.x, k.pos.z - Game.player.pos.z));
         const m = Math.hypot(k.pos.x - prev[i][0], k.pos.z - prev[i][1]), s = st[i];
