@@ -60,8 +60,8 @@ Fable card on the control room and Michael starts it from there.
    and staff row, six portables, the practice field with goalposts and sleds, five-tier home bleachers, the concession
    stand and court; After the Bell 1v1 with Tyler and The Portables 3v3; `tests/high-school.test.mjs`). ~~More school
    scenarios~~ — done, v1.156 (Hold the Portables defend, Friday Night Lights night 4v4 capstone; two more lamps).
-   Hollins Ridge High is complete at four scenarios; its kids are borrowed from other streets. Another zone, or school
-   kids of its own, is a new question. Next (Michael: **A**, the country-club pool and golf course, made-up name; control room, 4 Oct):
+   Hollins Ridge High is complete at four scenarios; ~~its kids are borrowed from other streets~~ — its own roster since
+   v1.190 (item 15). Next (Michael: **A**, the country-club pool and golf course, made-up name; control room, 4 Oct):
    ~~Willow Bend Country Club~~ — done, v1.157 (seventh on the ladder after the school, Horseshoe Bend: the clubhouse
    and veranda, the pool with its deck, loungers and pool house, the 18th green, the fairway, a pond, the cart barn and
    carts, the south lawn's gazebo and putting green; the pool and pond stop bodies, not BBs; Pool's Closed 1v1 with
@@ -199,6 +199,10 @@ Fable card on the control room and Michael starts it from there.
    house's lawn; a carrier tagged drops it, its own side sends it home or 20 s does; everyone comes back; Andrew and
    Mason run for the flags by the street or the backyards; `tests/ctf.test.mjs`). D.15 C is complete pending Michael's
    playtest (balance, a clock, a second enemy runner).
+   ~~Hollins Ridge High gets kids of its own (decisions "After capture the flag", Michael: **B**, control room 12 Oct): a
+   school roster in place of the kids it borrows from other streets.~~ — done, v1.190 (Jordan, Caleb, Nathan, Sophie,
+   Grant and Malik, each with the numbers of the kid he or she replaces, in all four school matches; the allies stay
+   Eric, Rebecca and Brooke; `tests/school-kids.test.mjs`).
 16. NPC movement looks a little too stiff/floaty. We need to make that a bit more organic looking. (Michael, control room,
    2026-10-05) **(design)** — question in decisions (builder, 5 Oct: A planted feet, B weight and turning, C A then B, D A and a run/jog difference) Michael: **C**, A then B,
    each shown to him (control room, 6 Oct). ~~Step A, planted feet~~ — done, v1.171 (legs hang from the hip, the stride

@@ -122,7 +122,7 @@ for (const id of ladder.ids) {
   // v1.156: the defend's attackers cross the field to the portables (x < -8) and come within 6 m of the player
   else if (id === 'school_defend_portables') check(`${id}: an attacker reaches the portables and closes on the player`,
     r.kids.some(k => k.at[0] < -8 || k.nearest < 6) && Math.min(...r.kids.map(k => k.nearest)) < 6, r.kids);
-  else check(`${id}: Tyler comes out of the portables to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
+  else check(`${id}: Jordan (Tyler before v1.190) comes out of the portables to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
