@@ -1906,7 +1906,7 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.189</div>
+  <div class="version">v1.190</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4701,6 +4701,54 @@ const CHARACTERS = {
     aggression: 0.65, fireRate: 1.15, accuracy: 0.6, headshotBias: 0.15, hp: 1, moveSpeed: 1.05,
     flavor: { hit: '"Tch. Nice shot."', win: 'Diego looks over at Fernando. "Told you."' },
   },
+
+  // === v1.190: HOLLINS RIDGE HIGH's own kids (decisions, Michael: B, control room 12 Oct). The school's four matches
+  // borrowed Tyler, the Bunratty kids and the Winnmark kids; these six go to the school and play only there. Each
+  // takes the numbers of the kid he or she replaces (Jordan: Tyler, Caleb: Ryan, Nathan: Mitchell, Sophie: Priya,
+  // Grant: Owen, Malik: Jamie), so the matches play as they did and only the faces change.
+  // -- Hollins Ridge High --
+  jordan: {
+    name: 'Jordan', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'tall', build: 'skinny', hairStyle: 'wavy', glasses: false,
+    hairColor: 0x1a1410, skinColor: 0x8a5a3a, shirtColor: 0x7a2a2a, pantsColor: 0x6a6048,
+    aggression: 0.5, fireRate: 1.0, accuracy: 0.6, headshotBias: 0.15, hp: 1, moveSpeed: 1.1,
+    flavor: { hit: '"Okay. Okay, that one\'s yours."', win: 'Jordan leans on the portable steps. "Told you. My portables."' },
+  },
+  caleb: {
+    name: 'Caleb', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'average', build: 'average', hairStyle: 'short', glasses: false,
+    hairColor: 0xe0c890, skinColor: 0xf0cca8, shirtColor: 0x2a6a8a, pantsColor: 0x3a3a3a,
+    aggression: 0.75, fireRate: 1.1, accuracy: 0.6, headshotBias: 0.1, hp: 1, moveSpeed: 0.9,
+    flavor: { hit: '"Ugh! I was right THERE."', win: 'Caleb jogs back across the field. "Too slow, man."' },
+  },
+  nathan: {
+    name: 'Nathan', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'tall', build: 'average', hairStyle: 'curly', glasses: true,
+    hairColor: 0x2a1a10, skinColor: 0xa86a42, shirtColor: 0x4a4a2a, pantsColor: 0x2a2a30,
+    aggression: 0.4, fireRate: 0.95, accuracy: 0.72, headshotBias: 0.12, hp: 1, moveSpeed: 0.95,
+    flavor: { hit: '"Hm. Fair."', win: 'Nathan pushes his glasses up. "You crossed the field. Everyone crosses the field."' },
+  },
+  sophie: {
+    name: 'Sophie', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'average', build: 'skinny', hairStyle: 'long', glasses: false,
+    hairColor: 0x8a4a20, skinColor: 0xf0d0b0, shirtColor: 0xd8a030, pantsColor: 0x3a4a6a,
+    aggression: 0.6, fireRate: 1.0, accuracy: 0.7, headshotBias: 0.18, hp: 1, moveSpeed: 0.98,
+    flavor: { hit: '"Wow. Okay. Nice."', win: 'Sophie comes round the end of the portable. "Wrong side."' },
+  },
+  grant: {
+    name: 'Grant', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'tall', build: 'heavy', hairStyle: 'short', glasses: false,
+    hairColor: 0x7a5a30, skinColor: 0xe0b890, shirtColor: 0x5a2a2a, pantsColor: 0x4a4a4a,
+    aggression: 0.2, fireRate: 0.9, accuracy: 0.82, headshotBias: 0.2, hp: 1, moveSpeed: 0.8,
+    flavor: { hit: '"Huh. Didn\'t see you."', win: 'Grant hasn\'t moved from the cars. "Whole field\'s mine."' },
+  },
+  malik: {
+    name: 'Malik', neighborhood: 'east_roswell', street: 'hollins_ridge_high',
+    height: 'average', build: 'heavy', hairStyle: 'short', glasses: false,
+    hairColor: 0x1a1010, skinColor: 0x6a4028, shirtColor: 0x9a9a9a, pantsColor: 0x2a2a3a,
+    aggression: 0.4, fireRate: 1.0, accuracy: 0.7, headshotBias: 0.15, hp: 1, moveSpeed: 1.0,
+    flavor: { hit: '"Aw, man. Clean."', win: 'Malik racks the shotgun. "Close up, that\'s my range."' },
+  },
 };
 
 // ---------------------------------------------------------------------
@@ -6513,28 +6561,28 @@ const SCENARIOS = {
   // high school: the brick front and the staff row, six portables, the practice field, the home bleachers.
   // ===================================================================
 
-  // --- Opener: 1v1 with Tyler after school ---
+  // --- Opener: 1v1 with Jordan after school (v1.190: was Tyler, from Wayt Road; the id stays for saves) ---
   school_1v1_tyler: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'After the Bell',
-    desc: "The last bell's gone and the grounds are empty. Tyler says the portables are his: six trailer classrooms in two rows, with gaps between them you can see straight down. You start at the end of the home bleachers. He's in among the portables with his pistol, and he knows every corner. Cross the field and you're in the open the whole way. One hit each.",
+    desc: "The last bell's gone and the grounds are empty. Jordan says the portables are his: six trailer classrooms in two rows, with gaps between them you can see straight down. You start at the end of the home bleachers. He's in among the portables with his pistol, and he knows every corner. Cross the field and you're in the open the whole way. One hit each.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'tyler', weapon: 'pistol', anchor: 'a_port_e', role: 'skirmisher' },
+      { charId: 'jordan', weapon: 'pistol', anchor: 'a_port_e', role: 'skirmisher' },   // v1.190: was Tyler
     ],
     winCondition: 'kill_all',
     rewards: { win: 55, lose: 13 },
     playerLives: 1, armorMult: 1,
   },
 
-  // --- 3v3: the Bunratty kids at the portables ---
+  // --- 3v3: the school's kids at the portables (v1.190: were the Bunratty kids) ---
   school_portables_3v3: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'The Portables',
-    desc: "Ryan, Mitchell and Priya came over from Bunratty and took the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Mitchell will sit back and pick; Priya will come round the side. Three lives for every kid but you, last team standing.",
+    desc: "Caleb, Nathan and Sophie go to Hollins Ridge, and they've taken the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Nathan will sit back and pick; Sophie will come round the side. Three lives for every kid but you, last team standing.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -6542,9 +6590,9 @@ const SCENARIOS = {
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',  anchor: 'b_bleach_w', team: 'player' },
       { charId: 'rebecca',  weapon: 'ak47', anchor: 'b_stand',    team: 'player' },
-      { charId: 'ryan',     weapon: 'ump',  anchor: 'a_port_e' },
-      { charId: 'mitchell', weapon: 'ak47', anchor: 'a_doors' },
-      { charId: 'priya',    weapon: 'mp5',  anchor: 'a_cars_e' },
+      { charId: 'caleb',    weapon: 'ump',  anchor: 'a_port_e' },     // v1.190: the school's own kids (were Ryan, Mitchell, Priya)
+      { charId: 'nathan',   weapon: 'ak47', anchor: 'a_doors' },
+      { charId: 'sophie',   weapon: 'mp5',  anchor: 'a_cars_e' },
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',
@@ -6557,7 +6605,7 @@ const SCENARIOS = {
   school_defend_portables: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Hold the Portables',
-    desc: "Marcus, Jamie and Trey want the portables, and you're in the lane between the rows. They come across the field from the sleds: one round the north end by the container, one straight at you, one down past the court to the south row. A tagged kid walks back to the field and comes again. Every gap between two portables is a door they can come through, so don't watch just one. Survive 90 seconds.",
+    desc: "Caleb, Malik and Sophie want their portables back, and you're in the lane between the rows. They come across the field from the sleds: one round the north end by the container, one straight at you, one down past the court to the south row. A tagged kid walks back to the field and comes again. Every gap between two portables is a door they can come through, so don't watch just one. Survive 90 seconds.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -6565,9 +6613,9 @@ const SCENARIOS = {
     playerSpawn: 'portables',
     enemySpawnCluster: 'cluster_field',
     enemySetup: [
-      { charId: 'marcus', weapon: 'ump',     anchor: 'a_container', role: 'attacker', flank: 'L' },
-      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_port_e',    role: 'attacker', flank: 'C' },
-      { charId: 'trey',   weapon: 'mp5',     anchor: 'b_port_s',    role: 'attacker', flank: 'R' },
+      { charId: 'caleb',  weapon: 'ump',     anchor: 'a_container', role: 'attacker', flank: 'L' },   // v1.190: were Marcus, Jamie, Trey
+      { charId: 'malik',  weapon: 'shotgun', anchor: 'a_port_e',    role: 'attacker', flank: 'C' },
+      { charId: 'sophie', weapon: 'mp5',     anchor: 'b_port_s',    role: 'attacker', flank: 'R' },
     ],
     winCondition: 'survive_timer',
     timerSec: 90,
@@ -6579,21 +6627,21 @@ const SCENARIOS = {
   school_night_4v4: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
-    desc: "No game tonight, so the field's yours. Ryan, Mitchell and Priya are back, and they've brought Owen, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
+    desc: "No game tonight, so the field's yours. Caleb, Nathan and Sophie are back, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     timeOfDay: 'night',
     scenarioType: 'skirmish',
-    playerSpawn: 'stand',            // v1.177: behind the concession stand, out of Owen's line
+    playerSpawn: 'stand',            // v1.177: behind the concession stand, out of the rifle's line (Owen's then, Grant's since v1.190)
     allyDeploy: true,                // v1.179: Eric, Rebecca and Brooke walk from the stand to their posts
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
       { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_port_s',   team: 'player' },   // v1.179: was b_stand, the start itself
       { charId: 'brooke',   weapon: 'ump',    anchor: 'b_court',    team: 'player' },
-      { charId: 'ryan',     weapon: 'ump',    anchor: 'a_port_e' },
-      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_doors' },
-      { charId: 'priya',    weapon: 'mp5',    anchor: 'a_cars_e' },
-      { charId: 'owen',     weapon: 'sniper', anchor: 'a_cars_w', role: 'defender' },
+      { charId: 'caleb',    weapon: 'ump',    anchor: 'a_port_e' },   // v1.190: the school's own kids (were Ryan, Mitchell, Priya, Owen)
+      { charId: 'nathan',   weapon: 'ak47',   anchor: 'a_doors' },
+      { charId: 'sophie',   weapon: 'mp5',    anchor: 'a_cars_e' },
+      { charId: 'grant',    weapon: 'sniper', anchor: 'a_cars_w', role: 'defender' },
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',
