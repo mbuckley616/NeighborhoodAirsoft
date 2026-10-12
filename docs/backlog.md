@@ -218,6 +218,12 @@ Fable card on the control room and Michael starts it from there.
    version of the game and build a healthy backlog." (Michael, control room, 2026-10-12, his D on "After the school's
    own kids") **(design)** — five questions in decisions (builder, 12 Oct, "A better game" 1–5): a story, more
    customisation, custom games, online play now, which screen first. Each answer becomes its own item here.
+   Michael's answers (control room, 12 Oct): 1 **A**, a light summer story told in the bedroom (calendar, texts, a rival
+   crew, a last-Saturday match); 2 **C**, looks you earn or buy, then your crew; 3 **A**, a Pickup Game board; 4 **B**,
+   online after the board; 5 **C**, settings, then a better result screen. ~~5, step 1: settings~~ — done, v1.192 (a
+   SETTINGS screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of view,
+   invert look; saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`). Next: 5, step 2, the result
+   screen; then 1, 2, 3 in that order unless Michael reorders (the producer files each as its own item).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

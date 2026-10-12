@@ -1804,6 +1804,37 @@
     margin-bottom: 16px; line-height: 1.4;
   }
 
+  /* v1.192: settings */
+  #titleScreen .settings-open-btn {
+    margin-top: 14px; padding: 9px 30px; font-size: 13px;
+    background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border);
+  }
+  #settingsScreen { background: rgba(0,0,0,0.55); z-index: 120; }
+  #settingsScreen .settings-card {
+    pointer-events: auto; background: var(--ui-bg); border: 1px solid var(--ui-border);
+    padding: 24px 32px; border-radius: 4px; width: min(460px, calc(100vw - 32px)); box-sizing: border-box;
+  }
+  #settingsScreen .settings-title {
+    font-family: 'Georgia', serif; font-size: 22px; color: var(--ui-accent); margin-bottom: 16px; text-align: center;
+  }
+  #settingsScreen .settings-row {
+    display: grid; grid-template-columns: 130px 1fr 52px; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--ui-text); margin-bottom: 10px;
+  }
+  #settingsScreen .settings-row input[type=range] { width: 100%; accent-color: var(--ui-accent); }
+  #settingsScreen .settings-row .settings-val { text-align: right; color: #ccc; font-variant-numeric: tabular-nums; }
+  #settingsScreen .settings-buttons { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+  #settingsScreen .settings-btn {
+    background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border); padding: 8px 22px;
+    font-family: inherit; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; font-size: 12px;
+  }
+  #settingsScreen .settings-btn.primary { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); }
+  #bedroomSettingsBtn {
+    position: fixed; right: 16px; top: 24px; z-index: 50; display: none;
+    background: var(--ui-bg); color: var(--ui-text); border: 1px solid var(--ui-border);
+    padding: 6px 12px; font-family: inherit; font-size: 12px; letter-spacing: 1px; cursor: pointer; border-radius: 3px;
+  }
+
   /* Pause hint */
   #pauseHint {
     position: fixed;
@@ -1906,7 +1937,8 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.191</div>
+  <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
+  <div class="version">v1.192</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2268,6 +2300,19 @@
     <button class="modal-close" id="modalCloseBtn">OK</button>
   </div>
 </div>
+
+<!-- === v1.192: SETTINGS (from the title and the bedroom) === -->
+<div class="menu-overlay" id="settingsScreen">
+  <div class="settings-card">
+    <div class="settings-title">Settings</div>
+    <div class="settings-rows" id="settingsRows"></div>
+    <div class="settings-buttons">
+      <button class="settings-btn" id="settingsResetBtn">Defaults</button>
+      <button class="settings-btn primary" id="settingsDoneBtn">Done</button>
+    </div>
+  </div>
+</div>
+<button id="bedroomSettingsBtn" title="Settings">&#9881; SETTINGS</button>
 
 <!-- === SCENARIO BRIEFING POPUP (pre-start details) === -->
 <div class="menu-overlay" id="scenarioBriefModal">
@@ -5002,7 +5047,7 @@ function tryNpcSpeak(enemy, category) {
     u.rate  = 1.05 + (((hp >>> 6) % 30) / 100); // 1.05..1.34
     // (A) Volume: cap at 0.5 (was 0.9 — TTS was dominating shots/footsteps),
     // then scale by the same positional vol curve as audio cues.
-    u.volume = 0.5 * posVol;
+    u.volume = 0.5 * posVol * Settings.effects;   // v1.192: the effects volume
     speechSynthesis.speak(u);
     VOICE.globalCooldownUntil = now + 1.5;
     enemy._voiceCooldownUntil = now + 4.0;
@@ -5031,9 +5076,9 @@ function playVoiceMarker(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
   if (ctx.createStereoPanner) {
     const p = ctx.createStereoPanner(); p.pan.value = pan;
-    fundamental.connect(gain); formant.connect(gain); gain.connect(p).connect(ctx.destination);
+    fundamental.connect(gain); formant.connect(gain); gain.connect(p).connect(sfxOut());
   } else {
-    fundamental.connect(gain); formant.connect(gain); gain.connect(ctx.destination);
+    fundamental.connect(gain); formant.connect(gain); gain.connect(sfxOut());
   }
   fundamental.start(t); formant.start(t);
   fundamental.stop(t + 0.1); formant.stop(t + 0.1);
@@ -6921,6 +6966,55 @@ function initAudio() {
   }
 }
 
+// === v1.192 (D.17 "A better game" 5, Michael: C — settings first): SETTINGS ===
+// Mouse and aim sensitivity, music and effects volume, field of view and invert look. They belong to the browser,
+// not to a save: their own localStorage key, so NEW GAME and CONTINUE both keep them.
+const SETTINGS_KEY = 'neighborhoodAirsoft.settings.v1';
+const SETTINGS_DEFAULTS = { mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false };
+const SETTINGS_RANGES = {
+  mouseSens: [0.25, 3, 0.05], aimSens: [0.25, 2, 0.05], music: [0, 1, 0.05], effects: [0, 1, 0.05], fov: [60, 100, 1],
+};
+const Settings = Object.assign({}, SETTINGS_DEFAULTS);
+function sanitizeSettings(raw) {
+  const out = Object.assign({}, SETTINGS_DEFAULTS);
+  if (raw && typeof raw === 'object') {
+    for (const k in SETTINGS_RANGES) {
+      const v = Number(raw[k]), r = SETTINGS_RANGES[k];
+      if (Number.isFinite(v)) out[k] = Math.max(r[0], Math.min(r[1], v));
+    }
+    if (typeof raw.invertY === 'boolean') out.invertY = raw.invertY;
+  }
+  return out;
+}
+function loadSettings() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (e) { raw = null; }
+  Object.assign(Settings, sanitizeSettings(raw));
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(Settings)); } catch (e) { /* storage blocked: kept for this visit */ }
+}
+// Every sound effect goes through one gain (the effects volume); the music has its own master (Music.masterGain).
+function sfxOut() {
+  const a = Game.audio;
+  if (!a.sfx) {
+    a.sfx = a.ctx.createGain();
+    a.sfx.gain.value = Settings.effects;
+    a.sfx.connect(a.ctx.destination);
+  }
+  return a.sfx;
+}
+function applySettings() {
+  const a = Game.audio;
+  if (a && a.ctx && a.sfx) a.sfx.gain.setValueAtTime(Settings.effects, a.ctx.currentTime);
+  if (a && a.ctx && Music.playing && Music.masterGain) {
+    const g = Music.masterGain.gain;
+    g.cancelScheduledValues(a.ctx.currentTime);
+    g.setValueAtTime(Music.volume * Settings.music, a.ctx.currentTime);
+  }
+}
+loadSettings();
+
 // =====================================================================
 // PROCEDURAL MUSIC — bedroom theme (Toontown-Central-flavored, suburban-cheery)
 // =====================================================================
@@ -6969,7 +7063,7 @@ function startMusic(themeName) {
   Music.masterGain.connect(ctx.destination);
   // Quick fade-in
   Music.masterGain.gain.setValueAtTime(0, ctx.currentTime);
-  Music.masterGain.gain.linearRampToValueAtTime(Music.volume, ctx.currentTime + 0.6);
+  Music.masterGain.gain.linearRampToValueAtTime(Music.volume * Settings.music, ctx.currentTime + 0.6);   // v1.192: the music volume
   // Initialize beat clock
   Music.startTime = ctx.currentTime + 0.08;
   Music.currentBeat = -1;
@@ -7316,7 +7410,7 @@ function playPlayerFootstep(heavy) {
   filt.Q.value = 0.7;
   const ng = ctx.createGain();
   ng.gain.value = baseVol;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
   // Low tonal thump — gives the step weight (heel contact).
   const osc = ctx.createOscillator();
@@ -7327,7 +7421,7 @@ function playPlayerFootstep(heavy) {
   const og = ctx.createGain();
   og.gain.setValueAtTime(baseVol * 1.1, t);
   og.gain.exponentialRampToValueAtTime(0.0008, t + 0.10);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.12);
 }
 
@@ -7351,9 +7445,9 @@ function playShot(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   if (pan !== null) {
     const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-    if (p) { p.pan.value = pan; osc.connect(gain).connect(p).connect(ctx.destination); }
-    else   { osc.connect(gain).connect(ctx.destination); }
-  } else { osc.connect(gain).connect(ctx.destination); }
+    if (p) { p.pan.value = pan; osc.connect(gain).connect(p).connect(sfxOut()); }
+    else   { osc.connect(gain).connect(sfxOut()); }
+  } else { osc.connect(gain).connect(sfxOut()); }
   osc.start(t); osc.stop(t + 0.1);
   // Noise burst
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
@@ -7365,9 +7459,9 @@ function playShot(srcX, srcZ) {
   src.buffer = buf;
   if (pan !== null && ctx.createStereoPanner) {
     const p2 = ctx.createStereoPanner(); p2.pan.value = pan;
-    src.connect(ng).connect(p2).connect(ctx.destination);
+    src.connect(ng).connect(p2).connect(sfxOut());
   } else {
-    src.connect(ng).connect(ctx.destination);
+    src.connect(ng).connect(sfxOut());
   }
   src.start(t);
 }
@@ -7420,8 +7514,8 @@ function playFootstep(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   if (ctx.createStereoPanner) {
     const p = ctx.createStereoPanner(); p.pan.value = pan;
-    osc.connect(gain).connect(p).connect(ctx.destination);
-  } else { osc.connect(gain).connect(ctx.destination); }
+    osc.connect(gain).connect(p).connect(sfxOut());
+  } else { osc.connect(gain).connect(sfxOut()); }
   osc.start(t); osc.stop(t + 0.1);
   // Scrape (the sole)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
@@ -7433,9 +7527,9 @@ function playFootstep(srcX, srcZ) {
   src.buffer = buf;
   if (ctx.createStereoPanner) {
     const p2 = ctx.createStereoPanner(); p2.pan.value = pan;
-    src.connect(ng).connect(p2).connect(ctx.destination);
+    src.connect(ng).connect(p2).connect(sfxOut());
   } else {
-    src.connect(ng).connect(ctx.destination);
+    src.connect(ng).connect(sfxOut());
   }
   src.start(t);
 }
@@ -7482,8 +7576,8 @@ function bbWhistleStart(bb) {
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
     src.connect(bp).connect(gain);
     tone.connect(toneGain).connect(gain);
-    if (pan) gain.connect(pan).connect(ctx.destination);
-    else     gain.connect(ctx.destination);
+    if (pan) gain.connect(pan).connect(sfxOut());
+    else     gain.connect(sfxOut());
     const t = ctx.currentTime;
     src.start(t); tone.start(t);
     bb._whistle = { src, tone, gain, pan, bp };
@@ -7538,7 +7632,7 @@ function playReloadClick() {
   osc.frequency.setValueAtTime(180, t);
   gain.gain.setValueAtTime(0.1, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
 }
 
@@ -7555,7 +7649,7 @@ function playCockBack() {
   osc.frequency.exponentialRampToValueAtTime(1000, t + 0.03);
   gain.gain.setValueAtTime(0.16, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
   // Brief noise tail (metal-on-metal)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
@@ -7568,7 +7662,7 @@ function playCockBack() {
   filt.type = 'highpass';
   filt.frequency.value = 1500;
   src.buffer = buf;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7585,7 +7679,7 @@ function playCockForward() {
   osc.frequency.exponentialRampToValueAtTime(140, t + 0.06);
   gain.gain.setValueAtTime(0.2, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.1);
   // Noise burst for the metal slam
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.045, ctx.sampleRate);
@@ -7599,7 +7693,7 @@ function playCockForward() {
   filt.frequency.value = 800;
   filt.Q.value = 0.7;
   src.buffer = buf;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7622,7 +7716,7 @@ function playJam() {
   filt.frequency.value = 350;
   filt.Q.value = 1.5;
   src.buffer = buf;
-  src.connect(filt).connect(g).connect(ctx.destination);
+  src.connect(filt).connect(g).connect(sfxOut());
   src.start(t);
   // Plus a downward whine
   const osc = ctx.createOscillator();
@@ -7632,7 +7726,7 @@ function playJam() {
   osc.frequency.exponentialRampToValueAtTime(70, t + 0.25);
   og.gain.setValueAtTime(0.08, t);
   og.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.28);
 }
 
@@ -7648,7 +7742,7 @@ function playUnjam() {
   osc.frequency.exponentialRampToValueAtTime(110, t + 0.08);
   gain.gain.setValueAtTime(0.22, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.14);
 }
 
@@ -7663,7 +7757,7 @@ function playSlotSwap() {
   osc.frequency.setValueAtTime(700, t);
   gain.gain.setValueAtTime(0.07, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
 }
 function playHitOnEnemy() {
@@ -7677,7 +7771,7 @@ function playHitOnEnemy() {
   osc.frequency.exponentialRampToValueAtTime(880, t + 0.12);
   gain.gain.setValueAtTime(0.14, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.2);
 }
 function playHitOnPlayer() {
@@ -7691,7 +7785,7 @@ function playHitOnPlayer() {
   const g = ctx.createGain();
   g.gain.value = 0.25;
   src.buffer = buf;
-  src.connect(g).connect(ctx.destination);
+  src.connect(g).connect(sfxOut());
   src.start(t);
 }
 
@@ -7724,7 +7818,7 @@ function playImpactMetal(impactPos) {
   osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.7, t + 0.12);
   g1.gain.setValueAtTime(0.18 * vol, t);
   g1.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  osc1.connect(g1).connect(ctx.destination);
+  osc1.connect(g1).connect(sfxOut());
   osc1.start(t); osc1.stop(t + 0.2);
   // Harmonic overlay for shimmer
   const osc2 = ctx.createOscillator();
@@ -7733,7 +7827,7 @@ function playImpactMetal(impactPos) {
   osc2.frequency.setValueAtTime(baseFreq * 1.5, t);
   g2.gain.setValueAtTime(0.07 * vol, t);
   g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  osc2.connect(g2).connect(ctx.destination);
+  osc2.connect(g2).connect(sfxOut());
   osc2.start(t); osc2.stop(t + 0.12);
   // Tiny noise click at attack
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.008, ctx.sampleRate);
@@ -7743,7 +7837,7 @@ function playImpactMetal(impactPos) {
   const ng = ctx.createGain();
   ng.gain.value = 0.08 * vol;
   src.buffer = buf;
-  src.connect(ng).connect(ctx.destination);
+  src.connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7773,7 +7867,7 @@ function playImpactCardboard(impactPos) {
   filter.type = 'lowpass';
   filter.frequency.value = 600 + (Math.random() - 0.5) * 200;
   filter.Q.value = 0.5;
-  src.connect(filter).connect(g).connect(ctx.destination);
+  src.connect(filter).connect(g).connect(sfxOut());
   src.start(t);
   // Subtle low body thump
   const osc = ctx.createOscillator();
@@ -7783,7 +7877,7 @@ function playImpactCardboard(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(80, t + 0.05);
   og.gain.setValueAtTime(0.12 * vol, t);
   og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.08);
 }
 
@@ -7802,7 +7896,7 @@ function playImpactWood(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.06);
   g.gain.setValueAtTime(0.2 * vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  osc.connect(g).connect(ctx.destination);
+  osc.connect(g).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.12);
   // Sharper attack click — short filtered noise burst
   const dur = 0.025;
@@ -7817,7 +7911,7 @@ function playImpactWood(impactPos) {
   filter.frequency.value = 1800;
   filter.Q.value = 1.2;
   src.buffer = buf;
-  src.connect(filter).connect(ng).connect(ctx.destination);
+  src.connect(filter).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7835,7 +7929,7 @@ function playImpactShatter(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(1400, t + 0.04);
   g.gain.setValueAtTime(0.12 * vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  osc.connect(g).connect(ctx.destination);
+  osc.connect(g).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.06);
   // Brief noise tail (the scattering shards)
   const dur = 0.08;
@@ -7851,7 +7945,7 @@ function playImpactShatter(impactPos) {
   filter.type = 'highpass';
   filter.frequency.value = 2000;
   src.buffer = buf;
-  src.connect(filter).connect(ng).connect(ctx.destination);
+  src.connect(filter).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -20669,7 +20763,7 @@ function endScenario(outcome) {
 // MENU UTILITIES
 // ---------------------------------------------------------------------
 function hideAllMenus() {
-  ['titleScreen', 'worldMap', 'resultScreen', 'modalScreen', 'shopScreen', 'loadoutScreen', 'workbenchScreen'].forEach(id => {
+  ['titleScreen', 'worldMap', 'resultScreen', 'modalScreen', 'shopScreen', 'loadoutScreen', 'workbenchScreen', 'settingsScreen'].forEach(id => {
     document.getElementById(id).classList.remove('active');
   });
   if (typeof WB !== 'undefined') WB.active = false;
@@ -21937,7 +22031,7 @@ function playShopChaching() {
     osc.frequency.setValueAtTime(freq, t + i * 0.06);
     g.gain.setValueAtTime(0.08, t + i * 0.06);
     g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.15);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(sfxOut());
     osc.start(t + i * 0.06);
     osc.stop(t + i * 0.06 + 0.16);
   });
@@ -22417,9 +22511,10 @@ function updatePlayer(dt) {
   const onLadder = inScenario && updateLadder(dt);
 
   // Look — sensitivity reduces with ADS
-  const sensMult = 1 - Game.player.ads * (1 - ADS_SENS_MULT);
+  // v1.192: the settings' mouse and aim sensitivity scale it, and invert look flips the pitch
+  const sensMult = Settings.mouseSens * (1 - Game.player.ads * (1 - ADS_SENS_MULT * Settings.aimSens));
   Game.player.yaw -= Game.mouse.dx * MOUSE_SENS * sensMult;
-  Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult;
+  Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult * (Settings.invertY ? -1 : 1);
   Game.player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, Game.player.pitch));
   Game.mouse.dx = 0; Game.mouse.dy = 0;
 
@@ -22644,14 +22739,17 @@ function updatePlayer(dt) {
   }
 
   // FOV — ADS, sprint, slide
-  let targetFov = BASE_FOV;
+  // v1.192: the settings' field of view; aiming narrows it by the same share as from the old fixed 75
+  const baseFov = Settings.fov;
+  let targetFov = baseFov;
   // v1.28: a magnified sight (scope) zooms further when aiming. zoomBonus 0..1
   // deepens the ADS target FOV toward a tighter value.
   const zoomBonus = getEquippedSightZoomBonus();
   // v1.61b: stronger magnification for scopes — deeper minimum FOV so a 4× scope
   // genuinely pulls targets in (floor 16° vs the old 28°).
-  const adsFovTarget = ADS_FOV_TARGET - zoomBonus * (ADS_FOV_TARGET - 16);
-  targetFov += Game.player.ads * (adsFovTarget - BASE_FOV);
+  const adsFov = ADS_FOV_TARGET * baseFov / BASE_FOV;
+  const adsFovTarget = adsFov - zoomBonus * (adsFov - 16);
+  targetFov += Game.player.ads * (adsFovTarget - baseFov);
   if (Game.player.sprinting && movingForwardish) targetFov += 5;
   if (Game.player.sliding) targetFov += 8;
   Game.camera.fov += (targetFov - Game.camera.fov) * Math.min(1, dt * 10);
@@ -28367,6 +28465,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
@@ -28441,6 +28540,81 @@ function tick() {
 // ---------------------------------------------------------------------
 // UI WIRING
 // ---------------------------------------------------------------------
+// v1.192 (D.17 "A better game" 5, Michael: C): the settings screen. The title's SETTINGS opens it over the title; in
+// the bedroom, with the mouse free, a SETTINGS button sits top right. Every change applies and saves at once.
+const SETTINGS_ROWS = [
+  { key: 'mouseSens', label: 'Mouse sensitivity', fmt: v => v.toFixed(2) + '×' },
+  { key: 'aimSens',   label: 'Aim sensitivity',   fmt: v => v.toFixed(2) + '×' },
+  { key: 'music',     label: 'Music volume',      fmt: v => Math.round(v * 100) + '%' },
+  { key: 'effects',   label: 'Effects volume',    fmt: v => Math.round(v * 100) + '%' },
+  { key: 'fov',       label: 'Field of view',     fmt: v => Math.round(v) + '°' },
+  { key: 'invertY',   label: 'Invert look',       toggle: true },
+];
+function renderSettings() {
+  const rows = document.getElementById('settingsRows');
+  rows.innerHTML = '';
+  for (const row of SETTINGS_ROWS) {
+    const el = document.createElement('div');
+    el.className = 'settings-row';
+    const label = document.createElement('label');
+    label.textContent = row.label;
+    const val = document.createElement('span');
+    val.className = 'settings-val';
+    const input = document.createElement('input');
+    input.dataset.key = row.key;
+    if (row.toggle) {
+      input.type = 'checkbox';
+      input.checked = !!Settings[row.key];
+      val.textContent = input.checked ? 'On' : 'Off';
+      input.addEventListener('change', () => {
+        Settings[row.key] = input.checked; val.textContent = input.checked ? 'On' : 'Off';
+        saveSettings(); applySettings();
+      });
+    } else {
+      const r = SETTINGS_RANGES[row.key];
+      input.type = 'range'; input.min = r[0]; input.max = r[1]; input.step = r[2];
+      input.value = Settings[row.key];
+      val.textContent = row.fmt(Settings[row.key]);
+      input.addEventListener('input', () => {
+        Settings[row.key] = sanitizeSettings(Object.assign({}, Settings, { [row.key]: Number(input.value) }))[row.key];
+        val.textContent = row.fmt(Settings[row.key]);
+        saveSettings(); applySettings();
+      });
+    }
+    el.append(label, input, val);
+    rows.appendChild(el);
+  }
+}
+function openSettings() {
+  renderSettings();
+  document.getElementById('settingsScreen').classList.add('active');
+  if (Game.mode !== 'title') { Game.prevMode = Game.mode; Game.mode = 'settings'; }
+  exitPointerLock();
+}
+function closeSettings() {
+  document.getElementById('settingsScreen').classList.remove('active');
+  if (Game.mode === 'settings') {
+    Game.mode = Game.prevMode || 'bedroom';
+    if (Game.mode === 'bedroom') showPauseHint();
+  }
+}
+function updateBedroomSettingsBtn() {
+  const want = Game.mode === 'bedroom' && !Game.mouse.locked ? 'block' : 'none';
+  const btn = document.getElementById('bedroomSettingsBtn');
+  if (btn.style.display !== want) btn.style.display = want;
+}
+document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('bedroomSettingsBtn').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
+// its mousedown must not reach the document's, which would take the pointer lock for the bedroom
+document.getElementById('bedroomSettingsBtn').addEventListener('mousedown', e => e.stopPropagation());
+document.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && document.getElementById('settingsScreen').classList.contains('active')) closeSettings();
+});
+document.getElementById('settingsDoneBtn').addEventListener('click', closeSettings);
+document.getElementById('settingsResetBtn').addEventListener('click', () => {
+  Object.assign(Settings, SETTINGS_DEFAULTS); saveSettings(); applySettings(); renderSettings();
+});
+
 // v1.37: title-screen entry points. If a save exists, show CONTINUE (load it,
 // then enter) and relabel the primary button to NEW GAME (which starts fresh
 // WITHOUT touching the save on disk — the save is only overwritten when the

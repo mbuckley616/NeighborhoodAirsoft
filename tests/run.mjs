@@ -28,7 +28,7 @@ const WEIGHTS = {
   'lot-hollow-polish.test.mjs': 105, 'map-screen.test.mjs': 15, 'market-lot.test.mjs': 83, 'mirror.test.mjs': 46,
   'music.test.mjs': 3, 'night-lights-allies.test.mjs': 50, 'night-lights-spawn.test.mjs': 40, 'night-prowl.test.mjs': 32, 'northcliff.test.mjs': 110, 'one-ending.test.mjs': 33,
   'opening-hold.test.mjs': 45, 'pincer.test.mjs': 34, 'pocket.test.mjs': 28, 'pointer-lock.test.mjs': 11,
-  'result-text.test.mjs': 109, 'school-kids.test.mjs': 30, 'retreat-progress.test.mjs': 175, 'road-slide.test.mjs': 58, 'shard.test.mjs': 1,
+  'result-text.test.mjs': 109, 'school-kids.test.mjs': 30, 'settings.test.mjs': 40, 'retreat-progress.test.mjs': 175, 'road-slide.test.mjs': 58, 'shard.test.mjs': 1,
   'shop-tabs.test.mjs': 44, 'smoke.test.mjs': 57, 'spawn-facing.test.mjs': 333, 'stuck-sweep-1.test.mjs': 243,
   'stuck-sweep-10.test.mjs': 195, 'stuck-sweep-11.test.mjs': 264, 'stuck-sweep-12.test.mjs': 161,
   'stuck-sweep-13.test.mjs': 138, 'stuck-sweep-14.test.mjs': 192, 'stuck-sweep-15.test.mjs': 333,

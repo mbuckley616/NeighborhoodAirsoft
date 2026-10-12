@@ -9026,3 +9026,45 @@ near the flag now. Mason still runs, and Andrew and Evan are unchanged.
   Fernando is still in the fort with the AK, and nothing here changes how he covers the street.
 - A draw pays as a loss and shows in the lose colour; whether it should read differently is Michael's call once he has
   seen one.
+
+## v1.192 — Settings
+Decisions, "A better game" 1–5 (builder, 12 Oct). Michael answered all five on the control room this evening: a
+light summer story (1 A), looks then a crew (2 C), a Pickup Game board (3 A), online after the board (4 B), and
+settings, then a better result screen (5 C). This run takes 5's first step because it is the smallest and the most
+plainly wanted: the game had no settings at all, and they are the first thing a new itch.io player looks for.
+
+**The screen.** SETTINGS sits under the title's two buttons, and in the bedroom a SETTINGS button shows top right
+whenever the mouse is free (the same moment as the "Click to capture mouse" hint). It opens a card over whatever is
+behind it, in the game's dark-and-amber style, with six rows: mouse sensitivity (0.25×–3×), aim sensitivity (0.25×–2×,
+on top of the old 0.55 slow-down when aimed), music volume and effects volume (0–100%), field of view (60–100°,
+default 75) and invert look. Each change applies at once and is saved at once; DEFAULTS puts them back; DONE or
+Escape closes it. The bedroom stands still while it is open, as it does for the shop.
+
+**Where they live.** In their own localStorage key, not the save: they belong to the browser, so NEW GAME (which
+resets the save in memory) and CONTINUE both keep them. A stored value outside a row's range is clamped, and a
+non-number falls back to the default.
+
+**How they reach the game.** The look multiplies by the mouse sensitivity, and when aimed by the aim sensitivity
+too; invert flips the pitch. The field of view replaces the fixed 75°, and aiming narrows it by the same share as
+before (75→55 becomes 90→66), so a wide setting still zooms when you aim; a scope's extra zoom is unchanged. The music
+volume scales the music master's fade-in and moves it live. The effects needed a bus: 36 sound effects were wired
+straight to the speakers, so they now all go through one effects gain, and the kids' spoken lines take the same
+volume. The M key still mutes the music.
+### Verified
+- `tests/settings.test.mjs` (new, 22 checks). The title opens the screen and stays on the title; six rows at 1×, 1×,
+  100%, 100%, 75°, off. Driving the controls sets 2×, 0.5×, 50%, 25%, 90°, on, saved at once, read back as "2.00×
+  0.50× 50% 25% 90° On". A page reload keeps them, and junk in storage is clamped (fov 500 → 100, a negative music
+  volume → 0, a string → the default). NEW GAME keeps them. The bedroom shows the button with the mouse free and
+  hides it when the mouse is taken or the screen is open; it opens over the bedroom (mode `settings`) and Escape
+  closes it back. In a match, 50 px of mouse turns 0.22 rad at 2×, the pitch goes the other way with invert, and
+  aimed it turns 0.0605 rad (2 × 0.55 × 0.5). The camera settles at 90.0° at the hip and 66.0° aimed. Playing seven
+  sound effects (shot, footsteps, reload, hit, impact, the shop till) connects nothing straight to the speakers, and
+  the effects slider sets the bus to 60%. No page errors.
+- `npm test` as four local shards: 96 of 101 suites passed. Five (`stuck-sweep-6`, `briefing-lives`, `houses`,
+  `utility-belt`, `car-side-fire`) died at Playwright's 30 s `page.goto` limit under the load of four shards, before any
+  check (the v1.124 case), and all five passed alone. `harness` caught one real NEW GAME stall and recovered.
+### Still open
+- How the ranges feel is for play: the top mouse speed (3×) and the field-of-view limits (60–100°) are guesses.
+- No key rebinding (the option didn't ask for it), and settings can't be opened mid-match: the match keeps running
+  while the mouse is free, so a settings screen there would need a pause first.
+- Next on this item: 5's second step, the result screen.
