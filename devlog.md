@@ -9014,6 +9014,8 @@ near the flag now. Mason still runs, and Andrew and Evan are unchanged.
   300 s on THEY WIN 1–0; another, on the first run, ended at 130 s on THEY TOOK IT 2–0.
 - `ctf` (its played rounds: the backyards and the street both used, runners over 150 m, no wedge over 0.6 s),
   `bellfield`, `northcliff` and the stuck-kid sweep on the match (ONLY=, three ways, 90 s: worst 1.5 s) pass.
+- `npm test` as four local shards: 98 of 99 suites passed. `mirror` died at a `page.evaluate` with the harness's "browser
+  has been closed" (as on v1.188), before any check, and passed alone.
 ### Still open
 - Whether a player can now get their flag home is for play. The critic's other finding stands: a player fighting down
   the street was tagged every ~7 s, once 14 times running by Fernando's AK from 28–38 m as each respawn grace ran out.
