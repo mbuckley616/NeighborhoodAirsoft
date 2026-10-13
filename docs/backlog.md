@@ -229,8 +229,10 @@ Fable card on the control room and Michael starts it from there.
    your own street. (Michael, control room, 2026-10-12, "A better game" 1: **A**) In four steps (builder): ~~1, the
    calendar~~ — done, v1.194 (summer 2003 on the bedroom's north wall: each zone a span of days from 1 June, the date
    moving with the matches won there, days gone crossed off, today ringed, Saturday 30 August ringed twice; E opens
-   June to August; `tests/calendar.test.mjs`). Next: 2, the flip phone and its texts; 3, the rival crew in briefings
-   and result lines; 4, the last-Saturday match on your street.
+   June to August; `tests/calendar.test.mjs`). ~~2, the flip phone and its texts~~ — done, v1.195 (a flip phone on
+   the north nightstand, its light on while a text is unread; eighteen texts from Eric, Rebecca, Brooke, Sean and Seth,
+   one per key win, dated by the calendar, read state saved; `tests/texts.test.mjs`). Next: 3, the rival crew (Seth's
+   crew, already the recurring other side) in briefings and result lines; 4, the last-Saturday match on your street.
 21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
    room, 2026-10-12, "A better game" 2: **C**)

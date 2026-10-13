@@ -1099,6 +1099,17 @@
   #modalBody .sm-day.today { outline: 2px solid #5fa0e8; color: #fff; font-weight: bold; }
   #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
   #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
+  /* v1.195: the flip phone's texts */
+  #modalScreen .modal-card.phone { max-width: 340px; border-radius: 22px; padding: 22px 22px 18px; background: #2c3138; }
+  #modalBody .ph-screen { background: #b9c7a6; color: #1d2614; border-radius: 6px; padding: 8px; text-align: left;
+    max-height: 52vh; overflow-y: auto; box-shadow: inset 0 0 0 2px #5d6a52; font-family: 'Courier New', monospace; }
+  #modalBody .ph-msg { padding: 6px 4px; border-bottom: 1px dashed #6f7d60; }
+  #modalBody .ph-msg:last-child { border-bottom: none; }
+  #modalBody .ph-head { display: flex; gap: 6px; align-items: baseline; font-size: 11px; }
+  #modalBody .ph-from { font-weight: bold; letter-spacing: 1px; }
+  #modalBody .ph-new { background: #1d2614; color: #b9c7a6; padding: 0 4px; font-size: 9px; letter-spacing: 1px; }
+  #modalBody .ph-date { margin-left: auto; opacity: 0.7; }
+  #modalBody .ph-text { font-size: 12px; line-height: 1.4; margin-top: 2px; }
 
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
@@ -1962,7 +1973,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.194</div>
+  <div class="version">v1.195</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3361,6 +3372,7 @@ const Game = {
       null,                     // slot 3 → equipment (locked by default)
     ],
     completed: {},
+    textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
   },
 };
 
@@ -8951,6 +8963,29 @@ function buildBedroomScene() {
   calGroup.position.set(-2.3, 1.5, -BR_D/2 + 0.062);   // the wall is 0.1 thick, its face at -BR_D/2 + 0.05
   scene.add(calGroup);
 
+  // v1.195 (D.20 step 2): your flip phone, shut, on the north nightstand; its little light is on while a text is unread
+  const phoneGroup = new THREE.Group();
+  const phoneShell = new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.35, metalness: 0.6 });
+  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.018, 0.095), phoneShell);
+  phoneGroup.add(phoneBody);
+  const phoneHinge = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), phoneShell);
+  phoneHinge.rotation.z = Math.PI / 2;
+  phoneHinge.position.set(0, 0, -0.047);
+  phoneGroup.add(phoneHinge);
+  const phoneLcd = new THREE.Mesh(new THREE.PlaneGeometry(0.026, 0.02), new THREE.MeshStandardMaterial({ color: 0x1b2a3a, roughness: 0.3 }));
+  phoneLcd.rotation.x = -Math.PI / 2;
+  phoneLcd.position.set(0, 0.0095, -0.02);
+  phoneGroup.add(phoneLcd);
+  const phoneLed = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0x40ff70, emissive: 0x30ff60, emissiveIntensity: 1.5 }));
+  phoneLed.position.set(0, 0.0095, 0.02);
+  phoneGroup.add(phoneLed);
+  phoneGroup.position.set(BR_W/2 - 0.35 - 0.17, 0.649, -1.05 + 0.14);
+  phoneGroup.rotation.y = 0.5;
+  scene.add(phoneGroup);
+  const phoneUnread = summerUnreadCount();
+  phoneLed.visible = phoneUnread > 0;
+
   // ============================================================
   // BIG CLOSET INTERIOR DECOR (visible through open doorway, looking south)
   // ============================================================
@@ -9060,6 +9095,17 @@ function buildBedroomScene() {
     prompt: 'Look at the calendar',
     label: 'Calendar', icon: 'calendar', labelY: 2.0,
     action: () => openSummerCalendar(),
+  });
+
+  // v1.195 (D.20 step 2): the phone → your texts
+  Game.interactables.push({
+    type: 'phone',
+    box: new THREE.Box3().setFromObject(phoneGroup),
+    pos: new THREE.Vector3(BR_W/2 - 0.6, 0.7, -0.95),
+    prompt: phonePromptText(phoneUnread),
+    label: phoneLabelText(phoneUnread), icon: 'phone', labelY: 1.25,
+    action: () => openPhone(),
+    _led: phoneLed,
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
@@ -20898,7 +20944,7 @@ function showModal(title, body) {
 function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
-  document.querySelector('#modalScreen .modal-card').classList.remove('wide');   // v1.194: the summer calendar widens it
+  document.querySelector('#modalScreen .modal-card').classList.remove('wide', 'phone');   // v1.194: the summer calendar widens it; v1.195: the phone styles it
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
@@ -23129,6 +23175,8 @@ const BR_LABEL_ICONS = {
   outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   // v1.194: a wall calendar — the summer so far
   calendar: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4M8 14l3 3M11 14l-3 3" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  // v1.195: a flip phone — your texts
+  phone: '<svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#f4e9d8" stroke-width="1.8"/><path d="M7 11h10M10 6h4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
@@ -29084,6 +29132,101 @@ function openSummerCalendar() {
   body.innerHTML = summerCalendarHTML(summerDayIndex());
   document.querySelector('#modalScreen .modal-card').classList.add('wide');
   document.getElementById('modalScreen').classList.add('active');
+}
+
+// v1.195 (D.20 step 2, Michael: A on "A better game" 1): your friends text your flip phone between matches. Each text
+// arrives with a win (`after`, a scenario id; none for the first), dated on the calendar by the day that win brings
+// (summerDayAfter), so an old save gets the summer's texts on the right days. Read ones are kept in the save.
+const SUMMER_TEXTS = [
+  { id: 'start',      from: 'Eric',    after: null,
+    text: "SUMMER!!! 13 weeks no school. seth set up targets at the end of winnmark so u can try the new gun. go" },
+  { id: 'tutorial',   from: 'Seth',    after: 'winnmark_tutorial',
+    text: "ok ur not terrible. my backyard tmrw. just u and me" },
+  { id: 'seth1',      from: 'Seth',    after: 'winnmark_seth_house',
+    text: "lucky shot. my dad is getting me a shotgun this week. then well see" },
+  { id: 'culdesac',   from: 'Brooke',  after: 'winnmark_cul_de_sac',
+    text: "ok that was kind of sick. trey is still mad u got past the plank fort" },
+  { id: 'squad',      from: 'Rebecca', after: 'winnmark_team_3v3',
+    text: "everybody on winnmark is talking about squad up. eric says u carried. eric says that about everyone tho" },
+  { id: 'bunratty',   from: 'Eric',    after: 'winnmark_night_team_2v2',
+    text: "sean from bunratty heard about u. he says nobody wins on their street, its all woods down by the river. tmrw?" },
+  { id: 'brothers',   from: 'Sean',    after: 'bunratty_brothers',
+    text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
+  { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
+    text: "infection at the cul de sac is the best game ever invented and i will not hear otherwise" },
+  { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
+    text: "everybody is going to the hollow this week. the woods past the river, forts at both ends. seth is bringing his whole crew. bring BBs" },
+  { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
+    text: "the big game was close and u know it. my crew wants the north fort back" },
+  { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
+    text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
+  { id: 'northcliff', from: 'Eric',    after: 'lot_night_4v4',
+    text: "some kid evan up in northcliff says they play it different up there. hills and a creek. august is gonna be crazy" },
+  { id: 'treehouse',  from: 'Rebecca', after: 'stoneglen_treehouse',
+    text: "the twins have a REAL treehouse?? with a ladder?? not fair" },
+  { id: 'flags',      from: 'Sean',    after: 'bellfield_ctf',
+    text: "capture the flag on bellfield. my legs still hurt" },
+  { id: 'school',     from: 'Seth',    after: 'northcliff_night_4v4',
+    text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. lets go see" },
+  { id: 'pool',       from: 'Brooke',  after: 'school_night_4v4',
+    text: "the club shut the pool for the season. i know a gap in the hedge. bring a pistol" },
+  { id: 'store',      from: 'Eric',    after: 'club_night_4v4',
+    text: "tylers dad is night manager at riverside market. tyler says we can get in before it opens. FOR REAL" },
+  { id: 'last',       from: 'Seth',    after: 'store_night_4v4',
+    text: "tmrw. last saturday of the summer. ur street, everybody. my crew vs yours. dont chicken out" },
+];
+// The calendar day a win brings: a zone's last match opens the next zone (its first day); any other moves the date
+// along its zone's span by one match's share, as summerDayIndex does.
+function summerDayAfter(scenarioId) {
+  if (!scenarioId) return 0;
+  const ctx = findScenarioListContext(scenarioId);
+  if (!ctx || !SUMMER_SPANS[ctx.group]) return 0;
+  const span = SUMMER_SPANS[ctx.group], n = ctx.ids.length;
+  if (ctx.idx === n - 1) {
+    const next = ZONE_LADDER[zoneLadderIndex(ctx.group) + 1];
+    return next && SUMMER_SPANS[next.key] ? SUMMER_SPANS[next.key][0] : span[1];
+  }
+  return Math.min(span[1], span[0] + Math.floor((span[1] - span[0] + 1) * (ctx.idx + 1) / n));
+}
+// The texts that have arrived, newest first: { id, from, text, day, read }.
+function summerTexts() {
+  const read = Game.persist.textsRead || {};
+  return SUMMER_TEXTS.map((t, i) => ({ t, i }))
+    .filter(({ t }) => !t.after || Game.persist.completed[t.after])
+    .map(({ t, i }) => ({ id: t.id, from: t.from, text: t.text, day: summerDayAfter(t.after), read: !!read[t.id], i }))
+    .sort((a, b) => (b.day - a.day) || (b.i - a.i));
+}
+function summerUnreadCount() { return summerTexts().filter(t => !t.read).length; }
+function phonePromptText(n) { return 'Check your phone' + (n ? ` (${n} new)` : ''); }
+function phoneLabelText(n) { return n ? `Phone · ${n} new` : 'Phone'; }
+function openPhone() {
+  const texts = summerTexts();
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Texts';
+  const body = document.getElementById('modalBody');
+  body.style.whiteSpace = 'normal';
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  body.innerHTML = `<div class="ph-screen">${texts.map(t => {
+    const d = summerDate(t.day);
+    return `<div class="ph-msg${t.read ? '' : ' new'}" data-id="${t.id}">
+      <div class="ph-head"><span class="ph-from">${t.from.toUpperCase()}</span>${t.read ? '' : '<span class="ph-new">NEW</span>'}
+        <span class="ph-date">${d.weekday.slice(0, 3)} ${d.date} ${SUMMER_MONTHS[d.month].name.slice(0, 3)}</span></div>
+      <div class="ph-text">${esc(t.text)}</div></div>`;
+  }).join('')}</div>`;
+  document.querySelector('#modalScreen .modal-card').classList.add('phone');
+  document.getElementById('modalScreen').classList.add('active');
+  // opening them reads them all; the nightstand phone stops blinking and its label and prompt catch up
+  Game.persist.textsRead = Game.persist.textsRead || {};
+  for (const t of texts) Game.persist.textsRead[t.id] = true;
+  const it = Game.interactables.find(i => i.type === 'phone');
+  if (it) {
+    it.prompt = phonePromptText(0); it.label = phoneLabelText(0);
+    const nm = it._labelEl && it._labelEl.querySelector('.br-name'); if (nm) nm.textContent = it.label;
+    if (it._led) it._led.visible = false;
+  }
+  autoSave();
 }
 
 // Human-readable reason a scenario is locked (for greyed rows / pickers).

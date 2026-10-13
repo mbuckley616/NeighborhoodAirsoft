@@ -9138,3 +9138,40 @@ days shaded, "Today is Sunday 20 July", and a line with the zone's dates and how
   days each, so August goes fast.
 - The calendar doesn't yet mark the days texts came or the rival crew's matches; those are steps 2 and 3. Saturday 30
   August is ringed but there is no match on it until step 4.
+
+## v1.195 — Texts on the flip phone
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 2 of the summer story: your friends text your
+flip phone between matches. v1.194 put the summer on the bedroom wall; the texts are dated on it.
+
+**The phone.** A shut silver flip phone lies on the north nightstand by the lamp. While a text is unread its little
+green light is on, its chip reads "Phone · 2 new" and the prompt "Check your phone (2 new)". E opens it: a phone-shaped
+card with a green LCD, the texts newest first, each with who sent it, NEW if you hadn't seen it, and the day ("Sun 22
+Jun"). Opening it reads them all; that is kept in the save (`textsRead`), so the light stays off after a reload.
+
+**The texts.** Eighteen of them, one for a new game and one each after seventeen wins: the tutorial, your first
+match with Seth, the cul-de-sac, Squad Up, every zone's last match (each one points you at the next place: Sean on
+Bunratty, the Hollow, Marcus's mom's Saturday shop at Riverside Market, Evan up in Northcliff, the school's portables,
+the pool's gap in the hedge, Tyler's dad's store), the brothers, Infection, the Hollow's Big Game, the twins'
+treehouse and Flags on Bellfield. They come from Eric, Rebecca, Brooke and Sean, and Seth, who is your friend and
+your rival at once, as the matches already have him. The last, from Seth on Friday 29 August, says the summer's last
+Saturday is on your street, his crew against yours; that match is step 4. A text's date is the calendar day its win
+brings (a zone's last match brings the next zone's first day), so an old save gets the summer's texts on the right
+days, all unread.
+### Verified
+- `tests/texts.test.mjs` (new, 17 checks). A new game has one text, Eric's, dated 1 June; the phone's light is on, its
+  chip "Phone · 1 new", the prompt "Check your phone (1 new)". Every text follows a real match; the dates never go
+  back down the list (days 0, 1, 2, 6, 17, 21 … 85, 89); Bunratty's comes Sunday 22 June, the store's Monday 25 August,
+  Seth's last Friday 29 August. Winning the ladder in order to the Hollow's Big Game, each of the nine texts on the way
+  is dated the day the calendar then shows, and ten wait, all unread, newest (Seth's, 20 July) first. Beside the
+  nightstand the prompt is "Check your phone (10 new)"; E opens "Texts" with ten NEW messages, Seth's first and
+  Eric's "Sun 1 Jun" last; that reads them all and saves ten ids; the light goes off and the chip and prompt drop the
+  count; OK closes to the bedroom. A save and load keeps them read, and finishing the Hollow brings one new text,
+  Brooke's about the lot. No page errors.
+- `npm test` as four local shards: 101 of 102 suites passed. `stuck-sweep-16` died at Playwright's 30 s `page.goto`
+  limit under load before any check and passed alone.
+### Still open
+- The texts' voice (lowercase, "u", "tmrw") is a guess at 2003 texting for Michael to read; every line is in
+  `SUMMER_TEXTS`, easy to change.
+- The phone's light is steady, not blinking, and there is no buzz when you come home to a new text.
+- Seth's crew is the rival in the texts; step 3 puts them in briefings and result lines, and may want a crew name
+  (a question for Michael if so).
