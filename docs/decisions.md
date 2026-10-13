@@ -5,6 +5,30 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The last Saturday: where is your street? (builder, 2026-10-13)** Step 4 of the summer story is one big match on
+  your own street on Saturday 30 August, after the store's night match; Seth's last text sets it up ("ur street,
+  everybody. my crew vs yours"). Nothing in the game yet says which street is yours. Options:
+  - A) Winnmark Court is your street: the summer started there and Seth lives on it. A day 6v6, last team standing,
+    three lives each: Eric, Rebecca, Brooke, Sean and Trey with you against Seth, Devon, Mitchell, Mason, Marcus and
+    Ryan; its own card after the store, dated 30 August on the calendar, and a last text after it *(recommended)*
+  - B) A new short street of your own, built from the polished Winnmark pieces, with the same match
+  - C) A, and the bedroom's calendar turns to a last page ("See you next summer") once it is won
+- **Does Seth's crew get a name? (builder, 2026-10-13)** v1.196 makes Seth's crew the summer's rival: 20 ladder
+  matches have Seth on the other side, and the briefing, the result card and the calendar now call them "Seth's
+  crew", as the texts already do. A name would go in one constant (`RIVAL_CREW`), so it is cheap either way; D.21 will
+  give your own crew a name later. Options:
+  - A) Keep "Seth's crew": it is what kids would call them, and it says who leads them *(recommended)*
+  - B) A made-up crew name you pick (say it in a note), shown wherever "Seth's crew" is now
+  - C) Wait until D.21's crew name for your side, then name both together
+- **Shoes as looks, when shoes are already gear? (builder, 2026-10-13)** D.21's list ends "shorts and shoes". The
+  shop's Gear tab already sells three pairs (Trail Runners, Track Spikes, Cushioned Cross-Trainers), each with its own
+  stamina or sprint numbers and its own look on the Loadout kid (v1.133); with none bought you wear plain sneakers in a colour
+  the game picks. A Clothes pair would have to sit beside or replace the gear pair. Options:
+  - A) A Sneakers row at the mirror, free: six colours for the plain pair you wear when no gear pair is on; the gear
+    pairs keep their own look *(recommended)*
+  - B) Clothes shoes with no numbers (high-tops, skate shoes, flip-flops), worn only when no gear pair is on
+  - C) Skip shoes; go on to your crew (a name and colours your allies wear)
+
 ## Answered
 
 - **The last Saturday: where is your street? (builder, 2026-10-13)** Step 4 of the summer story is one big match on

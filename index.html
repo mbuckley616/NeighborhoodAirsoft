@@ -1039,6 +1039,7 @@
   #resultScreen .rs-num { font-size: 20px; font-weight: bold; color: var(--ui-text); font-variant-numeric: tabular-nums; }
   #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
   #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
+  #resultScreen .rs-rival .rs-tag { color: #e0503a; }   /* v1.196 */
   #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
@@ -1099,6 +1100,27 @@
   #modalBody .sm-day.today { outline: 2px solid #5fa0e8; color: #fff; font-weight: bold; }
   #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
   #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
+  #modalBody .sm-note.sm-rival { margin-top: 4px; }
+  /* v1.201 (D.22 step 1): the Pickup Game board */
+  #modalBody .pk-board { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  #modalBody .pk-note { font-size: 13px; opacity: .8; }
+  #modalBody .pk-label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
+  #modalBody .pk-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  #modalBody .pk-opt { padding: 5px 12px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 13px; color: #f4e9d8; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); }
+  #modalBody .pk-opt.on { background: #b8562e; }
+  #modalBody .pk-play { padding: 8px 28px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 15px; letter-spacing: .1em; color: #fff; background: #2f7a3a; border: 1px solid rgba(255,255,255,.3); }
+  #modalBody .sm-day.rival::after { content: ''; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: #e0503a; }   /* v1.196: you beat Seth's crew */
+  /* v1.195: the flip phone's texts */
+  #modalScreen .modal-card.phone { max-width: 340px; border-radius: 22px; padding: 22px 22px 18px; background: #2c3138; }
+  #modalBody .ph-screen { background: #b9c7a6; color: #1d2614; border-radius: 6px; padding: 8px; text-align: left;
+    max-height: 52vh; overflow-y: auto; box-shadow: inset 0 0 0 2px #5d6a52; font-family: 'Courier New', monospace; }
+  #modalBody .ph-msg { padding: 6px 4px; border-bottom: 1px dashed #6f7d60; }
+  #modalBody .ph-msg:last-child { border-bottom: none; }
+  #modalBody .ph-head { display: flex; gap: 6px; align-items: baseline; font-size: 11px; }
+  #modalBody .ph-from { font-weight: bold; letter-spacing: 1px; }
+  #modalBody .ph-new { background: #1d2614; color: #b9c7a6; padding: 0 4px; font-size: 9px; letter-spacing: 1px; }
+  #modalBody .ph-date { margin-left: auto; opacity: 0.7; }
+  #modalBody .ph-text { font-size: 12px; line-height: 1.4; margin-top: 2px; }
 
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
@@ -1726,6 +1748,9 @@
     margin-right: 6px;
   }
 
+  .brief-rival { border-left-color: #e0503a; background: rgba(224,80,58,0.10); }   /* v1.196: Seth's crew */
+  .brief-rival .brief-obj-label { color: #e0503a; }
+
   /* ===== v1.39: Pre-start scenario details popup ===== */
   #scenarioBriefModal .brief-card {
     pointer-events: auto;
@@ -1962,7 +1987,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.194</div>
+  <div class="version">v1.201</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3280,7 +3305,14 @@ const Game = {
     // old saves get these defaults through loadGame's merge.
     look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
             shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
-            eyeColor: 'brown', shirtFront: 'plain' },   // v1.123: eye colour and shirt front (mirror rows)
+            eyeColor: 'brown', shirtFront: 'plain',   // v1.123: eye colour and shirt front (mirror rows)
+            hat: 'none',                              // v1.197 (D.21 step 1): a KID_HATS id, or none
+            top: 'none',                              // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
+            shorts: 'none',                           // v1.199 (D.21 step 3): a KID_SHORTS id, or none (the jeans)
+            crewName: '', crewColor: null },          // v1.200 (D.21, your crew): its name and bandana colour, or none
+    ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
+    ownedTops: {},              // v1.198: the tops you have bought
+    ownedShorts: {},            // v1.199: the shorts you have bought
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -3361,6 +3393,7 @@ const Game = {
       null,                     // slot 3 → equipment (locked by default)
     ],
     completed: {},
+    textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
   },
 };
 
@@ -5237,6 +5270,8 @@ function getScenarioBriefing(scenarioId) {
     scenarioName: sc.scenarioName || '',
     desc: sc.desc || '',
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
+    rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
+    tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
   };
 }
 
@@ -5255,7 +5290,7 @@ function renderBriefingRosterHTML(brief) {
   let html = '';
   // YOUR side (you + any allies)
   html += `<div class="brief-section">
-    <div class="brief-heading brief-heading-you">YOUR SIDE</div>
+    <div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
     <div class="brief-combatant you">
       <span class="brief-name">You</span>
       <span class="brief-gun">${youGun}</span>
@@ -5264,13 +5299,15 @@ function renderBriefingRosterHTML(brief) {
     ${brief.allies.map(c => row(c, 'ally')).join('')}
   </div>`;
   // OPPONENTS
-  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)' : 'OPPONENTS';
+  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');   // v1.196
   html += `<div class="brief-section">
     <div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
     ${brief.enemies.map(c => row(c, 'enemy')).join('')}
   </div>`;
   // Objective
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
+  if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;   // v1.196
   return html;
 }
 
@@ -8951,6 +8988,60 @@ function buildBedroomScene() {
   calGroup.position.set(-2.3, 1.5, -BR_D/2 + 0.062);   // the wall is 0.1 thick, its face at -BR_D/2 + 0.05
   scene.add(calGroup);
 
+  // v1.201 (D.22 step 1): the Pickup Game board, a corkboard on the north wall east of the window, a sheet pinned to it
+  const pickupGroup = new THREE.Group();
+  const corkMat = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: 0.95 });
+  const corkFrameMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8 });
+  const cork = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.58, 0.02), corkMat);
+  pickupGroup.add(cork);
+  for (const [w, h, x, y] of [[0.92, 0.03, 0, 0.305], [0.92, 0.03, 0, -0.305], [0.03, 0.64, -0.445, 0], [0.03, 0.64, 0.445, 0]]) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.035), corkFrameMat);
+    f.position.set(x, y, 0.005); pickupGroup.add(f);
+  }
+  const pkCanvas = document.createElement('canvas'); pkCanvas.width = 192; pkCanvas.height = 240;
+  { const c = pkCanvas.getContext('2d');
+    c.fillStyle = '#f4f0e4'; c.fillRect(0, 0, 192, 240);
+    c.fillStyle = '#c0342a'; c.font = 'bold 26px sans-serif'; c.textAlign = 'center';
+    c.fillText('PICKUP', 96, 44); c.fillText('GAME', 96, 74);
+    c.fillStyle = '#333'; c.font = '16px sans-serif';
+    ['where?', 'how many?', 'day or night?', 'lives?'].forEach((t, i) => c.fillText(t, 96, 112 + i * 28));
+    c.strokeStyle = '#2a4a8a'; c.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(30, 118 + i * 28); c.lineTo(162, 118 + i * 28); c.stroke(); } }
+  const pkSheet = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.375),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(pkCanvas), roughness: 0.9 }));
+  pkSheet.position.set(-0.12, -0.02, 0.012); pkSheet.rotation.z = 0.04; pickupGroup.add(pkSheet);
+  const pkNote = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.16), new THREE.MeshStandardMaterial({ color: 0xf2e27a, roughness: 0.9 }));
+  pkNote.position.set(0.24, 0.1, 0.012); pkNote.rotation.z = -0.08; pickupGroup.add(pkNote);
+  for (const [x, y, col] of [[-0.12, 0.16, 0xd8402a], [0.24, 0.17, 0x2a6ad8]]) {
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 }));
+    pin.position.set(x, y, 0.022); pickupGroup.add(pin);
+  }
+  pickupGroup.position.set(1.65, 1.5, -BR_D/2 + 0.062);
+  scene.add(pickupGroup);
+
+  // v1.195 (D.20 step 2): your flip phone, shut, on the north nightstand; its little light is on while a text is unread
+  const phoneGroup = new THREE.Group();
+  const phoneShell = new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.35, metalness: 0.6 });
+  const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.018, 0.095), phoneShell);
+  phoneGroup.add(phoneBody);
+  const phoneHinge = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), phoneShell);
+  phoneHinge.rotation.z = Math.PI / 2;
+  phoneHinge.position.set(0, 0, -0.047);
+  phoneGroup.add(phoneHinge);
+  const phoneLcd = new THREE.Mesh(new THREE.PlaneGeometry(0.026, 0.02), new THREE.MeshStandardMaterial({ color: 0x1b2a3a, roughness: 0.3 }));
+  phoneLcd.rotation.x = -Math.PI / 2;
+  phoneLcd.position.set(0, 0.0095, -0.02);
+  phoneGroup.add(phoneLcd);
+  const phoneLed = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0x40ff70, emissive: 0x30ff60, emissiveIntensity: 1.5 }));
+  phoneLed.position.set(0, 0.0095, 0.02);
+  phoneGroup.add(phoneLed);
+  phoneGroup.position.set(BR_W/2 - 0.35 - 0.17, 0.649, -1.05 + 0.14);
+  phoneGroup.rotation.y = 0.5;
+  scene.add(phoneGroup);
+  const phoneUnread = summerUnreadCount();
+  phoneLed.visible = phoneUnread > 0;
+
   // ============================================================
   // BIG CLOSET INTERIOR DECOR (visible through open doorway, looking south)
   // ============================================================
@@ -9060,6 +9151,27 @@ function buildBedroomScene() {
     prompt: 'Look at the calendar',
     label: 'Calendar', icon: 'calendar', labelY: 2.0,
     action: () => openSummerCalendar(),
+  });
+
+  // v1.201 (D.22 step 1): the corkboard → the Pickup Game board
+  Game.interactables.push({
+    type: 'pickup_board',
+    box: new THREE.Box3().setFromObject(pickupGroup),
+    pos: new THREE.Vector3(1.65, 1.0, -BR_D/2 + 0.45),
+    prompt: 'Set up a pickup game',
+    label: 'Pickup Game', icon: 'pickup', labelY: 2.0,
+    action: () => openPickupBoard(),
+  });
+
+  // v1.195 (D.20 step 2): the phone → your texts
+  Game.interactables.push({
+    type: 'phone',
+    box: new THREE.Box3().setFromObject(phoneGroup),
+    pos: new THREE.Vector3(BR_W/2 - 0.6, 0.7, -0.95),
+    prompt: phonePromptText(phoneUnread),
+    label: phoneLabelText(phoneUnread), icon: 'phone', labelY: 1.25,
+    action: () => openPhone(),
+    _led: phoneLed,
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
@@ -16503,7 +16615,7 @@ function addVipCap(kid, ours) {
   return cap;
 }
 
-function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false }) {
+function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false, crewColor = null }) {
   const baseCh = CHARACTERS[charId];
   if (!baseCh) {
     console.warn(`makeEnemyFromCharacter: unknown character "${charId}"`);
@@ -16513,7 +16625,8 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
   // with near-zero aggression/fireRate). Clone the profile first so we never mutate
   // the shared CHARACTERS entry used by every other scenario.
   const ch = statsOverride ? Object.assign({}, baseCh, statsOverride) : baseCh;
-  const kid = createKid(ch, weapon);
+  // v1.200: an ally of yours wears your crew's bandana (a copy of the profile, so CHARACTERS is never changed)
+  const kid = createKid(crewColor != null ? Object.assign({}, ch, { crewColor }) : ch, weapon);
   kid.group.position.copy(pos);
   scene.add(kid.group);
 
@@ -16834,12 +16947,16 @@ function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
     add('trim', box(w, 0.012, d), x, 0.266, z);
   // a chest stripe, a pocket, or plain, by kid
   // v1.123: a profile's shirtFront (Mike's, from the mirror) picks it; other kids keep the one their colours give
-  const style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
+  let style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
+  const topKind = KID_TOPS[p.top] ? KID_TOPS[p.top].kind : null;   // v1.198: a top has its own front (buildKidTop)
+  if (topKind) style = 2;
   if (style === 0) add('trim', box(0.424, 0.05, 0.244), 0, 0.06, 0);
   else if (style === 1) { add('trim', box(0.08, 0.085, 0.006), 0.1, 0.1, 0.116); add('trim', box(0.084, 0.01, 0.008), 0.1, 0.14, 0.117); }
   // belt round the waist with a buckle at the front
-  add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
-  add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  if (topKind !== 'hoodie') {   // v1.198: a hoodie hangs over the belt
+    add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
+    add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  }
   const trim = new THREE.Group(); trim.userData.kidClothes = true;
   _propMerge(trim, b, mats);
   trim.traverse(m => { if (m.isMesh) m.castShadow = false; });
@@ -16908,6 +17025,175 @@ function buildKidFace(head, p, skin, hair) {
   return { eyeL: eyes[0], eyeR: eyes[1], face };
 }
 
+// v1.197 (D.21 step 1, Michael: C on "A better game" 2 — looks you earn or buy): hats. Each is its own mesh worn over
+// the hair, in the average kid's frame (head centre y 1.26, its top 1.40, its face z +0.14). Bought in the shop's
+// Clothes tab, or won (`won`: the match whose win gives it); worn from the shop or the mirror (`look.hat`).
+const KID_HATS = {
+  cap_red:      { name: 'Red Ball Cap',  kind: 'cap',     color: 0xb8322a, price: 15,
+    desc: 'Six panels, a curved bill, a button on top. Keeps the sun out of your eyes.' },
+  cap_back:     { name: 'Backwards Cap', kind: 'capBack', color: 0x23345a, price: 15,
+    desc: 'Navy, bill to the back, the way the high school kids wear it.' },
+  bucket:       { name: 'Bucket Hat',    kind: 'bucket',  color: 0xb9a77a, price: 20,
+    desc: 'Floppy khaki, a brim all the way round. Very 2003.' },
+  bandana_red:  { name: 'Red Bandana',   kind: 'bandana', color: 0xa82a2a, price: 10,
+    desc: 'Folded into a headband and knotted at the back.' },
+  bandana_blue: { name: 'Blue Bandana',  kind: 'bandana', color: 0x2a4a8a, price: 10,
+    desc: 'The same, in blue.' },
+  winnmark_cap: { name: 'Winnmark Cap',  kind: 'cap',     color: 0x2f6a3a, won: 'winnmark_night_team_2v2', logo: 0xf2efe6,
+    desc: 'Green, a white patch on the front. Not for sale: clear Winnmark Court.' },
+};
+const KID_HAT_ORDER = ['cap_red', 'cap_back', 'bucket', 'bandana_red', 'bandana_blue', 'winnmark_cap'];
+function hatOwned(id) {
+  const h = KID_HATS[id];
+  if (!h) return false;
+  return h.won ? !!Game.persist.completed[h.won] : !!(Game.persist.ownedHats || {})[id];
+}
+function buildKidHat(id, color = null) {
+  let h = KID_HATS[id];
+  if (!h) return null;
+  if (color != null) h = Object.assign({}, h, { color });   // v1.200: the crew bandana, in the crew's colour
+  const mats = { cloth: _kidFaceMat('hat', h.color, 0.9),   // shared, as the face's and the clothes' are
+    trim: _kidFaceMat('hatTrim', new THREE.Color(h.color).multiplyScalar(0.7).getHex(), 0.9),
+    logo: _kidFaceMat('hatLogo', h.logo || 0xffffff, 0.8) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, ht, d) => new THREE.BoxGeometry(w, ht, d);
+  if (h.kind === 'cap' || h.kind === 'capBack') {
+    const zs = h.kind === 'cap' ? 1 : -1;
+    add('cloth', box(0.36, 0.1, 0.36), 0, 1.46, 0);               // the crown, over every hair style's cap
+    add('cloth', box(0.3, 0.035, 0.3), 0, 1.525, 0);              // its rounded top
+    add('trim', box(0.035, 0.02, 0.035), 0, 1.55, 0);             // the button
+    add('trim', box(0.37, 0.02, 0.37), 0, 1.415, 0);              // the sweatband edge
+    add('trim', box(0.3, 0.014, 0.14), 0, 1.418, zs * 0.245, zs * 0.12, 0, 0);   // the bill, dipping a little
+    if (h.logo) add('logo', box(0.1, 0.06, 0.006), 0, 1.465, 0.183);              // the front patch
+  } else if (h.kind === 'bucket') {
+    add('cloth', box(0.36, 0.11, 0.36), 0, 1.465, 0);
+    add('cloth', box(0.31, 0.03, 0.31), 0, 1.53, 0);
+    add('trim', box(0.37, 0.025, 0.37), 0, 1.42, 0);              // the band
+    add('cloth', new THREE.CylinderGeometry(0.25, 0.27, 0.016, 16), 0, 1.405, 0);   // the brim all round
+  } else if (h.kind === 'bandana') {
+    add('cloth', box(0.355, 0.06, 0.355), 0, 1.385, 0);           // folded band across the brow, wider than any hair
+    add('trim', box(0.07, 0.05, 0.04), 0, 1.385, -0.195);         // the knot at the back
+    for (const sx of [-1, 1]) add('cloth', box(0.04, 0.11, 0.015), sx * 0.025, 1.32, -0.205, 0.15, 0, sx * 0.25);   // its tails
+  }
+  const g = new THREE.Group(); g.userData.kidHat = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  return g;
+}
+
+// v1.198 (D.21 step 2, Michael: C on "A better game" 2): tops. A top is worn over the mirror's shirt: its colour is the
+// shirt's, and its front is its own (a tee's graphic, the hoodie's pocket and strings), all in the torso's frame (centre
+// 0, front face z 0.113). Tees are cut like the shirt; the hoodie hangs loose over the belt, has a hood down at the back
+// of the neck and long sleeves to the wrist. Bought in the Clothes tab or won; worn from the shop or the mirror (`look.top`).
+const KID_TOPS = {
+  tee_skate: { name: 'Skate Tee',   kind: 'tee', color: 0xe6e3da, price: 15, art: 'skate',
+    desc: 'White, a black deck with red wheels across the chest. You don’t skate. Nobody needs to know.' },
+  tee_shark: { name: 'Shark Tee',   kind: 'tee', color: 0x5f9cc8, price: 15, art: 'shark',
+    desc: 'Sky blue, a grey fin over a white wave. From the aquarium gift shop.' },
+  tee_flame: { name: 'Flame Tee',   kind: 'tee', color: 0x1e1e20, price: 18, art: 'flame',
+    desc: 'Black, orange and yellow flames up from the hem. The fastest shirt in the neighborhood.' },
+  hoodie:    { name: 'Grey Hoodie', kind: 'hoodie', color: 0x7c7d84, price: 30,
+    desc: 'Heather grey, a kangaroo pocket, the hood down. Too hot for August. Worn anyway.' },
+  tee_hollow: { name: 'Big Game Tee', kind: 'tee', color: 0x2f5a3a, won: 'hollow_big_battle', art: 'pine',
+    desc: 'Forest green, a white pine on the front. Not for sale: win the Big Game at the Hollow.' },
+};
+const KID_TOP_ORDER = ['tee_skate', 'tee_shark', 'tee_flame', 'hoodie', 'tee_hollow'];
+function topOwned(id) {
+  const t = KID_TOPS[id];
+  if (!t) return false;
+  return t.won ? !!Game.persist.completed[t.won] : !!(Game.persist.ownedTops || {})[id];
+}
+// The top's front and trim, merged into one group on the torso (buildKidClothes leaves the belt off under a hoodie).
+function buildKidTop(id) {
+  const t = KID_TOPS[id];
+  if (!t) return null;
+  const mats = { body: _kidFaceMat('top', t.color, 0.88),
+    rib: _kidFaceMat('topRib', new THREE.Color(t.color).multiplyScalar(0.78).getHex(), 0.9),
+    white: _kidFaceMat('topWhite', 0xf2efe6, 0.8), black: _kidFaceMat('topBlack', 0x161616, 0.8),
+    red: _kidFaceMat('topRed', 0xc0342a, 0.8), grey: _kidFaceMat('topGrey', 0x8a9098, 0.8),
+    orange: _kidFaceMat('topOrange', 0xe8701e, 0.75), yellow: _kidFaceMat('topYellow', 0xf2c230, 0.75),
+    brown: _kidFaceMat('topBrown', 0x6a4426, 0.85) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const tri = (r) => { const g = new THREE.CylinderGeometry(r, r, 0.006, 3); g.rotateX(Math.PI / 2); return g; };   // a flat triangle, point up
+  const Z = 0.116;                                   // just proud of the shirt's front
+  if (t.art === 'skate') {
+    add('black', box(0.24, 0.035, 0.006), 0, 0.07, Z, 0, 0, 0.18);                         // the deck, tilted
+    for (const sx of [-1, 1]) add('black', box(0.03, 0.03, 0.006), sx * 0.12, 0.07 + sx * 0.022, Z, 0, 0, 0.18);   // kicked-up ends
+    for (const sx of [-1, 1]) add('red', box(0.034, 0.034, 0.008), sx * 0.075, 0.032 + sx * 0.013, Z + 0.001);    // wheels
+  } else if (t.art === 'shark') {
+    add('grey', tri(0.07), -0.02, 0.1, Z, 0, 0, 0.2);                                        // the fin
+    add('white', box(0.28, 0.022, 0.006), 0, 0.045, Z);                                     // the wave
+    for (const x of [-0.1, 0, 0.1]) add('white', box(0.05, 0.02, 0.006), x + 0.02, 0.064, Z, 0, 0, 0.5);   // its curls
+  } else if (t.art === 'flame') {
+    // tongues up from the hem, tall orange behind short yellow, all round the front
+    const hs = [0.16, 0.1, 0.2, 0.12, 0.18, 0.09, 0.15];
+    hs.forEach((h, i) => {
+      const x = -0.17 + i * 0.0567;
+      add('orange', box(0.045, h, 0.006), x, -0.205 + h / 2, Z, 0, 0, (i % 2 ? -0.12 : 0.12));
+      add('yellow', box(0.026, h * 0.55, 0.006), x, -0.205 + h * 0.275, Z + 0.001, 0, 0, (i % 2 ? -0.12 : 0.12));
+    });
+  } else if (t.art === 'pine') {
+    add('white', tri(0.075), 0, 0.12, Z); add('white', tri(0.06), 0, 0.165, Z + 0.001);     // two tiers
+    add('white', box(0.022, 0.035, 0.006), 0, 0.068, Z);                                    // the trunk
+  }
+  if (t.kind === 'hoodie') {
+    add('body', box(0.43, 0.06, 0.25), 0, -0.235, 0);                                       // loose over the belt
+    add('rib', box(0.432, 0.03, 0.252), 0, -0.265, 0);                                      // the waistband rib
+    add('body', box(0.26, 0.1, 0.012), 0, -0.13, 0.118);                                    // the kangaroo pocket
+    add('rib', box(0.262, 0.012, 0.014), 0, -0.08, 0.119);                                  // its top edge
+    add('body', box(0.3, 0.11, 0.1), 0, 0.25, -0.1, -0.35, 0, 0);                           // the hood, down at the back of the neck
+    add('rib', box(0.24, 0.035, 0.07), 0, 0.285, -0.07, -0.35, 0, 0);                        // its opening's rim
+    for (const sx of [-1, 1]) add('white', box(0.012, 0.13, 0.008), sx * 0.04, 0.17, 0.118);   // drawstrings
+  }
+  const g = new THREE.Group(); g.userData.kidTop = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  return g;
+}
+
+// v1.199 (D.21 step 3, Michael: C on "A better game" 2): shorts. With shorts on, each leg is bare from the knee, in a
+// white sock above the sneaker; the shorts are a child of the leg (its frame: centre 0, 0.16 × 0.55 × 0.18, the knee near
+// y 0.03), so they swing and crouch with it. Bought in the Clothes tab or won; worn from the shop or the mirror
+// (`look.shorts`); a Pants colour at the mirror puts your jeans back on.
+const KID_SHORTS = {
+  cargo:    { name: 'Cargo Shorts',      kind: 'cargo',  color: 0xa89a74, price: 20,
+    desc: 'Khaki, a pocket on each side big enough for a speed loader and a Capri Sun.' },
+  mesh:     { name: 'Basketball Shorts', kind: 'mesh',   color: 0x223a6e, price: 15, stripe: 0xf2efe6,
+    desc: 'Navy mesh, white stripes down the sides, past the knee the way they wear them now.' },
+  jorts:    { name: 'Jean Shorts',       kind: 'jorts',  color: 0x4a6a9a, price: 12,
+    desc: 'Last year’s jeans with the legs cut off. Your mom hemmed them.' },
+  trunks:   { name: 'Swim Trunks',       kind: 'mesh',   color: 0x1f8a8a, won: 'club_night_4v4', stripe: 0xf2c230,
+    desc: 'Teal with yellow stripes, from the club’s lost and found. Not for sale: win Night Swim at Willow Bend.' },
+};
+const KID_SHORTS_ORDER = ['cargo', 'mesh', 'jorts', 'trunks'];
+function shortsOwned(id) {
+  const t = KID_SHORTS[id];
+  if (!t) return false;
+  return t.won ? !!Game.persist.completed[t.won] : !!(Game.persist.ownedShorts || {})[id];
+}
+let _kidBareLegGeo = null;
+function buildKidShorts(id, leg, skin, sx) {
+  const t = KID_SHORTS[id];
+  const mats = { body: _kidFaceMat('shorts', t.color, 0.88),
+    hem: _kidFaceMat('shortsHem', new THREE.Color(t.color).multiplyScalar(t.kind === 'jorts' ? 1.35 : 0.75).getHex(), 0.9),
+    stripe: _kidFaceMat('shortsStripe', t.stripe || 0xffffff, 0.8), sock: _kidFaceMat('sock', 0xeeece4, 0.9) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const long = t.kind === 'mesh';                       // basketball shorts and trunks reach past the knee
+  const y0 = long ? -0.06 : 0.0, y1 = 0.275, h = y1 - y0;
+  add('body', box(0.168, h, 0.188), 0, (y0 + y1) / 2, 0);
+  add('hem', box(0.172, t.kind === 'jorts' ? 0.04 : 0.022, 0.192), 0, y0 + 0.012, 0);   // a hem, or the jorts' rolled cuff
+  if (t.kind === 'cargo') add('hem', box(0.02, 0.1, 0.11), sx * 0.093, 0.06, 0);        // the cargo pocket on the outside
+  if (t.stripe) add('stripe', box(0.006, h, 0.03), sx * 0.085, (y0 + y1) / 2, 0);       // a stripe down the outside
+  add('sock', box(0.126, 0.07, 0.14), 0, -0.16, 0.0);                                     // a white sock above the sneaker
+  const g = new THREE.Group(); g.userData.kidShorts = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  leg.add(g);
+  return g;
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -16915,6 +17201,8 @@ function createKid(profile, weapon = 'pistol') {
     height: 'average', build: 'average', hairStyle: 'short', glasses: false,
     ...profile,
   };
+  const top = KID_TOPS[p.top] ? p.top : null;   // v1.198 (D.21 step 2): a top's colour is the shirt's
+  if (top) p.shirtColor = KID_TOPS[top].color;
 
   const scaleY  = KID_HEIGHT_SCALE[p.height]  ?? 1.0;
   const scaleXZ = KID_BUILD_SCALE[p.build]    ?? 1.0;
@@ -16937,10 +17225,15 @@ function createKid(profile, weapon = 'pistol') {
 
   // Legs
   const cl = kidClothesGeometry();   // v1.120: shaped shirt, jeans, sleeves and sneakers (same boxes; buildKidClothes adds trim)
-  const legL = new THREE.Mesh(cl.leg, pants);
+  // v1.199 (D.21 step 3): in shorts the leg is bare (a slimmer leg in the skin) and the shorts are its child
+  const shortsId = KID_SHORTS[p.shorts] ? p.shorts : null;
+  if (shortsId && !_kidBareLegGeo) _kidBareLegGeo = new THREE.BoxGeometry(0.12, 0.55, 0.135);
+  const legGeo = shortsId ? _kidBareLegGeo : cl.leg, legMat = shortsId ? skin : pants;
+  const legL = new THREE.Mesh(legGeo, legMat);
   legL.position.set(-0.1, 0.275, 0); legL.castShadow = true; group.add(legL);
-  const legR = new THREE.Mesh(cl.leg, pants);
+  const legR = new THREE.Mesh(legGeo, legMat);
   legR.position.set(0.1, 0.275, 0); legR.castShadow = true; group.add(legR);
+  const shorts = shortsId ? [buildKidShorts(shortsId, legR, skin, -1), buildKidShorts(shortsId, legL, skin, 1)] : null;
 
   // Shoes
   const shoeL = new THREE.Mesh(cl.shoe, shoes);
@@ -17063,6 +17356,22 @@ function createKid(profile, weapon = 'pistol') {
     }
   }
 
+  // v1.197 (D.21 step 1): a hat over the hair; it lowers with the head on a crouch. A cap or bucket hat hides the
+  // curly puffs that would poke through its crown (curly's headExtras are the three puffs).
+  let hat = null;
+  if (p.hat && KID_HATS[p.hat]) {
+    hat = buildKidHat(p.hat);
+    group.add(hat);
+    if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
+    headExtras.push(hat);
+  } else if (p.crewColor != null && CREW_COLORS.some(c => c.hex === p.crewColor)) {
+    // v1.200 (D.21, your crew): no hat on, so the crew's bandana in its colour; you and your allies wear it
+    hat = buildKidHat('bandana_red', p.crewColor);
+    hat.userData.crewBandana = true;
+    group.add(hat);
+    headExtras.push(hat);
+  }
+
   // v1.118 (backlog D.3 step 3, the kids: faces): the two black squares became a face on the head: eye whites, irises
   // and pupils, brows in the hair colour, a nose, ears and a mouth, and open glasses frames the eyes show through. It
   // is parented to the head, so it follows the crouch drop and the aim tilt; eyeL/eyeR are anchors at the eyes.
@@ -17074,9 +17383,20 @@ function createKid(profile, weapon = 'pistol') {
   group.add(gunGroup);
 
   buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
+  // v1.198 (D.21 step 2): the top's front on the torso; a hoodie's sleeves run down the forearms to a cuff at the wrist
+  let topMesh = null;
+  if (top) {
+    topMesh = buildKidTop(top); torso.add(topMesh);
+    if (KID_TOPS[top].kind === 'hoodie') for (const rig of [armRig_R, armRig_L]) {
+      const sl = new THREE.Mesh(new THREE.BoxGeometry(0.108, 0.17, 0.123), shirt);
+      sl.position.set(0, 0.02, 0); sl.castShadow = true; sl.userData.kidSleeve = true; rig.fore.add(sl);
+      const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.026, 0.125), _kidFaceMat('topRib', new THREE.Color(KID_TOPS[top].color).multiplyScalar(0.78).getHex(), 0.9));
+      cuff.position.set(0, -0.072, 0); rig.fore.add(cuff);
+    }
+  }
 
   return {
-    group, head, torso, eyeL, eyeR, gunGroup,
+    group, head, torso, eyeL, eyeR, gunGroup, hat, top: topMesh, shorts,   // v1.197: hat; v1.198: top; v1.199: shorts [R, L]
     parts: { head, torso, hairMesh, neck },
     // v1.14b: parts + their base transforms for a real crouch POSE (instead of
     // sinking the whole group into the ground). Feet stay planted; the body
@@ -19993,6 +20313,7 @@ function enterScenario(scenarioId) {
         team: esTeam,
         statsOverride: es.statsOverride || null,   // v1.57: tutorial dummies, etc.
         noFire: !!es.noFire,                        // v1.58: hard never-fire flag
+        crewColor: crewWornBy(sc, es, esTeam),      // v1.200: your allies wear your crew's bandana
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
@@ -20593,7 +20914,7 @@ function gunsInReach(cashBefore, cashAfter) {
     return cfg.price > cashBefore && cfg.price <= cashAfter;
   }).map(gt => `${GUN_MAGS[gt].displayName} ($${GUN_MAGS[gt].price})`);
 }
-function renderMatchStats(outcome, openBefore, cashBefore) {
+function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   const el = document.getElementById('resultStats');
   if (!el) return;
   const st = Game.scenario.stats || newMatchStats();
@@ -20607,11 +20928,14 @@ function renderMatchStats(outcome, openBefore, cashBefore) {
   const openNow = scenariosOpenNow();
   const opened = [...openNow].filter(id => !openBefore.has(id)).map(id => SCENARIOS[id].scenarioName || SCENARIOS[id].name || id);
   const reach = gunsInReach(cashBefore, Game.persist.cash);
+  const rivalId = Game.scenario.active;   // v1.196: a match against Seth's crew says how it went and the summer's score
+  const rival = isRivalMatch(rivalId) ? rivalResultLine(rivalId, outcome, outcome === 'win' && !wonBefore) : '';
+  if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
   el.innerHTML = html;
   Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
-    time: Game.scenario.roundTime || 0, best, opened, reach };
+    time: Game.scenario.roundTime || 0, best, opened, reach, rival };
 }
 
 function endScenario(outcome) {
@@ -20684,11 +21008,12 @@ function endScenario(outcome) {
   const scDef = SCENARIOS[Game.scenario.active];
   const reward = (scDef && scDef.rewards) || { win: 10, lose: 3 };
   const _openBefore = scenariosOpenNow(), _cashBefore = Game.persist.cash;   // v1.193: for "opened" and "in reach"
+  const _wonBefore = !!Game.persist.completed[Game.scenario.active];   // v1.196: a first win over Seth's crew reads differently
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
   Game.persist.cash += cashEarned;
-  if (outcome === 'win') {
+  if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup) {   // v1.201: a pickup game is no step on the ladder
     Game.persist.completed[Game.scenario.active] = true;
   }
 
@@ -20836,7 +21161,7 @@ function endScenario(outcome) {
     }
   }
 
-  renderMatchStats(outcome, _openBefore, _cashBefore);   // v1.193
+  renderMatchStats(outcome, _openBefore, _cashBefore, _wonBefore);   // v1.193; v1.196 the rival line
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
   const reloadNote = document.getElementById('reloadNote');
@@ -20898,7 +21223,7 @@ function showModal(title, body) {
 function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
-  document.querySelector('#modalScreen .modal-card').classList.remove('wide');   // v1.194: the summer calendar widens it
+  document.querySelector('#modalScreen .modal-card').classList.remove('wide', 'phone');   // v1.194: the summer calendar widens it; v1.195: the phone styles it
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
@@ -21045,7 +21370,7 @@ function closeMap() {
 // armour and shoes; Mods the sights, lasers and flashlight. The rows, prices and look are unchanged; only where they sit.
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
-const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods'];
+const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
 let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
 
 function openShop() {
@@ -21074,14 +21399,47 @@ const LOOK_OPTIONS = [
   { key: 'build',     label: 'Build',  kind: 'text', opts: [['skinny', 'Skinny'], ['average', 'Average'], ['heavy', 'Heavy']] },
   { key: 'hairStyle', label: 'Hair',   kind: 'text', opts: [['short', 'Short'], ['wavy', 'Wavy'], ['curly', 'Curly'], ['long', 'Long']] },
   { key: 'hairColor', label: 'Hair colour', kind: 'swatch', opts: [0x1a1410, 0x3a2818, 0x6a4a28, 0xa0703a, 0xd4b870, 0xb04a2a] },
+  // v1.197 (D.21 step 1): the hats you own; the row shows once you have one, under the hair
+  { key: 'hat', label: 'Hat', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_HAT_ORDER.filter(hatOwned).map(id => [id, KID_HATS[id].name])]; } },
   { key: 'skinColor', label: 'Skin',   kind: 'swatch', opts: [0xf0d0b0, 0xe6bf95, 0xe0b090, 0xc89870, 0xa87050, 0x7a4a30, 0x5a3420] },
   { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
+  // v1.198 (D.21 step 2): the tops you own, over the shirt; picking a Shirt colour or front takes the top off
+  { key: 'top', label: 'Top', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_TOP_ORDER.filter(topOwned).map(id => [id, KID_TOPS[id].name])]; } },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
+  // v1.199 (D.21 step 3): the shorts you own; a Pants colour puts the jeans back on
+  { key: 'shorts', label: 'Shorts', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_SHORTS_ORDER.filter(shortsOwned).map(id => [id, KID_SHORTS[id].name])]; } },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
   { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
   { key: 'shirtFront', label: 'Shirt front', kind: 'text', opts: [['plain', 'Plain'], ['stripe', 'Stripe'], ['pocket', 'Pocket']] },
+  // v1.200 (D.21, your crew): a name and a colour; the colour is a bandana you and your allies wear
+  { key: 'crewName', label: 'Crew name', kind: 'input', crew: true },
+  { key: 'crewColor', label: 'Crew colour', kind: 'swatch', crew: true, get opts() { return [null, ...CREW_COLORS.map(c => c.hex)]; } },
 ];
+// v1.200 (D.21, "then your crew: a name and colors your allies wear too"; Michael: C on "A better game" 2). The crew is
+// set at the mirror under YOUR CREW. Its name heads your side on the briefing (YOUR SIDE until you name it); its colour
+// is a bandana worn by you (when no hat is on) and by every ally in a match, except a VIP (his cap), Seth (the rival)
+// and the tutorial. None takes the bandanas off.
+const CREW_COLORS = [
+  { hex: 0xe07a1e, name: 'orange' }, { hex: 0x2a5ad0, name: 'blue' }, { hex: 0x2f8a3a, name: 'green' },
+  { hex: 0x6a3a9a, name: 'purple' }, { hex: 0xe0c020, name: 'yellow' }, { hex: 0x1e1e20, name: 'black' },
+];
+const CREW_NAME_MAX = 20;
+function cleanCrewName(v) {
+  return String(v == null ? '' : v).replace(/[<>&"`\\]/g, '').replace(/\s+/g, ' ').replace(/^\s+/, '').slice(0, CREW_NAME_MAX);
+}
+function crewName() { return cleanCrewName((Game.persist.look || {}).crewName).trim(); }
+function crewColor() {
+  const c = (Game.persist.look || {}).crewColor;
+  return CREW_COLORS.some(k => k.hex === c) ? c : null;
+}
+function crewWornBy(sc, es, team) {
+  if (team !== 'player' || es.vip || sc.tutorial || es.charId === 'seth') return null;
+  return crewColor();
+}
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
 function _hexCss(n) { return '#' + n.toString(16).padStart(6, '0'); }
 function ensureMirrorScreen() {
@@ -21104,26 +21462,58 @@ function renderMirrorOptions() {
   box.innerHTML = '';
   const look = Game.persist.look;
   for (const row of LOOK_OPTIONS) {
+    if (row.owned && row.opts.length < 2) continue;   // v1.197: nothing to choose yet
+    if (row.crew && row.key === 'crewName') {          // v1.200: the crew's own heading
+      const h = document.createElement('div');
+      h.className = 'mirror-crew-head';
+      h.style.cssText = 'margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.18);font-size:13px;letter-spacing:.12em;color:#e8b070';
+      h.textContent = 'YOUR CREW';
+      box.appendChild(h);
+    }
     const r = document.createElement('div');
     r.className = 'mirror-row'; r.dataset.key = row.key;
     r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">${row.label}</div>`;
+    if (row.kind === 'input') {   // v1.200: the crew name, typed; the game's keys don't see it
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.id = 'mirrorCrewName'; inp.maxLength = CREW_NAME_MAX; inp.placeholder = 'Name your crew';
+      inp.value = cleanCrewName(look[row.key]);
+      inp.style.cssText = 'width:100%;max-width:260px;box-sizing:border-box;padding:6px 8px;border-radius:4px;font:inherit;font-size:14px;color:#f4e9d8;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25)';
+      for (const ev of ['keydown', 'keyup', 'keypress']) inp.addEventListener(ev, e => e.stopPropagation());
+      inp.addEventListener('input', () => {
+        const v = cleanCrewName(inp.value);
+        if (v !== inp.value) inp.value = v;
+        Game.persist.look.crewName = v;
+      });
+      r.appendChild(inp);
+      box.appendChild(r);
+      continue;
+    }
     const btns = document.createElement('div');
     btns.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
     for (const o of row.opts) {
       const val = row.kind === 'swatch' ? o : o[0];
-      const on = look[row.key] === val;
+      const on = (look[row.key] === undefined ? null : look[row.key]) === val;   // v1.200: an old save's crew colour is none
       const b = document.createElement('button');
       b.className = 'mirror-opt' + (on ? ' on' : '');
       b.dataset.value = JSON.stringify(val);
-      if (row.kind === 'swatch') {
+      if (row.kind === 'swatch' && val === null) {   // v1.200: no crew colour
+        b.textContent = '×';
+        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;color:#f4e9d8;font-size:16px;line-height:1;background:rgba(255,255,255,.08);border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
+        b.title = 'none';
+      } else if (row.kind === 'swatch') {
         const hex = typeof val === 'string' ? KID_EYE_COLORS[val] : val;   // v1.123: the eye row names its colours
         b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(hex)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
-        b.title = typeof val === 'string' ? val : _hexCss(val);
+        b.title = typeof val === 'string' ? val : ((CREW_COLORS.find(c => c.hex === val) || {}).name || _hexCss(val));
       } else {
         b.textContent = o[1];
         b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;
       }
-      b.addEventListener('click', () => { Game.persist.look[row.key] = val; renderMirrorOptions(); renderMirrorPreview(); });
+      b.addEventListener('click', () => {
+        Game.persist.look[row.key] = val;
+        if (row.key === 'shirtColor' || row.key === 'shirtFront') Game.persist.look.top = 'none';   // v1.198: your own shirt again
+        if (row.key === 'pantsColor') Game.persist.look.shorts = 'none';                              // v1.199: your jeans again
+        renderMirrorOptions(); renderMirrorPreview();
+      });
       btns.appendChild(b);
     }
     r.appendChild(btns);
@@ -21764,6 +22154,105 @@ function renderShop() {
     case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
     case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
     case 'Mods': renderAccessoriesTab(c); break;
+    case 'Clothes': renderClothesTab(c); break;   // v1.197
+  }
+}
+
+// v1.197 (D.21 step 1, Michael: C on "A better game" 2): the Clothes tab. Hats for now; each row buys it (and puts it
+// on), or wears or takes off one you own. A won hat can't be bought: its row says which match gives it.
+function buyHat(id) {
+  const h = KID_HATS[id];
+  if (!h || h.won) return { ok: false, reason: 'not for sale' };
+  if (hatOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < h.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= h.price;
+  Game.persist.ownedHats = Game.persist.ownedHats || {};
+  Game.persist.ownedHats[id] = true;
+  Game.persist.look.hat = id;
+  autoSave();
+  return { ok: true };
+}
+function wearHat(id) {
+  if (id !== 'none' && !hatOwned(id)) return false;
+  Game.persist.look.hat = id;
+  autoSave();
+  return true;
+}
+// v1.198 (D.21 step 2): tops, the same way
+function buyTop(id) {
+  const t = KID_TOPS[id];
+  if (!t || t.won) return { ok: false, reason: 'not for sale' };
+  if (topOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < t.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= t.price;
+  Game.persist.ownedTops = Game.persist.ownedTops || {};
+  Game.persist.ownedTops[id] = true;
+  Game.persist.look.top = id;
+  autoSave();
+  return { ok: true };
+}
+function wearTop(id) {
+  if (id !== 'none' && !topOwned(id)) return false;
+  Game.persist.look.top = id;
+  autoSave();
+  return true;
+}
+// v1.199 (D.21 step 3): shorts, the same way
+function buyShorts(id) {
+  const t = KID_SHORTS[id];
+  if (!t || t.won) return { ok: false, reason: 'not for sale' };
+  if (shortsOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < t.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= t.price;
+  Game.persist.ownedShorts = Game.persist.ownedShorts || {};
+  Game.persist.ownedShorts[id] = true;
+  Game.persist.look.shorts = id;
+  autoSave();
+  return { ok: true };
+}
+function wearShorts(id) {
+  if (id !== 'none' && !shortsOwned(id)) return false;
+  Game.persist.look.shorts = id;
+  autoSave();
+  return true;
+}
+function renderClothesTab(c) {
+  // v1.198: two sections, hats then tops, each row the same (buy and wear, wear, take off, or earn it)
+  const kinds = [{ head: ['Hats', 'Worn on your kid; change it here or at the mirror'], order: KID_HAT_ORDER, table: KID_HATS,
+                   cls: 'shop-hat', data: 'hat', icon: '▲', own: hatOwned, buy: buyHat, wear: wearHat },
+                 { head: ['Tops', 'Over your shirt; the mirror’s Shirt rows take it off'], order: KID_TOP_ORDER, table: KID_TOPS,
+                   cls: 'shop-top', data: 'top', icon: '■', own: topOwned, buy: buyTop, wear: wearTop },
+                 { head: ['Shorts', 'Instead of your jeans; the mirror’s Pants row puts them back'], order: KID_SHORTS_ORDER,
+                   table: KID_SHORTS, cls: 'shop-shorts', data: 'shorts', icon: '▮', own: shortsOwned, buy: buyShorts, wear: wearShorts }];   // v1.199
+  for (const k of kinds) {
+  c.appendChild(shopSectionHeader(k.head[0], k.head[1]));
+  for (const id of k.order) {
+    const h = k.table[id], owned = k.own(id), wearing = Game.persist.look[k.data] === id;
+    const wearHat = k.wear, buyHat = k.buy;   // v1.198: the hat or the top functions, by section
+    const row = document.createElement('div');
+    row.className = 'shop-item ' + k.cls + (owned ? ' owned' : '') + (!owned && h.won ? ' locked' : '');
+    row.dataset[k.data] = id;
+    const swatch = '#' + h.color.toString(16).padStart(6, '0');
+    const status = wearing ? '<span class="shop-eq-tag">WEARING</span>' : (owned ? '<span class="shop-owned-tag">OWNED</span>' : '');
+    row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">${k.icon}</div>
+      <div class="shop-item-info"><div class="shop-item-name">${h.name} ${status}</div><div class="shop-item-desc">${h.desc}</div></div>
+      <div class="shop-item-price">${h.won ? 'WON' : '$' + h.price}</div>`;
+    const btn = document.createElement('button');
+    btn.className = 'shop-item-buy';
+    if (wearing) btn.textContent = 'TAKE OFF';
+    else if (owned) btn.textContent = 'WEAR';
+    else if (h.won) { btn.textContent = 'EARN IT'; btn.disabled = true; }
+    else if (Game.persist.cash < h.price) { btn.textContent = 'NEED $' + h.price; btn.disabled = true; }
+    else btn.textContent = 'BUY';
+    btn.addEventListener('click', () => {
+      if (wearing) { wearHat('none'); shopState.flash = `Took off the ${h.name}`; }
+      else if (owned) { wearHat(id); shopState.flash = `Wearing the ${h.name}`; }
+      else { const r = buyHat(id); shopState.flash = r.ok ? `Purchased: ${h.name}` : `Couldn't buy: ${r.reason}`; if (r.ok) playShopChaching(); }
+      renderShop();
+    });
+    row.appendChild(btn);
+    c.appendChild(row);
+  }
   }
 }
 
@@ -23128,7 +23617,10 @@ const BR_LABEL_ICONS = {
   // v1.88: door with an arrow out — the front door (goes outside to the map)
   outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   // v1.194: a wall calendar — the summer so far
+  pickup: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><path d="M7 9h5M7 12h7M7 15h4" stroke="#f4e9d8" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="9" r="1.6" fill="#f4e9d8"/></svg>',   // v1.201: the Pickup Game board
   calendar: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4M8 14l3 3M11 14l-3 3" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  // v1.195: a flip phone — your texts
+  phone: '<svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#f4e9d8" stroke-width="1.8"/><path d="M7 11h10M10 6h4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
@@ -29055,14 +29547,15 @@ function summerCalendarHTML(today) {
   const t = summerDate(today);
   const zone = summerZoneKey();
   const left = SUMMER_BIG_DAY - today;
+  const rivalDays = new Set(rivalWinDays());   // v1.196: the days you beat Seth's crew
   const months = SUMMER_MONTHS.map(mo => {
     let cells = '';
     for (let i = 0; i < mo.first % 7; i++) cells += '<span class="sm-day blank"></span>';
     for (let d = 1; d <= mo.days; d++) {
       const day = mo.first + d - 1, zk = summerZoneOfDay(day);
       const cls = ['sm-day', day < today ? 'past' : '', day === today ? 'today' : '', day === SUMMER_BIG_DAY ? 'big' : '',
-        zk === zone ? 'here' : ''].filter(Boolean).join(' ');
-      const tip = zk ? summerZoneName(zk) : 'The last Saturday of summer';
+        zk === zone ? 'here' : '', rivalDays.has(day) ? 'rival' : ''].filter(Boolean).join(' ');
+      const tip = (zk ? summerZoneName(zk) : 'The last Saturday of summer') + (rivalDays.has(day) ? ` · you beat ${RIVAL_CREW}` : '');
       cells += `<span class="${cls}" data-day="${day}" title="${tip}">${d}</span>`;
     }
     return `<div class="sm-month"><div class="sm-name">${mo.name}</div>
@@ -29072,7 +29565,8 @@ function summerCalendarHTML(today) {
   return `<div class="sm-today">Today is <b>${t.label}</b>.</div>
     <div class="sm-months">${months}</div>
     <div class="sm-note">${summerZoneName(zone)}: ${summerDate(span[0]).label.replace(/^\w+ /, '')} to ${summerDate(span[1]).label.replace(/^\w+ /, '')}.
-      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>`;
+      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>
+    <div class="sm-note sm-rival">${rivalDays.size ? `A red dot is a day you beat ${RIVAL_CREW}: ${rivalDays.size} so far` : `No wins over ${RIVAL_CREW} yet`}; ${rivalScoreText(rivalScore())}.</div>`;
 }
 function openSummerCalendar() {
   Game.prevMode = Game.mode;
@@ -29084,6 +29578,229 @@ function openSummerCalendar() {
   body.innerHTML = summerCalendarHTML(summerDayIndex());
   document.querySelector('#modalScreen .modal-card').classList.add('wide');
   document.getElementById('modalScreen').classList.add('active');
+}
+
+// v1.195 (D.20 step 2, Michael: A on "A better game" 1): your friends text your flip phone between matches. Each text
+// arrives with a win (`after`, a scenario id; none for the first), dated on the calendar by the day that win brings
+// (summerDayAfter), so an old save gets the summer's texts on the right days. Read ones are kept in the save.
+const SUMMER_TEXTS = [
+  { id: 'start',      from: 'Eric',    after: null,
+    text: "SUMMER!!! 13 weeks no school. seth set up targets at the end of winnmark so u can try the new gun. go" },
+  { id: 'tutorial',   from: 'Seth',    after: 'winnmark_tutorial',
+    text: "ok ur not terrible. my backyard tmrw. just u and me" },
+  { id: 'seth1',      from: 'Seth',    after: 'winnmark_seth_house',
+    text: "lucky shot. my dad is getting me a shotgun this week. then well see" },
+  { id: 'culdesac',   from: 'Brooke',  after: 'winnmark_cul_de_sac',
+    text: "ok that was kind of sick. trey is still mad u got past the plank fort" },
+  { id: 'squad',      from: 'Rebecca', after: 'winnmark_team_3v3',
+    text: "everybody on winnmark is talking about squad up. eric says u carried. eric says that about everyone tho" },
+  { id: 'bunratty',   from: 'Eric',    after: 'winnmark_night_team_2v2',
+    text: "sean from bunratty heard about u. he says nobody wins on their street, its all woods down by the river. tmrw?" },
+  { id: 'brothers',   from: 'Sean',    after: 'bunratty_brothers',
+    text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
+  { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
+    text: "infection at the cul de sac is the best game ever invented and i will not hear otherwise" },
+  { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
+    text: "everybody is going to the hollow this week. the woods past the river, forts at both ends. seth is bringing his whole crew. bring BBs" },
+  { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
+    text: "the big game was close and u know it. my crew wants the north fort back" },
+  { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
+    text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
+  { id: 'northcliff', from: 'Eric',    after: 'lot_night_4v4',
+    text: "some kid evan up in northcliff says they play it different up there. hills and a creek. august is gonna be crazy" },
+  { id: 'treehouse',  from: 'Rebecca', after: 'stoneglen_treehouse',
+    text: "the twins have a REAL treehouse?? with a ladder?? not fair" },
+  { id: 'flags',      from: 'Sean',    after: 'bellfield_ctf',
+    text: "capture the flag on bellfield. my legs still hurt" },
+  { id: 'school',     from: 'Seth',    after: 'northcliff_night_4v4',
+    text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. lets go see" },
+  { id: 'pool',       from: 'Brooke',  after: 'school_night_4v4',
+    text: "the club shut the pool for the season. i know a gap in the hedge. bring a pistol" },
+  { id: 'store',      from: 'Eric',    after: 'club_night_4v4',
+    text: "tylers dad is night manager at riverside market. tyler says we can get in before it opens. FOR REAL" },
+  { id: 'last',       from: 'Seth',    after: 'store_night_4v4',
+    text: "tmrw. last saturday of the summer. ur street, everybody. my crew vs yours. dont chicken out" },
+];
+// The calendar day a win brings: a zone's last match opens the next zone (its first day); any other moves the date
+// along its zone's span by one match's share, as summerDayIndex does.
+function summerDayAfter(scenarioId) {
+  if (!scenarioId) return 0;
+  const ctx = findScenarioListContext(scenarioId);
+  if (!ctx || !SUMMER_SPANS[ctx.group]) return 0;
+  const span = SUMMER_SPANS[ctx.group], n = ctx.ids.length;
+  if (ctx.idx === n - 1) {
+    const next = ZONE_LADDER[zoneLadderIndex(ctx.group) + 1];
+    return next && SUMMER_SPANS[next.key] ? SUMMER_SPANS[next.key][0] : span[1];
+  }
+  return Math.min(span[1], span[0] + Math.floor((span[1] - span[0] + 1) * (ctx.idx + 1) / n));
+}
+// v1.196 (D.20 step 3, Michael: A on "A better game" 1): Seth's crew is the summer's rival. A rival match is any match
+// on the ladder with Seth on the other side, but for the tutorial, the free-for-alls and Infection, where nobody is
+// anybody's crew. The briefing names them, the result card keeps the summer's score against them (read from
+// `completed`, so an old save has its score too), and the calendar marks the days you beat them.
+const RIVAL_CREW = "Seth's crew";
+
+// =====================================================================
+// v1.201 (D.22 step 1, Michael: A on "A better game" 3, "a Pickup Game board in the bedroom: any opened zone, the mode,
+// day or night, team sizes and which kids, lives, a clock; pays a little"). The corkboard on the bedroom's north wall
+// sets up a team match on any map whose zone is open: how many a side (1v1 up to the map's 4v4, or 3v3 on Winnmark),
+// day or night, and lives (1, 3 or 5, for every kid and for you as hits). Each map's match is its biggest team
+// battle with the sides cut to size: your side's kids and theirs are the first ones it lists, at their own spots, with
+// their own guns. PLAY writes it as SCENARIOS.pickup_game and goes through the usual briefing. It pays $3 for a win
+// and $1 for a loss, and never counts as a ladder win. The mode (free-for-all), which kids, and a clock come next.
+const PICKUP_MAPS = [
+  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3' },
+  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4' },
+  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle' },
+  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4' },
+  { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
+  { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
+  { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },
+  { key: 'country_club', zone: 'country_club',   name: 'Willow Bend',             template: 'club_night_4v4' },
+  { key: 'store',        zone: 'grocery_store',  name: 'Inside Riverside Market', template: 'store_night_4v4' },
+];
+const PICKUP_LIVES = [1, 3, 5];
+const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
+const pickupState = { map: 'winnmark', size: 2, tod: 'day', lives: 3 };
+function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
+// The most a side can be on a map: its template's allies plus you, against its enemies, at most four
+function pickupMaxSize(m) {
+  const es = SCENARIOS[m.template].enemySetup;
+  return Math.min(4, es.filter(e => e.team === 'player').length + 1, es.filter(e => !e.team).length);
+}
+function buildPickupScenario(opts) {
+  const m = PICKUP_MAPS.find(k => k.key === opts.map);
+  if (!m) return null;
+  const t = SCENARIOS[m.template];
+  const size = Math.max(1, Math.min(pickupMaxSize(m), opts.size | 0));
+  const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
+  const tod = opts.tod === 'night' ? 'night' : 'day';
+  const ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
+  const theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
+  const names = es => es.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
+  const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  const sc = {
+    region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${size}v${size}`,
+    desc: `A pickup game ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line. ` +
+      (ours.length ? `You've got ${list(names(ours))}` : `It's just you`) + ` against ${list(names(theirs))}. ` +
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing.`,
+    builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
+    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => Object.assign({}, e)),
+    winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives },
+  };
+  if (t.enemySpawnCluster) sc.enemySpawnCluster = t.enemySpawnCluster;
+  SCENARIOS.pickup_game = sc;
+  return sc;
+}
+function pickupBoardHTML() {
+  const open = pickupMapsOpen();
+  if (!open.some(m => m.key === pickupState.map)) pickupState.map = open[0].key;
+  const m = PICKUP_MAPS.find(k => k.key === pickupState.map), max = pickupMaxSize(m);
+  pickupState.size = Math.max(1, Math.min(max, pickupState.size));
+  const btn = (grp, val, label, on) => `<button class="pk-opt${on ? ' on' : ''}" data-grp="${grp}" data-val="${val}">${label}</button>`;
+  const row = (label, inner) => `<div class="pk-row"><div class="pk-label">${label}</div><div class="pk-btns">${inner}</div></div>`;
+  return `<div class="pk-board">
+    <div class="pk-note">Pick it, play it. $3 a win, $1 if you lose; it doesn't count for the ladder.</div>
+    ${row('Where', open.map(k => btn('map', k.key, k.name, k.key === pickupState.map)).join(''))}
+    ${row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
+    ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
+    ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
+    <div class="pk-row"><button class="pk-play" id="pickupPlayBtn">PLAY</button></div>
+  </div>`;
+}
+function renderPickupBoard() {
+  const body = document.getElementById('modalBody');
+  body.innerHTML = pickupBoardHTML();
+  body.querySelectorAll('.pk-opt').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.val;
+    pickupState[b.dataset.grp] = (b.dataset.grp === 'size' || b.dataset.grp === 'lives') ? +v : v;
+    renderPickupBoard();
+  }));
+  body.querySelector('#pickupPlayBtn').addEventListener('click', playPickupGame);
+}
+function openPickupBoard() {
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Pickup Game';
+  document.getElementById('modalCloseBtn').textContent = 'CLOSE';   // closeModal puts OK back
+  document.getElementById('modalBody').style.whiteSpace = 'normal';
+  document.querySelector('#modalScreen .modal-card').classList.add('wide');
+  renderPickupBoard();
+  document.getElementById('modalScreen').classList.add('active');
+}
+function playPickupGame() {
+  if (!buildPickupScenario(pickupState)) return;
+  closeModal();
+  enterScenario('pickup_game');
+}
+function isRivalMatch(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.ffa || sc.winCondition === 'survive_untagged' || !findScenarioListContext(id)) return false;
+  return (sc.enemySetup || []).some(es => es.charId === 'seth' && es.team !== 'player');
+}
+function rivalMatchIds() { return Object.keys(SCENARIOS).filter(isRivalMatch); }
+// { beaten, total } over the whole summer
+function rivalScore() {
+  const ids = rivalMatchIds();
+  return { beaten: ids.filter(id => Game.persist.completed[id]).length, total: ids.length };
+}
+// The calendar days you beat them: the day each rival win brings (summerDayAfter), once each.
+function rivalWinDays() {
+  return [...new Set(rivalMatchIds().filter(id => Game.persist.completed[id]).map(summerDayAfter))].sort((a, b) => a - b);
+}
+function rivalScoreText(s) { return `beaten in ${s.beaten} of their ${s.total} matches this summer`; }
+// The result card's line: who they are this match (Seth alone in a duel), how it went, and the summer's score.
+function rivalResultLine(id, outcome, firstWin) {
+  const sc = SCENARIOS[id];
+  const foes = (sc.enemySetup || []).filter(es => es.team !== 'player').length;
+  const who = foes > 1 ? RIVAL_CREW : 'Seth';
+  const s = rivalScore();
+  let head;
+  if (outcome === 'win') head = firstWin ? `${who} goes home beaten.` : `${who} loses again.`;
+  else head = `${who} takes this one.`;
+  return `${head} You've beaten ${foes > 1 ? 'them' : 'his crew'} in ${s.beaten} of their ${s.total} matches this summer.`;
+}
+// The texts that have arrived, newest first: { id, from, text, day, read }.
+function summerTexts() {
+  const read = Game.persist.textsRead || {};
+  return SUMMER_TEXTS.map((t, i) => ({ t, i }))
+    .filter(({ t }) => !t.after || Game.persist.completed[t.after])
+    .map(({ t, i }) => ({ id: t.id, from: t.from, text: t.text, day: summerDayAfter(t.after), read: !!read[t.id], i }))
+    .sort((a, b) => (b.day - a.day) || (b.i - a.i));
+}
+function summerUnreadCount() { return summerTexts().filter(t => !t.read).length; }
+function phonePromptText(n) { return 'Check your phone' + (n ? ` (${n} new)` : ''); }
+function phoneLabelText(n) { return n ? `Phone · ${n} new` : 'Phone'; }
+function openPhone() {
+  const texts = summerTexts();
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Texts';
+  const body = document.getElementById('modalBody');
+  body.style.whiteSpace = 'normal';
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  body.innerHTML = `<div class="ph-screen">${texts.map(t => {
+    const d = summerDate(t.day);
+    return `<div class="ph-msg${t.read ? '' : ' new'}" data-id="${t.id}">
+      <div class="ph-head"><span class="ph-from">${t.from.toUpperCase()}</span>${t.read ? '' : '<span class="ph-new">NEW</span>'}
+        <span class="ph-date">${d.weekday.slice(0, 3)} ${d.date} ${SUMMER_MONTHS[d.month].name.slice(0, 3)}</span></div>
+      <div class="ph-text">${esc(t.text)}</div></div>`;
+  }).join('')}</div>`;
+  document.querySelector('#modalScreen .modal-card').classList.add('phone');
+  document.getElementById('modalScreen').classList.add('active');
+  // opening them reads them all; the nightstand phone stops blinking and its label and prompt catch up
+  Game.persist.textsRead = Game.persist.textsRead || {};
+  for (const t of texts) Game.persist.textsRead[t.id] = true;
+  const it = Game.interactables.find(i => i.type === 'phone');
+  if (it) {
+    it.prompt = phonePromptText(0); it.label = phoneLabelText(0);
+    const nm = it._labelEl && it._labelEl.querySelector('.br-name'); if (nm) nm.textContent = it.label;
+    if (it._led) it._led.visible = false;
+  }
+  autoSave();
 }
 
 // Human-readable reason a scenario is locked (for greyed rows / pickers).
