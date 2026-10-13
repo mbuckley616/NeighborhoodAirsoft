@@ -9474,3 +9474,48 @@ together.
 - Night free-for-alls use the day starts (the four free-for-alls are all day matches). They build and run, but nobody
   has played one yet.
 - Steps 3 and 4: which kids, then a clock.
+
+## v1.203 — Pickup Game: which kids
+Backlog D.22, step 3 (Michael: A on "A better game" 3: "team sizes and which kids"). The board now lets you pick the
+kids. In Teams it adds a "With you" row and an "Against you" row; in Free-for-all it adds one row, "Who". Each row
+names every kid who plays on that street: any of its own matches, leaving out the tutorial and the Infection taggers.
+That is six on Winnmark (Seth, Trey, Brooke, Jamie, Marcus, Devon) and nine on Northcliff Trace (its seven, plus
+Haden and Connor). Each row shows a count (2/3), and a kid already picked for one side is greyed out on the other.
+Clicking a picked kid takes him off. Clicking another kid puts him on, and on a full side he replaces the last kid you
+picked. While a side is short, PLAY reads PICK THE KIDS and does nothing.
+
+**Where they stand.** The map keeps its spots: each side uses its first spots in that map's biggest team battle, or
+in its free-for-all. A picked kid who has his own spot among them takes it, with the gun he carries there. Any other
+kid takes the next free spot with the gun he carries in that map's team battle or free-for-all, or failing those, in
+his first match on the street. A spot's role, such as Fernando's sniper nest on Northcliff, stays only with its own
+kid, so whoever takes Fernando's spot plays it as an ordinary kid. That is also the way round the critic's 13 Oct
+Northcliff-by-day report: leave Fernando out.
+
+**Defaults.** The board starts each map on v1.201 and v1.202's kids. Your picks stay on the board between games. A
+bigger size fills the new spots from the defaults, and changing map starts that map afresh. `buildPickupScenario`
+with no picks builds the same games as before.
+### Verified
+- `tests/pickup-kids.test.mjs` (new, 18 checks). Winnmark 2v2 on a new game lists Seth, Trey, Brooke, Jamie, Marcus
+  and Devon, and starts with Seth with you and Brooke and Jamie against. The lit buttons are the picks, and Seth is
+  greyed out against you while Brooke and Jamie are greyed out with you. Taking Seth off leaves 0/1 and PICK THE KIDS,
+  disabled. Then picking Marcus with you and Seth against, in place of Jamie, builds Marcus (with you) at
+  house2_backyard with his shotgun, Brooke at her own house7_backyard, and Seth at the next spot, house6_backyard,
+  with his pistol. The briefing names both kids. In the match Marcus is on your side and Seth on theirs, and 5 s run.
+  On the board afterwards, Marcus and Brooke/Seth are still picked, and 3v3 keeps them and fills each side.
+  Northcliff 4v4 starts with Andrew, Alex and Evan with you and Mason, Christian, Diego and Fernando against. Without
+  Fernando, Haden takes yard_n3 with his UMP and no defender role, and that game runs 3 s. On the Hollow, a 4-way
+  starts with Seth, Sean and Devon, and picking Eric puts him in Devon's place at scatter_nw with his MP5. With no
+  picks, the team and free-for-all games are v1.201's and v1.202's. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the kid buttons out of their lit picks. The first
+  draft of this version crashed the board on a team-only map (it built a free-for-all default list for a map that has
+  no free-for-all). `pickup-ffa`'s Northcliff check caught it, and it is fixed here.
+- `npm test` as four local shards: 106 of 110 suites passed. The four that failed were `harness`, `result-text`,
+  `school-kids` and either `pointer-lock` or `stuck-sweep-6`. Each hit Playwright's 30 s `page.goto` limit before any
+  check ran. All of them passed when run alone afterwards: `harness` on its second solo run, after the first solo run
+  timed out on its second boot.
+### Still open
+- Whether the kid rows read well at a glance (nine names a row on Northcliff), and whether a kid taking another's spot
+  plays sensibly, need Michael to play them. A kid in a sniper's nest with a shotgun fights from it like any other spot.
+- The pool is the street's own kids. Kids from other streets (Eric at Bunratty, say) are left out on purpose, because
+  each street keeps its own crowd. If Michael wants anyone anywhere, it is one filter in `pickupPool`.
+- Step 4: a clock. Then online play (D.2) is hosted from this board.

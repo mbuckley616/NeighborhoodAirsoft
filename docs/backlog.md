@@ -253,8 +253,9 @@ Fable card on the control room and Michael starts it from there.
    bedroom's north wall: any map whose zone is open, 1v1 to 4v4, day or night, 1/3/5 lives; each map's biggest team
    battle cut to size; $3 a win, $1 a loss, never a ladder win; `tests/pickup.test.mjs`). ~~2, the mode~~ — done,
    v1.202 (Teams or Free-for-all on Winnmark, Bunratty, the Hollow and the lot: 3-way up to the map's own
-   free-for-all, at most 8-way, its kids at their own starts; `tests/pickup-ffa.test.mjs`). Next: 3, which kids;
-   4, a clock.
+   free-for-all, at most 8-way, its kids at their own starts; `tests/pickup-ffa.test.mjs`). ~~3, which kids~~ — done,
+   v1.203 (With you / Against you, or Who, listing every kid who plays on that street; each at his own spot when it is
+   used, else the next, with his own gun; `tests/pickup-kids.test.mjs`). Next: 4, a clock.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
