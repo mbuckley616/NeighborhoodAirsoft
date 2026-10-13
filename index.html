@@ -1979,7 +1979,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.199</div>
+  <div class="version">v1.200</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3300,7 +3300,8 @@ const Game = {
             eyeColor: 'brown', shirtFront: 'plain',   // v1.123: eye colour and shirt front (mirror rows)
             hat: 'none',                              // v1.197 (D.21 step 1): a KID_HATS id, or none
             top: 'none',                              // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
-            shorts: 'none' },                         // v1.199 (D.21 step 3): a KID_SHORTS id, or none (the jeans)
+            shorts: 'none',                           // v1.199 (D.21 step 3): a KID_SHORTS id, or none (the jeans)
+            crewName: '', crewColor: null },          // v1.200 (D.21, your crew): its name and bandana colour, or none
     ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
     ownedTops: {},              // v1.198: the tops you have bought
     ownedShorts: {},            // v1.199: the shorts you have bought
@@ -5262,6 +5263,7 @@ function getScenarioBriefing(scenarioId) {
     desc: sc.desc || '',
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
+    tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
   };
 }
 
@@ -5280,7 +5282,7 @@ function renderBriefingRosterHTML(brief) {
   let html = '';
   // YOUR side (you + any allies)
   html += `<div class="brief-section">
-    <div class="brief-heading brief-heading-you">YOUR SIDE</div>
+    <div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
     <div class="brief-combatant you">
       <span class="brief-name">You</span>
       <span class="brief-gun">${youGun}</span>
@@ -16564,7 +16566,7 @@ function addVipCap(kid, ours) {
   return cap;
 }
 
-function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false }) {
+function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, weapon = 'pistol', role = 'skirmisher', anchorPos = null, behavior = 'gunner', zombieSprinter = false, team = 'enemy', statsOverride = null, noFire = false, crewColor = null }) {
   const baseCh = CHARACTERS[charId];
   if (!baseCh) {
     console.warn(`makeEnemyFromCharacter: unknown character "${charId}"`);
@@ -16574,7 +16576,8 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
   // with near-zero aggression/fireRate). Clone the profile first so we never mutate
   // the shared CHARACTERS entry used by every other scenario.
   const ch = statsOverride ? Object.assign({}, baseCh, statsOverride) : baseCh;
-  const kid = createKid(ch, weapon);
+  // v1.200: an ally of yours wears your crew's bandana (a copy of the profile, so CHARACTERS is never changed)
+  const kid = createKid(crewColor != null ? Object.assign({}, ch, { crewColor }) : ch, weapon);
   kid.group.position.copy(pos);
   scene.add(kid.group);
 
@@ -16996,9 +16999,10 @@ function hatOwned(id) {
   if (!h) return false;
   return h.won ? !!Game.persist.completed[h.won] : !!(Game.persist.ownedHats || {})[id];
 }
-function buildKidHat(id) {
-  const h = KID_HATS[id];
+function buildKidHat(id, color = null) {
+  let h = KID_HATS[id];
   if (!h) return null;
+  if (color != null) h = Object.assign({}, h, { color });   // v1.200: the crew bandana, in the crew's colour
   const mats = { cloth: _kidFaceMat('hat', h.color, 0.9),   // shared, as the face's and the clothes' are
     trim: _kidFaceMat('hatTrim', new THREE.Color(h.color).multiplyScalar(0.7).getHex(), 0.9),
     logo: _kidFaceMat('hatLogo', h.logo || 0xffffff, 0.8) };
@@ -17310,6 +17314,12 @@ function createKid(profile, weapon = 'pistol') {
     hat = buildKidHat(p.hat);
     group.add(hat);
     if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
+    headExtras.push(hat);
+  } else if (p.crewColor != null && CREW_COLORS.some(c => c.hex === p.crewColor)) {
+    // v1.200 (D.21, your crew): no hat on, so the crew's bandana in its colour; you and your allies wear it
+    hat = buildKidHat('bandana_red', p.crewColor);
+    hat.userData.crewBandana = true;
+    group.add(hat);
     headExtras.push(hat);
   }
 
@@ -20254,6 +20264,7 @@ function enterScenario(scenarioId) {
         team: esTeam,
         statsOverride: es.statsOverride || null,   // v1.57: tutorial dummies, etc.
         noFire: !!es.noFire,                        // v1.58: hard never-fire flag
+        crewColor: crewWornBy(sc, es, esTeam),      // v1.200: your allies wear your crew's bandana
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
@@ -21355,7 +21366,31 @@ const LOOK_OPTIONS = [
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
   { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
   { key: 'shirtFront', label: 'Shirt front', kind: 'text', opts: [['plain', 'Plain'], ['stripe', 'Stripe'], ['pocket', 'Pocket']] },
+  // v1.200 (D.21, your crew): a name and a colour; the colour is a bandana you and your allies wear
+  { key: 'crewName', label: 'Crew name', kind: 'input', crew: true },
+  { key: 'crewColor', label: 'Crew colour', kind: 'swatch', crew: true, get opts() { return [null, ...CREW_COLORS.map(c => c.hex)]; } },
 ];
+// v1.200 (D.21, "then your crew: a name and colors your allies wear too"; Michael: C on "A better game" 2). The crew is
+// set at the mirror under YOUR CREW. Its name heads your side on the briefing (YOUR SIDE until you name it); its colour
+// is a bandana worn by you (when no hat is on) and by every ally in a match, except a VIP (his cap), Seth (the rival)
+// and the tutorial. None takes the bandanas off.
+const CREW_COLORS = [
+  { hex: 0xe07a1e, name: 'orange' }, { hex: 0x2a5ad0, name: 'blue' }, { hex: 0x2f8a3a, name: 'green' },
+  { hex: 0x6a3a9a, name: 'purple' }, { hex: 0xe0c020, name: 'yellow' }, { hex: 0x1e1e20, name: 'black' },
+];
+const CREW_NAME_MAX = 20;
+function cleanCrewName(v) {
+  return String(v == null ? '' : v).replace(/[<>&"`\\]/g, '').replace(/\s+/g, ' ').replace(/^\s+/, '').slice(0, CREW_NAME_MAX);
+}
+function crewName() { return cleanCrewName((Game.persist.look || {}).crewName).trim(); }
+function crewColor() {
+  const c = (Game.persist.look || {}).crewColor;
+  return CREW_COLORS.some(k => k.hex === c) ? c : null;
+}
+function crewWornBy(sc, es, team) {
+  if (team !== 'player' || es.vip || sc.tutorial || es.charId === 'seth') return null;
+  return crewColor();
+}
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
 function _hexCss(n) { return '#' + n.toString(16).padStart(6, '0'); }
 function ensureMirrorScreen() {
@@ -21379,21 +21414,47 @@ function renderMirrorOptions() {
   const look = Game.persist.look;
   for (const row of LOOK_OPTIONS) {
     if (row.owned && row.opts.length < 2) continue;   // v1.197: nothing to choose yet
+    if (row.crew && row.key === 'crewName') {          // v1.200: the crew's own heading
+      const h = document.createElement('div');
+      h.className = 'mirror-crew-head';
+      h.style.cssText = 'margin-top:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,.18);font-size:13px;letter-spacing:.12em;color:#e8b070';
+      h.textContent = 'YOUR CREW';
+      box.appendChild(h);
+    }
     const r = document.createElement('div');
     r.className = 'mirror-row'; r.dataset.key = row.key;
     r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">${row.label}</div>`;
+    if (row.kind === 'input') {   // v1.200: the crew name, typed; the game's keys don't see it
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.id = 'mirrorCrewName'; inp.maxLength = CREW_NAME_MAX; inp.placeholder = 'Name your crew';
+      inp.value = cleanCrewName(look[row.key]);
+      inp.style.cssText = 'width:100%;max-width:260px;box-sizing:border-box;padding:6px 8px;border-radius:4px;font:inherit;font-size:14px;color:#f4e9d8;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25)';
+      for (const ev of ['keydown', 'keyup', 'keypress']) inp.addEventListener(ev, e => e.stopPropagation());
+      inp.addEventListener('input', () => {
+        const v = cleanCrewName(inp.value);
+        if (v !== inp.value) inp.value = v;
+        Game.persist.look.crewName = v;
+      });
+      r.appendChild(inp);
+      box.appendChild(r);
+      continue;
+    }
     const btns = document.createElement('div');
     btns.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
     for (const o of row.opts) {
       const val = row.kind === 'swatch' ? o : o[0];
-      const on = look[row.key] === val;
+      const on = (look[row.key] === undefined ? null : look[row.key]) === val;   // v1.200: an old save's crew colour is none
       const b = document.createElement('button');
       b.className = 'mirror-opt' + (on ? ' on' : '');
       b.dataset.value = JSON.stringify(val);
-      if (row.kind === 'swatch') {
+      if (row.kind === 'swatch' && val === null) {   // v1.200: no crew colour
+        b.textContent = '×';
+        b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;color:#f4e9d8;font-size:16px;line-height:1;background:rgba(255,255,255,.08);border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
+        b.title = 'none';
+      } else if (row.kind === 'swatch') {
         const hex = typeof val === 'string' ? KID_EYE_COLORS[val] : val;   // v1.123: the eye row names its colours
         b.style.cssText = `width:30px;height:30px;border-radius:50%;cursor:pointer;background:${_hexCss(hex)};border:${on ? '3px solid #f4e9d8' : '2px solid rgba(255,255,255,.2)'}`;
-        b.title = typeof val === 'string' ? val : _hexCss(val);
+        b.title = typeof val === 'string' ? val : ((CREW_COLORS.find(c => c.hex === val) || {}).name || _hexCss(val));
       } else {
         b.textContent = o[1];
         b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;

@@ -9343,3 +9343,45 @@ and their own look on the Loadout kid. A Clothes pair would have to sit beside t
 ### Still open
 - Whether the bare legs and the long basketball shorts look right, and the prices ($12–20), are for Michael's look.
 - Shoes wait on "Shoes as looks" in decisions; then your crew (a name and colours your allies wear).
+
+## v1.200 — Your crew
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew: "a name and colors your allies wear
+too"; control room, 12 Oct). Shoes, the last of the looks, wait on "Shoes as looks" in decisions, so this run takes
+the crew, the second half of his C.
+
+**Where.** The mirror ends with a YOUR CREW section under a rule: a Crew name box (20 characters, typed; the game's keys
+never see what you type there, and < > & " ` \ are dropped) and a Crew colour row, none or six: orange, blue, green,
+purple, yellow, black. Both are part of the look (`look.crewName`, `look.crewColor`), so they are saved with it; an old
+save has no crew.
+
+**What it does.** The colour is a crew bandana, the v1.197 bandana mesh in that colour. You wear it at the mirror and on
+the Loadout kid when no hat is on (a hat you pick goes over a bare head instead). In a match every ally on your side
+wears it: Eric and Rebecca in the Hollow 3v3, Sean and Nick in Protect Ryan, and so on, lowered with the head on a
+crouch. Three never do: your VIP, who keeps his blue cap; Seth, who coaches the tutorial on your side but is the rival;
+and anyone in the tutorial. The other side never wears it, so a bandana in the colour you picked is a friend at a
+glance. The name heads your side on the briefing and the loading card (THE CREEK RATS where it said YOUR SIDE), when
+the match has allies; with no name, or in a 1v1, a free-for-all or the tutorial, it stays YOUR SIDE.
+
+Whether Seth's crew gets a name of its own is still pending ("Does Seth's crew get a name?", whose option C waited for
+this one); nothing here changes "Seth's crew".
+### Verified
+- `tests/crew.test.mjs` (new, 23 checks). A new game has no crew; the mirror ends YOUR CREW, Crew name (a text box),
+  Crew colour (none, orange, blue, green, purple, yellow, black), none lit, no bandana. A W pressed in the box reaches no
+  game listener (0 of 1); "The <Creek> Rats & co" saves as "The Creek Rats co"; a 32-character name stops at 20.
+  Orange: saved as e07a1e, the preview kid's bandana is e07a1e, one swatch lit, the typed name kept; with the red cap on
+  he wears the cap, not the bandana. The Loadout kid wears it. The Hollow 3v3 briefing heads your side THE CREEK RATS;
+  in the match Eric and Rebecca wear orange bandanas and Seth, Sean and Ryan none; a full crouch lowers Eric's 0.218 m;
+  10 s of the match run. Protect Ryan: Ryan wears his blue VIP cap and no bandana, Sean and Nick wear it, the other side
+  (Priya's red cap too) none. The tutorial: nobody wears it, Seth included, and the heading is YOUR SIDE. A blank name
+  and no colour: YOUR SIDE and no bandanas. A save and load keeps "The Creek Rats" and green; an old save has none. No
+  page errors.
+- `tests/mirror.test.mjs`, `tests/hats.test.mjs`, `tests/tops.test.mjs` count the two crew rows (12 on a new game) and
+  the crew colour's lit None.
+- `npm test`: one four-shard run was taken over this and v1.201 together; its result is in v1.201's entry.
+### Still open
+- Whether the bandana reads as "my crew" in play, at a glance and at night, and whether six colours are the right ones,
+  are for Michael's look. The player's own bandana is seen only at the mirror and the Loadout screen (first person
+  shows no head).
+- Allies wear only the bandana; their shirts keep their own colours. If he wants crew shirts as well, it is a profile
+  field away (`crewColor` reaches `createKid`).
+- Whether Seth's crew gets a name waits in decisions; shoes wait on "Shoes as looks".

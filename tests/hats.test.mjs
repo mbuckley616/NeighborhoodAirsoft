@@ -14,7 +14,7 @@ const d0 = await page.evaluate(() => {
   return { hat: Game.persist.look.hat, rows, owned: Object.keys(Game.persist.ownedHats) };
 });
 check('a new game wears no hat and owns none', d0.hat === 'none' && d0.owned.length === 0, d0);
-check('the mirror has no Hat row yet', !d0.rows.includes('hat') && d0.rows.length === 10, d0.rows);
+check('the mirror has no Hat row yet', !d0.rows.includes('hat') && d0.rows.length === 12, d0.rows);   // v1.200: the two crew rows
 
 // The shop's Clothes tab
 const readShop = () => page.evaluate(() => ({
@@ -89,7 +89,7 @@ const mir = await page.evaluate(() => {
   return r;
 });
 check('the mirror\'s Hat row: None, Red Ball Cap, Bucket Hat', mir.opts.join() === 'None,Red Ball Cap,Bucket Hat', mir.opts);
-check('clicking Bucket Hat wears it, on the preview too; one choice lit per row', mir.hat === 'bucket' && mir.preview === 'bucket' && mir.on === 11, mir);
+check('clicking Bucket Hat wears it, on the preview too; one choice lit per row', mir.hat === 'bucket' && mir.preview === 'bucket' && mir.on === 12, mir);   // v1.200: and the crew colour
 await page.evaluate(() => { MIRROR.kid.group.rotation.y = 0.9; MIRROR.renderer.render(MIRROR.scene, MIRROR.camera); });
 await g.shot('hats-mirror');
 await page.evaluate(() => closeMirror());

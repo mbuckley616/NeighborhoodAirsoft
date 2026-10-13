@@ -244,7 +244,9 @@ Fable card on the control room and Michael starts it from there.
    belt with a hood and sleeves to the wrist; the mirror's Top row; saved; `tests/tops.test.mjs`). ~~shorts~~ — done,
    v1.199 (cargo, basketball and jean shorts, and Swim Trunks won at Willow Bend; bare legs in white socks below them;
    the mirror's Shorts row; saved; `tests/shorts.test.mjs`). Shoes wait on a question in decisions (builder, 13 Oct:
-   shoes are already gear). Then your crew.
+   shoes are already gear). ~~Your crew~~ — done, v1.200 (YOUR CREW at the mirror: a typed name and a colour; the name
+   heads your side on the briefing, the colour is a bandana you and your allies wear in every match but the tutorial,
+   your VIP keeping his cap and Seth never wearing it; saved; `tests/crew.test.mjs`).
 22. A Pickup Game board in the bedroom: any opened zone, the mode, day or night, team sizes and which kids, lives, a
    clock; pays a little. Online play (D.2) comes after it, hosted from this board. (Michael, control room, 2026-10-12,
    "A better game" 3: **A** and 4: **B**)
