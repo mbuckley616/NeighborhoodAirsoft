@@ -1032,6 +1032,14 @@
     line-height: 1.5;
     font-style: italic;
   }
+  /* v1.193: the match's numbers, best moment and what it opened */
+  #resultScreen .result-stats { margin: -12px 0 18px; text-align: left; }
+  #resultScreen .rs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  #resultScreen .rs-cell { background: rgba(255,255,255,0.05); border: 1px solid rgba(212,165,116,0.35); border-radius: 3px; padding: 6px 4px; text-align: center; }
+  #resultScreen .rs-num { font-size: 20px; font-weight: bold; color: var(--ui-text); font-variant-numeric: tabular-nums; }
+  #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
+  #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
+  #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
     border: 1px solid var(--ui-good);
@@ -1075,6 +1083,22 @@
     border-radius: 4px;
     max-width: 400px;
   }
+
+  /* v1.194: the summer calendar's three months */
+  #modalScreen .modal-card.wide { max-width: 760px; }
+  #modalBody .sm-today { font-size: 15px; margin-bottom: 12px; }
+  #modalBody .sm-months { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+  #modalBody .sm-month { width: 210px; }
+  #modalBody .sm-name { font-family: Georgia, serif; color: var(--ui-accent); font-size: 15px; margin-bottom: 4px; }
+  #modalBody .sm-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 11px; }
+  #modalBody .sm-dow { opacity: 0.55; }
+  #modalBody .sm-day { padding: 3px 0; border-radius: 3px; background: rgba(255,255,255,0.04); position: relative; }
+  #modalBody .sm-day.blank { background: none; }
+  #modalBody .sm-day.here { background: rgba(212,166,74,0.22); }
+  #modalBody .sm-day.past { color: #777; text-decoration: line-through; text-decoration-color: #c0302a; }
+  #modalBody .sm-day.today { outline: 2px solid #5fa0e8; color: #fff; font-weight: bold; }
+  #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
+  #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
 
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
@@ -1804,6 +1828,37 @@
     margin-bottom: 16px; line-height: 1.4;
   }
 
+  /* v1.192: settings */
+  #titleScreen .settings-open-btn {
+    margin-top: 14px; padding: 9px 30px; font-size: 13px;
+    background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border);
+  }
+  #settingsScreen { background: rgba(0,0,0,0.55); z-index: 120; }
+  #settingsScreen .settings-card {
+    pointer-events: auto; background: var(--ui-bg); border: 1px solid var(--ui-border);
+    padding: 24px 32px; border-radius: 4px; width: min(460px, calc(100vw - 32px)); box-sizing: border-box;
+  }
+  #settingsScreen .settings-title {
+    font-family: 'Georgia', serif; font-size: 22px; color: var(--ui-accent); margin-bottom: 16px; text-align: center;
+  }
+  #settingsScreen .settings-row {
+    display: grid; grid-template-columns: 130px 1fr 52px; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--ui-text); margin-bottom: 10px;
+  }
+  #settingsScreen .settings-row input[type=range] { width: 100%; accent-color: var(--ui-accent); }
+  #settingsScreen .settings-row .settings-val { text-align: right; color: #ccc; font-variant-numeric: tabular-nums; }
+  #settingsScreen .settings-buttons { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+  #settingsScreen .settings-btn {
+    background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border); padding: 8px 22px;
+    font-family: inherit; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; font-size: 12px;
+  }
+  #settingsScreen .settings-btn.primary { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); }
+  #bedroomSettingsBtn {
+    position: fixed; right: 16px; top: 24px; z-index: 50; display: none;
+    background: var(--ui-bg); color: var(--ui-text); border: 1px solid var(--ui-border);
+    padding: 6px 12px; font-family: inherit; font-size: 12px; letter-spacing: 1px; cursor: pointer; border-radius: 3px;
+  }
+
   /* Pause hint */
   #pauseHint {
     position: fixed;
@@ -1906,7 +1961,8 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
-  <div class="version">v1.191</div>
+  <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
+  <div class="version">v1.194</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2146,6 +2202,7 @@
     <div class="outcome" id="outcomeText">VICTORY</div>
     <div class="flavor" id="flavorText"></div>
     <div class="reward" id="rewardText"></div>
+    <div class="result-stats" id="resultStats"></div>   <!-- v1.193 -->
     <div class="reload-note" id="reloadNote"></div>
     <div class="result-nav" id="resultNav">
       <button class="nav-btn" id="navPrevBtn">◀ Previous</button>
@@ -2268,6 +2325,19 @@
     <button class="modal-close" id="modalCloseBtn">OK</button>
   </div>
 </div>
+
+<!-- === v1.192: SETTINGS (from the title and the bedroom) === -->
+<div class="menu-overlay" id="settingsScreen">
+  <div class="settings-card">
+    <div class="settings-title">Settings</div>
+    <div class="settings-rows" id="settingsRows"></div>
+    <div class="settings-buttons">
+      <button class="settings-btn" id="settingsResetBtn">Defaults</button>
+      <button class="settings-btn primary" id="settingsDoneBtn">Done</button>
+    </div>
+  </div>
+</div>
+<button id="bedroomSettingsBtn" title="Settings">&#9881; SETTINGS</button>
 
 <!-- === SCENARIO BRIEFING POPUP (pre-start details) === -->
 <div class="menu-overlay" id="scenarioBriefModal">
@@ -5002,7 +5072,7 @@ function tryNpcSpeak(enemy, category) {
     u.rate  = 1.05 + (((hp >>> 6) % 30) / 100); // 1.05..1.34
     // (A) Volume: cap at 0.5 (was 0.9 — TTS was dominating shots/footsteps),
     // then scale by the same positional vol curve as audio cues.
-    u.volume = 0.5 * posVol;
+    u.volume = 0.5 * posVol * Settings.effects;   // v1.192: the effects volume
     speechSynthesis.speak(u);
     VOICE.globalCooldownUntil = now + 1.5;
     enemy._voiceCooldownUntil = now + 4.0;
@@ -5031,9 +5101,9 @@ function playVoiceMarker(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
   if (ctx.createStereoPanner) {
     const p = ctx.createStereoPanner(); p.pan.value = pan;
-    fundamental.connect(gain); formant.connect(gain); gain.connect(p).connect(ctx.destination);
+    fundamental.connect(gain); formant.connect(gain); gain.connect(p).connect(sfxOut());
   } else {
-    fundamental.connect(gain); formant.connect(gain); gain.connect(ctx.destination);
+    fundamental.connect(gain); formant.connect(gain); gain.connect(sfxOut());
   }
   fundamental.start(t); formant.start(t);
   fundamental.stop(t + 0.1); formant.stop(t + 0.1);
@@ -6921,6 +6991,55 @@ function initAudio() {
   }
 }
 
+// === v1.192 (D.17 "A better game" 5, Michael: C — settings first): SETTINGS ===
+// Mouse and aim sensitivity, music and effects volume, field of view and invert look. They belong to the browser,
+// not to a save: their own localStorage key, so NEW GAME and CONTINUE both keep them.
+const SETTINGS_KEY = 'neighborhoodAirsoft.settings.v1';
+const SETTINGS_DEFAULTS = { mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false };
+const SETTINGS_RANGES = {
+  mouseSens: [0.25, 3, 0.05], aimSens: [0.25, 2, 0.05], music: [0, 1, 0.05], effects: [0, 1, 0.05], fov: [60, 100, 1],
+};
+const Settings = Object.assign({}, SETTINGS_DEFAULTS);
+function sanitizeSettings(raw) {
+  const out = Object.assign({}, SETTINGS_DEFAULTS);
+  if (raw && typeof raw === 'object') {
+    for (const k in SETTINGS_RANGES) {
+      const v = Number(raw[k]), r = SETTINGS_RANGES[k];
+      if (Number.isFinite(v)) out[k] = Math.max(r[0], Math.min(r[1], v));
+    }
+    if (typeof raw.invertY === 'boolean') out.invertY = raw.invertY;
+  }
+  return out;
+}
+function loadSettings() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (e) { raw = null; }
+  Object.assign(Settings, sanitizeSettings(raw));
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(Settings)); } catch (e) { /* storage blocked: kept for this visit */ }
+}
+// Every sound effect goes through one gain (the effects volume); the music has its own master (Music.masterGain).
+function sfxOut() {
+  const a = Game.audio;
+  if (!a.sfx) {
+    a.sfx = a.ctx.createGain();
+    a.sfx.gain.value = Settings.effects;
+    a.sfx.connect(a.ctx.destination);
+  }
+  return a.sfx;
+}
+function applySettings() {
+  const a = Game.audio;
+  if (a && a.ctx && a.sfx) a.sfx.gain.setValueAtTime(Settings.effects, a.ctx.currentTime);
+  if (a && a.ctx && Music.playing && Music.masterGain) {
+    const g = Music.masterGain.gain;
+    g.cancelScheduledValues(a.ctx.currentTime);
+    g.setValueAtTime(Music.volume * Settings.music, a.ctx.currentTime);
+  }
+}
+loadSettings();
+
 // =====================================================================
 // PROCEDURAL MUSIC — bedroom theme (Toontown-Central-flavored, suburban-cheery)
 // =====================================================================
@@ -6969,7 +7088,7 @@ function startMusic(themeName) {
   Music.masterGain.connect(ctx.destination);
   // Quick fade-in
   Music.masterGain.gain.setValueAtTime(0, ctx.currentTime);
-  Music.masterGain.gain.linearRampToValueAtTime(Music.volume, ctx.currentTime + 0.6);
+  Music.masterGain.gain.linearRampToValueAtTime(Music.volume * Settings.music, ctx.currentTime + 0.6);   // v1.192: the music volume
   // Initialize beat clock
   Music.startTime = ctx.currentTime + 0.08;
   Music.currentBeat = -1;
@@ -7316,7 +7435,7 @@ function playPlayerFootstep(heavy) {
   filt.Q.value = 0.7;
   const ng = ctx.createGain();
   ng.gain.value = baseVol;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
   // Low tonal thump — gives the step weight (heel contact).
   const osc = ctx.createOscillator();
@@ -7327,7 +7446,7 @@ function playPlayerFootstep(heavy) {
   const og = ctx.createGain();
   og.gain.setValueAtTime(baseVol * 1.1, t);
   og.gain.exponentialRampToValueAtTime(0.0008, t + 0.10);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.12);
 }
 
@@ -7351,9 +7470,9 @@ function playShot(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   if (pan !== null) {
     const p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-    if (p) { p.pan.value = pan; osc.connect(gain).connect(p).connect(ctx.destination); }
-    else   { osc.connect(gain).connect(ctx.destination); }
-  } else { osc.connect(gain).connect(ctx.destination); }
+    if (p) { p.pan.value = pan; osc.connect(gain).connect(p).connect(sfxOut()); }
+    else   { osc.connect(gain).connect(sfxOut()); }
+  } else { osc.connect(gain).connect(sfxOut()); }
   osc.start(t); osc.stop(t + 0.1);
   // Noise burst
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
@@ -7365,9 +7484,9 @@ function playShot(srcX, srcZ) {
   src.buffer = buf;
   if (pan !== null && ctx.createStereoPanner) {
     const p2 = ctx.createStereoPanner(); p2.pan.value = pan;
-    src.connect(ng).connect(p2).connect(ctx.destination);
+    src.connect(ng).connect(p2).connect(sfxOut());
   } else {
-    src.connect(ng).connect(ctx.destination);
+    src.connect(ng).connect(sfxOut());
   }
   src.start(t);
 }
@@ -7420,8 +7539,8 @@ function playFootstep(srcX, srcZ) {
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   if (ctx.createStereoPanner) {
     const p = ctx.createStereoPanner(); p.pan.value = pan;
-    osc.connect(gain).connect(p).connect(ctx.destination);
-  } else { osc.connect(gain).connect(ctx.destination); }
+    osc.connect(gain).connect(p).connect(sfxOut());
+  } else { osc.connect(gain).connect(sfxOut()); }
   osc.start(t); osc.stop(t + 0.1);
   // Scrape (the sole)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
@@ -7433,9 +7552,9 @@ function playFootstep(srcX, srcZ) {
   src.buffer = buf;
   if (ctx.createStereoPanner) {
     const p2 = ctx.createStereoPanner(); p2.pan.value = pan;
-    src.connect(ng).connect(p2).connect(ctx.destination);
+    src.connect(ng).connect(p2).connect(sfxOut());
   } else {
-    src.connect(ng).connect(ctx.destination);
+    src.connect(ng).connect(sfxOut());
   }
   src.start(t);
 }
@@ -7482,8 +7601,8 @@ function bbWhistleStart(bb) {
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
     src.connect(bp).connect(gain);
     tone.connect(toneGain).connect(gain);
-    if (pan) gain.connect(pan).connect(ctx.destination);
-    else     gain.connect(ctx.destination);
+    if (pan) gain.connect(pan).connect(sfxOut());
+    else     gain.connect(sfxOut());
     const t = ctx.currentTime;
     src.start(t); tone.start(t);
     bb._whistle = { src, tone, gain, pan, bp };
@@ -7538,7 +7657,7 @@ function playReloadClick() {
   osc.frequency.setValueAtTime(180, t);
   gain.gain.setValueAtTime(0.1, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
 }
 
@@ -7555,7 +7674,7 @@ function playCockBack() {
   osc.frequency.exponentialRampToValueAtTime(1000, t + 0.03);
   gain.gain.setValueAtTime(0.16, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
   // Brief noise tail (metal-on-metal)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
@@ -7568,7 +7687,7 @@ function playCockBack() {
   filt.type = 'highpass';
   filt.frequency.value = 1500;
   src.buffer = buf;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7585,7 +7704,7 @@ function playCockForward() {
   osc.frequency.exponentialRampToValueAtTime(140, t + 0.06);
   gain.gain.setValueAtTime(0.2, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.1);
   // Noise burst for the metal slam
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.045, ctx.sampleRate);
@@ -7599,7 +7718,7 @@ function playCockForward() {
   filt.frequency.value = 800;
   filt.Q.value = 0.7;
   src.buffer = buf;
-  src.connect(filt).connect(ng).connect(ctx.destination);
+  src.connect(filt).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7622,7 +7741,7 @@ function playJam() {
   filt.frequency.value = 350;
   filt.Q.value = 1.5;
   src.buffer = buf;
-  src.connect(filt).connect(g).connect(ctx.destination);
+  src.connect(filt).connect(g).connect(sfxOut());
   src.start(t);
   // Plus a downward whine
   const osc = ctx.createOscillator();
@@ -7632,7 +7751,7 @@ function playJam() {
   osc.frequency.exponentialRampToValueAtTime(70, t + 0.25);
   og.gain.setValueAtTime(0.08, t);
   og.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.28);
 }
 
@@ -7648,7 +7767,7 @@ function playUnjam() {
   osc.frequency.exponentialRampToValueAtTime(110, t + 0.08);
   gain.gain.setValueAtTime(0.22, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.14);
 }
 
@@ -7663,7 +7782,7 @@ function playSlotSwap() {
   osc.frequency.setValueAtTime(700, t);
   gain.gain.setValueAtTime(0.07, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.05);
 }
 function playHitOnEnemy() {
@@ -7677,7 +7796,7 @@ function playHitOnEnemy() {
   osc.frequency.exponentialRampToValueAtTime(880, t + 0.12);
   gain.gain.setValueAtTime(0.14, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.2);
 }
 function playHitOnPlayer() {
@@ -7691,7 +7810,7 @@ function playHitOnPlayer() {
   const g = ctx.createGain();
   g.gain.value = 0.25;
   src.buffer = buf;
-  src.connect(g).connect(ctx.destination);
+  src.connect(g).connect(sfxOut());
   src.start(t);
 }
 
@@ -7724,7 +7843,7 @@ function playImpactMetal(impactPos) {
   osc1.frequency.exponentialRampToValueAtTime(baseFreq * 0.7, t + 0.12);
   g1.gain.setValueAtTime(0.18 * vol, t);
   g1.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-  osc1.connect(g1).connect(ctx.destination);
+  osc1.connect(g1).connect(sfxOut());
   osc1.start(t); osc1.stop(t + 0.2);
   // Harmonic overlay for shimmer
   const osc2 = ctx.createOscillator();
@@ -7733,7 +7852,7 @@ function playImpactMetal(impactPos) {
   osc2.frequency.setValueAtTime(baseFreq * 1.5, t);
   g2.gain.setValueAtTime(0.07 * vol, t);
   g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  osc2.connect(g2).connect(ctx.destination);
+  osc2.connect(g2).connect(sfxOut());
   osc2.start(t); osc2.stop(t + 0.12);
   // Tiny noise click at attack
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.008, ctx.sampleRate);
@@ -7743,7 +7862,7 @@ function playImpactMetal(impactPos) {
   const ng = ctx.createGain();
   ng.gain.value = 0.08 * vol;
   src.buffer = buf;
-  src.connect(ng).connect(ctx.destination);
+  src.connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7773,7 +7892,7 @@ function playImpactCardboard(impactPos) {
   filter.type = 'lowpass';
   filter.frequency.value = 600 + (Math.random() - 0.5) * 200;
   filter.Q.value = 0.5;
-  src.connect(filter).connect(g).connect(ctx.destination);
+  src.connect(filter).connect(g).connect(sfxOut());
   src.start(t);
   // Subtle low body thump
   const osc = ctx.createOscillator();
@@ -7783,7 +7902,7 @@ function playImpactCardboard(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(80, t + 0.05);
   og.gain.setValueAtTime(0.12 * vol, t);
   og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  osc.connect(og).connect(ctx.destination);
+  osc.connect(og).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.08);
 }
 
@@ -7802,7 +7921,7 @@ function playImpactWood(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.06);
   g.gain.setValueAtTime(0.2 * vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-  osc.connect(g).connect(ctx.destination);
+  osc.connect(g).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.12);
   // Sharper attack click — short filtered noise burst
   const dur = 0.025;
@@ -7817,7 +7936,7 @@ function playImpactWood(impactPos) {
   filter.frequency.value = 1800;
   filter.Q.value = 1.2;
   src.buffer = buf;
-  src.connect(filter).connect(ng).connect(ctx.destination);
+  src.connect(filter).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -7835,7 +7954,7 @@ function playImpactShatter(impactPos) {
   osc.frequency.exponentialRampToValueAtTime(1400, t + 0.04);
   g.gain.setValueAtTime(0.12 * vol, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  osc.connect(g).connect(ctx.destination);
+  osc.connect(g).connect(sfxOut());
   osc.start(t); osc.stop(t + 0.06);
   // Brief noise tail (the scattering shards)
   const dur = 0.08;
@@ -7851,7 +7970,7 @@ function playImpactShatter(impactPos) {
   filter.type = 'highpass';
   filter.frequency.value = 2000;
   src.buffer = buf;
-  src.connect(filter).connect(ng).connect(ctx.destination);
+  src.connect(filter).connect(ng).connect(sfxOut());
   src.start(t);
 }
 
@@ -8816,6 +8935,22 @@ function buildBedroomScene() {
   poster.rotation.y = Math.PI;
   scene.add(poster);
 
+  // v1.194 (D.20 step 1): the summer calendar on the north wall, west of the alcove — this month, the days gone
+  // crossed off, today ringed. It is redrawn on every visit (the bedroom is rebuilt each time).
+  const calCanvas = document.createElement('canvas');
+  calCanvas.width = 384; calCanvas.height = 576;
+  drawSummerCalendar(calCanvas, summerDayIndex());
+  const calGroup = new THREE.Group();
+  const calPage = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.72),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(calCanvas), roughness: 0.9 }));
+  calGroup.add(calPage);
+  const calNail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.03, 6), goldMat);
+  calNail.rotation.x = Math.PI / 2;
+  calNail.position.set(0, 0.39, 0);
+  calGroup.add(calNail);
+  calGroup.position.set(-2.3, 1.5, -BR_D/2 + 0.062);   // the wall is 0.1 thick, its face at -BR_D/2 + 0.05
+  scene.add(calGroup);
+
   // ============================================================
   // BIG CLOSET INTERIOR DECOR (visible through open doorway, looking south)
   // ============================================================
@@ -8915,6 +9050,16 @@ function buildBedroomScene() {
     prompt: 'Look in the bathroom mirror',
     label: 'Mirror', icon: 'bathroom', labelY: 2.05,
     action: () => openMirror(),
+  });
+
+  // v1.194 (D.20 step 1): the calendar → the summer so far
+  Game.interactables.push({
+    type: 'calendar',
+    box: new THREE.Box3().setFromObject(calGroup),
+    pos: new THREE.Vector3(-2.3, 1.0, -BR_D/2 + 0.45),
+    prompt: 'Look at the calendar',
+    label: 'Calendar', icon: 'calendar', labelY: 2.0,
+    action: () => openSummerCalendar(),
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
@@ -20238,6 +20383,7 @@ function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
+  Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
@@ -20405,6 +20551,69 @@ function startScenario(built) {
   requestPointerLock();
 }
 
+// === v1.193 (D.17 "A better game" 5, Michael: C — step 2): THE RESULT SCREEN'S NUMBERS ===
+// Each match counts your trigger pulls, your tags (each hit on a kid of the other side puts him out or sends him back),
+// how far each one flew and when, and the hits on you. The result screen shows them with the match's time, picks one
+// best moment, and says what the match opened: the next match it unlocked and any gun its pay put in reach.
+function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0 }; }
+function noteMatchTag(bb, c) {
+  const st = Game.scenario.stats;
+  const from = bb.spawnPos || bb.pos;
+  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+}
+const MATCH_DOUBLE_SEC = 3, MATCH_LONG_TAG_M = 15;
+function matchBestMoment(st, outcome) {
+  const tags = st.tags;
+  // two tags inside MATCH_DOUBLE_SEC: the quickest pair
+  let dbl = null;
+  for (let i = 1; i < tags.length; i++) {
+    const dt = tags[i].t - tags[i - 1].t;
+    if (dt <= MATCH_DOUBLE_SEC && tags[i].name !== tags[i - 1].name && (!dbl || dt < dbl.dt)) dbl = { a: tags[i - 1], b: tags[i], dt };
+  }
+  if (dbl) return `Two in ${dbl.dt.toFixed(1)} s: ${dbl.a.name}, then ${dbl.b.name}.`;
+  const longest = tags.reduce((m, t) => (!m || t.dist > m.dist ? t : m), null);
+  if (longest && longest.dist >= MATCH_LONG_TAG_M) return `A ${Math.round(longest.dist)} m tag on ${longest.name}.`;
+  if (outcome === 'win' && st.hitOnYou === 0) return 'Not a mark on you.';
+  if (longest) return `Your first tag: ${tags[0].name}, from ${Math.round(tags[0].dist)} m.`;
+  return '';
+}
+function fmtMatchTime(sec) {
+  const s = Math.max(0, Math.round(sec));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+// The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened
+const scenarioUnlockedForResult = isScenarioUnlocked;
+function scenariosOpenNow() {
+  return new Set(Object.keys(SCENARIOS).filter(id => findScenarioListContext(id) && scenarioUnlockedForResult(id)));
+}
+function gunsInReach(cashBefore, cashAfter) {
+  return ALL_GUN_TYPES.filter(gt => {
+    const cfg = GUN_MAGS[gt];
+    if (!cfg || !cfg.price || Game.persist.owned[cfg.ownFlag]) return false;
+    return cfg.price > cashBefore && cfg.price <= cashAfter;
+  }).map(gt => `${GUN_MAGS[gt].displayName} ($${GUN_MAGS[gt].price})`);
+}
+function renderMatchStats(outcome, openBefore, cashBefore) {
+  const el = document.getElementById('resultStats');
+  if (!el) return;
+  const st = Game.scenario.stats || newMatchStats();
+  const cell = (n, label) => `<div class="rs-cell"><div class="rs-num">${n}</div><div class="rs-label">${label}</div></div>`;
+  const hitsLabel = st.tags.length === 1 ? 'tag' : 'tags';
+  const shotsLabel = st.shots === 1 ? 'shot' : 'shots';
+  let html = `<div class="rs-grid">${cell(st.tags.length, hitsLabel)}${cell(st.shots, shotsLabel)}` +
+    `${cell(st.hitOnYou, st.hitOnYou === 1 ? 'hit on you' : 'hits on you')}${cell(fmtMatchTime(Game.scenario.roundTime || 0), 'time')}</div>`;
+  const best = matchBestMoment(st, outcome);
+  if (best) html += `<div class="rs-best"><span class="rs-tag">BEST</span> ${best}</div>`;
+  const openNow = scenariosOpenNow();
+  const opened = [...openNow].filter(id => !openBefore.has(id)).map(id => SCENARIOS[id].scenarioName || SCENARIOS[id].name || id);
+  const reach = gunsInReach(cashBefore, Game.persist.cash);
+  for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
+  if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
+  el.innerHTML = html;
+  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
+    time: Game.scenario.roundTime || 0, best, opened, reach };
+}
+
 function endScenario(outcome) {
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
@@ -20474,6 +20683,7 @@ function endScenario(outcome) {
   // shared with the world-map preview so display & payout always agree.
   const scDef = SCENARIOS[Game.scenario.active];
   const reward = (scDef && scDef.rewards) || { win: 10, lose: 3 };
+  const _openBefore = scenariosOpenNow(), _cashBefore = Game.persist.cash;   // v1.193: for "opened" and "in reach"
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
@@ -20626,6 +20836,8 @@ function endScenario(outcome) {
     }
   }
 
+  renderMatchStats(outcome, _openBefore, _cashBefore);   // v1.193
+
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
   const reloadNote = document.getElementById('reloadNote');
   if (reloadNote) {
@@ -20669,7 +20881,7 @@ function endScenario(outcome) {
 // MENU UTILITIES
 // ---------------------------------------------------------------------
 function hideAllMenus() {
-  ['titleScreen', 'worldMap', 'resultScreen', 'modalScreen', 'shopScreen', 'loadoutScreen', 'workbenchScreen'].forEach(id => {
+  ['titleScreen', 'worldMap', 'resultScreen', 'modalScreen', 'shopScreen', 'loadoutScreen', 'workbenchScreen', 'settingsScreen'].forEach(id => {
     document.getElementById(id).classList.remove('active');
   });
   if (typeof WB !== 'undefined') WB.active = false;
@@ -20686,6 +20898,7 @@ function showModal(title, body) {
 function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
+  document.querySelector('#modalScreen .modal-card').classList.remove('wide');   // v1.194: the summer calendar widens it
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
@@ -21937,7 +22150,7 @@ function playShopChaching() {
     osc.frequency.setValueAtTime(freq, t + i * 0.06);
     g.gain.setValueAtTime(0.08, t + i * 0.06);
     g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.15);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect(sfxOut());
     osc.start(t + i * 0.06);
     osc.stop(t + i * 0.06 + 0.16);
   });
@@ -22417,9 +22630,10 @@ function updatePlayer(dt) {
   const onLadder = inScenario && updateLadder(dt);
 
   // Look — sensitivity reduces with ADS
-  const sensMult = 1 - Game.player.ads * (1 - ADS_SENS_MULT);
+  // v1.192: the settings' mouse and aim sensitivity scale it, and invert look flips the pitch
+  const sensMult = Settings.mouseSens * (1 - Game.player.ads * (1 - ADS_SENS_MULT * Settings.aimSens));
   Game.player.yaw -= Game.mouse.dx * MOUSE_SENS * sensMult;
-  Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult;
+  Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult * (Settings.invertY ? -1 : 1);
   Game.player.pitch = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, Game.player.pitch));
   Game.mouse.dx = 0; Game.mouse.dy = 0;
 
@@ -22644,14 +22858,17 @@ function updatePlayer(dt) {
   }
 
   // FOV — ADS, sprint, slide
-  let targetFov = BASE_FOV;
+  // v1.192: the settings' field of view; aiming narrows it by the same share as from the old fixed 75
+  const baseFov = Settings.fov;
+  let targetFov = baseFov;
   // v1.28: a magnified sight (scope) zooms further when aiming. zoomBonus 0..1
   // deepens the ADS target FOV toward a tighter value.
   const zoomBonus = getEquippedSightZoomBonus();
   // v1.61b: stronger magnification for scopes — deeper minimum FOV so a 4× scope
   // genuinely pulls targets in (floor 16° vs the old 28°).
-  const adsFovTarget = ADS_FOV_TARGET - zoomBonus * (ADS_FOV_TARGET - 16);
-  targetFov += Game.player.ads * (adsFovTarget - BASE_FOV);
+  const adsFov = ADS_FOV_TARGET * baseFov / BASE_FOV;
+  const adsFovTarget = adsFov - zoomBonus * (adsFov - 16);
+  targetFov += Game.player.ads * (adsFovTarget - baseFov);
   if (Game.player.sprinting && movingForwardish) targetFov += 5;
   if (Game.player.sliding) targetFov += 8;
   Game.camera.fov += (targetFov - Game.camera.fov) * Math.min(1, dt * 10);
@@ -22910,6 +23127,8 @@ const BR_LABEL_ICONS = {
   bathroom: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><circle cx="14.5" cy="12" r="1" fill="#f4e9d8"/></svg>',
   // v1.88: door with an arrow out — the front door (goes outside to the map)
   outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // v1.194: a wall calendar — the summer so far
+  calendar: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4M8 14l3 3M11 14l-3 3" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
@@ -24006,6 +24225,7 @@ function buildEyewearFrameSVG(view) {
 // BB PROJECTILES — the core gimmick (unreliable trajectory past curve onset)
 // ---------------------------------------------------------------------
 function fireBB() {
+  if (Game.scenario.stats) Game.scenario.stats.shots++;   // v1.193: one per trigger pull, pellets or not
   // Spawn at gun muzzle, direction = camera forward
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(Game.camera.rotation);
   const pos = Game.camera.position.clone().add(forward.clone().multiplyScalar(0.4));
@@ -24533,6 +24753,7 @@ function applyBBHit(bb, c) {
   if (c === Game.player) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
+    if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
@@ -24545,6 +24766,7 @@ function applyBBHit(bb, c) {
       else endScenario('lose');
     }
   } else {
+    if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
@@ -28367,6 +28589,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
@@ -28441,6 +28664,81 @@ function tick() {
 // ---------------------------------------------------------------------
 // UI WIRING
 // ---------------------------------------------------------------------
+// v1.192 (D.17 "A better game" 5, Michael: C): the settings screen. The title's SETTINGS opens it over the title; in
+// the bedroom, with the mouse free, a SETTINGS button sits top right. Every change applies and saves at once.
+const SETTINGS_ROWS = [
+  { key: 'mouseSens', label: 'Mouse sensitivity', fmt: v => v.toFixed(2) + '×' },
+  { key: 'aimSens',   label: 'Aim sensitivity',   fmt: v => v.toFixed(2) + '×' },
+  { key: 'music',     label: 'Music volume',      fmt: v => Math.round(v * 100) + '%' },
+  { key: 'effects',   label: 'Effects volume',    fmt: v => Math.round(v * 100) + '%' },
+  { key: 'fov',       label: 'Field of view',     fmt: v => Math.round(v) + '°' },
+  { key: 'invertY',   label: 'Invert look',       toggle: true },
+];
+function renderSettings() {
+  const rows = document.getElementById('settingsRows');
+  rows.innerHTML = '';
+  for (const row of SETTINGS_ROWS) {
+    const el = document.createElement('div');
+    el.className = 'settings-row';
+    const label = document.createElement('label');
+    label.textContent = row.label;
+    const val = document.createElement('span');
+    val.className = 'settings-val';
+    const input = document.createElement('input');
+    input.dataset.key = row.key;
+    if (row.toggle) {
+      input.type = 'checkbox';
+      input.checked = !!Settings[row.key];
+      val.textContent = input.checked ? 'On' : 'Off';
+      input.addEventListener('change', () => {
+        Settings[row.key] = input.checked; val.textContent = input.checked ? 'On' : 'Off';
+        saveSettings(); applySettings();
+      });
+    } else {
+      const r = SETTINGS_RANGES[row.key];
+      input.type = 'range'; input.min = r[0]; input.max = r[1]; input.step = r[2];
+      input.value = Settings[row.key];
+      val.textContent = row.fmt(Settings[row.key]);
+      input.addEventListener('input', () => {
+        Settings[row.key] = sanitizeSettings(Object.assign({}, Settings, { [row.key]: Number(input.value) }))[row.key];
+        val.textContent = row.fmt(Settings[row.key]);
+        saveSettings(); applySettings();
+      });
+    }
+    el.append(label, input, val);
+    rows.appendChild(el);
+  }
+}
+function openSettings() {
+  renderSettings();
+  document.getElementById('settingsScreen').classList.add('active');
+  if (Game.mode !== 'title') { Game.prevMode = Game.mode; Game.mode = 'settings'; }
+  exitPointerLock();
+}
+function closeSettings() {
+  document.getElementById('settingsScreen').classList.remove('active');
+  if (Game.mode === 'settings') {
+    Game.mode = Game.prevMode || 'bedroom';
+    if (Game.mode === 'bedroom') showPauseHint();
+  }
+}
+function updateBedroomSettingsBtn() {
+  const want = Game.mode === 'bedroom' && !Game.mouse.locked ? 'block' : 'none';
+  const btn = document.getElementById('bedroomSettingsBtn');
+  if (btn.style.display !== want) btn.style.display = want;
+}
+document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('bedroomSettingsBtn').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
+// its mousedown must not reach the document's, which would take the pointer lock for the bedroom
+document.getElementById('bedroomSettingsBtn').addEventListener('mousedown', e => e.stopPropagation());
+document.addEventListener('keydown', e => {
+  if (e.code === 'Escape' && document.getElementById('settingsScreen').classList.contains('active')) closeSettings();
+});
+document.getElementById('settingsDoneBtn').addEventListener('click', closeSettings);
+document.getElementById('settingsResetBtn').addEventListener('click', () => {
+  Object.assign(Settings, SETTINGS_DEFAULTS); saveSettings(); applySettings(); renderSettings();
+});
+
 // v1.37: title-screen entry points. If a save exists, show CONTINUE (load it,
 // then enter) and relabel the primary button to NEW GAME (which starts fresh
 // WITHOUT touching the save on disk — the save is only overwritten when the
@@ -28645,6 +28943,149 @@ function isScenarioUnlocked(scenarioId) {
   const prevId = ctx.ids[ctx.idx - 1];
   return !!Game.persist.completed[prevId];
 }
+// =====================================================================
+// v1.194 (D.20 step 1, Michael: A on "A better game" 1 — a light summer story told in the bedroom): the summer of
+// 2003 on a wall calendar. Day 0 is Sunday 1 June; each zone of the ladder is a few weeks of it, and the date inside a
+// zone moves with the share of its matches you have won. The last Saturday, 30 August, is circled for the big match
+// on your own street (a later step). The calendar hangs on the bedroom's north wall and opens a three-month view.
+// =====================================================================
+const SUMMER_YEAR = 2003;
+const SUMMER_BIG_DAY = 90;                     // Saturday 30 August 2003
+const SUMMER_SPANS = {                         // zone key → [first day, last day], days since 1 June
+  winnmark_court: [0, 20],     // 1–21 June
+  bunratty_court: [21, 41],    // 22 June – 12 July
+  hollow:         [42, 55],    // 13–26 July
+  market_lot:     [56, 62],    // 27 July – 2 August
+  northcliff:     [63, 76],    // 3–16 August
+  high_school:    [77, 80],    // 17–20 August
+  country_club:   [81, 84],    // 21–24 August
+  grocery_store:  [85, 89],    // 25–29 August
+};
+const SUMMER_PENCIL = { winnmark_court: 'Winnmark', bunratty_court: 'Bunratty', hollow: 'The Hollow', market_lot: 'Market lot',
+  northcliff: 'Northcliff', high_school: 'Hollins HS', country_club: 'Willow Bend', grocery_store: 'The store' };
+const SUMMER_MONTHS = [{ name: 'June', m: 5, first: 0, days: 30 }, { name: 'July', m: 6, first: 30, days: 31 },
+  { name: 'August', m: 7, first: 61, days: 31 }];
+const SUMMER_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// The zone you are in: the furthest one the ladder has opened.
+function summerZoneKey() {
+  let key = ZONE_LADDER[0].key;
+  for (const z of ZONE_LADDER) if (isZoneUnlocked(z.key)) key = z.key;
+  return key;
+}
+// Today, as days since 1 June: the zone's first day plus its share of the span for the matches won there.
+function summerDayIndex() {
+  const key = summerZoneKey();
+  const span = SUMMER_SPANS[key] || [0, 0];
+  const ids = PIN_SCENARIO_GROUPS[key] || [];
+  const done = ids.filter(id => Game.persist.completed[id]).length;
+  const len = span[1] - span[0] + 1;
+  return Math.min(span[1], span[0] + Math.floor(len * done / Math.max(1, ids.length)));
+}
+// { month: 0..2, date: 1..31, weekday, label: 'Tuesday 10 June' } for a day index.
+function summerDate(day) {
+  let mi = 0;
+  while (mi < 2 && day >= SUMMER_MONTHS[mi + 1].first) mi++;
+  const date = day - SUMMER_MONTHS[mi].first + 1;
+  const weekday = SUMMER_WEEKDAYS[day % 7];    // 1 June 2003 was a Sunday
+  return { month: mi, date, weekday, label: weekday + ' ' + date + ' ' + SUMMER_MONTHS[mi].name };
+}
+// The zone whose span holds a day (or null for the big day).
+function summerZoneOfDay(day) {
+  for (const k in SUMMER_SPANS) if (day >= SUMMER_SPANS[k][0] && day <= SUMMER_SPANS[k][1]) return k;
+  return null;
+}
+function summerZoneName(key) {
+  const z = ZONE_LADDER.find(z => z.key === key);
+  return z ? z.name.split(' · ')[0].split(' /')[0] : '';
+}
+// The bedroom calendar's page: a picture on top, this month's grid below, past days crossed out, today ringed.
+function drawSummerCalendar(canvas, today) {
+  const W = canvas.width, H = canvas.height, c = canvas.getContext('2d');
+  const t = summerDate(today), mo = SUMMER_MONTHS[t.month];
+  c.fillStyle = '#f7f2e6'; c.fillRect(0, 0, W, H);
+  // the picture: a creek under pines in the summer sun
+  const ph = H * 0.38;
+  const sky = c.createLinearGradient(0, 0, 0, ph);
+  sky.addColorStop(0, '#5aa0d8'); sky.addColorStop(1, '#bfe0f0');
+  c.fillStyle = sky; c.fillRect(0, 0, W, ph);
+  c.fillStyle = '#ffd34a'; c.beginPath(); c.arc(W * 0.8, ph * 0.28, ph * 0.13, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#4f8a3a'; c.fillRect(0, ph * 0.72, W, ph * 0.28);
+  c.fillStyle = '#3d7fb0'; c.beginPath(); c.moveTo(W * 0.35, ph); c.quadraticCurveTo(W * 0.55, ph * 0.8, W * 0.6, ph * 0.72);
+  c.lineTo(W * 0.66, ph * 0.72); c.quadraticCurveTo(W * 0.66, ph * 0.86, W * 0.55, ph); c.fill();
+  c.fillStyle = '#2b5a2a';
+  for (const [x, s] of [[0.08, 1], [0.18, 1.3], [0.29, 0.9], [0.74, 1.2], [0.88, 1], [0.96, 1.4]]) {
+    c.beginPath(); c.moveTo(W * x, ph * (0.78 - 0.45 * s)); c.lineTo(W * x - 26 * s, ph * 0.8); c.lineTo(W * x + 26 * s, ph * 0.8); c.fill();
+  }
+  c.fillStyle = '#fff'; c.font = 'bold 34px Impact, sans-serif'; c.textAlign = 'center';
+  c.fillText('SUMMER ' + SUMMER_YEAR, W / 2, ph * 0.2);
+  // the month's name and the grid
+  c.fillStyle = '#b02a24'; c.font = 'bold 40px Georgia, serif';
+  c.fillText(mo.name.toUpperCase(), W / 2, ph + 50);
+  const gx = 16, gy = ph + 72, cw = (W - 32) / 7, rows = 6, ch = (H - gy - 12) / rows;
+  c.font = 'bold 15px Arial, sans-serif'; c.fillStyle = '#555';
+  'SMTWTFS'.split('').forEach((d, i) => c.fillText(d, gx + cw * (i + 0.5), gy - 6));
+  const firstDow = mo.first % 7;
+  for (let d = 1; d <= mo.days; d++) {
+    const day = mo.first + d - 1, slot = firstDow + d - 1;
+    const x = gx + cw * (slot % 7), y = gy + ch * Math.floor(slot / 7);
+    c.strokeStyle = '#c9c0ae'; c.lineWidth = 1; c.strokeRect(x, y, cw, ch);
+    c.fillStyle = '#333'; c.font = '18px Arial, sans-serif'; c.textAlign = 'left';
+    c.fillText(String(d), x + 5, y + 19);
+    const zk = summerZoneOfDay(day);
+    if (zk && SUMMER_SPANS[zk][0] === day) {          // a zone's first day carries its name in pencil
+      c.fillStyle = '#4a5a8a'; c.font = 'italic 11px Arial, sans-serif';
+      c.fillText(SUMMER_PENCIL[zk] || '', x + 3, y + ch - 6);
+    }
+    if (day < today) {                                 // crossed off
+      c.strokeStyle = '#c0302a'; c.lineWidth = 3;
+      c.beginPath(); c.moveTo(x + 6, y + 6); c.lineTo(x + cw - 6, y + ch - 6);
+      c.moveTo(x + cw - 6, y + 6); c.lineTo(x + 6, y + ch - 6); c.stroke();
+    }
+    if (day === today || day === SUMMER_BIG_DAY) {     // today ringed; the last Saturday ringed twice
+      c.strokeStyle = day === SUMMER_BIG_DAY ? '#c0302a' : '#1f5fb0'; c.lineWidth = 3;
+      for (let r = 0; r < (day === SUMMER_BIG_DAY ? 2 : 1); r++) {
+        c.beginPath(); c.ellipse(x + cw / 2, y + ch / 2, cw / 2 - 3 - r * 4, ch / 2 - 3 - r * 4, 0, 0, Math.PI * 2); c.stroke();
+      }
+    }
+  }
+  c.textAlign = 'left';
+}
+// The three-month view the calendar opens (in the modal shell).
+function summerCalendarHTML(today) {
+  const t = summerDate(today);
+  const zone = summerZoneKey();
+  const left = SUMMER_BIG_DAY - today;
+  const months = SUMMER_MONTHS.map(mo => {
+    let cells = '';
+    for (let i = 0; i < mo.first % 7; i++) cells += '<span class="sm-day blank"></span>';
+    for (let d = 1; d <= mo.days; d++) {
+      const day = mo.first + d - 1, zk = summerZoneOfDay(day);
+      const cls = ['sm-day', day < today ? 'past' : '', day === today ? 'today' : '', day === SUMMER_BIG_DAY ? 'big' : '',
+        zk === zone ? 'here' : ''].filter(Boolean).join(' ');
+      const tip = zk ? summerZoneName(zk) : 'The last Saturday of summer';
+      cells += `<span class="${cls}" data-day="${day}" title="${tip}">${d}</span>`;
+    }
+    return `<div class="sm-month"><div class="sm-name">${mo.name}</div>
+      <div class="sm-grid">${'SMTWTFS'.split('').map(w => `<span class="sm-dow">${w}</span>`).join('')}${cells}</div></div>`;
+  }).join('');
+  const span = SUMMER_SPANS[zone];
+  return `<div class="sm-today">Today is <b>${t.label}</b>.</div>
+    <div class="sm-months">${months}</div>
+    <div class="sm-note">${summerZoneName(zone)}: ${summerDate(span[0]).label.replace(/^\w+ /, '')} to ${summerDate(span[1]).label.replace(/^\w+ /, '')}.
+      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>`;
+}
+function openSummerCalendar() {
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Summer ' + SUMMER_YEAR;
+  const body = document.getElementById('modalBody');
+  body.style.whiteSpace = 'normal';
+  body.innerHTML = summerCalendarHTML(summerDayIndex());
+  document.querySelector('#modalScreen .modal-card').classList.add('wide');
+  document.getElementById('modalScreen').classList.add('active');
+}
+
 // Human-readable reason a scenario is locked (for greyed rows / pickers).
 function scenarioLockReason(scenarioId) {
   const ctx = findScenarioListContext(scenarioId);

@@ -219,13 +219,18 @@ Fable card on the control room and Michael starts it from there.
    own kids") **(design)** — five questions in decisions (builder, 12 Oct, "A better game" 1–5): a story, more
    customisation, custom games, online play now, which screen first. Each answer becomes its own item here.
    Michael's answers (control room, 12 Oct) are filed as D.18–D.22 (producer).
-18. A settings screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of
-   view, invert look; saved. (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 1)
-19. A better result screen: your tags, shots, hits, time and the match's best moment, and what you can now buy or open.
-   (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 2)
+18. ~~A settings screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of
+   view, invert look; saved. (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 1)~~ — done, v1.192
+   (saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`)
+19. ~~A better result screen: your tags, shots, hits, time and the match's best moment, and what you can now buy or open.
+   (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 2)~~ — done, v1.193 (`tests/result-stats.test.mjs`)
 20. A light summer story told in the bedroom, no cutscenes: a wall calendar from June to the last day of August, each
    zone a few weeks of it; friends text your flip phone between matches; a rival crew; it ends with one big match on
-   your own street. (Michael, control room, 2026-10-12, "A better game" 1: **A**)
+   your own street. (Michael, control room, 2026-10-12, "A better game" 1: **A**) In four steps (builder): ~~1, the
+   calendar~~ — done, v1.194 (summer 2003 on the bedroom's north wall: each zone a span of days from 1 June, the date
+   moving with the matches won there, days gone crossed off, today ringed, Saturday 30 August ringed twice; E opens
+   June to August; `tests/calendar.test.mjs`). Next: 2, the flip phone and its texts; 3, the rival crew in briefings
+   and result lines; 4, the last-Saturday match on your street.
 21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
    room, 2026-10-12, "A better game" 2: **C**)
