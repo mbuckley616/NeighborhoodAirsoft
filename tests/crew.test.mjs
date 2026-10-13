@@ -85,6 +85,8 @@ check('Hollow 3v3: both allies wear the orange crew bandana', allies.length === 
 check('…and none of the other side does', foes.length >= 3 && foes.every(k => !k.crew), foes);
 const crouch = await page.evaluate(() => {
   const e = Game.scenario.enemies.find(k => k.team === 'player'); const h = e.mesh.hat;
+  // v1.204 fix-up: stand him up first. Read from his pose mid-round (part crouched or leaning), the drop was 0.145-0.158
+  setKidCrouch(e.mesh, 0); e.mesh.group.updateMatrixWorld(true);
   const y0 = new THREE.Box3().setFromObject(h).max.y; setKidCrouch(e.mesh, 1); e.mesh.group.updateMatrixWorld(true);
   const y1 = new THREE.Box3().setFromObject(h).max.y; setKidCrouch(e.mesh, 0);
   return +(y0 - y1).toFixed(3);
