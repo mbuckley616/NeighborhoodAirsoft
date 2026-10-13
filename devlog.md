@@ -9593,3 +9593,24 @@ summer's last text. Before the win, the store's night match still leaves the cal
 - Whether a 6v6 on Bunratty reads as the summer's big finish, and whether three lives is the right length, need
   Michael to play it.
 - C on the same question (the calendar turning to a "see you next summer" page) was not chosen, and is not built.
+
+## v1.206 — Sneakers at the mirror
+Backlog D.21, shoes (Michael: A on "Shoes as looks, when shoes are already gear?": a free Sneakers row at the
+mirror). The shop's Gear tab already sells three pairs of shoes with their own numbers. With none on, you wore plain
+sneakers in a colour the game picked from your shirt, pants and hair. The mirror now has a Sneakers row, after the
+Pants (and Shorts) and before the Glasses, with six colours: black, white, navy, grey, red and royal blue. The first
+five are the colours the game picks from, and royal blue is new. It is free. Until you pick, the swatch for the pair
+you have on is the one lit, so an old save looks the same as before. The colour is saved with the rest of your look.
+A gear pair still replaces the plain pair: on the Loadout kid, Track Spikes stay orange whatever the mirror says.
+Other kids keep the colour the game picks for them.
+### Verified
+- `tests/sneakers.test.mjs` (new, 9 checks). A new game's mirror has the Sneakers row between Pants and Glasses, with
+  six swatches, none saved, and the one lit is the colour the preview kid wears (black on the default look). Each of
+  the six puts that colour on both preview sneakers, lit alone, and nothing else in the look changes. Picked red,
+  the Loadout kid wears red, and with Track Spikes equipped he wears their orange (0xf06a1a). Eight other kids
+  still wear `kidShoeColor`. A save and load keeps red. An old save with no colour has none picked and wears the
+  pair the game picks. No page errors.
+- `mirror`, `hats` and `tops` count the mirror's rows and lit choices, so each count goes up by one. With that change
+  they pass, and so do `shorts`, `crew` and `loadout-gear`.
+### Still open
+- Whether six colours are enough, and whether royal blue sits well beside them, is Michael's to judge at the mirror.

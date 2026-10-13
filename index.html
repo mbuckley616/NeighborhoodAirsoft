@@ -1990,7 +1990,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.205</div>
+  <div class="version">v1.206</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16965,8 +16965,21 @@ function _kidHash(p) {
   const n = ((p.shirtColor | 0) * 31 + (p.pantsColor | 0) * 17 + (p.hairColor | 0)) >>> 0;
   return (Math.abs(Math.sin(n * 12.9898) * 43758.5453)) % 1;
 }
+// v1.206 (D.21 shoes, Michael: A on "Shoes as looks": a free Sneakers row at the mirror): six colours for the plain
+// pair, the five the game picks from plus royal blue. A look with one of them wears it; any other kid (and an old save
+// that never picked) keeps the colour the game picks. A gear pair (Trail Runners, Track Spikes, Cross-Trainers) keeps
+// its own look over them on the Loadout kid.
+const KID_SNEAKER_COLORS = [0x1a1a1a, 0xd8d8d0, 0x26324a, 0x5a5a60, 0x7a2222, 0x2a6ad8];
 function kidShoeColor(p) {
+  if (KID_SNEAKER_COLORS.includes(p.shoeColor)) return p.shoeColor;   // v1.206
   return [0x1a1a1a, 0x1a1a1a, 0x26324a, 0x5a5a60, 0x7a2222, 0xd8d8d0][Math.floor(_kidHash(p) * 6)];
+}
+// v1.206: the sneakers your kid wears now: the picked colour, else the one the game picks (as createKid sees the look,
+// with a top's colour in place of the shirt's)
+function lookShoeColor(look) {
+  const p = Object.assign({}, look);
+  if (KID_TOPS[p.top]) p.shirtColor = KID_TOPS[p.top].color;
+  return kidShoeColor(p);
 }
 function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
   const cg = kidClothesGeometry();
@@ -21469,6 +21482,8 @@ const LOOK_OPTIONS = [
   // v1.199 (D.21 step 3): the shorts you own; a Pants colour puts the jeans back on
   { key: 'shorts', label: 'Shorts', kind: 'text', owned: true,
     get opts() { return [['none', 'None'], ...KID_SHORTS_ORDER.filter(shortsOwned).map(id => [id, KID_SHORTS[id].name])]; } },
+  // v1.206 (D.21 shoes, Michael: A): the plain pair's colour, free; until you pick, the one you have on is lit
+  { key: 'shoeColor', label: 'Sneakers', kind: 'swatch', opts: KID_SNEAKER_COLORS, current: lookShoeColor },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
   { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
@@ -21550,7 +21565,8 @@ function renderMirrorOptions() {
     btns.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
     for (const o of row.opts) {
       const val = row.kind === 'swatch' ? o : o[0];
-      const on = (look[row.key] === undefined ? null : look[row.key]) === val;   // v1.200: an old save's crew colour is none
+      const cur = row.current ? row.current(look) : look[row.key];   // v1.206: the sneakers you have on
+      const on = (cur === undefined ? null : cur) === val;   // v1.200: an old save's crew colour is none
       const b = document.createElement('button');
       b.className = 'mirror-opt' + (on ? ' on' : '');
       b.dataset.value = JSON.stringify(val);

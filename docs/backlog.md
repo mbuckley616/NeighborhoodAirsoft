@@ -247,8 +247,9 @@ Fable card on the control room and Michael starts it from there.
    graphic tees, a grey hoodie, and the Big Game Tee won at the Hollow, worn over the mirror's shirt; the hoodie over the
    belt with a hood and sleeves to the wrist; the mirror's Top row; saved; `tests/tops.test.mjs`). ~~shorts~~ — done,
    v1.199 (cargo, basketball and jean shorts, and Swim Trunks won at Willow Bend; bare legs in white socks below them;
-   the mirror's Shorts row; saved; `tests/shorts.test.mjs`). Shoes wait on a question in decisions (builder, 13 Oct:
-   shoes are already gear). ~~Your crew~~ — done, v1.200 (YOUR CREW at the mirror: a typed name and a colour; the name
+   the mirror's Shorts row; saved; `tests/shorts.test.mjs`). ~~Shoes~~ (Michael: A, a free Sneakers row at the mirror)
+   — done, v1.206 (six colours for the plain pair, the one you have on lit; a gear pair keeps its own look on the
+   Loadout kid; saved, an old save keeps the pair the game picked; `tests/sneakers.test.mjs`). ~~Your crew~~ — done, v1.200 (YOUR CREW at the mirror: a typed name and a colour; the name
    heads your side on the briefing, the colour is a bandana you and your allies wear in every match but the tutorial,
    your VIP keeping his cap and Seth never wearing it; saved; `tests/crew.test.mjs`).
 22. A Pickup Game board in the bedroom: any opened zone, the mode, day or night, team sizes and which kids, lives, a
