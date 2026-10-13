@@ -218,14 +218,21 @@ Fable card on the control room and Michael starts it from there.
    version of the game and build a healthy backlog." (Michael, control room, 2026-10-12, his D on "After the school's
    own kids") **(design)** — five questions in decisions (builder, 12 Oct, "A better game" 1–5): a story, more
    customisation, custom games, online play now, which screen first. Each answer becomes its own item here.
-   Michael's answers (control room, 12 Oct): 1 **A**, a light summer story told in the bedroom (calendar, texts, a rival
-   crew, a last-Saturday match); 2 **C**, looks you earn or buy, then your crew; 3 **A**, a Pickup Game board; 4 **B**,
-   online after the board; 5 **C**, settings, then a better result screen. ~~5, step 1: settings~~ — done, v1.192 (a
-   SETTINGS screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of view,
-   invert look; saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`). ~~5, step 2: the result
-   screen~~ — done, v1.193 (your tags, shots, hits on you and the match time; one best moment; the match it opened and any
-   gun its pay put in reach; `tests/result-stats.test.mjs`). D.17 5 C is complete pending Michael's look. Next: 1, 2, 3 in
-   that order unless Michael reorders (the producer files each as its own item).
+   Michael's answers (control room, 12 Oct) are filed as D.18–D.22 (producer).
+18. ~~A settings screen from the title and the bedroom: mouse and aim sensitivity, music and effects volume, field of
+   view, invert look; saved. (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 1)~~ — done, v1.192
+   (saved in the browser, kept across NEW GAME; `tests/settings.test.mjs`)
+19. ~~A better result screen: your tags, shots, hits, time and the match's best moment, and what you can now buy or open.
+   (Michael, control room, 2026-10-12, "A better game" 5: **C**, step 2)~~ — done, v1.193 (`tests/result-stats.test.mjs`)
+20. A light summer story told in the bedroom, no cutscenes: a wall calendar from June to the last day of August, each
+   zone a few weeks of it; friends text your flip phone between matches; a rival crew; it ends with one big match on
+   your own street. (Michael, control room, 2026-10-12, "A better game" 1: **A**)
+21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
+   in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
+   room, 2026-10-12, "A better game" 2: **C**)
+22. A Pickup Game board in the bedroom: any opened zone, the mode, day or night, team sizes and which kids, lives, a
+   clock; pays a little. Online play (D.2) comes after it, hosted from this board. (Michael, control room, 2026-10-12,
+   "A better game" 3: **A** and 4: **B**)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

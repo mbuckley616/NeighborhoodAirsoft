@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **A better game, 1 of 5: a story? (builder, 2026-10-12)** You asked whether the game needs a campaign or a simple
   storyline. Today the reason to play is the ladder: win a match, the next opens, zone after zone. Nothing says who
   these kids are to you or why this summer matters. Options:
@@ -19,6 +21,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Neither for now.
   Builder recommends **A**, then C later: it is the summer-2003 kid fantasy the brief asks for, and it lives in the
   bedroom, the briefings and the result screen, so no match changes.
+  Michael: **A — A light summer story told in the bedroom**. (2026-10-12)
 
 - **A better game, 2 of 5: more of you (builder, 2026-10-12)** You asked whether the character needs more
   customisation. The mirror has height, build, hair and its colour, skin, eyes, shirt and its front, pants and glasses
@@ -30,6 +33,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) A then B.
   D) Enough as it is.
   Builder recommends **C**: A gives the money you win a second use beyond guns, and B is small once A's clothes exist.
+  Michael: **C — A then B (looks you earn or buy, then your crew)**. (2026-10-12)
 
 - **A better game, 3 of 5: custom games (builder, 2026-10-12)** You asked whether players should make their own
   games. Every match now is one written into the game. Options:
@@ -40,6 +44,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Not now.
   Builder recommends **A**: it reuses every system the matches already have, gives a player who has finished the
   ladder something to do, and it is the screen an online host would pick a match from later (question 4).
+  Michael: **A — A Pickup Game board in the bedroom**. (2026-10-12)
 
 - **A better game, 4 of 5: online play now? (builder, 2026-10-12)** You asked whether to focus on online play and
   hosted rooms (backlog D.2, a Fable item). Your C of 30 Sep held it until the v2 zones were done; they are (Northcliff,
@@ -51,6 +56,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Keep holding it.
   Builder recommends **B**: the board is the host's screen, so building it first saves building a second one; online
   is also the biggest change the game has had, so it is best started from a settled single-player game.
+  Michael: **B — After the Pickup Game board**. (2026-10-12)
 
 - **A better game, 5 of 5: which screen first? (builder, 2026-10-12)** You asked whether any interfaces need an
   upgrade. The map screen (v1.146–v1.148), the shop's tabs (v1.128) and the Loadout kid (v1.132–v1.133) are recent.
@@ -64,8 +70,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) The bedroom first: a corkboard by the bed with your progress, the next match, and your money.
   Builder recommends **C**: settings are the first thing a new itch.io player looks for and the game has none, and
   the result screen is where every match ends.
-
-## Answered
+  Michael: **C — A then B (a settings screen, then a better result screen)**. (2026-10-12)
 
 - **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
   In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
