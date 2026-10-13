@@ -229,17 +229,34 @@ Fable card on the control room and Michael starts it from there.
    your own street. (Michael, control room, 2026-10-12, "A better game" 1: **A**) In four steps (builder): ~~1, the
    calendar~~ — done, v1.194 (summer 2003 on the bedroom's north wall: each zone a span of days from 1 June, the date
    moving with the matches won there, days gone crossed off, today ringed, Saturday 30 August ringed twice; E opens
-   June to August; `tests/calendar.test.mjs`). Next: 2, the flip phone and its texts; 3, the rival crew in briefings
-   and result lines; 4, the last-Saturday match on your street.
+   June to August; `tests/calendar.test.mjs`). ~~2, the flip phone and its texts~~ — done, v1.195 (a flip phone on
+   the north nightstand, its light on while a text is unread; eighteen texts from Eric, Rebecca, Brooke, Sean and Seth,
+   one per key win, dated by the calendar, read state saved; `tests/texts.test.mjs`). ~~3, the rival crew~~ — done,
+   v1.196 (Seth's crew is the other side in 20 ladder matches: the briefing heads them SETH'S CREW with the summer's score,
+   the result card says how it went, the calendar puts a red dot on each day you beat them; `tests/rival.test.mjs`;
+   whether they get a name is in decisions). Next: 4, the last-Saturday match on your street.
 21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
-   room, 2026-10-12, "A better game" 2: **C**)
+   room, 2026-10-12, "A better game" 2: **C**) In pieces, a part of the kid at a time (builder): ~~hats~~ — done, v1.197 (a
+   Clothes tab in the shop: two caps, a bucket hat, two bandanas, and the Winnmark Cap won by clearing Winnmark; each
+   its own mesh over the hair; worn from the shop or the mirror's Hat row; saved; `tests/hats.test.mjs`). ~~tops~~ — done, v1.198 (three
+   graphic tees, a grey hoodie, and the Big Game Tee won at the Hollow, worn over the mirror's shirt; the hoodie over the
+   belt with a hood and sleeves to the wrist; the mirror's Top row; saved; `tests/tops.test.mjs`). ~~shorts~~ — done,
+   v1.199 (cargo, basketball and jean shorts, and Swim Trunks won at Willow Bend; bare legs in white socks below them;
+   the mirror's Shorts row; saved; `tests/shorts.test.mjs`). Shoes wait on a question in decisions (builder, 13 Oct:
+   shoes are already gear). ~~Your crew~~ — done, v1.200 (YOUR CREW at the mirror: a typed name and a colour; the name
+   heads your side on the briefing, the colour is a bandana you and your allies wear in every match but the tutorial,
+   your VIP keeping his cap and Seth never wearing it; saved; `tests/crew.test.mjs`).
 22. A Pickup Game board in the bedroom: any opened zone, the mode, day or night, team sizes and which kids, lives, a
    clock; pays a little. Online play (D.2) comes after it, hosted from this board. (Michael, control room, 2026-10-12,
-   "A better game" 3: **A** and 4: **B**)
+   "A better game" 3: **A** and 4: **B**) In steps (builder): ~~1, the board~~ — done, v1.201 (a corkboard on the
+   bedroom's north wall: any map whose zone is open, 1v1 to 4v4, day or night, 1/3/5 lives; each map's biggest team
+   battle cut to size; $3 a win, $1 a loss, never a ladder win; `tests/pickup.test.mjs`). Next: 2, the mode (a
+   free-for-all on the maps that have one); 3, which kids; 4, a clock.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
+- Bellfield Bulb 3v3 (`tests/bellfield.test.mjs`, v1.197 full run, once): allies Andrew and Evan walked 60–75 m and fired 0 shots in 120 s while the other side fired 1,653; passed alone. Intermittent; worth a look if it recurs (builder, 13 Oct).
 - ~~v1.153 (builder, the stuck-kid sweep) — Bunratty Everybody for Themselves: Nick sits in `advancing` within 1 m of (5.5, −28.2), by house 2's backyard, for 7–15.5 s without a shot, in 2 of 5 runs with the player walked 10 m toward him (over the sweep's 15 s line in 1). It is the sweep's only finding, listed in `KNOWN` in `tests/lib/stuck-sweep.mjs` so CI stays green; delete that line with the fix. Steps: `ONLY=bunratty_ffa node tests/stuck-sweep-2.test.mjs`, a few times; watch Nick's `state` and `pos` after the player's walk.~~ — done, v1.154 (each 0.5 m bound back to a cover behind him restarted the pocket rule's 2.5 s window; a bound that keeps him within 1.5 m of where the window began no longer does; staged on the spot he leaves at 6.9–8.1 s, was never in 30 s; off the sweep's `KNOWN` list; `tests/fence-bound.test.mjs`)
 - ~~v1.140 (builder) — `tests/market-lot.test.mjs`'s team 3v3 "both sides lose lives (within 120 s)" can fail one-sided. Locally it was 9–0 in 1 of 4 runs on v1.140, and CI on d7e44da was the mirror case. In those rounds one side's kids stay at their spawn end and the other side's pusher picks them off from about 10 m. Part of it may be the test, not the game: it makes the player untaggable and counts only the kids' lives, but the enemy kids aim at the player a great deal (16 full 120 s rounds: the player was their target in 160–530 of their half-second samples, and took 0–1361 ignored hits). A hit on him would be a life lost on the player's side in a real round. Either count hits on the player toward the player's side, or find why one side sometimes never leaves its spawn. Steps: `g.scenario('lot_team_3v3')`, the test's 120 s loop, log `livesLost` per side, each kid's `_targetRef` and the hits on the player.~~ — done, v1.141 (the test, not the game: the untaggable player soaked the enemies' fire while his two allies ran out of lives, so his hits now count for his side; the 9–0 was a clean win, Eric tagging the enemy as they redeployed, which the in-evaluate loop can't see end; 58 probe rounds, no kid stayed at spawn)
 - ~~**v1.126 (builder) — fix before Builder sessions merges.** Since v1.125, Bunratty Infection's Mitchell can spend the whole round at (−26.8, 25.3), held by a bin (−26.4…−25.2, 24.8…25.8), a moving box and a plywood stack in his backyard; `tests/taggers.test.mjs` fails its low-frame-rate pass (every third step 0.05 s) in about half the runs (v1.124: 0 of 3). v1.125's detailed props have the same collision boxes, but they draw from the per-scenario seeded RNG (`withSeededRandom`) in a different order, so the board changed. Either fix the tagger's way out of a three-prop pocket (v1.121 gave gunners a back-out after two blocked turn-rounds; taggers have only v1.100's sidestep commitment), or make the detailed builders draw the same random numbers as the old ones so every board stays as it was. Steps: `g.scenario('bunratty_infection')`, `Game.player._infected = true`, 45 s of `stepGame(f % 3 ? 1/60 : 0.05)`, read Mitchell's `pos`.~~ — done, v1.126 fix-up (the straight step's slide cancelled the fence detour's to the millimetre at the bin's west face; while a detour moves him there is no slide, a detour that slides one component is no longer banned as failed, and under 0.3 m net in 0.5 s counts as wedged; 10 of 10 mixed-step rounds reach the player)

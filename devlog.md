@@ -9138,3 +9138,294 @@ days shaded, "Today is Sunday 20 July", and a line with the zone's dates and how
   days each, so August goes fast.
 - The calendar doesn't yet mark the days texts came or the rival crew's matches; those are steps 2 and 3. Saturday 30
   August is ringed but there is no match on it until step 4.
+
+## v1.195 — Texts on the flip phone
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 2 of the summer story: your friends text your
+flip phone between matches. v1.194 put the summer on the bedroom wall; the texts are dated on it.
+
+**The phone.** A shut silver flip phone lies on the north nightstand by the lamp. While a text is unread its little
+green light is on, its chip reads "Phone · 2 new" and the prompt "Check your phone (2 new)". E opens it: a phone-shaped
+card with a green LCD, the texts newest first, each with who sent it, NEW if you hadn't seen it, and the day ("Sun 22
+Jun"). Opening it reads them all; that is kept in the save (`textsRead`), so the light stays off after a reload.
+
+**The texts.** Eighteen of them, one for a new game and one each after seventeen wins: the tutorial, your first
+match with Seth, the cul-de-sac, Squad Up, every zone's last match (each one points you at the next place: Sean on
+Bunratty, the Hollow, Marcus's mom's Saturday shop at Riverside Market, Evan up in Northcliff, the school's portables,
+the pool's gap in the hedge, Tyler's dad's store), the brothers, Infection, the Hollow's Big Game, the twins'
+treehouse and Flags on Bellfield. They come from Eric, Rebecca, Brooke and Sean, and Seth, who is your friend and
+your rival at once, as the matches already have him. The last, from Seth on Friday 29 August, says the summer's last
+Saturday is on your street, his crew against yours; that match is step 4. A text's date is the calendar day its win
+brings (a zone's last match brings the next zone's first day), so an old save gets the summer's texts on the right
+days, all unread.
+### Verified
+- `tests/texts.test.mjs` (new, 17 checks). A new game has one text, Eric's, dated 1 June; the phone's light is on, its
+  chip "Phone · 1 new", the prompt "Check your phone (1 new)". Every text follows a real match; the dates never go
+  back down the list (days 0, 1, 2, 6, 17, 21 … 85, 89); Bunratty's comes Sunday 22 June, the store's Monday 25 August,
+  Seth's last Friday 29 August. Winning the ladder in order to the Hollow's Big Game, each of the nine texts on the way
+  is dated the day the calendar then shows, and ten wait, all unread, newest (Seth's, 20 July) first. Beside the
+  nightstand the prompt is "Check your phone (10 new)"; E opens "Texts" with ten NEW messages, Seth's first and
+  Eric's "Sun 1 Jun" last; that reads them all and saves ten ids; the light goes off and the chip and prompt drop the
+  count; OK closes to the bedroom. A save and load keeps them read, and finishing the Hollow brings one new text,
+  Brooke's about the lot. No page errors.
+- `npm test` as four local shards: 101 of 102 suites passed. `stuck-sweep-16` died at Playwright's 30 s `page.goto`
+  limit under load before any check and passed alone.
+### Still open
+- The texts' voice (lowercase, "u", "tmrw") is a guess at 2003 texting for Michael to read; every line is in
+  `SUMMER_TEXTS`, easy to change.
+- The phone's light is steady, not blinking, and there is no buzz when you come home to a new text.
+- Seth's crew is the rival in the texts; step 3 puts them in briefings and result lines, and may want a crew name
+  (a question for Michael if so).
+
+## v1.196 — Seth's crew
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 3 of the summer story: a rival crew. The texts
+already made Seth the friend who is also your rival, and the matches already put him on the other side again and
+again; this step says so on the screens around those matches.
+
+**Who they are.** A match is against Seth's crew when Seth is on the other side and it is on the ladder: 20 matches,
+from his backyard duel and the Winnmark cul-de-sac through all nine of the Hollow's fort and team battles to the
+lot's two night matches and the club's 3v3 and night 4v4. The tutorial, the free-for-alls and Infection don't count
+(nobody is anybody's crew there), nor the matches where Seth is on your side.
+
+**The briefing.** Both the briefing card on the map and the loading screen head the other side SETH'S CREW in a team
+match (a duel with Seth alone keeps OPPONENTS) and add a red RIVALS line under the objective: "Seth's crew: beaten in
+3 of their 20 matches this summer."
+
+**The result card.** A red RIVALS line under the best moment: "Seth's crew goes home beaten." the first time you win
+one of theirs, "Seth's crew loses again." on a replay, "Seth's crew takes this one." on a loss ("Seth" alone in a duel),
+then "You've beaten them in 3 of their 20 matches this summer." The score is read from `completed`, so an old save has
+its score and nothing new is saved.
+
+**The calendar.** June to August puts a small red dot on each day a win over them brought (the day the win moves the
+calendar to, as the texts are dated), with a note under the months: "A red dot is a day you beat Seth's crew: 17 so
+far; beaten in 17 of their 20 matches this summer." A dotted day's hover says so too.
+
+Two questions for Michael went into decisions: whether the crew gets a name (I recommend keeping "Seth's crew"), and
+where your street is for step 4's last-Saturday match (I recommend Winnmark Court).
+### Verified
+- `tests/rival.test.mjs` (new, 18 checks). 20 rival matches, none of them the tutorial, the two free-for-alls named,
+  Infection at night or Winnmark's 2v2 with Seth beside you. With his two duels won, the Cul-de-Sac's briefing heads
+  the other side SETH'S CREW and says "beaten in 2 of their 20"; his backyard duel keeps OPPONENTS with the same line;
+  Sean's duel has none. The loading screen shows both. Winning the Cul-de-Sac: "Seth's crew goes home beaten. You've
+  beaten them in 3 of their 20 matches this summer." under RIVALS; a Play Again loss "Seth's crew takes this one.", a
+  second win "Seth's crew loses again.", the score 3 both times; losing the shotgun duel "Seth takes this one. You've
+  beaten his crew in 3 …"; beating Sean, no line. With the ladder won to the Hollow's Big Game and all of Winnmark, 17
+  days carry the red dot (rgb 224, 80, 58), exactly the days those wins bring; a new summer has none and says "No wins
+  over Seth's crew yet". No page errors.
+- `npm test` as four local shards: 100 of 103 suites passed. Three (`under-parts`, `kid-climb`, `winnmark-cars`) died
+  at Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and
+  passed alone.
+### Still open
+- Whether the score line reads as a rivalry or as bookkeeping is for play; it counts matches, not rounds, so losses
+  don't lower it.
+- Seth's crew changes members from map to map (Devon, Mitchell, Mason, Ryan, Marcus at different times); the line
+  calls whoever Seth brings his crew.
+- Step 4, the last-Saturday match, waits on where your street is (decisions).
+
+## v1.197 — Hats
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct). The story's
+step 4 waits on where your street is (decisions), so this run starts the looks, which are answered. They come in
+pieces, one part of the kid at a time; hats first, because the head is what the mirror and the Loadout kid show
+best and a hat changes a silhouette the most.
+
+**The hats.** Six, each its own mesh over the hair: a Red Ball Cap (six panels, a bill that dips a little, a button)
+and a navy Backwards Cap, $15 each; a khaki Bucket Hat with its brim all round, $20; a Red and a Blue Bandana folded
+into a headband and knotted at the back with two tails, $10 each; and the green Winnmark Cap with a white patch,
+which is not for sale: clearing Winnmark Court gives it. Every crown is wider than the widest hair (curly, 34 cm), so
+no style pokes through its sides, and a cap or bucket hat hides curly hair's three puffs, which would come through
+its top; a bandana leaves them. The hat lowers with the head on a crouch. It is a `createKid` profile field
+(`hat`), so the other kids can wear them later (the crew colours, D.21's second half).
+
+**Where.** The shop has a fifth tab, Clothes, with a Hats section. BUY pays and puts it on; a hat you own says WEAR,
+the one on your head WEARING and TAKE OFF; the Winnmark Cap says WON and EARN IT until Winnmark is cleared, then WEAR.
+The mirror gets a Hat row under the hair colour once you own one (None and each hat you own), and the Loadout
+screen's kid wears it. The hat you wear (`look.hat`) and the ones you bought (`ownedHats`) are saved; an old save
+wears none.
+### Verified
+- `tests/hats.test.mjs` (new, 23 checks). A new game wears none and the mirror has its ten rows, no Hat. With $14 the
+  Clothes tab lists the six hats; the bandanas say BUY, the $15 cap NEED $15, the Winnmark Cap WON / EARN IT, greyed.
+  With $100, clicking BUY on the red cap pays $15 and puts it on (TAKE OFF); buying the bucket hat puts that on and
+  WEAR puts the cap back; TAKE OFF leaves you bare-headed. On all four hair styles every hat is at least as wide as
+  the hair; caps and the bucket hat top out at 1.545–1.56 m over hair at 1.47–1.49 and sit on the head (bottom
+  1.397–1.403, head top 1.40); bandanas sit below the hair's top; the cap's bill reaches 0.315 m forward, the
+  backwards cap's 0.315 back; on curly hair a crown leaves 0 puffs showing and a bandana 3; a full crouch lowers every
+  hat 0.247 m with the head (0.248). The mirror's Hat row is None, Red Ball Cap, Bucket Hat; Bucket Hat puts it on the
+  preview with eleven choices lit. The Loadout kid wears it. Winning Winnmark's last match turns the Winnmark Cap to
+  WEAR, free. A save and load keeps the cap worn and the two bought; an old save with no hat fields wears none. No
+  page errors.
+- `tests/shop-tabs.test.mjs` now expects five tabs, the fifth Clothes with its six hat rows.
+- `npm test` as four local shards: 102 of 104 suites passed. `whole-block` died at Playwright's 30 s `page.goto` limit
+  before any check and passed alone. `bellfield` failed one check once: in a 120 s Bellfield Bulb 3v3, Andrew and
+  Evan walked 75 m and 60 m and fired 0 shots while the other side fired 1,653, so no enemy lost a life. Run alone it
+  passed (8 enemy and 6 ally lives lost in 60 s, the allies firing 46 and 40). Nothing in this change touches the
+  kids' aim or fire (their profiles have no hat). Filed under Found in play.
+### Still open
+- Whether the hats look right on the kid, and the prices ($10–20 against the first wins' $15–22), are for Michael's
+  look.
+- The hat isn't seen in a match: first person shows no head. The other kids wear none until the crew colours.
+- Next pieces of D.21: tops (graphic tees, a hoodie), then shorts and shoes, then your crew.
+
+## v1.198 — Tops
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct), the second
+piece after v1.197's hats: tops, the graphic tees and the hoodie on his list.
+
+**The tops.** Five, each worn over the mirror's shirt: its colour becomes the shirt's (body and sleeves), the shirt's
+own stripe or pocket goes, and it brings a front of its own. A white Skate Tee (a black deck with red wheels) and a sky
+blue Shark Tee (a grey fin over a white wave), $15 each; a black Flame Tee with orange and yellow flames up from the
+hem, $18; a heather Grey Hoodie, $30; and the forest-green Big Game Tee with a white pine, which is not for sale:
+winning the Hollow's Big Game gives it. The hoodie is cut differently: it hangs loose over the belt to a waistband rib,
+has the hood down at the back of the neck, a kangaroo pocket and two white drawstrings, and its sleeves run down the
+forearms to a cuff above the hand. Everything is in the torso's and forearm's own frames, so a crouch, the walk and
+the aim move it with the body. The hitboxes are unchanged. A `createKid` profile field (`top`), like the hat.
+
+**Where.** The Clothes tab has a second section, Tops, under Hats, with the same buttons (BUY puts it on; WEAR; WEARING
+and TAKE OFF; the won tee says WON and EARN IT until the Big Game is won). The mirror gets a Top row under the Shirt
+colour once you own one. Picking a Shirt colour or Shirt front at the mirror takes the top off, so those rows always
+show what they do. The Loadout kid wears it. `look.top` and `ownedTops` are saved; an old save wears none.
+### Verified
+- `tests/tops.test.mjs` (new, 26 checks). A new game wears no top and owns none; the mirror has its ten rows. With $16
+  the Clothes tab shows Hats (six) then Tops: Skate Tee, Shark Tee, Flame Tee, Grey Hoodie, Big Game Tee; a $15 tee
+  says BUY, the Flame Tee NEED $18, the hoodie NEED $30, the Big Game Tee WON / EARN IT, greyed. With $100 and the red
+  cap on, BUY on the hoodie pays $30 and puts it on with the cap still worn (TAKE OFF); buying the Shark Tee puts that
+  on and WEAR brings the hoodie back; TAKE OFF shows your own shirt. Every top turns the shirt and sleeves its colour
+  (e6e3da, 5f9cc8, 1e1e20, 7c7d84, 2f5a3a); the shirt's stripe goes (trim 252 vertices bare, 216 under a tee, 144 under
+  the hoodie), a tee keeps the belt, the hoodie hangs over it. Each tee's graphic lies on the chest front
+  (z 0.113–0.121) inside the shirt's width and height. The hoodie's hood is behind the back (z −0.166 against −0.12) and
+  under the head (top 1.119, head bottom 1.12), its hem reaches 0.52 (shirt 0.59); its sleeves cover both forearms down
+  to 0.635, above the hand (0.644 top); a full crouch lowers it 0.248 with the torso. The mirror's Top row, after the
+  Shirt, is None, Shark Tee, Grey Hoodie; clicking Shark Tee wears it on the preview, one choice lit in each of 12 rows;
+  a Shirt colour then takes it off and shows that shirt. The Loadout kid wears the hoodie. Winning the Big Game turns its
+  tee to WEAR, free. A save and load keeps the tee worn and the two bought; an old save wears none. A match runs with
+  the hoodie on. No page errors.
+- `tests/hats.test.mjs` and `tests/shop-tabs.test.mjs` now expect the Tops section (11 rows in Clothes).
+- `npm test` as four local shards: 100 of 105 suites passed. Four (`bellfield`, `briefing-lives`, `ctf-clock`,
+  `winnmark-trees`) died at Playwright's 30 s `page.goto` limit under load before any check, and `spawn-facing` lost its
+  browser before its first check; all five passed alone.
+### Still open
+- How the tees' graphics and the hoodie read on the kid, and the prices ($15–30), are for Michael's look.
+- A top isn't seen in a match (first person shows no body), and the other kids wear none until the crew colours.
+- Next pieces of D.21: shorts, then shoes (a question in decisions: shoes are already gear), then your crew.
+
+## v1.199 — Shorts
+Decisions, "A better game" 2 (Michael: C), the third piece of the looks: shorts.
+
+**The shorts.** Four pairs. Khaki Cargo Shorts with a pocket on each outer thigh, $20; navy Basketball Shorts with
+white side stripes, cut long past the knee, $15; Jean Shorts with a rolled cuff, $12; and teal Swim Trunks with yellow
+stripes, not for sale: winning Night Swim at Willow Bend gives them. In shorts each leg is bare below them (a slimmer
+leg in the skin colour) in a white sock above the sneaker. The shorts and socks are children of the legs, so they swing
+with the walk and fold with the crouch, and knee pads and the drop-leg holster still sit where they did. The hitboxes
+are unchanged. A `createKid` profile field (`shorts`), like the hat and the top.
+
+**Where.** The Clothes tab's third section, Shorts, under Tops, with the same buttons. The mirror gets a Shorts row
+under the Pants colour once you own a pair; picking a Pants colour puts your jeans back on, in that colour. The Loadout
+kid wears them. `look.shorts` and `ownedShorts` are saved; an old save wears jeans.
+
+**Shoes.** The list ends "shorts and shoes", but the Gear tab already sells three pairs of shoes with their own numbers
+and their own look on the Loadout kid. A Clothes pair would have to sit beside them, so that went to decisions
+("Shoes as looks", I recommend A: a free Sneakers colour row at the mirror for the plain pair).
+### Verified
+- `tests/shorts.test.mjs` (new, 22 checks). A new game wears jeans, owns no shorts and has no Shorts row at the mirror.
+  With $14 the Clothes tab is Hats, Tops, Shorts; the shorts are Cargo Shorts, Basketball Shorts, Jean Shorts, Swim
+  Trunks; the $12 jean shorts say BUY, the others NEED $15 / NEED $20, the trunks WON / EARN IT, greyed. With $100 and
+  the Skate Tee on, BUY on the cargo shorts pays $20 and puts them on with the tee still worn (TAKE OFF); buying the
+  basketball shorts and WEAR on the cargo shorts leaves one pair on; TAKE OFF puts the jeans back. In jeans the legs are
+  the pants colour; in each pair they are the skin (c89870) with the shorts on both legs (children of the right and left
+  leg). Every pair's cloth runs from the hip (0.55) and is wider than the bare leg; the basketball shorts and trunks
+  end at 0.215, past the knee, the cargo and jean shorts at 0.275; a white sock shows from 0.08 to 0.15 above the
+  sneaker (top 0.085). Swinging the leg 0.5 rad moves the shorts 0.12 m forward; a full crouch keeps them on the leg
+  (top 0.321 against 0.314). The mirror's Shorts row, after the Pants, is None, Cargo Shorts, Basketball Shorts;
+  Basketball Shorts goes on the preview; a Pants colour then puts the jeans back in that colour. The Loadout kid wears
+  the cargo shorts. Winning Night Swim turns the trunks to WEAR, free. A save and load keeps the trunks worn and the two
+  bought; an old save wears jeans. A match runs. No page errors.
+- `tests/hats.test.mjs`, `tests/tops.test.mjs` and `tests/shop-tabs.test.mjs` expect the Shorts section (15 rows in
+  Clothes).
+- `npm test` as four local shards: 104 of 106 suites passed. `stuck-sweep-10` and `stuck-sweep-12` died at Playwright's
+  30 s `page.goto` limit under load before any check, and passed alone.
+### Still open
+- Whether the bare legs and the long basketball shorts look right, and the prices ($12–20), are for Michael's look.
+- Shoes wait on "Shoes as looks" in decisions; then your crew (a name and colours your allies wear).
+
+## v1.200 — Your crew
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew: "a name and colors your allies wear
+too"; control room, 12 Oct). Shoes, the last of the looks, wait on "Shoes as looks" in decisions, so this run takes
+the crew, the second half of his C.
+
+**Where.** The mirror ends with a YOUR CREW section under a rule: a Crew name box (20 characters, typed; the game's keys
+never see what you type there, and < > & " ` \ are dropped) and a Crew colour row, none or six: orange, blue, green,
+purple, yellow, black. Both are part of the look (`look.crewName`, `look.crewColor`), so they are saved with it; an old
+save has no crew.
+
+**What it does.** The colour is a crew bandana, the v1.197 bandana mesh in that colour. You wear it at the mirror and on
+the Loadout kid when no hat is on (a hat you pick goes over a bare head instead). In a match every ally on your side
+wears it: Eric and Rebecca in the Hollow 3v3, Sean and Nick in Protect Ryan, and so on, lowered with the head on a
+crouch. Three never do: your VIP, who keeps his blue cap; Seth, who coaches the tutorial on your side but is the rival;
+and anyone in the tutorial. The other side never wears it, so a bandana in the colour you picked is a friend at a
+glance. The name heads your side on the briefing and the loading card (THE CREEK RATS where it said YOUR SIDE), when
+the match has allies; with no name, or in a 1v1, a free-for-all or the tutorial, it stays YOUR SIDE.
+
+Whether Seth's crew gets a name of its own is still pending ("Does Seth's crew get a name?", whose option C waited for
+this one); nothing here changes "Seth's crew".
+### Verified
+- `tests/crew.test.mjs` (new, 23 checks). A new game has no crew; the mirror ends YOUR CREW, Crew name (a text box),
+  Crew colour (none, orange, blue, green, purple, yellow, black), none lit, no bandana. A W pressed in the box reaches no
+  game listener (0 of 1); "The <Creek> Rats & co" saves as "The Creek Rats co"; a 32-character name stops at 20.
+  Orange: saved as e07a1e, the preview kid's bandana is e07a1e, one swatch lit, the typed name kept; with the red cap on
+  he wears the cap, not the bandana. The Loadout kid wears it. The Hollow 3v3 briefing heads your side THE CREEK RATS;
+  in the match Eric and Rebecca wear orange bandanas and Seth, Sean and Ryan none; a full crouch lowers Eric's 0.218 m;
+  10 s of the match run. Protect Ryan: Ryan wears his blue VIP cap and no bandana, Sean and Nick wear it, the other side
+  (Priya's red cap too) none. The tutorial: nobody wears it, Seth included, and the heading is YOUR SIDE. A blank name
+  and no colour: YOUR SIDE and no bandanas. A save and load keeps "The Creek Rats" and green; an old save has none. No
+  page errors.
+- `tests/mirror.test.mjs`, `tests/hats.test.mjs`, `tests/tops.test.mjs` count the two crew rows (12 on a new game) and
+  the crew colour's lit None.
+- `npm test`: one four-shard run was taken over this and v1.201 together; its result is in v1.201's entry.
+### Still open
+- Whether the bandana reads as "my crew" in play, at a glance and at night, and whether six colours are the right ones,
+  are for Michael's look. The player's own bandana is seen only at the mirror and the Loadout screen (first person
+  shows no head).
+- Allies wear only the bandana; their shirts keep their own colours. If he wants crew shirts as well, it is a profile
+  field away (`crewColor` reaches `createKid`).
+- Whether Seth's crew gets a name waits in decisions; shoes wait on "Shoes as looks".
+
+## v1.201 — The Pickup Game board
+Decisions, "A better game" 3 (Michael: A, "a Pickup Game board in the bedroom: any opened zone, the mode, day or
+night, team sizes and which kids, lives, a clock; pays a little"; and 4: B, online play comes after it, hosted from
+this board; control room, 12 Oct). Too much for one version, so it comes in steps, like the looks; this is the first.
+
+**The board.** A corkboard hangs on the bedroom's north wall east of the window, a PICKUP GAME sheet and a sticky note
+pinned to it; "Set up a pickup game" at it, and E opens the board: Where (every map whose zone is open: Winnmark
+Court on a new game, nine with all zones open, Northcliff Trace and Bellfield Court both under Northcliff), How many
+(1v1 up to 4v4; Winnmark stops at 3v3), When (day or night) and Lives (1, 3 or 5, for every kid, and for you as the
+hits you can take). PLAY goes through the match's usual briefing.
+
+**The match.** Each map's pickup game is its biggest team battle with the sides cut to size: Winnmark's 3v3, Bunratty's
+4v4, the Hollow's Big Game, and the night 4v4 of the other six (whose starts were made safe at night, so they are by
+day too). Your side is you and the first kids it lists, theirs its first kids, each at his own spot with his own gun;
+last side standing. It is written as `SCENARIOS.pickup_game` at PLAY, so the briefing, the crew bandanas (v1.200) and
+the result screen all work on it as on any match. It pays $3 a win and $1 a loss (the ladder's first wins pay $15-22),
+and it never counts as a ladder win: nothing is marked done, the calendar does not move, no text arrives.
+
+**Next steps** (in the backlog): the mode (a free-for-all where the map has one), which kids, and a clock.
+### Verified
+- `tests/pickup.test.mjs` (new, 15 checks). Standing at (1.65, -1.4) facing the board, the prompt is "Set up a pickup
+  game" and E opens "Pickup Game". A new game: Where is Winnmark Court only, How many 1v1-3v3, Day/Night, 1/3/5, with
+  2v2, Day, 3 lit. Every zone open: nine maps, Winnmark Court first and Inside Riverside Market last; Winnmark's most is
+  3v3, the other eight 4v4. Clicking Bunratty Court, 4v4, Night, 5 lights those four and PLAY opens the briefing of a
+  night 4v4 ("You've got Sean, Nick and Ryan against Mitchell, Priya, Owen and Tyler"); after BEGIN, 3 allies and 4 of
+  theirs with 5 lives each, you with 5 hits; 10 s run. A win pays $3, marks nothing done (2 completed before and after)
+  and leaves the calendar on day 42. A 1v1 on Winnmark is you against Brooke, and a loss pays $1. All nine maps build
+  and run 3 s at 2v2 by night (3 kids, 1 ours) and at their biggest by day (7 kids, 3 ours; Winnmark 5, 2). No page
+  errors.
+- `npm test` as four local shards, over v1.200 and this together (the run began on v1.200 and this version's code
+  landed while it ran): 99 of 107 suites passed; the other eight (`country-club`, `night-lights-spawn`, `laser`,
+  `kid-clothes`, `desk-start`, `mirror`, `stuck-sweep-4`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit
+  under load before any check. On the final v1.201 build all eight passed, and so did 24 suites that touch the bedroom,
+  its screens or the result card (front-door, calendar, texts, rival, result-stats, result-text, one-ending, smoke,
+  harness, settings, shop-tabs, hats, tops, shorts, crew, pickup, both loadout suites, walkie, utility-belt, music,
+  map-screen, pointer-lock, briefing-lives).
+### Still open
+- Whether $3 and $1 is "a little", and whether the board's look fits the bedroom, are for Michael.
+- The sides are each map's first-listed kids; on Winnmark that puts Seth on your side, as in the ladder's 3v3. Step 3
+  (which kids) lets you pick.
+- Night by day: the six night 4v4s become day matches with the same spots. They build and run, but nobody has played
+  one, and a sniper spot chosen for the dark may be strong in daylight.
+- Steps 2-4: the mode, which kids, a clock. Online play (D.2) is hosted from this board after them.
