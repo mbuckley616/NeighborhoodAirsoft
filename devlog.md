@@ -9643,6 +9643,11 @@ untouched.
   `pickup-fernando` (above, fixed in the test), `treehouse`, whose browser closed during its first `g.scenario`
   under load, and `ctf`, where in two rounds no kid took a flag. Neither of the last two touches anything this run
   changed, and both passed when run alone afterwards.
+- CI fix-up 2: `pickup-fernando`'s "with the rifle he lands nearly every hit (at least 4 in 5)" failed on CI with 11
+  of 15. Over five rounds the rifle's share ran 9–12 of 15 and the AK's 3–9 of 15 in three local runs, so the 4-in-5
+  line was a coin flip, and the AK-under-the-rifle check could go either way too. Each gun now plays eight rounds,
+  the rifle has to land over half, and the AK is compared by share. Three passing runs: AK 10, 14 and 14 of 24
+  against the rifle's 20, 24 and 19 of 24.
 ### Still open
 - Whether an AK in the nest is still too strong by day (6–9 of 15 hits in some runs) is for Michael to feel in play.
   Option B, which frees him from the nest, is the next step if it is.
