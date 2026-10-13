@@ -9548,6 +9548,9 @@ more hit, is Michael's to promote. If he does, "the hits you can still take" in 
   suites pass.
 - `npm test` as four local shards: 109 of 111 suites passed. `harness` hit Playwright's 30 s `page.goto` limit on its
   third boot, and `houses` died after its second check under the same load; both passed when run alone afterwards.
+- CI fix-up: `crew`'s "a full crouch lowers an ally's bandana with his head" failed on CI at 0.145 m (needs over
+  0.15). It measured the standing height from the ally's pose mid-round, partly crouched or leaning, so the drop read
+  0.145–0.158. It now stands him up before measuring: 0.218 m in three runs out of three.
 ### Still open
 - Whether 3, 5 and 10 minutes are the right choices, and whether lives left (rather than tags) is the right count at
   time, are for Michael to judge in play. The board starts on Off.
