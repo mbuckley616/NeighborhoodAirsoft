@@ -1979,7 +1979,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.196</div>
+  <div class="version">v1.197</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3297,7 +3297,9 @@ const Game = {
     // old saves get these defaults through loadGame's merge.
     look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
             shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
-            eyeColor: 'brown', shirtFront: 'plain' },   // v1.123: eye colour and shirt front (mirror rows)
+            eyeColor: 'brown', shirtFront: 'plain',   // v1.123: eye colour and shirt front (mirror rows)
+            hat: 'none' },                            // v1.197 (D.21 step 1): a KID_HATS id, or none
+    ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -16963,6 +16965,61 @@ function buildKidFace(head, p, skin, hair) {
   return { eyeL: eyes[0], eyeR: eyes[1], face };
 }
 
+// v1.197 (D.21 step 1, Michael: C on "A better game" 2 — looks you earn or buy): hats. Each is its own mesh worn over
+// the hair, in the average kid's frame (head centre y 1.26, its top 1.40, its face z +0.14). Bought in the shop's
+// Clothes tab, or won (`won`: the match whose win gives it); worn from the shop or the mirror (`look.hat`).
+const KID_HATS = {
+  cap_red:      { name: 'Red Ball Cap',  kind: 'cap',     color: 0xb8322a, price: 15,
+    desc: 'Six panels, a curved bill, a button on top. Keeps the sun out of your eyes.' },
+  cap_back:     { name: 'Backwards Cap', kind: 'capBack', color: 0x23345a, price: 15,
+    desc: 'Navy, bill to the back, the way the high school kids wear it.' },
+  bucket:       { name: 'Bucket Hat',    kind: 'bucket',  color: 0xb9a77a, price: 20,
+    desc: 'Floppy khaki, a brim all the way round. Very 2003.' },
+  bandana_red:  { name: 'Red Bandana',   kind: 'bandana', color: 0xa82a2a, price: 10,
+    desc: 'Folded into a headband and knotted at the back.' },
+  bandana_blue: { name: 'Blue Bandana',  kind: 'bandana', color: 0x2a4a8a, price: 10,
+    desc: 'The same, in blue.' },
+  winnmark_cap: { name: 'Winnmark Cap',  kind: 'cap',     color: 0x2f6a3a, won: 'winnmark_night_team_2v2', logo: 0xf2efe6,
+    desc: 'Green, a white patch on the front. Not for sale: clear Winnmark Court.' },
+};
+const KID_HAT_ORDER = ['cap_red', 'cap_back', 'bucket', 'bandana_red', 'bandana_blue', 'winnmark_cap'];
+function hatOwned(id) {
+  const h = KID_HATS[id];
+  if (!h) return false;
+  return h.won ? !!Game.persist.completed[h.won] : !!(Game.persist.ownedHats || {})[id];
+}
+function buildKidHat(id) {
+  const h = KID_HATS[id];
+  if (!h) return null;
+  const mats = { cloth: _kidFaceMat('hat', h.color, 0.9),   // shared, as the face's and the clothes' are
+    trim: _kidFaceMat('hatTrim', new THREE.Color(h.color).multiplyScalar(0.7).getHex(), 0.9),
+    logo: _kidFaceMat('hatLogo', h.logo || 0xffffff, 0.8) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, ht, d) => new THREE.BoxGeometry(w, ht, d);
+  if (h.kind === 'cap' || h.kind === 'capBack') {
+    const zs = h.kind === 'cap' ? 1 : -1;
+    add('cloth', box(0.36, 0.1, 0.36), 0, 1.46, 0);               // the crown, over every hair style's cap
+    add('cloth', box(0.3, 0.035, 0.3), 0, 1.525, 0);              // its rounded top
+    add('trim', box(0.035, 0.02, 0.035), 0, 1.55, 0);             // the button
+    add('trim', box(0.37, 0.02, 0.37), 0, 1.415, 0);              // the sweatband edge
+    add('trim', box(0.3, 0.014, 0.14), 0, 1.418, zs * 0.245, zs * 0.12, 0, 0);   // the bill, dipping a little
+    if (h.logo) add('logo', box(0.1, 0.06, 0.006), 0, 1.465, 0.183);              // the front patch
+  } else if (h.kind === 'bucket') {
+    add('cloth', box(0.36, 0.11, 0.36), 0, 1.465, 0);
+    add('cloth', box(0.31, 0.03, 0.31), 0, 1.53, 0);
+    add('trim', box(0.37, 0.025, 0.37), 0, 1.42, 0);              // the band
+    add('cloth', new THREE.CylinderGeometry(0.25, 0.27, 0.016, 16), 0, 1.405, 0);   // the brim all round
+  } else if (h.kind === 'bandana') {
+    add('cloth', box(0.355, 0.06, 0.355), 0, 1.385, 0);           // folded band across the brow, wider than any hair
+    add('trim', box(0.07, 0.05, 0.04), 0, 1.385, -0.195);         // the knot at the back
+    for (const sx of [-1, 1]) add('cloth', box(0.04, 0.11, 0.015), sx * 0.025, 1.32, -0.205, 0.15, 0, sx * 0.25);   // its tails
+  }
+  const g = new THREE.Group(); g.userData.kidHat = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  return g;
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -17118,6 +17175,16 @@ function createKid(profile, weapon = 'pistol') {
     }
   }
 
+  // v1.197 (D.21 step 1): a hat over the hair; it lowers with the head on a crouch. A cap or bucket hat hides the
+  // curly puffs that would poke through its crown (curly's headExtras are the three puffs).
+  let hat = null;
+  if (p.hat && KID_HATS[p.hat]) {
+    hat = buildKidHat(p.hat);
+    group.add(hat);
+    if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
+    headExtras.push(hat);
+  }
+
   // v1.118 (backlog D.3 step 3, the kids: faces): the two black squares became a face on the head: eye whites, irises
   // and pupils, brows in the hair colour, a nose, ears and a mouth, and open glasses frames the eyes show through. It
   // is parented to the head, so it follows the crouch drop and the aim tilt; eyeL/eyeR are anchors at the eyes.
@@ -17131,7 +17198,7 @@ function createKid(profile, weapon = 'pistol') {
   buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
 
   return {
-    group, head, torso, eyeL, eyeR, gunGroup,
+    group, head, torso, eyeL, eyeR, gunGroup, hat,   // v1.197: hat
     parts: { head, torso, hairMesh, neck },
     // v1.14b: parts + their base transforms for a real crouch POSE (instead of
     // sinking the whole group into the ground). Feet stay planted; the body
@@ -21104,7 +21171,7 @@ function closeMap() {
 // armour and shoes; Mods the sights, lasers and flashlight. The rows, prices and look are unchanged; only where they sit.
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
-const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods'];
+const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
 let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
 
 function openShop() {
@@ -21133,6 +21200,9 @@ const LOOK_OPTIONS = [
   { key: 'build',     label: 'Build',  kind: 'text', opts: [['skinny', 'Skinny'], ['average', 'Average'], ['heavy', 'Heavy']] },
   { key: 'hairStyle', label: 'Hair',   kind: 'text', opts: [['short', 'Short'], ['wavy', 'Wavy'], ['curly', 'Curly'], ['long', 'Long']] },
   { key: 'hairColor', label: 'Hair colour', kind: 'swatch', opts: [0x1a1410, 0x3a2818, 0x6a4a28, 0xa0703a, 0xd4b870, 0xb04a2a] },
+  // v1.197 (D.21 step 1): the hats you own; the row shows once you have one, under the hair
+  { key: 'hat', label: 'Hat', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_HAT_ORDER.filter(hatOwned).map(id => [id, KID_HATS[id].name])]; } },
   { key: 'skinColor', label: 'Skin',   kind: 'swatch', opts: [0xf0d0b0, 0xe6bf95, 0xe0b090, 0xc89870, 0xa87050, 0x7a4a30, 0x5a3420] },
   { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
@@ -21163,6 +21233,7 @@ function renderMirrorOptions() {
   box.innerHTML = '';
   const look = Game.persist.look;
   for (const row of LOOK_OPTIONS) {
+    if (row.owned && row.opts.length < 2) continue;   // v1.197: nothing to choose yet
     const r = document.createElement('div');
     r.className = 'mirror-row'; r.dataset.key = row.key;
     r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">${row.label}</div>`;
@@ -21823,6 +21894,57 @@ function renderShop() {
     case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
     case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
     case 'Mods': renderAccessoriesTab(c); break;
+    case 'Clothes': renderClothesTab(c); break;   // v1.197
+  }
+}
+
+// v1.197 (D.21 step 1, Michael: C on "A better game" 2): the Clothes tab. Hats for now; each row buys it (and puts it
+// on), or wears or takes off one you own. A won hat can't be bought: its row says which match gives it.
+function buyHat(id) {
+  const h = KID_HATS[id];
+  if (!h || h.won) return { ok: false, reason: 'not for sale' };
+  if (hatOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < h.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= h.price;
+  Game.persist.ownedHats = Game.persist.ownedHats || {};
+  Game.persist.ownedHats[id] = true;
+  Game.persist.look.hat = id;
+  autoSave();
+  return { ok: true };
+}
+function wearHat(id) {
+  if (id !== 'none' && !hatOwned(id)) return false;
+  Game.persist.look.hat = id;
+  autoSave();
+  return true;
+}
+function renderClothesTab(c) {
+  c.appendChild(shopSectionHeader('Hats', 'Worn on your kid; change it here or at the mirror'));
+  for (const id of KID_HAT_ORDER) {
+    const h = KID_HATS[id], owned = hatOwned(id), wearing = Game.persist.look.hat === id;
+    const row = document.createElement('div');
+    row.className = 'shop-item shop-hat' + (owned ? ' owned' : '') + (!owned && h.won ? ' locked' : '');
+    row.dataset.hat = id;
+    const swatch = '#' + h.color.toString(16).padStart(6, '0');
+    const status = wearing ? '<span class="shop-eq-tag">WEARING</span>' : (owned ? '<span class="shop-owned-tag">OWNED</span>' : '');
+    row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">▲</div>
+      <div class="shop-item-info"><div class="shop-item-name">${h.name} ${status}</div><div class="shop-item-desc">${h.desc}</div></div>
+      <div class="shop-item-price">${h.won ? 'WON' : '$' + h.price}</div>`;
+    const btn = document.createElement('button');
+    btn.className = 'shop-item-buy';
+    if (wearing) btn.textContent = 'TAKE OFF';
+    else if (owned) btn.textContent = 'WEAR';
+    else if (h.won) { btn.textContent = 'EARN IT'; btn.disabled = true; }
+    else if (Game.persist.cash < h.price) { btn.textContent = 'NEED $' + h.price; btn.disabled = true; }
+    else btn.textContent = 'BUY';
+    btn.addEventListener('click', () => {
+      if (wearing) { wearHat('none'); shopState.flash = `Took off the ${h.name}`; }
+      else if (owned) { wearHat(id); shopState.flash = `Wearing the ${h.name}`; }
+      else { const r = buyHat(id); shopState.flash = r.ok ? `Purchased: ${h.name}` : `Couldn't buy: ${r.reason}`; if (r.ok) playShopChaching(); }
+      renderShop();
+    });
+    row.appendChild(btn);
+    c.appendChild(row);
   }
 }
 

@@ -9220,3 +9220,46 @@ where your street is for step 4's last-Saturday match (I recommend Winnmark Cour
 - Seth's crew changes members from map to map (Devon, Mitchell, Mason, Ryan, Marcus at different times); the line
   calls whoever Seth brings his crew.
 - Step 4, the last-Saturday match, waits on where your street is (decisions).
+
+## v1.197 — Hats
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct). The story's
+step 4 waits on where your street is (decisions), so this run starts the looks, which are answered. They come in
+pieces, one part of the kid at a time; hats first, because the head is what the mirror and the Loadout kid show
+best and a hat changes a silhouette the most.
+
+**The hats.** Six, each its own mesh over the hair: a Red Ball Cap (six panels, a bill that dips a little, a button)
+and a navy Backwards Cap, $15 each; a khaki Bucket Hat with its brim all round, $20; a Red and a Blue Bandana folded
+into a headband and knotted at the back with two tails, $10 each; and the green Winnmark Cap with a white patch,
+which is not for sale: clearing Winnmark Court gives it. Every crown is wider than the widest hair (curly, 34 cm), so
+no style pokes through its sides, and a cap or bucket hat hides curly hair's three puffs, which would come through
+its top; a bandana leaves them. The hat lowers with the head on a crouch. It is a `createKid` profile field
+(`hat`), so the other kids can wear them later (the crew colours, D.21's second half).
+
+**Where.** The shop has a fifth tab, Clothes, with a Hats section. BUY pays and puts it on; a hat you own says WEAR,
+the one on your head WEARING and TAKE OFF; the Winnmark Cap says WON and EARN IT until Winnmark is cleared, then WEAR.
+The mirror gets a Hat row under the hair colour once you own one (None and each hat you own), and the Loadout
+screen's kid wears it. The hat you wear (`look.hat`) and the ones you bought (`ownedHats`) are saved; an old save
+wears none.
+### Verified
+- `tests/hats.test.mjs` (new, 23 checks). A new game wears none and the mirror has its ten rows, no Hat. With $14 the
+  Clothes tab lists the six hats; the bandanas say BUY, the $15 cap NEED $15, the Winnmark Cap WON / EARN IT, greyed.
+  With $100, clicking BUY on the red cap pays $15 and puts it on (TAKE OFF); buying the bucket hat puts that on and
+  WEAR puts the cap back; TAKE OFF leaves you bare-headed. On all four hair styles every hat is at least as wide as
+  the hair; caps and the bucket hat top out at 1.545–1.56 m over hair at 1.47–1.49 and sit on the head (bottom
+  1.397–1.403, head top 1.40); bandanas sit below the hair's top; the cap's bill reaches 0.315 m forward, the
+  backwards cap's 0.315 back; on curly hair a crown leaves 0 puffs showing and a bandana 3; a full crouch lowers every
+  hat 0.247 m with the head (0.248). The mirror's Hat row is None, Red Ball Cap, Bucket Hat; Bucket Hat puts it on the
+  preview with eleven choices lit. The Loadout kid wears it. Winning Winnmark's last match turns the Winnmark Cap to
+  WEAR, free. A save and load keeps the cap worn and the two bought; an old save with no hat fields wears none. No
+  page errors.
+- `tests/shop-tabs.test.mjs` now expects five tabs, the fifth Clothes with its six hat rows.
+- `npm test` as four local shards: 102 of 104 suites passed. `whole-block` died at Playwright's 30 s `page.goto` limit
+  before any check and passed alone. `bellfield` failed one check once: in a 120 s Bellfield Bulb 3v3, Andrew and
+  Evan walked 75 m and 60 m and fired 0 shots while the other side fired 1,653, so no enemy lost a life. Run alone it
+  passed (8 enemy and 6 ally lives lost in 60 s, the allies firing 46 and 40). Nothing in this change touches the
+  kids' aim or fire (their profiles have no hat). Filed under Found in play.
+### Still open
+- Whether the hats look right on the kid, and the prices ($10–20 against the first wins' $15–22), are for Michael's
+  look.
+- The hat isn't seen in a match: first person shows no head. The other kids wear none until the crew colours.
+- Next pieces of D.21: tops (graphic tees, a hoodie), then shorts and shoes, then your crew.
