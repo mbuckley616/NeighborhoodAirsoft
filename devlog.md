@@ -9614,3 +9614,26 @@ Other kids keep the colour the game picks for them.
   they pass, and so do `shorts`, `crew` and `loadout-gear`.
 ### Still open
 - Whether six colours are enough, and whether royal blue sits well beside them, is Michael's to judge at the mirror.
+
+## v1.207 — Fernando's AK in a Northcliff pickup by day
+Found in play (critic, 13 Oct). Michael chose A on "Fernando's rifle in a Northcliff pickup game by day": he keeps the
+nest but carries his AK by day. The Northcliff pickup game uses the night 4v4's spots, and those put Fernando's
+sniper rifle in the high yard (`yard_n3`) as a defender. By day that rifle was a wall. Now a pickup game by day gives
+Fernando the AK he carries in Bellfield's matches, wherever he stands. On his own spot he keeps the nest's defender
+role. Picked onto another spot, he plays it as an ordinary kid with the AK. By night nothing changes: he has the
+rifle. The rule is one table, `PICKUP_DAY_GUNS`, applied in `buildPickupScenario`. The ladder's own matches are
+untouched.
+### Verified
+- `tests/pickup-fernando.test.mjs` (new, 6 checks). In a Northcliff 4v4 by day Fernando is at yard_n3, a defender,
+  with the AK; by night he has the rifle there. Picked alone against you in a 1v1 he takes bulb_car_n with no role,
+  with the AK by day and the rifle by night. The ladder's Bellfield After Dark keeps the rifle, and every other kid's
+  gun is unchanged.
+- The critic's steps, 5 day rounds of a Northcliff 4v4 at 3 lives, walking at the nearest kid and logging who
+  landed each hit. With the rifle (the same test with the table emptied), Fernando landed 15 of 15, the first at
+  13.1–15.9 s, and the player was out at 18.4–21.8 s, which matches the critic's report. With the AK he landed 3 of
+  15 (all in one round), and Mason and Diego landed the rest. The player was still out every round, now at
+  13.9–16.9 s, because walking straight at the nearest kid now reaches them.
+- `pickup`, `pickup-kids` pass.
+### Still open
+- A player walking straight at a 4v4 still loses inside 17 s at 3 lives. That is the critic's other report (a life is
+  one hit for you, a walk back for a kid), and its proposal is Michael's to promote.

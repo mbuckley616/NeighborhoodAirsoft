@@ -1990,7 +1990,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.206</div>
+  <div class="version">v1.207</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -29825,6 +29825,13 @@ function pickupNormalize(m, pad) {
     pickupState[side] = ids;
   }
 }
+// v1.207 (Found in play, critic 13 Oct; Michael: A on "Fernando's rifle in a Northcliff pickup game by day"): by day
+// Fernando carries the AK he uses in Bellfield's matches, wherever he stands; on his own spot (the high yard's nest)
+// he keeps its defender role. By night he keeps the rifle the night match gave him.
+const PICKUP_DAY_GUNS = { fernando: 'ak47' };
+function pickupDayGun(e, tod) {
+  return tod === 'day' && PICKUP_DAY_GUNS[e.charId] ? Object.assign({}, e, { weapon: PICKUP_DAY_GUNS[e.charId] }) : Object.assign({}, e);
+}
 function buildPickupScenario(opts) {
   const m = PICKUP_MAPS.find(k => k.key === opts.map);
   if (!m) return null;
@@ -29852,7 +29859,7 @@ function buildPickupScenario(opts) {
       `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing` +
       (clock ? `, or the side with more lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
-    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => Object.assign({}, e)),
+    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => pickupDayGun(e, tod)),   // v1.207
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
     rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock },
   };
