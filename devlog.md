@@ -9519,3 +9519,30 @@ with no picks builds the same games as before.
 - The pool is the street's own kids. Kids from other streets (Eric at Bunratty, say) are left out on purpose, because
   each street keeps its own crowd. If Michael wants anyone anywhere, it is one filter in `pickupPool`.
 - Step 4: a clock. Then online play (D.2) is hosted from this board.
+
+## v1.204 — Pickup Game: a clock
+Backlog D.22, step 4 (Michael: A on "A better game" 3: "lives, a clock"). The board gets a Clock row: Off, 3:00, 5:00
+or 10:00, with Off lit to start, so a game set up as before plays as before. With a clock, the match is still last side
+(or kid) standing, but when time runs out it is decided on lives left. Your side's count is the hits you can still take
+plus every ally's lives; theirs is their kids' lives. In a free-for-all you are measured against the one kid with the
+most. More wins; level is a draw paid as a loss, the rule Michael chose for the flags' clock (v1.191).
+
+**On screen.** The briefing says it ("last side standing, or the side with more lives left at 5:00", and the win line
+"Last team standing, or most lives left at 5:00"). In the match the timer box at the top shows the time left and the
+lives it will be decided on (LIVES 6–6, or YOUR LIVES 3 · MOST 3 in a free-for-all), and turns urgent in the last
+30 s. The result card reads TIME — 6 LIVES TO 2, TIME — THEY HAD 10 TO 2, or DRAW — 3 LIVES EACH. The count is
+taken the moment time runs out: nothing ends the round on last-standing in the 800 ms before the card, and no late BB
+can tag you. The pay stays $3 and $1, and a pickup game is still never a ladder win.
+
+Not done here: the critic's 13 Oct proposal that a pickup life brings you back to your start, rather than being one
+more hit, is Michael's to promote. If he does, "the hits you can still take" in the count becomes your lives left.
+### Verified
+- `tests/pickup-clock.test.mjs` (new, 11 checks). The board lists Off, 3:00, 5:00, 10:00 with Off lit, and clicking
+  3:00 builds a 180 s match whose briefing and win line say how time decides it. One second into a Winnmark 2v2 the HUD
+  reads 2:59 and LIVES 6–6 (you 3 hits, Seth 3; Brooke and Jamie 3 each). Run to time with their kids on 1 life each:
+  TIME — 6 LIVES TO 2, a win, $3, nothing marked done. A 5:00 game level at 3–3: DRAW — 3 LIVES EACH, $1. A 10:00 game
+  at 2 against 10: TIME — THEY HAD 10 TO 2, $1. A 4-way free-for-all with a 3:00 clock shows YOUR LIVES 3 · MOST 3 and
+  "Last kid standing, or most lives left at 3:00", and level with the best kid at time is a draw. With the clock Off,
+  the timer box stays hidden and a 1,000 s round goes on; a ladder 4v4 at Bunratty has no clock. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the lit Off out of their lit picks; all four pickup
+  suites pass.

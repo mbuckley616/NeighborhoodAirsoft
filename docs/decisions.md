@@ -28,6 +28,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     pairs keep their own look *(recommended)*
   - B) Clothes shoes with no numbers (high-tops, skate shoes, flip-flops), worn only when no gear pair is on
   - C) Skip shoes; go on to your crew (a name and colours your allies wear)
+- **Fernando's rifle in a Northcliff pickup game by day (builder, 2026-10-13)** The critic's 13 Oct report: the
+  Northcliff pickup game uses the night 4v4's spots, and by day Fernando's sniper rifle on the high yard (`yard_n3`)
+  made 15 of 15 hits on a player walking at the nearest kid, one every 2.4–2.9 s, out at 15–17 s every round (5 of
+  15 by night). Since v1.203 you can leave him out, but he is on their side by default. Options:
+  - A) By day his spot keeps its defender role, but he carries the AK he uses in Bellfield's matches *(recommended:
+    the nest still matters, and a rifle at 20–25 m in daylight is what made it a wall)*
+  - B) By day he plays it as an ordinary kid with his rifle, free to leave the nest
+  - C) Leave it: the board lets you take him off, and night is the match the spot was made for
 
 ## Answered
 

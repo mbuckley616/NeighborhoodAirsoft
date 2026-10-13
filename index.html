@@ -1990,7 +1990,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.203</div>
+  <div class="version">v1.204</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5215,7 +5215,8 @@ function describeWinCondition(sc) {
   switch (sc.winCondition) {
     case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
-    case 'last_team_standing': return sc.ffa ? 'Last kid standing' : 'Last team standing';
+    case 'last_team_standing': return (sc.ffa ? 'Last kid standing' : 'Last team standing') +
+      (sc.pickup && sc.pickup.clock ? `, or most lives left at ${pickupClockText(sc.pickup.clock)}` : '');   // v1.204
     case 'kill_all':
     default:                 return 'Tag everyone out';
   }
@@ -20524,6 +20525,8 @@ function enterScenario(scenarioId) {
   Game.scenario.ctf = null;
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
+  Game.scenario.pickupClock = (sc.pickup && sc.pickup.clock) || 0;   // v1.204
+  Game.scenario.pickupTimeUp = null;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
   Game.player._infected = false;   // v1.25: clear zombie-tag state each run
 
@@ -21073,6 +21076,25 @@ function endScenario(outcome) {
     outcomeEl.textContent = `THEY GOT ${_vipOurs.name.toUpperCase()}`;
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = `${_vipOurs.name} takes one right on the blue cap. "Aw, man — I was the VIP!" ${allStr} regroup ${regroupAt}. "Run it back?"`;
+  } else if (Game.scenario.pickupTimeUp && (outcome === 'win' || outcome === 'lose')) {
+    // v1.204: the pickup clock ran out: more lives left wins; level is a draw, paid as a loss
+    const o = Game.scenario.pickupTimeUp.ours, t = Game.scenario.pickupTimeUp.theirs;
+    const ffaT = Game.scenario.ffa;
+    if (o > t) {
+      outcomeEl.textContent = `TIME — ${o} LIVES TO ${t}`;
+      outcomeEl.className = 'outcome win';
+      flavorEl.textContent = ffaT ? `Time. Nobody's got more left than you. ${primaryName} groans — "Fine. Next one's mine."`
+        : `Time. ${primaryName} counts heads and groans — "${o} to ${t}? Fine. You had more."`;
+    } else if (o < t) {
+      outcomeEl.textContent = `TIME — THEY HAD ${t} TO ${o}`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = ffaT ? `Time. Somebody had more left than you. "Run it back?"`
+        : `Time. They had more left. ${allStr} regroup ${regroupAt}. "Run it back?"`;
+    } else {
+      outcomeEl.textContent = `DRAW — ${o} LIVES EACH`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = `Time, and it's level. ${primaryName} shrugs. "A tie doesn't count. Run it back?"`;
+    }
   } else if (_ctf && _ctf.timeUp) {
     // v1.191: the clock ran out: more flags wins; level is a draw, paid as a loss
     const o = _ctf.score.ours, t = _ctf.score.theirs;
@@ -26421,6 +26443,16 @@ function updateTimerHud() {
   if (!hud) return;
   if (Game.scenario.ctf) { updateCtfHud(hud); return; }   // v1.189: the flags' score and what is happening to them
   hud.classList.remove('urgent');
+  if (Game.scenario.pickupClock) {   // v1.204: the pickup clock, and the lives left that it is decided on
+    const left = Math.max(0, Math.ceil(Game.scenario.pickupClock - (Game.scenario.roundTime || 0)));
+    const L = Game.scenario.pickupTimeUp || pickupLivesLeft();
+    hud.style.display = 'block';
+    document.getElementById('timerValue').textContent = pickupClockText(left);
+    const lbl = document.getElementById('timerLabel');
+    if (lbl) lbl.textContent = Game.scenario.ffa ? `YOUR LIVES ${L.ours} · MOST ${L.theirs}` : `LIVES ${L.ours}–${L.theirs}`;
+    hud.classList.toggle('urgent', left <= 30);
+    return;
+  }
   const winCondition = Game.scenario.winCondition;
   if (winCondition !== 'survive_timer' && winCondition !== 'survive_untagged') {
     hud.style.display = 'none';
@@ -29137,6 +29169,7 @@ function stepGame(dt) {
     updateLoadoutHud();
     updateRosterHud();
     updateScenarioTimer(dt);
+    updatePickupClock();   // v1.204
     updateTimerHud();
     updateStaminaHud();
     updateEyewearOverlay();
@@ -29666,7 +29699,10 @@ const PICKUP_MAPS = [
 ];
 const PICKUP_LIVES = [1, 3, 5];
 const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
-const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3, ours: null, theirs: null, ffaKids: null };
+// v1.204 (D.22 step 4, a clock): Off, or 3, 5 or 10 minutes. Time up, the side with more lives left wins (in a
+// free-for-all, you need more than any one kid); level is a draw, paid as a loss, as the flags' clock (v1.191).
+const PICKUP_CLOCKS = [0, 180, 300, 600];
+const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3, clock: 0, ours: null, theirs: null, ffaKids: null };
 function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
 // The most a side can be on a map: its template's allies plus you, against its enemies, at most four
 function pickupMaxSize(m) {
@@ -29739,7 +29775,8 @@ function buildPickupScenario(opts) {
   const size = Math.max(1, Math.min(pickupMaxSize(m), opts.size | 0));
   const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
   const tod = opts.tod === 'night' ? 'night' : 'day';
-  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod);
+  const clock = PICKUP_CLOCKS.includes(opts.clock) ? opts.clock : 0;   // v1.204
+  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod, clock);
   let ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
   let theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
   // v1.203: the kids you picked, each side at its own first spots
@@ -29755,17 +29792,18 @@ function buildPickupScenario(opts) {
     region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${size}v${size}`,
     desc: `A pickup game ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line. ` +
       (ours.length ? `You've got ${list(names(ours))}` : `It's just you`) + ` against ${list(names(theirs))}. ` +
-      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing.`,
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing` +
+      (clock ? `, or the side with more lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
     playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => Object.assign({}, e)),
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
-    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives },
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock },
   };
   if (t.enemySpawnCluster) sc.enemySpawnCluster = t.enemySpawnCluster;
   SCENARIOS.pickup_game = sc;
   return sc;
 }
-function buildPickupFfa(m, opts, lives, tod) {   // v1.202
+function buildPickupFfa(m, opts, lives, tod, clock) {   // v1.202
   const t = SCENARIOS[m.ffa];
   const ways = Math.max(3, Math.min(pickupMaxWays(m), opts.ways | 0));
   const kids = opts.ffaKids && opts.ffaKids.length === ways - 1   // v1.203: the kids you picked, at the first spots
@@ -29775,11 +29813,12 @@ function buildPickupFfa(m, opts, lives, tod) {   // v1.202
     region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${ways}-way free-for-all`,
     desc: `A pickup free-for-all ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line: ` +
       `you, ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}, everyone for themselves. ` +
-      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last kid standing.`,
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last kid standing` +
+      (clock ? `, or the most lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
     playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)),
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
-    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives },
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives, clock: clock || 0 },
   };
   SCENARIOS.pickup_game = sc;
   return sc;
@@ -29818,6 +29857,7 @@ function pickupBoardHTML() {
     ${ffa ? kidRow('Who', 'ffaKids', []) : (pickupState.size > 1 ? kidRow('With you', 'ours', pickupState.theirs) : '') + kidRow('Against you', 'theirs', pickupState.ours)}
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
+    ${row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === pickupState.clock)).join(''))}
     <div class="pk-row"><button class="pk-play" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button></div>
   </div>`;
 }
@@ -29831,7 +29871,7 @@ function renderPickupBoard() {
       if (ids.includes(v)) ids.splice(ids.indexOf(v), 1);
       else { if (ids.length >= pickupNeeds(m, grp)) ids.pop(); ids.push(v); }
       pickupState.pad = false;   // leave a side short until you pick its last kid
-    } else pickupState[grp] = (grp === 'size' || grp === 'ways' || grp === 'lives') ? +v : v;
+    } else pickupState[grp] = (grp === 'size' || grp === 'ways' || grp === 'lives' || grp === 'clock') ? +v : v;
     renderPickupBoard();
   }));
   body.querySelector('#pickupPlayBtn').addEventListener('click', playPickupGame);
@@ -29846,6 +29886,29 @@ function openPickupBoard() {
   document.querySelector('#modalScreen .modal-card').classList.add('wide');
   renderPickupBoard();
   document.getElementById('modalScreen').classList.add('active');
+}
+function pickupClockText(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; }
+// v1.204: lives left now: yours (hits you can still take) and your allies', against the best other side's (in a
+// free-for-all, the best single kid's)
+function pickupLivesLeft() {
+  const by = new Map(), add = (team, n) => by.set(team, (by.get(team) || 0) + Math.max(0, n));
+  const mine = combatantTeam(Game.player);
+  add(mine, Game.player.maxHits - Game.player.hitsTaken);
+  for (const e of Game.scenario.enemies || []) add(combatantTeam(e), typeof e.lives === 'number' ? e.lives : (e.health > 0 ? 1 : 0));
+  const ours = by.get(mine) || 0;
+  by.delete(mine);
+  return { ours, theirs: Math.max(0, ...by.values()) };
+}
+// v1.204: the pickup clock, once a step from stepGame: at time, more lives left wins; level is a loss
+function updatePickupClock() {
+  const S = Game.scenario;
+  if (Game.mode !== 'scenario' || !S.pickupClock || S.pickupTimeUp) return;
+  if ((S.roundTime || 0) < S.pickupClock) return;
+  const L = pickupLivesLeft();
+  S.pickupTimeUp = L;
+  S.winCondition = '__finished__';   // no last-standing end inside the 800 ms
+  Game.player._graceT = 1;   // and no late tag on you: the count above is the result
+  endScenarioLater(L.ours > L.theirs ? 'win' : 'lose', 800);
 }
 function playPickupGame() {
   if (document.getElementById('pickupPlayBtn').disabled) return;
