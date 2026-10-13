@@ -48,7 +48,7 @@ const played = await page.evaluate(() => {
   openPickupBoard();
   const click = (grp, val) => document.querySelector(`#modalBody .pk-opt[data-grp="${grp}"][data-val="${val}"]`).click();
   click('map', 'bunratty'); click('size', 4); click('tod', 'night'); click('lives', 5);
-  const lit = [...document.querySelectorAll('#modalBody .pk-opt.on')].map(b => b.textContent);
+  const lit = [...document.querySelectorAll('#modalBody .pk-opt.on:not([data-grp="mode"])')].map(b => b.textContent);   // v1.202: Mode's Teams aside
   document.getElementById('pickupPlayBtn').click();
   const sc = SCENARIOS.pickup_game;
   return { lit, mode: Game.mode, modal: document.getElementById('modalScreen').classList.contains('active'),

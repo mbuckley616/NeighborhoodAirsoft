@@ -251,8 +251,10 @@ Fable card on the control room and Michael starts it from there.
    clock; pays a little. Online play (D.2) comes after it, hosted from this board. (Michael, control room, 2026-10-12,
    "A better game" 3: **A** and 4: **B**) In steps (builder): ~~1, the board~~ — done, v1.201 (a corkboard on the
    bedroom's north wall: any map whose zone is open, 1v1 to 4v4, day or night, 1/3/5 lives; each map's biggest team
-   battle cut to size; $3 a win, $1 a loss, never a ladder win; `tests/pickup.test.mjs`). Next: 2, the mode (a
-   free-for-all on the maps that have one); 3, which kids; 4, a clock.
+   battle cut to size; $3 a win, $1 a loss, never a ladder win; `tests/pickup.test.mjs`). ~~2, the mode~~ — done,
+   v1.202 (Teams or Free-for-all on Winnmark, Bunratty, the Hollow and the lot: 3-way up to the map's own
+   free-for-all, at most 8-way, its kids at their own starts; `tests/pickup-ffa.test.mjs`). Next: 3, which kids;
+   4, a clock.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

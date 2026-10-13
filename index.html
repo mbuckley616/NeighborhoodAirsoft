@@ -1987,7 +1987,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.201</div>
+  <div class="version">v1.202</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -29649,10 +29649,12 @@ const RIVAL_CREW = "Seth's crew";
 // their own guns. PLAY writes it as SCENARIOS.pickup_game and goes through the usual briefing. It pays $3 for a win
 // and $1 for a loss, and never counts as a ladder win. The mode (free-for-all), which kids, and a clock come next.
 const PICKUP_MAPS = [
-  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3' },
-  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4' },
-  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle' },
-  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4' },
+  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3', ffa: 'winnmark_ffa' },
+  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4', ffa: 'bunratty_ffa' },
+  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle', ffa: 'hollow_ffa',
+    // v1.202: the Ten-Way's first three share the south fort; take them spread out, one from each fort first
+    ffaOrder: ['seth', 'sean', 'devon', 'priya', 'mason', 'ryan', 'brooke', 'eric', 'rebecca'] },
+  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4', ffa: 'lot_ffa' },
   { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
   { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
   { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },
@@ -29661,12 +29663,22 @@ const PICKUP_MAPS = [
 ];
 const PICKUP_LIVES = [1, 3, 5];
 const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
-const pickupState = { map: 'winnmark', size: 2, tod: 'day', lives: 3 };
+const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3 };
 function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
 // The most a side can be on a map: its template's allies plus you, against its enemies, at most four
 function pickupMaxSize(m) {
   const es = SCENARIOS[m.template].enemySetup;
   return Math.min(4, es.filter(e => e.team === 'player').length + 1, es.filter(e => !e.team).length);
+}
+// v1.202 (D.22 step 2, the mode): the four maps with a free-for-all of their own (Winnmark, Bunratty, the Hollow, the
+// lot) can be played as one, 3-way up to that free-for-all's size with you in it, at most 8-way (a 4v4's headcount):
+// the kids are its first ones (the Hollow's taken one from each fort first), at their own spread-out starts, with
+// their own guns; lives and day or night as for teams; last kid standing. The team maps are unchanged.
+function pickupMaxWays(m) { return m.ffa ? Math.min(8, SCENARIOS[m.ffa].enemySetup.length + 1) : 0; }
+function pickupFfaKids(m, ways) {
+  const es = SCENARIOS[m.ffa].enemySetup;
+  const order = m.ffaOrder ? m.ffaOrder.map(id => es.find(e => e.charId === id)).filter(Boolean) : es;
+  return order.slice(0, ways - 1);
 }
 function buildPickupScenario(opts) {
   const m = PICKUP_MAPS.find(k => k.key === opts.map);
@@ -29675,6 +29687,7 @@ function buildPickupScenario(opts) {
   const size = Math.max(1, Math.min(pickupMaxSize(m), opts.size | 0));
   const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
   const tod = opts.tod === 'night' ? 'night' : 'day';
+  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod);
   const ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
   const theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
   const names = es => es.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
@@ -29693,17 +29706,41 @@ function buildPickupScenario(opts) {
   SCENARIOS.pickup_game = sc;
   return sc;
 }
+function buildPickupFfa(m, opts, lives, tod) {   // v1.202
+  const t = SCENARIOS[m.ffa];
+  const ways = Math.max(3, Math.min(pickupMaxWays(m), opts.ways | 0));
+  const kids = pickupFfaKids(m, ways);
+  const names = kids.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
+  const sc = {
+    region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${ways}-way free-for-all`,
+    desc: `A pickup free-for-all ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line: ` +
+      `you, ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}, everyone for themselves. ` +
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last kid standing.`,
+    builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
+    playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)),
+    winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives },
+  };
+  SCENARIOS.pickup_game = sc;
+  return sc;
+}
 function pickupBoardHTML() {
   const open = pickupMapsOpen();
   if (!open.some(m => m.key === pickupState.map)) pickupState.map = open[0].key;
   const m = PICKUP_MAPS.find(k => k.key === pickupState.map), max = pickupMaxSize(m);
   pickupState.size = Math.max(1, Math.min(max, pickupState.size));
+  const maxWays = pickupMaxWays(m);   // v1.202: the mode
+  if (!maxWays) pickupState.mode = 'teams';
+  pickupState.ways = Math.max(3, Math.min(maxWays || 3, pickupState.ways));
+  const ffa = pickupState.mode === 'ffa';
   const btn = (grp, val, label, on) => `<button class="pk-opt${on ? ' on' : ''}" data-grp="${grp}" data-val="${val}">${label}</button>`;
   const row = (label, inner) => `<div class="pk-row"><div class="pk-label">${label}</div><div class="pk-btns">${inner}</div></div>`;
   return `<div class="pk-board">
     <div class="pk-note">Pick it, play it. $3 a win, $1 if you lose; it doesn't count for the ladder.</div>
     ${row('Where', open.map(k => btn('map', k.key, k.name, k.key === pickupState.map)).join(''))}
-    ${row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
+    ${row('Mode', btn('mode', 'teams', 'Teams', !ffa) + (maxWays ? btn('mode', 'ffa', 'Free-for-all', ffa) : ''))}
+    ${ffa ? row('How many', [3, 4, 5, 6, 7, 8].filter(n => n <= maxWays).map(n => btn('ways', n, `${n}-way`, n === pickupState.ways)).join(''))
+      : row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
     <div class="pk-row"><button class="pk-play" id="pickupPlayBtn">PLAY</button></div>
@@ -29714,7 +29751,7 @@ function renderPickupBoard() {
   body.innerHTML = pickupBoardHTML();
   body.querySelectorAll('.pk-opt').forEach(b => b.addEventListener('click', () => {
     const v = b.dataset.val;
-    pickupState[b.dataset.grp] = (b.dataset.grp === 'size' || b.dataset.grp === 'lives') ? +v : v;
+    pickupState[b.dataset.grp] = (b.dataset.grp === 'size' || b.dataset.grp === 'ways' || b.dataset.grp === 'lives') ? +v : v;
     renderPickupBoard();
   }));
   body.querySelector('#pickupPlayBtn').addEventListener('click', playPickupGame);

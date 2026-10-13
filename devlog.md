@@ -9429,3 +9429,48 @@ and it never counts as a ladder win: nothing is marked done, the calendar does n
 - Night by day: the six night 4v4s become day matches with the same spots. They build and run, but nobody has played
   one, and a sniper spot chosen for the dark may be strong in daylight.
 - Steps 2-4: the mode, which kids, a clock. Online play (D.2) is hosted from this board after them.
+
+## v1.202 — Pickup Game: free-for-all
+Backlog D.22, step 2 (Michael: A on "A better game" 3, "the mode"). The board gets a Mode row, Teams or Free-for-all.
+The four maps that have a free-for-all of their own get both buttons: Winnmark Court, Bunratty Court, The Hollow and
+the Riverside Market lot. The other five maps (Northcliff, Bellfield, the school, Willow Bend and the store) only
+show Teams, and a free-for-all picked on an earlier map switches back to Teams when you move to one of them.
+
+**The free-for-all.** In Free-for-all, How many counts everyone in the game, you included. It runs from 3-way up to the
+size of that map's own free-for-all, with a cap of 8-way, the same headcount as a 4v4: Winnmark goes to 5-way, Bunratty
+and the lot to 7-way, and the Hollow to 8-way. The kids are the first ones from that map's free-for-all, each at their
+own spread-out start and with their own gun. On the Hollow the list is reordered, because the Ten-Way's first three
+all start in the south fort. There the kids are taken one from each fort first (Seth, then Sean, then the scattered
+kids), so a 3-way doesn't put two kids next to each other. Day or night and lives work as in the team game. The
+briefing heads the other kids EVERYONE ELSE (FREE-FOR-ALL), and it is last kid standing. The pay stays $3 for a win
+and $1 for a loss, and a pickup game is still never a ladder win. When no mode is given, `buildPickupScenario` builds
+v1.201's team game.
+
+Not done here: the critic's 13 Oct report (PR #62, not on this branch yet) says a pickup "life" is one hit for you but a
+walk back to base for a kid, and its proposal to make yours a respawn is Michael's to promote. The free-for-all's
+briefing makes the same "lives for everyone, you included" promise as the team game, so the two should change
+together.
+### Verified
+- `tests/pickup-ffa.test.mjs` (new, 14 checks). On a new game the board shows Mode as Teams or Free-for-all, with Teams
+  lit and team sizes 1v1–3v3. Picking Free-for-all on Winnmark shows 3-way, 4-way and 5-way, with 4-way lit. With
+  every zone open, the most for each map is Winnmark 5, Bunratty 7, Hollow 8 and lot 7; the other five maps have none.
+  Northcliff shows Teams only, and a free-for-all picked earlier falls back to Teams there. Clicking Bunratty,
+  Free-for-all, 6-way, Night and 1 lights all five buttons, and PLAY builds "Pickup Game: 6-way free-for-all" by night
+  with Sean, Nick, Ryan, Mitchell and Priya, none of them on a side, one life each. The briefing's roster says
+  EVERYONE ELSE (FREE-FOR-ALL). In the match there are five kids on five separate sides (ffa_sean…), none of them with
+  you. With you untaggable at your start, two kids had tagged each other out (Ryan, Priya) by 11.6 s. A 3-way on
+  Winnmark is you, Seth and Trey, and a win pays $3 and marks nothing done (8 completed before and after). All four
+  maps build and run for 3 s at 3-way by night and at their most by day: Winnmark 4 kids, Bunratty and the lot 6 each,
+  and the Hollow 7 (Seth at a_fort, Sean at b_fort, then the scattered starts). Each map has as many sides as kids. The
+  Hollow's 3-way puts its two kids in different forts. With no mode set, the result is still v1.201's team game. No
+  page errors.
+- `tests/pickup.test.mjs` leaves Mode's lit Teams out of its lit picks.
+- `npm test` as four local shards: 105 of 109 suites passed. The four that failed were `pickup`, whose lit-picks check
+  now has to skip the new Mode row (fixed in the test, and both pickup suites then passed), and `stuck-sweep-3`,
+  `spawn-facing` and `walk-anim`. Those three hit Playwright's 30 s `page.goto` limit while the shards were loaded,
+  before any check ran, and each passed when run alone.
+### Still open
+- Whether the free-for-alls are any fun at pickup sizes, and whether 8-way is the right cap, need Michael to play them.
+- Night free-for-alls use the day starts (the four free-for-alls are all day matches). They build and run, but nobody
+  has played one yet.
+- Steps 3 and 4: which kids, then a clock.
