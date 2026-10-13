@@ -9546,3 +9546,12 @@ more hit, is Michael's to promote. If he does, "the hits you can still take" in 
   the timer box stays hidden and a 1,000 s round goes on; a ladder 4v4 at Bunratty has no clock. No page errors.
 - `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the lit Off out of their lit picks; all four pickup
   suites pass.
+- `npm test` as four local shards: 109 of 111 suites passed. `harness` hit Playwright's 30 s `page.goto` limit on its
+  third boot, and `houses` died after its second check under the same load; both passed when run alone afterwards.
+### Still open
+- Whether 3, 5 and 10 minutes are the right choices, and whether lives left (rather than tags) is the right count at
+  time, are for Michael to judge in play. The board starts on Off.
+- If Michael promotes the critic's "a pickup life brings you back" proposal, the count's "hits you can still take"
+  becomes your lives left, and the 1.1 s three-hit bursts the critic saw stop deciding the clock too.
+- Fernando's daytime rifle on Northcliff (Found in play) is a question in decisions. With this, D.22's four steps are
+  done; online play (D.2, Fable) is hosted from the board next.
