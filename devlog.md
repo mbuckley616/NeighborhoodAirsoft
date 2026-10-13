@@ -9175,3 +9175,48 @@ days, all unread.
 - The phone's light is steady, not blinking, and there is no buzz when you come home to a new text.
 - Seth's crew is the rival in the texts; step 3 puts them in briefings and result lines, and may want a crew name
   (a question for Michael if so).
+
+## v1.196 — Seth's crew
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 3 of the summer story: a rival crew. The texts
+already made Seth the friend who is also your rival, and the matches already put him on the other side again and
+again; this step says so on the screens around those matches.
+
+**Who they are.** A match is against Seth's crew when Seth is on the other side and it is on the ladder: 20 matches,
+from his backyard duel and the Winnmark cul-de-sac through all nine of the Hollow's fort and team battles to the
+lot's two night matches and the club's 3v3 and night 4v4. The tutorial, the free-for-alls and Infection don't count
+(nobody is anybody's crew there), nor the matches where Seth is on your side.
+
+**The briefing.** Both the briefing card on the map and the loading screen head the other side SETH'S CREW in a team
+match (a duel with Seth alone keeps OPPONENTS) and add a red RIVALS line under the objective: "Seth's crew: beaten in
+3 of their 20 matches this summer."
+
+**The result card.** A red RIVALS line under the best moment: "Seth's crew goes home beaten." the first time you win
+one of theirs, "Seth's crew loses again." on a replay, "Seth's crew takes this one." on a loss ("Seth" alone in a duel),
+then "You've beaten them in 3 of their 20 matches this summer." The score is read from `completed`, so an old save has
+its score and nothing new is saved.
+
+**The calendar.** June to August puts a small red dot on each day a win over them brought (the day the win moves the
+calendar to, as the texts are dated), with a note under the months: "A red dot is a day you beat Seth's crew: 17 so
+far; beaten in 17 of their 20 matches this summer." A dotted day's hover says so too.
+
+Two questions for Michael went into decisions: whether the crew gets a name (I recommend keeping "Seth's crew"), and
+where your street is for step 4's last-Saturday match (I recommend Winnmark Court).
+### Verified
+- `tests/rival.test.mjs` (new, 18 checks). 20 rival matches, none of them the tutorial, the two free-for-alls named,
+  Infection at night or Winnmark's 2v2 with Seth beside you. With his two duels won, the Cul-de-Sac's briefing heads
+  the other side SETH'S CREW and says "beaten in 2 of their 20"; his backyard duel keeps OPPONENTS with the same line;
+  Sean's duel has none. The loading screen shows both. Winning the Cul-de-Sac: "Seth's crew goes home beaten. You've
+  beaten them in 3 of their 20 matches this summer." under RIVALS; a Play Again loss "Seth's crew takes this one.", a
+  second win "Seth's crew loses again.", the score 3 both times; losing the shotgun duel "Seth takes this one. You've
+  beaten his crew in 3 …"; beating Sean, no line. With the ladder won to the Hollow's Big Game and all of Winnmark, 17
+  days carry the red dot (rgb 224, 80, 58), exactly the days those wins bring; a new summer has none and says "No wins
+  over Seth's crew yet". No page errors.
+- `npm test` as four local shards: 100 of 103 suites passed. Three (`under-parts`, `kid-climb`, `winnmark-cars`) died
+  at Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and
+  passed alone.
+### Still open
+- Whether the score line reads as a rivalry or as bookkeeping is for play; it counts matches, not rounds, so losses
+  don't lower it.
+- Seth's crew changes members from map to map (Devon, Mitchell, Mason, Ryan, Marcus at different times); the line
+  calls whoever Seth brings his crew.
+- Step 4, the last-Saturday match, waits on where your street is (decisions).

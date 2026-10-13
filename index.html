@@ -1039,6 +1039,7 @@
   #resultScreen .rs-num { font-size: 20px; font-weight: bold; color: var(--ui-text); font-variant-numeric: tabular-nums; }
   #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
   #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
+  #resultScreen .rs-rival .rs-tag { color: #e0503a; }   /* v1.196 */
   #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
@@ -1099,6 +1100,8 @@
   #modalBody .sm-day.today { outline: 2px solid #5fa0e8; color: #fff; font-weight: bold; }
   #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
   #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
+  #modalBody .sm-note.sm-rival { margin-top: 4px; }
+  #modalBody .sm-day.rival::after { content: ''; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: #e0503a; }   /* v1.196: you beat Seth's crew */
   /* v1.195: the flip phone's texts */
   #modalScreen .modal-card.phone { max-width: 340px; border-radius: 22px; padding: 22px 22px 18px; background: #2c3138; }
   #modalBody .ph-screen { background: #b9c7a6; color: #1d2614; border-radius: 6px; padding: 8px; text-align: left;
@@ -1737,6 +1740,9 @@
     margin-right: 6px;
   }
 
+  .brief-rival { border-left-color: #e0503a; background: rgba(224,80,58,0.10); }   /* v1.196: Seth's crew */
+  .brief-rival .brief-obj-label { color: #e0503a; }
+
   /* ===== v1.39: Pre-start scenario details popup ===== */
   #scenarioBriefModal .brief-card {
     pointer-events: auto;
@@ -1973,7 +1979,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.195</div>
+  <div class="version">v1.196</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5249,6 +5255,7 @@ function getScenarioBriefing(scenarioId) {
     scenarioName: sc.scenarioName || '',
     desc: sc.desc || '',
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
+    rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
   };
 }
 
@@ -5276,13 +5283,15 @@ function renderBriefingRosterHTML(brief) {
     ${brief.allies.map(c => row(c, 'ally')).join('')}
   </div>`;
   // OPPONENTS
-  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)' : 'OPPONENTS';
+  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');   // v1.196
   html += `<div class="brief-section">
     <div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
     ${brief.enemies.map(c => row(c, 'enemy')).join('')}
   </div>`;
   // Objective
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
+  if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;   // v1.196
   return html;
 }
 
@@ -20639,7 +20648,7 @@ function gunsInReach(cashBefore, cashAfter) {
     return cfg.price > cashBefore && cfg.price <= cashAfter;
   }).map(gt => `${GUN_MAGS[gt].displayName} ($${GUN_MAGS[gt].price})`);
 }
-function renderMatchStats(outcome, openBefore, cashBefore) {
+function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   const el = document.getElementById('resultStats');
   if (!el) return;
   const st = Game.scenario.stats || newMatchStats();
@@ -20653,11 +20662,14 @@ function renderMatchStats(outcome, openBefore, cashBefore) {
   const openNow = scenariosOpenNow();
   const opened = [...openNow].filter(id => !openBefore.has(id)).map(id => SCENARIOS[id].scenarioName || SCENARIOS[id].name || id);
   const reach = gunsInReach(cashBefore, Game.persist.cash);
+  const rivalId = Game.scenario.active;   // v1.196: a match against Seth's crew says how it went and the summer's score
+  const rival = isRivalMatch(rivalId) ? rivalResultLine(rivalId, outcome, outcome === 'win' && !wonBefore) : '';
+  if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
   el.innerHTML = html;
   Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
-    time: Game.scenario.roundTime || 0, best, opened, reach };
+    time: Game.scenario.roundTime || 0, best, opened, reach, rival };
 }
 
 function endScenario(outcome) {
@@ -20730,6 +20742,7 @@ function endScenario(outcome) {
   const scDef = SCENARIOS[Game.scenario.active];
   const reward = (scDef && scDef.rewards) || { win: 10, lose: 3 };
   const _openBefore = scenariosOpenNow(), _cashBefore = Game.persist.cash;   // v1.193: for "opened" and "in reach"
+  const _wonBefore = !!Game.persist.completed[Game.scenario.active];   // v1.196: a first win over Seth's crew reads differently
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
@@ -20882,7 +20895,7 @@ function endScenario(outcome) {
     }
   }
 
-  renderMatchStats(outcome, _openBefore, _cashBefore);   // v1.193
+  renderMatchStats(outcome, _openBefore, _cashBefore, _wonBefore);   // v1.193; v1.196 the rival line
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
   const reloadNote = document.getElementById('reloadNote');
@@ -29103,14 +29116,15 @@ function summerCalendarHTML(today) {
   const t = summerDate(today);
   const zone = summerZoneKey();
   const left = SUMMER_BIG_DAY - today;
+  const rivalDays = new Set(rivalWinDays());   // v1.196: the days you beat Seth's crew
   const months = SUMMER_MONTHS.map(mo => {
     let cells = '';
     for (let i = 0; i < mo.first % 7; i++) cells += '<span class="sm-day blank"></span>';
     for (let d = 1; d <= mo.days; d++) {
       const day = mo.first + d - 1, zk = summerZoneOfDay(day);
       const cls = ['sm-day', day < today ? 'past' : '', day === today ? 'today' : '', day === SUMMER_BIG_DAY ? 'big' : '',
-        zk === zone ? 'here' : ''].filter(Boolean).join(' ');
-      const tip = zk ? summerZoneName(zk) : 'The last Saturday of summer';
+        zk === zone ? 'here' : '', rivalDays.has(day) ? 'rival' : ''].filter(Boolean).join(' ');
+      const tip = (zk ? summerZoneName(zk) : 'The last Saturday of summer') + (rivalDays.has(day) ? ` · you beat ${RIVAL_CREW}` : '');
       cells += `<span class="${cls}" data-day="${day}" title="${tip}">${d}</span>`;
     }
     return `<div class="sm-month"><div class="sm-name">${mo.name}</div>
@@ -29120,7 +29134,8 @@ function summerCalendarHTML(today) {
   return `<div class="sm-today">Today is <b>${t.label}</b>.</div>
     <div class="sm-months">${months}</div>
     <div class="sm-note">${summerZoneName(zone)}: ${summerDate(span[0]).label.replace(/^\w+ /, '')} to ${summerDate(span[1]).label.replace(/^\w+ /, '')}.
-      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>`;
+      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>
+    <div class="sm-note sm-rival">${rivalDays.size ? `A red dot is a day you beat ${RIVAL_CREW}: ${rivalDays.size} so far` : `No wins over ${RIVAL_CREW} yet`}; ${rivalScoreText(rivalScore())}.</div>`;
 }
 function openSummerCalendar() {
   Game.prevMode = Game.mode;
@@ -29187,6 +29202,38 @@ function summerDayAfter(scenarioId) {
     return next && SUMMER_SPANS[next.key] ? SUMMER_SPANS[next.key][0] : span[1];
   }
   return Math.min(span[1], span[0] + Math.floor((span[1] - span[0] + 1) * (ctx.idx + 1) / n));
+}
+// v1.196 (D.20 step 3, Michael: A on "A better game" 1): Seth's crew is the summer's rival. A rival match is any match
+// on the ladder with Seth on the other side, but for the tutorial, the free-for-alls and Infection, where nobody is
+// anybody's crew. The briefing names them, the result card keeps the summer's score against them (read from
+// `completed`, so an old save has its score too), and the calendar marks the days you beat them.
+const RIVAL_CREW = "Seth's crew";
+function isRivalMatch(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.ffa || sc.winCondition === 'survive_untagged' || !findScenarioListContext(id)) return false;
+  return (sc.enemySetup || []).some(es => es.charId === 'seth' && es.team !== 'player');
+}
+function rivalMatchIds() { return Object.keys(SCENARIOS).filter(isRivalMatch); }
+// { beaten, total } over the whole summer
+function rivalScore() {
+  const ids = rivalMatchIds();
+  return { beaten: ids.filter(id => Game.persist.completed[id]).length, total: ids.length };
+}
+// The calendar days you beat them: the day each rival win brings (summerDayAfter), once each.
+function rivalWinDays() {
+  return [...new Set(rivalMatchIds().filter(id => Game.persist.completed[id]).map(summerDayAfter))].sort((a, b) => a - b);
+}
+function rivalScoreText(s) { return `beaten in ${s.beaten} of their ${s.total} matches this summer`; }
+// The result card's line: who they are this match (Seth alone in a duel), how it went, and the summer's score.
+function rivalResultLine(id, outcome, firstWin) {
+  const sc = SCENARIOS[id];
+  const foes = (sc.enemySetup || []).filter(es => es.team !== 'player').length;
+  const who = foes > 1 ? RIVAL_CREW : 'Seth';
+  const s = rivalScore();
+  let head;
+  if (outcome === 'win') head = firstWin ? `${who} goes home beaten.` : `${who} loses again.`;
+  else head = `${who} takes this one.`;
+  return `${head} You've beaten ${foes > 1 ? 'them' : 'his crew'} in ${s.beaten} of their ${s.total} matches this summer.`;
 }
 // The texts that have arrived, newest first: { id, from, text, day, read }.
 function summerTexts() {

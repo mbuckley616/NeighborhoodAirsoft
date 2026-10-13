@@ -231,8 +231,10 @@ Fable card on the control room and Michael starts it from there.
    moving with the matches won there, days gone crossed off, today ringed, Saturday 30 August ringed twice; E opens
    June to August; `tests/calendar.test.mjs`). ~~2, the flip phone and its texts~~ — done, v1.195 (a flip phone on
    the north nightstand, its light on while a text is unread; eighteen texts from Eric, Rebecca, Brooke, Sean and Seth,
-   one per key win, dated by the calendar, read state saved; `tests/texts.test.mjs`). Next: 3, the rival crew (Seth's
-   crew, already the recurring other side) in briefings and result lines; 4, the last-Saturday match on your street.
+   one per key win, dated by the calendar, read state saved; `tests/texts.test.mjs`). ~~3, the rival crew~~ — done,
+   v1.196 (Seth's crew is the other side in 20 ladder matches: the briefing heads them SETH'S CREW with the summer's score,
+   the result card says how it went, the calendar puts a red dot on each day you beat them; `tests/rival.test.mjs`;
+   whether they get a name is in decisions). Next: 4, the last-Saturday match on your street.
 21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
    room, 2026-10-12, "A better game" 2: **C**)
