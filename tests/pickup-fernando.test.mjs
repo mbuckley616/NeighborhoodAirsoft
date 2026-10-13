@@ -26,9 +26,17 @@ check('picked onto another spot, he carries the AK by day and the rifle by night
 check('the ladder\'s night match and every other kid\'s gun are unchanged', build.ladder === 'sniper' && build.others, build);
 
 // Play it the critic's way: day 4v4, 3 lives, walk at the nearest kid; log who lands each hit on you
+// v1.207 fix-up: the share swings from round to round (3 of 15, then 9 of 15 on a loaded full run), so the same five
+// rounds are played with the rifle too, and the AK is measured against it
+const play = async (rifle) => {
 const rounds = [];
 for (let r = 0; r < 5; r++) {
-  await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); buildPickupScenario({ map: 'northcliff', size: 4, tod: 'day', lives: 3 }); });
+  await page.evaluate(rifle => {   // with the rifle: v1.206's game, the day table empty while it is built
+    if (Game.mode === 'scenario') endScenario('lose');
+    const keep = PICKUP_DAY_GUNS.fernando; if (rifle) delete PICKUP_DAY_GUNS.fernando;
+    buildPickupScenario({ map: 'northcliff', size: 4, tod: 'day', lives: 3 });
+    PICKUP_DAY_GUNS.fernando = keep;
+  }, rifle);
   await g.scenario('pickup_game');
   rounds.push(await page.evaluate(() => {
     const P = Game.player, hits = [];
@@ -46,9 +54,13 @@ for (let r = 0; r < 5; r++) {
     return { hits, out: Game.mode !== 'scenario', t: +Game.scenario.roundTime.toFixed(1) };
   }));
 }
-const all = rounds.flatMap(r => r.hits), byF = all.filter(h => h.by === 'fernando').length;
-for (const r of rounds) console.log(`   ${r.out ? 'out' : 'still in'} at ${r.t} s: ${r.hits.map(h => h.by + '@' + h.t).join(', ') || 'no hits'}`);
-console.log(`   Fernando landed ${byF} of ${all.length} hits on you in 5 day rounds (the critic's report: 15 of 15)`);
-check('Fernando no longer lands every hit on a walking player by day (under half of them)', all.length > 0 && byF / all.length < 0.5, { byF, n: all.length });
+  const all = rounds.flatMap(r => r.hits), byF = all.filter(h => h.by === 'fernando').length;
+  for (const r of rounds) console.log(`   ${rifle ? 'rifle' : 'AK'}: ${r.out ? 'out' : 'still in'} at ${r.t} s: ${r.hits.map(h => h.by + '@' + h.t).join(', ') || 'no hits'}`);
+  return { byF, n: all.length };
+};
+const ak = await play(false), rifle = await play(true);
+console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK and ${rifle.byF} of ${rifle.n} with the rifle (the critic: 15 of 15)`);
+check('with the rifle he lands nearly every hit, as the critic saw (at least 4 in 5)', rifle.n > 0 && rifle.byF / rifle.n >= 0.8, rifle);
+check('with the AK he lands fewer of them, and not every one', ak.n > 0 && ak.byF < rifle.byF && ak.byF < ak.n, { ak, rifle });
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
