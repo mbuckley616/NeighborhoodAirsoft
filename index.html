@@ -1979,7 +1979,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.197</div>
+  <div class="version">v1.198</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3298,8 +3298,10 @@ const Game = {
     look: { height: 'average', build: 'average', hairStyle: 'short', hairColor: 0x3a2818, skinColor: 0xe0b090,
             shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
             eyeColor: 'brown', shirtFront: 'plain',   // v1.123: eye colour and shirt front (mirror rows)
-            hat: 'none' },                            // v1.197 (D.21 step 1): a KID_HATS id, or none
+            hat: 'none',                              // v1.197 (D.21 step 1): a KID_HATS id, or none
+            top: 'none' },                            // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
     ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
+    ownedTops: {},              // v1.198: the tops you have bought
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -16891,12 +16893,16 @@ function buildKidClothes(p, { torso, shoeL, shoeR, shirt }) {
     add('trim', box(w, 0.012, d), x, 0.266, z);
   // a chest stripe, a pocket, or plain, by kid
   // v1.123: a profile's shirtFront (Mike's, from the mirror) picks it; other kids keep the one their colours give
-  const style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
+  let style = KID_SHIRT_FRONTS.indexOf(p.shirtFront) >= 0 ? KID_SHIRT_FRONTS.indexOf(p.shirtFront) : Math.floor(h * 3);
+  const topKind = KID_TOPS[p.top] ? KID_TOPS[p.top].kind : null;   // v1.198: a top has its own front (buildKidTop)
+  if (topKind) style = 2;
   if (style === 0) add('trim', box(0.424, 0.05, 0.244), 0, 0.06, 0);
   else if (style === 1) { add('trim', box(0.08, 0.085, 0.006), 0.1, 0.1, 0.116); add('trim', box(0.084, 0.01, 0.008), 0.1, 0.14, 0.117); }
   // belt round the waist with a buckle at the front
-  add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
-  add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  if (topKind !== 'hoodie') {   // v1.198: a hoodie hangs over the belt
+    add('belt', box(0.426, 0.036, 0.246), 0, -0.232, 0);
+    add('buckle', box(0.05, 0.03, 0.006), 0, -0.232, 0.1245);
+  }
   const trim = new THREE.Group(); trim.userData.kidClothes = true;
   _propMerge(trim, b, mats);
   trim.traverse(m => { if (m.isMesh) m.castShadow = false; });
@@ -17020,6 +17026,77 @@ function buildKidHat(id) {
   return g;
 }
 
+// v1.198 (D.21 step 2, Michael: C on "A better game" 2): tops. A top is worn over the mirror's shirt: its colour is the
+// shirt's, and its front is its own (a tee's graphic, the hoodie's pocket and strings), all in the torso's frame (centre
+// 0, front face z 0.113). Tees are cut like the shirt; the hoodie hangs loose over the belt, has a hood down at the back
+// of the neck and long sleeves to the wrist. Bought in the Clothes tab or won; worn from the shop or the mirror (`look.top`).
+const KID_TOPS = {
+  tee_skate: { name: 'Skate Tee',   kind: 'tee', color: 0xe6e3da, price: 15, art: 'skate',
+    desc: 'White, a black deck with red wheels across the chest. You don’t skate. Nobody needs to know.' },
+  tee_shark: { name: 'Shark Tee',   kind: 'tee', color: 0x5f9cc8, price: 15, art: 'shark',
+    desc: 'Sky blue, a grey fin over a white wave. From the aquarium gift shop.' },
+  tee_flame: { name: 'Flame Tee',   kind: 'tee', color: 0x1e1e20, price: 18, art: 'flame',
+    desc: 'Black, orange and yellow flames up from the hem. The fastest shirt in the neighborhood.' },
+  hoodie:    { name: 'Grey Hoodie', kind: 'hoodie', color: 0x7c7d84, price: 30,
+    desc: 'Heather grey, a kangaroo pocket, the hood down. Too hot for August. Worn anyway.' },
+  tee_hollow: { name: 'Big Game Tee', kind: 'tee', color: 0x2f5a3a, won: 'hollow_big_battle', art: 'pine',
+    desc: 'Forest green, a white pine on the front. Not for sale: win the Big Game at the Hollow.' },
+};
+const KID_TOP_ORDER = ['tee_skate', 'tee_shark', 'tee_flame', 'hoodie', 'tee_hollow'];
+function topOwned(id) {
+  const t = KID_TOPS[id];
+  if (!t) return false;
+  return t.won ? !!Game.persist.completed[t.won] : !!(Game.persist.ownedTops || {})[id];
+}
+// The top's front and trim, merged into one group on the torso (buildKidClothes leaves the belt off under a hoodie).
+function buildKidTop(id) {
+  const t = KID_TOPS[id];
+  if (!t) return null;
+  const mats = { body: _kidFaceMat('top', t.color, 0.88),
+    rib: _kidFaceMat('topRib', new THREE.Color(t.color).multiplyScalar(0.78).getHex(), 0.9),
+    white: _kidFaceMat('topWhite', 0xf2efe6, 0.8), black: _kidFaceMat('topBlack', 0x161616, 0.8),
+    red: _kidFaceMat('topRed', 0xc0342a, 0.8), grey: _kidFaceMat('topGrey', 0x8a9098, 0.8),
+    orange: _kidFaceMat('topOrange', 0xe8701e, 0.75), yellow: _kidFaceMat('topYellow', 0xf2c230, 0.75),
+    brown: _kidFaceMat('topBrown', 0x6a4426, 0.85) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const tri = (r) => { const g = new THREE.CylinderGeometry(r, r, 0.006, 3); g.rotateX(Math.PI / 2); return g; };   // a flat triangle, point up
+  const Z = 0.116;                                   // just proud of the shirt's front
+  if (t.art === 'skate') {
+    add('black', box(0.24, 0.035, 0.006), 0, 0.07, Z, 0, 0, 0.18);                         // the deck, tilted
+    for (const sx of [-1, 1]) add('black', box(0.03, 0.03, 0.006), sx * 0.12, 0.07 + sx * 0.022, Z, 0, 0, 0.18);   // kicked-up ends
+    for (const sx of [-1, 1]) add('red', box(0.034, 0.034, 0.008), sx * 0.075, 0.032 + sx * 0.013, Z + 0.001);    // wheels
+  } else if (t.art === 'shark') {
+    add('grey', tri(0.07), -0.02, 0.1, Z, 0, 0, 0.2);                                        // the fin
+    add('white', box(0.28, 0.022, 0.006), 0, 0.045, Z);                                     // the wave
+    for (const x of [-0.1, 0, 0.1]) add('white', box(0.05, 0.02, 0.006), x + 0.02, 0.064, Z, 0, 0, 0.5);   // its curls
+  } else if (t.art === 'flame') {
+    // tongues up from the hem, tall orange behind short yellow, all round the front
+    const hs = [0.16, 0.1, 0.2, 0.12, 0.18, 0.09, 0.15];
+    hs.forEach((h, i) => {
+      const x = -0.17 + i * 0.0567;
+      add('orange', box(0.045, h, 0.006), x, -0.205 + h / 2, Z, 0, 0, (i % 2 ? -0.12 : 0.12));
+      add('yellow', box(0.026, h * 0.55, 0.006), x, -0.205 + h * 0.275, Z + 0.001, 0, 0, (i % 2 ? -0.12 : 0.12));
+    });
+  } else if (t.art === 'pine') {
+    add('white', tri(0.075), 0, 0.12, Z); add('white', tri(0.06), 0, 0.165, Z + 0.001);     // two tiers
+    add('white', box(0.022, 0.035, 0.006), 0, 0.068, Z);                                    // the trunk
+  }
+  if (t.kind === 'hoodie') {
+    add('body', box(0.43, 0.06, 0.25), 0, -0.235, 0);                                       // loose over the belt
+    add('rib', box(0.432, 0.03, 0.252), 0, -0.265, 0);                                      // the waistband rib
+    add('body', box(0.26, 0.1, 0.012), 0, -0.13, 0.118);                                    // the kangaroo pocket
+    add('rib', box(0.262, 0.012, 0.014), 0, -0.08, 0.119);                                  // its top edge
+    add('body', box(0.3, 0.11, 0.1), 0, 0.25, -0.1, -0.35, 0, 0);                           // the hood, down at the back of the neck
+    add('rib', box(0.24, 0.035, 0.07), 0, 0.285, -0.07, -0.35, 0, 0);                        // its opening's rim
+    for (const sx of [-1, 1]) add('white', box(0.012, 0.13, 0.008), sx * 0.04, 0.17, 0.118);   // drawstrings
+  }
+  const g = new THREE.Group(); g.userData.kidTop = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  return g;
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -17027,6 +17104,8 @@ function createKid(profile, weapon = 'pistol') {
     height: 'average', build: 'average', hairStyle: 'short', glasses: false,
     ...profile,
   };
+  const top = KID_TOPS[p.top] ? p.top : null;   // v1.198 (D.21 step 2): a top's colour is the shirt's
+  if (top) p.shirtColor = KID_TOPS[top].color;
 
   const scaleY  = KID_HEIGHT_SCALE[p.height]  ?? 1.0;
   const scaleXZ = KID_BUILD_SCALE[p.build]    ?? 1.0;
@@ -17196,9 +17275,20 @@ function createKid(profile, weapon = 'pistol') {
   group.add(gunGroup);
 
   buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
+  // v1.198 (D.21 step 2): the top's front on the torso; a hoodie's sleeves run down the forearms to a cuff at the wrist
+  let topMesh = null;
+  if (top) {
+    topMesh = buildKidTop(top); torso.add(topMesh);
+    if (KID_TOPS[top].kind === 'hoodie') for (const rig of [armRig_R, armRig_L]) {
+      const sl = new THREE.Mesh(new THREE.BoxGeometry(0.108, 0.17, 0.123), shirt);
+      sl.position.set(0, 0.02, 0); sl.castShadow = true; sl.userData.kidSleeve = true; rig.fore.add(sl);
+      const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.026, 0.125), _kidFaceMat('topRib', new THREE.Color(KID_TOPS[top].color).multiplyScalar(0.78).getHex(), 0.9));
+      cuff.position.set(0, -0.072, 0); rig.fore.add(cuff);
+    }
+  }
 
   return {
-    group, head, torso, eyeL, eyeR, gunGroup, hat,   // v1.197: hat
+    group, head, torso, eyeL, eyeR, gunGroup, hat, top: topMesh,   // v1.197: hat; v1.198: top
     parts: { head, torso, hairMesh, neck },
     // v1.14b: parts + their base transforms for a real crouch POSE (instead of
     // sinking the whole group into the ground). Feet stay planted; the body
@@ -21205,6 +21295,9 @@ const LOOK_OPTIONS = [
     get opts() { return [['none', 'None'], ...KID_HAT_ORDER.filter(hatOwned).map(id => [id, KID_HATS[id].name])]; } },
   { key: 'skinColor', label: 'Skin',   kind: 'swatch', opts: [0xf0d0b0, 0xe6bf95, 0xe0b090, 0xc89870, 0xa87050, 0x7a4a30, 0x5a3420] },
   { key: 'shirtColor', label: 'Shirt', kind: 'swatch', opts: [0x3a5a8a, 0xc44a3a, 0x3a7a4a, 0xd8c040, 0x6a4a8a, 0xe8e4dc, 0x2a2a2a, 0xd07030] },
+  // v1.198 (D.21 step 2): the tops you own, over the shirt; picking a Shirt colour or front takes the top off
+  { key: 'top', label: 'Top', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_TOP_ORDER.filter(topOwned).map(id => [id, KID_TOPS[id].name])]; } },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
@@ -21253,7 +21346,11 @@ function renderMirrorOptions() {
         b.textContent = o[1];
         b.style.cssText = `padding:5px 12px;border-radius:4px;cursor:pointer;font:inherit;font-size:13px;color:#f4e9d8;background:${on ? '#b8562e' : 'rgba(255,255,255,.08)'};border:1px solid rgba(255,255,255,.2)`;
       }
-      b.addEventListener('click', () => { Game.persist.look[row.key] = val; renderMirrorOptions(); renderMirrorPreview(); });
+      b.addEventListener('click', () => {
+        Game.persist.look[row.key] = val;
+        if (row.key === 'shirtColor' || row.key === 'shirtFront') Game.persist.look.top = 'none';   // v1.198: your own shirt again
+        renderMirrorOptions(); renderMirrorPreview();
+      });
       btns.appendChild(b);
     }
     r.appendChild(btns);
@@ -21918,16 +22015,42 @@ function wearHat(id) {
   autoSave();
   return true;
 }
+// v1.198 (D.21 step 2): tops, the same way
+function buyTop(id) {
+  const t = KID_TOPS[id];
+  if (!t || t.won) return { ok: false, reason: 'not for sale' };
+  if (topOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < t.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= t.price;
+  Game.persist.ownedTops = Game.persist.ownedTops || {};
+  Game.persist.ownedTops[id] = true;
+  Game.persist.look.top = id;
+  autoSave();
+  return { ok: true };
+}
+function wearTop(id) {
+  if (id !== 'none' && !topOwned(id)) return false;
+  Game.persist.look.top = id;
+  autoSave();
+  return true;
+}
 function renderClothesTab(c) {
-  c.appendChild(shopSectionHeader('Hats', 'Worn on your kid; change it here or at the mirror'));
-  for (const id of KID_HAT_ORDER) {
-    const h = KID_HATS[id], owned = hatOwned(id), wearing = Game.persist.look.hat === id;
+  // v1.198: two sections, hats then tops, each row the same (buy and wear, wear, take off, or earn it)
+  const kinds = [{ head: ['Hats', 'Worn on your kid; change it here or at the mirror'], order: KID_HAT_ORDER, table: KID_HATS,
+                   cls: 'shop-hat', data: 'hat', icon: '▲', own: hatOwned, buy: buyHat, wear: wearHat },
+                 { head: ['Tops', 'Over your shirt; the mirror’s Shirt rows take it off'], order: KID_TOP_ORDER, table: KID_TOPS,
+                   cls: 'shop-top', data: 'top', icon: '■', own: topOwned, buy: buyTop, wear: wearTop }];
+  for (const k of kinds) {
+  c.appendChild(shopSectionHeader(k.head[0], k.head[1]));
+  for (const id of k.order) {
+    const h = k.table[id], owned = k.own(id), wearing = Game.persist.look[k.data] === id;
+    const wearHat = k.wear, buyHat = k.buy;   // v1.198: the hat or the top functions, by section
     const row = document.createElement('div');
-    row.className = 'shop-item shop-hat' + (owned ? ' owned' : '') + (!owned && h.won ? ' locked' : '');
-    row.dataset.hat = id;
+    row.className = 'shop-item ' + k.cls + (owned ? ' owned' : '') + (!owned && h.won ? ' locked' : '');
+    row.dataset[k.data] = id;
     const swatch = '#' + h.color.toString(16).padStart(6, '0');
     const status = wearing ? '<span class="shop-eq-tag">WEARING</span>' : (owned ? '<span class="shop-owned-tag">OWNED</span>' : '');
-    row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">▲</div>
+    row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">${k.icon}</div>
       <div class="shop-item-info"><div class="shop-item-name">${h.name} ${status}</div><div class="shop-item-desc">${h.desc}</div></div>
       <div class="shop-item-price">${h.won ? 'WON' : '$' + h.price}</div>`;
     const btn = document.createElement('button');
@@ -21945,6 +22068,7 @@ function renderClothesTab(c) {
     });
     row.appendChild(btn);
     c.appendChild(row);
+  }
   }
 }
 

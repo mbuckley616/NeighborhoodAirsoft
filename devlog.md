@@ -9263,3 +9263,44 @@ wears none.
   look.
 - The hat isn't seen in a match: first person shows no head. The other kids wear none until the crew colours.
 - Next pieces of D.21: tops (graphic tees, a hoodie), then shorts and shoes, then your crew.
+
+## v1.198 — Tops
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct), the second
+piece after v1.197's hats: tops, the graphic tees and the hoodie on his list.
+
+**The tops.** Five, each worn over the mirror's shirt: its colour becomes the shirt's (body and sleeves), the shirt's
+own stripe or pocket goes, and it brings a front of its own. A white Skate Tee (a black deck with red wheels) and a sky
+blue Shark Tee (a grey fin over a white wave), $15 each; a black Flame Tee with orange and yellow flames up from the
+hem, $18; a heather Grey Hoodie, $30; and the forest-green Big Game Tee with a white pine, which is not for sale:
+winning the Hollow's Big Game gives it. The hoodie is cut differently: it hangs loose over the belt to a waistband rib,
+has the hood down at the back of the neck, a kangaroo pocket and two white drawstrings, and its sleeves run down the
+forearms to a cuff above the hand. Everything is in the torso's and forearm's own frames, so a crouch, the walk and
+the aim move it with the body. The hitboxes are unchanged. A `createKid` profile field (`top`), like the hat.
+
+**Where.** The Clothes tab has a second section, Tops, under Hats, with the same buttons (BUY puts it on; WEAR; WEARING
+and TAKE OFF; the won tee says WON and EARN IT until the Big Game is won). The mirror gets a Top row under the Shirt
+colour once you own one. Picking a Shirt colour or Shirt front at the mirror takes the top off, so those rows always
+show what they do. The Loadout kid wears it. `look.top` and `ownedTops` are saved; an old save wears none.
+### Verified
+- `tests/tops.test.mjs` (new, 26 checks). A new game wears no top and owns none; the mirror has its ten rows. With $16
+  the Clothes tab shows Hats (six) then Tops: Skate Tee, Shark Tee, Flame Tee, Grey Hoodie, Big Game Tee; a $15 tee
+  says BUY, the Flame Tee NEED $18, the hoodie NEED $30, the Big Game Tee WON / EARN IT, greyed. With $100 and the red
+  cap on, BUY on the hoodie pays $30 and puts it on with the cap still worn (TAKE OFF); buying the Shark Tee puts that
+  on and WEAR brings the hoodie back; TAKE OFF shows your own shirt. Every top turns the shirt and sleeves its colour
+  (e6e3da, 5f9cc8, 1e1e20, 7c7d84, 2f5a3a); the shirt's stripe goes (trim 252 vertices bare, 216 under a tee, 144 under
+  the hoodie), a tee keeps the belt, the hoodie hangs over it. Each tee's graphic lies on the chest front
+  (z 0.113–0.121) inside the shirt's width and height. The hoodie's hood is behind the back (z −0.166 against −0.12) and
+  under the head (top 1.119, head bottom 1.12), its hem reaches 0.52 (shirt 0.59); its sleeves cover both forearms down
+  to 0.635, above the hand (0.644 top); a full crouch lowers it 0.248 with the torso. The mirror's Top row, after the
+  Shirt, is None, Shark Tee, Grey Hoodie; clicking Shark Tee wears it on the preview, one choice lit in each of 12 rows;
+  a Shirt colour then takes it off and shows that shirt. The Loadout kid wears the hoodie. Winning the Big Game turns its
+  tee to WEAR, free. A save and load keeps the tee worn and the two bought; an old save wears none. A match runs with
+  the hoodie on. No page errors.
+- `tests/hats.test.mjs` and `tests/shop-tabs.test.mjs` now expect the Tops section (11 rows in Clothes).
+- `npm test` as four local shards: 100 of 105 suites passed. Four (`bellfield`, `briefing-lives`, `ctf-clock`,
+  `winnmark-trees`) died at Playwright's 30 s `page.goto` limit under load before any check, and `spawn-facing` lost its
+  browser before its first check; all five passed alone.
+### Still open
+- How the tees' graphics and the hoodie read on the kid, and the prices ($15–30), are for Michael's look.
+- A top isn't seen in a match (first person shows no body), and the other kids wear none until the crew colours.
+- Next pieces of D.21: shorts, then shoes (a question in decisions: shoes are already gear), then your crew.

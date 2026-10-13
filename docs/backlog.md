@@ -239,8 +239,10 @@ Fable card on the control room and Michael starts it from there.
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
    room, 2026-10-12, "A better game" 2: **C**) In pieces, a part of the kid at a time (builder): ~~hats~~ — done, v1.197 (a
    Clothes tab in the shop: two caps, a bucket hat, two bandanas, and the Winnmark Cap won by clearing Winnmark; each
-   its own mesh over the hair; worn from the shop or the mirror's Hat row; saved; `tests/hats.test.mjs`). Next: tops
-   (graphic tees, a hoodie), then shorts and shoes, then your crew.
+   its own mesh over the hair; worn from the shop or the mirror's Hat row; saved; `tests/hats.test.mjs`). ~~tops~~ — done, v1.198 (three
+   graphic tees, a grey hoodie, and the Big Game Tee won at the Hollow, worn over the mirror's shirt; the hoodie over the
+   belt with a hood and sleeves to the wrist; the mirror's Top row; saved; `tests/tops.test.mjs`). Next: shorts and
+   shoes, then your crew.
 22. A Pickup Game board in the bedroom: any opened zone, the mode, day or night, team sizes and which kids, lives, a
    clock; pays a little. Online play (D.2) comes after it, hosted from this board. (Michael, control room, 2026-10-12,
    "A better game" 3: **A** and 4: **B**)

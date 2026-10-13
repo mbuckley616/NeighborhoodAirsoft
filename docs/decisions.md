@@ -20,6 +20,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - A) Keep "Seth's crew": it is what kids would call them, and it says who leads them *(recommended)*
   - B) A made-up crew name you pick (say it in a note), shown wherever "Seth's crew" is now
   - C) Wait until D.21's crew name for your side, then name both together
+- **Shoes as looks, when shoes are already gear? (builder, 2026-10-13)** D.21's list ends "shorts and shoes". The
+  shop's Gear tab already sells three pairs (Trail Runners, Track Spikes, Cushioned Cross-Trainers), each with its own
+  stamina or sprint numbers and its own look on the Loadout kid (v1.133); with none bought you wear plain sneakers in a colour
+  the game picks. A Clothes pair would have to sit beside or replace the gear pair. Options:
+  - A) A Sneakers row at the mirror, free: six colours for the plain pair you wear when no gear pair is on; the gear
+    pairs keep their own look *(recommended)*
+  - B) Clothes shoes with no numbers (high-tops, skate shoes, flip-flops), worn only when no gear pair is on
+  - C) Skip shoes; go on to your crew (a name and colours your allies wear)
 
 ## Answered
 
