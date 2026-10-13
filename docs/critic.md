@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -959,3 +959,93 @@ the two "what next" decisions. Nothing was addressed to me, and nothing asked me
 
 I have no proposal this run. Problem 1 is under Pending for the producer.
 
+
+## 2026-10-13 — Flags on Bellfield with its clock, the Pickup Game by day and night, Lamplight on Bellfield (v1.201)
+
+I played v1.201 from `auto/build`; main is at v1.194. The bot is last run's, rebuilt: it walks `kidFieldTo` to a goal,
+racks the spring by holding the trigger through `onLmbDown`/`onLmbUp` as a player does, and fires at the nearest enemy
+it can see within 40 m, aiming dead on. When it has a line to a kid inside 25 m it stops walking to trade, which a
+real player behind cover would not always do. Modes as before: *push*, *run* (sprint, never shoot), *stand*. 32
+rounds, no page errors. Smoke passes. The NEW GAME path still works for a first-timer: the mirror opens, DONE puts you
+in the hall with "E Go outside" on screen, and the new wall things (phone "1 new", the pickup board, the calendar) are
+5.9–6.8 m away, so none of them takes the door's prompt.
+
+**Flags on Bellfield after v1.191** (`bellfield_ctf`), 6 rounds. Every round ended on the clock, which is the fix
+working: two draws 0–0 from *push*, and from *run* a draw 0–0, a win 1–0 (my capture at 287 s), a loss 0–1 and a
+draw 1–1. Last week 0 of 8 ended. So four of six were draws, which pay as a loss (screenshot
+`docs/critic/2026-10-13-flags-draw-card.png`: "DRAW 0–0", red, +$3, Mason's "A tie doesn't count. Run it back?").
+- *Run* (4 rounds, about 1,250 s): the player took their flag at least 5 times and brought it home twice. Last week it was 3 takes
+  and 0 home in 540 s. But the runner is tagged 48–61 times in five minutes, about every 5–6 s. Of 105 logged tags, only
+  9 came within 15 m of their flag. The rest came in the street. Christian, now a pusher, made 38 of them at 0–13 m,
+  because he runs to the middle of the street, which is the runner's route. Fernando made 41, mostly from 26–34 m with
+  the AK. Mason made 26.
+- *Push* (2 rounds): tagged 30 times a round. The bot tagged 24–27 kids a round and never got to their flag. Andrew
+  took it 1–2 times a round and never got it home.
+- v1.191's draw question: a draw shows in the lose colour and pays the loss pay. Mason's line reads right for a draw.
+  Whether it should look different is still Michael's call.
+- Step cost: 0.9–1.6 ms on average, 26–38 ms worst.
+
+**The Pickup Game** (v1.201), 4v4 with 3 lives, built by `buildPickupScenario` and entered as `pickup_game`, 20
+rounds on three of the six maps that used to be night only, day and night. I lost all 20, out at 8.1–38.3 s. Each
+paid $1 and left `completed` at 0, so the ladder is untouched as promised. Two problems:
+
+*Problem 1: your "lives" are not the kids' lives.* The briefing says "3 lives for everyone, you included". For a kid,
+a life is a tag, a walk back to base and a return. For you, a life is one hit (`playerLives` → `maxHits`), with no
+gap between hits and no return. An auto gun or a shotgun takes all three at once. In 6 of 20 rounds, all three of my
+hits landed within 1.1 s:
+- Store by night: Jamie's shotgun from 2 m landed 3 pellets in the same frame (19.6, 19.6, 19.6 s). Marcus's AK hit at
+  9.0, 9.1, 9.2 and at 8.4, 9.0, 9.2.
+- Store by day: Marcus's AK hit at 9.2, 9.4, 9.5.
+- Willow Bend by day: Devon, then Seth, at 7.8, 7.9, 8.1.
+- Northcliff by night: Mason at 15.6, 15.7, 16.7.
+
+Store by day also had Jamie land two pellets in one frame. The same holds for 5 lives: one AK burst. The words promise
+a fair trade that the rules don't give. I've filed it under Found in play and written a proposal.
+
+*Problem 2: Northcliff by day belongs to Fernando's rifle.* The pickup game copies the night 4v4's spots, and Fernando
+keeps the sniper on the high yard (`yard_n3`). By day he made 15 of the 15 hits on me in 5 rounds. They came from 20–25
+m, one every 2.4–2.9 s, and I was out at 15.4–16.6 s every time. By night, from the same spots, he made 5 of 15, and the
+rest were Diego, Mason and Christian. This is v1.201's "a sniper spot chosen for the dark may be strong in daylight",
+and on Northcliff it is. My bot stood and traded at 25 m, so a real player who takes cover will last longer. Still, 15
+of 15 is one kid deciding the match. On Willow Bend, Devon's veranda rifle made 2 of 6 by day and 1 of 6 by night.
+Inside the store, Devon made none. There the AK and the shotgun decide it.
+- The start view on Northcliff (screenshot `docs/critic/2026-10-13-pickup-northcliff-day.png`) has a street lamp dead
+  centre about 3 m ahead. It has no collision box, so it is cosmetic, but it's the first thing you see. The ladder's
+  night 4v4 shares this start.
+- Step cost: Northcliff 2.6–8.4 ms average, 156–263 ms worst; Willow Bend 3.4–7.7 ms, 107–166 ms worst. The store
+  is 1.1–3.7 ms, 42–54 ms worst. Northcliff's averages are the highest I've logged this month, but a second browser
+  wasn't running here, so they may be real.
+
+**Lamplight on Bellfield** (`bellfield_night_4v4`), *push*, 3 rounds: out at 4.0, 15.1 and 12.1 s, one life. Mason's AK
+tagged me from 37 m at 4.0 s, 1.5 s after the opening hold and before I'd fired twice. The other two were Mason and
+Diego from 17 m. **Bellfield Bulb** (`bellfield_3v3`), 3 rounds: out at 8.0–10.5 s, to Diego and Fernando from 21–35
+m. My bot is a poor match for a 4v4 with one life, so I've only noted these. Nothing in them looked broken.
+
+**What worked.**
+- No page errors in 32 rounds. Every result card matched the round. TAGS and SHOTS on the card equal what the bot
+  counted (230/230, 205/205). HITS ON YOU counts each respawn in Flags (30, 48, 61), which is right for that mode.
+- The CTF clock: every round ended, the outcome text matched the score, and the 0.8 s freeze held.
+- The pickup board's briefing reads right ("A pickup game in the afternoon on Northcliff Trace, nothing on the line.
+  You've got Andrew, Alex and Evan against Mason, Christian, Diego and Fernando."). The pay and the ladder behave as
+  v1.201 says.
+- A harness note, not a game bug: `endScenarioLater` waits 800 ms of real time. A script that runs faster than real
+  time sees CTF rounds end at 5:12–5:18. In real play it's 5:01.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io (ENOTFOUND), so I read no comments. In Slack's last day
+there were the builder's v1.192–v1.201 posts, the v1.192–v1.194 merge and the producer's posts. Nothing was addressed
+to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.191–v1.201)
+- v1.191, whether a player can get their flag home: judged headless. Yes, sometimes. My runner took it at least 5 times in 4
+  rounds and got it home twice. The street is the problem now: about one tag every 5–6 s, mostly from the new pusher
+  Christian up close and Fernando's AK from 26–34 m. The draw's colour is for Michael (it reads as a loss).
+- v1.192, the settings ranges: can't judge headless.
+- v1.193, best-moment thresholds: they fired sensibly ("Two in 1.3 s: Fernando, then Christian.", "A 25 m tag on
+  Fernando."). Whether those are the moments a player would pick needs hands.
+- v1.194–v1.196, the calendar spans, the texts' voice, the rival line: not played. They're about the long game, and
+  I played no ladder run through.
+- v1.197–v1.200, hats, tops, shorts, the crew bandana: can't judge headless. These are for Michael's eye.
+- v1.201, the board: judged headless for three of its six day-from-night maps. They build and run with no errors.
+  Northcliff by day is Fernando's rifle (Problem 2). Willow Bend and the store are not dominated by their snipers.
+  Problem 1, lives, is new.
