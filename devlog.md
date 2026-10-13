@@ -9026,3 +9026,115 @@ near the flag now. Mason still runs, and Andrew and Evan are unchanged.
   Fernando is still in the fort with the AK, and nothing here changes how he covers the street.
 - A draw pays as a loss and shows in the lose colour; whether it should read differently is Michael's call once he has
   seen one.
+
+## v1.192 — Settings
+Decisions, "A better game" 1–5 (builder, 12 Oct). Michael answered all five on the control room this evening: a
+light summer story (1 A), looks then a crew (2 C), a Pickup Game board (3 A), online after the board (4 B), and
+settings, then a better result screen (5 C). This run takes 5's first step because it is the smallest and the most
+plainly wanted: the game had no settings at all, and they are the first thing a new itch.io player looks for.
+
+**The screen.** SETTINGS sits under the title's two buttons, and in the bedroom a SETTINGS button shows top right
+whenever the mouse is free (the same moment as the "Click to capture mouse" hint). It opens a card over whatever is
+behind it, in the game's dark-and-amber style, with six rows: mouse sensitivity (0.25×–3×), aim sensitivity (0.25×–2×,
+on top of the old 0.55 slow-down when aimed), music volume and effects volume (0–100%), field of view (60–100°,
+default 75) and invert look. Each change applies at once and is saved at once; DEFAULTS puts them back; DONE or
+Escape closes it. The bedroom stands still while it is open, as it does for the shop.
+
+**Where they live.** In their own localStorage key, not the save: they belong to the browser, so NEW GAME (which
+resets the save in memory) and CONTINUE both keep them. A stored value outside a row's range is clamped, and a
+non-number falls back to the default.
+
+**How they reach the game.** The look multiplies by the mouse sensitivity, and when aimed by the aim sensitivity
+too; invert flips the pitch. The field of view replaces the fixed 75°, and aiming narrows it by the same share as
+before (75→55 becomes 90→66), so a wide setting still zooms when you aim; a scope's extra zoom is unchanged. The music
+volume scales the music master's fade-in and moves it live. The effects needed a bus: 36 sound effects were wired
+straight to the speakers, so they now all go through one effects gain, and the kids' spoken lines take the same
+volume. The M key still mutes the music.
+### Verified
+- `tests/settings.test.mjs` (new, 22 checks). The title opens the screen and stays on the title; six rows at 1×, 1×,
+  100%, 100%, 75°, off. Driving the controls sets 2×, 0.5×, 50%, 25%, 90°, on, saved at once, read back as "2.00×
+  0.50× 50% 25% 90° On". A page reload keeps them, and junk in storage is clamped (fov 500 → 100, a negative music
+  volume → 0, a string → the default). NEW GAME keeps them. The bedroom shows the button with the mouse free and
+  hides it when the mouse is taken or the screen is open; it opens over the bedroom (mode `settings`) and Escape
+  closes it back. In a match, 50 px of mouse turns 0.22 rad at 2×, the pitch goes the other way with invert, and
+  aimed it turns 0.0605 rad (2 × 0.55 × 0.5). The camera settles at 90.0° at the hip and 66.0° aimed. Playing seven
+  sound effects (shot, footsteps, reload, hit, impact, the shop till) connects nothing straight to the speakers, and
+  the effects slider sets the bus to 60%. No page errors.
+- `npm test` as four local shards: 96 of 101 suites passed. Five (`stuck-sweep-6`, `briefing-lives`, `houses`,
+  `utility-belt`, `car-side-fire`) died at Playwright's 30 s `page.goto` limit under the load of four shards, before any
+  check (the v1.124 case), and all five passed alone. `harness` caught one real NEW GAME stall and recovered.
+### Still open
+- How the ranges feel is for play: the top mouse speed (3×) and the field-of-view limits (60–100°) are guesses.
+- No key rebinding (the option didn't ask for it), and settings can't be opened mid-match: the match keeps running
+  while the mouse is free, so a settings screen there would need a pause first.
+- Next on this item: 5's second step, the result screen.
+
+## v1.193 — The result screen tells you about your match
+Decisions, "A better game" 5 (Michael: C, settings then a better result screen; control room, 12 Oct). v1.192 was
+the settings; this is the second half. The result card said who won, a line of flavour and the pay, and nothing
+about how you played or what the win got you.
+
+**The numbers.** Under the pay, four boxes: your tags, your shots, the hits on you, and the match time. A tag is any
+hit of yours on a kid of the other side (each one puts him out or sends him back), and a shot is a trigger pull, so a
+shotgun's pellets count once. The time is the match's simulated seconds since BEGIN (m:ss). The count starts at zero
+at every BEGIN, Play Again included.
+
+**The best moment.** One line, picked in this order: two tags on two different kids inside 3 s ("Two in 1.6 s: Sean,
+then Nick."), else a tag from 15 m or more ("A 23 m tag on Sean."), else a win with no hits on you ("Not a mark on
+you."), else your first tag and its distance. With no tags and a loss there is none. Distance is from where the BB
+left the muzzle to the kid.
+
+**What it opened.** OPENED names each match this result unlocked (worked out with the real unlock rule before and
+after the pay and the win are written), and IN REACH names any gun you don't own whose price the pay just crossed
+("at the shop: Spring Shotgun ($60)"). A replay of a match you have already won opens nothing, so the lines go.
+### Verified
+- `tests/result-stats.test.mjs` (new, 20 checks). Seth's House with only the tutorial done and $59: two trigger pulls
+  count 2 shots; a BB that reaches Seth, fired from 20 m back, counts one tag at 20.0 m and wins. The card has four
+  boxes (1 tag, 2 shots, 0 hits on you, 0:04), "BEST A 20 m tag on Seth.", "OPENED Seth's Got a Shotgun" (locked
+  before), and "IN REACH at the shop: Spring Shotgun ($60)". Play Again starts at 0 / 0 / 0; a loss shows its hit on you,
+  no best moment and nothing opened. The rules: a 1.6 s double beats a 30 m tag, a 4 s gap doesn't count as one, the same
+  kid twice isn't one, an untouched win, the first tag otherwise; 0:00, 1:00 (59.6 s) and 2:05. No page errors. The
+  screenshot fits the card at 1280×720 with Previous / Play Again / Next and the way home still on screen.
+- `npm test` as four local shards: 99 of 102 suites passed (`result-text` among them). Three (`bound-forward`,
+  `stuck-sweep-13`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit under load before any check, as in
+  v1.192, and passed alone.
+### Still open
+- Whether the best-moment thresholds (3 s, 15 m) pick the moment a player would is for play.
+- Hits on your allies' targets and your allies' own tags aren't counted; this is your match. Capture the flag shows
+  the same four boxes, not flags carried, which the score line already gives.
+
+## v1.194 — A summer on the bedroom wall
+Decisions, "A better game" 1 (Michael: A, a light summer story told in the bedroom, no cutscenes; control room,
+12 Oct). The story has four parts: a wall calendar from June to the last day of August with each zone a few weeks of
+it, texts from your friends on a flip phone between matches, a rival crew, and one big match on your own street at
+the end. This run builds the calendar, because the other three hang their dates on it.
+
+**The summer.** It is 2003, the year the game is set in. Day one is Sunday 1 June and the last Saturday, 30 August,
+is the big day. Each zone of the ladder gets a span, back to back and sized roughly by how many matches it has:
+Winnmark 1–21 June, Bunratty 22 June – 12 July, the Hollow 13–26 July, the market lot 27 July – 2 August, Northcliff
+3–16 August, then four or five days each for Hollins Ridge High, Willow Bend and inside the store, which ends Friday
+29 August. Today is the zone you have reached (the furthest one the ladder has opened) plus its share of the span
+for the matches you've won there: half of Winnmark is Wednesday 11 June, and the day Bunratty opens is Sunday 22 June.
+It reads only `completed`, so old saves get a date too and nothing new is saved.
+
+**The calendar.** It hangs on the bedroom's north wall, between the bookcase and the desk alcove: a picture of a creek under pines
+with SUMMER 2003, and this month's grid below it, the days gone crossed off in red, today ringed in blue, each zone's
+first day pencilled with its name, and 30 August ringed twice. It is drawn fresh each time you come home. Walk up to
+it and E ("Look at the calendar") opens June, July and August side by side: the same crosses and rings, your zone's
+days shaded, "Today is Sunday 20 July", and a line with the zone's dates and how many days are left to the 30th.
+### Verified
+- `tests/calendar.test.mjs` (new, 19 checks). A new game is Sunday 1 June in Winnmark; the eight spans run back to back
+  from day 0 and end Friday 29 August, with 30 August a Saturday (4 July and 1 August 2003 both Fridays, as they were).
+  Half of Winnmark won is Wednesday 11 June, all of it Sunday 22 June in Bunratty, half of the Hollow Sunday 20 July,
+  the whole ladder Friday 29 August. Home on 20 July, the wall page crosses off the 19th (225 red pixels) and not the
+  20th (0), and rings the 20th (301 blue) and not the 21st (0). Standing in front of it the prompt is "Look at the
+  calendar"; E opens "Summer 2003" with 49 days crossed off, the 20th ringed, the 30th ringed twice, the Hollow's 14
+  days shaded and "41 days away"; OK closes it to the bedroom and the save card is narrow again. No page errors.
+- `npm test` as four local shards: 98 of 101 suites passed. Three (`settings`, `smoke`, `stuck-sweep-8`) died at
+  Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and all three
+  passed alone.
+### Still open
+- Whether the spans feel right is for play: Winnmark's 16 matches get three weeks, the last three zones four or five
+  days each, so August goes fast.
+- The calendar doesn't yet mark the days texts came or the rival crew's matches; those are steps 2 and 3. Saturday 30
+  August is ringed but there is no match on it until step 4.
