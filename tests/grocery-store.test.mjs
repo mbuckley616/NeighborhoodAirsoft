@@ -22,8 +22,8 @@ const ladder = await page.evaluate(() => {
   return { keys, ids, before, after, afterFirst, region: REGIONS.east_roswell.streets.riverside_market_inside };
 });
 check('the ladder ends with the store, after Willow Bend', ladder.keys.slice(-2).join() === 'country_club,grocery_store', ladder.keys);
-check('the store runs the 1v1 opener, the 3v3, then the desk defend and the night 4v4 (v1.160)',
-  ladder.ids.join() === 'store_1v1_tyler,store_price_check_3v3,store_defend_desk,store_night_4v4', ladder.ids);
+check('the store runs the 1v1 opener, the 3v3, then the desk defend and the night 4v4 (v1.160), then the last Saturday (v1.205)',
+  ladder.ids.join() === 'store_1v1_tyler,store_price_check_3v3,store_defend_desk,store_night_4v4,last_saturday', ladder.ids);
 check('its street is in East Roswell', ladder.region === 'Inside Riverside Market', ladder.region);
 check('the store is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the club opens the opener only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -58,7 +58,7 @@ check('after the club the pin is live and lists every scenario, only the opener 
 await g.shot('grocery-store-map');
 await page.evaluate(() => { delete Game.persist.completed[zoneCapstoneId('country_club')]; closeMap(); });
 
-for (const id of ladder.ids) {
+for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205: the last Saturday is on Bunratty Court (last-saturday.test)
   await g.scenario(id);
   const start = await page.evaluate(() => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);
