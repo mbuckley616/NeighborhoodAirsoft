@@ -9385,3 +9385,47 @@ this one); nothing here changes "Seth's crew".
 - Allies wear only the bandana; their shirts keep their own colours. If he wants crew shirts as well, it is a profile
   field away (`crewColor` reaches `createKid`).
 - Whether Seth's crew gets a name waits in decisions; shoes wait on "Shoes as looks".
+
+## v1.201 — The Pickup Game board
+Decisions, "A better game" 3 (Michael: A, "a Pickup Game board in the bedroom: any opened zone, the mode, day or
+night, team sizes and which kids, lives, a clock; pays a little"; and 4: B, online play comes after it, hosted from
+this board; control room, 12 Oct). Too much for one version, so it comes in steps, like the looks; this is the first.
+
+**The board.** A corkboard hangs on the bedroom's north wall east of the window, a PICKUP GAME sheet and a sticky note
+pinned to it; "Set up a pickup game" at it, and E opens the board: Where (every map whose zone is open: Winnmark
+Court on a new game, nine with all zones open, Northcliff Trace and Bellfield Court both under Northcliff), How many
+(1v1 up to 4v4; Winnmark stops at 3v3), When (day or night) and Lives (1, 3 or 5, for every kid, and for you as the
+hits you can take). PLAY goes through the match's usual briefing.
+
+**The match.** Each map's pickup game is its biggest team battle with the sides cut to size: Winnmark's 3v3, Bunratty's
+4v4, the Hollow's Big Game, and the night 4v4 of the other six (whose starts were made safe at night, so they are by
+day too). Your side is you and the first kids it lists, theirs its first kids, each at his own spot with his own gun;
+last side standing. It is written as `SCENARIOS.pickup_game` at PLAY, so the briefing, the crew bandanas (v1.200) and
+the result screen all work on it as on any match. It pays $3 a win and $1 a loss (the ladder's first wins pay $15-22),
+and it never counts as a ladder win: nothing is marked done, the calendar does not move, no text arrives.
+
+**Next steps** (in the backlog): the mode (a free-for-all where the map has one), which kids, and a clock.
+### Verified
+- `tests/pickup.test.mjs` (new, 15 checks). Standing at (1.65, -1.4) facing the board, the prompt is "Set up a pickup
+  game" and E opens "Pickup Game". A new game: Where is Winnmark Court only, How many 1v1-3v3, Day/Night, 1/3/5, with
+  2v2, Day, 3 lit. Every zone open: nine maps, Winnmark Court first and Inside Riverside Market last; Winnmark's most is
+  3v3, the other eight 4v4. Clicking Bunratty Court, 4v4, Night, 5 lights those four and PLAY opens the briefing of a
+  night 4v4 ("You've got Sean, Nick and Ryan against Mitchell, Priya, Owen and Tyler"); after BEGIN, 3 allies and 4 of
+  theirs with 5 lives each, you with 5 hits; 10 s run. A win pays $3, marks nothing done (2 completed before and after)
+  and leaves the calendar on day 42. A 1v1 on Winnmark is you against Brooke, and a loss pays $1. All nine maps build
+  and run 3 s at 2v2 by night (3 kids, 1 ours) and at their biggest by day (7 kids, 3 ours; Winnmark 5, 2). No page
+  errors.
+- `npm test` as four local shards, over v1.200 and this together (the run began on v1.200 and this version's code
+  landed while it ran): 99 of 107 suites passed; the other eight (`country-club`, `night-lights-spawn`, `laser`,
+  `kid-clothes`, `desk-start`, `mirror`, `stuck-sweep-4`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit
+  under load before any check. On the final v1.201 build all eight passed, and so did 24 suites that touch the bedroom,
+  its screens or the result card (front-door, calendar, texts, rival, result-stats, result-text, one-ending, smoke,
+  harness, settings, shop-tabs, hats, tops, shorts, crew, pickup, both loadout suites, walkie, utility-belt, music,
+  map-screen, pointer-lock, briefing-lives).
+### Still open
+- Whether $3 and $1 is "a little", and whether the board's look fits the bedroom, are for Michael.
+- The sides are each map's first-listed kids; on Winnmark that puts Seth on your side, as in the ladder's 3v3. Step 3
+  (which kids) lets you pick.
+- Night by day: the six night 4v4s become day matches with the same spots. They build and run, but nobody has played
+  one, and a sniper spot chosen for the dark may be strong in daylight.
+- Steps 2-4: the mode, which kids, a clock. Online play (D.2) is hosted from this board after them.

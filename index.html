@@ -1101,6 +1101,14 @@
   #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
   #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
   #modalBody .sm-note.sm-rival { margin-top: 4px; }
+  /* v1.201 (D.22 step 1): the Pickup Game board */
+  #modalBody .pk-board { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  #modalBody .pk-note { font-size: 13px; opacity: .8; }
+  #modalBody .pk-label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
+  #modalBody .pk-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  #modalBody .pk-opt { padding: 5px 12px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 13px; color: #f4e9d8; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); }
+  #modalBody .pk-opt.on { background: #b8562e; }
+  #modalBody .pk-play { padding: 8px 28px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 15px; letter-spacing: .1em; color: #fff; background: #2f7a3a; border: 1px solid rgba(255,255,255,.3); }
   #modalBody .sm-day.rival::after { content: ''; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: #e0503a; }   /* v1.196: you beat Seth's crew */
   /* v1.195: the flip phone's texts */
   #modalScreen .modal-card.phone { max-width: 340px; border-radius: 22px; padding: 22px 22px 18px; background: #2c3138; }
@@ -1979,7 +1987,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.200</div>
+  <div class="version">v1.201</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8980,6 +8988,37 @@ function buildBedroomScene() {
   calGroup.position.set(-2.3, 1.5, -BR_D/2 + 0.062);   // the wall is 0.1 thick, its face at -BR_D/2 + 0.05
   scene.add(calGroup);
 
+  // v1.201 (D.22 step 1): the Pickup Game board, a corkboard on the north wall east of the window, a sheet pinned to it
+  const pickupGroup = new THREE.Group();
+  const corkMat = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: 0.95 });
+  const corkFrameMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8 });
+  const cork = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.58, 0.02), corkMat);
+  pickupGroup.add(cork);
+  for (const [w, h, x, y] of [[0.92, 0.03, 0, 0.305], [0.92, 0.03, 0, -0.305], [0.03, 0.64, -0.445, 0], [0.03, 0.64, 0.445, 0]]) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.035), corkFrameMat);
+    f.position.set(x, y, 0.005); pickupGroup.add(f);
+  }
+  const pkCanvas = document.createElement('canvas'); pkCanvas.width = 192; pkCanvas.height = 240;
+  { const c = pkCanvas.getContext('2d');
+    c.fillStyle = '#f4f0e4'; c.fillRect(0, 0, 192, 240);
+    c.fillStyle = '#c0342a'; c.font = 'bold 26px sans-serif'; c.textAlign = 'center';
+    c.fillText('PICKUP', 96, 44); c.fillText('GAME', 96, 74);
+    c.fillStyle = '#333'; c.font = '16px sans-serif';
+    ['where?', 'how many?', 'day or night?', 'lives?'].forEach((t, i) => c.fillText(t, 96, 112 + i * 28));
+    c.strokeStyle = '#2a4a8a'; c.lineWidth = 2;
+    for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(30, 118 + i * 28); c.lineTo(162, 118 + i * 28); c.stroke(); } }
+  const pkSheet = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.375),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(pkCanvas), roughness: 0.9 }));
+  pkSheet.position.set(-0.12, -0.02, 0.012); pkSheet.rotation.z = 0.04; pickupGroup.add(pkSheet);
+  const pkNote = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.16), new THREE.MeshStandardMaterial({ color: 0xf2e27a, roughness: 0.9 }));
+  pkNote.position.set(0.24, 0.1, 0.012); pkNote.rotation.z = -0.08; pickupGroup.add(pkNote);
+  for (const [x, y, col] of [[-0.12, 0.16, 0xd8402a], [0.24, 0.17, 0x2a6ad8]]) {
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 }));
+    pin.position.set(x, y, 0.022); pickupGroup.add(pin);
+  }
+  pickupGroup.position.set(1.65, 1.5, -BR_D/2 + 0.062);
+  scene.add(pickupGroup);
+
   // v1.195 (D.20 step 2): your flip phone, shut, on the north nightstand; its little light is on while a text is unread
   const phoneGroup = new THREE.Group();
   const phoneShell = new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.35, metalness: 0.6 });
@@ -9112,6 +9151,16 @@ function buildBedroomScene() {
     prompt: 'Look at the calendar',
     label: 'Calendar', icon: 'calendar', labelY: 2.0,
     action: () => openSummerCalendar(),
+  });
+
+  // v1.201 (D.22 step 1): the corkboard → the Pickup Game board
+  Game.interactables.push({
+    type: 'pickup_board',
+    box: new THREE.Box3().setFromObject(pickupGroup),
+    pos: new THREE.Vector3(1.65, 1.0, -BR_D/2 + 0.45),
+    prompt: 'Set up a pickup game',
+    label: 'Pickup Game', icon: 'pickup', labelY: 2.0,
+    action: () => openPickupBoard(),
   });
 
   // v1.195 (D.20 step 2): the phone → your texts
@@ -20964,7 +21013,7 @@ function endScenario(outcome) {
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
   Game.persist.cash += cashEarned;
-  if (outcome === 'win') {
+  if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup) {   // v1.201: a pickup game is no step on the ladder
     Game.persist.completed[Game.scenario.active] = true;
   }
 
@@ -23568,6 +23617,7 @@ const BR_LABEL_ICONS = {
   // v1.88: door with an arrow out — the front door (goes outside to the map)
   outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   // v1.194: a wall calendar — the summer so far
+  pickup: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><path d="M7 9h5M7 12h7M7 15h4" stroke="#f4e9d8" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="9" r="1.6" fill="#f4e9d8"/></svg>',   // v1.201: the Pickup Game board
   calendar: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4M8 14l3 3M11 14l-3 3" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
   // v1.195: a flip phone — your texts
   phone: '<svg viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2" stroke="#f4e9d8" stroke-width="1.8"/><path d="M7 11h10M10 6h4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -29589,6 +29639,102 @@ function summerDayAfter(scenarioId) {
 // anybody's crew. The briefing names them, the result card keeps the summer's score against them (read from
 // `completed`, so an old save has its score too), and the calendar marks the days you beat them.
 const RIVAL_CREW = "Seth's crew";
+
+// =====================================================================
+// v1.201 (D.22 step 1, Michael: A on "A better game" 3, "a Pickup Game board in the bedroom: any opened zone, the mode,
+// day or night, team sizes and which kids, lives, a clock; pays a little"). The corkboard on the bedroom's north wall
+// sets up a team match on any map whose zone is open: how many a side (1v1 up to the map's 4v4, or 3v3 on Winnmark),
+// day or night, and lives (1, 3 or 5, for every kid and for you as hits). Each map's match is its biggest team
+// battle with the sides cut to size: your side's kids and theirs are the first ones it lists, at their own spots, with
+// their own guns. PLAY writes it as SCENARIOS.pickup_game and goes through the usual briefing. It pays $3 for a win
+// and $1 for a loss, and never counts as a ladder win. The mode (free-for-all), which kids, and a clock come next.
+const PICKUP_MAPS = [
+  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3' },
+  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4' },
+  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle' },
+  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4' },
+  { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
+  { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
+  { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },
+  { key: 'country_club', zone: 'country_club',   name: 'Willow Bend',             template: 'club_night_4v4' },
+  { key: 'store',        zone: 'grocery_store',  name: 'Inside Riverside Market', template: 'store_night_4v4' },
+];
+const PICKUP_LIVES = [1, 3, 5];
+const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
+const pickupState = { map: 'winnmark', size: 2, tod: 'day', lives: 3 };
+function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
+// The most a side can be on a map: its template's allies plus you, against its enemies, at most four
+function pickupMaxSize(m) {
+  const es = SCENARIOS[m.template].enemySetup;
+  return Math.min(4, es.filter(e => e.team === 'player').length + 1, es.filter(e => !e.team).length);
+}
+function buildPickupScenario(opts) {
+  const m = PICKUP_MAPS.find(k => k.key === opts.map);
+  if (!m) return null;
+  const t = SCENARIOS[m.template];
+  const size = Math.max(1, Math.min(pickupMaxSize(m), opts.size | 0));
+  const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
+  const tod = opts.tod === 'night' ? 'night' : 'day';
+  const ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
+  const theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
+  const names = es => es.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
+  const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  const sc = {
+    region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${size}v${size}`,
+    desc: `A pickup game ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line. ` +
+      (ours.length ? `You've got ${list(names(ours))}` : `It's just you`) + ` against ${list(names(theirs))}. ` +
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing.`,
+    builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
+    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => Object.assign({}, e)),
+    winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives },
+  };
+  if (t.enemySpawnCluster) sc.enemySpawnCluster = t.enemySpawnCluster;
+  SCENARIOS.pickup_game = sc;
+  return sc;
+}
+function pickupBoardHTML() {
+  const open = pickupMapsOpen();
+  if (!open.some(m => m.key === pickupState.map)) pickupState.map = open[0].key;
+  const m = PICKUP_MAPS.find(k => k.key === pickupState.map), max = pickupMaxSize(m);
+  pickupState.size = Math.max(1, Math.min(max, pickupState.size));
+  const btn = (grp, val, label, on) => `<button class="pk-opt${on ? ' on' : ''}" data-grp="${grp}" data-val="${val}">${label}</button>`;
+  const row = (label, inner) => `<div class="pk-row"><div class="pk-label">${label}</div><div class="pk-btns">${inner}</div></div>`;
+  return `<div class="pk-board">
+    <div class="pk-note">Pick it, play it. $3 a win, $1 if you lose; it doesn't count for the ladder.</div>
+    ${row('Where', open.map(k => btn('map', k.key, k.name, k.key === pickupState.map)).join(''))}
+    ${row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
+    ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
+    ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
+    <div class="pk-row"><button class="pk-play" id="pickupPlayBtn">PLAY</button></div>
+  </div>`;
+}
+function renderPickupBoard() {
+  const body = document.getElementById('modalBody');
+  body.innerHTML = pickupBoardHTML();
+  body.querySelectorAll('.pk-opt').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.val;
+    pickupState[b.dataset.grp] = (b.dataset.grp === 'size' || b.dataset.grp === 'lives') ? +v : v;
+    renderPickupBoard();
+  }));
+  body.querySelector('#pickupPlayBtn').addEventListener('click', playPickupGame);
+}
+function openPickupBoard() {
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Pickup Game';
+  document.getElementById('modalCloseBtn').textContent = 'CLOSE';   // closeModal puts OK back
+  document.getElementById('modalBody').style.whiteSpace = 'normal';
+  document.querySelector('#modalScreen .modal-card').classList.add('wide');
+  renderPickupBoard();
+  document.getElementById('modalScreen').classList.add('active');
+}
+function playPickupGame() {
+  if (!buildPickupScenario(pickupState)) return;
+  closeModal();
+  enterScenario('pickup_game');
+}
 function isRivalMatch(id) {
   const sc = SCENARIOS[id];
   if (!sc || sc.tutorial || sc.ffa || sc.winCondition === 'survive_untagged' || !findScenarioListContext(id)) return false;
