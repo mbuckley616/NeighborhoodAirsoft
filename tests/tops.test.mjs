@@ -13,7 +13,7 @@ const d0 = await page.evaluate(() => {
   return { top: Game.persist.look.top, rows, owned: Object.keys(Game.persist.ownedTops) };
 });
 check('a new game wears no top and owns none', d0.top === 'none' && d0.owned.length === 0, d0);
-check('the mirror has no Top row yet (ten rows and the crew\'s two, v1.200)', !d0.rows.includes('top') && d0.rows.length === 12, d0.rows);
+check('the mirror has no Top row yet (eleven rows and the crew\'s two, v1.200, v1.206)', !d0.rows.includes('top') && d0.rows.length === 13, d0.rows);
 
 // The shop: a Tops section under Hats
 const readShop = () => page.evaluate(() => ({
@@ -100,7 +100,7 @@ const mir = await page.evaluate(() => {
   return { rows, opts, on };
 });
 check('the mirror\'s Top row comes after the Shirt: None, Shark Tee, Grey Hoodie', mir.opts.join() === 'None,Shark Tee,Grey Hoodie' && mir.rows.indexOf('top') === mir.rows.indexOf('shirtColor') + 1, mir);
-check('clicking Shark Tee wears it on the preview; one choice lit per row (14 rows, the crew name a text box, v1.200)', mir.on.top === 'tee_shark' && mir.on.preview === 'tee_shark' && mir.on.lit === 13 && mir.rows.length === 14, mir.on);
+check('clicking Shark Tee wears it on the preview; one choice lit per row (15 rows, the crew name a text box, v1.200; Sneakers, v1.206)', mir.on.top === 'tee_shark' && mir.on.preview === 'tee_shark' && mir.on.lit === 14 && mir.rows.length === 15, mir.on);
 await page.evaluate(() => { MIRROR.kid.group.rotation.y = 0.2; MIRROR.renderer.render(MIRROR.scene, MIRROR.camera); });
 await g.shot('tops-mirror');
 const off = await page.evaluate(() => {
