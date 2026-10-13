@@ -1979,7 +1979,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.198</div>
+  <div class="version">v1.199</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3299,9 +3299,11 @@ const Game = {
             shirtColor: 0x3a5a8a, pantsColor: 0x2a2a2a, glasses: false,
             eyeColor: 'brown', shirtFront: 'plain',   // v1.123: eye colour and shirt front (mirror rows)
             hat: 'none',                              // v1.197 (D.21 step 1): a KID_HATS id, or none
-            top: 'none' },                            // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
+            top: 'none',                              // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
+            shorts: 'none' },                         // v1.199 (D.21 step 3): a KID_SHORTS id, or none (the jeans)
     ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
     ownedTops: {},              // v1.198: the tops you have bought
+    ownedShorts: {},            // v1.199: the shorts you have bought
     cash: 35,
     bag: 25,                    // BBs at home; only accessible from bedroom
     owned: {
@@ -17097,6 +17099,48 @@ function buildKidTop(id) {
   return g;
 }
 
+// v1.199 (D.21 step 3, Michael: C on "A better game" 2): shorts. With shorts on, each leg is bare from the knee, in a
+// white sock above the sneaker; the shorts are a child of the leg (its frame: centre 0, 0.16 × 0.55 × 0.18, the knee near
+// y 0.03), so they swing and crouch with it. Bought in the Clothes tab or won; worn from the shop or the mirror
+// (`look.shorts`); a Pants colour at the mirror puts your jeans back on.
+const KID_SHORTS = {
+  cargo:    { name: 'Cargo Shorts',      kind: 'cargo',  color: 0xa89a74, price: 20,
+    desc: 'Khaki, a pocket on each side big enough for a speed loader and a Capri Sun.' },
+  mesh:     { name: 'Basketball Shorts', kind: 'mesh',   color: 0x223a6e, price: 15, stripe: 0xf2efe6,
+    desc: 'Navy mesh, white stripes down the sides, past the knee the way they wear them now.' },
+  jorts:    { name: 'Jean Shorts',       kind: 'jorts',  color: 0x4a6a9a, price: 12,
+    desc: 'Last year’s jeans with the legs cut off. Your mom hemmed them.' },
+  trunks:   { name: 'Swim Trunks',       kind: 'mesh',   color: 0x1f8a8a, won: 'club_night_4v4', stripe: 0xf2c230,
+    desc: 'Teal with yellow stripes, from the club’s lost and found. Not for sale: win Night Swim at Willow Bend.' },
+};
+const KID_SHORTS_ORDER = ['cargo', 'mesh', 'jorts', 'trunks'];
+function shortsOwned(id) {
+  const t = KID_SHORTS[id];
+  if (!t) return false;
+  return t.won ? !!Game.persist.completed[t.won] : !!(Game.persist.ownedShorts || {})[id];
+}
+let _kidBareLegGeo = null;
+function buildKidShorts(id, leg, skin, sx) {
+  const t = KID_SHORTS[id];
+  const mats = { body: _kidFaceMat('shorts', t.color, 0.88),
+    hem: _kidFaceMat('shortsHem', new THREE.Color(t.color).multiplyScalar(t.kind === 'jorts' ? 1.35 : 0.75).getHex(), 0.9),
+    stripe: _kidFaceMat('shortsStripe', t.stripe || 0xffffff, 0.8), sock: _kidFaceMat('sock', 0xeeece4, 0.9) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const long = t.kind === 'mesh';                       // basketball shorts and trunks reach past the knee
+  const y0 = long ? -0.06 : 0.0, y1 = 0.275, h = y1 - y0;
+  add('body', box(0.168, h, 0.188), 0, (y0 + y1) / 2, 0);
+  add('hem', box(0.172, t.kind === 'jorts' ? 0.04 : 0.022, 0.192), 0, y0 + 0.012, 0);   // a hem, or the jorts' rolled cuff
+  if (t.kind === 'cargo') add('hem', box(0.02, 0.1, 0.11), sx * 0.093, 0.06, 0);        // the cargo pocket on the outside
+  if (t.stripe) add('stripe', box(0.006, h, 0.03), sx * 0.085, (y0 + y1) / 2, 0);       // a stripe down the outside
+  add('sock', box(0.126, 0.07, 0.14), 0, -0.16, 0.0);                                     // a white sock above the sneaker
+  const g = new THREE.Group(); g.userData.kidShorts = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  leg.add(g);
+  return g;
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -17128,10 +17172,15 @@ function createKid(profile, weapon = 'pistol') {
 
   // Legs
   const cl = kidClothesGeometry();   // v1.120: shaped shirt, jeans, sleeves and sneakers (same boxes; buildKidClothes adds trim)
-  const legL = new THREE.Mesh(cl.leg, pants);
+  // v1.199 (D.21 step 3): in shorts the leg is bare (a slimmer leg in the skin) and the shorts are its child
+  const shortsId = KID_SHORTS[p.shorts] ? p.shorts : null;
+  if (shortsId && !_kidBareLegGeo) _kidBareLegGeo = new THREE.BoxGeometry(0.12, 0.55, 0.135);
+  const legGeo = shortsId ? _kidBareLegGeo : cl.leg, legMat = shortsId ? skin : pants;
+  const legL = new THREE.Mesh(legGeo, legMat);
   legL.position.set(-0.1, 0.275, 0); legL.castShadow = true; group.add(legL);
-  const legR = new THREE.Mesh(cl.leg, pants);
+  const legR = new THREE.Mesh(legGeo, legMat);
   legR.position.set(0.1, 0.275, 0); legR.castShadow = true; group.add(legR);
+  const shorts = shortsId ? [buildKidShorts(shortsId, legR, skin, -1), buildKidShorts(shortsId, legL, skin, 1)] : null;
 
   // Shoes
   const shoeL = new THREE.Mesh(cl.shoe, shoes);
@@ -17288,7 +17337,7 @@ function createKid(profile, weapon = 'pistol') {
   }
 
   return {
-    group, head, torso, eyeL, eyeR, gunGroup, hat, top: topMesh,   // v1.197: hat; v1.198: top
+    group, head, torso, eyeL, eyeR, gunGroup, hat, top: topMesh, shorts,   // v1.197: hat; v1.198: top; v1.199: shorts [R, L]
     parts: { head, torso, hairMesh, neck },
     // v1.14b: parts + their base transforms for a real crouch POSE (instead of
     // sinking the whole group into the ground). Feet stay planted; the body
@@ -21299,6 +21348,9 @@ const LOOK_OPTIONS = [
   { key: 'top', label: 'Top', kind: 'text', owned: true,
     get opts() { return [['none', 'None'], ...KID_TOP_ORDER.filter(topOwned).map(id => [id, KID_TOPS[id].name])]; } },
   { key: 'pantsColor', label: 'Pants',  kind: 'swatch', opts: [0x2a2a2a, 0x2a3a5a, 0x5a4a3a, 0x4a5a3a, 0x8a8478, 0x6a2a2a] },
+  // v1.199 (D.21 step 3): the shorts you own; a Pants colour puts the jeans back on
+  { key: 'shorts', label: 'Shorts', kind: 'text', owned: true,
+    get opts() { return [['none', 'None'], ...KID_SHORTS_ORDER.filter(shortsOwned).map(id => [id, KID_SHORTS[id].name])]; } },
   { key: 'glasses',   label: 'Glasses', kind: 'text', opts: [[false, 'None'], [true, 'Glasses']] },
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
   { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
@@ -21349,6 +21401,7 @@ function renderMirrorOptions() {
       b.addEventListener('click', () => {
         Game.persist.look[row.key] = val;
         if (row.key === 'shirtColor' || row.key === 'shirtFront') Game.persist.look.top = 'none';   // v1.198: your own shirt again
+        if (row.key === 'pantsColor') Game.persist.look.shorts = 'none';                              // v1.199: your jeans again
         renderMirrorOptions(); renderMirrorPreview();
       });
       btns.appendChild(b);
@@ -22034,12 +22087,33 @@ function wearTop(id) {
   autoSave();
   return true;
 }
+// v1.199 (D.21 step 3): shorts, the same way
+function buyShorts(id) {
+  const t = KID_SHORTS[id];
+  if (!t || t.won) return { ok: false, reason: 'not for sale' };
+  if (shortsOwned(id)) return { ok: false, reason: 'already owned' };
+  if (Game.persist.cash < t.price) return { ok: false, reason: 'not enough cash' };
+  Game.persist.cash -= t.price;
+  Game.persist.ownedShorts = Game.persist.ownedShorts || {};
+  Game.persist.ownedShorts[id] = true;
+  Game.persist.look.shorts = id;
+  autoSave();
+  return { ok: true };
+}
+function wearShorts(id) {
+  if (id !== 'none' && !shortsOwned(id)) return false;
+  Game.persist.look.shorts = id;
+  autoSave();
+  return true;
+}
 function renderClothesTab(c) {
   // v1.198: two sections, hats then tops, each row the same (buy and wear, wear, take off, or earn it)
   const kinds = [{ head: ['Hats', 'Worn on your kid; change it here or at the mirror'], order: KID_HAT_ORDER, table: KID_HATS,
                    cls: 'shop-hat', data: 'hat', icon: '▲', own: hatOwned, buy: buyHat, wear: wearHat },
                  { head: ['Tops', 'Over your shirt; the mirror’s Shirt rows take it off'], order: KID_TOP_ORDER, table: KID_TOPS,
-                   cls: 'shop-top', data: 'top', icon: '■', own: topOwned, buy: buyTop, wear: wearTop }];
+                   cls: 'shop-top', data: 'top', icon: '■', own: topOwned, buy: buyTop, wear: wearTop },
+                 { head: ['Shorts', 'Instead of your jeans; the mirror’s Pants row puts them back'], order: KID_SHORTS_ORDER,
+                   table: KID_SHORTS, cls: 'shop-shorts', data: 'shorts', icon: '▮', own: shortsOwned, buy: buyShorts, wear: wearShorts }];   // v1.199
   for (const k of kinds) {
   c.appendChild(shopSectionHeader(k.head[0], k.head[1]));
   for (const id of k.order) {

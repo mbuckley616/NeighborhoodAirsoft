@@ -28,7 +28,7 @@ await page.evaluate(() => { Game.persist.cash = 16; openShop();
   [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Clothes').click(); });
 const s0 = await readShop();
 const row = (s, id) => s.rows.find(r => r.id === id);
-check('the Clothes tab: Hats (six) then Tops', s0.headers.join() === 'Hats,Tops' && s0.hats === 6, s0);
+check('the Clothes tab: Hats (six) then Tops (then, v1.199, Shorts)', s0.headers.join() === 'Hats,Tops,Shorts' && s0.hats === 6, s0);
 check('five tops: three tees, a hoodie, the Big Game Tee',
   s0.rows.map(r => r.name).join() === 'Skate Tee,Shark Tee,Flame Tee,Grey Hoodie,Big Game Tee', s0.rows.map(r => r.name));
 check('with $16 a $15 tee says BUY, the $18 tee NEED $18, the hoodie NEED $30',

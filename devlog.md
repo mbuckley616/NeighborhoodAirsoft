@@ -9304,3 +9304,42 @@ show what they do. The Loadout kid wears it. `look.top` and `ownedTops` are save
 - How the tees' graphics and the hoodie read on the kid, and the prices ($15–30), are for Michael's look.
 - A top isn't seen in a match (first person shows no body), and the other kids wear none until the crew colours.
 - Next pieces of D.21: shorts, then shoes (a question in decisions: shoes are already gear), then your crew.
+
+## v1.199 — Shorts
+Decisions, "A better game" 2 (Michael: C), the third piece of the looks: shorts.
+
+**The shorts.** Four pairs. Khaki Cargo Shorts with a pocket on each outer thigh, $20; navy Basketball Shorts with
+white side stripes, cut long past the knee, $15; Jean Shorts with a rolled cuff, $12; and teal Swim Trunks with yellow
+stripes, not for sale: winning Night Swim at Willow Bend gives them. In shorts each leg is bare below them (a slimmer
+leg in the skin colour) in a white sock above the sneaker. The shorts and socks are children of the legs, so they swing
+with the walk and fold with the crouch, and knee pads and the drop-leg holster still sit where they did. The hitboxes
+are unchanged. A `createKid` profile field (`shorts`), like the hat and the top.
+
+**Where.** The Clothes tab's third section, Shorts, under Tops, with the same buttons. The mirror gets a Shorts row
+under the Pants colour once you own a pair; picking a Pants colour puts your jeans back on, in that colour. The Loadout
+kid wears them. `look.shorts` and `ownedShorts` are saved; an old save wears jeans.
+
+**Shoes.** The list ends "shorts and shoes", but the Gear tab already sells three pairs of shoes with their own numbers
+and their own look on the Loadout kid. A Clothes pair would have to sit beside them, so that went to decisions
+("Shoes as looks", I recommend A: a free Sneakers colour row at the mirror for the plain pair).
+### Verified
+- `tests/shorts.test.mjs` (new, 22 checks). A new game wears jeans, owns no shorts and has no Shorts row at the mirror.
+  With $14 the Clothes tab is Hats, Tops, Shorts; the shorts are Cargo Shorts, Basketball Shorts, Jean Shorts, Swim
+  Trunks; the $12 jean shorts say BUY, the others NEED $15 / NEED $20, the trunks WON / EARN IT, greyed. With $100 and
+  the Skate Tee on, BUY on the cargo shorts pays $20 and puts them on with the tee still worn (TAKE OFF); buying the
+  basketball shorts and WEAR on the cargo shorts leaves one pair on; TAKE OFF puts the jeans back. In jeans the legs are
+  the pants colour; in each pair they are the skin (c89870) with the shorts on both legs (children of the right and left
+  leg). Every pair's cloth runs from the hip (0.55) and is wider than the bare leg; the basketball shorts and trunks
+  end at 0.215, past the knee, the cargo and jean shorts at 0.275; a white sock shows from 0.08 to 0.15 above the
+  sneaker (top 0.085). Swinging the leg 0.5 rad moves the shorts 0.12 m forward; a full crouch keeps them on the leg
+  (top 0.321 against 0.314). The mirror's Shorts row, after the Pants, is None, Cargo Shorts, Basketball Shorts;
+  Basketball Shorts goes on the preview; a Pants colour then puts the jeans back in that colour. The Loadout kid wears
+  the cargo shorts. Winning Night Swim turns the trunks to WEAR, free. A save and load keeps the trunks worn and the two
+  bought; an old save wears jeans. A match runs. No page errors.
+- `tests/hats.test.mjs`, `tests/tops.test.mjs` and `tests/shop-tabs.test.mjs` expect the Shorts section (15 rows in
+  Clothes).
+- `npm test` as four local shards: 104 of 106 suites passed. `stuck-sweep-10` and `stuck-sweep-12` died at Playwright's
+  30 s `page.goto` limit under load before any check, and passed alone.
+### Still open
+- Whether the bare legs and the long basketball shorts look right, and the prices ($12–20), are for Michael's look.
+- Shoes wait on "Shoes as looks" in decisions; then your crew (a name and colours your allies wear).

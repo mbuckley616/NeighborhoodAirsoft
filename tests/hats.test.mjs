@@ -29,7 +29,7 @@ await page.evaluate(() => { Game.persist.cash = 14; openShop();
   [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Clothes').click(); });
 const s0 = await readShop();
 const row = (s, id) => s.rows.find(r => r.id === id);
-check('the shop has a fifth tab, Clothes, with Hats', s0.tabs.join() === 'Guns,Ammo,Gear,Mods,Clothes' && s0.headers.join() === 'Hats,Tops', s0);   // v1.198: Tops under the hats
+check('the shop has a fifth tab, Clothes, with Hats', s0.tabs.join() === 'Guns,Ammo,Gear,Mods,Clothes' && s0.headers.join() === 'Hats,Tops,Shorts', s0);   // v1.198: Tops under the hats; v1.199: Shorts
 check('six hats: two caps, a bucket hat, two bandanas, the Winnmark Cap',
   s0.rows.map(r => r.name).join() === 'Red Ball Cap,Backwards Cap,Bucket Hat,Red Bandana,Blue Bandana,Winnmark Cap', s0.rows.map(r => r.name));
 check('with $14 the bandanas ($10) can be bought and the $15 cap says NEED $15',
