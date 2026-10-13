@@ -56,3 +56,25 @@ going at 240 s with no enemy within 25 m.
 comes looking needs a path, and wedges were the commonest bug of the last week, but v1.121–v1.122 hold up in today's
 play.
 **Recommendation.** Do it after the two Found-in-play items above. It's small, and it makes sure every team round ends.
+
+## 2026-10-13 — In a pickup game, a life brings you back (v1.201)
+**Why.** The Pickup Game board offers 1, 3 or 5 lives "for everyone, you included". For a kid, a life means getting
+tagged, walking back to base and coming back in. For you, it means one more BB you can take where you stand. In 20
+headless 4v4 rounds with 3 lives, all three went within 1.1 s in 6 of them. One was a single shotgun blast that landed
+3 pellets in one frame, and the others were AK bursts. Picking 5 lives on the board feels like a fair, longer game
+against kids who also have 5, but one burst ends it anyway. A kid playing pickup at the cul-de-sac yells "hit!", walks
+back to the curb and comes back in. The board should give you that too. Capture the flag and VIP already do it:
+`respawnPlayerVip()` sends you back to your start with your hits refilled and `VIP_GRACE` seconds in which nothing tags
+you.
+**What.** In `pickup_game` only, set `maxHits` to 1 and count your lives separately. Each tag that isn't your last
+calls `respawnPlayerVip()` and takes a life, and the HUD's HITS TAKEN circles become LIVES. When the last one goes,
+`endScenario('lose')` as now. The ladder isn't touched, since its matches are written around one hit.
+**Cost.** One builder session. That's a `Game.scenario.playerLivesLeft` counter, a branch in `applyBBHit` beside the
+VIP/CTF one, the HUD label, and a test: a 3-life pickup game in which three hits in one frame cost one life, and three
+separate tags with respawns end it.
+**Risk.** Low. The respawn code is already played every day in Flags and VIP. A 5-life 4v4 lasts longer, which is
+the point, but with no clock that could mean long rounds. The clock is already step 4 of D.22.
+**Alternative.** Keep hits as lives and change the words to "you can take 3 hits". It's cheaper and honest, but it
+leaves the shotgun able to take three at once.
+**Recommendation.** Do it as part of D.22's next step, before anyone plays the board for real. It's the board's main
+promise.
