@@ -31,9 +31,11 @@ const prog = await page.evaluate(() => {
   out.half = summerDate(summerDayIndex()).label;
   ids.forEach(id => Game.persist.completed[id] = true);
   out.zoneDone = { label: summerDate(summerDayIndex()).label, zone: summerZoneKey() };
-  // the whole ladder
-  for (const z of ZONE_LADDER) for (const id of PIN_SCENARIO_GROUPS[z.key]) Game.persist.completed[id] = true;
+  // the whole ladder but the last Saturday (v1.205), then that too
+  for (const z of ZONE_LADDER) for (const id of PIN_SCENARIO_GROUPS[z.key]) if (id !== SUMMER_FINALE) Game.persist.completed[id] = true;
   out.all = { label: summerDate(summerDayIndex()).label, zone: summerZoneKey() };
+  Game.persist.completed[SUMMER_FINALE] = true;
+  out.big = { label: summerDate(summerDayIndex()).label, zone: summerZoneKey() };
   // back to the middle of the Hollow: Winnmark and Bunratty done, 6 of the Hollow's 12
   Game.persist.completed = {};
   for (const k of ['winnmark_court', 'bunratty_court']) for (const id of PIN_SCENARIO_GROUPS[k]) Game.persist.completed[id] = true;
@@ -43,7 +45,8 @@ const prog = await page.evaluate(() => {
 });
 check('half of Winnmark won: Wednesday 11 June', prog.half === 'Wednesday 11 June', prog.half);
 check('all of Winnmark won: Sunday 22 June, in Bunratty', prog.zoneDone.label === 'Sunday 22 June' && prog.zoneDone.zone === 'bunratty_court', prog.zoneDone);
-check('the whole ladder won: the last day of the store, Friday 29 August', prog.all.label === 'Friday 29 August' && prog.all.zone === 'grocery_store', prog.all);
+check('the whole ladder won but the last Saturday: the last day of the store, Friday 29 August', prog.all.label === 'Friday 29 August' && prog.all.zone === 'grocery_store', prog.all);
+check('the last Saturday won too: Saturday 30 August (v1.205)', prog.big.label === 'Saturday 30 August', prog.big);
 check('half of the Hollow won: Sunday 20 July', prog.hollow.label === 'Sunday 20 July' && prog.hollow.zone === 'hollow', prog.hollow);
 
 // Home again: the wall calendar shows July, the days before the 20th crossed off, the 20th ringed

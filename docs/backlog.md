@@ -234,7 +234,11 @@ Fable card on the control room and Michael starts it from there.
    one per key win, dated by the calendar, read state saved; `tests/texts.test.mjs`). ~~3, the rival crew~~ — done,
    v1.196 (Seth's crew is the other side in 20 ladder matches: the briefing heads them SETH'S CREW with the summer's score,
    the result card says how it went, the calendar puts a red dot on each day you beat them; `tests/rival.test.mjs`;
-   whether they get a name is in decisions). Next: 4, the last-Saturday match on your street.
+   whether they get a name is in decisions; Michael: A, keep "Seth's crew"). ~~4, the last-Saturday match on your
+   street~~ — done, v1.205 (Michael: B, his note "Bunratty Court should be 'my street'": The Last Saturday, a day 6v6 on
+   Bunratty Court, three lives each, Eric, Rebecca, Brooke, Sean and Trey with you against Seth's crew in the bulb; the
+   fifth card after the store's night match and the end of the ladder; won, the calendar turns to Saturday 30 August
+   and Eric sends the summer's last text; `tests/last-saturday.test.mjs`). D.20's four steps are done.
 21. Looks you earn or buy (caps, bucket hats, bandanas, more hair, shorts, graphic tees, a hoodie, shoes; a Clothes tab
    in the shop, some won from matches), then your crew: a name and colors your allies wear too. (Michael, control
    room, 2026-10-12, "A better game" 2: **C**) In pieces, a part of the kid at a time (builder): ~~hats~~ — done, v1.197 (a

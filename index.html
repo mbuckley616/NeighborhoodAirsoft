@@ -1990,7 +1990,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.204</div>
+  <div class="version">v1.205</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6946,6 +6946,39 @@ const SCENARIOS = {
     npcLives: 4,
     rewards: { win: 175, lose: 40 },
     playerLives: 1, armorMult: 1,
+  },
+
+  // v1.205 (D.20 step 4, Michael: B on "The last Saturday: where is your street?", his note: "Bunratty Court should be
+  // 'my street'"): the summer ends with one big match on your own street, Bunratty Court, on Saturday 30 August. A
+  // day 6v6, last team standing, three lives each: your crew from the west entry against Seth's crew in the bulb. It is
+  // the fifth card after the store's night match and the last match of the ladder; winning it turns the calendar to
+  // the big day and brings a last text.
+  last_saturday: {
+    region: 'sentinel', street: 'bunratty_ct',
+    name: 'Bunratty Court', scenarioName: 'The Last Saturday',
+    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing. School's Tuesday. Make it count.",
+    builderFn: 'buildBunrattyCourtScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'lane_west',
+    finale: true,
+    enemySetup: [
+      { charId: 'eric',     weapon: 'mp5',     anchor: 'lane_west_north', team: 'player' },
+      { charId: 'rebecca',  weapon: 'ak47',    anchor: 'lane_west_south', team: 'player' },
+      { charId: 'brooke',   weapon: 'shotgun', anchor: 'house0_backyard', team: 'player' },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'house3_backyard', team: 'player' },
+      { charId: 'trey',     weapon: 'ar',      anchor: 'house1_backyard', team: 'player' },
+      { charId: 'seth',     weapon: 'ump',     anchor: 'bulb_car1'       },
+      { charId: 'devon',    weapon: 'mp5',     anchor: 'house2_backyard' },
+      { charId: 'mitchell', weapon: 'ak47',    anchor: 'bulb_car2'       },
+      { charId: 'mason',    weapon: 'mp5',     anchor: 'bulb_plank'      },
+      { charId: 'marcus',   weapon: 'ump',     anchor: 'hero_backyard'   },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'house5_backyard' },
+    ],
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 200, lose: 50 },
+    playerLives: 3, armorMult: 1,
   },
 
   // v1.170 (backlog D.15, Michael: A): VIP. Each side guards one kid in a cap: one life, a pistol, holding his spot.
@@ -29409,7 +29442,8 @@ const PIN_SCENARIO_GROUPS = {
     'store_1v1_tyler',
     'store_price_check_3v3',
     'store_defend_desk',     // v1.160
-    'store_night_4v4',       // v1.160: the zone capstone
+    'store_night_4v4',       // v1.160: the store's capstone
+    'last_saturday',         // v1.205: the last Saturday on your street, Bunratty Court (D.20 step 4); ends the ladder
   ],
 };
 
@@ -29479,6 +29513,7 @@ function isScenarioUnlocked(scenarioId) {
 // =====================================================================
 const SUMMER_YEAR = 2003;
 const SUMMER_BIG_DAY = 90;                     // Saturday 30 August 2003
+const SUMMER_FINALE = 'last_saturday';         // v1.205: the big day's match, on your street (Bunratty Court)
 const SUMMER_SPANS = {                         // zone key → [first day, last day], days since 1 June
   winnmark_court: [0, 20],     // 1–21 June
   bunratty_court: [21, 41],    // 22 June – 12 July
@@ -29502,6 +29537,7 @@ function summerZoneKey() {
 }
 // Today, as days since 1 June: the zone's first day plus its share of the span for the matches won there.
 function summerDayIndex() {
+  if (Game.persist.completed[SUMMER_FINALE]) return SUMMER_BIG_DAY;   // v1.205: the last Saturday is won
   const key = summerZoneKey();
   const span = SUMMER_SPANS[key] || [0, 0];
   const ids = PIN_SCENARIO_GROUPS[key] || [];
@@ -29591,7 +29627,8 @@ function summerCalendarHTML(today) {
       const day = mo.first + d - 1, zk = summerZoneOfDay(day);
       const cls = ['sm-day', day < today ? 'past' : '', day === today ? 'today' : '', day === SUMMER_BIG_DAY ? 'big' : '',
         zk === zone ? 'here' : '', rivalDays.has(day) ? 'rival' : ''].filter(Boolean).join(' ');
-      const tip = (zk ? summerZoneName(zk) : 'The last Saturday of summer') + (rivalDays.has(day) ? ` · you beat ${RIVAL_CREW}` : '');
+      // v1.205: the big day is on your street, Bunratty Court
+      const tip = (zk ? summerZoneName(zk) : day === SUMMER_BIG_DAY ? 'The last Saturday of summer · Bunratty Court' : 'Labor Day weekend') + (rivalDays.has(day) ? ` · you beat ${RIVAL_CREW}` : '');
       cells += `<span class="${cls}" data-day="${day}" title="${tip}">${d}</span>`;
     }
     return `<div class="sm-month"><div class="sm-name">${mo.name}</div>
@@ -29601,7 +29638,7 @@ function summerCalendarHTML(today) {
   return `<div class="sm-today">Today is <b>${t.label}</b>.</div>
     <div class="sm-months">${months}</div>
     <div class="sm-note">${summerZoneName(zone)}: ${summerDate(span[0]).label.replace(/^\w+ /, '')} to ${summerDate(span[1]).label.replace(/^\w+ /, '')}.
-      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>
+      Saturday 30 August is ringed twice: the last Saturday of summer, ${left > 0 ? `${left} day${left === 1 ? '' : 's'} away` : 'won on your street'}.</div>
     <div class="sm-note sm-rival">${rivalDays.size ? `A red dot is a day you beat ${RIVAL_CREW}: ${rivalDays.size} so far` : `No wins over ${RIVAL_CREW} yet`}; ${rivalScoreText(rivalScore())}.</div>`;
 }
 function openSummerCalendar() {
@@ -29656,11 +29693,15 @@ const SUMMER_TEXTS = [
     text: "tylers dad is night manager at riverside market. tyler says we can get in before it opens. FOR REAL" },
   { id: 'last',       from: 'Seth',    after: 'store_night_4v4',
     text: "tmrw. last saturday of the summer. ur street, everybody. my crew vs yours. dont chicken out" },
+  // v1.205 (D.20 step 4): after the last Saturday on your street
+  { id: 'summerEnd',  from: 'Eric',    after: 'last_saturday',
+    text: "SETH SHOOK UR HAND. i saw it. everybody saw it. school tuesday ugh. best summer ever. same time next year" },
 ];
 // The calendar day a win brings: a zone's last match opens the next zone (its first day); any other moves the date
 // along its zone's span by one match's share, as summerDayIndex does.
 function summerDayAfter(scenarioId) {
   if (!scenarioId) return 0;
+  if (scenarioId === SUMMER_FINALE) return SUMMER_BIG_DAY;   // v1.205
   const ctx = findScenarioListContext(scenarioId);
   if (!ctx || !SUMMER_SPANS[ctx.group]) return 0;
   const span = SUMMER_SPANS[ctx.group], n = ctx.ids.length;

@@ -9558,3 +9558,38 @@ more hit, is Michael's to promote. If he does, "the hits you can still take" in 
   becomes your lives left, and the 1.1 s three-hit bursts the critic saw stop deciding the clock too.
 - Fernando's daytime rifle on Northcliff (Found in play) is a question in decisions. With this, D.22's four steps are
   done; online play (D.2, Fable) is hosted from the board next.
+
+## v1.205 — The Last Saturday
+Backlog D.20, step 4, the summer story's last match (Michael: B on "The last Saturday: where is your street?", with
+the note "Bunratty court should be 'my street'"). Option B was "a new short street of your own"; the note names the
+street, and Bunratty Court is already a street in the game, so this build reads it as: your street is Bunratty Court,
+and no new map is built. If Michael meant a new street that is also called Bunratty Court, that is a new map and a
+new question.
+
+**The match.** The Last Saturday, Saturday 30 August on Bunratty Court, by day: the 6v6 from the question. You,
+Eric, Rebecca, Brooke, Sean and Trey come in from the west entry. Seth's crew holds the bulb end: Seth, Devon,
+Mitchell, Mason, Marcus and Ryan (no rifle; Devon carries an MP5, given the Fernando report). Three lives for every
+kid and three hits for you, last team standing; it pays $20 for a win and $5 for a loss. The briefing heads the other
+side SETH'S CREW, and it counts as their 21st match.
+
+**Where it sits.** It is the fifth card in the store's list, after Lights Out, so it is the last match of the ladder
+and opens only once the store's night match is won. The calendar was already ringing 30 August twice. Winning the
+match now turns the calendar to that day ("won on your street" in the note under the months), and Eric sends the
+summer's last text. Before the win, the store's night match still leaves the calendar on Friday 29 August, as before.
+### Verified
+- `tests/last-saturday.test.mjs` (new, 14 checks). The store's list ends store_night_4v4, last_saturday, and the
+  ladder's last capstone is last_saturday. The match is locked on a new game and before Lights Out ("Beat "Lights
+  Out" to unlock."), then open on Friday 29 August. On the map it is the store's card 5, NEXT, reading "The Last
+  Saturday" and "Bunratty Court · ♥ 3 lives", 6V6. The sides are as listed, all on 3 lives, and the briefing heads the
+  other side SETH'S CREW. In the match there are 11 kids, 5 with you, and you take 3 hits from x −22. With you
+  untaggable at the start, both sides had lost lives by 10 s (13 of 15 left on ours, 17 of 18 on theirs). A win marks
+  it done and pays $20. The calendar then reads Saturday 30 August, and the newest text is Eric's, dated day 90. No
+  page errors.
+- The stuck-kid sweep on this match alone (`ONLY=last_saturday`, three ways, 90 s each): no kid held a moving
+  state for over 3 s.
+- `calendar`, `rival` (now 21 matches), `texts`, `grocery-store` (its ladder check now ends with the last Saturday;
+  its in-store checks skip it) and `map-screen` pass.
+### Still open
+- Whether a 6v6 on Bunratty reads as the summer's big finish, and whether three lives is the right length, need
+  Michael to play it.
+- C on the same question (the calendar turning to a "see you next summer" page) was not chosen, and is not built.
