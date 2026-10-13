@@ -9429,3 +9429,132 @@ and it never counts as a ladder win: nothing is marked done, the calendar does n
 - Night by day: the six night 4v4s become day matches with the same spots. They build and run, but nobody has played
   one, and a sniper spot chosen for the dark may be strong in daylight.
 - Steps 2-4: the mode, which kids, a clock. Online play (D.2) is hosted from this board after them.
+
+## v1.202 — Pickup Game: free-for-all
+Backlog D.22, step 2 (Michael: A on "A better game" 3, "the mode"). The board gets a Mode row, Teams or Free-for-all.
+The four maps that have a free-for-all of their own get both buttons: Winnmark Court, Bunratty Court, The Hollow and
+the Riverside Market lot. The other five maps (Northcliff, Bellfield, the school, Willow Bend and the store) only
+show Teams, and a free-for-all picked on an earlier map switches back to Teams when you move to one of them.
+
+**The free-for-all.** In Free-for-all, How many counts everyone in the game, you included. It runs from 3-way up to the
+size of that map's own free-for-all, with a cap of 8-way, the same headcount as a 4v4: Winnmark goes to 5-way, Bunratty
+and the lot to 7-way, and the Hollow to 8-way. The kids are the first ones from that map's free-for-all, each at their
+own spread-out start and with their own gun. On the Hollow the list is reordered, because the Ten-Way's first three
+all start in the south fort. There the kids are taken one from each fort first (Seth, then Sean, then the scattered
+kids), so a 3-way doesn't put two kids next to each other. Day or night and lives work as in the team game. The
+briefing heads the other kids EVERYONE ELSE (FREE-FOR-ALL), and it is last kid standing. The pay stays $3 for a win
+and $1 for a loss, and a pickup game is still never a ladder win. When no mode is given, `buildPickupScenario` builds
+v1.201's team game.
+
+Not done here: the critic's 13 Oct report (PR #62, not on this branch yet) says a pickup "life" is one hit for you but a
+walk back to base for a kid, and its proposal to make yours a respawn is Michael's to promote. The free-for-all's
+briefing makes the same "lives for everyone, you included" promise as the team game, so the two should change
+together.
+### Verified
+- `tests/pickup-ffa.test.mjs` (new, 14 checks). On a new game the board shows Mode as Teams or Free-for-all, with Teams
+  lit and team sizes 1v1–3v3. Picking Free-for-all on Winnmark shows 3-way, 4-way and 5-way, with 4-way lit. With
+  every zone open, the most for each map is Winnmark 5, Bunratty 7, Hollow 8 and lot 7; the other five maps have none.
+  Northcliff shows Teams only, and a free-for-all picked earlier falls back to Teams there. Clicking Bunratty,
+  Free-for-all, 6-way, Night and 1 lights all five buttons, and PLAY builds "Pickup Game: 6-way free-for-all" by night
+  with Sean, Nick, Ryan, Mitchell and Priya, none of them on a side, one life each. The briefing's roster says
+  EVERYONE ELSE (FREE-FOR-ALL). In the match there are five kids on five separate sides (ffa_sean…), none of them with
+  you. With you untaggable at your start, two kids had tagged each other out (Ryan, Priya) by 11.6 s. A 3-way on
+  Winnmark is you, Seth and Trey, and a win pays $3 and marks nothing done (8 completed before and after). All four
+  maps build and run for 3 s at 3-way by night and at their most by day: Winnmark 4 kids, Bunratty and the lot 6 each,
+  and the Hollow 7 (Seth at a_fort, Sean at b_fort, then the scattered starts). Each map has as many sides as kids. The
+  Hollow's 3-way puts its two kids in different forts. With no mode set, the result is still v1.201's team game. No
+  page errors.
+- `tests/pickup.test.mjs` leaves Mode's lit Teams out of its lit picks.
+- `npm test` as four local shards: 105 of 109 suites passed. The four that failed were `pickup`, whose lit-picks check
+  now has to skip the new Mode row (fixed in the test, and both pickup suites then passed), and `stuck-sweep-3`,
+  `spawn-facing` and `walk-anim`. Those three hit Playwright's 30 s `page.goto` limit while the shards were loaded,
+  before any check ran, and each passed when run alone.
+### Still open
+- Whether the free-for-alls are any fun at pickup sizes, and whether 8-way is the right cap, need Michael to play them.
+- Night free-for-alls use the day starts (the four free-for-alls are all day matches). They build and run, but nobody
+  has played one yet.
+- Steps 3 and 4: which kids, then a clock.
+
+## v1.203 — Pickup Game: which kids
+Backlog D.22, step 3 (Michael: A on "A better game" 3: "team sizes and which kids"). The board now lets you pick the
+kids. In Teams it adds a "With you" row and an "Against you" row; in Free-for-all it adds one row, "Who". Each row
+names every kid who plays on that street: any of its own matches, leaving out the tutorial and the Infection taggers.
+That is six on Winnmark (Seth, Trey, Brooke, Jamie, Marcus, Devon) and nine on Northcliff Trace (its seven, plus
+Haden and Connor). Each row shows a count (2/3), and a kid already picked for one side is greyed out on the other.
+Clicking a picked kid takes him off. Clicking another kid puts him on, and on a full side he replaces the last kid you
+picked. While a side is short, PLAY reads PICK THE KIDS and does nothing.
+
+**Where they stand.** The map keeps its spots: each side uses its first spots in that map's biggest team battle, or
+in its free-for-all. A picked kid who has his own spot among them takes it, with the gun he carries there. Any other
+kid takes the next free spot with the gun he carries in that map's team battle or free-for-all, or failing those, in
+his first match on the street. A spot's role, such as Fernando's sniper nest on Northcliff, stays only with its own
+kid, so whoever takes Fernando's spot plays it as an ordinary kid. That is also the way round the critic's 13 Oct
+Northcliff-by-day report: leave Fernando out.
+
+**Defaults.** The board starts each map on v1.201 and v1.202's kids. Your picks stay on the board between games. A
+bigger size fills the new spots from the defaults, and changing map starts that map afresh. `buildPickupScenario`
+with no picks builds the same games as before.
+### Verified
+- `tests/pickup-kids.test.mjs` (new, 18 checks). Winnmark 2v2 on a new game lists Seth, Trey, Brooke, Jamie, Marcus
+  and Devon, and starts with Seth with you and Brooke and Jamie against. The lit buttons are the picks, and Seth is
+  greyed out against you while Brooke and Jamie are greyed out with you. Taking Seth off leaves 0/1 and PICK THE KIDS,
+  disabled. Then picking Marcus with you and Seth against, in place of Jamie, builds Marcus (with you) at
+  house2_backyard with his shotgun, Brooke at her own house7_backyard, and Seth at the next spot, house6_backyard,
+  with his pistol. The briefing names both kids. In the match Marcus is on your side and Seth on theirs, and 5 s run.
+  On the board afterwards, Marcus and Brooke/Seth are still picked, and 3v3 keeps them and fills each side.
+  Northcliff 4v4 starts with Andrew, Alex and Evan with you and Mason, Christian, Diego and Fernando against. Without
+  Fernando, Haden takes yard_n3 with his UMP and no defender role, and that game runs 3 s. On the Hollow, a 4-way
+  starts with Seth, Sean and Devon, and picking Eric puts him in Devon's place at scatter_nw with his MP5. With no
+  picks, the team and free-for-all games are v1.201's and v1.202's. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the kid buttons out of their lit picks. The first
+  draft of this version crashed the board on a team-only map (it built a free-for-all default list for a map that has
+  no free-for-all). `pickup-ffa`'s Northcliff check caught it, and it is fixed here.
+- `npm test` as four local shards: 106 of 110 suites passed. The four that failed were `harness`, `result-text`,
+  `school-kids` and either `pointer-lock` or `stuck-sweep-6`. Each hit Playwright's 30 s `page.goto` limit before any
+  check ran. All of them passed when run alone afterwards: `harness` on its second solo run, after the first solo run
+  timed out on its second boot.
+### Still open
+- Whether the kid rows read well at a glance (nine names a row on Northcliff), and whether a kid taking another's spot
+  plays sensibly, need Michael to play them. A kid in a sniper's nest with a shotgun fights from it like any other spot.
+- The pool is the street's own kids. Kids from other streets (Eric at Bunratty, say) are left out on purpose, because
+  each street keeps its own crowd. If Michael wants anyone anywhere, it is one filter in `pickupPool`.
+- Step 4: a clock. Then online play (D.2) is hosted from this board.
+
+## v1.204 — Pickup Game: a clock
+Backlog D.22, step 4 (Michael: A on "A better game" 3: "lives, a clock"). The board gets a Clock row: Off, 3:00, 5:00
+or 10:00, with Off lit to start, so a game set up as before plays as before. With a clock, the match is still last side
+(or kid) standing, but when time runs out it is decided on lives left. Your side's count is the hits you can still take
+plus every ally's lives; theirs is their kids' lives. In a free-for-all you are measured against the one kid with the
+most. More wins; level is a draw paid as a loss, the rule Michael chose for the flags' clock (v1.191).
+
+**On screen.** The briefing says it ("last side standing, or the side with more lives left at 5:00", and the win line
+"Last team standing, or most lives left at 5:00"). In the match the timer box at the top shows the time left and the
+lives it will be decided on (LIVES 6–6, or YOUR LIVES 3 · MOST 3 in a free-for-all), and turns urgent in the last
+30 s. The result card reads TIME — 6 LIVES TO 2, TIME — THEY HAD 10 TO 2, or DRAW — 3 LIVES EACH. The count is
+taken the moment time runs out: nothing ends the round on last-standing in the 800 ms before the card, and no late BB
+can tag you. The pay stays $3 and $1, and a pickup game is still never a ladder win.
+
+Not done here: the critic's 13 Oct proposal that a pickup life brings you back to your start, rather than being one
+more hit, is Michael's to promote. If he does, "the hits you can still take" in the count becomes your lives left.
+### Verified
+- `tests/pickup-clock.test.mjs` (new, 11 checks). The board lists Off, 3:00, 5:00, 10:00 with Off lit, and clicking
+  3:00 builds a 180 s match whose briefing and win line say how time decides it. One second into a Winnmark 2v2 the HUD
+  reads 2:59 and LIVES 6–6 (you 3 hits, Seth 3; Brooke and Jamie 3 each). Run to time with their kids on 1 life each:
+  TIME — 6 LIVES TO 2, a win, $3, nothing marked done. A 5:00 game level at 3–3: DRAW — 3 LIVES EACH, $1. A 10:00 game
+  at 2 against 10: TIME — THEY HAD 10 TO 2, $1. A 4-way free-for-all with a 3:00 clock shows YOUR LIVES 3 · MOST 3 and
+  "Last kid standing, or most lives left at 3:00", and level with the best kid at time is a draw. With the clock Off,
+  the timer box stays hidden and a 1,000 s round goes on; a ladder 4v4 at Bunratty has no clock. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the lit Off out of their lit picks; all four pickup
+  suites pass.
+- `npm test` as four local shards: 109 of 111 suites passed. `harness` hit Playwright's 30 s `page.goto` limit on its
+  third boot, and `houses` died after its second check under the same load; both passed when run alone afterwards.
+- CI fix-up: `crew`'s "a full crouch lowers an ally's bandana with his head" failed on CI at 0.145 m (needs over
+  0.15). It measured the standing height from the ally's pose mid-round, partly crouched or leaning, so the drop read
+  0.145–0.158. It now stands him up before measuring: 0.218 m in three runs out of three.
+### Still open
+- Whether 3, 5 and 10 minutes are the right choices, and whether lives left (rather than tags) is the right count at
+  time, are for Michael to judge in play. The board starts on Off.
+- If Michael promotes the critic's "a pickup life brings you back" proposal, the count's "hits you can still take"
+  becomes your lives left, and the 1.1 s three-hit bursts the critic saw stop deciding the clock too.
+- Fernando's daytime rifle on Northcliff (Found in play) is a question in decisions. With this, D.22's four steps are
+  done; online play (D.2, Fable) is hosted from the board next.

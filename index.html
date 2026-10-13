@@ -1108,6 +1108,9 @@
   #modalBody .pk-btns { display: flex; gap: 6px; flex-wrap: wrap; }
   #modalBody .pk-opt { padding: 5px 12px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 13px; color: #f4e9d8; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); }
   #modalBody .pk-opt.on { background: #b8562e; }
+  #modalBody .pk-opt.off { opacity: .35; cursor: default; }   /* v1.203: a kid on the other side */
+  #modalBody .pk-count { opacity: .7; font-size: 11px; }
+  #modalBody .pk-play:disabled { opacity: .5; cursor: default; }
   #modalBody .pk-play { padding: 8px 28px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 15px; letter-spacing: .1em; color: #fff; background: #2f7a3a; border: 1px solid rgba(255,255,255,.3); }
   #modalBody .sm-day.rival::after { content: ''; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: #e0503a; }   /* v1.196: you beat Seth's crew */
   /* v1.195: the flip phone's texts */
@@ -1987,7 +1990,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.201</div>
+  <div class="version">v1.204</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5212,7 +5215,8 @@ function describeWinCondition(sc) {
   switch (sc.winCondition) {
     case 'survive_timer':    return `Hold out for ${sc.timerSec || 90}s — they respawn, so just survive`;
     case 'survive_untagged': return `Stay untagged for ${sc.timerSec || 90}s`;
-    case 'last_team_standing': return sc.ffa ? 'Last kid standing' : 'Last team standing';
+    case 'last_team_standing': return (sc.ffa ? 'Last kid standing' : 'Last team standing') +
+      (sc.pickup && sc.pickup.clock ? `, or most lives left at ${pickupClockText(sc.pickup.clock)}` : '');   // v1.204
     case 'kill_all':
     default:                 return 'Tag everyone out';
   }
@@ -20521,6 +20525,8 @@ function enterScenario(scenarioId) {
   Game.scenario.ctf = null;
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
+  Game.scenario.pickupClock = (sc.pickup && sc.pickup.clock) || 0;   // v1.204
+  Game.scenario.pickupTimeUp = null;
   Game.scenario.scenarioType = sc.scenarioType || 'skirmish';
   Game.player._infected = false;   // v1.25: clear zombie-tag state each run
 
@@ -21070,6 +21076,25 @@ function endScenario(outcome) {
     outcomeEl.textContent = `THEY GOT ${_vipOurs.name.toUpperCase()}`;
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = `${_vipOurs.name} takes one right on the blue cap. "Aw, man — I was the VIP!" ${allStr} regroup ${regroupAt}. "Run it back?"`;
+  } else if (Game.scenario.pickupTimeUp && (outcome === 'win' || outcome === 'lose')) {
+    // v1.204: the pickup clock ran out: more lives left wins; level is a draw, paid as a loss
+    const o = Game.scenario.pickupTimeUp.ours, t = Game.scenario.pickupTimeUp.theirs;
+    const ffaT = Game.scenario.ffa;
+    if (o > t) {
+      outcomeEl.textContent = `TIME — ${o} LIVES TO ${t}`;
+      outcomeEl.className = 'outcome win';
+      flavorEl.textContent = ffaT ? `Time. Nobody's got more left than you. ${primaryName} groans — "Fine. Next one's mine."`
+        : `Time. ${primaryName} counts heads and groans — "${o} to ${t}? Fine. You had more."`;
+    } else if (o < t) {
+      outcomeEl.textContent = `TIME — THEY HAD ${t} TO ${o}`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = ffaT ? `Time. Somebody had more left than you. "Run it back?"`
+        : `Time. They had more left. ${allStr} regroup ${regroupAt}. "Run it back?"`;
+    } else {
+      outcomeEl.textContent = `DRAW — ${o} LIVES EACH`;
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = `Time, and it's level. ${primaryName} shrugs. "A tie doesn't count. Run it back?"`;
+    }
   } else if (_ctf && _ctf.timeUp) {
     // v1.191: the clock ran out: more flags wins; level is a draw, paid as a loss
     const o = _ctf.score.ours, t = _ctf.score.theirs;
@@ -26418,6 +26443,16 @@ function updateTimerHud() {
   if (!hud) return;
   if (Game.scenario.ctf) { updateCtfHud(hud); return; }   // v1.189: the flags' score and what is happening to them
   hud.classList.remove('urgent');
+  if (Game.scenario.pickupClock) {   // v1.204: the pickup clock, and the lives left that it is decided on
+    const left = Math.max(0, Math.ceil(Game.scenario.pickupClock - (Game.scenario.roundTime || 0)));
+    const L = Game.scenario.pickupTimeUp || pickupLivesLeft();
+    hud.style.display = 'block';
+    document.getElementById('timerValue').textContent = pickupClockText(left);
+    const lbl = document.getElementById('timerLabel');
+    if (lbl) lbl.textContent = Game.scenario.ffa ? `YOUR LIVES ${L.ours} · MOST ${L.theirs}` : `LIVES ${L.ours}–${L.theirs}`;
+    hud.classList.toggle('urgent', left <= 30);
+    return;
+  }
   const winCondition = Game.scenario.winCondition;
   if (winCondition !== 'survive_timer' && winCondition !== 'survive_untagged') {
     hud.style.display = 'none';
@@ -29134,6 +29169,7 @@ function stepGame(dt) {
     updateLoadoutHud();
     updateRosterHud();
     updateScenarioTimer(dt);
+    updatePickupClock();   // v1.204
     updateTimerHud();
     updateStaminaHud();
     updateEyewearOverlay();
@@ -29649,10 +29685,12 @@ const RIVAL_CREW = "Seth's crew";
 // their own guns. PLAY writes it as SCENARIOS.pickup_game and goes through the usual briefing. It pays $3 for a win
 // and $1 for a loss, and never counts as a ladder win. The mode (free-for-all), which kids, and a clock come next.
 const PICKUP_MAPS = [
-  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3' },
-  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4' },
-  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle' },
-  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4' },
+  { key: 'winnmark',     zone: 'winnmark_court', name: 'Winnmark Court',          template: 'winnmark_team_3v3', ffa: 'winnmark_ffa' },
+  { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4', ffa: 'bunratty_ffa' },
+  { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle', ffa: 'hollow_ffa',
+    // v1.202: the Ten-Way's first three share the south fort; take them spread out, one from each fort first
+    ffaOrder: ['seth', 'sean', 'devon', 'priya', 'mason', 'ryan', 'brooke', 'eric', 'rebecca'] },
+  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4', ffa: 'lot_ffa' },
   { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
   { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
   { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },
@@ -29661,12 +29699,74 @@ const PICKUP_MAPS = [
 ];
 const PICKUP_LIVES = [1, 3, 5];
 const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
-const pickupState = { map: 'winnmark', size: 2, tod: 'day', lives: 3 };
+// v1.204 (D.22 step 4, a clock): Off, or 3, 5 or 10 minutes. Time up, the side with more lives left wins (in a
+// free-for-all, you need more than any one kid); level is a draw, paid as a loss, as the flags' clock (v1.191).
+const PICKUP_CLOCKS = [0, 180, 300, 600];
+const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3, clock: 0, ours: null, theirs: null, ffaKids: null };
 function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
 // The most a side can be on a map: its template's allies plus you, against its enemies, at most four
 function pickupMaxSize(m) {
   const es = SCENARIOS[m.template].enemySetup;
   return Math.min(4, es.filter(e => e.team === 'player').length + 1, es.filter(e => !e.team).length);
+}
+// v1.202 (D.22 step 2, the mode): the four maps with a free-for-all of their own (Winnmark, Bunratty, the Hollow, the
+// lot) can be played as one, 3-way up to that free-for-all's size with you in it, at most 8-way (a 4v4's headcount):
+// the kids are its first ones (the Hollow's taken one from each fort first), at their own spread-out starts, with
+// their own guns; lives and day or night as for teams; last kid standing. The team maps are unchanged.
+function pickupMaxWays(m) { return m.ffa ? Math.min(8, SCENARIOS[m.ffa].enemySetup.length + 1) : 0; }
+function pickupFfaKids(m, ways) {
+  const es = SCENARIOS[m.ffa].enemySetup;
+  const order = m.ffaOrder ? m.ffaOrder.map(id => es.find(e => e.charId === id)).filter(Boolean) : es;
+  return order.slice(0, ways - 1);
+}
+// v1.203 (D.22 step 3, which kids): the board lists every kid who plays on that street (any match of its own, the
+// tutorial and taggers aside) and you pick who is with you and who is against you, or who is in the free-for-all.
+// The spots stay the map's: each side's first spots, in its biggest team battle (or its free-for-all); a kid you pick
+// takes his own spot, with his gun there, when it is one of them; otherwise the next free one, with the gun he carries in
+// that map's team battle or free-for-all, or failing those in his first match on the street. A kid keeps a
+// spot's role (Fernando's nest) only on his own spot. With no picks it is v1.201-v1.202's game.
+function pickupPool(m) {
+  const t = SCENARIOS[m.template], seen = new Map();
+  const take = es => { if (es.charId && es.weapon && !es.behavior && !seen.has(es.charId) && CHARACTERS[es.charId]) seen.set(es.charId, es.weapon); };
+  for (const id of [m.template, m.ffa].filter(Boolean)) SCENARIOS[id].enemySetup.forEach(take);
+  for (const [id, sc] of Object.entries(SCENARIOS)) {
+    if (id === 'pickup_game' || sc.tutorial || sc.street !== t.street || sc.builderFn !== t.builderFn) continue;
+    (sc.enemySetup || []).forEach(take);
+  }
+  return [...seen].map(([charId, weapon]) => ({ charId, weapon }));
+}
+function pickupDefaults(m, side, n) {   // the kids v1.201-v1.202 put there
+  if (side === 'ffaKids') return m.ffa ? pickupFfaKids(m, n + 1).map(e => e.charId) : [];
+  return SCENARIOS[m.template].enemySetup.filter(e => side === 'ours' ? e.team === 'player' : !e.team).slice(0, n).map(e => e.charId);
+}
+// Fill a side's spots with the picked kids: his own spot first, then the next free one
+function pickupFill(spots, ids, pool, team) {
+  const left = spots.slice(), out = [];
+  const gun = id => (pool.find(k => k.charId === id) || {}).weapon || 'pistol';
+  const own = ids.filter(id => left.some(s => s.charId === id));
+  for (const id of own) { const i = left.findIndex(s => s.charId === id); out.push(Object.assign({}, left[i])); left.splice(i, 1); }
+  for (const id of ids.filter(id => !own.includes(id))) {
+    const s = left.shift(); const e = { charId: id, weapon: gun(id), anchor: s.anchor };
+    if (team) e.team = team;
+    out.push(e);
+  }
+  return out;
+}
+function pickupNeeds(m, side) { return side === 'ours' ? pickupState.size - 1 : side === 'theirs' ? pickupState.size : pickupState.ways - 1; }
+// Keep the picks to kids of this map, off the other side, and to the count; pad from the defaults
+function pickupNormalize(m, pad) {
+  const pool = pickupPool(m).map(k => k.charId);
+  for (const side of ['ours', 'theirs', 'ffaKids']) {
+    const n = pickupNeeds(m, side);
+    let ids = (pickupState[side] || pickupDefaults(m, side, n)).filter(id => pool.includes(id));
+    if (side === 'theirs') ids = ids.filter(id => !pickupState.ours.includes(id));
+    ids = ids.slice(0, n);
+    if (pad) for (const id of pickupDefaults(m, side, n).concat(pool)) {
+      if (ids.length >= n) break;
+      if (!ids.includes(id) && !(side === 'theirs' && pickupState.ours.includes(id)) && !(side === 'ours' && (pickupState.theirs || []).includes(id))) ids.push(id);
+    }
+    pickupState[side] = ids;
+  }
 }
 function buildPickupScenario(opts) {
   const m = PICKUP_MAPS.find(k => k.key === opts.map);
@@ -29675,21 +29775,51 @@ function buildPickupScenario(opts) {
   const size = Math.max(1, Math.min(pickupMaxSize(m), opts.size | 0));
   const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
   const tod = opts.tod === 'night' ? 'night' : 'day';
-  const ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
-  const theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
+  const clock = PICKUP_CLOCKS.includes(opts.clock) ? opts.clock : 0;   // v1.204
+  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod, clock);
+  let ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
+  let theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
+  // v1.203: the kids you picked, each side at its own first spots
+  if (opts.ours && opts.theirs && opts.ours.length === size - 1 && opts.theirs.length === size
+      && !opts.ours.some(id => opts.theirs.includes(id))) {
+    const pool = pickupPool(m);
+    ours = pickupFill(ours, opts.ours, pool, 'player');
+    theirs = pickupFill(theirs, opts.theirs, pool);
+  }
   const names = es => es.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
   const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   const sc = {
     region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${size}v${size}`,
     desc: `A pickup game ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line. ` +
       (ours.length ? `You've got ${list(names(ours))}` : `It's just you`) + ` against ${list(names(theirs))}. ` +
-      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing.`,
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing` +
+      (clock ? `, or the side with more lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
     playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => Object.assign({}, e)),
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
-    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives },
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock },
   };
   if (t.enemySpawnCluster) sc.enemySpawnCluster = t.enemySpawnCluster;
+  SCENARIOS.pickup_game = sc;
+  return sc;
+}
+function buildPickupFfa(m, opts, lives, tod, clock) {   // v1.202
+  const t = SCENARIOS[m.ffa];
+  const ways = Math.max(3, Math.min(pickupMaxWays(m), opts.ways | 0));
+  const kids = opts.ffaKids && opts.ffaKids.length === ways - 1   // v1.203: the kids you picked, at the first spots
+    ? pickupFill(pickupFfaKids(m, ways), opts.ffaKids, pickupPool(m)) : pickupFfaKids(m, ways);
+  const names = kids.map(e => (CHARACTERS[e.charId] || { name: e.charId }).name);
+  const sc = {
+    region: t.region, street: t.street, name: t.name, scenarioName: `Pickup Game: ${ways}-way free-for-all`,
+    desc: `A pickup free-for-all ${tod === 'night' ? 'after dark' : 'in the afternoon'} on ${m.name}, nothing on the line: ` +
+      `you, ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}, everyone for themselves. ` +
+      `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last kid standing` +
+      (clock ? `, or the most lives left at ${pickupClockText(clock)}.` : '.'),
+    builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
+    playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)),
+    winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives, clock: clock || 0 },
+  };
   SCENARIOS.pickup_game = sc;
   return sc;
 }
@@ -29698,23 +29828,50 @@ function pickupBoardHTML() {
   if (!open.some(m => m.key === pickupState.map)) pickupState.map = open[0].key;
   const m = PICKUP_MAPS.find(k => k.key === pickupState.map), max = pickupMaxSize(m);
   pickupState.size = Math.max(1, Math.min(max, pickupState.size));
+  const maxWays = pickupMaxWays(m);   // v1.202: the mode
+  if (!maxWays) pickupState.mode = 'teams';
+  pickupState.ways = Math.max(3, Math.min(maxWays || 3, pickupState.ways));
+  const ffa = pickupState.mode === 'ffa';
+  if (pickupState.poolMap !== m.key) { pickupState.ours = pickupState.theirs = pickupState.ffaKids = null; pickupState.poolMap = m.key; }
+  pickupNormalize(m, pickupState.pad !== false);
+  pickupState.pad = true;
+  const pool = pickupPool(m);
+  const kidBtn = (grp, k, other) => {
+    const on = pickupState[grp].includes(k.charId), off = !on && other.includes(k.charId);
+    return `<button class="pk-opt pk-kid${on ? ' on' : ''}${off ? ' off' : ''}" data-grp="${grp}" data-val="${k.charId}"${off ? ' disabled' : ''}>${CHARACTERS[k.charId].name}</button>`;
+  };
+  const kidRow = (label, grp, other) => {
+    const n = pickupNeeds(m, grp), have = pickupState[grp].length;
+    return row(`${label} <span class="pk-count">${have}/${n}</span>`, pool.map(k => kidBtn(grp, k, other)).join(''));
+  };
+  const short = ffa ? pickupState.ffaKids.length < pickupState.ways - 1
+    : (pickupState.ours.length < pickupState.size - 1 || pickupState.theirs.length < pickupState.size);
   const btn = (grp, val, label, on) => `<button class="pk-opt${on ? ' on' : ''}" data-grp="${grp}" data-val="${val}">${label}</button>`;
   const row = (label, inner) => `<div class="pk-row"><div class="pk-label">${label}</div><div class="pk-btns">${inner}</div></div>`;
   return `<div class="pk-board">
     <div class="pk-note">Pick it, play it. $3 a win, $1 if you lose; it doesn't count for the ladder.</div>
     ${row('Where', open.map(k => btn('map', k.key, k.name, k.key === pickupState.map)).join(''))}
-    ${row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
+    ${row('Mode', btn('mode', 'teams', 'Teams', !ffa) + (maxWays ? btn('mode', 'ffa', 'Free-for-all', ffa) : ''))}
+    ${ffa ? row('How many', [3, 4, 5, 6, 7, 8].filter(n => n <= maxWays).map(n => btn('ways', n, `${n}-way`, n === pickupState.ways)).join(''))
+      : row('How many', [1, 2, 3, 4].filter(n => n <= max).map(n => btn('size', n, `${n}v${n}`, n === pickupState.size)).join(''))}
+    ${ffa ? kidRow('Who', 'ffaKids', []) : (pickupState.size > 1 ? kidRow('With you', 'ours', pickupState.theirs) : '') + kidRow('Against you', 'theirs', pickupState.ours)}
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
-    <div class="pk-row"><button class="pk-play" id="pickupPlayBtn">PLAY</button></div>
+    ${row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === pickupState.clock)).join(''))}
+    <div class="pk-row"><button class="pk-play" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button></div>
   </div>`;
 }
 function renderPickupBoard() {
   const body = document.getElementById('modalBody');
   body.innerHTML = pickupBoardHTML();
   body.querySelectorAll('.pk-opt').forEach(b => b.addEventListener('click', () => {
-    const v = b.dataset.val;
-    pickupState[b.dataset.grp] = (b.dataset.grp === 'size' || b.dataset.grp === 'lives') ? +v : v;
+    const v = b.dataset.val, grp = b.dataset.grp;
+    if (grp === 'ours' || grp === 'theirs' || grp === 'ffaKids') {   // v1.203: a picked kid comes off; another goes on, in place of the last when full
+      const ids = pickupState[grp], m = PICKUP_MAPS.find(k => k.key === pickupState.map);
+      if (ids.includes(v)) ids.splice(ids.indexOf(v), 1);
+      else { if (ids.length >= pickupNeeds(m, grp)) ids.pop(); ids.push(v); }
+      pickupState.pad = false;   // leave a side short until you pick its last kid
+    } else pickupState[grp] = (grp === 'size' || grp === 'ways' || grp === 'lives' || grp === 'clock') ? +v : v;
     renderPickupBoard();
   }));
   body.querySelector('#pickupPlayBtn').addEventListener('click', playPickupGame);
@@ -29730,7 +29887,31 @@ function openPickupBoard() {
   renderPickupBoard();
   document.getElementById('modalScreen').classList.add('active');
 }
+function pickupClockText(sec) { return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; }
+// v1.204: lives left now: yours (hits you can still take) and your allies', against the best other side's (in a
+// free-for-all, the best single kid's)
+function pickupLivesLeft() {
+  const by = new Map(), add = (team, n) => by.set(team, (by.get(team) || 0) + Math.max(0, n));
+  const mine = combatantTeam(Game.player);
+  add(mine, Game.player.maxHits - Game.player.hitsTaken);
+  for (const e of Game.scenario.enemies || []) add(combatantTeam(e), typeof e.lives === 'number' ? e.lives : (e.health > 0 ? 1 : 0));
+  const ours = by.get(mine) || 0;
+  by.delete(mine);
+  return { ours, theirs: Math.max(0, ...by.values()) };
+}
+// v1.204: the pickup clock, once a step from stepGame: at time, more lives left wins; level is a loss
+function updatePickupClock() {
+  const S = Game.scenario;
+  if (Game.mode !== 'scenario' || !S.pickupClock || S.pickupTimeUp) return;
+  if ((S.roundTime || 0) < S.pickupClock) return;
+  const L = pickupLivesLeft();
+  S.pickupTimeUp = L;
+  S.winCondition = '__finished__';   // no last-standing end inside the 800 ms
+  Game.player._graceT = 1;   // and no late tag on you: the count above is the result
+  endScenarioLater(L.ours > L.theirs ? 'win' : 'lose', 800);
+}
 function playPickupGame() {
+  if (document.getElementById('pickupPlayBtn').disabled) return;
   if (!buildPickupScenario(pickupState)) return;
   closeModal();
   enterScenario('pickup_game');
