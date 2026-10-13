@@ -9102,3 +9102,39 @@ after the pay and the win are written), and IN REACH names any gun you don't own
 - Whether the best-moment thresholds (3 s, 15 m) pick the moment a player would is for play.
 - Hits on your allies' targets and your allies' own tags aren't counted; this is your match. Capture the flag shows
   the same four boxes, not flags carried, which the score line already gives.
+
+## v1.194 — A summer on the bedroom wall
+Decisions, "A better game" 1 (Michael: A, a light summer story told in the bedroom, no cutscenes; control room,
+12 Oct). The story has four parts: a wall calendar from June to the last day of August with each zone a few weeks of
+it, texts from your friends on a flip phone between matches, a rival crew, and one big match on your own street at
+the end. This run builds the calendar, because the other three hang their dates on it.
+
+**The summer.** It is 2003, the year the game is set in. Day one is Sunday 1 June and the last Saturday, 30 August,
+is the big day. Each zone of the ladder gets a span, back to back and sized roughly by how many matches it has:
+Winnmark 1–21 June, Bunratty 22 June – 12 July, the Hollow 13–26 July, the market lot 27 July – 2 August, Northcliff
+3–16 August, then four or five days each for Hollins Ridge High, Willow Bend and inside the store, which ends Friday
+29 August. Today is the zone you have reached (the furthest one the ladder has opened) plus its share of the span
+for the matches you've won there: half of Winnmark is Wednesday 11 June, and the day Bunratty opens is Sunday 22 June.
+It reads only `completed`, so old saves get a date too and nothing new is saved.
+
+**The calendar.** It hangs on the bedroom's north wall, between the bookcase and the desk alcove: a picture of a creek under pines
+with SUMMER 2003, and this month's grid below it, the days gone crossed off in red, today ringed in blue, each zone's
+first day pencilled with its name, and 30 August ringed twice. It is drawn fresh each time you come home. Walk up to
+it and E ("Look at the calendar") opens June, July and August side by side: the same crosses and rings, your zone's
+days shaded, "Today is Sunday 20 July", and a line with the zone's dates and how many days are left to the 30th.
+### Verified
+- `tests/calendar.test.mjs` (new, 19 checks). A new game is Sunday 1 June in Winnmark; the eight spans run back to back
+  from day 0 and end Friday 29 August, with 30 August a Saturday (4 July and 1 August 2003 both Fridays, as they were).
+  Half of Winnmark won is Wednesday 11 June, all of it Sunday 22 June in Bunratty, half of the Hollow Sunday 20 July,
+  the whole ladder Friday 29 August. Home on 20 July, the wall page crosses off the 19th (225 red pixels) and not the
+  20th (0), and rings the 20th (301 blue) and not the 21st (0). Standing in front of it the prompt is "Look at the
+  calendar"; E opens "Summer 2003" with 49 days crossed off, the 20th ringed, the 30th ringed twice, the Hollow's 14
+  days shaded and "41 days away"; OK closes it to the bedroom and the save card is narrow again. No page errors.
+- `npm test` as four local shards: 98 of 101 suites passed. Three (`settings`, `smoke`, `stuck-sweep-8`) died at
+  Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and all three
+  passed alone.
+### Still open
+- Whether the spans feel right is for play: Winnmark's 16 matches get three weeks, the last three zones four or five
+  days each, so August goes fast.
+- The calendar doesn't yet mark the days texts came or the rival crew's matches; those are steps 2 and 3. Saturday 30
+  August is ringed but there is no match on it until step 4.

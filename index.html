@@ -1084,6 +1084,22 @@
     max-width: 400px;
   }
 
+  /* v1.194: the summer calendar's three months */
+  #modalScreen .modal-card.wide { max-width: 760px; }
+  #modalBody .sm-today { font-size: 15px; margin-bottom: 12px; }
+  #modalBody .sm-months { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+  #modalBody .sm-month { width: 210px; }
+  #modalBody .sm-name { font-family: Georgia, serif; color: var(--ui-accent); font-size: 15px; margin-bottom: 4px; }
+  #modalBody .sm-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; font-size: 11px; }
+  #modalBody .sm-dow { opacity: 0.55; }
+  #modalBody .sm-day { padding: 3px 0; border-radius: 3px; background: rgba(255,255,255,0.04); position: relative; }
+  #modalBody .sm-day.blank { background: none; }
+  #modalBody .sm-day.here { background: rgba(212,166,74,0.22); }
+  #modalBody .sm-day.past { color: #777; text-decoration: line-through; text-decoration-color: #c0302a; }
+  #modalBody .sm-day.today { outline: 2px solid #5fa0e8; color: #fff; font-weight: bold; }
+  #modalBody .sm-day.big { outline: 2px double #e0503a; color: #fff; font-weight: bold; }
+  #modalBody .sm-note { margin-top: 12px; font-size: 12px; opacity: 0.8; }
+
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
     pointer-events: auto;
@@ -1946,7 +1962,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.193</div>
+  <div class="version">v1.194</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8919,6 +8935,22 @@ function buildBedroomScene() {
   poster.rotation.y = Math.PI;
   scene.add(poster);
 
+  // v1.194 (D.20 step 1): the summer calendar on the north wall, west of the alcove — this month, the days gone
+  // crossed off, today ringed. It is redrawn on every visit (the bedroom is rebuilt each time).
+  const calCanvas = document.createElement('canvas');
+  calCanvas.width = 384; calCanvas.height = 576;
+  drawSummerCalendar(calCanvas, summerDayIndex());
+  const calGroup = new THREE.Group();
+  const calPage = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.72),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(calCanvas), roughness: 0.9 }));
+  calGroup.add(calPage);
+  const calNail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.03, 6), goldMat);
+  calNail.rotation.x = Math.PI / 2;
+  calNail.position.set(0, 0.39, 0);
+  calGroup.add(calNail);
+  calGroup.position.set(-2.3, 1.5, -BR_D/2 + 0.062);   // the wall is 0.1 thick, its face at -BR_D/2 + 0.05
+  scene.add(calGroup);
+
   // ============================================================
   // BIG CLOSET INTERIOR DECOR (visible through open doorway, looking south)
   // ============================================================
@@ -9018,6 +9050,16 @@ function buildBedroomScene() {
     prompt: 'Look in the bathroom mirror',
     label: 'Mirror', icon: 'bathroom', labelY: 2.05,
     action: () => openMirror(),
+  });
+
+  // v1.194 (D.20 step 1): the calendar → the summer so far
+  Game.interactables.push({
+    type: 'calendar',
+    box: new THREE.Box3().setFromObject(calGroup),
+    pos: new THREE.Vector3(-2.3, 1.0, -BR_D/2 + 0.45),
+    prompt: 'Look at the calendar',
+    label: 'Calendar', icon: 'calendar', labelY: 2.0,
+    action: () => openSummerCalendar(),
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
@@ -20856,6 +20898,7 @@ function showModal(title, body) {
 function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
+  document.querySelector('#modalScreen .modal-card').classList.remove('wide');   // v1.194: the summer calendar widens it
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
@@ -23084,6 +23127,8 @@ const BR_LABEL_ICONS = {
   bathroom: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="3" width="12" height="18" rx="1" stroke="#f4e9d8" stroke-width="1.8"/><circle cx="14.5" cy="12" r="1" fill="#f4e9d8"/></svg>',
   // v1.88: door with an arrow out — the front door (goes outside to the map)
   outside: '<svg viewBox="0 0 24 24" fill="none"><path d="M13 3H5v18h8" stroke="#f4e9d8" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 12h11M17 8l4 4-4 4" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // v1.194: a wall calendar — the summer so far
+  calendar: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="1.5" stroke="#f4e9d8" stroke-width="1.8"/><path d="M4 10h16M9 3v4M15 3v4M8 14l3 3M11 14l-3 3" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round"/></svg>',
   // bed — save game
   bed: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 14h18M3 18v2M21 18v2" stroke="#f4e9d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" stroke="#f4e9d8" stroke-width="1.8"/></svg>',
 };
@@ -28898,6 +28943,149 @@ function isScenarioUnlocked(scenarioId) {
   const prevId = ctx.ids[ctx.idx - 1];
   return !!Game.persist.completed[prevId];
 }
+// =====================================================================
+// v1.194 (D.20 step 1, Michael: A on "A better game" 1 — a light summer story told in the bedroom): the summer of
+// 2003 on a wall calendar. Day 0 is Sunday 1 June; each zone of the ladder is a few weeks of it, and the date inside a
+// zone moves with the share of its matches you have won. The last Saturday, 30 August, is circled for the big match
+// on your own street (a later step). The calendar hangs on the bedroom's north wall and opens a three-month view.
+// =====================================================================
+const SUMMER_YEAR = 2003;
+const SUMMER_BIG_DAY = 90;                     // Saturday 30 August 2003
+const SUMMER_SPANS = {                         // zone key → [first day, last day], days since 1 June
+  winnmark_court: [0, 20],     // 1–21 June
+  bunratty_court: [21, 41],    // 22 June – 12 July
+  hollow:         [42, 55],    // 13–26 July
+  market_lot:     [56, 62],    // 27 July – 2 August
+  northcliff:     [63, 76],    // 3–16 August
+  high_school:    [77, 80],    // 17–20 August
+  country_club:   [81, 84],    // 21–24 August
+  grocery_store:  [85, 89],    // 25–29 August
+};
+const SUMMER_PENCIL = { winnmark_court: 'Winnmark', bunratty_court: 'Bunratty', hollow: 'The Hollow', market_lot: 'Market lot',
+  northcliff: 'Northcliff', high_school: 'Hollins HS', country_club: 'Willow Bend', grocery_store: 'The store' };
+const SUMMER_MONTHS = [{ name: 'June', m: 5, first: 0, days: 30 }, { name: 'July', m: 6, first: 30, days: 31 },
+  { name: 'August', m: 7, first: 61, days: 31 }];
+const SUMMER_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// The zone you are in: the furthest one the ladder has opened.
+function summerZoneKey() {
+  let key = ZONE_LADDER[0].key;
+  for (const z of ZONE_LADDER) if (isZoneUnlocked(z.key)) key = z.key;
+  return key;
+}
+// Today, as days since 1 June: the zone's first day plus its share of the span for the matches won there.
+function summerDayIndex() {
+  const key = summerZoneKey();
+  const span = SUMMER_SPANS[key] || [0, 0];
+  const ids = PIN_SCENARIO_GROUPS[key] || [];
+  const done = ids.filter(id => Game.persist.completed[id]).length;
+  const len = span[1] - span[0] + 1;
+  return Math.min(span[1], span[0] + Math.floor(len * done / Math.max(1, ids.length)));
+}
+// { month: 0..2, date: 1..31, weekday, label: 'Tuesday 10 June' } for a day index.
+function summerDate(day) {
+  let mi = 0;
+  while (mi < 2 && day >= SUMMER_MONTHS[mi + 1].first) mi++;
+  const date = day - SUMMER_MONTHS[mi].first + 1;
+  const weekday = SUMMER_WEEKDAYS[day % 7];    // 1 June 2003 was a Sunday
+  return { month: mi, date, weekday, label: weekday + ' ' + date + ' ' + SUMMER_MONTHS[mi].name };
+}
+// The zone whose span holds a day (or null for the big day).
+function summerZoneOfDay(day) {
+  for (const k in SUMMER_SPANS) if (day >= SUMMER_SPANS[k][0] && day <= SUMMER_SPANS[k][1]) return k;
+  return null;
+}
+function summerZoneName(key) {
+  const z = ZONE_LADDER.find(z => z.key === key);
+  return z ? z.name.split(' · ')[0].split(' /')[0] : '';
+}
+// The bedroom calendar's page: a picture on top, this month's grid below, past days crossed out, today ringed.
+function drawSummerCalendar(canvas, today) {
+  const W = canvas.width, H = canvas.height, c = canvas.getContext('2d');
+  const t = summerDate(today), mo = SUMMER_MONTHS[t.month];
+  c.fillStyle = '#f7f2e6'; c.fillRect(0, 0, W, H);
+  // the picture: a creek under pines in the summer sun
+  const ph = H * 0.38;
+  const sky = c.createLinearGradient(0, 0, 0, ph);
+  sky.addColorStop(0, '#5aa0d8'); sky.addColorStop(1, '#bfe0f0');
+  c.fillStyle = sky; c.fillRect(0, 0, W, ph);
+  c.fillStyle = '#ffd34a'; c.beginPath(); c.arc(W * 0.8, ph * 0.28, ph * 0.13, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#4f8a3a'; c.fillRect(0, ph * 0.72, W, ph * 0.28);
+  c.fillStyle = '#3d7fb0'; c.beginPath(); c.moveTo(W * 0.35, ph); c.quadraticCurveTo(W * 0.55, ph * 0.8, W * 0.6, ph * 0.72);
+  c.lineTo(W * 0.66, ph * 0.72); c.quadraticCurveTo(W * 0.66, ph * 0.86, W * 0.55, ph); c.fill();
+  c.fillStyle = '#2b5a2a';
+  for (const [x, s] of [[0.08, 1], [0.18, 1.3], [0.29, 0.9], [0.74, 1.2], [0.88, 1], [0.96, 1.4]]) {
+    c.beginPath(); c.moveTo(W * x, ph * (0.78 - 0.45 * s)); c.lineTo(W * x - 26 * s, ph * 0.8); c.lineTo(W * x + 26 * s, ph * 0.8); c.fill();
+  }
+  c.fillStyle = '#fff'; c.font = 'bold 34px Impact, sans-serif'; c.textAlign = 'center';
+  c.fillText('SUMMER ' + SUMMER_YEAR, W / 2, ph * 0.2);
+  // the month's name and the grid
+  c.fillStyle = '#b02a24'; c.font = 'bold 40px Georgia, serif';
+  c.fillText(mo.name.toUpperCase(), W / 2, ph + 50);
+  const gx = 16, gy = ph + 72, cw = (W - 32) / 7, rows = 6, ch = (H - gy - 12) / rows;
+  c.font = 'bold 15px Arial, sans-serif'; c.fillStyle = '#555';
+  'SMTWTFS'.split('').forEach((d, i) => c.fillText(d, gx + cw * (i + 0.5), gy - 6));
+  const firstDow = mo.first % 7;
+  for (let d = 1; d <= mo.days; d++) {
+    const day = mo.first + d - 1, slot = firstDow + d - 1;
+    const x = gx + cw * (slot % 7), y = gy + ch * Math.floor(slot / 7);
+    c.strokeStyle = '#c9c0ae'; c.lineWidth = 1; c.strokeRect(x, y, cw, ch);
+    c.fillStyle = '#333'; c.font = '18px Arial, sans-serif'; c.textAlign = 'left';
+    c.fillText(String(d), x + 5, y + 19);
+    const zk = summerZoneOfDay(day);
+    if (zk && SUMMER_SPANS[zk][0] === day) {          // a zone's first day carries its name in pencil
+      c.fillStyle = '#4a5a8a'; c.font = 'italic 11px Arial, sans-serif';
+      c.fillText(SUMMER_PENCIL[zk] || '', x + 3, y + ch - 6);
+    }
+    if (day < today) {                                 // crossed off
+      c.strokeStyle = '#c0302a'; c.lineWidth = 3;
+      c.beginPath(); c.moveTo(x + 6, y + 6); c.lineTo(x + cw - 6, y + ch - 6);
+      c.moveTo(x + cw - 6, y + 6); c.lineTo(x + 6, y + ch - 6); c.stroke();
+    }
+    if (day === today || day === SUMMER_BIG_DAY) {     // today ringed; the last Saturday ringed twice
+      c.strokeStyle = day === SUMMER_BIG_DAY ? '#c0302a' : '#1f5fb0'; c.lineWidth = 3;
+      for (let r = 0; r < (day === SUMMER_BIG_DAY ? 2 : 1); r++) {
+        c.beginPath(); c.ellipse(x + cw / 2, y + ch / 2, cw / 2 - 3 - r * 4, ch / 2 - 3 - r * 4, 0, 0, Math.PI * 2); c.stroke();
+      }
+    }
+  }
+  c.textAlign = 'left';
+}
+// The three-month view the calendar opens (in the modal shell).
+function summerCalendarHTML(today) {
+  const t = summerDate(today);
+  const zone = summerZoneKey();
+  const left = SUMMER_BIG_DAY - today;
+  const months = SUMMER_MONTHS.map(mo => {
+    let cells = '';
+    for (let i = 0; i < mo.first % 7; i++) cells += '<span class="sm-day blank"></span>';
+    for (let d = 1; d <= mo.days; d++) {
+      const day = mo.first + d - 1, zk = summerZoneOfDay(day);
+      const cls = ['sm-day', day < today ? 'past' : '', day === today ? 'today' : '', day === SUMMER_BIG_DAY ? 'big' : '',
+        zk === zone ? 'here' : ''].filter(Boolean).join(' ');
+      const tip = zk ? summerZoneName(zk) : 'The last Saturday of summer';
+      cells += `<span class="${cls}" data-day="${day}" title="${tip}">${d}</span>`;
+    }
+    return `<div class="sm-month"><div class="sm-name">${mo.name}</div>
+      <div class="sm-grid">${'SMTWTFS'.split('').map(w => `<span class="sm-dow">${w}</span>`).join('')}${cells}</div></div>`;
+  }).join('');
+  const span = SUMMER_SPANS[zone];
+  return `<div class="sm-today">Today is <b>${t.label}</b>.</div>
+    <div class="sm-months">${months}</div>
+    <div class="sm-note">${summerZoneName(zone)}: ${summerDate(span[0]).label.replace(/^\w+ /, '')} to ${summerDate(span[1]).label.replace(/^\w+ /, '')}.
+      Saturday 30 August is ringed twice: the last Saturday of summer, ${left} day${left === 1 ? '' : 's'} away.</div>`;
+}
+function openSummerCalendar() {
+  Game.prevMode = Game.mode;
+  Game.mode = 'modal';
+  exitPointerLock();
+  document.getElementById('modalTitle').textContent = 'Summer ' + SUMMER_YEAR;
+  const body = document.getElementById('modalBody');
+  body.style.whiteSpace = 'normal';
+  body.innerHTML = summerCalendarHTML(summerDayIndex());
+  document.querySelector('#modalScreen .modal-card').classList.add('wide');
+  document.getElementById('modalScreen').classList.add('active');
+}
+
 // Human-readable reason a scenario is locked (for greyed rows / pickers).
 function scenarioLockReason(scenarioId) {
   const ctx = findScenarioListContext(scenarioId);
