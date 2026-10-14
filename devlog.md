@@ -10255,7 +10255,8 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   1.5 cm of trigger showing. All pass, no page errors.
 - Run after the change: `gun-parts`, `fp-hands` (the UMP: both hands on, gap 0 mm, none on the sight line),
   `under-parts`, `shop-pics`: all pass.
-- The full suite on v1.226, run in three shards beside this run's work, is in the next entry's notes or the PR comment.
+- The full suite on v1.226 (three local shards, run beside this run's work): 129 of 130 suites passed. The one miss,
+  `stuck-sweep-16`, timed out loading the page and passed alone on v1.228.
 ### Still open
 - Michael's eye on the pictures. The UMP's side-folding stock is drawn as two centre-line bars; the real one is a
   skeleton frame hinged on the right. The receiver is a plain box. D.31 goes on with the MAC-10.
