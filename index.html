@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.221</div>
+  <div class="version">v1.222</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -26161,6 +26161,8 @@ function applyBBHit(bb, c) {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
       else endScenario('lose');
+    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup) {
+      respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
     }
   } else {
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
@@ -26174,14 +26176,16 @@ function applyBBHit(bb, c) {
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
 // seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
 const VIP_GRACE = 2.0;
-function respawnPlayerVip() {
+// v1.221 (decisions "Pickup Game: what is a life for you?", Michael: A): `keepHits` for the Pickup Game, where each tag is
+// one of your lives gone (the HUD and the clock's count keep it) and the rest of a shotgun blast lands in the grace.
+function respawnPlayerVip(keepHits) {
   const st = Game.scenario.playerStart;
   if (!st) return;
   Game.player.pos.copy(st.pos);
   Game.player.vel.set(0, 0, 0);
   Game.player.yaw = st.yaw;
   Game.player.pitch = 0;
-  Game.player.hitsTaken = 0;
+  if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
   Game.player._graceT = VIP_GRACE;

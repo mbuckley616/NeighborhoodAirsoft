@@ -10057,3 +10057,31 @@ unchanged. `FP_HANDS.pistol` follows the grip to its new place and rake. Picture
   hand at the hip.
 - The kids' third-person pistol (`buildEnemyGunMesh`) is a separate, smaller model and was not touched.
 - D.31 goes on with the next gun.
+
+## v1.222 — A Pickup Game life is a life
+Decisions "Pickup Game: what is a life for you?" (Michael: A, control room, 14 Oct), from the critic's report on v1.201:
+the Pickup Game board says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a
+return, while yours was one hit where you stood, with nothing between hits. Two BBs of a burst or three pellets of one
+shotgun blast could take all three. In the critic's 20 rounds of 4v4 all three of your lives went in about a second in
+6, once to a single blast.
+
+Now, in a Pickup Game only, a tag costs one of your lives and puts you back at your start, facing the way you started,
+with 2 s in which nothing tags you: the respawn VIP and Flags already use, except that your lives are not refilled. The
+HUD's lives count and the clock's "more lives left" go down by one per tag. The last tag ends the round as before. Story
+matches are untouched: one life is one life, and a match that gives you more still takes them where you stand.
+### Verified
+- `tests/pickup-lives.test.mjs` (new, 7 checks). On a Winnmark 3v3, 3 lives: a tag 5.7 m from the start costs one life
+  (your side's lives 9 to 8), puts you at your start with 2.0 s of cover; five more BBs at once (a shotgun blast) change
+  nothing; after the cover a second tag costs the second life, back at the start; the third ends the round, a loss. In
+  a story match with three hits a hit leaves you where you stand, no cover. Three real 4v4 rounds standing at the start:
+  lives went at 49.1/51.4/53.8 s, 21.6/23.7/26.3 s and 19.0/23.0/25.6 s, gaps 2.1–4.0 s, none under 2 s. No page errors.
+- `pickup-fernando`, red on this branch since v1.218's seed shift, now passes with its last checks rewritten. On v1.221
+  (before this change), walking at the nearest kid, Fernando's AK took all three lives in 0.2–0.4 s at about 14 s in 8 of
+  8 rounds (24 of 24 hits; the rifle 19 of 24). Now he takes one life, about 14 s in, and you are out at 23–39 s (mean
+  34.1 s); he landed 7–8 of 24 hits. Its rifle-against-AK comparison measured the old stacking, so it is replaced by
+  "under half the hits are his" and "you last over 20 s on average".
+- `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-kids`, `vip` (2 suites), `ctf` (2 suites), `forfeit-ask` pass.
+### Still open
+- Standing still at the start, the next tag tends to come just after the 2 s cover (gaps of 2.1–2.6 s in five of six):
+  a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
+  sight, is for a playtest.
