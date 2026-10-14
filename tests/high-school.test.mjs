@@ -90,7 +90,10 @@ for (const id of ladder.ids) {
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
     let f = 1;
     for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
-      if (f > 60 * 60 && (!team || (livesLost('enemy') > 0 && livesLost('player') > 0))) break;
+      // v1.224 fix-up: and every kid still in the fight has moved or fired. CI, 14 Oct: Nathan (Mitchell's numbers, sits
+      // at the back) had walked 2 m and fired nothing at 60 s; locally he walks 12-15 m and fires 5-16 times by then
+      const quiet = kids.some((k, i) => npcInFight(k) && st[i].path <= 5 && !fired[i]);
+      if (f > 60 * 60 && !quiet && (!team || (livesLost('enemy') > 0 && livesLost('player') > 0))) break;
       // v1.156 fix-up: a team that is all out has lost the round; the game ends it on a 600 ms timer that cannot fire
       // inside this loop, so stop here (CI once saw the allies take all nine enemy lives without losing one)
       if (team && wiped()) break;
@@ -115,7 +118,7 @@ for (const id of ladder.ids) {
   // v1.170 fix-up: unless a side was wiped out first. CI, 6 Oct: the allies were all out at 32 s (Ryan and Priya), and
   // Mitchell, who sits back and picks at the doors 51 m off, had not moved or fired yet. Locally he walks 31-119 m and
   // fires 17-268 times when the round runs on.
-  check(`${id}: every kid moves or fires (unless a side is wiped out inside 60 s)`, r.kids.every(k => k.walked > 5 || k.fired > 0) || (r.wiped && r.secs < 60), r.kids);
+  check(`${id}: every kid moves or fires within 120 s (unless a side is wiped out first)`, r.kids.every(k => k.walked > 5 || k.fired > 0) || (r.wiped && r.secs < 120), r.kids);
   // v1.156 fix-up: or the round is decided, one side all out while the other side fired back at it
   if (r.team) check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
     (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);

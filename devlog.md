@@ -10176,3 +10176,57 @@ left side!" twice running in a 3v3). The pick now comes after the gate.
   playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
 - The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
   lines with names in them (templates), which this card did not ask for.
+
+## v1.223 — The AR, held up to an M4
+Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
+(its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
+showed 7.4 cm, straight, and set right against the pistol grip (0.7 cm between them), which left the trigger and its
+guard inside the lower receiver: from the side there was no trigger at all. The grip raked 13°, against an AR grip's
+roughly 20°.
+
+Now the mag shows 9.9 cm, tipped 7° forward for the M4 mag's curve, in a flared magwell at the front of the lower
+receiver; the trigger guard hangs below the lower, an upright behind the magwell and a bar back to the grip, with the
+trigger 1.4 cm into view inside it; and the grip rakes 20°, the shooting hand following it (`FP_HANDS.ar`). Nothing
+above the receiver moved (sights, rail, handguard, barrel). The stock is short for an M4 (its tube and butt 11 cm
+behind the receiver, about 18 at this scale) and was left: it sits by the camera in first person, and lengthening it
+is for Michael to ask for if it reads wrong in the shop and workbench. Pictures: `docs/guns/ar-side-before.png`,
+`docs/guns/ar-side.png`.
+### Verified
+- `tests/gun-ar.test.mjs` (new, 6 checks; writes the side picture). Before (v1.222, read from the builder): the mag 7.4 cm
+  below the lower, 0° tilt, the trigger 0.45 cm inside the lower (none showing), 0.7 cm from mag to grip, grip 12.6°.
+  After: 9.9 cm (limit 9.5–12.5), 6.9°, 1.4 cm of trigger showing, 3.0 cm mag to grip, grip 20.1°; no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AR: both hands on, gap 0 mm,
+  none on the sight line, elbows off the bottom), `under-parts`, `backyard-guns`, `shop-pics` pass; `workbench-labels`
+  timed out loading the page with five browsers running and passed alone.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip, where the longer mag now shows under the receiver.
+- The short stock (above). D.31 goes on with the next gun.
+
+## v1.224 — The shotgun, held up to an 870
+Backlog D.31, the third gun. The Spring Shotgun copies a Remington 870, drawn at about ×0.74 (its receiver 14 cm). Its
+barrel, tube, pump, receiver and the stock's length and drop were right; three things were not. The butt pad stood
+3.9 cm above the stock's top line, a black slab sticking up behind the heel. The trigger guard hung 1.65 cm under the
+receiver (an 870's, about 3.5 cm, would be 2.6 here), with 1.1 cm of trigger showing. And the wrist, the narrow part of
+the stock you hold, began 4.9 cm forward of the receiver's back, so it hung as a lump under the receiver instead of
+running back from it.
+
+Now the pad is the stock's back face (a child of the stock, within 1 mm of its top and bottom); the guard is an upright
+front and back with the bar 2.6 cm under the receiver and 2 cm of trigger inside it; and the wrist starts 2.4 cm forward
+of the receiver's back, behind the guard, running into the stock. The shooting hand moves with the wrist
+(`FP_HANDS.shotgun`). Pictures: `docs/guns/shotgun-side-before.png`, `docs/guns/shotgun-side.png`.
+### Verified
+- `tests/gun-shotgun.test.mjs` (new, 5 checks; writes the side picture). Before (v1.223, from the builder): pad 3.9 cm
+  above the stock, guard 1.65 cm, 1.1 cm of trigger, wrist 4.9 cm ahead. After: pad 1 mm off the stock's top and bottom
+  and 2 mm into its back, guard 2.6 cm (limit 2.2–3.0), trigger 2.0 cm, wrist 2.4 cm ahead (limit 2.5); no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (shotgun: both hands on, gap 0 mm, none on the sight line, the pump
+  hand rides the pump 0.070 m), `under-parts`, `shop-pics` pass. `backyard-guns` failed once with three suites at once
+  on "Thunder Pump: under two-thirds of its BBs within 0.5 m at 15 m" (68.3%) and passed alone (55.8%): a pellet-spread
+  statistic the mesh cannot touch (BBs leave from the camera), filed under Found in play.
+### Still open
+- Michael's eye on the pictures. The stock is still a block with a square butt; an 870's comb, belly curve and toe
+  would need shaped geometry, not boxes, and are left for him to ask for. D.31 goes on with the next gun.
+- CI fix-up (v1.224 head, 28c0c50): `high-school`'s "every kid moves or fires" failed once in lane 3/8 on the night
+  match: Nathan (Mitchell's numbers since v1.190, sits at the back) had walked 2 m and fired nothing at 60 s; three
+  local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
+  has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
+  forced on goes to 101–120 s per match and passes.

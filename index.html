@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.222</div>
+  <div class="version">v1.224</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18531,6 +18531,7 @@ function buildFPShotgun() {
   // === Receiver (main body) ===
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.06, 0.14), bodyMat);
   receiver.position.set(0, 0.02, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
 
   // Top rail on receiver (small Picatinny-style)
@@ -18588,32 +18589,39 @@ function buildFPShotgun() {
   group.add(pumpGroup);
 
   // === Trigger guard + trigger ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.022, -0.05);
+  // v1.224 (D.31, the shotgun against a Remington 870): the guard was 1.6 cm deep (an 870's is about 2.6 at this scale)
+  // with the trigger mostly inside the receiver; the wrist hung as a lump under the receiver's rear instead of behind
+  // it; and the butt pad stood 3.9 cm above the stock's top line. Now a deep guard, the wrist behind the receiver running
+  // into the stock, and the pad on the stock's back face.
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.027, 0.005), accentMat);
+  tgFront.position.set(0, -0.0225, -0.0525);
   group.add(tgFront);
   const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.05), accentMat);
-  tgBottom.position.set(0, -0.024, -0.03);
+  tgBottom.position.set(0, -0.0335, -0.03);
   group.add(tgBottom);
-  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.022, 0.005), accentMat);
-  tgRear.position.set(0, -0.012, -0.005);
+  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.027, 0.005), accentMat);
+  tgRear.position.set(0, -0.0225, -0.0075);
   group.add(tgRear);
   const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.01, -0.04);
+  trigger.position.set(0, -0.019, -0.035);
+  trigger.name = 'trigger';
   group.add(trigger);
 
   // === Stock (single-piece, kid-airsoft style) ===
   const wrist = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.055, 0.08), stockMat);
-  wrist.position.set(0, -0.035, 0.015);
+  wrist.position.set(0, -0.025, 0.04);
   wrist.rotation.x = 0.18;
+  wrist.name = 'wrist';
   group.add(wrist);
   const stock = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.085, 0.14), stockMat);
   stock.position.set(0, -0.005, 0.105);
   stock.rotation.x = 0.18;
+  stock.name = 'stock';
   group.add(stock);
-  const buttpad = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.085, 0.012), accentMat);
-  buttpad.position.set(0, 0.022, 0.175);
-  buttpad.rotation.x = 0.18;
-  group.add(buttpad);
+  const buttpad = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.087, 0.012), accentMat);
+  buttpad.position.set(0, 0, 0.074);   // v1.224: on the stock's back face (was 3.9 cm above its top line)
+  buttpad.name = 'buttpad';
+  stock.add(buttpad);
 
   // === Default hipfire pose ===
   group.position.set(0.13, -0.21, -0.30);
@@ -18641,6 +18649,7 @@ function buildFPAR() {
   // === Lower receiver ===
   const lower = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.045, 0.13), bodyMat);
   lower.position.set(0, -0.005, -0.04);
+  lower.name = 'lower';
   group.add(lower);
 
   // === Upper receiver ===
@@ -18710,28 +18719,39 @@ function buildFPAR() {
   group.add(orangeTip);
 
   // === Magazine (blue, M4-style) ===
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.07, 0.034), magMat);
-  mag.position.set(0, -0.058, -0.04);
+  // v1.223 (D.31, the AR against an M4): the mag was 7 cm below the receiver (an M4's 30-rounder would be 11 cm at
+  // this scale), straight, and set against the grip, leaving the trigger and guard inside the lower receiver. Now it is
+  // 10.5 cm, tipped 7° forward for the M4 mag's curve, in a flared magwell at the front of the lower, and the guard and
+  // trigger hang below the receiver between the magwell and the grip, which rakes 20° (was 13°).
+  const magwell = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.022, 0.042), bodyMat);
+  magwell.position.set(0, -0.035, -0.066);
+  group.add(magwell);
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.105, 0.034), magMat);
+  mag.position.set(0, -0.0721, -0.0713);
+  mag.rotation.x = 0.12;
+  mag.name = 'mag';
   group.add(mag);
   const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.038), accentMat);
-  magBase.position.set(0, -0.097, -0.04);
-  group.add(magBase);
+  magBase.position.set(0, -0.0545, 0);
+  mag.add(magBase);
 
   // === Pistol grip ===
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.07, 0.034), bodyMat);
   grip.position.set(0, -0.055, 0.01);
-  grip.rotation.x = -0.22;
+  grip.rotation.x = -0.35;
+  grip.name = 'grip';
   group.add(grip);
 
   // === Trigger guard ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.028, -0.012);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.005), accentMat);
+  tgFront.position.set(0, -0.037, -0.04);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.04), accentMat);
-  tgBottom.position.set(0, -0.03, 0.005);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.045), accentMat);
+  tgBottom.position.set(0, -0.0445, -0.018);
   group.add(tgBottom);
-  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.012, -0.005);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.016, 0.006), accentMat);
+  trigger.position.set(0, -0.034, -0.022);
+  trigger.name = 'trigger';
   group.add(trigger);
 
   // === Buffer tube + stock ===
@@ -19436,8 +19456,8 @@ function getActiveFpGun() {
 // =====================================================================
 const FP_HANDS = {
   pistol:  { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.221: the grip's new place
-  shotgun: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
-  ar:      { r: { c: [0, -0.055, 0.010], rx: -0.22, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
+  shotgun: { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
+  ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
   sniper:  { r: { c: [0, -0.022, -0.02], rx: -0.45, gw: 0.019, gd: 0.022, up: -0.012 }, l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.045, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
