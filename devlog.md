@@ -9721,6 +9721,9 @@ build the shots; `equipRow` takes a `pic`.
   it (hue within 12/255 of the item's colour). Gear: all 16 rows (belt, holster, 6 eyewear, 4 armour, 4 shoes) have
   a picture, over a tenth of each drawn, no two alike, one for each of the four pairs of shoes. The guns' checks from
   v1.209 still pass. No page errors.
+- `npm test` for v1.208–v1.210, as four local shards at once: 110 of 116 suites passed. The six that did not were
+  harness stalls under load (five page loads past 30 s, one NEW GAME past 75 s twice): `music`, `briefing-lives`,
+  `burst-pose`, `stuck-sweep-13`, `stuck-sweep-14`, `walk-anim`. No check failed, and each passed when run alone.
 ### Still open
 - The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
   speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
