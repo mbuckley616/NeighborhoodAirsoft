@@ -10265,3 +10265,8 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   starts hash the same on v1.224's 4d675c5 and here. 40 local rounds ran 10.6–30 s; the 10.6 was Fernando advancing
   from 22.6 m, and the test's own runs gave 8.7 once. The fault the check guards (v1.177) is a line from a start,
   tagging at about 3 s; a kid who walks into range needs 5 s or more, so the check now reads 5 s. Passes locally.
+- CI fix-up (v1.228 head, 75eca49): `pickup-fernando`'s "with the AK he lands under half of the hits on you" failed
+  once in lane 4/8 at 13 of 24 (local runs 7–10 of 24). His first tag, about 14 s in, comes every round, so a third of
+  the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
+  is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
+  round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
