@@ -10027,3 +10027,33 @@ laser or light on them sits 8 mm lower.
 ### Still open
 - D.31 goes on: each gun against the real thing it copies (shape, proportions, details), one at a time with
   screenshots for Michael's eye. The loose parts were the plain faults; whether a gun "looks accurate" is his call.
+
+## v1.221 — The pistol, held up to a Glock
+Backlog D.31, second part (Michael, control room, 13 Oct: "revisit the gun designs and make sure they all look good /
+accurate"): each gun against the real one it copies, one at a time, with a picture for Michael. The pistol first, as
+everyone starts with it. It copies a Glock 17 (slide 186 mm, 138 mm tall with the magazine, slide 25.5 mm wide and about
+30 mm tall, grip about 18° off upright, barrel flush with the slide). The game draws it about ×1.13 so it fills the same
+part of the screen, so the comparison is in ratios to the slide's length. Against those it was off four ways: the slide
+was wider than it was tall (42 × 40 mm), so it read as a brick from behind; the frame and grip stood the gun 1.06
+slide-lengths tall (the Glock is 0.74), a 13 cm grip under a 5 cm frame; the barrel and orange tip ran 7 cm past the
+slide like a suppressor; and the grip raked 10°.
+
+Now the slide is 30 mm wide and 36 mm tall over a 38 mm frame (a Glock's frame is wider than its slide), the frame is
+36 mm tall, the grip is 9 cm long at 18° with its stippling and baseplate riding on it, the trigger guard is the Glock's
+square one (an upright at the front, the bar back to the grip), and the barrel shows 5 mm past the slide with a 1 cm
+orange tip. The slide's length, the sights, the rear sight's notch and the bore line are where they were, so aiming is
+unchanged. `FP_HANDS.pistol` follows the grip to its new place and rake. Pictures from the right side, before and after:
+`docs/guns/pistol-side-before.png`, `docs/guns/pistol-side.png`.
+### Verified
+- `tests/gun-pistol.test.mjs` (new, 6 checks; writes the side picture). Before (v1.220, run on the old file): slide
+  0.042 wide × 0.040 tall, height 1.06 slide lengths, 0.331 of the slide's length out in front, grip 10.3°; five of
+  five ratio checks failed. After: 0.030 × 0.036, width 0.143 of the length (Glock 0.137), height 0.80 (limit 0.70–0.85),
+  0.095 out in front (limit 0.10), grip 18.3°; all pass, no page errors.
+- Run alone after the change: `gun-parts` (no part over 3 mm off, all twelve guns), `fp-hands` (pistol: both hands on,
+  gap 0 mm, 60 box corners on screen at the hip, none on the sight line, forearms off the bottom), `backyard-guns` (the
+  front sight still on the reticle aimed), `under-parts`, `shop-pics`, `workbench-labels`, `grip`, `laser`: all pass.
+### Still open
+- Whether it now looks like the pistol Michael has in mind is his call: the two pictures above, and the gun in your
+  hand at the hip.
+- The kids' third-person pistol (`buildEnemyGunMesh`) is a separate, smaller model and was not touched.
+- D.31 goes on with the next gun.

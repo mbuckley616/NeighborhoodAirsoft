@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.220</div>
+  <div class="version">v1.221</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18207,8 +18207,12 @@ function buildFPGun() {
   // Origin is roughly behind the trigger guard so the grip hangs below it.
 
   // === Frame (lower polymer body) ===
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.05, 0.18), polymerMat);
-  frame.position.set(0, -0.005, -0.07);
+  // v1.221 (D.31, the pistol against a Glock 17, scaled ×1.13 to keep its length on screen): the slide was wider
+  // (42 mm) than it was tall, the frame and grip stood 40% too tall, the barrel ran 7 cm past the slide and the grip
+  // raked 10°. Now a 30 mm slide over a 38 mm frame, a 9 cm grip at 18°, and an orange tip 1.7 cm past the slide.
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.036, 0.18), polymerMat);
+  frame.position.set(0, 0.006, -0.07);
+  frame.name = 'frame';
   group.add(frame);
 
   // Front rail dust cover (slight notch under the slide forward of trigger)
@@ -18217,43 +18221,46 @@ function buildFPGun() {
   group.add(dustCover);
 
   // === Slide (top metal section) ===
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.04, 0.21), slideMat);
-  slide.position.set(0, 0.04, -0.08);
+  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.036, 0.21), slideMat);
+  slide.position.set(0, 0.042, -0.08);
+  slide.name = 'slide';
   slide.userData.baseZ = slide.position.z;
   group.add(slide);
 
   // Slide serrations — 4 small notches near the rear of the slide
   const serrationMeshes = [];
   for (let i = 0; i < 4; i++) {
-    const serr = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.038, 0.004), accentMat);
-    serr.position.set(0, 0.04, -0.005 - i * 0.012);
+    const serr = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.034, 0.004), accentMat);
+    serr.position.set(0, 0.042, -0.005 - i * 0.012);
     serr.userData.baseZ = serr.position.z;
     serrationMeshes.push(serr);
     group.add(serr);
   }
 
   // Ejection port (dark notch on right side of slide)
-  const ejPort = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.012, 0.04), accentMat);
-  ejPort.position.set(0.012, 0.052, -0.07);
+  const ejPort = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.010, 0.04), accentMat);
+  ejPort.position.set(0.008, 0.054, -0.07);
   ejPort.userData.baseZ = ejPort.position.z;
   group.add(ejPort);
 
   // === Barrel + orange tip ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.05, 10), slideMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.010, 10), slideMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.035, -0.205);
+  barrel.position.set(0, 0.035, -0.187);   // v1.221: 5 mm past the slide, was 4.5 cm
+  barrel.name = 'barrel';
   group.add(barrel);
 
   // Orange muzzle tip — the iconic airsoft signifier
-  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.022, 10), orangeMat);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.010, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.035, -0.24);
+  orangeTip.position.set(0, 0.035, -0.197);
+  orangeTip.name = 'tip';
   group.add(orangeTip);
 
   // Tiny muzzle hole (black dot at very tip)
   const muzzleHole = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.005, 8), accentMat);
   muzzleHole.rotation.x = Math.PI / 2;
-  muzzleHole.position.set(0, 0.035, -0.252);
+  muzzleHole.position.set(0, 0.035, -0.2025);
   group.add(muzzleHole);
 
   // === Sights ===
@@ -18275,15 +18282,13 @@ function buildFPGun() {
 
   // === Trigger guard ===
   // Approximated with a thin rectangular ring built from 4 boxes
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.008), polymerMat);
-  tgFront.position.set(0, -0.038, -0.04);
+  // v1.221: the Glock's squared guard, an upright at the front from the frame down to the bar, the bar back to the grip
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.030, 0.006), polymerMat);
+  tgFront.position.set(0, -0.027, -0.049);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.05), polymerMat);
-  tgBottom.position.set(0, -0.04, -0.02);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.005, 0.05), polymerMat);
+  tgBottom.position.set(0, -0.0395, -0.025);
   group.add(tgBottom);
-  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.024, 0.005), polymerMat);
-  tgRear.position.set(0, -0.026, 0.005);
-  group.add(tgRear);
 
   // Trigger itself
   const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
@@ -18291,24 +18296,24 @@ function buildFPGun() {
   group.add(trigger);
 
   // === Grip (angled down/back, textured by stacked thin layers) ===
-  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.13, 0.055), polymerMat);
-  grip.position.set(0, -0.085, 0.005);
-  grip.rotation.x = -0.18;
+  // v1.221: 9 cm (was 13) at 18° (was 10°), its top under the frame; the stippling and baseplate ride on it
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.09, 0.052), polymerMat);
+  grip.position.set(0, -0.0507, 0.0122);
+  grip.rotation.x = -0.32;
+  grip.name = 'grip';
   group.add(grip);
 
-  // Grip stippling — a few thin horizontal lines
+  // Grip stippling — a few thin horizontal lines on the back strap
   for (let i = 0; i < 5; i++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.003, 0.001), accentMat);
-    line.position.set(0, -0.06 - i * 0.018, 0.029 + i * 0.0033);   // v1.220: on the back strap, which rakes back
-    line.rotation.x = -0.18;
-    group.add(line);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.003, 0.001), accentMat);
+    line.position.set(0, 0.02 - i * 0.014, 0.0265);
+    grip.add(line);
   }
 
   // Magazine baseplate (slight protrusion at bottom of grip)
-  const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.012, 0.06), accentMat);
-  magBase.position.set(0, -0.152, 0.029);
-  magBase.rotation.x = -0.18;
-  group.add(magBase);
+  const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.010, 0.056), accentMat);
+  magBase.position.set(0, -0.047, 0);
+  grip.add(magBase);
 
   // === Default (hipfire) pose ===
   group.position.set(0.16, -0.18, -0.32);
@@ -19255,7 +19260,7 @@ function getActiveFpGun() {
 // mag when one is mounted (`underHand`).
 // =====================================================================
 const FP_HANDS = {
-  pistol:  { r: { c: [0, -0.085, 0.005], rx: -0.18, gw: 0.020, gd: 0.028, up: 0.02 },  l: 'cup' },
+  pistol:  { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.221: the grip's new place
   shotgun: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
   ar:      { r: { c: [0, -0.055, 0.010], rx: -0.22, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
   sniper:  { r: { c: [0, -0.022, -0.02], rx: -0.45, gw: 0.019, gd: 0.022, up: -0.012 }, l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
