@@ -9702,3 +9702,26 @@ context can be had, the row keeps its glyph.
 - D.23 goes on: the Ammo, Gear, Mods and Clothes rows still have glyphs (BB packs, loaders, eye pro, armour, shoes,
   the belt, the rail and under-barrel parts, hats, tops and shorts). Those come next, a tab at a time.
 - Whether the angle (muzzle left, turned 24° toward you, tipped 10°) is the one Michael likes is for his eye.
+
+## v1.210 — The shop shows its clothes and gear
+Backlog D.23, second part, after v1.209's guns. The Clothes tab's hats, tops and shorts had a coloured glyph (▲ ■ ▮)
+and the Gear tab's belt, holster, eye pro, armour and shoes had ⛊, ◓ and 👟. Each row now has a picture of the thing
+itself, taken by v1.209's renderer.
+
+Clothes and gear are photographed on a plain kid (light shirt, jeans, short brown hair) wearing the item, turned a
+little as at the mirror, with the camera fitted to the part it covers: the head and hat for a hat, the torso for a
+top, the shorts for shorts, the face for eye pro, the vest or the pads for armour, the belt for the Utility Belt and
+the Drop-Leg Holster (turned further to show the hip). The gear is the Loadout screen's own meshes (`buildKidGear`), so
+the shop and the Loadout kid always match. Shoes are shown as a catalogue shows shoes: the pair alone, tipped toward
+you, with the rest of the kid hidden; "Sneakers (default)" shows the plain pair. `shopClothesPic` and `shopGearPic`
+build the shots; `equipRow` takes a `pic`.
+### Verified
+- `tests/shop-pics.test.mjs`, now 20 checks. Clothes: all 15 rows (6 hats, 5 tops, 4 shorts) have a picture in place of
+  the glyph, 112×112, the kid filling over a quarter of each, no two alike, and each picture has its item's colour in
+  it (hue within 12/255 of the item's colour). Gear: all 16 rows (belt, holster, 6 eyewear, 4 armour, 4 shoes) have
+  a picture, over a tenth of each drawn, no two alike, one for each of the four pairs of shoes. The guns' checks from
+  v1.209 still pass. No page errors.
+### Still open
+- The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
+  speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
+- The belt and holster pictures are the busiest of the lot at 56 px; whether they read is for Michael's eye.

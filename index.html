@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.209</div>
+  <div class="version">v1.210</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19644,7 +19644,63 @@ function buildBareGunMesh(gunType) {
 // on one small offscreen renderer made the first time it is needed. Each picture is a data URL, cached by gun and size.
 const SHOP_PIC = { renderer: null, scene: null, cache: {} };
 function shopGunPic(gunType, w, h) {
-  const key = gunType + '@' + w + 'x' + h;
+  return shopPic('gun:' + gunType, w, h, () => {
+    const holder = new THREE.Group();
+    holder.add(buildBareGunMesh(gunType));
+    holder.rotation.set(0.18, Math.PI / 2 - 0.42, 0);   // the muzzle to the left, turned a little toward you
+    return { obj: holder, fit: [holder] };
+  });
+}
+// v1.210 (D.23, clothes): a hat, top or pair of shorts is photographed on a plain kid wearing it, the camera fitted to
+// the part of him it covers (fit: the meshes whose box the picture frames).
+function shopClothesPic(kind, id, w, h) {
+  return shopPic(kind + ':' + id, w, h, () => {
+    const look = { hairStyle: 'short', skinColor: 0xd9a77e, hairColor: 0x4a3020, shirtColor: 0xe9e6dc, pantsColor: 0x3d4f6e };
+    look[kind] = id;
+    const kid = createKid(look, 'pistol');
+    kid.gunGroup.visible = false;
+    kid.group.rotation.y = 0.45;   // turned a little, as at the mirror
+    let fit;
+    if (kind === 'hat') fit = [kid.hat, kid.head];
+    else if (kind === 'top') fit = [kid.torso, kid.top].filter(Boolean);
+    else fit = (Array.isArray(kid.shorts) ? kid.shorts : [kid.shorts]).filter(Boolean);
+    return { obj: kid.group, fit, pad: kind === 'hat' ? 1.3 : kind === 'top' ? 1.2 : 1.25 };
+  });
+}
+// v1.210 (D.23, gear): eye pro, armour, shoes and the belt and holster, on the same plain kid with the Loadout
+// screen's gear meshes (buildKidGear), framed on the piece. kind: eyewear | armor | shoes | belt (id = slots, 3 or 4).
+function shopGearPic(kind, id, w, h) {
+  return shopPic('gear:' + kind + ':' + id, w, h, () => {
+    const kid = createKid({ hairStyle: 'short', skinColor: 0xd9a77e, hairColor: 0x4a3020, shirtColor: 0xe9e6dc, pantsColor: 0x3d4f6e }, 'pistol');
+    kid.gunGroup.visible = false;
+    const gear = { eyewear: 'none', chest: null, arms: null, legs: null, shoes: 'none', belt: 2 };
+    let rotY = 0.45;
+    if (kind === 'eyewear') gear.eyewear = id;
+    else if (kind === 'armor') gear[ARMOR[id].zone] = id;
+    else if (kind === 'shoes') gear.shoes = id;
+    else if (kind === 'belt') { gear.belt = id; rotY = id >= 4 ? 1.0 : 0.6; }   // turned to show the hip
+    kid.group.rotation.y = rotY;
+    if (kind === 'shoes') { kid.group.rotation.y = 0.75; kid.group.rotation.x = 0.55; }   // tipped toward you, to see the pair from above
+    const out = buildKidGear(kid, gear);
+    kid.group.updateMatrixWorld(true);
+    let fit;
+    if (kind === 'eyewear') fit = [kid.head];
+    else if (kind === 'armor') fit = out[ARMOR[id].zone];
+    else if (kind === 'shoes') fit = out.shoes.length ? out.shoes : [kid.pose.shoeL, kid.pose.shoeR];
+    else fit = out.belt;
+    if (!fit || !fit.length) fit = [kid.torso];
+    if (kind === 'shoes') {   // just the pair, as a catalogue shows shoes: the rest of the kid is hidden
+      const keep = new Set();
+      for (const f of fit) { f.traverse(o => keep.add(o)); for (let p = f.parent; p; p = p.parent) keep.add(p); }
+      kid.group.traverse(o => { if (o.isMesh && !keep.has(o)) o.visible = false; });
+      // a gear pair hangs under the plain shoe it covers: that shoe stays on, hidden only by the gear over it
+    }
+    const pad = kind === 'shoes' ? 1.2 : kind === 'eyewear' ? 1.25 : 1.3;
+    return { obj: kid.group, fit, pad };
+  });
+}
+function shopPic(key0, w, h, make) {
+  const key = key0 + '@' + w + 'x' + h;
   if (SHOP_PIC.cache[key]) return SHOP_PIC.cache[key];
   if (!SHOP_PIC.renderer) {
     try {
@@ -19658,15 +19714,14 @@ function shopGunPic(gunType, w, h) {
   }
   const r = SHOP_PIC.renderer;
   r.setSize(w * 2, h * 2, false);   // drawn at twice the size it shows, for a crisp picture
-  const gun = buildBareGunMesh(gunType);
-  const holder = new THREE.Group();
-  holder.add(gun);
-  holder.rotation.set(0.18, Math.PI / 2 - 0.42, 0);   // the muzzle to the left, turned a little toward you
+  const shot = make();
+  const holder = shot.obj;
   SHOP_PIC.scene.add(holder);
   holder.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(holder);
+  const box = new THREE.Box3();
+  for (const o of shot.fit) box.expandByObject(o);
   const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
-  const aspect = w / h, pad = 1.12;
+  const aspect = w / h, pad = shot.pad || 1.12;
   const halfW = Math.max(sz.x / 2, (sz.y / 2) * aspect) * pad, halfH = halfW / aspect;
   const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.01, 10);
   cam.position.set(c.x, c.y, c.z + 3);
@@ -19678,12 +19733,15 @@ function shopGunPic(gunType, w, h) {
   return url;
 }
 function shopGunIcon(iconEl, gunType, w, h) {
-  const url = shopGunPic(gunType, w, h);
+  shopIconImg(iconEl, shopGunPic(gunType, w, h), (GUN_MAGS[gunType] && GUN_MAGS[gunType].displayName) || gunType, { gun: gunType });
+}
+function shopIconImg(iconEl, url, alt, data) {
   if (!url) return;
   iconEl.textContent = '';
+  iconEl.style.color = '';
   const img = document.createElement('img');
-  img.src = url; img.alt = (GUN_MAGS[gunType] && GUN_MAGS[gunType].displayName) || gunType;
-  img.dataset.gun = gunType;
+  img.src = url; img.alt = alt;
+  Object.assign(img.dataset, data);
   iconEl.appendChild(img);
   iconEl.classList.add('pic');
 }
@@ -22417,6 +22475,7 @@ function renderClothesTab(c) {
     row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">${k.icon}</div>
       <div class="shop-item-info"><div class="shop-item-name">${h.name} ${status}</div><div class="shop-item-desc">${h.desc}</div></div>
       <div class="shop-item-price">${h.won ? 'WON' : '$' + h.price}</div>`;
+    shopIconImg(row.firstElementChild, shopClothesPic(k.data, id, 56, 56), h.name, { item: k.data + ':' + id });   // v1.210
     const btn = document.createElement('button');
     btn.className = 'shop-item-buy';
     if (wearing) btn.textContent = 'TAKE OFF';
@@ -22482,7 +22541,15 @@ function shopSectionHeader(text, sub) {
 function renderBeltAndHolster(c) {
   // v1.106: the slot unlocks are a belt and a holster (D.5)
   const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
-  if (slots.length) { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
+  if (slots.length) {
+    c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots'));
+    slots.forEach(i => {
+      const row = shopCatalogRow(i);
+      const n = +i.id.slice(5);   // v1.210: slot_3 is the belt, slot_4 the holster (with the belt under it)
+      shopIconImg(row.firstElementChild, shopGearPic('belt', n, 56, 56), i.name, { item: 'belt:' + n });
+      c.appendChild(row);
+    });
+  }
 }
 function renderSpeedLoaders(c) {
   const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
@@ -22734,7 +22801,7 @@ function renderEquipmentTab(c) {
       price: e.price, owned, equipped,
       onBuy: () => buyEquipment('eyewear', id),
       onEquip: () => equipEyewear(id),
-      label: e.name,
+      label: e.name, pic: ['eyewear', id],
     }));
   }
   // --- Armor (adds hit-points) ---
@@ -22756,7 +22823,7 @@ function renderEquipmentTab(c) {
       price: a.price, owned, equipped, locked,
       onBuy: () => buyEquipment('armor', id),
       onEquip: () => { toggleArmor(id); },
-      equipLabel: equipped ? 'EQUIPPED ✕' : 'EQUIP',
+      equipLabel: equipped ? 'EQUIPPED ✕' : 'EQUIP', pic: ['armor', id],
     }));
   }
   // --- Shoes (stamina/sprint) ---
@@ -22771,18 +22838,19 @@ function renderEquipmentTab(c) {
       desc: s.desc || 'Standard sneakers — no bonuses.',
       price: s.price, owned, equipped,
       onBuy: () => buyEquipment('shoes', id),
-      onEquip: () => equipShoes(id),
+      onEquip: () => equipShoes(id), pic: ['shoes', id],
     }));
   }
 }
 
 // Generic equip-style row: BUY when unowned, EQUIP/EQUIPPED when owned.
-function equipRow({ icon, name, desc, price, owned, equipped, locked, onBuy, onEquip, equipLabel }) {
+function equipRow({ icon, name, desc, price, owned, equipped, locked, onBuy, onEquip, equipLabel, pic }) {
   const row = document.createElement('div');
   row.className = 'shop-item' + (owned ? ' owned' : '') + (locked ? ' locked' : '');
   row.innerHTML = `<div class="shop-item-icon">${icon}</div>` +
     `<div class="shop-item-info"><div class="shop-item-name">${name}${equipped?' <span class="shop-eq-tag">EQUIPPED</span>':''}</div>` +
     `<div class="shop-item-desc">${desc}</div></div>`;
+  if (pic) shopIconImg(row.firstElementChild, shopGearPic(pic[0], pic[1], 56, 56), name, { item: pic[0] + ':' + pic[1] });   // v1.210
   if (!owned) {
     const p = document.createElement('div');
     p.className = 'shop-item-price';

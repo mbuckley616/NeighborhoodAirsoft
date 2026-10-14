@@ -74,6 +74,56 @@ check('the gun fills the large picture across, or top to bottom when it is the t
 check('the picture sits between the header and the gun’s row, which has the small picture too', big.every(r => r.photoBeforeRow && r.rowPic));
 check('its caption names the gun', big[1].cap.startsWith('AK') || big[1].cap.includes('AK'), big[1].cap);
 
+// v1.210: the Clothes tab's hats, tops and shorts, each on a plain kid, framed on the part it covers
+await page.evaluate(() => { shopState.view = 'list'; shopState.detailGun = null; });
+await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Clothes').click());
+const clothesRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
+  name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img'),
+  glyph: r.querySelector('.shop-item-icon').textContent })));
+const want = await page.evaluate(() => KID_HAT_ORDER.length + KID_TOP_ORDER.length + KID_SHORTS_ORDER.length);
+check(`the Clothes tab's ${want} rows each have a picture in place of the glyph`, clothesRows.length === want && clothesRows.every(r => r.pic && r.glyph === ''),
+  clothesRows.filter(r => !r.pic || r.glyph));
+const cl = await measure();
+check('the clothes pictures are drawn at 112×112 and the kid fills them (over 25% of the pixels)', cl.length === want &&
+  cl.every(i => i.w === 112 && i.h === 112 && i.fill > 0.25), cl.map(i => [i.hash.slice(-8), i.fill]));
+check('no two clothes share a picture', new Set(cl.map(i => i.hash)).size === want);
+// each picture shows its item's colour: the commonest strong colour near the frame's centre is close to the item's
+const tint = await page.evaluate(() => {
+  const all = [...KID_HAT_ORDER.map(id => ['hat', id, KID_HATS[id].color]), ...KID_TOP_ORDER.map(id => ['top', id, KID_TOPS[id].color]),
+    ...KID_SHORTS_ORDER.map(id => ['shorts', id, KID_SHORTS[id].color])];
+  return all.map(([k, id, col]) => {
+    const img = document.querySelector(`#shopScreen img[data-item="${k}:${id}"]`);
+    const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+    const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+    const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+    const want = [(col >> 16) & 255, (col >> 8) & 255, col & 255];
+    let best = 1e9;   // the nearest drawn pixel to the item's colour, lit or shaded (scaled to the same brightness)
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 200) continue;
+      const px = [d[i], d[i + 1], d[i + 2]], sw = want.reduce((a, b) => a + b, 1), sp = px.reduce((a, b) => a + b, 1);
+      const dist = Math.hypot(...px.map((v, j) => v / sp - want[j] / sw)) * 255;
+      if (dist < best) best = dist;
+    }
+    return [k + ':' + id, Math.round(best)];
+  });
+});
+check('each picture has its item’s colour in it (hue within 12/255)', tint.every(t => t[1] <= 12), tint);
+await g.shot('shop-pics-clothes');
+
+// v1.210: the Gear tab's belt and holster, eye pro, armour and shoes, on the same kid, framed on the piece
+await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Gear').click());
+const gearRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
+  name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img') })));
+const wantGear = await page.evaluate(() => 2 + Object.keys(EYEWEAR).length + Object.keys(ARMOR).length + Object.keys(SHOES).length);
+check(`the Gear tab's ${wantGear} rows each have a picture`, gearRows.length === wantGear && gearRows.every(r => r.pic), gearRows.filter(r => !r.pic));
+const ge = await measure();
+check('the gear pictures are drawn at 112×112 with something on them (over 10% of the pixels)', ge.length === wantGear &&
+  ge.every(i => i.w === 112 && i.h === 112 && i.fill > 0.1), ge.map(i => i.fill));
+check('no two gear rows share a picture', new Set(ge.map(i => i.hash)).size === wantGear);
+const shoes = await page.evaluate(() => [...document.querySelectorAll('#shopScreen img[data-item^="shoes:"]')].map(i => i.dataset.item));
+check('the shoes rows show the pairs: one picture for each of the four', shoes.length === 4, shoes);
+await g.shot('shop-pics-gear');
+
 // The workbench still mounts parts on its own copy (the bare model was split out of it)
 const wb = await page.evaluate(() => {
   const m = buildWorkbenchGun('ar');
