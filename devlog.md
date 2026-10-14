@@ -10230,3 +10230,36 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
+
+## v1.229 — The voices build brought up to main, and the school's own kids get lines of their own
+Michael approved the voices build (v1.150–v1.151, eb29fc2) on 3 Oct, but by then it no longer merged onto main: both
+sides had changed the title-screen version label and the end of the devlog, and the producer only merges the exact commit
+he approved, so it stopped and raised a blocker that nobody owned once the Fable card was done. Main went on for eleven
+days and 324 commits. Asked about the blocker on 14 Oct, Michael had it fixed locally.
+
+Main (v1.222) is merged into `auto/fable-d9-voices`. The conflicts were the version label (main's NEW GAME ask and
+SETTINGS button kept), `startScenario`'s round reset (the voice cooldowns and the start call from this branch, the match
+stats and the ladder flag from main: all four lines kept), the devlog (main's entries, then v1.150–v1.151) and D.9 in the
+backlog. The builder's v1.223–v1.224 (4d675c5), which Michael approved the same morning and the producer has not yet
+merged, is merged in as well, so this branch goes onto main cleanly whichever of the two lands first.
+
+One thing the conflicts did not show: Hollins Ridge High's six kids (v1.190, Jordan, Caleb, Nathan, Sophie, Grant and
+Malik) came after the v1.150 tables and had no lines of their own; they drew only on their aggression band's defaults,
+and `tests/voices.test.mjs` failed on them (0 own lines in each of the four situations). Each now has 4–5 lines a
+situation drawn from his or her flavor text: Jordan's portables, Caleb always nearly making it across, Nathan's "everyone
+crosses the field", Sophie coming round the wrong side, Grant at the cars, Malik's close range. Their TTS voice and pitch
+already came from their id and height, so nothing else was missing.
+### Verified
+- `tests/voices.test.mjs`: 30 kids, 664 lines in the tables (was 562 on the merge), every kid at least 4 own lines in
+  every situation, no duplicates, nothing over 8 words, nothing rude. New: the school's 3v3 joins the headless rounds
+  (16–18 lines, none repeated, pacing and pools right), and each hostile school kid is called by hand at 2 m six times a
+  situation: Caleb 16 lines (12 his own), Nathan 24 (17), Sophie 24 (16). Passed three runs.
+- Full suite in six local shards at once: no check failed anywhere; 27 suites were cut off by the runner's 10-minute
+  limit or a 30 s page load with six browsers on one machine. The twelve non-sweep suites among them pass run alone
+  (ai-clock, idle-ally, pickup-lives, ctf-clock, fp-hands, grip, last-kid, pickup, retreat-progress, pickup-fernando,
+  market-lot, pointer-lock). The sixteen stuck-kid sweeps are left to CI's shards on the push.
+### Still open
+- Michael's ear on the school kids' lines, and a fresh Approve on this head (the 3 Oct approval was of eb29fc2).
+- Whichever of this and the builder's later work (v1.225+) merges second still meets the version label and the devlog
+  tail; the builder merges main into its branch itself, so it should land this first if it can.
+- The walkie callouts (D.10) can start once this is on main.

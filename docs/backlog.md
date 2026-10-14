@@ -154,7 +154,8 @@ Fable card on the control room and Michael starts it from there.
    (Fable: every one of the 24 kids has his own lines in all four situations, 544 lines where there were 162, a
    per-kid memory so no line repeats within four, teammates talk to you instead of taunting you;
    `tests/voices.test.mjs`); v1.151 adds a kid calling a tag on another kid and a start call when the opening hold
-   lifts. Recorded voices (B/C: a script for VoiceStudio and a clip loader) are a later card.
+   lifts. Recorded voices (B/C: a script for VoiceStudio and a clip loader) are a later card. v1.229 brings the branch
+   up to main (v1.224) and gives Hollins Ridge High's six kids (v1.190, after the tables) their own lines.
 10. "Potentially flagging for online, but could make sense for regular gameplay too - teammate callouts can be regular
    voice when in earshot, but otherwise should come in as walkie talkie callouts. I also think we should add walkie
    talkies as something the player carries. This could be a very fun and lighthearted feature for online play, if we

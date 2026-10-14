@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.224</div>
+  <div class="version">v1.229</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5103,6 +5103,49 @@ const VOICE_LINES = {
     npcHit:        ["Tch. Nice shot.", "Okay. That counts.", "Fernando, he got me.", "Hm. Fine.", "Good one."],
     playerSpotted: ["Fernando, there.", "Got him.", "He's right there. Go.", "See him. Left side."],
     taunt:         ["Any day now.", "Fernando, he's hiding again.", "Come on. Let's go.", "We know where you are.", "Told you he'd hide."],
+  },
+  // v1.229: Hollins Ridge High's six (v1.190) came after the v1.150 tables; their own lines, from their flavor.
+  // Jordan: easygoing, knows the portables.
+  jordan: {
+    playerHit:     ["Got you by the portables.", "That's a tag, man.", "Told you. My portables.", "Right off the steps.", "Okay, that one's mine."],
+    npcHit:        ["Okay. Okay, that one's yours.", "Aw, off the steps too.", "Yeah, you got me.", "Alright, alright, I'm out."],
+    playerSpotted: ["He's under the portables!", "By the steps, right there!", "Got him, between the buildings.", "There, by the portable!"],
+    taunt:         ["Nobody knows these portables like me.", "Come around the steps, man.", "I'm in here somewhere, man.", "Every portable looks the same, huh?"],
+  },
+  // Caleb: fast, pushy, always nearly made it.
+  caleb: {
+    playerHit:     ["Too slow, man!", "Got you! Ran right past!", "Ha! Right across the field!", "Tagged! Keep up!", "Yes! Called it!"],
+    npcHit:        ["Ugh! I was right THERE!", "No way! I was moving!", "Aw, I almost made it!", "Okay! Okay! I'm hit!"],
+    playerSpotted: ["Going around, going around!", "He's by the bleachers!", "Got him! Cutting across!", "Field side! Field side!"],
+    taunt:         ["Can't catch me, man!", "Faster than you, dude!", "I'm already behind you!", "Race you to the fence!"],
+  },
+  // Nathan: glasses, patient, has worked out where you'll go.
+  nathan: {
+    playerHit:     ["You crossed the field.", "Everyone crosses the field.", "Predictable. Sorry.", "Hm. Got you.", "That angle was open."],
+    npcHit:        ["Hm. Fair.", "Okay. Didn't plan for that.", "Huh. Good angle.", "Noted. I'm out."],
+    playerSpotted: ["He's going for the field.", "Movement, by the doors.", "There. Between the portables.", "Got him. Second window."],
+    taunt:         ["The field is wide open.", "I've done the math.", "Don't cross the field.", "You'll have to come to me."],
+  },
+  // Sophie: the best shot at the school, comes round the end of the portable.
+  sophie: {
+    playerHit:     ["Wrong side, dude.", "Got you. Check your corners.", "Wow. That was easy.", "Right where I thought.", "Nope. Mine."],
+    npcHit:        ["Wow. Okay. Nice.", "Okay, that's fair.", "Ugh, I hate that angle.", "Fine. Good shot."],
+    playerSpotted: ["End of the portable, there!", "He's on the wrong side!", "Got him. Coming round.", "I see you, by the doors."],
+    taunt:         ["I'm coming round the end.", "Better check your corners.", "You picked the wrong side.", "I'm faster round the back."],
+  },
+  // Grant: big, quiet, never leaves the cars.
+  grant: {
+    playerHit:     ["Whole field's mine.", "Didn't even move.", "From the cars. Again.", "Yep. Clean.", "Long way from here."],
+    npcHit:        ["Huh. Didn't see you.", "Huh. Okay.", "Guess I'm out.", "Didn't think you'd get here."],
+    playerSpotted: ["Got him on the field.", "He's out in the grass.", "Lined up. By the cars.", "Saw that. Grass, left."],
+    taunt:         ["I'm not leaving the cars.", "Nothing but grass out there.", "Come on across.", "I can see the whole field."],
+  },
+  // Malik: the shotgun, wants you close.
+  malik: {
+    playerHit:     ["Close up, that's my range.", "Too close, man.", "Boom. Shotgun rules.", "Up close, every time.", "Got you round the corner."],
+    npcHit:        ["Aw, man. Clean.", "Couldn't get close enough.", "Okay, okay. Nice.", "Aw, from way out there?"],
+    playerSpotted: ["He's close! Right there!", "Round the corner, I got him.", "In my range now.", "Right by the doors!"],
+    taunt:         ["Come a little closer.", "Corners are my thing, man.", "Bring it in close.", "I'll be round the corner."],
   },
 };
 

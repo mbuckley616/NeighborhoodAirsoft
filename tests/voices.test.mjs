@@ -4,7 +4,7 @@
 //      >= 6, no pool holds a duplicate, no line is over VOICE_LINE_WORD_CAP words, nothing rude;
 //   2. the picker: 300 draws per (kid, situation) never repeat the last line, nor any of the last three when the
 //      pool allows, and the kid's own lines carry most of the draws;
-//   3. headless rounds (a team 3v3, a 1v1, the whole block, a free-for-all, Infection) with the player untaggable:
+//   3. headless rounds (a team 3v3, a 1v1, the whole block, a free-for-all, Infection, v1.229 the school's 3v3) with the player untaggable:
 //      VOICE.log shows no kid saying the same line twice running, 4 s between a kid's lines, 1.5 s between anyone's,
 //      every line from the right pool, allies talking to you (teammate lines) and never taunting you.
 //   4. v1.151: the nearest hostile kid calls the start when the 2.5 s opening hold lifts (once, never a teammate, never
@@ -88,7 +88,7 @@ const ROUND = async (id, secs) => {
   }));
 };
 const rounds = {};
-for (const [id, secs] of [['winnmark_team_3v3', 90], ['bunratty_sean', 60], ['winnmark_whole_block', 90], ['lot_ffa', 60], ['bunratty_infection', 45]]) {
+for (const [id, secs] of [['winnmark_team_3v3', 90], ['bunratty_sean', 60], ['winnmark_whole_block', 90], ['lot_ffa', 60], ['bunratty_infection', 45], ['school_portables_3v3', 60]]) {   // v1.229: the school's own kids too
   const r = await ROUND(id, secs);
   rounds[id] = r;
   const bySpeaker = {};
@@ -140,6 +140,28 @@ const direct = await page.evaluate(() => {
 console.log('  by hand, 3v3:', JSON.stringify(direct));
 check('an ally\'s taunt comes out as a teammate line, from the teammate pool', direct.filter(d => d[1] === 'teammate' && d[3]).length === 4, direct);
 check('a hostile kid\'s taunt is still a taunt', direct.filter(d => d[1] === 'taunt' && !d[3]).length === 4, direct);
+// v1.229: the school's own kids (v1.190) came after the v1.150 tables. Out of earshot of a player at spawn they say
+// little in a round, so each hostile one in the school's 3v3 is called by hand at 2 m, six times a situation.
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+await g.scenario('school_portables_3v3');
+const school = await page.evaluate(() => {
+  Game.player.maxHits = 999; VOICE.log.length = 0;
+  const ids = ['jordan', 'caleb', 'nathan', 'sophie', 'grant', 'malik'];
+  const kids = Game.scenario.enemies.filter(e => ids.includes(e.charId) && (e.team || 'enemy') !== 'player');
+  for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
+    k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
+    tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
+  }
+  const out = {};
+  for (const k of kids) {
+    const said = VOICE.log.filter(e => e.charId === k.charId);
+    out[k.charId] = { said: said.length, own: said.filter(e => voiceLinePools(e.charId, e.category).own.includes(e.line)).length, sample: said.slice(0, 3).map(e => e.line) };
+  }
+  return out;
+});
+console.log("  by hand, the school's 3v3:", JSON.stringify(school));
+check("the school's own kids are in its 3v3", Object.keys(school).length >= 2, Object.keys(school));
+check('each of them speaks, a good share of it his or her own lines', Object.values(school).every(k => k.said >= 12 && k.own >= k.said / 3), school);
 // ---- 4. v1.151: the start call and a tag on another kid ----
 const starts = [];
 for (const [id, near] of [['winnmark_team_3v3', true], ['winnmark_team_3v3', false], ['bunratty_infection', true], ['lot_ffa', true]]) {
