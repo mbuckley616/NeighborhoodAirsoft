@@ -10134,3 +10134,8 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
 ### Still open
 - Michael's eye on the pictures. The stock is still a block with a square butt; an 870's comb, belly curve and toe
   would need shaped geometry, not boxes, and are left for him to ask for. D.31 goes on with the next gun.
+- CI fix-up (v1.224 head, 28c0c50): `high-school`'s "every kid moves or fires" failed once in lane 3/8 on the night
+  match: Nathan (Mitchell's numbers since v1.190, sits at the back) had walked 2 m and fired nothing at 60 s; three
+  local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
+  has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
+  forced on goes to 101–120 s per match and passes.
