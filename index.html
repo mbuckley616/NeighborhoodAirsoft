@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.211</div>
+  <div class="version">v1.212</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19796,6 +19796,29 @@ function shopAmmoPic(id, w, h) {
     return { obj: holder, fit: [holder], pad: 1.1 };
   });
 }
+// v1.212 (D.23): the gun page's magazines. The mag is the one you hold to reload in a match (buildFPMag), taller for
+// more BBs, drawn in one fixed frame so a bigger mag looks bigger; a spare-mag row shows a pair of them, since you buy
+// spares to carry several.
+function shopMagPic(cap, pair, w, h) {
+  return shopPic('mag:' + cap + (pair ? ':pair' : ''), w, h, () => {
+    const holder = new THREE.Group();
+    const tall = Math.max(0.7, Math.min(1.35, 0.7 + 0.5 * Math.log10(Math.max(1, cap) / 10)));
+    const one = (x, rz) => {
+      const m = buildFPMag();
+      m.position.set(x, 0, 0); m.rotation.set(0, 0.5, rz); m.visible = true;
+      m.scale.set(1, tall, 1);
+      m.position.y = (tall - 1.35) * 0.084;   // every mag stands on the same floor
+      holder.add(m);
+    };
+    if (pair) { one(-0.034, 0.12); one(0.034, -0.08); } else one(0, 0.06);
+    // the frame: the same box for every mag, the size of the tallest pair
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.06), new THREE.MeshBasicMaterial({ visible: false }));
+    frame.position.y = -0.0134;
+    holder.add(frame);
+    holder.rotation.x = 0.12;
+    return { obj: holder, fit: [frame], pad: 1.05 };
+  });
+}
 function shopPic(key0, w, h, make) {
   const key = key0 + '@' + w + 'x' + h;
   if (SHOP_PIC.cache[key]) return SHOP_PIC.cache[key];
@@ -22803,6 +22826,7 @@ function renderGunDetail(c, gt) {
         `<div class="shop-item-info"><div class="shop-item-name">${mag.cap}-Round Mag</div>` +
         `<div class="shop-item-desc">Bring ${mag.cap} BBs into a match instead of ${cfg.baseCap}.${mag.requires?' Requires the smaller mag.':''}</div></div>` +
         `<div class="shop-item-price">$${mag.price}</div>`;
+      shopIconImg(row.firstElementChild, shopMagPic(mag.cap, false, 56, 56), mag.cap + '-Round Mag', { item: 'mag:' + mag.flag });   // v1.212
       const btn = document.createElement('button');
       btn.className = 'shop-item-buy';
       const cantAfford = Game.persist.cash < mag.price;
@@ -22827,6 +22851,8 @@ function renderGunDetail(c, gt) {
         `<div class="shop-item-info"><div class="shop-item-name">${sp.label}${held?` <span class="shop-owned-tag">×${held}</span>`:''}</div>` +
         `<div class="shop-item-desc">${sLocked?'Requires the matching capacity mag first.':'Buy multiple to carry several.'}</div></div>` +
         `<div class="shop-item-price">$${sp.price}</div>`;
+      const spCap = (sp.needsFlag && (cfg.mags.find(m => m.flag === sp.needsFlag) || {}).cap) || cfg.baseCap;   // v1.212
+      shopIconImg(row.firstElementChild, shopMagPic(spCap, true, 56, 56), sp.label, { item: 'spare:' + sp.key });
       const btn = document.createElement('button');
       btn.className = 'shop-item-buy';
       const cantAfford = Game.persist.cash < sp.price;

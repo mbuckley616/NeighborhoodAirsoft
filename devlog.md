@@ -9757,3 +9757,20 @@ shots.
 ### Still open
 - The gun details page's Magazines and Spare Mags rows still show ▮ and ▯. They are the last glyphs in the shop.
 - Whether the pale gun behind each part reads at 56 px is for Michael's eye.
+
+## v1.212 — The gun page shows its magazines
+Backlog D.23, its last part. A gun's details page lists its bigger magazines and its spare mags, and those rows still
+had ▮ and ▯ after v1.211. Each now has a picture of the mag: the one your kid holds up to reload in a match
+(`buildFPMag`), standing a little turned. It is taller the more BBs it holds (10 rounds is the shortest, 100 the
+tallest), and every mag is drawn in the same frame on the same floor, so a bigger mag looks bigger next to a smaller
+one. A spare-mag row shows a pair leaning together, since spares are bought to carry several, at the size of the mag
+they fit. With this, every row in the shop has a picture of what it sells; only the BB colour swatches, which were
+always colour cells, are left as they were. `shopMagPic` builds the shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 33 checks. The pistol (two mags, two spares), AR and MAC-10 pages: every row has a
+  picture, 112×112, 16–45% drawn. The pistol's 20-round mag stands 0.70 of the frame, its 10-round 0.59; the AR's 40
+  stands 0.81 and the MAC-10's 100 0.96. A spare's pair spans 0.63–0.65 of the frame across, a single mag 0.33–0.35.
+  All of v1.209–v1.211's checks still pass.
+### Still open
+- The mags are one black shape for every gun (an AK's curve, a shotgun's shell tube, the six-shooter's cylinder are
+  not modelled). Whether that bothers him is for Michael's eye.

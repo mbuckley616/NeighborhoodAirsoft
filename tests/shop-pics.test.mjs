@@ -164,6 +164,37 @@ const held = await page.evaluate(() => getMountedAccessories('ar').length);
 check('drawing them mounts nothing on your own AR', held === 0, held);
 await g.shot('shop-pics-mods');
 
+// v1.212: the gun page's Magazines and Spare Mags rows, a mag taller for more BBs, a pair for a spare
+const magRes = [];
+for (const gt of ['pistol', 'ar', 'mac10']) {
+  await page.evaluate(gt => { shopState.view = 'gun'; shopState.detailGun = gt; renderShop(); }, gt);
+  magRes.push(await page.evaluate(gt => {
+    const rows = [...document.querySelectorAll('#shopItems .shop-item')].filter(r => r.querySelector('img[data-item^="mag:"], img[data-item^="spare:"]') ||
+      ['▮', '▯'].includes(r.querySelector('.shop-item-icon').textContent));
+    const cfg = GUN_MAGS[gt];
+    // the drawn rows' heights: the topmost drawn pixel of each picture
+    const tops = rows.map(r => {
+      const img = r.querySelector('img'); if (!img) return null;
+      const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+      const d = cx.getImageData(0, 0, cv.width, cv.height).data;
+      let top = cv.height, x0 = cv.width, x1 = -1, n = 0;
+      for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) if (d[(y * cv.width + x) * 4 + 3] > 40) { n++; if (y < top) top = y; if (x < x0) x0 = x; if (x > x1) x1 = x; }
+      return { item: img.dataset.item, w: cv.width, height: +(1 - top / cv.height).toFixed(2), across: +((x1 - x0 + 1) / cv.width).toFixed(2), fill: +(n / cv.width / cv.height).toFixed(3) };
+    });
+    return { gt, want: cfg.mags.length + cfg.spares.length, rows: rows.length, tops };
+  }, gt));
+}
+check('every Magazines and Spare Mags row on the pistol, AR and MAC-10 pages has a picture', magRes.every(m => m.rows === m.want && m.tops.every(Boolean)),
+  magRes.map(m => [m.gt, m.rows, m.want]));
+const pm = magRes[0].tops;
+check('the pistol\'s 20-round mag stands taller than its 10-round mag', pm[1].height > pm[0].height + 0.03, pm.map(t => [t.item, t.height]));
+check('a spare-mag picture is a pair: wider than the single mag of the same size', pm[2].across > pm[0].across * 1.5, pm.map(t => [t.item, t.across]));
+check('the mag pictures are drawn at 112×112 with the mag over 5% of the pixels', magRes.every(m => m.tops.every(t => t.w === 112 && t.fill > 0.05)),
+  magRes.map(m => m.tops.map(t => t.fill)));
+console.log('    mags (item, height, across):', magRes.map(m => m.tops.map(t => `${t.item} ${t.height} ${t.across}`).join('; ')).join(' | '));
+await g.shot('shop-pics-mags');
+
 // The workbench still mounts parts on its own copy (the bare model was split out of it)
 const wb = await page.evaluate(() => {
   const m = buildWorkbenchGun('ar');
