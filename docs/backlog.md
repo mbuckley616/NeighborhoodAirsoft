@@ -80,6 +80,10 @@ Fable card on the control room and Michael starts it from there.
    Campaign (the current game) and Online Multiplayer, and maybe a third for Options/Settings. (Michael, 2026-09-28) **(design)**
    **(Fable)** — networking, a session model and the title screen touch every scenario; held by Michael’s C (30 Sep) until the
    v2 zones are done.
+   Michael: **A** on the matchmaker (PeerJS's free public one, four-letter room codes; control room, 14 Oct). ~~Step 1, a 1v1
+   on Winnmark by room code~~ — done, v1.230 (PLAY ONLINE on the Pickup Game board; the host's game referees; nothing on
+   the line; `tests/online.test.mjs`). Step 2 (teams, the board's kids filling the empty spots) and step 3 (a room list,
+   which needs Michael's own matchmaker, option B, and a Campaign / Online / Settings title) wait for his look at step 1.
 3. Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
    **(design)** — Michael: **D**, one map end to end, Winnmark first, each step shown to him before
    the next (control room, 30 Sep). ~~Step 1, Winnmark's houses~~ — done, v1.104 (hip roofs with eaves, cross gable,

@@ -10270,3 +10270,71 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
+
+## v1.230 — Online play, step 1: a 1v1 with a friend by room code
+Backlog D.2 (Michael, 28 Sep: "Online play: local-host sessions others can join"), a deep-work item. Michael's B (12 Oct)
+put it after the Pickup Game board, so the host sets the match up there; his A (14 Oct) picked PeerJS's free public
+matchmaker and four-letter room codes. This is step 1 of the three in the question: two friends, one match, Winnmark Court.
+
+The Pickup Game board has a second button, PLAY ONLINE. It opens a panel: your name (14 letters, remembered on this
+computer), HOST A ROOM, and a box for a code with JOIN. The host gets a code such as `KXRB` in big letters and waits; the
+friend types it on his own board and presses JOIN. Both get the usual briefing ("Online: 1v1", you against the other's
+name), and BEGIN waits until both have pressed it ("WAITING FOR SAM…"). The match is the board's Winnmark 1v1 with the
+host's day or night, lives and clock. The one kid on the other side is the other player: his look from his mirror, his
+name, his equipped gun. He starts at the spot the board's own kid would take. A tag costs a life and puts you back at your
+start with 2 s of cover, as in any pickup game since v1.221. Lives are the board's exactly; armor adds none online.
+
+How it works. The host's game is the referee: it runs the BBs, the tags, the lives and the clock, as the question
+promised. One choice there differs from the question's sketch, and a player would not see it. Each player moves his own kid
+and sends where he is (30 times a second from the guest, 20 from the host), rather than the guest sending keys for the host
+to move him. That keeps the guest's movement as quick as in single player, and it needed no change to the player code.
+Each shot is sent once, as it leaves the gun: where from, which way, and its curve. It then flies in both games, but only
+the host's copy can tag (`bbCanTarget` is false for every BB in the guest's game). The host's game tells the guest when
+either one is tagged, and how the match ended. A friend's kid is moved by `netDriveRemote` in place of the AI. He eases
+toward each position, jumps on a respawn, and walks, crouches and holds his gun up with the kids' own pose code. He never
+speaks (`tryNpcSpeak` skips him). F's forfeit question does not pause an online match. A forfeit ends it for both; the
+other player wins.
+
+Nothing is on the line. The match pays nothing and counts for nothing, and the result screen says "Online match: nothing
+on the line" with no Play Again. Each player gets a full bag for the match, and his own bag is put back as it was before
+the result autosaves. If the link drops, before or during the match, the other game ends it, goes back to the bedroom and
+says "Your friend left". Closing the board while you host gives the room up. The two games must be the same version (the
+title's), or the host says so to both.
+
+The connection. PeerJS 1.5.4 (93 KB, from unpkg) loads only when someone presses HOST or JOIN; nothing new loads at
+startup. The host's room is the PeerJS id `nbhd-airsoft-<code>`, from 24 letters (no I or O), about 330,000 codes. A taken
+code tries another, three times. Once the friend is in, the host leaves the matchmaker, so the code is free and nobody else
+can join. The panel says what the question said about privacy: each player sees the other's internet address, and a
+public service carries the code, so play with friends you know. `netPeerTransport` is the only code that knows about
+PeerJS; Michael's own matchmaker (option B, for step 3's room list) would replace that one function. What the other game
+sends is checked before use: a name of plain letters, a look of plain values, a gun the game has, finite numbers, and a
+shot that starts within 4 m of where that player is.
+
+Also fixed on the way: the briefing's BEGIN button is cloned for each briefing, and it kept an online match's "WAITING…"
+text and its disabled state, so the next briefing could not be begun. It is reset each time now.
+### Verified
+- `tests/online.test.mjs` (new, 17 checks): two headless games, joined through a stub transport that passes the same
+  JSON messages every two frames (about 33 ms of lag). Nothing loads at startup (no Peer, no PeerJS script). HOST shows a
+  four-letter code and waits. Both get the briefing, and BEGIN waits for the friend. The 1v1 has one kid a side, the other
+  player by name, 3 lives each. After both walk (3.7 m and 4.3 m), each sees the other within 5 cm. The guest's first shot
+  from 3.5 m tags the host: the host has 2 lives on both screens and goes back to his start. The host's first shot tags the
+  guest: 2 and 2 on both screens, and the host sees the guest back at his start. Two more tags end it: the host's result
+  is a loss ("Guesty got you this time."), the guest's a win ("You beat Hosty."). Cash $35, bag 25 and wins 0 are
+  unchanged on both, and Play Again is off. BACK TO YOUR ROOM closes the link. In a second match the guest's link drops
+  60 frames in: the host is in the bedroom under "Your friend left", with his bag as it was, and so is the guest. After that the
+  board's own 1v1 has a kid again, not the friend. The PeerJS adapter, against a stand-in `Peer`, opens
+  `nbhd-airsoft-KXRB`, joins it with JSON, leaves the matchmaker once the friend is in, and passes on open, data, close
+  and "no room with that code". No page errors in either game. Two runs, both clean, 38 s each.
+- Run after the change: `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-fernando`, `pickup-kids`, `pickup-lives`,
+  `forfeit-ask`, `briefing-lives`, `smoke`: 9 of 9 pass.
+### Still open
+- Michael's real test with a friend: this session's sandbox cannot reach unpkg or PeerJS's server, so the real
+  connection is checked only against a stand-in `Peer`. One pair in ten on strict networks may not connect at all
+  (no paid relay, as the question said).
+- The host's game stops while his tab is hidden (the browser stops drawing it), so the guest's BBs and tags wait. Worth
+  a "keep this tab open" line if it bites.
+- The guest's own shots cannot tag in his game; the host's copy decides, about one message later, so a tag on a moving
+  kid at the edge of a hit can count in one game and miss in the other's picture. The briefing's field map shows the
+  guest at the host's start.
+- Steps 2 (teams, the board's kids filling the empty spots) and 3 (a room list and a Campaign / Online / Settings title)
+  wait for Michael's look at this one.
