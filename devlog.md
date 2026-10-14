@@ -10139,3 +10139,39 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
+
+## v1.225 — The sniper, held up to a Remington 700
+Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
+copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
+receiver's, so the barrel rode on top of the action with a 9 mm gap between it and the forend under it. The stock was
+three boxes and a cheek block: its underside ran flat from under the trigger to the toe, with no pistol grip, and the
+trigger was buried inside it (3.5 cm above the stock's bottom), inside a guard that also sat in the stock. The bipod,
+described in the code as folded, hung its legs 8 cm straight down.
+
+Now the barrel comes out of the receiver's front on its axis, tapering to the muzzle and bedded 1.5 cm into the
+forend. The stock is one piece cut to the 700's side profile: a forend slimming to its tip, a wrist rising to a
+straight comb, a pistol grip raked 25° behind the trigger guard, and the belly dropping from the grip to the toe. The
+trigger hangs 1.5 cm under the stock in a guard whose bar runs back to the grip. The bipod's legs lie folded forward
+under the barrel. The front sight moved from the receiver's front, where it stood on nothing, out to the muzzle on a
+ramp, along the line from your eye when aimed, so the aimed picture is the same (its tip 2.51° below the eye line
+before, 2.49° now). The post now sits inside the rear sight's notch, framed by it, with the comb lower in the view.
+The sights hide when an optic is mounted, as the AR's do. The shooting hand moves back onto the new grip
+(`FP_HANDS.sniper`), and the support hand follows the slimmer forend. Pictures: `docs/guns/sniper-side-before.png`,
+`docs/guns/sniper-side.png`.
+### Verified
+- `tests/gun-sniper.test.mjs` (new, 8 checks; writes the side picture). Before (v1.224, the same test on the old file):
+  the barrel 25 mm off the receiver's axis and 9 mm clear of the forend; the stock's underside dropped 0 cm at the
+  grip; its lowest point 0.8 cm behind the trigger; the trigger 3.5 cm inside the stock; the bipod legs 7.9 cm tall.
+  Six of eight checks failed. After: 0 mm off the axis and 15.5 mm into the forend; a 2.7 cm drop from the grip cap to
+  the belly behind it, the cap 3.3 cm behind the trigger; 1.5 cm of trigger showing; the legs 0.5 cm tall and 8 cm
+  long; the aimed sight 2.49° below and 0.06° to the side. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the sniper: both hands on, gap
+  0 mm, none on the sight line, both forearms off the bottom), `under-parts`, `backyard-guns` (the sniper's sight 2.48°,
+  1.00 BB a shot, 100% within 0.5 m at 15 m), `shop-pics`, `workbench-labels`, `laser`: all pass.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip and aimed.
+- The bolt still rides on the receiver's right side rather than inside it, and the stock's profile has square edges
+  (an extruded side view, not a rounded stock). The laser and side-rail mount height (`FP_GUN_MOUNT.sniper.barrelY`,
+  3.2 cm) was left where it was, 1.2 cm above the barrel's new axis, so mounted parts sit as before.
+- The kids' third-person sniper (`buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on with the
+  AK.

@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.224</div>
+  <div class="version">v1.225</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18613,53 +18613,56 @@ function buildFPSniper() {
   const accentMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.7 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // === Stock (synthetic black, single piece) ===
-  const forend = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.04, 0.165), stockMat);   // v1.220: one stock with the grip (was 15 mm apart)
-  forend.position.set(0, 0.005, -0.1725);
-  group.add(forend);
-  const stockGrip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.058, 0.06), stockMat);
-  stockGrip.position.set(0, -0.022, -0.025);
-  group.add(stockGrip);
-  const butt = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.095, 0.16), stockMat);
-  butt.position.set(0, -0.005, 0.075);
-  group.add(butt);
-  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.092, 0.008), accentMat);
-  buttPad.position.set(0, -0.005, 0.158);
+  // v1.225 (D.31): held up to the rifle it copies, a Remington 700 / VSR-10 (drawn at about ×0.5 along its length). The
+  // stock is one piece in the 700's side profile: a forend the barrel beds into, slimming to its tip, a wrist rising to a straight comb,
+  // a pistol grip raked 25° behind the trigger guard, and the belly dropping to the toe. Before v1.225 it was three
+  // boxes and a cheek block, flat along the bottom from the grip to the toe with the grip under the trigger.
+  const prof = new THREE.Shape();   // x: the gun's z (toward the butt), y: the gun's y
+  [[-0.255, 0.025], [-0.005, 0.025], [0.012, 0.030], [0.045, 0.042], [0.080, 0.057], [0.158, 0.054], [0.158, -0.052],
+   [0.046, -0.034], [0.058, -0.057], [0.036, -0.063], [0.017, -0.016], [-0.005, -0.015],
+   [-0.250, -0.006], [-0.258, 0.006]]
+    .forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
+  const stockGeo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
+  stockGeo.translate(0, 0, -0.019);
+  stockGeo.rotateY(-Math.PI / 2);
+  const stock = new THREE.Mesh(stockGeo, stockMat);
+  stock.name = 'stock';
+  group.add(stock);
+  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.106, 0.008), accentMat);
+  buttPad.position.set(0, 0.001, 0.162);
+  buttPad.name = 'buttpad';
   group.add(buttPad);
-  // Cheek-rest hump
-  const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.018, 0.10), stockMat);
-  cheek.position.set(0, 0.052, 0.06);
-  group.add(cheek);
 
   // === Receiver ===
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.034, 0.10), receiverMat);
   receiver.position.set(0, 0.02, -0.04);
+  receiver.name = 'receiver';
   group.add(receiver);
 
-  // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.27, 12), barrelMat);   // v1.220: into the receiver (was 1 cm short)
+  // === Barrel === v1.225: on the receiver's axis, bedded in the forend, tapering to the muzzle (was 2.5 cm above
+  // the receiver's axis, its underside clear of the forend)
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0085, 0.27, 12), barrelMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.045, -0.225);
+  barrel.position.set(0, 0.02, -0.225);
+  barrel.name = 'barrel';
   group.add(barrel);
 
   // === Orange muzzle tip ===
-  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.026, 10), orangeMat);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.045, -0.37);
+  orangeTip.position.set(0, 0.02, -0.37);
   group.add(orangeTip);
 
-  // === Bipod (folded down under the forend) ===
-  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.018), accentMat);
-  bipodHinge.position.set(0, -0.014, -0.24);
+  // === Bipod, folded: v1.225 the legs lie forward under the barrel (they hung straight down, deployed) ===
+  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.018), accentMat);
+  bipodHinge.position.set(0, -0.0123, -0.24);
   group.add(bipodHinge);
-  const bipodL = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodL.position.set(-0.018, -0.05, -0.245);
-  bipodL.rotation.z = 0.25;
-  group.add(bipodL);
-  const bipodR = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodR.position.set(0.018, -0.05, -0.245);
-  bipodR.rotation.z = -0.25;
-  group.add(bipodR);
+  for (const sx of [-0.011, 0.011]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
+    leg.rotation.x = Math.PI / 2;
+    leg.position.set(sx, -0.0123, -0.288);
+    group.add(leg);
+  }
 
   // === Bolt assembly (the cocking part — slides backward, with a slight vertical bob) ===
   const boltGroup = new THREE.Group();
@@ -18682,23 +18685,35 @@ function buildFPSniper() {
   boltGroup.userData.baseY = 0;
   group.add(boltGroup);
 
-  // === Trigger guard + trigger ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.018, -0.022);
+  // === Trigger guard + trigger === v1.225: the trigger under the receiver's rear, the guard's bar below the stock
+  // running back to the grip (the trigger sat inside the old guard, the grip block round both)
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.004), accentMat);
+  tgFront.position.set(0, -0.025, -0.018);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.05), accentMat);
-  tgBottom.position.set(0, -0.02, 0);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.043), accentMat);
+  tgBottom.position.set(0, -0.034, 0.0015);
   group.add(tgBottom);
-  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.005, -0.012);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), accentMat);
+  trigger.position.set(0, -0.022, 0.003);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
   group.add(trigger);
 
-  // Iron sights
+  // Iron sights. v1.225: the front post moved out to the muzzle on a ramp, along the line from your eye aimed, so
+  // the aimed picture is unchanged (it stood at the receiver's front on nothing); both hide when an optic is mounted.
   const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.008, 0.006), accentMat);
   rearSight.position.set(0, 0.042, 0.005);
+  rearSight.userData.ironSight = true;
   group.add(rearSight);
+  const fsRamp = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.0195, 0.016), accentMat);
+  fsRamp.position.set(0, 0.03575, -0.335);
+  fsRamp.userData.ironSight = true;
+  group.add(fsRamp);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.004), accentMat);
-  fsPost.position.set(0, 0.062, -0.10);
+  fsPost.position.set(0, 0.0518, -0.335);
+  fsPost.userData.ironSight = true;
+  fsPost.userData.frontSight = true;
+  fsPost.name = 'frontsight';
   group.add(fsPost);
 
   // === Default hipfire pose — sniper held a touch lower (heavier feel) ===
@@ -19283,7 +19298,8 @@ const FP_HANDS = {
   pistol:  { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.221: the grip's new place
   shotgun: { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
   ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
-  sniper:  { r: { c: [0, -0.022, -0.02], rx: -0.45, gw: 0.019, gd: 0.022, up: -0.012 }, l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
+            l: { kind: 'support', c: [0, 0.0085, -0.215], hw: 0.019, hh: 0.0165 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.045, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
   ump:     { r: { c: [0, -0.048, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
