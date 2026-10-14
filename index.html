@@ -1522,6 +1522,15 @@
     font-size: 26px;
     flex-shrink: 0;
   }
+  /* v1.209: the guns' pictures, in the row and large on the details page */
+  #shopScreen .shop-item-icon.pic { background: #fff; padding: 0; overflow: hidden; }
+  #shopScreen .shop-item-icon.pic img { width: 100%; height: 100%; display: block; }
+  #shopScreen .shop-gun-photo {
+    background: #fff; border: 1px solid #aca899; box-shadow: inset 0 0 0 3px #f4f1e0;
+    margin: 0 0 10px; padding: 8px; text-align: center;
+  }
+  #shopScreen .shop-gun-photo img { width: 420px; max-width: 100%; height: auto; aspect-ratio: 420 / 190; display: block; margin: 0 auto; }
+  #shopScreen .shop-gun-photo-cap { font-size: 10px; color: #777; margin-top: 4px; font-style: italic; }
   #shopScreen .shop-item-info {
     flex: 1;
   }
@@ -1999,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.208</div>
+  <div class="version">v1.209</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19603,6 +19612,13 @@ function bindWorkbenchPointer(canvas) {
 // Build a FRESH gun mesh for display (not the cached viewmodel instance, which
 // is parented to the FP camera). Reset its pose flat for turntable viewing.
 function buildWorkbenchGun(gunType) {
+  const mesh = buildBareGunMesh(gunType);
+  // Build the accessory rig on this fresh group so laser/flashlight render here.
+  ensureFPGunAccessory(mesh, gunType);
+  return mesh;
+}
+// v1.209: split out of buildWorkbenchGun so the shop's pictures get the gun with nothing mounted
+function buildBareGunMesh(gunType) {
   let mesh;
   if (gunType === 'pistol')       mesh = buildFPGun();
   else if (gunType === 'shotgun') mesh = buildFPShotgun();
@@ -19620,9 +19636,56 @@ function buildWorkbenchGun(gunType) {
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
   mesh.visible = true;
-  // Build the accessory rig on this fresh group so laser/flashlight render here.
-  ensureFPGunAccessory(mesh, gunType);
   return mesh;
+}
+
+// v1.209 (backlog D.23, Michael 13 Oct: "a mesh sample of weapons / whatever you're buying as the icon, and ... a
+// larger image" on the details page): the shop photographs each gun's own model, side-on and a little from the front,
+// on one small offscreen renderer made the first time it is needed. Each picture is a data URL, cached by gun and size.
+const SHOP_PIC = { renderer: null, scene: null, cache: {} };
+function shopGunPic(gunType, w, h) {
+  const key = gunType + '@' + w + 'x' + h;
+  if (SHOP_PIC.cache[key]) return SHOP_PIC.cache[key];
+  if (!SHOP_PIC.renderer) {
+    try {
+      SHOP_PIC.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    } catch (e) { return null; }   // no WebGL to spare: the row keeps its old glyph
+    SHOP_PIC.renderer.setClearColor(0x000000, 0);
+    SHOP_PIC.scene = new THREE.Scene();
+    const key1 = new THREE.DirectionalLight(0xfff2e0, 1.1); key1.position.set(2, 3, 2); SHOP_PIC.scene.add(key1);
+    const fill = new THREE.DirectionalLight(0x88aaff, 0.45); fill.position.set(-2, 1, -1); SHOP_PIC.scene.add(fill);
+    SHOP_PIC.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  }
+  const r = SHOP_PIC.renderer;
+  r.setSize(w * 2, h * 2, false);   // drawn at twice the size it shows, for a crisp picture
+  const gun = buildBareGunMesh(gunType);
+  const holder = new THREE.Group();
+  holder.add(gun);
+  holder.rotation.set(0.18, Math.PI / 2 - 0.42, 0);   // the muzzle to the left, turned a little toward you
+  SHOP_PIC.scene.add(holder);
+  holder.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(holder);
+  const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  const aspect = w / h, pad = 1.12;
+  const halfW = Math.max(sz.x / 2, (sz.y / 2) * aspect) * pad, halfH = halfW / aspect;
+  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.01, 10);
+  cam.position.set(c.x, c.y, c.z + 3);
+  cam.lookAt(c);
+  r.render(SHOP_PIC.scene, cam);
+  const url = r.domElement.toDataURL('image/png');
+  SHOP_PIC.scene.remove(holder);
+  SHOP_PIC.cache[key] = url;
+  return url;
+}
+function shopGunIcon(iconEl, gunType, w, h) {
+  const url = shopGunPic(gunType, w, h);
+  if (!url) return;
+  iconEl.textContent = '';
+  const img = document.createElement('img');
+  img.src = url; img.alt = (GUN_MAGS[gunType] && GUN_MAGS[gunType].displayName) || gunType;
+  img.dataset.gun = gunType;
+  iconEl.appendChild(img);
+  iconEl.classList.add('pic');
 }
 
 function workbenchSelectGun(gunType) {
@@ -22473,6 +22536,7 @@ function renderGunsTab(c) {
     const icon = document.createElement('div');
     icon.className = 'shop-item-icon';
     icon.textContent = '⌐';
+    shopGunIcon(icon, gt, 56, 56);   // v1.209: the gun's own picture
     row.appendChild(icon);
     const info = document.createElement('div');
     info.className = 'shop-item-info';
@@ -22524,6 +22588,15 @@ function renderGunDetail(c, gt) {
   const gunRow = document.createElement('div');
   gunRow.className = 'shop-item' + (owned ? ' owned' : '');
   gunRow.innerHTML = `<div class="shop-item-icon">⌐</div>`;
+  shopGunIcon(gunRow.firstChild, gt, 56, 56);   // v1.209
+  // v1.209: and a large picture of it above, framed like a catalogue photo
+  const photo = document.createElement('div');
+  photo.className = 'shop-gun-photo';
+  const pic = shopGunPic(gt, 420, 190);
+  if (pic) {
+    photo.innerHTML = `<img src="${pic}" alt="${cfg.displayName}" data-gun="${gt}"><div class="shop-gun-photo-cap">${cfg.displayName} · actual product may vary</div>`;
+    c.appendChild(photo);
+  }
   const ginfo = document.createElement('div');
   ginfo.className = 'shop-item-info';
   const spec = getGunSpec(gt);

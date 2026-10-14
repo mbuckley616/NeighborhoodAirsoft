@@ -9677,3 +9677,28 @@ round ends some other way while it is up (a win already on its 600 ms delay), th
 ### Still open
 - Whether Esc should be the way back: in a real browser the first Esc also lets go of the mouse, and the question has
   already let go of it, so Esc goes straight to the question. Michael can say if he'd rather Enter mean "keep playing".
+
+## v1.209 — The shop shows its guns
+Backlog D.23, first part (Michael, control room, 13 Oct: "The online shop should have a mesh sample of weapons /
+whatever you're buying as the icon, and when you look at the details page, there should be a larger image listed
+there"). Every gun in the shop's Guns tab had the same ⌐ glyph in its icon box. Each row now shows a picture of that
+gun's own model, the same one you hold in a match, and the gun's details page has a large picture of it in a white
+catalogue frame between the header and the buy row, captioned "<gun> · actual product may vary". The site's look is
+kept: the cream boxes with their grey borders, the dashed rows, the early-2000s store page.
+
+The pictures are taken by one small offscreen renderer, made the first time the shop needs one. It builds a fresh copy
+of the gun with nothing mounted (`buildBareGunMesh`, split out of the workbench's builder), turns it muzzle-left and a
+little toward you, fits an orthographic camera to its bounding box, and keeps the result as a data URL, cached by gun
+and size. A row's picture is drawn at twice its 56 px box, the large one at 840×380 for a 420×190 frame. If no WebGL
+context can be had, the row keeps its glyph.
+### Verified
+- `tests/shop-pics.test.mjs` (new, 13 checks). All 12 rows of the Guns tab have a picture in place of the glyph, in
+  GUN_ORDER, drawn at 112×112. Read by their pixels: each gun spans 89% of its frame across, and 11–29% of the pixels
+  are gun (the long rifles least, the MAC-10 most); no two pictures are alike. The details pages of the pistol, the
+  AK-47, the sniper rifle and the Bucket Gun each show a picture of that gun, 840×380, shown 420 px wide, filling it
+  across (AK, sniper: 89%) or top to bottom (pistol, Bucket Gun), above the row, which has the small picture too. The
+  caption names the gun. The workbench's own copy still carries its accessory rig. No page errors.
+### Still open
+- D.23 goes on: the Ammo, Gear, Mods and Clothes rows still have glyphs (BB packs, loaders, eye pro, armour, shoes,
+  the belt, the rail and under-barrel parts, hats, tops and shorts). Those come next, a tab at a time.
+- Whether the angle (muzzle left, turned 24° toward you, tipped 10°) is the one Michael likes is for his eye.
