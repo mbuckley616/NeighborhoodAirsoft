@@ -9843,3 +9843,32 @@ shelf. The map paper lies on the table, and its pencil lines and red dots are se
 ### Still open
 - D.26 is complete for the furniture in the room: the desk, the bed and nightstands, the bookcases and the map table.
   The hall, the closet and the bathroom were not touched; Michael can say if they want the same pass.
+
+## v1.216 — The houses have backs
+Backlog D.27, first part (Michael, control room, 13 Oct: "Can we try to tighten up the environmental meshes in-game?
+For example, some of the boxes / some of the houses. The houses are nice from the front, but the backyards look really
+janky/unpolished"). Seen from its yard, the detailed house (Winnmark, Bunratty, Northcliff, Bellfield, the school's
+staff row and the other streets built from it) was a bare brick face with four windows: no door, no belt course
+(the front has one between the storeys), nothing a house has round the back.
+
+The back now has a door: a half-glass door with two panels under the glass, in its casing, under a small shingled
+hood on two brackets, with a knob, a step and a light beside it. The belt course runs across the back as on the front,
+and a window sits over the door. Round the back are the things a house has there: the electric meter with its round
+glass and its conduit down the wall near one corner, a hose reel with a coil of green hose on its bracket and the tap
+under it on the other side of the door, and a dryer vent. Which corner gets the meter follows the house's own accent
+hash, so the street does not repeat exactly. Below head height none of it stands more than 0.28 m off the wall, inside
+a body's 0.3 m radius, so nothing can be walked through and the collision boxes are unchanged. It merges into the
+house's existing meshes: 15 per house, as before. Each merged mesh is tagged with its part for the test.
+### Verified
+- `tests/house-backs.test.mjs` (new, 7 checks). All eight Winnmark houses and all seven on Bunratty have a door on
+  the back wall, and nothing below 2 m stands more than 0.28 m off it (heights read from each house's own base, since
+  they stand on the terrain at 1.3–2.6 m). Still 15 meshes a house. Walking at a back wall stops at it (z −19.85 against
+  the wall at −19.5). No page errors.
+- `houses` passes. `bunratty-polish`'s "every kid walks over 3 m in 30 s" failed in 2 of 3 runs on this build and
+  passed 2 of 2 without it, so I looked: in both builds Nick holds one cover in the middle of the road at (−20.8, −0.5),
+  hiding and peeking, for 13–27 s before he moves (three probe runs each). Nothing there is near a house's back. It
+  is filed under Found in play.
+### Still open
+- D.27 goes on: the boxes Michael named, the yards themselves (bare grass between the fences) and the old box house on
+  the maps that still use it.
+- The back door is the same on every house; whether the street wants more variety there is for Michael's eye.

@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.215</div>
+  <div class="version">v1.216</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9856,10 +9856,47 @@ function buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, tri
   // a small window over the door, under the gable
   win(0, 3.95, fd + 0.03, 0.8, 0.9, false);
 
+  // v1.216 (backlog D.27, Michael 13 Oct: "The houses are nice from the front, but the backyards look really
+  // janky/unpolished"): the back was a bare brick face with four windows. It gets a back door (a half-glass door in its
+  // casing under a small hood), a step, a light, the belt course the front has, a window over the door, and the things
+  // a house has round the back: the electric meter, a hose reel on its bracket, the dryer vent. Below head height all of
+  // it lies within 0.3 m of the wall (a body's radius), so nothing new can be walked through; collision is unchanged.
+  {
+    const bz = -fd - 0.04;   // the back face (the front frame's -z), a hair proud of the brick
+    add('door', box(dW, dH, 0.07), 0, dH / 2 + 0.12, bz);
+    add('win', box(dW * 0.62, 0.9, 0.04), 0, dH * 0.68 + 0.12, bz - 0.04);                       // its glass upper half
+    for (const px of [-0.2, 0.2]) add('door', box(0.3, 0.55, 0.03), px, 0.55 + 0.12, bz - 0.05);   // two panels under it
+    add('trim', box(0.12, dH + 0.1, 0.08), -dW / 2 - 0.06, (dH + 0.1) / 2 + 0.12, bz - 0.01);
+    add('trim', box(0.12, dH + 0.1, 0.08), dW / 2 + 0.06, (dH + 0.1) / 2 + 0.12, bz - 0.01);
+    add('trim', box(dW + 0.36, 0.12, 0.1), 0, dH + 0.12 + 0.11, bz - 0.02);
+    add('roof', box(dW + 0.6, 0.08, 0.5), 0, dH + 0.42, bz - 0.25, 0, -0.14);                  // a small hood
+    for (const sd of [-1, 1]) add('trim', box(0.06, 0.2, 0.3), sd * (dW / 2 + 0.22), dH + 0.27, bz - 0.15);   // on two brackets
+    add('brass', new THREE.SphereGeometry(0.045, 8, 6), -dW / 2 + 0.13, 1.07, bz - 0.07);
+    add('band', box(1.3, 0.14, 0.24), 0, 0.19, bz - 0.12);                                        // the step
+    add('brass', box(0.12, 0.22, 0.09), -dW / 2 - 0.32, 1.9, bz - 0.05);                          // the light
+    add('trim', box(fl + 0.04, 0.1, 0.05), 0, 2.72, bz - 0.01);                                   // the belt course
+    win(0, 3.95, -fd - 0.03, 0.7, 0.8, false, Math.PI);                                           // a window over the door
+    // the meter: a grey box with its round glass, near one back corner
+    const mx = (hsh < 0.5 ? 1 : -1) * (fl / 2 - 0.7);
+    add('metal', box(0.3, 0.42, 0.12), mx, 1.45, bz - 0.06);
+    add('win', new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12), mx, 1.5, bz - 0.13, 0, Math.PI / 2);
+    add('metal', box(0.05, 1.05, 0.05), mx, 0.75, bz - 0.03);                                     // its conduit down
+    // the hose reel on the other side of the door: a bracket, the drum and a coil of green hose, and the tap
+    const hx2 = -mx * 0.55;
+    add('metal', box(0.32, 0.1, 0.1), hx2, 0.95, bz - 0.05);
+    add('shut', new THREE.CylinderGeometry(0.2, 0.2, 0.16, 14), hx2, 0.82, bz - 0.13, 0, Math.PI / 2);
+    add('band', new THREE.TorusGeometry(0.21, 0.035, 6, 16), hx2, 0.82, bz - 0.13);
+    add('brass', box(0.05, 0.08, 0.08), hx2 + 0.3, 0.55, bz - 0.04);
+    // the dryer vent, low on the wall by the meter
+    add('metal', box(0.18, 0.18, 0.08), mx - Math.sign(mx) * 0.75, 0.75, bz - 0.04);
+    add('band', box(0.14, 0.03, 0.09), mx - Math.sign(mx) * 0.75, 0.7, bz - 0.06);
+  }
+
   for (const k in buckets) {
     if (!buckets[k].length) continue;
     const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
     m.castShadow = (k === 'roof' || k === 'trim'); m.receiveShadow = true;
+    m.userData.part = k;   // v1.216: named for the tests (house-backs)
     front.add(m);
   }
 }
