@@ -714,6 +714,13 @@
     box-shadow: 0 6px 0 rgba(0,0,0,0.4);
   }
   #titleScreen .start-btn:active { transform: translateY(0); }
+  /* v1.218: NEW GAME over a save asks first; the autosave's note in the corner */
+  #newGameAsk { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  #newGameAsk .new-game-ask-text { max-width: 420px; text-align: center; color: #f4e9d8; font-size: 14px; line-height: 1.5; margin: 6px 0 4px; }
+  #autosaveNote { position: fixed; right: 18px; bottom: 14px; z-index: 60; pointer-events: none; font-family: 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #f4e9d8; background: rgba(20,18,16,0.72);
+    border: 1px solid rgba(244,233,216,0.25); padding: 4px 10px; border-radius: 3px; opacity: 0; transition: opacity 0.25s; }
+  #autosaveNote.show { opacity: 1; }
   #titleScreen .version {
     position: absolute;
     bottom: 12px; right: 16px;
@@ -2000,6 +2007,7 @@
 </div>
 
 <div id="pauseHint">Click to capture mouse · <kbd>ESC</kbd> to release</div>
+<div id="autosaveNote">Saved</div>   <!-- v1.218 -->
 
 <!-- === TITLE === -->
 <div class="menu-overlay active" id="titleScreen">
@@ -2007,8 +2015,13 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
+  <div id="newGameAsk" style="display:none;">   <!-- v1.218: NEW GAME over a save asks first -->
+    <div class="new-game-ask-text">Start a new summer? Your saved game is replaced the first time the new one saves.</div>
+    <button class="start-btn" id="newGameYesBtn">START OVER</button>
+    <button class="start-btn" id="newGameNoBtn">BACK</button>
+  </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.210</div>
+  <div class="version">v1.228</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3520,13 +3533,24 @@ function loadGame() {
   return { ok: true };
 }
 
-// Auto-save silently, but ONLY once the player has opted into persistence this
-// session (by loading a save or sleeping in the bed at least once). This keeps
-// a fresh NEW GAME run from silently clobbering an existing save the player
-// might still want — their first deliberate sleep is what commits them.
+// Auto-save, but ONLY once the player has opted into persistence this session (by loading a save, starting a NEW
+// GAME, or sleeping in the bed). A NEW GAME over an existing save asks first (v1.218), so it never silently clobbers
+// a save the player might still want.
+// v1.218 (backlog D.29, Michael 13 Oct: "We need an autosave function - I don't remember to go back to the bed every
+// time and I doubt most players will either"): a NEW GAME is opted in from the start (asking first when it would
+// replace a save on disk), so the game saves itself when you come home, after every match, and after every buy or
+// change at the shop, the loadout, the workbench and the mirror. A small "Saved" shows in the corner when it does.
 function autoSave() {
   if (!Game._saveEnabled) return { ok: false, reason: 'not-enabled' };
-  return saveGame();
+  const r = saveGame();
+  if (r.ok) {
+    const n = document.getElementById('autosaveNote');
+    if (n) {
+      n.classList.remove('show'); void n.offsetWidth; n.classList.add('show');
+      clearTimeout(autoSave._t); autoSave._t = setTimeout(() => n.classList.remove('show'), 1600);
+    }
+  }
+  return r;
 }
 
 // Wipe the save and reset the in-memory profile to a fresh start.
@@ -4589,6 +4613,7 @@ function purchaseItem(itemId) {
   if (Game.persist.cash < item.price) return { ok: false, reason: 'not enough cash' };
   Game.persist.cash -= item.price;
   item.apply();
+  autoSave();   // v1.218 (D.29)
   return { ok: true };
 }
 
@@ -8680,15 +8705,56 @@ function buildBedroomScene() {
   // Single solid grey comforter — covers the mattress, hangs slightly over the sides at the foot
   const comforter = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.10, 1.40), beddingMat);
   comforter.position.set(-0.05, 0.66, 0);
+  comforter.name = 'bed_comforter';
   bedGroup.add(comforter);
-  // Pillows (two stacked at the headboard end — east side of bed)
-  const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.13, 0.95), pillowMat);
-  p1.position.set(0.72, 0.78, 0.05);
-  bedGroup.add(p1);
+  // v1.214 (backlog D.26): small touches on the bed. A box with its corners pulled in toward a ball, for anything soft.
+  const puffy = (w, h, d, mat, k) => {
+    const geo = new THREE.BoxGeometry(1, 1, 1, 6, 4, 6), pa = geo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < pa.count; i++) {
+      v.fromBufferAttribute(pa, i);
+      const sph = v.clone().normalize().multiplyScalar(0.5);
+      v.lerp(sph, k === undefined ? 0.45 : k);
+      pa.setXYZ(i, v.x * w, v.y * h, v.z * d);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat);
+  };
+  const COMF_TOP = 0.71;   // the comforter's top face
+  // the comforter falls over both sides of the mattress to the frame, and over the foot onto the footboard
+  for (const side of [-1, 1]) {
+    const drape = new THREE.Mesh(new THREE.BoxGeometry(1.95, COMF_TOP - 0.375, 0.03), beddingMat);   // down to the frame's top (0.375)
+    drape.position.set(-0.05, (COMF_TOP + 0.375) / 2, side * 0.71); drape.name = 'bed_drape';
+    bedGroup.add(drape);
+  }
+  const footDrape = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 1.45), beddingMat);
+  footDrape.position.set(-1.04, COMF_TOP - 0.08, 0); footDrape.name = 'bed_drape';
+  bedGroup.add(footDrape);
+  // the sheet folded back over the comforter under the pillows
+  const sheetMat = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.9 });
+  const fold = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.02, 1.46), sheetMat);
+  fold.position.set(0.32, COMF_TOP + 0.01, 0); fold.name = 'bed_fold';
+  bedGroup.add(fold);
+  // Pillows: two soft ones side by side against the headboard, and the red one leaning on them
+  for (const side of [-1, 1]) {
+    const pw = puffy(0.4, 0.14, 0.62, pillowMat);
+    pw.position.set(0.7, COMF_TOP + 0.07 - 0.012, side * 0.33); pw.name = 'bed_pillow';   // pressed 1 cm into the bed
+    pw.rotation.y = side * 0.04;
+    bedGroup.add(pw);
+  }
   // Accent red pillow
-  const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.13, 0.4), pillowAccent);
-  p2.position.set(0.65, 0.84, 0);
+  const p2 = puffy(0.12, 0.36, 0.36, pillowAccent, 0.5);
+  p2.position.set(0.5, COMF_TOP + 0.16, 0.02); p2.rotation.z = 0.38; p2.name = 'bed_throw';
   bedGroup.add(p2);
+  // a folded red-and-cream blanket across the foot
+  const blanketMat = new THREE.MeshStandardMaterial({ color: 0x8c2a2a, roughness: 0.95 });
+  const blanket = puffy(0.34, 0.06, 1.2, blanketMat, 0.2);
+  blanket.position.set(-0.72, COMF_TOP + 0.03 - 0.004, 0); blanket.name = 'bed_blanket';
+  bedGroup.add(blanket);
+  for (const dx of [-0.1, 0.1]) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.004, 1.02), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.95 }));
+    stripe.position.set(-0.72 + dx, COMF_TOP + 0.054, 0);   // woven across its top
+    bedGroup.add(stripe);
+  }
   // Headboard (tall, black, against the red wall)
   const headboard = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 1.6), bedFrameMat);
   headboard.position.set(0.97, 0.55, 0);
@@ -8727,16 +8793,45 @@ function buildBedroomScene() {
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), goldMat);
     knob.position.set(0, 0.42, 0.253);
     g.add(knob);
+    // v1.214 (D.26): a second drawer below the first, with its own knob, and a dark kick at the floor
+    const knob2 = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), goldMat);
+    knob2.position.set(0, 0.2, 0.253);
+    g.add(knob2);
+    const kick = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.005), new THREE.MeshStandardMaterial({ color: 0x0a0604 }));
+    kick.position.set(0, 0.035, 0.252);
+    g.add(kick);
     // Small lamp on top
-    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.06, 12), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7 }));
-    lampBase.position.y = 0.65;
+    const lampMetal = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7 });
+    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.06, 12), lampMetal);
+    lampBase.position.y = 0.67;   // v1.214: on the top (0.64), was sunk 2 cm into it
+    lampBase.name = 'ns_lamp_base';
     g.add(lampBase);
-    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-    lampPole.position.y = 0.78;
+    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 8), lampMetal);
+    lampPole.position.y = 0.81;
     g.add(lampPole);
-    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, 0.18, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8d4a0, roughness: 0.85, side: THREE.DoubleSide }));
-    lampShade.position.y = 0.99;
+    // v1.214: the socket and a lit bulb under the shade, the wire harp that holds the shade, and a finial on top
+    const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 10), new THREE.MeshStandardMaterial({ color: 0xb8a060, roughness: 0.4, metalness: 0.6 }));
+    socket.position.y = 0.94;
+    g.add(socket);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 10), new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0xffe0a0, emissiveIntensity: 0.9 }));
+    bulb.position.y = 0.99; bulb.name = 'ns_bulb';
+    g.add(bulb);
+    for (const side of [-1, 1]) {
+      const harp = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.15, 6), lampMetal);
+      harp.position.set(side * 0.045, 1.0, 0); harp.rotation.z = -side * 0.3;
+      g.add(harp);
+    }
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshStandardMaterial({ color: 0xb8a060, roughness: 0.4, metalness: 0.6 }));
+    finial.position.y = 1.085;
+    g.add(finial);
+    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, 0.18, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8d4a0, roughness: 0.85, side: THREE.DoubleSide, emissive: 0x5a4020, emissiveIntensity: 0.35 }));
+    lampShade.position.y = 1.0; lampShade.name = 'ns_shade';
     g.add(lampShade);
+    for (const ry of [0.91, 1.09]) {   // the shade's rolled rims
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(ry < 1 ? 0.13 : 0.10, 0.004, 4, 20), new THREE.MeshStandardMaterial({ color: 0xc9b07a, roughness: 0.8 }));
+      rim.position.y = ry; rim.rotation.x = Math.PI / 2;
+      g.add(rim);
+    }
     return g;
   }
   const ns1 = buildNightstand();
@@ -8765,23 +8860,50 @@ function buildBedroomScene() {
   scene.add(deskGroup);
 
   // === Computer on the desk (reuses 2003 CRT aesthetic) ===
+  // v1.213 (backlog D.26, Michael 13 Oct: "the computer for example hovers off of the desk a bit"): the keyboard and
+  // mouse sat half over the desk's front edge, in the air, and the monitor stood 1 cm proud of its stand. Everything now
+  // stands on the desk top (DESK_Y) inside its edges: a CRT on a swivel foot with the tube's stepped back, airsoft.com
+  // on its screen, a power light; the keyboard with its key rows; the mouse on a mouse pad; two little speakers; the
+  // cables; and drive bays and a power light on the tower under the desk.
   const compGroup = new THREE.Group();
-  // CRT body
-  const crtBody = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.40), new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.85 }));
-  crtBody.position.set(0, 0.95, 0);
-  compGroup.add(crtBody);
-  // CRT screen face
-  const crtFront = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.30, 0.02), new THREE.MeshStandardMaterial({ color: 0x111418, roughness: 0.3, emissive: 0x6688aa, emissiveIntensity: 0.4 }));
-  crtFront.position.set(0, 0.95, 0.21);
+  const DESK_Y = 0.76;                          // the desk top's surface (0.74 + half its 0.04)
+  const beigeMat = new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.85 });
+  const beigeDk = new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.6 });
+  const cableMat = new THREE.MeshStandardMaterial({ color: 0x3a3632, roughness: 0.7 });
+  const pcBox = (name, w, h, d, mat, x, y, z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z); m.name = name; compGroup.add(m); return m;
+  };
+  // the swivel foot, then the monitor: the front case, and the tube's back stepping in toward the wall
+  pcBox('pc_crt_foot', 0.24, 0.022, 0.22, beigeDk, 0, DESK_Y + 0.011, -0.04);
+  pcBox('pc_crt_neck', 0.14, 0.012, 0.12, beigeDk, 0, DESK_Y + 0.028, -0.04);
+  const crtBody = pcBox('pc_crt', 0.42, 0.36, 0.22, beigeMat, 0, DESK_Y + 0.034 + 0.18, 0.01);
+  pcBox('pc_crt_back', 0.34, 0.29, 0.08, beigeMat, 0, crtBody.position.y - 0.01, -0.14);
+  pcBox('pc_crt_back2', 0.24, 0.2, 0.08, beigeDk, 0, crtBody.position.y - 0.02, -0.22);
+  const crtFaceZ = 0.01 + 0.11;
+  pcBox('pc_crt_bezel', 0.37, 0.29, 0.006, darkMat, 0, crtBody.position.y + 0.015, crtFaceZ + 0.003);
+  // airsoft.com on the screen, drawn like the shop's own page: the dark header, the red rule, the tabs, a row or two
+  const scr = document.createElement('canvas'); scr.width = 256; scr.height = 192;
+  const sx = scr.getContext('2d');
+  sx.fillStyle = '#f4efe2'; sx.fillRect(0, 0, 256, 192);
+  sx.fillStyle = '#0a4fbf'; sx.fillRect(0, 0, 256, 14);
+  sx.fillStyle = '#1d1d1d'; sx.fillRect(0, 14, 256, 44);
+  sx.fillStyle = '#ffffff'; sx.font = 'bold 22px Arial, sans-serif'; sx.fillText('AIRSOFT.COM', 12, 44);
+  sx.fillStyle = '#d23a2a'; sx.fillRect(0, 58, 256, 4);
+  sx.fillStyle = '#e8e2cf'; sx.fillRect(0, 62, 256, 18);
+  sx.fillStyle = '#555'; sx.font = '10px Arial, sans-serif';
+  ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'].forEach((t, i) => sx.fillText(t, 12 + i * 46, 75));
+  for (let i = 0; i < 4; i++) {
+    sx.fillStyle = '#cfc8b4'; sx.fillRect(12, 92 + i * 24, 18, 18);
+    sx.fillStyle = '#444'; sx.fillRect(38, 95 + i * 24, 90, 5);
+    sx.fillStyle = '#999'; sx.fillRect(38, 104 + i * 24, 140, 3);
+    sx.fillStyle = '#b8261c'; sx.fillRect(206, 94 + i * 24, 38, 12);
+  }
+  const scrTex = new THREE.CanvasTexture(scr);
+  const crtFront = new THREE.Mesh(new THREE.PlaneGeometry(0.33, 0.25), new THREE.MeshBasicMaterial({ map: scrTex, color: 0xd8e4f0 }));
+  crtFront.position.set(0, crtBody.position.y + 0.015, crtFaceZ + 0.0065); crtFront.name = 'pc_screen';
   compGroup.add(crtFront);
-  // Bezel
-  const crtBezel = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.005), new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 }));
-  crtBezel.position.set(0, 0.95, 0.215);
-  compGroup.add(crtBezel);
-  // Stand
-  const crtStand = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.06, 0.25), new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 }));
-  crtStand.position.set(0, 0.78, 0);
-  compGroup.add(crtStand);
   // Scanlines (drawn on a transparent canvas overlay)
   const scanCanvas = document.createElement('canvas');
   scanCanvas.width = 64; scanCanvas.height = 64;
@@ -8792,29 +8914,42 @@ function buildBedroomScene() {
   scanTex.wrapS = THREE.RepeatWrapping; scanTex.wrapT = THREE.RepeatWrapping;
   scanTex.repeat.set(8, 8);
   const scanlines = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.36, 0.28),
-    new THREE.MeshBasicMaterial({ map: scanTex, transparent: true, opacity: 0.3 })
+    new THREE.PlaneGeometry(0.33, 0.25),
+    new THREE.MeshBasicMaterial({ map: scanTex, transparent: true, opacity: 0.18 })
   );
-  scanlines.position.set(0, 0.95, 0.225);
+  scanlines.position.set(0, crtBody.position.y + 0.015, crtFaceZ + 0.008);
   compGroup.add(scanlines);
-  // Keyboard
-  const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.025, 0.16), new THREE.MeshStandardMaterial({ color: 0xb8a890, roughness: 0.8 }));
-  kb.position.set(0, 0.76, 0.30);
-  compGroup.add(kb);
-  // Mouse
-  const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.025, 0.11), new THREE.MeshStandardMaterial({ color: 0xb8a890 }));
-  mouse.position.set(0.28, 0.76, 0.30);
-  compGroup.add(mouse);
-  // Tower (under desk)
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.45, 0.42), new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.8 }));
-  tower.position.set(0.65, 0.23, 0);
-  compGroup.add(tower);
+  pcBox('pc_crt_button', 0.022, 0.012, 0.006, beigeDk, 0.15, crtBody.position.y - 0.155, crtFaceZ + 0.003);
+  pcBox('pc_crt_led', 0.008, 0.008, 0.004, new THREE.MeshBasicMaterial({ color: 0x40e060 }), 0.125, crtBody.position.y - 0.155, crtFaceZ + 0.002);
+  // Keyboard: on the desk in front of the monitor, its keys in four dark rows
+  const kb = pcBox('pc_keyboard', 0.42, 0.022, 0.15, beigeMat, -0.04, DESK_Y + 0.011, 0.2);
+  for (let r = 0; r < 4; r++) pcBox('pc_keys', 0.37, 0.004, 0.022, new THREE.MeshStandardMaterial({ color: 0x9a8c74, roughness: 0.8 }),
+    -0.04 + (r === 3 ? -0.03 : 0), DESK_Y + 0.023, 0.152 + r * 0.03);
+  // Mouse on a blue mouse pad, right of the keyboard
+  pcBox('pc_mousepad', 0.2, 0.004, 0.17, new THREE.MeshStandardMaterial({ color: 0x24508a, roughness: 0.95 }), 0.33, DESK_Y + 0.002, 0.18);
+  const mouse = pcBox('pc_mouse', 0.06, 0.024, 0.1, beigeMat, 0.33, DESK_Y + 0.004 + 0.012, 0.19);
+  // Cables: the mouse's and the keyboard's, lying on the desk back to the computer
+  pcBox('pc_cable', 0.006, 0.006, 0.26, cableMat, 0.31, DESK_Y + 0.003, 0.01);
+  pcBox('pc_cable', 0.006, 0.006, 0.28, cableMat, -0.2, DESK_Y + 0.003, -0.015);
+  // Two little speakers either side of the monitor
+  for (const side of [-1, 1]) {
+    const sp = pcBox('pc_speaker', 0.085, 0.15, 0.09, beigeMat, side * 0.33, DESK_Y + 0.075, -0.17);
+    pcBox('pc_speaker_grille', 0.06, 0.07, 0.004, darkMat, sp.position.x, sp.position.y + 0.02, sp.position.z + 0.046);
+  }
+  // Tower (under desk), with two drive bays, a floppy slot and a power light on its front
+  const tower = pcBox('pc_tower', 0.20, 0.45, 0.42, beigeMat, 0.65, 0.225, 0);
+  pcBox('pc_tower_bay', 0.16, 0.04, 0.004, beigeDk, 0.65, 0.39, 0.211);
+  pcBox('pc_tower_bay', 0.16, 0.04, 0.004, beigeDk, 0.65, 0.34, 0.211);
+  pcBox('pc_tower_floppy', 0.1, 0.006, 0.004, darkMat, 0.65, 0.28, 0.212);
+  pcBox('pc_tower_led', 0.01, 0.01, 0.004, new THREE.MeshBasicMaterial({ color: 0x40e060 }), 0.69, 0.22, 0.212);
+  pcBox('pc_tower_button', 0.03, 0.03, 0.006, beigeDk, 0.65, 0.18, 0.212);
   compGroup.position.copy(deskGroup.position);
   scene.add(compGroup);
 
   // ============================================================
   // BOOKCASES (west wall) + MAP TABLE between them
   // ============================================================
+  let bcSeed = 1;   // v1.215: each bookcase's books come from its own seed
   function buildBookcase() {
     const g = new THREE.Group();
     // Bookcase dimensions
@@ -8850,25 +8985,69 @@ function buildBedroomScene() {
       g.add(sh);
     }
     // Books on each shelf (placed in front area, visible)
+    // v1.215 (backlog D.26): a book is never taller than its shelf's opening (the tallest went 4.5 cm up
+    // through the shelf above, and the top shelf's through the top of the case), the books are the same every visit
+    // (a seeded shuffle, was Math.random), a few have a pale band on the spine, and some shelves end in a book leaning
+    // on the side or a short stack lying flat.
+    let seed = bcSeed++ * 7919 + 17;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
     const bookColors = [0x8b1818, 0x1a3a6e, 0x3a5a25, 0x6b4a18, 0x5a2f6b, 0x205050, 0x3a3a3a, 0xb87c1e];
+    const bandMat = new THREE.MeshStandardMaterial({ color: 0xe8dcb0, roughness: 0.8 });
     const allShelfBases = [0.06].concat(shelfYs); // bottom shelf + 4 interior shelves
+    const ceilings = shelfYs.concat([BH - T]).map(y => y - T / 2);   // the underside of the board above each shelf
     for (let s = 0; s < allShelfBases.length; s++) {
       const shelfTopY = allShelfBases[s] + T/2;
+      const room = ceilings[s] - shelfTopY - 0.025;   // at least 2.5 cm of air over the tallest book
       let zCursor = -BW/2 + T + 0.02;
-      const maxZ = BW/2 - T - 0.02;
+      let maxZ = BW/2 - T - 0.02;
+      const ending = rnd();   // what closes the row: a stack lying flat, a book leaning on the side, or nothing
+      if (ending < 0.4) {
+        maxZ -= 0.24;
+        let sy = shelfTopY;
+        for (let i = 0; i < 2 + Math.floor(rnd() * 3); i++) {
+          const th = 0.03 + rnd() * 0.02;
+          const flat = new THREE.Mesh(new THREE.BoxGeometry(0.16 + rnd() * 0.05, th, 0.2 + rnd() * 0.04),
+            new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
+          flat.position.set(BD/2 - 0.12, sy + th / 2, BW/2 - T - 0.13); flat.rotation.y = (rnd() - 0.5) * 0.2;
+          flat.name = 'bc_book';
+          g.add(flat); sy += th;
+        }
+      }
       while (zCursor < maxZ) {
-        const bw = 0.06 + Math.random() * 0.05;        // book width (along Z)
+        const bw = 0.04 + rnd() * 0.05;        // book width (along Z)
         if (zCursor + bw > maxZ) break;
-        const bh = 0.22 + Math.random() * 0.10;
-        const bd = 0.14 + Math.random() * 0.06;        // depth (sticks out from back)
+        const bh = Math.min(room, 0.2 + rnd() * 0.11);
+        const bd = 0.14 + rnd() * 0.06;        // depth (sticks out from back)
         const book = new THREE.Mesh(new THREE.BoxGeometry(bd, bh, bw),
-          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(Math.random() * bookColors.length)], roughness: 0.85 }));
+          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
         // Position: x toward the front of the case (positive X), y resting on shelf
         book.position.set(BD/2 - bd/2 - 0.03, shelfTopY + bh/2, zCursor + bw/2);
+        book.name = 'bc_book';
         g.add(book);
+        if (rnd() < 0.3) {   // a pale band across the spine
+          const band = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.018, bw * 0.9), bandMat);
+          band.position.set(BD/2 - 0.03 + 0.0015, shelfTopY + bh * 0.78, zCursor + bw/2);
+          g.add(band);
+        }
         zCursor += bw + 0.003;
       }
+      if (ending >= 0.4 && ending < 0.7 && maxZ - zCursor > 0.05) {
+        // the last book leans over against the case's side, its foot on the shelf
+        const bw = 0.035, bh = Math.min(room, 0.24), bd = 0.17, lean = 0.32;
+        const book = new THREE.Mesh(new THREE.BoxGeometry(bd, bh, bw),
+          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
+        const sideZ = BW/2 - T;   // the inner face of the side it leans on
+        // pivot: its outer bottom corner on the shelf, the top corner against the side
+        book.rotation.x = lean;
+        book.position.set(BD/2 - bd/2 - 0.03, shelfTopY + (bh / 2) * Math.cos(lean) + (bw / 2) * Math.sin(lean), sideZ - (bh / 2) * Math.sin(lean) - (bw / 2) * Math.cos(lean));
+        book.name = 'bc_book';
+        g.add(book);
+      }
     }
+    // a kick board across the front under the bottom shelf
+    const kick = new THREE.Mesh(new THREE.BoxGeometry(T, 0.05, BW - T * 2), bookcaseMat);
+    kick.position.set(BD/2 - T/2 - 0.01, 0.025, 0);
+    g.add(kick);
     return g;
   }
   const bc1 = buildBookcase();
@@ -8889,29 +9068,33 @@ function buildBedroomScene() {
     mapTableGroup.add(leg);
   }
   // Map paper on top
+  // v1.215 (D.26): the paper lies on the table (it floated 5 mm over it) and its marks are the same every visit
+  let mtSeed = 4242;
+  const mtRnd = () => { mtSeed = (mtSeed * 16807) % 2147483647; return (mtSeed - 1) / 2147483646; };
   const mapPaper = new THREE.Mesh(
     new THREE.PlaneGeometry(0.6, 0.9),
     new THREE.MeshStandardMaterial({ color: 0xf4e9d8, roughness: 1.0, side: THREE.DoubleSide })
   );
   mapPaper.rotation.x = -Math.PI / 2;
-  mapPaper.position.set(0, 0.775, 0);
+  mapPaper.position.set(0, 0.7705, 0);
+  mapPaper.name = 'mt_paper';
   mapTableGroup.add(mapPaper);
   // Ink markings
   for (let i = 0; i < 6; i++) {
     const inkLine = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.04 + Math.random() * 0.4, 0.012),
+      new THREE.PlaneGeometry(0.04 + mtRnd() * 0.4, 0.012),
       new THREE.MeshBasicMaterial({ color: 0x8b6f47 })
     );
     inkLine.rotation.x = -Math.PI / 2;
-    inkLine.rotation.z = Math.random() * Math.PI;
-    inkLine.position.set((Math.random()-0.5)*0.45, 0.776, (Math.random()-0.5)*0.75);
+    inkLine.rotation.z = mtRnd() * Math.PI;
+    inkLine.position.set((mtRnd()-0.5)*0.45, 0.771, (mtRnd()-0.5)*0.75);
     mapTableGroup.add(inkLine);
   }
   // A few "location dots" on the map
   for (let i = 0; i < 3; i++) {
     const dot = new THREE.Mesh(new THREE.CircleGeometry(0.015, 8), new THREE.MeshBasicMaterial({ color: 0xc94020 }));
     dot.rotation.x = -Math.PI / 2;
-    dot.position.set((Math.random()-0.5)*0.5, 0.777, (Math.random()-0.5)*0.8);
+    dot.position.set((mtRnd()-0.5)*0.5, 0.7715, (mtRnd()-0.5)*0.8);
     mapTableGroup.add(dot);
   }
   mapTableGroup.position.set(-BR_W/2 + 0.45, 0, 0);
@@ -9698,10 +9881,47 @@ function buildHouseDetail(group, { width, depth, wallH, faceDir, brickColor, tri
   // a small window over the door, under the gable
   win(0, 3.95, fd + 0.03, 0.8, 0.9, false);
 
+  // v1.216 (backlog D.27, Michael 13 Oct: "The houses are nice from the front, but the backyards look really
+  // janky/unpolished"): the back was a bare brick face with four windows. It gets a back door (a half-glass door in its
+  // casing under a small hood), a step, a light, the belt course the front has, a window over the door, and the things
+  // a house has round the back: the electric meter, a hose reel on its bracket, the dryer vent. Below head height all of
+  // it lies within 0.3 m of the wall (a body's radius), so nothing new can be walked through; collision is unchanged.
+  {
+    const bz = -fd - 0.04;   // the back face (the front frame's -z), a hair proud of the brick
+    add('door', box(dW, dH, 0.07), 0, dH / 2 + 0.12, bz);
+    add('win', box(dW * 0.62, 0.9, 0.04), 0, dH * 0.68 + 0.12, bz - 0.04);                       // its glass upper half
+    for (const px of [-0.2, 0.2]) add('door', box(0.3, 0.55, 0.03), px, 0.55 + 0.12, bz - 0.05);   // two panels under it
+    add('trim', box(0.12, dH + 0.1, 0.08), -dW / 2 - 0.06, (dH + 0.1) / 2 + 0.12, bz - 0.01);
+    add('trim', box(0.12, dH + 0.1, 0.08), dW / 2 + 0.06, (dH + 0.1) / 2 + 0.12, bz - 0.01);
+    add('trim', box(dW + 0.36, 0.12, 0.1), 0, dH + 0.12 + 0.11, bz - 0.02);
+    add('roof', box(dW + 0.6, 0.08, 0.5), 0, dH + 0.42, bz - 0.25, 0, -0.14);                  // a small hood
+    for (const sd of [-1, 1]) add('trim', box(0.06, 0.2, 0.3), sd * (dW / 2 + 0.22), dH + 0.27, bz - 0.15);   // on two brackets
+    add('brass', new THREE.SphereGeometry(0.045, 8, 6), -dW / 2 + 0.13, 1.07, bz - 0.07);
+    add('band', box(1.3, 0.14, 0.24), 0, 0.19, bz - 0.12);                                        // the step
+    add('brass', box(0.12, 0.22, 0.09), -dW / 2 - 0.32, 1.9, bz - 0.05);                          // the light
+    add('trim', box(fl + 0.04, 0.1, 0.05), 0, 2.72, bz - 0.01);                                   // the belt course
+    win(0, 3.95, -fd - 0.03, 0.7, 0.8, false, Math.PI);                                           // a window over the door
+    // the meter: a grey box with its round glass, near one back corner
+    const mx = (hsh < 0.5 ? 1 : -1) * (fl / 2 - 0.7);
+    add('metal', box(0.3, 0.42, 0.12), mx, 1.45, bz - 0.06);
+    add('win', new THREE.CylinderGeometry(0.08, 0.08, 0.05, 12), mx, 1.5, bz - 0.13, 0, Math.PI / 2);
+    add('metal', box(0.05, 1.05, 0.05), mx, 0.75, bz - 0.03);                                     // its conduit down
+    // the hose reel on the other side of the door: a bracket, the drum and a coil of green hose, and the tap
+    const hx2 = -mx * 0.55;
+    add('metal', box(0.32, 0.1, 0.1), hx2, 0.95, bz - 0.05);
+    add('shut', new THREE.CylinderGeometry(0.2, 0.2, 0.16, 14), hx2, 0.82, bz - 0.13, 0, Math.PI / 2);
+    add('band', new THREE.TorusGeometry(0.21, 0.035, 6, 16), hx2, 0.82, bz - 0.13);
+    add('brass', box(0.05, 0.08, 0.08), hx2 + 0.3, 0.55, bz - 0.04);
+    // the dryer vent, low on the wall by the meter
+    add('metal', box(0.18, 0.18, 0.08), mx - Math.sign(mx) * 0.75, 0.75, bz - 0.04);
+    add('band', box(0.14, 0.03, 0.09), mx - Math.sign(mx) * 0.75, 0.7, bz - 0.06);
+  }
+
   for (const k in buckets) {
     if (!buckets[k].length) continue;
     const m = new THREE.Mesh(_houseMergeParts(buckets[k]), mats[k]);
     m.castShadow = (k === 'roof' || k === 'trim'); m.receiveShadow = true;
+    m.userData.part = k;   // v1.216: named for the tests (house-backs)
     front.add(m);
   }
 }
@@ -10244,7 +10464,7 @@ function addBrickMailbox(scene, x, z, opts = {}) {
 function addCurbsideBin(scene, x, z, opts = {}) {
   const variant = opts.variant ?? 'garbage';
   const tipped  = !!opts.tipped;
-  const facing  = opts.facing ?? 0; // yaw (radians) — orientation of door/handle
+  const facing  = propFacing(opts.facing ?? 0); // yaw (radians) — orientation of door/handle; v1.217: squared up
   const isRecycle = variant === 'recycle';
 
   const bodyColor = isRecycle ? 0x2a4a8a : 0x2a2a2e;
@@ -10322,11 +10542,16 @@ function addCurbsideBin(scene, x, z, opts = {}) {
   group.position.set(x, 0, z);
   group.rotation.y = facing;
   // If tipped, rotate around X so the bin lies on its side. Lid faces +Z post-rotation.
+  // v1.217: what the turned bin covers, standing (W × D turned about its upright) or lying (its cross-section
+  // turned about its length, which lies along z)
+  const cf = Math.abs(Math.cos(facing)), sf = Math.abs(Math.sin(facing));
+  const ex = cf * W / 2 + sf * D / 2, ez = sf * W / 2 + cf * D / 2, lieH = sf * W + cf * D;
   if (tipped) {
     group.rotation.x = -Math.PI / 2;
     // After rotating around X, the body's "up" is now +Z, so we need to drop
-    // the group down by D/2 so the side rests on the ground.
-    group.position.y = D/2;
+    // the group down so the side rests on the ground (v1.217: by half the turned cross-section's height, was D/2).
+    group.position.y = lieH / 2;
+    group.position.z = z + H / 2;   // v1.217: tipping swings the bin's length to -z from its base; centre it on its spot
   }
   scene.add(group);
 
@@ -10335,14 +10560,14 @@ function addCurbsideBin(scene, x, z, opts = {}) {
   // rectangular wheelie bin, stays AABB).
   if (tipped) {
     return {
-      minX: x - W/2, maxX: x + W/2,
+      minX: x - ex, maxX: x + ex,   // v1.217: the turned cross-section's width (ex here: W and D across x)
       minZ: z - H/2, maxZ: z + H/2,
-      h: D, mesh: group, surface: 'metal',  // v1.33: hard plastic wheelie bin — BBs bounce, never stick (was 'soft', which caused BBs to embed all over the bin)
+      h: lieH, mesh: group, surface: 'metal',  // v1.33: hard plastic wheelie bin — BBs bounce, never stick (was 'soft', which caused BBs to embed all over the bin)
     };
   } else {
     return {
-      minX: x - W/2, maxX: x + W/2,
-      minZ: z - D/2, maxZ: z + D/2,
+      minX: x - ex, maxX: x + ex,   // v1.217: the turned bin's bounds
+      minZ: z - ez, maxZ: z + ez,
       h: H + 0.06, mesh: group, surface: 'metal',  // v1.33: see above
     };
   }
@@ -10351,11 +10576,66 @@ function addCurbsideBin(scene, x, z, opts = {}) {
 // --- Home Depot moving box ---
 // A standard tan corrugated cardboard box with the Home Depot orange-and-white
 // branding stripe on one face. Used as kid-fort cover. Can be stacked or rotated.
+// v1.217 (backlog D.27): a yard prop's facing is squared to the nearest quarter turn, keeping a seventh of its twist
+// (at most 6.75°), and its collision box is the box round what is drawn. A box at any angle with a collision box of
+// its unturned size showed corners up to 0.55 m outside what stops you, and stopped you on air at its sides.
+function propFacing(f) {
+  const q = Math.round(f / (Math.PI / 2));
+  return q * (Math.PI / 2) + (f - q * (Math.PI / 2)) * 0.15;
+}
+// v1.217 (backlog D.27): the yards' boxes, bins and plywood stacks are dropped at random spots, and some landed
+// through an iron fence or a house wall, round a tree trunk, or inside another prop. Once the match is built, each such
+// prop is slid out along its shallower overlap (5 cm clear), a few passes so a slide can't leave it in something else.
+// Props that were placed on purpose against something (a kid fort's own bins and boxes, a stacked box) are left: only
+// fences (tall, thin, metal), houses, tree trunks and other loose props count.
+function settleYardProps(obstacles) {
+  const isProp = o => o && o.mesh && o.mesh.userData && ['box', 'bin', 'plystack'].includes(o.mesh.userData.propDetail) &&
+    o.shape !== 'obox' && !o._stacked && !o._isStacked && isFinite(o.minX);
+  const props = obstacles.filter(isProp);
+  if (!props.length) return 0;
+  const isFence = o => o.surface === 'metal' && (o.h || 0) >= 1.3 && Math.min(o.maxX - o.minX, o.maxZ - o.minZ) <= 0.3;
+  const walls = obstacles.filter(o => o !== null && !isProp(o) && o.shape !== 'obox' && o.shape !== 'cylinder' && isFinite(o.minX) &&
+    ((o.h || 0) >= 5 || isFence(o)));
+  const trunks = obstacles.filter(o => o && o.shape === 'cylinder' && isFinite(o.cx) && (o.radius || 0) < 0.8);
+  const move = (p, dx, dz) => {
+    p.minX += dx; p.maxX += dx; p.minZ += dz; p.maxZ += dz;
+    if (p.mesh) { p.mesh.position.x += dx; p.mesh.position.z += dz; }
+  };
+  let moved = 0;
+  for (let pass = 0; pass < 4; pass++) {
+    let any = false;
+    for (const p of props) {
+      for (const o of walls.concat(props)) {
+        if (o === p) continue;
+        const ox = Math.min(p.maxX, o.maxX) - Math.max(p.minX, o.minX), oz = Math.min(p.maxZ, o.maxZ) - Math.max(p.minZ, o.minZ);
+        if (ox <= 0.02 || oz <= 0.02) continue;
+        const pcx = (p.minX + p.maxX) / 2, pcz = (p.minZ + p.maxZ) / 2, ocx = (o.minX + o.maxX) / 2, ocz = (o.minZ + o.maxZ) / 2;
+        if (ox < oz) move(p, (pcx >= ocx ? 1 : -1) * (ox + 0.05), 0);
+        else move(p, 0, (pcz >= ocz ? 1 : -1) * (oz + 0.05));
+        any = true; moved++;
+      }
+      for (const t of trunks) {
+        const qx = Math.max(p.minX, Math.min(t.cx, p.maxX)), qz = Math.max(p.minZ, Math.min(t.cz, p.maxZ));
+        const dd = Math.hypot(t.cx - qx, t.cz - qz);
+        if (dd >= t.radius) continue;
+        const pcx = (p.minX + p.maxX) / 2, pcz = (p.minZ + p.maxZ) / 2;
+        const ox = Math.min(p.maxX, t.cx + t.radius) - Math.max(p.minX, t.cx - t.radius), oz = Math.min(p.maxZ, t.cz + t.radius) - Math.max(p.minZ, t.cz - t.radius);
+        if (ox < oz) move(p, (pcx >= t.cx ? 1 : -1) * (ox + 0.05), 0);
+        else move(p, 0, (pcz >= t.cz ? 1 : -1) * (oz + 0.05));
+        any = true; moved++;
+      }
+    }
+    if (!any) break;
+  }
+  return moved;
+}
 function addHomeDepotBox(scene, x, z, opts = {}) {
   const w = opts.w ?? 1.1;
   const h = opts.h ?? 0.95;
   const d = opts.d ?? 0.95;
-  const facing = opts.facing ?? 0;
+  const facing = propFacing(opts.facing ?? 0);   // v1.217
+  const hx = Math.abs(Math.cos(facing)) * w / 2 + Math.abs(Math.sin(facing)) * d / 2;
+  const hz = Math.abs(Math.sin(facing)) * w / 2 + Math.abs(Math.cos(facing)) * d / 2;
 
   const cardboardMat = new THREE.MeshStandardMaterial({ color: 0xb88f5a, roughness: 0.95 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xf06a0a, roughness: 0.85 });
@@ -10365,7 +10645,7 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
   group.position.set(x, 0, z);
   group.rotation.y = facing;
 
-  if (opts.detail) { buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }); scene.add(group); return { minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2, h, mesh: group, surface: 'soft' }; }   // v1.115 (Winnmark)
+  if (opts.detail) { buildBoxDetail(group, { w, h, d, cardboardMat, orangeMat, whiteMat }); scene.add(group); return { minX: x - hx, maxX: x + hx, minZ: z - hz, maxZ: z + hz, h, mesh: group, surface: 'soft' }; }   // v1.115 (Winnmark); v1.217: the turned box's bounds
   const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), cardboardMat);
   body.position.y = h/2;
   body.castShadow = body.receiveShadow = true;
@@ -10396,8 +10676,8 @@ function addHomeDepotBox(scene, x, z, opts = {}) {
 
   scene.add(group);
   return {
-    minX: x - w/2, maxX: x + w/2,
-    minZ: z - d/2, maxZ: z + d/2,
+    minX: x - hx, maxX: x + hx,   // v1.217: the turned box's bounds
+    minZ: z - hz, maxZ: z + hz,
     h, mesh: group, surface: 'soft',
   };
 }
@@ -13531,7 +13811,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (x > h.minX - 2 && x < h.maxX + 2 && z > h.minZ - 2 && z < h.maxZ + 2) { inHouse = true; break; }
     }
     if (inHouse) continue;
-    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z), detail: true }));   // v1.125
+    // v1.218 fix-up: a scatter tree on a backyard fence line made a fence-and-trunk corner a kid wedges in (v1.216's
+    // meshes shifted the seed and put one at (5.0, -28.5), on the fence at x 5: Nick stood there for 30 s in
+    // tests/fence-bound.test.mjs). A trunk within 1.2 m of a fence's line is moved to 1.2 m off it, on its own side.
+    // Only the position moves: the same rng calls are made, so nothing placed after it changes.
+    let x2 = x, z2 = z;
+    for (const f of fences) {
+      const thinX = (f.maxX - f.minX) < (f.maxZ - f.minZ);
+      if (thinX && z2 > f.minZ - 1.2 && z2 < f.maxZ + 1.2) {
+        const cx = (f.minX + f.maxX) / 2; if (Math.abs(x2 - cx) < 1.2) x2 = cx + (x2 < cx ? -1.2 : 1.2);
+      } else if (!thinX && x2 > f.minX - 1.2 && x2 < f.maxX + 1.2) {
+        const cz = (f.minZ + f.maxZ) / 2; if (Math.abs(z2 - cz) < 1.2) z2 = cz + (z2 < cz ? -1.2 : 1.2);
+      }
+    }
+    treeObs.push(addSuburbanTree(scene, x2, z2, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x2, z2), detail: true }));   // v1.125
   }
 
   // Front-yard ornamentals + foundation bushes (lots of plantings in the photos).
@@ -17914,8 +18207,12 @@ function buildFPGun() {
   // Origin is roughly behind the trigger guard so the grip hangs below it.
 
   // === Frame (lower polymer body) ===
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.05, 0.18), polymerMat);
-  frame.position.set(0, -0.005, -0.07);
+  // v1.221 (D.31, the pistol against a Glock 17, scaled ×1.13 to keep its length on screen): the slide was wider
+  // (42 mm) than it was tall, the frame and grip stood 40% too tall, the barrel ran 7 cm past the slide and the grip
+  // raked 10°. Now a 30 mm slide over a 38 mm frame, a 9 cm grip at 18°, and an orange tip 1.7 cm past the slide.
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.036, 0.18), polymerMat);
+  frame.position.set(0, 0.006, -0.07);
+  frame.name = 'frame';
   group.add(frame);
 
   // Front rail dust cover (slight notch under the slide forward of trigger)
@@ -17924,43 +18221,46 @@ function buildFPGun() {
   group.add(dustCover);
 
   // === Slide (top metal section) ===
-  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.04, 0.21), slideMat);
-  slide.position.set(0, 0.04, -0.08);
+  const slide = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.036, 0.21), slideMat);
+  slide.position.set(0, 0.042, -0.08);
+  slide.name = 'slide';
   slide.userData.baseZ = slide.position.z;
   group.add(slide);
 
   // Slide serrations — 4 small notches near the rear of the slide
   const serrationMeshes = [];
   for (let i = 0; i < 4; i++) {
-    const serr = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.038, 0.004), accentMat);
-    serr.position.set(0, 0.04, -0.005 - i * 0.012);
+    const serr = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.034, 0.004), accentMat);
+    serr.position.set(0, 0.042, -0.005 - i * 0.012);
     serr.userData.baseZ = serr.position.z;
     serrationMeshes.push(serr);
     group.add(serr);
   }
 
   // Ejection port (dark notch on right side of slide)
-  const ejPort = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.012, 0.04), accentMat);
-  ejPort.position.set(0.012, 0.052, -0.07);
+  const ejPort = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.010, 0.04), accentMat);
+  ejPort.position.set(0.008, 0.054, -0.07);
   ejPort.userData.baseZ = ejPort.position.z;
   group.add(ejPort);
 
   // === Barrel + orange tip ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.05, 10), slideMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.010, 10), slideMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.035, -0.205);
+  barrel.position.set(0, 0.035, -0.187);   // v1.221: 5 mm past the slide, was 4.5 cm
+  barrel.name = 'barrel';
   group.add(barrel);
 
   // Orange muzzle tip — the iconic airsoft signifier
-  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.022, 10), orangeMat);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.010, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.035, -0.24);
+  orangeTip.position.set(0, 0.035, -0.197);
+  orangeTip.name = 'tip';
   group.add(orangeTip);
 
   // Tiny muzzle hole (black dot at very tip)
   const muzzleHole = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.005, 8), accentMat);
   muzzleHole.rotation.x = Math.PI / 2;
-  muzzleHole.position.set(0, 0.035, -0.252);
+  muzzleHole.position.set(0, 0.035, -0.2025);
   group.add(muzzleHole);
 
   // === Sights ===
@@ -17982,15 +18282,13 @@ function buildFPGun() {
 
   // === Trigger guard ===
   // Approximated with a thin rectangular ring built from 4 boxes
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.008), polymerMat);
-  tgFront.position.set(0, -0.038, -0.04);
+  // v1.221: the Glock's squared guard, an upright at the front from the frame down to the bar, the bar back to the grip
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.030, 0.006), polymerMat);
+  tgFront.position.set(0, -0.027, -0.049);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.05), polymerMat);
-  tgBottom.position.set(0, -0.04, -0.02);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.005, 0.05), polymerMat);
+  tgBottom.position.set(0, -0.0395, -0.025);
   group.add(tgBottom);
-  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.024, 0.005), polymerMat);
-  tgRear.position.set(0, -0.026, 0.005);
-  group.add(tgRear);
 
   // Trigger itself
   const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
@@ -17998,24 +18296,24 @@ function buildFPGun() {
   group.add(trigger);
 
   // === Grip (angled down/back, textured by stacked thin layers) ===
-  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.13, 0.055), polymerMat);
-  grip.position.set(0, -0.085, 0.005);
-  grip.rotation.x = -0.18;
+  // v1.221: 9 cm (was 13) at 18° (was 10°), its top under the frame; the stippling and baseplate ride on it
+  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.09, 0.052), polymerMat);
+  grip.position.set(0, -0.0507, 0.0122);
+  grip.rotation.x = -0.32;
+  grip.name = 'grip';
   group.add(grip);
 
-  // Grip stippling — a few thin horizontal lines
+  // Grip stippling — a few thin horizontal lines on the back strap
   for (let i = 0; i < 5; i++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.003, 0.001), accentMat);
-    line.position.set(0, -0.06 - i * 0.018, 0.034 + i * 0.0035);
-    line.rotation.x = -0.18;
-    group.add(line);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.003, 0.001), accentMat);
+    line.position.set(0, 0.02 - i * 0.014, 0.0265);
+    grip.add(line);
   }
 
   // Magazine baseplate (slight protrusion at bottom of grip)
-  const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.012, 0.06), accentMat);
-  magBase.position.set(0, -0.152, 0.029);
-  magBase.rotation.x = -0.18;
-  group.add(magBase);
+  const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.010, 0.056), accentMat);
+  magBase.position.set(0, -0.047, 0);
+  grip.add(magBase);
 
   // === Default (hipfire) pose ===
   group.position.set(0.16, -0.18, -0.32);
@@ -18058,6 +18356,7 @@ function buildFPShotgun() {
   // === Receiver (main body) ===
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.06, 0.14), bodyMat);
   receiver.position.set(0, 0.02, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
 
   // Top rail on receiver (small Picatinny-style)
@@ -18072,9 +18371,9 @@ function buildFPShotgun() {
   }
 
   // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.20, 12), barrelMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.216, 12), barrelMat);   // v1.220: reaches the tip (was 8 mm short)
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.04, -0.22);
+  barrel.position.set(0, 0.04, -0.228);
   group.add(barrel);
 
   // Magazine tube (under barrel)
@@ -18115,32 +18414,39 @@ function buildFPShotgun() {
   group.add(pumpGroup);
 
   // === Trigger guard + trigger ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.022, -0.05);
+  // v1.224 (D.31, the shotgun against a Remington 870): the guard was 1.6 cm deep (an 870's is about 2.6 at this scale)
+  // with the trigger mostly inside the receiver; the wrist hung as a lump under the receiver's rear instead of behind
+  // it; and the butt pad stood 3.9 cm above the stock's top line. Now a deep guard, the wrist behind the receiver running
+  // into the stock, and the pad on the stock's back face.
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.027, 0.005), accentMat);
+  tgFront.position.set(0, -0.0225, -0.0525);
   group.add(tgFront);
   const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.005, 0.05), accentMat);
-  tgBottom.position.set(0, -0.024, -0.03);
+  tgBottom.position.set(0, -0.0335, -0.03);
   group.add(tgBottom);
-  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.022, 0.005), accentMat);
-  tgRear.position.set(0, -0.012, -0.005);
+  const tgRear = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.027, 0.005), accentMat);
+  tgRear.position.set(0, -0.0225, -0.0075);
   group.add(tgRear);
   const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.01, -0.04);
+  trigger.position.set(0, -0.019, -0.035);
+  trigger.name = 'trigger';
   group.add(trigger);
 
   // === Stock (single-piece, kid-airsoft style) ===
   const wrist = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.055, 0.08), stockMat);
-  wrist.position.set(0, -0.035, 0.015);
+  wrist.position.set(0, -0.025, 0.04);
   wrist.rotation.x = 0.18;
+  wrist.name = 'wrist';
   group.add(wrist);
   const stock = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.085, 0.14), stockMat);
   stock.position.set(0, -0.005, 0.105);
   stock.rotation.x = 0.18;
+  stock.name = 'stock';
   group.add(stock);
-  const buttpad = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.085, 0.012), accentMat);
-  buttpad.position.set(0, 0.022, 0.175);
-  buttpad.rotation.x = 0.18;
-  group.add(buttpad);
+  const buttpad = new THREE.Mesh(new THREE.BoxGeometry(0.040, 0.087, 0.012), accentMat);
+  buttpad.position.set(0, 0, 0.074);   // v1.224: on the stock's back face (was 3.9 cm above its top line)
+  buttpad.name = 'buttpad';
+  stock.add(buttpad);
 
   // === Default hipfire pose ===
   group.position.set(0.13, -0.21, -0.30);
@@ -18168,6 +18474,7 @@ function buildFPAR() {
   // === Lower receiver ===
   const lower = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.045, 0.13), bodyMat);
   lower.position.set(0, -0.005, -0.04);
+  lower.name = 'lower';
   group.add(lower);
 
   // === Upper receiver ===
@@ -18197,8 +18504,8 @@ function buildFPAR() {
   group.add(chargeGroup);
 
   // === Handguard / RIS rail ===
-  const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.038, 0.13), handlerMat);
-  handguard.position.set(0, 0.038, -0.19);
+  const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.038, 0.15), handlerMat);   // v1.220: meets the receiver (a 2 cm gap before)
+  handguard.position.set(0, 0.038, -0.18);
   group.add(handguard);
   for (let i = 0; i < 6; i++) {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.005, 0.005), accentMat);
@@ -18237,28 +18544,39 @@ function buildFPAR() {
   group.add(orangeTip);
 
   // === Magazine (blue, M4-style) ===
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.07, 0.034), magMat);
-  mag.position.set(0, -0.058, -0.04);
+  // v1.223 (D.31, the AR against an M4): the mag was 7 cm below the receiver (an M4's 30-rounder would be 11 cm at
+  // this scale), straight, and set against the grip, leaving the trigger and guard inside the lower receiver. Now it is
+  // 10.5 cm, tipped 7° forward for the M4 mag's curve, in a flared magwell at the front of the lower, and the guard and
+  // trigger hang below the receiver between the magwell and the grip, which rakes 20° (was 13°).
+  const magwell = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.022, 0.042), bodyMat);
+  magwell.position.set(0, -0.035, -0.066);
+  group.add(magwell);
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.105, 0.034), magMat);
+  mag.position.set(0, -0.0721, -0.0713);
+  mag.rotation.x = 0.12;
+  mag.name = 'mag';
   group.add(mag);
   const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.008, 0.038), accentMat);
-  magBase.position.set(0, -0.097, -0.04);
-  group.add(magBase);
+  magBase.position.set(0, -0.0545, 0);
+  mag.add(magBase);
 
   // === Pistol grip ===
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.07, 0.034), bodyMat);
   grip.position.set(0, -0.055, 0.01);
-  grip.rotation.x = -0.22;
+  grip.rotation.x = -0.35;
+  grip.name = 'grip';
   group.add(grip);
 
   // === Trigger guard ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.028, -0.012);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.005), accentMat);
+  tgFront.position.set(0, -0.037, -0.04);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.04), accentMat);
-  tgBottom.position.set(0, -0.03, 0.005);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.005, 0.045), accentMat);
+  tgBottom.position.set(0, -0.0445, -0.018);
   group.add(tgBottom);
-  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.012, -0.005);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.016, 0.006), accentMat);
+  trigger.position.set(0, -0.034, -0.022);
+  trigger.name = 'trigger';
   group.add(trigger);
 
   // === Buffer tube + stock ===
@@ -18295,53 +18613,61 @@ function buildFPSniper() {
   const accentMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.7 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // === Stock (synthetic black, single piece) ===
-  const forend = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.04, 0.15), stockMat);
-  forend.position.set(0, 0.005, -0.18);
-  group.add(forend);
-  const stockGrip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.058, 0.06), stockMat);
-  stockGrip.position.set(0, -0.022, -0.025);
-  group.add(stockGrip);
-  const butt = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.095, 0.16), stockMat);
-  butt.position.set(0, -0.005, 0.075);
-  group.add(butt);
-  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.092, 0.008), accentMat);
-  buttPad.position.set(0, -0.005, 0.158);
+  // v1.225 (D.31): held up to the rifle it copies, a Remington 700 / VSR-10 (drawn at about ×0.5 along its length). The
+  // stock is one piece in the 700's side profile: a forend the barrel beds into, slimming to its tip, a wrist rising to a straight comb,
+  // a pistol grip raked 25° behind the trigger guard, and the belly dropping to the toe. Before v1.225 it was three
+  // boxes and a cheek block, flat along the bottom from the grip to the toe with the grip under the trigger.
+  // x: the gun's z (toward the butt), y: the gun's y. v1.225 fix-up: the forend is its own piece, so the under-barrel
+  // parts, which hang from the box of whatever is at the rail, hang from the forend and not from the grip cap; its
+  // underside runs level back past the rail and the support hand, slimming only over its last 4 cm.
+  const sideProfile = (pts, name) => {
+    const prof = new THREE.Shape();
+    pts.forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
+    const geo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
+    geo.translate(0, 0, -0.019);
+    geo.rotateY(-Math.PI / 2);
+    const mesh = new THREE.Mesh(geo, stockMat);
+    mesh.name = name;
+    group.add(mesh);
+  };
+  sideProfile([[-0.255, 0.025], [-0.005, 0.025], [-0.005, -0.015], [-0.215, -0.015], [-0.250, -0.006], [-0.258, 0.006]], 'forend');
+  sideProfile([[-0.005, 0.025], [0.012, 0.030], [0.045, 0.042], [0.080, 0.057], [0.158, 0.054], [0.158, -0.052],
+    [0.046, -0.034], [0.058, -0.057], [0.036, -0.063], [0.017, -0.016], [-0.005, -0.015]], 'stock');
+  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.106, 0.008), accentMat);
+  buttPad.position.set(0, 0.001, 0.162);
+  buttPad.name = 'buttpad';
   group.add(buttPad);
-  // Cheek-rest hump
-  const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.018, 0.10), stockMat);
-  cheek.position.set(0, 0.052, 0.06);
-  group.add(cheek);
 
   // === Receiver ===
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.034, 0.10), receiverMat);
   receiver.position.set(0, 0.02, -0.04);
+  receiver.name = 'receiver';
   group.add(receiver);
 
-  // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.26, 12), barrelMat);
+  // === Barrel === v1.225: on the receiver's axis, bedded in the forend, tapering to the muzzle (was 2.5 cm above
+  // the receiver's axis, its underside clear of the forend)
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0085, 0.27, 12), barrelMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.045, -0.23);
+  barrel.position.set(0, 0.02, -0.225);
+  barrel.name = 'barrel';
   group.add(barrel);
 
   // === Orange muzzle tip ===
-  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.026, 10), orangeMat);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.045, -0.37);
+  orangeTip.position.set(0, 0.02, -0.37);
   group.add(orangeTip);
 
-  // === Bipod (folded down under the forend) ===
-  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.018), accentMat);
-  bipodHinge.position.set(0, -0.014, -0.24);
+  // === Bipod, folded: v1.225 the legs lie forward under the barrel (they hung straight down, deployed) ===
+  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.018), accentMat);
+  bipodHinge.position.set(0, -0.0123, -0.24);
   group.add(bipodHinge);
-  const bipodL = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodL.position.set(-0.018, -0.05, -0.245);
-  bipodL.rotation.z = 0.25;
-  group.add(bipodL);
-  const bipodR = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodR.position.set(0.018, -0.05, -0.245);
-  bipodR.rotation.z = -0.25;
-  group.add(bipodR);
+  for (const sx of [-0.011, 0.011]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
+    leg.rotation.x = Math.PI / 2;
+    leg.position.set(sx, -0.0123, -0.288);
+    group.add(leg);
+  }
 
   // === Bolt assembly (the cocking part — slides backward, with a slight vertical bob) ===
   const boltGroup = new THREE.Group();
@@ -18364,23 +18690,35 @@ function buildFPSniper() {
   boltGroup.userData.baseY = 0;
   group.add(boltGroup);
 
-  // === Trigger guard + trigger ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.018, -0.022);
+  // === Trigger guard + trigger === v1.225: the trigger under the receiver's rear, the guard's bar below the stock
+  // running back to the grip (the trigger sat inside the old guard, the grip block round both)
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.004), accentMat);
+  tgFront.position.set(0, -0.025, -0.018);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.05), accentMat);
-  tgBottom.position.set(0, -0.02, 0);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.043), accentMat);
+  tgBottom.position.set(0, -0.034, 0.0015);
   group.add(tgBottom);
-  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.005, -0.012);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), accentMat);
+  trigger.position.set(0, -0.022, 0.003);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
   group.add(trigger);
 
-  // Iron sights
+  // Iron sights. v1.225: the front post moved out to the muzzle on a ramp, along the line from your eye aimed, so
+  // the aimed picture is unchanged (it stood at the receiver's front on nothing); both hide when an optic is mounted.
   const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.008, 0.006), accentMat);
   rearSight.position.set(0, 0.042, 0.005);
+  rearSight.userData.ironSight = true;
   group.add(rearSight);
+  const fsRamp = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.0195, 0.016), accentMat);
+  fsRamp.position.set(0, 0.03575, -0.335);
+  fsRamp.userData.ironSight = true;
+  group.add(fsRamp);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.004), accentMat);
-  fsPost.position.set(0, 0.062, -0.10);
+  fsPost.position.set(0, 0.0518, -0.335);
+  fsPost.userData.ironSight = true;
+  fsPost.userData.frontSight = true;
+  fsPost.name = 'frontsight';
   group.add(fsPost);
 
   // === Default hipfire pose — sniper held a touch lower (heavier feel) ===
@@ -18420,51 +18758,81 @@ function buildFPAK() {
   // Receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.16), steelMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top cover (rounded-ish dust cover) — slightly narrower box on top
   const topCover = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.02, 0.15), steelMat);
   topCover.position.set(0, 0.045, -0.05);
   group.add(topCover);
 
-  // Wood handguard (forward, under the gas tube)
+  // v1.226 (D.31): held up to an AK-47 (drawn at about ×0.67, its receiver 16 cm). The gas tube runs from the
+  // receiver to a gas block behind the front sight, under a wood upper handguard over its rear half (it floated
+  // 9 mm over the lower handguard and stopped where the handguard did); a rear sight stands at the front of the top
+  // cover; the magazine is one curved piece seated in the receiver, 2 cm further forward, so a trigger and guard fit
+  // between it and the grip (it was three tilted blocks with gaps, touching the guard, and there was no trigger); the
+  // stock drops from the receiver to a tall butt (it was a straight box on the bore line).
+  // Lower wood handguard, round the barrel
   const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.10), woodMat);
   handguard.position.set(0, 0.01, -0.18);
+  handguard.name = 'handguard';
   group.add(handguard);
-  // Gas tube above the handguard
-  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.10, 8), steelMat);
+  // Gas tube from the receiver to the gas block, the upper handguard round its rear half
+  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.155, 8), steelMat);
   gasTube.rotation.x = Math.PI / 2;
-  gasTube.position.set(0, 0.05, -0.18);
+  gasTube.position.set(0, 0.044, -0.2075);
+  gasTube.name = 'gastube';
   group.add(gasTube);
+  const upperGuard = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.026, 0.10), woodMat);
+  upperGuard.position.set(0, 0.043, -0.18);
+  upperGuard.name = 'upperguard';
+  group.add(upperGuard);
+  const gasBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.034, 0.02), steelMat);
+  gasBlock.position.set(0, 0.035, -0.285);
+  gasBlock.name = 'gasblock';
+  group.add(gasBlock);
 
   // Barrel + front sight block + orange tip
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.16, 10), darkMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.174, 10), darkMat);   // v1.220: reaches the tip
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.025, -0.30);
+  barrel.position.set(0, 0.025, -0.307);
+  barrel.name = 'barrel';
   group.add(barrel);
   const fsBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.022), steelMat);
   fsBlock.position.set(0, 0.045, -0.31);
   group.add(fsBlock);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.014, 0.004), darkMat);
   fsPost.position.set(0, 0.064, -0.31);
+  fsPost.userData.frontSight = true;
   group.add(fsPost);
+  // Rear sight at the front of the top cover: a base and two ears, the notch between them over the bore line
+  const rsBase = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.011, 0.016), steelMat);
+  rsBase.position.set(0, 0.0605, -0.117);
+  rsBase.userData.ironSight = true;
+  group.add(rsBase);
+  for (const sx of [-0.0065, 0.0065]) {
+    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.006, 0.006), steelMat);
+    ear.position.set(sx, 0.069, -0.117);
+    ear.userData.ironSight = true;
+    group.add(ear);
+  }
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
   orangeTip.position.set(0, 0.025, -0.40);
   group.add(orangeTip);
 
-  // Curved banana magazine — approximate the curve with three stacked, tilted segments.
-  const magSeg1 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.05), magMat);
-  magSeg1.position.set(0, -0.04, -0.045);
-  magSeg1.rotation.x = 0.12;
-  group.add(magSeg1);
-  const magSeg2 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.045), magMat);
-  magSeg2.position.set(0, -0.08, -0.062);
-  magSeg2.rotation.x = 0.34;
-  group.add(magSeg2);
-  const magSeg3 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.03, 0.04), magMat);
-  magSeg3.position.set(0, -0.115, -0.088);
-  magSeg3.rotation.x = 0.55;
-  group.add(magSeg3);
+  // Curved banana magazine: one piece between two arcs about a centre ahead of it, sweeping 0.56 rad forward as it
+  // drops 12.5 cm, its top 4.5 cm long seated 3 mm into the receiver
+  const magProf = new THREE.Shape(), MR = 0.24, MW = 0.045, MA = 0.56, mcz = -0.038 - MR, mcy = -0.010;
+  const magPts = [];
+  for (let i = 0; i <= 6; i++) { const t = MA * i / 6; magPts.push([mcz + MR * Math.cos(t), mcy - MR * Math.sin(t)]); }
+  for (let i = 6; i >= 0; i--) { const t = MA * i / 6; magPts.push([mcz + (MR - MW) * Math.cos(t), mcy - (MR - MW) * Math.sin(t)]); }
+  magPts.forEach(([z, y], i) => i ? magProf.lineTo(z, y) : magProf.moveTo(z, y));
+  const magGeo = new THREE.ExtrudeGeometry(magProf, { depth: 0.026, bevelEnabled: false });
+  magGeo.translate(0, 0, -0.013);
+  magGeo.rotateY(-Math.PI / 2);
+  const mag = new THREE.Mesh(magGeo, magMat);
+  mag.name = 'mag';
+  group.add(mag);
 
   // Charging handle — AK's is on the RIGHT side, reciprocates with the bolt.
   const chargeGroup = new THREE.Group();
@@ -18479,18 +18847,33 @@ function buildFPAK() {
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.07, 0.03), woodMat2);
   grip.position.set(0, -0.05, 0.02);
   grip.rotation.x = -0.25;
+  grip.name = 'grip';
   group.add(grip);
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.045), darkMat);
-  tg.position.set(0, -0.026, -0.005);
+  // Trigger guard (an upright behind the mag, a bar back to the grip) and the trigger inside it
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.004), darkMat);
+  tgFront.position.set(0, -0.023, -0.034);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.04), darkMat);
+  tg.position.set(0, -0.033, -0.016);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), darkMat);
+  trigger.position.set(0, -0.020, -0.015);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
-  // Fixed wood stock (straight, runs back toward camera)
-  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.10), woodMat);
-  stock.position.set(0, 0.0, 0.10);
+  // Fixed wood stock, dropping from the receiver's rear to a tall butt
+  const stockProf = new THREE.Shape();
+  [[0.028, 0.032], [0.150, 0.012], [0.150, -0.066], [0.028, -0.013]].forEach(([z, y], i) => i ? stockProf.lineTo(z, y) : stockProf.moveTo(z, y));
+  const stockGeo = new THREE.ExtrudeGeometry(stockProf, { depth: 0.034, bevelEnabled: false });
+  stockGeo.translate(0, 0, -0.017);
+  stockGeo.rotateY(-Math.PI / 2);
+  const stock = new THREE.Mesh(stockGeo, woodMat);
+  stock.name = 'stock';
   group.add(stock);
-  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.052, 0.012), darkMat);
-  stockPad.position.set(0, 0.0, 0.155);
+  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.08, 0.012), darkMat);
+  stockPad.position.set(0, -0.027, 0.155);
+  stockPad.name = 'buttpad';
   group.add(stockPad);
 
   group.position.set(0.13, -0.20, -0.32);
@@ -18514,6 +18897,7 @@ function buildFPMP5() {
   // Receiver (slim)
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.042, 0.13), bodyMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Slim cylindrical handguard
   const handguard = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.09, 12), matteMat);
@@ -18544,27 +18928,33 @@ function buildFPMP5() {
   group.add(fsRing);
   const rearDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.016, 10), bodyMat);
   rearDrum.rotation.z = Math.PI / 2;
-  rearDrum.position.set(0, 0.04, 0.02);
+  rearDrum.position.set(0, 0.04, 0.003);   // v1.227: on the receiver's back end (it hung 5 mm past it)
   group.add(rearDrum);
 
-  // Curved magazine (MP5's signature banana, slightly forward-curving)
-  const magTop = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.03), matteMat);
-  magTop.position.set(0, -0.045, -0.05);
-  magTop.rotation.x = -0.10;
-  group.add(magTop);
-  const magBot = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.028), matteMat);
-  magBot.position.set(0, -0.092, -0.034);
-  magBot.rotation.x = -0.28;
-  group.add(magBot);
+  // v1.227 (D.31): held up to an MP5 (drawn at about ×0.64). The magazine is one piece curving forward as it drops,
+  // with a trigger inside the guard between it and the grip (it was two blocks kinked back toward the grip, and there
+  // was no trigger); the stock's two rails run back from the receiver's sides to the pad (it was one strut down the
+  // middle).
+  const magProf = new THREE.Shape(), MR = 0.2, MW = 0.028, MA = 0.5, mcz = -0.036 - MR, mcy = -0.006;
+  const magPts = [];
+  for (let i = 0; i <= 6; i++) { const t = MA * i / 6; magPts.push([mcz + MR * Math.cos(t), mcy - MR * Math.sin(t)]); }
+  for (let i = 6; i >= 0; i--) { const t = MA * i / 6; magPts.push([mcz + (MR - MW) * Math.cos(t), mcy - (MR - MW) * Math.sin(t)]); }
+  magPts.forEach(([z, y], i) => i ? magProf.lineTo(z, y) : magProf.moveTo(z, y));
+  const magGeo = new THREE.ExtrudeGeometry(magProf, { depth: 0.022, bevelEnabled: false });
+  magGeo.translate(0, 0, -0.011);
+  magGeo.rotateY(-Math.PI / 2);
+  const mag = new THREE.Mesh(magGeo, matteMat);
+  mag.name = 'mag';
+  group.add(mag);
 
   // Cocking handle (the "HK slap" tube up front-left, pulls back)
   const chargeGroup = new THREE.Group();
   const cockTube = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.05, 8), steelMat);
   cockTube.rotation.x = Math.PI / 2;
-  cockTube.position.set(-0.022, 0.045, -0.13);
+  cockTube.position.set(-0.022, 0.036, -0.13);   // v1.220: on the receiver, not 6 mm over it
   chargeGroup.add(cockTube);
   const cockKnob = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.014), steelMat);
-  cockKnob.position.set(-0.022, 0.045, -0.108);
+  cockKnob.position.set(-0.022, 0.036, -0.108);
   chargeGroup.add(cockKnob);
   chargeGroup.position.set(0, 0, 0);
   chargeGroup.userData.baseZ = 0;
@@ -18572,18 +18962,29 @@ function buildFPMP5() {
 
   // Pistol grip + trigger guard
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.062, 0.028), bodyMat);
-  grip.position.set(0, -0.045, 0.012);
+  grip.position.set(0, -0.041, 0.012);   // v1.227: up against the receiver (it hung 5 mm under it)
   grip.rotation.x = -0.22;
   group.add(grip);
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.04), matteMat);
-  tg.position.set(0, -0.024, -0.004);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.004), matteMat);
+  tgFront.position.set(0, -0.019, -0.031);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.033), matteMat);
+  tg.position.set(0, -0.029, -0.0145);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.014, 0.005), matteMat);
+  trigger.position.set(0, -0.015, -0.016);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
-  // Retractable stock (single straight strut + pad)
-  const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.10), steelMat);
-  stockStrut.position.set(0, 0.015, 0.10);
-  group.add(stockStrut);
-  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.045, 0.012), matteMat);
+  // Retractable stock: a rail down each side of the receiver, back to the pad
+  for (const sx of [-0.0155, 0.0155]) {
+    const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.01, 0.16), steelMat);
+    stockStrut.position.set(sx, 0.018, 0.064);
+    stockStrut.name = 'stockrail';
+    group.add(stockStrut);
+  }
+  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.045, 0.012), matteMat);
   stockPad.position.set(0, 0.012, 0.15);
   group.add(stockPad);
 
@@ -18605,9 +19006,13 @@ function buildFPUMP() {
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.45, metalness: 0.5 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
+  // v1.228 (D.31): held up to a UMP45 (drawn at about ×0.62). The barrel shroud is the receiver's front end (it stood
+  // 5 mm off it); the stick mag rakes a little forward from a magwell, seated in the receiver (it tilted back, its top
+  // 4.5 mm short); the grip meets the receiver; a trigger hangs inside a deeper guard (there was none).
   // Bulky polymer receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.15), polyMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top rail
   const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.13), steelMat);
@@ -18620,8 +19025,9 @@ function buildFPUMP() {
   }
 
   // Stubby barrel shroud + barrel + orange tip
-  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.06), polyMat2);
-  shroud.position.set(0, 0.012, -0.16);
+  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.066), polyMat2);
+  shroud.position.set(0, 0.012, -0.157);
+  shroud.name = 'shroud';
   group.add(shroud);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.06, 10), steelMat);
   barrel.rotation.x = Math.PI / 2;
@@ -18633,13 +19039,21 @@ function buildFPUMP() {
   group.add(orangeTip);
 
   // Straight stick magazine (.45 — fat, straight, slight forward angle)
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.085, 0.034), polyMat2);
-  mag.position.set(0, -0.06, -0.045);
-  mag.rotation.x = -0.05;
-  group.add(mag);
+  const magHolder = new THREE.Group();   // pivots at the receiver's underside
+  magHolder.position.set(0, -0.011, -0.047);
+  magHolder.rotation.x = 0.08;
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.09, 0.034), polyMat2);
+  mag.position.set(0, -0.045, 0);
+  mag.name = 'mag';
+  magHolder.add(mag);
   const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.01, 0.038), steelMat);
-  magBase.position.set(0, -0.105, -0.043);
-  group.add(magBase);
+  magBase.position.set(0, -0.094, 0);
+  magHolder.add(magBase);
+  group.add(magHolder);
+  const magwell = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.016, 0.042), polyMat);
+  magwell.position.set(0, -0.019, -0.048);
+  magwell.name = 'magwell';
+  group.add(magwell);
 
   // Charging handle (left side, pulls back)
   const chargeGroup = new THREE.Group();
@@ -18652,19 +19066,28 @@ function buildFPUMP() {
 
   // Grip + trigger guard
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.065, 0.03), polyMat);
-  grip.position.set(0, -0.048, 0.018);
+  grip.position.set(0, -0.045, 0.018);
   grip.rotation.x = -0.2;
+  grip.name = 'grip';
   group.add(grip);
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.042), steelMat);
-  tg.position.set(0, -0.025, -0.002);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.004), polyMat);
+  tgFront.position.set(0, -0.022, -0.025);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.034), polyMat);
+  tg.position.set(0, -0.0335, -0.009);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), steelMat);
+  trigger.position.set(0, -0.020, -0.010);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
   // Folding stock (UMP's side-folder, shown extended: two struts + pad)
-  const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.10), steelMat);
-  strutTop.position.set(0, 0.03, 0.095);
+  const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);   // v1.220: from the receiver
+  strutTop.position.set(0, 0.03, 0.08);
   group.add(strutTop);
-  const strutBot = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.10), steelMat);
-  strutBot.position.set(0, -0.005, 0.095);
+  const strutBot = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);
+  strutBot.position.set(0, -0.005, 0.08);
   group.add(strutBot);
   const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.055, 0.012), polyMat2);
   stockPad.position.set(0, 0.012, 0.15);
@@ -18741,7 +19164,7 @@ function buildFPMAC10() {
 
   // Stub of a retractable wire stock (collapsed look — short)
   const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.03), matteMat);
-  stockStub.position.set(0, 0.01, 0.04);
+  stockStub.position.set(0, 0.01, 0.025);   // v1.220: on the back of the box (was 15 mm behind it)
   group.add(stockStub);
 
   group.position.set(0.16, -0.18, -0.30);
@@ -18769,7 +19192,7 @@ function _fpPart(group, geo, mat, x, y, z, rx) {
 }
 function _fpTriggerGuard(group, mat, y, z) {
   _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.05), mat, 0, y - 0.022, z + 0.01);
-  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.008), mat, 0, y - 0.01, z - 0.015);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.017, 0.005), mat, 0, y - 0.0135, z - 0.0125);   // v1.220: the front upright, down to the bar
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.02, 0.006), mat, 0, y - 0.008, z);
 }
 const _fpOrangeMat = () => new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
@@ -18870,8 +19293,8 @@ function buildFPBucket() {
   _fpPart(group, new THREE.CylinderGeometry(0.046, 0.032, 0.06, 16), clear, 0, 0.075, -0.09);        // the bucket
   _fpPart(group, new THREE.CylinderGeometry(0.038, 0.031, 0.034, 16), bbs, 0, 0.062, -0.09);         // BBs in it
   _fpPart(group, new THREE.CylinderGeometry(0.048, 0.048, 0.006, 16), yellow, 0, 0.106, -0.09);      // lid
-  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, 0.02);                    // handle posts
-  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, -0.21);
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.08, 0.016), blue, 0, 0.0875, 0.02);                  // handle posts (v1.220: down on the body)
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.08, 0.016), blue, 0, 0.0875, -0.21);
   _fpPart(group, new THREE.BoxGeometry(0.022, 0.016, 0.25), dark, 0, 0.127, -0.095);                 // carry-handle rail
   _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), dark, 0, 0.142, -0.205).userData.frontSight = true;                // front blade (tip y 0.149)
   _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), dark, 0, 0.138, 0.012);                 // rear notch
@@ -18940,12 +19363,211 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else mesh = buildFPGun();   // fallback
+  attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
   fpGuns[gunType] = mesh;
   return mesh;
 }
 function getActiveFpGun() {
   return fpGuns[Game.gun.type] || fpGuns.pistol;
+}
+
+// =====================================================================
+// v1.219 (backlog D.30, Michael 13 Oct: "Can we have the player's hand(s) shown holding their weapons in First Person
+// View? Same for the Speed Loader"). Your hands on whatever you hold, in your own skin colour, the forearms running
+// back out of the bottom of the screen; a hoodie's sleeves come down to a cuff at the wrist. Each hand is a child of
+// the thing it holds (a pump hand rides the pump), so bob, kick, ADS and cocking carry it. Three shapes, in the frame
+// of what they hold: a GRIP hand round an upright grip (local Y up the grip, -Z forward), a SUPPORT hand under a
+// handguard running along Z, and a CUP hand, the off hand wrapped round the shooting hand on a pistol.
+// FP_HANDS: per gun, `r` the shooting hand (centre of the grip, its rake rx, half width/depth, and `up`, how far up
+// the grip from its centre the hand's middle sits) and `l` the off hand ('cup', or a support/grip spec; `on: 'pump'`
+// rides the gun's cocking part). Long guns with an under-barrel slot move the off hand onto a PVC foregrip or a taped
+// mag when one is mounted (`underHand`).
+// =====================================================================
+const FP_HANDS = {
+  pistol:  { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.221: the grip's new place
+  shotgun: { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
+  ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
+  sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
+  mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
+  ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
+  mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
+  thunder: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
+  sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
+  boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
+};
+// Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
+const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
+const FP_HAND_MATS = { skin: null, sleeve: null, key: '' };
+const _fpForearms = [];   // every forearm built: { arm, cuff }, re-dressed when the look changes
+function fpHandMats() {
+  if (!FP_HAND_MATS.skin) {
+    FP_HAND_MATS.skin = new THREE.MeshStandardMaterial({ color: 0xe0b090, roughness: 0.75 });
+    FP_HAND_MATS.sleeve = new THREE.MeshStandardMaterial({ color: 0x7c7d84, roughness: 0.9 });
+  }
+  return FP_HAND_MATS;
+}
+// Skin and sleeve follow the mirror (look.skinColor; a hoodie's colour when one is worn). Cheap enough each frame:
+// it only does work when the look has changed.
+function syncFpHandLook() {
+  const look = (Game.persist && Game.persist.look) || {};
+  const top = (typeof KID_TOPS !== 'undefined' && look.top && KID_TOPS[look.top]) || null;
+  const hoodie = !!(top && top.kind === 'hoodie');
+  const key = (look.skinColor || 0) + '|' + (hoodie ? top.color : 'bare');
+  if (FP_HAND_MATS.key === key) return;
+  const M = fpHandMats();
+  FP_HAND_MATS.key = key;
+  M.skin.color.setHex(look.skinColor != null ? look.skinColor : 0xe0b090);
+  if (hoodie) M.sleeve.color.setHex(top.color);
+  for (const f of _fpForearms) f.arm.material = hoodie ? M.sleeve : M.skin;
+}
+function _fpHandBox(g, w, h, d, x, y, z, ry) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), fpHandMats().skin);
+  m.position.set(x, y, z);
+  if (ry) m.rotation.y = ry;
+  m.userData.fpHand = true;
+  g.add(m);
+  return m;
+}
+// A hand round an upright grip. s = +1 the right hand (back of the hand on the grip's right, fingertips and thumb on
+// its left), -1 the left. Spans about 0.04 below to 0.045 above its origin.
+function buildFpGripHand(gw, gd, s) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 0.024, 0.078, 0.07, s * (gw + 0.012), -0.004, 0.006);              // back of the hand
+  _fpHandBox(g, 2 * gw + 0.02, 0.07, 0.02, s * 0.006, -0.008, gd + 0.01);          // heel of the hand on the back strap
+  for (let i = 0; i < 3; i++) {
+    _fpHandBox(g, 2 * gw + 0.026, 0.0175, 0.019, -s * 0.002, 0.012 - i * 0.021, -gd - 0.0095);   // fingers round the front
+    _fpHandBox(g, 0.012, 0.0175, 0.024, -s * (gw + 0.006), 0.012 - i * 0.021, -gd + 0.008);      // their tips
+  }
+  _fpHandBox(g, 0.015, 0.016, 0.034, s * gw * 0.3, 0.034, -gd - 0.022);           // the trigger finger
+  _fpHandBox(g, 0.016, 0.018, 0.05, -s * (gw + 0.008), 0.04, -0.004, s * 0.12);    // the thumb
+  g.userData.wrist = [s * 0.012, -0.012, gd + 0.024];
+  return g;
+}
+// The off hand under a handguard (along Z, half width hw, half height hh): the palm under it, the heel and thumb up
+// its left side, four fingers up its right.
+function buildFpSupportHand(hw, hh) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 2 * hw + 0.016, 0.02, 0.08, 0, -hh - 0.01, 0);                       // palm
+  _fpHandBox(g, 0.016, hh * 1.4, 0.075, -(hw + 0.008), -hh * 0.35, 0.004);           // heel of the hand
+  _fpHandBox(g, 0.015, 0.016, 0.05, -(hw + 0.006), hh * 0.55, -0.02);                // thumb
+  for (let i = 0; i < 4; i++) _fpHandBox(g, 0.014, 2 * hh + 0.004, 0.0165, hw + 0.007, -0.002, -0.03 + i * 0.0195);   // fingers
+  g.userData.wrist = [-0.006, -hh - 0.014, 0.03];
+  return g;
+}
+// The off hand cupped round the shooting hand on a pistol grip (same frame as the grip hand).
+function buildFpCupHand(gw, gd) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 0.022, 0.075, 0.075, -(gw + 0.026), -0.01, -0.004);                 // palm on the grip's left
+  for (let i = 0; i < 3; i++) _fpHandBox(g, 2 * gw + 0.05, 0.017, 0.019, -0.008, 0.008 - i * 0.02, -gd - 0.029);   // fingers over the other hand's
+  _fpHandBox(g, 0.016, 0.017, 0.05, -(gw + 0.02), 0.024, -0.012, -0.1);             // thumb under the other thumb
+  g.userData.wrist = [-(gw + 0.03), -0.025, 0.022];
+  return g;
+}
+// The forearm from a hand's wrist to an elbow given in camera space, both as children of `parent` (whose pose at
+// build time, and its parents' up to `root`, convert the elbow). Narrow at the wrist; a cuff there for a hoodie.
+function addFpForearm(parent, root, hand, elbowCam) {
+  const M = new THREE.Matrix4();
+  for (let o = parent; o; o = o.parent) { o.updateMatrix(); M.premultiply(o.matrix); if (o === root) break; }
+  const elbow = new THREE.Vector3().fromArray(elbowCam).applyMatrix4(M.clone().invert());
+  hand.updateMatrix();
+  const wrist = new THREE.Vector3().fromArray(hand.userData.wrist).applyMatrix4(hand.matrix);
+  const dir = new THREE.Vector3().subVectors(elbow, wrist);
+  const len = dir.length();
+  dir.normalize();
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);   // -Y runs wrist to elbow
+  const M2 = fpHandMats();
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.034, len, 8), M2.skin);
+  arm.quaternion.copy(q);
+  arm.position.copy(wrist).addScaledVector(dir, len / 2);
+  arm.userData.fpHand = true;
+  parent.add(arm);
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.03, 8), M2.sleeve);
+  cuff.quaternion.copy(q);
+  cuff.position.copy(wrist).addScaledVector(dir, 0.03);
+  cuff.userData.fpHand = true;
+  cuff.visible = false;
+  parent.add(cuff);
+  const f = { arm, cuff };
+  _fpForearms.push(f);
+  return f;
+}
+function _fpPlaceGripHand(parent, root, spec, s, elbow) {
+  const h = buildFpGripHand(spec.gw, spec.gd, s);
+  const ax = new THREE.Vector3(0, Math.cos(spec.rx), Math.sin(spec.rx));      // up the grip
+  h.position.set(spec.c[0], spec.c[1], spec.c[2]).addScaledVector(ax, spec.up || 0);
+  h.rotation.x = spec.rx;
+  parent.add(h);
+  const f = addFpForearm(parent, root, h, elbow);
+  return [h, f.arm, f.cuff];
+}
+// Put both hands on an FP gun group, built in its hip pose. Tags: userData.fpHands = { r, l, under } (arrays of the
+// meshes/groups of each hand, its forearm and cuff) for updateHeldMesh and the tests.
+function attachFpHands(group, gunType) {
+  const spec = FP_HANDS[gunType];
+  if (!spec || group.userData.fpHands) return;
+  const out = { r: [], l: [], under: null };
+  out.r = _fpPlaceGripHand(group, group, spec.r, 1, FP_ELBOW_R);
+  if (spec.l === 'cup') {
+    const h = buildFpCupHand(spec.r.gw, spec.r.gd);
+    const ax = new THREE.Vector3(0, Math.cos(spec.r.rx), Math.sin(spec.r.rx));
+    h.position.set(spec.r.c[0], spec.r.c[1], spec.r.c[2]).addScaledVector(ax, spec.r.up || 0);
+    h.rotation.x = spec.r.rx;
+    group.add(h);
+    const f = addFpForearm(group, group, h, FP_ELBOW_L_CUP);
+    out.l = [h, f.arm, f.cuff];
+  } else if (spec.l.kind === 'grip') {
+    out.l = _fpPlaceGripHand(group, group, spec.l, -1, FP_ELBOW_L);
+  } else {
+    const parent = spec.l.on === 'pump' ? (group.userData.cockingParts || [])[0] || group : group;
+    const h = buildFpSupportHand(spec.l.hw, spec.l.hh);
+    h.position.set(spec.l.c[0], spec.l.c[1], spec.l.c[2]);
+    parent.add(h);
+    const f = addFpForearm(parent, group, h, FP_ELBOW_L);
+    out.l = [h, f.arm, f.cuff];
+  }
+  if (spec.underHand && FP_GUN_MOUNT[gunType]) {
+    // The off hand on a PVC foregrip or a taped mag, which hang under the handguard at the rail's middle.
+    const mount = FP_GUN_MOUNT[gunType];
+    const bottom = measureGunForUnder(group, mount).bottom;
+    out.under = _fpPlaceGripHand(group, group, { c: [0, bottom - 0.04, mount.railZ], rx: 0, gw: 0.012, gd: 0.016, up: 0.008 }, -1, FP_ELBOW_L);
+    for (const o of out.under) o.visible = false;
+  }
+  group.userData.fpHands = out;
+  syncFpHandLook();
+}
+// Which off hand shows: on a long gun with a PVC foregrip or a taped mag mounted, the one on that part.
+function updateFpHands(group, gunType) {
+  syncFpHandLook();
+  const H = group && group.userData.fpHands;
+  if (!H) return;
+  if (H.under) {
+    const under = getMountedAccessories(gunType).find(a => a.slot === 'under');
+    const onPart = !!under && (under.type === 'foregrip' || under.type === 'taped_mag');
+    for (const o of H.l) o.visible = !onPart;
+    for (const o of H.under) o.visible = onPart;
+  }
+  const hoodie = FP_HAND_MATS.key.indexOf('bare') < 0;   // a cuff only with a hoodie, only on a hand that shows
+  for (const hand of [H.r, H.l, H.under]) if (hand && hand.length) hand[2].visible = hoodie && hand[0].visible;
+}
+// The speed loader and the spare mag are held in the right hand: round the loader's tube (along its Z), or round
+// the mag's body.
+function attachFpItemHand(group, kind) {
+  let h;
+  if (kind === 'loader') {
+    h = buildFpSupportHand(0.025, 0.025);
+    h.position.set(0, 0, 0.025);
+  } else {
+    h = buildFpGripHand(0.02, 0.025, 1);
+    h.position.set(0, -0.025, 0);
+  }
+  group.add(h);
+  const f = addFpForearm(group, group, h, FP_ELBOW_R);
+  group.userData.fpHands = { r: [h, f.arm, f.cuff], l: [], under: null };
+  syncFpHandLook();
 }
 
 // =====================================================================
@@ -18971,7 +19593,7 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
-  sniper:  { barrelY: 0.040, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
+  sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
   mp5:     { barrelY: 0.010, sideX: 0.016, railZ: -0.16,  railLen: 0.07,  underY: -0.010, sightY: 0.030, sightZ: -0.05,  sightScale: 0.95 },
   ump:     { barrelY: 0.012, sideX: 0.015, railZ: -0.155, railLen: 0.06,  underY: -0.006, sightY: 0.052, sightZ: -0.05,  sightScale: 0.95 },
@@ -19307,10 +19929,10 @@ function ensureFPGunAccessory(group, gunType) {
 // Show/hide + POSITION the laser & flashlight on a gun group based on the
 // accessories mounted on THAT gun (v1.28: both can be on at once, each on a
 // left or right rail). Called when the held mesh is shown/swapped.
-function updateFPGunAccessory(group, gunType) {
+function updateFPGunAccessory(group, gunType, mountedOverride) {
   if (!group) return;
   const acc = ensureFPGunAccessory(group, gunType);
-  const mounted = getMountedAccessories(gunType);
+  const mounted = mountedOverride || getMountedAccessories(gunType);   // v1.211: the shop's pictures pass their own
   // v1.36i: either laser variant (red or green) shows the FP laser rig; the
   // mounted attachment's `laserColor` recolors the beam/dot/emitter.
   const laserPl = mounted.find(a => a.type === 'laser' || a.type === 'laser_green');
@@ -19406,7 +20028,7 @@ function measureGunForUnder(group, mount) {
   const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
   let bottom = null, frontZ = 0, frontY = mount.barrelY;
   group.traverse(o => {
-    if (!o.isMesh || !o.geometry || !o.visible) return;
+    if (!o.isMesh || !o.geometry || !o.visible || o.userData.fpHand) return;   // v1.219: not the hands
     if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
     if (b.min.x > 0.004 || b.max.x < -0.004) return;                       // off the centre line
@@ -19699,6 +20321,126 @@ function shopGearPic(kind, id, w, h) {
     return { obj: kid.group, fit, pad };
   });
 }
+// v1.211 (D.23, the last part): the Mods tab's parts, each mounted alone on the AR (the one gun with every slot) and
+// framed on the part with a little of the gun round it, so you see where it goes. Rail parts go on the left rail, the
+// side the camera sees; under-barrel parts are seen from a little below.
+function shopModPic(aid, w, h) {
+  return shopPic('mod:' + aid, w, h, () => {
+    const a = ATTACHMENTS[aid];
+    const gun = buildBareGunMesh('ar');
+    const holder = new THREE.Group();
+    holder.add(gun);
+    const acc = ensureFPGunAccessory(gun, 'ar');
+    updateFPGunAccessory(gun, 'ar', [{ type: aid, slot: a.slot, placement: a.slot === 'rail' ? 'left' : a.slot }]);
+    if (acc.laserBeam) acc.laserBeam.visible = false;   // the beam and its dot would run out of the frame
+    if (acc.laserDot) acc.laserDot.visible = false;
+    if (acc.flashLight) acc.flashLight.intensity = 0;
+    holder.rotation.set(a.slot === 'under' ? -0.32 : 0.22, Math.PI / 2 - 0.42, 0);
+    holder.updateMatrixWorld(true);
+    let part, fit;
+    if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : acc.redDotOptic;
+    else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
+    else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
+      part = acc.flashUnit;
+      const fb = part.userData.flashBodyGroup;
+      fb.children.forEach(o => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; });
+      fit = fb.children.filter(o => o.isMesh && o.visible);
+    } else { part = acc.laserUnit; fit = [part.userData.laserBodyGroup || part]; }
+    part = part || gun;
+    // the gun is drawn pale, as a catalogue shows a part on a grey gun, so the part keeps its own colours
+    const mine = new Set(); part.traverse(o => mine.add(o));
+    const pale = new THREE.MeshStandardMaterial({ color: 0xc9cbcf, roughness: 0.7, metalness: 0.05 });
+    gun.traverse(o => { if (o.isMesh && !mine.has(o) && !(o.material && o.material.transparent)) o.material = pale; });
+    return { obj: holder, fit: fit || [part], pad: aid === 'scope' ? 1.45 : a.slot === 'sight' ? 1.9 : 1.7 };
+  });
+}
+// v1.211 (D.23): the Ammo tab. A speed loader is its own model (the one you hold in a match), longer for the bigger
+// ones; a BB pack is a clear bag of BBs with a card header, and the two cases are cardboard boxes, the bulk case wider.
+function shopAmmoPic(id, w, h) {
+  return shopPic('ammo:' + id, w, h, () => {
+    const holder = new THREE.Group();
+    if (id.startsWith('sl_')) {
+      const ld = buildFPLoader();
+      ld.position.set(0, 0, 0); ld.rotation.set(0, 0, 0); ld.visible = true;
+      ld.scale.set(1, 1, { sl_50: 1, sl_100: 1.3, sl_200: 1.7 }[id] || 1);
+      const tip = new THREE.Group(); tip.add(ld);
+      tip.rotation.set(0.35, Math.PI / 2 - 0.5, 0);   // the nozzle to the left, tipped to see the plunger
+      holder.add(tip);
+      holder.rotation.z = 0.6;   // laid corner to corner, so the long tube fills the square
+      return { obj: holder, fit: [ld], pad: 1.1 };
+    }
+    const n = +id.slice(4);
+    const bbMat = new THREE.MeshStandardMaterial({ color: 0xf4f1e6, roughness: 0.35 });
+    if (n <= 500) {
+      const big = n >= 500, bw = big ? 0.2 : 0.13, bh = big ? 0.26 : 0.18, bd = big ? 0.07 : 0.05;
+      const fill = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.9, bh * 0.72, bd * 0.8), bbMat);
+      fill.position.y = -bh * 0.12; holder.add(fill);
+      const bbGeo = new THREE.SphereGeometry(0.009, 6, 5);   // a few BBs pressing at the plastic
+      for (let i = 0; i < (big ? 40 : 24); i++) {
+        const bb = new THREE.Mesh(bbGeo, bbMat);
+        bb.position.set((((i * 37) % 19) / 19 - 0.5) * bw * 0.85, -bh * 0.12 + (((i * 53) % 23) / 23 - 0.5) * bh * 0.68, bd * 0.4);
+        holder.add(bb);
+      }
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(bw, bh * 0.86, bd),
+        new THREE.MeshStandardMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.35, roughness: 0.15 }));
+      bag.position.y = -bh * 0.07; holder.add(bag);
+      const card = new THREE.Mesh(new THREE.BoxGeometry(bw * 1.02, bh * 0.16, bd * 0.3),
+        new THREE.MeshStandardMaterial({ color: big ? 0x2a6fd1 : 0xe0b020, roughness: 0.6 }));
+      card.position.y = bh * 0.43; holder.add(card);
+      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, bd * 0.32, 10), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      hole.rotation.x = Math.PI / 2; hole.position.y = bh * 0.45; holder.add(hole);
+      const label = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.22, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
+      label.position.set(0, bh * 0.05, bd / 2 + 0.002); holder.add(label);
+      const band = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.05, 0.003), new THREE.MeshStandardMaterial({ color: 0xc93030 }));
+      band.position.set(0, bh * 0.12, bd / 2 + 0.003); holder.add(band);
+      holder.rotation.set(0.12, 0.38, 0);
+      return { obj: holder, fit: [holder], pad: 1.12 };
+    }
+    // a cardboard case: 2,000 a cube-ish box, 5,000 a wide one with hand holes
+    const wide = n >= 5000, cw = wide ? 0.42 : 0.26, ch = wide ? 0.22 : 0.22, cd = wide ? 0.28 : 0.24;
+    const cardMat = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: 0.85 });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cd), cardMat); holder.add(box);
+    const tape = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.003, cd + 0.002), new THREE.MeshStandardMaterial({ color: 0xd9c9a0, roughness: 0.4 }));
+    tape.position.y = ch / 2 + 0.001; holder.add(tape);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.002, 0.004, 0.003), new THREE.MeshStandardMaterial({ color: 0x8a6538 }));
+    flap.position.set(0, ch / 2 - 0.001, 0); holder.add(flap);
+    const label = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.4, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
+    label.position.set(-cw * 0.08, -ch * 0.05, cd / 2 + 0.002); holder.add(label);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.08, 0.003), new THREE.MeshStandardMaterial({ color: wide ? 0x2a6fd1 : 0xc93030 }));
+    stripe.position.set(-cw * 0.08, ch * 0.08, cd / 2 + 0.003); holder.add(stripe);
+    const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.003, 14), bbMat);   // a BB printed on the side
+    dot.rotation.x = Math.PI / 2; dot.position.set(cw * 0.33, 0, cd / 2 + 0.002); holder.add(dot);
+    if (wide) for (const sx of [-1, 1]) {
+      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.025, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a1c10 }));
+      hand.position.set(sx * (cw / 2 + 0.001), ch * 0.28, 0); holder.add(hand);
+    }
+    holder.rotation.set(0.42, 0.55, 0);   // a three-quarter view from above: the front, the side and the taped top
+    return { obj: holder, fit: [holder], pad: 1.1 };
+  });
+}
+// v1.212 (D.23): the gun page's magazines. The mag is the one you hold to reload in a match (buildFPMag), taller for
+// more BBs, drawn in one fixed frame so a bigger mag looks bigger; a spare-mag row shows a pair of them, since you buy
+// spares to carry several.
+function shopMagPic(cap, pair, w, h) {
+  return shopPic('mag:' + cap + (pair ? ':pair' : ''), w, h, () => {
+    const holder = new THREE.Group();
+    const tall = Math.max(0.7, Math.min(1.35, 0.7 + 0.5 * Math.log10(Math.max(1, cap) / 10)));
+    const one = (x, rz) => {
+      const m = buildFPMag();
+      m.position.set(x, 0, 0); m.rotation.set(0, 0.5, rz); m.visible = true;
+      m.scale.set(1, tall, 1);
+      m.position.y = (tall - 1.35) * 0.084;   // every mag stands on the same floor
+      holder.add(m);
+    };
+    if (pair) { one(-0.034, 0.12); one(0.034, -0.08); } else one(0, 0.06);
+    // the frame: the same box for every mag, the size of the tallest pair
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.06), new THREE.MeshBasicMaterial({ visible: false }));
+    frame.position.y = -0.0134;
+    holder.add(frame);
+    holder.rotation.x = 0.12;
+    return { obj: holder, fit: [frame], pad: 1.05 };
+  });
+}
 function shopPic(key0, w, h, make) {
   const key = key0 + '@' + w + 'x' + h;
   if (SHOP_PIC.cache[key]) return SHOP_PIC.cache[key];
@@ -19952,6 +20694,7 @@ function openWorkbench() {
 }
 
 function closeWorkbench() {
+  autoSave();   // v1.218 (D.29): what was mounted or packed
   document.getElementById('workbenchScreen').classList.remove('active');
   WB.active = false;
   Game.mode = 'bedroom';
@@ -20947,6 +21690,7 @@ function startScenario(built) {
   Game.player.exhausted = false;
   Game.player.airSprint = false;
   Game.player.bounds = built.bounds;
+  settleYardProps(built.obstacles);   // v1.217 (D.27): no yard prop through a fence, a house, a tree or another prop
   Game.player.obstacles = built.obstacles;
   Game.player.crouching = false;
   Game.player.sprinting = false;
@@ -21039,8 +21783,8 @@ function startScenario(built) {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   fpGun = getOrBuildFPGun(Game.gun.type);
-  if (!fpLoader) fpLoader = buildFPLoader();
-  if (!fpMag) fpMag = buildFPMag();
+  if (!fpLoader) { fpLoader = buildFPLoader(); attachFpItemHand(fpLoader, 'loader'); }   // v1.219 (D.30): in your hand here,
+  if (!fpMag) { fpMag = buildFPMag(); attachFpItemHand(fpMag, 'mag'); }                 // not in the shop's pictures
   fpGun.visible = true;
   updateFPGunAccessory(fpGun, Game.gun.type);   // v1.27: show laser/flashlight if equipped
   fpLoader.visible = false;
@@ -21435,6 +22179,7 @@ function endScenario(outcome) {
   }
 
   card.classList.add('active');
+  autoSave();   // v1.218 (D.29): the match's pay, unlocks and stats are saved as the result shows, not only back home
 }
 
 // ---------------------------------------------------------------------
@@ -21621,6 +22366,7 @@ function openShop() {
 
 function closeShop() {
   document.getElementById('shopScreen').classList.remove('active');
+  autoSave();   // v1.218 (D.29): whatever was bought or equipped
   Game.mode = 'bedroom';
   updateBedroomHud();
   showPauseHint();
@@ -22045,6 +22791,7 @@ function openLoadout() {
 }
 
 function closeLoadout() {
+  autoSave();   // v1.218 (D.29): what was mounted or packed
   document.getElementById('loadoutScreen').classList.remove('active');
   Game.mode = 'bedroom';
   updateBedroomHud();
@@ -22553,12 +23300,23 @@ function renderBeltAndHolster(c) {
 }
 function renderSpeedLoaders(c) {
   const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
-  if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
+  if (loaders.length) {
+    c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match'));
+    loaders.forEach(i => {
+      const row = shopCatalogRow(i);
+      shopIconImg(row.firstElementChild, shopAmmoPic(i.id, 56, 56), i.name, { item: 'ammo:' + i.id });   // v1.211
+      c.appendChild(row);
+    });
+  }
 }
 
 function renderBBsTab(c, between) {
   c.appendChild(shopSectionHeader('Restock BBs', 'Adds to your home stash'));
-  SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => c.appendChild(shopCatalogRow(i)));
+  SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => {
+    const row = shopCatalogRow(i);
+    shopIconImg(row.firstElementChild, shopAmmoPic(i.id, 56, 56), i.name, { item: 'ammo:' + i.id });   // v1.211
+    c.appendChild(row);
+  });
   if (between) between(c);   // v1.128: the Ammo tab puts the speed loaders between the packs and the colours
   // BB color picker
   c.appendChild(shopSectionHeader('BB Color', 'Cosmetic — tint the BBs you fire'));
@@ -22695,6 +23453,7 @@ function renderGunDetail(c, gt) {
         `<div class="shop-item-info"><div class="shop-item-name">${mag.cap}-Round Mag</div>` +
         `<div class="shop-item-desc">Bring ${mag.cap} BBs into a match instead of ${cfg.baseCap}.${mag.requires?' Requires the smaller mag.':''}</div></div>` +
         `<div class="shop-item-price">$${mag.price}</div>`;
+      shopIconImg(row.firstElementChild, shopMagPic(mag.cap, false, 56, 56), mag.cap + '-Round Mag', { item: 'mag:' + mag.flag });   // v1.212
       const btn = document.createElement('button');
       btn.className = 'shop-item-buy';
       const cantAfford = Game.persist.cash < mag.price;
@@ -22719,6 +23478,8 @@ function renderGunDetail(c, gt) {
         `<div class="shop-item-info"><div class="shop-item-name">${sp.label}${held?` <span class="shop-owned-tag">×${held}</span>`:''}</div>` +
         `<div class="shop-item-desc">${sLocked?'Requires the matching capacity mag first.':'Buy multiple to carry several.'}</div></div>` +
         `<div class="shop-item-price">$${sp.price}</div>`;
+      const spCap = (sp.needsFlag && (cfg.mags.find(m => m.flag === sp.needsFlag) || {}).cap) || cfg.baseCap;   // v1.212
+      shopIconImg(row.firstElementChild, shopMagPic(spCap, true, 56, 56), sp.label, { item: 'spare:' + sp.key });
       const btn = document.createElement('button');
       btn.className = 'shop-item-buy';
       const cantAfford = Game.persist.cash < sp.price;
@@ -22783,6 +23544,7 @@ function renderAccessoriesTab(c) {
     if (cantAfford) { btn.textContent = 'NEED $' + a.price; btn.disabled = true; }
     else { btn.textContent = owned ? 'BUY ANOTHER' : 'BUY'; btn.addEventListener('click', () => { const r = buyEquipment('attachments', aid); if (r.ok) playShopChaching(); shopState.flash = r.ok ? `Bought ${a.name}` : `Couldn't buy: ${r.reason}`; renderShop(); }); }
     row.appendChild(btn);
+    shopIconImg(row.firstElementChild, shopModPic(aid, 56, 56), a.name, { item: 'mod:' + aid });   // v1.211
     c.appendChild(row);
   }
 }
@@ -24223,6 +24985,7 @@ function updateHeldMesh(dt) {
   fpGun.visible = isGunHeld && !scopedFully;
   if (fpLoader) fpLoader.visible = isLoader;
   if (fpMag) fpMag.visible = isMag;
+  updateFpHands(isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
 
   if (isGunHeld) {
     // Cocking animation: cockProgress 0→1 maps to cocking parts moving backward
@@ -25524,6 +26287,8 @@ function applyBBHit(bb, c) {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
       else endScenario('lose');
+    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup) {
+      respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
     }
   } else {
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
@@ -25537,14 +26302,16 @@ function applyBBHit(bb, c) {
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
 // seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
 const VIP_GRACE = 2.0;
-function respawnPlayerVip() {
+// v1.221 (decisions "Pickup Game: what is a life for you?", Michael: A): `keepHits` for the Pickup Game, where each tag is
+// one of your lives gone (the HUD and the clock's count keep it) and the rest of a shotgun blast lands in the grace.
+function respawnPlayerVip(keepHits) {
   const st = Game.scenario.playerStart;
   if (!st) return;
   Game.player.pos.copy(st.pos);
   Game.player.vel.set(0, 0, 0);
   Game.player.yaw = st.yaw;
   Game.player.pitch = 0;
-  Game.player.hitsTaken = 0;
+  if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
   Game.player._graceT = VIP_GRACE;
@@ -29513,9 +30280,8 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
 });
 
 // v1.37: title-screen entry points. If a save exists, show CONTINUE (load it,
-// then enter) and relabel the primary button to NEW GAME (which starts fresh
-// WITHOUT touching the save on disk — the save is only overwritten when the
-// player next sleeps in the bed, so a misclick can't nuke their progress).
+// then enter) and relabel the primary button to NEW GAME (which starts fresh;
+// v1.218: after asking, since the new game autosaves over the old one).
 (function setupTitleButtons() {
   const startBtn = document.getElementById('startBtn');
   const continueBtn = document.getElementById('continueBtn');
@@ -29533,18 +30299,32 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
       enterBedroom();
     });
   }
-  startBtn.addEventListener('click', () => {
+  // v1.218 (D.29): a NEW GAME saves itself as it goes. Over an existing save it asks first (START OVER / BACK),
+  // since the first autosave replaces that save.
+  const ask = document.getElementById('newGameAsk');
+  const beginNewGame = () => {
     initAudio();
     // NEW GAME from a profile that already has a save → reset the in-memory
-    // profile so the player actually starts fresh (don't carry a half-loaded
-    // state). The on-disk save is untouched until they sleep again.
+    // profile so the player actually starts fresh (don't carry a half-loaded state).
     if (hasSaveGame()) {
       Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
       _accInstanceSeq = 1;
     }
+    Game._saveEnabled = true;   // v1.218: autosave from the start
     enterBedroom();
     openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
+  };
+  const showAsk = (on) => {
+    ask.style.display = on ? 'flex' : 'none';
+    startBtn.style.display = on ? 'none' : '';
+    continueBtn.style.display = on || !hasSaveGame() ? 'none' : '';
+  };
+  startBtn.addEventListener('click', () => {
+    if (hasSaveGame()) { showAsk(true); return; }
+    beginNewGame();
   });
+  document.getElementById('newGameYesBtn').addEventListener('click', () => { showAsk(false); beginNewGame(); });
+  document.getElementById('newGameNoBtn').addEventListener('click', () => showAsk(false));
 })();
 
 document.getElementById('mapCloseBtn').addEventListener('click', closeMap);

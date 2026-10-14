@@ -9728,3 +9728,545 @@ build the shots; `equipRow` takes a `pic`.
 - The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
   speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
 - The belt and holster pictures are the busiest of the lot at 56 px; whether they read is for Michael's eye.
+
+## v1.211 — The shop shows its ammo and mods
+Backlog D.23, third part, after v1.209's guns and v1.210's clothes and gear. The Ammo tab's BB packs and speed loaders
+had the category glyph, and every Mods row had ⊹. Each row now has a picture of the thing itself, from v1.209's
+renderer.
+
+The speed loaders are the loader you hold in a match (`buildFPLoader`), laid corner to corner, the 100 and 200 a third
+and seven tenths longer than the 50. The BB packs had no model, so they have small ones of their own: the 100 and 500
+are clear bags of BBs under a card header with a hang hole (yellow card for the small bag, blue for the bulk one), and
+the 2,000 and 5,000 are taped cardboard cases with a label, the bulk case wider with hand holes. The BB colour swatches
+were already pictures and are unchanged.
+
+A mod is shown mounted alone on the AR (the one gun with sight, rail and under-barrel slots), framed on the part with a
+little of the gun round it so you can see where it goes. The gun is drawn pale grey, the way a catalogue shows a part
+on a plain gun, so the part keeps its own colours: the red dot's ring, the scope, the two lasers (red and green lens),
+the flashlight on the left rail, and the taped mag, sling, foregrip and cardboard barrel seen from a little below. The
+laser's beam and the flashlight's cone are left out of the picture. `updateFPGunAccessory` takes an optional list of
+mounted parts for this, so the picture never touches your own AR's mounts. `shopAmmoPic` and `shopModPic` build the
+shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 29 checks. Ammo: all 7 rows (4 packs, 3 loaders) have a picture in place of the
+  glyph, 112×112; the packs cover 49–66% of their pixels, the loaders 11–17% (a long thin tube), and each fills its frame
+  across (89–91%) or top to bottom; no two alike. Mods: all 9 rows have a picture, 9.5–72% drawn (the cardboard tube
+  least), no two alike (the two lasers differ by their lens); each picture's gun has exactly one part on it, and your
+  own AR has none mounted after the tab is drawn. The guns', clothes' and gear's checks still pass.
+- `under-parts`, `laser`, `workbench-labels`, `shop-tabs` pass (the accessory function they use took the new argument).
+### Still open
+- The gun details page's Magazines and Spare Mags rows still show ▮ and ▯. They are the last glyphs in the shop.
+- Whether the pale gun behind each part reads at 56 px is for Michael's eye.
+
+## v1.212 — The gun page shows its magazines
+Backlog D.23, its last part. A gun's details page lists its bigger magazines and its spare mags, and those rows still
+had ▮ and ▯ after v1.211. Each now has a picture of the mag: the one your kid holds up to reload in a match
+(`buildFPMag`), standing a little turned. It is taller the more BBs it holds (10 rounds is the shortest, 100 the
+tallest), and every mag is drawn in the same frame on the same floor, so a bigger mag looks bigger next to a smaller
+one. A spare-mag row shows a pair leaning together, since spares are bought to carry several, at the size of the mag
+they fit. With this, every row in the shop has a picture of what it sells; only the BB colour swatches, which were
+always colour cells, are left as they were. `shopMagPic` builds the shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 33 checks. The pistol (two mags, two spares), AR and MAC-10 pages: every row has a
+  picture, 112×112, 16–45% drawn. The pistol's 20-round mag stands 0.70 of the frame, its 10-round 0.59; the AR's 40
+  stands 0.81 and the MAC-10's 100 0.96. A spare's pair spans 0.63–0.65 of the frame across, a single mag 0.33–0.35.
+  All of v1.209–v1.211's checks still pass.
+### Still open
+- The mags are one black shape for every gun (an AK's curve, a shotgun's shell tube, the six-shooter's cylinder are
+  not modelled). Whether that bothers him is for Michael's eye.
+
+## v1.213 — The computer sits on the desk
+Backlog D.26, first part (Michael, control room, 13 Oct: "Can we make the room a bit more detailed / polished? Small
+touches on what's already there basically. Like the computer for example hovers off of the desk a bit"). Measured, the
+keyboard and mouse were the ones in the air: each was centred on the desk's front edge, so half of it hung out past
+the edge with nothing under it, and the monitor's case floated 1 cm over the top of its little stand. A sweep of every
+mesh in the bedroom for anything with a gap under it found nothing else standing in the air (the shelves and the
+nightstand drawer lines are fixed to their sides and fronts).
+
+The desk is rebuilt so everything stands on the desk top inside its edges, and a few small touches went on while it
+was open, all in the beige 2003 look it had. The CRT stands on a swivel foot and neck with the tube's back stepping in
+toward the wall, a dark bezel round the screen, a power button and a green light. The screen shows airsoft.com the way
+the shop draws it (the blue title bar, the dark header, the red rule, the five tabs, rows with red BUY buttons), under
+fainter scanlines. The keyboard sits in front of the monitor with four rows of keys; the mouse is on a blue mouse pad
+to its right; both cables lie on the desk back to the computer; two little speakers stand either side of the monitor.
+The tower under the desk gets two drive bays, a floppy slot, a power button and a green light. Collision, the SHOP
+label and the prompt are where they were. Each piece is named `pc_*` for the test.
+### Verified
+- `tests/bedroom-desk.test.mjs` (new, 10 checks). The monitor's foot, the keyboard, the mouse pad, both speakers and
+  both cables stand on the desk top at 0.760 m, 0 mm off; none of the 28 pieces on the desk passes its edges (the
+  keyboard and mouse were 8 cm over the front). The mouse sits on its pad, the monitor on its neck and foot with no
+  gap, the tower on the floor under the desk top, the keyboard clear in front of the monitor. The screen has the page
+  drawn on it, and using the computer still opens the shop. No page errors.
+### Still open
+- D.26 goes on: the rest of the room's small touches (the bed is a plain grey slab with a red block for a pillow, the
+  nightstands and the lamps). Those come next.
+- Whether the speakers and the page on the screen are the right touches is for Michael's eye.
+
+## v1.214 — The bed is made
+Backlog D.26, second part, after v1.213's desk. The bed was a grey slab: a flat comforter, one long white box for a
+pillow with a red box sunk into it, and the comforter's edge stopped square at the mattress top. The nightstand lamps
+were sunk 2 cm into the nightstands, and their shades were empty tubes.
+
+Small touches, in the room's existing colours. The comforter now falls down both sides to the frame and over the foot
+onto the footboard. The sheet is folded back over it under the pillows. There are two soft pillows side by side
+against the headboard and the red one leans on them, tilted. A folded red blanket with two cream stripes lies across
+the foot. Soft things are boxes with their corners pulled toward a ball (`puffy`), so they read as soft and not as
+crates. Each nightstand gets a second drawer knob and a dark kick at the floor. Each lamp now stands on its top, with
+a brass socket, a lit bulb inside the shade, the wire harp, a finial and rolled rims, and the shade glows a little.
+Collision, the save prompt and the phone on the north nightstand are where they were.
+### Verified
+- `tests/bedroom-bed.test.mjs` (new, 11 checks). The comforter's top is at 0.710 m; both pillows lie on it pressed in
+  1.2 cm, the red pillow leans from 0.681 m, the blanket lies on it at 0.706 m and the fold at 0.710 m. The side drapes
+  end on the frame's top (0.375 m) and the foot drape on the footboard (0.55 m), all inside the frame's edges. Both
+  lamp bases stand on the nightstand tops at 0.640 m (they were at 0.620), and each bulb is inside its shade. The bed is
+  still the save spot. No page errors.
+- `texts` (the phone on the nightstand) passes.
+### Still open
+- D.26 goes on: the bookcases, the map table, the wardrobe and the hall are next for small touches.
+- Whether the blanket and the red pillow suit the room is for Michael's eye.
+
+## v1.215 — The bookcases keep their books inside
+Backlog D.26, third part, after the desk (v1.213) and the bed (v1.214). The bookcases' books were drawn at random
+heights up to 32 cm on shelves 31.5 cm apart, so the tallest went up to 4.5 cm through the shelf above, and on the top
+shelf through the top of the case (the red books seen sticking out over the top). They were also shuffled with
+`Math.random`, so the shelves changed every time you came home. The map table's paper floated 5 mm over the table.
+
+A book is now never taller than its shelf's opening less 2.5 cm, and each bookcase draws its books from its own seed,
+so they are the same every visit. A few books have a pale band across the spine, and some rows end in a short stack
+of two to four books lying flat or a book leaning over against the side. Each case has a kick board under its bottom
+shelf. The map paper lies on the table, and its pencil lines and red dots are seeded too.
+### Verified
+- `tests/bedroom-shelves.test.mjs` (new, 6 checks). Two bookcases, 105 books: none comes within 1.5 cm of the board
+  above it, and every one rests on a shelf or on another book (the stacks and the leaning ones included). The map
+  paper is 0.5 mm over the table. Entering the bedroom again rebuilds it with the same 105 books in the same places.
+  No page errors.
+### Still open
+- D.26 is complete for the furniture in the room: the desk, the bed and nightstands, the bookcases and the map table.
+  The hall, the closet and the bathroom were not touched; Michael can say if they want the same pass.
+
+## v1.216 — The houses have backs
+Backlog D.27, first part (Michael, control room, 13 Oct: "Can we try to tighten up the environmental meshes in-game?
+For example, some of the boxes / some of the houses. The houses are nice from the front, but the backyards look really
+janky/unpolished"). Seen from its yard, the detailed house (Winnmark, Bunratty, Northcliff, Bellfield and the
+treehouse yard) was a bare brick face with four windows: no door, no belt course
+(the front has one between the storeys), nothing a house has round the back.
+
+The back now has a door: a half-glass door with two panels under the glass, in its casing, under a small shingled
+hood on two brackets, with a knob, a step and a light beside it. The belt course runs across the back as on the front,
+and a window sits over the door. Round the back are the things a house has there: the electric meter with its round
+glass and its conduit down the wall near one corner, a hose reel with a coil of green hose on its bracket and the tap
+under it on the other side of the door, and a dryer vent. Which corner gets the meter follows the house's own accent
+hash, so the street does not repeat exactly. Below head height none of it stands more than 0.28 m off the wall, inside
+a body's 0.3 m radius, so nothing can be walked through and the collision boxes are unchanged. It merges into the
+house's existing meshes: 15 per house, as before. Each merged mesh is tagged with its part for the test.
+### Verified
+- `tests/house-backs.test.mjs` (new, 7 checks). All eight Winnmark houses and all seven on Bunratty have a door on
+  the back wall, and nothing below 2 m stands more than 0.28 m off it (heights read from each house's own base, since
+  they stand on the terrain at 1.3–2.6 m). Still 15 meshes a house. Walking at a back wall stops at it (z −19.85 against
+  the wall at −19.5). No page errors.
+- `houses` passes. `bunratty-polish`'s "every kid walks over 3 m in 30 s" failed in 2 of 3 runs on this build and
+  passed 2 of 2 without it, so I looked: in both builds Nick holds one cover in the middle of the road at (−20.8, −0.5),
+  hiding and peeking, for 13–27 s before he moves (three probe runs each). Nothing there is near a house's back. It
+  is filed under Found in play.
+### Still open
+- D.27 goes on: the boxes Michael named, the yards themselves (bare grass between the fences) and the old box house on
+  the maps that still use it.
+- The back door is the same on every house; whether the street wants more variety there is for Michael's eye.
+
+## v1.217 — The yard boxes are where they stop you
+Backlog D.27, second part ("some of the boxes"), after v1.216's house backs. Measured on Winnmark, Bunratty, Northcliff
+and Bellfield, the moving boxes and wheelie bins in the yards were the jankiest thing out there, for two reasons.
+
+First, a box or bin was turned to any angle at all, but its collision box kept its unturned size, square to the map.
+A 1.3 m box at 45° showed its corners up to 0.3 m outside what stopped you and stopped you on air at its sides, and a
+tipped bin lay from its spot to a whole bin-length away, so half of it (0.53 m) was outside its box and you walked
+through it. On those four maps 10–27 props each were drawn more than 12 cm off their collision, the worst 0.55 m. Now
+a prop's facing is squared to the nearest quarter turn, keeping a seventh of its twist (6.75° at most, so a yard still
+looks dropped, not drilled), its collision box is the box round what is drawn, and a tipped bin lies centred on its
+spot, resting on its side at the right height. `propFacing` does the squaring for `addHomeDepotBox` and
+`addCurbsideBin`, so every map's boxes and bins get it.
+
+Second, props were dropped at random spots with nothing checking what was already there: on Winnmark one bin and one
+box stood through an iron fence and two props stood round tree trunks; on Bunratty a prop went into a house wall and
+two props stood inside each other; Northcliff had one prop inside another. Once a match is built, `settleYardProps`
+slides any loose box, bin or plywood stack out of a fence, a house, a tree trunk or another loose prop, along its
+shallower overlap with 5 cm clear, a few passes over. Props put against something on purpose (the kid forts' bins and
+boxes against their 1.12 m walls) are left where they are, since only fences, houses, trunks and loose props count.
+### Verified
+- `tests/yard-props.test.mjs` (new, 6 checks), on Winnmark (46 props), Bunratty (40), Northcliff (40) and Bellfield
+  (26): every prop is drawn within 10 cm of its collision box (the 10 cm is a bin's handle and wheels), none stands
+  through a fence, a house, a trunk or another prop, and every box and standing bin is within 5.2° of square. On the
+  build before this one the same count was 27, 21, 20 and 10 props off by more than 12 cm, with 2 fences, 2 trunks, 1
+  house and 2 props run through.
+### Still open
+- D.27 is complete for what Michael named, the boxes and the house backs. The yards' grass itself, and the plywood
+  stacks' lawn chairs, are as they were; he can say if the yards want more.
+- `npm test` for v1.211–v1.217 is in v1.218's entry, run once over the lot.
+
+## v1.218 — The game saves itself
+Backlog D.29 (Michael, control room, 13 Oct: "We need an autosave function - I don't remember to go back to the bed
+every time and I doubt most players will either. I'm not sure what to do with the bed though then"). The game already
+had an autosave (coming home, and buying gear), but it only ran once you had slept in the bed or loaded a save that
+session. That guard was there so a NEW GAME could not quietly write over a save you still wanted, and it meant a new
+player who never slept never saved at all.
+
+Now a NEW GAME saves itself from the start. If there is already a save on disk, NEW GAME first asks, on the title
+screen, "Start a new summer? Your saved game is replaced the first time the new one saves", with START OVER and BACK,
+so the old guard is kept as a question instead of a silent rule. The game saves when you come home, as the result of
+every match shows (pay, unlocks and stats on disk before you click anything), on every buy at the shop and when the
+shop closes, and on closing the loadout, the workbench and the mirror. Each save puts a small "Saved" in the bottom
+right corner for 1.6 s. CONTINUE and the bed work as before; the bed still saves and shows the summary. What the bed
+should do now is a question in decisions (A–D, I recommend A: the bed shows the summer so far).
+### Verified
+- `tests/autosave.test.mjs` (new, 11 checks). A new game is on disk as soon as you are home ($35, 25 BBs), without
+  sleeping. A won tutorial is saved while its result shows ($37 and the win on disk), and the "Saved" note comes up.
+  A buy at the shop is saved at once ($52, 125 BBs). After a page reload the title offers CONTINUE and NEW GAME, and
+  CONTINUE brings back $52, 125 BBs and the win, with the bed never used. NEW GAME over that save asks and starts
+  nothing; BACK leaves the save as it was ($52); START OVER starts fresh and the new game saves over the old one ($35,
+  no wins). No page errors.
+- `mirror`, `hats`, `crew`, `smoke` pass (each saves and loads).
+- `npm test` for v1.211–v1.217, as four local shards at once: 117 of 121 suites passed. The four that did not are
+  not this run's: `fence-bound`'s round 1 (Nick held at the fence spot for 30 s) fails the same way on main's v1.210
+  under this load; `bunratty-polish`'s Nick is the flake filed in v1.216; `pickup-fernando`'s AK landed 24 of 24 here,
+  and also 24 of 24 on v1.216 and 18 or 24 on v1.210 when rerun alone, the coin flip v1.207 described; and one
+  suite's page load passed Playwright's 30 s under load. Filed under Found in play.
+- CI fix-up: from v1.216 on, `fence-bound` failed on CI and on every local run, with Nick wedged at his fence spot
+  for the whole 30 s. v1.216's back-of-house meshes add no collision, but three.js draws a uuid from Math.random for
+  each new geometry, and the map builders run with Math.random seeded. So the extra meshes moved everything the seed
+  placed after the houses. On Bunratty one scatter tree landed on the north fence at x 5, making a fence-and-trunk
+  corner. Building those meshes off the seed would put the old layout back, but v1.217 and v1.218 are tuned to the
+  new one: tried, it broke `yard-props` (a Winnmark prop through a fence) and `car-side-fire` (1720 of 6048 pulls
+  held). So that was reverted, and instead Bunratty's scatter trees keep 1.2 m off a fence line. Only the position
+  moves, with the same rng calls, so nothing placed after changes. `fence-bound` passes (Nick 3 m clear at
+  2.5–3.9 s in all three rounds), as do `yard-props`, `car-side-fire`, `bunratty-polish`, `bunratty-road`,
+  `house-backs` and `pincer`.
+- Still red from the same seed shift: `pickup-fernando`. Northcliff's yard boxes and trees round the high yard moved,
+  and by day Fernando's AK in the nest now lands 21–24 of 24 hits, as many as the rifle (v1.215: 6–14 of 24). That
+  undoes v1.207's balance. The fix is a design choice: v1.207's Still open names Option B, freeing him from the
+  nest, as the next step.
+### Still open
+- The bed: decisions, "What does the bed do, now the game saves itself?"
+- The "Saved" note's look and corner are for Michael's eye.
+
+## v1.219 — Your hands on the gun
+Backlog D.30 (Michael, control room, 13 Oct: "Can we have the player's hand(s) shown holding their weapons in First
+Person View? Same for the Speed Loader and anything else i might be forgetting"). In first person every gun floated
+on its own: no hand on the grip, none on the handguard, and the speed loader and the spare mag hung in the air the
+same way. The kids in third person have had hands on their guns since v1.81; you had none.
+
+Now your hands hold what you hold. The shooting hand wraps the pistol grip (or the stock's wrist on the shotgun and the
+Thunder Pump): the back of the hand on the grip's right, three fingers round the front strap with their tips on the
+left, the trigger finger forward and the thumb along the frame. The off hand goes where it would: under the handguard
+of the AK, MP5, UMP and sniper rifle, under the Bucket Gun's body, on the AR's vertical foregrip, on the pump of the
+shotgun and the Thunder Pump, where it slides back with the pump as you rack it, and cupped round the shooting hand on
+the four pistols and the MAC-10. Mount a PVC Foregrip or a Taped Twin Mag on a long gun and the off hand moves onto it;
+a sling leaves it where it was. The speed loader and the spare mag are held in your right hand. Each forearm runs from
+the wrist down and back out of the bottom of the screen. The hands are your skin from the mirror; in the Grey Hoodie
+the forearms are its sleeves, with a cuff at each wrist. Everything is a child of the gun (or the pump), so bob, kick,
+aiming in and cocking carry the hands with it, and the hands are built once per gun, about 35 small boxes, only the
+held gun drawn. `measureGunForUnder` skips them, so the under-barrel parts sit where they did.
+
+The table `FP_HANDS` gives each gun its grip centre, rake and size, and the off hand's place, so a new gun needs one
+line there.
+### Verified
+- `tests/fp-hands.test.mjs` (new, 69 checks), on all twelve guns in a match, at the hip and aimed: both hands are on
+  each gun; each hand touches it (gap 0 mm, the cupped off hand on the pistol 1.6 mm and on the bolt pistol 2.1 mm
+  aimed); both show on screen at the hip or aimed (on the AR 18 and 34 box corners in view hip, 80 and 80 aimed); no
+  hand or forearm crosses the line of sight, hip or aimed, on any gun (a ray from the eye down the reticle meets
+  none); both elbows are off the bottom of the screen or behind the near plane in every pose. The shotgun's off hand
+  is on the pump and slides back 0.070 m with it, the pump's own travel. On the MP5 a PVC foregrip and a taped mag each
+  take the off hand (gap 0) and hide the handguard hand; a sling does not. The hands take the mirror's skin
+  (0x8d5a3b set, 0x8d5a3b drawn) with bare forearms; in the hoodie the forearms turn its grey (0x7c7d84) with cuffs on.
+  The speed loader and the spare mag are each in a hand that touches them, shows, and runs off the bottom. No page
+  errors.
+- `under-parts` (the under-barrel parts still measure where they did) and `grip` pass alone.
+- The shop's Ammo tab draws the speed loader and spare mag from the same builders, so the item hands are put on in the
+  match's set-up only; `shop-pics` passes (34 checks) and `backyard-guns` passes.
+- Test fix-up, not this item: `car-side-fire`'s "he still shoots" failed on every run of the branch head (1,714–1,735 of
+  6,048 pulls held, limit 25%) and passed on v1.218 and on main. The v1.216 fix-up had moved Bunratty's lane car 0.45 m
+  west (x 19.15–23.03), so two of the test's four fixed firing spots stood inside the car's box and every pull there
+  held, as it should. The spots are now set off whatever stands in the car's slot, west side; on that layout 978 of
+  6,048 held (16%), 0 BBs into the car. (A second session's v1.218 fix-up, pushed during this run, reverts the v1.216
+  fix-up and moves the layout back; the anchored spots hold on either.)
+### Still open
+- How the hands look is for Michael's eye: box hands to match the game's kids, the default skin reads pale in strong
+  sun, and the left forearm comes in from the lower left at a steep angle. Screenshots of the AR, pistol, shotgun and
+  sniper at the hip and aimed, the MP5 with a foregrip, the hoodie and the loader are in `tests/out/fp-hands-*.png`.
+- Fingers do not move: no trigger pull, no thumb on the speed loader's plunger, no hand on the hammer as the
+  Six-Shooter cocks.
+
+## v1.220 — No loose parts on the guns
+Backlog D.31, first part (Michael, control room, 13 Oct: "Can we make an effort to revisit the gun designs and make
+sure they all look good / accurate, and don't have any bugs or flaws?"). The first flaw to look for is a part that
+does not touch the gun. Built as the workbench and first person draw them, with each part's box joined to any other
+within 3 mm, eleven of the twelve guns had something standing off the body: the shotgun's orange tip 8 mm ahead of its
+barrel; the AR's handguard 2 cm in front of its receiver, an open gap you see at the hip; the sniper rifle's forend
+1.5 cm off its grip and its barrel 1 cm short of the receiver, and its side rails 5 mm over the forend; the AK's tip
+7 mm off its barrel and its wooden stock off the receiver; the MP5's magazine 5 mm under its well, its cocking tube
+6 mm over the receiver and its stock 1.7 cm behind it; the UMP's stock struts and the MAC-10's stock stub likewise; the
+Bucket Gun's carry handle 7.5 mm above the body; on the Six-Shooter, Bucket Gun and Bolt Pistol the trigger guard's front
+was a flat 5 mm sliver hanging clear of its bar; and one line of the pistol's grip stippling sat behind the grip.
+
+Each is joined by lengthening or moving the part that was short (the barrels to their tips, the handguards and stocks
+back to the receivers, the MP5's mag up into its well, the handle posts down onto the body, the trigger guard's front
+made an upright from the bar), never by moving a sight, so every iron sight sits where v1.168 and v1.73 put it. The
+sniper's rail line (`FP_GUN_MOUNT.sniper.barrelY`) drops from 0.040 to 0.032 so its side rails sit on the forend; a
+laser or light on them sits 8 mm lower.
+### Verified
+- `tests/gun-parts.test.mjs` (new, 14 checks): all twelve guns, 22–52 parts each, have no part more than 3 mm from the
+  body; on v1.219 the same check found loose parts on eleven (only the Thunder Pump was whole).
+- Run alone after the change: `fp-hands` 69 of 69 (every hand still touches its gun: the forends and handguards that
+  grew are the ones the off hands hold), `backyard-guns` 28 of 28 (aimed, each front sight still on the reticle),
+  `under-parts` 28 of 28 (the under-barrel parts still hang under the handguards), `shop-pics` 34 of 34, and, after
+  merging the second session's v1.218 fix-up, `car-side-fire` 6 of 6 (0 of 6,048 pulls held on that layout).
+- `npm test` on this head (efcf456, v1.218 fix-up merged), three local shards at once, stopped at the run's time limit:
+  84 of the 127 suites ran, 81 passed. The three that did not: `bunratty-polish`'s Nick (1.9 m in 30 s, the flake filed
+  in v1.216), `pickup-fernando`'s AK share (24 of 24, the seed shift the v1.218 fix-up describes and leaves open), and
+  `bellfield`'s Lamplight opening (one round of three tagged at 6.5 s, limit 8 s), which passed alone straight after
+  (12.3 s, none in 30 s, 15.9 s). The other 43 suites were not reached; CI runs them all.
+### Still open
+- D.31 goes on: each gun against the real thing it copies (shape, proportions, details), one at a time with
+  screenshots for Michael's eye. The loose parts were the plain faults; whether a gun "looks accurate" is his call.
+
+## v1.221 — The pistol, held up to a Glock
+Backlog D.31, second part (Michael, control room, 13 Oct: "revisit the gun designs and make sure they all look good /
+accurate"): each gun against the real one it copies, one at a time, with a picture for Michael. The pistol first, as
+everyone starts with it. It copies a Glock 17 (slide 186 mm, 138 mm tall with the magazine, slide 25.5 mm wide and about
+30 mm tall, grip about 18° off upright, barrel flush with the slide). The game draws it about ×1.13 so it fills the same
+part of the screen, so the comparison is in ratios to the slide's length. Against those it was off four ways: the slide
+was wider than it was tall (42 × 40 mm), so it read as a brick from behind; the frame and grip stood the gun 1.06
+slide-lengths tall (the Glock is 0.74), a 13 cm grip under a 5 cm frame; the barrel and orange tip ran 7 cm past the
+slide like a suppressor; and the grip raked 10°.
+
+Now the slide is 30 mm wide and 36 mm tall over a 38 mm frame (a Glock's frame is wider than its slide), the frame is
+36 mm tall, the grip is 9 cm long at 18° with its stippling and baseplate riding on it, the trigger guard is the Glock's
+square one (an upright at the front, the bar back to the grip), and the barrel shows 5 mm past the slide with a 1 cm
+orange tip. The slide's length, the sights, the rear sight's notch and the bore line are where they were, so aiming is
+unchanged. `FP_HANDS.pistol` follows the grip to its new place and rake. Pictures from the right side, before and after:
+`docs/guns/pistol-side-before.png`, `docs/guns/pistol-side.png`.
+### Verified
+- `tests/gun-pistol.test.mjs` (new, 6 checks; writes the side picture). Before (v1.220, run on the old file): slide
+  0.042 wide × 0.040 tall, height 1.06 slide lengths, 0.331 of the slide's length out in front, grip 10.3°; five of
+  five ratio checks failed. After: 0.030 × 0.036, width 0.143 of the length (Glock 0.137), height 0.80 (limit 0.70–0.85),
+  0.095 out in front (limit 0.10), grip 18.3°; all pass, no page errors.
+- Run alone after the change: `gun-parts` (no part over 3 mm off, all twelve guns), `fp-hands` (pistol: both hands on,
+  gap 0 mm, 60 box corners on screen at the hip, none on the sight line, forearms off the bottom), `backyard-guns` (the
+  front sight still on the reticle aimed), `under-parts`, `shop-pics`, `workbench-labels`, `grip`, `laser`: all pass.
+### Still open
+- Whether it now looks like the pistol Michael has in mind is his call: the two pictures above, and the gun in your
+  hand at the hip.
+- The kids' third-person pistol (`buildEnemyGunMesh`) is a separate, smaller model and was not touched.
+- D.31 goes on with the next gun.
+
+## v1.222 — A Pickup Game life is a life
+Decisions "Pickup Game: what is a life for you?" (Michael: A, control room, 14 Oct), from the critic's report on v1.201:
+the Pickup Game board says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a
+return, while yours was one hit where you stood, with nothing between hits. Two BBs of a burst or three pellets of one
+shotgun blast could take all three. In the critic's 20 rounds of 4v4 all three of your lives went in about a second in
+6, once to a single blast.
+
+Now, in a Pickup Game only, a tag costs one of your lives and puts you back at your start, facing the way you started,
+with 2 s in which nothing tags you: the respawn VIP and Flags already use, except that your lives are not refilled. The
+HUD's lives count and the clock's "more lives left" go down by one per tag. The last tag ends the round as before. Story
+matches are untouched: one life is one life, and a match that gives you more still takes them where you stand.
+### Verified
+- `tests/pickup-lives.test.mjs` (new, 7 checks). On a Winnmark 3v3, 3 lives: a tag 5.7 m from the start costs one life
+  (your side's lives 9 to 8), puts you at your start with 2.0 s of cover; five more BBs at once (a shotgun blast) change
+  nothing; after the cover a second tag costs the second life, back at the start; the third ends the round, a loss. In
+  a story match with three hits a hit leaves you where you stand, no cover. Three real 4v4 rounds standing at the start:
+  lives went at 49.1/51.4/53.8 s, 21.6/23.7/26.3 s and 19.0/23.0/25.6 s, gaps 2.1–4.0 s, none under 2 s. No page errors.
+- `pickup-fernando`, red on this branch since v1.218's seed shift, now passes with its last checks rewritten. On v1.221
+  (before this change), walking at the nearest kid, Fernando's AK took all three lives in 0.2–0.4 s at about 14 s in 8 of
+  8 rounds (24 of 24 hits; the rifle 19 of 24). Now he takes one life, about 14 s in, and you are out at 23–39 s (mean
+  34.1 s); he landed 7–8 of 24 hits. Its rifle-against-AK comparison measured the old stacking, so it is replaced by
+  "under half the hits are his" and "you last over 20 s on average".
+- `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-kids`, `vip` (2 suites), `ctf` (2 suites), `forfeit-ask` pass.
+### Still open
+- Standing still at the start, the next tag tends to come just after the 2 s cover (gaps of 2.1–2.6 s in five of six):
+  a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
+  sight, is for a playtest.
+
+## v1.223 — The AR, held up to an M4
+Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
+(its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
+showed 7.4 cm, straight, and set right against the pistol grip (0.7 cm between them), which left the trigger and its
+guard inside the lower receiver: from the side there was no trigger at all. The grip raked 13°, against an AR grip's
+roughly 20°.
+
+Now the mag shows 9.9 cm, tipped 7° forward for the M4 mag's curve, in a flared magwell at the front of the lower
+receiver; the trigger guard hangs below the lower, an upright behind the magwell and a bar back to the grip, with the
+trigger 1.4 cm into view inside it; and the grip rakes 20°, the shooting hand following it (`FP_HANDS.ar`). Nothing
+above the receiver moved (sights, rail, handguard, barrel). The stock is short for an M4 (its tube and butt 11 cm
+behind the receiver, about 18 at this scale) and was left: it sits by the camera in first person, and lengthening it
+is for Michael to ask for if it reads wrong in the shop and workbench. Pictures: `docs/guns/ar-side-before.png`,
+`docs/guns/ar-side.png`.
+### Verified
+- `tests/gun-ar.test.mjs` (new, 6 checks; writes the side picture). Before (v1.222, read from the builder): the mag 7.4 cm
+  below the lower, 0° tilt, the trigger 0.45 cm inside the lower (none showing), 0.7 cm from mag to grip, grip 12.6°.
+  After: 9.9 cm (limit 9.5–12.5), 6.9°, 1.4 cm of trigger showing, 3.0 cm mag to grip, grip 20.1°; no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AR: both hands on, gap 0 mm,
+  none on the sight line, elbows off the bottom), `under-parts`, `backyard-guns`, `shop-pics` pass; `workbench-labels`
+  timed out loading the page with five browsers running and passed alone.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip, where the longer mag now shows under the receiver.
+- The short stock (above). D.31 goes on with the next gun.
+
+## v1.224 — The shotgun, held up to an 870
+Backlog D.31, the third gun. The Spring Shotgun copies a Remington 870, drawn at about ×0.74 (its receiver 14 cm). Its
+barrel, tube, pump, receiver and the stock's length and drop were right; three things were not. The butt pad stood
+3.9 cm above the stock's top line, a black slab sticking up behind the heel. The trigger guard hung 1.65 cm under the
+receiver (an 870's, about 3.5 cm, would be 2.6 here), with 1.1 cm of trigger showing. And the wrist, the narrow part of
+the stock you hold, began 4.9 cm forward of the receiver's back, so it hung as a lump under the receiver instead of
+running back from it.
+
+Now the pad is the stock's back face (a child of the stock, within 1 mm of its top and bottom); the guard is an upright
+front and back with the bar 2.6 cm under the receiver and 2 cm of trigger inside it; and the wrist starts 2.4 cm forward
+of the receiver's back, behind the guard, running into the stock. The shooting hand moves with the wrist
+(`FP_HANDS.shotgun`). Pictures: `docs/guns/shotgun-side-before.png`, `docs/guns/shotgun-side.png`.
+### Verified
+- `tests/gun-shotgun.test.mjs` (new, 5 checks; writes the side picture). Before (v1.223, from the builder): pad 3.9 cm
+  above the stock, guard 1.65 cm, 1.1 cm of trigger, wrist 4.9 cm ahead. After: pad 1 mm off the stock's top and bottom
+  and 2 mm into its back, guard 2.6 cm (limit 2.2–3.0), trigger 2.0 cm, wrist 2.4 cm ahead (limit 2.5); no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (shotgun: both hands on, gap 0 mm, none on the sight line, the pump
+  hand rides the pump 0.070 m), `under-parts`, `shop-pics` pass. `backyard-guns` failed once with three suites at once
+  on "Thunder Pump: under two-thirds of its BBs within 0.5 m at 15 m" (68.3%) and passed alone (55.8%): a pellet-spread
+  statistic the mesh cannot touch (BBs leave from the camera), filed under Found in play.
+### Still open
+- Michael's eye on the pictures. The stock is still a block with a square butt; an 870's comb, belly curve and toe
+  would need shaped geometry, not boxes, and are left for him to ask for. D.31 goes on with the next gun.
+- CI fix-up (v1.224 head, 28c0c50): `high-school`'s "every kid moves or fires" failed once in lane 3/8 on the night
+  match: Nathan (Mitchell's numbers since v1.190, sits at the back) had walked 2 m and fired nothing at 60 s; three
+  local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
+  has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
+  forced on goes to 101–120 s per match and passes.
+
+## v1.225 — The sniper, held up to a Remington 700
+Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
+copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
+receiver's, so the barrel rode on top of the action with a 9 mm gap between it and the forend under it. The stock was
+three boxes and a cheek block: its underside ran flat from under the trigger to the toe, with no pistol grip, and the
+trigger was buried inside it (3.5 cm above the stock's bottom), inside a guard that also sat in the stock. The bipod,
+described in the code as folded, hung its legs 8 cm straight down.
+
+Now the barrel comes out of the receiver's front on its axis, tapering to the muzzle and bedded 1.5 cm into the
+forend. The stock is one piece cut to the 700's side profile: a forend slimming to its tip, a wrist rising to a
+straight comb, a pistol grip raked 25° behind the trigger guard, and the belly dropping from the grip to the toe. The
+trigger hangs 1.5 cm under the stock in a guard whose bar runs back to the grip. The bipod's legs lie folded forward
+under the barrel. The front sight moved from the receiver's front, where it stood on nothing, out to the muzzle on a
+ramp, along the line from your eye when aimed, so the aimed picture is the same (its tip 2.51° below the eye line
+before, 2.49° now). The post now sits inside the rear sight's notch, framed by it, with the comb lower in the view.
+The sights hide when an optic is mounted, as the AR's do. The shooting hand moves back onto the new grip
+(`FP_HANDS.sniper`), and the support hand follows the slimmer forend. Pictures: `docs/guns/sniper-side-before.png`,
+`docs/guns/sniper-side.png`.
+### Verified
+- `tests/gun-sniper.test.mjs` (new, 8 checks; writes the side picture). Before (v1.224, the same test on the old file):
+  the barrel 25 mm off the receiver's axis and 9 mm clear of the forend; the stock's underside dropped 0 cm at the
+  grip; its lowest point 0.8 cm behind the trigger; the trigger 3.5 cm inside the stock; the bipod legs 7.9 cm tall.
+  Six of eight checks failed. After: 0 mm off the axis and 15.5 mm into the forend; a 2.7 cm drop from the grip cap to
+  the belly behind it, the cap 3.3 cm behind the trigger; 1.5 cm of trigger showing; the legs 0.5 cm tall and 8 cm
+  long; the aimed sight 2.49° below and 0.06° to the side. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the sniper: both hands on, gap
+  0 mm, none on the sight line, both forearms off the bottom), `under-parts`, `backyard-guns` (the sniper's sight 2.48°,
+  1.00 BB a shot, 100% within 0.5 m at 15 m), `shop-pics`, `workbench-labels`, `laser`: all pass.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip and aimed.
+- The bolt still rides on the receiver's right side rather than inside it, and the stock's profile has square edges
+  (an extruded side view, not a rounded stock). The laser and side-rail mount height (`FP_GUN_MOUNT.sniper.barrelY`,
+  3.2 cm) was left where it was, 1.2 cm above the barrel's new axis, so mounted parts sit as before.
+- The kids' third-person sniper (`buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on with the
+  AK.
+
+## v1.226 — The AK, held up to an AK-47
+Backlog D.31, the fifth gun. The AK-47 is drawn at about ×0.67 (its receiver 16 cm). From the side it had five faults.
+The magazine was three tilted blocks with gaps between them, 4 mm short of the receiver. It sat 1.5 cm from the
+grip, with no trigger at all: just a guard bar running through the mag and the grip. The gas tube floated 9 mm above
+the lower handguard and stopped where the handguard did, with nothing joining it to the barrel. There was no rear
+sight. The stock was a straight box on the bore line, where an AK's drops to a tall butt.
+
+Now the magazine is one curved piece between two arcs, seated 3 mm into the receiver and 2 cm further forward. It drops
+12.4 cm and sweeps 3.3 cm forward as it goes. A trigger hangs 1.5 cm under the receiver inside a guard (an upright
+behind the mag and a bar back to the grip), with 3.6 cm between the mag and the grip. The gas tube runs from the
+receiver to a gas block behind the front sight, under a wood upper handguard over its rear half. A rear sight (a base
+and two ears) stands at the front of the top cover; aimed, the front post sits in its notch on the reticle, as
+before (0.20°). It hides when an optic is mounted, as the AR's does. The stock drops from the receiver to a butt 8 cm
+tall, 5.3 cm below the receiver. The grip and both hands are where they were. Pictures: `docs/guns/ak-side-before.png`,
+`docs/guns/ak-side.png`.
+### Verified
+- `tests/gun-ak.test.mjs` (new, 9 checks; writes the side picture). Before (v1.225, the same test on the old file): 3
+  mag pieces 4.2 mm off the receiver, 1.5 cm from mag to grip, no trigger, the tube 9 mm over the handguard, no rear
+  sight, the stock 1.2 cm below the receiver and level. Seven of nine checks failed. After: 1 piece, 0 mm, 12.4 cm
+  drop, 3.3 cm sweep, 3.6 cm to the grip, trigger 1.5 cm, the guard 6.7 mm below it, the tube in the upper handguard,
+  the rear sight in place, the butt 5.3 cm below the receiver and its top 1.7 cm lower at the heel. Aimed, 0.20° off
+  centre. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AK: both hands on, gap
+  0 mm, none on the sight line), `under-parts`, `shop-pics`, `workbench-labels`, `laser`, `loadout-kid`: all pass.
+### Still open
+- Michael's eye on the pictures, and the gun aimed: the rear sight is new in the view.
+- The receiver and top cover are still plain boxes (no rivets or ejection port), and the stock's edges are square.
+  The kids' third-person AK (Fernando's, `buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on
+  with the MP5.
+
+## v1.227 — The MP5, held up to an MP5A3
+Backlog D.31, the sixth gun. The MP5 is drawn at about ×0.64. Its magazine, the MP5's best-known shape, was two
+blocks kinked *back* toward the grip, where the real one curves forward. Below the receiver there was a guard bar but
+no trigger. The grip hung 4 mm under the receiver. The rear sight drum stood 2 cm past the receiver's back end, and the
+retractable stock was one strut down the middle, where the A3's two rails run back along the receiver's sides.
+
+Now the magazine is one piece curving forward as it drops (9.3 cm down, its bottom 2.1 cm ahead of its top), seated in
+the receiver. A trigger hangs 1.3 cm under the receiver inside a guard: an upright behind the mag and a bar back to
+the grip. The grip meets the receiver, and the shooting hand moves up with it (`FP_HANDS.mp5`). The drum sits on the
+receiver's back end. The stock's two rails run back from the receiver's sides to the pad. The front sight, handguard,
+barrel and cocking tube are where they were. Pictures: `docs/guns/mp5-side-before.png`, `docs/guns/mp5-side.png`.
+
+Also in this run, a fix-up to v1.225 (the sniper). The under-barrel parts hang from the box of whatever is at the
+rail. The sniper's new one-piece stock had a box reaching down to the grip cap, so a PVC foregrip, taped mag or sling
+would have hung 5 cm under the forend. The forend is now its own piece, level underneath back past the rail and the
+support hand (as before v1.225), and slims only over its last 4 cm. `gun-sniper` gained a check that the parts hang
+from the forend's underside (−1.5 cm at the rail, 0 mm apart). That fix-up's commit also picked up this entry's
+test and a scratch probe by mistake; the probe is removed here.
+### Verified
+- `tests/gun-mp5.test.mjs` (new, 8 checks; writes the side picture). Before (v1.226): 2 mag pieces, curving 1.8 cm
+  *back*, no trigger, the grip 4.2 mm under the receiver, the drum 1.9 cm past its back, one stock strut on the centre
+  line. Six of eight checks failed. After: 1 piece, 9.3 cm drop, 2.1 cm forward, 3.0 cm from the mag to the grip,
+  1.3 cm of trigger with the guard 8.6 mm below it, the grip 0.2 mm off the receiver, the drum 2 mm past (within its
+  rounding), rails at x ±15.5 mm. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the MP5: both hands on, gap 0 mm, none on the
+  sight line), `under-parts`, `shop-pics`: all pass. `under-parts` timed out loading the page once with five browsers
+  running (the full suite was running beside it) and passed alone.
+### Still open
+- Michael's eye on the pictures. The receiver is still a box (the MP5's is a rounded tube with a flared magwell), and
+  the trigger group is a plain grip, not the MP5's moulded housing. D.31 goes on with the UMP.
+
+## v1.228 — The UMP, held up to a UMP45
+Backlog D.31, the seventh gun. The UMP is drawn at about ×0.62. Four faults from the side. The barrel shroud, which on
+a UMP is the receiver's own front end, stood 5 mm ahead of the receiver, so light showed through. The straight .45
+magazine tilted back toward the grip, with its top 4.4 mm short of the receiver. The grip hung 1.8 mm under the
+receiver. There was no trigger, only a guard bar.
+
+Now the shroud meets the receiver. The mag pivots from the receiver's underside and rakes 0.08 rad forward, as the
+UMP's does, in a polymer magwell seated in the receiver. The grip meets the receiver, and the shooting hand moves up
+with it (`FP_HANDS.ump`). A trigger hangs 1.5 cm under the receiver inside a deeper guard: a polymer upright behind
+the magwell and a bar 7.7 mm below the trigger, back to the grip. The rail, the stock and the charging handle are as
+they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
+### Verified
+- `tests/gun-ump.test.mjs` (new, 6 checks; writes the side picture). Before (v1.227): shroud 5.0 mm off, the mag
+  4.4 mm short and raking 2.5 mm *back*, the grip 1.8 mm under, no trigger; five of six checks failed. After: shroud
+  1 mm into the receiver, the magwell 2.3 mm into it, the mag's bottom 3.9 mm ahead of its top, the grip 1.2 mm in,
+  1.5 cm of trigger showing. All pass, no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (the UMP: both hands on, gap 0 mm, none on the sight line),
+  `under-parts`, `shop-pics`: all pass.
+- The full suite on v1.226 (three local shards, run beside this run's work): 129 of 130 suites passed. The one miss,
+  `stuck-sweep-16`, timed out loading the page and passed alone on v1.228.
+### Still open
+- Michael's eye on the pictures. The UMP's side-folding stock is drawn as two centre-line bars; the real one is a
+  skeleton frame hinged on the right. The receiver is a plain box. D.31 goes on with the MAC-10.
+- CI fix-up (v1.228 head, 75eca49): `bellfield`'s "Lamplight on Bellfield: a player standing at the entry is not tagged
+  in the first 8 s" failed once in lane 8/8 ([18.5, 30, 6]). Not the gun work: the street's obstacles and the seven
+  starts hash the same on v1.224's 4d675c5 and here. 40 local rounds ran 10.6–30 s; the 10.6 was Fernando advancing
+  from 22.6 m, and the test's own runs gave 8.7 once. The fault the check guards (v1.177) is a line from a start,
+  tagging at about 3 s; a kid who walks into range needs 5 s or more, so the check now reads 5 s. Passes locally.
+- CI fix-up (v1.228 head, 75eca49): `pickup-fernando`'s "with the AK he lands under half of the hits on you" failed
+  once in lane 4/8 at 13 of 24 (local runs 7–10 of 24). His first tag, about 14 s in, comes every round, so a third of
+  the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
+  is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
+  round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.

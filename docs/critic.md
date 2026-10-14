@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13).
 
@@ -1049,3 +1049,80 @@ to me, and nothing asked me to break a rule.
 - v1.201, the board: judged headless for three of its six day-from-night maps. They build and run with no errors.
   Northcliff by day is Fernando's rifle (Problem 2). Willow Bend and the store are not dominated by their snipers.
   Problem 1, lives, is new.
+
+## 2026-10-14 — The Last Saturday, the Pickup Game after its lives fix (four day maps, two free-for-alls), Northcliff by day with Fernando's AK, a first-timer to the first match and back (v1.224)
+
+I played v1.224 from `auto/build`; main is at v1.210. Same bot as last run, rebuilt in `tests/tmp/`: it walks `kidFieldTo`
+to the nearest enemy, racks the spring by holding the trigger through `onLmbDown`/`onLmbUp`, aims dead on at the
+nearest kid it can see inside 40 m and stops to trade inside 25 m. When the mag is empty it gets a full one after
+2.5 s instead of using the loader, which is kinder than a real reload. This run it also logs who fired the BB that
+hit you (`bb.enemyRef`), so the kid names below are the shooters. It ends rounds on stepped time rather than
+`endScenarioLater`'s real 800 ms, so the times below are the game's own. Modes: *push*, *run* (sprint, never shoot),
+*stand*. 32 rounds, no page errors. Smoke passes. The bot carries the new-game Spring Pistol everywhere, which matters
+most in the Last Saturday (below).
+
+**A first-timer, start to finish.** NEW GAME → mirror → DONE → the hall with "E Go outside" focused. E opens the map,
+whose one open card is Backyard Basics, marked NEXT. START, then BEGIN, and the bot cleared it in 25.3 s with 20 shots.
+BACK TO YOUR ROOM, then a page reload: the title offers CONTINUE, and it brings back the $37 (from $35) and the
+tutorial ticked. The autosave (v1.218) works the way a player would test it.
+
+**The Last Saturday** (`last_saturday`, v1.205), 10 rounds, all lost. It is the summer's last match, and the briefing
+promises "Six a side, three lives for everybody", with "You … 3 lives" on the roster (screenshot
+`docs/critic/2026-10-14-last-saturday-briefing.png`). The kids get three lives with a walk home between them. You get
+three hits where you stand, which is the Pickup Game problem from 13 Oct. v1.222 fixed it for the board only.
+- Two of your lives went within 0.75 s in 8 of 10 rounds. All three went inside 0.55 s in 2 of 10: Mitchell's AK at
+  3.68, 4.15 and 4.23 s, and Mason's MP5 at 11.27, 11.47 and 11.57 s. Ryan's shotgun took two in 0.12 s from 7 m.
+- Sprinting off the start without firing, you are out at 4.0, 4.5 and 4.2 s, 1.5–2 s after the opening hold.
+  Pushing, you are out at 7.2–15.3 s. Standing at the start you last 152 and 200 s, because they come to you one
+  at a time.
+- The result card is the stock one ("regroup near the road. "Run it back?""), so the summer's last match ends on a
+  generic line (screenshot `docs/critic/2026-10-14-last-saturday-out-at-4s.png`).
+- A real player arrives here with a bought gun, and against six AKs, MP5s and UMPs my pistol is the worst case. But
+  the lives problem doesn't depend on the gun. Filed under Found in play. Of the story matches, this is now the only
+  one with more than one player life, not counting the tutorial, so Michael's A on the pickup question looks to cover it.
+- Step cost: 4.7–8.4 ms on average, 482 ms worst. It's the heaviest map I've logged: eleven kids on Bunratty.
+
+**The Pickup Game after v1.222** (a tag costs a life and sends you to your start with 2 s of cover), 3 lives, by day.
+The 4v4s were on Bunratty, the lot, the school and Northcliff, and Winnmark ran its 3v3. The free-for-alls were
+6-ways on Bunratty and the Hollow. 21 rounds: 1 won (Winnmark, *stand*, 210 s) and 2 ran to my 240 s cap with no
+result (Bunratty and the school, *stand*, with 0 and 1 hits: nobody came; the clock was Off). The other 18 were lost.
+- The fix holds. Across 54 lost lives, the shortest gap between two was 2.05 s. On 13 Oct, 6 of 20 rounds lost all
+  three inside 1.1 s. *Push* rounds now last 15.0–50.6 s, up from 8.1–38.3 s.
+- v1.222's camping worry holds on Bunratty's free-for-all. Sean's AK took all six of my lives in two rounds from
+  17–20 m, each time within 2.05–2.9 s of my return to the start, and 3.07 s into the first round. *Push* was out at
+  8.0 s and *stand* at 14.8 s. On the Hollow's 6-way, the kills were spread out (Sean at 4–6 m, Seth at 26 m, out at
+  34.4 s). The team starts weren't camped: their gaps were 2.55 s and up, mostly 5–25 s.
+- Northcliff by day with Fernando's AK (v1.207), 7 rounds, out at 18.0–68.8 s. In the 4 rounds I attributed, Fernando
+  took your first life every time, at 6.8–9.7 s from 57.8 m, and none after that. The other 8 lives went to Diego
+  (MP5), Mason (AK) and Christian (shotgun). He's no longer the whole match (15 of 15 hits with the rifle), but the nest
+  still sees the start. An AK hitting from 58 m in the first 10 s of every round is longer than any other kid reached
+  me in 32 rounds.
+- Step cost: 0.6–3.7 ms on average. Worst frames: 400 ms on Bunratty, 424 ms at the school, 320 ms on Northcliff.
+
+**What worked.** No page errors in 32 rounds. Every result card matched the round: TAGS, SHOTS and HITS ON YOU equal
+the bot's counts, and the pickup pay was $1 a loss and $3 the win. The opening hold held everywhere: the earliest tag
+was 3.07 s. The Last Saturday's briefing, roster, map and RIVALS line read right. The first-timer path is clean.
+
+### itch.io
+Still unreachable. WebFetch fails on mbuckley616.itch.io (ENOTFOUND), and curl gets no connection. I read no comments.
+In Slack's last day there were the builder's v1.196–v1.224 posts, the producer's and Fable's posts, and the merge and
+decision cards. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.202–v1.224)
+- v1.202, the free-for-alls: two 6-ways built and ran, with no errors. Fun and the 8-way cap need hands. On Bunratty,
+  one kid (Sean) with a line to your start decides it (above). I played no night free-for-all.
+- v1.203, picking kids: not played. I used the defaults.
+- v1.204, the clock: not judged. I ran with the clock Off, and two *stand* rounds stalemated at 240 s. That's an
+  argument for the clock rather than against it.
+- v1.205, the Last Saturday as the big finish: it reads right on the briefing and plays as a 4–15 s wipe for a player
+  who moves. Most of that is the lives problem (filed). Whether 6v6 at three lives is the right length can only be
+  judged once that's fixed.
+- v1.206, sneakers; v1.209–v1.212, shop pictures; v1.213–v1.217, the room and the house backs; v1.219–v1.224, hands
+  and guns: these are for Michael's eye. I can't judge them headless.
+- v1.207, Fernando's AK by day: judged headless. He takes the first life from 58 m in 4 of 4 rounds and nothing after.
+  He's strong in the opening, not dominant. Option B is still there if Michael feels it.
+- v1.208, F asks before forfeiting: covered by its own test. I didn't play it.
+- v1.218, the autosave: judged headless, through a real reload and CONTINUE (above). I didn't judge the "Saved"
+  note's look.
+- v1.222, the pickup life: judged headless. It works (shortest gap 2.05 s across 54 lives). The camping question is
+  real on Bunratty's free-for-all start, and I didn't see it on the team starts.

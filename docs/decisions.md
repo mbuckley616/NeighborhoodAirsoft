@@ -43,6 +43,59 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
+  You chose B on 12 Oct: online comes after the Pickup Game board, and the host sets the match up from it. The board is
+  done (v1.201–v1.207). The game is one HTML file on itch.io, so the two browsers have to talk to each other directly
+  (WebRTC, built into every browser). To start that talk, each browser first needs to hand the other a short "here is
+  how to reach me" note. Something has to carry that note, and that is the question.
+  How the match itself would work, whatever you pick: the host's game is the referee. It runs the kids, the BBs and
+  the score exactly as today. The guest's game sends its keys and mouse about 60 times a second and draws what the
+  host sends back about 20 times a second. On the host's screen the guest is one more kid, wearing the guest's look.
+  The code already tags each BB with who fired it and which side he is on, so a guest's tag counts the way a kid's does.
+  What it means for privacy, whatever you pick: a direct connection shows each player's internet address (IP) to the
+  other, as any voice chat or console party does. So it is for friends you know, and the screen says so. No accounts,
+  no names leave the game except the kid name the guest picks. Nothing loads at startup. The connection code (about
+  100 KB) loads only when someone presses Online. Two players behind strict networks (some school and office Wi-Fi,
+  some phone hotspots) may not connect at all. That is roughly one pair in ten. Fixing it needs a paid relay, which
+  none of these options includes.
+  Options:
+  - A) **A free public matchmaker (PeerJS's).** The host presses Online on the board and gets a four-letter room code
+    such as `KXRB`. The friend opens the game, presses Online, types the code, and they are in. Nothing for you to set
+    up or pay. The catch: it is a stranger's free service. It sees the room code and both IPs, it has no promise to
+    stay up, and it cannot list open rooms, so step 3 (a room list) would need B later. *(recommended: the only option
+    that plays like a game today at no cost to you. If it ever goes away, the swap to B touches one function)*
+  - B) **Your own tiny matchmaker.** The same room codes as A, but carried by a small free Cloudflare Worker on your own
+    account. That is a free sign-up and about 15 minutes. I would write the code and the steps, and you would paste
+    them in. It is under your control, nobody else sees the codes, and it can also hold the list of open rooms that
+    step 3 needs. The catch: it waits on you, and it is one more account to keep.
+  - C) **No service at all: copy-paste invites.** The host presses Online and gets a long invite code, about 400
+    characters. They send it to the friend by text or Discord. The friend pastes it in and gets a reply code to send
+    back, and the host pastes that. Nothing in the middle at all. The catch: two long pastes each way every match, and
+    no room list ever.
+  - D) Hold online play for now.
+  The first playable step, for A, B or C: Winnmark Court only, a 1v1, you against your friend, with the board's lives
+  and clock. Online appears as a button on the Pickup Game board, and the title screen stays as it is. Nothing is on
+  the line: no pay, no progress, and each player's save is untouched. The guest needs no unlocks. If either player
+  drops, the other sees "Your friend left" and goes back to the bedroom. Teams with kids filling the empty spots
+  (step 2), the room list and a Campaign / Online / Settings title screen (step 3) come after, each shown to you first.
+  Michael: **A) A free public matchmaker (PeerJS's)** (2026-10-14, control room)
+
+- **What does the bed do, now the game saves itself? (builder, 2026-10-14)** Backlog D.29 (Michael, 13 Oct: "We
+  need an autosave function ... I'm not sure what to do with the bed though then... maybe with the calendar and the
+  campaign mode, we use it as a way to advance to the next day? Idk."). Autosave is built (v1.218): a new game saves
+  itself coming home, after every match and after every buy, with a small "Saved" in the corner. The bed still says
+  "Sleep (save your game)" and shows the save summary. The calendar's date moves with the matches you win, not with
+  days you sleep. Options:
+  - A) The bed shows the summer so far: the save summary as now (cash, guns, matches won), plus the date, the score
+    against Seth's crew and what is next on the ladder; the prompt becomes "Sleep (how's the summer going?)"
+    *(recommended: it keeps the bed useful without changing how the summer's dates work)*
+  - B) Sleeping ends the day: the calendar moves on a day each time you sleep (as well as with wins), and a day
+    that goes by without a match is crossed off
+  - C) Sleeping switches day and night: the next match you start (or the Pickup Game board) is at night, and the
+    next sleep turns it back
+  - D) The bed is furniture: no prompt, nothing to do there
+  Michael: **A) The bed shows the summer so far** (2026-10-14, control room)
+
 - **Pickup Game: what is a life for you? (builder, 2026-10-13)** Found in play (critic, 13 Oct, v1.201): the board's
   briefing says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a return, while
   yours is one hit where you stand, with no gap between hits. In 6 of 20 headless 4v4 rounds at 3 lives all three of

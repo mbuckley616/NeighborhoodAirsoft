@@ -15,7 +15,10 @@ const r = await page.evaluate(() => {
   const mk = makeBB, made = [];
   window.makeBB = function (pos, vel, owner, ref) { if (ref === e) made.push({ p: pos.clone(), v: vel.clone() }); return mk.apply(this, arguments); };
   let calls = 0, held = 0, bbs = 0, near = 0, intoCar = 0;
-  for (const [sx, sz] of [[18.7, 6.8], [18.9, 6.9], [19.2, 6.6], [19.4, 7.2]]) {
+  // v1.219: the spots are set off the car's own west side (they were fixed at x 18.7–19.4; after the v1.216 fix-up the
+  // car stood 0.45 m further west, at x 19.15–23.03, so two of them were inside it and every pull there held)
+  const cz = car ? (car.minZ + car.maxZ) / 2 : 6.9, cx0 = car ? car.minX : 19.8;
+  for (const [sx, sz] of [[cx0 - 1.1, cz - 0.1], [cx0 - 0.9, cz], [cx0 - 0.6, cz - 0.3], [cx0 - 0.4, cz + 0.3]]) {
     e.pos.x = sx; e.pos.z = sz; e.pos.y = scenarioGroundY(sx, sz);
     for (const R of [5, 9, 15, 30]) for (const up of [0.3, 1.0, 2.0]) for (let a = -80; a <= 80; a += 8) {
       const rad = a * Math.PI / 180, tx = sx + Math.cos(rad) * R, tz = sz + Math.sin(rad) * R;

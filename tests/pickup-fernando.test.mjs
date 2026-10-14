@@ -58,11 +58,20 @@ for (let r = 0; r < 8; r++) {
 }
   const all = rounds.flatMap(r => r.hits), byF = all.filter(h => h.by === 'fernando').length;
   for (const r of rounds) console.log(`   ${rifle ? 'rifle' : 'AK'}: ${r.out ? 'out' : 'still in'} at ${r.t} s: ${r.hits.map(h => h.by + '@' + h.t).join(', ') || 'no hits'}`);
-  return { byF, n: all.length };
+  return { byF, n: all.length, meanOut: +(rounds.reduce((a, r) => a + r.t, 0) / rounds.length).toFixed(1),
+    allHis: rounds.filter(r => r.out && r.hits.length && r.hits.every(h => h.by === 'fernando')).length };
 };
-const ak = await play(false), rifle = await play(true);
-console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK and ${rifle.byF} of ${rifle.n} with the rifle (the critic: 15 of 15)`);
-check('with the rifle he lands most of the hits, as the critic saw (over half)', rifle.n > 0 && rifle.byF / rifle.n > 0.5, rifle);
-check('with the AK he lands a smaller share of them, and not every one', ak.n > 0 && ak.byF / ak.n < rifle.byF / rifle.n && ak.byF < ak.n, { ak, rifle });
+// v1.221: a tag now sends you back to your start with 2 s of cover (decisions "Pickup Game: what is a life for you?",
+// Michael: A), so one kid's lane can no longer take all three lives at once. Before, with the AK, Fernando took all
+// three in 0.2-0.4 s at about 14 s in 8 of 8 rounds (24 of 24 hits; the rifle 19 of 24), and the rifle-against-AK
+// comparison here measured that. Now the rounds are measured with the AK alone, as a player gets them.
+const ak = await play(false);
+console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK (the critic: 15 of 15 with the rifle; v1.220: 24 of 24)`);
+// v1.228 fix-up: the round in which every tag is his is the fault v1.221 fixed, so that is checked outright; his share
+// only has to stay well under the rifle's (all of them). His first tag, about 14 s in, comes every round (8 of 24), and
+// a second one sometimes: 7-10 of 24 locally, 13 of 24 on CI (14 Oct), so "under half" failed on a fair run.
+check('with the AK he never takes all three of your lives in a round', ak.n > 0 && ak.allHis === 0, ak);
+check('and he lands under two-thirds of the hits on you', ak.n > 0 && ak.byF / ak.n < 2 / 3, ak);
+check('and you last over 20 s on average (all three lives went by 14 s before v1.221)', ak.meanOut > 20, ak.meanOut);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
