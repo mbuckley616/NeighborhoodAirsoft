@@ -10205,3 +10205,34 @@ tall, 5.3 cm below the receiver. The grip and both hands are where they were. Pi
 - The receiver and top cover are still plain boxes (no rivets or ejection port), and the stock's edges are square.
   The kids' third-person AK (Fernando's, `buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on
   with the MP5.
+
+## v1.227 — The MP5, held up to an MP5A3
+Backlog D.31, the sixth gun. The MP5 is drawn at about ×0.64. Its magazine, the MP5's best-known shape, was two
+blocks kinked *back* toward the grip, where the real one curves forward. Below the receiver there was a guard bar but
+no trigger. The grip hung 4 mm under the receiver. The rear sight drum stood 2 cm past the receiver's back end, and the
+retractable stock was one strut down the middle, where the A3's two rails run back along the receiver's sides.
+
+Now the magazine is one piece curving forward as it drops (9.3 cm down, its bottom 2.1 cm ahead of its top), seated in
+the receiver. A trigger hangs 1.3 cm under the receiver inside a guard: an upright behind the mag and a bar back to
+the grip. The grip meets the receiver, and the shooting hand moves up with it (`FP_HANDS.mp5`). The drum sits on the
+receiver's back end. The stock's two rails run back from the receiver's sides to the pad. The front sight, handguard,
+barrel and cocking tube are where they were. Pictures: `docs/guns/mp5-side-before.png`, `docs/guns/mp5-side.png`.
+
+Also in this run, a fix-up to v1.225 (the sniper). The under-barrel parts hang from the box of whatever is at the
+rail. The sniper's new one-piece stock had a box reaching down to the grip cap, so a PVC foregrip, taped mag or sling
+would have hung 5 cm under the forend. The forend is now its own piece, level underneath back past the rail and the
+support hand (as before v1.225), and slims only over its last 4 cm. `gun-sniper` gained a check that the parts hang
+from the forend's underside (−1.5 cm at the rail, 0 mm apart). That fix-up's commit also picked up this entry's
+test and a scratch probe by mistake; the probe is removed here.
+### Verified
+- `tests/gun-mp5.test.mjs` (new, 8 checks; writes the side picture). Before (v1.226): 2 mag pieces, curving 1.8 cm
+  *back*, no trigger, the grip 4.2 mm under the receiver, the drum 1.9 cm past its back, one stock strut on the centre
+  line. Six of eight checks failed. After: 1 piece, 9.3 cm drop, 2.1 cm forward, 3.0 cm from the mag to the grip,
+  1.3 cm of trigger with the guard 8.6 mm below it, the grip 0.2 mm off the receiver, the drum 2 mm past (within its
+  rounding), rails at x ±15.5 mm. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the MP5: both hands on, gap 0 mm, none on the
+  sight line), `under-parts`, `shop-pics`: all pass. `under-parts` timed out loading the page once with five browsers
+  running (the full suite was running beside it) and passed alone.
+### Still open
+- Michael's eye on the pictures. The receiver is still a box (the MP5's is a rounded tube with a flared magwell), and
+  the trigger group is a plain grip, not the MP5's moulded housing. D.31 goes on with the UMP.
