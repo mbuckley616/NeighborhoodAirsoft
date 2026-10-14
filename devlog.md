@@ -10085,3 +10085,28 @@ matches are untouched: one life is one life, and a match that gives you more sti
 - Standing still at the start, the next tag tends to come just after the 2 s cover (gaps of 2.1–2.6 s in five of six):
   a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
   sight, is for a playtest.
+
+## v1.223 — The AR, held up to an M4
+Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
+(its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
+showed 7.4 cm, straight, and set right against the pistol grip (0.7 cm between them), which left the trigger and its
+guard inside the lower receiver: from the side there was no trigger at all. The grip raked 13°, against an AR grip's
+roughly 20°.
+
+Now the mag shows 9.9 cm, tipped 7° forward for the M4 mag's curve, in a flared magwell at the front of the lower
+receiver; the trigger guard hangs below the lower, an upright behind the magwell and a bar back to the grip, with the
+trigger 1.4 cm into view inside it; and the grip rakes 20°, the shooting hand following it (`FP_HANDS.ar`). Nothing
+above the receiver moved (sights, rail, handguard, barrel). The stock is short for an M4 (its tube and butt 11 cm
+behind the receiver, about 18 at this scale) and was left: it sits by the camera in first person, and lengthening it
+is for Michael to ask for if it reads wrong in the shop and workbench. Pictures: `docs/guns/ar-side-before.png`,
+`docs/guns/ar-side.png`.
+### Verified
+- `tests/gun-ar.test.mjs` (new, 6 checks; writes the side picture). Before (v1.222, read from the builder): the mag 7.4 cm
+  below the lower, 0° tilt, the trigger 0.45 cm inside the lower (none showing), 0.7 cm from mag to grip, grip 12.6°.
+  After: 9.9 cm (limit 9.5–12.5), 6.9°, 1.4 cm of trigger showing, 3.0 cm mag to grip, grip 20.1°; no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AR: both hands on, gap 0 mm,
+  none on the sight line, elbows off the bottom), `under-parts`, `backyard-guns`, `shop-pics` pass; `workbench-labels`
+  timed out loading the page with five browsers running and passed alone.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip, where the longer mag now shows under the receiver.
+- The short stock (above). D.31 goes on with the next gun.
