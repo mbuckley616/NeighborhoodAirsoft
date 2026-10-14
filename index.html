@@ -1522,6 +1522,15 @@
     font-size: 26px;
     flex-shrink: 0;
   }
+  /* v1.209: the guns' pictures, in the row and large on the details page */
+  #shopScreen .shop-item-icon.pic { background: #fff; padding: 0; overflow: hidden; }
+  #shopScreen .shop-item-icon.pic img { width: 100%; height: 100%; display: block; }
+  #shopScreen .shop-gun-photo {
+    background: #fff; border: 1px solid #aca899; box-shadow: inset 0 0 0 3px #f4f1e0;
+    margin: 0 0 10px; padding: 8px; text-align: center;
+  }
+  #shopScreen .shop-gun-photo img { width: 420px; max-width: 100%; height: auto; aspect-ratio: 420 / 190; display: block; margin: 0 auto; }
+  #shopScreen .shop-gun-photo-cap { font-size: 10px; color: #777; margin-top: 4px; font-style: italic; }
   #shopScreen .shop-item-info {
     flex: 1;
   }
@@ -1664,6 +1673,15 @@
     text-transform: uppercase;
     font-size: 12px;
   }
+
+  /* v1.208: the forfeit question */
+  #forfeitAsk .modal-card { background: var(--ui-bg); border: 1px solid var(--ui-border); padding: 28px 40px; max-width: 420px; text-align: center; border-radius: 4px; }
+  #forfeitAsk .modal-title { font-family: 'Georgia', serif; font-size: 22px; color: var(--ui-accent); margin-bottom: 12px; }
+  #forfeitAsk .modal-body { font-size: 13px; line-height: 1.6; color: #ccc; margin-bottom: 20px; }
+  #forfeitAsk .forfeit-btns { display: flex; gap: 12px; justify-content: center; }
+  #forfeitAsk .modal-close { background: var(--ui-accent); color: #1a1a1a; border: none; padding: 8px 18px; font-family: inherit; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
+  #forfeitAsk .modal-close.forfeit-yes { background: transparent; color: #e88; border: 1px solid #a55; }
+  #forfeitAsk kbd { font-size: 10px; opacity: 0.7; margin-left: 4px; }
 
   /* Scenario intro card */
   #scenarioIntro {
@@ -1990,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.207</div>
+  <div class="version">v1.210</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2351,6 +2369,18 @@
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-body" id="modalBody"></div>
     <button class="modal-close" id="modalCloseBtn">OK</button>
+  </div>
+</div>
+
+<!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
+<div class="menu-overlay" id="forfeitAsk">
+  <div class="modal-card forfeit-card">
+    <div class="modal-title">Forfeit this match?</div>
+    <div class="modal-body">The match is paused. A forfeit ends it here, with no pay.</div>
+    <div class="forfeit-btns">
+      <button class="modal-close" id="forfeitKeepBtn">KEEP PLAYING <kbd>ESC</kbd></button>
+      <button class="modal-close forfeit-yes" id="forfeitYesBtn">FORFEIT <kbd>ENTER</kbd></button>
+    </div>
   </div>
 </div>
 
@@ -19582,6 +19612,13 @@ function bindWorkbenchPointer(canvas) {
 // Build a FRESH gun mesh for display (not the cached viewmodel instance, which
 // is parented to the FP camera). Reset its pose flat for turntable viewing.
 function buildWorkbenchGun(gunType) {
+  const mesh = buildBareGunMesh(gunType);
+  // Build the accessory rig on this fresh group so laser/flashlight render here.
+  ensureFPGunAccessory(mesh, gunType);
+  return mesh;
+}
+// v1.209: split out of buildWorkbenchGun so the shop's pictures get the gun with nothing mounted
+function buildBareGunMesh(gunType) {
   let mesh;
   if (gunType === 'pistol')       mesh = buildFPGun();
   else if (gunType === 'shotgun') mesh = buildFPShotgun();
@@ -19599,9 +19636,114 @@ function buildWorkbenchGun(gunType) {
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
   mesh.visible = true;
-  // Build the accessory rig on this fresh group so laser/flashlight render here.
-  ensureFPGunAccessory(mesh, gunType);
   return mesh;
+}
+
+// v1.209 (backlog D.23, Michael 13 Oct: "a mesh sample of weapons / whatever you're buying as the icon, and ... a
+// larger image" on the details page): the shop photographs each gun's own model, side-on and a little from the front,
+// on one small offscreen renderer made the first time it is needed. Each picture is a data URL, cached by gun and size.
+const SHOP_PIC = { renderer: null, scene: null, cache: {} };
+function shopGunPic(gunType, w, h) {
+  return shopPic('gun:' + gunType, w, h, () => {
+    const holder = new THREE.Group();
+    holder.add(buildBareGunMesh(gunType));
+    holder.rotation.set(0.18, Math.PI / 2 - 0.42, 0);   // the muzzle to the left, turned a little toward you
+    return { obj: holder, fit: [holder] };
+  });
+}
+// v1.210 (D.23, clothes): a hat, top or pair of shorts is photographed on a plain kid wearing it, the camera fitted to
+// the part of him it covers (fit: the meshes whose box the picture frames).
+function shopClothesPic(kind, id, w, h) {
+  return shopPic(kind + ':' + id, w, h, () => {
+    const look = { hairStyle: 'short', skinColor: 0xd9a77e, hairColor: 0x4a3020, shirtColor: 0xe9e6dc, pantsColor: 0x3d4f6e };
+    look[kind] = id;
+    const kid = createKid(look, 'pistol');
+    kid.gunGroup.visible = false;
+    kid.group.rotation.y = 0.45;   // turned a little, as at the mirror
+    let fit;
+    if (kind === 'hat') fit = [kid.hat, kid.head];
+    else if (kind === 'top') fit = [kid.torso, kid.top].filter(Boolean);
+    else fit = (Array.isArray(kid.shorts) ? kid.shorts : [kid.shorts]).filter(Boolean);
+    return { obj: kid.group, fit, pad: kind === 'hat' ? 1.3 : kind === 'top' ? 1.2 : 1.25 };
+  });
+}
+// v1.210 (D.23, gear): eye pro, armour, shoes and the belt and holster, on the same plain kid with the Loadout
+// screen's gear meshes (buildKidGear), framed on the piece. kind: eyewear | armor | shoes | belt (id = slots, 3 or 4).
+function shopGearPic(kind, id, w, h) {
+  return shopPic('gear:' + kind + ':' + id, w, h, () => {
+    const kid = createKid({ hairStyle: 'short', skinColor: 0xd9a77e, hairColor: 0x4a3020, shirtColor: 0xe9e6dc, pantsColor: 0x3d4f6e }, 'pistol');
+    kid.gunGroup.visible = false;
+    const gear = { eyewear: 'none', chest: null, arms: null, legs: null, shoes: 'none', belt: 2 };
+    let rotY = 0.45;
+    if (kind === 'eyewear') gear.eyewear = id;
+    else if (kind === 'armor') gear[ARMOR[id].zone] = id;
+    else if (kind === 'shoes') gear.shoes = id;
+    else if (kind === 'belt') { gear.belt = id; rotY = id >= 4 ? 1.0 : 0.6; }   // turned to show the hip
+    kid.group.rotation.y = rotY;
+    if (kind === 'shoes') { kid.group.rotation.y = 0.75; kid.group.rotation.x = 0.55; }   // tipped toward you, to see the pair from above
+    const out = buildKidGear(kid, gear);
+    kid.group.updateMatrixWorld(true);
+    let fit;
+    if (kind === 'eyewear') fit = [kid.head];
+    else if (kind === 'armor') fit = out[ARMOR[id].zone];
+    else if (kind === 'shoes') fit = out.shoes.length ? out.shoes : [kid.pose.shoeL, kid.pose.shoeR];
+    else fit = out.belt;
+    if (!fit || !fit.length) fit = [kid.torso];
+    if (kind === 'shoes') {   // just the pair, as a catalogue shows shoes: the rest of the kid is hidden
+      const keep = new Set();
+      for (const f of fit) { f.traverse(o => keep.add(o)); for (let p = f.parent; p; p = p.parent) keep.add(p); }
+      kid.group.traverse(o => { if (o.isMesh && !keep.has(o)) o.visible = false; });
+      // a gear pair hangs under the plain shoe it covers: that shoe stays on, hidden only by the gear over it
+    }
+    const pad = kind === 'shoes' ? 1.2 : kind === 'eyewear' ? 1.25 : 1.3;
+    return { obj: kid.group, fit, pad };
+  });
+}
+function shopPic(key0, w, h, make) {
+  const key = key0 + '@' + w + 'x' + h;
+  if (SHOP_PIC.cache[key]) return SHOP_PIC.cache[key];
+  if (!SHOP_PIC.renderer) {
+    try {
+      SHOP_PIC.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    } catch (e) { return null; }   // no WebGL to spare: the row keeps its old glyph
+    SHOP_PIC.renderer.setClearColor(0x000000, 0);
+    SHOP_PIC.scene = new THREE.Scene();
+    const key1 = new THREE.DirectionalLight(0xfff2e0, 1.1); key1.position.set(2, 3, 2); SHOP_PIC.scene.add(key1);
+    const fill = new THREE.DirectionalLight(0x88aaff, 0.45); fill.position.set(-2, 1, -1); SHOP_PIC.scene.add(fill);
+    SHOP_PIC.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  }
+  const r = SHOP_PIC.renderer;
+  r.setSize(w * 2, h * 2, false);   // drawn at twice the size it shows, for a crisp picture
+  const shot = make();
+  const holder = shot.obj;
+  SHOP_PIC.scene.add(holder);
+  holder.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  for (const o of shot.fit) box.expandByObject(o);
+  const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  const aspect = w / h, pad = shot.pad || 1.12;
+  const halfW = Math.max(sz.x / 2, (sz.y / 2) * aspect) * pad, halfH = halfW / aspect;
+  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.01, 10);
+  cam.position.set(c.x, c.y, c.z + 3);
+  cam.lookAt(c);
+  r.render(SHOP_PIC.scene, cam);
+  const url = r.domElement.toDataURL('image/png');
+  SHOP_PIC.scene.remove(holder);
+  SHOP_PIC.cache[key] = url;
+  return url;
+}
+function shopGunIcon(iconEl, gunType, w, h) {
+  shopIconImg(iconEl, shopGunPic(gunType, w, h), (GUN_MAGS[gunType] && GUN_MAGS[gunType].displayName) || gunType, { gun: gunType });
+}
+function shopIconImg(iconEl, url, alt, data) {
+  if (!url) return;
+  iconEl.textContent = '';
+  iconEl.style.color = '';
+  const img = document.createElement('img');
+  img.src = url; img.alt = alt;
+  Object.assign(img.dataset, data);
+  iconEl.appendChild(img);
+  iconEl.classList.add('pic');
 }
 
 function workbenchSelectGun(gunType) {
@@ -19964,6 +20106,27 @@ function updateFPWalkie(bobY) {
 function forfeitScenario() {
   if (Game.mode !== 'scenario') return;
   endScenario('forfeit');
+}
+// v1.208 (backlog B.8, Michael 13 Oct: "Hitting F should pause the game and ask if you're sure"): F opens a question
+// and the match stops (stepGame skips the scenario while Game.forfeitAsk is set). Enter or Y forfeits; Esc, N or F
+// again keeps playing. A round that ends some other way while it asks (a delayed win) closes it.
+function askForfeit() {
+  if (Game.mode !== 'scenario' || Game.forfeitAsk) return;
+  Game.forfeitAsk = true;
+  Game.mouseLMB = false;
+  for (const k in Game.keys) Game.keys[k] = false;
+  document.getElementById('forfeitAsk').classList.add('active');
+  exitPointerLock();
+}
+function closeForfeitAsk() {
+  Game.forfeitAsk = false;
+  document.getElementById('forfeitAsk').classList.remove('active');
+}
+function answerForfeit(yes) {
+  if (!Game.forfeitAsk) return;
+  closeForfeitAsk();
+  if (yes) forfeitScenario();
+  else if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
 }
 
 // ---------------------------------------------------------------------
@@ -20991,6 +21154,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
 }
 
 function endScenario(outcome) {
+  if (Game.forfeitAsk) closeForfeitAsk();   // v1.208
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
@@ -22311,6 +22475,7 @@ function renderClothesTab(c) {
     row.innerHTML = `<div class="shop-item-icon" style="color:${swatch}">${k.icon}</div>
       <div class="shop-item-info"><div class="shop-item-name">${h.name} ${status}</div><div class="shop-item-desc">${h.desc}</div></div>
       <div class="shop-item-price">${h.won ? 'WON' : '$' + h.price}</div>`;
+    shopIconImg(row.firstElementChild, shopClothesPic(k.data, id, 56, 56), h.name, { item: k.data + ':' + id });   // v1.210
     const btn = document.createElement('button');
     btn.className = 'shop-item-buy';
     if (wearing) btn.textContent = 'TAKE OFF';
@@ -22376,7 +22541,15 @@ function shopSectionHeader(text, sub) {
 function renderBeltAndHolster(c) {
   // v1.106: the slot unlocks are a belt and a holster (D.5)
   const slots = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('slot_'));
-  if (slots.length) { c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots')); slots.forEach(i => c.appendChild(shopCatalogRow(i))); }
+  if (slots.length) {
+    c.appendChild(shopSectionHeader('Belt & Holster', 'Gear that opens more loadout slots'));
+    slots.forEach(i => {
+      const row = shopCatalogRow(i);
+      const n = +i.id.slice(5);   // v1.210: slot_3 is the belt, slot_4 the holster (with the belt under it)
+      shopIconImg(row.firstElementChild, shopGearPic('belt', n, 56, 56), i.name, { item: 'belt:' + n });
+      c.appendChild(row);
+    });
+  }
 }
 function renderSpeedLoaders(c) {
   const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
@@ -22430,6 +22603,7 @@ function renderGunsTab(c) {
     const icon = document.createElement('div');
     icon.className = 'shop-item-icon';
     icon.textContent = '⌐';
+    shopGunIcon(icon, gt, 56, 56);   // v1.209: the gun's own picture
     row.appendChild(icon);
     const info = document.createElement('div');
     info.className = 'shop-item-info';
@@ -22481,6 +22655,15 @@ function renderGunDetail(c, gt) {
   const gunRow = document.createElement('div');
   gunRow.className = 'shop-item' + (owned ? ' owned' : '');
   gunRow.innerHTML = `<div class="shop-item-icon">⌐</div>`;
+  shopGunIcon(gunRow.firstChild, gt, 56, 56);   // v1.209
+  // v1.209: and a large picture of it above, framed like a catalogue photo
+  const photo = document.createElement('div');
+  photo.className = 'shop-gun-photo';
+  const pic = shopGunPic(gt, 420, 190);
+  if (pic) {
+    photo.innerHTML = `<img src="${pic}" alt="${cfg.displayName}" data-gun="${gt}"><div class="shop-gun-photo-cap">${cfg.displayName} · actual product may vary</div>`;
+    c.appendChild(photo);
+  }
   const ginfo = document.createElement('div');
   ginfo.className = 'shop-item-info';
   const spec = getGunSpec(gt);
@@ -22618,7 +22801,7 @@ function renderEquipmentTab(c) {
       price: e.price, owned, equipped,
       onBuy: () => buyEquipment('eyewear', id),
       onEquip: () => equipEyewear(id),
-      label: e.name,
+      label: e.name, pic: ['eyewear', id],
     }));
   }
   // --- Armor (adds hit-points) ---
@@ -22640,7 +22823,7 @@ function renderEquipmentTab(c) {
       price: a.price, owned, equipped, locked,
       onBuy: () => buyEquipment('armor', id),
       onEquip: () => { toggleArmor(id); },
-      equipLabel: equipped ? 'EQUIPPED ✕' : 'EQUIP',
+      equipLabel: equipped ? 'EQUIPPED ✕' : 'EQUIP', pic: ['armor', id],
     }));
   }
   // --- Shoes (stamina/sprint) ---
@@ -22655,18 +22838,19 @@ function renderEquipmentTab(c) {
       desc: s.desc || 'Standard sneakers — no bonuses.',
       price: s.price, owned, equipped,
       onBuy: () => buyEquipment('shoes', id),
-      onEquip: () => equipShoes(id),
+      onEquip: () => equipShoes(id), pic: ['shoes', id],
     }));
   }
 }
 
 // Generic equip-style row: BUY when unowned, EQUIP/EQUIPPED when owned.
-function equipRow({ icon, name, desc, price, owned, equipped, locked, onBuy, onEquip, equipLabel }) {
+function equipRow({ icon, name, desc, price, owned, equipped, locked, onBuy, onEquip, equipLabel, pic }) {
   const row = document.createElement('div');
   row.className = 'shop-item' + (owned ? ' owned' : '') + (locked ? ' locked' : '');
   row.innerHTML = `<div class="shop-item-icon">${icon}</div>` +
     `<div class="shop-item-info"><div class="shop-item-name">${name}${equipped?' <span class="shop-eq-tag">EQUIPPED</span>':''}</div>` +
     `<div class="shop-item-desc">${desc}</div></div>`;
+  if (pic) shopIconImg(row.firstElementChild, shopGearPic(pic[0], pic[1], 56, 56), name, { item: pic[0] + ':' + pic[1] });   // v1.210
   if (!owned) {
     const p = document.createElement('div');
     p.className = 'shop-item-price';
@@ -22750,6 +22934,15 @@ document.addEventListener('pointerlockchange', () => {
 // INPUT
 // ---------------------------------------------------------------------
 document.addEventListener('keydown', e => {
+  // v1.208: while the forfeit question is up, only its keys do anything
+  if (Game.forfeitAsk) {
+    if (!e.repeat) {
+      if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'KeyY') answerForfeit(true);
+      else if (e.code === 'Escape' || e.code === 'KeyN' || e.code === 'KeyF') answerForfeit(false);
+    }
+    e.preventDefault();
+    return;
+  }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -22794,9 +22987,9 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
     Game.focusedInteractable.action();
   }
-  // F to forfeit (scenario)
+  // F to forfeit (scenario); v1.208: it asks first
   if (e.code === 'KeyF' && Game.mode === 'scenario' && !e.repeat) {
-    forfeitScenario();
+    askForfeit();
   }
   // M to toggle music
   if (e.code === 'KeyM' && !e.repeat) {
@@ -22832,6 +23025,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mousedown', e => {
+  if (Game.forfeitAsk) return;   // v1.208: clicks on the forfeit question are its buttons'
   // Right-click → ADS in scenario
   if (e.button === 2 && Game.mode === 'scenario' && Game.mouse.locked) {
     Game.player.adsTarget = 1;
@@ -29184,7 +29378,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario') {
+  } else if (Game.mode === 'scenario' && !Game.forfeitAsk) {   // v1.208: paused while F asks
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
@@ -29312,6 +29506,8 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Escape' && document.getElementById('settingsScreen').classList.contains('active')) closeSettings();
 });
 document.getElementById('settingsDoneBtn').addEventListener('click', closeSettings);
+document.getElementById('forfeitYesBtn').addEventListener('click', () => answerForfeit(true));    // v1.208
+document.getElementById('forfeitKeepBtn').addEventListener('click', () => answerForfeit(false));
 document.getElementById('settingsResetBtn').addEventListener('click', () => {
   Object.assign(Settings, SETTINGS_DEFAULTS); saveSettings(); applySettings(); renderSettings();
 });
