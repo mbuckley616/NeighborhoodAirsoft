@@ -9983,13 +9983,42 @@ line there.
 - The shop's Ammo tab draws the speed loader and spare mag from the same builders, so the item hands are put on in the
   match's set-up only; `shop-pics` passes (34 checks) and `backyard-guns` passes.
 - Test fix-up, not this item: `car-side-fire`'s "he still shoots" failed on every run of the branch head (1,714–1,735 of
-  6,048 pulls held, limit 25%) and passed on v1.218 and on main. The v1.216 fix-up gave the back-of-house meshes their
-  own random numbers, and Bunratty's lane car went back to the slot it had before v1.216, 0.45 m further west (x 19.15–
-  23.03), so two of the test's four fixed firing spots stood inside the car's box and every pull there held, as it
-  should. The spots are now set off the car's west side; 978 of 6,048 held (16%), 0 BBs into the car.
+  6,048 pulls held, limit 25%) and passed on v1.218 and on main. The v1.216 fix-up had moved Bunratty's lane car 0.45 m
+  west (x 19.15–23.03), so two of the test's four fixed firing spots stood inside the car's box and every pull there
+  held, as it should. The spots are now set off whatever stands in the car's slot, west side; on that layout 978 of
+  6,048 held (16%), 0 BBs into the car. (A second session's v1.218 fix-up, pushed during this run, reverts the v1.216
+  fix-up and moves the layout back; the anchored spots hold on either.)
 ### Still open
 - How the hands look is for Michael's eye: box hands to match the game's kids, the default skin reads pale in strong
   sun, and the left forearm comes in from the lower left at a steep angle. Screenshots of the AR, pistol, shotgun and
   sniper at the hip and aimed, the MP5 with a foregrip, the hoodie and the loader are in `tests/out/fp-hands-*.png`.
 - Fingers do not move: no trigger pull, no thumb on the speed loader's plunger, no hand on the hammer as the
   Six-Shooter cocks.
+
+## v1.220 — No loose parts on the guns
+Backlog D.31, first part (Michael, control room, 13 Oct: "Can we make an effort to revisit the gun designs and make
+sure they all look good / accurate, and don't have any bugs or flaws?"). The first flaw to look for is a part that
+does not touch the gun. Built as the workbench and first person draw them, with each part's box joined to any other
+within 3 mm, eleven of the twelve guns had something standing off the body: the shotgun's orange tip 8 mm ahead of its
+barrel; the AR's handguard 2 cm in front of its receiver, an open gap you see at the hip; the sniper rifle's forend
+1.5 cm off its grip and its barrel 1 cm short of the receiver, and its side rails 5 mm over the forend; the AK's tip
+7 mm off its barrel and its wooden stock off the receiver; the MP5's magazine 5 mm under its well, its cocking tube
+6 mm over the receiver and its stock 1.7 cm behind it; the UMP's stock struts and the MAC-10's stock stub likewise; the
+Bucket Gun's carry handle 7.5 mm above the body; on the Six-Shooter, Bucket Gun and Bolt Pistol the trigger guard's front
+was a flat 5 mm sliver hanging clear of its bar; and one line of the pistol's grip stippling sat behind the grip.
+
+Each is joined by lengthening or moving the part that was short (the barrels to their tips, the handguards and stocks
+back to the receivers, the MP5's mag up into its well, the handle posts down onto the body, the trigger guard's front
+made an upright from the bar), never by moving a sight, so every iron sight sits where v1.168 and v1.73 put it. The
+sniper's rail line (`FP_GUN_MOUNT.sniper.barrelY`) drops from 0.040 to 0.032 so its side rails sit on the forend; a
+laser or light on them sits 8 mm lower.
+### Verified
+- `tests/gun-parts.test.mjs` (new, 14 checks): all twelve guns, 22–52 parts each, have no part more than 3 mm from the
+  body; on v1.219 the same check found loose parts on eleven (only the Thunder Pump was whole).
+- Run alone after the change: `fp-hands` 69 of 69 (every hand still touches its gun: the forends and handguards that
+  grew are the ones the off hands hold), `backyard-guns` 28 of 28 (aimed, each front sight still on the reticle),
+  `under-parts` 28 of 28 (the under-barrel parts still hang under the handguards), `shop-pics` 34 of 34, and, after
+  merging the second session's v1.218 fix-up, `car-side-fire` 6 of 6 (0 of 6,048 pulls held on that layout).
+### Still open
+- D.31 goes on: each gun against the real thing it copies (shape, proportions, details), one at a time with
+  screenshots for Michael's eye. The loose parts were the plain faults; whether a gun "looks accurate" is his call.

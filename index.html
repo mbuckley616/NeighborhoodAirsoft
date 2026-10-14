@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.219</div>
+  <div class="version">v1.220</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18299,7 +18299,7 @@ function buildFPGun() {
   // Grip stippling — a few thin horizontal lines
   for (let i = 0; i < 5; i++) {
     const line = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.003, 0.001), accentMat);
-    line.position.set(0, -0.06 - i * 0.018, 0.034 + i * 0.0035);
+    line.position.set(0, -0.06 - i * 0.018, 0.029 + i * 0.0033);   // v1.220: on the back strap, which rakes back
     line.rotation.x = -0.18;
     group.add(line);
   }
@@ -18365,9 +18365,9 @@ function buildFPShotgun() {
   }
 
   // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.20, 12), barrelMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.216, 12), barrelMat);   // v1.220: reaches the tip (was 8 mm short)
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.04, -0.22);
+  barrel.position.set(0, 0.04, -0.228);
   group.add(barrel);
 
   // Magazine tube (under barrel)
@@ -18490,8 +18490,8 @@ function buildFPAR() {
   group.add(chargeGroup);
 
   // === Handguard / RIS rail ===
-  const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.038, 0.13), handlerMat);
-  handguard.position.set(0, 0.038, -0.19);
+  const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.038, 0.15), handlerMat);   // v1.220: meets the receiver (a 2 cm gap before)
+  handguard.position.set(0, 0.038, -0.18);
   group.add(handguard);
   for (let i = 0; i < 6; i++) {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.005, 0.005), accentMat);
@@ -18589,8 +18589,8 @@ function buildFPSniper() {
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
   // === Stock (synthetic black, single piece) ===
-  const forend = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.04, 0.15), stockMat);
-  forend.position.set(0, 0.005, -0.18);
+  const forend = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.04, 0.165), stockMat);   // v1.220: one stock with the grip (was 15 mm apart)
+  forend.position.set(0, 0.005, -0.1725);
   group.add(forend);
   const stockGrip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.058, 0.06), stockMat);
   stockGrip.position.set(0, -0.022, -0.025);
@@ -18612,9 +18612,9 @@ function buildFPSniper() {
   group.add(receiver);
 
   // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.26, 12), barrelMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.27, 12), barrelMat);   // v1.220: into the receiver (was 1 cm short)
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.045, -0.23);
+  barrel.position.set(0, 0.045, -0.225);
   group.add(barrel);
 
   // === Orange muzzle tip ===
@@ -18730,9 +18730,9 @@ function buildFPAK() {
   group.add(gasTube);
 
   // Barrel + front sight block + orange tip
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.16, 10), darkMat);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.174, 10), darkMat);   // v1.220: reaches the tip
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.025, -0.30);
+  barrel.position.set(0, 0.025, -0.307);
   group.add(barrel);
   const fsBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.022), steelMat);
   fsBlock.position.set(0, 0.045, -0.31);
@@ -18779,8 +18779,8 @@ function buildFPAK() {
   group.add(tg);
 
   // Fixed wood stock (straight, runs back toward camera)
-  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.10), woodMat);
-  stock.position.set(0, 0.0, 0.10);
+  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.12), woodMat);   // v1.220: meets the receiver
+  stock.position.set(0, 0.0, 0.09);
   group.add(stock);
   const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.052, 0.012), darkMat);
   stockPad.position.set(0, 0.0, 0.155);
@@ -18841,8 +18841,8 @@ function buildFPMP5() {
   group.add(rearDrum);
 
   // Curved magazine (MP5's signature banana, slightly forward-curving)
-  const magTop = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.03), matteMat);
-  magTop.position.set(0, -0.045, -0.05);
+  const magTop = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.064, 0.03), matteMat);   // v1.220: up into the mag well
+  magTop.position.set(0, -0.039, -0.05);
   magTop.rotation.x = -0.10;
   group.add(magTop);
   const magBot = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.028), matteMat);
@@ -18854,10 +18854,10 @@ function buildFPMP5() {
   const chargeGroup = new THREE.Group();
   const cockTube = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.05, 8), steelMat);
   cockTube.rotation.x = Math.PI / 2;
-  cockTube.position.set(-0.022, 0.045, -0.13);
+  cockTube.position.set(-0.022, 0.036, -0.13);   // v1.220: on the receiver, not 6 mm over it
   chargeGroup.add(cockTube);
   const cockKnob = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.014), steelMat);
-  cockKnob.position.set(-0.022, 0.045, -0.108);
+  cockKnob.position.set(-0.022, 0.036, -0.108);
   chargeGroup.add(cockKnob);
   chargeGroup.position.set(0, 0, 0);
   chargeGroup.userData.baseZ = 0;
@@ -18873,8 +18873,8 @@ function buildFPMP5() {
   group.add(tg);
 
   // Retractable stock (single straight strut + pad)
-  const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.10), steelMat);
-  stockStrut.position.set(0, 0.015, 0.10);
+  const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.14), steelMat);   // v1.220: from the receiver
+  stockStrut.position.set(0, 0.015, 0.08);
   group.add(stockStrut);
   const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.045, 0.012), matteMat);
   stockPad.position.set(0, 0.012, 0.15);
@@ -18953,11 +18953,11 @@ function buildFPUMP() {
   group.add(tg);
 
   // Folding stock (UMP's side-folder, shown extended: two struts + pad)
-  const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.10), steelMat);
-  strutTop.position.set(0, 0.03, 0.095);
+  const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);   // v1.220: from the receiver
+  strutTop.position.set(0, 0.03, 0.08);
   group.add(strutTop);
-  const strutBot = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.10), steelMat);
-  strutBot.position.set(0, -0.005, 0.095);
+  const strutBot = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);
+  strutBot.position.set(0, -0.005, 0.08);
   group.add(strutBot);
   const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.055, 0.012), polyMat2);
   stockPad.position.set(0, 0.012, 0.15);
@@ -19034,7 +19034,7 @@ function buildFPMAC10() {
 
   // Stub of a retractable wire stock (collapsed look — short)
   const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.03), matteMat);
-  stockStub.position.set(0, 0.01, 0.04);
+  stockStub.position.set(0, 0.01, 0.025);   // v1.220: on the back of the box (was 15 mm behind it)
   group.add(stockStub);
 
   group.position.set(0.16, -0.18, -0.30);
@@ -19062,7 +19062,7 @@ function _fpPart(group, geo, mat, x, y, z, rx) {
 }
 function _fpTriggerGuard(group, mat, y, z) {
   _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.05), mat, 0, y - 0.022, z + 0.01);
-  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.008), mat, 0, y - 0.01, z - 0.015);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.017, 0.005), mat, 0, y - 0.0135, z - 0.0125);   // v1.220: the front upright, down to the bar
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.02, 0.006), mat, 0, y - 0.008, z);
 }
 const _fpOrangeMat = () => new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
@@ -19163,8 +19163,8 @@ function buildFPBucket() {
   _fpPart(group, new THREE.CylinderGeometry(0.046, 0.032, 0.06, 16), clear, 0, 0.075, -0.09);        // the bucket
   _fpPart(group, new THREE.CylinderGeometry(0.038, 0.031, 0.034, 16), bbs, 0, 0.062, -0.09);         // BBs in it
   _fpPart(group, new THREE.CylinderGeometry(0.048, 0.048, 0.006, 16), yellow, 0, 0.106, -0.09);      // lid
-  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, 0.02);                    // handle posts
-  _fpPart(group, new THREE.BoxGeometry(0.016, 0.07, 0.016), blue, 0, 0.09, -0.21);
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.08, 0.016), blue, 0, 0.0875, 0.02);                  // handle posts (v1.220: down on the body)
+  _fpPart(group, new THREE.BoxGeometry(0.016, 0.08, 0.016), blue, 0, 0.0875, -0.21);
   _fpPart(group, new THREE.BoxGeometry(0.022, 0.016, 0.25), dark, 0, 0.127, -0.095);                 // carry-handle rail
   _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), dark, 0, 0.142, -0.205).userData.frontSight = true;                // front blade (tip y 0.149)
   _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), dark, 0, 0.138, 0.012);                 // rear notch
@@ -19462,7 +19462,7 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
-  sniper:  { barrelY: 0.040, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
+  sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
   mp5:     { barrelY: 0.010, sideX: 0.016, railZ: -0.16,  railLen: 0.07,  underY: -0.010, sightY: 0.030, sightZ: -0.05,  sightScale: 0.95 },
   ump:     { barrelY: 0.012, sideX: 0.015, railZ: -0.155, railLen: 0.06,  underY: -0.006, sightY: 0.052, sightZ: -0.05,  sightScale: 0.95 },

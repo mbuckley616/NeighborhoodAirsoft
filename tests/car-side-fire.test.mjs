@@ -15,8 +15,8 @@ const r = await page.evaluate(() => {
   const mk = makeBB, made = [];
   window.makeBB = function (pos, vel, owner, ref) { if (ref === e) made.push({ p: pos.clone(), v: vel.clone() }); return mk.apply(this, arguments); };
   let calls = 0, held = 0, bbs = 0, near = 0, intoCar = 0;
-  // v1.219: the spots are set off the car's own west side (they were fixed at x 18.7–19.4; since the v1.216 fix-up the
-  // car stands 0.45 m further west, at x 19.15–23.03, so two of them were inside it and every pull there held)
+  // v1.219: the spots are set off the car's own west side (they were fixed at x 18.7–19.4; after the v1.216 fix-up the
+  // car stood 0.45 m further west, at x 19.15–23.03, so two of them were inside it and every pull there held)
   const cz = car ? (car.minZ + car.maxZ) / 2 : 6.9, cx0 = car ? car.minX : 19.8;
   for (const [sx, sz] of [[cx0 - 1.1, cz - 0.1], [cx0 - 0.9, cz], [cx0 - 0.6, cz - 0.3], [cx0 - 0.4, cz + 0.3]]) {
     e.pos.x = sx; e.pos.z = sz; e.pos.y = scenarioGroundY(sx, sz);
