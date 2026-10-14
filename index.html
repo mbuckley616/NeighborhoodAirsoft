@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.218</div>
+  <div class="version">v1.219</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19233,12 +19233,210 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else mesh = buildFPGun();   // fallback
+  attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
   fpGuns[gunType] = mesh;
   return mesh;
 }
 function getActiveFpGun() {
   return fpGuns[Game.gun.type] || fpGuns.pistol;
+}
+
+// =====================================================================
+// v1.219 (backlog D.30, Michael 13 Oct: "Can we have the player's hand(s) shown holding their weapons in First Person
+// View? Same for the Speed Loader"). Your hands on whatever you hold, in your own skin colour, the forearms running
+// back out of the bottom of the screen; a hoodie's sleeves come down to a cuff at the wrist. Each hand is a child of
+// the thing it holds (a pump hand rides the pump), so bob, kick, ADS and cocking carry it. Three shapes, in the frame
+// of what they hold: a GRIP hand round an upright grip (local Y up the grip, -Z forward), a SUPPORT hand under a
+// handguard running along Z, and a CUP hand, the off hand wrapped round the shooting hand on a pistol.
+// FP_HANDS: per gun, `r` the shooting hand (centre of the grip, its rake rx, half width/depth, and `up`, how far up
+// the grip from its centre the hand's middle sits) and `l` the off hand ('cup', or a support/grip spec; `on: 'pump'`
+// rides the gun's cocking part). Long guns with an under-barrel slot move the off hand onto a PVC foregrip or a taped
+// mag when one is mounted (`underHand`).
+// =====================================================================
+const FP_HANDS = {
+  pistol:  { r: { c: [0, -0.085, 0.005], rx: -0.18, gw: 0.020, gd: 0.028, up: 0.02 },  l: 'cup' },
+  shotgun: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
+  ar:      { r: { c: [0, -0.055, 0.010], rx: -0.22, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
+  sniper:  { r: { c: [0, -0.022, -0.02], rx: -0.45, gw: 0.019, gd: 0.022, up: -0.012 }, l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
+  mp5:     { r: { c: [0, -0.045, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
+  ump:     { r: { c: [0, -0.048, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
+  mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
+  thunder: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
+  sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
+  boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
+};
+// Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
+const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
+const FP_HAND_MATS = { skin: null, sleeve: null, key: '' };
+const _fpForearms = [];   // every forearm built: { arm, cuff }, re-dressed when the look changes
+function fpHandMats() {
+  if (!FP_HAND_MATS.skin) {
+    FP_HAND_MATS.skin = new THREE.MeshStandardMaterial({ color: 0xe0b090, roughness: 0.75 });
+    FP_HAND_MATS.sleeve = new THREE.MeshStandardMaterial({ color: 0x7c7d84, roughness: 0.9 });
+  }
+  return FP_HAND_MATS;
+}
+// Skin and sleeve follow the mirror (look.skinColor; a hoodie's colour when one is worn). Cheap enough each frame:
+// it only does work when the look has changed.
+function syncFpHandLook() {
+  const look = (Game.persist && Game.persist.look) || {};
+  const top = (typeof KID_TOPS !== 'undefined' && look.top && KID_TOPS[look.top]) || null;
+  const hoodie = !!(top && top.kind === 'hoodie');
+  const key = (look.skinColor || 0) + '|' + (hoodie ? top.color : 'bare');
+  if (FP_HAND_MATS.key === key) return;
+  const M = fpHandMats();
+  FP_HAND_MATS.key = key;
+  M.skin.color.setHex(look.skinColor != null ? look.skinColor : 0xe0b090);
+  if (hoodie) M.sleeve.color.setHex(top.color);
+  for (const f of _fpForearms) f.arm.material = hoodie ? M.sleeve : M.skin;
+}
+function _fpHandBox(g, w, h, d, x, y, z, ry) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), fpHandMats().skin);
+  m.position.set(x, y, z);
+  if (ry) m.rotation.y = ry;
+  m.userData.fpHand = true;
+  g.add(m);
+  return m;
+}
+// A hand round an upright grip. s = +1 the right hand (back of the hand on the grip's right, fingertips and thumb on
+// its left), -1 the left. Spans about 0.04 below to 0.045 above its origin.
+function buildFpGripHand(gw, gd, s) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 0.024, 0.078, 0.07, s * (gw + 0.012), -0.004, 0.006);              // back of the hand
+  _fpHandBox(g, 2 * gw + 0.02, 0.07, 0.02, s * 0.006, -0.008, gd + 0.01);          // heel of the hand on the back strap
+  for (let i = 0; i < 3; i++) {
+    _fpHandBox(g, 2 * gw + 0.026, 0.0175, 0.019, -s * 0.002, 0.012 - i * 0.021, -gd - 0.0095);   // fingers round the front
+    _fpHandBox(g, 0.012, 0.0175, 0.024, -s * (gw + 0.006), 0.012 - i * 0.021, -gd + 0.008);      // their tips
+  }
+  _fpHandBox(g, 0.015, 0.016, 0.034, s * gw * 0.3, 0.034, -gd - 0.022);           // the trigger finger
+  _fpHandBox(g, 0.016, 0.018, 0.05, -s * (gw + 0.008), 0.04, -0.004, s * 0.12);    // the thumb
+  g.userData.wrist = [s * 0.012, -0.012, gd + 0.024];
+  return g;
+}
+// The off hand under a handguard (along Z, half width hw, half height hh): the palm under it, the heel and thumb up
+// its left side, four fingers up its right.
+function buildFpSupportHand(hw, hh) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 2 * hw + 0.016, 0.02, 0.08, 0, -hh - 0.01, 0);                       // palm
+  _fpHandBox(g, 0.016, hh * 1.4, 0.075, -(hw + 0.008), -hh * 0.35, 0.004);           // heel of the hand
+  _fpHandBox(g, 0.015, 0.016, 0.05, -(hw + 0.006), hh * 0.55, -0.02);                // thumb
+  for (let i = 0; i < 4; i++) _fpHandBox(g, 0.014, 2 * hh + 0.004, 0.0165, hw + 0.007, -0.002, -0.03 + i * 0.0195);   // fingers
+  g.userData.wrist = [-0.006, -hh - 0.014, 0.03];
+  return g;
+}
+// The off hand cupped round the shooting hand on a pistol grip (same frame as the grip hand).
+function buildFpCupHand(gw, gd) {
+  const g = new THREE.Group();
+  _fpHandBox(g, 0.022, 0.075, 0.075, -(gw + 0.026), -0.01, -0.004);                 // palm on the grip's left
+  for (let i = 0; i < 3; i++) _fpHandBox(g, 2 * gw + 0.05, 0.017, 0.019, -0.008, 0.008 - i * 0.02, -gd - 0.029);   // fingers over the other hand's
+  _fpHandBox(g, 0.016, 0.017, 0.05, -(gw + 0.02), 0.024, -0.012, -0.1);             // thumb under the other thumb
+  g.userData.wrist = [-(gw + 0.03), -0.025, 0.022];
+  return g;
+}
+// The forearm from a hand's wrist to an elbow given in camera space, both as children of `parent` (whose pose at
+// build time, and its parents' up to `root`, convert the elbow). Narrow at the wrist; a cuff there for a hoodie.
+function addFpForearm(parent, root, hand, elbowCam) {
+  const M = new THREE.Matrix4();
+  for (let o = parent; o; o = o.parent) { o.updateMatrix(); M.premultiply(o.matrix); if (o === root) break; }
+  const elbow = new THREE.Vector3().fromArray(elbowCam).applyMatrix4(M.clone().invert());
+  hand.updateMatrix();
+  const wrist = new THREE.Vector3().fromArray(hand.userData.wrist).applyMatrix4(hand.matrix);
+  const dir = new THREE.Vector3().subVectors(elbow, wrist);
+  const len = dir.length();
+  dir.normalize();
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);   // -Y runs wrist to elbow
+  const M2 = fpHandMats();
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.034, len, 8), M2.skin);
+  arm.quaternion.copy(q);
+  arm.position.copy(wrist).addScaledVector(dir, len / 2);
+  arm.userData.fpHand = true;
+  parent.add(arm);
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.03, 8), M2.sleeve);
+  cuff.quaternion.copy(q);
+  cuff.position.copy(wrist).addScaledVector(dir, 0.03);
+  cuff.userData.fpHand = true;
+  cuff.visible = false;
+  parent.add(cuff);
+  const f = { arm, cuff };
+  _fpForearms.push(f);
+  return f;
+}
+function _fpPlaceGripHand(parent, root, spec, s, elbow) {
+  const h = buildFpGripHand(spec.gw, spec.gd, s);
+  const ax = new THREE.Vector3(0, Math.cos(spec.rx), Math.sin(spec.rx));      // up the grip
+  h.position.set(spec.c[0], spec.c[1], spec.c[2]).addScaledVector(ax, spec.up || 0);
+  h.rotation.x = spec.rx;
+  parent.add(h);
+  const f = addFpForearm(parent, root, h, elbow);
+  return [h, f.arm, f.cuff];
+}
+// Put both hands on an FP gun group, built in its hip pose. Tags: userData.fpHands = { r, l, under } (arrays of the
+// meshes/groups of each hand, its forearm and cuff) for updateHeldMesh and the tests.
+function attachFpHands(group, gunType) {
+  const spec = FP_HANDS[gunType];
+  if (!spec || group.userData.fpHands) return;
+  const out = { r: [], l: [], under: null };
+  out.r = _fpPlaceGripHand(group, group, spec.r, 1, FP_ELBOW_R);
+  if (spec.l === 'cup') {
+    const h = buildFpCupHand(spec.r.gw, spec.r.gd);
+    const ax = new THREE.Vector3(0, Math.cos(spec.r.rx), Math.sin(spec.r.rx));
+    h.position.set(spec.r.c[0], spec.r.c[1], spec.r.c[2]).addScaledVector(ax, spec.r.up || 0);
+    h.rotation.x = spec.r.rx;
+    group.add(h);
+    const f = addFpForearm(group, group, h, FP_ELBOW_L_CUP);
+    out.l = [h, f.arm, f.cuff];
+  } else if (spec.l.kind === 'grip') {
+    out.l = _fpPlaceGripHand(group, group, spec.l, -1, FP_ELBOW_L);
+  } else {
+    const parent = spec.l.on === 'pump' ? (group.userData.cockingParts || [])[0] || group : group;
+    const h = buildFpSupportHand(spec.l.hw, spec.l.hh);
+    h.position.set(spec.l.c[0], spec.l.c[1], spec.l.c[2]);
+    parent.add(h);
+    const f = addFpForearm(parent, group, h, FP_ELBOW_L);
+    out.l = [h, f.arm, f.cuff];
+  }
+  if (spec.underHand && FP_GUN_MOUNT[gunType]) {
+    // The off hand on a PVC foregrip or a taped mag, which hang under the handguard at the rail's middle.
+    const mount = FP_GUN_MOUNT[gunType];
+    const bottom = measureGunForUnder(group, mount).bottom;
+    out.under = _fpPlaceGripHand(group, group, { c: [0, bottom - 0.04, mount.railZ], rx: 0, gw: 0.012, gd: 0.016, up: 0.008 }, -1, FP_ELBOW_L);
+    for (const o of out.under) o.visible = false;
+  }
+  group.userData.fpHands = out;
+  syncFpHandLook();
+}
+// Which off hand shows: on a long gun with a PVC foregrip or a taped mag mounted, the one on that part.
+function updateFpHands(group, gunType) {
+  syncFpHandLook();
+  const H = group && group.userData.fpHands;
+  if (!H) return;
+  if (H.under) {
+    const under = getMountedAccessories(gunType).find(a => a.slot === 'under');
+    const onPart = !!under && (under.type === 'foregrip' || under.type === 'taped_mag');
+    for (const o of H.l) o.visible = !onPart;
+    for (const o of H.under) o.visible = onPart;
+  }
+  const hoodie = FP_HAND_MATS.key.indexOf('bare') < 0;   // a cuff only with a hoodie, only on a hand that shows
+  for (const hand of [H.r, H.l, H.under]) if (hand && hand.length) hand[2].visible = hoodie && hand[0].visible;
+}
+// The speed loader and the spare mag are held in the right hand: round the loader's tube (along its Z), or round
+// the mag's body.
+function attachFpItemHand(group, kind) {
+  let h;
+  if (kind === 'loader') {
+    h = buildFpSupportHand(0.025, 0.025);
+    h.position.set(0, 0, 0.025);
+  } else {
+    h = buildFpGripHand(0.02, 0.025, 1);
+    h.position.set(0, -0.025, 0);
+  }
+  group.add(h);
+  const f = addFpForearm(group, group, h, FP_ELBOW_R);
+  group.userData.fpHands = { r: [h, f.arm, f.cuff], l: [], under: null };
+  syncFpHandLook();
 }
 
 // =====================================================================
@@ -19699,7 +19897,7 @@ function measureGunForUnder(group, mount) {
   const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
   let bottom = null, frontZ = 0, frontY = mount.barrelY;
   group.traverse(o => {
-    if (!o.isMesh || !o.geometry || !o.visible) return;
+    if (!o.isMesh || !o.geometry || !o.visible || o.userData.fpHand) return;   // v1.219: not the hands
     if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
     if (b.min.x > 0.004 || b.max.x < -0.004) return;                       // off the centre line
@@ -21454,8 +21652,8 @@ function startScenario(built) {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   fpGun = getOrBuildFPGun(Game.gun.type);
-  if (!fpLoader) fpLoader = buildFPLoader();
-  if (!fpMag) fpMag = buildFPMag();
+  if (!fpLoader) { fpLoader = buildFPLoader(); attachFpItemHand(fpLoader, 'loader'); }   // v1.219 (D.30): in your hand here,
+  if (!fpMag) { fpMag = buildFPMag(); attachFpItemHand(fpMag, 'mag'); }                 // not in the shop's pictures
   fpGun.visible = true;
   updateFPGunAccessory(fpGun, Game.gun.type);   // v1.27: show laser/flashlight if equipped
   fpLoader.visible = false;
@@ -24656,6 +24854,7 @@ function updateHeldMesh(dt) {
   fpGun.visible = isGunHeld && !scopedFully;
   if (fpLoader) fpLoader.visible = isLoader;
   if (fpMag) fpMag.visible = isMag;
+  updateFpHands(isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
 
   if (isGunHeld) {
     // Cocking animation: cockProgress 0→1 maps to cocking parts moving backward

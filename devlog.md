@@ -9947,3 +9947,49 @@ should do now is a question in decisions (A–D, I recommend A: the bed shows th
 ### Still open
 - The bed: decisions, "What does the bed do, now the game saves itself?"
 - The "Saved" note's look and corner are for Michael's eye.
+
+## v1.219 — Your hands on the gun
+Backlog D.30 (Michael, control room, 13 Oct: "Can we have the player's hand(s) shown holding their weapons in First
+Person View? Same for the Speed Loader and anything else i might be forgetting"). In first person every gun floated
+on its own: no hand on the grip, none on the handguard, and the speed loader and the spare mag hung in the air the
+same way. The kids in third person have had hands on their guns since v1.81; you had none.
+
+Now your hands hold what you hold. The shooting hand wraps the pistol grip (or the stock's wrist on the shotgun and the
+Thunder Pump): the back of the hand on the grip's right, three fingers round the front strap with their tips on the
+left, the trigger finger forward and the thumb along the frame. The off hand goes where it would: under the handguard
+of the AK, MP5, UMP and sniper rifle, under the Bucket Gun's body, on the AR's vertical foregrip, on the pump of the
+shotgun and the Thunder Pump, where it slides back with the pump as you rack it, and cupped round the shooting hand on
+the four pistols and the MAC-10. Mount a PVC Foregrip or a Taped Twin Mag on a long gun and the off hand moves onto it;
+a sling leaves it where it was. The speed loader and the spare mag are held in your right hand. Each forearm runs from
+the wrist down and back out of the bottom of the screen. The hands are your skin from the mirror; in the Grey Hoodie
+the forearms are its sleeves, with a cuff at each wrist. Everything is a child of the gun (or the pump), so bob, kick,
+aiming in and cocking carry the hands with it, and the hands are built once per gun, about 35 small boxes, only the
+held gun drawn. `measureGunForUnder` skips them, so the under-barrel parts sit where they did.
+
+The table `FP_HANDS` gives each gun its grip centre, rake and size, and the off hand's place, so a new gun needs one
+line there.
+### Verified
+- `tests/fp-hands.test.mjs` (new, 69 checks), on all twelve guns in a match, at the hip and aimed: both hands are on
+  each gun; each hand touches it (gap 0 mm, the cupped off hand on the pistol 1.6 mm and on the bolt pistol 2.1 mm
+  aimed); both show on screen at the hip or aimed (on the AR 18 and 34 box corners in view hip, 80 and 80 aimed); no
+  hand or forearm crosses the line of sight, hip or aimed, on any gun (a ray from the eye down the reticle meets
+  none); both elbows are off the bottom of the screen or behind the near plane in every pose. The shotgun's off hand
+  is on the pump and slides back 0.070 m with it, the pump's own travel. On the MP5 a PVC foregrip and a taped mag each
+  take the off hand (gap 0) and hide the handguard hand; a sling does not. The hands take the mirror's skin
+  (0x8d5a3b set, 0x8d5a3b drawn) with bare forearms; in the hoodie the forearms turn its grey (0x7c7d84) with cuffs on.
+  The speed loader and the spare mag are each in a hand that touches them, shows, and runs off the bottom. No page
+  errors.
+- `under-parts` (the under-barrel parts still measure where they did) and `grip` pass alone.
+- The shop's Ammo tab draws the speed loader and spare mag from the same builders, so the item hands are put on in the
+  match's set-up only; `shop-pics` passes (34 checks) and `backyard-guns` passes.
+- Test fix-up, not this item: `car-side-fire`'s "he still shoots" failed on every run of the branch head (1,714–1,735 of
+  6,048 pulls held, limit 25%) and passed on v1.218 and on main. The v1.216 fix-up gave the back-of-house meshes their
+  own random numbers, and Bunratty's lane car went back to the slot it had before v1.216, 0.45 m further west (x 19.15–
+  23.03), so two of the test's four fixed firing spots stood inside the car's box and every pull there held, as it
+  should. The spots are now set off the car's west side; 978 of 6,048 held (16%), 0 BBs into the car.
+### Still open
+- How the hands look is for Michael's eye: box hands to match the game's kids, the default skin reads pale in strong
+  sun, and the left forearm comes in from the lower left at a steep angle. Screenshots of the AR, pistol, shotgun and
+  sniper at the hip and aimed, the MP5 with a foregrip, the hoodie and the loader are in `tests/out/fp-hands-*.png`.
+- Fingers do not move: no trigger pull, no thumb on the speed loader's plunger, no hand on the hammer as the
+  Six-Shooter cocks.
