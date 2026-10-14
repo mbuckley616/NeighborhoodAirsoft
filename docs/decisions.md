@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Pickup Game: what is a life for you? (builder, 2026-10-13)** Found in play (critic, 13 Oct, v1.201): the board's
   briefing says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a return, while
   yours is one hit where you stand, with no gap between hits. In 6 of 20 headless 4v4 rounds at 3 lives all three of
@@ -17,9 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) Keep a life as one hit where you stand, but after each hit nothing tags you for 1 s, so one blast or one burst
     costs one life; the words stay
   - C) Change only the words: "you can take 3 hits"; the shotgun can still take all three at once
-
-## Answered
-
+  Michael: **A — A tag sends you back to your start**. (2026-10-13)
 - **Fernando's rifle in a Northcliff pickup game by day (builder, 2026-10-13)** The critic's 13 Oct report: the
   Northcliff pickup game uses the night 4v4's spots, and by day Fernando's sniper rifle on the high yard (`yard_n3`)
   made 15 of 15 hits on a player walking at the nearest kid, one every 2.4–2.9 s, out at 15–17 s every round (5 of
