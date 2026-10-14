@@ -9930,13 +9930,6 @@ should do now is a question in decisions (A–D, I recommend A: the bed shows th
   under this load; `bunratty-polish`'s Nick is the flake filed in v1.216; `pickup-fernando`'s AK landed 24 of 24 here,
   and also 24 of 24 on v1.216 and 18 or 24 on v1.210 when rerun alone, the coin flip v1.207 described; and one
   suite's page load passed Playwright's 30 s under load. Filed under Found in play.
-- CI fix-up (v1.216's back doors): `fence-bound` failed on CI, and on every local run, from v1.216 on. Nick stood
-  wedged at his fence spot for the whole 30 s. The new back-of-house meshes did it, though they add no collision:
-  three.js gives each new geometry a uuid from Math.random, and the map builders run with Math.random seeded. Each
-  house's 30-odd new geometries advanced the seed and moved every tree placed after the houses. On Bunratty one trunk
-  landed at (4.7–5.4, −28.8…−28.1), the spot the test stages Nick on. The back-of-house parts are now built under
-  `withUnseededRandom` (the browser's own Math.random, kept at load), so decoration can no longer move what the seed
-  places. `fence-bound` passes again: Nick is 3 m clear at 3.3–3.9 s in all three rounds.
 ### Still open
 - The bed: decisions, "What does the bed do, now the game saves itself?"
 - The "Saved" note's look and corner are for Michael's eye.
