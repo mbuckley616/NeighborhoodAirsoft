@@ -10327,6 +10327,9 @@ text and its disabled state, so the next briefing could not be begun. It is rese
   and "no room with that code". No page errors in either game. Two runs, both clean, 38 s each.
 - Run after the change: `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-fernando`, `pickup-kids`, `pickup-lives`,
   `forfeit-ask`, `briefing-lives`, `smoke`: 9 of 9 pass.
+- The full suite (`run.mjs --shard k/4`, four shards side by side on this sandbox's four cores): 130 of 133 suites passed.
+  The three misses failed before a check ran: `road-slide` and `taggers` timed out loading the page, and `mirror` lost
+  its browser at boot. All three passed alone.
 ### Still open
 - Michael's real test with a friend: this session's sandbox cannot reach unpkg or PeerJS's server, so the real
   connection is checked only against a stand-in `Peer`. One pair in ten on strict networks may not connect at all
