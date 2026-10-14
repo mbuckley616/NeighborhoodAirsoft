@@ -58,11 +58,15 @@ for (let r = 0; r < 8; r++) {
 }
   const all = rounds.flatMap(r => r.hits), byF = all.filter(h => h.by === 'fernando').length;
   for (const r of rounds) console.log(`   ${rifle ? 'rifle' : 'AK'}: ${r.out ? 'out' : 'still in'} at ${r.t} s: ${r.hits.map(h => h.by + '@' + h.t).join(', ') || 'no hits'}`);
-  return { byF, n: all.length };
+  return { byF, n: all.length, meanOut: +(rounds.reduce((a, r) => a + r.t, 0) / rounds.length).toFixed(1) };
 };
-const ak = await play(false), rifle = await play(true);
-console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK and ${rifle.byF} of ${rifle.n} with the rifle (the critic: 15 of 15)`);
-check('with the rifle he lands most of the hits, as the critic saw (over half)', rifle.n > 0 && rifle.byF / rifle.n > 0.5, rifle);
-check('with the AK he lands a smaller share of them, and not every one', ak.n > 0 && ak.byF / ak.n < rifle.byF / rifle.n && ak.byF < ak.n, { ak, rifle });
+// v1.221: a tag now sends you back to your start with 2 s of cover (decisions "Pickup Game: what is a life for you?",
+// Michael: A), so one kid's lane can no longer take all three lives at once. Before, with the AK, Fernando took all
+// three in 0.2-0.4 s at about 14 s in 8 of 8 rounds (24 of 24 hits; the rifle 19 of 24), and the rifle-against-AK
+// comparison here measured that. Now the rounds are measured with the AK alone, as a player gets them.
+const ak = await play(false);
+console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK (the critic: 15 of 15 with the rifle; v1.220: 24 of 24)`);
+check('with the AK he lands under half of the hits on you', ak.n > 0 && ak.byF / ak.n < 0.5, ak);
+check('and you last over 20 s on average (all three lives went by 14 s before v1.221)', ak.meanOut > 20, ak.meanOut);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

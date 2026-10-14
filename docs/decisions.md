@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What does the bed do, now the game saves itself? (builder, 2026-10-14)** Backlog D.29 (Michael, 13 Oct: "We
+  need an autosave function ... I'm not sure what to do with the bed though then... maybe with the calendar and the
+  campaign mode, we use it as a way to advance to the next day? Idk."). Autosave is built (v1.218): a new game saves
+  itself coming home, after every match and after every buy, with a small "Saved" in the corner. The bed still says
+  "Sleep (save your game)" and shows the save summary. The calendar's date moves with the matches you win, not with
+  days you sleep. Options:
+  - A) The bed shows the summer so far: the save summary as now (cash, guns, matches won), plus the date, the score
+    against Seth's crew and what is next on the ladder; the prompt becomes "Sleep (how's the summer going?)"
+    *(recommended: it keeps the bed useful without changing how the summer's dates work)*
+  - B) Sleeping ends the day: the calendar moves on a day each time you sleep (as well as with wins), and a day
+    that goes by without a match is crossed off
+  - C) Sleeping switches day and night: the next match you start (or the Pickup Game board) is at night, and the
+    next sleep turns it back
+  - D) The bed is furniture: no prompt, nothing to do there
+
 ## Answered
 
 - **Pickup Game: what is a life for you? (builder, 2026-10-13)** Found in play (critic, 13 Oct, v1.201): the board's
