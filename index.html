@@ -13811,7 +13811,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (x > h.minX - 2 && x < h.maxX + 2 && z > h.minZ - 2 && z < h.maxZ + 2) { inHouse = true; break; }
     }
     if (inHouse) continue;
-    treeObs.push(addSuburbanTree(scene, x, z, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x, z), detail: true }));   // v1.125
+    // v1.218 fix-up: a scatter tree on a backyard fence line made a fence-and-trunk corner a kid wedges in (v1.216's
+    // meshes shifted the seed and put one at (5.0, -28.5), on the fence at x 5: Nick stood there for 30 s in
+    // tests/fence-bound.test.mjs). A trunk within 1.2 m of a fence's line is moved to 1.2 m off it, on its own side.
+    // Only the position moves: the same rng calls are made, so nothing placed after it changes.
+    let x2 = x, z2 = z;
+    for (const f of fences) {
+      const thinX = (f.maxX - f.minX) < (f.maxZ - f.minZ);
+      if (thinX && z2 > f.minZ - 1.2 && z2 < f.maxZ + 1.2) {
+        const cx = (f.minX + f.maxX) / 2; if (Math.abs(x2 - cx) < 1.2) x2 = cx + (x2 < cx ? -1.2 : 1.2);
+      } else if (!thinX && x2 > f.minX - 1.2 && x2 < f.maxX + 1.2) {
+        const cz = (f.minZ + f.maxZ) / 2; if (Math.abs(z2 - cz) < 1.2) z2 = cz + (z2 < cz ? -1.2 : 1.2);
+      }
+    }
+    treeObs.push(addSuburbanTree(scene, x2, z2, { leafR: rng(1.4, 2.2), trunkH: rng(2.8, 4.0), baseY: groundY(x2, z2), detail: true }));   // v1.125
   }
 
   // Front-yard ornamentals + foundation bushes (lots of plantings in the photos).

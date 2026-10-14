@@ -9930,6 +9930,20 @@ should do now is a question in decisions (A–D, I recommend A: the bed shows th
   under this load; `bunratty-polish`'s Nick is the flake filed in v1.216; `pickup-fernando`'s AK landed 24 of 24 here,
   and also 24 of 24 on v1.216 and 18 or 24 on v1.210 when rerun alone, the coin flip v1.207 described; and one
   suite's page load passed Playwright's 30 s under load. Filed under Found in play.
+- CI fix-up: from v1.216 on, `fence-bound` failed on CI and on every local run, with Nick wedged at his fence spot
+  for the whole 30 s. v1.216's back-of-house meshes add no collision, but three.js draws a uuid from Math.random for
+  each new geometry, and the map builders run with Math.random seeded. So the extra meshes moved everything the seed
+  placed after the houses. On Bunratty one scatter tree landed on the north fence at x 5, making a fence-and-trunk
+  corner. Building those meshes off the seed would put the old layout back, but v1.217 and v1.218 are tuned to the
+  new one: tried, it broke `yard-props` (a Winnmark prop through a fence) and `car-side-fire` (1720 of 6048 pulls
+  held). So that was reverted, and instead Bunratty's scatter trees keep 1.2 m off a fence line. Only the position
+  moves, with the same rng calls, so nothing placed after changes. `fence-bound` passes (Nick 3 m clear at
+  2.5–3.9 s in all three rounds), as do `yard-props`, `car-side-fire`, `bunratty-polish`, `bunratty-road`,
+  `house-backs` and `pincer`.
+- Still red from the same seed shift: `pickup-fernando`. Northcliff's yard boxes and trees round the high yard moved,
+  and by day Fernando's AK in the nest now lands 21–24 of 24 hits, as many as the rifle (v1.215: 6–14 of 24). That
+  undoes v1.207's balance. The fix is a design choice: v1.207's Still open names Option B, freeing him from the
+  nest, as the next step.
 ### Still open
 - The bed: decisions, "What does the bed do, now the game saves itself?"
 - The "Saved" note's look and corner are for Michael's eye.
