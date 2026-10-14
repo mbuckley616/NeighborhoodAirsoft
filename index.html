@@ -18617,17 +18617,22 @@ function buildFPSniper() {
   // stock is one piece in the 700's side profile: a forend the barrel beds into, slimming to its tip, a wrist rising to a straight comb,
   // a pistol grip raked 25° behind the trigger guard, and the belly dropping to the toe. Before v1.225 it was three
   // boxes and a cheek block, flat along the bottom from the grip to the toe with the grip under the trigger.
-  const prof = new THREE.Shape();   // x: the gun's z (toward the butt), y: the gun's y
-  [[-0.255, 0.025], [-0.005, 0.025], [0.012, 0.030], [0.045, 0.042], [0.080, 0.057], [0.158, 0.054], [0.158, -0.052],
-   [0.046, -0.034], [0.058, -0.057], [0.036, -0.063], [0.017, -0.016], [-0.005, -0.015],
-   [-0.250, -0.006], [-0.258, 0.006]]
-    .forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
-  const stockGeo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
-  stockGeo.translate(0, 0, -0.019);
-  stockGeo.rotateY(-Math.PI / 2);
-  const stock = new THREE.Mesh(stockGeo, stockMat);
-  stock.name = 'stock';
-  group.add(stock);
+  // x: the gun's z (toward the butt), y: the gun's y. v1.225 fix-up: the forend is its own piece, so the under-barrel
+  // parts, which hang from the box of whatever is at the rail, hang from the forend and not from the grip cap; its
+  // underside runs level back past the rail and the support hand, slimming only over its last 4 cm.
+  const sideProfile = (pts, name) => {
+    const prof = new THREE.Shape();
+    pts.forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
+    const geo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
+    geo.translate(0, 0, -0.019);
+    geo.rotateY(-Math.PI / 2);
+    const mesh = new THREE.Mesh(geo, stockMat);
+    mesh.name = name;
+    group.add(mesh);
+  };
+  sideProfile([[-0.255, 0.025], [-0.005, 0.025], [-0.005, -0.015], [-0.215, -0.015], [-0.250, -0.006], [-0.258, 0.006]], 'forend');
+  sideProfile([[-0.005, 0.025], [0.012, 0.030], [0.045, 0.042], [0.080, 0.057], [0.158, 0.054], [0.158, -0.052],
+    [0.046, -0.034], [0.058, -0.057], [0.036, -0.063], [0.017, -0.016], [-0.005, -0.015]], 'stock');
   const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.106, 0.008), accentMat);
   buttPad.position.set(0, 0.001, 0.162);
   buttPad.name = 'buttpad';
@@ -19344,7 +19349,7 @@ const FP_HANDS = {
   shotgun: { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
   ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
   sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
-            l: { kind: 'support', c: [0, 0.0085, -0.215], hw: 0.019, hh: 0.0165 }, underHand: true },
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.045, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
   ump:     { r: { c: [0, -0.048, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },

@@ -45,6 +45,7 @@ const r = await page.evaluate(() => {
     gripCap: low.map(v => +v.toFixed(3)), notchBehindGrip: notch.map(v => +v.toFixed(3)), gripDrop: +(notch[1] - low[1]).toFixed(3),
     gripBehindTrigger: +(low[0] - trigZ).toFixed(3),
     triggerShows: +((bottomAt(trigZ) ?? 0) - T.min.y).toFixed(4),
+    underBottom: +measureGunForUnder(m, FP_GUN_MOUNT.sniper).bottom.toFixed(4), forendBottomAtRail: +(bottomAt(FP_GUN_MOUNT.sniper.railZ) ?? 0).toFixed(4),
     legsTall: legs.map(x => +(x.b.max.y - x.b.min.y).toFixed(3)), legsLong: legs.map(x => +(x.b.max.z - x.b.min.z).toFixed(3)),
     png: (() => {
       const Wd = 800, H = 400;
@@ -91,6 +92,7 @@ check('a pistol grip: the stock\'s underside drops 1.5 cm or more below the bell
 check('the grip is behind the trigger (its lowest point 2 cm or more back)', r.gripBehindTrigger >= 0.02, r.gripBehindTrigger);
 check('at least 1 cm of trigger shows under the stock', r.triggerShows >= 0.01, r.triggerShows);
 check('the bipod is folded: two legs lying along the barrel, each under 1 cm tall', r.legsTall.length === 2 && r.legsTall.every(h => h < 0.01) && r.legsLong.every(l => l > 0.06), { tall: r.legsTall, long: r.legsLong });
+check('the under-barrel parts hang from the forend at the rail (within 5 mm of its underside)', Math.abs(r.underBottom - r.forendBottomAtRail) <= 0.005, { under: r.underBottom, forend: r.forendBottomAtRail });
 // before v1.225 the post's tip sat 2.6° below the eye line, centred
 check('aimed, the front sight\'s tip sits where it did (2.4–2.8° below the eye line, under 0.2° to the side)', r.aimed.belowDeg >= 2.4 && r.aimed.belowDeg <= 2.8 && Math.abs(r.aimed.sideDeg) < 0.2, r.aimed);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
