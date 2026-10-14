@@ -9872,3 +9872,33 @@ house's existing meshes: 15 per house, as before. Each merged mesh is tagged wit
 - D.27 goes on: the boxes Michael named, the yards themselves (bare grass between the fences) and the old box house on
   the maps that still use it.
 - The back door is the same on every house; whether the street wants more variety there is for Michael's eye.
+
+## v1.217 — The yard boxes are where they stop you
+Backlog D.27, second part ("some of the boxes"), after v1.216's house backs. Measured on Winnmark, Bunratty, Northcliff
+and Bellfield, the moving boxes and wheelie bins in the yards were the jankiest thing out there, for two reasons.
+
+First, a box or bin was turned to any angle at all, but its collision box kept its unturned size, square to the map.
+A 1.3 m box at 45° showed its corners up to 0.3 m outside what stopped you and stopped you on air at its sides, and a
+tipped bin lay from its spot to a whole bin-length away, so half of it (0.53 m) was outside its box and you walked
+through it. On those four maps 10–27 props each were drawn more than 12 cm off their collision, the worst 0.55 m. Now
+a prop's facing is squared to the nearest quarter turn, keeping a seventh of its twist (6.75° at most, so a yard still
+looks dropped, not drilled), its collision box is the box round what is drawn, and a tipped bin lies centred on its
+spot, resting on its side at the right height. `propFacing` does the squaring for `addHomeDepotBox` and
+`addCurbsideBin`, so every map's boxes and bins get it.
+
+Second, props were dropped at random spots with nothing checking what was already there: on Winnmark one bin and one
+box stood through an iron fence and two props stood round tree trunks; on Bunratty a prop went into a house wall and
+two props stood inside each other; Northcliff had one prop inside another. Once a match is built, `settleYardProps`
+slides any loose box, bin or plywood stack out of a fence, a house, a tree trunk or another loose prop, along its
+shallower overlap with 5 cm clear, a few passes over. Props put against something on purpose (the kid forts' bins and
+boxes against their 1.12 m walls) are left where they are, since only fences, houses, trunks and loose props count.
+### Verified
+- `tests/yard-props.test.mjs` (new, 6 checks), on Winnmark (46 props), Bunratty (40), Northcliff (40) and Bellfield
+  (26): every prop is drawn within 10 cm of its collision box (the 10 cm is a bin's handle and wheels), none stands
+  through a fence, a house, a trunk or another prop, and every box and standing bin is within 5.2° of square. On the
+  build before this one the same count was 27, 21, 20 and 10 props off by more than 12 cm, with 2 fences, 2 trunks, 1
+  house and 2 props run through.
+### Still open
+- D.27 is complete for what Michael named, the boxes and the house backs. The yards' grass itself, and the plywood
+  stacks' lawn chairs, are as they were; he can say if the yards want more.
+- `npm test` for v1.211–v1.217 is in the next version's entry, run once over the lot.
