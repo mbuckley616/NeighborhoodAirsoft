@@ -9901,4 +9901,35 @@ boxes against their 1.12 m walls) are left where they are, since only fences, ho
 ### Still open
 - D.27 is complete for what Michael named, the boxes and the house backs. The yards' grass itself, and the plywood
   stacks' lawn chairs, are as they were; he can say if the yards want more.
-- `npm test` for v1.211–v1.217 is in the next version's entry, run once over the lot.
+- `npm test` for v1.211–v1.217 is in v1.218's entry, run once over the lot.
+
+## v1.218 — The game saves itself
+Backlog D.29 (Michael, control room, 13 Oct: "We need an autosave function - I don't remember to go back to the bed
+every time and I doubt most players will either. I'm not sure what to do with the bed though then"). The game already
+had an autosave (coming home, and buying gear), but it only ran once you had slept in the bed or loaded a save that
+session. That guard was there so a NEW GAME could not quietly write over a save you still wanted, and it meant a new
+player who never slept never saved at all.
+
+Now a NEW GAME saves itself from the start. If there is already a save on disk, NEW GAME first asks, on the title
+screen, "Start a new summer? Your saved game is replaced the first time the new one saves", with START OVER and BACK,
+so the old guard is kept as a question instead of a silent rule. The game saves when you come home, as the result of
+every match shows (pay, unlocks and stats on disk before you click anything), on every buy at the shop and when the
+shop closes, and on closing the loadout, the workbench and the mirror. Each save puts a small "Saved" in the bottom
+right corner for 1.6 s. CONTINUE and the bed work as before; the bed still saves and shows the summary. What the bed
+should do now is a question in decisions (A–D, I recommend A: the bed shows the summer so far).
+### Verified
+- `tests/autosave.test.mjs` (new, 11 checks). A new game is on disk as soon as you are home ($35, 25 BBs), without
+  sleeping. A won tutorial is saved while its result shows ($37 and the win on disk), and the "Saved" note comes up.
+  A buy at the shop is saved at once ($52, 125 BBs). After a page reload the title offers CONTINUE and NEW GAME, and
+  CONTINUE brings back $52, 125 BBs and the win, with the bed never used. NEW GAME over that save asks and starts
+  nothing; BACK leaves the save as it was ($52); START OVER starts fresh and the new game saves over the old one ($35,
+  no wins). No page errors.
+- `mirror`, `hats`, `crew`, `smoke` pass (each saves and loads).
+- `npm test` for v1.211–v1.217, as four local shards at once: 117 of 121 suites passed. The four that did not are
+  not this run's: `fence-bound`'s round 1 (Nick held at the fence spot for 30 s) fails the same way on main's v1.210
+  under this load; `bunratty-polish`'s Nick is the flake filed in v1.216; `pickup-fernando`'s AK landed 24 of 24 here,
+  and also 24 of 24 on v1.216 and 18 or 24 on v1.210 when rerun alone, the coin flip v1.207 described; and one
+  suite's page load passed Playwright's 30 s under load. Filed under Found in play.
+### Still open
+- The bed: decisions, "What does the bed do, now the game saves itself?"
+- The "Saved" note's look and corner are for Michael's eye.

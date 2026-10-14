@@ -714,6 +714,13 @@
     box-shadow: 0 6px 0 rgba(0,0,0,0.4);
   }
   #titleScreen .start-btn:active { transform: translateY(0); }
+  /* v1.218: NEW GAME over a save asks first; the autosave's note in the corner */
+  #newGameAsk { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  #newGameAsk .new-game-ask-text { max-width: 420px; text-align: center; color: #f4e9d8; font-size: 14px; line-height: 1.5; margin: 6px 0 4px; }
+  #autosaveNote { position: fixed; right: 18px; bottom: 14px; z-index: 60; pointer-events: none; font-family: 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #f4e9d8; background: rgba(20,18,16,0.72);
+    border: 1px solid rgba(244,233,216,0.25); padding: 4px 10px; border-radius: 3px; opacity: 0; transition: opacity 0.25s; }
+  #autosaveNote.show { opacity: 1; }
   #titleScreen .version {
     position: absolute;
     bottom: 12px; right: 16px;
@@ -2000,6 +2007,7 @@
 </div>
 
 <div id="pauseHint">Click to capture mouse · <kbd>ESC</kbd> to release</div>
+<div id="autosaveNote">Saved</div>   <!-- v1.218 -->
 
 <!-- === TITLE === -->
 <div class="menu-overlay active" id="titleScreen">
@@ -2007,8 +2015,13 @@
   <div class="subtitle">SUMMER · 2003</div>
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
+  <div id="newGameAsk" style="display:none;">   <!-- v1.218: NEW GAME over a save asks first -->
+    <div class="new-game-ask-text">Start a new summer? Your saved game is replaced the first time the new one saves.</div>
+    <button class="start-btn" id="newGameYesBtn">START OVER</button>
+    <button class="start-btn" id="newGameNoBtn">BACK</button>
+  </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.217</div>
+  <div class="version">v1.218</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3520,13 +3533,24 @@ function loadGame() {
   return { ok: true };
 }
 
-// Auto-save silently, but ONLY once the player has opted into persistence this
-// session (by loading a save or sleeping in the bed at least once). This keeps
-// a fresh NEW GAME run from silently clobbering an existing save the player
-// might still want — their first deliberate sleep is what commits them.
+// Auto-save, but ONLY once the player has opted into persistence this session (by loading a save, starting a NEW
+// GAME, or sleeping in the bed). A NEW GAME over an existing save asks first (v1.218), so it never silently clobbers
+// a save the player might still want.
+// v1.218 (backlog D.29, Michael 13 Oct: "We need an autosave function - I don't remember to go back to the bed every
+// time and I doubt most players will either"): a NEW GAME is opted in from the start (asking first when it would
+// replace a save on disk), so the game saves itself when you come home, after every match, and after every buy or
+// change at the shop, the loadout, the workbench and the mirror. A small "Saved" shows in the corner when it does.
 function autoSave() {
   if (!Game._saveEnabled) return { ok: false, reason: 'not-enabled' };
-  return saveGame();
+  const r = saveGame();
+  if (r.ok) {
+    const n = document.getElementById('autosaveNote');
+    if (n) {
+      n.classList.remove('show'); void n.offsetWidth; n.classList.add('show');
+      clearTimeout(autoSave._t); autoSave._t = setTimeout(() => n.classList.remove('show'), 1600);
+    }
+  }
+  return r;
 }
 
 // Wipe the save and reset the in-memory profile to a fresh start.
@@ -4589,6 +4613,7 @@ function purchaseItem(itemId) {
   if (Game.persist.cash < item.price) return { ok: false, reason: 'not enough cash' };
   Game.persist.cash -= item.price;
   item.apply();
+  autoSave();   // v1.218 (D.29)
   return { ok: true };
 }
 
@@ -20327,6 +20352,7 @@ function openWorkbench() {
 }
 
 function closeWorkbench() {
+  autoSave();   // v1.218 (D.29): what was mounted or packed
   document.getElementById('workbenchScreen').classList.remove('active');
   WB.active = false;
   Game.mode = 'bedroom';
@@ -21811,6 +21837,7 @@ function endScenario(outcome) {
   }
 
   card.classList.add('active');
+  autoSave();   // v1.218 (D.29): the match's pay, unlocks and stats are saved as the result shows, not only back home
 }
 
 // ---------------------------------------------------------------------
@@ -21997,6 +22024,7 @@ function openShop() {
 
 function closeShop() {
   document.getElementById('shopScreen').classList.remove('active');
+  autoSave();   // v1.218 (D.29): whatever was bought or equipped
   Game.mode = 'bedroom';
   updateBedroomHud();
   showPauseHint();
@@ -22421,6 +22449,7 @@ function openLoadout() {
 }
 
 function closeLoadout() {
+  autoSave();   // v1.218 (D.29): what was mounted or packed
   document.getElementById('loadoutScreen').classList.remove('active');
   Game.mode = 'bedroom';
   updateBedroomHud();
@@ -29904,9 +29933,8 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
 });
 
 // v1.37: title-screen entry points. If a save exists, show CONTINUE (load it,
-// then enter) and relabel the primary button to NEW GAME (which starts fresh
-// WITHOUT touching the save on disk — the save is only overwritten when the
-// player next sleeps in the bed, so a misclick can't nuke their progress).
+// then enter) and relabel the primary button to NEW GAME (which starts fresh;
+// v1.218: after asking, since the new game autosaves over the old one).
 (function setupTitleButtons() {
   const startBtn = document.getElementById('startBtn');
   const continueBtn = document.getElementById('continueBtn');
@@ -29924,18 +29952,32 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
       enterBedroom();
     });
   }
-  startBtn.addEventListener('click', () => {
+  // v1.218 (D.29): a NEW GAME saves itself as it goes. Over an existing save it asks first (START OVER / BACK),
+  // since the first autosave replaces that save.
+  const ask = document.getElementById('newGameAsk');
+  const beginNewGame = () => {
     initAudio();
     // NEW GAME from a profile that already has a save → reset the in-memory
-    // profile so the player actually starts fresh (don't carry a half-loaded
-    // state). The on-disk save is untouched until they sleep again.
+    // profile so the player actually starts fresh (don't carry a half-loaded state).
     if (hasSaveGame()) {
       Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
       _accInstanceSeq = 1;
     }
+    Game._saveEnabled = true;   // v1.218: autosave from the start
     enterBedroom();
     openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
+  };
+  const showAsk = (on) => {
+    ask.style.display = on ? 'flex' : 'none';
+    startBtn.style.display = on ? 'none' : '';
+    continueBtn.style.display = on || !hasSaveGame() ? 'none' : '';
+  };
+  startBtn.addEventListener('click', () => {
+    if (hasSaveGame()) { showAsk(true); return; }
+    beginNewGame();
   });
+  document.getElementById('newGameYesBtn').addEventListener('click', () => { showAsk(false); beginNewGame(); });
+  document.getElementById('newGameNoBtn').addEventListener('click', () => showAsk(false));
 })();
 
 document.getElementById('mapCloseBtn').addEventListener('click', closeMap);
