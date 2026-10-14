@@ -9824,3 +9824,22 @@ Collision, the save prompt and the phone on the north nightstand are where they 
 ### Still open
 - D.26 goes on: the bookcases, the map table, the wardrobe and the hall are next for small touches.
 - Whether the blanket and the red pillow suit the room is for Michael's eye.
+
+## v1.215 — The bookcases keep their books inside
+Backlog D.26, third part, after the desk (v1.213) and the bed (v1.214). The bookcases' books were drawn at random
+heights up to 32 cm on shelves 31.5 cm apart, so the tallest went up to 4.5 cm through the shelf above, and on the top
+shelf through the top of the case (the red books seen sticking out over the top). They were also shuffled with
+`Math.random`, so the shelves changed every time you came home. The map table's paper floated 5 mm over the table.
+
+A book is now never taller than its shelf's opening less 2.5 cm, and each bookcase draws its books from its own seed,
+so they are the same every visit. A few books have a pale band across the spine, and some rows end in a short stack
+of two to four books lying flat or a book leaning over against the side. Each case has a kick board under its bottom
+shelf. The map paper lies on the table, and its pencil lines and red dots are seeded too.
+### Verified
+- `tests/bedroom-shelves.test.mjs` (new, 6 checks). Two bookcases, 105 books: none comes within 1.5 cm of the board
+  above it, and every one rests on a shelf or on another book (the stacks and the leaning ones included). The map
+  paper is 0.5 mm over the table. Entering the bedroom again rebuilds it with the same 105 books in the same places.
+  No page errors.
+### Still open
+- D.26 is complete for the furniture in the room: the desk, the bed and nightstands, the bookcases and the map table.
+  The hall, the closet and the bathroom were not touched; Michael can say if they want the same pass.

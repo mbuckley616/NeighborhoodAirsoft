@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.214</div>
+  <div class="version">v1.215</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8924,6 +8924,7 @@ function buildBedroomScene() {
   // ============================================================
   // BOOKCASES (west wall) + MAP TABLE between them
   // ============================================================
+  let bcSeed = 1;   // v1.215: each bookcase's books come from its own seed
   function buildBookcase() {
     const g = new THREE.Group();
     // Bookcase dimensions
@@ -8959,25 +8960,69 @@ function buildBedroomScene() {
       g.add(sh);
     }
     // Books on each shelf (placed in front area, visible)
+    // v1.215 (backlog D.26): a book is never taller than its shelf's opening (the tallest went 4.5 cm up
+    // through the shelf above, and the top shelf's through the top of the case), the books are the same every visit
+    // (a seeded shuffle, was Math.random), a few have a pale band on the spine, and some shelves end in a book leaning
+    // on the side or a short stack lying flat.
+    let seed = bcSeed++ * 7919 + 17;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
     const bookColors = [0x8b1818, 0x1a3a6e, 0x3a5a25, 0x6b4a18, 0x5a2f6b, 0x205050, 0x3a3a3a, 0xb87c1e];
+    const bandMat = new THREE.MeshStandardMaterial({ color: 0xe8dcb0, roughness: 0.8 });
     const allShelfBases = [0.06].concat(shelfYs); // bottom shelf + 4 interior shelves
+    const ceilings = shelfYs.concat([BH - T]).map(y => y - T / 2);   // the underside of the board above each shelf
     for (let s = 0; s < allShelfBases.length; s++) {
       const shelfTopY = allShelfBases[s] + T/2;
+      const room = ceilings[s] - shelfTopY - 0.025;   // at least 2.5 cm of air over the tallest book
       let zCursor = -BW/2 + T + 0.02;
-      const maxZ = BW/2 - T - 0.02;
+      let maxZ = BW/2 - T - 0.02;
+      const ending = rnd();   // what closes the row: a stack lying flat, a book leaning on the side, or nothing
+      if (ending < 0.4) {
+        maxZ -= 0.24;
+        let sy = shelfTopY;
+        for (let i = 0; i < 2 + Math.floor(rnd() * 3); i++) {
+          const th = 0.03 + rnd() * 0.02;
+          const flat = new THREE.Mesh(new THREE.BoxGeometry(0.16 + rnd() * 0.05, th, 0.2 + rnd() * 0.04),
+            new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
+          flat.position.set(BD/2 - 0.12, sy + th / 2, BW/2 - T - 0.13); flat.rotation.y = (rnd() - 0.5) * 0.2;
+          flat.name = 'bc_book';
+          g.add(flat); sy += th;
+        }
+      }
       while (zCursor < maxZ) {
-        const bw = 0.06 + Math.random() * 0.05;        // book width (along Z)
+        const bw = 0.04 + rnd() * 0.05;        // book width (along Z)
         if (zCursor + bw > maxZ) break;
-        const bh = 0.22 + Math.random() * 0.10;
-        const bd = 0.14 + Math.random() * 0.06;        // depth (sticks out from back)
+        const bh = Math.min(room, 0.2 + rnd() * 0.11);
+        const bd = 0.14 + rnd() * 0.06;        // depth (sticks out from back)
         const book = new THREE.Mesh(new THREE.BoxGeometry(bd, bh, bw),
-          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(Math.random() * bookColors.length)], roughness: 0.85 }));
+          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
         // Position: x toward the front of the case (positive X), y resting on shelf
         book.position.set(BD/2 - bd/2 - 0.03, shelfTopY + bh/2, zCursor + bw/2);
+        book.name = 'bc_book';
         g.add(book);
+        if (rnd() < 0.3) {   // a pale band across the spine
+          const band = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.018, bw * 0.9), bandMat);
+          band.position.set(BD/2 - 0.03 + 0.0015, shelfTopY + bh * 0.78, zCursor + bw/2);
+          g.add(band);
+        }
         zCursor += bw + 0.003;
       }
+      if (ending >= 0.4 && ending < 0.7 && maxZ - zCursor > 0.05) {
+        // the last book leans over against the case's side, its foot on the shelf
+        const bw = 0.035, bh = Math.min(room, 0.24), bd = 0.17, lean = 0.32;
+        const book = new THREE.Mesh(new THREE.BoxGeometry(bd, bh, bw),
+          new THREE.MeshStandardMaterial({ color: bookColors[Math.floor(rnd() * bookColors.length)], roughness: 0.85 }));
+        const sideZ = BW/2 - T;   // the inner face of the side it leans on
+        // pivot: its outer bottom corner on the shelf, the top corner against the side
+        book.rotation.x = lean;
+        book.position.set(BD/2 - bd/2 - 0.03, shelfTopY + (bh / 2) * Math.cos(lean) + (bw / 2) * Math.sin(lean), sideZ - (bh / 2) * Math.sin(lean) - (bw / 2) * Math.cos(lean));
+        book.name = 'bc_book';
+        g.add(book);
+      }
     }
+    // a kick board across the front under the bottom shelf
+    const kick = new THREE.Mesh(new THREE.BoxGeometry(T, 0.05, BW - T * 2), bookcaseMat);
+    kick.position.set(BD/2 - T/2 - 0.01, 0.025, 0);
+    g.add(kick);
     return g;
   }
   const bc1 = buildBookcase();
@@ -8998,29 +9043,33 @@ function buildBedroomScene() {
     mapTableGroup.add(leg);
   }
   // Map paper on top
+  // v1.215 (D.26): the paper lies on the table (it floated 5 mm over it) and its marks are the same every visit
+  let mtSeed = 4242;
+  const mtRnd = () => { mtSeed = (mtSeed * 16807) % 2147483647; return (mtSeed - 1) / 2147483646; };
   const mapPaper = new THREE.Mesh(
     new THREE.PlaneGeometry(0.6, 0.9),
     new THREE.MeshStandardMaterial({ color: 0xf4e9d8, roughness: 1.0, side: THREE.DoubleSide })
   );
   mapPaper.rotation.x = -Math.PI / 2;
-  mapPaper.position.set(0, 0.775, 0);
+  mapPaper.position.set(0, 0.7705, 0);
+  mapPaper.name = 'mt_paper';
   mapTableGroup.add(mapPaper);
   // Ink markings
   for (let i = 0; i < 6; i++) {
     const inkLine = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.04 + Math.random() * 0.4, 0.012),
+      new THREE.PlaneGeometry(0.04 + mtRnd() * 0.4, 0.012),
       new THREE.MeshBasicMaterial({ color: 0x8b6f47 })
     );
     inkLine.rotation.x = -Math.PI / 2;
-    inkLine.rotation.z = Math.random() * Math.PI;
-    inkLine.position.set((Math.random()-0.5)*0.45, 0.776, (Math.random()-0.5)*0.75);
+    inkLine.rotation.z = mtRnd() * Math.PI;
+    inkLine.position.set((mtRnd()-0.5)*0.45, 0.771, (mtRnd()-0.5)*0.75);
     mapTableGroup.add(inkLine);
   }
   // A few "location dots" on the map
   for (let i = 0; i < 3; i++) {
     const dot = new THREE.Mesh(new THREE.CircleGeometry(0.015, 8), new THREE.MeshBasicMaterial({ color: 0xc94020 }));
     dot.rotation.x = -Math.PI / 2;
-    dot.position.set((Math.random()-0.5)*0.5, 0.777, (Math.random()-0.5)*0.8);
+    dot.position.set((mtRnd()-0.5)*0.5, 0.7715, (mtRnd()-0.5)*0.8);
     mapTableGroup.add(dot);
   }
   mapTableGroup.position.set(-BR_W/2 + 0.45, 0, 0);
