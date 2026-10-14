@@ -8,13 +8,33 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: node scripts/parsecheck.mjs
-  headless:
+  headless-shard:
     runs-on: ubuntu-latest
-    timeout-minutes: 45   # 33 suites take 25–28 min on a hosted runner (v1.122); 30 cut one run off
+    # v1.145 (backlog B.4): 49 suites took 30–45+ min in one job and half the runs hit the 45-min limit. Four jobs
+    # run a quarter each in parallel (`run.mjs --shard`); a shard takes ~10 min, so 30 leaves room for a 10-min hang.
+    # v1.160 fix-up: the suites now take 101 min on CI, 25 a shard in four, and shard 4 was cancelled at the 30-min
+    # limit with all its suites passed. Six shards run ~17 min each.
+    # v1.166: the stuck-kid sweep is now about 2.2 times the work (whole rounds up to 90 s, three ways; Michael: B),
+    # about 55 more minutes in all. Eight shards keep each one near 20 min.
+    # v1.174 fix-up: 40. On 085e505 shard 2/8 passed all ten suites in 19.5 min but was cancelled at 30:34: installing
+    # the browser's system packages took 11 min that run instead of the usual 3.
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    name: headless (${{ matrix.shard }}/8)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: node tests/run.mjs
+      - run: node tests/run.mjs --shard ${{ matrix.shard }}/8
+  headless:
+    # v1.145: one check named `headless` as before, green only when every shard is.
+    needs: headless-shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.headless-shard.result }}" = success

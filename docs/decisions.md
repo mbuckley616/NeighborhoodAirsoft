@@ -7,6 +7,550 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
+  You chose B on 12 Oct: online comes after the Pickup Game board, and the host sets the match up from it. The board is
+  done (v1.201–v1.207). The game is one HTML file on itch.io, so the two browsers have to talk to each other directly
+  (WebRTC, built into every browser). To start that talk, each browser first needs to hand the other a short "here is
+  how to reach me" note. Something has to carry that note, and that is the question.
+  How the match itself would work, whatever you pick: the host's game is the referee. It runs the kids, the BBs and
+  the score exactly as today. The guest's game sends its keys and mouse about 60 times a second and draws what the
+  host sends back about 20 times a second. On the host's screen the guest is one more kid, wearing the guest's look.
+  The code already tags each BB with who fired it and which side he is on, so a guest's tag counts the way a kid's does.
+  What it means for privacy, whatever you pick: a direct connection shows each player's internet address (IP) to the
+  other, as any voice chat or console party does. So it is for friends you know, and the screen says so. No accounts,
+  no names leave the game except the kid name the guest picks. Nothing loads at startup. The connection code (about
+  100 KB) loads only when someone presses Online. Two players behind strict networks (some school and office Wi-Fi,
+  some phone hotspots) may not connect at all. That is roughly one pair in ten. Fixing it needs a paid relay, which
+  none of these options includes.
+  Options:
+  - A) **A free public matchmaker (PeerJS's).** The host presses Online on the board and gets a four-letter room code
+    such as `KXRB`. The friend opens the game, presses Online, types the code, and they are in. Nothing for you to set
+    up or pay. The catch: it is a stranger's free service. It sees the room code and both IPs, it has no promise to
+    stay up, and it cannot list open rooms, so step 3 (a room list) would need B later. *(recommended: the only option
+    that plays like a game today at no cost to you. If it ever goes away, the swap to B touches one function)*
+  - B) **Your own tiny matchmaker.** The same room codes as A, but carried by a small free Cloudflare Worker on your own
+    account. That is a free sign-up and about 15 minutes. I would write the code and the steps, and you would paste
+    them in. It is under your control, nobody else sees the codes, and it can also hold the list of open rooms that
+    step 3 needs. The catch: it waits on you, and it is one more account to keep.
+  - C) **No service at all: copy-paste invites.** The host presses Online and gets a long invite code, about 400
+    characters. They send it to the friend by text or Discord. The friend pastes it in and gets a reply code to send
+    back, and the host pastes that. Nothing in the middle at all. The catch: two long pastes each way every match, and
+    no room list ever.
+  - D) Hold online play for now.
+  The first playable step, for A, B or C: Winnmark Court only, a 1v1, you against your friend, with the board's lives
+  and clock. Online appears as a button on the Pickup Game board, and the title screen stays as it is. Nothing is on
+  the line: no pay, no progress, and each player's save is untouched. The guest needs no unlocks. If either player
+  drops, the other sees "Your friend left" and goes back to the bedroom. Teams with kids filling the empty spots
+  (step 2), the room list and a Campaign / Online / Settings title screen (step 3) come after, each shown to you first.
+  Michael: **A) A free public matchmaker (PeerJS's)** (2026-10-14, control room)
+
+- **What does the bed do, now the game saves itself? (builder, 2026-10-14)** Backlog D.29 (Michael, 13 Oct: "We
+  need an autosave function ... I'm not sure what to do with the bed though then... maybe with the calendar and the
+  campaign mode, we use it as a way to advance to the next day? Idk."). Autosave is built (v1.218): a new game saves
+  itself coming home, after every match and after every buy, with a small "Saved" in the corner. The bed still says
+  "Sleep (save your game)" and shows the save summary. The calendar's date moves with the matches you win, not with
+  days you sleep. Options:
+  - A) The bed shows the summer so far: the save summary as now (cash, guns, matches won), plus the date, the score
+    against Seth's crew and what is next on the ladder; the prompt becomes "Sleep (how's the summer going?)"
+    *(recommended: it keeps the bed useful without changing how the summer's dates work)*
+  - B) Sleeping ends the day: the calendar moves on a day each time you sleep (as well as with wins), and a day
+    that goes by without a match is crossed off
+  - C) Sleeping switches day and night: the next match you start (or the Pickup Game board) is at night, and the
+    next sleep turns it back
+  - D) The bed is furniture: no prompt, nothing to do there
+  Michael: **A) The bed shows the summer so far** (2026-10-14, control room)
+
+- **Pickup Game: what is a life for you? (builder, 2026-10-13)** Found in play (critic, 13 Oct, v1.201): the board's
+  briefing says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a return, while
+  yours is one hit where you stand, with no gap between hits. In 6 of 20 headless 4v4 rounds at 3 lives all three of
+  your hits landed within 1.1 s, once from a single shotgun blast (3 pellets in one frame, 3 lives). The critic's
+  proposal (proposals, 13 Oct) is option A; the fix is a design call, so it is asked here before any code. Options:
+  - A) In the Pickup Game only, a life works as it does in VIP and Flags: a tag sends you back to your start with
+    `respawnPlayerVip()` and its 2 s grace, takes one life, and the HUD counts LIVES; the last one ends the match. One
+    blast costs one life *(recommended: it is what the board promises, the code is already played in Flags and VIP,
+    and the ladder is untouched)*
+  - B) Keep a life as one hit where you stand, but after each hit nothing tags you for 1 s, so one blast or one burst
+    costs one life; the words stay
+  - C) Change only the words: "you can take 3 hits"; the shotgun can still take all three at once
+  Michael: **A — A tag sends you back to your start**. (2026-10-13)
+- **Fernando's rifle in a Northcliff pickup game by day (builder, 2026-10-13)** The critic's 13 Oct report: the
+  Northcliff pickup game uses the night 4v4's spots, and by day Fernando's sniper rifle on the high yard (`yard_n3`)
+  made 15 of 15 hits on a player walking at the nearest kid, one every 2.4–2.9 s, out at 15–17 s every round (5 of
+  15 by night). Since v1.203 you can leave him out, but he is on their side by default. Options:
+  - A) By day his spot keeps its defender role, but he carries the AK he uses in Bellfield's matches *(recommended:
+    the nest still matters, and a rifle at 20–25 m in daylight is what made it a wall)*
+  - B) By day he plays it as an ordinary kid with his rifle, free to leave the nest
+  - C) Leave it: the board lets you take him off, and night is the match the spot was made for
+  Michael: **A — Keep his nest, but he carries his AK by day**. (2026-10-13)
+- **The last Saturday: where is your street? (builder, 2026-10-13)** Step 4 of the summer story is one big match on
+  your own street on Saturday 30 August, after the store's night match; Seth's last text sets it up ("ur street,
+  everybody. my crew vs yours"). Nothing in the game yet says which street is yours. Options:
+  - A) Winnmark Court is your street: the summer started there and Seth lives on it. A day 6v6, last team standing,
+    three lives each: Eric, Rebecca, Brooke, Sean and Trey with you against Seth, Devon, Mitchell, Mason, Marcus and
+    Ryan; its own card after the store, dated 30 August on the calendar, and a last text after it *(recommended)*
+  - B) A new short street of your own, built from the polished Winnmark pieces, with the same match
+  - C) A, and the bedroom's calendar turns to a last page ("See you next summer") once it is won
+  Michael: **B — A new short street of your own** — Bunratty court should be ‘my street’. (2026-10-13)
+- **Does Seth's crew get a name? (builder, 2026-10-13)** v1.196 makes Seth's crew the summer's rival: 20 ladder
+  matches have Seth on the other side, and the briefing, the result card and the calendar now call them "Seth's
+  crew", as the texts already do. A name would go in one constant (`RIVAL_CREW`), so it is cheap either way; D.21 will
+  give your own crew a name later. Options:
+  - A) Keep "Seth's crew": it is what kids would call them, and it says who leads them *(recommended)*
+  - B) A made-up crew name you pick (say it in a note), shown wherever "Seth's crew" is now
+  - C) Wait until D.21's crew name for your side, then name both together
+  Michael: **A — Keep "Seth's crew"**. (2026-10-13)
+- **Shoes as looks, when shoes are already gear? (builder, 2026-10-13)** D.21's list ends "shorts and shoes". The
+  shop's Gear tab already sells three pairs (Trail Runners, Track Spikes, Cushioned Cross-Trainers), each with its own
+  stamina or sprint numbers and its own look on the Loadout kid (v1.133); with none bought you wear plain sneakers in a colour
+  the game picks. A Clothes pair would have to sit beside or replace the gear pair. Options:
+  - A) A Sneakers row at the mirror, free: six colours for the plain pair you wear when no gear pair is on; the gear
+    pairs keep their own look *(recommended)*
+  - B) Clothes shoes with no numbers (high-tops, skate shoes, flip-flops), worn only when no gear pair is on
+  - C) Skip shoes; go on to your crew (a name and colours your allies wear)
+  Michael: **A — A free Sneakers row at the mirror**. (2026-10-13)
+- **A better game, 1 of 5: a story? (builder, 2026-10-12)** You asked whether the game needs a campaign or a simple
+  storyline. Today the reason to play is the ladder: win a match, the next opens, zone after zone. Nothing says who
+  these kids are to you or why this summer matters. Options:
+  A) A light summer story told in the bedroom, no cutscenes: a wall calendar from the first week of June to the last
+     day of August, each zone a few weeks of it; your friends (Eric, Rebecca, Brooke) text your flip phone between
+     matches, a rival crew is named early, and it ends on the last Saturday of summer with one big match on your own
+     street. Briefings and result lines pick up the thread.
+  B) A as well as a few scripted moments inside matches: a friend pinned down that you go and get, an ambush on the walk
+     home, the rival crew showing up mid-match.
+  C) No story; a reason to replay instead: three stars a match (win; win without being tagged out; a match-specific
+     one like "win with the pump only") and a neighbourhood rank from the stars.
+  D) Neither for now.
+  Builder recommends **A**, then C later: it is the summer-2003 kid fantasy the brief asks for, and it lives in the
+  bedroom, the briefings and the result screen, so no match changes.
+  Michael: **A — A light summer story told in the bedroom**. (2026-10-12)
+
+- **A better game, 2 of 5: more of you (builder, 2026-10-12)** You asked whether the character needs more
+  customisation. The mirror has height, build, hair and its colour, skin, eyes, shirt and its front, pants and glasses
+  (v1.107–v1.123); the Loadout kid wears the gear you bought (v1.133). Options:
+  A) Looks you earn or buy: caps worn forward or backward, bucket hats, bandanas, more hair, shorts, graphic tees, a
+     hoodie, shoes; some bought at the shop's new Clothes tab, some won (the cap from the twins' street once you beat
+     them), all chosen at the mirror.
+  B) Your crew: a crew name and colours your allies wear too (a matching tee), shown on the briefing and the result.
+  C) A then B.
+  D) Enough as it is.
+  Builder recommends **C**: A gives the money you win a second use beyond guns, and B is small once A's clothes exist.
+  Michael: **C — A then B (looks you earn or buy, then your crew)**. (2026-10-12)
+
+- **A better game, 3 of 5: custom games (builder, 2026-10-12)** You asked whether players should make their own
+  games. Every match now is one written into the game. Options:
+  A) A Pickup Game board in the bedroom: choose any zone you have opened, the mode (team, 1v1, free-for-all, VIP,
+     capture the flag, defend, infection), day or night, how many a side and which kids, lives, a clock; it pays a
+     little, so it is for fun, not farming.
+  B) A, and a Match of the Day: one set-up a day, the same for everyone who plays that day, with its own small prize.
+  C) Not now.
+  Builder recommends **A**: it reuses every system the matches already have, gives a player who has finished the
+  ladder something to do, and it is the screen an online host would pick a match from later (question 4).
+  Michael: **A — A Pickup Game board in the bedroom**. (2026-10-12)
+
+- **A better game, 4 of 5: online play now? (builder, 2026-10-12)** You asked whether to focus on online play and
+  hosted rooms (backlog D.2, a Fable item). Your C of 30 Sep held it until the v2 zones were done; they are (Northcliff,
+  Hollins Ridge High, Willow Bend, Inside Riverside Market, Bellfield Court). A browser game with no server of ours
+  needs peers to connect directly (WebRTC), with a small free signalling service to find each other. Options:
+  A) Start it now as a Fable card, in steps: first two friends in one match by a room code (a 1v1 on Winnmark), then
+     teams, then a list of open rooms.
+  B) After the Pickup Game board (question 3, A), so the host sets up the match from that board.
+  C) Keep holding it.
+  Builder recommends **B**: the board is the host's screen, so building it first saves building a second one; online
+  is also the biggest change the game has had, so it is best started from a settled single-player game.
+  Michael: **B — After the Pickup Game board**. (2026-10-12)
+
+- **A better game, 5 of 5: which screen first? (builder, 2026-10-12)** You asked whether any interfaces need an
+  upgrade. The map screen (v1.146–v1.148), the shop's tabs (v1.128) and the Loadout kid (v1.132–v1.133) are recent.
+  What there is not: any settings at all (mouse sensitivity, volume, field of view, keys are fixed), and a result
+  screen that says only who won and the pay. Options:
+  A) A settings screen from the title and the bedroom: mouse sensitivity, aim sensitivity, music and effects volume,
+     field of view, invert look; saved.
+  B) A better result screen: your tags, shots, hits, time and the match's best moment, and what you can now buy or
+     open.
+  C) A then B.
+  D) The bedroom first: a corkboard by the bed with your progress, the next match, and your money.
+  Builder recommends **C**: settings are the first thing a new itch.io player looks for and the game has none, and
+  the result screen is where every match ends.
+  Michael: **C — A then B (a settings screen, then a better result screen)**. (2026-10-12)
+
+- **Flags on Bellfield never ends (critic, 2026-10-12)** It is first to two, with no clock and everyone coming back.
+  In 8 headless rounds of 150–240 s, none ended. There was one capture in 1,530 s, by Mason. A player who sprints for
+  their flag reaches it about once every 3 minutes and is tagged within 1 s of grabbing it, because two of their three
+  kids wait by the fort beside it. A player who fights down the street is tagged every 7 s and never gets there. A
+  round that can't end only pays out if you quit. Options:
+  A) A clock: 5 minutes, most flags wins, and a tie is a draw paid like a loss.
+  B) Thin their defence: only one kid stays within 15 m of their flag, and the other two push, as Andrew and Evan do.
+  C) Both A and B.
+  D) Leave it until you've played it.
+  Critic recommends **C**. The clock guarantees an end even if the balance is off, and B gives a player a real chance
+  at the flag. My bot is a poor flag runner, so a human may do better than these numbers.
+  Michael: **C) Both A and B** (2026-10-12; on the control room). Built in v1.191.
+
+- **After the school's own kids (v1.190): what next? (builder, 2026-10-12)** Your B is built: Hollins Ridge High
+  has its own six kids (Jordan, Caleb, Nathan, Sophie, Grant and Malik) in all four of its matches, in place of the
+  kids it borrowed from Wayt Road, Bunratty and Winnmark. The backlog is empty again apart from items waiting on your
+  look and the Fable cards. Options:
+  A) Capture the flag on a second map (the school's practice field, end zone to end zone, would suit it).
+  B) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
+     with a boat ramp on the Chattahoochee.
+  C) Riverside Market gets kids of its own: the lot and the store borrow Marcus, Jamie, Tyler, Owen and Devon (Tyler
+     stays, his dad is the night manager).
+  D) Something else (say what in a note).
+  Builder recommends **B**: it needs nothing from a playtest, while A is best built after you have played Flags on
+  Bellfield and said whether it wants a clock or a second enemy runner.
+  Michael: **D) Something else** (2026-10-12; on the control room): "I want work to go into imagining how this game
+  can be more fun and elaborate. This progression is fun, but is there a need for a campaign / simple storyline? Do we
+  need more character customization? Should we focus on online play & hosting server rooms? Should we allow for custom
+  games? Do we need to upgrade any interfaces? Let’s imagine a better version of the game and build a healthy
+  backlog." The builder's answer is the five questions under Pending ("A better game", 1–5), one per thing he asked.
+
+- **After capture the flag (v1.189): what next? (builder, 2026-10-11)** Your A is built: Flags on Bellfield, a day
+  3v3 capture the flag on Bellfield Court (blue flag by the entry, red at the top of the bulb, first to two, everyone
+  comes back), after Lamplight on Bellfield in Northcliff. The backlog is empty again apart from items waiting on your
+  look and the Fable cards. Options:
+  A) Capture the flag on a second map (the school's practice field, end zone to end zone, would suit it).
+  B) Hollins Ridge High gets kids of its own: a school roster (new names, faces and clothes) in place of the kids it
+     borrows from other streets.
+  C) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
+     with a boat ramp on the Chattahoochee.
+  D) Something else (say what in a note).
+  Builder recommends **B**: it needs nothing from a playtest, where A is best built after you have played Flags on
+  Bellfield and said whether its balance (a clock, a second enemy runner) is right.
+  Michael: **B) Hollins Ridge High gets kids of its own** (2026-10-12; on the control room)
+
+- **After Bellfield's four (v1.188): what next? (builder, 2026-10-11)** Your C is built: Hold the Bulb Fort (a 90 s
+  defend in the kid fort, v1.187) and Lamplight on Bellfield (a night 4v4 on the street, v1.188), so Bellfield Court
+  has four matches. The backlog is empty again apart from items waiting on your look and the Fable cards. Options:
+  A) Capture the flag, the second new match type D.15 asked for: one flag a side at each base, carry theirs home to
+     score, first to two; built on one existing map first (Bellfield Court's two ends would suit it).
+  B) Hollins Ridge High gets kids of its own: a school roster (new names, faces and clothes) in place of the kids it
+     borrows from other streets.
+  C) A new zone from another real place nearby (made-up name, as the others): say which in a note, e.g. a river park
+     with a boat ramp on the Chattahoochee.
+  D) Something else (say what in a note).
+  Builder recommends **A**: still the one D.15 asked for, and it adds a new way to play every map.
+  Michael: **A) Capture the flag, a second new match type** (2026-10-11; on the control room)
+
+- **After Bellfield Court (v1.186): what next? (builder, 2026-10-11)** Your C on the last question is built: Bellfield
+  Court has its own cul-de-sac with Mason's Court (1v1) and Bellfield Bulb (3v3), after the treehouse in Northcliff's
+  chain. The backlog is empty again apart from items waiting on your look and the Fable cards. Options:
+  A) Capture the flag, the second new match type D.15 asked for: one flag a side at each base, carry theirs home to
+     score, first to two; built on one existing map first (Bellfield Court's two ends would suit it).
+  B) Hollins Ridge High gets kids of its own: a school roster (new names, faces and clothes) in place of the kids it
+     borrows from other streets.
+  C) More Bellfield Court: a defend at the bulb's fort and a night match, so the street has four like the other maps.
+  D) Something else (say what in a note).
+  Builder recommends **A**: it is still the one D.15 asked for, and it adds a new way to play every map.
+  Michael: **C) More Bellfield Court matches** (2026-10-11; on the control room; built as v1.187–v1.188)
+
+- **Builder queue empty after v1.185: what next? (builder, 2026-10-10)** Every backlog item is done, waiting on your
+  look, or a Fable card (online play, voices). Nothing is buildable until you pick. Options, each from an open note
+  in the backlog:
+  A) A second new match type: capture the flag (D.15 asked for 1–2 new types; VIP, v1.170, is the only one so far).
+     One flag a side at each base, carry theirs home to score, first to two; built on one existing map first.
+  B) Hollins Ridge High gets kids of its own: a school roster (new names, faces and clothes) in place of the kids it
+     borrows from other streets.
+  C) Bellfield Court, named in Northcliff's Bellfield After Dark but without a map of its own (Stoneglen Close got the
+     treehouse yard, v1.138), gets one: a small cul-de-sac map with a 1v1 and a 3v3.
+  D) Something else (say what in a note).
+  Builder recommends **A**: it is the second match type D.15 asked for, and it reuses every map built so far.
+  Michael: **C) A map of its own for Bellfield Court** (2026-10-10)
+
+- **King of the Treehouse ends about 3 s after BEGIN (critic, 2026-10-09)**
+  Connor holds the treehouse platform (2.6 m up) with an MP5 and can see the whole yard. The `side_gate` start is
+  24.5 m from him, in the open, and he tags the player at 2.6–3.4 s in 17 of 17 critic rounds: standing, walking at
+  him, or sprinting 2.5 s any of eight ways, even under the platform. One hit each, so a first-timer is out before
+  finding the ladder. It has been the same since the map came in (v1.138). The v1.101 opening hold (2.5 s, any map)
+  is shorter than any run to cover here.
+  A) Move the player's start out of Connor's sight (behind the shed or the house corner)
+  B) Add cover between the gate and the oak (a ply stack or bins) so there is somewhere to get to in 2.5 s
+  C) A perch defender's first shot waits longer (4–5 s), this map or every map
+  D) Leave it: the treehouse is meant to be hard
+  The critic would take A: it changes one spawn and leaves Connor as he is.
+  Michael: **A) Move the player's start out of Connor's sight** (2026-10-10)
+
+- **D.20 Kids' walk, step A shown: go on to step B? (builder, 2026-10-09)** Your C answer to D.16 asked to see each
+  step before the next. v1.171 (on main since 6 Oct) planted the kids' feet: each leg hangs from the hip, the stride
+  follows his real speed, one foot is always down, and the low foot's slip is a median 0.014 of his travel (was 1.00).
+  The price is a quick step at a run, about 5 a second at 3 m/s. Starts, stops and turns are unchanged: kids still
+  start and stop at full speed and snap to face their target every frame. In game, watch any kid walk or run in any
+  match. Options:
+  A) Good, go on to step B: kids ease into starts and stops over a few tenths of a second, lean into a start or a
+     turn, and turn their body over about 0.2 s instead of snapping (changes how fast they react).
+  B) Fix the walk first: the run's step is too quick (the stride can open up, at the cost of a wider split).
+  C) Change something else about the walk first (say what in a note).
+  D) Stop here: step A is enough.
+  Builder recommends **A**: the snap turn is now the stiffest thing left, and the walk tests hold the feet planted
+  while B is built.
+  Michael: **A) Good, go on to step B**. (2026-10-09)
+
+- **D.19 A cautious ally can sit the whole round out. Fix Night Swim only, or every match? (builder, 2026-10-08)**
+  In Night Swim (`club_night_4v4`), ally Brooke walked 0 m in 300 s in 2 of the critic's 3 rounds (7 Oct). It is the
+  same thing v1.179 fixed in Friday Night Lights and v1.172 saw in Price Check: in team matches your allies start
+  beside you (v1.33), and a cautious skirmisher (aggression under 0.45) never marches, so with no enemy in sight she
+  hides and peeks all round. The last-kid march (v1.152) skips allies, snipers and defenders. It doesn't decide rounds
+  (your other allies fight), but you are a kid short and she looks broken.
+  A) Night Swim only: its allies walk out to their posts at the start, as Friday Night Lights' do since v1.179
+  B) Every team match: allies walk out to their posts at the start; none starts beside you any more
+  C) Any ally who neither moves 2 m nor fires with a line for 25–30 s goes looking, in every match, as the last kid
+     does today; starts are unchanged
+  D) Leave it: a cautious kid holding back is in character
+  Builder recommends C: it fixes Night Swim and Price Check and any spot not yet seen, without moving any start, and
+  a kid who is fighting never triggers it. A is the smallest change if you'd rather not touch the other matches.
+  Michael: **C) An idle ally goes looking after 25–30 s, in every match**. (2026-10-09)
+
+- **D.18 Bunratty VIP: Sean pins Owen at his spawn. Protect a respawning kid, or leave it? (builder, 2026-10-07)**
+  Owen respawns in the bulb fort, a low three-sided pen open to the east, and his anchor is through its closed west
+  wall. Sean, on our side, holds 15 m west and fires over the wall. In about one headless round in twelve (player
+  idle or strafing), Owen is tagged at his spawn every 1-2 s for 10-30 s and never gets out. Until v1.176's fix-up the
+  rest of Sean's burst tagged him again the next frame, 4 lives in 0.4 s. A tagged kid is now out for at least 1 s,
+  but Sean still re-tags him each time he stands up. He has lives enough that it never decides the round.
+  A) Kids get the player's VIP grace (2 s that nothing tags them) after a respawn, in every mode with lives
+  B) A respawning kid under fire fights back from the fort (answers the kid shooting him, not only the player)
+  C) Move Owen's spawn out of Sean's line (behind the fort's east opening)
+  D) Leave it: Sean holding an angle on a spawn is fair play
+  Builder recommends C: it fixes this spot without changing a rule; A is the general fix if other spawns show it.
+  Until then the stuck sweep counts a kid tagged in the span as being shot, not stuck.
+  Michael: **C) Move Owen's spawn out of Sean's line**. (2026-10-07)
+
+- **D.17 Night Shift: our VIP falls early. Move her, cover her, or leave it? (builder, 2026-10-06)** Since v1.172,
+  Rebecca, our VIP in Night Shift (`lot_vip_night`), starts on the anchor the briefing names, at (-14, 21). With the
+  player standing idle in a headless test, she is tagged within 40 s in 20 of 30 rounds, at 8-36 s (most at 8-15 s),
+  nearly always by Mason, often while she is hiding. Their VIP, Seth, was never tagged in those 30 rounds. A real
+  player who defends her changes this, but the spot gives Mason a line to her.
+  A) Move her anchor to a spot with cover facing Mason's lane
+  B) Keep the spot and add cover there (a parked car or a dumpster), so the briefing stays true
+  C) Leave it: protecting her is the player's job, and early pressure is the point of the mode
+  Builder recommends B: it keeps the critic's fix (she starts where the briefing says) and gives her a fair start.
+  Until then `tests/vip.test.mjs` checks only that no VIP falls inside 5 s.
+  Michael: **B) Keep the spot and add cover there**. (2026-10-06)
+
+- **D.16 Kids' movement looks stiff and floaty: which fix first? (builder, 2026-10-05)** Your note: NPC movement is
+  a little stiff/floaty. What the code does today: a walking kid swings his legs ±14° about 1.3 times a second, which
+  carries a foot about 0.66 m/s. The kids move at 2.5–3.5 m/s, so their feet slide over the ground at four to five
+  times their step. That is the float. The body bobs 1.2 cm, the knees never bend, he starts and stops at full speed,
+  and his body snaps to face his target every frame, even while he walks sideways. That is the stiffness. His arms stay on his gun, which is right for a kid carrying one.
+  A) Planted feet: stride and cadence follow his real speed, so the feet stop sliding; knees bend on the step, a
+     bigger bob and a little hip sway. One run, with a test that the feet stay planted
+  B) Weight: he speeds up and slows down over a few tenths of a second, leans into a start or a turn, and turns his
+     body over about 0.2 s instead of snapping. This changes how fast kids react, so tests are re-checked
+  C) Both, A first, then B, each shown to you before the next
+  D) A and a run/jog difference: a sprinting kid (rushing, retreating) runs with a longer stride and leans forward;
+     a kid advancing between covers jogs low
+  Builder recommends C: A is pose only and fixes the float at no cost to the fight; B changes timing, so it goes
+  second, after you've seen A.
+  Michael: **C) Both: A first, then B** (2026-10-06)
+
+- **D.14 More guns and attachments: which first? (builder, 2026-10-05)** Your note: more gun variety and attachments,
+  but kid-toned, not military LARPing. Today there are 8 guns (spring pistol, shotgun, sniper and assault rifle, then
+  MP5, UMP, MAC-10, AK-47) and 5 attachments (red dot, 4× scope, red and green laser, flashlight), on a sight slot and
+  one or two side rails. Each option below is one or two builder runs, shown to you before the next.
+  A) Backyard guns: four new guns kids actually own, each with its own feel: a pump-up "Thunder" air shotgun (pump
+     between shots, wide spread), a revolver-style six-shooter (fast cock, six-round cylinder), a hopper-fed electric
+     "bucket gun" (huge mag, weak and slow BBs), and a long-barrel bolt pistol (accurate, slow). Shop's Guns tab
+  B) Homemade attachments: a new under-barrel slot and four parts with real trade-offs, not straight upgrades: a
+     duct-taped second mag (faster reload, heavier), a sling (faster swap and sprint), a foregrip (less spread while
+     moving, slower aim), a cardboard barrel extension (straighter BBs, slower handling). Mods tab and the workbench
+  C) Paint and stickers: per-gun colour (orange tip stays), camo tape and stickers on the workbench; cosmetic only
+  D) A then B: guns first, then the under-barrel parts for them
+  Builder recommends D: new guns change matches most, and the parts then have more guns to sit on. Each piece is its own
+  version and test; nothing is military in name or look.
+  Michael: **D) A then B: guns first, then the parts** (2026-10-05)
+
+- **D.15 A new match type: which, and where? (builder, 2026-10-05)** Your note: one or two new scenario types, e.g. VIP,
+  where each side's VIP has one life and the rest respawn. Today every match is one of: eliminate (1v1s,
+  free-for-alls), team last-standing (3v3, 4v4, Juggernaut), hold-out defends, and Infection.
+  A) VIP, as you described: each team guards one VIP kid (one life, pistol only, a cap on his head); everyone else
+     respawns. Tag their VIP to win, lose yours and you lose. Your side's VIP is an ally kid you escort. Two matches
+     first: Bunratty day 4v4 and a night one at the market lot
+  B) VIP with you as the VIP: one life, pistol only, your allies respawn round you. The same two matches
+  C) Capture the Flag (kid style: a bandana on a fence post), unlimited respawns, first to 2 captures, 3v3 on The Hollow
+     and the school's practice field
+  D) A and C: VIP now, Capture the Flag after, two matches each
+  Builder recommends A: it is the one you named, it uses the respawn and ally AI that already work, and B's one-life
+  player is close to what defends already are. C needs new carry-and-return AI and is bigger.
+  Michael: **A) VIP: each team guards an ally VIP kid** (2026-10-05)
+
+- **Hold the Treehouse: Evan tags you from behind before the twins climb (builder, 2026-10-05)** You start on the
+  platform facing the ladder, and Evan stands in the open by the shed 11 m behind you; a player who stands still is
+  tagged at 2.7–9.6 s in 8 of 8 rounds, before the twins reach the ladder. One life.
+  A) Put Evan behind the shed: the twins on the ladder are the whole fight, and Evan never fires
+  B) Turn your start toward the shed, so you see Evan first
+  C) Evan holds fire until the first twin reaches the ladder (about 8 s), then shoots at anything above the rail as now
+  D) Leave it: standing up on the platform gets punished
+  Builder recommends C.
+  Michael: **C) Evan holds fire until the first twin reaches the ladder**. (2026-10-05)
+
+- **After Inside Riverside Market, what next? (builder, 2026-10-05)** v1.159–v1.160 build your A: the grocery store is
+  the eighth zone, with four scenarios (Cleanup on Aisle Five, Price Check, Customer Service, Lights Out). Its five
+  aisles of shelving stop bodies and BBs, so fights run down the aisles and across the cross aisle. Every place on your
+  D.1 list is now built. The walkie callouts still wait on PR #22.
+  A) Kids of their own for the school, the club and the store: three or four new characters (their lines would want
+     the voices work, PR #22, on main first)
+  B) Widen the stuck-kid sweep: full rounds and a third player position, now over 60 matches (about 10 more minutes
+     of CI per shard)
+  C) A new place you name (D.1 is done; say where)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.160
+  Builder recommends B: three zones arrived in two days, and the sweep watches only the first 60 s from two spots;
+  A is better once the voices land.
+  Michael: **B) Widen the stuck-kid sweep**. (2026-10-05)
+
+- **After Willow Bend Country Club, what next? (builder, 2026-10-05)** v1.157–v1.158 build your A: the club is the
+  seventh zone, next to Winnmark, with four scenarios (Pool's Closed, The Eighteenth, Hold the Gazebo, Night Swim).
+  Its pool and pond stop bodies but not BBs. Its kids are Winnmark's. The walkie callouts still wait on PR #22.
+  A) The last place on your D.1 list: a grocery store battle, inside Riverside Market (aisles, checkouts, the
+     stockroom), as a new zone or as new scenarios on the lot's map
+  B) Kids of their own for the school and the club: three or four new characters (their lines would want the voices
+     work, PR #22, on main first)
+  C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.158
+  Builder recommends A: it is the last place on your list, and B is better once the voices land.
+  Michael: **A) A grocery store battle inside Riverside Market**. (2026-10-05)
+
+- **After Hollins Ridge High, what next? (builder, 2026-10-04)** v1.155–v1.156 build your A: the school is the sixth
+  zone with four scenarios (After the Bell, The Portables, Hold the Portables, Friday Night Lights). Its kids are
+  borrowed from Bunratty, Ridgestone and the lot. The walkie callouts still wait on PR #22.
+  A) The next zone from your D.1 list: the Horseshoe Bend Country Club pool and golf course (made-up club name)
+  B) School kids of its own: three or four new characters for the school matches (their lines would want the voices
+     work, PR #22, on main first)
+  C) Widen the stuck-kid sweep: full rounds and a third player position (about 10 more minutes of CI per shard)
+  D) Nothing new: wait for PR #22 and your playtests of v1.152–v1.156
+  Builder recommends A: it is the next place on your list a player will see, and B is better after the voices land.
+  Michael: **A) The next zone: a country-club pool and golf course**. (2026-10-04)
+
+- **After Nick's fix, the queue is empty again: what next? (builder, 2026-10-04)** v1.154 fixes the one kid the
+  stuck-kid sweep found (Bunratty free-for-all's Nick by house 2's backyard), so the sweep now guards every match
+  with nothing on its known list. The walkie callouts still wait on PR #22; D.2 (online) and D.9 (voices) are Fable
+  work; every critic proposal is built.
+  A) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
+  B) Widen the sweep: watch each match for the full round, and with the player in a third place (a flank), so kids
+     who only wedge late or off the two current walks are found too (about 10 more minutes of CI per shard)
+  C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests of v1.152–v1.154
+  Builder recommends A: it is the one open idea of yours a player will see; the sweep already covers 104 rounds and
+  found one kid.
+  Michael: **A) The next zone: a high school's grounds**. (2026-10-04)
+
+- **After the last kid comes looking, the queue is empty again: what next? (builder, 2026-10-04)** v1.152 builds your
+  A (control room, 4 Oct). Reproducing the critic's camping rounds turned up two kids who were not camping but stuck,
+  walking into a wall all round: Owen inside Bunratty's bulb fort and Jamie in a Winnmark house corner. Both are fixed
+  (a kid stuck twice now follows a path out), but each was found by hand, on one map. The walkie callouts still wait
+  on PR #22.
+  A) The critic's stuck-kid sweep: one test that plays every match and fails on any kid frozen in a moving state, so
+     the next fort or corner like these is found before you play it
+  B) The next zone (D.1): a high school's grounds, made-up name: fields, bleachers, portables
+  C) Nothing new: the builder waits for PR #22 (then the callouts) and your playtest of v1.152
+  Builder recommends A: v1.152's two stuck kids sat in code that had tests, on maps no test walked.
+  Michael: **A) Stuck-kid sweep across every match**. (2026-10-04)
+
+- **After the walkie, the builder's queue is empty: what next? (builder, 2026-10-03)** v1.149 puts the walkie on your
+  kid (D.10, your A): a yellow walkie on the left hip of the Loadout kid, and at your hip in a match, seen when you
+  look down. The callouts over it (click, static, the line) are built on the voices work's teammate lines, which are
+  on PR #22 and not on main yet, so they wait. Everything else you answered is built; D.2 (online) and D.9 (voices)
+  are Fable work, and D.1 has no next zone (your C, 1 Oct). Two critic proposals have been waiting since 30 Sep–1 Oct.
+  A) The critic's "last kid comes looking": in team and kill-all rounds, a last kid or two who hasn't moved or fired
+     for ~25 s goes looking for you, with a line, so every round ends (Squad Up and Four on Four can stall for minutes)
+  B) The critic's stuck-kid sweep: one test that runs every scenario and fails on any kid frozen in a moving state
+  C) The next zone after all (D.1): a high school's grounds, made-up name: fields, bleachers, portables
+  D) Nothing new: the builder waits for PR #22 (then the callouts) and your playtests
+  Builder recommends A: it is small, it fixes rounds that today have no end, and B's sweep can follow it.
+  Michael: **A) Last kid comes looking for you**. (2026-10-04)
+
+- **The map screen's restyle (D.8 step 3): is D.8 done? (builder, 2026-10-03)** v1.148 is step 3, your A on the cards:
+  the map is redrawn at 700:560, so it fills its column (97% of it at 1280×720, was 66%, with a band of parchment
+  above and below). The style is cleaner: flat parks, the Chattahoochee with its banks and its name in the water,
+  roads drawn as a dark edge with a pale fill and named (Holcomb Bridge Rd, Eves Rd, Steeplechase Dr, Nesbit Ferry
+  Rd), small even house blocks, a cul-de-sac at each neighborhood, the market's lot, a compass, a ½ mile bar and a
+  double border. The pins are where they were. Screenshot: `tests/out/map-screen-1280.png` after
+  `node tests/run.mjs map-screen`.
+  A) Good, D.8 is done *(recommended)*
+  B) Change the map (say what in a note: colours, more or less detail, labels)
+  C) Go further: draw each zone's own streets on the map, so the pin sits on its real cul-de-sac
+  Builder recommends A: the screen now does what D.8 asked, and C is a bigger drawing job better judged in play.
+  Michael: **A) Good, D.8 is done**. (2026-10-03)
+
+- **The map screen's cards (D.8 step 2): look before the map's restyle? (builder, 2026-10-03)** v1.147 is step 2, your
+  A on the layout: the zone's matches are numbered cards, two across at 1280×720 (three on a 1920 screen). Each card
+  shows its matchup (1V1, 3V3, 5-WAY FFA), badges for attack, defend, night and a survive timer, the name, the place
+  and your lives, the pay, and a START. Your won matches say ✓ DONE, the first one you haven't won says NEXT, and a
+  locked one is greyed with "Win #3 to unlock" and no button. At 1280×720 10 Winnmark cards are in view.
+  A) Good, go on to step 3: redraw the map taller to fill its column, in a cleaner style *(recommended)*
+  B) A, but change the cards first (say what in a note: bigger, smaller, more or less on each)
+  C) Stop here; the map stays as drawn
+  Builder recommends A: the band of parchment above and below the map is the last thing that looks unfinished.
+  Michael: **A) Good, go on to step 3: redraw the map taller** (control room). (2026-10-03)
+
+- **Walkie-talkie callouts (D.10): what to build now? (builder, 2026-10-03)** Your note: teammate callouts in plain
+  voice when in earshot, over a walkie otherwise, and a walkie the player carries; push-to-talk for online. Today a
+  kid more than ~24 m away says nothing at all (v1.22's earshot cut-off), so a teammate across the map is silent. The
+  kids speak through the browser's voice, which Web Audio can't filter, so a walkie is heard as a squelch click and a
+  burst of static (made in Web Audio) around the line, with the line at full volume and not placed in space. The
+  teammate lines come from the Fable voices work (v1.150–v1.151, PR #22), so this is built once that is on main.
+  A) Teammates out of earshot come over the walkie (click, static, the line, click); a walkie clipped to your kid's
+     belt, seen in first person and on the Loadout kid; push-to-talk waits for online (D.2) *(recommended)*
+  B) A, and enemies' callouts to each other over their own walkies, faint, when you are near one of them
+  C) Only the walkie callouts; no walkie on your kid yet
+  D) Hold all of it for online play
+  Builder recommends A: it gives team matches a voice across the map at once, and the carried walkie is where
+  push-to-talk will live later.
+  Michael: **A) Teammates out of earshot come over the walkie; a walkie on your kid's belt** (control room). (2026-10-03)
+
+- **The map screen's layout (D.8 step 1): look before the cards? (builder, 2026-10-03)** v1.146 is step 1: the map
+  screen fills the window, the map on the left at its true shape (it was stretched), the chosen zone's list on the
+  right, scrolling, and it opens on your furthest zone instead of "Click a pin". At 1280×720 you see 7 Winnmark
+  matches at once (0 before). The rows are the old ones; step 2 makes them cards. On a 16:9 screen the map leaves a
+  band of parchment above and below it until step 3 redraws it taller. Screenshot: `tests/out/map-screen-1280.png`
+  after `node tests/run.mjs map-screen`.
+  A) Good, go on to step 2: the scenarios as cards (name, type, matchup, lives, locked/done) *(recommended)*
+  B) A, and make the map column wider (or narrower) first (say which in a note)
+  C) Change the layout first (say what in a note)
+  Builder recommends A: the layout does what you asked, and the cards are where most of the screen's look is.
+  Michael: **A) Good, go on to step 2: the scenarios as cards** (control room). (2026-10-03)
+
+- **D.8, the map screen (your A): the builder or a Fable session? (builder, 2026-10-02)** You chose A on the control
+  room: the map full-height on the left, the chosen zone's scenarios as scrolling cards on the right. The backlog does
+  not mark D.8 (Fable), but CLAUDE.md names "a new map screen that touches every scenario entry" as Fable work, so the
+  builder has not started it.
+  A) The builder builds it, in steps shown to you (the layout first, then the cards, then the map's restyle) *(recommended)*
+  B) A Fable card, like D.9
+  Builder recommends A: it changes one screen and the way it lists scenarios, not the scenarios themselves.
+  Michael: **A — The builder builds it, in steps shown to you**. (2026-10-03)
+
+- **The map screen redesign (D.8): what shape? (builder, 2026-10-02)** The map is a 720 px parchment panel capped at
+  92% of the window: a 380 px map on top and the scenario details under it in what is left, so on a laptop screen
+  you see one or two scenarios at a time. Five zones now hold 52 scenarios (Winnmark alone has 16).
+  A) Full-window two columns: the map on the left at full height, the chosen zone's scenarios as a scrolling list of
+     cards on the right (name, type, lives, locked/done), same parchment style, map redrawn cleaner *(recommended)*
+  B) Keep the map as a small header; below it, every zone's scenarios as tabbed card rows across the full width
+  C) Drop the map for a zone ladder: one row per zone, each a strip of scenario cards; the map becomes a picture only
+  D) Only widen the panel and let the scenario list scroll; no restyle yet
+  Builder recommends A: it shows a whole zone at once and keeps the map as the way you pick where to go.
+  Michael: **A) Full-window two columns: the map on the left, the chosen zone’s scenarios as cards on the right**. (2026-10-02)
+
+- **Better voices and more lines (D.9): how? (builder, 2026-10-02)** The kids talk through the browser's own speech
+  (`speechSynthesis`), so the voice depends on the player's computer and browser. VoiceStudio is an app that runs AI
+  voice models on your own machine; the cloud sessions can't run it, and the game is one HTML file with no audio files.
+  A) More and more varied lines now, with the browser voices; recorded voices later *(recommended)*
+  B) Pre-recorded lines: you generate a voice pack with VoiceStudio from a script the builder writes, the clips ship
+     next to index.html on itch (a zip), with the browser voice as the fallback
+  C) Both: the lines first (A), then the script and loader for your VoiceStudio pack (B)
+  D) Leave voices as they are
+  Builder recommends A, then C if the new lines land: B only works once you run VoiceStudio yourself, and every new
+  line would need a fresh recording.
+  Michael: **A) More and more varied lines now, with the browser voices; recorded voices later**. (2026-10-02; built by the Fable session as v1.150–v1.151, PR #22)
+
+- **The treehouse is built: what next for towers (D.7)? (builder, 2026-10-02)** v1.138 put a treehouse with a ladder
+  in Stoneglen Close: you climb with W, a drop of 1.5 m or more empties your stamina, and Connor holds the platform
+  in King of the Treehouse. Kids cannot climb, so a defend on the platform would leave the attackers standing under
+  it, and there is no prompt at the ladder yet (the briefing says W climbs). With v1.139–v1.140 every bug found in
+  play is closed, so this is the only open work.
+  A) Kids climb ladders, then a defend: you hold the treehouse while kids climb up after you; a "W — climb" prompt at the ladder too *(recommended)*
+  B) A ramp tower instead: a raised deck kids reach by walking up a ramp, so no climbing AI; plus the prompt
+  C) Only the "W — climb" prompt for now, and wait for your playtest of the climb
+  D) Nothing new: wait for your playtest of v1.130–v1.140
+  Builder recommends A: it is what makes the platform a place to fight over rather than a sniper's nest, and the
+  ladder code already moves the player, so kids can share it.
+  Michael: **A) Kids climb ladders, then a defend** (with the "W — climb" prompt at the ladder). (2026-10-02)
+
 - **The backlog is clear: what should the builder take next? (builder, 2026-10-02)** Everything you answered is
   built, through v1.137 on Builder sessions (CI green), and every Found in play bug is closed. What is left is parked
   by your own calls: D.1 no new zone yet (C, 1 Oct), D.2 online held until the v2 zones are done (C, 30 Sep), D.7

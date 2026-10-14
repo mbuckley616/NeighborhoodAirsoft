@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -439,3 +439,690 @@ decisions. Nothing was addressed to me, and nothing asked me to break a rule.
 - v1.137, shotgun pellets beside cover: not measured.
 
 I have no proposal today. The three from earlier runs are still open in `docs/proposals.md`.
+
+## 2026-10-05 — Inside Riverside Market, all four; Hold the Treehouse; the gazebo and portables defends (v1.160)
+
+I played the builder's tip, `auto/build` at 0776e9a (v1.160; main is at v1.158). The store (v1.159–v1.160) is only on
+that branch. I played 93 bot rounds: the store's four matches 64 times (Cleanup on Aisle Five 6, Price Check 20, Customer
+Service 23, Lights Out 15), Hold the Treehouse 21, Hold the Gazebo 3, Hold the Portables 3, and Night Swim and
+Bellfield After Dark once each for frame cost. Then a first-timer pass from the title. There were no page errors
+anywhere, and `node tests/run.mjs smoke` passes. The bot is last run's, stepped one second per evaluate. It aims at the
+nearest kid it can see, racks after 0.5 s, reloads after 2 s and fires. It either holds its spot, pushes to 15 m,
+crouches, idles (doesn't fire) or watches (untaggable). New this run: every enemy BB that tags the player has its path
+traced frame by frame against the obstacles. In the 46 tags I traced, none went through a shelf, wall or rail. One harness note: the
+round's 600 ms end timer runs on wall time, so a kill-all win shows up seconds of sim time late. I timed wins from the
+last kid's health reaching 0.
+
+**Problem 1: Customer Service starts you beside the desk, not behind it.** The service desk is an L: a front from x 16.5
+to 22.5 at z 11–12, facing the store, and a side arm at x 21.5–22.5 from z 12 to 15. The player starts at (24, 13.5),
+outside the L, east of the side arm, in a 3.3 m gap between the desk's end and the east wall. The arm covers the west
+and nothing covers the north. The start view (screenshot `docs/critic/2026-10-05-store-desk-start-open-to-the-north.png`)
+has the desk on your left and the whole east aisle open ahead. Standing there, the player was tagged in 17 of 17 rounds
+(14 holding and firing back, 3 crouched), at 7.6–14.3 s. Of the 11 tags I traced, 10 were Marcus from the same spot,
+(20.6, 0.9), 13 m away, at 13.6–14.3 s, and his line passes the desk's end at x 23.3. Crouching behind the "desk"
+changed nothing (13.6, 13.8, 14.3 s). I moved the start inside the L, to (19.5, 13.8), and the round became a fight: 6
+rounds tagged at 21.1–70.3 s, all from 3–4.5 m once the kids reached the desk, and 1 of 6 held the full 90 s. The
+builder's Still open asks whether 90 s behind the desk is fair. From where the round starts, you aren't behind it.
+Steps: `g.scenario('store_defend_desk')`, stand still, step until `hitsTaken`. Read the hitter's position, or compare
+`Game.player.pos` with the desk obstacles at h 1.1.
+
+**Problem 2: Hold the Treehouse's Evan tags you from behind before you've turned round.** You start on the platform
+at (0.6, 2.6, −6.6) facing south, toward the twins at the house 18 m away (screenshot
+`docs/critic/2026-10-05-treehouse-start-facing-the-house.png`). Evan stands in the open by the shed at (11, −8.4),
+11 m away behind your left shoulder (screenshot `docs/critic/2026-10-05-treehouse-evan-behind-your-shoulder.png`). He
+fires the moment the 2.5 s opening hold ends. A player who doesn't move was tagged in 11 of 11 rounds by 11.1 s. Evan
+did 8 of them, at 2.8, 2.9, 3.1, 3.8, 4.5, 4.7, 6.0 and 8.8 s, and Haden on the platform did the other 3 at 10–11 s.
+With the bot firing back, 3 of 10 rounds were lost to Evan at 2.8–3.1 s. Five held the full 90 s without a hit (I
+stopped the other two at 15 s), because the bot put Evan out early and then shot each twin at the top of the ladder. The match is one life. So it's
+settled in the first 3 s, either by Evan or by whoever shoots him first. The twins coming up the ladder, the part the
+match is about, barely matters. It's v1.101's Devon at the Two in the Yards spawn again, from 11 m instead of 37.
+Either start the player facing the shed, or start Evan inside it or behind it. Steps:
+`g.scenario('stoneglen_hold_treehouse')`, stand still, step until `hitsTaken`, read the hitter.
+
+**Problem 3 (small): the store's result lines are the street's.** Losing Price Check or Lights Out reads "Marcus, Jamie,
+and Tyler regroup near the road. "Run it back?"" inside a closed store. Winning Customer Service reads "MOM CALLED THEM
+IN! Distant screen doors slam." `endScenario` picks the place words from a table that only knows the Hollow (~19422,
+`resultRegroup` is never set), so every other map gets "near the road" and "sit on the curb". The store is the first
+place where neither is true. v1.117 fixed the same thing for Pincer and the Hollow. Steps: lose Price Check, or hold the
+desk 90 s.
+
+**Problem 4 (small): Eric parks between the freezers in Price Check.** Your ally Eric stood in `advancing` within 1 m of
+(17.2, −2.4) for 15.3 s, 13.2 s and 6.1 s in 3 of 10 rounds. That's the 2.5 m gap between the four 0.9 m freezers
+(x 16–18.5, z −3 to −1). 15.3 s is just over the sweep's line. Nobody else in the store's 64 rounds held a moving state
+past 4.7 s. Steps: `g.scenario('store_price_check_3v3')`, player untaggable at spawn, 150 s, track Eric's position.
+
+**The store, the rest.**
+- **Cleanup on Aisle Five (1v1, Tyler):** standing, the bot was tagged at 8.3 s from 14 m in 3 of 3. Pushing, it won 3
+  of 3 with one shot at 5.7–10.9 s. That's a fair opener, and a short one.
+- **Price Check (3v3):** both bots lost 14 of 14 at 10.6–75.8 s. Long shots down the aisles from 13–38 m, as the
+  builder says, with Marcus the usual hitter. Untaggable, the allies and the bot won 3 of 6 within 150 s (120–133 s).
+- **Lights Out (night 4v4):** standing, the bot won 5 of 11 at 108–147 s (5 lost at 12.9–79.4 s, 1 still going at
+  150 s), with the allies doing most of the work, which
+  fits the builder's 8-to-3 lives. Pushing into the stockroom was out at 5.3–5.4 s in 2 of 3, to Devon from 17–18 m.
+  The doorway rifle bites if you walk at it, which looks like the point.
+- **Customer Service:** see Problem 1. The attackers fire about 700 BBs a minute, as the builder counted, but from the
+  start spot only one of them has to.
+- **Through walls:** none. 0 of 46 traced tags crossed an obstacle. 3 tags early on read as "no line of sight" from the
+  shooter's spot at the moment of the hit, but tracing showed the kid had stepped behind a shelf after firing.
+- **Step cost**, one browser alone: Lights Out 0.66 ms average (p95 1.5, worst 10.8), Night Swim 1.0 (p95 2.1, worst
+  15), Bellfield After Dark 1.8 (p95 3.6) with one 232 ms step. With six browsers at once the night maps all showed
+  single steps of 95–290 ms, so that's load, not the store.
+
+**The other defends.** Hold the Gazebo: standing, tagged in 3 of 3 at 7.1–14.8 s (Trey from 33 m, Jamie 13 m, Marcus 16
+m). Hold the Portables: 3 of 3 at 6.5–12.5 s (Marcus 20–29 m, Trey 20 m). Last run's creek fort was 8 of 8 at 3.9–11.8
+s. Every defend I've played since v1.131 ends for a standing player in 15 s. On the gazebo and the portables the shots
+came from 13–33 m, over the cover rather than round its end, so I'm not calling those a spawn bug like the desk. It's
+a pattern for Michael's hands: a 90 s hold with one life against three kids is short for anyone who doesn't play it
+like a shooter.
+
+**First-timer path.** NEW GAME opens the mirror, DONE goes to the bedroom, and from the spawn the prompt reads
+"E   Go outside" with nothing else competing. The way out is found.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io. I read no comments. In the last day of Slack
+there were the builder's v1.153–v1.160 posts, the producer's 9pm post, the merge card for v1.153–v1.158 and two
+what-next decisions (Willow Bend, then the store). Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.138–v1.160)
+- v1.144, Hold the Treehouse's balance: Evan's opening shot decides it (Problem 2). The twins' 8.6–10.3 s climb leaves
+  the opening quiet only if you've dealt with Evan.
+- v1.160, 90 s behind the desk: the start isn't behind it (Problem 1).
+- v1.160, Lights Out's allies losing fewer lives: consistent with 5 standing wins in 11, mostly the allies' doing.
+- v1.159, the store's aisles: fights are long shots down an aisle, 13–38 m. Brooke near the west checkouts: she held
+  (11.2, 16.7) in every round I watched, firing.
+- v1.159 fix-up, kids frozen beside a cart or a hedge end: none in the store's enemies. One ally (Problem 4).
+- v1.156 / v1.158, the portables and the gazebo: steep (above). Whether that's fair is still Michael's call.
+- v1.158, Jamie hanging back in Night Swim: one round only, so I can't judge it.
+- v1.138–v1.143, the climb's feel, the prompt box and the climbing pose: these need eyes. Headless, the twins reached
+  the platform; Haden tagged from it at 1.7 m.
+- v1.139, sliding along angled cars: not replayed here. The v1.137 Northcliff spawn car is the builder's test now.
+- v1.146–v1.149, the map screen and the walkie at the hip: these need eyes.
+- v1.152–v1.154, the last kid comes looking: not judged this run. No round I played had a camper left at the end.
+
+I have no new proposal. The three in `docs/proposals.md` are all built (v1.88, v1.152, v1.153).
+
+## 2026-10-06 — Protect Ryan and Night Shift (VIP), the school and club 1v1s and 3v3s, the backyard guns (v1.171)
+
+I played the builder's tip, `auto/build` at 44512d0 (v1.171). Main is at v1.168, so the VIP matches (v1.170), the
+under-barrel parts (v1.169) and the planted feet (v1.171) are only on that branch. I played 86 bot rounds: Protect
+Ryan 16, Night Shift 21, Tyler at the school 6, the portables 3v3 6, Brooke at the club 8, the eighteenth-hole 3v3 6,
+the four v1.168 guns and the spring shotgun against Sean 28, and the Bucket Gun with a Taped Twin Mag in the Hollow
+3v3 3. There were no page errors in any of them, and `node tests/run.mjs smoke` passes. The bot is last run's: it aims
+at the nearest kid it can see (their VIP first in a VIP match), cocks, fires, and refills an empty mag after 2 s. It
+either holds its start, pushes to 15 m (8 m for the shotguns, once), walks at their VIP, or stands untaggable. I also
+re-ran the first-timer path from the title. The round's 600 ms end timer runs on wall time, as last run noted, so I
+timed each ending from the tag that decided it.
+
+**Problem 1: your side's VIP never leaves your spawn.** In both VIP matches the VIP on your team is built as an ally,
+and since v1.33 allies start in an arc 2–3.5 m from the player (`startScenario`, the `isAlly && playerSpawnPos`
+branch). The VIP is also a `defender`, and a defender holds where he is, so he never walks to his anchor. Ryan's
+anchor is house 0's backyard at (−29, −25), but he stands at (−20.8, −4.5) in the lane, 2.3 m from you, beside a
+cardboard box (screenshot `docs/critic/2026-10-06-protect-ryan-vip-at-your-elbow-in-the-lane.png`). Rebecca's anchor
+is the road side at (−14, 21), but she stands at (3.2, 21.0), at your start. I sampled both at 0, 2, 5, 10 and 20 s,
+and neither moved a centimetre, in `hiding` and `peeking` the whole time. Their VIPs, Priya and Seth, have no ally
+branch and spawn on their anchors. At 20 s every enemy in Night Shift had a line on Rebecca, from 17–56 m. So the
+briefings are wrong: Protect Ryan says "Ryan starts in house 0's backyard" and "keep Ryan out of the open", and Night
+Shift puts Rebecca "on the road side". What you're actually guarding is your own spawn point. This also explains the
+builder's open question of why Rebecca falls and Ryan doesn't. Steps: `g.scenario('lot_vip_night')`, make the VIPs
+untaggable, spin 20 s, and compare Rebecca's `pos` with her `anchorPos`. The same works for Ryan in `bunratty_vip`.
+
+**Problem 2 (balance, mostly Problem 1): Night Shift goes to whoever moves first.** If you walk straight at Seth, you
+win. The bot tagged him from 15 m at 12.3, 12.3, 14.5, 16.7 and 57.8 s, so 5 of 5, four of them inside 17 s. He stands
+at his dumpster at (−30, −24.5) and never moves, the same as Rebecca. If you stay home, Rebecca is tagged at your
+start. Holding and firing back, the bot lost her at 18.7, 29.1 and 68.2 s, and she survived 120 s once. Untaggable, it
+lost her at 10.1 s (Marcus, 25 m), 22.6 s (Mason, 4.3 m) and 105.3 s (Mitchell, 39 m). Protect Ryan is slower and
+fairer. Holding, the bot won 2 (Priya out at 69 and 117.5 s), lost Ryan once at 48.9 s, and 1 round was still going at
+120 s. Walking at Priya, it won 3 of 3 at 76–113 s after 4–9 respawns, because the bulb plank covers her. Untaggable,
+2 of 3 rounds were still level at 120 s, and Tyler tagged Ryan from 27.5 m in the third. I'd fix Problem 1 before
+judging either match's balance.
+
+**What worked.**
+- **VIP rules:** respawns at your start with the 2 s grace worked in every round, up to 9 times in one round, with no
+  page error. Every ending matched what happened: "YOU GOT THEM" with Priya's or Seth's cap line, and "THEY GOT
+  RYAN/REBECCA" when ours fell.
+- **Stuck kids:** none. My loose 1 m tracker flagged Sean in Night Shift (11–13 s), Owen in Protect Ryan, Trey at the
+  club and Mitchell at the school. A per-frame probe (moving state only, more than 2.5 m from the player) found no kid
+  over 3 s in 11 rounds of Protect Ryan, the club 3v3, the portables 3v3 and Brooke's 1v1. The flags were kids
+  respawning beside their spawn or holding a spot.
+- **The 1v1s:** Tyler at the school, standing, gave 1 win and 2 losses (tagged at 10.9 and 11.6 s, from 9–12 m).
+  Pushing, the bot won 2 of 3. Brooke at the club tagged a standing bot at 44.6–52.4 s from 8–16 m in 3 of 3. Pushing,
+  the bot was tagged at 10 and 12 s from 15 m twice and won once. Both read as fair duels.
+- **The 3v3s:** the portables 3v3 ran the full 120 s three times with the allies trading. The eighteenth-hole 3v3
+  ended at 64.5 s (Seth from 30 m), and two rounds were won at 98 and 115 s.
+- **Backyard guns against Sean's AK (one life):** the Bucket Gun won 3 of 4. The Bolt Pistol won 2 of 4, the
+  Six-Shooter 1 of 4 and the spring shotgun 1 of 4. The Thunder Pump lost 4 of 4 from 15 m and won 1 of 4 when closing
+  to 8 m. The spring shotgun closing to 8 m lost all 4. Sean tags at 5–6 s from 10–15 m whatever you carry, so the
+  pumps are underdogs here, and the Thunder Pump is no worse than the spring shotgun. That's the trade the builder
+  described, not a bug. The Bucket Gun with a taped mag in the Hollow 3v3 was out at 18.7–54.8 s (1 life). My bot
+  refills rather than flipping, so this run doesn't judge the taped mag.
+- **Step cost** (three or four browsers at once): Night Shift averaged 0.8–2.6 ms with a p95 of 1.6–6.8, and Protect
+  Ryan 1.5–2.3 ms with a p95 of 2.4–5.8. Single steps reached 230–390 ms under load, as last run's did.
+- **First-timer path:** the title reads v1.171 with one button. The mirror, then DONE, puts you in the bedroom, and
+  the first prompt is "E Go outside". Holding W from there walks past the mirror prompt to the computer.
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io, so I read no comments. In the last day of
+Slack there were the builder's v1.164–v1.171 posts, the producer's posts, and the D.14/D.15/D.16 decisions and their
+answers. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.161–v1.171)
+- v1.170, VIP balance: see Problems 1 and 2. Rebecca falls because she stands at your spawn. Ryan lasts because the
+  lane happens to be quieter, not because anyone is guarding him well. "VIP kids don't talk about being the VIP" is
+  true, but it matters less than where they stand.
+- v1.168, the gun trades: judged against one kid (above). Whether the Thunder Pump feels right at 10 m, and whether
+  the Bucket Gun's 23 m/s BBs look slow, need hands. Prices: not judged.
+- v1.169, the parts' trades: not judged. My bot doesn't flip the taped mag or sprint.
+- v1.169 fix-up, the bored rifle kid holding at 40–50 m: not met this run.
+- v1.171, planted feet: the builder's slip numbers are the headless measure. How it looks needs eyes. My side-on
+  capture of a running kid failed (it rendered sky), so I have no picture for Michael.
+- v1.171 fix-up, Brooke hiding at her anchor in the lot 3v3: not played.
+- v1.161 / v1.165, the desk's ~20 s of cover and the treehouse's quiet 7 s: not replayed.
+- v1.167, a crouched kid's chest-high carry over low cover: needs eyes.
+
+I have no new proposal. Problem 1 is a bug, not a design question: the briefings already say where the VIPs should be.
+
+## 2026-10-07 — Protect Ryan and Night Shift again, Friday Night Lights, Night Swim (v1.176)
+
+I played the builder's tip, `auto/build` at c3defb3 (v1.176). Main is at v1.174, so the Night Shift dumpster (v1.175)
+and the kids' game-time memory (v1.176) are only on that branch. I played 64 bot rounds: Night Shift 17, Protect
+Ryan 11, Friday Night Lights 24, Night Swim 12, plus 12 thirty-second sniper openings (Night Swim and Northcliff's
+night 4v4, 6 each). I also probed Protect Ryan's tags three times. There were no page errors anywhere, and
+`node tests/run.mjs smoke` passes. Last run's bot didn't survive the session (tests/tmp is ignored), so I wrote a new
+one. It aims at the nearest kid it can see (their VIP first when rushing), cocks for the gun's cock time plus 0.15 s,
+fires, and refills an empty mag after 2 s. It either holds its start, pushes to 15 m from the nearest kid, or walks
+straight at their VIP. It walks in a straight line, so on the lot it snags on cars for up to 5 s. The 600 ms end
+timer runs on wall time, so I timed each ending from the tag that decided it.
+
+**Problem 1: in Friday Night Lights, Owen tags you at your spawn about 3 s after BEGIN.** You start at the
+bleachers at (5, 26.5), facing down the field 14° off Owen, who sits by the staff cars 48.3 m away with the spring
+sniper (screenshot `docs/critic/2026-10-07-friday-night-lights-start-owen-48m-ahead.png`). The match gives you one
+life. Standing still, you're out to Owen in 17 of 18 rounds, at 2.9–16.6 s, and 8 of those were inside 3.5 s, about
+a second after the 2.5 s opening hold lifts. The bot fared no better. Holding and firing back, it was out at 3.1–3.5 s
+in 3 of 3 rounds. Pushing up the field, it was out at 2.9–3.0 s in 3 of 3, from 36 m. It's survivable if you know
+where to go. Sprinting 9.7 m left to the 3 m block at (−3, 21) and stopping behind it, away from Owen, takes 1.4 s, and
+nobody touched me there for 20 s in 6 of 6 rounds. A first-timer won't know that, and the result screen's "Too many
+angles, not enough cover" is the first they hear of it. This is the same failure as Two in the Yards (v1.86) and Hold
+the Treehouse (v1.144). The other night snipers don't do it. Night Swim's Devon at 52 m and Northcliff's at 57 m fired
+at 2.2–5 s but tagged a standing player 0 times in 12 rounds of 30 s. One more thing makes this worse: the briefing
+text says "Four a side, four lives each", but the roster under it says "You … 1 life". All five night 4v4s (the
+school, the club, Northcliff, the store and the lot) use the same "four lives" line with `playerLives: 1`. Steps:
+`g.scenario('school_night_4v4')`, stand still, and `stepGame` until `Game.mode` is 'result'. Log the `enemyRef` of the BB
+that hits you.
+
+**Problem 2 (balance): Protect Ryan now goes to whoever walks at Priya, and a held round never ends.** Since v1.172
+both VIPs stand on their anchors, at 0.0 m in every round. If you hold your start, no VIP fell on either side in 5
+rounds of 120 s or 2 of 360 s (1,320 s of play), so a held round never ends. The match has no timer. If you walk
+straight at Priya, you win 4 of 4. I tagged her from 12 m at 28.1, 33.1 and 39.4 s, and Sean got her at 15.2 s. Each
+round cost 1–2 respawns. Last run, with Ryan at your elbow, the same walk took 76–113 s. Nobody on their side comes for
+Ryan in house 0's backyard, so you lose nothing by leaving him. A player will find the walk quickly. I'm not filing
+this as a bug. It's the trade v1.172 made by putting Ryan where the briefing says, and it's for Michael to judge with
+hands.
+
+**Night Shift with the dumpster (v1.175) is a different match.** I played 12 hold rounds: 6 of 120 s that could tag
+me, and 6 of 60 s untaggable. Rebecca fell in 4 of the 12, at 19.1, 27.6, 45.5 and 48.1 s, every time to Mason. Two of
+those were from 3 m, so he walked round the dumpster to her. The other two were from 11 m. Sean won one round, tagging
+Seth from 29 m at 53.5 s. The other 7 were still level at the limit. Before the dumpster, last run, she fell in 6 of 7.
+Walking straight at Seth won 0 of 5 for the bot, against 5 of 5 last run. Sean won one round at 46.6 s, and the other
+4 were still going at 120 s, with the bot respawned 5–19 times on the way. Part of that is my straight-line walker
+snagging on cars, so read it as "no longer a 15 s walk", not as "too hard". Mason getting to 3 m of her is worth a look
+with hands.
+
+**What worked.**
+- **Night Swim plays as a match.** Pushing down the lawn with one life, the bot was out at 4.8–7.3 s (Seth from
+  28 m, Marcus from 14 and 25 m), which fits the briefing's warning about the lit pool deck. Holding, it lost 1 round at
+  58.3 s (Marcus, 28 m), and 2 were still going at 150 s. In 3 untaggable 300 s rounds, Trey finished Devon and Jamie
+  at 105 and 112 s in two. In the third, our three were all out by 92 s, Jamie (4 lives) and Devon (3) were left, and
+  nothing happened for the last 208 s. Ally Brooke walked 0 m in 300 s in 2 of the 3 rounds. That is the builder's open
+  question from the v1.172 fix-up (a cautious ally far back sits the round out) on another map. The boredom march
+  (v1.152) skips allies, snipers and defenders, so when Devon is the last kid, you have to cross 50 m to the veranda
+  yourself.
+- **D.18, Owen at his spawn:** 3 Protect Ryan rounds of 120 s, with every tag logged. Owen was tagged 1–2 times a round,
+  and once at his spawn pen (29.3, 2.3). Tyler was the one tagged most, 7–8 times a round, by Sean and Nick, but all
+  over the field (x −6 to 29) on his way in, not pinned. In this sample the pin D.18 describes is rare.
+- **VIP endings:** every decided round matched what happened. A tagged Seth or Priya gave a win, and a tagged Rebecca
+  a loss. Player respawns worked up to 19 times in one round, with no page error.
+- **Stuck kids:** none seen. The bot itself was stuck on lot cars, which is my walker's fault.
+- **Step cost** (four browsers at once): averages 0.8–4.5 ms, p95 1.7–11 ms. Single steps reached 815 ms under load,
+  as before.
+- **First-timer path:** the title reads v1.176. NEW GAME goes through the mirror to the bedroom, and the first prompt
+  is "E Go outside".
+
+### itch.io
+Still unreachable: WebFetch gets EGRESS_BLOCKED for mbuckley616.itch.io, so I read no comments. In the last day of
+Slack there were the builder's v1.170–v1.176 posts, the producer's posts, and D.17 with its answer (B). Nothing was
+addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.172–v1.176)
+- v1.172, VIP balance with both VIPs on their anchors: see Problem 2 and the Night Shift paragraph. Protect Ryan
+  tilted toward the attacker, and Night Shift tilted toward nobody.
+- v1.175, Rebecca leaving her spot (1 in 38 of the builder's rounds): not seen. She was 0.2 m off her anchor in all 17
+  of my Night Shift rounds. Whether the dumpster makes Night Shift too safe with a real defender: with my bot, she
+  still fell in 4 of 12, so it isn't too safe.
+- v1.172 fix-up, a cautious ally sitting the round out: seen again in Night Swim (Brooke, 0 m in 300 s, 2 of 3). It's
+  a design call, as the builder says.
+- v1.173, workbench labels at in-between angles: not judged. It needs eyes.
+- v1.174 and v1.176: nothing for play. With v1.176 my rounds run on game time anyway, and Devon's doorway was not
+  replayed.
+- D.18: rare in my sample (above).
+
+I have no new proposal. Problem 1 is a bug of a kind the builder has fixed twice before, and Problem 2 is Michael's to
+feel.
+
+## 2026-10-08 — Storm the Court, Seth's Got a Shotgun, Two Against the World; Friday Night Lights and Protect Ryan again (v1.179)
+
+I played main at e9be181 (v1.179). `auto/build` is ahead only by a decisions note (D.19), so main is the newest
+build. I played 52 bot rounds: Friday Night Lights 12, Storm the Court 12, Seth's Got a Shotgun 16, Two Against the
+World 6 and Protect Ryan 4. I also ran five probes. There were no page errors anywhere, and `node tests/run.mjs smoke`
+passes. The bot is new again (tests/tmp doesn't survive). It aims at the nearest kid it can see, cocks for the gun's
+cock time plus 0.15 s, fires, and refills an empty mag after 2 s. It either holds its start, or walks straight at the
+nearest kid until it is 15 m away. One warning for whoever writes the next bot: making the player untaggable with
+`maxHits = 1e9` freezes the page on the first hit, because `updateHealthHud` then builds that many pips. The vip suite
+already says so. It cost me one 15-minute hang before I saw it. The untaggable rounds below ignore hits on the player
+instead.
+
+**Problem 1: kids on the cul-de-sac's raised bulb can't see over the plank fort, so they never fire.** In Storm the
+Court, Mitchell has the sniper on the plank fort (`bulb_plank`, at (30.6, 2.3)), and the briefing says "he does not
+miss". He fired 0 shots in all 12 rounds, and 0 in a 30 s probe where I walked the player from the lane to 12 m from him
+and stopped there in the open. Ryan and Nick, behind the cars, fired 1–9 times a round. The cause is in the kids'
+sight check. The bulb's ground sits at y 0.35, and the check that sets `_hasLOSNow` puts the kid's muzzle at
+`(perch ? perch.y : 0) + 1.05 × scaleY`, which leaves the ground's height out. The code comment at v1.138 says so
+("the ground's own height is still left out here"). For a kid on the bulb, that puts the eye about 0.8 m above his feet
+instead of 1.2 m, which is below the plank's top. Over the same 30 s walk, I sampled his line to the player 53 times.
+`_hasLOSNow`'s formula was clear 0 times, and the same line from his real height was clear 48 times. Priya, Protect
+Ryan's VIP, holds the same anchor. She was clear 0 of 53 times against 40 of 53, and she fired 0 shots in that probe and
+in all 4 of my Protect Ryan rounds, while Sean tagged her from 17–19 m. That explains last run's "walk straight at
+Priya and win 4 of 4": the VIP can't shoot back. Screenshot `docs/critic/2026-10-08-storm-the-court-mitchell-hiding-at-12m.png`
+shows Mitchell's head over the KEEP OUT plank at 12 m, in `hiding`, with 0 shots. So Storm the Court's sniper threat
+doesn't exist, and with it most of the match's reason to "push the lane smart". Still, the straight walker was out in
+6 of 6 rounds at 9.4–11.5 s, to Ryan and Nick from 15–22 m. Two Against the World's Priya (`bunratty_team_2v4`) also
+starts at `bulb_plank`, but she isn't a defender and walks off it. I didn't check other raised ground. Any kid
+standing on ground above y 0 behind cover just over 1 m should show the same thing. Steps: `g.scenario('bunratty_storm_the_court')`,
+ignore hits on the player, walk him to (18.7, 1.4), and step 20 s. Count `spawnEnemyBB` calls from Mitchell, and
+compare `hasLineOfSight` from `1.05 × scaleY` with one from `pos.y + 1.05 × scaleY`.
+
+**Problem 2: Seth's Got a Shotgun's briefing promises "past 14m and he can't touch you", and he can.** When I held the
+start, Seth ended 4 of 6 rounds at 3.5–4.5 s, tagging the player from 14.7, 14.7, 17.7 and 17.7 m. In 4 untaggable
+probes he fired his first shot at 2.8 s from 20.1 m every time, his second from 16.9–17.3 m, and he hit from 15.0–17.7 m
+in 3 of the 4 before closing to 5.7 m. The shotgun's AI bands are 6/8/25 (PUSH/NEAR/FAR), so he engages out to 25 m.
+Either the line or Seth's range is wrong. A player who backs off to 15 m because the briefing told them to gets tagged
+and doesn't know why. The match is otherwise a fair, fast duel: the bot won 4 of 12 (2 holding, 2 pushing), tagging
+him from 5.7–5.8 m, and every round was decided by 8.2 s. Steps: `g.scenario('winnmark_seth_shotgun_duel')`, stand still,
+and log the shooter's distance at each hit on the player.
+
+**Friday Night Lights with the stand start (v1.177) and the allies walking out (v1.179).** Holding behind the stand,
+nobody tagged me before 70 s in 6 of 6 rounds. Owen tagged nobody, and 4 rounds were still going at 120 s. The 2 I lost
+were to Ryan, who walked in, at 70.6 s from 2.5 m and at 107.4 s from 21 m. Pushing up the field, I was out in 6 of 6 at
+12–50 s, 5 of them to Ryan from 11–23 m. So the stand covers the start without making the round safe. Allies: Eric
+walked 189–350 m and was out of lives by 120 s every time. Brooke fired 59–232 shots a round and Rebecca 26–77. Neither
+sat out. But both stopped about 20–50 m from their start and stayed there 85–111 s of the 120: Rebecca at
+(−16.4, 12.2), 7.5 m short of the south portable, and Brooke at (−22.4, 24.9). That matches the builder's v1.179 note.
+They fight from there, so I'm not filing it. Mitchell on their side was the one who did least: 12–36 m walked, 7–50
+shots, and still for 59–104 s in the stockroom corner at (−16, −22).
+
+**Protect Ryan (v1.178).** I ran 4 rounds of 120 s, holding and untaggable. Owen reached his anchor at 18.3–18.4 s in 3
+of them. In the fourth he was tagged on the way and ended up peeking behind the east car, his new spawn, for 61 s. Sean
+tagged Priya at 43.3 and 100.8 s, so a held round now ends in 2 of 4 (last run: 0 of 7). With Problem 1, that's
+because Priya can't shoot Sean back, not because of the spawn move.
+
+**Two Against the World.** I ran 6 rounds holding the lane start with one life. I was out every time, at 9.6–21.7 s:
+Priya twice (18.9 and 37 m), Ryan three times (5.5–14.7 m) and Mitchell once (27 m). Sean lost 1–2 of his 3 lives in
+the same time. The briefing calls it "a real underdog fight", and it is one. I'm not filing it. Whether 10–20 s is
+too short for a player is for hands.
+
+**What worked.**
+- **First-timer path:** the title reads v1.179, and the button says ENTER MIKE'S ROOM. NEW GAME goes through the
+  mirror to the bedroom, and the first prompt is "E Go outside".
+- **Stuck kids:** apart from the holders named above, none. The kids who stood still longest held cover at their
+  posts, peeking and firing, and none of them was wedged on the way to one.
+- **Step cost** (two to four browsers at once): averages 0.3–4.2 ms, p95 0.5–10.6 ms. Single steps reached 826 ms
+  under load. The harness restarted one stalled NEW GAME (the known v1.123 stall).
+
+### itch.io
+Still unreachable: WebFetch can't resolve mbuckley616.itch.io, and curl gets a 403 from the proxy, so I read no
+comments. In the last day of Slack there were the builder's v1.178 and v1.179 posts, the producer's posts, the D.18
+decision, and two merge cards. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.177–v1.179)
+- v1.177, whether the stand start is too safe for a capstone: it isn't. The start is safe from Owen, but Ryan walks in
+  and ends 2 of 6 held rounds (above).
+- v1.178, whether Owen's longer walk changes Protect Ryan's pace: he reaches his anchor at 18.3–18.4 s. I have no
+  earlier number to compare against, and the pace is set by Problem 1 more than by Owen.
+- v1.179, whether the west side feels crowded with two allies on it: the numbers say the two allies stop 7–20 m apart
+  and both fire. How it feels needs hands.
+- v1.179 and D.19, Night Swim's idle Brooke: not replayed. D.19 is with Michael.
+
+I have no proposal. Problem 1 is a one-line kind of bug with a large effect on two matches, and Problem 2 is a line of
+text or a range number. Both are the builder's.
+
+## 2026-10-09 — King of the Treehouse, Night Game in the Woods, Two of Us Four of Them (Night); Storm the Court and Protect Ryan after v1.180 (v1.181)
+
+I played main at c02adf8 (v1.181). `auto/build` is ahead only by a decisions note (D.20), so main is the newest
+build. I played 61 bot rounds: King of the Treehouse 14 (8 on v1.181, 3 each on v1.179 and v1.138), Storm the Court
+10, Protect Ryan 8, Night Game in the Woods 9 and Two of Us, Four of Them (Night) 6. I also ran four probes. There were
+no page errors anywhere, and `node tests/run.mjs smoke` passes. The bot is new again. It aims from the camera at the
+nearest kid it can see, holds the trigger to a full pull, releases, and fires when it has a line. It refills an empty
+mag after 2 s. It either holds its start, or walks straight at the nearest kid until it is 15 m away. A note for
+whoever writes the next bot: the win in a VIP or team match comes through a `setTimeout` (v1.90's guarded delays), so a
+bot that runs the whole round inside one `page.evaluate` never sees it end. Step in chunks with an await between them.
+My first VIP rounds showed Priya out with the round still going, and that was the bot's fault, not the game's.
+
+**Problem 1: King of the Treehouse ends about 3 s after BEGIN, whatever the player does.** This is the first time I've
+played it. Connor holds the treehouse platform with an MP5. You start by the bins at the side gate, 24.5 m from him, in
+the open with the platform in full view (screenshot `docs/critic/2026-10-09-king-of-the-treehouse-spawn.png`). The
+v1.101 opening hold ends at 2.5 s, and his first burst (5–9 BBs) tags you at 2.9–3.3 s. That happened in 8 of 8 rounds,
+holding or walking at him, from 17–24.5 m. Then I sprinted for 2.5 s from the start in each of eight directions,
+45° apart, and stopped. He had a line in 55 of 55 samples every time and tagged me at 2.6–3.4 s. That includes the run
+straight under the platform to 6.1 m. In the 2.5 s the hold gives you there is no cover from a kid 2.6 m up, and one
+hit ends the match. It isn't new. v1.138, the build that added the map, gives the same 3.0–3.3 s from 24.5 m in 3 of 3,
+and so does v1.179. The briefing invites you to "get to the ladder and climb it", which takes about 1.5 s once you are
+there. As it plays, a first-timer reads the card, clicks BEGIN and is out before they've found the ladder. It is
+Devon's opening shot in Two in the Yards again, which Michael answered with the opening hold. This time the hold is
+too short, because the shooter sees the whole yard. The fixes are a start out of his sight (behind the shed or the
+house corner), cover between the gate and the oak, or a longer first-shot wait for a perch defender. Which one is a
+design call, so I'm filing it and leaving the choice open. Steps: `g.scenario('stoneglen_treehouse')`, stand still
+or sprint any way, step 8 s, and log the time of the first hit on the player.
+
+**Problem 2: three briefings promise you five lives or respawns, and you get one.** Two of Us, Four of Them (Night) says
+"Everyone's got five lives and respawns at their fort". The Hollow 3v3 (`hollow_skirmish_3v3`) says "everyone's got
+five lives and respawns at their fort". Bunratty's Night Game: Sean Has Your Back (`bunratty_night_team_2v2`) says
+"everyone respawning at their base", and Winnmark's night 2v2 says "both teams respawning at their base flags". All four
+have `playerLives: 1`. The roster under each briefing says "You · 1 life" correctly, so only the prose is wrong
+(screenshot `docs/critic/2026-10-09-two-of-us-briefing-five-lives.png`). In the six Two of Us rounds I was out on the
+first hit every time, at 22.5–79.6 s. The other Hollow and lot battles already say it right ("five lives for every kid
+but you"), so the fix is the same few words in four lines of text.
+
+**Storm the Court after v1.180.** Mitchell shoots back now. Walking down the lane, I was out in 6 of 6 rounds at
+5.6–8.8 s. Mitchell tagged me in all six, from 17.5–30.7 m, with his first or second shot (1–2 shots a round). Last run,
+the same walk was out at 9.4–11.5 s, to Ryan and Nick. Holding the start, nobody fired a shot in 4 rounds of 90 s, and
+none of those rounds ended. Whether a sniper who lands his first shot from 30 m is too hard is v1.180's Still open, and
+it needs hands. A bot walking a straight line down the lane is the worst case. "He does not miss" now holds.
+
+**Protect Ryan after v1.180.** Priya fires back now, 1–51 shots a round (0 in all four rounds last run). Holding the
+start for 120 s, I won 1 of 4, when Sean tagged her at 71 s. The other 3 ran to 120 s. Walking at Priya, I won 3 of 4,
+at 10.0, 82.5 and 105.5 s. I was tagged 1–9 times on the way (you come back in a VIP match), mostly by Mitchell from
+19–26 m. Last run that walk won 4 of 4. It is harder now, but not shut.
+
+**Night Game in the Woods (`hollow_night_battle`).** I played 8 rounds of 150 s. In the four I held, I was out in 3, at
+53, 86 and 89 s, to Ryan from 5.7 and 19.6 m and Seth from 14.7 m. My "push" bot wedged against its own fort wall 4.6 m
+from the start, so the other four rounds were holds too. I was not tagged in any of them, and all four went to 150 s.
+The fight is real. Eric runs out of all 5 lives in 6 of 8 rounds, and Seth and Ryan lose theirs in 4 of 8. Two
+allies stand still. Rebecca (pistol, posted to `b_creek`) stays at (1.7, 35.7) in her own fort in 8 of 8 rounds,
+walks 0 m and fires 0–11 shots in 150 s. Brooke (sniper) walks 0 m in 7 of 8 and fires 18–46. That is D.19's cautious
+ally on a third map, after Night Swim and Price Check. I've added one line under Found in play so whichever answer
+Michael gives can be checked here. Solo, with nothing else running, the match steps at 1.97 ms on average, p95 4.4 ms,
+worst 15.7 ms, with all its lights.
+
+**Two of Us, Four of Them (Night).** I played 6 rounds, out at 22.5–79.6 s, to Ryan from 5.8–9.3 m four times and to
+Seth from 14.7 and 19 m. The enemy sniper Mason walks 1 m a round and fires 2–12 shots from the north fort, which is a
+sniper's job. Sean stays alive (0–2 lives lost) and fires 35–341 shots. Apart from Problem 2, it plays as the briefing
+says.
+
+**What worked.**
+- **First-timer path:** the title reads v1.181, and the button says ENTER MIKE'S ROOM. NEW GAME goes through the mirror
+  to the bedroom, and the first prompt is "E Go outside".
+- **Kids' heights:** on Bunratty and the Hollow, every kid's feet are within 0.00 m of the ground under him, sampled
+  each second for 30 s. Bunratty's west end really is 11.5 m up the hill, so Ryan at y 11.5 is standing on the ground.
+- **Stuck kids:** none, apart from the allies above and the perch and fort defenders, who are meant to hold.
+- **Step cost** (four browsers at once): averages 0.3–5.8 ms, p95 0.8–21.8 ms. Single steps reached 1.06 s under load.
+  Solo figures are above.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io, and curl's CONNECT is refused by the proxy, so I read no
+comments. In the last day of Slack there were the builder's v1.180–v1.181 post, the producer's posts, the merge card,
+D.19 and D.20. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.180–v1.181)
+- v1.180, whether Storm the Court and Protect Ryan are now too hard: I could judge the numbers headless (above). A
+  straight walk down the lane is out in 6–9 s, and walking at Priya still wins 3 of 4. Whether that feels too hard
+  needs hands, and so does whether a player who uses the cars' cover lasts longer.
+- v1.181, whether Seth should have a real safe range: not replayed. That one is Michael's.
+- D.20, the kids' walk: I can't judge it headless.
+
+I have no proposal. Problem 1 needs Michael's choice of fix, which I've put under Pending for the producer. Problem 2
+is the builder's text edit.
+
+## 2026-10-12 — Bellfield Court: Flags on Bellfield, Mason's Court, Hold the Bulb Fort; the school's new kids (v1.190)
+
+I played v1.190 from `auto/build`. main is at v1.189, and v1.190 only changes the school's roster. A bot drove the
+player. It walks the game's own distance field (`kidFieldTo`) to its goal, racks the spring and fires at the nearest
+enemy it can see within 40 m, aiming dead on. When the mag runs dry the script refills it (14–20 times a round in the
+long matches), because a real player would be feeding a speed loader. Three bot modes: *push* (go to the goal,
+shooting), *run* (sprint to the goal, never shoot) and *stand* (at the start, never shoot). I played 25 rounds with
+no page errors. The NEW GAME → bedroom path passed in smoke.
+
+**Problem 1: Flags on Bellfield never ends.** It is first to two flags, with no clock and everyone coming back, and
+none of my 8 rounds reached a result. Over 1,530 s of play there was one capture, by Mason. These were all on
+`bellfield_ctf`:
+- *Push*, 3 rounds of 240 s: 0–0, 0–0, 0–0. The player never got to their flag, and was tagged 33–36 times a round
+  (every 7 s) in the middle of the street, mostly by Fernando's AK from 13–38 m and by Mason. In one stretch Fernando
+  tagged him 14 times running, each one 2.0–3.5 s after the last, from 28–38 m. That is about one tag every time the
+  2 s respawn grace ran out on the walk back in. Andrew (our runner) took their flag twice a round and lost it within
+  2–7 s each time.
+- *Run* (sprint for the flag, never shoot), 3 rounds of 180 s: 0–0, 0–0, 0–1. The player reached their flag 3 times
+  in 540 s and was tagged with it within 1 s every time, after carrying it 1–5 m. Christian and Fernando wait by the
+  kid fort beside the flag, 1–8 m away (screenshot `docs/critic/2026-10-12-flags-carry.png`: Christian at 6.7 m when
+  you pick it up). The one capture was Mason's at 41 s in round 3. He took our flag twice more and lost it both times.
+- *Stand* at the start, 2 rounds of 150 s: 0–0 both. Mason, their runner, comes for the player instead of the flag 4
+  m away, and took our flag once a round. Tagged 6–9 times a round, mostly by Mason at 8–16 m.
+The match does what v1.189 says it does. Taking, dropping, sending home and the HUD all behaved, and the timer box
+reads "FLAGS · FIRST TO 2 0 – 0" or "OUR FLAG IS DOWN 0 – 1". But a player who can't score in four minutes has no way
+out except quitting, and a round with no clock never pays out. The builder already listed a clock as Michael's
+call once he had played it, so I've put the numbers under Pending (a clock, two defenders fewer by their flag, or
+both) rather than pick a fix. My bot is a poor flag runner: it never uses the backyards or clears the fort before
+grabbing. A real player will do better, and whether that is enough needs hands.
+
+**Mason's Court** (`bellfield_1v1_mason`), *push*, 6 rounds: 3 wins and 3 losses, all decided at 8.9–13.3 s, 33 m
+down the street, with the two pistols 7–10.5 m apart. Each side got one hit in. Mason walks to meet you rather than
+sitting behind the fort, so the "58 m of open street" in v1.186's Still open never comes up: the fight happens at
+pistol range in the middle. The result screen matched what happened every time (YOU GOT THEM +$8, YOU'RE OUT +$2).
+
+**Hold the Bulb Fort** (`bellfield_defend_fort`), holding inside the fort and shooting back, 4 rounds of 90 s: 4 wins,
+and the player was never tagged. The bot tagged 9–10 attackers a round in three waves (about 17–26 s, 43–56 s,
+68–88 s) for 66–71 shots, and nobody ever reached the open back. v1.187 measured a player who never fires as tagged at
+22–24 s. One who fires back is not tagged at all here. My bot aims perfectly and has no reaction time, so this is an
+upper bound. Even so, it suggests the defend is easy for anyone who shoots back. "MOM CALLED THEM IN!" showed every
+time, +$9.
+
+**The Portables (v1.190's kids)** (`school_portables_3v3`), *push*, 3 rounds: out at 6.2, 6.4 and 25.3 s, to Caleb
+from 13 m twice and to Nathan from 22 m. Sophie was tagged once. Caleb, Nathan and Sophie build, name themselves on
+the roster and the result line ("Caleb, Nathan, and Sophie regroup near the road"), and fight. I can't tell whether
+the faces read headless.
+
+**What worked.**
+- No page errors in 25 rounds. Every result screen matched the outcome.
+- The CTF HUD and rules behaved as v1.189 lists them: pickup, the carrier's HUD line, drop on tag, return by touch
+  and the 20 s timeout all showed up in play, not only in the scripted suite.
+- Step cost (one browser, with a second one playing at the same time): Mason's Court averages 0.2–1.1 ms. Flags on
+  Bellfield averages 1.0–1.2 ms, with its worst single step at 198 ms. The fort averages 0.4–0.6 ms, with spikes to
+  119–359 ms while the other browser was busy. The Portables averages 1.1–2.1 ms.
+
+**Not a bug, but noted:** `Game.scenario.aiClock` is never reset, so it keeps counting across rounds in one session
+(my first logs showed rounds "ending" at 12, 22, 32 s). The kids' ban and route windows only compare it against
+values taken in the same round, and the opening hold uses `roundTime`, so nothing in play is wrong. Suites that time
+with it will be off after the first round.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io, and curl's CONNECT gets a 403 from the proxy, so I
+read no comments. Slack's last day had the builder's v1.187–v1.190 posts, the producer's posts, the v1.189 merge and
+the two "what next" decisions. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.182–v1.190)
+- v1.183, the kids' turn and lean: can't judge headless. Nothing in the numbers above looked like a kid snapping.
+- v1.184, a bored ally walking out: not replayed this run.
+- v1.185, the treehouse's shed start: not replayed. `treehouse-start` covers the numbers.
+- v1.186, 58 m of open street for a pistol 1v1: judged headless (above). The duel happens at 7–10 m in the middle of
+  the street, not across 58 m. Whether the backyards get used needs a human, because my bot never goes there.
+- v1.187, whether the fort is fair: judged headless. Easy for a player who fires back (0 tags taken in 4 rounds).
+- v1.188, lamplight pools: can't judge headless. Not played.
+- v1.189, CTF balance and a clock: judged headless. It doesn't end (Problem 1).
+- v1.190, the school kids' looks: can't judge headless. They play as the kids they replace.
+
+I have no proposal this run. Problem 1 is under Pending for the producer.
+
+
+## 2026-10-13 — Flags on Bellfield with its clock, the Pickup Game by day and night, Lamplight on Bellfield (v1.201)
+
+I played v1.201 from `auto/build`; main is at v1.194. The bot is last run's, rebuilt: it walks `kidFieldTo` to a goal,
+racks the spring by holding the trigger through `onLmbDown`/`onLmbUp` as a player does, and fires at the nearest enemy
+it can see within 40 m, aiming dead on. When it has a line to a kid inside 25 m it stops walking to trade, which a
+real player behind cover would not always do. Modes as before: *push*, *run* (sprint, never shoot), *stand*. 32
+rounds, no page errors. Smoke passes. The NEW GAME path still works for a first-timer: the mirror opens, DONE puts you
+in the hall with "E Go outside" on screen, and the new wall things (phone "1 new", the pickup board, the calendar) are
+5.9–6.8 m away, so none of them takes the door's prompt.
+
+**Flags on Bellfield after v1.191** (`bellfield_ctf`), 6 rounds. Every round ended on the clock, which is the fix
+working: two draws 0–0 from *push*, and from *run* a draw 0–0, a win 1–0 (my capture at 287 s), a loss 0–1 and a
+draw 1–1. Last week 0 of 8 ended. So four of six were draws, which pay as a loss (screenshot
+`docs/critic/2026-10-13-flags-draw-card.png`: "DRAW 0–0", red, +$3, Mason's "A tie doesn't count. Run it back?").
+- *Run* (4 rounds, about 1,250 s): the player took their flag at least 5 times and brought it home twice. Last week it was 3 takes
+  and 0 home in 540 s. But the runner is tagged 48–61 times in five minutes, about every 5–6 s. Of 105 logged tags, only
+  9 came within 15 m of their flag. The rest came in the street. Christian, now a pusher, made 38 of them at 0–13 m,
+  because he runs to the middle of the street, which is the runner's route. Fernando made 41, mostly from 26–34 m with
+  the AK. Mason made 26.
+- *Push* (2 rounds): tagged 30 times a round. The bot tagged 24–27 kids a round and never got to their flag. Andrew
+  took it 1–2 times a round and never got it home.
+- v1.191's draw question: a draw shows in the lose colour and pays the loss pay. Mason's line reads right for a draw.
+  Whether it should look different is still Michael's call.
+- Step cost: 0.9–1.6 ms on average, 26–38 ms worst.
+
+**The Pickup Game** (v1.201), 4v4 with 3 lives, built by `buildPickupScenario` and entered as `pickup_game`, 20
+rounds on three of the six maps that used to be night only, day and night. I lost all 20, out at 8.1–38.3 s. Each
+paid $1 and left `completed` at 0, so the ladder is untouched as promised. Two problems:
+
+*Problem 1: your "lives" are not the kids' lives.* The briefing says "3 lives for everyone, you included". For a kid,
+a life is a tag, a walk back to base and a return. For you, a life is one hit (`playerLives` → `maxHits`), with no
+gap between hits and no return. An auto gun or a shotgun takes all three at once. In 6 of 20 rounds, all three of my
+hits landed within 1.1 s:
+- Store by night: Jamie's shotgun from 2 m landed 3 pellets in the same frame (19.6, 19.6, 19.6 s). Marcus's AK hit at
+  9.0, 9.1, 9.2 and at 8.4, 9.0, 9.2.
+- Store by day: Marcus's AK hit at 9.2, 9.4, 9.5.
+- Willow Bend by day: Devon, then Seth, at 7.8, 7.9, 8.1.
+- Northcliff by night: Mason at 15.6, 15.7, 16.7.
+
+Store by day also had Jamie land two pellets in one frame. The same holds for 5 lives: one AK burst. The words promise
+a fair trade that the rules don't give. I've filed it under Found in play and written a proposal.
+
+*Problem 2: Northcliff by day belongs to Fernando's rifle.* The pickup game copies the night 4v4's spots, and Fernando
+keeps the sniper on the high yard (`yard_n3`). By day he made 15 of the 15 hits on me in 5 rounds. They came from 20–25
+m, one every 2.4–2.9 s, and I was out at 15.4–16.6 s every time. By night, from the same spots, he made 5 of 15, and the
+rest were Diego, Mason and Christian. This is v1.201's "a sniper spot chosen for the dark may be strong in daylight",
+and on Northcliff it is. My bot stood and traded at 25 m, so a real player who takes cover will last longer. Still, 15
+of 15 is one kid deciding the match. On Willow Bend, Devon's veranda rifle made 2 of 6 by day and 1 of 6 by night.
+Inside the store, Devon made none. There the AK and the shotgun decide it.
+- The start view on Northcliff (screenshot `docs/critic/2026-10-13-pickup-northcliff-day.png`) has a street lamp dead
+  centre about 3 m ahead. It has no collision box, so it is cosmetic, but it's the first thing you see. The ladder's
+  night 4v4 shares this start.
+- Step cost: Northcliff 2.6–8.4 ms average, 156–263 ms worst; Willow Bend 3.4–7.7 ms, 107–166 ms worst. The store
+  is 1.1–3.7 ms, 42–54 ms worst. Northcliff's averages are the highest I've logged this month, but a second browser
+  wasn't running here, so they may be real.
+
+**Lamplight on Bellfield** (`bellfield_night_4v4`), *push*, 3 rounds: out at 4.0, 15.1 and 12.1 s, one life. Mason's AK
+tagged me from 37 m at 4.0 s, 1.5 s after the opening hold and before I'd fired twice. The other two were Mason and
+Diego from 17 m. **Bellfield Bulb** (`bellfield_3v3`), 3 rounds: out at 8.0–10.5 s, to Diego and Fernando from 21–35
+m. My bot is a poor match for a 4v4 with one life, so I've only noted these. Nothing in them looked broken.
+
+**What worked.**
+- No page errors in 32 rounds. Every result card matched the round. TAGS and SHOTS on the card equal what the bot
+  counted (230/230, 205/205). HITS ON YOU counts each respawn in Flags (30, 48, 61), which is right for that mode.
+- The CTF clock: every round ended, the outcome text matched the score, and the 0.8 s freeze held.
+- The pickup board's briefing reads right ("A pickup game in the afternoon on Northcliff Trace, nothing on the line.
+  You've got Andrew, Alex and Evan against Mason, Christian, Diego and Fernando."). The pay and the ladder behave as
+  v1.201 says.
+- A harness note, not a game bug: `endScenarioLater` waits 800 ms of real time. A script that runs faster than real
+  time sees CTF rounds end at 5:12–5:18. In real play it's 5:01.
+
+### itch.io
+Still unreachable. WebFetch can't resolve mbuckley616.itch.io (ENOTFOUND), so I read no comments. In Slack's last day
+there were the builder's v1.192–v1.201 posts, the v1.192–v1.194 merge and the producer's posts. Nothing was addressed
+to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.191–v1.201)
+- v1.191, whether a player can get their flag home: judged headless. Yes, sometimes. My runner took it at least 5 times in 4
+  rounds and got it home twice. The street is the problem now: about one tag every 5–6 s, mostly from the new pusher
+  Christian up close and Fernando's AK from 26–34 m. The draw's colour is for Michael (it reads as a loss).
+- v1.192, the settings ranges: can't judge headless.
+- v1.193, best-moment thresholds: they fired sensibly ("Two in 1.3 s: Fernando, then Christian.", "A 25 m tag on
+  Fernando."). Whether those are the moments a player would pick needs hands.
+- v1.194–v1.196, the calendar spans, the texts' voice, the rival line: not played. They're about the long game, and
+  I played no ladder run through.
+- v1.197–v1.200, hats, tops, shorts, the crew bandana: can't judge headless. These are for Michael's eye.
+- v1.201, the board: judged headless for three of its six day-from-night maps. They build and run with no errors.
+  Northcliff by day is Fernando's rifle (Problem 2). Willow Bend and the store are not dominated by their snipers.
+  Problem 1, lives, is new.
+
+## 2026-10-14 — The Last Saturday, the Pickup Game after its lives fix (four day maps, two free-for-alls), Northcliff by day with Fernando's AK, a first-timer to the first match and back (v1.224)
+
+I played v1.224 from `auto/build`; main is at v1.210. Same bot as last run, rebuilt in `tests/tmp/`: it walks `kidFieldTo`
+to the nearest enemy, racks the spring by holding the trigger through `onLmbDown`/`onLmbUp`, aims dead on at the
+nearest kid it can see inside 40 m and stops to trade inside 25 m. When the mag is empty it gets a full one after
+2.5 s instead of using the loader, which is kinder than a real reload. This run it also logs who fired the BB that
+hit you (`bb.enemyRef`), so the kid names below are the shooters. It ends rounds on stepped time rather than
+`endScenarioLater`'s real 800 ms, so the times below are the game's own. Modes: *push*, *run* (sprint, never shoot),
+*stand*. 32 rounds, no page errors. Smoke passes. The bot carries the new-game Spring Pistol everywhere, which matters
+most in the Last Saturday (below).
+
+**A first-timer, start to finish.** NEW GAME → mirror → DONE → the hall with "E Go outside" focused. E opens the map,
+whose one open card is Backyard Basics, marked NEXT. START, then BEGIN, and the bot cleared it in 25.3 s with 20 shots.
+BACK TO YOUR ROOM, then a page reload: the title offers CONTINUE, and it brings back the $37 (from $35) and the
+tutorial ticked. The autosave (v1.218) works the way a player would test it.
+
+**The Last Saturday** (`last_saturday`, v1.205), 10 rounds, all lost. It is the summer's last match, and the briefing
+promises "Six a side, three lives for everybody", with "You … 3 lives" on the roster (screenshot
+`docs/critic/2026-10-14-last-saturday-briefing.png`). The kids get three lives with a walk home between them. You get
+three hits where you stand, which is the Pickup Game problem from 13 Oct. v1.222 fixed it for the board only.
+- Two of your lives went within 0.75 s in 8 of 10 rounds. All three went inside 0.55 s in 2 of 10: Mitchell's AK at
+  3.68, 4.15 and 4.23 s, and Mason's MP5 at 11.27, 11.47 and 11.57 s. Ryan's shotgun took two in 0.12 s from 7 m.
+- Sprinting off the start without firing, you are out at 4.0, 4.5 and 4.2 s, 1.5–2 s after the opening hold.
+  Pushing, you are out at 7.2–15.3 s. Standing at the start you last 152 and 200 s, because they come to you one
+  at a time.
+- The result card is the stock one ("regroup near the road. "Run it back?""), so the summer's last match ends on a
+  generic line (screenshot `docs/critic/2026-10-14-last-saturday-out-at-4s.png`).
+- A real player arrives here with a bought gun, and against six AKs, MP5s and UMPs my pistol is the worst case. But
+  the lives problem doesn't depend on the gun. Filed under Found in play. Of the story matches, this is now the only
+  one with more than one player life, not counting the tutorial, so Michael's A on the pickup question looks to cover it.
+- Step cost: 4.7–8.4 ms on average, 482 ms worst. It's the heaviest map I've logged: eleven kids on Bunratty.
+
+**The Pickup Game after v1.222** (a tag costs a life and sends you to your start with 2 s of cover), 3 lives, by day.
+The 4v4s were on Bunratty, the lot, the school and Northcliff, and Winnmark ran its 3v3. The free-for-alls were
+6-ways on Bunratty and the Hollow. 21 rounds: 1 won (Winnmark, *stand*, 210 s) and 2 ran to my 240 s cap with no
+result (Bunratty and the school, *stand*, with 0 and 1 hits: nobody came; the clock was Off). The other 18 were lost.
+- The fix holds. Across 54 lost lives, the shortest gap between two was 2.05 s. On 13 Oct, 6 of 20 rounds lost all
+  three inside 1.1 s. *Push* rounds now last 15.0–50.6 s, up from 8.1–38.3 s.
+- v1.222's camping worry holds on Bunratty's free-for-all. Sean's AK took all six of my lives in two rounds from
+  17–20 m, each time within 2.05–2.9 s of my return to the start, and 3.07 s into the first round. *Push* was out at
+  8.0 s and *stand* at 14.8 s. On the Hollow's 6-way, the kills were spread out (Sean at 4–6 m, Seth at 26 m, out at
+  34.4 s). The team starts weren't camped: their gaps were 2.55 s and up, mostly 5–25 s.
+- Northcliff by day with Fernando's AK (v1.207), 7 rounds, out at 18.0–68.8 s. In the 4 rounds I attributed, Fernando
+  took your first life every time, at 6.8–9.7 s from 57.8 m, and none after that. The other 8 lives went to Diego
+  (MP5), Mason (AK) and Christian (shotgun). He's no longer the whole match (15 of 15 hits with the rifle), but the nest
+  still sees the start. An AK hitting from 58 m in the first 10 s of every round is longer than any other kid reached
+  me in 32 rounds.
+- Step cost: 0.6–3.7 ms on average. Worst frames: 400 ms on Bunratty, 424 ms at the school, 320 ms on Northcliff.
+
+**What worked.** No page errors in 32 rounds. Every result card matched the round: TAGS, SHOTS and HITS ON YOU equal
+the bot's counts, and the pickup pay was $1 a loss and $3 the win. The opening hold held everywhere: the earliest tag
+was 3.07 s. The Last Saturday's briefing, roster, map and RIVALS line read right. The first-timer path is clean.
+
+### itch.io
+Still unreachable. WebFetch fails on mbuckley616.itch.io (ENOTFOUND), and curl gets no connection. I read no comments.
+In Slack's last day there were the builder's v1.196–v1.224 posts, the producer's and Fable's posts, and the merge and
+decision cards. Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.202–v1.224)
+- v1.202, the free-for-alls: two 6-ways built and ran, with no errors. Fun and the 8-way cap need hands. On Bunratty,
+  one kid (Sean) with a line to your start decides it (above). I played no night free-for-all.
+- v1.203, picking kids: not played. I used the defaults.
+- v1.204, the clock: not judged. I ran with the clock Off, and two *stand* rounds stalemated at 240 s. That's an
+  argument for the clock rather than against it.
+- v1.205, the Last Saturday as the big finish: it reads right on the briefing and plays as a 4–15 s wipe for a player
+  who moves. Most of that is the lives problem (filed). Whether 6v6 at three lives is the right length can only be
+  judged once that's fixed.
+- v1.206, sneakers; v1.209–v1.212, shop pictures; v1.213–v1.217, the room and the house backs; v1.219–v1.224, hands
+  and guns: these are for Michael's eye. I can't judge them headless.
+- v1.207, Fernando's AK by day: judged headless. He takes the first life from 58 m in 4 of 4 rounds and nothing after.
+  He's strong in the opening, not dominant. Option B is still there if Michael feels it.
+- v1.208, F asks before forfeiting: covered by its own test. I didn't play it.
+- v1.218, the autosave: judged headless, through a real reload and CONTINUE (above). I didn't judge the "Saved"
+  note's look.
+- v1.222, the pickup life: judged headless. It works (shortest gap 2.05 s across 54 lives). The camping question is
+  real on Bunratty's free-for-all start, and I didn't see it on the team starts.

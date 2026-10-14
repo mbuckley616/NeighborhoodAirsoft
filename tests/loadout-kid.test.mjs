@@ -15,7 +15,7 @@ const open = await page.evaluate(() => {
 });
 check('the Loadout screen opens with a kid panel (280 × 380)', open.mode === 'loadoutMgr' && open.kid && open.w === 280 && open.h === 380, open);
 check('the kid holds the slot-1 gun', open.gun === open.equipped, open);
-check('seven body parts each have a line and a label', open.lines === 7 && Object.keys(open.texts).length === 7, open);
+check('eight body parts each have a line and a label (v1.149: the walkie at the hip)', open.lines === 8 && Object.keys(open.texts).length === 8, open);
 check('a new save: no eye pro, no armour, default sneakers, no belt, the pistol',
   open.texts.eyes === 'No Eye Pro' && open.texts.chest === 'nothing' && open.texts.feet === 'Sneakers (default)'
   && open.texts.belt === 'nothing' && /Pistol/i.test(open.texts.gun), open.texts);

@@ -7,7 +7,9 @@ await g.bedroom();
 const IDS = ['bunratty_sean', 'winnmark_seth_house', 'bunratty_night_lane', 'bunratty_brothers', 'hollow_skirmish_3v3',
              'hollow_defend_south_fort', 'winnmark_defend_culdesac', 'bunratty_infection',
              // v1.117: the place words fit the map (Found in play, v1.101)
-             'bunratty_pincer', 'lot_defend_store', 'hollow_juggernaut', 'hollow_big_battle'];
+             'bunratty_pincer', 'lot_defend_store', 'hollow_juggernaut', 'hollow_big_battle',
+             // v1.162: the store is indoors (Found in play, critic v1.160)
+             'store_price_check_3v3', 'store_defend_desk', 'store_night_4v4'];
 const lines = [];
 for (const id of IDS) {
   await g.scenario(id);
@@ -40,6 +42,12 @@ check('Hold the Doors loses the doors', of('lot_defend_store', 'lose').every(t =
 const woods = lines.filter(l => /^hollow_/.test(l.id) && /\b(road|curb)\b/.test(l.text)).map(l => `${l.id} ${l.o}: ${l.text}`);
 check('no road or curb in the Hollow (Juggernauts, The Big Game, 3v3, the south fort)', woods.length === 0, woods);
 check('the forts still lose the fort', ['hollow_defend_south_fort', 'winnmark_defend_culdesac'].every(id => of(id, 'lose').every(t => /take the fort/.test(t))), ['hollow_defend_south_fort', 'winnmark_defend_culdesac'].map(id => of(id, 'lose')));
+// v1.162: inside the store there is no road, curb or screen door: the kids regroup in the stockroom and their phones call them home
+const store = lines.filter(l => /^store_/.test(l.id) && /\b(road|curb|screen doors?)\b/.test(l.text)).map(l => `${l.id} ${l.o}: ${l.text}`);
+check('no road, curb or screen door inside the store', store.length === 0, store);
+check('the store\'s team losses regroup in the stockroom', ['store_price_check_3v3', 'store_night_4v4'].every(id => of(id, 'lose').every(t => /regroup back in the stockroom/.test(t))), ['store_price_check_3v3', 'store_night_4v4'].map(id => of(id, 'lose')));
+check('the desk defend\'s timer win: their phones buzz', of('store_defend_desk', 'win/timer').every(t => /phones buzz/.test(t)), of('store_defend_desk', 'win/timer'));
+check('the desk defend loses the service desk', of('store_defend_desk', 'lose').every(t => /take the service desk/.test(t)), of('store_defend_desk', 'lose'));
 // An intermittent "Failed to execute 'connect' on 'AudioNode'" showed up once in three runs of this suite
 // (12 at once, never in the other suites). It's filed in the backlog (Found in play, v1.96) and reported
 // here, not failed on, until it's run down; any other page error fails.

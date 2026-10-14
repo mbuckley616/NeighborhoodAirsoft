@@ -6882,6 +6882,3210 @@ How the pieces work:
   now adds its height, but on sloped maps (Northcliff rises 4 m) a kid's sight line still starts low. Not changed
   here; it would move AI on every hill.
 
+## v1.139 — You slide along a car parked at an angle instead of stopping dead
+The critic found it on v1.137 (Found in play): on Northcliff's road start, holding W in the facing you're given
+stopped you dead at (29.5, 1) after 2 s, against a parked car at an angle (an obox at (30.6, 2.3), 2.99 rad) that
+sits out of view below-left while the road on screen looks open. All three road-start matches. The player's move
+tests the x step and the z step apart, which slides along a wall that runs along x or z, but against a sloped face
+both steps go into it, so neither is taken and you stop.
+
+Now, when the x/z split gets less than half the step, the move finds what blocks it (`blockingObstacle`, the test
+`collidesObstacles` always ran, now returning the obstacle), takes the direction away from its nearest point
+(`obsAwayNormal`, for boxes, angled boxes and cylinders alike), drops the part of the step that goes into it and
+takes the rest along the face, if that is clear and goes further than the split did. If you were touching closer
+than your radius (the split can leave you a fraction of a millimetre in), the slide also eases you back out to it.
+Walking square into a face leaves nothing to slide with, so you still stop. Players only; the kids keep their own
+movement. Trees and other round things now let you slide round them the same way.
+
+### Verified
+- `tests/road-slide.test.mjs` (new): the three Northcliff road starts, each held W for 4 s at the critic's five
+  facings (0°, 3° and 9° left, 9° right, 17° left): all 15 get past the car (x 18.5–23.2, from 35); on v1.138
+  0°, 3° and 9° left stopped at 29.5–32.3. 0 of 3,600 frames inside an obstacle. Square into the car's long side
+  for 3 s: 0.17 m along it, never inside.
+- The first cut stopped at 9° left: the split had left him 0.6 mm inside the car's face, so the slide's own clear
+  test failed every step. The ease-out fixed it; its first version pushed to 2 mm off and let him creep 0.92 m along
+  a face he walked square into, so it now pushes back only to his radius.
+- `npm test`: 46/46 suites green (the baseline before the change had passed its first 17 when it was stopped).
+### Still open
+- How sliding along cars and round trees feels needs a real playtest; corners now ease you round rather than catching you.
+
+## v1.140 — The lot free-for-all starts you looking down the aisle, not at a windshield
+The critic's second v1.134 report: in Everybody for Themselves on the Riverside Market lot, the start v1.134 hid
+behind the last car of the north row faced west, straight into that car, with its windshield 0.9 m away filling the
+screen. The cars in that row are parked nose-in along z, so the row runs north–south past your shoulder. The start
+now faces south (yaw π), down the east aisle along the row, with 40 m of open asphalt ahead and the car along your
+right. Turning that way keeps the kids' centroid 73° off your facing, inside the 120° the spawn suite allows, and the
+start's position and its cover from the other six are unchanged.
+
+### Verified
+- `tests/spawn-facing.test.mjs` now also measures, for every scenario, how far you see straight ahead at eye height
+  (±10°) before an obstacle, and fails under 2 m. Before the change only `lot_ffa` failed it (0.9 m); the next
+  closest are Bunratty Infection and Pincer at 2.7 m. With the change `lot_ffa` reads 26.5 m (the ±10° rays catch a
+  tree down the aisle; 40.6 m dead ahead).
+- Looked at the start at three facings in screenshots (west, 165°, south) before picking south.
+- `npm test`: 46/46 suites green (the harness recovered one real NEW GAME stall in a fresh browser).
+### Still open
+- Nothing for a playtest to judge beyond whether the aisle view is the one Michael wants to open on.
+
+## v1.139 fix-up — road-slide sets the pointer lock itself
+CI failed Builder sessions on v1.139 in its new `tests/road-slide.test.mjs`: "holding W for 4 s gets him past the car"
+failed with the player ending exactly where he started, (35, 1).
+
+`updatePlayer` moves no one unless `Game.mouse.locked` is set, and CI's headless Chromium sometimes refuses the real
+pointer lock. This is the same cause as the houses, jump and laser fix-ups. Both walk loops now set
+`Game.mouse.locked` each step. Test change only; no game change.
+
+### Verified
+- With the lock forced off: every angle fails with the player at (35, 1), as in CI.
+- With the fix: 2 of 2 runs green.
+
+### Still open
+- The same CI run also failed `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s at (−4.1, −23.3). Locally,
+  Mason reached 3 s in 1 of 10 rounds, shuttling north–south at x −17.3, with his sidestep timer not counting down.
+  So that movement comes from a path other than the direct push my v1.134 fix-up covered. Under investigation.
+
+## v1.139 fix-up — a bound cover dropped as failed isn't picked again straight away
+CI failed Builder sessions on v1.139 in `market-lot`'s Night 4v4: Mason stood in `advancing` for 4 s. A probe
+traced which movement branch ran on each frame and caught him alternating along a wall at x −17.3:
+- About 1 s on the bound mover, heading for a cover's stand spot and wedging at (−17.27, −14.22). v1.99 drops a bound
+  wedged for 0.6 s and rests from bounding for 1.5 s.
+- About 1 s on the direct push, whose wall-follow took him back along the wall.
+
+When the rest ran out he picked the same cover again. Each mode undid the other, and neither ran long enough for
+v1.121's pocket back-out to fire.
+
+A cover dropped as failed, by v1.99's wedge or v1.110's no-gain rule, is now skipped by `pickBoundCover` for 6 s of
+scenario time. The direct push gets him round the wall before that cover can be picked again.
+
+### Verified
+- Probe, 40 rounds of `lot_night_4v4`: the longest stand-still in `advancing` is 2 s (before: 3 s in about 1 round in
+  10, and 4 s in CI).
+- `market-lot` 4 of 4 runs green. `npm test`: 45/46. The one failure is `market-lot`'s team 3v3 "both sides lose lives",
+  9–0 in 120 s. It is not from this change: the same check failed 1 of 4 runs on the build without it, also 9–0.
+
+### Still open
+- Lot team 3v3 one-sided rounds. In about 1 run in 4, one side's kids never leave their end (here enemy Marcus at his
+  start and Tyler still `deploying`). The other side's pusher picks them off, so nobody on his side loses a life in
+  120 s. The d7e44da CI failure was the mirror case, with allied Brooke at her start. Being investigated.
+
+## v1.141 — The lot 3v3 check counts the hits on the player, and a clean sweep
+The builder filed it on v1.140 (Found in play): `tests/market-lot.test.mjs`'s team 3v3 check "both sides lose lives
+(within 120 s)" failed one-sided about 1 run in 4, and CI saw the mirror case. The test makes the player untaggable,
+leaves him standing at his spawn, and counted only the kids' lives. Two probes, 50 full rounds of `lot_team_3v3`
+between them, logged every kid's state, position and target, and every final tag with who made it and from where.
+Two different things fail the check, and neither is a game fault:
+- The enemy kids spend much of each round aiming at the player (up to 2,029 hits on him in one round), and Brooke,
+  the allied sniper, holds her spot at the road end as her role says. With the player standing still and unhittable,
+  his side is two kids against three. In the lopsided rounds the two allies were out of lives by 30–40 s while the
+  enemy had lost one, and the enemy then shot the player for the rest of the round. In a real round the first of
+  those hits ends it.
+- The 9–0 case is the other way round: the allies win clean. In the full run that failed, Eric pushed to the enemy's
+  end, (0.8, −18.1), and tagged all three as they came back to their spawn to redeploy; every enemy life was spent
+  and nobody on the player's side lost one. The round was over, but the test steps the game inside one
+  `page.evaluate`, so the 600 ms delayed `endScenario` never runs and the loop went on to 120 s.
+No kid stayed at his spawn in any logged round.
+
+The check now counts a hit on the player as a life lost on his side (it is, with one life), and passes a round in
+which every enemy life is spent (a win). The game is unchanged.
+
+### Verified
+- Probes, 58 rounds on v1.140: the enemy side lost 1–9 lives in every round. Counting the player's hits (0–2,029),
+  his side lost at least one life in every round, the fewest 1 (a 9–1 win with no hit on him).
+- The full `npm test` run before the second half of the change: 45/46, the one failure the clean sweep above
+  (`lostEnemy` 9, `lostAlly` 0, `playerHits` 0). It now passes that result.
+- `npm test` on the final change: 46/46 suites green. `node tests/run.mjs market-lot` 3 of 3 runs green; night 4v4 reads 6 lost by the enemy, 18 by the player's side (13 of them
+  hits on the player).
+### Still open
+- An ally camping the enemy respawn is real behaviour: kids coming back to spawn walk into Eric's MP5 one at a time.
+  It needs a player in the round to say whether it matters; there is no respawn protection.
+
+## v1.142 — A climb prompt at the treehouse ladder
+Michael answered D.7 with A on the control room (2 Oct): kids climb ladders, then a defend in which you hold the
+treehouse while they climb after you, and a "W — climb" prompt at the ladder. This is the prompt, the first of the
+three pieces. v1.138 left the ladder without one; only the briefing said that W climbs.
+
+The scenario now uses the bedroom's prompt box (`#interactPrompt`), driven each step by `updateLadderPrompt`. The
+prompt follows the rule `updateLadder` climbs on, so it never offers a climb that W would not start:
+- At the ladder's foot, looking at it: **W climb**.
+- On the ladder: **W up · S down · Space let go**.
+- In the rail's gap up top, with his back to the ladder: **S climb down**.
+- Anywhere else, looking away from the ladder, or once the round has ended: hidden. `endScenario` now hides it too.
+
+### Verified
+- `tests/ladder-prompt.test.mjs`, 10 checks. Nothing shows at the side gate. At the foot it reads "W climb", and
+  nothing shows looking away. On the ladder it lists the three keys, and it goes once he steps off at the top. In the
+  gap it reads "S climb down", the keys show on the way down, and it reads "W climb" again at the bottom. After
+  `endScenario` it is hidden.
+- `npm test` (run three suites at a time): 46/47. `burst-pose` failed twice in a row on the harness's NEW GAME stall
+  under that load. It passed on its own re-run (below).
+### Still open
+- Whether the box at 60% of the screen height sits well over the ladder view. The box is the bedroom's own.
+
+## v1.143 — Kids climb the treehouse ladder
+This is D.7 A's second piece. Before it, a kid whose target stood on the Stoneglen platform pushed toward the player's
+x and z, which put him under the platform with the floor between them. Only Connor, placed on the platform by the
+scenario, ever got up there.
+
+`kidLadderStep` now runs ahead of the state machine for any gun kid in a scenario with ladders. When his target is on
+a ladder's perch (the platform, within a metre of it) or on the ladder itself, he walks to the ladder's foot and climbs
+at 1.5 m/s (the player climbs at 1.7). At the top he steps onto the floor and becomes a perched kid (v1.138's
+`e.perch`), so he fights with the usual states, kept inside the rail. Once his target has been off the platform for
+2 s, he walks back to the gap and climbs down. The rules:
+- One kid on a ladder at a time; the next waits at the foot.
+- A kid placed on a perch by the scenario (Connor in King of the Treehouse) never leaves it.
+- A scenario can keep a kid on the ground with `climb: false`.
+- A kid tagged on the ladder lets go and falls to the grass under gravity.
+- In a defend, a kid tagged up on the platform he climbed drops off by the ladder and runs back to redeploy. The
+  game had no way down for him: the perch clamp held him on the floor while his retreat pulled him toward the patio.
+
+A straight push to the foot wedged Haden in his fort, whose east side is closed. He stood against the wall for the
+whole round. The walk now follows a distance field: a breadth-first fill from the foot over the scenario's bounds, in
+0.5 m cells a kid fits in, built once per ladder. He steps toward the lowest neighbouring cell until he is 1.2 m from
+the foot, then goes straight in.
+
+### Verified
+- `tests/kid-climb.test.mjs`, 13 checks:
+  - With the player on the platform, Haden leaves the fort and is up at 7.3 s in 3 of 3 rounds, never standing
+    still on the way. On the ladder his body rises from 0 to 2.6 m.
+  - Up there he stays on the floor (0 steps off) and fires 19–20 BBs. When the player drops to the far side of the
+    yard he is back on the grass at 4.3 s.
+  - From five other corners of the yard (behind the shed, the back fence, the patio, north of the oak, the west
+    bins) he is up in 5.1–10.1 s.
+  - Connor never leaves the platform. With the player at the side gate nobody heads for the ladder (10 s); with the
+    player on the ladder Haden does.
+  - Tagged 1.5 m up, he falls to the grass and stays there. `climb: false` keeps him down. Winnmark has no ladders,
+    and no kid there takes one.
+- `tests/treehouse.test.mjs` (v1.138) still passes: Connor holds the platform, and Haden walks and fires with the
+  player at the gate.
+- On this build: `kid-climb`, `treehouse`, `northcliff` and `ladder-prompt` all green. The full `npm test` ran on
+  v1.144, which carries this change unaltered (see there).
+### Still open
+- How a climb looks: the kid keeps his walk animation on the rungs, with no climbing pose.
+- A kid on the platform and the player standing on the same spot can overlap. Nothing pushes them apart up there.
+
+## v1.144 — Hold the Treehouse
+This is D.7 A's third piece, the defend. **Hold the Treehouse** is Northcliff's fourth match, after King of the
+Treehouse. You start on the Stoneglen platform and hold it for 90 s:
+- Haden (UMP) and Connor (shotgun) come out of the house from the patio and climb the ladder after you, one at a time.
+- A tagged twin drops off and walks back to the patio to come again.
+- Evan (MP5) holds by the shed (`climb: false`) and shoots at anything above the rail.
+
+The briefing tells you to keep low behind the plywood and watch the gap over the ladder. The result lines name the
+treehouse.
+
+### Verified
+- `tests/treehouse-hold.test.mjs`, 11 checks. You start on the floor at 2.6 m. It is a 90 s defend, right after King
+  of the Treehouse. In 60 s with the player untaggable, every twin who had been up for 1.5 s was tagged (as you would).
+  The twins reached the platform at 8.6 and 10.3 s, then about every 15 s, 4 times each. Every tagged twin fell
+  2.6 m to the grass in 0.73 s. Evan never left the ground. He hit a standing player 35 times, and a crouched one
+  0 times. When the timer runs out you win ("Haden groans … You held the line.").
+- `tests/northcliff.test.mjs` now expects six Northcliff matches in order.
+- `npm test` (three suites at a time): 49/49 green.
+### Still open
+- The balance needs Michael's hands. With the twins arriving one at a time through a 1.2 m gap, the round may be easy
+  for a player who crouches and aims at the gap, or hard if a twin who steps off at close range shoots first.
+- Each twin's first trip from the patio to the top takes 8.6–10.3 s. That may leave the opening quiet.
+
+## v1.145 — CI runs the suites in four parallel jobs
+Backlog B.4, from the producer. Since 2 Oct about half of CI's headless runs were cancelled at the job's 45-minute
+limit. The job ran all 49 suites one after another, and passing runs took 30–40 min, so a slow runner or one
+75 s harness restart pushed it over. Merges then waited on re-runs. Raising the limit would only have made every run
+slower to fail, so the suites are split instead.
+
+- `tests/run.mjs --shard k/n` runs the k-th of n parts. Each suite's run time is listed in `run.mjs`, measured on this
+  run's baseline. The longest go first, each onto the lightest part so far. The split depends only on the file list,
+  so every job agrees on it. A new suite counts as 60 s until it gets a time. `--list` prints a part without running it.
+- `.github/workflows/check.yml` runs four `headless-shard` jobs in parallel (`fail-fast: false`, so one red shard
+  doesn't hide the others), each with a 30-minute limit. A small job still named `headless` goes green only when all
+  four do, so anything that waits on the old check name still works.
+- `npm test` and `node tests/run.mjs smoke` work as before. CLAUDE.md notes the new flag.
+
+Nothing in the game changes. The title screen reads v1.145.
+
+### Verified
+- `tests/shard.test.mjs`, 17 checks, no browser. For 1, 2, 3, 4 and 7 parts, every suite lands in exactly one part
+  and no part is empty. check.yml asks for 4 parts. Every suite has a measured time, and the four CI parts weigh 604–607 s.
+  The same part lists the same suites twice, a bad `--shard` exits 2, and a prefix still picks one suite.
+- Before the change, all 49 suites passed three at a time (13.6 min). After it, the four shards ran at once on the
+  4-core container (11 + 13 + 13 + 13 suites): 50/50 green in 13 min wall time. The slowest suites were spawn-facing
+  at 273 s and result-text at 204 s.
+### Still open
+- The real CI time per shard. On a hosted runner a quarter should take about 8–10 min of tests, plus about 2 min for
+  the Playwright install each job repeats. The first CI run on this push will show it.
+- If the branch protection on `main` names the old `headless` check, the new aggregate job keeps it satisfied. If it
+  names nothing, nothing changes.
+
+## v1.146 — The map screen fills the window (D.8 step 1)
+D.8, Michael's A: the map full-height on the left, the chosen zone's scenarios in a scrolling column on the right, built
+by the builder in steps he sees (layout, then the cards, then the map's restyle). This is the layout.
+
+Before it, the map was a 720 px parchment panel capped at 92% of the window. The 380 px map took the top, and the
+scenario list squeezed into whatever was left below. At 1280×720 not one Winnmark row fitted whole in view (1 at
+1366×768, 5 at 1920×1080), and the list stayed empty until you clicked a pin. The 700:380 drawing was also stretched to
+636 px wide (`preserveAspectRatio="none"`), so the river and the 140 shield were squashed by about 10%.
+
+- The panel is the whole window, less a 16 px margin, up to 1800 px wide. The title and BACK TO ROOM share one row
+  at the top.
+- The map takes the left column (60%). It is sized by container units to the largest box at the drawing's own 700:380
+  that fits, so the pins stay where they were on the drawing and nothing is stretched.
+- The right column (40%, 280–640 px) holds the zone's list. It is the same rows as before, which become cards in
+  step 2, and it scrolls on its own.
+- The map opens on a zone, never on "Click a pin": the zone you last looked at this session, or else the furthest
+  zone you have unlocked, where your next match is. The chosen pin gets a pale ring and a bold label.
+- In a narrow or portrait window (820 px wide or less, or taller than wide) the two stack, the map on top.
+
+`selectMapZone(key)` is the old pin-click handler as a function, shared by the pins and `openMap`. Nothing else about
+the zones, locks or briefings changed.
+
+### Verified
+- `tests/map-screen.test.mjs`, 36 checks, Winnmark on a new save:
+
+  | Window    | Map         | List        | Winnmark rows in view (was) |
+  |-----------|-------------|-------------|-----------------------------|
+  | 1280×720  | 700×380     | 466×578     | 7 of 16 (0)                 |
+  | 1366×768  | 751×408     | 501×626     | 7 (1)                       |
+  | 1920×1080 | 1078×585    | 640×938     | 11 (5)                      |
+  | 1024×640  | 546×296     | 364×498     | 5 (0)                       |
+
+  At every size the map is 1.842:1 (700/380 = 1.842), every pin sits on it, and the list scrolls. At 800×1000 the
+  map (664×360) stacks above a full-width list.
+- It opens on Winnmark on a new save and on the lot once The Hollow is cleared. It reopens on Bunratty after you click
+  Bunratty, and a locked Northcliff still says what opens it. A real click on START opens the briefing.
+- `front-door`, `northcliff` and `market-lot`, which click the pins, still pass. `run.mjs` gives the new suite 25 s.
+- `npm test` as four shards at once: 44 suites passed. Seven died at `page.goto`'s 30 s load limit with 4 shards
+  loading pages at once (the v1.124 note: load, not a hang). Run alone, all seven passed, so 51/51 are green.
+### Still open
+- How it looks to Michael. Step 2 (the scenarios as cards) waits on his look, in decisions.
+- On a 16:9 window the map leaves a band of parchment above and below it, 100 px at 1280×720. The drawing is 700:380,
+  wider than its column. Step 3 redraws the map, and can draw it taller to fill the column.
+- At 1024×640 the list shows 5 rows. The cards in step 2 should be more compact than today's three-line rows.
+
+## v1.147 — The map screen's matches are cards (D.8 step 2)
+D.8 step 2, Michael's A on the v1.146 layout (control room, 3 Oct): "go on to step 2, the scenarios as cards". The right
+column held the old three-line rows, one per line: a locked row spent a whole line on "Beat “Every Kid for
+Themselves” to unlock." and a LOCKED button, and nothing said which match was yours to play next.
+
+- The zone's matches are cards in a grid, as many across as fit 155 px: two at 1024×640 to 1366×768, three at
+  1920×1080, four in a portrait window where the list runs full width. Under the zone's name, a count: "2 of 16 won".
+- Each card has its number in the zone, the matchup (TUTORIAL, 1V1, 3V3, 5-WAY FFA), badges for ⚔ ATTACK, 🛡 DEFEND,
+  🌙 NIGHT and a survive timer (⏱ 90s), the name, the place and your lives (the briefing's count, armour included),
+  then the pay and START.
+- A match you have won has a green top and ✓ DONE. The first open match you haven't won is NEXT, on a lighter card. A
+  locked card is greyed, has no button, and says which card opens it: "Win #3 to unlock". (A whole locked zone still
+  shows its one "Clear … to unlock this area" line.)
+- A click anywhere on an open card opens the briefing, as START did. A locked card does nothing.
+
+`renderScenarioCard` replaces `renderScenarioRow` and `scenarioMatchup` is split out of it. The pins, locks, zones
+and briefing are unchanged. `tests/northcliff.test.mjs` now reads the cards for its locked list.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 50 checks (36 before). Winnmark cards in view on a new save:
+
+  | Window    | List        | Across | Cards in view (v1.146 rows) |
+  |-----------|-------------|--------|-----------------------------|
+  | 1280×720  | 466×578     | 2      | 10 of 16 (7)                |
+  | 1366×768  | 501×626     | 2      | 12 (7)                      |
+  | 1920×1080 | 640×938     | 3      | 16, all (11)                |
+  | 1024×640  | 364×498     | 2      | 6 (5)                       |
+  | 800×1000  | 708×484     | 4      | 12 (stacked under the map)  |
+
+- With the first two Winnmark matches won: the cards follow the zone order numbered 1–16, "2 of 16 won", two DONE,
+  one NEXT (Seth's Got a Shotgun), 13 locked, each with "Win #N to unlock" for the card before it and no START. A
+  night match shows 🌙 NIGHT and a defend 🛡 DEFEND. A click on a locked card opens nothing, a click on an open
+  card's text opens its briefing, and a real mouse click on START still does.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14). `northcliff` also passed alone. A baseline
+  run before the change lost winnmark-trees to `page.goto`'s 30 s load limit under four-shard load (the v1.124
+  note); it passed in the run on v1.147.
+### Still open
+- How the cards look to Michael. Step 3, the map's restyle (drawn taller to fill its column, a cleaner style), waits
+  on his look, in decisions.
+- The card's lives are the briefing's, armour included, so they change when you put on a plate carrier. The match's
+  own count is in the briefing.
+
+## v1.148 — The map is redrawn to fill its column (D.8 step 3)
+D.8 step 3, Michael's A on the v1.147 cards (control room, 3 Oct): "go on to step 3: redraw the map taller", in a
+cleaner style. The drawing was 700:380, wider than its column, so on a 16:9 window it left a band of parchment above
+and below it: at 1280×720 the map covered 66% of its column. It was also drawn in see-through washes over the
+parchment, with roads as single grey strokes and no names but the 140 shield.
+
+- The map is drawn again at 700:560 (5:4), the shape of its column on a laptop or desktop. It now covers 97% of its
+  column at 1280×720, 96% at 1366×768, 92% at 1920×1080 and 88% at 1024×640. The CSS sizes it the v1.146 way, by
+  container units at the drawing's own shape, and the SVG keeps its aspect (`xMidYMid meet`, was `none`).
+- The layout is the old one drawn taller, so every pin keeps its percentage place: the Hollow above the river, the
+  lot off Holcomb Bridge Rd by the 140 shield, Winnmark down Steeplechase Dr near the bend.
+- The style: flat parks with no outlines; the Chattahoochee as water between darker banks with a pale channel and
+  its name set in the water; every road a dark edge under a pale fill, named along its line (Holcomb Bridge Rd, Eves
+  Rd, Steeplechase Dr, Nesbit Ferry Rd); a cul-de-sac bulb at Winnmark, Bunratty and Northcliff; small even house
+  blocks along the streets; two-tone tree dots; the market's store and striped lot; EAST ROSWELL set faint in the
+  middle; a compass, a ½ mile bar and a double neatline. The map's frame is solid, no longer dashed.
+
+Only the drawing and the map's two sizing lines changed; the pins, cards, zones and briefings are as in v1.147.
+
+### Verified
+- `tests/map-screen.test.mjs`, now 60 checks (50 before):
+
+  | Window    | Map (v1.147) | Column covered (v1.147) |
+  |-----------|--------------|-------------------------|
+  | 1280×720  | 700×560 (700×380)   | 97% (66%)        |
+  | 1366×768  | 751×601 (751×408)   | 96%              |
+  | 1920×1080 | 1078×862 (1078×585) | 92%              |
+  | 1024×640  | 546×437 (546×296)   | 88%              |
+  | 800×1000  | 450×360, stacked above the list | —    |
+
+  At every size the map is 1.25:1, every pin sits on it, and no two pin labels overlap. The drawing's viewBox is
+  `0 0 700 560`, it is not stretched, and the river and four roads carry their names. The card counts are unchanged
+  (10 of 16 Winnmark cards in view at 1280×720).
+- Screenshots at 1280×720 and 1920×1080 read by eye: no road name or house block sits under a pin label; Northcliff's
+  street was moved below its label after the first look.
+- `npm test` as four shards at once: 51/51 green (11 + 12 + 14 + 14).
+### Still open
+- How it looks to Michael, and whether D.8 is done (in decisions).
+- In a portrait window the map is 450×360 in a 708 px wide column, a band at each side; the stacked layout gives the
+  map 42% of the height, and a 5:4 map is narrower there than the old one (664×360).
+- The pins sit on a schematic drawing, not on each zone's own streets; drawing those is a choice in decisions (C).
+
+## v1.149 — Your kid carries a walkie-talkie (D.10, first part)
+D.10, Michael's A on the control room (3 Oct): teammates out of earshot come over the walkie, and "a walkie clipped to
+your kid's belt, seen in first person and on the Loadout kid"; push-to-talk waits for online (D.2). The callouts are
+built on the teammate lines from the Fable voices work (D.9, PR #22), which is not on main yet, and touching the speech
+code now would collide with it. The walkie itself touches none of it, so this run builds that half.
+
+- Every kid carries a yellow walkie, clipped to the jeans' belt on the left hip (the gun is on the right): a body with
+  a little green screen, a speaker grille, a talk button on the side, a channel knob, a stubby antenna and a red
+  transmit light. It is not bought and takes no slot.
+- On the Loadout screen the kid wears it in front of where the Utility Belt's side pouch sits, and an eighth label,
+  HIP, reads Walkie-Talkie.
+- In a match it hangs at your hip, about 57% of your eye height down (the kid's belt under his eyes), a hand forward
+  and to the left. It follows where you stand and which way you face, but not where you look, so it is out of view
+  looking ahead and in view when you look down; crouching brings it lower with you.
+
+`addWalkieParts` builds it (shared by the Loadout kid and the match), `buildFPWalkie`/`updateFPWalkie` place it in
+the match's own scene beside the camera. Nothing about speech, the HUD or the loadout slots changed.
+
+### Verified
+- `tests/walkie.test.mjs`, 13 checks. On the Loadout kid, a new save: the walkie spans x 0.116–0.177 (left hip),
+  y 0.468–0.642 (the belt is at 0.57), z 0.13–0.17 (the front of the hips), the same with the Utility Belt and
+  holster on; the HIP label is on the canvas. In Bunratty 1v1: standing, its centre is 0.16 m left, 0.115 m forward
+  and 0.585 m up; looking ahead 0 of its 8 corners are on screen, looking down (pitch −1.45) all 8, turned to yaw 2.2
+  still 0.16 m left and in view; crouched it drops to 0.348 m up and stays in view; after a 1.27 m walk it is 0.197 m
+  from where you stand. Screenshots `tests/out/walkie-look-down.png` and `loadout-kid.png` read by eye.
+- `tests/loadout-kid.test.mjs` counts eight labelled parts (was seven); `loadout-gear` unchanged and green.
+- `npm test` as four shards at once: 50 of 52 suites passed; laser and winnmark-trees died at `page.goto`'s 30 s load
+  limit under four-shard load before any check ran (the v1.124 note). Run alone, both passed, so 52/52 are green.
+### Still open
+- The callouts over it (a click, static, the line, a click for a teammate out of earshot) wait on PR #22 reaching main.
+- There is no body in first person, so the walkie hangs on its own when you look down. Whether that reads as "at my
+  hip" or as a toy floating over the road is for Michael's eye.
+
+## v1.149 fix-up — the walkie test keeps the round alive
+CI failed Builder sessions on v1.149 in its new `tests/walkie.test.mjs`: "walking 1.5 s, the walkie stays at your
+hip" saw the player move 0 m (offset 0.197). Locally he walks 1.21–1.27 m.
+
+The suite enters `bunratty_sean` and takes several page steps before the walk. On CI's slow runner, the page's own
+frames between those steps give Sean real time, and he can tag the player and end the round. In the result screen
+nobody moves. Ending the round just before the walk reproduces CI's numbers exactly (moved 0, offset 0.197). The suite
+now makes the player untaggable, as the other combat suites do, and the check also requires the round to still be on.
+Test change only; no game change.
+
+### Verified
+- With the round ended before the walk: the CI failure, exactly. With the fix: 2 of 2 runs green, moved 1.27 m in
+  `scenario`.
+
+## v1.152 — The last kid comes looking
+Michael's A on "what next after the walkie" (control room, 4 Oct): the critic's "last kid gets bored and comes
+looking" (proposals, 1 Oct). In Squad Up the critic watched Brooke and Jamie (aggression 0.35 and 0.4, under the 0.45
+line where a kid marches) sit 32–50 m off in cover once our allies were out; Four on Four's Mitchell and Owen held
+their end for 150–195 s. A team round has no timer, so a player who plays it safe got a round with no end. (Numbered
+v1.152: the voices work on PR #22 already carries v1.150–v1.151.)
+
+- In team and kill-all rounds, once a side is down to its last one or two kids, a kid who has neither moved 2 m nor
+  fired with a line on his target for 25–30 s gets bored: he taunts and marches as a keen skirmisher does. A shot with a
+  line settles him back into his own way of fighting, and the clock starts again. Snipers, defenders, taggers,
+  free-for-alls (they roam since v1.134) and defend or timer rounds are left as they were. `updateKidBoredom`.
+- Reproducing it with the player tucked in a backyard turned up a second stall the clock alone couldn't cure: two of
+  the four campers weren't hiding at all. They were in `advancing`, walking into a wall all round. Owen was inside
+  Bunratty's bulb fort, whose closed wall faces the player. Jamie was in the corner of a house and a fence post. v1.121's
+  pocket rule backs a kid out and sidesteps, but the fort gave him a sidestep at once and he walked back into the same
+  wall; behind Jamie the way back was blocked too. Now, when the pocket rule fires a second time within 10 s and 3 m,
+  the kid follows a distance field to his target for 5 s instead: the v1.143 ladder walk's fill, aimed at any point
+  (`kidFieldTo`), steering to the nearest-to-goal cell within two cells that he can walk to in a straight line. The
+  cells a kid fits in are worked out once a round.
+
+### Verified
+- `tests/last-kid.test.mjs`, 11 checks. The player stands untaggable and never fires; his allies and the enemy's keener
+  kids are knocked out.
+
+  | Round (player hides in)              | Last kids          | Nearest each came, v1.149 | v1.152       |
+  |--------------------------------------|--------------------|---------------------------|--------------|
+  | Squad Up (Trey's backyard), 150 s ×2 | Brooke, Jamie      | 2.3 / **38.3** m; 4.6 / 22.9 | 2.3 / 6.5; 4.4 / 22.9 |
+  | Four on Four (Sean's backyard), ×2   | Mitchell, Owen     | **67.7 / 64** m, 0 shots on him | 21.9 / 2.9 m, 116–117 shots |
+
+  In Four on Four Mitchell gets bored at 31.6–31.8 s (none on v1.149). With all three Squad Up enemies in, nobody gets
+  bored in 45 s; in Last Stand at the Fort (defend) nobody in 40 s. The clock alone: not bored at 24 s still, bored at
+  26 s and switched to `advancing`, and a shot with a line clears it. v1.149 fails four of the checks.
+- `pocket`, `whole-block`, `night-prowl`, `pincer`, `market-lot`, `hollow-held`, `cover-fire`, `kid-climb` and
+  `treehouse-hold` each passed alone on the change.
+- `npm test` as four shards at once: 53/53 green (12 + 13 + 14 + 14). An earlier four-shard run on the change lost
+  `harness` at `page.goto`'s 30 s load limit (the v1.124 note; passed alone) and `market-lot` once: ally Eric
+  "wedged in advancing" 5 s in the lot 3v3. That passed in 4 more runs and in 12 probe rounds on each build (longest
+  wedge 1 s either way), so it is not shown to be this change; but a routed step that was blocked could have held a kid
+  for the route's whole 5 s, so a blocked routed step now ends the route at once.
+### Still open
+- Whether a camper who breaks cover after 25–30 s feels right in play, or makes the cautious kids too like the rest.
+  The bored kid's taunt is cut past 24 m like every line (v1.22), so a far one comes without a word.
+- The field route only starts on a second pocket in 10 s; a kid in a pocket wastes about 5 s first.
+- The critic's stuck-kid sweep over every scenario (option B) would catch the next pocket like these two; it stays a
+  proposal until Michael promotes it.
+
+## v1.153 — The stuck-kid sweep
+Michael's A on "after the last kid comes looking" (control room, 4 Oct): the critic's stuck-kid sweep (proposals,
+30 Sep). Every kid found frozen so far was found by hand on one map (v1.98–v1.100, v1.103, and v1.152's bulb fort and
+house corner), and each fix came with a test for its own map only. Now one test walks them all.
+
+- Every match but the tutorial (52) is played for 60 s with BB hits on the player dropped, twice: the player standing
+  at his spawn, and the player first walked up to 10 m toward the nearest enemy with W held (so the kids react to
+  someone coming at them). A tagger's touch is ignored too, as `tests/taggers` does.
+- Every half second each living kid, on either side, is checked: in a moving state (`advancing`, `repositioning`,
+  `chasing`, `deploying`, `retreating`), more than 2.5 m from the player, and still within 1 m of where the run
+  started, his clock goes on; anything else restarts it. Over 15 s fails, and the line printed is a backlog line:
+  match, which way, kid, side, role, seconds, state, spot and shots in that time. Holding states (`hiding`, `peeking`,
+  `shooting`, a sniper's nest) are left alone, since they are still on purpose.
+- The 2.5 m rule came from the first pass: in both Infection rounds the taggers who had reached the untaggable player
+  stood on him in `chasing` for 40–60 s. They had arrived, not stuck.
+- It takes about 22 minutes of one browser, so it is four suites, `tests/stuck-sweep-1…4.test.mjs`, each every fourth
+  match over `tests/lib/stuck-sweep.mjs`, with measured times in `run.mjs` so each CI shard gets one (the shard check
+  reads 971, 970, 966, 956 s). `ONLY=<id>`, `SECS=` and `LIMIT=` run it by hand.
+
+It found one. In Bunratty's free-for-all, with the player walked toward the kids, Nick stood in `advancing` within 1 m
+of (5.5, −28.2), by house 2's backyard, for 15.5 s without firing; again for 7 s in one of four more runs, the same
+spot. That is filed under Found in play as the next builder item. There wasn't time to fix it in this run, and a
+suite that goes red one run in four would block merges, so the sweep carries a `KNOWN` list: a match, a kid and a spot
+(within 2 m) printed as KNOWN instead of failing. Nick's is its one line, to be deleted with the fix. Any other kid,
+or Nick anywhere else, still fails.
+
+### Verified
+- The four parts over all 52 matches, twice each: nothing else over 15 s. The longest otherwise were 7.5 s (Sean
+  `retreating` in Bunratty's night 2v2), 7 s and 6.5 s; most matches' worst kid held
+  a spot 0.5–3 s. Part times alone 341–441 s with the other three shards beside it.
+- With `LIMIT=0.4` on two matches the check fails and prints each kid as a line, so the failing path works.
+- `tests/shard.test.mjs`: 57 suites, each in one shard for 1, 2, 3, 4 and 7 shards; the four CI shards even.
+- `npm test` as four shards at once, with the sweep: 50 of 57 passed. Five died at `page.goto`'s 30 s load limit
+  (houses, ladder-prompt, mirror, winnmark-cars, and stuck-sweep-4) under four browsers each running a minutes-long
+  in-page loop, and hollow-held's "holds fire 20 times" saw Sean at 23 once (no game change this run). Each passed run
+  alone, stuck-sweep-4 too (13 matches, none over 15 s); part 2 failed on Nick, now KNOWN. The baseline before the
+  change was 53/53 (kid-hands' load timeout passed alone).
+### Still open
+- Nick's pocket in the Bunratty free-for-all (Found in play).
+- The sweep adds about 6 minutes to each CI shard (about 16 minutes each now, against a 30-minute limit). If CI's
+  runners are much slower than this container, `SECS` can come down to 45; the 15 s line still fits in that.
+- 60 s per way catches kids who stall early in a round. A kid who only wedges late, or only where the player goes
+  somewhere other than spawn or 10 m toward the nearest enemy, is still found by hand.
+
+## v1.153 fix-up — the stuck-kid sweep runs in eighths
+CI failed Builder sessions on v1.153 in shard 1/4, in both runs: `stuck-sweep-1` died with "page.evaluate: Target page,
+context or browser has been closed" after about 10 minutes (16:31:14 to 16:41:16). `tests/run.mjs` stops any suite
+after 10 minutes (`spawnSync`'s `timeout: 600000`), and stopping it takes the browser down mid-sweep. Part 1 of four
+(330 s here) carries the long Hollow battles and ran past that limit on CI's slower runner.
+
+Rather than raise the 10-minute limit, which is what catches a hung suite, the sweep now runs as eight suites,
+`stuck-sweep-1` to `-8`, each every eighth match (`PARTS` in `tests/lib/stuck-sweep.mjs`). They weigh 165 s each in
+`run.mjs`'s shard table, so the shards still balance. The sweep's checks and limits are unchanged, and `ONLY=` still
+sweeps any named match. Test change only; no game change.
+
+### Verified
+- `stuck-sweep-1` (now 7 matches, both ways): 129 s here, green. `SECS=5` runs of parts 1 and 8 also pass.
+- `run.mjs --shard k/4 --list`: parts 6 and 5 go to shards 1 and 2; parts 1, 3 and 7 to shard 3; parts 2, 4 and 8
+  to shard 4.
+
+## v1.154 — Nick gets off the fence
+The stuck-kid sweep's one finding (v1.153, Found in play): in Bunratty's free-for-all Nick stood in `advancing`
+within 1 m of (5.5, −28.2), by house 2's backyard, for 15–23 s without a shot. Logged every quarter second, he was
+neither hiding nor walking into a wall for good. He pushed toward his target along the fence there for about 1.5 s,
+sliding 0.4 m north. Then his flanker's bounding picked a cover behind him and walked him 0.4 m back south. The bound
+was dropped, and the push began again, a 2 s cycle. v1.121's pocket rule backs a kid out (and v1.152's routes him on
+a second pocket) once he has made no 0.5 m of progress in 2.5 s of wall-following. But that progress window restarts
+whenever a frame of the direct push is missed, and every bound missed some, so it never reached 2.5 s.
+
+- A bound that leaves him within 1.5 m of where his progress window began now keeps the window open. On the next
+  push the pocket rule fires as it would have: he backs out, and on the second pocket follows the distance field out.
+  A real bound carries a kid well past 1.5 m in under a second and lets the window lapse as before.
+- Nick's line is off the sweep's `KNOWN` list, so the sweep fails on him again if he comes back.
+
+### Verified
+- `tests/fence-bound.test.mjs` (new), 10 checks: the other kids out, Nick put on the spot advancing on a flank, the
+  player held at (−24.8, −12.1). On v1.153 he holds the spot 23.5–30 s of 30 and never gets 3 m clear (6 of 6
+  rounds; the suite fails 6 checks). On v1.154 he is 3 m clear at 6.9–8.1 s, his longest hold is 5.5–6 s, and he
+  ends the 30 s 2–6 m from the player.
+- The natural round, the sweep's walk then 60 s, 12 times: Nick's longest hold 0.5–5 s (v1.153: 23.5 s in 1 of 6).
+- `npm test` as four shards at once: 62/62 green (15 + 16 + 15 + 16), the eight sweep parts with nothing over 15 s
+  and no KNOWN line; in Bunratty's free-for-all the sweep's worst kid held a spot 1 s (Nick, walked) and 0.5 s (at spawn).
+  A baseline run at the start, beside the probes, lost 10 suites to `page.goto`'s 30 s load limit, none to a check.
+### Still open
+- The pocket rule still needs about 7 s here: a 2.5 s window, a 1.5 s back-out, a second window. In play that reads as
+  a kid fidgeting by a fence for a few seconds rather than standing there all round.
+- Nothing left on the sweep's known list; what the builder takes next is a question in decisions.
+
+## v1.154 fix-up — taggers back out of a pocket
+The stuck-kid sweep's first CI run in eighths (78cea3a, part 4) caught a tagger. In Hollow Infection Night, with the
+player walked 8 m toward the nearest enemy, Devon stood 21 s in `chasing` within 1 m of (10.5, 6.9).
+
+He was inside a fort corner: a north–south wall to his west (x 9.85–10.15, z 5.96–9.24), an east–west wall to his
+south (x 9.96–13.04, z 5.85–6.15), and, on loads where the trees fall that way, a tree at (11.18, 8.01) whose trunk
+leaves no gap to the wall's north end. Trees differ from load to load, which is why most runs pass. The pocket is
+open only to the east, away from the player. A tagger's sidestep runs at right angles to the player, here north or
+south, so he shuttled between the south wall and the tree: each committed sidestep turned round at a block, about
+twice a second.
+
+Gunners in `advancing` have had a way out of exactly this since v1.121; taggers had none. Now a second blocked
+turn-round within 3 s backs a tagger away from his target for 0.8 s, then he sidesteps again from there. If straight
+back is shut, as here where the tree is due east of the north end of his shuttle, he tries 45° and then 90° either
+side of it, starting with the side that last worked so he doesn't zigzag.
+
+### Verified
+- Probe, 30 rounds of `hollow_infection_night` with the player walked 8.1 m and Devon placed at (11, 6.9): before,
+  12 of 30 stayed 24–30 s in the corner; after, 30 of 30 get out, the longest stand-still 1 s.
+- `npm test`: 62/62, all eight stuck-sweep parts and `taggers` included.
+
+## v1.155 — Hollins Ridge High: the sixth zone opens
+Michael's A on "after Nick's fix, what next" (control room, 4 Oct): the next zone, a high school's grounds with a
+made-up name, with fields, bleachers and portables. It follows his C on place names: real roads, made-up schools.
+This is the first part, shaped like v1.130 was for Northcliff: the grounds, on the map and the ladder, with two
+scenarios that play.
+
+**Hollins Ridge High** (`buildHighSchoolScene`) is flat, 80 × 57 m inside a chain-link fence.
+- The school's two-storey brick front closes the north, with its name over the main doors under a canopy. A staff
+  row of seven cars stands nosed in along it, with gaps to walk through.
+- Six portable classrooms stand in two columns in the west, numbered P1–P6. Each is 11 × 7 m on a skirt, with an AC
+  unit, windows, and a door with a wooden landing and steps you can stand on. The columns are 3.5 m apart, which
+  gives one long sightline down the middle; the rows are 6 m apart.
+- The practice field fills the east. It has lines every 4.5 m, a goalpost at each end, three tackling sleds (1.05 m,
+  crouch cover), a ball cart, a water table and the team bench.
+- The home bleachers face the field from the south: five aluminium tiers, each 0.45 m above the one in front.
+  Collision follows the steps, so the front tiers are low cover and the back is a 2.25 m wall.
+- Between the court and the bleachers: a concession stand. On the lawn between the portables and the field: a steel
+  storage container. There is also a blacktop court with two hoops, picnic tables, dumpsters, trees and two lamps.
+- The layout is fixed, as the lot's is. Only car colours vary.
+
+Two scenarios, sixth on the ladder after Northcliff and in East Roswell's region (`hollins_ridge_high`):
+- **After the Bell** (the opener): 1v1 against Tyler with a pistol. He starts among the portables and you start at
+  the west end of the home bleachers. One hit each.
+- **The Portables** (the zone capstone for now): 3v3. You, Eric (MP5) and Rebecca (AK) at the bleachers. Ryan (UMP),
+  Mitchell (AK) and Priya (MP5) start from the school doors and deploy to the portables, the doors and the staff
+  cars. Three lives each, last team standing. The kids are ones already in the game, from Bunratty and Ridgestone;
+  the school draws from every street.
+
+The map gets a new pin, "Hollins Ridge High · School", between Holcomb Bridge Rd and Nesbit Ferry Rd, with the
+school, four portables and the field drawn under it. It is locked until Northcliff's capstone is won.
+
+At first the team start was behind the middle of the bleachers. There Rebecca (aggression 0.4, a camper) hid for the
+whole minute in 2 of 2 rounds, firing 1–82 times at nothing she could reach. The start is now the bleachers' west
+end, which looks up the field's west sideline. There she walks 0–68 m and fires 207–379 times.
+
+### Verified
+- `tests/high-school.test.mjs` (new), 21 checks:
+  - The ladder ends Northcliff, then the school. The school is locked on a new save. Winning Northcliff's capstone
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Northcliff. It sits inside the map and covers no other pin's marker or
+    label. Once Northcliff is cleared, it lists both cards with only the opener playable.
+  - Every anchor and player spawn on the grounds is clear of obstacles, and so are the player and every kid at the
+    start. The grounds hold six 11 × 7 m portables, five bleacher tiers (0.45 to 2.25 m), two goalposts and the
+    school front.
+  - After the Bell, 60 s with the player untaggable at the spawn: Tyler walks 41–92 m out of the portables, comes to
+    within 7.4–7.9 m and fires 37–56 times.
+  - The Portables, 60 s: 262–463 BBs. Both sides lose lives (enemy 1–5, ally 1–6). Every kid moves or fires. The
+    longest stall in `advancing` is 3 s.
+  - Screenshots `tests/out/high-school-{field,portables,front,bleachers,map}.png`, checked by eye.
+- The stuck-kid sweep picks the two new matches up by itself (it walks `SCENARIOS`). `ONLY=` on them, 3 runs each
+  way: worst kid 4 s (Eric at the concession stand's corner), against the 15 s line.
+- `tests/market-lot.test.mjs` and `tests/northcliff.test.mjs` had the ladder spelled out, and now include the school.
+- `npm test` as four shards at once: 61 of 63 passed (15 + 15 + 16 + 15). Two died at `page.goto`'s 30 s load limit
+  (road-slide and stuck-sweep-5, the v1.124 note) and passed alone. Stuck-sweep-5 now holds After the Bell: worst
+  kid 0.5 s either way. The Portables falls in part 6, which passed in its shard.
+### Still open
+- More school scenarios, as v1.131 gave Northcliff: a defend (the portables or the bleachers), a night match under
+  the two lamps, and a capstone. No school kids of their own yet; the kids are borrowed from other streets.
+- Whether the bleachers' stepped collision feels right to climb and fight from is for a playtest. The field is
+  meant to be dangerous to cross, and whether the sleds give enough cover is for a playtest too.
+
+## v1.156 — Hollins Ridge High: the portables defend and Friday Night Lights
+The rest of what v1.155 left open, as v1.131 rounded out Northcliff. The school now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's and Northcliff's.
+- **Hold the Portables** (defend, 90 s). You start in the lane between the middle and south rows, facing the field.
+  Marcus (UMP), Jamie (shotgun) and Trey (MP5) stage on the field (`cluster_field`, by the sleds) and come on three
+  flanks: the north end by the container, straight in, and down past the court to the south row. A tagged kid walks
+  back and comes again. The lose line says "the portables". New `portables` player spawn.
+- **Friday Night Lights** (night 4v4, the new capstone). You with Eric, Rebecca and Brooke at the bleachers, against
+  Ryan, Mitchell and Priya, with Owen's rifle as a defender by the staff cars looking down the field. Four lives
+  each. Two more lamps light the night: at the field's south-east corner and in front of the school's west wing. Both
+  also stand in the day matches as poles.
+
+### Verified
+- `tests/high-school.test.mjs`, extended to the four scenarios:
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts in the lane. Every anchor (with `cluster_field`) and spawn is clear of obstacles,
+    the new lamps included.
+  - Hold the Portables, 60 s with the player untaggable: the three attackers walk 42–64 m and fire 712 BBs. Jamie
+    comes into the portables to 2.6 m of the player, and Trey reaches the container's west side.
+  - Friday Night Lights, 60 s: 790 BBs, enemy 10 lives lost and ally 5. Every kid moves or fires, Owen holds the
+    cars and fires 16 times, and no kid stalls in `advancing`.
+  - Screenshots `high-school-night.png` and `high-school-defend.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 3 s (Eric in the night match), against the 15 s line.
+- `npm test` as four shards at once: 57 of 63 passed. Six died at `page.goto`'s 30 s load limit with no check failed:
+  lot-ffa-opening, stuck-sweep-1, -2 and -8, fort-spawn and kid-face. A container restart had cut the first run short,
+  so these ran beside the rerun. Each passed alone or two at a time.
+### Still open
+- Whether 90 s in the lane against three kids is fair. As in the creek-fort defend, it's for a playtest; at the
+  start you can see along the lane to the field and nowhere else.
+- Rebecca keeps to the bleachers' end in most rounds and fires from there (207–412 shots). She is a camper by
+  her numbers, so that is her.
+- Hollins Ridge High is complete at four scenarios. More school kids, or another zone, is Michael's call.
+
+## v1.156 fix-up — the school team-round check counts a wipe
+CI failed `headless (3/4)` on 5354d9f with one check in `high-school`: "school_portables_3v3: both sides lose lives
+(within 120 s)". In that round Eric pushed up the side and the allies took all nine enemy lives (three each) without
+losing one. Ryan, Mitchell and Priya fired 57 shots between them. That is a legitimate result, a flawless win, not a
+broken round. Locally it is a tail case: 102 sampled rounds always traded lives, and one more took all nine enemy
+lives, with the allies' first loss coming only at 80 s. Two things made it fail. The check demanded both sides lose a
+life. And the game ends a decided team round on a 600 ms `setTimeout`, which can never fire inside the test's
+synchronous `stepGame` loop, so the loop ran on to 120 s and reported the wipe as a stalled round. The loop now stops
+when a whole team is out (`npcInFight` false for every kid on it), as the game does. The check passes if both sides
+lose lives, or if one side is wiped out while it fired back. The game is unchanged.
+### Verified
+`node tests/run.mjs high-school` passed 5/5 runs. The 3v3 still breaks at 60 s with lives traded (3/2 in the logged
+run). The night 4v4 now stops at 47 s, when the allies are all out (12 lives), instead of running on to 60 s.
+### Still open
+- Nothing for play. Whether a flawless 3v3 win by the AI allies is too easy is a playtest call; it was 1 in about 100.
+
+## v1.157 — Willow Bend Country Club: the seventh zone opens
+Michael's A on "after Hollins Ridge High, what next" (control room, 4 Oct): the next place on his D.1 list, the
+country-club pool and golf course, with a made-up club name per his C on place names. Shaped like v1.155 was for the
+school: the grounds, on the map and the ladder, with two scenarios that play.
+
+**Willow Bend Country Club** (`buildCountryClubScene`) is flat, 80 × 57 m, fenced in club green.
+- The white clubhouse closes the north. It has a green roof, a covered veranda on white posts with planters by the
+  doors, and the club's name over them. The cart barn stands at the north-east, with three carts parked in front.
+- The pool fills the north-west: 16 × 7 m with lane ropes, a diving board and a lifeguard chair. A lounger row runs
+  along each long side (0.5 m, crouch cover), with umbrellas between them. The pool house stands against the west fence.
+  A 1.1 m hedge closes the deck's south and east sides, each with a gap to walk through.
+- **The water stops a body but not a BB** (`bbPass`, `noStand`, the picket-fence flags). You can shoot across the pool
+  and the pond but can't walk or jump onto them, so the pool is a wall with a window in it. Kids path round it.
+- The 18th green fills the east, with its flag, the fringe, two greenside bunkers and a fairway bunker. The fairway
+  runs south in mown stripes, with a 5 m pond and fountain on it. Two more carts stand on the cart path, which runs
+  from the barn to the south fence.
+- On the south lawn: the halfway hut, the putting green, a gazebo you can stand in, a low stone wall in two runs, and
+  willows and hardwoods.
+- The layout is fixed, as the school's is. Only cart colours vary.
+
+Two scenarios, seventh on the ladder after the school, in Horseshoe Bend's region (`willow_bend_cc`), since the
+club is Winnmark's neighbour:
+- **Pool's Closed** (the opener): 1v1 against Brooke with a pistol. She starts on the pool deck and you start by
+  the halfway hut. One hit each.
+- **The Eighteenth** (the zone capstone for now): 3v3. You, Sean (MP5) and Trey (AK) on the south lawn. Seth (AK),
+  Marcus (UMP) and Jamie (shotgun) start from the veranda and deploy to it, the barn and the pool. Three lives each,
+  last team standing. The kids are Winnmark's, from over the back fence.
+
+The map gets a new pin, "Willow Bend · Country Club", south-east of Winnmark, between Steeplechase Dr and the river.
+Under it are drawn the clubhouse, the pool and the green. It is locked until the school's capstone is won.
+
+The first draft put the diving board's stand in the 2.4 m lane between the pool's deep end and the pool house. Sean
+wedged against it in `advancing` for 5 s. The stand is now inside the pool's own footprint.
+The first pin sat where its label hid Winnmark's marker, and at 1024 × 640 it hid the Battleground label.
+`tests/map-screen.test.mjs` caught both. It now stands at the drawing's east edge, clear at all four sizes.
+
+### Verified
+- `tests/country-club.test.mjs` (new), 30 checks:
+  - The ladder ends with the school, then the club. The club is locked on a new save. Winning Friday Night Lights
+    opens the opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Hollins Ridge High. It sits inside the map and covers no other pin's
+    marker or label. Once the school is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The
+    grounds hold the clubhouse front, the pool and the pond as water, five carts and the cart barn.
+  - The water, walked into: the player stops at the pool's edge (z −7.67 against the edge at −8). Jumping doesn't
+    put him on it, and he stops at the pond's rim. A BB fired at 1 m across the pool's 16 m keeps going, past x = 2.
+  - Pool's Closed, 60 s with the player untaggable at the spawn: Brooke walks 59–66 m off the deck, comes within
+    7.2–8 m and fires 11–13 times.
+  - The Eighteenth, 52–60 s, 3 runs: 433–676 BBs, with lives traded (enemy 3–8 lost, allies 1–6). Every kid moves or
+    fires. No kid stands in the water at any step, and the longest stall in `advancing` is 2 s.
+  - Screenshots `tests/out/country-club-{pool,green,front,start,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (parts 1 and 2). `ONLY=` on them, both ways: worst kid 2 s (Sean by the
+  putting green, Marcus at the barn), against the 15 s line.
+- `tests/high-school.test.mjs`, `market-lot.test.mjs` and `northcliff.test.mjs` spell out the ladder and now include
+  the club. All three pass, as do `map-screen`, `spawn-facing` (the club's start has 57 m clear ahead) and `taggers`.
+- `npm test` as four shards at once, before the club, mid-edit: 62 of 63 passed. `taggers` died at `page.goto`'s 30 s
+  load limit (the v1.124 note) and passed alone on the new build.
+### Still open
+- The club's defend and a night match, as v1.156 gave the school.
+- Whether the pool as "a wall with a window in it" plays well is for a playtest. Kids go round it and shoot across it,
+  and so can you.
+
+## v1.158 — Willow Bend: Hold the Gazebo and Night Swim
+The rest of what v1.157 left open, as v1.156 rounded out the school. The club now runs four scenarios: 1v1, 3v3,
+defend, then a night 4v4. That is the same arc as the lot's, Northcliff's and the school's.
+- **Hold the Gazebo** (defend, 90 s). You start inside the gazebo on the south lawn, facing out of its open east
+  side toward the course. Its rails are now real: 0.9 m walls between the posts on the other seven sides (oriented
+  boxes, one per side). They cover you crouched and stop a body, and you can see over them standing. Marcus (UMP),
+  Jamie (shotgun) and Trey (MP5) stage on the lawn below the veranda (`cluster_course`). They come on three flanks:
+  along the pool deck to the stone wall, straight across the putting green, and round by the halfway hut. A tagged
+  kid walks back and comes again. The lose line says "the gazebo". New `gazebo` player spawn.
+- **Night Swim** (night 4v4, the new capstone). You, Sean, Trey and Brooke at the halfway hut, against Seth, Marcus
+  and Jamie, with Devon's rifle as a defender on the veranda's east end looking down the lawn. Four lives each. The
+  pool's water glows at night (v1.157's emissive). Three more lamps light it: on the pool deck, on the fairway and on
+  the south lawn. They also stand in the day matches as poles.
+
+The defend's first start faced the south fence, a sign error in the yaw. Its second faced a gazebo post 2.4 m away.
+It now looks out through the open side, with 16.7 m clear.
+
+### Verified
+- `tests/country-club.test.mjs`, extended to the four scenarios (48 checks):
+  - The ladder order is opener, 3v3, defend, night, and the pin lists all four with only the opener playable.
+  - The defend's player starts inside the gazebo. Every anchor and spawn is clear of obstacles, the new lamps
+    included. The gazebo has six rails, and the player walking west inside it stops at one (0.6 m from the posts'
+    ring).
+  - Hold the Gazebo, 60 s with the player untaggable, 3 runs: the attackers walk 40–69 m and fire 708–712 BBs. Jamie
+    comes to 6 m, and Marcus and Trey shoot from 11–13 m.
+  - Night Swim, 60 s, 3 runs: 652–771 BBs, enemy 4–8 lives lost and ally 4–6. Every kid moves or fires. Devon holds
+    the veranda and fires 19–20 times. No kid stalls 2 s or more in `advancing`, and none stands in the water.
+  - Screenshots `country-club-{defend,night,night-pool}.png`, checked by eye.
+- The stuck-kid sweep, over both new matches both ways: worst kid 2.5 s (Marcus in the night match), against 15 s.
+- `spawn-facing`: the club's four starts have 16.7–57.1 m clear ahead.
+- `npm test` as four shards at once on this build: 64 of 64 passed (16 + 16 + 16 + 16).
+### Still open
+- Whether 90 s in the gazebo against three kids is fair is for a playtest. The rails cover a crouch, but the
+  attackers fire about 700 BBs a minute at it.
+- Jamie, the shotgun, hangs back by the pool in both team matches. He fired 0–4 times in two of three night rounds
+  and once in one 3v3, from 35–54 m away. That is a shotgun with nobody in range. Whether he should push is for the
+  playtest.
+- Willow Bend is complete at four scenarios. What comes next is Michael's call (in decisions: A the grocery store
+  inside Riverside Market, B kids of their own, C widen the sweep, D wait; builder recommends A).
+
+## v1.159 — Inside Riverside Market: the eighth zone opens
+Michael's A on "after Willow Bend, what next" (control room, 5 Oct): the last place on his D.1 list, a grocery store
+battle inside Riverside Market. The option left open whether it would be a new zone or new matches on the lot's map.
+It is a new zone, because the lot is outdoors and a store interior is a different map with a roof. It sits eighth on
+the ladder after the club, opened by Night Swim, as each zone before it was. As v1.155 and v1.157 did, this version
+builds the store, its place on the map and the ladder, and two scenarios.
+
+**Inside Riverside Market** (`buildGroceryStoreScene`) is one room, 52 × 48 m inside, under a 5.6 m roof.
+- The front wall closes the south. It is glass, with the automatic doors and an ENTER · EXIT sign. Inside it are six
+  checkout lanes (1.0 m counters, numbered lane lights, impulse racks), the service desk, a nested row of carts and two
+  loose carts.
+- The sales floor has five aisles of 2.1 m shelving, signed 1–5 (Bread · Cereal through Paper · Cleaning). A cross
+  aisle cuts them halfway down, and a soda end-cap stands at aisle 3. Each run of shelving is one box with a drawn wall
+  of products on its long faces. The shelves stop a body and a BB, and you can't see over them or jump onto them, so
+  every aisle is a corridor.
+- On the west, eight produce tables (0.9 m, crouch cover) and the misted wall case. On the east, four chest freezers
+  (0.9 m) and the deli's glass case (1.25 m) against the wall, with room behind it.
+- The dairy coolers line the back aisle. The back wall has three doorways, marked EMPLOYEES ONLY, into the stockroom.
+- The stockroom has three runs of 3.2 m racking, eight pallets of stock (1.0–1.3 m), the baler, a parked forklift and
+  the loading-dock door.
+- The lighting is indoor: a high, soft light with more ambient, light panels in the ceiling, and a darker tile floor
+  than the first draft, which was washed out to white. Point lights and exit signs are built for a night match, but no
+  scenario uses it yet.
+
+Two scenarios, in East Roswell (`riverside_market_inside`). The kids are the lot's.
+- **Cleanup on Aisle Five** (opener): 1v1 against Tyler with a pistol. He starts by the dairy coolers and you start
+  inside the front doors. One hit each.
+- **Price Check** (3v3): you, Eric (MP5) and Brooke (UMP) at the checkouts. Marcus (AK), Jamie (shotgun) and Tyler
+  (UMP) start in the stockroom and deploy through the doorways: Marcus to the stockroom's west, Jamie to the dairy
+  aisle, Tyler to the freezers. Three lives each, last team standing.
+
+The map gets a new pin, "Riverside Market · Inside", above the lot's pin toward the store's drawing. It is locked until
+the club's capstone is won.
+
+The first draft had three faults, each caught by the new test:
+- The player started 1.6 m inside the front wall. Allies start 2 m either side of the player in z, so Brooke was pushed
+  out through the glass and stood outside all round. The start is now at z 14.8, with both allies inside.
+- Jamie was sent to an anchor beside his spawn in the stockroom. He hid there all round, out of sight. He now goes to
+  the dairy aisle.
+- The pin's first spot at (88%, 24%) ran off the map's edge at 1280 × 720 and 1024 × 640 and covered the lot's label.
+  `map-screen` caught it too.
+
+### Verified
+- `tests/grocery-store.test.mjs` (new), 33 checks, passed in two runs:
+  - The ladder ends with the club, then the store. The store is locked on a new save. Winning Night Swim opens the
+    opener only, and the opener opens the 3v3.
+  - The pin is locked on a new save and names Willow Bend. It sits inside the map and covers no other pin's marker or
+    label. Once the club is cleared, it lists both cards, with only the opener playable.
+  - Every anchor and player spawn is clear of obstacles, and so are the player and every kid at the start. The store
+    holds 12 runs of shelving, 6 checkout counters, 8 produce tables, 4 freezers, 3 doorways in the back wall, 8
+    pallets and 3 racks.
+  - Shelves: walking into one stops the player at its face (x −7.59 against the face at −7.9). A jump at a shelf rises
+    0.7 m and doesn't put him on it, and the same jump doesn't clear a 1.0 m counter. A BB fired into a shelf at 60 m/s
+    never comes out the far side.
+  - The room is closed: 288 rays from six points inside (level, up and steeply up) all meet a wall or the roof within
+    60 m.
+  - Cleanup on Aisle Five, 60 s with the player untaggable, 3 runs: Tyler walks 46–55 m out of the back, comes within
+    6.7–7.3 m and fires 49 times.
+  - Price Check, 60 s, 3 runs: 369–557 BBs, enemy 2–4 lives lost and ally 2–3. Every kid moves or fires, and the
+    stockroom kids come through the back wall. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `tests/out/grocery-store-{start,aisle,checkouts,stockroom,produce,freezers,map}.png`, checked by eye.
+- The stuck-kid sweep picks up both matches (part 1). With `ONLY=` on them, both ways, the worst kid stalled 2 s
+  (Jamie in the stockroom, and Tyler), against the 15 s line.
+- `market-lot`, `northcliff`, `high-school` and `country-club` spell out the ladder and now include the store.
+  `map-screen` passes with the new pin. `spawn-facing` passes: both store starts face 12–26° off the nearest enemy, with
+  8 m clear ahead.
+- `npm test` as four shards at once on this build: 63 of 65 passed. `spawn-facing` lost its browser and `stuck-sweep-3`
+  hit the 30 s `page.goto` limit under load (the v1.124 note). Both passed alone on the same build.
+### Still open
+- The store's defend and a night match, as v1.156 and v1.158 gave the school and the club. The night lighting is
+  built and untested.
+- Whether the aisles play well is for a playtest. A shelf is a wall, so fights are down an aisle's length or across
+  the cross aisle and the open ends. The 3v3's opening is mostly long shots down the aisles: Marcus fired 278–312
+  times in two of the runs.
+- Brooke spends the 3v3 near the west checkouts and fires from there, about 30 m walked a round.
+
+## v1.160 — Inside Riverside Market: Customer Service and Lights Out
+The rest of what v1.159 left open, as v1.156 and v1.158 rounded out the school and the club. The store now runs four
+scenarios: 1v1, 3v3, defend, then a night 4v4. That is the same arc as the lot's, Northcliff's, the school's and the
+club's.
+- **Customer Service** (defend, 90 s). You start in the corner behind the service desk, inside the front doors. The
+  1.1 m counter covers you on its north and west sides, and the way in runs along the east wall past the deli. Marcus
+  (UMP), Jamie (shotgun) and Tyler (MP5) stage in the stockroom (`cluster_north`). They come on three flanks: down the
+  deli wall (`b_deli_s`, new), through the freezers (`b_frozen_s`, new) and round by the checkouts to the doors. A
+  tagged kid walks back and comes again. The lose line says "the service desk". New `desk` player spawn, facing up
+  the east wall.
+- **Lights Out** (night 4v4, the new capstone). You, Eric, Brooke and Rebecca at the checkouts, against Marcus, Jamie
+  and Tyler, with Devon's rifle as a defender in the stockroom's centre doorway (`a_door_c`, new), looking straight
+  down aisle 3. Four lives each. The ceiling is dark. The coolers glow down the back aisle, the exit signs are red, and
+  eight night lights hang over the floor (all built in v1.159, now used).
+
+### Verified
+- `tests/grocery-store.test.mjs`, extended to the four scenarios (52 checks):
+  - The ladder order is opener, 3v3, defend, night.
+  - The defend's player starts behind the service desk. Every anchor and spawn is clear of obstacles, the three new
+    anchors included.
+  - Customer Service, 60 s with the player untaggable: the attackers walk 40–106 m and fire 718 BBs. Jamie comes to
+    3.3 m and Tyler to 3.6 m, both at the desk's corner, and Marcus shoots from 13 m.
+  - Lights Out, 60 s: 719 BBs, enemy 8 lives lost and ally 3. Every kid moves or fires. Devon holds the doorway and
+    fires 19 times. No kid stalls 2 s or more in `advancing`, and none stands on a shelf.
+  - Screenshots `grocery-store-{night,night-dairy,defend}.png`, checked by eye.
+- The stuck-kid sweep, over all four store matches both ways, in the full run: worst kid 3 s (Jamie in the stockroom
+  in the defend), against 15 s.
+- `npm test` as four shards at once on this build: the container restarted with 42 of 65 suites done and none
+  failed. The other 23 ran in four lanes on the same build and all passed, so all 65 passed.
+### Still open
+- Whether 90 s behind the desk is fair is for a playtest. Jamie and Tyler reach the desk's corner at 3–4 m, and the
+  attackers fire about 700 BBs a minute.
+- In the night match the allies lose fewer lives than the enemy (8 to 3 in the logged round). Devon's doorway covers
+  aisle 3 only, so how much the rifle matters is for the playtest.
+- Inside Riverside Market is complete, and so is Michael's D.1 list. What next is in decisions: A kids of their own,
+  B widen the sweep, C a new place, D wait. The builder recommends B.
+
+## v1.159 fix-up — a blocked fence detour falls through to the sidestep
+CI failed `headless (4/4)` on 1b821b9 with one check in `country-club`: "club_eighteenth_3v3: no kid is wedged in
+advancing for 4 s or more" (ally Trey, 4 s). The club 3v3 did this in about 7 rounds in 40 locally: Trey against a
+golf cart, Sean at the end of a hedge (Marcus too, by a rail, twice). Each stood
+completely still in 'advancing' for 4-5 s. When the direct push wedges, the wall-follow asks `fenceDetourWaypoint`
+for a fence on the straight line to the target and walks to its nearer end. That fence can be far along the line,
+while the thing actually in his way is a cart or the corner of another hedge right beside him, which blocks every
+step toward the waypoint. The side flip and the v1.103 committed sidestep only ran when there was no detour. The
+progress window never saw wall-following time long enough to back him out either. Now a detour step that moves him
+nowhere falls through to the sidestep in the same frame. A detour that moves him is unchanged.
+### Verified
+- The club 3v3 was sampled at 120 s per round. Before the fix, 7 of 40 rounds had a kid wedged in advancing for 4 s
+  or more. After it, 0 of 48 had one.
+- A probe at the wedge showed the cause: the detour waypoint was the end of a far fence, e.g. (-14.7, -11.5) for
+  Trey at (6.1, 15.5). All three step tries were blocked by the cart at x 4.58-5.82, z 12.75-15.25.
+- The full suite was run locally in four parallel shards: 62 of 65 suites passed. The three that failed
+  (shop-tabs, stuck-sweep-8, harness) were page-load timeouts at load average 15. All three passed when rerun
+  alone on v1.160, as did country-club and grocery-store.
+### Still open
+- Nothing for play beyond the usual: kids should no longer stand frozen beside a cart or a hedge end while
+  advancing.
+- One wedge probed before the fix had no detour behind it (Marcus at 5.7, -20.4, 3 s). It did not recur in the 48
+  rounds after the fix, but its cause was not traced.
+
+## v1.160 fix-up — CI runs the suites in six shards
+On 875210d, `headless (4/4)` was cancelled in both runs, at 30:06, against the job's 30-minute limit. Its 16 suites
+had all passed ("16/16 suites passed" is the log's last line). Shards 1-3 took 22-26 minutes. The suites now take
+101 minutes on CI in all. The eight stuck-kid sweeps alone take 250-455 s each, against the 165 s `tests/run.mjs`
+counted for them, and each new zone adds scenarios to them. Four shards average 25 minutes before the ~2 minutes of
+setup, so any shard dealt a little more than its share runs out of time. `check.yml` now runs six shards
+(`--shard k/6`, jobs `headless (k/6)`). The aggregate `headless` check is unchanged and still green only when every
+shard is. The weights in `tests/run.mjs` are now the per-suite times measured in that run's four shard logs.
+### Verified
+- `node tests/shard.test.mjs` passes. All 65 suites land in exactly one shard for 1, 2, 3, 6 and 7 shards, and every
+  suite has a measured time.
+- By the measured times, the six CI shards are 1012, 1006, 1011, 1006, 1006 and 1006 s, about 17 minutes each.
+### Still open
+- CLAUDE.md still says CI runs four shards. That file is Michael's, so it is left for him or the producer.
+- If `main`'s branch protection names the old `headless (k/4)` checks rather than `headless`, it needs updating. This
+  session cannot read it (403).
+
+## v1.161 — Customer Service starts you behind the desk
+The critic's first bug from the store (Found in play, v1.160). Customer Service is meant to start you in the corner
+behind the service desk, and its briefing says so. The start was at (24, 13.5), which is east of the desk's arm, in the
+3.3 m gap between the counter's end and the east wall. That spot is open to the whole east aisle, the way the
+attackers come in. The critic stood a player there in 17 rounds and all 17 were tagged, at 7.6–14.3 s, crouched or
+not, mostly by Marcus from 13 m. The start is now inside the counter's L, at (19.5, 13.8). The desk's front (x 16.5–22.5,
+z 11–12) covers it from the north and the arm (x 21.5–22.5) from the east. The facing is unchanged, up the east wall.
+
+The run also took the critic's Hold the Treehouse report, where Evan by the shed tags you from behind before the twins
+climb. It reproduced (8 of 8 standing rounds, at 2.7–9.6 s). Evan doesn't step out to peek, though. At three spots in
+the shed's cover he landed 0 hits in 60 s on a player standing above the rail, against Michael's brief that he "shoots
+at anything above the rail". The fix is a choice between those, so it is in decisions (builder recommends C: Evan holds
+fire until the first twin reaches the ladder). The code was put back as it was.
+### Verified
+- `tests/desk-start.test.mjs` (new): 6 rounds standing still at the start for 20 s. 1 round was tagged, at 19.6 s.
+  The same suite on v1.160 failed: the start was outside the L, and all 6 rounds were tagged at 10.7–13.8 s.
+- `tests/grocery-store.test.mjs` passes with its start check moved inside the L. Customer Service's attackers still
+  come out of the back to within 10 m of the desk. `spawn-facing` passes.
+### Still open
+- Whether 90 s behind the desk is now too easy is for a playtest. The critic saw 21–70 s to the first tag from this
+  spot, and 1 of 6 rounds held the full 90 s.
+
+## v1.162 — The store's result lines are indoor lines
+The critic's second store bug (Found in play, v1.160). The result screen's place words come from a small table in
+`endScenario`, and that table knew only the Hollow. Every other map got the street's words. In the store, a Price
+Check or Lights Out loss read "…regroup near the road". Holding the desk for 90 s read "Distant screen doors slam",
+inside a supermarket. The store now has its own entry:
+- Team losses: "…regroup back in the stockroom", where the other side starts.
+- A defend won by killing everyone: "…slide down against the shelves, defeated."
+- A defend won on the timer keeps its heading, MOM CALLED THEM IN!, but the line is now "Their phones buzz all at
+  once. Marcus groans — "Aw, COME ON!" — and Jamie and Tyler head for the doors." The one-kid form is ready too.
+Customer Service's loss already said "take the service desk" (v1.160's `resultHold`).
+### Verified
+- `tests/result-text.test.mjs` now ends Price Check, Customer Service and Lights Out every way (win, timer win, lose,
+  forfeit). No store line names a road, curb or screen door, both team losses regroup in the stockroom, the timer win
+  has the phones, and the defend loses the service desk. The suite's old checks (quotes, commas, allies, the Hollow,
+  the forts) still pass.
+### Still open
+- Nothing for play. Only the Hollow and the store have their own words. The school and the club still use the
+  street's road and curb, which fit outdoors well enough. Nobody has flagged them.
+
+## v1.161 fix-up — the desk-start check sits under the measured tag times
+CI failed `headless (6/6)` on 6ae6329 with one check in v1.161's `desk-start`: "standing at the start, at most 2 of
+6 rounds are tagged inside 20 s". Three rounds were tagged, at 19.3, 19.4 and 19.5 s. Locally, a player standing at
+the new start inside the service desk's L is tagged in every round, at 19.3-23.7 s (40 rounds). 14 of the 40 fall
+just under 20 s, so with six rounds the check failed about a third of the time. The start is fine: the old one was
+tagged at 7.6-14.3 s, and nothing now comes close to that. Only the line was in the middle of the new spread. The
+check is now that no round is tagged inside 18 s. The "no tag before 10 s" check stays. The game is unchanged.
+### Verified
+- 40 sampled rounds, standing at the start, were tagged at 19.3-23.7 s.
+- `node tests/run.mjs desk-start` passed 3/3 runs.
+### Still open
+- Whether about 20 s of cover at the desk feels right is for the playtest.
+
+## v1.163 — A bound has to gain ground where he'll stand
+The critic's last store bug (Found in play, v1.159). In Price Check your ally Eric stood in `advancing` within 1 m of
+(17.2, −2.4) for 6–15 s in 3 of 10 rounds. That spot is the 2.5 m gap between the four chest freezers. A probe showed
+he was bounding the whole time. Marcus was 20 m north, and the two north freezers are 8 m long, end-on to him.
+`pickBoundCover` measures how much a cover gains by its centre, which is 4–5 m nearer Marcus. But a kid walks to the
+cover's stand spot, which for those freezers is their south end, level with the gap. So Eric reached the west
+freezer's end, was offered the east freezer's end 2 m across the gap, and walked to it. As Marcus moved, the spot moved
+too, so the 1 s no-gain check kept resetting. Then he was offered the west one again. Now a cover is offered only if
+its stand spot is itself at least 1 m nearer the target. The centre test (2 m) and everything else are unchanged. This
+is shared AI, so it applies to every flanker on every map.
+### Verified
+- `tests/bound-forward.test.mjs` (new):
+  - The pick from Eric's spot in the gap, against Marcus at four places along the stockroom: on v1.162 it offered the
+    east freezer's end every time, 0.1–0.8 m farther from the target. It now offers nothing, so he takes the direct
+    push.
+  - 6 rounds of Price Check, 120 s each, the player untaggable. Eric's longest stay within 1 m spent mostly advancing
+    was 0.8–2.8 s. On v1.162 the same suite failed, with 8.7 s in one round.
+- A 16-round probe at 150 s: Eric spent at most 3.5 s in the gap in any round. His long stays were all hiding or
+  shooting. Before the fix it was 11.3 s, and 3 of 8 rounds had a stay of 4 s or more.
+- `npm test` as four shards at once on this build: 67 of 67 suites passed (16 + 17 + 17 + 17), the eight stuck-kid
+  sweeps and the cover-fire, pocket and last-kid suites included.
+### Still open
+- Flankers bound a little less wherever a long cover lies end-on to their target. They push straight instead. Whether
+  that is visible in play is for a playtest.
+
+## v1.161 fix-up — an advancing kid drops a detour that is not getting him nearer
+CI failed `headless (3/6)` on 6ae6329: "club_eighteenth_3v3: no kid is wedged in advancing for 4 s or more"
+(Marcus, 4 s). That is the v1.159 fix-up's check, with that fix already in. A 4 s threshold probe found 5-7 such rounds
+in 120, all but two of them Marcus at the south-east corner of the bench at x 13-15, z -4.3 to -3.7, chasing the
+player to the north-north-west. Hooking writes to his position showed the loop. The fence detour (the bench lets BBs
+pass, so it counts as a fence) slid him along x 3 cm a frame toward its waypoint, into the corner, for four frames.
+On the fifth every step toward the waypoint was blocked, v1.159's fall-through ran the sidestep, and that threw him
+12 cm back east. He moved every frame, so v1.159's "goes nowhere" test never caught the detour. The pocket rule's
+back-out found a free side after one step and handed straight back to the same slide. Advancing kids now do what the
+taggers have done since v1.125: if 0.8 s of detour steps gets him no 0.3 m nearer the waypoint, detours are dropped
+for 1.5 s, and the ordinary wall-follow (side flips, committed sidesteps, the pocket back-out) takes over. A detour
+that is working gains 0.3 m in well under 0.8 s and is untouched.
+### Verified
+- The club 3v3, probed at 4 s or more in 'advancing': 5-7 rounds in about 120 before, 0 in about 96 after (one
+  probe browser timed out under load).
+- The full suite was run locally in six shards, three at a time: 63 of 66 suites passed. treehouse and utility-belt
+  were page-load timeouts under load. northcliff_twins_3v3 had one round with no enemy life lost in 120 s; that
+  round sampled 10 times with and without the change took enemy lives every time. All three suites, plus
+  country-club and grocery-store, passed when rerun alone on v1.163.
+### Still open
+- A tried change, ending a blocked pocket route in a back-out, did not help (7 rounds in 120) and was reverted.
+
+## v1.164 — A retreating kid who isn't getting home is sent home
+Backlog B.5, from the producer: in one CI run the stuck-kid sweep caught Northcliff twins 3v3's ally Andrew in
+`retreating` within 1 m of (-6.3, -1) for 17 s, with the player walked toward the enemy. It passed on rerun. A probe
+of 8 rounds found it twice: Andrew once at that spot for 11 s, and Connor on the other side, at (-7.9, 1.4), for 11 s.
+A kid with lives left who is tagged jogs back to his spawn to come out again (`retreating`). Since v1.23 a watchdog
+sends him straight home if he is stuck for 1.2 s, but "stuck" meant "moved under 2 cm this frame". Pressed into a wall
+on the way, Andrew slid 3-5 cm about once a second. Each slide reset the watchdog, so it never fired. The watchdog now
+counts ground gained toward spawn instead: 1.2 s without getting 0.3 m nearer home and he is home and redeploying. A
+kid on a clear run gains 0.3 m in a tenth of a second, so only a wedged retreat is affected. While retreating a kid is
+out of the fight, so nothing a player sees changes except that he comes back out sooner. This is shared AI: every
+team match and every defend with respawning attackers.
+### Verified
+- `tests/retreat-progress.test.mjs` (new):
+  - Staged: Andrew retreating at (-6.4, -0.95), every step blocked except a 5 cm creep every 50 frames. He is home and
+    deploying at 1.23 s. On v1.163 he was still retreating after 10 s.
+  - Six rounds of the twins 3v3, 90 s each, the player walked 10 m toward the nearest enemy: no kid held `retreating`
+    within 1 m for more than 1 s. On v1.163 the same run had Andrew at 10.5 s in one round.
+- A 10-round probe at 120 s: the longest retreat in one spot was 2 s (Haden, by his spawn). Before, 2 of 8 rounds
+  had 11 s.
+- `northcliff`, `treehouse` and `treehouse-hold` pass.
+### Still open
+- Nothing for play. The sweep's 15 s line would not have caught an 11 s stall; widening it is next.
+
+## v1.165 — Evan waits for the ladder
+Michael's C on Hold the Treehouse (control room, 5 Oct), from the critic's v1.144 bug. You start on the platform
+facing the ladder and the house. Evan stands in the open by the shed, 11 m behind your shoulder, and tagged a player
+standing at the start at 2.7–9.6 s in 8 of 8 rounds. That was before Haden and Connor had climbed, in a one-life
+match. Now Evan holds his fire until the first twin reaches the foot of the ladder. From then on he shoots at
+anything above the rail, as the brief says. The hold is a flag on his line in the scenario (`holdUntilLadder`), checked
+at `spawnEnemyBB`, the one place every kid's BB comes from. It is cleared by the first kid to start up any ladder.
+No other match sets it. The match's description now says Evan shoots "once a twin is on the ladder".
+### Verified
+- `tests/treehouse-evan.test.mjs` (new):
+  - Six rounds, the player standing at the start with one life and real hits. The first twin reached the ladder at
+    6.9–7.0 s every round. The player was tagged at 7.5–11.0 s: three times by Evan, three by Haden. None came before
+    the first twin was on the ladder.
+  - Run against v1.164, the same suite fails. Evan tagged the player at 5.2 and 5.4 s in 2 of 6 rounds, before any
+    twin reached the ladder. He fired 205 BBs in 30 s before the ladder, against none now. After the ladder he fired
+    162.
+- `treehouse-hold` (Evan still hits a player standing above the rail, 55 hits in 60 s, and none on a crouched one)
+  and `treehouse` pass.
+### Still open
+- The first 7 s are now quiet. Whether the platform should still feel watched in that time is for a playtest.
+
+## v1.166 — The stuck-kid sweep, wider
+Michael's B on "after Inside Riverside Market" (control room, 5 Oct): widen the stuck-kid sweep. Since v1.153 it
+played every match for its first 60 s, twice: the player at his spawn, and the player walked 10 m toward the nearest
+enemy. Two gaps were left open. A kid who wedges late was missed, and so was one who wedges only when the player goes
+somewhere else. Both are now covered:
+- Each match is watched for its whole round, up to 90 s. That is the full timer of every defend, and most other
+  matches end sooner with the player's hits dropped and the allies fighting.
+- A third way: the player strafes 10 m sideways across the line to the nearest enemy, still facing him, so the
+  kids are drawn round from a new angle. 1v1s and defends otherwise looked the same from both earlier ways.
+- The check is unchanged: any living kid of either side, more than 2.5 m from the player, who holds a moving state
+  within 1 m of one spot for over 15 s, fails, and is printed as a backlog line. `WAYS=spawn,toward,side`, `SECS=`,
+  `LIMIT=` and `ONLY=` still run it by hand.
+It is about 2.2 times the work, so it runs as sixteen suites, `stuck-sweep-1` to `-16`, each every sixteenth match.
+Each part stays well under run.mjs's 10-minute limit. CI goes from six shards to eight (`check.yml`), with each part
+weighted at 1.6 times its time here, so every shard reads about 20 min (1176-1181 s). Test and CI change only; no game
+change.
+### Verified
+- `npm test` as four local shards at once on v1.165 + this: 77 of 77 suites passed (19 + 20 + 20 + 18). That
+  includes v1.165's `treehouse-evan` and v1.164's `retreat-progress`.
+- The sweep covered all 64 matches, three ways each: 192 runs with no kid over 15 s. The longest stays were 5.5 s
+  (Ryan, `advancing`, at (24.7, −9.2)) and 4.5 s (Nick `chasing`; Mitchell and Devon). The parts took 86-296 s here.
+- `tests/shard.test.mjs`: 77 suites, each in exactly one shard for 1, 2, 3, 7 and 8 shards, and the eight CI shards even.
+- v1.164 alone: 68 of 68 suites passed, as four shards, before it was pushed.
+### Still open
+- CI's sweep times are estimated (1.6 times local). If a CI shard runs near its 30-minute limit, re-measure the
+  weights from the shard jobs, as v1.160's fix-up did.
+- The sweep now catches a kid who wedges late in a round or off the sideways walk. A kid who wedges only past 90 s, or
+  only where a real player goes, is still found by hand.
+
+## v1.167 — Kids hold their guns
+Backlog B.6, Michael's note (control room, 5 Oct): kids sometimes hold their guns awkwardly. A probe sampled every
+kid's hands against his gun every tenth of a second, in six matches for 60 s each. Two poses were wrong, and every
+other one was right: the firing hand was 0 cm from the grip, and the off hand 3–8 cm from the foregrip.
+- A kid fully crouched behind cover let go of his gun. The pose pass skipped the hold above 0.98 crouch, so the gun
+  stayed at its built spot by his right knee and both arms hung straight down. His hand was 21–39 cm from the grip.
+  That was every hiding kid, about a third of all samples (in Night Prowl, over half). The hold now runs at every
+  crouch. Its crouched geometry was already right: `grip.test` has checked it at full crouch since v1.95, but called
+  the hold directly, past the skip.
+- A tagged kid raising his gun ("I'm hit!") held it beside his hand, 16–33 cm off. A kid tagged while standing also
+  kept his hold's arm angles under the raise, so the off arm went on reaching across for a gun that had gone up. The
+  hit pose now resets both arms first, and puts the gun's grip in the raised hand, muzzle to the sky. The off arm
+  hangs at his side.
+Pose only: no hitbox, muzzle or AI change. A hiding kid's gun is now in front of his chest instead of by his knee.
+### Verified
+- `tests/kid-hold.test.mjs` (new): Hollow 3v3, Hold the Fort and Night Prowl, 40 s each, with two kids tagged the
+  real way in each. In 3,380 living-kid samples (694 fully crouched, 900 with small guns) the firing hand was 0 cm from
+  the grip, and the off hand at most 6.8 cm from the foregrip point. In 618 hit-pose samples the gun was in the hand
+  (0 cm). Staged for pistol, AK and sniper, standing and crouched, the gun is in the hand at 0.3 and full raise. The
+  off hand hangs at (0.27, 0.59), and the muzzle rises 0.34 m over its first 0.3 m.
+- The same suite on v1.166 fails five checks. The firing hand was up to 33.5 cm off, all at full crouch, and the off
+  hand up to 47 cm. The raised gun was 15–30 cm from the hand staged, and up to 28.5 cm in play, and the off arm
+  still reached across.
+- Screenshots, crouched with an AK, a pistol and a shotgun, and the raise with a sniper and a pistol: the gun is held
+  in front of the chest, or overhead in the hand.
+- `npm test` as four local shards: 72 of 77 passed and the other five timed out loading the page, while my probes
+  loaded the same 4 cores. Those five, and 17 more, the ones that ran before the edit landed and the pose suites (among them `grip`,
+  `burst-pose`, `walk-anim`, `laser`, `kid-hands`, `kid-climb` and `treehouse-hold`), passed on rerun.
+  `car-side-fire` hit the known NEW GAME stall (v1.129) twice, then passed alone.
+### Still open
+- Whether a crouched kid's chest-high carry reads well behind low cover (the gun may peek over a 0.9 m wall) is for
+  a playtest. The two-handed off hand still sits 3–7 cm short of its foregrip point, inside the hand box (v1.97).
+
+## v1.167 fix-up — kid-hold tags its kid before the step, as a BB does
+CI failed `headless (6/8)` on b28cb6a with v1.167's `kid-hold`: Eric, 'retreating', had his firing hand 29 cm from
+his grip and his off hand 37 cm from the foregrip. It failed about one run in six locally. Every bad sample was at
+frame 600 or 1500, the frames where the test tags a kid with `applyBBHit` itself, and it tagged him after
+`stepGame`, then sampled that same frame. A crouched kid with a life to spare goes through `eliminateEnemy`, whose
+stand-up (`setKidCrouch(…, 0)`) resets his arms; the hold comes back in the next `updateEnemies`. In play a BB's hit
+lands in `updateBBs`, which runs before `updateEnemies` in the same step, so the hold is back before the frame is
+drawn. The test now tags before the step. The game is unchanged.
+### Verified
+`node tests/run.mjs kid-hold` passed 8/8 runs. An instrumented copy showed the failing sample at f = 1500, Eric
+crouched before the tag, with his shoulder and gun at rest (both rotations 0).
+### Still open
+- Nothing for play.
+
+## v1.168 — Four backyard guns
+Backlog D.14, Michael's D (control room, 5 Oct): the guns first, then the parts. This is the guns: four that kids
+actually own, each one a trade rather than an upgrade. They are in the shop's Guns tab between the spring guns, with a
+line of their own on each gun's page, and each has its own first-person model with the orange tip:
+- **Thunder Pump** ($75, 30 BBs, a 50 for $15): a green pump-up air shotgun with an air tank under the barrel, a
+  pressure gauge and a flared muzzle. It throws 4 or 5 BBs a shot (the spring shotgun 2 or 3), in about four times the
+  spring shotgun's cloud, and the pump takes 1.05 s against 0.85.
+- **Six-Shooter** ($70, 6 rounds, always): a silver cap-gun revolver with a wooden bird's-head grip. Thumbing the hammer
+  (0.3 s) is the fastest re-cock in the game, and the cylinder turns a chamber as it comes back. Spare cylinders are $3.
+- **Bucket Gun** ($110, 600 BBs, a 1,000 for $25): a blue electric gun with a see-through bucket of BBs on top and a
+  carry-handle sight above it. Full-auto at 7 a second, but the BBs leave at 23 m/s (the MP5's 50) and wobble off
+  after 5 m.
+- **Bolt Pistol** ($95, 8 rounds, a 12 for $14): a long-barrel pistol with a bolt knob on the right. Nearly sniper
+  accuracy (52 m/s, a tight cone, a late wobble) at pistol weight, at a 1.0 s re-cock.
+The hand pose a kid uses for each (one-handed for the revolver and the bolt pistol), their reticles, rail counts
+(two on the long guns, one on the pistols), weights, spare mags and the workbench all know them. No kid carries one
+yet; they are the player's. The shop's mode line now says "Pump-action" for both shotguns, where the spring shotgun
+said "rack slide". The save summary counts all twelve guns.
+### Verified
+- `tests/backyard-guns.test.mjs` (new). Each new gun is bought from its own page with real clicks, for its price, and
+  equipped. Then a match with each, and with the gun nearest it, 60 hip shots standing still and three real cocks
+  (hold to the full pull, let go):
+
+  | gun | BBs a shot | next shot ready | speed | cone, median / 90% | off line at 15 m | within 0.5 m |
+  |---|---|---|---|---|---|---|
+  | Thunder Pump | 4.4 | 1.43 s | 27 m/s | 2.5° / 3.7° | 0.45 m | 56% |
+  | spring shotgun | 2.6 | 1.25 s | 30 | 0.7° / 0.9° | 0.16 | 98% |
+  | Six-Shooter | 1 | 0.73 s | 32 | 0.26° / 0.38° | 0.16 | 92% |
+  | spring pistol | 1 | 1.10 s | 30 | 0.28° / 0.41° | 0.20 | 85% |
+  | Bucket Gun | 1, 8 in a held second | auto | 23 | 0.43° / 0.61° | 0.30 | 68% |
+  | MP5 | 1, 14 | auto | 50 | 0.15° / 0.20° | 0.03 | 100% |
+  | Bolt Pistol | 1 | 1.38 s | 52 | 0.07° / 0.09° | 0.01 | 100% |
+  | sniper | 1 | 1.48 s | 75 | 0.03° / 0.05° | 0.01 | 100% |
+
+  Aimed with no optic, each new gun's front sight tip is 0.10–0.11° from screen centre. The workbench and a kid's hands
+  build all four with no page error.
+- Screenshots of each aimed: the six-shooter's hammer stood over the front sight in the first one and was lowered under
+  the sight line.
+### Still open
+- Whether each trade feels right in a real match is for a playtest: the Thunder Pump at 10 m, the Bucket Gun's slow
+  BBs, the six-round cylinder. The prices are guesses against the old guns ($60–$240).
+- No kid carries one of the new guns. Giving them to kids in matches would be a new question.
+- Next is D.14 B: the under-barrel slot and its four homemade parts.
+
+## v1.169 — Homemade parts under the barrel
+Backlog D.14 B, Michael's D (control room, 5 Oct): after the guns, the parts. Each long gun (the spring shotgun, AR and
+sniper, the AK, MP5, UMP, Thunder Pump and Bucket Gun) has a new under-barrel slot, under its two side rails; the four
+pistols have none. Four homemade parts go in it, one at a time, each a trade and not an upgrade. They are in the shop's
+Mods tab with an UNDER tag, mount at the workbench (a new Under-barrel row, and an "Under" label on the turning gun), and
+each has its own mesh on the gun in hand, found from the bare gun's handguard and muzzle so it sits right on all eight:
+- **Taped Twin Mag** ($22): a blue mag duct-taped under the handguard. It loads from the bag after the gun's mag, up to
+  the same size. R flips the pair (0.6 s, no shot meanwhile): the mags trade places, and what was left in the one you
+  were shooting rides along. Holding R doesn't flip twice; an empty taped mag isn't flipped to. The HUD reads
+  "25 / 25 · taped 25", and an empty mag says "R TO FLIP (n)". Both mags go back to the bag at the round's end. It
+  weighs 1.2 lb, carried gear like a spare mag.
+- **Shoelace Sling** ($12): a red strap looping under the gun. Sprinting drains stamina at 0.8 times the rate, so a
+  sprint lasts a quarter longer; aiming in runs at 0.7 times the speed (letting go of aim is unchanged).
+- **PVC Foregrip** ($16): a white pipe stub with a hose clamp. The walking part of the cone is 0.65 times as wide; it
+  weighs 0.8 lb.
+- **Cardboard Barrel** ($6): a paper-towel tube taped over the muzzle. The cone is a fifth tighter, but BBs leave at
+  0.85 times the speed, so they fly longer and drop sooner. (The game's jitter is in m/s, so a slower BB spreads wider
+  in degrees; its hip-spread factor is 0.68 so the cone in degrees comes out about 0.8.)
+R did nothing outside a jam before, so the flip has the key to itself. Old saves get an empty under-barrel slot on each
+long gun.
+### Verified
+- `tests/under-parts.test.mjs` (new). Each part bought in the Mods tab with a click, tagged UNDER, for its price. At the
+  workbench the AR shows an Under-barrel row (the pistol none), the row offers the four parts and nothing else, and a
+  click mounts the foregrip, shown on the gun. A part won't go on a rail, a laser won't go under, nothing goes under a
+  pistol. A save and load keeps it.
+- On all eight long guns the mag, sling and foregrip hang from within 1 cm of the handguard's underside to 5–12 cm below
+  it, and the cardboard tube runs 11 cm past the muzzle. In a match the mounted part is the one shown in hand.
+- The AR in Bunratty against Sean, hip-fire, 300 shots each way, against the bare AR:
+
+  | AR with | mags | walk 2 s | sprint lasts | aim in | cone still | cone walking | BB speed |
+  |---|---|---|---|---|---|---|---|
+  | nothing | 25 | 6.12 m | 6.02 s | 0.28 s | 0.14° | 1.10–1.27° | 45.0 m/s |
+  | Taped Twin Mag | 25 + 25 | 6.03 m | 6.02 s | 0.28 s | 0.13–0.15° | 1.16–1.27° | 45.0 |
+  | Shoelace Sling | 25 | 6.12 m | 7.50 s | 0.40 s | 0.14° | 1.05–1.16° | 45.0 |
+  | PVC Foregrip | 25 | 6.06 m | 6.02 s | 0.28 s | 0.14° | 0.71–0.78° | 45.0 |
+  | Cardboard Barrel | 25 | 6.12 m | 6.02 s | 0.28 s | 0.115–0.125° | 1.14–1.20° | 38.3 |
+
+- The flip, with a full AR mag and 20 left in the bag: 25 + 20 loaded; shot down to 7, R flipped in 0.60 s to 20 + 7
+  with no shot fired during it; held R, no second flip; a new press back to 7 + 0; another press, nothing (the taped mag
+  is empty); the round's end put the 7 back in the bag.
+- Screenshots at the workbench of each part on the AR, and in hand.
+- `npm test` as four local shards at once: 80 of 80 suites passed (20 each), `under-parts` among them.
+### Still open
+- Whether each trade is worth its price is for a playtest: the taped mag doubles what you carry for 1.2 lb, which may
+  be too good on the 600-BB Bucket Gun; the sling's slower aim may be felt more than its longer sprint.
+- The parts are the player's; kids' guns have none. The Loadout kid's gun does not show the part either.
+- At the workbench the Sight and rail labels sit in the viewport's top-left corner: `computeWorkbenchLabelAnchors`
+  reads `m.y`/`m.z`, which FP_GUN_MOUNT has never had (since v1.40e). Older than this; the new Under label reads the
+  real handguard and sits right. Filed under Found in play.
+
+## v1.169 fix-up — last-kid lets a rifle kid hold at range when he has a line
+CI failed `headless (3/8)` on 2185f32 with `last-kid`: "Four on Four: both last kids come within 30 m in every run".
+In one of its two runs Mitchell's closest was 46.8 m. Locally, Mitchell's closest was 21.9 m in every one of about 28
+runs, but the test plays in real time between `g.scenario` and its loop. Each extra real-time delay moves the round a
+few frames on before Mitchell and Owen are left, and random delays brought it back: Mitchell at 40 m in 3 of 18. With
+no delay at all it reproduces every time. Traced, he does come looking. He gets bored three times and advances each
+time, but his AR has a line at 53.6 m and then 40.6 m, and he fires from there. That is the rifle's hold-and-reach
+design (its far band is 48 m), and firing with a line resets his boredom. Before v1.152 the two never came nearer than
+64 and 68 m and never fired. The check now passes a last kid who comes within 30 m, or within 50 m while firing on the
+player with a line (counted per kid). The game is unchanged.
+### Verified
+- The case with no delay (Mitchell 40.4 m, firing with a line) passes the new rule.
+- `node tests/run.mjs last-kid` passed 3/3 runs.
+### Still open
+- Whether a bored rifle kid should keep closing rather than hold at 40-50 m once he has a line is a design call. It is
+  left as the game has it.
+
+## v1.169 fix-up — two more checks that the second CI run on 2185f32 tripped
+The other CI run on 2185f32 failed `headless (6/8)` and `headless (3/8)` on two checks that pass locally.
+- `grocery-store`, "walking into a shelf stops at its face" and "walking north stops at the dairy coolers": the
+  player never moved ({x -6, z -6} and {x -7, z -14}, his start points). `updatePlayer` moves no one unless
+  `Game.mouse.locked`, and CI's Chromium sometimes refuses the real pointer lock (as `jump` and `houses` found). The
+  test's walk now sets it, as theirs do.
+- `backyard-guns` (v1.168), "Bolt Pistol: a cone ... within twice the sniper's": 0.0644° against 0.0319°, a ratio of
+  2.02. Each median is of 60 shots, and the ratio ran 1.45-2.02 over six more local runs (Bolt Pistol 0.056-0.064°,
+  sniper 0.030-0.039°). The bound is now 2.5 times. The other bound, under a third of the spring pistol's, still
+  holds with room (0.28-0.32°).
+The game is unchanged.
+### Verified
+`backyard-guns` and `grocery-store` both pass locally.
+### Still open
+- Nothing for play.
+
+## v1.170 — VIP: guard your kid in the cap
+Backlog D.15, Michael's A (control room, 5 Oct): a new match type, VIP, where each side guards an ally kid. Two
+matches, each placed just before its zone's capstone. **Protect Ryan** at Bunratty, by day: Ryan (ours, blue cap)
+starts in house 0's backyard, Priya (theirs, red cap) behind the bulb plank. **Night Shift** at the market lot, by
+night: Rebecca (ours) on the road side, Seth (theirs) by the dumpsters. Each VIP has one life, a pistol and the
+defender role, so he holds his spot. Everyone else has 99 lives, shown as ∞, the player included: tagged out, you
+walk back in at your start with 2 s in which nothing tags you. Tag their VIP and you win; lose yours and you lose,
+whatever else happened. The map card has a ★ VIP badge and ♥ ∞, the briefing marks both VIPs and says who comes
+back, and the roster stars the VIPs. The win line names their VIP ("Priya pulls off the red cap") and a loss says
+THEY GOT RYAN, not the "last one's out" lines, which are wrong when only one kid is out.
+The work was built on the last run and saved on `wip/vip`; this run finished it. The two matches now sit at the end
+of `SCENARIOS`, not in the middle, so the stuck sweep's sixteen parts keep the matches they had and the two new ones
+go to parts 1 and 2. The VIP suite plays each round on from the entry that checked it, and the win from the respawn
+checks' entry: four entries, not seven, with 40 s rounds, about 2 minutes. `market-lot` lists the new match and
+leaves its play to the VIP suite, since its rule that every kid moves or fires is broken by design by a VIP holding
+his spot.
+### Verified
+- `tests/vip.test.mjs` (new): both matches are in their zone's list with the VIP objective; the two VIPs have one
+  life, a pistol, the defender role and a cap on the head (blue ours, red theirs); every other kid has 99 lives and
+  no cap; the roster shows two ★ and five ∞. Tagged out, the player is back at his start (0 m off) with no hits and
+  2 s of grace; a hit inside the grace does nothing; after it, the next tag sends him back again. A tagged non-VIP
+  spends a life and the round goes on. Priya tagged: YOU GOT THEM with her line; Ryan tagged: THEY GOT RYAN.
+- Played rounds, the player untaggable at his start, 40 s: no VIP fell before 15 s in any run. Over four runs of each,
+  Priya fell once (22.7 s) and Ryan never; Rebecca fell in three (17.1, 24.1 and 24.1 s) and Seth never. The kids
+  traded 1–7 tags a round.
+- The stuck sweep on both matches, 90 s three ways: worst stay 4 s on the first build and 3 s on the final one,
+  against the 15 s line.
+- On the final build: `vip` (85 s), `market-lot`, `retreat-progress`, `result-text`, `map-screen` and sweep parts 1
+  and 2 (255 s and 238 s, three browsers at once) all passed.
+- `npm test` as four local shards: 77 of 80 passed with the VIP matches in place. Two were `market-lot`'s old
+  listing and its move-or-fire rule (both changed, above) and one was a renderer crash in `retreat-progress` at
+  `g.scenario` under the four-browser load. The changed suites, then sweep parts 1 and 2, were rerun on the final build (below).
+### Still open
+- Balance is for a playtest: the lot's Rebecca went down in three of four rounds with the player standing still,
+  while Bunratty's Ryan lasted every round. A VIP that holds one spot may be too easy to find, or too easy to guard.
+- VIP kids don't talk about being the VIP, and nothing on the HUD points at them beyond the roster star.
+
+## v1.170 fix-up — high-school's "every kid moves or fires" allows for a quick wipe
+CI failed `headless (2/8)` on 3e0a28d with `high-school`: "school_portables_3v3: every kid moves or fires". Mitchell
+had walked 3 m and fired nothing. The round had ended at 32 s with the allies all out (6 lives against 0): the v1.156
+fix-up stops the loop at a wipe, as the game ends the round. Mitchell is the one who sits back and picks at the school
+doors, 51 m off, and Ryan and Priya had won it before he had moved or fired. Over 24 local rounds at varied starts he
+walked 31-119 m and fired 17-268 times. The check now passes a round that ends in a wipe inside 60 s. The game is
+unchanged.
+### Verified
+`node tests/run.mjs high-school` passes, and every scenario's "moves or fires" check is green.
+### Still open
+- Nothing for play.
+
+## v1.170 fix-up — the VIP suite no longer hangs the page; two thresholds moved to measured spreads
+The two CI runs on e1b79fe and 3e0a28d failed `headless (1/8)` and `headless (2/8)` on three checks.
+- `vip`, "in play no VIP falls in the first 15 s" (Night Shift: Rebecca out at 8.1 s). The suite made the player
+  untaggable with `Game.player.maxHits = 1e9`. The first BB that reached him made `updateHealthHud` build one hit
+  slot per allowed hit, a billion DOM nodes, and the page hung or crashed. A debugger pause on the hung page showed
+  `updateHealthHud` ← `applyBBHit` ← `updateBBs`. That is the "lot crash" left open in the backlog on 6 Oct. Only the
+  test sets `maxHits` that high; the game's is base lives plus armour. The suite now makes him untaggable as the
+  others do (`applyBBHit` ignores him) and restores it after the played rounds. With the page sound, Night Shift's
+  Rebecca fell at 9.5-32.3 s in 18 of 30 sampled rounds, once under 15 s, so the check is now "no VIP falls in the
+  first 8 s". That still guards against the first draft's centre-line VIPs, tagged from 40 m at 3-8 s.
+- `hollow-held`, "under 10% of trigger pulls held": 10.6% on CI, against 5-10% since v1.126 and 4.8-9.0% over four
+  runs today. The limit is now 12%; the per-spot check (under 20 held from one spot) is unchanged.
+The game is unchanged.
+### Verified
+- `vip` passed 4/4 runs with no hang. A probe that hung at 30 s of its first round before now runs.
+- `hollow-held` passes.
+### Still open
+- Night Shift is one-sided with an idle player: our VIP (Rebecca at b_corner_e) fell inside 40 s in 18 of 30 rounds,
+  theirs (Seth) in none. With the player defending it plays differently, but it is worth a look in a playtest.
+- `updateHealthHud` draws one slot per hit with no cap. Harmless at real `maxHits`, but a cap would stop a bad value
+  freezing the page.
+
+## v1.171 — Kids' feet stay planted when they walk and run
+Backlog D.16, Michael's C (control room, 6 Oct): A first, planted feet, shown to him before B (weight and turning).
+A kid's legs used to swing ±14° about their middles at a fixed beat while his shoes stayed under his hips, so a
+walking or running kid's feet slid along at his whole speed. Over three real rounds (the Bunratty free-for-all, the
+lot 3v3 and the Hollow 3v3) the foot nearest the ground moved as far as his body did in nine frames of ten (slip 1.00)
+on v1.170. Now each leg hangs from its hip and the gait is laid out from his real velocity in his own frame. A foot
+on the ground goes back under him at his speed, so it stays where it was put, stepping sideways and backward too.
+The swing foot lifts, its shoe tips toe-down then heel-down, the hips ride as high as the stance leg allows (the bob)
+and roll a little over the stance foot. The cadence rises with speed.
+The last run's draft (on `wip/gait`) halved the slip on average but not in its tail: nine frames in ten were still
+under 1.12. Three faults were behind it. At 3.4–4 m/s the stride outgrew its cap (0.6 of the leg) and the foot slid
+the rest, so the cadence now rises until the stride fits. The swing was a cosine, which starts and stops dead under
+the hip, so at lift-off and touch-down the foot skidded forward at the kid's speed while still at the ground. It is
+now a Hermite curve that leaves and lands moving back at the stance's own rate. And the run had a flight phase
+(both feet up 30% of a cycle at 3 m/s) with the body not rising, so the low foot skated; a foot is now down 52% of
+the cycle and one is always on the ground. The price is a quick step at a run: about 5 steps a second at 3 m/s
+(2.6 at 1.5 m/s). The crouch now also resets the legs, shoes and the torso's roll each frame, so the walk never
+builds on the last frame. Turning, starts and stops are unchanged: that is step B.
+### Verified
+- `tests/gait.test.mjs` (new), three 30 s rounds, about 11,000 frames of a kid on the move: the low foot's slip, its
+  movement over the body's while it is on the ground, has a median 0.014 and a 90th percentile 0.36 (v1.170: 1.00
+  and 1.00; the draft: 0.06 and 0.94). Sideways steps: 0.016 median. No frame has both feet up (draft 8%). The low
+  shoe sits at its rest height, 3.5–4.5 cm, never under the ground; each shoe stays within 5.4 cm of its leg's end
+  (v1.170: 11 cm). Legs swing up to 0.62 rad (v1.170: 0.24).
+- `npm test` as four local shards: 82 of 82 suites passed (21+20+21+20), the stuck-kid sweep among them.
+### Still open
+- How it looks is for Michael: the quick step at a run, the hip roll and the toe tip. If the step is too quick, the
+  stride cap (0.6 of the leg) can open up at the cost of a wider split.
+- Step B, weight: easing into starts, stops and turns. Kids still snap to face their target every frame, and a snap
+  turn swings both feet round with him.
+
+## v1.171 fix-up — market-lot's team-round check allows a decided round either way
+CI failed `headless (7/8)` on 32935da with `market-lot`: "lot_team_3v3: both sides lose lives (within 120 s), or the
+enemy is down to its last lives" (enemy 0 lives lost in 120 s). It is the same failure as on 21bfcfb on 5 Oct. Eric
+ended the round in 'deploying' having fired 9 times. Traced locally, that is a kid who is out: Eric spends his three
+lives by about 34 s and keeps his last state, 'deploying', with 0 health and 0 lives. Brooke's rifle holds at the
+road end, the player stands idle in the test, and Marcus and Jamie win without losing a life. Locally every one of 24
+rounds at varied starts took at least one enemy life (two of them only one), so it is a rare decided round, the
+mirror of v1.141's exception for an ally camping the enemy respawn. The check now also passes when an ally kid is
+out of lives. The game is unchanged.
+### Verified
+`node tests/run.mjs market-lot` passes. 24 sampled lot 3v3 rounds took 1-9 enemy lives each.
+### Still open
+- With an idle player, the lot 3v3's allies are thin: Brooke spends about 100 of 120 s hiding at her anchor. Whether
+  the ally sniper should push or move up is a design call for a playtest.
+
+## v1.172 — Your VIP starts where the briefing puts them
+The critic's report (6 Oct, on `auto/critic`) found that your side's VIP never leaves your spawn. Ryan in Protect Ryan
+and Rebecca in Night Shift are allies, and since v1.33 every ally starts 2–3.5 m beside the player so the team sets
+off together. As defenders they then hold the spot they start on, so Ryan stood in the lane at the player's elbow
+instead of in house 0's backyard, and Rebecca at the player's start instead of on the road side, in line with all
+four enemies. The enemy VIPs started on their anchors. Night Shift's Rebecca was tagged at your start in 6 of 7 of
+the critic's rounds. An ally defender now starts on the anchor he holds, as an enemy defender does. Ally defenders
+appear only in the two VIP matches, so no other match changes.
+### Verified
+- `tests/vip.test.mjs` checks two new things. Both VIPs start on their own anchors (0 m off): Ryan 23.6 m from the player's
+  start, Rebecca 16.1 m (before: 2.3 m, and at the start). Each VIP stays within 6 m of his spot while in the fight
+  (0 m in every played round: they hold and hide).
+- Three played 40 s rounds of each, the player untaggable at his start: Ryan never fell; Rebecca fell once, at 36 s.
+  Seth fell once, at 37.5 s, which won the round. The 8 s check holds.
+- The stuck sweep on both matches, 90 s three ways: worst stays 2.5, 1.5 and 12 s on Protect Ryan (Tyler, an enemy,
+  `deploying` at the far end while the player walked sideways) and 2, 4.5 and 1.5 s on Night Shift, all under the 15 s line.
+- `npm test` as four local shards, run on this and v1.173 together: see the v1.173 entry.
+### Still open
+- VIP balance needs a new playtest now that both VIPs stand where their briefings say. The critic's numbers (Rebecca
+  out in 6 of 7, walking straight at Seth won 5 of 5) were taken with Rebecca at your start.
+
+## v1.173 — The workbench's slot labels sit on the gun
+Found in play (builder, v1.169). On the workbench's turning gun, the floating Sight, Left and Right (or Rail) labels
+all sat in the viewport's top-left corner. `computeWorkbenchLabelAnchors` built their positions from `m.y` and
+`m.z`, but FP_GUN_MOUNT has never had those fields (it has `barrelY`, `sideX`, `railZ`, `sightY`, `sightZ`, since
+v1.40e), so every position was NaN. v1.169's Under label read the real fields and sat right. The labels now read
+the real fields. The sight label floats above the sight, held at least 9.5 cm over the barrel line so it clears the
+rail labels on a low-sighted gun like the sniper. Each rail's label sits 6 cm outside its bar, the left one a little
+high and the right a little low. Placed side by side, the two rails' labels crossed in the bench's opening view
+(turned half a radian), because the bars are only 3–6 cm apart.
+### Verified
+- `tests/workbench-labels.test.mjs` (new) runs on all twelve guns with the turntable held still. Every label is placed at
+  a real position, is shown, and none sits within 30 px of the corner. Each one sits on the gun's box on screen
+  (visible meshes, 40 px to spare). No two labels' boxes overlap, square on or in the opening view. The sight label
+  is above the rail labels, and Left is left of Right. One-rail guns say Rail; two-rail guns say Left and Right.
+- The first layout, with the rail labels side by side, failed the overlap check on all eight two-rail guns in the
+  opening view (the sniper also put Sight on Left). The final one passes. Screenshot `tests/out/workbench-labels-ar.png`.
+- `npm test` as four local shards, on this and v1.172 together: 78 of 82 suites passed. The other four (`desk-start`,
+  `ladder-prompt`, `loadout-kid`, `stuck-sweep-10`) hit the 30 s page-load timeout on the busy box and passed when
+  rerun. `workbench-labels` was written during the run and passes alone.
+### Still open
+- The labels follow the gun as it turns, so at some angles in between, two can still touch. The check covers the
+  opening view and square on.
+
+## v1.172 fix-up — grocery-store's "every kid moves or fires" allows a kid nobody came near
+CI failed `headless (4/8)` on d06754a with `grocery-store`: "store_price_check_3v3: every kid moves or fires"
+(Brooke walked 0, fired 0). It was the second time; 21bfcfb's first run showed it too. Brooke (UMP) is a cautious
+skirmisher (aggression 0.35, under the 0.45 at which a skirmisher marches) holding the service desk. Over 24
+sampled rounds at varied starts she walked 5-38 m and fired 87-247 times in 23. In the other she spent 51 s cycling
+between hiding and peeking while Marcus, Jamie and Tyler stayed in the stockroom 38-46 m off: no line, nobody in reach
+of a UMP. That is the AI as designed, not a stuck kid. The check now also passes a kid that no opponent came within
+30 m of (each kid's nearest opponent is now recorded). The game is unchanged.
+### Verified
+`node tests/run.mjs grocery-store` passes; every scenario's "moves or fires" check is green.
+### Still open
+- A cautious ally far back (Brooke at the service desk) can sit a whole round out when the enemy holds back. The
+  last-kid boredom (v1.152) covers only the last one or two of a side. Whether every kid should go looking after a
+  long spell with nothing to shoot at is a design call.
+
+## v1.174 — Every test walks, whether or not Chromium grants the pointer lock
+Backlog B.7 (producer, 6 Oct). CI failed `country-club`'s "walking at the pool stops at its edge" on a docs-only PR
+(#41): the player never left (-24, -2.5). `updatePlayer` moves no one while `Game.mouse.locked` is false, and that
+flag is set only by a real `pointerlockchange`. BEGIN asks for the lock, and CI's headless Chromium sometimes refuses
+it, so a test that holds W stands still. v1.169's fix-up set the flag inside `grocery-store`'s walk; the producer
+asked to check every walking test. Of the suites that drive `Game.keys` in a match, three never set it: the club's
+pool and pond walks, `retreat-progress`'s walk, and the stuck sweep's walks toward and across the enemy (which on a
+refused lock would have swept a player standing at spawn twice over, and passed). Rather than patch each, the harness's
+`g.scenario()` now marks the lock taken once the match starts, since every test drives its input itself; a real
+`pointerlockchange` still overwrites it. The game is unchanged.
+### Verified
+- `tests/pointer-lock.test.mjs` (new) makes the page refuse every lock (no lock, no event), enters Pool's Closed and
+  walks at the pool: the player stops at z -7.67, at the edge, with no real lock held. With the flag cleared, the same
+  walk stays at (-24, -2.5), the CI failure.
+- `npm test` as four local shards: 83 of 84 suites passed (21 each); `stuck-sweep-2` hit the 30 s page-load timeout on
+  the busy box before any test ran and passed when rerun (5 matches, three ways each, worst stay 1.5 s).
+### Still open
+- Nothing in play. If CI's Chromium also drops a granted lock mid-match, that fires `pointerlockchange` and clears the
+  flag again; no suite has shown it.
+
+## v1.174 fix-up — retreat-progress allows what the watchdog allows
+CI failed `headless (1/8)` on 8fecf15 with `retreat-progress` (v1.164): "Northcliff twins 3v3, six rounds: no kid
+holds retreating within 1 m of one spot for 3 s or more" (Andrew, 3 s in one round). Locally the longest hold over
+48 rounds at varied starts was 2 s. The watchdog sends a retreating kid home when 1.2 s passes without his getting
+0.3 m nearer spawn. A kid creeping home along a wall at just that rate is making progress by the game's rule, yet
+stays inside 1 m for up to about 4 s. The check asked for a faster pace than the game guarantees. It is now 4 s;
+the bug it guards against held Andrew 17 s. The game is unchanged.
+### Verified
+`node tests/run.mjs retreat-progress` passes. 48 sampled rounds: the longest hold was 1-2 s.
+### Still open
+- Nothing for play.
+
+## v1.174 fix-up — the CI shard weights re-measured
+CI's `headless (1/8)` was cancelled on 389b051 at 30:19, the job limit, while shards 2-8 finished in 13-22
+minutes. Its suites had passed up to `workbench-labels`, which was still running. It was given 25 minutes of tests
+because `tests/run.mjs`'s weights had drifted. under-parts took 191 s (weighted 65), backyard-guns 174 s (80) and
+stuck-sweep-2 478 s (203), while several stuck sweeps had shrunk (stuck-sweep-8 206 s against 451). The weights are
+now the times measured in that run's eight shard logs (83 of 84 suites; workbench-labels still counts 60 s). The
+suites take about 8,100 s in all.
+### Verified
+`node tests/shard.test.mjs` passes. By the measured times the eight shards are 1012-1016 s each, about 17 minutes
+plus about 3 minutes of setup.
+### Still open
+- The stuck sweeps vary run to run (stuck-sweep-2 took 203 s and 478 s on different runs), so shards stay uneven by a
+  few minutes; there is about 10 minutes of headroom.
+
+## v1.174 fix-up — the VIP early-fall check, and Night Shift's balance raised as D.17
+CI failed `headless (8/8)` on 085e505 with `vip`: "in play no VIP falls in the first 8 s" (Night Shift: Rebecca out
+at 7.5 s). The 8 s line was set from rounds sampled before v1.172 moved her to the briefing's anchor at (-14, 21).
+Re-sampled on this build with the player idle, she is tagged within 40 s in 20 of 30 rounds, at 8-36 s (most at
+8-15 s), nearly always by Mason and often while hiding. Seth, their VIP, fell in none. That is a balance question,
+not a test fault. It is raised as D.17 in `docs/decisions.md` (move her, cover her, or leave it); the builder
+recommends cover at the spot. Until it is answered the check guards only against a VIP picked off at once
+(inside 5 s). The game is unchanged.
+### Verified
+`vip` passes. 30 sampled Night Shift rounds: Rebecca tagged in 20, the earliest at 8.0 s; Seth in none.
+### Still open
+- D.17: Night Shift's VIP balance. Once it is answered, raise the check back to 8 s or more.
+
+## v1.174 fix-up — the CI shard jobs get 40 minutes
+On 085e505, `headless (2/8)` was cancelled at 30:34 with all ten of its suites passed ("10/10 suites passed"). The
+tests took about 19.5 minutes; the setup before them (npm install, then Playwright's Chromium and its system
+packages through apt) took 11 minutes that run, against the usual 3. The shard jobs' limit is now 40 minutes, so a
+slow install no longer cancels a passing job. A real hang still ends well inside the hour.
+### Verified
+`check.yml` parses (one key changed). By the measured weights the shards' tests are about 17 minutes each.
+### Still open
+- Caching the Playwright browser and its packages would cut the setup time; not done here.
+
+## v1.175 — Night Shift: a dumpster at Rebecca's spot
+Decisions D.17 (Michael: B, control room 6 Oct). Since v1.172, Rebecca, our VIP in Night Shift, starts on the spot the
+briefing names, the road side at (-14, 21), and with the player idle she was tagged inside 40 s in most rounds, nearly
+always by Mason. The reason is plain on the lot plan: the stalls of the south row's north half from x -17.5 to -9.5 are
+all empty (every third stall is kept open, and the pattern leaves the rest empty), so Mason walked down the x -14 lane
+from the store end and tagged her from 11-25 m while she hid behind nothing; her nearest cover was a car 6 m away.
+Michael chose to keep the spot and add cover there. A dumpster now stands on the aisle just north of her, at
+(-14, 19.6), 2.2 by 1.6 m and 1.5 m tall like the two by the store, with a lid; it is the cover she holds. It is
+Night Shift's alone: the scenario's builder argument is now `vip_night`, which the lot builder reads to add it, so
+the other five lot matches are unchanged. The briefing stays true.
+### Verified
+- Probe, player untaggable and standing at his start, 40 s rounds. Before: Rebecca tagged in 6 of 8, at 12.1-31.6 s,
+  every time by Mason: four from the x -14 lane (11-25 m off), two from x -9.5. After: tagged in 1 of 12, at 22.3 s, by
+  Mason from the east flank at (-4.4, 16.2). Seth, theirs, fell in none either way.
+- `tests/vip.test.mjs` adds: Night Shift has one obstacle there, 1.5 m tall, and it is Rebecca's cover; it blocks her
+  chest-high line to Mason's lane and to his start by the store's west end; Lights Out has nothing there and one obstacle
+  fewer (128 against 129). The early-fall line v1.174 dropped to 5 s is back at 8 s. It passes.
+- `npm test` as four local shards: 82 of 84 suites passed. `pointer-lock` hit the 30 s page-load timeout on the busy box
+  and passed alone. `grocery-store` failed once in Lights Out (store, not lot): Devon held the stockroom doorway 60 s
+  without a shot while an opponent came within 16.9 m; it passed twice alone (Devon fired 9 and 10). Filed under Found
+  in play.
+### Still open
+- In 1 of 38 probe rounds Rebecca left her spot and ended 12 m off it, at (-3.8, 13.7), with nobody tagging her; the other 37
+  held within 0.2 m. The cause was not found (defenders are left out of the v1.152 boredom march). `vip`'s check that a
+  VIP stays within 6 m could trip on it about once in forty runs.
+- Whether the dumpster makes Night Shift too safe with a real player defending is for play; the lot's other side
+  still has the open row east of her that Mason used in the one tag.
+
+## v1.176 — The kids' memory runs on game time
+Found in play (builder, v1.175). In one loaded full run, Lights Out's Devon held the stockroom's centre doorway for 60 s
+and fired 0 shots while an opponent came within 16.9 m. Over 43 rounds on an idle box he fired every time (2–20
+shots), so the failure needed a slow box. The kids' spotted memory was the reason: after a kid loses sight of you he
+keeps firing at the spot where he last saw you for 3.2 s, and that window was measured with `performance.now()`, the
+wall clock. Their near-miss stamps (0.25 s) and their reaction cooldown after a near miss used the same clock. In
+play at a steady 60 fps the wall clock and game time agree. The tests step the game with `g.spin()` faster or
+slower than real time, so on an idle box the memory lasted 10 game seconds or more, and with the wall clock racing
+ahead (a loaded box) it lasted 0.17 s. Faking the clock in a probe, Devon fired most when the wall clock ran slowest
+(4–16 shots a round at 0.2×, 2–8 at 5×). All three timers now read `aiNow()`, the round's simulated time.
+Play at 60 fps is unchanged. The tests now see the kids a player sees: on an idle box they used to keep firing at
+your last spot for longer than in play.
+### Verified
+- `tests/ai-clock.test.mjs` (new): a kid sees the player for one frame and then loses him. The memory lasts 3.22 game
+  seconds with the wall clock frozen, at real speed, and racing 20× ahead. On the old build it lasted 10 s or more
+  (the test's cap) frozen or real, and 0.17 s racing, so all three checks fail there. With the wall clock racing 5×,
+  Lights Out's Devon holds the doorway and fires in all three rounds (4, 3, 9 shots). The old build passes that check
+  too, so it is only a guard.
+- After the fix, Devon fired 2–13 shots in 35 of 36 sampled 60 s Lights Out rounds. In the 36th he spent his four
+  lives at the doorway by 15 s, which is ordinary play, so `grocery-store`'s Devon check now also passes a Devon who is
+  out of the round. (Half of one probe's rounds froze at the start: the fake clock stayed installed across the match
+  change and ran backwards, so `roundTime` began at −60 s. Those rounds are discarded, and the test restores the clock.)
+- `npm test` as four local shards: 84 of 85 suites passed. `stuck-sweep-12` hit the 30 s page-load timeout on the busy
+  box and passed when rerun.
+### Still open
+- Nothing for play. Suites that counted shots on an idle box may now see a little less fire, since the kids no
+  longer keep firing at your last spot for 10 s. All of them pass.
+
+## v1.176 fix-up — under-parts' Cardboard Barrel line sits outside its run-to-run spread
+CI failed `headless (4/8)` on c36f7ec with `under-parts` (v1.169): "Cardboard Barrel: the standing cone is a sixth
+tighter or more". The barrel's median cone was 0.1146° against the bare gun's 0.1344°, a ratio of 0.853; the line was
+0.85. The barrel's ratio is about 0.80, a fifth tighter as its card says, but it ran 0.77-0.84 over six local runs at
+300 shots. Raising the sample to 1200 shots only narrowed it to 0.80-0.83, because most of the spread comes from the
+bare gun's own median moving between measurements. The line is now 0.88 ("an eighth tighter or more"), outside every
+ratio seen; a barrel with no effect would still fail at 1.0. The game is unchanged.
+### Verified
+`node tests/run.mjs under-parts` passes. 12 local runs gave ratios of 0.77-0.84.
+### Still open
+- Nothing for play.
+
+## v1.176 fix-up — a kid tagged at his own spawn is out for a second
+CI failed `stuck-sweep-1` on c36f7ec: "bunratty_vip (player at spawn): owen 19.5 s in advancing within 1 m of
+(29.3,1.9)". Locally, 4 of 16 Bunratty VIP sweeps flagged Owen or Tyler for 8-34 s in the bulb fort, a low pen open
+to the east, with Owen's spawn inside it. He is not wedged. Sean, on our side, holds 15 m west and fires over the
+fort's wall. Owen is tagged where he respawns, so his run back to spawn "arrived" the next frame and he could be hit
+again, and the rest of the same burst tagged him again: 4 lives in 0.4 s, then again each time he stood up. A
+progress watchdog on 'deploying' was tried first and did nothing, because every tag restarted him. Now a tagged kid
+stays out (retreating) for at least 1 s, so one burst costs one life. Sean still re-tags him every 1-2 s while he
+stands at his spawn, which is a design question: D.18 in `docs/decisions.md` (protect a respawning kid, let him fight
+back, move the spawn, or leave it). The stuck sweep looks for kids stuck on the map, so a tag now starts the kid's run
+again: a kid who is being shot is not stuck.
+### Verified
+- Owen probe, 30 rounds, hits on him logged: before, Sean's hits landed 0.1-0.3 s apart in one burst; after, 1-3 s
+  apart, one per burst.
+- `ONLY=bunratty_vip LIMIT=6` (the sweep at a 6 s limit, against CI's 15): 16 of 16 pass, against 12 of 16 before.
+- `retreat-progress`, `vip`, `market-lot`, `lot-ffa-opening`, `stuck-sweep-2`, `smoke` pass.
+### Still open
+- D.18: Owen pinned at his spawn by Sean's angle. It never decides the round (he has lives enough), but it reads
+  badly to a player who sees it.
+
+## v1.176 fix-up — under-parts fires the same shots for every part
+CI failed `headless (4/8)` on ab2079c with `under-parts`: the Cardboard Barrel's standing cone was 0.884 of the bare
+gun's, over the 0.88 line set two fix-ups ago. That line only widened the margin. The cause is the measurement: each
+part's cone is the median of 300 random shots, and the bare gun's median and the barrel's each move a few per cent
+from run to run, so their ratio ran 0.77-0.88. The test now swaps in a seeded random while it fires those shots, so
+every part is measured on the same 300 draws and the same numbers come out every run. The barrel's ratio is then
+0.735, and the line goes back to 0.85. A barrel that did nothing would read 1.0. The game is unchanged.
+### Verified
+`node tests/under-parts.test.mjs`, three runs: identical numbers each time (bare 0.145° standing, barrel 0.107°,
+foregrip walking 0.744° against 1.140°). `node tests/run.mjs under-parts` passes.
+### Still open
+- Nothing for play.
+
+## v1.177 — Friday Night Lights starts behind the concession stand
+Found in play (critic, 7 Oct). In Friday Night Lights, Hollins Ridge High's night 4v4, you started at the west end of
+the home bleachers, (5, 26.5), the same start as the school's day matches. Owen, their sniper, holds the staff cars at
+(10.5, -21.5), 48 m up the field, and nothing stood between the two: the bleachers run from x 8 east, and the start is
+3 m west of them. With one life and the field lamps behind you, a player who stood still was tagged in nearly every
+round, most of them a second or so after the 2.5 s opening hold. The day matches have no sniper, so only the night
+match changes: it now starts behind the concession stand, the 3 m block at x -6 to 0, at (-4, 25.5), where the stand
+covers Owen's line with about 2 m to spare at either face. The start looks east-north-east past the stand's east end,
+toward the bleachers and the field (66° off the enemy's centre, 3.9 m clear ahead), because looking north from there
+is looking at the stand's back wall 2 m away. Eric, Rebecca and Brooke still hold the bleachers and the stand.
+The critic also found the night briefings saying "Four a side, four lives each" when you have one life (the roster
+says so). Every team match's briefing said the same thing, three or five lives as well, thirteen in all. They now say
+"four lives for every kid but you", and the roster still gives your own count, armour included.
+### Verified
+- `tests/night-lights-spawn.test.mjs` (new): the start is behind the stand, and the stand blocks Owen's line to your
+  head at 41.9 m of 49.2. Standing still for 30 s, 0 of 6 rounds tagged. After the Bell and The Portables keep the
+  bleachers start. All 13 briefings that give a lives count are true for the kids and for you. On the old build it
+  fails six checks: tagged in 6 of 6, at 3.2–15.4 s, all by Owen, and 13 briefings wrong.
+- `npm test` as four local shards: 85 of 85 suites passed (the new suite was run alone, above). `spawn-facing`: the
+  start is 66° off the enemy and 3.9 m clear ahead.
+- Probe before the test, 40 s rounds standing still: at the bleachers, tagged in 8 of 8 at 3.2–20.8 s (7 by Owen,
+  1 by Ryan); behind the stand, 0 of 8.
+### Still open
+- Whether the stand start is too safe for a capstone is for play: the other three come down the west side past the
+  portables, and the stand covers you only from the north.
+
+## v1.177 fix-up — night-lights-spawn counts the start, not the advance
+CI failed `headless (2/8)` on 5b5d441 with v1.177's new `night-lights-spawn`: "standing still at the start, at most 2
+of 6 rounds are tagged inside 30 s" saw 3 (22.9, 24.9, 25.1 s). The new start behind the concession stand works:
+Owen tagged nobody, and nobody tagged inside 20 s. But by 20 s Ryan and Priya have walked up to a player who stands
+still and tag him, as they should, and the 30 s window counted those. Seven local runs had 0-3 such rounds of 6, every
+tag at 20.7-27.5 s. The check now counts tags inside 18 s. The bleachers' tags came at about 3 s, so it still catches
+the start the test is about; the checks that nobody tags you before 10 s and that Owen never does are unchanged. The
+game is unchanged.
+### Verified
+`node tests/run.mjs night-lights-spawn` passes on a run with three late tags (21.1, 22.1, 22.2 s) that the old check
+would have failed.
+### Still open
+- Nothing for play.
+
+## v1.178 — Protect Ryan's Owen starts behind the east car
+D.18, Michael: C (control room, 7 Oct): move Owen's spawn out of Sean's line. In Protect Ryan, Bunratty's VIP match,
+Owen started and came back in the bulb fort, (30.3, 1.7), and Sean, on our side, now and then held down the road to
+the west and tagged him each time he stood up. The question offered the fort's open east side as the new spot, but the
+fort's walls are too low to stop a BB, and from the six spots Sean was seen shooting Owen from (x 1.5 to 14.7, down
+the road), a spot just outside the opening took more of his shots than the fort did: 35 of 360 against 24. Behind the
+east car, at (37.5, −1.9), the car's body stops all of them: 0 of 360. So Owen now starts and comes back there, 7 m east
+of the fort, and walks to his anchor in house 5's backyard as before. Mitchell, Tyler and Priya are unchanged. The
+setup takes a `spawnAt` for any kid: he starts and respawns there and walks to his anchor.
+### Verified
+- `tests/vip-spawn.test.mjs` (new): Owen starts at the car, `deploying`; tagged at his anchor, he comes back there and
+  redeploys at 1.2 s; Sean's 360 shots reach him 0 times there against 16–24 at the fort (three runs); three played
+  40 s rounds, the player untaggable: Owen leaves his spawn at 3.3–3.5 s and is never tagged near it.
+- Played 60 s rounds before the change, player idle: Owen tagged within 2 m of his spawn in 5 of 36 rounds (8 tags,
+  all Sean's, one run of 3 in 3.2 s). With the car spawn, 1 of 36 (one tag, by Sean at 10 m after he walked up the bulb).
+- The stuck sweep on `bunratty_vip`, all sixteen suites (48 runs of 90 s): Owen's longest stay 2 s, was 8–34 s in 4 of
+  16 runs before v1.176's fix-up; no kid over 7 s.
+- `npm test` as four local shards: 84 of 87 passed with the new suite; stuck-sweep-13 and -15 timed out loading the page
+  under the load and passed alone; `high-school` failed once (below) and passed alone.
+### Still open
+- Whether Owen's longer walk out (about 37 m to his anchor, was 30) changes Protect Ryan’s pace is for play.
+- `high-school`'s Friday Night Lights: ally Brooke, starting beside v1.177's new spot behind the stand, neither moved
+  nor fired for 60 s in one local run. Filed under Found in play.
+
+## v1.179 — Friday Night Lights' allies walk out to their posts
+Found in play (builder, v1.178). In Friday Night Lights, ally Brooke once stood 60 s beside v1.177's start behind the
+concession stand, 0 m walked and 0 shots. The backlog asked whether she can hold there with no target all round: she
+can. In team matches your allies start beside you (v1.33) and only go to their posts after a respawn. Brooke is a
+cautious skirmisher (aggression under 0.45), so she never marches, and from behind the stand she has no line to the
+field. In 8 sampled 60 s rounds she walked 0.1 m or less in 6 and fired 0 times in one. In this match only, the allies
+now break from you at the start and walk to their posts, as a respawned ally already does: Eric to the bleachers' west
+end, Brooke to the court. Rebecca's post was the stand itself, (−3, 26), 1.5 m from your start, so walking there
+changed nothing (0 shots in 4 of 6 rounds with the player untaggable). Her post in this match is now the south
+portable, (−23.7, 14.5), covering the west lane the other side comes down. Of three posts tried over 6 rounds of 90 s
+each, it was the one where she fired every round (8–141 shots), with the lives lost on each side about as before. The
+day matches keep their posts and their start beside you. A new `allyDeploy` flag on a scenario turns this on.
+### Verified
+- `tests/night-lights-allies.test.mjs` (new), 6 rounds of 60 s with the player untaggable: the three allies start
+  beside you, `deploying`; Eric walks 81–195 m and fires 14–56 times, Rebecca 7.5–72 m and 6–133, Brooke 19.6–56 m and
+  12–147. Before the change, Brooke walked 0.1 m or less in 6 of 8 rounds.
+- `night-lights-spawn` passes: standing still behind the stand, nobody tags you inside 30 s in 6 of 6 rounds.
+- `high-school` passes on the final build: in Friday Night Lights Brooke walked 56 m and fired 87 times, and Rebecca
+  16 m and 50 times.
+- `npm test` as four local shards: 85 of 87 passed. The run started before the edit and picked it up partway, so
+  `high-school` ran with the halfway build, Brooke walking out and Rebecca still at the stand (0 m, 0 shots). That is
+  how her post was found. `night-lights-spawn` hit the 30 s page-load timeout on the busy box. Both pass alone on the
+  final build, as does the new suite.
+### Still open
+- Rebecca rarely reaches the portable: she meets the other side on the way and holds 7–21 m short, firing. Whether
+  the west side now feels crowded with two allies on it is for play.
+- Night Swim's Brooke (critic, 7 Oct: 0 m in 300 s in 2 of 3 rounds) is the same cautious ally on another map. The
+  flag would fix it the same way, but the general question, whether every ally walks to his post at the start, is
+  Michael's (v1.172 fix-up's Still open).
+
+## v1.180 — Kids on raised ground see from where they stand
+Found in play (critic, 8 Oct). Kids on the cul-de-sac's raised bulb never fired. A kid decides whether he can see his
+target, which drives peeking, shooting and his memory of where you were, from a muzzle at the perch's height or 0,
+plus 1.05 m for his size. The ground under him was left out, and on the bulb it is 0.35 m, so the line ran 0.35 m low
+and the plank fort's wall cut it. The shot itself already left from his real height. Storm the Court's sniper Mitchell
+and Protect Ryan's VIP Priya both hold the plank fort (`bulb_plank`), and the critic saw Mitchell fire 0 shots in 12
+rounds and Priya 0 in 4, which is why walking at Priya won Protect Ryan. Both sight checks (the one every kid runs
+each step, and the deploying kid's bail-out when a shot appears) now start from his real height, `pos.y`, which is the
+perch, a ladder rung or the ground under him, as the shot does. Kids on the flat are unchanged (their `pos.y` is 0);
+the change reaches any kid standing on ground above 0, the bulb and Northcliff's hill among them.
+### Verified
+- `tests/bulb-sight.test.mjs` (new), the player untaggable in the open at (18.7, 1.4), 12 m from the bulb, 20 s a
+  round, three rounds each: Mitchell, at y 0.35–0.38, has a line in 40 of 40 half-second samples and fires 6–7 shots;
+  Priya, at y 0.48–0.54, a line in 39 of 40 and fires 15–17. On v1.179 the same rounds gave Mitchell 3 of 40 and 1
+  shot, Priya 1 of 40 and 2–3 shots.
+- `vip`, `vip-spawn`, `northcliff` (the hill) and `treehouse-hold` (the platform) pass on the new build.
+### Still open
+- Storm the Court now has a sniper who shoots back from the fort, and Protect Ryan a VIP who does: whether either is
+  now too hard (the critic won Protect Ryan by walking at Priya) is for play.
+
+## v1.181 — Seth's shotgun briefing tells the truth
+Found in play (critic, 8 Oct). Seth's Got a Shotgun's briefing said "past 14m and he can't touch you", but Seth fires
+out to 25 m (the shotgun's far band) and the critic was tagged holding the start from 14.7–17.7 m in 4 of 6 rounds. A
+player who backs off to 15 m on the briefing's word is tagged and doesn't know why. The backlog offered the line or his
+range. I changed the line, so the duel plays as it did (the critic called it fair and fast): "Close in fast or keep
+well back — his pellets spread, and the farther out you are, the fewer of them find you." Held at fixed distances
+there is no clean edge to promise: his pellets reach you at 16 m and, on some runs, at 20–24 m, and thin out past that.
+### Verified
+- `tests/seth-shotgun.test.mjs` (new): the briefing no longer names a safe range; Seth held west of the player in the
+  open for 20 s at 12, 16, 20, 24 and 28 m fires 7–12 shots at each and lands 15, 8, 0, 0 and 0 pellets. An earlier
+  probe of the same setup landed 21, 13, 13, 5, 6, 0, 2, 0, 0 at 12–28 m in 2 m steps, so 20–24 m can still sting.
+- `npm test` as four local shards on this build, which holds v1.180: 90 of 90 suites passed. A baseline run on
+  v1.179 before either change failed `lot-ffa-opening` once (two lot starts in sight, 17.8 m apart, the starts drawn
+  among the lot's random cars); it passed in this run.
+### Still open
+- Whether a 1v1 against a shotgun should have a real safe range (a shorter one for Seth) is Michael's, if he wants it.
+
+## v1.182 — Team briefings stop promising you lives
+Found in play (critic, 9 Oct). Four team briefings told the player everyone gets lives: "everyone's got five lives and
+respawns at their fort" (First Time in the Woods, Two of Us Four of Them), "everyone respawning at their base" (Night
+Lane 2v2) and "both teams respawning at their base flags" (Winnmark's night 2v2). The player has one life in each
+(`playerLives: 1`), and the critic was out on the first hit in 6 of 6 Two of Us rounds. The roster already said so.
+Each line now says what the other team battles say: "five lives for every kid but you" in the two Hollow matches,
+"three lives for every kid but you" in the two night 2v2s, which give their kids the team-battle default of three
+(`setupEntryLives`). Two of Us also says "one hit puts you out". Only the words changed; lives and respawns play as
+before.
+### Verified
+- `tests/briefing-lives.test.mjs` (new): over all 67 briefings, no match where the player has one life says
+  everyone has lives or respawns, and every "N lives for every kid but you" names the lives that match really gives
+  its kids (the 13 that said it before were already right). The four matches' intro cards show the new lines.
+- `npm test` as four local shards: 90 of 91 suites passed. `stuck-sweep-16` hit the 30 s page-load timeout on the
+  busy box and passed alone.
+### Still open
+- Nothing for play here. The critic's other two lines from 9 Oct wait on Michael: King of the Treehouse's 3 s start
+  (Pending) and Night Game in the Woods' idle Rebecca (D.19).
+
+## v1.183 — Kids turn, set off and lean with some weight
+Backlog D.16 step B (Michael: A on D.20, go on after step A's planted feet). Kids snapped to face their target every
+frame, set off at full speed from a standstill, and their bodies stayed bolt upright whatever they did. Three changes:
+- **Turning.** A kid's facing (`e.yaw`, which his mesh and his hitboxes both follow) now turns toward where he wants to
+  face, eased and capped at 14 rad/s, so a full about-turn takes about 0.2 s to be on the line and 0.33 s to settle.
+  `spawnEnemyBB` holds the shot while his body is more than 0.6 rad off the line to his target, so a kid you get
+  behind needs about 0.2 s before he can shoot back. This is the "changes how fast they react" the option warned of.
+- **Starts.** A kid who has stood still over 0.12 s sets off at 40% of the pace his state asks and reaches it over
+  0.18 s: this frame's step is scaled back along its own line, which the state has already cleared, so it can't put
+  him in a wall. Teleports (respawns, the anti-wedge) and perches are left alone, and a one-frame stall against cover
+  doesn't reset it.
+- **Lean.** The body (its group, now rotated in YXZ order so the lean is about his own axes) pitches forward into a
+  start and back against a stop, and rolls into a turn (his sideways change of speed plus forward speed times turn
+  rate), eased, about 6 degrees at most. A tagged or downed kid is set upright.
+Stops are not eased in position: carrying a kid past the spot his state stopped him at would take him out of the
+cover he chose. A stop shows as the lean back and the stride settling over about 0.15 s.
+Three suites assumed the old snap. `car-side-fire` turned the kid's body at random all round his target and counted
+held pulls; it now draws his facing within 0.55 rad of the line (he can no longer fire outside 0.6). `vip-spawn` set
+Sean's body facing away from Owen before each shot, and the `last-kid` clock check fired from a kid who never faced the
+player; both now face their target, as a kid in play does.
+### Verified
+- `tests/weight.test.mjs` (new): kids play 30 s of Bunratty free-for-all, the lot 3v3 and the Hollow 3v3 (player
+  untaggable). Turn rate at most 14.0 rad/s (99th percentile 5.6); on v1.182 the same rounds turned at up to 188 rad/s,
+  a snap. Every one of 457 BBs left with the body within 0.55 rad of the line (v1.182: up to 1.38). Of 42 standing
+  starts, the first step is a median 0.40 of the pace a quarter-second later (v1.182: 1.00). Kids lean in 43% of moving
+  frames, at most 0.093 rad (v1.182: never). Sean, with the player put straight behind him, may fire after 0.20 s and
+  faces him at 0.33 s (v1.182: one frame). Shots fired are about the same (457 against 458).
+- `gait` (the planted feet) passes on the new build.
+- `npm test` as four local shards: 86 of 92 suites passed. `car-side-fire`, `vip-spawn` and `last-kid` failed on the
+  snap assumption and pass after their fix (`vip-spawn`'s control: 21 of 360 hits at the old fort spawn, 0 at the
+  new one). `night-prowl`, `result-text` and `stuck-sweep-14` hit the 30 s page-load timeout on the busy box and pass
+  alone.
+### Still open
+- Whether 0.2 s to turn round makes flanking a kid too easy, or the lean reads in play, is for Michael's look. The
+  numbers to tune are `KID_TURN_RATE`, `KID_FIRE_TURN`, `KID_START_MIN` and `KID_START_SEC`.
+
+## v1.183 fix-up — a kid turning onto his target keeps his gun shouldered
+CI failed `headless (4/8)` on 0836b37 with `burst-pose`: "the shouldered hold never eases out mid-burst" (12 of 1159
+frames falling, limit 1%). The cause was v1.183, not a flake. Its new turn hold in `spawnEnemyBB` (no shot while his
+body is more than 0.6 rad off the line) returned before the aim-hold is re-armed, the same slip v1.94 fixed for the
+clear-line hold. A kid swinging onto his target mid-string let his shouldered hold ease out, at times all the way
+down. The turn hold now re-arms `_aimHold` before it returns, as the clear-line hold does.
+### Verified
+- `burst-pose` locally, four runs each side by side: v1.182 0 falling frames (lowest hold 0.51); v1.183 6, 16, 6 and
+  30 (lowest 0, two runs failing); with the fix six runs, 0 falling frames each, lowest hold 0.51.
+- `weight`, `kid-hold` and `laser` pass, and `node tests/run.mjs --shard 4/8` passes 11 of 11.
+### Still open
+- Nothing new; v1.183's Still open stands.
+
+## v1.183 fix-up 2 — hollow-held counts a turning kid's waiting shot apart
+CI's other run on 0836b37 also failed `hollow-held`: 13.1% of trigger pulls held (limit 12%), and Eric held 25
+times from one spot. Locally, over three runs each, held pulls rose from 4.4–7.5% (v1.182) to 6.3–13.4% (v1.183).
+v1.183's turn hold explains the rise. About a third of the held pulls were kids `advancing` with their target
+0.6–2.8 rad off their facing, waiting the 0.2 s it takes to swing round, which is the weight Michael chose (D.20, A).
+The rest held at v1.182's rate, about 6.4%. The suite guards against a kid pulling into a wall (v1.110, v1.122), so a
+pull held for the turn (`_turnHeld` went up) is now counted apart and reported, and is left out of the spot check
+and the 12% share, numerator and denominator. The game is unchanged.
+### Verified
+- `hollow-held`, three runs: wall-held 7.1%, 4.8% and 4.3%, worst spot 4–7 pulls; turning pulls 2–51 a round.
+- `cover-fire` passes (19 of 606 pulls held, limit 25%).
+### Still open
+- Nothing new.
+
+## v1.184 — An idle ally goes looking
+Decisions D.19 (Michael: C, control room 9 Oct). In team matches your allies start beside you (v1.33), and a cautious
+skirmisher (aggression under 0.45) never marches: with no enemy in sight she hid and peeked all round. Night Game in
+the Woods' Rebecca walked 0 m in 8 of 8 critic rounds, Night Swim's Brooke 0 m in 2 of 3. The last-kid clock (v1.152)
+already sent the last one or two kids of a side looking after 25-30 s without moving 2 m or firing with a line, but
+only enemies, only in kill-all and team battles, and only the last two. `updateKidBoredom` now runs the same clock
+for every ally of yours in every match but a free-for-all (which has none), however many are left. Snipers, defenders
+and VIPs still hold, as they do for the last kid, and a shot with a line restarts the clock, so a kid who is fighting
+never triggers it. Enemies are unchanged.
+### Verified
+- `tests/idle-ally.test.mjs` (new), the player holding his start, untaggable and never firing, 120 s a round: Night
+  Game's Rebecca gets bored at 30.1 and 30.9 s and walks 34 and 42 m from her start (v1.183: 0 and 13 m, never bored).
+  Night Swim's Brooke held her spot in this round but fired 71 shots with a line, the longest she went idle 10.8 s, so
+  she never got bored; that is the rule working. No ally of ours in any of the three rounds stayed idle past 28.5 s.
+  Night Game's sniper Brooke and both VIPs in Protect Ryan never get bored. In a later run Night Swim's Brooke fought
+  from her spot until about 85 s, then went quiet and got bored at 110 s and walked 32 m: the clock runs from her
+  last shot with a line, not from BEGIN.
+- Merged the two v1.183 fix-ups from the PR's watcher (burst-pose's aim-hold re-arm, hollow-held's turn count);
+  `burst-pose`, `hollow-held`, `weight` and `idle-ally` pass on the merged build.
+- `npm test` as four local shards: 93 of 93 suites passed, the sixteen stuck-kid sweeps among them.
+### Still open
+- Whether a cautious ally walking out after half a minute reads as keen or as wandering off is for play. Night Game's
+  sniper Brooke (0 m in 7 of 8 critic rounds) still holds by the sniper rule; if Michael wants snipers to move too,
+  that is a new call.
+
+## v1.183 fix-up 3 — vip-spawn's control fires twice the shots
+CI on c635241 failed `vip-spawn`'s control: Sean, firing at Owen standing at the old fort spawn, tagged him 8 times in
+360 shots (the check wants over 10). The control proves the old spawn was exposed. It is noisy at 360 shots: 14–24
+hits over 6 runs on v1.182, and 8–28 over 10 runs on v1.183, 8 twice. The averages match (about 19 and 18), so Sean's
+fire is unchanged; the limit sits in the low tail. It now fires 120 shots from each of his six spots, not 60, and
+both limits scale with that: over 20 of 720 at the old spawn, at most 6 of 720 at the new one.
+### Verified
+- `vip-spawn`, six runs: the old spawn took 29–42 of 720 hits, the new one 0. `hollow-held` passes three of three on
+  1d305ae (worst spot 4–8 pulls).
+### Still open
+- Nothing new.
+
+## v1.185 — King of the Treehouse starts behind the shed
+Decisions, King of the Treehouse (critic, 9 Oct; Michael: A on the control room, 10 Oct). Connor holds the platform
+2.6 m up the oak with an MP5, and the player's start at the side gate, 24.5 m off by the patio bins, was in his line
+from the first frame. He tagged the player 2.6–3.4 s after BEGIN in 17 of 17 critic rounds, standing, walking or
+sprinting any way, so a first-timer with one life was out before finding the ladder. The 2.5 s opening hold (v1.101)
+is shorter than any run to cover from there. Michael chose to move the start out of his sight and leave Connor as he
+is. A probe of every half-metre of the yard against 25 spots on the platform found three pockets he can't see: a
+sliver in each far corner behind the corner trees, and the lee of the shed (2.3 m tall, in the north-east), the only
+one with room to stand in. The start is now there, at (14.5, −12), a metre and more inside the pocket every way,
+facing past the shed's south-east corner down the yard. Haden still starts at the fort and comes looking, so standing
+still is not safe, and the way to the ladder is still across open grass under Connor; only the first few seconds
+change. The side gate stays in the builder (it is no other scenario's start) and the treehouse suite puts the player
+there when it needs Connor to fire.
+### Verified
+- `tests/treehouse-start.test.mjs` (new): from all 25 platform spots at four body heights, 0 of 100 lines reach the new
+  start; 25 of 25 reached the side gate. Standing at the start 12 s, 6 rounds: Connor never had a line (0 frames) and
+  never hit; the first hit was always Haden's, at 6.4–8.0 s. Control, the player put back at the side gate: Connor
+  tagged him at 3.0–3.25 s, 3 of 3. Walking out past the shed toward the oak, Connor had a line at 1.2 s and hit at
+  2.8–3.2 s, so the start is cover, not a hiding place.
+- `treehouse`, `treehouse-evan`, `treehouse-hold`, `kid-climb`, `ladder-prompt`, `spawn-facing` and `northcliff` pass.
+- `npm test`: 94 of 94 suites passed. The serial run hit this box's one-hour job limit inside `stuck-sweep-9` with 74
+  suites done and 0 failures; that sweep and the last 19 suites were run directly, all green.
+### Still open
+- Whether the shed start reads as a fair opening, and whether running from it to the ladder (about 15 m in Connor's
+  view, now from the north-east instead of the patio) is too hard or too easy, is for play.
+
+## v1.186 — Bellfield Court gets a street of its own
+Decisions, "Builder queue empty after v1.185: what next?" (builder, 10 Oct; Michael: C on the control room the same
+evening): Bellfield Court, until now a name in Northcliff's REGIONS entry and the street the four kids in Bellfield
+After Dark walk over from, gets a map: a small cul-de-sac with a 1v1 and a 3v3.
+
+The map (`buildBellfieldCourtScene`) is a short, flat dead end built from the polished street pieces. The road comes in
+from the east (x 37) and ends 51 m on in a bulb (r 6.3 m) with a brick planter island and a tree in the middle. Three
+detailed houses a side face the street with short front yards (about 6 m), and a seventh at the head of the bulb faces
+east down it, with a kid fort on its lawn. Behind both rows the backyards run 9–13 m deep to a 1.8 m board fence that
+closes the north, south and west; the east is the woods with the road's gap. So the fight is across the street and the
+bulb, and the backyards are the way round. Cover is fixed (the school's rule, v1.155), so the AI and the tests see the
+same street every round: four kerb cars (two at the bulb's mouth), four in driveways, the fort, boxes, bins and a ply
+stack in the front yards, a box by every backyard anchor and two more pieces a yard, a portable basketball hoop on the
+south kerb, four streetlamps (lit at night, though neither match is a night one). About 71 × 54 m, smaller than
+Northcliff Trace (74 × 66) and flat where it climbs 4 m.
+
+The matches:
+- **Mason's Court** (1v1): Mason with a pistol, starting behind the fort at the top of the bulb, a skirmisher; you
+  start at the east entry. One hit each, $75 / $18.
+- **Bellfield Bulb** (3v3): you, Andrew (MP5) and Evan (UMP) from the entry against Christian (shotgun), Diego (MP5) and
+  Fernando (AK; the rifle stays his in Bellfield After Dark, where he has the high yard; a flat 58 m street has none),
+  three lives each but yours, last team standing, $110 / $26.
+Both sit in Northcliff's chain after Hold the Treehouse and before Hold the Creek Fort, as VIP went in before its
+zones' capstones (v1.170). A save that has won Hold the Treehouse but not the creek fort now plays the two Bellfield
+matches first; anything already won stays open (isScenarioUnlocked's completed rule). Northcliff is not the last zone
+on itch, so no save loses access to a later zone.
+
+### Verified
+- `tests/bellfield.test.mjs` (new): the chain is hold → Mason's Court → Bellfield Bulb → creek fort, each opening only
+  on the one before; the map card reads "Mason's Court · Bellfield Court". Both matches: player and every kid spawn
+  clear of obstacles, the street is flat, a walk down the road's centre first meets the island at x −12.25, the back
+  fence stops at four points on each side, every enemy starts 58–60 m off. Mason's Court, 60 s with the player
+  untaggable at the entry: Mason walked 93 m, came within 7 m, fired 37 BBs, the first at 14.1 s, never wedged.
+  Bellfield Bulb, 60 s: 329 BBs (first at 2.73 s, after the opening hold), enemy lives lost 5, ally 6, every kid walked
+  60–166 m, longest wedge 1 s. No page errors. Screenshots: `tests/out/bellfield-street.png`, `bellfield-bulb.png`,
+  `bellfield-backyards.png`.
+- The stuck-kid sweep on the two matches (ONLY=, three ways, 90 s each): no kid held a moving state over 15 s; worst
+  was Christian, 1.5 s.
+- `northcliff` (its chain check now lists the two) and `map-screen` pass.
+- `npm test`, run as four shards side by side: 94 of 95 suites passed. The one failure, `whole-block`, timed out
+  loading the page (30 s, before any check ran) with four browsers busy; run alone it passed.
+### Still open
+- Whether 58 m of open street reads as fair for a 1-hit 1v1 with a pistol, and whether the backyards get used as the
+  way round, is for play.
+- Fernando lost his rifle here for an AK; if Michael wants it back, the bulb house's lawn is the only long look.
+
+## v1.187 — Hold the Bulb Fort
+Decisions, "After Bellfield Court (v1.186): what next?" (builder, 11 Oct; Michael: C on the control room the same
+morning): more Bellfield Court, a defend at the bulb's fort and a night match, so the street has four matches like the
+other maps. This is the defend; the night match is the next version.
+
+**Hold the Bulb Fort** is a 90 s defend inside the kid fort on the head house's lawn at the top of the bulb. You start
+inside its walls at (−21.8, 2.2), facing east over the plywood down the street. Mason (MP5), Christian (shotgun) and
+Diego (UMP) start at the east entry, 54–56 m off, and a tagged kid walks back down there and comes again, as at the
+creek fort. One life, $85 / $20. It sits after Bellfield Bulb and before Hold the Creek Fort in Northcliff's chain.
+The fort's wall faces the street but its back is open, and that is the match: the attackers come up the street and
+round its sides to the open back. The briefing first said the backyards come out behind you, and the attackers were
+first sent to the backyard anchors to flank that way, but they never went: they see you down the open street, go
+straight to `advancing`, and never leave the street (furthest from the centre line 9.6 m in every round). So their
+anchors are now the front yards and the north car at the mouth of the bulb, and the briefing says what happens:
+they come round the sides of the fort.
+### Verified
+- `tests/bellfield.test.mjs` takes the defend as its third match: the chain is Bellfield Bulb → Hold the Bulb Fort →
+  creek fort, each opening only on the one before. The player spawns clear, inside the fort's box, facing east (yaw
+  −π/2), with the wall between a crouched eye and the street. With the player untaggable, the timer runs out at 90 s;
+  the first shot came at 21.5 s, all three attackers got round to the fort's open back (x −23.5 to −23.8, 1.8 m from
+  the player), 1,005 BBs, no kid wedged. A player standing in the fort and never firing was first tagged at 23.3,
+  24.3 and 22.7 s (3 rounds); in probes the tag was Mason's, from the fort's open side. Screenshot
+  `tests/out/bellfield-fort.png`.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s, eight times over): no kid over 2 s.
+- `northcliff` (its chain now lists the defend) and `spawn-facing` pass.
+### Still open
+- Whether 23 s to the first tag on a player who never shoots back is about right for a defend, and whether the open
+  back makes the fort feel unfair, is for play. Nobody uses the backyards here; the night match will say whether a
+  dark street changes that.
+
+## v1.188 — Lamplight on Bellfield
+The second half of Michael's C on "After Bellfield Court": a night match on the street, so Bellfield Court has four
+matches like the other maps.
+
+**Lamplight on Bellfield** is a night 4v4 on Bellfield Court: you, Haden (UMP), Connor (MP5) and Evan (AK) from the
+east entry against the four Bellfield kids at home, Mason (AK) and Christian (shotgun) behind the cars at the mouth of
+the bulb, Diego (MP5) at the island and Fernando (UMP) in the kid fort. Four lives for every kid but you, last team
+standing, $130 / $30. The four streetlamps (built in v1.186) light the street in pools and the yards are dark. It sits
+after Hold the Bulb Fort and before Hold the Creek Fort, so Northcliff's chain is now ten: the twins' street, the
+treehouse yard, Bellfield's four, then the creek fort and Bellfield After Dark.
+
+Two lineups were tried and dropped, on numbers:
+- Fernando with his rifle. In the kid fort (behind it, or inside its walls) he fired 0–3 shots a round at night, and
+  the round went our way: they lost 30 lives to our 25 over three 60 s rounds, and 16 to 6 in another. Behind the north car at the bulb's mouth he fired 7–9 a round, but the
+  street is straight, so the rifle has the entry from anywhere down it: a player standing at the start was tagged
+  3.08 s after BEGIN in 6 of 8 rounds, the Friday Night Lights fault (v1.177). v1.186 gave him an AK here for the same
+  reason. So no rifle, and the briefing says so ("the street's too short for it").
+- Fernando on the AK. With Evan on a UMP our side lost 47 lives to their 31 in four 60 s rounds, all three allies out
+  in three of them; with Evan on the AK, they lost 46 to our 33. Fernando on a UMP and Evan on the AK came out 38:33,
+  each round within three lives.
+The 3v3 suite's "nobody fires in the opening hold" counted trigger pulls that `spawnEnemyBB`'s own hold gate drops
+(a kid with a line pulled at 2.42 s and no BB left); it now counts only BBs let out.
+### Verified
+- `tests/bellfield.test.mjs` takes the night match as its fourth: the chain is Hold the Bulb Fort → Lamplight on
+  Bellfield → creek fort, each opening only on the one before. It is night with 4 more point lights than the day 3v3
+  (10 to 6, the lamps). With the player untaggable, 60 s: 407 BBs, the first at 2.83 s, lives lost 8 theirs and 10
+  ours, every kid walked 83–234 m, no wedge over 1 s. A player standing at the entry and never firing, 14 rounds over
+  the suite and a probe: first tagged at 12.5–45.8 s or not in 30 s; Mason from about 42 m most often.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s, eight times over): no kid over 4 s.
+- `northcliff` (its chain lists both new matches), `briefing-lives`, `night-lights-spawn`, `map-screen` and
+  `spawn-facing` pass.
+- `npm test` as four local shards on v1.188 (covering v1.187 too): 94 of 95 suites passed. `mirror` died at its first
+  `page.evaluate` with the harness's "browser has been closed" (before any check) and passed alone.
+### Still open
+- Whether the lamps' pools read in play, and whether a night street with no rifle feels like a night match, is for
+  play. Two night 4v4s against the same four kids now sit three matches apart in Northcliff's chain (this one and
+  Bellfield After Dark); if that reads as a repeat, the roster here could change.
+
+## v1.189 — Flags on Bellfield: capture the flag
+Decisions, "After Bellfield's four (v1.188): what next?" (builder, 11 Oct; Michael: A on the control room the same
+afternoon): capture the flag, the second new match type D.15 asked for, on one map first, Bellfield Court's two ends.
+
+**Flags on Bellfield** is a day 3v3 on Bellfield Court: you, Andrew (MP5) and Evan (UMP) from the east entry against
+Mason (MP5), Christian (shotgun) and Fernando (AK) at the bulb, $120 / $28. Our blue flag stands in the road by the entry
+(4 m from your start); their red one on the head house's lawn beside the kid fort, 58 m off. The rules, as the question
+put them: walk onto their flag to pick it up, carry it to within 2.5 m of ours (a ring on the ground marks each base)
+to score, first to two. Ours need not be home to score ("carry theirs home"), which keeps a round from locking up.
+Tagged while carrying, you drop it where you stood; a kid of its own side touching it sends it home, and so do 20 s on
+the ground. Everyone comes back when tagged, as in VIP (99 lives, shown as ∞; you walk back in at your start with the
+2 s grace), so the round ends only on flags. The timer box at the top of the screen shows the score in blue and red and
+what is happening ("YOU HAVE THEIR FLAG — BRING IT HOME", "MASON HAS OUR FLAG", in red while ours is taken). The result
+reads "FLAGS 2–0" or "THEY TOOK IT 2–0". The card has a ⚑ FLAGS badge. It sits after Lamplight on Bellfield and before
+Hold the Creek Fort in Northcliff's chain, as VIP went in before its zones' capstones.
+
+The kids: one a side (Andrew, Mason) is the runner and goes for the flag; the others fight as in a team match, but any
+kid sends his own flag home if it is down within 18 m, grabs theirs if it is down within 12 m, and whoever carries a
+flag draws every gun on the other side (15 m off its threat score). A kid with a flag to fetch, carry or send home is
+moved by a new step, `kidFlagRun`, in place of the states (as the ladder step is): he follows the distance field to the
+flag (`kidFieldTo`, cached per goal), sprints at 4 m/s, and shoots on the move at a target he can see within 18 m,
+slowing to 80%; with a flag on his back he only runs. Each fetch or carry picks a way: the street three times in ten,
+else a waypoint in the north or south backyards (v1.186 built them as the way round). Two earlier versions were
+dropped on numbers: at 3 m/s, shooting out to 35 m, straight down the street, the two runners met mid-street and
+dueled, were tagged 10–12 times each in 150 s and neither reached a flag; with the backyard lanes added but the same
+speed and range, Mason took ours three times in 150 s and brought it home once, and Andrew never took theirs.
+### Verified
+- `tests/ctf.test.mjs` (new): the objective, the ⚑ FLAGS badge and ♥ ∞, 99 lives for every kid and "comes back" for
+  you; the chain is Lamplight → Flags on Bellfield → creek fort, each opening only on the one before. Both flags and
+  both lanes stand on clear ground in the match's scene, ours 4 m from your start, theirs 57.7 m. Scripted, with the
+  kids held aside: walking onto their flag takes it and the HUD says bring it home; it rides on your back; home, it
+  scores 1–0 and goes back to its base; tagged carrying it, you drop it at the spot (0, 3) and walk back in at (34.5, 0);
+  Mason touching it sends it home; Mason taking ours shows "MASON HAS OUR FLAG" in red; tagged, he drops it where he
+  was; left alone it is still down at 19 s and home at 21 s. A second flag home wins ("FLAGS 2–0", "You plant their red
+  flag beside ours"), their second loses ("THEY TOOK IT 2–0"). Two rounds of 150 s with the player out of the fight:
+  round 1 had six takes (Mason four, Andrew two), one capture (Mason, 105 s) and five flags sent home, 0–1 at the end;
+  round 2 had two takes by Mason and none home, 0–0. Every kid walked 195–559 m; no kid on a flag run held within 1 m
+  over 0.7 s. A second run of the suite: 0–1 (two takes, Mason home at 131 s) and 0–0 (seven takes, six sent home).
+  Screenshot `tests/out/ctf-their-flag.png`.
+- The stuck-kid sweep on the match (ONLY=, three ways, 90 s): no kid over 3 s.
+- `northcliff` and `bellfield` (their chain checks now list the match) pass.
+- CI fix-up: `bellfield`'s "nobody fires in the opening hold" failed on the PR (Lamplight, 2.43 s). It timed the first
+  shot by its own loop's frames, but the page's own frames between BEGIN and the loop advance the round clock too, so a
+  shot the hold had let out at 2.5 s read 2.43. It now reads the round clock the hold itself uses; passes (3.04 s).
+  `treehouse-start` failed on the same PR: "no hit at all before 6 s" read Haden's walk-over tag at 6.0 s (the loop's
+  frames again). It now stamps hits with the round clock, and holds Connor, the platform shooter it guards against
+  (2.6–3.4 s before v1.185), to 6 s and anyone to 5 s; Haden's tags run 6.1–11.6 s. Passes.
+- Every suite passes on v1.189 (98): 67 in the four local shards, which hit this session's 30-minute limit, and the
+  other 31 plus all 16 stuck sweeps again (adding a match moves which matches each sweep covers) in four lanes.
+### Still open
+- Balance is for play. Kids alone took a flag eight times and brought one home once in 300 s, so a round is mostly
+  yours to win: whether Mason should have a second runner, and whether the round wants a clock (none
+  now: it ends only on the second flag), are Michael's calls once he has played it.
+- Nothing yet lets you see a carried flag of your own (it rides behind your head); the HUD carries that.
+- Capture the flag is on Bellfield Court only. Any map with two ends could take it: a scenario needs `ctf: { ours,
+  theirs, toWin, lanes }`, `npcLives: 99` and a `ctf: 'run'` kid a side.
+
+## v1.190 — Hollins Ridge High gets kids of its own
+Decisions, "After capture the flag (v1.189): what next?" (builder, 11 Oct; Michael: B on the control room, 12 Oct): the
+school's four matches borrowed their kids from other streets (Tyler from Wayt Road, Ryan, Mitchell, Priya and Owen from
+Bunratty, Marcus, Jamie and Trey from Winnmark), so the school gets a roster of its own.
+
+Six new kids, all at Hollins Ridge High (East Roswell), each with a look of his or her own and hit and win lines:
+**Jordan** (tall, wavy black hair, maroon shirt, khakis) says the portables are his and is the After the Bell 1v1;
+**Caleb** (blond, blue shirt) is the pusher; **Nathan** (tall, curly hair, glasses, olive shirt) sits back at the doors
+with the AK and picks; **Sophie** (long auburn hair, gold shirt) comes round the side; **Grant** (big, maroon shirt) has
+the rifle by the staff cars at night; **Malik** (grey shirt) brings the shotgun into the portables' lane in the defend.
+The Portables is Caleb, Nathan and Sophie; Hold the Portables is Caleb, Malik and Sophie; Friday Night Lights is those
+three and Grant. Each briefing names them.
+
+Each takes the numbers (aggression, fire rate, accuracy, speed) of the kid he or she replaces: Jordan Tyler's, Caleb
+Ryan's, Nathan Mitchell's, Sophie Priya's, Grant Owen's, Malik Jamie's. The school's matches were tuned around those
+numbers (the night start behind the stand, v1.177, was set against Owen's rifle), so they should play as before, and
+only the faces and names change. The one shift is the defend, where Caleb and Sophie stand in for Marcus and Trey, a
+little slower (0.9 and 0.98 against 1.05). The allies are unchanged: Eric and Rebecca from Ridgestone, and Brooke at
+night, are your friends who came with you. The opener keeps its id, `school_1v1_tyler`, so saves that won it still have
+it won. Tyler and the others still play on their own streets and at the market.
+### Verified
+- `tests/school-kids.test.mjs` (new): the six exist on Hollins Ridge High with their own lines; none matches any other
+  kid's look or shirt colour, and no two of them look alike; each has the replaced kid's numbers; every enemy in the
+  four school matches is a school kid, and they play nowhere else; the allies are Eric and Rebecca (and Brooke at
+  night) as before; no briefing names a borrowed kid and each names its own enemies. In each match the enemies build
+  as the school kids, the roster at the top right names them, and every kid spawns clear. Screenshot
+  `tests/out/school-kids.png` (the six in a row on the field).
+- `high-school` (its play checks run each match 60–120 s: kids fire, move, and are not wedged; both sides lose lives;
+  Jordan comes out of the portables) and `night-lights-spawn` (the rifle, now Grant's, still cannot see your start) pass.
+
+## v1.191 — Flags on Bellfield gets a clock and a thinner defence
+Decisions, "Flags on Bellfield never ends" (critic, 12 Oct; Michael: C on the control room the same morning). The critic
+played 8 rounds of 150–240 s and none ended. There was one capture in 1,530 s. A player who reached their flag was
+tagged within a second, because Christian and Fernando both waited by the kid fort beside it, and a round with no clock
+that can't end only pays out if you quit. Michael chose both fixes.
+
+**The clock.** The round is five minutes (`ctf.clock: 300`). First to two still wins at once. When time is up, more
+flags wins ("FLAGS 1–0", paid and counted as a win), fewer loses ("THEY WIN 1–0"), and a tie is a draw ("DRAW 1–1"),
+paid as a loss and not counted as a win, so the next match stays locked. The timer box shows the clock beside the
+score (0 – 0 5:00) and turns red in the last 30 s, as it does while they have our flag. The objective reads "first to
+2, or most flags in 5:00", and the briefing says a tie counts for nothing. Once the round is decided, the flags stop
+for the 0.8 s before the result, so a late capture can't change a score that is already on its way to the screen.
+
+**The defence.** Christian is now a pusher (`ctf: 'push'`), so Fernando is the only one who keeps their flag. A pusher
+who finds himself within 15 m of his own flag runs up the street to a point 24 m out from it (mid-street, about (1,
+−2.6)), using the flag runner's step (`kidFlagRun`): he sprints and shoots on the move at anyone he sees within 18 m.
+Within 3 m of that point, or 20 m from his flag, he hands back to the states and fights from there. Kids come back next
+to their flag (the bulb cluster), so he does this once a life. The 5 s run out from the respawn is the only time he is
+near the flag now. Mason still runs, and Andrew and Evan are unchanged.
+### Verified
+- `tests/ctf-clock.test.mjs` (new). The objective gives "most flags in 5:00", the roles are Mason run, Christian push,
+  and Fernando none, and the briefing names the five minutes and the tie. The HUD reads 0 – 0 5:00 at the start, 1:40
+  (white) at 200 s and 0:20 (red) at 280 s. Scripted time-ups: nothing ends at 299.9 s. 1–0 at 300 s wins (FLAGS 1–0,
+  $12, marked done), 0–1 loses (THEY WIN 1–0, $3) and 1–1 draws (DRAW 1–1, $3, not done).
+- Kids only (the player tagged out and parked), three 120 s rounds with the push and three with it turned off (v1.190).
+  Two of theirs keeping the flag (within 15 m, not walking back from a tag, not on the way out) was 2, 0 and 0 of 120
+  seconds with the push, 1% overall, against 10, 26 and 28 without, 18%. Counting Christian's run out from his respawn,
+  it was 14%. He pushed 5–7 times a round and was never held over 0.4 s on the way. One round run to the clock ended at
+  300 s on THEY WIN 1–0; another, on the first run, ended at 130 s on THEY TOOK IT 2–0.
+- `ctf` (its played rounds: the backyards and the street both used, runners over 150 m, no wedge over 0.6 s),
+  `bellfield`, `northcliff` and the stuck-kid sweep on the match (ONLY=, three ways, 90 s: worst 1.5 s) pass.
+- `npm test` as four local shards: 98 of 99 suites passed. `mirror` died at a `page.evaluate` with the harness's "browser
+  has been closed" (as on v1.188), before any check, and passed alone.
+- CI fix-up: `seth-shotgun`'s "past 14 m he still fires and reaches the player" failed on CI twice (on v1.190 and on
+  this PR's head): one round each at 16 and 20 m, and both landed 0 hits (6–7 shots). No cover is in the line. The
+  pellets land by chance, and locally a round at 20 m lands none in 5 of 22. It now counts the hits over three rounds
+  each at 16 and 20 m. It passed twice, with 25 and 33 hits at 16 m and 19 and 9 at 20 m.
+### Still open
+- Whether a player can now get their flag home is for play. The critic's other finding stands: a player fighting down
+  the street was tagged every ~7 s, once 14 times running by Fernando's AK from 28–38 m as each respawn grace ran out.
+  Fernando is still in the fort with the AK, and nothing here changes how he covers the street.
+- A draw pays as a loss and shows in the lose colour; whether it should read differently is Michael's call once he has
+  seen one.
+
+## v1.192 — Settings
+Decisions, "A better game" 1–5 (builder, 12 Oct). Michael answered all five on the control room this evening: a
+light summer story (1 A), looks then a crew (2 C), a Pickup Game board (3 A), online after the board (4 B), and
+settings, then a better result screen (5 C). This run takes 5's first step because it is the smallest and the most
+plainly wanted: the game had no settings at all, and they are the first thing a new itch.io player looks for.
+
+**The screen.** SETTINGS sits under the title's two buttons, and in the bedroom a SETTINGS button shows top right
+whenever the mouse is free (the same moment as the "Click to capture mouse" hint). It opens a card over whatever is
+behind it, in the game's dark-and-amber style, with six rows: mouse sensitivity (0.25×–3×), aim sensitivity (0.25×–2×,
+on top of the old 0.55 slow-down when aimed), music volume and effects volume (0–100%), field of view (60–100°,
+default 75) and invert look. Each change applies at once and is saved at once; DEFAULTS puts them back; DONE or
+Escape closes it. The bedroom stands still while it is open, as it does for the shop.
+
+**Where they live.** In their own localStorage key, not the save: they belong to the browser, so NEW GAME (which
+resets the save in memory) and CONTINUE both keep them. A stored value outside a row's range is clamped, and a
+non-number falls back to the default.
+
+**How they reach the game.** The look multiplies by the mouse sensitivity, and when aimed by the aim sensitivity
+too; invert flips the pitch. The field of view replaces the fixed 75°, and aiming narrows it by the same share as
+before (75→55 becomes 90→66), so a wide setting still zooms when you aim; a scope's extra zoom is unchanged. The music
+volume scales the music master's fade-in and moves it live. The effects needed a bus: 36 sound effects were wired
+straight to the speakers, so they now all go through one effects gain, and the kids' spoken lines take the same
+volume. The M key still mutes the music.
+### Verified
+- `tests/settings.test.mjs` (new, 22 checks). The title opens the screen and stays on the title; six rows at 1×, 1×,
+  100%, 100%, 75°, off. Driving the controls sets 2×, 0.5×, 50%, 25%, 90°, on, saved at once, read back as "2.00×
+  0.50× 50% 25% 90° On". A page reload keeps them, and junk in storage is clamped (fov 500 → 100, a negative music
+  volume → 0, a string → the default). NEW GAME keeps them. The bedroom shows the button with the mouse free and
+  hides it when the mouse is taken or the screen is open; it opens over the bedroom (mode `settings`) and Escape
+  closes it back. In a match, 50 px of mouse turns 0.22 rad at 2×, the pitch goes the other way with invert, and
+  aimed it turns 0.0605 rad (2 × 0.55 × 0.5). The camera settles at 90.0° at the hip and 66.0° aimed. Playing seven
+  sound effects (shot, footsteps, reload, hit, impact, the shop till) connects nothing straight to the speakers, and
+  the effects slider sets the bus to 60%. No page errors.
+- `npm test` as four local shards: 96 of 101 suites passed. Five (`stuck-sweep-6`, `briefing-lives`, `houses`,
+  `utility-belt`, `car-side-fire`) died at Playwright's 30 s `page.goto` limit under the load of four shards, before any
+  check (the v1.124 case), and all five passed alone. `harness` caught one real NEW GAME stall and recovered.
+### Still open
+- How the ranges feel is for play: the top mouse speed (3×) and the field-of-view limits (60–100°) are guesses.
+- No key rebinding (the option didn't ask for it), and settings can't be opened mid-match: the match keeps running
+  while the mouse is free, so a settings screen there would need a pause first.
+- Next on this item: 5's second step, the result screen.
+
+## v1.193 — The result screen tells you about your match
+Decisions, "A better game" 5 (Michael: C, settings then a better result screen; control room, 12 Oct). v1.192 was
+the settings; this is the second half. The result card said who won, a line of flavour and the pay, and nothing
+about how you played or what the win got you.
+
+**The numbers.** Under the pay, four boxes: your tags, your shots, the hits on you, and the match time. A tag is any
+hit of yours on a kid of the other side (each one puts him out or sends him back), and a shot is a trigger pull, so a
+shotgun's pellets count once. The time is the match's simulated seconds since BEGIN (m:ss). The count starts at zero
+at every BEGIN, Play Again included.
+
+**The best moment.** One line, picked in this order: two tags on two different kids inside 3 s ("Two in 1.6 s: Sean,
+then Nick."), else a tag from 15 m or more ("A 23 m tag on Sean."), else a win with no hits on you ("Not a mark on
+you."), else your first tag and its distance. With no tags and a loss there is none. Distance is from where the BB
+left the muzzle to the kid.
+
+**What it opened.** OPENED names each match this result unlocked (worked out with the real unlock rule before and
+after the pay and the win are written), and IN REACH names any gun you don't own whose price the pay just crossed
+("at the shop: Spring Shotgun ($60)"). A replay of a match you have already won opens nothing, so the lines go.
+### Verified
+- `tests/result-stats.test.mjs` (new, 20 checks). Seth's House with only the tutorial done and $59: two trigger pulls
+  count 2 shots; a BB that reaches Seth, fired from 20 m back, counts one tag at 20.0 m and wins. The card has four
+  boxes (1 tag, 2 shots, 0 hits on you, 0:04), "BEST A 20 m tag on Seth.", "OPENED Seth's Got a Shotgun" (locked
+  before), and "IN REACH at the shop: Spring Shotgun ($60)". Play Again starts at 0 / 0 / 0; a loss shows its hit on you,
+  no best moment and nothing opened. The rules: a 1.6 s double beats a 30 m tag, a 4 s gap doesn't count as one, the same
+  kid twice isn't one, an untouched win, the first tag otherwise; 0:00, 1:00 (59.6 s) and 2:05. No page errors. The
+  screenshot fits the card at 1280×720 with Previous / Play Again / Next and the way home still on screen.
+- `npm test` as four local shards: 99 of 102 suites passed (`result-text` among them). Three (`bound-forward`,
+  `stuck-sweep-13`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit under load before any check, as in
+  v1.192, and passed alone.
+### Still open
+- Whether the best-moment thresholds (3 s, 15 m) pick the moment a player would is for play.
+- Hits on your allies' targets and your allies' own tags aren't counted; this is your match. Capture the flag shows
+  the same four boxes, not flags carried, which the score line already gives.
+
+## v1.194 — A summer on the bedroom wall
+Decisions, "A better game" 1 (Michael: A, a light summer story told in the bedroom, no cutscenes; control room,
+12 Oct). The story has four parts: a wall calendar from June to the last day of August with each zone a few weeks of
+it, texts from your friends on a flip phone between matches, a rival crew, and one big match on your own street at
+the end. This run builds the calendar, because the other three hang their dates on it.
+
+**The summer.** It is 2003, the year the game is set in. Day one is Sunday 1 June and the last Saturday, 30 August,
+is the big day. Each zone of the ladder gets a span, back to back and sized roughly by how many matches it has:
+Winnmark 1–21 June, Bunratty 22 June – 12 July, the Hollow 13–26 July, the market lot 27 July – 2 August, Northcliff
+3–16 August, then four or five days each for Hollins Ridge High, Willow Bend and inside the store, which ends Friday
+29 August. Today is the zone you have reached (the furthest one the ladder has opened) plus its share of the span
+for the matches you've won there: half of Winnmark is Wednesday 11 June, and the day Bunratty opens is Sunday 22 June.
+It reads only `completed`, so old saves get a date too and nothing new is saved.
+
+**The calendar.** It hangs on the bedroom's north wall, between the bookcase and the desk alcove: a picture of a creek under pines
+with SUMMER 2003, and this month's grid below it, the days gone crossed off in red, today ringed in blue, each zone's
+first day pencilled with its name, and 30 August ringed twice. It is drawn fresh each time you come home. Walk up to
+it and E ("Look at the calendar") opens June, July and August side by side: the same crosses and rings, your zone's
+days shaded, "Today is Sunday 20 July", and a line with the zone's dates and how many days are left to the 30th.
+### Verified
+- `tests/calendar.test.mjs` (new, 19 checks). A new game is Sunday 1 June in Winnmark; the eight spans run back to back
+  from day 0 and end Friday 29 August, with 30 August a Saturday (4 July and 1 August 2003 both Fridays, as they were).
+  Half of Winnmark won is Wednesday 11 June, all of it Sunday 22 June in Bunratty, half of the Hollow Sunday 20 July,
+  the whole ladder Friday 29 August. Home on 20 July, the wall page crosses off the 19th (225 red pixels) and not the
+  20th (0), and rings the 20th (301 blue) and not the 21st (0). Standing in front of it the prompt is "Look at the
+  calendar"; E opens "Summer 2003" with 49 days crossed off, the 20th ringed, the 30th ringed twice, the Hollow's 14
+  days shaded and "41 days away"; OK closes it to the bedroom and the save card is narrow again. No page errors.
+- `npm test` as four local shards: 98 of 101 suites passed. Three (`settings`, `smoke`, `stuck-sweep-8`) died at
+  Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and all three
+  passed alone.
+### Still open
+- Whether the spans feel right is for play: Winnmark's 16 matches get three weeks, the last three zones four or five
+  days each, so August goes fast.
+- The calendar doesn't yet mark the days texts came or the rival crew's matches; those are steps 2 and 3. Saturday 30
+  August is ringed but there is no match on it until step 4.
+
+## v1.195 — Texts on the flip phone
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 2 of the summer story: your friends text your
+flip phone between matches. v1.194 put the summer on the bedroom wall; the texts are dated on it.
+
+**The phone.** A shut silver flip phone lies on the north nightstand by the lamp. While a text is unread its little
+green light is on, its chip reads "Phone · 2 new" and the prompt "Check your phone (2 new)". E opens it: a phone-shaped
+card with a green LCD, the texts newest first, each with who sent it, NEW if you hadn't seen it, and the day ("Sun 22
+Jun"). Opening it reads them all; that is kept in the save (`textsRead`), so the light stays off after a reload.
+
+**The texts.** Eighteen of them, one for a new game and one each after seventeen wins: the tutorial, your first
+match with Seth, the cul-de-sac, Squad Up, every zone's last match (each one points you at the next place: Sean on
+Bunratty, the Hollow, Marcus's mom's Saturday shop at Riverside Market, Evan up in Northcliff, the school's portables,
+the pool's gap in the hedge, Tyler's dad's store), the brothers, Infection, the Hollow's Big Game, the twins'
+treehouse and Flags on Bellfield. They come from Eric, Rebecca, Brooke and Sean, and Seth, who is your friend and
+your rival at once, as the matches already have him. The last, from Seth on Friday 29 August, says the summer's last
+Saturday is on your street, his crew against yours; that match is step 4. A text's date is the calendar day its win
+brings (a zone's last match brings the next zone's first day), so an old save gets the summer's texts on the right
+days, all unread.
+### Verified
+- `tests/texts.test.mjs` (new, 17 checks). A new game has one text, Eric's, dated 1 June; the phone's light is on, its
+  chip "Phone · 1 new", the prompt "Check your phone (1 new)". Every text follows a real match; the dates never go
+  back down the list (days 0, 1, 2, 6, 17, 21 … 85, 89); Bunratty's comes Sunday 22 June, the store's Monday 25 August,
+  Seth's last Friday 29 August. Winning the ladder in order to the Hollow's Big Game, each of the nine texts on the way
+  is dated the day the calendar then shows, and ten wait, all unread, newest (Seth's, 20 July) first. Beside the
+  nightstand the prompt is "Check your phone (10 new)"; E opens "Texts" with ten NEW messages, Seth's first and
+  Eric's "Sun 1 Jun" last; that reads them all and saves ten ids; the light goes off and the chip and prompt drop the
+  count; OK closes to the bedroom. A save and load keeps them read, and finishing the Hollow brings one new text,
+  Brooke's about the lot. No page errors.
+- `npm test` as four local shards: 101 of 102 suites passed. `stuck-sweep-16` died at Playwright's 30 s `page.goto`
+  limit under load before any check and passed alone.
+### Still open
+- The texts' voice (lowercase, "u", "tmrw") is a guess at 2003 texting for Michael to read; every line is in
+  `SUMMER_TEXTS`, easy to change.
+- The phone's light is steady, not blinking, and there is no buzz when you come home to a new text.
+- Seth's crew is the rival in the texts; step 3 puts them in briefings and result lines, and may want a crew name
+  (a question for Michael if so).
+
+## v1.196 — Seth's crew
+Decisions, "A better game" 1 (Michael: A; control room, 12 Oct), step 3 of the summer story: a rival crew. The texts
+already made Seth the friend who is also your rival, and the matches already put him on the other side again and
+again; this step says so on the screens around those matches.
+
+**Who they are.** A match is against Seth's crew when Seth is on the other side and it is on the ladder: 20 matches,
+from his backyard duel and the Winnmark cul-de-sac through all nine of the Hollow's fort and team battles to the
+lot's two night matches and the club's 3v3 and night 4v4. The tutorial, the free-for-alls and Infection don't count
+(nobody is anybody's crew there), nor the matches where Seth is on your side.
+
+**The briefing.** Both the briefing card on the map and the loading screen head the other side SETH'S CREW in a team
+match (a duel with Seth alone keeps OPPONENTS) and add a red RIVALS line under the objective: "Seth's crew: beaten in
+3 of their 20 matches this summer."
+
+**The result card.** A red RIVALS line under the best moment: "Seth's crew goes home beaten." the first time you win
+one of theirs, "Seth's crew loses again." on a replay, "Seth's crew takes this one." on a loss ("Seth" alone in a duel),
+then "You've beaten them in 3 of their 20 matches this summer." The score is read from `completed`, so an old save has
+its score and nothing new is saved.
+
+**The calendar.** June to August puts a small red dot on each day a win over them brought (the day the win moves the
+calendar to, as the texts are dated), with a note under the months: "A red dot is a day you beat Seth's crew: 17 so
+far; beaten in 17 of their 20 matches this summer." A dotted day's hover says so too.
+
+Two questions for Michael went into decisions: whether the crew gets a name (I recommend keeping "Seth's crew"), and
+where your street is for step 4's last-Saturday match (I recommend Winnmark Court).
+### Verified
+- `tests/rival.test.mjs` (new, 18 checks). 20 rival matches, none of them the tutorial, the two free-for-alls named,
+  Infection at night or Winnmark's 2v2 with Seth beside you. With his two duels won, the Cul-de-Sac's briefing heads
+  the other side SETH'S CREW and says "beaten in 2 of their 20"; his backyard duel keeps OPPONENTS with the same line;
+  Sean's duel has none. The loading screen shows both. Winning the Cul-de-Sac: "Seth's crew goes home beaten. You've
+  beaten them in 3 of their 20 matches this summer." under RIVALS; a Play Again loss "Seth's crew takes this one.", a
+  second win "Seth's crew loses again.", the score 3 both times; losing the shotgun duel "Seth takes this one. You've
+  beaten his crew in 3 …"; beating Sean, no line. With the ladder won to the Hollow's Big Game and all of Winnmark, 17
+  days carry the red dot (rgb 224, 80, 58), exactly the days those wins bring; a new summer has none and says "No wins
+  over Seth's crew yet". No page errors.
+- `npm test` as four local shards: 100 of 103 suites passed. Three (`under-parts`, `kid-climb`, `winnmark-cars`) died
+  at Playwright's 30 s `page.goto` limit under the load of four shards, before any check (the v1.124 case), and
+  passed alone.
+### Still open
+- Whether the score line reads as a rivalry or as bookkeeping is for play; it counts matches, not rounds, so losses
+  don't lower it.
+- Seth's crew changes members from map to map (Devon, Mitchell, Mason, Ryan, Marcus at different times); the line
+  calls whoever Seth brings his crew.
+- Step 4, the last-Saturday match, waits on where your street is (decisions).
+
+## v1.197 — Hats
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct). The story's
+step 4 waits on where your street is (decisions), so this run starts the looks, which are answered. They come in
+pieces, one part of the kid at a time; hats first, because the head is what the mirror and the Loadout kid show
+best and a hat changes a silhouette the most.
+
+**The hats.** Six, each its own mesh over the hair: a Red Ball Cap (six panels, a bill that dips a little, a button)
+and a navy Backwards Cap, $15 each; a khaki Bucket Hat with its brim all round, $20; a Red and a Blue Bandana folded
+into a headband and knotted at the back with two tails, $10 each; and the green Winnmark Cap with a white patch,
+which is not for sale: clearing Winnmark Court gives it. Every crown is wider than the widest hair (curly, 34 cm), so
+no style pokes through its sides, and a cap or bucket hat hides curly hair's three puffs, which would come through
+its top; a bandana leaves them. The hat lowers with the head on a crouch. It is a `createKid` profile field
+(`hat`), so the other kids can wear them later (the crew colours, D.21's second half).
+
+**Where.** The shop has a fifth tab, Clothes, with a Hats section. BUY pays and puts it on; a hat you own says WEAR,
+the one on your head WEARING and TAKE OFF; the Winnmark Cap says WON and EARN IT until Winnmark is cleared, then WEAR.
+The mirror gets a Hat row under the hair colour once you own one (None and each hat you own), and the Loadout
+screen's kid wears it. The hat you wear (`look.hat`) and the ones you bought (`ownedHats`) are saved; an old save
+wears none.
+### Verified
+- `tests/hats.test.mjs` (new, 23 checks). A new game wears none and the mirror has its ten rows, no Hat. With $14 the
+  Clothes tab lists the six hats; the bandanas say BUY, the $15 cap NEED $15, the Winnmark Cap WON / EARN IT, greyed.
+  With $100, clicking BUY on the red cap pays $15 and puts it on (TAKE OFF); buying the bucket hat puts that on and
+  WEAR puts the cap back; TAKE OFF leaves you bare-headed. On all four hair styles every hat is at least as wide as
+  the hair; caps and the bucket hat top out at 1.545–1.56 m over hair at 1.47–1.49 and sit on the head (bottom
+  1.397–1.403, head top 1.40); bandanas sit below the hair's top; the cap's bill reaches 0.315 m forward, the
+  backwards cap's 0.315 back; on curly hair a crown leaves 0 puffs showing and a bandana 3; a full crouch lowers every
+  hat 0.247 m with the head (0.248). The mirror's Hat row is None, Red Ball Cap, Bucket Hat; Bucket Hat puts it on the
+  preview with eleven choices lit. The Loadout kid wears it. Winning Winnmark's last match turns the Winnmark Cap to
+  WEAR, free. A save and load keeps the cap worn and the two bought; an old save with no hat fields wears none. No
+  page errors.
+- `tests/shop-tabs.test.mjs` now expects five tabs, the fifth Clothes with its six hat rows.
+- `npm test` as four local shards: 102 of 104 suites passed. `whole-block` died at Playwright's 30 s `page.goto` limit
+  before any check and passed alone. `bellfield` failed one check once: in a 120 s Bellfield Bulb 3v3, Andrew and
+  Evan walked 75 m and 60 m and fired 0 shots while the other side fired 1,653, so no enemy lost a life. Run alone it
+  passed (8 enemy and 6 ally lives lost in 60 s, the allies firing 46 and 40). Nothing in this change touches the
+  kids' aim or fire (their profiles have no hat). Filed under Found in play.
+### Still open
+- Whether the hats look right on the kid, and the prices ($10–20 against the first wins' $15–22), are for Michael's
+  look.
+- The hat isn't seen in a match: first person shows no head. The other kids wear none until the crew colours.
+- Next pieces of D.21: tops (graphic tees, a hoodie), then shorts and shoes, then your crew.
+
+## v1.198 — Tops
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew; control room, 12 Oct), the second
+piece after v1.197's hats: tops, the graphic tees and the hoodie on his list.
+
+**The tops.** Five, each worn over the mirror's shirt: its colour becomes the shirt's (body and sleeves), the shirt's
+own stripe or pocket goes, and it brings a front of its own. A white Skate Tee (a black deck with red wheels) and a sky
+blue Shark Tee (a grey fin over a white wave), $15 each; a black Flame Tee with orange and yellow flames up from the
+hem, $18; a heather Grey Hoodie, $30; and the forest-green Big Game Tee with a white pine, which is not for sale:
+winning the Hollow's Big Game gives it. The hoodie is cut differently: it hangs loose over the belt to a waistband rib,
+has the hood down at the back of the neck, a kangaroo pocket and two white drawstrings, and its sleeves run down the
+forearms to a cuff above the hand. Everything is in the torso's and forearm's own frames, so a crouch, the walk and
+the aim move it with the body. The hitboxes are unchanged. A `createKid` profile field (`top`), like the hat.
+
+**Where.** The Clothes tab has a second section, Tops, under Hats, with the same buttons (BUY puts it on; WEAR; WEARING
+and TAKE OFF; the won tee says WON and EARN IT until the Big Game is won). The mirror gets a Top row under the Shirt
+colour once you own one. Picking a Shirt colour or Shirt front at the mirror takes the top off, so those rows always
+show what they do. The Loadout kid wears it. `look.top` and `ownedTops` are saved; an old save wears none.
+### Verified
+- `tests/tops.test.mjs` (new, 26 checks). A new game wears no top and owns none; the mirror has its ten rows. With $16
+  the Clothes tab shows Hats (six) then Tops: Skate Tee, Shark Tee, Flame Tee, Grey Hoodie, Big Game Tee; a $15 tee
+  says BUY, the Flame Tee NEED $18, the hoodie NEED $30, the Big Game Tee WON / EARN IT, greyed. With $100 and the red
+  cap on, BUY on the hoodie pays $30 and puts it on with the cap still worn (TAKE OFF); buying the Shark Tee puts that
+  on and WEAR brings the hoodie back; TAKE OFF shows your own shirt. Every top turns the shirt and sleeves its colour
+  (e6e3da, 5f9cc8, 1e1e20, 7c7d84, 2f5a3a); the shirt's stripe goes (trim 252 vertices bare, 216 under a tee, 144 under
+  the hoodie), a tee keeps the belt, the hoodie hangs over it. Each tee's graphic lies on the chest front
+  (z 0.113–0.121) inside the shirt's width and height. The hoodie's hood is behind the back (z −0.166 against −0.12) and
+  under the head (top 1.119, head bottom 1.12), its hem reaches 0.52 (shirt 0.59); its sleeves cover both forearms down
+  to 0.635, above the hand (0.644 top); a full crouch lowers it 0.248 with the torso. The mirror's Top row, after the
+  Shirt, is None, Shark Tee, Grey Hoodie; clicking Shark Tee wears it on the preview, one choice lit in each of 12 rows;
+  a Shirt colour then takes it off and shows that shirt. The Loadout kid wears the hoodie. Winning the Big Game turns its
+  tee to WEAR, free. A save and load keeps the tee worn and the two bought; an old save wears none. A match runs with
+  the hoodie on. No page errors.
+- `tests/hats.test.mjs` and `tests/shop-tabs.test.mjs` now expect the Tops section (11 rows in Clothes).
+- `npm test` as four local shards: 100 of 105 suites passed. Four (`bellfield`, `briefing-lives`, `ctf-clock`,
+  `winnmark-trees`) died at Playwright's 30 s `page.goto` limit under load before any check, and `spawn-facing` lost its
+  browser before its first check; all five passed alone.
+### Still open
+- How the tees' graphics and the hoodie read on the kid, and the prices ($15–30), are for Michael's look.
+- A top isn't seen in a match (first person shows no body), and the other kids wear none until the crew colours.
+- Next pieces of D.21: shorts, then shoes (a question in decisions: shoes are already gear), then your crew.
+
+## v1.199 — Shorts
+Decisions, "A better game" 2 (Michael: C), the third piece of the looks: shorts.
+
+**The shorts.** Four pairs. Khaki Cargo Shorts with a pocket on each outer thigh, $20; navy Basketball Shorts with
+white side stripes, cut long past the knee, $15; Jean Shorts with a rolled cuff, $12; and teal Swim Trunks with yellow
+stripes, not for sale: winning Night Swim at Willow Bend gives them. In shorts each leg is bare below them (a slimmer
+leg in the skin colour) in a white sock above the sneaker. The shorts and socks are children of the legs, so they swing
+with the walk and fold with the crouch, and knee pads and the drop-leg holster still sit where they did. The hitboxes
+are unchanged. A `createKid` profile field (`shorts`), like the hat and the top.
+
+**Where.** The Clothes tab's third section, Shorts, under Tops, with the same buttons. The mirror gets a Shorts row
+under the Pants colour once you own a pair; picking a Pants colour puts your jeans back on, in that colour. The Loadout
+kid wears them. `look.shorts` and `ownedShorts` are saved; an old save wears jeans.
+
+**Shoes.** The list ends "shorts and shoes", but the Gear tab already sells three pairs of shoes with their own numbers
+and their own look on the Loadout kid. A Clothes pair would have to sit beside them, so that went to decisions
+("Shoes as looks", I recommend A: a free Sneakers colour row at the mirror for the plain pair).
+### Verified
+- `tests/shorts.test.mjs` (new, 22 checks). A new game wears jeans, owns no shorts and has no Shorts row at the mirror.
+  With $14 the Clothes tab is Hats, Tops, Shorts; the shorts are Cargo Shorts, Basketball Shorts, Jean Shorts, Swim
+  Trunks; the $12 jean shorts say BUY, the others NEED $15 / NEED $20, the trunks WON / EARN IT, greyed. With $100 and
+  the Skate Tee on, BUY on the cargo shorts pays $20 and puts them on with the tee still worn (TAKE OFF); buying the
+  basketball shorts and WEAR on the cargo shorts leaves one pair on; TAKE OFF puts the jeans back. In jeans the legs are
+  the pants colour; in each pair they are the skin (c89870) with the shorts on both legs (children of the right and left
+  leg). Every pair's cloth runs from the hip (0.55) and is wider than the bare leg; the basketball shorts and trunks
+  end at 0.215, past the knee, the cargo and jean shorts at 0.275; a white sock shows from 0.08 to 0.15 above the
+  sneaker (top 0.085). Swinging the leg 0.5 rad moves the shorts 0.12 m forward; a full crouch keeps them on the leg
+  (top 0.321 against 0.314). The mirror's Shorts row, after the Pants, is None, Cargo Shorts, Basketball Shorts;
+  Basketball Shorts goes on the preview; a Pants colour then puts the jeans back in that colour. The Loadout kid wears
+  the cargo shorts. Winning Night Swim turns the trunks to WEAR, free. A save and load keeps the trunks worn and the two
+  bought; an old save wears jeans. A match runs. No page errors.
+- `tests/hats.test.mjs`, `tests/tops.test.mjs` and `tests/shop-tabs.test.mjs` expect the Shorts section (15 rows in
+  Clothes).
+- `npm test` as four local shards: 104 of 106 suites passed. `stuck-sweep-10` and `stuck-sweep-12` died at Playwright's
+  30 s `page.goto` limit under load before any check, and passed alone.
+### Still open
+- Whether the bare legs and the long basketball shorts look right, and the prices ($12–20), are for Michael's look.
+- Shoes wait on "Shoes as looks" in decisions; then your crew (a name and colours your allies wear).
+
+## v1.200 — Your crew
+Decisions, "A better game" 2 (Michael: C, looks you earn or buy, then your crew: "a name and colors your allies wear
+too"; control room, 12 Oct). Shoes, the last of the looks, wait on "Shoes as looks" in decisions, so this run takes
+the crew, the second half of his C.
+
+**Where.** The mirror ends with a YOUR CREW section under a rule: a Crew name box (20 characters, typed; the game's keys
+never see what you type there, and < > & " ` \ are dropped) and a Crew colour row, none or six: orange, blue, green,
+purple, yellow, black. Both are part of the look (`look.crewName`, `look.crewColor`), so they are saved with it; an old
+save has no crew.
+
+**What it does.** The colour is a crew bandana, the v1.197 bandana mesh in that colour. You wear it at the mirror and on
+the Loadout kid when no hat is on (a hat you pick goes over a bare head instead). In a match every ally on your side
+wears it: Eric and Rebecca in the Hollow 3v3, Sean and Nick in Protect Ryan, and so on, lowered with the head on a
+crouch. Three never do: your VIP, who keeps his blue cap; Seth, who coaches the tutorial on your side but is the rival;
+and anyone in the tutorial. The other side never wears it, so a bandana in the colour you picked is a friend at a
+glance. The name heads your side on the briefing and the loading card (THE CREEK RATS where it said YOUR SIDE), when
+the match has allies; with no name, or in a 1v1, a free-for-all or the tutorial, it stays YOUR SIDE.
+
+Whether Seth's crew gets a name of its own is still pending ("Does Seth's crew get a name?", whose option C waited for
+this one); nothing here changes "Seth's crew".
+### Verified
+- `tests/crew.test.mjs` (new, 23 checks). A new game has no crew; the mirror ends YOUR CREW, Crew name (a text box),
+  Crew colour (none, orange, blue, green, purple, yellow, black), none lit, no bandana. A W pressed in the box reaches no
+  game listener (0 of 1); "The <Creek> Rats & co" saves as "The Creek Rats co"; a 32-character name stops at 20.
+  Orange: saved as e07a1e, the preview kid's bandana is e07a1e, one swatch lit, the typed name kept; with the red cap on
+  he wears the cap, not the bandana. The Loadout kid wears it. The Hollow 3v3 briefing heads your side THE CREEK RATS;
+  in the match Eric and Rebecca wear orange bandanas and Seth, Sean and Ryan none; a full crouch lowers Eric's 0.218 m;
+  10 s of the match run. Protect Ryan: Ryan wears his blue VIP cap and no bandana, Sean and Nick wear it, the other side
+  (Priya's red cap too) none. The tutorial: nobody wears it, Seth included, and the heading is YOUR SIDE. A blank name
+  and no colour: YOUR SIDE and no bandanas. A save and load keeps "The Creek Rats" and green; an old save has none. No
+  page errors.
+- `tests/mirror.test.mjs`, `tests/hats.test.mjs`, `tests/tops.test.mjs` count the two crew rows (12 on a new game) and
+  the crew colour's lit None.
+- `npm test`: one four-shard run was taken over this and v1.201 together; its result is in v1.201's entry.
+### Still open
+- Whether the bandana reads as "my crew" in play, at a glance and at night, and whether six colours are the right ones,
+  are for Michael's look. The player's own bandana is seen only at the mirror and the Loadout screen (first person
+  shows no head).
+- Allies wear only the bandana; their shirts keep their own colours. If he wants crew shirts as well, it is a profile
+  field away (`crewColor` reaches `createKid`).
+- Whether Seth's crew gets a name waits in decisions; shoes wait on "Shoes as looks".
+
+## v1.201 — The Pickup Game board
+Decisions, "A better game" 3 (Michael: A, "a Pickup Game board in the bedroom: any opened zone, the mode, day or
+night, team sizes and which kids, lives, a clock; pays a little"; and 4: B, online play comes after it, hosted from
+this board; control room, 12 Oct). Too much for one version, so it comes in steps, like the looks; this is the first.
+
+**The board.** A corkboard hangs on the bedroom's north wall east of the window, a PICKUP GAME sheet and a sticky note
+pinned to it; "Set up a pickup game" at it, and E opens the board: Where (every map whose zone is open: Winnmark
+Court on a new game, nine with all zones open, Northcliff Trace and Bellfield Court both under Northcliff), How many
+(1v1 up to 4v4; Winnmark stops at 3v3), When (day or night) and Lives (1, 3 or 5, for every kid, and for you as the
+hits you can take). PLAY goes through the match's usual briefing.
+
+**The match.** Each map's pickup game is its biggest team battle with the sides cut to size: Winnmark's 3v3, Bunratty's
+4v4, the Hollow's Big Game, and the night 4v4 of the other six (whose starts were made safe at night, so they are by
+day too). Your side is you and the first kids it lists, theirs its first kids, each at his own spot with his own gun;
+last side standing. It is written as `SCENARIOS.pickup_game` at PLAY, so the briefing, the crew bandanas (v1.200) and
+the result screen all work on it as on any match. It pays $3 a win and $1 a loss (the ladder's first wins pay $15-22),
+and it never counts as a ladder win: nothing is marked done, the calendar does not move, no text arrives.
+
+**Next steps** (in the backlog): the mode (a free-for-all where the map has one), which kids, and a clock.
+### Verified
+- `tests/pickup.test.mjs` (new, 15 checks). Standing at (1.65, -1.4) facing the board, the prompt is "Set up a pickup
+  game" and E opens "Pickup Game". A new game: Where is Winnmark Court only, How many 1v1-3v3, Day/Night, 1/3/5, with
+  2v2, Day, 3 lit. Every zone open: nine maps, Winnmark Court first and Inside Riverside Market last; Winnmark's most is
+  3v3, the other eight 4v4. Clicking Bunratty Court, 4v4, Night, 5 lights those four and PLAY opens the briefing of a
+  night 4v4 ("You've got Sean, Nick and Ryan against Mitchell, Priya, Owen and Tyler"); after BEGIN, 3 allies and 4 of
+  theirs with 5 lives each, you with 5 hits; 10 s run. A win pays $3, marks nothing done (2 completed before and after)
+  and leaves the calendar on day 42. A 1v1 on Winnmark is you against Brooke, and a loss pays $1. All nine maps build
+  and run 3 s at 2v2 by night (3 kids, 1 ours) and at their biggest by day (7 kids, 3 ours; Winnmark 5, 2). No page
+  errors.
+- `npm test` as four local shards, over v1.200 and this together (the run began on v1.200 and this version's code
+  landed while it ran): 99 of 107 suites passed; the other eight (`country-club`, `night-lights-spawn`, `laser`,
+  `kid-clothes`, `desk-start`, `mirror`, `stuck-sweep-4`, `stuck-sweep-14`) died at Playwright's 30 s `page.goto` limit
+  under load before any check. On the final v1.201 build all eight passed, and so did 24 suites that touch the bedroom,
+  its screens or the result card (front-door, calendar, texts, rival, result-stats, result-text, one-ending, smoke,
+  harness, settings, shop-tabs, hats, tops, shorts, crew, pickup, both loadout suites, walkie, utility-belt, music,
+  map-screen, pointer-lock, briefing-lives).
+### Still open
+- Whether $3 and $1 is "a little", and whether the board's look fits the bedroom, are for Michael.
+- The sides are each map's first-listed kids; on Winnmark that puts Seth on your side, as in the ladder's 3v3. Step 3
+  (which kids) lets you pick.
+- Night by day: the six night 4v4s become day matches with the same spots. They build and run, but nobody has played
+  one, and a sniper spot chosen for the dark may be strong in daylight.
+- Steps 2-4: the mode, which kids, a clock. Online play (D.2) is hosted from this board after them.
+
+## v1.202 — Pickup Game: free-for-all
+Backlog D.22, step 2 (Michael: A on "A better game" 3, "the mode"). The board gets a Mode row, Teams or Free-for-all.
+The four maps that have a free-for-all of their own get both buttons: Winnmark Court, Bunratty Court, The Hollow and
+the Riverside Market lot. The other five maps (Northcliff, Bellfield, the school, Willow Bend and the store) only
+show Teams, and a free-for-all picked on an earlier map switches back to Teams when you move to one of them.
+
+**The free-for-all.** In Free-for-all, How many counts everyone in the game, you included. It runs from 3-way up to the
+size of that map's own free-for-all, with a cap of 8-way, the same headcount as a 4v4: Winnmark goes to 5-way, Bunratty
+and the lot to 7-way, and the Hollow to 8-way. The kids are the first ones from that map's free-for-all, each at their
+own spread-out start and with their own gun. On the Hollow the list is reordered, because the Ten-Way's first three
+all start in the south fort. There the kids are taken one from each fort first (Seth, then Sean, then the scattered
+kids), so a 3-way doesn't put two kids next to each other. Day or night and lives work as in the team game. The
+briefing heads the other kids EVERYONE ELSE (FREE-FOR-ALL), and it is last kid standing. The pay stays $3 for a win
+and $1 for a loss, and a pickup game is still never a ladder win. When no mode is given, `buildPickupScenario` builds
+v1.201's team game.
+
+Not done here: the critic's 13 Oct report (PR #62, not on this branch yet) says a pickup "life" is one hit for you but a
+walk back to base for a kid, and its proposal to make yours a respawn is Michael's to promote. The free-for-all's
+briefing makes the same "lives for everyone, you included" promise as the team game, so the two should change
+together.
+### Verified
+- `tests/pickup-ffa.test.mjs` (new, 14 checks). On a new game the board shows Mode as Teams or Free-for-all, with Teams
+  lit and team sizes 1v1–3v3. Picking Free-for-all on Winnmark shows 3-way, 4-way and 5-way, with 4-way lit. With
+  every zone open, the most for each map is Winnmark 5, Bunratty 7, Hollow 8 and lot 7; the other five maps have none.
+  Northcliff shows Teams only, and a free-for-all picked earlier falls back to Teams there. Clicking Bunratty,
+  Free-for-all, 6-way, Night and 1 lights all five buttons, and PLAY builds "Pickup Game: 6-way free-for-all" by night
+  with Sean, Nick, Ryan, Mitchell and Priya, none of them on a side, one life each. The briefing's roster says
+  EVERYONE ELSE (FREE-FOR-ALL). In the match there are five kids on five separate sides (ffa_sean…), none of them with
+  you. With you untaggable at your start, two kids had tagged each other out (Ryan, Priya) by 11.6 s. A 3-way on
+  Winnmark is you, Seth and Trey, and a win pays $3 and marks nothing done (8 completed before and after). All four
+  maps build and run for 3 s at 3-way by night and at their most by day: Winnmark 4 kids, Bunratty and the lot 6 each,
+  and the Hollow 7 (Seth at a_fort, Sean at b_fort, then the scattered starts). Each map has as many sides as kids. The
+  Hollow's 3-way puts its two kids in different forts. With no mode set, the result is still v1.201's team game. No
+  page errors.
+- `tests/pickup.test.mjs` leaves Mode's lit Teams out of its lit picks.
+- `npm test` as four local shards: 105 of 109 suites passed. The four that failed were `pickup`, whose lit-picks check
+  now has to skip the new Mode row (fixed in the test, and both pickup suites then passed), and `stuck-sweep-3`,
+  `spawn-facing` and `walk-anim`. Those three hit Playwright's 30 s `page.goto` limit while the shards were loaded,
+  before any check ran, and each passed when run alone.
+### Still open
+- Whether the free-for-alls are any fun at pickup sizes, and whether 8-way is the right cap, need Michael to play them.
+- Night free-for-alls use the day starts (the four free-for-alls are all day matches). They build and run, but nobody
+  has played one yet.
+- Steps 3 and 4: which kids, then a clock.
+
+## v1.203 — Pickup Game: which kids
+Backlog D.22, step 3 (Michael: A on "A better game" 3: "team sizes and which kids"). The board now lets you pick the
+kids. In Teams it adds a "With you" row and an "Against you" row; in Free-for-all it adds one row, "Who". Each row
+names every kid who plays on that street: any of its own matches, leaving out the tutorial and the Infection taggers.
+That is six on Winnmark (Seth, Trey, Brooke, Jamie, Marcus, Devon) and nine on Northcliff Trace (its seven, plus
+Haden and Connor). Each row shows a count (2/3), and a kid already picked for one side is greyed out on the other.
+Clicking a picked kid takes him off. Clicking another kid puts him on, and on a full side he replaces the last kid you
+picked. While a side is short, PLAY reads PICK THE KIDS and does nothing.
+
+**Where they stand.** The map keeps its spots: each side uses its first spots in that map's biggest team battle, or
+in its free-for-all. A picked kid who has his own spot among them takes it, with the gun he carries there. Any other
+kid takes the next free spot with the gun he carries in that map's team battle or free-for-all, or failing those, in
+his first match on the street. A spot's role, such as Fernando's sniper nest on Northcliff, stays only with its own
+kid, so whoever takes Fernando's spot plays it as an ordinary kid. That is also the way round the critic's 13 Oct
+Northcliff-by-day report: leave Fernando out.
+
+**Defaults.** The board starts each map on v1.201 and v1.202's kids. Your picks stay on the board between games. A
+bigger size fills the new spots from the defaults, and changing map starts that map afresh. `buildPickupScenario`
+with no picks builds the same games as before.
+### Verified
+- `tests/pickup-kids.test.mjs` (new, 18 checks). Winnmark 2v2 on a new game lists Seth, Trey, Brooke, Jamie, Marcus
+  and Devon, and starts with Seth with you and Brooke and Jamie against. The lit buttons are the picks, and Seth is
+  greyed out against you while Brooke and Jamie are greyed out with you. Taking Seth off leaves 0/1 and PICK THE KIDS,
+  disabled. Then picking Marcus with you and Seth against, in place of Jamie, builds Marcus (with you) at
+  house2_backyard with his shotgun, Brooke at her own house7_backyard, and Seth at the next spot, house6_backyard,
+  with his pistol. The briefing names both kids. In the match Marcus is on your side and Seth on theirs, and 5 s run.
+  On the board afterwards, Marcus and Brooke/Seth are still picked, and 3v3 keeps them and fills each side.
+  Northcliff 4v4 starts with Andrew, Alex and Evan with you and Mason, Christian, Diego and Fernando against. Without
+  Fernando, Haden takes yard_n3 with his UMP and no defender role, and that game runs 3 s. On the Hollow, a 4-way
+  starts with Seth, Sean and Devon, and picking Eric puts him in Devon's place at scatter_nw with his MP5. With no
+  picks, the team and free-for-all games are v1.201's and v1.202's. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the kid buttons out of their lit picks. The first
+  draft of this version crashed the board on a team-only map (it built a free-for-all default list for a map that has
+  no free-for-all). `pickup-ffa`'s Northcliff check caught it, and it is fixed here.
+- `npm test` as four local shards: 106 of 110 suites passed. The four that failed were `harness`, `result-text`,
+  `school-kids` and either `pointer-lock` or `stuck-sweep-6`. Each hit Playwright's 30 s `page.goto` limit before any
+  check ran. All of them passed when run alone afterwards: `harness` on its second solo run, after the first solo run
+  timed out on its second boot.
+### Still open
+- Whether the kid rows read well at a glance (nine names a row on Northcliff), and whether a kid taking another's spot
+  plays sensibly, need Michael to play them. A kid in a sniper's nest with a shotgun fights from it like any other spot.
+- The pool is the street's own kids. Kids from other streets (Eric at Bunratty, say) are left out on purpose, because
+  each street keeps its own crowd. If Michael wants anyone anywhere, it is one filter in `pickupPool`.
+- Step 4: a clock. Then online play (D.2) is hosted from this board.
+
+## v1.204 — Pickup Game: a clock
+Backlog D.22, step 4 (Michael: A on "A better game" 3: "lives, a clock"). The board gets a Clock row: Off, 3:00, 5:00
+or 10:00, with Off lit to start, so a game set up as before plays as before. With a clock, the match is still last side
+(or kid) standing, but when time runs out it is decided on lives left. Your side's count is the hits you can still take
+plus every ally's lives; theirs is their kids' lives. In a free-for-all you are measured against the one kid with the
+most. More wins; level is a draw paid as a loss, the rule Michael chose for the flags' clock (v1.191).
+
+**On screen.** The briefing says it ("last side standing, or the side with more lives left at 5:00", and the win line
+"Last team standing, or most lives left at 5:00"). In the match the timer box at the top shows the time left and the
+lives it will be decided on (LIVES 6–6, or YOUR LIVES 3 · MOST 3 in a free-for-all), and turns urgent in the last
+30 s. The result card reads TIME — 6 LIVES TO 2, TIME — THEY HAD 10 TO 2, or DRAW — 3 LIVES EACH. The count is
+taken the moment time runs out: nothing ends the round on last-standing in the 800 ms before the card, and no late BB
+can tag you. The pay stays $3 and $1, and a pickup game is still never a ladder win.
+
+Not done here: the critic's 13 Oct proposal that a pickup life brings you back to your start, rather than being one
+more hit, is Michael's to promote. If he does, "the hits you can still take" in the count becomes your lives left.
+### Verified
+- `tests/pickup-clock.test.mjs` (new, 11 checks). The board lists Off, 3:00, 5:00, 10:00 with Off lit, and clicking
+  3:00 builds a 180 s match whose briefing and win line say how time decides it. One second into a Winnmark 2v2 the HUD
+  reads 2:59 and LIVES 6–6 (you 3 hits, Seth 3; Brooke and Jamie 3 each). Run to time with their kids on 1 life each:
+  TIME — 6 LIVES TO 2, a win, $3, nothing marked done. A 5:00 game level at 3–3: DRAW — 3 LIVES EACH, $1. A 10:00 game
+  at 2 against 10: TIME — THEY HAD 10 TO 2, $1. A 4-way free-for-all with a 3:00 clock shows YOUR LIVES 3 · MOST 3 and
+  "Last kid standing, or most lives left at 3:00", and level with the best kid at time is a draw. With the clock Off,
+  the timer box stays hidden and a 1,000 s round goes on; a ladder 4v4 at Bunratty has no clock. No page errors.
+- `tests/pickup.test.mjs` and `tests/pickup-ffa.test.mjs` leave the lit Off out of their lit picks; all four pickup
+  suites pass.
+- `npm test` as four local shards: 109 of 111 suites passed. `harness` hit Playwright's 30 s `page.goto` limit on its
+  third boot, and `houses` died after its second check under the same load; both passed when run alone afterwards.
+- CI fix-up: `crew`'s "a full crouch lowers an ally's bandana with his head" failed on CI at 0.145 m (needs over
+  0.15). It measured the standing height from the ally's pose mid-round, partly crouched or leaning, so the drop read
+  0.145–0.158. It now stands him up before measuring: 0.218 m in three runs out of three.
+### Still open
+- Whether 3, 5 and 10 minutes are the right choices, and whether lives left (rather than tags) is the right count at
+  time, are for Michael to judge in play. The board starts on Off.
+- If Michael promotes the critic's "a pickup life brings you back" proposal, the count's "hits you can still take"
+  becomes your lives left, and the 1.1 s three-hit bursts the critic saw stop deciding the clock too.
+- Fernando's daytime rifle on Northcliff (Found in play) is a question in decisions. With this, D.22's four steps are
+  done; online play (D.2, Fable) is hosted from the board next.
+
+## v1.205 — The Last Saturday
+Backlog D.20, step 4, the summer story's last match (Michael: B on "The last Saturday: where is your street?", with
+the note "Bunratty court should be 'my street'"). Option B was "a new short street of your own"; the note names the
+street, and Bunratty Court is already a street in the game, so this build reads it as: your street is Bunratty Court,
+and no new map is built. If Michael meant a new street that is also called Bunratty Court, that is a new map and a
+new question.
+
+**The match.** The Last Saturday, Saturday 30 August on Bunratty Court, by day: the 6v6 from the question. You,
+Eric, Rebecca, Brooke, Sean and Trey come in from the west entry. Seth's crew holds the bulb end: Seth, Devon,
+Mitchell, Mason, Marcus and Ryan (no rifle; Devon carries an MP5, given the Fernando report). Three lives for every
+kid and three hits for you, last team standing; it pays $20 for a win and $5 for a loss. The briefing heads the other
+side SETH'S CREW, and it counts as their 21st match.
+
+**Where it sits.** It is the fifth card in the store's list, after Lights Out, so it is the last match of the ladder
+and opens only once the store's night match is won. The calendar was already ringing 30 August twice. Winning the
+match now turns the calendar to that day ("won on your street" in the note under the months), and Eric sends the
+summer's last text. Before the win, the store's night match still leaves the calendar on Friday 29 August, as before.
+### Verified
+- `tests/last-saturday.test.mjs` (new, 14 checks). The store's list ends store_night_4v4, last_saturday, and the
+  ladder's last capstone is last_saturday. The match is locked on a new game and before Lights Out ("Beat "Lights
+  Out" to unlock."), then open on Friday 29 August. On the map it is the store's card 5, NEXT, reading "The Last
+  Saturday" and "Bunratty Court · ♥ 3 lives", 6V6. The sides are as listed, all on 3 lives, and the briefing heads the
+  other side SETH'S CREW. In the match there are 11 kids, 5 with you, and you take 3 hits from x −22. With you
+  untaggable at the start, both sides had lost lives by 10 s (13 of 15 left on ours, 17 of 18 on theirs). A win marks
+  it done and pays $20. The calendar then reads Saturday 30 August, and the newest text is Eric's, dated day 90. No
+  page errors.
+- The stuck-kid sweep on this match alone (`ONLY=last_saturday`, three ways, 90 s each): no kid held a moving
+  state for over 3 s.
+- `calendar`, `rival` (now 21 matches), `texts`, `grocery-store` (its ladder check now ends with the last Saturday;
+  its in-store checks skip it) and `map-screen` pass.
+### Still open
+- Whether a 6v6 on Bunratty reads as the summer's big finish, and whether three lives is the right length, need
+  Michael to play it.
+- C on the same question (the calendar turning to a "see you next summer" page) was not chosen, and is not built.
+
+## v1.206 — Sneakers at the mirror
+Backlog D.21, shoes (Michael: A on "Shoes as looks, when shoes are already gear?": a free Sneakers row at the
+mirror). The shop's Gear tab already sells three pairs of shoes with their own numbers. With none on, you wore plain
+sneakers in a colour the game picked from your shirt, pants and hair. The mirror now has a Sneakers row, after the
+Pants (and Shorts) and before the Glasses, with six colours: black, white, navy, grey, red and royal blue. The first
+five are the colours the game picks from, and royal blue is new. It is free. Until you pick, the swatch for the pair
+you have on is the one lit, so an old save looks the same as before. The colour is saved with the rest of your look.
+A gear pair still replaces the plain pair: on the Loadout kid, Track Spikes stay orange whatever the mirror says.
+Other kids keep the colour the game picks for them.
+### Verified
+- `tests/sneakers.test.mjs` (new, 9 checks). A new game's mirror has the Sneakers row between Pants and Glasses, with
+  six swatches, none saved, and the one lit is the colour the preview kid wears (black on the default look). Each of
+  the six puts that colour on both preview sneakers, lit alone, and nothing else in the look changes. Picked red,
+  the Loadout kid wears red, and with Track Spikes equipped he wears their orange (0xf06a1a). Eight other kids
+  still wear `kidShoeColor`. A save and load keeps red. An old save with no colour has none picked and wears the
+  pair the game picks. No page errors.
+- `mirror`, `hats` and `tops` count the mirror's rows and lit choices, so each count goes up by one. With that change
+  they pass, and so do `shorts`, `crew` and `loadout-gear`.
+### Still open
+- Whether six colours are enough, and whether royal blue sits well beside them, is Michael's to judge at the mirror.
+
+## v1.207 — Fernando's AK in a Northcliff pickup by day
+Found in play (critic, 13 Oct). Michael chose A on "Fernando's rifle in a Northcliff pickup game by day": he keeps the
+nest but carries his AK by day. The Northcliff pickup game uses the night 4v4's spots, and those put Fernando's
+sniper rifle in the high yard (`yard_n3`) as a defender. By day that rifle was a wall. Now a pickup game by day gives
+Fernando the AK he carries in Bellfield's matches, wherever he stands. On his own spot he keeps the nest's defender
+role. Picked onto another spot, he plays it as an ordinary kid with the AK. By night nothing changes: he has the
+rifle. The rule is one table, `PICKUP_DAY_GUNS`, applied in `buildPickupScenario`. The ladder's own matches are
+untouched.
+### Verified
+- `tests/pickup-fernando.test.mjs` (new, 6 checks). In a Northcliff 4v4 by day Fernando is at yard_n3, a defender,
+  with the AK; by night he has the rifle there. Picked alone against you in a 1v1 he takes bulb_car_n with no role,
+  with the AK by day and the rifle by night. The ladder's Bellfield After Dark keeps the rifle, and every other kid's
+  gun is unchanged.
+- The critic's steps, 5 day rounds of a Northcliff 4v4 at 3 lives, walking at the nearest kid and logging who
+  landed each hit. With the rifle (the same test with the table emptied), Fernando landed 15 of 15, the first at
+  13.1–15.9 s, and the player was out at 18.4–21.8 s, which matches the critic's report. With the AK he landed 3 of
+  15 (all in one round), and Mason and Diego landed the rest. The player was still out every round, now at
+  13.9–16.9 s, because walking straight at the nearest kid now reaches them.
+- The share swings, though. On the loaded full run he landed 9 of 15 with the AK, and in three of those five rounds
+  all three hits were his, so the test's first check (under half) failed. The test now plays the same five rounds
+  with the rifle as well (the day table emptied while the match is built) and checks that the rifle lands at least
+  4 in 5 and the AK fewer. On two runs the result was AK 6 of 15 against rifle 12 and 14 of 15. Even with the AK, the
+  nest is still where most of the hits come from.
+- `pickup`, `pickup-kids` pass.
+- `npm test` for v1.205–v1.207, as three local shards: 111 of 114 suites passed. The three that failed were
+  `pickup-fernando` (above, fixed in the test), `treehouse`, whose browser closed during its first `g.scenario`
+  under load, and `ctf`, where in two rounds no kid took a flag. Neither of the last two touches anything this run
+  changed, and both passed when run alone afterwards.
+- CI fix-up 2: `pickup-fernando`'s "with the rifle he lands nearly every hit (at least 4 in 5)" failed on CI with 11
+  of 15. Over five rounds the rifle's share ran 9–12 of 15 and the AK's 3–9 of 15 in three local runs, so the 4-in-5
+  line was a coin flip, and the AK-under-the-rifle check could go either way too. Each gun now plays eight rounds,
+  the rifle has to land over half, and the AK is compared by share. Three passing runs: AK 10, 14 and 14 of 24
+  against the rifle's 20, 24 and 19 of 24.
+### Still open
+- Whether an AK in the nest is still too strong by day (6–9 of 15 hits in some runs) is for Michael to feel in play.
+  Option B, which frees him from the nest, is the next step if it is.
+- A player walking straight at a 4v4 still loses inside 17 s at 3 lives. That is the critic's other report (a life is
+  one hit for you, a walk back for a kid), and its proposal is Michael's to promote.
+
+## v1.208 — F asks before it forfeits
+Backlog B.8 (Michael, control room, 13 Oct: "Hitting F should pause the game and ask if you're sure you want to
+forfeit - i've misclicked that many times"). F used to end the match the instant it was pressed. Now it pauses the
+match and asks "Forfeit this match?", with KEEP PLAYING (Esc) and FORFEIT (Enter) buttons. Enter, Y or the FORFEIT
+button forfeits as before. Esc, N, F again or KEEP PLAYING closes the question, takes the mouse back and the match
+goes on from where it stopped. The question says a forfeit ends the match with no pay, which is what a forfeit has
+always done (a loss pays a little; a forfeit pays nothing).
+
+Paused means `stepGame` skips the match while `Game.forfeitAsk` is set: the round clock, your kid, every kid and every
+BB in the air stand still, and the keys held when F was pressed are let go so you don't walk off on return. While it
+asks, only its own keys do anything (no jump, no slot switch), and a click doesn't fire or take the mouse. If the
+round ends some other way while it is up (a win already on its 600 ms delay), the result shows and the question goes.
+`forfeitScenario()` still forfeits at once, for the tests that use it.
+### Verified
+- `tests/forfeit-ask.test.mjs` (new, 18 checks), on Bunratty 1v1. F puts the question up and the mode stays
+  'scenario'. 180 steps (3 s) with W held and Space pressed: the round clock stayed at 3.43 s, you stayed at
+  (−22, −2.5) and Sean did not move. Esc, N, F again and KEEP PLAYING each close it, and 60 steps later the clock is
+  1 s on. F, F, F leaves it asking, still in the match. A win while it asks shows the result and takes it down. F on
+  the result screen and in the bedroom asks nothing. F then Enter, F then Y and F then FORFEIT each end the match
+  FORFEITED. No page errors.
+### Still open
+- Whether Esc should be the way back: in a real browser the first Esc also lets go of the mouse, and the question has
+  already let go of it, so Esc goes straight to the question. Michael can say if he'd rather Enter mean "keep playing".
+
+## v1.209 — The shop shows its guns
+Backlog D.23, first part (Michael, control room, 13 Oct: "The online shop should have a mesh sample of weapons /
+whatever you're buying as the icon, and when you look at the details page, there should be a larger image listed
+there"). Every gun in the shop's Guns tab had the same ⌐ glyph in its icon box. Each row now shows a picture of that
+gun's own model, the same one you hold in a match, and the gun's details page has a large picture of it in a white
+catalogue frame between the header and the buy row, captioned "<gun> · actual product may vary". The site's look is
+kept: the cream boxes with their grey borders, the dashed rows, the early-2000s store page.
+
+The pictures are taken by one small offscreen renderer, made the first time the shop needs one. It builds a fresh copy
+of the gun with nothing mounted (`buildBareGunMesh`, split out of the workbench's builder), turns it muzzle-left and a
+little toward you, fits an orthographic camera to its bounding box, and keeps the result as a data URL, cached by gun
+and size. A row's picture is drawn at twice its 56 px box, the large one at 840×380 for a 420×190 frame. If no WebGL
+context can be had, the row keeps its glyph.
+### Verified
+- `tests/shop-pics.test.mjs` (new, 13 checks). All 12 rows of the Guns tab have a picture in place of the glyph, in
+  GUN_ORDER, drawn at 112×112. Read by their pixels: each gun spans 89% of its frame across, and 11–29% of the pixels
+  are gun (the long rifles least, the MAC-10 most); no two pictures are alike. The details pages of the pistol, the
+  AK-47, the sniper rifle and the Bucket Gun each show a picture of that gun, 840×380, shown 420 px wide, filling it
+  across (AK, sniper: 89%) or top to bottom (pistol, Bucket Gun), above the row, which has the small picture too. The
+  caption names the gun. The workbench's own copy still carries its accessory rig. No page errors.
+### Still open
+- D.23 goes on: the Ammo, Gear, Mods and Clothes rows still have glyphs (BB packs, loaders, eye pro, armour, shoes,
+  the belt, the rail and under-barrel parts, hats, tops and shorts). Those come next, a tab at a time.
+- Whether the angle (muzzle left, turned 24° toward you, tipped 10°) is the one Michael likes is for his eye.
+
+## v1.210 — The shop shows its clothes and gear
+Backlog D.23, second part, after v1.209's guns. The Clothes tab's hats, tops and shorts had a coloured glyph (▲ ■ ▮)
+and the Gear tab's belt, holster, eye pro, armour and shoes had ⛊, ◓ and 👟. Each row now has a picture of the thing
+itself, taken by v1.209's renderer.
+
+Clothes and gear are photographed on a plain kid (light shirt, jeans, short brown hair) wearing the item, turned a
+little as at the mirror, with the camera fitted to the part it covers: the head and hat for a hat, the torso for a
+top, the shorts for shorts, the face for eye pro, the vest or the pads for armour, the belt for the Utility Belt and
+the Drop-Leg Holster (turned further to show the hip). The gear is the Loadout screen's own meshes (`buildKidGear`), so
+the shop and the Loadout kid always match. Shoes are shown as a catalogue shows shoes: the pair alone, tipped toward
+you, with the rest of the kid hidden; "Sneakers (default)" shows the plain pair. `shopClothesPic` and `shopGearPic`
+build the shots; `equipRow` takes a `pic`.
+### Verified
+- `tests/shop-pics.test.mjs`, now 20 checks. Clothes: all 15 rows (6 hats, 5 tops, 4 shorts) have a picture in place of
+  the glyph, 112×112, the kid filling over a quarter of each, no two alike, and each picture has its item's colour in
+  it (hue within 12/255 of the item's colour). Gear: all 16 rows (belt, holster, 6 eyewear, 4 armour, 4 shoes) have
+  a picture, over a tenth of each drawn, no two alike, one for each of the four pairs of shoes. The guns' checks from
+  v1.209 still pass. No page errors.
+- `npm test` for v1.208–v1.210, as four local shards at once: 110 of 116 suites passed. The six that did not were
+  harness stalls under load (five page loads past 30 s, one NEW GAME past 75 s twice): `music`, `briefing-lives`,
+  `burst-pose`, `stuck-sweep-13`, `stuck-sweep-14`, `walk-anim`. No check failed, and each passed when run alone.
+### Still open
+- The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
+  speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
+- The belt and holster pictures are the busiest of the lot at 56 px; whether they read is for Michael's eye.
+
+## v1.211 — The shop shows its ammo and mods
+Backlog D.23, third part, after v1.209's guns and v1.210's clothes and gear. The Ammo tab's BB packs and speed loaders
+had the category glyph, and every Mods row had ⊹. Each row now has a picture of the thing itself, from v1.209's
+renderer.
+
+The speed loaders are the loader you hold in a match (`buildFPLoader`), laid corner to corner, the 100 and 200 a third
+and seven tenths longer than the 50. The BB packs had no model, so they have small ones of their own: the 100 and 500
+are clear bags of BBs under a card header with a hang hole (yellow card for the small bag, blue for the bulk one), and
+the 2,000 and 5,000 are taped cardboard cases with a label, the bulk case wider with hand holes. The BB colour swatches
+were already pictures and are unchanged.
+
+A mod is shown mounted alone on the AR (the one gun with sight, rail and under-barrel slots), framed on the part with a
+little of the gun round it so you can see where it goes. The gun is drawn pale grey, the way a catalogue shows a part
+on a plain gun, so the part keeps its own colours: the red dot's ring, the scope, the two lasers (red and green lens),
+the flashlight on the left rail, and the taped mag, sling, foregrip and cardboard barrel seen from a little below. The
+laser's beam and the flashlight's cone are left out of the picture. `updateFPGunAccessory` takes an optional list of
+mounted parts for this, so the picture never touches your own AR's mounts. `shopAmmoPic` and `shopModPic` build the
+shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 29 checks. Ammo: all 7 rows (4 packs, 3 loaders) have a picture in place of the
+  glyph, 112×112; the packs cover 49–66% of their pixels, the loaders 11–17% (a long thin tube), and each fills its frame
+  across (89–91%) or top to bottom; no two alike. Mods: all 9 rows have a picture, 9.5–72% drawn (the cardboard tube
+  least), no two alike (the two lasers differ by their lens); each picture's gun has exactly one part on it, and your
+  own AR has none mounted after the tab is drawn. The guns', clothes' and gear's checks still pass.
+- `under-parts`, `laser`, `workbench-labels`, `shop-tabs` pass (the accessory function they use took the new argument).
+### Still open
+- The gun details page's Magazines and Spare Mags rows still show ▮ and ▯. They are the last glyphs in the shop.
+- Whether the pale gun behind each part reads at 56 px is for Michael's eye.
+
+## v1.212 — The gun page shows its magazines
+Backlog D.23, its last part. A gun's details page lists its bigger magazines and its spare mags, and those rows still
+had ▮ and ▯ after v1.211. Each now has a picture of the mag: the one your kid holds up to reload in a match
+(`buildFPMag`), standing a little turned. It is taller the more BBs it holds (10 rounds is the shortest, 100 the
+tallest), and every mag is drawn in the same frame on the same floor, so a bigger mag looks bigger next to a smaller
+one. A spare-mag row shows a pair leaning together, since spares are bought to carry several, at the size of the mag
+they fit. With this, every row in the shop has a picture of what it sells; only the BB colour swatches, which were
+always colour cells, are left as they were. `shopMagPic` builds the shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 33 checks. The pistol (two mags, two spares), AR and MAC-10 pages: every row has a
+  picture, 112×112, 16–45% drawn. The pistol's 20-round mag stands 0.70 of the frame, its 10-round 0.59; the AR's 40
+  stands 0.81 and the MAC-10's 100 0.96. A spare's pair spans 0.63–0.65 of the frame across, a single mag 0.33–0.35.
+  All of v1.209–v1.211's checks still pass.
+### Still open
+- The mags are one black shape for every gun (an AK's curve, a shotgun's shell tube, the six-shooter's cylinder are
+  not modelled). Whether that bothers him is for Michael's eye.
+
+## v1.213 — The computer sits on the desk
+Backlog D.26, first part (Michael, control room, 13 Oct: "Can we make the room a bit more detailed / polished? Small
+touches on what's already there basically. Like the computer for example hovers off of the desk a bit"). Measured, the
+keyboard and mouse were the ones in the air: each was centred on the desk's front edge, so half of it hung out past
+the edge with nothing under it, and the monitor's case floated 1 cm over the top of its little stand. A sweep of every
+mesh in the bedroom for anything with a gap under it found nothing else standing in the air (the shelves and the
+nightstand drawer lines are fixed to their sides and fronts).
+
+The desk is rebuilt so everything stands on the desk top inside its edges, and a few small touches went on while it
+was open, all in the beige 2003 look it had. The CRT stands on a swivel foot and neck with the tube's back stepping in
+toward the wall, a dark bezel round the screen, a power button and a green light. The screen shows airsoft.com the way
+the shop draws it (the blue title bar, the dark header, the red rule, the five tabs, rows with red BUY buttons), under
+fainter scanlines. The keyboard sits in front of the monitor with four rows of keys; the mouse is on a blue mouse pad
+to its right; both cables lie on the desk back to the computer; two little speakers stand either side of the monitor.
+The tower under the desk gets two drive bays, a floppy slot, a power button and a green light. Collision, the SHOP
+label and the prompt are where they were. Each piece is named `pc_*` for the test.
+### Verified
+- `tests/bedroom-desk.test.mjs` (new, 10 checks). The monitor's foot, the keyboard, the mouse pad, both speakers and
+  both cables stand on the desk top at 0.760 m, 0 mm off; none of the 28 pieces on the desk passes its edges (the
+  keyboard and mouse were 8 cm over the front). The mouse sits on its pad, the monitor on its neck and foot with no
+  gap, the tower on the floor under the desk top, the keyboard clear in front of the monitor. The screen has the page
+  drawn on it, and using the computer still opens the shop. No page errors.
+### Still open
+- D.26 goes on: the rest of the room's small touches (the bed is a plain grey slab with a red block for a pillow, the
+  nightstands and the lamps). Those come next.
+- Whether the speakers and the page on the screen are the right touches is for Michael's eye.
+
+## v1.214 — The bed is made
+Backlog D.26, second part, after v1.213's desk. The bed was a grey slab: a flat comforter, one long white box for a
+pillow with a red box sunk into it, and the comforter's edge stopped square at the mattress top. The nightstand lamps
+were sunk 2 cm into the nightstands, and their shades were empty tubes.
+
+Small touches, in the room's existing colours. The comforter now falls down both sides to the frame and over the foot
+onto the footboard. The sheet is folded back over it under the pillows. There are two soft pillows side by side
+against the headboard and the red one leans on them, tilted. A folded red blanket with two cream stripes lies across
+the foot. Soft things are boxes with their corners pulled toward a ball (`puffy`), so they read as soft and not as
+crates. Each nightstand gets a second drawer knob and a dark kick at the floor. Each lamp now stands on its top, with
+a brass socket, a lit bulb inside the shade, the wire harp, a finial and rolled rims, and the shade glows a little.
+Collision, the save prompt and the phone on the north nightstand are where they were.
+### Verified
+- `tests/bedroom-bed.test.mjs` (new, 11 checks). The comforter's top is at 0.710 m; both pillows lie on it pressed in
+  1.2 cm, the red pillow leans from 0.681 m, the blanket lies on it at 0.706 m and the fold at 0.710 m. The side drapes
+  end on the frame's top (0.375 m) and the foot drape on the footboard (0.55 m), all inside the frame's edges. Both
+  lamp bases stand on the nightstand tops at 0.640 m (they were at 0.620), and each bulb is inside its shade. The bed is
+  still the save spot. No page errors.
+- `texts` (the phone on the nightstand) passes.
+### Still open
+- D.26 goes on: the bookcases, the map table, the wardrobe and the hall are next for small touches.
+- Whether the blanket and the red pillow suit the room is for Michael's eye.
+
+## v1.215 — The bookcases keep their books inside
+Backlog D.26, third part, after the desk (v1.213) and the bed (v1.214). The bookcases' books were drawn at random
+heights up to 32 cm on shelves 31.5 cm apart, so the tallest went up to 4.5 cm through the shelf above, and on the top
+shelf through the top of the case (the red books seen sticking out over the top). They were also shuffled with
+`Math.random`, so the shelves changed every time you came home. The map table's paper floated 5 mm over the table.
+
+A book is now never taller than its shelf's opening less 2.5 cm, and each bookcase draws its books from its own seed,
+so they are the same every visit. A few books have a pale band across the spine, and some rows end in a short stack
+of two to four books lying flat or a book leaning over against the side. Each case has a kick board under its bottom
+shelf. The map paper lies on the table, and its pencil lines and red dots are seeded too.
+### Verified
+- `tests/bedroom-shelves.test.mjs` (new, 6 checks). Two bookcases, 105 books: none comes within 1.5 cm of the board
+  above it, and every one rests on a shelf or on another book (the stacks and the leaning ones included). The map
+  paper is 0.5 mm over the table. Entering the bedroom again rebuilds it with the same 105 books in the same places.
+  No page errors.
+### Still open
+- D.26 is complete for the furniture in the room: the desk, the bed and nightstands, the bookcases and the map table.
+  The hall, the closet and the bathroom were not touched; Michael can say if they want the same pass.
+
+## v1.216 — The houses have backs
+Backlog D.27, first part (Michael, control room, 13 Oct: "Can we try to tighten up the environmental meshes in-game?
+For example, some of the boxes / some of the houses. The houses are nice from the front, but the backyards look really
+janky/unpolished"). Seen from its yard, the detailed house (Winnmark, Bunratty, Northcliff, Bellfield and the
+treehouse yard) was a bare brick face with four windows: no door, no belt course
+(the front has one between the storeys), nothing a house has round the back.
+
+The back now has a door: a half-glass door with two panels under the glass, in its casing, under a small shingled
+hood on two brackets, with a knob, a step and a light beside it. The belt course runs across the back as on the front,
+and a window sits over the door. Round the back are the things a house has there: the electric meter with its round
+glass and its conduit down the wall near one corner, a hose reel with a coil of green hose on its bracket and the tap
+under it on the other side of the door, and a dryer vent. Which corner gets the meter follows the house's own accent
+hash, so the street does not repeat exactly. Below head height none of it stands more than 0.28 m off the wall, inside
+a body's 0.3 m radius, so nothing can be walked through and the collision boxes are unchanged. It merges into the
+house's existing meshes: 15 per house, as before. Each merged mesh is tagged with its part for the test.
+### Verified
+- `tests/house-backs.test.mjs` (new, 7 checks). All eight Winnmark houses and all seven on Bunratty have a door on
+  the back wall, and nothing below 2 m stands more than 0.28 m off it (heights read from each house's own base, since
+  they stand on the terrain at 1.3–2.6 m). Still 15 meshes a house. Walking at a back wall stops at it (z −19.85 against
+  the wall at −19.5). No page errors.
+- `houses` passes. `bunratty-polish`'s "every kid walks over 3 m in 30 s" failed in 2 of 3 runs on this build and
+  passed 2 of 2 without it, so I looked: in both builds Nick holds one cover in the middle of the road at (−20.8, −0.5),
+  hiding and peeking, for 13–27 s before he moves (three probe runs each). Nothing there is near a house's back. It
+  is filed under Found in play.
+### Still open
+- D.27 goes on: the boxes Michael named, the yards themselves (bare grass between the fences) and the old box house on
+  the maps that still use it.
+- The back door is the same on every house; whether the street wants more variety there is for Michael's eye.
+
+## v1.217 — The yard boxes are where they stop you
+Backlog D.27, second part ("some of the boxes"), after v1.216's house backs. Measured on Winnmark, Bunratty, Northcliff
+and Bellfield, the moving boxes and wheelie bins in the yards were the jankiest thing out there, for two reasons.
+
+First, a box or bin was turned to any angle at all, but its collision box kept its unturned size, square to the map.
+A 1.3 m box at 45° showed its corners up to 0.3 m outside what stopped you and stopped you on air at its sides, and a
+tipped bin lay from its spot to a whole bin-length away, so half of it (0.53 m) was outside its box and you walked
+through it. On those four maps 10–27 props each were drawn more than 12 cm off their collision, the worst 0.55 m. Now
+a prop's facing is squared to the nearest quarter turn, keeping a seventh of its twist (6.75° at most, so a yard still
+looks dropped, not drilled), its collision box is the box round what is drawn, and a tipped bin lies centred on its
+spot, resting on its side at the right height. `propFacing` does the squaring for `addHomeDepotBox` and
+`addCurbsideBin`, so every map's boxes and bins get it.
+
+Second, props were dropped at random spots with nothing checking what was already there: on Winnmark one bin and one
+box stood through an iron fence and two props stood round tree trunks; on Bunratty a prop went into a house wall and
+two props stood inside each other; Northcliff had one prop inside another. Once a match is built, `settleYardProps`
+slides any loose box, bin or plywood stack out of a fence, a house, a tree trunk or another loose prop, along its
+shallower overlap with 5 cm clear, a few passes over. Props put against something on purpose (the kid forts' bins and
+boxes against their 1.12 m walls) are left where they are, since only fences, houses, trunks and loose props count.
+### Verified
+- `tests/yard-props.test.mjs` (new, 6 checks), on Winnmark (46 props), Bunratty (40), Northcliff (40) and Bellfield
+  (26): every prop is drawn within 10 cm of its collision box (the 10 cm is a bin's handle and wheels), none stands
+  through a fence, a house, a trunk or another prop, and every box and standing bin is within 5.2° of square. On the
+  build before this one the same count was 27, 21, 20 and 10 props off by more than 12 cm, with 2 fences, 2 trunks, 1
+  house and 2 props run through.
+### Still open
+- D.27 is complete for what Michael named, the boxes and the house backs. The yards' grass itself, and the plywood
+  stacks' lawn chairs, are as they were; he can say if the yards want more.
+- `npm test` for v1.211–v1.217 is in v1.218's entry, run once over the lot.
+
+## v1.218 — The game saves itself
+Backlog D.29 (Michael, control room, 13 Oct: "We need an autosave function - I don't remember to go back to the bed
+every time and I doubt most players will either. I'm not sure what to do with the bed though then"). The game already
+had an autosave (coming home, and buying gear), but it only ran once you had slept in the bed or loaded a save that
+session. That guard was there so a NEW GAME could not quietly write over a save you still wanted, and it meant a new
+player who never slept never saved at all.
+
+Now a NEW GAME saves itself from the start. If there is already a save on disk, NEW GAME first asks, on the title
+screen, "Start a new summer? Your saved game is replaced the first time the new one saves", with START OVER and BACK,
+so the old guard is kept as a question instead of a silent rule. The game saves when you come home, as the result of
+every match shows (pay, unlocks and stats on disk before you click anything), on every buy at the shop and when the
+shop closes, and on closing the loadout, the workbench and the mirror. Each save puts a small "Saved" in the bottom
+right corner for 1.6 s. CONTINUE and the bed work as before; the bed still saves and shows the summary. What the bed
+should do now is a question in decisions (A–D, I recommend A: the bed shows the summer so far).
+### Verified
+- `tests/autosave.test.mjs` (new, 11 checks). A new game is on disk as soon as you are home ($35, 25 BBs), without
+  sleeping. A won tutorial is saved while its result shows ($37 and the win on disk), and the "Saved" note comes up.
+  A buy at the shop is saved at once ($52, 125 BBs). After a page reload the title offers CONTINUE and NEW GAME, and
+  CONTINUE brings back $52, 125 BBs and the win, with the bed never used. NEW GAME over that save asks and starts
+  nothing; BACK leaves the save as it was ($52); START OVER starts fresh and the new game saves over the old one ($35,
+  no wins). No page errors.
+- `mirror`, `hats`, `crew`, `smoke` pass (each saves and loads).
+- `npm test` for v1.211–v1.217, as four local shards at once: 117 of 121 suites passed. The four that did not are
+  not this run's: `fence-bound`'s round 1 (Nick held at the fence spot for 30 s) fails the same way on main's v1.210
+  under this load; `bunratty-polish`'s Nick is the flake filed in v1.216; `pickup-fernando`'s AK landed 24 of 24 here,
+  and also 24 of 24 on v1.216 and 18 or 24 on v1.210 when rerun alone, the coin flip v1.207 described; and one
+  suite's page load passed Playwright's 30 s under load. Filed under Found in play.
+- CI fix-up: from v1.216 on, `fence-bound` failed on CI and on every local run, with Nick wedged at his fence spot
+  for the whole 30 s. v1.216's back-of-house meshes add no collision, but three.js draws a uuid from Math.random for
+  each new geometry, and the map builders run with Math.random seeded. So the extra meshes moved everything the seed
+  placed after the houses. On Bunratty one scatter tree landed on the north fence at x 5, making a fence-and-trunk
+  corner. Building those meshes off the seed would put the old layout back, but v1.217 and v1.218 are tuned to the
+  new one: tried, it broke `yard-props` (a Winnmark prop through a fence) and `car-side-fire` (1720 of 6048 pulls
+  held). So that was reverted, and instead Bunratty's scatter trees keep 1.2 m off a fence line. Only the position
+  moves, with the same rng calls, so nothing placed after changes. `fence-bound` passes (Nick 3 m clear at
+  2.5–3.9 s in all three rounds), as do `yard-props`, `car-side-fire`, `bunratty-polish`, `bunratty-road`,
+  `house-backs` and `pincer`.
+- Still red from the same seed shift: `pickup-fernando`. Northcliff's yard boxes and trees round the high yard moved,
+  and by day Fernando's AK in the nest now lands 21–24 of 24 hits, as many as the rifle (v1.215: 6–14 of 24). That
+  undoes v1.207's balance. The fix is a design choice: v1.207's Still open names Option B, freeing him from the
+  nest, as the next step.
+### Still open
+- The bed: decisions, "What does the bed do, now the game saves itself?"
+- The "Saved" note's look and corner are for Michael's eye.
+
+## v1.219 — Your hands on the gun
+Backlog D.30 (Michael, control room, 13 Oct: "Can we have the player's hand(s) shown holding their weapons in First
+Person View? Same for the Speed Loader and anything else i might be forgetting"). In first person every gun floated
+on its own: no hand on the grip, none on the handguard, and the speed loader and the spare mag hung in the air the
+same way. The kids in third person have had hands on their guns since v1.81; you had none.
+
+Now your hands hold what you hold. The shooting hand wraps the pistol grip (or the stock's wrist on the shotgun and the
+Thunder Pump): the back of the hand on the grip's right, three fingers round the front strap with their tips on the
+left, the trigger finger forward and the thumb along the frame. The off hand goes where it would: under the handguard
+of the AK, MP5, UMP and sniper rifle, under the Bucket Gun's body, on the AR's vertical foregrip, on the pump of the
+shotgun and the Thunder Pump, where it slides back with the pump as you rack it, and cupped round the shooting hand on
+the four pistols and the MAC-10. Mount a PVC Foregrip or a Taped Twin Mag on a long gun and the off hand moves onto it;
+a sling leaves it where it was. The speed loader and the spare mag are held in your right hand. Each forearm runs from
+the wrist down and back out of the bottom of the screen. The hands are your skin from the mirror; in the Grey Hoodie
+the forearms are its sleeves, with a cuff at each wrist. Everything is a child of the gun (or the pump), so bob, kick,
+aiming in and cocking carry the hands with it, and the hands are built once per gun, about 35 small boxes, only the
+held gun drawn. `measureGunForUnder` skips them, so the under-barrel parts sit where they did.
+
+The table `FP_HANDS` gives each gun its grip centre, rake and size, and the off hand's place, so a new gun needs one
+line there.
+### Verified
+- `tests/fp-hands.test.mjs` (new, 69 checks), on all twelve guns in a match, at the hip and aimed: both hands are on
+  each gun; each hand touches it (gap 0 mm, the cupped off hand on the pistol 1.6 mm and on the bolt pistol 2.1 mm
+  aimed); both show on screen at the hip or aimed (on the AR 18 and 34 box corners in view hip, 80 and 80 aimed); no
+  hand or forearm crosses the line of sight, hip or aimed, on any gun (a ray from the eye down the reticle meets
+  none); both elbows are off the bottom of the screen or behind the near plane in every pose. The shotgun's off hand
+  is on the pump and slides back 0.070 m with it, the pump's own travel. On the MP5 a PVC foregrip and a taped mag each
+  take the off hand (gap 0) and hide the handguard hand; a sling does not. The hands take the mirror's skin
+  (0x8d5a3b set, 0x8d5a3b drawn) with bare forearms; in the hoodie the forearms turn its grey (0x7c7d84) with cuffs on.
+  The speed loader and the spare mag are each in a hand that touches them, shows, and runs off the bottom. No page
+  errors.
+- `under-parts` (the under-barrel parts still measure where they did) and `grip` pass alone.
+- The shop's Ammo tab draws the speed loader and spare mag from the same builders, so the item hands are put on in the
+  match's set-up only; `shop-pics` passes (34 checks) and `backyard-guns` passes.
+- Test fix-up, not this item: `car-side-fire`'s "he still shoots" failed on every run of the branch head (1,714–1,735 of
+  6,048 pulls held, limit 25%) and passed on v1.218 and on main. The v1.216 fix-up had moved Bunratty's lane car 0.45 m
+  west (x 19.15–23.03), so two of the test's four fixed firing spots stood inside the car's box and every pull there
+  held, as it should. The spots are now set off whatever stands in the car's slot, west side; on that layout 978 of
+  6,048 held (16%), 0 BBs into the car. (A second session's v1.218 fix-up, pushed during this run, reverts the v1.216
+  fix-up and moves the layout back; the anchored spots hold on either.)
+### Still open
+- How the hands look is for Michael's eye: box hands to match the game's kids, the default skin reads pale in strong
+  sun, and the left forearm comes in from the lower left at a steep angle. Screenshots of the AR, pistol, shotgun and
+  sniper at the hip and aimed, the MP5 with a foregrip, the hoodie and the loader are in `tests/out/fp-hands-*.png`.
+- Fingers do not move: no trigger pull, no thumb on the speed loader's plunger, no hand on the hammer as the
+  Six-Shooter cocks.
+
+## v1.220 — No loose parts on the guns
+Backlog D.31, first part (Michael, control room, 13 Oct: "Can we make an effort to revisit the gun designs and make
+sure they all look good / accurate, and don't have any bugs or flaws?"). The first flaw to look for is a part that
+does not touch the gun. Built as the workbench and first person draw them, with each part's box joined to any other
+within 3 mm, eleven of the twelve guns had something standing off the body: the shotgun's orange tip 8 mm ahead of its
+barrel; the AR's handguard 2 cm in front of its receiver, an open gap you see at the hip; the sniper rifle's forend
+1.5 cm off its grip and its barrel 1 cm short of the receiver, and its side rails 5 mm over the forend; the AK's tip
+7 mm off its barrel and its wooden stock off the receiver; the MP5's magazine 5 mm under its well, its cocking tube
+6 mm over the receiver and its stock 1.7 cm behind it; the UMP's stock struts and the MAC-10's stock stub likewise; the
+Bucket Gun's carry handle 7.5 mm above the body; on the Six-Shooter, Bucket Gun and Bolt Pistol the trigger guard's front
+was a flat 5 mm sliver hanging clear of its bar; and one line of the pistol's grip stippling sat behind the grip.
+
+Each is joined by lengthening or moving the part that was short (the barrels to their tips, the handguards and stocks
+back to the receivers, the MP5's mag up into its well, the handle posts down onto the body, the trigger guard's front
+made an upright from the bar), never by moving a sight, so every iron sight sits where v1.168 and v1.73 put it. The
+sniper's rail line (`FP_GUN_MOUNT.sniper.barrelY`) drops from 0.040 to 0.032 so its side rails sit on the forend; a
+laser or light on them sits 8 mm lower.
+### Verified
+- `tests/gun-parts.test.mjs` (new, 14 checks): all twelve guns, 22–52 parts each, have no part more than 3 mm from the
+  body; on v1.219 the same check found loose parts on eleven (only the Thunder Pump was whole).
+- Run alone after the change: `fp-hands` 69 of 69 (every hand still touches its gun: the forends and handguards that
+  grew are the ones the off hands hold), `backyard-guns` 28 of 28 (aimed, each front sight still on the reticle),
+  `under-parts` 28 of 28 (the under-barrel parts still hang under the handguards), `shop-pics` 34 of 34, and, after
+  merging the second session's v1.218 fix-up, `car-side-fire` 6 of 6 (0 of 6,048 pulls held on that layout).
+- `npm test` on this head (efcf456, v1.218 fix-up merged), three local shards at once, stopped at the run's time limit:
+  84 of the 127 suites ran, 81 passed. The three that did not: `bunratty-polish`'s Nick (1.9 m in 30 s, the flake filed
+  in v1.216), `pickup-fernando`'s AK share (24 of 24, the seed shift the v1.218 fix-up describes and leaves open), and
+  `bellfield`'s Lamplight opening (one round of three tagged at 6.5 s, limit 8 s), which passed alone straight after
+  (12.3 s, none in 30 s, 15.9 s). The other 43 suites were not reached; CI runs them all.
+### Still open
+- D.31 goes on: each gun against the real thing it copies (shape, proportions, details), one at a time with
+  screenshots for Michael's eye. The loose parts were the plain faults; whether a gun "looks accurate" is his call.
+
+## v1.221 — The pistol, held up to a Glock
+Backlog D.31, second part (Michael, control room, 13 Oct: "revisit the gun designs and make sure they all look good /
+accurate"): each gun against the real one it copies, one at a time, with a picture for Michael. The pistol first, as
+everyone starts with it. It copies a Glock 17 (slide 186 mm, 138 mm tall with the magazine, slide 25.5 mm wide and about
+30 mm tall, grip about 18° off upright, barrel flush with the slide). The game draws it about ×1.13 so it fills the same
+part of the screen, so the comparison is in ratios to the slide's length. Against those it was off four ways: the slide
+was wider than it was tall (42 × 40 mm), so it read as a brick from behind; the frame and grip stood the gun 1.06
+slide-lengths tall (the Glock is 0.74), a 13 cm grip under a 5 cm frame; the barrel and orange tip ran 7 cm past the
+slide like a suppressor; and the grip raked 10°.
+
+Now the slide is 30 mm wide and 36 mm tall over a 38 mm frame (a Glock's frame is wider than its slide), the frame is
+36 mm tall, the grip is 9 cm long at 18° with its stippling and baseplate riding on it, the trigger guard is the Glock's
+square one (an upright at the front, the bar back to the grip), and the barrel shows 5 mm past the slide with a 1 cm
+orange tip. The slide's length, the sights, the rear sight's notch and the bore line are where they were, so aiming is
+unchanged. `FP_HANDS.pistol` follows the grip to its new place and rake. Pictures from the right side, before and after:
+`docs/guns/pistol-side-before.png`, `docs/guns/pistol-side.png`.
+### Verified
+- `tests/gun-pistol.test.mjs` (new, 6 checks; writes the side picture). Before (v1.220, run on the old file): slide
+  0.042 wide × 0.040 tall, height 1.06 slide lengths, 0.331 of the slide's length out in front, grip 10.3°; five of
+  five ratio checks failed. After: 0.030 × 0.036, width 0.143 of the length (Glock 0.137), height 0.80 (limit 0.70–0.85),
+  0.095 out in front (limit 0.10), grip 18.3°; all pass, no page errors.
+- Run alone after the change: `gun-parts` (no part over 3 mm off, all twelve guns), `fp-hands` (pistol: both hands on,
+  gap 0 mm, 60 box corners on screen at the hip, none on the sight line, forearms off the bottom), `backyard-guns` (the
+  front sight still on the reticle aimed), `under-parts`, `shop-pics`, `workbench-labels`, `grip`, `laser`: all pass.
+### Still open
+- Whether it now looks like the pistol Michael has in mind is his call: the two pictures above, and the gun in your
+  hand at the hip.
+- The kids' third-person pistol (`buildEnemyGunMesh`) is a separate, smaller model and was not touched.
+- D.31 goes on with the next gun.
+
+## v1.222 — A Pickup Game life is a life
+Decisions "Pickup Game: what is a life for you?" (Michael: A, control room, 14 Oct), from the critic's report on v1.201:
+the Pickup Game board says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a
+return, while yours was one hit where you stood, with nothing between hits. Two BBs of a burst or three pellets of one
+shotgun blast could take all three. In the critic's 20 rounds of 4v4 all three of your lives went in about a second in
+6, once to a single blast.
+
+Now, in a Pickup Game only, a tag costs one of your lives and puts you back at your start, facing the way you started,
+with 2 s in which nothing tags you: the respawn VIP and Flags already use, except that your lives are not refilled. The
+HUD's lives count and the clock's "more lives left" go down by one per tag. The last tag ends the round as before. Story
+matches are untouched: one life is one life, and a match that gives you more still takes them where you stand.
+### Verified
+- `tests/pickup-lives.test.mjs` (new, 7 checks). On a Winnmark 3v3, 3 lives: a tag 5.7 m from the start costs one life
+  (your side's lives 9 to 8), puts you at your start with 2.0 s of cover; five more BBs at once (a shotgun blast) change
+  nothing; after the cover a second tag costs the second life, back at the start; the third ends the round, a loss. In
+  a story match with three hits a hit leaves you where you stand, no cover. Three real 4v4 rounds standing at the start:
+  lives went at 49.1/51.4/53.8 s, 21.6/23.7/26.3 s and 19.0/23.0/25.6 s, gaps 2.1–4.0 s, none under 2 s. No page errors.
+- `pickup-fernando`, red on this branch since v1.218's seed shift, now passes with its last checks rewritten. On v1.221
+  (before this change), walking at the nearest kid, Fernando's AK took all three lives in 0.2–0.4 s at about 14 s in 8 of
+  8 rounds (24 of 24 hits; the rifle 19 of 24). Now he takes one life, about 14 s in, and you are out at 23–39 s (mean
+  34.1 s); he landed 7–8 of 24 hits. Its rifle-against-AK comparison measured the old stacking, so it is replaced by
+  "under half the hits are his" and "you last over 20 s on average".
+- `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-kids`, `vip` (2 suites), `ctf` (2 suites), `forfeit-ask` pass.
+### Still open
+- Standing still at the start, the next tag tends to come just after the 2 s cover (gaps of 2.1–2.6 s in five of six):
+  a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
+  sight, is for a playtest.
+
 ## v1.150 — Every kid has his own lines, and none of them repeats himself
 Michael's D.9 note asked for better voices (VoiceStudio) and more, more varied lines. The builder put the
 question to him with four options and he answered A on the control room (2 Oct, 19:59 UTC): more and more varied

@@ -19,10 +19,10 @@ const ladder = await page.evaluate(() => {
   delete done[zoneCapstoneId('market_lot')]; delete done[ids[0]];
   return { keys, ids, before, after, afterFirst, coming: ZONE_LADDER.some(z => z.comingSoon) };
 });
-check('ladder ends with Northcliff, after the market lot',
-  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff', ladder.keys);
-check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138), the creek-fort defend, then the night 4v4 (v1.131)',
-  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
+check('Northcliff comes after the market lot (v1.155: then Hollins Ridge High; v1.157: then Willow Bend)',
+  ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club,grocery_store', ladder.keys);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138) and its defend (v1.144), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -40,7 +40,8 @@ const pin = await page.evaluate(() => {
   const lockedAfter = p.classList.contains('locked');
   p.click();
   const info = document.getElementById('scenarioInfo');
-  const rows = [...info.querySelectorAll('.sc-go')].map(b => ({ id: b.dataset.launch, locked: b.classList.contains('locked') }));
+  // v1.147: the rows are cards; a locked card has no START
+  const rows = [...info.querySelectorAll('.sc-card')].map(b => ({ id: b.dataset.id, locked: b.classList.contains('locked') && !b.querySelector('.sc-go') }));
   delete Game.persist.completed[zoneCapstoneId('market_lot')];
   closeMap();
   return { lockedNew, label, lockedInfo, lockedAfter, rows, oldPin: !!document.querySelector('#worldMap .pin[data-scenario="locked"]') };
@@ -51,7 +52,8 @@ check('after the lot, the pin is live and lists every scenario, only the opener 
   !pin.lockedAfter && pin.rows.length === ladder.ids.length && pin.rows[0].id === 'northcliff_1v1_evan' && !pin.rows[0].locked
   && pin.rows.slice(1).every(r => r.locked), pin);
 
-// v1.138: the Stoneglen treehouse is its own flat backyard map (tests/treehouse.test.mjs); these are Northcliff Trace's
+// v1.138: the Stoneglen treehouse is its own flat backyard map (tests/treehouse.test.mjs), as Bellfield Court is (v1.186,
+// tests/bellfield.test.mjs); these are Northcliff Trace's
 for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   await g.scenario(id);
   const start = await page.evaluate(() => {

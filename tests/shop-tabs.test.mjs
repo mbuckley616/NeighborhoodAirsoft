@@ -19,7 +19,7 @@ const read = () => page.evaluate(() => {
 const clickTab = (name) => page.evaluate(name => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === name).click(), name);
 const first = await read();
 console.log('  ', JSON.stringify({ tabs: first.tabs, active: first.active }));
-check('four tabs: Guns, Ammo, Gear, Mods', first.tabs.join() === 'Guns,Ammo,Gear,Mods', first.tabs);
+check('five tabs: Guns, Ammo, Gear, Mods and (v1.197) Clothes', first.tabs.join() === 'Guns,Ammo,Gear,Mods,Clothes', first.tabs);
 check('the shop opens on Guns', first.active === 'Guns', first.active);
 const seen = {};
 for (const tab of first.tabs) {
@@ -33,6 +33,7 @@ check('Guns: the guns, as before', seen.Guns.headers.join() === 'Guns' && seen.G
 check('Ammo: BB packs, speed loaders, BB colours', seen.Ammo.headers.join() === 'Restock BBs,Speed Loaders,BB Color' && seen.Ammo.colours.length >= 7, seen.Ammo.headers);
 check('Gear: belt & holster, eyewear, armour, shoes', seen.Gear.headers.join() === 'Belt & Holster,Eyewear,Body Armor,Shoes', seen.Gear.headers);
 check('Mods: the sights, lasers and flashlight', seen.Mods.headers.join() === 'Gun Mods', seen.Mods.headers);
+check('Clothes: the hats (v1.197), tops (v1.198) and shorts (v1.199)', seen.Clothes.headers.join() === 'Hats,Tops,Shorts' && seen.Clothes.rows.length === 15, seen.Clothes);
 const want = await page.evaluate(() => ({
   catalog: SHOP_CATALOG.map(i => i.name), mods: Object.values(ATTACHMENTS).map(a => a.name),
   gear: [...Object.values(EYEWEAR), ...Object.values(ARMOR), ...Object.values(SHOES)].map(e => e.name),
