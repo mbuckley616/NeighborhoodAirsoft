@@ -281,6 +281,9 @@ Fable card on the control room and Michael starts it from there.
 35. It would be cool if there is a 'squad commands' mechanic that allows you to tell your squad/team to either push up / keep distance / find cover / follow me. Similar to the original Star Wars Battlefront 1 and 2. (Michael, control room, 2026-10-14)
 36. A 'pool noodle' as a purchasable or unlockable melee weapon would be a fun addition, as a backup in case you run out of ammo. (Michael, control room, 2026-10-14)
 37. Can we add a few more 'shitty' automatic guns? Maybe ones with low fire rates / high spin so bullets go every which way, or ones prone to jamming. I remember these always being the clear/transparent white-ish plastic. maybe like 3-4 guns of this tier. And maybe having tabs on the guns tab to shift between pistols, rifles, shotguns, automatics, etc. Or at least grouping the weapons in sections by type on that page. (Michael, control room, 2026-10-14)
+38. I think we have partial controller support - can we look into having full controller support? (Michael, control room, 2026-10-14)
+39. Can we make the pause menu more obvious / auto-open when hitting escape? (Michael, control room, 2026-10-14)
+40. Can we have some sort of 'shooting range' that's maybe set up in the backyard? have like coke cans, bottles, pieces of paper stood up (that can be punched through), handmade targets/bullseyes, etc. Idea is that this could be a way to test your guns and setups outside of a game. It would still cost you real BBs though! We could ideally base it off of my old house (235 Bunratty Court), which should still have pictures of the backyard & pool deck area on zillow. (Michael, control room, 2026-10-14)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
