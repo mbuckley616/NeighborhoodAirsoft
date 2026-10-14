@@ -9847,8 +9847,8 @@ shelf. The map paper lies on the table, and its pencil lines and red dots are se
 ## v1.216 — The houses have backs
 Backlog D.27, first part (Michael, control room, 13 Oct: "Can we try to tighten up the environmental meshes in-game?
 For example, some of the boxes / some of the houses. The houses are nice from the front, but the backyards look really
-janky/unpolished"). Seen from its yard, the detailed house (Winnmark, Bunratty, Northcliff, Bellfield, the school's
-staff row and the other streets built from it) was a bare brick face with four windows: no door, no belt course
+janky/unpolished"). Seen from its yard, the detailed house (Winnmark, Bunratty, Northcliff, Bellfield and the
+treehouse yard) was a bare brick face with four windows: no door, no belt course
 (the front has one between the storeys), nothing a house has round the back.
 
 The back now has a door: a half-glass door with two panels under the glass, in its casing, under a small shingled
