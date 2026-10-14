@@ -1665,6 +1665,15 @@
     font-size: 12px;
   }
 
+  /* v1.208: the forfeit question */
+  #forfeitAsk .modal-card { background: var(--ui-bg); border: 1px solid var(--ui-border); padding: 28px 40px; max-width: 420px; text-align: center; border-radius: 4px; }
+  #forfeitAsk .modal-title { font-family: 'Georgia', serif; font-size: 22px; color: var(--ui-accent); margin-bottom: 12px; }
+  #forfeitAsk .modal-body { font-size: 13px; line-height: 1.6; color: #ccc; margin-bottom: 20px; }
+  #forfeitAsk .forfeit-btns { display: flex; gap: 12px; justify-content: center; }
+  #forfeitAsk .modal-close { background: var(--ui-accent); color: #1a1a1a; border: none; padding: 8px 18px; font-family: inherit; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
+  #forfeitAsk .modal-close.forfeit-yes { background: transparent; color: #e88; border: 1px solid #a55; }
+  #forfeitAsk kbd { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+
   /* Scenario intro card */
   #scenarioIntro {
     position: fixed;
@@ -1990,7 +1999,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.207</div>
+  <div class="version">v1.208</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2351,6 +2360,18 @@
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-body" id="modalBody"></div>
     <button class="modal-close" id="modalCloseBtn">OK</button>
+  </div>
+</div>
+
+<!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
+<div class="menu-overlay" id="forfeitAsk">
+  <div class="modal-card forfeit-card">
+    <div class="modal-title">Forfeit this match?</div>
+    <div class="modal-body">The match is paused. A forfeit ends it here, with no pay.</div>
+    <div class="forfeit-btns">
+      <button class="modal-close" id="forfeitKeepBtn">KEEP PLAYING <kbd>ESC</kbd></button>
+      <button class="modal-close forfeit-yes" id="forfeitYesBtn">FORFEIT <kbd>ENTER</kbd></button>
+    </div>
   </div>
 </div>
 
@@ -19965,6 +19986,27 @@ function forfeitScenario() {
   if (Game.mode !== 'scenario') return;
   endScenario('forfeit');
 }
+// v1.208 (backlog B.8, Michael 13 Oct: "Hitting F should pause the game and ask if you're sure"): F opens a question
+// and the match stops (stepGame skips the scenario while Game.forfeitAsk is set). Enter or Y forfeits; Esc, N or F
+// again keeps playing. A round that ends some other way while it asks (a delayed win) closes it.
+function askForfeit() {
+  if (Game.mode !== 'scenario' || Game.forfeitAsk) return;
+  Game.forfeitAsk = true;
+  Game.mouseLMB = false;
+  for (const k in Game.keys) Game.keys[k] = false;
+  document.getElementById('forfeitAsk').classList.add('active');
+  exitPointerLock();
+}
+function closeForfeitAsk() {
+  Game.forfeitAsk = false;
+  document.getElementById('forfeitAsk').classList.remove('active');
+}
+function answerForfeit(yes) {
+  if (!Game.forfeitAsk) return;
+  closeForfeitAsk();
+  if (yes) forfeitScenario();
+  else if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
+}
 
 // ---------------------------------------------------------------------
 // SCENE TRANSITIONS
@@ -20991,6 +21033,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
 }
 
 function endScenario(outcome) {
+  if (Game.forfeitAsk) closeForfeitAsk();   // v1.208
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
@@ -22750,6 +22793,15 @@ document.addEventListener('pointerlockchange', () => {
 // INPUT
 // ---------------------------------------------------------------------
 document.addEventListener('keydown', e => {
+  // v1.208: while the forfeit question is up, only its keys do anything
+  if (Game.forfeitAsk) {
+    if (!e.repeat) {
+      if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'KeyY') answerForfeit(true);
+      else if (e.code === 'Escape' || e.code === 'KeyN' || e.code === 'KeyF') answerForfeit(false);
+    }
+    e.preventDefault();
+    return;
+  }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -22794,9 +22846,9 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
     Game.focusedInteractable.action();
   }
-  // F to forfeit (scenario)
+  // F to forfeit (scenario); v1.208: it asks first
   if (e.code === 'KeyF' && Game.mode === 'scenario' && !e.repeat) {
-    forfeitScenario();
+    askForfeit();
   }
   // M to toggle music
   if (e.code === 'KeyM' && !e.repeat) {
@@ -22832,6 +22884,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mousedown', e => {
+  if (Game.forfeitAsk) return;   // v1.208: clicks on the forfeit question are its buttons'
   // Right-click → ADS in scenario
   if (e.button === 2 && Game.mode === 'scenario' && Game.mouse.locked) {
     Game.player.adsTarget = 1;
@@ -29184,7 +29237,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario') {
+  } else if (Game.mode === 'scenario' && !Game.forfeitAsk) {   // v1.208: paused while F asks
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
@@ -29312,6 +29365,8 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Escape' && document.getElementById('settingsScreen').classList.contains('active')) closeSettings();
 });
 document.getElementById('settingsDoneBtn').addEventListener('click', closeSettings);
+document.getElementById('forfeitYesBtn').addEventListener('click', () => answerForfeit(true));    // v1.208
+document.getElementById('forfeitKeepBtn').addEventListener('click', () => answerForfeit(false));
 document.getElementById('settingsResetBtn').addEventListener('click', () => {
   Object.assign(Settings, SETTINGS_DEFAULTS); saveSettings(); applySettings(); renderSettings();
 });

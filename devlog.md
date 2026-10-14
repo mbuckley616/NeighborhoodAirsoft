@@ -9653,3 +9653,27 @@ untouched.
   Option B, which frees him from the nest, is the next step if it is.
 - A player walking straight at a 4v4 still loses inside 17 s at 3 lives. That is the critic's other report (a life is
   one hit for you, a walk back for a kid), and its proposal is Michael's to promote.
+
+## v1.208 — F asks before it forfeits
+Backlog B.8 (Michael, control room, 13 Oct: "Hitting F should pause the game and ask if you're sure you want to
+forfeit - i've misclicked that many times"). F used to end the match the instant it was pressed. Now it pauses the
+match and asks "Forfeit this match?", with KEEP PLAYING (Esc) and FORFEIT (Enter) buttons. Enter, Y or the FORFEIT
+button forfeits as before. Esc, N, F again or KEEP PLAYING closes the question, takes the mouse back and the match
+goes on from where it stopped. The question says a forfeit ends the match with no pay, which is what a forfeit has
+always done (a loss pays a little; a forfeit pays nothing).
+
+Paused means `stepGame` skips the match while `Game.forfeitAsk` is set: the round clock, your kid, every kid and every
+BB in the air stand still, and the keys held when F was pressed are let go so you don't walk off on return. While it
+asks, only its own keys do anything (no jump, no slot switch), and a click doesn't fire or take the mouse. If the
+round ends some other way while it is up (a win already on its 600 ms delay), the result shows and the question goes.
+`forfeitScenario()` still forfeits at once, for the tests that use it.
+### Verified
+- `tests/forfeit-ask.test.mjs` (new, 18 checks), on Bunratty 1v1. F puts the question up and the mode stays
+  'scenario'. 180 steps (3 s) with W held and Space pressed: the round clock stayed at 3.43 s, you stayed at
+  (−22, −2.5) and Sean did not move. Esc, N, F again and KEEP PLAYING each close it, and 60 steps later the clock is
+  1 s on. F, F, F leaves it asking, still in the match. A win while it asks shows the result and takes it down. F on
+  the result screen and in the bedroom asks nothing. F then Enter, F then Y and F then FORFEIT each end the match
+  FORFEITED. No page errors.
+### Still open
+- Whether Esc should be the way back: in a real browser the first Esc also lets go of the mouse, and the question has
+  already let go of it, so Esc goes straight to the question. Michael can say if he'd rather Enter mean "keep playing".
