@@ -5,9 +5,10 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 await g.scenario('bunratty_sean');
-await g.spin(200);   // past the opening hold, so the kids are moving
 // nothing tags you in this test, so the round lasts through every way of closing the question
+// v1.220 fix-up: set before the spin, not after; Sean tagged the standing player at 3.28 s, inside the 3.33 s spin
 await page.evaluate(() => { Game.player._graceT = 1e9; });
+await g.spin(200);   // past the opening hold, so the kids are moving
 
 const snap = () => page.evaluate(() => ({
   mode: Game.mode, asking: !!Game.forfeitAsk,
