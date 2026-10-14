@@ -10019,6 +10019,11 @@ laser or light on them sits 8 mm lower.
   grew are the ones the off hands hold), `backyard-guns` 28 of 28 (aimed, each front sight still on the reticle),
   `under-parts` 28 of 28 (the under-barrel parts still hang under the handguards), `shop-pics` 34 of 34, and, after
   merging the second session's v1.218 fix-up, `car-side-fire` 6 of 6 (0 of 6,048 pulls held on that layout).
+- `npm test` on this head (efcf456, v1.218 fix-up merged), three local shards at once, stopped at the run's time limit:
+  84 of the 127 suites ran, 81 passed. The three that did not: `bunratty-polish`'s Nick (1.9 m in 30 s, the flake filed
+  in v1.216), `pickup-fernando`'s AK share (24 of 24, the seed shift the v1.218 fix-up describes and leaves open), and
+  `bellfield`'s Lamplight opening (one round of three tagged at 6.5 s, limit 8 s), which passed alone straight after
+  (12.3 s, none in 30 s, 15.9 s). The other 43 suites were not reached; CI runs them all.
 ### Still open
 - D.31 goes on: each gun against the real thing it copies (shape, proportions, details), one at a time with
   screenshots for Michael's eye. The loose parts were the plain faults; whether a gun "looks accurate" is his call.
