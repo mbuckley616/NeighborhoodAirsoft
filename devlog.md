@@ -10175,3 +10175,33 @@ The sights hide when an optic is mounted, as the AR's do. The shooting hand move
   3.2 cm) was left where it was, 1.2 cm above the barrel's new axis, so mounted parts sit as before.
 - The kids' third-person sniper (`buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on with the
   AK.
+
+## v1.226 — The AK, held up to an AK-47
+Backlog D.31, the fifth gun. The AK-47 is drawn at about ×0.67 (its receiver 16 cm). From the side it had five faults.
+The magazine was three tilted blocks with gaps between them, 4 mm short of the receiver. It sat 1.5 cm from the
+grip, with no trigger at all: just a guard bar running through the mag and the grip. The gas tube floated 9 mm above
+the lower handguard and stopped where the handguard did, with nothing joining it to the barrel. There was no rear
+sight. The stock was a straight box on the bore line, where an AK's drops to a tall butt.
+
+Now the magazine is one curved piece between two arcs, seated 3 mm into the receiver and 2 cm further forward. It drops
+12.4 cm and sweeps 3.3 cm forward as it goes. A trigger hangs 1.5 cm under the receiver inside a guard (an upright
+behind the mag and a bar back to the grip), with 3.6 cm between the mag and the grip. The gas tube runs from the
+receiver to a gas block behind the front sight, under a wood upper handguard over its rear half. A rear sight (a base
+and two ears) stands at the front of the top cover; aimed, the front post sits in its notch on the reticle, as
+before (0.20°). It hides when an optic is mounted, as the AR's does. The stock drops from the receiver to a butt 8 cm
+tall, 5.3 cm below the receiver. The grip and both hands are where they were. Pictures: `docs/guns/ak-side-before.png`,
+`docs/guns/ak-side.png`.
+### Verified
+- `tests/gun-ak.test.mjs` (new, 9 checks; writes the side picture). Before (v1.225, the same test on the old file): 3
+  mag pieces 4.2 mm off the receiver, 1.5 cm from mag to grip, no trigger, the tube 9 mm over the handguard, no rear
+  sight, the stock 1.2 cm below the receiver and level. Seven of nine checks failed. After: 1 piece, 0 mm, 12.4 cm
+  drop, 3.3 cm sweep, 3.6 cm to the grip, trigger 1.5 cm, the guard 6.7 mm below it, the tube in the upper handguard,
+  the rear sight in place, the butt 5.3 cm below the receiver and its top 1.7 cm lower at the heel. Aimed, 0.20° off
+  centre. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AK: both hands on, gap
+  0 mm, none on the sight line), `under-parts`, `shop-pics`, `workbench-labels`, `laser`, `loadout-kid`: all pass.
+### Still open
+- Michael's eye on the pictures, and the gun aimed: the rear sight is new in the view.
+- The receiver and top cover are still plain boxes (no rivets or ejection port), and the stock's edges are square.
+  The kids' third-person AK (Fernando's, `buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on
+  with the MP5.

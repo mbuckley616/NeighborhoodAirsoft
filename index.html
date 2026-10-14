@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.225</div>
+  <div class="version">v1.226</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18753,51 +18753,81 @@ function buildFPAK() {
   // Receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.16), steelMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top cover (rounded-ish dust cover) — slightly narrower box on top
   const topCover = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.02, 0.15), steelMat);
   topCover.position.set(0, 0.045, -0.05);
   group.add(topCover);
 
-  // Wood handguard (forward, under the gas tube)
+  // v1.226 (D.31): held up to an AK-47 (drawn at about ×0.67, its receiver 16 cm). The gas tube runs from the
+  // receiver to a gas block behind the front sight, under a wood upper handguard over its rear half (it floated
+  // 9 mm over the lower handguard and stopped where the handguard did); a rear sight stands at the front of the top
+  // cover; the magazine is one curved piece seated in the receiver, 2 cm further forward, so a trigger and guard fit
+  // between it and the grip (it was three tilted blocks with gaps, touching the guard, and there was no trigger); the
+  // stock drops from the receiver to a tall butt (it was a straight box on the bore line).
+  // Lower wood handguard, round the barrel
   const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.10), woodMat);
   handguard.position.set(0, 0.01, -0.18);
+  handguard.name = 'handguard';
   group.add(handguard);
-  // Gas tube above the handguard
-  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.10, 8), steelMat);
+  // Gas tube from the receiver to the gas block, the upper handguard round its rear half
+  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.155, 8), steelMat);
   gasTube.rotation.x = Math.PI / 2;
-  gasTube.position.set(0, 0.05, -0.18);
+  gasTube.position.set(0, 0.044, -0.2075);
+  gasTube.name = 'gastube';
   group.add(gasTube);
+  const upperGuard = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.026, 0.10), woodMat);
+  upperGuard.position.set(0, 0.043, -0.18);
+  upperGuard.name = 'upperguard';
+  group.add(upperGuard);
+  const gasBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.034, 0.02), steelMat);
+  gasBlock.position.set(0, 0.035, -0.285);
+  gasBlock.name = 'gasblock';
+  group.add(gasBlock);
 
   // Barrel + front sight block + orange tip
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.174, 10), darkMat);   // v1.220: reaches the tip
   barrel.rotation.x = Math.PI / 2;
   barrel.position.set(0, 0.025, -0.307);
+  barrel.name = 'barrel';
   group.add(barrel);
   const fsBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.022), steelMat);
   fsBlock.position.set(0, 0.045, -0.31);
   group.add(fsBlock);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.014, 0.004), darkMat);
   fsPost.position.set(0, 0.064, -0.31);
+  fsPost.userData.frontSight = true;
   group.add(fsPost);
+  // Rear sight at the front of the top cover: a base and two ears, the notch between them over the bore line
+  const rsBase = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.011, 0.016), steelMat);
+  rsBase.position.set(0, 0.0605, -0.117);
+  rsBase.userData.ironSight = true;
+  group.add(rsBase);
+  for (const sx of [-0.0065, 0.0065]) {
+    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.006, 0.006), steelMat);
+    ear.position.set(sx, 0.069, -0.117);
+    ear.userData.ironSight = true;
+    group.add(ear);
+  }
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
   orangeTip.position.set(0, 0.025, -0.40);
   group.add(orangeTip);
 
-  // Curved banana magazine — approximate the curve with three stacked, tilted segments.
-  const magSeg1 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.05), magMat);
-  magSeg1.position.set(0, -0.04, -0.045);
-  magSeg1.rotation.x = 0.12;
-  group.add(magSeg1);
-  const magSeg2 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.045), magMat);
-  magSeg2.position.set(0, -0.08, -0.062);
-  magSeg2.rotation.x = 0.34;
-  group.add(magSeg2);
-  const magSeg3 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.03, 0.04), magMat);
-  magSeg3.position.set(0, -0.115, -0.088);
-  magSeg3.rotation.x = 0.55;
-  group.add(magSeg3);
+  // Curved banana magazine: one piece between two arcs about a centre ahead of it, sweeping 0.56 rad forward as it
+  // drops 12.5 cm, its top 4.5 cm long seated 3 mm into the receiver
+  const magProf = new THREE.Shape(), MR = 0.24, MW = 0.045, MA = 0.56, mcz = -0.038 - MR, mcy = -0.010;
+  const magPts = [];
+  for (let i = 0; i <= 6; i++) { const t = MA * i / 6; magPts.push([mcz + MR * Math.cos(t), mcy - MR * Math.sin(t)]); }
+  for (let i = 6; i >= 0; i--) { const t = MA * i / 6; magPts.push([mcz + (MR - MW) * Math.cos(t), mcy - (MR - MW) * Math.sin(t)]); }
+  magPts.forEach(([z, y], i) => i ? magProf.lineTo(z, y) : magProf.moveTo(z, y));
+  const magGeo = new THREE.ExtrudeGeometry(magProf, { depth: 0.026, bevelEnabled: false });
+  magGeo.translate(0, 0, -0.013);
+  magGeo.rotateY(-Math.PI / 2);
+  const mag = new THREE.Mesh(magGeo, magMat);
+  mag.name = 'mag';
+  group.add(mag);
 
   // Charging handle — AK's is on the RIGHT side, reciprocates with the bolt.
   const chargeGroup = new THREE.Group();
@@ -18812,18 +18842,33 @@ function buildFPAK() {
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.07, 0.03), woodMat2);
   grip.position.set(0, -0.05, 0.02);
   grip.rotation.x = -0.25;
+  grip.name = 'grip';
   group.add(grip);
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.045), darkMat);
-  tg.position.set(0, -0.026, -0.005);
+  // Trigger guard (an upright behind the mag, a bar back to the grip) and the trigger inside it
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.004), darkMat);
+  tgFront.position.set(0, -0.023, -0.034);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.04), darkMat);
+  tg.position.set(0, -0.033, -0.016);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), darkMat);
+  trigger.position.set(0, -0.020, -0.015);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
-  // Fixed wood stock (straight, runs back toward camera)
-  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.12), woodMat);   // v1.220: meets the receiver
-  stock.position.set(0, 0.0, 0.09);
+  // Fixed wood stock, dropping from the receiver's rear to a tall butt
+  const stockProf = new THREE.Shape();
+  [[0.028, 0.032], [0.150, 0.012], [0.150, -0.066], [0.028, -0.013]].forEach(([z, y], i) => i ? stockProf.lineTo(z, y) : stockProf.moveTo(z, y));
+  const stockGeo = new THREE.ExtrudeGeometry(stockProf, { depth: 0.034, bevelEnabled: false });
+  stockGeo.translate(0, 0, -0.017);
+  stockGeo.rotateY(-Math.PI / 2);
+  const stock = new THREE.Mesh(stockGeo, woodMat);
+  stock.name = 'stock';
   group.add(stock);
-  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.052, 0.012), darkMat);
-  stockPad.position.set(0, 0.0, 0.155);
+  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.08, 0.012), darkMat);
+  stockPad.position.set(0, -0.027, 0.155);
+  stockPad.name = 'buttpad';
   group.add(stockPad);
 
   group.position.set(0.13, -0.20, -0.32);
