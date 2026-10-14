@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.227</div>
+  <div class="version">v1.228</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19006,9 +19006,13 @@ function buildFPUMP() {
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.45, metalness: 0.5 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
+  // v1.228 (D.31): held up to a UMP45 (drawn at about ×0.62). The barrel shroud is the receiver's front end (it stood
+  // 5 mm off it); the stick mag rakes a little forward from a magwell, seated in the receiver (it tilted back, its top
+  // 4.5 mm short); the grip meets the receiver; a trigger hangs inside a deeper guard (there was none).
   // Bulky polymer receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.15), polyMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top rail
   const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.13), steelMat);
@@ -19021,8 +19025,9 @@ function buildFPUMP() {
   }
 
   // Stubby barrel shroud + barrel + orange tip
-  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.06), polyMat2);
-  shroud.position.set(0, 0.012, -0.16);
+  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.066), polyMat2);
+  shroud.position.set(0, 0.012, -0.157);
+  shroud.name = 'shroud';
   group.add(shroud);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.06, 10), steelMat);
   barrel.rotation.x = Math.PI / 2;
@@ -19034,13 +19039,21 @@ function buildFPUMP() {
   group.add(orangeTip);
 
   // Straight stick magazine (.45 — fat, straight, slight forward angle)
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.085, 0.034), polyMat2);
-  mag.position.set(0, -0.06, -0.045);
-  mag.rotation.x = -0.05;
-  group.add(mag);
+  const magHolder = new THREE.Group();   // pivots at the receiver's underside
+  magHolder.position.set(0, -0.011, -0.047);
+  magHolder.rotation.x = 0.08;
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.09, 0.034), polyMat2);
+  mag.position.set(0, -0.045, 0);
+  mag.name = 'mag';
+  magHolder.add(mag);
   const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.01, 0.038), steelMat);
-  magBase.position.set(0, -0.105, -0.043);
-  group.add(magBase);
+  magBase.position.set(0, -0.094, 0);
+  magHolder.add(magBase);
+  group.add(magHolder);
+  const magwell = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.016, 0.042), polyMat);
+  magwell.position.set(0, -0.019, -0.048);
+  magwell.name = 'magwell';
+  group.add(magwell);
 
   // Charging handle (left side, pulls back)
   const chargeGroup = new THREE.Group();
@@ -19053,12 +19066,21 @@ function buildFPUMP() {
 
   // Grip + trigger guard
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.065, 0.03), polyMat);
-  grip.position.set(0, -0.048, 0.018);
+  grip.position.set(0, -0.045, 0.018);
   grip.rotation.x = -0.2;
+  grip.name = 'grip';
   group.add(grip);
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.042), steelMat);
-  tg.position.set(0, -0.025, -0.002);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.004), polyMat);
+  tgFront.position.set(0, -0.022, -0.025);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.034), polyMat);
+  tg.position.set(0, -0.0335, -0.009);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), steelMat);
+  trigger.position.set(0, -0.020, -0.010);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
   // Folding stock (UMP's side-folder, shown extended: two struts + pad)
   const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);   // v1.220: from the receiver
@@ -19370,7 +19392,7 @@ const FP_HANDS = {
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
-  ump:     { r: { c: [0, -0.048, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
+  ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   thunder: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },

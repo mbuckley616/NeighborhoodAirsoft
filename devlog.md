@@ -10236,3 +10236,26 @@ test and a scratch probe by mistake; the probe is removed here.
 ### Still open
 - Michael's eye on the pictures. The receiver is still a box (the MP5's is a rounded tube with a flared magwell), and
   the trigger group is a plain grip, not the MP5's moulded housing. D.31 goes on with the UMP.
+
+## v1.228 — The UMP, held up to a UMP45
+Backlog D.31, the seventh gun. The UMP is drawn at about ×0.62. Four faults from the side. The barrel shroud, which on
+a UMP is the receiver's own front end, stood 5 mm ahead of the receiver, so light showed through. The straight .45
+magazine tilted back toward the grip, with its top 4.4 mm short of the receiver. The grip hung 1.8 mm under the
+receiver. There was no trigger, only a guard bar.
+
+Now the shroud meets the receiver. The mag pivots from the receiver's underside and rakes 0.08 rad forward, as the
+UMP's does, in a polymer magwell seated in the receiver. The grip meets the receiver, and the shooting hand moves up
+with it (`FP_HANDS.ump`). A trigger hangs 1.5 cm under the receiver inside a deeper guard: a polymer upright behind
+the magwell and a bar 7.7 mm below the trigger, back to the grip. The rail, the stock and the charging handle are as
+they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
+### Verified
+- `tests/gun-ump.test.mjs` (new, 6 checks; writes the side picture). Before (v1.227): shroud 5.0 mm off, the mag
+  4.4 mm short and raking 2.5 mm *back*, the grip 1.8 mm under, no trigger; five of six checks failed. After: shroud
+  1 mm into the receiver, the magwell 2.3 mm into it, the mag's bottom 3.9 mm ahead of its top, the grip 1.2 mm in,
+  1.5 cm of trigger showing. All pass, no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (the UMP: both hands on, gap 0 mm, none on the sight line),
+  `under-parts`, `shop-pics`: all pass.
+- The full suite on v1.226, run in three shards beside this run's work, is in the next entry's notes or the PR comment.
+### Still open
+- Michael's eye on the pictures. The UMP's side-folding stock is drawn as two centre-line bars; the real one is a
+  skeleton frame hinged on the right. The receiver is a plain box. D.31 goes on with the MAC-10.
