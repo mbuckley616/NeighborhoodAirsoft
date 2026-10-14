@@ -161,7 +161,10 @@ for (let i = 0; i < 3; i++) {
   await g.spin(60);
 }
 console.log('  Lamplight on Bellfield, a player standing at the entry first tagged at (s, 30 = not in 30 s):', JSON.stringify(nightTag));
-check('Lamplight on Bellfield: a player standing at the entry is not tagged in the first 8 s', nightTag.every(t => t > 8), nightTag);
+// v1.228 fix-up: 5 s, not 8. The fault this guards (v1.177, Friday Night Lights) is a kid with a line from his start,
+// tagging at about 3 s. CI, 14 Oct, tagged once at 6 s; 40 local rounds ran 10.6-30 s, the 10.6 Fernando advancing
+// from 22.6 m. A kid who walks into range takes 5 s or more to get there, so 5 s still catches a line from the start.
+check('Lamplight on Bellfield: a player standing at the entry is not tagged in the first 5 s (no line from a start)', nightTag.every(t => t > 5), nightTag);
 
 // screenshots by eye: down the street from the entry, the bulb from its mouth, and a backyard
 await g.scenario('bellfield_1v1_mason');

@@ -10139,3 +10139,134 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   local runs had him at 12–15 m and 5–16 shots. The round now runs on, to 120 s at most, while a kid still in the fight
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
+
+## v1.225 — The sniper, held up to a Remington 700
+Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
+copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
+receiver's, so the barrel rode on top of the action with a 9 mm gap between it and the forend under it. The stock was
+three boxes and a cheek block: its underside ran flat from under the trigger to the toe, with no pistol grip, and the
+trigger was buried inside it (3.5 cm above the stock's bottom), inside a guard that also sat in the stock. The bipod,
+described in the code as folded, hung its legs 8 cm straight down.
+
+Now the barrel comes out of the receiver's front on its axis, tapering to the muzzle and bedded 1.5 cm into the
+forend. The stock is one piece cut to the 700's side profile: a forend slimming to its tip, a wrist rising to a
+straight comb, a pistol grip raked 25° behind the trigger guard, and the belly dropping from the grip to the toe. The
+trigger hangs 1.5 cm under the stock in a guard whose bar runs back to the grip. The bipod's legs lie folded forward
+under the barrel. The front sight moved from the receiver's front, where it stood on nothing, out to the muzzle on a
+ramp, along the line from your eye when aimed, so the aimed picture is the same (its tip 2.51° below the eye line
+before, 2.49° now). The post now sits inside the rear sight's notch, framed by it, with the comb lower in the view.
+The sights hide when an optic is mounted, as the AR's do. The shooting hand moves back onto the new grip
+(`FP_HANDS.sniper`), and the support hand follows the slimmer forend. Pictures: `docs/guns/sniper-side-before.png`,
+`docs/guns/sniper-side.png`.
+### Verified
+- `tests/gun-sniper.test.mjs` (new, 8 checks; writes the side picture). Before (v1.224, the same test on the old file):
+  the barrel 25 mm off the receiver's axis and 9 mm clear of the forend; the stock's underside dropped 0 cm at the
+  grip; its lowest point 0.8 cm behind the trigger; the trigger 3.5 cm inside the stock; the bipod legs 7.9 cm tall.
+  Six of eight checks failed. After: 0 mm off the axis and 15.5 mm into the forend; a 2.7 cm drop from the grip cap to
+  the belly behind it, the cap 3.3 cm behind the trigger; 1.5 cm of trigger showing; the legs 0.5 cm tall and 8 cm
+  long; the aimed sight 2.49° below and 0.06° to the side. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the sniper: both hands on, gap
+  0 mm, none on the sight line, both forearms off the bottom), `under-parts`, `backyard-guns` (the sniper's sight 2.48°,
+  1.00 BB a shot, 100% within 0.5 m at 15 m), `shop-pics`, `workbench-labels`, `laser`: all pass.
+### Still open
+- Michael's eye on the two pictures, and on the gun at the hip and aimed.
+- The bolt still rides on the receiver's right side rather than inside it, and the stock's profile has square edges
+  (an extruded side view, not a rounded stock). The laser and side-rail mount height (`FP_GUN_MOUNT.sniper.barrelY`,
+  3.2 cm) was left where it was, 1.2 cm above the barrel's new axis, so mounted parts sit as before.
+- The kids' third-person sniper (`buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on with the
+  AK.
+
+## v1.226 — The AK, held up to an AK-47
+Backlog D.31, the fifth gun. The AK-47 is drawn at about ×0.67 (its receiver 16 cm). From the side it had five faults.
+The magazine was three tilted blocks with gaps between them, 4 mm short of the receiver. It sat 1.5 cm from the
+grip, with no trigger at all: just a guard bar running through the mag and the grip. The gas tube floated 9 mm above
+the lower handguard and stopped where the handguard did, with nothing joining it to the barrel. There was no rear
+sight. The stock was a straight box on the bore line, where an AK's drops to a tall butt.
+
+Now the magazine is one curved piece between two arcs, seated 3 mm into the receiver and 2 cm further forward. It drops
+12.4 cm and sweeps 3.3 cm forward as it goes. A trigger hangs 1.5 cm under the receiver inside a guard (an upright
+behind the mag and a bar back to the grip), with 3.6 cm between the mag and the grip. The gas tube runs from the
+receiver to a gas block behind the front sight, under a wood upper handguard over its rear half. A rear sight (a base
+and two ears) stands at the front of the top cover; aimed, the front post sits in its notch on the reticle, as
+before (0.20°). It hides when an optic is mounted, as the AR's does. The stock drops from the receiver to a butt 8 cm
+tall, 5.3 cm below the receiver. The grip and both hands are where they were. Pictures: `docs/guns/ak-side-before.png`,
+`docs/guns/ak-side.png`.
+### Verified
+- `tests/gun-ak.test.mjs` (new, 9 checks; writes the side picture). Before (v1.225, the same test on the old file): 3
+  mag pieces 4.2 mm off the receiver, 1.5 cm from mag to grip, no trigger, the tube 9 mm over the handguard, no rear
+  sight, the stock 1.2 cm below the receiver and level. Seven of nine checks failed. After: 1 piece, 0 mm, 12.4 cm
+  drop, 3.3 cm sweep, 3.6 cm to the grip, trigger 1.5 cm, the guard 6.7 mm below it, the tube in the upper handguard,
+  the rear sight in place, the butt 5.3 cm below the receiver and its top 1.7 cm lower at the heel. Aimed, 0.20° off
+  centre. All pass, no page errors.
+- Run after the change: `gun-parts` (every part joins, all twelve guns), `fp-hands` (the AK: both hands on, gap
+  0 mm, none on the sight line), `under-parts`, `shop-pics`, `workbench-labels`, `laser`, `loadout-kid`: all pass.
+### Still open
+- Michael's eye on the pictures, and the gun aimed: the rear sight is new in the view.
+- The receiver and top cover are still plain boxes (no rivets or ejection port), and the stock's edges are square.
+  The kids' third-person AK (Fernando's, `buildEnemyGunMesh`) is a separate model and was not touched. D.31 goes on
+  with the MP5.
+
+## v1.227 — The MP5, held up to an MP5A3
+Backlog D.31, the sixth gun. The MP5 is drawn at about ×0.64. Its magazine, the MP5's best-known shape, was two
+blocks kinked *back* toward the grip, where the real one curves forward. Below the receiver there was a guard bar but
+no trigger. The grip hung 4 mm under the receiver. The rear sight drum stood 2 cm past the receiver's back end, and the
+retractable stock was one strut down the middle, where the A3's two rails run back along the receiver's sides.
+
+Now the magazine is one piece curving forward as it drops (9.3 cm down, its bottom 2.1 cm ahead of its top), seated in
+the receiver. A trigger hangs 1.3 cm under the receiver inside a guard: an upright behind the mag and a bar back to
+the grip. The grip meets the receiver, and the shooting hand moves up with it (`FP_HANDS.mp5`). The drum sits on the
+receiver's back end. The stock's two rails run back from the receiver's sides to the pad. The front sight, handguard,
+barrel and cocking tube are where they were. Pictures: `docs/guns/mp5-side-before.png`, `docs/guns/mp5-side.png`.
+
+Also in this run, a fix-up to v1.225 (the sniper). The under-barrel parts hang from the box of whatever is at the
+rail. The sniper's new one-piece stock had a box reaching down to the grip cap, so a PVC foregrip, taped mag or sling
+would have hung 5 cm under the forend. The forend is now its own piece, level underneath back past the rail and the
+support hand (as before v1.225), and slims only over its last 4 cm. `gun-sniper` gained a check that the parts hang
+from the forend's underside (−1.5 cm at the rail, 0 mm apart). That fix-up's commit also picked up this entry's
+test and a scratch probe by mistake; the probe is removed here.
+### Verified
+- `tests/gun-mp5.test.mjs` (new, 8 checks; writes the side picture). Before (v1.226): 2 mag pieces, curving 1.8 cm
+  *back*, no trigger, the grip 4.2 mm under the receiver, the drum 1.9 cm past its back, one stock strut on the centre
+  line. Six of eight checks failed. After: 1 piece, 9.3 cm drop, 2.1 cm forward, 3.0 cm from the mag to the grip,
+  1.3 cm of trigger with the guard 8.6 mm below it, the grip 0.2 mm off the receiver, the drum 2 mm past (within its
+  rounding), rails at x ±15.5 mm. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the MP5: both hands on, gap 0 mm, none on the
+  sight line), `under-parts`, `shop-pics`: all pass. `under-parts` timed out loading the page once with five browsers
+  running (the full suite was running beside it) and passed alone.
+### Still open
+- Michael's eye on the pictures. The receiver is still a box (the MP5's is a rounded tube with a flared magwell), and
+  the trigger group is a plain grip, not the MP5's moulded housing. D.31 goes on with the UMP.
+
+## v1.228 — The UMP, held up to a UMP45
+Backlog D.31, the seventh gun. The UMP is drawn at about ×0.62. Four faults from the side. The barrel shroud, which on
+a UMP is the receiver's own front end, stood 5 mm ahead of the receiver, so light showed through. The straight .45
+magazine tilted back toward the grip, with its top 4.4 mm short of the receiver. The grip hung 1.8 mm under the
+receiver. There was no trigger, only a guard bar.
+
+Now the shroud meets the receiver. The mag pivots from the receiver's underside and rakes 0.08 rad forward, as the
+UMP's does, in a polymer magwell seated in the receiver. The grip meets the receiver, and the shooting hand moves up
+with it (`FP_HANDS.ump`). A trigger hangs 1.5 cm under the receiver inside a deeper guard: a polymer upright behind
+the magwell and a bar 7.7 mm below the trigger, back to the grip. The rail, the stock and the charging handle are as
+they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
+### Verified
+- `tests/gun-ump.test.mjs` (new, 6 checks; writes the side picture). Before (v1.227): shroud 5.0 mm off, the mag
+  4.4 mm short and raking 2.5 mm *back*, the grip 1.8 mm under, no trigger; five of six checks failed. After: shroud
+  1 mm into the receiver, the magwell 2.3 mm into it, the mag's bottom 3.9 mm ahead of its top, the grip 1.2 mm in,
+  1.5 cm of trigger showing. All pass, no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (the UMP: both hands on, gap 0 mm, none on the sight line),
+  `under-parts`, `shop-pics`: all pass.
+- The full suite on v1.226 (three local shards, run beside this run's work): 129 of 130 suites passed. The one miss,
+  `stuck-sweep-16`, timed out loading the page and passed alone on v1.228.
+### Still open
+- Michael's eye on the pictures. The UMP's side-folding stock is drawn as two centre-line bars; the real one is a
+  skeleton frame hinged on the right. The receiver is a plain box. D.31 goes on with the MAC-10.
+- CI fix-up (v1.228 head, 75eca49): `bellfield`'s "Lamplight on Bellfield: a player standing at the entry is not tagged
+  in the first 8 s" failed once in lane 8/8 ([18.5, 30, 6]). Not the gun work: the street's obstacles and the seven
+  starts hash the same on v1.224's 4d675c5 and here. 40 local rounds ran 10.6–30 s; the 10.6 was Fernando advancing
+  from 22.6 m, and the test's own runs gave 8.7 once. The fault the check guards (v1.177) is a line from a start,
+  tagging at about 3 s; a kid who walks into range needs 5 s or more, so the check now reads 5 s. Passes locally.
+- CI fix-up (v1.228 head, 75eca49): `pickup-fernando`'s "with the AK he lands under half of the hits on you" failed
+  once in lane 4/8 at 13 of 24 (local runs 7–10 of 24). His first tag, about 14 s in, comes every round, so a third of
+  the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
+  is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
+  round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
