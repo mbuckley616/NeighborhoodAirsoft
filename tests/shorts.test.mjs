@@ -132,6 +132,8 @@ check('an old save with no shorts wears jeans', save.old.shorts === 'none' && sa
 
 // Kids in matches still walk: an enemy's legs and the walk are unchanged (no kid but yours wears shorts)
 await g.scenario('bunratty_sean');
+// v1.220 fix-up: the player stands still and is not to be tagged here (CI, 14 Oct: Sean ended the 1v1 inside the 3 s)
+await page.evaluate(() => { const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
 await g.spin(180);
 check('a match runs', await page.evaluate(() => Game.mode === 'scenario'));
 
