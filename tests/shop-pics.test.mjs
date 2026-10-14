@@ -124,6 +124,46 @@ const shoes = await page.evaluate(() => [...document.querySelectorAll('#shopScre
 check('the shoes rows show the pairs: one picture for each of the four', shoes.length === 4, shoes);
 await g.shot('shop-pics-gear');
 
+// v1.211: the Ammo tab's BB packs and speed loaders, and the Mods tab's parts, each mounted alone on the AR
+await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Ammo').click());
+const ammoRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
+  name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img'),
+  glyph: r.querySelector('.shop-item-icon').textContent })));
+check('the Ammo tab\'s 7 rows (4 BB packs, 3 speed loaders) each have a picture in place of the glyph',
+  ammoRows.length === 7 && ammoRows.every(r => r.pic && r.glyph === ''), ammoRows);
+const am = await measure();
+check('the ammo pictures are drawn at 112×112: the packs fill over 30% of the pixels, the thin loaders over 8%', am.length === 7 &&
+  am.every((i, k) => i.w === 112 && i.h === 112 && i.fill > (k < 4 ? 0.3 : 0.08)), am.map(i => i.fill));
+check('each ammo item fills its frame across or top to bottom (at least 80%)', am.every(i => Math.max(i.spanX, i.spanY) >= 0.8),
+  am.map(i => [i.spanX, i.spanY]));
+check('no two ammo rows share a picture', new Set(am.map(i => i.hash)).size === 7);
+console.log('    ammo (drawn, across, down):', am.map(i => `${i.fill} ${i.spanX} ${i.spanY}`).join('; '));
+await g.shot('shop-pics-ammo');
+
+await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Mods').click());
+const modRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
+  name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img'),
+  glyph: r.querySelector('.shop-item-icon').textContent })));
+const wantMods = await page.evaluate(() => Object.keys(ATTACHMENTS).length);
+check(`the Mods tab's ${wantMods} rows each have a picture in place of the ⊹ glyph`,
+  modRows.length === wantMods && modRows.every(r => r.pic && r.glyph === ''), modRows);
+const mo = await measure();
+check('the mods pictures are drawn at 112×112 with something on them (over 8% of the pixels)', mo.length === wantMods &&
+  mo.every(i => i.w === 112 && i.h === 112 && i.fill > 0.08), mo.map(i => i.fill));
+check('no two mods share a picture', new Set(mo.map(i => i.hash)).size === wantMods);
+// the part is in the middle of its picture: the frame is fitted on it, so its own pixels change the centre
+const centred = await page.evaluate(() => Object.keys(ATTACHMENTS).map(aid => {
+  const box = new THREE.Box3();
+  const gun = buildBareGunMesh('ar'); const acc = ensureFPGunAccessory(gun, 'ar');
+  updateFPGunAccessory(gun, 'ar', [{ type: aid, slot: ATTACHMENTS[aid].slot, placement: ATTACHMENTS[aid].slot === 'rail' ? 'left' : ATTACHMENTS[aid].slot }]);
+  const shown = [acc.redDotOptic, acc.scopeOptic, acc.laserUnit, acc.flashUnit, ...Object.values(acc.underParts.meshes)].filter(m => m && m.visible).length;
+  return [aid, shown];
+}));
+check('each part is the one thing mounted on its gun', centred.every(c => c[1] === 1), centred);
+const held = await page.evaluate(() => getMountedAccessories('ar').length);
+check('drawing them mounts nothing on your own AR', held === 0, held);
+await g.shot('shop-pics-mods');
+
 // The workbench still mounts parts on its own copy (the bare model was split out of it)
 const wb = await page.evaluate(() => {
   const m = buildWorkbenchGun('ar');

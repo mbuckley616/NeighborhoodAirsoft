@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.210</div>
+  <div class="version">v1.211</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19307,10 +19307,10 @@ function ensureFPGunAccessory(group, gunType) {
 // Show/hide + POSITION the laser & flashlight on a gun group based on the
 // accessories mounted on THAT gun (v1.28: both can be on at once, each on a
 // left or right rail). Called when the held mesh is shown/swapped.
-function updateFPGunAccessory(group, gunType) {
+function updateFPGunAccessory(group, gunType, mountedOverride) {
   if (!group) return;
   const acc = ensureFPGunAccessory(group, gunType);
-  const mounted = getMountedAccessories(gunType);
+  const mounted = mountedOverride || getMountedAccessories(gunType);   // v1.211: the shop's pictures pass their own
   // v1.36i: either laser variant (red or green) shows the FP laser rig; the
   // mounted attachment's `laserColor` recolors the beam/dot/emitter.
   const laserPl = mounted.find(a => a.type === 'laser' || a.type === 'laser_green');
@@ -19697,6 +19697,103 @@ function shopGearPic(kind, id, w, h) {
     }
     const pad = kind === 'shoes' ? 1.2 : kind === 'eyewear' ? 1.25 : 1.3;
     return { obj: kid.group, fit, pad };
+  });
+}
+// v1.211 (D.23, the last part): the Mods tab's parts, each mounted alone on the AR (the one gun with every slot) and
+// framed on the part with a little of the gun round it, so you see where it goes. Rail parts go on the left rail, the
+// side the camera sees; under-barrel parts are seen from a little below.
+function shopModPic(aid, w, h) {
+  return shopPic('mod:' + aid, w, h, () => {
+    const a = ATTACHMENTS[aid];
+    const gun = buildBareGunMesh('ar');
+    const holder = new THREE.Group();
+    holder.add(gun);
+    const acc = ensureFPGunAccessory(gun, 'ar');
+    updateFPGunAccessory(gun, 'ar', [{ type: aid, slot: a.slot, placement: a.slot === 'rail' ? 'left' : a.slot }]);
+    if (acc.laserBeam) acc.laserBeam.visible = false;   // the beam and its dot would run out of the frame
+    if (acc.laserDot) acc.laserDot.visible = false;
+    if (acc.flashLight) acc.flashLight.intensity = 0;
+    holder.rotation.set(a.slot === 'under' ? -0.32 : 0.22, Math.PI / 2 - 0.42, 0);
+    holder.updateMatrixWorld(true);
+    let part, fit;
+    if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : acc.redDotOptic;
+    else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
+    else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
+      part = acc.flashUnit;
+      const fb = part.userData.flashBodyGroup;
+      fb.children.forEach(o => { if (o.isMesh && o.geometry.type === 'ConeGeometry') o.visible = false; });
+      fit = fb.children.filter(o => o.isMesh && o.visible);
+    } else { part = acc.laserUnit; fit = [part.userData.laserBodyGroup || part]; }
+    part = part || gun;
+    // the gun is drawn pale, as a catalogue shows a part on a grey gun, so the part keeps its own colours
+    const mine = new Set(); part.traverse(o => mine.add(o));
+    const pale = new THREE.MeshStandardMaterial({ color: 0xc9cbcf, roughness: 0.7, metalness: 0.05 });
+    gun.traverse(o => { if (o.isMesh && !mine.has(o) && !(o.material && o.material.transparent)) o.material = pale; });
+    return { obj: holder, fit: fit || [part], pad: aid === 'scope' ? 1.45 : a.slot === 'sight' ? 1.9 : 1.7 };
+  });
+}
+// v1.211 (D.23): the Ammo tab. A speed loader is its own model (the one you hold in a match), longer for the bigger
+// ones; a BB pack is a clear bag of BBs with a card header, and the two cases are cardboard boxes, the bulk case wider.
+function shopAmmoPic(id, w, h) {
+  return shopPic('ammo:' + id, w, h, () => {
+    const holder = new THREE.Group();
+    if (id.startsWith('sl_')) {
+      const ld = buildFPLoader();
+      ld.position.set(0, 0, 0); ld.rotation.set(0, 0, 0); ld.visible = true;
+      ld.scale.set(1, 1, { sl_50: 1, sl_100: 1.3, sl_200: 1.7 }[id] || 1);
+      const tip = new THREE.Group(); tip.add(ld);
+      tip.rotation.set(0.35, Math.PI / 2 - 0.5, 0);   // the nozzle to the left, tipped to see the plunger
+      holder.add(tip);
+      holder.rotation.z = 0.6;   // laid corner to corner, so the long tube fills the square
+      return { obj: holder, fit: [ld], pad: 1.1 };
+    }
+    const n = +id.slice(4);
+    const bbMat = new THREE.MeshStandardMaterial({ color: 0xf4f1e6, roughness: 0.35 });
+    if (n <= 500) {
+      const big = n >= 500, bw = big ? 0.2 : 0.13, bh = big ? 0.26 : 0.18, bd = big ? 0.07 : 0.05;
+      const fill = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.9, bh * 0.72, bd * 0.8), bbMat);
+      fill.position.y = -bh * 0.12; holder.add(fill);
+      const bbGeo = new THREE.SphereGeometry(0.009, 6, 5);   // a few BBs pressing at the plastic
+      for (let i = 0; i < (big ? 40 : 24); i++) {
+        const bb = new THREE.Mesh(bbGeo, bbMat);
+        bb.position.set((((i * 37) % 19) / 19 - 0.5) * bw * 0.85, -bh * 0.12 + (((i * 53) % 23) / 23 - 0.5) * bh * 0.68, bd * 0.4);
+        holder.add(bb);
+      }
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(bw, bh * 0.86, bd),
+        new THREE.MeshStandardMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.35, roughness: 0.15 }));
+      bag.position.y = -bh * 0.07; holder.add(bag);
+      const card = new THREE.Mesh(new THREE.BoxGeometry(bw * 1.02, bh * 0.16, bd * 0.3),
+        new THREE.MeshStandardMaterial({ color: big ? 0x2a6fd1 : 0xe0b020, roughness: 0.6 }));
+      card.position.y = bh * 0.43; holder.add(card);
+      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, bd * 0.32, 10), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+      hole.rotation.x = Math.PI / 2; hole.position.y = bh * 0.45; holder.add(hole);
+      const label = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.22, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
+      label.position.set(0, bh * 0.05, bd / 2 + 0.002); holder.add(label);
+      const band = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.05, 0.003), new THREE.MeshStandardMaterial({ color: 0xc93030 }));
+      band.position.set(0, bh * 0.12, bd / 2 + 0.003); holder.add(band);
+      holder.rotation.set(0.12, 0.38, 0);
+      return { obj: holder, fit: [holder], pad: 1.12 };
+    }
+    // a cardboard case: 2,000 a cube-ish box, 5,000 a wide one with hand holes
+    const wide = n >= 5000, cw = wide ? 0.42 : 0.26, ch = wide ? 0.22 : 0.22, cd = wide ? 0.28 : 0.24;
+    const cardMat = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: 0.85 });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cd), cardMat); holder.add(box);
+    const tape = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.003, cd + 0.002), new THREE.MeshStandardMaterial({ color: 0xd9c9a0, roughness: 0.4 }));
+    tape.position.y = ch / 2 + 0.001; holder.add(tape);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.002, 0.004, 0.003), new THREE.MeshStandardMaterial({ color: 0x8a6538 }));
+    flap.position.set(0, ch / 2 - 0.001, 0); holder.add(flap);
+    const label = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.4, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
+    label.position.set(-cw * 0.08, -ch * 0.05, cd / 2 + 0.002); holder.add(label);
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.08, 0.003), new THREE.MeshStandardMaterial({ color: wide ? 0x2a6fd1 : 0xc93030 }));
+    stripe.position.set(-cw * 0.08, ch * 0.08, cd / 2 + 0.003); holder.add(stripe);
+    const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.003, 14), bbMat);   // a BB printed on the side
+    dot.rotation.x = Math.PI / 2; dot.position.set(cw * 0.33, 0, cd / 2 + 0.002); holder.add(dot);
+    if (wide) for (const sx of [-1, 1]) {
+      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.025, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a1c10 }));
+      hand.position.set(sx * (cw / 2 + 0.001), ch * 0.28, 0); holder.add(hand);
+    }
+    holder.rotation.set(0.42, 0.55, 0);   // a three-quarter view from above: the front, the side and the taped top
+    return { obj: holder, fit: [holder], pad: 1.1 };
   });
 }
 function shopPic(key0, w, h, make) {
@@ -22553,12 +22650,23 @@ function renderBeltAndHolster(c) {
 }
 function renderSpeedLoaders(c) {
   const loaders = SHOP_CATALOG.filter(x => x.category === 'Loadout' && x.id.startsWith('sl_'));
-  if (loaders.length) { c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match')); loaders.forEach(i => c.appendChild(shopCatalogRow(i))); }
+  if (loaders.length) {
+    c.appendChild(shopSectionHeader('Speed Loaders', 'Refill your mag mid-match'));
+    loaders.forEach(i => {
+      const row = shopCatalogRow(i);
+      shopIconImg(row.firstElementChild, shopAmmoPic(i.id, 56, 56), i.name, { item: 'ammo:' + i.id });   // v1.211
+      c.appendChild(row);
+    });
+  }
 }
 
 function renderBBsTab(c, between) {
   c.appendChild(shopSectionHeader('Restock BBs', 'Adds to your home stash'));
-  SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => c.appendChild(shopCatalogRow(i)));
+  SHOP_CATALOG.filter(x => x.category === 'BBs').forEach(i => {
+    const row = shopCatalogRow(i);
+    shopIconImg(row.firstElementChild, shopAmmoPic(i.id, 56, 56), i.name, { item: 'ammo:' + i.id });   // v1.211
+    c.appendChild(row);
+  });
   if (between) between(c);   // v1.128: the Ammo tab puts the speed loaders between the packs and the colours
   // BB color picker
   c.appendChild(shopSectionHeader('BB Color', 'Cosmetic — tint the BBs you fire'));
@@ -22783,6 +22891,7 @@ function renderAccessoriesTab(c) {
     if (cantAfford) { btn.textContent = 'NEED $' + a.price; btn.disabled = true; }
     else { btn.textContent = owned ? 'BUY ANOTHER' : 'BUY'; btn.addEventListener('click', () => { const r = buyEquipment('attachments', aid); if (r.ok) playShopChaching(); shopState.flash = r.ok ? `Bought ${a.name}` : `Couldn't buy: ${r.reason}`; renderShop(); }); }
     row.appendChild(btn);
+    shopIconImg(row.firstElementChild, shopModPic(aid, 56, 56), a.name, { item: 'mod:' + aid });   // v1.211
     c.appendChild(row);
   }
 }

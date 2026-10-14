@@ -9728,3 +9728,32 @@ build the shots; `equipRow` takes a `pic`.
 - The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
   speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
 - The belt and holster pictures are the busiest of the lot at 56 px; whether they read is for Michael's eye.
+
+## v1.211 — The shop shows its ammo and mods
+Backlog D.23, third part, after v1.209's guns and v1.210's clothes and gear. The Ammo tab's BB packs and speed loaders
+had the category glyph, and every Mods row had ⊹. Each row now has a picture of the thing itself, from v1.209's
+renderer.
+
+The speed loaders are the loader you hold in a match (`buildFPLoader`), laid corner to corner, the 100 and 200 a third
+and seven tenths longer than the 50. The BB packs had no model, so they have small ones of their own: the 100 and 500
+are clear bags of BBs under a card header with a hang hole (yellow card for the small bag, blue for the bulk one), and
+the 2,000 and 5,000 are taped cardboard cases with a label, the bulk case wider with hand holes. The BB colour swatches
+were already pictures and are unchanged.
+
+A mod is shown mounted alone on the AR (the one gun with sight, rail and under-barrel slots), framed on the part with a
+little of the gun round it so you can see where it goes. The gun is drawn pale grey, the way a catalogue shows a part
+on a plain gun, so the part keeps its own colours: the red dot's ring, the scope, the two lasers (red and green lens),
+the flashlight on the left rail, and the taped mag, sling, foregrip and cardboard barrel seen from a little below. The
+laser's beam and the flashlight's cone are left out of the picture. `updateFPGunAccessory` takes an optional list of
+mounted parts for this, so the picture never touches your own AR's mounts. `shopAmmoPic` and `shopModPic` build the
+shots.
+### Verified
+- `tests/shop-pics.test.mjs`, now 29 checks. Ammo: all 7 rows (4 packs, 3 loaders) have a picture in place of the
+  glyph, 112×112; the packs cover 49–66% of their pixels, the loaders 11–17% (a long thin tube), and each fills its frame
+  across (89–91%) or top to bottom; no two alike. Mods: all 9 rows have a picture, 9.5–72% drawn (the cardboard tube
+  least), no two alike (the two lasers differ by their lens); each picture's gun has exactly one part on it, and your
+  own AR has none mounted after the tab is drawn. The guns', clothes' and gear's checks still pass.
+- `under-parts`, `laser`, `workbench-labels`, `shop-tabs` pass (the accessory function they use took the new argument).
+### Still open
+- The gun details page's Magazines and Spare Mags rows still show ▮ and ▯. They are the last glyphs in the shop.
+- Whether the pale gun behind each part reads at 56 px is for Michael's eye.
