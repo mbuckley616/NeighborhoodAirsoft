@@ -5,7 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-(none)
+- **Pickup Game: what is a life for you? (builder, 2026-10-13)** Found in play (critic, 13 Oct, v1.201): the board's
+  briefing says "3 lives for everyone, you included", but a kid's life is a tag, a walk back to base and a return, while
+  yours is one hit where you stand, with no gap between hits. In 6 of 20 headless 4v4 rounds at 3 lives all three of
+  your hits landed within 1.1 s, once from a single shotgun blast (3 pellets in one frame, 3 lives). The critic's
+  proposal (proposals, 13 Oct) is option A; the fix is a design call, so it is asked here before any code. Options:
+  - A) In the Pickup Game only, a life works as it does in VIP and Flags: a tag sends you back to your start with
+    `respawnPlayerVip()` and its 2 s grace, takes one life, and the HUD counts LIVES; the last one ends the match. One
+    blast costs one life *(recommended: it is what the board promises, the code is already played in Flags and VIP,
+    and the ladder is untouched)*
+  - B) Keep a life as one hit where you stand, but after each hit nothing tags you for 1 s, so one blast or one burst
+    costs one life; the words stay
+  - C) Change only the words: "you can take 3 hits"; the shotgun can still take all three at once
 
 ## Answered
 
