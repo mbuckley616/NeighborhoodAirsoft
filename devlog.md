@@ -10110,3 +10110,27 @@ is for Michael to ask for if it reads wrong in the shop and workbench. Pictures:
 ### Still open
 - Michael's eye on the two pictures, and on the gun at the hip, where the longer mag now shows under the receiver.
 - The short stock (above). D.31 goes on with the next gun.
+
+## v1.224 — The shotgun, held up to an 870
+Backlog D.31, the third gun. The Spring Shotgun copies a Remington 870, drawn at about ×0.74 (its receiver 14 cm). Its
+barrel, tube, pump, receiver and the stock's length and drop were right; three things were not. The butt pad stood
+3.9 cm above the stock's top line, a black slab sticking up behind the heel. The trigger guard hung 1.65 cm under the
+receiver (an 870's, about 3.5 cm, would be 2.6 here), with 1.1 cm of trigger showing. And the wrist, the narrow part of
+the stock you hold, began 4.9 cm forward of the receiver's back, so it hung as a lump under the receiver instead of
+running back from it.
+
+Now the pad is the stock's back face (a child of the stock, within 1 mm of its top and bottom); the guard is an upright
+front and back with the bar 2.6 cm under the receiver and 2 cm of trigger inside it; and the wrist starts 2.4 cm forward
+of the receiver's back, behind the guard, running into the stock. The shooting hand moves with the wrist
+(`FP_HANDS.shotgun`). Pictures: `docs/guns/shotgun-side-before.png`, `docs/guns/shotgun-side.png`.
+### Verified
+- `tests/gun-shotgun.test.mjs` (new, 5 checks; writes the side picture). Before (v1.223, from the builder): pad 3.9 cm
+  above the stock, guard 1.65 cm, 1.1 cm of trigger, wrist 4.9 cm ahead. After: pad 1 mm off the stock's top and bottom
+  and 2 mm into its back, guard 2.6 cm (limit 2.2–3.0), trigger 2.0 cm, wrist 2.4 cm ahead (limit 2.5); no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (shotgun: both hands on, gap 0 mm, none on the sight line, the pump
+  hand rides the pump 0.070 m), `under-parts`, `shop-pics` pass. `backyard-guns` failed once with three suites at once
+  on "Thunder Pump: under two-thirds of its BBs within 0.5 m at 15 m" (68.3%) and passed alone (55.8%): a pellet-spread
+  statistic the mesh cannot touch (BBs leave from the camera), filed under Found in play.
+### Still open
+- Michael's eye on the pictures. The stock is still a block with a square butt; an 870's comb, belly curve and toe
+  would need shaped geometry, not boxes, and are left for him to ask for. D.31 goes on with the next gun.
