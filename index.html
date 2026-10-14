@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.213</div>
+  <div class="version">v1.214</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8680,15 +8680,56 @@ function buildBedroomScene() {
   // Single solid grey comforter — covers the mattress, hangs slightly over the sides at the foot
   const comforter = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.10, 1.40), beddingMat);
   comforter.position.set(-0.05, 0.66, 0);
+  comforter.name = 'bed_comforter';
   bedGroup.add(comforter);
-  // Pillows (two stacked at the headboard end — east side of bed)
-  const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.13, 0.95), pillowMat);
-  p1.position.set(0.72, 0.78, 0.05);
-  bedGroup.add(p1);
+  // v1.214 (backlog D.26): small touches on the bed. A box with its corners pulled in toward a ball, for anything soft.
+  const puffy = (w, h, d, mat, k) => {
+    const geo = new THREE.BoxGeometry(1, 1, 1, 6, 4, 6), pa = geo.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < pa.count; i++) {
+      v.fromBufferAttribute(pa, i);
+      const sph = v.clone().normalize().multiplyScalar(0.5);
+      v.lerp(sph, k === undefined ? 0.45 : k);
+      pa.setXYZ(i, v.x * w, v.y * h, v.z * d);
+    }
+    geo.computeVertexNormals();
+    return new THREE.Mesh(geo, mat);
+  };
+  const COMF_TOP = 0.71;   // the comforter's top face
+  // the comforter falls over both sides of the mattress to the frame, and over the foot onto the footboard
+  for (const side of [-1, 1]) {
+    const drape = new THREE.Mesh(new THREE.BoxGeometry(1.95, COMF_TOP - 0.375, 0.03), beddingMat);   // down to the frame's top (0.375)
+    drape.position.set(-0.05, (COMF_TOP + 0.375) / 2, side * 0.71); drape.name = 'bed_drape';
+    bedGroup.add(drape);
+  }
+  const footDrape = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 1.45), beddingMat);
+  footDrape.position.set(-1.04, COMF_TOP - 0.08, 0); footDrape.name = 'bed_drape';
+  bedGroup.add(footDrape);
+  // the sheet folded back over the comforter under the pillows
+  const sheetMat = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.9 });
+  const fold = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.02, 1.46), sheetMat);
+  fold.position.set(0.32, COMF_TOP + 0.01, 0); fold.name = 'bed_fold';
+  bedGroup.add(fold);
+  // Pillows: two soft ones side by side against the headboard, and the red one leaning on them
+  for (const side of [-1, 1]) {
+    const pw = puffy(0.4, 0.14, 0.62, pillowMat);
+    pw.position.set(0.7, COMF_TOP + 0.07 - 0.012, side * 0.33); pw.name = 'bed_pillow';   // pressed 1 cm into the bed
+    pw.rotation.y = side * 0.04;
+    bedGroup.add(pw);
+  }
   // Accent red pillow
-  const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.13, 0.4), pillowAccent);
-  p2.position.set(0.65, 0.84, 0);
+  const p2 = puffy(0.12, 0.36, 0.36, pillowAccent, 0.5);
+  p2.position.set(0.5, COMF_TOP + 0.16, 0.02); p2.rotation.z = 0.38; p2.name = 'bed_throw';
   bedGroup.add(p2);
+  // a folded red-and-cream blanket across the foot
+  const blanketMat = new THREE.MeshStandardMaterial({ color: 0x8c2a2a, roughness: 0.95 });
+  const blanket = puffy(0.34, 0.06, 1.2, blanketMat, 0.2);
+  blanket.position.set(-0.72, COMF_TOP + 0.03 - 0.004, 0); blanket.name = 'bed_blanket';
+  bedGroup.add(blanket);
+  for (const dx of [-0.1, 0.1]) {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.004, 1.02), new THREE.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.95 }));
+    stripe.position.set(-0.72 + dx, COMF_TOP + 0.054, 0);   // woven across its top
+    bedGroup.add(stripe);
+  }
   // Headboard (tall, black, against the red wall)
   const headboard = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 1.6), bedFrameMat);
   headboard.position.set(0.97, 0.55, 0);
@@ -8727,16 +8768,45 @@ function buildBedroomScene() {
     const knob = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), goldMat);
     knob.position.set(0, 0.42, 0.253);
     g.add(knob);
+    // v1.214 (D.26): a second drawer below the first, with its own knob, and a dark kick at the floor
+    const knob2 = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), goldMat);
+    knob2.position.set(0, 0.2, 0.253);
+    g.add(knob2);
+    const kick = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.005), new THREE.MeshStandardMaterial({ color: 0x0a0604 }));
+    kick.position.set(0, 0.035, 0.252);
+    g.add(kick);
     // Small lamp on top
-    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.06, 12), new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7 }));
-    lampBase.position.y = 0.65;
+    const lampMetal = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.7 });
+    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.06, 12), lampMetal);
+    lampBase.position.y = 0.67;   // v1.214: on the top (0.64), was sunk 2 cm into it
+    lampBase.name = 'ns_lamp_base';
     g.add(lampBase);
-    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 8), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-    lampPole.position.y = 0.78;
+    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.22, 8), lampMetal);
+    lampPole.position.y = 0.81;
     g.add(lampPole);
-    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, 0.18, 12, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8d4a0, roughness: 0.85, side: THREE.DoubleSide }));
-    lampShade.position.y = 0.99;
+    // v1.214: the socket and a lit bulb under the shade, the wire harp that holds the shade, and a finial on top
+    const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 10), new THREE.MeshStandardMaterial({ color: 0xb8a060, roughness: 0.4, metalness: 0.6 }));
+    socket.position.y = 0.94;
+    g.add(socket);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 10), new THREE.MeshStandardMaterial({ color: 0xfff6dc, emissive: 0xffe0a0, emissiveIntensity: 0.9 }));
+    bulb.position.y = 0.99; bulb.name = 'ns_bulb';
+    g.add(bulb);
+    for (const side of [-1, 1]) {
+      const harp = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.15, 6), lampMetal);
+      harp.position.set(side * 0.045, 1.0, 0); harp.rotation.z = -side * 0.3;
+      g.add(harp);
+    }
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), new THREE.MeshStandardMaterial({ color: 0xb8a060, roughness: 0.4, metalness: 0.6 }));
+    finial.position.y = 1.085;
+    g.add(finial);
+    const lampShade = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.13, 0.18, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8d4a0, roughness: 0.85, side: THREE.DoubleSide, emissive: 0x5a4020, emissiveIntensity: 0.35 }));
+    lampShade.position.y = 1.0; lampShade.name = 'ns_shade';
     g.add(lampShade);
+    for (const ry of [0.91, 1.09]) {   // the shade's rolled rims
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(ry < 1 ? 0.13 : 0.10, 0.004, 4, 20), new THREE.MeshStandardMaterial({ color: 0xc9b07a, roughness: 0.8 }));
+      rim.position.y = ry; rim.rotation.x = Math.PI / 2;
+      g.add(rim);
+    }
     return g;
   }
   const ns1 = buildNightstand();

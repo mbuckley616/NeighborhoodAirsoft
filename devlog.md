@@ -9801,3 +9801,26 @@ label and the prompt are where they were. Each piece is named `pc_*` for the tes
 - D.26 goes on: the rest of the room's small touches (the bed is a plain grey slab with a red block for a pillow, the
   nightstands and the lamps). Those come next.
 - Whether the speakers and the page on the screen are the right touches is for Michael's eye.
+
+## v1.214 — The bed is made
+Backlog D.26, second part, after v1.213's desk. The bed was a grey slab: a flat comforter, one long white box for a
+pillow with a red box sunk into it, and the comforter's edge stopped square at the mattress top. The nightstand lamps
+were sunk 2 cm into the nightstands, and their shades were empty tubes.
+
+Small touches, in the room's existing colours. The comforter now falls down both sides to the frame and over the foot
+onto the footboard. The sheet is folded back over it under the pillows. There are two soft pillows side by side
+against the headboard and the red one leans on them, tilted. A folded red blanket with two cream stripes lies across
+the foot. Soft things are boxes with their corners pulled toward a ball (`puffy`), so they read as soft and not as
+crates. Each nightstand gets a second drawer knob and a dark kick at the floor. Each lamp now stands on its top, with
+a brass socket, a lit bulb inside the shade, the wire harp, a finial and rolled rims, and the shade glows a little.
+Collision, the save prompt and the phone on the north nightstand are where they were.
+### Verified
+- `tests/bedroom-bed.test.mjs` (new, 11 checks). The comforter's top is at 0.710 m; both pillows lie on it pressed in
+  1.2 cm, the red pillow leans from 0.681 m, the blanket lies on it at 0.706 m and the fold at 0.710 m. The side drapes
+  end on the frame's top (0.375 m) and the foot drape on the footboard (0.55 m), all inside the frame's edges. Both
+  lamp bases stand on the nightstand tops at 0.640 m (they were at 0.620), and each bulb is inside its shade. The bed is
+  still the save spot. No page errors.
+- `texts` (the phone on the nightstand) passes.
+### Still open
+- D.26 goes on: the bookcases, the map table, the wardrobe and the hall are next for small touches.
+- Whether the blanket and the red pillow suit the room is for Michael's eye.
