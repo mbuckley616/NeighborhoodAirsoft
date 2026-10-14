@@ -9774,3 +9774,30 @@ always colour cells, are left as they were. `shopMagPic` builds the shots.
 ### Still open
 - The mags are one black shape for every gun (an AK's curve, a shotgun's shell tube, the six-shooter's cylinder are
   not modelled). Whether that bothers him is for Michael's eye.
+
+## v1.213 — The computer sits on the desk
+Backlog D.26, first part (Michael, control room, 13 Oct: "Can we make the room a bit more detailed / polished? Small
+touches on what's already there basically. Like the computer for example hovers off of the desk a bit"). Measured, the
+keyboard and mouse were the ones in the air: each was centred on the desk's front edge, so half of it hung out past
+the edge with nothing under it, and the monitor's case floated 1 cm over the top of its little stand. A sweep of every
+mesh in the bedroom for anything with a gap under it found nothing else standing in the air (the shelves and the
+nightstand drawer lines are fixed to their sides and fronts).
+
+The desk is rebuilt so everything stands on the desk top inside its edges, and a few small touches went on while it
+was open, all in the beige 2003 look it had. The CRT stands on a swivel foot and neck with the tube's back stepping in
+toward the wall, a dark bezel round the screen, a power button and a green light. The screen shows airsoft.com the way
+the shop draws it (the blue title bar, the dark header, the red rule, the five tabs, rows with red BUY buttons), under
+fainter scanlines. The keyboard sits in front of the monitor with four rows of keys; the mouse is on a blue mouse pad
+to its right; both cables lie on the desk back to the computer; two little speakers stand either side of the monitor.
+The tower under the desk gets two drive bays, a floppy slot, a power button and a green light. Collision, the SHOP
+label and the prompt are where they were. Each piece is named `pc_*` for the test.
+### Verified
+- `tests/bedroom-desk.test.mjs` (new, 10 checks). The monitor's foot, the keyboard, the mouse pad, both speakers and
+  both cables stand on the desk top at 0.760 m, 0 mm off; none of the 28 pieces on the desk passes its edges (the
+  keyboard and mouse were 8 cm over the front). The mouse sits on its pad, the monitor on its neck and foot with no
+  gap, the tower on the floor under the desk top, the keyboard clear in front of the monitor. The screen has the page
+  drawn on it, and using the computer still opens the shop. No page errors.
+### Still open
+- D.26 goes on: the rest of the room's small touches (the bed is a plain grey slab with a red block for a pillow, the
+  nightstands and the lamps). Those come next.
+- Whether the speakers and the page on the screen are the right touches is for Michael's eye.

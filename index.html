@@ -2008,7 +2008,7 @@
   <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.212</div>
+  <div class="version">v1.213</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8765,23 +8765,50 @@ function buildBedroomScene() {
   scene.add(deskGroup);
 
   // === Computer on the desk (reuses 2003 CRT aesthetic) ===
+  // v1.213 (backlog D.26, Michael 13 Oct: "the computer for example hovers off of the desk a bit"): the keyboard and
+  // mouse sat half over the desk's front edge, in the air, and the monitor stood 1 cm proud of its stand. Everything now
+  // stands on the desk top (DESK_Y) inside its edges: a CRT on a swivel foot with the tube's stepped back, airsoft.com
+  // on its screen, a power light; the keyboard with its key rows; the mouse on a mouse pad; two little speakers; the
+  // cables; and drive bays and a power light on the tower under the desk.
   const compGroup = new THREE.Group();
-  // CRT body
-  const crtBody = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.40), new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.85 }));
-  crtBody.position.set(0, 0.95, 0);
-  compGroup.add(crtBody);
-  // CRT screen face
-  const crtFront = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.30, 0.02), new THREE.MeshStandardMaterial({ color: 0x111418, roughness: 0.3, emissive: 0x6688aa, emissiveIntensity: 0.4 }));
-  crtFront.position.set(0, 0.95, 0.21);
+  const DESK_Y = 0.76;                          // the desk top's surface (0.74 + half its 0.04)
+  const beigeMat = new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.85 });
+  const beigeDk = new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x2a2826, roughness: 0.6 });
+  const cableMat = new THREE.MeshStandardMaterial({ color: 0x3a3632, roughness: 0.7 });
+  const pcBox = (name, w, h, d, mat, x, y, z) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z); m.name = name; compGroup.add(m); return m;
+  };
+  // the swivel foot, then the monitor: the front case, and the tube's back stepping in toward the wall
+  pcBox('pc_crt_foot', 0.24, 0.022, 0.22, beigeDk, 0, DESK_Y + 0.011, -0.04);
+  pcBox('pc_crt_neck', 0.14, 0.012, 0.12, beigeDk, 0, DESK_Y + 0.028, -0.04);
+  const crtBody = pcBox('pc_crt', 0.42, 0.36, 0.22, beigeMat, 0, DESK_Y + 0.034 + 0.18, 0.01);
+  pcBox('pc_crt_back', 0.34, 0.29, 0.08, beigeMat, 0, crtBody.position.y - 0.01, -0.14);
+  pcBox('pc_crt_back2', 0.24, 0.2, 0.08, beigeDk, 0, crtBody.position.y - 0.02, -0.22);
+  const crtFaceZ = 0.01 + 0.11;
+  pcBox('pc_crt_bezel', 0.37, 0.29, 0.006, darkMat, 0, crtBody.position.y + 0.015, crtFaceZ + 0.003);
+  // airsoft.com on the screen, drawn like the shop's own page: the dark header, the red rule, the tabs, a row or two
+  const scr = document.createElement('canvas'); scr.width = 256; scr.height = 192;
+  const sx = scr.getContext('2d');
+  sx.fillStyle = '#f4efe2'; sx.fillRect(0, 0, 256, 192);
+  sx.fillStyle = '#0a4fbf'; sx.fillRect(0, 0, 256, 14);
+  sx.fillStyle = '#1d1d1d'; sx.fillRect(0, 14, 256, 44);
+  sx.fillStyle = '#ffffff'; sx.font = 'bold 22px Arial, sans-serif'; sx.fillText('AIRSOFT.COM', 12, 44);
+  sx.fillStyle = '#d23a2a'; sx.fillRect(0, 58, 256, 4);
+  sx.fillStyle = '#e8e2cf'; sx.fillRect(0, 62, 256, 18);
+  sx.fillStyle = '#555'; sx.font = '10px Arial, sans-serif';
+  ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'].forEach((t, i) => sx.fillText(t, 12 + i * 46, 75));
+  for (let i = 0; i < 4; i++) {
+    sx.fillStyle = '#cfc8b4'; sx.fillRect(12, 92 + i * 24, 18, 18);
+    sx.fillStyle = '#444'; sx.fillRect(38, 95 + i * 24, 90, 5);
+    sx.fillStyle = '#999'; sx.fillRect(38, 104 + i * 24, 140, 3);
+    sx.fillStyle = '#b8261c'; sx.fillRect(206, 94 + i * 24, 38, 12);
+  }
+  const scrTex = new THREE.CanvasTexture(scr);
+  const crtFront = new THREE.Mesh(new THREE.PlaneGeometry(0.33, 0.25), new THREE.MeshBasicMaterial({ map: scrTex, color: 0xd8e4f0 }));
+  crtFront.position.set(0, crtBody.position.y + 0.015, crtFaceZ + 0.0065); crtFront.name = 'pc_screen';
   compGroup.add(crtFront);
-  // Bezel
-  const crtBezel = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.005), new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 }));
-  crtBezel.position.set(0, 0.95, 0.215);
-  compGroup.add(crtBezel);
-  // Stand
-  const crtStand = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.06, 0.25), new THREE.MeshStandardMaterial({ color: 0xb0a080, roughness: 0.85 }));
-  crtStand.position.set(0, 0.78, 0);
-  compGroup.add(crtStand);
   // Scanlines (drawn on a transparent canvas overlay)
   const scanCanvas = document.createElement('canvas');
   scanCanvas.width = 64; scanCanvas.height = 64;
@@ -8792,23 +8819,35 @@ function buildBedroomScene() {
   scanTex.wrapS = THREE.RepeatWrapping; scanTex.wrapT = THREE.RepeatWrapping;
   scanTex.repeat.set(8, 8);
   const scanlines = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.36, 0.28),
-    new THREE.MeshBasicMaterial({ map: scanTex, transparent: true, opacity: 0.3 })
+    new THREE.PlaneGeometry(0.33, 0.25),
+    new THREE.MeshBasicMaterial({ map: scanTex, transparent: true, opacity: 0.18 })
   );
-  scanlines.position.set(0, 0.95, 0.225);
+  scanlines.position.set(0, crtBody.position.y + 0.015, crtFaceZ + 0.008);
   compGroup.add(scanlines);
-  // Keyboard
-  const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.025, 0.16), new THREE.MeshStandardMaterial({ color: 0xb8a890, roughness: 0.8 }));
-  kb.position.set(0, 0.76, 0.30);
-  compGroup.add(kb);
-  // Mouse
-  const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.025, 0.11), new THREE.MeshStandardMaterial({ color: 0xb8a890 }));
-  mouse.position.set(0.28, 0.76, 0.30);
-  compGroup.add(mouse);
-  // Tower (under desk)
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.45, 0.42), new THREE.MeshStandardMaterial({ color: 0xc8b896, roughness: 0.8 }));
-  tower.position.set(0.65, 0.23, 0);
-  compGroup.add(tower);
+  pcBox('pc_crt_button', 0.022, 0.012, 0.006, beigeDk, 0.15, crtBody.position.y - 0.155, crtFaceZ + 0.003);
+  pcBox('pc_crt_led', 0.008, 0.008, 0.004, new THREE.MeshBasicMaterial({ color: 0x40e060 }), 0.125, crtBody.position.y - 0.155, crtFaceZ + 0.002);
+  // Keyboard: on the desk in front of the monitor, its keys in four dark rows
+  const kb = pcBox('pc_keyboard', 0.42, 0.022, 0.15, beigeMat, -0.04, DESK_Y + 0.011, 0.2);
+  for (let r = 0; r < 4; r++) pcBox('pc_keys', 0.37, 0.004, 0.022, new THREE.MeshStandardMaterial({ color: 0x9a8c74, roughness: 0.8 }),
+    -0.04 + (r === 3 ? -0.03 : 0), DESK_Y + 0.023, 0.152 + r * 0.03);
+  // Mouse on a blue mouse pad, right of the keyboard
+  pcBox('pc_mousepad', 0.2, 0.004, 0.17, new THREE.MeshStandardMaterial({ color: 0x24508a, roughness: 0.95 }), 0.33, DESK_Y + 0.002, 0.18);
+  const mouse = pcBox('pc_mouse', 0.06, 0.024, 0.1, beigeMat, 0.33, DESK_Y + 0.004 + 0.012, 0.19);
+  // Cables: the mouse's and the keyboard's, lying on the desk back to the computer
+  pcBox('pc_cable', 0.006, 0.006, 0.26, cableMat, 0.31, DESK_Y + 0.003, 0.01);
+  pcBox('pc_cable', 0.006, 0.006, 0.28, cableMat, -0.2, DESK_Y + 0.003, -0.015);
+  // Two little speakers either side of the monitor
+  for (const side of [-1, 1]) {
+    const sp = pcBox('pc_speaker', 0.085, 0.15, 0.09, beigeMat, side * 0.33, DESK_Y + 0.075, -0.17);
+    pcBox('pc_speaker_grille', 0.06, 0.07, 0.004, darkMat, sp.position.x, sp.position.y + 0.02, sp.position.z + 0.046);
+  }
+  // Tower (under desk), with two drive bays, a floppy slot and a power light on its front
+  const tower = pcBox('pc_tower', 0.20, 0.45, 0.42, beigeMat, 0.65, 0.225, 0);
+  pcBox('pc_tower_bay', 0.16, 0.04, 0.004, beigeDk, 0.65, 0.39, 0.211);
+  pcBox('pc_tower_bay', 0.16, 0.04, 0.004, beigeDk, 0.65, 0.34, 0.211);
+  pcBox('pc_tower_floppy', 0.1, 0.006, 0.004, darkMat, 0.65, 0.28, 0.212);
+  pcBox('pc_tower_led', 0.01, 0.01, 0.004, new THREE.MeshBasicMaterial({ color: 0x40e060 }), 0.69, 0.22, 0.212);
+  pcBox('pc_tower_button', 0.03, 0.03, 0.006, beigeDk, 0.65, 0.18, 0.212);
   compGroup.position.copy(deskGroup.position);
   scene.add(compGroup);
 
