@@ -9653,3 +9653,78 @@ untouched.
   Option B, which frees him from the nest, is the next step if it is.
 - A player walking straight at a 4v4 still loses inside 17 s at 3 lives. That is the critic's other report (a life is
   one hit for you, a walk back for a kid), and its proposal is Michael's to promote.
+
+## v1.208 — F asks before it forfeits
+Backlog B.8 (Michael, control room, 13 Oct: "Hitting F should pause the game and ask if you're sure you want to
+forfeit - i've misclicked that many times"). F used to end the match the instant it was pressed. Now it pauses the
+match and asks "Forfeit this match?", with KEEP PLAYING (Esc) and FORFEIT (Enter) buttons. Enter, Y or the FORFEIT
+button forfeits as before. Esc, N, F again or KEEP PLAYING closes the question, takes the mouse back and the match
+goes on from where it stopped. The question says a forfeit ends the match with no pay, which is what a forfeit has
+always done (a loss pays a little; a forfeit pays nothing).
+
+Paused means `stepGame` skips the match while `Game.forfeitAsk` is set: the round clock, your kid, every kid and every
+BB in the air stand still, and the keys held when F was pressed are let go so you don't walk off on return. While it
+asks, only its own keys do anything (no jump, no slot switch), and a click doesn't fire or take the mouse. If the
+round ends some other way while it is up (a win already on its 600 ms delay), the result shows and the question goes.
+`forfeitScenario()` still forfeits at once, for the tests that use it.
+### Verified
+- `tests/forfeit-ask.test.mjs` (new, 18 checks), on Bunratty 1v1. F puts the question up and the mode stays
+  'scenario'. 180 steps (3 s) with W held and Space pressed: the round clock stayed at 3.43 s, you stayed at
+  (−22, −2.5) and Sean did not move. Esc, N, F again and KEEP PLAYING each close it, and 60 steps later the clock is
+  1 s on. F, F, F leaves it asking, still in the match. A win while it asks shows the result and takes it down. F on
+  the result screen and in the bedroom asks nothing. F then Enter, F then Y and F then FORFEIT each end the match
+  FORFEITED. No page errors.
+### Still open
+- Whether Esc should be the way back: in a real browser the first Esc also lets go of the mouse, and the question has
+  already let go of it, so Esc goes straight to the question. Michael can say if he'd rather Enter mean "keep playing".
+
+## v1.209 — The shop shows its guns
+Backlog D.23, first part (Michael, control room, 13 Oct: "The online shop should have a mesh sample of weapons /
+whatever you're buying as the icon, and when you look at the details page, there should be a larger image listed
+there"). Every gun in the shop's Guns tab had the same ⌐ glyph in its icon box. Each row now shows a picture of that
+gun's own model, the same one you hold in a match, and the gun's details page has a large picture of it in a white
+catalogue frame between the header and the buy row, captioned "<gun> · actual product may vary". The site's look is
+kept: the cream boxes with their grey borders, the dashed rows, the early-2000s store page.
+
+The pictures are taken by one small offscreen renderer, made the first time the shop needs one. It builds a fresh copy
+of the gun with nothing mounted (`buildBareGunMesh`, split out of the workbench's builder), turns it muzzle-left and a
+little toward you, fits an orthographic camera to its bounding box, and keeps the result as a data URL, cached by gun
+and size. A row's picture is drawn at twice its 56 px box, the large one at 840×380 for a 420×190 frame. If no WebGL
+context can be had, the row keeps its glyph.
+### Verified
+- `tests/shop-pics.test.mjs` (new, 13 checks). All 12 rows of the Guns tab have a picture in place of the glyph, in
+  GUN_ORDER, drawn at 112×112. Read by their pixels: each gun spans 89% of its frame across, and 11–29% of the pixels
+  are gun (the long rifles least, the MAC-10 most); no two pictures are alike. The details pages of the pistol, the
+  AK-47, the sniper rifle and the Bucket Gun each show a picture of that gun, 840×380, shown 420 px wide, filling it
+  across (AK, sniper: 89%) or top to bottom (pistol, Bucket Gun), above the row, which has the small picture too. The
+  caption names the gun. The workbench's own copy still carries its accessory rig. No page errors.
+### Still open
+- D.23 goes on: the Ammo, Gear, Mods and Clothes rows still have glyphs (BB packs, loaders, eye pro, armour, shoes,
+  the belt, the rail and under-barrel parts, hats, tops and shorts). Those come next, a tab at a time.
+- Whether the angle (muzzle left, turned 24° toward you, tipped 10°) is the one Michael likes is for his eye.
+
+## v1.210 — The shop shows its clothes and gear
+Backlog D.23, second part, after v1.209's guns. The Clothes tab's hats, tops and shorts had a coloured glyph (▲ ■ ▮)
+and the Gear tab's belt, holster, eye pro, armour and shoes had ⛊, ◓ and 👟. Each row now has a picture of the thing
+itself, taken by v1.209's renderer.
+
+Clothes and gear are photographed on a plain kid (light shirt, jeans, short brown hair) wearing the item, turned a
+little as at the mirror, with the camera fitted to the part it covers: the head and hat for a hat, the torso for a
+top, the shorts for shorts, the face for eye pro, the vest or the pads for armour, the belt for the Utility Belt and
+the Drop-Leg Holster (turned further to show the hip). The gear is the Loadout screen's own meshes (`buildKidGear`), so
+the shop and the Loadout kid always match. Shoes are shown as a catalogue shows shoes: the pair alone, tipped toward
+you, with the rest of the kid hidden; "Sneakers (default)" shows the plain pair. `shopClothesPic` and `shopGearPic`
+build the shots; `equipRow` takes a `pic`.
+### Verified
+- `tests/shop-pics.test.mjs`, now 20 checks. Clothes: all 15 rows (6 hats, 5 tops, 4 shorts) have a picture in place of
+  the glyph, 112×112, the kid filling over a quarter of each, no two alike, and each picture has its item's colour in
+  it (hue within 12/255 of the item's colour). Gear: all 16 rows (belt, holster, 6 eyewear, 4 armour, 4 shoes) have
+  a picture, over a tenth of each drawn, no two alike, one for each of the four pairs of shoes. The guns' checks from
+  v1.209 still pass. No page errors.
+- `npm test` for v1.208–v1.210, as four local shards at once: 110 of 116 suites passed. The six that did not were
+  harness stalls under load (five page loads past 30 s, one NEW GAME past 75 s twice): `music`, `briefing-lives`,
+  `burst-pose`, `stuck-sweep-13`, `stuck-sweep-14`, `walk-anim`. No check failed, and each passed when run alone.
+### Still open
+- The Ammo tab (BB packs, speed loaders) and the Mods tab (the rail and under-barrel parts) still have glyphs. The
+  speed loaders and the parts have models; the BB packs need a little bag of their own. They are D.23's last part.
+- The belt and holster pictures are the busiest of the lot at 56 px; whether they read is for Michael's eye.
