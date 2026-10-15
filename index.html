@@ -1047,6 +1047,14 @@
   #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
   #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
   #resultScreen .rs-rival .rs-tag { color: #e0503a; }   /* v1.196 */
+  /* v1.238 (D.34): the damage report, your kid front and back with each hit marked, and the list */
+  #resultScreen .rs-damage { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(212,165,116,0.25); }
+  #resultScreen .rs-dmg-fig { position: relative; width: 176px; height: 150px; flex: none; }
+  #resultScreen .rs-dmg-fig canvas, #resultScreen .rs-dmg-fig svg { position: absolute; left: 0; top: 0; width: 176px; height: 150px; }
+  #resultScreen .rs-dmg-list { font-size: 11px; color: #ddd; line-height: 1.35; flex: 1; min-width: 0; }
+  #resultScreen .rs-dmg-list .rs-tag { display: block; margin-bottom: 3px; }
+  #resultScreen .rs-dmg-row { margin-bottom: 2px; }
+  #resultScreen .rs-dmg-n { display: inline-block; width: 14px; height: 14px; line-height: 14px; border-radius: 7px; background: #e0503a; color: #fff; font-size: 9px; text-align: center; font-weight: bold; margin-right: 4px; }
   #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
@@ -1500,6 +1508,11 @@
     border-radius: 4px 4px 0 0;
   }
   #shopScreen .cat-tab:hover { background: #f4f1e0; color: #222; }
+  /* v1.240 (D.37): the Guns tab's kinds, a row of chips over the list */
+  #shopScreen .shop-gun-kinds { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+  #shopScreen .shop-gun-kind { padding: 4px 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #555; cursor: pointer; border: 1px solid #aca899; border-radius: 12px; background: #f4f1e0; }
+  #shopScreen .shop-gun-kind:hover { color: #222; background: #fff; }
+  #shopScreen .shop-gun-kind.active { color: #fff; background: #c93030; border-color: #c93030; }
   #shopScreen .cat-tab.active {
     background: #fff;
     color: #c93030;
@@ -1689,6 +1702,15 @@
   #forfeitAsk .modal-close { background: var(--ui-accent); color: #1a1a1a; border: none; padding: 8px 18px; font-family: inherit; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
   #forfeitAsk .modal-close.forfeit-yes { background: transparent; color: #e88; border: 1px solid #a55; }
   #forfeitAsk kbd { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+  /* v1.239 (D.39): the pause menu */
+  #pauseMenu .modal-card { background: var(--ui-bg); border: 2px solid var(--ui-accent); padding: 28px 44px; min-width: 300px; text-align: center; border-radius: 4px; }
+  #pauseMenu .modal-title { font-family: 'Georgia', serif; font-size: 34px; letter-spacing: 4px; color: var(--ui-accent); margin-bottom: 6px; }
+  #pauseMenu .modal-body { font-size: 13px; color: #ccc; margin-bottom: 18px; }
+  #pauseMenu .pause-btns { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  #pauseMenu button { background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border); padding: 9px 18px; font-family: inherit; cursor: pointer; letter-spacing: 2px; font-size: 13px; }
+  #pauseMenu button.pause-resume { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); font-weight: bold; }
+  #pauseMenu button.pause-forfeit { color: #e88; border-color: #a55; }
+  #pauseMenu kbd { font-size: 10px; opacity: 0.7; margin-left: 6px; }
 
   /* Scenario intro card */
   #scenarioIntro {
@@ -1913,6 +1935,11 @@
   }
 
   /* Pause hint */
+  /* v1.242 (D.38 step 2): the pad's cursor on the screens, and what it would click */
+  #padCursor { position: fixed; display: none; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
+    border: 3px solid #ffd54a; box-shadow: 0 0 0 2px rgba(0,0,0,0.55), 0 0 10px rgba(255,213,74,0.7);
+    pointer-events: none; z-index: 10000; }
+  .pad-hover { outline: 3px solid #ffd54a !important; outline-offset: 2px; }
   #pauseHint {
     position: fixed;
     left: 50%; top: 30px;
@@ -2021,7 +2048,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.228</div>
+  <div class="version">v1.242</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2386,6 +2413,18 @@
 </div>
 
 <!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
+<!-- v1.239 (D.39): Escape in a match opens this and the match stops -->
+<div class="menu-overlay" id="pauseMenu">
+  <div class="modal-card">
+    <div class="modal-title">PAUSED</div>
+    <div class="modal-body">The match is stopped until you go back to it.</div>
+    <div class="pause-btns">
+      <button class="pause-resume" id="pauseResumeBtn">RESUME <kbd>ESC</kbd></button>
+      <button id="pauseSettingsBtn">SETTINGS</button>
+      <button class="pause-forfeit" id="pauseForfeitBtn">FORFEIT <kbd>F</kbd></button>
+    </div>
+  </div>
+</div>
 <div class="menu-overlay" id="forfeitAsk">
   <div class="modal-card forfeit-card">
     <div class="modal-title">Forfeit this match?</div>
@@ -4995,18 +5034,21 @@ const VOICE_LINES_DEFAULT = {
     npcHit:        ["Ugh, fine!", "Aw come on!", "Lucky shot!"],
     playerSpotted: ["There he is!", "Get him!", "Push push push!"],
     taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!"],
+    shotWhileOut:  ["Ow!! Dude, I literally have my hand in the air!", "I'm OUT already!! What the heck, dude!", "Hey! I'm out! Are you blind?", "Dude! Hand's UP!"],   // v1.237 (D.33)
   },
   mid_agg: { // 0.4..0.65
     playerHit:     ["Got him!", "Hit!", "That's one."],
     npcHit:        ["Augh, okay!", "Fine, fair!", "Got me."],
     playerSpotted: ["I see him!", "On him!", "Right there!"],
     taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!"],
+    shotWhileOut:  ["I'm out already!! What the heck, dude.", "Ow! My hand's up, man!", "Dude, I'm walking off! Quit it!", "Hey! I'm already out!"],   // v1.237 (D.33)
   },
   low_agg: { // < 0.4
     playerHit:     ["Got him.", "Nice.", "Tagged."],
     npcHit:        ["Mm, okay.", "Yeah, fair.", "Got me."],
     playerSpotted: ["I have him.", "He's there.", "Got eyes."],
     taunt:         ["Take your time.", "I can wait.", "He'll show himself."],
+    shotWhileOut:  ["Ow. I'm out, man.", "Seriously? My hand is up.", "Okay, that's overshooting.", "I'm already out, dude."],   // v1.237 (D.33)
   },
 };
 
@@ -9425,14 +9467,15 @@ function buildBedroomScene() {
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
+  // v1.231 (D.29, Michael: A): the game saves itself (v1.218), so the bed shows the summer so far.
   // Fits the kid-bedroom framing and matches the original hub design pillar
   // ("Save, gear, world map"). Trigger box covers the whole bed footprint.
   Game.interactables.push({
     type: 'bed',
     box: new THREE.Box3().setFromObject(bedGroup),
     pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
-    prompt: 'Sleep (save your game)',
-    label: 'Save', icon: 'bed', labelY: 1.5,
+    prompt: 'Sleep (how’s the summer going?)',   // v1.231: was "Sleep (save your game)"
+    label: 'Summer', icon: 'bed', labelY: 1.5,
     action: () => openSaveMenu(),
   });
 
@@ -19104,31 +19147,39 @@ function buildFPUMP() {
 }
 
 // --- MAC-10: tiny boxy machine pistol, mag through the grip, very stubby ---
+// v1.232 (D.31, held up to an M10 at about ×0.6): the receiver is a long flat-sided box, 0.16 long by 0.06 tall (was
+// 0.10), so the grip and its mag sit a little behind the middle (was at the back); a trigger in front of the grip inside
+// the M10's long guard, a strip forward from the grip and up to the receiver; a front post and rear ears on top with
+// the cocking knob below the sight line; the collapsed wire stock's rods along the lower receiver and a butt plate.
 function buildFPMAC10() {
   const group = new THREE.Group();
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1c1c20, roughness: 0.5,  metalness: 0.5 });
   const matteMat  = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.7,  metalness: 0.25 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // Boxy upper (the whole gun is basically a steel box)
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.10), steelMat);
-  box.position.set(0, 0.01, -0.04);
+  // Boxy upper (the whole gun is basically a steel box) — v1.232: z -0.115…0.045, y -0.02…0.04
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.16), steelMat);
+  box.position.set(0, 0.01, -0.035);
   group.add(box);
-  // Stamped panel lines on the side
+  // Stamped panel lines on the side (the upper/lower seam and a pressing line)
   for (let i = 0; i < 2; i++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.08), matteMat);
-    line.position.set(0, 0.03 - i * 0.03, -0.04);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.14), matteMat);
+    line.position.set(0, 0.03 - i * 0.03, -0.035);
     group.add(line);
   }
+  // v1.232: the ejection port on the right side, ahead of the knob's track
+  const port = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.014, 0.034), matteMat);
+  port.position.set(0.0255, 0.018, -0.06);
+  group.add(port);
 
   // Stubby barrel + orange tip (MAC-10 barrel is very short)
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), matteMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.02, -0.105);
+  barrel.position.set(0, 0.02, -0.13);
   group.add(barrel);
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.022, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.02, -0.142);
+  orangeTip.position.set(0, 0.02, -0.165);
   group.add(orangeTip);
 
   // Magazine THROUGH the grip (the MAC-10's defining feature — long stick mag
@@ -19148,24 +19199,59 @@ function buildFPMAC10() {
   gripBack.position.set(0, -0.04, -0.002);
   group.add(gripBack);
 
-  // Top cocking knob (MAC-10 charges from a knob on TOP of the box)
+  // Top cocking knob (MAC-10 charges from a knob on TOP of the box) — v1.232: low (top y 0.05), under the sight line
   const chargeGroup = new THREE.Group();
-  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.016, 8), steelMat);
-  cockKnob.position.set(0, 0.048, -0.04);
+  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 8), steelMat);
+  cockKnob.position.set(0, 0.045, -0.05);
   chargeGroup.add(cockKnob);
   chargeGroup.position.set(0, 0, 0);
   chargeGroup.userData.baseZ = 0;
   group.add(chargeGroup);
 
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.03), matteMat);
-  tg.position.set(0, -0.018, -0.012);
-  group.add(tg);
+  // v1.232: the sights. A front post between two ears at the front of the top, a rear sight of two ears at the back;
+  // every tip at y 0.056, the aimed eye height (adsPos.y −0.056). They hide when an optic is mounted.
+  const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.016, 0.004), steelMat);
+  fsPost.position.set(0, 0.048, -0.104);
+  fsPost.userData.frontSight = true;
+  fsPost.userData.ironSight = true;
+  group.add(fsPost);
+  for (const sx of [-1, 1]) {
+    const fEar = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.008), steelMat);
+    fEar.position.set(sx * 0.012, 0.046, -0.104);
+    fEar.userData.ironSight = true;
+    group.add(fEar);
+    const rEar = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.016, 0.01), steelMat);
+    rEar.position.set(sx * 0.006, 0.048, 0.036);
+    rEar.userData.ironSight = true;
+    group.add(rEar);
+  }
 
-  // Stub of a retractable wire stock (collapsed look — short)
-  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.03), matteMat);
-  stockStub.position.set(0, 0.01, 0.025);   // v1.220: on the back of the box (was 15 mm behind it)
+  // v1.232: a trigger in front of the grip, and the M10's long guard: a strip from the grip's front, forward under
+  // the trigger, and up to the receiver 2 cm behind its front end
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.006), matteMat);
+  trigger.position.set(0, -0.028, -0.054);
+  trigger.rotation.x = 0.12;
+  group.add(trigger);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.054), matteMat);
+  tg.position.set(0, -0.046, -0.069);
+  group.add(tg);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.031, 0.005), matteMat);
+  tgFront.position.set(0, -0.034, -0.0935);   // top 1.5 mm into the receiver
+  group.add(tgFront);
+
+  // The collapsed wire stock: v1.232, two rods along the lower receiver's sides and the butt plate behind it (was one
+  // block on the back)
+  for (const sx of [-1, 1]) {
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.005, 0.12), matteMat);
+    rod.position.set(sx * 0.0275, -0.012, -0.01);
+    group.add(rod);
+  }
+  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.006), matteMat);
+  stockStub.position.set(0, -0.004, 0.053);
   group.add(stockStub);
+  const plateLink = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.006), matteMat);   // joins the rods' ends to the plate
+  plateLink.position.set(0, -0.012, 0.0475);
+  group.add(plateLink);
 
   group.position.set(0.16, -0.18, -0.30);
   group.rotation.y = 0.12;
@@ -19215,7 +19301,7 @@ function buildFPThunder() {
   const needle = _fpPart(group, new THREE.BoxGeometry(0.002, 0.016, 0.002), dark, -0.032, 0.033, -0.06);
   needle.rotation.x = 0.7;
   _fpPart(group, new THREE.SphereGeometry(0.0055, 8, 6), orange, 0, 0.0635, -0.33).userData.frontSight = true;                  // front bead (tip y 0.069)
-  _fpPart(group, new THREE.BoxGeometry(0.022, 0.01, 0.008), dark, 0, 0.058, 0.02);                   // rear notch block
+  _fpPart(group, new THREE.BoxGeometry(0.022, 0.01, 0.008), dark, 0, 0.0575, 0.02);                  // rear notch block (v1.233: seated on the receiver)
   // The pump handle slides back along the tank: the cocking part.
   const pump = new THREE.Group();
   _fpPart(pump, new THREE.BoxGeometry(0.046, 0.04, 0.09), dark, 0, 0.014, 0);
@@ -19223,10 +19309,17 @@ function buildFPThunder() {
   pump.position.set(0, 0, -0.22);
   pump.userData.baseZ = pump.position.z;
   group.add(pump);
-  _fpTriggerGuard(group, dark, 0, -0.04);
-  _fpPart(group, new THREE.BoxGeometry(0.036, 0.06, 0.08), green, 0, -0.035, 0.015, 0.18);            // wrist
-  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.14), green, 0, -0.005, 0.105, 0.18);            // stock
-  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.012), dark, 0, 0.022, 0.175, 0.18);             // butt pad
+  // v1.233 (D.31, held up to a toy pump-action air shotgun, built like the 870): the shotgun's v1.224 faults were here
+  // too. The wrist hung under the receiver's back with the guard and trigger hidden behind it, and the butt pad stood
+  // 3.9 cm above the stock's top line. Now a deep guard with the trigger showing, the wrist behind the receiver
+  // running into the stock, and the pad on the stock's back face.
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.027, 0.005), dark, 0, -0.0245, -0.0625);             // guard: front upright
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.05), dark, 0, -0.0355, -0.04);                // guard: bottom
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.027, 0.005), dark, 0, -0.0245, -0.0175);             // guard: rear upright
+  _fpPart(group, new THREE.BoxGeometry(0.008, 0.02, 0.006), dark, 0, -0.021, -0.045, 0.15);          // trigger
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.06, 0.08), green, 0, -0.022, 0.05, 0.18);             // wrist (was under the receiver at z 0.015)
+  const stock = _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.14), green, 0, -0.005, 0.093, 0.18);   // stock (its comb meets the receiver's back)
+  _fpPart(stock, new THREE.BoxGeometry(0.04, 0.085, 0.012), dark, 0, 0, 0.076);                       // butt pad, the stock's back face
   group.position.set(0.13, -0.21, -0.30);
   group.rotation.y = 0.10;
   group.rotation.x = -0.05;
@@ -19245,8 +19338,12 @@ function buildFPSixShooter() {
   const dark   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7 });
   const wood   = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.75 });
   const orange = _fpOrangeMat();
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.09), silver, 0, 0.02, -0.03);                   // frame
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.1), silver, 0, 0.048, -0.04);                   // top strap
+  // v1.234 (D.31, held up to a Colt single-action with a bird's-head grip): the frame ran 3.8 cm past the cylinder's
+  // back with the hammer and grip at its far end, and the grip was one straight slab with a flat cap. Now the frame
+  // ends 1.2 cm behind the cylinder (the recoil shield), the hammer, notch, guard and grip come forward 1.5 cm with it,
+  // and the grip curves: raked back at the top, turning down to a rounded butt.
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.064), silver, 0, 0.02, -0.043);                 // frame (was 0.09 long)
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.082), silver, 0, 0.048, -0.049);                // top strap
   // The cylinder, with six chambers on its face. It turns a sixth as the hammer comes back (userData.cockSpin).
   const cyl = new THREE.Group();
   _fpPart(cyl, new THREE.CylinderGeometry(0.021, 0.021, 0.044, 12), steel, 0, 0, 0);
@@ -19262,12 +19359,13 @@ function buildFPSixShooter() {
   _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.1, 8), silver, 0, 0.022, -0.12, Math.PI / 2);   // ejector rod
   _fpPart(group, new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 10), orange, 0, 0.036, -0.207, Math.PI / 2); // orange tip
   _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.01), silver, 0, 0.05, -0.19).userData.frontSight = true;                 // front blade (tip y 0.056)
-  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, 0.004);                 // rear notch
-  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, 0.02, -0.45);   // spur under the sight line
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, -0.011);                // rear notch
+  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, -0.005, -0.45);   // spur under the sight line
   hammer.userData.baseZ = hammer.position.z;
-  _fpTriggerGuard(group, silver, -0.002, -0.03);
-  _fpPart(group, new THREE.BoxGeometry(0.032, 0.1, 0.045), wood, 0, -0.045, 0.03, -0.38);             // bird's-head grip
-  _fpPart(group, new THREE.BoxGeometry(0.034, 0.012, 0.05), silver, 0, -0.092, 0.05, -0.38);          // grip cap
+  _fpTriggerGuard(group, silver, -0.002, -0.045);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.06, 0.045), wood, 0, -0.0264, 0.0076, -0.38);    // bird's-head grip, upper (raked back)
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.036, 0.045), wood, 0, -0.0663, 0.0193, -0.05);         // bird's-head grip, lower (turning down)
+  _fpPart(group, new THREE.CylinderGeometry(0.0225, 0.0225, 0.032, 14), wood, 0, -0.0843, 0.0197).rotation.z = Math.PI / 2;   // the rounded butt
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19302,7 +19400,9 @@ function buildFPBucket() {
   // The power switch on the right flank slides back: the cocking part.
   const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), yellow, 0.033, 0.022, -0.04);
   sw.userData.baseZ = sw.position.z;
-  _fpTriggerGuard(group, dark, -0.028, -0.03);
+  // v1.235 (D.31): the trigger and guard were pushed into the grip's front (the trigger 0.6 cm into it, the guard's bar
+  // 3.8 cm); now 3 cm forward, a finger's room ahead of the grip, the bar's back end meeting it.
+  _fpTriggerGuard(group, dark, -0.028, -0.06);
   _fpPart(group, new THREE.BoxGeometry(0.038, 0.11, 0.05), dark, 0, -0.085, 0.0, -0.2);              // grip
   group.position.set(0.14, -0.21, -0.30);
   group.rotation.y = 0.10;
@@ -19332,8 +19432,11 @@ function buildFPBoltPistol() {
   const knob = _fpPart(group, new THREE.SphereGeometry(0.007, 10, 8), dark, 0.042, 0.048, 0.0);
   rod.userData.baseZ = rod.position.z;
   knob.userData.baseZ = knob.position.z;
-  _fpTriggerGuard(group, gun, -0.012, -0.04);
-  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.065, 0.005, -0.2);            // grip
+  // v1.236 (D.31): the trigger and guard 1.5 cm forward with a finger's room before the grip (the guard's bar ran 2.2 cm
+  // into it), and 4.5 mm up so the guard's front upright meets the frame; the grip 4 mm up so its top front corner
+  // meets the frame without a wedge of light.
+  _fpTriggerGuard(group, gun, -0.0075, -0.055);
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.061, 0.005, -0.2);            // grip
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19394,10 +19497,10 @@ const FP_HANDS = {
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
   ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
-  thunder: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
-  sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
+  sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
-  boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
+  boltpistol: { r: { c: [0, -0.061, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.236: the grip 4 mm up
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
@@ -20871,6 +20974,30 @@ function answerForfeit(yes) {
   if (yes) forfeitScenario();
   else if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
 }
+// v1.239 (backlog D.39, Michael 14 Oct: "Can we make the pause menu more obvious / auto-open when hitting escape?"):
+// before this Escape only let go of the mouse, the match ran on behind a small "Click to capture mouse" note, and
+// there was no menu. Now Escape in a match (or the mouse let go any other way, as alt-tab does) opens PAUSED and the
+// match stops (stepGame skips it, as for the forfeit question): RESUME (Esc or a click) goes back, SETTINGS opens the
+// settings over it, FORFEIT asks the forfeit question.
+function openPauseMenu() {
+  if (Game.mode !== 'scenario' || Game.forfeitAsk || Game.paused) return;
+  Game.paused = true;
+  Game._pausedAt = performance.now();
+  Game.mouseLMB = false;
+  for (const k in Game.keys) Game.keys[k] = false;
+  document.getElementById('pauseMenu').classList.add('active');
+  document.getElementById('pauseHint').style.display = 'none';
+  exitPointerLock();
+}
+function closePauseMenu() {
+  Game.paused = false;
+  document.getElementById('pauseMenu').classList.remove('active');
+}
+function resumeFromPause() {
+  if (!Game.paused) return;
+  closePauseMenu();
+  if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
+}
 
 // ---------------------------------------------------------------------
 // SCENE TRANSITIONS
@@ -21659,6 +21786,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 }
 
 function startScenario(built) {
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
@@ -21835,11 +21963,114 @@ function startScenario(built) {
 // Each match counts your trigger pulls, your tags (each hit on a kid of the other side puts him out or sends him back),
 // how far each one flew and when, and the hits on you. The result screen shows them with the match's time, picks one
 // best moment, and says what the match opened: the next match it unlocked and any gun its pay put in reach.
-function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0 }; }
+function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0, damage: [] }; }   // v1.238: damage
 function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
   st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+}
+// v1.238 (backlog D.34, Michael 14 Oct: "a 'damage report' after you've been eliminated from a match that shows where
+// you were shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that
+// landed on your character"). Each hit on you keeps where it landed on your body (its height up your hitbox, how far
+// off your middle and which side it came from), who fired it, his gun, the distance, the time and which life it was.
+function noteDamageOnYou(bb) {
+  const P = Game.player, st = Game.scenario.stats;
+  if (!st.damage) st.damage = [];
+  const h = Math.max(0, Math.min(1, (bb.pos.y - P.pos.y) / (P.eyeOffset + 0.1)));
+  const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);          // your facing
+  const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);           // your right
+  const dx = bb.pos.x - P.pos.x, dz = bb.pos.z - P.pos.z;
+  const lat = dx * rx + dz * rz;                                // + to your right
+  const vx = bb.vel ? bb.vel.x : -dx, vz = bb.vel ? bb.vel.z : -dz;
+  const front = (-vx * fx - vz * fz) >= 0;                      // it came from in front of you
+  const side = lat >= 0 ? 'right' : 'left';
+  const part = h > 0.86 ? 'head' : h > 0.5 ? (Math.abs(lat) > 0.2 ? side + ' arm' : (front ? 'chest' : 'back'))
+    : h > 0.4 ? (front ? 'stomach' : 'lower back') : side + ' leg';
+  const e = bb.enemyRef;
+  const from = bb.spawnPos || null;
+  const pickup = !!(SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup);
+  st.damage.push({ part, front, h: +h.toFixed(3), lat: +Math.max(-0.3, Math.min(0.3, lat)).toFixed(3),
+    by: e ? (e.name || 'a kid') : null, gun: e && e.weapon ? getGunDisplayName(e.weapon) : null,
+    dist: from ? Math.round(Math.hypot(P.pos.x - from.x, P.pos.z - from.z)) : null,
+    t: Game.scenario.roundTime || 0, life: pickup ? P.hitsTaken : (Game.scenario.playerRespawns || 0) + 1 });
+}
+// Shown on the result screen once you have been tagged out: a match lost, or any life lost in one you came back in.
+const DAMAGE_REPORT = { renderer: null, scene: null, camera: null, kid: null, sig: '' };
+const DAMAGE_W = 176, DAMAGE_H = 150, DAMAGE_ROWS = 8;
+function damageReportHtml(outcome) {
+  const st = Game.scenario.stats;
+  const dmg = (st && st.damage) || [];
+  if (!dmg.length || (outcome === 'win' && !(Game.scenario.playerRespawns > 0))) return '';
+  const lives = new Set(dmg.map(d => d.life)).size > 1;
+  let rows = '';
+  dmg.slice(0, DAMAGE_ROWS).forEach((d, i) => {
+    const who = d.by ? `${d.by}${d.gun ? ', ' + d.gun : ''}` : 'a stray BB';
+    const extra = [d.dist != null ? d.dist + ' m' : '', fmtMatchTime(d.t), lives ? 'life ' + d.life : ''].filter(Boolean).join(' · ');
+    rows += `<div class="rs-dmg-row"><span class="rs-dmg-n">${i + 1}</span>${d.part[0].toUpperCase() + d.part.slice(1)} — ${who}<br><span style="color:#9a8f7c">${extra}</span></div>`;
+  });
+  if (dmg.length > DAMAGE_ROWS) rows += `<div class="rs-dmg-row" style="color:#9a8f7c">and ${dmg.length - DAMAGE_ROWS} more</div>`;
+  return `<div class="rs-damage" id="rsDamage"><div class="rs-dmg-fig"><canvas id="rsDamageCanvas" width="${DAMAGE_W}" height="${DAMAGE_H}"></canvas>` +
+    `<svg id="rsDamageDots" viewBox="0 0 ${DAMAGE_W} ${DAMAGE_H}"></svg></div>` +
+    `<div class="rs-dmg-list"><span class="rs-tag">DAMAGE REPORT</span>${rows}</div></div>`;
+}
+// Your kid (your look, your gun, your gear) drawn twice, front and back, with a numbered dot where each hit landed:
+// hits from in front on the front view, from behind on the back one.
+function drawDamageReport() {
+  const canvas = document.getElementById('rsDamageCanvas'), svg = document.getElementById('rsDamageDots');
+  if (!canvas || !svg) return;
+  const D = DAMAGE_REPORT;
+  if (!D.renderer) {
+    D.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    D.renderer.setSize(DAMAGE_W, DAMAGE_H, false);
+    D.scene = new THREE.Scene();
+    D.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
+    const l = new THREE.DirectionalLight(0xffffff, 0.6); l.position.set(0, 3, 4); D.scene.add(l);
+    const l2 = new THREE.DirectionalLight(0xffffff, 0.4); l2.position.set(0, 3, -4); D.scene.add(l2);
+    D.camera = new THREE.PerspectiveCamera(30, (DAMAGE_W / 2) / DAMAGE_H, 0.1, 20);
+  }
+  const gk = loadoutKidGearKeys();
+  const sig = JSON.stringify([Game.persist.look, Game.persist.equipped.gun, gk]);
+  if (D.sig !== sig) {
+    if (D.kid) D.scene.remove(D.kid.group);
+    D.kid = createKid(Object.assign({}, Game.persist.look), Game.persist.equipped.gun);
+    buildKidGear(D.kid, gk);
+    D.scene.add(D.kid.group); D.sig = sig;
+  }
+  const kid = D.kid.group;
+  kid.rotation.set(0, 0, 0); kid.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(kid), tall = box.max.y - box.min.y;
+  const cy = box.min.y + tall / 2, dist = tall / 2 / Math.tan(15 * Math.PI / 180) * 1.12;
+  const r = D.renderer, half = DAMAGE_W / 2;
+  r.setScissorTest(true);
+  r.setClearColor(0x2a2f38, 1);
+  const dots = [];
+  const dmg = (Game.scenario.stats && Game.scenario.stats.damage || []).slice(0, DAMAGE_ROWS);
+  for (const [i, back] of [[0, false], [1, true]]) {
+    kid.rotation.y = back ? Math.PI : 0; kid.updateMatrixWorld(true);
+    D.camera.position.set(0, cy, dist); D.camera.lookAt(0, cy, 0); D.camera.updateMatrixWorld(true);
+    r.setViewport(i * half, 0, half, DAMAGE_H); r.setScissor(i * half, 0, half, DAMAGE_H);
+    r.render(D.scene, D.camera);
+    dmg.forEach((d, n) => {
+      if (d.front === back) return;
+      // the kid's right is −x and he faces +z; on the back view the group is turned round
+      // on the leg or arm it hit, else near the middle (the hitbox is a cylinder, the kid is not)
+      const sg = d.lat < 0 ? -1 : 1, ax = Math.abs(d.lat);
+      const x = sg * (/leg/.test(d.part) ? 0.09 : /arm/.test(d.part) ? 0.27 : Math.min(ax, 0.15));
+      const p = new THREE.Vector3(-x, box.min.y + d.h * tall, back ? -0.14 : 0.14).applyMatrix4(kid.matrixWorld).project(D.camera);
+      dots.push({ n: n + 1, x: i * half + (p.x + 1) / 2 * half, y: (1 - p.y) / 2 * DAMAGE_H });
+    });
+  }
+  r.setScissorTest(false);
+  kid.rotation.y = 0;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(r.domElement, 0, 0, DAMAGE_W, DAMAGE_H);
+  let html = `<text x="4" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">FRONT</text>` +
+    `<text x="${half + 4}" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">BACK</text>` +
+    `<line x1="${half}" y1="6" x2="${half}" y2="${DAMAGE_H - 14}" stroke="rgba(255,255,255,0.12)"/>`;
+  for (const d of dots) html += `<g class="rs-dot" data-n="${d.n}"><circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="6" fill="#e0503a" stroke="#fff" stroke-width="1"/>` +
+    `<text x="${d.x.toFixed(1)}" y="${(d.y + 3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff">${d.n}</text></g>`;
+  svg.innerHTML = html;
+  Game.scenario.lastDamageDots = dots;
 }
 const MATCH_DOUBLE_SEC = 3, MATCH_LONG_TAG_M = 15;
 function matchBestMoment(st, outcome) {
@@ -21892,13 +22123,17 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
+  const dmgHtml = damageReportHtml(outcome);   // v1.238 (D.34)
+  html += dmgHtml;
   el.innerHTML = html;
+  if (dmgHtml) { try { drawDamageReport(); } catch (e) { console.warn('damage report', e); } }
   Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
-    time: Game.scenario.roundTime || 0, best, opened, reach, rival };
+    time: Game.scenario.roundTime || 0, best, opened, reach, rival, damage: dmgHtml ? (st.damage || []).slice() : [] };
 }
 
 function endScenario(outcome) {
   if (Game.forfeitAsk) closeForfeitAsk();   // v1.208
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
@@ -22229,6 +22464,34 @@ function profileSummaryHTML() {
     ${row('Scenarios cleared', completed)}
   </div>`;
 }
+// v1.231 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
+// today's date off the calendar, the score against Seth's crew, and the next match on the ladder.
+function nextLadderMatchId() {
+  for (const z of ZONE_LADDER) {
+    if (!isZoneUnlocked(z.key)) break;
+    const id = (PIN_SCENARIO_GROUPS[z.key] || []).find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+    if (id) return id;
+  }
+  return null;
+}
+function summerSoFarHTML() {
+  const day = summerDayIndex(), d = summerDate(day);
+  const s = rivalScore();
+  const nextId = nextLadderMatchId(), sc = nextId && SCENARIOS[nextId];
+  const next = sc ? `${sc.scenarioName || sc.name || nextId} · ${sc.name || ''}`.replace(/ · $/, '')
+                  : 'Nothing left: the summer is won';
+  const zone = day === SUMMER_BIG_DAY ? 'Bunratty Court' : summerZoneName(summerZoneKey());
+  const row = (label, val) =>
+    `<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;">
+       <span style="opacity:0.75;">${label}</span><span style="font-weight:bold;text-align:right;">${val}</span>
+     </div>`;
+  return `<div class="summer-so-far" style="text-align:left;font-size:13px;line-height:1.5;margin-bottom:10px;">
+    ${row('Today', d.label + ' ' + SUMMER_YEAR)}
+    ${row('Where', zone)}
+    ${row(RIVAL_CREW.replace(/^\w/, c => c.toUpperCase()), s.beaten + ' of ' + s.total + ' beaten')}
+    ${row('Next', next)}
+  </div>`;
+}
 
 function openSaveMenu() {
   const res = saveGame();
@@ -22240,11 +22503,12 @@ function openSaveMenu() {
   exitPointerLock();
 
   if (res.ok) {
-    titleEl.textContent = 'Saved — sleep tight';
+    titleEl.textContent = 'The summer so far';   // v1.231: was "Saved — sleep tight"
     bodyEl.style.whiteSpace = 'normal';
     bodyEl.innerHTML =
-      `<div style="margin-bottom:12px;">Your progress is saved to this browser. It'll be here next time you open the game.</div>` +
+      summerSoFarHTML() +
       profileSummaryHTML() +
+      `<div style="margin-top:10px;opacity:0.7;font-size:11px;">Saved to this browser. The game saves itself, too.</div>` +
       `<div style="margin-top:16px;">` +
         `<button id="saveDeleteBtn" style="background:transparent;border:1px solid var(--ui-border);` +
         `color:#c88;padding:5px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">` +
@@ -22351,7 +22615,7 @@ function closeMap() {
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
 const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
-let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL' };   // v1.240: gunKind
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
@@ -23348,12 +23612,50 @@ function renderBBsTab(c, between) {
   c.appendChild(grid);
 }
 
+// v1.240 (backlog D.37, Michael 14 Oct: "maybe having tabs on the guns tab to shift between pistols, rifles, shotguns,
+// automatics, etc. Or at least grouping the weapons in sections by type on that page"): the Guns tab lists its guns
+// under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
+// entry here; a gun missing from it goes by its fire mode (automatic or rifle).
+const GUN_KINDS = [
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol'] },
+  { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder'] },
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'sniper'] },
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['bucket', 'mp5', 'ump', 'mac10', 'ak47'] },
+];
+function gunKind(gt) {
+  const k = GUN_KINDS.find(k => k.guns.includes(gt));
+  if (k) return k.id;
+  return getGunSpec(gt).fireMode === 'auto' ? 'AUTOMATICS' : 'RIFLES';
+}
 function renderGunsTab(c) {
   c.appendChild(shopSectionHeader('Guns', 'Click a gun to see its magazines & spares'));
+  const chips = document.createElement('div');
+  chips.className = 'shop-gun-kinds';
+  for (const id of ['ALL', ...GUN_KINDS.map(k => k.id)]) {
+    const n = id === 'ALL' ? GUN_ORDER.length : GUN_ORDER.filter(gt => gunKind(gt) === id).length;
+    const chip = document.createElement('div');
+    chip.className = 'shop-gun-kind' + (shopState.gunKind === id ? ' active' : '');
+    chip.dataset.kind = id;
+    chip.textContent = `${id} (${n})`;
+    chip.addEventListener('click', () => { shopState.gunKind = id; renderShop(); });
+    chips.appendChild(chip);
+  }
+  c.appendChild(chips);
   const equippedGun = Game.persist.equipped.gun;
+  let lastKind = null;
   for (const gt of GUN_ORDER) {
     const cfg = GUN_MAGS[gt];
     if (!cfg) continue;
+    const kind = gunKind(gt);
+    if (shopState.gunKind !== 'ALL' && kind !== shopState.gunKind) continue;
+    if (kind !== lastKind) {   // GUN_ORDER runs kind by kind, so each kind's header comes once
+      const k = GUN_KINDS.find(x => x.id === kind);
+      const h = shopSectionHeader(k ? k.name : kind, '');
+      h.classList.add('shop-gun-kind-header');
+      h.dataset.kind = kind;
+      c.appendChild(h);
+      lastKind = kind;
+    }
     const owned = !!Game.persist.owned[cfg.ownFlag] || gt === 'pistol';
     const isEquipped = equippedGun === gt;
     const row = document.createElement('div');
@@ -23666,7 +23968,7 @@ function playShopChaching() {
 }
 function showPauseHint() {
   const hint = document.getElementById('pauseHint');
-  hint.style.display = Game.mouse.locked ? 'none' : 'block';
+  hint.style.display = (Game.mouse.locked || Pad.active) ? 'none' : 'block';   // v1.241: not with a pad
 }
 
 // ---------------------------------------------------------------------
@@ -23687,9 +23989,11 @@ function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
 }
 document.addEventListener('pointerlockchange', () => {
+  const was = Game.mouse.locked;
   Game.mouse.locked = document.pointerLockElement === Game.renderer.domElement;
+  if (was && !Game.mouse.locked && Game.mode === 'scenario') openPauseMenu();   // v1.239 (D.39): Escape let go of it
   document.getElementById('pauseHint').style.display =
-    (!Game.mouse.locked && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
+    (!Game.mouse.locked && !Game.paused && !Pad.active && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
 });
 
 // ---------------------------------------------------------------------
@@ -23705,6 +24009,19 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
+  // v1.239 (D.39): the pause menu. Escape opens it in a match (when the mouse is already free; a held mouse lets go
+  // first, and that opens it) and Escape again goes back; F there asks the forfeit question. The settings over it
+  // take their own Escape.
+  if (Game.paused) {
+    if (!e.repeat && !document.getElementById('settingsScreen').classList.contains('active')) {
+      // the Escape that let go of the mouse may also arrive as a key, just after the menu opened: not a second press
+      if (e.code === 'Escape' && performance.now() - (Game._pausedAt || 0) > 300) resumeFromPause();
+      else if (e.code === 'KeyF') { closePauseMenu(); askForfeit(); }
+    }
+    e.preventDefault();
+    return;
+  }
+  if (e.code === 'Escape' && Game.mode === 'scenario' && !e.repeat) { openPauseMenu(); e.preventDefault(); return; }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -23787,7 +24104,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mousedown', e => {
-  if (Game.forfeitAsk) return;   // v1.208: clicks on the forfeit question are its buttons'
+  if (Game.forfeitAsk || Game.paused) return;   // v1.208: clicks on the forfeit question are its buttons' (v1.239: and the pause menu's)
   // Right-click → ADS in scenario
   if (e.button === 2 && Game.mode === 'scenario' && Game.mouse.locked) {
     Game.player.adsTarget = 1;
@@ -23819,6 +24136,253 @@ document.addEventListener('mouseup', e => {
 document.addEventListener('contextmenu', e => {
   if (Game.mode === 'scenario' || Game.mode === 'bedroom') e.preventDefault();
 });
+
+// v1.241 (backlog D.38, Michael 14 Oct: "I think we have partial controller support - can we look into having full
+// controller support?"): there was none; nothing read a gamepad. Now a pad in the browser's standard layout (Xbox,
+// PlayStation, most others) plays a match and walks the bedroom. Read once a step (stepGame), it drives the same paths
+// as the keys and mouse: the left stick moves (analog, so a half push walks slower), the right stick looks (the
+// settings' sensitivities and invert apply), RT fires and LT aims, A jumps (in the bedroom it is E), B crouches and
+// slides, X reloads (held, as R; it also clears a jam), Y and RB pick the next slot, LB the one before, the d-pad slots
+// 1-4, a click of the left stick sprints until the stick lets go, Start pauses and resumes, Back/View asks to forfeit.
+// On the pause menu and the forfeit question A is yes and B is no. A pad needs no pointer lock: once it is used the
+// player moves without one, and the "click to capture" note stays hidden while it is.
+const PAD_DEAD = 0.18;          // radial dead zone of each stick
+const PAD_LOOK_PX = 1150;       // full right stick = this many mouse pixels a second (about 2.5 rad/s at 1.0×)
+const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11,
+                  UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const Pad = { active: false, prev: [], move: { x: 0, z: 0 }, sprintLatch: false, ads: false, fire: false };
+function padStick(x, y) {
+  const m = Math.hypot(x, y);
+  if (m < PAD_DEAD) return { x: 0, y: 0, m: 0 };
+  const k = Math.min(1, (m - PAD_DEAD) / (1 - PAD_DEAD)) / m;
+  return { x: x * k, y: y * k, m: Math.min(1, m * k) };
+}
+function padKey(code, down) {   // the pad's buttons go through the keyboard's own handlers
+  document.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, cancelable: true }));
+}
+function padCycleSlot(dir) {
+  const n = getUnlockedSlotCount();
+  for (let i = 1; i < n; i++) {
+    const idx = (Game.held.slotIdx + dir * i + n * 4) % n;
+    if (Game.persist.loadoutSlots[idx]) { trySwitchSlot(idx); return; }
+  }
+}
+// v1.242 (backlog D.38, step 2): the screens between matches by pad. Title, map, briefing, result, shop, loadout,
+// mirror, workbench, the Pickup board, settings and the pause menu all want the mouse, so on them the pad drives a
+// cursor (a yellow ring): the left stick moves it, the d-pad jumps it to the next thing you can click that way, A
+// clicks (a slider takes the spot you click; the d-pad's left and right step a slider the cursor is on), B goes back
+// (the screen's own close, back or done button, as Escape does), the right stick scrolls what is under it. The thing
+// it would click is outlined. It shows only while the pad is in use and a screen is up.
+const PAD_CURSOR_PX = 1100;     // full left stick = this many pixels a second
+const PAD_BACK_IDS = ['settingsDoneBtn', 'newGameNoBtn', 'modalCloseBtn', 'briefCancelBtn', 'shopCloseBtn',
+                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'mirrorDoneBtn'];
+const PadCursor = { x: 0, y: 0, shown: false, el: null, hover: null };
+function padScreenUp() {
+  if (document.getElementById('settingsScreen').classList.contains('active')) return true;
+  if (Game.mode === 'scenario') return !!Game.paused;
+  return Game.mode !== 'bedroom';
+}
+function padVisible(el) {
+  if (!el || !el.getBoundingClientRect) return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2 || r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) return false;
+  const cx = Math.min(innerWidth - 1, Math.max(0, (r.left + r.right) / 2)), cy = Math.min(innerHeight - 1, Math.max(0, (r.top + r.bottom) / 2));
+  const top = document.elementFromPoint(cx, cy);
+  return !!top && (top === el || el.contains(top) || top.contains(el));
+}
+function padClickable(el) {   // what a click lands on: a control, or anything the page styles with a pointer
+  for (let e = el; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+    if (e === PadCursor.el) return null;
+    if (e.disabled) return null;
+    const tag = e.tagName;
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || tag === 'LABEL') return e;
+    if (getComputedStyle(e).cursor === 'pointer') return e;
+  }
+  return null;
+}
+function padTargets() {
+  const out = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    if (el === PadCursor.el || el.tagName === 'CANVAS') continue;
+    const tag = el.tagName;
+    if (!(tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || getComputedStyle(el).cursor === 'pointer')) continue;
+    if (el.parentElement && padClickable(el.parentElement)) continue;   // the outermost clickable, not its insides
+    if (padVisible(el)) out.push(el);
+  }
+  return out;
+}
+function padCenter(el) { const r = el.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; }
+function padCursorPlace(x, y) {
+  PadCursor.x = Math.max(0, Math.min(innerWidth - 1, x));
+  PadCursor.y = Math.max(0, Math.min(innerHeight - 1, y));
+  if (PadCursor.el) { PadCursor.el.style.left = PadCursor.x + 'px'; PadCursor.el.style.top = PadCursor.y + 'px'; }
+  const hov = padClickable(document.elementFromPoint(PadCursor.x, PadCursor.y));
+  if (hov !== PadCursor.hover) {
+    if (PadCursor.hover) PadCursor.hover.classList.remove('pad-hover');
+    PadCursor.hover = hov;
+    if (hov) hov.classList.add('pad-hover');
+  }
+}
+function padCursorShow(on) {
+  if (on === PadCursor.shown) return;
+  PadCursor.shown = on;
+  if (!PadCursor.el) {
+    PadCursor.el = document.createElement('div');
+    PadCursor.el.id = 'padCursor';
+    document.body.appendChild(PadCursor.el);
+  }
+  PadCursor.el.style.display = on ? 'block' : 'none';
+  if (on) {   // start on the clickable thing nearest the middle of the screen
+    let best = null, bd = Infinity;
+    for (const el of padTargets()) {
+      const c = padCenter(el), d = Math.hypot(c.x - innerWidth / 2, c.y - innerHeight / 2);
+      if (d < bd) { bd = d; best = c; }
+    }
+    padCursorPlace(best ? best.x : innerWidth / 2, best ? best.y : innerHeight / 2);
+  } else if (PadCursor.hover) { PadCursor.hover.classList.remove('pad-hover'); PadCursor.hover = null; }
+}
+function padSnap(dx, dy) {   // the nearest clickable that way, favouring ones straight ahead
+  let best = null, bs = Infinity;
+  for (const el of padTargets()) {
+    if (el === PadCursor.hover) continue;
+    const c = padCenter(el), vx = c.x - PadCursor.x, vy = c.y - PadCursor.y;
+    const along = vx * dx + vy * dy, across = Math.abs(vx * dy - vy * dx);
+    if (along < 4) continue;
+    const score = along + across * 2.5;
+    if (score < bs) { bs = score; best = c; }
+  }
+  if (best) padCursorPlace(best.x, best.y);
+}
+function padStepRange(el, dir) {
+  const step = +el.step || 1, v = Math.max(+el.min, Math.min(+el.max, +el.value + dir * step));
+  el.value = v;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function padCursorMove(ls, rs, pressed, dt) {
+  const hov = PadCursor.hover;
+  const range = hov && hov.tagName === 'INPUT' && hov.type === 'range';
+  if (pressed(PAD_BTN.LEFT)) { if (range) padStepRange(hov, -1); else padSnap(-1, 0); }
+  if (pressed(PAD_BTN.RIGHT)) { if (range) padStepRange(hov, 1); else padSnap(1, 0); }
+  if (pressed(PAD_BTN.UP)) padSnap(0, -1);
+  if (pressed(PAD_BTN.DOWN)) padSnap(0, 1);
+  if (ls.m > 0) {
+    const sp = PAD_CURSOR_PX * Math.pow(ls.m, 1.5) * dt / ls.m;
+    padCursorPlace(PadCursor.x + ls.x * sp, PadCursor.y + ls.y * sp);
+  }
+  if (rs.y !== 0) {   // scroll the nearest scrolling box under the cursor
+    for (let e = document.elementFromPoint(PadCursor.x, PadCursor.y); e && e !== document.documentElement; e = e.parentElement) {
+      const oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 1) { e.scrollTop += rs.y * 900 * dt; break; }
+    }
+    padCursorPlace(PadCursor.x, PadCursor.y);
+  }
+}
+function padClick() {
+  const el = PadCursor.hover;
+  if (!el) return;
+  if (el.tagName === 'INPUT' && el.type === 'range') {
+    const r = el.getBoundingClientRect(), f = Math.max(0, Math.min(1, (PadCursor.x - r.left) / r.width));
+    const step = +el.step || 1, min = +el.min, max = +el.max;
+    el.value = Math.round((min + f * (max - min)) / step) * step;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'button') { el.focus(); return; }
+  const o = { bubbles: true, cancelable: true, clientX: PadCursor.x, clientY: PadCursor.y, button: 0 };
+  el.dispatchEvent(new MouseEvent('mousedown', o));
+  el.dispatchEvent(new MouseEvent('mouseup', o));
+  el.click();
+  requestAnimationFrame(() => padCursorPlace(PadCursor.x, PadCursor.y));   // the screen may have changed under it
+}
+function padBack() {
+  for (const id of PAD_BACK_IDS) {
+    const el = document.getElementById(id);
+    if (el && padVisible(el)) { el.click(); return; }
+  }
+  // a shop page's own BACK, or anything else labelled as a way back
+  for (const el of padTargets()) {
+    if (/^\s*(←\s*)?(back|close|done|cancel)\b/i.test(el.textContent || '')) { el.click(); return; }
+  }
+  padKey('Escape', true);
+}
+function pollGamepad(dt) {
+  const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+  let gp = null;
+  for (const p of pads) if (p && p.connected !== false && p.buttons && p.buttons.length) { gp = p; break; }
+  if (!gp) {
+    if (Pad.active) { Pad.move.x = Pad.move.z = 0; Pad.prev = []; }
+    return;
+  }
+  const btn = gp.buttons.map((b, i) => {
+    const v = typeof b === 'object' ? (b.value || (b.pressed ? 1 : 0)) : +b;
+    return (i === PAD_BTN.LT || i === PAD_BTN.RT) ? v > 0.4 : (typeof b === 'object' ? !!b.pressed || v > 0.5 : v > 0.5);
+  });
+  const ax = gp.axes || [];
+  const ls = padStick(ax[0] || 0, ax[1] || 0), rs = padStick(ax[2] || 0, ax[3] || 0);
+  const prev = Pad.prev;
+  const was = i => !!prev[i], now = i => !!btn[i];
+  const pressed = i => now(i) && !was(i), released = i => !now(i) && was(i);
+  if (btn.some(Boolean) || ls.m > 0 || rs.m > 0) {
+    if (!Pad.active) { Pad.active = true; document.getElementById('pauseHint').style.display = 'none'; }
+  }
+  Pad.prev = btn;
+  if (!Pad.active) return;
+  const inMatch = Game.mode === 'scenario';
+  // v1.242 (D.38 step 2): every screen that wants the mouse gets the pad's cursor
+  const onScreen = padScreenUp();
+  padCursorShow(onScreen);
+  // the questions over a match: A is yes, B is no; Start resumes from the pause menu
+  if (Game.forfeitAsk) {
+    if (pressed(PAD_BTN.A)) padKey('Enter', true);
+    else if (pressed(PAD_BTN.B) || pressed(PAD_BTN.BACK)) padKey('Escape', true);
+    return;
+  }
+  if (Game.paused && !document.getElementById('settingsScreen').classList.contains('active')) {
+    if (pressed(PAD_BTN.A) && PadCursor.hover) { padClick(); return; }   // v1.242: A clicks what the cursor is on
+    if (pressed(PAD_BTN.START) || pressed(PAD_BTN.A) || pressed(PAD_BTN.B)) { Game._pausedAt = 0; padKey('Escape', true); }
+    else if (pressed(PAD_BTN.BACK)) padKey('KeyF', true);
+    else padCursorMove(ls, rs, pressed, dt);
+    return;
+  }
+  if (onScreen) {
+    if (pressed(PAD_BTN.A)) padClick();
+    else if (pressed(PAD_BTN.B)) padBack();
+    else padCursorMove(ls, rs, pressed, dt);
+    return;
+  }
+  if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
+  // sticks: movement and look (read by updatePlayer)
+  Pad.move.x = ls.x; Pad.move.z = ls.y;
+  Game.mouse.dx += Math.sign(rs.x) * Math.pow(Math.abs(rs.x), 1.6) * PAD_LOOK_PX * dt;
+  Game.mouse.dy += Math.sign(rs.y) * Math.pow(Math.abs(rs.y), 1.6) * PAD_LOOK_PX * dt;
+  if (Game.mode === 'bedroom') {
+    if (pressed(PAD_BTN.A)) padKey('KeyE', true);
+    else if (pressed(PAD_BTN.START)) openSettings();   // v1.242: the bedroom's SETTINGS
+    return;
+  }
+  if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }
+  if (pressed(PAD_BTN.BACK)) { padKey('KeyF', true); return; }
+  if (pressed(PAD_BTN.A)) padKey('Space', true);
+  if (pressed(PAD_BTN.B)) padKey('ControlLeft', true);
+  if (pressed(PAD_BTN.X)) padKey('KeyR', true);
+  if (released(PAD_BTN.X)) padKey('KeyR', false);
+  if (pressed(PAD_BTN.Y) || pressed(PAD_BTN.RB)) padCycleSlot(1);
+  if (pressed(PAD_BTN.LB)) padCycleSlot(-1);
+  const dpad = [PAD_BTN.UP, PAD_BTN.RIGHT, PAD_BTN.DOWN, PAD_BTN.LEFT];
+  for (let i = 0; i < 4; i++) if (pressed(dpad[i])) trySwitchSlot(i);
+  // sprint: a click of the left stick holds Shift until the stick lets go
+  if (pressed(PAD_BTN.L3) && ls.m > 0) { Pad.sprintLatch = true; Game.keys['ShiftLeft'] = true; }
+  if (Pad.sprintLatch && ls.m === 0) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
+  // triggers: aim and fire, as the right and left mouse buttons (by state, so a trigger let go while paused lets go)
+  if (now(PAD_BTN.LT) !== Pad.ads) { Pad.ads = now(PAD_BTN.LT); Game.player.adsTarget = Pad.ads ? 1 : 0; }
+  if (now(PAD_BTN.RT) !== Pad.fire) {
+    Pad.fire = now(PAD_BTN.RT);
+    if (Pad.fire) { Game.mouseLMB = true; onLmbDown(); }
+    else { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); }
+  }
+}
 
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
@@ -24011,7 +24575,7 @@ function ladderAt(x, z) {
 // Returns true while he is on a ladder (updatePlayer then moves him no other way).
 function updateLadder(dt) {
   const p = Game.player, k = Game.keys || {};
-  const up = !!k['KeyW'], down = !!k['KeyS'];
+  const up = !!k['KeyW'] || Pad.move.z < -0.5, down = !!k['KeyS'] || Pad.move.z > 0.5;   // v1.241: the stick climbs
   let L = p.climbing;
   if (!L) {
     const at = ladderAt(p.pos.x, p.pos.z);
@@ -24058,7 +24622,7 @@ function updateLadderPrompt() {
 }
 
 function updatePlayer(dt) {
-  if (!Game.mouse.locked) {
+  if (!Game.mouse.locked && !Pad.active) {   // v1.241 (D.38): a pad plays without the pointer lock
     Game.mouse.dx = 0; Game.mouse.dy = 0;
     easeStanceAndAds(dt);
     // v1.28j: even with the mouse released (e.g. just entered the bedroom, or
@@ -24122,7 +24686,8 @@ function updatePlayer(dt) {
   // OR while preserving an air-sprint jump; recharges after a short delay
   // otherwise. Hitting zero forces an exhausted lockout.
   {
-    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']);
+    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']) ||
+                         Pad.move.x !== 0 || Pad.move.z !== 0;   // v1.241
     const draining = inScenario && (Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround)) && pressingMove;
     if (draining) {
       Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * underPartMult('sprintDrainMult') * dt;   // v1.169: sling
@@ -24174,6 +24739,7 @@ function updatePlayer(dt) {
     if (Game.keys['KeyD']) mx += 1;
     const mag = Math.hypot(mx, mz);
     if (mag > 0) { mx /= mag; mz /= mag; }
+    else if (Pad.move.x !== 0 || Pad.move.z !== 0) { mx = Pad.move.x; mz = Pad.move.z; }   // v1.241: the stick, analog
 
     let speed = inScenario ? MOVE_SPEED_SCENARIO : MOVE_SPEED;
     if (inScenario) {
@@ -24201,7 +24767,7 @@ function updatePlayer(dt) {
     const sinY = Math.sin(Game.player.yaw);
     wx = (mx * cosY + mz * sinY) * speed;
     wz = (-mx * sinY + mz * cosY) * speed;
-    movingForwardish = mag > 0;
+    movingForwardish = mx !== 0 || mz !== 0;   // v1.241: the stick too
   }
 
   // Apply horizontal motion with collision
@@ -25025,9 +25591,9 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.135, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.072, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'mac10') {
+    } else if (gunType === 'mac10') {        // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
-      adsPos  = { x: 0.0,  y: -0.078, z: -0.27 };
+      adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
     } else if (gunType === 'thunder') {        // v1.168: each ADS Y is minus its sight tip's height
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
@@ -26264,9 +26830,27 @@ function bbCanTarget(bb, c) {
   if (c === Game.player) {
     return Game.player.hitsTaken < Game.player.maxHits;
   }
-  if (c.health <= 0) return false;
-  if (c.state === 'retreating') return false;
+  // v1.237 (D.33): a kid who is out (hand up where he was tagged, or walking back) still stops YOUR BBs, and says so
+  if (c.health <= 0 || c.state === 'retreating') return bb.owner === 'player' && kidIsOutStanding(c);
   return true;
+}
+// v1.237 (backlog D.33, Michael 14 Oct: "Players that raise their arms and are 'out' should still be able to be shot, and
+// if you shoot them, they should be mad and call you out for it"): out is a tagged kid standing with his hand up, or
+// one walking back to respawn. A downed Infection tagger is slumped, not out, and still lets BBs through.
+function kidIsOutStanding(c) {
+  return c !== Game.player && c.behavior !== 'tagger';
+}
+const OUT_SHOT_LINE_GAP = 1.0;   // seconds (simulated) between a kid's out-shot complaints
+function shotWhileOut(c) {
+  if (Game.scenario.stats) Game.scenario.stats.outShots = (Game.scenario.stats.outShots || 0) + 1;
+  playHitOnEnemy();
+  const now = aiNow();
+  if (c._outLineAt != null && now - c._outLineAt < OUT_SHOT_LINE_GAP) return;
+  c._outLineAt = now;
+  // he was just tagged, so his own 4 s voice cooldown (and the 1.5 s one for everybody) is likely still running:
+  // being shot with his hand up is worth saying anyway
+  c._voiceCooldownUntil = 0; VOICE.globalCooldownUntil = 0;
+  tryNpcSpeak(c, 'shotWhileOut');
 }
 
 // Apply the hit's consequences for combatant c. Returns true if the BB should be
@@ -26277,6 +26861,7 @@ function applyBBHit(bb, c) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
     if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
+    if (Game.scenario.stats && bb.pos) noteDamageOnYou(bb);   // v1.238 (D.34): where, by whom, with what
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
@@ -26291,6 +26876,7 @@ function applyBBHit(bb, c) {
       respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
     }
   } else {
+    if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c); return true; }   // v1.237 (D.33): out already
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
     playHitOnEnemy();
@@ -30126,6 +30712,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  pollGamepad(dt);   // v1.241 (D.38)
   updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
@@ -30145,7 +30732,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario' && !Game.forfeitAsk) {   // v1.208: paused while F asks
+  } else if (Game.mode === 'scenario' && !Game.forfeitAsk && !Game.paused) {   // v1.208: paused while F asks (v1.239: and in the pause menu)
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
@@ -30266,6 +30853,10 @@ function updateBedroomSettingsBtn() {
   if (btn.style.display !== want) btn.style.display = want;
 }
 document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
+// v1.239 (D.39): the pause menu's buttons. Settings open over it; closing them leaves it up, the match still stopped.
+document.getElementById('pauseResumeBtn').addEventListener('click', resumeFromPause);
+document.getElementById('pauseSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('pauseForfeitBtn').addEventListener('click', () => { closePauseMenu(); askForfeit(); });
 document.getElementById('bedroomSettingsBtn').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
 // its mousedown must not reach the document's, which would take the pointer lock for the bedroom
 document.getElementById('bedroomSettingsBtn').addEventListener('mousedown', e => e.stopPropagation());

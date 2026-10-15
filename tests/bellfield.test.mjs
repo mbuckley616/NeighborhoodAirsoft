@@ -89,11 +89,14 @@ for (const id of IDS) {
   check(`${id}: the back fence closes both rows of yards`, start.fence, start);
   check(`${id}: every enemy starts at least 35 m off, down the street`, start.seen.every(s => s.d > 35), start.seen);
   const r = await page.evaluate(() => {
-    const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
+    // v1.235 fix-up (as market-lot's v1.141): the player is untaggable, but a hit on him is a life lost on his side
+    let playerHits = 0;
+    const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) { playerHits++; return; } return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
     const o = spawnEnemyBB; let shots = 0, firstAt = null; spawnEnemyBB = (e, t) => { if (inOpeningHold()) return o(e, t); shots++; if (firstAt === null) firstAt = +Game.scenario.roundTime.toFixed(2); const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], maxZ: 0, minD: 1e9, minX: 1e9 }));
-    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
+    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0)
+      + (t === 'player' ? playerHits : 0);
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
     let f = 1, firstShot = null, nearest = 1e9;
     const defend = scd.scenarioType === 'defend';
@@ -116,14 +119,18 @@ for (const id of IDS) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    return { defend, won: !!Game.scenario.winByTimer, team, secs: Math.round((f - 1) / 60), shots, firstShot, nearest: +nearest.toFixed(1), lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
+    return { defend, won: !!Game.scenario.winByTimer, team, secs: Math.round((f - 1) / 60), shots, firstShot, nearest: +nearest.toFixed(1), lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'), playerHits,
+      enemyLives: kids.filter(k => k.team === 'enemy').reduce((a, k) => a + k.maxLives, 0),
       kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, maxZ: +st[i].maxZ.toFixed(1), minX: +st[i].minX.toFixed(1), minD: +st[i].minD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: nobody fires in the opening hold (2.5 s)`, r.firstShot === null || r.firstShot >= 2.5, r.firstShot);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  // v1.235 fix-up (as market-lot's v1.141): or the round is decided, every enemy life gone with none of ours. CI on
+  // 5c22449 (PR #75): 9-0 in 120 s, Andrew and Evan tagging Christian, Diego and Fernando as they redeployed at x -24.
+  if (r.team) check(`${id}: both sides lose lives (within 120 s), or one side has lost every life`,
+    r.lostEnemy > 0 && (r.lostAlly > 0 || r.lostEnemy >= r.enemyLives), r);
   else if (r.defend) {
     check(`${id}: the timer runs out and the player holds (90 s)`, r.won && r.secs >= 89 && r.secs <= 91, r);
     check(`${id}: an attacker reaches the fort (within 5 m of the player)`, r.kids.some(k => k.t !== 'player' && k.minD < 5), r.kids);
