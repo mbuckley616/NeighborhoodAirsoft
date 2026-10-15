@@ -10612,3 +10612,22 @@ in one build to (6.50, −14.50) in the next. The check now reads each kid's sta
 ### Still open
 - The same line's `seth-shotgun` share at 24-28 m is an unseeded spread near its limit, as v1.243's was; seed it the
   same way if it fails again.
+
+## v1.245 — The first loss no longer freezes
+Found in play (critic, 15 Oct): the first loss of a session froze the game for 2.2–3.3 s, all of it in the damage
+report (v1.238) making its own WebGL renderer on its first draw; later losses took 3–6 ms. Here it took 4.1–5.7 s.
+Timing the parts showed the drawing was never the cost: making the renderer was 5.4 s of it, the report itself 39 ms
+after. A first try drew the report with the game's own renderer instead, which makes no context, but the read-back of
+its pixels then waited on every frame the game had queued for the GPU (4.0 s in the render call), so it was undone.
+The report now makes its renderer at boot, before the title shows, and draws a kid once there so its shaders are
+compiled; a loss only swaps in your look, gun and gear. Nothing about how the report looks changed.
+### Verified
+- `tests/damage-report-first.test.mjs` (new, 7 checks): at the title the report's renderer exists with its shader
+  compiled. A real loss in The Seth House (one BB into your chest, stepped until the round ends): the result shows the
+  report with your kid drawn, no WebGL context is made and no shader compiled while it happens, and the step that ends
+  the round takes 69 ms the first time and 5 ms the second (v1.244: 4,100–5,700 ms the first time on this machine,
+  measured with the same loss). No page errors.
+- `tests/damage-report.test.mjs` (v1.238) passes unchanged: the dots, rows and both views as before.
+### Still open
+- The renderer is now made during page load instead; on a slow machine that is a moment longer before the title,
+  where it is not felt in play. Michael's eye on whether the first loss on his machine now shows at once.

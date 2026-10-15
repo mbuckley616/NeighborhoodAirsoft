@@ -2048,7 +2048,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.244</div>
+  <div class="version">v1.245</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22013,29 +22013,43 @@ function damageReportHtml(outcome) {
     `<svg id="rsDamageDots" viewBox="0 0 ${DAMAGE_W} ${DAMAGE_H}"></svg></div>` +
     `<div class="rs-dmg-list"><span class="rs-tag">DAMAGE REPORT</span>${rows}</div></div>`;
 }
+// v1.245: the report's own renderer is made, and its kid's shaders compiled, at boot (warmDamageReport). Made on the
+// first loss it froze the game for 2–3 s there, waiting on the GPU (critic, 15 Oct); later losses took 3–6 ms.
+function initDamageReport() {
+  const D = DAMAGE_REPORT;
+  if (D.renderer) return;
+  D.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  D.renderer.setSize(DAMAGE_W, DAMAGE_H, false);
+  D.scene = new THREE.Scene();
+  D.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
+  const l = new THREE.DirectionalLight(0xffffff, 0.6); l.position.set(0, 3, 4); D.scene.add(l);
+  const l2 = new THREE.DirectionalLight(0xffffff, 0.4); l2.position.set(0, 3, -4); D.scene.add(l2);
+  D.camera = new THREE.PerspectiveCamera(30, (DAMAGE_W / 2) / DAMAGE_H, 0.1, 20);
+}
+function setDamageReportKid(look, gun, gk) {
+  const D = DAMAGE_REPORT;
+  const sig = JSON.stringify([look, gun, gk]);
+  if (D.sig === sig) return;
+  if (D.kid) D.scene.remove(D.kid.group);
+  D.kid = createKid(Object.assign({}, look), gun);
+  buildKidGear(D.kid, gk);
+  D.scene.add(D.kid.group); D.sig = sig;
+}
+function warmDamageReport() {
+  initDamageReport();
+  const D = DAMAGE_REPORT;
+  setDamageReportKid(Game.persist.look, Game.persist.equipped.gun, []);
+  D.camera.position.set(0, 1, 4); D.camera.lookAt(0, 1, 0); D.camera.updateMatrixWorld(true);
+  D.renderer.render(D.scene, D.camera);
+}
 // Your kid (your look, your gun, your gear) drawn twice, front and back, with a numbered dot where each hit landed:
 // hits from in front on the front view, from behind on the back one.
 function drawDamageReport() {
   const canvas = document.getElementById('rsDamageCanvas'), svg = document.getElementById('rsDamageDots');
   if (!canvas || !svg) return;
   const D = DAMAGE_REPORT;
-  if (!D.renderer) {
-    D.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-    D.renderer.setSize(DAMAGE_W, DAMAGE_H, false);
-    D.scene = new THREE.Scene();
-    D.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
-    const l = new THREE.DirectionalLight(0xffffff, 0.6); l.position.set(0, 3, 4); D.scene.add(l);
-    const l2 = new THREE.DirectionalLight(0xffffff, 0.4); l2.position.set(0, 3, -4); D.scene.add(l2);
-    D.camera = new THREE.PerspectiveCamera(30, (DAMAGE_W / 2) / DAMAGE_H, 0.1, 20);
-  }
-  const gk = loadoutKidGearKeys();
-  const sig = JSON.stringify([Game.persist.look, Game.persist.equipped.gun, gk]);
-  if (D.sig !== sig) {
-    if (D.kid) D.scene.remove(D.kid.group);
-    D.kid = createKid(Object.assign({}, Game.persist.look), Game.persist.equipped.gun);
-    buildKidGear(D.kid, gk);
-    D.scene.add(D.kid.group); D.sig = sig;
-  }
+  initDamageReport();
+  setDamageReportKid(Game.persist.look, Game.persist.equipped.gun, loadoutKidGearKeys());
   const kid = D.kid.group;
   kid.rotation.set(0, 0, 0); kid.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(kid), tall = box.max.y - box.min.y;
@@ -31847,6 +31861,8 @@ document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
 document.getElementById('loadoutCloseBtn').addEventListener('click', closeLoadout);
 document.getElementById('wbCloseBtn').addEventListener('click', closeWorkbench);
 
+// v1.245: the damage report's renderer and shaders, ready before the first loss
+try { warmDamageReport(); } catch (e) { console.warn('damage report warm-up', e); }
 // Start render loop immediately (title screen renders nothing but stays warm)
 Game.clock.start();
 tick();
