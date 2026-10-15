@@ -5,6 +5,32 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
+  You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
+  that BBs punch through, homemade bullseyes, every BB from your real bag, based on 235 Bunratty Court's backyard and
+  pool deck. Whatever you pick: no kids, no clock, no money won; cans knock off and can be stood back up, bottles
+  break, paper keeps every hole, bullseyes show where each BB landed and its ring; E at the bench stands everything
+  back up; the gun, gear and BBs are your loadout's. The cloud can't open Zillow, so a few screenshots of the yard
+  and deck (in Slack or the control room) would let the builder match it; without them it is a fenced lawn, a pool
+  deck and a bench, from memory of the street map.
+  - A) **Out your own back door.** A "Backyard" door in the bedroom's hall opens the range in your own yard (the
+    house the bedroom is in), back in through the same door. *(recommended: it is your yard, one step from the shop
+    and the workbench, so you buy a part and try it straight away)*
+  - B) **A pin on the map** in the Bunratty Court zone, like a match, entered through a briefing.
+  - C) A, and timed drills on the bench: knock all six cans, best time saved, shown on the bench next time.
+  - D) Different (say where or what in a note).
+
+- **The Last Saturday: what is a life for you? (builder, 2026-10-15)**
+  The critic (14 Oct, v1.224) found The Last Saturday says "three lives for everybody", but your three lives are
+  three hits where you stand: in 8 of 10 rounds two went within 0.75 s, in 2 of 10 all three inside 0.55 s (Mitchell's
+  AK at 3.68, 4.15, 4.23 s). Your A on "Pickup Game: what is a life for you?" fixed this for the board only and kept
+  the ladder untouched, so this one is yours to call. It is the only ladder match with more than one life for you.
+  - A) **As in the Pickup Game:** a tag sends you back to your start with 2 s of cover and takes one life.
+    *(recommended: it is what the briefing promises, the code is the Pickup Game's, and the finale stays three
+    real chances)*
+  - B) Keep a life as a hit where you stand, with 1 s of cover after each, so one burst costs one life.
+  - C) Change only the words: "you can take three hits".
+
 - **The cheap clear-plastic automatics (D.37): which ones? (builder, 2026-10-15)**
   You asked for 3-4 "shitty" automatic guns in see-through white plastic: low rate of fire, wild spin so BBs go every
   which way, or prone to jamming. The shop's Guns tab now has an AUTOMATICS chip they would land under (v1.240). All
