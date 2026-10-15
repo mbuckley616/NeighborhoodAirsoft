@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.233</div>
+  <div class="version">v1.234</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19296,8 +19296,12 @@ function buildFPSixShooter() {
   const dark   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7 });
   const wood   = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.75 });
   const orange = _fpOrangeMat();
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.09), silver, 0, 0.02, -0.03);                   // frame
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.1), silver, 0, 0.048, -0.04);                   // top strap
+  // v1.234 (D.31, held up to a Colt single-action with a bird's-head grip): the frame ran 3.8 cm past the cylinder's
+  // back with the hammer and grip at its far end, and the grip was one straight slab with a flat cap. Now the frame
+  // ends 1.2 cm behind the cylinder (the recoil shield), the hammer, notch, guard and grip come forward 1.5 cm with it,
+  // and the grip curves: raked back at the top, turning down to a rounded butt.
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.064), silver, 0, 0.02, -0.043);                 // frame (was 0.09 long)
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.082), silver, 0, 0.048, -0.049);                // top strap
   // The cylinder, with six chambers on its face. It turns a sixth as the hammer comes back (userData.cockSpin).
   const cyl = new THREE.Group();
   _fpPart(cyl, new THREE.CylinderGeometry(0.021, 0.021, 0.044, 12), steel, 0, 0, 0);
@@ -19313,12 +19317,13 @@ function buildFPSixShooter() {
   _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.1, 8), silver, 0, 0.022, -0.12, Math.PI / 2);   // ejector rod
   _fpPart(group, new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 10), orange, 0, 0.036, -0.207, Math.PI / 2); // orange tip
   _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.01), silver, 0, 0.05, -0.19).userData.frontSight = true;                 // front blade (tip y 0.056)
-  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, 0.004);                 // rear notch
-  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, 0.02, -0.45);   // spur under the sight line
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, -0.011);                // rear notch
+  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, -0.005, -0.45);   // spur under the sight line
   hammer.userData.baseZ = hammer.position.z;
-  _fpTriggerGuard(group, silver, -0.002, -0.03);
-  _fpPart(group, new THREE.BoxGeometry(0.032, 0.1, 0.045), wood, 0, -0.045, 0.03, -0.38);             // bird's-head grip
-  _fpPart(group, new THREE.BoxGeometry(0.034, 0.012, 0.05), silver, 0, -0.092, 0.05, -0.38);          // grip cap
+  _fpTriggerGuard(group, silver, -0.002, -0.045);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.06, 0.045), wood, 0, -0.0264, 0.0076, -0.38);    // bird's-head grip, upper (raked back)
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.036, 0.045), wood, 0, -0.0663, 0.0193, -0.05);         // bird's-head grip, lower (turning down)
+  _fpPart(group, new THREE.CylinderGeometry(0.0225, 0.0225, 0.032, 14), wood, 0, -0.0843, 0.0197).rotation.z = Math.PI / 2;   // the rounded butt
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19446,7 +19451,7 @@ const FP_HANDS = {
   ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
-  sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
   boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
 };

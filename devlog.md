@@ -10349,3 +10349,27 @@ before the model change.)
 ### Still open
 - Michael's eye on the pictures. The receiver, tank and stock are still plain boxes and cylinders, as a toy's would
   be; the stock's lower edge steps at the wrist. D.31 goes on with the Six-Shooter.
+
+## v1.234 — The Six-Shooter, held up to a bird's-head Colt
+Backlog D.31, the tenth gun. The Six-Shooter is a cap-gun copy of a Colt single-action with a bird's-head grip. On a
+Colt the cylinder sits just ahead of the recoil shield, with the hammer and the grip straight behind it. Here the frame
+ran 3.8 cm past the cylinder's back, a plain block with the hammer 3.3 cm back at its far end. The "bird's-head" grip
+was one straight slab with a flat silver cap, where a bird's-head grip curves down to a rounded butt.
+
+Now the frame ends 1.2 cm behind the cylinder, and the top strap, rear notch, hammer, trigger guard and grip come
+forward 1.5 cm with it. The hammer stands 8 mm behind the cylinder, still under the sight line. The grip is two
+pieces: the top raked back as before, the lower one turned 0.33 rad toward the vertical, ending in a rounded wooden
+butt. It reaches about as low as the old cap (10.6 cm under the bore, was 10.7). The shooting hand moves forward with
+the grip (`FP_HANDS.sixshooter`). The barrel, ejector rod, cylinder, front blade and sight heights are unchanged, so
+the aimed picture is too. Pictures: `docs/guns/sixshooter-side-before.png`, `docs/guns/sixshooter-side.png`.
+### Verified
+- `tests/gun-sixshooter.test.mjs` (new, 6 checks; writes the side picture). Before (v1.233): the frame 3.8 cm past
+  the cylinder, the hammer 3.3 cm back, the grip starting 1.4 cm back, one straight piece, no rounded butt; five of six
+  checks failed. After: 1.2 cm, 0.8 cm, the grip from the cylinder's back (−1.4 mm), two pieces 0.33 rad apart, a
+  rounded butt. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Six-Shooter: both hands on, gap 0, none
+  on the sight line), `backyard-guns` (its blade on the reticle, its shop row), `shop-pics`: all pass.
+### Still open
+- Michael's eye on the pictures. A real bird's-head butt hooks a little further; this is the curve and the round,
+  drawn in two boxes and a disc, with a small step at the back where they meet. The frame is still a box with the
+  cylinder in front of it, not a window round it. D.31 goes on with the Bucket Gun.
