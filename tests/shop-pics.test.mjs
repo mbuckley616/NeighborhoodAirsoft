@@ -110,11 +110,11 @@ const tint = await page.evaluate(() => {
 check('each picture has its item’s colour in it (hue within 12/255)', tint.every(t => t[1] <= 12), tint);
 await g.shot('shop-pics-clothes');
 
-// v1.210: the Gear tab's belt and holster, eye pro, armour and shoes, on the same kid, framed on the piece
+// v1.210: the Gear tab's belt and holster (v1.249: and the pool noodle), eye pro, armour and shoes, on the same kid, framed on the piece
 await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Gear').click());
 const gearRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img') })));
-const wantGear = await page.evaluate(() => 2 + Object.keys(EYEWEAR).length + Object.keys(ARMOR).length + Object.keys(SHOES).length);
+const wantGear = await page.evaluate(() => 3 + Object.keys(EYEWEAR).length + Object.keys(ARMOR).length + Object.keys(SHOES).length);
 check(`the Gear tab's ${wantGear} rows each have a picture`, gearRows.length === wantGear && gearRows.every(r => r.pic), gearRows.filter(r => !r.pic));
 const ge = await measure();
 check('the gear pictures are drawn at 112×112 with something on them (over 10% of the pixels)', ge.length === wantGear &&
