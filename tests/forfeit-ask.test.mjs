@@ -51,7 +51,10 @@ for (const [how, act] of [
   check(`${how} closes it and the match goes on`, before.asking && !mid.asking && !mid.shown && after.mode === 'scenario'
     && after.t > mid.t + 0.9, { before: before.asking, mid: mid.asking, t: [mid.t, after.t], mode: after.mode });
 }
-const moved = await snap();
+// Fix-up (PR #75, CI on 698e66a): one snapshot can catch Sean holding a spot in cover the whole time since the
+// question closed, so he gets up to 10 s more to move (the clock check above already shows the match runs).
+let moved = await snap();
+for (let i = 0; i < 10 && same(a1.kids, moved.kids); i++) { await g.spin(60); moved = await snap(); }
 check('the kids move again after it closes', !same(a1.kids, moved.kids));
 
 // A second F a moment later asks again (no forfeit by double-tapping)
