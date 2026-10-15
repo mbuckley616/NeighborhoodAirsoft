@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.231</div>
+  <div class="version">v1.232</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19105,31 +19105,39 @@ function buildFPUMP() {
 }
 
 // --- MAC-10: tiny boxy machine pistol, mag through the grip, very stubby ---
+// v1.232 (D.31, held up to an M10 at about ×0.6): the receiver is a long flat-sided box, 0.16 long by 0.06 tall (was
+// 0.10), so the grip and its mag sit a little behind the middle (was at the back); a trigger in front of the grip inside
+// the M10's long guard, a strip forward from the grip and up to the receiver; a front post and rear ears on top with
+// the cocking knob below the sight line; the collapsed wire stock's rods along the lower receiver and a butt plate.
 function buildFPMAC10() {
   const group = new THREE.Group();
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1c1c20, roughness: 0.5,  metalness: 0.5 });
   const matteMat  = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.7,  metalness: 0.25 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // Boxy upper (the whole gun is basically a steel box)
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.10), steelMat);
-  box.position.set(0, 0.01, -0.04);
+  // Boxy upper (the whole gun is basically a steel box) — v1.232: z -0.115…0.045, y -0.02…0.04
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.16), steelMat);
+  box.position.set(0, 0.01, -0.035);
   group.add(box);
-  // Stamped panel lines on the side
+  // Stamped panel lines on the side (the upper/lower seam and a pressing line)
   for (let i = 0; i < 2; i++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.08), matteMat);
-    line.position.set(0, 0.03 - i * 0.03, -0.04);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.14), matteMat);
+    line.position.set(0, 0.03 - i * 0.03, -0.035);
     group.add(line);
   }
+  // v1.232: the ejection port on the right side, ahead of the knob's track
+  const port = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.014, 0.034), matteMat);
+  port.position.set(0.0255, 0.018, -0.06);
+  group.add(port);
 
   // Stubby barrel + orange tip (MAC-10 barrel is very short)
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), matteMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.02, -0.105);
+  barrel.position.set(0, 0.02, -0.13);
   group.add(barrel);
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.022, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.02, -0.142);
+  orangeTip.position.set(0, 0.02, -0.165);
   group.add(orangeTip);
 
   // Magazine THROUGH the grip (the MAC-10's defining feature — long stick mag
@@ -19149,24 +19157,59 @@ function buildFPMAC10() {
   gripBack.position.set(0, -0.04, -0.002);
   group.add(gripBack);
 
-  // Top cocking knob (MAC-10 charges from a knob on TOP of the box)
+  // Top cocking knob (MAC-10 charges from a knob on TOP of the box) — v1.232: low (top y 0.05), under the sight line
   const chargeGroup = new THREE.Group();
-  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.016, 8), steelMat);
-  cockKnob.position.set(0, 0.048, -0.04);
+  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 8), steelMat);
+  cockKnob.position.set(0, 0.045, -0.05);
   chargeGroup.add(cockKnob);
   chargeGroup.position.set(0, 0, 0);
   chargeGroup.userData.baseZ = 0;
   group.add(chargeGroup);
 
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.03), matteMat);
-  tg.position.set(0, -0.018, -0.012);
-  group.add(tg);
+  // v1.232: the sights. A front post between two ears at the front of the top, a rear sight of two ears at the back;
+  // every tip at y 0.056, the aimed eye height (adsPos.y −0.056). They hide when an optic is mounted.
+  const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.016, 0.004), steelMat);
+  fsPost.position.set(0, 0.048, -0.104);
+  fsPost.userData.frontSight = true;
+  fsPost.userData.ironSight = true;
+  group.add(fsPost);
+  for (const sx of [-1, 1]) {
+    const fEar = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.008), steelMat);
+    fEar.position.set(sx * 0.012, 0.046, -0.104);
+    fEar.userData.ironSight = true;
+    group.add(fEar);
+    const rEar = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.016, 0.01), steelMat);
+    rEar.position.set(sx * 0.006, 0.048, 0.036);
+    rEar.userData.ironSight = true;
+    group.add(rEar);
+  }
 
-  // Stub of a retractable wire stock (collapsed look — short)
-  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.03), matteMat);
-  stockStub.position.set(0, 0.01, 0.025);   // v1.220: on the back of the box (was 15 mm behind it)
+  // v1.232: a trigger in front of the grip, and the M10's long guard: a strip from the grip's front, forward under
+  // the trigger, and up to the receiver 2 cm behind its front end
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.006), matteMat);
+  trigger.position.set(0, -0.028, -0.054);
+  trigger.rotation.x = 0.12;
+  group.add(trigger);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.054), matteMat);
+  tg.position.set(0, -0.046, -0.069);
+  group.add(tg);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.031, 0.005), matteMat);
+  tgFront.position.set(0, -0.034, -0.0935);   // top 1.5 mm into the receiver
+  group.add(tgFront);
+
+  // The collapsed wire stock: v1.232, two rods along the lower receiver's sides and the butt plate behind it (was one
+  // block on the back)
+  for (const sx of [-1, 1]) {
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.005, 0.12), matteMat);
+    rod.position.set(sx * 0.0275, -0.012, -0.01);
+    group.add(rod);
+  }
+  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.006), matteMat);
+  stockStub.position.set(0, -0.004, 0.053);
   group.add(stockStub);
+  const plateLink = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.006), matteMat);   // joins the rods' ends to the plate
+  plateLink.position.set(0, -0.012, 0.0475);
+  group.add(plateLink);
 
   group.position.set(0.16, -0.18, -0.30);
   group.rotation.y = 0.12;
@@ -25055,9 +25098,9 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.135, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.072, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'mac10') {
+    } else if (gunType === 'mac10') {        // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
-      adsPos  = { x: 0.0,  y: -0.078, z: -0.27 };
+      adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
     } else if (gunType === 'thunder') {        // v1.168: each ADS Y is minus its sight tip's height
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };

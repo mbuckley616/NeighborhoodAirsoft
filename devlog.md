@@ -10291,3 +10291,33 @@ you sleep; the calendar's dates still move only with wins.
 - Michael's look at the card in play. The bed's floating label now reads "Summer" (was "Save").
 - Numbered v1.231, not v1.229: the voices build (auto/fable-d9-voices) is v1.229 and online play step 1
   (auto/fable-d2-online) is v1.230, both off main, so this skips them to keep the title screen's number unique.
+
+## v1.232 — The MAC-10, held up to an M10
+Backlog D.31, the eighth gun. The MAC-10 is drawn at about ×0.6. From the side it was a cube on a stick: the box
+receiver only 1.7 times as long as it was tall, with the grip at its back end (70% of the way along), no trigger, a
+trigger guard that was a bar hidden inside the receiver's bottom, no sights at all, and a small block for a stock. The
+M10's receiver is a long flat-sided box with the grip a little behind its middle, a long strip guard, sights with
+protective ears on top, and a wire stock that collapses along the lower receiver.
+
+Now the receiver is 16 cm long by 6 cm tall (2.7 to 1), grown forward and back around the grip, which stays where your
+hand is (so `FP_HANDS` is unchanged), now 59% of the way back. A trigger hangs 1.6 cm under the receiver inside the M10's
+guard: a strip from the grip's front, 1.3 cm below the trigger, forward 6 cm ahead of the mag and up into the receiver.
+On top, a front post between two ears at the front and two rear ears at the back, every tip at the same height; the
+cocking knob between them is lowered under that line. Aimed, the eye looks along them, so the aimed gun sits 2.2 cm
+higher than before (adsPos y −0.056, was −0.078 with nothing to aim along); the post sits on the reticle (0.16°). The
+sights hide when an optic is mounted, as the AR's and AK's do. There is an ejection port on the right. The stock is two
+rods along the lower receiver's sides and a butt plate behind it. The barrel stub and the orange tip moved forward
+with the receiver's front. Pictures: `docs/guns/mac10-side-before.png`, `docs/guns/mac10-side.png`.
+### Verified
+- `tests/gun-mac10.test.mjs` (new, 10 checks; writes the side picture). Before (v1.231): 1.67 to 1, the grip 70% back,
+  no trigger, no guard below the receiver, no sights, no stock but the block, nothing to aim along; nine of ten checks
+  failed. After: 2.67 to 1, 59% back, 1.6 cm of trigger with the guard 1.3 cm below it and 6.1 cm ahead of the mag,
+  the front post 1.6 cm over the top in the front 7%, two rear ears level with it, the knob 6 mm under the line, the
+  plate 4 cm tall and both rods; aimed, 0.16° off centre. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the MAC-10: both hands on, none on the sight
+  line), `under-parts`, `shop-pics`, `workbench-labels`, `loadout-kid`, `laser`: all pass.
+### Still open
+- Michael's eye on the pictures, and the gun aimed: it now has sights to look along and sits higher in the view. The
+  M10's front strap (the loop people hold under the barrel) and its rounded stock rods are not drawn; the off hand
+  still cups the shooting hand. The kids' third-person MAC-10 was not touched. D.31 goes on with the four backyard
+  guns, the Thunder Pump first.
