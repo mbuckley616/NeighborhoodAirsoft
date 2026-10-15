@@ -1697,6 +1697,15 @@
   #forfeitAsk .modal-close { background: var(--ui-accent); color: #1a1a1a; border: none; padding: 8px 18px; font-family: inherit; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
   #forfeitAsk .modal-close.forfeit-yes { background: transparent; color: #e88; border: 1px solid #a55; }
   #forfeitAsk kbd { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+  /* v1.239 (D.39): the pause menu */
+  #pauseMenu .modal-card { background: var(--ui-bg); border: 2px solid var(--ui-accent); padding: 28px 44px; min-width: 300px; text-align: center; border-radius: 4px; }
+  #pauseMenu .modal-title { font-family: 'Georgia', serif; font-size: 34px; letter-spacing: 4px; color: var(--ui-accent); margin-bottom: 6px; }
+  #pauseMenu .modal-body { font-size: 13px; color: #ccc; margin-bottom: 18px; }
+  #pauseMenu .pause-btns { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  #pauseMenu button { background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border); padding: 9px 18px; font-family: inherit; cursor: pointer; letter-spacing: 2px; font-size: 13px; }
+  #pauseMenu button.pause-resume { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); font-weight: bold; }
+  #pauseMenu button.pause-forfeit { color: #e88; border-color: #a55; }
+  #pauseMenu kbd { font-size: 10px; opacity: 0.7; margin-left: 6px; }
 
   /* Scenario intro card */
   #scenarioIntro {
@@ -2029,7 +2038,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.238</div>
+  <div class="version">v1.239</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2394,6 +2403,18 @@
 </div>
 
 <!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
+<!-- v1.239 (D.39): Escape in a match opens this and the match stops -->
+<div class="menu-overlay" id="pauseMenu">
+  <div class="modal-card">
+    <div class="modal-title">PAUSED</div>
+    <div class="modal-body">The match is stopped until you go back to it.</div>
+    <div class="pause-btns">
+      <button class="pause-resume" id="pauseResumeBtn">RESUME <kbd>ESC</kbd></button>
+      <button id="pauseSettingsBtn">SETTINGS</button>
+      <button class="pause-forfeit" id="pauseForfeitBtn">FORFEIT <kbd>F</kbd></button>
+    </div>
+  </div>
+</div>
 <div class="menu-overlay" id="forfeitAsk">
   <div class="modal-card forfeit-card">
     <div class="modal-title">Forfeit this match?</div>
@@ -20943,6 +20964,30 @@ function answerForfeit(yes) {
   if (yes) forfeitScenario();
   else if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
 }
+// v1.239 (backlog D.39, Michael 14 Oct: "Can we make the pause menu more obvious / auto-open when hitting escape?"):
+// before this Escape only let go of the mouse, the match ran on behind a small "Click to capture mouse" note, and
+// there was no menu. Now Escape in a match (or the mouse let go any other way, as alt-tab does) opens PAUSED and the
+// match stops (stepGame skips it, as for the forfeit question): RESUME (Esc or a click) goes back, SETTINGS opens the
+// settings over it, FORFEIT asks the forfeit question.
+function openPauseMenu() {
+  if (Game.mode !== 'scenario' || Game.forfeitAsk || Game.paused) return;
+  Game.paused = true;
+  Game._pausedAt = performance.now();
+  Game.mouseLMB = false;
+  for (const k in Game.keys) Game.keys[k] = false;
+  document.getElementById('pauseMenu').classList.add('active');
+  document.getElementById('pauseHint').style.display = 'none';
+  exitPointerLock();
+}
+function closePauseMenu() {
+  Game.paused = false;
+  document.getElementById('pauseMenu').classList.remove('active');
+}
+function resumeFromPause() {
+  if (!Game.paused) return;
+  closePauseMenu();
+  if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
+}
 
 // ---------------------------------------------------------------------
 // SCENE TRANSITIONS
@@ -21731,6 +21776,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 }
 
 function startScenario(built) {
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
@@ -22077,6 +22123,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
 
 function endScenario(outcome) {
   if (Game.forfeitAsk) closeForfeitAsk();   // v1.208
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
@@ -23894,9 +23941,11 @@ function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
 }
 document.addEventListener('pointerlockchange', () => {
+  const was = Game.mouse.locked;
   Game.mouse.locked = document.pointerLockElement === Game.renderer.domElement;
+  if (was && !Game.mouse.locked && Game.mode === 'scenario') openPauseMenu();   // v1.239 (D.39): Escape let go of it
   document.getElementById('pauseHint').style.display =
-    (!Game.mouse.locked && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
+    (!Game.mouse.locked && !Game.paused && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
 });
 
 // ---------------------------------------------------------------------
@@ -23912,6 +23961,19 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
+  // v1.239 (D.39): the pause menu. Escape opens it in a match (when the mouse is already free; a held mouse lets go
+  // first, and that opens it) and Escape again goes back; F there asks the forfeit question. The settings over it
+  // take their own Escape.
+  if (Game.paused) {
+    if (!e.repeat && !document.getElementById('settingsScreen').classList.contains('active')) {
+      // the Escape that let go of the mouse may also arrive as a key, just after the menu opened: not a second press
+      if (e.code === 'Escape' && performance.now() - (Game._pausedAt || 0) > 300) resumeFromPause();
+      else if (e.code === 'KeyF') { closePauseMenu(); askForfeit(); }
+    }
+    e.preventDefault();
+    return;
+  }
+  if (e.code === 'Escape' && Game.mode === 'scenario' && !e.repeat) { openPauseMenu(); e.preventDefault(); return; }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -23994,7 +24056,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mousedown', e => {
-  if (Game.forfeitAsk) return;   // v1.208: clicks on the forfeit question are its buttons'
+  if (Game.forfeitAsk || Game.paused) return;   // v1.208: clicks on the forfeit question are its buttons' (v1.239: and the pause menu's)
   // Right-click → ADS in scenario
   if (e.button === 2 && Game.mode === 'scenario' && Game.mouse.locked) {
     Game.player.adsTarget = 1;
@@ -30372,7 +30434,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario' && !Game.forfeitAsk) {   // v1.208: paused while F asks
+  } else if (Game.mode === 'scenario' && !Game.forfeitAsk && !Game.paused) {   // v1.208: paused while F asks (v1.239: and in the pause menu)
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
@@ -30493,6 +30555,10 @@ function updateBedroomSettingsBtn() {
   if (btn.style.display !== want) btn.style.display = want;
 }
 document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
+// v1.239 (D.39): the pause menu's buttons. Settings open over it; closing them leaves it up, the match still stopped.
+document.getElementById('pauseResumeBtn').addEventListener('click', resumeFromPause);
+document.getElementById('pauseSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('pauseForfeitBtn').addEventListener('click', () => { closePauseMenu(); askForfeit(); });
 document.getElementById('bedroomSettingsBtn').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
 // its mousedown must not reach the document's, which would take the pointer lock for the bedroom
 document.getElementById('bedroomSettingsBtn').addEventListener('mousedown', e => e.stopPropagation());

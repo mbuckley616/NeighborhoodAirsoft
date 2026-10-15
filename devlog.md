@@ -10472,3 +10472,28 @@ its own small renderer and copied into a canvas, so the screen costs one extra d
 - Michael's eye on it in play. The hitbox on you is a cylinder, so "arm" is a guess from how far off your middle the BB
   landed; the dots sit on the part named, not at the exact spot. Hits that land in the 2 s cover after a respawn don't
   count and aren't listed.
+
+## v1.239 — A pause menu on Escape
+Backlog D.39 (Michael, 14 Oct): "Can we make the pause menu more obvious / auto-open when hitting escape?" There was no
+pause menu in a match. Escape only let go of the mouse; the match ran on behind a small "Click to capture mouse · ESC
+to release" note, so a kid could tag you while you read it, and the only way out was F (the forfeit question, v1.208).
+
+Now letting go of the mouse in a match (Escape, or alt-tab and the like) opens PAUSED in the middle of the screen and
+the match stops, the same stop as the forfeit question (`stepGame` skips the match; held keys and the trigger are let
+go). RESUME goes back (a click on it, or Escape), taking the mouse again. SETTINGS opens the settings over it; closing
+them leaves the match paused. FORFEIT (or F) asks the forfeit question. Escape with the mouse already free opens it
+too. The Escape that lets go of the mouse can also arrive as a key a moment later, so an Escape within 0.3 s of the
+menu opening does not close it. A round that ends while it is up closes it. The bedroom is unchanged: nothing runs
+there, and its Settings button still shows when the mouse is free. Picture: `docs/pause-menu.png`.
+### Verified
+- `tests/pause-menu.test.mjs` (new, 13 checks), Bunratty against Sean. The headless page holds a real pointer lock
+  after BEGIN; letting go of it opens PAUSED with no capture note; 3 s of steps leave the clock at 3.43 s and Sean
+  where he was; an Escape at once leaves it open. RESUME: the clock runs 1 s in 60 steps. Escape opens it, Escape
+  0.35 s later closes it. SETTINGS opens over it, their Escape closes them with the match still paused and stopped.
+  FORFEIT and F ask the question; KEEP PLAYING goes on; ENTER forfeits and nothing is left open. In the bedroom it
+  does not open. Before (v1.238) there was no menu to find.
+- Run after the change: `settings`, `forfeit-ask`, `pointer-lock`, `smoke`, `harness`: all pass.
+### Still open
+- Michael's eye on it in play, in a real browser: whether the browser hands the mouse back on Escape-to-resume (it
+  can refuse without a click; then the "click to capture" note shows and a click takes it, as before).
+- The bedroom has no pause menu; if he wants one there (a quit to the title, say), that is a small follow-up.
