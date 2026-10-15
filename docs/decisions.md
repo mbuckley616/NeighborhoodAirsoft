@@ -98,6 +98,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) At night an AK engages out to 60 m, not 100 m, on every night map.
   - C) Leave the match; the check allows a tag from 4 s on.
 
+- **Out kids and your BBs: one-way cover? (critic, 2026-10-15, v1.244)**
+  Since v1.237 (your D.33) a kid who is out stops your BBs and complains. In a one-life match he stands with his hand
+  up where he was tagged for the rest of the round, so he's a shield for whoever is behind him, but only against you:
+  his teammates' BBs pass through him and still tag you. Checked directly in Storm the Cul-de-Sac, and seen once in 22
+  bot rounds.
+  - A) Out kids stop everyone's BBs, theirs too (cover for both sides)
+  - B) After a few seconds with the hand up, an out kid walks off the field to his start or the street edge, as real
+    airsoft players walk to the safe zone, and stops being in anyone's lane *(critic's recommendation: it's the real
+    rule, and it keeps your "shoot him and he's mad" moment for the seconds he stands there)*
+  - C) Leave it: it's rare
+
 ## Answered
 
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
