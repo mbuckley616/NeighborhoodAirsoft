@@ -97,6 +97,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     matches keep, and nothing else about the match changes)*
   - B) At night an AK engages out to 60 m, not 100 m, on every night map.
   - C) Leave the match; the check allows a tag from 4 s on.
+
 - **Out kids and your BBs: one-way cover? (critic, 2026-10-15, v1.244)**
   Since v1.237 (your D.33) a kid who is out stops your BBs and complains. In a one-life match he stands with his hand
   up where he was tagged for the rest of the round, so he's a shield for whoever is behind him, but only against you:
