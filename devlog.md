@@ -10723,3 +10723,31 @@ shot mid-swing. Kids never carry one.
 - Michael's hands on it: the reach and the cone, and whether a tag from a noodle is too strong (a kid who rushes you
   is tagged before he fires if you swing first). The noodle is not drawn on your kid in the Loadout screen or the
   mirror; no pad button for V yet.
+
+## v1.250 — Four cheap clear-plastic automatics
+Backlog D.37 (Michael: B, control room 15 Oct): 3-4 "shitty" automatic guns in see-through white plastic, low rate of
+fire, BBs every which way, or prone to jamming. Four, each bad in its own way, all cheaper than the Bucket Gun ($110),
+at the head of the shop's AUTOMATICS, carried by no kid: the Rattle Can ($25, all three faults: 2 BBs a second, every
+BB curving, a jam in about one burst in four), the Clear Sprayer ($35, a little battery SMG: 6-7 BBs a second, every
+one curving hard), the Ghost Mini ($45, a clear micro-uzi: steady, 10 a second, but about one burst in five jams; R
+held clears it, as any jam) and the Tick-Tock ($55, a clear wind-up rifle: dead accurate and the longest carry of the
+four, 2 BBs a second). Each has its own model in clear plastic with the gearbox showing through, an orange tip, the
+Bucket Gun's grip (so the hands hold as there), its own picture in the shop, a top sight and a rail; no bigger mag
+and no spares are sold for them (a speed loader fills any gun). Two small engine changes carry it: a gun can now set a
+floor on how hard its BBs curve (`curveStrengthMin`, the spring guns keep 1.5), and an automatic can jam a burst
+(`burstJam`, the jam landing on its first or second BB). The pool noodle's shop picture (v1.249) is drawn a little
+fatter, as `shop-pics` wants a tenth of the square filled (it was 9.3%).
+### Verified
+- `tests/clear-guns.test.mjs` (new, 17 checks). The shop: AUTOMATICS lists Rattle Can, Clear Sprayer, Ghost Mini,
+  Tick-Tock, then the Bucket Gun, each with its picture, each bought from its page for $25/35/45/55 with no mag or
+  spare rows. In Bunratty with each, seeded, against the Bucket Gun: held a second, 2.0 / 6.6 / 10.0 / 2.0 BBs (Bucket
+  7.8); bursts of a second that jam, of 200: 26% / 0 / 19% / 0; at 15 m within 0.5 m of the line 10% / 13% / 100% /
+  100% (Bucket 57%), the middle BB 1.33 / 0.99 / 0.03 / 0.01 m off and nine in ten within 2.7 / 2.6 m for the two
+  curving ones (about a 3 m circle); a level shot from chest height carries 14 / 16 / 30 / 39 m (Bucket 18). Aimed,
+  each front sight sits 0.13-0.16° off the reticle. No page errors.
+- Updated for sixteen guns: `gun-parts` (the four join up, 25-36 parts each), `shop-gun-kinds` (AUTOMATICS (9), the
+  first automatic's page is the Rattle Can's), `shop-pics` (16 distinct pictures; the Gear tab's noodle row),
+  `backyard-guns`, `under-parts` (eight guns with no under-barrel slot). All pass, with `workbench-labels`.
+### Still open
+- Michael's look at the four (`tests/out/clear-*-aimed.png`) and his hands on how bad is bad enough. The kids' guns
+  are unchanged (none carries one); the Pickup Game's kid list can't hand one out yet.
