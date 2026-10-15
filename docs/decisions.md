@@ -18,6 +18,76 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
+  You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
+  that BBs punch through, homemade bullseyes, every BB from your real bag, based on 235 Bunratty Court's backyard and
+  pool deck. Whatever you pick: no kids, no clock, no money won; cans knock off and can be stood back up, bottles
+  break, paper keeps every hole, bullseyes show where each BB landed and its ring; E at the bench stands everything
+  back up; the gun, gear and BBs are your loadout's. The cloud can't open Zillow, so a few screenshots of the yard
+  and deck (in Slack or the control room) would let the builder match it; without them it is a fenced lawn, a pool
+  deck and a bench, from memory of the street map.
+  - A) **Out your own back door.** A "Backyard" door in the bedroom's hall opens the range in your own yard (the
+    house the bedroom is in), back in through the same door. *(recommended: it is your yard, one step from the shop
+    and the workbench, so you buy a part and try it straight away)*
+  - B) **A pin on the map** in the Bunratty Court zone, like a match, entered through a briefing.
+  - C) A, and timed drills on the bench: knock all six cans, best time saved, shown on the bench next time.
+  - D) Different (say where or what in a note).
+  Michael: **A — Out your own back door**. (2026-10-15, on the control room)
+
+- **The Last Saturday: what is a life for you? (builder, 2026-10-15)**
+  The critic (14 Oct, v1.224) found The Last Saturday says "three lives for everybody", but your three lives are
+  three hits where you stand: in 8 of 10 rounds two went within 0.75 s, in 2 of 10 all three inside 0.55 s (Mitchell's
+  AK at 3.68, 4.15, 4.23 s). Your A on "Pickup Game: what is a life for you?" fixed this for the board only and kept
+  the ladder untouched, so this one is yours to call. It is the only ladder match with more than one life for you.
+  - A) **As in the Pickup Game:** a tag sends you back to your start with 2 s of cover and takes one life.
+    *(recommended: it is what the briefing promises, the code is the Pickup Game's, and the finale stays three
+    real chances)*
+  - B) Keep a life as a hit where you stand, with 1 s of cover after each, so one burst costs one life.
+  - C) Change only the words: "you can take three hits".
+  Michael: **A — As in the Pickup Game**. (2026-10-15, on the control room)
+
+- **The cheap clear-plastic automatics (D.37): which ones? (builder, 2026-10-15)**
+  You asked for 3-4 "shitty" automatic guns in see-through white plastic: low rate of fire, wild spin so BBs go every
+  which way, or prone to jamming. The shop's Guns tab now has an AUTOMATICS chip they would land under (v1.240). All
+  of them would be cheaper than the Bucket Gun ($110), sold on airsoft.com, carried by no kid at first, each with its
+  own model in clear plastic with an orange tip, and each bad in its own way:
+  - A) **Three:** the *Clear Sprayer* ($35, a little battery SMG: 6 BBs a second but every BB curves hard, a 3 m
+    circle at 15 m), the *Ghost Mini* ($45, a clear micro-uzi: steady aim, but jams about one burst in five, R held to
+    clear it), and the *Tick-Tock* ($55, a clear rifle: dead accurate and the longest reach of the three, but only 2
+    BBs a second, ticking like a clock). *(recommended: three kinds of bad, one each, cheap enough to buy early)*
+  - B) A, and a fourth, the *Rattle Can* ($25, all three faults at once, a joke gun for the first week of summer).
+  - C) Two only, the Sprayer and the Ghost Mini; rifles stay spring guns.
+  - D) Different guns or faults (say which in a note).
+  Michael: **B — A, and a fourth, the Rattle Can**. (2026-10-15, on the control room)
+
+- **Squad commands (D.35): how do you give them? (builder, 2026-10-15)**
+  You asked for Battlefront-style orders to your team: push up, keep distance, find cover, follow me. Your teammates
+  are the ally kids in team matches (3v3, 4v4, VIP, flags, the Pickup Game). Whatever you pick: an order goes to every
+  teammate in walkie range, they answer it on the walkie ("Copy, pushing!"), the HUD shows the order standing, and it
+  holds until you give another or the round ends. Push up: they advance to the next cover toward the other side. Keep
+  distance: they hang back 15-25 m and fight from range. Find cover: each takes the nearest cover and holds. Follow
+  me: they stay within about 6 m of you and shoot what you shoot at.
+  - A) **Hold Q for a wheel.** Hold Q, the four orders show round the crosshair, flick the mouse toward one, let go.
+    The match keeps running while you choose. *(recommended: one key, nothing to remember, like Battlefront 2's)*
+  - B) **Four keys, Z X C V**, one order each, no menu (all four are free today). Fastest, but four more keys to
+    learn.
+  - C) **The walkie: T talks, then 1-4.** Press T, a walkie card shows the four orders, a number picks one. Ties it to
+    the walkie your kid already carries, but two key presses and 1-4 are the loadout keys while it is open.
+  - D) A or B, and orders to one teammate (aim at him while giving it) as well as to everybody.
+  Michael: **A — Hold Q for a wheel**. (2026-10-15, on the control room)
+
+- **The pool noodle (D.36): bought or earned, and what does a hit do? (builder, 2026-10-15)**
+  A pool noodle as a melee backup for when you are out of BBs. Whatever you pick: it goes in a loadout slot like the
+  speed loader, a key (V) swings it in first person, it reaches about 1.6 m, and a kid hit by it reacts like a BB tag
+  (a hit kid shouts something about it). Kids never carry one.
+  - A) **Sold on airsoft.com for $15**, a hit is a tag like a BB. *(recommended: simple, and a real backup)*
+  - B) **Earned**, not sold: it lies in the garage and becomes yours after a match (say the first Bellfield win), a
+    hit is a tag.
+  - C) A, but a noodle hit only counts if you hit from behind (a sneak tag), so it doesn't replace the gun.
+  - D) A or B, but a hit is not a tag: it stuns the kid for 2 s (he stops shooting and complains), to buy you time to
+    reload.
+  Michael: **A — Sold on airsoft.com for $15**. (2026-10-15, on the control room)
+
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
   You chose B on 12 Oct: online comes after the Pickup Game board, and the host sets the match up from it. The board is
   done (v1.201–v1.207). The game is one HTML file on itch.io, so the two browsers have to talk to each other directly
