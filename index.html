@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.235</div>
+  <div class="version">v1.236</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19390,8 +19390,11 @@ function buildFPBoltPistol() {
   const knob = _fpPart(group, new THREE.SphereGeometry(0.007, 10, 8), dark, 0.042, 0.048, 0.0);
   rod.userData.baseZ = rod.position.z;
   knob.userData.baseZ = knob.position.z;
-  _fpTriggerGuard(group, gun, -0.012, -0.04);
-  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.065, 0.005, -0.2);            // grip
+  // v1.236 (D.31): the trigger and guard 1.5 cm forward with a finger's room before the grip (the guard's bar ran 2.2 cm
+  // into it), and 4.5 mm up so the guard's front upright meets the frame; the grip 4 mm up so its top front corner
+  // meets the frame without a wedge of light.
+  _fpTriggerGuard(group, gun, -0.0075, -0.055);
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.061, 0.005, -0.2);            // grip
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19455,7 +19458,7 @@ const FP_HANDS = {
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
-  boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
+  boltpistol: { r: { c: [0, -0.061, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.236: the grip 4 mm up
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];

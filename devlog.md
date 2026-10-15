@@ -10396,3 +10396,28 @@ the grip, the hands and the aimed picture are as they were. Pictures: `docs/guns
 - The full suite on v1.231 (three local shards, run beside this run's gun work): 130 of 133 suites passed. The three
   misses, `gun-ump` and `ladder-prompt` (the page load passed 30 s) and `harness` (NEW GAME stalled under load), each
   passed alone on v1.235. v1.232–v1.235 ran their neighbouring suites, as listed in each entry.
+
+## v1.236 — The Bolt Pistol's trigger, out of its grip
+Backlog D.31, the twelfth and last gun. The Bolt Pistol is a made-up backyard spring pistol copying a bolt-action
+target pistol (an XP-100 type): a long barrel off a short receiver over a wooden grip, the trigger hanging in a guard
+ahead of the grip with room for a finger. Its barrel, receiver, sights and bolt knob join and read well from the side;
+the faults were below, the Bucket Gun's fault again and two smaller ones. The guard's bar ran 2.2 cm into the grip's
+front and the trigger stood 9 mm from it, so the finger had no room. The guard's front upright stopped 4.5 mm under the
+frame, with light between them. The grip is raked back, and its top front corner hung 3.6 mm under the frame, a wedge
+of light at the front of the grip.
+
+Now the trigger and guard sit 1.5 cm forward and 4.5 mm up: 2.4 cm of room between the trigger and the grip, the bar's
+back end 6.9 mm into the grip's front, the front upright flush with the frame. The trigger shows 1.3 cm under the frame
+(was 1.75) with the bar 6.5 mm below it. The grip moves 4 mm up so its top front corner meets the frame, and the
+shooting hand moves with it (`FP_HANDS.boltpistol`). The barrel, sights and bolt did not move, so the aimed picture is
+unchanged. Pictures: `docs/guns/boltpistol-side-before.png`, `docs/guns/boltpistol-side.png`. That is the twelve.
+### Verified
+- `tests/gun-boltpistol.test.mjs` (new, 6 checks; writes the side picture). Before (v1.235): the finger's room 9.4 mm,
+  the bar 2.2 cm into the grip, the front upright 4.5 mm short of the frame, the grip's corner 3.6 mm under it; four of
+  six checks failed. After: 2.4 cm, 6.9 mm, 0 mm, −0.4 mm (just inside). All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Bolt Pistol: both hands on, none on the
+  sight line), `backyard-guns` (its blade on the reticle, its shop row), `shop-pics`, `under-parts`: all pass.
+### Still open
+- Michael's eye on the pictures. The frame is still one deep box under the receiver tube, and the grip a straight
+  slab; a target pistol's grip would be shaped wood with a thumb rest. With this D.31's one-at-a-time pass is done;
+  whether any gun wants a second pass is his call from the pictures in `docs/guns/`.
