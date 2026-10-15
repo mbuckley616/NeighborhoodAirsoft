@@ -2043,7 +2043,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.240</div>
+  <div class="version">v1.241</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23963,7 +23963,7 @@ function playShopChaching() {
 }
 function showPauseHint() {
   const hint = document.getElementById('pauseHint');
-  hint.style.display = Game.mouse.locked ? 'none' : 'block';
+  hint.style.display = (Game.mouse.locked || Pad.active) ? 'none' : 'block';   // v1.241: not with a pad
 }
 
 // ---------------------------------------------------------------------
@@ -23988,7 +23988,7 @@ document.addEventListener('pointerlockchange', () => {
   Game.mouse.locked = document.pointerLockElement === Game.renderer.domElement;
   if (was && !Game.mouse.locked && Game.mode === 'scenario') openPauseMenu();   // v1.239 (D.39): Escape let go of it
   document.getElementById('pauseHint').style.display =
-    (!Game.mouse.locked && !Game.paused && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
+    (!Game.mouse.locked && !Game.paused && !Pad.active && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
 });
 
 // ---------------------------------------------------------------------
@@ -24131,6 +24131,102 @@ document.addEventListener('mouseup', e => {
 document.addEventListener('contextmenu', e => {
   if (Game.mode === 'scenario' || Game.mode === 'bedroom') e.preventDefault();
 });
+
+// v1.241 (backlog D.38, Michael 14 Oct: "I think we have partial controller support - can we look into having full
+// controller support?"): there was none; nothing read a gamepad. Now a pad in the browser's standard layout (Xbox,
+// PlayStation, most others) plays a match and walks the bedroom. Read once a step (stepGame), it drives the same paths
+// as the keys and mouse: the left stick moves (analog, so a half push walks slower), the right stick looks (the
+// settings' sensitivities and invert apply), RT fires and LT aims, A jumps (in the bedroom it is E), B crouches and
+// slides, X reloads (held, as R; it also clears a jam), Y and RB pick the next slot, LB the one before, the d-pad slots
+// 1-4, a click of the left stick sprints until the stick lets go, Start pauses and resumes, Back/View asks to forfeit.
+// On the pause menu and the forfeit question A is yes and B is no. A pad needs no pointer lock: once it is used the
+// player moves without one, and the "click to capture" note stays hidden while it is.
+const PAD_DEAD = 0.18;          // radial dead zone of each stick
+const PAD_LOOK_PX = 1150;       // full right stick = this many mouse pixels a second (about 2.5 rad/s at 1.0×)
+const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11,
+                  UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const Pad = { active: false, prev: [], move: { x: 0, z: 0 }, sprintLatch: false, ads: false, fire: false };
+function padStick(x, y) {
+  const m = Math.hypot(x, y);
+  if (m < PAD_DEAD) return { x: 0, y: 0, m: 0 };
+  const k = Math.min(1, (m - PAD_DEAD) / (1 - PAD_DEAD)) / m;
+  return { x: x * k, y: y * k, m: Math.min(1, m * k) };
+}
+function padKey(code, down) {   // the pad's buttons go through the keyboard's own handlers
+  document.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, cancelable: true }));
+}
+function padCycleSlot(dir) {
+  const n = getUnlockedSlotCount();
+  for (let i = 1; i < n; i++) {
+    const idx = (Game.held.slotIdx + dir * i + n * 4) % n;
+    if (Game.persist.loadoutSlots[idx]) { trySwitchSlot(idx); return; }
+  }
+}
+function pollGamepad(dt) {
+  const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+  let gp = null;
+  for (const p of pads) if (p && p.connected !== false && p.buttons && p.buttons.length) { gp = p; break; }
+  if (!gp) {
+    if (Pad.active) { Pad.move.x = Pad.move.z = 0; Pad.prev = []; }
+    return;
+  }
+  const btn = gp.buttons.map((b, i) => {
+    const v = typeof b === 'object' ? (b.value || (b.pressed ? 1 : 0)) : +b;
+    return (i === PAD_BTN.LT || i === PAD_BTN.RT) ? v > 0.4 : (typeof b === 'object' ? !!b.pressed || v > 0.5 : v > 0.5);
+  });
+  const ax = gp.axes || [];
+  const ls = padStick(ax[0] || 0, ax[1] || 0), rs = padStick(ax[2] || 0, ax[3] || 0);
+  const prev = Pad.prev;
+  const was = i => !!prev[i], now = i => !!btn[i];
+  const pressed = i => now(i) && !was(i), released = i => !now(i) && was(i);
+  if (btn.some(Boolean) || ls.m > 0 || rs.m > 0) {
+    if (!Pad.active) { Pad.active = true; document.getElementById('pauseHint').style.display = 'none'; }
+  }
+  Pad.prev = btn;
+  if (!Pad.active) return;
+  const inMatch = Game.mode === 'scenario';
+  // the questions over a match: A is yes, B is no; Start resumes from the pause menu
+  if (Game.forfeitAsk) {
+    if (pressed(PAD_BTN.A)) padKey('Enter', true);
+    else if (pressed(PAD_BTN.B) || pressed(PAD_BTN.BACK)) padKey('Escape', true);
+    return;
+  }
+  if (Game.paused) {
+    if (document.getElementById('settingsScreen').classList.contains('active')) return;
+    if (pressed(PAD_BTN.START) || pressed(PAD_BTN.A) || pressed(PAD_BTN.B)) { Game._pausedAt = 0; padKey('Escape', true); }
+    else if (pressed(PAD_BTN.BACK)) padKey('KeyF', true);
+    return;
+  }
+  if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
+  // sticks: movement and look (read by updatePlayer)
+  Pad.move.x = ls.x; Pad.move.z = ls.y;
+  Game.mouse.dx += Math.sign(rs.x) * Math.pow(Math.abs(rs.x), 1.6) * PAD_LOOK_PX * dt;
+  Game.mouse.dy += Math.sign(rs.y) * Math.pow(Math.abs(rs.y), 1.6) * PAD_LOOK_PX * dt;
+  if (Game.mode === 'bedroom') {
+    if (pressed(PAD_BTN.A)) padKey('KeyE', true);
+    return;
+  }
+  if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }
+  if (pressed(PAD_BTN.BACK)) { padKey('KeyF', true); return; }
+  if (pressed(PAD_BTN.A)) padKey('Space', true);
+  if (pressed(PAD_BTN.B)) padKey('ControlLeft', true);
+  if (pressed(PAD_BTN.X)) padKey('KeyR', true);
+  if (released(PAD_BTN.X)) padKey('KeyR', false);
+  if (pressed(PAD_BTN.Y) || pressed(PAD_BTN.RB)) padCycleSlot(1);
+  if (pressed(PAD_BTN.LB)) padCycleSlot(-1);
+  const dpad = [PAD_BTN.UP, PAD_BTN.RIGHT, PAD_BTN.DOWN, PAD_BTN.LEFT];
+  for (let i = 0; i < 4; i++) if (pressed(dpad[i])) trySwitchSlot(i);
+  // sprint: a click of the left stick holds Shift until the stick lets go
+  if (pressed(PAD_BTN.L3) && ls.m > 0) { Pad.sprintLatch = true; Game.keys['ShiftLeft'] = true; }
+  if (Pad.sprintLatch && ls.m === 0) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
+  // triggers: aim and fire, as the right and left mouse buttons (by state, so a trigger let go while paused lets go)
+  if (now(PAD_BTN.LT) !== Pad.ads) { Pad.ads = now(PAD_BTN.LT); Game.player.adsTarget = Pad.ads ? 1 : 0; }
+  if (now(PAD_BTN.RT) !== Pad.fire) {
+    Pad.fire = now(PAD_BTN.RT);
+    if (Pad.fire) { Game.mouseLMB = true; onLmbDown(); }
+    else { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); }
+  }
+}
 
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
@@ -24323,7 +24419,7 @@ function ladderAt(x, z) {
 // Returns true while he is on a ladder (updatePlayer then moves him no other way).
 function updateLadder(dt) {
   const p = Game.player, k = Game.keys || {};
-  const up = !!k['KeyW'], down = !!k['KeyS'];
+  const up = !!k['KeyW'] || Pad.move.z < -0.5, down = !!k['KeyS'] || Pad.move.z > 0.5;   // v1.241: the stick climbs
   let L = p.climbing;
   if (!L) {
     const at = ladderAt(p.pos.x, p.pos.z);
@@ -24370,7 +24466,7 @@ function updateLadderPrompt() {
 }
 
 function updatePlayer(dt) {
-  if (!Game.mouse.locked) {
+  if (!Game.mouse.locked && !Pad.active) {   // v1.241 (D.38): a pad plays without the pointer lock
     Game.mouse.dx = 0; Game.mouse.dy = 0;
     easeStanceAndAds(dt);
     // v1.28j: even with the mouse released (e.g. just entered the bedroom, or
@@ -24434,7 +24530,8 @@ function updatePlayer(dt) {
   // OR while preserving an air-sprint jump; recharges after a short delay
   // otherwise. Hitting zero forces an exhausted lockout.
   {
-    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']);
+    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']) ||
+                         Pad.move.x !== 0 || Pad.move.z !== 0;   // v1.241
     const draining = inScenario && (Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround)) && pressingMove;
     if (draining) {
       Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * underPartMult('sprintDrainMult') * dt;   // v1.169: sling
@@ -24486,6 +24583,7 @@ function updatePlayer(dt) {
     if (Game.keys['KeyD']) mx += 1;
     const mag = Math.hypot(mx, mz);
     if (mag > 0) { mx /= mag; mz /= mag; }
+    else if (Pad.move.x !== 0 || Pad.move.z !== 0) { mx = Pad.move.x; mz = Pad.move.z; }   // v1.241: the stick, analog
 
     let speed = inScenario ? MOVE_SPEED_SCENARIO : MOVE_SPEED;
     if (inScenario) {
@@ -24513,7 +24611,7 @@ function updatePlayer(dt) {
     const sinY = Math.sin(Game.player.yaw);
     wx = (mx * cosY + mz * sinY) * speed;
     wz = (-mx * sinY + mz * cosY) * speed;
-    movingForwardish = mag > 0;
+    movingForwardish = mx !== 0 || mz !== 0;   // v1.241: the stick too
   }
 
   // Apply horizontal motion with collision
@@ -30458,6 +30556,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  pollGamepad(dt);   // v1.241 (D.38)
   updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {

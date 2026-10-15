@@ -10519,3 +10519,34 @@ mode, so the cheap automatics this item asks for land under AUTOMATICS. Picture:
 - D.37's first half, the 3-4 cheap clear-plastic automatics (low rate of fire, wild spin, jams), is not built. Their
   names, prices and how bad each is are design; a question goes to decisions if Michael wants to choose, else the
   builder proposes them there.
+
+## v1.241 — A controller plays a match
+Backlog D.38 (Michael, 14 Oct): "I think we have partial controller support - can we look into having full controller
+support?" There was none: nothing in the game read a gamepad, and the match would not move you at all without the
+mouse captured. Now a pad in the browser's standard layout (Xbox, PlayStation and most others) plays a match and walks
+the bedroom, and needs no captured mouse: once it is used you move without one and the "click to capture" note stays
+hidden. The left stick moves, analog (a half push walks at half speed); the right stick looks, about 2.5 radians a
+second at full tilt, scaled by the settings' sensitivities and flipped by invert look. RT fires and LT aims, the way the
+mouse buttons do (a spring gun still cocks on one pull and fires on the next). A jumps (in the bedroom it is E, use
+what you look at), B crouches and slides, X is R held (reload, clear a jam), Y and RB the next loadout slot, LB the one
+before, the d-pad slots 1-4 (up, right, down, left), a click of the left stick sprints until the stick lets go, the
+stick climbs ladders. Start pauses and resumes; on the pause menu A or B go back too, Back asks the forfeit question,
+and there A forfeits and B keeps playing. The pad is read once a step and goes through the keyboard's own handlers, so
+every rule those keys have (no jump on a ladder, the pause stopping the match) holds for it too.
+### Verified
+- `tests/gamepad.test.mjs` (new, 23 checks) with a stand-in for `navigator.getGamepads()`. Bedroom, mouse not captured:
+  nothing moves until the pad is touched, then the stick walks 1.6 m in 0.5 s, no capture note. Bunratty against Sean,
+  mouse not captured: full stick 4.11 m in 1 s, forward; half a push 2.06 m; full right stick turns 2.53 rad in 1 s, up
+  looks up; L3 sprints and stops with the stick; LT aims (0.997) and lets go (0.003); six RT pulls fire 3 BBs (10 → 7);
+  X holds R; A jumps; B crouches and stands; Y, LB, d-pad right and up go to slots 2, 1, 2, 1; Start pauses (the clock
+  stands for 60 steps, the stick moves nobody) and Start or B resume; Back asks, B keeps playing, Back then A forfeits
+  to the result; unplugged, nothing stays held. Before (v1.240) the stick did nothing.
+- Run after the change: `pause-menu`, `forfeit-ask`, `pointer-lock`, `settings`, `ladder-prompt`, `treehouse`, `jump`,
+  `walk-anim`, `smoke`: all pass (one of the four treehouse suites missed once with three suites running and passed
+  when the four were rerun).
+### Still open
+- Michael's hands on a real pad: whether 2.5 rad/s and the 18% dead zone feel right (a look-speed row in the settings
+  is a small follow-up), and whether his pad reports the standard layout (Chrome and Firefox do for Xbox and
+  PlayStation pads; an odd one may map buttons elsewhere).
+- The screens between matches (title, map, briefing, result, shop, loadout, mirror, settings) still want the mouse:
+  pad navigation of them is D.38's second step. The on-screen hints still name keyboard keys.
