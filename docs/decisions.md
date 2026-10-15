@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The cheap clear-plastic automatics (D.37): which ones? (builder, 2026-10-15)**
+  You asked for 3-4 "shitty" automatic guns in see-through white plastic: low rate of fire, wild spin so BBs go every
+  which way, or prone to jamming. The shop's Guns tab now has an AUTOMATICS chip they would land under (v1.240). All
+  of them would be cheaper than the Bucket Gun ($110), sold on airsoft.com, carried by no kid at first, each with its
+  own model in clear plastic with an orange tip, and each bad in its own way:
+  - A) **Three:** the *Clear Sprayer* ($35, a little battery SMG: 6 BBs a second but every BB curves hard, a 3 m
+    circle at 15 m), the *Ghost Mini* ($45, a clear micro-uzi: steady aim, but jams about one burst in five, R held to
+    clear it), and the *Tick-Tock* ($55, a clear rifle: dead accurate and the longest reach of the three, but only 2
+    BBs a second, ticking like a clock). *(recommended: three kinds of bad, one each, cheap enough to buy early)*
+  - B) A, and a fourth, the *Rattle Can* ($25, all three faults at once, a joke gun for the first week of summer).
+  - C) Two only, the Sprayer and the Ghost Mini; rifles stay spring guns.
+  - D) Different guns or faults (say which in a note).
+
 - **Squad commands (D.35): how do you give them? (builder, 2026-10-15)**
   You asked for Battlefront-style orders to your team: push up, keep distance, find cover, follow me. Your teammates
   are the ally kids in team matches (3v3, 4v4, VIP, flags, the Pickup Game). Whatever you pick: an order goes to every
