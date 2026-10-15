@@ -1047,6 +1047,14 @@
   #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
   #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
   #resultScreen .rs-rival .rs-tag { color: #e0503a; }   /* v1.196 */
+  /* v1.238 (D.34): the damage report, your kid front and back with each hit marked, and the list */
+  #resultScreen .rs-damage { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(212,165,116,0.25); }
+  #resultScreen .rs-dmg-fig { position: relative; width: 176px; height: 150px; flex: none; }
+  #resultScreen .rs-dmg-fig canvas, #resultScreen .rs-dmg-fig svg { position: absolute; left: 0; top: 0; width: 176px; height: 150px; }
+  #resultScreen .rs-dmg-list { font-size: 11px; color: #ddd; line-height: 1.35; flex: 1; min-width: 0; }
+  #resultScreen .rs-dmg-list .rs-tag { display: block; margin-bottom: 3px; }
+  #resultScreen .rs-dmg-row { margin-bottom: 2px; }
+  #resultScreen .rs-dmg-n { display: inline-block; width: 14px; height: 14px; line-height: 14px; border-radius: 7px; background: #e0503a; color: #fff; font-size: 9px; text-align: center; font-weight: bold; margin-right: 4px; }
   #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
@@ -2021,7 +2029,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.237</div>
+  <div class="version">v1.238</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -21899,11 +21907,114 @@ function startScenario(built) {
 // Each match counts your trigger pulls, your tags (each hit on a kid of the other side puts him out or sends him back),
 // how far each one flew and when, and the hits on you. The result screen shows them with the match's time, picks one
 // best moment, and says what the match opened: the next match it unlocked and any gun its pay put in reach.
-function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0 }; }
+function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0, damage: [] }; }   // v1.238: damage
 function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
   st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+}
+// v1.238 (backlog D.34, Michael 14 Oct: "a 'damage report' after you've been eliminated from a match that shows where
+// you were shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that
+// landed on your character"). Each hit on you keeps where it landed on your body (its height up your hitbox, how far
+// off your middle and which side it came from), who fired it, his gun, the distance, the time and which life it was.
+function noteDamageOnYou(bb) {
+  const P = Game.player, st = Game.scenario.stats;
+  if (!st.damage) st.damage = [];
+  const h = Math.max(0, Math.min(1, (bb.pos.y - P.pos.y) / (P.eyeOffset + 0.1)));
+  const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);          // your facing
+  const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);           // your right
+  const dx = bb.pos.x - P.pos.x, dz = bb.pos.z - P.pos.z;
+  const lat = dx * rx + dz * rz;                                // + to your right
+  const vx = bb.vel ? bb.vel.x : -dx, vz = bb.vel ? bb.vel.z : -dz;
+  const front = (-vx * fx - vz * fz) >= 0;                      // it came from in front of you
+  const side = lat >= 0 ? 'right' : 'left';
+  const part = h > 0.86 ? 'head' : h > 0.5 ? (Math.abs(lat) > 0.2 ? side + ' arm' : (front ? 'chest' : 'back'))
+    : h > 0.4 ? (front ? 'stomach' : 'lower back') : side + ' leg';
+  const e = bb.enemyRef;
+  const from = bb.spawnPos || null;
+  const pickup = !!(SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup);
+  st.damage.push({ part, front, h: +h.toFixed(3), lat: +Math.max(-0.3, Math.min(0.3, lat)).toFixed(3),
+    by: e ? (e.name || 'a kid') : null, gun: e && e.weapon ? getGunDisplayName(e.weapon) : null,
+    dist: from ? Math.round(Math.hypot(P.pos.x - from.x, P.pos.z - from.z)) : null,
+    t: Game.scenario.roundTime || 0, life: pickup ? P.hitsTaken : (Game.scenario.playerRespawns || 0) + 1 });
+}
+// Shown on the result screen once you have been tagged out: a match lost, or any life lost in one you came back in.
+const DAMAGE_REPORT = { renderer: null, scene: null, camera: null, kid: null, sig: '' };
+const DAMAGE_W = 176, DAMAGE_H = 150, DAMAGE_ROWS = 8;
+function damageReportHtml(outcome) {
+  const st = Game.scenario.stats;
+  const dmg = (st && st.damage) || [];
+  if (!dmg.length || (outcome === 'win' && !(Game.scenario.playerRespawns > 0))) return '';
+  const lives = new Set(dmg.map(d => d.life)).size > 1;
+  let rows = '';
+  dmg.slice(0, DAMAGE_ROWS).forEach((d, i) => {
+    const who = d.by ? `${d.by}${d.gun ? ', ' + d.gun : ''}` : 'a stray BB';
+    const extra = [d.dist != null ? d.dist + ' m' : '', fmtMatchTime(d.t), lives ? 'life ' + d.life : ''].filter(Boolean).join(' · ');
+    rows += `<div class="rs-dmg-row"><span class="rs-dmg-n">${i + 1}</span>${d.part[0].toUpperCase() + d.part.slice(1)} — ${who}<br><span style="color:#9a8f7c">${extra}</span></div>`;
+  });
+  if (dmg.length > DAMAGE_ROWS) rows += `<div class="rs-dmg-row" style="color:#9a8f7c">and ${dmg.length - DAMAGE_ROWS} more</div>`;
+  return `<div class="rs-damage" id="rsDamage"><div class="rs-dmg-fig"><canvas id="rsDamageCanvas" width="${DAMAGE_W}" height="${DAMAGE_H}"></canvas>` +
+    `<svg id="rsDamageDots" viewBox="0 0 ${DAMAGE_W} ${DAMAGE_H}"></svg></div>` +
+    `<div class="rs-dmg-list"><span class="rs-tag">DAMAGE REPORT</span>${rows}</div></div>`;
+}
+// Your kid (your look, your gun, your gear) drawn twice, front and back, with a numbered dot where each hit landed:
+// hits from in front on the front view, from behind on the back one.
+function drawDamageReport() {
+  const canvas = document.getElementById('rsDamageCanvas'), svg = document.getElementById('rsDamageDots');
+  if (!canvas || !svg) return;
+  const D = DAMAGE_REPORT;
+  if (!D.renderer) {
+    D.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    D.renderer.setSize(DAMAGE_W, DAMAGE_H, false);
+    D.scene = new THREE.Scene();
+    D.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
+    const l = new THREE.DirectionalLight(0xffffff, 0.6); l.position.set(0, 3, 4); D.scene.add(l);
+    const l2 = new THREE.DirectionalLight(0xffffff, 0.4); l2.position.set(0, 3, -4); D.scene.add(l2);
+    D.camera = new THREE.PerspectiveCamera(30, (DAMAGE_W / 2) / DAMAGE_H, 0.1, 20);
+  }
+  const gk = loadoutKidGearKeys();
+  const sig = JSON.stringify([Game.persist.look, Game.persist.equipped.gun, gk]);
+  if (D.sig !== sig) {
+    if (D.kid) D.scene.remove(D.kid.group);
+    D.kid = createKid(Object.assign({}, Game.persist.look), Game.persist.equipped.gun);
+    buildKidGear(D.kid, gk);
+    D.scene.add(D.kid.group); D.sig = sig;
+  }
+  const kid = D.kid.group;
+  kid.rotation.set(0, 0, 0); kid.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(kid), tall = box.max.y - box.min.y;
+  const cy = box.min.y + tall / 2, dist = tall / 2 / Math.tan(15 * Math.PI / 180) * 1.12;
+  const r = D.renderer, half = DAMAGE_W / 2;
+  r.setScissorTest(true);
+  r.setClearColor(0x2a2f38, 1);
+  const dots = [];
+  const dmg = (Game.scenario.stats && Game.scenario.stats.damage || []).slice(0, DAMAGE_ROWS);
+  for (const [i, back] of [[0, false], [1, true]]) {
+    kid.rotation.y = back ? Math.PI : 0; kid.updateMatrixWorld(true);
+    D.camera.position.set(0, cy, dist); D.camera.lookAt(0, cy, 0); D.camera.updateMatrixWorld(true);
+    r.setViewport(i * half, 0, half, DAMAGE_H); r.setScissor(i * half, 0, half, DAMAGE_H);
+    r.render(D.scene, D.camera);
+    dmg.forEach((d, n) => {
+      if (d.front === back) return;
+      // the kid's right is −x and he faces +z; on the back view the group is turned round
+      // on the leg or arm it hit, else near the middle (the hitbox is a cylinder, the kid is not)
+      const sg = d.lat < 0 ? -1 : 1, ax = Math.abs(d.lat);
+      const x = sg * (/leg/.test(d.part) ? 0.09 : /arm/.test(d.part) ? 0.27 : Math.min(ax, 0.15));
+      const p = new THREE.Vector3(-x, box.min.y + d.h * tall, back ? -0.14 : 0.14).applyMatrix4(kid.matrixWorld).project(D.camera);
+      dots.push({ n: n + 1, x: i * half + (p.x + 1) / 2 * half, y: (1 - p.y) / 2 * DAMAGE_H });
+    });
+  }
+  r.setScissorTest(false);
+  kid.rotation.y = 0;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(r.domElement, 0, 0, DAMAGE_W, DAMAGE_H);
+  let html = `<text x="4" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">FRONT</text>` +
+    `<text x="${half + 4}" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">BACK</text>` +
+    `<line x1="${half}" y1="6" x2="${half}" y2="${DAMAGE_H - 14}" stroke="rgba(255,255,255,0.12)"/>`;
+  for (const d of dots) html += `<g class="rs-dot" data-n="${d.n}"><circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="6" fill="#e0503a" stroke="#fff" stroke-width="1"/>` +
+    `<text x="${d.x.toFixed(1)}" y="${(d.y + 3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff">${d.n}</text></g>`;
+  svg.innerHTML = html;
+  Game.scenario.lastDamageDots = dots;
 }
 const MATCH_DOUBLE_SEC = 3, MATCH_LONG_TAG_M = 15;
 function matchBestMoment(st, outcome) {
@@ -21956,9 +22067,12 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
+  const dmgHtml = damageReportHtml(outcome);   // v1.238 (D.34)
+  html += dmgHtml;
   el.innerHTML = html;
+  if (dmgHtml) { try { drawDamageReport(); } catch (e) { console.warn('damage report', e); } }
   Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
-    time: Game.scenario.roundTime || 0, best, opened, reach, rival };
+    time: Game.scenario.roundTime || 0, best, opened, reach, rival, damage: dmgHtml ? (st.damage || []).slice() : [] };
 }
 
 function endScenario(outcome) {
@@ -26388,6 +26502,7 @@ function applyBBHit(bb, c) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
     if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
+    if (Game.scenario.stats && bb.pos) noteDamageOnYou(bb);   // v1.238 (D.34): where, by whom, with what
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');

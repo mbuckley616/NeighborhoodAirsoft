@@ -10445,3 +10445,30 @@ lets BBs through.
 - Hearing it: the headless browser has no voices, so the lines are tested as chosen, not as heard. Whether out kids
   should cost you something for overshooting (pay, or a word on the result screen) is Michael's call; nothing does now.
 - When the voices build (D.9, v1.229) lands, its own pools can take these lines over; the category name is `shotWhileOut`.
+
+## v1.238 — The damage report
+Backlog D.34 (Michael, 14 Oct): "a 'damage report' after you've been eliminated from a match that shows where you were
+shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that landed on your
+character." Before this the result screen only counted the hits on you.
+
+Now each BB that lands on you keeps where it landed: how far up your body (head over 86% of your height, chest or back
+over half, stomach or lower back above 40%, a leg below; an arm when it lands more than 20 cm off your middle in the
+top half), which side it came from, who fired it and his gun, how far he was, when, and which life it took. The result
+screen of a match you were tagged out of (a loss, or any match where you lost a life and came back: Pickup Game, VIP,
+flags) shows a DAMAGE REPORT under the numbers: your own kid, in your look, gun and gear, drawn front and back, with a
+numbered red dot on each hit (a hit from in front on the front view, from behind on the back), and beside it one row a
+hit: "Chest — Brooke, Spring Shotgun · 12 m · 0:00 · life 1". Life numbers show only when there was more than one
+life; eight rows at most, then "and N more". A win without a life lost shows none. The kid is drawn once per result by
+its own small renderer and copied into a canvas, so the screen costs one extra draw.
+### Verified
+- `tests/damage-report.test.mjs` (new, 13 checks). Pickup Game, 3 lives: Brooke's BBs on your chest from in front,
+  your head from behind and your right leg from the side, a life each; the report reads chest/head/right leg, lives
+  1/2/3, Brooke and her Spring Shotgun from 12 m, and the list says so. Dots 1 and 3 on the front view, 2 on the back;
+  the head dot at y 15 of 150, the chest at 58, the leg at 117 and on the kid's right (the left of the front view); the
+  kid's pixels show in both views. A one-hit loss to Seth: one row, no life numbers. A win with no life lost: no report.
+  Before (v1.237) there was no report to find. Picture: `docs/damage-report.png`.
+- Run after the change: `result-stats`, `pickup-lives`, both `vip` suites, `smoke`: all pass.
+### Still open
+- Michael's eye on it in play. The hitbox on you is a cylinder, so "arm" is a guess from how far off your middle the BB
+  landed; the dots sit on the part named, not at the exact spot. Hits that land in the 2 s cover after a respawn don't
+  count and aren't listed.
