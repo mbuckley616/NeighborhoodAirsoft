@@ -78,7 +78,8 @@ const play = async (order, opts = {}) => {
         const f = foeD(e); if (f < Infinity) rows[i].foe.push(+f.toFixed(1));
         rows[i].me.push(+Math.hypot(e.pos.x - Game.player.pos.x, e.pos.z - Game.player.pos.z).toFixed(1));
         rows[i].n2++; if ((e.mesh.pose?.crouch ?? 0) > 0.5) rows[i].low++;
-        if (order === 'cover' && e._ordCover) rows[i].atCover = +Math.hypot(e._ordCover.at.x - e.pos.x, e._ordCover.at.z - e.pos.z).toFixed(2);
+        // fix-up (PR #75): the closest he got, not the last sample's distance (CI: 6.93 m once, after reaching it)
+        if (order === 'cover' && e._ordCover) rows[i].atCover = Math.min(rows[i].atCover ?? Infinity, +Math.hypot(e._ordCover.at.x - e.pos.x, e._ordCover.at.z - e.pos.z).toFixed(2));
       });
     }
     const mean = a => a.length ? +(a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : null;
@@ -111,7 +112,11 @@ check('follow me: with you walked to the middle of the field, every teammate is 
 check('...which they are not with no order', fBase.mates.some(m => m.meMax > 7), fBase.mates.map(m => [m.n, m.meMax]));
 
 // follow me's "shoot what I shoot at": look at one of the other side and he is the kid your teammates go for
+// fix-up (PR #75): on a fresh round, past the deploy; the last round can end with every opponent tagged (they don't
+// fire), and then there was nobody to look at (TypeError reading 'pos', 1 run in 8)
+await start();
 const aim = await page.evaluate(() => {
+  for (let i = 0; i < 150; i++) stepGame(1 / 60);
   giveSquadOrder('follow');
   const m0 = squadMates().find(e => e.health > 0), foe = opposingCombatants(m0).filter(c => c !== Game.player).pop(), p = Game.player.pos;
   Game.player.yaw = Math.atan2(-(foe.pos.x - p.x), -(foe.pos.z - p.z));
