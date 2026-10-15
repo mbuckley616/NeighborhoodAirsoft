@@ -1,9 +1,10 @@
 // v1.245 (Found in play, critic 15 Oct): "The first loss of a session freezes the game: endScenario('lose') took 2,227
 // and 3,338 ms on a fresh boot (then 3–6 ms), all in the damage report (v1.238) creating its own WebGL renderer on its
-// first draw." The report's renderer is now made, and its kid's shaders compiled, at boot; the first loss makes no
-// WebGL context and compiles no shader, and takes what later losses take.
+// first draw." The report's renderer is now made, and its kid's shaders compiled, at the title just after the page
+// loads; the first loss makes no WebGL context and compiles no shader, and takes what later losses take.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
+await page.waitForFunction(() => !!DAMAGE_REPORT.renderer, null, { timeout: 30000 }).catch(() => {});
 const atTitle = await page.evaluate(() => ({ mode: Game.mode, made: !!DAMAGE_REPORT.renderer,
   progs: DAMAGE_REPORT.renderer ? DAMAGE_REPORT.renderer.info.programs.length : 0 }));
 check('at the title the report\'s renderer is made and its shader compiled', atTitle.made && atTitle.progs >= 1, atTitle);

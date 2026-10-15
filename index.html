@@ -22013,7 +22013,7 @@ function damageReportHtml(outcome) {
     `<svg id="rsDamageDots" viewBox="0 0 ${DAMAGE_W} ${DAMAGE_H}"></svg></div>` +
     `<div class="rs-dmg-list"><span class="rs-tag">DAMAGE REPORT</span>${rows}</div></div>`;
 }
-// v1.245: the report's own renderer is made, and its kid's shaders compiled, at boot (warmDamageReport). Made on the
+// v1.245: the report's own renderer is made, and its kid's shaders compiled, at the title (warmDamageReport). Made on the
 // first loss it froze the game for 2–3 s there, waiting on the GPU (critic, 15 Oct); later losses took 3–6 ms.
 function initDamageReport() {
   const D = DAMAGE_REPORT;
@@ -31866,8 +31866,11 @@ document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
 document.getElementById('loadoutCloseBtn').addEventListener('click', closeLoadout);
 document.getElementById('wbCloseBtn').addEventListener('click', closeWorkbench);
 
-// v1.245: the damage report's renderer and shaders, ready before the first loss
-try { warmDamageReport(); } catch (e) { console.warn('damage report warm-up', e); }
+// v1.245: the damage report's renderer and shaders, ready before the first loss. Made just after the page has loaded,
+// while the title sits idle, not during the load (it is most of a second on a software GPU).
+window.addEventListener('load', () => setTimeout(() => {
+  try { warmDamageReport(); } catch (e) { console.warn('damage report warm-up', e); }
+}, 500));
 // Start render loop immediately (title screen renders nothing but stays warm)
 Game.clock.start();
 tick();

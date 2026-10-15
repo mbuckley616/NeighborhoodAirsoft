@@ -10619,8 +10619,10 @@ report (v1.238) making its own WebGL renderer on its first draw; later losses to
 Timing the parts showed the drawing was never the cost: making the renderer was 5.4 s of it, the report itself 39 ms
 after. A first try drew the report with the game's own renderer instead, which makes no context, but the read-back of
 its pixels then waited on every frame the game had queued for the GPU (4.0 s in the render call), so it was undone.
-The report now makes its renderer at boot, before the title shows, and draws a kid once there so its shaders are
-compiled; a loss only swaps in your look, gun and gear. Nothing about how the report looks changed.
+The report now makes its renderer at the title, half a second after the page has loaded, and draws a kid once there
+so its shaders are compiled; a loss only swaps in your look, gun and gear. (Made during the load itself it added
+0.7–0.9 s to it on the tests' software GPU, enough to push loaded suites past their 30 s page-load limit, so it waits
+for the load.) Nothing about how the report looks changed.
 ### Verified
 - `tests/damage-report-first.test.mjs` (new, 7 checks): at the title the report's renderer exists with its shader
   compiled. A real loss in The Seth House (one BB into your chest, stepped until the round ends): the result shows the
@@ -10629,8 +10631,8 @@ compiled; a loss only swaps in your look, gun and gear. Nothing about how the re
   measured with the same loss). No page errors.
 - `tests/damage-report.test.mjs` (v1.238) passes unchanged: the dots, rows and both views as before.
 ### Still open
-- The renderer is now made during page load instead; on a slow machine that is a moment longer before the title,
-  where it is not felt in play. Michael's eye on whether the first loss on his machine now shows at once.
+- The cost moved to the title: 0.7–0.9 s of the main thread headless (far less on a real GPU), where nothing is
+  moving. Michael's eye on whether the first loss on his machine now shows at once.
 
 ## v1.246 — A free-for-all loss has nobody regrouping
 Found in play (critic, 15 Oct): losing Every Kid for Themselves said "Seth, Trey, Brooke, and Jamie regroup near the
@@ -10659,5 +10661,8 @@ was 9). No game code changed.
 ### Verified
 - `tests/seth-shotgun.test.mjs` three times at once, with two other shards running: near 1.89, 2.58 and 2.47 pellets a
   shot, far 0, 0.19 and 0.17, so far is 0–8% of near against the 50% line. All checks pass each time.
+- This run's full suite: `npm test` in four parallel shards on v1.247, 124 of 145 passed; all 21 misses died loading
+  the page (30 s limit) under that load, and all 21 rerun three at a time pass, with v1.245's warm-up moved after the
+  load (first loss 30 ms, second 7 ms).
 ### Still open
 - Nothing for the game; the suite takes about a third longer.
