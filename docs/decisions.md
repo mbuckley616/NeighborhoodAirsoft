@@ -5,6 +5,72 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
+- **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
+  The critic (15 Oct, v1.244) found Every Kid for Themselves decided by Seth: your `road_east` start is 27.7 m from his
+  backyard (the others 32–59 m), he has a line to you by 2–3 s, and tagged a player standing at the start at 4.4–7.7 s
+  in 4 of 4 probes and took all 4 of the bot's losses. Bunratty's 6-way did the same on 14 Oct with Sean (all six of
+  your lives from 17–20 m, each within 2–3 s of coming back). For the lot's free-for-all you chose B on 1 Oct: hidden
+  starts, yours behind a car at the edge, "one of seven hidden kids"; the lot's test now holds every start 18 m or more
+  from the next and none in sight of another. Winnmark's and Bunratty's free-for-alls never got that rule.
+  - A) **The lot's rule on every free-for-all:** move starts (yours or the kids') until each is at least 18 m from the
+    next, none in sight of another, and no kid nearer your start than the rest; a test holds it on all four maps,
+    the Pickup Game's free-for-alls included. *(recommended: it is the rule you already set, and it keeps the
+    briefing's "everyone shoots at you the second they see you" without one kid owning the start)*
+  - B) Only move your start on Winnmark and Bunratty, away from Seth and Sean.
+  - C) Leave it: in a free-for-all somebody is always nearest.
+  The lose line that had all four "regroup near the road" together is fixed already (v1.246: it names who got you and
+  says the rest keep going at each other).
+  Michael: **A) The lot's rule on every free-for-all**. (2026-10-15)
+
+- **Lamplight on Bellfield: Fernando's AK can reach your start (builder, 2026-10-15)**
+  CI on PR #75 failed the check that a player standing at the entry in Lamplight on Bellfield (the night 4v4) is not
+  tagged in the first 5 s: tagged at 4.6 s. Reproduced in 1 of 45 rounds (4.7 s): Fernando, 5 m from his start, landed
+  an AK BB from 55.5 m. The test's own check prints that he and Christian have a line to the entry from their starts,
+  and an AK engages out to 100 m. Of the other 44 rounds, one was tagged at 10 s, 32 at 13.8–29.1 s, 11 not in 30 s. It
+  is rare, but it is a tag before you have moved, and it fails CI now and then.
+  - A) **Move Fernando's (and Christian's) start out of the line to the entry**, behind a house or the island's
+    hedge, so nobody can see your start at BEGIN. *(recommended: the same "no line from a start" rule the other night
+    matches keep, and nothing else about the match changes)*
+  - B) At night an AK engages out to 60 m, not 100 m, on every night map.
+  - C) Leave the match; the check allows a tag from 4 s on.
+  Michael: **A) Move Fernando's (and Christian's) start out of the line to the entry**. (2026-10-15)
+
+- **Views past the edge of every map (D.24–D.25): generic now, or from your own pictures of the real streets? (deep-work session, 2026-10-15)**
+  I stood at the middle of each map's four edges in a headless browser and looked outward. Pictures of the four worst:
+  [Bunratty](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-BunrattyCourt.png),
+  [the Riverside Market lot](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-MarketLot.png),
+  [the Country Club](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-CountryClub.png),
+  [Winnmark](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-WinnmarkCourt.png).
+  What shows today: on Bunratty, looking north and west there is no ground at all, only sky. On Winnmark, looking east
+  the grass stops and the sky begins. On the market lot, the high school and the country club, a flat green field runs
+  to a hard line under an empty sky (at the school and the club, just past the chain-link fence). The grocery store's
+  front windows show plain sky, not its parking lot. The Hollow, Bellfield and the treehouse yard are mostly fine: fences
+  and a tree line close the view. Northcliff's hills hide most of its edge.
+  How it would be built, whatever you pick: scenery past the fence that nobody can walk into or shoot through (BBs
+  stop where they stop now). The ground runs on to the horizon. Rows of simple houses with roofs and yards stand behind
+  the back fences, with tree lines, rooftops further out, and a soft haze. Each map gets what fits it: more houses behind
+  the courts, a road and other shops beyond the market lot, playing fields and houses beyond the school and the club,
+  and the lot through the grocery store's windows. It is cheap to draw: today an edge view costs 52–180 draw calls and a
+  spawn view 330–1,650, and the backdrop adds at most 40 per map, checked by a test. Nothing loads from the internet.
+  A cloud session cannot reliably pull satellite imagery, so the real look comes only from pictures you send. They
+  would be a guide for shapes and placement (which side has houses, trees, a field or a road; how tall; how far). No
+  photo goes into the game.
+  Options:
+  - A) **Generic backdrops for every map now.** The scenery above, made up to suit each map, with no real references.
+    About two sessions. Nothing needed from you.
+  - B) **A now, then map by map from your pictures.** A first, so no map has a hard edge. Then, as you send pictures of
+    a street, that map's backdrop is reshaped to match it. What to send for each map: 2–4 screenshots from Google Maps
+    (satellite or 3D view, or Street View), standing on the street and looking out past the houses or fences that are
+    the map's edge. Attach them on the control room, or put them in the repo under `docs/refs/<map name>/`. If the repo
+    is public, use the control room, since those pictures show real streets near your home. *(recommended: every map
+    stops looking cut off after one step, and the real look comes map by map as your pictures arrive, with no waiting.)*
+  - C) **Winnmark first, to your pictures, shown to you before the rest.** This waits on your pictures of Winnmark. The
+    other maps keep their hard edges until you have seen Winnmark and said go.
+  - D) Not now.
+  Michael: **B) A now, then map by map from your pictures**. (2026-10-15)
+
 - **Out kids and your BBs: one-way cover? (critic, 2026-10-15, v1.244)**
   Since v1.237 (your D.33) a kid who is out stops your BBs and complains. In a one-life match he stands with his hand
   up where he was tagged for the rest of the round, so he's a shield for whoever is behind him, but only against you:
@@ -15,8 +81,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     airsoft players walk to the safe zone, and stops being in anyone's lane *(critic's recommendation: it's the real
     rule, and it keeps your "shoot him and he's mad" moment for the seconds he stands there)*
   - C) Leave it: it's rare
-
-## Answered
+  Michael: **B) After a few seconds an out kid walks off the field**. (2026-10-15)
 
 - **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
   You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
