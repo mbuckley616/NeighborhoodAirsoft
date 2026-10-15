@@ -10578,3 +10578,18 @@ needs nothing added for the pad. The forfeit question keeps A for yes and B for 
 - Michael's hands on it. The typed crew name at the mirror still needs a keyboard (A puts the caret in the box). The
   workbench's turntable drag and the Loadout kid's spin are mouse drags with no pad equivalent yet. Prompts and hints
   across the game still name keyboard keys; showing pad buttons when a pad is in use is a possible follow-up.
+
+## v1.243 — The Thunder Pump's spread check, seeded
+Found in play (builder, v1.224): `tests/backyard-guns.test.mjs`'s "Thunder Pump: at 15 m under two-thirds of its BBs
+within 0.5 m" sat on its limit, 68.3% once with three suites running and 55.8% alone straight after. Nothing was wrong
+with the gun: the 60 test shots drew their spread from the unseeded `Math.random`, and only the first 120 of about 270
+BBs were flown to 15 m, so the share wandered by a dozen points from run to run against a 67% line. The 60 shots of
+each gun now draw from a seed of their own (`withSeededRandom('backyard-guns:<gun>')`, the game's own seeding), and
+every BB is flown, not the first 120. No game code changed; the version moves so the test change has one.
+### Verified
+- `tests/backyard-guns.test.mjs` twice in a row: the same numbers both times. Thunder Pump 49% within 0.5 m at 15 m
+  over 269 BBs (limit under 67%), the spring shotgun 98% (over 90%); its other figures as before (4.48 BBs a shot,
+  cone 3.72° at 90% against the shotgun's 0.96°, pump 1.43 s against 1.25 s). All checks pass.
+### Still open
+- Two other seedless spreads named in Found in play (Seth's shotgun at 24-28 m in `seth-shotgun`, Fernando's AK share
+  in `pickup-fernando`) are the same kind of near-limit coin flip; each wants the same seeding if it fails again.

@@ -67,16 +67,20 @@ const probe = (gt) => page.evaluate((gt) => {
   const fwd = new THREE.Vector3(0, 0, -1).applyEuler(Game.camera.rotation);
   let shots = 0, pellets = 0, speed = 0, ang = [];
   const flights = [];
-  for (let i = 0; i < 60; i++) {
-    clear();
-    Game.gun.ammo = Game.gun.maxAmmo;
-    const used = fireBB(); shots++; pellets += used;
-    for (const b of mine()) {
-      speed += b.vel.length();
-      ang.push(Math.acos(Math.min(1, b.vel.clone().normalize().dot(fwd))) * 180 / Math.PI);
-      flights.push({ p: b.pos.clone(), v: b.vel.clone(), b });
+  // v1.243 (Found in play, v1.224): the spread was unseeded, so the Thunder Pump's share within 0.5 m ran 56-68% from
+  // run to run against a 67% limit. The 60 shots now draw from a seed per gun, and every BB is flown, not the first 120.
+  withSeededRandom('backyard-guns:' + gt, () => {
+    for (let i = 0; i < 60; i++) {
+      clear();
+      Game.gun.ammo = Game.gun.maxAmmo;
+      const used = fireBB(); shots++; pellets += used;
+      for (const b of mine()) {
+        speed += b.vel.length();
+        ang.push(Math.acos(Math.min(1, b.vel.clone().normalize().dot(fwd))) * 180 / Math.PI);
+        flights.push({ p: b.pos.clone(), v: b.vel.clone(), b });
+      }
     }
-  }
+  });
   out.perShot = pellets / shots;
   out.speed = speed / pellets;
   ang.sort((a, b) => a - b);
@@ -84,7 +88,7 @@ const probe = (gt) => page.evaluate((gt) => {
   out.cone90 = ang[Math.floor(ang.length * 0.9)];
   // off line at 15 m: fly each BB in free air (no world) with the game's own drag-free model, curve included
   const off = [];
-  for (const fl of flights.slice(0, 120)) {
+  for (const fl of flights) {
     const b = fl.b, pos = fl.p.clone(), vel = fl.v.clone();
     const start = pos.clone();
     let age = 0;
@@ -100,9 +104,9 @@ const probe = (gt) => page.evaluate((gt) => {
     }
   }
   off.sort((a, b) => a - b);
-  out.reached15 = off.length / Math.min(120, flights.length);
+  out.reached15 = off.length / flights.length;
   out.off15Median = off.length ? off[off.length >> 1] : null;
-  out.within50cm = off.filter(x => x < 0.5).length / Math.min(120, flights.length);
+  out.within50cm = off.filter(x => x < 0.5).length / flights.length;
   clear();
   // aimed: the front sight's tip against screen centre
   Game.player.adsTarget = 1; Game.player.ads = 1;
