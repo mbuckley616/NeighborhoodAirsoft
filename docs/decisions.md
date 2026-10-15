@@ -70,6 +70,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) A or B, but a hit is not a tag: it stuns the kid for 2 s (he stops shooting and complains), to buy you time to
     reload.
 
+- **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
+  The critic (15 Oct, v1.244) found Every Kid for Themselves decided by Seth: your `road_east` start is 27.7 m from his
+  backyard (the others 32–59 m), he has a line to you by 2–3 s, and tagged a player standing at the start at 4.4–7.7 s
+  in 4 of 4 probes and took all 4 of the bot's losses. Bunratty's 6-way did the same on 14 Oct with Sean (all six of
+  your lives from 17–20 m, each within 2–3 s of coming back). For the lot's free-for-all you chose B on 1 Oct: hidden
+  starts, yours behind a car at the edge, "one of seven hidden kids"; the lot's test now holds every start 18 m or more
+  from the next and none in sight of another. Winnmark's and Bunratty's free-for-alls never got that rule.
+  - A) **The lot's rule on every free-for-all:** move starts (yours or the kids') until each is at least 18 m from the
+    next, none in sight of another, and no kid nearer your start than the rest; a test holds it on all four maps,
+    the Pickup Game's free-for-alls included. *(recommended: it is the rule you already set, and it keeps the
+    briefing's "everyone shoots at you the second they see you" without one kid owning the start)*
+  - B) Only move your start on Winnmark and Bunratty, away from Seth and Sean.
+  - C) Leave it: in a free-for-all somebody is always nearest.
+  The lose line that had all four "regroup near the road" together is fixed already (v1.246: it names who got you and
+  says the rest keep going at each other).
+
 ## Answered
 
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**

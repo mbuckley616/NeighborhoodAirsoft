@@ -2048,7 +2048,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.245</div>
+  <div class="version">v1.246</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22373,6 +22373,11 @@ function endScenario(outcome) {
       flavorEl.textContent = multi
         ? `They got through. ${allStr} take ${holdPlace}. "Our turn, dude."`
         : `They got through. ${primaryName} takes ${holdPlace}. "Our turn, dude."`;
+    } else if (Game.scenario.ffa) {
+      // v1.246 (Found in play, critic 15 Oct): nobody regroups with anybody in a free-for-all; name who got you
+      const _dmg = (Game.scenario.stats && Game.scenario.stats.damage) || [];
+      const _by = _dmg.length && _dmg[_dmg.length - 1].by;
+      flavorEl.textContent = `Too many angles, not enough cover. ${_by || 'Somebody'} gets the last one on you, and the rest keep going at each other. "Every kid for himself, dude."`;
     } else if (multi) {
       flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup ${regroupAt}. "Run it back?"`;
     } else {

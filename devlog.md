@@ -10631,3 +10631,19 @@ compiled; a loss only swaps in your look, gun and gear. Nothing about how the re
 ### Still open
 - The renderer is now made during page load instead; on a slow machine that is a moment longer before the title,
   where it is not felt in play. Michael's eye on whether the first loss on his machine now shows at once.
+
+## v1.246 — A free-for-all loss has nobody regrouping
+Found in play (critic, 15 Oct): losing Every Kid for Themselves said "Seth, Trey, Brooke, and Jamie regroup near the
+road", the team-match line, though in a free-for-all nobody regroups with anybody. A free-for-all loss now reads "Too
+many angles, not enough cover. Seth gets the last one on you, and the rest keep going at each other. "Every kid for
+himself, dude."", naming whoever landed the last hit on you (from the damage report's list), "Somebody" if none is
+known. Team losses keep their line. The other half of the same report, Seth's start 27.7 m from yours deciding the
+match, is a placement call like the lot's on 1 Oct, so it is asked in decisions ("Free-for-all starts on Winnmark and
+Bunratty"), not changed.
+### Verified
+- `tests/result-text.test.mjs` with Every Kid for Themselves and Everybody for Themselves added (17 scenarios, each
+  ended every way): both free-for-all losses read without "regroup" and say the rest keep going; a loss whose last hit
+  was Seth's names Seth. Every earlier check passes, team losses still regroup (in the stockroom at the store). No page
+  errors.
+### Still open
+- The start placement itself waits on Michael's answer.
