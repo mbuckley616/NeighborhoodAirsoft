@@ -10393,3 +10393,6 @@ the grip, the hands and the aimed picture are as they were. Pictures: `docs/guns
 ### Still open
 - Michael's eye on the pictures. The body is still one box and the bucket a plain cone. D.31 goes on with the Bolt
   Pistol, the last of the twelve.
+- The full suite on v1.231 (three local shards, run beside this run's gun work): 130 of 133 suites passed. The three
+  misses, `gun-ump` and `ladder-prompt` (the page load passed 30 s) and `harness` (NEW GAME stalled under load), each
+  passed alone on v1.235. v1.232–v1.235 ran their neighbouring suites, as listed in each entry.
