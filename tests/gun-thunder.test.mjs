@@ -1,7 +1,7 @@
 // v1.233 (backlog D.31, Michael 13 Oct: "revisit the gun designs and make sure they all look good / accurate"), the
 // Thunder Pump, a made-up backyard gun, held up to what it copies: a toy pump-action air shotgun, built like the
 // shotgun (an 870) with a tank under the barrel. The v1.224 faults of the shotgun were here too: the wrist hung as a
-// lump under the receiver's back with the guard and trigger hidden behind it, and the butt pad stood 2.7 cm above the
+// lump under the receiver's back with the guard and trigger hidden behind it, and the butt pad stood 3.9 cm above the
 // stock's top line. Now the trigger shows inside a deep guard, the wrist runs from the receiver's back into the stock,
 // and the pad is the stock's back face. A side picture goes to tests/out/gun-thunder-side.png (and, with SAVE_DOCS,
 // to docs/guns/).

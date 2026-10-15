@@ -10321,3 +10321,31 @@ with the receiver's front. Pictures: `docs/guns/mac10-side-before.png`, `docs/gu
   M10's front strap (the loop people hold under the barrel) and its rounded stock rods are not drawn; the off hand
   still cups the shooting hand. The kids' third-person MAC-10 was not touched. D.31 goes on with the four backyard
   guns, the Thunder Pump first.
+
+## v1.233 — The Thunder Pump, held up to a toy pump shotgun
+Backlog D.31, the ninth gun and the first of the four made-up backyard guns. The Thunder Pump copies a toy pump-action
+air shotgun and is built on the shotgun's body plan, so it had the three faults v1.224 fixed on the shotgun. The wrist
+hung as a lump under the receiver's back (its top front corner 4.9 cm under it) and hid the guard behind it, 2.5 cm of
+overlap. The trigger was inside the receiver, none of it showing. The butt pad stood 3.9 cm above the stock's top line
+and 1.2 cm into its back.
+
+Now there is a deep guard (front and rear uprights and a bottom bar) with a trigger showing 1.9 cm under the receiver
+and the bar 0.7 cm below it, 2 cm clear ahead of the wrist. The wrist runs back from the receiver's back and the
+shooting hand moves with it (`FP_HANDS.thunder`, 3.5 cm back). The stock moves 1.2 cm forward so its comb meets the
+receiver's back 3 mm under its top, without the wedge of light that showed between them. The butt pad is the stock's
+back face, a child of the stock. The rear notch sits on the receiver (it hovered 0.5 mm over it). The barrel, tank,
+pump, gauge and front bead are where they were, so the aimed picture is unchanged. Pictures:
+`docs/guns/thunder-side-before.png`, `docs/guns/thunder-side.png`. (Its test went into v1.232's commit by mistake,
+before the model change.)
+### Verified
+- `tests/gun-thunder.test.mjs` (new, 6 checks; writes the side picture). Before (v1.232): no trigger showing, the guard
+  2.5 cm into the wrist, the wrist 4.9 cm under the receiver, the pad 3.9 cm above the stock and 1.2 cm into it; four
+  of six checks failed. After: 1.9 cm of trigger with the guard 6.7 mm below it, the guard 2.0 cm clear of the wrist,
+  the wrist's corner 1.4 cm under the receiver's back, the comb 3 mm under the receiver's top, the pad flush (0 mm).
+  All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Thunder Pump: both hands on, the off hand
+  riding the pump, none on the sight line), `backyard-guns` (its bead on the reticle, its shop row and trade),
+  `under-parts`, `shop-pics`: all pass.
+### Still open
+- Michael's eye on the pictures. The receiver, tank and stock are still plain boxes and cylinders, as a toy's would
+  be; the stock's lower edge steps at the wrist. D.31 goes on with the Six-Shooter.
