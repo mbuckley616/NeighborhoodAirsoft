@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13).
 
@@ -1126,3 +1126,92 @@ decision cards. Nothing was addressed to me, and nothing asked me to break a rul
   note's look.
 - v1.222, the pickup life: judged headless. It works (shortest gap 2.05 s across 54 lives). The camping question is
   real on Bunratty's free-for-all start, and I didn't see it on the team starts.
+
+## 2026-10-15 — Outnumbered, The Eighteenth, Every Kid for Themselves, Storm the Cul-de-Sac; the pause menu, the damage report and shooting out kids (v1.244)
+
+I played v1.244 from `auto/build`; main is at v1.228. The bot is rebuilt in `tests/tmp/` the same way as last run:
+it walks `kidFieldTo` toward the nearest live enemy, racks the spring by holding the trigger, aims dead on at the
+nearest kid it can see inside 40 m, stops to trade inside 25 m, and gets a full mag 2.5 s after it runs dry. Modes:
+*push* and *stand*. It carries the new-game Spring Pistol. None of these four had a critic run before. 22 bot
+rounds, plus probes for the pause menu, out kids, the free-for-all starts, the result screen's cost and the bed card.
+No page errors anywhere. Smoke passes. The rounds that the bot logs as 240 s wins are its own artifact: I step the
+game inside one evaluate, so `endScenarioLater`'s real-time 600 ms never fires until the loop ends. The kills and
+hits are right; those clocks are not.
+
+**The first loss of a session freezes the game for seconds (v1.238).** It's the step where you get tagged out. In
+the bot's first round of every boot, that step was the worst of the round: 1.4–5.5 s with two browsers running,
+and 563 ms alone. Later rounds' worst steps were 6–60 ms. Timing `endScenario('lose')` alone, one browser, a fresh
+boot: 2,227 ms and 3,338 ms the first time, then 3–6 ms. On main's v1.228 it's 7 ms, then 2–3 ms. `DAMAGE_REPORT.renderer`
+is null before that call and set after it. The damage report makes its own WebGL renderer the first time it draws,
+and that costs the whole freeze. Software GL makes this worse than a real GPU would, but a new context and its shaders
+still cost something real on a laptop, and it lands at the moment you're tagged. Steps: a new game, any match, get tagged
+out once. Filed under Found in play. The fix is probably to build the renderer at boot or at BEGIN, or to draw with the
+game's own renderer.
+
+**An out kid is cover for his team, and only against you (v1.237).** In a one-life match, a tagged kid stands with his
+hand up where he was tagged for the rest of the round. Since v1.237 he stops your BBs. A teammate's BBs still pass
+through him (as the devlog says). I checked it directly in Storm the Cul-de-Sac: Trey tagged and standing 6 m in front
+of you, Brooke live behind him at 12 m. Your BB at Brooke stops on Trey (`outShots` +1) and Brooke is untouched.
+Brooke's BB at you goes straight through Trey and tags you. In the bot's own rounds this came up once in 22, in
+Outnumbered (*stand*, 123 s): a BB aimed at a live kid was stopped by an out one. It's rare, and Michael asked for out
+kids to be shootable. But a permanent shield that works one way only isn't what he asked for. I filed it as a bug and
+put the choice in decisions.md under Pending.
+
+**Every Kid for Themselves** (`winnmark_ffa`, 5-way), 5 bot rounds plus 7 probes. You start on `road_east`, 27.7 m
+from Seth's backyard and 32–59 m from the others. Seth walks straight at you and has a line from about 2–3 s. He tagged
+a player standing at the start at 4.4, 7.5, 7.7 and 7.7 s in 4 of 4 probes, from 9–17 m. In the bot rounds he took
+4 of the 4 losses (3.5–5.5 s, two of them from 1 m as he came round the hedge to you). The one *push* round I won took
+all four kids. With the player made untouchable for 90 s, the kids tagged each other 2–3 times a round, and put
+101–213 hits on the player. It's the same shape as Bunratty's 6-way on 14 Oct: one kid has the start, and the match
+is him. "Everyone's shooting at you the second they see you" is the briefing's own promise, so I've filed it as a
+start-placement problem, not an AI one. The result card says "Seth, Trey, Brooke, and Jamie regroup near the road,"
+but in a free-for-all nobody regroups with anybody. Screenshot `docs/critic/2026-10-15-ffa-seth-at-4s.png`.
+
+**The Eighteenth** (`club_eighteenth_3v3`, three lives for every kid but you), 6 rounds. *Push*: out at 5.3, 5.5,
+6.3 and 10.3 s. Three of the four were Seth's AK from 31–32 m on the fairway. *Stand*: out at 38.7 s, then a 240 s
+round that Sean and Trey won while I stood (+$15, 0 tags). That's the briefing's "the fairway's open" made real. A
+player who walks up the middle is out at 5–6 s, so it's harsh but honest. The damage report on that card is right:
+"Right leg — Seth, AK-47, 31 m · 0:06", with the dot on the kid's right leg. Screenshot
+`docs/critic/2026-10-15-eighteenth-out-at-6s.png`.
+
+**Outnumbered** (`winnmark_team_2v3`), 8 rounds, all lost: *push* 13.6–28.9 s with 1–3 tags, *stand* 16.4–123 s.
+The briefing doesn't say how many lives anyone has. The kids end rounds on 1–3 lives each, and you have one. My
+three-tag rounds still lost. A first-timer would want the briefing to say they're playing one life against three
+kids with three lives each.
+
+**Storm the Cul-de-Sac** (`winnmark_cul_de_sac`), 5 rounds. *Push*: Trey's sniper from the plank fort, 39 m, at
+6.3–6.4 s in 3 of 3, on the bot's second shot. *Stand*: nobody came in 240 s, twice (`kill_all`, no clock). The
+briefing says "he'll see you coming," so it's working as designed. But this attack doesn't end unless you go in.
+
+**The pause menu (v1.239)**, through a real BEGIN click and real key presses. The pointer lock is taken. Escape
+opens PAUSED and the round's clock stops (0.15 s before, 0.15 s after 4 s real). Escape again resumes and takes the
+mouse back. A third Escape pauses again, and a mouse click on RESUME resumes. Clean.
+
+**The damage report (v1.238)**, on 18 real losses: every row matched who shot me, his gun and the time, and the
+distances were plausible against the kids' positions. A stomach hit 19 m off draws its dot at the kid's side, by the
+arm, rather than mid-body (the dot follows the hit's lateral offset). The devlog says the dots are approximate.
+
+**The bed (v1.231)** on a new game: Sunday 1 June 2003, Winnmark Court, "0 of 21 beaten", next Backyard Basics. After
+a win: Monday 2 June, "1 of 21". It reads right.
+
+**What worked.** No page errors in 22 rounds and the probes. Every result card's TAGS, SHOTS and HITS ON YOU matched
+the bot's counts. The pause menu and the bed card are right first time. The opening hold held: the earliest tag was
+3.45 s.
+
+### itch.io
+Still unreachable. WebFetch gets ENOTFOUND on mbuckley616.itch.io, and curl gets no connection. I read no comments.
+Slack's last day had the builder's v1.225–v1.244 posts, the producer's, Fable's online step 1, and the merge cards.
+Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.225–v1.244)
+- v1.225–v1.236, the twelve guns: for Michael's eye, from the pictures in `docs/guns/`. I can't judge them headless.
+- v1.231, the bed card: judged headless (above). It reads right on a new game and after a win.
+- v1.237, shooting out kids: works as built (the hit stops and `outShots` counts). I couldn't hear the lines. The
+  one-way shield is new (above). Whether overshooting should cost anything is still Michael's call.
+- v1.238, the damage report: judged on 18 real losses. The rows are right and the dots are approximate. The first draw
+  costs 2–3 s (filed).
+- v1.239, the pause menu: judged through real Escape presses and a real click (above). Whether a real browser hands the
+  mouse back on Escape needs a real browser.
+- v1.240, the shop's chips: not played.
+- v1.241–v1.242, the controller: not judged beyond the builder's own suites. It needs a real pad and hands.
+- v1.243–v1.244, test seeding: not play items.
