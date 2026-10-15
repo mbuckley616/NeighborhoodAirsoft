@@ -2074,7 +2074,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.248</div>
+  <div class="version">v1.249</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3439,6 +3439,7 @@ const Game = {
       glasses_clear: false,
       slot_3: false,            // 1=gun and 2=equipment are unlocked by default
       slot_4: false,
+      pool_noodle: false,       // v1.249 (D.36)
     },
     // Speed loader instances player owns. Each has a tier and current ammo.
     // List of objects: { id, tier, currentBBs }
@@ -4171,6 +4172,7 @@ function describeSlot(idx) {
       desc: `Mag: ${getMaxAmmoForGun(Game.persist.equipped.gun)} rounds`,
     };
   }
+  if (slot.kind === 'noodle') return { kind: 'noodle', icon: '〰', name: 'Pool Noodle', desc: 'V swings it · a hit tags' };   // v1.249
   if (slot.kind === 'speed_loader') {
     const sl = Game.persist.speedLoaders.find(s => s.id === slot.refId);
     if (!sl) return null;
@@ -4231,6 +4233,151 @@ function describeSlot(idx) {
   return null;
 }
 
+// v1.249 (backlog D.36, Michael: A): THE POOL NOODLE. Sold at airsoft.com for $15 (Gear tab), carried in a loadout slot
+// like a speed loader. V swings it from anything you hold (a quick swing, then back to what you had); with its slot
+// held, a click swings it too. It reaches NOODLE_REACH (from your middle to the kid's), across a cone in front of you,
+// not through a wall; the nearest kid of the other side in it is tagged as a BB tags him, and says something about it.
+// A kid already out gets his "I'm out already" (v1.237). Kids never carry one.
+const NOODLE_REACH = 1.6, NOODLE_CONE = 0.7071;      // m from your middle to his; cos 45° either side of your look
+const NOODLE_SWING = 0.42, NOODLE_HIT_AT = 0.16, NOODLE_COOLDOWN = 0.65;   // s: the swing, when it lands, swing to swing
+const NOODLE_LINES = ['A POOL NOODLE?! Are you serious?!', 'Dude, you got me with a NOODLE.', 'That does not count! ...It counts, doesn\'t it.',
+  'I just got noodled. Great.', 'Ow! Okay, that one actually stung.', 'Who brings a pool noodle to airsoft?!'];
+function noodleCarried() { return Game.persist.loadoutSlots.some(s => s && s.kind === 'noodle'); }
+let fpNoodle = null;
+function buildNoodleMesh() {
+  // a foam pool noodle, 1.2 m, along +Y from the hand: a fluted tube with the hollow showing at the far end
+  const g = new THREE.Group();
+  const foam = new THREE.MeshStandardMaterial({ color: 0x3fd16a, roughness: 0.92 });
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 1.2, 9, 1, true), foam);
+  tube.position.y = 0.52;
+  g.add(tube);
+  const cap = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.036, 9), new THREE.MeshStandardMaterial({ color: 0x35b85c, roughness: 0.95, side: THREE.DoubleSide }));
+  cap.rotation.x = -Math.PI / 2; cap.position.y = 1.12;
+  const cap2 = cap.clone(); cap2.position.y = -0.08;
+  const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.19, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0x1f6e36, roughness: 1, side: THREE.BackSide }));
+  hole.position.y = 0.52;
+  g.add(cap, cap2, hole);
+  g.userData.tube = tube;
+  return g;
+}
+function buildFPNoodle() {
+  // the hand and forearm hold still in the root; the noodle swings about the hand in its own group
+  const group = new THREE.Group(), n = buildNoodleMesh();
+  group.add(n);
+  group.userData.swing = n;
+  group.userData.baseRot = { x: -0.95, y: 0, z: 0.12 };
+  group.userData.basePos = { x: 0.2, y: -0.17, z: -0.32 };
+  group.position.set(0.2, -0.17, -0.32);
+  group.rotation.set(-0.95, 0, 0.12);
+  const h = buildFpGripHand(0.036, 0.036, 1);   // the hand round its near end
+  group.add(h);
+  const f = addFpForearm(group, group, h, FP_ELBOW_R);
+  group.userData.fpHands = { r: [h, f.arm, f.cuff], l: [], under: null };
+  group.visible = false;
+  Game.camera.add(group);
+  syncFpHandLook();
+  return group;
+}
+function shopNoodlePic(w, h) {
+  return shopPic('gear:noodle', w, h, () => {
+    const holder = new THREE.Group(), n = buildNoodleMesh();
+    n.rotation.z = -0.8;   // laid corner to corner, the hollow end up
+    holder.add(n);
+    return { obj: holder, fit: [n], pad: 1.1 };
+  });
+}
+function renderPoolNoodle(c) {
+  const item = SHOP_CATALOG.find(x => x.id === 'pool_noodle');
+  if (!item) return;
+  c.appendChild(shopSectionHeader('Backup', 'For when the BBs run out'));
+  const row = shopCatalogRow(item);
+  shopIconImg(row.firstElementChild, shopNoodlePic(56, 56), item.name, { item: 'gear:noodle' });
+  c.appendChild(row);
+}
+function startNoodleSwing() {
+  if (Game.mode !== 'scenario' || Game.paused || Game.forfeitAsk || !noodleCarried()) return false;
+  const N = Game.noodle;
+  if (N.t >= 0 || N.cd > 0) return false;
+  if (Game.held.using) { Game.held.using = false; Game.held.useProgress = 0; Game.held.useKind = null; Game.held._feedingActive = false; }
+  N.t = 0; N.cd = NOODLE_COOLDOWN; N.hitDone = false;
+  N.swings = (N.swings || 0) + 1;
+  playNoodleWhoosh();
+  return true;
+}
+function updateNoodle(dt) {
+  const N = Game.noodle;
+  if (N.cd > 0) N.cd = Math.max(0, N.cd - dt);
+  if (N.t < 0) return;
+  N.t += dt;
+  if (!N.hitDone && N.t >= NOODLE_HIT_AT) { N.hitDone = true; noodleStrike(); }
+  if (N.t >= NOODLE_SWING) N.t = -1;
+}
+// who the swing lands on: the nearest kid of the other side within reach, in the cone, with nothing in the way
+function noodleTarget() {
+  const P = Game.player, fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), mine = combatantTeam(P);
+  let best = null, bd = Infinity;
+  for (const c of Game.scenario.enemies || []) {
+    if (combatantTeam(c) === mine || c.behavior === 'tagger') continue;
+    const dx = c.pos.x - P.pos.x, dz = c.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+    if (d > NOODLE_REACH || d >= bd) continue;
+    if (d > 0.3 && (dx * fx + dz * fz) / d < NOODLE_CONE) continue;
+    const eyeY = P.pos.y + (P.eyeOffset || 1.4) * 0.8;
+    if (d > 0.3 && !hasLineOfSight(P.pos.x, eyeY, P.pos.z, c.pos.x, _combatantChestY(c), c.pos.z, P.obstacles)) continue;
+    best = c; bd = d;
+  }
+  return best;
+}
+function noodleStrike() {
+  if (Game.mode !== 'scenario') return;
+  const c = noodleTarget(), N = Game.noodle;
+  if (!c) return;
+  const wasOut = c.health <= 0 || c.state === 'retreating';
+  const at = new THREE.Vector3(c.pos.x, _combatantChestY(c), c.pos.z);
+  applyBBHit({ owner: 'player', pos: at, spawnPos: Game.player.pos.clone(), noodle: true }, c);
+  N.hits = N.hits || [];
+  N.hits.push({ name: c.name, out: wasOut, t: +(Game.scenario.roundTime || 0).toFixed(2) });
+  if (!wasOut) kidSayLine(c, NOODLE_LINES[Math.floor(Math.random() * NOODLE_LINES.length)]);
+}
+// a kid says a given line where he stands (as tryNpcSpeak, but this line, now)
+function kidSayLine(e, line) {
+  e._lastLine = line;
+  if (typeof speechSynthesis === 'undefined') return;
+  try {
+    const { vol } = positionalAudio(e.pos.x, e.pos.z, 24);
+    if (vol < 0.12) return;
+    playVoiceMarker(e.pos.x, e.pos.z);
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
+    if (v) u.voice = v;
+    u.rate = 1.15; u.pitch = 1.15;
+    u.volume = 0.5 * vol * Settings.effects;
+    speechSynthesis.speak(u);
+    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
+    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
+  } catch (err) {}
+}
+function playNoodleWhoosh() {
+  if (!Game.audio?.ctx) return;
+  const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 * Settings.effects, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.25);
+}
+// the swing in first person: wound back to the right, across to the left, back to rest
+function poseFPNoodle() {
+  const br = fpNoodle.userData.baseRot, bp = fpNoodle.userData.basePos, t = Game.noodle.t;
+  let z = br.z, x = br.x, px = bp.x;
+  if (t >= 0) {
+    const p = t / NOODLE_SWING, ease = s => s * s * (3 - 2 * s);
+    if (p < 0.3) { const s = ease(p / 0.3); z = br.z + (-0.75 - br.z) * s; px = bp.x + 0.06 * s; }
+    else if (p < 0.6) { const s = ease((p - 0.3) / 0.3); z = -0.75 + 1.85 * s; x = br.x - 0.35 * Math.sin(s * Math.PI); px = bp.x + 0.06 - 0.16 * s; }
+    else { const s = ease((p - 0.6) / 0.4); z = 1.1 + (br.z - 1.1) * s; px = bp.x - 0.1 + 0.1 * s; }
+  }
+  fpNoodle.position.set(px, bp.y, bp.z);
+  fpNoodle.userData.swing.rotation.set(x - br.x, 0, z - br.z);
+}
+Game.noodle = { t: -1, cd: 0 };
+
 // === SPEED LOADER TIERS ===
 const SPEED_LOADER_TIERS = {
   sl_50:  { capacity: 50,  name: 'Speed Loader (50)',  price: 15 },
@@ -4283,6 +4430,8 @@ function computeLoadoutWeight() {
       const sl = Game.persist.speedLoaders.find(s => s.id === slot.refId);
       const w = sl ? speedLoaderWeight(sl.tier) : 1.3;
       gearW += w; parts.push({ label: 'Speed loader', w });
+    } else if (slot.kind === 'noodle') {
+      gearW += 0.3; parts.push({ label: 'Pool noodle', w: 0.3 });   // v1.249
     }
   }
   const armorMap = Game.persist.equipped.armor || {};
@@ -4656,6 +4805,11 @@ const SHOP_CATALOG = [
   { id:'sl_200', category:'Loadout', name:'Speed Loader (200 BBs)', price:50,
     desc:'High-capacity loader for long matches.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>buySpeedLoader('sl_200'), buttonLabel:()=>'BUY' },
+  // v1.249 (backlog D.36, Michael: A): the pool noodle, on the Gear tab
+  { id:'pool_noodle', category:'Loadout', name:'Pool Noodle', price:15,
+    desc:'A foam pool noodle, for when the BBs run out. Put it in a loadout slot: V swings it from anything you hold, or hold its slot and click. Reaches about a metre and a half; a hit tags.',
+    isOwned:()=>!!Game.persist.owned.pool_noodle, isLocked:()=>false,
+    apply:()=>{Game.persist.owned.pool_noodle=true;}, buttonLabel:()=>Game.persist.owned.pool_noodle?'OWNED':'BUY' },
 ];
 
 function getShopCategories() {
@@ -21073,6 +21227,7 @@ function enterBedroom() {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   if (fpLoader) fpLoader.visible = false;
+  if (fpNoodle) fpNoodle.visible = false;   // v1.249
   if (fpMag) fpMag.visible = false;
 
   // Add camera into scene
@@ -21942,6 +22097,9 @@ function startScenario(built) {
   fpGun = getOrBuildFPGun(Game.gun.type);
   if (!fpLoader) { fpLoader = buildFPLoader(); attachFpItemHand(fpLoader, 'loader'); }   // v1.219 (D.30): in your hand here,
   if (!fpMag) { fpMag = buildFPMag(); attachFpItemHand(fpMag, 'mag'); }                 // not in the shop's pictures
+  if (!fpNoodle) fpNoodle = buildFPNoodle();   // v1.249 (D.36)
+  fpNoodle.visible = false;
+  Game.noodle = { t: -1, cd: 0, swings: 0, hits: [] };
   fpGun.visible = true;
   updateFPGunAccessory(fpGun, Game.gun.type);   // v1.27: show laser/flashlight if equipped
   fpLoader.visible = false;
@@ -22211,6 +22369,7 @@ function endScenario(outcome) {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   if (fpLoader) fpLoader.visible = false;
+  if (fpNoodle) fpNoodle.visible = false;   // v1.249
   if (fpMag) fpMag.visible = false;
   exitPointerLock();
 
@@ -23363,6 +23522,9 @@ function renderClosetWornGear() {
 // Build list of available equippable items (not already in slots)
 function getAvailableSlotItems() {
   const out = [];
+  // v1.249 (D.36): the pool noodle, when you own it and it isn't in a slot
+  if (Game.persist.owned.pool_noodle && !noodleCarried())
+    out.push({ icon: '〰', name: 'Pool Noodle', desc: 'V swings it; a hit tags.', detail: 'reach 1.6 m', slotData: { kind: 'noodle' } });
   // Unequipped speed loaders
   for (const sl of getUnequippedSpeedLoaders()) {
     const tier = SPEED_LOADER_TIERS[sl.tier];
@@ -23450,7 +23612,7 @@ function renderShop() {
   switch (shopState.activeTab) {
     case 'Guns': renderGunsTab(c); break;
     case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
-    case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
+    case 'Gear': renderBeltAndHolster(c); renderPoolNoodle(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes (v1.249: the noodle)
     case 'Mods': renderAccessoriesTab(c); break;
     case 'Clothes': renderClothesTab(c); break;   // v1.197
   }
@@ -24117,6 +24279,8 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
     Game.focusedInteractable.action();
   }
+  // v1.249 (D.36): V swings the pool noodle, if you carry one
+  if (e.code === 'KeyV' && Game.mode === 'scenario' && !e.repeat) startNoodleSwing();
   // F to forfeit (scenario); v1.208: it asks first
   if (e.code === 'KeyF' && Game.mode === 'scenario' && !e.repeat) {
     askForfeit();
@@ -24440,6 +24604,8 @@ function pollGamepad(dt) {
 
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
+  if (Game.noodle && Game.noodle.t >= 0) return;   // v1.249: mid-swing
+  if (describeSlot(Game.held.slotIdx)?.kind === 'noodle') { startNoodleSwing(); return; }   // v1.249 (D.36)
   if (Game.gun.jammed) return;
   if (Game.gun.flipT > 0) return;   // v1.169: no shot while the taped mags are being flipped
   const heldSlot = describeSlot(Game.held.slotIdx);
@@ -25450,7 +25616,7 @@ function updateGun(dt) {
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
   // between shots. When the mag empties, cocked drops to false → falls through
   // to the normal cock/reload path.
-  if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed) {
+  if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed && !(Game.noodle.t >= 0)) {   // v1.249: not mid-swing
     if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0 && !(Game.gun.flipT > 0)) {
       const cycle = 60 / Math.max(1, Game.gun.cyclicRPM); // seconds per shot
       Game.gun.autoFireTimer += dt;
@@ -25597,6 +25763,9 @@ function updateHeldMesh(dt) {
   const isGunHeld = held && held.kind === 'gun';
   const isLoader = held && held.kind === 'speed_loader';
   const isMag = held && held.kind === 'spare_mag';
+  // v1.249 (D.36): the noodle shows while its slot is held, and over anything else for a V swing
+  const swinging = Game.noodle && Game.noodle.t >= 0;
+  const showNoodle = !!fpNoodle && ((held && held.kind === 'noodle') || swinging);
 
   // Show the right mesh. v1.61b: while aiming with a SCOPE, hide the whole gun
   // model — the full-screen scope overlay becomes the entire sight picture, so a
@@ -25604,10 +25773,11 @@ function updateHeldMesh(dt) {
   // fade-in (ads > 0.55 ≈ overlay near full) so the gun vanishes as the scope
   // takes over rather than popping.
   const scopedFully = isGunHeld && gunHasAccessoryType(Game.gun.type, 'scope') && Game.player.ads > 0.55;
-  fpGun.visible = isGunHeld && !scopedFully;
-  if (fpLoader) fpLoader.visible = isLoader;
-  if (fpMag) fpMag.visible = isMag;
-  updateFpHands(isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
+  fpGun.visible = isGunHeld && !scopedFully && !swinging;
+  if (fpLoader) fpLoader.visible = isLoader && !swinging;
+  if (fpMag) fpMag.visible = isMag && !swinging;
+  if (fpNoodle) { fpNoodle.visible = showNoodle; if (showNoodle) poseFPNoodle(); }
+  updateFpHands(showNoodle ? fpNoodle : isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
 
   if (isGunHeld) {
     // Cocking animation: cockProgress 0→1 maps to cocking parts moving backward
@@ -25871,6 +26041,8 @@ function updateLoadoutHud() {
         hint = desc.ref.currentBBs === 0 ? 'Loader is empty. Switch back.'
              : Game.gun.ammo >= Game.gun.maxAmmo ? 'Mag is full.'
              : 'Hold LMB to feed BBs.';
+      } else if (isHeld && desc.kind === 'noodle') {
+        hint = 'Click or V to swing. Get close.';   // v1.249
       } else if (isHeld && desc.kind === 'spare_mag') {
         hint = 'Hold LMB to slam in the fresh mag.';
       }
@@ -31074,6 +31246,7 @@ function stepGame(dt) {
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
+    updateNoodle(dt);   // v1.249 (D.36)
     // Sub-step BB physics: BBs at 30+ m/s can skip through thin obstacles
     // in a single 16ms frame. Run physics at ~5ms steps.
     // v1.74: a BB hit can call endScenario() mid-substep (final-life loss), which

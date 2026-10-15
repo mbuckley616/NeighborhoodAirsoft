@@ -10698,3 +10698,28 @@ with a flag to see to. Nothing changes in a match without teammates, and the tut
 - Michael's hands on it: whether the wheel's size and the four places feel right, and whether teammates on an order
   are any use in a real fight (the test holds the other side's guns). No pad button yet for the wheel; the briefing
   doesn't mention Q (the HUD does, in every match with teammates).
+
+## v1.249 — The pool noodle
+Backlog D.36 (Michael: A, control room 15 Oct): a pool noodle as a melee backup for when you are out of BBs, sold on
+airsoft.com for $15, and a hit is a tag like a BB. It is on the Gear tab under a new Backup header, with its own
+picture (a green foam noodle, the hollow showing at the end), and goes in a loadout slot like a speed loader (0.3 lb).
+In a match, V swings it from whatever you hold, a quick swing and back to the gun; or press its slot's number to hold
+it, and a click swings it. The swing winds back to the right and sweeps across to the left in 0.42 s, with a whoosh;
+it lands at 0.16 s on the nearest kid of the other side within 1.6 m (your middle to his), within 45° of where you
+look, with nothing tall between you. He is tagged exactly as a BB tags him (out, or walking back to respawn, and on
+your result screen's tags), then says one of six noodle lines ("A POOL NOODLE?! Are you serious?!", "Dude, you got me
+with a NOODLE."). A kid already out gets his v1.237 "I'm out already". One swing at a time, 0.65 s apart; no gun
+shot mid-swing. Kids never carry one.
+### Verified
+- `tests/pool-noodle.test.mjs` (new, 14 checks). The Gear tab: Pool Noodle, $15, under Backup, with its picture;
+  bought with $50 it is owned, $35 left, OWNED. The loadout picker offers it once and not again once it is in slot 2.
+  In the Hollow 3v3, one of their kids stood in front of you, guns held: a real V shows the noodle and hides the gun
+  mid-swing and the gun is back after it; a kid 1.2 m ahead is tagged and walks back ("Dude, you got me with a
+  NOODLE."); 2.2 m ahead, 1 m behind, and 1.4 m off at 56° to the right are not hit; behind a wall 1.3 m off he is
+  not hit. Key 2 holds it (the hint says "Click or V to swing"), a click swings it and tags a kid 1 m ahead. A second
+  V mid-swing does nothing and one 0.85 s later swings; with no noodle in a slot V does nothing. No page errors.
+  Pictures: `tests/out/pool-noodle-held.png`, `tests/out/pool-noodle-swing.png`.
+### Still open
+- Michael's hands on it: the reach and the cone, and whether a tag from a noodle is too strong (a kid who rushes you
+  is tagged before he fires if you swing first). The noodle is not drawn on your kid in the Loadout screen or the
+  mirror; no pad button for V yet.
