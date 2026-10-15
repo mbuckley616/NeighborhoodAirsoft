@@ -49,13 +49,14 @@ await page.keyboard.down('KeyQ');
 await page.evaluate(() => { Game.mouse.dx = 50; Game.mouse.dy = -60; stepGame(1 / 60); });
 await g.shot('squad-wheel');
 await page.keyboard.up('KeyQ');
+const standing = await page.evaluate(() => Game.scenario.squadOrder);   // push, from the picture's flick
 const small = await flick(10, 6);
-check('a small move picks nothing and leaves the order standing', small.pick === null && small.order === 'follow', [small.pick, small.order]);
+check('a small move picks nothing and leaves the order standing', small.pick === null && small.order === standing && standing === 'push', [small.pick, small.order, standing]);
 await page.keyboard.down('KeyQ');
 const esc = await page.evaluate(() => { openPauseMenu(); return { wheel: !!Game.squadWheel, paused: Game.paused }; });
 await page.keyboard.up('KeyQ');
 const escAfter = await page.evaluate(() => { resumeFromPause(); Game.mouse.locked = true; return Game.scenario.squadOrder; });
-check('pausing with the wheel open shuts it without an order', !esc.wheel && esc.paused && escAfter === 'follow', [esc, escAfter]);
+check('pausing with the wheel open shuts it without an order', !esc.wheel && esc.paused && escAfter === standing, [esc, escAfter]);
 
 // --- each order, played: 20 s from BEGIN, the same round with no order as the measure
 const play = async (order, opts = {}) => {
