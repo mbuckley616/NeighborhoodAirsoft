@@ -10751,3 +10751,23 @@ fatter, as `shop-pics` wants a tenth of the square filled (it was 9.3%).
 ### Still open
 - Michael's look at the four (`tests/out/clear-*-aimed.png`) and his hands on how bad is bad enough. The kids' guns
   are unchanged (none carries one); the Pickup Game's kid list can't hand one out yet.
+
+## v1.251 — The Last Saturday: a tag sends you home
+Found in play (critic, 14 Oct, v1.224), decided in decisions ("The Last Saturday: what is a life for you?", Michael:
+A, control room 15 Oct). The finale's briefing says "three lives for everybody", but your three lives were three hits
+where you stood: two went inside 0.75 s in 8 of 10 critic rounds, all three inside 0.55 s in 2. Now, as in the Pickup
+Game (v1.221), a tag there costs one of your lives and puts you back at the west end with 2 s in which nothing tags
+you; the rest of the burst lands in that cover. The kids' lives are unchanged, and so is every other story match (one
+life each). The briefing adds "tagged, you walk back to the west end and go again". The scenario carries the rule as a
+flag (`tagSendsHome`), so another match could take it later.
+### Verified
+- `tests/last-saturday-lives.test.mjs` (new, 8 checks). Scripted: a tag 6 m from the start costs one life of three and
+  puts you at the start with 2 s of cover; four more BBs straight after take nothing; after the cover a second tag
+  costs a second and sends you back again; the third ends the round. Real rounds, two runs: holding the start you lose
+  0-3 lives in 60 s (at 27-58 s), sprinting at the bulb without firing all three at 5.7-6.9, 9.7-12.0 and 12.9-16.0 s;
+  the gaps between lives are 2.0-19.7 s (v1.224: 0.08-0.75 s), and you are back at the start after every tag but the
+  last. No page errors.
+- `tests/last-saturday.test.mjs` passes unchanged (three lives each, the map card, the win, the calendar, Eric's text).
+### Still open
+- Whether the finale is now too easy: a sprint at the bulb still loses all three lives inside 16 s, and the critic's
+  bot will show how often you win it.

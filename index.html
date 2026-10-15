@@ -2074,7 +2074,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.250</div>
+  <div class="version">v1.251</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7286,12 +7286,15 @@ const SCENARIOS = {
   last_saturday: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'The Last Saturday',
-    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing. School's Tuesday. Make it count.",
+    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
     finale: true,
+    // v1.251 (decisions "The Last Saturday: what is a life for you?", Michael: A): your three lives are three tags, each
+    // sending you back to the west end with 2 s of cover, as in the Pickup Game; the briefing's promise kept
+    tagSendsHome: true,
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',     anchor: 'lane_west_north', team: 'player' },
       { charId: 'rebecca',  weapon: 'ak47',    anchor: 'lane_west_south', team: 'player' },
@@ -27289,8 +27292,9 @@ function applyBBHit(bb, c) {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
       else endScenario('lose');
-    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup) {
+    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && (SCENARIOS[Game.scenario.active].pickup || SCENARIOS[Game.scenario.active].tagSendsHome)) {
       respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
+      // (v1.251: and in The Last Saturday, `tagSendsHome`)
     }
   } else {
     if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c); return true; }   // v1.237 (D.33): out already
