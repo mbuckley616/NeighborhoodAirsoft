@@ -1508,6 +1508,11 @@
     border-radius: 4px 4px 0 0;
   }
   #shopScreen .cat-tab:hover { background: #f4f1e0; color: #222; }
+  /* v1.240 (D.37): the Guns tab's kinds, a row of chips over the list */
+  #shopScreen .shop-gun-kinds { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+  #shopScreen .shop-gun-kind { padding: 4px 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #555; cursor: pointer; border: 1px solid #aca899; border-radius: 12px; background: #f4f1e0; }
+  #shopScreen .shop-gun-kind:hover { color: #222; background: #fff; }
+  #shopScreen .shop-gun-kind.active { color: #fff; background: #c93030; border-color: #c93030; }
   #shopScreen .cat-tab.active {
     background: #fff;
     color: #c93030;
@@ -2038,7 +2043,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.239</div>
+  <div class="version">v1.240</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22605,7 +22610,7 @@ function closeMap() {
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
 const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
-let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL' };   // v1.240: gunKind
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
@@ -23602,12 +23607,50 @@ function renderBBsTab(c, between) {
   c.appendChild(grid);
 }
 
+// v1.240 (backlog D.37, Michael 14 Oct: "maybe having tabs on the guns tab to shift between pistols, rifles, shotguns,
+// automatics, etc. Or at least grouping the weapons in sections by type on that page"): the Guns tab lists its guns
+// under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
+// entry here; a gun missing from it goes by its fire mode (automatic or rifle).
+const GUN_KINDS = [
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol'] },
+  { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder'] },
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'sniper'] },
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['bucket', 'mp5', 'ump', 'mac10', 'ak47'] },
+];
+function gunKind(gt) {
+  const k = GUN_KINDS.find(k => k.guns.includes(gt));
+  if (k) return k.id;
+  return getGunSpec(gt).fireMode === 'auto' ? 'AUTOMATICS' : 'RIFLES';
+}
 function renderGunsTab(c) {
   c.appendChild(shopSectionHeader('Guns', 'Click a gun to see its magazines & spares'));
+  const chips = document.createElement('div');
+  chips.className = 'shop-gun-kinds';
+  for (const id of ['ALL', ...GUN_KINDS.map(k => k.id)]) {
+    const n = id === 'ALL' ? GUN_ORDER.length : GUN_ORDER.filter(gt => gunKind(gt) === id).length;
+    const chip = document.createElement('div');
+    chip.className = 'shop-gun-kind' + (shopState.gunKind === id ? ' active' : '');
+    chip.dataset.kind = id;
+    chip.textContent = `${id} (${n})`;
+    chip.addEventListener('click', () => { shopState.gunKind = id; renderShop(); });
+    chips.appendChild(chip);
+  }
+  c.appendChild(chips);
   const equippedGun = Game.persist.equipped.gun;
+  let lastKind = null;
   for (const gt of GUN_ORDER) {
     const cfg = GUN_MAGS[gt];
     if (!cfg) continue;
+    const kind = gunKind(gt);
+    if (shopState.gunKind !== 'ALL' && kind !== shopState.gunKind) continue;
+    if (kind !== lastKind) {   // GUN_ORDER runs kind by kind, so each kind's header comes once
+      const k = GUN_KINDS.find(x => x.id === kind);
+      const h = shopSectionHeader(k ? k.name : kind, '');
+      h.classList.add('shop-gun-kind-header');
+      h.dataset.kind = kind;
+      c.appendChild(h);
+      lastKind = kind;
+    }
     const owned = !!Game.persist.owned[cfg.ownFlag] || gt === 'pistol';
     const isEquipped = equippedGun === gt;
     const row = document.createElement('div');

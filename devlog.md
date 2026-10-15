@@ -10497,3 +10497,24 @@ there, and its Settings button still shows when the mouse is free. Picture: `doc
 - Michael's eye on it in play, in a real browser: whether the browser hands the mouse back on Escape-to-resume (it
   can refuse without a click; then the "click to capture" note shows and a click takes it, as before).
 - The bedroom has no pause menu; if he wants one there (a quit to the title, say), that is a small follow-up.
+
+## v1.240 — The shop's guns by kind
+Backlog D.37, its second half (Michael, 14 Oct): "maybe having tabs on the guns tab to shift between pistols, rifles,
+shotguns, automatics, etc. Or at least grouping the weapons in sections by type on that page." The Guns tab was one
+list of twelve. Now it is both: a row of chips under the Guns header (ALL (12), PISTOLS (3), SHOTGUNS (2), RIFLES (2),
+AUTOMATICS (5)) shows one kind or all, and the list runs under a header for each kind. Pistols: the Spring Pistol,
+Six-Shooter and Bolt Pistol. Shotguns: the Spring Shotgun and Thunder Pump. Rifles: the Spring Assault Rifle and Sniper
+(both cock each shot). Automatics: the Bucket Gun, MP5, UMP, MAC-10 and AK-47. The chip you pick stays while you look
+at a gun's details and come back. A gun's kind is a table (`GUN_KINDS`); a new gun missing from it goes by its fire
+mode, so the cheap automatics this item asks for land under AUTOMATICS. Picture: `docs/shop-gun-kinds.png`.
+### Verified
+- `tests/shop-gun-kinds.test.mjs` (new, 10 checks): the five chips with their counts; ALL shows the four headers in
+  order with all twelve guns, each under its kind; AUTOMATICS shows its five under one header, a gun's details and
+  back keeps it; PISTOLS shows three; ALL the twelve again. No page errors.
+- `tests/shop-tabs.test.mjs` expected the Guns tab's one header; it now expects the kinds' four after it. Run after
+  the change: `shop-tabs`, `shop-pics`, `backyard-guns`, `autosave`, `hats`, `tops`, `shorts`, `under-parts`,
+  `utility-belt`: all pass.
+### Still open
+- D.37's first half, the 3-4 cheap clear-plastic automatics (low rate of fire, wild spin, jams), is not built. Their
+  names, prices and how bad each is are design; a question goes to decisions if Michael wants to choose, else the
+  builder proposes them there.
