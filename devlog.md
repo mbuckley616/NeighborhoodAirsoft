@@ -10373,3 +10373,23 @@ the aimed picture is too. Pictures: `docs/guns/sixshooter-side-before.png`, `doc
 - Michael's eye on the pictures. A real bird's-head butt hooks a little further; this is the curve and the round,
   drawn in two boxes and a disc, with a small step at the back where they meet. The frame is still a box with the
   cylinder in front of it, not a window round it. D.31 goes on with the Bucket Gun.
+
+## v1.235 — The Bucket Gun's trigger, out of its grip
+Backlog D.31, the eleventh gun. The Bucket Gun is a made-up battery hopper gun with a bucket of BBs on top, like the
+toy electric guns of the time, whose trigger hangs in a guard ahead of the pistol grip. Its body, bucket, carry-handle
+sights, battery-pack stock and grip all join and read well from the side; the one fault was below: the trigger and
+its guard had been pushed back into the grip's front. The trigger reached 0.6 cm into the grip and the guard's bar ran
+3.8 cm into it, so from the side only a stub of the guard showed and no trigger at all. Now the trigger and guard sit
+3 cm forward. There is a finger's room (2.4 cm) between the trigger and the grip, and the bar's back end meets the
+grip's front (7.6 mm in). The trigger still shows 1.9 cm under the body with the bar 6.5 mm below it. Nothing else moved;
+the grip, the hands and the aimed picture are as they were. Pictures: `docs/guns/bucket-side-before.png`,
+`docs/guns/bucket-side.png`.
+### Verified
+- `tests/gun-bucket.test.mjs` (new, 4 checks; writes the side picture). Before (v1.234): the trigger 6.4 mm into the
+  grip, the bar 3.8 cm into it; two of four checks failed. After: 2.4 cm of room, the bar 7.6 mm into the grip's front.
+  All pass, no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (the Bucket Gun: both hands on, none on the sight line),
+  `backyard-guns` (its blade on the reticle, its shop row and trade), `shop-pics`, `under-parts`: all pass.
+### Still open
+- Michael's eye on the pictures. The body is still one box and the bucket a plain cone. D.31 goes on with the Bolt
+  Pistol, the last of the twelve.

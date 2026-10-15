@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.234</div>
+  <div class="version">v1.235</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -19358,7 +19358,9 @@ function buildFPBucket() {
   // The power switch on the right flank slides back: the cocking part.
   const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), yellow, 0.033, 0.022, -0.04);
   sw.userData.baseZ = sw.position.z;
-  _fpTriggerGuard(group, dark, -0.028, -0.03);
+  // v1.235 (D.31): the trigger and guard were pushed into the grip's front (the trigger 0.6 cm into it, the guard's bar
+  // 3.8 cm); now 3 cm forward, a finger's room ahead of the grip, the bar's back end meeting it.
+  _fpTriggerGuard(group, dark, -0.028, -0.06);
   _fpPart(group, new THREE.BoxGeometry(0.038, 0.11, 0.05), dark, 0, -0.085, 0.0, -0.2);              // grip
   group.position.set(0.14, -0.21, -0.30);
   group.rotation.y = 0.10;
