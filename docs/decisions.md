@@ -5,6 +5,39 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Views past the edge of every map (D.24–D.25): generic now, or from your own pictures of the real streets? (deep-work session, 2026-10-15)**
+  I stood at the middle of each map's four edges in a headless browser and looked outward. Pictures of the four worst:
+  [Bunratty](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-BunrattyCourt.png),
+  [the Riverside Market lot](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-MarketLot.png),
+  [the Country Club](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-CountryClub.png),
+  [Winnmark](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-WinnmarkCourt.png).
+  What shows today: on Bunratty, looking north and west there is no ground at all, only sky. On Winnmark, looking east
+  the grass stops and the sky begins. On the market lot, the high school and the country club, a flat green field runs
+  to a hard line under an empty sky (at the school and the club, just past the chain-link fence). The grocery store's
+  front windows show plain sky, not its parking lot. The Hollow, Bellfield and the treehouse yard are mostly fine: fences
+  and a tree line close the view. Northcliff's hills hide most of its edge.
+  How it would be built, whatever you pick: scenery past the fence that nobody can walk into or shoot through (BBs
+  stop where they stop now). The ground runs on to the horizon. Rows of simple houses with roofs and yards stand behind
+  the back fences, with tree lines, rooftops further out, and a soft haze. Each map gets what fits it: more houses behind
+  the courts, a road and other shops beyond the market lot, playing fields and houses beyond the school and the club,
+  and the lot through the grocery store's windows. It is cheap to draw: today an edge view costs 52–180 draw calls and a
+  spawn view 330–1,650, and the backdrop adds at most 40 per map, checked by a test. Nothing loads from the internet.
+  A cloud session cannot reliably pull satellite imagery, so the real look comes only from pictures you send. They
+  would be a guide for shapes and placement (which side has houses, trees, a field or a road; how tall; how far). No
+  photo goes into the game.
+  Options:
+  - A) **Generic backdrops for every map now.** The scenery above, made up to suit each map, with no real references.
+    About two sessions. Nothing needed from you.
+  - B) **A now, then map by map from your pictures.** A first, so no map has a hard edge. Then, as you send pictures of
+    a street, that map's backdrop is reshaped to match it. What to send for each map: 2–4 screenshots from Google Maps
+    (satellite or 3D view, or Street View), standing on the street and looking out past the houses or fences that are
+    the map's edge. Attach them on the control room, or put them in the repo under `docs/refs/<map name>/`. If the repo
+    is public, use the control room, since those pictures show real streets near your home. *(recommended: every map
+    stops looking cut off after one step, and the real look comes map by map as your pictures arrive, with no waiting.)*
+  - C) **Winnmark first, to your pictures, shown to you before the rest.** This waits on your pictures of Winnmark. The
+    other maps keep their hard edges until you have seen Winnmark and said go.
+  - D) Not now.
+
 ## Answered
 
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
