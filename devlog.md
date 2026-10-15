@@ -10421,3 +10421,27 @@ unchanged. Pictures: `docs/guns/boltpistol-side-before.png`, `docs/guns/boltpist
 - Michael's eye on the pictures. The frame is still one deep box under the receiver tube, and the grip a straight
   slab; a target pistol's grip would be shaped wood with a thumb rest. With this D.31's one-at-a-time pass is done;
   whether any gun wants a second pass is his call from the pictures in `docs/guns/`.
+
+## v1.237 — Shooting a kid who is already out
+Backlog D.33 (Michael, 14 Oct): "Players that raise their arms and are 'out' should still be able to be shot, and if
+you shoot them, they should be mad and call you out for it." Before this your BBs passed straight through a kid who was
+out (`bbCanTarget` skipped him), so shooting one did nothing at all. Now a kid who is out, standing with his hand up
+where he was tagged or walking back to respawn, stops your BB with the hit sound and calls you out: a line from a new
+`shotWhileOut` pool, four lines for each of the three temper bands (every kid draws from his band), with Michael's two
+among them ("Ow!! Dude, I literally have my hand in the air!", "I'm OUT already!! What the heck, dude!"). He was
+usually just tagged, so his own 4 s voice cooldown is still running; this line goes through it, at most one a second
+from the same kid however many BBs land. It changes nothing else: no tag, no life, no pay, the round goes on; the
+result screen's tags are unchanged (the match stats count `outShots` for the tests). Only your BBs: a teammate's still
+pass through him, so the kids' own fights are as they were. A downed Infection tagger is slumped, not out, and still
+lets BBs through.
+### Verified
+- `tests/out-shot.test.mjs` (new, 13 checks). Every one of the 30 kids has a line. Winnmark Cul-de-sac (three kids
+  against you): Trey tagged, his hand up; three BBs at him each stop at him (0 m past his middle) and he says one line,
+  none for the second BB the same moment, another 1.25 s later; tags stay 1, the round goes on; a teammate's BB passes
+  through (3.4 m on). Defend at the treehouse: Marcus tagged and walking back stops a BB and says his line. Before
+  (v1.236): seven checks failed, no line in the pool and every BB 3.4 m past him.
+- The full suite on v1.237, below.
+### Still open
+- Hearing it: the headless browser has no voices, so the lines are tested as chosen, not as heard. Whether out kids
+  should cost you something for overshooting (pay, or a word on the result screen) is Michael's call; nothing does now.
+- When the voices build (D.9, v1.229) lands, its own pools can take these lines over; the category name is `shotWhileOut`.

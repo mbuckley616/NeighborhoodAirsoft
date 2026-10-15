@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.236</div>
+  <div class="version">v1.237</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4995,18 +4995,21 @@ const VOICE_LINES_DEFAULT = {
     npcHit:        ["Ugh, fine!", "Aw come on!", "Lucky shot!"],
     playerSpotted: ["There he is!", "Get him!", "Push push push!"],
     taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!"],
+    shotWhileOut:  ["Ow!! Dude, I literally have my hand in the air!", "I'm OUT already!! What the heck, dude!", "Hey! I'm out! Are you blind?", "Dude! Hand's UP!"],   // v1.237 (D.33)
   },
   mid_agg: { // 0.4..0.65
     playerHit:     ["Got him!", "Hit!", "That's one."],
     npcHit:        ["Augh, okay!", "Fine, fair!", "Got me."],
     playerSpotted: ["I see him!", "On him!", "Right there!"],
     taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!"],
+    shotWhileOut:  ["I'm out already!! What the heck, dude.", "Ow! My hand's up, man!", "Dude, I'm walking off! Quit it!", "Hey! I'm already out!"],   // v1.237 (D.33)
   },
   low_agg: { // < 0.4
     playerHit:     ["Got him.", "Nice.", "Tagged."],
     npcHit:        ["Mm, okay.", "Yeah, fair.", "Got me."],
     playerSpotted: ["I have him.", "He's there.", "Got eyes."],
     taunt:         ["Take your time.", "I can wait.", "He'll show himself."],
+    shotWhileOut:  ["Ow. I'm out, man.", "Seriously? My hand is up.", "Okay, that's overshooting.", "I'm already out, dude."],   // v1.237 (D.33)
   },
 };
 
@@ -26354,9 +26357,27 @@ function bbCanTarget(bb, c) {
   if (c === Game.player) {
     return Game.player.hitsTaken < Game.player.maxHits;
   }
-  if (c.health <= 0) return false;
-  if (c.state === 'retreating') return false;
+  // v1.237 (D.33): a kid who is out (hand up where he was tagged, or walking back) still stops YOUR BBs, and says so
+  if (c.health <= 0 || c.state === 'retreating') return bb.owner === 'player' && kidIsOutStanding(c);
   return true;
+}
+// v1.237 (backlog D.33, Michael 14 Oct: "Players that raise their arms and are 'out' should still be able to be shot, and
+// if you shoot them, they should be mad and call you out for it"): out is a tagged kid standing with his hand up, or
+// one walking back to respawn. A downed Infection tagger is slumped, not out, and still lets BBs through.
+function kidIsOutStanding(c) {
+  return c !== Game.player && c.behavior !== 'tagger';
+}
+const OUT_SHOT_LINE_GAP = 1.0;   // seconds (simulated) between a kid's out-shot complaints
+function shotWhileOut(c) {
+  if (Game.scenario.stats) Game.scenario.stats.outShots = (Game.scenario.stats.outShots || 0) + 1;
+  playHitOnEnemy();
+  const now = aiNow();
+  if (c._outLineAt != null && now - c._outLineAt < OUT_SHOT_LINE_GAP) return;
+  c._outLineAt = now;
+  // he was just tagged, so his own 4 s voice cooldown (and the 1.5 s one for everybody) is likely still running:
+  // being shot with his hand up is worth saying anyway
+  c._voiceCooldownUntil = 0; VOICE.globalCooldownUntil = 0;
+  tryNpcSpeak(c, 'shotWhileOut');
 }
 
 // Apply the hit's consequences for combatant c. Returns true if the BB should be
@@ -26381,6 +26402,7 @@ function applyBBHit(bb, c) {
       respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
     }
   } else {
+    if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c); return true; }   // v1.237 (D.33): out already
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
     playHitOnEnemy();
