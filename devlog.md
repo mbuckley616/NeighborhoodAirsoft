@@ -10271,7 +10271,7 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
 
-## v1.229 — The bed shows the summer so far
+## v1.231 — The bed shows the summer so far
 Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
 do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
 "Summer". The card it opens is headed THE SUMMER SO FAR: today's date off the wall calendar (Sunday 1 June 2003 on a
@@ -10289,3 +10289,5 @@ you sleep; the calendar's dates still move only with wins.
 - Run after the change: `autosave`, `bedroom-bed`, `calendar`, `rival`, `texts`: all pass.
 ### Still open
 - Michael's look at the card in play. The bed's floating label now reads "Summer" (was "Save").
+- Numbered v1.231, not v1.229: the voices build (auto/fable-d9-voices) is v1.229 and online play step 1
+  (auto/fable-d2-online) is v1.230, both off main, so this skips them to keep the title screen's number unique.

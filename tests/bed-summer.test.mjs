@@ -1,4 +1,4 @@
-// v1.229 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
+// v1.231 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
 // the save summary as before, plus today's date, the score against Seth's crew and the next match on the ladder.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;

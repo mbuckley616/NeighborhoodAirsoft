@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.229</div>
+  <div class="version">v1.231</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9425,14 +9425,14 @@ function buildBedroomScene() {
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
-  // v1.229 (D.29, Michael: A): the game saves itself (v1.218), so the bed shows the summer so far.
+  // v1.231 (D.29, Michael: A): the game saves itself (v1.218), so the bed shows the summer so far.
   // Fits the kid-bedroom framing and matches the original hub design pillar
   // ("Save, gear, world map"). Trigger box covers the whole bed footprint.
   Game.interactables.push({
     type: 'bed',
     box: new THREE.Box3().setFromObject(bedGroup),
     pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
-    prompt: 'Sleep (how’s the summer going?)',   // v1.229: was "Sleep (save your game)"
+    prompt: 'Sleep (how’s the summer going?)',   // v1.231: was "Sleep (save your game)"
     label: 'Summer', icon: 'bed', labelY: 1.5,
     action: () => openSaveMenu(),
   });
@@ -22230,7 +22230,7 @@ function profileSummaryHTML() {
     ${row('Scenarios cleared', completed)}
   </div>`;
 }
-// v1.229 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
+// v1.231 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
 // today's date off the calendar, the score against Seth's crew, and the next match on the ladder.
 function nextLadderMatchId() {
   for (const z of ZONE_LADDER) {
@@ -22269,7 +22269,7 @@ function openSaveMenu() {
   exitPointerLock();
 
   if (res.ok) {
-    titleEl.textContent = 'The summer so far';   // v1.229: was "Saved — sleep tight"
+    titleEl.textContent = 'The summer so far';   // v1.231: was "Saved — sleep tight"
     bodyEl.style.whiteSpace = 'normal';
     bodyEl.innerHTML =
       summerSoFarHTML() +
