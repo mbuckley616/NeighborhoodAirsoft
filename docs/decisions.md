@@ -86,6 +86,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   The lose line that had all four "regroup near the road" together is fixed already (v1.246: it names who got you and
   says the rest keep going at each other).
 
+- **Lamplight on Bellfield: Fernando's AK can reach your start (builder, 2026-10-15)**
+  CI on PR #75 failed the check that a player standing at the entry in Lamplight on Bellfield (the night 4v4) is not
+  tagged in the first 5 s: tagged at 4.6 s. Reproduced in 1 of 45 rounds (4.7 s): Fernando, 5 m from his start, landed
+  an AK BB from 55.5 m. The test's own check prints that he and Christian have a line to the entry from their starts,
+  and an AK engages out to 100 m. Of the 45 rounds, 2 were tagged inside 11 s, 32 at 13.8–29.1 s, 11 not in 30 s. It
+  is rare, but it is a tag before you have moved, and it fails CI now and then.
+  - A) **Move Fernando's (and Christian's) start out of the line to the entry**, behind a house or the island's
+    hedge, so nobody can see your start at BEGIN. *(recommended: the same "no line from a start" rule the other night
+    matches keep, and nothing else about the match changes)*
+  - B) At night an AK reaches 60 m, not 100 m, on every night map (the lamps light 20-30 m round them).
+  - C) Leave the match; the check allows a tag from 4 s on.
+
 ## Answered
 
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
