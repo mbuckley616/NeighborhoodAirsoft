@@ -10606,6 +10606,9 @@ in one build to (6.50, −14.50) in the next. The check now reads each kid's sta
 ### Verified
 - `tests/lot-ffa-opening.test.mjs`: seven starts clear of obstacles, none in sight of another, 19.0 m apart at the
   closest (the rule is 18 m), yours at the east edge; the three openings as before. All pass.
+- This run's full suite: `npm test` in four parallel shards on v1.241 while v1.242's suites also ran, 128 of 143
+  passed; of the 15 misses, 14 died loading the page or at NEW GAME under that load and one was `seth-shotgun`'s near
+  /far share (near 0.65, far 0.94 a shot), the known near-limit check. All 15 rerun on v1.244, three at a time: pass.
 ### Still open
 - The same line's `seth-shotgun` share at 24-28 m is an unseeded spread near its limit, as v1.243's was; seed it the
   same way if it fails again.
