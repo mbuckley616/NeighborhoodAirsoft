@@ -5,6 +5,32 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Squad commands (D.35): how do you give them? (builder, 2026-10-15)**
+  You asked for Battlefront-style orders to your team: push up, keep distance, find cover, follow me. Your teammates
+  are the ally kids in team matches (3v3, 4v4, VIP, flags, the Pickup Game). Whatever you pick: an order goes to every
+  teammate in walkie range, they answer it on the walkie ("Copy, pushing!"), the HUD shows the order standing, and it
+  holds until you give another or the round ends. Push up: they advance to the next cover toward the other side. Keep
+  distance: they hang back 15-25 m and fight from range. Find cover: each takes the nearest cover and holds. Follow
+  me: they stay within about 6 m of you and shoot what you shoot at.
+  - A) **Hold Q for a wheel.** Hold Q, the four orders show round the crosshair, flick the mouse toward one, let go.
+    The match keeps running while you choose. *(recommended: one key, nothing to remember, like Battlefront 2's)*
+  - B) **Four keys, Z X C V**, one order each, no menu (all four are free today). Fastest, but four more keys to
+    learn.
+  - C) **The walkie: T talks, then 1-4.** Press T, a walkie card shows the four orders, a number picks one. Ties it to
+    the walkie your kid already carries, but two key presses and 1-4 are the loadout keys while it is open.
+  - D) A or B, and orders to one teammate (aim at him while giving it) as well as to everybody.
+
+- **The pool noodle (D.36): bought or earned, and what does a hit do? (builder, 2026-10-15)**
+  A pool noodle as a melee backup for when you are out of BBs. Whatever you pick: it goes in a loadout slot like the
+  speed loader, a key (V) swings it in first person, it reaches about 1.6 m, and a kid hit by it reacts like a BB tag
+  (a hit kid shouts something about it). Kids never carry one.
+  - A) **Sold on airsoft.com for $15**, a hit is a tag like a BB. *(recommended: simple, and a real backup)*
+  - B) **Earned**, not sold: it lies in the garage and becomes yours after a match (say the first Bellfield win), a
+    hit is a tag.
+  - C) A, but a noodle hit only counts if you hit from behind (a sneak tag), so it doesn't replace the gun.
+  - D) A or B, but a hit is not a tag: it stuns the kid for 2 s (he stops shooting and complains), to buy you time to
+    reload.
+
 ## Answered
 
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
