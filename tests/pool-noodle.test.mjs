@@ -58,7 +58,13 @@ const swing = (how = 'V') => page.evaluate(async (how) => {
   return { k: k.name, before };
 }, how).then(async (b) => {
   if (how === 'V') await page.keyboard.press('KeyV'); else await page.evaluate(() => onLmbDown());
-  const mid = await page.evaluate(() => { for (let i = 0; i < 6; i++) stepGame(1 / 60); return { noodle: fpNoodle.visible, gun: fpGun.visible, t: Game.noodle.t }; });
+  // fix-up (PR #75, CI on fe746aa): held where he stands through the swing itself too, not only after it; a kid
+  // repositioning walked out of the 1 m reach during these steps and the swing missed
+  const mid = await page.evaluate(() => {
+    const k = Game.scenario.enemies.find(e => e._freeze && e.health > 0);
+    for (let i = 0; i < 6; i++) { if (k && k.state !== 'retreating' && k.health > 0) { k.pos.x = k._freeze.x; k.pos.z = k._freeze.z; } stepGame(1 / 60); }
+    return { noodle: fpNoodle.visible, gun: fpGun.visible, t: Game.noodle.t };
+  });
   if (how === 'mid') await g.shot('pool-noodle-swing');
   const after = await page.evaluate((name) => {
     const k = Game.scenario.enemies.find(e => e.name === name);
@@ -104,6 +110,7 @@ await place(1.0, 0);
 await page.keyboard.press('Digit2');
 const held = await page.evaluate(() => { stepGame(1 / 60); return { slot: Game.held.slotIdx, noodle: fpNoodle.visible, gun: fpGun.visible, hint: document.getElementById('loadoutHint').textContent }; });
 await g.shot('pool-noodle-held');
+await place(1.0, 0);   // fix-up: again, after the key, the step and the picture let him walk off
 check('key 2 holds the noodle: it shows and the gun does not, and the hint says click or V', held.slot === 1 && held.noodle && !held.gun && /swing/i.test(held.hint), held);
 const click = await swing('mid');
 check('holding its slot, a click swings it and tags the kid 1 m ahead', click.tagged && click.swings === click.before.swings + 1, click);
