@@ -10647,3 +10647,17 @@ Bunratty"), not changed.
   errors.
 ### Still open
 - The start placement itself waits on Michael's answer.
+
+## v1.247 — Seth's shotgun check, with more rounds
+Found in play (builder, v1.222; again in v1.244's full run): `tests/seth-shotgun.test.mjs`'s "fewer of his pellets
+find you at 24-28 m than at 12-16 m" failed now and then (once at near 0.65, far 0.94 pellets a shot; the line is far
+under half of near). Sixteen rounds held at fixed distances showed why: one round's pellets a shot run anywhere from
+0.7 to 4.3 at 12-16 m and 0 to 0.7 at 24-28 m, while the means are 2.5 and 0.25, so with a single round at 12, 24 and
+28 m one unlucky round could tip it. v1.244 found seeding each round does not make it repeat (each starts from where
+the page's frames left Seth), so the test now plays two rounds at each of 12, 24 and 28 m instead of one (12 rounds,
+was 9). No game code changed.
+### Verified
+- `tests/seth-shotgun.test.mjs` three times at once, with two other shards running: near 1.89, 2.58 and 2.47 pellets a
+  shot, far 0, 0.19 and 0.17, so far is 0–8% of near against the 50% line. All checks pass each time.
+### Still open
+- Nothing for the game; the suite takes about a third longer.

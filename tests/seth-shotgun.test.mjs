@@ -13,7 +13,10 @@ check('the briefing no longer promises a range he cannot reach', !/14 ?m|can.t t
 const rows = [];
 // v1.191 fix-up: three rounds each at 16 and 20 m. A round there is 6-8 shots whose pellets land by chance, and CI twice
 // had 0 hits at both distances with one round each (12 Oct; locally a round at 20 m lands none about 1 time in 4).
-for (const d of [12, 16, 16, 16, 20, 20, 20, 24, 28]) {
+// v1.247 (Found in play, v1.222/v1.244): two each at 12, 24 and 28 m, was one. One round's pellets a shot run 0.7–4.3
+// at 12-16 m and 0–0.7 at 24-28 m (16 rounds, 15 Oct), so the near/far share with one far round a side sat near its line
+// (failed once at near 0.65, far 0.94); the means are 2.5 and 0.25.
+for (const d of [12, 12, 16, 16, 16, 20, 20, 20, 24, 24, 28, 28]) {
   await g.scenario('winnmark_seth_shotgun_duel');
   rows.push(await page.evaluate((d) => {
     const real = applyBBHit, bb0 = spawnEnemyBB; let hits = 0, shots = 0;
