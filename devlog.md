@@ -10270,3 +10270,311 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
+
+## v1.231 — The bed shows the summer so far
+Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
+do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
+"Summer". The card it opens is headed THE SUMMER SO FAR: today's date off the wall calendar (Sunday 1 June 2003 on a
+new game), the zone you are in, the score against Seth's crew ("13 of 21 beaten"), and the next match on the ladder,
+by name and street (the first unlocked match not yet won, zone by zone; the last Saturday once the rest are won, and
+"Nothing left: the summer is won" after it). Below that, the save summary as before (cash, BBs, guns, accessories,
+cleared), a line saying it is saved and that the game saves itself too, and DELETE SAVE. The bed still saves when
+you sleep; the calendar's dates still move only with wins.
+### Verified
+- `tests/bed-summer.test.mjs` (new, 13 checks): the prompt; a new game reads Sunday 1 June 2003, Winnmark Court, 0 of
+  21 beaten, Backyard Basics next, the summary and the save there, OK back to the bedroom; Winnmark and Bunratty won
+  with six of the Hollow reads Sunday 20 July 2003, the Hollow, 13 of 21, Night Game in the Woods next; everything
+  but the finale reads Friday 29 August with The Last Saturday next; that won too, Saturday 30 August, Bunratty Court,
+  21 of 21, the summer won. No page errors.
+- Run after the change: `autosave`, `bedroom-bed`, `calendar`, `rival`, `texts`: all pass.
+### Still open
+- Michael's look at the card in play. The bed's floating label now reads "Summer" (was "Save").
+- Numbered v1.231, not v1.229: the voices build (auto/fable-d9-voices) is v1.229 and online play step 1
+  (auto/fable-d2-online) is v1.230, both off main, so this skips them to keep the title screen's number unique.
+
+## v1.232 — The MAC-10, held up to an M10
+Backlog D.31, the eighth gun. The MAC-10 is drawn at about ×0.6. From the side it was a cube on a stick: the box
+receiver only 1.7 times as long as it was tall, with the grip at its back end (70% of the way along), no trigger, a
+trigger guard that was a bar hidden inside the receiver's bottom, no sights at all, and a small block for a stock. The
+M10's receiver is a long flat-sided box with the grip a little behind its middle, a long strip guard, sights with
+protective ears on top, and a wire stock that collapses along the lower receiver.
+
+Now the receiver is 16 cm long by 6 cm tall (2.7 to 1), grown forward and back around the grip, which stays where your
+hand is (so `FP_HANDS` is unchanged), now 59% of the way back. A trigger hangs 1.6 cm under the receiver inside the M10's
+guard: a strip from the grip's front, 1.3 cm below the trigger, forward 6 cm ahead of the mag and up into the receiver.
+On top, a front post between two ears at the front and two rear ears at the back, every tip at the same height; the
+cocking knob between them is lowered under that line. Aimed, the eye looks along them, so the aimed gun sits 2.2 cm
+higher than before (adsPos y −0.056, was −0.078 with nothing to aim along); the post sits on the reticle (0.16°). The
+sights hide when an optic is mounted, as the AR's and AK's do. There is an ejection port on the right. The stock is two
+rods along the lower receiver's sides and a butt plate behind it. The barrel stub and the orange tip moved forward
+with the receiver's front. Pictures: `docs/guns/mac10-side-before.png`, `docs/guns/mac10-side.png`.
+### Verified
+- `tests/gun-mac10.test.mjs` (new, 10 checks; writes the side picture). Before (v1.231): 1.67 to 1, the grip 70% back,
+  no trigger, no guard below the receiver, no sights, no stock but the block, nothing to aim along; nine of ten checks
+  failed. After: 2.67 to 1, 59% back, 1.6 cm of trigger with the guard 1.3 cm below it and 6.1 cm ahead of the mag,
+  the front post 1.6 cm over the top in the front 7%, two rear ears level with it, the knob 6 mm under the line, the
+  plate 4 cm tall and both rods; aimed, 0.16° off centre. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the MAC-10: both hands on, none on the sight
+  line), `under-parts`, `shop-pics`, `workbench-labels`, `loadout-kid`, `laser`: all pass.
+### Still open
+- Michael's eye on the pictures, and the gun aimed: it now has sights to look along and sits higher in the view. The
+  M10's front strap (the loop people hold under the barrel) and its rounded stock rods are not drawn; the off hand
+  still cups the shooting hand. The kids' third-person MAC-10 was not touched. D.31 goes on with the four backyard
+  guns, the Thunder Pump first.
+
+## v1.233 — The Thunder Pump, held up to a toy pump shotgun
+Backlog D.31, the ninth gun and the first of the four made-up backyard guns. The Thunder Pump copies a toy pump-action
+air shotgun and is built on the shotgun's body plan, so it had the three faults v1.224 fixed on the shotgun. The wrist
+hung as a lump under the receiver's back (its top front corner 4.9 cm under it) and hid the guard behind it, 2.5 cm of
+overlap. The trigger was inside the receiver, none of it showing. The butt pad stood 3.9 cm above the stock's top line
+and 1.2 cm into its back.
+
+Now there is a deep guard (front and rear uprights and a bottom bar) with a trigger showing 1.9 cm under the receiver
+and the bar 0.7 cm below it, 2 cm clear ahead of the wrist. The wrist runs back from the receiver's back and the
+shooting hand moves with it (`FP_HANDS.thunder`, 3.5 cm back). The stock moves 1.2 cm forward so its comb meets the
+receiver's back 3 mm under its top, without the wedge of light that showed between them. The butt pad is the stock's
+back face, a child of the stock. The rear notch sits on the receiver (it hovered 0.5 mm over it). The barrel, tank,
+pump, gauge and front bead are where they were, so the aimed picture is unchanged. Pictures:
+`docs/guns/thunder-side-before.png`, `docs/guns/thunder-side.png`. (Its test went into v1.232's commit by mistake,
+before the model change.)
+### Verified
+- `tests/gun-thunder.test.mjs` (new, 6 checks; writes the side picture). Before (v1.232): no trigger showing, the guard
+  2.5 cm into the wrist, the wrist 4.9 cm under the receiver, the pad 3.9 cm above the stock and 1.2 cm into it; four
+  of six checks failed. After: 1.9 cm of trigger with the guard 6.7 mm below it, the guard 2.0 cm clear of the wrist,
+  the wrist's corner 1.4 cm under the receiver's back, the comb 3 mm under the receiver's top, the pad flush (0 mm).
+  All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Thunder Pump: both hands on, the off hand
+  riding the pump, none on the sight line), `backyard-guns` (its bead on the reticle, its shop row and trade),
+  `under-parts`, `shop-pics`: all pass.
+### Still open
+- Michael's eye on the pictures. The receiver, tank and stock are still plain boxes and cylinders, as a toy's would
+  be; the stock's lower edge steps at the wrist. D.31 goes on with the Six-Shooter.
+
+## v1.234 — The Six-Shooter, held up to a bird's-head Colt
+Backlog D.31, the tenth gun. The Six-Shooter is a cap-gun copy of a Colt single-action with a bird's-head grip. On a
+Colt the cylinder sits just ahead of the recoil shield, with the hammer and the grip straight behind it. Here the frame
+ran 3.8 cm past the cylinder's back, a plain block with the hammer 3.3 cm back at its far end. The "bird's-head" grip
+was one straight slab with a flat silver cap, where a bird's-head grip curves down to a rounded butt.
+
+Now the frame ends 1.2 cm behind the cylinder, and the top strap, rear notch, hammer, trigger guard and grip come
+forward 1.5 cm with it. The hammer stands 8 mm behind the cylinder, still under the sight line. The grip is two
+pieces: the top raked back as before, the lower one turned 0.33 rad toward the vertical, ending in a rounded wooden
+butt. It reaches about as low as the old cap (10.6 cm under the bore, was 10.7). The shooting hand moves forward with
+the grip (`FP_HANDS.sixshooter`). The barrel, ejector rod, cylinder, front blade and sight heights are unchanged, so
+the aimed picture is too. Pictures: `docs/guns/sixshooter-side-before.png`, `docs/guns/sixshooter-side.png`.
+### Verified
+- `tests/gun-sixshooter.test.mjs` (new, 6 checks; writes the side picture). Before (v1.233): the frame 3.8 cm past
+  the cylinder, the hammer 3.3 cm back, the grip starting 1.4 cm back, one straight piece, no rounded butt; five of six
+  checks failed. After: 1.2 cm, 0.8 cm, the grip from the cylinder's back (−1.4 mm), two pieces 0.33 rad apart, a
+  rounded butt. All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Six-Shooter: both hands on, gap 0, none
+  on the sight line), `backyard-guns` (its blade on the reticle, its shop row), `shop-pics`: all pass.
+### Still open
+- Michael's eye on the pictures. A real bird's-head butt hooks a little further; this is the curve and the round,
+  drawn in two boxes and a disc, with a small step at the back where they meet. The frame is still a box with the
+  cylinder in front of it, not a window round it. D.31 goes on with the Bucket Gun.
+
+## v1.235 — The Bucket Gun's trigger, out of its grip
+Backlog D.31, the eleventh gun. The Bucket Gun is a made-up battery hopper gun with a bucket of BBs on top, like the
+toy electric guns of the time, whose trigger hangs in a guard ahead of the pistol grip. Its body, bucket, carry-handle
+sights, battery-pack stock and grip all join and read well from the side; the one fault was below: the trigger and
+its guard had been pushed back into the grip's front. The trigger reached 0.6 cm into the grip and the guard's bar ran
+3.8 cm into it, so from the side only a stub of the guard showed and no trigger at all. Now the trigger and guard sit
+3 cm forward. There is a finger's room (2.4 cm) between the trigger and the grip, and the bar's back end meets the
+grip's front (7.6 mm in). The trigger still shows 1.9 cm under the body with the bar 6.5 mm below it. Nothing else moved;
+the grip, the hands and the aimed picture are as they were. Pictures: `docs/guns/bucket-side-before.png`,
+`docs/guns/bucket-side.png`.
+### Verified
+- `tests/gun-bucket.test.mjs` (new, 4 checks; writes the side picture). Before (v1.234): the trigger 6.4 mm into the
+  grip, the bar 3.8 cm into it; two of four checks failed. After: 2.4 cm of room, the bar 7.6 mm into the grip's front.
+  All pass, no page errors.
+- Run after the change: `gun-parts`, `fp-hands` (the Bucket Gun: both hands on, none on the sight line),
+  `backyard-guns` (its blade on the reticle, its shop row and trade), `shop-pics`, `under-parts`: all pass.
+### Still open
+- Michael's eye on the pictures. The body is still one box and the bucket a plain cone. D.31 goes on with the Bolt
+  Pistol, the last of the twelve.
+- The full suite on v1.231 (three local shards, run beside this run's gun work): 130 of 133 suites passed. The three
+  misses, `gun-ump` and `ladder-prompt` (the page load passed 30 s) and `harness` (NEW GAME stalled under load), each
+  passed alone on v1.235. v1.232–v1.235 ran their neighbouring suites, as listed in each entry.
+
+## v1.236 — The Bolt Pistol's trigger, out of its grip
+Backlog D.31, the twelfth and last gun. The Bolt Pistol is a made-up backyard spring pistol copying a bolt-action
+target pistol (an XP-100 type): a long barrel off a short receiver over a wooden grip, the trigger hanging in a guard
+ahead of the grip with room for a finger. Its barrel, receiver, sights and bolt knob join and read well from the side;
+the faults were below, the Bucket Gun's fault again and two smaller ones. The guard's bar ran 2.2 cm into the grip's
+front and the trigger stood 9 mm from it, so the finger had no room. The guard's front upright stopped 4.5 mm under the
+frame, with light between them. The grip is raked back, and its top front corner hung 3.6 mm under the frame, a wedge
+of light at the front of the grip.
+
+Now the trigger and guard sit 1.5 cm forward and 4.5 mm up: 2.4 cm of room between the trigger and the grip, the bar's
+back end 6.9 mm into the grip's front, the front upright flush with the frame. The trigger shows 1.3 cm under the frame
+(was 1.75) with the bar 6.5 mm below it. The grip moves 4 mm up so its top front corner meets the frame, and the
+shooting hand moves with it (`FP_HANDS.boltpistol`). The barrel, sights and bolt did not move, so the aimed picture is
+unchanged. Pictures: `docs/guns/boltpistol-side-before.png`, `docs/guns/boltpistol-side.png`. That is the twelve.
+### Verified
+- `tests/gun-boltpistol.test.mjs` (new, 6 checks; writes the side picture). Before (v1.235): the finger's room 9.4 mm,
+  the bar 2.2 cm into the grip, the front upright 4.5 mm short of the frame, the grip's corner 3.6 mm under it; four of
+  six checks failed. After: 2.4 cm, 6.9 mm, 0 mm, −0.4 mm (just inside). All pass, no page errors.
+- Run after the change: `gun-parts` (all twelve guns join), `fp-hands` (the Bolt Pistol: both hands on, none on the
+  sight line), `backyard-guns` (its blade on the reticle, its shop row), `shop-pics`, `under-parts`: all pass.
+### Still open
+- Michael's eye on the pictures. The frame is still one deep box under the receiver tube, and the grip a straight
+  slab; a target pistol's grip would be shaped wood with a thumb rest. With this D.31's one-at-a-time pass is done;
+  whether any gun wants a second pass is his call from the pictures in `docs/guns/`.
+
+## v1.237 — Shooting a kid who is already out
+Backlog D.33 (Michael, 14 Oct): "Players that raise their arms and are 'out' should still be able to be shot, and if
+you shoot them, they should be mad and call you out for it." Before this your BBs passed straight through a kid who was
+out (`bbCanTarget` skipped him), so shooting one did nothing at all. Now a kid who is out, standing with his hand up
+where he was tagged or walking back to respawn, stops your BB with the hit sound and calls you out: a line from a new
+`shotWhileOut` pool, four lines for each of the three temper bands (every kid draws from his band), with Michael's two
+among them ("Ow!! Dude, I literally have my hand in the air!", "I'm OUT already!! What the heck, dude!"). He was
+usually just tagged, so his own 4 s voice cooldown is still running; this line goes through it, at most one a second
+from the same kid however many BBs land. It changes nothing else: no tag, no life, no pay, the round goes on; the
+result screen's tags are unchanged (the match stats count `outShots` for the tests). Only your BBs: a teammate's still
+pass through him, so the kids' own fights are as they were. A downed Infection tagger is slumped, not out, and still
+lets BBs through.
+### Verified
+- `tests/out-shot.test.mjs` (new, 13 checks). Every one of the 30 kids has a line. Winnmark Cul-de-sac (three kids
+  against you): Trey tagged, his hand up; three BBs at him each stop at him (0 m past his middle) and he says one line,
+  none for the second BB the same moment, another 1.25 s later; tags stay 1, the round goes on; a teammate's BB passes
+  through (3.4 m on). Defend at the treehouse: Marcus tagged and walking back stops a BB and says his line. Before
+  (v1.236): seven checks failed, no line in the pool and every BB 3.4 m past him.
+- The full suite on v1.237 (three local shards): 138 of 139 suites passed. The miss, `spawn-facing`, lost its
+  browser under load before its first check and passed alone on v1.240.
+### Still open
+- Hearing it: the headless browser has no voices, so the lines are tested as chosen, not as heard. Whether out kids
+  should cost you something for overshooting (pay, or a word on the result screen) is Michael's call; nothing does now.
+- When the voices build (D.9, v1.229) lands, its own pools can take these lines over; the category name is `shotWhileOut`.
+
+## v1.238 — The damage report
+Backlog D.34 (Michael, 14 Oct): "a 'damage report' after you've been eliminated from a match that shows where you were
+shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that landed on your
+character." Before this the result screen only counted the hits on you.
+
+Now each BB that lands on you keeps where it landed: how far up your body (head over 86% of your height, chest or back
+over half, stomach or lower back above 40%, a leg below; an arm when it lands more than 20 cm off your middle in the
+top half), which side it came from, who fired it and his gun, how far he was, when, and which life it took. The result
+screen of a match you were tagged out of (a loss, or any match where you lost a life and came back: Pickup Game, VIP,
+flags) shows a DAMAGE REPORT under the numbers: your own kid, in your look, gun and gear, drawn front and back, with a
+numbered red dot on each hit (a hit from in front on the front view, from behind on the back), and beside it one row a
+hit: "Chest — Brooke, Spring Shotgun · 12 m · 0:00 · life 1". Life numbers show only when there was more than one
+life; eight rows at most, then "and N more". A win without a life lost shows none. The kid is drawn once per result by
+its own small renderer and copied into a canvas, so the screen costs one extra draw.
+### Verified
+- `tests/damage-report.test.mjs` (new, 13 checks). Pickup Game, 3 lives: Brooke's BBs on your chest from in front,
+  your head from behind and your right leg from the side, a life each; the report reads chest/head/right leg, lives
+  1/2/3, Brooke and her Spring Shotgun from 12 m, and the list says so. Dots 1 and 3 on the front view, 2 on the back;
+  the head dot at y 15 of 150, the chest at 58, the leg at 117 and on the kid's right (the left of the front view); the
+  kid's pixels show in both views. A one-hit loss to Seth: one row, no life numbers. A win with no life lost: no report.
+  Before (v1.237) there was no report to find. Picture: `docs/damage-report.png`.
+- Run after the change: `result-stats`, `pickup-lives`, both `vip` suites, `smoke`: all pass.
+### Still open
+- Michael's eye on it in play. The hitbox on you is a cylinder, so "arm" is a guess from how far off your middle the BB
+  landed; the dots sit on the part named, not at the exact spot. Hits that land in the 2 s cover after a respawn don't
+  count and aren't listed.
+
+## v1.239 — A pause menu on Escape
+Backlog D.39 (Michael, 14 Oct): "Can we make the pause menu more obvious / auto-open when hitting escape?" There was no
+pause menu in a match. Escape only let go of the mouse; the match ran on behind a small "Click to capture mouse · ESC
+to release" note, so a kid could tag you while you read it, and the only way out was F (the forfeit question, v1.208).
+
+Now letting go of the mouse in a match (Escape, or alt-tab and the like) opens PAUSED in the middle of the screen and
+the match stops, the same stop as the forfeit question (`stepGame` skips the match; held keys and the trigger are let
+go). RESUME goes back (a click on it, or Escape), taking the mouse again. SETTINGS opens the settings over it; closing
+them leaves the match paused. FORFEIT (or F) asks the forfeit question. Escape with the mouse already free opens it
+too. The Escape that lets go of the mouse can also arrive as a key a moment later, so an Escape within 0.3 s of the
+menu opening does not close it. A round that ends while it is up closes it. The bedroom is unchanged: nothing runs
+there, and its Settings button still shows when the mouse is free. Picture: `docs/pause-menu.png`.
+### Verified
+- `tests/pause-menu.test.mjs` (new, 13 checks), Bunratty against Sean. The headless page holds a real pointer lock
+  after BEGIN; letting go of it opens PAUSED with no capture note; 3 s of steps leave the clock at 3.43 s and Sean
+  where he was; an Escape at once leaves it open. RESUME: the clock runs 1 s in 60 steps. Escape opens it, Escape
+  0.35 s later closes it. SETTINGS opens over it, their Escape closes them with the match still paused and stopped.
+  FORFEIT and F ask the question; KEEP PLAYING goes on; ENTER forfeits and nothing is left open. In the bedroom it
+  does not open. Before (v1.238) there was no menu to find.
+- Run after the change: `settings`, `forfeit-ask`, `pointer-lock`, `smoke`, `harness`: all pass.
+### Still open
+- Michael's eye on it in play, in a real browser: whether the browser hands the mouse back on Escape-to-resume (it
+  can refuse without a click; then the "click to capture" note shows and a click takes it, as before).
+- The bedroom has no pause menu; if he wants one there (a quit to the title, say), that is a small follow-up.
+
+## v1.240 — The shop's guns by kind
+Backlog D.37, its second half (Michael, 14 Oct): "maybe having tabs on the guns tab to shift between pistols, rifles,
+shotguns, automatics, etc. Or at least grouping the weapons in sections by type on that page." The Guns tab was one
+list of twelve. Now it is both: a row of chips under the Guns header (ALL (12), PISTOLS (3), SHOTGUNS (2), RIFLES (2),
+AUTOMATICS (5)) shows one kind or all, and the list runs under a header for each kind. Pistols: the Spring Pistol,
+Six-Shooter and Bolt Pistol. Shotguns: the Spring Shotgun and Thunder Pump. Rifles: the Spring Assault Rifle and Sniper
+(both cock each shot). Automatics: the Bucket Gun, MP5, UMP, MAC-10 and AK-47. The chip you pick stays while you look
+at a gun's details and come back. A gun's kind is a table (`GUN_KINDS`); a new gun missing from it goes by its fire
+mode, so the cheap automatics this item asks for land under AUTOMATICS. Picture: `docs/shop-gun-kinds.png`.
+### Verified
+- `tests/shop-gun-kinds.test.mjs` (new, 10 checks): the five chips with their counts; ALL shows the four headers in
+  order with all twelve guns, each under its kind; AUTOMATICS shows its five under one header, a gun's details and
+  back keeps it; PISTOLS shows three; ALL the twelve again. No page errors.
+- `tests/shop-tabs.test.mjs` expected the Guns tab's one header; it now expects the kinds' four after it. Run after
+  the change: `shop-tabs`, `shop-pics`, `backyard-guns`, `autosave`, `hats`, `tops`, `shorts`, `under-parts`,
+  `utility-belt`: all pass.
+### Still open
+- D.37's first half, the 3-4 cheap clear-plastic automatics (low rate of fire, wild spin, jams), is not built. Their
+  names, prices and how bad each is are design; a question goes to decisions if Michael wants to choose, else the
+  builder proposes them there.
+
+## v1.241 — A controller plays a match
+Backlog D.38 (Michael, 14 Oct): "I think we have partial controller support - can we look into having full controller
+support?" There was none: nothing in the game read a gamepad, and the match would not move you at all without the
+mouse captured. Now a pad in the browser's standard layout (Xbox, PlayStation and most others) plays a match and walks
+the bedroom, and needs no captured mouse: once it is used you move without one and the "click to capture" note stays
+hidden. The left stick moves, analog (a half push walks at half speed); the right stick looks, about 2.5 radians a
+second at full tilt, scaled by the settings' sensitivities and flipped by invert look. RT fires and LT aims, the way the
+mouse buttons do (a spring gun still cocks on one pull and fires on the next). A jumps (in the bedroom it is E, use
+what you look at), B crouches and slides, X is R held (reload, clear a jam), Y and RB the next loadout slot, LB the one
+before, the d-pad slots 1-4 (up, right, down, left), a click of the left stick sprints until the stick lets go, the
+stick climbs ladders. Start pauses and resumes; on the pause menu A or B go back too, Back asks the forfeit question,
+and there A forfeits and B keeps playing. The pad is read once a step and goes through the keyboard's own handlers, so
+every rule those keys have (no jump on a ladder, the pause stopping the match) holds for it too.
+### Verified
+- `tests/gamepad.test.mjs` (new, 23 checks) with a stand-in for `navigator.getGamepads()`. Bedroom, mouse not captured:
+  nothing moves until the pad is touched, then the stick walks 1.6 m in 0.5 s, no capture note. Bunratty against Sean,
+  mouse not captured: full stick 4.11 m in 1 s, forward; half a push 2.06 m; full right stick turns 2.53 rad in 1 s, up
+  looks up; L3 sprints and stops with the stick; LT aims (0.997) and lets go (0.003); six RT pulls fire 3 BBs (10 → 7);
+  X holds R; A jumps; B crouches and stands; Y, LB, d-pad right and up go to slots 2, 1, 2, 1; Start pauses (the clock
+  stands for 60 steps, the stick moves nobody) and Start or B resume; Back asks, B keeps playing, Back then A forfeits
+  to the result; unplugged, nothing stays held. Before (v1.240) the stick did nothing.
+- Run after the change: `pause-menu`, `forfeit-ask`, `pointer-lock`, `settings`, `ladder-prompt`, `treehouse`, `jump`,
+  `walk-anim`, `smoke`: all pass (one of the four treehouse suites missed once with three suites running and passed
+  when the four were rerun).
+### Still open
+- Michael's hands on a real pad: whether 2.5 rad/s and the 18% dead zone feel right (a look-speed row in the settings
+  is a small follow-up), and whether his pad reports the standard layout (Chrome and Firefox do for Xbox and
+  PlayStation pads; an odd one may map buttons elsewhere).
+- The screens between matches (title, map, briefing, result, shop, loadout, mirror, settings) still want the mouse:
+  pad navigation of them is D.38's second step. The on-screen hints still name keyboard keys.
+
+## v1.242 — The screens by controller
+Backlog D.38's second step. v1.241 made a pad play a match and walk the bedroom, but every screen around them (the
+title, the mirror, settings, the map, the briefing, the pause menu, the result, the shop, loadout, workbench and the
+Pickup Game board) still wanted the mouse, so a pad player could not start a game or a match. Now, while the pad is in
+use and one of those screens is up, a yellow ring shows as a cursor, and whatever it would click is outlined. It
+starts on the clickable thing nearest the middle of the screen. The d-pad jumps it to the next clickable thing that
+way, the left stick moves it freely (about 1,100 pixels a second at full tilt), A clicks, B goes back (the screen's
+own DONE, CLOSE, BACK or CANCEL, as Escape would), and the right stick scrolls the list under it. On a slider, the
+d-pad's left and right step it and A sets it to the spot under the cursor. Start in the bedroom opens the settings.
+"Clickable" is read off the page itself (a button, an input, or anything styled with a pointer), so a new screen
+needs nothing added for the pad. The forfeit question keeps A for yes and B for no, with no cursor. Picture:
+`docs/gamepad-cursor.png`.
+### Verified
+- `tests/gamepad-screens.test.mjs` (new, 19 checks), a whole trip by pad alone. Title: no cursor until the pad is
+  touched, then one on SETTINGS, outlined; the d-pad reaches NEW GAME and A opens the mirror; B there is DONE and the
+  bedroom shows no cursor. Start opens the settings with the cursor on a slider; d-pad left steps Music volume 1 →
+  0.95 and right steps it back; B closes them. The shop: the right stick scrolls its list 450 px in 0.5 s, B closes
+  it. A briefing: the d-pad reaches BEGIN, A starts the match, no cursor in play. Start pauses with the cursor on
+  RESUME; d-pad to FORFEIT and A asks the question; A forfeits to the result, with the cursor; the left stick moves it
+  275 px in 0.25 s; A on BACK TO YOUR ROOM goes home. No page errors. Before (v1.241) none of it had a cursor.
+- `tests/gamepad.test.mjs` (v1.241) still passes. Run after the change: `settings`, `pause-menu`, `forfeit-ask`,
+  `shop-tabs`, `mirror`, `result-stats`, `map-screen`, `smoke`: all pass (`mirror`, `result-stats` and `pause-menu`
+  lost their browser while six suites ran at once and passed alone).
+### Still open
+- Michael's hands on it. The typed crew name at the mirror still needs a keyboard (A puts the caret in the box). The
+  workbench's turntable drag and the Loadout kid's spin are mouse drags with no pad equivalent yet. Prompts and hints
+  across the game still name keyboard keys; showing pad buttons when a pad is in use is a possible follow-up.

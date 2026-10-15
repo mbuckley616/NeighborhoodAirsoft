@@ -59,7 +59,8 @@ for (let r = 0; r < 8; r++) {
   const all = rounds.flatMap(r => r.hits), byF = all.filter(h => h.by === 'fernando').length;
   for (const r of rounds) console.log(`   ${rifle ? 'rifle' : 'AK'}: ${r.out ? 'out' : 'still in'} at ${r.t} s: ${r.hits.map(h => h.by + '@' + h.t).join(', ') || 'no hits'}`);
   return { byF, n: all.length, meanOut: +(rounds.reduce((a, r) => a + r.t, 0) / rounds.length).toFixed(1),
-    allHis: rounds.filter(r => r.out && r.hits.length && r.hits.every(h => h.by === 'fernando')).length };
+    allHis: rounds.filter(r => r.out && r.hits.length && r.hits.every(h => h.by === 'fernando')).length,
+    minGap: Math.min(...rounds.flatMap(r => r.hits.slice(1).map((h, i) => +(h.t - r.hits[i].t).toFixed(1)))) };
 };
 // v1.221: a tag now sends you back to your start with 2 s of cover (decisions "Pickup Game: what is a life for you?",
 // Michael: A), so one kid's lane can no longer take all three lives at once. Before, with the AK, Fernando took all
@@ -70,7 +71,10 @@ console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK (the criti
 // v1.228 fix-up: the round in which every tag is his is the fault v1.221 fixed, so that is checked outright; his share
 // only has to stay well under the rifle's (all of them). His first tag, about 14 s in, comes every round (8 of 24), and
 // a second one sometimes: 7-10 of 24 locally, 13 of 24 on CI (14 Oct), so "under half" failed on a fair run.
-check('with the AK he never takes all three of your lives in a round', ak.n > 0 && ak.allHis === 0, ak);
+// Fix-up (PR #75, CI on 035d174): "never all three his" failed on a fair round, his tags at 13.6, 25.5 and 39.4 s,
+// three separate fights. At his share (about 45%) a round of three is all his about one time in ten, so 8 rounds
+// failed a third of the time. The v1.221 fault was all three in one burst (0.2-0.4 s), so that is what is checked.
+check('no two lives go in one burst: every tag comes 2 s or more after the last (all three went in 0.2-0.4 s before v1.221)', ak.n > 0 && ak.minGap >= 2, { minGap: ak.minGap, allHis: ak.allHis });
 check('and he lands under two-thirds of the hits on you', ak.n > 0 && ak.byF / ak.n < 2 / 3, ak);
 check('and you last over 20 s on average (all three lives went by 14 s before v1.221)', ak.meanOut > 20, ak.meanOut);
 check('no page errors', g.errs.length === 0, g.errs);
