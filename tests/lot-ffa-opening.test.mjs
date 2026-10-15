@@ -11,7 +11,10 @@ for (let r = 0; r < 3; r++) {
   await g.scenario('lot_ffa');
   if (r === 0) {
     const st = await page.evaluate(() => {
-      const pts = [[Game.player.pos.x, Game.player.pos.z, 'you'], ...Game.scenario.enemies.map(e => [e.pos.x, e.pos.z, e.character.name])];
+      // v1.244 (Found in play, v1.222): the starts themselves. The kids' positions now are a few animation frames past
+      // BEGIN (the page's own rAF ticks while the harness waits), more frames under load, so they had walked a varying
+      // way and once came in sight (18.0 m apart). Their starts are kept on each kid as _spawnPos.
+      const pts = [[Game.player.pos.x, Game.player.pos.z, 'you'], ...Game.scenario.enemies.map(e => [(e._spawnPos || e.pos).x, (e._spawnPos || e.pos).z, e.character.name])];
       const seen = [], obs = Game.player.obstacles;
       let mind = Infinity;
       for (let i = 0; i < pts.length; i++) for (let j = 0; j < pts.length; j++) {

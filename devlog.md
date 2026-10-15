@@ -10593,3 +10593,19 @@ every BB is flown, not the first 120. No game code changed; the version moves so
 ### Still open
 - Two other seedless spreads named in Found in play (Seth's shotgun at 24-28 m in `seth-shotgun`, Fernando's AK share
   in `pickup-fernando`) are the same kind of near-limit coin flip; each wants the same seeding if it fails again.
+
+## v1.244 — The lot free-for-all's starts, read from the starts
+Found in play (builder, v1.222): `tests/lot-ffa-opening.test.mjs`'s "nobody can see anybody from the start" failed
+once in a full run (Marcus and Brooke in sight, 18.0 m apart at the closest) and passed alone (18.6 m, 18.2 m), and the
+note guessed the seeded layout was drawing on `Math.random` from outside its seed. It is not: built three ways (fresh,
+twice running, after a Bunratty match) the lot's 128 obstacles hash the same. What changed was the kids. The test read
+where they stood, not where they started, and by then the page's own animation frames had run a few steps past BEGIN
+while the harness waited (more of them under load), so the kids had walked a varying way: Marcus from (6.14, −14.43)
+in one build to (6.50, −14.50) in the next. The check now reads each kid's start, which every kid keeps
+(`_spawnPos`). No game code changed.
+### Verified
+- `tests/lot-ffa-opening.test.mjs`: seven starts clear of obstacles, none in sight of another, 19.0 m apart at the
+  closest (the rule is 18 m), yours at the east edge; the three openings as before. All pass.
+### Still open
+- The same line's `seth-shotgun` share at 24-28 m is an unseeded spread near its limit, as v1.243's was; seed it the
+  same way if it fails again.
