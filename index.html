@@ -1935,6 +1935,11 @@
   }
 
   /* Pause hint */
+  /* v1.242 (D.38 step 2): the pad's cursor on the screens, and what it would click */
+  #padCursor { position: fixed; display: none; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
+    border: 3px solid #ffd54a; box-shadow: 0 0 0 2px rgba(0,0,0,0.55), 0 0 10px rgba(255,213,74,0.7);
+    pointer-events: none; z-index: 10000; }
+  .pad-hover { outline: 3px solid #ffd54a !important; outline-offset: 2px; }
   #pauseHint {
     position: fixed;
     left: 50%; top: 30px;
@@ -2043,7 +2048,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.241</div>
+  <div class="version">v1.242</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24162,6 +24167,146 @@ function padCycleSlot(dir) {
     if (Game.persist.loadoutSlots[idx]) { trySwitchSlot(idx); return; }
   }
 }
+// v1.242 (backlog D.38, step 2): the screens between matches by pad. Title, map, briefing, result, shop, loadout,
+// mirror, workbench, the Pickup board, settings and the pause menu all want the mouse, so on them the pad drives a
+// cursor (a yellow ring): the left stick moves it, the d-pad jumps it to the next thing you can click that way, A
+// clicks (a slider takes the spot you click; the d-pad's left and right step a slider the cursor is on), B goes back
+// (the screen's own close, back or done button, as Escape does), the right stick scrolls what is under it. The thing
+// it would click is outlined. It shows only while the pad is in use and a screen is up.
+const PAD_CURSOR_PX = 1100;     // full left stick = this many pixels a second
+const PAD_BACK_IDS = ['settingsDoneBtn', 'newGameNoBtn', 'modalCloseBtn', 'briefCancelBtn', 'shopCloseBtn',
+                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'mirrorDoneBtn'];
+const PadCursor = { x: 0, y: 0, shown: false, el: null, hover: null };
+function padScreenUp() {
+  if (document.getElementById('settingsScreen').classList.contains('active')) return true;
+  if (Game.mode === 'scenario') return !!Game.paused;
+  return Game.mode !== 'bedroom';
+}
+function padVisible(el) {
+  if (!el || !el.getBoundingClientRect) return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2 || r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) return false;
+  const cx = Math.min(innerWidth - 1, Math.max(0, (r.left + r.right) / 2)), cy = Math.min(innerHeight - 1, Math.max(0, (r.top + r.bottom) / 2));
+  const top = document.elementFromPoint(cx, cy);
+  return !!top && (top === el || el.contains(top) || top.contains(el));
+}
+function padClickable(el) {   // what a click lands on: a control, or anything the page styles with a pointer
+  for (let e = el; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+    if (e === PadCursor.el) return null;
+    if (e.disabled) return null;
+    const tag = e.tagName;
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || tag === 'LABEL') return e;
+    if (getComputedStyle(e).cursor === 'pointer') return e;
+  }
+  return null;
+}
+function padTargets() {
+  const out = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    if (el === PadCursor.el || el.tagName === 'CANVAS') continue;
+    const tag = el.tagName;
+    if (!(tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || getComputedStyle(el).cursor === 'pointer')) continue;
+    if (el.parentElement && padClickable(el.parentElement)) continue;   // the outermost clickable, not its insides
+    if (padVisible(el)) out.push(el);
+  }
+  return out;
+}
+function padCenter(el) { const r = el.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; }
+function padCursorPlace(x, y) {
+  PadCursor.x = Math.max(0, Math.min(innerWidth - 1, x));
+  PadCursor.y = Math.max(0, Math.min(innerHeight - 1, y));
+  if (PadCursor.el) { PadCursor.el.style.left = PadCursor.x + 'px'; PadCursor.el.style.top = PadCursor.y + 'px'; }
+  const hov = padClickable(document.elementFromPoint(PadCursor.x, PadCursor.y));
+  if (hov !== PadCursor.hover) {
+    if (PadCursor.hover) PadCursor.hover.classList.remove('pad-hover');
+    PadCursor.hover = hov;
+    if (hov) hov.classList.add('pad-hover');
+  }
+}
+function padCursorShow(on) {
+  if (on === PadCursor.shown) return;
+  PadCursor.shown = on;
+  if (!PadCursor.el) {
+    PadCursor.el = document.createElement('div');
+    PadCursor.el.id = 'padCursor';
+    document.body.appendChild(PadCursor.el);
+  }
+  PadCursor.el.style.display = on ? 'block' : 'none';
+  if (on) {   // start on the clickable thing nearest the middle of the screen
+    let best = null, bd = Infinity;
+    for (const el of padTargets()) {
+      const c = padCenter(el), d = Math.hypot(c.x - innerWidth / 2, c.y - innerHeight / 2);
+      if (d < bd) { bd = d; best = c; }
+    }
+    padCursorPlace(best ? best.x : innerWidth / 2, best ? best.y : innerHeight / 2);
+  } else if (PadCursor.hover) { PadCursor.hover.classList.remove('pad-hover'); PadCursor.hover = null; }
+}
+function padSnap(dx, dy) {   // the nearest clickable that way, favouring ones straight ahead
+  let best = null, bs = Infinity;
+  for (const el of padTargets()) {
+    if (el === PadCursor.hover) continue;
+    const c = padCenter(el), vx = c.x - PadCursor.x, vy = c.y - PadCursor.y;
+    const along = vx * dx + vy * dy, across = Math.abs(vx * dy - vy * dx);
+    if (along < 4) continue;
+    const score = along + across * 2.5;
+    if (score < bs) { bs = score; best = c; }
+  }
+  if (best) padCursorPlace(best.x, best.y);
+}
+function padStepRange(el, dir) {
+  const step = +el.step || 1, v = Math.max(+el.min, Math.min(+el.max, +el.value + dir * step));
+  el.value = v;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function padCursorMove(ls, rs, pressed, dt) {
+  const hov = PadCursor.hover;
+  const range = hov && hov.tagName === 'INPUT' && hov.type === 'range';
+  if (pressed(PAD_BTN.LEFT)) { if (range) padStepRange(hov, -1); else padSnap(-1, 0); }
+  if (pressed(PAD_BTN.RIGHT)) { if (range) padStepRange(hov, 1); else padSnap(1, 0); }
+  if (pressed(PAD_BTN.UP)) padSnap(0, -1);
+  if (pressed(PAD_BTN.DOWN)) padSnap(0, 1);
+  if (ls.m > 0) {
+    const sp = PAD_CURSOR_PX * Math.pow(ls.m, 1.5) * dt / ls.m;
+    padCursorPlace(PadCursor.x + ls.x * sp, PadCursor.y + ls.y * sp);
+  }
+  if (rs.y !== 0) {   // scroll the nearest scrolling box under the cursor
+    for (let e = document.elementFromPoint(PadCursor.x, PadCursor.y); e && e !== document.documentElement; e = e.parentElement) {
+      const oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 1) { e.scrollTop += rs.y * 900 * dt; break; }
+    }
+    padCursorPlace(PadCursor.x, PadCursor.y);
+  }
+}
+function padClick() {
+  const el = PadCursor.hover;
+  if (!el) return;
+  if (el.tagName === 'INPUT' && el.type === 'range') {
+    const r = el.getBoundingClientRect(), f = Math.max(0, Math.min(1, (PadCursor.x - r.left) / r.width));
+    const step = +el.step || 1, min = +el.min, max = +el.max;
+    el.value = Math.round((min + f * (max - min)) / step) * step;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'button') { el.focus(); return; }
+  const o = { bubbles: true, cancelable: true, clientX: PadCursor.x, clientY: PadCursor.y, button: 0 };
+  el.dispatchEvent(new MouseEvent('mousedown', o));
+  el.dispatchEvent(new MouseEvent('mouseup', o));
+  el.click();
+  requestAnimationFrame(() => padCursorPlace(PadCursor.x, PadCursor.y));   // the screen may have changed under it
+}
+function padBack() {
+  for (const id of PAD_BACK_IDS) {
+    const el = document.getElementById(id);
+    if (el && padVisible(el)) { el.click(); return; }
+  }
+  // a shop page's own BACK, or anything else labelled as a way back
+  for (const el of padTargets()) {
+    if (/^\s*(←\s*)?(back|close|done|cancel)\b/i.test(el.textContent || '')) { el.click(); return; }
+  }
+  padKey('Escape', true);
+}
 function pollGamepad(dt) {
   const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
   let gp = null;
@@ -24185,16 +24330,26 @@ function pollGamepad(dt) {
   Pad.prev = btn;
   if (!Pad.active) return;
   const inMatch = Game.mode === 'scenario';
+  // v1.242 (D.38 step 2): every screen that wants the mouse gets the pad's cursor
+  const onScreen = padScreenUp();
+  padCursorShow(onScreen);
   // the questions over a match: A is yes, B is no; Start resumes from the pause menu
   if (Game.forfeitAsk) {
     if (pressed(PAD_BTN.A)) padKey('Enter', true);
     else if (pressed(PAD_BTN.B) || pressed(PAD_BTN.BACK)) padKey('Escape', true);
     return;
   }
-  if (Game.paused) {
-    if (document.getElementById('settingsScreen').classList.contains('active')) return;
+  if (Game.paused && !document.getElementById('settingsScreen').classList.contains('active')) {
+    if (pressed(PAD_BTN.A) && PadCursor.hover) { padClick(); return; }   // v1.242: A clicks what the cursor is on
     if (pressed(PAD_BTN.START) || pressed(PAD_BTN.A) || pressed(PAD_BTN.B)) { Game._pausedAt = 0; padKey('Escape', true); }
     else if (pressed(PAD_BTN.BACK)) padKey('KeyF', true);
+    else padCursorMove(ls, rs, pressed, dt);
+    return;
+  }
+  if (onScreen) {
+    if (pressed(PAD_BTN.A)) padClick();
+    else if (pressed(PAD_BTN.B)) padBack();
+    else padCursorMove(ls, rs, pressed, dt);
     return;
   }
   if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
@@ -24204,6 +24359,7 @@ function pollGamepad(dt) {
   Game.mouse.dy += Math.sign(rs.y) * Math.pow(Math.abs(rs.y), 1.6) * PAD_LOOK_PX * dt;
   if (Game.mode === 'bedroom') {
     if (pressed(PAD_BTN.A)) padKey('KeyE', true);
+    else if (pressed(PAD_BTN.START)) openSettings();   // v1.242: the bedroom's SETTINGS
     return;
   }
   if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }

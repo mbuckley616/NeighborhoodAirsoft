@@ -10550,3 +10550,31 @@ every rule those keys have (no jump on a ladder, the pause stopping the match) h
   PlayStation pads; an odd one may map buttons elsewhere).
 - The screens between matches (title, map, briefing, result, shop, loadout, mirror, settings) still want the mouse:
   pad navigation of them is D.38's second step. The on-screen hints still name keyboard keys.
+
+## v1.242 — The screens by controller
+Backlog D.38's second step. v1.241 made a pad play a match and walk the bedroom, but every screen around them (the
+title, the mirror, settings, the map, the briefing, the pause menu, the result, the shop, loadout, workbench and the
+Pickup Game board) still wanted the mouse, so a pad player could not start a game or a match. Now, while the pad is in
+use and one of those screens is up, a yellow ring shows as a cursor, and whatever it would click is outlined. It
+starts on the clickable thing nearest the middle of the screen. The d-pad jumps it to the next clickable thing that
+way, the left stick moves it freely (about 1,100 pixels a second at full tilt), A clicks, B goes back (the screen's
+own DONE, CLOSE, BACK or CANCEL, as Escape would), and the right stick scrolls the list under it. On a slider, the
+d-pad's left and right step it and A sets it to the spot under the cursor. Start in the bedroom opens the settings.
+"Clickable" is read off the page itself (a button, an input, or anything styled with a pointer), so a new screen
+needs nothing added for the pad. The forfeit question keeps A for yes and B for no, with no cursor. Picture:
+`docs/gamepad-cursor.png`.
+### Verified
+- `tests/gamepad-screens.test.mjs` (new, 19 checks), a whole trip by pad alone. Title: no cursor until the pad is
+  touched, then one on SETTINGS, outlined; the d-pad reaches NEW GAME and A opens the mirror; B there is DONE and the
+  bedroom shows no cursor. Start opens the settings with the cursor on a slider; d-pad left steps Music volume 1 →
+  0.95 and right steps it back; B closes them. The shop: the right stick scrolls its list 450 px in 0.5 s, B closes
+  it. A briefing: the d-pad reaches BEGIN, A starts the match, no cursor in play. Start pauses with the cursor on
+  RESUME; d-pad to FORFEIT and A asks the question; A forfeits to the result, with the cursor; the left stick moves it
+  275 px in 0.25 s; A on BACK TO YOUR ROOM goes home. No page errors. Before (v1.241) none of it had a cursor.
+- `tests/gamepad.test.mjs` (v1.241) still passes. Run after the change: `settings`, `pause-menu`, `forfeit-ask`,
+  `shop-tabs`, `mirror`, `result-stats`, `map-screen`, `smoke`: all pass (`mirror`, `result-stats` and `pause-menu`
+  lost their browser while six suites ran at once and passed alone).
+### Still open
+- Michael's hands on it. The typed crew name at the mirror still needs a keyboard (A puts the caret in the box). The
+  workbench's turntable drag and the Loadout kid's spin are mouse drags with no pad equivalent yet. Prompts and hints
+  across the game still name keyboard keys; showing pad buttons when a pad is in use is a possible follow-up.
