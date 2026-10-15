@@ -10666,3 +10666,35 @@ was 9). No game code changed.
   load (first loss 30 ms, second 7 ms).
 ### Still open
 - Nothing for the game; the suite takes about a third longer.
+
+## v1.248 — Squad commands: hold Q
+Backlog D.35 (Michael: A, control room 15 Oct): Battlefront-style orders to your team. In any match with teammates,
+hold Q and four orders show round the crosshair, PUSH UP above, FIND COVER right, KEEP DISTANCE below, FOLLOW ME left;
+move the mouse toward one and let go. The match keeps running while the wheel is open, but the mouse moves its pointer
+and not your look; a small move, Escape or the pause menu shuts it with no order. The order goes to every teammate (the
+walkie reaches the whole map), the nearest one answers it on the walkie ("Copy, pushing!", a click of the talk button
+then his voice, heard wherever he is), and the HUD under the roster shows the order standing and his line. It holds
+until you give another or the round ends. A teammate on an order moves on it by the distance field, the way a flag
+runner does, instead of his usual states, and shoots on the move at whoever he can see: push up, he heads for the
+nearest of the other side until he is within 14 m, then fights as he would; keep distance, he backs off to about 21 m
+when one of them is inside 15 m, closes when they are past 25 m, and holds and shoots in between; find cover, he goes
+to the nearest cover within 15 m, on its side away from the nearest enemy, and holds there low, up to shoot for a
+moment every couple of seconds; follow me, he keeps a couple of metres behind and beside you, sets off when you are
+over 6 m away, and the kid you look at is the one he goes for. Left out, as before: a VIP (he holds his spot), a
+perched or climbing kid, one walking back after a tag (he picks the order up again when he is back), a flag runner
+with a flag to see to. Nothing changes in a match without teammates, and the tutorial has no wheel.
+### Verified
+- `tests/squad-orders.test.mjs` (new, 15 checks), on the Hollow 3v3 with Eric and Rebecca, the other side's guns held so
+  nobody is walked back after a tag, each order against the same round with none. A real Q held: each way picks its
+  order, the yaw does not move while it is open, letting go shuts it; Eric or Rebecca answers each order and the HUD
+  shows it; a 10 px move picks nothing; pausing shuts it with no order. Push up: from 8 to 20 s the pair stand 17 m
+  from the nearest of the other side on average, 33 m with no order. Keep distance: 13–27 m from them 90% of samples,
+  21% with no order. Find cover: Eric holds 1.2 m from his spot, low 63% of the time; Rebecca, with no cover within
+  15 m of her start, holds low where she is (58%). Follow me, with you walked to the middle: both within 4 m of you from
+  12 s on, against 22 and 34 m with no order. The kid you look at scores best for your teammates (Ryan −8.5 against
+  −3.9 and 13.5). The next round starts with no order; a 1v1 has no wheel and no HUD. No page errors. Picture of the
+  wheel: `tests/out/squad-wheel.png`.
+### Still open
+- Michael's hands on it: whether the wheel's size and the four places feel right, and whether teammates on an order
+  are any use in a real fight (the test holds the other side's guns). No pad button yet for the wheel; the briefing
+  doesn't mention Q (the HUD does, in every match with teammates).

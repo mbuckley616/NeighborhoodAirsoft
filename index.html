@@ -148,6 +148,30 @@
   #ammoHud .status.reloading { color: var(--ui-accent); }
   #ammoHud .status.ready { color: var(--ui-good); }
 
+  /* v1.248 (D.35): squad commands — the standing order under the roster, and the Q wheel round the crosshair */
+  #squadHud {
+    position: absolute; right: 24px; top: 210px; max-width: 260px;
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 4px;
+    padding: 5px 10px; font-size: 12px; color: #ddd; display: none;
+  }
+  #squadHud .sq-k { color: var(--ui-accent); letter-spacing: 1.5px; font-size: 11px; }
+  #squadHud .sq-hint { color: #888; font-size: 11px; }
+  #squadHud .sq-reply { color: #cfe8a8; margin-top: 3px; }
+  #squadWheel {
+    position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none;
+  }
+  #squadWheel .sq-opt {
+    position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
+    background: rgba(10, 14, 10, 0.78); border: 1px solid #556; color: #ddd;
+    padding: 6px 12px; border-radius: 4px; font-size: 13px; letter-spacing: 1px;
+  }
+  #squadWheel .sq-opt.on { background: rgba(70, 120, 60, 0.9); border-color: #9c6; color: #fff; }
+  #squadWheel .sq-push { left: 0; top: -105px; }
+  #squadWheel .sq-cover { left: 125px; top: 0; }
+  #squadWheel .sq-distance { left: 0; top: 105px; }
+  #squadWheel .sq-follow { left: -125px; top: 0; }
+  #squadWheel .sq-ptr { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #9c6; }
+  #squadWheel .sq-title { position: absolute; left: 0; top: 150px; transform: translateX(-50%); white-space: nowrap; color: #aaa; font-size: 11px; letter-spacing: 1px; }
   /* === Enemy roster HUD (top-right during scenario) === */
   #rosterHud {
     position: absolute;
@@ -2005,6 +2029,8 @@
     <div class="label">Players on the Field</div>
     <div id="rosterList"></div>
   </div>
+  <div id="squadHud"></div>   <!-- v1.248 (D.35): the standing order and the walkie's answer -->
+  <div id="squadWheel"></div>  <!-- v1.248: hold Q -->
   <div id="timerHud">
     <div class="timer-label" id="timerLabel">Hold Out</div>
     <div class="timer-value" id="timerValue">0:00</div>
@@ -2048,7 +2074,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.247</div>
+  <div class="version">v1.248</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20980,6 +21006,7 @@ function answerForfeit(yes) {
 // match stops (stepGame skips it, as for the forfeit question): RESUME (Esc or a click) goes back, SETTINGS opens the
 // settings over it, FORFEIT asks the forfeit question.
 function openPauseMenu() {
+  if (Game.squadWheel) closeSquadWheel(false);   // v1.248: the Q wheel shuts without an order
   if (Game.mode !== 'scenario' || Game.forfeitAsk || Game.paused) return;
   Game.paused = true;
   Game._pausedAt = performance.now();
@@ -21024,6 +21051,7 @@ function enterBedroom() {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
+  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -21602,6 +21630,7 @@ function enterScenario(scenarioId) {
   Game.scenario.vip = !!sc.vip;   // v1.170
   Game.scenario.ctfDef = sc.ctf || null;   // v1.189: capture the flag; the flags themselves are set up in startScenario
   Game.scenario.ctf = null;
+  Game.scenario.squadOrder = null; Game.scenario.squadReply = null; Game.scenario.squadLog = []; Game.scenario._ordFields = null;   // v1.248 (D.35): orders hold for one round
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.pickupClock = (sc.pickup && sc.pickup.clock) || 0;   // v1.204
@@ -22167,6 +22196,7 @@ function endScenario(outcome) {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
+  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -24041,6 +24071,8 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (e.code === 'Escape' && Game.mode === 'scenario' && !e.repeat) { openPauseMenu(); e.preventDefault(); return; }
+  // v1.248 (D.35): hold Q for the squad orders wheel; letting go gives the order the pointer is on
+  if (e.code === 'KeyQ' && Game.mode === 'scenario') { if (!e.repeat && !Game.squadWheel) openSquadWheel(); e.preventDefault(); return; }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -24113,7 +24145,10 @@ document.addEventListener('keydown', e => {
     }
   }
 });
-document.addEventListener('keyup', e => { Game.keys[e.code] = false; });
+document.addEventListener('keyup', e => {
+  Game.keys[e.code] = false;
+  if (e.code === 'KeyQ' && Game.squadWheel) closeSquadWheel(true);   // v1.248 (D.35)
+});
 
 document.addEventListener('mousemove', e => {
   if (Game.mouse.locked) {
@@ -24734,6 +24769,8 @@ function updatePlayer(dt) {
 
   // Look — sensitivity reduces with ADS
   // v1.192: the settings' mouse and aim sensitivity scale it, and invert look flips the pitch
+  // v1.248 (D.35): while the squad wheel is open the mouse moves its pointer, not your look
+  if (Game.squadWheel && inScenario) { squadWheelMove(Game.mouse.dx, Game.mouse.dy); Game.mouse.dx = 0; Game.mouse.dy = 0; }
   const sensMult = Settings.mouseSens * (1 - Game.player.ads * (1 - ADS_SENS_MULT * Settings.aimSens));
   Game.player.yaw -= Game.mouse.dx * MOUSE_SENS * sensMult;
   Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult * (Settings.invertY ? -1 : 1);
@@ -27181,6 +27218,284 @@ function kidFlagRun(e, tgt, dist, dt) {
   }
   return true;
 }
+// v1.248 (backlog D.35, Michael: A): SQUAD COMMANDS. Hold Q in a match with teammates and the four orders show round
+// the crosshair; move the mouse toward one and let go (the match keeps running, and the mouse doesn't look while the
+// wheel is open). An order goes to every teammate (the walkie reaches the whole map), one of them answers it on the
+// walkie, the HUD shows it standing, and it holds until you give another or the round ends. A kid carrying out an
+// order moves by the distance field (as a flag runner does, kidOrderRun) and shoots on the move at whoever he can see;
+// where the order leaves him free (pushed up within 14 m of the other side) the states take over. Kids skipped: a VIP
+// (he holds his spot), a perched or ladder kid, one walking back after a tag, a flag runner with a flag to see to.
+const SQUAD_ORDERS = {
+  push:     { label: 'PUSH UP',       dir: [0, -1], replies: ['Copy, pushing!', 'Moving up!', 'Going, going!', 'Pushing up, cover me!'] },
+  cover:    { label: 'FIND COVER',    dir: [1, 0],  replies: ['Copy, getting behind something!', 'Taking cover!', 'Finding cover!'] },
+  distance: { label: 'KEEP DISTANCE', dir: [0, 1],  replies: ['Copy, hanging back.', 'Backing off!', 'Keeping my distance.'] },
+  follow:   { label: 'FOLLOW ME',     dir: [-1, 0], replies: ['Right behind you!', 'Copy, on you!', 'Following!', 'Lead the way!'] },
+};
+const SQUAD_WHEEL_R = 110, SQUAD_WHEEL_PICK = 24;      // px the wheel's pointer can travel; px to choose
+const SQUAD_PUSH_NEAR = 14;                            // push up: within this of the nearest enemy, the states fight
+const SQUAD_KEEP_MIN = 15, SQUAD_KEEP_MAX = 25;        // keep distance: the band he holds from the nearest enemy
+const SQUAD_FOLLOW_GO = 6, SQUAD_FOLLOW_STOP = 4;      // follow me: sets off past 6 m from you, stops inside 4 m
+const SQUAD_AIM_BONUS = 20;                            // follow me: the kid you aim at draws his gun (m-equiv)
+function squadMates() {
+  return (Game.scenario && Game.scenario.enemies || []).filter(e => e.team === 'player' && e.behavior !== 'tagger');
+}
+function squadCanOrder() {
+  return Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk && !Tutorial.active && squadMates().some(e => e.health > 0 && !e.vip);
+}
+function openSquadWheel() {
+  if (!squadCanOrder()) return false;
+  Game.squadWheel = { x: 0, y: 0, pick: null };
+  Game.mouse.dx = 0; Game.mouse.dy = 0;
+  drawSquadWheel();
+  return true;
+}
+function closeSquadWheel(choose) {
+  const w = Game.squadWheel;
+  Game.squadWheel = null;
+  const el = document.getElementById('squadWheel');
+  if (el) el.style.display = 'none';
+  if (choose && w && w.pick && Game.mode === 'scenario') giveSquadOrder(w.pick);
+}
+function squadWheelMove(dx, dy) {
+  const w = Game.squadWheel;
+  w.x += dx; w.y += dy;
+  const L = Math.hypot(w.x, w.y);
+  if (L > SQUAD_WHEEL_R) { w.x *= SQUAD_WHEEL_R / L; w.y *= SQUAD_WHEEL_R / L; }
+  w.pick = null;
+  if (L >= SQUAD_WHEEL_PICK) {
+    let best = -2;
+    for (const k in SQUAD_ORDERS) {
+      const d = SQUAD_ORDERS[k].dir, c = (w.x * d[0] + w.y * d[1]) / Math.hypot(w.x, w.y);
+      if (c > best) { best = c; w.pick = k; }
+    }
+  }
+  drawSquadWheel();
+}
+function drawSquadWheel() {
+  const el = document.getElementById('squadWheel'), w = Game.squadWheel;
+  if (!el || !w) return;
+  el.style.display = 'block';
+  if (!el.dataset.built) {
+    el.dataset.built = '1';
+    el.innerHTML = Object.keys(SQUAD_ORDERS).map(k => `<div class="sq-opt sq-${k}" data-k="${k}">${SQUAD_ORDERS[k].label}</div>`).join('') +
+      '<div class="sq-ptr"></div><div class="sq-title">ORDERS · let go of Q</div>';
+  }
+  for (const o of el.querySelectorAll('.sq-opt')) o.classList.toggle('on', o.dataset.k === w.pick);
+  const p = el.querySelector('.sq-ptr');
+  if (p) p.style.transform = `translate(${w.x.toFixed(0)}px, ${w.y.toFixed(0)}px)`;
+}
+function giveSquadOrder(key) {
+  const S = Game.scenario, O = SQUAD_ORDERS[key];
+  if (!S || !O) return;
+  S.squadOrder = key;
+  S.squadLog = S.squadLog || [];
+  S.squadLog.push({ key, t: +(S.roundTime || 0).toFixed(2) });
+  for (const e of squadMates()) { e._ordGoal = null; e._ordBan = 0; e._ordBest = null; e._ordStuck = 0; e._ordCover = null; e._ordAt = false; }
+  // one teammate answers on the walkie: the nearest one standing
+  const live = squadMates().filter(e => e.health > 0 && e.state !== 'retreating' && !e.vip);
+  live.sort((a, b) => Math.hypot(a.pos.x - Game.player.pos.x, a.pos.z - Game.player.pos.z) - Math.hypot(b.pos.x - Game.player.pos.x, b.pos.z - Game.player.pos.z));
+  const who = live[0];
+  const line = who ? O.replies[Math.floor(Math.random() * O.replies.length)] : null;
+  S.squadReply = who ? { name: who.name, line, until: (S.roundTime || 0) + 3.5 } : null;
+  if (who) squadWalkieSay(who, line);
+  updateSquadHud();
+}
+// a walkie line: heard wherever he is (no distance cut-off), a click of the talk button first
+function squadWalkieSay(e, line) {
+  try {
+    if (Game.audio?.ctx) {
+      const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(1400, t);
+      g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
+    }
+    if (typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
+    if (v) u.voice = v;
+    u.rate = 1.15; u.pitch = 1.1;
+    u.volume = 0.45 * Settings.effects;
+    speechSynthesis.speak(u);
+    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
+    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
+  } catch (err) { /* no audio: the HUD still shows the line */ }
+}
+function updateSquadHud() {
+  const hud = document.getElementById('squadHud');
+  if (!hud) return;
+  const S = Game.scenario;
+  if (Game.mode !== 'scenario' || !S || !squadMates().length || Tutorial.active) { hud.style.display = 'none'; return; }
+  hud.style.display = 'block';
+  const order = S.squadOrder ? SQUAD_ORDERS[S.squadOrder].label : 'NONE';
+  const r = S.squadReply && (S.roundTime || 0) < S.squadReply.until ? S.squadReply : null;
+  const html = `<span class="sq-k">ORDER</span> ${order} <span class="sq-hint">· hold <kbd>Q</kbd></span>` +
+    (r ? `<div class="sq-reply">📻 ${r.name}: “${r.line}”</div>` : '');
+  if (hud.innerHTML !== html) hud.innerHTML = html;
+}
+// once a step, before the kids: who you are aiming at (follow me's "shoot what I shoot at")
+function updateSquad(dt) {
+  const S = Game.scenario;
+  S._playerAimKid = null;
+  if (S.squadOrder === 'follow') {
+    const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw);
+    let best = 0.966;   // within 15° of where you look
+    for (const c of S.enemies) {
+      if (c.team === 'player' || c.health <= 0 || c.state === 'retreating') continue;
+      const dx = c.pos.x - Game.player.pos.x, dz = c.pos.z - Game.player.pos.z, d = Math.hypot(dx, dz);
+      if (d < 0.5 || d > 70) continue;
+      const cs = (dx * fx + dz * fz) / d;
+      if (cs > best) { best = cs; S._playerAimKid = c; }
+    }
+  }
+  updateSquadHud();
+}
+function squadField(goal) {
+  const S = Game.scenario, key = Math.round(goal.x / 2) + ',' + Math.round(goal.z / 2);
+  if (!S._ordFields) S._ordFields = new Map();
+  let F = S._ordFields.get(key);
+  if (!F) { if (S._ordFields.size > 24) S._ordFields.clear(); F = kidFieldTo(Math.round(goal.x / 2) * 2, Math.round(goal.z / 2) * 2); S._ordFields.set(key, F); }
+  return F;
+}
+function squadNearestFoe(e) {
+  let best = null, bd = Infinity;
+  for (const c of opposingCombatants(e)) {
+    const d = Math.hypot(c.pos.x - e.pos.x, c.pos.z - e.pos.z);
+    if (d < bd) { bd = d; best = c; }
+  }
+  return best ? { c: best, d: bd } : null;
+}
+function squadClampToField(p) {
+  const b = Game.scenario.bounds || { minX: -40, maxX: 40, minZ: -40, maxZ: 40 };
+  return { x: Math.max(b.minX + 1.5, Math.min(b.maxX - 1.5, p.x)), z: Math.max(b.minZ + 1.5, Math.min(b.maxZ - 1.5, p.z)) };
+}
+// where the standing order sends kid e now: { goal } to walk to, { hold } to stay and fight where he is (crouched
+// for find cover), or null to leave him to the states
+function squadOrderGoal(e) {
+  const S = Game.scenario, key = S.squadOrder, foe = squadNearestFoe(e);
+  if (key === 'follow') {
+    const dp = Math.hypot(Game.player.pos.x - e.pos.x, Game.player.pos.z - e.pos.z);
+    if (dp > SQUAD_FOLLOW_GO || (e._ordGoal && dp > SQUAD_FOLLOW_STOP)) {
+      // a spot a couple of metres behind and beside you, not on top of you
+      const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw), side = (e._ordSide = e._ordSide || (Math.random() < 0.5 ? -1 : 1));
+      return { goal: squadClampToField({ x: Game.player.pos.x - fx * 2 - fz * 1.5 * side, z: Game.player.pos.z - fz * 2 + fx * 1.5 * side }) };
+    }
+    return { hold: true };
+  }
+  if (!foe) return null;
+  if (key === 'push') return foe.d > SQUAD_PUSH_NEAR ? { goal: { x: foe.c.pos.x, z: foe.c.pos.z }, near: SQUAD_PUSH_NEAR } : null;
+  if (key === 'distance') {
+    const ux = (e.pos.x - foe.c.pos.x) / (foe.d || 1), uz = (e.pos.z - foe.c.pos.z) / (foe.d || 1);
+    if (foe.d < SQUAD_KEEP_MIN || (e._ordGoal && e._ordAway && foe.d < (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2)) {
+      e._ordAway = true;
+      // straight away from him, or, against the field's edge, back toward your own start
+      let g = squadClampToField({ x: foe.c.pos.x + ux * 21, z: foe.c.pos.z + uz * 21 });
+      if (Math.hypot(g.x - foe.c.pos.x, g.z - foe.c.pos.z) < SQUAD_KEEP_MIN + 1 && e._spawnPos) g = { x: e._spawnPos.x, z: e._spawnPos.z };
+      return { goal: g };
+    }
+    if (foe.d > SQUAD_KEEP_MAX || (e._ordGoal && !e._ordAway && foe.d > (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2)) {
+      e._ordAway = false;
+      return { goal: { x: foe.c.pos.x, z: foe.c.pos.z }, near: (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2 };
+    }
+    return { hold: true };
+  }
+  if (key === 'cover') {
+    // the nearest cover within 15 m, on its side away from the nearest enemy; picked once per order (and again after a tag)
+    if (!e._ordCover) {
+      let best = null, bd = 15;
+      for (const c of (S.cover || [])) {
+        const cc = obsCenter(c), d = Math.hypot(cc.x - e.pos.x, cc.z - e.pos.z);
+        if (d < bd) { bd = d; best = c; }
+      }
+      e._ordCover = { at: best ? coverStandPos(best, foe.c.pos, 0.35) : { x: e.pos.x, z: e.pos.z } };
+      e._ordAt = false;
+    }
+    const at = e._ordCover.at;
+    // there within 1.2 m, or within 3 m and no nearer for a second (the stand spot can sit tight against a corner)
+    const dc = Math.hypot(at.x - e.pos.x, at.z - e.pos.z);
+    if (!e._ordAt && dc > 1.2 && !(dc < 3 && (e._ordStuck || 0) > 1)) return { goal: { x: at.x, z: at.z } };
+    e._ordAt = true;
+    return { hold: true, low: true };
+  }
+  return null;
+}
+// moves kid e on the standing order in place of the states and returns true; false leaves him to them
+function kidOrderRun(e, tgt, dist, dt) {
+  const S = Game.scenario;
+  if (!S.squadOrder || e.team !== 'player' || e.vip) return false;
+  if (e.state === 'retreating') e._ordCover = null;
+  if (e.state === 'retreating' || e.state === 'deploying' || e.noFire || e.perch || e._lad || e.behavior === 'tagger') return false;
+  if (e._ordBan > 0) { e._ordBan -= dt; return false; }
+  const want = squadOrderGoal(e);
+  if (!want) {
+    if (e._orderRun) { e.targetPos = null; e.homeCover = null; e.stateTime = 0; e._ordGoal = null; }
+    return false;
+  }
+  const ch = e.character || {};
+  if (!e._orderRun) { e.targetPos = null; e.homeCover = null; e._ordBest = null; e._ordStuck = 0; }
+  e.state = want.hold ? 'hiding' : 'advancing';
+  e.mesh.group.position.y = 0;
+  // can he see his target? (5 times a second)
+  e._ordLosT = (e._ordLosT || 0) - dt;
+  if (e._ordLosT <= 0) {
+    e._ordLosT = 0.2;
+    const range = e.weapon === 'shotgun' ? 16 : e.weapon === 'sniper' ? 45 : 30;
+    const my = (e.pos.y || 0) + 1.05 * (e.mesh.scaleY ?? 1.0);
+    e._ordSee = !!(tgt && tgt.alive && dist < range && hasLineOfSight(e.pos.x, my, e.pos.z, tgt.pos.x, tgt.chestY, tgt.pos.z, tgt.obstacles));
+  }
+  const see = !!e._ordSee;
+  let ux = 0, uz = 0;
+  if (want.goal) {
+    e._ordGoal = want.goal;
+    setKidCrouch(e.mesh, 0);
+    const goal = want.goal, gx = goal.x - e.pos.x, gz = goal.z - e.pos.z, gd = Math.hypot(gx, gz);
+    ux = gd > 1e-3 ? gx / gd : 0; uz = gd > 1e-3 ? gz / gd : 0;
+    if (gd > 1.2) {
+      const w = kidFieldNext(squadField(goal), e.pos.x, e.pos.z);
+      if (w) { const wx = w.x - e.pos.x, wz = w.z - e.pos.z, wl = Math.hypot(wx, wz); if (wl > 0.05) { ux = wx / wl; uz = wz / wl; } }
+    }
+    if (e._ordSideT > 0) { e._ordSideT -= dt; const t = ux; ux = -uz * e._ordSideS; uz = t * e._ordSideS; }
+    // a jog; a run (as a flag runner's) when he is over 12 m from where he is going
+    const sp = Math.min(gd, (gd > 12 ? CTF_RUN_SPEED : 3.2) * (ch.moveSpeed ?? 1.0) * (see ? 0.75 : 1) * dt), r = 0.33;
+    const bx = e.pos.x, bz = e.pos.z, nx = bx + ux * sp, nz = bz + uz * sp;
+    if (!collidesObstacles(nx, nz, r)) { e.pos.x = nx; e.pos.z = nz; }
+    else {
+      if (!collidesObstacles(nx, e.pos.z, r)) e.pos.x = nx;
+      if (!collidesObstacles(e.pos.x, nz, r)) e.pos.z = nz;
+    }
+    if (sp > 1e-4 && Math.hypot(e.pos.x - bx, e.pos.z - bz) < sp * 0.3) {
+      e._ordWall = (e._ordWall || 0) + dt;
+      if (e._ordWall > 0.4) { e._ordSideS = e._ordSideS ? -e._ordSideS : (Math.random() < 0.5 ? -1 : 1); e._ordSideT = 0.7; e._ordWall = 0; }
+    } else e._ordWall = 0;
+    // no nearer by 0.3 m in 4 s: the states have him for 2 s
+    const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
+    if (e._ordBest == null || dNow < e._ordBest - 0.3 || dNow < 1) { e._ordBest = dNow; e._ordStuck = 0; }
+    else if ((e._ordStuck = (e._ordStuck || 0) + dt) > 4) { e._ordStuck = 0; e._ordBest = null; e._ordBan = 2; e.stateTime = 0; }
+    if (want.near && Math.hypot(want.goal.x - e.pos.x, want.goal.z - e.pos.z) <= want.near) e._ordGoal = null;
+  } else {
+    e._ordGoal = null; e._ordBest = null; e._ordStuck = 0;
+    // holding: find cover keeps him low, up to shoot for a moment every couple of seconds; otherwise he stands
+    if (want.low) {
+      e._ordPeekT = (e._ordPeekT ?? 2) - dt;
+      if (e._ordPeekT <= -1.2) e._ordPeekT = 1.6 + Math.random() * 0.8;
+      setKidCrouch(e.mesh, e._ordPeekT > 0 ? 1 : 0);
+    } else setKidCrouch(e.mesh, 0);
+  }
+  const up = !(want.low && e._ordPeekT > 0);
+  kidTurnToward(e, see || want.hold ? Math.atan2(tgt.pos.x - e.pos.x, tgt.pos.z - e.pos.z) : Math.atan2(ux, uz), dt);
+  e.mesh.group.rotation.y = e.yaw;
+  e._hasLOSNow = see && up;
+  if (see && up) {
+    e._ordShotT = (e._ordShotT ?? 0.3) - dt;
+    if (e._ordShotT <= 0) {
+      const aim = tgt.pos.clone(); aim.y = tgt.chestY;
+      spawnEnemyBB(e, aim);
+      e._ordShots = (e._ordShots || 0) + 1;
+      const auto = ['mp5', 'ump', 'ak47', 'ar', 'mac10'].includes(e.weapon);
+      e._ordShotT = auto ? 0.25 + Math.random() * 0.15 : e.weapon === 'shotgun' ? 0.9 + Math.random() * 0.4 : e.weapon === 'sniper' ? 1.6 + Math.random() * 0.6 : 0.6 + Math.random() * 0.3;
+    }
+  }
+  return true;
+}
 function updateCtfHud(hud) {
   const C = Game.scenario.ctf;
   hud.style.display = 'block';
@@ -28568,6 +28883,8 @@ function threatScore(e, c) {
   if (e._teamFocus && e._teamFocus === c) score -= FOCUS_BONUS;
   // v1.189: whoever carries a flag draws every gun on the other side
   if (Game.scenario.ctf && ctfCarrying(c)) score -= CTF_CARRIER_BONUS;
+  // v1.248 (D.35): on follow me, the kid you aim at draws your teammates' guns
+  if (e.team === 'player' && Game.scenario.squadOrder === 'follow' && Game.scenario._playerAimKid === c) score -= SQUAD_AIM_BONUS;
   return score;
 }
 
@@ -29041,7 +29358,7 @@ function updateEnemies(dt) {
     const dzP = tgt.pos.z - e.pos.z;
     const distToPlayer = Math.sqrt(dxP*dxP + dzP*dzP);
     // v1.183: turns over ~0.2 s, not a snap (a retreating kid turns toward home in his state instead)
-    if (e.state !== 'retreating' && !e._flagRun) kidTurnToward(e, Math.atan2(dxP, dzP), dt);   // v1.189: a flag runner turns in kidFlagRun
+    if (e.state !== 'retreating' && !e._flagRun && !e._orderRun) kidTurnToward(e, Math.atan2(dxP, dzP), dt);   // v1.189: a flag runner turns in kidFlagRun (v1.248: and one on an order in kidOrderRun)
     e.mesh.group.rotation.y = e.yaw;
 
     // v1.28m: plant pos.y on the terrain HERE, at the top of per-enemy work,
@@ -29433,8 +29750,10 @@ function updateEnemies(dt) {
     // v1.189: capture the flag. A kid with a flag to fetch, carry home or send home walks there by the distance field
     // (kidFlagRun) instead of the states below, firing on the move at whoever he can see.
     e._flagRun = Game.scenario.ctf ? kidFlagRun(e, tgt, distToPlayer, dt) : false;
+    // v1.248 (D.35): a teammate on a standing order (squad commands) moves on it instead of the states
+    e._orderRun = !e._flagRun && Game.scenario.squadOrder && e.team === 'player' ? kidOrderRun(e, tgt, distToPlayer, dt) : false;
     // State logic
-    if (!e._flagRun) switch (e.state) {
+    if (!e._flagRun && !e._orderRun) switch (e.state) {
       case 'deploying': {
         // v1.14: Match-start dispersal. The kid spawned in a tight huddle at one
         // end of the map and now jogs to its assigned fighting position
@@ -30776,6 +31095,7 @@ function stepGame(dt) {
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
+    updateSquad(dt);   // v1.248 (D.35)
     updateEnemies(dt);
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
