@@ -10440,7 +10440,8 @@ lets BBs through.
   none for the second BB the same moment, another 1.25 s later; tags stay 1, the round goes on; a teammate's BB passes
   through (3.4 m on). Defend at the treehouse: Marcus tagged and walking back stops a BB and says his line. Before
   (v1.236): seven checks failed, no line in the pool and every BB 3.4 m past him.
-- The full suite on v1.237, below.
+- The full suite on v1.237 (three local shards): 138 of 139 suites passed. The miss, `spawn-facing`, lost its
+  browser under load before its first check and passed alone on v1.240.
 ### Still open
 - Hearing it: the headless browser has no voices, so the lines are tested as chosen, not as heard. Whether out kids
   should cost you something for overshooting (pay, or a word on the result screen) is Michael's call; nothing does now.
