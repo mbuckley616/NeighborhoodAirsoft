@@ -2021,7 +2021,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.228</div>
+  <div class="version">v1.229</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9425,14 +9425,15 @@ function buildBedroomScene() {
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
+  // v1.229 (D.29, Michael: A): the game saves itself (v1.218), so the bed shows the summer so far.
   // Fits the kid-bedroom framing and matches the original hub design pillar
   // ("Save, gear, world map"). Trigger box covers the whole bed footprint.
   Game.interactables.push({
     type: 'bed',
     box: new THREE.Box3().setFromObject(bedGroup),
     pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
-    prompt: 'Sleep (save your game)',
-    label: 'Save', icon: 'bed', labelY: 1.5,
+    prompt: 'Sleep (how’s the summer going?)',   // v1.229: was "Sleep (save your game)"
+    label: 'Summer', icon: 'bed', labelY: 1.5,
     action: () => openSaveMenu(),
   });
 
@@ -22229,6 +22230,34 @@ function profileSummaryHTML() {
     ${row('Scenarios cleared', completed)}
   </div>`;
 }
+// v1.229 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
+// today's date off the calendar, the score against Seth's crew, and the next match on the ladder.
+function nextLadderMatchId() {
+  for (const z of ZONE_LADDER) {
+    if (!isZoneUnlocked(z.key)) break;
+    const id = (PIN_SCENARIO_GROUPS[z.key] || []).find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+    if (id) return id;
+  }
+  return null;
+}
+function summerSoFarHTML() {
+  const day = summerDayIndex(), d = summerDate(day);
+  const s = rivalScore();
+  const nextId = nextLadderMatchId(), sc = nextId && SCENARIOS[nextId];
+  const next = sc ? `${sc.scenarioName || sc.name || nextId} · ${sc.name || ''}`.replace(/ · $/, '')
+                  : 'Nothing left: the summer is won';
+  const zone = day === SUMMER_BIG_DAY ? 'Bunratty Court' : summerZoneName(summerZoneKey());
+  const row = (label, val) =>
+    `<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;">
+       <span style="opacity:0.75;">${label}</span><span style="font-weight:bold;text-align:right;">${val}</span>
+     </div>`;
+  return `<div class="summer-so-far" style="text-align:left;font-size:13px;line-height:1.5;margin-bottom:10px;">
+    ${row('Today', d.label + ' ' + SUMMER_YEAR)}
+    ${row('Where', zone)}
+    ${row(RIVAL_CREW.replace(/^\w/, c => c.toUpperCase()), s.beaten + ' of ' + s.total + ' beaten')}
+    ${row('Next', next)}
+  </div>`;
+}
 
 function openSaveMenu() {
   const res = saveGame();
@@ -22240,11 +22269,12 @@ function openSaveMenu() {
   exitPointerLock();
 
   if (res.ok) {
-    titleEl.textContent = 'Saved — sleep tight';
+    titleEl.textContent = 'The summer so far';   // v1.229: was "Saved — sleep tight"
     bodyEl.style.whiteSpace = 'normal';
     bodyEl.innerHTML =
-      `<div style="margin-bottom:12px;">Your progress is saved to this browser. It'll be here next time you open the game.</div>` +
+      summerSoFarHTML() +
       profileSummaryHTML() +
+      `<div style="margin-top:10px;opacity:0.7;font-size:11px;">Saved to this browser. The game saves itself, too.</div>` +
       `<div style="margin-top:16px;">` +
         `<button id="saveDeleteBtn" style="background:transparent;border:1px solid var(--ui-border);` +
         `color:#c88;padding:5px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">` +

@@ -10270,3 +10270,22 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   the hits are his before anything varies, and a second tag in five rounds of eight tipped it. The fault v1.221 fixed
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
+
+## v1.229 — The bed shows the summer so far
+Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
+do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
+"Summer". The card it opens is headed THE SUMMER SO FAR: today's date off the wall calendar (Sunday 1 June 2003 on a
+new game), the zone you are in, the score against Seth's crew ("13 of 21 beaten"), and the next match on the ladder,
+by name and street (the first unlocked match not yet won, zone by zone; the last Saturday once the rest are won, and
+"Nothing left: the summer is won" after it). Below that, the save summary as before (cash, BBs, guns, accessories,
+cleared), a line saying it is saved and that the game saves itself too, and DELETE SAVE. The bed still saves when
+you sleep; the calendar's dates still move only with wins.
+### Verified
+- `tests/bed-summer.test.mjs` (new, 13 checks): the prompt; a new game reads Sunday 1 June 2003, Winnmark Court, 0 of
+  21 beaten, Backyard Basics next, the summary and the save there, OK back to the bedroom; Winnmark and Bunratty won
+  with six of the Hollow reads Sunday 20 July 2003, the Hollow, 13 of 21, Night Game in the Woods next; everything
+  but the finale reads Friday 29 August with The Last Saturday next; that won too, Saturday 30 August, Bunratty Court,
+  21 of 21, the summer won. No page errors.
+- Run after the change: `autosave`, `bedroom-bed`, `calendar`, `rival`, `texts`: all pass.
+### Still open
+- Michael's look at the card in play. The bed's floating label now reads "Summer" (was "Save").
