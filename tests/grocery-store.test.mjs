@@ -192,7 +192,7 @@ check('a BB fired into a shelf (aisle 4, x -0.1…1.1) never comes out the far s
 // meets the roof or a wall within 60 m (no open edge where the sky or the void would show).
 const closed = await page.evaluate(() => {
   const ray = new THREE.Raycaster(), sc = Game.scene, misses = [];
-  const solids = []; sc.traverse(o => { if (o.isMesh && o.geometry && (o.geometry.type === 'PlaneGeometry' || o.geometry.type === 'BoxGeometry') && !o.material.transparent) solids.push(o); });
+  const solids = []; sc.traverse(o => { if (o.isMesh && o.geometry && (o.geometry.type === 'PlaneGeometry' || o.geometry.type === 'BoxGeometry') && (!o.material.transparent || o.geometry.type === 'BoxGeometry')) solids.push(o); });   // v1.252: the front glass is see-through now, onto the lot (addEdgeBackdrop), and still closes the room
   for (const [x, z] of [[11, 14.8], [-20, 8], [0, -6], [20, -6], [-15, -24], [15, -24]]) {
     for (let k = 0; k < 16; k++) {
       const a = k * Math.PI / 8;
