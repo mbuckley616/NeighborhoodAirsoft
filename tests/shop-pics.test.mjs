@@ -29,7 +29,7 @@ const rows = await page.evaluate(() => [...document.querySelectorAll('#shopScree
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(),
   pic: !!r.querySelector('.shop-item-icon.pic img'), glyph: r.querySelector('.shop-item-icon').textContent })));
 const order = await page.evaluate(() => GUN_ORDER.slice());
-check('the Guns tab lists all 12 guns', rows.length === 12 && order.length === 12, rows.map(r => r.name));
+check('the Guns tab lists all 16 guns', rows.length === 16 && order.length === 16, rows.map(r => r.name));
 check('every gun row has a picture in place of the ⌐ glyph', rows.every(r => r.pic && r.glyph === ''), rows.filter(r => !r.pic));
 const icons = await measure();
 check('the pictures are in GUN_ORDER, drawn at 112×112 for a 56 px box',
@@ -39,7 +39,7 @@ check('each gun fills its frame across (at least 80% of the width)', icons.every
   icons.map(i => [i.gun, i.spanX]));
 check('each picture has the gun drawn on it (at least 6% of its pixels)', icons.every(i => i.fill >= 0.06),
   icons.map(i => [i.gun, i.fill]));
-check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 12);
+check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 16);
 console.log('    icons (gun, drawn, span across, span down):', icons.map(i => `${i.gun} ${i.fill} ${i.spanX} ${i.spanY}`).join('; '));
 await g.shot('shop-pics-list');
 
@@ -110,11 +110,11 @@ const tint = await page.evaluate(() => {
 check('each picture has its item’s colour in it (hue within 12/255)', tint.every(t => t[1] <= 12), tint);
 await g.shot('shop-pics-clothes');
 
-// v1.210: the Gear tab's belt and holster, eye pro, armour and shoes, on the same kid, framed on the piece
+// v1.210: the Gear tab's belt and holster (v1.249: and the pool noodle), eye pro, armour and shoes, on the same kid, framed on the piece
 await page.evaluate(() => [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Gear').click());
 const gearRows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(), pic: !!r.querySelector('.shop-item-icon.pic img') })));
-const wantGear = await page.evaluate(() => 2 + Object.keys(EYEWEAR).length + Object.keys(ARMOR).length + Object.keys(SHOES).length);
+const wantGear = await page.evaluate(() => 3 + Object.keys(EYEWEAR).length + Object.keys(ARMOR).length + Object.keys(SHOES).length);
 check(`the Gear tab's ${wantGear} rows each have a picture`, gearRows.length === wantGear && gearRows.every(r => r.pic), gearRows.filter(r => !r.pic));
 const ge = await measure();
 check('the gear pictures are drawn at 112×112 with something on them (over 10% of the pixels)', ge.length === wantGear &&

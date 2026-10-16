@@ -202,11 +202,12 @@ const tagCall = await page.evaluate(() => {
   const foe = Game.scenario.enemies.find(e => (e.team || 'enemy') !== 'player');
   ally.pos.x = Game.player.pos.x + 2; ally.pos.z = Game.player.pos.z; foe.pos.x = Game.player.pos.x - 2; foe.pos.z = Game.player.pos.z;
   VOICE.globalCooldownUntil = 0; ally._voiceCooldownUntil = 0; foe._voiceCooldownUntil = 0;
+  const st0 = ally.state;   // v1.229 (merge of v1.252): an out kid now ignores a second hit (v1.237), so step 2 stands him back up
   // 1: the tagged kid can speak: he reacts, and the shooter's call is held by the global cooldown
   Game.scenario.roundTime += 10; applyBBHit({ enemyRef: foe, canDamage: true }, ally);
   const a = VOICE.log.map(e => [e.charId, e.category]);
   // 2: the tagged kid is on his own cooldown: the shooter's call fills in
-  VOICE.log.length = 0; Game.scenario.roundTime += 10; ally.health = 1; ally._voiceCooldownUntil = Game.scenario.roundTime + 30;
+  VOICE.log.length = 0; Game.scenario.roundTime += 10; ally.health = 1; ally.state = st0; ally._voiceCooldownUntil = Game.scenario.roundTime + 30;
   applyBBHit({ enemyRef: foe, canDamage: true }, ally);
   const b = VOICE.log.map(e => [e.charId, e.category, e.line]);
   return { ally: ally.charId, foe: foe.charId, a, b, foePool: voiceLinePools(foe.charId, 'playerHit') };

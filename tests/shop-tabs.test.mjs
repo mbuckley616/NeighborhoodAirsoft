@@ -29,9 +29,10 @@ for (const tab of first.tabs) {
   console.log(`   ${tab}: ${JSON.stringify(r.headers)} ${r.rows.length} rows, ${r.colours.length} colours`);
   await g.shot('shop-' + tab.toLowerCase());
 }
-check('Guns: the guns, as before', seen.Guns.headers.join() === 'Guns' && seen.Guns.rows.length >= 8, seen.Guns.headers);
+// v1.240 (D.37): the guns under a header for each kind
+check('Guns: the guns, under their kinds', seen.Guns.headers.join() === 'Guns,Pistols,Shotguns,Rifles,Automatics' && seen.Guns.rows.length >= 8, seen.Guns.headers);
 check('Ammo: BB packs, speed loaders, BB colours', seen.Ammo.headers.join() === 'Restock BBs,Speed Loaders,BB Color' && seen.Ammo.colours.length >= 7, seen.Ammo.headers);
-check('Gear: belt & holster, eyewear, armour, shoes', seen.Gear.headers.join() === 'Belt & Holster,Eyewear,Body Armor,Shoes', seen.Gear.headers);
+check('Gear: belt & holster, the pool noodle (v1.249), eyewear, armour, shoes', seen.Gear.headers.join() === 'Belt & Holster,Backup,Eyewear,Body Armor,Shoes', seen.Gear.headers);
 check('Mods: the sights, lasers and flashlight', seen.Mods.headers.join() === 'Gun Mods', seen.Mods.headers);
 check('Clothes: the hats (v1.197), tops (v1.198) and shorts (v1.199)', seen.Clothes.headers.join() === 'Hats,Tops,Shorts' && seen.Clothes.rows.length === 15, seen.Clothes);
 const want = await page.evaluate(() => ({

@@ -37,7 +37,10 @@ for (const [id, who, secs] of [['hollow_night_battle', 'rebecca', 120], ['club_n
   console.log(`   ${id}:`, JSON.stringify(r));
   out.push({ id, ...r });
 }
-check('Night Game in the Woods: idle Rebecca comes looking, over 10 m from her start', out.filter(r => r.who === 'rebecca').every(r => r.far > 10 && r.boredAt), out);
+// fix-up (PR #75, CI on e67f110): a round where she walked 38.3 m on her own and was never idle long enough to get
+// bored (23.3 s at most; the threshold is 25-30 s) failed for want of boredAt. The fault (v1.184) is an ally who walks
+// 0 m all round; so she must get over 10 m out, and boredom must have come whenever she idled past 25 s.
+check('Night Game in the Woods: idle Rebecca comes looking, over 10 m from her start', out.filter(r => r.who === 'rebecca').every(r => r.far > 10 && (r.boredAt || r.idleMax < 25)), out);
 check('Night Swim: Brooke walks over 10 m or keeps firing with a line', out.filter(r => r.who === 'brooke').every(r => r.far > 10 || r.losShots >= 10), out);
 check('no ally of ours stays idle (no 2 m, no shot with a line) past 30 s', out.every(r => r.idleMax <= 30.05), out);
 check('nobody gets bored inside the first 25 s', out.every(r => r.boredAt == null || r.boredAt >= 25), out);

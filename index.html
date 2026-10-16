@@ -148,6 +148,30 @@
   #ammoHud .status.reloading { color: var(--ui-accent); }
   #ammoHud .status.ready { color: var(--ui-good); }
 
+  /* v1.248 (D.35): squad commands — the standing order under the roster, and the Q wheel round the crosshair */
+  #squadHud {
+    position: absolute; right: 24px; top: 210px; max-width: 260px;
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 4px;
+    padding: 5px 10px; font-size: 12px; color: #ddd; display: none;
+  }
+  #squadHud .sq-k { color: var(--ui-accent); letter-spacing: 1.5px; font-size: 11px; }
+  #squadHud .sq-hint { color: #888; font-size: 11px; }
+  #squadHud .sq-reply { color: #cfe8a8; margin-top: 3px; }
+  #squadWheel {
+    position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none;
+  }
+  #squadWheel .sq-opt {
+    position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
+    background: rgba(10, 14, 10, 0.78); border: 1px solid #556; color: #ddd;
+    padding: 6px 12px; border-radius: 4px; font-size: 13px; letter-spacing: 1px;
+  }
+  #squadWheel .sq-opt.on { background: rgba(70, 120, 60, 0.9); border-color: #9c6; color: #fff; }
+  #squadWheel .sq-push { left: 0; top: -105px; }
+  #squadWheel .sq-cover { left: 125px; top: 0; }
+  #squadWheel .sq-distance { left: 0; top: 105px; }
+  #squadWheel .sq-follow { left: -125px; top: 0; }
+  #squadWheel .sq-ptr { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: #9c6; }
+  #squadWheel .sq-title { position: absolute; left: 0; top: 150px; transform: translateX(-50%); white-space: nowrap; color: #aaa; font-size: 11px; letter-spacing: 1px; }
   /* === Enemy roster HUD (top-right during scenario) === */
   #rosterHud {
     position: absolute;
@@ -1047,6 +1071,14 @@
   #resultScreen .rs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #9a8f7c; }
   #resultScreen .rs-best, #resultScreen .rs-new { font-size: 12px; color: #ddd; margin-top: 4px; line-height: 1.4; }
   #resultScreen .rs-rival .rs-tag { color: #e0503a; }   /* v1.196 */
+  /* v1.238 (D.34): the damage report, your kid front and back with each hit marked, and the list */
+  #resultScreen .rs-damage { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(212,165,116,0.25); }
+  #resultScreen .rs-dmg-fig { position: relative; width: 176px; height: 150px; flex: none; }
+  #resultScreen .rs-dmg-fig canvas, #resultScreen .rs-dmg-fig svg { position: absolute; left: 0; top: 0; width: 176px; height: 150px; }
+  #resultScreen .rs-dmg-list { font-size: 11px; color: #ddd; line-height: 1.35; flex: 1; min-width: 0; }
+  #resultScreen .rs-dmg-list .rs-tag { display: block; margin-bottom: 3px; }
+  #resultScreen .rs-dmg-row { margin-bottom: 2px; }
+  #resultScreen .rs-dmg-n { display: inline-block; width: 14px; height: 14px; line-height: 14px; border-radius: 7px; background: #e0503a; color: #fff; font-size: 9px; text-align: center; font-weight: bold; margin-right: 4px; }
   #resultScreen .rs-tag { display: inline-block; min-width: 64px; font-size: 10px; letter-spacing: 1px; color: var(--ui-accent); font-weight: bold; }
   #resultScreen .reward {
     background: rgba(106, 191, 105, 0.12);
@@ -1500,6 +1532,11 @@
     border-radius: 4px 4px 0 0;
   }
   #shopScreen .cat-tab:hover { background: #f4f1e0; color: #222; }
+  /* v1.240 (D.37): the Guns tab's kinds, a row of chips over the list */
+  #shopScreen .shop-gun-kinds { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+  #shopScreen .shop-gun-kind { padding: 4px 12px; font-size: 11px; font-weight: bold; letter-spacing: 1px; color: #555; cursor: pointer; border: 1px solid #aca899; border-radius: 12px; background: #f4f1e0; }
+  #shopScreen .shop-gun-kind:hover { color: #222; background: #fff; }
+  #shopScreen .shop-gun-kind.active { color: #fff; background: #c93030; border-color: #c93030; }
   #shopScreen .cat-tab.active {
     background: #fff;
     color: #c93030;
@@ -1689,6 +1726,15 @@
   #forfeitAsk .modal-close { background: var(--ui-accent); color: #1a1a1a; border: none; padding: 8px 18px; font-family: inherit; cursor: pointer; letter-spacing: 1px; font-size: 12px; }
   #forfeitAsk .modal-close.forfeit-yes { background: transparent; color: #e88; border: 1px solid #a55; }
   #forfeitAsk kbd { font-size: 10px; opacity: 0.7; margin-left: 4px; }
+  /* v1.239 (D.39): the pause menu */
+  #pauseMenu .modal-card { background: var(--ui-bg); border: 2px solid var(--ui-accent); padding: 28px 44px; min-width: 300px; text-align: center; border-radius: 4px; }
+  #pauseMenu .modal-title { font-family: 'Georgia', serif; font-size: 34px; letter-spacing: 4px; color: var(--ui-accent); margin-bottom: 6px; }
+  #pauseMenu .modal-body { font-size: 13px; color: #ccc; margin-bottom: 18px; }
+  #pauseMenu .pause-btns { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  #pauseMenu button { background: transparent; color: var(--ui-text); border: 1px solid var(--ui-border); padding: 9px 18px; font-family: inherit; cursor: pointer; letter-spacing: 2px; font-size: 13px; }
+  #pauseMenu button.pause-resume { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); font-weight: bold; }
+  #pauseMenu button.pause-forfeit { color: #e88; border-color: #a55; }
+  #pauseMenu kbd { font-size: 10px; opacity: 0.7; margin-left: 6px; }
 
   /* Scenario intro card */
   #scenarioIntro {
@@ -1913,6 +1959,11 @@
   }
 
   /* Pause hint */
+  /* v1.242 (D.38 step 2): the pad's cursor on the screens, and what it would click */
+  #padCursor { position: fixed; display: none; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
+    border: 3px solid #ffd54a; box-shadow: 0 0 0 2px rgba(0,0,0,0.55), 0 0 10px rgba(255,213,74,0.7);
+    pointer-events: none; z-index: 10000; }
+  .pad-hover { outline: 3px solid #ffd54a !important; outline-offset: 2px; }
   #pauseHint {
     position: fixed;
     left: 50%; top: 30px;
@@ -1978,6 +2029,8 @@
     <div class="label">Players on the Field</div>
     <div id="rosterList"></div>
   </div>
+  <div id="squadHud"></div>   <!-- v1.248 (D.35): the standing order and the walkie's answer -->
+  <div id="squadWheel"></div>  <!-- v1.248: hold Q -->
   <div id="timerHud">
     <div class="timer-label" id="timerLabel">Hold Out</div>
     <div class="timer-value" id="timerValue">0:00</div>
@@ -2021,7 +2074,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.229</div>
+  <div class="version">v1.252</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2386,6 +2439,18 @@
 </div>
 
 <!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
+<!-- v1.239 (D.39): Escape in a match opens this and the match stops -->
+<div class="menu-overlay" id="pauseMenu">
+  <div class="modal-card">
+    <div class="modal-title">PAUSED</div>
+    <div class="modal-body">The match is stopped until you go back to it.</div>
+    <div class="pause-btns">
+      <button class="pause-resume" id="pauseResumeBtn">RESUME <kbd>ESC</kbd></button>
+      <button id="pauseSettingsBtn">SETTINGS</button>
+      <button class="pause-forfeit" id="pauseForfeitBtn">FORFEIT <kbd>F</kbd></button>
+    </div>
+  </div>
+</div>
 <div class="menu-overlay" id="forfeitAsk">
   <div class="modal-card forfeit-card">
     <div class="modal-title">Forfeit this match?</div>
@@ -3374,6 +3439,7 @@ const Game = {
       glasses_clear: false,
       slot_3: false,            // 1=gun and 2=equipment are unlocked by default
       slot_4: false,
+      pool_noodle: false,       // v1.249 (D.36)
     },
     // Speed loader instances player owns. Each has a tier and current ammo.
     // List of objects: { id, tier, currentBBs }
@@ -3589,7 +3655,8 @@ const MAG_GUN_FIT = {
 
 // The canonical ordered list of gun types, and the subset the player owns.
 // v1.168 (backlog D.14 A, Michael: D): the four backyard guns join the end.
-const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol'];
+const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol',
+  'sprayer', 'ghost', 'ticktock', 'rattle'];   // v1.250 (D.37): the cheap clear automatics
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -3639,6 +3706,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'sixshooter') return 6;
   if (gunType === 'bucket')     return Game.persist.owned.bucket_mag_1000 ? 1000 : 600;
   if (gunType === 'boltpistol') return Game.persist.owned.boltpistol_mag_12 ? 12 : 8;
+  if (GUN_MAGS[gunType] && GUN_MAGS[gunType].cheap) return GUN_MAGS[gunType].baseCap;   // v1.250: one mag, no upgrade
   return 1;
 }
 
@@ -3729,6 +3797,7 @@ const GUN_ACCESSORY_CAP = {
   sixshooter: { sight: 1, rails: 1 },
   bucket:  { sight: 1, rails: 2, under: 1 },
   boltpistol: { sight: 1, rails: 1 },
+  sprayer: { sight: 1, rails: 1 }, ghost: { sight: 1, rails: 1 }, ticktock: { sight: 1, rails: 2 }, rattle: { sight: 1, rails: 1 },   // v1.250
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -3994,8 +4063,30 @@ const GUN_MAGS = {
     mags: [ { flag: 'boltpistol_mag_12', cap: 12, price: 14 } ],
     spares: [ { key: 'spare_mag_boltpistol', label: 'Spare Bolt Pistol Mag (8)', price: 6 } ],
   },
+  // v1.250 (backlog D.37, Michael: B): the cheap clear-plastic automatics, cheaper than the Bucket Gun, each bad in its
+  // own way. One mag each, no bigger mag and no spares sold (a speed loader fills any gun); no kid carries one.
+  rattle: {
+    displayName: 'Rattle Can', baseCap: 50, price: 25, ownFlag: 'rattle', cheap: true,
+    blurb: 'A clear plastic joke gun with a battery taped under its nose. Slow, wild and it jams. Every kid had one the first week of summer.',
+    mags: [], spares: [],
+  },
+  sprayer: {
+    displayName: 'Clear Sprayer', baseCap: 120, price: 35, ownFlag: 'sprayer', cheap: true,
+    blurb: 'A little see-through battery SMG. Six BBs a second, and every one of them curves off somewhere new.',
+    mags: [], spares: [],
+  },
+  ghost: {
+    displayName: 'Ghost Mini', baseCap: 80, price: 45, ownFlag: 'ghost', cheap: true,
+    blurb: 'A clear micro-uzi. It holds steady, but about one burst in five it jams: hold R to clear it.',
+    mags: [], spares: [],
+  },
+  ticktock: {
+    displayName: 'Tick-Tock', baseCap: 60, price: 55, ownFlag: 'ticktock', cheap: true,
+    blurb: 'A clear wind-up rifle. Dead accurate and the longest reach of the cheap ones, but it ticks out two BBs a second.',
+    mags: [], spares: [],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','sniper','bucket','mp5','ump','mac10','ak47'];
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -4106,6 +4197,7 @@ function describeSlot(idx) {
       desc: `Mag: ${getMaxAmmoForGun(Game.persist.equipped.gun)} rounds`,
     };
   }
+  if (slot.kind === 'noodle') return { kind: 'noodle', icon: '〰', name: 'Pool Noodle', desc: 'V swings it · a hit tags' };   // v1.249
   if (slot.kind === 'speed_loader') {
     const sl = Game.persist.speedLoaders.find(s => s.id === slot.refId);
     if (!sl) return null;
@@ -4166,6 +4258,152 @@ function describeSlot(idx) {
   return null;
 }
 
+// v1.249 (backlog D.36, Michael: A): THE POOL NOODLE. Sold at airsoft.com for $15 (Gear tab), carried in a loadout slot
+// like a speed loader. V swings it from anything you hold (a quick swing, then back to what you had); with its slot
+// held, a click swings it too. It reaches NOODLE_REACH (from your middle to the kid's), across a cone in front of you,
+// not through a wall; the nearest kid of the other side in it is tagged as a BB tags him, and says something about it.
+// A kid already out gets his "I'm out already" (v1.237). Kids never carry one.
+const NOODLE_REACH = 1.6, NOODLE_CONE = 0.7071;      // m from your middle to his; cos 45° either side of your look
+const NOODLE_SWING = 0.42, NOODLE_HIT_AT = 0.16, NOODLE_COOLDOWN = 0.65;   // s: the swing, when it lands, swing to swing
+const NOODLE_LINES = ['A POOL NOODLE?! Are you serious?!', 'Dude, you got me with a NOODLE.', 'That does not count! ...It counts, doesn\'t it.',
+  'I just got noodled. Great.', 'Ow! Okay, that one actually stung.', 'Who brings a pool noodle to airsoft?!'];
+function noodleCarried() { return Game.persist.loadoutSlots.some(s => s && s.kind === 'noodle'); }
+let fpNoodle = null;
+function buildNoodleMesh() {
+  // a foam pool noodle, 1.2 m, along +Y from the hand: a fluted tube with the hollow showing at the far end
+  const g = new THREE.Group();
+  const foam = new THREE.MeshStandardMaterial({ color: 0x3fd16a, roughness: 0.92 });
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 1.2, 9, 1, true), foam);
+  tube.position.y = 0.52;
+  g.add(tube);
+  const cap = new THREE.Mesh(new THREE.RingGeometry(0.012, 0.036, 9), new THREE.MeshStandardMaterial({ color: 0x35b85c, roughness: 0.95, side: THREE.DoubleSide }));
+  cap.rotation.x = -Math.PI / 2; cap.position.y = 1.12;
+  const cap2 = cap.clone(); cap2.position.y = -0.08;
+  const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.19, 8, 1, true), new THREE.MeshStandardMaterial({ color: 0x1f6e36, roughness: 1, side: THREE.BackSide }));
+  hole.position.y = 0.52;
+  g.add(cap, cap2, hole);
+  g.userData.tube = tube;
+  return g;
+}
+function buildFPNoodle() {
+  // the hand and forearm hold still in the root; the noodle swings about the hand in its own group
+  const group = new THREE.Group(), n = buildNoodleMesh();
+  group.add(n);
+  group.userData.swing = n;
+  group.userData.baseRot = { x: -0.95, y: 0, z: 0.12 };
+  group.userData.basePos = { x: 0.2, y: -0.17, z: -0.32 };
+  group.position.set(0.2, -0.17, -0.32);
+  group.rotation.set(-0.95, 0, 0.12);
+  const h = buildFpGripHand(0.036, 0.036, 1);   // the hand round its near end
+  group.add(h);
+  const f = addFpForearm(group, group, h, FP_ELBOW_R);
+  group.userData.fpHands = { r: [h, f.arm, f.cuff], l: [], under: null };
+  group.visible = false;
+  Game.camera.add(group);
+  syncFpHandLook();
+  return group;
+}
+function shopNoodlePic(w, h) {
+  return shopPic('gear:noodle', w, h, () => {
+    const holder = new THREE.Group(), n = buildNoodleMesh();
+    n.rotation.z = -0.8;   // laid corner to corner, the hollow end up
+    n.scale.set(1.8, 1, 1.8);   // drawn a little fat, so the thin tube reads in a 56 px box
+    holder.add(n);
+    return { obj: holder, fit: [n], pad: 1.1 };
+  });
+}
+function renderPoolNoodle(c) {
+  const item = SHOP_CATALOG.find(x => x.id === 'pool_noodle');
+  if (!item) return;
+  c.appendChild(shopSectionHeader('Backup', 'For when the BBs run out'));
+  const row = shopCatalogRow(item);
+  shopIconImg(row.firstElementChild, shopNoodlePic(56, 56), item.name, { item: 'gear:noodle' });
+  c.appendChild(row);
+}
+function startNoodleSwing() {
+  if (Game.mode !== 'scenario' || Game.paused || Game.forfeitAsk || !noodleCarried()) return false;
+  const N = Game.noodle;
+  if (N.t >= 0 || N.cd > 0) return false;
+  if (Game.held.using) { Game.held.using = false; Game.held.useProgress = 0; Game.held.useKind = null; Game.held._feedingActive = false; }
+  N.t = 0; N.cd = NOODLE_COOLDOWN; N.hitDone = false;
+  N.swings = (N.swings || 0) + 1;
+  playNoodleWhoosh();
+  return true;
+}
+function updateNoodle(dt) {
+  const N = Game.noodle;
+  if (N.cd > 0) N.cd = Math.max(0, N.cd - dt);
+  if (N.t < 0) return;
+  N.t += dt;
+  if (!N.hitDone && N.t >= NOODLE_HIT_AT) { N.hitDone = true; noodleStrike(); }
+  if (N.t >= NOODLE_SWING) N.t = -1;
+}
+// who the swing lands on: the nearest kid of the other side within reach, in the cone, with nothing in the way
+function noodleTarget() {
+  const P = Game.player, fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), mine = combatantTeam(P);
+  let best = null, bd = Infinity;
+  for (const c of Game.scenario.enemies || []) {
+    if (combatantTeam(c) === mine || c.behavior === 'tagger') continue;
+    const dx = c.pos.x - P.pos.x, dz = c.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+    if (d > NOODLE_REACH || d >= bd) continue;
+    if (d > 0.3 && (dx * fx + dz * fz) / d < NOODLE_CONE) continue;
+    const eyeY = P.pos.y + (P.eyeOffset || 1.4) * 0.8;
+    if (d > 0.3 && !hasLineOfSight(P.pos.x, eyeY, P.pos.z, c.pos.x, _combatantChestY(c), c.pos.z, P.obstacles)) continue;
+    best = c; bd = d;
+  }
+  return best;
+}
+function noodleStrike() {
+  if (Game.mode !== 'scenario') return;
+  const c = noodleTarget(), N = Game.noodle;
+  if (!c) return;
+  const wasOut = c.health <= 0 || c.state === 'retreating';
+  const at = new THREE.Vector3(c.pos.x, _combatantChestY(c), c.pos.z);
+  applyBBHit({ owner: 'player', pos: at, spawnPos: Game.player.pos.clone(), noodle: true }, c);
+  N.hits = N.hits || [];
+  N.hits.push({ name: c.name, out: wasOut, t: +(Game.scenario.roundTime || 0).toFixed(2) });
+  if (!wasOut) kidSayLine(c, NOODLE_LINES[Math.floor(Math.random() * NOODLE_LINES.length)]);
+}
+// a kid says a given line where he stands (as tryNpcSpeak, but this line, now)
+function kidSayLine(e, line) {
+  e._lastLine = line;
+  if (typeof speechSynthesis === 'undefined') return;
+  try {
+    const { vol } = positionalAudio(e.pos.x, e.pos.z, 24);
+    if (vol < 0.12) return;
+    playVoiceMarker(e.pos.x, e.pos.z);
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
+    if (v) u.voice = v;
+    u.rate = 1.15; u.pitch = 1.15;
+    u.volume = 0.5 * vol * Settings.effects;
+    speechSynthesis.speak(u);
+    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
+    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
+  } catch (err) {}
+}
+function playNoodleWhoosh() {
+  if (!Game.audio?.ctx) return;
+  const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05 * Settings.effects, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.25);
+}
+// the swing in first person: wound back to the right, across to the left, back to rest
+function poseFPNoodle() {
+  const br = fpNoodle.userData.baseRot, bp = fpNoodle.userData.basePos, t = Game.noodle.t;
+  let z = br.z, x = br.x, px = bp.x;
+  if (t >= 0) {
+    const p = t / NOODLE_SWING, ease = s => s * s * (3 - 2 * s);
+    if (p < 0.3) { const s = ease(p / 0.3); z = br.z + (-0.75 - br.z) * s; px = bp.x + 0.06 * s; }
+    else if (p < 0.6) { const s = ease((p - 0.3) / 0.3); z = -0.75 + 1.85 * s; x = br.x - 0.35 * Math.sin(s * Math.PI); px = bp.x + 0.06 - 0.16 * s; }
+    else { const s = ease((p - 0.6) / 0.4); z = 1.1 + (br.z - 1.1) * s; px = bp.x - 0.1 + 0.1 * s; }
+  }
+  fpNoodle.position.set(px, bp.y, bp.z);
+  fpNoodle.userData.swing.rotation.set(x - br.x, 0, z - br.z);
+}
+Game.noodle = { t: -1, cd: 0 };
+
 // === SPEED LOADER TIERS ===
 const SPEED_LOADER_TIERS = {
   sl_50:  { capacity: 50,  name: 'Speed Loader (50)',  price: 15 },
@@ -4184,6 +4422,7 @@ const SPEED_LOADER_TIERS = {
 const GUN_WEIGHT = {
   pistol: 2, mac10: 3, mp5: 5, ump: 5, shotgun: 6, ar: 8, ak47: 8, sniper: 10,
   sixshooter: 2, boltpistol: 3, thunder: 5, bucket: 6,   // v1.168
+  rattle: 2, sprayer: 2.5, ghost: 2.5, ticktock: 4,       // v1.250: hollow plastic
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -4218,6 +4457,8 @@ function computeLoadoutWeight() {
       const sl = Game.persist.speedLoaders.find(s => s.id === slot.refId);
       const w = sl ? speedLoaderWeight(sl.tier) : 1.3;
       gearW += w; parts.push({ label: 'Speed loader', w });
+    } else if (slot.kind === 'noodle') {
+      gearW += 0.3; parts.push({ label: 'Pool noodle', w: 0.3 });   // v1.249
     }
   }
   const armorMap = Game.persist.equipped.armor || {};
@@ -4546,6 +4787,32 @@ const GUN_SPECS = {
     cockType: 'bolt',
     displayName: 'Bolt Pistol',
   },
+  // v1.250 (backlog D.37, Michael: B): the cheap clear-plastic automatics. `burstJam` is the chance a burst jams (it
+  // goes a few BBs in first); R held clears it, as any jam.
+  sprayer: {   // Clear Sprayer: 6 BBs a second, every one curves hard (about a 3 m circle at 15 m)
+    fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
+    cyclicRPM: 360, muzzleVelocity: 32, baseSpread: 0.55, adsSpreadMult: 0.8,
+    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12,
+    pelletsPerShot: () => 1, cockTime: 0.4, cockType: 'switch', displayName: 'Clear Sprayer',
+  },
+  ghost: {     // Ghost Mini: steady, but about one burst in five jams
+    fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
+    cyclicRPM: 600, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.45,
+    curveOnsetDistance: 10, curveStrengthMax: 12, burstJam: 0.2,
+    pelletsPerShot: () => 1, cockTime: 0.5, cockType: 'charge', displayName: 'Ghost Mini',
+  },
+  ticktock: {  // Tick-Tock: dead accurate, the longest reach of the cheap ones, 2 BBs a second
+    fireMode: 'auto', weightClass: 'medium', playerSpeedMult: 1.0,
+    cyclicRPM: 120, muzzleVelocity: 50, baseSpread: 0.14, adsSpreadMult: 0.3,
+    curveOnsetDistance: 20, curveStrengthMax: 6,
+    pelletsPerShot: () => 1, cockTime: 0.6, cockType: 'charge', displayName: 'Tick-Tock',
+  },
+  rattle: {    // Rattle Can: all three faults at once
+    fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
+    cyclicRPM: 120, muzzleVelocity: 28, baseSpread: 0.55, adsSpreadMult: 0.8,
+    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12, burstJam: 0.25,
+    pelletsPerShot: () => 1, cockTime: 0.4, cockType: 'switch', displayName: 'Rattle Can',
+  },
 };
 
 function getGunSpec(gunType) {
@@ -4591,6 +4858,11 @@ const SHOP_CATALOG = [
   { id:'sl_200', category:'Loadout', name:'Speed Loader (200 BBs)', price:50,
     desc:'High-capacity loader for long matches.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>buySpeedLoader('sl_200'), buttonLabel:()=>'BUY' },
+  // v1.249 (backlog D.36, Michael: A): the pool noodle, on the Gear tab
+  { id:'pool_noodle', category:'Loadout', name:'Pool Noodle', price:15,
+    desc:'A foam pool noodle, for when the BBs run out. Put it in a loadout slot: V swings it from anything you hold, or hold its slot and click. Reaches about a metre and a half; a hit tags.',
+    isOwned:()=>!!Game.persist.owned.pool_noodle, isLocked:()=>false,
+    apply:()=>{Game.persist.owned.pool_noodle=true;}, buttonLabel:()=>Game.persist.owned.pool_noodle?'OWNED':'BUY' },
 ];
 
 function getShopCategories() {
@@ -5158,6 +5430,7 @@ const VOICE_LINES_DEFAULT = {
     playerSpotted: ["There he is!", "Get him!", "Push push push!", "Found him! Go!", "On him! Move!", "He's right there!"],
     taunt:         ["Come fight me!", "Stop hiding!", "I'm coming for you!", "Let's go already!", "You can't hide from me!", "Come on, chicken!"],
     roundStart:    ["Game on! Let's go!", "Here we come!", "Go go go!", "Let's get him!", "Rush him! Rush him!", "It's on, dude!"],   // v1.151
+    shotWhileOut:  ["Ow!! Dude, I literally have my hand in the air!", "I'm OUT already!! What the heck, dude!", "Hey! I'm out! Are you blind?", "Dude! Hand's UP!"],   // v1.237 (D.33)
   },
   mid_agg: { // 0.4..0.65
     playerHit:     ["Got him!", "Hit!", "That's one.", "Tagged you!", "Nice, that landed.", "Got you, dude!"],
@@ -5165,6 +5438,7 @@ const VOICE_LINES_DEFAULT = {
     playerSpotted: ["I see him!", "On him!", "Right there!", "There he is!", "Got him in sight!", "Over there, over there!"],
     taunt:         ["Where'd he go?", "Come on out!", "You can't hide forever!", "I know you're there.", "Come on, let's play!", "Any time now."],
     roundStart:    ["Game on!", "Okay, here we go!", "Let's play!", "Alright, let's do this.", "Ready or not!", "Spread out, spread out!"],   // v1.151
+    shotWhileOut:  ["I'm out already!! What the heck, dude.", "Ow! My hand's up, man!", "Dude, I'm walking off! Quit it!", "Hey! I'm already out!"],   // v1.237 (D.33)
   },
   low_agg: { // < 0.4
     playerHit:     ["Got him.", "Nice.", "Tagged.", "Yep. That's a hit.", "Saw you coming.", "Mm. Got you."],
@@ -5172,6 +5446,7 @@ const VOICE_LINES_DEFAULT = {
     playerSpotted: ["I have him.", "He's there.", "Got eyes.", "There he is.", "Got him lined up.", "He's in the open."],
     taunt:         ["Take your time.", "I can wait.", "He'll show himself.", "Still here.", "No rush.", "I'm not going anywhere."],
     roundStart:    ["Game on.", "Okay. Here we go.", "Everybody find a spot.", "Eyes open.", "Take it slow.", "Nice and easy."],   // v1.151
+    shotWhileOut:  ["Ow. I'm out, man.", "Seriously? My hand is up.", "Okay, that's overshooting.", "I'm already out, dude."],   // v1.237 (D.33)
   },
 };
 
@@ -7229,12 +7504,15 @@ const SCENARIOS = {
   last_saturday: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'The Last Saturday',
-    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing. School's Tuesday. Make it count.",
+    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
     finale: true,
+    // v1.251 (decisions "The Last Saturday: what is a life for you?", Michael: A): your three lives are three tags, each
+    // sending you back to the west end with 2 s of cover, as in the Pickup Game; the briefing's promise kept
+    tagSendsHome: true,
     enemySetup: [
       { charId: 'eric',     weapon: 'mp5',     anchor: 'lane_west_north', team: 'player' },
       { charId: 'rebecca',  weapon: 'ak47',    anchor: 'lane_west_south', team: 'player' },
@@ -9643,14 +9921,15 @@ function buildBedroomScene() {
   });
 
   // Bed → SAVE GAME (v1.37). Sleeping on it writes your progress to the browser.
+  // v1.231 (D.29, Michael: A): the game saves itself (v1.218), so the bed shows the summer so far.
   // Fits the kid-bedroom framing and matches the original hub design pillar
   // ("Save, gear, world map"). Trigger box covers the whole bed footprint.
   Game.interactables.push({
     type: 'bed',
     box: new THREE.Box3().setFromObject(bedGroup),
     pos: new THREE.Vector3(BR_W/2 - 1.07, 0.6, 0.0),
-    prompt: 'Sleep (save your game)',
-    label: 'Save', icon: 'bed', labelY: 1.5,
+    prompt: 'Sleep (how’s the summer going?)',   // v1.231: was "Sleep (save your game)"
+    label: 'Summer', icon: 'bed', labelY: 1.5,
     action: () => openSaveMenu(),
   });
 
@@ -16895,7 +17174,11 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     };
     wall(-26.4, -25.8, -30.4, 18.4); wall(25.8, 26.4, -30.4, 18.4);    // west, east
     wall(-26.4, 26.4, -30.4, -29.8);                                   // north (the stockroom's back)
-    wall(-26.4, 26.4, 17.8, 18.4);                                     // south, the front (glass drawn on it)
+    // south, the front. v1.252 (D.24): the wall is open behind the glass, so the lot shows through it (addEdgeBackdrop);
+    // its collision box is the whole wall as before, so BBs and kids stop at the glass
+    box(-26.4, 26.4, 17.8, 18.4, 6);
+    for (const [x0, x1, y0, y1] of [[-26.4, -24, 0, H], [-2, 2, 0, H], [22, 26.4, 0, H], [-24, -2, 2.8, H], [2, 22, 2.8, H], [-24, -2, 0, 0.2], [2, 22, 0, 0.2]])
+      mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, 0.6), wallMat, (x0 + x1) / 2, (y0 + y1) / 2, 18.1, false).receiveShadow = true;
     // the back wall of the sales floor, with three doorways into the stockroom (x -16.5…-13.5, -1.5…1.5, 13.5…16.5)
     for (const [x0, x1] of [[-25.8, -16.5], [-13.5, -1.5], [1.5, 13.5], [16.5, 25.8]]) wall(x0, x1, -18.6, -18.0);
     for (const dx of [-15, 0, 15]) {
@@ -16911,7 +17194,7 @@ function buildGroceryStoreScene(variant, timeOfDay) {
       const b = new THREE.Mesh(new THREE.PlaneGeometry(z1 - z0, 0.5), bandMat); b.position.set(x, H - 0.45, (z0 + z1) / 2); b.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2; scene.add(b);
     }
     // the front: the glass and the automatic doors at x 8…14, daylight (or the dark lot) outside
-    const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4 });
+    const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4, transparent: true, opacity: _night ? 0.4 : 0.22, depthWrite: false });   // v1.252: see-through
     for (const [x0, x1] of [[-24, -2], [2, 22]]) mesh(new THREE.BoxGeometry(x1 - x0, 2.6, 0.04), glassMat, (x0 + x1) / 2, 1.5, 17.76, false);
     for (let x = -24; x <= 22; x += 2) mesh(new THREE.BoxGeometry(0.08, 2.7, 0.08), std(0x8a8c8e, { metalness: 0.5 }), x, 1.45, 17.74, false);
     mesh(new THREE.BoxGeometry(6, 0.3, 0.3), std(0x2f6a3a), 11, 2.95, 17.6, false);
@@ -17370,6 +17653,15 @@ function buildEnemyGunMesh(weapon) {
       const pail = new THREE.MeshStandardMaterial({ color: 0xdbe8f0, roughness: 0.2 });
       box(0.06, 0.08, 0.32, blue, 0, 0, 0.12);           // body + barrel
       box(0.09, 0.07, 0.09, pail, 0, 0.075, 0.08);       // the bucket on top
+      grip();
+      break;
+    }
+    case 'sprayer': case 'ghost': case 'ticktock': case 'rattle': {   // v1.250: the clear automatics
+      const clear = new THREE.MeshStandardMaterial({ color: 0xe9eef2, roughness: 0.2, transparent: true, opacity: 0.6 });
+      const L = { sprayer: 0.26, ghost: 0.2, ticktock: 0.46, rattle: 0.2 }[weapon];
+      box(0.05, 0.07, L, clear, 0, 0, L / 2 - 0.05);     // body + barrel
+      box(0.025, 0.035, L * 0.6, dark, 0, 0, L / 2 - 0.05);   // the guts, seen through it
+      box(0.03, 0.03, 0.02, _fpOrangeMat(), 0, 0.01, L - 0.04);   // orange tip
       grip();
       break;
     }
@@ -18831,53 +19123,61 @@ function buildFPSniper() {
   const accentMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.7 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // === Stock (synthetic black, single piece) ===
-  const forend = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.04, 0.165), stockMat);   // v1.220: one stock with the grip (was 15 mm apart)
-  forend.position.set(0, 0.005, -0.1725);
-  group.add(forend);
-  const stockGrip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.058, 0.06), stockMat);
-  stockGrip.position.set(0, -0.022, -0.025);
-  group.add(stockGrip);
-  const butt = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.095, 0.16), stockMat);
-  butt.position.set(0, -0.005, 0.075);
-  group.add(butt);
-  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.092, 0.008), accentMat);
-  buttPad.position.set(0, -0.005, 0.158);
+  // v1.225 (D.31): held up to the rifle it copies, a Remington 700 / VSR-10 (drawn at about ×0.5 along its length). The
+  // stock is one piece in the 700's side profile: a forend the barrel beds into, slimming to its tip, a wrist rising to a straight comb,
+  // a pistol grip raked 25° behind the trigger guard, and the belly dropping to the toe. Before v1.225 it was three
+  // boxes and a cheek block, flat along the bottom from the grip to the toe with the grip under the trigger.
+  // x: the gun's z (toward the butt), y: the gun's y. v1.225 fix-up: the forend is its own piece, so the under-barrel
+  // parts, which hang from the box of whatever is at the rail, hang from the forend and not from the grip cap; its
+  // underside runs level back past the rail and the support hand, slimming only over its last 4 cm.
+  const sideProfile = (pts, name) => {
+    const prof = new THREE.Shape();
+    pts.forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
+    const geo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
+    geo.translate(0, 0, -0.019);
+    geo.rotateY(-Math.PI / 2);
+    const mesh = new THREE.Mesh(geo, stockMat);
+    mesh.name = name;
+    group.add(mesh);
+  };
+  sideProfile([[-0.255, 0.025], [-0.005, 0.025], [-0.005, -0.015], [-0.215, -0.015], [-0.250, -0.006], [-0.258, 0.006]], 'forend');
+  sideProfile([[-0.005, 0.025], [0.012, 0.030], [0.045, 0.042], [0.080, 0.057], [0.158, 0.054], [0.158, -0.052],
+    [0.046, -0.034], [0.058, -0.057], [0.036, -0.063], [0.017, -0.016], [-0.005, -0.015]], 'stock');
+  const buttPad = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.106, 0.008), accentMat);
+  buttPad.position.set(0, 0.001, 0.162);
+  buttPad.name = 'buttpad';
   group.add(buttPad);
-  // Cheek-rest hump
-  const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.018, 0.10), stockMat);
-  cheek.position.set(0, 0.052, 0.06);
-  group.add(cheek);
 
   // === Receiver ===
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.034, 0.10), receiverMat);
   receiver.position.set(0, 0.02, -0.04);
+  receiver.name = 'receiver';
   group.add(receiver);
 
-  // === Barrel ===
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.27, 12), barrelMat);   // v1.220: into the receiver (was 1 cm short)
+  // === Barrel === v1.225: on the receiver's axis, bedded in the forend, tapering to the muzzle (was 2.5 cm above
+  // the receiver's axis, its underside clear of the forend)
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0085, 0.27, 12), barrelMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.045, -0.225);
+  barrel.position.set(0, 0.02, -0.225);
+  barrel.name = 'barrel';
   group.add(barrel);
 
   // === Orange muzzle tip ===
-  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.026, 10), orangeMat);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0095, 0.0095, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.045, -0.37);
+  orangeTip.position.set(0, 0.02, -0.37);
   group.add(orangeTip);
 
-  // === Bipod (folded down under the forend) ===
-  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.018), accentMat);
-  bipodHinge.position.set(0, -0.014, -0.24);
+  // === Bipod, folded: v1.225 the legs lie forward under the barrel (they hung straight down, deployed) ===
+  const bipodHinge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.018), accentMat);
+  bipodHinge.position.set(0, -0.0123, -0.24);
   group.add(bipodHinge);
-  const bipodL = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodL.position.set(-0.018, -0.05, -0.245);
-  bipodL.rotation.z = 0.25;
-  group.add(bipodL);
-  const bipodR = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
-  bipodR.position.set(0.018, -0.05, -0.245);
-  bipodR.rotation.z = -0.25;
-  group.add(bipodR);
+  for (const sx of [-0.011, 0.011]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.0025, 0.0025, 0.08, 6), accentMat);
+    leg.rotation.x = Math.PI / 2;
+    leg.position.set(sx, -0.0123, -0.288);
+    group.add(leg);
+  }
 
   // === Bolt assembly (the cocking part — slides backward, with a slight vertical bob) ===
   const boltGroup = new THREE.Group();
@@ -18900,23 +19200,35 @@ function buildFPSniper() {
   boltGroup.userData.baseY = 0;
   group.add(boltGroup);
 
-  // === Trigger guard + trigger ===
-  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.008), accentMat);
-  tgFront.position.set(0, -0.018, -0.022);
+  // === Trigger guard + trigger === v1.225: the trigger under the receiver's rear, the guard's bar below the stock
+  // running back to the grip (the trigger sat inside the old guard, the grip block round both)
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.004), accentMat);
+  tgFront.position.set(0, -0.025, -0.018);
   group.add(tgFront);
-  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.05), accentMat);
-  tgBottom.position.set(0, -0.02, 0);
+  const tgBottom = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.043), accentMat);
+  tgBottom.position.set(0, -0.034, 0.0015);
   group.add(tgBottom);
-  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.006), accentMat);
-  trigger.position.set(0, -0.005, -0.012);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), accentMat);
+  trigger.position.set(0, -0.022, 0.003);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
   group.add(trigger);
 
-  // Iron sights
+  // Iron sights. v1.225: the front post moved out to the muzzle on a ramp, along the line from your eye aimed, so
+  // the aimed picture is unchanged (it stood at the receiver's front on nothing); both hide when an optic is mounted.
   const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.008, 0.006), accentMat);
   rearSight.position.set(0, 0.042, 0.005);
+  rearSight.userData.ironSight = true;
   group.add(rearSight);
+  const fsRamp = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.0195, 0.016), accentMat);
+  fsRamp.position.set(0, 0.03575, -0.335);
+  fsRamp.userData.ironSight = true;
+  group.add(fsRamp);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.004), accentMat);
-  fsPost.position.set(0, 0.062, -0.10);
+  fsPost.position.set(0, 0.0518, -0.335);
+  fsPost.userData.ironSight = true;
+  fsPost.userData.frontSight = true;
+  fsPost.name = 'frontsight';
   group.add(fsPost);
 
   // === Default hipfire pose — sniper held a touch lower (heavier feel) ===
@@ -18956,51 +19268,81 @@ function buildFPAK() {
   // Receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.16), steelMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top cover (rounded-ish dust cover) — slightly narrower box on top
   const topCover = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.02, 0.15), steelMat);
   topCover.position.set(0, 0.045, -0.05);
   group.add(topCover);
 
-  // Wood handguard (forward, under the gas tube)
+  // v1.226 (D.31): held up to an AK-47 (drawn at about ×0.67, its receiver 16 cm). The gas tube runs from the
+  // receiver to a gas block behind the front sight, under a wood upper handguard over its rear half (it floated
+  // 9 mm over the lower handguard and stopped where the handguard did); a rear sight stands at the front of the top
+  // cover; the magazine is one curved piece seated in the receiver, 2 cm further forward, so a trigger and guard fit
+  // between it and the grip (it was three tilted blocks with gaps, touching the guard, and there was no trigger); the
+  // stock drops from the receiver to a tall butt (it was a straight box on the bore line).
+  // Lower wood handguard, round the barrel
   const handguard = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.10), woodMat);
   handguard.position.set(0, 0.01, -0.18);
+  handguard.name = 'handguard';
   group.add(handguard);
-  // Gas tube above the handguard
-  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.10, 8), steelMat);
+  // Gas tube from the receiver to the gas block, the upper handguard round its rear half
+  const gasTube = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.155, 8), steelMat);
   gasTube.rotation.x = Math.PI / 2;
-  gasTube.position.set(0, 0.05, -0.18);
+  gasTube.position.set(0, 0.044, -0.2075);
+  gasTube.name = 'gastube';
   group.add(gasTube);
+  const upperGuard = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.026, 0.10), woodMat);
+  upperGuard.position.set(0, 0.043, -0.18);
+  upperGuard.name = 'upperguard';
+  group.add(upperGuard);
+  const gasBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.034, 0.02), steelMat);
+  gasBlock.position.set(0, 0.035, -0.285);
+  gasBlock.name = 'gasblock';
+  group.add(gasBlock);
 
   // Barrel + front sight block + orange tip
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.174, 10), darkMat);   // v1.220: reaches the tip
   barrel.rotation.x = Math.PI / 2;
   barrel.position.set(0, 0.025, -0.307);
+  barrel.name = 'barrel';
   group.add(barrel);
   const fsBlock = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.022), steelMat);
   fsBlock.position.set(0, 0.045, -0.31);
   group.add(fsBlock);
   const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.014, 0.004), darkMat);
   fsPost.position.set(0, 0.064, -0.31);
+  fsPost.userData.frontSight = true;
   group.add(fsPost);
+  // Rear sight at the front of the top cover: a base and two ears, the notch between them over the bore line
+  const rsBase = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.011, 0.016), steelMat);
+  rsBase.position.set(0, 0.0605, -0.117);
+  rsBase.userData.ironSight = true;
+  group.add(rsBase);
+  for (const sx of [-0.0065, 0.0065]) {
+    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.006, 0.006), steelMat);
+    ear.position.set(sx, 0.069, -0.117);
+    ear.userData.ironSight = true;
+    group.add(ear);
+  }
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.026, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
   orangeTip.position.set(0, 0.025, -0.40);
   group.add(orangeTip);
 
-  // Curved banana magazine — approximate the curve with three stacked, tilted segments.
-  const magSeg1 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.05), magMat);
-  magSeg1.position.set(0, -0.04, -0.045);
-  magSeg1.rotation.x = 0.12;
-  group.add(magSeg1);
-  const magSeg2 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.04, 0.045), magMat);
-  magSeg2.position.set(0, -0.08, -0.062);
-  magSeg2.rotation.x = 0.34;
-  group.add(magSeg2);
-  const magSeg3 = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.03, 0.04), magMat);
-  magSeg3.position.set(0, -0.115, -0.088);
-  magSeg3.rotation.x = 0.55;
-  group.add(magSeg3);
+  // Curved banana magazine: one piece between two arcs about a centre ahead of it, sweeping 0.56 rad forward as it
+  // drops 12.5 cm, its top 4.5 cm long seated 3 mm into the receiver
+  const magProf = new THREE.Shape(), MR = 0.24, MW = 0.045, MA = 0.56, mcz = -0.038 - MR, mcy = -0.010;
+  const magPts = [];
+  for (let i = 0; i <= 6; i++) { const t = MA * i / 6; magPts.push([mcz + MR * Math.cos(t), mcy - MR * Math.sin(t)]); }
+  for (let i = 6; i >= 0; i--) { const t = MA * i / 6; magPts.push([mcz + (MR - MW) * Math.cos(t), mcy - (MR - MW) * Math.sin(t)]); }
+  magPts.forEach(([z, y], i) => i ? magProf.lineTo(z, y) : magProf.moveTo(z, y));
+  const magGeo = new THREE.ExtrudeGeometry(magProf, { depth: 0.026, bevelEnabled: false });
+  magGeo.translate(0, 0, -0.013);
+  magGeo.rotateY(-Math.PI / 2);
+  const mag = new THREE.Mesh(magGeo, magMat);
+  mag.name = 'mag';
+  group.add(mag);
 
   // Charging handle — AK's is on the RIGHT side, reciprocates with the bolt.
   const chargeGroup = new THREE.Group();
@@ -19015,18 +19357,33 @@ function buildFPAK() {
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.07, 0.03), woodMat2);
   grip.position.set(0, -0.05, 0.02);
   grip.rotation.x = -0.25;
+  grip.name = 'grip';
   group.add(grip);
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.045), darkMat);
-  tg.position.set(0, -0.026, -0.005);
+  // Trigger guard (an upright behind the mag, a bar back to the grip) and the trigger inside it
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.02, 0.004), darkMat);
+  tgFront.position.set(0, -0.023, -0.034);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.04), darkMat);
+  tg.position.set(0, -0.033, -0.016);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), darkMat);
+  trigger.position.set(0, -0.020, -0.015);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
-  // Fixed wood stock (straight, runs back toward camera)
-  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.12), woodMat);   // v1.220: meets the receiver
-  stock.position.set(0, 0.0, 0.09);
+  // Fixed wood stock, dropping from the receiver's rear to a tall butt
+  const stockProf = new THREE.Shape();
+  [[0.028, 0.032], [0.150, 0.012], [0.150, -0.066], [0.028, -0.013]].forEach(([z, y], i) => i ? stockProf.lineTo(z, y) : stockProf.moveTo(z, y));
+  const stockGeo = new THREE.ExtrudeGeometry(stockProf, { depth: 0.034, bevelEnabled: false });
+  stockGeo.translate(0, 0, -0.017);
+  stockGeo.rotateY(-Math.PI / 2);
+  const stock = new THREE.Mesh(stockGeo, woodMat);
+  stock.name = 'stock';
   group.add(stock);
-  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.052, 0.012), darkMat);
-  stockPad.position.set(0, 0.0, 0.155);
+  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.08, 0.012), darkMat);
+  stockPad.position.set(0, -0.027, 0.155);
+  stockPad.name = 'buttpad';
   group.add(stockPad);
 
   group.position.set(0.13, -0.20, -0.32);
@@ -19050,6 +19407,7 @@ function buildFPMP5() {
   // Receiver (slim)
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.042, 0.13), bodyMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Slim cylindrical handguard
   const handguard = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.09, 12), matteMat);
@@ -19080,18 +19438,24 @@ function buildFPMP5() {
   group.add(fsRing);
   const rearDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.016, 10), bodyMat);
   rearDrum.rotation.z = Math.PI / 2;
-  rearDrum.position.set(0, 0.04, 0.02);
+  rearDrum.position.set(0, 0.04, 0.003);   // v1.227: on the receiver's back end (it hung 5 mm past it)
   group.add(rearDrum);
 
-  // Curved magazine (MP5's signature banana, slightly forward-curving)
-  const magTop = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.064, 0.03), matteMat);   // v1.220: up into the mag well
-  magTop.position.set(0, -0.039, -0.05);
-  magTop.rotation.x = -0.10;
-  group.add(magTop);
-  const magBot = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.05, 0.028), matteMat);
-  magBot.position.set(0, -0.092, -0.034);
-  magBot.rotation.x = -0.28;
-  group.add(magBot);
+  // v1.227 (D.31): held up to an MP5 (drawn at about ×0.64). The magazine is one piece curving forward as it drops,
+  // with a trigger inside the guard between it and the grip (it was two blocks kinked back toward the grip, and there
+  // was no trigger); the stock's two rails run back from the receiver's sides to the pad (it was one strut down the
+  // middle).
+  const magProf = new THREE.Shape(), MR = 0.2, MW = 0.028, MA = 0.5, mcz = -0.036 - MR, mcy = -0.006;
+  const magPts = [];
+  for (let i = 0; i <= 6; i++) { const t = MA * i / 6; magPts.push([mcz + MR * Math.cos(t), mcy - MR * Math.sin(t)]); }
+  for (let i = 6; i >= 0; i--) { const t = MA * i / 6; magPts.push([mcz + (MR - MW) * Math.cos(t), mcy - (MR - MW) * Math.sin(t)]); }
+  magPts.forEach(([z, y], i) => i ? magProf.lineTo(z, y) : magProf.moveTo(z, y));
+  const magGeo = new THREE.ExtrudeGeometry(magProf, { depth: 0.022, bevelEnabled: false });
+  magGeo.translate(0, 0, -0.011);
+  magGeo.rotateY(-Math.PI / 2);
+  const mag = new THREE.Mesh(magGeo, matteMat);
+  mag.name = 'mag';
+  group.add(mag);
 
   // Cocking handle (the "HK slap" tube up front-left, pulls back)
   const chargeGroup = new THREE.Group();
@@ -19108,18 +19472,29 @@ function buildFPMP5() {
 
   // Pistol grip + trigger guard
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.062, 0.028), bodyMat);
-  grip.position.set(0, -0.045, 0.012);
+  grip.position.set(0, -0.041, 0.012);   // v1.227: up against the receiver (it hung 5 mm under it)
   grip.rotation.x = -0.22;
   group.add(grip);
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.04), matteMat);
-  tg.position.set(0, -0.024, -0.004);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.022, 0.004), matteMat);
+  tgFront.position.set(0, -0.019, -0.031);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.004, 0.033), matteMat);
+  tg.position.set(0, -0.029, -0.0145);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.014, 0.005), matteMat);
+  trigger.position.set(0, -0.015, -0.016);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
-  // Retractable stock (single straight strut + pad)
-  const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.14), steelMat);   // v1.220: from the receiver
-  stockStrut.position.set(0, 0.015, 0.08);
-  group.add(stockStrut);
-  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.045, 0.012), matteMat);
+  // Retractable stock: a rail down each side of the receiver, back to the pad
+  for (const sx of [-0.0155, 0.0155]) {
+    const stockStrut = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.01, 0.16), steelMat);
+    stockStrut.position.set(sx, 0.018, 0.064);
+    stockStrut.name = 'stockrail';
+    group.add(stockStrut);
+  }
+  const stockPad = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.045, 0.012), matteMat);
   stockPad.position.set(0, 0.012, 0.15);
   group.add(stockPad);
 
@@ -19141,9 +19516,13 @@ function buildFPUMP() {
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.45, metalness: 0.5 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
+  // v1.228 (D.31): held up to a UMP45 (drawn at about ×0.62). The barrel shroud is the receiver's front end (it stood
+  // 5 mm off it); the stick mag rakes a little forward from a magwell, seated in the receiver (it tilted back, its top
+  // 4.5 mm short); the grip meets the receiver; a trigger hangs inside a deeper guard (there was none).
   // Bulky polymer receiver
   const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.05, 0.15), polyMat);
   receiver.position.set(0, 0.012, -0.05);
+  receiver.name = 'receiver';
   group.add(receiver);
   // Top rail
   const rail = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.13), steelMat);
@@ -19156,8 +19535,9 @@ function buildFPUMP() {
   }
 
   // Stubby barrel shroud + barrel + orange tip
-  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.06), polyMat2);
-  shroud.position.set(0, 0.012, -0.16);
+  const shroud = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.034, 0.066), polyMat2);
+  shroud.position.set(0, 0.012, -0.157);
+  shroud.name = 'shroud';
   group.add(shroud);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.06, 10), steelMat);
   barrel.rotation.x = Math.PI / 2;
@@ -19169,13 +19549,21 @@ function buildFPUMP() {
   group.add(orangeTip);
 
   // Straight stick magazine (.45 — fat, straight, slight forward angle)
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.085, 0.034), polyMat2);
-  mag.position.set(0, -0.06, -0.045);
-  mag.rotation.x = -0.05;
-  group.add(mag);
+  const magHolder = new THREE.Group();   // pivots at the receiver's underside
+  magHolder.position.set(0, -0.011, -0.047);
+  magHolder.rotation.x = 0.08;
+  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.09, 0.034), polyMat2);
+  mag.position.set(0, -0.045, 0);
+  mag.name = 'mag';
+  magHolder.add(mag);
   const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.01, 0.038), steelMat);
-  magBase.position.set(0, -0.105, -0.043);
-  group.add(magBase);
+  magBase.position.set(0, -0.094, 0);
+  magHolder.add(magBase);
+  group.add(magHolder);
+  const magwell = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.016, 0.042), polyMat);
+  magwell.position.set(0, -0.019, -0.048);
+  magwell.name = 'magwell';
+  group.add(magwell);
 
   // Charging handle (left side, pulls back)
   const chargeGroup = new THREE.Group();
@@ -19188,12 +19576,21 @@ function buildFPUMP() {
 
   // Grip + trigger guard
   const grip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.065, 0.03), polyMat);
-  grip.position.set(0, -0.048, 0.018);
+  grip.position.set(0, -0.045, 0.018);
   grip.rotation.x = -0.2;
+  grip.name = 'grip';
   group.add(grip);
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.005, 0.042), steelMat);
-  tg.position.set(0, -0.025, -0.002);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.022, 0.004), polyMat);
+  tgFront.position.set(0, -0.022, -0.025);
+  group.add(tgFront);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.034), polyMat);
+  tg.position.set(0, -0.0335, -0.009);
   group.add(tg);
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.005), steelMat);
+  trigger.position.set(0, -0.020, -0.010);
+  trigger.rotation.x = 0.2;
+  trigger.name = 'trigger';
+  group.add(trigger);
 
   // Folding stock (UMP's side-folder, shown extended: two struts + pad)
   const strutTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.13), steelMat);   // v1.220: from the receiver
@@ -19217,31 +19614,39 @@ function buildFPUMP() {
 }
 
 // --- MAC-10: tiny boxy machine pistol, mag through the grip, very stubby ---
+// v1.232 (D.31, held up to an M10 at about ×0.6): the receiver is a long flat-sided box, 0.16 long by 0.06 tall (was
+// 0.10), so the grip and its mag sit a little behind the middle (was at the back); a trigger in front of the grip inside
+// the M10's long guard, a strip forward from the grip and up to the receiver; a front post and rear ears on top with
+// the cocking knob below the sight line; the collapsed wire stock's rods along the lower receiver and a butt plate.
 function buildFPMAC10() {
   const group = new THREE.Group();
   const steelMat  = new THREE.MeshStandardMaterial({ color: 0x1c1c20, roughness: 0.5,  metalness: 0.5 });
   const matteMat  = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.7,  metalness: 0.25 });
   const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
 
-  // Boxy upper (the whole gun is basically a steel box)
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.10), steelMat);
-  box.position.set(0, 0.01, -0.04);
+  // Boxy upper (the whole gun is basically a steel box) — v1.232: z -0.115…0.045, y -0.02…0.04
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.06, 0.16), steelMat);
+  box.position.set(0, 0.01, -0.035);
   group.add(box);
-  // Stamped panel lines on the side
+  // Stamped panel lines on the side (the upper/lower seam and a pressing line)
   for (let i = 0; i < 2; i++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.08), matteMat);
-    line.position.set(0, 0.03 - i * 0.03, -0.04);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.004, 0.14), matteMat);
+    line.position.set(0, 0.03 - i * 0.03, -0.035);
     group.add(line);
   }
+  // v1.232: the ejection port on the right side, ahead of the knob's track
+  const port = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.014, 0.034), matteMat);
+  port.position.set(0.0255, 0.018, -0.06);
+  group.add(port);
 
   // Stubby barrel + orange tip (MAC-10 barrel is very short)
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), matteMat);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0.02, -0.105);
+  barrel.position.set(0, 0.02, -0.13);
   group.add(barrel);
   const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.022, 10), orangeMat);
   orangeTip.rotation.x = Math.PI / 2;
-  orangeTip.position.set(0, 0.02, -0.142);
+  orangeTip.position.set(0, 0.02, -0.165);
   group.add(orangeTip);
 
   // Magazine THROUGH the grip (the MAC-10's defining feature — long stick mag
@@ -19261,24 +19666,59 @@ function buildFPMAC10() {
   gripBack.position.set(0, -0.04, -0.002);
   group.add(gripBack);
 
-  // Top cocking knob (MAC-10 charges from a knob on TOP of the box)
+  // Top cocking knob (MAC-10 charges from a knob on TOP of the box) — v1.232: low (top y 0.05), under the sight line
   const chargeGroup = new THREE.Group();
-  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.016, 8), steelMat);
-  cockKnob.position.set(0, 0.048, -0.04);
+  const cockKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.01, 8), steelMat);
+  cockKnob.position.set(0, 0.045, -0.05);
   chargeGroup.add(cockKnob);
   chargeGroup.position.set(0, 0, 0);
   chargeGroup.userData.baseZ = 0;
   group.add(chargeGroup);
 
-  // Trigger guard
-  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.005, 0.03), matteMat);
-  tg.position.set(0, -0.018, -0.012);
-  group.add(tg);
+  // v1.232: the sights. A front post between two ears at the front of the top, a rear sight of two ears at the back;
+  // every tip at y 0.056, the aimed eye height (adsPos.y −0.056). They hide when an optic is mounted.
+  const fsPost = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.016, 0.004), steelMat);
+  fsPost.position.set(0, 0.048, -0.104);
+  fsPost.userData.frontSight = true;
+  fsPost.userData.ironSight = true;
+  group.add(fsPost);
+  for (const sx of [-1, 1]) {
+    const fEar = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.008), steelMat);
+    fEar.position.set(sx * 0.012, 0.046, -0.104);
+    fEar.userData.ironSight = true;
+    group.add(fEar);
+    const rEar = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.016, 0.01), steelMat);
+    rEar.position.set(sx * 0.006, 0.048, 0.036);
+    rEar.userData.ironSight = true;
+    group.add(rEar);
+  }
 
-  // Stub of a retractable wire stock (collapsed look — short)
-  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.03), matteMat);
-  stockStub.position.set(0, 0.01, 0.025);   // v1.220: on the back of the box (was 15 mm behind it)
+  // v1.232: a trigger in front of the grip, and the M10's long guard: a strip from the grip's front, forward under
+  // the trigger, and up to the receiver 2 cm behind its front end
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.016, 0.006), matteMat);
+  trigger.position.set(0, -0.028, -0.054);
+  trigger.rotation.x = 0.12;
+  group.add(trigger);
+  const tg = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.005, 0.054), matteMat);
+  tg.position.set(0, -0.046, -0.069);
+  group.add(tg);
+  const tgFront = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.031, 0.005), matteMat);
+  tgFront.position.set(0, -0.034, -0.0935);   // top 1.5 mm into the receiver
+  group.add(tgFront);
+
+  // The collapsed wire stock: v1.232, two rods along the lower receiver's sides and the butt plate behind it (was one
+  // block on the back)
+  for (const sx of [-1, 1]) {
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.005, 0.005, 0.12), matteMat);
+    rod.position.set(sx * 0.0275, -0.012, -0.01);
+    group.add(rod);
+  }
+  const stockStub = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.006), matteMat);
+  stockStub.position.set(0, -0.004, 0.053);
   group.add(stockStub);
+  const plateLink = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.006), matteMat);   // joins the rods' ends to the plate
+  plateLink.position.set(0, -0.012, 0.0475);
+  group.add(plateLink);
 
   group.position.set(0.16, -0.18, -0.30);
   group.rotation.y = 0.12;
@@ -19328,7 +19768,7 @@ function buildFPThunder() {
   const needle = _fpPart(group, new THREE.BoxGeometry(0.002, 0.016, 0.002), dark, -0.032, 0.033, -0.06);
   needle.rotation.x = 0.7;
   _fpPart(group, new THREE.SphereGeometry(0.0055, 8, 6), orange, 0, 0.0635, -0.33).userData.frontSight = true;                  // front bead (tip y 0.069)
-  _fpPart(group, new THREE.BoxGeometry(0.022, 0.01, 0.008), dark, 0, 0.058, 0.02);                   // rear notch block
+  _fpPart(group, new THREE.BoxGeometry(0.022, 0.01, 0.008), dark, 0, 0.0575, 0.02);                  // rear notch block (v1.233: seated on the receiver)
   // The pump handle slides back along the tank: the cocking part.
   const pump = new THREE.Group();
   _fpPart(pump, new THREE.BoxGeometry(0.046, 0.04, 0.09), dark, 0, 0.014, 0);
@@ -19336,10 +19776,17 @@ function buildFPThunder() {
   pump.position.set(0, 0, -0.22);
   pump.userData.baseZ = pump.position.z;
   group.add(pump);
-  _fpTriggerGuard(group, dark, 0, -0.04);
-  _fpPart(group, new THREE.BoxGeometry(0.036, 0.06, 0.08), green, 0, -0.035, 0.015, 0.18);            // wrist
-  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.14), green, 0, -0.005, 0.105, 0.18);            // stock
-  _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.012), dark, 0, 0.022, 0.175, 0.18);             // butt pad
+  // v1.233 (D.31, held up to a toy pump-action air shotgun, built like the 870): the shotgun's v1.224 faults were here
+  // too. The wrist hung under the receiver's back with the guard and trigger hidden behind it, and the butt pad stood
+  // 3.9 cm above the stock's top line. Now a deep guard with the trigger showing, the wrist behind the receiver
+  // running into the stock, and the pad on the stock's back face.
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.027, 0.005), dark, 0, -0.0245, -0.0625);             // guard: front upright
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.005, 0.05), dark, 0, -0.0355, -0.04);                // guard: bottom
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.027, 0.005), dark, 0, -0.0245, -0.0175);             // guard: rear upright
+  _fpPart(group, new THREE.BoxGeometry(0.008, 0.02, 0.006), dark, 0, -0.021, -0.045, 0.15);          // trigger
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.06, 0.08), green, 0, -0.022, 0.05, 0.18);             // wrist (was under the receiver at z 0.015)
+  const stock = _fpPart(group, new THREE.BoxGeometry(0.04, 0.085, 0.14), green, 0, -0.005, 0.093, 0.18);   // stock (its comb meets the receiver's back)
+  _fpPart(stock, new THREE.BoxGeometry(0.04, 0.085, 0.012), dark, 0, 0, 0.076);                       // butt pad, the stock's back face
   group.position.set(0.13, -0.21, -0.30);
   group.rotation.y = 0.10;
   group.rotation.x = -0.05;
@@ -19358,8 +19805,12 @@ function buildFPSixShooter() {
   const dark   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7 });
   const wood   = new THREE.MeshStandardMaterial({ color: 0x7a4a24, roughness: 0.75 });
   const orange = _fpOrangeMat();
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.09), silver, 0, 0.02, -0.03);                   // frame
-  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.1), silver, 0, 0.048, -0.04);                   // top strap
+  // v1.234 (D.31, held up to a Colt single-action with a bird's-head grip): the frame ran 3.8 cm past the cylinder's
+  // back with the hammer and grip at its far end, and the grip was one straight slab with a flat cap. Now the frame
+  // ends 1.2 cm behind the cylinder (the recoil shield), the hammer, notch, guard and grip come forward 1.5 cm with it,
+  // and the grip curves: raked back at the top, turning down to a rounded butt.
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.05, 0.064), silver, 0, 0.02, -0.043);                 // frame (was 0.09 long)
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.01, 0.082), silver, 0, 0.048, -0.049);                // top strap
   // The cylinder, with six chambers on its face. It turns a sixth as the hammer comes back (userData.cockSpin).
   const cyl = new THREE.Group();
   _fpPart(cyl, new THREE.CylinderGeometry(0.021, 0.021, 0.044, 12), steel, 0, 0, 0);
@@ -19375,12 +19826,13 @@ function buildFPSixShooter() {
   _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.1, 8), silver, 0, 0.022, -0.12, Math.PI / 2);   // ejector rod
   _fpPart(group, new THREE.CylinderGeometry(0.0105, 0.0105, 0.018, 10), orange, 0, 0.036, -0.207, Math.PI / 2); // orange tip
   _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.01), silver, 0, 0.05, -0.19).userData.frontSight = true;                 // front blade (tip y 0.056)
-  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, 0.004);                 // rear notch
-  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, 0.02, -0.45);   // spur under the sight line
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.004, 0.008), dark, 0, 0.054, -0.011);                // rear notch
+  const hammer = _fpPart(group, new THREE.BoxGeometry(0.01, 0.022, 0.012), steel, 0, 0.04, -0.005, -0.45);   // spur under the sight line
   hammer.userData.baseZ = hammer.position.z;
-  _fpTriggerGuard(group, silver, -0.002, -0.03);
-  _fpPart(group, new THREE.BoxGeometry(0.032, 0.1, 0.045), wood, 0, -0.045, 0.03, -0.38);             // bird's-head grip
-  _fpPart(group, new THREE.BoxGeometry(0.034, 0.012, 0.05), silver, 0, -0.092, 0.05, -0.38);          // grip cap
+  _fpTriggerGuard(group, silver, -0.002, -0.045);
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.06, 0.045), wood, 0, -0.0264, 0.0076, -0.38);    // bird's-head grip, upper (raked back)
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.036, 0.045), wood, 0, -0.0663, 0.0193, -0.05);         // bird's-head grip, lower (turning down)
+  _fpPart(group, new THREE.CylinderGeometry(0.0225, 0.0225, 0.032, 14), wood, 0, -0.0843, 0.0197).rotation.z = Math.PI / 2;   // the rounded butt
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19415,7 +19867,9 @@ function buildFPBucket() {
   // The power switch on the right flank slides back: the cocking part.
   const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), yellow, 0.033, 0.022, -0.04);
   sw.userData.baseZ = sw.position.z;
-  _fpTriggerGuard(group, dark, -0.028, -0.03);
+  // v1.235 (D.31): the trigger and guard were pushed into the grip's front (the trigger 0.6 cm into it, the guard's bar
+  // 3.8 cm); now 3 cm forward, a finger's room ahead of the grip, the bar's back end meeting it.
+  _fpTriggerGuard(group, dark, -0.028, -0.06);
   _fpPart(group, new THREE.BoxGeometry(0.038, 0.11, 0.05), dark, 0, -0.085, 0.0, -0.2);              // grip
   group.position.set(0.14, -0.21, -0.30);
   group.rotation.y = 0.10;
@@ -19425,6 +19879,95 @@ function buildFPBucket() {
   group.userData.gunType = 'bucket';
   Game.camera.add(group);
   return group;
+}
+
+// v1.250 (backlog D.37, Michael: B): the cheap clear-plastic automatics, see-through white with the gearbox showing,
+// each bad in its own way. They share the Bucket Gun's grip, guard and hand (so the hands sit as they do there).
+function _clearGunMats() {
+  return {
+    clear: new THREE.MeshStandardMaterial({ color: 0xe9eef2, roughness: 0.18, transparent: true, opacity: 0.55, metalness: 0.0 }),
+    milky: new THREE.MeshStandardMaterial({ color: 0xdfe4e8, roughness: 0.35, transparent: true, opacity: 0.8 }),
+    guts:  new THREE.MeshStandardMaterial({ color: 0x3a3d42, roughness: 0.6, metalness: 0.3 }),
+    dark:  new THREE.MeshStandardMaterial({ color: 0x1c1d20, roughness: 0.7 }),
+    yellow: new THREE.MeshStandardMaterial({ color: 0xf2c632, roughness: 0.5 }),
+    orange: _fpOrangeMat(),
+  };
+}
+function _clearGunFinish(group, M, gunType, cock) {
+  _fpTriggerGuard(group, M.milky, -0.028, -0.06);
+  _fpPart(group, new THREE.BoxGeometry(0.038, 0.11, 0.05), M.milky, 0, -0.085, 0.0, -0.2);   // grip (the Bucket Gun's)
+  group.position.set(0.14, -0.21, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [cock];
+  cock.userData.baseZ = cock.position.z;
+  group.userData.cockingOffset = 0.02;
+  group.userData.gunType = gunType;
+  Game.camera.add(group);
+  return group;
+}
+// Clear Sprayer: a little battery SMG, a stick mag, a battery-pack stock. Every BB curves hard.
+function buildFPSprayer() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.06, 0.075, 0.20), M.clear, 0, 0.01, -0.07);                  // body
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.04, 0.12), M.guts, 0, 0.01, -0.07);                     // the gearbox inside
+  _fpPart(group, new THREE.CylinderGeometry(0.011, 0.011, 0.08, 10), M.clear, 0, 0.02, -0.21, Math.PI / 2);   // barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), M.orange, 0, 0.02, -0.26, Math.PI / 2);  // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.10, 0.035), M.milky, 0, -0.075, -0.13);                // stick mag
+  _fpPart(group, new THREE.BoxGeometry(0.04, 0.05, 0.07), M.clear, 0, 0.0, 0.065);                     // battery-pack stock
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.03, 0.05), M.yellow, 0, 0.0, 0.065);                    // the battery in it
+  _fpPart(group, new THREE.BoxGeometry(0.02, 0.012, 0.16), M.milky, 0, 0.0535, -0.07);                 // top rail
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), M.dark, 0, 0.0665, -0.14).userData.frontSight = true;   // front blade (tip y 0.0735)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), M.dark, 0, 0.0625, 0.0);                  // rear notch
+  const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), M.yellow, 0.033, 0.022, -0.04); // power switch
+  return _clearGunFinish(group, M, 'sprayer', sw);
+}
+// Ghost Mini: a clear micro-uzi, the mag in the grip, a folded wire stock. Steady, but it jams.
+function buildFPGhost() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.17), M.clear, 0, 0.01, -0.04);                 // receiver
+  _fpPart(group, new THREE.BoxGeometry(0.028, 0.04, 0.11), M.guts, 0, 0.01, -0.04);                    // the gearbox inside
+  _fpPart(group, new THREE.CylinderGeometry(0.010, 0.010, 0.05, 10), M.clear, 0, 0.02, -0.15, Math.PI / 2);   // barrel stub
+  _fpPart(group, new THREE.CylinderGeometry(0.013, 0.013, 0.02, 10), M.orange, 0, 0.02, -0.185, Math.PI / 2); // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.025, 0.10, 0.03), M.guts, 0, -0.085, 0.0, -0.2);              // the mag, seen through the grip
+  const knob = _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.02), M.dark, 0, 0.0535, -0.02);   // cocking knob on top
+  _fpPart(group, new THREE.BoxGeometry(0.006, 0.012, 0.006), M.dark, 0, 0.0535, -0.11).userData.frontSight = true;   // front post (tip y 0.0595)
+  _fpPart(group, new THREE.BoxGeometry(0.02, 0.008, 0.008), M.dark, 0, 0.0515, 0.03);                  // rear ears
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, 0.022, -0.01, 0.085);             // folded wire stock
+  _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, -0.022, -0.01, 0.085);
+  return _clearGunFinish(group, M, 'ghost', knob);
+}
+// Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Dead accurate, two BBs a second.
+function buildFPTickTock() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.30), M.clear, 0, 0.01, -0.10);                 // receiver
+  _fpPart(group, new THREE.BoxGeometry(0.028, 0.04, 0.2), M.guts, 0, 0.01, -0.10);                     // the clockwork inside
+  _fpPart(group, new THREE.CylinderGeometry(0.011, 0.011, 0.20, 10), M.clear, 0, 0.02, -0.35, Math.PI / 2);   // barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), M.orange, 0, 0.02, -0.46, Math.PI / 2);  // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.05, 0.05, 0.14), M.milky, 0, 0.01, -0.32);                    // handguard
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.09, 0.04), M.milky, 0, -0.07, -0.12);                   // mag
+  _fpPart(group, new THREE.BoxGeometry(0.04, 0.07, 0.18), M.clear, 0, -0.005, 0.14);                   // stock
+  _fpPart(group, new THREE.BoxGeometry(0.045, 0.08, 0.012), M.dark, 0, -0.005, 0.236);                 // butt pad
+  _fpPart(group, new THREE.BoxGeometry(0.02, 0.012, 0.24), M.milky, 0, 0.0535, -0.10);                 // top rail
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.016, 0.008), M.dark, 0, 0.0675, -0.21).userData.frontSight = true;  // front blade (tip y 0.0755)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), M.dark, 0, 0.0625, 0.0);                  // rear notch
+  const key = _fpPart(group, new THREE.BoxGeometry(0.008, 0.02, 0.02), M.yellow, 0.031, 0.02, -0.02);  // the winding key
+  return _clearGunFinish(group, M, 'ticktock', key);
+}
+// Rattle Can: the first-week-of-summer joke gun, a clear box with a battery taped under its nose. All three faults.
+function buildFPRattle() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.06, 0.075, 0.16), M.clear, 0, 0.01, -0.05);                  // body
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.04, 0.1), M.guts, 0, 0.01, -0.05);                      // the motor inside
+  _fpPart(group, new THREE.CylinderGeometry(0.010, 0.010, 0.06, 10), M.clear, 0, 0.02, -0.16, Math.PI / 2);   // barrel
+  _fpPart(group, new THREE.CylinderGeometry(0.013, 0.013, 0.02, 10), M.orange, 0, 0.02, -0.20, Math.PI / 2);  // orange tip
+  _fpPart(group, new THREE.BoxGeometry(0.05, 0.04, 0.06), M.yellow, 0, -0.0475, -0.10);                // a battery under the nose
+  _fpPart(group, new THREE.BoxGeometry(0.062, 0.046, 0.012), M.dark, 0, -0.045, -0.10);                // the tape round it
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.006), M.dark, 0, 0.0535, -0.11).userData.frontSight = true;   // front post (tip y 0.0595)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.008, 0.008), M.dark, 0, 0.0515, 0.02);                 // rear notch
+  _fpPart(group, new THREE.BoxGeometry(0.01, 0.03, 0.03), M.milky, 0, -0.01, 0.045);                   // lanyard loop
+  const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), M.yellow, 0.033, 0.022, -0.04); // switch
+  return _clearGunFinish(group, M, 'rattle', sw);
 }
 
 // Bolt Pistol: a long-barrel target pistol with a little bolt knob on the right and a wooden grip.
@@ -19445,8 +19988,11 @@ function buildFPBoltPistol() {
   const knob = _fpPart(group, new THREE.SphereGeometry(0.007, 10, 8), dark, 0.042, 0.048, 0.0);
   rod.userData.baseZ = rod.position.z;
   knob.userData.baseZ = knob.position.z;
-  _fpTriggerGuard(group, gun, -0.012, -0.04);
-  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.065, 0.005, -0.2);            // grip
+  // v1.236 (D.31): the trigger and guard 1.5 cm forward with a finger's room before the grip (the guard's bar ran 2.2 cm
+  // into it), and 4.5 mm up so the guard's front upright meets the frame; the grip 4 mm up so its top front corner
+  // meets the frame without a wedge of light.
+  _fpTriggerGuard(group, gun, -0.0075, -0.055);
+  _fpPart(group, new THREE.BoxGeometry(0.036, 0.11, 0.05), wood, 0, -0.061, 0.005, -0.2);            // grip
   group.position.set(0.16, -0.18, -0.32);
   group.rotation.y = 0.12;
   group.rotation.x = -0.05;
@@ -19475,6 +20021,10 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'sixshooter') mesh = buildFPSixShooter();
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
+  else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'ghost')   mesh = buildFPGhost();
+  else if (gunType === 'ticktock') mesh = buildFPTickTock();
+  else if (gunType === 'rattle')  mesh = buildFPRattle();
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -19501,15 +20051,21 @@ const FP_HANDS = {
   pistol:  { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.221: the grip's new place
   shotgun: { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },
   ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
-  sniper:  { r: { c: [0, -0.022, -0.02], rx: -0.45, gw: 0.019, gd: 0.022, up: -0.012 }, l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
-  mp5:     { r: { c: [0, -0.045, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
-  ump:     { r: { c: [0, -0.048, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
+  mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
+  ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
-  thunder: { r: { c: [0, -0.035, 0.022], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
-  sixshooter: { r: { c: [0, -0.045, 0.030], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
+  sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
-  boltpistol: { r: { c: [0, -0.065, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },
+  boltpistol: { r: { c: [0, -0.061, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.236: the grip 4 mm up
+  // v1.250: the clear automatics have the Bucket Gun's grip; the rifle's off hand under its handguard
+  sprayer: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
+  ghost:   { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
+  rattle:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
+  ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
@@ -19715,6 +20271,11 @@ const FP_GUN_MOUNT = {
   sixshooter: { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },
   bucket:  { barrelY: 0.010, sideX: 0.030, railZ: -0.18,  railLen: 0.08,  underY: -0.028, sightY: 0.135, sightZ: -0.10, sightScale: 1.0 },
   boltpistol: { barrelY: 0.030, sideX: 0.016, railZ: -0.04, railLen: 0.06, underY: 0.03, sightY: 0.059, sightZ: -0.05, sightScale: 0.85 },
+  // v1.250: the clear automatics (sights on the top rail or the receiver, a rail low on the side)
+  sprayer: { barrelY: 0.010, sideX: 0.030, railZ: -0.10, railLen: 0.07, underY: -0.028, sightY: 0.0595, sightZ: -0.06, sightScale: 0.9 },
+  ghost:   { barrelY: 0.010, sideX: 0.0275, railZ: -0.07, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.06, sightScale: 0.85 },
+  ticktock: { barrelY: 0.010, sideX: 0.0275, railZ: -0.18, railLen: 0.09, underY: -0.028, sightY: 0.0595, sightZ: -0.08, sightScale: 1.0 },
+  rattle:  { barrelY: 0.010, sideX: 0.030, railZ: -0.08, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.05, sightScale: 0.85 },
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -20366,6 +20927,10 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'sixshooter') mesh = buildFPSixShooter();
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
+  else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'ghost')   mesh = buildFPGhost();
+  else if (gunType === 'ticktock') mesh = buildFPTickTock();
+  else if (gunType === 'rattle')  mesh = buildFPRattle();
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
@@ -20983,6 +21548,31 @@ function answerForfeit(yes) {
   if (yes) forfeitScenario();
   else if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
 }
+// v1.239 (backlog D.39, Michael 14 Oct: "Can we make the pause menu more obvious / auto-open when hitting escape?"):
+// before this Escape only let go of the mouse, the match ran on behind a small "Click to capture mouse" note, and
+// there was no menu. Now Escape in a match (or the mouse let go any other way, as alt-tab does) opens PAUSED and the
+// match stops (stepGame skips it, as for the forfeit question): RESUME (Esc or a click) goes back, SETTINGS opens the
+// settings over it, FORFEIT asks the forfeit question.
+function openPauseMenu() {
+  if (Game.squadWheel) closeSquadWheel(false);   // v1.248: the Q wheel shuts without an order
+  if (Game.mode !== 'scenario' || Game.forfeitAsk || Game.paused) return;
+  Game.paused = true;
+  Game._pausedAt = performance.now();
+  Game.mouseLMB = false;
+  for (const k in Game.keys) Game.keys[k] = false;
+  document.getElementById('pauseMenu').classList.add('active');
+  document.getElementById('pauseHint').style.display = 'none';
+  exitPointerLock();
+}
+function closePauseMenu() {
+  Game.paused = false;
+  document.getElementById('pauseMenu').classList.remove('active');
+}
+function resumeFromPause() {
+  if (!Game.paused) return;
+  closePauseMenu();
+  if (Game.mode === 'scenario') { Game.clock.getDelta(); requestPointerLock(); }
+}
 
 // ---------------------------------------------------------------------
 // SCENE TRANSITIONS
@@ -21009,6 +21599,7 @@ function enterBedroom() {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
+  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -21030,6 +21621,7 @@ function enterBedroom() {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   if (fpLoader) fpLoader.visible = false;
+  if (fpNoodle) fpNoodle.visible = false;   // v1.249
   if (fpMag) fpMag.visible = false;
 
   // Add camera into scene
@@ -21152,6 +21744,418 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
   return group;
 }
 
+// ----------------------------------------------------------------------
+// v1.252 (backlog D.24, Michael: B — generic backdrops for every map now, then map by map from his pictures):
+// the view past the edge. Some maps ended in a hard line under an empty sky (the ground plane stopped inside the fog,
+// or a flat field ran to nothing). addEdgeBackdrop() lays a ground skirt from each map's ground out past the fog and
+// stands simple neighborhood scenery outside the playable bounds: rows of houses with roofs and windows, tree belts,
+// shop strips, parking lots, playing fields, the street running on out of the court. It is scenery only: nothing goes
+// in `obstacles`, so nobody walks into it, and nothing stands within 6 m of the bounds, past where BBs are dropped
+// (bounds + 2 m across x, + 5 m along z, updateBBs). Everything is merged into one vertex-coloured mesh (plus one for
+// lit windows at night), so a map pays one or two draw calls for it. It draws its own seeded random numbers, so the
+// map's cover layout (built under withSeededRandom) is untouched. Each map's sides are listed in EDGE_BACKDROPS:
+// `from` is where the scenery starts (metres past the bounds edge, past what the map already has there), `bands` what
+// stands from there outward, `street` a road running on out of the map at that lateral offset.
+const EDGE_BACKDROPS = {
+  buildWinnmarkCourtScene: {
+    N: { from: 33, bands: [['trees', 12], ['houses', 22], ['trees', 30]] },          // past the golf course
+    W: { from: 30, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the lake and its trees
+    S: { from: 13, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildBunrattyCourtScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 9, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 43, bands: [['houses', 22], ['trees', 30]] },                         // past the pond
+  },
+  buildHollowScene: {
+    N: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
+    S: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
+    E: { from: 9, bands: [['trees', 22], ['houses', 22], ['trees', 40]] },
+    W: { from: 54, bands: [['trees', 50]] },                                          // past the river
+  },
+  buildMarketLotScene: {
+    N: { from: 20, bands: [['trees', 8], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },   // behind the store
+    S: { from: 13, bands: [['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },                  // across the road
+    W: { from: 7, bands: [['lot', 20], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+  },
+  buildNorthcliffScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 10, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the creek
+    W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildTreehouseYardScene: {
+    N: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 18, bands: [['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },   // the street out front
+  },
+  buildBellfieldCourtScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildHighSchoolScene: {
+    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the school
+    S: { from: 7, bands: [['field', 34], ['trees', 8], ['houses', 22], ['trees', 40]] },                   // the playing fields
+    W: { from: 7, bands: [['field', 26], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['lot', 20], ['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
+  },
+  buildCountryClubScene: {
+    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the clubhouse
+    S: { from: 7, bands: [['fairway', 40], ['trees', 12], ['houses', 22], ['trees', 40]] },
+    W: { from: 7, bands: [['fairway', 30], ['trees', 12], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['lot', 20], ['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
+  },
+  buildGroceryStoreScene: {
+    skirt: 0x45464a,   // asphalt: only the front windows look out, onto the store's own lot
+    sky: { side: 'S', d: 110, color: 0x9cc8ea },   // indoors the background is the store's beige, so the windows get a sky of their own
+    S: { from: 6, bands: [['lot', 26], ['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+  },
+};
+const _BD_WALLS = [0xd8d0bc, 0xc8b89a, 0xb8c4c8, 0xe0d8c8, 0x9aa894, 0xc4a888, 0xa8b0b8, 0xd4c4a0, 0xb89880, 0xe8e0d0];
+const _BD_ROOFS = [0x4a4440, 0x5a4a3e, 0x3e4248, 0x6a5040, 0x524a46, 0x384030];
+const _BD_SHOPS = [0xc8bca8, 0xa89880, 0xd0c8b8, 0x9a8a78, 0xb8b0a4, 0x8a7a6a];
+const _BD_SIGNS = [0x8a2a24, 0x24486a, 0x2a5a34, 0xc89a2a, 0x5a2a5a, 0x2a2a2a];
+const _BD_LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a];
+const _BD_PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+const _BD_CARS = [0x8a2020, 0x20304a, 0xc8c8c8, 0x2a2a2a, 0x5a6a7a, 0xd8d0b0, 0x2a4a2a];
+let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
+
+function addEdgeBackdrop(built, builderFn, timeOfDay) {
+  const cfg = EDGE_BACKDROPS[builderFn];
+  if (!cfg || !built || !built.scene || !built.bounds) return null;
+  const scene = built.scene, B = built.bounds, night = (timeOfDay === 'night');
+  const rnd = _mulberry32(_hashStringToSeed('backdrop|' + builderFn));
+  const R = (a, b) => a + (b - a) * rnd();
+  const pick = arr => arr[Math.floor(rnd() * arr.length) % arr.length];
+  const gyFn = (typeof built.groundY === 'function') ? built.groundY : null;
+  const fogFar = (scene.fog && scene.fog.far) || 100;
+
+  // --- what is already there: the main ground (the widest low mesh), big flat planes past it, and every other mesh's
+  // footprint, so the scenery stands clear of the map's own lake, golf course, store or tree wall.
+  scene.updateMatrixWorld(true);
+  const _bb = new THREE.Box3();
+  const boxes = [];
+  scene.traverse(m => {
+    if (!m.isMesh || !m.geometry || (m.material && m.material.fog === false)) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    _bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld);
+    if (_bb.isEmpty()) return;
+    boxes.push({ minX: _bb.min.x, maxX: _bb.max.x, minZ: _bb.min.z, maxZ: _bb.max.z, minY: _bb.min.y, maxY: _bb.max.y, mesh: m });
+  });
+  let ground = null;
+  for (const b of boxes) {
+    if (b.minY > 1) continue;
+    const a = (b.maxX - b.minX) * (b.maxZ - b.minZ);
+    if (!ground || a > ground.area) ground = Object.assign({ area: a }, b);
+  }
+  if (!ground) return null;
+  const G = { minX: ground.minX, maxX: ground.maxX, minZ: ground.minZ, maxZ: ground.maxZ };
+  const groundColor = (ground.mesh.material && ground.mesh.material.color) ? ground.mesh.material.color.getHex() : 0x5a8040;
+  const flats = boxes.filter(b => b !== ground && b.mesh !== ground.mesh && (b.maxY - b.minY) < 0.5 && b.minY < 0.5 &&
+    (b.maxX - b.minX > 30 || b.maxZ - b.minZ > 30) && (b.minX < G.minX || b.maxX > G.maxX || b.minZ < G.minZ || b.maxZ > G.maxZ));
+  const CELL = 4, occ = new Set();
+  const ck = (i, j) => i * 100003 + j;
+  for (const b of boxes) {
+    if (b.mesh === ground.mesh) continue;
+    if (b.minX > B.minX && b.maxX < B.maxX && b.minZ > B.minZ && b.maxZ < B.maxZ) continue;   // inside the field of play
+    if ((b.maxX - b.minX) > 400 || (b.maxZ - b.minZ) > 400) continue;
+    for (let i = Math.floor((b.minX - 1) / CELL); i <= Math.floor((b.maxX + 1) / CELL); i++)
+      for (let j = Math.floor((b.minZ - 1) / CELL); j <= Math.floor((b.maxZ + 1) / CELL); j++) occ.add(ck(i, j));
+  }
+  const clear = (x, z, r) => {
+    for (let i = Math.floor((x - r) / CELL); i <= Math.floor((x + r) / CELL); i++)
+      for (let j = Math.floor((z - r) / CELL); j <= Math.floor((z + r) / CELL); j++) if (occ.has(ck(i, j))) return false;
+    return true;
+  };
+  const clampG = (v, lo, hi) => Math.max(lo + 0.5, Math.min(hi - 0.5, v));
+  const baseY = (x, z) => gyFn ? gyFn(clampG(x, G.minX, G.maxX), clampG(z, G.minZ, G.maxZ)) : ground.maxY;
+
+  // --- the geometry: flat-shaded triangles with a colour per vertex
+  const P = [], N = [], C = [], LP = [], LN = [], LC = [];
+  const _c = new THREE.Color();
+  function tri(a, b, c, col, lit) {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    _c.setHex(col);
+    const p = lit ? LP : P, n = lit ? LN : N, cc = lit ? LC : C;
+    for (const v of [a, b, c]) { p.push(v[0], v[1], v[2]); n.push(nx, ny, nz); cc.push(_c.r, _c.g, _c.b); }
+  }
+  // a polygon (convex, 3-4 points) wound to face away from `inside`
+  function face(pts, col, inside, lit) {
+    const a = pts[0], b = pts[1], c = pts[2];
+    const nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+    const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    const nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const flip = (nx * (a[0] - inside[0]) + ny * (a[1] - inside[1]) + nz * (a[2] - inside[2])) < 0;
+    const q = flip ? pts.slice().reverse() : pts;
+    tri(q[0], q[1], q[2], col, lit);
+    if (q.length === 4) tri(q[0], q[2], q[3], col, lit);
+  }
+  // local frame -> world: x across, y up, z toward the map (the front)
+  const frame = (x, z, yaw) => { const s = Math.sin(yaw), c = Math.cos(yaw); return (lx, ly, lz) => [x + lx * c + lz * s, ly, z - lx * s + lz * c]; };
+  function box(T, y0, w, h, d, col, topCol, ox = 0, oz = 0) {
+    const x0 = ox - w / 2, x1 = ox + w / 2, z0 = oz - d / 2, z1 = oz + d / 2, y1 = y0 + h;
+    const v = (x, y, z) => T(x, y, z), inside = T(ox, y0 + h / 2, oz);
+    face([v(x0, y0, z1), v(x1, y0, z1), v(x1, y1, z1), v(x0, y1, z1)], col, inside);
+    face([v(x0, y0, z0), v(x1, y0, z0), v(x1, y1, z0), v(x0, y1, z0)], col, inside);
+    face([v(x0, y0, z0), v(x0, y0, z1), v(x0, y1, z1), v(x0, y1, z0)], col, inside);
+    face([v(x1, y0, z0), v(x1, y0, z1), v(x1, y1, z1), v(x1, y1, z0)], col, inside);
+    face([v(x0, y1, z0), v(x1, y1, z0), v(x1, y1, z1), v(x0, y1, z1)], topCol != null ? topCol : col, inside);
+  }
+  function pad(x0, z0, x1, z1, col, lift) {   // a flat world-aligned rectangle laid on the ground
+    const nx = Math.max(1, Math.ceil((x1 - x0) / 8)), nz = Math.max(1, Math.ceil((z1 - z0) / 8));
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+      const ax = x0 + (x1 - x0) * i / nx, bx = x0 + (x1 - x0) * (i + 1) / nx, az = z0 + (z1 - z0) * j / nz, bz = z0 + (z1 - z0) * (j + 1) / nz;
+      const p = (x, z) => [x, baseY(x, z) + lift, z];
+      face([p(ax, az), p(ax, bz), p(bx, bz), p(bx, az)], col, [(ax + bx) / 2, -1000, (az + bz) / 2]);
+    }
+  }
+
+  // --- the ground skirt: from the map's own ground out past the fog, at its rim height, dipping under any water or
+  // other flat plane the map runs past its ground
+  const cx = (B.minX + B.maxX) / 2, cz = (B.minZ + B.maxZ) / 2;
+  const RR = Math.max(B.maxX - B.minX, B.maxZ - B.minZ) / 2 + fogFar + 20;
+  const skirtCol = cfg.skirt != null ? cfg.skirt : groundColor;
+  const lines = (lo, hi, c0, c1) => {
+    const out = [c0, c1];
+    for (let v = c0 - 12; v > lo; v -= 12) out.push(v);
+    for (let v = c1 + 12; v < hi; v += 12) out.push(v);
+    out.push(lo, hi); return out.sort((a, b) => a - b);
+  };
+  const xs = lines(cx - RR, cx + RR, G.minX, G.maxX), zs = lines(cz - RR, cz + RR, G.minZ, G.maxZ);
+  const skirtY = (x, z) => {
+    let y = baseY(x, z) - 0.08;
+    for (const f of flats) if (x > f.minX - 13 && x < f.maxX + 13 && z > f.minZ - 13 && z < f.maxZ + 13) y = Math.min(y, f.minY - 0.12);
+    return y;
+  };
+  for (let i = 0; i + 1 < xs.length; i++) for (let j = 0; j + 1 < zs.length; j++) {
+    const ax = xs[i], bx = xs[i + 1], az = zs[j], bz = zs[j + 1];
+    if (bx - ax < 0.01 || bz - az < 0.01) continue;
+    const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+    if (mx > G.minX && mx < G.maxX && mz > G.minZ && mz < G.maxZ) continue;
+    if (mx > B.minX && mx < B.maxX && mz > B.minZ && mz < B.maxZ) continue;
+    const p = (x, z) => [x, skirtY(x, z), z];
+    face([p(ax, az), p(ax, bz), p(bx, bz), p(bx, az)], skirtCol, [mx, -1000, mz]);
+  }
+  const skirtVerts = P.length / 3;
+
+  // --- the sides
+  const SIDES = {
+    N: { o: [0, -1], l: [1, 0], m: [cx, B.minZ], half: (B.maxX - B.minX) / 2 },
+    S: { o: [0, 1], l: [1, 0], m: [cx, B.maxZ], half: (B.maxX - B.minX) / 2 },
+    W: { o: [-1, 0], l: [0, 1], m: [B.minX, cz], half: (B.maxZ - B.minZ) / 2 },
+    E: { o: [1, 0], l: [0, 1], m: [B.maxX, cz], half: (B.maxZ - B.minZ) / 2 },
+  };
+  const from = {};
+  for (const k in SIDES) from[k] = cfg[k] ? Math.max(6, cfg[k].from || 6) : Infinity;
+  const sideOf = (x, z) => {
+    const e = { N: B.minZ - z, S: z - B.maxZ, W: B.minX - x, E: x - B.maxX };
+    let best = null, bv = -Infinity;
+    for (const k in e) { const v = e[k] - (isFinite(from[k]) ? from[k] : 1e6); if (v > bv) { bv = v; best = k; } }
+    return best;
+  };
+  const stats = { houses: 0, trees: 0, shops: 0, cars: 0, pads: 0 };
+  for (const k of ['N', 'S', 'W', 'E']) {
+    const sc = cfg[k]; if (!sc) continue;
+    const S = SIDES[k];
+    const at = (lat, d) => [S.m[0] + S.o[0] * d + S.l[0] * lat, S.m[1] + S.o[1] * d + S.l[1] * lat];
+    const faceYaw = Math.atan2(-S.o[0], -S.o[1]);   // local +z (the front) toward the map
+    const mine = (x, z) => sideOf(x, z) === k;
+    const ok = (x, z, r, d) => mine(x, z) && d - r >= from[k] && d <= fogFar + 10 && clear(x, z, r);
+    const street = sc.street ? Object.assign({ w: 7 }, sc.street) : null;
+    const inStreet = (lat, r) => street && Math.abs(lat - street.at) < street.w / 2 + 2.5 + r;
+    const latPad = (d0, d1, lat0, lat1, col, lift) => {   // a pad given in the side frame, cut into 8 m cells
+      for (let a = lat0; a < lat1 - 0.01; a += 8) for (let d = d0; d < d1 - 0.01; d += 8) {
+        const a1 = Math.min(lat1, a + 8), dd1 = Math.min(d1, d + 8);
+        const [mx, mz] = at((a + a1) / 2, (d + dd1) / 2);
+        if (!mine(mx, mz) || !clear(mx, mz, 0.5) || (d + dd1) / 2 > fogFar + 20) continue;
+        const p0 = at(a, d), p1 = at(a1, dd1);
+        pad(Math.min(p0[0], p1[0]), Math.min(p0[1], p1[1]), Math.max(p0[0], p1[0]), Math.max(p0[1], p1[1]), col, lift);
+        stats.pads++;
+      }
+    };
+    function house(x, z, yaw) {
+      const y = baseY(x, z) - 0.15, T = frame(x, z, yaw);
+      const two = rnd() < 0.4, w = R(9, 12.5), d = R(7.5, 9.5), h = two ? R(5.2, 5.8) : R(2.8, 3.2);
+      const wall = pick(_BD_WALLS), roof = pick(_BD_ROOFS);
+      box((lx, ly, lz) => T(lx, ly, lz), y, w, h + 0.15, d, wall);
+      // roof: a gable or a hip, with a short eave all round
+      const o = 0.45, top = y + h + 0.15, rh = R(1.8, 2.8), hip = rnd() < 0.5;
+      const rIn = hip ? Math.min(w / 2 - 0.5, d / 2) : 0;
+      const A = T(-w / 2 - o, top, -d / 2 - o), Bq = T(w / 2 + o, top, -d / 2 - o), Cq = T(w / 2 + o, top, d / 2 + o), D = T(-w / 2 - o, top, d / 2 + o);
+      const R1 = T(-w / 2 - o + rIn, top + rh, 0), R2 = T(w / 2 + o - rIn, top + rh, 0), mid = T(0, top + rh * 0.3, 0);
+      face([A, Bq, R2, R1], roof, mid); face([D, Cq, R2, R1], roof, mid);
+      face([A, D, R1], hip ? roof : wall, mid); face([Bq, Cq, R2], hip ? roof : wall, mid);
+      // windows and a door on the face toward the map; at night some are lit
+      const zf = d / 2 + 0.04, rows = two ? [y + 1.2, y + 3.9] : [y + 1.1];
+      const n = Math.max(2, Math.round(w / 3.2));
+      for (const wy of rows) for (let i = 0; i < n; i++) {
+        const wx = -w / 2 + (i + 0.5) * w / n;
+        if (wy === rows[0] && i === Math.floor(n / 2)) {   // the door
+          face([T(wx - 0.5, y + 0.15, zf), T(wx + 0.5, y + 0.15, zf), T(wx + 0.5, y + 2.25, zf), T(wx - 0.5, y + 2.25, zf)], 0x3a2a1e, T(wx, y + 1, 0));
+          continue;
+        }
+        const lit = night && rnd() < 0.35;
+        face([T(wx - 0.6, wy, zf), T(wx + 0.6, wy, zf), T(wx + 0.6, wy + 1.3, zf), T(wx - 0.6, wy + 1.3, zf)], lit ? 0xffd890 : 0x2a3440, T(wx, wy, 0), lit);
+      }
+      stats.houses++;
+    }
+    function tree(x, z) {
+      const y = baseY(x, z) - 0.2, T = frame(x, z, rnd() * 6.283);
+      if (rnd() < 0.22) {   // a conifer
+        const h = R(7, 12), r = R(1.8, 2.8), col = pick(_BD_PINE);
+        box(T, y, 0.35, 1.6, 0.35, 0x4a3424);
+        const apex = T(0, y + h, 0), seg = 6;
+        for (let i = 0; i < seg; i++) {
+          const a0 = i / seg * 6.283, a1 = (i + 1) / seg * 6.283;
+          face([T(Math.cos(a0) * r, y + 1.2, Math.sin(a0) * r), T(Math.cos(a1) * r, y + 1.2, Math.sin(a1) * r), apex], col, T(0, y + h * 0.4, 0));
+        }
+      } else {
+        const th = R(2.2, 3.6), r = R(2.2, 3.8), col = pick(_BD_LEAF);
+        box(T, y, 0.4, th + 0.6, 0.4, 0x4a3828);
+        if (!_bdIcosa) { const gi = new THREE.IcosahedronGeometry(1, 0).toNonIndexed(); _bdIcosa = Array.from(gi.attributes.position.array); gi.dispose(); }
+        const cy = y + th + r * 0.75, sy = R(0.8, 1.05);
+        for (let i = 0; i < _bdIcosa.length; i += 9) {
+          const v = j => T(_bdIcosa[i + j] * r, cy + _bdIcosa[i + j + 1] * r * sy, _bdIcosa[i + j + 2] * r);
+          face([v(0), v(3), v(6)], col, T(0, cy, 0));
+        }
+      }
+      stats.trees++;
+    }
+    function shop(lat, d, w, dep) {
+      const [x, z] = at(lat, d), y = baseY(x, z) - 0.15, T = frame(x, z, faceYaw);
+      const h = R(4.8, 6.8), wall = pick(_BD_SHOPS);
+      box(T, y, w, h, dep, wall, 0x6a6a6a);
+      const zf = dep / 2 + 0.04, lit = night && rnd() < 0.6;   // a closed shop or two at night
+      face([T(-w / 2 + 0.6, y + 0.2, zf), T(w / 2 - 0.6, y + 0.2, zf), T(w / 2 - 0.6, y + 2.8, zf), T(-w / 2 + 0.6, y + 2.8, zf)], lit ? 0xa89060 : 0x2a3640, T(0, y + 1, 0), lit);
+      face([T(-w / 2 + 1.5, y + h - 1.5, zf + 0.02), T(w / 2 - 1.5, y + h - 1.5, zf + 0.02), T(w / 2 - 1.5, y + h - 0.4, zf + 0.02), T(-w / 2 + 1.5, y + h - 0.4, zf + 0.02)], pick(_BD_SIGNS), T(0, y + 1, 0));
+      stats.shops++;
+    }
+    function car(x, z, yaw) {
+      const y = baseY(x, z), T = frame(x, z, yaw), col = pick(_BD_CARS);
+      box(T, y + 0.25, 1.8, 0.75, 4.3, col);
+      box(T, y + 1.0, 1.6, 0.6, 2.2, 0x2a3038, col, 0, -0.2);
+      stats.cars++;
+    }
+
+    let d0 = from[k];
+    const latSpan = d => S.half + d + 4;
+    // the street running out of the map, with its houses kept off it
+    if (street) {
+      const dEnd = Math.min(fogFar + 10, d0 + sc.bands.reduce((s, b) => s + b[1], 0));
+      latPad(d0 - Math.max(0, d0 - 6), dEnd, street.at - street.w / 2, street.at + street.w / 2, 0x3a3a3c, 0.03);
+      for (let d = 6 + 2; d < dEnd; d += 6) {
+        const [x, z] = at(street.at, d);
+        if (mine(x, z) && clear(x, z, 0.3)) { const T = frame(x, z, faceYaw); face([T(-0.08, baseY(x, z) + 0.05, -1.4), T(0.08, baseY(x, z) + 0.05, -1.4), T(0.08, baseY(x, z) + 0.05, 1.4), T(-0.08, baseY(x, z) + 0.05, 1.4)], 0xd8c050, T(0, -10, 0)); }
+      }
+    }
+    for (const [kind, depth] of sc.bands) {
+      const d1 = d0 + depth;
+      if (d0 > fogFar + 10) break;
+      if (kind === 'houses') {
+        const dc = d0 + depth * 0.42;
+        for (let lat = -latSpan(dc); lat < latSpan(dc); lat += R(14.5, 18)) {
+          if (inStreet(lat, 6.5)) continue;
+          const dd = dc + R(-1.2, 1.2);
+          const [x, z] = at(lat, dd);
+          let yaw = faceYaw;
+          if (street && Math.abs(lat - street.at) < 22) yaw = faceYaw + (lat > street.at ? -1 : 1) * Math.PI / 2;   // houses on the street face it
+          if (!ok(x, z, 7, dd)) continue;
+          house(x, z, yaw);
+          if (rnd() < 0.45) { const [tx, tz] = at(lat + R(7.5, 9), d0 + depth * R(0.65, 0.95)); if (ok(tx, tz, 3, d0 + depth * 0.8)) tree(tx, tz); }
+        }
+      } else if (kind === 'trees') {
+        const step = 5.2;
+        for (let d = d0 + 2.5; d < d1; d += step) for (let lat = -latSpan(d); lat < latSpan(d); lat += step) {
+          if (rnd() < 0.28) continue;
+          const la = lat + R(-1.8, 1.8), dd = d + R(-1.8, 1.8);
+          if (inStreet(la, 2)) continue;
+          const [x, z] = at(la, dd);
+          if (ok(x, z, 2.5, dd)) tree(x, z);
+        }
+      } else if (kind === 'shops') {
+        latPad(d0, d0 + 7, -latSpan(d0), latSpan(d0), 0x46474a, 0.03);
+        for (let lat = -latSpan(d0 + 14); lat < latSpan(d0 + 14);) {
+          const w = R(16, 30), dep = R(12, 15);
+          const dc = d0 + 7.5 + dep / 2, [x, z] = at(lat + w / 2, dc);
+          if (!inStreet(lat + w / 2, w / 2) && ok(x, z, Math.max(w, dep) / 2, dc)) shop(lat + w / 2, dc, w, dep);
+          lat += w + R(2, 6);
+        }
+      } else if (kind === 'lot') {
+        latPad(d0, d1, -latSpan(d0), latSpan(d0), 0x45464a, 0.03);
+        for (let row = d0 + 4; row < d1 - 3; row += 11) for (let lat = -latSpan(row); lat < latSpan(row); lat += 2.8) {
+          const [x, z] = at(lat, row);
+          if (!mine(x, z) || !clear(x, z, 1)) continue;
+          const T = frame(x, z, faceYaw), y = baseY(x, z) + 0.05;
+          face([T(-1.4, y, -2.6), T(-1.3, y, -2.6), T(-1.3, y, 2.6), T(-1.4, y, 2.6)], 0xd8d8d0, T(0, -10, 0));
+          if (rnd() < 0.45 && ok(x, z, 2.4, row)) car(x, z, faceYaw + (rnd() < 0.5 ? 0 : Math.PI));
+        }
+      } else if (kind === 'road') {
+        latPad(d0 + 1.5, d0 + 2.5, -latSpan(d0), latSpan(d0), 0xa8a49a, 0.04);
+        latPad(d0 + 2.5, d0 + 9.5, -latSpan(d0), latSpan(d0), 0x3a3a3c, 0.03);
+        latPad(d0 + 9.5, d0 + 10.5, -latSpan(d0), latSpan(d0), 0xa8a49a, 0.04);
+        for (let lat = -latSpan(d0); lat < latSpan(d0); lat += 6) {
+          const [x, z] = at(lat, d0 + 6);
+          if (!mine(x, z) || !clear(x, z, 0.5)) continue;
+          const T = frame(x, z, faceYaw + Math.PI / 2), y = baseY(x, z) + 0.06;
+          face([T(-0.08, y, -1.4), T(0.08, y, -1.4), T(0.08, y, 1.4), T(-0.08, y, 1.4)], 0xd8c050, T(0, -10, 0));
+        }
+      } else if (kind === 'field' || kind === 'fairway') {
+        latPad(d0, d1, -latSpan(d0), latSpan(d0), kind === 'field' ? 0x6e9a48 : 0x7aa850, 0.02);
+        if (kind === 'field') {   // a backstop and a pair of goals, so it reads as a playing field
+          for (const [lat, dd] of [[-S.half * 0.45, d0 + depth * 0.5], [S.half * 0.45, d0 + depth * 0.5]]) {
+            const [x, z] = at(lat, dd);
+            if (!ok(x, z, 4, dd)) continue;
+            const T = frame(x, z, faceYaw), y = baseY(x, z);
+            box(T, y, 0.12, 2.4, 0.12, 0xe8e8e8, null, -3.6, 0); box(T, y, 0.12, 2.4, 0.12, 0xe8e8e8, null, 3.6, 0);
+            box(T, y + 2.3, 7.3, 0.12, 0.12, 0xe8e8e8);
+          }
+        }
+      }
+      d0 = d1;
+    }
+  }
+  if (!P.length) return null;
+  const mk = (p, n, c, mat) => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+    geo.computeBoundingSphere();
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = false; mesh.receiveShadow = false; mesh.matrixAutoUpdate = false;
+    mesh.userData.backdrop = true;
+    return mesh;
+  };
+  const group = new THREE.Group();
+  group.name = 'edgeBackdrop';
+  group.userData.backdrop = true;
+  const main = mk(P, N, C, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  main.userData.skirtVerts = skirtVerts;
+  group.add(main);
+  if (LP.length) group.add(mk(LP, LN, LC, new THREE.MeshBasicMaterial({ vertexColors: true })));
+  if (cfg.sky && !night) {   // a sky card behind the scenery (fog off, so it keeps its blue)
+    const S = SIDES[cfg.sky.side], d = cfg.sky.d, W = 800;
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(W, 260), new THREE.MeshBasicMaterial({ color: cfg.sky.color, fog: false }));
+    sky.position.set(S.m[0] + S.o[0] * d, 110, S.m[1] + S.o[1] * d);
+    sky.rotation.y = Math.atan2(-S.o[0], -S.o[1]);
+    sky.userData.backdrop = true;
+    group.add(sky);
+  }
+  scene.add(group);
+  stats.tris = (P.length + LP.length) / 9;
+  group.userData.stats = stats;
+  built.backdrop = group;
+  return group;
+}
+
 function enterScenario(scenarioId) {
   // v1.48: hard progression guard — a locked scenario can never be entered,
   // regardless of which path tried to launch it. This is the last line of
@@ -21180,6 +22184,7 @@ function enterScenario(scenarioId) {
     // two scenarios sharing a builder+variant but different ids still diverge.
     const _seedKey = scenarioId + '|' + (sc.builderArg || 'default');
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
+    addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');
     return;
@@ -21587,6 +22592,7 @@ function enterScenario(scenarioId) {
   Game.scenario.vip = !!sc.vip;   // v1.170
   Game.scenario.ctfDef = sc.ctf || null;   // v1.189: capture the flag; the flags themselves are set up in startScenario
   Game.scenario.ctf = null;
+  Game.scenario.squadOrder = null; Game.scenario.squadReply = null; Game.scenario.squadLog = []; Game.scenario._ordFields = null;   // v1.248 (D.35): orders hold for one round
   Game.scenario.timerRemaining = (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged') ? (sc.timerSec || 90) : null;
   Game.scenario.winByTimer = false;
   Game.scenario.pickupClock = (sc.pickup && sc.pickup.clock) || 0;   // v1.204
@@ -21771,6 +22777,7 @@ function drawIntroFieldMap(built, playerSpawnPos) {
 }
 
 function startScenario(built) {
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
@@ -21826,12 +22833,14 @@ function startScenario(built) {
   Game.gun.adsSpreadMult = spec.adsSpreadMult;
   Game.gun.curveOnsetDistance = spec.curveOnsetDistance;
   Game.gun.curveStrengthMax = spec.curveStrengthMax;
+  Game.gun.curveStrengthMin = spec.curveStrengthMin;   // v1.250: the curving cheap guns' floor (undefined for the rest)
   Game.gun.pelletsPerShot = spec.pelletsPerShot;
   Game.gun.cockType = spec.cockType;
   Game.gun.cockTime = spec.cockTime;
   // v1.20: auto-fire fields
   Game.gun.fireMode = spec.fireMode || 'semi';
   Game.gun.cyclicRPM = spec.cyclicRPM || 0;
+  Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
   Game.gun.maxAmmo = getMaxAmmoForGun(Game.gun.type);
   // v1.60: snapshot the carried-gear weight penalty for this match (loadout is
@@ -21899,6 +22908,9 @@ function startScenario(built) {
   fpGun = getOrBuildFPGun(Game.gun.type);
   if (!fpLoader) { fpLoader = buildFPLoader(); attachFpItemHand(fpLoader, 'loader'); }   // v1.219 (D.30): in your hand here,
   if (!fpMag) { fpMag = buildFPMag(); attachFpItemHand(fpMag, 'mag'); }                 // not in the shop's pictures
+  if (!fpNoodle) fpNoodle = buildFPNoodle();   // v1.249 (D.36)
+  fpNoodle.visible = false;
+  Game.noodle = { t: -1, cd: 0, swings: 0, hits: [] };
   fpGun.visible = true;
   updateFPGunAccessory(fpGun, Game.gun.type);   // v1.27: show laser/flashlight if equipped
   fpLoader.visible = false;
@@ -21949,11 +22961,128 @@ function startScenario(built) {
 // Each match counts your trigger pulls, your tags (each hit on a kid of the other side puts him out or sends him back),
 // how far each one flew and when, and the hits on you. The result screen shows them with the match's time, picks one
 // best moment, and says what the match opened: the next match it unlocked and any gun its pay put in reach.
-function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0 }; }
+function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0, damage: [] }; }   // v1.238: damage
 function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
   st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+}
+// v1.238 (backlog D.34, Michael 14 Oct: "a 'damage report' after you've been eliminated from a match that shows where
+// you were shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that
+// landed on your character"). Each hit on you keeps where it landed on your body (its height up your hitbox, how far
+// off your middle and which side it came from), who fired it, his gun, the distance, the time and which life it was.
+function noteDamageOnYou(bb) {
+  const P = Game.player, st = Game.scenario.stats;
+  if (!st.damage) st.damage = [];
+  const h = Math.max(0, Math.min(1, (bb.pos.y - P.pos.y) / (P.eyeOffset + 0.1)));
+  const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);          // your facing
+  const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);           // your right
+  const dx = bb.pos.x - P.pos.x, dz = bb.pos.z - P.pos.z;
+  const lat = dx * rx + dz * rz;                                // + to your right
+  const vx = bb.vel ? bb.vel.x : -dx, vz = bb.vel ? bb.vel.z : -dz;
+  const front = (-vx * fx - vz * fz) >= 0;                      // it came from in front of you
+  const side = lat >= 0 ? 'right' : 'left';
+  const part = h > 0.86 ? 'head' : h > 0.5 ? (Math.abs(lat) > 0.2 ? side + ' arm' : (front ? 'chest' : 'back'))
+    : h > 0.4 ? (front ? 'stomach' : 'lower back') : side + ' leg';
+  const e = bb.enemyRef;
+  const from = bb.spawnPos || null;
+  const pickup = !!(SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup);
+  st.damage.push({ part, front, h: +h.toFixed(3), lat: +Math.max(-0.3, Math.min(0.3, lat)).toFixed(3),
+    by: e ? (e.name || 'a kid') : null, gun: e && e.weapon ? getGunDisplayName(e.weapon) : null,
+    dist: from ? Math.round(Math.hypot(P.pos.x - from.x, P.pos.z - from.z)) : null,
+    t: Game.scenario.roundTime || 0, life: pickup ? P.hitsTaken : (Game.scenario.playerRespawns || 0) + 1 });
+}
+// Shown on the result screen once you have been tagged out: a match lost, or any life lost in one you came back in.
+const DAMAGE_REPORT = { renderer: null, scene: null, camera: null, kid: null, sig: '' };
+const DAMAGE_W = 176, DAMAGE_H = 150, DAMAGE_ROWS = 8;
+function damageReportHtml(outcome) {
+  const st = Game.scenario.stats;
+  const dmg = (st && st.damage) || [];
+  if (!dmg.length || (outcome === 'win' && !(Game.scenario.playerRespawns > 0))) return '';
+  const lives = new Set(dmg.map(d => d.life)).size > 1;
+  let rows = '';
+  dmg.slice(0, DAMAGE_ROWS).forEach((d, i) => {
+    const who = d.by ? `${d.by}${d.gun ? ', ' + d.gun : ''}` : 'a stray BB';
+    const extra = [d.dist != null ? d.dist + ' m' : '', fmtMatchTime(d.t), lives ? 'life ' + d.life : ''].filter(Boolean).join(' · ');
+    rows += `<div class="rs-dmg-row"><span class="rs-dmg-n">${i + 1}</span>${d.part[0].toUpperCase() + d.part.slice(1)} — ${who}<br><span style="color:#9a8f7c">${extra}</span></div>`;
+  });
+  if (dmg.length > DAMAGE_ROWS) rows += `<div class="rs-dmg-row" style="color:#9a8f7c">and ${dmg.length - DAMAGE_ROWS} more</div>`;
+  return `<div class="rs-damage" id="rsDamage"><div class="rs-dmg-fig"><canvas id="rsDamageCanvas" width="${DAMAGE_W}" height="${DAMAGE_H}"></canvas>` +
+    `<svg id="rsDamageDots" viewBox="0 0 ${DAMAGE_W} ${DAMAGE_H}"></svg></div>` +
+    `<div class="rs-dmg-list"><span class="rs-tag">DAMAGE REPORT</span>${rows}</div></div>`;
+}
+// v1.245: the report's own renderer is made, and its kid's shaders compiled, at the title (warmDamageReport). Made on the
+// first loss it froze the game for 2–3 s there, waiting on the GPU (critic, 15 Oct); later losses took 3–6 ms.
+function initDamageReport() {
+  const D = DAMAGE_REPORT;
+  if (D.renderer) return;
+  D.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  D.renderer.setSize(DAMAGE_W, DAMAGE_H, false);
+  D.scene = new THREE.Scene();
+  D.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
+  const l = new THREE.DirectionalLight(0xffffff, 0.6); l.position.set(0, 3, 4); D.scene.add(l);
+  const l2 = new THREE.DirectionalLight(0xffffff, 0.4); l2.position.set(0, 3, -4); D.scene.add(l2);
+  D.camera = new THREE.PerspectiveCamera(30, (DAMAGE_W / 2) / DAMAGE_H, 0.1, 20);
+}
+function setDamageReportKid(look, gun, gk) {
+  const D = DAMAGE_REPORT;
+  const sig = JSON.stringify([look, gun, gk]);
+  if (D.sig === sig) return;
+  if (D.kid) D.scene.remove(D.kid.group);
+  D.kid = createKid(Object.assign({}, look), gun);
+  buildKidGear(D.kid, gk);
+  D.scene.add(D.kid.group); D.sig = sig;
+}
+function warmDamageReport() {
+  initDamageReport();
+  const D = DAMAGE_REPORT;
+  setDamageReportKid(Game.persist.look, Game.persist.equipped.gun, []);
+  D.camera.position.set(0, 1, 4); D.camera.lookAt(0, 1, 0); D.camera.updateMatrixWorld(true);
+  D.renderer.render(D.scene, D.camera);
+}
+// Your kid (your look, your gun, your gear) drawn twice, front and back, with a numbered dot where each hit landed:
+// hits from in front on the front view, from behind on the back one.
+function drawDamageReport() {
+  const canvas = document.getElementById('rsDamageCanvas'), svg = document.getElementById('rsDamageDots');
+  if (!canvas || !svg) return;
+  const D = DAMAGE_REPORT;
+  initDamageReport();
+  setDamageReportKid(Game.persist.look, Game.persist.equipped.gun, loadoutKidGearKeys());
+  const kid = D.kid.group;
+  kid.rotation.set(0, 0, 0); kid.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(kid), tall = box.max.y - box.min.y;
+  const cy = box.min.y + tall / 2, dist = tall / 2 / Math.tan(15 * Math.PI / 180) * 1.12;
+  const r = D.renderer, half = DAMAGE_W / 2;
+  r.setScissorTest(true);
+  r.setClearColor(0x2a2f38, 1);
+  const dots = [];
+  const dmg = (Game.scenario.stats && Game.scenario.stats.damage || []).slice(0, DAMAGE_ROWS);
+  for (const [i, back] of [[0, false], [1, true]]) {
+    kid.rotation.y = back ? Math.PI : 0; kid.updateMatrixWorld(true);
+    D.camera.position.set(0, cy, dist); D.camera.lookAt(0, cy, 0); D.camera.updateMatrixWorld(true);
+    r.setViewport(i * half, 0, half, DAMAGE_H); r.setScissor(i * half, 0, half, DAMAGE_H);
+    r.render(D.scene, D.camera);
+    dmg.forEach((d, n) => {
+      if (d.front === back) return;
+      // the kid's right is −x and he faces +z; on the back view the group is turned round
+      // on the leg or arm it hit, else near the middle (the hitbox is a cylinder, the kid is not)
+      const sg = d.lat < 0 ? -1 : 1, ax = Math.abs(d.lat);
+      const x = sg * (/leg/.test(d.part) ? 0.09 : /arm/.test(d.part) ? 0.27 : Math.min(ax, 0.15));
+      const p = new THREE.Vector3(-x, box.min.y + d.h * tall, back ? -0.14 : 0.14).applyMatrix4(kid.matrixWorld).project(D.camera);
+      dots.push({ n: n + 1, x: i * half + (p.x + 1) / 2 * half, y: (1 - p.y) / 2 * DAMAGE_H });
+    });
+  }
+  r.setScissorTest(false);
+  kid.rotation.y = 0;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(r.domElement, 0, 0, DAMAGE_W, DAMAGE_H);
+  let html = `<text x="4" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">FRONT</text>` +
+    `<text x="${half + 4}" y="10" font-size="8" fill="#9a8f7c" letter-spacing="1">BACK</text>` +
+    `<line x1="${half}" y1="6" x2="${half}" y2="${DAMAGE_H - 14}" stroke="rgba(255,255,255,0.12)"/>`;
+  for (const d of dots) html += `<g class="rs-dot" data-n="${d.n}"><circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="6" fill="#e0503a" stroke="#fff" stroke-width="1"/>` +
+    `<text x="${d.x.toFixed(1)}" y="${(d.y + 3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="bold" fill="#fff">${d.n}</text></g>`;
+  svg.innerHTML = html;
+  Game.scenario.lastDamageDots = dots;
 }
 const MATCH_DOUBLE_SEC = 3, MATCH_LONG_TAG_M = 15;
 function matchBestMoment(st, outcome) {
@@ -22006,13 +23135,17 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
+  const dmgHtml = damageReportHtml(outcome);   // v1.238 (D.34)
+  html += dmgHtml;
   el.innerHTML = html;
+  if (dmgHtml) { try { drawDamageReport(); } catch (e) { console.warn('damage report', e); } }
   Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
-    time: Game.scenario.roundTime || 0, best, opened, reach, rival };
+    time: Game.scenario.roundTime || 0, best, opened, reach, rival, damage: dmgHtml ? (st.damage || []).slice() : [] };
 }
 
 function endScenario(outcome) {
   if (Game.forfeitAsk) closeForfeitAsk();   // v1.208
+  if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'result';
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
@@ -22032,6 +23165,7 @@ function endScenario(outcome) {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
+  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -22046,6 +23180,7 @@ function endScenario(outcome) {
     if (fpGuns[key]) fpGuns[key].visible = false;
   }
   if (fpLoader) fpLoader.visible = false;
+  if (fpNoodle) fpNoodle.visible = false;   // v1.249
   if (fpMag) fpMag.visible = false;
   exitPointerLock();
 
@@ -22238,6 +23373,11 @@ function endScenario(outcome) {
       flavorEl.textContent = multi
         ? `They got through. ${allStr} take ${holdPlace}. "Our turn, dude."`
         : `They got through. ${primaryName} takes ${holdPlace}. "Our turn, dude."`;
+    } else if (Game.scenario.ffa) {
+      // v1.246 (Found in play, critic 15 Oct): nobody regroups with anybody in a free-for-all; name who got you
+      const _dmg = (Game.scenario.stats && Game.scenario.stats.damage) || [];
+      const _by = _dmg.length && _dmg[_dmg.length - 1].by;
+      flavorEl.textContent = `Too many angles, not enough cover. ${_by || 'Somebody'} gets the last one on you, and the rest keep going at each other. "Every kid for himself, dude."`;
     } else if (multi) {
       flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup ${regroupAt}. "Run it back?"`;
     } else {
@@ -22343,6 +23483,34 @@ function profileSummaryHTML() {
     ${row('Scenarios cleared', completed)}
   </div>`;
 }
+// v1.231 (D.29, Michael: A on "What does the bed do, now the game saves itself?"): the bed shows the summer so far:
+// today's date off the calendar, the score against Seth's crew, and the next match on the ladder.
+function nextLadderMatchId() {
+  for (const z of ZONE_LADDER) {
+    if (!isZoneUnlocked(z.key)) break;
+    const id = (PIN_SCENARIO_GROUPS[z.key] || []).find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+    if (id) return id;
+  }
+  return null;
+}
+function summerSoFarHTML() {
+  const day = summerDayIndex(), d = summerDate(day);
+  const s = rivalScore();
+  const nextId = nextLadderMatchId(), sc = nextId && SCENARIOS[nextId];
+  const next = sc ? `${sc.scenarioName || sc.name || nextId} · ${sc.name || ''}`.replace(/ · $/, '')
+                  : 'Nothing left: the summer is won';
+  const zone = day === SUMMER_BIG_DAY ? 'Bunratty Court' : summerZoneName(summerZoneKey());
+  const row = (label, val) =>
+    `<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;">
+       <span style="opacity:0.75;">${label}</span><span style="font-weight:bold;text-align:right;">${val}</span>
+     </div>`;
+  return `<div class="summer-so-far" style="text-align:left;font-size:13px;line-height:1.5;margin-bottom:10px;">
+    ${row('Today', d.label + ' ' + SUMMER_YEAR)}
+    ${row('Where', zone)}
+    ${row(RIVAL_CREW.replace(/^\w/, c => c.toUpperCase()), s.beaten + ' of ' + s.total + ' beaten')}
+    ${row('Next', next)}
+  </div>`;
+}
 
 function openSaveMenu() {
   const res = saveGame();
@@ -22354,11 +23522,12 @@ function openSaveMenu() {
   exitPointerLock();
 
   if (res.ok) {
-    titleEl.textContent = 'Saved — sleep tight';
+    titleEl.textContent = 'The summer so far';   // v1.231: was "Saved — sleep tight"
     bodyEl.style.whiteSpace = 'normal';
     bodyEl.innerHTML =
-      `<div style="margin-bottom:12px;">Your progress is saved to this browser. It'll be here next time you open the game.</div>` +
+      summerSoFarHTML() +
       profileSummaryHTML() +
+      `<div style="margin-top:10px;opacity:0.7;font-size:11px;">Saved to this browser. The game saves itself, too.</div>` +
       `<div style="margin-top:16px;">` +
         `<button id="saveDeleteBtn" style="background:transparent;border:1px solid var(--ui-border);` +
         `color:#c88;padding:5px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">` +
@@ -22465,7 +23634,7 @@ function closeMap() {
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
 const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
-let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null };
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL' };   // v1.240: gunKind
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
@@ -23164,6 +24333,9 @@ function renderClosetWornGear() {
 // Build list of available equippable items (not already in slots)
 function getAvailableSlotItems() {
   const out = [];
+  // v1.249 (D.36): the pool noodle, when you own it and it isn't in a slot
+  if (Game.persist.owned.pool_noodle && !noodleCarried())
+    out.push({ icon: '〰', name: 'Pool Noodle', desc: 'V swings it; a hit tags.', detail: 'reach 1.6 m', slotData: { kind: 'noodle' } });
   // Unequipped speed loaders
   for (const sl of getUnequippedSpeedLoaders()) {
     const tier = SPEED_LOADER_TIERS[sl.tier];
@@ -23251,7 +24423,7 @@ function renderShop() {
   switch (shopState.activeTab) {
     case 'Guns': renderGunsTab(c); break;
     case 'Ammo': renderBBsTab(c, renderSpeedLoaders); break;             // v1.128: BB packs, speed loaders, BB colours
-    case 'Gear': renderBeltAndHolster(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes
+    case 'Gear': renderBeltAndHolster(c); renderPoolNoodle(c); renderEquipmentTab(c); break;  // v1.128: belt & holster, eyewear, armour, shoes (v1.249: the noodle)
     case 'Mods': renderAccessoriesTab(c); break;
     case 'Clothes': renderClothesTab(c); break;   // v1.197
   }
@@ -23462,12 +24634,50 @@ function renderBBsTab(c, between) {
   c.appendChild(grid);
 }
 
+// v1.240 (backlog D.37, Michael 14 Oct: "maybe having tabs on the guns tab to shift between pistols, rifles, shotguns,
+// automatics, etc. Or at least grouping the weapons in sections by type on that page"): the Guns tab lists its guns
+// under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
+// entry here; a gun missing from it goes by its fire mode (automatic or rifle).
+const GUN_KINDS = [
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol'] },
+  { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder'] },
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'sniper'] },
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'mac10', 'ak47'] },   // v1.250: the cheap clear ones first
+];
+function gunKind(gt) {
+  const k = GUN_KINDS.find(k => k.guns.includes(gt));
+  if (k) return k.id;
+  return getGunSpec(gt).fireMode === 'auto' ? 'AUTOMATICS' : 'RIFLES';
+}
 function renderGunsTab(c) {
   c.appendChild(shopSectionHeader('Guns', 'Click a gun to see its magazines & spares'));
+  const chips = document.createElement('div');
+  chips.className = 'shop-gun-kinds';
+  for (const id of ['ALL', ...GUN_KINDS.map(k => k.id)]) {
+    const n = id === 'ALL' ? GUN_ORDER.length : GUN_ORDER.filter(gt => gunKind(gt) === id).length;
+    const chip = document.createElement('div');
+    chip.className = 'shop-gun-kind' + (shopState.gunKind === id ? ' active' : '');
+    chip.dataset.kind = id;
+    chip.textContent = `${id} (${n})`;
+    chip.addEventListener('click', () => { shopState.gunKind = id; renderShop(); });
+    chips.appendChild(chip);
+  }
+  c.appendChild(chips);
   const equippedGun = Game.persist.equipped.gun;
+  let lastKind = null;
   for (const gt of GUN_ORDER) {
     const cfg = GUN_MAGS[gt];
     if (!cfg) continue;
+    const kind = gunKind(gt);
+    if (shopState.gunKind !== 'ALL' && kind !== shopState.gunKind) continue;
+    if (kind !== lastKind) {   // GUN_ORDER runs kind by kind, so each kind's header comes once
+      const k = GUN_KINDS.find(x => x.id === kind);
+      const h = shopSectionHeader(k ? k.name : kind, '');
+      h.classList.add('shop-gun-kind-header');
+      h.dataset.kind = kind;
+      c.appendChild(h);
+      lastKind = kind;
+    }
     const owned = !!Game.persist.owned[cfg.ownFlag] || gt === 'pistol';
     const isEquipped = equippedGun === gt;
     const row = document.createElement('div');
@@ -23780,7 +24990,7 @@ function playShopChaching() {
 }
 function showPauseHint() {
   const hint = document.getElementById('pauseHint');
-  hint.style.display = Game.mouse.locked ? 'none' : 'block';
+  hint.style.display = (Game.mouse.locked || Pad.active) ? 'none' : 'block';   // v1.241: not with a pad
 }
 
 // ---------------------------------------------------------------------
@@ -23801,9 +25011,11 @@ function exitPointerLock() {
   if (document.pointerLockElement) document.exitPointerLock?.();
 }
 document.addEventListener('pointerlockchange', () => {
+  const was = Game.mouse.locked;
   Game.mouse.locked = document.pointerLockElement === Game.renderer.domElement;
+  if (was && !Game.mouse.locked && Game.mode === 'scenario') openPauseMenu();   // v1.239 (D.39): Escape let go of it
   document.getElementById('pauseHint').style.display =
-    (!Game.mouse.locked && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
+    (!Game.mouse.locked && !Game.paused && !Pad.active && (Game.mode === 'bedroom' || Game.mode === 'scenario')) ? 'block' : 'none';
 });
 
 // ---------------------------------------------------------------------
@@ -23819,6 +25031,21 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     return;
   }
+  // v1.239 (D.39): the pause menu. Escape opens it in a match (when the mouse is already free; a held mouse lets go
+  // first, and that opens it) and Escape again goes back; F there asks the forfeit question. The settings over it
+  // take their own Escape.
+  if (Game.paused) {
+    if (!e.repeat && !document.getElementById('settingsScreen').classList.contains('active')) {
+      // the Escape that let go of the mouse may also arrive as a key, just after the menu opened: not a second press
+      if (e.code === 'Escape' && performance.now() - (Game._pausedAt || 0) > 300) resumeFromPause();
+      else if (e.code === 'KeyF') { closePauseMenu(); askForfeit(); }
+    }
+    e.preventDefault();
+    return;
+  }
+  if (e.code === 'Escape' && Game.mode === 'scenario' && !e.repeat) { openPauseMenu(); e.preventDefault(); return; }
+  // v1.248 (D.35): hold Q for the squad orders wheel; letting go gives the order the pointer is on
+  if (e.code === 'KeyQ' && Game.mode === 'scenario') { if (!e.repeat && !Game.squadWheel) openSquadWheel(); e.preventDefault(); return; }
   // Diagnostic: toggle the laser clip readout HUD with the backtick (`) key.
   if (e.code === 'Backquote' && !e.repeat) {
     const hud = document.getElementById('laserDiagHud');
@@ -23863,6 +25090,8 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
     Game.focusedInteractable.action();
   }
+  // v1.249 (D.36): V swings the pool noodle, if you carry one
+  if (e.code === 'KeyV' && Game.mode === 'scenario' && !e.repeat) startNoodleSwing();
   // F to forfeit (scenario); v1.208: it asks first
   if (e.code === 'KeyF' && Game.mode === 'scenario' && !e.repeat) {
     askForfeit();
@@ -23891,7 +25120,10 @@ document.addEventListener('keydown', e => {
     }
   }
 });
-document.addEventListener('keyup', e => { Game.keys[e.code] = false; });
+document.addEventListener('keyup', e => {
+  Game.keys[e.code] = false;
+  if (e.code === 'KeyQ' && Game.squadWheel) closeSquadWheel(true);   // v1.248 (D.35)
+});
 
 document.addEventListener('mousemove', e => {
   if (Game.mouse.locked) {
@@ -23901,7 +25133,7 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mousedown', e => {
-  if (Game.forfeitAsk) return;   // v1.208: clicks on the forfeit question are its buttons'
+  if (Game.forfeitAsk || Game.paused) return;   // v1.208: clicks on the forfeit question are its buttons' (v1.239: and the pause menu's)
   // Right-click → ADS in scenario
   if (e.button === 2 && Game.mode === 'scenario' && Game.mouse.locked) {
     Game.player.adsTarget = 1;
@@ -23934,8 +25166,257 @@ document.addEventListener('contextmenu', e => {
   if (Game.mode === 'scenario' || Game.mode === 'bedroom') e.preventDefault();
 });
 
+// v1.241 (backlog D.38, Michael 14 Oct: "I think we have partial controller support - can we look into having full
+// controller support?"): there was none; nothing read a gamepad. Now a pad in the browser's standard layout (Xbox,
+// PlayStation, most others) plays a match and walks the bedroom. Read once a step (stepGame), it drives the same paths
+// as the keys and mouse: the left stick moves (analog, so a half push walks slower), the right stick looks (the
+// settings' sensitivities and invert apply), RT fires and LT aims, A jumps (in the bedroom it is E), B crouches and
+// slides, X reloads (held, as R; it also clears a jam), Y and RB pick the next slot, LB the one before, the d-pad slots
+// 1-4, a click of the left stick sprints until the stick lets go, Start pauses and resumes, Back/View asks to forfeit.
+// On the pause menu and the forfeit question A is yes and B is no. A pad needs no pointer lock: once it is used the
+// player moves without one, and the "click to capture" note stays hidden while it is.
+const PAD_DEAD = 0.18;          // radial dead zone of each stick
+const PAD_LOOK_PX = 1150;       // full right stick = this many mouse pixels a second (about 2.5 rad/s at 1.0×)
+const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11,
+                  UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+const Pad = { active: false, prev: [], move: { x: 0, z: 0 }, sprintLatch: false, ads: false, fire: false };
+function padStick(x, y) {
+  const m = Math.hypot(x, y);
+  if (m < PAD_DEAD) return { x: 0, y: 0, m: 0 };
+  const k = Math.min(1, (m - PAD_DEAD) / (1 - PAD_DEAD)) / m;
+  return { x: x * k, y: y * k, m: Math.min(1, m * k) };
+}
+function padKey(code, down) {   // the pad's buttons go through the keyboard's own handlers
+  document.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code, cancelable: true }));
+}
+function padCycleSlot(dir) {
+  const n = getUnlockedSlotCount();
+  for (let i = 1; i < n; i++) {
+    const idx = (Game.held.slotIdx + dir * i + n * 4) % n;
+    if (Game.persist.loadoutSlots[idx]) { trySwitchSlot(idx); return; }
+  }
+}
+// v1.242 (backlog D.38, step 2): the screens between matches by pad. Title, map, briefing, result, shop, loadout,
+// mirror, workbench, the Pickup board, settings and the pause menu all want the mouse, so on them the pad drives a
+// cursor (a yellow ring): the left stick moves it, the d-pad jumps it to the next thing you can click that way, A
+// clicks (a slider takes the spot you click; the d-pad's left and right step a slider the cursor is on), B goes back
+// (the screen's own close, back or done button, as Escape does), the right stick scrolls what is under it. The thing
+// it would click is outlined. It shows only while the pad is in use and a screen is up.
+const PAD_CURSOR_PX = 1100;     // full left stick = this many pixels a second
+const PAD_BACK_IDS = ['settingsDoneBtn', 'newGameNoBtn', 'modalCloseBtn', 'briefCancelBtn', 'shopCloseBtn',
+                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'mirrorDoneBtn'];
+const PadCursor = { x: 0, y: 0, shown: false, el: null, hover: null };
+function padScreenUp() {
+  if (document.getElementById('settingsScreen').classList.contains('active')) return true;
+  if (Game.mode === 'scenario') return !!Game.paused;
+  return Game.mode !== 'bedroom';
+}
+function padVisible(el) {
+  if (!el || !el.getBoundingClientRect) return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2 || r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) return false;
+  const cx = Math.min(innerWidth - 1, Math.max(0, (r.left + r.right) / 2)), cy = Math.min(innerHeight - 1, Math.max(0, (r.top + r.bottom) / 2));
+  const top = document.elementFromPoint(cx, cy);
+  return !!top && (top === el || el.contains(top) || top.contains(el));
+}
+function padClickable(el) {   // what a click lands on: a control, or anything the page styles with a pointer
+  for (let e = el; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+    if (e === PadCursor.el) return null;
+    if (e.disabled) return null;
+    const tag = e.tagName;
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || tag === 'LABEL') return e;
+    if (getComputedStyle(e).cursor === 'pointer') return e;
+  }
+  return null;
+}
+function padTargets() {
+  const out = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    if (el === PadCursor.el || el.tagName === 'CANVAS') continue;
+    const tag = el.tagName;
+    if (!(tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'A' || getComputedStyle(el).cursor === 'pointer')) continue;
+    if (el.parentElement && padClickable(el.parentElement)) continue;   // the outermost clickable, not its insides
+    if (padVisible(el)) out.push(el);
+  }
+  return out;
+}
+function padCenter(el) { const r = el.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 }; }
+function padCursorPlace(x, y) {
+  PadCursor.x = Math.max(0, Math.min(innerWidth - 1, x));
+  PadCursor.y = Math.max(0, Math.min(innerHeight - 1, y));
+  if (PadCursor.el) { PadCursor.el.style.left = PadCursor.x + 'px'; PadCursor.el.style.top = PadCursor.y + 'px'; }
+  const hov = padClickable(document.elementFromPoint(PadCursor.x, PadCursor.y));
+  if (hov !== PadCursor.hover) {
+    if (PadCursor.hover) PadCursor.hover.classList.remove('pad-hover');
+    PadCursor.hover = hov;
+    if (hov) hov.classList.add('pad-hover');
+  }
+}
+function padCursorShow(on) {
+  if (on === PadCursor.shown) return;
+  PadCursor.shown = on;
+  if (!PadCursor.el) {
+    PadCursor.el = document.createElement('div');
+    PadCursor.el.id = 'padCursor';
+    document.body.appendChild(PadCursor.el);
+  }
+  PadCursor.el.style.display = on ? 'block' : 'none';
+  if (on) {   // start on the clickable thing nearest the middle of the screen
+    let best = null, bd = Infinity;
+    for (const el of padTargets()) {
+      const c = padCenter(el), d = Math.hypot(c.x - innerWidth / 2, c.y - innerHeight / 2);
+      if (d < bd) { bd = d; best = c; }
+    }
+    padCursorPlace(best ? best.x : innerWidth / 2, best ? best.y : innerHeight / 2);
+  } else if (PadCursor.hover) { PadCursor.hover.classList.remove('pad-hover'); PadCursor.hover = null; }
+}
+function padSnap(dx, dy) {   // the nearest clickable that way, favouring ones straight ahead
+  let best = null, bs = Infinity;
+  for (const el of padTargets()) {
+    if (el === PadCursor.hover) continue;
+    const c = padCenter(el), vx = c.x - PadCursor.x, vy = c.y - PadCursor.y;
+    const along = vx * dx + vy * dy, across = Math.abs(vx * dy - vy * dx);
+    if (along < 4) continue;
+    const score = along + across * 2.5;
+    if (score < bs) { bs = score; best = c; }
+  }
+  if (best) padCursorPlace(best.x, best.y);
+}
+function padStepRange(el, dir) {
+  const step = +el.step || 1, v = Math.max(+el.min, Math.min(+el.max, +el.value + dir * step));
+  el.value = v;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function padCursorMove(ls, rs, pressed, dt) {
+  const hov = PadCursor.hover;
+  const range = hov && hov.tagName === 'INPUT' && hov.type === 'range';
+  if (pressed(PAD_BTN.LEFT)) { if (range) padStepRange(hov, -1); else padSnap(-1, 0); }
+  if (pressed(PAD_BTN.RIGHT)) { if (range) padStepRange(hov, 1); else padSnap(1, 0); }
+  if (pressed(PAD_BTN.UP)) padSnap(0, -1);
+  if (pressed(PAD_BTN.DOWN)) padSnap(0, 1);
+  if (ls.m > 0) {
+    const sp = PAD_CURSOR_PX * Math.pow(ls.m, 1.5) * dt / ls.m;
+    padCursorPlace(PadCursor.x + ls.x * sp, PadCursor.y + ls.y * sp);
+  }
+  if (rs.y !== 0) {   // scroll the nearest scrolling box under the cursor
+    for (let e = document.elementFromPoint(PadCursor.x, PadCursor.y); e && e !== document.documentElement; e = e.parentElement) {
+      const oy = getComputedStyle(e).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 1) { e.scrollTop += rs.y * 900 * dt; break; }
+    }
+    padCursorPlace(PadCursor.x, PadCursor.y);
+  }
+}
+function padClick() {
+  const el = PadCursor.hover;
+  if (!el) return;
+  if (el.tagName === 'INPUT' && el.type === 'range') {
+    const r = el.getBoundingClientRect(), f = Math.max(0, Math.min(1, (PadCursor.x - r.left) / r.width));
+    const step = +el.step || 1, min = +el.min, max = +el.max;
+    el.value = Math.round((min + f * (max - min)) / step) * step;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'button') { el.focus(); return; }
+  const o = { bubbles: true, cancelable: true, clientX: PadCursor.x, clientY: PadCursor.y, button: 0 };
+  el.dispatchEvent(new MouseEvent('mousedown', o));
+  el.dispatchEvent(new MouseEvent('mouseup', o));
+  el.click();
+  requestAnimationFrame(() => padCursorPlace(PadCursor.x, PadCursor.y));   // the screen may have changed under it
+}
+function padBack() {
+  for (const id of PAD_BACK_IDS) {
+    const el = document.getElementById(id);
+    if (el && padVisible(el)) { el.click(); return; }
+  }
+  // a shop page's own BACK, or anything else labelled as a way back
+  for (const el of padTargets()) {
+    if (/^\s*(←\s*)?(back|close|done|cancel)\b/i.test(el.textContent || '')) { el.click(); return; }
+  }
+  padKey('Escape', true);
+}
+function pollGamepad(dt) {
+  const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+  let gp = null;
+  for (const p of pads) if (p && p.connected !== false && p.buttons && p.buttons.length) { gp = p; break; }
+  if (!gp) {
+    if (Pad.active) { Pad.move.x = Pad.move.z = 0; Pad.prev = []; }
+    return;
+  }
+  const btn = gp.buttons.map((b, i) => {
+    const v = typeof b === 'object' ? (b.value || (b.pressed ? 1 : 0)) : +b;
+    return (i === PAD_BTN.LT || i === PAD_BTN.RT) ? v > 0.4 : (typeof b === 'object' ? !!b.pressed || v > 0.5 : v > 0.5);
+  });
+  const ax = gp.axes || [];
+  const ls = padStick(ax[0] || 0, ax[1] || 0), rs = padStick(ax[2] || 0, ax[3] || 0);
+  const prev = Pad.prev;
+  const was = i => !!prev[i], now = i => !!btn[i];
+  const pressed = i => now(i) && !was(i), released = i => !now(i) && was(i);
+  if (btn.some(Boolean) || ls.m > 0 || rs.m > 0) {
+    if (!Pad.active) { Pad.active = true; document.getElementById('pauseHint').style.display = 'none'; }
+  }
+  Pad.prev = btn;
+  if (!Pad.active) return;
+  const inMatch = Game.mode === 'scenario';
+  // v1.242 (D.38 step 2): every screen that wants the mouse gets the pad's cursor
+  const onScreen = padScreenUp();
+  padCursorShow(onScreen);
+  // the questions over a match: A is yes, B is no; Start resumes from the pause menu
+  if (Game.forfeitAsk) {
+    if (pressed(PAD_BTN.A)) padKey('Enter', true);
+    else if (pressed(PAD_BTN.B) || pressed(PAD_BTN.BACK)) padKey('Escape', true);
+    return;
+  }
+  if (Game.paused && !document.getElementById('settingsScreen').classList.contains('active')) {
+    if (pressed(PAD_BTN.A) && PadCursor.hover) { padClick(); return; }   // v1.242: A clicks what the cursor is on
+    if (pressed(PAD_BTN.START) || pressed(PAD_BTN.A) || pressed(PAD_BTN.B)) { Game._pausedAt = 0; padKey('Escape', true); }
+    else if (pressed(PAD_BTN.BACK)) padKey('KeyF', true);
+    else padCursorMove(ls, rs, pressed, dt);
+    return;
+  }
+  if (onScreen) {
+    if (pressed(PAD_BTN.A)) padClick();
+    else if (pressed(PAD_BTN.B)) padBack();
+    else padCursorMove(ls, rs, pressed, dt);
+    return;
+  }
+  if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
+  // sticks: movement and look (read by updatePlayer)
+  Pad.move.x = ls.x; Pad.move.z = ls.y;
+  Game.mouse.dx += Math.sign(rs.x) * Math.pow(Math.abs(rs.x), 1.6) * PAD_LOOK_PX * dt;
+  Game.mouse.dy += Math.sign(rs.y) * Math.pow(Math.abs(rs.y), 1.6) * PAD_LOOK_PX * dt;
+  if (Game.mode === 'bedroom') {
+    if (pressed(PAD_BTN.A)) padKey('KeyE', true);
+    else if (pressed(PAD_BTN.START)) openSettings();   // v1.242: the bedroom's SETTINGS
+    return;
+  }
+  if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }
+  if (pressed(PAD_BTN.BACK)) { padKey('KeyF', true); return; }
+  if (pressed(PAD_BTN.A)) padKey('Space', true);
+  if (pressed(PAD_BTN.B)) padKey('ControlLeft', true);
+  if (pressed(PAD_BTN.X)) padKey('KeyR', true);
+  if (released(PAD_BTN.X)) padKey('KeyR', false);
+  if (pressed(PAD_BTN.Y) || pressed(PAD_BTN.RB)) padCycleSlot(1);
+  if (pressed(PAD_BTN.LB)) padCycleSlot(-1);
+  const dpad = [PAD_BTN.UP, PAD_BTN.RIGHT, PAD_BTN.DOWN, PAD_BTN.LEFT];
+  for (let i = 0; i < 4; i++) if (pressed(dpad[i])) trySwitchSlot(i);
+  // sprint: a click of the left stick holds Shift until the stick lets go
+  if (pressed(PAD_BTN.L3) && ls.m > 0) { Pad.sprintLatch = true; Game.keys['ShiftLeft'] = true; }
+  if (Pad.sprintLatch && ls.m === 0) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
+  // triggers: aim and fire, as the right and left mouse buttons (by state, so a trigger let go while paused lets go)
+  if (now(PAD_BTN.LT) !== Pad.ads) { Pad.ads = now(PAD_BTN.LT); Game.player.adsTarget = Pad.ads ? 1 : 0; }
+  if (now(PAD_BTN.RT) !== Pad.fire) {
+    Pad.fire = now(PAD_BTN.RT);
+    if (Pad.fire) { Game.mouseLMB = true; onLmbDown(); }
+    else { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); }
+  }
+}
+
 // === Click handlers — dispatch based on what's held ===
 function onLmbDown() {
+  if (Game.noodle && Game.noodle.t >= 0) return;   // v1.249: mid-swing
+  if (describeSlot(Game.held.slotIdx)?.kind === 'noodle') { startNoodleSwing(); return; }   // v1.249 (D.36)
   if (Game.gun.jammed) return;
   if (Game.gun.flipT > 0) return;   // v1.169: no shot while the taped mags are being flipped
   const heldSlot = describeSlot(Game.held.slotIdx);
@@ -23953,6 +25434,10 @@ function onLmbDown() {
       if (Game.gun.fireMode === 'auto') {
         // Stay cocked, reset the cycle timer so the NEXT auto shot waits a full cycle.
         Game.gun.autoFireTimer = 0;
+        // v1.250 (D.37): a cheap gun's burst may jam, a few BBs in
+        const bj = getGunSpec(Game.gun.type).burstJam || 0;
+        Game.gun._jamIn = (bj && Math.random() < bj) ? 1 + Math.floor(Math.random() * 2) : 0;
+        Game.gun._bursts = (Game.gun._bursts || 0) + 1;
         // Don't mark LMB consumed — the held trigger keeps the stream alive.
       } else {
         Game.gun.cocked = false;
@@ -24125,7 +25610,7 @@ function ladderAt(x, z) {
 // Returns true while he is on a ladder (updatePlayer then moves him no other way).
 function updateLadder(dt) {
   const p = Game.player, k = Game.keys || {};
-  const up = !!k['KeyW'], down = !!k['KeyS'];
+  const up = !!k['KeyW'] || Pad.move.z < -0.5, down = !!k['KeyS'] || Pad.move.z > 0.5;   // v1.241: the stick climbs
   let L = p.climbing;
   if (!L) {
     const at = ladderAt(p.pos.x, p.pos.z);
@@ -24172,7 +25657,7 @@ function updateLadderPrompt() {
 }
 
 function updatePlayer(dt) {
-  if (!Game.mouse.locked) {
+  if (!Game.mouse.locked && !Pad.active) {   // v1.241 (D.38): a pad plays without the pointer lock
     Game.mouse.dx = 0; Game.mouse.dy = 0;
     easeStanceAndAds(dt);
     // v1.28j: even with the mouse released (e.g. just entered the bedroom, or
@@ -24236,7 +25721,8 @@ function updatePlayer(dt) {
   // OR while preserving an air-sprint jump; recharges after a short delay
   // otherwise. Hitting zero forces an exhausted lockout.
   {
-    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']);
+    const pressingMove = !!(Game.keys['KeyW'] || Game.keys['KeyA'] || Game.keys['KeyS'] || Game.keys['KeyD']) ||
+                         Pad.move.x !== 0 || Pad.move.z !== 0;   // v1.241
     const draining = inScenario && (Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround)) && pressingMove;
     if (draining) {
       Game.player.stamina -= STAMINA_DRAIN_RATE * (shoeStats.drainMult || 1) * underPartMult('sprintDrainMult') * dt;   // v1.169: sling
@@ -24264,6 +25750,8 @@ function updatePlayer(dt) {
 
   // Look — sensitivity reduces with ADS
   // v1.192: the settings' mouse and aim sensitivity scale it, and invert look flips the pitch
+  // v1.248 (D.35): while the squad wheel is open the mouse moves its pointer, not your look
+  if (Game.squadWheel && inScenario) { squadWheelMove(Game.mouse.dx, Game.mouse.dy); Game.mouse.dx = 0; Game.mouse.dy = 0; }
   const sensMult = Settings.mouseSens * (1 - Game.player.ads * (1 - ADS_SENS_MULT * Settings.aimSens));
   Game.player.yaw -= Game.mouse.dx * MOUSE_SENS * sensMult;
   Game.player.pitch -= Game.mouse.dy * MOUSE_SENS * sensMult * (Settings.invertY ? -1 : 1);
@@ -24288,6 +25776,7 @@ function updatePlayer(dt) {
     if (Game.keys['KeyD']) mx += 1;
     const mag = Math.hypot(mx, mz);
     if (mag > 0) { mx /= mag; mz /= mag; }
+    else if (Pad.move.x !== 0 || Pad.move.z !== 0) { mx = Pad.move.x; mz = Pad.move.z; }   // v1.241: the stick, analog
 
     let speed = inScenario ? MOVE_SPEED_SCENARIO : MOVE_SPEED;
     if (inScenario) {
@@ -24315,7 +25804,7 @@ function updatePlayer(dt) {
     const sinY = Math.sin(Game.player.yaw);
     wx = (mx * cosY + mz * sinY) * speed;
     wz = (-mx * sinY + mz * cosY) * speed;
-    movingForwardish = mag > 0;
+    movingForwardish = mx !== 0 || mz !== 0;   // v1.241: the stick too
   }
 
   // Apply horizontal motion with collision
@@ -24888,6 +26377,7 @@ function doFire() {
   if (fpGun) fpGun.userData.kick = 1.0;
   updateAmmoHud();
   if (pelletsFired > 0 && Tutorial.active) Tutorial.notify('fired');
+  if (Game.gun._jamIn > 0 && --Game.gun._jamIn === 0 && Game.gun.ammo > 0) { jamGun(); Game.gun._jams = (Game.gun._jams || 0) + 1; }   // v1.250: the cheap gun's burst jams
 }
 
 function updateGun(dt) {
@@ -24942,14 +26432,14 @@ function updateGun(dt) {
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
   // between shots. When the mag empties, cocked drops to false → falls through
   // to the normal cock/reload path.
-  if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed) {
+  if (held && held.kind === 'gun' && Game.gun.fireMode === 'auto' && !Game.gun.jammed && !(Game.noodle.t >= 0)) {   // v1.249: not mid-swing
     if (Game.mouseLMB && Game.gun.cocked && Game.gun.ammo > 0 && !(Game.gun.flipT > 0)) {
       const cycle = 60 / Math.max(1, Game.gun.cyclicRPM); // seconds per shot
       Game.gun.autoFireTimer += dt;
       // Allow multiple shots per frame at very high RPMs (MAC-10 at 1100 RPM
       // is one shot every 54ms — at 60fps that's already < frame time at low
       // frame rates). Loop so we don't drop shots.
-      while (Game.gun.autoFireTimer >= cycle && Game.gun.ammo > 0) {
+      while (Game.gun.autoFireTimer >= cycle && Game.gun.ammo > 0 && !Game.gun.jammed) {
         Game.gun.autoFireTimer -= cycle;
         doFire();
       }
@@ -25089,6 +26579,9 @@ function updateHeldMesh(dt) {
   const isGunHeld = held && held.kind === 'gun';
   const isLoader = held && held.kind === 'speed_loader';
   const isMag = held && held.kind === 'spare_mag';
+  // v1.249 (D.36): the noodle shows while its slot is held, and over anything else for a V swing
+  const swinging = Game.noodle && Game.noodle.t >= 0;
+  const showNoodle = !!fpNoodle && ((held && held.kind === 'noodle') || swinging);
 
   // Show the right mesh. v1.61b: while aiming with a SCOPE, hide the whole gun
   // model — the full-screen scope overlay becomes the entire sight picture, so a
@@ -25096,10 +26589,11 @@ function updateHeldMesh(dt) {
   // fade-in (ads > 0.55 ≈ overlay near full) so the gun vanishes as the scope
   // takes over rather than popping.
   const scopedFully = isGunHeld && gunHasAccessoryType(Game.gun.type, 'scope') && Game.player.ads > 0.55;
-  fpGun.visible = isGunHeld && !scopedFully;
-  if (fpLoader) fpLoader.visible = isLoader;
-  if (fpMag) fpMag.visible = isMag;
-  updateFpHands(isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
+  fpGun.visible = isGunHeld && !scopedFully && !swinging;
+  if (fpLoader) fpLoader.visible = isLoader && !swinging;
+  if (fpMag) fpMag.visible = isMag && !swinging;
+  if (fpNoodle) { fpNoodle.visible = showNoodle; if (showNoodle) poseFPNoodle(); }
+  updateFpHands(showNoodle ? fpNoodle : isGunHeld ? fpGun : isLoader ? fpLoader : isMag ? fpMag : null, Game.gun.type);   // v1.219 (D.30): the off hand, skin and sleeves
 
   if (isGunHeld) {
     // Cocking animation: cockProgress 0→1 maps to cocking parts moving backward
@@ -25139,9 +26633,9 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.135, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.072, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'mac10') {
+    } else if (gunType === 'mac10') {        // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
-      adsPos  = { x: 0.0,  y: -0.078, z: -0.27 };
+      adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
     } else if (gunType === 'thunder') {        // v1.168: each ADS Y is minus its sight tip's height
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
@@ -25154,6 +26648,14 @@ function updateHeldMesh(dt) {
     } else if (gunType === 'bucket') {
       hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.149, z: -0.27 };
+      hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'sprayer' || gunType === 'ticktock') {   // v1.250: the clear automatics, held as the Bucket Gun
+      hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
+      adsPos  = { x: 0.0,  y: gunType === 'ticktock' ? -0.0755 : -0.0735, z: -0.27 };
+      hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'ghost' || gunType === 'rattle') {
+      hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.0595, z: -0.25 };
       hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'boltpistol') {
       hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
@@ -25363,6 +26865,8 @@ function updateLoadoutHud() {
         hint = desc.ref.currentBBs === 0 ? 'Loader is empty. Switch back.'
              : Game.gun.ammo >= Game.gun.maxAmmo ? 'Mag is full.'
              : 'Hold LMB to feed BBs.';
+      } else if (isHeld && desc.kind === 'noodle') {
+        hint = 'Click or V to swing. Get close.';   // v1.249
       } else if (isHeld && desc.kind === 'spare_mag') {
         hint = 'Hold LMB to slam in the fresh mag.';
       }
@@ -25617,6 +27121,10 @@ const RETICLE_SPECS = {
   sixshooter: { style: 'ring_ticks', baseGap: 9, ringR: 9, centerDot: 1.4 },
   bucket:  { style: 'wide_ticks', baseGap: 14, ringR: 0,  centerDot: 1.5 },
   boltpistol: { style: 'fine_cross', baseGap: 7, ringR: 0, centerDot: 1.1 },
+  sprayer: { style: 'wide_ticks', baseGap: 16, ringR: 0, centerDot: 1.5 },   // v1.250
+  ghost:   { style: 'circle_cross', baseGap: 10, ringR: 9, centerDot: 1.3 },
+  ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
+  rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }
 
@@ -25973,6 +27481,7 @@ function makeBB(pos, vel, owner, enemyRef, gunSpec, team) {
   const spec = gunSpec || {
     curveOnsetDistance: Game.gun.curveOnsetDistance,
     curveStrengthMax: Game.gun.curveStrengthMax,
+    curveStrengthMin: Game.gun.curveStrengthMin,   // v1.250
   };
   // Random curve axis perpendicular to flight direction
   const forward = vel.clone().normalize();
@@ -25988,7 +27497,7 @@ function makeBB(pos, vel, owner, enemyRef, gunSpec, team) {
   // Curve strength = (random^2) * max — biases toward small values
   const r = Math.random();
   const curveMax = spec.curveStrengthMax ?? 18;
-  const curveStrength = r * r * curveMax + 1.5;
+  const curveStrength = r * r * curveMax + (spec.curveStrengthMin ?? 1.5);   // v1.250: a floor of its own for the curving cheap guns
 
   return {
     pos,
@@ -26378,9 +27887,27 @@ function bbCanTarget(bb, c) {
   if (c === Game.player) {
     return Game.player.hitsTaken < Game.player.maxHits;
   }
-  if (c.health <= 0) return false;
-  if (c.state === 'retreating') return false;
+  // v1.237 (D.33): a kid who is out (hand up where he was tagged, or walking back) still stops YOUR BBs, and says so
+  if (c.health <= 0 || c.state === 'retreating') return bb.owner === 'player' && kidIsOutStanding(c);
   return true;
+}
+// v1.237 (backlog D.33, Michael 14 Oct: "Players that raise their arms and are 'out' should still be able to be shot, and
+// if you shoot them, they should be mad and call you out for it"): out is a tagged kid standing with his hand up, or
+// one walking back to respawn. A downed Infection tagger is slumped, not out, and still lets BBs through.
+function kidIsOutStanding(c) {
+  return c !== Game.player && c.behavior !== 'tagger';
+}
+const OUT_SHOT_LINE_GAP = 1.0;   // seconds (simulated) between a kid's out-shot complaints
+function shotWhileOut(c) {
+  if (Game.scenario.stats) Game.scenario.stats.outShots = (Game.scenario.stats.outShots || 0) + 1;
+  playHitOnEnemy();
+  const now = aiNow();
+  if (c._outLineAt != null && now - c._outLineAt < OUT_SHOT_LINE_GAP) return;
+  c._outLineAt = now;
+  // he was just tagged, so his own 4 s voice cooldown (and the 1.5 s one for everybody) is likely still running:
+  // being shot with his hand up is worth saying anyway
+  c._voiceCooldownUntil = 0; VOICE.globalCooldownUntil = 0;
+  tryNpcSpeak(c, 'shotWhileOut');
 }
 
 // Apply the hit's consequences for combatant c. Returns true if the BB should be
@@ -26391,6 +27918,7 @@ function applyBBHit(bb, c) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
     Game.player.hitsTaken++;
     if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
+    if (Game.scenario.stats && bb.pos) noteDamageOnYou(bb);   // v1.238 (D.34): where, by whom, with what
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
     if (bb.enemyRef && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
@@ -26401,10 +27929,12 @@ function applyBBHit(bb, c) {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
       else endScenario('lose');
-    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].pickup) {
+    } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && (SCENARIOS[Game.scenario.active].pickup || SCENARIOS[Game.scenario.active].tagSendsHome)) {
       respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
+      // (v1.251: and in The Last Saturday, `tagSendsHome`)
     }
   } else {
+    if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c); return true; }   // v1.237 (D.33): out already
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, 'npcHit');   // react before dying/retreating
     // v1.151: the shooter calls a tag on another kid the way he calls one on you. The tagged kid speaks first;
@@ -26690,6 +28220,284 @@ function kidFlagRun(e, tgt, dist, dt) {
       e._flagShots = (e._flagShots || 0) + 1;
       const auto = ['mp5', 'ump', 'ak47', 'ar', 'mac10'].includes(e.weapon);
       e._flagShotT = auto ? 0.25 + Math.random() * 0.15 : e.weapon === 'shotgun' ? 0.9 + Math.random() * 0.4 : 0.6 + Math.random() * 0.3;
+    }
+  }
+  return true;
+}
+// v1.248 (backlog D.35, Michael: A): SQUAD COMMANDS. Hold Q in a match with teammates and the four orders show round
+// the crosshair; move the mouse toward one and let go (the match keeps running, and the mouse doesn't look while the
+// wheel is open). An order goes to every teammate (the walkie reaches the whole map), one of them answers it on the
+// walkie, the HUD shows it standing, and it holds until you give another or the round ends. A kid carrying out an
+// order moves by the distance field (as a flag runner does, kidOrderRun) and shoots on the move at whoever he can see;
+// where the order leaves him free (pushed up within 14 m of the other side) the states take over. Kids skipped: a VIP
+// (he holds his spot), a perched or ladder kid, one walking back after a tag, a flag runner with a flag to see to.
+const SQUAD_ORDERS = {
+  push:     { label: 'PUSH UP',       dir: [0, -1], replies: ['Copy, pushing!', 'Moving up!', 'Going, going!', 'Pushing up, cover me!'] },
+  cover:    { label: 'FIND COVER',    dir: [1, 0],  replies: ['Copy, getting behind something!', 'Taking cover!', 'Finding cover!'] },
+  distance: { label: 'KEEP DISTANCE', dir: [0, 1],  replies: ['Copy, hanging back.', 'Backing off!', 'Keeping my distance.'] },
+  follow:   { label: 'FOLLOW ME',     dir: [-1, 0], replies: ['Right behind you!', 'Copy, on you!', 'Following!', 'Lead the way!'] },
+};
+const SQUAD_WHEEL_R = 110, SQUAD_WHEEL_PICK = 24;      // px the wheel's pointer can travel; px to choose
+const SQUAD_PUSH_NEAR = 14;                            // push up: within this of the nearest enemy, the states fight
+const SQUAD_KEEP_MIN = 15, SQUAD_KEEP_MAX = 25;        // keep distance: the band he holds from the nearest enemy
+const SQUAD_FOLLOW_GO = 6, SQUAD_FOLLOW_STOP = 4;      // follow me: sets off past 6 m from you, stops inside 4 m
+const SQUAD_AIM_BONUS = 20;                            // follow me: the kid you aim at draws his gun (m-equiv)
+function squadMates() {
+  return (Game.scenario && Game.scenario.enemies || []).filter(e => e.team === 'player' && e.behavior !== 'tagger');
+}
+function squadCanOrder() {
+  return Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk && !Tutorial.active && squadMates().some(e => e.health > 0 && !e.vip);
+}
+function openSquadWheel() {
+  if (!squadCanOrder()) return false;
+  Game.squadWheel = { x: 0, y: 0, pick: null };
+  Game.mouse.dx = 0; Game.mouse.dy = 0;
+  drawSquadWheel();
+  return true;
+}
+function closeSquadWheel(choose) {
+  const w = Game.squadWheel;
+  Game.squadWheel = null;
+  const el = document.getElementById('squadWheel');
+  if (el) el.style.display = 'none';
+  if (choose && w && w.pick && Game.mode === 'scenario') giveSquadOrder(w.pick);
+}
+function squadWheelMove(dx, dy) {
+  const w = Game.squadWheel;
+  w.x += dx; w.y += dy;
+  const L = Math.hypot(w.x, w.y);
+  if (L > SQUAD_WHEEL_R) { w.x *= SQUAD_WHEEL_R / L; w.y *= SQUAD_WHEEL_R / L; }
+  w.pick = null;
+  if (L >= SQUAD_WHEEL_PICK) {
+    let best = -2;
+    for (const k in SQUAD_ORDERS) {
+      const d = SQUAD_ORDERS[k].dir, c = (w.x * d[0] + w.y * d[1]) / Math.hypot(w.x, w.y);
+      if (c > best) { best = c; w.pick = k; }
+    }
+  }
+  drawSquadWheel();
+}
+function drawSquadWheel() {
+  const el = document.getElementById('squadWheel'), w = Game.squadWheel;
+  if (!el || !w) return;
+  el.style.display = 'block';
+  if (!el.dataset.built) {
+    el.dataset.built = '1';
+    el.innerHTML = Object.keys(SQUAD_ORDERS).map(k => `<div class="sq-opt sq-${k}" data-k="${k}">${SQUAD_ORDERS[k].label}</div>`).join('') +
+      '<div class="sq-ptr"></div><div class="sq-title">ORDERS · let go of Q</div>';
+  }
+  for (const o of el.querySelectorAll('.sq-opt')) o.classList.toggle('on', o.dataset.k === w.pick);
+  const p = el.querySelector('.sq-ptr');
+  if (p) p.style.transform = `translate(${w.x.toFixed(0)}px, ${w.y.toFixed(0)}px)`;
+}
+function giveSquadOrder(key) {
+  const S = Game.scenario, O = SQUAD_ORDERS[key];
+  if (!S || !O) return;
+  S.squadOrder = key;
+  S.squadLog = S.squadLog || [];
+  S.squadLog.push({ key, t: +(S.roundTime || 0).toFixed(2) });
+  for (const e of squadMates()) { e._ordGoal = null; e._ordBan = 0; e._ordBest = null; e._ordStuck = 0; e._ordCover = null; e._ordAt = false; }
+  // one teammate answers on the walkie: the nearest one standing
+  const live = squadMates().filter(e => e.health > 0 && e.state !== 'retreating' && !e.vip);
+  live.sort((a, b) => Math.hypot(a.pos.x - Game.player.pos.x, a.pos.z - Game.player.pos.z) - Math.hypot(b.pos.x - Game.player.pos.x, b.pos.z - Game.player.pos.z));
+  const who = live[0];
+  const line = who ? O.replies[Math.floor(Math.random() * O.replies.length)] : null;
+  S.squadReply = who ? { name: who.name, line, until: (S.roundTime || 0) + 3.5 } : null;
+  if (who) squadWalkieSay(who, line);
+  updateSquadHud();
+}
+// a walkie line: heard wherever he is (no distance cut-off), a click of the talk button first
+function squadWalkieSay(e, line) {
+  try {
+    if (Game.audio?.ctx) {
+      const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(1400, t);
+      g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
+    }
+    if (typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
+    if (v) u.voice = v;
+    u.rate = 1.15; u.pitch = 1.1;
+    u.volume = 0.45 * Settings.effects;
+    speechSynthesis.speak(u);
+    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
+    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
+  } catch (err) { /* no audio: the HUD still shows the line */ }
+}
+function updateSquadHud() {
+  const hud = document.getElementById('squadHud');
+  if (!hud) return;
+  const S = Game.scenario;
+  if (Game.mode !== 'scenario' || !S || !squadMates().length || Tutorial.active) { hud.style.display = 'none'; return; }
+  hud.style.display = 'block';
+  const order = S.squadOrder ? SQUAD_ORDERS[S.squadOrder].label : 'NONE';
+  const r = S.squadReply && (S.roundTime || 0) < S.squadReply.until ? S.squadReply : null;
+  const html = `<span class="sq-k">ORDER</span> ${order} <span class="sq-hint">· hold <kbd>Q</kbd></span>` +
+    (r ? `<div class="sq-reply">📻 ${r.name}: “${r.line}”</div>` : '');
+  if (hud.innerHTML !== html) hud.innerHTML = html;
+}
+// once a step, before the kids: who you are aiming at (follow me's "shoot what I shoot at")
+function updateSquad(dt) {
+  const S = Game.scenario;
+  S._playerAimKid = null;
+  if (S.squadOrder === 'follow') {
+    const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw);
+    let best = 0.966;   // within 15° of where you look
+    for (const c of S.enemies) {
+      if (c.team === 'player' || c.health <= 0 || c.state === 'retreating') continue;
+      const dx = c.pos.x - Game.player.pos.x, dz = c.pos.z - Game.player.pos.z, d = Math.hypot(dx, dz);
+      if (d < 0.5 || d > 70) continue;
+      const cs = (dx * fx + dz * fz) / d;
+      if (cs > best) { best = cs; S._playerAimKid = c; }
+    }
+  }
+  updateSquadHud();
+}
+function squadField(goal) {
+  const S = Game.scenario, key = Math.round(goal.x / 2) + ',' + Math.round(goal.z / 2);
+  if (!S._ordFields) S._ordFields = new Map();
+  let F = S._ordFields.get(key);
+  if (!F) { if (S._ordFields.size > 24) S._ordFields.clear(); F = kidFieldTo(Math.round(goal.x / 2) * 2, Math.round(goal.z / 2) * 2); S._ordFields.set(key, F); }
+  return F;
+}
+function squadNearestFoe(e) {
+  let best = null, bd = Infinity;
+  for (const c of opposingCombatants(e)) {
+    const d = Math.hypot(c.pos.x - e.pos.x, c.pos.z - e.pos.z);
+    if (d < bd) { bd = d; best = c; }
+  }
+  return best ? { c: best, d: bd } : null;
+}
+function squadClampToField(p) {
+  const b = Game.scenario.bounds || { minX: -40, maxX: 40, minZ: -40, maxZ: 40 };
+  return { x: Math.max(b.minX + 1.5, Math.min(b.maxX - 1.5, p.x)), z: Math.max(b.minZ + 1.5, Math.min(b.maxZ - 1.5, p.z)) };
+}
+// where the standing order sends kid e now: { goal } to walk to, { hold } to stay and fight where he is (crouched
+// for find cover), or null to leave him to the states
+function squadOrderGoal(e) {
+  const S = Game.scenario, key = S.squadOrder, foe = squadNearestFoe(e);
+  if (key === 'follow') {
+    const dp = Math.hypot(Game.player.pos.x - e.pos.x, Game.player.pos.z - e.pos.z);
+    if (dp > SQUAD_FOLLOW_GO || (e._ordGoal && dp > SQUAD_FOLLOW_STOP)) {
+      // a spot a couple of metres behind and beside you, not on top of you
+      const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw), side = (e._ordSide = e._ordSide || (Math.random() < 0.5 ? -1 : 1));
+      return { goal: squadClampToField({ x: Game.player.pos.x - fx * 2 - fz * 1.5 * side, z: Game.player.pos.z - fz * 2 + fx * 1.5 * side }) };
+    }
+    return { hold: true };
+  }
+  if (!foe) return null;
+  if (key === 'push') return foe.d > SQUAD_PUSH_NEAR ? { goal: { x: foe.c.pos.x, z: foe.c.pos.z }, near: SQUAD_PUSH_NEAR } : null;
+  if (key === 'distance') {
+    const ux = (e.pos.x - foe.c.pos.x) / (foe.d || 1), uz = (e.pos.z - foe.c.pos.z) / (foe.d || 1);
+    if (foe.d < SQUAD_KEEP_MIN || (e._ordGoal && e._ordAway && foe.d < (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2)) {
+      e._ordAway = true;
+      // straight away from him, or, against the field's edge, back toward your own start
+      let g = squadClampToField({ x: foe.c.pos.x + ux * 21, z: foe.c.pos.z + uz * 21 });
+      if (Math.hypot(g.x - foe.c.pos.x, g.z - foe.c.pos.z) < SQUAD_KEEP_MIN + 1 && e._spawnPos) g = { x: e._spawnPos.x, z: e._spawnPos.z };
+      return { goal: g };
+    }
+    if (foe.d > SQUAD_KEEP_MAX || (e._ordGoal && !e._ordAway && foe.d > (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2)) {
+      e._ordAway = false;
+      return { goal: { x: foe.c.pos.x, z: foe.c.pos.z }, near: (SQUAD_KEEP_MIN + SQUAD_KEEP_MAX) / 2 };
+    }
+    return { hold: true };
+  }
+  if (key === 'cover') {
+    // the nearest cover within 15 m, on its side away from the nearest enemy; picked once per order (and again after a tag)
+    if (!e._ordCover) {
+      let best = null, bd = 15;
+      for (const c of (S.cover || [])) {
+        const cc = obsCenter(c), d = Math.hypot(cc.x - e.pos.x, cc.z - e.pos.z);
+        if (d < bd) { bd = d; best = c; }
+      }
+      e._ordCover = { at: best ? coverStandPos(best, foe.c.pos, 0.35) : { x: e.pos.x, z: e.pos.z } };
+      e._ordAt = false;
+    }
+    const at = e._ordCover.at;
+    // there within 1.2 m, or within 3 m and no nearer for a second (the stand spot can sit tight against a corner)
+    const dc = Math.hypot(at.x - e.pos.x, at.z - e.pos.z);
+    if (!e._ordAt && dc > 1.2 && !(dc < 3 && (e._ordStuck || 0) > 1)) return { goal: { x: at.x, z: at.z } };
+    e._ordAt = true;
+    return { hold: true, low: true };
+  }
+  return null;
+}
+// moves kid e on the standing order in place of the states and returns true; false leaves him to them
+function kidOrderRun(e, tgt, dist, dt) {
+  const S = Game.scenario;
+  if (!S.squadOrder || e.team !== 'player' || e.vip) return false;
+  if (e.state === 'retreating') e._ordCover = null;
+  if (e.state === 'retreating' || e.state === 'deploying' || e.noFire || e.perch || e._lad || e.behavior === 'tagger') return false;
+  if (e._ordBan > 0) { e._ordBan -= dt; return false; }
+  const want = squadOrderGoal(e);
+  if (!want) {
+    if (e._orderRun) { e.targetPos = null; e.homeCover = null; e.stateTime = 0; e._ordGoal = null; }
+    return false;
+  }
+  const ch = e.character || {};
+  if (!e._orderRun) { e.targetPos = null; e.homeCover = null; e._ordBest = null; e._ordStuck = 0; }
+  e.state = want.hold ? 'hiding' : 'advancing';
+  e.mesh.group.position.y = 0;
+  // can he see his target? (5 times a second)
+  e._ordLosT = (e._ordLosT || 0) - dt;
+  if (e._ordLosT <= 0) {
+    e._ordLosT = 0.2;
+    const range = e.weapon === 'shotgun' ? 16 : e.weapon === 'sniper' ? 45 : 30;
+    const my = (e.pos.y || 0) + 1.05 * (e.mesh.scaleY ?? 1.0);
+    e._ordSee = !!(tgt && tgt.alive && dist < range && hasLineOfSight(e.pos.x, my, e.pos.z, tgt.pos.x, tgt.chestY, tgt.pos.z, tgt.obstacles));
+  }
+  const see = !!e._ordSee;
+  let ux = 0, uz = 0;
+  if (want.goal) {
+    e._ordGoal = want.goal;
+    setKidCrouch(e.mesh, 0);
+    const goal = want.goal, gx = goal.x - e.pos.x, gz = goal.z - e.pos.z, gd = Math.hypot(gx, gz);
+    ux = gd > 1e-3 ? gx / gd : 0; uz = gd > 1e-3 ? gz / gd : 0;
+    if (gd > 1.2) {
+      const w = kidFieldNext(squadField(goal), e.pos.x, e.pos.z);
+      if (w) { const wx = w.x - e.pos.x, wz = w.z - e.pos.z, wl = Math.hypot(wx, wz); if (wl > 0.05) { ux = wx / wl; uz = wz / wl; } }
+    }
+    if (e._ordSideT > 0) { e._ordSideT -= dt; const t = ux; ux = -uz * e._ordSideS; uz = t * e._ordSideS; }
+    // a jog; a run (as a flag runner's) when he is over 12 m from where he is going
+    const sp = Math.min(gd, (gd > 12 ? CTF_RUN_SPEED : 3.2) * (ch.moveSpeed ?? 1.0) * (see ? 0.75 : 1) * dt), r = 0.33;
+    const bx = e.pos.x, bz = e.pos.z, nx = bx + ux * sp, nz = bz + uz * sp;
+    if (!collidesObstacles(nx, nz, r)) { e.pos.x = nx; e.pos.z = nz; }
+    else {
+      if (!collidesObstacles(nx, e.pos.z, r)) e.pos.x = nx;
+      if (!collidesObstacles(e.pos.x, nz, r)) e.pos.z = nz;
+    }
+    if (sp > 1e-4 && Math.hypot(e.pos.x - bx, e.pos.z - bz) < sp * 0.3) {
+      e._ordWall = (e._ordWall || 0) + dt;
+      if (e._ordWall > 0.4) { e._ordSideS = e._ordSideS ? -e._ordSideS : (Math.random() < 0.5 ? -1 : 1); e._ordSideT = 0.7; e._ordWall = 0; }
+    } else e._ordWall = 0;
+    // no nearer by 0.3 m in 4 s: the states have him for 2 s
+    const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
+    if (e._ordBest == null || dNow < e._ordBest - 0.3 || dNow < 1) { e._ordBest = dNow; e._ordStuck = 0; }
+    else if ((e._ordStuck = (e._ordStuck || 0) + dt) > 4) { e._ordStuck = 0; e._ordBest = null; e._ordBan = 2; e.stateTime = 0; }
+    if (want.near && Math.hypot(want.goal.x - e.pos.x, want.goal.z - e.pos.z) <= want.near) e._ordGoal = null;
+  } else {
+    e._ordGoal = null; e._ordBest = null; e._ordStuck = 0;
+    // holding: find cover keeps him low, up to shoot for a moment every couple of seconds; otherwise he stands
+    if (want.low) {
+      e._ordPeekT = (e._ordPeekT ?? 2) - dt;
+      if (e._ordPeekT <= -1.2) e._ordPeekT = 1.6 + Math.random() * 0.8;
+      setKidCrouch(e.mesh, e._ordPeekT > 0 ? 1 : 0);
+    } else setKidCrouch(e.mesh, 0);
+  }
+  const up = !(want.low && e._ordPeekT > 0);
+  kidTurnToward(e, see || want.hold ? Math.atan2(tgt.pos.x - e.pos.x, tgt.pos.z - e.pos.z) : Math.atan2(ux, uz), dt);
+  e.mesh.group.rotation.y = e.yaw;
+  e._hasLOSNow = see && up;
+  if (see && up) {
+    e._ordShotT = (e._ordShotT ?? 0.3) - dt;
+    if (e._ordShotT <= 0) {
+      const aim = tgt.pos.clone(); aim.y = tgt.chestY;
+      spawnEnemyBB(e, aim);
+      e._ordShots = (e._ordShots || 0) + 1;
+      const auto = ['mp5', 'ump', 'ak47', 'ar', 'mac10'].includes(e.weapon);
+      e._ordShotT = auto ? 0.25 + Math.random() * 0.15 : e.weapon === 'shotgun' ? 0.9 + Math.random() * 0.4 : e.weapon === 'sniper' ? 1.6 + Math.random() * 0.6 : 0.6 + Math.random() * 0.3;
     }
   }
   return true;
@@ -28081,6 +29889,8 @@ function threatScore(e, c) {
   if (e._teamFocus && e._teamFocus === c) score -= FOCUS_BONUS;
   // v1.189: whoever carries a flag draws every gun on the other side
   if (Game.scenario.ctf && ctfCarrying(c)) score -= CTF_CARRIER_BONUS;
+  // v1.248 (D.35): on follow me, the kid you aim at draws your teammates' guns
+  if (e.team === 'player' && Game.scenario.squadOrder === 'follow' && Game.scenario._playerAimKid === c) score -= SQUAD_AIM_BONUS;
   return score;
 }
 
@@ -28572,7 +30382,7 @@ function updateEnemies(dt) {
     const dzP = tgt.pos.z - e.pos.z;
     const distToPlayer = Math.sqrt(dxP*dxP + dzP*dzP);
     // v1.183: turns over ~0.2 s, not a snap (a retreating kid turns toward home in his state instead)
-    if (e.state !== 'retreating' && !e._flagRun) kidTurnToward(e, Math.atan2(dxP, dzP), dt);   // v1.189: a flag runner turns in kidFlagRun
+    if (e.state !== 'retreating' && !e._flagRun && !e._orderRun) kidTurnToward(e, Math.atan2(dxP, dzP), dt);   // v1.189: a flag runner turns in kidFlagRun (v1.248: and one on an order in kidOrderRun)
     e.mesh.group.rotation.y = e.yaw;
 
     // v1.28m: plant pos.y on the terrain HERE, at the top of per-enemy work,
@@ -28964,8 +30774,10 @@ function updateEnemies(dt) {
     // v1.189: capture the flag. A kid with a flag to fetch, carry home or send home walks there by the distance field
     // (kidFlagRun) instead of the states below, firing on the move at whoever he can see.
     e._flagRun = Game.scenario.ctf ? kidFlagRun(e, tgt, distToPlayer, dt) : false;
+    // v1.248 (D.35): a teammate on a standing order (squad commands) moves on it instead of the states
+    e._orderRun = !e._flagRun && Game.scenario.squadOrder && e.team === 'player' ? kidOrderRun(e, tgt, distToPlayer, dt) : false;
     // State logic
-    if (!e._flagRun) switch (e.state) {
+    if (!e._flagRun && !e._orderRun) switch (e.state) {
       case 'deploying': {
         // v1.14: Match-start dispersal. The kid spawned in a tight huddle at one
         // end of the map and now jogs to its assigned fighting position
@@ -30262,6 +32074,7 @@ const Tutorial = {
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
 function stepGame(dt) {
+  pollGamepad(dt);   // v1.241 (D.38)
   updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
@@ -30281,10 +32094,11 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario' && !Game.forfeitAsk) {   // v1.208: paused while F asks
+  } else if (Game.mode === 'scenario' && !Game.forfeitAsk && !Game.paused) {   // v1.208: paused while F asks (v1.239: and in the pause menu)
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);
+    updateNoodle(dt);   // v1.249 (D.36)
     // Sub-step BB physics: BBs at 30+ m/s can skip through thin obstacles
     // in a single 16ms frame. Run physics at ~5ms steps.
     // v1.74: a BB hit can call endScenario() mid-substep (final-life loss), which
@@ -30306,6 +32120,7 @@ function stepGame(dt) {
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
+    updateSquad(dt);   // v1.248 (D.35)
     updateEnemies(dt);
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
@@ -30402,6 +32217,10 @@ function updateBedroomSettingsBtn() {
   if (btn.style.display !== want) btn.style.display = want;
 }
 document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
+// v1.239 (D.39): the pause menu's buttons. Settings open over it; closing them leaves it up, the match still stopped.
+document.getElementById('pauseResumeBtn').addEventListener('click', resumeFromPause);
+document.getElementById('pauseSettingsBtn').addEventListener('click', openSettings);
+document.getElementById('pauseForfeitBtn').addEventListener('click', () => { closePauseMenu(); askForfeit(); });
 document.getElementById('bedroomSettingsBtn').addEventListener('click', e => { e.stopPropagation(); openSettings(); });
 // its mousedown must not reach the document's, which would take the pointer lock for the bedroom
 document.getElementById('bedroomSettingsBtn').addEventListener('mousedown', e => e.stopPropagation());
@@ -31392,6 +33211,11 @@ document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
 document.getElementById('loadoutCloseBtn').addEventListener('click', closeLoadout);
 document.getElementById('wbCloseBtn').addEventListener('click', closeWorkbench);
 
+// v1.245: the damage report's renderer and shaders, ready before the first loss. Made just after the page has loaded,
+// while the title sits idle, not during the load (it is most of a second on a software GPU).
+window.addEventListener('load', () => setTimeout(() => {
+  try { warmDamageReport(); } catch (e) { console.warn('damage report warm-up', e); }
+}, 500));
 // Start render loop immediately (title screen renders nothing but stays warm)
 Game.clock.start();
 tick();
