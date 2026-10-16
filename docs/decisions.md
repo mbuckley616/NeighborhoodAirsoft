@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **A trade on the last tag is a loss (critic, 2026-10-16)**
   When you tag the last kid and his BB, already in the air, lands on you inside the next 600 ms, you lose: the win
   waits 600 ms so the hit shows on screen, and a tag on you ends the round at once (v1.90, "the first ending stands";
@@ -15,8 +17,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **A trade is a draw:** a new result, both out, no win, the loss's pay
   - C) **Leave it:** the round was still on, so the BB counts (today)
   Critic's lean: A. It is how a kid would call it ("I got you first!"), and the cost is one check in `applyBBHit`.
-
-## Answered
+  Michael: **A) A trade goes to you**. (2026-10-16)
 
 - **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
   The critic (15 Oct, v1.244) found Every Kid for Themselves decided by Seth: your `road_east` start is 27.7 m from his
