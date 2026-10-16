@@ -5,6 +5,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **A trade on the last tag is a loss (critic, 2026-10-16)**
+  When you tag the last kid and his BB, already in the air, lands on you inside the next 600 ms, you lose: the win
+  waits 600 ms so the hit shows on screen, and a tag on you ends the round at once (v1.90, "the first ending stands";
+  its Still open left this to you). In 1v1s it's common up close: in Seth's House the critic's bot tagged Seth in 12
+  rounds and 9 ended YOU'RE OUT, his BB landing 16–50 ms after the tag (he fired before it, from 1–8 m); Tyler in the
+  store, 1 of 4. The card then reads "Seth grins from behind the cardboard" with Seth out and your tag counted.
+  - A) **A trade goes to you:** once your last tag lands, nothing tags you during the 600 ms; you win
+  - B) **A trade is a draw:** a new result, both out, no win, the loss's pay
+  - C) **Leave it:** the round was still on, so the BB counts (today)
+  Critic's lean: A. It is how a kid would call it ("I got you first!"), and the cost is one check in `applyBBHit`.
+
 ## Answered
 
 - **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
