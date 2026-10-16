@@ -10086,6 +10086,97 @@ matches are untouched: one life is one life, and a match that gives you more sti
   a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
   sight, is for a playtest.
 
+## v1.150 — Every kid has his own lines, and none of them repeats himself
+Michael's D.9 note asked for better voices (VoiceStudio) and more, more varied lines. The builder put the
+question to him with four options and he answered A on the control room (2 Oct, 19:59 UTC): more and more varied
+lines now, with the browser voices; recorded voices later. This is the first Fable session, and the first half of
+that answer. (This branch's versions start at v1.150 so they cannot collide with the builder's, which is at
+v1.141 on auto/build and climbing.)
+
+What the kids had: four situations a kid speaks in (he tagged you, he got tagged, he peeked out on you, a taunt
+every 12 to 30 s or with a covering burst), plus the Infection barks. Nine of the 24 kids had their own lines,
+three or four a situation; the other fifteen shared three generic lines a situation by aggression band, so Priya,
+Owen, the twins and all of Northcliff sounded like the same kid. Each line was drawn at random with no memory, so a
+kid could say the same line twice running, and in a long round a three-line taunt pool came round every minute.
+Two smaller things: the speech cooldowns ran on wall-clock time, and a kid on your own team ran the same taunt
+timer as the enemy, so Seth beside you would yell "Stop hiding!" at nobody.
+
+What changed, all in the voice tables and `tryNpcSpeak`:
+- Every kid in CHARACTERS has his own lines in all four situations, four or five each, written to the character
+  notes already in the file: Priya talks about your sides, Owen barely talks, the twins yell for each other,
+  Christian is thrilled to hit anything, Rebecca is unbothered. The three band defaults are six a situation now.
+  A kid's pool for a situation is his own lines plus his band's, about ten, and the picker takes his own 7 in 10.
+  Early-2000s suburban kids: trash talk, nothing mean, no profanity, no real brands or schools. Eight words at
+  most (TTS runs about three words a second), and the table has 544 lines where it had 162.
+- A memory: each kid keeps his last three lines and the game keeps the last two anyone said; those are left out
+  while anything else remains, so a kid never says the same line twice running and two kids do not echo each other.
+- A `teammate` pool (ten lines: "Push up with me!", "Cover me, I'm moving!"): a kid on your team, outside a
+  free-for-all, draws from it when his taunt timer fires, instead of taunting you.
+- The cooldowns (1.5 s between anyone's lines, 4 s between one kid's) now run on the round clock, not wall time,
+  and the global one resets at BEGIN. In play that is the same thing; a backgrounded tab and the headless tests
+  now pace the kids the way play does. A line counts as said (cooldowns, and a `VOICE.log` of the last 64 lines
+  for the tests) before the browser is asked to speak it, so a browser with no voices paces the kids the same way.
+Nothing else moved: the voice per kid, the pitch by height, the distance cutoff at 24 m and the positional chirp
+are as they were.
+
+### Verified
+- `tests/voices.test.mjs` (new), 44 checks. The tables: 24 kids, every one with at least 4 own lines in each of
+  the 4 situations; 6 a situation in each band; no pool holds a line twice (16 bespoke lines that matched their
+  band's defaults were rewritten); no line over 8 words; nothing from a short rude-word list. The picker: 96
+  (kid, situation) pairs, 300 draws each, never the last line, never any of the last three, at least 4 distinct
+  lines from every pool, own lines 50 to 90% of the draws. Headless rounds with the player untaggable at spawn:
+  the Winnmark 3v3 (13 to 40 lines in 90 s from 4 or 5 kids), the whole block (35 lines, Marcus and Seth, the two
+  within earshot), Infection (4 to 6 barks from the pool), the 1v1 and the lot free-for-all (1 to 5 lines; Sean and
+  the free-for-all kids fight past the 24 m range of a player who stands still). In every round no kid said the
+  same line twice running, every gap was at least 4 s per kid and 1.5 s overall, and every line came from the
+  speaker's pool for that situation. Allies' taunt timers gave teammate lines ("Go, go, I'll cover you!", "Stay
+  low, stay low!") and never a taunt; by hand, 4 of 4 ally taunts came out as teammate lines and 4 of 4 hostile
+  ones as taunts. No page errors.
+- `npm test`: see the PR comment for the full run on this build.
+
+### Still open
+- Only a real playtest can judge the lines themselves, and whether 7 in 10 own lines is the right mix; the band
+  lines are there so the pools are deep, not because they are better.
+- Recorded voices (options B and C) wait on Michael: the script and the loader are a later card.
+- A kid's memory is three lines; the taunt pools are about ten, so over a long round a line does come back, just
+  never within four of a kid's lines.
+
+## v1.151 — A kid calls a tag on another kid, and the nearest kid calls the start
+The second half of the D.9 inventory. The card listed the situations a kid speaks in, and two on the list had no
+line: "tagged someone" only covered tagging you (a kid who tagged your teammate said nothing), and nothing was said
+at the start of a round. Both are small and sit on hooks the code already had, so they are in; Michael can veto the
+start call if it is one voice too many at BEGIN.
+
+- A kid who tags another kid calls it the way he calls a tag on you, from the same pool ("Got him! Easy.", "SETH!
+  Did you see that?"). The tagged kid still speaks first, and the 1.5 s global cooldown then usually keeps the
+  shooter quiet, so his call fills in when the tagged kid was out of earshot or on his own cooldown: you hear
+  whichever of the two is nearer.
+- When the 2.5 s opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls the
+  start, once a round, from a pool by aggression band (six each: "Game on! Let's go!", "Spread out, spread out!",
+  "Everybody find a spot."). Taggers bark on their own and tutorial dummies never speak. A kid who has already
+  called you out inside the hold is on his 4 s cooldown and is passed over.
+
+Two bugs of v1.150's found by the new checks and fixed here: the once-a-round flag lived on `Game.scenario`, which
+persists between rounds, so the start call would have fired only in the first round of a session (it resets at
+BEGIN now); and a line was picked, and so entered the kid's recent-lines memory, before the earshot gate, so a kid
+out of range filled his memory with lines nobody heard and a heard line could come round again (Trey said "Watch the
+left side!" twice running in a 3v3). The pick now comes after the gate.
+
+### Verified
+- `tests/voices.test.mjs`, now 54 checks, green 3 of 3 runs. New: the band tables carry six start lines each with no
+  duplicates and under the 8-word cap (562 lines in the tables now). By hand in the Winnmark 3v3 and the lot
+  free-for-all with a hostile kid 6 m from spawn: one start call, at 2.52 s, from that kid; with every kid 40 m
+  off, no call and the flag spent; in Infection, no call. A tag on another kid by hand: with the tagged kid free
+  to speak, one line (his npcHit) and the shooter held by the global cooldown; with the tagged kid on cooldown,
+  one line, the shooter's, from his own tag pool. The five headless rounds and the picker checks of v1.150 hold.
+- `npm test`: the full run on this build is in the PR comment.
+
+### Still open
+- The start call is the one new spoken moment a player hears every match; whether it earns its place is a
+  playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
+- The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
+  lines with names in them (templates), which this card did not ask for.
+
 ## v1.223 — The AR, held up to an M4
 Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
 (its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
@@ -10140,6 +10231,38 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
 
+## v1.229 — The voices build brought up to main, and the school's own kids get lines of their own
+Michael approved the voices build (v1.150–v1.151, eb29fc2) on 3 Oct, but by then it no longer merged onto main: both
+sides had changed the title-screen version label and the end of the devlog, and the producer only merges the exact commit
+he approved, so it stopped and raised a blocker that nobody owned once the Fable card was done. Main went on for eleven
+days and 324 commits. Asked about the blocker on 14 Oct, Michael had it fixed locally.
+
+Main (v1.222) is merged into `auto/fable-d9-voices`. The conflicts were the version label (main's NEW GAME ask and
+SETTINGS button kept), `startScenario`'s round reset (the voice cooldowns and the start call from this branch, the match
+stats and the ladder flag from main: all four lines kept), the devlog (main's entries, then v1.150–v1.151) and D.9 in the
+backlog. The builder's v1.223–v1.224 (4d675c5), which Michael approved the same morning and the producer has not yet
+merged, is merged in as well, so this branch goes onto main cleanly whichever of the two lands first.
+
+One thing the conflicts did not show: Hollins Ridge High's six kids (v1.190, Jordan, Caleb, Nathan, Sophie, Grant and
+Malik) came after the v1.150 tables and had no lines of their own; they drew only on their aggression band's defaults,
+and `tests/voices.test.mjs` failed on them (0 own lines in each of the four situations). Each now has 4–5 lines a
+situation drawn from his or her flavor text: Jordan's portables, Caleb always nearly making it across, Nathan's "everyone
+crosses the field", Sophie coming round the wrong side, Grant at the cars, Malik's close range. Their TTS voice and pitch
+already came from their id and height, so nothing else was missing.
+### Verified
+- `tests/voices.test.mjs`: 30 kids, 664 lines in the tables (was 562 on the merge), every kid at least 4 own lines in
+  every situation, no duplicates, nothing over 8 words, nothing rude. New: the school's 3v3 joins the headless rounds
+  (16–18 lines, none repeated, pacing and pools right), and each hostile school kid is called by hand at 2 m six times a
+  situation: Caleb 16 lines (12 his own), Nathan 24 (17), Sophie 24 (16). Passed three runs.
+- Full suite in six local shards at once: no check failed anywhere; 27 suites were cut off by the runner's 10-minute
+  limit or a 30 s page load with six browsers on one machine. The twelve non-sweep suites among them pass run alone
+  (ai-clock, idle-ally, pickup-lives, ctf-clock, fp-hands, grip, last-kid, pickup, retreat-progress, pickup-fernando,
+  market-lot, pointer-lock). The sixteen stuck-kid sweeps are left to CI's shards on the push.
+### Still open
+- Michael's ear on the school kids' lines, and a fresh Approve on this head (the 3 Oct approval was of eb29fc2).
+- Whichever of this and the builder's later work (v1.225+) merges second still meets the version label and the devlog
+  tail; the builder merges main into its branch itself, so it should land this first if it can.
+- The walkie callouts (D.10) can start once this is on main.
 ## v1.225 — The sniper, held up to a Remington 700
 Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
 copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
@@ -10960,3 +11083,19 @@ backlog keeps this branch's VIP-fall note above main's lines.
 ### Still open
 - Escape online still opens the PAUSED card while the match runs on behind it; whether it should open at all online is
   a step-2 question. A fresh Approve on this head.
+## v1.229 (16 Oct) — The voices build brought up to main a second time
+Michael's 14 Oct approval of f68d759 could not merge: the builder's v1.225–v1.228 landed first, and the branch sat
+blocked for two days while main went on to v1.252, because nobody on the team is set to bring a finished Fable branch up
+to main. Main (v1.252) is merged in from a local session. Conflicts: the title-screen label (main's v1.252 kept, so the
+title reads v1.252 until the next bump), the band defaults in `VOICE_LINES_DEFAULT` (this branch's six-a-category pools,
+with main's v1.237 `shotWhileOut` lines added to each band), and the devlog tail (both kept). `applyBBHit` merged on its
+own: the v1.237 early return for a kid who is already out now comes before the v1.151 tag call, so an out kid who is
+shot complains and the shooter says nothing, which is right.
+One test needed its setup changed, not the game: `tests/voices.test.mjs` tags the same kid twice by hand, and since
+v1.237 the second hit on an out kid is a complaint, not a tag. The test now stands him back up (state and health)
+before the second hit.
+### Verified
+- `node scripts/parsecheck.mjs` OK; `tests/voices.test.mjs` passes (the shooter's call fills in: Brooke, "Saw you coming.").
+- The rest is left to CI's eight shards on the push.
+### Still open
+- A fresh Approve on this head. Whichever of this and the builder's next merge lands second meets the version label again.
