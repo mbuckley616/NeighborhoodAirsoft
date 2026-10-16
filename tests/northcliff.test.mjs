@@ -73,11 +73,14 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   check(`${id}: the hill falls north to south (top > road > bank > creek)`,
     start.hill.top > start.hill.road + 1.5 && start.hill.road > start.hill.bank + 1 && start.hill.bank > start.hill.creek, start.hill);
   const r = await page.evaluate(() => {
-    const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
+    // fix-up (PR #75, as market-lot's v1.141): the player is untaggable, but a hit on him is a life lost on his side
+    let playerHits = 0;
+    const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) { playerHits++; return; } return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
     const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z] }));
-    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
+    const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0)
+      + (t === 'player' ? playerHits : 0);
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
     let f = 1, floatMax = 0;
     for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
@@ -94,13 +97,17 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
       });
     }
     spawnEnemyBB = o; applyBBHit = orig;
-    return { team, secs: Math.round((f - 1) / 60), shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
+    return { team, secs: Math.round((f - 1) / 60), shots, mode: Game.mode, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'), playerHits,
+      enemyLives: kids.filter(k => k.team === 'enemy').reduce((a, k) => a + k.maxLives, 0),
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, lives: k.lives, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  if (r.team) check(`${id}: both sides lose lives (within 120 s)`, r.lostEnemy > 0 && r.lostAlly > 0, r);
+  // fix-up (PR #75, as market-lot's v1.141 and v1.171): or the round is decided, every enemy life gone with none of
+  // ours, or an ally kid out of lives. CI on 5e2e2a3: the twins 3v3 at 0-6, Andrew and Alex both out of lives.
+  if (r.team) check(`${id}: both sides lose lives (within 120 s), or one side is down to its last lives`,
+    (r.lostEnemy > 0 && (r.lostAlly > 0 || r.lostEnemy >= r.enemyLives)) || r.kids.some(k => k.t === 'player' && k.lives === 0), r);
   if (id === 'northcliff_defend_creek') check(`${id}: an attacker comes down past the road into the low yards (z > 8)`,
     r.kids.filter(k => k.t !== 'player').some(k => k.at[1] > 8), r.kids);
   // v1.131: Fernando's rifle holds the high yard by the bulb, (-15, -28), as the briefings say

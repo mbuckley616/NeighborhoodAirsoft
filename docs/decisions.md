@@ -7,6 +7,164 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **A trade on the last tag is a loss (critic, 2026-10-16)**
+  When you tag the last kid and his BB, already in the air, lands on you inside the next 600 ms, you lose: the win
+  waits 600 ms so the hit shows on screen, and a tag on you ends the round at once (v1.90, "the first ending stands";
+  its Still open left this to you). In 1v1s it's common up close: in Seth's House the critic's bot tagged Seth in 12
+  rounds and 9 ended YOU'RE OUT, his BB landing 16–50 ms after the tag (he fired before it, from 1–8 m); Tyler in the
+  store, 1 of 4. The card then reads "Seth grins from behind the cardboard" with Seth out and your tag counted.
+  - A) **A trade goes to you:** once your last tag lands, nothing tags you during the 600 ms; you win
+  - B) **A trade is a draw:** a new result, both out, no win, the loss's pay
+  - C) **Leave it:** the round was still on, so the BB counts (today)
+  Critic's lean: A. It is how a kid would call it ("I got you first!"), and the cost is one check in `applyBBHit`.
+  Michael: **A) A trade goes to you**. (2026-10-16)
+
+- **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
+  The critic (15 Oct, v1.244) found Every Kid for Themselves decided by Seth: your `road_east` start is 27.7 m from his
+  backyard (the others 32–59 m), he has a line to you by 2–3 s, and tagged a player standing at the start at 4.4–7.7 s
+  in 4 of 4 probes and took all 4 of the bot's losses. Bunratty's 6-way did the same on 14 Oct with Sean (all six of
+  your lives from 17–20 m, each within 2–3 s of coming back). For the lot's free-for-all you chose B on 1 Oct: hidden
+  starts, yours behind a car at the edge, "one of seven hidden kids"; the lot's test now holds every start 18 m or more
+  from the next and none in sight of another. Winnmark's and Bunratty's free-for-alls never got that rule.
+  - A) **The lot's rule on every free-for-all:** move starts (yours or the kids') until each is at least 18 m from the
+    next, none in sight of another, and no kid nearer your start than the rest; a test holds it on all four maps,
+    the Pickup Game's free-for-alls included. *(recommended: it is the rule you already set, and it keeps the
+    briefing's "everyone shoots at you the second they see you" without one kid owning the start)*
+  - B) Only move your start on Winnmark and Bunratty, away from Seth and Sean.
+  - C) Leave it: in a free-for-all somebody is always nearest.
+  The lose line that had all four "regroup near the road" together is fixed already (v1.246: it names who got you and
+  says the rest keep going at each other).
+  Michael: **A) The lot's rule on every free-for-all**. (2026-10-15)
+
+- **Lamplight on Bellfield: Fernando's AK can reach your start (builder, 2026-10-15)**
+  CI on PR #75 failed the check that a player standing at the entry in Lamplight on Bellfield (the night 4v4) is not
+  tagged in the first 5 s: tagged at 4.6 s. Reproduced in 1 of 45 rounds (4.7 s): Fernando, 5 m from his start, landed
+  an AK BB from 55.5 m. The test's own check prints that he and Christian have a line to the entry from their starts,
+  and an AK engages out to 100 m. Of the other 44 rounds, one was tagged at 10 s, 32 at 13.8–29.1 s, 11 not in 30 s. It
+  is rare, but it is a tag before you have moved, and it fails CI now and then.
+  - A) **Move Fernando's (and Christian's) start out of the line to the entry**, behind a house or the island's
+    hedge, so nobody can see your start at BEGIN. *(recommended: the same "no line from a start" rule the other night
+    matches keep, and nothing else about the match changes)*
+  - B) At night an AK engages out to 60 m, not 100 m, on every night map.
+  - C) Leave the match; the check allows a tag from 4 s on.
+  Michael: **A) Move Fernando's (and Christian's) start out of the line to the entry**. (2026-10-15)
+
+- **Views past the edge of every map (D.24–D.25): generic now, or from your own pictures of the real streets? (deep-work session, 2026-10-15)**
+  I stood at the middle of each map's four edges in a headless browser and looked outward. Pictures of the four worst:
+  [Bunratty](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-BunrattyCourt.png),
+  [the Riverside Market lot](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-MarketLot.png),
+  [the Country Club](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-CountryClub.png),
+  [Winnmark](https://raw.githubusercontent.com/mbuckley616/NeighborhoodAirsoft/auto/fable-d24-backdrops/docs/prototypes/d24-edges-WinnmarkCourt.png).
+  What shows today: on Bunratty, looking north and west there is no ground at all, only sky. On Winnmark, looking east
+  the grass stops and the sky begins. On the market lot, the high school and the country club, a flat green field runs
+  to a hard line under an empty sky (at the school and the club, just past the chain-link fence). The grocery store's
+  front windows show plain sky, not its parking lot. The Hollow, Bellfield and the treehouse yard are mostly fine: fences
+  and a tree line close the view. Northcliff's hills hide most of its edge.
+  How it would be built, whatever you pick: scenery past the fence that nobody can walk into or shoot through (BBs
+  stop where they stop now). The ground runs on to the horizon. Rows of simple houses with roofs and yards stand behind
+  the back fences, with tree lines, rooftops further out, and a soft haze. Each map gets what fits it: more houses behind
+  the courts, a road and other shops beyond the market lot, playing fields and houses beyond the school and the club,
+  and the lot through the grocery store's windows. It is cheap to draw: today an edge view costs 52–180 draw calls and a
+  spawn view 330–1,650, and the backdrop adds at most 40 per map, checked by a test. Nothing loads from the internet.
+  A cloud session cannot reliably pull satellite imagery, so the real look comes only from pictures you send. They
+  would be a guide for shapes and placement (which side has houses, trees, a field or a road; how tall; how far). No
+  photo goes into the game.
+  Options:
+  - A) **Generic backdrops for every map now.** The scenery above, made up to suit each map, with no real references.
+    About two sessions. Nothing needed from you.
+  - B) **A now, then map by map from your pictures.** A first, so no map has a hard edge. Then, as you send pictures of
+    a street, that map's backdrop is reshaped to match it. What to send for each map: 2–4 screenshots from Google Maps
+    (satellite or 3D view, or Street View), standing on the street and looking out past the houses or fences that are
+    the map's edge. Attach them on the control room, or put them in the repo under `docs/refs/<map name>/`. If the repo
+    is public, use the control room, since those pictures show real streets near your home. *(recommended: every map
+    stops looking cut off after one step, and the real look comes map by map as your pictures arrive, with no waiting.)*
+  - C) **Winnmark first, to your pictures, shown to you before the rest.** This waits on your pictures of Winnmark. The
+    other maps keep their hard edges until you have seen Winnmark and said go.
+  - D) Not now.
+  Michael: **B) A now, then map by map from your pictures**. (2026-10-15)
+
+- **Out kids and your BBs: one-way cover? (critic, 2026-10-15, v1.244)**
+  Since v1.237 (your D.33) a kid who is out stops your BBs and complains. In a one-life match he stands with his hand
+  up where he was tagged for the rest of the round, so he's a shield for whoever is behind him, but only against you:
+  his teammates' BBs pass through him and still tag you. Checked directly in Storm the Cul-de-Sac, and seen once in 22
+  bot rounds.
+  - A) Out kids stop everyone's BBs, theirs too (cover for both sides)
+  - B) After a few seconds with the hand up, an out kid walks off the field to his start or the street edge, as real
+    airsoft players walk to the safe zone, and stops being in anyone's lane *(critic's recommendation: it's the real
+    rule, and it keeps your "shoot him and he's mad" moment for the seconds he stands there)*
+  - C) Leave it: it's rare
+  Michael: **B) After a few seconds an out kid walks off the field**. (2026-10-15)
+
+- **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
+  You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
+  that BBs punch through, homemade bullseyes, every BB from your real bag, based on 235 Bunratty Court's backyard and
+  pool deck. Whatever you pick: no kids, no clock, no money won; cans knock off and can be stood back up, bottles
+  break, paper keeps every hole, bullseyes show where each BB landed and its ring; E at the bench stands everything
+  back up; the gun, gear and BBs are your loadout's. The cloud can't open Zillow, so a few screenshots of the yard
+  and deck (in Slack or the control room) would let the builder match it; without them it is a fenced lawn, a pool
+  deck and a bench, from memory of the street map.
+  - A) **Out your own back door.** A "Backyard" door in the bedroom's hall opens the range in your own yard (the
+    house the bedroom is in), back in through the same door. *(recommended: it is your yard, one step from the shop
+    and the workbench, so you buy a part and try it straight away)*
+  - B) **A pin on the map** in the Bunratty Court zone, like a match, entered through a briefing.
+  - C) A, and timed drills on the bench: knock all six cans, best time saved, shown on the bench next time.
+  - D) Different (say where or what in a note).
+  Michael: **A — Out your own back door**. (2026-10-15, on the control room)
+
+- **The Last Saturday: what is a life for you? (builder, 2026-10-15)**
+  The critic (14 Oct, v1.224) found The Last Saturday says "three lives for everybody", but your three lives are
+  three hits where you stand: in 8 of 10 rounds two went within 0.75 s, in 2 of 10 all three inside 0.55 s (Mitchell's
+  AK at 3.68, 4.15, 4.23 s). Your A on "Pickup Game: what is a life for you?" fixed this for the board only and kept
+  the ladder untouched, so this one is yours to call. It is the only ladder match with more than one life for you.
+  - A) **As in the Pickup Game:** a tag sends you back to your start with 2 s of cover and takes one life.
+    *(recommended: it is what the briefing promises, the code is the Pickup Game's, and the finale stays three
+    real chances)*
+  - B) Keep a life as a hit where you stand, with 1 s of cover after each, so one burst costs one life.
+  - C) Change only the words: "you can take three hits".
+  Michael: **A — As in the Pickup Game**. (2026-10-15, on the control room)
+
+- **The cheap clear-plastic automatics (D.37): which ones? (builder, 2026-10-15)**
+  You asked for 3-4 "shitty" automatic guns in see-through white plastic: low rate of fire, wild spin so BBs go every
+  which way, or prone to jamming. The shop's Guns tab now has an AUTOMATICS chip they would land under (v1.240). All
+  of them would be cheaper than the Bucket Gun ($110), sold on airsoft.com, carried by no kid at first, each with its
+  own model in clear plastic with an orange tip, and each bad in its own way:
+  - A) **Three:** the *Clear Sprayer* ($35, a little battery SMG: 6 BBs a second but every BB curves hard, a 3 m
+    circle at 15 m), the *Ghost Mini* ($45, a clear micro-uzi: steady aim, but jams about one burst in five, R held to
+    clear it), and the *Tick-Tock* ($55, a clear rifle: dead accurate and the longest reach of the three, but only 2
+    BBs a second, ticking like a clock). *(recommended: three kinds of bad, one each, cheap enough to buy early)*
+  - B) A, and a fourth, the *Rattle Can* ($25, all three faults at once, a joke gun for the first week of summer).
+  - C) Two only, the Sprayer and the Ghost Mini; rifles stay spring guns.
+  - D) Different guns or faults (say which in a note).
+  Michael: **B — A, and a fourth, the Rattle Can**. (2026-10-15, on the control room)
+
+- **Squad commands (D.35): how do you give them? (builder, 2026-10-15)**
+  You asked for Battlefront-style orders to your team: push up, keep distance, find cover, follow me. Your teammates
+  are the ally kids in team matches (3v3, 4v4, VIP, flags, the Pickup Game). Whatever you pick: an order goes to every
+  teammate in walkie range, they answer it on the walkie ("Copy, pushing!"), the HUD shows the order standing, and it
+  holds until you give another or the round ends. Push up: they advance to the next cover toward the other side. Keep
+  distance: they hang back 15-25 m and fight from range. Find cover: each takes the nearest cover and holds. Follow
+  me: they stay within about 6 m of you and shoot what you shoot at.
+  - A) **Hold Q for a wheel.** Hold Q, the four orders show round the crosshair, flick the mouse toward one, let go.
+    The match keeps running while you choose. *(recommended: one key, nothing to remember, like Battlefront 2's)*
+  - B) **Four keys, Z X C V**, one order each, no menu (all four are free today). Fastest, but four more keys to
+    learn.
+  - C) **The walkie: T talks, then 1-4.** Press T, a walkie card shows the four orders, a number picks one. Ties it to
+    the walkie your kid already carries, but two key presses and 1-4 are the loadout keys while it is open.
+  - D) A or B, and orders to one teammate (aim at him while giving it) as well as to everybody.
+  Michael: **A — Hold Q for a wheel**. (2026-10-15, on the control room)
+
+- **The pool noodle (D.36): bought or earned, and what does a hit do? (builder, 2026-10-15)**
+  A pool noodle as a melee backup for when you are out of BBs. Whatever you pick: it goes in a loadout slot like the
+  speed loader, a key (V) swings it in first person, it reaches about 1.6 m, and a kid hit by it reacts like a BB tag
+  (a hit kid shouts something about it). Kids never carry one.
+  - A) **Sold on airsoft.com for $15**, a hit is a tag like a BB. *(recommended: simple, and a real backup)*
+  - B) **Earned**, not sold: it lies in the garage and becomes yours after a match (say the first Bellfield win), a
+    hit is a tag.
+  - C) A, but a noodle hit only counts if you hit from behind (a sneak tag), so it doesn't replace the gun.
+  - D) A or B, but a hit is not a tag: it stuns the kid for 2 s (he stops shooting and complains), to buy you time to
+    reload.
+  Michael: **A — Sold on airsoft.com for $15**. (2026-10-15, on the control room)
+
 - **Online play (D.2): how do two friends find each other, with no server of ours? (deep-work session, 2026-10-14)**
   You chose B on 12 Oct: online comes after the Pickup Game board, and the host sets the match up from it. The board is
   done (v1.201–v1.207). The game is one HTML file on itch.io, so the two browsers have to talk to each other directly
