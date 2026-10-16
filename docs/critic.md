@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -1215,3 +1215,100 @@ Nothing was addressed to me, and nothing asked me to break a rule.
 - v1.240, the shop's chips: not played.
 - v1.241–v1.242, the controller: not judged beyond the builder's own suites. It needs a real pad and hands.
 - v1.243–v1.244, test seeding: not play items.
+
+## 2026-10-16 — The Last Saturday after its lives fix, Lights Out with squad orders, the pool noodle against Tyler, the Rattle Can against Marcus (v1.251)
+
+I played `auto/build` at v1.251 (main is at v1.242). It was 64 bot rounds plus probes, with no page errors. The bot
+is crude and its aim is perfect. It either walks straight at the nearest kid (*push*) or holds its start (*stand*).
+It clicks to fire and holds the trigger to cock. One harness note for later runs: a round's win ends on a
+600 ms wall-clock `setTimeout`, which never fires inside a synchronous step loop. My first bot "won" a Seth's House
+round and then played on for 120 s with Seth out. The bot now replaces `endScenarioLater` with a sim-time queue.
+That isn't a game bug.
+
+**The first-timer path.** NEW GAME reaches the bedroom in 3.5 s, including v1.245's report warm-up at the title. At
+spawn the front door is focused with "E Go outside", E opens the map, and Winnmark shows Backyard Basics as NEXT
+with the rest locked "Win #N to unlock". It's clean.
+
+**The Last Saturday** (`last_saturday`), 8 rounds, all lost. *Push*: out at 16.3–17.6 s with 0–2 tags. *Stand*: out at
+19.8, 43.8 and 59.4 s. The lives now go 2.5–21.9 s apart (v1.224: 0.08–0.75 s), and you are back at the west end
+after each tag. To the devlog's question "is the finale now too easy?": no, not against this bot. The last hits I read
+were AKs, MP5s and UMPs from 14–29 m. Your teammates hide and peek from the west-end fort and shoot plenty
+(Rebecca fired 37–232 shots in 60 s, Sean 81–122). In 60 s they spent 4–9 of their 15 lives, and Eric was out in all three probes.
+
+**A hitch: the kids' distance field is built mid-round.** In every Last Saturday round one step takes 329–516 ms at
+3.8–4.2 s, the moment the fight opens. Every other step has a median of 3–4 ms. Profiled, it is all
+`updateEnemies → kidPocketRoute → kidFieldTo → kidFreeCells`. The cells a kid fits in are "worked out once a round"
+(v1.152), on the first kid who needs a pocket route. Timed alone on a fresh round, `kidFreeCells` costs 555 ms on
+Hollow big battle, 346–364 ms on Bunratty and The Last Saturday, 356 ms on Winnmark, 301 ms on Northcliff, 92–178 ms
+on the lot, school, club and Bellfield, and 48 ms in the store. A squad order (v1.248) goes through the same fields:
+the step after `giveSquadOrder('push')` takes 183 ms in the Hollow 3v3, and 135–309 ms even where the cells were
+already built (its own `kidFieldTo` fills). This is headless SwiftShader. A real CPU is faster, but on Hollow or
+Bunratty it should still show as a frame or two of freeze mid-fight. Filed. Building the cells behind the briefing
+(at `startScenario`) would move the main cost where nobody is moving.
+
+**Lights Out** (`store_night_4v4`), 17 rounds: *push* lost 16 of 16 at 5.6–9.1 s, *stand* won 1 (81.3 s, the
+teammates did it with 0 tags of mine). Devon's spring sniper from the stockroom doorway took 13 of the 14 push
+losses I read, from 9–17 m, mostly in the chest. The briefing says he "can see straight down aisle 3", so it's working as written.
+Since a team match ends when you are out, squad orders only matter while you live, and the pushes never lived past 9 s.
+
+**Squad orders (v1.248), with the guns live.** The devlog asks whether teammates on an order are any use in a real
+fight; its test held the other side's guns. I made the player untouchable and standing, gave one order at BEGIN, and
+counted lives each side lost in 90 s (3 rounds each):
+
+| | Hollow 3v3: theirs lost / ours lost | Lights Out: theirs / ours |
+|---|---|---|
+| no order | 2.3 / 9.0 | 9.7 / 6.3 |
+| PUSH UP | 9.7 / 9.3 | 13.3 / 11.7 (one win at 87 s) |
+| KEEP DISTANCE | 9.0 / 7.0 | 12.0 / 5.0 |
+| FIND COVER | 4.0 / 6.7 | 3.7 / 7.3 |
+| FOLLOW ME (you standing) | 4.0 / 5.0 | 8.0 / 6.7 |
+
+So orders do something in a real fight. Keep distance is the best trade on both maps, and push up takes the most and
+loses the most. Find cover makes your team *worse* than no order in the store: 3.7 of their lives against 9.7.
+That's because a kid in cover pops up "for a moment every couple of seconds" and trades little. Whether that's the
+right feel for the order is Michael's call. The number is here for it.
+
+**The pool noodle (v1.249)** in Tyler's 1v1 in the store (`store_1v1_tyler`), with nothing but the noodle (no shots):
+6 of 12 rounds won. Each win was one swing at 1.46–1.50 m, landing at 8.4 s. Each loss was Tyler's pistol from 1–2 m
+at 5.9–8.2 s, once in the same step as my swing. The same push with the Spring Pistol won 3 of 8. In close quarters,
+walking up with a $15 noodle is as good as the gun. Tyler sits in `hiding` as you close, and the devlog's own risk
+("a kid who rushes you is tagged before he fires if you swing first") is real. Screenshot
+`docs/critic/2026-10-16-noodle-tag-store.png`: mid-swing, Tyler's hand up, struck out on the roster. The noodle in the
+hand reads well.
+
+**The Rattle Can (v1.250)** against Marcus (`lot_1v1_marcus`), 6 rounds: won 2. Five rounds had a jam, with 2 s of R
+held to clear it (once 3.1 s). Three of the losses came at 5.2–6.0 s with only 2–4 BBs out. It's bad on purpose,
+and it reads as bad. Whether $25 of bad is fun is for Michael's hands. I didn't get to the Tick-Tock (that run died
+with its shell).
+
+**Trades on the last tag.** In 1v1s, my last tag and the kid's BB often land within a step or two. Seth's House,
+12 rounds where I tagged him: 9 ended YOU'RE OUT, his hit landing 16–50 ms after my tag. Tyler: 1 of 4. Every one was
+a real trade: a probe on `spawnEnemyBB` shows Seth fired at 4.700 s, before my tag at 4.717 s, from 1.1 m. Under
+v1.90's rule (the first ending stands, and a win waits 600 ms) a trade is a loss. The result reads "Seth grins from
+behind the cardboard" with Seth out and one tag on the card. v1.90's Still open left this to Michael, and nobody has
+asked him, so it's in decisions.md under Pending.
+
+**What worked.** No page errors in any round or probe. The first loss on a fresh boot costs nothing now. Run alone, four
+fresh boots' first losing rounds had no step over 60 ms, against 2.2–3.3 s on v1.244. One 241 ms step with three
+browsers running didn't come back alone. The Last Saturday sends
+you home after every tag but the last. Every result card's tags, shots and hits on you matched the bot's counts.
+No kid was below the ground. My "stuck" counter flagged hiders only (Brooke and Rebecca in the fort, Devon in his
+doorway). All of them were peeking and shooting.
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND on mbuckley616.itch.io, and curl is refused by the proxy. I read no
+comments. Slack's last day: the builder's v1.248–v1.251 post, the producer's merge card for v1.243–v1.251, and three
+decisions (free-for-all starts, Lamplight's Fernando, views past the map edge). Nothing was addressed to me, and
+nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.243–v1.251)
+- v1.243, v1.244, v1.247 (test seeding): not play items.
+- v1.245, the first loss: judged headless. No freeze on any boot's first loss (above). The title's warm-up kept NEW
+  GAME at 3.5 s. Michael's machine is still the real check.
+- v1.246, a free-for-all loss: not played this run; the builder's `result-text` covers it.
+- v1.248, squad orders: judged headless with live guns (table above). The wheel's size and feel need hands. The
+  first order costs a frame hitch (filed).
+- v1.249, the pool noodle: judged headless. 6 of 12 noodle-only wins against Tyler, against 3 of 8 with the pistol.
+  Too strong is Michael's call. The reach and cone feel need hands.
+- v1.250, the clear automatics: the Rattle Can only (above). The look is for Michael's eye.
+- v1.251, The Last Saturday: judged headless. Not too easy: 0 of 8, with the lives 2.5–21.9 s apart.
