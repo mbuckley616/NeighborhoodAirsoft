@@ -10341,3 +10341,47 @@ text and its disabled state, so the next briefing could not be begun. It is rese
   guest at the host's start.
 - Steps 2 (teams, the board's kids filling the empty spots) and 3 (a room list and a Campaign / Online / Settings title)
   wait for Michael's look at this one.
+
+## v1.230 fix-up — shard 7/8 steadied: online's start waits, vip's played rounds seeded
+PR #67 (online play, step 1) had a green PR run, but shard 7/8 of the push run failed twice on 14 Oct, on two
+different suites, so it could not be approved. A local session took it (Michael's desktop, Windows, 12 cores) and read
+the CI logs. Neither failure was the game.
+
+`online.test.mjs` died with a `TimeoutError` at the second match's start, before its dropped-friend checks ran. BEGIN
+starts a match on a 400 ms timer, and both pages then build and draw Winnmark in software GL. The suite gave each game
+20 s of wall clock to reach `scenario`. On CI the first match's join-to-start took 17 s; in the second the host took
+about 13 s and the guest then ran past his own 20 s. The waits are now 90 s (the harness gives a briefing 90), polled
+every 250 ms rather than on the page's frames, and the result waits 30 s, not 10. The suite also crossed its messages
+in up to six evaluates every two frames, and each evaluate waits out a frame of both pages' render loops. It now steps
+each game in one evaluate (what the other sent, two steps, what it sends back), and no message waits in Node between
+runs. The checks and the lag between the games (two frames) are as before.
+
+`vip.test.mjs`'s "the kids trade tags and come back" (and with it "no VIP falls in the first 8 s") came from a played
+round that was a fresh draw every run. Math.random was unseeded; the page's own render loop stepped the game in real
+time between the test's steps (0.5-1 s of the round before the played part, more during it); and the kids' voice
+cooldowns read the wall clock and drew their lines from Math.random. Most Bunratty rounds see 1-5 tags in 40 s, but in
+1 round of about 70 sampled Priya was out at 2.9 s, before anyone had been tagged, and both checks failed (reproduced
+here, three suites at once). From the entry to the end of each played round the suite now seeds Math.random per match
+(only the entry's, the start's and the test's own steps draw from it: the music's hi-hats and snares draw on their own
+timer), steps the game only itself (tick() still draws, but `stepGame` is a no-op for it until the round is over), keeps
+the voices quiet, and stops stepping once a VIP is out (the result follows on a wall-clock timer). Every run now plays
+the same two rounds. Only the tests change: `index.html` is as v1.230 left it.
+
+`run.mjs` weighted online at the 40 s a new suite is guessed at. On CI it ran about 3 min before the timeout; here
+277-388 s alone before the change and 211 s after. It is 210 now, which moves it to shard 8/8 and vip to 7/8. Main's
+re-measured table (e82316b) does not list online, so 210 has to be carried over when main is merged in (not done here:
+FREEZE #78, the map backdrops, is open).
+### Verified
+- The CI logs (push run of 0b0e761): attempt 1, shard 7/8, `page.waitForFunction: Timeout 20000ms exceeded` at
+  online.test.mjs:63, the guest's wait in the second match's `begin()`, 33 s after BACK TO YOUR ROOM.
+- `online.test.mjs`, final code: 10 of 10 pass, three and four at a time (timings below in the PR note). Before the
+  change it also passed 6 of 6 here, at 277-388 s alone and 600-660 s three at a time.
+- `vip.test.mjs`: before the change, 1 of 3 failed with three at a time (Priya out at 2.9 s, no kid tagged). After it,
+  10 of 10 pass, five at a time, and all ten log the same played rounds byte for byte: Bunratty 40 s with neither VIP
+  out (Sean 1, Owen 1, Tyler 1 tags), Night Shift 40 s with neither VIP out (Eric 2, Sean 2, Mason 1, Marcus 2).
+- `node scripts/parsecheck.mjs`: OK.
+### Still open
+- The seeded rounds are one sample each. A change to the kids' play that makes Priya fall early or nobody trade tags
+  now fails every run rather than one in seventy, which is the point, but the 8 s line is no longer a spread.
+- Locally the kids' lines are spoken through Windows' own speech engine (Michael heard them while the suites ran), which
+  probably slows these runs well past CI's.

@@ -14,6 +14,8 @@ const only = args[0];
 // v1.174 fix-up: re-measured again from the eight shard jobs of 389b051 (6 Oct). Shard 1/8 hit the 30-min limit while
 // the rest took 13-22 min: under-parts (191 s, weighted 65), backyard-guns (174, weighted 80) and stuck-sweep-2 (478,
 // weighted 203) had grown, and several sweeps had shrunk.
+// v1.230 fix-up: online (two games at once) ran about 3 min on CI (14 Oct) and 277-388 s alone on a desktop, not the
+// 40 s guessed. Main's v1.235 table does not list it yet: carry 210 over when main is merged in.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
   'backyard-guns.test.mjs': 174, 'bb-sweep.test.mjs': 19, 'bound-forward.test.mjs': 57,
@@ -26,7 +28,7 @@ const WEIGHTS = {
   'kid-hold.test.mjs': 71, 'ladder-prompt.test.mjs': 6, 'laser.test.mjs': 44, 'last-kid.test.mjs': 144,
   'loadout-gear.test.mjs': 17, 'loadout-kid.test.mjs': 7, 'lot-ffa-opening.test.mjs': 52,
   'lot-hollow-polish.test.mjs': 105, 'map-screen.test.mjs': 15, 'market-lot.test.mjs': 83, 'mirror.test.mjs': 46,
-  'music.test.mjs': 3, 'night-lights-allies.test.mjs': 50, 'night-lights-spawn.test.mjs': 40, 'night-prowl.test.mjs': 32, 'northcliff.test.mjs': 110, 'online.test.mjs': 40, 'one-ending.test.mjs': 33,
+  'music.test.mjs': 3, 'night-lights-allies.test.mjs': 50, 'night-lights-spawn.test.mjs': 40, 'night-prowl.test.mjs': 32, 'northcliff.test.mjs': 110, 'online.test.mjs': 210, 'one-ending.test.mjs': 33,
   'opening-hold.test.mjs': 45, 'pincer.test.mjs': 34, 'pocket.test.mjs': 28, 'pointer-lock.test.mjs': 11,
   'result-text.test.mjs': 109, 'result-stats.test.mjs': 40, 'school-kids.test.mjs': 30, 'settings.test.mjs': 40, 'retreat-progress.test.mjs': 175, 'road-slide.test.mjs': 58, 'shard.test.mjs': 1,
   'shop-tabs.test.mjs': 44, 'smoke.test.mjs': 57, 'spawn-facing.test.mjs': 333, 'stuck-sweep-1.test.mjs': 243,

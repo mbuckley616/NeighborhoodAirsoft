@@ -29,9 +29,21 @@ const pump = async (from, to) => {
   if (ms.length) await to.evaluate(ms => ms.forEach(m => window.__h && window.__h.data(JSON.parse(m))), ms);
   return ms.length;
 };
-const pumpBoth = async () => (await pump(a, b)) + (await pump(b, a));
-// Both games step together, the messages crossing every two frames (about 33 ms of lag)
-const run = async (frames) => { for (let i = 0; i < frames; i += 2) { await A.spin(2); await B.spin(2); await pumpBoth(); } };
+// Both games step together, the messages crossing every two frames (about 33 ms of lag).
+// v1.230 fix-up: one evaluate a game per two frames (what the other sent, two steps, what it sends back), not up to
+// six. Each evaluate waits out a software-GL frame of both pages' render loops: the suite took 277-388 s alone on a
+// Windows desktop and 600-660 s three at a time, near run.mjs's 10-min cap; now 211 s and 376-435 s. Nothing waits
+// in Node between runs: the last messages are delivered.
+const stepIn = (p, ms) => p.evaluate(([ms]) => {
+  ms.forEach(m => window.__h && window.__h.data(JSON.parse(m)));
+  for (let i = 0; i < 2 && Game.mode !== 'title'; i++) stepGame(1 / 60);
+  return (window.__out || []).splice(0);
+}, [ms]);
+const run = async (frames) => {
+  let toA = [];
+  for (let i = 0; i < frames; i += 2) toA = await stepIn(b, await stepIn(a, toA));
+  if (toA.length) await a.evaluate(ms => ms.forEach(m => window.__h && window.__h.data(JSON.parse(m))), toA);
+};
 
 const before = async p => p.evaluate(() => ({ cash: Game.persist.cash, bag: Game.persist.bag, done: Object.keys(Game.persist.completed).length }));
 const a0 = await before(a), b0 = await before(b);
@@ -59,8 +71,12 @@ async function begin() {
   await b.evaluate(() => document.getElementById('introBeginBtn').click());
   await pump(b, a);   // ready: the host says go
   await pump(a, b);
-  await a.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 20000 });
-  await b.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 20000 });
+  // v1.230 fix-up (CI shard 7/8, 14 Oct): BEGIN starts the match on a 400 ms timer and both pages then build and draw
+  // Winnmark in software GL. On CI the first match's join-to-start took 17 s against a 20 s wait for each game, and in
+  // the second the guest ran past his own 20 s (the dropped-friend checks never ran: a TimeoutError at this line).
+  // 90 s, as the harness gives a briefing, polled every 250 ms rather than on the page's (slow) frames.
+  await a.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000, polling: 250 });
+  await b.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000, polling: 250 });
   for (const p of [a, b]) await p.evaluate(() => { Game.mouse.locked = true; });
   return { intro, waiting };
 }
@@ -153,9 +169,9 @@ for (let n = 0; n < 2; n++) {
   do { await shoot(b); await run(30); s = await score(); tries++; } while (s.host.myHits === 1 + n && s.host.mode === 'scenario' && tries < 6);
 }
 await run(60);
-await a.waitForFunction(() => Game.mode === 'result', null, { timeout: 10000 }).catch(() => {});
+await a.waitForFunction(() => Game.mode === 'result', null, { timeout: 30000, polling: 250 }).catch(() => {});
 await run(4);
-await b.waitForFunction(() => Game.mode === 'result', null, { timeout: 10000 }).catch(() => {});
+await b.waitForFunction(() => Game.mode === 'result', null, { timeout: 30000, polling: 250 }).catch(() => {});
 const res = async p => p.evaluate(() => ({ mode: Game.mode, out: document.getElementById('outcomeText').className, flavor: document.getElementById('flavorText').textContent,
   again: document.getElementById('navAgainBtn').disabled, cash: Game.persist.cash, bag: Game.persist.bag, done: Object.keys(Game.persist.completed).length }));
 const ra = await res(a), rb = await res(b);
