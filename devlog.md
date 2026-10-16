@@ -10771,3 +10771,46 @@ flag (`tagSendsHome`), so another match could take it later.
 ### Still open
 - Whether the finale is now too easy: a sprint at the bulb still loses all three lives inside 16 s, and the critic's
   bot will show how often you win it.
+
+## v1.252 — Believable views past the edge of every map
+Backlog D.24–D.25, decided in decisions ("Views past the edge of every map", Michael: B, 15 Oct): generic backdrops on
+every map now, then map by map from his pictures. Standing at the middle of each edge and looking out (v1.251 shots in
+`docs/prototypes/d24-edges-*.png`), Bunratty showed only sky to the north and west, Winnmark's grass stopped under the
+sky to the east, and the market lot, the high school and the country club ran a flat field to a hard line: their
+ground planes (±60–100 m) ended inside fogs that reach 82–160 m, and nothing stood past the fences. The grocery
+store's front windows were opaque panels on a solid wall.
+`addEdgeBackdrop()` runs once in `enterScenario`, right after the map is built, and reads each map's sides from one
+table, `EDGE_BACKDROPS`: where the scenery starts on each side (past what the map already has there, such as
+Winnmark's golf course and lake, Bunratty's pond, the Hollow's river, the school and the clubhouse) and what stands from
+there outward. It lays a ground skirt from the map's ground out past its fog at the rim's height (dipping under any
+water that runs past the ground), then rows of houses with hip or gable roofs, windows and a door, tree belts with
+round and pointed trees, shop strips with sign bands, parking lots with stalls and parked cars, playing fields with
+goals, a fairway past the club, a road past the lot, the school and the treehouse yard's front, and on Winnmark,
+Bunratty, Northcliff and Bellfield the street running on out of the map with houses facing it. Anything that would
+land on an existing mesh is skipped, so it never pokes through what was there. At night a third of the house windows
+and most shop fronts are lit. The store's front wall is now open behind its glass (its collision box is the whole wall,
+as before) and the glass is see-through, onto its own lot, the road and the shops across it, under a sky card of its
+own, since indoors the background is the store's beige.
+None of it is solid: nothing is added to `obstacles`, and nothing stands within 6 m of the bounds, past where BBs are
+dropped (bounds + 2 m across x, + 5 m along z). It is all merged into one vertex-coloured Lambert mesh, plus one for lit
+windows at night and the store's sky card, and draws its own seeded random numbers after the map is built, so the
+cover layouts are untouched and the scenery is the same every round.
+### Verified
+- `tests/backdrop.test.mjs` (new). All ten maps, day and night: the backdrop is in the map's own scene, with 14–68
+  houses and 134–1,496 trees (the store at night, whose fog closes at 52 m: its lot, 31 cars and 7 shops); nothing in it
+  is an obstacle and the obstacle list is unchanged; the nearest vertex is 6.0–12.8 m outside the bounds; the ground
+  skirt never comes inside; at most 3 meshes and 1.5k–44k triangles; the same scenery twice. In play on Bunratty, the
+  market lot, the store and Bellfield, looking out each way costs +1 draw call (the store +2; before: 57–97 per view,
+  budget +4), and holding W toward each edge for 4 s stops at the bounds. No page errors.
+- Before and after, from the middle of each edge looking out (`docs/prototypes/d24-after-*.png`): Bunratty's north and
+  west show houses and trees over the crest, Winnmark's east has the street running on between houses, the lot is
+  ringed by shops, a road and a second lot, the school and the club look over fields and a fairway to tree lines and
+  rooftops, and the store's windows show its parking lot.
+- `npm test`: SUITES_LINE
+### Still open
+- The real streets: as Michael's pictures arrive (2–4 per map, Google Maps satellite or 3D view, or Street View,
+  looking out past the map's edge), that map's entry in `EDGE_BACKDROPS` is reshaped to match. Nothing is owed until
+  then.
+- Whether the scenery reads right in play: the houses are simple boxes with roofs on purpose (cost), the tree belts
+  may look too regular from some spots, and the night shop fronts may be too bright.
+- Frame rate on a real machine: the cost is one or two draw calls but up to 44k extra triangles by day.

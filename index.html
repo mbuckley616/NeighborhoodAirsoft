@@ -2074,7 +2074,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.251</div>
+  <div class="version">v1.252</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16956,7 +16956,11 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     };
     wall(-26.4, -25.8, -30.4, 18.4); wall(25.8, 26.4, -30.4, 18.4);    // west, east
     wall(-26.4, 26.4, -30.4, -29.8);                                   // north (the stockroom's back)
-    wall(-26.4, 26.4, 17.8, 18.4);                                     // south, the front (glass drawn on it)
+    // south, the front. v1.252 (D.24): the wall is open behind the glass, so the lot shows through it (addEdgeBackdrop);
+    // its collision box is the whole wall as before, so BBs and kids stop at the glass
+    box(-26.4, 26.4, 17.8, 18.4, 6);
+    for (const [x0, x1, y0, y1] of [[-26.4, -24, 0, H], [-2, 2, 0, H], [22, 26.4, 0, H], [-24, -2, 2.8, H], [2, 22, 2.8, H], [-24, -2, 0, 0.2], [2, 22, 0, 0.2]])
+      mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, 0.6), wallMat, (x0 + x1) / 2, (y0 + y1) / 2, 18.1, false).receiveShadow = true;
     // the back wall of the sales floor, with three doorways into the stockroom (x -16.5…-13.5, -1.5…1.5, 13.5…16.5)
     for (const [x0, x1] of [[-25.8, -16.5], [-13.5, -1.5], [1.5, 13.5], [16.5, 25.8]]) wall(x0, x1, -18.6, -18.0);
     for (const dx of [-15, 0, 15]) {
@@ -16972,7 +16976,7 @@ function buildGroceryStoreScene(variant, timeOfDay) {
       const b = new THREE.Mesh(new THREE.PlaneGeometry(z1 - z0, 0.5), bandMat); b.position.set(x, H - 0.45, (z0 + z1) / 2); b.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2; scene.add(b);
     }
     // the front: the glass and the automatic doors at x 8…14, daylight (or the dark lot) outside
-    const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4 });
+    const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4, transparent: true, opacity: _night ? 0.4 : 0.22, depthWrite: false });   // v1.252: see-through
     for (const [x0, x1] of [[-24, -2], [2, 22]]) mesh(new THREE.BoxGeometry(x1 - x0, 2.6, 0.04), glassMat, (x0 + x1) / 2, 1.5, 17.76, false);
     for (let x = -24; x <= 22; x += 2) mesh(new THREE.BoxGeometry(0.08, 2.7, 0.08), std(0x8a8c8e, { metalness: 0.5 }), x, 1.45, 17.74, false);
     mesh(new THREE.BoxGeometry(6, 0.3, 0.3), std(0x2f6a3a), 11, 2.95, 17.6, false);
@@ -21522,6 +21526,418 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
   return group;
 }
 
+// ----------------------------------------------------------------------
+// v1.252 (backlog D.24, Michael: B — generic backdrops for every map now, then map by map from his pictures):
+// the view past the edge. Some maps ended in a hard line under an empty sky (the ground plane stopped inside the fog,
+// or a flat field ran to nothing). addEdgeBackdrop() lays a ground skirt from each map's ground out past the fog and
+// stands simple neighborhood scenery outside the playable bounds: rows of houses with roofs and windows, tree belts,
+// shop strips, parking lots, playing fields, the street running on out of the court. It is scenery only: nothing goes
+// in `obstacles`, so nobody walks into it, and nothing stands within 6 m of the bounds, past where BBs are dropped
+// (bounds + 2 m across x, + 5 m along z, updateBBs). Everything is merged into one vertex-coloured mesh (plus one for
+// lit windows at night), so a map pays one or two draw calls for it. It draws its own seeded random numbers, so the
+// map's cover layout (built under withSeededRandom) is untouched. Each map's sides are listed in EDGE_BACKDROPS:
+// `from` is where the scenery starts (metres past the bounds edge, past what the map already has there), `bands` what
+// stands from there outward, `street` a road running on out of the map at that lateral offset.
+const EDGE_BACKDROPS = {
+  buildWinnmarkCourtScene: {
+    N: { from: 33, bands: [['trees', 12], ['houses', 22], ['trees', 30]] },          // past the golf course
+    W: { from: 30, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the lake and its trees
+    S: { from: 13, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildBunrattyCourtScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 9, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 43, bands: [['houses', 22], ['trees', 30]] },                         // past the pond
+  },
+  buildHollowScene: {
+    N: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
+    S: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
+    E: { from: 9, bands: [['trees', 22], ['houses', 22], ['trees', 40]] },
+    W: { from: 54, bands: [['trees', 50]] },                                          // past the river
+  },
+  buildMarketLotScene: {
+    N: { from: 20, bands: [['trees', 8], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },   // behind the store
+    S: { from: 13, bands: [['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },                  // across the road
+    W: { from: 7, bands: [['lot', 20], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+  },
+  buildNorthcliffScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 10, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the creek
+    W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildTreehouseYardScene: {
+    N: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 18, bands: [['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },   // the street out front
+  },
+  buildBellfieldCourtScene: {
+    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+  },
+  buildHighSchoolScene: {
+    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the school
+    S: { from: 7, bands: [['field', 34], ['trees', 8], ['houses', 22], ['trees', 40]] },                   // the playing fields
+    W: { from: 7, bands: [['field', 26], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['lot', 20], ['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
+  },
+  buildCountryClubScene: {
+    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the clubhouse
+    S: { from: 7, bands: [['fairway', 40], ['trees', 12], ['houses', 22], ['trees', 40]] },
+    W: { from: 7, bands: [['fairway', 30], ['trees', 12], ['houses', 22], ['trees', 40]] },
+    E: { from: 7, bands: [['lot', 20], ['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
+  },
+  buildGroceryStoreScene: {
+    skirt: 0x45464a,   // asphalt: only the front windows look out, onto the store's own lot
+    sky: { side: 'S', d: 110, color: 0x9cc8ea },   // indoors the background is the store's beige, so the windows get a sky of their own
+    S: { from: 6, bands: [['lot', 26], ['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+  },
+};
+const _BD_WALLS = [0xd8d0bc, 0xc8b89a, 0xb8c4c8, 0xe0d8c8, 0x9aa894, 0xc4a888, 0xa8b0b8, 0xd4c4a0, 0xb89880, 0xe8e0d0];
+const _BD_ROOFS = [0x4a4440, 0x5a4a3e, 0x3e4248, 0x6a5040, 0x524a46, 0x384030];
+const _BD_SHOPS = [0xc8bca8, 0xa89880, 0xd0c8b8, 0x9a8a78, 0xb8b0a4, 0x8a7a6a];
+const _BD_SIGNS = [0x8a2a24, 0x24486a, 0x2a5a34, 0xc89a2a, 0x5a2a5a, 0x2a2a2a];
+const _BD_LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a];
+const _BD_PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+const _BD_CARS = [0x8a2020, 0x20304a, 0xc8c8c8, 0x2a2a2a, 0x5a6a7a, 0xd8d0b0, 0x2a4a2a];
+let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
+
+function addEdgeBackdrop(built, builderFn, timeOfDay) {
+  const cfg = EDGE_BACKDROPS[builderFn];
+  if (!cfg || !built || !built.scene || !built.bounds) return null;
+  const scene = built.scene, B = built.bounds, night = (timeOfDay === 'night');
+  const rnd = _mulberry32(_hashStringToSeed('backdrop|' + builderFn));
+  const R = (a, b) => a + (b - a) * rnd();
+  const pick = arr => arr[Math.floor(rnd() * arr.length) % arr.length];
+  const gyFn = (typeof built.groundY === 'function') ? built.groundY : null;
+  const fogFar = (scene.fog && scene.fog.far) || 100;
+
+  // --- what is already there: the main ground (the widest low mesh), big flat planes past it, and every other mesh's
+  // footprint, so the scenery stands clear of the map's own lake, golf course, store or tree wall.
+  scene.updateMatrixWorld(true);
+  const _bb = new THREE.Box3();
+  const boxes = [];
+  scene.traverse(m => {
+    if (!m.isMesh || !m.geometry || (m.material && m.material.fog === false)) return;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    _bb.copy(m.geometry.boundingBox).applyMatrix4(m.matrixWorld);
+    if (_bb.isEmpty()) return;
+    boxes.push({ minX: _bb.min.x, maxX: _bb.max.x, minZ: _bb.min.z, maxZ: _bb.max.z, minY: _bb.min.y, maxY: _bb.max.y, mesh: m });
+  });
+  let ground = null;
+  for (const b of boxes) {
+    if (b.minY > 1) continue;
+    const a = (b.maxX - b.minX) * (b.maxZ - b.minZ);
+    if (!ground || a > ground.area) ground = Object.assign({ area: a }, b);
+  }
+  if (!ground) return null;
+  const G = { minX: ground.minX, maxX: ground.maxX, minZ: ground.minZ, maxZ: ground.maxZ };
+  const groundColor = (ground.mesh.material && ground.mesh.material.color) ? ground.mesh.material.color.getHex() : 0x5a8040;
+  const flats = boxes.filter(b => b !== ground && b.mesh !== ground.mesh && (b.maxY - b.minY) < 0.5 && b.minY < 0.5 &&
+    (b.maxX - b.minX > 30 || b.maxZ - b.minZ > 30) && (b.minX < G.minX || b.maxX > G.maxX || b.minZ < G.minZ || b.maxZ > G.maxZ));
+  const CELL = 4, occ = new Set();
+  const ck = (i, j) => i * 100003 + j;
+  for (const b of boxes) {
+    if (b.mesh === ground.mesh) continue;
+    if (b.minX > B.minX && b.maxX < B.maxX && b.minZ > B.minZ && b.maxZ < B.maxZ) continue;   // inside the field of play
+    if ((b.maxX - b.minX) > 400 || (b.maxZ - b.minZ) > 400) continue;
+    for (let i = Math.floor((b.minX - 1) / CELL); i <= Math.floor((b.maxX + 1) / CELL); i++)
+      for (let j = Math.floor((b.minZ - 1) / CELL); j <= Math.floor((b.maxZ + 1) / CELL); j++) occ.add(ck(i, j));
+  }
+  const clear = (x, z, r) => {
+    for (let i = Math.floor((x - r) / CELL); i <= Math.floor((x + r) / CELL); i++)
+      for (let j = Math.floor((z - r) / CELL); j <= Math.floor((z + r) / CELL); j++) if (occ.has(ck(i, j))) return false;
+    return true;
+  };
+  const clampG = (v, lo, hi) => Math.max(lo + 0.5, Math.min(hi - 0.5, v));
+  const baseY = (x, z) => gyFn ? gyFn(clampG(x, G.minX, G.maxX), clampG(z, G.minZ, G.maxZ)) : ground.maxY;
+
+  // --- the geometry: flat-shaded triangles with a colour per vertex
+  const P = [], N = [], C = [], LP = [], LN = [], LC = [];
+  const _c = new THREE.Color();
+  function tri(a, b, c, col, lit) {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    _c.setHex(col);
+    const p = lit ? LP : P, n = lit ? LN : N, cc = lit ? LC : C;
+    for (const v of [a, b, c]) { p.push(v[0], v[1], v[2]); n.push(nx, ny, nz); cc.push(_c.r, _c.g, _c.b); }
+  }
+  // a polygon (convex, 3-4 points) wound to face away from `inside`
+  function face(pts, col, inside, lit) {
+    const a = pts[0], b = pts[1], c = pts[2];
+    const nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+    const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    const nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const flip = (nx * (a[0] - inside[0]) + ny * (a[1] - inside[1]) + nz * (a[2] - inside[2])) < 0;
+    const q = flip ? pts.slice().reverse() : pts;
+    tri(q[0], q[1], q[2], col, lit);
+    if (q.length === 4) tri(q[0], q[2], q[3], col, lit);
+  }
+  // local frame -> world: x across, y up, z toward the map (the front)
+  const frame = (x, z, yaw) => { const s = Math.sin(yaw), c = Math.cos(yaw); return (lx, ly, lz) => [x + lx * c + lz * s, ly, z - lx * s + lz * c]; };
+  function box(T, y0, w, h, d, col, topCol, ox = 0, oz = 0) {
+    const x0 = ox - w / 2, x1 = ox + w / 2, z0 = oz - d / 2, z1 = oz + d / 2, y1 = y0 + h;
+    const v = (x, y, z) => T(x, y, z), inside = T(ox, y0 + h / 2, oz);
+    face([v(x0, y0, z1), v(x1, y0, z1), v(x1, y1, z1), v(x0, y1, z1)], col, inside);
+    face([v(x0, y0, z0), v(x1, y0, z0), v(x1, y1, z0), v(x0, y1, z0)], col, inside);
+    face([v(x0, y0, z0), v(x0, y0, z1), v(x0, y1, z1), v(x0, y1, z0)], col, inside);
+    face([v(x1, y0, z0), v(x1, y0, z1), v(x1, y1, z1), v(x1, y1, z0)], col, inside);
+    face([v(x0, y1, z0), v(x1, y1, z0), v(x1, y1, z1), v(x0, y1, z1)], topCol != null ? topCol : col, inside);
+  }
+  function pad(x0, z0, x1, z1, col, lift) {   // a flat world-aligned rectangle laid on the ground
+    const nx = Math.max(1, Math.ceil((x1 - x0) / 8)), nz = Math.max(1, Math.ceil((z1 - z0) / 8));
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+      const ax = x0 + (x1 - x0) * i / nx, bx = x0 + (x1 - x0) * (i + 1) / nx, az = z0 + (z1 - z0) * j / nz, bz = z0 + (z1 - z0) * (j + 1) / nz;
+      const p = (x, z) => [x, baseY(x, z) + lift, z];
+      face([p(ax, az), p(ax, bz), p(bx, bz), p(bx, az)], col, [(ax + bx) / 2, -1000, (az + bz) / 2]);
+    }
+  }
+
+  // --- the ground skirt: from the map's own ground out past the fog, at its rim height, dipping under any water or
+  // other flat plane the map runs past its ground
+  const cx = (B.minX + B.maxX) / 2, cz = (B.minZ + B.maxZ) / 2;
+  const RR = Math.max(B.maxX - B.minX, B.maxZ - B.minZ) / 2 + fogFar + 20;
+  const skirtCol = cfg.skirt != null ? cfg.skirt : groundColor;
+  const lines = (lo, hi, c0, c1) => {
+    const out = [c0, c1];
+    for (let v = c0 - 12; v > lo; v -= 12) out.push(v);
+    for (let v = c1 + 12; v < hi; v += 12) out.push(v);
+    out.push(lo, hi); return out.sort((a, b) => a - b);
+  };
+  const xs = lines(cx - RR, cx + RR, G.minX, G.maxX), zs = lines(cz - RR, cz + RR, G.minZ, G.maxZ);
+  const skirtY = (x, z) => {
+    let y = baseY(x, z) - 0.08;
+    for (const f of flats) if (x > f.minX - 13 && x < f.maxX + 13 && z > f.minZ - 13 && z < f.maxZ + 13) y = Math.min(y, f.minY - 0.12);
+    return y;
+  };
+  for (let i = 0; i + 1 < xs.length; i++) for (let j = 0; j + 1 < zs.length; j++) {
+    const ax = xs[i], bx = xs[i + 1], az = zs[j], bz = zs[j + 1];
+    if (bx - ax < 0.01 || bz - az < 0.01) continue;
+    const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+    if (mx > G.minX && mx < G.maxX && mz > G.minZ && mz < G.maxZ) continue;
+    if (mx > B.minX && mx < B.maxX && mz > B.minZ && mz < B.maxZ) continue;
+    const p = (x, z) => [x, skirtY(x, z), z];
+    face([p(ax, az), p(ax, bz), p(bx, bz), p(bx, az)], skirtCol, [mx, -1000, mz]);
+  }
+  const skirtVerts = P.length / 3;
+
+  // --- the sides
+  const SIDES = {
+    N: { o: [0, -1], l: [1, 0], m: [cx, B.minZ], half: (B.maxX - B.minX) / 2 },
+    S: { o: [0, 1], l: [1, 0], m: [cx, B.maxZ], half: (B.maxX - B.minX) / 2 },
+    W: { o: [-1, 0], l: [0, 1], m: [B.minX, cz], half: (B.maxZ - B.minZ) / 2 },
+    E: { o: [1, 0], l: [0, 1], m: [B.maxX, cz], half: (B.maxZ - B.minZ) / 2 },
+  };
+  const from = {};
+  for (const k in SIDES) from[k] = cfg[k] ? Math.max(6, cfg[k].from || 6) : Infinity;
+  const sideOf = (x, z) => {
+    const e = { N: B.minZ - z, S: z - B.maxZ, W: B.minX - x, E: x - B.maxX };
+    let best = null, bv = -Infinity;
+    for (const k in e) { const v = e[k] - (isFinite(from[k]) ? from[k] : 1e6); if (v > bv) { bv = v; best = k; } }
+    return best;
+  };
+  const stats = { houses: 0, trees: 0, shops: 0, cars: 0, pads: 0 };
+  for (const k of ['N', 'S', 'W', 'E']) {
+    const sc = cfg[k]; if (!sc) continue;
+    const S = SIDES[k];
+    const at = (lat, d) => [S.m[0] + S.o[0] * d + S.l[0] * lat, S.m[1] + S.o[1] * d + S.l[1] * lat];
+    const faceYaw = Math.atan2(-S.o[0], -S.o[1]);   // local +z (the front) toward the map
+    const mine = (x, z) => sideOf(x, z) === k;
+    const ok = (x, z, r, d) => mine(x, z) && d - r >= from[k] && d <= fogFar + 10 && clear(x, z, r);
+    const street = sc.street ? Object.assign({ w: 7 }, sc.street) : null;
+    const inStreet = (lat, r) => street && Math.abs(lat - street.at) < street.w / 2 + 2.5 + r;
+    const latPad = (d0, d1, lat0, lat1, col, lift) => {   // a pad given in the side frame, cut into 8 m cells
+      for (let a = lat0; a < lat1 - 0.01; a += 8) for (let d = d0; d < d1 - 0.01; d += 8) {
+        const a1 = Math.min(lat1, a + 8), dd1 = Math.min(d1, d + 8);
+        const [mx, mz] = at((a + a1) / 2, (d + dd1) / 2);
+        if (!mine(mx, mz) || !clear(mx, mz, 0.5) || (d + dd1) / 2 > fogFar + 20) continue;
+        const p0 = at(a, d), p1 = at(a1, dd1);
+        pad(Math.min(p0[0], p1[0]), Math.min(p0[1], p1[1]), Math.max(p0[0], p1[0]), Math.max(p0[1], p1[1]), col, lift);
+        stats.pads++;
+      }
+    };
+    function house(x, z, yaw) {
+      const y = baseY(x, z) - 0.15, T = frame(x, z, yaw);
+      const two = rnd() < 0.4, w = R(9, 12.5), d = R(7.5, 9.5), h = two ? R(5.2, 5.8) : R(2.8, 3.2);
+      const wall = pick(_BD_WALLS), roof = pick(_BD_ROOFS);
+      box((lx, ly, lz) => T(lx, ly, lz), y, w, h + 0.15, d, wall);
+      // roof: a gable or a hip, with a short eave all round
+      const o = 0.45, top = y + h + 0.15, rh = R(1.8, 2.8), hip = rnd() < 0.5;
+      const rIn = hip ? Math.min(w / 2 - 0.5, d / 2) : 0;
+      const A = T(-w / 2 - o, top, -d / 2 - o), Bq = T(w / 2 + o, top, -d / 2 - o), Cq = T(w / 2 + o, top, d / 2 + o), D = T(-w / 2 - o, top, d / 2 + o);
+      const R1 = T(-w / 2 - o + rIn, top + rh, 0), R2 = T(w / 2 + o - rIn, top + rh, 0), mid = T(0, top + rh * 0.3, 0);
+      face([A, Bq, R2, R1], roof, mid); face([D, Cq, R2, R1], roof, mid);
+      face([A, D, R1], hip ? roof : wall, mid); face([Bq, Cq, R2], hip ? roof : wall, mid);
+      // windows and a door on the face toward the map; at night some are lit
+      const zf = d / 2 + 0.04, rows = two ? [y + 1.2, y + 3.9] : [y + 1.1];
+      const n = Math.max(2, Math.round(w / 3.2));
+      for (const wy of rows) for (let i = 0; i < n; i++) {
+        const wx = -w / 2 + (i + 0.5) * w / n;
+        if (wy === rows[0] && i === Math.floor(n / 2)) {   // the door
+          face([T(wx - 0.5, y + 0.15, zf), T(wx + 0.5, y + 0.15, zf), T(wx + 0.5, y + 2.25, zf), T(wx - 0.5, y + 2.25, zf)], 0x3a2a1e, T(wx, y + 1, 0));
+          continue;
+        }
+        const lit = night && rnd() < 0.35;
+        face([T(wx - 0.6, wy, zf), T(wx + 0.6, wy, zf), T(wx + 0.6, wy + 1.3, zf), T(wx - 0.6, wy + 1.3, zf)], lit ? 0xffd890 : 0x2a3440, T(wx, wy, 0), lit);
+      }
+      stats.houses++;
+    }
+    function tree(x, z) {
+      const y = baseY(x, z) - 0.2, T = frame(x, z, rnd() * 6.283);
+      if (rnd() < 0.22) {   // a conifer
+        const h = R(7, 12), r = R(1.8, 2.8), col = pick(_BD_PINE);
+        box(T, y, 0.35, 1.6, 0.35, 0x4a3424);
+        const apex = T(0, y + h, 0), seg = 6;
+        for (let i = 0; i < seg; i++) {
+          const a0 = i / seg * 6.283, a1 = (i + 1) / seg * 6.283;
+          face([T(Math.cos(a0) * r, y + 1.2, Math.sin(a0) * r), T(Math.cos(a1) * r, y + 1.2, Math.sin(a1) * r), apex], col, T(0, y + h * 0.4, 0));
+        }
+      } else {
+        const th = R(2.2, 3.6), r = R(2.2, 3.8), col = pick(_BD_LEAF);
+        box(T, y, 0.4, th + 0.6, 0.4, 0x4a3828);
+        if (!_bdIcosa) { const gi = new THREE.IcosahedronGeometry(1, 0).toNonIndexed(); _bdIcosa = Array.from(gi.attributes.position.array); gi.dispose(); }
+        const cy = y + th + r * 0.75, sy = R(0.8, 1.05);
+        for (let i = 0; i < _bdIcosa.length; i += 9) {
+          const v = j => T(_bdIcosa[i + j] * r, cy + _bdIcosa[i + j + 1] * r * sy, _bdIcosa[i + j + 2] * r);
+          face([v(0), v(3), v(6)], col, T(0, cy, 0));
+        }
+      }
+      stats.trees++;
+    }
+    function shop(lat, d, w, dep) {
+      const [x, z] = at(lat, d), y = baseY(x, z) - 0.15, T = frame(x, z, faceYaw);
+      const h = R(4.8, 6.8), wall = pick(_BD_SHOPS);
+      box(T, y, w, h, dep, wall, 0x6a6a6a);
+      const zf = dep / 2 + 0.04, lit = night && rnd() < 0.6;   // a closed shop or two at night
+      face([T(-w / 2 + 0.6, y + 0.2, zf), T(w / 2 - 0.6, y + 0.2, zf), T(w / 2 - 0.6, y + 2.8, zf), T(-w / 2 + 0.6, y + 2.8, zf)], lit ? 0xa89060 : 0x2a3640, T(0, y + 1, 0), lit);
+      face([T(-w / 2 + 1.5, y + h - 1.5, zf + 0.02), T(w / 2 - 1.5, y + h - 1.5, zf + 0.02), T(w / 2 - 1.5, y + h - 0.4, zf + 0.02), T(-w / 2 + 1.5, y + h - 0.4, zf + 0.02)], pick(_BD_SIGNS), T(0, y + 1, 0));
+      stats.shops++;
+    }
+    function car(x, z, yaw) {
+      const y = baseY(x, z), T = frame(x, z, yaw), col = pick(_BD_CARS);
+      box(T, y + 0.25, 1.8, 0.75, 4.3, col);
+      box(T, y + 1.0, 1.6, 0.6, 2.2, 0x2a3038, col, 0, -0.2);
+      stats.cars++;
+    }
+
+    let d0 = from[k];
+    const latSpan = d => S.half + d + 4;
+    // the street running out of the map, with its houses kept off it
+    if (street) {
+      const dEnd = Math.min(fogFar + 10, d0 + sc.bands.reduce((s, b) => s + b[1], 0));
+      latPad(d0 - Math.max(0, d0 - 6), dEnd, street.at - street.w / 2, street.at + street.w / 2, 0x3a3a3c, 0.03);
+      for (let d = 6 + 2; d < dEnd; d += 6) {
+        const [x, z] = at(street.at, d);
+        if (mine(x, z) && clear(x, z, 0.3)) { const T = frame(x, z, faceYaw); face([T(-0.08, baseY(x, z) + 0.05, -1.4), T(0.08, baseY(x, z) + 0.05, -1.4), T(0.08, baseY(x, z) + 0.05, 1.4), T(-0.08, baseY(x, z) + 0.05, 1.4)], 0xd8c050, T(0, -10, 0)); }
+      }
+    }
+    for (const [kind, depth] of sc.bands) {
+      const d1 = d0 + depth;
+      if (d0 > fogFar + 10) break;
+      if (kind === 'houses') {
+        const dc = d0 + depth * 0.42;
+        for (let lat = -latSpan(dc); lat < latSpan(dc); lat += R(14.5, 18)) {
+          if (inStreet(lat, 6.5)) continue;
+          const dd = dc + R(-1.2, 1.2);
+          const [x, z] = at(lat, dd);
+          let yaw = faceYaw;
+          if (street && Math.abs(lat - street.at) < 22) yaw = faceYaw + (lat > street.at ? -1 : 1) * Math.PI / 2;   // houses on the street face it
+          if (!ok(x, z, 7, dd)) continue;
+          house(x, z, yaw);
+          if (rnd() < 0.45) { const [tx, tz] = at(lat + R(7.5, 9), d0 + depth * R(0.65, 0.95)); if (ok(tx, tz, 3, d0 + depth * 0.8)) tree(tx, tz); }
+        }
+      } else if (kind === 'trees') {
+        const step = 5.2;
+        for (let d = d0 + 2.5; d < d1; d += step) for (let lat = -latSpan(d); lat < latSpan(d); lat += step) {
+          if (rnd() < 0.28) continue;
+          const la = lat + R(-1.8, 1.8), dd = d + R(-1.8, 1.8);
+          if (inStreet(la, 2)) continue;
+          const [x, z] = at(la, dd);
+          if (ok(x, z, 2.5, dd)) tree(x, z);
+        }
+      } else if (kind === 'shops') {
+        latPad(d0, d0 + 7, -latSpan(d0), latSpan(d0), 0x46474a, 0.03);
+        for (let lat = -latSpan(d0 + 14); lat < latSpan(d0 + 14);) {
+          const w = R(16, 30), dep = R(12, 15);
+          const dc = d0 + 7.5 + dep / 2, [x, z] = at(lat + w / 2, dc);
+          if (!inStreet(lat + w / 2, w / 2) && ok(x, z, Math.max(w, dep) / 2, dc)) shop(lat + w / 2, dc, w, dep);
+          lat += w + R(2, 6);
+        }
+      } else if (kind === 'lot') {
+        latPad(d0, d1, -latSpan(d0), latSpan(d0), 0x45464a, 0.03);
+        for (let row = d0 + 4; row < d1 - 3; row += 11) for (let lat = -latSpan(row); lat < latSpan(row); lat += 2.8) {
+          const [x, z] = at(lat, row);
+          if (!mine(x, z) || !clear(x, z, 1)) continue;
+          const T = frame(x, z, faceYaw), y = baseY(x, z) + 0.05;
+          face([T(-1.4, y, -2.6), T(-1.3, y, -2.6), T(-1.3, y, 2.6), T(-1.4, y, 2.6)], 0xd8d8d0, T(0, -10, 0));
+          if (rnd() < 0.45 && ok(x, z, 2.4, row)) car(x, z, faceYaw + (rnd() < 0.5 ? 0 : Math.PI));
+        }
+      } else if (kind === 'road') {
+        latPad(d0 + 1.5, d0 + 2.5, -latSpan(d0), latSpan(d0), 0xa8a49a, 0.04);
+        latPad(d0 + 2.5, d0 + 9.5, -latSpan(d0), latSpan(d0), 0x3a3a3c, 0.03);
+        latPad(d0 + 9.5, d0 + 10.5, -latSpan(d0), latSpan(d0), 0xa8a49a, 0.04);
+        for (let lat = -latSpan(d0); lat < latSpan(d0); lat += 6) {
+          const [x, z] = at(lat, d0 + 6);
+          if (!mine(x, z) || !clear(x, z, 0.5)) continue;
+          const T = frame(x, z, faceYaw + Math.PI / 2), y = baseY(x, z) + 0.06;
+          face([T(-0.08, y, -1.4), T(0.08, y, -1.4), T(0.08, y, 1.4), T(-0.08, y, 1.4)], 0xd8c050, T(0, -10, 0));
+        }
+      } else if (kind === 'field' || kind === 'fairway') {
+        latPad(d0, d1, -latSpan(d0), latSpan(d0), kind === 'field' ? 0x6e9a48 : 0x7aa850, 0.02);
+        if (kind === 'field') {   // a backstop and a pair of goals, so it reads as a playing field
+          for (const [lat, dd] of [[-S.half * 0.45, d0 + depth * 0.5], [S.half * 0.45, d0 + depth * 0.5]]) {
+            const [x, z] = at(lat, dd);
+            if (!ok(x, z, 4, dd)) continue;
+            const T = frame(x, z, faceYaw), y = baseY(x, z);
+            box(T, y, 0.12, 2.4, 0.12, 0xe8e8e8, null, -3.6, 0); box(T, y, 0.12, 2.4, 0.12, 0xe8e8e8, null, 3.6, 0);
+            box(T, y + 2.3, 7.3, 0.12, 0.12, 0xe8e8e8);
+          }
+        }
+      }
+      d0 = d1;
+    }
+  }
+  if (!P.length) return null;
+  const mk = (p, n, c, mat) => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+    geo.computeBoundingSphere();
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = false; mesh.receiveShadow = false; mesh.matrixAutoUpdate = false;
+    mesh.userData.backdrop = true;
+    return mesh;
+  };
+  const group = new THREE.Group();
+  group.name = 'edgeBackdrop';
+  group.userData.backdrop = true;
+  const main = mk(P, N, C, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  main.userData.skirtVerts = skirtVerts;
+  group.add(main);
+  if (LP.length) group.add(mk(LP, LN, LC, new THREE.MeshBasicMaterial({ vertexColors: true })));
+  if (cfg.sky && !night) {   // a sky card behind the scenery (fog off, so it keeps its blue)
+    const S = SIDES[cfg.sky.side], d = cfg.sky.d, W = 800;
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(W, 260), new THREE.MeshBasicMaterial({ color: cfg.sky.color, fog: false }));
+    sky.position.set(S.m[0] + S.o[0] * d, 110, S.m[1] + S.o[1] * d);
+    sky.rotation.y = Math.atan2(-S.o[0], -S.o[1]);
+    sky.userData.backdrop = true;
+    group.add(sky);
+  }
+  scene.add(group);
+  stats.tris = (P.length + LP.length) / 9;
+  group.userData.stats = stats;
+  built.backdrop = group;
+  return group;
+}
+
 function enterScenario(scenarioId) {
   // v1.48: hard progression guard — a locked scenario can never be entered,
   // regardless of which path tried to launch it. This is the last line of
@@ -21550,6 +21966,7 @@ function enterScenario(scenarioId) {
     // two scenarios sharing a builder+variant but different ids still diverge.
     const _seedKey = scenarioId + '|' + (sc.builderArg || 'default');
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
+    addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');
     return;
