@@ -24,6 +24,9 @@ Fable card on the control room and Michael starts it from there.
 6. ~~NPCs are sometimes holding guns awkwardly. We should take a pass at ensuring guns are anchored properly and that the held positions are not awkward. (Michael, control room, 2026-10-05)~~ — done, v1.167 (a kid fully crouched behind cover, a third of all samples, let go of his gun: it floated by his knee 21–39 cm from his hand; a tagged kid's raised gun sat 16–33 cm from his raised hand and his off arm kept reaching for it. Both now hold it, 0 cm; `tests/kid-hold.test.mjs`)
 7. ~~CI: `country-club`'s "walking at the pool stops at its edge" failed on a docs-only PR (#41, 6 Oct): the player never moved from (-24, -2.5). Same as v1.169's `grocery-store` fix-up: the walk needs to set `Game.mouse.locked`, since CI's Chromium sometimes refuses the pointer lock. Check every walking test for the same. (producer, 6 Oct)~~ — done, v1.174 (`g.scenario()` marks the lock taken for every suite, so the pool walk, the stuck sweep's walks and retreat-progress's walk, the three that never set it, move with the lock refused; `tests/pointer-lock.test.mjs`)
 8. ~~Hitting F should pause the game and ask if you're sure you want to forfeit - i've misclicked that many times. (Michael, control room, 2026-10-13)~~ — done, v1.208 (F pauses the match and asks; Enter, Y or FORFEIT forfeits, Esc, N, F or KEEP PLAYING goes back; `tests/forfeit-ask.test.mjs`)
+9. The commands module callouts can overlap with the full player roster/live counter in game, which looks sloppy. recommend moving that to another part of the screen. (Michael, control room, 2026-10-16)
+10. The 'Settings' button/label is always visible when on controller in the bedroom. It also generally looks odd in that place, as it sits on top of the $ and BB tracker. recommend looking at this and figuring out how to clean it up. (Michael, control room, 2026-10-16)
+11. There is no button to activate the command wheel (Q on keyboard) on the controller. I am thinking the D Pad may make the most sense for this? (Michael, control room, 2026-10-16)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
@@ -287,6 +290,8 @@ Fable card on the control room and Michael starts it from there.
 41. The map mesh in the bedroom is kind of ugly - can we clean it up / make it look like the actual map? (Michael, control room, 2026-10-15)
 42. The fort(s) in the Chattahoochee River zone are kind of ugly - can we take a pass at cleaning them up? They've got a bunch of random intersecting meshes, and it almost feels like you're at more of a disadvantage being inside them. There should be a staircase/ramp of some sort inside, to allow you to get to the top of the fort, so you can have high ground & some cover up top (like wooden crenellations). (Michael, control room, 2026-10-15)
 43. We should show the player's $ amount somewhere on the UI while in a match, but also should show it when they've been killed / won the match / are about to start a match. Same thing with BBs on those screens as well. (Michael, control room, 2026-10-15)
+44. You should be able to sell guns back, but with a resale penalty. Maybe you get a free return if you've only used it in 3 matches or something? (Michael, control room, 2026-10-16)
+45. Enemies should wince/react based on where they are hit for a second or two after they are shot. (Michael, control room, 2026-10-16)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
