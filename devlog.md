@@ -10578,3 +10578,196 @@ needs nothing added for the pad. The forfeit question keeps A for yes and B for 
 - Michael's hands on it. The typed crew name at the mirror still needs a keyboard (A puts the caret in the box). The
   workbench's turntable drag and the Loadout kid's spin are mouse drags with no pad equivalent yet. Prompts and hints
   across the game still name keyboard keys; showing pad buttons when a pad is in use is a possible follow-up.
+
+## v1.243 — The Thunder Pump's spread check, seeded
+Found in play (builder, v1.224): `tests/backyard-guns.test.mjs`'s "Thunder Pump: at 15 m under two-thirds of its BBs
+within 0.5 m" sat on its limit, 68.3% once with three suites running and 55.8% alone straight after. Nothing was wrong
+with the gun: the 60 test shots drew their spread from the unseeded `Math.random`, and only the first 120 of about 270
+BBs were flown to 15 m, so the share wandered by a dozen points from run to run against a 67% line. The 60 shots of
+each gun now draw from a seed of their own (`withSeededRandom('backyard-guns:<gun>')`, the game's own seeding), and
+every BB is flown, not the first 120. No game code changed; the version moves so the test change has one.
+### Verified
+- `tests/backyard-guns.test.mjs` twice in a row: the same numbers both times. Thunder Pump 49% within 0.5 m at 15 m
+  over 269 BBs (limit under 67%), the spring shotgun 98% (over 90%); its other figures as before (4.48 BBs a shot,
+  cone 3.72° at 90% against the shotgun's 0.96°, pump 1.43 s against 1.25 s). All checks pass.
+### Still open
+- Two other seedless spreads named in Found in play (Seth's shotgun at 24-28 m in `seth-shotgun`, Fernando's AK share
+  in `pickup-fernando`) are the same kind of near-limit coin flip; each wants the same seeding if it fails again.
+
+## v1.244 — The lot free-for-all's starts, read from the starts
+Found in play (builder, v1.222): `tests/lot-ffa-opening.test.mjs`'s "nobody can see anybody from the start" failed
+once in a full run (Marcus and Brooke in sight, 18.0 m apart at the closest) and passed alone (18.6 m, 18.2 m), and the
+note guessed the seeded layout was drawing on `Math.random` from outside its seed. It is not: built three ways (fresh,
+twice running, after a Bunratty match) the lot's 128 obstacles hash the same. What changed was the kids. The test read
+where they stood, not where they started, and by then the page's own animation frames had run a few steps past BEGIN
+while the harness waited (more of them under load), so the kids had walked a varying way: Marcus from (6.14, −14.43)
+in one build to (6.50, −14.50) in the next. The check now reads each kid's start, which every kid keeps
+(`_spawnPos`). No game code changed.
+### Verified
+- `tests/lot-ffa-opening.test.mjs`: seven starts clear of obstacles, none in sight of another, 19.0 m apart at the
+  closest (the rule is 18 m), yours at the east edge; the three openings as before. All pass.
+- This run's full suite: `npm test` in four parallel shards on v1.241 while v1.242's suites also ran, 128 of 143
+  passed; of the 15 misses, 14 died loading the page or at NEW GAME under that load and one was `seth-shotgun`'s near
+  /far share (near 0.65, far 0.94 a shot), the known near-limit check. All 15 rerun on v1.244, three at a time: pass.
+### Still open
+- The same line's `seth-shotgun` share at 24-28 m is an unseeded spread near its limit, as v1.243's was; seed it the
+  same way if it fails again.
+
+## v1.245 — The first loss no longer freezes
+Found in play (critic, 15 Oct): the first loss of a session froze the game for 2.2–3.3 s, all of it in the damage
+report (v1.238) making its own WebGL renderer on its first draw; later losses took 3–6 ms. Here it took 4.1–5.7 s.
+Timing the parts showed the drawing was never the cost: making the renderer was 5.4 s of it, the report itself 39 ms
+after. A first try drew the report with the game's own renderer instead, which makes no context, but the read-back of
+its pixels then waited on every frame the game had queued for the GPU (4.0 s in the render call), so it was undone.
+The report now makes its renderer at the title, half a second after the page has loaded, and draws a kid once there
+so its shaders are compiled; a loss only swaps in your look, gun and gear. (Made during the load itself it added
+0.7–0.9 s to it on the tests' software GPU, enough to push loaded suites past their 30 s page-load limit, so it waits
+for the load.) Nothing about how the report looks changed.
+### Verified
+- `tests/damage-report-first.test.mjs` (new, 7 checks): at the title the report's renderer exists with its shader
+  compiled. A real loss in The Seth House (one BB into your chest, stepped until the round ends): the result shows the
+  report with your kid drawn, no WebGL context is made and no shader compiled while it happens, and the step that ends
+  the round takes 69 ms the first time and 5 ms the second (v1.244: 4,100–5,700 ms the first time on this machine,
+  measured with the same loss). No page errors.
+- `tests/damage-report.test.mjs` (v1.238) passes unchanged: the dots, rows and both views as before.
+### Still open
+- The cost moved to the title: 0.7–0.9 s of the main thread headless (far less on a real GPU), where nothing is
+  moving. Michael's eye on whether the first loss on his machine now shows at once.
+
+## v1.246 — A free-for-all loss has nobody regrouping
+Found in play (critic, 15 Oct): losing Every Kid for Themselves said "Seth, Trey, Brooke, and Jamie regroup near the
+road", the team-match line, though in a free-for-all nobody regroups with anybody. A free-for-all loss now reads "Too
+many angles, not enough cover. Seth gets the last one on you, and the rest keep going at each other. "Every kid for
+himself, dude."", naming whoever landed the last hit on you (from the damage report's list), "Somebody" if none is
+known. Team losses keep their line. The other half of the same report, Seth's start 27.7 m from yours deciding the
+match, is a placement call like the lot's on 1 Oct, so it is asked in decisions ("Free-for-all starts on Winnmark and
+Bunratty"), not changed.
+### Verified
+- `tests/result-text.test.mjs` with Every Kid for Themselves and Everybody for Themselves added (17 scenarios, each
+  ended every way): both free-for-all losses read without "regroup" and say the rest keep going; a loss whose last hit
+  was Seth's names Seth. Every earlier check passes, team losses still regroup (in the stockroom at the store). No page
+  errors.
+### Still open
+- The start placement itself waits on Michael's answer.
+
+## v1.247 — Seth's shotgun check, with more rounds
+Found in play (builder, v1.222; again in v1.244's full run): `tests/seth-shotgun.test.mjs`'s "fewer of his pellets
+find you at 24-28 m than at 12-16 m" failed now and then (once at near 0.65, far 0.94 pellets a shot; the line is far
+under half of near). Sixteen rounds held at fixed distances showed why: one round's pellets a shot run anywhere from
+0.7 to 4.3 at 12-16 m and 0 to 0.7 at 24-28 m, while the means are 2.5 and 0.25, so with a single round at 12, 24 and
+28 m one unlucky round could tip it. v1.244 found seeding each round does not make it repeat (each starts from where
+the page's frames left Seth), so the test now plays two rounds at each of 12, 24 and 28 m instead of one (12 rounds,
+was 9). No game code changed.
+### Verified
+- `tests/seth-shotgun.test.mjs` three times at once, with two other shards running: near 1.89, 2.58 and 2.47 pellets a
+  shot, far 0, 0.19 and 0.17, so far is 0–8% of near against the 50% line. All checks pass each time.
+- This run's full suite: `npm test` in four parallel shards on v1.247, 124 of 145 passed; all 21 misses died loading
+  the page (30 s limit) under that load, and all 21 rerun three at a time pass, with v1.245's warm-up moved after the
+  load (first loss 30 ms, second 7 ms).
+### Still open
+- Nothing for the game; the suite takes about a third longer.
+
+## v1.248 — Squad commands: hold Q
+Backlog D.35 (Michael: A, control room 15 Oct): Battlefront-style orders to your team. In any match with teammates,
+hold Q and four orders show round the crosshair, PUSH UP above, FIND COVER right, KEEP DISTANCE below, FOLLOW ME left;
+move the mouse toward one and let go. The match keeps running while the wheel is open, but the mouse moves its pointer
+and not your look; a small move, Escape or the pause menu shuts it with no order. The order goes to every teammate (the
+walkie reaches the whole map), the nearest one answers it on the walkie ("Copy, pushing!", a click of the talk button
+then his voice, heard wherever he is), and the HUD under the roster shows the order standing and his line. It holds
+until you give another or the round ends. A teammate on an order moves on it by the distance field, the way a flag
+runner does, instead of his usual states, and shoots on the move at whoever he can see: push up, he heads for the
+nearest of the other side until he is within 14 m, then fights as he would; keep distance, he backs off to about 21 m
+when one of them is inside 15 m, closes when they are past 25 m, and holds and shoots in between; find cover, he goes
+to the nearest cover within 15 m, on its side away from the nearest enemy, and holds there low, up to shoot for a
+moment every couple of seconds; follow me, he keeps a couple of metres behind and beside you, sets off when you are
+over 6 m away, and the kid you look at is the one he goes for. Left out, as before: a VIP (he holds his spot), a
+perched or climbing kid, one walking back after a tag (he picks the order up again when he is back), a flag runner
+with a flag to see to. Nothing changes in a match without teammates, and the tutorial has no wheel.
+### Verified
+- `tests/squad-orders.test.mjs` (new, 15 checks), on the Hollow 3v3 with Eric and Rebecca, the other side's guns held so
+  nobody is walked back after a tag, each order against the same round with none. A real Q held: each way picks its
+  order, the yaw does not move while it is open, letting go shuts it; Eric or Rebecca answers each order and the HUD
+  shows it; a 10 px move picks nothing; pausing shuts it with no order. Push up: from 8 to 20 s the pair stand 17 m
+  from the nearest of the other side on average, 33 m with no order. Keep distance: 13–27 m from them 90% of samples,
+  21% with no order. Find cover: Eric holds 1.2 m from his spot, low 63% of the time; Rebecca, with no cover within
+  15 m of her start, holds low where she is (58%). Follow me, with you walked to the middle: both within 4 m of you from
+  12 s on, against 22 and 34 m with no order. The kid you look at scores best for your teammates (Ryan −8.5 against
+  −3.9 and 13.5). The next round starts with no order; a 1v1 has no wheel and no HUD. No page errors. Picture of the
+  wheel: `tests/out/squad-wheel.png`.
+### Still open
+- Michael's hands on it: whether the wheel's size and the four places feel right, and whether teammates on an order
+  are any use in a real fight (the test holds the other side's guns). No pad button yet for the wheel; the briefing
+  doesn't mention Q (the HUD does, in every match with teammates).
+
+## v1.249 — The pool noodle
+Backlog D.36 (Michael: A, control room 15 Oct): a pool noodle as a melee backup for when you are out of BBs, sold on
+airsoft.com for $15, and a hit is a tag like a BB. It is on the Gear tab under a new Backup header, with its own
+picture (a green foam noodle, the hollow showing at the end), and goes in a loadout slot like a speed loader (0.3 lb).
+In a match, V swings it from whatever you hold, a quick swing and back to the gun; or press its slot's number to hold
+it, and a click swings it. The swing winds back to the right and sweeps across to the left in 0.42 s, with a whoosh;
+it lands at 0.16 s on the nearest kid of the other side within 1.6 m (your middle to his), within 45° of where you
+look, with nothing tall between you. He is tagged exactly as a BB tags him (out, or walking back to respawn, and on
+your result screen's tags), then says one of six noodle lines ("A POOL NOODLE?! Are you serious?!", "Dude, you got me
+with a NOODLE."). A kid already out gets his v1.237 "I'm out already". One swing at a time, 0.65 s apart; no gun
+shot mid-swing. Kids never carry one.
+### Verified
+- `tests/pool-noodle.test.mjs` (new, 14 checks). The Gear tab: Pool Noodle, $15, under Backup, with its picture;
+  bought with $50 it is owned, $35 left, OWNED. The loadout picker offers it once and not again once it is in slot 2.
+  In the Hollow 3v3, one of their kids stood in front of you, guns held: a real V shows the noodle and hides the gun
+  mid-swing and the gun is back after it; a kid 1.2 m ahead is tagged and walks back ("Dude, you got me with a
+  NOODLE."); 2.2 m ahead, 1 m behind, and 1.4 m off at 56° to the right are not hit; behind a wall 1.3 m off he is
+  not hit. Key 2 holds it (the hint says "Click or V to swing"), a click swings it and tags a kid 1 m ahead. A second
+  V mid-swing does nothing and one 0.85 s later swings; with no noodle in a slot V does nothing. No page errors.
+  Pictures: `tests/out/pool-noodle-held.png`, `tests/out/pool-noodle-swing.png`.
+### Still open
+- Michael's hands on it: the reach and the cone, and whether a tag from a noodle is too strong (a kid who rushes you
+  is tagged before he fires if you swing first). The noodle is not drawn on your kid in the Loadout screen or the
+  mirror; no pad button for V yet.
+
+## v1.250 — Four cheap clear-plastic automatics
+Backlog D.37 (Michael: B, control room 15 Oct): 3-4 "shitty" automatic guns in see-through white plastic, low rate of
+fire, BBs every which way, or prone to jamming. Four, each bad in its own way, all cheaper than the Bucket Gun ($110),
+at the head of the shop's AUTOMATICS, carried by no kid: the Rattle Can ($25, all three faults: 2 BBs a second, every
+BB curving, a jam in about one burst in four), the Clear Sprayer ($35, a little battery SMG: 6-7 BBs a second, every
+one curving hard), the Ghost Mini ($45, a clear micro-uzi: steady, 10 a second, but about one burst in five jams; R
+held clears it, as any jam) and the Tick-Tock ($55, a clear wind-up rifle: dead accurate and the longest carry of the
+four, 2 BBs a second). Each has its own model in clear plastic with the gearbox showing through, an orange tip, the
+Bucket Gun's grip (so the hands hold as there), its own picture in the shop, a top sight and a rail; no bigger mag
+and no spares are sold for them (a speed loader fills any gun). Two small engine changes carry it: a gun can now set a
+floor on how hard its BBs curve (`curveStrengthMin`, the spring guns keep 1.5), and an automatic can jam a burst
+(`burstJam`, the jam landing on its first or second BB). The pool noodle's shop picture (v1.249) is drawn a little
+fatter, as `shop-pics` wants a tenth of the square filled (it was 9.3%).
+### Verified
+- `tests/clear-guns.test.mjs` (new, 17 checks). The shop: AUTOMATICS lists Rattle Can, Clear Sprayer, Ghost Mini,
+  Tick-Tock, then the Bucket Gun, each with its picture, each bought from its page for $25/35/45/55 with no mag or
+  spare rows. In Bunratty with each, seeded, against the Bucket Gun: held a second, 2.0 / 6.6 / 10.0 / 2.0 BBs (Bucket
+  7.8); bursts of a second that jam, of 200: 26% / 0 / 19% / 0; at 15 m within 0.5 m of the line 10% / 13% / 100% /
+  100% (Bucket 57%), the middle BB 1.33 / 0.99 / 0.03 / 0.01 m off and nine in ten within 2.7 / 2.6 m for the two
+  curving ones (about a 3 m circle); a level shot from chest height carries 14 / 16 / 30 / 39 m (Bucket 18). Aimed,
+  each front sight sits 0.13-0.16° off the reticle. No page errors.
+- Updated for sixteen guns: `gun-parts` (the four join up, 25-36 parts each), `shop-gun-kinds` (AUTOMATICS (9), the
+  first automatic's page is the Rattle Can's), `shop-pics` (16 distinct pictures; the Gear tab's noodle row),
+  `backyard-guns`, `under-parts` (eight guns with no under-barrel slot). All pass, with `workbench-labels`.
+### Still open
+- Michael's look at the four (`tests/out/clear-*-aimed.png`) and his hands on how bad is bad enough. The kids' guns
+  are unchanged (none carries one); the Pickup Game's kid list can't hand one out yet.
+
+## v1.251 — The Last Saturday: a tag sends you home
+Found in play (critic, 14 Oct, v1.224), decided in decisions ("The Last Saturday: what is a life for you?", Michael:
+A, control room 15 Oct). The finale's briefing says "three lives for everybody", but your three lives were three hits
+where you stood: two went inside 0.75 s in 8 of 10 critic rounds, all three inside 0.55 s in 2. Now, as in the Pickup
+Game (v1.221), a tag there costs one of your lives and puts you back at the west end with 2 s in which nothing tags
+you; the rest of the burst lands in that cover. The kids' lives are unchanged, and so is every other story match (one
+life each). The briefing adds "tagged, you walk back to the west end and go again". The scenario carries the rule as a
+flag (`tagSendsHome`), so another match could take it later.
+### Verified
+- `tests/last-saturday-lives.test.mjs` (new, 8 checks). Scripted: a tag 6 m from the start costs one life of three and
+  puts you at the start with 2 s of cover; four more BBs straight after take nothing; after the cover a second tag
+  costs a second and sends you back again; the third ends the round. Real rounds, two runs: holding the start you lose
+  0-3 lives in 60 s (at 27-58 s), sprinting at the bulb without firing all three at 5.7-6.9, 9.7-12.0 and 12.9-16.0 s;
+  the gaps between lives are 2.0-19.7 s (v1.224: 0.08-0.75 s), and you are back at the start after every tag but the
+  last. No page errors.
+- `tests/last-saturday.test.mjs` passes unchanged (three lives each, the map card, the win, the calendar, Eric's text).
+### Still open
+- Whether the finale is now too easy: a sprint at the bulb still loses all three lives inside 16 s, and the critic's
+  bot will show how often you win it.

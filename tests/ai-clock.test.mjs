@@ -43,13 +43,17 @@ for (let r = 0; r < 3; r++) {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const d = Game.scenario.enemies.find(k => k.character?.name === 'Devon');
     let fired = 0; const o = spawnEnemyBB; spawnEnemyBB = (e, t) => { if (e === d) fired++; return o(e, t); };
-    for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
+    // fix-up (PR #75, CI on 2849a66: one round of three with 0 shots): the seconds he was alive with a line to someone,
+    // so a round in which nobody came into his doorway's line, or he was tagged out early, is told apart from the fault
+    let losSecs = 0;
+    for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) { stepGame(1 / 60); if (d.health > 0 && d._hasLOSNow) losSecs += 1 / 60; }
     spawnEnemyBB = o; applyBBHit = orig; performance.now = pn;
-    return { fired, at: [+d.pos.x.toFixed(1), +d.pos.z.toFixed(1)] };
+    return { fired, losSecs: +losSecs.toFixed(1), at: [+d.pos.x.toFixed(1), +d.pos.z.toFixed(1)] };
   }));
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
 console.log('  Devon, wall clock 5x:', JSON.stringify(rounds));
-check('Lights Out: with the wall clock racing, Devon holds the doorway and fires every round', rounds.every(r => r.fired > 0 && Math.hypot(r.at[0] + 1, r.at[1] + 20) < 4), rounds);
+check('Lights Out: with the wall clock racing, Devon holds the doorway and fires in every round he has a line for 1 s or more, and in at least one',
+  rounds.every(r => (r.losSecs < 1 || r.fired > 0) && Math.hypot(r.at[0] + 1, r.at[1] + 20) < 4) && rounds.some(r => r.fired > 0), rounds);
 await g.close();
