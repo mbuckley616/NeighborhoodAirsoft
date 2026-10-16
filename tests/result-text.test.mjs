@@ -1,6 +1,7 @@
 // v1.96 (Found in play, v1.86): the result screen's flavor line. Flavor quotes were doubled (""Ow!""), and the
 // multi-kid lines had a stray comma, named the player's own allies, and used a plural verb for one name. Ends
-// several scenarios every way and checks the sentence. v1.117: and the place words fit the map.
+// several scenarios every way and checks the sentence. v1.117: and the place words fit the map. v1.246: and a
+// free-for-all loss has nobody regrouping.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -9,7 +10,9 @@ const IDS = ['bunratty_sean', 'winnmark_seth_house', 'bunratty_night_lane', 'bun
              // v1.117: the place words fit the map (Found in play, v1.101)
              'bunratty_pincer', 'lot_defend_store', 'hollow_juggernaut', 'hollow_big_battle',
              // v1.162: the store is indoors (Found in play, critic v1.160)
-             'store_price_check_3v3', 'store_defend_desk', 'store_night_4v4'];
+             'store_price_check_3v3', 'store_defend_desk', 'store_night_4v4',
+             // v1.246: nobody regroups in a free-for-all (Found in play, critic 15 Oct)
+             'winnmark_ffa', 'lot_ffa'];
 const lines = [];
 for (const id of IDS) {
   await g.scenario(id);
@@ -48,6 +51,18 @@ check('no road, curb or screen door inside the store', store.length === 0, store
 check('the store\'s team losses regroup in the stockroom', ['store_price_check_3v3', 'store_night_4v4'].every(id => of(id, 'lose').every(t => /regroup back in the stockroom/.test(t))), ['store_price_check_3v3', 'store_night_4v4'].map(id => of(id, 'lose')));
 check('the desk defend\'s timer win: their phones buzz', of('store_defend_desk', 'win/timer').every(t => /phones buzz/.test(t)), of('store_defend_desk', 'win/timer'));
 check('the desk defend loses the service desk', of('store_defend_desk', 'lose').every(t => /take the service desk/.test(t)), of('store_defend_desk', 'lose'));
+// v1.246 (Found in play, critic 15 Oct): a free-for-all loss said all four "regroup near the road" together
+check('a free-for-all loss: nobody regroups, the rest keep going', ['winnmark_ffa', 'lot_ffa'].every(id => of(id, 'lose').every(t => !/regroup/.test(t) && /the rest keep going at each other/.test(t))), ['winnmark_ffa', 'lot_ffa'].map(id => of(id, 'lose')));
+await g.scenario('winnmark_ffa');
+const ffaBy = await page.evaluate(() => {
+  Game.scenario.stats.damage = [{ part: 'chest', front: true, h: 0.6, lat: 0, by: 'Trey', gun: 'MP5', dist: 9, t: 3, life: 1 },
+    { part: 'head', front: true, h: 0.9, lat: 0, by: 'Seth', gun: 'Spring Shotgun', dist: 12, t: 5, life: 1 }];
+  endScenario('lose');
+  return document.getElementById('flavorText').textContent;
+});
+console.log('  winnmark_ffa lose, tagged by Seth: ' + ffaBy);
+check('it names who got the last one on you', /^Too many angles, not enough cover\. Seth gets the last one on you/.test(ffaBy), ffaBy);
+await page.evaluate(() => enterBedroom()); await g.spin(5);
 // An intermittent "Failed to execute 'connect' on 'AudioNode'" showed up once in three runs of this suite
 // (12 at once, never in the other suites). It's filed in the backlog (Found in play, v1.96) and reported
 // here, not failed on, until it's run down; any other page error fails.

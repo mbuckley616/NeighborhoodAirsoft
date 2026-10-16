@@ -90,7 +90,7 @@ const geo = await page.evaluate(() => {
 });
 for (const r of geo) console.log('  ', JSON.stringify(r));
 const longs = geo.filter(r => !('none' in r));
-check('every long gun (8) has the slot, every pistol (4) none', longs.length === 8 && geo.filter(r => r.none).length === 4, geo.map(r => r.gt));
+check('every long gun (8) has the slot, every pistol and clear automatic (8) none', longs.length === 8 && geo.filter(r => r.none).length === 8, geo.map(r => r.gt));
 check('the mag, sling and foregrip hang below the handguard (top within 1 cm of it, bottom 5-12 cm under)',
   longs.every(r => ['taped_mag', 'sling', 'foregrip'].every(k => r[k].maxY <= r.bottom + 0.01 && r[k].minY < r.bottom - 0.05 && r[k].minY > r.bottom - 0.12)), longs);
 check('the cardboard barrel runs ahead of the muzzle (10 cm or more past it)', longs.every(r => r.cardboard_barrel.minZ < r.frontZ - 0.1 && r.cardboard_barrel.maxZ > r.frontZ - 0.01), longs);
