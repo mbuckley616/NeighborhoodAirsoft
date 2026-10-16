@@ -10806,7 +10806,10 @@ cover layouts are untouched and the scenery is the same every round.
   west show houses and trees over the crest, Winnmark's east has the street running on between houses, the lot is
   ringed by shops, a road and a second lot, the school and the club look over fields and a fairway to tree lines and
   rooftops, and the store's windows show its parking lot.
-- `npm test`: SUITES_LINE
+- `npm test`, as four parallel shards here: 150 suites, 143 green the first time. Five timed out under the four-way load
+  (sneakers, stuck-sweep-10 and -16, winnmark-props) or missed a ratio (squad-orders 0.58 vs 0.26), and all five pass
+  run alone. The one real failure was `grocery-store`'s closed-room check: three rays out through the doors now pass
+  through the see-through glass. The check counts the glass as closing the room, and passes.
 ### Still open
 - The real streets: as Michael's pictures arrive (2–4 per map, Google Maps satellite or 3D view, or Street View,
   looking out past the map's edge), that map's entry in `EDGE_BACKDROPS` is reshaped to match. Nothing is owed until
