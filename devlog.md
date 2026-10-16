@@ -10385,3 +10385,16 @@ FREEZE #78, the map backdrops, is open).
   now fails every run rather than one in seventy, which is the point, but the 8 s line is no longer a spread.
 - Locally the kids' lines are spoken through Windows' own speech engine (Michael heard them while the suites ran), which
   probably slows these runs well past CI's.
+
+## v1.230 fix-up 2 — vip's seeding taken back out; the early VIP fall filed
+CI on 8ce921f passed the online suite (now on shard 8/8) and failed `vip.test.mjs` on shard 7/8: Priya out at 5.6 s
+at Bunratty with no kid tagged, both in-play checks failed. The seeded played rounds came out the same run after run on
+one machine but not across machines (on CI Sean spawned 2.3 m from the player, here 2.5 m), and CI's round was one of the
+early falls. So the early fall is the game's, not the test's draw: their VIP can be picked off before 8 s, the line
+D.17 drew. Michael (16 Oct): take the seeding back out, keep the online fix, and file the fall for the builder. The suite
+is v1.230's again, and the fall is under Found in play in the backlog with what was measured.
+### Verified
+- CI log of 8ce921f, shard 7/8: `FAIL in play no VIP falls in the first 8 s` (theirs 5.6 s, f 338) and `FAIL ... trade
+  tags` (Bunratty: every kid 0). Shard 8/8, with `online.test.mjs`, passed.
+### Still open
+- PR #67 can still fail shard 7/8 on vip until the builder settles the early VIP fall (or Michael moves the line).

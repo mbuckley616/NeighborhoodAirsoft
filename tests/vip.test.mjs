@@ -46,50 +46,21 @@ const built = async (id) => {
 // Played on from the entry above, LIMIT game seconds, so the suite fits run.mjs's 10 minutes.
 const LIMIT = 40;
 const played = [];
-// v1.230 fix-up (CI shard 7/8 on auto/fable-d2-online, 14 Oct: "the kids trade tags" failed): each played round was a
-// fresh draw. Math.random was unseeded, the page's own render loop stepped the game in real time between the test's
-// steps (0.5-1 s of the round before play(), more while it ran), and the kids' voice cooldowns read the wall clock and
-// drew a line from Math.random. Most rounds see 1-5 tags in 40 s at Bunratty, but 1 in about 70 here had Priya out at
-// 2.9 s, before anyone was tagged, and both in-play checks below failed. From the entry to the end of the round the
-// suite now seeds Math.random per match, steps the game only itself, and keeps the voices quiet, so every run plays the
-// same round. The seeded draws are only the entry's, the start's and the test's steps: the music's hi-hats and snares
-// draw on their own wall-clock timer and keep the page's own random. Only the test changes: the game is as it was.
-async function hold(id) {
-  await page.evaluate(seedText => {
-    const o = window._vipOrig = window._vipOrig || { random: Math.random, step: stepGame, enter: enterScenario, start: startScenario };
-    let h = 2166136261; for (const ch of seedText) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-    let seed = h >>> 0, depth = 0;
-    const seeded = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    Math.random = () => depth ? seeded() : o.random();
-    const inSeed = f => function (...a) { depth++; try { return f.apply(this, a); } finally { depth--; } };
-    window._vipStep = inSeed(o.step);
-    window.enterScenario = inSeed(o.enter); window.startScenario = inSeed(o.start);
-    window.stepGame = () => {};   // tick() calls stepGame by name: the render loop draws, but moves no one
-    Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true });
-  }, 'vip:' + id);
-}
-const release = () => page.evaluate(() => {
-  const o = window._vipOrig;
-  Math.random = o.random; window.stepGame = o.step; window.enterScenario = o.enter; window.startScenario = o.start;
-  delete window.speechSynthesis;
-});
 async function play(id) {
   // v1.170 fix-up: untaggable by ignoring hits on him, as the other suites do. maxHits = 1e9 made updateHealthHud build
   // a billion hit slots on the first BB that reached him, which hung or crashed the page (the "lot crash", and CI's
   // VIP fall times that skipped game seconds).
   await page.evaluate(() => { window._vipHit = window._vipHit || applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : window._vipHit(bb, c); window._vipT = { ours: null, theirs: null, f: 0 }; });
   for (let s = 0; s < LIMIT; s++) {
-    // v1.230 fix-up: stepped through window._vipStep (hold, above), and no further once a VIP is out: the round is
-    // decided, and its result comes on a wall-clock timer (endScenarioLater), after more or fewer of these steps
     const mode = await page.evaluate(() => {
       const T = window._vipT, vips = Game.scenario.enemies.filter(e => e.vip);
-      for (let i = 0; i < 60 && Game.mode === 'scenario' && T.ours == null && T.theirs == null; i++) {
-        window._vipStep(1 / 60); T.f++;
+      for (let i = 0; i < 60 && Game.mode === 'scenario'; i++) {
+        stepGame(1 / 60); T.f++;
         for (const v of vips) { const k = v.team === 'player' ? 'ours' : 'theirs'; if (T[k] == null && !npcInFight(v)) T[k] = +(T.f / 60).toFixed(1);
           // v1.172: how far each VIP strays from the anchor he holds while he is in the fight
           if (T[k] == null) { const d = Math.hypot(v.pos.x - v.anchorPos.x, v.pos.z - v.anchorPos.z); T[k + 'Stray'] = Math.max(T[k + 'Stray'] || 0, +d.toFixed(2)); } }
       }
-      return T.ours != null || T.theirs != null ? 'decided' : Game.mode;
+      return Game.mode;
     });
     if (mode !== 'scenario') break;
   }
@@ -103,7 +74,6 @@ async function play(id) {
   console.log(`   ${id}, ${LIMIT} s: our VIP out at ${res.ours ?? '-'} s, theirs at ${res.theirs ?? '-'} s (${res.mode}); VIPs now ${res.shots}; tags each kid took: ${res.spent}`);
 }
 for (const id of Object.keys(MATCHES)) {
-  await hold(id);
   const b = await built(id);
   console.log(`   ${id}: ${b.ks.map(k => `${k.n}${k.vip ? '*' : ''}(${k.team}, ${k.w}, ${k.lives}${k.cap ? ', ' + k.cap + ' cap' : ''})`).join(' ')} | roster: ${b.roster}`);
   const vips = b.ks.filter(k => k.vip);
@@ -118,7 +88,6 @@ for (const id of Object.keys(MATCHES)) {
     vips.every(k => k.offAnchor < 1) && vips.find(k => k.team === 'player').offPlayer > 10, vips.map(k => `${k.n} ${k.offAnchor} m off anchor, ${k.offPlayer} m from player`));
   await g.shot('vip-' + id);
   await play(id);   // v1.170: the played round goes on from this entry, not a fresh one
-  await release();
 }
 
 // v1.175 (D.17, Michael: B): Night Shift keeps Rebecca on the briefing's spot at (-14, 21) and puts a dumpster on the
