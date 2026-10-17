@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.265</div>
+  <div class="version">v1.266</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7334,13 +7334,17 @@ const SCENARIOS = {
       { charId: 'haden',     weapon: 'ump',     anchor: 'entry_n',      team: 'player' },
       { charId: 'connor',    weapon: 'mp5',     anchor: 'entry_s',      team: 'player' },
       { charId: 'evan',      weapon: 'ak47',    anchor: 'cluster_east', team: 'player' },
-      { charId: 'mason',     weapon: 'ak47',    anchor: 'bulb_car_n' },
-      { charId: 'christian', weapon: 'shotgun', anchor: 'bulb_car_s' },
-      { charId: 'diego',     weapon: 'mp5',     anchor: 'bulb_island' },
+      // v1.266 (decisions, "Lamplight on Bellfield: Fernando's AK can reach your start", Michael: A): the four start in
+      // the bulb houses' west yards, where the houses hide them from the entry, and walk out to their spots. From the
+      // huddle at the bulb's mouth Fernando and Christian had a line down the street, and an AK tagged a player at the
+      // entry at 4.6 s; the kid fort's 1.12 m walls hide no standing kid. They come back there when tagged, too.
+      { charId: 'mason',     weapon: 'ak47',    anchor: 'bulb_car_n',  spawnAt: [-21, -17] },
+      { charId: 'christian', weapon: 'shotgun', anchor: 'bulb_car_s',  spawnAt: [-21, 17] },
+      { charId: 'diego',     weapon: 'mp5',     anchor: 'bulb_island', spawnAt: [-24, -20] },
       // v1.188: no rifle. From the fort it fired 0-3 shots a round at night; from the north car it tagged a player
       // standing at the entry 3.08 s after BEGIN in 6 of 8 rounds (the straight street gives it the entry from anywhere).
       // A UMP, not his 3v3 AK (and Evan the AK): the other way round our side lost 47 lives to their 31 in 4 rounds; this way 38 to 33
-      { charId: 'fernando',  weapon: 'ump',     anchor: 'bulb_fort' },
+      { charId: 'fernando',  weapon: 'ump',     anchor: 'bulb_fort',   spawnAt: [-24, 20] },
     ],
     enemySpawnCluster: 'cluster_bulb',
     winCondition: 'last_team_standing',

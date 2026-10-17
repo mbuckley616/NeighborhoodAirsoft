@@ -11439,3 +11439,35 @@ can't be held. Filed in Found in play; what to do about the Hollow is in decisio
 - Whether the free-for-alls open too slowly now: nobody is in sight at BEGIN, so the first tags come later (the roam
   sends a kid looking after 5 s unseen, as on the lot).
 - The Hollow's kid-to-kid sight lines, and the layout drift behind them (decisions; Found in play).
+
+## v1.266 — Lamplight's kids start out of sight of the entry
+Decisions, "Lamplight on Bellfield: Fernando's AK can reach your start" (builder, 15 Oct; Michael: A, move the starts
+out of the line to the entry). In the night 4v4 the four Bellfield kids huddled round `cluster_bulb` at the bulb's
+mouth and walked to their spots from there, and the huddle's west slots look straight down the street: CI on PR #75
+had a player standing at the entry tagged at 4.6 s, and locally 1 round in 45 at 4.7 s (an AK from 55.5 m). v1.265's
+run tried the huddle inside the kid fort and found its 1.12 m walls hide no standing kid (muzzles at 1.05–1.18 m), and
+nothing at the bulb hides one. Now each kid has his own start (`spawnAt`, as Owen's in Protect Ryan, v1.178) in a bulb
+house's west yard, where the house stands between him and the entry: Mason (-21, -17) and Diego (-24, -20) beside the
+north house, Christian (-21, 17) and Fernando (-24, 20) beside the south one. They walk out through the side yards to
+the same spots as before (the north car, the south car, the island, the fort) and come back to their yard when tagged.
+The spots were picked from a grid of the bulb end: a cell counts as hidden when no line runs from it at 1.05, 1.18, 1.35
+or 1.6 m to the entry or a step either side, or to our two allies' posts, at chest or head height. The houses do the
+hiding, so it is the same in the first build after a load and every later one.
+### Verified
+- `tests/lamplight-starts.test.mjs` (new): in the first build and a later one, all four start at their yard starts,
+  clear of obstacles, 58–61.8 m from the entry, with no line to it (0 of 40 lines each). Out of their yards inside 25 s
+  (at the spot, or fighting 8 m or more from the start): Fernando 4.3 s, Diego 4.8, Christian 7.4, Mason 14.4. Mason,
+  tagged, turns round at (-21, -17). A player standing at the entry, taggable, 8 rounds: first tagged 12–28.5 s or not
+  in 30 s.
+- 40 rounds of the same (`ROUNDS=40`): first tagged at 11.9 s at the earliest (Fernando), 17 rounds tagged at
+  11.9–28 s, 23 not in 30 s. Before, of 45: one at 4.7 s, one at 10 s, 32 at 13.8–29.1 s, 11 not in 30 s.
+- `bellfield` (its own Lamplight checks: kids fire, both sides lose lives, nobody wedged; standing at the entry 30, 30,
+  30 s), `pickup`, `pickup-kids`, `squad-orders`, and the stuck sweep on Lamplight twice over three ways (worst 3 s,
+  Fernando at the fort) pass.
+- The full suite in four parallel shards: 160 of 166 passed; the other six (`shop-gun-kinds`, `squad-orders`, `cars`,
+  `car-side-fire`, `seth-shotgun`, `stuck-sweep-11`) stopped on Playwright load timeouts under the load, with no check
+  failing, and all six passed when re-run.
+### Still open
+- Whether Lamplight opens too slowly now: the Bellfield kids come out of the yards 4–14 s in, and in 23 of 40 rounds
+  a player standing at the entry was not tagged in 30 s (11 of 45 before).
+- The Hollow's free-for-all starts are still waiting on Michael's answer (decisions).
