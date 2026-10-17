@@ -11185,3 +11185,38 @@ Each band (pushy, middling, calm) has its own pressed, teammate-down and you're-
 ### Still open
 - Whether the excuses are too frequent from the pushy kids in a long match, and whether the 30 m and 4 m lines fit.
 - Each kid having his own excuses (Seth's are not Evan's) would be a further step.
+
+## v1.257 — The backyard range
+Backlog D.40 (Michael, 14 Oct): a shooting range in the backyard, with cans, bottles, paper stood up that BBs punch
+through and homemade bullseyes, to try guns and setups outside a match, still costing real BBs; based on 235 Bunratty
+Court's yard and pool deck. He chose A (15 Oct): out your own back door. The bedroom's hall gets a back door on its west
+wall, between the bathroom and the entry door, with a glass panel and the label BACKYARD; E there ("Go out back (the
+range)") takes you straight out, no briefing. At spawn the front door keeps the first prompt.
+The range is a match with nobody else in it: the gun, gear and BBs are your loadout's and load from your bag as in a
+match, and `winCondition: 'range'` never ends on its own. It is written as `SCENARIOS.backyard_range` on the way out
+(as the Pickup Game is), so the map, the ladder and the tests' sweeps over the scenario table never meet it. No roster,
+no lives, no clock, no money. The yard: the house to the south (its v1.216 back door is the one you come out of), a
+deck, the pool on the east side (it stops bodies, not BBs, as the club's does), a board fence round, trees beyond. From
+the bench, downrange: six cans on a plank across two cinder blocks at 8 m, knocked off with a clank and tumbling to
+rest on the grass, where they can be shot again; three bottles on an upturned crate at 11 m, which break into glass on
+the lawn; two sheets of paper on stakes at about 12 m, which keep every hole while the BB goes on through; two cardboard
+bullseyes on easels at about 15 and 20 m, which keep a mark for each BB and score its ring (10, 8, 6, 4, 2 out to
+23 cm, else "on the board"). A tally sits top left (cans down, bottles broken, holes, bullseye hits, and the last
+thing hit with its ring). E (A on a pad) at the bench stands everything back up; E at the back door, or F, goes home,
+the BBs left in the gun back in the bag, and saves.
+### Verified
+- `tests/backyard-range.test.mjs` (new, 19 checks): the door, its label and prompt; out back with no kids, no roster
+  or lives showing and the tally up; the gun loaded from the bag (25 → 15 with 10 in a pistol); a trigger pull spends
+  one. Aimed BBs: a can flies 1.2–1.3 m and rests on the grass at 3.3 cm (lying), the other five still up; a bottle
+  breaks into 8 shards that all land; paper takes one hole and the BB is 0.5 m past it; from the bench, aimed dead
+  centre at the 20 m bullseye, the BB drops into the 8; on the near board the middle scores 10 and 10 cm out 6; eight
+  marks drawn (front and back). E at the bench: six cans home, three bottles, no glass or marks, tally zero. E at the
+  back door: the bedroom, no result screen, the bag 24 (the one BB fired is spent). F goes home without the forfeit
+  question.
+- `front-door`, the four `bedroom-*` suites, `autosave`, `forfeit-ask`, `pause-menu`, `gamepad`, `gamepad-screens`,
+  `harness` and `smoke` pass. Screenshots from the bench, downrange and the hall looked right.
+### Still open
+- The yard is from memory, not 235 Bunratty Court: the cloud can't open Zillow, so its pictures (in Slack or the
+  control room) would let the layout match.
+- No timed drills (option C wasn't picked); the range has no night version.
+- Whether the BB's drop at 20 m (dead centre lands in the 8) reads as fair on screen.

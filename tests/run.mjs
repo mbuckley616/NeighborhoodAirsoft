@@ -19,7 +19,7 @@ const only = args[0];
 // bellfield (233, weighted 100) and the unlisted fp-hands (361) had landed on it together.
 // A new suite counts as 60 s until it is listed; a stale number only makes the split a little uneven.
 const WEIGHTS = {
-  'ai-clock.test.mjs': 59, 'autosave.test.mjs': 31, 'backyard-guns.test.mjs': 105, 'bb-sweep.test.mjs': 36,
+  'ai-clock.test.mjs': 59, 'autosave.test.mjs': 31, 'backyard-guns.test.mjs': 105, 'backyard-range.test.mjs': 40, 'bb-sweep.test.mjs': 36,
   'bed-summer.test.mjs': 9, 'bedroom-bed.test.mjs': 12, 'bedroom-desk.test.mjs': 9, 'bedroom-shelves.test.mjs': 9,
   'bedroom-settings.test.mjs': 15, 'bellfield.test.mjs': 233, 'bound-forward.test.mjs': 53, 'briefing-lives.test.mjs': 57, 'bulb-sight.test.mjs': 74,
   'bunratty-polish.test.mjs': 81, 'bunratty-road.test.mjs': 78, 'burst-pose.test.mjs': 40, 'calendar.test.mjs': 30,

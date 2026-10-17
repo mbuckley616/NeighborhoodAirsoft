@@ -158,6 +158,15 @@
   #squadHud .sq-k { color: var(--ui-accent); letter-spacing: 1.5px; font-size: 11px; }
   #squadHud .sq-hint { color: #888; font-size: 11px; }
   #squadHud .sq-reply { color: #cfe8a8; margin-top: 3px; }
+  /* v1.257 (D.40): the backyard range's tally, top left where a match's squad order sits */
+  #rangeHud {
+    position: absolute; left: 24px; top: 24px; max-width: 360px;
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 4px;
+    padding: 5px 10px; font-size: 12px; color: #ddd; display: none;
+  }
+  #rangeHud .rg-k { color: var(--ui-accent); letter-spacing: 1.5px; font-size: 11px; margin-right: 4px; }
+  #rangeHud .rg-last { color: #f0e0a0; margin-top: 3px; }
+  #rangeHud .rg-hint { color: #888; font-size: 11px; margin-top: 2px; }
   #squadWheel {
     position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: none; pointer-events: none;
   }
@@ -2042,6 +2051,7 @@
   </div>
   <div id="squadHud"></div>   <!-- v1.248 (D.35): the standing order and the walkie's answer -->
   <div id="squadWheel"></div>  <!-- v1.248: hold Q -->
+  <div id="rangeHud"></div>  <!-- v1.257: the backyard range -->
   <div id="timerHud">
     <div class="timer-label" id="timerLabel">Hold Out</div>
     <div class="timer-value" id="timerValue">0:00</div>
@@ -2086,7 +2096,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.256</div>
+  <div class="version">v1.257</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -9100,6 +9110,20 @@ function buildBedroomScene() {
   addCasing(-HALL_W/2 - 0.02, 1.025, bathDoorTop, 0.05, 2.10, 'z');
   addCasing(-HALL_W/2 - 0.02, 1.025, bathDoorBot, 0.05, 2.10, 'z');
   addCasing(-HALL_W/2 - 0.02, 2.10, bathDoorZ, bathDoorW + 0.1, 0.08, 'z');
+  // v1.257 (D.40, Michael: A): the back door, on the hall's west wall between the bathroom and the entry door; it
+  // goes out to the backyard range. Drawn closed against the wall, as the entry door is, with a glass panel.
+  const backDoorZ = (bathDoorBot + hallSouthZ) / 2, backDoorW = 0.8;
+  const backDoor = buildDoor(backDoorW * 0.95, 2.05);
+  backDoor.position.set(-HALL_W/2 + 0.03, 0, backDoorZ);
+  backDoor.rotation.y = -Math.PI / 2;
+  scene.add(backDoor);
+  const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.42),
+    new THREE.MeshStandardMaterial({ color: 0xbfe0f0, emissive: 0x6a9ab8, emissiveIntensity: 0.5, roughness: 0.2 }));
+  backGlass.position.set(-HALL_W/2 + 0.075, 1.45, backDoorZ);
+  scene.add(backGlass);
+  addCasing(-HALL_W/2 + 0.02, 1.025, backDoorZ - backDoorW/2, 0.05, 2.10, 'z');
+  addCasing(-HALL_W/2 + 0.02, 1.025, backDoorZ + backDoorW/2, 0.05, 2.10, 'z');
+  addCasing(-HALL_W/2 + 0.02, 2.10, backDoorZ, backDoorW + 0.1, 0.08, 'z');
   // Hall closet casing (bifold)
   addCasing(HALL_W/2 + 0.02, 1.025, hclDoorTop, 0.05, 2.10, 'z');
   addCasing(HALL_W/2 + 0.02, 1.025, hclDoorBot, 0.05, 2.10, 'z');
@@ -9967,6 +9991,16 @@ function buildBedroomScene() {
     prompt: 'Go outside',
     label: 'Outside', icon: 'outside', labelY: 2.0,
     action: () => openMap(),
+  });
+
+  // v1.257 (D.40): the back door → the backyard range
+  Game.interactables.push({
+    type: 'back_door',
+    box: new THREE.Box3().setFromObject(backDoor),
+    pos: new THREE.Vector3(-HALL_W/2 + 0.4, 1.0, backDoorZ),
+    prompt: 'Go out back (the range)',
+    label: 'Backyard', icon: 'outside', labelY: 1.6,
+    action: () => enterRange(),
   });
 
   // Bathroom door → placeholder
@@ -16350,6 +16384,306 @@ function buildTreehouseYardScene(variant, timeOfDay) {
 }
 
 // =====================================================================
+// v1.257 (backlog D.40, Michael: A on "The backyard range: where is it, and what's on it?"): THE RANGE, in your own
+// backyard, out the back door in the bedroom's hall. Try a gun or a setup outside a match: no kids, no clock, no money,
+// but every BB comes out of your bag as in a match (it is the match code with nobody else in it, `winCondition:
+// 'range'`, which never ends on its own). Downrange from the bench: six cans on a plank (knocked off, and they can be
+// shot along the grass), three bottles on a crate (they break), two sheets of paper on stakes (a BB punches through and
+// leaves its hole), two cardboard bullseyes at about 15 and 20 m (each BB leaves a mark, and its ring is scored). E at
+// the bench stands everything back up; E at the back door (or F) goes back inside. Laid out from a memory of a
+// Bunratty Court yard, no pictures yet: the house to the south with a deck, the pool to the east, a board fence round.
+// Playable box: x∈[-12.5,12.5], z∈[-21.5,9.6]. The player faces −z downrange.
+// =====================================================================
+const RANGE_RINGS = [[0.035, 10], [0.08, 8], [0.13, 6], [0.18, 4], [0.23, 2]];   // bullseye: radius (m) → score
+const RANGE_CAN_R = 0.033, RANGE_CAN_H = 0.122, RANGE_REACH = 1.6;
+function buildBackyardRangeScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  applyTimeOfDay(scene, 'day', {
+    dayBg: 0x9ab8d0, dayFog: [40, 90],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-14, 30, 16],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
+    nightFog: [16, 50], moonPos: [14, 32, -16],
+    shadow: { size: 2048, extent: 26, far: 70 },
+  });
+  const groundY = () => 0;
+  const obstacles = [];
+  const box = (minX, maxX, minZ, maxZ, h, baseY = 0, extra = {}) => ({ minX, maxX, minZ, maxZ, h, baseY, surface: 'hard', ...extra });
+  const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, ...o });
+  const mesh = (geo, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+
+  // --- the lawn, the deck off the back of the house ---
+  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), std(0x5a8a40, { roughness: 1 }));
+  lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn);
+  {
+    const deckMat = std(0x9a7a58), deckDark = std(0x7a5e42);
+    for (let i = 0; i < 18; i++) mesh(new THREE.BoxGeometry(9, 0.05, 0.19), i % 4 ? deckMat : deckDark, -0.5, 0.025, 6.6 + i * 0.19).castShadow = false;
+  }
+  // --- the house to the south, its back to the yard; its back door (v1.216's, in the middle) is the one you came out of ---
+  obstacles.push(buildSuburbanHouse(scene, { x: 0, z: 14, width: 14, depth: 8, brickColor: 0xc8b8a0, roofColor: 0x4a3a2a, faceDir: 'south', porch: false, detail: true }));
+  const DOOR = { x: 0, z: 9.2 };
+  // --- a 1.8 m board fence round the yard, to the house's corners ---
+  {
+    const boardMat = std(0x8a6a48, { roughness: 0.95 }), railMat = std(0x6a5038, { roughness: 0.95 });
+    const run = (x1, z1, x2, z2) => {
+      const alongX = Math.abs(x2 - x1) > Math.abs(z2 - z1), len = alongX ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
+      const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, g = new THREE.Group();
+      mesh(new THREE.BoxGeometry(alongX ? len : 0.05, 1.8, alongX ? 0.05 : len), boardMat, cx, 0.9, cz, g);
+      for (let s = 0; s <= len; s += 2.4) mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), railMat, alongX ? Math.min(x1, x2) + s : cx, 0.95, alongX ? cz : Math.min(z1, z2) + s, g);
+      scene.add(g);
+      obstacles.push(box(Math.min(x1, x2) - 0.06, Math.max(x1, x2) + 0.06, Math.min(z1, z2) - 0.06, Math.max(z1, z2) + 0.06, 1.8, 0, { mesh: g }));
+    };
+    run(-13, -22, 13, -22); run(-13, -22, -13, 10); run(13, -22, 13, 10);
+    run(-13, 10, -7, 10); run(7, 10, 13, 10);
+  }
+  // --- the pool on the east side, with its coping; the water stops bodies, not BBs ---
+  {
+    const px0 = 6, px1 = 11.5, pz0 = 0.5, pz1 = 8;
+    const pcx = (px0 + px1) / 2, pcz = (pz0 + pz1) / 2;
+    mesh(new THREE.BoxGeometry(px1 - px0 + 0.8, 0.08, pz1 - pz0 + 0.8), std(0xe8e2d4), pcx, 0.04, pcz).castShadow = false;
+    mesh(new THREE.BoxGeometry(px1 - px0, 0.04, pz1 - pz0), std(0x3aa0c8, { roughness: 0.15, metalness: 0.1 }), pcx, 0.085, pcz).castShadow = false;
+    mesh(new THREE.BoxGeometry(px1 - px0, 0.045, (pz1 - pz0) * 0.35), std(0x2a86b0, { roughness: 0.15 }), pcx, 0.086, pz0 + (pz1 - pz0) * 0.175).castShadow = false;
+    for (const s of [-0.25, 0.25]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 6), std(0xc8c8c8, { metalness: 0.7 }), px0 + 0.8 + s, 0.5, pz1 + 0.12);
+    obstacles.push(box(px0, px1, pz0, pz1, 1.0, 0, { surface: 'water', bbPass: true, noStand: true }));
+    // two loungers on the deck side
+    for (const lz of [3, 5.4]) { mesh(new THREE.BoxGeometry(0.7, 0.3, 1.8), std(0xf0f0f0), 4.4, 0.15, lz); obstacles.push(box(4.05, 4.75, lz - 0.9, lz + 0.9, 0.3)); }
+  }
+  // --- the bench: a folding table at the firing line ---
+  const BENCH = { x: 0, z: 6.0 };
+  {
+    const g = new THREE.Group(), top = std(0xd8d0c0), leg = std(0x606060, { metalness: 0.5 });
+    mesh(new THREE.BoxGeometry(1.8, 0.05, 0.7), top, BENCH.x, 0.74, BENCH.z, g);
+    for (const [dx, dz] of [[-0.8, -0.28], [0.8, -0.28], [-0.8, 0.28], [0.8, 0.28]]) mesh(new THREE.BoxGeometry(0.04, 0.72, 0.04), leg, BENCH.x + dx, 0.36, BENCH.z + dz, g);
+    mesh(new THREE.BoxGeometry(0.3, 0.14, 0.2), std(0x3a6a3a), BENCH.x + 0.5, 0.84, BENCH.z, g);    // a BB bottle box
+    mesh(new THREE.BoxGeometry(0.4, 0.02, 0.3), std(0xf4f0e0), BENCH.x - 0.4, 0.775, BENCH.z + 0.05, g);   // the score pad
+    scene.add(g);
+    obstacles.push(box(BENCH.x - 0.9, BENCH.x + 0.9, BENCH.z - 0.35, BENCH.z + 0.35, 0.77, 0, { mesh: g }));
+  }
+  const R = { door: DOOR, bench: BENCH, cans: [], bottles: [], papers: [], eyes: [], shards: [], marks: [],
+    stats: { cans: 0, bottles: 0, holes: 0, eyeHits: 0, last: null } };
+  // --- six cans on a plank across two cinder blocks, 8 m out ---
+  {
+    const block = std(0x9a9a96), plank = std(0x9a7650);
+    for (const bx of [-1.6, 1.6]) { mesh(new THREE.BoxGeometry(0.2, 0.4, 0.4), block, bx, 0.2, -2); obstacles.push(box(bx - 0.1, bx + 0.1, -2.2, -1.8, 0.4)); }
+    mesh(new THREE.BoxGeometry(3.6, 0.04, 0.25), plank, 0, 0.42, -2);
+    const colors = [0xc0302a, 0x2a5aa8, 0xc0302a, 0x3a8a3a, 0xd8d8d0, 0xc0302a];
+    for (let i = 0; i < 6; i++) {
+      const g = new THREE.Group();
+      mesh(new THREE.CylinderGeometry(RANGE_CAN_R, RANGE_CAN_R, RANGE_CAN_H, 12), std(colors[i], { roughness: 0.4, metalness: 0.5 }), 0, 0, 0, g);
+      mesh(new THREE.CylinderGeometry(RANGE_CAN_R * 0.92, RANGE_CAN_R, 0.008, 12), std(0xd0d0d0, { metalness: 0.8, roughness: 0.3 }), 0, RANGE_CAN_H / 2, 0, g);
+      const home = new THREE.Vector3(-1.5 + i * 0.6, 0.44 + RANGE_CAN_H / 2, -2);
+      g.position.copy(home); scene.add(g);
+      R.cans.push({ g, home, pos: g.position, vel: new THREE.Vector3(), spin: new THREE.Vector3(), state: 'up' });
+    }
+  }
+  // --- three bottles on an upturned crate, 11 m out ---
+  {
+    mesh(new THREE.BoxGeometry(0.5, 0.36, 0.36), std(0x8a6a48), 3.5, 0.18, -5);
+    obstacles.push(box(3.25, 3.75, -5.18, -4.82, 0.36));
+    const glass = [0x2a6a2a, 0x6a3a1a, 0xc8d8d0];
+    for (let i = 0; i < 3; i++) {
+      const g = new THREE.Group(), mat = std(glass[i], { roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.8 });
+      mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.17, 10), mat, 0, 0.085, 0, g);
+      mesh(new THREE.CylinderGeometry(0.012, 0.03, 0.09, 8), mat, 0, 0.215, 0, g);
+      g.position.set(3.32 + i * 0.18, 0.36, -5); scene.add(g);
+      R.bottles.push({ g, x: g.position.x, z: -5, y0: 0.36, h: 0.26, color: glass[i], state: 'up' });
+    }
+  }
+  // --- two sheets of paper on stakes, about 12-13 m out; a BB goes straight through ---
+  for (const [x, z] of [[-4.5, -6], [6.2, -7]]) {
+    mesh(new THREE.BoxGeometry(0.03, 1.25, 0.03), std(0x8a6a48), x, 0.62, z - 0.02);
+    const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.216, 0.279), new THREE.MeshStandardMaterial({ color: 0xf8f6f0, roughness: 1, side: THREE.DoubleSide }));
+    paper.position.set(x, 1.1, z); scene.add(paper);
+    R.papers.push({ x, y: 1.1, z, w: 0.216, h: 0.279, mesh: paper });
+  }
+  // --- two homemade bullseyes on easels, about 15 and 20 m out ---
+  {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#b08a5a'; c.fillRect(0, 0, 256, 256);                                     // cardboard
+    const px = r => r / 0.5 * 256;
+    for (let i = RANGE_RINGS.length - 1; i >= 0; i--) {                                       // marker rings, outside in
+      c.beginPath(); c.arc(128, 128, px(RANGE_RINGS[i][0]), 0, Math.PI * 2);
+      c.fillStyle = i === 0 ? '#c82020' : i % 2 ? '#f4f0e4' : '#d03a2a'; c.fill();
+      c.lineWidth = 2; c.strokeStyle = '#2a2a2a'; c.stroke();
+    }
+    c.fillStyle = '#2a2a2a'; c.font = 'bold 16px sans-serif'; c.fillText('10', 120, 134);
+    const tex = new THREE.CanvasTexture(cv);
+    for (const [x, z, label] of [[1, -9.5, 'near'], [-2.5, -14.5, 'far']]) {
+      const easel = std(0x7a5e42);
+      for (const dx of [-0.22, 0.22]) mesh(new THREE.BoxGeometry(0.04, 1.3, 0.04), easel, x + dx, 0.62, z - 0.06).rotation.x = -0.08;
+      mesh(new THREE.BoxGeometry(0.6, 0.04, 0.06), easel, x, 0.72, z - 0.03);
+      const board = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshStandardMaterial({ map: tex, roughness: 1, side: THREE.DoubleSide }));
+      board.position.set(x, 1.0, z); scene.add(board);
+      R.eyes.push({ x, y: 1.0, z, w: 0.5, h: 0.5, label, mesh: board });
+    }
+  }
+  // --- shrubs along the fences, trees beyond them ---
+  for (const [x, z] of [[-12, -16], [-12, -6], [12, -12], [12, -4], [-5, -21], [6, -21]]) obstacles.push(addBush(scene, x, z, 1.3, 0.9, 1.1, null, 0, { detail: true }));
+  for (const [x, z] of [[-11, 4], [10.5, -19]]) obstacles.push(addSuburbanTree(scene, x, z, { detail: true, trunkH: 4, leafR: 2.4 }));
+  for (let x = -24; x <= 24; x += 4.5) addSuburbanTree(scene, x + (x % 3), -26, { detail: true, trunkH: 5, leafR: 2.8 });
+  for (let z = -20; z <= 8; z += 4.5) for (const sx of [-1, 1]) addSuburbanTree(scene, sx * 17.5, z + sx, { detail: true, trunkH: 5, leafR: 2.6 });
+
+  return {
+    scene,
+    spawn: new THREE.Vector3(DOOR.x, 0, DOOR.z), spawnYaw: 0,
+    bounds: { minX: -12.5, maxX: 12.5, minZ: -21.5, maxZ: 9.6 },
+    cover: [], obstacles, enemies: [], placements: {}, playerSpawns: {},
+    name: 'Your Backyard', scenarioName: 'The Range', desc: '',
+    groundY, range: R,
+  };
+}
+// the bedroom's back door: the range is written as SCENARIOS.backyard_range when you go out (as the Pickup Game is),
+// so nothing that walks the scenario table at load (the map, the ladder, the tests' sweeps) meets it
+function enterRange() {
+  SCENARIOS.backyard_range = {
+    name: 'Your Backyard', scenarioName: 'The Range',
+    desc: 'Your own backyard: cans, bottles, paper and two bullseyes. No kids, no money, but the BBs are your own.',
+    builderFn: 'buildBackyardRangeScene', scenarioType: 'skirmish', winCondition: 'range', range: true,
+    playerLives: 1, armorMult: 1, rewards: { win: 0, lose: 0 },
+  };
+  hideBedroomLabels();
+  enterScenario('backyard_range');
+}
+function rangeNear(p) { return Math.hypot(Game.player.pos.x - p.x, Game.player.pos.z - p.z) < RANGE_REACH; }
+function rangeFocus() {
+  const R = Game.scenario && Game.scenario.range;
+  if (!R || Game.mode !== 'scenario') return null;
+  return rangeNear(R.bench) ? 'bench' : rangeNear(R.door) ? 'door' : null;
+}
+function rangePromptText() {
+  const f = rangeFocus(), k = Pad.active ? '<kbd>A</kbd>' : '<kbd>E</kbd>';
+  return f === 'bench' ? `${k} &nbsp; Stand everything back up` : f === 'door' ? `${k} &nbsp; Go back inside` : null;
+}
+function rangeUse() {
+  const f = rangeFocus();
+  if (f === 'bench') rangeReset();
+  else if (f === 'door') endScenario('range');
+  return !!f;
+}
+// E at the bench: the cans back on the plank, new bottles, fresh paper, clean bullseyes
+function rangeReset() {
+  const R = Game.scenario.range;
+  for (const c of R.cans) { c.state = 'up'; c.g.position.copy(c.home); c.g.rotation.set(0, 0, 0); c.vel.set(0, 0, 0); }
+  for (const b of R.bottles) { b.state = 'up'; b.g.visible = true; }
+  for (const s of R.shards) Game.scene.remove(s.m);
+  for (const m of R.marks) Game.scene.remove(m);
+  R.shards = []; R.marks = [];
+  R.stats = { cans: 0, bottles: 0, holes: 0, eyeHits: 0, last: null };
+  updateRangeHud();
+}
+// where the segment a→b first enters the box (slab test), as a 0..1 fraction, or null
+function rangeSegBox(a, b, minX, maxX, minY, maxY, minZ, maxZ) {
+  let t0 = 0, t1 = 1;
+  for (const [p, q, lo, hi] of [[a.x, b.x, minX, maxX], [a.y, b.y, minY, maxY], [a.z, b.z, minZ, maxZ]]) {
+    const d = q - p;
+    if (Math.abs(d) < 1e-9) { if (p < lo || p > hi) return null; continue; }
+    let u = (lo - p) / d, v = (hi - p) / d;
+    if (u > v) [u, v] = [v, u];
+    t0 = Math.max(t0, u); t1 = Math.min(t1, v);
+    if (t0 > t1) return null;
+  }
+  return t0;
+}
+// where a→b crosses a target facing +z (the plane z = T.z) inside its w×h, or null
+function rangeSegPlate(a, b, T) {
+  if ((a.z - T.z) * (b.z - T.z) > 0 || a.z === b.z) return null;
+  const t = (T.z - a.z) / (b.z - a.z), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+  if (Math.abs(x - T.x) > T.w / 2 || Math.abs(y - T.y) > T.h / 2) return null;
+  return { t, x, y };
+}
+function rangeMark(x, y, z, r, color) {
+  for (const s of [1, -1]) {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 8), new THREE.MeshBasicMaterial({ color }));
+    m.position.set(x, y, z + s * 0.002); if (s < 0) m.rotation.y = Math.PI;
+    Game.scene.add(m); Game.scenario.range.marks.push(m);
+  }
+}
+// called from updateBBs for each live BB's sub-step: 'stop' (it is spent on the target), 'pass' (through paper), or null
+function rangeBBHit(bb, a) {
+  const R = Game.scenario.range, b = bb.pos;
+  let best = null;
+  const take = (t, kind, ref, extra) => { if (t != null && (!best || t < best.t)) best = { t, kind, ref, ...extra }; };
+  for (const c of R.cans) take(rangeSegBox(a, b, c.pos.x - 0.045, c.pos.x + 0.045, c.pos.y - 0.065, c.pos.y + 0.065, c.pos.z - 0.045, c.pos.z + 0.045), 'can', c);
+  for (const o of R.bottles) if (o.state === 'up') take(rangeSegBox(a, b, o.x - 0.04, o.x + 0.04, o.y0, o.y0 + o.h, o.z - 0.04, o.z + 0.04), 'bottle', o);
+  for (const T of R.eyes) { const h = rangeSegPlate(a, b, T); if (h) take(h.t, 'eye', T, h); }
+  for (const T of R.papers) { const h = rangeSegPlate(a, b, T); if (h) take(h.t, 'paper', T, h); }
+  if (!best) return null;
+  const at = new THREE.Vector3(a.x + (b.x - a.x) * best.t, a.y + (b.y - a.y) * best.t, a.z + (b.z - a.z) * best.t);
+  const S = R.stats, dir = bb.vel.clone().normalize();
+  if (best.kind === 'can') {
+    const c = best.ref;
+    if (c.state === 'up') S.cans++;
+    c.state = 'flying';
+    c.vel.set(dir.x * 3 + (Math.random() - 0.5), 1.2 + Math.random() * 1.2, dir.z * 3 + (Math.random() - 0.5));
+    c.spin.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 20);
+    playImpactMetal(at);
+    S.last = 'a can';
+  } else if (best.kind === 'bottle') {
+    const o = best.ref;
+    o.state = 'broken'; o.g.visible = false; S.bottles++;
+    const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.1, transparent: true, opacity: 0.8 });
+    for (let i = 0; i < 8; i++) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.025 + Math.random() * 0.02, 0.006, 0.02 + Math.random() * 0.02), mat);
+      m.position.set(o.x, o.y0 + Math.random() * o.h, o.z); Game.scene.add(m);
+      R.shards.push({ m, vel: new THREE.Vector3(dir.x * 1.5 + (Math.random() - 0.5) * 2, 0.8 + Math.random() * 1.5, dir.z * 1.5 + (Math.random() - 0.5) * 2), spin: Math.random() * 12, still: false });
+    }
+    playImpactShatter(at);
+    S.last = 'a bottle';
+  } else if (best.kind === 'paper') {
+    rangeMark(best.x, best.y, best.ref.z, 0.0045, 0x1a1a1a);
+    S.holes++;
+    S.last = 'the paper';
+    return 'pass';
+  } else {
+    const T = best.ref, r = Math.hypot(best.x - T.x, best.y - T.y), ring = RANGE_RINGS.find(([rr]) => r <= rr);
+    rangeMark(best.x, best.y, T.z, 0.006, 0x101010);
+    S.eyeHits++;
+    S.last = `the ${T.label} bullseye: ${ring ? ring[1] : 'on the board'}`;
+    S.lastRing = ring ? ring[1] : 0;
+    playImpactCardboard(at);
+  }
+  bb.pos.copy(at);
+  updateRangeHud();
+  return 'stop';
+}
+// once a step in the range: knocked cans and broken glass fall and settle on the grass
+function rangeStep(dt) {
+  const R = Game.scenario.range;
+  for (const c of R.cans) {
+    if (c.state !== 'flying') continue;
+    c.vel.y -= 9.8 * dt;
+    c.pos.addScaledVector(c.vel, dt);
+    c.g.rotation.x += c.spin.x * dt; c.g.rotation.y += c.spin.y * dt; c.g.rotation.z += c.spin.z * dt;
+    const B = Game.scenario.bounds;
+    c.pos.x = Math.max(B.minX, Math.min(B.maxX, c.pos.x)); c.pos.z = Math.max(B.minZ, Math.min(B.maxZ, c.pos.z));
+    if (c.pos.y <= RANGE_CAN_R && c.vel.y < 0) {
+      c.pos.y = RANGE_CAN_R;
+      c.vel.y *= -0.3; c.vel.x *= 0.6; c.vel.z *= 0.6; c.spin.multiplyScalar(0.5);
+      if (c.vel.length() < 0.4) { c.state = 'down'; c.vel.set(0, 0, 0); c.g.rotation.set(Math.PI / 2, c.g.rotation.y, 0); }
+    }
+  }
+  for (const s of R.shards) {
+    if (s.still) continue;
+    s.vel.y -= 9.8 * dt;
+    s.m.position.addScaledVector(s.vel, dt);
+    s.m.rotation.y += s.spin * dt;
+    if (s.m.position.y <= 0.004) { s.m.position.y = 0.004; s.still = true; }
+  }
+}
+function updateRangeHud() {
+  const el = document.getElementById('rangeHud');
+  if (!el) return;
+  const R = Game.mode === 'scenario' && Game.scenario.range;
+  if (!R) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+  const S = R.stats;
+  const html = `<span class="rg-k">THE RANGE</span> cans ${S.cans}/${R.cans.length} · bottles ${S.bottles}/${R.bottles.length} · ` +
+    `holes ${S.holes} · bullseye hits ${S.eyeHits}` + (S.last ? `<div class="rg-last">Last: ${S.last}</div>` : '') +
+    `<div class="rg-hint">bench: stand them back up · back door: inside</div>`;
+  if (el.innerHTML !== html) el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+// =====================================================================
 // v1.186: BELLFIELD COURT (Northcliff) — the Bellfield kids' own street (decisions, "Builder queue empty after
 // v1.185", Michael: C on the control room, 10 Oct: a small cul-de-sac map with a 1v1 and a 3v3). Until now it was only
 // a name in REGIONS and the kids who walk over in Bellfield After Dark. A short, flat cul-de-sac: the road comes in
@@ -21626,6 +21960,7 @@ function forfeitScenario() {
 // again keeps playing. A round that ends some other way while it asks (a delayed win) closes it.
 function askForfeit() {
   if (Game.mode !== 'scenario' || Game.forfeitAsk) return;
+  if (Game.scenario.range) { endScenario('range'); return; }   // v1.257: nothing to forfeit in the range; F goes inside
   Game.forfeitAsk = true;
   Game.mouseLMB = false;
   for (const k in Game.keys) Game.keys[k] = false;
@@ -22667,6 +23002,7 @@ function enterScenario(scenarioId) {
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
   Game.scenario.ladders = built.ladders || null;   // v1.138: climb zones (the treehouse ladder)
   Game.scenario.perches = built.perches || null;   // v1.143: what a kid who climbs a ladder holds (kidLadderStep)
+  Game.scenario.range = (sc.range && built.range) || null;   // v1.257 (D.40): the backyard range's targets
   Game.player.climbing = null;
   // v1.67: silence any whistles still attached to BBs from a prior run before we
   // drop the array, so no audio node is orphaned and left droning.
@@ -22696,6 +23032,15 @@ function enterScenario(scenarioId) {
 
   // v1.39: remember the scenario id for the result-screen nav buttons.
   Game._lastScenarioId = scenarioId;
+
+  // v1.257 (D.40): the backyard range has no briefing; you are straight out the back door
+  if (sc.range) {
+    hideAllMenus();
+    document.getElementById('bedroomHud').style.display = 'none';
+    Game.scene = built.scene;
+    startScenario(built);
+    return;
+  }
 
   // === v1.39: Loading screen (replaces the old auto-advancing intro card) ===
   // Header + description.
@@ -22983,6 +23328,11 @@ function startScenario(built) {
   document.getElementById('loadoutHud').style.display = 'block';
   document.getElementById('rosterHud').style.display = 'block';
   document.getElementById('crosshair').style.display = 'block';
+  if (Game.scenario.range) {   // v1.257 (D.40): nobody to count and nothing to lose in the range
+    document.getElementById('rosterHud').style.display = 'none';
+    document.getElementById('healthHud').style.display = 'none';
+    rangeReset();
+  }
   // v1.40: build the per-gun reticle shape + reset aim sway for a clean start.
   buildReticle(Game.gun.type);
   Game.player.sway = 0.18;
@@ -23309,6 +23659,14 @@ function endScenario(outcome) {
   // so nothing is lost between rounds and they refill cleanly next start.
   returnEquippedSpeedLoadersToBag();
   if (Net.active) netRestoreBag();   // v1.230: online, your bag is as it was before the match
+  // v1.257 (D.40): out of the range by the back door (or F): straight home, the BBs left in the gun back in the bag
+  if (SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].range) {
+    Game.scenario.range = null;
+    updateRangeHud();
+    enterBedroom();
+    saveGame();
+    return;
+  }
 
   // Cash reward — pull from SCENARIOS table (fallback for unregistered scenarios).
   // v1.28g: rewards dialed down 10x (rounded UP to the next whole dollar) — the
@@ -25191,7 +25549,7 @@ document.addEventListener('keydown', e => {
   // E to interact (bedroom)
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
     Game.focusedInteractable.action();
-  }
+  } else if (e.code === 'KeyE' && Game.mode === 'scenario' && Game.scenario.range && !e.repeat) rangeUse();   // v1.257 (D.40): one press, one use
   // v1.249 (D.36): V swings the pool noodle, if you carry one
   if (e.code === 'KeyV' && Game.mode === 'scenario' && !e.repeat) startNoodleSwing();
   // F to forfeit (scenario); v1.208: it asks first
@@ -25496,7 +25854,7 @@ function pollGamepad(dt) {
   }
   if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }
   if (pressed(PAD_BTN.BACK)) { padKey('KeyF', true); return; }
-  if (pressed(PAD_BTN.A)) padKey('Space', true);
+  if (pressed(PAD_BTN.A)) { if (!(Game.scenario.range && rangeUse())) padKey('Space', true); }   // v1.257: A uses the range's bench and door
   if (pressed(PAD_BTN.B)) padKey('ControlLeft', true);
   if (pressed(PAD_BTN.X)) padKey('KeyR', true);
   if (released(PAD_BTN.X)) padKey('KeyR', false);
@@ -25747,6 +26105,7 @@ function updateLadder(dt) {
 // the rail's gap: "S — climb down"; on the ladder: the three keys. Uses the bedroom's #interactPrompt box.
 function ladderPromptText() {
   const p = Game.player;
+  if (Game.scenario && Game.scenario.range) return rangePromptText();   // v1.257: the range's bench and back door
   if (!Game.scenario || !Game.scenario.ladders) return null;
   if (p.climbing) return '<kbd>W</kbd> &nbsp;up &nbsp;·&nbsp; <kbd>S</kbd> &nbsp;down &nbsp;·&nbsp; <kbd>Space</kbd> &nbsp;let go';
   const at = ladderAt(p.pos.x, p.pos.z);
@@ -28718,6 +29077,8 @@ function updateBBs(dt) {
     }
 
     let removed = false;
+    // v1.257 (D.40): the range's cans, bottles, paper and bullseyes
+    if (Game.scenario.range && bb.canDamage) { if (rangeBBHit(bb, oldPos) === 'stop') removed = true; }
 
     // Out of bounds / age
     if (bb.age > MAX_AGE) removed = true;
@@ -32257,6 +32618,7 @@ function stepGame(dt) {
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
     updateSquad(dt);   // v1.248 (D.35)
     voiceStep();   // v1.256 (D.32): lines waiting on the voice cooldowns
+    if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
     updateEnemies(dt);
     if (Net.active) netStep(dt);   // v1.230 (D.2)
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
