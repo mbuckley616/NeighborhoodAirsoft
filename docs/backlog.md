@@ -302,6 +302,7 @@ Fable card on the control room and Michael starts it from there.
 43. We should show the player's $ amount somewhere on the UI while in a match, but also should show it when they've been killed / won the match / are about to start a match. Same thing with BBs on those screens as well. (Michael, control room, 2026-10-15)
 44. You should be able to sell guns back, but with a resale penalty. Maybe you get a free return if you've only used it in 3 matches or something? (Michael, control room, 2026-10-16)
 45. Enemies should wince/react based on where they are hit for a second or two after they are shot. (Michael, control room, 2026-10-16)
+46. Can we make all of the UI elements look like they're on Notebook Paper, as if a kid ripped out some pages from a notebook for school and wrote on them? (Michael, control room, 2026-10-17) **(Fable)** **(design)** — restyles the title, map, briefing, HUD, result and bedroom screens.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
