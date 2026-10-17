@@ -11400,3 +11400,42 @@ seconds and is coming back.
   start; nobody has looked at it on screen yet but the test.
 - A kid whose start is far off (40-60 m on the big maps) is in sight for a while on his way; he can't be hit, so he
   only looks like a target.
+
+## v1.265 — Free-for-all starts: the lot's rule on every map
+Decisions, "Free-for-all starts on Winnmark and Bunratty" (critic, 15 Oct; Michael: A, the lot's rule on every
+free-for-all). In Every Kid for Themselves your `road_east` start was 27.9 m from Seth's backyard and you were the
+nearest start he had (Trey 39 m), so he walked straight in: a player standing at the start was tagged at 4.3–7.6 s.
+Bunratty's Last Kid Standing did the same with Sean (23.7 m, his next nearest 44.7 m), and the Hollow's ten-way had four
+pairs 9.5–14.7 m apart, Brooke 14.7 m from your midfield start with a line to it. The rule, as the lot has had it since
+v1.134, now on all four free-for-alls:
+- every start at least 18 m from every other (the new ones 19.5 m, so the spawn's small offsets keep it);
+- nobody in sight of anybody from the start, by the kids' own sight rule (muzzle 1.05 m to chest 0.95 m over the ground);
+- no kid nearer your start than the rest, read as: every kid has another kid's start nearer than yours, so nobody's
+  first walk is to you;
+- the same for the Pickup Game's free-for-alls at every size (its kids are the map's first ones, in order).
+New `ffa_*` placements were found by a search over each map's own obstacles, preferring each kid's old spot: Winnmark
+keeps your start and moves Trey, Brooke and Jamie; Bunratty starts you between houses 1 and 2 (`ffa_side`) and the six
+kids round the street; the Hollow starts you in the west woods (`ffa_west`) with Sean at midfield. The lot's starts
+were already right, but its Pickup Game began with Marcus and Jamie, both nearer you than each other, so the lot gets a
+pickup order (Tyler, Priya, Brooke, Owen, Marcus, Jamie).
+Found on the way: a match's layout is not the same every load. The first match built after a page load draws its props,
+cars and trees differently from every later build (three.js takes `Math.random` for each new object's id inside the
+seeded build, and the first build makes objects the later ones take from caches). So the street starts are checked in
+both layouts. The Hollow's starts can only be hidden by its trees, which move between the two: there the distances and
+the nearest-start rule hold, your start is hidden from every kid's after the first build, and kid-to-kid sight lines
+can't be held. Filed in Found in play; what to do about the Hollow is in decisions.
+### Verified
+- `tests/ffa-starts.test.mjs` (new): each map in a fresh page, its first build, its second and its biggest Pickup Game.
+  Winnmark: closest pair 24.2 m, nobody in sight in any of the three, nearest kid to you Seth 28.2 m (his own nearest,
+  Trey, 24.2 m). Bunratty: 20.0 m, none in sight, nearest Nick 23.4 m. The lot: 19.0 m, none in sight, unchanged.
+  The Hollow: 19.7 m, no kid sees your start after the first build; 9.5 pairs of 45 see each other in the later forest
+  (the old starts: 11.5–13). Every Pickup size keeps the rule (3- to 5-way, 7-way, 8-way, 7-way). Standing at the
+  start, first tagged (3 rounds): Winnmark 11.2–14.5 s (the old file 4.3–7.6 s), Bunratty 16.5–18.3 s (4.7–5.7 s), the
+  Hollow 15.6–19 s (10.2 s or not in 20 s).
+- `pickup-ffa`: its Hollow 3-way check now names the new starts (Seth in the north fort, Sean at midfield), and passes.
+  The stuck sweep on the free-for-alls (three ways each, 90 s) passes, and so do `lot-ffa-opening`, `pickup-clock`,
+  `market-lot`, `fence-bound` (Bunratty's free-for-all), `opening-hold`, `gait` and `smoke`. The full suite was not run.
+### Still open
+- Whether the free-for-alls open too slowly now: nobody is in sight at BEGIN, so the first tags come later (the roam
+  sends a kid looking after 5 s unseen, as on the lot).
+- The Hollow's kid-to-kid sight lines, and the layout drift behind them (decisions; Found in play).

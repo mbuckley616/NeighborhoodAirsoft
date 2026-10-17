@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.264</div>
+  <div class="version">v1.265</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6107,10 +6107,11 @@ const SCENARIOS = {
     // tucked behind its own house with no initial line of sight to the others, so
     // the FFA actually develops instead of resolving in the first three seconds.
     enemySetup: [
-      { charId: 'seth',   weapon: 'pistol',  anchor: 'seth_backyard'   }, // NE (house 0, x=24)
-      { charId: 'trey',   weapon: 'pistol',  anchor: 'trey_backyard'   }, // NW (house 3, x=-18)
-      { charId: 'brooke', weapon: 'shotgun', anchor: 'house4_backyard' }, // SE (house 4, x=22)
-      { charId: 'jamie',  weapon: 'pistol',  anchor: 'house7_backyard' }, // SW (house 7, x=-17)
+      // v1.265: the hidden starts (ffa_1–4, Michael: A); in this order every Pickup Game subset keeps the rule too
+      { charId: 'seth',   weapon: 'pistol',  anchor: 'ffa_1' }, // NE, Seth's own backyard
+      { charId: 'trey',   weapon: 'pistol',  anchor: 'ffa_2' }, // north, the side yard between houses 1 and 2
+      { charId: 'brooke', weapon: 'shotgun', anchor: 'ffa_3' }, // SW
+      { charId: 'jamie',  weapon: 'pistol',  anchor: 'ffa_4' }, // south, between houses 4 and 5
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 45, lose: 10 },
@@ -6506,15 +6507,16 @@ const SCENARIOS = {
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'lane_west',
+    playerSpawn: 'ffa_side',   // v1.265: was lane_west
     ffa: true,
     enemySetup: [
-      { charId: 'sean',     weapon: 'ak47',    anchor: 'house0_backyard' },
-      { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard' },
-      { charId: 'ryan',     weapon: 'shotgun', anchor: 'house3_backyard' },
-      { charId: 'mitchell', weapon: 'pistol',  anchor: 'house4_backyard' },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'house5_backyard' },
-      { charId: 'owen',     weapon: 'ar',      anchor: 'hero_backyard'   },
+      // v1.265: the hidden starts (ffa_1–6, Michael: A); in this order every Pickup Game subset keeps the rule too
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'ffa_1' },
+      { charId: 'nick',     weapon: 'ar',      anchor: 'ffa_2' },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'ffa_3' },
+      { charId: 'mitchell', weapon: 'pistol',  anchor: 'ffa_4' },
+      { charId: 'priya',    weapon: 'mp5',     anchor: 'ffa_5' },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'ffa_6' },
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 70, lose: 15 },
@@ -6825,18 +6827,18 @@ const SCENARIOS = {
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'midfield',
+    playerSpawn: 'ffa_west',   // v1.265: was midfield; the kids' hidden starts are ffa_1–9 (Michael: A)
     ffa: true,
     enemySetup: [
-      { charId: 'seth',     weapon: 'pistol',  anchor: 'a_fort'    },
-      { charId: 'eric',     weapon: 'mp5',     anchor: 'a_left'    },
-      { charId: 'rebecca',  weapon: 'pistol',  anchor: 'a_right'   },
-      { charId: 'devon',    weapon: 'shotgun', anchor: 'scatter_nw' },
-      { charId: 'mason',    weapon: 'sniper',  anchor: 'scatter_ne' },
-      { charId: 'sean',     weapon: 'ak47',    anchor: 'b_fort'    },
-      { charId: 'ryan',     weapon: 'shotgun', anchor: 'scatter_sw' },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'scatter_se' },
-      { charId: 'brooke',   weapon: 'sniper',  anchor: 'b_center'  },
+      { charId: 'seth',     weapon: 'pistol',  anchor: 'ffa_1' },
+      { charId: 'eric',     weapon: 'mp5',     anchor: 'ffa_8' },
+      { charId: 'rebecca',  weapon: 'pistol',  anchor: 'ffa_9' },
+      { charId: 'devon',    weapon: 'shotgun', anchor: 'ffa_3' },
+      { charId: 'mason',    weapon: 'sniper',  anchor: 'ffa_5' },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'ffa_2' },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'ffa_6' },
+      { charId: 'priya',    weapon: 'mp5',     anchor: 'ffa_4' },
+      { charId: 'brooke',   weapon: 'sniper',  anchor: 'ffa_7' },
     ],
     winCondition: 'last_team_standing',
     npcLives: 5,
@@ -13832,6 +13834,16 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     // house's open west side, onto the road, then east toward the player's fort.
     cluster_treehouse: { pos: new THREE.Vector3(20, 0, -23), cover: null },
     cluster_bulb:      { pos: new THREE.Vector3(-31, 0, 0), cover: null }, // cul-de-sac — defenders in attack scenarios
+    // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): Every Kid for Themselves' starts. Seth's
+    // own backyard was 27.9 m from road_east with nobody nearer him than you (Trey 39 m), so he walked straight to you.
+    // Each start is out of the others' sight (muzzle 1.05 m to chest 0.95 m, from points 0.6 m round each) in both of
+    // the street's layouts (the first match built after a page load draws its yard trees and props differently from
+    // the rest), 19.5 m or more from every other, and every kid has another kid's start nearer than yours (found by a
+    // search over the street).
+    ffa_1: { pos: new THREE.Vector3(22.5, 0, -26.5), cover: null },
+    ffa_2: { pos: new THREE.Vector3(0.5, 0, -16.5), cover: null },
+    ffa_3: { pos: new THREE.Vector3(-15.5, 0, 23.5), cover: null },
+    ffa_4: { pos: new THREE.Vector3(12.5, 0, 23.5), cover: null },
   };
 
   // === Player spawn anchors ===
@@ -14801,6 +14813,17 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // Enemy spawn clusters — one staging area per map end.
     cluster_bulb:      { pos: P(BULB.x, BULB.z), cover: null }, // east bulb (defenders)
     cluster_lane_west: { pos: P(-35, 0),         cover: null }, // west entry (attackers) — moved west off the curb props (v1.26)
+    // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): Last Kid Standing's starts. From lane_west
+    // Sean's backyard was 23.7 m off and you were the nearest start he had (Nick 44.7 m). Each start is out of the
+    // others' sight (muzzle 1.05 m to chest 0.95 m, from points 0.6 m round each) in both of the street's layouts (the
+    // first match built after a page load draws its yard props and cars differently from the rest), 19.5 m or more
+    // from every other, and every kid has another kid's start nearer than yours (found by a search over the street).
+    ffa_1: { pos: P(-29.5, -25.5), cover: null },   // Sean's backyard
+    ffa_2: { pos: P(-17.5, -9.5),  cover: null },   // house 0's front lawn, east of the drive
+    ffa_3: { pos: P(-35.5, 16.5),  cover: null },   // west of house 3
+    ffa_4: { pos: P(-11.5, 22.5),  cover: null },   // beside house 4
+    ffa_5: { pos: P(18.5, 18.5),   cover: null },   // in front of the hero house, west of its drive
+    ffa_6: { pos: P(40.5, 18.5),   cover: null },   // east of the hero house
   };
 
   // === Player spawn anchors ===
@@ -14808,6 +14831,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     lane_west:   { pos: P(-22, -2.5), yaw: -Math.PI / 2 }, // just past the west entry, on the centerline, facing EAST up the lane
     bulb_center: { pos: P(BULB.x, BULB.z), yaw: Math.PI / 2 }, // in the bulb, facing west (defend)
     hero_yard:   { pos: P(30, 24), yaw: 0 }, // hero backyard near the trampoline
+    ffa_side:    { pos: P(4.5, -17.5), yaw: Math.PI },      // v1.265: the free-for-all's, between houses 1 and 2, facing the lane
   };
 
   // === Legacy return scaffolding ===
@@ -15702,6 +15726,21 @@ function buildHollowScene(variant, timeOfDay) {
     // Staging clusters (one per team end)
     cluster_north: { pos: P(0, -33),  cover: null },
     cluster_south: { pos: P(0, 33),   cover: null },
+    // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): the Ten-Way Free-for-All's starts. Four
+    // pairs were 9.5–14.7 m apart, Brooke 14.7 m from your midfield start among them. Each start is 19.5 m or more
+    // from every other, and every kid has another kid's start nearer than yours, in the Pickup Game's order
+    // (PICKUP_MAPS ffaOrder) at every size, and no kid can see your start from his. Kid from kid out of sight can't
+    // be held: only the woods hide them here, and the interior trees fall differently in the first match built after
+    // a page load from the rest (in decisions, what to do).
+    ffa_1: { pos: P(-1.5, -25.5), cover: null },   // the north fort
+    ffa_2: { pos: P(2.5, -1.5),   cover: null },   // midfield
+    ffa_3: { pos: P(-19.5, -33.5), cover: null },
+    ffa_4: { pos: P(36.5, 22.5),  cover: null },
+    ffa_5: { pos: P(36.5, -23.5), cover: null },
+    ffa_6: { pos: P(-7.5, 24.5),  cover: null },
+    ffa_7: { pos: P(12.5, 24.5),  cover: null },
+    ffa_8: { pos: P(-27.5, 16.5), cover: null },
+    ffa_9: { pos: P(32.5, 2.5),   cover: null },
   };
 
   const playerSpawns = {
@@ -15712,6 +15751,7 @@ function buildHollowScene(variant, timeOfDay) {
     // (x 0–0.6) on that line and still looks out through the port.
     team_b:  { pos: P(0.5, 32.3), yaw: 0 },         // in the south fort, facing north (-z)
     midfield:{ pos: P(0, 0),    yaw: 0 },
+    ffa_west:{ pos: P(-27.5, -9.5), yaw: -Math.PI / 2 },   // v1.265: the free-for-all's, in the west woods facing east
   };
 
   // === Legacy return scaffolding ===
@@ -33475,7 +33515,10 @@ const PICKUP_MAPS = [
   { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle', ffa: 'hollow_ffa',
     // v1.202: the Ten-Way's first three share the south fort; take them spread out, one from each fort first
     ffaOrder: ['seth', 'sean', 'devon', 'priya', 'mason', 'ryan', 'brooke', 'eric', 'rebecca'] },
-  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4', ffa: 'lot_ffa' },
+  { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4', ffa: 'lot_ffa',
+    // v1.265 (Michael: A on the free-for-all starts): Marcus and Jamie, its first two, both had your start nearer than
+    // each other's, so a 3- or 4-way was them coming for you; in this order every size keeps the rule
+    ffaOrder: ['tyler', 'priya', 'brooke', 'owen', 'marcus', 'jamie'] },
   { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
   { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
   { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },
