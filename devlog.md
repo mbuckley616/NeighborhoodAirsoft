@@ -10817,3 +10817,21 @@ cover layouts are untouched and the scenery is the same every round.
 - Whether the scenery reads right in play: the houses are simple boxes with roofs on purpose (cost), the tree belts
   may look too regular from some spots, and the night shop fronts may be too bright.
 - Frame rate on a real machine: the cost is one or two draw calls but up to 44k extra triangles by day.
+
+## v1.253 — The squad order moves to the top left
+Backlog B.9 (Michael, control room 16 Oct): the squad commands' box overlaps the roster and the live count, which
+looks sloppy; move it. The ORDER box (v1.248) sat at a fixed 210 px from the top on the right, under "Players on the
+Field", and the roster grows a row per player: in the Hollow's three big battles (9 players) it reached 245 px and in
+The Last Saturday (12) 285 px, so the order was drawn across the names, and in every 4v4 it sat 5 px under the roster.
+It now sits in the top-left corner, which nothing else uses in a match (the loadout, stance and hits panels are low
+on the left, the timer top centre), and may run to 300 px wide so a walkie answer wraps once at most.
+### Verified
+- `tests/squad-hud.test.mjs` (new). Every match with teammates (31, the tutorial shows no order) at 1280×720, with the
+  longest walkie answer showing: the order's box shows and touches none of the roster, timer, loadout, stance, hits,
+  ammo, stamina, tutorial, prompt or crosshair (before, the roster in 5: the three Hollow big battles, Full-Auto
+  Mayhem and The Last Saturday). The same at 1024×576 for the six fullest (The Last Saturday, the Hollow big battle,
+  After Close, Flags on Bellfield, Protect Ryan, The Portables), and in a Pickup Game 4v4 on Bunratty (box at
+  24–324 × 24–82, roster 1068–1256 × 24–205). `squad-orders` passes unchanged.
+### Still open
+- Whether the top left reads well in play next to the walkie line, or wants to sit closer to the crosshair.
+

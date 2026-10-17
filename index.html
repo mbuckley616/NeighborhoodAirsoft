@@ -148,9 +148,10 @@
   #ammoHud .status.reloading { color: var(--ui-accent); }
   #ammoHud .status.ready { color: var(--ui-good); }
 
-  /* v1.248 (D.35): squad commands — the standing order under the roster, and the Q wheel round the crosshair */
+  /* v1.248 (D.35): squad commands — the standing order, and the Q wheel round the crosshair */
+  /* v1.253 (B.9): the order sits top-left, clear of the roster, which grows to 285 px in the big battles */
   #squadHud {
-    position: absolute; right: 24px; top: 210px; max-width: 260px;
+    position: absolute; left: 24px; top: 24px; max-width: 300px;
     background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 4px;
     padding: 5px 10px; font-size: 12px; color: #ddd; display: none;
   }
@@ -2074,7 +2075,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.252</div>
+  <div class="version">v1.253</div>
 </div>
 
 <!-- === WORLD MAP === -->
