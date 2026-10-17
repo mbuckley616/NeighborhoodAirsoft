@@ -25,7 +25,7 @@ const WEIGHTS = {
   'bunratty-polish.test.mjs': 81, 'bunratty-road.test.mjs': 78, 'burst-pose.test.mjs': 40, 'calendar.test.mjs': 30,
   'car-side-fire.test.mjs': 22, 'cars.test.mjs': 11, 'clear-guns.test.mjs': 276, 'country-club.test.mjs': 151,
   'cover-fire.test.mjs': 112, 'crew.test.mjs': 44, 'ctf.test.mjs': 118, 'ctf-clock.test.mjs': 231,
-  'damage-report.test.mjs': 34, 'damage-report-first.test.mjs': 27, 'desk-start.test.mjs': 22,
+  'damage-report.test.mjs': 34, 'damage-report-first.test.mjs': 27, 'deploy-progress.test.mjs': 30, 'desk-start.test.mjs': 22,
   'fence-bound.test.mjs': 31, 'forfeit-ask.test.mjs': 66, 'fort-spawn.test.mjs': 69, 'fp-hands.test.mjs': 361,
   'front-door.test.mjs': 10, 'gait.test.mjs': 51, 'gamepad.test.mjs': 31, 'gamepad-screens.test.mjs': 44,
   'grip.test.mjs': 18, 'grocery-store.test.mjs': 189, 'gun-ak.test.mjs': 25, 'gun-ar.test.mjs': 7,

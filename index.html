@@ -31609,6 +31609,7 @@ function updateEnemies(dt) {
         e.mesh.group.position.y = 0;
         setKidCrouch(e.mesh, 0);
         const dest = e.deployTarget || e.anchorPos;
+        if (e.stateTime < 0.1) { e._deployBest = null; e._deployNoGain = 0; }   // v1.265 fix-up: a fresh deploy, a fresh progress mark
         const dxd = dest.x - e.pos.x, dzd = dest.z - e.pos.z;
         const dd = Math.sqrt(dxd*dxd + dzd*dzd);
         // Reactive bail: if a real shot presents itself mid-deploy, take it.
@@ -31683,8 +31684,16 @@ function updateEnemies(dt) {
         }
         const deployMovedFinal = Math.hypot(e.pos.x - beforeDX, e.pos.z - beforeDZ);
         e._deployStuck = (deployMovedFinal > 0.02) ? 0 : (e._deployStuck || 0) + dt;
+        // v1.265 fix-up (CI, stuck-sweep 5/15/16): also measured as ground gained toward the anchor, as v1.164 did for
+        // retreating. Behind the Hollow's south fort (v1.259) ally Sean, deploying south through its back wall, crept
+        // ~1 cm/s along it and was nudged back 8 cm every few seconds; each nudge reset the "moved over 2 cm" test and he
+        // held 'deploying' at (4.9, 33.6) for 26-71 s. Now 1.5 s without getting 0.3 m nearer the anchor hands him off too.
+        if (e._deployBest == null || dd < e._deployBest - 0.3) { e._deployBest = dd; e._deployNoGain = 0; }
+        else e._deployNoGain = (e._deployNoGain || 0) + dt;
+        if (e._deployNoGain > 1.5) { e._deployStuck = 1.01; e._deployBest = null; e._deployNoGain = 0; }
         if (e._deployStuck > 1.0) {
           e._deployStuck = 0;
+          e._deployBest = null;
           e.state = 'advancing';
           e.stateTime = 0;
           e.advanceCheckTimer = 0;
