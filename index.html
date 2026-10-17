@@ -1685,6 +1685,7 @@
   }
   #shopScreen .shop-back-btn:hover { background: #e8e4d6; }
   #shopScreen .shop-gun-row .shop-item-buy { background: #5a7a9a; }
+  #shopScreen .shop-sell-btn { background: linear-gradient(180deg, #e0b030, #b08010); border-color: #806000; }   /* v1.262 (D.44) */
   /* BB color picker grid */
   #shopScreen .shop-color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
   #shopScreen .shop-color-cell {
@@ -2106,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.261</div>
+  <div class="version">v1.262</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3540,6 +3541,7 @@ const Game = {
     ],
     completed: {},
     textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
+    gunMatches: {},             // v1.262 (D.44): per gun bought, how many matches it has been into (for selling it back)
   },
 };
 
@@ -4207,7 +4209,50 @@ function buyGun(gunType) {
   Game.persist.cash -= cfg.price;
   Game.persist.owned[cfg.ownFlag] = true;
   Game.persist.equipped.gun = gunType;
+  if (!Game.persist.gunMatches) Game.persist.gunMatches = {};
+  Game.persist.gunMatches[gunType] = 0;   // v1.262 (D.44): matches it has been into, counted from the day it is bought
   return { ok:true };
+}
+
+// v1.262 (backlog D.44, Michael: B): sell a gun back. The full price back if it has been into 3 matches or fewer, half
+// after; a gun bought before this build has no count and is taken as used. Its mags (the capacity upgrades and the spare
+// mags that fit only it) and the parts mounted on it go with it at the same rate. The Spring Pistol can't be sold.
+const SELL_FREE_MATCHES = 3;
+function gunSellQuote(gunType) {
+  const cfg = GUN_MAGS[gunType];
+  if (!cfg || gunType === 'pistol' || !Game.persist.owned[cfg.ownFlag]) return null;
+  const n = (Game.persist.gunMatches || {})[gunType];
+  const used = typeof n !== 'number' ? null : n;
+  const full = used !== null && used <= SELL_FREE_MATCHES;
+  let paid = cfg.price;
+  const mags = cfg.mags.filter(m => Game.persist.owned[m.flag]);
+  for (const m of mags) paid += m.price;
+  const spares = cfg.spares.filter(s => MAG_GUN_FIT[s.key] === gunType && (Game.persist.consumables[s.key] || 0) > 0);
+  for (const s of spares) paid += s.price * Game.persist.consumables[s.key];
+  const g = (Game.persist.equipped.attachments || {})[gunType] || {};
+  const parts = [g.sight, ...(Array.isArray(g.rails) ? g.rails : []), g.under].map(id => id && getAccessoryInstance(id)).filter(Boolean);
+  for (const a of parts) paid += (ATTACHMENTS[a.type] || {}).price || 0;
+  return { paid, value: full ? paid : Math.floor(paid / 2), full, used, mags, spares, parts };
+}
+function sellGun(gunType) {
+  const q = gunSellQuote(gunType); if (!q) return { ok:false };
+  const p = Game.persist, cfg = GUN_MAGS[gunType];
+  for (const part of q.parts) {
+    p.accessories = p.accessories.filter(a => a.id !== part.id);
+    p.ownedEquipment.attachments[part.type] = Math.max(0, (p.ownedEquipment.attachments[part.type] || 0) - 1);
+  }
+  delete p.equipped.attachments[gunType];
+  for (const m of q.mags) p.owned[m.flag] = false;
+  for (const s of q.spares) {
+    p.consumables[s.key] = 0;
+    p.loadoutSlots = p.loadoutSlots.map(sl => (sl && sl.kind === 'spare_mag' && sl.refId === s.key) ? null : sl);
+  }
+  p.owned[cfg.ownFlag] = false;
+  if (p.gunMatches) delete p.gunMatches[gunType];
+  if (p.equipped.gun === gunType) p.equipped.gun = 'pistol';
+  p.cash += q.value;
+  autoSave();
+  return { ok:true, value: q.value, full: q.full };
 }
 
 // === SLOT HELPERS ===
@@ -23374,6 +23419,8 @@ function startScenario(built) {
   VOICE.globalCooldownUntil = 0; VOICE.recentLines = []; VOICE.pending = [];   // v1.150: the speech cooldown runs on the round clock (v1.256: no lines left waiting)
   Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
+  { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
+    if (gm && typeof gm[gt] === 'number') gm[gt]++; }
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
@@ -25335,7 +25382,7 @@ function renderGunDetail(c, gt) {
   const back = document.createElement('button');
   back.className = 'shop-back-btn';
   back.textContent = '◂ Back to Guns';
-  back.addEventListener('click', () => { shopState.view = 'list'; shopState.detailGun = null; renderShop(); });
+  back.addEventListener('click', () => { shopState.view = 'list'; shopState.detailGun = null; shopState.sellArm = null; renderShop(); });
   c.appendChild(back);
 
   const owned = !!Game.persist.owned[cfg.ownFlag] || gt === 'pistol';
@@ -25373,6 +25420,34 @@ function renderGunDetail(c, gt) {
   }
   gunRow.appendChild(gbtn);
   c.appendChild(gunRow);
+
+  // v1.262 (D.44): sell it back. The first press asks, the second sells.
+  const q = gunSellQuote(gt);
+  if (q) {
+    const srow = document.createElement('div');
+    srow.className = 'shop-item shop-sell-row';
+    const extras = [q.mags.length || q.spares.length ? 'its mags' : '', q.parts.length ? 'the parts on it' : ''].filter(Boolean).join(' and ');
+    const why = q.full ? `Full price back: it has been into ${q.used} of ${SELL_FREE_MATCHES} free-return matches.`
+      : q.used === null ? 'Half back: it was bought before returns were counted.'
+      : `Half back: it has been into ${q.used} matches (full price only within ${SELL_FREE_MATCHES}).`;
+    srow.innerHTML = `<div class="shop-item-icon">$</div>` +
+      `<div class="shop-item-info"><div class="shop-item-name">Sell it back</div>` +
+      `<div class="shop-item-desc">${why}${extras ? ` ${extras[0].toUpperCase() + extras.slice(1)} go with it.` : ''} You paid $${q.paid}.</div></div>`;
+    const sbtn = document.createElement('button');
+    sbtn.className = 'shop-item-buy shop-sell-btn';
+    const armed = shopState.sellArm === gt;
+    sbtn.textContent = armed ? `SURE? SELL $${q.value}` : `SELL $${q.value}`;
+    sbtn.addEventListener('click', () => {
+      if (shopState.sellArm !== gt) { shopState.sellArm = gt; renderShop(); return; }
+      shopState.sellArm = null;
+      const r = sellGun(gt);
+      if (r.ok) playShopChaching();
+      shopState.flash = r.ok ? `Sold ${cfg.displayName} for $${r.value}` : `Couldn't sell it`;
+      renderShop();
+    });
+    srow.appendChild(sbtn);
+    c.appendChild(srow);
+  }
 
   // Magazines (capacity upgrades)
   if (cfg.mags.length) {

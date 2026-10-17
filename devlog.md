@@ -11320,3 +11320,29 @@ and the arm is blended from where his pose has it, so when the flinch ends his o
   and `smoke` pass. Screenshots of the four flinches on Seth read as meant.
 ### Still open
 - Whether the flinch is big enough at 20-30 m, where most tags happen, and whether a head shot should also stagger him.
+
+## v1.262 — Sell a gun back
+Backlog D.44 (Michael, 16 Oct): sell guns back with a resale penalty, maybe a free return if it has seen only a few
+matches. His answer (control room, 17 Oct): B, the full price back if the gun has been into 3 matches or fewer, half
+after. The shop had no Sell and nothing counted a gun's matches. Now:
+- each gun bought keeps a count of the matches it has been carried into (`Game.persist.gunMatches`, set to 0 by
+  `buyGun`, one more at each `startScenario` for the equipped gun only; a retry is a match);
+- each gun's shop page, under the gun, has a "Sell it back" row saying what you'll get and why ("Full price back: it has
+  been into 1 of 3 free-return matches", "Half back: it has been into 4 matches", or, for a gun owned before this
+  build, which has no count, "Half back: it was bought before returns were counted"), and what you paid;
+- its button reads SELL $N; the first press turns it to SURE? SELL $N, the second sells (a misclick costs nothing);
+- the sale takes the gun's capacity mags, the spare mags that fit only it (and any loadout slot holding one) and the
+  parts mounted on it at the workbench, at the same rate as the gun, as the D.44 card said; if it was the gun you
+  carry, you carry the Spring Pistol, which can't be sold. It saves at once. You can buy the gun again later.
+Half is rounded down to the dollar.
+### Verified
+- `tests/sell-back.test.mjs` (new, 10 checks): a shotgun with its 60-round mag, two spares and a red dot = $137 paid,
+  quoted $137 back; the shop's button reads SELL $137, then SURE? SELL $137, then sells: cash back to $500, the gun,
+  mag, spares, the spare's slot and the sight gone, the pistol carried, the page offers BUY $60 again. Rebought and taken
+  into three real matches (Seth's House, BEGIN), still $60; a fourth, $30, and the page says why. A match with the
+  shotgun leaves the AR's count at 0; the counts survive save and load; a sniper with no count quotes $60 of $120; the
+  Spring Pistol has no SELL. Screenshot: the gold SELL row sits between the gun and its magazines.
+- The full suite ran once, four shards in parallel, on v1.264’s tree, which carries this: see v1.264.
+### Still open
+- Whether 3 matches is the right window, and whether the parts should come off into your box instead of being sold
+  (today they go with the gun, as the card said).
