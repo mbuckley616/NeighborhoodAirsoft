@@ -11295,3 +11295,28 @@ One helper (`walletHTML`) writes the line for both screens.
   showed the line fitting each.
 ### Still open
 - Whether the ammo box is the right place for cash in a match, or it wants its own corner.
+
+## v1.261 — Kids flinch where they're hit
+Backlog D.45 (Michael, 16 Oct): enemies should wince or react, according to where they were hit, for a second or two
+after they are shot. Until now a tagged kid only raised his gun arm (out) or walked back (a life gone), whatever the
+BB had hit. Now the BB's place on him picks a flinch: its height up his body (over 80% the head, under 45% a leg) and,
+between, how far off his middle (past 17 cm an arm, which side from his facing). Then, for 1.5 s on top of whatever
+else he is doing (the hand up when he is out, the walk back, the fight):
+- head: he snaps back (9°) and his free hand goes up to his face;
+- chest: he hunches forward (10°) with his hand on his chest;
+- his gun arm: the free hand grabs across at it; his other arm: he shakes it out to the side;
+- a leg: he buckles toward that side with his hand at the thigh.
+It comes on in 0.2 s, holds to 0.7 s and eases off by 1.5 s. A BB on a kid who is already out stings too (a new
+flinch). The lean is added to whatever the kid's own update set that step (taken off again only if nothing reset it),
+and the arm is blended from where his pose has it, so when the flinch ends his off hand is back on the foregrip.
+### Verified
+- `tests/wince.test.mjs` (new, 6 checks) on Seth's House: points at 90%, 62%, 65% ±24 cm and 20% of his height read as
+  head, chest, right arm, left arm and leg; a real tag in the chest hunches him 0.18 rad with his hand at −1.0 rad from
+  0.2 s to 0.7 s and is gone at 1.6 s, his lean back at 0; a BB at his shin while he is out leans him 0.13 rad toward
+  it.
+- `kid-hold`: its off-hand-on-the-foregrip check now skips a kid mid-flinch (30 samples in the Hollow 3v3); outside
+  them the worst off hand is 6.8 cm (8 allowed). `weight`: its lean check skips a flinching kid (a flinch is not a lean
+  into the move), lean max 0.095 rad. `grip`, `burst-pose`, `out-shot`, `walk-anim`, `kid-hands`, `voice-situations`
+  and `smoke` pass. Screenshots of the four flinches on Seth read as meant.
+### Still open
+- Whether the flinch is big enough at 20-30 m, where most tags happen, and whether a head shot should also stagger him.

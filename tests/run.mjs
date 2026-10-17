@@ -56,7 +56,7 @@ const WEIGHTS = {
   'taggers.test.mjs': 40, 'texts.test.mjs': 15, 'tops.test.mjs': 29, 'treehouse.test.mjs': 40,
   'treehouse-evan.test.mjs': 23, 'treehouse-hold.test.mjs': 22, 'treehouse-start.test.mjs': 38,
   'under-parts.test.mjs': 267, 'utility-belt.test.mjs': 16, 'vip.test.mjs': 128, 'vip-spawn.test.mjs': 102,
-  'voice-situations.test.mjs': 30, 'walk-anim.test.mjs': 24, 'wallet.test.mjs': 20, 'walkie.test.mjs': 39, 'weight.test.mjs': 67, 'whole-block.test.mjs': 17,
+  'voice-situations.test.mjs': 30, 'walk-anim.test.mjs': 24, 'wallet.test.mjs': 20, 'walkie.test.mjs': 39, 'weight.test.mjs': 67, 'whole-block.test.mjs': 17, 'wince.test.mjs': 15,
   'winnmark-cars.test.mjs': 47, 'winnmark-fort.test.mjs': 23, 'winnmark-props.test.mjs': 35,
   'winnmark-road.test.mjs': 53, 'winnmark-trees.test.mjs': 52, 'workbench-labels.test.mjs': 22,
   'yard-props.test.mjs': 38

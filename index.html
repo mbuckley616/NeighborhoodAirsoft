@@ -2106,7 +2106,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.260</div>
+  <div class="version">v1.261</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18931,6 +18931,53 @@ function setKidCrouch(kid, amount) {
 // a tagged kid stands still and raises their gun-arm straight up. `amount` is
 // 0 (normal) .. 1 (fully raised); the death branch ramps it toward 1 so the
 // raise animates over a beat. Feet stay planted at terrain height.
+// v1.261 (backlog D.45, Michael 16 Oct: "Enemies should wince/react based on where they are hit for a second or two
+// after they are shot"): where the BB landed on him (kidHitPart, from its height up his body and how far off his
+// middle) picks a flinch that plays for WINCE_S over whatever else he is doing (the hand up when he is out, the walk
+// back, the fight): a head shot snaps his head back and his free hand to his face; the chest, a hunch forward with the
+// hand on it; an arm, his free hand grabs the gun arm (or the hit left arm is shaken out); a leg, he buckles toward it
+// with the hand on the thigh. In a fifth of a second, held half a second, eased off over the next second.
+const WINCE_S = 1.5;
+const _WINCE_Q = new THREE.Quaternion(), _WINCE_E = new THREE.Euler();
+function kidHitPart(c, p) {
+  const v = combatantView(c), foot = v.chestY - v.height * 0.65, h = (p.y - foot) / v.height;
+  const yaw = c.mesh.group.rotation.y, lx = (p.x - c.pos.x) * Math.cos(yaw) - (p.z - c.pos.z) * Math.sin(yaw);
+  const side = lx < 0 ? -1 : 1;   // −1: his right, the gun side (local −x)
+  const part = h > 0.8 ? 'head' : h < 0.45 ? 'leg' : Math.abs(lx) > 0.17 * (c.mesh.scaleXZ || 1) ? 'arm' : 'chest';
+  return { part, side, h: +h.toFixed(2) };
+}
+function startKidWince(c, bb) {
+  if (!c || !c.mesh || !c.mesh.pose || !bb || !bb.pos) return;
+  c._wince = Object.assign(kidHitPart(c, bb.pos), { t: 0 });
+}
+function kidWinceStep(dt) {
+  for (const e of Game.scenario.enemies) {
+    const W = e._wince;
+    if (!W || !e.mesh || !e.mesh.pose) continue;
+    const g = e.mesh.group, L = e.mesh.pose.rigL, A = e._winceSet;
+    // last step's lean comes off first, unless the kid's own update has set the group since (it sets it most steps)
+    if (A && g.rotation.x === A.x) g.rotation.x -= A.dx;
+    if (A && g.rotation.z === A.z) g.rotation.z -= A.dz;
+    W.t += dt;
+    const w = W.t < 0.2 ? W.t / 0.2 : W.t < 0.7 ? 1 : Math.max(0, 1 - (W.t - 0.7) / (WINCE_S - 0.7));
+    // the free arm: from where his own pose has it this step (or had it, if nothing has posed it since) toward the spot
+    let dx = 0, dz = 0, aS, aE;
+    if (W.part === 'head') { dx = -0.16 * w; aS = [-2.3, -0.35]; aE = -1.3; }
+    else if (W.part === 'chest') { dx = 0.18 * w; aS = [-1.0, -0.55]; aE = -1.5; }
+    else if (W.part === 'arm' && W.side < 0) { dz = -0.06 * w; aS = [-0.8, -0.85]; aE = -1.2; }
+    else if (W.part === 'arm') { dz = 0.08 * w; aS = [-0.3, 0.7]; aE = -0.4; }
+    else { dz = -0.13 * W.side * w; dx = 0.08 * w; aS = [-0.35, -0.15]; aE = -0.3; }
+    const sq = L.shoulder.quaternion, eq = L.elbow.quaternion, M = e._winceArm;
+    const kept = M && sq.equals(M.setS) && eq.equals(M.setE);
+    const bS = kept ? M.baseS : sq.clone(), bE = kept ? M.baseE : eq.clone();
+    sq.copy(bS).slerp(_WINCE_Q.setFromEuler(_WINCE_E.set(aS[0], 0, aS[1])), w);
+    eq.copy(bE).slerp(_WINCE_Q.setFromEuler(_WINCE_E.set(aE, 0, 0)), w);
+    e._winceArm = { baseS: bS, baseE: bE, setS: sq.clone(), setE: eq.clone() };
+    g.rotation.x += dx; g.rotation.z += dz;
+    e._winceSet = { x: g.rotation.x, z: g.rotation.z, dx, dz };
+    if (W.t >= WINCE_S) { e._wince = null; e._winceSet = null; e._winceArm = null; }
+  }
+}
 function setKidHitPose(kid, amount) {
   const po = kid.pose;
   if (!po) return;
@@ -28489,9 +28536,10 @@ function kidIsOutStanding(c) {
   return c !== Game.player && c.behavior !== 'tagger';
 }
 const OUT_SHOT_LINE_GAP = 1.0;   // seconds (simulated) between a kid's out-shot complaints
-function shotWhileOut(c) {
+function shotWhileOut(c, bb) {
   if (Game.scenario.stats) Game.scenario.stats.outShots = (Game.scenario.stats.outShots || 0) + 1;
   playHitOnEnemy();
+  if (bb) startKidWince(c, bb);   // v1.261 (D.45): a BB on an out kid stings too
   const now = aiNow();
   if (c._outLineAt != null && now - c._outLineAt < OUT_SHOT_LINE_GAP) return;
   c._outLineAt = now;
@@ -28530,9 +28578,10 @@ function applyBBHit(bb, c) {
     }
   } else {
     if (c.remote) return netTagRemote(bb, c);   // v1.230 (D.2): your friend, online
-    if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c); return true; }   // v1.237 (D.33): out already
+    if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c, bb); return true; }   // v1.237 (D.33): out already (v1.261: where)
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, bb.owner === 'player' ? npcHitCategory(c) : 'npcHit');   // react before dying/retreating (v1.256: maybe an excuse)
+    startKidWince(c, bb);   // v1.261 (D.45): he flinches where it landed
     callAllyDown(c);   // v1.256 (D.32): a teammate near him calls it
     // v1.151: the shooter calls a tag on another kid the way he calls one on you. The tagged kid speaks first;
     // the 1.5 s global cooldown then usually keeps the shooter quiet, so his call fills in when the tagged kid
@@ -32743,6 +32792,7 @@ function stepGame(dt) {
     voiceStep();   // v1.256 (D.32): lines waiting on the voice cooldowns
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
     updateEnemies(dt);
+    kidWinceStep(dt);   // v1.261 (D.45): after the kids have posed themselves
     if (Net.active) netStep(dt);   // v1.230 (D.2)
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
