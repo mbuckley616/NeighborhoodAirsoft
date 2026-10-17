@@ -2096,7 +2096,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.257</div>
+  <div class="version">v1.258</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -8706,6 +8706,43 @@ function playImpactShatter(impactPos) {
 // ---------------------------------------------------------------------
 // BEDROOM SCENE
 // ---------------------------------------------------------------------
+// v1.258 (backlog D.41): the map table's paper is the map screen's own map. The SVG is drawn to a canvas through an
+// <img> (it is all inline attributes, so it renders the same outside the page's CSS), then the zone pins on top from
+// their places on the map screen. Asynchronous: the paper is plain until the image loads (a frame or two).
+// `Game._mapTablePaint` counts the paints (for the tests).
+const MAP_TABLE_PX = 2;   // canvas pixels per SVG unit
+function paintMapTablePaper(paper) {
+  const svg = document.querySelector('#mapArea svg');
+  if (!svg) return;
+  const W = 700 * MAP_TABLE_PX, H = 560 * MAP_TABLE_PX;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const tex = new THREE.CanvasTexture(cv);
+  const src = new XMLSerializer().serializeToString(svg).replace('<svg ', `<svg width="${W}" height="${H}" `);
+  const img = new Image();
+  img.onload = () => {
+    const c = cv.getContext('2d');
+    c.drawImage(img, 0, 0, W, H);
+    for (const pin of document.querySelectorAll('#worldMap .pin')) {
+      const key = pin.dataset.scenario, x = parseFloat(pin.style.left) / 100 * W, y = parseFloat(pin.style.top) / 100 * H;
+      if (!isFinite(x) || !isFinite(y)) continue;
+      const open = key !== 'locked' && PIN_SCENARIO_GROUPS[key] && isZoneUnlocked(key);
+      const r = 11 * MAP_TABLE_PX;   // the map screen's teardrop marker, point down on the place
+      const cy = y - r * 1.41, a = Math.PI / 4;   // a round head, its two tangents meeting at the point
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x - r * Math.cos(a), cy + r * Math.sin(a));
+      c.arc(x, cy, r, Math.PI - a, a, false); c.closePath();
+      c.fillStyle = open ? '#c94a3a' : '#8a8a8a'; c.fill(); c.lineWidth = 2 * MAP_TABLE_PX; c.strokeStyle = '#2a2520'; c.stroke();
+      const label = (pin.querySelector('.label')?.textContent || '').split(' · ')[0];
+      c.font = `bold ${10 * MAP_TABLE_PX}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'top';
+      const tw = c.measureText(label).width;
+      c.fillStyle = 'rgba(244,233,216,0.92)'; c.fillRect(x - tw / 2 - 4 * MAP_TABLE_PX, y + 3 * MAP_TABLE_PX, tw + 8 * MAP_TABLE_PX, 14 * MAP_TABLE_PX);
+      c.fillStyle = open ? '#2a2520' : '#6a6460'; c.fillText(label, x, y + 5 * MAP_TABLE_PX);
+    }
+    tex.needsUpdate = true;
+    paper.material.map = tex; paper.material.color.set(0xffffff); paper.material.needsUpdate = true;
+    Game._mapTablePaint = (Game._mapTablePaint || 0) + 1;
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
+}
 function buildBedroomScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x9bbfe0);   // soft daylight sky as backdrop
@@ -9681,35 +9718,29 @@ function buildBedroomScene() {
     leg.position.set(lx, 0.375, lz);
     mapTableGroup.add(leg);
   }
-  // Map paper on top
-  // v1.215 (D.26): the paper lies on the table (it floated 5 mm over it) and its marks are the same every visit
-  let mtSeed = 4242;
-  const mtRnd = () => { mtSeed = (mtSeed * 16807) % 2147483647; return (mtSeed - 1) / 2147483646; };
+  // v1.258 (backlog D.41, Michael 15 Oct: "The map mesh in the bedroom is kind of ugly - can we clean it up / make it
+  // look like the actual map?"): the paper was a blank sheet with six random ink strokes and three red dots. It is now
+  // the neighborhood map itself, drawn from the map screen's own SVG with its zone pins (red open, grey locked, as on
+  // the map screen when you build the room), lying north to the wall so it reads the right way up from the room. A
+  // raised lip round the table top and four thumbtacks hold it down.
   const mapPaper = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.6, 0.9),
-    new THREE.MeshStandardMaterial({ color: 0xf4e9d8, roughness: 1.0, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(0.8, 0.64),
+    new THREE.MeshStandardMaterial({ color: 0xf4e9d8, roughness: 1.0 })
   );
-  mapPaper.rotation.x = -Math.PI / 2;
+  mapPaper.rotation.set(-Math.PI / 2, 0, Math.PI / 2);   // the map's width along the table, its north toward the wall
   mapPaper.position.set(0, 0.7705, 0);
   mapPaper.name = 'mt_paper';
   mapTableGroup.add(mapPaper);
-  // Ink markings
-  for (let i = 0; i < 6; i++) {
-    const inkLine = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.04 + mtRnd() * 0.4, 0.012),
-      new THREE.MeshBasicMaterial({ color: 0x8b6f47 })
-    );
-    inkLine.rotation.x = -Math.PI / 2;
-    inkLine.rotation.z = mtRnd() * Math.PI;
-    inkLine.position.set((mtRnd()-0.5)*0.45, 0.771, (mtRnd()-0.5)*0.75);
-    mapTableGroup.add(inkLine);
+  paintMapTablePaper(mapPaper);
+  for (const [lx, lz, w, d] of [[-0.335, 0, 0.03, 1.0], [0.335, 0, 0.03, 1.0], [0, -0.485, 0.7, 0.03], [0, 0.485, 0.7, 0.03]]) {
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(w, 0.025, d), woodDark);
+    lip.position.set(lx, 0.782, lz);
+    mapTableGroup.add(lip);
   }
-  // A few "location dots" on the map
-  for (let i = 0; i < 3; i++) {
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.015, 8), new THREE.MeshBasicMaterial({ color: 0xc94020 }));
-    dot.rotation.x = -Math.PI / 2;
-    dot.position.set((mtRnd()-0.5)*0.5, 0.7715, (mtRnd()-0.5)*0.8);
-    mapTableGroup.add(dot);
+  for (const [tx, tz] of [[-0.3, -0.38], [-0.3, 0.38], [0.3, -0.38], [0.3, 0.38]]) {
+    const tack = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.006, 8), new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: 0.5 }));
+    tack.position.set(tx, 0.774, tz);
+    mapTableGroup.add(tack);
   }
   mapTableGroup.position.set(-BR_W/2 + 0.45, 0, 0);
   scene.add(mapTableGroup);

@@ -37,7 +37,7 @@ const WEIGHTS = {
   'kid-clothes.test.mjs': 48, 'kid-face.test.mjs': 13, 'kid-hands.test.mjs': 10, 'kid-hold.test.mjs': 56,
   'ladder-prompt.test.mjs': 13, 'laser.test.mjs': 51, 'last-kid.test.mjs': 161, 'last-saturday.test.mjs': 52,
   'last-saturday-lives.test.mjs': 168, 'loadout-gear.test.mjs': 51, 'loadout-kid.test.mjs': 22,
-  'lot-ffa-opening.test.mjs': 73, 'lot-hollow-polish.test.mjs': 95, 'map-screen.test.mjs': 19,
+  'lot-ffa-opening.test.mjs': 73, 'lot-hollow-polish.test.mjs': 95, 'map-screen.test.mjs': 19, 'map-table.test.mjs': 15,
   'market-lot.test.mjs': 89, 'mirror.test.mjs': 36, 'music.test.mjs': 4, 'night-lights-allies.test.mjs': 79,
   'night-lights-spawn.test.mjs': 43, 'night-prowl.test.mjs': 22, 'northcliff.test.mjs': 149,
   'online.test.mjs': 210, 'one-ending.test.mjs': 48, 'opening-hold.test.mjs': 101, 'out-shot.test.mjs': 39, 'pad-orders.test.mjs': 40, 'pause-menu.test.mjs': 32,

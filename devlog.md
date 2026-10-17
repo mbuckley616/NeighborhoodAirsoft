@@ -11220,3 +11220,25 @@ the BBs left in the gun back in the bag, and saves.
   control room) would let the layout match.
 - No timed drills (option C wasn't picked); the range has no night version.
 - Whether the BB's drop at 20 m (dead centre lands in the 8) reads as fair on screen.
+
+## v1.258 — The map on the bedroom table is the map
+Backlog D.41 (Michael, 15 Oct): the map on the bedroom's table is ugly; clean it up and make it look like the actual
+map. It was a blank cream sheet with six random brown strokes and three red dots. The paper is now the neighborhood map
+itself: the map screen's own SVG (v1.148) is drawn to a canvas through an image, which works because the SVG is all
+inline attributes, and the zone pins go on top where the map screen puts them, red for a zone you have opened and grey
+for one still locked, each with its place name. It is painted each time the room is built, so the pins follow your
+progress. It lies with north toward the wall and west on your left as you stand at the table, so it reads the right
+way up, and is sized to the map's 700:560 (0.8 × 0.64 m, was a 0.6 × 0.9 portrait sheet). A low lip round the table
+top and four red thumbtacks hold it down. The paint is asynchronous (the image loads in a frame or two); until then the
+paper is plain.
+### Verified
+- `tests/map-table.test.mjs` (new, 8 checks): painted once the room is built; a 1400 × 1120 canvas with the map's land
+  colour (239, 229, 207) at its corner and 45 colours in a coarse sample; on a new save Winnmark's pin head is red
+  (201, 74, 58) and the seven locked zones' are grey (138, 138, 138); the texture's top lies toward the wall (x −2.87
+  against −2.23) and its left at +z (your left); after the ladder is won and the room rebuilt, it is painted again and
+  Bunratty's pin is red.
+- `bedroom-shelves` (the paper within 1 mm of the table top), `map-screen`, `front-door` and `smoke` pass. A screenshot
+  at the table showed the river, parks and roads the right way round.
+### Still open
+- The labels and pins are small at the table's size; whether they read in play, and whether a pin for "you are
+  here" (Bunratty Court, home) would help.
