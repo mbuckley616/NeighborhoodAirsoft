@@ -47,6 +47,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
+  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
+  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
+  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
+  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
+  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
+  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
+  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
+  - D) Different (say in a note)
+  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
+  Michael: **B) Free return, then half** (17 Oct 2026)
+
 - **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
   Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
   (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
