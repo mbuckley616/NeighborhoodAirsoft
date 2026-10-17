@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.266</div>
+  <div class="version">v1.267</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -11320,17 +11320,24 @@ function settleYardProps(obstacles) {
     p.minX += dx; p.maxX += dx; p.minZ += dz; p.maxZ += dz;
     if (p.mesh) { p.mesh.position.x += dx; p.mesh.position.z += dz; }
   };
+  // v1.267: a slide is the depth the prop is in on that side, not the overlap's span (a fence inside a box's footprint
+  // moved it 0.2 m and left it on the fence), and it takes the shortest of the four ways out that lands clear of every
+  // fence, house and trunk, so two props can't push each other back into a wall (Seth's House: a box against a bin).
+  const inWall = p => walls.some(o => Math.min(p.maxX, o.maxX) - Math.max(p.minX, o.minX) > 0.02 && Math.min(p.maxZ, o.maxZ) - Math.max(p.minZ, o.minZ) > 0.02) ||
+    trunks.some(t => Math.hypot(t.cx - Math.max(p.minX, Math.min(t.cx, p.maxX)), t.cz - Math.max(p.minZ, Math.min(t.cz, p.maxZ))) < t.radius);
   let moved = 0;
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 6; pass++) {
     let any = false;
     for (const p of props) {
       for (const o of walls.concat(props)) {
         if (o === p) continue;
         const ox = Math.min(p.maxX, o.maxX) - Math.max(p.minX, o.minX), oz = Math.min(p.maxZ, o.maxZ) - Math.max(p.minZ, o.minZ);
         if (ox <= 0.02 || oz <= 0.02) continue;
-        const pcx = (p.minX + p.maxX) / 2, pcz = (p.minZ + p.maxZ) / 2, ocx = (o.minX + o.maxX) / 2, ocz = (o.minZ + o.maxZ) / 2;
-        if (ox < oz) move(p, (pcx >= ocx ? 1 : -1) * (ox + 0.05), 0);
-        else move(p, 0, (pcz >= ocz ? 1 : -1) * (oz + 0.05));
+        const ways = [[o.maxX - p.minX + 0.05, 0], [-(p.maxX - o.minX + 0.05), 0], [0, o.maxZ - p.minZ + 0.05], [0, -(p.maxZ - o.minZ + 0.05)]]
+          .sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]));
+        const clear = ways.find(([dx, dz]) => !inWall({ minX: p.minX + dx, maxX: p.maxX + dx, minZ: p.minZ + dz, maxZ: p.maxZ + dz }));
+        const [dx, dz] = clear || ways[0];
+        move(p, dx, dz);
         any = true; moved++;
       }
       for (const t of trunks) {
@@ -22328,20 +22335,31 @@ function findClearSpawn(x, z, obstacles, radius = 0.4, footY = null) {
   // can't find clear space after the iterations.
   const margin = radius + 0.35;
   let px = x, pz = z;
-  for (let iter = 0; iter < 16; iter++) {
-    let hit = null;
+  // v1.267: the first obstacle a spot is in (null when clear)
+  const hitAt = (qx, qz) => {
     for (const o of obstacles) {
       // v1.138: a spawn up in the treehouse (footY) ignores what is under its feet or over its head
       if (footY != null && ((o.baseY ?? 0) + (o.h ?? 5) <= footY + 0.05 || (o.baseY ?? 0) >= footY + 1.5)) continue;
-      if (px + margin > o.minX && px - margin < o.maxX &&
-          pz + margin > o.minZ && pz - margin < o.maxZ) { hit = o; break; }
+      if (qx + margin > o.minX && qx - margin < o.maxX &&
+          qz + margin > o.minZ && qz - margin < o.maxZ) return o;
     }
+    return null;
+  };
+  for (let iter = 0; iter < 16; iter++) {
+    const hit = hitAt(px, pz);
     if (!hit) return { x: px, z: pz };
     // Compute penetration depth on each axis and exit along the smaller one.
     const pushE = (hit.maxX + margin) - px;   // distance to clear east
     const pushW = px - (hit.minX - margin);   // distance to clear west
     const pushN = pz - (hit.minZ - margin);   // distance to clear north (-Z)
     const pushS = (hit.maxZ + margin) - pz;   // distance to clear south (+Z)
+    // v1.267: the shortest of the four exits that lands clear of everything, when one does. Taking the shorter axis
+    // alone bounced a kid between a Hollow pallet and the tree 0.8 m behind it for all 16 tries, and he spawned in
+    // the pallet and stood there all round (Infection in the Dark: Seth and Brooke, once the forest stopped moving).
+    const exits = [[pushE + 0.02, 0, pushE], [-(pushW + 0.02), 0, pushW], [0, -(pushN + 0.02), pushN], [0, pushS + 0.02, pushS]]
+      .sort((a, b) => a[2] - b[2]);
+    const out = exits.find(([dx, dz]) => !hitAt(px + dx, pz + dz));
+    if (out) return { x: px + out[0], z: pz + out[1] };
     const minX = Math.min(pushE, pushW);
     const minZ = Math.min(pushN, pushS);
     if (minX < minZ) {
