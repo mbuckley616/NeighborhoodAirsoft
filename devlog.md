@@ -11387,6 +11387,14 @@ seconds and is coming back.
   start, hand up (raise 1.0), walk phase running, the mesh on his position; your BB and his side's both pass him
   (3.55 m past); by 45 s he is 0.98 m from his start and stops there, and the round goes on.
 - `out-shot` (a BB on an out kid in his first 1.75 s still stops and gets a line) passes unchanged.
+- The full suite on this tree (v1.262–v1.264 together), four shards at once, 69 min: 151 of 164 suites passed first time.
+  11 died at boot or lost their browser under the load (page load past 30 s) and all 11 passed alone (car-side-fire,
+  country-club, harness, spawn-facing, stuck-sweep-3, vip, voices, wallet, wince, winnmark-props, winnmark-trees).
+  Two failed: `hollow-fort`'s "no pole inside a fort wall" counted your own first-person gun, which hangs off the camera
+  in the scene, on the deck by the merlons (where the camera stood depends on when the page last rendered); the test
+  now leaves the camera's meshes out and passes (fix-up commit). And `stuck-sweep-5` caught ally Sean held in
+  `deploying` by the Hollow's south fort in Full Auto Mayhem; v1.261's file does the same (1 of 2 rounds), so it is
+  filed in Found in play, not this run's.
 ### Still open
 - Whether 4 s is long enough to enjoy shooting him, and how it reads to see an out kid walking across the fight to his
   start; nobody has looked at it on screen yet but the test.
