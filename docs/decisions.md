@@ -7,6 +7,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
+  Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
+  (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
+  the same way round: up push up, right find cover, down keep distance, left follow me.
+  - A) **The d-pad gives the orders:** a press is that direction's order at once (the wheel flashes it and a teammate
+    answers on the walkie); slots stay on Y/RB (next) and LB (back). Fastest; costs the d-pad's straight-to-a-slot
+  - B) **Hold the d-pad for the wheel:** a tap still picks a slot; held 0.3 s the wheel opens, the right stick points
+    at an order, letting go gives it. Keeps both, but a slow press in a fight swaps your gun
+  - C) **Click the right stick (R3) for the wheel:** R3 is free; hold it, point the right stick, let go. The d-pad keeps
+    the slots, but you can't look around while picking (as with Q and the mouse)
+  Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
+  on-screen hint would read "d-pad" on a pad.
+  Michael: **A) The d-pad gives the orders** (control room). (2026-10-17)
+
 - **A trade on the last tag is a loss (critic, 2026-10-16)**
   When you tag the last kid and his BB, already in the air, lands on you inside the next 600 ms, you lose: the win
   waits 600 ms so the hit shows on screen, and a tag on you ends the round at once (v1.90, "the first ending stands";
