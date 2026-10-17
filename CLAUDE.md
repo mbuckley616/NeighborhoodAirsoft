@@ -14,6 +14,8 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 - `docs/backlog.md` — the open work, `~~strikethrough~~ — done, v1.NN` when finished.
 - `docs/decisions.md` — questions for Michael and his answers; nothing is a spec without a `Michael:` line.
 - `docs/critic.md`, `docs/proposals.md` — the critic's playtest reports and its unapproved ideas.
+- `docs/refs/` — Michael's reference pictures of the real places, described map by map (the photos stay in his Google
+  Drive; the repo is public, so no photos, house numbers or residents' names go in it). Read a map's guide before changing that map.
 - `tests/` — Playwright suites against headless Chromium. `npm test` runs them all; `node tests/run.mjs smoke` runs one;
   `node tests/run.mjs --shard 2/4` runs a quarter (CI runs the four in parallel jobs).
 - `scripts/parsecheck.mjs` syntax-checks the inline script. `node scripts/tag.mjs bump` bumps the version on the title screen.
