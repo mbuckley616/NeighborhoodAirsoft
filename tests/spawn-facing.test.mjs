@@ -19,22 +19,28 @@ for (const id of ids) {
     const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw);
     const dx = cx - p.pos.x, dz = cz - p.pos.z, d = Math.hypot(dx, dz) || 1;
     const ang = Math.acos(Math.max(-1, Math.min(1, (fx * dx + fz * dz) / d))) * 180 / Math.PI;
+    // v1.267: kids on every side of you (Infection in the Dark's nine round midfield, 25-40 m out) put their centroid
+    // a couple of metres off and its direction is noise (60.2° on v1.266, 65° once two kids spawned a metre off a
+    // pallet): such a start has no way to face, so it is marked `ring` and the facing checks leave it out
+    const md = foes.reduce((s, e) => s + Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z), 0) / Math.max(1, foes.length);
+    const ring = foes.length > 2 && d < md * 0.25;
     // v1.140: how far you can see straight ahead (±10°) at eye height before an obstacle
     let ahead = 80;
     for (const a of [-10, 0, 10]) {
       const yw = p.yaw + a * Math.PI / 180, ddx = -Math.sin(yw), ddz = -Math.cos(yw);
       for (const o of p.obstacles) { const t = obsRayDist(o, p.pos.x, p.pos.y + p.eyeOffset, p.pos.z, ddx, 0, ddz, 80); if (t != null && t < ahead) ahead = t; }
     }
-    return { id, fn: sc.builderFn, spawn: sc.playerSpawn || '-', type: sc.scenarioType, foes: foes.length, ang: Math.round(ang), ahead: +ahead.toFixed(1) };
+    return { id, fn: sc.builderFn, spawn: sc.playerSpawn || '-', type: sc.scenarioType, foes: foes.length, ang: Math.round(ang), ring, ahead: +ahead.toFixed(1) };
   }, id));
   await page.evaluate(() => { Game.mode = 'scenario'; endScenario('forfeit'); enterBedroom(); });
   await g.spin(5);
 }
 for (const r of rows) console.log(`   ${r.ang.toString().padStart(3)}°  ${String(r.ahead).padStart(4)} m  ${r.id}  (${r.fn}, ${r.spawn}, ${r.type}, ${r.foes} foes)`);
-const hollow = rows.filter(r => /Hollow/.test(r.fn));
+const hollow = rows.filter(r => /Hollow/.test(r.fn) && !r.ring);
+console.log('   surrounded at the start (left out of the facing checks):', rows.filter(r => r.ring).map(r => r.id));
 check('there are Hollow scenarios', hollow.length > 0, hollow.length);
 for (const r of hollow) check(`${r.id}: the player starts facing within 60° of the enemy kids`, r.ang <= 60, r);
-const back = rows.filter(r => r.ang > 120 && r.foes > 0);
+const back = rows.filter(r => r.ang > 120 && r.foes > 0 && !r.ring);
 check('no scenario starts the player with the enemy kids behind them (>120°)', back.length === 0, back.map(r => r.id + ' ' + r.ang));
 // v1.140 (Found in play, critic v1.134): the lot free-for-all started you 0.9 m from a windshield
 const blind = rows.filter(r => r.ahead < 2);

@@ -11495,6 +11495,15 @@ Pickup size; and every kid's start is 30 m or more from yours. That last one cam
 where Eric came out of the trees and tagged a player standing at the start at 3.9 s in 2 of 14 rounds. Your start
 moved 11 m south-west in the west woods (-34, -18.5), still facing east; Sean's left midfield, which half the field
 could see.
+The props and trees moving once showed up two old faults the full suite caught:
+- a yard prop slid off a fence by the overlap's span, not by how deep it was in: a thin fence inside a box's footprint
+  moved it 0.25 m, still on the fence, and the bin beside it pushed it back on each pass (Seth's House: a moving box
+  across the iron fence at x -13). `settleYardProps` now slides a prop by its depth on that side, the shortest of the
+  four ways out that lands clear of every fence, house and trunk, six passes (was four);
+- a kid's spawn nudged out of cover took the shorter axis only, and on the Hollow two pallets now have a tree 0.8 m
+  behind: `findClearSpawn` bounced Seth and Brooke between pallet and trunk for all 16 tries and left them in the
+  pallet, where they stood all 90 s of Infection in the Dark. It now takes the shortest of the four exits that lands
+  clear of everything when one does, and falls back to the old walk when none does.
 ### Verified
 - `tests/layout-same.test.mjs` (new): one match on each of the ten match maps, each built first in a fresh page and
   again after all the others in reverse order: 0 obstacles differ on every map (358 on Winnmark, 311 Bunratty, 473 the
@@ -11510,3 +11519,18 @@ could see.
 - `pickup-ffa`, `rival` pass. `lamplight-starts`: Mason now meets the fight 7.4 m out of his yard, in the side yard,
   and trades from there (3 rounds traced: out and fighting at 4–6 s); the check's "fighting 8 m from his start" is now
   6 m.
+- `yard-props` (failed on the branch: 1 box through a fence in Seth's House) passes: 0 through fences or houses, 0 in
+  trunks or other props on all four maps. The stuck sweep on Infection in the Dark (failed twice, Seth and Brooke 90 s
+  in `chasing` at their spawns, every way) passes: both clear their pallets, and Seth is on a player at midfield
+  inside 20 s.
+- `spawn-facing` then failed Infection in the Dark at 65° (limit 60): its nine taggers ring midfield 25–40 m out, so
+  their centroid is 2.3 m from you and its direction is noise (60.2° on v1.266; Seth 1.3 m and Brooke 0.6 m off their
+  old spawns tipped it). The check now leaves out a start whose kids' centroid is nearer than a quarter of their mean
+  distance (only this match), and passes.
+- The full suite in four parallel shards: 159 of 168 passed first time. Seven stopped on Playwright's 30 s page load
+  (calendar, ctf, deploy-progress, harness, pickup-lives, settings, treehouse-hold) and treehouse hit the 10-minute
+  limit under the load; all eight passed alone or two at a time. The ninth was `spawn-facing`, above.
+### Still open
+- Every map's props, cars and trees stand in a third layout, the same on every load now, but nobody has looked at it
+  on screen; suites that read a spot near a prop held, and the stuck sweeps found nothing new.
+- The Hollow starts you 11 m further into the west woods in the Ten-Way; whether it opens too slowly, as v1.265 asked.
