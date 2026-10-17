@@ -2086,7 +2086,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.254</div>
+  <div class="version">v1.255</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -21567,7 +21567,7 @@ function answerForfeit(yes) {
 // match stops (stepGame skips it, as for the forfeit question): RESUME (Esc or a click) goes back, SETTINGS opens the
 // settings over it, FORFEIT asks the forfeit question.
 function openPauseMenu() {
-  if (Game.squadWheel) closeSquadWheel(false);   // v1.248: the Q wheel shuts without an order
+  if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false);   // v1.248: the Q wheel shuts without an order
   if (Game.mode !== 'scenario' || Game.forfeitAsk || Game.paused) return;
   Game.paused = true;
   Game._pausedAt = performance.now();
@@ -21612,7 +21612,7 @@ function enterBedroom() {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
-  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
+  if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -23183,7 +23183,7 @@ function endScenario(outcome) {
   document.getElementById('stanceHud').style.display = 'none';
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
-  if (Game.squadWheel) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
+  if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
@@ -25193,7 +25193,8 @@ document.addEventListener('contextmenu', e => {
 // as the keys and mouse: the left stick moves (analog, so a half push walks slower), the right stick looks (the
 // settings' sensitivities and invert apply), RT fires and LT aims, A jumps (in the bedroom it is E), B crouches and
 // slides, X reloads (held, as R; it also clears a jam), Y and RB pick the next slot, LB the one before, the d-pad slots
-// 1-4, a click of the left stick sprints until the stick lets go, Start pauses and resumes, Back/View asks to forfeit.
+// 1-4 (v1.255: in a match with teammates the d-pad gives the squad orders instead), a click of the left stick sprints until
+// the stick lets go, Start pauses and resumes, Back/View asks to forfeit.
 // On the pause menu and the forfeit question A is yes and B is no. A pad needs no pointer lock: once it is used the
 // player moves without one, and the "click to capture" note stays hidden while it is.
 const PAD_DEAD = 0.18;          // radial dead zone of each stick
@@ -25421,7 +25422,10 @@ function pollGamepad(dt) {
   if (pressed(PAD_BTN.Y) || pressed(PAD_BTN.RB)) padCycleSlot(1);
   if (pressed(PAD_BTN.LB)) padCycleSlot(-1);
   const dpad = [PAD_BTN.UP, PAD_BTN.RIGHT, PAD_BTN.DOWN, PAD_BTN.LEFT];
-  for (let i = 0; i < 4; i++) if (pressed(dpad[i])) trySwitchSlot(i);
+  // v1.255 (backlog B.11, Michael: A): with teammates the d-pad gives the squad orders, the wheel's way round (up push
+  // up, right find cover, down keep distance, left follow me); slots stay on Y/RB and LB. With none it still picks slots.
+  const orders = squadMates().length > 0, dpadOrder = ['push', 'cover', 'distance', 'follow'];
+  for (let i = 0; i < 4; i++) if (pressed(dpad[i])) { if (orders) padSquadOrder(dpadOrder[i]); else trySwitchSlot(i); }
   // sprint: a click of the left stick holds Shift until the stick lets go
   if (pressed(PAD_BTN.L3) && ls.m > 0) { Pad.sprintLatch = true; Game.keys['ShiftLeft'] = true; }
   if (Pad.sprintLatch && ls.m === 0) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
@@ -28284,7 +28288,7 @@ function openSquadWheel() {
 }
 function closeSquadWheel(choose) {
   const w = Game.squadWheel;
-  Game.squadWheel = null;
+  Game.squadWheel = null; Game.squadFlashT = 0;   // v1.255: a d-pad order's flash goes too
   const el = document.getElementById('squadWheel');
   if (el) el.style.display = 'none';
   if (choose && w && w.pick && Game.mode === 'scenario') giveSquadOrder(w.pick);
@@ -28304,8 +28308,19 @@ function squadWheelMove(dx, dy) {
   }
   drawSquadWheel();
 }
+// v1.255 (B.11): a d-pad order is given at once; the wheel shows for SQUAD_FLASH_S with that order lit, the mouse free
+const SQUAD_FLASH_S = 0.6;
+function padSquadOrder(key) {
+  if (Game.squadWheel || !squadCanOrder()) return false;
+  giveSquadOrder(key);
+  const d = SQUAD_ORDERS[key].dir;
+  Game.squadFlash = { x: d[0] * SQUAD_WHEEL_R * 0.6, y: d[1] * SQUAD_WHEEL_R * 0.6, pick: key };
+  Game.squadFlashT = SQUAD_FLASH_S;
+  drawSquadWheel();
+  return true;
+}
 function drawSquadWheel() {
-  const el = document.getElementById('squadWheel'), w = Game.squadWheel;
+  const el = document.getElementById('squadWheel'), w = Game.squadWheel || (Game.squadFlashT > 0 ? Game.squadFlash : null);
   if (!el || !w) return;
   el.style.display = 'block';
   if (!el.dataset.built) {
@@ -28313,6 +28328,8 @@ function drawSquadWheel() {
     el.innerHTML = Object.keys(SQUAD_ORDERS).map(k => `<div class="sq-opt sq-${k}" data-k="${k}">${SQUAD_ORDERS[k].label}</div>`).join('') +
       '<div class="sq-ptr"></div><div class="sq-title">ORDERS · let go of Q</div>';
   }
+  const title = el.querySelector('.sq-title'), tt = Game.squadWheel ? 'ORDERS · let go of Q' : 'ORDER GIVEN';   // v1.255
+  if (title && title.textContent !== tt) title.textContent = tt;
   for (const o of el.querySelectorAll('.sq-opt')) o.classList.toggle('on', o.dataset.k === w.pick);
   const p = el.querySelector('.sq-ptr');
   if (p) p.style.transform = `translate(${w.x.toFixed(0)}px, ${w.y.toFixed(0)}px)`;
@@ -28361,13 +28378,18 @@ function updateSquadHud() {
   hud.style.display = 'block';
   const order = S.squadOrder ? SQUAD_ORDERS[S.squadOrder].label : 'NONE';
   const r = S.squadReply && (S.roundTime || 0) < S.squadReply.until ? S.squadReply : null;
-  const html = `<span class="sq-k">ORDER</span> ${order} <span class="sq-hint">· hold <kbd>Q</kbd></span>` +
+  const hint = Pad.active ? '<kbd>D-PAD</kbd>' : 'hold <kbd>Q</kbd>';   // v1.255 (B.11): on a pad the d-pad gives them
+  const html = `<span class="sq-k">ORDER</span> ${order} <span class="sq-hint">· ${hint}</span>` +
     (r ? `<div class="sq-reply">📻 ${r.name}: “${r.line}”</div>` : '');
   if (hud.innerHTML !== html) hud.innerHTML = html;
 }
 // once a step, before the kids: who you are aiming at (follow me's "shoot what I shoot at")
 function updateSquad(dt) {
   const S = Game.scenario;
+  if (Game.squadFlashT > 0 && (Game.squadFlashT -= dt) <= 0) {   // v1.255: the d-pad order's flash ends
+    Game.squadFlashT = 0;
+    if (!Game.squadWheel) { const el = document.getElementById('squadWheel'); if (el) el.style.display = 'none'; }
+  }
   S._playerAimKid = null;
   if (S.squadOrder === 'follow') {
     const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw);

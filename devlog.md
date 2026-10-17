@@ -11135,3 +11135,23 @@ button sits 6 px under the box, as wide as it, so the two read as one panel; it 
   4v4): 69 s locally, weighted 240; the eight shards weigh 1,713–1,719 each.
 ### Still open
 - The bedroom's prompts ("E Go outside") still name keyboard keys on a pad.
+
+## v1.255 — Squad orders on a controller: the d-pad
+Backlog B.11 (Michael, control room 16 Oct: no pad button opens the Q wheel; the d-pad, perhaps). The d-pad picked gun
+slots 1–4 in a match (v1.241), so it went to him as a question, and he chose A (17 Oct): the d-pad gives the orders at
+once. In a match with teammates a press is that direction's order, the wheel's own way round (up push up, right find
+cover, down keep distance, left follow me): it goes through the same `giveSquadOrder` as Q, so a teammate answers on
+the walkie and the HUD shows it standing. So a pad player sees what he gave, the wheel shows for 0.6 s with that order
+lit and titled ORDER GIVEN, without taking the right stick (the Q wheel stops the look; the flash does not). Slots stay
+on Y/RB (next) and LB (back). The HUD's hint reads D-PAD while the pad is in use, "hold Q" otherwise. One call of mine:
+in a match with no teammates (every 1v1 and free-for-all) there is no order to give, so there the d-pad still picks
+slots rather than doing nothing. Paused, on the forfeit question or in the tutorial it gives nothing (`squadCanOrder`).
+### Verified
+- `tests/pad-orders.test.mjs` (new, 11 checks), a stand-in pad on the Hollow 3v3: each d-pad way gives its order
+  (push, cover, distance, follow, logged in that order), the wheel shows lit on the press frame and 5 steps later and is
+  gone after 0.6 s, a teammate answers each (Eric, then Rebecca), the gun slot never changes, the HUD reads
+  "ORDER FOLLOW ME · D-PAD"; paused, a press gives nothing. On Bunratty's 1v1 with Sean, right then up pick slots 2 and 1.
+- `squad-orders`, `squad-hud`, `gamepad` and `gamepad-screens` pass unchanged; the rest is left to CI's shards.
+### Still open
+- Whether 0.6 s of the wheel reads as "order given" in play, or is too much over the crosshair mid-fight.
+- With teammates, a pad player can no longer go straight to a slot; Y/RB and LB step through them.
