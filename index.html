@@ -542,6 +542,9 @@
     color: var(--ui-text);
   }
   #bedroomHud .bag-line { margin-top: 4px; }
+  /* v1.254 (B.10): on a pad the SETTINGS button goes and the box says which button opens them */
+  #bedroomHud .pad-line { display: none; margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--ui-border); font-size: 11px; color: #aaa; letter-spacing: 1px; }
+  #bedroomHud .pad-key { font-size: 10px; color: var(--ui-accent); letter-spacing: 1.5px; margin-right: 4px; }
 
   #damageVignette {
     position: absolute;
@@ -1953,8 +1956,9 @@
     font-family: inherit; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; font-size: 12px;
   }
   #settingsScreen .settings-btn.primary { background: var(--ui-accent); color: #1a1a1a; border-color: var(--ui-accent); }
+  /* v1.254 (B.10): under the cash box, as wide as it (placed by updateBedroomSettingsBtn), not over it */
   #bedroomSettingsBtn {
-    position: fixed; right: 16px; top: 24px; z-index: 50; display: none;
+    position: fixed; right: 24px; top: 96px; z-index: 50; display: none; box-sizing: border-box;
     background: var(--ui-bg); color: var(--ui-text); border: 1px solid var(--ui-border);
     padding: 6px 12px; font-family: inherit; font-size: 12px; letter-spacing: 1px; cursor: pointer; border-radius: 3px;
   }
@@ -2057,6 +2061,7 @@
   <div id="bedroomHud">
     <div class="cash-line"><span class="cash-label">CASH</span> <span id="cashAmount">$25</span></div>
     <div class="bag-line"><span class="bag-label">BBs</span> <span id="bedroomBag">15</span></div>
+    <div class="pad-line" id="bedroomPadSettings"><span class="pad-key">START</span> Settings</div>   <!-- v1.254 (B.10): on a pad -->
   </div>
 </div>
 
@@ -2075,7 +2080,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.253</div>
+  <div class="version">v1.254</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -31971,9 +31976,22 @@ function closeSettings() {
   }
 }
 function updateBedroomSettingsBtn() {
-  const want = Game.mode === 'bedroom' && !Game.mouse.locked ? 'block' : 'none';
+  // v1.254 (B.10): a pad never takes the pointer lock, so the button stood there all the time; on a pad Start opens
+  // the settings, and the cash box says so instead. With the mouse free the button sits under the box, as wide as it.
+  const want = Game.mode === 'bedroom' && !Game.mouse.locked && !Pad.active ? 'block' : 'none';
   const btn = document.getElementById('bedroomSettingsBtn');
   if (btn.style.display !== want) btn.style.display = want;
+  const padLine = document.getElementById('bedroomPadSettings'), padWant = Game.mode === 'bedroom' && Pad.active ? 'block' : 'none';
+  if (padLine.style.display !== padWant) padLine.style.display = padWant;
+  if (want === 'block') {
+    const r = document.getElementById('bedroomHud').getBoundingClientRect();
+    if (r.height) {
+      const top = Math.round(r.bottom + 6) + 'px', right = Math.round(window.innerWidth - r.right) + 'px', w = Math.round(r.width) + 'px';
+      if (btn.style.top !== top) btn.style.top = top;
+      if (btn.style.right !== right) btn.style.right = right;
+      if (btn.style.width !== w) btn.style.width = w;
+    }
+  }
 }
 document.getElementById('titleSettingsBtn').addEventListener('click', openSettings);
 // v1.239 (D.39): the pause menu's buttons. Settings open over it; closing them leaves it up, the match still stopped.

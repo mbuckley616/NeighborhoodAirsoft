@@ -10835,3 +10835,18 @@ on the left, the timer top centre), and may run to 300 px wide so a walkie answe
 ### Still open
 - Whether the top left reads well in play next to the walkie line, or wants to sit closer to the crosshair.
 
+## v1.254 — The bedroom's SETTINGS button, on a controller and off the cash box
+Backlog B.10 (Michael, control room 16 Oct): on a controller the Settings button is always showing in the bedroom,
+and it looks odd where it is, on top of the $ and BB box. Both were true. The button (v1.192) shows whenever the mouse
+is free, and a pad never takes the pointer lock (v1.241), so on a pad it never went away; and it was placed at the
+top right, 24 px down, exactly where the CASH/BBs box is. Now on a pad the button doesn't show, and the box gains a
+third line under a rule, "START Settings", since Start is what opens them on a pad (v1.242). With the mouse free the
+button sits 6 px under the box, as wide as it, so the two read as one panel; it still hides once the mouse is taken.
+### Verified
+- `tests/bedroom-settings.test.mjs` (new, 8 checks). Mouse free: the button shows at 1126–1256 × 93–122 under the box
+  at 1126–1256 × 24–87, touching nothing, and opens settings. With a stand-in pad touched: over 3 s of the bedroom the
+  button never shows, the box (now 24–111) carries "START Settings" inside it, and Start opens the settings; in a
+  match neither the box nor the button shows. `settings` and `gamepad-screens` pass unchanged.
+### Still open
+- The bedroom's prompts ("E Go outside") still name keyboard keys on a pad.
+
