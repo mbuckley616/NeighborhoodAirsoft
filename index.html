@@ -140,6 +140,7 @@
     letter-spacing: 1px;
   }
   #ammoHud .bag-line.empty { color: var(--ui-danger); }
+  #ammoHud .cash-line { font-size: 11px; color: var(--ui-good); margin-top: 2px; letter-spacing: 1px; }   /* v1.260 (D.43) */
   #ammoHud .status {
     font-size: 11px;
     color: #888;
@@ -1114,6 +1115,14 @@
     color: var(--ui-good);
     font-family: 'Georgia', serif;
   }
+  /* v1.260 (D.43): what you have now, under what you earned */
+  #resultScreen .result-wallet, #scenarioIntro .intro-wallet {
+    display: flex; justify-content: center; gap: 18px; font-size: 13px; color: #ddd; margin: -14px 0 18px;
+  }
+  #scenarioIntro .intro-wallet { margin: 10px 0 0; font-size: 12px; flex-wrap: wrap; }
+  .wallet-k { font-size: 10px; letter-spacing: 1.5px; color: #8a8170; margin-right: 5px; }
+  .wallet-cash { color: var(--ui-good); font-weight: bold; }
+  .wallet-low { color: var(--ui-danger); }
   #resultScreen .return-btn {
     background: var(--ui-accent);
     color: #1a1a1a;
@@ -2039,6 +2048,7 @@
     <div class="gun-name" id="gunName">Spring Pistol</div>
     <div class="ammo-line"><span id="ammoCurrent">1</span> / <span id="ammoMax">1</span></div>
     <div class="bag-line">Bag: <span id="bagCount">0</span></div>
+    <div class="cash-line" id="hudCash"></div>   <!-- v1.260 (D.43): your money, in a match -->
     <div class="status ready" id="ammoStatus">READY</div>
   </div>
   <div id="healthHud">
@@ -2096,7 +2106,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.259</div>
+  <div class="version">v1.260</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2336,6 +2346,7 @@
     <div class="outcome" id="outcomeText">VICTORY</div>
     <div class="flavor" id="flavorText"></div>
     <div class="reward" id="rewardText"></div>
+    <div class="result-wallet" id="resultWallet"></div>   <!-- v1.260 (D.43) -->
     <div class="result-stats" id="resultStats"></div>   <!-- v1.193 -->
     <div class="reload-note" id="reloadNote"></div>
     <div class="result-nav" id="resultNav">
@@ -2528,6 +2539,7 @@
         <span class="lg"><span class="dot" style="background:#6abf69;"></span>Allies</span>
         <span class="lg"><span class="dot" style="background:#e74c3c;"></span>Enemies</span>
       </div>
+      <div class="intro-wallet" id="introWallet"></div>   <!-- v1.260 (D.43) -->
       <button class="intro-begin" id="introBeginBtn">BEGIN ▶</button>
       <div class="intro-loadhint" id="introLoadHint">Building the field…</div>
     </div>
@@ -23139,6 +23151,7 @@ function enterScenario(scenarioId) {
   // Roster panel: allies / enemies / gear / lives, from the data table.
   const brief = getScenarioBriefing(scenarioId);
   document.getElementById('introRoster').innerHTML = renderBriefingRosterHTML(brief);
+  { const w = document.getElementById('introWallet'); if (w) w.innerHTML = walletHTML(getMaxAmmoForGun(Game.persist.equipped.gun)); }   // v1.260 (D.43)
 
   // Birds-eye field map: enemy + ally + player starting positions, drawn from
   // the actually-spawned enemies (authoritative) and the resolved player spawn.
@@ -23941,6 +23954,7 @@ function endScenario(outcome) {
   }
 
   renderMatchStats(outcome, _openBefore, _cashBefore, _wonBefore);   // v1.193; v1.196 the rival line
+  { const w = document.getElementById('resultWallet'); if (w) w.innerHTML = walletHTML(); }   // v1.260 (D.43)
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
   const reloadNote = document.getElementById('reloadNote');
@@ -27358,6 +27372,15 @@ function updateHeldMesh(dt) {
   }
 }
 
+// v1.260 (backlog D.43, Michael 15 Oct: show the player's $ in a match, and when they've been tagged out, won or are
+// about to start one; the same for BBs on those screens): your cash and the BBs in your bag, as a line. On the briefing
+// `magSize` is what your gun will load from the bag at BEGIN, and a bag that can't fill it shows red.
+function walletHTML(magSize) {
+  const bag = Game.persist.bag, low = magSize != null && bag < magSize;
+  return `<span><span class="wallet-k">CASH</span><span class="wallet-cash">$${Game.persist.cash}</span></span>` +
+    `<span class="${low ? 'wallet-low' : ''}"><span class="wallet-k">BBs IN YOUR BAG</span>${bag}` +
+    (magSize != null ? ` <span class="wallet-k">· YOUR GUN LOADS ${magSize}</span>` : '') + `</span>`;
+}
 function updateAmmoHud() {
   document.getElementById('gunName').textContent = getGunDisplayName(Game.gun.type);
   document.getElementById('ammoCurrent').textContent = Game.gun.ammo;
@@ -27365,6 +27388,8 @@ function updateAmmoHud() {
   const bagEl = document.getElementById('bagCount');
   bagEl.textContent = Game.persist.bag;
   bagEl.parentElement.classList.toggle('empty', Game.persist.bag === 0);
+  const cashEl = document.getElementById('hudCash'), cashT = `Cash: $${Game.persist.cash}`;   // v1.260 (D.43)
+  if (cashEl && cashEl.textContent !== cashT) cashEl.textContent = cashT;
   const s = document.getElementById('ammoStatus');
 
   if (Game.gun.jammed) {

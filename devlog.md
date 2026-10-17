@@ -11276,3 +11276,22 @@ checked from the terrain, so its 0.2 m first step stops him and the kids never w
   it; only you do). A playtest should say whether it is too strong, or whether kids should hold it too.
 - The ramp sits on the side the lookout was (west in the north fort, east in the south); the south fort's spawn is
   no longer under a roof.
+
+## v1.260 — Your cash and BBs, on screen when they matter
+Backlog D.43 (Michael, 15 Oct): show your $ on screen in a match, and when you've been tagged out, won, or are about
+to start one; the same for BBs. Until now your cash showed only in the bedroom and the shop, and your bag only in the
+match's ammo box. Now:
+- in a match, the ammo box (bottom right) says "Cash: $N" under "Bag: N";
+- on the result screen, won or lost, a line under what you earned: your cash after the pay and the BBs in your bag after
+  the gun is unloaded;
+- on the briefing, above BEGIN: your cash, the BBs in your bag and how many your gun will load from it at BEGIN, in red
+  when the bag can't fill the gun (so you know before you start that you'll be short).
+One helper (`walletHTML`) writes the line for both screens.
+### Verified
+- `tests/wallet.test.mjs` (new, 6 checks) on Seth's House: the briefing reads "CASH $37 · BBs IN YOUR BAG 23 · YOUR GUN
+  LOADS 10"; in the match the box says "Cash: $37" (bag 13 with 10 in the pistol); won, "CASH $39 · BAG 23"; with 4 in
+  the bag the briefing shows red; tagged out, "CASH $38 · BAG 4".
+- `result-stats`, `result-text`, `briefing-lives`, `damage-report` and `smoke` pass; screenshots of the three screens
+  showed the line fitting each.
+### Still open
+- Whether the ammo box is the right place for cash in a match, or it wants its own corner.
