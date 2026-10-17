@@ -8,23 +8,29 @@ await g.bedroom();
 const ID = 'winnmark_seth_house';
 // A BB of Seth's 1.2 m in front of you, flying at your chest at 40 m/s (it lands on the second step). Seth's own gun is
 // held (noFire) so that BB is the only one in the air.
-const fire = () => page.evaluate(() => {
-  const P = Game.player, seth = Game.scenario.enemies.find(e => e.team !== 'player');
-  seth.noFire = true; Game.scenario.bbs.length = 0; P._graceT = 0;
-  const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
-  const target = new THREE.Vector3(P.pos.x, P.pos.y + 0.6 * (P.eyeOffset + 0.1), P.pos.z);
-  const dir = new THREE.Vector3(-fx, 0, -fz);
-  const bb = makeBB(target.clone().addScaledVector(dir, -1.2), dir.clone().multiplyScalar(40), 'enemy', seth, null, combatantTeam(seth));
-  bb.curveStrength = 0;
-  bb.spawnPos = target.clone().addScaledVector(dir, -8);
-  Game.scenario.bbs.push(bb);
-  return Game.scenario.bbs.length;
+// the two steps live in the page, so the race below can run them in one evaluate
+const install = () => page.evaluate(() => {
+  window.__fire = () => {
+    const P = Game.player, seth = Game.scenario.enemies.find(e => e.team !== 'player');
+    seth.noFire = true; Game.scenario.bbs.length = 0; P._graceT = 0;
+    const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
+    const target = new THREE.Vector3(P.pos.x, P.pos.y + 0.6 * (P.eyeOffset + 0.1), P.pos.z);
+    const dir = new THREE.Vector3(-fx, 0, -fz);
+    const bb = makeBB(target.clone().addScaledVector(dir, -1.2), dir.clone().multiplyScalar(40), 'enemy', seth, null, combatantTeam(seth));
+    bb.curveStrength = 0;
+    bb.spawnPos = target.clone().addScaledVector(dir, -8);
+    Game.scenario.bbs.push(bb);
+    return Game.scenario.bbs.length;
+  };
+  window.__tagSeth = () => {
+    const seth = Game.scenario.enemies.find(e => e.team !== 'player');
+    applyBBHit({ owner: 'player', pos: seth.pos.clone().setY(seth.pos.y + 1.2), spawnPos: Game.player.pos.clone() }, seth);
+    return { health: seth.health, won: Game.scenario.wonRound === Game.roundSeq };
+  };
 });
-const tagSeth = () => page.evaluate(() => {
-  const seth = Game.scenario.enemies.find(e => e.team !== 'player');
-  applyBBHit({ owner: 'player', pos: seth.pos.clone().setY(seth.pos.y + 1.2), spawnPos: Game.player.pos.clone() }, seth);
-  return { health: seth.health, won: Game.scenario.wonRound === Game.roundSeq };
-});
+const fire = () => page.evaluate(() => window.__fire());
+const tagSeth = () => page.evaluate(() => window.__tagSeth());
+await install();
 const state = () => page.evaluate(() => ({ mode: Game.mode, hits: Game.player.hitsTaken, max: Game.player.maxHits, bbs: Game.scenario.bbs.length }));
 
 // Without the tag: the BB in the air puts you out.
@@ -41,8 +47,9 @@ await page.evaluate(() => enterBedroom()); await g.spin(5);
 await g.scenario(ID);
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.noFire = true; });
 await g.spin(300);
-await fire();
-const tag = await tagSeth();
+// fired and tagged in one evaluate: between two, the page's own frame loop can step the game, and on a slow runner one
+// frame (30 ms+) carries the BB the 1.2 m to you before the tag lands (CI, 17 Oct, every run on shard 1/8 or 3/8)
+const tag = await page.evaluate(() => { window.__fire(); return window.__tagSeth(); });
 await g.spin(4);
 const after = await state();
 check('your last tag lands first: the round is won at once', tag.health <= 0 && tag.won, tag);
