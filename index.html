@@ -4441,7 +4441,7 @@ function noodleStrike() {
   applyBBHit({ owner: 'player', pos: at, spawnPos: Game.player.pos.clone(), noodle: true }, c);
   N.hits = N.hits || [];
   N.hits.push({ name: c.name, out: wasOut, t: +(Game.scenario.roundTime || 0).toFixed(2) });
-  if (!wasOut) kidSayLine(c, NOODLE_LINES[Math.floor(Math.random() * NOODLE_LINES.length)]);
+  if (!wasOut) kidSayLine(c, NOODLE_LINES[Math.floor(gameRandom() * NOODLE_LINES.length)]);
 }
 // a kid says a given line where he stands (as tryNpcSpeak, but this line, now)
 function kidSayLine(e, line) {
@@ -4694,7 +4694,7 @@ const GUN_SPECS = {
     adsSpreadMult: 0.5,
     curveOnsetDistance: 8,
     curveStrengthMax: 18,
-    pelletsPerShot: () => 2 + Math.floor(Math.random() * 2),  // 2 or 3
+    pelletsPerShot: () => 2 + Math.floor(gameRandom() * 2),  // 2 or 3
     cockTime: 0.85,           // pump action takes slightly longer than slide
     cockType: 'pump',
     displayName: 'Spring Shotgun',
@@ -4815,7 +4815,7 @@ const GUN_SPECS = {
     adsSpreadMult: 0.65,      // aiming barely tightens it
     curveOnsetDistance: 6,
     curveStrengthMax: 20,
-    pelletsPerShot: () => 4 + Math.floor(Math.random() * 2),  // 4 or 5
+    pelletsPerShot: () => 4 + Math.floor(gameRandom() * 2),  // 4 or 5
     cockTime: 1.05,           // pumping up the air takes a while
     cockType: 'pump',
     displayName: 'Thunder Pump',
@@ -5557,13 +5557,13 @@ function voiceBand(charId) {
 }
 // what a kid you just tagged says: an excuse that fits (from behind, far, close, moving, any) or his npcHit line
 function npcHitCategory(c) {
-  if (c.behavior === 'tagger' || Math.random() >= EXCUSE_CHANCE[voiceBand(c.charId)]) return 'npcHit';
+  if (c.behavior === 'tagger' || gameRandom() >= EXCUSE_CHANCE[voiceBand(c.charId)]) return 'npcHit';
   const P = Game.player.pos, dx = P.x - c.pos.x, dz = P.z - c.pos.z, d = Math.hypot(dx, dz);
   const facing = d > 0.01 && typeof c.yaw === 'number' ? (Math.sin(c.yaw) * dx + Math.cos(c.yaw) * dz) / d : 1;
   if (facing < -0.35) return 'excuse_behind';
   if (d > EXCUSE_FAR) return 'excuse_far';
   if (d < EXCUSE_CLOSE) return 'excuse_close';
-  if (['advancing', 'chasing', 'repositioning'].includes(c.state) && Math.random() < 0.5) return 'excuse_moving';
+  if (['advancing', 'chasing', 'repositioning'].includes(c.state) && gameRandom() < 0.5) return 'excuse_moving';
   return 'excuse_any';
 }
 // v1.256 (D.32): a line that waits for the voice cooldowns (a teammate's "they got Sean!" after Sean's own line),
@@ -5605,7 +5605,7 @@ function notePressed(e, now) {
   e._pressHits.push(now);
   if (e._pressHits.length < 2 || (e._pressedLineAt != null && now - e._pressedLineAt < PRESSED_GAP)) return;
   e._pressedLineAt = now; e._pressHits = [];
-  if (Math.random() < PRESSED_CHANCE) tryNpcSpeak(e, 'pressed');
+  if (gameRandom() < PRESSED_CHANCE) tryNpcSpeak(e, 'pressed');
 }
 
 // v1.150: a kid on YOUR team (team 'player', not a free-for-all) is talking to you, not hunting you, so his
@@ -5671,9 +5671,9 @@ function pickVoiceLine(charId, category, speaker) {
     if (ownOk.length + bandOk.length === 0) { ownOk = own; bandOk = band; }
   }
   let pool;
-  if (ownOk.length && bandOk.length) pool = Math.random() < 0.7 ? ownOk : bandOk;
+  if (ownOk.length && bandOk.length) pool = gameRandom() < 0.7 ? ownOk : bandOk;
   else pool = ownOk.length ? ownOk : bandOk;
-  const line = pool[Math.floor(Math.random() * pool.length)];
+  const line = pool[Math.floor(gameRandom() * pool.length)];
   if (speaker) {
     speaker._recentLines = [line, ...(speaker._recentLines || [])].slice(0, VOICE_RECENT_PER_SPEAKER);
   }
@@ -8142,7 +8142,7 @@ function playHiHat(time, vol) {
   vol = vol || 1;
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/d.length, 2);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i/d.length, 2);
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const filt = ctx.createBiquadFilter();
@@ -8174,7 +8174,7 @@ function playSnare(time) {
   const ctx = Game.audio.ctx;
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.10, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/d.length, 1.8);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i/d.length, 1.8);
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const filt = ctx.createBiquadFilter();
@@ -8209,7 +8209,7 @@ function playPlayerFootstep(heavy) {
   if (!Game.audio?.ctx) return;
   const ctx = Game.audio.ctx;
   const t = ctx.currentTime;
-  const jitter = 0.85 + Math.random() * 0.3;     // 0.85..1.15 per-step variation
+  const jitter = 0.85 + gameRandom() * 0.3;     // 0.85..1.15 per-step variation
   const baseVol = (heavy ? 0.075 : 0.045) * jitter;
   // Noise scuff — short, low-passed so it's a muffled "thud/scuff" not a hiss.
   const dur = heavy ? 0.13 : 0.10;
@@ -8217,7 +8217,7 @@ function playPlayerFootstep(heavy) {
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) {
     // fast attack, quick decay envelope baked into the buffer
-    d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
+    d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
   }
   const src = ctx.createBufferSource();
   src.buffer = buf;
@@ -8269,7 +8269,7 @@ function playShot(srcX, srcZ) {
   // Noise burst
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * (1 - i / d.length);
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.12 * vol;
@@ -8337,7 +8337,7 @@ function playFootstep(srcX, srcZ) {
   // Scrape (the sole)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) * 0.4;
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * (1 - i / d.length) * 0.4;
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.04 * vol;
@@ -8373,7 +8373,7 @@ function _bbNoiseBuffer(ctx) {
   const len = Math.ceil(ctx.sampleRate * 0.5);
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+  for (let i = 0; i < len; i++) d[i] = (gameRandom() * 2 - 1);
   _bbNoiseBuf = buf;
   return buf;
 }
@@ -8471,7 +8471,7 @@ function playCockBack() {
   // Brief noise tail (metal-on-metal)
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * (1 - i / d.length);
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.08;
@@ -8501,7 +8501,7 @@ function playCockForward() {
   // Noise burst for the metal slam
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.045, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i / d.length, 1.5);
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.14;
@@ -8523,7 +8523,7 @@ function playJam() {
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) {
     const env = Math.pow(1 - i / d.length, 1.3);
-    d[i] = (Math.random() * 2 - 1) * env * 0.8;
+    d[i] = (gameRandom() * 2 - 1) * env * 0.8;
   }
   const src = ctx.createBufferSource();
   const g = ctx.createGain();
@@ -8597,7 +8597,7 @@ function playHitOnPlayer() {
   const t = ctx.currentTime;
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i / d.length, 2);
   const src = ctx.createBufferSource();
   const g = ctx.createGain();
   g.gain.value = 0.25;
@@ -8627,7 +8627,7 @@ function playImpactMetal(impactPos) {
   const t = ctx.currentTime;
   const vol = impactVolume(impactPos);
   // Two stacked oscillators for a richer "ping"
-  const baseFreq = 2400 + (Math.random() - 0.5) * 400;
+  const baseFreq = 2400 + (gameRandom() - 0.5) * 400;
   const osc1 = ctx.createOscillator();
   const g1 = ctx.createGain();
   osc1.type = 'sine';
@@ -8649,7 +8649,7 @@ function playImpactMetal(impactPos) {
   // Tiny noise click at attack
   const buf = ctx.createBuffer(1, ctx.sampleRate * 0.008, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * (1 - i / d.length);
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.08 * vol;
@@ -8671,7 +8671,7 @@ function playImpactCardboard(impactPos) {
   // Lowpass-ish noise via simple smoothing
   let prev = 0;
   for (let i = 0; i < d.length; i++) {
-    const n = (Math.random() * 2 - 1);
+    const n = (gameRandom() * 2 - 1);
     prev = prev * 0.7 + n * 0.3;
     d[i] = prev * Math.pow(1 - i / d.length, 1.6);
   }
@@ -8682,7 +8682,7 @@ function playImpactCardboard(impactPos) {
   // Apply a biquad lowpass for that muffled cardboard feel
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.value = 600 + (Math.random() - 0.5) * 200;
+  filter.frequency.value = 600 + (gameRandom() - 0.5) * 200;
   filter.Q.value = 0.5;
   src.connect(filter).connect(g).connect(sfxOut());
   src.start(t);
@@ -8690,7 +8690,7 @@ function playImpactCardboard(impactPos) {
   const osc = ctx.createOscillator();
   const og = ctx.createGain();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(140 + (Math.random() - 0.5) * 30, t);
+  osc.frequency.setValueAtTime(140 + (gameRandom() - 0.5) * 30, t);
   osc.frequency.exponentialRampToValueAtTime(80, t + 0.05);
   og.gain.setValueAtTime(0.12 * vol, t);
   og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
@@ -8705,7 +8705,7 @@ function playImpactWood(impactPos) {
   const t = ctx.currentTime;
   const vol = impactVolume(impactPos);
   // Body resonance
-  const freq = 320 + (Math.random() - 0.5) * 80;
+  const freq = 320 + (gameRandom() - 0.5) * 80;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
   osc.type = 'triangle';
@@ -8719,7 +8719,7 @@ function playImpactWood(impactPos) {
   const dur = 0.025;
   const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 0.8);
+  for (let i = 0; i < d.length; i++) d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i / d.length, 0.8);
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
   ng.gain.value = 0.18 * vol;
@@ -8753,7 +8753,7 @@ function playImpactShatter(impactPos) {
   const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
   const d = buf.getChannelData(0);
   for (let i = 0; i < d.length; i++) {
-    d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    d[i] = (gameRandom() * 2 - 1) * Math.pow(1 - i / d.length, 2);
   }
   const src = ctx.createBufferSource();
   const ng = ctx.createGain();
@@ -9322,8 +9322,8 @@ function buildBedroomScene() {
   // Some grass strokes
   oct.strokeStyle = '#8db452';
   for (let i = 0; i < 80; i++) {
-    const x = Math.random() * outsideCanvas.width;
-    const y = 310 + Math.random() * (outsideCanvas.height - 310);
+    const x = gameRandom() * outsideCanvas.width;
+    const y = 310 + gameRandom() * (outsideCanvas.height - 310);
     oct.beginPath();
     oct.moveTo(x, y);
     oct.lineTo(x, y - 4);
@@ -9361,7 +9361,7 @@ function buildBedroomScene() {
     // Multiple leaf clusters (a few overlapping spheres for organic look)
     const leafMat = new THREE.MeshStandardMaterial({ color: leavesColor, roughness: 0.8 });
     for (let i = 0; i < 4; i++) {
-      const sphere = new THREE.Mesh(new THREE.SphereGeometry(leavesR * (0.65 + Math.random() * 0.4), 9, 7), leafMat);
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(leavesR * (0.65 + gameRandom() * 0.4), 9, 7), leafMat);
       const angle = (i / 4) * Math.PI * 2;
       sphere.position.set(
         Math.cos(angle) * leavesR * 0.5,
@@ -9376,9 +9376,9 @@ function buildBedroomScene() {
     pivot.add(crown);
     g.add(pivot);
     g.userData.pivot = pivot;
-    g.userData.swayPhase = Math.random() * Math.PI * 2;
-    g.userData.swayAmp = 0.025 + Math.random() * 0.025;
-    g.userData.swayFreq = 0.0010 + Math.random() * 0.0010;
+    g.userData.swayPhase = gameRandom() * Math.PI * 2;
+    g.userData.swayAmp = 0.025 + gameRandom() * 0.025;
+    g.userData.swayFreq = 0.0010 + gameRandom() * 0.0010;
     return g;
   }
   // A few trees arranged behind the window — bigger and more varied
@@ -10908,12 +10908,12 @@ function _buildBushDetail(x, z) {
 
 function addSuburbanTree(scene, x, z, opts = {}) {
   const trunkR = opts.trunkR ?? 0.32;
-  const trunkH = opts.trunkH ?? (3.0 + Math.random() * 1.5);
-  const leafR  = opts.leafR  ?? (1.8 + Math.random() * 0.7);
+  const trunkH = opts.trunkH ?? (3.0 + gameRandom() * 1.5);
+  const leafR  = opts.leafR  ?? (1.8 + gameRandom() * 0.7);
   const baseY  = opts.baseY ?? 0;   // v1.8: terrain ground height at (x,z)
   const shape  = opts.shape ?? 'round';   // 'round' (deciduous sphere) | 'pine' (conifer)
   if (opts.detail && shape === 'round') {   // v1.113: the low-poly tree (Winnmark)
-    const leafColor = opts.leafColor ?? (Math.random() < 0.5 ? 0x3a5a2a : 0x4a6a35);
+    const leafColor = opts.leafColor ?? (gameRandom() < 0.5 ? 0x3a5a2a : 0x4a6a35);
     const trunk = _buildTreeDetail(scene, x, z, { trunkR, trunkH, leafR, baseY, leafColor });
     trunk.userData.plantDetail = true;
     return { minX: x - trunkR, maxX: x + trunkR, minZ: z - trunkR, maxZ: z + trunkR,
@@ -10926,7 +10926,7 @@ function addSuburbanTree(scene, x, z, opts = {}) {
   trunk.position.set(x, baseY + trunkH/2, z);
   trunk.castShadow = trunk.receiveShadow = true;
   scene.add(trunk);
-  const leafColor = opts.leafColor ?? (Math.random() < 0.5 ? 0x3a5a2a : 0x4a6a35);
+  const leafColor = opts.leafColor ?? (gameRandom() < 0.5 ? 0x3a5a2a : 0x4a6a35);
   const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 1.0 });
   if (shape === 'pine') {
     // Conifer — 3 stacked cones tapering upward (loblolly/Eastern white pine,
@@ -10971,7 +10971,7 @@ function addSuburbanTree(scene, x, z, opts = {}) {
 // Low bush — a small ovoid. Player can walk around it; BBs at low height
 // hit it (great for crouch-cover or peeking).
 function addBush(scene, x, z, w = 1.2, h = 0.8, d = 1.0, color = null, baseY = 0, opts = {}) {
-  const c = color ?? (Math.random() < 0.5 ? 0x3e5a30 : 0x4a6a3a);
+  const c = color ?? (gameRandom() < 0.5 ? 0x3e5a30 : 0x4a6a3a);
   const bush = opts.detail   // v1.113: the clumped shrub (Winnmark)
     ? new THREE.Mesh(_buildBushDetail(x, z), _plantMat(c, true))
     : new THREE.Mesh(
@@ -11090,7 +11090,7 @@ function addBrickMailbox(scene, x, z, opts = {}) {
   // Warm brick palette with slight per-pillar variation (matches house stucco/
   // brick warmth). Mortar-ish trim for the cap.
   const brickTones = [0x9c5a3c, 0xa86848, 0x8f5236, 0xb06e4a, 0x95543a];
-  const brickColor = brickTones[Math.floor(Math.random() * brickTones.length)];
+  const brickColor = brickTones[Math.floor(gameRandom() * brickTones.length)];
   const brickMat = new THREE.MeshStandardMaterial({ color: brickColor, roughness: 0.95, metalness: 0.0 });
   const capMat   = new THREE.MeshStandardMaterial({ color: 0xd8cdb8, roughness: 0.9 });  // limestone-ish cap
   const metalMat = new THREE.MeshStandardMaterial({ color: 0x202024, roughness: 0.5, metalness: 0.5 });
@@ -12169,17 +12169,24 @@ function _mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-// Run `fn` with Math.random seeded by `seedKey`, then restore the real RNG.
-// Restoration is in a finally so a throw inside the builder can't leave the global
-// RNG patched. Returns whatever fn returns.
+// v1.267: the game's own code draws from gameRandom(), never Math.random(). Swapping the global meant three.js drew
+// from the seed too (four Math.random() calls for every new object's uuid), and the first build after a page load
+// makes materials and geometries that later builds take from caches, so the first match's props, cars and trees
+// fell differently from every later build's. Now the seed is ours alone: three.js keeps the real Math.random and a
+// match's layout is the same on every load. Outside a seeded build gameRandom() is Math.random() (looked up per
+// call, so a test that swaps Math.random still steers the game).
+var _gameRng = null;
+function gameRandom() { return _gameRng ? _gameRng() : Math.random(); }
+// Run `fn` with gameRandom seeded by `seedKey`, then restore the real RNG.
+// Restoration is in a finally so a throw inside the builder can't leave the
+// RNG seeded. Returns whatever fn returns.
 function withSeededRandom(seedKey, fn) {
-  const realRandom = Math.random;
-  const prng = _mulberry32(_hashStringToSeed(seedKey));
-  Math.random = prng;
+  const outer = _gameRng;
+  _gameRng = _mulberry32(_hashStringToSeed(seedKey));
   try {
     return fn();
   } finally {
-    Math.random = realRandom;
+    _gameRng = outer;
   }
 }
 
@@ -12289,10 +12296,12 @@ function applyTimeOfDay(scene, timeOfDay, palette) {
   const starGeo = new THREE.BufferGeometry();
   const sPos = new Float32Array(starCount * 3);
   const R = 300;
+  // v1.267: the stars draw from their own stream, not the match's seed, so a map lays out the same by night as by day
+  const starRnd = _mulberry32(0x57a25);
   for (let i = 0; i < starCount; i++) {
     // Upper hemisphere bias (most stars overhead, none below horizon).
-    const u = Math.random();
-    const theta = Math.random() * Math.PI * 2;
+    const u = starRnd();
+    const theta = starRnd() * Math.PI * 2;
     const phi = Math.acos(0.05 + 0.95 * u);   // mostly upper sky
     const x = R * Math.sin(phi) * Math.cos(theta);
     const y = R * Math.cos(phi);
@@ -13145,10 +13154,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
 
   // A few distant trees on the far side of the fairway, framing it visually
   for (let i = 0; i < 10; i++) {
-    const x = -40 + i * 9 + (Math.random() - 0.5) * 2;
-    const z = -52 + (Math.random() - 0.5) * 3;
-    const trunkH = 3.5 + Math.random() * 1.5;
-    const leafR = 2.2 + Math.random() * 0.6;
+    const x = -40 + i * 9 + (gameRandom() - 0.5) * 2;
+    const z = -52 + (gameRandom() - 0.5) * 3;
+    const trunkH = 3.5 + gameRandom() * 1.5;
+    const leafR = 2.2 + gameRandom() * 0.6;
     addSuburbanTree(scene, x, z, { trunkH, leafR, detail: true });
   }
 
@@ -13407,7 +13416,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // rows so it reads as a solid wall (no see-through gaps).
   const treeObs = [];
   const bushObs = [];
-  const rng = (min, max) => min + Math.random() * (max - min);
+  const rng = (min, max) => min + gameRandom() * (max - min);
 
   // Helper: lay a dense double row of trees along a straight segment, staggered
   // so the back row fills the front row's gaps → reads as a solid wall.
@@ -13476,7 +13485,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // Scattered front-yard ornamental trees (smaller) — unchanged flavor.
   for (const hc of houseCenters) {
     const off = hc.side === 'north' ? +6 : -6;
-    if (Math.random() < 0.6) {
+    if (gameRandom() < 0.6) {
       const tx = hc.x + rng(-4, 4), tz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, tx, tz,
         { leafR: rng(1.0, 1.5), trunkH: rng(2.2, 2.8), baseY: groundY(tx, tz), detail: true }));
@@ -13486,7 +13495,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // wall — just breaks up the big new yards).
   for (const hc of houseCenters) {
     const backSign = hc.side === 'north' ? -1 : 1;
-    const n = 1 + Math.floor(Math.random() * 2);
+    const n = 1 + Math.floor(gameRandom() * 2);
     for (let i = 0; i < n; i++) {
       const tz = hc.z + backSign * rng(8, 15);
       const tx = hc.x + rng(-5, 5);
@@ -13502,7 +13511,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const frontZ = hc.z + towardRoad * 4.0;
     bushObs.push(addBush(scene, hc.x - 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.6, frontZ), { detail: true }));
     bushObs.push(addBush(scene, hc.x + 1.6, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.6, frontZ), { detail: true }));
-    if (Math.random() < 0.6) {
+    if (gameRandom() < 0.6) {
       const ex = hc.x + rng(-3, 3), ez = frontZ + towardRoad * rng(0.2, 0.8);
       bushObs.push(addBush(scene, ex, ez,
         rng(0.8, 1.2), rng(0.5, 0.8), rng(0.8, 1.1), null, groundY(ex, ez), { detail: true }));
@@ -13533,7 +13542,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const baseZ = best.z + dirZ * (ROAD_HALF + SHOULDER_GRASS);
     // shift sideways (perpendicular) to the driveway's side edge (±2.2m)
     const perpX = -dirZ, perpZ = dirX;
-    const sideSign = (Math.random() < 0.5 ? -1 : 1);
+    const sideSign = (gameRandom() < 0.5 ? -1 : 1);
     const mbX = baseX + perpX * 2.2 * sideSign;
     const mbZ = baseZ + perpZ * 2.2 * sideSign;
     // v1.76: face the door toward the ROAD. The door is local +Z; the road lies in
@@ -13558,14 +13567,14 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // Bins face the house (handle-side toward house, label-side toward road).
   const curbsideBins = [];
   for (const hc of houseCenters) {
-    if (Math.random() < 0.5) continue; // skip half — they're not all out
+    if (gameRandom() < 0.5) continue; // skip half — they're not all out
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const binZ = hc.z + towardRoad * 6.5;
     // Place pair offset from the mailbox side. Spacing ~0.8m between bins.
-    const binBaseX = hc.x + (Math.random() < 0.5 ? 1.5 : -1.5);
+    const binBaseX = hc.x + (gameRandom() < 0.5 ? 1.5 : -1.5);
     const facing = hc.side === 'north' ? Math.PI : 0; // label toward road
     // Garbage on one side, recycle on the other, in random order
-    const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
+    const order = gameRandom() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
     const bin1 = sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ);
     const bin2 = sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ);
     curbsideBins.push(bin1);
@@ -13586,14 +13595,14 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     coverByHouse[i] = [];
 
     // 3-4 pieces of cover per yard (was 2-3) to fill the larger backyards.
-    const numCover = 3 + Math.floor(Math.random() * 2);
+    const numCover = 3 + Math.floor(gameRandom() * 2);
     for (let j = 0; j < numCover; j++) {
       const cx = hc.x + rng(-5, 5);                   // wider spread (was ±3)
       const cz = yardCenterZ + rng(-6, 6);            // deeper spread (was ±3)
       // v1.28k: keep Seth's-yard fort footprint clear (the treehouse-defend
       // spawn sits in it). Don't drop random cover inside its keep-clear radius.
       if (Math.hypot(cx - 21, cz - (-25)) < 4.0) continue;
-      const kind = Math.random();
+      const kind = gameRandom();
       let cobj;
       const gy = groundY(cx, cz);
       if (kind < 0.4) {
@@ -13604,8 +13613,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         }), cx, cz);
       } else if (kind < 0.75) {
         // Wheeled curbside bin — randomly garbage or recycle, ~15% chance tipped.
-        const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
-        const tipped = Math.random() < 0.15;
+        const variant = gameRandom() < 0.55 ? 'garbage' : 'recycle';
+        const tipped = gameRandom() < 0.15;
         cobj = sinkObs(addCurbsideBin(scene, cx, cz, {
           variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true,   // v1.115
         }), cx, cz);
@@ -13636,7 +13645,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   const driveCars = [];
   const carColors = [0x6a8aa8, 0x8a4030, 0x2a3a4a, 0x4a4a4a, 0xc8b878, 0x3a5a3a, 0xa8a8a8];
   for (const hc of houseCenters) {
-    if (Math.random() > 0.6) continue;
+    if (gameRandom() > 0.6) continue;
     // v1.56: never park a random car in Seth's driveway (house 0). It sits right
     // at the throat of the only lane between the backyard and the road, and the
     // Treehouse-defend attackers staged in the backyard kept jamming on it (plus
@@ -13654,7 +13663,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const carZ = hc.z + towardRoad * 5.6;
     // Orientation: car length along Z (facing road)
     const orientation = hc.side === 'north' ? Math.PI / 2 : -Math.PI / 2;
-    const color = carColors[Math.floor(Math.random() * carColors.length)];
+    const color = carColors[Math.floor(gameRandom() * carColors.length)];
     // v1.76: pass groundNormal so the car tilts onto the grade (all 4 tires touch).
     const carObs = sinkObs(addCar(scene, carX, carZ, { orientation, color, groundNormalFn: groundNormal, detail: true }), carX, carZ);
     pushCarObs(driveCars, carObs);
@@ -13757,18 +13766,18 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       // Pick a cover type — mix of moving boxes, bins, plywood, and the
       // occasional car parked at an angle. Weighted toward solid waist/chest
       // pieces a kid can crouch behind.
-      const kind = Math.random();
+      const kind = gameRandom();
       let cobj;
       const gyp = groundY(cxp, czp);
       if (kind < 0.30) {
-        const carColor = carColors[Math.floor(Math.random() * carColors.length)];
+        const carColor = carColors[Math.floor(gameRandom() * carColors.length)];
         cobj = sinkObs(addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true }), cxp, czp);
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
         cobj = sinkObs(addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else if (kind < 0.85) {
-        const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
+        const variant = gameRandom() < 0.5 ? 'garbage' : 'recycle';
+        cobj = sinkObs(addCurbsideBin(scene, cxp, czp, { variant, tipped: gameRandom() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true }), cxp, czp);   // v1.115
       } else {
         // plywood stack + chair (grounded waist-high)
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
@@ -13884,7 +13893,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const sethCover = coverByHouse[0];
     enemies.push(makeEnemyFromCharacter('seth', {
       pos: new THREE.Vector3(houseCenters[0].x - 2, 0, houseCenters[0].z - 12),
-      homeCover: sethCover[Math.floor(Math.random() * sethCover.length)],
+      homeCover: sethCover[Math.floor(gameRandom() * sethCover.length)],
       scene,
     }));
   } else if (variant === 'cul_de_sac' || variant === 'treehouse') {
@@ -14020,7 +14029,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     shadow: { size: 2048, extent: 44, far: 84 },
   });
 
-  const rng = (min, max) => min + Math.random() * (max - min);
+  const rng = (min, max) => min + gameRandom() * (max - min);
 
   // ===================================================================
   // TERRAIN — v1.8: real z-varying ground (the deferred v1.7 feature).
@@ -14562,7 +14571,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const frontZ = hc.z + towardRoad * 4.0;
     bushObs.push(addBush(scene, hc.x - 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x - 1.8, frontZ), { detail: true }));   // v1.125
     bushObs.push(addBush(scene, hc.x + 1.8, frontZ, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(hc.x + 1.8, frontZ), { detail: true }));
-    if (Math.random() < 0.6) {
+    if (gameRandom() < 0.6) {
       const off = hc.side === 'north' ? +6 : -6;
       const ox = hc.x + rng(-4, 4), oz = hc.z + off + rng(-1, 1);
       treeObs.push(addSuburbanTree(scene, ox, oz,
@@ -14595,7 +14604,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const baseZ = best.z + dirZ * (BR_ROAD_HALF + BR_SHOULDER);
     // shift sideways (perpendicular) to the driveway's side edge (±2.2m)
     const perpX = -dirZ, perpZ = dirX;
-    const sideSign = (Math.random() < 0.5 ? -1 : 1);
+    const sideSign = (gameRandom() < 0.5 ? -1 : 1);
     const mbX = baseX + perpX * 2.2 * sideSign;
     const mbZ = baseZ + perpZ * 2.2 * sideSign;
     // Face the box toward the road (front +Z points back along -dir, i.e. toward
@@ -14612,14 +14621,14 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // Curbside trash bins (trash-day flavor; decoration+collision, NOT AI cover).
   const curbsideBins = [];
   for (const hc of houseCenters) {
-    if (Math.random() < 0.5) continue;
+    if (gameRandom() < 0.5) continue;
     let nearestZ = 0, best = Infinity;
     for (const p of roadCenterline) { const d = Math.abs(p.x - hc.x); if (d < best) { best = d; nearestZ = p.z; } }
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const binZ = nearestZ + towardRoad * 1.5;
-    const binBaseX = hc.x + (Math.random() < 0.5 ? 1.6 : -1.6);
+    const binBaseX = hc.x + (gameRandom() < 0.5 ? 1.6 : -1.6);
     const facing = hc.side === 'north' ? Math.PI : 0;
-    const order = Math.random() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
+    const order = gameRandom() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
     curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ));
     curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX + 0.4, binZ, { variant: order[1], facing, detail: true }), binBaseX + 0.4, binZ));
   }
@@ -14630,19 +14639,19 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const backwardZ = hc.side === 'north' ? -1 : +1;
     const yardCenterZ = hc.z + backwardZ * 9;   // shallower than Winnmark — woods crowd in
     coverByHouse[i] = [];
-    const numCover = 3 + Math.floor(Math.random() * 2);
+    const numCover = 3 + Math.floor(gameRandom() * 2);
     for (let j = 0; j < numCover; j++) {
       const cx = hc.x + rng(-5, 5);
       const cz = yardCenterZ + rng(-5, 5);
-      const kind = Math.random();
+      const kind = gameRandom();
       let cobj;
       const cgy = groundY(cx, cz);
       if (kind < 0.4) {
         const w = rng(0.9, 1.3), h = rng(0.85, 1.1), d = rng(0.85, 1.1);
         cobj = addHomeDepotBox(scene, cx, cz, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else if (kind < 0.75) {
-        const variant = Math.random() < 0.55 ? 'garbage' : 'recycle';
-        const tipped = Math.random() < 0.15;
+        const variant = gameRandom() < 0.55 ? 'garbage' : 'recycle';
+        const tipped = gameRandom() < 0.15;
         cobj = addCurbsideBin(scene, cx, cz, { variant, tipped, facing: rng(-Math.PI, Math.PI), detail: true });   // v1.125
       } else {
         // v1.125: Winnmark's plywood stack (sheets on sleepers, a lawn chair on top), was one slab and a flat box
@@ -14762,18 +14771,18 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       const px = -tz / tl, pz = tx / tl;
       const offset = 2.2 * side;
       const cxp = p.x + px * offset, czp = p.z + pz * offset;
-      const kind = Math.random();
+      const kind = gameRandom();
       let cobj;
       const sgy = groundY(cxp, czp);
       if (kind < 0.30) {
-        const carColor = carColors[Math.floor(Math.random() * carColors.length)];
+        const carColor = carColors[Math.floor(gameRandom() * carColors.length)];
         cobj = addCar(scene, cxp, czp, { orientation: Math.atan2(tz, tx) + rng(-0.3, 0.3), color: carColor, groundNormalFn: groundNormal, detail: true });   // v1.125
       } else if (kind < 0.62) {
         const w = rng(1.0, 1.4), h = rng(0.95, 1.2), d = rng(0.95, 1.2);
         cobj = addHomeDepotBox(scene, cxp, czp, { w, h, d, facing: rng(-Math.PI, Math.PI), detail: true });
       } else if (kind < 0.85) {
-        const variant = Math.random() < 0.5 ? 'garbage' : 'recycle';
-        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: Math.random() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true });
+        const variant = gameRandom() < 0.5 ? 'garbage' : 'recycle';
+        cobj = addCurbsideBin(scene, cxp, czp, { variant, tipped: gameRandom() < 0.2, facing: rng(-Math.PI, Math.PI), detail: true });
       } else {
         const plyMat = new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.95 });
         const stack = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 0.9), plyMat);
@@ -14940,7 +14949,7 @@ function buildHollowScene(variant, timeOfDay) {
     shadow: { size: 4096, extent: 56, far: 120 },
   });
 
-  const rng = (min, max) => min + Math.random() * (max - min);
+  const rng = (min, max) => min + gameRandom() * (max - min);
 
   // ===================================================================
   // TERRAIN — a gently rolling hollow. Mostly flat so the big team fight
@@ -15136,11 +15145,11 @@ function buildHollowScene(variant, timeOfDay) {
     for (let i = 0; i < 26; i++) {
       const fx = rng(-92, -68);
       const fz = -80 + i * 6.3 + rng(-1.5, 1.5);
-      const fsh = Math.random() < 0.5 ? 'pine' : 'round';
+      const fsh = gameRandom() < 0.5 ? 'pine' : 'round';
       addSuburbanTree(scene, fx, fz, {
         shape: fsh, leafR: rng(2.2, 3.4), trunkH: rng(3.8, 6.5),
-        leafColor: fsh === 'pine' ? (Math.random() < 0.5 ? 0x254526 : 0x2c5230)
-                                  : (Math.random() < 0.5 ? 0x34521f : 0x3e5e26),
+        leafColor: fsh === 'pine' ? (gameRandom() < 0.5 ? 0x254526 : 0x2c5230)
+                                  : (gameRandom() < 0.5 ? 0x34521f : 0x3e5e26),
         baseY: RIVER_Y + 1.0, detail: true,   // v1.126: the round ones are Winnmark's low-poly tree
       });
       // (intentionally NOT pushed to treeObs — unreachable backdrop)
@@ -15156,13 +15165,13 @@ function buildHollowScene(variant, timeOfDay) {
   // — North-Georgia riverside forest is heavy loblolly/white pine over hardwood.
   // ===================================================================
   // North-Atlanta riverside mix: ~50% pine. Varied heights (understory → canopy).
-  function treeShape() { return Math.random() < 0.5 ? 'pine' : 'round'; }
-  function pineColor() { return Math.random() < 0.5 ? 0x274a2a : 0x305c33; }   // bluer green
-  function leafColorDecid() { return Math.random() < 0.5 ? 0x3a5e28 : 0x4a6a30; }
+  function treeShape() { return gameRandom() < 0.5 ? 'pine' : 'round'; }
+  function pineColor() { return gameRandom() < 0.5 ? 0x274a2a : 0x305c33; }   // bluer green
+  function leafColorDecid() { return gameRandom() < 0.5 ? 0x3a5e28 : 0x4a6a30; }
   function makeTree(x, z, sizeBias) {
     const sh = treeShape();
     // sizeBias 0..1 nudges toward taller; add big natural spread.
-    const tall = Math.random() < (0.30 + 0.4 * (sizeBias ?? 0.4));
+    const tall = gameRandom() < (0.30 + 0.4 * (sizeBias ?? 0.4));
     // v1.36e: PINES run taller (5–11m) — even "short" pines clear eye level so
     // the high skirt sits well overhead. Round/deciduous keep the wider spread.
     let trunkH;
@@ -15235,7 +15244,7 @@ function buildHollowScene(variant, timeOfDay) {
     while (added < 110 && attempts < 1400) {
       attempts++;
       const x = rng(-39, 43), z = rng(-34, 34);
-      if (tryPlace(x, z, 3.2, Math.random())) added++;
+      if (tryPlace(x, z, 3.2, gameRandom())) added++;
     }
   }
 
@@ -15733,18 +15742,20 @@ function buildHollowScene(variant, timeOfDay) {
     // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): the Ten-Way Free-for-All's starts. Four
     // pairs were 9.5–14.7 m apart, Brooke 14.7 m from your midfield start among them. Each start is 19.5 m or more
     // from every other, and every kid has another kid's start nearer than yours, in the Pickup Game's order
-    // (PICKUP_MAPS ffaOrder) at every size, and no kid can see your start from his. Kid from kid out of sight can't
-    // be held: only the woods hide them here, and the interior trees fall differently in the first match built after
-    // a page load from the rest (in decisions, what to do).
-    ffa_1: { pos: P(-1.5, -25.5), cover: null },   // the north fort
-    ffa_2: { pos: P(2.5, -1.5),   cover: null },   // midfield
-    ffa_3: { pos: P(-19.5, -33.5), cover: null },
-    ffa_4: { pos: P(36.5, 22.5),  cover: null },
-    ffa_5: { pos: P(36.5, -23.5), cover: null },
-    ffa_6: { pos: P(-7.5, 24.5),  cover: null },
-    ffa_7: { pos: P(12.5, 24.5),  cover: null },
-    ffa_8: { pos: P(-27.5, 16.5), cover: null },
-    ffa_9: { pos: P(32.5, 2.5),   cover: null },
+    // (PICKUP_MAPS ffaOrder) at every size, and no kid can see your start from his.
+    // v1.267 (decisions, "The Hollow's free-for-all", Michael: A): the woods are the same every build now
+    // (gameRandom), so the starts were searched again in them: nobody can see anybody from his start, from the start
+    // or 0.3 m off it, every start stands 20 m or more from every other, and every kid's is 30 m or more from yours
+    // (Eric, 25 m off, tagged a player standing at the start at 3.9 s in 2 of 14 rounds).
+    ffa_1: { pos: P(12, -22),     cover: null },   // east of the north fort
+    ffa_2: { pos: P(15, 8),       cover: null },   // was midfield, in sight of half the field
+    ffa_3: { pos: P(-6.5, -30.5), cover: null },   // behind the north fort
+    ffa_4: { pos: P(39, 22),      cover: null },
+    ffa_5: { pos: P(40.5, -25.5), cover: null },
+    ffa_6: { pos: P(-8.5, 23.5),  cover: null },   // west of the south fort
+    ffa_7: { pos: P(18.5, 28),    cover: null },
+    ffa_8: { pos: P(-31.5, 18.5), cover: null },
+    ffa_9: { pos: P(32, -6.5),    cover: null },
   };
 
   const playerSpawns = {
@@ -15755,7 +15766,7 @@ function buildHollowScene(variant, timeOfDay) {
     // (x 0–0.6) on that line and still looks out through the port.
     team_b:  { pos: P(0.5, 32.3), yaw: 0 },         // in the south fort, facing north (-z)
     midfield:{ pos: P(0, 0),    yaw: 0 },
-    ffa_west:{ pos: P(-27.5, -9.5), yaw: -Math.PI / 2 },   // v1.265: the free-for-all's, in the west woods facing east
+    ffa_west:{ pos: P(-34, -18.5), yaw: -Math.PI / 2 },   // v1.265: the free-for-all's, in the west woods facing east (v1.267: 11 m south-west, 30 m from every kid)
   };
 
   // === Legacy return scaffolding ===
@@ -15914,7 +15925,7 @@ function buildMarketLotScene(variant, timeOfDay) {
       const zc = Math.round(row.z / 14) * 14;
       const orient = (row.z < zc ? -1 : 1) * (Math.PI / 2) + (rnd() - 0.5) * 0.08;
       const cx = x + (rnd() - 0.5) * 0.3, cz = row.z + (rnd() - 0.5) * 0.2;
-      const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+      const color = CAR_COLORS[Math.floor(gameRandom() * CAR_COLORS.length)];
       const carObs = addCar(scene, cx, cz, { orientation: orient, color, detail: true });   // v1.126: Winnmark's car (D.3 step 4)
       const seated = carSeatY(carObs, groundY);
       carObs.mesh.position.y += seated;
@@ -16175,7 +16186,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
     }
     return walls;
   }
-  const rng = (a, b) => a + Math.random() * (b - a);
+  const rng = (a, b) => a + gameRandom() * (b - a);
 
   // --- ground (displaced), the creek and its far bank ---
   {
@@ -16257,13 +16268,13 @@ function buildNorthcliffScene(variant, timeOfDay) {
   // mailboxes at the foot of each driveway
   for (const hc of houseCenters) {
     const rz = roadZAt(hc.x), dir = hc.side === 'north' ? -1 : 1;
-    const mx = hc.x + (Math.random() < 0.5 ? -2.3 : 2.3), mz = rz + dir * 4.6;
+    const mx = hc.x + (gameRandom() < 0.5 ? -2.3 : 2.3), mz = rz + dir * 4.6;
     bushObs.push(sinkObs(addMailbox(scene, mx, mz, { facing: hc.side === 'north' ? 0 : Math.PI }), mx, mz));
   }
   // bins out on trash day at half the houses (player cover, not AI cover, as Winnmark)
   for (const hc of houseCenters) {
-    if (Math.random() < 0.5) continue;
-    const dir = hc.side === 'north' ? -1 : 1, bz = roadZAt(hc.x) + dir * 4.9, bx = hc.x + (Math.random() < 0.5 ? 3.4 : -3.4);
+    if (gameRandom() < 0.5) continue;
+    const dir = hc.side === 'north' ? -1 : 1, bz = roadZAt(hc.x) + dir * 4.9, bx = hc.x + (gameRandom() < 0.5 ? 3.4 : -3.4);
     const facing = hc.side === 'north' ? Math.PI : 0;
     curbBins.push(sinkObs(addCurbsideBin(scene, bx - 0.4, bz, { variant: 'garbage', facing, detail: true }), bx - 0.4, bz));
     curbBins.push(sinkObs(addCurbsideBin(scene, bx + 0.4, bz, { variant: 'recycle', facing, detail: true }), bx + 0.4, bz));
@@ -16272,14 +16283,14 @@ function buildNorthcliffScene(variant, timeOfDay) {
   houseCenters.forEach((hc, i) => {
     const back = hc.side === 'north' ? -1 : 1, yz = hc.z + back * 10.5;
     coverByHouse[i] = [];
-    const n = 3 + Math.floor(Math.random() * 2);
+    const n = 3 + Math.floor(gameRandom() * 2);
     for (let j = 0; j < n; j++) {
       const cx = hc.x + rng(-6.5, 6.5), cz = yz + rng(-4, 3.5) * back;
       if (keepClear(cx, cz) || Math.abs(cz) > 31.5) continue;
-      const k = Math.random(), gy = groundY(cx, cz);
+      const k = gameRandom(), gy = groundY(cx, cz);
       let o;
       if (k < 0.4) o = sinkObs(addHomeDepotBox(scene, cx, cz, { w: rng(0.9, 1.3), h: rng(0.85, 1.1), d: rng(0.85, 1.1), facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
-      else if (k < 0.72) o = sinkObs(addCurbsideBin(scene, cx, cz, { variant: Math.random() < 0.55 ? 'garbage' : 'recycle', tipped: Math.random() < 0.15, facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
+      else if (k < 0.72) o = sinkObs(addCurbsideBin(scene, cx, cz, { variant: gameRandom() < 0.55 ? 'garbage' : 'recycle', tipped: gameRandom() < 0.15, facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
       else {
         const st = buildPlyStack(cx, gy, cz, Math.abs(Math.sin(cx * 12.9898 + cz * 78.233) * 43758.5453) % 1);
         scene.add(st);
@@ -16297,9 +16308,9 @@ function buildNorthcliffScene(variant, timeOfDay) {
   }
   // cars: about half the driveways (collision, not AI cover); two in the bulb and four along the kerb (AI cover)
   const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x3a5a3a, 0xb09a6a, 0x2a3e6a];
-  const pickColor = () => CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  const pickColor = () => CAR_COLORS[Math.floor(gameRandom() * CAR_COLORS.length)];
   for (const hc of houseCenters) {
-    if (Math.random() < 0.45) continue;
+    if (gameRandom() < 0.45) continue;
     const dir = hc.side === 'north' ? -1 : 1, cz = roadZAt(hc.x) + dir * 7.6;
     driveCars.push(sinkObs(addCar(scene, hc.x, cz, { orientation: dir < 0 ? Math.PI / 2 : -Math.PI / 2, color: pickColor(), groundNormalFn: groundNormal, detail: true }), hc.x, cz));
   }
@@ -16401,7 +16412,7 @@ function buildTreehouseYardScene(variant, timeOfDay) {
   // Flat, but a ground fn all the same: with one, kids' and the player's collision is height-aware (v1.8), so the
   // platform 2.45 m up is walked under, not into.
   const groundY = () => 0;
-  const rng = (a, b) => a + Math.random() * (b - a);
+  const rng = (a, b) => a + gameRandom() * (b - a);
   const obstacles = [], cover = [];
   const box = (minX, maxX, minZ, maxZ, h, baseY = 0, extra = {}) => ({ minX, maxX, minZ, maxZ, h, baseY, surface: 'hard', ...extra });
 
@@ -16803,8 +16814,8 @@ function rangeBBHit(bb, a) {
     const c = best.ref;
     if (c.state === 'up') S.cans++;
     c.state = 'flying';
-    c.vel.set(dir.x * 3 + (Math.random() - 0.5), 1.2 + Math.random() * 1.2, dir.z * 3 + (Math.random() - 0.5));
-    c.spin.set((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 20);
+    c.vel.set(dir.x * 3 + (gameRandom() - 0.5), 1.2 + gameRandom() * 1.2, dir.z * 3 + (gameRandom() - 0.5));
+    c.spin.set((gameRandom() - 0.5) * 20, (gameRandom() - 0.5) * 8, (gameRandom() - 0.5) * 20);
     playImpactMetal(at);
     S.last = 'a can';
   } else if (best.kind === 'bottle') {
@@ -16812,9 +16823,9 @@ function rangeBBHit(bb, a) {
     o.state = 'broken'; o.g.visible = false; S.bottles++;
     const mat = new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.1, transparent: true, opacity: 0.8 });
     for (let i = 0; i < 8; i++) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.025 + Math.random() * 0.02, 0.006, 0.02 + Math.random() * 0.02), mat);
-      m.position.set(o.x, o.y0 + Math.random() * o.h, o.z); Game.scene.add(m);
-      R.shards.push({ m, vel: new THREE.Vector3(dir.x * 1.5 + (Math.random() - 0.5) * 2, 0.8 + Math.random() * 1.5, dir.z * 1.5 + (Math.random() - 0.5) * 2), spin: Math.random() * 12, still: false });
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.025 + gameRandom() * 0.02, 0.006, 0.02 + gameRandom() * 0.02), mat);
+      m.position.set(o.x, o.y0 + gameRandom() * o.h, o.z); Game.scene.add(m);
+      R.shards.push({ m, vel: new THREE.Vector3(dir.x * 1.5 + (gameRandom() - 0.5) * 2, 0.8 + gameRandom() * 1.5, dir.z * 1.5 + (gameRandom() - 0.5) * 2), spin: gameRandom() * 12, still: false });
     }
     playImpactShatter(at);
     S.last = 'a bottle';
@@ -16963,7 +16974,7 @@ function buildBellfieldCourtScene(variant, timeOfDay) {
   const coverList = [islandObs[0]], propObs = [], driveCars = [];
   const coverAt = (o) => { coverList.push(o); return o; };
   const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x3a5a3a, 0xb09a6a, 0x2a3e6a];
-  const pickColor = () => CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  const pickColor = () => CAR_COLORS[Math.floor(gameRandom() * CAR_COLORS.length)];
   // cars: three in driveways (collision only), one at the head house; two at the bulb's mouth and two down the
   // street on the kerb (AI cover)
   for (const [x, z] of [[21, -7.2], [5, 7.2], [-13, 9.4]]) driveCars.push(addCar(scene, x, z, { orientation: Math.PI / 2, color: pickColor(), detail: true }));
@@ -17220,7 +17231,7 @@ function buildHighSchoolScene(variant, timeOfDay) {
     const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x6e7478, 0x3a5a3a, 0xb09a6a, 0x9a2a2a, 0x2a3e6a];
     for (const x of [2, 5, 11, 14, 20, 26, 29]) {
       const orient = Math.PI / 2 + (rnd() - 0.5) * 0.08;   // nose north, toward the school
-      const color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+      const color = CAR_COLORS[Math.floor(gameRandom() * CAR_COLORS.length)];
       const carObs = addCar(scene, x + (rnd() - 0.5) * 0.3, -25.4 + (rnd() - 0.5) * 0.2, { orientation: orient, color, detail: true });
       carObs.mesh.position.y += carSeatY(carObs, groundY);
       resolveObox(carObs); resolveObox(carObs._stacked);
@@ -17566,7 +17577,7 @@ function buildCountryClubScene(variant, timeOfDay) {
     const CART_COLORS = [0xf2f0ea, 0xf2f0ea, 0x2f4a3a, 0xe8d8a0];
     const cart = (x, z, yaw) => {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw;
-      const body = std(CART_COLORS[Math.floor(Math.random() * CART_COLORS.length)], { roughness: 0.5 });
+      const body = std(CART_COLORS[Math.floor(gameRandom() * CART_COLORS.length)], { roughness: 0.5 });
       const add = (geo, mat, gx, gy, gz) => { const m = new THREE.Mesh(geo, mat); m.position.set(gx, gy, gz); m.castShadow = m.receiveShadow = true; g.add(m); };
       add(new THREE.BoxGeometry(1.2, 0.55, 2.4), body, 0, 0.5, 0);
       add(new THREE.BoxGeometry(1.1, 0.5, 0.5), std(0x2a2a2a), 0, 0.95, 0.2);
@@ -18121,7 +18132,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
     homeCover,
     state: behavior === 'tagger' ? 'chasing' : 'hiding',
     stateTime: 0,
-    nextStateChange: 1.5 + Math.random(),
+    nextStateChange: 1.5 + gameRandom(),
     yaw: 0,
     health: ch.hp * armorMult,
     maxHealth: ch.hp * armorMult,
@@ -22847,7 +22858,8 @@ function enterScenario(scenarioId) {
     // cover layout is the SAME every load (learnable/replayable) while different
     // scenarios on the same map still differ. The seed also folds in builderArg so
     // two scenarios sharing a builder+variant but different ids still diverge.
-    const _seedKey = scenarioId + '|' + (sc.builderArg || 'default');
+    // v1.267: a Pickup Game free-for-all is laid out as its map's own free-for-all (seedFrom), so the starts hidden there stay hidden
+    const _seedKey = (sc.seedFrom || scenarioId) + '|' + (sc.builderArg || 'default');
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
   } else {
@@ -23095,7 +23107,7 @@ function enterScenario(scenarioId) {
           enemy.state = startState;
           // Staggered hold so the huddle is visible and kids peel off one at a
           // time: ~0.5s base + 0.45s per spawn index + a little jitter.
-          enemy.deployDelay = 0.5 + (clusterIdx - 1) * 0.45 + Math.random() * 0.25;
+          enemy.deployDelay = 0.5 + (clusterIdx - 1) * 0.45 + gameRandom() * 0.25;
           enemy._baseDeployDelay = enemy.deployDelay;
         } else {
           // No-cluster spawn (rare for defends, but be safe): respawn deploys
@@ -26168,7 +26180,7 @@ function onLmbDown() {
         Game.gun.autoFireTimer = 0;
         // v1.250 (D.37): a cheap gun's burst may jam, a few BBs in
         const bj = getGunSpec(Game.gun.type).burstJam || 0;
-        Game.gun._jamIn = (bj && Math.random() < bj) ? 1 + Math.floor(Math.random() * 2) : 0;
+        Game.gun._jamIn = (bj && gameRandom() < bj) ? 1 + Math.floor(gameRandom() * 2) : 0;
         Game.gun._bursts = (Game.gun._bursts || 0) + 1;
         // Don't mark LMB consumed — the held trigger keeps the stream alive.
       } else {
@@ -26225,7 +26237,7 @@ function onLmbUp() {
         startCockRelease(false);
       } else if (p >= 0.1) {
         // Partial pull, low → small jam chance + slide returns NOT cocked
-        if (Math.random() < 0.3 && Game.gun.ammo > 0) {
+        if (gameRandom() < 0.3 && Game.gun.ammo > 0) {
           jamGun();
         } else {
           startCockRelease(false);
@@ -26254,7 +26266,7 @@ function jamGun() {
   Game.gun.cockProgress = 0;
   Game.gun.cocked = false;
   // Lose 2-3 BBs from the mag (the jammed BB plus a couple that get crushed)
-  const lost = Math.min(Game.gun.ammo, 2 + Math.floor(Math.random() * 2));
+  const lost = Math.min(Game.gun.ammo, 2 + Math.floor(gameRandom() * 2));
   Game.gun.ammo -= lost;
   Game.gun.jamProgress = 0;
   playJam();
@@ -28155,9 +28167,9 @@ function fireBB() {
     // base velocity jitter (gun's intrinsic accuracy) + movement cone (sway).
     const s = baseSpread * pelletSpreadBoost;
     const m = moveSpread * (Game.player.ads > 0 ? (1 - Game.player.ads * 0.6) : 1);
-    vel.x += (Math.random() - 0.5) * s + (Math.random() - 0.5) * m;
-    vel.y += (Math.random() - 0.5) * s + (Math.random() - 0.5) * m;
-    vel.z += (Math.random() - 0.5) * s;
+    vel.x += (gameRandom() - 0.5) * s + (gameRandom() - 0.5) * m;
+    vel.y += (gameRandom() - 0.5) * s + (gameRandom() - 0.5) * m;
+    vel.z += (gameRandom() - 0.5) * s;
     // Ship B: tag with the player's team (combatantView resolves it; 'player'
     // today, but reads a future Game.player.team if Ship C sets one).
     const bb = makeBB(pos.clone(), vel, 'player', null, null, combatantView(Game.player).team);
@@ -28242,7 +28254,7 @@ function makeBB(pos, vel, owner, enemyRef, gunSpec, team) {
   // Random curve axis perpendicular to flight direction
   const forward = vel.clone().normalize();
   // Pick a random angle around the forward axis (0 = up, π/2 = right, etc.)
-  const curveAngle = Math.random() * Math.PI * 2;
+  const curveAngle = gameRandom() * Math.PI * 2;
   // Build a perpendicular vector: take an arbitrary up, get perpendicular to forward, rotate by curveAngle
   const worldUp = Math.abs(forward.y) < 0.95 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
   const right = new THREE.Vector3().crossVectors(forward, worldUp).normalize();
@@ -28251,7 +28263,7 @@ function makeBB(pos, vel, owner, enemyRef, gunSpec, team) {
                    .add(right.clone().multiplyScalar(Math.cos(curveAngle)));
   // Most BBs curve gently, a few curve hard (long-tail distribution)
   // Curve strength = (random^2) * max — biases toward small values
-  const r = Math.random();
+  const r = gameRandom();
   const curveMax = spec.curveStrengthMax ?? 18;
   const curveStrength = r * r * curveMax + (spec.curveStrengthMin ?? 1.5);   // v1.250: a floor of its own for the curving cheap guns
 
@@ -28478,9 +28490,9 @@ function spawnEnemyBB(enemy, targetPos) {
       if (tries >= 4) { dir = baseDir.clone(); break; }
       dir = baseDir.clone();
       const s = baseSpread * pelletSpreadBoost;
-      dir.x += (Math.random() - 0.5) * s;
-      dir.y += (Math.random() - 0.5) * (s * 0.6);
-      dir.z += (Math.random() - 0.5) * s;
+      dir.x += (gameRandom() - 0.5) * s;
+      dir.y += (gameRandom() - 0.5) * (s * 0.6);
+      dir.z += (gameRandom() - 0.5) * s;
       dir.normalize();
       if (!nearObs || !nearObs.length || nearReach <= 0.2) break;
       const rr = nearReach / Math.max(0.05, Math.hypot(dir.x, dir.z));
@@ -28938,7 +28950,7 @@ function kidFlagGoal(e) {
   if (kind !== e._flagKind) {
     e._flagKind = kind;
     e._flagWp = null;
-    if ((kind === 'fetch' || kind === 'carry') && C.lanes.length && Math.random() >= 0.3) e._flagWp = C.lanes[Math.floor(Math.random() * C.lanes.length)];
+    if ((kind === 'fetch' || kind === 'carry') && C.lanes.length && gameRandom() >= 0.3) e._flagWp = C.lanes[Math.floor(gameRandom() * C.lanes.length)];
     if (kind && kind !== 'push') C.log.push({ ev: 'lane', by: e.name, kind, wp: e._flagWp ? (e._flagWp.z < 0 ? 'north' : 'south') : 'street', t: +(Game.scenario.roundTime || 0).toFixed(1) });
   }
   const wp = e._flagWp;
@@ -29000,7 +29012,7 @@ function kidFlagRun(e, tgt, dist, dt) {
     }
     if (Math.hypot(e.pos.x - bx, e.pos.z - bz) < sp * 0.3) {
       e._flagWall = (e._flagWall || 0) + dt;
-      if (e._flagWall > 0.4) { e._flagSide = e._flagSide ? -e._flagSide : (Math.random() < 0.5 ? -1 : 1); e._flagSideT = 0.7; e._flagWall = 0; }
+      if (e._flagWall > 0.4) { e._flagSide = e._flagSide ? -e._flagSide : (gameRandom() < 0.5 ? -1 : 1); e._flagSideT = 0.7; e._flagWall = 0; }
     } else e._flagWall = 0;
   }
   // progress toward the goal; a kid who has not got 0.3 m nearer in 4 s hands back to the states for 2 s
@@ -29018,7 +29030,7 @@ function kidFlagRun(e, tgt, dist, dt) {
       spawnEnemyBB(e, aim);
       e._flagShots = (e._flagShots || 0) + 1;
       const auto = ['mp5', 'ump', 'ak47', 'ar', 'mac10'].includes(e.weapon);
-      e._flagShotT = auto ? 0.25 + Math.random() * 0.15 : e.weapon === 'shotgun' ? 0.9 + Math.random() * 0.4 : 0.6 + Math.random() * 0.3;
+      e._flagShotT = auto ? 0.25 + gameRandom() * 0.15 : e.weapon === 'shotgun' ? 0.9 + gameRandom() * 0.4 : 0.6 + gameRandom() * 0.3;
     }
   }
   return true;
@@ -29113,7 +29125,7 @@ function giveSquadOrder(key) {
   const live = squadMates().filter(e => e.health > 0 && e.state !== 'retreating' && !e.vip);
   live.sort((a, b) => Math.hypot(a.pos.x - Game.player.pos.x, a.pos.z - Game.player.pos.z) - Math.hypot(b.pos.x - Game.player.pos.x, b.pos.z - Game.player.pos.z));
   const who = live[0];
-  const line = who ? O.replies[Math.floor(Math.random() * O.replies.length)] : null;
+  const line = who ? O.replies[Math.floor(gameRandom() * O.replies.length)] : null;
   S.squadReply = who ? { name: who.name, line, until: (S.roundTime || 0) + 3.5 } : null;
   if (who) squadWalkieSay(who, line);
   updateSquadHud();
@@ -29199,7 +29211,7 @@ function squadOrderGoal(e) {
     const dp = Math.hypot(Game.player.pos.x - e.pos.x, Game.player.pos.z - e.pos.z);
     if (dp > SQUAD_FOLLOW_GO || (e._ordGoal && dp > SQUAD_FOLLOW_STOP)) {
       // a spot a couple of metres behind and beside you, not on top of you
-      const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw), side = (e._ordSide = e._ordSide || (Math.random() < 0.5 ? -1 : 1));
+      const fx = -Math.sin(Game.player.yaw), fz = -Math.cos(Game.player.yaw), side = (e._ordSide = e._ordSide || (gameRandom() < 0.5 ? -1 : 1));
       return { goal: squadClampToField({ x: Game.player.pos.x - fx * 2 - fz * 1.5 * side, z: Game.player.pos.z - fz * 2 + fx * 1.5 * side }) };
     }
     return { hold: true };
@@ -29287,7 +29299,7 @@ function kidOrderRun(e, tgt, dist, dt) {
     }
     if (sp > 1e-4 && Math.hypot(e.pos.x - bx, e.pos.z - bz) < sp * 0.3) {
       e._ordWall = (e._ordWall || 0) + dt;
-      if (e._ordWall > 0.4) { e._ordSideS = e._ordSideS ? -e._ordSideS : (Math.random() < 0.5 ? -1 : 1); e._ordSideT = 0.7; e._ordWall = 0; }
+      if (e._ordWall > 0.4) { e._ordSideS = e._ordSideS ? -e._ordSideS : (gameRandom() < 0.5 ? -1 : 1); e._ordSideT = 0.7; e._ordWall = 0; }
     } else e._ordWall = 0;
     // no nearer by 0.3 m in 4 s: the states have him for 2 s
     const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
@@ -29299,7 +29311,7 @@ function kidOrderRun(e, tgt, dist, dt) {
     // holding: find cover keeps him low, up to shoot for a moment every couple of seconds; otherwise he stands
     if (want.low) {
       e._ordPeekT = (e._ordPeekT ?? 2) - dt;
-      if (e._ordPeekT <= -1.2) e._ordPeekT = 1.6 + Math.random() * 0.8;
+      if (e._ordPeekT <= -1.2) e._ordPeekT = 1.6 + gameRandom() * 0.8;
       setKidCrouch(e.mesh, e._ordPeekT > 0 ? 1 : 0);
     } else setKidCrouch(e.mesh, 0);
   }
@@ -29314,7 +29326,7 @@ function kidOrderRun(e, tgt, dist, dt) {
       spawnEnemyBB(e, aim);
       e._ordShots = (e._ordShots || 0) + 1;
       const auto = ['mp5', 'ump', 'ak47', 'ar', 'mac10'].includes(e.weapon);
-      e._ordShotT = auto ? 0.25 + Math.random() * 0.15 : e.weapon === 'shotgun' ? 0.9 + Math.random() * 0.4 : e.weapon === 'sniper' ? 1.6 + Math.random() * 0.6 : 0.6 + Math.random() * 0.3;
+      e._ordShotT = auto ? 0.25 + gameRandom() * 0.15 : e.weapon === 'shotgun' ? 0.9 + gameRandom() * 0.4 : e.weapon === 'sniper' ? 1.6 + gameRandom() * 0.6 : 0.6 + gameRandom() * 0.3;
     }
   }
   return true;
@@ -29521,7 +29533,7 @@ function updateBBs(dt) {
           // the INTENDED outcome. Stage 2: if that's 'bounce' but the BB is out of
           // bounces / too slow, downgrade — soft sticks, metal does a final
           // low-energy ping-and-despawn (never embeds), hard shatters.
-          const roll = Math.random();
+          const roll = gameRandom();
           let intended;
           if (roll < pBounce) intended = 'bounce';
           else if (roll < pBounce + pStick) intended = 'stick';
@@ -29746,8 +29758,8 @@ function applyBounce(bb, oldPos, hitAxis, bounceEnergy, o) {
   }
   bb.mesh.position.copy(bb.pos);
   // Slight scatter from impact
-  bb.vel.x += (Math.random() - 0.5) * 1.2;
-  bb.vel.z += (Math.random() - 0.5) * 1.2;
+  bb.vel.x += (gameRandom() - 0.5) * 1.2;
+  bb.vel.z += (gameRandom() - 0.5) * 1.2;
   bb.bouncesLeft--;
   bb.canDamage = false;
   if (!bb.mesh._glow) {
@@ -29807,10 +29819,10 @@ function applyStick(bb, oldPos, hitAxis, o) {
 
 // Shatter into a few small fragments that scatter and fade
 function applyShatter(bb) {
-  const FRAGS = 4 + Math.floor(Math.random() * 3);
+  const FRAGS = 4 + Math.floor(gameRandom() * 3);
   Game.scenario.fragments = Game.scenario.fragments || [];
   for (let f = 0; f < FRAGS; f++) {
-    const geom = new THREE.SphereGeometry(0.015 + Math.random() * 0.01, 4, 3);
+    const geom = new THREE.SphereGeometry(0.015 + gameRandom() * 0.01, 4, 3);
     const mat = new THREE.MeshBasicMaterial({
       color: 0xfff0a8,
       transparent: true,
@@ -29820,9 +29832,9 @@ function applyShatter(bb) {
     m.position.copy(bb.pos);
     Game.scene.add(m);
     // Random scatter velocity, somewhat away from impact
-    const vx = (Math.random() - 0.5) * 4;
-    const vy = Math.random() * 3 + 1;  // upward bias
-    const vz = (Math.random() - 0.5) * 4;
+    const vx = (gameRandom() - 0.5) * 4;
+    const vy = gameRandom() * 3 + 1;  // upward bias
+    const vz = (gameRandom() - 0.5) * 4;
     Game.scenario.fragments.push({
       mesh: m,
       vel: new THREE.Vector3(vx, vy, vz),
@@ -30149,7 +30161,7 @@ function updateKidBoredom(e, dt) {
     if (!eligible) e._bored = false;
     return;
   }
-  if (e._boredAfter == null) e._boredAfter = 25 + Math.random() * 5;
+  if (e._boredAfter == null) e._boredAfter = 25 + gameRandom() * 5;
   if (Math.hypot(e.pos.x - e._boredAt.x, e.pos.z - e._boredAt.z) > BORED_MOVE_M) {
     e._boredAt.x = e.pos.x; e._boredAt.z = e.pos.z;
     e._boredT = 0;
@@ -30824,7 +30836,7 @@ function queueSuppressionBurst(e, aimPt, looseSpread = 1.4) {
   const cycle = 60 / Math.max(1, spec.cyclicRPM);
   // Shorter than a committed peek burst (2..3 follow-ups) — it's pressure while
   // moving, not a full string. Wider spread (passed through the burst entry).
-  const followUps = 2 + Math.floor(Math.random() * 2);
+  const followUps = 2 + Math.floor(gameRandom() * 2);
   for (let k = 1; k <= followUps; k++) {
     e.pendingBurst.push({ dueIn: k * cycle, aim: aimPt.clone(), spread: looseSpread });
   }
@@ -31016,7 +31028,7 @@ function kidLadderStep(e, tgt, dt) {
       }
       const m = Math.hypot(e.pos.x - bx, e.pos.z - bz);
       s.stuck = (m < sp * 0.3) ? s.stuck + dt : 0;
-      if (s.stuck > 0.4) { s.side = s.side ? -s.side : (Math.random() < 0.5 ? -1 : 1); s.sideT = 0.7; s.stuck = 0; }
+      if (s.stuck > 0.4) { s.side = s.side ? -s.side : (gameRandom() < 0.5 ? -1 : 1); s.sideT = 0.7; s.stuck = 0; }
       walking = m > 1e-4;
       faceYaw = Math.atan2(ux, uz);
     }
@@ -31163,10 +31175,10 @@ function updateEnemies(dt) {
 
     // v1.21: random TAUNT timer — every 12-30s, kid might interject. Gated by
     // the speech cooldowns in tryNpcSpeak so this doesn't dominate the soundscape.
-    if (e._tauntTimer === undefined) e._tauntTimer = 12 + Math.random() * 18;
+    if (e._tauntTimer === undefined) e._tauntTimer = 12 + gameRandom() * 18;
     e._tauntTimer -= dt;
     if (e._tauntTimer <= 0) {
-      e._tauntTimer = 12 + Math.random() * 18;
+      e._tauntTimer = 12 + gameRandom() * 18;
       // Only kids in some kind of active state (not deploying) feel right taunting.
       if (e.state !== 'deploying') tryNpcSpeak(e, 'taunt');
     }
@@ -31251,10 +31263,10 @@ function updateEnemies(dt) {
       // chasing. tryNpcSpeak handles global/per-kid cooldowns + positional
       // attenuation, so distant taggers stay quiet and the soundscape doesn't
       // turn into a babble festival. Per-tagger jittered interval on top.
-      if (e._infBark === undefined) e._infBark = 2 + Math.random() * 5;
+      if (e._infBark === undefined) e._infBark = 2 + gameRandom() * 5;
       e._infBark -= dt;
       if (e._infBark <= 0) {
-        e._infBark = 5 + Math.random() * 7;
+        e._infBark = 5 + gameRandom() * 7;
         tryNpcSpeak(e, 'infection');
       }
       if (distToPlayer <= ZOMBIE_TAG_RANGE && Game.mode === 'scenario' && !Game.player._infected) {
@@ -31357,7 +31369,7 @@ function updateEnemies(dt) {
           } else {
           e._zDetourOn = false;
           let px = -zdzP / d, pz = zdxP / d;
-          if (!e._zSide) e._zSide = Math.random() < 0.5 ? 1 : -1;
+          if (!e._zSide) e._zSide = gameRandom() < 0.5 ? 1 : -1;
           if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
           px *= e._zSide; pz *= e._zSide;
           const ss = speed * zdt;
@@ -31418,9 +31430,9 @@ function updateEnemies(dt) {
           // Add a touch of dispersion that scales with how far into the burst we are.
           // Suppression bursts use a wider, looser spread (set in `spread`).
           const burstSpread = (entry.spread != null ? entry.spread : 0.04) * (1 + k * 0.15);
-          target.x += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
-          target.y += (Math.random() - 0.5) * burstSpread * 0.6;
-          target.z += (Math.random() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
+          target.x += (gameRandom() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
+          target.y += (gameRandom() - 0.5) * burstSpread * 0.6;
+          target.z += (gameRandom() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
           spawnEnemyBB(e, target);
           // v1.122: a held pull empties the queue (v1.112); the next pass of this loop then read a missing entry
           // and threw ("reading 'dueIn'"), which skipped the rest of the frame's enemy update.
@@ -31561,7 +31573,7 @@ function updateEnemies(dt) {
           e.stateTime = 0;
           setKidCrouch(e.mesh, 1);
           // Brave kids snap back to fighting fast; timid kids stay tucked longer.
-          e.nextStateChange = (1.1 - aggression * 0.5) + Math.random() * 0.4;
+          e.nextStateChange = (1.1 - aggression * 0.5) + gameRandom() * 0.4;
         } else {
           // Exposed (in the open, or cover doesn't block this bearing) → relocate
           // to cover that shields the threat. If fully in the open, also throw a
@@ -31572,12 +31584,12 @@ function updateEnemies(dt) {
               // Aim a round back along the incoming bearing (toward the shooter),
               // chest height, with spread — pressure, not precision.
               const aimPt = new THREE.Vector3(
-                e.pos.x + dir.x * 14 + (Math.random()-0.5)*2.5,
+                e.pos.x + dir.x * 14 + (gameRandom()-0.5)*2.5,
                 (e.pos.y || 0) + 1.0,
-                e.pos.z + dir.z * 14 + (Math.random()-0.5)*2.5
+                e.pos.z + dir.z * 14 + (gameRandom()-0.5)*2.5
               );
               spawnEnemyBB(e, aimPt);
-              e._suppressCd = (1.6 - aggression * 0.6) + Math.random()*0.5;
+              e._suppressCd = (1.6 - aggression * 0.6) + gameRandom()*0.5;
             }
           }
           const newCover = nearestShieldingCover(e, dir, 14);
@@ -31629,7 +31641,7 @@ function updateEnemies(dt) {
           if (losNow && inFullRange) {
             e.state = 'hiding';
             e.stateTime = 0;
-            e.nextStateChange = 0.3 + Math.random() * 0.3;
+            e.nextStateChange = 0.3 + gameRandom() * 0.3;
             break;
           }
         }
@@ -31643,7 +31655,7 @@ function updateEnemies(dt) {
           // Arrived at fighting position → settle into normal behavior.
           e.state = 'hiding';
           e.stateTime = 0;
-          e.nextStateChange = 0.4 + Math.random() * 0.6;
+          e.nextStateChange = 0.4 + gameRandom() * 0.6;
           break;
         }
         // Jog straight toward the anchor, sliding along obstacles (try X-only then
@@ -31765,7 +31777,7 @@ function updateEnemies(dt) {
           // v1.23: wind-up shortened further, and CUT HARD when recently spotted —
           // a kid who just saw you reacts almost instantly (covering fire / fast
           // re-engage) instead of doing a full lazy peek wind-up.
-          let baseWindup = (0.35 + Math.random() * 0.35) * (1.3 - aggression * 0.6);
+          let baseWindup = (0.35 + gameRandom() * 0.35) * (1.3 - aggression * 0.6);
           if (e._recentlySpotted) baseWindup *= 0.35;  // snap reaction when freshly spotted
           if (inLongRange) baseWindup *= 1.8;
           e.nextStateChange = baseWindup;
@@ -31833,11 +31845,11 @@ function updateEnemies(dt) {
               );
               if (losSup && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 8)) {
                 const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
-                aimPt.x += (Math.random()-0.5)*1.2; aimPt.z += (Math.random()-0.5)*1.2;
+                aimPt.x += (gameRandom()-0.5)*1.2; aimPt.z += (gameRandom()-0.5)*1.2;
                 // v1.74: bounding auto-gunners suppress with a short burst too.
                 queueSuppressionBurst(e, aimPt, 1.2);
                 tryNpcSpeak(e, 'taunt');
-                e._suppressCd = 1.4 + Math.random()*0.8;   // burst pacing
+                e._suppressCd = 1.4 + gameRandom()*0.8;   // burst pacing
               }
               // Pick the next cover to bound to.
               const next = pickBoundCover(e, Game.scenario.cover, tgt.pos);
@@ -31914,13 +31926,13 @@ function updateEnemies(dt) {
               if (losSupM && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 10)) {
                 const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
                 const spread = 1.6 + rawD * 0.02;   // looser the farther/faster they are
-                aimPt.x += (Math.random()-0.5)*spread;
-                aimPt.z += (Math.random()-0.5)*spread;
+                aimPt.x += (gameRandom()-0.5)*spread;
+                aimPt.z += (gameRandom()-0.5)*spread;
                 // v1.74: auto guns spit a short burst here (not a lone round) so a
                 // marching AK/AR peppers from range instead of reading as a pistol.
                 queueSuppressionBurst(e, aimPt, 1.4);
                 // Cooldown shrinks with aggression: brave kids suppress more.
-                e._suppressCd = (1.8 - aggression * 0.7) + Math.random()*0.7;
+                e._suppressCd = (1.8 - aggression * 0.7) + gameRandom()*0.7;
               }
             }
           }
@@ -32075,7 +32087,7 @@ function updateEnemies(dt) {
               if (!detoured) {
               // perpendicular to the player direction
               let px = -dz / d, pz = dx / d;
-              if (!e._advSide) e._advSide = (Math.random() < 0.5 ? 1 : -1);
+              if (!e._advSide) e._advSide = (gameRandom() < 0.5 ? 1 : -1);
               // every ~0.5s of being stuck, flip the side we try
               if (e._advStuck > 0.5) { e._advSide *= -1; e._advStuck = 0; }
               px *= e._advSide; pz *= e._advSide;
@@ -32154,7 +32166,7 @@ function updateEnemies(dt) {
               e.state = 'hiding';
               e.stateTime = 0;
               // Short wind-up — they just arrived, brief moment before peek.
-              e.nextStateChange = 0.2 + Math.random() * 0.2;
+              e.nextStateChange = 0.2 + gameRandom() * 0.2;
             }
           }
         }
@@ -32184,7 +32196,7 @@ function updateEnemies(dt) {
           } else if (inFullRange) {
             willShoot = true;
           } else if (inMarginalRange) {
-            willShoot = (e._recentlySpotted ? true : Math.random() < 0.8);
+            willShoot = (e._recentlySpotted ? true : gameRandom() < 0.8);
           } else {
             willShoot = false; // beyond FAR range — peek/duck only
           }
@@ -32196,7 +32208,7 @@ function updateEnemies(dt) {
             // Go back to hiding without firing. Treat this as a "peek-and-hide" beat.
             e.state = 'hiding';
             e.stateTime = 0;
-            e.nextStateChange = 0.6 + Math.random() * 0.6;
+            e.nextStateChange = 0.6 + gameRandom() * 0.6;
           }
         }
         break;
@@ -32241,7 +32253,7 @@ function updateEnemies(dt) {
             const eSpec = GUN_SPECS[e.weapon] || GUN_SPECS.pistol;
             if (eSpec.fireMode === 'auto') {
               const cycle = 60 / Math.max(1, eSpec.cyclicRPM);
-              const burstLen = 4 + Math.floor(Math.random() * 4); // 4..7 follow-ups
+              const burstLen = 4 + Math.floor(gameRandom() * 4); // 4..7 follow-ups
               // v1.129 fix-up: firing at the last-known spot (no line), the follow-ups go there too. They
               // re-aimed at the live target behind the wall, so every burst after the first BB was held
               // (Sean in the Hollow 3v3: 20–27 held a round from one spot, tests/hollow-held).
@@ -32259,7 +32271,7 @@ function updateEnemies(dt) {
           // cut the recovery hard (×0.45) so a kid who's locked onto you keeps
           // shooting at a real rhythm instead of long lulls — even firing at the
           // cover you ducked behind. Disengaged kids keep the relaxed cadence.
-          let recovery = (0.7 + Math.random() * 0.9) / fireRate;
+          let recovery = (0.7 + gameRandom() * 0.9) / fireRate;
           if (e._recentlySpotted) recovery *= 0.45;
           // v1.46: BOLT-ACTION SNIPER cadence. The shared recovery (even before
           // the recently-spotted ×0.45) lets a sniper fire ~0.7-1.6s apart, which
@@ -32269,7 +32281,7 @@ function updateEnemies(dt) {
           // is the only weapon with a hard floor; everything else keeps the
           // aggression/fireRate-driven cadence.
           if (e.weapon === 'sniper') {
-            recovery = 2.0 + Math.random() * 1.0;   // 2.0–3.0s between shots
+            recovery = 2.0 + gameRandom() * 1.0;   // 2.0–3.0s between shots
           }
           e.nextStateChange = recovery;
 
@@ -32292,7 +32304,7 @@ function updateEnemies(dt) {
           // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
           let movedByHolds = false;
           if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
-          if (Math.random() < repositionChance) {
+          if (gameRandom() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
             // ~5m of their anchorPos, not their current position. This stops them
@@ -32347,7 +32359,7 @@ function updateEnemies(dt) {
               const rangedAutoClosing = isRangedAuto && e.role !== 'defender' && distToPlayer > ENGAGE_PUSH;
               let newCover;
               if (e.role === 'defender') {
-                newCover = candidates[Math.floor(Math.random() * candidates.length)];
+                newCover = candidates[Math.floor(gameRandom() * candidates.length)];
               } else if (aggression >= 0.7 || rangedAutoClosing) {
                 // Aggressive: closest to player wins
                 let bestDist = Infinity;
@@ -32379,7 +32391,7 @@ function updateEnemies(dt) {
                   return { c, pref };
                 });
                 const total = scored.reduce((s, x) => s + x.pref, 0);
-                let r = Math.random() * total;
+                let r = gameRandom() * total;
                 for (const { c, pref } of scored) {
                   r -= pref;
                   if (r <= 0) { newCover = c; break; }
@@ -32421,7 +32433,7 @@ function updateEnemies(dt) {
           if (d < 0.2) {
             e.state = 'hiding';
             e.stateTime = 0;
-            e.nextStateChange = 0.5 + Math.random() * 0.8;
+            e.nextStateChange = 0.5 + gameRandom() * 0.8;
             e.targetPos = null;
           } else {
             // v1.70: COLLISION-SLIDE (was a raw straight-line move that phased the
@@ -32450,7 +32462,7 @@ function updateEnemies(dt) {
               e._repoStuck = 0;
               e.state = 'hiding';
               e.stateTime = 0;
-              e.nextStateChange = 0.4 + Math.random() * 0.6;
+              e.nextStateChange = 0.4 + gameRandom() * 0.6;
               e.targetPos = null;
             }
             e.mesh.group.position.x = e.pos.x;
@@ -32484,7 +32496,7 @@ function updateEnemies(dt) {
           e.coverMemory = [];
           e.homeCover = null;
           e.deployTarget = (e._deployAnchor || e.anchorPos).clone();
-          e.deployDelay = (e._baseDeployDelay ?? 0.4) * 0.5 + Math.random() * 0.3; // quicker than first deploy
+          e.deployDelay = (e._baseDeployDelay ?? 0.4) * 0.5 + gameRandom() * 0.3; // quicker than first deploy
           e.state = 'deploying';
           e.stateTime = 0;
           e._deployStuck = 0; // fresh deploy — clear any stale wedge counter
@@ -33664,7 +33676,7 @@ function buildPickupFfa(m, opts, lives, tod, clock) {   // v1.202
       `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last kid standing` +
       (clock ? `, or the most lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
-    playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)),
+    playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)), seedFrom: m.ffa,   // v1.267
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
     rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives, clock: clock || 0 },
   };
@@ -33790,7 +33802,7 @@ const Net = {
   makeTransport: null,   // set below to netPeerTransport
 };
 function netVersion() { const v = document.querySelector('#titleScreen .version, .version'); return v ? v.textContent.trim() : '?'; }
-function netNewCode() { let s = ''; for (let i = 0; i < 4; i++) s += NET_CODE_LETTERS[Math.floor(Math.random() * NET_CODE_LETTERS.length)]; return s; }
+function netNewCode() { let s = ''; for (let i = 0; i < 4; i++) s += NET_CODE_LETTERS[Math.floor(gameRandom() * NET_CODE_LETTERS.length)]; return s; }
 function netCleanCode(s) { return String(s || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4); }
 function netCleanName(s) { return String(s || '').replace(/[^A-Za-z0-9 _.-]/g, '').trim().slice(0, 14) || 'Friend'; }
 // What the other game sends is checked before it is used: a look of plain values, a gun the game has, numbers that are numbers

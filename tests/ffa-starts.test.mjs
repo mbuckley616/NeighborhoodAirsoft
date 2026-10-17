@@ -5,12 +5,10 @@
 // free-for-all keeps the lot's rule: every start at least 18 m from every other, none in sight of another (the kids'
 // own sight rule, muzzle 1.05 m to chest 0.95 m over the ground), and no kid nearer your start than the rest: every
 // kid has another kid's start nearer than yours. It holds for the Pickup Game's free-for-alls at every size too.
-// A map's layout is seeded by the match (v1.76), but the first match built after a page load draws differently: three.js
-// takes Math.random for every new object's id, and the first build makes objects later builds take from the caches. So
-// each map is checked in a fresh page, in its first build and its second. The Hollow's starts can only be hidden by its
-// trees, which fall differently in those two builds: there the distances are held, your start is hidden from every
-// kid's after the first build, and the kids' sight lines on each other are counted, not held (in decisions).
-const RANDOM_WOODS = { hollow_ffa: true };
+// Each map is checked in a fresh page, in its first build and its second. Until v1.267 the first match built after a
+// page load drew its props and trees differently (three.js shared the seeded Math.random), and the Hollow's kids could
+// only be held apart, not hidden; v1.267 (Michael: A) made every build the same and hid the Hollow's starts too.
+const RANDOM_WOODS = {};
 import { boot, check } from './lib/game.mjs';
 const opts = process.env.SRC ? { src: process.env.SRC } : {};
 let g = null, page = null;

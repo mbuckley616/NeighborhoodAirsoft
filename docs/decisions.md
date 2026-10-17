@@ -29,6 +29,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) Different (say in a note)
   Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
 
+## Answered
+
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
   Your A on the free-for-all starts is built on all four maps (v1.265): every start 18 m or more from every other, no
   kid with your start as his nearest, the Pickup Game's sizes too, and on Winnmark, Bunratty and the lot nobody in
@@ -44,8 +46,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Cover at the starts:** a fixed brush pile or log stack at each Hollow start, the same every build
   Builder's lean: A. It makes the board the same every time you replay a match, which v1.76 promised and the first
   match of a session breaks, and it lets the rule hold in the woods.
-
-## Answered
+  Michael: **A) Fix the drift** (control room, 17 Oct 2026) — done, v1.267
 
 - **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
   You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
