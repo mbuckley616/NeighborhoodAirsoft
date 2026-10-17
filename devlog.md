@@ -10086,6 +10086,97 @@ matches are untouched: one life is one life, and a match that gives you more sti
   a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
   sight, is for a playtest.
 
+## v1.150 — Every kid has his own lines, and none of them repeats himself
+Michael's D.9 note asked for better voices (VoiceStudio) and more, more varied lines. The builder put the
+question to him with four options and he answered A on the control room (2 Oct, 19:59 UTC): more and more varied
+lines now, with the browser voices; recorded voices later. This is the first Fable session, and the first half of
+that answer. (This branch's versions start at v1.150 so they cannot collide with the builder's, which is at
+v1.141 on auto/build and climbing.)
+
+What the kids had: four situations a kid speaks in (he tagged you, he got tagged, he peeked out on you, a taunt
+every 12 to 30 s or with a covering burst), plus the Infection barks. Nine of the 24 kids had their own lines,
+three or four a situation; the other fifteen shared three generic lines a situation by aggression band, so Priya,
+Owen, the twins and all of Northcliff sounded like the same kid. Each line was drawn at random with no memory, so a
+kid could say the same line twice running, and in a long round a three-line taunt pool came round every minute.
+Two smaller things: the speech cooldowns ran on wall-clock time, and a kid on your own team ran the same taunt
+timer as the enemy, so Seth beside you would yell "Stop hiding!" at nobody.
+
+What changed, all in the voice tables and `tryNpcSpeak`:
+- Every kid in CHARACTERS has his own lines in all four situations, four or five each, written to the character
+  notes already in the file: Priya talks about your sides, Owen barely talks, the twins yell for each other,
+  Christian is thrilled to hit anything, Rebecca is unbothered. The three band defaults are six a situation now.
+  A kid's pool for a situation is his own lines plus his band's, about ten, and the picker takes his own 7 in 10.
+  Early-2000s suburban kids: trash talk, nothing mean, no profanity, no real brands or schools. Eight words at
+  most (TTS runs about three words a second), and the table has 544 lines where it had 162.
+- A memory: each kid keeps his last three lines and the game keeps the last two anyone said; those are left out
+  while anything else remains, so a kid never says the same line twice running and two kids do not echo each other.
+- A `teammate` pool (ten lines: "Push up with me!", "Cover me, I'm moving!"): a kid on your team, outside a
+  free-for-all, draws from it when his taunt timer fires, instead of taunting you.
+- The cooldowns (1.5 s between anyone's lines, 4 s between one kid's) now run on the round clock, not wall time,
+  and the global one resets at BEGIN. In play that is the same thing; a backgrounded tab and the headless tests
+  now pace the kids the way play does. A line counts as said (cooldowns, and a `VOICE.log` of the last 64 lines
+  for the tests) before the browser is asked to speak it, so a browser with no voices paces the kids the same way.
+Nothing else moved: the voice per kid, the pitch by height, the distance cutoff at 24 m and the positional chirp
+are as they were.
+
+### Verified
+- `tests/voices.test.mjs` (new), 44 checks. The tables: 24 kids, every one with at least 4 own lines in each of
+  the 4 situations; 6 a situation in each band; no pool holds a line twice (16 bespoke lines that matched their
+  band's defaults were rewritten); no line over 8 words; nothing from a short rude-word list. The picker: 96
+  (kid, situation) pairs, 300 draws each, never the last line, never any of the last three, at least 4 distinct
+  lines from every pool, own lines 50 to 90% of the draws. Headless rounds with the player untaggable at spawn:
+  the Winnmark 3v3 (13 to 40 lines in 90 s from 4 or 5 kids), the whole block (35 lines, Marcus and Seth, the two
+  within earshot), Infection (4 to 6 barks from the pool), the 1v1 and the lot free-for-all (1 to 5 lines; Sean and
+  the free-for-all kids fight past the 24 m range of a player who stands still). In every round no kid said the
+  same line twice running, every gap was at least 4 s per kid and 1.5 s overall, and every line came from the
+  speaker's pool for that situation. Allies' taunt timers gave teammate lines ("Go, go, I'll cover you!", "Stay
+  low, stay low!") and never a taunt; by hand, 4 of 4 ally taunts came out as teammate lines and 4 of 4 hostile
+  ones as taunts. No page errors.
+- `npm test`: see the PR comment for the full run on this build.
+
+### Still open
+- Only a real playtest can judge the lines themselves, and whether 7 in 10 own lines is the right mix; the band
+  lines are there so the pools are deep, not because they are better.
+- Recorded voices (options B and C) wait on Michael: the script and the loader are a later card.
+- A kid's memory is three lines; the taunt pools are about ten, so over a long round a line does come back, just
+  never within four of a kid's lines.
+
+## v1.151 — A kid calls a tag on another kid, and the nearest kid calls the start
+The second half of the D.9 inventory. The card listed the situations a kid speaks in, and two on the list had no
+line: "tagged someone" only covered tagging you (a kid who tagged your teammate said nothing), and nothing was said
+at the start of a round. Both are small and sit on hooks the code already had, so they are in; Michael can veto the
+start call if it is one voice too many at BEGIN.
+
+- A kid who tags another kid calls it the way he calls a tag on you, from the same pool ("Got him! Easy.", "SETH!
+  Did you see that?"). The tagged kid still speaks first, and the 1.5 s global cooldown then usually keeps the
+  shooter quiet, so his call fills in when the tagged kid was out of earshot or on his own cooldown: you hear
+  whichever of the two is nearer.
+- When the 2.5 s opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls the
+  start, once a round, from a pool by aggression band (six each: "Game on! Let's go!", "Spread out, spread out!",
+  "Everybody find a spot."). Taggers bark on their own and tutorial dummies never speak. A kid who has already
+  called you out inside the hold is on his 4 s cooldown and is passed over.
+
+Two bugs of v1.150's found by the new checks and fixed here: the once-a-round flag lived on `Game.scenario`, which
+persists between rounds, so the start call would have fired only in the first round of a session (it resets at
+BEGIN now); and a line was picked, and so entered the kid's recent-lines memory, before the earshot gate, so a kid
+out of range filled his memory with lines nobody heard and a heard line could come round again (Trey said "Watch the
+left side!" twice running in a 3v3). The pick now comes after the gate.
+
+### Verified
+- `tests/voices.test.mjs`, now 54 checks, green 3 of 3 runs. New: the band tables carry six start lines each with no
+  duplicates and under the 8-word cap (562 lines in the tables now). By hand in the Winnmark 3v3 and the lot
+  free-for-all with a hostile kid 6 m from spawn: one start call, at 2.52 s, from that kid; with every kid 40 m
+  off, no call and the flag spent; in Infection, no call. A tag on another kid by hand: with the tagged kid free
+  to speak, one line (his npcHit) and the shooter held by the global cooldown; with the tagged kid on cooldown,
+  one line, the shooter's, from his own tag pool. The five headless rounds and the picker checks of v1.150 hold.
+- `npm test`: the full run on this build is in the PR comment.
+
+### Still open
+- The start call is the one new spoken moment a player hears every match; whether it earns its place is a
+  playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
+- The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
+  lines with names in them (templates), which this card did not ask for.
+
 ## v1.223 — The AR, held up to an M4
 Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
 (its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
@@ -10140,6 +10231,38 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
 
+## v1.229 — The voices build brought up to main, and the school's own kids get lines of their own
+Michael approved the voices build (v1.150–v1.151, eb29fc2) on 3 Oct, but by then it no longer merged onto main: both
+sides had changed the title-screen version label and the end of the devlog, and the producer only merges the exact commit
+he approved, so it stopped and raised a blocker that nobody owned once the Fable card was done. Main went on for eleven
+days and 324 commits. Asked about the blocker on 14 Oct, Michael had it fixed locally.
+
+Main (v1.222) is merged into `auto/fable-d9-voices`. The conflicts were the version label (main's NEW GAME ask and
+SETTINGS button kept), `startScenario`'s round reset (the voice cooldowns and the start call from this branch, the match
+stats and the ladder flag from main: all four lines kept), the devlog (main's entries, then v1.150–v1.151) and D.9 in the
+backlog. The builder's v1.223–v1.224 (4d675c5), which Michael approved the same morning and the producer has not yet
+merged, is merged in as well, so this branch goes onto main cleanly whichever of the two lands first.
+
+One thing the conflicts did not show: Hollins Ridge High's six kids (v1.190, Jordan, Caleb, Nathan, Sophie, Grant and
+Malik) came after the v1.150 tables and had no lines of their own; they drew only on their aggression band's defaults,
+and `tests/voices.test.mjs` failed on them (0 own lines in each of the four situations). Each now has 4–5 lines a
+situation drawn from his or her flavor text: Jordan's portables, Caleb always nearly making it across, Nathan's "everyone
+crosses the field", Sophie coming round the wrong side, Grant at the cars, Malik's close range. Their TTS voice and pitch
+already came from their id and height, so nothing else was missing.
+### Verified
+- `tests/voices.test.mjs`: 30 kids, 664 lines in the tables (was 562 on the merge), every kid at least 4 own lines in
+  every situation, no duplicates, nothing over 8 words, nothing rude. New: the school's 3v3 joins the headless rounds
+  (16–18 lines, none repeated, pacing and pools right), and each hostile school kid is called by hand at 2 m six times a
+  situation: Caleb 16 lines (12 his own), Nathan 24 (17), Sophie 24 (16). Passed three runs.
+- Full suite in six local shards at once: no check failed anywhere; 27 suites were cut off by the runner's 10-minute
+  limit or a 30 s page load with six browsers on one machine. The twelve non-sweep suites among them pass run alone
+  (ai-clock, idle-ally, pickup-lives, ctf-clock, fp-hands, grip, last-kid, pickup, retreat-progress, pickup-fernando,
+  market-lot, pointer-lock). The sixteen stuck-kid sweeps are left to CI's shards on the push.
+### Still open
+- Michael's ear on the school kids' lines, and a fresh Approve on this head (the 3 Oct approval was of eb29fc2).
+- Whichever of this and the builder's later work (v1.225+) merges second still meets the version label and the devlog
+  tail; the builder merges main into its branch itself, so it should land this first if it can.
+- The walkie callouts (D.10) can start once this is on main.
 ## v1.225 — The sniper, held up to a Remington 700
 Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
 copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
@@ -10271,6 +10394,133 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
 
+## v1.230 — Online play, step 1: a 1v1 with a friend by room code
+Backlog D.2 (Michael, 28 Sep: "Online play: local-host sessions others can join"), a deep-work item. Michael's B (12 Oct)
+put it after the Pickup Game board, so the host sets the match up there; his A (14 Oct) picked PeerJS's free public
+matchmaker and four-letter room codes. This is step 1 of the three in the question: two friends, one match, Winnmark Court.
+
+The Pickup Game board has a second button, PLAY ONLINE. It opens a panel: your name (14 letters, remembered on this
+computer), HOST A ROOM, and a box for a code with JOIN. The host gets a code such as `KXRB` in big letters and waits; the
+friend types it on his own board and presses JOIN. Both get the usual briefing ("Online: 1v1", you against the other's
+name), and BEGIN waits until both have pressed it ("WAITING FOR SAM…"). The match is the board's Winnmark 1v1 with the
+host's day or night, lives and clock. The one kid on the other side is the other player: his look from his mirror, his
+name, his equipped gun. He starts at the spot the board's own kid would take. A tag costs a life and puts you back at your
+start with 2 s of cover, as in any pickup game since v1.221. Lives are the board's exactly; armor adds none online.
+
+How it works. The host's game is the referee: it runs the BBs, the tags, the lives and the clock, as the question
+promised. One choice there differs from the question's sketch, and a player would not see it. Each player moves his own kid
+and sends where he is (30 times a second from the guest, 20 from the host), rather than the guest sending keys for the host
+to move him. That keeps the guest's movement as quick as in single player, and it needed no change to the player code.
+Each shot is sent once, as it leaves the gun: where from, which way, and its curve. It then flies in both games, but only
+the host's copy can tag (`bbCanTarget` is false for every BB in the guest's game). The host's game tells the guest when
+either one is tagged, and how the match ended. A friend's kid is moved by `netDriveRemote` in place of the AI. He eases
+toward each position, jumps on a respawn, and walks, crouches and holds his gun up with the kids' own pose code. He never
+speaks (`tryNpcSpeak` skips him). F's forfeit question does not pause an online match. A forfeit ends it for both; the
+other player wins.
+
+Nothing is on the line. The match pays nothing and counts for nothing, and the result screen says "Online match: nothing
+on the line" with no Play Again. Each player gets a full bag for the match, and his own bag is put back as it was before
+the result autosaves. If the link drops, before or during the match, the other game ends it, goes back to the bedroom and
+says "Your friend left". Closing the board while you host gives the room up. The two games must be the same version (the
+title's), or the host says so to both.
+
+The connection. PeerJS 1.5.4 (93 KB, from unpkg) loads only when someone presses HOST or JOIN; nothing new loads at
+startup. The host's room is the PeerJS id `nbhd-airsoft-<code>`, from 24 letters (no I or O), about 330,000 codes. A taken
+code tries another, three times. Once the friend is in, the host leaves the matchmaker, so the code is free and nobody else
+can join. The panel says what the question said about privacy: each player sees the other's internet address, and a
+public service carries the code, so play with friends you know. `netPeerTransport` is the only code that knows about
+PeerJS; Michael's own matchmaker (option B, for step 3's room list) would replace that one function. What the other game
+sends is checked before use: a name of plain letters, a look of plain values, a gun the game has, finite numbers, and a
+shot that starts within 4 m of where that player is.
+
+Also fixed on the way: the briefing's BEGIN button is cloned for each briefing, and it kept an online match's "WAITING…"
+text and its disabled state, so the next briefing could not be begun. It is reset each time now.
+### Verified
+- `tests/online.test.mjs` (new, 17 checks): two headless games, joined through a stub transport that passes the same
+  JSON messages every two frames (about 33 ms of lag). Nothing loads at startup (no Peer, no PeerJS script). HOST shows a
+  four-letter code and waits. Both get the briefing, and BEGIN waits for the friend. The 1v1 has one kid a side, the other
+  player by name, 3 lives each. After both walk (3.7 m and 4.3 m), each sees the other within 5 cm. The guest's first shot
+  from 3.5 m tags the host: the host has 2 lives on both screens and goes back to his start. The host's first shot tags the
+  guest: 2 and 2 on both screens, and the host sees the guest back at his start. Two more tags end it: the host's result
+  is a loss ("Guesty got you this time."), the guest's a win ("You beat Hosty."). Cash $35, bag 25 and wins 0 are
+  unchanged on both, and Play Again is off. BACK TO YOUR ROOM closes the link. In a second match the guest's link drops
+  60 frames in: the host is in the bedroom under "Your friend left", with his bag as it was, and so is the guest. After that the
+  board's own 1v1 has a kid again, not the friend. The PeerJS adapter, against a stand-in `Peer`, opens
+  `nbhd-airsoft-KXRB`, joins it with JSON, leaves the matchmaker once the friend is in, and passes on open, data, close
+  and "no room with that code". No page errors in either game. Two runs, both clean, 38 s each.
+- Run after the change: `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-fernando`, `pickup-kids`, `pickup-lives`,
+  `forfeit-ask`, `briefing-lives`, `smoke`: 9 of 9 pass.
+- The full suite (`run.mjs --shard k/4`, four shards side by side on this sandbox's four cores): 130 of 133 suites passed.
+  The three misses failed before a check ran: `road-slide` and `taggers` timed out loading the page, and `mirror` lost
+  its browser at boot. All three passed alone.
+### Still open
+- Michael's real test with a friend: this session's sandbox cannot reach unpkg or PeerJS's server, so the real
+  connection is checked only against a stand-in `Peer`. One pair in ten on strict networks may not connect at all
+  (no paid relay, as the question said).
+- The host's game stops while his tab is hidden (the browser stops drawing it), so the guest's BBs and tags wait. Worth
+  a "keep this tab open" line if it bites.
+- The guest's own shots cannot tag in his game; the host's copy decides, about one message later, so a tag on a moving
+  kid at the edge of a hit can count in one game and miss in the other's picture. The briefing's field map shows the
+  guest at the host's start.
+- Steps 2 (teams, the board's kids filling the empty spots) and 3 (a room list and a Campaign / Online / Settings title)
+  wait for Michael's look at this one.
+
+## v1.230 fix-up — shard 7/8 steadied: online's start waits, vip's played rounds seeded
+PR #67 (online play, step 1) had a green PR run, but shard 7/8 of the push run failed twice on 14 Oct, on two
+different suites, so it could not be approved. A local session took it (Michael's desktop, Windows, 12 cores) and read
+the CI logs. Neither failure was the game.
+
+`online.test.mjs` died with a `TimeoutError` at the second match's start, before its dropped-friend checks ran. BEGIN
+starts a match on a 400 ms timer, and both pages then build and draw Winnmark in software GL. The suite gave each game
+20 s of wall clock to reach `scenario`. On CI the first match's join-to-start took 17 s; in the second the host took
+about 13 s and the guest then ran past his own 20 s. The waits are now 90 s (the harness gives a briefing 90), polled
+every 250 ms rather than on the page's frames, and the result waits 30 s, not 10. The suite also crossed its messages
+in up to six evaluates every two frames, and each evaluate waits out a frame of both pages' render loops. It now steps
+each game in one evaluate (what the other sent, two steps, what it sends back), and no message waits in Node between
+runs. The checks and the lag between the games (two frames) are as before.
+
+`vip.test.mjs`'s "the kids trade tags and come back" (and with it "no VIP falls in the first 8 s") came from a played
+round that was a fresh draw every run. Math.random was unseeded; the page's own render loop stepped the game in real
+time between the test's steps (0.5-1 s of the round before the played part, more during it); and the kids' voice
+cooldowns read the wall clock and drew their lines from Math.random. Most Bunratty rounds see 1-5 tags in 40 s, but in
+1 round of about 70 sampled Priya was out at 2.9 s, before anyone had been tagged, and both checks failed (reproduced
+here, three suites at once). From the entry to the end of each played round the suite now seeds Math.random per match
+(only the entry's, the start's and the test's own steps draw from it: the music's hi-hats and snares draw on their own
+timer), steps the game only itself (tick() still draws, but `stepGame` is a no-op for it until the round is over), keeps
+the voices quiet, and stops stepping once a VIP is out (the result follows on a wall-clock timer). Every run now plays
+the same two rounds. Only the tests change: `index.html` is as v1.230 left it.
+
+`run.mjs` weighted online at the 40 s a new suite is guessed at. On CI it ran about 3 min before the timeout; here
+277-388 s alone before the change and 211 s after. It is 210 now, which moves it to shard 8/8 and vip to 7/8. Main's
+re-measured table (e82316b) does not list online, so 210 has to be carried over when main is merged in (not done here:
+FREEZE #78, the map backdrops, is open).
+### Verified
+- The CI logs (push run of 0b0e761): attempt 1, shard 7/8, `page.waitForFunction: Timeout 20000ms exceeded` at
+  online.test.mjs:63, the guest's wait in the second match's `begin()`, 33 s after BACK TO YOUR ROOM.
+- `online.test.mjs`, final code: 10 of 10 pass, three and four at a time (timings below in the PR note). Before the
+  change it also passed 6 of 6 here, at 277-388 s alone and 600-660 s three at a time.
+- `vip.test.mjs`: before the change, 1 of 3 failed with three at a time (Priya out at 2.9 s, no kid tagged). After it,
+  10 of 10 pass, five at a time, and all ten log the same played rounds byte for byte: Bunratty 40 s with neither VIP
+  out (Sean 1, Owen 1, Tyler 1 tags), Night Shift 40 s with neither VIP out (Eric 2, Sean 2, Mason 1, Marcus 2).
+- `node scripts/parsecheck.mjs`: OK.
+### Still open
+- The seeded rounds are one sample each. A change to the kids' play that makes Priya fall early or nobody trade tags
+  now fails every run rather than one in seventy, which is the point, but the 8 s line is no longer a spread.
+- Locally the kids' lines are spoken through Windows' own speech engine (Michael heard them while the suites ran), which
+  probably slows these runs well past CI's.
+
+## v1.230 fix-up 2 — vip's seeding taken back out; the early VIP fall filed
+CI on 8ce921f passed the online suite (now on shard 8/8) and failed `vip.test.mjs` on shard 7/8: Priya out at 5.6 s
+at Bunratty with no kid tagged, both in-play checks failed. The seeded played rounds came out the same run after run on
+one machine but not across machines (on CI Sean spawned 2.3 m from the player, here 2.5 m), and CI's round was one of the
+early falls. So the early fall is the game's, not the test's draw: their VIP can be picked off before 8 s, the line
+D.17 drew. Michael (16 Oct): take the seeding back out, keep the online fix, and file the fall for the builder. The suite
+is v1.230's again, and the fall is under Found in play in the backlog with what was measured.
+### Verified
+- CI log of 8ce921f, shard 7/8: `FAIL in play no VIP falls in the first 8 s` (theirs 5.6 s, f 338) and `FAIL ... trade
+  tags` (Bunratty: every kid 0). Shard 8/8, with `online.test.mjs`, passed.
+### Still open
+- PR #67 can still fail shard 7/8 on vip until the builder settles the early VIP fall (or Michael moves the line).
 ## v1.231 — The bed shows the summer so far
 Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
 do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
@@ -10818,6 +11068,38 @@ cover layouts are untouched and the scenery is the same every round.
   may look too regular from some spots, and the night shop fronts may be too bright.
 - Frame rate on a real machine: the cost is one or two draw calls but up to 44k extra triangles by day.
 
+## v1.230 (16 Oct) — Online play brought up to main
+The step-1 branch was blocked the moment v1.252 reached main: it conflicted in index.html, the devlog, the backlog and
+the test runner, and nobody on the team is set to bring a finished Fable branch up to main. Main (v1.252) is merged in
+from a local session. In `index.html`: the title label takes main's v1.252; `endScenario` keeps both the online end call
+and v1.239's closing of the pause menu; `applyBBHit` keeps both the online hit report and v1.238's damage note on a tag
+on you, and for a kid, the online check (`c.remote`) comes before v1.237's "already out" complaint, so a hit on your
+friend always goes to the host. One real call: v1.239's pause menu stops the simulation, and online it must not (your
+friend's game runs on), so the step loop now ignores `Game.paused` and `Game.forfeitAsk` while `Net.active`, as it
+already ignored the forfeit ask. `tests/run.mjs` takes main's v1.235 weights with `online.test.mjs` at 210 added; the
+backlog keeps this branch's VIP-fall note above main's lines.
+### Verified
+- `node scripts/parsecheck.mjs` OK; the suites run locally are listed in the merge commit. The rest is left to CI.
+### Still open
+- Escape online still opens the PAUSED card while the match runs on behind it; whether it should open at all online is
+  a step-2 question. A fresh Approve on this head.
+## v1.229 (16 Oct) — The voices build brought up to main a second time
+Michael's 14 Oct approval of f68d759 could not merge: the builder's v1.225–v1.228 landed first, and the branch sat
+blocked for two days while main went on to v1.252, because nobody on the team is set to bring a finished Fable branch up
+to main. Main (v1.252) is merged in from a local session. Conflicts: the title-screen label (main's v1.252 kept, so the
+title reads v1.252 until the next bump), the band defaults in `VOICE_LINES_DEFAULT` (this branch's six-a-category pools,
+with main's v1.237 `shotWhileOut` lines added to each band), and the devlog tail (both kept). `applyBBHit` merged on its
+own: the v1.237 early return for a kid who is already out now comes before the v1.151 tag call, so an out kid who is
+shot complains and the shooter says nothing, which is right.
+One test needed its setup changed, not the game: `tests/voices.test.mjs` tags the same kid twice by hand, and since
+v1.237 the second hit on an out kid is a complaint, not a tag. The test now stands him back up (state and health)
+before the second hit.
+### Verified
+- `node scripts/parsecheck.mjs` OK; `tests/voices.test.mjs` passes (the shooter's call fills in: Brooke, "Saw you coming.").
+- The rest is left to CI's eight shards on the push.
+### Still open
+- A fresh Approve on this head. Whichever of this and the builder's next merge lands second meets the version label again.
+
 ## v1.253 — The squad order moves to the top left
 Backlog B.9 (Michael, control room 16 Oct): the squad commands' box overlaps the roster and the live count, which
 looks sloppy; move it. The ORDER box (v1.248) sat at a fixed 210 px from the top on the right, under "Players on the
@@ -10853,4 +11135,3 @@ button sits 6 px under the box, as wide as it, so the two read as one panel; it 
   4v4): 69 s locally, weighted 240; the eight shards weigh 1,713–1,719 each.
 ### Still open
 - The bedroom's prompts ("E Go outside") still name keyboard keys on a pad.
-

@@ -40,7 +40,7 @@ const WEIGHTS = {
   'lot-ffa-opening.test.mjs': 73, 'lot-hollow-polish.test.mjs': 95, 'map-screen.test.mjs': 19,
   'market-lot.test.mjs': 89, 'mirror.test.mjs': 36, 'music.test.mjs': 4, 'night-lights-allies.test.mjs': 79,
   'night-lights-spawn.test.mjs': 43, 'night-prowl.test.mjs': 22, 'northcliff.test.mjs': 149,
-  'one-ending.test.mjs': 48, 'opening-hold.test.mjs': 101, 'out-shot.test.mjs': 39, 'pause-menu.test.mjs': 32,
+  'online.test.mjs': 210, 'one-ending.test.mjs': 48, 'opening-hold.test.mjs': 101, 'out-shot.test.mjs': 39, 'pause-menu.test.mjs': 32,
   'pickup.test.mjs': 158, 'pickup-clock.test.mjs': 117, 'pickup-fernando.test.mjs': 128, 'pickup-ffa.test.mjs': 105,
   'pickup-kids.test.mjs': 44, 'pickup-lives.test.mjs': 75, 'pincer.test.mjs': 40, 'pocket.test.mjs': 22,
   'pointer-lock.test.mjs': 16, 'pool-noodle.test.mjs': 48, 'result-stats.test.mjs': 36, 'result-text.test.mjs': 64,
