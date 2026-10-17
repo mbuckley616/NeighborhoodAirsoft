@@ -11366,3 +11366,29 @@ flag home. A tag on you before your last tag lands still puts you out, and the r
 - The full suite: see v1.264.
 ### Still open
 - Nothing for a playtest beyond whether it feels fair: a kid's BB that lands 0.6 s after your last tag no longer counts.
+
+## v1.264 — Out kids walk off the field
+Decisions, "Out kids and your BBs: one-way cover?" (critic, 15 Oct, v1.244; Michael: B, after a few seconds an out kid
+walks off the field). Since v1.237 a kid who is out stops your BBs and complains, but in a one-life match he stood with
+his hand up where he was tagged for the rest of the round, a shield for whoever was behind him, and only against you:
+his teammates' BBs passed through him (Storm the Cul-de-Sac: Trey out 6 m ahead, Brooke tagging you past him). Now,
+as real players walk to the safe zone:
+- for the first 4 s (`OUT_WALK_AFTER`) he stands where he was tagged with his hand up, and your BB still stops on him
+  and gets a complaint, as v1.237 made it;
+- then he walks back to his start at 1.5 m/s, hand still up, turning to face the way he goes, legs on the walk cycle;
+- from his first step every BB passes him, yours and his side's alike: he is in nobody's lane;
+- he stops at his start (within 1 m), or where he is if a wall holds him (no 0.3 m nearer in 2 s).
+A kid tagged on a ladder, a perch or the treehouse platform, the tutorial's targets and Infection's taggers are left as
+they were. A kid who walks back to respawn in a team battle or a defend (`retreating`) is unchanged: he is gone in
+seconds and is coming back.
+### Verified
+- `tests/out-walk-off.test.mjs` (new, 9 checks) on Storm the Cul-de-Sac, the kids' guns held: Seth, tagged 6 m from his
+  start, stands 3.5 s without moving (0 m) with his hand up and stops your BB; at 5 s he has walked 1.55 m toward his
+  start, hand up (raise 1.0), walk phase running, the mesh on his position; your BB and his side's both pass him
+  (3.55 m past); by 45 s he is 0.98 m from his start and stops there, and the round goes on.
+- `out-shot` (a BB on an out kid in his first 1.75 s still stops and gets a line) passes unchanged.
+### Still open
+- Whether 4 s is long enough to enjoy shooting him, and how it reads to see an out kid walking across the fight to his
+  start; nobody has looked at it on screen yet but the test.
+- A kid whose start is far off (40-60 m on the big maps) is in sight for a while on his way; he can't be hit, so he
+  only looks like a target.

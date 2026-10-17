@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.263</div>
+  <div class="version">v1.264</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -28601,7 +28601,8 @@ function bbCanTarget(bb, c) {
     return Game.player.hitsTaken < Game.player.maxHits;
   }
   // v1.237 (D.33): a kid who is out (hand up where he was tagged, or walking back) still stops YOUR BBs, and says so
-  if (c.health <= 0 || c.state === 'retreating') return bb.owner === 'player' && kidIsOutStanding(c);
+  // v1.264 (decisions "Out kids and your BBs", Michael: B): one walking off the field has left everyone's lane
+  if (c.health <= 0 || c.state === 'retreating') return bb.owner === 'player' && kidIsOutStanding(c) && !c._walkingOff;
   return true;
 }
 // v1.237 (backlog D.33, Michael 14 Oct: "Players that raise their arms and are 'out' should still be able to be shot, and
@@ -28609,6 +28610,36 @@ function bbCanTarget(bb, c) {
 // one walking back to respawn. A downed Infection tagger is slumped, not out, and still lets BBs through.
 function kidIsOutStanding(c) {
   return c !== Game.player && c.behavior !== 'tagger';
+}
+// v1.264 (decisions "Out kids and your BBs: one-way cover?", critic 15 Oct; Michael: B): in a one-life match a kid who is
+// out stood where he was tagged for the rest of the round, a shield against your BBs only (his teammates' pass through
+// him). Now, as real players walk to the safe zone, after OUT_WALK_AFTER seconds with his hand up he walks back to his
+// start, hand still up, and from his first step he is in nobody's lane: every BB passes him. Held up (no 0.3 m nearer
+// in OUT_WALK_STUCK s) he stops where he is. A kid on a ladder, a perch or a platform, and the tutorial's, stay put.
+const OUT_WALK_AFTER = 4.0, OUT_WALK_SPEED = 1.5, OUT_WALK_STUCK = 2.0;
+function outKidWalkOff(e, dt) {
+  if (Tutorial.active || e.perch || e._lad || e._climbed || e._dropY != null || !kidIsOutStanding(e)) return;
+  e._outT = (e._outT || 0) + dt;
+  if (e._outT < OUT_WALK_AFTER || e._offField) return;
+  const goal = e._spawnPos || e.anchorPos;
+  if (!goal) return;
+  e._walkingOff = true;
+  const dx = goal.x - e.pos.x, dz = goal.z - e.pos.z, d = Math.hypot(dx, dz);
+  if (d < 1.0) { e._offField = true; return; }
+  kidTurnToward(e, Math.atan2(dx, dz), dt);
+  e.mesh.group.rotation.y = e.yaw;
+  const step = Math.min(d, OUT_WALK_SPEED * dt), nX = e.pos.x + dx / d * step, nZ = e.pos.z + dz / d * step;
+  if (!collidesObstacles(nX, nZ, 0.35)) { e.pos.x = nX; e.pos.z = nZ; }
+  else {
+    if (!collidesObstacles(nX, e.pos.z, 0.35)) e.pos.x = nX;
+    if (!collidesObstacles(e.pos.x, nZ, 0.35)) e.pos.z = nZ;
+  }
+  const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
+  if (e._offBest == null || dNow < e._offBest - 0.3) { e._offBest = dNow; e._offStuck = 0; }
+  else if ((e._offStuck = (e._offStuck || 0) + dt) > OUT_WALK_STUCK) { e._offField = true; return; }
+  e._walkPhase = (e._walkPhase || 0) + 2 * Math.PI * kidGaitCadence(OUT_WALK_SPEED) * dt;
+  setKidWalk(e.mesh, e._walkPhase, 0.8);
+  e.mesh.group.position.x = e.pos.x; e.mesh.group.position.z = e.pos.z;
 }
 const OUT_SHOT_LINE_GAP = 1.0;   // seconds (simulated) between a kid's out-shot complaints
 function shotWhileOut(c, bb) {
@@ -29962,6 +29993,7 @@ function eliminateEnemy(e) {
   } else {
     // Permanent kill.
     e.health = 0;
+    e._outT = 0; e._walkingOff = false; e._offField = false; e._offBest = null; e._offStuck = 0;   // v1.264: his walk off starts now
     if (typeof e.lives === 'number') e.lives = 0;   // v1.34: last life spent
     e.hitFlash = 0.6;
     updateRosterHud();
@@ -31058,6 +31090,7 @@ function updateEnemies(dt) {
       setKidHitPose(e.mesh, e._hitRaise);
       e.mesh.group.rotation.z = 0; e.mesh.group.rotation.x = 0;   // v1.183: and no lean
       kidLadderFall(e, dt);   // v1.143: tagged on the ladder or the platform he climbed: he drops to the grass
+      outKidWalkOff(e, dt);   // v1.264: after a few seconds he walks off the field
       e.mesh.group.position.y = kidGroundY(e);
       // v1.77: a downed kid's laser is no longer re-aimed (we `continue` below,
       // skipping updateKidLaser). The hit pose pitches the gun ~90° skyward, and
