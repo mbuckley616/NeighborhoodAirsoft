@@ -10847,6 +10847,10 @@ button sits 6 px under the box, as wide as it, so the two read as one panel; it 
   at 1126–1256 × 24–87, touching nothing, and opens settings. With a stand-in pad touched: over 3 s of the bedroom the
   button never shows, the box (now 24–111) carries "START Settings" inside it, and Start opens the settings; in a
   match neither the box nor the button shows. `settings` and `gamepad-screens` pass unchanged.
+- CI fix-up: on a3db0fa CI's shard 8/8 passed all 19 suites but was cancelled at its 40-minute limit, because v1.253's
+  `squad-hud` loaded all 31 team matches and took 8.5 min there (weighted at 150 s). It now checks the five fullest,
+  every map's biggest team match, the flags match and both VIP matches (14 at 1280×720, 4 at 1024×576, and the Pickup
+  4v4): 69 s locally, weighted 240; the eight shards weigh 1,713–1,719 each.
 ### Still open
 - The bedroom's prompts ("E Go outside") still name keyboard keys on a pad.
 

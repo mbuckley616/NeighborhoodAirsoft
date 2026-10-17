@@ -1,8 +1,8 @@
 // v1.253 (backlog B.9, Michael 16 Oct): the squad order's box sat under the roster at a fixed 210 px, and the roster
 // grows a row per player, so in the big battles (9-11 players, the roster 245-285 px tall) the order was drawn over the
-// names, and in every 4v4 it sat 5 px under it. It now sits top-left. Checked: in every match with teammates, with the
-// walkie's answer showing (the box at its widest), the order's box touches no other panel on screen at 1280×720, the
-// biggest of them at a small 1024×576 window too, and in a Pickup Game 4v4.
+// names, and in every 4v4 it sat 5 px under it. It now sits top-left. Checked: in the fullest matches and every map's
+// biggest team match, with the walkie's answer showing (the box at its widest), the order's box touches no other panel
+// on screen, at 1280×720 and at a small 1024×576 window, and in a Pickup Game 4v4.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -22,17 +22,19 @@ const measure = () => page.evaluate((PANELS) => {
   return { sq, hits, roster: box('rosterHud'), players: S.enemies.length + 1 };
 }, PANELS);
 
-const ids = await page.evaluate(() => Object.keys(SCENARIOS));
-// every match at 1280×720; at 1024×576 the biggest rosters and the ones with a timer or flags (one page can't load
-// every map twice: it ran out of memory)
-const SMALL = ['last_saturday', 'hollow_big_battle', 'lot_night_4v4', 'bellfield_ctf', 'bunratty_vip', 'school_portables_3v3'];
-for (const [w, h, list] of [[1280, 720, ids], [1024, 576, SMALL]]) {
+// The box's place is fixed, so what varies is the roster's height and which panels a match shows: at 1280×720 the
+// five fullest matches (9-12 players), every map's biggest team match, a timer (the CTF) and both VIP matches; at
+// 1024×576 the fullest and the timer. (Every match with teammates, 31, passed alike on v1.253, but took 8.5 min on CI.)
+const BIG = ['last_saturday', 'hollow_big_battle', 'hollow_night_battle', 'hollow_full_auto_mayhem', 'winnmark_team_3v3',
+  'bunratty_team_4v4', 'lot_night_4v4', 'northcliff_night_4v4', 'bellfield_ctf', 'school_night_4v4', 'club_night_4v4',
+  'store_night_4v4', 'bunratty_vip', 'lot_vip_night'];
+const SMALL = ['last_saturday', 'hollow_big_battle', 'bellfield_ctf', 'bunratty_vip'];
+for (const [w, h, list] of [[1280, 720, BIG], [1024, 576, SMALL]]) {
   await page.setViewportSize({ width: w, height: h });
   const bad = [], seen = [];
   let tallest = null;
   for (const id of list) {
-    if (id === 'winnmark_tutorial') continue;   // the tutorial shows no order (v1.248)
-    try { await g.scenario(id); } catch (e) { continue; }
+    await g.scenario(id);
     const r = await measure();
     if (!r) continue;
     seen.push(id);
@@ -40,7 +42,7 @@ for (const [w, h, list] of [[1280, 720, ids], [1024, 576, SMALL]]) {
     if (r.roster && (!tallest || r.roster[3] > tallest[1][3])) tallest = [id, r.roster, r.players];
   }
   console.log(`   ${w}×${h}: ${seen.length} matches with teammates; tallest roster ${JSON.stringify(tallest)}`);
-  check(`${w}×${h}: in every match with teammates the order's box shows and touches no other panel`, seen.length >= Math.min(31, list.length) && !bad.length, bad.slice(0, 6));
+  check(`${w}×${h}: in each of ${list.length} matches the order's box shows and touches no other panel`, seen.length === list.length && !bad.length, bad.slice(0, 6));
 }
 await page.setViewportSize({ width: 1280, height: 720 });
 

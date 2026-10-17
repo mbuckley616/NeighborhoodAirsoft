@@ -47,7 +47,7 @@ const WEIGHTS = {
   'retreat-progress.test.mjs': 164, 'rival.test.mjs': 52, 'road-slide.test.mjs': 81, 'school-kids.test.mjs': 32,
   'seth-shotgun.test.mjs': 114, 'settings.test.mjs': 33, 'shard.test.mjs': 1, 'shop-gun-kinds.test.mjs': 46,
   'shop-pics.test.mjs': 106, 'shop-tabs.test.mjs': 55, 'shorts.test.mjs': 49, 'smoke.test.mjs': 38,
-  'sneakers.test.mjs': 25, 'spawn-facing.test.mjs': 252, 'squad-hud.test.mjs': 150, 'squad-orders.test.mjs': 122, 'stuck-sweep-1.test.mjs': 429,
+  'sneakers.test.mjs': 25, 'spawn-facing.test.mjs': 252, 'squad-hud.test.mjs': 240, 'squad-orders.test.mjs': 122, 'stuck-sweep-1.test.mjs': 429,
   'stuck-sweep-10.test.mjs': 202, 'stuck-sweep-11.test.mjs': 193, 'stuck-sweep-12.test.mjs': 263,
   'stuck-sweep-13.test.mjs': 158, 'stuck-sweep-14.test.mjs': 319, 'stuck-sweep-15.test.mjs': 270,
   'stuck-sweep-16.test.mjs': 430, 'stuck-sweep-2.test.mjs': 235, 'stuck-sweep-3.test.mjs': 376,
