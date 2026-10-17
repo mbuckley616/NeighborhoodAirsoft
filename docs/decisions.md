@@ -5,14 +5,48 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
+  Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
+  (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
+  the same way round: up push up, right find cover, down keep distance, left follow me.
+  - A) **The d-pad gives the orders:** a press is that direction's order at once (the wheel flashes it and a teammate
+    answers on the walkie); slots stay on Y/RB (next) and LB (back). Fastest; costs the d-pad's straight-to-a-slot
+  - B) **Hold the d-pad for the wheel:** a tap still picks a slot; held 0.3 s the wheel opens, the right stick points
+    at an order, letting go gives it. Keeps both, but a slow press in a fight swaps your gun
+  - C) **Click the right stick (R3) for the wheel:** R3 is free; hold it, point the right stick, let go. The d-pad keeps
+    the slots, but you can't look around while picking (as with Q and the mouse)
+  Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
+  on-screen hint would read "d-pad" on a pad.
+
+- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
+  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
+  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
+  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
+  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
+  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
+  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
+  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
+  - D) Different (say in a note)
+  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
+
 ## Answered
 
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
-  In the Hollow only the trees can hide a start, and its forest is not the same every time: the first match built after
-  the game loads draws its trees differently from every later one, so 4–10 of the 45 kid pairs can see each other from
-  their starts. A) fix the drift (seeded random numbers for the map builders, every layout the same on every load), then
-  hide the Hollow's ten starts; B) leave it; C) cover at the starts. Builder's lean: A.
-  Michael: **A — Fix the drift, then hide the Hollow's starts**. (2026-10-17)
+  Your A on the free-for-all starts is built on all four maps (v1.265): every start 18 m or more from every other, no
+  kid with your start as his nearest, the Pickup Game's sizes too, and on Winnmark, Bunratty and the lot nobody in
+  sight of anybody. In the Hollow only the trees can hide a start, and its forest is not the same every time: the first
+  match built after the game loads draws its trees differently from every later one (three.js uses the same random
+  numbers the map's seed does, so the first build shifts the layout; it also moves a parked car or a yard prop on the
+  street maps, filed in Found in play). Today your start is hidden from every kid's after the first match, but 4–10 of
+  the 45 kid pairs can see each other from their starts (was 12–13, with Brooke 14.7 m from you).
+  - A) **Fix the drift:** the map builders get their own seeded random numbers, so every match's layout is the same on
+    every load (as v1.76 meant), then hide the Hollow's ten starts in that forest. Moves every map's props and trees
+    once, to their "later build" places
+  - B) **Leave it:** the Hollow keeps the distances and your hidden start; kids may see each other from the start
+  - C) **Cover at the starts:** a fixed brush pile or log stack at each Hollow start, the same every build
+  Builder's lean: A. It makes the board the same every time you replay a match, which v1.76 promised and the first
+  match of a session breaks, and it lets the rule hold in the woods.
+  Michael: **A) Fix the drift** (control room, 17 Oct 2026) — done, v1.267
 
 - **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
   You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
