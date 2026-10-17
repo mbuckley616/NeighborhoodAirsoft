@@ -11155,3 +11155,33 @@ slots rather than doing nothing. Paused, on the forfeit question or in the tutor
 ### Still open
 - Whether 0.6 s of the wheel reads as "order given" in play, or is too much over the crosshair mid-fight.
 - With teammates, a pad player can no longer go straight to a slot; Y/RB and LB step through them.
+
+## v1.256 — The kids say what happened
+Backlog D.32 (Michael, 14 Oct): more varied lines that fit the moment, more excited when they land a hit, more panic
+when pressed or a teammate is hit, and more complaining after they are hit, "that's not fair because x", "you only got
+me because of y", depending on the kid. It waited on the voices build (D.9), which reached main with v1.229. Four
+situations are added, all through `tryNpcSpeak`, so its cooldowns, earshot and no-repeat memory hold:
+- **Excuses.** A kid you tag sometimes makes an excuse instead of his npcHit line, and it fits how he was tagged:
+  from behind ("You shot me in the back, that's so cheap!"), from past 30 m ("Lucky shot! You couldn't even see me!"),
+  inside 4 m ("Way too close! That doesn't count!"), on the move ("I was running! That doesn't count!"), or any old
+  reason ("My gun jammed, I swear!", "The sun was in my eyes!"). It depends on the kid: a pushy kid (aggression 0.65+)
+  makes one 60% of the time, a middling one 40%, a calm one 15%; the rest still own it. Only for your tags.
+- **A teammate is hit.** The nearest kid of the tagged kid's side within 20 m calls it by name ("They got Brooke!",
+  "Brooke's out! Come on, guys!"), a second after the tagged kid's own line; the line waits for the voice cooldowns
+  (up to 3 s) rather than being lost to them. Not in a free-for-all.
+- **Pressed.** A kid with a second BB whizzing past inside 3 s (v1.67's near miss) says so, six times in ten, at most
+  once in 8 s: "Whoa, whoa! He's on me!", "I'm pinned, I'm pinned!", "Taking fire."
+- **Excited.** The hit that puts you out is called louder than the others: "I GOT HIM!! YES!", "Whoa, I actually got him!".
+Each band (pushy, middling, calm) has its own pressed, teammate-down and you're-out lines; the excuses are shared.
+### Verified
+- `tests/voice-situations.test.mjs` (new, 11 checks): the excuse picked by where you stand (behind, 40 m, 2 m, in front,
+  and running); 3,000 draws per band give 59.8%, 39.7% and 13.9% excuses; a real tag on Winnmark's 3v3 gives Brooke's
+  "My gun jammed, I swear!" at 10.0 s and Jamie's "We lost Brooke! Careful!" at 11.5 s; one near miss says nothing,
+  a second inside 3 s says "Whoa, whoa! He's on me!", two more inside 8 s nothing; a hit that leaves you in is a
+  playerHit line and the one that puts you out "I got him!! I got him!".
+- `voices` passes unchanged (every logged line from its pool, no repeats, the 4 s and 1.5 s gaps hold in six rounds);
+  `out-shot` passes with its record of the out kid's lines leaving out a teammate's new tag call. `smoke` and
+  `squad-orders` pass. The rest is left to CI.
+### Still open
+- Whether the excuses are too frequent from the pushy kids in a long match, and whether the 30 m and 4 m lines fit.
+- Each kid having his own excuses (Seth's are not Evan's) would be a further step.
