@@ -39,14 +39,16 @@ const walk = await page.evaluate(() => {
   const p = Game.player; let playerHits = 0;
   const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) { playerHits++; return; } return orig(bb, who); };
   const kids = Game.scenario.enemies.filter(e => e.team === 'enemy');
-  // out of the yard: at his spot (within 3 m), or fighting (out of 'deploying') 8 m or more from his start
+  // out of the yard: at his spot (within 3 m), or fighting (out of 'deploying') 6 m or more from his start (v1.267:
+  // was 8; in the layout that is now the same every build Mason meets the fight 7.4 m out, in the side yard, and
+  // trades from there)
   const reached = kids.map(() => null), anchor = kids.map(k => k._deployAnchor.clone()), how = kids.map(() => null);
   for (let f = 1; f <= 25 * 60 && Game.mode === 'scenario'; f++) {
     stepGame(1 / 60);
     kids.forEach((k, i) => {
       if (reached[i] !== null) return;
       const atSpot = Math.hypot(k.pos.x - anchor[i].x, k.pos.z - anchor[i].z) < 3;
-      const out = k.state !== 'deploying' && Math.hypot(k.pos.x - k._spawnPos.x, k.pos.z - k._spawnPos.z) >= 8;
+      const out = k.state !== 'deploying' && Math.hypot(k.pos.x - k._spawnPos.x, k.pos.z - k._spawnPos.z) >= 6;
       if (atSpot || out) { reached[i] = +(f / 60).toFixed(1); how[i] = atSpot ? 'spot' : k.state; }
     });
   }
@@ -63,7 +65,7 @@ const walk = await page.evaluate(() => {
   return { reached: kids.map((k, i) => [k.character.name, reached[i], how[i]]), back, playerHits };
 });
 console.log('  reached their spots (s):', JSON.stringify(walk));
-check('each Bellfield kid is out of his yard inside 25 s: at his spot, or fighting 8 m or more from his start', walk.reached.every(r => r[1] !== null), walk.reached);
+check('each Bellfield kid is out of his yard inside 25 s: at his spot, or fighting 6 m or more from his start', walk.reached.every(r => r[1] !== null), walk.reached);
 check('a tagged kid comes back at his yard start', walk.back && Math.hypot(walk.back[0] - STARTS.Mason[0], walk.back[1] - STARTS.Mason[1]) < 3, walk.back);
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
 await g.spin(30);

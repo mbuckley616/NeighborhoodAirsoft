@@ -11471,3 +11471,42 @@ hiding, so it is the same in the first build after a load and every later one.
 - Whether Lamplight opens too slowly now: the Bellfield kids come out of the yards 4–14 s in, and in 23 of 40 rounds
   a player standing at the entry was not tagged in 30 s (11 of 45 before).
 - The Hollow's free-for-all starts are still waiting on Michael's answer (decisions).
+
+## v1.267 — Every match lays out the same on every load; the Hollow's free-for-all starts hidden
+Decisions, "The Hollow's free-for-all: the kids can't all be hidden from each other" (builder, v1.265; Michael: A, fix
+the drift, then hide the Hollow's starts). v1.76 seeded each match's layout by swapping the global `Math.random` for
+the build, but three.js draws from `Math.random` too (four calls for every new object's uuid), and the first build after
+a page load makes materials and geometries that later builds take from caches. So the first match of a session put its
+props, parked cars and trees in other places than every later build, and a map built after other maps differed again
+(on the old file about 350 of the Hollow's 474 obstacles stood elsewhere in a fresh load than in a later build, about
+20 of Bunratty's, and 2 of the treehouse yard's trees). Now the game's own code draws from `gameRandom()` (191
+calls, all of them), which is `Math.random()` except inside a seeded build, where it is the match's seed: three.js
+keeps the real `Math.random` and never touches the seed. Two smaller holes on the way:
+- the night sky's 900 stars drew from the seed before the trees, so a night match laid out differently from the same
+  match by day; the stars have their own fixed stream now;
+- a Pickup Game is built under the seed `pickup_game`, so its Hollow free-for-all had another forest from the
+  Ten-Way's and the starts hidden in one were not hidden in the other; a Pickup free-for-all is now laid out as its
+  map's own free-for-all (`seedFrom`).
+Every map's props and trees moved once, to a third layout (neither the old first-build one nor the later one: there is
+no way to keep three.js's draws in the stream). The Hollow's ten starts were then searched again in the fixed forest,
+from the old spots: nobody can see anybody from his start, from the start or 0.3 m off it (the kids' sight rule, 1.05 m
+to 0.95 m); every start is 20 m or more from every other; every kid has another kid's start nearer than yours at every
+Pickup size; and every kid's start is 30 m or more from yours. That last one came from a first search, 25 m from you,
+where Eric came out of the trees and tagged a player standing at the start at 3.9 s in 2 of 14 rounds. Your start
+moved 11 m south-west in the west woods (-34, -18.5), still facing east; Sean's left midfield, which half the field
+could see.
+### Verified
+- `tests/layout-same.test.mjs` (new): one match on each of the ten match maps, each built first in a fresh page and
+  again after all the others in reverse order: 0 obstacles differ on every map (358 on Winnmark, 311 Bunratty, 473 the
+  Hollow, 128 the lot, 244 Northcliff, 42 the treehouse yard, 109 Bellfield, 72 the school, 86 the club, 69 the store).
+  The Hollow and Bunratty in a second page load: 0 differ. The Hollow's 8-way Pickup free-for-all by night: 0 differ
+  from the Ten-Way by day. On the old file the same suite fails the treehouse yard (2 trees moved), and the Hollow (about 350
+  obstacles) and Bunratty (about 20) across loads.
+- `tests/ffa-starts.test.mjs` now holds the Hollow to the whole rule, the special case for its woods removed: closest
+  pair 20.9 m, nobody in sight in the first build, the second or the 8-way Pickup Game, every Pickup size keeps it;
+  nearest kid to you Eric 25.3 m was the first search's, now 30 m+. Standing at the start, first tagged: the Hollow not
+  in 20 s in 3 of 3 (and in 14 of 14 rounds of a probe; the first search's starts: 3.9–19 s); Winnmark 12.9–13 s or
+  not, Bunratty 12.5–17.5 s, so the street maps keep the rule in their fixed layouts.
+- `pickup-ffa`, `rival` pass. `lamplight-starts`: Mason now meets the fight 7.4 m out of his yard, in the side yard,
+  and trades from there (3 rounds traced: out and fighting at 4–6 s); the check's "fighting 8 m from his start" is now
+  6 m.
