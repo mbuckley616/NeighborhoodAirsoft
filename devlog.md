@@ -10394,6 +10394,133 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
 
+## v1.230 — Online play, step 1: a 1v1 with a friend by room code
+Backlog D.2 (Michael, 28 Sep: "Online play: local-host sessions others can join"), a deep-work item. Michael's B (12 Oct)
+put it after the Pickup Game board, so the host sets the match up there; his A (14 Oct) picked PeerJS's free public
+matchmaker and four-letter room codes. This is step 1 of the three in the question: two friends, one match, Winnmark Court.
+
+The Pickup Game board has a second button, PLAY ONLINE. It opens a panel: your name (14 letters, remembered on this
+computer), HOST A ROOM, and a box for a code with JOIN. The host gets a code such as `KXRB` in big letters and waits; the
+friend types it on his own board and presses JOIN. Both get the usual briefing ("Online: 1v1", you against the other's
+name), and BEGIN waits until both have pressed it ("WAITING FOR SAM…"). The match is the board's Winnmark 1v1 with the
+host's day or night, lives and clock. The one kid on the other side is the other player: his look from his mirror, his
+name, his equipped gun. He starts at the spot the board's own kid would take. A tag costs a life and puts you back at your
+start with 2 s of cover, as in any pickup game since v1.221. Lives are the board's exactly; armor adds none online.
+
+How it works. The host's game is the referee: it runs the BBs, the tags, the lives and the clock, as the question
+promised. One choice there differs from the question's sketch, and a player would not see it. Each player moves his own kid
+and sends where he is (30 times a second from the guest, 20 from the host), rather than the guest sending keys for the host
+to move him. That keeps the guest's movement as quick as in single player, and it needed no change to the player code.
+Each shot is sent once, as it leaves the gun: where from, which way, and its curve. It then flies in both games, but only
+the host's copy can tag (`bbCanTarget` is false for every BB in the guest's game). The host's game tells the guest when
+either one is tagged, and how the match ended. A friend's kid is moved by `netDriveRemote` in place of the AI. He eases
+toward each position, jumps on a respawn, and walks, crouches and holds his gun up with the kids' own pose code. He never
+speaks (`tryNpcSpeak` skips him). F's forfeit question does not pause an online match. A forfeit ends it for both; the
+other player wins.
+
+Nothing is on the line. The match pays nothing and counts for nothing, and the result screen says "Online match: nothing
+on the line" with no Play Again. Each player gets a full bag for the match, and his own bag is put back as it was before
+the result autosaves. If the link drops, before or during the match, the other game ends it, goes back to the bedroom and
+says "Your friend left". Closing the board while you host gives the room up. The two games must be the same version (the
+title's), or the host says so to both.
+
+The connection. PeerJS 1.5.4 (93 KB, from unpkg) loads only when someone presses HOST or JOIN; nothing new loads at
+startup. The host's room is the PeerJS id `nbhd-airsoft-<code>`, from 24 letters (no I or O), about 330,000 codes. A taken
+code tries another, three times. Once the friend is in, the host leaves the matchmaker, so the code is free and nobody else
+can join. The panel says what the question said about privacy: each player sees the other's internet address, and a
+public service carries the code, so play with friends you know. `netPeerTransport` is the only code that knows about
+PeerJS; Michael's own matchmaker (option B, for step 3's room list) would replace that one function. What the other game
+sends is checked before use: a name of plain letters, a look of plain values, a gun the game has, finite numbers, and a
+shot that starts within 4 m of where that player is.
+
+Also fixed on the way: the briefing's BEGIN button is cloned for each briefing, and it kept an online match's "WAITING…"
+text and its disabled state, so the next briefing could not be begun. It is reset each time now.
+### Verified
+- `tests/online.test.mjs` (new, 17 checks): two headless games, joined through a stub transport that passes the same
+  JSON messages every two frames (about 33 ms of lag). Nothing loads at startup (no Peer, no PeerJS script). HOST shows a
+  four-letter code and waits. Both get the briefing, and BEGIN waits for the friend. The 1v1 has one kid a side, the other
+  player by name, 3 lives each. After both walk (3.7 m and 4.3 m), each sees the other within 5 cm. The guest's first shot
+  from 3.5 m tags the host: the host has 2 lives on both screens and goes back to his start. The host's first shot tags the
+  guest: 2 and 2 on both screens, and the host sees the guest back at his start. Two more tags end it: the host's result
+  is a loss ("Guesty got you this time."), the guest's a win ("You beat Hosty."). Cash $35, bag 25 and wins 0 are
+  unchanged on both, and Play Again is off. BACK TO YOUR ROOM closes the link. In a second match the guest's link drops
+  60 frames in: the host is in the bedroom under "Your friend left", with his bag as it was, and so is the guest. After that the
+  board's own 1v1 has a kid again, not the friend. The PeerJS adapter, against a stand-in `Peer`, opens
+  `nbhd-airsoft-KXRB`, joins it with JSON, leaves the matchmaker once the friend is in, and passes on open, data, close
+  and "no room with that code". No page errors in either game. Two runs, both clean, 38 s each.
+- Run after the change: `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-fernando`, `pickup-kids`, `pickup-lives`,
+  `forfeit-ask`, `briefing-lives`, `smoke`: 9 of 9 pass.
+- The full suite (`run.mjs --shard k/4`, four shards side by side on this sandbox's four cores): 130 of 133 suites passed.
+  The three misses failed before a check ran: `road-slide` and `taggers` timed out loading the page, and `mirror` lost
+  its browser at boot. All three passed alone.
+### Still open
+- Michael's real test with a friend: this session's sandbox cannot reach unpkg or PeerJS's server, so the real
+  connection is checked only against a stand-in `Peer`. One pair in ten on strict networks may not connect at all
+  (no paid relay, as the question said).
+- The host's game stops while his tab is hidden (the browser stops drawing it), so the guest's BBs and tags wait. Worth
+  a "keep this tab open" line if it bites.
+- The guest's own shots cannot tag in his game; the host's copy decides, about one message later, so a tag on a moving
+  kid at the edge of a hit can count in one game and miss in the other's picture. The briefing's field map shows the
+  guest at the host's start.
+- Steps 2 (teams, the board's kids filling the empty spots) and 3 (a room list and a Campaign / Online / Settings title)
+  wait for Michael's look at this one.
+
+## v1.230 fix-up — shard 7/8 steadied: online's start waits, vip's played rounds seeded
+PR #67 (online play, step 1) had a green PR run, but shard 7/8 of the push run failed twice on 14 Oct, on two
+different suites, so it could not be approved. A local session took it (Michael's desktop, Windows, 12 cores) and read
+the CI logs. Neither failure was the game.
+
+`online.test.mjs` died with a `TimeoutError` at the second match's start, before its dropped-friend checks ran. BEGIN
+starts a match on a 400 ms timer, and both pages then build and draw Winnmark in software GL. The suite gave each game
+20 s of wall clock to reach `scenario`. On CI the first match's join-to-start took 17 s; in the second the host took
+about 13 s and the guest then ran past his own 20 s. The waits are now 90 s (the harness gives a briefing 90), polled
+every 250 ms rather than on the page's frames, and the result waits 30 s, not 10. The suite also crossed its messages
+in up to six evaluates every two frames, and each evaluate waits out a frame of both pages' render loops. It now steps
+each game in one evaluate (what the other sent, two steps, what it sends back), and no message waits in Node between
+runs. The checks and the lag between the games (two frames) are as before.
+
+`vip.test.mjs`'s "the kids trade tags and come back" (and with it "no VIP falls in the first 8 s") came from a played
+round that was a fresh draw every run. Math.random was unseeded; the page's own render loop stepped the game in real
+time between the test's steps (0.5-1 s of the round before the played part, more during it); and the kids' voice
+cooldowns read the wall clock and drew their lines from Math.random. Most Bunratty rounds see 1-5 tags in 40 s, but in
+1 round of about 70 sampled Priya was out at 2.9 s, before anyone had been tagged, and both checks failed (reproduced
+here, three suites at once). From the entry to the end of each played round the suite now seeds Math.random per match
+(only the entry's, the start's and the test's own steps draw from it: the music's hi-hats and snares draw on their own
+timer), steps the game only itself (tick() still draws, but `stepGame` is a no-op for it until the round is over), keeps
+the voices quiet, and stops stepping once a VIP is out (the result follows on a wall-clock timer). Every run now plays
+the same two rounds. Only the tests change: `index.html` is as v1.230 left it.
+
+`run.mjs` weighted online at the 40 s a new suite is guessed at. On CI it ran about 3 min before the timeout; here
+277-388 s alone before the change and 211 s after. It is 210 now, which moves it to shard 8/8 and vip to 7/8. Main's
+re-measured table (e82316b) does not list online, so 210 has to be carried over when main is merged in (not done here:
+FREEZE #78, the map backdrops, is open).
+### Verified
+- The CI logs (push run of 0b0e761): attempt 1, shard 7/8, `page.waitForFunction: Timeout 20000ms exceeded` at
+  online.test.mjs:63, the guest's wait in the second match's `begin()`, 33 s after BACK TO YOUR ROOM.
+- `online.test.mjs`, final code: 10 of 10 pass, three and four at a time (timings below in the PR note). Before the
+  change it also passed 6 of 6 here, at 277-388 s alone and 600-660 s three at a time.
+- `vip.test.mjs`: before the change, 1 of 3 failed with three at a time (Priya out at 2.9 s, no kid tagged). After it,
+  10 of 10 pass, five at a time, and all ten log the same played rounds byte for byte: Bunratty 40 s with neither VIP
+  out (Sean 1, Owen 1, Tyler 1 tags), Night Shift 40 s with neither VIP out (Eric 2, Sean 2, Mason 1, Marcus 2).
+- `node scripts/parsecheck.mjs`: OK.
+### Still open
+- The seeded rounds are one sample each. A change to the kids' play that makes Priya fall early or nobody trade tags
+  now fails every run rather than one in seventy, which is the point, but the 8 s line is no longer a spread.
+- Locally the kids' lines are spoken through Windows' own speech engine (Michael heard them while the suites ran), which
+  probably slows these runs well past CI's.
+
+## v1.230 fix-up 2 — vip's seeding taken back out; the early VIP fall filed
+CI on 8ce921f passed the online suite (now on shard 8/8) and failed `vip.test.mjs` on shard 7/8: Priya out at 5.6 s
+at Bunratty with no kid tagged, both in-play checks failed. The seeded played rounds came out the same run after run on
+one machine but not across machines (on CI Sean spawned 2.3 m from the player, here 2.5 m), and CI's round was one of the
+early falls. So the early fall is the game's, not the test's draw: their VIP can be picked off before 8 s, the line
+D.17 drew. Michael (16 Oct): take the seeding back out, keep the online fix, and file the fall for the builder. The suite
+is v1.230's again, and the fall is under Found in play in the backlog with what was measured.
+### Verified
+- CI log of 8ce921f, shard 7/8: `FAIL in play no VIP falls in the first 8 s` (theirs 5.6 s, f 338) and `FAIL ... trade
+  tags` (Bunratty: every kid 0). Shard 8/8, with `online.test.mjs`, passed.
+### Still open
+- PR #67 can still fail shard 7/8 on vip until the builder settles the early VIP fall (or Michael moves the line).
 ## v1.231 — The bed shows the summer so far
 Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
 do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
@@ -10941,6 +11068,21 @@ cover layouts are untouched and the scenery is the same every round.
   may look too regular from some spots, and the night shop fronts may be too bright.
 - Frame rate on a real machine: the cost is one or two draw calls but up to 44k extra triangles by day.
 
+## v1.230 (16 Oct) — Online play brought up to main
+The step-1 branch was blocked the moment v1.252 reached main: it conflicted in index.html, the devlog, the backlog and
+the test runner, and nobody on the team is set to bring a finished Fable branch up to main. Main (v1.252) is merged in
+from a local session. In `index.html`: the title label takes main's v1.252; `endScenario` keeps both the online end call
+and v1.239's closing of the pause menu; `applyBBHit` keeps both the online hit report and v1.238's damage note on a tag
+on you, and for a kid, the online check (`c.remote`) comes before v1.237's "already out" complaint, so a hit on your
+friend always goes to the host. One real call: v1.239's pause menu stops the simulation, and online it must not (your
+friend's game runs on), so the step loop now ignores `Game.paused` and `Game.forfeitAsk` while `Net.active`, as it
+already ignored the forfeit ask. `tests/run.mjs` takes main's v1.235 weights with `online.test.mjs` at 210 added; the
+backlog keeps this branch's VIP-fall note above main's lines.
+### Verified
+- `node scripts/parsecheck.mjs` OK; the suites run locally are listed in the merge commit. The rest is left to CI.
+### Still open
+- Escape online still opens the PAUSED card while the match runs on behind it; whether it should open at all online is
+  a step-2 question. A fresh Approve on this head.
 ## v1.229 (16 Oct) — The voices build brought up to main a second time
 Michael's 14 Oct approval of f68d759 could not merge: the builder's v1.225–v1.228 landed first, and the branch sat
 blocked for two days while main went on to v1.252, because nobody on the team is set to bring a finished Fable branch up
