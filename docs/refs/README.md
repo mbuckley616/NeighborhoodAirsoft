@@ -36,6 +36,12 @@ school (no real brands or school marks in the game).
 - The river's far (south) bank rises hard: Michael's "very aggressive slope" opposite the field. Past-the-edge scenery
   on the river maps should show that wooded bank climbing 40-60 m, not a flat horizon.
 
+## Michael's answers (16 Oct)
+The guides were written before Michael answered their questions. His answers are in `docs/decisions.md` ("The maps
+from the reference pictures", under Answered) and override a guide where they differ. Most of all: he chose **real
+scale throughout**, so most maps become one Fable rebuild each, not the in-place steps a guide's "Suggested order"
+lists. Backlog D.44 has the plan.
+
 ## How to use a guide
 Each guide has Michael's notes in his words, a table of every picture (with its Drive link), the real place in
 metres and colours, the game map today, the gaps biggest first, and a suggested order of builder-sized steps. Items

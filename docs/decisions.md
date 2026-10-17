@@ -5,76 +5,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **The maps from the reference pictures (D.44): what to rebuild, and how far (local session, 2026-10-16)**
-  Your pictures are written up map by map in `docs/refs/` (backlog D.44 and D.25). The look-alike work (house styles,
-  colours, trees, terrain, the river, the store front) needs no answer and is open to the builder. These calls change
-  where kids stand, start and fight, so they wait for you. Each guide has the detail behind them.
-  1. **Scale.** The real streets are about two and a half times the game's: Bunratty Court runs about 210 m (the game's
-     lane 85 m), and the real houses are 15-25 m across against the game's 8-11 m.
-     - A) **Keep every map its size; give real size to the places the fights were:** your house, motor court and back
-       terraces at Bunratty, Seth's lot at Winnmark. The other houses are restyled at today's size. *(recommended:
-       fights stay at the 10-40 m the guns are tuned for, and the places you remember are full size)*
-     - B) Fewer, bigger houses on the same streets (3-4 a side), every scenario on the map re-anchored (a Fable card per map)
-     - C) Real scale throughout: maps two and a half times bigger (a Fable card per map; longer walks, more AI and draw cost)
-  2. **Seth's lot at Winnmark.** In the game he lives at the top of the street, at the east entry, on a flat lot. You
-     remember fights in the middle of the street, his steep driveway down to a sunken lot, the deck, the hot tub under it,
-     and the wooded yard falling to a creek.
-     - A) **Move Seth's house to mid-street, sunk 2-3 m below the road, with the deck, the tub, a pool and the creek
-       behind** (his scenarios' starts move with it) *(recommended: it is where you say the fights were)*
-     - B) Keep it at the east entry and rebuild that lot the same way
-  3. **Willow Bend: which part of the club is the map?** The real club has two centres 650 m apart: the clubhouse on
-     the hill, and the swim and tennis centre down on the river's bend.
-     - A) **Keep today's layout and make each piece look like the real one** (clubhouse, terrace, the fenced pools,
-       the pond) *(recommended: four scenarios keep working, all builder steps)*
-     - B) Rebuild the map as the swim and tennis centre by the river (a Fable card)
-  4. **The river beach and rope swing at the club.**
-     - A) **Past the edge: the course falls to the river and you can see the beach and the swing from the map**
-       *(recommended: one builder step, nothing in play moves)*
-     - B) Inside the map: the west edge moves out about 25 m onto the beach, the swing is a landmark (cover moves)
-     - C) A map of its own, the river beach
-     - D) Not now
-  5. **Golfers in carts.** The game has no bystanders yet.
-     - A) **Scenery: carts driving the paths past the edge, golfers in them** *(recommended: one builder step)*
-     - B) A hazard: a cart drives through the match, the golfer stops and yells, and a BB that hits him costs you (the
-       first bystander in the game: a Fable card)
-     - C) Not now
-  6. **Hollins Ridge: how far?** You named the two lots, the practice fields and the stadium. The game's school has
-     portables, a court and a concession stand, none of which is in the pictures, and no stadium.
-     - A) Reshape today's map in place: the real entrance, the grandstand's look, a slice of the real lot, the mural;
-       the portables stay
-     - B) Rebuild the map around the stadium, the west lot and the gym dome (a Fable card; all four scenarios move)
-     - C) **A for the three day matches, and Friday Night Lights moves to a new stadium-and-lot map under the real
-       floodlights** *(recommended: the stadium you remember gets a real map, the day matches keep working)*
-  7. **Riverside Market's lot.** The real rows run north-south, straight at the doors; the game's three run across.
-     - A) Turn the rows to match (a Fable card: all six lot scenarios move, and the "three rows between you" briefings change)
-     - B) **Keep the rows and dress the lot like the real one** *(recommended: the matches stay as they play now)*
-  8. **The Mexican restaurant** at the west end of the strip (it needs a made-up name; tell us one).
-     - A) In play: the west edge moves out about 20 m, with the arches, the patio and its iron fence as cover
-     - B) **Scenery past the west edge for now** *(recommended: one builder step; A can follow when there is a match for it)*
-  9. **Northcliff's pool**, the neighbourhood's hub (pool, clubhouse, two courts at the Stoneglen Close turn).
-     - A) **Its own small map with its own matches, as Bellfield was** *(recommended: a hub deserves its own fights)*
-     - B) Built onto Northcliff Trace's east end (Northcliff's four scenarios move)
-     - C) Scenery past the edge only
-  10. **The twins' yard.** You remember an open, flat yard lined by trees, a raised gravel road along the far side, and
-     bunkers they built. The game has a 34 x 31 m fenced square round a treehouse.
-     - A) **Rework the treehouse yard into their course** (open, tree-lined, the gravel road, plywood and sandbag
-       bunkers) *(recommended: it is already their yard on Stoneglen Close)*
-     - B) A new map for the course, and the treehouse yard stays
-
-  What only you remember (answer in words, any you know):
-  - Bunratty: in your time, the wooden playset by the stone wall, a trampoline, or both? Did the steep hill fall along
-    the street (the fork down to the bulb, as the game has it) or across it, and about how much (one storey, two)?
-  - Winnmark: which side of the street was Seth's house on, and is one of the three listings in the folder his? How far
-    back was the creek, and was the hot tub sunk in the ground or raised?
-  - The Hollow: which bank was the field on, and where (near Bunratty's river frontage, or another bend)? One photo is a
-    hand-made "WIZARD HOLLOW" sign on a tree: was that your trail, and may it go in the game? Could you see houses from
-    the field, or only woods?
-  - The club: was the river beach sand, red clay or rocks?
-  - The twins' yard: fenced? How high was the gravel road above the yard? Was there a treehouse?
-  - Inside the store: which door did you use, and where were produce, the deli, the pharmacy and the flowers?
-  - Hollins Ridge's mural: a made-up mascot of its own, or a plain pennant?
-  - The three videos (one in Bunratty, two in Chattahoochee River) can't be viewed here: what do they show?
-
 - **A trade on the last tag is a loss (critic, 2026-10-16)**
   When you tag the last kid and his BB, already in the air, lands on you inside the next 600 ms, you lose: the win
   waits 600 ms so the hit shows on screen, and a tag on you ends the round at once (v1.90, "the first ending stands";
@@ -87,6 +17,87 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Critic's lean: A. It is how a kid would call it ("I got you first!"), and the cost is one check in `applyBBHit`.
 
 ## Answered
+
+- **The maps from the reference pictures (D.44): what to rebuild, and how far (local session, 2026-10-16)**
+  Your pictures are written up map by map in `docs/refs/` (backlog D.44 and D.25). The look-alike work (house styles,
+  colours, trees, terrain, the river, the store front) needs no answer and is open to the builder. These calls change
+  where kids stand, start and fight, so they wait for you. Each guide has the detail behind them.
+  1. **Scale.** The real streets are about two and a half times the game's: Bunratty Court runs about 210 m (the game's
+     lane 85 m), and the real houses are 15-25 m across against the game's 8-11 m.
+     - A) **Keep every map its size; give real size to the places the fights were:** your house, motor court and back
+       terraces at Bunratty, Seth's lot at Winnmark. The other houses are restyled at today's size. *(recommended:
+       fights stay at the 10-40 m the guns are tuned for, and the places you remember are full size)*
+     - B) Fewer, bigger houses on the same streets (3-4 a side), every scenario on the map re-anchored (a Fable card per map)
+     - C) Real scale throughout: maps two and a half times bigger (a Fable card per map; longer walks, more AI and draw cost)
+     Michael: **C) Real scale throughout**. (local session, clicked, 2026-10-16)
+  2. **Seth's lot at Winnmark.** In the game he lives at the top of the street, at the east entry, on a flat lot. You
+     remember fights in the middle of the street, his steep driveway down to a sunken lot, the deck, the hot tub under it,
+     and the wooded yard falling to a creek.
+     - A) **Move Seth's house to mid-street, sunk 2-3 m below the road, with the deck, the tub, a pool and the creek
+       behind** (his scenarios' starts move with it) *(recommended: it is where you say the fights were)*
+     - B) Keep it at the east entry and rebuild that lot the same way
+     Michael: **A) Move Seth's house to mid-street**, on the south side, the hot tub sunk into the patio. (local session, clicked, 2026-10-16)
+  3. **Willow Bend: which part of the club is the map?** The real club has two centres 650 m apart: the clubhouse on
+     the hill, and the swim and tennis centre down on the river's bend.
+     - A) **Keep today's layout and make each piece look like the real one** (clubhouse, terrace, the fenced pools,
+       the pond) *(recommended: four scenarios keep working, all builder steps)*
+     - B) Rebuild the map as the swim and tennis centre by the river (a Fable card)
+     Michael: **B) Rebuild the map as the swim and tennis centre by the river**. (local session, clicked, 2026-10-16)
+  4. **The river beach and rope swing at the club.**
+     - A) **Past the edge: the course falls to the river and you can see the beach and the swing from the map**
+       *(recommended: one builder step, nothing in play moves)*
+     - B) Inside the map: the west edge moves out about 25 m onto the beach, the swing is a landmark (cover moves)
+     - C) A map of its own, the river beach
+     - D) Not now
+     Michael: **A) Past the edge**; the beach is a really fine river sand, brownish-black. (local session, clicked, 2026-10-16)
+  5. **Golfers in carts.** The game has no bystanders yet.
+     - A) **Scenery: carts driving the paths past the edge, golfers in them** *(recommended: one builder step)*
+     - B) A hazard: a cart drives through the match, the golfer stops and yells, and a BB that hits him costs you (the
+       first bystander in the game: a Fable card)
+     - C) Not now
+     Michael: **A) Scenery**. (local session, clicked, 2026-10-16)
+  6. **Hollins Ridge: how far?** You named the two lots, the practice fields and the stadium. The game's school has
+     portables, a court and a concession stand, none of which is in the pictures, and no stadium.
+     - A) Reshape today's map in place: the real entrance, the grandstand's look, a slice of the real lot, the mural;
+       the portables stay
+     - B) Rebuild the map around the stadium, the west lot and the gym dome (a Fable card; all four scenarios move)
+     - C) **A for the three day matches, and Friday Night Lights moves to a new stadium-and-lot map under the real
+       floodlights** *(recommended: the stadium you remember gets a real map, the day matches keep working)*
+     Michael: **B) Rebuild the map around the stadium, the west lot and the gym dome**. (local session, clicked, 2026-10-16)
+  7. **Riverside Market's lot.** The real rows run north-south, straight at the doors; the game's three run across.
+     - A) Turn the rows to match (a Fable card: all six lot scenarios move, and the "three rows between you" briefings change)
+     - B) **Keep the rows and dress the lot like the real one** *(recommended: the matches stay as they play now)*
+     Michael: **A) Turn the rows to match**. (local session, clicked, 2026-10-16)
+  8. **The Mexican restaurant** at the west end of the strip (it needs a made-up name; tell us one).
+     - A) In play: the west edge moves out about 20 m, with the arches, the patio and its iron fence as cover
+     - B) **Scenery past the west edge for now** *(recommended: one builder step; A can follow when there is a match for it)*
+     Michael: **A) In play**, named for another Mexican city, like Guadalajara (the game uses "Guadalajara"). (local session, clicked, 2026-10-16)
+  9. **Northcliff's pool**, the neighbourhood's hub (pool, clubhouse, two courts at the Stoneglen Close turn).
+     - A) **Its own small map with its own matches, as Bellfield was** *(recommended: a hub deserves its own fights)*
+     - B) Built onto Northcliff Trace's east end (Northcliff's four scenarios move)
+     - C) Scenery past the edge only
+     Michael: **A) Its own small map**. (local session, clicked, 2026-10-16)
+  10. **The twins' yard.** You remember an open, flat yard lined by trees, a raised gravel road along the far side, and
+     bunkers they built. The game has a 34 x 31 m fenced square round a treehouse.
+     - A) **Rework the treehouse yard into their course** (open, tree-lined, the gravel road, plywood and sandbag
+       bunkers) *(recommended: it is already their yard on Stoneglen Close)*
+     - B) A new map for the course, and the treehouse yard stays
+     Michael: **A) Rework the treehouse yard into their course**: open to the trees, no fence; the gravel road
+     3-4 m above the yard ("we would rarely play up there"); no treehouse. (local session, clicked, 2026-10-16)
+
+  What only Michael remembers (his answers, 2026-10-16):
+  - Bunratty: a trampoline, no playset. The steep hill fell along the street, from the fork down to the bulb, by more
+    than 10 m.
+  - Winnmark: Seth's house was on the south side; the hot tub was sunk into the ground under the deck.
+  - The Hollow: the field was below Bunratty, on its own river frontage. The "WIZARD HOLLOW" sign goes in, at the
+    trailhead. From the field you saw big houses up the far bank, and a few houses against the river on the opposite bank
+    (a different neighbourhood, in Dunwoody).
+  - Willow Bend: the river beach was a really fine river sand, brownish-black.
+  - The twins' yard: open to the trees, no fence; the gravel road 3-4 m above it; no treehouse.
+  - Hollins Ridge's mural: a made-up mascot of its own.
+  - Still open (answer any time): which of the three Winnmark listings, if any, is Seth's; how far back the creek was;
+    the inside of the store (which door, where produce, the deli, the pharmacy and the flowers were); what the three
+    videos show.
 
 - **Free-for-all starts on Winnmark and Bunratty: one kid has your start (builder, 2026-10-15)**
   The critic (15 Oct, v1.244) found Every Kid for Themselves decided by Seth: your `road_east` start is 27.7 m from his
