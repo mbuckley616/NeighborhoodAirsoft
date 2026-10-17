@@ -79,6 +79,9 @@ const inWall = await page.evaluate(() => {
   const bad = [];
   Game.scene.traverse(m => {
     if (!m.isMesh || m.geometry.type !== 'CylinderGeometry') return;
+    // v1.264 fix-up: not your own first-person gun, which hangs off the camera in the scene: where the camera stood when
+    // the page last rendered is up to the frame timing, and on the deck by the merlons its barrel read as a pole in a wall
+    for (let p = m.parent; p; p = p.parent) if (p === Game.camera) return;
     const c = new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3());
     for (const b of bands) if (c.x > b.minX + 0.05 && c.x < b.maxX - 0.05 && c.z > b.minZ + 0.05 && c.z < b.maxZ - 0.05 && c.y > b.baseY && c.y < b.baseY + 2.6) bad.push([+c.x.toFixed(2), +c.y.toFixed(2), +c.z.toFixed(2)]);
   });
