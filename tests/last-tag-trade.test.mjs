@@ -53,7 +53,9 @@ const tag = await page.evaluate(() => { window.__fire(); return window.__tagSeth
 await g.spin(4);
 const after = await state();
 check('your last tag lands first: the round is won at once', tag.health <= 0 && tag.won, tag);
-check('his BB, already in the air, lands and does not tag you', after.hits === 0 && after.mode === 'scenario' && after.bbs === 0, after);
+// the round may already show its win: the 600 ms wait is real time (setTimeout), and a slow runner can spend that much
+// between evaluates (CI, 17 Oct); what matters is no hit, and the next check sees the win
+check('his BB, already in the air, lands and does not tag you', after.hits === 0 && after.bbs === 0, after);
 await page.waitForFunction(() => Game.mode === 'result', null, { timeout: 10000 });
 const res = await page.evaluate(() => document.getElementById('outcomeText').textContent.trim());
 check('the round ends YOU GOT THEM', /GOT THEM/.test(res), res);
