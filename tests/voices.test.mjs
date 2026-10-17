@@ -179,7 +179,9 @@ for (const [id, near] of [['winnmark_team_3v3', true], ['winnmark_team_3v3', fal
     const before = Game.scenario.roundTime;
     // a kid 6 m from spawn calls you out inside the hold and his 4 s cooldown would hold the start call (the
     // next free kid would be 40 m off): clear the cooldowns just before the hold lifts so the call itself is seen
-    for (let f = 0; f < 60 * 2.4 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
+    // v1.266 fix-up: up to 2.4 s on the round's clock, not 2.4 s from here (CI's slower BEGIN had the round at 0.18 s
+    // already, so a fixed 2.4 s ran past the 2.5 s start call and the cooldowns were cleared too late)
+    for (let f = 0; f < 60 * 3 && (Game.scenario.roundTime || 0) < 2.4 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     VOICE.globalCooldownUntil = 0; for (const e of Game.scenario.enemies) e._voiceCooldownUntil = 0;
     for (let f = 0; f < 60 * 1.6 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     const starts = VOICE.log.filter(e => e.category === 'roundStart');
