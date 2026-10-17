@@ -148,10 +148,14 @@ const school = await page.evaluate(() => {
   Game.player.maxHits = 999; VOICE.log.length = 0;
   const ids = ['jordan', 'caleb', 'nathan', 'sophie', 'grant', 'malik'];
   const kids = Game.scenario.enemies.filter(e => ids.includes(e.charId) && (e.team || 'enemy') !== 'player');
-  for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
-    k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
-    tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
-  }
+  // seeded (v1.267's withSeededRandom), so the 7-in-10 own-line draw is the same sample on every runner: unseeded, a
+  // kid with few own lines (Caleb) could land just under a third (5 of 16 on CI, 17 Oct)
+  withSeededRandom('voices-school-3v3', () => {
+    for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
+      k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
+      tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
+    }
+  });
   const out = {};
   for (const k of kids) {
     const said = VOICE.log.filter(e => e.charId === k.charId);
