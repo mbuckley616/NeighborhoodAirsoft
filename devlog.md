@@ -11242,3 +11242,37 @@ paper is plain.
 ### Still open
 - The labels and pins are small at the table's size; whether they read in play, and whether a pin for "you are
   here" (Bunratty Court, home) would help.
+
+## v1.259 — The Hollow's forts get a deck, a ramp and crenellations
+Backlog D.42 (Michael, 15 Oct): the forts in the Chattahoochee River zone are ugly, with random intersecting meshes,
+and being inside one feels like a disadvantage; a staircase or ramp inside up to the top, for high ground and cover up
+there, like wooden crenellations. What intersected: the "lookout" deck at 1.1 m (cosmetic, nothing could stand on it),
+whose posts and rail ran through the window band; the pitched part-roof, sunk into the back and side walls; Team B's
+lean-to, a tilted sheet through its side wall; and both flag poles, standing inside the back wall. All of that is gone
+(the flags now stand just behind the back wall). In its place, in each fort:
+- a plank deck over the front half at the walls' top, 2.6 m up, on two joists; you stand on it, and walk under it
+  through the port as before;
+- a ramp up the inside of the ramp-side wall (the old lookout's side): a 0.2 m step 0.6 m deep at the back corner,
+  stepped onto from the fort floor, a cleated board rising at about 31° to a landing beside the deck;
+- crenellations: 0.5 m wooden merlons 0.9 m tall along the front wall and both side walls round the deck, 0.37 m
+  gaps between them to shoot through, and a rail along the deck's back edge, so the deck is high ground with cover
+  that you can't walk off by accident (a jump down inside is a 2.6 m drop, and costs your stamina as the treehouse's).
+The ramp is a new kind of obstacle (`ramp`): its top rises along its length (`obsTopAt`), the player steps up it up to
+0.3 m at a time (`RAMP_STEP`, in `blockingObstacle` and `playerSupportY`), and BBs pass it. A kid's body is height-
+checked from the terrain, so its 0.2 m first step stops him and the kids never walk up; the deck is the player's.
+### Verified
+- `tests/hollow-fort.test.mjs` (new, 18 checks), both forts on the Hollow 3v3: from the floor beside the step you step
+  onto it (0.92 m, the fort sits at 0.72), walk up to 3.32 m (2.6 m above the fort), step sideways onto the deck and
+  stand there (4.8 m across from the ramp); walking at the front wall the merlons hold you 0.5 m short of it, walking
+  back the rail holds you on the deck; 7 merlons on each front wall, and a BB from the deck goes out through a 0.37 m
+  gap; a kid's body is blocked at the ramp's step; under the deck you walk the length of the fort and out of the port
+  on the ground; no pole stands inside a wall.
+- The stuck-kid sweep over all 12 Hollow matches (3 ways each, 90 s): no kid held. `fort-spawn` (standing at the south
+  fort's spawn, which v1.124 put "under the roof", now open above: still rarely tagged), `hollow-held`,
+  `lot-hollow-polish`, `cover-fire`, `kid-hold`, `pickup-ffa` and `jump` pass. Screenshots: the merlons read as a
+  fort's top from the field, the ramp and deck from inside.
+### Still open
+- Balance: the deck is strong high ground in the 3v3s and the fort matches (Storm the North Fort's defenders don't use
+  it; only you do). A playtest should say whether it is too strong, or whether kids should hold it too.
+- The ramp sits on the side the lookout was (west in the north fort, east in the south); the south fort's spawn is
+  no longer under a roof.

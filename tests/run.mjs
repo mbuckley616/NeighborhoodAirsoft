@@ -32,7 +32,7 @@ const WEIGHTS = {
   'gun-boltpistol.test.mjs': 4, 'gun-bucket.test.mjs': 5, 'gun-mac10.test.mjs': 24, 'gun-mp5.test.mjs': 9,
   'gun-parts.test.mjs': 8, 'gun-pistol.test.mjs': 9, 'gun-shotgun.test.mjs': 8, 'gun-sixshooter.test.mjs': 8,
   'gun-sniper.test.mjs': 16, 'gun-thunder.test.mjs': 5, 'gun-ump.test.mjs': 9, 'harness.test.mjs': 37,
-  'hats.test.mjs': 40, 'high-school.test.mjs': 152, 'hollow-held.test.mjs': 108, 'house-backs.test.mjs': 41,
+  'hats.test.mjs': 40, 'high-school.test.mjs': 152, 'hollow-fort.test.mjs': 30, 'hollow-held.test.mjs': 108, 'house-backs.test.mjs': 41,
   'houses.test.mjs': 34, 'idle-ally.test.mjs': 239, 'jump.test.mjs': 41, 'kid-climb.test.mjs': 51,
   'kid-clothes.test.mjs': 48, 'kid-face.test.mjs': 13, 'kid-hands.test.mjs': 10, 'kid-hold.test.mjs': 56,
   'ladder-prompt.test.mjs': 13, 'laser.test.mjs': 51, 'last-kid.test.mjs': 161, 'last-saturday.test.mjs': 52,

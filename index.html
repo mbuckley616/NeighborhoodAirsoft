@@ -2096,7 +2096,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.258</div>
+  <div class="version">v1.259</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -15488,26 +15488,87 @@ function buildHollowScene(variant, timeOfDay) {
     const header = new THREE.Mesh(new THREE.BoxGeometry(portGap, 0.28, th), palletMatDark);
     header.position.set(cx, wallH - 0.14, frontZ);   // tucked under the wall top
     header.castShadow = true; grp.add(header);
-    // LOOKOUT platform along the back, on `lookoutSide`. A raised deck (~1.1m)
-    // with two posts and a low rail. Cosmetic deck (no walk-up in v1; it's a
-    // visual perch) — gives the fort its silhouette.
-    const loX = cx + lookoutSide * (W / 2 - 1.4);
-    const deck = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.18, 2.0), plywoodMat);
-    deck.position.set(loX, 1.1, backZ + facing * 0.9);
-    deck.castShadow = deck.receiveShadow = true; grp.add(deck);
-    for (const px of [loX - 1.1, loX + 1.1]) {
-      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 6), postMat);
-      post.position.set(px, 0.55, backZ + facing * 0.9);
-      grp.add(post);
+    // v1.259 (backlog D.42, Michael 15 Oct: "The fort(s) in the Chattahoochee River zone are kind of ugly ... a bunch of
+    // random intersecting meshes, and it almost feels like you're at more of a disadvantage being inside them. There
+    // should be a staircase/ramp of some sort inside, to allow you to get to the top of the fort, so you can have high
+    // ground & some cover up top (like wooden crenellations)"). The cosmetic lookout deck (its posts through the window
+    // band), the pitched part-roof sunk into the walls and Team B's lean-to through its side wall are gone. In their
+    // place: a plank DECK over the front half at the walls' top (2.6 m), stood on; a RAMP along the `lookoutSide` wall
+    // from the back corner up to a landing beside the deck; wooden CRENELLATIONS on the front and side walls round the
+    // deck (0.9 m merlons, 0.45 m gaps to shoot through) and a rail along the deck's open back edge. The ramp is a
+    // player-only slope (obstacle `ramp`, rampTopAt): its foot is a 0.2 m step, so a kid's terrain-footed body is stopped
+    // by it and never walks up; BBs pass it (bbPass), as they would the gaps of a plank ramp.
+    const deckTop = wallH, deckT = 0.15, RW = 1.0, s = lookoutSide;
+    const inL = leftX + th / 2, inR = rightX - th / 2;                       // the walls' inner faces
+    const inFront = frontZ - facing * th / 2, inBack = backZ + facing * th / 2;
+    const stripIn = cx + s * (W / 2 - th / 2), stripOut = stripIn - s * RW;   // the ramp's strip against the side wall
+    const deckMinX = s < 0 ? stripOut : inL, deckMaxX = s < 0 ? inR : stripOut;
+    const deckMinZ = Math.min(cz, inFront), deckMaxZ = Math.max(cz, inFront);
+    const plankMat = new THREE.MeshStandardMaterial({ color: 0x9a7a52, roughness: 0.92 });
+    {   // the deck: planks across a pair of joists
+      const n = 9, dz = (deckMaxZ - deckMinZ) / n;
+      for (let i = 0; i < n; i++) {
+        const pl = new THREE.Mesh(new THREE.BoxGeometry(deckMaxX - deckMinX, deckT, dz - 0.02), i % 3 ? plankMat : plywoodMat);
+        pl.position.set((deckMinX + deckMaxX) / 2, deckTop - deckT / 2, deckMinZ + dz * (i + 0.5));
+        pl.castShadow = pl.receiveShadow = true; grp.add(pl);
+      }
+      for (const jx of [deckMinX + 0.6, deckMaxX - 0.6]) {
+        const j = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, deckMaxZ - deckMinZ), postMat);
+        j.position.set(jx, deckTop - deckT - 0.08, (deckMinZ + deckMaxZ) / 2); grp.add(j);
+      }
+      list.push({ minX: deckMinX, maxX: deckMaxX, minZ: deckMinZ, maxZ: deckMaxZ, h: deckT, surface: 'hard', baseY: deckTop - deckT });
     }
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.1, 0.1), palletMatDark);
-    rail.position.set(loX, 1.55, backZ + facing * 1.8);
-    grp.add(rail);
-    // Partial plywood ROOF over the back half.
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(W - 0.4, 0.14, D * 0.5), plywoodMat);
-    roof.position.set(cx, wallH + 0.15, backZ + facing * (D * 0.25));
-    roof.rotation.x = facing * 0.12;           // slight pitch
-    roof.castShadow = true; grp.add(roof);
+    // crenellations: merlons along a wall's top over the deck's run
+    function merlons(axis, at, from, to) {
+      const mw = 0.5, gap = 0.45, len = to - from, n = Math.max(1, Math.floor((len + gap) / (mw + gap)));
+      const used = n * mw + (n - 1) * gap, start = from + (len - used) / 2;
+      for (let i = 0; i < n; i++) {
+        const c = start + mw / 2 + i * (mw + gap);
+        const w = axis === 'x' ? mw : th + 0.02, d = axis === 'x' ? th + 0.02 : mw;
+        const mx = axis === 'x' ? c : at, mz = axis === 'x' ? at : c;
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.9, d), i % 2 ? palletMat : palletMatDark);
+        m.position.set(mx, deckTop + 0.45, mz); m.castShadow = true; grp.add(m);
+        list.push({ minX: mx - w / 2 - 0.04, maxX: mx + w / 2 + 0.04, minZ: mz - d / 2 - 0.04, maxZ: mz + d / 2 + 0.04,
+                    h: 0.9, surface: 'hard', baseY: deckTop, noStand: true });
+      }
+    }
+    merlons('x', frontZ, leftX, rightX);
+    merlons('z', leftX, deckMinZ, deckMaxZ);
+    merlons('z', rightX, deckMinZ, deckMaxZ);
+    {   // the rail along the deck's back edge, over the inside of the fort
+      const rz = facing > 0 ? deckMinZ : deckMaxZ, rl = deckMaxX - deckMinX;
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(rl, 0.1, 0.08), palletMatDark);
+      rail.position.set((deckMinX + deckMaxX) / 2, deckTop + 0.85, rz); grp.add(rail);
+      for (const px of [deckMinX + 0.06, (deckMinX + deckMaxX) / 2, deckMaxX - 0.06]) {
+        const rp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.08), postMat);
+        rp.position.set(px, deckTop + 0.45, rz); grp.add(rp);
+      }
+      list.push({ minX: deckMinX, maxX: deckMaxX, minZ: rz - 0.08, maxZ: rz + 0.08, h: 0.9, surface: 'hard', baseY: deckTop, noStand: true });
+    }
+    {   // the ramp: a 0.2 m step at the back corner (0.6 m deep, stepped onto from the side), up to 2.6 m, then a landing
+      const z0 = inBack + facing * 0.15, z1 = inFront - facing * 0.15, LAND = 0.85, y0 = 0.2;
+      const FOOT = 0.6 / Math.abs(z1 - z0), zF = z0 + (z1 - z0) * FOOT;
+      const zL = z0 + (z1 - z0) * LAND, run = Math.abs(zL - zF), rise = deckTop - y0;
+      const rx = (stripIn + stripOut) / 2, slope = Math.atan2(rise, run), len = Math.hypot(run, rise);
+      const board = new THREE.Mesh(new THREE.BoxGeometry(RW - 0.04, 0.06, len), plankMat);
+      board.position.set(rx, (y0 + deckTop) / 2 - 0.03, (zF + zL) / 2);
+      board.rotation.x = -facing * slope; board.castShadow = board.receiveShadow = true; grp.add(board);
+      for (let d = 0.3; d < len - 0.1; d += 0.35) {   // cleats to step on
+        const f = d / len, cl = new THREE.Mesh(new THREE.BoxGeometry(RW - 0.1, 0.04, 0.05), postMat);
+        cl.position.set(rx, y0 + rise * f + 0.01, zF + (zL - zF) * f); cl.rotation.x = -facing * slope; grp.add(cl);
+      }
+      const land = new THREE.Mesh(new THREE.BoxGeometry(RW - 0.04, deckT, Math.abs(z1 - zL) + 0.1), plankMat);
+      land.position.set(rx, deckTop - deckT / 2, (zL + z1) / 2); land.castShadow = true; grp.add(land);
+      const stepM = new THREE.Mesh(new THREE.BoxGeometry(RW - 0.04, y0, Math.abs(zF - z0) + 0.15), plankMat);
+      stepM.position.set(rx, y0 / 2, (z0 + zF) / 2 - facing * 0.075); stepM.receiveShadow = true; grp.add(stepM);
+      for (const f of [0.45, 1]) {   // posts under the board and the landing, on the open side
+        const ph = y0 + rise * f, pz = zF + (zL - zF) * f;
+        const pp = new THREE.Mesh(new THREE.BoxGeometry(0.1, ph, 0.1), postMat);
+        pp.position.set(stripOut + s * 0.06, ph / 2, pz); grp.add(pp);
+      }
+      list.push({ minX: Math.min(stripIn, stripOut), maxX: Math.max(stripIn, stripOut), minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1),
+                  h: deckTop, surface: 'hard', baseY: 0, bbPass: true, ramp: { z0, z1, y0, y1: deckTop, foot: FOOT, land: LAND } });
+    }
     // Asymmetric extra: Team A gets a tire stack out front; Team B a lean-to.
     if (o.frontTires) {
       for (let i = 0; i < 3; i++) {
@@ -15518,17 +15579,10 @@ function buildHollowScene(variant, timeOfDay) {
       list.push({ minX: cx - 2.1, maxX: cx - 1.1, minZ: frontZ + facing * 1.2 - 0.5,
                   maxZ: frontZ + facing * 1.2 + 0.5, h: 1.1, surface: 'hard', baseY: 0 });
     }
-    if (o.leanTo) {
-      const lean = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 2.4), plywoodMat);
-      lean.position.set(rightX + 0.9, 1.3, cz);
-      lean.rotation.z = 0.5; lean.castShadow = true; grp.add(lean);
-      const lp = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.6, 6), postMat);
-      lp.position.set(rightX + 1.8, 0.8, cz); grp.add(lp);
-    }
     // FLAG — pole + triangular pennant in the team color, at the back corner.
     const flagX = cx - lookoutSide * (W / 2 - 0.6);
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.6, 6), postMat);
-    pole.position.set(flagX, 1.8, backZ);
+    pole.position.set(flagX, 1.8, backZ - facing * 0.3);   // v1.259: behind the back wall, not in it
     grp.add(pole);
     const pennant = new THREE.Mesh(
       new THREE.BufferGeometry().setFromPoints([
@@ -15538,7 +15592,7 @@ function buildHollowScene(variant, timeOfDay) {
     );
     pennant.geometry.setIndex([0, 1, 2]);
     pennant.geometry.computeVertexNormals();
-    pennant.position.set(flagX + 0.06, 3.3, backZ);
+    pennant.position.set(flagX + 0.06, 3.3, backZ - facing * 0.3);
     grp.add(pennant);
     // Seat the whole fort group on terrain (use the back-center ground height).
     // v1.36b: ADD fortGy to each AABB's LOCAL baseY (was overwriting it, which
@@ -15546,16 +15600,19 @@ function buildHollowScene(variant, timeOfDay) {
     // shoot-through gaps). Now local [0, winB, winT] bands lift together.
     const fortGy = groundY(cx, backZ);
     grp.position.y += fortGy;
-    for (const ob of list) ob.baseY = (ob.baseY || 0) + fortGy;
+    for (const ob of list) {
+      ob.baseY = (ob.baseY || 0) + fortGy;
+      if (ob.ramp) { ob.ramp.y0 += fortGy; ob.ramp.y1 += fortGy; }   // v1.259
+    }
     scene.add(grp);
     return list;
   }
   // Team A fort — NORTH end (z≈-30), front/port faces SOUTH (+z toward midfield),
-  // RED flag, lookout LEFT, tires out front.
+  // RED flag, ramp on the LEFT (v1.259), tires out front.
   fortObs.push(...addFort(-2, -30, { facing: 1, flagColor: 0xc0392b, lookoutSide: -1, frontTires: true }));
   // Team B fort — SOUTH end (z≈30), front/port faces NORTH (-z toward midfield),
-  // BLUE flag, lookout RIGHT, plywood lean-to.
-  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1, leanTo: true }));
+  // BLUE flag, ramp on the RIGHT (v1.259: the lean-to is gone).
+  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1 }));
 
   // ===================================================================
   // ANCHORS & SPAWNS
@@ -26076,7 +26133,16 @@ const JUMP_VEL = 4.2;
 // on and stood on (boxes, bins, low walls). A jump rises about 0.74 m, so a 1 m wall needs a step up first.
 // Kids stay on the ground (they call collidesObstacles without a foot height).
 const STAND_MAX_H = 1.05;
-function isStandable(o) { return !o.bbPass && !o.noStand && (o.h ?? 5) <= STAND_MAX_H; }
+function isStandable(o) { return !!o.ramp || (!o.bbPass && !o.noStand && (o.h ?? 5) <= STAND_MAX_H); }
+// v1.259 (D.42): a ramp obstacle's top is level at ramp.y0 for its `foot` fraction from z0 (the step), rises to ramp.y1
+// at its `land` fraction of the way to z1, then is level to z1 (the landing). The player walks up it, stepping up to RAMP_STEP at a time (a kid's terrain foot
+// meets its 0.2 m first step and is stopped).
+const RAMP_STEP = 0.3;
+function obsTopAt(o, x, z) {
+  if (!o.ramp) return (o.baseY ?? 0) + (o.h ?? 5);
+  const R = o.ramp, t = Math.max(0, Math.min(1, (z - R.z0) / (R.z1 - R.z0)));
+  return R.y0 + (R.y1 - R.y0) * Math.max(0, Math.min(1, (t - (R.foot || 0)) / (R.land - (R.foot || 0))));
+}
 
 // v1.26 STAMINA tuning (seconds). Base values; shoes scale these.
 const STAMINA_MAX_BASE = 6.0;       // seconds of continuous sprint at base
@@ -26698,10 +26764,11 @@ function blockingObstacle(x, z, r, footYOverride = null) {
   for (const o of obs) {
     if (obsOverlapsXZ(o, x, z, r)) {
       const oBase = o.baseY ?? 0;
-      const oTop = oBase + (o.h ?? 5);
+      const oTop = o.ramp ? obsTopAt(o, x, z) : oBase + (o.h ?? 5);   // v1.259: a ramp's top where he stands
       // Vertical overlap test (skip when no terrain so behaviour is unchanged).
       if (Game.scenario.groundY || footYOverride != null) {
-        if (oTop <= footY + 0.05 || oBase >= headY) continue; // below feet / above head
+        const step = (o.ramp && footYOverride != null) ? RAMP_STEP : 0.05;   // v1.259: the player walks up a ramp
+        if (oTop <= footY + step || oBase >= headY) continue; // below feet / above head
       }
       return o;
     }
@@ -26716,8 +26783,8 @@ function playerSupportY(x, z, footY, r) {
   let y = scenarioGroundY(x, z);
   for (const o of (Game.player.obstacles || [])) {
     if (!isStandable(o)) continue;
-    const top = (o.baseY ?? 0) + (o.h ?? 5);
-    if (top <= y || top > footY + 0.1) continue;
+    const top = obsTopAt(o, x, z);   // v1.259: a ramp's top where he stands
+    if (top <= y || top > footY + (o.ramp ? RAMP_STEP : 0.1)) continue;
     if (obsOverlapsXZ(o, x, z, r)) y = top;
   }
   return y;
