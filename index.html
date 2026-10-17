@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.262</div>
+  <div class="version">v1.263</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -28630,6 +28630,9 @@ function shotWhileOut(c, bb) {
 function applyBBHit(bb, c) {
   if (c === Game.player) {
     if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
+    // v1.263 (decisions "A trade on the last tag counts as a loss", Michael: A, 16 Oct): once the round is won (your
+    // last tag landed and the win waits its 600 ms to show), a BB already in the air no longer tags you: a trade is yours.
+    if (Game.scenario.wonRound === Game.roundSeq && Game.mode === 'scenario') return true;
     Game.player.hitsTaken++;
     if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
     if (Net.active && Net.phase === 'play') netSend({ t: 'ht', n: Game.player.hitsTaken,   // v1.230: your friend tagged you
@@ -29976,6 +29979,7 @@ function eliminateEnemy(e) {
 // Game.roundSeq (bumped in startScenario), not by the object.
 function endScenarioLater(outcome, ms) {
   const round = Game.roundSeq;
+  if (outcome === 'win') Game.scenario.wonRound = round;   // v1.263 (decisions "A trade on the last tag", Michael: A): see applyBBHit
   setTimeout(() => { if (Game.mode === 'scenario' && Game.roundSeq === round) endScenario(outcome); }, ms);
 }
 

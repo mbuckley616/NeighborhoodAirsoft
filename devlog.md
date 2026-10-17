@@ -11346,3 +11346,23 @@ Half is rounded down to the dollar.
 ### Still open
 - Whether 3 matches is the right window, and whether the parts should come off into your box instead of being sold
   (today they go with the gun, as the card said).
+
+## v1.263 — A trade on the last tag goes to you
+Decisions, "A trade on the last tag counts as a loss" (critic, 16 Oct; Michael: A, a trade goes to you). When you tagged
+the last kid, the win waited 600 ms so the tag showed on screen, and a BB of his already in the air that landed inside
+it ended the round YOU'RE OUT (v1.90's "the first ending stands"); in Seth's House the critic's bot lost 9 of 12 rounds
+that way, his BB landing 16–50 ms after the tag. Now `endScenarioLater` marks the round won (`Game.scenario.wonRound`,
+by `Game.roundSeq`) the moment a win is scheduled, and `applyBBHit` lets a BB on you through without a tag while it is.
+It covers every delayed win: the last kid in a 1v1, the other side wiped in a team battle, their VIP out, the last
+flag home. A tag on you before your last tag lands still puts you out, and the round still ends once.
+### Verified
+- `tests/last-tag-trade.test.mjs` (new, 6 checks) in Seth's House with a real BB of Seth's 1.2 m from your chest at
+  40 m/s: with nothing else it tags you (YOU'RE OUT); with your tag on Seth landing first, the round is won at once,
+  the BB lands two steps later with no tag (hits 0, the BB gone) and the round ends YOU GOT THEM; tagged before your
+  tag, still YOU'RE OUT.
+- `tests/one-ending.test.mjs`: its two v1.90 checks that a BB inside the 600 ms made it YOU'RE OUT (the 1v1 and the
+  team battle) now expect the win, with one ending and one payout, as the decision says; the other three pass as they
+  were.
+- The full suite: see v1.264.
+### Still open
+- Nothing for a playtest beyond whether it feels fair: a kid's BB that lands 0.6 s after your last tag no longer counts.
