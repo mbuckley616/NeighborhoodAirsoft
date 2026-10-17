@@ -18,6 +18,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
   on-screen hint would read "d-pad" on a pad.
 
+- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
+  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
+  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
+  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
+  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
+  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
+  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
+  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
+  - D) Different (say in a note)
+  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
+
 ## Answered
 
 - **A trade on the last tag is a loss (critic, 2026-10-16)**
