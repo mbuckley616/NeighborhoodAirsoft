@@ -7,6 +7,13 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
+  In the Hollow only the trees can hide a start, and its forest is not the same every time: the first match built after
+  the game loads draws its trees differently from every later one, so 4–10 of the 45 kid pairs can see each other from
+  their starts. A) fix the drift (seeded random numbers for the map builders, every layout the same on every load), then
+  hide the Hollow's ten starts; B) leave it; C) cover at the starts. Builder's lean: A.
+  Michael: **A — Fix the drift, then hide the Hollow's starts**. (2026-10-17)
+
 - **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
   You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
   something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
