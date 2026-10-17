@@ -170,8 +170,10 @@ Fable card on the control room and Michael starts it from there.
    now for teammate lines (D.9's teammate voices); push-to-talk belongs with online play (D.2, held). Michael: **A**, teammates
    out of earshot over the walkie, a walkie on your kid's belt; push-to-talk waits for online (control room, 3 Oct).
    ~~The walkie on your kid~~ — done, v1.149 (a yellow walkie on the left hip of the Loadout kid, labelled HIP, and at
-   your hip in a match, seen when you look down; `tests/walkie.test.mjs`). The callouts over it wait on the voices
-   build (D.9, PR #22) reaching main.
+   your hip in a match, seen when you look down; `tests/walkie.test.mjs`). ~~The callouts over it~~ — done, v1.268 (a
+   teammate past earshot, 24 m, is heard over the walkie instead of not at all: the talk button's click, his voice, the
+   line on the squad box; one walkie line every 4 s at most; enemies and free-for-alls unchanged;
+   `tests/walkie-callouts.test.mjs`). D.10 A is complete; push-to-talk waits for online play (D.2).
 11. ~~What next after the walkie (builder, 3 Oct). Michael: **A**, the critic's "last kid comes looking" (proposals,
    1 Oct; control room, 4 Oct).~~ — done, v1.152 (in team and kill-all rounds the last one or two kids of a side who
    neither move 2 m nor fire with a line for 25–30 s march to find you; an advancing kid stuck in a pocket twice

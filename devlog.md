@@ -11534,3 +11534,34 @@ The props and trees moving once showed up two old faults the full suite caught:
 - Every map's props, cars and trees stand in a third layout, the same on every load now, but nobody has looked at it
   on screen; suites that read a spot near a prop held, and the stuck sweeps found nothing new.
 - The Hollow starts you 11 m further into the west woods in the Ten-Way; whether it opens too slowly, as v1.265 asked.
+
+## v1.268 — Teammates out of earshot come in over the walkie
+Backlog D.10 (Michael: A, 3 Oct: teammates' lines in earshot as they are, out of earshot over the walkie; a walkie on
+your kid's belt, done in v1.149; push-to-talk waits for online play). The callouts waited on the voices build reaching
+main, which it did on 16 Oct. Until now a kid's line past 24 m (`tryNpcSpeak`'s earshot gate) went unsaid, so a
+teammate across the map never spoke at all. Now a teammate's line from past earshot is said over the walkie: the talk
+button's click, his voice at the walkie's level wherever he is, and the line on the squad box under the order
+("📻 Trey: …"), as your squad order's answer already was (v1.248). Every situation he has comes this way (spotting a
+kid, tagging one, being tagged, being pressed, the teammate lines), except a free-for-all, where nobody is on your side,
+and Infection's taggers. One walkie line every 4 s at most (`WALKIE_GAP`), so a far fight is not a radio play; an
+order's answer holds the walkie the same 4 s, longer than it shows (3.5 s), so chatter never writes over it. Enemies
+out of earshot still go unsaid.
+On the way, a slip from v1.248: an order's walkie answer set the speech cooldowns on wall time (`performance.now()`),
+when since v1.150 they run on the round clock. In play the page is older than the round, so after an order every kid
+in earshot went quiet until the round clock caught up with the page's age (a page open 10 minutes: 10 minutes of
+silence, i.e. the rest of the round). The pool noodle's line (`kidSayLine`) had the same slip. Both are on the round
+clock now.
+### Verified
+- `tests/walkie-callouts.test.mjs` (new), Winnmark's 3v3: a teammate 200 m off is heard over the walkie and shows on
+  the squad box; a second walkie line 2 s later waits, 4.1 s later goes out; an enemy 200 m off goes unsaid; a teammate
+  5 m off speaks where he stands; after an order the cooldowns are 1.5 s and 4 s on the round clock (old file: −26.9 s,
+  the page's age against the round's); a walkie line 2.5 s after an order waits and the answer stays; in Every Kid for
+  Themselves a kid 200 m off goes unsaid. Two played rounds of 60 s standing at the start: 1–2 walkie lines each, all
+  teammates, 39 s apart where two. On the old file the suite fails five of these checks (no walkie lines in play).
+- The full suite: 149 of 169 in four parallel shards, 0 checks failed; the shards' wrapper hit its hour before the
+  last 20 ran, and those, the three it cut off and `stuck-sweep-7` (a Playwright page-load timeout) passed three at a
+  time: 169 of 169.
+### Still open
+- How the walkie sounds next to the near voices in a real browser (headless has no voices), and whether one line every
+  4 s is too much or too little in the 6v6 Last Saturday.
+- Push-to-talk, with online play (D.2).

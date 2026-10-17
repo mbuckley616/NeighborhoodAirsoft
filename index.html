@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.267</div>
+  <div class="version">v1.268</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4457,8 +4457,9 @@ function kidSayLine(e, line) {
     u.rate = 1.15; u.pitch = 1.15;
     u.volume = 0.5 * vol * Settings.effects;
     speechSynthesis.speak(u);
-    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
-    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
+    const now = Game.scenario?.roundTime || 0;   // v1.268: on the round clock, as tryNpcSpeak's (v1.150)
+    VOICE.globalCooldownUntil = now + 1.5;
+    e._voiceCooldownUntil = now + 4.0;
   } catch (err) {}
 }
 function playNoodleWhoosh() {
@@ -5693,7 +5694,16 @@ const VOICE = {
   voicesCache: null,
   recentLines: [],          // v1.150: the last two lines anyone said (pickVoiceLine)
   log: [],                  // v1.150: the last 64 lines spoken, {t, charId, name, category, line} (tests)
+  walkieUntil: 0,           // v1.268 (D.10): the next walkie line not before this (round clock), reset by startScenario
 };
+// v1.268 (backlog D.10, Michael: A): a teammate out of earshot comes in over the walkie instead of going unsaid,
+// at most one walkie line every WALKIE_GAP seconds so a far-off fight is not a radio play
+const WALKIE_GAP = 4;
+function overWalkieMate(e, category) {
+  const S = Game.scenario;
+  if (!S || S.ffa || category === 'infection' || category === 'shotWhileOut') return false;
+  return e.team === 'player' && e.behavior !== 'tagger' && !e.remote;
+}
 
 function ttsGetVoices() {
   if (typeof speechSynthesis === 'undefined') return [];
@@ -5776,7 +5786,9 @@ function tryNpcSpeak(enemy, category, fill) {
   // and the words at attenuated volume so they don't dominate the soundscape.
   const VOICE_AUDIBLE_RANGE = 24;   // meters — past this we just don't speak
   const { vol: posVol } = positionalAudio(enemy.pos.x, enemy.pos.z, VOICE_AUDIBLE_RANGE);
-  if (posVol < 0.12) return false;  // too quiet to bother → don't speak (Option B; ~25m cutoff)
+  const walkie = posVol < 0.12 && overWalkieMate(enemy, category);   // v1.268 (D.10)
+  if (posVol < 0.12 && !walkie) return false;  // too quiet to bother → don't speak (Option B; ~25m cutoff)
+  if (walkie && now < VOICE.walkieUntil) return false;
   // v1.151: the line is picked after the earshot gate, so a kid's recent-lines memory holds only lines he was
   // heard to say (a pick for a kid out of range used to fill it, and a heard line could come round again).
   const line = pickVoiceLine(enemy.charId, category, enemy);
@@ -5787,8 +5799,18 @@ function tryNpcSpeak(enemy, category, fill) {
   // to speak, so headless Chromium (no voices, silent) and a real browser pace the kids the same way.
   VOICE.globalCooldownUntil = now + 1.5;
   enemy._voiceCooldownUntil = now + 4.0;
-  VOICE.log.push({ t: +now.toFixed(2), charId: enemy.charId, name: enemy.name || enemy.character?.name, category, line, said });
+  VOICE.log.push({ t: +now.toFixed(2), charId: enemy.charId, name: enemy.name || enemy.character?.name, category, line, said, ...(walkie ? { walkie: true } : {}) });
   if (VOICE.log.length > 64) VOICE.log.shift();
+  if (walkie) {
+    // v1.268 (D.10): over the walkie: the talk button's click, his voice flat and from nowhere, and the line on the
+    // squad box under the order (an order's answer holds the walkie WALKIE_GAP, longer than it shows, so is never
+    // written over)
+    VOICE.walkieUntil = now + WALKIE_GAP;
+    Game.scenario.squadReply = { name: enemy.name || enemy.character?.name, line: said, until: now + 3.5 };
+    updateSquadHud();
+    walkieVoice(enemy, said);
+    return true;
+  }
   if (typeof speechSynthesis === 'undefined') return true;
 
   try {
@@ -23490,7 +23512,7 @@ function startScenario(built) {
   Game.mode = 'scenario';
   Game.roundSeq = (Game.roundSeq || 0) + 1;   // v1.90: identifies this round for endScenarioLater
   Game.scenario.roundTime = 0;   // v1.101: simulated seconds since BEGIN (drives the opening hold)
-  VOICE.globalCooldownUntil = 0; VOICE.recentLines = []; VOICE.pending = [];   // v1.150: the speech cooldown runs on the round clock (v1.256: no lines left waiting)
+  VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; VOICE.recentLines = []; VOICE.pending = [];   // v1.150: the speech cooldown runs on the round clock (v1.256: no lines left waiting)
   Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
   { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
@@ -29150,6 +29172,15 @@ function giveSquadOrder(key) {
 }
 // a walkie line: heard wherever he is (no distance cut-off), a click of the talk button first
 function squadWalkieSay(e, line) {
+  // v1.268: the cooldowns on the round clock, as every other line's (v1.150); on wall time they ran a page's age
+  // ahead of the round, and every kid in earshot went quiet for the round's first minutes after an order
+  const now = Game.scenario?.roundTime || 0;
+  VOICE.globalCooldownUntil = now + 1.5;
+  e._voiceCooldownUntil = now + 4.0;
+  VOICE.walkieUntil = now + WALKIE_GAP;
+  walkieVoice(e, line);
+}
+function walkieVoice(e, line) {   // v1.268: the sound of a walkie line, split out of squadWalkieSay
   try {
     if (Game.audio?.ctx) {
       const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
@@ -29164,8 +29195,6 @@ function squadWalkieSay(e, line) {
     u.rate = 1.15; u.pitch = 1.1;
     u.volume = 0.45 * Settings.effects;
     speechSynthesis.speak(u);
-    VOICE.globalCooldownUntil = performance.now() / 1000 + 1.5;
-    e._voiceCooldownUntil = performance.now() / 1000 + 4.0;
   } catch (err) { /* no audio: the HUD still shows the line */ }
 }
 function updateSquadHud() {
