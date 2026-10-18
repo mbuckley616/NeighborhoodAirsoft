@@ -11586,3 +11586,21 @@ toward a goal (about a millisecond each) still run when they are needed.
 ### Still open
 - BEGIN itself now takes the build's 50–550 ms on the click, before the first frame of the match; nobody has felt
   whether that shows on a slow machine.
+
+## v1.270 — Price Check's stockroom check allows a fight taken into the stockroom
+Backlog Found in play (producer, 16 Oct; CI on docs-only PR #83): `tests/grocery-store.test.mjs` failed in CI, first
+"store_price_check_3v3: the stockroom kids come through the back wall onto the floor", then on the re-run "store_night_4v4:
+no kid is wedged in advancing for 4 s or more" (Tyler, 4 s at (−0.8, −25.2)). Price Check, 30 sampled 60 s rounds with
+the player standing at the start: the first stockroom kid reached the floor at 8.7–27 s in 28, at 41.7 s in one, and
+in one none came out at all. In that round Eric went through the back wall at 15 s and Brooke at 42 s, and the three
+stockroom kids lost 3 lives each to our 0: the fight happened in the stockroom because our side carried it there.
+That is the match working, so the check now passes when they come out, or when one of ours goes in and they lose a
+life. The game is unchanged. The night match's wedge did not come up in 24 sampled rounds (no kid over 2 s advancing
+in place); it stays open with the numbers.
+### Verified
+- `tests/grocery-store.test.mjs` passes with the new check; the round that failed it would now pass (Eric in at 15.2 s,
+  their side 9 lives lost).
+- The full suite in four parallel shards, with v1.269 in it: 170 of 170 passed first time, `kid-cells` and
+  `grocery-store` among them (64 minutes).
+### Still open
+- The night 4v4's Tyler wedge at the centre doorway, not reproduced in 24 rounds.
