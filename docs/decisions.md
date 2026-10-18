@@ -5,6 +5,57 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
+  Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
+  (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
+  the same way round: up push up, right find cover, down keep distance, left follow me.
+  - A) **The d-pad gives the orders:** a press is that direction's order at once (the wheel flashes it and a teammate
+    answers on the walkie); slots stay on Y/RB (next) and LB (back). Fastest; costs the d-pad's straight-to-a-slot
+  - B) **Hold the d-pad for the wheel:** a tap still picks a slot; held 0.3 s the wheel opens, the right stick points
+    at an order, letting go gives it. Keeps both, but a slow press in a fight swaps your gun
+  - C) **Click the right stick (R3) for the wheel:** R3 is free; hold it, point the right stick, let go. The d-pad keeps
+    the slots, but you can't look around while picking (as with Q and the mouse)
+  Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
+  on-screen hint would read "d-pad" on a pad.
+
+- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
+  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
+  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
+  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
+  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
+  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
+  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
+  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
+  - D) Different (say in a note)
+  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
+
+- **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
+  Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
+  BBs from Sean's eight spots reach her at seven places in the fort (it was 1–36 of 960 at each). The cost: her pistol's muzzle is
+  1.05 m up, so she can't see over a 1.5 m stack either. From her spot she no longer sees the lane west of the fort (all
+  four test spots there, 12 m out and closer), only the bulb's north side, its south-west corner and the open back. So a
+  player coming up the lane isn't shot at by her any more and has to go round the fort to tag her. A slit at her eye
+  height, so she could shoot through, doesn't work: hill BBs come through it at her chest, 2–32 per 960, the same as no
+  stack. Seeing down the lane and being safe from the hill can't both be true at her spot.
+  - A) **Keep it as built:** she is a VIP you flush out of a fort; the lane is safe from her but the fort's sides aren't
+  - B) **A lower stack, 1.3 m:** she sees and fires over it standing, as before; the hill can tag her again, less often
+    (to be measured)
+  - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
+  Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
+
+- **Controller: the on-screen hints still name keyboard keys (builder, 2026-10-18, backlog D.38)**
+  D.38's matches and screens work on a pad (v1.241–v1.242). Its leftover was "pad button names in the on-screen hints,
+  and the workbench and Loadout drags, if you want them". Today, with a pad in hand, only the range bench and the
+  squad-order hint switch to pad names. Still keyboard-only: the E prompt at every door, the shop, mirror, bed and
+  board (it should say A), the treehouse's W climb / S down / Space let go, the tutorial's six steps (WASD, Shift,
+  Right-Mouse, Left-Mouse, R), and the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens
+  a pad can click but can't drag a part onto the gun or turn the kid.
+  - A) **The hints only:** every prompt above names the pad's button while the pad is in use, and goes back to the key
+    when you touch the keyboard or mouse. About one session
+  - B) **The hints, then the drags:** A, then the workbench's parts and the Loadout kid move with the sticks. Two
+  - C) **Leave it:** the pad works; the words are a small thing
+  Builder's lean: A. You play on a pad, and it is the first thing a pad player reads; the drags have click ways round them.
+
 ## Answered
 
 - **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
@@ -82,12 +133,37 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     Winnmark's finale, where Seth is still your teammate, is the exception to the finale rule or where he turns; whether
     a finale's extra kids grow with your crew on a replay; the exact joining matches.
 
+- **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
+  Bunratty Court climbs about 7 m from the bulb to the west end. Priya (their VIP) holds the bulb fort behind its back
+  wall, 1.12 m tall; our Sean's AK fires from the high street 30–41 m west, downhill, and clears that wall. In 196
+  sampled rounds she went out 3 times (9.4, 15.1 and 31.1 s), all to Sean from up the slope; Ryan never. Rarely it is
+  inside the first 8 s (2.9 s once in about 70 rounds on a Windows desktop, 5.6 s on CI), which breaks your "no VIP
+  falls in the first 8 s" line and fails the VIP suite now and then. It is Owen's spawn in v1.178 and Rebecca's spot
+  in Night Shift (v1.175) again.
+  - A) **Taller cover at her spot:** a stacked-plank barricade 1.5 m tall in the fort, as Night Shift's dumpster; she
+    stays "behind the plank" as the briefing says, and the shots that tag her come from the bulb's own level
+  - B) **Move her spot out of the hill's line:** behind the east car beside Owen's start; the briefing's "behind the
+    plank" changes
+  - C) **Leave it:** a lucky long shot on the VIP is part of the game; the suite's 8 s line is loosened for this match
+  Builder's lean: A. It keeps the match as written and fixes the cause, as the dumpster did for Rebecca.
+  Michael: **A) Taller cover at her spot** (18 Oct 2026; on the control room). Built in v1.272.
+
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
-  In the Hollow only the trees can hide a start, and its forest is not the same every time: the first match built after
-  the game loads draws its trees differently from every later one, so 4–10 of the 45 kid pairs can see each other from
-  their starts. A) fix the drift (seeded random numbers for the map builders, every layout the same on every load), then
-  hide the Hollow's ten starts; B) leave it; C) cover at the starts. Builder's lean: A.
-  Michael: **A — Fix the drift, then hide the Hollow's starts**. (2026-10-17)
+  Your A on the free-for-all starts is built on all four maps (v1.265): every start 18 m or more from every other, no
+  kid with your start as his nearest, the Pickup Game's sizes too, and on Winnmark, Bunratty and the lot nobody in
+  sight of anybody. In the Hollow only the trees can hide a start, and its forest is not the same every time: the first
+  match built after the game loads draws its trees differently from every later one (three.js uses the same random
+  numbers the map's seed does, so the first build shifts the layout; it also moves a parked car or a yard prop on the
+  street maps, filed in Found in play). Today your start is hidden from every kid's after the first match, but 4–10 of
+  the 45 kid pairs can see each other from their starts (was 12–13, with Brooke 14.7 m from you).
+  - A) **Fix the drift:** the map builders get their own seeded random numbers, so every match's layout is the same on
+    every load (as v1.76 meant), then hide the Hollow's ten starts in that forest. Moves every map's props and trees
+    once, to their "later build" places
+  - B) **Leave it:** the Hollow keeps the distances and your hidden start; kids may see each other from the start
+  - C) **Cover at the starts:** a fixed brush pile or log stack at each Hollow start, the same every build
+  Builder's lean: A. It makes the board the same every time you replay a match, which v1.76 promised and the first
+  match of a session breaks, and it lets the rule hold in the woods.
+  Michael: **A) Fix the drift** (control room, 17 Oct 2026) — done, v1.267
 
 - **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
   You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or

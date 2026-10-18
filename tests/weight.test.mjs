@@ -37,7 +37,7 @@ for (const id of MATCHES) {
         const v = step * 60;
         let h = hist.get(e); if (!h) { h = []; hist.set(e, h); }
         h.push(v);
-        if (v > 0.3) {
+        if (v > 0.3 && !e._wince) {   // v1.261 (D.45): a flinch from a hit is not a lean into the move
           out.moveFrames++;
           const lean = Math.max(Math.abs(e.mesh.group.rotation.x), Math.abs(e.mesh.group.rotation.z));
           out.leanMax = Math.max(out.leanMax, lean);

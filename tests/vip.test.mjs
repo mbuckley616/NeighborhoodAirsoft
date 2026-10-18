@@ -109,6 +109,37 @@ check("Night Shift: it blocks her chest-high line to Mason's lane at x -14 and t
   dumpVip.lane && dumpVip.fromStoreW, dumpVip);
 check('the other lot night match has nothing there, one obstacle fewer', dumpLot.n === 0 && dumpLot.obs === dumpVip.obs - 1, dumpLot);
 
+// v1.272 (Found in play, Michael: A): Bunratty Court climbs about 7 m to the west end, and Sean fired downhill from
+// 30–41 m over the bulb fort's 1.12 m back wall to tag Priya (3 of 196 rounds, now and then inside 8 s). Protect Ryan
+// gets a 1.5 m stacked-plank barricade inside the back wall, the cover she holds; the court is otherwise laid out as before.
+const bar = await page.evaluate(() => {
+  const sig = (obs) => obs.map(o => [o.minX, o.maxX, o.minZ, o.maxZ, o.h].map(v => (+v || 0).toFixed(2)).join(',')).sort();
+  const mk = (arg) => withSeededRandom('bunratty_vip|default', () => buildBunrattyCourtScene(arg, 'day')).obstacles;
+  const a = sig(mk('default')), b = sig(mk('vip'));
+  const extra = b.filter(k => !a.includes(k)), gone = a.filter(k => !b.includes(k));
+  return { extra, gone };
+}).catch(e => ({ err: String(e) }));
+await g.scenario('bunratty_vip');
+const sight = await page.evaluate(() => {
+  const gyf = Game.scenario.groundY, obs = Game.player.obstacles, p = Game.scenario.enemies.find(e => e.name === 'Priya');
+  const at = obs.filter(o => o.h === 1.5 && o.minX > 28.8 && o.maxX < 30.6 && o.minZ < p.pos.z && o.maxZ > p.pos.z);
+  const gy = gyf(p.pos.x, p.pos.z);
+  const lines = (list) => { let n = 0, chest = 0, head = 0;
+    for (let x = -20; x <= 22; x++) for (let z = -8; z <= 8; z++) {
+      if (Math.hypot(x - p.pos.x, z - p.pos.z) < 20) continue;
+      const y = gyf(x, z); if (y - gy < 2) continue;   // up the hill, 2 m or more above her
+      n++; if (hasLineOfSight(x, y + 1.3, z, p.pos.x, gy + 1.0, p.pos.z, list)) chest++; if (hasLineOfSight(x, y + 1.3, z, p.pos.x, gy + 1.45, p.pos.z, list)) head++; }
+    return { n, chest, head }; };
+  return { n: at.length, h: at[0] && at[0].h, cover: !!(at.length && p.homeCover === at[0]), off: +Math.hypot(p.pos.x - p.anchorPos.x, p.pos.z - p.anchorPos.z).toFixed(2),
+    now: lines(obs), without: lines(obs.filter(o => !at.includes(o))) };
+});
+console.log('   Protect Ryan barricade:', JSON.stringify(bar), JSON.stringify(sight));
+check("Protect Ryan: a 1.5 m barricade stands inside the bulb fort's back wall at Priya's spot, and it is the cover she holds",
+  sight.n === 1 && sight.h === 1.5 && sight.cover && sight.off < 1, sight);
+check('Protect Ryan: from up the hill (2 m+ above her, 20 m+ off) no line reaches her chest or head; without it many do',
+  sight.now.n > 300 && sight.now.chest === 0 && sight.now.head === 0 && sight.without.chest > 100 && sight.without.head > 100, sight);
+check('Protect Ryan: the court is laid out as before, with the barricade the one obstacle added', !bar.err && bar.extra.length === 1 && bar.gone.length === 0, bar);
+
 // --- the player's respawn, its grace, and the two endings (Bunratty)
 await g.scenario('bunratty_vip');
 const resp = await page.evaluate(() => {

@@ -95,7 +95,9 @@ export async function boot(opts = {}) {
     await page.evaluate(id => enterScenario(id), id);
     await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
     await page.evaluate(() => document.getElementById('introBeginBtn').click());
-    await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 30000 });
+    // 18 Oct fix-up: 90 s, as the intro's wait above. BEGIN builds the match (and since v1.269 the kids' route grid):
+    // 1-5 s locally for the night Hollow, and CI 86d93e2 timed out at 30 s on idle-ally's fourth match in one page.
+    await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000 });
     // v1.174: updatePlayer moves no one while the mouse is unlocked, and CI's headless Chromium sometimes refuses the
     // pointer lock BEGIN asks for, so a test holding W would stand still (country-club's pool walk, 6 Oct). Tests drive
     // the keys themselves: mark the lock taken. A real pointerlockchange still overwrites it.
