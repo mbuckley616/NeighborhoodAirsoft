@@ -11604,3 +11604,19 @@ in place); it stays open with the numbers.
   `grocery-store` among them (64 minutes).
 ### Still open
 - The night 4v4's Tyler wedge at the centre doorway, not reproduced in 24 rounds.
+
+## v1.271 — a kid stops "suppressing" into the wall beside him
+CI on 623ef41 failed `hollow-held`: Eric (our side, the MP5) held fire 20 times in a round from one metre at the Hollow north
+fort's south-west corner (−1, 30), where the line is 19. Forty local rounds put him there 8–16 times in five of them.
+His deploy spot is that corner, inside the player's fort. From it he walked up and down the wall, got an eye line, and
+pulled into the wall 3 m from his muzzle. Most of those pulls were suppression on the move: the march suppression (v1.67)
+and the bound suppression (v1.25) need only an eye line to the last-seen spot, not a clear muzzle. The held count
+(v1.122) rose to 7, but only the shooting state's move-on reads it, so nothing acted on those pulls. Now a kid whose
+last two pulls were held at a wall from within 1.5 m of where he stands doesn't suppress from there; he walks on, and
+a clear shot clears the count as before.
+### Verified
+- The 40-round probe of the Hollow 3v3: the worst spot a round fell from 16 held pulls (8–16 in five rounds) to 9
+  (8 or more in two rounds; most rounds 1–4).
+- `hollow-held`, `cover-fire`, `stuck-sweep-1`, `bound-forward`, `fence-bound`, `clear-guns`, `ctf` pass.
+### Still open
+- Eric still deploys into that corner; whether that deploy spot should move is a design call, not raised yet.

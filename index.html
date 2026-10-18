@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.270</div>
+  <div class="version">v1.271</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -28494,7 +28494,7 @@ function spawnEnemyBB(enemy, targetPos) {
         // can't see past it: hold fire. v1.112: and let go of the trigger, so an
         // auto's queued follow-ups don't each try the same blocked line again.
         // v1.122: count blocked pulls in a row; the 'shooting' state moves a kid on after three.
-        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; enemy._lineHolds = (enemy._lineHolds || 0) + 1; return; }
+        if (!clear) { if (enemy.pendingBurst) enemy.pendingBurst.length = 0; enemy._lineHolds = (enemy._lineHolds || 0) + 1; enemy._lineHoldAt = { x: enemy.pos.x, z: enemy.pos.z }; return; }
         enemy._lineHolds = 0;
         if (y > muzzlePos.y + 1e-6) {
           muzzlePos.y = y;
@@ -30981,6 +30981,13 @@ function kidFieldTo(gx, gz) {
 }
 // An advancing kid's pocket rule (v1.121) fired: the second time within 10 s and 3 m, the back-out has not got him
 // out, so route him by the field to his target for 5 s instead. Returns true when he is routed.
+// v1.271: his last two pulls held at a wall within 3 m of the muzzle, from within 1.5 m of here. Suppressing on the
+// move (v1.67, v1.25) needs only an eye line to the last-seen spot, so a kid deployed into the Hollow fort's corner kept
+// "suppressing" into the wall beside him while he walked up and down it (Eric, our side: 16-20 held a round from one
+// spot, tests/hollow-held); the shooting state's move-on after three (v1.122) never saw those pulls.
+function kidLineHeldHere(e) {
+  return (e._lineHolds || 0) >= 2 && !!e._lineHoldAt && Math.hypot(e.pos.x - e._lineHoldAt.x, e.pos.z - e._lineHoldAt.z) < 1.5;
+}
 function kidPocketRoute(e, tgt) {
   const clk = Game.scenario.aiClock || 0, p = e._advPocket;
   if (p && clk - p.t < 10 && Math.hypot(e.pos.x - p.x, e.pos.z - p.z) < 3) p.n++;
@@ -31893,7 +31900,7 @@ function updateEnemies(dt) {
                 lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z,
                 tgt.obstacles
               );
-              if (losSup && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 8)) {
+              if (losSup && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 8) && !kidLineHeldHere(e)) {   // v1.271
                 const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
                 aimPt.x += (gameRandom()-0.5)*1.2; aimPt.z += (gameRandom()-0.5)*1.2;
                 // v1.74: bounding auto-gunners suppress with a short burst too.
@@ -31973,7 +31980,7 @@ function updateEnemies(dt) {
               // March-suppression reaches a bit past the weapon's far band — the
               // point is morale/pressure, not accuracy. Wider miss spread than a
               // committed shot since they're moving and the target may have moved.
-              if (losSupM && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 10)) {
+              if (losSupM && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 10) && !kidLineHeldHere(e)) {   // v1.271
                 const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
                 const spread = 1.6 + rawD * 0.02;   // looser the farther/faster they are
                 aimPt.x += (gameRandom()-0.5)*spread;
