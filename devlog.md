@@ -11565,3 +11565,24 @@ clock now.
 - How the walkie sounds next to the near voices in a real browser (headless has no voices), and whether one line every
   4 s is too much or too little in the 6v6 Last Saturday.
 - Push-to-talk, with online play (D.2).
+
+## v1.269 — The kids' route grid is built at BEGIN, not mid-fight
+Backlog Found in play (critic, 16 Oct): a frame hitch the first time a round needed the kids' distance field. The
+cells a kid fits in (`kidFreeCells`, v1.152) were worked out on the first pocket route or squad order of a round, one
+step of 48–555 ms headless depending on the map (the Hollow's big battle the worst, Bunratty and The Last Saturday
+about 350), and in The Last Saturday it landed as the fight opened. The obstacles never move in a round, so the grid is
+now built in `startScenario`, at BEGIN, where the briefing has just closed and the opening hold covers it. The grid's
+key (this match's obstacles and bounds) is unchanged, so a match that adds an obstacle still rebuilds it. The fills
+toward a goal (about a millisecond each) still run when they are needed.
+### Verified
+- `tests/kid-cells.test.mjs` (new): in The Last Saturday, the Hollow's big battle and Bunratty's 4v4 the grid is there
+  as the round starts, for that match's obstacles and bounds, and the first 6 s of play use it without a rebuild
+  (slowest step 7–15 ms; a build costs 247, 436 and 251 ms here). A PUSH UP order 1 s into Bunratty's 4v4: the next
+  step 24 ms, was 300 ms on v1.268's file, which fails all four checks (no grid at BEGIN).
+- `last-kid`, the stuck sweep's first suite (8 matches) pass. `squad-orders` failed its keep-distance share once (0.48
+  against 0.6, three browsers at once) and passed twice on this file (0.91, 0.82) and twice on v1.268's (0.75, 0.84)
+  run side by side, so it is not this change.
+- The full suite: in v1.270's entry.
+### Still open
+- BEGIN itself now takes the build's 50–550 ms on the click, before the first frame of the match; nobody has felt
+  whether that shows on a slow machine.

@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.268</div>
+  <div class="version">v1.269</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23692,6 +23692,9 @@ function startScenario(built) {
     }
   }
   if (Net.active && Net.phase === 'begin') netAfterStart();   // v1.230 (D.2)
+  // v1.269: the cells a kid fits in, worked out at BEGIN behind the opening hold, not on the first pocket route or
+  // squad order mid-fight (a 50-550 ms step, critic 16 Oct)
+  if ((Game.scenario.enemies || []).length) kidFreeCells();
 
   requestPointerLock();
 }
