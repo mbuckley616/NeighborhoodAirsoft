@@ -109,8 +109,9 @@ await g.scenario('winnmark_team_3v3');
 await g.spin(5);
 const m = await page.evaluate(() => ({ mode: Game.mode,
   ours: Game.scenario.enemies.filter(e => e.team === 'player').map(e => e.charId).sort(),
-  want: ['seth', ...CREW_ROSTER].sort() }));
-// v1.274 (D.28 step 2): the crew takes the field, so Squad Up is Seth (yours on Winnmark) and your five (tests/crew-field)
-check('a full crew plays Squad Up as Seth and your five', m.mode === 'scenario' && m.ours.join() === m.want.join(), m);
+  want: CREW_ROSTER.slice().sort(), seth: (Game.scenario.enemies.find(e => e.charId === 'seth') || {}).team }));
+// v1.274 (D.28 step 2): the crew takes the field. v1.275 (step 3): with the whole ladder done, Lights Out is too, so on
+// this replay Seth plays for the other side (tests/crew-balance)
+check('a full crew plays Squad Up as your five, with Seth on the other side', m.mode === 'scenario' && m.ours.join() === m.want.join() && m.seth !== 'player', m);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

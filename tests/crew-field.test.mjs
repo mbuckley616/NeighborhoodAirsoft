@@ -11,7 +11,9 @@ await g.spin(3);
 // Nobody in the crew: every match is exactly its own; solo matches never change, even with all five in
 const same = await page.evaluate(() => {
   const ids = Object.keys(SCENARIOS);
-  const empty = ids.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup);
+  // v1.275 (D.28 step 3): a match is tuned for the crew you'd have when you first reach it, so only matches before
+  // Eric's ask (Winnmark's) and the solo ones keep their own sides on a new game
+  const empty = ids.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup && !crewFirstTime(id).length);
   Game.persist.crew = CREW_ROSTER.slice();
   const solo = ids.filter(id => !crewTeamMatch(id));
   const soloChanged = solo.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup);
@@ -20,7 +22,7 @@ const same = await page.evaluate(() => {
   return { empty, n: ids.length, solo: solo.length, soloChanged, team: team.length,
     tut: crewTeamMatch('winnmark_tutorial'), jugg: crewTeamMatch('hollow_juggernaut'), out: crewTeamMatch('bunratty_team_2v4') };
 });
-check(`a new game: every one of the ${same.n} matches plays its own sides`, same.empty.length === 0, same.empty);
+check(`a new game: every match tuned for nobody in your crew (of ${same.n}) plays its own sides`, same.empty.length === 0, same.empty);
 check(`with all five in, the ${same.solo} solo matches (the tutorial among them) still play alone`, same.soloChanged.length === 0 && !same.tut, same.soloChanged);
 check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 31 && same.jugg && same.out, same);
 
@@ -42,10 +44,11 @@ check('each crew kid carries his own gun (Eric MP5, Sean AK, Nick AR, Alex AK, D
   s.guns.eric === 'mp5' && s.guns.sean === 'ak47' && s.guns.nick === 'ar' && s.guns.alex === 'ak47' && s.guns.diego === 'mp5', s.guns);
 // The named kid comes along until he is in the crew
 s = await sides('bunratty_team_2v1', ['eric']);
-check('You and Nick, Eric in: Nick (the named kid) and Eric with you, v Sean', s.ours.join() === 'nick,eric' && s.theirs.join() === 'sean', s);
+// v1.275: tuned for Eric, so their side keeps its margin of one: Sean and Ryan
+check('You and Nick, Eric in: Nick (the named kid) and Eric with you, v Sean and Ryan', s.ours.join() === 'nick,eric' && s.theirs.join() === 'sean,ryan', s);
 s = await sides('bunratty_team_2v1', ['eric', 'sean', 'nick']);
 check('You and Nick, Sean and Nick in: your three in the order they joined, and a street kid for Sean on the other side',
-  s.ours.join() === 'eric,sean,nick' && s.theirs.length === 1 && !['sean', 'nick', 'eric'].includes(s.theirs[0]), s);
+  s.ours.join() === 'eric,sean,nick' && s.theirs.length === 2 && !s.theirs.some(k => ['sean', 'nick', 'eric'].includes(k)), s);
 // Seth stays yours on Winnmark; a VIP stays
 s = await sides('winnmark_team_3v3', ['eric', 'sean', 'nick', 'alex', 'diego']);
 check('Squad Up, all five: Seth and your five (Trey\'s place goes to the crew)', s.ours.join() === 'seth,eric,sean,nick,alex,diego' && s.theirs.join() === 'brooke,jamie,marcus', s);
@@ -57,13 +60,15 @@ check('The Last Saturday, all five: you and your five v Seth and seven, Brooke a
   s.ours.join() === 'eric,sean,nick,alex,diego' && s.theirs.length === 8 && s.theirs.includes('brooke') && s.theirs.includes('trey') && s.match === '6V8', s);
 // A small crew: places left go to the match's own allies; a benched kid's place stays empty
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick']);
-check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth', s.ours.join() === 'eric,sean,nick,rebecca' &&
-  s.theirs.length === 6 && s.theirs.includes('brooke'), s);
+// v1.275: Brooke crossing keeps the side at the match's five (Ryan sits out), the 5 v 5 it was built as
+check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth, 5 v 5', s.ours.join() === 'eric,sean,nick,rebecca' &&
+  s.theirs.length === 5 && s.theirs.includes('brooke'), s);
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick'], ['nick']);
 check('The Big Game, Nick benched: his place stays empty, the briefing names him', s.ours.join() === 'eric,sean,rebecca' && s.benched.join() === 'Nick', s);
 s = await sides('hollow_skirmish_3v3', ['eric', 'sean']);
-check('First Time in the Woods, Sean in: Sean is yours, a street kid takes his place beside Seth', s.ours.join() === 'eric,sean' &&
-  s.theirs.length === 3 && !s.theirs.includes('sean') && s.theirs[0] === 'seth', s);
+// v1.275: tuned for Eric, Sean and Nick (4 v 4); with Nick not in, Rebecca (the match's own) fills his place
+check('First Time in the Woods, Sean in: Sean is yours, Rebecca fills the third place, Seth and three v you', s.ours.join() === 'eric,sean,rebecca' &&
+  s.theirs.length === 4 && !s.theirs.includes('sean') && s.theirs[0] === 'seth', s);
 
 // Every team match with all five: the whole crew, no kid twice, none of yours facing you, Seth's crew never beside you
 // against him, the kept kids kept, and your side at least the match's own count

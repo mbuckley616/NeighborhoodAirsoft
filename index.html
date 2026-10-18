@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.274</div>
+  <div class="version">v1.275</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7742,10 +7742,10 @@ const SCENARIOS = {
   // day 6v6, last team standing, three lives each: your crew from the west entry against Seth's crew in the bulb. It is
   // the fifth card after the store's night match and the last match of the ladder; winning it turns the calendar to
   // the big day and brings a last text.
-  last_saturday: {
+  last_saturday: {   // v1.275 (D.28 step 3): your crew v Seth and his seven, 6 v 8
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'The Last Saturday',
-    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
+    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: your crew is with you at the west end, and Seth's whole crew has the bulb: Seth, Trey, Brooke, Tyler, Evan, Andrew, Garrett and Colin. Six of you against eight, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -33736,13 +33736,76 @@ function crewStreetPool(sc) {
   }
   return [...seen].map(([charId, weapon]) => ({ charId, weapon }));
 }
+// v1.275 (D.28 step 3, Michael: A on "other side fixed or growing with your crew"): each team match is tuned for the
+// crew you would have the first time you reach it (every kid whose ask comes before it on the ladder, taken in). That
+// first-time crew sets the match's sides once: your side never smaller than it, theirs fixed. An ordinary match keeps
+// its own margin (their side grows by as many as the first-time crew adds to yours); a zone's finale has their side one
+// more than yours, the Last Saturday two more, Seth and his seven. Winnmark's finale stays 2 v 2, with Seth beside you.
+// A replay with a bigger crew is meant to be easy; a benched kid's place stays empty. Extra kids on their side come
+// from the street, Seth's crew first when Seth plays (Garrett and Colin with him once Bellfield's flags are done). On a
+// replay of Winnmark's team matches once its finale is done, Seth plays for the other side.
+const CREW_KID_GUNS = { garrett: 'ar', colin: 'mac10' };   // the two new kids' own guns (the spec: mid-high tier, cheap)
+const CREW_FOE_SIDES = { last_saturday: SETH_CREW_ROSTER };   // a side the spec names outright
+function crewLadderPos(id) {
+  const ctx = findScenarioListContext(id);
+  return ctx ? zoneLadderIndex(ctx.group) * 1000 + ctx.idx : -1;
+}
+function crewFinale(id) {
+  const ctx = findScenarioListContext(id);
+  return !!ctx && ctx.idx === ctx.ids.length - 1;
+}
+const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
+// The crew you'd have the first time you play this match: each kid whose ask comes before it on the ladder
+function crewFirstTime(id) {
+  const pos = crewLadderPos(id);
+  return CREW_ROSTER.filter(kid => { const t = SUMMER_TEXTS.find(t => t.ask === kid); return t && crewLadderPos(t.after) < pos; });
+}
+// Seth has turned rival: a Winnmark team match with him on your side, replayed once Lights Out is done
+function crewSethTurned(id) {
+  const ctx = findScenarioListContext(id);
+  return !!ctx && ctx.group === 'winnmark_court' && !!Game.persist.completed[WINNMARK_FINALE] &&
+    (SCENARIOS[id].enemySetup || []).some(es => es.charId === 'seth' && es.team === 'player');
+}
+// The gun a kid carries most across the summer (the two new kids carry their own)
+function crewKidGun(charId) {
+  if (CREW_KID_GUNS[charId]) return CREW_KID_GUNS[charId];
+  const n = {};
+  for (const [id, s] of Object.entries(SCENARIOS)) {
+    if (id === 'pickup_game' || s.tutorial) continue;
+    for (const es of s.enemySetup || []) if (es.charId === charId && es.weapon) n[es.weapon] = (n[es.weapon] || 0) + 1;
+  }
+  return Object.keys(n).sort((x, y) => n[y] - n[x])[0] || 'pistol';
+}
+// v1.275: when the street runs out of kids, the rest of the zone's, then anybody's, each on the gun he carries most
+function crewWiderPool(id) {
+  const ctx = findScenarioListContext(id), seen = new Set();
+  const ids = (ctx ? ctx.ids : []).concat(Object.keys(SCENARIOS));
+  for (const sid of ids) {
+    const s = SCENARIOS[sid];
+    if (!s || sid === 'pickup_game' || s.tutorial) continue;
+    for (const es of s.enemySetup || []) if (es.charId && es.weapon && !es.behavior && !es.statsOverride && CHARACTERS[es.charId]) seen.add(es.charId);
+  }
+  return [...seen].filter(k => !CREW_KID_GUNS[k]).map(charId => ({ charId, weapon: crewKidGun(charId) }));
+}
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
 function crewSetup(id) {
   const sc = SCENARIOS[id];
-  const crew = crewMembers();
-  if (!sc || !crew.length || !crewTeamMatch(id)) return sc ? sc.enemySetup : undefined;
-  const setup = sc.enemySetup, fielded = crewFielded();
-  const sethFoe = setup.some(es => es.charId === 'seth' && es.team !== 'player');
+  if (!sc || !crewTeamMatch(id)) return sc ? sc.enemySetup : undefined;
+  const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
+  if (!crew.length && !first.length && !turned) return sc.enemySetup;
+  const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
+  // v1.275: the first-time sides fix the match; then your crew as it is now plays it
+  const base = crewSides(id, first, first, allies.length, null, false);
+  const ours1 = base.filter(es => es.team === 'player').length + 1;
+  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1 : foes + ours1 - (allies.length + 1);
+  return crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+}
+// v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
+function crewSides(id, crew, fielded, alliesN, foeN, turned) {
+  const sc = SCENARIOS[id];
+  // v1.275: Seth turned rival leaves your side for theirs
+  const setup = turned ? sc.enemySetup.filter(es => !(es.charId === 'seth' && es.team === 'player')) : sc.enemySetup;
+  const sethFoe = turned || setup.some(es => es.charId === 'seth' && es.team !== 'player');
   const named = CREW_NAMED_ALLY[id];
   const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
   const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
@@ -33752,8 +33815,13 @@ function crewSetup(id) {
   const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
   const strip = (es, fields) => { const o = Object.assign({}, es); for (const f of fields) delete o[f]; return o; };
   const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch']);   // a place past the match's own
-  const taken = new Set([...setup.map(es => es.charId), ...crew]);
-  const pool = crewStreetPool(sc).filter(k => !CREW_ROSTER.includes(k.charId) && k.charId !== 'seth');
+  // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
+  const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
+  // v1.275: the street's kids, then Garrett and Colin, who play with Seth once Bellfield's flags are done ("u havent met
+  // garrett. u will"), then the rest of the zone's and anybody's
+  const newKids = sethFoe && crewLadderPos(id) > crewLadderPos('bellfield_ctf') ? ['garrett', 'colin'].map(k => ({ charId: k, weapon: crewKidGun(k) })) : [];
+  const pool = crewStreetPool(sc).concat(newKids, crewWiderPool(id)).filter((k, i, a) => !CREW_ROSTER.includes(k.charId) && k.charId !== 'seth' &&
+    a.findIndex(o => o.charId === k.charId) === i);
   const fromStreet = (preferSeth) => {
     const list = preferSeth ? pool.filter(k => SETH_CREW_ROSTER.includes(k.charId)).concat(pool) : pool.filter(k => !(sethFoe && SETH_CREW_ROSTER.includes(k.charId)));
     const k = list.find(k => !taken.has(k.charId));
@@ -33768,18 +33836,42 @@ function crewSetup(id) {
     const i = at.has(kid) ? at.get(kid) : free.length ? free.shift() : -1;
     out.push(Object.assign(i >= 0 ? Object.assign({}, slots[i]) : spare(), { charId: kid, weapon: CREW_GUNS[kid], team: 'player' }));
   }
-  let left = allies.length - kept.length - crew.length;   // a benched kid's place stays empty
-  for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); left--; }
+  let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
+  for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }
   while (left-- > 0) { const k = fromStreet(false); if (!k) break; out.push(Object.assign(spare(), { charId: k.charId, weapon: k.weapon, team: 'player' })); }
   // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
+  const them = [];
   for (const es of foes) {
-    if (!crew.includes(es.charId)) { out.push(Object.assign({}, es)); continue; }
+    if (!crew.includes(es.charId)) { them.push(Object.assign({}, es)); continue; }
     const k = fromStreet(sethFoe);
-    if (k) out.push(Object.assign({}, es, { charId: k.charId, weapon: k.weapon }));
+    if (k) them.push(Object.assign({}, es, { charId: k.charId, weapon: k.weapon }));
   }
-  const foeSpot = foes.find(es => es.role !== 'defender' && !es.spawnAt) || foes[0];
-  for (const es of crossing) out.push(Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch']), { anchor: foeSpot.anchor }));
-  return out;
+  const spots = foes.filter(es => es.role !== 'defender' && !es.spawnAt);
+  const foeSpot = spots[0] || foes[0];
+  const over = [...(turned ? sc.enemySetup.filter(es => es.charId === 'seth') : []), ...crossing];
+  const crossed = over.map(es => Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch', 'behavior']), { anchor: foeSpot.anchor }));
+  them.unshift(...crossed.filter(es => es.charId === 'seth')); them.push(...crossed.filter(es => es.charId !== 'seth'));
+  if (foeN != null) {
+    // v1.275: fit their side to the match's number: the match's own kids go from the end (never Seth, a crosser or a
+    // defender), extra kids come from the street at the match's own spots in turn
+    for (let i = them.length - 1; them.length > foeN && i >= 0; i--) {
+      const es = them[i];
+      if (es.charId !== 'seth' && !crossed.includes(es) && es.role !== 'defender' && !es.vip) them.splice(i, 1);
+    }
+    let n = 0;
+    while (them.length < foeN) {
+      const k = fromStreet(sethFoe); if (!k) break;
+      const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
+      them.push(Object.assign(strip(spot, ['role', 'spawnAt', 'perch', 'vip', 'behavior', 'statsOverride']), { charId: k.charId, weapon: k.weapon }));
+    }
+    // A side the spec names outright (the Last Saturday: Seth and his seven) takes those kids at its places
+    const named = CREW_FOE_SIDES[id];
+    if (named) {
+      const rest = named.filter(k => !them.some(es => es.charId === k));
+      for (const es of them) if (!named.includes(es.charId) && rest.length) { const k = rest.shift(); es.charId = k; es.weapon = crewKidGun(k); }
+    }
+  }
+  return out.concat(them);
 }
 // A scenario as it will be played: the same object when the crew changes nothing, else a copy with the crew's sides
 function crewScenario(id) {

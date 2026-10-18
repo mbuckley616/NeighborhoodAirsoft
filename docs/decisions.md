@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Build your crew, step 3: do the other side's numbers stay fixed or grow with your crew? (deep-work session, 2026-10-18, fable d28-crew)**
   Step 2 is built (v1.274, PR #95): every team match takes your whole crew, so your side is now bigger than before and
   the odds have moved (with all five in, Squad Up is 7 v 3, Two Against the World 6 v 4; the Last Saturday is already
@@ -24,8 +26,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   would pick if you want the finales to always be a fight. Two things step 3 will do unless you say otherwise: Winnmark's
   finale stays the exception (2 v 2 with Seth, before he turns), and on a Winnmark replay after it is done Seth plays
   for the other side, as your spec says; in a finale without Seth, "their side" means the match's own other side.
-
-## Answered
+  Michael: **A) Fixed, tuned for the first time through** (control room, 2026-10-18)
 
 - **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
   Step 1 is built (v1.273, PR #95): the two rosters, Garrett and Colin, and each of your five asking by text. Step 2

@@ -82,7 +82,9 @@ await g.scenario('hollow_skirmish_3v3');
 const k1 = await readKids();
 console.log('   hollow 3v3:', JSON.stringify(k1.map(k => `${k.id}/${k.team}/${k.crew}`)));
 const allies = k1.filter(k => k.team === 'player'), foes = k1.filter(k => k.team !== 'player');
-check('Hollow 3v3: both allies wear the orange crew bandana', allies.length === 2 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
+// v1.275 (D.28 step 3): the match is tuned for Eric, Sean and Nick in your crew, so with nobody in it the street fills
+// your side to their count: three allies, every one in the bandana
+check('Hollow 3v3: all three allies wear the orange crew bandana', allies.length === 3 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
 check('…and none of the other side does', foes.length >= 3 && foes.every(k => !k.crew), foes);
 const crouch = await page.evaluate(() => {
   const e = Game.scenario.enemies.find(k => k.team === 'player'); const h = e.mesh.hat;
