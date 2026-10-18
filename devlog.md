@@ -11685,7 +11685,11 @@ joining moments and the texts. Your crew does not take the field yet (step 2), s
 - `texts` updated for the new count (13 texts by the Hollow's big game, was 10; Sean's "come home" is dated Sunday 22
   June as Eric's was); `crew` and `mirror` updated for the third crew row. `voices`, `kid-clothes`, `kid-face`, `out-shot`,
   `school-kids`, `calendar`, `bed-summer` pass with the two new kids.
-- The full suite: below, under its numbers.
+- `hats` and `tops` count the mirror's rows and were updated for the third crew row (14 rows on a new game, 16 with
+  a top; the lit choices stay 14, the new row has no buttons).
+- The full suite in four parallel shards: 159 of 171 passed first time. The 12 that didn't were `hats` (the row count,
+  above), nine Playwright page-load timeouts and two closed browsers, all from four browsers at once in this container.
+  All 12, and `tops`, passed re-run two at a time: 171 of 171.
 ### Still open
 - Step 2 (your crew in every team match, solo matches kept solo, benching) and the rest of Michael's steps. Until step
   2 lands, the crew is a list on the phone and the mirror and nothing more.
