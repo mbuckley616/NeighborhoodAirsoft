@@ -5,29 +5,11 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
-  Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
-  (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
-  the same way round: up push up, right find cover, down keep distance, left follow me.
-  - A) **The d-pad gives the orders:** a press is that direction's order at once (the wheel flashes it and a teammate
-    answers on the walkie); slots stay on Y/RB (next) and LB (back). Fastest; costs the d-pad's straight-to-a-slot
-  - B) **Hold the d-pad for the wheel:** a tap still picks a slot; held 0.3 s the wheel opens, the right stick points
-    at an order, letting go gives it. Keeps both, but a slow press in a fight swaps your gun
-  - C) **Click the right stick (R3) for the wheel:** R3 is free; hold it, point the right stick, let go. The d-pad keeps
-    the slots, but you can't look around while picking (as with Q and the mouse)
-  Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
-  on-screen hint would read "d-pad" on a pad.
+## Answered
 
-- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
-  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
-  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
-  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
-  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
-  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
-  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
-  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
-  - D) Different (say in a note)
-  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
+- **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
+  The question and Michael's full step-by-step spec are in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad).
+  Michael: **His own design, closest to B, with hand-me-down outfitting from C** — "Not A: my own version, closest to B with hand-me-down outfitting. Full spec is written in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad, worked out with Claude); build from that." Fixed crew (Sean, Nick, Eric, Diego, Alex); Seth's fixed crew (Trey, Brooke, Tyler, Evan, Andrew, Garrett, Colin); kids join at zone-end story moments; solo matches stay solo; every team match takes the whole crew, benching allowed; finales Seth's side +1 (Last Saturday 6 v 8); hand-me-down guns and gear; built in steps. (2026-10-18)
 
 - **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
   Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
@@ -42,6 +24,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     (to be measured)
   - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
   Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
+  Michael: **A) Keep it as built** (2026-10-18)
 
 - **Controller: the on-screen hints still name keyboard keys (builder, 2026-10-18, backlog D.38)**
   D.38's matches and screens work on a pad (v1.241–v1.242). Its leftover was "pad button names in the on-screen hints,
@@ -55,8 +38,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **The hints, then the drags:** A, then the workbench's parts and the Loadout kid move with the sticks. Two
   - C) **Leave it:** the pad works; the words are a small thing
   Builder's lean: A. You play on a pad, and it is the first thing a pad player reads; the drags have click ways round them.
-
-## Answered
+  Michael: **B) The hints, then the drags** (2026-10-18)
 
 - **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
   Bunratty Court climbs about 7 m from the bulb to the west end. Priya (their VIP) holds the bulb fort behind its back
