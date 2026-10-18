@@ -11741,3 +11741,20 @@ and step 3 rebalances them. So from this version a kid who has joined plays.
   (The Big Game with Sean benched from the briefing) field exactly the computed sides, Eric on his MP5; the crew
   survives a save and load.
 - `crew-roster`'s last check now expects Squad Up as Seth and your five (it said step 1 changed no match).
+- The stuck-kid sweep with the whole crew in (`CREW=all WAYS=spawn`, the 31 team matches, 90 s each, four browsers):
+  no kid held a moving state in one place over 15 s; the worst was Brooke 5 s in Full-Auto Mayhem, beside Seth's
+  side's fort; no page errors.
+- The full suite in four parallel shards: 169 of 172 passed first time; the three that didn't (`out-walk-off`,
+  `treehouse`, `stuck-sweep-10`) were Playwright page-load timeouts from four browsers at once, and passed re-run
+  alone (with `treehouse-*`): 172 of 172.
+### Still open
+- Balance is step 3: with all five in, early team matches are easy (Squad Up 7 v 3, Two Against the World 6 v 4), as
+  the spec expects of a replay, but the first time through Bunratty and the Hollow's matches are already bigger on your
+  side than they were. Each zone gets tuned for the crew you'd have the first time.
+- The briefing's text (`desc`) still names each match's own allies ("You're on blue with Eric, Rebecca, Sean, and
+  Brooke"), while the roster under it shows the crew. Rewriting them belongs with step 3's sides.
+- Seth still plays on your side in Winnmark's team matches on a replay after he turns rival (the spec has him go to the
+  other side); that, the finale rule for Winnmark, and whether a finale's extra kids grow with the crew are step 3's
+  open questions in decisions.
+- Garrett and Colin still take no field; step 3 gives them guns and places on Seth's side.
+- The bench isn't saved and has no controller hint; whether a shorthanded win pays more is still open (no extra pay now).
