@@ -7,6 +7,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Build your crew, step 3: do the other side's numbers stay fixed or grow with your crew? (deep-work session, 2026-10-18, fable d28-crew)**
+  The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 866c5ea). Step 2 (v1.274) put the whole crew
+  in every team match; step 3 rebalances the other side.
+  - A) Fixed, tuned for the crew you'd have the first time you reach each match; finales one more than that. *(recommended)*
+  - B) Grows with your crew in every match (finales one more).
+  - C) A, but finales always have one more than the side you bring (two more in the Last Saturday).
+  Michael: **A) Fixed, tuned for the first time through** (2026-10-18, control room)
+
 - **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
   The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 1e28837). Outnumbered, Two Against the
   World and Two of Us, Four of Them are you and one friend against more; with your crew in, those odds go.
