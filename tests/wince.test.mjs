@@ -34,7 +34,15 @@ const tag = await page.evaluate(() => {
     stepGame(1 / 60);
     if (i % 6 === 0) track.push({ t: +(i / 60).toFixed(2), rx: +k.mesh.group.rotation.x.toFixed(3), sh: +k.mesh.pose.rigL.shoulder.rotation.x.toFixed(2), on: !!k._wince });
   }
-  return { part: w0, out: k.health <= 0, track };
+  // and a BB on him now that he is out, in this same evaluate: the tag wins the round (Seth is the only kid), whose
+  // end waits 600 ms on a real timer; on CI (18 Oct) it fired between two evaluates and the round was over (rz 0)
+  const v2 = combatantView(k), foot = v2.chestY - v2.height * 0.65, yaw = k.mesh.group.rotation.y;
+  const at2 = new THREE.Vector3(k.pos.x - 0.06 * Math.cos(yaw), foot + 0.15 * v2.height, k.pos.z + 0.06 * Math.sin(yaw));
+  k._outLineAt = null;
+  applyBBHit({ owner: 'player', team: 'player', pos: at2, spawnPos: P.pos.clone(), vel: new THREE.Vector3(0, 0, -50), canDamage: true }, k);
+  const part2 = k._wince && k._wince.part;
+  for (let i = 0; i < 20; i++) stepGame(1 / 60);
+  return { part: w0, out: k.health <= 0, track, again: { part: part2, rz: +k.mesh.group.rotation.z.toFixed(3), out: k.health <= 0 } };
 });
 console.log('   chest tag:', JSON.stringify(tag.track.filter((_, i) => i % 2 === 0)));
 const peak = tag.track.filter(s => s.t >= 0.2 && s.t <= 0.7);
@@ -43,16 +51,7 @@ check('he hunches forward and his free hand goes to his chest while it peaks (0.
 const end = tag.track[tag.track.length - 1];
 check('by 1.6 s it is over and he stands as the out pose has him (no lean left)', !end.on && Math.abs(end.rx) < 0.01, end);
 
-// a BB on him now that he is out
-const again = await page.evaluate(() => {
-  const k = Game.scenario.enemies[0], P = Game.player, v = combatantView(k), foot = v.chestY - v.height * 0.65;
-  const yaw = k.mesh.group.rotation.y, at = new THREE.Vector3(k.pos.x - 0.06 * Math.cos(yaw), foot + 0.15 * v.height, k.pos.z + 0.06 * Math.sin(yaw));
-  k._outLineAt = null;
-  applyBBHit({ owner: 'player', team: 'player', pos: at, spawnPos: P.pos.clone(), vel: new THREE.Vector3(0, 0, -50), canDamage: true }, k);
-  const part = k._wince && k._wince.part;
-  for (let i = 0; i < 20; i++) stepGame(1 / 60);
-  return { part, rz: +k.mesh.group.rotation.z.toFixed(3), out: k.health <= 0 };
-});
+const again = tag.again;
 check('a BB on him while he is out: a leg flinch, leaning toward it', again.out && again.part === 'leg' && Math.abs(again.rz) > 0.08, again);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
