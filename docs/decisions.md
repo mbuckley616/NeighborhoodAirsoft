@@ -5,6 +5,26 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Build your crew, step 3: do the other side's numbers stay fixed or grow with your crew? (deep-work session, 2026-10-18, fable d28-crew)**
+  Step 2 is built (v1.274, PR #95): every team match takes your whole crew, so your side is now bigger than before and
+  the odds have moved (with all five in, Squad Up is 7 v 3, Two Against the World 6 v 4; the Last Saturday is already
+  your 6 v 8). Step 3 rebalances. Your spec says each match is tuned for the crew you'd have the first time you play it,
+  a replay with a bigger crew meant to be easy, and every zone's finale has their side one more than yours. The first
+  time through, the finales come out today as: Winnmark 2 v 2 (Seth beside you, no crew yet), Bunratty 3 v 2, the
+  Hollow 5 v 6, the lot 4 v 4, Northcliff 6 v 4, the school 6 v 4, Willow Bend 6 v 6, the Last Saturday 6 v 8.
+  - A) **Fixed, tuned for the first time through** (your spec): each team match gets a set other side, sized for the
+    crew you'd have when you first reach it, filled with kids from that street (Seth's crew where Seth plays; Garrett
+    and Colin take the field here). Finales one more than that first-time crew. A replay with all five is easy, as you
+    said. *(recommended)*
+  - B) **Grows with your crew, every match:** their side is always your side's size (finales one more), extra kids
+    from the street. Replays stay fair; nothing is ever easy, and a benched kid takes one off their side too.
+  - C) **A, but finales grow:** ordinary matches fixed as in A; a finale always has one more than the side you bring
+    (two more in the Last Saturday), so a finale is never a walkover.
+  My reaction: A. It is what you wrote, and flattening Winnmark with the full crew is part of the fun; C is the one I
+  would pick if you want the finales to always be a fight. Two things step 3 will do unless you say otherwise: Winnmark's
+  finale stays the exception (2 v 2 with Seth, before he turns), and on a Winnmark replay after it is done Seth plays
+  for the other side, as your spec says; in a finale without Seth, "their side" means the match's own other side.
+
 ## Answered
 
 - **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
