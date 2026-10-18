@@ -148,10 +148,14 @@ const school = await page.evaluate(() => {
   Game.player.maxHits = 999; VOICE.log.length = 0;
   const ids = ['jordan', 'caleb', 'nathan', 'sophie', 'grant', 'malik'];
   const kids = Game.scenario.enemies.filter(e => ids.includes(e.charId) && (e.team || 'enemy') !== 'player');
-  for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
-    k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
-    tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
-  }
+  // seeded (v1.267's withSeededRandom), so the 7-in-10 own-line draw is the same sample on every runner: unseeded, a
+  // kid with few own lines (Caleb) could land just under a third (5 of 16 on CI, 17 Oct)
+  withSeededRandom('voices-school-3v3', () => {
+    for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
+      k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
+      tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
+    }
+  });
   const out = {};
   for (const k of kids) {
     const said = VOICE.log.filter(e => e.charId === k.charId);
@@ -179,7 +183,9 @@ for (const [id, near] of [['winnmark_team_3v3', true], ['winnmark_team_3v3', fal
     const before = Game.scenario.roundTime;
     // a kid 6 m from spawn calls you out inside the hold and his 4 s cooldown would hold the start call (the
     // next free kid would be 40 m off): clear the cooldowns just before the hold lifts so the call itself is seen
-    for (let f = 0; f < 60 * 2.4 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
+    // v1.266 fix-up: up to 2.4 s on the round's clock, not 2.4 s from here (CI's slower BEGIN had the round at 0.18 s
+    // already, so a fixed 2.4 s ran past the 2.5 s start call and the cooldowns were cleared too late)
+    for (let f = 0; f < 60 * 3 && (Game.scenario.roundTime || 0) < 2.4 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     VOICE.globalCooldownUntil = 0; for (const e of Game.scenario.enemies) e._voiceCooldownUntil = 0;
     for (let f = 0; f < 60 * 1.6 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
     const starts = VOICE.log.filter(e => e.category === 'roundStart');

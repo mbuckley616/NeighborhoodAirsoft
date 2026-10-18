@@ -18,19 +18,21 @@ jobs:
     # about 55 more minutes in all. Eight shards keep each one near 20 min.
     # v1.174 fix-up: 40. On 085e505 shard 2/8 passed all ten suites in 19.5 min but was cancelled at 30:34: installing
     # the browser's system packages took 11 min that run instead of the usual 3.
+    # 17 Oct fix-up: ten. On 5e9437a the eight shards ran their suites in 26-40 min (168 suites, 242 weighted min)
+    # and shard 5/8 was cancelled at 40:00 partway through stuck-sweep-8 with every suite so far passing.
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
-    name: headless (${{ matrix.shard }}/8)
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    name: headless (${{ matrix.shard }}/10)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: node tests/run.mjs --shard ${{ matrix.shard }}/8
+      - run: node tests/run.mjs --shard ${{ matrix.shard }}/10
   headless:
     # v1.145: one check named `headless` as before, green only when every shard is.
     needs: headless-shard

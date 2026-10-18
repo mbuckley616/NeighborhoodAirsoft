@@ -42,7 +42,8 @@ let r = await race('bunratty_sean', () => {
   checkWinCondition();
   applyBBHit({}, Game.player);
 });
-check('1v1: last kill then tagged out → one ending, YOU\'RE OUT stands', r.ends.length === 1 && r.ends[0] === 'lose' && !/GOT THEM/.test(r.outcome), r);
+// v1.263 (decisions "A trade on the last tag", Michael: A): the BB in flight no longer tags you once the last kill lands
+check('1v1: last kill then a BB in flight → one ending, the win stands', r.ends.length === 1 && r.ends[0] === 'win' && /GOT THEM/.test(r.outcome), r);
 await home();
 
 // 2. Infection: the timer runs out (win in 400 ms) and a tagger reaches the player inside it (infected in 200 ms)
@@ -63,7 +64,7 @@ r = await race('hollow_skirmish_3v3', () => {
   checkWinCondition();
   applyBBHit({}, Game.player);
 });
-check('Team battle: wipe then tagged out → one ending', r.ends.length === 1 && r.ends[0] === 'lose', r);
+check('Team battle: wipe then a BB in flight → one ending, the win (v1.263)', r.ends.length === 1 && r.ends[0] === 'win', r);
 await home();
 
 // 4. a normal win still arrives after its delay

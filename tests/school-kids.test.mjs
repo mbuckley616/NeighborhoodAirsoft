@@ -51,6 +51,7 @@ for (const id of IDS) {
   const r = await page.evaluate(SCHOOL => {
     const sc = Game.scenario;
     const foes = sc.enemies.filter(e => e.team !== 'player');
+    stepGame(1 / 60);   // the roster fills on the first frame; CI could read it before the page's own loop had run one
     const roster = (document.getElementById('rosterHud') || {}).textContent || '';
     return { names: foes.map(e => e.name), school: foes.every(e => SCHOOL.includes(e.charId || (e.character && e.character.name.toLowerCase()))),
       shirts: foes.map(e => e.character && e.character.shirtColor), rosterHas: foes.every(e => roster.includes(e.name)),

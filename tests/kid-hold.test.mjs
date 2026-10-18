@@ -35,6 +35,7 @@ for (const id of MATCHES) {
         if ((k.pose.crouch || 0) > 0.98) r.crouched++;
         let L = 0;
         if (isSmallGun(e.weapon)) r.small++;
+        else if (e._wince) r.winceSkips = (r.winceSkips || 0) + 1;   // v1.261 (D.45): flinching, his off hand goes to where he was hit
         else {
           k.pose.gunGroup.localToWorld(a.set(0, -0.05, Math.min(gunForegripZ(e.weapon), 0.13)));
           L = a.distanceTo(k.pose.rigL.hand.getWorldPosition(b)) * 100;
