@@ -29,6 +29,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) Different (say in a note)
   Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
 
+- **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
+  Bunratty Court climbs about 7 m from the bulb to the west end. Priya (their VIP) holds the bulb fort behind its back
+  wall, 1.12 m tall; our Sean's AK fires from the high street 30–41 m west, downhill, and clears that wall. In 196
+  sampled rounds she went out 3 times (9.4, 15.1 and 31.1 s), all to Sean from up the slope; Ryan never. Rarely it is
+  inside the first 8 s (2.9 s once in about 70 rounds on a Windows desktop, 5.6 s on CI), which breaks your "no VIP
+  falls in the first 8 s" line and fails the VIP suite now and then. It is Owen's spawn in v1.178 and Rebecca's spot
+  in Night Shift (v1.175) again.
+  - A) **Taller cover at her spot:** a stacked-plank barricade 1.5 m tall in the fort, as Night Shift's dumpster; she
+    stays "behind the plank" as the briefing says, and the shots that tag her come from the bulb's own level
+  - B) **Move her spot out of the hill's line:** behind the east car beside Owen's start; the briefing's "behind the
+    plank" changes
+  - C) **Leave it:** a lucky long shot on the VIP is part of the game; the suite's 8 s line is loosened for this match
+  Builder's lean: A. It keeps the match as written and fixes the cause, as the dumpster did for Rebecca.
+
 ## Answered
 
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
