@@ -21,7 +21,7 @@ const facts = await page.evaluate(() => SUMMER_TEXTS.map(t => ({ id: t.id, ok: !
 check('every text arrives after a real match', facts.every(f => f.ok), facts.filter(f => !f.ok));
 const byId = Object.fromEntries(facts.map(f => [f.id, f]));
 check('a zone\'s last match dates its text on the next zone\'s first day (Bunratty: Sunday 22 June; the store: Monday 25 August)',
-  byId.bunratty.label === 'Sunday 22 June' && byId.store.label === 'Monday 25 August', [byId.bunratty, byId.store]);
+  byId.seanHome.label === 'Sunday 22 June' && byId.store.label === 'Monday 25 August', [byId.seanHome, byId.store]);   // v1.273: Sean calls you home (was Eric's)
 check('the last one comes the day before the big Saturday: Friday 29 August', byId.last.label === 'Friday 29 August', byId.last);
 check('the dates never go backwards down the list', facts.every((f, i) => i === 0 || f.day >= facts[i - 1].day), facts.map(f => f.day));
 
@@ -38,7 +38,8 @@ const prog = await page.evaluate(() => {
 });
 check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 9 && prog.out.every(o => o.day === o.calendar), prog.out);
 // the Hollow's chain stops at the big game; ladder order puts the big battle after the fort matches
-check('ten texts by the Hollow\'s big game, all unread, newest first', prog.n === 10 && prog.unread === 10 &&
+// v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew
+check('thirteen texts by the Hollow\'s big game, all unread, newest first', prog.n === 13 && prog.unread === 13 &&
   prog.order[0] === 'bigGame' && prog.order[prog.order.length - 1] === 'start', prog);
 
 // Home: the phone shows 10 new; walk to it, E opens them, newest first, and reads them all
@@ -49,7 +50,7 @@ await page.evaluate(() => { const it = Game.interactables.find(i => i.type === '
 await g.spin(3);
 const near = await page.evaluate(() => ({ focus: Game.focusedInteractable && Game.focusedInteractable.type,
   prompt: document.getElementById('interactPrompt').textContent }));
-check('beside the nightstand, the prompt is "Check your phone (10 new)"', near.focus === 'phone' && /Check your phone \(10 new\)/.test(near.prompt), near);
+check('beside the nightstand, the prompt is "Check your phone (13 new)"', near.focus === 'phone' && /Check your phone \(13 new\)/.test(near.prompt), near);
 await g.shot('texts-phone');
 await page.keyboard.press('KeyE');
 const open = await page.evaluate(() => ({
@@ -60,9 +61,9 @@ const open = await page.evaluate(() => ({
   it: (() => { const it = Game.interactables.find(i => i.type === 'phone'); return { prompt: it.prompt, led: it._led.visible, chip: it._labelEl.textContent }; })(),
 }));
 check('E opens "Texts" over the bedroom', open.mode === 'modal' && open.title === 'Texts', open.mode);
-check('ten messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
-  open.msgs.length === 10 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[9].id === 'start' && open.msgs[9].date === 'Sun 1 Jun', open.msgs);
-check('opening them reads them all: none unread, ten kept in the save', open.unread === 0 && open.stored === 10, open);
+check('thirteen messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
+  open.msgs.length === 13 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[12].id === 'start' && open.msgs[12].date === 'Sun 1 Jun', open.msgs);
+check('opening them reads them all: none unread, thirteen kept in the save', open.unread === 0 && open.stored === 13, open);
 check('the phone.s light goes off and its prompt and chip say "Phone" again', open.it.prompt === 'Check your phone' && !open.it.led && /Phone$/.test(open.it.chip.trim()), open.it);
 await g.shot('texts-open');
 await page.evaluate(() => document.getElementById('modalCloseBtn').click());

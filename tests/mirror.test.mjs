@@ -25,7 +25,7 @@ check('at the bathroom door the mirror is the focused interactable', focus === '
 await page.keyboard.press('KeyE');
 const open = await page.evaluate(() => ({ mode: Game.mode, rows: [...document.querySelectorAll('#mirrorOptions .mirror-row')].map(r => r.dataset.key), kid: !!(MIRROR.kid && MIRROR.kid.group.children.length) }));
 check('E opens the mirror screen', open.mode === 'mirror', open.mode);
-check('it offers height, build, hair, hair colour, skin, shirt, pants, sneakers (v1.206), glasses, eyes and shirt front, then the crew (v1.200)', open.rows.join() === 'height,build,hairStyle,hairColor,skinColor,shirtColor,pantsColor,shoeColor,glasses,eyeColor,shirtFront,crewName,crewColor', open.rows);
+check('it offers height, build, hair, hair colour, skin, shirt, pants, sneakers (v1.206), glasses, eyes and shirt front, then the crew (v1.200) and who is in it (v1.273)', open.rows.join() === 'height,build,hairStyle,hairColor,skinColor,shirtColor,pantsColor,shoeColor,glasses,eyeColor,shirtFront,crewName,crewColor,crewMembers', open.rows);
 check('the preview has Mike\'s kid mesh in it', open.kid);
 
 // click one choice in each row (the last option), as a player would

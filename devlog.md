@@ -11647,3 +11647,51 @@ stack. So she now can't see down the lane west of the fort either. That is raise
 - Priya can't fire down the lane from her spot any more (west of the fort: 0 of 4 test spots, was 4 of 4); she still
   covers the bulb's north side, its south-west corner and the open back. Whether that is right for the match is in
   decisions (A keep, B a 1.3 m stack, C move her spot).
+
+## v1.273 — Build your crew, step 1: the two rosters, Garrett and Colin, and the asks
+Backlog D.28 (Fable card d28-crew). Michael answered the design question with his own design (decisions, Answered:
+"Build your crew"): both crews are fixed, yours fills from five friends at story moments, Seth's is eight with two new
+kids, and it is built in five steps, each playable on its own. This is step 1: the rosters, Garrett and Colin, the
+joining moments and the texts. Your crew does not take the field yet (step 2), so no match plays differently.
+- The rosters: `CREW_ROSTER` is Eric, Sean, Nick, Alex and Diego, five at most (`CREW_MAX`); nobody else can ever join
+  and Seth never does. `SETH_CREW_ROSTER` is Seth, Trey, Brooke, Tyler, Evan, Andrew, Garrett and Colin, the data step 2
+  and the finales (step 3) will read. Who has joined is saved as `persist.crew`, in the order they joined; anything
+  else in it (a tampered or future save) is ignored. An old save loads with nobody in.
+- Garrett and Colin are characters with their own looks, numbers and voice lines. Garrett: Seth's neighbourhood, tall,
+  blond, average build, aggression 0.55, accuracy 0.68 (balanced, a good shot). Colin: from near Diego's street, average
+  height and build, curly brown hair, aggression 0.88, speed 1.1, accuracy 0.5 (runs straight at you). Neither is in a
+  match yet: their guns (Garrett mid- to high-tier, Colin cheap) are set when they first take the field, in step 3.
+- The joining moments (the spec left the exact matches to this session): each kid's ask is a text with two buttons on
+  the flip phone, "Yes, you're in" and "Not yet". Not yet leaves the ask open the next time you look, because the
+  roster is fixed and you are meant to end the summer with all five; a kid can't be lost by a wrong tap.
+  Eric asks when Winnmark is done (after its last match, Lights Out 2v2), Sean and Nick when Bunratty is done (its last
+  match), Alex after Hold the Treehouse at Stoneglen (where the twins split: Andrew goes to Seth), Diego after Flags on
+  Bellfield.
+- The texts: Eric's "sean from bunratty heard about u" goes, since Sean is your brother. After Winnmark Sean texts "u
+  been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric", and Eric asks (Michael's
+  words for both). Eric's Northcliff text now has Evan as "seths old friend". Diego, who has only been across the
+  street from you, texts once after Lamplight on Bellfield, about Colin calling your crew soft, before he asks. Seth
+  texts after the flags that Andrew, Colin and Garrett are with him now ("u havent met garrett. u will").
+- The mirror's YOUR CREW card has a third row, "In it · n of 5", with the names, or "Just you so far" on a new game.
+### Verified
+- `tests/crew-roster.test.mjs` (new, 23 checks): the two rosters (no kid on both, Seth never yours, all real characters);
+  Garrett and Colin built (Garrett's scale 1.12 against Colin's 1.0) with 4-5 own lines in every situation; one ask per
+  kid, from the kid himself, on days 21, 42, 42, 68 and 74 of the summer. A new game has nobody in and no ask open. After
+  Winnmark the phone shows Eric's two buttons; Not yet keeps the ask open across a close and reopen; Yes puts Eric in and
+  his text then says "Eric is in your crew" with no buttons. A save and load keeps him; an old save without `crew` loads
+  with nobody in and Eric's ask open. Through the whole ladder the asks open at exactly the four other moments; all five
+  in, in order, and Seth, Garrett or Rebecca can't be taken in, nor a kid written into the save by hand. With all five
+  in, Squad Up still fields its own Seth and Trey.
+- `texts` updated for the new count (13 texts by the Hollow's big game, was 10; Sean's "come home" is dated Sunday 22
+  June as Eric's was); `crew` and `mirror` updated for the third crew row. `voices`, `kid-clothes`, `kid-face`, `out-shot`,
+  `school-kids`, `calendar`, `bed-summer` pass with the two new kids.
+- The full suite: below, under its numbers.
+### Still open
+- Step 2 (your crew in every team match, solo matches kept solo, benching) and the rest of Michael's steps. Until step
+  2 lands, the crew is a list on the phone and the mirror and nothing more.
+- The Last Saturday's briefing still names Seth's crew as Seth, Devon, Mitchell, Mason, Marcus and Ryan, with Brooke and
+  Trey on your side; its sides change in steps 2 and 3 (6 v 8).
+- Brooke's and Trey's texts were read and left as they are: Brooke's are friendly gossip that still reads right from
+  Seth's sister. Michael may want them sharper.
+- Whether "Not yet" should exist at all, or a No should be final, is for Michael to say if he minds; the fixed roster
+  argued for keeping the door open.
