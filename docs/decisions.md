@@ -43,6 +43,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
   Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
 
+- **Controller: the on-screen hints still name keyboard keys (builder, 2026-10-18, backlog D.38)**
+  D.38's matches and screens work on a pad (v1.241–v1.242). Its leftover was "pad button names in the on-screen hints,
+  and the workbench and Loadout drags, if you want them". Today, with a pad in hand, only the range bench and the
+  squad-order hint switch to pad names. Still keyboard-only: the E prompt at every door, the shop, mirror, bed and
+  board (it should say A), the treehouse's W climb / S down / Space let go, the tutorial's six steps (WASD, Shift,
+  Right-Mouse, Left-Mouse, R), and the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens
+  a pad can click but can't drag a part onto the gun or turn the kid.
+  - A) **The hints only:** every prompt above names the pad's button while the pad is in use, and goes back to the key
+    when you touch the keyboard or mouse. About one session
+  - B) **The hints, then the drags:** A, then the workbench's parts and the Loadout kid move with the sticks. Two
+  - C) **Leave it:** the pad works; the words are a small thing
+  Builder's lean: A. You play on a pad, and it is the first thing a pad player reads; the drags have click ways round them.
+
 ## Answered
 
 - **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
