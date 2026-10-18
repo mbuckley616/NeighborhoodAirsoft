@@ -7,6 +7,13 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
+  Bunratty Court climbs about 7 m from the bulb to the west end; our Sean fires downhill from 30–41 m and clears the
+  1.12 m back wall Priya (their VIP) hides behind. In 196 sampled rounds she went out 3 times this way, now and then
+  inside the first 8 s. A) taller cover at her spot (a 1.5 m stacked-plank barricade, as Night Shift's dumpster);
+  B) move her spot behind the east car; C) leave it. Builder's lean: A.
+  Michael: **A) Taller cover at her spot (1.5 m plank barricade)**. (2026-10-18)
+
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
   In the Hollow only the trees can hide a start, and its forest is not the same every time: the first match built after
   the game loads draws its trees differently from every later one, so 4–10 of the 45 kid pairs can see each other from
