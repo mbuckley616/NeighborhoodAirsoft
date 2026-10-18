@@ -29,6 +29,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) Different (say in a note)
   Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
 
+- **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
+  Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
+  BBs from Sean's eight spots reach her at seven places in the fort (it was 1–36 of 960 at each). The cost: her pistol's muzzle is
+  1.05 m up, so she can't see over a 1.5 m stack either. From her spot she no longer sees the lane west of the fort (all
+  four test spots there, 12 m out and closer), only the bulb's north side, its south-west corner and the open back. So a
+  player coming up the lane isn't shot at by her any more and has to go round the fort to tag her. A slit at her eye
+  height, so she could shoot through, doesn't work: hill BBs come through it at her chest, 2–32 per 960, the same as no
+  stack. Seeing down the lane and being safe from the hill can't both be true at her spot.
+  - A) **Keep it as built:** she is a VIP you flush out of a fort; the lane is safe from her but the fort's sides aren't
+  - B) **A lower stack, 1.3 m:** she sees and fires over it standing, as before; the hill can tag her again, less often
+    (to be measured)
+  - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
+  Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
+
+## Answered
+
 - **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
   Bunratty Court climbs about 7 m from the bulb to the west end. Priya (their VIP) holds the bulb fort behind its back
   wall, 1.12 m tall; our Sean's AK fires from the high street 30–41 m west, downhill, and clears that wall. In 196
@@ -42,8 +58,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     plank" changes
   - C) **Leave it:** a lucky long shot on the VIP is part of the game; the suite's 8 s line is loosened for this match
   Builder's lean: A. It keeps the match as written and fixes the cause, as the dumpster did for Rebecca.
-
-## Answered
+  Michael: **A) Taller cover at her spot** (18 Oct 2026; on the control room). Built in v1.272.
 
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
   Your A on the free-for-all starts is built on all four maps (v1.265): every start 18 m or more from every other, no

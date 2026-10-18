@@ -2107,7 +2107,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.271</div>
+  <div class="version">v1.272</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7729,7 +7729,8 @@ const SCENARIOS = {
     name: 'Bunratty Court', scenarioName: 'Protect Ryan',
     desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Priya's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Mitchell, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Priya.",
     builderFn: 'buildBunrattyCourtScene',
-    builderArg: 'default',
+    builderArg: 'vip',   // v1.272: the default court plus a 1.5 m plank barricade at Priya's spot
+    seedArg: 'default',  // v1.272: laid out under the default seed, so every prop and tree stays where it was
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
     vip: true,
@@ -14776,6 +14777,29 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     var bulbCar1Obs = carObs;
     var bulbCar2Obs = carObs2;
     var bulbPlankObs = fortWalls[0]; // back wall is the primary cover ref
+    // v1.272 (Found in play, Michael: A): Protect Ryan only. The street climbs about 7 m to the west end, so Sean fired
+    // downhill from 30–41 m over the 1.12 m back wall and tagged Priya, sometimes inside 8 s. A stacked-plank barricade
+    // 1.5 m tall stands just in front of her inside the fort, between the corner bins, and is the cover she holds (closer to
+    // her than the back wall, so the line over it to her head, not only her chest, is shut too).
+    if (variant === 'vip') {
+      const bx0 = fortX - 0.4, bx1 = fortX + 0.05, bz0 = fortZ - 1.05, bz1 = fortZ + 1.05, bh = 1.5;
+      const bg = new THREE.Group();
+      const boardMats = [new THREE.MeshStandardMaterial({ color: 0xb8925a, roughness: 0.92 }), new THREE.MeshStandardMaterial({ color: 0xa47e4a, roughness: 0.92 })];
+      for (let i = 0; i < 5; i++) {   // five boards, each a little off true, as kids stack them
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.28, 2.1 - (i % 2) * 0.12), boardMats[i % 2]);
+        b.position.set((bx0 + bx1) / 2 + (i % 2 ? 0.06 : -0.06), 0.15 + i * 0.3, (bz0 + bz1) / 2 + (i % 2 ? 0.05 : -0.04));
+        b.rotation.y = (i % 2 ? 0.02 : -0.015); b.castShadow = b.receiveShadow = true; bg.add(b);
+      }
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.95 });
+      for (const pz of [bz0 + 0.12, bz1 - 0.12]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.09, bh, 0.09), postMat);
+        post.position.set(bx1 - 0.05, bh / 2, pz); post.castShadow = true; bg.add(post);
+      }
+      bg.position.y = fortGY; scene.add(bg);
+      const barObs = { minX: bx0, maxX: bx1, minZ: bz0, maxZ: bz1, h: bh, baseY: fortGY, mesh: bg, surface: 'hard' };
+      coverList.push(barObs);
+      bulbPlankObs = barObs;
+    }
   }
 
   // === Street cover (staggered bounding cover down the lane) ===
@@ -22899,7 +22923,7 @@ function enterScenario(scenarioId) {
     // scenarios on the same map still differ. The seed also folds in builderArg so
     // two scenarios sharing a builder+variant but different ids still diverge.
     // v1.267: a Pickup Game free-for-all is laid out as its map's own free-for-all (seedFrom), so the starts hidden there stay hidden
-    const _seedKey = (sc.seedFrom || scenarioId) + '|' + (sc.builderArg || 'default');
+    const _seedKey = (sc.seedFrom || scenarioId) + '|' + (sc.seedArg || sc.builderArg || 'default');   // v1.272: seedArg keeps a variant on its base layout
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
   } else {

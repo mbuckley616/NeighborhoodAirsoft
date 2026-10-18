@@ -11620,3 +11620,30 @@ a clear shot clears the count as before.
 - `hollow-held`, `cover-fire`, `stuck-sweep-1`, `bound-forward`, `fence-bound`, `clear-guns`, `ctf` pass.
 ### Still open
 - Eric still deploys into that corner; whether that deploy spot should move is a design call, not raised yet.
+
+## v1.272 — Protect Ryan: a plank barricade in front of Priya
+Michael's A on the Found-in-play item (control room, 18 Oct): Bunratty Court climbs about 7 m from the bulb to the west
+end, and our Sean fired his AK downhill from the high street, 30–41 m off, over the bulb fort's 1.12 m back wall to tag
+Priya, their VIP. It happened in 3 of 196 sampled rounds, now and then inside the first 8 s, which broke the VIP suite's
+"no VIP falls in the first 8 s" line. Protect Ryan now builds Bunratty Court with a stacked-plank barricade 1.5 m tall
+standing just in front of Priya inside the fort, between its corner bins, and it is the cover she holds. It stands 0.55 m
+from her and not against the back wall: at the wall, the downhill line to her head still got over it. The match
+is laid out under the default court's seed (a new `seedArg`), so every prop and tree stays where it was and the
+barricade is the one obstacle added. The other Bunratty matches are unchanged.
+A slit at her eye height, so she could shoot through it, was tried first (three heights) and dropped. Anyone who can
+see her muzzle can hit her upper chest from up the hill, so the slit let 2–32 hill BBs of 960 through, the same as no
+stack. So she now can't see down the lane west of the fort either. That is raised in decisions, Pending.
+### Verified
+- Sean firing real BBs from his eight hill spots (120 shots each) at seven places in the fort: 0 of 6,720 reach her with
+  the barricade; without it 1–36 of 960 at each place. `vip-spawn`'s control (Owen at his old fort spawn, 27 of 720 hits)
+  now runs with the barricade lifted out, and with it in, 0 of 720.
+- `vip`: the barricade is there, 1.5 m, and is the cover Priya holds (0.22 m off her anchor). From 544 high-street
+  points 2 m or more above her and 20 m+ off, no sight line reaches her chest or head (362 and 382 do without it). The
+  court's obstacles are the same as the default build's but for the barricade.
+- 24 played rounds of 40 s, the player untaggable at his start: no VIP hit at all; 3.7 tags a round among the others.
+- `bulb-sight`: from behind the barricade Priya can't see a player in the lane at (18.7, 1.4) (1 of 40 samples, 2–3 shots).
+  Her raised-bulb check is now taken from the bulb's north side at (34, 7): 39 of 40 samples, 17–20 shots in 20 s.
+### Still open
+- Priya can't fire down the lane from her spot any more (west of the fort: 0 of 4 test spots, was 4 of 4); she still
+  covers the bulb's north side, its south-west corner and the open back. Whether that is right for the match is in
+  decisions (A keep, B a 1.3 m stack, C move her spot).
