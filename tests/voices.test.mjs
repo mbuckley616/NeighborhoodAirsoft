@@ -79,7 +79,15 @@ const ROUND = async (id, secs) => {
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.scenario(id);
   await page.evaluate(() => { Game.player.maxHits = 999; VOICE.log.length = 0; Game.mouse.locked = true; });
-  for (let s = 0; s < secs; s += 5) await g.spin(300);
+  // 18 Oct fix-up: a late pointerlockchange (BEGIN's own lock request, let go on CI's headless Chromium) opens the pause
+  // menu (v1.239) and stepGame then skips the match; CI dd5cbf8 had bunratty_infection's taggers say 2 lines in 45 s
+  // where local rounds say 4-9. The round is resumed if that happened, and the pauses are logged.
+  let pauses = 0;
+  for (let s = 0; s < secs; s += 5) {
+    if (await page.evaluate(() => { const was = !!Game.paused; if (was) { closePauseMenu(); Game.mouse.locked = true; } return was; })) pauses++;
+    await g.spin(300);
+  }
+  if (pauses) console.log(`  (${id}: the round was paused ${pauses} time(s) by the pointer lock; resumed)`);
   return page.evaluate(() => ({
     ffa: !!Game.scenario.ffa,
     teams: Object.fromEntries(Game.scenario.enemies.map(e => [e.charId, e.team || 'enemy'])),
