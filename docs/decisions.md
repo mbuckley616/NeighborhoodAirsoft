@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
   Step 1 is built (v1.273, PR #95): the two rosters, Garrett and Colin, and each of your five asking by text. Step 2
   puts your whole crew in every team match. Your spec keeps out "the outnumbered matches Michael marks" and names Two
@@ -21,60 +23,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Two smaller things step 2 will do unless you say otherwise: in the two VIP matches (Protect Ryan, Night Shift) the
   VIP counts as the kid the match is named after, so your crew comes plus Ryan or Rebecca; and in a match with Seth on
   the other side, his crew kids who stand on your side today (Trey in The Eighteenth and Night Swim) move to his side,
-  their places on yours going to your crew or a neighbourhood kid.
-
-- **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
-  Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
-  (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
-  the same way round: up push up, right find cover, down keep distance, left follow me.
-  - A) **The d-pad gives the orders:** a press is that direction's order at once (the wheel flashes it and a teammate
-    answers on the walkie); slots stay on Y/RB (next) and LB (back). Fastest; costs the d-pad's straight-to-a-slot
-  - B) **Hold the d-pad for the wheel:** a tap still picks a slot; held 0.3 s the wheel opens, the right stick points
-    at an order, letting go gives it. Keeps both, but a slow press in a fight swaps your gun
-  - C) **Click the right stick (R3) for the wheel:** R3 is free; hold it, point the right stick, let go. The d-pad keeps
-    the slots, but you can't look around while picking (as with Q and the mouse)
-  Builder's lean: A. Orders are what you reach for mid-fight and the pad already has three ways to change gun; the
-  on-screen hint would read "d-pad" on a pad.
-
-- **Selling a gun back: what do you get for it? (builder, 2026-10-17, backlog D.44)**
-  You asked to sell guns back with a resale penalty, "maybe a free return if you've only used it in 3 matches or
-  something". The shop has no Sell today and nothing counts how many matches a gun has been used in; both are small to
-  add (a per-gun match count in the save, from the day it ships; guns bought before count as used). Selling a gun also
-  sells its mags and parts with it, at the same rate, and the starting Spring Pistol can't be sold. Which rate?
-  - A) **Half back, always:** 50% of what you paid for the gun, its mags and parts. Simple, no counting
-  - B) **Free return, then half:** the full price back if you've taken it into 3 matches or fewer, 50% after
-  - C) **Free return, then less the more you use it:** full back up to 3 matches, then 70% down to 40% at 20 matches
-  - D) Different (say in a note)
-  Builder's lean: B. It is what you described, one number to remember, and a bad buy can be undone before it costs you.
-
-- **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
-  Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
-  BBs from Sean's eight spots reach her at seven places in the fort (it was 1–36 of 960 at each). The cost: her pistol's muzzle is
-  1.05 m up, so she can't see over a 1.5 m stack either. From her spot she no longer sees the lane west of the fort (all
-  four test spots there, 12 m out and closer), only the bulb's north side, its south-west corner and the open back. So a
-  player coming up the lane isn't shot at by her any more and has to go round the fort to tag her. A slit at her eye
-  height, so she could shoot through, doesn't work: hill BBs come through it at her chest, 2–32 per 960, the same as no
-  stack. Seeing down the lane and being safe from the hill can't both be true at her spot.
-  - A) **Keep it as built:** she is a VIP you flush out of a fort; the lane is safe from her but the fort's sides aren't
-  - B) **A lower stack, 1.3 m:** she sees and fires over it standing, as before; the hill can tag her again, less often
-    (to be measured)
-  - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
-  Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
-
-- **Controller: the on-screen hints still name keyboard keys (builder, 2026-10-18, backlog D.38)**
-  D.38's matches and screens work on a pad (v1.241–v1.242). Its leftover was "pad button names in the on-screen hints,
-  and the workbench and Loadout drags, if you want them". Today, with a pad in hand, only the range bench and the
-  squad-order hint switch to pad names. Still keyboard-only: the E prompt at every door, the shop, mirror, bed and
-  board (it should say A), the treehouse's W climb / S down / Space let go, the tutorial's six steps (WASD, Shift,
-  Right-Mouse, Left-Mouse, R), and the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens
-  a pad can click but can't drag a part onto the gun or turn the kid.
-  - A) **The hints only:** every prompt above names the pad's button while the pad is in use, and goes back to the key
-    when you touch the keyboard or mouse. About one session
-  - B) **The hints, then the drags:** A, then the workbench's parts and the Loadout kid move with the sticks. Two
-  - C) **Leave it:** the pad works; the words are a small thing
-  Builder's lean: A. You play on a pad, and it is the first thing a pad player reads; the drags have click ways round them.
-
-## Answered
+  Michael: **C) None stays; every team match takes your crew, and step 3 rebalances them** (control room, 2026-10-18)
 
 - **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
   You asked for a crew you recruit, field and maybe outfit, and whether it should simply be how single player works.
@@ -150,6 +99,35 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - **Still open:** which outnumbered team matches stay solo (Two of Us, Four of Them is the first to decide); whether
     Winnmark's finale, where Seth is still your teammate, is the exception to the finale rule or where he turns; whether
     a finale's extra kids grow with your crew on a replay; the exact joining matches.
+
+- **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
+  Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
+  BBs from Sean's eight spots reach her at seven places in the fort (it was 1–36 of 960 at each). The cost: her pistol's muzzle is
+  1.05 m up, so she can't see over a 1.5 m stack either. From her spot she no longer sees the lane west of the fort (all
+  four test spots there, 12 m out and closer), only the bulb's north side, its south-west corner and the open back. So a
+  player coming up the lane isn't shot at by her any more and has to go round the fort to tag her. A slit at her eye
+  height, so she could shoot through, doesn't work: hill BBs come through it at her chest, 2–32 per 960, the same as no
+  stack. Seeing down the lane and being safe from the hill can't both be true at her spot.
+  - A) **Keep it as built:** she is a VIP you flush out of a fort; the lane is safe from her but the fort's sides aren't
+  - B) **A lower stack, 1.3 m:** she sees and fires over it standing, as before; the hill can tag her again, less often
+    (to be measured)
+  - C) **Move her spot behind the east car** (the old B): the briefing's "behind the plank" changes
+  Builder's lean: A. Only she holds back; her three teammates still hold the lane, and it is still your answer.
+  Michael: **A) Keep it as built** (2026-10-18)
+
+- **Controller: the on-screen hints still name keyboard keys (builder, 2026-10-18, backlog D.38)**
+  D.38's matches and screens work on a pad (v1.241–v1.242). Its leftover was "pad button names in the on-screen hints,
+  and the workbench and Loadout drags, if you want them". Today, with a pad in hand, only the range bench and the
+  squad-order hint switch to pad names. Still keyboard-only: the E prompt at every door, the shop, mirror, bed and
+  board (it should say A), the treehouse's W climb / S down / Space let go, the tutorial's six steps (WASD, Shift,
+  Right-Mouse, Left-Mouse, R), and the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens
+  a pad can click but can't drag a part onto the gun or turn the kid.
+  - A) **The hints only:** every prompt above names the pad's button while the pad is in use, and goes back to the key
+    when you touch the keyboard or mouse. About one session
+  - B) **The hints, then the drags:** A, then the workbench's parts and the Loadout kid move with the sticks. Two
+  - C) **Leave it:** the pad works; the words are a small thing
+  Builder's lean: A. You play on a pad, and it is the first thing a pad player reads; the drags have click ways round them.
+  Michael: **B) The hints, then the drags** (2026-10-18)
 
 - **Protect Ryan: Sean tags Priya over her plank from up the hill (builder, 2026-10-18, Found in play)**
   Bunratty Court climbs about 7 m from the bulb to the west end. Priya (their VIP) holds the bulb fort behind its back
