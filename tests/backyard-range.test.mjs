@@ -47,6 +47,11 @@ check('a trigger pull uses a BB from the gun', pull.after < pull.before, pull);
 
 // aimed shots from the bench line
 await page.evaluate(() => {
+  // 18 Oct fix-up: the trigger pull's BB above is cleared first. The page's own frame loop lands it between evaluates
+  // locally, but on CI f20d3df it was still in the air when these shots stepped, hit a board and counted (4 bullseye
+  // hits, 10 marks, for 3 and 8).
+  for (const ob of Game.scenario.bbs) if (ob._whistle) bbWhistleStop(ob);
+  Game.scenario.bbs.length = 0;
   Game.player.pos.set(Game.scenario.range.bench.x, 0, Game.scenario.range.bench.z - 0.8); Game.player.yaw = 0;
   window._shoot = (x, y, z) => {
     const eye = new THREE.Vector3(Game.player.pos.x, Game.player.pos.y + Game.player.eyeOffset, Game.player.pos.z);
