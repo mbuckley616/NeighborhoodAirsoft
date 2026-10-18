@@ -28,7 +28,10 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
   for (const k of ks) if (k !== sean && k !== owen) { k.pos.x = -60; k.pos.z = -60; }
   let hit = 0; const real = window.applyBBHit; window.applyBBHit = (bb, c) => { if (c === owen) hit++; };
   const out = {};
-  for (const [key, at] of [['old', OLD], ['new', NEW]]) {
+  // v1.272: Protect Ryan's barricade (1.5 m, Priya's cover) now stands in the fort; the control fires with it lifted out
+  const all = Game.player.obstacles.slice(), bar = all.find(o => o.h === 1.5 && o.minX > 29 && o.maxX < 30.6);
+  for (const [key, at, keep] of [['old', OLD, false], ['new', NEW, true], ['oldBar', OLD, true]]) {
+    Game.player.obstacles.length = 0; for (const o of all) if (keep || o !== bar) Game.player.obstacles.push(o);
     const per = []; let los = 0;
     for (const s of SPOTS) {
       hit = 0; Game.scenario.bbs.length = 0;
@@ -46,11 +49,15 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
     }
     out[key] = { hits: per.reduce((a, b) => a + b, 0), per, los };
   }
+  Game.player.obstacles.length = 0; for (const o of all) Game.player.obstacles.push(o);
   window.applyBBHit = real;
+  out.bar = !!bar;
   return out;
 }, { OLD, NEW, SPOTS });
 console.log('   Sean, 720 shots from his six spots:', JSON.stringify(fire));
-check('control: Sean tags Owen at the old spawn in the fort (over 20 of 720)', fire.old.hits > 20, fire.old);
+check('control: Sean tags Owen at the old spawn in the fort, the barricade lifted out (over 20 of 720)', fire.bar && fire.old.hits > 20, fire.old);
+// v1.272 (Michael: A): with Priya's 1.5 m barricade in the fort, the same fire at the old spawn is stopped
+check('with the barricade in, none of the 720 reaches the old spawn in the fort', fire.oldBar.hits === 0, fire.oldBar);
 // (los is the kids' sight check, chest-high over the car's roof; the car's body stops every BB, which is what counts)
 check('the new spawn is out of his line: the car stops his fire, at most 6 of 720', fire.new.hits <= 6, fire.new);
 

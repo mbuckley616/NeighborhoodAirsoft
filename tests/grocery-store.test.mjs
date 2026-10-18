@@ -90,7 +90,7 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
     const o = spawnEnemyBB; let shots = 0; spawnEnemyBB = (e, t) => { shots++; const i = kids.indexOf(e); if (i >= 0) fired[i]++; return o(e, t); };
-    const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9, front: false, onTop: 0, oppD: 1e9 }));
+    const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9, front: false, back: false, onTop: 0, oppD: 1e9 }));
     const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
     const wiped = () => ['enemy', 'player'].find(t => kids.filter(k => k.team === t).every(k => !npcInFight(k))) || null;
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
@@ -104,6 +104,7 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
         const m = Math.hypot(k.pos.x - prev[i][0], k.pos.z - prev[i][1]), s = st[i];
         if (m < 1.5) s.path += m;
         if (k.team !== 'player' && k.pos.z > -17) s.front = true;   // through the back wall onto the sales floor
+        if (k.team === 'player' && k.pos.z < -17) s.back = true;    // v1.270: one of ours through it into the stockroom
         if ((k.pos.y || 0) > 1.5) s.onTop++;                        // up on a shelf (2.1 m): never
         s.minD = Math.min(s.minD, Math.hypot(k.pos.x - Game.player.pos.x, k.pos.z - Game.player.pos.z));
         // v1.172 fix-up: the nearest any opponent came (the player counts for the enemy side)
@@ -117,7 +118,7 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
     }
     spawnEnemyBB = o; applyBBHit = orig;
     return { team, secs: Math.round((f - 1) / 60), shots, wiped: team ? wiped() : null, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, out: !npcInFight(k) })) };
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, front: st[i].front, back: st[i].back, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, out: !npcInFight(k) })) };
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
@@ -127,7 +128,11 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
   check(`${id}: every kid moves or fires (or no opponent came within 30 m)`, r.kids.every(k => k.walked > 5 || k.fired > 0 || k.opp > 30), r.kids);
   check(`${id}: no kid ever stands on a shelf`, r.kids.every(k => k.onTop === 0), r.kids);
   if (r.team) {
-    check(`${id}: the stockroom kids come through the back wall onto the floor`, r.kids.filter(k => k.t !== 'player').some(k => k.front), r.kids);
+    // v1.270 (producer, 16 Oct, CI on PR #83): or our side took the fight into the stockroom and they were tagged there.
+    // In 1 of 30 sampled Price Check rounds none of the three came out in 60 s: Eric went in at 15 s, Brooke at 42 s,
+    // and the three lost 3 lives each to their 0.
+    check(`${id}: the stockroom kids come through the back wall onto the floor (or ours go in and tag them there)`,
+      r.kids.filter(k => k.t !== 'player').some(k => k.front) || (r.kids.some(k => k.t === 'player' && k.back) && r.lostEnemy > 0), r.kids);
     check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
       (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
   // v1.160: the defend's attackers come out of the stockroom to within 10 m of the desk

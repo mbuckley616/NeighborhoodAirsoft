@@ -133,7 +133,9 @@ check('their second flag home loses: THEY TOOK IT 2-0', lost.mode === 'result' &
 // capture-the-flag match never ends on) and the kids play it out. Stepped a second per evaluate.
 const LIMIT = 150;
 const rounds = [];
-for (let r = 0; r < 2; r++) {
+// 18 Oct fix-up: two rounds, and up to two more only if neither saw a take. A round gives 1-4 takes locally, but CI
+// dd5cbf8 had none in either (as a local shard did on v1.205-207), so two dry rounds are rare but not a bug.
+for (let r = 0; r < 4 && (r < 2 || !rounds.some(x => x.takes.length > 0)); r++) {
   await g.scenario(ID);
   await page.evaluate(() => {
     Game.player.pos.set(36, 0, 25); Game.player.hitsTaken = Game.player.maxHits;

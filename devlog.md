@@ -11565,3 +11565,85 @@ clock now.
 - How the walkie sounds next to the near voices in a real browser (headless has no voices), and whether one line every
   4 s is too much or too little in the 6v6 Last Saturday.
 - Push-to-talk, with online play (D.2).
+
+## v1.269 — The kids' route grid is built at BEGIN, not mid-fight
+Backlog Found in play (critic, 16 Oct): a frame hitch the first time a round needed the kids' distance field. The
+cells a kid fits in (`kidFreeCells`, v1.152) were worked out on the first pocket route or squad order of a round, one
+step of 48–555 ms headless depending on the map (the Hollow's big battle the worst, Bunratty and The Last Saturday
+about 350), and in The Last Saturday it landed as the fight opened. The obstacles never move in a round, so the grid is
+now built in `startScenario`, at BEGIN, where the briefing has just closed and the opening hold covers it. The grid's
+key (this match's obstacles and bounds) is unchanged, so a match that adds an obstacle still rebuilds it. The fills
+toward a goal (about a millisecond each) still run when they are needed.
+### Verified
+- `tests/kid-cells.test.mjs` (new): in The Last Saturday, the Hollow's big battle and Bunratty's 4v4 the grid is there
+  as the round starts, for that match's obstacles and bounds, and the first 6 s of play use it without a rebuild
+  (slowest step 7–15 ms; a build costs 247, 436 and 251 ms here). A PUSH UP order 1 s into Bunratty's 4v4: the next
+  step 24 ms, was 300 ms on v1.268's file, which fails all four checks (no grid at BEGIN).
+- `last-kid`, the stuck sweep's first suite (8 matches) pass. `squad-orders` failed its keep-distance share once (0.48
+  against 0.6, three browsers at once) and passed twice on this file (0.91, 0.82) and twice on v1.268's (0.75, 0.84)
+  run side by side, so it is not this change.
+- The full suite: in v1.270's entry.
+### Still open
+- BEGIN itself now takes the build's 50–550 ms on the click, before the first frame of the match; nobody has felt
+  whether that shows on a slow machine.
+
+## v1.270 — Price Check's stockroom check allows a fight taken into the stockroom
+Backlog Found in play (producer, 16 Oct; CI on docs-only PR #83): `tests/grocery-store.test.mjs` failed in CI, first
+"store_price_check_3v3: the stockroom kids come through the back wall onto the floor", then on the re-run "store_night_4v4:
+no kid is wedged in advancing for 4 s or more" (Tyler, 4 s at (−0.8, −25.2)). Price Check, 30 sampled 60 s rounds with
+the player standing at the start: the first stockroom kid reached the floor at 8.7–27 s in 28, at 41.7 s in one, and
+in one none came out at all. In that round Eric went through the back wall at 15 s and Brooke at 42 s, and the three
+stockroom kids lost 3 lives each to our 0: the fight happened in the stockroom because our side carried it there.
+That is the match working, so the check now passes when they come out, or when one of ours goes in and they lose a
+life. The game is unchanged. The night match's wedge did not come up in 24 sampled rounds (no kid over 2 s advancing
+in place); it stays open with the numbers.
+### Verified
+- `tests/grocery-store.test.mjs` passes with the new check; the round that failed it would now pass (Eric in at 15.2 s,
+  their side 9 lives lost).
+- The full suite in four parallel shards, with v1.269 in it: 170 of 170 passed first time, `kid-cells` and
+  `grocery-store` among them (64 minutes).
+### Still open
+- The night 4v4's Tyler wedge at the centre doorway, not reproduced in 24 rounds.
+
+## v1.271 — a kid stops "suppressing" into the wall beside him
+CI on 623ef41 failed `hollow-held`: Eric (our side, the MP5) held fire 20 times in a round from one metre at the Hollow north
+fort's south-west corner (−1, 30), where the line is 19. Forty local rounds put him there 8–16 times in five of them.
+His deploy spot is that corner, inside the player's fort. From it he walked up and down the wall, got an eye line, and
+pulled into the wall 3 m from his muzzle. Most of those pulls were suppression on the move: the march suppression (v1.67)
+and the bound suppression (v1.25) need only an eye line to the last-seen spot, not a clear muzzle. The held count
+(v1.122) rose to 7, but only the shooting state's move-on reads it, so nothing acted on those pulls. Now a kid whose
+last two pulls were held at a wall from within 1.5 m of where he stands doesn't suppress from there; he walks on, and
+a clear shot clears the count as before.
+### Verified
+- The 40-round probe of the Hollow 3v3: the worst spot a round fell from 16 held pulls (8–16 in five rounds) to 9
+  (8 or more in two rounds; most rounds 1–4).
+- `hollow-held`, `cover-fire`, `stuck-sweep-1`, `bound-forward`, `fence-bound`, `clear-guns`, `ctf` pass.
+### Still open
+- Eric still deploys into that corner; whether that deploy spot should move is a design call, not raised yet.
+
+## v1.272 — Protect Ryan: a plank barricade in front of Priya
+Michael's A on the Found-in-play item (control room, 18 Oct): Bunratty Court climbs about 7 m from the bulb to the west
+end, and our Sean fired his AK downhill from the high street, 30–41 m off, over the bulb fort's 1.12 m back wall to tag
+Priya, their VIP. It happened in 3 of 196 sampled rounds, now and then inside the first 8 s, which broke the VIP suite's
+"no VIP falls in the first 8 s" line. Protect Ryan now builds Bunratty Court with a stacked-plank barricade 1.5 m tall
+standing just in front of Priya inside the fort, between its corner bins, and it is the cover she holds. It stands 0.55 m
+from her and not against the back wall: at the wall, the downhill line to her head still got over it. The match
+is laid out under the default court's seed (a new `seedArg`), so every prop and tree stays where it was and the
+barricade is the one obstacle added. The other Bunratty matches are unchanged.
+A slit at her eye height, so she could shoot through it, was tried first (three heights) and dropped. Anyone who can
+see her muzzle can hit her upper chest from up the hill, so the slit let 2–32 hill BBs of 960 through, the same as no
+stack. So she now can't see down the lane west of the fort either. That is raised in decisions, Pending.
+### Verified
+- Sean firing real BBs from his eight hill spots (120 shots each) at seven places in the fort: 0 of 6,720 reach her with
+  the barricade; without it 1–36 of 960 at each place. `vip-spawn`'s control (Owen at his old fort spawn, 27 of 720 hits)
+  now runs with the barricade lifted out, and with it in, 0 of 720.
+- `vip`: the barricade is there, 1.5 m, and is the cover Priya holds (0.22 m off her anchor). From 544 high-street
+  points 2 m or more above her and 20 m+ off, no sight line reaches her chest or head (362 and 382 do without it). The
+  court's obstacles are the same as the default build's but for the barricade.
+- 24 played rounds of 40 s, the player untaggable at his start: no VIP hit at all; 3.7 tags a round among the others.
+- `bulb-sight`: from behind the barricade Priya can't see a player in the lane at (18.7, 1.4) (1 of 40 samples, 2–3 shots).
+  Her raised-bulb check is now taken from the bulb's north side at (34, 7): 39 of 40 samples, 17–20 shots in 20 s.
+### Still open
+- Priya can't fire down the lane from her spot any more (west of the fort: 0 of 4 test spots, was 4 of 4); she still
+  covers the bulb's north side, its south-west corner and the open back. Whether that is right for the match is in
+  decisions (A keep, B a 1.3 m stack, C move her spot).

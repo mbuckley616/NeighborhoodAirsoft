@@ -16,6 +16,7 @@ const snap = () => page.evaluate(() => ({
   t: Game.scenario?.roundTime,
   p: [Game.player.pos.x, Game.player.pos.z],
   kids: (Game.scenario?.enemies || []).map(e => [e.pos.x, e.pos.z]),
+  ai: (Game.scenario?.enemies || []).map(e => [e.state, +(e.stateTime || 0).toFixed(3)]),
   outcome: document.getElementById('outcomeText').textContent.trim(),
 }));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -32,7 +33,7 @@ await page.keyboard.up('w');
 const a1 = await snap();
 check('3 s of steps while it asks: the round clock stands still', a1.t === a0.t, [a0.t, a1.t]);
 check('the player stays put with W held and Space pressed', same(a0.p, a1.p), [a0.p, a1.p]);
-check('every kid stays put', same(a0.kids, a1.kids));
+check('every kid stays put, his state clock too', same(a0.kids, a1.kids) && same(a0.ai, a1.ai), [a0.ai, a1.ai]);
 check('still asking, still in the match', a1.asking && a1.mode === 'scenario');
 
 // Each way back to the match
@@ -53,9 +54,12 @@ for (const [how, act] of [
 }
 // Fix-up (PR #75, CI on 698e66a): one snapshot can catch Sean holding a spot in cover the whole time since the
 // question closed, so he gets up to 10 s more to move (the clock check above already shows the match runs).
+// 18 Oct fix-up: or their AI runs again. Sean can hold one spot in cover over 10 s (CI 86d93e2; 2 runs in 6 locally,
+// before v1.271 as after), but his state clock only stands still while the match is paused.
 let moved = await snap();
-for (let i = 0; i < 10 && same(a1.kids, moved.kids); i++) { await g.spin(60); moved = await snap(); }
-check('the kids move again after it closes', !same(a1.kids, moved.kids));
+const still = m => same(a1.kids, m.kids) && same(a1.ai, m.ai);
+for (let i = 0; i < 10 && still(moved); i++) { await g.spin(60); moved = await snap(); }
+check('the kids move again after it closes (or their state clock runs)', !still(moved), { kids: same(a1.kids, moved.kids), ai: [a1.ai, moved.ai] });
 
 // A second F a moment later asks again (no forfeit by double-tapping)
 await page.keyboard.press('f'); await page.keyboard.press('f'); await page.keyboard.press('f');

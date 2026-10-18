@@ -78,8 +78,17 @@ check("a kid's own lines carry 50-90% of his draws", picker.ownShare.length === 
 const ROUND = async (id, secs) => {
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.scenario(id);
-  await page.evaluate(() => { Game.player.maxHits = 999; VOICE.log.length = 0; Game.mouse.locked = true; });
-  for (let s = 0; s < secs; s += 5) await g.spin(300);
+  // 18 Oct fix-up: maxHits keeps a BB from tagging you out, but in Infection a tagger's touch infects you and ends the
+  // round (200 ms later): CI dd5cbf8 and 2dd3322 both had bunratty_infection over by about 15 s with 2 lines, and 8x CPU
+  // throttling locally ended it at 15.2 s. Marked infected already, the touch is spent and the round runs its 45 s.
+  await page.evaluate(() => { Game.player.maxHits = 999; Game.player._infected = true; VOICE.log.length = 0; Game.mouse.locked = true; });
+  // and a late pointerlockchange would open the pause menu (v1.239), which stops stepGame: resumed and logged if so
+  let pauses = 0;
+  for (let s = 0; s < secs; s += 5) {
+    if (await page.evaluate(() => { const was = !!Game.paused; if (was) { closePauseMenu(); Game.mouse.locked = true; } return was; })) pauses++;
+    await g.spin(300);
+  }
+  if (pauses) console.log(`  (${id}: the round was paused ${pauses} time(s) by the pointer lock; resumed)`);
   return page.evaluate(() => ({
     ffa: !!Game.scenario.ffa,
     teams: Object.fromEntries(Game.scenario.enemies.map(e => [e.charId, e.team || 'enemy'])),

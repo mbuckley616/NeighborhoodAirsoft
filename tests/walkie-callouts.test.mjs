@@ -63,21 +63,40 @@ const ffa = await page.evaluate(() => {
 check('in a free-for-all a kid 200 m off goes unsaid', ffa.ffa && ffa.said === false, ffa);
 
 // --- a played round: you stand at the start, untaggable, 60 s
+// 18 Oct fix-up: whether a teammate wanders past earshot (~29 m) in 60 s is up to the round, and on CI one run had 25
+// and 21 lines with none on the walkie (both teams stayed close). So each line's distance is recorded (tryNpcSpeak is
+// wrapped for the round), and the checks are the rule: a teammate who tries from 31 m+ (past earshot: 30 m is under
+// 0.12 volume) with every cooldown clear is heard over the walkie, nobody within 20 m is, and only teammates are. The
+// parts above set the walkie up by hand; this one only checks it holds in play. The round steps in one seeded evaluate.
 const ROUNDS = +(process.env.ROUNDS || 2);
 const played = [];
 for (let i = 0; i < ROUNDS; i++) {
   await g.scenario('winnmark_team_3v3');
-  await page.evaluate(() => { Game.player.maxHits = 999; VOICE.log.length = 0; });
-  for (let s = 0; s < 60; s++) await g.spin(60);
-  played.push(await page.evaluate(() => {
+  played.push(await page.evaluate((i) => withSeededRandom('walkie-play-' + i, () => {
+    Game.player.maxHits = 999; VOICE.log.length = 0;
+    const orig = window.tryNpcSpeak, far = [];
+    window.tryNpcSpeak = function (e, category, fill) {
+      const P = Game.player.pos, d = e && e.pos ? Math.hypot(e.pos.x - P.x, e.pos.z - P.z) : 0;
+      const now = Game.scenario?.roundTime || 0, n = VOICE.log.length;
+      const clear = now >= VOICE.globalCooldownUntil && now >= VOICE.walkieUntil && !(e._voiceCooldownUntil > now);
+      const said = orig.call(this, e, category, fill);
+      if (VOICE.log.length > n) VOICE.log[VOICE.log.length - 1].d = +d.toFixed(1);
+      if (d >= 31 && clear && overWalkieMate(e, category)) far.push(!!said);
+      return said;
+    };
+    try { for (let s = 0; s < 3600 && Game.mode === 'scenario'; s++) stepGame(1 / 60); }
+    finally { window.tryNpcSpeak = orig; }
     const mates = new Set(Game.scenario.enemies.filter(e => e.team === 'player').map(e => e.charId));
-    return VOICE.log.map(l => ({ t: l.t, mate: mates.has(l.charId), walkie: !!l.walkie, name: l.name, category: l.category }));
-  }));
+    return { far, log: VOICE.log.map(l => ({ t: l.t, d: l.d, mate: mates.has(l.charId), walkie: !!l.walkie, name: l.name, category: l.category })) };
+  }), i));
 }
-const walk = played.map(log => log.filter(l => l.walkie));
+const walk = played.map(r => r.log.filter(l => l.walkie));
 for (const [i, w] of walk.entries())
-  console.log(`   round ${i + 1}: ${played[i].length} lines, ${w.length} over the walkie:`, JSON.stringify(w.map(l => [l.t, l.name, l.category])));
-check('in play the walkie carries teammates\' lines', walk.flat().length > 0, walk.map(w => w.length));
+  console.log(`   round ${i + 1}: ${played[i].log.length} lines, ${w.length} over the walkie:`, JSON.stringify(w.map(l => [l.t, l.name, l.category, l.d])),
+    `; teammates trying from 31 m+ with the cooldowns clear: ${played[i].far.length}`);
+const far = played.flatMap(r => r.far);
+check('in play a teammate trying from 31 m+ with the cooldowns clear is heard over the walkie', far.every(x => x), far);
+check('nobody within 20 m talks on the walkie', walk.flat().every(l => l.d > 20), walk.flat().map(l => l.d));
 check('only teammates talk on the walkie', walk.flat().every(l => l.mate));
 const gaps = walk.flatMap(w => w.slice(1).map((l, j) => l.t - w[j].t));
 check('walkie lines 4 s apart or more', gaps.every(d => d >= 4 - 0.02), gaps);
