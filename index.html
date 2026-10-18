@@ -1840,6 +1840,11 @@
   .brief-combatant .brief-gun  { color: #cdbfa8; font-size: 12px; }
   .brief-combatant .brief-lives { font-size: 12px; color: var(--ui-accent); text-align: right; white-space: nowrap; }
   .brief-combatant .brief-lives em { color: #9a8f7c; font-style: normal; font-size: 10px; }
+  /* v1.274 (D.28 step 2): bench a crew kid before the match, or bring him back */
+  .brief-combatant:has(.brief-bench) { grid-template-columns: 1.1fr 1.3fr auto auto; }
+  .brief-combatant.benched { opacity: 0.55; }
+  .brief-bench { font: inherit; font-size: 11px; padding: 2px 8px; border-radius: 3px; cursor: pointer;
+    background: transparent; color: var(--ui-accent); border: 1px solid currentColor; }
   .brief-objective {
     font-size: 12px;
     color: var(--ui-text);
@@ -2113,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.273</div>
+  <div class="version">v1.274</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6010,7 +6015,7 @@ function getScenarioBriefing(scenarioId) {
   if (!sc) return null;
   const allies = [];
   const enemies = [];
-  const setup = sc.enemySetup || [];
+  const setup = crewSetup(scenarioId) || [];   // v1.274 (D.28 step 2): your crew's sides
   for (const es of setup) {
     const ch = CHARACTERS[es.charId];
     const combatant = {
@@ -6020,6 +6025,7 @@ function getScenarioBriefing(scenarioId) {
       gunType: es.weapon || 'pistol',
       lives: setupEntryLives(sc, es),
       vip: !!es.vip,   // v1.170
+      crew: es.team === 'player' && crewMembers().includes(es.charId),   // v1.274
     };
     if (es.team === 'player') allies.push(combatant);
     else enemies.push(combatant);
@@ -6046,13 +6052,17 @@ function getScenarioBriefing(scenarioId) {
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
     tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
+    // v1.274 (D.28 step 2): a team match takes your crew; who you left out
+    crewMatch: crewTeamMatch(scenarioId) && crewMembers().length > 0,
+    benched: crewTeamMatch(scenarioId) ? crewMembers().filter(id => crewBench.has(id)).map(id => CHARACTERS[id].name) : [],
   };
 }
 
 // Build the inner HTML for a briefing roster (allies + enemies + lives + the
 // player's own life count). Shared by the pre-start popup and loading screen.
-function renderBriefingRosterHTML(brief) {
+function renderBriefingRosterHTML(brief, opts) {
   if (!brief) return '';
+  const bench = !!(opts && opts.bench && brief.crewMatch);   // v1.274: the pre-match briefing can bench a crew kid
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
   const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
   const row = (c, side) =>
@@ -6060,6 +6070,7 @@ function renderBriefingRosterHTML(brief) {
        <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
        <span class="brief-gun">${c.gun}</span>
        <span class="brief-lives">${lifeStr(c.lives)}</span>
+       ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}
      </div>`;
   let html = '';
   // YOUR side (you + any allies)
@@ -6071,6 +6082,8 @@ function renderBriefingRosterHTML(brief) {
       <span class="brief-lives">${brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
     </div>
     ${brief.allies.map(c => row(c, 'ally')).join('')}
+    ${bench ? crewMembers().filter(id => crewBench.has(id)).map(id =>
+      `<div class="brief-combatant ally benched"><span class="brief-name">${CHARACTERS[id].name}</span><span class="brief-gun">on the bench</span><span class="brief-lives"></span><button class="brief-bench" data-unbench="${id}">Bring</button></div>`).join('') : ''}
   </div>`;
   // OPPONENTS
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
@@ -22944,7 +22957,7 @@ function enterScenario(scenarioId) {
     return;
   }
   Game.mode = 'scenario_intro';
-  const sc = SCENARIOS[scenarioId];
+  const sc = crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it
   let built;
   // v1.35: time-of-day for this scenario ('day' default | 'night'), hoisted to
   // function scope so the night-flashlight pass below can read it.
@@ -33676,8 +33689,7 @@ function summerDayAfter(scenarioId) {
 const RIVAL_CREW = "Seth's crew";
 // v1.273 (D.28 step 1, Michael's design in decisions "Build your crew"): both crews are fixed. Yours is five kids who
 // each ask to join by text at a story moment (SUMMER_TEXTS with `ask`); nobody else can join, and Seth never does.
-// Seth's is eight. Step 1 is the rosters and the asking; the crew takes the field in step 2, so for now a kid who has
-// joined changes no match.
+// Seth's is eight. Step 1 is the rosters and the asking; the crew takes the field in step 2 (v1.274, crewSetup below).
 const CREW_ROSTER = ['eric', 'sean', 'nick', 'alex', 'diego'];   // the order they ask
 const CREW_MAX = 5;
 const SETH_CREW_ROSTER = ['seth', 'trey', 'brooke', 'tyler', 'evan', 'andrew', 'garrett', 'colin'];
@@ -33695,6 +33707,85 @@ function crewTakeIn(id) {
   if (!crewAskOpen(id) || crewMembers().length >= CREW_MAX) return false;
   Game.persist.crew = crewMembers().concat(id);
   return true;
+}
+// v1.274 (D.28 step 2, Michael's design; C on "which two-against-more matches stay": none): your crew takes the field.
+// A team match (one that gives you allies today, the tutorial and the pickup games aside) takes your whole crew, each
+// kid on his own gun, plus the kids the match keeps: a VIP, Seth while he is on your side, and the kid a match is named
+// after (You and Nick, Sean Has Your Back) until he is in your crew. Places left on your side go to the match's own
+// allies, then to kids from the street; a benched kid's place stays empty. A crew kid the match puts on the other side
+// is swapped for a kid from the street at his spot, and with Seth on the other side his crew kids on yours cross over
+// to him. Solo matches never take the crew. With nobody in the crew every match is exactly as before. The crew sizes
+// and the odds are step 3's (rebalancing); the bench is the briefing's and is not saved.
+const CREW_GUNS = { eric: 'mp5', sean: 'ak47', nick: 'ar', alex: 'ak47', diego: 'mp5' };   // each kid's own gun
+const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean' };
+const crewBench = new Set();
+function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); }
+function crewTeamMatch(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.ffa || sc.pickup || sc.net || id === 'pickup_game') return false;
+  return (sc.enemySetup || []).some(es => es.team === 'player');
+}
+// The kids who play on this street with a gun of their own, in the order the matches list them
+function crewStreetPool(sc) {
+  const seen = new Map();
+  for (const [id, s] of Object.entries(SCENARIOS)) {
+    if (id === 'pickup_game' || s.tutorial || s.street !== sc.street) continue;
+    for (const es of s.enemySetup || []) {
+      if (es.charId && es.weapon && !es.behavior && !es.statsOverride && !seen.has(es.charId) && CHARACTERS[es.charId]) seen.set(es.charId, es.weapon);
+    }
+  }
+  return [...seen].map(([charId, weapon]) => ({ charId, weapon }));
+}
+// The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
+function crewSetup(id) {
+  const sc = SCENARIOS[id];
+  const crew = crewMembers();
+  if (!sc || !crew.length || !crewTeamMatch(id)) return sc ? sc.enemySetup : undefined;
+  const setup = sc.enemySetup, fielded = crewFielded();
+  const sethFoe = setup.some(es => es.charId === 'seth' && es.team !== 'player');
+  const named = CREW_NAMED_ALLY[id];
+  const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
+  const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
+  const kept = allies.filter(keep), slots = allies.filter(es => !keep(es));
+  // Seth's crew on your side crosses over to him; the rest of the match's own allies wait to fill places
+  const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
+  const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
+  const strip = (es, fields) => { const o = Object.assign({}, es); for (const f of fields) delete o[f]; return o; };
+  const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch']);   // a place past the match's own
+  const taken = new Set([...setup.map(es => es.charId), ...crew]);
+  const pool = crewStreetPool(sc).filter(k => !CREW_ROSTER.includes(k.charId) && k.charId !== 'seth');
+  const fromStreet = (preferSeth) => {
+    const list = preferSeth ? pool.filter(k => SETH_CREW_ROSTER.includes(k.charId)).concat(pool) : pool.filter(k => !(sethFoe && SETH_CREW_ROSTER.includes(k.charId)));
+    const k = list.find(k => !taken.has(k.charId));
+    if (k) taken.add(k.charId);
+    return k;
+  };
+  // Your side: the kept kids, then the crew (a kid on his own spot when the match has one for him), then the places left
+  const out = kept.map(es => Object.assign({}, es));
+  const free = slots.map((es, i) => i), at = new Map();
+  for (const kid of fielded) { const i = slots.findIndex(es => es.charId === kid); if (i >= 0) { at.set(kid, i); free.splice(free.indexOf(i), 1); } }
+  for (const kid of fielded) {
+    const i = at.has(kid) ? at.get(kid) : free.length ? free.shift() : -1;
+    out.push(Object.assign(i >= 0 ? Object.assign({}, slots[i]) : spare(), { charId: kid, weapon: CREW_GUNS[kid], team: 'player' }));
+  }
+  let left = allies.length - kept.length - crew.length;   // a benched kid's place stays empty
+  for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); left--; }
+  while (left-- > 0) { const k = fromStreet(false); if (!k) break; out.push(Object.assign(spare(), { charId: k.charId, weapon: k.weapon, team: 'player' })); }
+  // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
+  for (const es of foes) {
+    if (!crew.includes(es.charId)) { out.push(Object.assign({}, es)); continue; }
+    const k = fromStreet(sethFoe);
+    if (k) out.push(Object.assign({}, es, { charId: k.charId, weapon: k.weapon }));
+  }
+  const foeSpot = foes.find(es => es.role !== 'defender' && !es.spawnAt) || foes[0];
+  for (const es of crossing) out.push(Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch']), { anchor: foeSpot.anchor }));
+  return out;
+}
+// A scenario as it will be played: the same object when the crew changes nothing, else a copy with the crew's sides
+function crewScenario(id) {
+  const sc = SCENARIOS[id];
+  const setup = crewSetup(id);
+  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });
 }
 
 // =====================================================================
@@ -34412,7 +34503,7 @@ function rivalScoreText(s) { return `beaten in ${s.beaten} of their ${s.total} m
 // The result card's line: who they are this match (Seth alone in a duel), how it went, and the summer's score.
 function rivalResultLine(id, outcome, firstWin) {
   const sc = SCENARIOS[id];
-  const foes = (sc.enemySetup || []).filter(es => es.team !== 'player').length;
+  const foes = (crewSetup(id) || []).filter(es => es.team !== 'player').length;   // v1.274
   const who = foes > 1 ? RIVAL_CREW : 'Seth';
   const s = rivalScore();
   let head;
@@ -34538,7 +34629,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
     <div class="${cls}" data-id="${scenarioId}">
       <div class="sc-card-top">
         <span class="sc-card-num">${num}</span>
-        <span class="sc-card-match">${scenarioMatchup(sc)}</span>
+        <span class="sc-card-match">${scenarioMatchup(crewScenario(scenarioId))}</span>
         ${badges.map(t => `<span class="sc-card-badge">${t}</span>`).join('')}
         ${stamp}
       </div>
@@ -34575,7 +34666,7 @@ function openScenarioBrief(scenarioId) {
   document.getElementById('briefLoc').textContent = locParts.join(' · ');
   document.getElementById('briefTitle').textContent = brief.scenarioName || brief.name;
   document.getElementById('briefDesc').textContent = brief.desc || '';
-  document.getElementById('briefRoster').innerHTML = renderBriefingRosterHTML(brief);
+  renderBriefRoster(scenarioId);   // v1.274: with Bench and Bring for your crew
   const modal = document.getElementById('scenarioBriefModal');
   modal.classList.add('active');
   Game.mode = 'modal';
@@ -34588,6 +34679,17 @@ function openScenarioBrief(scenarioId) {
     document.getElementById('worldMap').classList.remove('active');
     enterScenario(scenarioId);
   });
+}
+
+// v1.274 (D.28 step 2): the briefing's roster, where a crew kid can be benched or brought back
+function renderBriefRoster(scenarioId) {
+  const el = document.getElementById('briefRoster');
+  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true });
+  el.querySelectorAll('[data-bench],[data-unbench]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    if (b.dataset.bench) crewBench.add(b.dataset.bench); else crewBench.delete(b.dataset.unbench);
+    renderBriefRoster(scenarioId);
+  }));
 }
 
 // v1.146 (D.8 step 1): a pin click and openMap both show a zone through here; the chosen pin is marked

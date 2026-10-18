@@ -11699,3 +11699,45 @@ joining moments and the texts. Your crew does not take the field yet (step 2), s
   Seth's sister. Michael may want them sharper.
 - Whether "Not yet" should exist at all, or a No should be final, is for Michael to say if he minds; the fixed roster
   argued for keeping the door open.
+
+## v1.274 — Build your crew, step 2: your crew takes the field
+Backlog D.28, step 2 of Michael's design (Fable card d28-crew). The spec kept "the outnumbered matches Michael marks"
+solo; asked which (decisions, "Build your crew, step 2"), he answered C: none stays, every team match takes your crew,
+and step 3 rebalances them. So from this version a kid who has joined plays.
+- Which matches: a team match is one that gives you allies today, 31 of the 73, all on the ladder (the tutorial, the
+  free-for-alls, the pickup games and online play aside). The other 42 never take the crew. With nobody in the crew
+  (every new game until Winnmark is done) `crewSetup` hands back the scenario's own list, the same object, so nothing
+  changes for anyone who has not taken a kid in.
+- Your side: the kids the match keeps, then your whole crew, then the places left. Kept are a VIP (Ryan, Rebecca),
+  Seth while he is on your side (Winnmark's team matches; he never joins), and the kid a match is named after (Nick in
+  You and Nick, Sean in Sean Has Your Back, day and night) until he is in the crew. Your side is never smaller than the
+  match's own: when the crew is short, the match's own allies fill the places left in their order, then kids from the
+  street (the kids who play on that street with a gun of their own, in match order). A crew kid takes his own spot when
+  the match has one for him, otherwise a free ally spot, past those the first ally's spot without its role.
+- Each crew kid plays on his own gun, the one he carries most across the summer: Eric MP5, Sean AK, Nick AR, Alex AK,
+  Diego MP5 (`CREW_GUNS`). Hand-me-downs are step 4.
+- Their side: a crew kid the match puts against you is swapped for a kid from the street at his spot, with that kid's
+  gun (Nick in Two Against the World, Sean in First Time in the Woods and You and Nick, Diego in Bellfield's). With Seth
+  on the other side his crew kids on yours cross to him at his side's first spot (Brooke in the Hollow's big games, Trey
+  and Brooke at Willow Bend and in the Last Saturday), as the step-2 question said. When the street kid is needed with
+  Seth there, his crew comes first.
+- So the odds move: Two Against the World is 6 v 4 with all five, Squad Up 7 v 3, and the Last Saturday comes out as
+  you and your five against Seth and seven, the 6 v 8 the spec asks of it. The Big Game with Eric, Sean and Nick is 5 v
+  6 (Rebecca stays, Brooke crosses). Step 3 tunes each zone for the crew you would have the first time.
+- Benching: the briefing (the pre-match popup) gives each crew kid a Bench button; a benched kid shows under your side
+  "on the bench" with Bring. His place stays empty, as the spec says. The bench lasts the session and is not saved,
+  so a reload brings everyone back.
+- The map's cards and the briefing count the crew (a card reads 6V4); the result card's "Seth's crew" line counts the
+  sides as played. `CREW=all` in the stuck-kid sweep puts the whole crew in first.
+### Verified
+- `tests/crew-field.test.mjs` (new, 27 checks): a new game leaves all 73 matches as they are; with all five in, the 42
+  solo matches still play alone and the 31 team matches take the crew. Two Against the World: Eric in, you and Eric v 4
+  (2V4); all five, 6V4 with Nick swapped for Owen, each kid on his own gun. You and Nick with Eric: Nick and Eric v Sean;
+  with Sean and Nick in, a street kid for Sean. Squad Up: Seth and your five v 3. Protect Ryan: Ryan and your five.
+  The Last Saturday: your five v eight, Brooke and Trey with Seth, 6V8. The Big Game with three: Eric, Sean, Nick,
+  Rebecca v six; Nick benched, his place empty and the briefing names him. First Time in the Woods: Sean yours, a street
+  kid beside Seth. Over all 31 with all five: nobody twice, none of the crew against you, no VIP lost, neither side
+  short of its own count. The briefing's Bench and Bring move a kid off and back; six matches entered with the crew
+  (The Big Game with Sean benched from the briefing) field exactly the computed sides, Eric on his MP5; the crew
+  survives a save and load.
+- `crew-roster`'s last check now expects Squad Up as Seth and your five (it said step 1 changed no match).

@@ -109,7 +109,8 @@ await g.scenario('winnmark_team_3v3');
 await g.spin(5);
 const m = await page.evaluate(() => ({ mode: Game.mode,
   ours: Game.scenario.enemies.filter(e => e.team === 'player').map(e => e.charId).sort(),
-  want: SCENARIOS.winnmark_team_3v3.enemySetup.filter(e => e.team === 'player').map(e => e.charId).sort() }));
-check('a full crew still plays Squad Up with its own allies (step 2 fields the crew)', m.mode === 'scenario' && m.ours.join() === m.want.join() && m.ours.length > 0, m);
+  want: ['seth', ...CREW_ROSTER].sort() }));
+// v1.274 (D.28 step 2): the crew takes the field, so Squad Up is Seth (yours on Winnmark) and your five (tests/crew-field)
+check('a full crew plays Squad Up as Seth and your five', m.mode === 'scenario' && m.ours.join() === m.want.join(), m);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
