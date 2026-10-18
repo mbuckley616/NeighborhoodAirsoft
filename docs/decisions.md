@@ -5,6 +5,36 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
+  You asked for a crew you recruit, field and maybe outfit, and whether it should simply be how single player works.
+  How it stands: 32 of the 73 matches give you allies (1 to 5 kids), all named and picked by hand: Seth coaches the
+  tutorial, Sean and Nick are your Bunratty friends, Andrew and Alex are the Northcliff twins, Ryan or Rebecca is the
+  VIP you guard, and Eric, Rebecca, Brooke, Sean and Trey stand with you on the Last Saturday. 41 matches are solo. The
+  Pickup Game board already lets you pick who plays with you, but forgets it after each game. Your crew's name and
+  colour (v1.200) are saved; who is in it is not. Whatever you pick, a kid joins the same way: after you have won
+  twice with him on your side, or beaten his side twice, he texts your flip phone asking to run with you, and you say
+  yes or no. Your crew holds up to five kids, and the mirror's YOUR CREW card shows them.
+  Options:
+  - A) **A crew you recruit, used where you choose.** The Pickup Game board gets MY CREW, which fills "With you" from
+    your crew and remembers your picks. In an ordinary team match on the ladder, the briefing gets BRING MY CREW,
+    which swaps the match's allies for your crew at the same count; leave it alone and the match plays exactly as
+    today. The tutorial, the two VIP matches and the Last Saturday keep their own kids. About two sessions.
+    *(recommended)*
+  - B) **Your crew is your team in every team match.** Each match keeps only its ally count, and your crew fills the
+    slots, with the match's own kids filling any you cannot. The same four story matches stay fixed. It is the bigger
+    feeling of "my squad", but every hand-picked pairing goes (no Bunratty friends in Bunratty, no twins on
+    Northcliff), and early on, with nobody recruited yet, it plays exactly like today anyway. About three sessions,
+    and every team match needs its balance looked at again.
+  - C) **A, plus outfitting.** Each crew kid gets a gun you choose from the guns you own and wears your colours.
+    About three to four sessions. A kid's gun is half of who he is today (Fernando's AK, the snipers), and a crew of
+    five snipers could make some matches easy, so it needs limits we would agree on first.
+  - D) **Not now.**
+  My reaction: I like it, and I would not make it how single player works yet. The hand-picked allies carry the story
+  (your street's friends, the twins, the VIP you protect), and B throws that away to give a choice most players only
+  get after a dozen matches. A gives the whole feeling to anyone who wants it (you recruit kids from your own matches
+  and take them anywhere) and changes nothing for anyone who does not. If you love it in play, B is a small step from
+  A later, and C a separate card.
+
 ## Answered
 
 - **The Hollow's free-for-all: the kids can't all be hidden from each other (builder, 2026-10-17, v1.265)**
