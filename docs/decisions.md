@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
+  Step 1 is built (v1.273, PR #95): the two rosters, Garrett and Colin, and each of your five asking by text. Step 2
+  puts your whole crew in every team match. Your spec keeps out "the outnumbered matches Michael marks" and names Two
+  of Us, Four of Them as the first to decide. Three team matches have you and one friend against more:
+  Outnumbered (Winnmark, you and Seth v 3), Two Against the World (Bunratty, you and Sean v 4) and Two of Us, Four of
+  Them (the Hollow at night, you and Sean v 4). Juggernauts (the Hollow) is the other way round: five of you against
+  two armoured kids. With your crew in, the first time you play them Bunratty's would be you and Eric v 4 (Sean isn't
+  in your crew until Bunratty is done), and the Hollow's you, Eric, Sean and Nick v 4, so the odds they are named for go.
+  - A) **The three "two against more" matches stay as they are** (their own one friend, no crew); Juggernauts takes
+    your crew like any team match. *(recommended)*
+  - B) **Only Two of Us, Four of Them stays**; Outnumbered and Two Against the World take your crew.
+  - C) **None stays**; every team match takes your crew, and step 3 rebalances them.
+  My reaction: A. Their names are their promise, and the summer already has plenty of team matches for the crew.
+  Two smaller things step 2 will do unless you say otherwise: in the two VIP matches (Protect Ryan, Night Shift) the
+  VIP counts as the kid the match is named after, so your crew comes plus Ryan or Rebecca; and in a match with Seth on
+  the other side, his crew kids who stand on your side today (Trey in The Eighteenth and Night Swim) move to his side,
+  their places on yours going to your crew or a neighbourhood kid.
+
 - **Squad orders on a controller: which button (builder, 2026-10-17, backlog B.11)**
   Q's wheel (v1.248) has no pad button. You suggested the d-pad, but in a match the d-pad already picks gun slots 1-4
   (up 1, right 2, down 3, left 4, v1.241), and Y/RB and LB also step through the slots. The wheel's four orders sit
