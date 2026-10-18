@@ -7,6 +7,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
+  The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 1e28837). Outnumbered, Two Against the
+  World and Two of Us, Four of Them are you and one friend against more; with your crew in, those odds go.
+  - A) The three "two against more" matches stay as they are; Juggernauts takes your crew. *(recommended)*
+  - B) Only Two of Us, Four of Them stays; Outnumbered and Two Against the World take your crew.
+  - C) None stays; every team match takes your crew, and step 3 rebalances them.
+  Michael: **C) None stays; step 3 rebalances them** (2026-10-18)
+
 - **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
   The question and Michael's full step-by-step spec are in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad).
   Michael: **His own design, closest to B, with hand-me-down outfitting from C** — "Not A: my own version, closest to B with hand-me-down outfitting. Full spec is written in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad, worked out with Claude); build from that." Fixed crew (Sean, Nick, Eric, Diego, Alex); Seth's fixed crew (Trey, Brooke, Tyler, Evan, Andrew, Garrett, Colin); kids join at zone-end story moments; solo matches stay solo; every team match takes the whole crew, benching allowed; finales Seth's side +1 (Last Saturday 6 v 8); hand-me-down guns and gear; built in steps. (2026-10-18)
