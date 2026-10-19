@@ -27,7 +27,9 @@ for (let build = 0; build < 2; build++) {
   });
   console.log(`  build ${build + 1}:`, JSON.stringify(st));
   check(`build ${build + 1}: each Bellfield kid starts at his own yard start, clear of obstacles`,
-    st.length === 4 && st.every(k => STARTS[k.n] && Math.hypot(k.at[0] - STARTS[k.n][0], k.at[1] - STARTS[k.n][1]) < 0.6 && !k.stuck), st);
+    // v1.275 (D.28 step 3): the match is tuned for your first-time crew, so their side is five: the fifth kid starts at
+    // one of the four yard starts, the spot's he takes
+    st.length >= 4 && st.every(k => (STARTS[k.n] ? [STARTS[k.n]] : Object.values(STARTS)).some(s => Math.hypot(k.at[0] - s[0], k.at[1] - s[1]) < 0.6) && !k.stuck), st);
   check(`build ${build + 1}: no start has a line to the entry (muzzle and eye 1.05-1.6 m, chest and head)`, st.every(k => k.lines === 0), st);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(30);

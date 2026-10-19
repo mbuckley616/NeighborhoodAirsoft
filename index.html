@@ -33726,11 +33726,13 @@ function crewTeamMatch(id) {
   return (sc.enemySetup || []).some(es => es.team === 'player');
 }
 // The kids who play on this street with a gun of their own, in the order the matches list them
+// (v1.275: the kids who play against you there first, then the ones who stand with you)
 function crewStreetPool(sc) {
   const seen = new Map();
-  for (const [id, s] of Object.entries(SCENARIOS)) {
+  for (const ours of [false, true]) for (const [id, s] of Object.entries(SCENARIOS)) {
     if (id === 'pickup_game' || s.tutorial || s.street !== sc.street) continue;
     for (const es of s.enemySetup || []) {
+      if ((es.team === 'player') !== ours) continue;
       if (es.charId && es.weapon && !es.behavior && !es.statsOverride && !seen.has(es.charId) && CHARACTERS[es.charId]) seen.set(es.charId, es.weapon);
     }
   }
@@ -33840,7 +33842,6 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   }
   let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
   for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }
-  while (left-- > 0) { const k = fromStreet(false); if (!k) break; out.push(Object.assign(spare(), { charId: k.charId, weapon: k.weapon, team: 'player' })); }
   // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
   const them = [];
   for (const es of foes) {
@@ -33848,8 +33849,8 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
     const k = fromStreet(sethFoe);
     if (k) them.push(Object.assign({}, es, { charId: k.charId, weapon: k.weapon }));
   }
-  const spots = foes.filter(es => es.role !== 'defender' && !es.spawnAt);
-  const foeSpot = spots[0] || foes[0];
+  const spots = foes.filter(es => es.role !== 'defender');
+  const foeSpot = foes.find(es => es.role !== 'defender' && !es.spawnAt) || foes[0];
   const over = [...(turned ? sc.enemySetup.filter(es => es.charId === 'seth') : []), ...crossing];
   const crossed = over.map(es => Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch', 'behavior', 'ctf', 'lives']), { anchor: foeSpot.anchor }));
   them.unshift(...crossed.filter(es => es.charId === 'seth')); them.push(...crossed.filter(es => es.charId !== 'seth'));
@@ -33864,7 +33865,10 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
     while (them.length < foeN) {
       const k = fromStreet(sethFoe); if (!k) break;
       const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
-      them.push(Object.assign(strip(spot, ['role', 'spawnAt', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon }));
+      // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
+      const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
+      if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
+      them.push(kid);
     }
     // A side the spec names outright (the Last Saturday: Seth and his seven) takes those kids at its places
     const named = CREW_FOE_SIDES[id];
@@ -33873,6 +33877,8 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
       for (const es of them) if (!named.includes(es.charId) && rest.length) { const k = rest.shift(); es.charId = k; es.weapon = crewKidGun(k); }
     }
   }
+  // v1.275: places left on your side come after theirs, so the street's own kids stand on their side first
+  while (left-- > 0) { const k = fromStreet(false); if (!k) break; out.push(Object.assign(spare(), { charId: k.charId, weapon: k.weapon, team: 'player' })); }
   return out.concat(them);
 }
 // A scenario as it will be played: the same object when the crew changes nothing, else a copy with the crew's sides

@@ -11758,3 +11758,46 @@ and step 3 rebalances them. So from this version a kid who has joined plays.
   open questions in decisions.
 - Garrett and Colin still take no field; step 3 gives them guns and places on Seth's side.
 - The bench isn't saved and has no controller hint; whether a shorthanded win pays more is still open (no extra pay now).
+
+## v1.275 — Build your crew, step 3: each match tuned for the crew you'd have
+Backlog D.28, step 3 of Michael's design (Fable card d28-crew). Step 2 put your whole crew in every team match, so
+your side had grown and the odds with it (Squad Up 7 v 3 with all five). Asked whether the other side stays fixed or
+grows with your crew (decisions, "Build your crew, step 3"), Michael answered A: fixed, tuned for the crew you'd have
+the first time you reach each match, so a replay with all five is easy, as his spec says.
+- The first-time crew: every kid whose ask comes before the match on the ladder, taken in (`crewFirstTime`). Winnmark's
+  matches have nobody, Bunratty's Eric, the Hollow, the lot and Northcliff Trace Eric, Sean and Nick, Bellfield's Alex
+  too, and everything from Northcliff's finale on all five.
+- Those sides fix the match once (`crewSetup` now builds them first, then plays them with your crew as it is). Your side
+  is never smaller than the first time: kids not yet in your crew have their places filled by the match's own allies,
+  then the street, so an old save or a "Not yet" plays the same numbers. A benched kid's place still stays empty.
+- Their side is a fixed number for the match. An ordinary match keeps the margin it was built with: their side grows by
+  as many as the first-time crew adds to yours (Two of Us, Four of Them was 2 v 4 and is 4 v 6 with Eric, Sean and Nick;
+  the school's portables 3 v 3 is 6 v 6). A zone's finale has their side one more than yours: Bunratty 3 v 4, the Hollow
+  5 v 6, the lot 4 v 5, Northcliff 6 v 7, the school 6 v 7, Willow Bend 6 v 7. Lights Out stays 2 v 2 with Seth beside
+  you. The Last Saturday is two more, 6 v 8, and its other side is now Seth and his seven as the spec names them (Trey,
+  Brooke, Tyler, Evan, Andrew, Garrett, Colin), not the old Devon, Mitchell, Mason, Marcus and Ryan; its briefing says so.
+- Where their side grows, the extra kids come from the street at the match's own spots in turn (deploying from the
+  huddle, not from a spot's own start or nest), Seth's crew first when Seth plays; when the street runs short, the rest
+  of the zone's kids, then anybody's, each on the gun he carries most. An extra kid never brings a sniper rifle (he has
+  no nest to shoot it from; Devon and Brooke sat still with one), nor a spot's flag run or lives; on Bellfield's flags
+  the extras push, as Christian does, so only Fernando keeps their flag (Michael's C of v1.191). Where it shrinks (Brooke crossing to Seth in the
+  Big Game used to make it 5 v 6), the match's own kids go from the end of its list, never Seth, a crosser or a
+  defender, so the Big Game is the 5 v 5 it was built as.
+- Garrett (an AR) and Colin (a MAC-10) take the field: with Seth, once Bellfield's flags are done and Seth has texted
+  "u havent met garrett. u will". Garrett plays at Willow Bend (both matches) and both play the Last Saturday.
+- Seth turns: replaying one of Winnmark's team matches once Lights Out is done, Seth plays for the other side, and Trey
+  with him (his crew crosses as it does elsewhere). Squad Up with all five is your six v Seth, Brooke and Trey.
+### Verified
+- `tests/crew-balance.test.mjs` (new, 21 checks): over the 31 team matches the first time through, every ordinary match
+  keeps its own margin and every finale is one more (the Last Saturday two, Lights Out 2 v 2), the eight finales coming
+  out as listed above. Their side is the same number with nobody in the crew, the first-time crew or all five, in all 31.
+  Two Against the World with all five is 6 v 4; Northcliff's finale with nobody in is 6 v 7 with the street on your side,
+  with Nick and Alex benched 4 v 7. The Last Saturday is your five v Seth's eight, Garrett on an AR and Colin on a MAC-10.
+  Garrett and Colin turn up only on Seth's side and only after the flags (Willow Bend's two and the Last Saturday). Squad
+  Up the first time is you, Seth and Trey v 3; replayed after Lights Out with all five, your six v Seth, Brooke and Trey;
+  Lights Out replayed with Eric, you and Eric v Seth and Trey. Five matches entered and played 10 s (the Last Saturday,
+  Northcliff's finale with nobody in, Bunratty's finale with Eric, the Squad Up replay, Willow Bend's finale): the field
+  is the computed sides (6 v 8, 6 v 7, 3 v 4, 6 v 3, 6 v 7), at least half the kids off their spots, no page errors.
+- `crew-field` updated for the new numbers (You and Nick with Eric is 3 v 2, the Big Game with three 5 v 5, First Time in
+  the Woods with Eric and Sean 4 v 4 with Rebecca filling), `crew-roster` (with the ladder done, Squad Up has Seth on the
+  other side) and `crew` (the Hollow's 3 v 3 with nobody in has three allies in the bandana, not two).
