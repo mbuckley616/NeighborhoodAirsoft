@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Build your crew is stuck on one more CI fix: re-start it? (producer, 2026-10-19, fable d28-crew, STUCK #101)**
   PR #95 (v1.273–v1.276, head e6f626b) went red a second time after its fix: in the country-club 3v3 two crew allies,
   Devon and Mitchell, start on the same spot and Devon never moves. The Fable session will not retry a second red on its
@@ -12,8 +14,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   the crew's starting spots at every team start at least 1.5 m apart and test it.
   - A) Re-start the card so the Fable session makes that fix next check. *(recommended)*
   - B) Set it aside: lift the freeze so the builder works on, and come back to the crew later.
-
-## Answered
+  Michael: **A) Re-start the card so the Fable session makes that fix next check** (2026-10-19, control room)
 
 - **Build your crew, step 3: do the other side's numbers stay fixed or grow with your crew? (deep-work session, 2026-10-18, fable d28-crew)**
   The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 866c5ea). Step 2 (v1.274) put the whole crew
