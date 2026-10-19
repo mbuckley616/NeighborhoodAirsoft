@@ -11778,9 +11778,12 @@ the first time you reach each match, so a replay with all five is easy, as his s
   Brooke, Tyler, Evan, Andrew, Garrett, Colin), not the old Devon, Mitchell, Mason, Marcus and Ryan; its briefing says so.
 - Where their side grows, the extra kids come from the street at the match's own spots in turn (deploying from the
   huddle, not from a spot's own start or nest), Seth's crew first when Seth plays; when the street runs short, the rest
-  of the zone's kids, then anybody's, each on the gun he carries most. An extra kid never brings a sniper rifle (he has
+  of the zone's kids, then anybody's, each on the gun he carries most. The street's kids who play against you there
+  go to their side first; places left on your side are filled after theirs (the school's six all play against you,
+  where Jordan and Malik had been standing with you and Brooke against you). An extra kid never brings a sniper rifle (he has
   no nest to shoot it from; Devon and Brooke sat still with one), nor a spot's flag run or lives; on Bellfield's flags
-  the extras push, as Christian does, so only Fernando keeps their flag (Michael's C of v1.191). Where it shrinks (Brooke crossing to Seth in the
+  the extras push, as Christian does, so only Fernando keeps their flag (Michael's C of v1.191), and on Lamplight an
+  extra keeps the yard start of the spot he takes, out of sight of your entry (v1.266). Where it shrinks (Brooke crossing to Seth in the
   Big Game used to make it 5 v 6), the match's own kids go from the end of its list, never Seth, a crosser or a
   defender, so the Big Game is the 5 v 5 it was built as.
 - Garrett (an AR) and Colin (a MAC-10) take the field: with Seth, once Bellfield's flags are done and Seth has texted
@@ -11801,3 +11804,28 @@ the first time you reach each match, so a replay with all five is easy, as his s
 - `crew-field` updated for the new numbers (You and Nick with Eric is 3 v 2, the Big Game with three 5 v 5, First Time in
   the Woods with Eric and Sean 4 v 4 with Rebecca filling), `crew-roster` (with the ladder done, Squad Up has Seth on the
   other side) and `crew` (the Hollow's 3 v 3 with nobody in has three allies in the bandana, not two).
+- Suites written for the old sides, updated to the tuned ones without loosening what they guard: `lot-hollow-polish`
+  and `grocery-store` play each match with the crew you'd have the first time; `last-saturday` counts 13 kids;
+  `night-lights-allies` lets the fifth ally start on the next ring out (within 9 m, the first four still within 4.5);
+  `lamplight-starts` lets the fifth Bellfield kid start at one of the four yard starts (still no line to the entry);
+  `idle-ally` reads Sean in Night Swim and the lot's Brooke as the sniper who holds (Night Swim's and Night Game's Brooke
+  cross to Seth now); `school-kids` asks that every school kid not on your side is on theirs before anybody else is;
+  `vip` counts the ∞ by the kids there; `voices` reads each school kid's lines before the next talks (six kids' 144
+  lines ran past the log's 64); `laser` stages whichever of theirs has a laser in Bunratty's 3 v 4 finale.
+- The stuck-kid sweep over the 31 team matches at spawn, with nobody in the crew and with all five (90 s each, two
+  browsers): no kid held a moving state in one place over 15 s; the worst was 6 s (Devon in the Big Game and Full-Auto
+  Mayhem, at the Hollow's south fort); no page errors.
+- The full suite in four parallel shards, on 85cb15a: 137 of the first 138 suites passed when the session's four hours
+  ran out; the one that didn't was `harness` ("NEW GAME stalled for 10 s", a page load under four browsers at once; it
+  passed run alone). The other 35 suites are owed to the next session before review.
+### Still open
+- Whether the first time through feels right is a playtest: the Hollow's finale is 5 v 6, Northcliff's, the school's
+  and Willow Bend's 6 v 7. Ordinary matches keep the margins they were built with, so Two of Us, Four of Them is 4 v 6.
+- A player who answers "Not yet" or loaded an old save plays the same numbers, the empty places filled by the street
+  (the Hollow's 3 v 3 then has Mitchell beside you). Whether those fills should be the crew kid who asked is Michael's.
+- With more kids in the store, `grocery-store` once saw Marcus held 4.0 s (its limit) face to face with Alex in an
+  aisle in Inside Riverside Market's 6 v 6; it passed re-run. Worth a look if the critic sees kids blocking in aisles.
+- The briefings of the other team matches still name each match's own allies in their text, while the roster under it
+  shows who plays; the Last Saturday's is rewritten.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) are their own sessions.
+
