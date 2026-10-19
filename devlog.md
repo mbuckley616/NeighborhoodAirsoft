@@ -11834,3 +11834,41 @@ the first time you reach each match, so a replay with all five is easy, as his s
   parallel shards, 171 passed. The two that did not were the load again, not the code: `spawn-facing` (the browser tab
   crashed entering a scenario, "Target crashed") and `under-parts` (page.goto timed out at 30 s); both passed run alone.
   CI's ten shards were green on the same head.
+
+## v1.276 — Build your crew: the fourth ally starts inside the store
+Michael re-queued the crew card (19 Oct) because PR #95 went red on 3254c3e. `squad-orders` failed in the pull_request
+run (push up's team stood 20.27 m from the other side against a 20 m line, 35.97 m with no order) and `grocery-store`
+in the push run (Price Check: Marcus held 4 s in the stockroom, `advancing`, 1.3 m from Alex). Each passed in the other
+run on the same commit. The card asked whether either was a real fault or only timing.
+- `grocery-store` was a real fault, and one a player would meet. Allies start fanned out beside you, ±2.0 m along the
+  street and then ±3.4 m (v1.33). That was fine with two allies. With the crew's four and five, the fourth steps out
+  3.4 m, and the grocery store's team matches start you at z 16.8 by the front wall (the store's bounds end at 17.6).
+  So Alex started at (12.2, 19.2), outside the store. He spent every store team match running round the lot outside
+  the walls, unable to get in, and fired 0 shots in 60 s in every round sampled (5 of 5 here, and in CI's log). Their
+  kids pressed against the stockroom's back wall toward him, and that is how Marcus came to be "wedged". The fan now
+  stays inside the field: a spot past the bounds (0.8 m in) starts at the edge, 2.4 m behind the player.
+- `squad-orders` was only chance. The round is not the same twice: push up's mean distance came out 14–20 m in five
+  runs here, so CI's 20.27 was the tail. Each measured round now draws from one seed (`_gameRng`, the way `under-parts`
+  and `backyard-guns` steady their draws). Every order meets the same deploy and the same draws until it is given, so
+  the numbers are the same every run. The 20 m line and the other checks are unchanged.
+- With Alex inside, our side reaches the stockroom more often. Devon, holding its centre doorway in Lights Out at the
+  store, was once tagged out there before his first peek: 0 shots and 0 metres walked, with Diego 0.1 m from him. That
+  failed `grocery-store`'s "every kid moves or fires" check. A kid tagged at his post is playing, not stuck, so the
+  check now also passes a kid who lost a life. The wedge and Devon-holds-the-doorway checks are unchanged.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` (new): all 31 team matches on the ladder entered with all five in the crew. Every
+  kid starts inside the field in every one. Before the fix this failed exactly at `store_price_check_3v3` and
+  `store_night_4v4` (Alex at (11.8, 19.1)). In Price Check over 60 s, Alex fired 0 shots and was outside all 3600 frames
+  before the fix; after it he fired 122 and was never outside.
+- `grocery-store` 5 of 5 before the Devon change, run beside `squad-orders` (one under load each time). After it, 3 of
+  3 run beside the full suite's shards. Marcus's wedge did not come back in any of them.
+- `squad-orders` 5 of 5 seeded, beside `grocery-store`: push up 19.87 m against 37.27 m with no order (37.70 once).
+  Keep distance 0.84 in the band against 0.15–0.17; find cover and follow me pass.
+- Devon over 8 sampled Lights Out rounds at the store: out of lives by 60 s in all 8, firing 0–12 shots.
+- The full suite in four parallel shards on 34d8a73, with two more suites running beside it: FULLSUITE
+### Still open
+- The ally fan is still a ring around where you start. Where the ring leaves the field, the clamped kid starts just
+  behind you, which a playtest may find crowded in the store's front aisle.
+- Devon at the store's centre doorway can be caught before his first peek now that five of ours come in. Whether the
+  defender needs a moment's grace is a playtest call, not a test's.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) stay for a fresh card.
