@@ -11829,3 +11829,8 @@ the first time you reach each match, so a replay with all five is easy, as his s
   shows who plays; the Last Saturday's is rewritten.
 - Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) are their own sessions.
 
+- The owed full suite, next session (fable d28-crew, resumed 19 Oct), on c04b6d6 (v1.275 with origin/main merged in;
+  main had changed only docs/decisions.md, where the branch's full answered entries were kept): all 173 suites in four
+  parallel shards, 171 passed. The two that did not were the load again, not the code: `spawn-facing` (the browser tab
+  crashed entering a scenario, "Target crashed") and `under-parts` (page.goto timed out at 30 s); both passed run alone.
+  CI's ten shards were green on the same head.
