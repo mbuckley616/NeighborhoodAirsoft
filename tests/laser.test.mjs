@@ -54,7 +54,10 @@ await page.evaluate(() => { const hit = window.__origHit = window.__origHit || a
 // stands uphill of him with a clear line (at z = −2 a lamp post blocks it), while the player stands low on the east
 // lane: Sean's chest is above the player's head.
 await g.scenario('bunratty_night_team_2v2');
-await page.evaluate(() => { const hit = window.__origHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
+// v1.275: Sean is unkillable too. Mitchell's AR (the staged kid since D.28 step 3) tagged him every few seconds where
+// Ryan's shotgun rarely did, and a tagged kid walks home (state 'retreating') and is nobody's target, so Mitchell's
+// aim left Sean for 13-15 of the 36 samples and CI fell under 20 (17).
+await page.evaluate(() => { const hit = window.__origHit; window.applyBBHit = (bb, c) => c === Game.player || (c && c.name === 'Sean') ? undefined : hit(bb, c); });
 const st = await page.evaluate(() => {
   const V = THREE.Vector3, o = new V(), d = new V(), hp = new V(), tc = new V();
   const by = n => Game.scenario.enemies.find(e => e.name === n);
