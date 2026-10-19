@@ -11865,7 +11865,12 @@ run on the same commit. The card asked whether either was a real fault or only t
 - `squad-orders` 5 of 5 seeded, beside `grocery-store`: push up 19.87 m against 37.27 m with no order (37.70 once).
   Keep distance 0.84 in the band against 0.15–0.17; find cover and follow me pass.
 - Devon over 8 sampled Lights Out rounds at the store: out of lives by 60 s in all 8, firing 0–12 shots.
-- The full suite in four parallel shards on 34d8a73, with two more suites running beside it: FULLSUITE
+- The full suite in four parallel shards on 34d8a73, with two more suites running beside it: 156 of 174 passed.
+  Of the eighteen that did not, sixteen never started (`page.goto` timed out at 30 s with six browsers up), one was
+  `harness` ("NEW GAME stalled for 10 s", the same load stall as v1.275's run), and one was `grocery-store`'s Devon
+  round above, before its change. All eighteen passed run again, at most two at once: the crew family (5 suites),
+  pincer, shop-tabs, squad-orders, treehouse-hold, kid-hands, northcliff, spawn-facing, bb-sweep, grocery-store,
+  pickup-kids, shorts, harness and stuck-sweeps 6, 7, 12, 15 and 16.
 ### Still open
 - The ally fan is still a ring around where you start. Where the ring leaves the field, the clamped kid starts just
   behind you, which a playtest may find crowded in the store's front aisle.
