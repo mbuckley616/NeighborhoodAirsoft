@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.276</div>
+  <div class="version">v1.277</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23193,7 +23193,7 @@ function enterScenario(scenarioId) {
         const clear = findClearSpawn(spawnPos.x, spawnPos.z, built.obstacles, 0.4, perch ? perch.y : null);
         spawnPos.x = clear.x; spawnPos.z = clear.z;
       }
-      if (crewSpread && !perch && !joinsEnemyHuddle && !es.spawnAt) {   // v1.277: see crewSpread
+      if (crewSpread && !perch && !(joinsEnemyHuddle && !es.spawnAt)) {   // v1.277: see crewSpread (a shared start too)
         const p = crewSpreadStart(spawnPos.x, spawnPos.z, takenStarts, built.bounds, built.obstacles);
         spawnPos.x = p.x; spawnPos.z = p.z;
       }
@@ -23221,7 +23221,7 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
-        if (joinsEnemyHuddle && !es.spawnAt) enemy.huddleStart = true;   // v1.277: started in the attack huddle's ring
+        enemy.startAt = { x: spawnPos.x, z: spawnPos.z, huddle: !!(joinsEnemyHuddle && !es.spawnAt) };   // v1.277: where he started
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170

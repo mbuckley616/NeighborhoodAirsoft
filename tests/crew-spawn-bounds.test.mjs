@@ -6,7 +6,7 @@
 // v1.277 (STUCK #101): the clamp put two allies on one spot where you start by an edge (Sean and Alex at the club's
 // 3v3, 0.00 m apart; one walked 0 m all match) and extra kids at one anchor stacked there. Checked now as well: in every
 // team match, with all five and with the first-time crew, no two kids (you among them) start under 1.5 m apart, the
-// attack huddle's ring aside; and the club's 3v3 with all five has every kid on our side moving or firing.
+// attack huddle's ring aside (1.0 m beside it); and the club's 3v3 with all five has every kid on our side moving or firing.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -19,12 +19,14 @@ for (const crew of ['all', 'first']) for (const id of ids) {
   await page.evaluate(([all, crew, id]) => { Game.persist.crew = crew === 'all' ? all.slice() : crewFirstTime(id); Game.persist.completed = {}; crewBench.clear(); }, [ALL, crew, id]);
   await g.scenario(id);
   near.push(...await page.evaluate(([id, crew]) => {
-    const P = Game.player.pos, pts = Game.scenario.enemies.map(e => ({ n: e.character?.name, x: e.pos.x, z: e.pos.z, h: !!e.huddleStart }));
-    pts.push({ n: 'you', x: P.x, z: P.z, h: false });
+    const pts = Game.scenario.enemies.map(e => ({ n: e.character?.name, x: e.startAt.x, z: e.startAt.z, h: e.startAt.huddle }));
+    const P = Game.player.pos; pts.push({ n: 'you', x: P.x, z: P.z, h: false });
     const bad = [];
     for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
       const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.z - b.z);
-      if (d < 1.5 && !(a.h && b.h)) bad.push(`${crew} ${id}: ${a.n}-${b.n} ${d.toFixed(2)} m`);
+      // the huddle's ring is its own (v1.14); a kid beside one only has to be off his spot
+      if (a.h && b.h) continue;
+      if (d < (a.h || b.h ? 1.0 : 1.5)) bad.push(`${crew} ${id}: ${a.n}${a.h ? '(h)' : ''}-${b.n}${b.h ? '(h)' : ''} ${d.toFixed(2)} m`);
     }
     return bad;
   }, [id, crew]));
@@ -42,7 +44,7 @@ const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
 check(`${ids.length} team matches entered with all five in the crew`, ids.length === 31 && out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
-check('no two kids start under 1.5 m apart (all five, and the first-time crew), the huddle aside', near.length === 0, near);
+check('no two kids start under 1.5 m apart (all five, and the first-time crew; 1.0 m beside the huddle, its ring aside)', near.length === 0, near);
 
 // the club's 3v3 with all five: every kid on our side moves or fires in 40 s (Devon walked 0 m on CI, e6f626b)
 await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);

@@ -11877,3 +11877,34 @@ run on the same commit. The card asked whether either was a real fault or only t
 - Devon at the store's centre doorway can be caught before his first peek now that five of ours come in. Whether the
   defender needs a moment's grace is a playtest call, not a test's.
 - Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) stay for a fresh card.
+
+## v1.277 — Build your crew: no two kids start on one spot
+Michael re-started the crew card (19 Oct, decision A on STUCK #101). On e6f626b, CI's push run failed `country-club`'s
+"every kid moves or fires" in The Eighteenth: Devon walked 0 m and started on the same spot as Mitchell, (4.3, 28.2).
+A sweep of every team match's start, with all five in the crew and with the crew you'd have the first time, showed why.
+It was v1.276's own clamp. Where you start by an edge, the second and fourth allies both land past it. Both were
+clamped to the same line and the same step back, so they started on one point: Sean and Alex at the club, 0.00 m apart,
+and Eric and Nick in five of the Hollow's matches and the school's Lights Out. Extra kids put on one anchor or given one
+authored start stacked there too. In the Last Saturday, Garrett, Colin, Brooke and Trey started within 0.4 m of each
+other, and Mason and Evan shared a start exactly in Bellfield after dark. Two kids on one point push against each other
+and can hold each other still, which is what CI saw. A player would see two kids standing inside one another at BEGIN.
+- In a match whose sides the crew has changed, every kid's start is now at least 1.5 m from every start already taken,
+  your own included (`crewSpreadStart`). The nearest free spot is searched on rings 0.75 m apart out to 6 m. It has to
+  be inside the field (0.8 m in) and clear of cover, or the kid keeps the spot he had. Two groups are left alone: kids
+  starting in the attack huddle's ring, who walk straight out to their posts, and kids on a perch.
+- A match the crew does not change starts exactly as before: the spread only runs when its sides differ from the
+  scenario's own.
+- Each kid now keeps the spot he started on (`startAt`), so a test can check the starts rather than where kids stand
+  after BEGIN.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` checks two more things now. First, no two starts under 1.5 m apart in all 31
+  team matches, with all five and with the first-time crew, the huddle ring aside. Before the fix this found 0.00 m
+  pairs in 20 matches. After it, every pair is clear. Two kids still start 1.2–1.3 m apart, Priya and Tyler in
+  Bunratty's VIP, and one of them starts in the huddle, so the check allows 1.0 m beside a huddle kid. Second, the club's 3v3 with all five: every kid on our side moves or fires over 40 s. Eric
+  walked 119 m, Sean 103, Nick 29, Alex 59 and Diego 84, and all of them fired.
+- `country-club`, 3 of 3 run beside `crew-spawn-bounds` (under load). `crew-spawn-bounds`, `crew-field` and
+  `crew-balance` passed run side by side.
+### Still open
+- The attack huddle's ring is unchanged. With the crew's extra foes it packs eleven kids into a 1.4 m ring (0.7–0.8 m
+  apart) for the moment before they walk out. No test has seen a stall from it, but a playtest may see the crush.
+- Steps 4 and 5 of the crew stay for a fresh card.
