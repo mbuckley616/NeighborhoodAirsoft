@@ -3,6 +3,10 @@
 // the front wall and ran round the lot all match, firing at nobody, while their kids pressed against the walls toward
 // him (Marcus "wedged" 4 s in the stockroom). Checked: in every team match on the ladder, with all five in the crew,
 // every kid starts inside the field; and in the store's Price Check Alex gets in and fires.
+// v1.277 (STUCK #101): the clamp put two allies on one spot where you start by an edge (Sean and Alex at the club's
+// 3v3, 0.00 m apart; one walked 0 m all match) and extra kids at one anchor stacked there. Checked now as well: in every
+// team match, with all five and with the first-time crew, no two kids (you among them) start under 1.5 m apart, the
+// attack huddle's ring aside; and the club's 3v3 with all five has every kid on our side moving or firing.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -10,10 +14,21 @@ await g.spin(3);
 
 const ALL = ['eric', 'sean', 'nick', 'alex', 'diego'];
 const ids = await page.evaluate(() => Object.keys(SCENARIOS).filter(crewTeamMatch).sort((a, b) => crewLadderPos(a) - crewLadderPos(b)));
-const out = [];
-for (const id of ids) {
-  await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);
+const out = [], near = [];
+for (const crew of ['all', 'first']) for (const id of ids) {
+  await page.evaluate(([all, crew, id]) => { Game.persist.crew = crew === 'all' ? all.slice() : crewFirstTime(id); Game.persist.completed = {}; crewBench.clear(); }, [ALL, crew, id]);
   await g.scenario(id);
+  near.push(...await page.evaluate(([id, crew]) => {
+    const P = Game.player.pos, pts = Game.scenario.enemies.map(e => ({ n: e.character?.name, x: e.pos.x, z: e.pos.z, h: !!e.huddleStart }));
+    pts.push({ n: 'you', x: P.x, z: P.z, h: false });
+    const bad = [];
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.z - b.z);
+      if (d < 1.5 && !(a.h && b.h)) bad.push(`${crew} ${id}: ${a.n}-${b.n} ${d.toFixed(2)} m`);
+    }
+    return bad;
+  }, [id, crew]));
+  if (crew === 'first') { await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30); continue; }
   out.push(await page.evaluate(id => {
     const B = Game.scenario.bounds, inside = p => !B || (p.x > B.minX && p.x < B.maxX && p.z > B.minZ && p.z < B.maxZ);
     const kids = Game.scenario.enemies;
@@ -27,6 +42,28 @@ const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
 check(`${ids.length} team matches entered with all five in the crew`, ids.length === 31 && out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
+check('no two kids start under 1.5 m apart (all five, and the first-time crew), the huddle aside', near.length === 0, near);
+
+// the club's 3v3 with all five: every kid on our side moves or fires in 40 s (Devon walked 0 m on CI, e6f626b)
+await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);
+await g.scenario('club_eighteenth_3v3');
+const club = await page.evaluate(() => {
+  Game.player.maxHits = 999;
+  const ours = Game.scenario.enemies.filter(e => e.team === 'player');
+  const st = new Map(ours.map(e => [e, { n: e.character?.name, x: e.pos.x, z: e.pos.z, walked: 0, fired: 0 }]));
+  const sp = spawnEnemyBB; spawnEnemyBB = (e, t) => { if (st.has(e)) st.get(e).fired++; return sp(e, t); };
+  try {
+    for (let f = 0; f < 40 * 60 && Game.mode === 'scenario'; f++) {
+      stepGame(1 / 60);
+      for (const e of ours) { const s = st.get(e); s.walked += Math.hypot(e.pos.x - s.x, e.pos.z - s.z); s.x = e.pos.x; s.z = e.pos.z; }
+    }
+  } finally { spawnEnemyBB = sp; }
+  return [...st.values()].map(s => ({ n: s.n, walked: +s.walked.toFixed(1), fired: s.fired }));
+});
+console.log('   club 3v3, our side, 40 s:', JSON.stringify(club));
+check('club 3v3 with all five: every kid on our side moves or fires', club.length >= 5 && club.every(s => s.walked > 1 || s.fired > 0), club);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+await g.spin(30);
 
 // the store: Alex, the crew's fourth, starts inside and plays (he fired 0 shots in 60 s in every run before)
 await page.evaluate(() => { Game.persist.crew = crewFirstTime('store_price_check_3v3'); Game.persist.completed = {}; crewBench.clear(); });

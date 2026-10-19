@@ -22424,6 +22424,23 @@ function enterBedroom() {
 // exit axis, then re-checks; bails after a few iterations and returns the best
 // effort. Operates on the builder's obstacle list directly (Game.player.obstacles
 // isn't wired up yet during enterScenario).
+// v1.277: the nearest spot to (x, z) at least CREW_START_GAP from every start already taken, inside the field and clear
+// of cover (rings 0.75 m apart out to 6 m, twelve points on each); the spot itself when nothing nearer is free
+const CREW_START_GAP = 1.5;
+function crewSpreadStart(x, z, taken, bounds, obstacles) {
+  const free = (qx, qz) => taken.every(t => Math.hypot(t.x - qx, t.z - qz) >= CREW_START_GAP);
+  if (free(x, z)) return { x, z };
+  const m = 0.8;
+  for (let r = 0.75; r <= 6.01; r += 0.75) for (let k = 0; k < 12; k++) {
+    const a = k / 12 * Math.PI * 2;
+    const qx = x + Math.cos(a) * r, qz = z + Math.sin(a) * r;
+    if (bounds && (qx < bounds.minX + m || qx > bounds.maxX - m || qz < bounds.minZ + m || qz > bounds.maxZ - m)) continue;
+    const c = findClearSpawn(qx, qz, obstacles, 0.4);
+    if (Math.abs(c.x - qx) > 0.01 || Math.abs(c.z - qz) > 0.01 || !free(qx, qz)) continue;
+    return { x: qx, z: qz };
+  }
+  return { x, z };
+}
 function findClearSpawn(x, z, obstacles, radius = 0.4, footY = null) {
   if (!obstacles || obstacles.length === 0) return { x, z };
   // v1.26: use a roomier effective radius than the kid's collision radius so a
@@ -23094,6 +23111,12 @@ function enterScenario(scenarioId) {
     let clusterIdx = 0;
     let setupIdx = 0;
     let allyIdxCounter = 0;   // v1.33: loop-local (don't mutate the shared sc object across replays)
+    // v1.277: with the crew in it (the match's sides differ from the scenario's own), no two kids start on one spot.
+    // The v1.276 clamp put the second and fourth allies on the same point where you start by an edge (Sean and Alex at
+    // the club's 3v3, 0.00 m apart, and one stood all match: CI red on PR #95, STUCK #101), and extra kids at one anchor
+    // stacked there (the Last Saturday's Garrett, Colin, Brooke and Trey within 0.4 m). Huddle kids keep their ring.
+    const crewSpread = sc.enemySetup !== (SCENARIOS[scenarioId] || {}).enemySetup;
+    const takenStarts = playerSpawnPos ? [{ x: playerSpawnPos.x, z: playerSpawnPos.z }] : [];
 
     for (const es of sc.enemySetup) {
       const placement = built.placements[es.anchor];
@@ -23170,6 +23193,11 @@ function enterScenario(scenarioId) {
         const clear = findClearSpawn(spawnPos.x, spawnPos.z, built.obstacles, 0.4, perch ? perch.y : null);
         spawnPos.x = clear.x; spawnPos.z = clear.z;
       }
+      if (crewSpread && !perch && !joinsEnemyHuddle && !es.spawnAt) {   // v1.277: see crewSpread
+        const p = crewSpreadStart(spawnPos.x, spawnPos.z, takenStarts, built.bounds, built.obstacles);
+        spawnPos.x = p.x; spawnPos.z = p.z;
+      }
+      takenStarts.push({ x: spawnPos.x, z: spawnPos.z });
 
       const enemy = makeEnemyFromCharacter(es.charId, {
         pos: spawnPos,
@@ -23193,6 +23221,7 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
+        if (joinsEnemyHuddle && !es.spawnAt) enemy.huddleStart = true;   // v1.277: started in the attack huddle's ring
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
