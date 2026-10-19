@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16).
 
@@ -1312,3 +1312,129 @@ nothing asked me to break a rule.
   Too strong is Michael's call. The reach and cone feel need hands.
 - v1.250, the clear automatics: the Rattle Can only (above). The look is for Michael's eye.
 - v1.251, The Last Saturday: judged headless. Not too easy: 0 of 8, with the lives 2.5–21.9 s apart.
+
+## 2026-10-19 — The Brothers, Hold the Fort, Willow Bend and Hollins Ridge at night, the backyard range, Seth's House after the trade fix; the crew build's Last Saturday 6 v 8 (v1.272)
+
+I played main at v1.272, which is also what itch has; `auto/build` is not ahead of it. I also played the Fable
+branch `auto/fable-d28-crew` (v1.275, PR #95, waiting on an Approve) for its team matches. In all, 74 bot rounds plus
+range and accuracy probes, with no page errors anywhere. The bot is the same crude one as 16 Oct, rebuilt: aim is
+perfect at the nearest kid it can see, it clicks to fire and holds to cock, and it either walks at that kid (*push*,
+stopping at 6 m) or holds its start (*stand*). Win delays run on sim time. When the mag is empty the bot refills it
+in place, because the starter loadout carries no spare mag.
+
+**The first-timer path** is unchanged and clean. At spawn the front door is focused with "E Go outside", and the new
+back door (BACKYARD) is 0.4 m away without stealing the prompt.
+
+**The backyard range (v1.257).** I went out the back door with the starter Spring Pistol and shot the bullseyes the
+way a player would: hold to cock, click, real spread and real hop-up, aimed dead centre, standing still.
+
+| From | Hip: median miss | Hip: on the board (≤23 cm) | Aimed (RMB): median miss | Aimed: on the board |
+|---|---|---|---|---|
+| 5 m | 4 cm | 12 of 12 | 2 cm | 12 of 12 |
+| 10 m | 15 cm | 9 of 12 | 19 cm | 8 of 12 |
+| 15 m (the near bullseye) | 49 cm | 1 of 12 | 54 cm | 0 of 12 |
+| 20 m (the far bullseye) | 99 cm | 0 of 12 | 94 cm | 1 of 12 |
+
+Fired from the bench at the boards where they stand, 15 shots each: the near board (14.7 m) took 2 hits, both
+"on the board" or a 2, and the far board (19.9 m) took none. The misses are mostly low. At 15 m the mean is 41–49 cm
+under the aim point, at 20 m 47–60 cm: the hop-up curve, not the drop. The test that says "aimed dead centre at
+the far bullseye, the BB drops into the 8" fires with the curve switched off (`curveStrength = 0`), which no trigger
+pull does. So to the v1.257 Still open question ("whether the BB's drop at 20 m reads as fair"): with the gun every
+player starts with, the far bullseye can't be hit by aiming at it, and the near one rarely. That is the pillar
+working ("reliable inside ~10 m, increasingly random beyond"). But both bullseyes sit past 10 m, so the one target
+that scores you has no distance where you can see yourself being good. A proposal follows.
+
+Two small things at the range. The ammo box says "MAG EMPTY · F TO FORFEIT" once the 10 BBs are gone, but there is
+nothing to forfeit there: F walks you back inside, as the back door does (`askForfeit`'s range branch). That's filed. There
+is also no way to reload at the range. The starter loadout has no spare mag, so after 10 shots you walk in through the
+back door and out again, and the gun refills from the bag. That's by the rules, but it's a lot of walking for a range.
+Screenshot `docs/critic/2026-10-19-range-far-bullseye.png`: the far board under the crosshair and the HUD's forfeit line.
+
+**The Brothers** (`bunratty_brothers`, Ryan and Mitchell, pistols), 6 rounds. *Push* won 2 of 3 at 8.4 and 9.7 s
+("Two in 1.9 s: Ryan, then Mitchell"), lost 1 to Mitchell from 18 m at 6.1 s. *Stand* won 2 of 3 (25.8 s, 55.2 s),
+lost 1 at 28.3 s. It's a fair 1v2 on equal guns. Over two stand rounds my pistol made 4 of 13 hits at 10–20 m, 0 of
+14 at 20–30 and 0 of 6 past 30. The brothers made 0 of 8.
+
+**Hold the Fort** (`bunratty_hold_the_fort`, Ryan shotgun, Mitchell AR, Sean AK), 6 rounds, all lost at 11.9–23.9 s.
+In all 6, the damage report reads Sean's AK from 31–39 m. Probed with the player untouchable over four 60 s rounds of standing, Sean's AK
+landed 59% at 10–20 m, 29–31% at 20–30 m and 5–7% past 30 m, but he fires 100–138 BBs a minute from past 30 m, so
+7 of them land. My pistol from the fort made 12 of 25 at 10–20 m, 1 of 48 at 20–30 and 1 of 23 past 30. Mitchell's AR
+made 0 of 39 past 30, and Ryan's shotgun 0 of 28 past 20. The unreliable-BB pillar holds both ways. The difference
+is volume: a full-auto kid at 35 m will find you eventually, and a spring pistol at 35 m can't answer. Whether a
+starter-gun player is meant to clear this one or come back with an automatic is Michael's call. I'm not filing it.
+
+**Willow Bend at night** (`club_night_4v4`), 6 rounds, 0 won. *Push* was out at 3.4, 4.1 and 4.5 s, each time to
+Seth's AK from 38–40 m, in the leg, about a second after the 2.5 s opening hold ends. *Stand* lasted 63.7 and 84.8 s
+(Seth's AK again, 35 m), and one round ran out the 90 s with Seth and Marcus out to my teammates. Seth's AK made 0 of
+23 at a player standing at the start, so the push is walking into his line. One life, so the match is four seconds
+long for a kid who runs out.
+
+**Hollins Ridge at night** (`school_night_4v4`), 6 rounds, 0 won. *Push* was out at 14.3, 20.5 and 15.3 s (Caleb's
+UMP 9 m, Sophie's MP5 11–15 m), with one tag of mine (Caleb from 4 m). *Stand*: two rounds ran out the 90 s with no
+shots either way, and one was out at 63.3 s to Caleb from 5 m. The stand rounds found nobody to shoot for a minute
+and more. That's the night working.
+
+**Seth's House after v1.263** (`winnmark_seth_house`), 12 *push* rounds. I meant to recount the trades from 16 Oct
+(9 of 12 tags on Seth were trades then). I couldn't, because the push bot lost all 12 at 5.7–7.6 s with exactly one
+shot fired. Traced: the bot walks straight at Seth into the house's corner (a 9 × 7 m box between them for most of the
+approach). Seth "advances" round the far side and comes out 1–1.3 m from you, and his BB lands first. My one shot
+is still in the air when the round ends. That's the bot, not the game, and it's a fair lesson for a kid who walks at
+a house. v1.263's own test covers the trade. I didn't see one this run.
+
+**The hitch I filed on 16 Oct is gone (v1.269).** Run alone, with no other browser on the box, the largest single
+step in The Last Saturday was 26–27 ms over two 60 s stand rounds (it was 329–516 ms at 3.8–4.2 s). The Brothers,
+Willow Bend at night and Hold the Fort came in at 6–64 ms. Steps of 190–850 ms showed only while three browsers
+ran at once, and none came back alone. The crew build's Last Saturday showed the same: 26–36 ms alone.
+
+**The Last Saturday on main (6 v 6).** Three 90 s *stand* rounds: none ended. My teammates put 4–5 of their 6 out,
+and I took 0–1 hits. On 16 Oct the stand bot was out at 19.8, 43.8 and 59.4 s, though that was a different build of
+the bot, so take the comparison loosely.
+
+**The crew build (v1.275, PR #95), from play.** I put all five friends in (`persist.crew = CREW_ROSTER`), as a player has
+them by the Last Saturday, and played its team matches.
+- *The Last Saturday, 6 v 8* (Seth UMP, Tyler and Brooke shotguns, Evan UMP, Andrew MP5, Garrett and Trey ARs, Colin
+  MAC-10, against Eric, Sean, Nick, Alex and Diego). *Stand* won 2 of 3, at 64.3 s and 87.6 s, with 0 and 1 tags
+  of mine and no hits on me. In the third, 7 of 8 were out at 90 s. *Push* lost 3 of 3 at 23.8–24.5 s, with
+  2–3 tags each. Without the crew, a fresh save fills the side with Eric, Rebecca, Sean, Priya and Owen: *stand*
+  ran out 90 s three times with 7 of 8 out, and *push* lost 3 of 3 at 21.3–25.3 s. So the finale with your crew is
+  won by the crew while you stand at the start. That's what Michael asked for on replays (A, "replays with all five
+  are easy"), but the Last Saturday is a first time through, and every player arrives at it with all five in.
+- *Squad Up with all five* (`winnmark_team_3v3`, Seth and your five against Brooke, Jamie and Marcus): *stand* won
+  2 of 2 at 15.9 s with 0 tags and 2–6 shots of mine. *Push* won 1 of 3 (18.0 s) and was out twice at 6.7–6.8 s to
+  Marcus's shotgun from 13 m.
+- *Two Against the World, 6 v 4* (`bunratty_team_2v4`): *stand* won 1 of 2 at 66.9 s with 0 tags of mine. *Push*
+  lost 2 of 2 to Priya's MP5 from 15–21 m at 6.0–7.5 s.
+- *The Big Game* (`hollow_big_battle`, your five against Seth, Mitchell, Devon, Mason and Brooke): *stand* won 1 of
+  2 at 82.2 s with 0 tags and 3 shots of mine. *Push* lost 2 of 2 at 18.1–19.5 s.
+- No page errors, nobody twice, and none of the crew on the wrong side in any of these. The briefing's Bench and the
+  map's counts I didn't touch.
+
+**What worked.** No page errors in 74 rounds and the probes. Every result card's tags, shots and hits on you
+matched the bot's counts (the cards printed after a 90 s stand round that never ended are the previous round's,
+which is my script reading a card that wasn't drawn). Each damage report's time matched the bot's logged hit time to the
+second. The HUD's cash line (v1.260) reads under the bag count.
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND on mbuckley616.itch.io, and curl is refused by the proxy
+(`connect_rejected`). I read no comments. Slack's last day: the Fable session's Build-your-crew steps 1–3 and their two
+decisions, the producer's 5:05pm note filing D.47–D.50, and the overnight and morning merges of v1.253–v1.272.
+Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.252–v1.272)
+- v1.252, views past the edge: not judged. They're scenery, for Michael's eye. No step cost showed from them (above).
+- v1.253–v1.255, squad order placement and the pad wheel: need hands and a pad.
+- v1.256, the kids' excuses: headless has no voices. Not judged.
+- v1.257, the range: judged headless (table above). The far bullseye can't be hit by aiming at it with the starter gun.
+  I have a proposal and filed one HUD bug. The yard's likeness to Bunratty needs Michael's pictures.
+- v1.258, the map on the table: not looked at this run.
+- v1.259, the Hollow fort decks: not played (no Hollow fort matches this run).
+- v1.260, cash on the HUD: seen in the range screenshot. It reads.
+- v1.261, the flinch: needs eyes.
+- v1.262, sell a gun back: not played.
+- v1.263, a trade goes to you: not reproduced in play this run (see Seth's House). The test covers it.
+- v1.264, out kids walk off: not judged from the screen. No out kid blocked a shot of mine in the logs.
+- v1.265–v1.267, free-for-all and Lamplight starts: not played this run.
+- v1.268, the walkie: headless has no voices.
+- v1.269, the grid at BEGIN: judged headless. The mid-fight hitch is gone (26–36 ms worst step). BEGIN's own cost
+  runs inside the click's handler and I couldn't time it from the page; it needs a slow real machine.
+- v1.270–v1.272, Price Check, the suppressing kid, Priya's planks: not played this run.
