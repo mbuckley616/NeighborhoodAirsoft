@@ -59,6 +59,7 @@ await g.shot('grocery-store-map');
 await page.evaluate(() => { delete Game.persist.completed[zoneCapstoneId('country_club')]; closeMap(); });
 
 for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205: the last Saturday is on Bunratty Court (last-saturday.test)
+  await page.evaluate(id => { Game.persist.crew = crewFirstTime(id); }, id);   // v1.275: with the crew you'd have the first time
   await g.scenario(id);
   const start = await page.evaluate(() => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);

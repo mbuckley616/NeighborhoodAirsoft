@@ -34,6 +34,8 @@ check('the Hollow: its round trees are the low-poly tree (about half; the rest a
 
 const kids = () => page.evaluate(() => [...(Game.scenario.enemies || []), ...(Game.scenario.allies || [])].map(e => [e.name, e.pos.x, e.pos.z]));
 for (const [id, shot, x, z, yaw, pitch] of [['lot_team_3v3', 'lot-cars', 2, 21, 0.25, -0.08], ['hollow_skirmish_3v3', 'hollow-trees', 28, 12, -Math.PI / 2 + 0.4, 0.1]]) {
+  // v1.275 (D.28 step 3): played with the crew you'd have the first time, as the match is tuned
+  await page.evaluate(id => { Game.persist.crew = crewFirstTime(id); }, id);
   await g.scenario(id);
   await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
   const walked = {}; let prev = await kids();

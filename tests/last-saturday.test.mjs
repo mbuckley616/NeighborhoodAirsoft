@@ -56,8 +56,9 @@ await g.scenario('last_saturday');
 const s0 = await page.evaluate(() => ({ n: Game.scenario.enemies.length, ours: Game.scenario.enemies.filter(e => e.team === 'player').length,
   lives: [...new Set(Game.scenario.enemies.map(e => e.lives))], hits: Game.player.maxHits,
   x: +Game.player.pos.x.toFixed(1) }));
-check('in the match: 11 kids, 5 of them with you, all on 3 lives, and you take 3 hits; you start at the west end',
-  s0.n === 11 && s0.ours === 5 && s0.lives.join() === '3' && s0.hits === 3 && s0.x < -15, s0);
+// v1.275 (D.28 step 3): Seth and his seven against you and five, 6 v 8
+check('in the match: 13 kids, 5 of them with you, all on 3 lives, and you take 3 hits; you start at the west end',
+  s0.n === 13 && s0.ours === 5 && s0.lives.join() === '3' && s0.hits === 3 && s0.x < -15, s0);
 await page.evaluate(() => { Game.player._graceT = 999; });   // stand at the start untaggable and let them fight
 let t = 0, fired = null;
 for (; t < 60; t += 10) {

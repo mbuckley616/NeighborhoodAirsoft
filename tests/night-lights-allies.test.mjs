@@ -31,7 +31,9 @@ for (let r = 0; r < R; r++) {
 }
 for (const r of rounds) console.log('  ' + r.map(k => `${k.n} ${k.walked} m ${k.fired} shots post ${k.nearPost} m`).join(' | '));
 const all = rounds.flat(), brooke = all.filter(k => k.n === 'Brooke');
-check('the allies start beside you behind the stand and set off for their posts', all.every(k => k.start < 4.5 && k.state0 === 'deploying'), rounds[0]);
+// v1.275 (D.28 step 3): the finale is tuned for your five, so five allies fan out in rings: the first four within
+// 4.5 m, the fifth on the next ring out (beside the stand's corner, within 9 m)
+check('the allies start beside you behind the stand and set off for their posts', rounds.every(r => r.every((k, i) => k.start < (i < 4 ? 4.5 : 9) && k.state0 === 'deploying')), rounds[0]);
 check('every ally reaches within 2 m of his post (or is drawn into the fight on the way) and moves or fires',
   all.every(k => (k.nearPost < 2 || k.fired > 0) && (k.walked > 5 || k.fired > 0)), all);
 check('Brooke walks out from the stand (over 10 m) and fires in every round', brooke.every(k => k.walked > 10 && k.fired > 0), brooke);

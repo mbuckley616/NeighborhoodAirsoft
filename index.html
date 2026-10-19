@@ -33767,12 +33767,13 @@ function crewSethTurned(id) {
     (SCENARIOS[id].enemySetup || []).some(es => es.charId === 'seth' && es.team === 'player');
 }
 // The gun a kid carries most across the summer (the two new kids carry their own)
+// (not a sniper rifle: a kid brought in to make up the numbers has no nest to shoot it from)
 function crewKidGun(charId) {
   if (CREW_KID_GUNS[charId]) return CREW_KID_GUNS[charId];
   const n = {};
   for (const [id, s] of Object.entries(SCENARIOS)) {
     if (id === 'pickup_game' || s.tutorial) continue;
-    for (const es of s.enemySetup || []) if (es.charId === charId && es.weapon) n[es.weapon] = (n[es.weapon] || 0) + 1;
+    for (const es of s.enemySetup || []) if (es.charId === charId && es.weapon && es.weapon !== 'sniper') n[es.weapon] = (n[es.weapon] || 0) + 1;
   }
   return Object.keys(n).sort((x, y) => n[y] - n[x])[0] || 'pistol';
 }
@@ -33814,7 +33815,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
   const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
   const strip = (es, fields) => { const o = Object.assign({}, es); for (const f of fields) delete o[f]; return o; };
-  const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch']);   // a place past the match's own
+  const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives']);   // a place past the match's own (v1.275: not its flag run or lives)
   // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
   const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
   // v1.275: the street's kids, then Garrett and Colin, who play with Seth once Bellfield's flags are done ("u havent met
@@ -33825,8 +33826,9 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const fromStreet = (preferSeth) => {
     const list = preferSeth ? pool.filter(k => SETH_CREW_ROSTER.includes(k.charId)).concat(pool) : pool.filter(k => !(sethFoe && SETH_CREW_ROSTER.includes(k.charId)));
     const k = list.find(k => !taken.has(k.charId));
-    if (k) taken.add(k.charId);
-    return k;
+    if (!k) return k;
+    taken.add(k.charId);
+    return k.weapon === 'sniper' ? { charId: k.charId, weapon: crewKidGun(k.charId) } : k;   // v1.275: no nest, no rifle
   };
   // Your side: the kept kids, then the crew (a kid on his own spot when the match has one for him), then the places left
   const out = kept.map(es => Object.assign({}, es));
@@ -33849,7 +33851,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const spots = foes.filter(es => es.role !== 'defender' && !es.spawnAt);
   const foeSpot = spots[0] || foes[0];
   const over = [...(turned ? sc.enemySetup.filter(es => es.charId === 'seth') : []), ...crossing];
-  const crossed = over.map(es => Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch', 'behavior']), { anchor: foeSpot.anchor }));
+  const crossed = over.map(es => Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch', 'behavior', 'ctf', 'lives']), { anchor: foeSpot.anchor }));
   them.unshift(...crossed.filter(es => es.charId === 'seth')); them.push(...crossed.filter(es => es.charId !== 'seth'));
   if (foeN != null) {
     // v1.275: fit their side to the match's number: the match's own kids go from the end (never Seth, a crosser or a
@@ -33862,7 +33864,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
     while (them.length < foeN) {
       const k = fromStreet(sethFoe); if (!k) break;
       const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
-      them.push(Object.assign(strip(spot, ['role', 'spawnAt', 'perch', 'vip', 'behavior', 'statsOverride']), { charId: k.charId, weapon: k.weapon }));
+      them.push(Object.assign(strip(spot, ['role', 'spawnAt', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon }));
     }
     // A side the spec names outright (the Last Saturday: Seth and his seven) takes those kids at its places
     const named = CREW_FOE_SIDES[id];
