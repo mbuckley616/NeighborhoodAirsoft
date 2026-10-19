@@ -59,9 +59,15 @@ const escAfter = await page.evaluate(() => { resumeFromPause(); Game.mouse.locke
 check('pausing with the wheel open shuts it without an order', !esc.wheel && esc.paused && escAfter === standing, [esc, escAfter]);
 
 // --- each order, played: 20 s from BEGIN, the same round with no order as the measure
+// v1.276 (CI red on PR #95): each round draws from one seed. Unseeded, the same order's round wandered run to run: push
+// up's mean distance was 14-20 m locally and 20.27 m once in CI against its 20 m line (35.97 with no order). With the
+// seed every order meets the same deploy, the same draws until it is given, and the same numbers on every run.
+const SEED = 0x5a0d;
 const play = async (order, opts = {}) => {
+  await page.evaluate(seed => { _gameRng = _mulberry32(seed); }, SEED);
   await start();
   return page.evaluate(([order, opts]) => {
+    try {
     const S = Game.scenario, mates = squadMates();
     if (opts.walk) { const c = findClearSpawn(opts.walk[0], opts.walk[1], Game.player.obstacles, 0.4); Game.player.pos.x = c.x; Game.player.pos.z = c.z; }
     for (let i = 0; i < 150; i++) stepGame(1 / 60);   // the deploy and the opening hold
@@ -86,6 +92,7 @@ const play = async (order, opts = {}) => {
     return { mode: Game.mode, order: S.squadOrder, mates: rows.map(r => ({ n: r.n, foe: mean(r.foe), me: mean(r.me), meMax: r.me.length ? Math.max(...r.me) : null,
       inBand: r.foe.length ? +(r.foe.filter(d => d >= 13 && d <= 27).length / r.foe.length).toFixed(2) : null,
       low: r.n2 ? +(r.low / r.n2).toFixed(2) : null, walked: +r.walked.toFixed(1), atCover: r.atCover })) };
+    } finally { _gameRng = null; }
   }, [order, opts]);
 };
 const base = await play(null);

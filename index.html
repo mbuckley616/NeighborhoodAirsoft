@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.275</div>
+  <div class="version">v1.276</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23143,6 +23143,16 @@ function enterScenario(scenarioId) {
           0,
           playerSpawnPos.z + side * ring
         );
+        // v1.276: the fan stays inside the field. With the crew's four and five allies the fourth steps out 3.4 m, and
+        // where you start by a wall (the grocery store's front, z 16.8 against 17.6) he started outside it and spent
+        // the match running round the lot unable to get in, firing at nobody (Alex in every store team match, CI red
+        // on PR #95). One past the edge starts at the edge instead, a step behind the player.
+        const B = built.bounds;
+        if (B) {
+          const m = 0.8, cz = Math.min(B.maxZ - m, Math.max(B.minZ + m, spawnPos.z));
+          if (cz !== spawnPos.z) { spawnPos.z = cz; spawnPos.x -= 2.4; }
+          spawnPos.x = Math.min(B.maxX - m, Math.max(B.minX + m, spawnPos.x));
+        }
         // v1.179: in a match whose start has no line to the field (Friday Night Lights, behind the concession stand),
         // the allies break from you and walk to the posts they hold, as a respawned ally already does. Brooke stood
         // beside you all round with nobody to see (Found in play, v1.178).
