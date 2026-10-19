@@ -15,7 +15,9 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 - `docs/decisions.md` — questions for Michael and his answers; nothing is a spec without a `Michael:` line.
 - `docs/critic.md`, `docs/proposals.md` — the critic's playtest reports and its unapproved ideas.
 - `tests/` — Playwright suites against headless Chromium. `npm test` runs them all; `node tests/run.mjs smoke` runs one;
-  `node tests/run.mjs --shard 2/4` runs a quarter (CI runs the four in parallel jobs).
+  `node tests/run.mjs --shard 2/4` runs a quarter. CI (`docs/pipeline.md`, 19 Oct 2026): main runs every suite in ten
+  shards after each merge; a PR runs only the suites its change can reach (`node tests/lib/select.mjs --base=main` shows
+  which), a docs-only PR none; the one check to read on a PR is `gate`.
 - `scripts/parsecheck.mjs` syntax-checks the inline script. `node scripts/tag.mjs bump` bumps the version on the title screen.
 
 ## A session
