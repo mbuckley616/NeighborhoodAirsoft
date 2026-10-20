@@ -11888,20 +11888,29 @@ and Eric and Nick in five of the Hollow's matches and the school's Lights Out. E
 authored start stacked there too. In the Last Saturday, Garrett, Colin, Brooke and Trey started within 0.4 m of each
 other, and Mason and Evan shared a start exactly in Bellfield after dark. Two kids on one point push against each other
 and can hold each other still, which is what CI saw. A player would see two kids standing inside one another at BEGIN.
-- In a match whose sides the crew has changed, every kid's start is now at least 1.5 m from every start already taken,
-  your own included (`crewSpreadStart`). The nearest free spot is searched on rings 0.75 m apart out to 6 m. It has to
-  be inside the field (0.8 m in) and clear of cover, or the kid keeps the spot he had. Two groups are left alone: kids
+- In a match whose sides the crew has changed, every kid's start is now at least 1.4 m from every start already taken,
+  your own included (`crewSpreadStart`). 1.4 m is the ally fan's own step (v1.33). A first try at 1.5 m also moved
+  every third ally off the fan. The nearest free spot is searched on rings 0.75 m apart out to 6 m. It has to be
+  inside the field (0.8 m in) and clear of cover, or the kid keeps the spot he had. Two groups are left alone: kids
   starting in the attack huddle's ring, who walk straight out to their posts, and kids on a perch.
 - A match the crew does not change starts exactly as before: the spread only runs when its sides differ from the
   scenario's own.
 - Each kid now keeps the spot he started on (`startAt`), so a test can check the starts rather than where kids stand
   after BEGIN.
+- Two tests changed with it. `lamplight-starts` lets the fifth Bellfield kid, who shares a yard start, stand up to
+  2.1 m from it, and he still has no line to the entry. `squad-orders` had not been made steady by v1.276's seed. The
+  page's own frame loop kept stepping the game on the real clock between BEGIN and the measured round, as many frames
+  as the load allowed. On one build, push up came out 18.9 m run alone and 21.4 m beside another suite, against its
+  20 m line, the same tail CI met on 3254c3e. The loop is now held for each measured round, and the seed is set again
+  at its start.
 ### Verified
-- `tests/crew-spawn-bounds.test.mjs` checks two more things now. First, no two starts under 1.5 m apart in all 31
+- `tests/crew-spawn-bounds.test.mjs` checks two more things now. First, no two starts under 1.4 m apart in all 31
   team matches, with all five and with the first-time crew, the huddle ring aside. Before the fix this found 0.00 m
-  pairs in 20 matches. After it, every pair is clear. Two kids still start 1.2–1.3 m apart, Priya and Tyler in
-  Bunratty's VIP, and one of them starts in the huddle, so the check allows 1.0 m beside a huddle kid. Second, the club's 3v3 with all five: every kid on our side moves or fires over 40 s. Eric
-  walked 119 m, Sean 103, Nick 29, Alex 59 and Diego 84, and all of them fired.
+  pairs in 20 matches. After it, every pair is clear. A kid beside the huddle is held to 1.0 m: Priya and Tyler in
+  Bunratty's VIP start 1.2–1.3 m apart, one of them in the huddle. Second, the club's 3v3 with all five: every kid on
+  our side moves or fires over 40 s. Eric walked 119 m, Sean 103, Nick 29, Alex 59 and Diego 84, and all of them fired.
+- `squad-orders`, 5 of 5 with the same numbers (push up 16.7 m against 35.7 m with no order), two of them beside
+  `crew-field` and `crew-balance`. `lamplight-starts` passes.
 - `country-club`, 3 of 3 run beside `crew-spawn-bounds` (under load). `crew-spawn-bounds`, `crew-field` and
   `crew-balance` passed run side by side.
 ### Still open
