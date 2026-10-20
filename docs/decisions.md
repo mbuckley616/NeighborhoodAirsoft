@@ -5,35 +5,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Notebook-paper screens: how far does the paper go? (deep-work session, 2026-10-20, fable d46-notebook-ui)**
-  Every screen today is a dark glass panel with orange buttons, typed in Courier and Georgia. The notebook look turns a
-  screen into a page torn out of a school notebook: cream paper, blue ruled lines, a red margin, three-ring holes, a
-  ripped top edge, writing in blue ballpoint (Patrick Hand) with headings in black marker (Permanent Marker), and
-  buttons as yellow sticky notes outlined in pen. Both fonts are free to ship and would be embedded in index.html
-  (about 72 KB), so nothing is fetched from the internet. Rough mock-ups, made by restyling the live game in headless
-  Chromium (the real thing gets tidied up):
-  the briefing ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-08-briefing.png),
-  [paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-briefing.png)),
-  the result card ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-11-result.png),
-  [paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-result.png)),
-  the title ([paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-title.png)),
-  and the in-match HUD as taped scraps ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-09-hud.png),
-  [scraps](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-B-hud.png)).
-  Readability: blue ink on the paper is 12.9 : 1 contrast, red pen 5.7 : 1, green 4.8 : 1 (4.5 is the usual floor);
-  handwriting is kept at 14 px or larger and the small labels (CASH, BBs) stay in the plainest hand; the controller's
-  focus becomes a thick dashed red ring around the sticky note, never colour alone.
-  - A) Every menu and card becomes a notebook page: title, map, briefing, result, PAUSED and the forfeit question,
-    settings, shop, workbench and loadout, the Pickup Game board, the bedroom's prompts. The in-match HUD keeps its
-    dark panels so it reads against any sky, and only takes the handwriting for its labels. About 3–4 sessions, one
-    group of screens per version, the briefing first. *(recommended)*
-  - B) A, and the HUD too, as scraps of notebook paper taped to the corners (the mock-up above). One more session. The
-    risk: cream scraps over a bright daytime street read less sharply than dark panels, and they hide a little more of
-    the field.
-  - C) The briefing card only, on the next build, for you to play with before deciding between A and B.
-  - Michael (control room d66-notebook-paper, 19:27 UTC 20 Oct, carried to the card by the producer): **A**. Every line of
-    text sits on the ruled lines; larger blocks like the result-card boxes get a filled background instead of lines
-    showing through.
-
 - **D.48 Jog back to your spawn when you are tagged: in which matches, and who steers? (builder, 2026-10-20, backlog D.48)**
   Today a tag that doesn't end your match does one of two things. In the matches where you come back (capture the
   flag, Protect Ryan's VIP matches, the Pickup Game and the Last Saturday) you are put back at your start in one frame.
