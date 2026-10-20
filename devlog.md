@@ -12049,3 +12049,53 @@ within 0.5 m of her for 10.4 s and 27.5 s, hiding and peeking from it.
 ### Still open
 - Mitchell now holds `bulb_car1` and the cover round it. Whether Priya's side still guards her well enough is for a
   playtest; `vip`'s "no VIP falls in the first 8 s" and the trade checks pass.
+
+## v1.283 — Notebook paper, part 1: the briefing and the result card
+Michael asked (D.46, control room, 17 Oct) for every menu and card to look like pages a kid tore out of a school
+notebook and wrote on. He picked A on 20 Oct (d66-notebook-paper): every menu and card goes on paper, and the in-match
+HUD keeps its dark panels. He added that every line of text has to sit on the ruled lines, and that larger blocks like
+the result card's boxes get a filled background so no lines show through them. The work goes one group of screens per
+version, briefing first. This version does the briefing before BEGIN, the map's briefing popup and the result card.
+- One shared look, `.nb-paper`. It is cream paper with light blue rules every 26 px (`--nb-rule`), a red margin, three
+  binder holes and a ripped top edge. The edge is a CSS mask, so it holds on a card that scrolls. Writing is blue
+  ballpoint in Patrick Hand, headings are black marker in Permanent Marker, and the buttons (`.nb-btn`) are yellow
+  sticky notes outlined in pen, each tilted a little. Both fonts are embedded in index.html as base64 woff2, Latin only:
+  24 KB and 30 KB, about 72 KB of text. Patrick Hand is SIL OFL and Permanent Marker is Apache 2.0. Nothing is fetched.
+- How text stays on the rules. Inside a page every line box is one rule high, and every vertical margin, padding and
+  fixed height is a whole number of rules. A smaller label inside a line (CASH, OBJECTIVE, BEST) gets a shorter
+  line-height, so it can't make its line taller. Each rule is drawn 6 px above the bottom of its band, which is where
+  the hand's baseline falls. The big marker headings (the outcome, the match name on the popup) take two rules and are
+  nudged 2–3 px down onto the second one.
+- Filled blocks: the EARNED box, the four stat boxes, the damage report, the objective and the field map. Each is
+  filled with paper, outlined in pencil and a whole number of rules tall. The map is drawn 312 px tall (12 rules) with
+  `object-fit: contain`, so it stays square. The damage figure's frame is 6 rules.
+- A long roster (the Big Game's eleven rows) scrolls inside the page, and it scrolls a whole rule at a time (scroll
+  snap). The page's height is rounded down to a whole number of rules (CSS `round()`, with a plain fallback), so
+  scrolled to the end, the roster still sits on the rules. Before this the page ran off a 720 px screen.
+- Colours on the paper: ink 12.4 : 1, pencil 8.2 : 1, red and green pen 6.2 : 1, marker 16.8 : 1. The light text
+  colours the dark panels used (#9a8f7c and #ddd) are overridden on paper, including the damage list's inline grey.
+  The pad's cursor used to ring what it would click in yellow, which would vanish on a sticky note. On paper it rings
+  it in thick red dashes.
+- Nothing else changes: the same elements, ids and handlers. Only classes were added in the HTML (`nb-paper`,
+  `nb-btn`), and the HUD, the title, the map and the rest are untouched until their own versions.
+### Verified
+- `tests/notebook.test.mjs` (new; its helpers are in `tests/lib/notebook.mjs`). Both fonts load with nothing fetched
+  from the network. It walks the baseline of every line of text on each page (outside the filled blocks and the
+  buttons):
+  - the popup: 11 lines
+  - Bunratty's briefing: 19 lines
+  - the Big Game's briefing: 43 lines, both at the top and scrolled to the end of its roster
+  - the result card after a win: 11 lines
+  - the result card after a loss with a three-hit damage report: 7 lines
+  On every page the worst baseline is 2.5 px from a rule. Every filled block and button is a whole number of rules
+  tall. The lowest text contrast on any page is 6.16 : 1. Both briefings and the loss card fit on a 1280×720 screen.
+  ← Back, BEGIN, Play Again and ← BACK TO YOUR ROOM work on paper, with no page errors.
+- These suites pass: `smoke`, `briefing-lives`, `result-stats`, `result-text`, `damage-report`,
+  `damage-report-first`, `gamepad-screens` (the pad's cursor over the briefing and the result card), `pause-menu`,
+  `forfeit-ask`, `crew-roster` (Bench and Bring on the paper roster), `map-screen`, `wallet`, `deploy-progress`,
+  `pad-hints` and `harness`.
+### Still open
+- Whether Patrick Hand reads well enough at 15–17 px on a real screen, and whether the tilted sticky notes feel right,
+  is for Michael's eye. Screenshots are in tests/out/notebook-*.png when the suite runs.
+- Next: the title, PAUSED, the forfeit question and settings (v1.284), then the map, shop, workbench, loadout, the
+  Pickup Game board and the bedroom's prompts.
