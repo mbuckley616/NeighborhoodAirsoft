@@ -8,8 +8,10 @@ const list = a => { const r = spawnSync('node', [path.join(here, 'run.mjs'), ...
 let fails = 0; const check = (ok, msg) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${msg}`); if (!ok) fails++; };
 
 check(list([]).files.join() === all.join(), `no shard lists all ${all.length} suites`);
-const ci = +(/--shard \$\{\{ matrix\.shard \}\}\/(\d+)/.exec(fs.readFileSync(path.join(here, '..', '.github', 'workflows', 'check.yml'), 'utf8'))?.[1] ?? 0);
-check(ci >= 2, `check.yml runs the suites in ${ci} shards`);
+// 19 Oct 2026: CI takes its shard count from tests/lib/select.mjs (FULL_SHARDS for every suite, fewer for a PR's selection)
+const { FULL_SHARDS: ci } = await import('./lib/select.mjs');
+const yml = fs.readFileSync(path.join(here, '..', '.github', 'workflows', 'check.yml'), 'utf8');
+check(ci >= 2 && yml.includes('--shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }}'), `check.yml runs every suite in ${ci} shards, a PR's selection in as many as it needs`);
 for (const n of [1, 2, 3, ci || 4, 7]) {
   const parts = Array.from({ length: n }, (_, i) => list(['--shard', `${i + 1}/${n}`]).files);
   const flat = parts.flat().sort();
