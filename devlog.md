@@ -12204,5 +12204,6 @@ The fourth group of screens for D.46 (decision A): the map.
   No two pin labels overlap. `map-table`, `gamepad-screens`, `front-door`, `desk-start`, `smoke`, `last-saturday`,
   `northcliff`, `market-lot`, `country-club`, `high-school`, `grocery-store` and `bellfield` pass.
 ### Still open
-- At 1024×640 a zone shows 6 cards before it scrolls, where the dark map showed 8.
+- Cards in view on Winnmark, counted the same way on main's build: 10 at 1280×720 on the dark map, 12 on paper;
+  6 at 1024×640 on both. Whether the smaller card type (11–14 px) reads well enough is for a playtest.
 - Next: the shop, the workbench and the loadout.
