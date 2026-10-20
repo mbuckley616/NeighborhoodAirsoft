@@ -2096,7 +2096,7 @@
   .nb-paper .nb-btn:nth-child(2n) { transform: rotate(0.7deg); }
   .nb-paper .nb-btn:hover:not(:disabled) { background: #ffe873 !important; }
   .nb-paper .nb-btn:disabled { opacity: 0.45; box-shadow: inset 0 0 0 2px var(--nb-pencil) !important; }
-  .nb-paper .nb-btn kbd { font-family: var(--nb-hand); font-size: 13px; opacity: 0.8; }
+  .nb-paper .nb-btn kbd { font-family: var(--nb-hand); font-size: 13px !important; opacity: 0.8; }
   .nb-paper .pad-hover, .nb-paper.pad-hover { outline: 4px dashed var(--nb-red) !important; outline-offset: 3px; }
   .nb-paper .nb-head, .nb-paper .outcome, .nb-paper .brief-title { font-family: var(--nb-marker) !important; font-weight: 400 !important; color: #17171c; }
   .nb-paper .nb-label { font-family: var(--nb-hand); font-weight: 400; letter-spacing: 1.5px; text-transform: uppercase; }
@@ -2177,6 +2177,36 @@
   #resultScreen .nb-paper .reload-note { font-size: 15px; color: var(--nb-pencil); margin: 0 0 var(--nb-rule); }
   #resultScreen .nb-paper .result-nav { gap: 0 12px; margin: 0; }
   #resultScreen .nb-paper .nav-btn { font-size: 16px !important; padding: 0 14px !important; }
+  /* -- v1.284 (D.46): the title, PAUSED, the forfeit question and settings on paper -- */
+  #titleScreen .title-page.nb-paper { display: flex; flex-direction: column; align-items: center; text-align: center;
+    width: min(540px, calc(100vw - 32px)); padding-bottom: calc(var(--nb-rule) * 2) !important; }
+  #titleScreen .nb-paper .title { font-family: var(--nb-marker); font-weight: 400; font-size: 46px; color: #17171c; text-shadow: none;
+    letter-spacing: 1px; line-height: calc(var(--nb-rule) * 2) !important; margin: 0; position: relative; top: 3px; }
+  #titleScreen .nb-paper .subtitle { font-size: 19px; color: var(--nb-red); letter-spacing: 4px; margin: 0 0 var(--nb-rule); }
+  #titleScreen .nb-paper .start-btn { width: 300px; font-size: 20px !important; transition: none; }
+  #titleScreen .nb-paper .start-btn:hover { transform: rotate(-0.8deg); }
+  #titleScreen .nb-paper .settings-open-btn { margin-top: calc(var(--nb-rule) + 4px) !important; width: 220px; font-size: 16px !important;
+    background: var(--nb-paper) !important; }
+  #titleScreen .nb-paper #newGameAsk { align-items: center; }
+  #titleScreen .nb-paper .new-game-ask-text { color: var(--nb-red); font-size: 17px; margin: 0; max-width: 380px; }
+  #titleScreen .version { color: rgba(255,255,255,0.55); }
+  #pauseMenu .modal-card.nb-paper, #forfeitAsk .modal-card.nb-paper { min-width: 360px; max-width: 440px; padding-right: 40px !important; }
+  .nb-paper .modal-title { font-family: var(--nb-marker) !important; font-size: 30px !important; color: #17171c !important; letter-spacing: 2px;
+    line-height: calc(var(--nb-rule) * 2) !important; margin: 0 !important; position: relative; top: 9px; }
+  .nb-paper .modal-body { font-size: 17px !important; color: var(--nb-ink) !important; margin: 0 0 var(--nb-rule) !important; }
+  #pauseMenu .nb-paper .pause-btns { gap: 0; }
+  #pauseMenu .nb-paper .pause-forfeit, #forfeitAsk .nb-paper .forfeit-yes { color: var(--nb-red) !important; background: var(--nb-paper) !important;
+    box-shadow: inset 0 0 0 2px var(--nb-red), 3px 3px 0 rgba(179,38,30,0.7) !important; }
+  #forfeitAsk .nb-paper .forfeit-btns { gap: 14px; }
+  #settingsScreen .settings-card.nb-paper { width: min(500px, calc(100vw - 32px)); padding-right: 40px !important; }
+  #settingsScreen .nb-paper .settings-title { font-family: var(--nb-marker); font-size: 28px; color: #17171c;
+    line-height: calc(var(--nb-rule) * 2) !important; margin: 0; position: relative; top: 9px; }
+  #settingsScreen .nb-paper .settings-row { font-size: 17px; color: var(--nb-ink); margin: 0; }
+  #settingsScreen .nb-paper .settings-row input[type=range] { accent-color: var(--nb-ink); height: 18px; }
+  #settingsScreen .nb-paper .settings-row input[type=checkbox] { accent-color: var(--nb-ink); width: 18px; height: 18px; justify-self: start; }
+  #settingsScreen .nb-paper .settings-row .settings-val { color: var(--nb-ink); }
+  #settingsScreen .nb-paper .settings-buttons { margin-top: var(--nb-rule); gap: 14px; }
+  #settingsScreen .nb-paper .settings-btn:not(.primary) { background: var(--nb-paper) !important; }
 </style>
 </head>
 <body>
@@ -2261,17 +2291,19 @@
 
 <!-- === TITLE === -->
 <div class="menu-overlay active" id="titleScreen">
+  <div class="title-page nb-paper">   <!-- v1.284 (D.46): the title on a notebook page -->
   <div class="title">NEIGHBORHOOD AIRSOFT</div>
   <div class="subtitle">SUMMER · 2003</div>
-  <button class="start-btn" id="continueBtn" style="display:none;">CONTINUE</button>
-  <button class="start-btn" id="startBtn">ENTER MIKE'S ROOM</button>
+  <button class="start-btn nb-btn" id="continueBtn" style="display:none;">CONTINUE</button>
+  <button class="start-btn nb-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <div id="newGameAsk" style="display:none;">   <!-- v1.218: NEW GAME over a save asks first -->
     <div class="new-game-ask-text">Start a new summer? Your saved game is replaced the first time the new one saves.</div>
-    <button class="start-btn" id="newGameYesBtn">START OVER</button>
-    <button class="start-btn" id="newGameNoBtn">BACK</button>
+    <button class="start-btn nb-btn" id="newGameYesBtn">START OVER</button>
+    <button class="start-btn nb-btn" id="newGameNoBtn">BACK</button>
   </div>
-  <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.283</div>
+  <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
+  </div>
+  <div class="version">v1.284</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2639,35 +2671,35 @@
 <!-- === v1.208: F asks before it forfeits; the match is paused while it asks === -->
 <!-- v1.239 (D.39): Escape in a match opens this and the match stops -->
 <div class="menu-overlay" id="pauseMenu">
-  <div class="modal-card">
+  <div class="modal-card nb-paper">
     <div class="modal-title">PAUSED</div>
     <div class="modal-body">The match is stopped until you go back to it.</div>
     <div class="pause-btns">
-      <button class="pause-resume" id="pauseResumeBtn">RESUME <kbd>ESC</kbd></button>
-      <button id="pauseSettingsBtn">SETTINGS</button>
-      <button class="pause-forfeit" id="pauseForfeitBtn">FORFEIT <kbd>F</kbd></button>
+      <button class="pause-resume nb-btn" id="pauseResumeBtn">RESUME <kbd>ESC</kbd></button>
+      <button class="nb-btn" id="pauseSettingsBtn">SETTINGS</button>
+      <button class="pause-forfeit nb-btn" id="pauseForfeitBtn">FORFEIT <kbd>F</kbd></button>
     </div>
   </div>
 </div>
 <div class="menu-overlay" id="forfeitAsk">
-  <div class="modal-card forfeit-card">
+  <div class="modal-card forfeit-card nb-paper">
     <div class="modal-title">Forfeit this match?</div>
     <div class="modal-body">The match is paused. A forfeit ends it here, with no pay.</div>
     <div class="forfeit-btns">
-      <button class="modal-close" id="forfeitKeepBtn">KEEP PLAYING <kbd>ESC</kbd></button>
-      <button class="modal-close forfeit-yes" id="forfeitYesBtn">FORFEIT <kbd>ENTER</kbd></button>
+      <button class="modal-close nb-btn" id="forfeitKeepBtn">KEEP PLAYING <kbd>ESC</kbd></button>
+      <button class="modal-close nb-btn forfeit-yes" id="forfeitYesBtn">FORFEIT <kbd>ENTER</kbd></button>
     </div>
   </div>
 </div>
 
 <!-- === v1.192: SETTINGS (from the title and the bedroom) === -->
 <div class="menu-overlay" id="settingsScreen">
-  <div class="settings-card">
+  <div class="settings-card nb-paper">
     <div class="settings-title">Settings</div>
     <div class="settings-rows" id="settingsRows"></div>
     <div class="settings-buttons">
-      <button class="settings-btn" id="settingsResetBtn">Defaults</button>
-      <button class="settings-btn primary" id="settingsDoneBtn">Done</button>
+      <button class="settings-btn nb-btn" id="settingsResetBtn">Defaults</button>
+      <button class="settings-btn nb-btn primary" id="settingsDoneBtn">Done</button>
     </div>
   </div>
 </div>

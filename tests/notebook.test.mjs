@@ -4,13 +4,12 @@
 // opens each paper screen and checks: no page errors and nothing fetched from the network (both fonts are embedded);
 // every line of text has its baseline within 3 px of a rule; every filled block is a whole number of rules tall;
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
-// them in red dashes.
+// them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question.
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
 const fetched = [];
 page.on('request', r => { const u = r.url(); if (!/^(file|data|blob):/.test(u)) fetched.push(u); });
-await g.bedroom();
 
 const PAPER = 'rgb(251, 248, 239)';
 let worstContrast = 99;
@@ -39,6 +38,22 @@ function wholeRules(name, bl) {
   const bad = bl.filter(b => Math.abs(b.h / 26 - Math.round(b.h / 26)) > 0.02);
   check(`${name}: each filled block and button takes a whole number of rules (${bl.length})`, !bl.length || !bad.length, bad);
 }
+
+// 0) v1.284: the title, and settings over it
+await page.evaluate(() => Promise.all([document.fonts.load('17px "NB Hand"'), document.fonts.load('20px "NB Marker"')]));
+await g.shot('notebook-title');
+onRules('the title', await lineReport(page, '#titleScreen .title-page'));
+wholeRules('the title', await blocks('#titleScreen .title-page'));
+const tfit = await page.evaluate(() => { const r = document.querySelector('#titleScreen .title-page').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; });
+check('the title page fits on a 720 px screen', tfit.top >= 0 && tfit.bottom <= tfit.vh, tfit);
+await page.evaluate(() => document.getElementById('titleSettingsBtn').click());
+check('SETTINGS on the title opens settings', await page.evaluate(() => document.getElementById('settingsScreen').classList.contains('active')));
+await g.shot('notebook-settings');
+onRules('settings', await lineReport(page, '#settingsScreen .settings-card'));
+wholeRules('settings', await blocks('#settingsScreen .settings-card'));
+await page.evaluate(() => document.getElementById('settingsDoneBtn').click());
+check('Done closes settings', await page.evaluate(() => !document.getElementById('settingsScreen').classList.contains('active')));
+await g.bedroom();
 
 // 1) the fonts are on the page without a fetch
 await page.evaluate(() => Promise.all([document.fonts.load('17px "NB Hand"'), document.fonts.load('20px "NB Marker"')]));
@@ -74,6 +89,21 @@ check('the pad\'s cursor rings a sticky note in red dashes', ring.style === 'das
 await page.evaluate(() => document.getElementById('introBeginBtn').click());
 await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000 });
 check('BEGIN on the paper starts the match', (await g.mode()) === 'scenario');
+
+// 3b) v1.284: PAUSED and the forfeit question, in the match
+await page.evaluate(() => { Game.player._graceT = 1e9; document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' })); });
+check('Escape opens PAUSED on paper', await page.evaluate(() => !!Game.paused && document.getElementById('pauseMenu').classList.contains('active')));
+await g.shot('notebook-pause');
+onRules('PAUSED', await lineReport(page, '#pauseMenu .modal-card'));
+wholeRules('PAUSED', await blocks('#pauseMenu .modal-card'));
+await page.evaluate(() => document.getElementById('pauseForfeitBtn').click());
+check('FORFEIT asks first', await page.evaluate(() => !!Game.forfeitAsk && document.getElementById('forfeitAsk').classList.contains('active')));
+await g.shot('notebook-forfeit');
+onRules('the forfeit question', await lineReport(page, '#forfeitAsk .modal-card'));
+wholeRules('the forfeit question', await blocks('#forfeitAsk .modal-card'));
+await page.evaluate(() => document.getElementById('forfeitKeepBtn').click());
+await page.evaluate(() => { if (Game.paused) document.getElementById('pauseResumeBtn').click(); });
+check('KEEP PLAYING and RESUME go back to the match', await page.evaluate(() => Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk));
 
 // 4) the result card, a win
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; endScenario('win'); });

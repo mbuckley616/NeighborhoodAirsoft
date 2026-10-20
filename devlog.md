@@ -12099,3 +12099,35 @@ version, briefing first. This version does the briefing before BEGIN, the map's 
   is for Michael's eye. Screenshots are in tests/out/notebook-*.png when the suite runs.
 - Next: the title, PAUSED, the forfeit question and settings (v1.284), then the map, shop, workbench, loadout, the
   Pickup Game board and the bedroom's prompts.
+
+## v1.284 — Notebook paper, part 2: the title, PAUSED, the forfeit question and settings
+The second group of screens for D.46 (decision A, 20 Oct), in the same `.nb-paper` look as v1.283.
+- The title. Its words now sit on a notebook page in the middle of the old dusk gradient: NEIGHBORHOOD AIRSOFT in
+  black marker over two rules each, SUMMER · 2003 in red pen, and ENTER MIKE'S ROOM / CONTINUE as yellow sticky
+  notes. SETTINGS is a plain paper note under them, and NEW GAME's "start over?" question is in red pen. The title's
+  elements are wrapped in one `<div class="title-page nb-paper">`. Every id is unchanged, and the version stays in the
+  screen's corner.
+- PAUSED and the forfeit question. Each is a small page with its heading in marker and its line in ballpoint. RESUME,
+  SETTINGS and KEEP PLAYING are sticky notes. Both FORFEIT buttons are paper notes outlined in red pen, so the one
+  that ends the match looks different from the ones that don't. The key hints (ESC, F, ENTER) are in the hand at
+  13 px.
+- Settings: one row per setting on one rule each. The sliders and the checkbox are in ink blue. Defaults is a paper
+  note and Done is a sticky note.
+- The marker headings at 28–30 px take two rules and are nudged 9 px down, so their baseline lands on the second rule.
+  The 44–46 px ones need 3 px.
+### Verified
+- `tests/notebook.test.mjs` now opens these screens as well. Baselines, worst distance from a rule:
+  - the title: 2 lines, 0.5 px
+  - settings: 13 lines, 1.5 px
+  - PAUSED: 2 lines, 1.5 px
+  - the forfeit question: 2 lines, 1.5 px
+  
+  Every sticky note is a whole number of rules tall, the title page fits a 720 px screen, and the lowest contrast is
+  still 6.16 : 1. SETTINGS → Done, Escape → PAUSED → FORFEIT → KEEP PLAYING → RESUME all work on paper, and the
+  v1.283 pages still pass.
+- These suites pass: `pause-menu`, `forfeit-ask`, `settings`, `bedroom-settings`, `gamepad-screens`, `smoke`,
+  `harness`, `autosave` (NEW GAME's question), `desk-start`, `pointer-lock`, `pad-hints`, `mirror` and `online`.
+### Still open
+- The title's paper on the dusk gradient is plain. A desk or a binder behind it would be a new picture, and that is
+  Michael's call.
+- Next: the map screen, the messages and calendar, the Pickup Game board, then the shop, workbench and loadout.
