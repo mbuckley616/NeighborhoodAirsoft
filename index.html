@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.277</div>
+  <div class="version">v1.278</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -23228,6 +23228,7 @@ function enterScenario(scenarioId) {
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
+        if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -30348,7 +30349,9 @@ function updateKidBoredom(e, dt) {
   if (e._bored || e._boredT < e._boredAfter) return;
   const side = combatantTeam(e);
   const sideLeft = sc.enemies.filter(k => npcInFight(k) && combatantTeam(k) === side).length;
-  if (sideLeft > 2 && !ally) return;   // v1.184: an ally needn't be the last
+  // v1.278: nor need a kid the crew's numbers added to their side. Fitted to a crew of five, the Eighteenth's 3 became 6;
+  // Brooke (aggression 0.35) took Jamie's pool spot 55 m off and hid all round in 3 runs of 8, two of them with Jamie.
+  if (sideLeft > 2 && !ally && !e.crewFill) return;   // v1.184: an ally needn't be the last
   e._bored = true;
   e._boredCount = (e._boredCount || 0) + 1;
   tryNpcSpeak(e, 'taunt');
@@ -33909,6 +33912,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
       // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
       const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
       if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
+      kid.crewFill = true;   // v1.278: a kid the crew's numbers added comes looking when he has hidden too long (updateKidBoredom)
       them.push(kid);
     }
     // A side the spec names outright (the Last Saturday: Seth and his seven) takes those kids at its places

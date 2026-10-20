@@ -11917,3 +11917,29 @@ and can hold each other still, which is what CI saw. A player would see two kids
 - The attack huddle's ring is unchanged. With the crew's extra foes it packs eleven kids into a 1.4 m ring (0.7–0.8 m
   apart) for the moment before they walk out. No test has seen a stall from it, but a playtest may see the crush.
 - Steps 4 and 5 of the crew stay for a fresh card.
+
+## v1.278 — Kids added for your crew come looking
+CI went red again on PR #95, this time on 3202fca: `country-club` failed in headless (7/10) of one of the two runs on
+that head. The other run passed the same shard, so this was not a hang. The failing check was "every kid moves or
+fires" in the Eighteenth. With the crew in it, that match's 3 v 3 is fitted to 6 v 6 (v1.275). Two of the six on their
+side are kids the street adds, and the round-robin put Brooke on Jamie's spot by the pool, 55 m from your start. She
+walked 0 m and fired 0 times in 60 s. Run here she did the same in 3 runs of 8; main, where she is not in the match,
+passed 6 of 6. The cause is v1.152's rule. An enemy kid with aggression under 0.45 (Brooke is 0.35) only marches when
+he can see you or when he is bored, and an enemy only gets bored when two or fewer are left on his side. In a match
+of six that does not come for a long while, so a player would have had a kid hiding at the far end of the course for
+most of the round. That is the same fault v1.184 fixed for allies (Michael: C on D.19).
+- A kid the crew's numbers add to their side (`crewFill`, set in `crewSides` when their side is fitted to the match's
+  number) now gets bored the way an ally does. After 25–30 s within 2 m without a line, he comes looking however
+  many of his side are left. The match's own kids, Seth, kids crossing over to Seth and a crew kid's street
+  stand-in keep v1.152's rule. Snipers, defenders, VIPs and taggers still hold as before.
+- Matches the crew does not change have no `crewFill` kid, so they play exactly as before.
+### Verified
+- `country-club`, 8 of 8 green run alone after the fix (3 of 8 failed before it). Brooke walked 5–87 m and fired 2–12
+  times; Garrett, the other added kid, walked 42–130 m. 1 more run green beside `last-kid` (under load).
+- `crew-balance` has a new check. In the Eighteenth with all five, their side is 6 (Trey crossed over), and 2 of them
+  (Brooke and Garrett) are added. Held in hiding, each added kid is bored within 31 s with 6 on his side. Marcus,
+  Jamie and Trey, the match's own, are not. `last-kid`, `idle-ally`, `crew-field`, the five `crew*` suites and
+  `stuck-sweep-15` (the Eighteenth swept three ways) pass.
+### Still open
+- An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
+  or like a wave arriving late is for a playtest of a crew match.

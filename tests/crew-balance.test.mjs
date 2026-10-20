@@ -113,5 +113,23 @@ for (const [id, crew, done] of [['last_saturday', ALL, []], ['northcliff_night_4
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(2);
 }
+// v1.278: a kid the crew's numbers add to their side comes looking when he has hidden too long, as an ally does (v1.184);
+// the match's own kids still hold until two of their side are left (v1.152). Brooke, added at Jamie's pool spot in the
+// Eighteenth, hid 55 m off all round in 3 runs of 8 (country-club failed on CI).
+await page.evaluate(() => { Game.persist.crew = ['eric', 'sean', 'nick', 'alex', 'diego']; Game.persist.completed = {}; crewBench.clear(); });
+await g.scenario('club_eighteenth_3v3');
+await g.spin(600);
+const fill = await page.evaluate(() => {
+  const foes = Game.scenario.enemies.filter(e => e.team !== 'player'), added = foes.filter(e => e.crewFill), own = foes.filter(e => !e.crewFill && e.charId !== 'seth');
+  const sit = e => { e.state = 'hiding'; e._bored = false; e._boredAt = null; e._boredAfter = 25;
+    for (let i = 0; i < 31 * 60 && !e._bored; i++) { e.state = 'hiding'; updateKidBoredom(e, 1 / 60); } return { n: e.charId, bored: !!e._bored }; };
+  return { hold: inOpeningHold(), foes: foes.length, added: added.map(sit), own: own.map(sit), spec: crewSetup('club_eighteenth_3v3').filter(e => e.crewFill).length };
+});
+console.log('   the Eighteenth with all five:', JSON.stringify(fill));
+check('the Eighteenth with all five: 6 on their side (Trey crossed over), Brooke and Garrett added by the crew\'s numbers', fill.foes === 6 && fill.added.length === 2 && fill.spec === 2, fill);
+check('an added kid who hides 25 s comes looking with 6 on his side; the match\'s own kids still hold', !fill.hold &&
+  fill.added.every(k => k.bored) && fill.own.length > 0 && fill.own.every(k => !k.bored), fill);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); Game.persist.crew = []; });
+await g.spin(2);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
