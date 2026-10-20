@@ -5,7 +5,7 @@
 // every kid starts inside the field; and in the store's Price Check Alex gets in and fires.
 // v1.277 (STUCK #101): the clamp put two allies on one spot where you start by an edge (Sean and Alex at the club's
 // 3v3, 0.00 m apart; one walked 0 m all match) and extra kids at one anchor stacked there. Checked now as well: in every
-// team match, with all five and with the first-time crew, no two kids (you among them) start under 1.5 m apart, the
+// team match, with all five and with the first-time crew, no two kids (you among them) start under 1.4 m apart, the
 // attack huddle's ring aside (1.0 m beside it); and the club's 3v3 with all five has every kid on our side moving or firing.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -26,7 +26,7 @@ for (const crew of ['all', 'first']) for (const id of ids) {
       const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.z - b.z);
       // the huddle's ring is its own (v1.14); a kid beside one only has to be off his spot
       if (a.h && b.h) continue;
-      if (d < (a.h || b.h ? 1.0 : 1.5)) bad.push(`${crew} ${id}: ${a.n}${a.h ? '(h)' : ''}-${b.n}${b.h ? '(h)' : ''} ${d.toFixed(2)} m`);
+      if (d < (a.h || b.h ? 1.0 : 1.39)) bad.push(`${crew} ${id}: ${a.n}${a.h ? '(h)' : ''}-${b.n}${b.h ? '(h)' : ''} ${d.toFixed(2)} m`);
     }
     return bad;
   }, [id, crew]));
@@ -44,7 +44,7 @@ const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
 check(`${ids.length} team matches entered with all five in the crew`, ids.length === 31 && out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
-check('no two kids start under 1.5 m apart (all five, and the first-time crew; 1.0 m beside the huddle, its ring aside)', near.length === 0, near);
+check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, its ring aside)', near.length === 0, near);
 
 // the club's 3v3 with all five: every kid on our side moves or fires in 40 s (Devon walked 0 m on CI, e6f626b)
 await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);

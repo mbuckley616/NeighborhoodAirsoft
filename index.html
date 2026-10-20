@@ -22425,8 +22425,9 @@ function enterBedroom() {
 // effort. Operates on the builder's obstacle list directly (Game.player.obstacles
 // isn't wired up yet during enterScenario).
 // v1.277: the nearest spot to (x, z) at least CREW_START_GAP from every start already taken, inside the field and clear
-// of cover (rings 0.75 m apart out to 6 m, twelve points on each); the spot itself when nothing nearer is free
-const CREW_START_GAP = 1.5;
+// of cover (rings 0.75 m apart out to 6 m, twelve points on each); the spot itself when nothing nearer is free.
+// 1.4 m is the ally fan's own step (v1.33), so the fan is left as it was and only a real stack moves.
+const CREW_START_GAP = 1.4;
 function crewSpreadStart(x, z, taken, bounds, obstacles) {
   const free = (qx, qz) => taken.every(t => Math.hypot(t.x - qx, t.z - qz) >= CREW_START_GAP);
   if (free(x, z)) return { x, z };
@@ -23111,7 +23112,8 @@ function enterScenario(scenarioId) {
     let clusterIdx = 0;
     let setupIdx = 0;
     let allyIdxCounter = 0;   // v1.33: loop-local (don't mutate the shared sc object across replays)
-    // v1.277: with the crew in it (the match's sides differ from the scenario's own), no two kids start on one spot.
+    // v1.277: with the crew in it (the match's sides differ from the scenario's own), no two kids start on one spot
+    // (CREW_START_GAP apart).
     // The v1.276 clamp put the second and fourth allies on the same point where you start by an edge (Sean and Alex at
     // the club's 3v3, 0.00 m apart, and one stood all match: CI red on PR #95, STUCK #101), and extra kids at one anchor
     // stacked there (the Last Saturday's Garrett, Colin, Brooke and Trey within 0.4 m). Huddle kids keep their ring.
