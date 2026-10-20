@@ -97,6 +97,10 @@ check('on the near board the middle scores 10 and 10 cm out scores 6', shots.nea
 check('every hole and BB mark is drawn (front and back)', shots.marks === 8, shots.marks);
 check('the tally counts them', shots.stats.cans === 1 && shots.stats.bottles === 1 && shots.stats.eyeHits === 3 && /cans 1\/6/.test(shots.hud), shots.hud);
 
+// v1.281 (critic, 19 Oct): with the mag empty the ammo box says the back door reloads, not F TO FORFEIT
+const empty = await page.evaluate(() => { const a = Game.gun.ammo; Game.gun.ammo = 0; updateAmmoHud();
+  const t = document.getElementById('ammoStatus').textContent; Game.gun.ammo = a; updateAmmoHud(); return t; });
+check('an empty mag at the range reads "MAG EMPTY · BACK DOOR TO RELOAD"', empty === 'MAG EMPTY · BACK DOOR TO RELOAD', empty);
 // the bench: E stands everything back up
 const reset = await page.evaluate(() => {
   const R = Game.scenario.range;
