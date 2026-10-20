@@ -82,7 +82,7 @@ for (const id of Object.keys(MATCHES)) {
     vips.length === 2 && vips.every(k => k.lives === 1 && k.w === 'pistol' && k.role === 'defender' && k.capOnHead) &&
     vips.find(k => k.team === 'player')?.cap === 'blue' && vips.find(k => k.team !== 'player')?.cap === 'red', vips);
   check(`${id}: everyone else has 99 lives and no cap; the roster shows ∞ and stars the VIPs`,
-    b.ks.filter(k => !k.vip).every(k => k.lives === 99 && !k.cap) && (b.roster.match(/★/g) || []).length === 2 && (b.roster.match(/∞/g) || []).length === 5, b.roster);
+    b.ks.filter(k => !k.vip).every(k => k.lives === 99 && !k.cap) && (b.roster.match(/★/g) || []).length === 2 && (b.roster.match(/∞/g) || []).length === b.ks.filter(k => !k.vip).length, b.roster);   // v1.275: was 5; the sides are tuned for your first-time crew now
   // v1.172 (critic, 6 Oct): Ryan stood 2.3 m from the player in the lane, Rebecca at the player's start
   check(`${id}: both VIPs start on their own anchors (within 1 m), ours ${'>'} 10 m from the player's start`,
     vips.every(k => k.offAnchor < 1) && vips.find(k => k.team === 'player').offPlayer > 10, vips.map(k => `${k.n} ${k.offAnchor} m off anchor, ${k.offPlayer} m from player`));

@@ -59,9 +59,25 @@ const escAfter = await page.evaluate(() => { resumeFromPause(); Game.mouse.locke
 check('pausing with the wheel open shuts it without an order', !esc.wheel && esc.paused && escAfter === standing, [esc, escAfter]);
 
 // --- each order, played: 20 s from BEGIN, the same round with no order as the measure
+// v1.276 (CI red on PR #95): each round draws from one seed. Unseeded, the same order's round wandered run to run: push
+// up's mean distance was 14-20 m locally and 20.27 m once in CI against its 20 m line (35.97 with no order). With the
+// seed every order meets the same deploy, the same draws until it is given, and the same numbers on every run.
+const SEED = 0x5a0d;
+// v1.277: and the page's own frames are held for the round. Between BEGIN and the measure they ran on the real clock,
+// as many as the load allowed, so the kids had deployed further on a busy machine: push up 18.9 m alone, 21.4 m beside
+// another suite, on one build. The test's steps go to the game; the page's frame loop steps nothing until it is over.
 const play = async (order, opts = {}) => {
+  await page.evaluate(seed => {
+    if (!window._liveStep) { window._liveStep = stepGame; stepGame = dt => { if (!window._liveHeld) window._liveStep(dt); }; }
+    window._liveHeld = true; _gameRng = _mulberry32(seed);
+  }, SEED);
   await start();
-  return page.evaluate(([order, opts]) => {
+  return page.evaluate(([order, opts, seed]) => {
+    try {
+    // v1.277: and again here. The page's own frames run between BEGIN and this step, as many as the load allows, and
+    // each draws: under load push up came out 17.9 or 20.4 m on one build
+    _gameRng = _mulberry32(seed);
+    const stepGame = window._liveStep;
     const S = Game.scenario, mates = squadMates();
     if (opts.walk) { const c = findClearSpawn(opts.walk[0], opts.walk[1], Game.player.obstacles, 0.4); Game.player.pos.x = c.x; Game.player.pos.z = c.z; }
     for (let i = 0; i < 150; i++) stepGame(1 / 60);   // the deploy and the opening hold
@@ -86,7 +102,8 @@ const play = async (order, opts = {}) => {
     return { mode: Game.mode, order: S.squadOrder, mates: rows.map(r => ({ n: r.n, foe: mean(r.foe), me: mean(r.me), meMax: r.me.length ? Math.max(...r.me) : null,
       inBand: r.foe.length ? +(r.foe.filter(d => d >= 13 && d <= 27).length / r.foe.length).toFixed(2) : null,
       low: r.n2 ? +(r.low / r.n2).toFixed(2) : null, walked: +r.walked.toFixed(1), atCover: r.atCover })) };
-  }, [order, opts]);
+    } finally { _gameRng = null; window._liveHeld = false; }
+  }, [order, opts, SEED]);
 };
 const base = await play(null);
 console.log('   no order:', JSON.stringify(base));

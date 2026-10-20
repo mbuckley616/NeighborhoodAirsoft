@@ -11647,3 +11647,299 @@ stack. So she now can't see down the lane west of the fort either. That is raise
 - Priya can't fire down the lane from her spot any more (west of the fort: 0 of 4 test spots, was 4 of 4); she still
   covers the bulb's north side, its south-west corner and the open back. Whether that is right for the match is in
   decisions (A keep, B a 1.3 m stack, C move her spot).
+
+## v1.273 — Build your crew, step 1: the two rosters, Garrett and Colin, and the asks
+Backlog D.28 (Fable card d28-crew). Michael answered the design question with his own design (decisions, Answered:
+"Build your crew"): both crews are fixed, yours fills from five friends at story moments, Seth's is eight with two new
+kids, and it is built in five steps, each playable on its own. This is step 1: the rosters, Garrett and Colin, the
+joining moments and the texts. Your crew does not take the field yet (step 2), so no match plays differently.
+- The rosters: `CREW_ROSTER` is Eric, Sean, Nick, Alex and Diego, five at most (`CREW_MAX`); nobody else can ever join
+  and Seth never does. `SETH_CREW_ROSTER` is Seth, Trey, Brooke, Tyler, Evan, Andrew, Garrett and Colin, the data step 2
+  and the finales (step 3) will read. Who has joined is saved as `persist.crew`, in the order they joined; anything
+  else in it (a tampered or future save) is ignored. An old save loads with nobody in.
+- Garrett and Colin are characters with their own looks, numbers and voice lines. Garrett: Seth's neighbourhood, tall,
+  blond, average build, aggression 0.55, accuracy 0.68 (balanced, a good shot). Colin: from near Diego's street, average
+  height and build, curly brown hair, aggression 0.88, speed 1.1, accuracy 0.5 (runs straight at you). Neither is in a
+  match yet: their guns (Garrett mid- to high-tier, Colin cheap) are set when they first take the field, in step 3.
+- The joining moments (the spec left the exact matches to this session): each kid's ask is a text with two buttons on
+  the flip phone, "Yes, you're in" and "Not yet". Not yet leaves the ask open the next time you look, because the
+  roster is fixed and you are meant to end the summer with all five; a kid can't be lost by a wrong tap.
+  Eric asks when Winnmark is done (after its last match, Lights Out 2v2), Sean and Nick when Bunratty is done (its last
+  match), Alex after Hold the Treehouse at Stoneglen (where the twins split: Andrew goes to Seth), Diego after Flags on
+  Bellfield.
+- The texts: Eric's "sean from bunratty heard about u" goes, since Sean is your brother. After Winnmark Sean texts "u
+  been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric", and Eric asks (Michael's
+  words for both). Eric's Northcliff text now has Evan as "seths old friend". Diego, who has only been across the
+  street from you, texts once after Lamplight on Bellfield, about Colin calling your crew soft, before he asks. Seth
+  texts after the flags that Andrew, Colin and Garrett are with him now ("u havent met garrett. u will").
+- The mirror's YOUR CREW card has a third row, "In it · n of 5", with the names, or "Just you so far" on a new game.
+### Verified
+- `tests/crew-roster.test.mjs` (new, 23 checks): the two rosters (no kid on both, Seth never yours, all real characters);
+  Garrett and Colin built (Garrett's scale 1.12 against Colin's 1.0) with 4-5 own lines in every situation; one ask per
+  kid, from the kid himself, on days 21, 42, 42, 68 and 74 of the summer. A new game has nobody in and no ask open. After
+  Winnmark the phone shows Eric's two buttons; Not yet keeps the ask open across a close and reopen; Yes puts Eric in and
+  his text then says "Eric is in your crew" with no buttons. A save and load keeps him; an old save without `crew` loads
+  with nobody in and Eric's ask open. Through the whole ladder the asks open at exactly the four other moments; all five
+  in, in order, and Seth, Garrett or Rebecca can't be taken in, nor a kid written into the save by hand. With all five
+  in, Squad Up still fields its own Seth and Trey.
+- `texts` updated for the new count (13 texts by the Hollow's big game, was 10; Sean's "come home" is dated Sunday 22
+  June as Eric's was); `crew` and `mirror` updated for the third crew row. `voices`, `kid-clothes`, `kid-face`, `out-shot`,
+  `school-kids`, `calendar`, `bed-summer` pass with the two new kids.
+- `hats` and `tops` count the mirror's rows and were updated for the third crew row (14 rows on a new game, 16 with
+  a top; the lit choices stay 14, the new row has no buttons).
+- The full suite in four parallel shards: 159 of 171 passed first time. The 12 that didn't were `hats` (the row count,
+  above), nine Playwright page-load timeouts and two closed browsers, all from four browsers at once in this container.
+  All 12, and `tops`, passed re-run two at a time: 171 of 171.
+### Still open
+- Step 2 (your crew in every team match, solo matches kept solo, benching) and the rest of Michael's steps. Until step
+  2 lands, the crew is a list on the phone and the mirror and nothing more.
+- The Last Saturday's briefing still names Seth's crew as Seth, Devon, Mitchell, Mason, Marcus and Ryan, with Brooke and
+  Trey on your side; its sides change in steps 2 and 3 (6 v 8).
+- Brooke's and Trey's texts were read and left as they are: Brooke's are friendly gossip that still reads right from
+  Seth's sister. Michael may want them sharper.
+- Whether "Not yet" should exist at all, or a No should be final, is for Michael to say if he minds; the fixed roster
+  argued for keeping the door open.
+
+## v1.274 — Build your crew, step 2: your crew takes the field
+Backlog D.28, step 2 of Michael's design (Fable card d28-crew). The spec kept "the outnumbered matches Michael marks"
+solo; asked which (decisions, "Build your crew, step 2"), he answered C: none stays, every team match takes your crew,
+and step 3 rebalances them. So from this version a kid who has joined plays.
+- Which matches: a team match is one that gives you allies today, 31 of the 73, all on the ladder (the tutorial, the
+  free-for-alls, the pickup games and online play aside). The other 42 never take the crew. With nobody in the crew
+  (every new game until Winnmark is done) `crewSetup` hands back the scenario's own list, the same object, so nothing
+  changes for anyone who has not taken a kid in.
+- Your side: the kids the match keeps, then your whole crew, then the places left. Kept are a VIP (Ryan, Rebecca),
+  Seth while he is on your side (Winnmark's team matches; he never joins), and the kid a match is named after (Nick in
+  You and Nick, Sean in Sean Has Your Back, day and night) until he is in the crew. Your side is never smaller than the
+  match's own: when the crew is short, the match's own allies fill the places left in their order, then kids from the
+  street (the kids who play on that street with a gun of their own, in match order). A crew kid takes his own spot when
+  the match has one for him, otherwise a free ally spot, past those the first ally's spot without its role.
+- Each crew kid plays on his own gun, the one he carries most across the summer: Eric MP5, Sean AK, Nick AR, Alex AK,
+  Diego MP5 (`CREW_GUNS`). Hand-me-downs are step 4.
+- Their side: a crew kid the match puts against you is swapped for a kid from the street at his spot, with that kid's
+  gun (Nick in Two Against the World, Sean in First Time in the Woods and You and Nick, Diego in Bellfield's). With Seth
+  on the other side his crew kids on yours cross to him at his side's first spot (Brooke in the Hollow's big games, Trey
+  and Brooke at Willow Bend and in the Last Saturday), as the step-2 question said. When the street kid is needed with
+  Seth there, his crew comes first.
+- So the odds move: Two Against the World is 6 v 4 with all five, Squad Up 7 v 3, and the Last Saturday comes out as
+  you and your five against Seth and seven, the 6 v 8 the spec asks of it. The Big Game with Eric, Sean and Nick is 5 v
+  6 (Rebecca stays, Brooke crosses). Step 3 tunes each zone for the crew you would have the first time.
+- Benching: the briefing (the pre-match popup) gives each crew kid a Bench button; a benched kid shows under your side
+  "on the bench" with Bring. His place stays empty, as the spec says. The bench lasts the session and is not saved,
+  so a reload brings everyone back.
+- The map's cards and the briefing count the crew (a card reads 6V4); the result card's "Seth's crew" line counts the
+  sides as played. `CREW=all` in the stuck-kid sweep puts the whole crew in first.
+### Verified
+- `tests/crew-field.test.mjs` (new, 27 checks): a new game leaves all 73 matches as they are; with all five in, the 42
+  solo matches still play alone and the 31 team matches take the crew. Two Against the World: Eric in, you and Eric v 4
+  (2V4); all five, 6V4 with Nick swapped for Owen, each kid on his own gun. You and Nick with Eric: Nick and Eric v Sean;
+  with Sean and Nick in, a street kid for Sean. Squad Up: Seth and your five v 3. Protect Ryan: Ryan and your five.
+  The Last Saturday: your five v eight, Brooke and Trey with Seth, 6V8. The Big Game with three: Eric, Sean, Nick,
+  Rebecca v six; Nick benched, his place empty and the briefing names him. First Time in the Woods: Sean yours, a street
+  kid beside Seth. Over all 31 with all five: nobody twice, none of the crew against you, no VIP lost, neither side
+  short of its own count. The briefing's Bench and Bring move a kid off and back; six matches entered with the crew
+  (The Big Game with Sean benched from the briefing) field exactly the computed sides, Eric on his MP5; the crew
+  survives a save and load.
+- `crew-roster`'s last check now expects Squad Up as Seth and your five (it said step 1 changed no match).
+- The stuck-kid sweep with the whole crew in (`CREW=all WAYS=spawn`, the 31 team matches, 90 s each, four browsers):
+  no kid held a moving state in one place over 15 s; the worst was Brooke 5 s in Full-Auto Mayhem, beside Seth's
+  side's fort; no page errors.
+- The full suite in four parallel shards: 169 of 172 passed first time; the three that didn't (`out-walk-off`,
+  `treehouse`, `stuck-sweep-10`) were Playwright page-load timeouts from four browsers at once, and passed re-run
+  alone (with `treehouse-*`): 172 of 172.
+### Still open
+- Balance is step 3: with all five in, early team matches are easy (Squad Up 7 v 3, Two Against the World 6 v 4), as
+  the spec expects of a replay, but the first time through Bunratty and the Hollow's matches are already bigger on your
+  side than they were. Each zone gets tuned for the crew you'd have the first time.
+- The briefing's text (`desc`) still names each match's own allies ("You're on blue with Eric, Rebecca, Sean, and
+  Brooke"), while the roster under it shows the crew. Rewriting them belongs with step 3's sides.
+- Seth still plays on your side in Winnmark's team matches on a replay after he turns rival (the spec has him go to the
+  other side); that, the finale rule for Winnmark, and whether a finale's extra kids grow with the crew are step 3's
+  open questions in decisions.
+- Garrett and Colin still take no field; step 3 gives them guns and places on Seth's side.
+- The bench isn't saved and has no controller hint; whether a shorthanded win pays more is still open (no extra pay now).
+
+## v1.275 — Build your crew, step 3: each match tuned for the crew you'd have
+Backlog D.28, step 3 of Michael's design (Fable card d28-crew). Step 2 put your whole crew in every team match, so
+your side had grown and the odds with it (Squad Up 7 v 3 with all five). Asked whether the other side stays fixed or
+grows with your crew (decisions, "Build your crew, step 3"), Michael answered A: fixed, tuned for the crew you'd have
+the first time you reach each match, so a replay with all five is easy, as his spec says.
+- The first-time crew: every kid whose ask comes before the match on the ladder, taken in (`crewFirstTime`). Winnmark's
+  matches have nobody, Bunratty's Eric, the Hollow, the lot and Northcliff Trace Eric, Sean and Nick, Bellfield's Alex
+  too, and everything from Northcliff's finale on all five.
+- Those sides fix the match once (`crewSetup` now builds them first, then plays them with your crew as it is). Your side
+  is never smaller than the first time: kids not yet in your crew have their places filled by the match's own allies,
+  then the street, so an old save or a "Not yet" plays the same numbers. A benched kid's place still stays empty.
+- Their side is a fixed number for the match. An ordinary match keeps the margin it was built with: their side grows by
+  as many as the first-time crew adds to yours (Two of Us, Four of Them was 2 v 4 and is 4 v 6 with Eric, Sean and Nick;
+  the school's portables 3 v 3 is 6 v 6). A zone's finale has their side one more than yours: Bunratty 3 v 4, the Hollow
+  5 v 6, the lot 4 v 5, Northcliff 6 v 7, the school 6 v 7, Willow Bend 6 v 7. Lights Out stays 2 v 2 with Seth beside
+  you. The Last Saturday is two more, 6 v 8, and its other side is now Seth and his seven as the spec names them (Trey,
+  Brooke, Tyler, Evan, Andrew, Garrett, Colin), not the old Devon, Mitchell, Mason, Marcus and Ryan; its briefing says so.
+- Where their side grows, the extra kids come from the street at the match's own spots in turn (deploying from the
+  huddle, not from a spot's own start or nest), Seth's crew first when Seth plays; when the street runs short, the rest
+  of the zone's kids, then anybody's, each on the gun he carries most. The street's kids who play against you there
+  go to their side first; places left on your side are filled after theirs (the school's six all play against you,
+  where Jordan and Malik had been standing with you and Brooke against you). An extra kid never brings a sniper rifle (he has
+  no nest to shoot it from; Devon and Brooke sat still with one), nor a spot's flag run or lives; on Bellfield's flags
+  the extras push, as Christian does, so only Fernando keeps their flag (Michael's C of v1.191), and on Lamplight an
+  extra keeps the yard start of the spot he takes, out of sight of your entry (v1.266). Where it shrinks (Brooke crossing to Seth in the
+  Big Game used to make it 5 v 6), the match's own kids go from the end of its list, never Seth, a crosser or a
+  defender, so the Big Game is the 5 v 5 it was built as.
+- Garrett (an AR) and Colin (a MAC-10) take the field: with Seth, once Bellfield's flags are done and Seth has texted
+  "u havent met garrett. u will". Garrett plays at Willow Bend (both matches) and both play the Last Saturday.
+- Seth turns: replaying one of Winnmark's team matches once Lights Out is done, Seth plays for the other side, and Trey
+  with him (his crew crosses as it does elsewhere). Squad Up with all five is your six v Seth, Brooke and Trey.
+### Verified
+- `tests/crew-balance.test.mjs` (new, 21 checks): over the 31 team matches the first time through, every ordinary match
+  keeps its own margin and every finale is one more (the Last Saturday two, Lights Out 2 v 2), the eight finales coming
+  out as listed above. Their side is the same number with nobody in the crew, the first-time crew or all five, in all 31.
+  Two Against the World with all five is 6 v 4; Northcliff's finale with nobody in is 6 v 7 with the street on your side,
+  with Nick and Alex benched 4 v 7. The Last Saturday is your five v Seth's eight, Garrett on an AR and Colin on a MAC-10.
+  Garrett and Colin turn up only on Seth's side and only after the flags (Willow Bend's two and the Last Saturday). Squad
+  Up the first time is you, Seth and Trey v 3; replayed after Lights Out with all five, your six v Seth, Brooke and Trey;
+  Lights Out replayed with Eric, you and Eric v Seth and Trey. Five matches entered and played 10 s (the Last Saturday,
+  Northcliff's finale with nobody in, Bunratty's finale with Eric, the Squad Up replay, Willow Bend's finale): the field
+  is the computed sides (6 v 8, 6 v 7, 3 v 4, 6 v 3, 6 v 7), at least half the kids off their spots, no page errors.
+- `crew-field` updated for the new numbers (You and Nick with Eric is 3 v 2, the Big Game with three 5 v 5, First Time in
+  the Woods with Eric and Sean 4 v 4 with Rebecca filling), `crew-roster` (with the ladder done, Squad Up has Seth on the
+  other side) and `crew` (the Hollow's 3 v 3 with nobody in has three allies in the bandana, not two).
+- Suites written for the old sides, updated to the tuned ones without loosening what they guard: `lot-hollow-polish`
+  and `grocery-store` play each match with the crew you'd have the first time; `last-saturday` counts 13 kids;
+  `night-lights-allies` lets the fifth ally start on the next ring out (within 9 m, the first four still within 4.5);
+  `lamplight-starts` lets the fifth Bellfield kid start at one of the four yard starts (still no line to the entry);
+  `idle-ally` reads Sean in Night Swim and the lot's Brooke as the sniper who holds (Night Swim's and Night Game's Brooke
+  cross to Seth now); `school-kids` asks that every school kid not on your side is on theirs before anybody else is;
+  `vip` counts the ∞ by the kids there; `voices` reads each school kid's lines before the next talks (six kids' 144
+  lines ran past the log's 64); `laser` stages whichever of theirs has a laser in Bunratty's 3 v 4 finale.
+- The stuck-kid sweep over the 31 team matches at spawn, with nobody in the crew and with all five (90 s each, two
+  browsers): no kid held a moving state in one place over 15 s; the worst was 6 s (Devon in the Big Game and Full-Auto
+  Mayhem, at the Hollow's south fort); no page errors.
+- The full suite in four parallel shards, on 85cb15a: 137 of the first 138 suites passed when the session's four hours
+  ran out; the one that didn't was `harness` ("NEW GAME stalled for 10 s", a page load under four browsers at once; it
+  passed run alone). The other 35 suites are owed to the next session before review.
+### Still open
+- Whether the first time through feels right is a playtest: the Hollow's finale is 5 v 6, Northcliff's, the school's
+  and Willow Bend's 6 v 7. Ordinary matches keep the margins they were built with, so Two of Us, Four of Them is 4 v 6.
+- A player who answers "Not yet" or loaded an old save plays the same numbers, the empty places filled by the street
+  (the Hollow's 3 v 3 then has Mitchell beside you). Whether those fills should be the crew kid who asked is Michael's.
+- With more kids in the store, `grocery-store` once saw Marcus held 4.0 s (its limit) face to face with Alex in an
+  aisle in Inside Riverside Market's 6 v 6; it passed re-run. Worth a look if the critic sees kids blocking in aisles.
+- The briefings of the other team matches still name each match's own allies in their text, while the roster under it
+  shows who plays; the Last Saturday's is rewritten.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) are their own sessions.
+
+- The owed full suite, next session (fable d28-crew, resumed 19 Oct), on c04b6d6 (v1.275 with origin/main merged in;
+  main had changed only docs/decisions.md, where the branch's full answered entries were kept): all 173 suites in four
+  parallel shards, 171 passed. The two that did not were the load again, not the code: `spawn-facing` (the browser tab
+  crashed entering a scenario, "Target crashed") and `under-parts` (page.goto timed out at 30 s); both passed run alone.
+  CI's ten shards were green on the same head.
+
+## v1.276 — Build your crew: the fourth ally starts inside the store
+Michael re-queued the crew card (19 Oct) because PR #95 went red on 3254c3e. `squad-orders` failed in the pull_request
+run (push up's team stood 20.27 m from the other side against a 20 m line, 35.97 m with no order) and `grocery-store`
+in the push run (Price Check: Marcus held 4 s in the stockroom, `advancing`, 1.3 m from Alex). Each passed in the other
+run on the same commit. The card asked whether either was a real fault or only timing.
+- `grocery-store` was a real fault, and one a player would meet. Allies start fanned out beside you, ±2.0 m along the
+  street and then ±3.4 m (v1.33). That was fine with two allies. With the crew's four and five, the fourth steps out
+  3.4 m, and the grocery store's team matches start you at z 16.8 by the front wall (the store's bounds end at 17.6).
+  So Alex started at (12.2, 19.2), outside the store. He spent every store team match running round the lot outside
+  the walls, unable to get in, and fired 0 shots in 60 s in every round sampled (5 of 5 here, and in CI's log). Their
+  kids pressed against the stockroom's back wall toward him, and that is how Marcus came to be "wedged". The fan now
+  stays inside the field: a spot past the bounds (0.8 m in) starts at the edge, 2.4 m behind the player.
+- `squad-orders` was only chance. The round is not the same twice: push up's mean distance came out 14–20 m in five
+  runs here, so CI's 20.27 was the tail. Each measured round now draws from one seed (`_gameRng`, the way `under-parts`
+  and `backyard-guns` steady their draws). Every order meets the same deploy and the same draws until it is given, so
+  the numbers are the same every run. The 20 m line and the other checks are unchanged.
+- With Alex inside, our side reaches the stockroom more often. Devon, holding its centre doorway in Lights Out at the
+  store, was once tagged out there before his first peek: 0 shots and 0 metres walked, with Diego 0.1 m from him. That
+  failed `grocery-store`'s "every kid moves or fires" check. A kid tagged at his post is playing, not stuck, so the
+  check now also passes a kid who lost a life. The wedge and Devon-holds-the-doorway checks are unchanged.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` (new): all 31 team matches on the ladder entered with all five in the crew. Every
+  kid starts inside the field in every one. Before the fix this failed exactly at `store_price_check_3v3` and
+  `store_night_4v4` (Alex at (11.8, 19.1)). In Price Check over 60 s, Alex fired 0 shots and was outside all 3600 frames
+  before the fix; after it he fired 122 and was never outside.
+- `grocery-store` 5 of 5 before the Devon change, run beside `squad-orders` (one under load each time). After it, 3 of
+  3 run beside the full suite's shards. Marcus's wedge did not come back in any of them.
+- `squad-orders` 5 of 5 seeded, beside `grocery-store`: push up 19.87 m against 37.27 m with no order (37.70 once).
+  Keep distance 0.84 in the band against 0.15–0.17; find cover and follow me pass.
+- Devon over 8 sampled Lights Out rounds at the store: out of lives by 60 s in all 8, firing 0–12 shots.
+- The full suite in four parallel shards on d6fe817, with two more suites running beside it: 156 of 174 passed.
+  Of the eighteen that did not, sixteen never started (`page.goto` timed out at 30 s with six browsers up), one was
+  `harness` ("NEW GAME stalled for 10 s", the same load stall as v1.275's run), and one was `grocery-store`'s Devon
+  round above, before its change. All eighteen passed run again, at most two at once: the crew family (5 suites),
+  pincer, shop-tabs, squad-orders, treehouse-hold, kid-hands, northcliff, spawn-facing, bb-sweep, grocery-store,
+  pickup-kids, shorts, harness and stuck-sweeps 6, 7, 12, 15 and 16.
+### Still open
+- The ally fan is still a ring around where you start. Where the ring leaves the field, the clamped kid starts just
+  behind you, which a playtest may find crowded in the store's front aisle.
+- Devon at the store's centre doorway can be caught before his first peek now that five of ours come in. Whether the
+  defender needs a moment's grace is a playtest call, not a test's.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) stay for a fresh card.
+
+## v1.277 — Build your crew: no two kids start on one spot
+Michael re-started the crew card (19 Oct, decision A on STUCK #101). On e6f626b, CI's push run failed `country-club`'s
+"every kid moves or fires" in The Eighteenth: Devon walked 0 m and started on the same spot as Mitchell, (4.3, 28.2).
+A sweep of every team match's start, with all five in the crew and with the crew you'd have the first time, showed why.
+It was v1.276's own clamp. Where you start by an edge, the second and fourth allies both land past it. Both were
+clamped to the same line and the same step back, so they started on one point: Sean and Alex at the club, 0.00 m apart,
+and Eric and Nick in five of the Hollow's matches and the school's Lights Out. Extra kids put on one anchor or given one
+authored start stacked there too. In the Last Saturday, Garrett, Colin, Brooke and Trey started within 0.4 m of each
+other, and Mason and Evan shared a start exactly in Bellfield after dark. Two kids on one point push against each other
+and can hold each other still, which is what CI saw. A player would see two kids standing inside one another at BEGIN.
+- In a match whose sides the crew has changed, every kid's start is now at least 1.4 m from every start already taken,
+  your own included (`crewSpreadStart`). 1.4 m is the ally fan's own step (v1.33). A first try at 1.5 m also moved
+  every third ally off the fan. The nearest free spot is searched on rings 0.75 m apart out to 6 m. It has to be
+  inside the field (0.8 m in) and clear of cover, or the kid keeps the spot he had. Two groups are left alone: kids
+  starting in the attack huddle's ring, who walk straight out to their posts, and kids on a perch.
+- A match the crew does not change starts exactly as before: the spread only runs when its sides differ from the
+  scenario's own.
+- Each kid now keeps the spot he started on (`startAt`), so a test can check the starts rather than where kids stand
+  after BEGIN.
+- Two tests changed with it. `lamplight-starts` lets the fifth Bellfield kid, who shares a yard start, stand up to
+  2.1 m from it, and he still has no line to the entry. `squad-orders` had not been made steady by v1.276's seed. The
+  page's own frame loop kept stepping the game on the real clock between BEGIN and the measured round, as many frames
+  as the load allowed. On one build, push up came out 18.9 m run alone and 21.4 m beside another suite, against its
+  20 m line, the same tail CI met on 3254c3e. The loop is now held for each measured round, and the seed is set again
+  at its start.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` checks two more things now. First, no two starts under 1.4 m apart in all 31
+  team matches, with all five and with the first-time crew, the huddle ring aside. Before the fix this found 0.00 m
+  pairs in 20 matches. After it, every pair is clear. A kid beside the huddle is held to 1.0 m: Priya and Tyler in
+  Bunratty's VIP start 1.2–1.3 m apart, one of them in the huddle. Second, the club's 3v3 with all five: every kid on
+  our side moves or fires over 40 s. Eric walked 119 m, Sean 103, Nick 29, Alex 59 and Diego 84, and all of them fired.
+- `squad-orders`, 5 of 5 with the same numbers (push up 16.7 m against 35.7 m with no order), two of them beside
+  `crew-field` and `crew-balance`. `lamplight-starts` passes.
+- `country-club`, 3 of 3 run beside `crew-spawn-bounds` (under load). `crew-spawn-bounds`, `crew-field` and
+  `crew-balance` passed run side by side.
+### Still open
+- The attack huddle's ring is unchanged. With the crew's extra foes it packs eleven kids into a 1.4 m ring (0.7–0.8 m
+  apart) for the moment before they walk out. No test has seen a stall from it, but a playtest may see the crush.
+- Steps 4 and 5 of the crew stay for a fresh card.
+
+## v1.278 — Kids added for your crew come looking
+CI went red again on PR #95, this time on 3202fca: `country-club` failed in headless (7/10) of one of the two runs on
+that head. The other run passed the same shard, so this was not a hang. The failing check was "every kid moves or
+fires" in the Eighteenth. With the crew in it, that match's 3 v 3 is fitted to 6 v 6 (v1.275). Two of the six on their
+side are kids the street adds, and the round-robin put Brooke on Jamie's spot by the pool, 55 m from your start. She
+walked 0 m and fired 0 times in 60 s. Run here she did the same in 3 runs of 8; main, where she is not in the match,
+passed 6 of 6. The cause is v1.152's rule. An enemy kid with aggression under 0.45 (Brooke is 0.35) only marches when
+he can see you or when he is bored, and an enemy only gets bored when two or fewer are left on his side. In a match
+of six that does not come for a long while, so a player would have had a kid hiding at the far end of the course for
+most of the round. That is the same fault v1.184 fixed for allies (Michael: C on D.19).
+- A kid the crew's numbers add to their side (`crewFill`, set in `crewSides` when their side is fitted to the match's
+  number) now gets bored the way an ally does. After 25–30 s within 2 m without a line, he comes looking however
+  many of his side are left. The match's own kids, Seth, kids crossing over to Seth and a crew kid's street
+  stand-in keep v1.152's rule. Snipers, defenders, VIPs and taggers still hold as before.
+- Matches the crew does not change have no `crewFill` kid, so they play exactly as before.
+### Verified
+- `country-club`, 8 of 8 green run alone after the fix (3 of 8 failed before it). Brooke walked 5–87 m and fired 2–12
+  times; Garrett, the other added kid, walked 42–130 m. 1 more run green beside `last-kid` (under load).
+- `crew-balance` has a new check. In the Eighteenth with all five, their side is 6 (Trey crossed over), and 2 of them
+  (Brooke and Garrett) are added. Held in hiding, each added kid is bored within 31 s with 6 on his side. Marcus,
+  Jamie and Trey, the match's own, are not. `last-kid`, `idle-ally`, `crew-field`, the five `crew*` suites and
+  `stuck-sweep-15` (the Eighteenth swept three ways) pass.
+### Still open
+- An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
+  or like a wave arriving late is for a playtest of a crew match.

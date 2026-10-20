@@ -159,15 +159,21 @@ const school = await page.evaluate(() => {
   const kids = Game.scenario.enemies.filter(e => ids.includes(e.charId) && (e.team || 'enemy') !== 'player');
   // seeded (v1.267's withSeededRandom), so the 7-in-10 own-line draw is the same sample on every runner: unseeded, a
   // kid with few own lines (Caleb) could land just under a third (5 of 16 on CI, 17 Oct)
+  // v1.275: six school kids play the 3v3 now (it is tuned for your first-time crew), 144 lines, past the log's 64; each
+  // kid's lines are read before the next one talks
+  const heard = [];
   withSeededRandom('voices-school-3v3', () => {
-    for (const k of kids) for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
-      k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
-      tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
+    for (const k of kids) {
+      for (const c of ['playerSpotted', 'taunt', 'playerHit', 'npcHit']) for (let i = 0; i < 6; i++) {
+        k.pos.x = Game.player.pos.x + 2; k.pos.z = Game.player.pos.z;
+        tryNpcSpeak(k, c); Game.scenario.roundTime += 5;
+      }
+      heard.push(...VOICE.log.splice(0));
     }
   });
   const out = {};
   for (const k of kids) {
-    const said = VOICE.log.filter(e => e.charId === k.charId);
+    const said = heard.filter(e => e.charId === k.charId);
     out[k.charId] = { said: said.length, own: said.filter(e => voiceLinePools(e.charId, e.category).own.includes(e.line)).length, sample: said.slice(0, 3).map(e => e.line) };
   }
   return out;

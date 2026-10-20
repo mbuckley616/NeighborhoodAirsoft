@@ -27,24 +27,118 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Michael: **A) Re-start the card so the Fable session makes that fix next check** (2026-10-19, control room)
 
 - **Build your crew, step 3: do the other side's numbers stay fixed or grow with your crew? (deep-work session, 2026-10-18, fable d28-crew)**
-  The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 866c5ea). Step 2 (v1.274) put the whole crew
-  in every team match; step 3 rebalances the other side.
-  - A) Fixed, tuned for the crew you'd have the first time you reach each match; finales one more than that. *(recommended)*
-  - B) Grows with your crew in every match (finales one more).
-  - C) A, but finales always have one more than the side you bring (two more in the Last Saturday).
-  Michael: **A) Fixed, tuned for the first time through** (2026-10-18, control room)
+  Step 2 is built (v1.274, PR #95): every team match takes your whole crew, so your side is now bigger than before and
+  the odds have moved (with all five in, Squad Up is 7 v 3, Two Against the World 6 v 4; the Last Saturday is already
+  your 6 v 8). Step 3 rebalances. Your spec says each match is tuned for the crew you'd have the first time you play it,
+  a replay with a bigger crew meant to be easy, and every zone's finale has their side one more than yours. The first
+  time through, the finales come out today as: Winnmark 2 v 2 (Seth beside you, no crew yet), Bunratty 3 v 2, the
+  Hollow 5 v 6, the lot 4 v 4, Northcliff 6 v 4, the school 6 v 4, Willow Bend 6 v 6, the Last Saturday 6 v 8.
+  - A) **Fixed, tuned for the first time through** (your spec): each team match gets a set other side, sized for the
+    crew you'd have when you first reach it, filled with kids from that street (Seth's crew where Seth plays; Garrett
+    and Colin take the field here). Finales one more than that first-time crew. A replay with all five is easy, as you
+    said. *(recommended)*
+  - B) **Grows with your crew, every match:** their side is always your side's size (finales one more), extra kids
+    from the street. Replays stay fair; nothing is ever easy, and a benched kid takes one off their side too.
+  - C) **A, but finales grow:** ordinary matches fixed as in A; a finale always has one more than the side you bring
+    (two more in the Last Saturday), so a finale is never a walkover.
+  My reaction: A. It is what you wrote, and flattening Winnmark with the full crew is part of the fun; C is the one I
+  would pick if you want the finales to always be a fight. Two things step 3 will do unless you say otherwise: Winnmark's
+  finale stays the exception (2 v 2 with Seth, before he turns), and on a Winnmark replay after it is done Seth plays
+  for the other side, as your spec says; in a finale without Seth, "their side" means the match's own other side.
+  Michael: **A) Fixed, tuned for the first time through** (control room, 2026-10-18)
 
 - **Build your crew, step 2: which "two against more" matches stay as they are? (deep-work session, 2026-10-18, fable d28-crew)**
-  The question in full is in docs/decisions.md on auto/fable-d28-crew (commit 1e28837). Outnumbered, Two Against the
-  World and Two of Us, Four of Them are you and one friend against more; with your crew in, those odds go.
-  - A) The three "two against more" matches stay as they are; Juggernauts takes your crew. *(recommended)*
-  - B) Only Two of Us, Four of Them stays; Outnumbered and Two Against the World take your crew.
-  - C) None stays; every team match takes your crew, and step 3 rebalances them.
-  Michael: **C) None stays; step 3 rebalances them** (2026-10-18)
+  Step 1 is built (v1.273, PR #95): the two rosters, Garrett and Colin, and each of your five asking by text. Step 2
+  puts your whole crew in every team match. Your spec keeps out "the outnumbered matches Michael marks" and names Two
+  of Us, Four of Them as the first to decide. Three team matches have you and one friend against more:
+  Outnumbered (Winnmark, you and Seth v 3), Two Against the World (Bunratty, you and Sean v 4) and Two of Us, Four of
+  Them (the Hollow at night, you and Sean v 4). Juggernauts (the Hollow) is the other way round: five of you against
+  two armoured kids. With your crew in, the first time you play them Bunratty's would be you and Eric v 4 (Sean isn't
+  in your crew until Bunratty is done), and the Hollow's you, Eric, Sean and Nick v 4, so the odds they are named for go.
+  - A) **The three "two against more" matches stay as they are** (their own one friend, no crew); Juggernauts takes
+    your crew like any team match. *(recommended)*
+  - B) **Only Two of Us, Four of Them stays**; Outnumbered and Two Against the World take your crew.
+  - C) **None stays**; every team match takes your crew, and step 3 rebalances them.
+  My reaction: A. Their names are their promise, and the summer already has plenty of team matches for the crew.
+  Two smaller things step 2 will do unless you say otherwise: in the two VIP matches (Protect Ryan, Night Shift) the
+  VIP counts as the kid the match is named after, so your crew comes plus Ryan or Rebecca; and in a match with Seth on
+  the other side, his crew kids who stand on your side today (Trey in The Eighteenth and Night Swim) move to his side,
+  Michael: **C) None stays; every team match takes your crew, and step 3 rebalances them** (control room, 2026-10-18)
 
 - **Build your crew (D.28): what does your crew do, and does it replace the allies a match gives you? (deep-work session, 2026-10-18, fable d28-crew)**
-  The question and Michael's full step-by-step spec are in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad).
-  Michael: **His own design, closest to B, with hand-me-down outfitting from C** — "Not A: my own version, closest to B with hand-me-down outfitting. Full spec is written in docs/decisions.md on auto/fable-d28-crew (commit 215f2ad, worked out with Claude); build from that." Fixed crew (Sean, Nick, Eric, Diego, Alex); Seth's fixed crew (Trey, Brooke, Tyler, Evan, Andrew, Garrett, Colin); kids join at zone-end story moments; solo matches stay solo; every team match takes the whole crew, benching allowed; finales Seth's side +1 (Last Saturday 6 v 8); hand-me-down guns and gear; built in steps. (2026-10-18)
+  You asked for a crew you recruit, field and maybe outfit, and whether it should simply be how single player works.
+  How it stands: 32 of the 73 matches give you allies (1 to 5 kids), all named and picked by hand: Seth coaches the
+  tutorial, Sean and Nick are your Bunratty friends, Andrew and Alex are the Northcliff twins, Ryan or Rebecca is the
+  VIP you guard, and Eric, Rebecca, Brooke, Sean and Trey stand with you on the Last Saturday. 41 matches are solo. The
+  Pickup Game board already lets you pick who plays with you, but forgets it after each game. Your crew's name and
+  colour (v1.200) are saved; who is in it is not. Whatever you pick, a kid joins the same way: after you have won
+  twice with him on your side, or beaten his side twice, he texts your flip phone asking to run with you, and you say
+  yes or no. Your crew holds up to five kids, and the mirror's YOUR CREW card shows them.
+  Options:
+  - A) **A crew you recruit, used where you choose.** The Pickup Game board gets MY CREW, which fills "With you" from
+    your crew and remembers your picks. In an ordinary team match on the ladder, the briefing gets BRING MY CREW,
+    which swaps the match's allies for your crew at the same count; leave it alone and the match plays exactly as
+    today. The tutorial, the two VIP matches and the Last Saturday keep their own kids. About two sessions.
+    *(recommended)*
+  - B) **Your crew is your team in every team match.** Each match keeps only its ally count, and your crew fills the
+    slots, with the match's own kids filling any you cannot. The same four story matches stay fixed. It is the bigger
+    feeling of "my squad", but every hand-picked pairing goes (no Bunratty friends in Bunratty, no twins on
+    Northcliff), and early on, with nobody recruited yet, it plays exactly like today anyway. About three sessions,
+    and every team match needs its balance looked at again.
+  - C) **A, plus outfitting.** Each crew kid gets a gun you choose from the guns you own and wears your colours.
+    About three to four sessions. A kid's gun is half of who he is today (Fernando's AK, the snipers), and a crew of
+    five snipers could make some matches easy, so it needs limits we would agree on first.
+  - D) **Not now.**
+  My reaction: I like it, and I would not make it how single player works yet. The hand-picked allies carry the story
+  (your street's friends, the twins, the VIP you protect), and B throws that away to give a choice most players only
+  get after a dozen matches. A gives the whole feeling to anyone who wants it (you recruit kids from your own matches
+  and take them anywhere) and changes nothing for anyone who does not. If you love it in play, B is a small step from
+  A later, and C a separate card.
+  Michael: **His own design: closest to B, with hand-me-down outfitting from C** (with Claude, 2026-10-18; also on the
+  control room card). The spec, step by step:
+  - **Your crew is fixed, not open:** Sean (your brother), Nick (best friend), Eric (close childhood friend), Diego
+    (close childhood friend) and Alex. Nobody else can ever join. Five kids, the crew's limit, so you end the summer with
+    all of them. Seth never joins: he was your first teammate and stays the summer's rival, like Gary in Pokémon,
+    turning up again and better each time.
+  - **Seth's crew is fixed too:** Trey (his neighbour), Brooke (his sister), Tyler (his neighbourhood), Evan (his other
+    best friend growing up), Andrew (the twins split: Alex with you, Andrew with Seth), and two new kids:
+    Garrett (lived in Seth's neighbourhood; tall, blond, average build; mid- to high-tier guns; balanced aggression) and
+    Colin (lived near Diego, Fernando, Christian and Mason; medium height and build; cheap guns; high aggression;
+    medium-high speed). When Seth plays, his crew is on his side; in a match without Seth it is a pickup game and any of
+    them can be on either side. Devon, Mitchell, Mason, Marcus and Ryan (his crew today) become ordinary kids.
+  - **A kid joins at a story moment when you finish a zone,** not after a count of wins: Eric when Winnmark is done,
+    Sean and Nick when Bunratty is done, Alex at Stoneglen, Diego at Bellfield (the exact matches are the session's to
+    propose). He texts asking to run with you and you say yes or no. Once he's in, he comes everywhere, earlier zones
+    included: going back to Winnmark with the full crew and flattening it is meant to work. Zones never cap the crew.
+  - **Bunratty's texts change,** since Sean is your brother: the Eric text after Winnmark ("sean from bunratty heard
+    about u") goes. Sean texts instead, calling you home and challenging you (the zone opens with Just You and Sean,
+    then Nick), e.g. "u been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric";
+    then Eric, e.g. "sean texted me lol. im coming to bunratty either way. also. can i be in ur crew? for real".
+    Eric's "some kid evan up in northcliff" text is rewritten (Evan is Seth's old friend now), and Brooke's and Trey's
+    lines may need a look. Diego, met only as an opponent today, needs a text or a match beside you before he asks.
+  - **Solo matches stay solo:** every match that has no teammates today (the duels, holding out alone, attacking alone,
+    the free-for-alls, Infection) never takes your crew, nor do the outnumbered matches Michael marks.
+  - **Every team match takes your whole crew,** plus the kid the match is named after (You and Nick, Sean Has Your
+    Back), and is tuned for the crew you'd have the first time you play it; a replay with a bigger crew is meant to be
+    easy. Empty places on your side, when your crew is smaller than the match, go to neighbourhood kids as a pickup
+    game would. On a replay of Winnmark's team matches after Seth has turned rival, Seth plays for the other side.
+  - **Finales:** in each zone's finale Seth's side has at least one more kid than yours (counting the crew you'd have
+    by then), and in the Last Saturday two more: you and your five against Seth and his seven, 6 v 8, as hard to win as
+    it can fairly be.
+  - **Benching:** the pre-match screen lets you leave any crew kid out (to go solo, to play a hard match shorthanded,
+    to save BBs). A benched kid's place stays empty. Whether a shorthanded win pays more is open (Claude leans no).
+  - **Upgrades are hand-me-downs:** you give a crew kid a gun you own (your old one goes to Nick when you buy better),
+    plus some gear for them with small gains. Each kid keeps his own gun until you hand him one.
+  - **BBs are not one shared pool:** a kid on his own gun brings his own BBs; a kid on a gun you handed him uses yours.
+    Before this is built the critic measures how many BBs a crew fires in a match.
+  - **Built in steps, each playable on its own:** (1) the two rosters, Garrett and Colin, the joining moments and the
+    texts; (2) your crew in team matches, solo matches kept solo, and benching; (3) rebalancing the team matches zone
+    by zone (late zones are built for 4 v 4 and grow to about 6 v 7); (4) hand-me-downs and the BB rule; (5) Seth in
+    every zone (his own card: once per zone, a better gun and aim each time, his best in the Last Saturday rather than
+    the UMP he carries today).
+  - **Still open:** which outnumbered team matches stay solo (Two of Us, Four of Them is the first to decide); whether
+    Winnmark's finale, where Seth is still your teammate, is the exception to the finale rule or where he turns; whether
+    a finale's extra kids grow with your crew on a replay; the exact joining matches.
 
 - **Protect Ryan: behind her barricade Priya can't fire down the lane (builder, 2026-10-18, v1.272)**
   Your A is built: a 1.5 m plank stack just in front of Priya inside the bulb fort. From up the hill, 0 of 6,720 test
