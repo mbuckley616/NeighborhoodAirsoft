@@ -6,18 +6,19 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-// A new game: no crew; the mirror's last two rows are the crew's, under a YOUR CREW heading
+// A new game: no crew; the mirror's last rows are the crew's, under a YOUR CREW heading
 const d0 = await page.evaluate(() => {
   openMirror();
   const rows = [...document.querySelectorAll('#mirrorOptions .mirror-row')].map(r => r.dataset.key);
   const head = document.querySelector('#mirrorOptions .mirror-crew-head');
   const swatches = [...document.querySelectorAll('#mirrorOptions .mirror-row[data-key="crewColor"] .mirror-opt')];
-  return { name: Game.persist.look.crewName, color: Game.persist.look.crewColor, rows: rows.slice(-2), head: head && head.textContent,
+  return { name: Game.persist.look.crewName, color: Game.persist.look.crewColor, rows: rows.slice(-3), head: head && head.textContent,
     swatches: swatches.map(b => b.title), lit: swatches.filter(b => b.classList.contains('on')).map(b => b.title),
     input: !!document.getElementById('mirrorCrewName'), bandana: !!(MIRROR.kid.hat) };
 });
 check('a new game has no crew name or colour', d0.name === '' && d0.color === null, d0);
-check('the mirror ends with YOUR CREW: Crew name (a text box) and Crew colour', d0.head === 'YOUR CREW' && d0.rows.join() === 'crewName,crewColor' && d0.input, d0);
+// v1.273: and who is in it (tests/crew-roster.test.mjs)
+check('the mirror ends with YOUR CREW: Crew name (a text box), Crew colour and who is in it', d0.head === 'YOUR CREW' && d0.rows.join() === 'crewName,crewColor,crewMembers' && d0.input, d0);
 check('the colours: none and six, none lit', d0.swatches.join() === 'none,orange,blue,green,purple,yellow,black' && d0.lit.join() === 'none', d0.swatches);
 check('no crew colour, no bandana on your kid', !d0.bandana, d0);
 
@@ -81,7 +82,9 @@ await g.scenario('hollow_skirmish_3v3');
 const k1 = await readKids();
 console.log('   hollow 3v3:', JSON.stringify(k1.map(k => `${k.id}/${k.team}/${k.crew}`)));
 const allies = k1.filter(k => k.team === 'player'), foes = k1.filter(k => k.team !== 'player');
-check('Hollow 3v3: both allies wear the orange crew bandana', allies.length === 2 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
+// v1.275 (D.28 step 3): the match is tuned for Eric, Sean and Nick in your crew, so with nobody in it the street fills
+// your side to their count: three allies, every one in the bandana
+check('Hollow 3v3: all three allies wear the orange crew bandana', allies.length === 3 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
 check('…and none of the other side does', foes.length >= 3 && foes.every(k => !k.crew), foes);
 const crouch = await page.evaluate(() => {
   const e = Game.scenario.enemies.find(k => k.team === 'player'); const h = e.mesh.hat;

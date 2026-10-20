@@ -12,6 +12,7 @@
 // player at spawn, walked 10 m toward the nearest enemy, and walked 10 m sideways across that line (strafing right
 // while facing him), so the kids are drawn round a third way. About 2.2 times the work, so sixteen parts.
 // `WAYS=spawn,toward,side` picks ways by hand.
+// v1.274: `CREW=all` puts your whole crew in first (D.28 step 2), so the team matches are swept as the crew plays them.
 import { boot, check } from './game.mjs';
 
 // Found by the sweep and filed under docs/backlog.md's Found in play, not yet fixed: printed as KNOWN, not failed.
@@ -26,6 +27,8 @@ export async function sweep(part) {
   await g.bedroom();
   await page.evaluate(() => { const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c); });
 
+  // v1.274 (D.28 step 2): `CREW=all` (or `CREW=eric,sean`) sweeps with your crew in, as it takes the team matches
+  if (process.env.CREW) await page.evaluate(c => { Game.persist.crew = c === 'all' ? CREW_ROSTER.slice() : c.split(','); }, process.env.CREW);
   const SECS = +(process.env.SECS || 90), LIMIT = +(process.env.LIMIT || 15);   // v1.166: 90 s, was 60
   const WAYS = (process.env.WAYS || 'spawn,toward,side').split(',');
   let ids = await page.evaluate(() => Object.keys(SCENARIOS).filter(id => id !== 'winnmark_tutorial'));

@@ -42,17 +42,20 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 ```
 
 ## The team (cloud routines, Opus except the Fable session, each on its own branch with one quiet PR labelled `auto`)
-Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs round the clock (Michael asked for faster progress, 29 Sep); the producer follows each builder run and keeps Slack quiet 10pm-7am.
+Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs round the clock (Michael asked for faster progress, 29 Sep); the producer checks every hour and keeps Slack quiet 10pm-7am.
 - **Builder** — `auto/build`, every 3 hours, every day (1:10am, 4:10, 7:10, 10:10, 1:10pm, 4:10, 7:10, 10:10). Each run works `docs/backlog.md` top-down for up to ~90 minutes, one committed version per item, and reads Michael's answers straight from the control room.
 - **Critic** — `auto/critic`, weekdays 6am. Plays headless, reads the itch.io comments, writes `docs/critic.md`, files bugs
   under backlog section `## Found in play`, at most two ideas in `docs/proposals.md` (Michael promotes them, nobody else).
-- **Producer** — `auto/producer`, every 3 hours at :55 UTC, about 1 hour 45 minutes after each builder run starts (quick exit when nothing changed; no Slack posts 10pm-7am Central, at most one summary per 6 hours). Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
+- **Producer** — `auto/producer`, every hour at :55 UTC since 16 Oct, so approvable work reaches Michael sooner (quick exit when nothing changed; no Slack posts 10pm-7am Central, at most one summary per 6 hours). Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
   files his Slack notes into the backlog, and says which branches are ready to merge.
 - **Fable session** — `auto/fable-<id>`, model Fable, an hourly check at :35 that ends in a minute unless a `fable/<id>` card on
   the control room is queued, paused or answered (a cloud routine cannot fire another one, so nothing fires it: the schedule
   does). One cross-cutting item per card: the producer proposes the card once the item’s design is answered, Michael taps Start,
   the next check takes it. It raises its questions in `docs/decisions.md` and stops until they are answered; its PR
-  `Fable: <title>` is approved like any other.
+  `Fable: <title>` is approved like any other. A finished branch (card at "review") that stops merging cleanly onto main is
+  the hourly check's too: it merges main in, runs parsecheck and the suites for the conflicted files, pushes, and leaves the
+  card at "review" with no version bump. When an approved Fable merge and an approved builder merge are both waiting, the
+  producer lands the Fable one first, and a merge card's `note` that names an order is followed.
 
 **The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
 (decisions, merges, blockers, to-dos), Inbox, Roadmap, Team and Ideas. The producer keeps it in step with the repo

@@ -1191,6 +1191,12 @@
   #modalBody .ph-new { background: #1d2614; color: #b9c7a6; padding: 0 4px; font-size: 9px; letter-spacing: 1px; }
   #modalBody .ph-date { margin-left: auto; opacity: 0.7; }
   #modalBody .ph-text { font-size: 12px; line-height: 1.4; margin-top: 2px; }
+  /* v1.273 (D.28 step 1): a kid asking to join your crew */
+  #modalBody .ph-ask { display: flex; gap: 6px; margin-top: 5px; font-size: 11px; font-weight: bold; }
+  #modalBody .ph-ask button { font: inherit; font-size: 11px; padding: 3px 8px; cursor: pointer; border-radius: 3px;
+    background: #1d2614; color: #b9c7a6; border: 1px solid #1d2614; }
+  #modalBody .ph-ask button[data-yes="0"] { background: transparent; color: #1d2614; }
+  #modalBody .ph-ask.ph-later { font-weight: normal; opacity: 0.75; }
 
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
@@ -1834,6 +1840,11 @@
   .brief-combatant .brief-gun  { color: #cdbfa8; font-size: 12px; }
   .brief-combatant .brief-lives { font-size: 12px; color: var(--ui-accent); text-align: right; white-space: nowrap; }
   .brief-combatant .brief-lives em { color: #9a8f7c; font-style: normal; font-size: 10px; }
+  /* v1.274 (D.28 step 2): bench a crew kid before the match, or bring him back */
+  .brief-combatant:has(.brief-bench) { grid-template-columns: 1.1fr 1.3fr auto auto; }
+  .brief-combatant.benched { opacity: 0.55; }
+  .brief-bench { font: inherit; font-size: 11px; padding: 2px 8px; border-radius: 3px; cursor: pointer;
+    background: transparent; color: var(--ui-accent); border: 1px solid currentColor; }
   .brief-objective {
     font-size: 12px;
     color: var(--ui-text);
@@ -2107,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.272</div>
+  <div class="version">v1.278</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3541,6 +3552,7 @@ const Game = {
     ],
     completed: {},
     textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
+    crew: [],                   // v1.273 (D.28 step 1): the kids of CREW_ROSTER who have joined, in order
     gunMatches: {},             // v1.262 (D.44): per gun bought, how many matches it has been into (for selling it back)
   },
 };
@@ -5074,6 +5086,15 @@ const CHARACTERS = {
     aggression: 0.5, fireRate: 1.0, accuracy: 0.6, headshotBias: 0.15, hp: 1, moveSpeed: 1.1,
     flavor: { hit: '"Aight, that was a good one."', win: 'Tyler nods. "Better luck next time."' },
   },
+  // v1.273 (D.28 step 1, Michael's design): Garrett, one of Seth's crew. Lived in Seth's neighbourhood; tall, blond,
+  // average build; mid- to high-tier guns; balanced aggression.
+  garrett: {
+    name: 'Garrett', neighborhood: 'horseshoe_bend', street: 'winnmark_ct',
+    height: 'tall', build: 'average', hairStyle: 'short', glasses: false,
+    hairColor: 0xe2cc8a, skinColor: 0xecc8a4, shirtColor: 0x8a3a3a, pantsColor: 0x3a3a44,
+    aggression: 0.55, fireRate: 1.0, accuracy: 0.68, headshotBias: 0.15, hp: 1, moveSpeed: 1.0,
+    flavor: { hit: '"Huh. Okay. Good shot."', win: 'Garrett shrugs. "Seth said you were good."' },
+  },
 
   // === SENTINEL ON THE RIVER ===
   // -- Bunratty Court --
@@ -5214,6 +5235,15 @@ const CHARACTERS = {
     aggression: 0.65, fireRate: 1.15, accuracy: 0.6, headshotBias: 0.15, hp: 1, moveSpeed: 1.05,
     flavor: { hit: '"Tch. Nice shot."', win: 'Diego looks over at Fernando. "Told you."' },
   },
+  // v1.273 (D.28 step 1, Michael's design): Colin, one of Seth's crew. Lived near Diego, Fernando, Christian and Mason;
+  // medium height and build; cheap guns; high aggression; medium-high speed.
+  colin: {
+    name: 'Colin', neighborhood: 'northcliff', street: 'bellfield_ct',
+    height: 'average', build: 'average', hairStyle: 'curly', glasses: false,
+    hairColor: 0x6a4a28, skinColor: 0xe6bf95, shirtColor: 0xd07030, pantsColor: 0x2a3a5a,
+    aggression: 0.88, fireRate: 1.1, accuracy: 0.5, headshotBias: 0.1, hp: 1, moveSpeed: 1.1,
+    flavor: { hit: '"WHAT. No way. Again!"', win: 'Colin is already running back. "Again! Again!"' },
+  },
 
   // === v1.190: HOLLINS RIDGE HIGH's own kids (decisions, Michael: B, control room 12 Oct). The school's four matches
   // borrowed Tyler, the Bunratty kids and the Winnmark kids; these six go to the school and play only there. Each
@@ -5335,6 +5365,13 @@ const VOICE_LINES = {
     playerSpotted: ["Yeah, I see him.", "Over there, by the car.", "Got him. Chill.", "Hey, there he goes."],
     taunt:         ["Take it easy out there.", "No rush, man.", "Still hiding? Aight.", "Come on, let's go already."],
   },
+  // v1.273: Garrett, Seth's crew: calm, sure of himself, a little bored by how easy it is.
+  garrett: {
+    playerHit:     ["Got him. Easy.", "That's one for Seth.", "Right where I aimed.", "Yep. Saw that coming.", "Tagged. Next."],
+    npcHit:        ["Huh. Okay. Good shot.", "Fine. That one's yours.", "Didn't see you there.", "Alright. I'm out."],
+    playerSpotted: ["There. By the fence.", "Got him. Seth, left side.", "See him. Moving up.", "He's right there, guys."],
+    taunt:         ["Seth said you were good.", "Is that all you got?", "Take your time, man.", "We've done this before."],
+  },
 
   // === Sentinel (Bunratty Ct) ===
   // Sean: the AK, spray and pray, loud.
@@ -5455,6 +5492,13 @@ const VOICE_LINES = {
     npcHit:        ["Tch. Nice shot.", "Okay. That counts.", "Fernando, he got me.", "Hm. Fine.", "Good one."],
     playerSpotted: ["Fernando, there.", "Got him.", "He's right there. Go.", "See him. Left side."],
     taunt:         ["Any day now.", "Fernando, he's hiding again.", "Come on. Let's go.", "We know where you are.", "Told you he'd hide."],
+  },
+  // v1.273: Colin, Seth's crew: loud, fast, always running straight at you.
+  colin: {
+    playerHit:     ["GOT HIM! Did you see?!", "Ha! Ran right at you!", "Yes! Again! Again!", "Told you I'm fast!", "Boom! Got you good!"],
+    npcHit:        ["WHAT. No way!", "Aw come on, again!", "That's so lucky!", "Okay okay, run it back!"],
+    playerSpotted: ["THERE! I'm going!", "Got him, I'm going in!", "He's mine, he's mine!", "Charging! Cover me, Seth!"],
+    taunt:         ["I'm coming right at you!", "Run, dude, run!", "Can't hide from me!", "Diego would've ran already!"],
   },
   // v1.229: Hollins Ridge High's six (v1.190) came after the v1.150 tables; their own lines, from their flavor.
   // Jordan: easygoing, knows the portables.
@@ -5971,7 +6015,7 @@ function getScenarioBriefing(scenarioId) {
   if (!sc) return null;
   const allies = [];
   const enemies = [];
-  const setup = sc.enemySetup || [];
+  const setup = crewSetup(scenarioId) || [];   // v1.274 (D.28 step 2): your crew's sides
   for (const es of setup) {
     const ch = CHARACTERS[es.charId];
     const combatant = {
@@ -5981,6 +6025,7 @@ function getScenarioBriefing(scenarioId) {
       gunType: es.weapon || 'pistol',
       lives: setupEntryLives(sc, es),
       vip: !!es.vip,   // v1.170
+      crew: es.team === 'player' && crewMembers().includes(es.charId),   // v1.274
     };
     if (es.team === 'player') allies.push(combatant);
     else enemies.push(combatant);
@@ -6007,13 +6052,17 @@ function getScenarioBriefing(scenarioId) {
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
     tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
+    // v1.274 (D.28 step 2): a team match takes your crew; who you left out
+    crewMatch: crewTeamMatch(scenarioId) && crewMembers().length > 0,
+    benched: crewTeamMatch(scenarioId) ? crewMembers().filter(id => crewBench.has(id)).map(id => CHARACTERS[id].name) : [],
   };
 }
 
 // Build the inner HTML for a briefing roster (allies + enemies + lives + the
 // player's own life count). Shared by the pre-start popup and loading screen.
-function renderBriefingRosterHTML(brief) {
+function renderBriefingRosterHTML(brief, opts) {
   if (!brief) return '';
+  const bench = !!(opts && opts.bench && brief.crewMatch);   // v1.274: the pre-match briefing can bench a crew kid
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
   const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
   const row = (c, side) =>
@@ -6021,6 +6070,7 @@ function renderBriefingRosterHTML(brief) {
        <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
        <span class="brief-gun">${c.gun}</span>
        <span class="brief-lives">${lifeStr(c.lives)}</span>
+       ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}
      </div>`;
   let html = '';
   // YOUR side (you + any allies)
@@ -6032,6 +6082,8 @@ function renderBriefingRosterHTML(brief) {
       <span class="brief-lives">${brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)}${brief.player.armorBonus ? ` <em>(${brief.player.baseLives}+${brief.player.armorBonus} armor)</em>` : ''}</span>
     </div>
     ${brief.allies.map(c => row(c, 'ally')).join('')}
+    ${bench ? crewMembers().filter(id => crewBench.has(id)).map(id =>
+      `<div class="brief-combatant ally benched"><span class="brief-name">${CHARACTERS[id].name}</span><span class="brief-gun">on the bench</span><span class="brief-lives"></span><button class="brief-bench" data-unbench="${id}">Bring</button></div>`).join('') : ''}
   </div>`;
   // OPPONENTS
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
@@ -7690,10 +7742,10 @@ const SCENARIOS = {
   // day 6v6, last team standing, three lives each: your crew from the west entry against Seth's crew in the bulb. It is
   // the fifth card after the store's night match and the last match of the ladder; winning it turns the calendar to
   // the big day and brings a last text.
-  last_saturday: {
+  last_saturday: {   // v1.275 (D.28 step 3): your crew v Seth and his seven, 6 v 8
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'The Last Saturday',
-    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: Eric, Rebecca, Brooke, Sean and Trey are with you at the west end. Seth's crew has the bulb: Seth, Devon, Mitchell, Mason, Marcus and Ryan. Six a side, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
+    desc: "Saturday 30 August, the last Saturday of summer, and it's on your street. Everybody came: your crew is with you at the west end, and Seth's whole crew has the bulb: Seth, Trey, Brooke, Tyler, Evan, Andrew, Garrett and Colin. Six of you against eight, three lives for everybody, last team standing; tagged, you walk back to the west end and go again. School's Tuesday. Make it count.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -22372,6 +22424,24 @@ function enterBedroom() {
 // exit axis, then re-checks; bails after a few iterations and returns the best
 // effort. Operates on the builder's obstacle list directly (Game.player.obstacles
 // isn't wired up yet during enterScenario).
+// v1.277: the nearest spot to (x, z) at least CREW_START_GAP from every start already taken, inside the field and clear
+// of cover (rings 0.75 m apart out to 6 m, twelve points on each); the spot itself when nothing nearer is free.
+// 1.4 m is the ally fan's own step (v1.33), so the fan is left as it was and only a real stack moves.
+const CREW_START_GAP = 1.4;
+function crewSpreadStart(x, z, taken, bounds, obstacles) {
+  const free = (qx, qz) => taken.every(t => Math.hypot(t.x - qx, t.z - qz) >= CREW_START_GAP);
+  if (free(x, z)) return { x, z };
+  const m = 0.8;
+  for (let r = 0.75; r <= 6.01; r += 0.75) for (let k = 0; k < 12; k++) {
+    const a = k / 12 * Math.PI * 2;
+    const qx = x + Math.cos(a) * r, qz = z + Math.sin(a) * r;
+    if (bounds && (qx < bounds.minX + m || qx > bounds.maxX - m || qz < bounds.minZ + m || qz > bounds.maxZ - m)) continue;
+    const c = findClearSpawn(qx, qz, obstacles, 0.4);
+    if (Math.abs(c.x - qx) > 0.01 || Math.abs(c.z - qz) > 0.01 || !free(qx, qz)) continue;
+    return { x: qx, z: qz };
+  }
+  return { x, z };
+}
 function findClearSpawn(x, z, obstacles, radius = 0.4, footY = null) {
   if (!obstacles || obstacles.length === 0) return { x, z };
   // v1.26: use a roomier effective radius than the kid's collision radius so a
@@ -22905,7 +22975,7 @@ function enterScenario(scenarioId) {
     return;
   }
   Game.mode = 'scenario_intro';
-  const sc = SCENARIOS[scenarioId];
+  const sc = crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it
   let built;
   // v1.35: time-of-day for this scenario ('day' default | 'night'), hoisted to
   // function scope so the night-flashlight pass below can read it.
@@ -23042,6 +23112,13 @@ function enterScenario(scenarioId) {
     let clusterIdx = 0;
     let setupIdx = 0;
     let allyIdxCounter = 0;   // v1.33: loop-local (don't mutate the shared sc object across replays)
+    // v1.277: with the crew in it (the match's sides differ from the scenario's own), no two kids start on one spot
+    // (CREW_START_GAP apart).
+    // The v1.276 clamp put the second and fourth allies on the same point where you start by an edge (Sean and Alex at
+    // the club's 3v3, 0.00 m apart, and one stood all match: CI red on PR #95, STUCK #101), and extra kids at one anchor
+    // stacked there (the Last Saturday's Garrett, Colin, Brooke and Trey within 0.4 m). Huddle kids keep their ring.
+    const crewSpread = sc.enemySetup !== (SCENARIOS[scenarioId] || {}).enemySetup;
+    const takenStarts = playerSpawnPos ? [{ x: playerSpawnPos.x, z: playerSpawnPos.z }] : [];
 
     for (const es of sc.enemySetup) {
       const placement = built.placements[es.anchor];
@@ -23091,6 +23168,16 @@ function enterScenario(scenarioId) {
           0,
           playerSpawnPos.z + side * ring
         );
+        // v1.276: the fan stays inside the field. With the crew's four and five allies the fourth steps out 3.4 m, and
+        // where you start by a wall (the grocery store's front, z 16.8 against 17.6) he started outside it and spent
+        // the match running round the lot unable to get in, firing at nobody (Alex in every store team match, CI red
+        // on PR #95). One past the edge starts at the edge instead, a step behind the player.
+        const B = built.bounds;
+        if (B) {
+          const m = 0.8, cz = Math.min(B.maxZ - m, Math.max(B.minZ + m, spawnPos.z));
+          if (cz !== spawnPos.z) { spawnPos.z = cz; spawnPos.x -= 2.4; }
+          spawnPos.x = Math.min(B.maxX - m, Math.max(B.minX + m, spawnPos.x));
+        }
         // v1.179: in a match whose start has no line to the field (Friday Night Lights, behind the concession stand),
         // the allies break from you and walk to the posts they hold, as a respawned ally already does. Brooke stood
         // beside you all round with nobody to see (Found in play, v1.178).
@@ -23108,6 +23195,11 @@ function enterScenario(scenarioId) {
         const clear = findClearSpawn(spawnPos.x, spawnPos.z, built.obstacles, 0.4, perch ? perch.y : null);
         spawnPos.x = clear.x; spawnPos.z = clear.z;
       }
+      if (crewSpread && !perch && !(joinsEnemyHuddle && !es.spawnAt)) {   // v1.277: see crewSpread (a shared start too)
+        const p = crewSpreadStart(spawnPos.x, spawnPos.z, takenStarts, built.bounds, built.obstacles);
+        spawnPos.x = p.x; spawnPos.z = p.z;
+      }
+      takenStarts.push({ x: spawnPos.x, z: spawnPos.z });
 
       const enemy = makeEnemyFromCharacter(es.charId, {
         pos: spawnPos,
@@ -23131,10 +23223,12 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
+        enemy.startAt = { x: spawnPos.x, z: spawnPos.z, huddle: !!(joinsEnemyHuddle && !es.spawnAt) };   // v1.277: where he started
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
+        if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -24564,7 +24658,17 @@ function renderMirrorOptions() {
     }
     r.appendChild(btns);
     box.appendChild(r);
+    if (row.key === 'crewColor') box.appendChild(mirrorCrewRow());   // v1.273: who is in it
   }
+}
+// v1.273 (D.28 step 1): the YOUR CREW card lists who has joined, out of five
+function mirrorCrewRow() {
+  const r = document.createElement('div');
+  r.className = 'mirror-row'; r.dataset.key = 'crewMembers';
+  const m = crewMembers();
+  r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">In it · ${m.length} of ${CREW_MAX}</div>
+    <div id="mirrorCrewMembers" style="font-size:14px;color:#f4e9d8">${m.length ? m.map(id => CHARACTERS[id].name).join(' · ') : 'Just you so far. Friends ask to join by text as the summer goes.'}</div>`;
+  return r;
 }
 function renderMirrorPreview() {
   const canvas = document.getElementById('mirrorCanvas');
@@ -30245,7 +30349,9 @@ function updateKidBoredom(e, dt) {
   if (e._bored || e._boredT < e._boredAfter) return;
   const side = combatantTeam(e);
   const sideLeft = sc.enemies.filter(k => npcInFight(k) && combatantTeam(k) === side).length;
-  if (sideLeft > 2 && !ally) return;   // v1.184: an ally needn't be the last
+  // v1.278: nor need a kid the crew's numbers added to their side. Fitted to a crew of five, the Eighteenth's 3 became 6;
+  // Brooke (aggression 0.35) took Jamie's pool spot 55 m off and hid all round in 3 runs of 8, two of them with Jamie.
+  if (sideLeft > 2 && !ally && !e.crewFill) return;   // v1.184: an ally needn't be the last
   e._bored = true;
   e._boredCount = (e._boredCount || 0) + 1;
   tryNpcSpeak(e, 'taunt');
@@ -33557,24 +33663,43 @@ const SUMMER_TEXTS = [
     text: "ok that was kind of sick. trey is still mad u got past the plank fort" },
   { id: 'squad',      from: 'Rebecca', after: 'winnmark_team_3v3',
     text: "everybody on winnmark is talking about squad up. eric says u carried. eric says that about everyone tho" },
-  { id: 'bunratty',   from: 'Eric',    after: 'winnmark_night_team_2v2',
-    text: "sean from bunratty heard about u. he says nobody wins on their street, its all woods down by the river. tmrw?" },
+  // v1.273 (D.28 step 1, Michael's design): Sean is your brother, so he calls you home himself; Eric asks to join
+  { id: 'seanHome',   from: 'Sean',    after: 'winnmark_night_team_2v2',
+    text: "u been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric" },
+  { id: 'askEric',    from: 'Eric',    after: 'winnmark_night_team_2v2', ask: 'eric',
+    text: "sean texted me lol. im coming to bunratty either way. also. can i be in ur crew? for real" },
   { id: 'brothers',   from: 'Sean',    after: 'bunratty_brothers',
     text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
   { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
     text: "infection at the cul de sac is the best game ever invented and i will not hear otherwise" },
   { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
     text: "everybody is going to the hollow this week. the woods past the river, forts at both ends. seth is bringing his whole crew. bring BBs" },
+  // v1.273: Bunratty done, your brother and your best friend ask
+  { id: 'askSean',    from: 'Sean',    after: 'bunratty_night_team_2v2', ask: 'sean',
+    text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
+  { id: 'askNick',    from: 'Nick',    after: 'bunratty_night_team_2v2', ask: 'nick',
+    text: "if seans in ur crew im in ur crew. right? im in right?" },
   { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
     text: "the big game was close and u know it. my crew wants the north fort back" },
   { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
     text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
   { id: 'northcliff', from: 'Eric',    after: 'lot_night_4v4',
-    text: "some kid evan up in northcliff says they play it different up there. hills and a creek. august is gonna be crazy" },
+    text: "seths old friend evan lives up in northcliff now. seth says evan is better than all of us. hills and a creek. august is gonna be crazy" },
   { id: 'treehouse',  from: 'Rebecca', after: 'stoneglen_treehouse',
     text: "the twins have a REAL treehouse?? with a ladder?? not fair" },
+  // v1.273: the twins split, Andrew to Seth and Alex to you
+  { id: 'askAlex',    from: 'Alex',    after: 'stoneglen_hold_treehouse', ask: 'alex',
+    text: "andrews going with seth. evan talked him into it. im not. can i run with ur crew?" },
+  // v1.273: Diego, met only across the street, gets a text before he asks
+  { id: 'diego',      from: 'Diego',   after: 'bellfield_night_4v4',
+    text: "colin says ur crew is soft. i told him u beat us on our own street. hes so mad lol" },
   { id: 'flags',      from: 'Sean',    after: 'bellfield_ctf',
     text: "capture the flag on bellfield. my legs still hurt" },
+  // v1.273: Seth's crew fills up; Diego asks
+  { id: 'sethCrew',   from: 'Seth',    after: 'bellfield_ctf',
+    text: "andrew and colin are with us now. and garrett. u havent met garrett. u will" },
+  { id: 'askDiego',   from: 'Diego',   after: 'bellfield_ctf', ask: 'diego',
+    text: "colin went to seths. id rather run with u. u got room in ur crew?" },
   { id: 'school',     from: 'Seth',    after: 'northcliff_night_4v4',
     text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. lets go see" },
   { id: 'pool',       from: 'Brooke',  after: 'school_night_4v4',
@@ -33606,6 +33731,207 @@ function summerDayAfter(scenarioId) {
 // anybody's crew. The briefing names them, the result card keeps the summer's score against them (read from
 // `completed`, so an old save has its score too), and the calendar marks the days you beat them.
 const RIVAL_CREW = "Seth's crew";
+// v1.273 (D.28 step 1, Michael's design in decisions "Build your crew"): both crews are fixed. Yours is five kids who
+// each ask to join by text at a story moment (SUMMER_TEXTS with `ask`); nobody else can join, and Seth never does.
+// Seth's is eight. Step 1 is the rosters and the asking; the crew takes the field in step 2 (v1.274, crewSetup below).
+const CREW_ROSTER = ['eric', 'sean', 'nick', 'alex', 'diego'];   // the order they ask
+const CREW_MAX = 5;
+const SETH_CREW_ROSTER = ['seth', 'trey', 'brooke', 'tyler', 'evan', 'andrew', 'garrett', 'colin'];
+// Who has said yes and you took, in the order they joined
+function crewMembers() {
+  const c = Array.isArray(Game.persist.crew) ? Game.persist.crew : [];
+  return c.filter((id, i) => CREW_ROSTER.includes(id) && c.indexOf(id) === i).slice(0, CREW_MAX);
+}
+// A kid's ask is open once its text has come and he is not in yet; "Not yet" leaves it open
+function crewAskOpen(id) {
+  const t = SUMMER_TEXTS.find(t => t.ask === id);
+  return !!t && !!Game.persist.completed[t.after] && !crewMembers().includes(id);
+}
+function crewTakeIn(id) {
+  if (!crewAskOpen(id) || crewMembers().length >= CREW_MAX) return false;
+  Game.persist.crew = crewMembers().concat(id);
+  return true;
+}
+// v1.274 (D.28 step 2, Michael's design; C on "which two-against-more matches stay": none): your crew takes the field.
+// A team match (one that gives you allies today, the tutorial and the pickup games aside) takes your whole crew, each
+// kid on his own gun, plus the kids the match keeps: a VIP, Seth while he is on your side, and the kid a match is named
+// after (You and Nick, Sean Has Your Back) until he is in your crew. Places left on your side go to the match's own
+// allies, then to kids from the street; a benched kid's place stays empty. A crew kid the match puts on the other side
+// is swapped for a kid from the street at his spot, and with Seth on the other side his crew kids on yours cross over
+// to him. Solo matches never take the crew. With nobody in the crew every match is exactly as before. The crew sizes
+// and the odds are step 3's (rebalancing); the bench is the briefing's and is not saved.
+const CREW_GUNS = { eric: 'mp5', sean: 'ak47', nick: 'ar', alex: 'ak47', diego: 'mp5' };   // each kid's own gun
+const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean' };
+const crewBench = new Set();
+function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); }
+function crewTeamMatch(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.ffa || sc.pickup || sc.net || id === 'pickup_game') return false;
+  return (sc.enemySetup || []).some(es => es.team === 'player');
+}
+// The kids who play on this street with a gun of their own, in the order the matches list them
+// (v1.275: the kids who play against you there first, then the ones who stand with you)
+function crewStreetPool(sc) {
+  const seen = new Map();
+  for (const ours of [false, true]) for (const [id, s] of Object.entries(SCENARIOS)) {
+    if (id === 'pickup_game' || s.tutorial || s.street !== sc.street) continue;
+    for (const es of s.enemySetup || []) {
+      if ((es.team === 'player') !== ours) continue;
+      if (es.charId && es.weapon && !es.behavior && !es.statsOverride && !seen.has(es.charId) && CHARACTERS[es.charId]) seen.set(es.charId, es.weapon);
+    }
+  }
+  return [...seen].map(([charId, weapon]) => ({ charId, weapon }));
+}
+// v1.275 (D.28 step 3, Michael: A on "other side fixed or growing with your crew"): each team match is tuned for the
+// crew you would have the first time you reach it (every kid whose ask comes before it on the ladder, taken in). That
+// first-time crew sets the match's sides once: your side never smaller than it, theirs fixed. An ordinary match keeps
+// its own margin (their side grows by as many as the first-time crew adds to yours); a zone's finale has their side one
+// more than yours, the Last Saturday two more, Seth and his seven. Winnmark's finale stays 2 v 2, with Seth beside you.
+// A replay with a bigger crew is meant to be easy; a benched kid's place stays empty. Extra kids on their side come
+// from the street, Seth's crew first when Seth plays (Garrett and Colin with him once Bellfield's flags are done). On a
+// replay of Winnmark's team matches once its finale is done, Seth plays for the other side.
+const CREW_KID_GUNS = { garrett: 'ar', colin: 'mac10' };   // the two new kids' own guns (the spec: mid-high tier, cheap)
+const CREW_FOE_SIDES = { last_saturday: SETH_CREW_ROSTER };   // a side the spec names outright
+function crewLadderPos(id) {
+  const ctx = findScenarioListContext(id);
+  return ctx ? zoneLadderIndex(ctx.group) * 1000 + ctx.idx : -1;
+}
+function crewFinale(id) {
+  const ctx = findScenarioListContext(id);
+  return !!ctx && ctx.idx === ctx.ids.length - 1;
+}
+const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
+// The crew you'd have the first time you play this match: each kid whose ask comes before it on the ladder
+function crewFirstTime(id) {
+  const pos = crewLadderPos(id);
+  return CREW_ROSTER.filter(kid => { const t = SUMMER_TEXTS.find(t => t.ask === kid); return t && crewLadderPos(t.after) < pos; });
+}
+// Seth has turned rival: a Winnmark team match with him on your side, replayed once Lights Out is done
+function crewSethTurned(id) {
+  const ctx = findScenarioListContext(id);
+  return !!ctx && ctx.group === 'winnmark_court' && !!Game.persist.completed[WINNMARK_FINALE] &&
+    (SCENARIOS[id].enemySetup || []).some(es => es.charId === 'seth' && es.team === 'player');
+}
+// The gun a kid carries most across the summer (the two new kids carry their own)
+// (not a sniper rifle: a kid brought in to make up the numbers has no nest to shoot it from)
+function crewKidGun(charId) {
+  if (CREW_KID_GUNS[charId]) return CREW_KID_GUNS[charId];
+  const n = {};
+  for (const [id, s] of Object.entries(SCENARIOS)) {
+    if (id === 'pickup_game' || s.tutorial) continue;
+    for (const es of s.enemySetup || []) if (es.charId === charId && es.weapon && es.weapon !== 'sniper') n[es.weapon] = (n[es.weapon] || 0) + 1;
+  }
+  return Object.keys(n).sort((x, y) => n[y] - n[x])[0] || 'pistol';
+}
+// v1.275: when the street runs out of kids, the rest of the zone's, then anybody's, each on the gun he carries most
+function crewWiderPool(id) {
+  const ctx = findScenarioListContext(id), seen = new Set();
+  const ids = (ctx ? ctx.ids : []).concat(Object.keys(SCENARIOS));
+  for (const sid of ids) {
+    const s = SCENARIOS[sid];
+    if (!s || sid === 'pickup_game' || s.tutorial) continue;
+    for (const es of s.enemySetup || []) if (es.charId && es.weapon && !es.behavior && !es.statsOverride && CHARACTERS[es.charId]) seen.add(es.charId);
+  }
+  return [...seen].filter(k => !CREW_KID_GUNS[k]).map(charId => ({ charId, weapon: crewKidGun(charId) }));
+}
+// The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
+function crewSetup(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || !crewTeamMatch(id)) return sc ? sc.enemySetup : undefined;
+  const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
+  if (!crew.length && !first.length && !turned) return sc.enemySetup;
+  const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
+  // v1.275: the first-time sides fix the match; then your crew as it is now plays it
+  const base = crewSides(id, first, first, allies.length, null, false);
+  const ours1 = base.filter(es => es.team === 'player').length + 1;
+  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1 : foes + ours1 - (allies.length + 1);
+  return crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+}
+// v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
+function crewSides(id, crew, fielded, alliesN, foeN, turned) {
+  const sc = SCENARIOS[id];
+  // v1.275: Seth turned rival leaves your side for theirs
+  const setup = turned ? sc.enemySetup.filter(es => !(es.charId === 'seth' && es.team === 'player')) : sc.enemySetup;
+  const sethFoe = turned || setup.some(es => es.charId === 'seth' && es.team !== 'player');
+  const named = CREW_NAMED_ALLY[id];
+  const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
+  const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
+  const kept = allies.filter(keep), slots = allies.filter(es => !keep(es));
+  // Seth's crew on your side crosses over to him; the rest of the match's own allies wait to fill places
+  const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
+  const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
+  const strip = (es, fields) => { const o = Object.assign({}, es); for (const f of fields) delete o[f]; return o; };
+  const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives']);   // a place past the match's own (v1.275: not its flag run or lives)
+  // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
+  const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
+  // v1.275: the street's kids, then Garrett and Colin, who play with Seth once Bellfield's flags are done ("u havent met
+  // garrett. u will"), then the rest of the zone's and anybody's
+  const newKids = sethFoe && crewLadderPos(id) > crewLadderPos('bellfield_ctf') ? ['garrett', 'colin'].map(k => ({ charId: k, weapon: crewKidGun(k) })) : [];
+  const pool = crewStreetPool(sc).concat(newKids, crewWiderPool(id)).filter((k, i, a) => !CREW_ROSTER.includes(k.charId) && k.charId !== 'seth' &&
+    a.findIndex(o => o.charId === k.charId) === i);
+  const fromStreet = (preferSeth) => {
+    const list = preferSeth ? pool.filter(k => SETH_CREW_ROSTER.includes(k.charId)).concat(pool) : pool.filter(k => !(sethFoe && SETH_CREW_ROSTER.includes(k.charId)));
+    const k = list.find(k => !taken.has(k.charId));
+    if (!k) return k;
+    taken.add(k.charId);
+    return k.weapon === 'sniper' ? { charId: k.charId, weapon: crewKidGun(k.charId) } : k;   // v1.275: no nest, no rifle
+  };
+  // Your side: the kept kids, then the crew (a kid on his own spot when the match has one for him), then the places left
+  const out = kept.map(es => Object.assign({}, es));
+  const free = slots.map((es, i) => i), at = new Map();
+  for (const kid of fielded) { const i = slots.findIndex(es => es.charId === kid); if (i >= 0) { at.set(kid, i); free.splice(free.indexOf(i), 1); } }
+  for (const kid of fielded) {
+    const i = at.has(kid) ? at.get(kid) : free.length ? free.shift() : -1;
+    out.push(Object.assign(i >= 0 ? Object.assign({}, slots[i]) : spare(), { charId: kid, weapon: CREW_GUNS[kid], team: 'player' }));
+  }
+  let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
+  for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }
+  // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
+  const them = [];
+  for (const es of foes) {
+    if (!crew.includes(es.charId)) { them.push(Object.assign({}, es)); continue; }
+    const k = fromStreet(sethFoe);
+    if (k) them.push(Object.assign({}, es, { charId: k.charId, weapon: k.weapon }));
+  }
+  const spots = foes.filter(es => es.role !== 'defender');
+  const foeSpot = foes.find(es => es.role !== 'defender' && !es.spawnAt) || foes[0];
+  const over = [...(turned ? sc.enemySetup.filter(es => es.charId === 'seth') : []), ...crossing];
+  const crossed = over.map(es => Object.assign(strip(es, ['team', 'vip', 'role', 'spawnAt', 'perch', 'behavior', 'ctf', 'lives']), { anchor: foeSpot.anchor }));
+  them.unshift(...crossed.filter(es => es.charId === 'seth')); them.push(...crossed.filter(es => es.charId !== 'seth'));
+  if (foeN != null) {
+    // v1.275: fit their side to the match's number: the match's own kids go from the end (never Seth, a crosser or a
+    // defender), extra kids come from the street at the match's own spots in turn
+    for (let i = them.length - 1; them.length > foeN && i >= 0; i--) {
+      const es = them[i];
+      if (es.charId !== 'seth' && !crossed.includes(es) && es.role !== 'defender' && !es.vip) them.splice(i, 1);
+    }
+    let n = 0;
+    while (them.length < foeN) {
+      const k = fromStreet(sethFoe); if (!k) break;
+      const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
+      // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
+      const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
+      if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
+      kid.crewFill = true;   // v1.278: a kid the crew's numbers added comes looking when he has hidden too long (updateKidBoredom)
+      them.push(kid);
+    }
+    // A side the spec names outright (the Last Saturday: Seth and his seven) takes those kids at its places
+    const named = CREW_FOE_SIDES[id];
+    if (named) {
+      const rest = named.filter(k => !them.some(es => es.charId === k));
+      for (const es of them) if (!named.includes(es.charId) && rest.length) { const k = rest.shift(); es.charId = k; es.weapon = crewKidGun(k); }
+    }
+  }
+  // v1.275: places left on your side come after theirs, so the street's own kids stand on their side first
+  while (left-- > 0) { const k = fromStreet(false); if (!k) break; out.push(Object.assign(spare(), { charId: k.charId, weapon: k.weapon, team: 'player' })); }
+  return out.concat(them);
+}
+// A scenario as it will be played: the same object when the crew changes nothing, else a copy with the crew's sides
+function crewScenario(id) {
+  const sc = SCENARIOS[id];
+  const setup = crewSetup(id);
+  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });
+}
 
 // =====================================================================
 // v1.201 (D.22 step 1, Michael: A on "A better game" 3, "a Pickup Game board in the bedroom: any opened zone, the mode,
@@ -34322,7 +34648,7 @@ function rivalScoreText(s) { return `beaten in ${s.beaten} of their ${s.total} m
 // The result card's line: who they are this match (Seth alone in a duel), how it went, and the summer's score.
 function rivalResultLine(id, outcome, firstWin) {
   const sc = SCENARIOS[id];
-  const foes = (sc.enemySetup || []).filter(es => es.team !== 'player').length;
+  const foes = (crewSetup(id) || []).filter(es => es.team !== 'player').length;   // v1.274
   const who = foes > 1 ? RIVAL_CREW : 'Seth';
   const s = rivalScore();
   let head;
@@ -34335,7 +34661,7 @@ function summerTexts() {
   const read = Game.persist.textsRead || {};
   return SUMMER_TEXTS.map((t, i) => ({ t, i }))
     .filter(({ t }) => !t.after || Game.persist.completed[t.after])
-    .map(({ t, i }) => ({ id: t.id, from: t.from, text: t.text, day: summerDayAfter(t.after), read: !!read[t.id], i }))
+    .map(({ t, i }) => ({ id: t.id, from: t.from, text: t.text, day: summerDayAfter(t.after), read: !!read[t.id], i, ask: t.ask || null }))
     .sort((a, b) => (b.day - a.day) || (b.i - a.i));
 }
 function summerUnreadCount() { return summerTexts().filter(t => !t.read).length; }
@@ -34355,8 +34681,9 @@ function openPhone() {
     return `<div class="ph-msg${t.read ? '' : ' new'}" data-id="${t.id}">
       <div class="ph-head"><span class="ph-from">${t.from.toUpperCase()}</span>${t.read ? '' : '<span class="ph-new">NEW</span>'}
         <span class="ph-date">${d.weekday.slice(0, 3)} ${d.date} ${SUMMER_MONTHS[d.month].name.slice(0, 3)}</span></div>
-      <div class="ph-text">${esc(t.text)}</div></div>`;
+      <div class="ph-text">${esc(t.text)}</div>${phoneAskHTML(t)}</div>`;
   }).join('')}</div>`;
+  body.querySelectorAll('.ph-ask button').forEach(b => b.addEventListener('click', () => phoneAnswer(b.dataset.kid, b.dataset.yes === '1', b)));
   document.querySelector('#modalScreen .modal-card').classList.add('phone');
   document.getElementById('modalScreen').classList.add('active');
   // opening them reads them all; the nightstand phone stops blinking and its label and prompt catch up
@@ -34369,6 +34696,24 @@ function openPhone() {
     if (it._led) it._led.visible = false;
   }
   autoSave();
+}
+
+// v1.273 (D.28 step 1): a kid asking to join gets two buttons under his text. YES takes him in for good; NOT YET
+// leaves the ask open for the next time you look. Once he's in, the text says so.
+function phoneAskHTML(t) {
+  if (!t.ask) return '';
+  const name = CHARACTERS[t.ask].name;
+  if (crewMembers().includes(t.ask)) return `<div class="ph-ask ph-in">${name} is in your crew</div>`;
+  return `<div class="ph-ask"><button data-kid="${t.ask}" data-yes="1">Yes, you're in</button><button data-kid="${t.ask}" data-yes="0">Not yet</button></div>`;
+}
+function phoneAnswer(id, yes, btn) {
+  const box = btn && btn.closest('.ph-ask');
+  if (yes && crewTakeIn(id)) {
+    if (box) { box.className = 'ph-ask ph-in'; box.textContent = `${CHARACTERS[id].name} is in your crew`; }
+    autoSave();
+  } else if (!yes && box) {
+    box.className = 'ph-ask ph-later'; box.textContent = 'Not yet. You can still say yes here.';
+  }
 }
 
 // Human-readable reason a scenario is locked (for greyed rows / pickers).
@@ -34429,7 +34774,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
     <div class="${cls}" data-id="${scenarioId}">
       <div class="sc-card-top">
         <span class="sc-card-num">${num}</span>
-        <span class="sc-card-match">${scenarioMatchup(sc)}</span>
+        <span class="sc-card-match">${scenarioMatchup(crewScenario(scenarioId))}</span>
         ${badges.map(t => `<span class="sc-card-badge">${t}</span>`).join('')}
         ${stamp}
       </div>
@@ -34466,7 +34811,7 @@ function openScenarioBrief(scenarioId) {
   document.getElementById('briefLoc').textContent = locParts.join(' · ');
   document.getElementById('briefTitle').textContent = brief.scenarioName || brief.name;
   document.getElementById('briefDesc').textContent = brief.desc || '';
-  document.getElementById('briefRoster').innerHTML = renderBriefingRosterHTML(brief);
+  renderBriefRoster(scenarioId);   // v1.274: with Bench and Bring for your crew
   const modal = document.getElementById('scenarioBriefModal');
   modal.classList.add('active');
   Game.mode = 'modal';
@@ -34479,6 +34824,17 @@ function openScenarioBrief(scenarioId) {
     document.getElementById('worldMap').classList.remove('active');
     enterScenario(scenarioId);
   });
+}
+
+// v1.274 (D.28 step 2): the briefing's roster, where a crew kid can be benched or brought back
+function renderBriefRoster(scenarioId) {
+  const el = document.getElementById('briefRoster');
+  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true });
+  el.querySelectorAll('[data-bench],[data-unbench]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    if (b.dataset.bench) crewBench.add(b.dataset.bench); else crewBench.delete(b.dataset.unbench);
+    renderBriefRoster(scenarioId);
+  }));
 }
 
 // v1.146 (D.8 step 1): a pin click and openMap both show a zone through here; the chosen pin is marked
