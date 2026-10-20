@@ -51,13 +51,18 @@ for (const id of IDS) {
   const r = await page.evaluate(SCHOOL => {
     const sc = Game.scenario;
     const foes = sc.enemies.filter(e => e.team !== 'player');
+    stepGame(1 / 60);   // the roster fills on the first frame; CI could read it before the page's own loop had run one
     const roster = (document.getElementById('rosterHud') || {}).textContent || '';
-    return { names: foes.map(e => e.name), school: foes.every(e => SCHOOL.includes(e.charId || (e.character && e.character.name.toLowerCase()))),
+    // v1.275 (D.28 step 3): their side is tuned for your first-time crew (six or seven), more than the school has
+    // kids, so every school kid not on your side is on theirs and only then does anybody else make up the number
+    const isSchool = e => SCHOOL.includes(e.charId || (e.character && e.character.name.toLowerCase()));
+    const ours = sc.enemies.filter(e => e.team === 'player');
+    return { names: foes.map(e => e.name), school: foes.filter(isSchool).length === Math.min(foes.length, SCHOOL.length - ours.filter(isSchool).length),
       shirts: foes.map(e => e.character && e.character.shirtColor), rosterHas: foes.every(e => roster.includes(e.name)),
       stuck: sc.enemies.filter(e => collidesObstacles(e.pos.x, e.pos.z, 0.3)).map(e => e.name) };
   }, SCHOOL);
   console.log(`  ${id}:`, JSON.stringify(r));
-  check(`${id}: the enemies are school kids (${r.names.join(', ')}) and the roster names them`, r.school && r.rosterHas, r);
+  check(`${id}: the enemies are the school's kids first (${r.names.join(', ')}) and the roster names them`, r.school && r.rosterHas, r);
   check(`${id}: every kid spawns clear`, !r.stuck.length, r.stuck);
   await g.spin(60);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });

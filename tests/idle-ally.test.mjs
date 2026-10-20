@@ -31,7 +31,9 @@ const RUN = (who, secs) => page.evaluate(({ who, secs }) => {
 }, { who, secs });
 
 const out = [];
-for (const [id, who, secs] of [['hollow_night_battle', 'rebecca', 120], ['club_night_4v4', 'brooke', 120], ['hollow_night_battle', 'rebecca', 120]]) {
+// v1.275 (D.28 step 3): with your first-time crew in Night Swim, Brooke crosses to Seth's side (v1.274), so Sean, the
+// match's own ally, is the one read there
+for (const [id, who, secs] of [['hollow_night_battle', 'rebecca', 120], ['club_night_4v4', 'sean', 120], ['hollow_night_battle', 'rebecca', 120]]) {
   await g.scenario(id);
   const r = await RUN(who, secs);
   console.log(`   ${id}:`, JSON.stringify(r));
@@ -41,12 +43,13 @@ for (const [id, who, secs] of [['hollow_night_battle', 'rebecca', 120], ['club_n
 // bored (23.3 s at most; the threshold is 25-30 s) failed for want of boredAt. The fault (v1.184) is an ally who walks
 // 0 m all round; so she must get over 10 m out, and boredom must have come whenever she idled past 25 s.
 check('Night Game in the Woods: idle Rebecca comes looking, over 10 m from her start', out.filter(r => r.who === 'rebecca').every(r => r.far > 10 && (r.boredAt || r.idleMax < 25)), out);
-check('Night Swim: Brooke walks over 10 m or keeps firing with a line', out.filter(r => r.who === 'brooke').every(r => r.far > 10 || r.losShots >= 10), out);
+check('Night Swim: Sean walks over 10 m or keeps firing with a line', out.filter(r => r.who === 'sean').every(r => r.far > 10 || r.losShots >= 10), out);
 check('no ally of ours stays idle (no 2 m, no shot with a line) past 30 s', out.every(r => r.idleMax <= 30.05), out);
 check('nobody gets bored inside the first 25 s', out.every(r => r.boredAt == null || r.boredAt >= 25), out);
 
-// A sniper ally and the VIP still hold: Night Game's Brooke (sniper) is never marched by boredom, nor Protect Ryan's Ryan.
-await g.scenario('hollow_night_battle');
+// A sniper ally and the VIP still hold: the lot's Brooke (sniper) is never marched by boredom, nor Protect Ryan's Ryan.
+// v1.275: Night Game's Brooke, the sniper this read, crosses to Seth's side now
+await g.scenario('lot_team_3v3');
 const H = await page.evaluate(() => {
   for (let f = 0; f < 60 * 45 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
   return Game.scenario.enemies.filter(e => e.team === 'player' && (e.weapon === 'sniper' || e.vip || e.role === 'defender')).map(e => ({ n: e.charId, bored: !!e._boredCount }));

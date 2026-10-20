@@ -40,7 +40,7 @@ school (no real brands or school marks in the game).
 The guides were written before Michael answered their questions. His answers are in `docs/decisions.md` ("The maps
 from the reference pictures", under Answered) and override a guide where they differ. Most of all: he chose **real
 scale throughout**, so most maps become one Fable rebuild each, not the in-place steps a guide's "Suggested order"
-lists. Backlog D.44 has the plan.
+lists. Backlog D.51 has the plan.
 
 ## How to use a guide
 Each guide has Michael's notes in his words, a table of every picture (with its Drive link), the real place in

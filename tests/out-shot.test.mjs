@@ -18,7 +18,8 @@ check('every kid has a shot-while-out line', pool.n > 5 && pool.missing.length =
 const install = () => page.evaluate(() => {
   window._said = [];
   const real = window.tryNpcSpeak;
-  window.tryNpcSpeak = (e, cat) => { window._said.push([e.name, cat]); return real(e, cat); };
+  // v1.256: a teammate calling the tag (allyDown) is his own line, not the out kid's, and is left out of the record
+  window.tryNpcSpeak = (e, cat, fill) => { if (cat !== 'allyDown') window._said.push([e.name, cat]); return real(e, cat, fill); };
   window._shootAt = (e, owner, team) => {
     const target = e.pos.clone(); target.y = (e.pos.y || 0) + 0.9;
     const dir = new THREE.Vector3(1, 0, 0);

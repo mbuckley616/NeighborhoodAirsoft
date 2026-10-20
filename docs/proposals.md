@@ -78,3 +78,39 @@ the point, but with no clock that could mean long rounds. The clock is already s
 leaves the shotgun able to take three at once.
 **Recommendation.** Do it as part of D.22's next step, before anyone plays the board for real. It's the board's main
 promise.
+
+## 2026-10-19 — A bullseye inside 10 m at the range (v1.272)
+**Why.** The range (v1.257) has two scored targets, the cardboard bullseyes at about 15 and 20 m. With the Spring
+Pistol every player starts with, standing still and aiming dead centre, BBs land a median 49–54 cm off at 15 m and
+94–99 cm at 20 m, mostly low, from the hop-up curve. On the boards: 1 of 12 at 15 m, 0–1 of 12 at 20 m, 2 of 15 from the
+bench at the near one, 0 of 15 at the far one. At 5 m, 12 of 12 land within 9 cm, and at 10 m, 8–9 of 12 are on the
+board (critic, 19 Oct). The brief's gimmick is "reliable inside ~10 m, increasingly random beyond", and the range is
+where a kid should see that line for himself. Right now the scoring starts past it, so the scored part of the range
+says only "you miss".
+**What.** Move the near bullseye in to about 8 m and leave the far one at 20 m, or add a third one at 8 m. The tally
+then shows a score you can earn next to one you mostly can't, which teaches holding over at range. Optionally, the HUD's
+"Last:" line could say how far off a miss was ("40 cm low"), so you learn the hold-over at 20 m.
+**Cost.** Part of one builder session: one easel position in `buildBackyardRangeScene` (or one more entry in
+`R.eyes`), the range test's distances, and a range test that fires the real trigger at the 8 m board and expects most on
+it. The "how far off" line is ~10 lines in the range's BB hook.
+**Risk.** Low. It's the range only, and no match changes. A target at 8 m in the line of the 15 m one must not hide it.
+**Recommendation.** Do the 8 m move. Leave the miss distance for after Michael has shot it himself.
+
+## 2026-10-20 — Deal the free-for-all starts fresh each round (v1.272)
+**Why.** Since v1.265–v1.267 every free-for-all start is hidden and the same on every load, which is what Michael
+asked for. The kids stand on the same starts too, so the same kid hunts you in every replay. In Last Kid Standing,
+Sean's AK (from `ffa_1`, 34.9 m off) tagged me in 5 of 6 rounds. In the Ten-Way, Eric's MP5 (37.1 m off) did the
+same, 5 of 6 (critic, 20 Oct). A pushing player meets the same AK at the same second. A kid's free-for-all is a
+scramble where you never know who's round the next hedge. The fixed deal makes it a set piece you solve once.
+**What.** Keep the hidden starts and the player's start as they are. In a full free-for-all (all of a map's `ffa_N`
+used), shuffle which kid gets which `ffa_N` at BEGIN, from the match's seeded random, so the layout stays the same
+and only the deal changes. The Pickup Game's subsets keep their fixed order, since "in this order every subset
+keeps the rule".
+**Cost.** Part of one builder session: a shuffle of the anchors over `enemySetup` in `startScenario`'s ffa branch
+(for the four full free-for-alls), plus a test that two BEGINs deal at least two kids differently and every start is
+still used once. `ffa-starts` and `lamplight-starts` read the starts, not the kids, so they should hold.
+**Risk.** Low. Each start passes the hidden rule whoever stands on it. What changes is who your nearest gun is. A
+sniper dealt the start nearest you (`ffa_2` in Bunratty, 23.7 m) could make some rounds harder than any today, so
+the test should log the opening tag time over a few deals.
+**Recommendation.** Do it, unless Michael wants a free-for-all to be the same puzzle every time. One line in
+decisions would settle that.

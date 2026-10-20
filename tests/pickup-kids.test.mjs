@@ -110,7 +110,7 @@ const ff = await page.evaluate(() => {
 console.log('  ', JSON.stringify(ff));
 check('Hollow 4-way starts on Seth, Sean, Devon; picking Eric swaps out Devon, and Eric takes the third start with his gun',
   ff.start.join() === 'seth,sean,devon' && ff.after.join() === 'seth,sean,eric' && ff.ffa
-  && ff.es.join() === 'seth/pistol/a_fort,sean/ak47/b_fort,eric/mp5/scatter_nw', ff);
+  && ff.es.join() === 'seth/pistol/ffa_1,sean/ak47/ffa_2,eric/mp5/ffa_3', ff);   // v1.265: the Hollow's free-for-all starts
 
 // With no picks, v1.201 and v1.202's games are as they were
 const plain = await page.evaluate(() => [buildPickupScenario({ map: 'winnmark', size: 3, tod: 'day', lives: 3 }).enemySetup.map(e => e.charId).join(),

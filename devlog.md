@@ -10086,6 +10086,97 @@ matches are untouched: one life is one life, and a match that gives you more sti
   a start in sight of their kids is open to being camped. Whether the cover should be longer, or the start out of
   sight, is for a playtest.
 
+## v1.150 — Every kid has his own lines, and none of them repeats himself
+Michael's D.9 note asked for better voices (VoiceStudio) and more, more varied lines. The builder put the
+question to him with four options and he answered A on the control room (2 Oct, 19:59 UTC): more and more varied
+lines now, with the browser voices; recorded voices later. This is the first Fable session, and the first half of
+that answer. (This branch's versions start at v1.150 so they cannot collide with the builder's, which is at
+v1.141 on auto/build and climbing.)
+
+What the kids had: four situations a kid speaks in (he tagged you, he got tagged, he peeked out on you, a taunt
+every 12 to 30 s or with a covering burst), plus the Infection barks. Nine of the 24 kids had their own lines,
+three or four a situation; the other fifteen shared three generic lines a situation by aggression band, so Priya,
+Owen, the twins and all of Northcliff sounded like the same kid. Each line was drawn at random with no memory, so a
+kid could say the same line twice running, and in a long round a three-line taunt pool came round every minute.
+Two smaller things: the speech cooldowns ran on wall-clock time, and a kid on your own team ran the same taunt
+timer as the enemy, so Seth beside you would yell "Stop hiding!" at nobody.
+
+What changed, all in the voice tables and `tryNpcSpeak`:
+- Every kid in CHARACTERS has his own lines in all four situations, four or five each, written to the character
+  notes already in the file: Priya talks about your sides, Owen barely talks, the twins yell for each other,
+  Christian is thrilled to hit anything, Rebecca is unbothered. The three band defaults are six a situation now.
+  A kid's pool for a situation is his own lines plus his band's, about ten, and the picker takes his own 7 in 10.
+  Early-2000s suburban kids: trash talk, nothing mean, no profanity, no real brands or schools. Eight words at
+  most (TTS runs about three words a second), and the table has 544 lines where it had 162.
+- A memory: each kid keeps his last three lines and the game keeps the last two anyone said; those are left out
+  while anything else remains, so a kid never says the same line twice running and two kids do not echo each other.
+- A `teammate` pool (ten lines: "Push up with me!", "Cover me, I'm moving!"): a kid on your team, outside a
+  free-for-all, draws from it when his taunt timer fires, instead of taunting you.
+- The cooldowns (1.5 s between anyone's lines, 4 s between one kid's) now run on the round clock, not wall time,
+  and the global one resets at BEGIN. In play that is the same thing; a backgrounded tab and the headless tests
+  now pace the kids the way play does. A line counts as said (cooldowns, and a `VOICE.log` of the last 64 lines
+  for the tests) before the browser is asked to speak it, so a browser with no voices paces the kids the same way.
+Nothing else moved: the voice per kid, the pitch by height, the distance cutoff at 24 m and the positional chirp
+are as they were.
+
+### Verified
+- `tests/voices.test.mjs` (new), 44 checks. The tables: 24 kids, every one with at least 4 own lines in each of
+  the 4 situations; 6 a situation in each band; no pool holds a line twice (16 bespoke lines that matched their
+  band's defaults were rewritten); no line over 8 words; nothing from a short rude-word list. The picker: 96
+  (kid, situation) pairs, 300 draws each, never the last line, never any of the last three, at least 4 distinct
+  lines from every pool, own lines 50 to 90% of the draws. Headless rounds with the player untaggable at spawn:
+  the Winnmark 3v3 (13 to 40 lines in 90 s from 4 or 5 kids), the whole block (35 lines, Marcus and Seth, the two
+  within earshot), Infection (4 to 6 barks from the pool), the 1v1 and the lot free-for-all (1 to 5 lines; Sean and
+  the free-for-all kids fight past the 24 m range of a player who stands still). In every round no kid said the
+  same line twice running, every gap was at least 4 s per kid and 1.5 s overall, and every line came from the
+  speaker's pool for that situation. Allies' taunt timers gave teammate lines ("Go, go, I'll cover you!", "Stay
+  low, stay low!") and never a taunt; by hand, 4 of 4 ally taunts came out as teammate lines and 4 of 4 hostile
+  ones as taunts. No page errors.
+- `npm test`: see the PR comment for the full run on this build.
+
+### Still open
+- Only a real playtest can judge the lines themselves, and whether 7 in 10 own lines is the right mix; the band
+  lines are there so the pools are deep, not because they are better.
+- Recorded voices (options B and C) wait on Michael: the script and the loader are a later card.
+- A kid's memory is three lines; the taunt pools are about ten, so over a long round a line does come back, just
+  never within four of a kid's lines.
+
+## v1.151 — A kid calls a tag on another kid, and the nearest kid calls the start
+The second half of the D.9 inventory. The card listed the situations a kid speaks in, and two on the list had no
+line: "tagged someone" only covered tagging you (a kid who tagged your teammate said nothing), and nothing was said
+at the start of a round. Both are small and sit on hooks the code already had, so they are in; Michael can veto the
+start call if it is one voice too many at BEGIN.
+
+- A kid who tags another kid calls it the way he calls a tag on you, from the same pool ("Got him! Easy.", "SETH!
+  Did you see that?"). The tagged kid still speaks first, and the 1.5 s global cooldown then usually keeps the
+  shooter quiet, so his call fills in when the tagged kid was out of earshot or on his own cooldown: you hear
+  whichever of the two is nearer.
+- When the 2.5 s opening hold lifts, the nearest hostile gunner within earshot who is free to speak calls the
+  start, once a round, from a pool by aggression band (six each: "Game on! Let's go!", "Spread out, spread out!",
+  "Everybody find a spot."). Taggers bark on their own and tutorial dummies never speak. A kid who has already
+  called you out inside the hold is on his 4 s cooldown and is passed over.
+
+Two bugs of v1.150's found by the new checks and fixed here: the once-a-round flag lived on `Game.scenario`, which
+persists between rounds, so the start call would have fired only in the first round of a session (it resets at
+BEGIN now); and a line was picked, and so entered the kid's recent-lines memory, before the earshot gate, so a kid
+out of range filled his memory with lines nobody heard and a heard line could come round again (Trey said "Watch the
+left side!" twice running in a 3v3). The pick now comes after the gate.
+
+### Verified
+- `tests/voices.test.mjs`, now 54 checks, green 3 of 3 runs. New: the band tables carry six start lines each with no
+  duplicates and under the 8-word cap (562 lines in the tables now). By hand in the Winnmark 3v3 and the lot
+  free-for-all with a hostile kid 6 m from spawn: one start call, at 2.52 s, from that kid; with every kid 40 m
+  off, no call and the flag spent; in Infection, no call. A tag on another kid by hand: with the tagged kid free
+  to speak, one line (his npcHit) and the shooter held by the global cooldown; with the tagged kid on cooldown,
+  one line, the shooter's, from his own tag pool. The five headless rounds and the picker checks of v1.150 hold.
+- `npm test`: the full run on this build is in the PR comment.
+
+### Still open
+- The start call is the one new spoken moment a player hears every match; whether it earns its place is a
+  playtest call. The tag call on another kid is heard mostly in team matches and free-for-alls.
+- The player's own kid still says nothing, and allies do not react when a teammate goes out; both would be
+  lines with names in them (templates), which this card did not ask for.
+
 ## v1.223 — The AR, held up to an M4
 Backlog D.31, the second gun against its real model. The Spring Assault Rifle copies an M4 and is drawn at about ×0.72
 (its upper receiver 13 cm), so an M4's 30-round magazine, about 15 cm below the receiver, should show about 11 cm. It
@@ -10140,6 +10231,38 @@ of the receiver's back, behind the guard, running into the stock. The shooting h
   has neither walked 5 m nor fired, and the check reads "within 120 s". Two local runs pass at 60 s; one with the run-on
   forced on goes to 101–120 s per match and passes.
 
+## v1.229 — The voices build brought up to main, and the school's own kids get lines of their own
+Michael approved the voices build (v1.150–v1.151, eb29fc2) on 3 Oct, but by then it no longer merged onto main: both
+sides had changed the title-screen version label and the end of the devlog, and the producer only merges the exact commit
+he approved, so it stopped and raised a blocker that nobody owned once the Fable card was done. Main went on for eleven
+days and 324 commits. Asked about the blocker on 14 Oct, Michael had it fixed locally.
+
+Main (v1.222) is merged into `auto/fable-d9-voices`. The conflicts were the version label (main's NEW GAME ask and
+SETTINGS button kept), `startScenario`'s round reset (the voice cooldowns and the start call from this branch, the match
+stats and the ladder flag from main: all four lines kept), the devlog (main's entries, then v1.150–v1.151) and D.9 in the
+backlog. The builder's v1.223–v1.224 (4d675c5), which Michael approved the same morning and the producer has not yet
+merged, is merged in as well, so this branch goes onto main cleanly whichever of the two lands first.
+
+One thing the conflicts did not show: Hollins Ridge High's six kids (v1.190, Jordan, Caleb, Nathan, Sophie, Grant and
+Malik) came after the v1.150 tables and had no lines of their own; they drew only on their aggression band's defaults,
+and `tests/voices.test.mjs` failed on them (0 own lines in each of the four situations). Each now has 4–5 lines a
+situation drawn from his or her flavor text: Jordan's portables, Caleb always nearly making it across, Nathan's "everyone
+crosses the field", Sophie coming round the wrong side, Grant at the cars, Malik's close range. Their TTS voice and pitch
+already came from their id and height, so nothing else was missing.
+### Verified
+- `tests/voices.test.mjs`: 30 kids, 664 lines in the tables (was 562 on the merge), every kid at least 4 own lines in
+  every situation, no duplicates, nothing over 8 words, nothing rude. New: the school's 3v3 joins the headless rounds
+  (16–18 lines, none repeated, pacing and pools right), and each hostile school kid is called by hand at 2 m six times a
+  situation: Caleb 16 lines (12 his own), Nathan 24 (17), Sophie 24 (16). Passed three runs.
+- Full suite in six local shards at once: no check failed anywhere; 27 suites were cut off by the runner's 10-minute
+  limit or a 30 s page load with six browsers on one machine. The twelve non-sweep suites among them pass run alone
+  (ai-clock, idle-ally, pickup-lives, ctf-clock, fp-hands, grip, last-kid, pickup, retreat-progress, pickup-fernando,
+  market-lot, pointer-lock). The sixteen stuck-kid sweeps are left to CI's shards on the push.
+### Still open
+- Michael's ear on the school kids' lines, and a fresh Approve on this head (the 3 Oct approval was of eb29fc2).
+- Whichever of this and the builder's later work (v1.225+) merges second still meets the version label and the devlog
+  tail; the builder merges main into its branch itself, so it should land this first if it can.
+- The walkie callouts (D.10) can start once this is on main.
 ## v1.225 — The sniper, held up to a Remington 700
 Backlog D.31, the fourth gun. The Spring Sniper Rifle copies a bolt-action Remington 700 (the VSR-10 airsoft rifles
 copy), drawn at about ×0.5 along its length. Side-on it did not read as a rifle. The barrel's axis sat 2.5 cm above the
@@ -10271,6 +10394,133 @@ they were. Pictures: `docs/guns/ump-side-before.png`, `docs/guns/ump-side.png`.
   is a round in which every tag is his, so that is now checked outright ("never takes all three of your lives in a
   round"), and the share check reads under two-thirds (the rifle had all of them). Passes locally at 9 of 24.
 
+## v1.230 — Online play, step 1: a 1v1 with a friend by room code
+Backlog D.2 (Michael, 28 Sep: "Online play: local-host sessions others can join"), a deep-work item. Michael's B (12 Oct)
+put it after the Pickup Game board, so the host sets the match up there; his A (14 Oct) picked PeerJS's free public
+matchmaker and four-letter room codes. This is step 1 of the three in the question: two friends, one match, Winnmark Court.
+
+The Pickup Game board has a second button, PLAY ONLINE. It opens a panel: your name (14 letters, remembered on this
+computer), HOST A ROOM, and a box for a code with JOIN. The host gets a code such as `KXRB` in big letters and waits; the
+friend types it on his own board and presses JOIN. Both get the usual briefing ("Online: 1v1", you against the other's
+name), and BEGIN waits until both have pressed it ("WAITING FOR SAM…"). The match is the board's Winnmark 1v1 with the
+host's day or night, lives and clock. The one kid on the other side is the other player: his look from his mirror, his
+name, his equipped gun. He starts at the spot the board's own kid would take. A tag costs a life and puts you back at your
+start with 2 s of cover, as in any pickup game since v1.221. Lives are the board's exactly; armor adds none online.
+
+How it works. The host's game is the referee: it runs the BBs, the tags, the lives and the clock, as the question
+promised. One choice there differs from the question's sketch, and a player would not see it. Each player moves his own kid
+and sends where he is (30 times a second from the guest, 20 from the host), rather than the guest sending keys for the host
+to move him. That keeps the guest's movement as quick as in single player, and it needed no change to the player code.
+Each shot is sent once, as it leaves the gun: where from, which way, and its curve. It then flies in both games, but only
+the host's copy can tag (`bbCanTarget` is false for every BB in the guest's game). The host's game tells the guest when
+either one is tagged, and how the match ended. A friend's kid is moved by `netDriveRemote` in place of the AI. He eases
+toward each position, jumps on a respawn, and walks, crouches and holds his gun up with the kids' own pose code. He never
+speaks (`tryNpcSpeak` skips him). F's forfeit question does not pause an online match. A forfeit ends it for both; the
+other player wins.
+
+Nothing is on the line. The match pays nothing and counts for nothing, and the result screen says "Online match: nothing
+on the line" with no Play Again. Each player gets a full bag for the match, and his own bag is put back as it was before
+the result autosaves. If the link drops, before or during the match, the other game ends it, goes back to the bedroom and
+says "Your friend left". Closing the board while you host gives the room up. The two games must be the same version (the
+title's), or the host says so to both.
+
+The connection. PeerJS 1.5.4 (93 KB, from unpkg) loads only when someone presses HOST or JOIN; nothing new loads at
+startup. The host's room is the PeerJS id `nbhd-airsoft-<code>`, from 24 letters (no I or O), about 330,000 codes. A taken
+code tries another, three times. Once the friend is in, the host leaves the matchmaker, so the code is free and nobody else
+can join. The panel says what the question said about privacy: each player sees the other's internet address, and a
+public service carries the code, so play with friends you know. `netPeerTransport` is the only code that knows about
+PeerJS; Michael's own matchmaker (option B, for step 3's room list) would replace that one function. What the other game
+sends is checked before use: a name of plain letters, a look of plain values, a gun the game has, finite numbers, and a
+shot that starts within 4 m of where that player is.
+
+Also fixed on the way: the briefing's BEGIN button is cloned for each briefing, and it kept an online match's "WAITING…"
+text and its disabled state, so the next briefing could not be begun. It is reset each time now.
+### Verified
+- `tests/online.test.mjs` (new, 17 checks): two headless games, joined through a stub transport that passes the same
+  JSON messages every two frames (about 33 ms of lag). Nothing loads at startup (no Peer, no PeerJS script). HOST shows a
+  four-letter code and waits. Both get the briefing, and BEGIN waits for the friend. The 1v1 has one kid a side, the other
+  player by name, 3 lives each. After both walk (3.7 m and 4.3 m), each sees the other within 5 cm. The guest's first shot
+  from 3.5 m tags the host: the host has 2 lives on both screens and goes back to his start. The host's first shot tags the
+  guest: 2 and 2 on both screens, and the host sees the guest back at his start. Two more tags end it: the host's result
+  is a loss ("Guesty got you this time."), the guest's a win ("You beat Hosty."). Cash $35, bag 25 and wins 0 are
+  unchanged on both, and Play Again is off. BACK TO YOUR ROOM closes the link. In a second match the guest's link drops
+  60 frames in: the host is in the bedroom under "Your friend left", with his bag as it was, and so is the guest. After that the
+  board's own 1v1 has a kid again, not the friend. The PeerJS adapter, against a stand-in `Peer`, opens
+  `nbhd-airsoft-KXRB`, joins it with JSON, leaves the matchmaker once the friend is in, and passes on open, data, close
+  and "no room with that code". No page errors in either game. Two runs, both clean, 38 s each.
+- Run after the change: `pickup`, `pickup-clock`, `pickup-ffa`, `pickup-fernando`, `pickup-kids`, `pickup-lives`,
+  `forfeit-ask`, `briefing-lives`, `smoke`: 9 of 9 pass.
+- The full suite (`run.mjs --shard k/4`, four shards side by side on this sandbox's four cores): 130 of 133 suites passed.
+  The three misses failed before a check ran: `road-slide` and `taggers` timed out loading the page, and `mirror` lost
+  its browser at boot. All three passed alone.
+### Still open
+- Michael's real test with a friend: this session's sandbox cannot reach unpkg or PeerJS's server, so the real
+  connection is checked only against a stand-in `Peer`. One pair in ten on strict networks may not connect at all
+  (no paid relay, as the question said).
+- The host's game stops while his tab is hidden (the browser stops drawing it), so the guest's BBs and tags wait. Worth
+  a "keep this tab open" line if it bites.
+- The guest's own shots cannot tag in his game; the host's copy decides, about one message later, so a tag on a moving
+  kid at the edge of a hit can count in one game and miss in the other's picture. The briefing's field map shows the
+  guest at the host's start.
+- Steps 2 (teams, the board's kids filling the empty spots) and 3 (a room list and a Campaign / Online / Settings title)
+  wait for Michael's look at this one.
+
+## v1.230 fix-up — shard 7/8 steadied: online's start waits, vip's played rounds seeded
+PR #67 (online play, step 1) had a green PR run, but shard 7/8 of the push run failed twice on 14 Oct, on two
+different suites, so it could not be approved. A local session took it (Michael's desktop, Windows, 12 cores) and read
+the CI logs. Neither failure was the game.
+
+`online.test.mjs` died with a `TimeoutError` at the second match's start, before its dropped-friend checks ran. BEGIN
+starts a match on a 400 ms timer, and both pages then build and draw Winnmark in software GL. The suite gave each game
+20 s of wall clock to reach `scenario`. On CI the first match's join-to-start took 17 s; in the second the host took
+about 13 s and the guest then ran past his own 20 s. The waits are now 90 s (the harness gives a briefing 90), polled
+every 250 ms rather than on the page's frames, and the result waits 30 s, not 10. The suite also crossed its messages
+in up to six evaluates every two frames, and each evaluate waits out a frame of both pages' render loops. It now steps
+each game in one evaluate (what the other sent, two steps, what it sends back), and no message waits in Node between
+runs. The checks and the lag between the games (two frames) are as before.
+
+`vip.test.mjs`'s "the kids trade tags and come back" (and with it "no VIP falls in the first 8 s") came from a played
+round that was a fresh draw every run. Math.random was unseeded; the page's own render loop stepped the game in real
+time between the test's steps (0.5-1 s of the round before the played part, more during it); and the kids' voice
+cooldowns read the wall clock and drew their lines from Math.random. Most Bunratty rounds see 1-5 tags in 40 s, but in
+1 round of about 70 sampled Priya was out at 2.9 s, before anyone had been tagged, and both checks failed (reproduced
+here, three suites at once). From the entry to the end of each played round the suite now seeds Math.random per match
+(only the entry's, the start's and the test's own steps draw from it: the music's hi-hats and snares draw on their own
+timer), steps the game only itself (tick() still draws, but `stepGame` is a no-op for it until the round is over), keeps
+the voices quiet, and stops stepping once a VIP is out (the result follows on a wall-clock timer). Every run now plays
+the same two rounds. Only the tests change: `index.html` is as v1.230 left it.
+
+`run.mjs` weighted online at the 40 s a new suite is guessed at. On CI it ran about 3 min before the timeout; here
+277-388 s alone before the change and 211 s after. It is 210 now, which moves it to shard 8/8 and vip to 7/8. Main's
+re-measured table (e82316b) does not list online, so 210 has to be carried over when main is merged in (not done here:
+FREEZE #78, the map backdrops, is open).
+### Verified
+- The CI logs (push run of 0b0e761): attempt 1, shard 7/8, `page.waitForFunction: Timeout 20000ms exceeded` at
+  online.test.mjs:63, the guest's wait in the second match's `begin()`, 33 s after BACK TO YOUR ROOM.
+- `online.test.mjs`, final code: 10 of 10 pass, three and four at a time (timings below in the PR note). Before the
+  change it also passed 6 of 6 here, at 277-388 s alone and 600-660 s three at a time.
+- `vip.test.mjs`: before the change, 1 of 3 failed with three at a time (Priya out at 2.9 s, no kid tagged). After it,
+  10 of 10 pass, five at a time, and all ten log the same played rounds byte for byte: Bunratty 40 s with neither VIP
+  out (Sean 1, Owen 1, Tyler 1 tags), Night Shift 40 s with neither VIP out (Eric 2, Sean 2, Mason 1, Marcus 2).
+- `node scripts/parsecheck.mjs`: OK.
+### Still open
+- The seeded rounds are one sample each. A change to the kids' play that makes Priya fall early or nobody trade tags
+  now fails every run rather than one in seventy, which is the point, but the 8 s line is no longer a spread.
+- Locally the kids' lines are spoken through Windows' own speech engine (Michael heard them while the suites ran), which
+  probably slows these runs well past CI's.
+
+## v1.230 fix-up 2 — vip's seeding taken back out; the early VIP fall filed
+CI on 8ce921f passed the online suite (now on shard 8/8) and failed `vip.test.mjs` on shard 7/8: Priya out at 5.6 s
+at Bunratty with no kid tagged, both in-play checks failed. The seeded played rounds came out the same run after run on
+one machine but not across machines (on CI Sean spawned 2.3 m from the player, here 2.5 m), and CI's round was one of the
+early falls. So the early fall is the game's, not the test's draw: their VIP can be picked off before 8 s, the line
+D.17 drew. Michael (16 Oct): take the seeding back out, keep the online fix, and file the fall for the builder. The suite
+is v1.230's again, and the fall is under Found in play in the backlog with what was measured.
+### Verified
+- CI log of 8ce921f, shard 7/8: `FAIL in play no VIP falls in the first 8 s` (theirs 5.6 s, f 338) and `FAIL ... trade
+  tags` (Bunratty: every kid 0). Shard 8/8, with `online.test.mjs`, passed.
+### Still open
+- PR #67 can still fail shard 7/8 on vip until the builder settles the early VIP fall (or Michael moves the line).
 ## v1.231 — The bed shows the summer so far
 Backlog D.29, the bed. Since v1.218 the game saves itself, so the bed's "Sleep (save your game)" had nothing left to
 do. Michael's A: the bed shows the summer so far. The prompt is now "Sleep (how’s the summer going?)" and its label
@@ -10771,3 +11021,925 @@ flag (`tagSendsHome`), so another match could take it later.
 ### Still open
 - Whether the finale is now too easy: a sprint at the bulb still loses all three lives inside 16 s, and the critic's
   bot will show how often you win it.
+
+## v1.252 — Believable views past the edge of every map
+Backlog D.24–D.25, decided in decisions ("Views past the edge of every map", Michael: B, 15 Oct): generic backdrops on
+every map now, then map by map from his pictures. Standing at the middle of each edge and looking out (v1.251 shots in
+`docs/prototypes/d24-edges-*.png`), Bunratty showed only sky to the north and west, Winnmark's grass stopped under the
+sky to the east, and the market lot, the high school and the country club ran a flat field to a hard line: their
+ground planes (±60–100 m) ended inside fogs that reach 82–160 m, and nothing stood past the fences. The grocery
+store's front windows were opaque panels on a solid wall.
+`addEdgeBackdrop()` runs once in `enterScenario`, right after the map is built, and reads each map's sides from one
+table, `EDGE_BACKDROPS`: where the scenery starts on each side (past what the map already has there, such as
+Winnmark's golf course and lake, Bunratty's pond, the Hollow's river, the school and the clubhouse) and what stands from
+there outward. It lays a ground skirt from the map's ground out past its fog at the rim's height (dipping under any
+water that runs past the ground), then rows of houses with hip or gable roofs, windows and a door, tree belts with
+round and pointed trees, shop strips with sign bands, parking lots with stalls and parked cars, playing fields with
+goals, a fairway past the club, a road past the lot, the school and the treehouse yard's front, and on Winnmark,
+Bunratty, Northcliff and Bellfield the street running on out of the map with houses facing it. Anything that would
+land on an existing mesh is skipped, so it never pokes through what was there. At night a third of the house windows
+and most shop fronts are lit. The store's front wall is now open behind its glass (its collision box is the whole wall,
+as before) and the glass is see-through, onto its own lot, the road and the shops across it, under a sky card of its
+own, since indoors the background is the store's beige.
+None of it is solid: nothing is added to `obstacles`, and nothing stands within 6 m of the bounds, past where BBs are
+dropped (bounds + 2 m across x, + 5 m along z). It is all merged into one vertex-coloured Lambert mesh, plus one for lit
+windows at night and the store's sky card, and draws its own seeded random numbers after the map is built, so the
+cover layouts are untouched and the scenery is the same every round.
+### Verified
+- `tests/backdrop.test.mjs` (new). All ten maps, day and night: the backdrop is in the map's own scene, with 14–68
+  houses and 134–1,496 trees (the store at night, whose fog closes at 52 m: its lot, 31 cars and 7 shops); nothing in it
+  is an obstacle and the obstacle list is unchanged; the nearest vertex is 6.0–12.8 m outside the bounds; the ground
+  skirt never comes inside; at most 3 meshes and 1.5k–44k triangles; the same scenery twice. In play on Bunratty, the
+  market lot, the store and Bellfield, looking out each way costs +1 draw call (the store +2; before: 57–97 per view,
+  budget +4), and holding W toward each edge for 4 s stops at the bounds. No page errors.
+- Before and after, from the middle of each edge looking out (`docs/prototypes/d24-after-*.png`): Bunratty's north and
+  west show houses and trees over the crest, Winnmark's east has the street running on between houses, the lot is
+  ringed by shops, a road and a second lot, the school and the club look over fields and a fairway to tree lines and
+  rooftops, and the store's windows show its parking lot.
+- `npm test`, as four parallel shards here: 150 suites, 143 green the first time. Five timed out under the four-way load
+  (sneakers, stuck-sweep-10 and -16, winnmark-props) or missed a ratio (squad-orders 0.58 vs 0.26), and all five pass
+  run alone. The one real failure was `grocery-store`'s closed-room check: three rays out through the doors now pass
+  through the see-through glass. The check counts the glass as closing the room, and passes.
+### Still open
+- The real streets: as Michael's pictures arrive (2–4 per map, Google Maps satellite or 3D view, or Street View,
+  looking out past the map's edge), that map's entry in `EDGE_BACKDROPS` is reshaped to match. Nothing is owed until
+  then.
+- Whether the scenery reads right in play: the houses are simple boxes with roofs on purpose (cost), the tree belts
+  may look too regular from some spots, and the night shop fronts may be too bright.
+- Frame rate on a real machine: the cost is one or two draw calls but up to 44k extra triangles by day.
+
+## v1.230 (16 Oct) — Online play brought up to main
+The step-1 branch was blocked the moment v1.252 reached main: it conflicted in index.html, the devlog, the backlog and
+the test runner, and nobody on the team is set to bring a finished Fable branch up to main. Main (v1.252) is merged in
+from a local session. In `index.html`: the title label takes main's v1.252; `endScenario` keeps both the online end call
+and v1.239's closing of the pause menu; `applyBBHit` keeps both the online hit report and v1.238's damage note on a tag
+on you, and for a kid, the online check (`c.remote`) comes before v1.237's "already out" complaint, so a hit on your
+friend always goes to the host. One real call: v1.239's pause menu stops the simulation, and online it must not (your
+friend's game runs on), so the step loop now ignores `Game.paused` and `Game.forfeitAsk` while `Net.active`, as it
+already ignored the forfeit ask. `tests/run.mjs` takes main's v1.235 weights with `online.test.mjs` at 210 added; the
+backlog keeps this branch's VIP-fall note above main's lines.
+### Verified
+- `node scripts/parsecheck.mjs` OK; the suites run locally are listed in the merge commit. The rest is left to CI.
+### Still open
+- Escape online still opens the PAUSED card while the match runs on behind it; whether it should open at all online is
+  a step-2 question. A fresh Approve on this head.
+## v1.229 (16 Oct) — The voices build brought up to main a second time
+Michael's 14 Oct approval of f68d759 could not merge: the builder's v1.225–v1.228 landed first, and the branch sat
+blocked for two days while main went on to v1.252, because nobody on the team is set to bring a finished Fable branch up
+to main. Main (v1.252) is merged in from a local session. Conflicts: the title-screen label (main's v1.252 kept, so the
+title reads v1.252 until the next bump), the band defaults in `VOICE_LINES_DEFAULT` (this branch's six-a-category pools,
+with main's v1.237 `shotWhileOut` lines added to each band), and the devlog tail (both kept). `applyBBHit` merged on its
+own: the v1.237 early return for a kid who is already out now comes before the v1.151 tag call, so an out kid who is
+shot complains and the shooter says nothing, which is right.
+One test needed its setup changed, not the game: `tests/voices.test.mjs` tags the same kid twice by hand, and since
+v1.237 the second hit on an out kid is a complaint, not a tag. The test now stands him back up (state and health)
+before the second hit.
+### Verified
+- `node scripts/parsecheck.mjs` OK; `tests/voices.test.mjs` passes (the shooter's call fills in: Brooke, "Saw you coming.").
+- The rest is left to CI's eight shards on the push.
+### Still open
+- A fresh Approve on this head. Whichever of this and the builder's next merge lands second meets the version label again.
+
+## v1.253 — The squad order moves to the top left
+Backlog B.9 (Michael, control room 16 Oct): the squad commands' box overlaps the roster and the live count, which
+looks sloppy; move it. The ORDER box (v1.248) sat at a fixed 210 px from the top on the right, under "Players on the
+Field", and the roster grows a row per player: in the Hollow's three big battles (9 players) it reached 245 px and in
+The Last Saturday (12) 285 px, so the order was drawn across the names, and in every 4v4 it sat 5 px under the roster.
+It now sits in the top-left corner, which nothing else uses in a match (the loadout, stance and hits panels are low
+on the left, the timer top centre), and may run to 300 px wide so a walkie answer wraps once at most.
+### Verified
+- `tests/squad-hud.test.mjs` (new). Every match with teammates (31, the tutorial shows no order) at 1280×720, with the
+  longest walkie answer showing: the order's box shows and touches none of the roster, timer, loadout, stance, hits,
+  ammo, stamina, tutorial, prompt or crosshair (before, the roster in 5: the three Hollow big battles, Full-Auto
+  Mayhem and The Last Saturday). The same at 1024×576 for the six fullest (The Last Saturday, the Hollow big battle,
+  After Close, Flags on Bellfield, Protect Ryan, The Portables), and in a Pickup Game 4v4 on Bunratty (box at
+  24–324 × 24–82, roster 1068–1256 × 24–205). `squad-orders` passes unchanged.
+### Still open
+- Whether the top left reads well in play next to the walkie line, or wants to sit closer to the crosshair.
+
+## v1.254 — The bedroom's SETTINGS button, on a controller and off the cash box
+Backlog B.10 (Michael, control room 16 Oct): on a controller the Settings button is always showing in the bedroom,
+and it looks odd where it is, on top of the $ and BB box. Both were true. The button (v1.192) shows whenever the mouse
+is free, and a pad never takes the pointer lock (v1.241), so on a pad it never went away; and it was placed at the
+top right, 24 px down, exactly where the CASH/BBs box is. Now on a pad the button doesn't show, and the box gains a
+third line under a rule, "START Settings", since Start is what opens them on a pad (v1.242). With the mouse free the
+button sits 6 px under the box, as wide as it, so the two read as one panel; it still hides once the mouse is taken.
+### Verified
+- `tests/bedroom-settings.test.mjs` (new, 8 checks). Mouse free: the button shows at 1126–1256 × 93–122 under the box
+  at 1126–1256 × 24–87, touching nothing, and opens settings. With a stand-in pad touched: over 3 s of the bedroom the
+  button never shows, the box (now 24–111) carries "START Settings" inside it, and Start opens the settings; in a
+  match neither the box nor the button shows. `settings` and `gamepad-screens` pass unchanged.
+- CI fix-up: on a3db0fa CI's shard 8/8 passed all 19 suites but was cancelled at its 40-minute limit, because v1.253's
+  `squad-hud` loaded all 31 team matches and took 8.5 min there (weighted at 150 s). It now checks the five fullest,
+  every map's biggest team match, the flags match and both VIP matches (14 at 1280×720, 4 at 1024×576, and the Pickup
+  4v4): 69 s locally, weighted 240; the eight shards weigh 1,713–1,719 each.
+### Still open
+- The bedroom's prompts ("E Go outside") still name keyboard keys on a pad.
+
+## v1.255 — Squad orders on a controller: the d-pad
+Backlog B.11 (Michael, control room 16 Oct: no pad button opens the Q wheel; the d-pad, perhaps). The d-pad picked gun
+slots 1–4 in a match (v1.241), so it went to him as a question, and he chose A (17 Oct): the d-pad gives the orders at
+once. In a match with teammates a press is that direction's order, the wheel's own way round (up push up, right find
+cover, down keep distance, left follow me): it goes through the same `giveSquadOrder` as Q, so a teammate answers on
+the walkie and the HUD shows it standing. So a pad player sees what he gave, the wheel shows for 0.6 s with that order
+lit and titled ORDER GIVEN, without taking the right stick (the Q wheel stops the look; the flash does not). Slots stay
+on Y/RB (next) and LB (back). The HUD's hint reads D-PAD while the pad is in use, "hold Q" otherwise. One call of mine:
+in a match with no teammates (every 1v1 and free-for-all) there is no order to give, so there the d-pad still picks
+slots rather than doing nothing. Paused, on the forfeit question or in the tutorial it gives nothing (`squadCanOrder`).
+### Verified
+- `tests/pad-orders.test.mjs` (new, 11 checks), a stand-in pad on the Hollow 3v3: each d-pad way gives its order
+  (push, cover, distance, follow, logged in that order), the wheel shows lit on the press frame and 5 steps later and is
+  gone after 0.6 s, a teammate answers each (Eric, then Rebecca), the gun slot never changes, the HUD reads
+  "ORDER FOLLOW ME · D-PAD"; paused, a press gives nothing. On Bunratty's 1v1 with Sean, right then up pick slots 2 and 1.
+- `squad-orders`, `squad-hud`, `gamepad` and `gamepad-screens` pass unchanged; the rest is left to CI's shards.
+### Still open
+- Whether 0.6 s of the wheel reads as "order given" in play, or is too much over the crosshair mid-fight.
+- With teammates, a pad player can no longer go straight to a slot; Y/RB and LB step through them.
+
+## v1.256 — The kids say what happened
+Backlog D.32 (Michael, 14 Oct): more varied lines that fit the moment, more excited when they land a hit, more panic
+when pressed or a teammate is hit, and more complaining after they are hit, "that's not fair because x", "you only got
+me because of y", depending on the kid. It waited on the voices build (D.9), which reached main with v1.229. Four
+situations are added, all through `tryNpcSpeak`, so its cooldowns, earshot and no-repeat memory hold:
+- **Excuses.** A kid you tag sometimes makes an excuse instead of his npcHit line, and it fits how he was tagged:
+  from behind ("You shot me in the back, that's so cheap!"), from past 30 m ("Lucky shot! You couldn't even see me!"),
+  inside 4 m ("Way too close! That doesn't count!"), on the move ("I was running! That doesn't count!"), or any old
+  reason ("My gun jammed, I swear!", "The sun was in my eyes!"). It depends on the kid: a pushy kid (aggression 0.65+)
+  makes one 60% of the time, a middling one 40%, a calm one 15%; the rest still own it. Only for your tags.
+- **A teammate is hit.** The nearest kid of the tagged kid's side within 20 m calls it by name ("They got Brooke!",
+  "Brooke's out! Come on, guys!"), a second after the tagged kid's own line; the line waits for the voice cooldowns
+  (up to 3 s) rather than being lost to them. Not in a free-for-all.
+- **Pressed.** A kid with a second BB whizzing past inside 3 s (v1.67's near miss) says so, six times in ten, at most
+  once in 8 s: "Whoa, whoa! He's on me!", "I'm pinned, I'm pinned!", "Taking fire."
+- **Excited.** The hit that puts you out is called louder than the others: "I GOT HIM!! YES!", "Whoa, I actually got him!".
+Each band (pushy, middling, calm) has its own pressed, teammate-down and you're-out lines; the excuses are shared.
+### Verified
+- `tests/voice-situations.test.mjs` (new, 11 checks): the excuse picked by where you stand (behind, 40 m, 2 m, in front,
+  and running); 3,000 draws per band give 59.8%, 39.7% and 13.9% excuses; a real tag on Winnmark's 3v3 gives Brooke's
+  "My gun jammed, I swear!" at 10.0 s and Jamie's "We lost Brooke! Careful!" at 11.5 s; one near miss says nothing,
+  a second inside 3 s says "Whoa, whoa! He's on me!", two more inside 8 s nothing; a hit that leaves you in is a
+  playerHit line and the one that puts you out "I got him!! I got him!".
+- `voices` passes unchanged (every logged line from its pool, no repeats, the 4 s and 1.5 s gaps hold in six rounds);
+  `out-shot` passes with its record of the out kid's lines leaving out a teammate's new tag call. `smoke` and
+  `squad-orders` pass. The rest is left to CI.
+### Still open
+- Whether the excuses are too frequent from the pushy kids in a long match, and whether the 30 m and 4 m lines fit.
+- Each kid having his own excuses (Seth's are not Evan's) would be a further step.
+
+## v1.257 — The backyard range
+Backlog D.40 (Michael, 14 Oct): a shooting range in the backyard, with cans, bottles, paper stood up that BBs punch
+through and homemade bullseyes, to try guns and setups outside a match, still costing real BBs; based on 235 Bunratty
+Court's yard and pool deck. He chose A (15 Oct): out your own back door. The bedroom's hall gets a back door on its west
+wall, between the bathroom and the entry door, with a glass panel and the label BACKYARD; E there ("Go out back (the
+range)") takes you straight out, no briefing. At spawn the front door keeps the first prompt.
+The range is a match with nobody else in it: the gun, gear and BBs are your loadout's and load from your bag as in a
+match, and `winCondition: 'range'` never ends on its own. It is written as `SCENARIOS.backyard_range` on the way out
+(as the Pickup Game is), so the map, the ladder and the tests' sweeps over the scenario table never meet it. No roster,
+no lives, no clock, no money. The yard: the house to the south (its v1.216 back door is the one you come out of), a
+deck, the pool on the east side (it stops bodies, not BBs, as the club's does), a board fence round, trees beyond. From
+the bench, downrange: six cans on a plank across two cinder blocks at 8 m, knocked off with a clank and tumbling to
+rest on the grass, where they can be shot again; three bottles on an upturned crate at 11 m, which break into glass on
+the lawn; two sheets of paper on stakes at about 12 m, which keep every hole while the BB goes on through; two cardboard
+bullseyes on easels at about 15 and 20 m, which keep a mark for each BB and score its ring (10, 8, 6, 4, 2 out to
+23 cm, else "on the board"). A tally sits top left (cans down, bottles broken, holes, bullseye hits, and the last
+thing hit with its ring). E (A on a pad) at the bench stands everything back up; E at the back door, or F, goes home,
+the BBs left in the gun back in the bag, and saves.
+### Verified
+- `tests/backyard-range.test.mjs` (new, 19 checks): the door, its label and prompt; out back with no kids, no roster
+  or lives showing and the tally up; the gun loaded from the bag (25 → 15 with 10 in a pistol); a trigger pull spends
+  one. Aimed BBs: a can flies 1.2–1.3 m and rests on the grass at 3.3 cm (lying), the other five still up; a bottle
+  breaks into 8 shards that all land; paper takes one hole and the BB is 0.5 m past it; from the bench, aimed dead
+  centre at the 20 m bullseye, the BB drops into the 8; on the near board the middle scores 10 and 10 cm out 6; eight
+  marks drawn (front and back). E at the bench: six cans home, three bottles, no glass or marks, tally zero. E at the
+  back door: the bedroom, no result screen, the bag 24 (the one BB fired is spent). F goes home without the forfeit
+  question.
+- `front-door`, the four `bedroom-*` suites, `autosave`, `forfeit-ask`, `pause-menu`, `gamepad`, `gamepad-screens`,
+  `harness` and `smoke` pass. Screenshots from the bench, downrange and the hall looked right.
+### Still open
+- The yard is from memory, not 235 Bunratty Court: the cloud can't open Zillow, so its pictures (in Slack or the
+  control room) would let the layout match.
+- No timed drills (option C wasn't picked); the range has no night version.
+- Whether the BB's drop at 20 m (dead centre lands in the 8) reads as fair on screen.
+
+## v1.258 — The map on the bedroom table is the map
+Backlog D.41 (Michael, 15 Oct): the map on the bedroom's table is ugly; clean it up and make it look like the actual
+map. It was a blank cream sheet with six random brown strokes and three red dots. The paper is now the neighborhood map
+itself: the map screen's own SVG (v1.148) is drawn to a canvas through an image, which works because the SVG is all
+inline attributes, and the zone pins go on top where the map screen puts them, red for a zone you have opened and grey
+for one still locked, each with its place name. It is painted each time the room is built, so the pins follow your
+progress. It lies with north toward the wall and west on your left as you stand at the table, so it reads the right
+way up, and is sized to the map's 700:560 (0.8 × 0.64 m, was a 0.6 × 0.9 portrait sheet). A low lip round the table
+top and four red thumbtacks hold it down. The paint is asynchronous (the image loads in a frame or two); until then the
+paper is plain.
+### Verified
+- `tests/map-table.test.mjs` (new, 8 checks): painted once the room is built; a 1400 × 1120 canvas with the map's land
+  colour (239, 229, 207) at its corner and 45 colours in a coarse sample; on a new save Winnmark's pin head is red
+  (201, 74, 58) and the seven locked zones' are grey (138, 138, 138); the texture's top lies toward the wall (x −2.87
+  against −2.23) and its left at +z (your left); after the ladder is won and the room rebuilt, it is painted again and
+  Bunratty's pin is red.
+- `bedroom-shelves` (the paper within 1 mm of the table top), `map-screen`, `front-door` and `smoke` pass. A screenshot
+  at the table showed the river, parks and roads the right way round.
+### Still open
+- The labels and pins are small at the table's size; whether they read in play, and whether a pin for "you are
+  here" (Bunratty Court, home) would help.
+
+## v1.259 — The Hollow's forts get a deck, a ramp and crenellations
+Backlog D.42 (Michael, 15 Oct): the forts in the Chattahoochee River zone are ugly, with random intersecting meshes,
+and being inside one feels like a disadvantage; a staircase or ramp inside up to the top, for high ground and cover up
+there, like wooden crenellations. What intersected: the "lookout" deck at 1.1 m (cosmetic, nothing could stand on it),
+whose posts and rail ran through the window band; the pitched part-roof, sunk into the back and side walls; Team B's
+lean-to, a tilted sheet through its side wall; and both flag poles, standing inside the back wall. All of that is gone
+(the flags now stand just behind the back wall). In its place, in each fort:
+- a plank deck over the front half at the walls' top, 2.6 m up, on two joists; you stand on it, and walk under it
+  through the port as before;
+- a ramp up the inside of the ramp-side wall (the old lookout's side): a 0.2 m step 0.6 m deep at the back corner,
+  stepped onto from the fort floor, a cleated board rising at about 31° to a landing beside the deck;
+- crenellations: 0.5 m wooden merlons 0.9 m tall along the front wall and both side walls round the deck, 0.37 m
+  gaps between them to shoot through, and a rail along the deck's back edge, so the deck is high ground with cover
+  that you can't walk off by accident (a jump down inside is a 2.6 m drop, and costs your stamina as the treehouse's).
+The ramp is a new kind of obstacle (`ramp`): its top rises along its length (`obsTopAt`), the player steps up it up to
+0.3 m at a time (`RAMP_STEP`, in `blockingObstacle` and `playerSupportY`), and BBs pass it. A kid's body is height-
+checked from the terrain, so its 0.2 m first step stops him and the kids never walk up; the deck is the player's.
+### Verified
+- `tests/hollow-fort.test.mjs` (new, 18 checks), both forts on the Hollow 3v3: from the floor beside the step you step
+  onto it (0.92 m, the fort sits at 0.72), walk up to 3.32 m (2.6 m above the fort), step sideways onto the deck and
+  stand there (4.8 m across from the ramp); walking at the front wall the merlons hold you 0.5 m short of it, walking
+  back the rail holds you on the deck; 7 merlons on each front wall, and a BB from the deck goes out through a 0.37 m
+  gap; a kid's body is blocked at the ramp's step; under the deck you walk the length of the fort and out of the port
+  on the ground; no pole stands inside a wall.
+- The stuck-kid sweep over all 12 Hollow matches (3 ways each, 90 s): no kid held. `fort-spawn` (standing at the south
+  fort's spawn, which v1.124 put "under the roof", now open above: still rarely tagged), `hollow-held`,
+  `lot-hollow-polish`, `cover-fire`, `kid-hold`, `pickup-ffa` and `jump` pass. Screenshots: the merlons read as a
+  fort's top from the field, the ramp and deck from inside.
+### Still open
+- Balance: the deck is strong high ground in the 3v3s and the fort matches (Storm the North Fort's defenders don't use
+  it; only you do). A playtest should say whether it is too strong, or whether kids should hold it too.
+- The ramp sits on the side the lookout was (west in the north fort, east in the south); the south fort's spawn is
+  no longer under a roof.
+
+## v1.260 — Your cash and BBs, on screen when they matter
+Backlog D.43 (Michael, 15 Oct): show your $ on screen in a match, and when you've been tagged out, won, or are about
+to start one; the same for BBs. Until now your cash showed only in the bedroom and the shop, and your bag only in the
+match's ammo box. Now:
+- in a match, the ammo box (bottom right) says "Cash: $N" under "Bag: N";
+- on the result screen, won or lost, a line under what you earned: your cash after the pay and the BBs in your bag after
+  the gun is unloaded;
+- on the briefing, above BEGIN: your cash, the BBs in your bag and how many your gun will load from it at BEGIN, in red
+  when the bag can't fill the gun (so you know before you start that you'll be short).
+One helper (`walletHTML`) writes the line for both screens.
+### Verified
+- `tests/wallet.test.mjs` (new, 6 checks) on Seth's House: the briefing reads "CASH $37 · BBs IN YOUR BAG 23 · YOUR GUN
+  LOADS 10"; in the match the box says "Cash: $37" (bag 13 with 10 in the pistol); won, "CASH $39 · BAG 23"; with 4 in
+  the bag the briefing shows red; tagged out, "CASH $38 · BAG 4".
+- `result-stats`, `result-text`, `briefing-lives`, `damage-report` and `smoke` pass; screenshots of the three screens
+  showed the line fitting each.
+### Still open
+- Whether the ammo box is the right place for cash in a match, or it wants its own corner.
+
+## v1.261 — Kids flinch where they're hit
+Backlog D.45 (Michael, 16 Oct): enemies should wince or react, according to where they were hit, for a second or two
+after they are shot. Until now a tagged kid only raised his gun arm (out) or walked back (a life gone), whatever the
+BB had hit. Now the BB's place on him picks a flinch: its height up his body (over 80% the head, under 45% a leg) and,
+between, how far off his middle (past 17 cm an arm, which side from his facing). Then, for 1.5 s on top of whatever
+else he is doing (the hand up when he is out, the walk back, the fight):
+- head: he snaps back (9°) and his free hand goes up to his face;
+- chest: he hunches forward (10°) with his hand on his chest;
+- his gun arm: the free hand grabs across at it; his other arm: he shakes it out to the side;
+- a leg: he buckles toward that side with his hand at the thigh.
+It comes on in 0.2 s, holds to 0.7 s and eases off by 1.5 s. A BB on a kid who is already out stings too (a new
+flinch). The lean is added to whatever the kid's own update set that step (taken off again only if nothing reset it),
+and the arm is blended from where his pose has it, so when the flinch ends his off hand is back on the foregrip.
+### Verified
+- `tests/wince.test.mjs` (new, 6 checks) on Seth's House: points at 90%, 62%, 65% ±24 cm and 20% of his height read as
+  head, chest, right arm, left arm and leg; a real tag in the chest hunches him 0.18 rad with his hand at −1.0 rad from
+  0.2 s to 0.7 s and is gone at 1.6 s, his lean back at 0; a BB at his shin while he is out leans him 0.13 rad toward
+  it.
+- `kid-hold`: its off-hand-on-the-foregrip check now skips a kid mid-flinch (30 samples in the Hollow 3v3); outside
+  them the worst off hand is 6.8 cm (8 allowed). `weight`: its lean check skips a flinching kid (a flinch is not a lean
+  into the move), lean max 0.095 rad. `grip`, `burst-pose`, `out-shot`, `walk-anim`, `kid-hands`, `voice-situations`
+  and `smoke` pass. Screenshots of the four flinches on Seth read as meant.
+### Still open
+- Whether the flinch is big enough at 20-30 m, where most tags happen, and whether a head shot should also stagger him.
+
+## v1.262 — Sell a gun back
+Backlog D.44 (Michael, 16 Oct): sell guns back with a resale penalty, maybe a free return if it has seen only a few
+matches. His answer (control room, 17 Oct): B, the full price back if the gun has been into 3 matches or fewer, half
+after. The shop had no Sell and nothing counted a gun's matches. Now:
+- each gun bought keeps a count of the matches it has been carried into (`Game.persist.gunMatches`, set to 0 by
+  `buyGun`, one more at each `startScenario` for the equipped gun only; a retry is a match);
+- each gun's shop page, under the gun, has a "Sell it back" row saying what you'll get and why ("Full price back: it has
+  been into 1 of 3 free-return matches", "Half back: it has been into 4 matches", or, for a gun owned before this
+  build, which has no count, "Half back: it was bought before returns were counted"), and what you paid;
+- its button reads SELL $N; the first press turns it to SURE? SELL $N, the second sells (a misclick costs nothing);
+- the sale takes the gun's capacity mags, the spare mags that fit only it (and any loadout slot holding one) and the
+  parts mounted on it at the workbench, at the same rate as the gun, as the D.44 card said; if it was the gun you
+  carry, you carry the Spring Pistol, which can't be sold. It saves at once. You can buy the gun again later.
+Half is rounded down to the dollar.
+### Verified
+- `tests/sell-back.test.mjs` (new, 10 checks): a shotgun with its 60-round mag, two spares and a red dot = $137 paid,
+  quoted $137 back; the shop's button reads SELL $137, then SURE? SELL $137, then sells: cash back to $500, the gun,
+  mag, spares, the spare's slot and the sight gone, the pistol carried, the page offers BUY $60 again. Rebought and taken
+  into three real matches (Seth's House, BEGIN), still $60; a fourth, $30, and the page says why. A match with the
+  shotgun leaves the AR's count at 0; the counts survive save and load; a sniper with no count quotes $60 of $120; the
+  Spring Pistol has no SELL. Screenshot: the gold SELL row sits between the gun and its magazines.
+- The full suite ran once, four shards in parallel, on v1.264’s tree, which carries this: see v1.264.
+### Still open
+- Whether 3 matches is the right window, and whether the parts should come off into your box instead of being sold
+  (today they go with the gun, as the card said).
+
+## v1.263 — A trade on the last tag goes to you
+Decisions, "A trade on the last tag counts as a loss" (critic, 16 Oct; Michael: A, a trade goes to you). When you tagged
+the last kid, the win waited 600 ms so the tag showed on screen, and a BB of his already in the air that landed inside
+it ended the round YOU'RE OUT (v1.90's "the first ending stands"); in Seth's House the critic's bot lost 9 of 12 rounds
+that way, his BB landing 16–50 ms after the tag. Now `endScenarioLater` marks the round won (`Game.scenario.wonRound`,
+by `Game.roundSeq`) the moment a win is scheduled, and `applyBBHit` lets a BB on you through without a tag while it is.
+It covers every delayed win: the last kid in a 1v1, the other side wiped in a team battle, their VIP out, the last
+flag home. A tag on you before your last tag lands still puts you out, and the round still ends once.
+### Verified
+- `tests/last-tag-trade.test.mjs` (new, 6 checks) in Seth's House with a real BB of Seth's 1.2 m from your chest at
+  40 m/s: with nothing else it tags you (YOU'RE OUT); with your tag on Seth landing first, the round is won at once,
+  the BB lands two steps later with no tag (hits 0, the BB gone) and the round ends YOU GOT THEM; tagged before your
+  tag, still YOU'RE OUT.
+- `tests/one-ending.test.mjs`: its two v1.90 checks that a BB inside the 600 ms made it YOU'RE OUT (the 1v1 and the
+  team battle) now expect the win, with one ending and one payout, as the decision says; the other three pass as they
+  were.
+- The full suite: see v1.264.
+### Still open
+- Nothing for a playtest beyond whether it feels fair: a kid's BB that lands 0.6 s after your last tag no longer counts.
+
+## v1.264 — Out kids walk off the field
+Decisions, "Out kids and your BBs: one-way cover?" (critic, 15 Oct, v1.244; Michael: B, after a few seconds an out kid
+walks off the field). Since v1.237 a kid who is out stops your BBs and complains, but in a one-life match he stood with
+his hand up where he was tagged for the rest of the round, a shield for whoever was behind him, and only against you:
+his teammates' BBs passed through him (Storm the Cul-de-Sac: Trey out 6 m ahead, Brooke tagging you past him). Now,
+as real players walk to the safe zone:
+- for the first 4 s (`OUT_WALK_AFTER`) he stands where he was tagged with his hand up, and your BB still stops on him
+  and gets a complaint, as v1.237 made it;
+- then he walks back to his start at 1.5 m/s, hand still up, turning to face the way he goes, legs on the walk cycle;
+- from his first step every BB passes him, yours and his side's alike: he is in nobody's lane;
+- he stops at his start (within 1 m), or where he is if a wall holds him (no 0.3 m nearer in 2 s).
+A kid tagged on a ladder, a perch or the treehouse platform, the tutorial's targets and Infection's taggers are left as
+they were. A kid who walks back to respawn in a team battle or a defend (`retreating`) is unchanged: he is gone in
+seconds and is coming back.
+### Verified
+- `tests/out-walk-off.test.mjs` (new, 9 checks) on Storm the Cul-de-Sac, the kids' guns held: Seth, tagged 6 m from his
+  start, stands 3.5 s without moving (0 m) with his hand up and stops your BB; at 5 s he has walked 1.55 m toward his
+  start, hand up (raise 1.0), walk phase running, the mesh on his position; your BB and his side's both pass him
+  (3.55 m past); by 45 s he is 0.98 m from his start and stops there, and the round goes on.
+- `out-shot` (a BB on an out kid in his first 1.75 s still stops and gets a line) passes unchanged.
+- The full suite on this tree (v1.262–v1.264 together), four shards at once, 69 min: 151 of 164 suites passed first time.
+  11 died at boot or lost their browser under the load (page load past 30 s) and all 11 passed alone (car-side-fire,
+  country-club, harness, spawn-facing, stuck-sweep-3, vip, voices, wallet, wince, winnmark-props, winnmark-trees).
+  Two failed: `hollow-fort`'s "no pole inside a fort wall" counted your own first-person gun, which hangs off the camera
+  in the scene, on the deck by the merlons (where the camera stood depends on when the page last rendered); the test
+  now leaves the camera's meshes out and passes (fix-up commit). And `stuck-sweep-5` caught ally Sean held in
+  `deploying` by the Hollow's south fort in Full Auto Mayhem; v1.261's file does the same (1 of 2 rounds), so it is
+  filed in Found in play, not this run's.
+### Still open
+- Whether 4 s is long enough to enjoy shooting him, and how it reads to see an out kid walking across the fight to his
+  start; nobody has looked at it on screen yet but the test.
+- A kid whose start is far off (40-60 m on the big maps) is in sight for a while on his way; he can't be hit, so he
+  only looks like a target.
+
+## v1.265 — Free-for-all starts: the lot's rule on every map
+Decisions, "Free-for-all starts on Winnmark and Bunratty" (critic, 15 Oct; Michael: A, the lot's rule on every
+free-for-all). In Every Kid for Themselves your `road_east` start was 27.9 m from Seth's backyard and you were the
+nearest start he had (Trey 39 m), so he walked straight in: a player standing at the start was tagged at 4.3–7.6 s.
+Bunratty's Last Kid Standing did the same with Sean (23.7 m, his next nearest 44.7 m), and the Hollow's ten-way had four
+pairs 9.5–14.7 m apart, Brooke 14.7 m from your midfield start with a line to it. The rule, as the lot has had it since
+v1.134, now on all four free-for-alls:
+- every start at least 18 m from every other (the new ones 19.5 m, so the spawn's small offsets keep it);
+- nobody in sight of anybody from the start, by the kids' own sight rule (muzzle 1.05 m to chest 0.95 m over the ground);
+- no kid nearer your start than the rest, read as: every kid has another kid's start nearer than yours, so nobody's
+  first walk is to you;
+- the same for the Pickup Game's free-for-alls at every size (its kids are the map's first ones, in order).
+New `ffa_*` placements were found by a search over each map's own obstacles, preferring each kid's old spot: Winnmark
+keeps your start and moves Trey, Brooke and Jamie; Bunratty starts you between houses 1 and 2 (`ffa_side`) and the six
+kids round the street; the Hollow starts you in the west woods (`ffa_west`) with Sean at midfield. The lot's starts
+were already right, but its Pickup Game began with Marcus and Jamie, both nearer you than each other, so the lot gets a
+pickup order (Tyler, Priya, Brooke, Owen, Marcus, Jamie).
+Found on the way: a match's layout is not the same every load. The first match built after a page load draws its props,
+cars and trees differently from every later build (three.js takes `Math.random` for each new object's id inside the
+seeded build, and the first build makes objects the later ones take from caches). So the street starts are checked in
+both layouts. The Hollow's starts can only be hidden by its trees, which move between the two: there the distances and
+the nearest-start rule hold, your start is hidden from every kid's after the first build, and kid-to-kid sight lines
+can't be held. Filed in Found in play; what to do about the Hollow is in decisions.
+### Verified
+- `tests/ffa-starts.test.mjs` (new): each map in a fresh page, its first build, its second and its biggest Pickup Game.
+  Winnmark: closest pair 24.2 m, nobody in sight in any of the three, nearest kid to you Seth 28.2 m (his own nearest,
+  Trey, 24.2 m). Bunratty: 20.0 m, none in sight, nearest Nick 23.4 m. The lot: 19.0 m, none in sight, unchanged.
+  The Hollow: 19.7 m, no kid sees your start after the first build; 9.5 pairs of 45 see each other in the later forest
+  (the old starts: 11.5–13). Every Pickup size keeps the rule (3- to 5-way, 7-way, 8-way, 7-way). Standing at the
+  start, first tagged (3 rounds): Winnmark 11.2–14.5 s (the old file 4.3–7.6 s), Bunratty 16.5–18.3 s (4.7–5.7 s), the
+  Hollow 15.6–19 s (10.2 s or not in 20 s).
+- `pickup-ffa`: its Hollow 3-way check now names the new starts (Seth in the north fort, Sean at midfield), and passes.
+  The stuck sweep on the free-for-alls (three ways each, 90 s) passes, and so do `lot-ffa-opening`, `pickup-clock`,
+  `market-lot`, `fence-bound` (Bunratty's free-for-all), `opening-hold`, `gait` and `smoke`. The full suite was not run.
+### Still open
+- Whether the free-for-alls open too slowly now: nobody is in sight at BEGIN, so the first tags come later (the roam
+  sends a kid looking after 5 s unseen, as on the lot).
+- The Hollow's kid-to-kid sight lines, and the layout drift behind them (decisions; Found in play).
+
+## v1.266 — Lamplight's kids start out of sight of the entry
+Decisions, "Lamplight on Bellfield: Fernando's AK can reach your start" (builder, 15 Oct; Michael: A, move the starts
+out of the line to the entry). In the night 4v4 the four Bellfield kids huddled round `cluster_bulb` at the bulb's
+mouth and walked to their spots from there, and the huddle's west slots look straight down the street: CI on PR #75
+had a player standing at the entry tagged at 4.6 s, and locally 1 round in 45 at 4.7 s (an AK from 55.5 m). v1.265's
+run tried the huddle inside the kid fort and found its 1.12 m walls hide no standing kid (muzzles at 1.05–1.18 m), and
+nothing at the bulb hides one. Now each kid has his own start (`spawnAt`, as Owen's in Protect Ryan, v1.178) in a bulb
+house's west yard, where the house stands between him and the entry: Mason (-21, -17) and Diego (-24, -20) beside the
+north house, Christian (-21, 17) and Fernando (-24, 20) beside the south one. They walk out through the side yards to
+the same spots as before (the north car, the south car, the island, the fort) and come back to their yard when tagged.
+The spots were picked from a grid of the bulb end: a cell counts as hidden when no line runs from it at 1.05, 1.18, 1.35
+or 1.6 m to the entry or a step either side, or to our two allies' posts, at chest or head height. The houses do the
+hiding, so it is the same in the first build after a load and every later one.
+### Verified
+- `tests/lamplight-starts.test.mjs` (new): in the first build and a later one, all four start at their yard starts,
+  clear of obstacles, 58–61.8 m from the entry, with no line to it (0 of 40 lines each). Out of their yards inside 25 s
+  (at the spot, or fighting 8 m or more from the start): Fernando 4.3 s, Diego 4.8, Christian 7.4, Mason 14.4. Mason,
+  tagged, turns round at (-21, -17). A player standing at the entry, taggable, 8 rounds: first tagged 12–28.5 s or not
+  in 30 s.
+- 40 rounds of the same (`ROUNDS=40`): first tagged at 11.9 s at the earliest (Fernando), 17 rounds tagged at
+  11.9–28 s, 23 not in 30 s. Before, of 45: one at 4.7 s, one at 10 s, 32 at 13.8–29.1 s, 11 not in 30 s.
+- `bellfield` (its own Lamplight checks: kids fire, both sides lose lives, nobody wedged; standing at the entry 30, 30,
+  30 s), `pickup`, `pickup-kids`, `squad-orders`, and the stuck sweep on Lamplight twice over three ways (worst 3 s,
+  Fernando at the fort) pass.
+- The full suite in four parallel shards: 160 of 166 passed; the other six (`shop-gun-kinds`, `squad-orders`, `cars`,
+  `car-side-fire`, `seth-shotgun`, `stuck-sweep-11`) stopped on Playwright load timeouts under the load, with no check
+  failing, and all six passed when re-run.
+### Still open
+- Whether Lamplight opens too slowly now: the Bellfield kids come out of the yards 4–14 s in, and in 23 of 40 rounds
+  a player standing at the entry was not tagged in 30 s (11 of 45 before).
+- The Hollow's free-for-all starts are still waiting on Michael's answer (decisions).
+
+## v1.267 — Every match lays out the same on every load; the Hollow's free-for-all starts hidden
+Decisions, "The Hollow's free-for-all: the kids can't all be hidden from each other" (builder, v1.265; Michael: A, fix
+the drift, then hide the Hollow's starts). v1.76 seeded each match's layout by swapping the global `Math.random` for
+the build, but three.js draws from `Math.random` too (four calls for every new object's uuid), and the first build after
+a page load makes materials and geometries that later builds take from caches. So the first match of a session put its
+props, parked cars and trees in other places than every later build, and a map built after other maps differed again
+(on the old file about 350 of the Hollow's 474 obstacles stood elsewhere in a fresh load than in a later build, about
+20 of Bunratty's, and 2 of the treehouse yard's trees). Now the game's own code draws from `gameRandom()` (191
+calls, all of them), which is `Math.random()` except inside a seeded build, where it is the match's seed: three.js
+keeps the real `Math.random` and never touches the seed. Two smaller holes on the way:
+- the night sky's 900 stars drew from the seed before the trees, so a night match laid out differently from the same
+  match by day; the stars have their own fixed stream now;
+- a Pickup Game is built under the seed `pickup_game`, so its Hollow free-for-all had another forest from the
+  Ten-Way's and the starts hidden in one were not hidden in the other; a Pickup free-for-all is now laid out as its
+  map's own free-for-all (`seedFrom`).
+Every map's props and trees moved once, to a third layout (neither the old first-build one nor the later one: there is
+no way to keep three.js's draws in the stream). The Hollow's ten starts were then searched again in the fixed forest,
+from the old spots: nobody can see anybody from his start, from the start or 0.3 m off it (the kids' sight rule, 1.05 m
+to 0.95 m); every start is 20 m or more from every other; every kid has another kid's start nearer than yours at every
+Pickup size; and every kid's start is 30 m or more from yours. That last one came from a first search, 25 m from you,
+where Eric came out of the trees and tagged a player standing at the start at 3.9 s in 2 of 14 rounds. Your start
+moved 11 m south-west in the west woods (-34, -18.5), still facing east; Sean's left midfield, which half the field
+could see.
+The props and trees moving once showed up two old faults the full suite caught:
+- a yard prop slid off a fence by the overlap's span, not by how deep it was in: a thin fence inside a box's footprint
+  moved it 0.25 m, still on the fence, and the bin beside it pushed it back on each pass (Seth's House: a moving box
+  across the iron fence at x -13). `settleYardProps` now slides a prop by its depth on that side, the shortest of the
+  four ways out that lands clear of every fence, house and trunk, six passes (was four);
+- a kid's spawn nudged out of cover took the shorter axis only, and on the Hollow two pallets now have a tree 0.8 m
+  behind: `findClearSpawn` bounced Seth and Brooke between pallet and trunk for all 16 tries and left them in the
+  pallet, where they stood all 90 s of Infection in the Dark. It now takes the shortest of the four exits that lands
+  clear of everything when one does, and falls back to the old walk when none does.
+### Verified
+- `tests/layout-same.test.mjs` (new): one match on each of the ten match maps, each built first in a fresh page and
+  again after all the others in reverse order: 0 obstacles differ on every map (358 on Winnmark, 311 Bunratty, 473 the
+  Hollow, 128 the lot, 244 Northcliff, 42 the treehouse yard, 109 Bellfield, 72 the school, 86 the club, 69 the store).
+  The Hollow and Bunratty in a second page load: 0 differ. The Hollow's 8-way Pickup free-for-all by night: 0 differ
+  from the Ten-Way by day. On the old file the same suite fails the treehouse yard (2 trees moved), and the Hollow (about 350
+  obstacles) and Bunratty (about 20) across loads.
+- `tests/ffa-starts.test.mjs` now holds the Hollow to the whole rule, the special case for its woods removed: closest
+  pair 20.9 m, nobody in sight in the first build, the second or the 8-way Pickup Game, every Pickup size keeps it;
+  nearest kid to you Eric 25.3 m was the first search's, now 30 m+. Standing at the start, first tagged: the Hollow not
+  in 20 s in 3 of 3 (and in 14 of 14 rounds of a probe; the first search's starts: 3.9–19 s); Winnmark 12.9–13 s or
+  not, Bunratty 12.5–17.5 s, so the street maps keep the rule in their fixed layouts.
+- `pickup-ffa`, `rival` pass. `lamplight-starts`: Mason now meets the fight 7.4 m out of his yard, in the side yard,
+  and trades from there (3 rounds traced: out and fighting at 4–6 s); the check's "fighting 8 m from his start" is now
+  6 m.
+- `yard-props` (failed on the branch: 1 box through a fence in Seth's House) passes: 0 through fences or houses, 0 in
+  trunks or other props on all four maps. The stuck sweep on Infection in the Dark (failed twice, Seth and Brooke 90 s
+  in `chasing` at their spawns, every way) passes: both clear their pallets, and Seth is on a player at midfield
+  inside 20 s.
+- `spawn-facing` then failed Infection in the Dark at 65° (limit 60): its nine taggers ring midfield 25–40 m out, so
+  their centroid is 2.3 m from you and its direction is noise (60.2° on v1.266; Seth 1.3 m and Brooke 0.6 m off their
+  old spawns tipped it). The check now leaves out a start whose kids' centroid is nearer than a quarter of their mean
+  distance (only this match), and passes.
+- The full suite in four parallel shards: 159 of 168 passed first time. Seven stopped on Playwright's 30 s page load
+  (calendar, ctf, deploy-progress, harness, pickup-lives, settings, treehouse-hold) and treehouse hit the 10-minute
+  limit under the load; all eight passed alone or two at a time. The ninth was `spawn-facing`, above.
+### Still open
+- Every map's props, cars and trees stand in a third layout, the same on every load now, but nobody has looked at it
+  on screen; suites that read a spot near a prop held, and the stuck sweeps found nothing new.
+- The Hollow starts you 11 m further into the west woods in the Ten-Way; whether it opens too slowly, as v1.265 asked.
+
+## v1.268 — Teammates out of earshot come in over the walkie
+Backlog D.10 (Michael: A, 3 Oct: teammates' lines in earshot as they are, out of earshot over the walkie; a walkie on
+your kid's belt, done in v1.149; push-to-talk waits for online play). The callouts waited on the voices build reaching
+main, which it did on 16 Oct. Until now a kid's line past 24 m (`tryNpcSpeak`'s earshot gate) went unsaid, so a
+teammate across the map never spoke at all. Now a teammate's line from past earshot is said over the walkie: the talk
+button's click, his voice at the walkie's level wherever he is, and the line on the squad box under the order
+("📻 Trey: …"), as your squad order's answer already was (v1.248). Every situation he has comes this way (spotting a
+kid, tagging one, being tagged, being pressed, the teammate lines), except a free-for-all, where nobody is on your side,
+and Infection's taggers. One walkie line every 4 s at most (`WALKIE_GAP`), so a far fight is not a radio play; an
+order's answer holds the walkie the same 4 s, longer than it shows (3.5 s), so chatter never writes over it. Enemies
+out of earshot still go unsaid.
+On the way, a slip from v1.248: an order's walkie answer set the speech cooldowns on wall time (`performance.now()`),
+when since v1.150 they run on the round clock. In play the page is older than the round, so after an order every kid
+in earshot went quiet until the round clock caught up with the page's age (a page open 10 minutes: 10 minutes of
+silence, i.e. the rest of the round). The pool noodle's line (`kidSayLine`) had the same slip. Both are on the round
+clock now.
+### Verified
+- `tests/walkie-callouts.test.mjs` (new), Winnmark's 3v3: a teammate 200 m off is heard over the walkie and shows on
+  the squad box; a second walkie line 2 s later waits, 4.1 s later goes out; an enemy 200 m off goes unsaid; a teammate
+  5 m off speaks where he stands; after an order the cooldowns are 1.5 s and 4 s on the round clock (old file: −26.9 s,
+  the page's age against the round's); a walkie line 2.5 s after an order waits and the answer stays; in Every Kid for
+  Themselves a kid 200 m off goes unsaid. Two played rounds of 60 s standing at the start: 1–2 walkie lines each, all
+  teammates, 39 s apart where two. On the old file the suite fails five of these checks (no walkie lines in play).
+- The full suite: 149 of 169 in four parallel shards, 0 checks failed; the shards' wrapper hit its hour before the
+  last 20 ran, and those, the three it cut off and `stuck-sweep-7` (a Playwright page-load timeout) passed three at a
+  time: 169 of 169.
+### Still open
+- How the walkie sounds next to the near voices in a real browser (headless has no voices), and whether one line every
+  4 s is too much or too little in the 6v6 Last Saturday.
+- Push-to-talk, with online play (D.2).
+
+## v1.269 — The kids' route grid is built at BEGIN, not mid-fight
+Backlog Found in play (critic, 16 Oct): a frame hitch the first time a round needed the kids' distance field. The
+cells a kid fits in (`kidFreeCells`, v1.152) were worked out on the first pocket route or squad order of a round, one
+step of 48–555 ms headless depending on the map (the Hollow's big battle the worst, Bunratty and The Last Saturday
+about 350), and in The Last Saturday it landed as the fight opened. The obstacles never move in a round, so the grid is
+now built in `startScenario`, at BEGIN, where the briefing has just closed and the opening hold covers it. The grid's
+key (this match's obstacles and bounds) is unchanged, so a match that adds an obstacle still rebuilds it. The fills
+toward a goal (about a millisecond each) still run when they are needed.
+### Verified
+- `tests/kid-cells.test.mjs` (new): in The Last Saturday, the Hollow's big battle and Bunratty's 4v4 the grid is there
+  as the round starts, for that match's obstacles and bounds, and the first 6 s of play use it without a rebuild
+  (slowest step 7–15 ms; a build costs 247, 436 and 251 ms here). A PUSH UP order 1 s into Bunratty's 4v4: the next
+  step 24 ms, was 300 ms on v1.268's file, which fails all four checks (no grid at BEGIN).
+- `last-kid`, the stuck sweep's first suite (8 matches) pass. `squad-orders` failed its keep-distance share once (0.48
+  against 0.6, three browsers at once) and passed twice on this file (0.91, 0.82) and twice on v1.268's (0.75, 0.84)
+  run side by side, so it is not this change.
+- The full suite: in v1.270's entry.
+### Still open
+- BEGIN itself now takes the build's 50–550 ms on the click, before the first frame of the match; nobody has felt
+  whether that shows on a slow machine.
+
+## v1.270 — Price Check's stockroom check allows a fight taken into the stockroom
+Backlog Found in play (producer, 16 Oct; CI on docs-only PR #83): `tests/grocery-store.test.mjs` failed in CI, first
+"store_price_check_3v3: the stockroom kids come through the back wall onto the floor", then on the re-run "store_night_4v4:
+no kid is wedged in advancing for 4 s or more" (Tyler, 4 s at (−0.8, −25.2)). Price Check, 30 sampled 60 s rounds with
+the player standing at the start: the first stockroom kid reached the floor at 8.7–27 s in 28, at 41.7 s in one, and
+in one none came out at all. In that round Eric went through the back wall at 15 s and Brooke at 42 s, and the three
+stockroom kids lost 3 lives each to our 0: the fight happened in the stockroom because our side carried it there.
+That is the match working, so the check now passes when they come out, or when one of ours goes in and they lose a
+life. The game is unchanged. The night match's wedge did not come up in 24 sampled rounds (no kid over 2 s advancing
+in place); it stays open with the numbers.
+### Verified
+- `tests/grocery-store.test.mjs` passes with the new check; the round that failed it would now pass (Eric in at 15.2 s,
+  their side 9 lives lost).
+- The full suite in four parallel shards, with v1.269 in it: 170 of 170 passed first time, `kid-cells` and
+  `grocery-store` among them (64 minutes).
+### Still open
+- The night 4v4's Tyler wedge at the centre doorway, not reproduced in 24 rounds.
+
+## v1.271 — a kid stops "suppressing" into the wall beside him
+CI on 623ef41 failed `hollow-held`: Eric (our side, the MP5) held fire 20 times in a round from one metre at the Hollow north
+fort's south-west corner (−1, 30), where the line is 19. Forty local rounds put him there 8–16 times in five of them.
+His deploy spot is that corner, inside the player's fort. From it he walked up and down the wall, got an eye line, and
+pulled into the wall 3 m from his muzzle. Most of those pulls were suppression on the move: the march suppression (v1.67)
+and the bound suppression (v1.25) need only an eye line to the last-seen spot, not a clear muzzle. The held count
+(v1.122) rose to 7, but only the shooting state's move-on reads it, so nothing acted on those pulls. Now a kid whose
+last two pulls were held at a wall from within 1.5 m of where he stands doesn't suppress from there; he walks on, and
+a clear shot clears the count as before.
+### Verified
+- The 40-round probe of the Hollow 3v3: the worst spot a round fell from 16 held pulls (8–16 in five rounds) to 9
+  (8 or more in two rounds; most rounds 1–4).
+- `hollow-held`, `cover-fire`, `stuck-sweep-1`, `bound-forward`, `fence-bound`, `clear-guns`, `ctf` pass.
+### Still open
+- Eric still deploys into that corner; whether that deploy spot should move is a design call, not raised yet.
+
+## v1.272 — Protect Ryan: a plank barricade in front of Priya
+Michael's A on the Found-in-play item (control room, 18 Oct): Bunratty Court climbs about 7 m from the bulb to the west
+end, and our Sean fired his AK downhill from the high street, 30–41 m off, over the bulb fort's 1.12 m back wall to tag
+Priya, their VIP. It happened in 3 of 196 sampled rounds, now and then inside the first 8 s, which broke the VIP suite's
+"no VIP falls in the first 8 s" line. Protect Ryan now builds Bunratty Court with a stacked-plank barricade 1.5 m tall
+standing just in front of Priya inside the fort, between its corner bins, and it is the cover she holds. It stands 0.55 m
+from her and not against the back wall: at the wall, the downhill line to her head still got over it. The match
+is laid out under the default court's seed (a new `seedArg`), so every prop and tree stays where it was and the
+barricade is the one obstacle added. The other Bunratty matches are unchanged.
+A slit at her eye height, so she could shoot through it, was tried first (three heights) and dropped. Anyone who can
+see her muzzle can hit her upper chest from up the hill, so the slit let 2–32 hill BBs of 960 through, the same as no
+stack. So she now can't see down the lane west of the fort either. That is raised in decisions, Pending.
+### Verified
+- Sean firing real BBs from his eight hill spots (120 shots each) at seven places in the fort: 0 of 6,720 reach her with
+  the barricade; without it 1–36 of 960 at each place. `vip-spawn`'s control (Owen at his old fort spawn, 27 of 720 hits)
+  now runs with the barricade lifted out, and with it in, 0 of 720.
+- `vip`: the barricade is there, 1.5 m, and is the cover Priya holds (0.22 m off her anchor). From 544 high-street
+  points 2 m or more above her and 20 m+ off, no sight line reaches her chest or head (362 and 382 do without it). The
+  court's obstacles are the same as the default build's but for the barricade.
+- 24 played rounds of 40 s, the player untaggable at his start: no VIP hit at all; 3.7 tags a round among the others.
+- `bulb-sight`: from behind the barricade Priya can't see a player in the lane at (18.7, 1.4) (1 of 40 samples, 2–3 shots).
+  Her raised-bulb check is now taken from the bulb's north side at (34, 7): 39 of 40 samples, 17–20 shots in 20 s.
+### Still open
+- Priya can't fire down the lane from her spot any more (west of the fort: 0 of 4 test spots, was 4 of 4); she still
+  covers the bulb's north side, its south-west corner and the open back. Whether that is right for the match is in
+  decisions (A keep, B a 1.3 m stack, C move her spot).
+
+## v1.273 — Build your crew, step 1: the two rosters, Garrett and Colin, and the asks
+Backlog D.28 (Fable card d28-crew). Michael answered the design question with his own design (decisions, Answered:
+"Build your crew"): both crews are fixed, yours fills from five friends at story moments, Seth's is eight with two new
+kids, and it is built in five steps, each playable on its own. This is step 1: the rosters, Garrett and Colin, the
+joining moments and the texts. Your crew does not take the field yet (step 2), so no match plays differently.
+- The rosters: `CREW_ROSTER` is Eric, Sean, Nick, Alex and Diego, five at most (`CREW_MAX`); nobody else can ever join
+  and Seth never does. `SETH_CREW_ROSTER` is Seth, Trey, Brooke, Tyler, Evan, Andrew, Garrett and Colin, the data step 2
+  and the finales (step 3) will read. Who has joined is saved as `persist.crew`, in the order they joined; anything
+  else in it (a tampered or future save) is ignored. An old save loads with nobody in.
+- Garrett and Colin are characters with their own looks, numbers and voice lines. Garrett: Seth's neighbourhood, tall,
+  blond, average build, aggression 0.55, accuracy 0.68 (balanced, a good shot). Colin: from near Diego's street, average
+  height and build, curly brown hair, aggression 0.88, speed 1.1, accuracy 0.5 (runs straight at you). Neither is in a
+  match yet: their guns (Garrett mid- to high-tier, Colin cheap) are set when they first take the field, in step 3.
+- The joining moments (the spec left the exact matches to this session): each kid's ask is a text with two buttons on
+  the flip phone, "Yes, you're in" and "Not yet". Not yet leaves the ask open the next time you look, because the
+  roster is fixed and you are meant to end the summer with all five; a kid can't be lost by a wrong tap.
+  Eric asks when Winnmark is done (after its last match, Lights Out 2v2), Sean and Nick when Bunratty is done (its last
+  match), Alex after Hold the Treehouse at Stoneglen (where the twins split: Andrew goes to Seth), Diego after Flags on
+  Bellfield.
+- The texts: Eric's "sean from bunratty heard about u" goes, since Sean is your brother. After Winnmark Sean texts "u
+  been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric", and Eric asks (Michael's
+  words for both). Eric's Northcliff text now has Evan as "seths old friend". Diego, who has only been across the
+  street from you, texts once after Lamplight on Bellfield, about Colin calling your crew soft, before he asks. Seth
+  texts after the flags that Andrew, Colin and Garrett are with him now ("u havent met garrett. u will").
+- The mirror's YOUR CREW card has a third row, "In it · n of 5", with the names, or "Just you so far" on a new game.
+### Verified
+- `tests/crew-roster.test.mjs` (new, 23 checks): the two rosters (no kid on both, Seth never yours, all real characters);
+  Garrett and Colin built (Garrett's scale 1.12 against Colin's 1.0) with 4-5 own lines in every situation; one ask per
+  kid, from the kid himself, on days 21, 42, 42, 68 and 74 of the summer. A new game has nobody in and no ask open. After
+  Winnmark the phone shows Eric's two buttons; Not yet keeps the ask open across a close and reopen; Yes puts Eric in and
+  his text then says "Eric is in your crew" with no buttons. A save and load keeps him; an old save without `crew` loads
+  with nobody in and Eric's ask open. Through the whole ladder the asks open at exactly the four other moments; all five
+  in, in order, and Seth, Garrett or Rebecca can't be taken in, nor a kid written into the save by hand. With all five
+  in, Squad Up still fields its own Seth and Trey.
+- `texts` updated for the new count (13 texts by the Hollow's big game, was 10; Sean's "come home" is dated Sunday 22
+  June as Eric's was); `crew` and `mirror` updated for the third crew row. `voices`, `kid-clothes`, `kid-face`, `out-shot`,
+  `school-kids`, `calendar`, `bed-summer` pass with the two new kids.
+- `hats` and `tops` count the mirror's rows and were updated for the third crew row (14 rows on a new game, 16 with
+  a top; the lit choices stay 14, the new row has no buttons).
+- The full suite in four parallel shards: 159 of 171 passed first time. The 12 that didn't were `hats` (the row count,
+  above), nine Playwright page-load timeouts and two closed browsers, all from four browsers at once in this container.
+  All 12, and `tops`, passed re-run two at a time: 171 of 171.
+### Still open
+- Step 2 (your crew in every team match, solo matches kept solo, benching) and the rest of Michael's steps. Until step
+  2 lands, the crew is a list on the phone and the mirror and nothing more.
+- The Last Saturday's briefing still names Seth's crew as Seth, Devon, Mitchell, Mason, Marcus and Ryan, with Brooke and
+  Trey on your side; its sides change in steps 2 and 3 (6 v 8).
+- Brooke's and Trey's texts were read and left as they are: Brooke's are friendly gossip that still reads right from
+  Seth's sister. Michael may want them sharper.
+- Whether "Not yet" should exist at all, or a No should be final, is for Michael to say if he minds; the fixed roster
+  argued for keeping the door open.
+
+## v1.274 — Build your crew, step 2: your crew takes the field
+Backlog D.28, step 2 of Michael's design (Fable card d28-crew). The spec kept "the outnumbered matches Michael marks"
+solo; asked which (decisions, "Build your crew, step 2"), he answered C: none stays, every team match takes your crew,
+and step 3 rebalances them. So from this version a kid who has joined plays.
+- Which matches: a team match is one that gives you allies today, 31 of the 73, all on the ladder (the tutorial, the
+  free-for-alls, the pickup games and online play aside). The other 42 never take the crew. With nobody in the crew
+  (every new game until Winnmark is done) `crewSetup` hands back the scenario's own list, the same object, so nothing
+  changes for anyone who has not taken a kid in.
+- Your side: the kids the match keeps, then your whole crew, then the places left. Kept are a VIP (Ryan, Rebecca),
+  Seth while he is on your side (Winnmark's team matches; he never joins), and the kid a match is named after (Nick in
+  You and Nick, Sean in Sean Has Your Back, day and night) until he is in the crew. Your side is never smaller than the
+  match's own: when the crew is short, the match's own allies fill the places left in their order, then kids from the
+  street (the kids who play on that street with a gun of their own, in match order). A crew kid takes his own spot when
+  the match has one for him, otherwise a free ally spot, past those the first ally's spot without its role.
+- Each crew kid plays on his own gun, the one he carries most across the summer: Eric MP5, Sean AK, Nick AR, Alex AK,
+  Diego MP5 (`CREW_GUNS`). Hand-me-downs are step 4.
+- Their side: a crew kid the match puts against you is swapped for a kid from the street at his spot, with that kid's
+  gun (Nick in Two Against the World, Sean in First Time in the Woods and You and Nick, Diego in Bellfield's). With Seth
+  on the other side his crew kids on yours cross to him at his side's first spot (Brooke in the Hollow's big games, Trey
+  and Brooke at Willow Bend and in the Last Saturday), as the step-2 question said. When the street kid is needed with
+  Seth there, his crew comes first.
+- So the odds move: Two Against the World is 6 v 4 with all five, Squad Up 7 v 3, and the Last Saturday comes out as
+  you and your five against Seth and seven, the 6 v 8 the spec asks of it. The Big Game with Eric, Sean and Nick is 5 v
+  6 (Rebecca stays, Brooke crosses). Step 3 tunes each zone for the crew you would have the first time.
+- Benching: the briefing (the pre-match popup) gives each crew kid a Bench button; a benched kid shows under your side
+  "on the bench" with Bring. His place stays empty, as the spec says. The bench lasts the session and is not saved,
+  so a reload brings everyone back.
+- The map's cards and the briefing count the crew (a card reads 6V4); the result card's "Seth's crew" line counts the
+  sides as played. `CREW=all` in the stuck-kid sweep puts the whole crew in first.
+### Verified
+- `tests/crew-field.test.mjs` (new, 27 checks): a new game leaves all 73 matches as they are; with all five in, the 42
+  solo matches still play alone and the 31 team matches take the crew. Two Against the World: Eric in, you and Eric v 4
+  (2V4); all five, 6V4 with Nick swapped for Owen, each kid on his own gun. You and Nick with Eric: Nick and Eric v Sean;
+  with Sean and Nick in, a street kid for Sean. Squad Up: Seth and your five v 3. Protect Ryan: Ryan and your five.
+  The Last Saturday: your five v eight, Brooke and Trey with Seth, 6V8. The Big Game with three: Eric, Sean, Nick,
+  Rebecca v six; Nick benched, his place empty and the briefing names him. First Time in the Woods: Sean yours, a street
+  kid beside Seth. Over all 31 with all five: nobody twice, none of the crew against you, no VIP lost, neither side
+  short of its own count. The briefing's Bench and Bring move a kid off and back; six matches entered with the crew
+  (The Big Game with Sean benched from the briefing) field exactly the computed sides, Eric on his MP5; the crew
+  survives a save and load.
+- `crew-roster`'s last check now expects Squad Up as Seth and your five (it said step 1 changed no match).
+- The stuck-kid sweep with the whole crew in (`CREW=all WAYS=spawn`, the 31 team matches, 90 s each, four browsers):
+  no kid held a moving state in one place over 15 s; the worst was Brooke 5 s in Full-Auto Mayhem, beside Seth's
+  side's fort; no page errors.
+- The full suite in four parallel shards: 169 of 172 passed first time; the three that didn't (`out-walk-off`,
+  `treehouse`, `stuck-sweep-10`) were Playwright page-load timeouts from four browsers at once, and passed re-run
+  alone (with `treehouse-*`): 172 of 172.
+### Still open
+- Balance is step 3: with all five in, early team matches are easy (Squad Up 7 v 3, Two Against the World 6 v 4), as
+  the spec expects of a replay, but the first time through Bunratty and the Hollow's matches are already bigger on your
+  side than they were. Each zone gets tuned for the crew you'd have the first time.
+- The briefing's text (`desc`) still names each match's own allies ("You're on blue with Eric, Rebecca, Sean, and
+  Brooke"), while the roster under it shows the crew. Rewriting them belongs with step 3's sides.
+- Seth still plays on your side in Winnmark's team matches on a replay after he turns rival (the spec has him go to the
+  other side); that, the finale rule for Winnmark, and whether a finale's extra kids grow with the crew are step 3's
+  open questions in decisions.
+- Garrett and Colin still take no field; step 3 gives them guns and places on Seth's side.
+- The bench isn't saved and has no controller hint; whether a shorthanded win pays more is still open (no extra pay now).
+
+## v1.275 — Build your crew, step 3: each match tuned for the crew you'd have
+Backlog D.28, step 3 of Michael's design (Fable card d28-crew). Step 2 put your whole crew in every team match, so
+your side had grown and the odds with it (Squad Up 7 v 3 with all five). Asked whether the other side stays fixed or
+grows with your crew (decisions, "Build your crew, step 3"), Michael answered A: fixed, tuned for the crew you'd have
+the first time you reach each match, so a replay with all five is easy, as his spec says.
+- The first-time crew: every kid whose ask comes before the match on the ladder, taken in (`crewFirstTime`). Winnmark's
+  matches have nobody, Bunratty's Eric, the Hollow, the lot and Northcliff Trace Eric, Sean and Nick, Bellfield's Alex
+  too, and everything from Northcliff's finale on all five.
+- Those sides fix the match once (`crewSetup` now builds them first, then plays them with your crew as it is). Your side
+  is never smaller than the first time: kids not yet in your crew have their places filled by the match's own allies,
+  then the street, so an old save or a "Not yet" plays the same numbers. A benched kid's place still stays empty.
+- Their side is a fixed number for the match. An ordinary match keeps the margin it was built with: their side grows by
+  as many as the first-time crew adds to yours (Two of Us, Four of Them was 2 v 4 and is 4 v 6 with Eric, Sean and Nick;
+  the school's portables 3 v 3 is 6 v 6). A zone's finale has their side one more than yours: Bunratty 3 v 4, the Hollow
+  5 v 6, the lot 4 v 5, Northcliff 6 v 7, the school 6 v 7, Willow Bend 6 v 7. Lights Out stays 2 v 2 with Seth beside
+  you. The Last Saturday is two more, 6 v 8, and its other side is now Seth and his seven as the spec names them (Trey,
+  Brooke, Tyler, Evan, Andrew, Garrett, Colin), not the old Devon, Mitchell, Mason, Marcus and Ryan; its briefing says so.
+- Where their side grows, the extra kids come from the street at the match's own spots in turn (deploying from the
+  huddle, not from a spot's own start or nest), Seth's crew first when Seth plays; when the street runs short, the rest
+  of the zone's kids, then anybody's, each on the gun he carries most. The street's kids who play against you there
+  go to their side first; places left on your side are filled after theirs (the school's six all play against you,
+  where Jordan and Malik had been standing with you and Brooke against you). An extra kid never brings a sniper rifle (he has
+  no nest to shoot it from; Devon and Brooke sat still with one), nor a spot's flag run or lives; on Bellfield's flags
+  the extras push, as Christian does, so only Fernando keeps their flag (Michael's C of v1.191), and on Lamplight an
+  extra keeps the yard start of the spot he takes, out of sight of your entry (v1.266). Where it shrinks (Brooke crossing to Seth in the
+  Big Game used to make it 5 v 6), the match's own kids go from the end of its list, never Seth, a crosser or a
+  defender, so the Big Game is the 5 v 5 it was built as.
+- Garrett (an AR) and Colin (a MAC-10) take the field: with Seth, once Bellfield's flags are done and Seth has texted
+  "u havent met garrett. u will". Garrett plays at Willow Bend (both matches) and both play the Last Saturday.
+- Seth turns: replaying one of Winnmark's team matches once Lights Out is done, Seth plays for the other side, and Trey
+  with him (his crew crosses as it does elsewhere). Squad Up with all five is your six v Seth, Brooke and Trey.
+### Verified
+- `tests/crew-balance.test.mjs` (new, 21 checks): over the 31 team matches the first time through, every ordinary match
+  keeps its own margin and every finale is one more (the Last Saturday two, Lights Out 2 v 2), the eight finales coming
+  out as listed above. Their side is the same number with nobody in the crew, the first-time crew or all five, in all 31.
+  Two Against the World with all five is 6 v 4; Northcliff's finale with nobody in is 6 v 7 with the street on your side,
+  with Nick and Alex benched 4 v 7. The Last Saturday is your five v Seth's eight, Garrett on an AR and Colin on a MAC-10.
+  Garrett and Colin turn up only on Seth's side and only after the flags (Willow Bend's two and the Last Saturday). Squad
+  Up the first time is you, Seth and Trey v 3; replayed after Lights Out with all five, your six v Seth, Brooke and Trey;
+  Lights Out replayed with Eric, you and Eric v Seth and Trey. Five matches entered and played 10 s (the Last Saturday,
+  Northcliff's finale with nobody in, Bunratty's finale with Eric, the Squad Up replay, Willow Bend's finale): the field
+  is the computed sides (6 v 8, 6 v 7, 3 v 4, 6 v 3, 6 v 7), at least half the kids off their spots, no page errors.
+- `crew-field` updated for the new numbers (You and Nick with Eric is 3 v 2, the Big Game with three 5 v 5, First Time in
+  the Woods with Eric and Sean 4 v 4 with Rebecca filling), `crew-roster` (with the ladder done, Squad Up has Seth on the
+  other side) and `crew` (the Hollow's 3 v 3 with nobody in has three allies in the bandana, not two).
+- Suites written for the old sides, updated to the tuned ones without loosening what they guard: `lot-hollow-polish`
+  and `grocery-store` play each match with the crew you'd have the first time; `last-saturday` counts 13 kids;
+  `night-lights-allies` lets the fifth ally start on the next ring out (within 9 m, the first four still within 4.5);
+  `lamplight-starts` lets the fifth Bellfield kid start at one of the four yard starts (still no line to the entry);
+  `idle-ally` reads Sean in Night Swim and the lot's Brooke as the sniper who holds (Night Swim's and Night Game's Brooke
+  cross to Seth now); `school-kids` asks that every school kid not on your side is on theirs before anybody else is;
+  `vip` counts the ∞ by the kids there; `voices` reads each school kid's lines before the next talks (six kids' 144
+  lines ran past the log's 64); `laser` stages whichever of theirs has a laser in Bunratty's 3 v 4 finale.
+- The stuck-kid sweep over the 31 team matches at spawn, with nobody in the crew and with all five (90 s each, two
+  browsers): no kid held a moving state in one place over 15 s; the worst was 6 s (Devon in the Big Game and Full-Auto
+  Mayhem, at the Hollow's south fort); no page errors.
+- The full suite in four parallel shards, on 85cb15a: 137 of the first 138 suites passed when the session's four hours
+  ran out; the one that didn't was `harness` ("NEW GAME stalled for 10 s", a page load under four browsers at once; it
+  passed run alone). The other 35 suites are owed to the next session before review.
+### Still open
+- Whether the first time through feels right is a playtest: the Hollow's finale is 5 v 6, Northcliff's, the school's
+  and Willow Bend's 6 v 7. Ordinary matches keep the margins they were built with, so Two of Us, Four of Them is 4 v 6.
+- A player who answers "Not yet" or loaded an old save plays the same numbers, the empty places filled by the street
+  (the Hollow's 3 v 3 then has Mitchell beside you). Whether those fills should be the crew kid who asked is Michael's.
+- With more kids in the store, `grocery-store` once saw Marcus held 4.0 s (its limit) face to face with Alex in an
+  aisle in Inside Riverside Market's 6 v 6; it passed re-run. Worth a look if the critic sees kids blocking in aisles.
+- The briefings of the other team matches still name each match's own allies in their text, while the roster under it
+  shows who plays; the Last Saturday's is rewritten.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) are their own sessions.
+
+- The owed full suite, next session (fable d28-crew, resumed 19 Oct), on c04b6d6 (v1.275 with origin/main merged in;
+  main had changed only docs/decisions.md, where the branch's full answered entries were kept): all 173 suites in four
+  parallel shards, 171 passed. The two that did not were the load again, not the code: `spawn-facing` (the browser tab
+  crashed entering a scenario, "Target crashed") and `under-parts` (page.goto timed out at 30 s); both passed run alone.
+  CI's ten shards were green on the same head.
+
+## v1.276 — Build your crew: the fourth ally starts inside the store
+Michael re-queued the crew card (19 Oct) because PR #95 went red on 3254c3e. `squad-orders` failed in the pull_request
+run (push up's team stood 20.27 m from the other side against a 20 m line, 35.97 m with no order) and `grocery-store`
+in the push run (Price Check: Marcus held 4 s in the stockroom, `advancing`, 1.3 m from Alex). Each passed in the other
+run on the same commit. The card asked whether either was a real fault or only timing.
+- `grocery-store` was a real fault, and one a player would meet. Allies start fanned out beside you, ±2.0 m along the
+  street and then ±3.4 m (v1.33). That was fine with two allies. With the crew's four and five, the fourth steps out
+  3.4 m, and the grocery store's team matches start you at z 16.8 by the front wall (the store's bounds end at 17.6).
+  So Alex started at (12.2, 19.2), outside the store. He spent every store team match running round the lot outside
+  the walls, unable to get in, and fired 0 shots in 60 s in every round sampled (5 of 5 here, and in CI's log). Their
+  kids pressed against the stockroom's back wall toward him, and that is how Marcus came to be "wedged". The fan now
+  stays inside the field: a spot past the bounds (0.8 m in) starts at the edge, 2.4 m behind the player.
+- `squad-orders` was only chance. The round is not the same twice: push up's mean distance came out 14–20 m in five
+  runs here, so CI's 20.27 was the tail. Each measured round now draws from one seed (`_gameRng`, the way `under-parts`
+  and `backyard-guns` steady their draws). Every order meets the same deploy and the same draws until it is given, so
+  the numbers are the same every run. The 20 m line and the other checks are unchanged.
+- With Alex inside, our side reaches the stockroom more often. Devon, holding its centre doorway in Lights Out at the
+  store, was once tagged out there before his first peek: 0 shots and 0 metres walked, with Diego 0.1 m from him. That
+  failed `grocery-store`'s "every kid moves or fires" check. A kid tagged at his post is playing, not stuck, so the
+  check now also passes a kid who lost a life. The wedge and Devon-holds-the-doorway checks are unchanged.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` (new): all 31 team matches on the ladder entered with all five in the crew. Every
+  kid starts inside the field in every one. Before the fix this failed exactly at `store_price_check_3v3` and
+  `store_night_4v4` (Alex at (11.8, 19.1)). In Price Check over 60 s, Alex fired 0 shots and was outside all 3600 frames
+  before the fix; after it he fired 122 and was never outside.
+- `grocery-store` 5 of 5 before the Devon change, run beside `squad-orders` (one under load each time). After it, 3 of
+  3 run beside the full suite's shards. Marcus's wedge did not come back in any of them.
+- `squad-orders` 5 of 5 seeded, beside `grocery-store`: push up 19.87 m against 37.27 m with no order (37.70 once).
+  Keep distance 0.84 in the band against 0.15–0.17; find cover and follow me pass.
+- Devon over 8 sampled Lights Out rounds at the store: out of lives by 60 s in all 8, firing 0–12 shots.
+- The full suite in four parallel shards on d6fe817, with two more suites running beside it: 156 of 174 passed.
+  Of the eighteen that did not, sixteen never started (`page.goto` timed out at 30 s with six browsers up), one was
+  `harness` ("NEW GAME stalled for 10 s", the same load stall as v1.275's run), and one was `grocery-store`'s Devon
+  round above, before its change. All eighteen passed run again, at most two at once: the crew family (5 suites),
+  pincer, shop-tabs, squad-orders, treehouse-hold, kid-hands, northcliff, spawn-facing, bb-sweep, grocery-store,
+  pickup-kids, shorts, harness and stuck-sweeps 6, 7, 12, 15 and 16.
+### Still open
+- The ally fan is still a ring around where you start. Where the ring leaves the field, the clamped kid starts just
+  behind you, which a playtest may find crowded in the store's front aisle.
+- Devon at the store's centre doorway can be caught before his first peek now that five of ours come in. Whether the
+  defender needs a moment's grace is a playtest call, not a test's.
+- Steps 4 (hand-me-downs and the BB rule) and 5 (Seth in every zone) stay for a fresh card.
+
+## v1.277 — Build your crew: no two kids start on one spot
+Michael re-started the crew card (19 Oct, decision A on STUCK #101). On e6f626b, CI's push run failed `country-club`'s
+"every kid moves or fires" in The Eighteenth: Devon walked 0 m and started on the same spot as Mitchell, (4.3, 28.2).
+A sweep of every team match's start, with all five in the crew and with the crew you'd have the first time, showed why.
+It was v1.276's own clamp. Where you start by an edge, the second and fourth allies both land past it. Both were
+clamped to the same line and the same step back, so they started on one point: Sean and Alex at the club, 0.00 m apart,
+and Eric and Nick in five of the Hollow's matches and the school's Lights Out. Extra kids put on one anchor or given one
+authored start stacked there too. In the Last Saturday, Garrett, Colin, Brooke and Trey started within 0.4 m of each
+other, and Mason and Evan shared a start exactly in Bellfield after dark. Two kids on one point push against each other
+and can hold each other still, which is what CI saw. A player would see two kids standing inside one another at BEGIN.
+- In a match whose sides the crew has changed, every kid's start is now at least 1.4 m from every start already taken,
+  your own included (`crewSpreadStart`). 1.4 m is the ally fan's own step (v1.33). A first try at 1.5 m also moved
+  every third ally off the fan. The nearest free spot is searched on rings 0.75 m apart out to 6 m. It has to be
+  inside the field (0.8 m in) and clear of cover, or the kid keeps the spot he had. Two groups are left alone: kids
+  starting in the attack huddle's ring, who walk straight out to their posts, and kids on a perch.
+- A match the crew does not change starts exactly as before: the spread only runs when its sides differ from the
+  scenario's own.
+- Each kid now keeps the spot he started on (`startAt`), so a test can check the starts rather than where kids stand
+  after BEGIN.
+- Two tests changed with it. `lamplight-starts` lets the fifth Bellfield kid, who shares a yard start, stand up to
+  2.1 m from it, and he still has no line to the entry. `squad-orders` had not been made steady by v1.276's seed. The
+  page's own frame loop kept stepping the game on the real clock between BEGIN and the measured round, as many frames
+  as the load allowed. On one build, push up came out 18.9 m run alone and 21.4 m beside another suite, against its
+  20 m line, the same tail CI met on 3254c3e. The loop is now held for each measured round, and the seed is set again
+  at its start.
+### Verified
+- `tests/crew-spawn-bounds.test.mjs` checks two more things now. First, no two starts under 1.4 m apart in all 31
+  team matches, with all five and with the first-time crew, the huddle ring aside. Before the fix this found 0.00 m
+  pairs in 20 matches. After it, every pair is clear. A kid beside the huddle is held to 1.0 m: Priya and Tyler in
+  Bunratty's VIP start 1.2–1.3 m apart, one of them in the huddle. Second, the club's 3v3 with all five: every kid on
+  our side moves or fires over 40 s. Eric walked 119 m, Sean 103, Nick 29, Alex 59 and Diego 84, and all of them fired.
+- `squad-orders`, 5 of 5 with the same numbers (push up 16.7 m against 35.7 m with no order), two of them beside
+  `crew-field` and `crew-balance`. `lamplight-starts` passes.
+- `country-club`, 3 of 3 run beside `crew-spawn-bounds` (under load). `crew-spawn-bounds`, `crew-field` and
+  `crew-balance` passed run side by side.
+### Still open
+- The attack huddle's ring is unchanged. With the crew's extra foes it packs eleven kids into a 1.4 m ring (0.7–0.8 m
+  apart) for the moment before they walk out. No test has seen a stall from it, but a playtest may see the crush.
+- Steps 4 and 5 of the crew stay for a fresh card.
+
+## v1.278 — Kids added for your crew come looking
+CI went red again on PR #95, this time on 3202fca: `country-club` failed in headless (7/10) of one of the two runs on
+that head. The other run passed the same shard, so this was not a hang. The failing check was "every kid moves or
+fires" in the Eighteenth. With the crew in it, that match's 3 v 3 is fitted to 6 v 6 (v1.275). Two of the six on their
+side are kids the street adds, and the round-robin put Brooke on Jamie's spot by the pool, 55 m from your start. She
+walked 0 m and fired 0 times in 60 s. Run here she did the same in 3 runs of 8; main, where she is not in the match,
+passed 6 of 6. The cause is v1.152's rule. An enemy kid with aggression under 0.45 (Brooke is 0.35) only marches when
+he can see you or when he is bored, and an enemy only gets bored when two or fewer are left on his side. In a match
+of six that does not come for a long while, so a player would have had a kid hiding at the far end of the course for
+most of the round. That is the same fault v1.184 fixed for allies (Michael: C on D.19).
+- A kid the crew's numbers add to their side (`crewFill`, set in `crewSides` when their side is fitted to the match's
+  number) now gets bored the way an ally does. After 25–30 s within 2 m without a line, he comes looking however
+  many of his side are left. The match's own kids, Seth, kids crossing over to Seth and a crew kid's street
+  stand-in keep v1.152's rule. Snipers, defenders, VIPs and taggers still hold as before.
+- Matches the crew does not change have no `crewFill` kid, so they play exactly as before.
+### Verified
+- `country-club`, 8 of 8 green run alone after the fix (3 of 8 failed before it). Brooke walked 5–87 m and fired 2–12
+  times; Garrett, the other added kid, walked 42–130 m. 1 more run green beside `last-kid` (under load).
+- `crew-balance` has a new check. In the Eighteenth with all five, their side is 6 (Trey crossed over), and 2 of them
+  (Brooke and Garrett) are added. Held in hiding, each added kid is bored within 31 s with 6 on his side. Marcus,
+  Jamie and Trey, the match's own, are not. `last-kid`, `idle-ally`, `crew-field`, the five `crew*` suites and
+  `stuck-sweep-15` (the Eighteenth swept three ways) pass.
+### Still open
+- An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
+  or like a wave arriving late is for a playtest of a crew match.

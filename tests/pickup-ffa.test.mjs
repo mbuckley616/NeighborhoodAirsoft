@@ -112,7 +112,8 @@ for (const key of ['winnmark', 'bunratty', 'hollow', 'market_lot']) for (const [
 }
 check('the four maps build a free-for-all at 3-way by night and their most by day, and run 3 s', bad.length === 0, bad);
 const hollow3 = await page.evaluate(() => buildPickupScenario({ map: 'hollow', mode: 'ffa', ways: 3, tod: 'day', lives: 1 }).enemySetup.map(e => e.anchor).join());
-check('the Hollow\'s 3-way puts its two kids in different forts', hollow3 === 'a_fort,b_fort', hollow3);
+// v1.265: the free-for-all's hidden starts (Michael: A); a 3-way keeps the rule too (tests/ffa-starts.test.mjs)
+check('the Hollow\'s 3-way puts Seth and Sean at its first two hidden starts (east of the north fort, east of the creek)', hollow3 === 'ffa_1,ffa_2', hollow3);
 
 // The team game is as before
 const team = await page.evaluate(() => { const s = buildPickupScenario({ map: 'bunratty', size: 2, tod: 'day', lives: 3 });
