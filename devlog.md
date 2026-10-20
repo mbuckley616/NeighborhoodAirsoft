@@ -12249,3 +12249,30 @@ The fifth group of screens for D.46 (decision A).
   done because decision A named the shop. If Michael would rather the website look like a 2003 website again, that
   is one block of CSS and a class to take off.
 - The mirror (the new-game look picker) shares the loadout's card but is not on paper yet.
+
+## v1.288 — Notebook paper, part 6: the HUD's labels and the bedroom's prompts
+The last part of decision A: "The in-match HUD keeps its dark panels so it reads against any sky, and only takes the
+handwriting for its labels", and the bedroom's prompts on paper.
+- The HUD's labels are now in the hand at 13–14 px: the gun's name, Bag, Cash and READY under it, PLAYERS ON THE
+  FIELD, HITS TAKEN, LOADOUT (1-4) and its hint, the stance row, the squad order, the range's tally, the tutorial's
+  step and the bedroom's CASH and BBs. The panels stay dark, and the numbers (the ammo count, the clock, the cash)
+  keep the type they had.
+- The "E to …" prompt (the bedroom's, and the ladder's in a match) is a strip torn off a page. It is one rule of
+  ballpoint on cream, with its blue line under the words and ragged top and bottom edges, and its key on a sticky
+  note. The labels floating over the room's things are paper tags in ink. The one you can use now is a sticky note
+  ringed in ink.
+### Verified
+- `tests/notebook.test.mjs`:
+  - The prompt is paper in the hand, ink on paper at 12.4 : 1.
+  - The room's labels are paper tags in ink.
+  - CASH and BBs are in the hand.
+  - In a match, the HUD's labels are in the hand, its numbers are not, and its panels are still the dark
+    rgba(20, 24, 28, 0.92).
+- Frame cost: 240 steps of a match, with every HUD panel's layout forced each step and 30 untimed steps after each
+  switch. Median of three rounds each way: 1.18 ms a step with the hand on the labels, 1.36 ms with them put back
+  in Courier. The check allows the hand at most 10% over Courier.
+- These suites pass: `ladder-prompt`, `squad-hud`, `pad-hints`, `walkie-callouts`, `bedroom-desk`,
+  `bedroom-shelves`, `backyard-range`, `front-door`, `gamepad` (both), `pad-orders`, `treehouse-hold` and `smoke`.
+### Still open
+- Whether 13–14 px handwriting reads at a glance in a firefight is for a playtest. The HUD selector list in this
+  version's CSS block can put any label back in the print.

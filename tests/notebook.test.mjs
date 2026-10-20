@@ -6,7 +6,7 @@
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
 // them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question; v1.285 the
 // message card (messages, the bed, the calendar, the Pickup Game board and its online panel); v1.286 the map; v1.287 the
-// loadout, the workbench and the shop.
+// loadout, the workbench and the shop; v1.288 the HUD's labels, the bedroom's prompts and the frame cost.
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
@@ -62,6 +62,22 @@ await page.evaluate(() => Promise.all([document.fonts.load('17px "NB Hand"'), do
 const fonts = await page.evaluate(() => ({ hand: document.fonts.check('17px "NB Hand"'), marker: document.fonts.check('20px "NB Marker"'),
   faces: [...document.fonts].filter(f => /^"?NB /.test(f.family)).map(f => f.family + ':' + f.status) }));
 check('both handwriting fonts load from the file itself', fonts.hand && fonts.marker, fonts);
+
+// 1a) v1.288: the bedroom's prompts on paper: the "E to …" strip and the labels over the room
+const prompts = await page.evaluate(() => {
+  const ip = document.getElementById('interactPrompt');
+  ip.innerHTML = '<kbd>E</kbd> &nbsp; Use the desk'; ip.style.display = 'block';
+  const cs = getComputedStyle(ip), chip = document.querySelector('#bedroomLabels .br-chip'), name = document.querySelector('#bedroomLabels .br-name');
+  const r = { promptBg: cs.backgroundColor, promptFont: cs.fontFamily, promptInk: cs.color,
+    chipBg: chip && getComputedStyle(chip).backgroundColor, chipInk: name && getComputedStyle(name).color,
+    cashLabel: getComputedStyle(document.querySelector('#bedroomHud .cash-label')).fontFamily };
+  return r;
+});
+await g.shot('notebook-prompt');
+check('the bedroom\'s prompt is a strip of paper in the hand', prompts.promptBg === PAPER && /NB Hand/.test(prompts.promptFont) && contrast(prompts.promptInk, PAPER) >= 4.5, prompts);
+check('the bedroom\'s CASH and BBs labels are in the hand', /NB Hand/.test(prompts.cashLabel), prompts.cashLabel);
+check('the labels over the room are paper tags in ink', prompts.chipBg === PAPER && contrast(prompts.chipInk, PAPER) >= 4.5, prompts);
+await page.evaluate(() => { document.getElementById('interactPrompt').style.display = 'none'; });
 
 // 1b) v1.285: the shared message card: a plain message, the bed's summer so far and its delete question, the calendar,
 // the Pickup Game board and its online panel; the flip phone stays a phone
@@ -221,6 +237,31 @@ wholeRules('the forfeit question', await blocks('#forfeitAsk .modal-card'));
 await page.evaluate(() => document.getElementById('forfeitKeepBtn').click());
 await page.evaluate(() => { if (Game.paused) document.getElementById('pauseResumeBtn').click(); });
 check('KEEP PLAYING and RESUME go back to the match', await page.evaluate(() => Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk));
+
+// 3c) v1.288: the HUD keeps its dark panels and takes the hand for its labels only; the numbers keep their type.
+// The frame cost: 240 steps of the match, each with the HUD's layout forced, with the hand on the labels and with
+// the labels put back in Courier, three rounds each way (30 untimed steps after each switch); the hand may cost no more than 10% over Courier.
+const hud = await page.evaluate(() => {
+  const ff = sel => { const e = document.querySelector(sel); return e ? getComputedStyle(e).fontFamily : null; };
+  const bg = sel => { const e = document.querySelector(sel); return e ? getComputedStyle(e).backgroundColor : null; };
+  return { label: ff('#ammoHud .gun-name'), roster: ff('#rosterHud .label'), number: ff('#ammoHud .ammo-line'), panel: bg('#ammoHud') };
+});
+check('the HUD\'s labels are in the hand, its numbers in the type they had, its panels dark',
+  /NB Hand/.test(hud.label) && /NB Hand/.test(hud.roster) && !/NB/.test(hud.number) && hud.panel === 'rgba(20, 24, 28, 0.92)', hud);
+const cost = await page.evaluate(() => {
+  const panels = ['ammoHud', 'rosterHud', 'healthHud', 'loadoutHud', 'stanceHud', 'squadHud'].map(id => document.getElementById(id)).filter(Boolean);
+  const plain = document.createElement('style');
+  plain.textContent = '#hud * { font-family: "Courier New", monospace !important; }';
+  const steps = n => { for (let i = 0; i < n && Game.mode === 'scenario'; i++) { stepGame(1 / 60); for (const p of panels) p.offsetHeight; } };
+  const run = () => { steps(30); const t0 = performance.now(); steps(240); return performance.now() - t0; };   // 30 untimed after each switch
+  run();   // warm
+  const hand = [], courier = [];
+  for (let k = 0; k < 3; k++) { hand.push(run()); document.head.appendChild(plain); courier.push(run()); plain.remove(); }
+  const med = a => a.slice().sort((x, y) => x - y)[1];
+  return { hand: +(med(hand) / 240).toFixed(3), courier: +(med(courier) / 240).toFixed(3), mode: Game.mode };
+});
+console.log(`   a match step with the HUD laid out: ${cost.hand} ms with the hand, ${cost.courier} ms in Courier (median of 3 x 240)`);
+check('the hand on the HUD costs no more than 10% a frame over Courier', cost.mode === 'scenario' && cost.hand <= cost.courier * 1.10 + 0.05, cost);
 
 // 4) the result card, a win
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; endScenario('win'); });
