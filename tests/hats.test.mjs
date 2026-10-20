@@ -14,7 +14,7 @@ const d0 = await page.evaluate(() => {
   return { hat: Game.persist.look.hat, rows, owned: Object.keys(Game.persist.ownedHats) };
 });
 check('a new game wears no hat and owns none', d0.hat === 'none' && d0.owned.length === 0, d0);
-check('the mirror has no Hat row yet', !d0.rows.includes('hat') && d0.rows.length === 13, d0.rows);   // v1.200: the two crew rows; v1.206: Sneakers
+check('the mirror has no Hat row yet', !d0.rows.includes('hat') && d0.rows.length === 14, d0.rows);   // v1.200: the two crew rows; v1.206: Sneakers; v1.273: who is in the crew
 
 // The shop's Clothes tab
 const readShop = () => page.evaluate(() => ({
