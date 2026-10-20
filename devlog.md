@@ -12131,3 +12131,39 @@ The second group of screens for D.46 (decision A, 20 Oct), in the same `.nb-pape
 - The title's paper on the dusk gradient is plain. A desk or a binder behind it would be a new picture, and that is
   Michael's call.
 - Next: the map screen, the messages and calendar, the Pickup Game board, then the shop, workbench and loadout.
+
+## v1.285 — Notebook paper, part 3: messages, the bed, the calendar and the Pickup Game board
+The third group of screens for D.46 (decision A). One shared message card (`#modalScreen`) holds a lot of the game's
+screens between matches. It now goes on paper, so these screens are on paper:
+- the plain messages: Locked, Save not loaded, Your friend left
+- the bed's summer so far and its delete question
+- the summer calendar
+- the Pickup Game board and its PLAY ONLINE panel
+- What each looks like on paper:
+  - Messages: the title is in marker over two rules and the body is in ballpoint. OK and CLOSE are sticky notes.
+  - The bed's rows were written with inline spacing for the dark card (3 px padding, 10–16 px margins, 11–13 px
+    type). On paper that spacing is overridden to whole rules and the type to 15–17 px. DELETE SAVE and DELETE are
+    paper notes outlined in red, and KEEP is a sticky note (the three buttons now carry `nb-btn`).
+  - The calendar: each month is a filled block with one rule per week. This month's days are highlighted in yellow,
+    today is ringed in ink, and the last Saturday is double-ringed in red.
+  - The Pickup Game board: every choice is a word boxed in pen, 22 px on a 26 px rule. The picked one is highlighted
+    and ringed. A kid on the other side is struck through. PLAY is a sticky note. The online panel's room code is in red
+    marker.
+- The flip phone stays a phone. `openPhone` takes the paper off the card, and `closeModal` puts it back.
+### Verified
+- `tests/notebook.test.mjs` opens each of these on paper. Baselines, worst distance from a rule:
+  - a message: 2 lines, 1.5 px
+  - the summer so far: 20 lines, 2.5 px
+  - the delete question: 2 lines, 1.5 px
+  - the calendar: 122 lines, 2.5 px
+  - the board: 12 lines, 2.5 px (and again after picking Night)
+  - the online panel: 6 lines, 2.5 px
+  
+  Every note is a whole number of rules tall and each page fits on 720 px. KEEP goes back to the summer so far.
+  Night picks on the board. The phone opens as a phone, and the card is paper again after it.
+- These suites pass: `bed-summer`, `calendar`, `crew-roster`, `online`, `pickup` (all six), `rival`, `texts`,
+  `gamepad-screens`, `bedroom-bed`, `squad-hud`, `crew` (all five) and `smoke`.
+### Still open
+- The board is a tall page. With four-a-side and every row filled it reaches the bottom of a 720 px screen, and it
+  scrolls past that (that scroll does not snap to the rules).
+- Next: the map screen, then the shop, the workbench and the loadout.

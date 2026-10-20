@@ -2207,6 +2207,60 @@
   #settingsScreen .nb-paper .settings-row .settings-val { color: var(--nb-ink); }
   #settingsScreen .nb-paper .settings-buttons { margin-top: var(--nb-rule); gap: 14px; }
   #settingsScreen .nb-paper .settings-btn:not(.primary) { background: var(--nb-paper) !important; }
+  /* -- v1.285 (D.46): the shared message card on paper: messages, the bed's summer so far, the calendar, the Pickup
+     Game board and its online panel. The flip phone's texts keep the phone (openPhone takes the paper off). -- */
+  #modalScreen .modal-card.nb-paper { min-width: 380px; max-width: 460px; padding-right: 40px !important;
+    max-height: 100vh; overflow-y: auto; }
+  #modalScreen .modal-card.nb-paper.wide { max-width: 780px; }
+  #modalScreen .nb-paper .modal-close { margin-top: calc(var(--nb-rule) + 4px) !important; }
+  #modalScreen .nb-paper #modalBody { text-align: left; }
+  /* the save menu's and the bed's rows are written with inline spacing for the dark card: on paper, whole rules */
+  #modalScreen .nb-paper #modalBody div[style] { padding-top: 0 !important; padding-bottom: 0 !important;
+    margin-top: 0 !important; margin-bottom: 0 !important; font-size: 17px !important; }
+  #modalScreen .nb-paper #modalBody div[style*="margin-top"] { margin-top: var(--nb-rule) !important; }
+  #modalScreen .nb-paper #modalBody div[style*="margin-bottom:14px"] { margin-bottom: var(--nb-rule) !important; }
+  #modalScreen .nb-paper #modalBody span[style*="opacity"] { opacity: 1 !important; color: var(--nb-pencil); }
+  #modalScreen .nb-paper #modalBody div[style*="opacity"] { opacity: 1 !important; color: var(--nb-pencil); font-size: 15px !important; }
+  #modalScreen .nb-paper #modalBody span[style*="font-weight:bold"] { font-weight: 400 !important; }
+  #modalScreen .nb-paper #modalBody .nb-btn { font-size: 16px !important; }
+  #modalScreen .nb-paper #modalBody div:has(> .nb-btn) { display: flex; gap: 14px; align-items: center; justify-content: flex-start; }
+  #modalScreen .nb-paper #saveDeleteBtn, #modalScreen .nb-paper #saveDelYes { color: var(--nb-red) !important; background: var(--nb-paper) !important;
+    box-shadow: inset 0 0 0 2px var(--nb-red), 2px 2px 0 rgba(179,38,30,0.7) !important; }
+  /* the calendar: each month a filled block, one rule per week */
+  #modalScreen .nb-paper .sm-today { font-size: 17px; margin: 0 0 var(--nb-rule); }
+  #modalScreen .nb-paper .sm-months { gap: var(--nb-rule) 18px; }
+  #modalScreen .nb-paper .sm-month { background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.55); padding: 0 6px; }
+  #modalScreen .nb-paper .sm-name { font-family: var(--nb-marker); color: #17171c; font-size: 17px; margin: 0; }
+  #modalScreen .nb-paper .sm-grid { gap: 0 2px; font-size: 15px; }
+  #modalScreen .nb-paper .sm-dow { opacity: 1; color: var(--nb-pencil); }
+  #modalScreen .nb-paper .sm-day { padding: 0; background: none; height: var(--nb-rule); }
+  #modalScreen .nb-paper .sm-day.here { background: rgba(255,226,64,0.55); }
+  #modalScreen .nb-paper .sm-day.past { color: var(--nb-pencil); text-decoration-color: var(--nb-red); }
+  #modalScreen .nb-paper .sm-day.today { outline: 2px solid var(--nb-ink); outline-offset: -2px; border-radius: 50%; color: var(--nb-ink); }
+  #modalScreen .nb-paper .sm-day.big { outline: 3px double var(--nb-red); outline-offset: -3px; border-radius: 50%; color: var(--nb-red); }
+  #modalScreen .nb-paper .sm-note { font-size: 16px; margin: 0; opacity: 1; color: var(--nb-ink); }
+  #modalScreen .nb-paper .sm-note:first-of-type { margin-top: var(--nb-rule); }
+  /* the Pickup Game board: each choice a word boxed in pen, the picked one highlighted and ringed */
+  #modalScreen .nb-paper .pk-board { gap: 0; }
+  #modalScreen .nb-paper .pk-note { font-size: 16px; opacity: 1; color: var(--nb-ink); }
+  #modalScreen .nb-paper .pk-label { font-size: 14px; opacity: 1; color: var(--nb-red); margin: 0; }
+  #modalScreen .nb-paper .pk-count { opacity: 1; color: var(--nb-pencil); font-size: 13px; }
+  #modalScreen .nb-paper .pk-btns { gap: 0 8px; }
+  #modalScreen .nb-paper .pk-opt { font-family: var(--nb-hand); font-size: 16px; height: 22px; line-height: 22px !important; margin: 2px 0;
+    padding: 0 10px; border: none; border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper);
+    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5); }
+  #modalScreen .nb-paper .pk-opt.on { background: rgba(255,226,64,0.85); box-shadow: inset 0 0 0 2px var(--nb-ink); }
+  #modalScreen .nb-paper .pk-opt.off, #modalScreen .nb-paper .pk-opt:disabled { opacity: 0.5; text-decoration: line-through; cursor: default; }
+  #modalScreen .nb-paper .pk-row:has(.pk-play) { margin-top: var(--nb-rule); display: flex; gap: 14px; align-items: center; }
+  #modalScreen .nb-paper .pk-play { font-size: 18px !important; }
+  #modalScreen .nb-paper .pk-play:disabled { opacity: 0.6; }
+  #modalScreen .nb-paper .pk-online { margin: 0; }
+  #modalScreen .nb-paper .pk-input { font-family: var(--nb-hand); font-size: 16px; height: 22px; padding: 0 6px; margin: 2px 0;
+    color: var(--nb-ink); background: #fff; border: none; border-radius: 0; box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.6); }
+  #modalScreen .nb-paper .pk-net-code { font-family: var(--nb-marker); font-weight: 400; font-size: 40px; color: var(--nb-red);
+    line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 4px; }
+  #modalScreen .nb-paper .pk-net-err { font-size: 16px; color: var(--nb-red); }
+  #modalScreen .nb-paper .pk-net-privacy { font-size: 14px; opacity: 1; color: var(--nb-pencil); }
 </style>
 </head>
 <body>
@@ -2303,7 +2357,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.284</div>
+  <div class="version">v1.285</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2661,10 +2715,10 @@
 
 <!-- === MODAL === -->
 <div class="menu-overlay" id="modalScreen">
-  <div class="modal-card">
+  <div class="modal-card nb-paper">
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-body" id="modalBody"></div>
-    <button class="modal-close" id="modalCloseBtn">OK</button>
+    <button class="modal-close nb-btn" id="modalCloseBtn">OK</button>
   </div>
 </div>
 
@@ -24518,6 +24572,7 @@ function closeModal() {
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
   document.querySelector('#modalScreen .modal-card').classList.remove('wide', 'phone');   // v1.194: the summer calendar widens it; v1.195: the phone styles it
+  document.querySelector('#modalScreen .modal-card').classList.add('nb-paper');   // v1.285 (D.46): back on paper after the phone
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
 }
@@ -24589,11 +24644,12 @@ function openSaveMenu() {
       profileSummaryHTML() +
       `<div style="margin-top:10px;opacity:0.7;font-size:11px;">Saved to this browser. The game saves itself, too.</div>` +
       `<div style="margin-top:16px;">` +
-        `<button id="saveDeleteBtn" style="background:transparent;border:1px solid var(--ui-border);` +
+        `<button id="saveDeleteBtn" class="nb-btn" style="background:transparent;border:1px solid var(--ui-border);` +
         `color:#c88;padding:5px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">` +
         `DELETE SAVE</button>` +
       `</div>`;
     closeEl.textContent = 'OK';
+    // v1.285 (D.46): DELETE SAVE, DELETE and KEEP carry nb-btn, so on the paper card they are notes, not dark-card buttons
     // Rebind the delete button each open (it's freshly injected).
     const del = document.getElementById('saveDeleteBtn');
     if (del) del.addEventListener('click', () => confirmDeleteSave());
@@ -24621,9 +24677,9 @@ function confirmDeleteSave() {
     `<div style="margin-bottom:14px;">This wipes your saved cash, guns, gear, and cleared scenarios from this browser. ` +
     `It can't be undone.</div>` +
     `<div style="display:flex;gap:10px;justify-content:center;">` +
-      `<button id="saveDelYes" style="background:#a33;border:none;color:#fff;padding:6px 16px;` +
+      `<button id="saveDelYes" class="nb-btn" style="background:#a33;border:none;color:#fff;padding:6px 16px;` +
       `font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;font-weight:bold;">DELETE</button>` +
-      `<button id="saveDelNo" style="background:transparent;border:1px solid var(--ui-border);color:inherit;` +
+      `<button id="saveDelNo" class="nb-btn" style="background:transparent;border:1px solid var(--ui-border);color:inherit;` +
       `padding:6px 16px;font-family:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;border-radius:3px;">KEEP</button>` +
     `</div>`;
   document.getElementById('modalCloseBtn').textContent = 'CANCEL';
@@ -34435,7 +34491,7 @@ function pickupBoardHTML() {
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
     ${row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === pickupState.clock)).join(''))}
-    <div class="pk-row"><button class="pk-play" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button>
+    <div class="pk-row"><button class="pk-play nb-btn" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button>
       <button class="pk-opt pk-online" id="pickupOnlineBtn">PLAY ONLINE</button></div>
   </div>`;
 }
@@ -34995,6 +35051,7 @@ function openPhone() {
   }).join('')}</div>`;
   body.querySelectorAll('.ph-ask button').forEach(b => b.addEventListener('click', () => phoneAnswer(b.dataset.kid, b.dataset.yes === '1', b)));
   document.querySelector('#modalScreen .modal-card').classList.add('phone');
+  document.querySelector('#modalScreen .modal-card').classList.remove('nb-paper');   // v1.285 (D.46): the phone is a phone, not paper
   document.getElementById('modalScreen').classList.add('active');
   // opening them reads them all; the nightstand phone stops blinking and its label and prompt catch up
   Game.persist.textsRead = Game.persist.textsRead || {};

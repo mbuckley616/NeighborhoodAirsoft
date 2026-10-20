@@ -4,7 +4,8 @@
 // opens each paper screen and checks: no page errors and nothing fetched from the network (both fonts are embedded);
 // every line of text has its baseline within 3 px of a rule; every filled block is a whole number of rules tall;
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
-// them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question.
+// them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question; v1.285 the
+// message card (messages, the bed, the calendar, the Pickup Game board and its online panel).
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
@@ -60,6 +61,46 @@ await page.evaluate(() => Promise.all([document.fonts.load('17px "NB Hand"'), do
 const fonts = await page.evaluate(() => ({ hand: document.fonts.check('17px "NB Hand"'), marker: document.fonts.check('20px "NB Marker"'),
   faces: [...document.fonts].filter(f => /^"?NB /.test(f.family)).map(f => f.family + ':' + f.status) }));
 check('both handwriting fonts load from the file itself', fonts.hand && fonts.marker, fonts);
+
+// 1b) v1.285: the shared message card: a plain message, the bed's summer so far and its delete question, the calendar,
+// the Pickup Game board and its online panel; the flip phone stays a phone
+const card = '#modalScreen .modal-card';
+async function modalPage(name, open, shot) {
+  await page.evaluate(open);
+  await page.evaluate(() => document.fonts.ready);
+  if (shot) await g.shot('notebook-' + shot);
+  check(`${name} opens on paper`, await page.evaluate(() => document.getElementById('modalScreen').classList.contains('active') &&
+    document.querySelector('#modalScreen .modal-card').classList.contains('nb-paper')));
+  onRules(name, await lineReport(page, card));
+  wholeRules(name, await blocks(card));
+  const fit = await page.evaluate(() => { const r = document.querySelector('#modalScreen .modal-card').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; });
+  check(`${name} fits on a 720 px screen`, fit.top >= 0 && fit.bottom <= fit.vh + 0.5, fit);
+}
+const closeCard = () => page.evaluate(() => document.getElementById('modalCloseBtn').click());
+await modalPage('a message', () => showModal('Locked', 'Win Just You and Seth first.\nSeth is waiting in his backyard.'), 'message');
+await closeCard();
+await modalPage('the summer so far (the bed)', () => openSaveMenu(), 'bed');
+await modalPage('the delete question', () => document.getElementById('saveDeleteBtn').click());
+await page.evaluate(() => document.getElementById('saveDelNo').click());
+check('KEEP goes back to the summer so far', await page.evaluate(() => document.getElementById('modalTitle').textContent === 'The summer so far'));
+await closeCard();
+await modalPage('the calendar', () => openSummerCalendar(), 'calendar');
+await closeCard();
+await modalPage('the Pickup Game board', () => openPickupBoard(), 'board');
+const pk = await page.evaluate(() => {
+  const b = [...document.querySelectorAll('#modalBody .pk-opt[data-grp="tod"]')].find(x => x.dataset.val === 'night'); b.click();
+  return { tod: pickupState.tod, on: document.querySelector('#modalBody .pk-opt[data-grp="tod"][data-val="night"]').classList.contains('on') };
+});
+check('a choice on the paper board still picks (Night)', pk.tod === 'night' && pk.on, pk);
+onRules('the board after a pick', await lineReport(page, card));
+await page.evaluate(() => { const b = document.querySelector('#modalBody .pk-opt[data-grp="tod"][data-val="day"]'); b.click(); });
+await modalPage('the online panel', () => document.getElementById('pickupOnlineBtn').click(), 'online');
+await page.evaluate(() => document.getElementById('netBackBtn').click());
+await closeCard();
+const ph = await page.evaluate(() => { openPhone(); const c = document.querySelector('#modalScreen .modal-card');
+  const r = { phone: c.classList.contains('phone'), paper: c.classList.contains('nb-paper') };
+  document.getElementById('modalCloseBtn').click(); r.after = c.classList.contains('nb-paper'); return r; });
+check('the flip phone is still a phone, and the card is paper again after it', ph.phone && !ph.paper && ph.after, ph);
 
 // 2) the map's popup briefing
 await page.evaluate(() => { isScenarioUnlocked = () => true; openScenarioBrief('bunratty_sean'); });
