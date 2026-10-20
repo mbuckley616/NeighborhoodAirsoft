@@ -12017,3 +12017,15 @@ fire at once, with 2 s in which nothing tagged you.
 - Whether 10 s at the base makes Flags on Bellfield drag, or lets one side run away with it, is for a playtest. With
   you parked out of the fight, the kids-only rounds went 0–2 to them at 67 s and 126 s, and 0–1 at 150 s.
 - The 2 s grace after the hold is unchanged. How long it should be, and whether kids get one, is D.49 (in decisions).
+
+## v1.281 — The range's ammo box says the back door reloads
+The critic (19 Oct, Found in play): at the backyard range, once the mag is empty, the ammo box read "MAG EMPTY · F TO
+FORFEIT". There is nothing to forfeit at the range. F walks you inside (v1.257), and going in and back out by the back
+door is how the starter loadout refills the gun from the bag. At the range the box now reads "MAG EMPTY · BACK DOOR TO
+RELOAD". Every match keeps "F TO FORFEIT", and with a pad, "BACK TO FORFEIT" (v1.279).
+### Verified
+- `tests/backyard-range.test.mjs` has a new check: with the Spring Pistol's mag empty at the range, the box reads "MAG
+  EMPTY · BACK DOOR TO RELOAD". The suite passes. `pad-hints` passes, and it still reads BACK TO FORFEIT in a match
+  with the pad and F TO FORFEIT with the keys.
+### Still open
+- Nothing.

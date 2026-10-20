@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.280</div>
+  <div class="version">v1.281</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -27844,7 +27844,9 @@ function updateAmmoHud() {
     s.className = 'status reloading';
   } else if (Game.gun.ammo === 0) {
     // Show what they can do — F to forfeit always available
-    s.textContent = 'MAG EMPTY · F TO FORFEIT';
+    // v1.281 (critic, 19 Oct): at the backyard range there is nothing to forfeit (F walks you in); going in and out
+    // by the back door fills the gun from your bag
+    s.textContent = Game.scenario && Game.scenario.range ? 'MAG EMPTY · BACK DOOR TO RELOAD' : 'MAG EMPTY · F TO FORFEIT';
     s.className = 'status reloading';
   } else if (!Game.gun.cocked) {
     s.textContent = 'HOLD LMB TO RACK';
