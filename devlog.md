@@ -12207,3 +12207,45 @@ The fourth group of screens for D.46 (decision A): the map.
 - Cards in view on Winnmark, counted the same way on main's build: 10 at 1280×720 on the dark map, 12 on paper;
   6 at 1024×640 on both. Whether the smaller card type (11–14 px) reads well enough is for a playtest.
 - Next: the shop, the workbench and the loadout.
+
+## v1.287 — Notebook paper, part 5: the loadout, the workbench and the shop
+The fifth group of screens for D.46 (decision A).
+- The loadout and the workbench are notebook pages now: the title in marker, CLOSE a sticky note, the column titles in
+  red pen. Their lists (equipment slots, the gun picker, available items, worn gear; guns, accessory slots, the
+  locker) are written on the rules. Each row has no vertical padding or margin, and its outline is a box-shadow that
+  takes no room, so a row of one or two lines is one or two rules high.
+  - Slot numbers are red marker figures, not dark badges.
+  - The picked row (the workbench's gun, a selected slot) is highlighted and ringed in ink.
+  - The kid's picture is set 15 rules tall and the gun's viewport 14. The weight readout is a filled block.
+  - The weight tier keeps its four colours on the dark mirror card. On paper it uses darker pen colours of the same
+    four (`weightTier(...).ink`), because the light green read at 2.1 : 1 on the paper.
+  - The gun picker's grey spans got class names (`lo-pk-icon`, `lo-pk-sub`) so the paper can recolour them.
+- The shop keeps its browser window: the blue title bar, the close box and the address bar are still the computer.
+  airsoft.com's page inside the window is the paper.
+  - AIRSOFT.COM is in marker, and the balance is a sticky note in the corner.
+  - The tabs are marker tabs over an ink line, and the gun kinds are words boxed in pen.
+  - Each item is a row three rules high. Its picture is two rules tall, its name and lines are on the rules, and its
+    price is in green marker. BUY and DETAILS are small sticky notes.
+  - A gun's page has its photo in a filled block eight rules tall, with its caption on the last rule. The colour,
+    accessory and slot pickers follow the same look.
+- The test helper now finds a line's baseline from the text's own glyph box less the font's descent. It used to put
+  a probe element beside the text, but in a flex row (the gun picker's rows) that probe became a flex item of its
+  own. Every page measured before reads exactly as it did.
+### Verified
+- `tests/notebook.test.mjs` adds these pages. Baselines, worst distance from a rule:
+  - the loadout: 25 lines, 2.5 px
+  - the loadout with the gun picker open: 32 lines, 2.5 px
+  - the workbench: 41 lines, 2.5 px
+  - the shop's five tabs, at the top and scrolled to the end: 21–35 lines each, 2.5 px
+  - a gun's page: 19 lines, 2.5 px
+  - the page after a purchase: 19 lines, 2.5 px
+  
+  DETAILS, BUY, the close box and CLOSE work. The lowest contrast is 6.16 : 1.
+- These suites pass: `autosave`, `backyard-guns`, `clear-guns`, `gamepad-screens`, `hats`, `loadout-gear`,
+  `loadout-kid`, `pad-hints`, `pool-noodle`, `sell-back`, `shop-gun-kinds`, `shop-pics`, `shop-tabs`, `shorts`,
+  `sneakers`, `tops`, `under-parts`, `utility-belt`, `walkie` (both), `workbench-labels`, `weight` and `smoke`.
+### Still open
+- The shop is airsoft.com seen on Mike's computer, and a website on notebook paper is a stretch of the fiction. It is
+  done because decision A named the shop. If Michael would rather the website look like a 2003 website again, that
+  is one block of CSS and a class to take off.
+- The mirror (the new-game look picker) shares the loadout's card but is not on paper yet.

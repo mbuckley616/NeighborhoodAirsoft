@@ -6,8 +6,9 @@ export const lineReport = (page, sel) => page.evaluate((sel) => {
   if (!root || root.offsetParent === null && getComputedStyle(root).position !== 'fixed') return null;
   const RULE = parseFloat(getComputedStyle(root).getPropertyValue('--nb-rule')) || 26;
   const r0 = root.getBoundingClientRect(), origin = r0.top - root.scrollTop;
-  const skip = '.nb-btn, .reward, .rs-cell, .rs-damage, .brief-objective, .nb-box, .sc-card, .map-area, canvas, svg, button, input, kbd';
+  const skip = '.nb-btn, .reward, .rs-cell, .rs-damage, .brief-objective, .nb-box, .sc-card, .map-area, .wb-viewport, canvas, svg, button, input, kbd';
   const out = [];
+  const ctx = document.createElement('canvas').getContext('2d');
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n; (n = walker.nextNode());) {
     if (!n.textContent.trim()) continue;
@@ -15,11 +16,13 @@ export const lineReport = (page, sel) => page.evaluate((sel) => {
     if (el.closest(skip)) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || !el.getClientRects().length) continue;
-    const probe = document.createElement('span');
-    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
-    n.parentNode.insertBefore(probe, n);
-    const base = probe.getBoundingClientRect().top;
-    probe.remove();
+    // the baseline of the text's first line: the bottom of its first glyph box less the font's descent (a probe
+    // element inserted beside the text would become a flex item of its own in a flex row)
+    const range = document.createRange(); range.selectNodeContents(n);
+    const box = [...range.getClientRects()].find(r => r.width > 0);
+    if (!box) continue;
+    ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const base = box.bottom - ctx.measureText(n.textContent.trim()).fontBoundingBoxDescent;
     if (base < r0.top || base > r0.bottom) continue;   // scrolled out of the page
     const off = ((base - origin) % RULE + RULE) % RULE;   // the rule is the band's 6th pixel from the bottom
     let d = off - (RULE - 5.5); if (d < -RULE / 2) d += RULE;

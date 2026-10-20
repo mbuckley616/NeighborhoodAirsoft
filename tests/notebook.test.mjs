@@ -5,7 +5,8 @@
 // every line of text has its baseline within 3 px of a rule; every filled block is a whole number of rules tall;
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
 // them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question; v1.285 the
-// message card (messages, the bed, the calendar, the Pickup Game board and its online panel); v1.286 the map.
+// message card (messages, the bed, the calendar, the Pickup Game board and its online panel); v1.286 the map; v1.287 the
+// loadout, the workbench and the shop.
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
@@ -30,7 +31,7 @@ function onRules(name, rep) {
 }
 const blocks = (sel) => page.evaluate((sel) => {
   const root = document.querySelector(sel);
-  return [...root.querySelectorAll('.reward, .rs-cell, .rs-damage, .brief-objective, #introMap, .nb-btn')]
+  return [...root.querySelectorAll('.reward, .rs-cell, .rs-damage, .brief-objective, #introMap, .nb-btn, #loWeightBar, .lo-kid-col, .wb-viewport')]
     .filter(e => e.getClientRects().length && !e.closest('.rs-grid') || e.classList.contains('rs-cell'))
     .map(e => { const cs = getComputedStyle(e);
       return { el: e.id || e.className.split(' ')[0], h: +(e.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)).toFixed(1) }; });
@@ -132,6 +133,50 @@ check('a card on the paper map opens its briefing', await page.evaluate(() => do
 await page.evaluate(() => document.getElementById('briefCancelBtn').click());
 await page.evaluate(() => document.getElementById('mapCloseBtn').click());
 check('← BACK TO ROOM on the paper map goes home', (await g.mode()) === 'bedroom');
+
+// 1d) v1.287: the loadout (with the gun picker open) and the workbench, with a second gun owned
+await page.evaluate(() => { Game.persist.owned.mp5 = true; });
+for (const [name, open, sel, shot] of [
+  ['the loadout', () => openLoadout(), '#loadoutScreen .loadout-card', 'loadout'],
+  ['the loadout with the gun picker', () => document.querySelector('#loSlotsList .lo-slot.gun').click(), '#loadoutScreen .loadout-card', 'loadout-picker'],
+  ['the workbench', () => { hideAllMenus(); Game.mode = 'bedroom'; openWorkbench(); }, '#workbenchScreen .wb-card', 'workbench']]) {
+  await page.evaluate(open);
+  await g.spin(3);
+  await page.evaluate(() => document.fonts.ready);
+  await g.shot('notebook-' + shot);
+  onRules(name, await lineReport(page, sel));
+  wholeRules(name, await blocks(sel));
+  const fit = await page.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; }, sel);
+  check(`${name} fits on a 720 px screen`, fit.top >= 0 && fit.bottom <= fit.vh + 0.5, fit);
+}
+await page.evaluate(() => document.getElementById('wbCloseBtn').click());
+check('CLOSE on the paper workbench goes home', (await g.mode()) === 'bedroom');
+
+// 1e) v1.287: the shop's page, every tab, a gun's details page, scrolled to the end of the longest list
+await page.evaluate(() => { hideAllMenus(); Game.mode = 'bedroom'; Game.persist.cash = 500; openShop(); });
+const shopTabs = await page.evaluate(() => SHOP_TABS.slice());
+const shopPage = '#shopScreen .shop-body';
+for (const tab of shopTabs) {
+  await page.evaluate(t => { shopState.activeTab = t; shopState.view = 'list'; shopState.detailGun = null; renderShop();
+    document.querySelector('#shopScreen .shop-body').scrollTop = 0; }, tab);
+  await page.evaluate(() => document.fonts.ready);
+  await g.shot('notebook-shop-' + tab.toLowerCase());
+  onRules(`the shop's ${tab} tab`, await lineReport(page, shopPage));
+  await page.evaluate(() => { const b = document.querySelector('#shopScreen .shop-body'); b.scrollTop = b.scrollHeight; });
+  onRules(`the shop's ${tab} tab scrolled to its end`, await lineReport(page, shopPage));
+}
+await page.evaluate(() => { shopState.activeTab = 'Guns'; shopState.view = 'list'; renderShop(); document.querySelector('#shopScreen .shop-body').scrollTop = 0;
+  document.querySelector('#shopItems .shop-item:not(.owned) .shop-item-buy').click(); });
+await page.evaluate(() => document.fonts.ready);
+await g.shot('notebook-shop-gun');
+check('DETAILS on paper opens a gun\'s page', await page.evaluate(() => shopState.view === 'gun'));
+onRules('a gun\'s page in the shop', await lineReport(page, shopPage));
+const bought = await page.evaluate(() => { const cash = Game.persist.cash; const b = [...document.querySelectorAll('#shopItems .shop-item-buy')].find(x => !x.disabled && /BUY/i.test(x.textContent));
+  if (b) b.click(); return { had: !!b, spent: cash - Game.persist.cash }; });
+check('BUY on the paper shop still buys', bought.had && bought.spent > 0, bought);
+onRules('the shop after a purchase (its note on top)', await lineReport(page, shopPage));
+await page.evaluate(() => document.getElementById('shopCloseBtn').click());
+check('the shop\'s close box goes home', (await g.mode()) === 'bedroom');
 
 // 2) the map's popup briefing
 await page.evaluate(() => { isScenarioUnlocked = () => true; openScenarioBrief('bunratty_sean'); });
