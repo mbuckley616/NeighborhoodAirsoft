@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.278</div>
+  <div class="version">v1.282</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4413,6 +4413,7 @@ function renderPoolNoodle(c) {
 }
 function startNoodleSwing() {
   if (Game.mode !== 'scenario' || Game.paused || Game.forfeitAsk || !noodleCarried()) return false;
+  if (Game.player._holdT > 0) return false;   // v1.280 (D.47)
   const N = Game.noodle;
   if (N.t >= 0 || N.cd > 0) return false;
   if (Game.held.using) { Game.held.using = false; Game.held.useProgress = 0; Game.held.useKind = null; Game.held._feedingActive = false; }
@@ -23647,6 +23648,7 @@ function startScenario(built) {
   Game.scenario.playerStart = { pos: built.spawn.clone(), yaw: built.spawnYaw };   // v1.170: where a VIP-match respawn puts you
   Game.scenario.playerRespawns = 0;
   Game.player._graceT = 0;
+  Game.player._holdT = 0;   // v1.280
   Game.player.pitch = 0;
   Game.player.hitsTaken = 0;
   // v1.28h: base lives default to 1 (one hit and you're out) — was a flat 3.
@@ -24720,7 +24722,7 @@ let loadoutPickerSlot = -1;
 // slowly in a panel with the slot-1 gun in hand, and a leader line from each body part to what is equipped there: eye
 // pro, chest, arms, legs, feet, belt and holster, the gun. The worn gear has no meshes on the kid yet (step 2, a group
 // at a time); the lines name it. Part points are in the average kid's local frame (createKid's group scale applies).
-const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '' };
+const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '', turn: 0 };   // v1.279: turn, the pad's
 const LOADOUT_KID_PARTS = [
   { key: 'eyes',  part: 'EYES',  p: [0, 1.27, 0.15],      side: 'L' },   // the kid faces +z; eyes at 1.27 (head top 1.47)
   { key: 'chest', part: 'CHEST', p: [0, 0.92, 0.13],      side: 'L' },
@@ -24923,7 +24925,7 @@ function updateLoadoutKid(dt) {
 }
 function drawLoadoutKid() {
   const L = LOADOUT_KID;
-  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw);   // swings between three-quarter views, gun side and front to camera
+  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw) + (L.turn || 0);   // swings between three-quarter views, gun side and front to camera; v1.279: plus the pad's turn
   L.kid.group.updateMatrixWorld(true);
   L.renderer.render(L.scene, L.camera);
   const items = loadoutKidItems(), svg = document.getElementById('loKidLabels');
@@ -25969,7 +25971,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   // Jump (scenario only)
-  if (e.code === 'Space' && Game.mode === 'scenario' && !e.repeat) {
+  if (e.code === 'Space' && Game.mode === 'scenario' && !e.repeat && !(Game.player._holdT > 0)) {   // v1.280: no jump while held at base
     if (Game.player.climbing) {
       // v1.138: Space on a ladder lets go: he drops from where he hangs (a long drop empties his stamina)
       Game.player.climbing = null;
@@ -26092,6 +26094,73 @@ const PAD_LOOK_PX = 1150;       // full right stick = this many mouse pixels a s
 const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11,
                   UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const Pad = { active: false, prev: [], move: { x: 0, z: 0 }, sprintLatch: false, ads: false, fire: false };
+// v1.279 (backlog D.38, Michael: B, the hints then the drags): while the pad is in use every on-screen hint names the
+// pad's button, not the key: the E prompts at the doors, shop, mirror, bed and board say A, the ladder's W / S / Space
+// say the stick and A, the tutorial's steps, the ammo box, the jam and rack bars, the slot hint, and the pause and
+// forfeit buttons. Touching the keyboard or the mouse (a real key or click, or the mouse moved) puts the keys back.
+const PAD_WORDS = [
+  [/<kbd>W<\/kbd> <kbd>A<\/kbd> <kbd>S<\/kbd> <kbd>D<\/kbd>/g, 'the <kbd>Left Stick</kbd>'],
+  [/Hold <kbd>Shift<\/kbd>/g, 'Click <kbd>L3</kbd> (press the left stick)'],
+  [/<kbd>Right-Mouse<\/kbd>/g, '<kbd>LT</kbd>'],
+  [/Click <kbd>Left-Mouse<\/kbd>/g, 'Pull <kbd>RT</kbd>'],
+  [/<kbd>Left-Mouse<\/kbd>/g, '<kbd>RT</kbd>'],
+  [/<kbd>R<\/kbd>/g, '<kbd>X</kbd>'],
+  [/<kbd>E<\/kbd>/g, '<kbd>A</kbd>'],
+  [/<kbd>Space<\/kbd>/g, '<kbd>A</kbd>'],
+  [/<kbd>W<\/kbd>/g, '<kbd>Stick ↑</kbd>'],
+  [/<kbd>S<\/kbd>/g, '<kbd>Stick ↓</kbd>'],
+  [/Click & hold LMB/g, 'Hold RT'],
+  [/Click LMB/g, 'Pull RT'],
+  [/Click or V to swing/g, 'Pull RT to swing'],
+  [/(Hold|HOLD) LMB/g, '$1 RT'],
+  [/CLICK TO FIRE/g, 'RT TO FIRE'],
+  [/(Hold|HOLD) R\b/g, '$1 X'],
+  [/\bR TO FLIP/g, 'X TO FLIP'],
+  [/\bF TO FORFEIT/g, 'BACK TO FORFEIT'],
+];
+function padWords(s) {
+  if (!Pad.active || !s) return s;
+  for (const [re, to] of PAD_WORDS) s = s.replace(re, to);
+  return s;
+}
+// the hints written into the page itself: [element, the keys' words, the pad's words]
+const PAD_STATIC_HINTS = [
+  ['#pauseResumeBtn', 'RESUME <kbd>ESC</kbd>', 'RESUME <kbd>START</kbd>'],
+  ['#pauseForfeitBtn', 'FORFEIT <kbd>F</kbd>', 'FORFEIT <kbd>BACK</kbd>'],
+  ['#forfeitKeepBtn', 'KEEP PLAYING <kbd>ESC</kbd>', 'KEEP PLAYING <kbd>B</kbd>'],
+  ['#forfeitYesBtn', 'FORFEIT <kbd>ENTER</kbd>', 'FORFEIT <kbd>A</kbd>'],
+  ['#jamBar .jam-label', 'JAMMED — HOLD R TO CLEAR', 'JAMMED — HOLD X TO CLEAR'],
+  ['#cockBar .cock-hint', 'Hold LMB · release at FULL', 'Hold RT · release at FULL'],
+  ['#workbenchScreen .wb-vp-hint', 'Drag to rotate · scroll to zoom', 'Right stick to turn · LT / RT to zoom'],
+];
+function padHintsRefresh() {
+  for (const [sel, keys, pad] of PAD_STATIC_HINTS) {
+    const el = document.querySelector(sel);
+    if (el) el.innerHTML = Pad.active ? pad : keys;
+  }
+  if (Game.mode === 'scenario' && Game.gun) { updateAmmoHud(); updateLoadoutHud(); }
+  if (Tutorial.active && !Tutorial.done) {
+    const base = Tutorial._reloadBaseline;
+    Tutorial._renderStep();
+    Tutorial._reloadBaseline = base;
+  }
+}
+function padSetActive(on) {
+  if (Pad.active === on) return;
+  Pad.active = on;
+  if (on) document.getElementById('pauseHint').style.display = 'none';
+  else {   // the keys again: let go of whatever the pad was holding, and put the cursor away
+    Pad.move.x = Pad.move.z = 0;
+    if (Pad.sprintLatch) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
+    padCursorShow(false);
+  }
+  padHintsRefresh();
+}
+document.addEventListener('keydown', e => { if (e.isTrusted && Pad.active) padSetActive(false); }, true);
+document.addEventListener('mousedown', e => { if (e.isTrusted && Pad.active) padSetActive(false); }, true);
+document.addEventListener('mousemove', e => {
+  if (e.isTrusted && Pad.active && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) > 3) padSetActive(false);
+}, true);
 function padStick(x, y) {
   const m = Math.hypot(x, y);
   if (m < PAD_DEAD) return { x: 0, y: 0, m: 0 };
@@ -26219,6 +26288,26 @@ function padCursorMove(ls, rs, pressed, dt) {
     padCursorPlace(PadCursor.x, PadCursor.y);
   }
 }
+// v1.279 (D.38, the drags): the workbench's gun turns with the right stick (sideways always; up and down while the
+// cursor is on the gun, else it scrolls as before) and LT / RT zoom out and in, as the mouse's drag and wheel do. On the
+// Loadout screen the right stick's sideways push turns the kid. Returns true when the stick's up and down are used.
+const PAD_TURN = 2.4;   // rad/s at full stick
+function padTurnViews(rs, now, dt) {
+  if (Game.mode === 'workbench' && WB.active) {
+    const onGun = document.elementFromPoint(PadCursor.x, PadCursor.y) === document.getElementById('wbCanvas');
+    if (rs.x !== 0 || (onGun && rs.y !== 0)) WB.autoRotate = false;
+    WB.yaw += rs.x * PAD_TURN * dt;
+    if (onGun) WB.pitch = Math.max(-1.2, Math.min(1.2, WB.pitch + rs.y * PAD_TURN * 0.6 * dt));
+    if (now(PAD_BTN.LT)) WB.dist = Math.min(2.0, WB.dist + 0.9 * dt);
+    if (now(PAD_BTN.RT)) WB.dist = Math.max(0.4, WB.dist - 0.9 * dt);
+    return onGun;
+  }
+  if (Game.mode === 'loadoutMgr' && LOADOUT_KID.kid && rs.x !== 0) {
+    LOADOUT_KID.turn = (LOADOUT_KID.turn || 0) + rs.x * PAD_TURN * dt;
+    drawLoadoutKid();
+  }
+  return false;
+}
 function padClick() {
   const el = PadCursor.hover;
   if (!el) return;
@@ -26266,7 +26355,7 @@ function pollGamepad(dt) {
   const was = i => !!prev[i], now = i => !!btn[i];
   const pressed = i => now(i) && !was(i), released = i => !now(i) && was(i);
   if (btn.some(Boolean) || ls.m > 0 || rs.m > 0) {
-    if (!Pad.active) { Pad.active = true; document.getElementById('pauseHint').style.display = 'none'; }
+    if (!Pad.active) padSetActive(true);   // v1.279: and the hints turn to the pad's buttons
   }
   Pad.prev = btn;
   if (!Pad.active) return;
@@ -26288,9 +26377,10 @@ function pollGamepad(dt) {
     return;
   }
   if (onScreen) {
+    const rsUsed = padTurnViews(rs, now, dt);   // v1.279: the workbench gun and the Loadout kid
     if (pressed(PAD_BTN.A)) padClick();
     else if (pressed(PAD_BTN.B)) padBack();
-    else padCursorMove(ls, rs, pressed, dt);
+    else padCursorMove(ls, rsUsed ? { x: rs.x, y: 0, m: rs.m } : rs, pressed, dt);
     return;
   }
   if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
@@ -26576,7 +26666,7 @@ function ladderPromptText() {
 function updateLadderPrompt() {
   const el = document.getElementById('interactPrompt');
   if (!el) return;
-  const t = ladderPromptText();
+  const t = padWords(ladderPromptText());   // v1.279: the stick and A on a pad
   if (t) { if (el.innerHTML !== t) el.innerHTML = t; el.style.display = 'block'; }
   else if (el.style.display !== 'none') el.style.display = 'none';
 }
@@ -26702,6 +26792,7 @@ function updatePlayer(dt) {
     const mag = Math.hypot(mx, mz);
     if (mag > 0) { mx /= mag; mz /= mag; }
     else if (Pad.move.x !== 0 || Pad.move.z !== 0) { mx = Pad.move.x; mz = Pad.move.z; }   // v1.241: the stick, analog
+    if (Game.player._holdT > 0) { mx = 0; mz = 0; Game.player.sprinting = false; }   // v1.280 (D.47): held at your base
 
     let speed = inScenario ? MOVE_SPEED_SCENARIO : MOVE_SPEED;
     if (inScenario) {
@@ -27278,7 +27369,7 @@ function updateInteractables() {
   Game.focusedInteractable = best;
   const prompt = document.getElementById('interactPrompt');
   if (best) {
-    prompt.innerHTML = `<kbd>E</kbd> &nbsp; ${best.prompt}`;
+    prompt.innerHTML = padWords(`<kbd>E</kbd> &nbsp; ${best.prompt}`);   // v1.279: A on a pad
     prompt.style.display = 'block';
   } else {
     prompt.style.display = 'none';
@@ -27296,6 +27387,7 @@ const UNJAM_TIME = 2.0;          // seconds to unjam (hold R)
 const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked during this time
 
 function doFire() {
+  if (Game.player._holdT > 0) return;   // v1.280 (D.47): no shot while held at your base
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)
   playShot();
   Game.gun.ammo = Math.max(0, Game.gun.ammo - pelletsFired);
@@ -27752,7 +27844,9 @@ function updateAmmoHud() {
     s.className = 'status reloading';
   } else if (Game.gun.ammo === 0) {
     // Show what they can do — F to forfeit always available
-    s.textContent = 'MAG EMPTY · F TO FORFEIT';
+    // v1.281 (critic, 19 Oct): at the backyard range there is nothing to forfeit (F walks you in); going in and out
+    // by the back door fills the gun from your bag
+    s.textContent = Game.scenario && Game.scenario.range ? 'MAG EMPTY · BACK DOOR TO RELOAD' : 'MAG EMPTY · F TO FORFEIT';
     s.className = 'status reloading';
   } else if (!Game.gun.cocked) {
     s.textContent = 'HOLD LMB TO RACK';
@@ -27761,6 +27855,7 @@ function updateAmmoHud() {
     s.textContent = 'READY · CLICK TO FIRE';
     s.className = 'status ready';
   }
+  if (Pad.active) s.textContent = padWords(s.textContent);   // v1.279 (D.38): RT, X and BACK on a pad
 }
 
 function updateLoadoutHud() {
@@ -27810,7 +27905,7 @@ function updateLoadoutHud() {
     }
     container.appendChild(div);
   }
-  hintEl.textContent = hint;
+  hintEl.textContent = padWords(hint);   // v1.279
 }
 
 function updateProgressBars() {
@@ -28945,6 +29040,7 @@ function respawnPlayerVip(keepHits) {
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
   Game.player._graceT = VIP_GRACE;
+  if (Game.scenario.ctf) { Game.player._holdT = CTF_HOLD_SEC; Game.player._graceT = CTF_HOLD_SEC + VIP_GRACE; }   // v1.280 (D.47)
   Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
   updateHealthHud();
 }
@@ -28961,10 +29057,17 @@ const CTF_TOUCH = 1.3, CTF_HOME = 2.5, CTF_RETURN_SEC = 20, CTF_CARRIER_BONUS = 
 // tie is a draw, paid as a loss), and a `ctf: 'push'` kid found within CTF_GUARD_R of his own flag runs to a point
 // CTF_PUSH_D up the street (kidFlagRun, shooting on the move) and fights from there, so one kid a side keeps the flag.
 const CTF_GUARD_R = 15, CTF_PUSH_D = 24;
+// v1.280 (backlog D.47, Michael 18 Oct: "Capture the Flag needs a respawn timer, where enemies/teammates cannot start
+// shooting again until they've been in their base for 10 seconds. The player should suffer the same penalty. You cannot
+// move or shoot after you get back to your base for 10 seconds."): a kid tagged in capture the flag walks back to his
+// base as before and then waits CTF_HOLD_SEC there, still out (no shot, no flag, nothing tags him), before he plays
+// again. You come back at your start held for CTF_HOLD_SEC: you can look round but not move, jump, fire or swing, nothing
+// tags you, and the flag box counts it down. The respawn's 2 s grace then starts as you are let go.
+const CTF_HOLD_SEC = 10;
 function ctfSide(c) { return combatantTeam(c) === combatantTeam(Game.player) ? 'ours' : 'theirs'; }
 function ctfOther(side) { return side === 'ours' ? 'theirs' : 'ours'; }
 function ctfAlive(c) {
-  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits;
+  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits && !(Game.player._holdT > 0);   // v1.280: not while held at base
   return c.health > 0 && c.state !== 'retreating';
 }
 function ctfCarrying(c) {
@@ -29521,6 +29624,11 @@ function updateCtfHud(hud) {
   else if (ours.dropped) status = 'OUR FLAG IS DOWN';
   else if (theirs.dropped) status = 'THEIR FLAG IS DOWN';
   else status = `FLAGS · FIRST TO ${C.toWin}`;
+  // v1.280 (D.47): held at your base, the countdown; news of a flag keeps the line, with the countdown after it
+  if (Game.player._holdT > 0) {
+    const n = Math.ceil(Game.player._holdT);
+    status = status === `FLAGS · FIRST TO ${C.toWin}` ? `BACK AT YOUR BASE · PLAY IN ${n}` : `${status} · YOU PLAY IN ${n}`;
+  }
   const lbl = document.getElementById('timerLabel');
   if (lbl) lbl.textContent = status;
   const val = document.getElementById('timerValue');
@@ -30671,6 +30779,15 @@ function coverShieldsFrom(c, ePos, dir) {
 // v1.67: nearest suitable cover (height ≥ 0.5) within `maxDist` that would
 // shield the kid from threat direction `dir`; falls back to nearest cover at all
 // if none specifically shields (moving beats standing exposed).
+// v1.282 (critic, 20 Oct, Found in play): in Protect Ryan, Mitchell took Priya's plank (their VIP's own cover) as his and
+// stood inside her, centres 0.17 m apart, for 10-36 s of a round. Nobody takes cover a living VIP is holding: not by the
+// incoming-fire dash, the reposition pick or a bound.
+function vipHoldsCover(e, c) {
+  for (const o of (Game.scenario && Game.scenario.enemies) || []) {
+    if (o !== e && o.vip && o.homeCover === c && o.health > 0 && o.state !== 'retreating') return true;
+  }
+  return false;
+}
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
@@ -30680,7 +30797,7 @@ function nearestShieldingCover(e, dir, maxDist = 14) {
   let bestW = null, bestWD = Infinity, bestAnyW = null, bestAnyWD = Infinity;
   const threat = { x: e.pos.x - dir.x, z: e.pos.z - dir.z };
   for (const c of cover) {
-    if ((c.h || 0) < 0.5 || c === e.homeCover) continue;
+    if ((c.h || 0) < 0.5 || c === e.homeCover || vipHoldsCover(e, c)) continue;   // v1.282: not a VIP's
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
     if (d > maxDist) continue;
@@ -30735,6 +30852,7 @@ function pickBoundCover(e, coverList, playerPos) {
   let best = null, bestScore = -Infinity;
   for (const c of coverList) {
     if (c === e._boundCover) continue;                  // not the one we're at
+    if (vipHoldsCover(e, c)) continue;                  // v1.282: nor a VIP's
     // v1.139 fix-up: nor, for 6 s, one dropped as failed (wedged, or no gain) on the way to it. After the 1.5 s rest
     // he picked it again, slid back into the same wedge, and with the direct push between the two (each undoing the
     // other) stood 3–4 s along one wall in 'advancing' (the lot at night: Mason at (−17.3, −14.2)).
@@ -32506,7 +32624,7 @@ function updateEnemies(dt) {
             if (e.weapon === 'sniper')  maxRepositionDist = 3 + aggression * 3;  // 3..6m, small lateral moves
             if (e.role === 'defender')  maxRepositionDist = Math.min(maxRepositionDist, 5); // never abandon zone
             let candidates = Game.scenario.cover.filter(c => {
-              if (e.coverMemory.includes(c) || c === e.homeCover) return false;
+              if (e.coverMemory.includes(c) || c === e.homeCover || vipHoldsCover(e, c)) return false;   // v1.282: not a VIP's
               const cx = (c.minX + c.maxX) / 2;
               const cz = (c.minZ + c.maxZ) / 2;
               // For defenders, distance is measured from anchor, not current pos
@@ -32678,6 +32796,12 @@ function updateEnemies(dt) {
           // target again, and the rest of the same burst tagged him again: Bunratty VIP's Owen, in the bulb fort,
           // lost 4 lives in 0.4 s to one of Sean's bursts over its low wall, and looped there 10-30 s.
           if (e.stateTime < 1.0) break;
+          // v1.280 (D.47): in capture the flag he waits at his base, still out, before he plays again
+          if (Game.scenario.ctf) {
+            e._ctfHoldT = (e._ctfHoldT || 0) + dt;
+            if (e._ctfHoldT < CTF_HOLD_SEC) { e._retreatStuck = 0; break; }
+            e._ctfHoldT = 0;
+          }
           // Reached spawn → redeploy. Reset health and jog back out to the anchor.
           e.health = e.maxHealth;
           e.coverMemory = [];
@@ -33011,9 +33135,9 @@ const Tutorial = {
     if (this._instrEl) {
       // The TAG beat shows live progress.
       if (beat.id === 'tag') {
-        this._instrEl.innerHTML = `Hold <kbd>Left-Mouse</kbd> to re-cock, release to fire. Tag all three — <strong>${this.dummiesTagged}/${this.dummiesTotal}</strong> down.`;
+        this._instrEl.innerHTML = padWords(`Hold <kbd>Left-Mouse</kbd> to re-cock, release to fire. Tag all three — <strong>${this.dummiesTagged}/${this.dummiesTotal}</strong> down.`);   // v1.279
       } else {
-        this._instrEl.innerHTML = beat.instr;
+        this._instrEl.innerHTML = padWords(beat.instr);   // v1.279: the pad's buttons while it is in use
       }
       this._instrEl.classList.remove('done');
     }
@@ -33152,6 +33276,7 @@ function stepGame(dt) {
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
+    if (Game.player._holdT > 0) Game.player._holdT = Math.max(0, Game.player._holdT - dt);   // v1.280 (D.47)
     updateSquad(dt);   // v1.248 (D.35)
     voiceStep();   // v1.256 (D.32): lines waiting on the voice cooldowns
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)

@@ -30,6 +30,53 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     risk: cream scraps over a bright daytime street read less sharply than dark panels, and they hide a little more of
     the field.
   - C) The briefing card only, on the next build, for you to play with before deciding between A and B.
+  - Michael (control room d66-notebook-paper, 19:27 UTC 20 Oct, carried to the card by the producer): **A**. Every line of
+    text sits on the ruled lines; larger blocks like the result-card boxes get a filled background instead of lines
+    showing through.
+
+- **D.48 Jog back to your spawn when you are tagged: in which matches, and who steers? (builder, 2026-10-20, backlog D.48)**
+  Today a tag that doesn't end your match does one of two things. In the matches where you come back (capture the
+  flag, Protect Ryan's VIP matches, the Pickup Game and the Last Saturday) you are put back at your start in one frame.
+  In the other team matches, a spare life (from armour or a match's own lives) costs one and you stay where you are.
+  Your note asks for a jog back to your side's spawn with the gun pointed at the sky, and control back at the base.
+  Kids already do this: they walk back with a hand up, untouchable, and BBs pass through them.
+  - A) **The coming-back matches only, walked for you:** in those four kinds, a tag turns you round and jogs you to your
+    start at a kid's retreat pace (3.2 m/s), gun up. You can look round but not steer or fire, and nothing tags you. At
+    the start you get control back, after capture the flag's 10 s hold (v1.280). The other team matches stay as they are.
+  - B) **A, but you steer:** gun up, no firing, nothing tags you, and you walk yourself back. Control comes back when you
+    reach your start, and an arrow points the way.
+  - C) **A, and every team match with a spare life:** a tag that costs a life also jogs you home, as the Last Saturday
+    does, rather than leaving you where you were.
+  Builder's lean: A. It is what kids do already. It keeps the camera off a teleport, and it doesn't change how armour
+  plays in the one-life ladder matches.
+
+- **D.49 Spawn camping: what grace after a respawn? (builder, 2026-10-20, backlog D.49)**
+  Today, in the matches where you come back, a respawn gives you 2 s in which nothing tags you (`VIP_GRACE`, v1.170).
+  Capture the flag adds its 10 s hold at the base (v1.280), untouchable, before that 2 s starts. A kid has no grace:
+  he is out while he walks back, and fair game from the moment he redeploys at his base. A kid standing over your start
+  can still empty your lives at the end of the 2 s.
+  - A) **3 s, ended early by your own shot:** after you are let go at your base nothing tags you for 3 s, unless you
+    fire first. The same rule for kids. The HUD shows a small countdown on you.
+  - B) **5 s**, otherwise as A.
+  - C) **A, and a no-camp ring:** kids won't fire into the other side's base (8 m round its start) while someone there
+    is in grace, and they move off it.
+  - D) **Leave it at 2 s.**
+  Builder's lean: A. 3 s is enough to reach cover from every start we have. Ending it on your own shot stops grace from
+  being an attack.
+
+- **D.50 The Tick-Tock and a weapons balance pass (builder, 2026-10-20, backlog D.50)**
+  The Tick-Tock ($55) is an automatic that ticks out 2 BBs a second when held. Automatics skip the semi-auto lockout on
+  a fresh click (v1.20), so clicking fast fires a BB per click: tapped, it shoots faster than it does held, with the
+  cheap guns' best accuracy and reach. Measured headless: clicked six times a second for 3 s it fired 18 BBs; held
+  for 3 s, 6. That is what you found.
+  - A) **Fix the taps:** no automatic fires faster tapped than held. A click inside the gun's own cycle waits for it.
+    Prices are unchanged.
+  - B) **A, and raise the Tick-Tock to $75.**
+  - C) **A, then a balance table first:** all 16 guns in one table (price, BBs a second, spread, reach, BBs per tag
+    against a kid at 10 and 20 m, measured headless) with the changes I'd make, for your OK before any of them is built.
+  - D) **Leave it.**
+  Builder's lean: C. A is a fix whatever you choose, and the table gives you numbers to judge "the best gun for the
+  price" before any price moves.
 
 ## Answered
 

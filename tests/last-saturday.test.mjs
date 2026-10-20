@@ -60,15 +60,20 @@ const s0 = await page.evaluate(() => ({ n: Game.scenario.enemies.length, ours: G
 check('in the match: 13 kids, 5 of them with you, all on 3 lives, and you take 3 hits; you start at the west end',
   s0.n === 13 && s0.ours === 5 && s0.lives.join() === '3' && s0.hits === 3 && s0.x < -15, s0);
 await page.evaluate(() => { Game.player._graceT = 999; });   // stand at the start untaggable and let them fight
+// CI fix-up (20 Oct): each side's starting total, not 15 and 18. Since v1.275 theirs is eight kids on 3 (24), so "under
+// 18 left" asked for seven of their lives gone; on 09000e2 they had lost six (18 left) and ours all 15.
+const start = await page.evaluate(() => ({
+  ours: Game.scenario.enemies.filter(e => e.team === 'player').reduce((a, e) => a + Math.max(0, e.lives), 0),
+  theirs: Game.scenario.enemies.filter(e => e.team !== 'player').reduce((a, e) => a + Math.max(0, e.lives), 0) }));
 let t = 0, fired = null;
 for (; t < 60; t += 10) {
   await g.spin(600);
   fired = await page.evaluate(() => ({ mode: Game.mode, time: +Game.scenario.roundTime.toFixed(1),
     livesOurs: Game.scenario.enemies.filter(e => e.team === 'player').reduce((a, e) => a + Math.max(0, e.lives), 0),
     livesTheirs: Game.scenario.enemies.filter(e => e.team !== 'player').reduce((a, e) => a + Math.max(0, e.lives), 0) }));
-  if (fired.mode !== 'scenario' || (fired.livesOurs < 15 && fired.livesTheirs < 18)) break;
+  if (fired.mode !== 'scenario' || (fired.livesOurs < start.ours && fired.livesTheirs < start.theirs)) break;
 }
-check('both sides trade tags: each has lost lives within a minute', fired.livesOurs < 15 && fired.livesTheirs < 18, fired);
+check('both sides trade tags: each has lost lives within a minute', fired.livesOurs < start.ours && fired.livesTheirs < start.theirs, { start, fired });
 await g.shot('last-saturday');
 
 // Win it: the calendar turns to Saturday 30 August, and Eric texts the last text of the summer

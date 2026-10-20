@@ -11943,3 +11943,109 @@ most of the round. That is the same fault v1.184 fixed for allies (Michael: C on
 ### Still open
 - An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
   or like a wave arriving late is for a playtest of a crew match.
+
+## v1.279 — Pad button names in the hints, and the pad turns the workbench gun and the Loadout kid
+Michael answered D.38's leftover with B (18 Oct): the hints, then the drags. With a pad in hand only the range bench
+and the squad-order hint named pad buttons. Every other hint still named a key: the E prompt at every door and at the
+shop, mirror, bed and board; the treehouse ladder's W / S / Space; the tutorial's WASD, Shift, both mouse buttons and
+R; the ammo box (HOLD LMB TO RACK, CLICK TO FIRE, R TO FLIP, F TO FORFEIT), the jam and rack bars and the slot hint; and
+the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens the pad could click but not turn the
+gun or the kid.
+- While the pad is in use, the hints name its buttons (`padWords`, `PAD_STATIC_HINTS`). E is A. The ladder says
+  Stick ↑ climb, and on the ladder Stick ↑ up · Stick ↓ down · A let go. The tutorial says the Left Stick, Click L3,
+  LT, Pull RT and X. The ammo box says HOLD RT TO RACK, RT TO FIRE, X TO FLIP and BACK TO FORFEIT. Pause shows RESUME
+  START and FORFEIT BACK, and the forfeit question shows KEEP PLAYING B and FORFEIT A. Those are the buttons the pad
+  already used for each (v1.241–v1.242).
+- A real key press, a real mouse click, or the mouse moved more than 3 px puts every hint back on the keys, puts away
+  the pad's cursor, and lets go of a held stick and sprint. The next touch of the pad turns them back. The pad's own
+  clicks and key presses are synthetic events, so they never count as the keyboard.
+- The drags: on the workbench the right stick's sideways push turns the gun, its up and down tilt it while the cursor
+  is on the gun (elsewhere it still scrolls), and RT / LT zoom in and out, the same limits as the mouse's drag and
+  wheel. The viewport's hint says so. On the Loadout screen the sideways push turns the kid, on top of his slow swing.
+  Full stick is 2.4 rad/s. Parts were already mounted by clicking, so nothing else on the workbench needed the mouse.
+### Verified
+- `tests/pad-hints.test.mjs` (new). The bedroom's prompt reads "E Use the computer" with keys, "A Use the computer"
+  with the pad, and E again after a real mouse move or a key press. At the ladder foot it reads "W climb" with keys and
+  "Stick ↑ climb" with the pad, and climbing by the stick shows "Stick ↑ up · Stick ↓ down · A let go". With the pad
+  the ammo box reads MAG EMPTY · BACK TO FORFEIT and the jam bar HOLD X. Start pauses with RESUME START / FORFEIT
+  BACK, Back asks with KEEP PLAYING B / FORFEIT A, and a key press brings ESC, F, ENTER and HOLD R back. The tutorial's
+  five steps name the Left Stick and L3, LT, Pull RT and X, and R again after a mouse move. On the workbench, half a
+  second of full right stick turned the gun 1.20 rad and stopped its own turning. With the cursor on the gun the stick
+  tilted it 0.20 → 0.68 rad, and RT took the zoom 0.90 → 0.45 and LT back to 0.90. On the Loadout screen a second of
+  stick turned the kid 2.40 rad.
+- The suites that read these hints or drive the pad pass: backyard-range, bedroom-settings, calendar, crew,
+  forfeit-ask, front-door, gamepad, gamepad-screens, hats, ladder-prompt, loadout-gear, loadout-kid, pad-orders,
+  pause-menu, pickup, pool-noodle, shorts, sneakers, squad-hud, texts, tops, under-parts, walkie, workbench-labels.
+  The whole suite takes about five hours on one machine here, so the rest is left to CI's shards.
+### Still open
+- The HUD's slot numbers (1–4) are still keys. On a pad Y/RB/LB pick slots, and the d-pad does too in a match
+  without teammates. Michael's list didn't name them.
+- Whether "Stick ↑" and "Click L3 (press the left stick)" read well on a real pad is for Michael's hands.
+
+## v1.280 — Capture the flag: ten seconds at your base after a tag
+Michael's D.47 (18 Oct): "Capture the Flag needs a respawn timer, where enemies/teammates cannot start shooting again
+until they've been in their base for 10 seconds. The player should suffer the same penalty. You cannot move or shoot
+after you get back to your base for 10 seconds." Before, a kid tagged in Flags on Bellfield walked back to his base and
+redeployed the moment he got there (after at least a second out). You were put back at your start and could move and
+fire at once, with 2 s in which nothing tagged you.
+- A kid tagged in capture the flag still walks back to his base, hand up, as before. There he now waits
+  `CTF_HOLD_SEC` (10 s), still out: he doesn't fire, can't take or return a flag, and nothing tags him. Then he
+  redeploys as before. Allies and enemies alike.
+- You come back at your start held for 10 s. You can look round, but W/A/S/D and the stick don't move you, and Space,
+  the trigger and the pool noodle do nothing. You can't take or send home a flag, and nothing tags you. The flag box
+  counts it down: "BACK AT YOUR BASE · PLAY IN 7", or, when a flag is on the move, the news with "· YOU PLAY IN 7"
+  after it. The respawn's 2 s grace now starts as you are let go, not as you arrive. Without that, a kid at your base
+  could tag you on your first step.
+- Only capture the flag has the hold. The VIP matches, the Pickup Game and the Last Saturday keep their respawns as
+  they were (D.48 and D.49 ask about those).
+- `tests/ctf.test.mjs`'s played rounds wanted both flag runners to walk 150 m. With a 10 s wait per tag a round can
+  now end on two flags well inside its 150 s: 0–2 at 67 s with Andrew tagged four times and 102 m walked. The bar is
+  now a metre for each second played, which is still 150 m over a full round. Its HUD check (Mason has our flag, in
+  red) failed while you were held, because the countdown had replaced the flag news. That is why the countdown now
+  follows the news.
+### Verified
+- `tests/ctf-hold.test.mjs` (new), on Flags on Bellfield. Tagged, you came back at your start with a 10 s hold. Two
+  seconds of W and D held moved you 0.00 m, Space didn't jump, the trigger fired 0 BBs, a BB didn't tag you, and the
+  flag box read "BACK AT YOUR BASE · PLAY IN 8". At 9 s you were still held. At 10 s you were let go with 1.5–2 s of
+  grace left, walked off, and the trigger fired. Mason (theirs) reached his base 6.95 s after his tag and played
+  again at 16.95 s, a wait of 10.00 s. Evan (ours) arrived at 5.72 s and played again at 15.72 s. Neither fired, held
+  a flag or could be tagged while he waited. Protect Ryan's respawn has no hold.
+- `ctf` (with its two changes), `ctf-clock`, `bellfield`, `northcliff`, `crew-roster`, `crew-balance` and `squad-hud`
+  pass. In ctf's kids-only rounds (you parked out of the fight) Andrew walked 128–242 m with 5–8 tags, and Mason
+  267–488 m.
+### Still open
+- Whether 10 s at the base makes Flags on Bellfield drag, or lets one side run away with it, is for a playtest. With
+  you parked out of the fight, the kids-only rounds went 0–2 to them at 67 s and 126 s, and 0–1 at 150 s.
+- The 2 s grace after the hold is unchanged. How long it should be, and whether kids get one, is D.49 (in decisions).
+
+## v1.281 — The range's ammo box says the back door reloads
+The critic (19 Oct, Found in play): at the backyard range, once the mag is empty, the ammo box read "MAG EMPTY · F TO
+FORFEIT". There is nothing to forfeit at the range. F walks you inside (v1.257), and going in and back out by the back
+door is how the starter loadout refills the gun from the bag. At the range the box now reads "MAG EMPTY · BACK DOOR TO
+RELOAD". Every match keeps "F TO FORFEIT", and with a pad, "BACK TO FORFEIT" (v1.279).
+### Verified
+- `tests/backyard-range.test.mjs` has a new check: with the Spring Pistol's mag empty at the range, the box reads "MAG
+  EMPTY · BACK DOOR TO RELOAD". The suite passes. `pad-hints` passes, and it still reads BACK TO FORFEIT in a match
+  with the pad and F TO FORFEIT with the keys.
+### Still open
+- Nothing.
+
+## v1.282 — Nobody takes the VIP's cover
+The critic (20 Oct, Found in play): in Protect Ryan, Mitchell (theirs, anchor `bulb_car1`) took Priya's plank as his
+cover and stood inside her, centres 0.17 m apart. He was within 0.5 m of her for 36 s of a 60 s round in 1 of 3 rounds,
+and ended at her spot in 3 of 6 played rounds. A player saw two kids in one body, with a second kid in the VIP's cover.
+Reproduced here before the fix: in 2 of 4 rounds of 60 s Mitchell took her plank as his `homeCover` and stood
+within 0.5 m of her for 10.4 s and 27.5 s, hiding and peeking from it.
+- A kid choosing cover now skips any cover a living VIP of either side holds as hers (`vipHoldsCover`). That applies
+  in all three ways a kid picks a new cover: the dash out of incoming fire (`nearestShieldingCover`), the reposition
+  pick, and a bound (`pickBoundCover`). Only the VIPs' covers are kept free. Any other shared cover is still left to
+  v1.33's soft crowding penalty, so the matches without a VIP pick as before.
+### Verified
+- `tests/vip-cover.test.mjs` (new): six rounds of 60 s of Protect Ryan, you untouchable. Priya holds her plank in
+  every round, no kid takes it, and no kid is within 0.5 m of her for over 1 s. The nearest anyone came was 0.84–1.05
+  m. The same probe that found 2 of 4 rounds before found 0 of 4 after, nearest 1.79 m.
+- `vip`, `vip-spawn`, `bulb-sight` and `idle-ally` pass, and so does the stuck-kid sweep of both VIP matches
+  (`bunratty_vip`, `lot_vip_night`), three ways each, 90 s.
+### Still open
+- Mitchell now holds `bulb_car1` and the cover round it. Whether Priya's side still guards her well enough is for a
+  playtest; `vip`'s "no VIP falls in the first 8 s" and the trade checks pass.

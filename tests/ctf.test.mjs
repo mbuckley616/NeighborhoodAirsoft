@@ -169,12 +169,18 @@ for (let r = 0; r < 4 && (r < 2 || !rounds.some(x => x.takes.length > 0)); r++) 
       returns: C.log.filter(x => x.ev === 'return' || x.ev === 'timeout').map(x => (x.by || 'timeout') + '@' + x.t),
       lanes: C.log.filter(x => x.ev === 'lane').map(x => x.wp),
       tags: Game.scenario.enemies.map(e => e.name + ':' + (99 - e.lives)).join(' '),
+      tagsOf: Object.fromEntries(Game.scenario.enemies.map(e => [e.name, 99 - e.lives])),   // v1.280
       walked: Object.fromEntries(Object.entries(W.walked).map(([k, v]) => [k, Math.round(v)])), wedge: W.wedge };
   });
   rounds.push(res);
   console.log(`   round ${r + 1}, ${res.t} s: score ${res.score.ours}-${res.score.theirs} (${res.mode}); takes ${res.takes.join(' ') || '-'}; caps ${res.caps.join(' ') || '-'}; sent home ${res.returns.join(' ') || '-'}; ` +
     `lanes ${['street', 'north', 'south'].map(w => w + ' ' + res.lanes.filter(x => x === w).length).join(', ')}; tags taken ${res.tags}; walked ${JSON.stringify(res.walked)}; runner wedges ${JSON.stringify(res.wedge)}`);
-  check(`round ${r + 1}: both runners walk over 150 m`, (res.walked.Andrew || 0) > 150 && (res.walked.Mason || 0) > 150, res.walked);
+  // v1.280 (D.47): a tagged kid now waits 10 s at his base before he plays again, so a runner tagged often has less of
+  // the round to walk in (Andrew, tagged 8 times in 150 s, walked 128 m). The bar is a metre for every second he was not
+  // waiting at his base, at most 150 m: the old bar over a full round with no tags.
+  const bar = (name) => Math.min(150, res.t - 10 * (res.tagsOf[name] || 0));
+  check(`round ${r + 1}: both runners walk over a metre for each second not held at base`, (res.walked.Andrew || 0) > bar('Andrew') && (res.walked.Mason || 0) > bar('Mason'),
+    { bars: { Andrew: bar('Andrew'), Mason: bar('Mason') }, walked: res.walked });
   check(`round ${r + 1}: no runner is held on his flag run within 1 m for over 4 s`, Object.values(res.wedge).every(t => t <= 4.1), res.wedge);
   check(`round ${r + 1}: the backyards and the street are both used`, res.lanes.includes('street') && res.lanes.some(x => x !== 'street'), res.lanes);
 }
