@@ -1,6 +1,37 @@
 name: check
-on: [push, pull_request]
+# 19 Oct 2026 (Michael in chat: "port the docs-only skip and the test-what-you-touch selection", from The Old Gates' pipeline):
+# a pull request runs only the suites its change can reach (tests/lib/select.mjs), a docs-only one none; main runs every suite
+# after each merge, and the next merge never cancels that run. A branch is tested through its pull request only: before, a
+# push to a branch with an open PR ran the full suite twice, once for the push and once for the PR. A new commit on a PR
+# cancels that PR's older run. `gate` is the one check that says whether a pull request is fit to merge: green when parse
+# passed and the suites passed or were not needed. Merging still waits for Michael's approval.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: check-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.p.outputs.mode }}
+      n: ${{ steps.p.outputs.n }}
+      shards: ${{ steps.p.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - id: p
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node tests/lib/select.mjs --base=${{ github.event.pull_request.base.sha }} --github-output
+          else
+            node tests/lib/select.mjs --full --github-output
+          fi
   parse:
     runs-on: ubuntu-latest
     steps:
@@ -8,8 +39,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: node scripts/parsecheck.mjs
-  headless-shard:
-    runs-on: ubuntu-latest
+  headless:
     # v1.145 (backlog B.4): 49 suites took 30–45+ min in one job and half the runs hit the 45-min limit. Four jobs
     # run a quarter each in parallel (`run.mjs --shard`); a shard takes ~10 min, so 30 leaves room for a 10-min hang.
     # v1.160 fix-up: the suites now take 101 min on CI, 25 a shard in four, and shard 4 was cancelled at the 30-min
@@ -20,23 +50,30 @@ jobs:
     # the browser's system packages took 11 min that run instead of the usual 3.
     # 17 Oct fix-up: ten. On 5e9437a the eight shards ran their suites in 26-40 min (168 suites, 242 weighted min)
     # and shard 5/8 was cancelled at 40:00 partway through stuck-sweep-8 with every suite so far passing.
+    # 19 Oct 2026: ten for every suite (main); a pull request's selection gets one shard per ~24 minutes of suites, up to ten.
+    needs: plan
+    if: needs.plan.outputs.mode != 'none'
+    runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    name: headless (${{ matrix.shard }}/10)
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    name: headless (${{ matrix.shard }}/${{ needs.plan.outputs.n }})
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: npm install
       - run: npx playwright install --with-deps chromium
-      - run: node tests/run.mjs --shard ${{ matrix.shard }}/10
-  headless:
-    # v1.145: one check named `headless` as before, green only when every shard is.
-    needs: headless-shard
+      - run: node tests/run.mjs --shard ${{ matrix.shard }}/${{ needs.plan.outputs.n }} ${{ needs.plan.outputs.mode == 'some' && format('--changed {0}', github.event.pull_request.base.sha) || '' }}
+  gate:
+    # v1.145's `headless` collector, now one check for the whole run: what the producer reads before a merge
+    needs: [plan, parse, headless]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: test "${{ needs.headless-shard.result }}" = success
+      - run: |
+          echo "plan: ${{ needs.plan.result }} (${{ needs.plan.outputs.mode }}, ${{ needs.plan.outputs.n }} shards); parse: ${{ needs.parse.result }}; suites: ${{ needs.headless.result }}"
+          [ "${{ needs.plan.result }}" = success ] && [ "${{ needs.parse.result }}" = success ] && { [ "${{ needs.headless.result }}" = success ] || [ "${{ needs.headless.result }}" = skipped ]; }
