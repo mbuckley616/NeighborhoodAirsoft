@@ -6,7 +6,7 @@
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
 // them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question; v1.285 the
 // message card (messages, the bed, the calendar, the Pickup Game board and its online panel); v1.286 the map; v1.287 the
-// loadout, the workbench and the shop; v1.288 the HUD's labels, the bedroom's prompts and the frame cost.
+// loadout, the workbench and the shop; v1.288 the HUD's labels, the bedroom's prompts and the frame cost; v1.289 the mirror.
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
@@ -31,7 +31,7 @@ function onRules(name, rep) {
 }
 const blocks = (sel) => page.evaluate((sel) => {
   const root = document.querySelector(sel);
-  return [...root.querySelectorAll('.reward, .rs-cell, .rs-damage, .brief-objective, #introMap, .nb-btn, #loWeightBar, .lo-kid-col, .wb-viewport')]
+  return [...root.querySelectorAll('.reward, .rs-cell, .rs-damage, .brief-objective, #introMap, .nb-btn, #loWeightBar, .lo-kid-col, .wb-viewport, #mirrorCanvas')]
     .filter(e => e.getClientRects().length && !e.closest('.rs-grid') || e.classList.contains('rs-cell'))
     .map(e => { const cs = getComputedStyle(e);
       return { el: e.id || e.className.split(' ')[0], h: +(e.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)).toFixed(1) }; });
@@ -78,6 +78,19 @@ check('the bedroom\'s prompt is a strip of paper in the hand', prompts.promptBg 
 check('the bedroom\'s CASH and BBs labels are in the hand', /NB Hand/.test(prompts.cashLabel), prompts.cashLabel);
 check('the labels over the room are paper tags in ink', prompts.chipBg === PAPER && contrast(prompts.chipInk, PAPER) >= 4.5, prompts);
 await page.evaluate(() => { document.getElementById('interactPrompt').style.display = 'none'; });
+
+// 1a2) v1.289: the mirror
+await page.evaluate(() => openMirror());
+await page.evaluate(() => document.fonts.ready);
+await g.shot('notebook-mirror');
+onRules('the mirror', await lineReport(page, '#mirrorScreen .loadout-card'));
+wholeRules('the mirror', await blocks('#mirrorScreen .loadout-card'));
+const mir = await page.evaluate(() => { const b = [...document.querySelectorAll('#mirrorOptions .mirror-row[data-key="height"] .mirror-opt')].find(x => !x.classList.contains('on'));
+  if (!b) return null; const v = JSON.parse(b.dataset.value); b.click(); return { v, now: Game.persist.look.height }; });
+check('a choice on the paper mirror still picks', mir && mir.now === mir.v, mir);
+onRules('the mirror after a pick', await lineReport(page, '#mirrorScreen .loadout-card'));
+await page.evaluate(() => document.getElementById('mirrorDoneBtn').click());
+check('DONE on the paper mirror goes back to the room', (await g.mode()) === 'bedroom');
 
 // 1b) v1.285: the shared message card: a plain message, the bed's summer so far and its delete question, the calendar,
 // the Pickup Game board and its online panel; the flip phone stays a phone

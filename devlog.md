@@ -12276,3 +12276,25 @@ handwriting for its labels", and the bedroom's prompts on paper.
 ### Still open
 - Whether 13–14 px handwriting reads at a glance in a firefight is for a playtest. The HUD selector list in this
   version's CSS block can put any label back in the print.
+
+## v1.289 — Notebook paper, part 7: the mirror
+The mirror (NEW GAME's look picker, and the bathroom's) shares the loadout's card and was the one menu still dark
+(v1.287's Still open). It is on paper now, which finishes decision A.
+- The card is a page: The Mirror in marker, DONE a sticky note, and the kid's picture 15 rules tall (292×390, the
+  same 3:4 as its 300×400 drawing).
+- The mirror's rows were written with inline styles for the dark card, so the paper overrides them:
+  - each row's name is on one rule in red pen
+  - its choices are words boxed in pen on the next rule (22 px on a 26 px rule), the picked one highlighted and
+    ringed
+  - the colour swatches are 22 px, the picked one ringed in ink
+  - YOUR CREW is in marker a rule below, and the crew-name box is white with a pen outline
+  
+  Nothing in how the mirror works changed. The only change in its code is the card's two classes.
+### Verified
+- `tests/notebook.test.mjs`: the mirror has 12 lines and the worst baseline is 2.5 px from a rule, before and after
+  picking a height. The picked height is saved, the picture is a whole number of rules, and DONE goes back to the
+  room.
+- These suites pass: `mirror`, `desk-start` (NEW GAME opens on the mirror), `autosave`, `crew-roster`, `crew` (all
+  five), `hats`, `shorts`, `sneakers`, `tops`, `smoke`, `harness` and `notebook`.
+### Still open
+- The mirror is a long page and scrolls past the Shirt front row at 720 px. Its scroll does not snap to the rules.
