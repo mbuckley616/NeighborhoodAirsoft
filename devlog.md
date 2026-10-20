@@ -12167,3 +12167,42 @@ screens between matches. It now goes on paper, so these screens are on paper:
 - The board is a tall page. With four-a-side and every row filled it reaches the bottom of a 720 px screen, and it
   scrolls past that (that scroll does not snap to the rules).
 - Next: the map screen, then the shop, the workbench and the loadout.
+
+## v1.286 — Notebook paper, part 4: the map screen
+The fourth group of screens for D.46 (decision A): the map.
+- The whole map window is a notebook page now. THE NEIGHBORHOOD is in marker, CHOOSE YOUR BATTLEFIELD in red pen and
+  ← BACK TO ROOM is a sticky note.
+- The map drawing is unchanged, as if a printed map were taped onto the page: two strips of tape and a small shadow.
+  Its pin labels keep the print font and their own line height, so a label is the same size as before (with the
+  page's rule for a line-height they had grown to 32 px and two overlapped at 1024×640, which `map-screen` caught).
+- The zone's name and its "n of 16 won" are written on the rules. Each scenario card is a filled block with a red
+  line across the top: green when the match is won, inked round when it is NEXT, pencil grey when it is locked. Each
+  card's name is in marker. START is a small sticky note.
+- The cards are three rules tall, so 12 Winnmark cards show at 1280×720 (`map-screen` asks for at least 10).
+  `fitScenarioCards` checks a zone's cards after they are drawn. If any card's words need a fourth rule (a long name,
+  or a row of badges that wraps, as in Night Team 2v2), every card in that zone takes four. That keeps the rows even
+  and on the rules.
+- The list's height is rounded down to a whole number of rules (CSS `round()`), and it scrolls a rule at a time, so
+  the lines round the cards stay on the rules when it is scrolled to the end. The window itself still fills the
+  screen as before.
+### Verified
+- `tests/notebook.test.mjs` opens the map at 1280×720 and at 1600×900, every zone unlocked, and goes through all 8
+  zones. In each:
+  - every line is on a rule: 32 lines, worst 2.5 px
+  - every card and button is a whole number of rules tall
+  - no card's words spill out of it
+  - scrolled to the end, the list is still on the rules
+  
+  A card still opens its briefing and ← BACK TO ROOM goes home.
+- `map-screen` passes at all five sizes:
+  - 1280×720: 12 of 16 cards in view, the map fills 98% of its column
+  - 1366×768: 12 in view
+  - 1920×1080: all 16
+  - 1024×640: 6 in view, where every card needs four rules
+  - 800×1000: stacked
+  
+  No two pin labels overlap. `map-table`, `gamepad-screens`, `front-door`, `desk-start`, `smoke`, `last-saturday`,
+  `northcliff`, `market-lot`, `country-club`, `high-school`, `grocery-store` and `bellfield` pass.
+### Still open
+- At 1024×640 a zone shows 6 cards before it scrolls, where the dark map showed 8.
+- Next: the shop, the workbench and the loadout.

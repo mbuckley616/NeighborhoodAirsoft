@@ -2261,6 +2261,57 @@
     line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 4px; }
   #modalScreen .nb-paper .pk-net-err { font-size: 16px; color: var(--nb-red); }
   #modalScreen .nb-paper .pk-net-privacy { font-size: 14px; opacity: 1; color: var(--nb-pencil); }
+  /* -- v1.286 (D.46): the map screen on paper. The map's drawing stays as it is, a printed map taped onto the page (a
+     filled block); the header, the zone's name and count are written on the rules; each scenario card is a filled
+     block three rules high, and the list (a whole number of rules tall) scrolls a whole rule at a time. -- */
+  #worldMap .map-content.nb-paper { padding: var(--nb-rule) 28px var(--nb-rule) 70px !important; }
+  #worldMap .nb-paper .map-area { font-family: 'Courier New', monospace; }   /* the printed map keeps its print */
+  #worldMap .nb-paper .map-area * { line-height: normal !important; }
+  #worldMap .nb-paper .map-head { align-items: flex-start; margin: 0 0 var(--nb-rule); }
+  #worldMap .nb-paper .map-title { font-family: var(--nb-marker); font-size: 28px; color: #17171c; margin: 0;
+    line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 9px; }
+  #worldMap .nb-paper .map-subtitle { font-size: 15px; color: var(--nb-red); }
+  #worldMap .nb-paper .map-close { font-size: 16px !important; }
+  #worldMap .nb-paper .map-area { box-shadow: 2px 3px 0 rgba(29,42,107,0.25); }
+  #worldMap .nb-paper .map-area::before, #worldMap .nb-paper .map-area::after {   /* two strips of tape */
+    content: ''; position: absolute; z-index: 4; width: 90px; height: 22px; background: rgba(240,236,214,0.75);
+    box-shadow: 0 0 0 1px rgba(160,150,120,0.35); pointer-events: none; }
+  #worldMap .nb-paper .map-area::before { left: -24px; top: 10px; transform: rotate(-35deg); }
+  #worldMap .nb-paper .map-area::after { right: -24px; bottom: 10px; transform: rotate(-35deg); }
+  #worldMap .nb-paper .scenario-info { background: none; border: none; padding: 0 4px 0 0; font-size: 16px;
+    scroll-snap-type: y mandatory; flex: 0 0 auto; height: round(down, 100%, var(--nb-rule)); }
+  #worldMap .nb-paper .scenario-info > *, #worldMap .nb-paper .sc-list > * { scroll-snap-align: start; }
+  #worldMap .nb-paper .scenario-info.empty { color: var(--nb-pencil); min-height: 0; }
+  #worldMap .nb-paper .scenario-info .sc-name { font-size: 18px; font-weight: 400; margin: 0; }
+  #worldMap .nb-paper .scenario-info .sc-zone-count { font-size: 14px; color: var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-row-lock { font-size: 16px; color: var(--nb-red); margin: 0 !important; }
+  #worldMap .nb-paper .scenario-info .sc-list { margin: 0; gap: 0 10px; grid-auto-rows: calc(var(--nb-rule) * var(--sc-rows, 3)); }
+  #worldMap .nb-paper .scenario-info .sc-card { margin: 0 0 4px; padding: 4px 7px 2px; border: none; gap: 0;
+    background: var(--nb-paper); overflow: hidden;
+    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5), inset 0 3px 0 var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-card * { line-height: 1.2 !important; }
+  #worldMap .nb-paper .scenario-info .sc-card:hover { transform: rotate(-0.6deg); }
+  #worldMap .nb-paper .scenario-info .sc-card.done { box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5), inset 0 3px 0 var(--nb-green); }
+  #worldMap .nb-paper .scenario-info .sc-card.next { background: #fff8c8; box-shadow: inset 0 0 0 2px var(--nb-ink), inset 0 3px 0 var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-card.locked { background: var(--nb-paper); opacity: 1;
+    box-shadow: inset 0 0 0 1.5px rgba(74,74,88,0.35), inset 0 3px 0 rgba(74,74,88,0.45); }
+  #worldMap .nb-paper .scenario-info .sc-card-top { font-size: 11px; }
+  #worldMap .nb-paper .scenario-info .sc-card-num { background: var(--nb-ink); color: var(--nb-paper); font-weight: 400; }
+  #worldMap .nb-paper .scenario-info .sc-card.locked .sc-card-num { background: var(--nb-pencil); }
+  #worldMap .nb-paper .scenario-info .sc-card-match, #worldMap .nb-paper .scenario-info .sc-card-badge,
+  #worldMap .nb-paper .scenario-info .sc-card-stamp { font-weight: 400; }
+  #worldMap .nb-paper .scenario-info .sc-card-match { color: var(--nb-ink); }
+  #worldMap .nb-paper .scenario-info .sc-card-badge { color: var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-card-stamp.next { color: var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-card-stamp.done { color: var(--nb-green); }
+  #worldMap .nb-paper .scenario-info .sc-card-title { font-family: var(--nb-marker); font-weight: 400; font-size: 14px; color: #17171c; }
+  #worldMap .nb-paper .scenario-info .sc-card.locked .sc-card-title { color: var(--nb-pencil); }
+  #worldMap .nb-paper .scenario-info .sc-card-meta { font-size: 13px; color: var(--nb-pencil); }
+  #worldMap .nb-paper .scenario-info .sc-card-foot { margin-top: auto; }
+  #worldMap .nb-paper .scenario-info .sc-card-pay { font-size: 11px; color: var(--nb-green); font-weight: 400; }
+  #worldMap .nb-paper .scenario-info .sc-card-lock { font-size: 13px; color: var(--nb-red); font-style: normal; margin-top: auto; }
+  #worldMap .nb-paper .scenario-info .sc-go { font-family: var(--nb-marker); font-size: 11px; padding: 0 8px; color: var(--nb-ink);
+    background: var(--nb-sticky); box-shadow: inset 0 0 0 1.5px var(--nb-ink), 2px 2px 0 rgba(29,42,107,0.8); }
 </style>
 </head>
 <body>
@@ -2357,12 +2408,12 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.285</div>
+  <div class="version">v1.286</div>
 </div>
 
 <!-- === WORLD MAP === -->
 <div class="menu-overlay" id="worldMap">
-  <div class="map-content">
+  <div class="map-content nb-paper">   <!-- v1.286 (D.46): on paper -->
     <!-- v1.146 (D.8 step 1, Michael: A): full window, two columns. The header carries the title and the way back;
          the map fills the left column at its own aspect, the chosen zone's scenarios scroll in the right one. -->
     <div class="map-head">
@@ -2370,7 +2421,7 @@
         <div class="map-title">The Neighborhood</div>
         <div class="map-subtitle">Choose your battlefield</div>
       </div>
-      <button class="map-close" id="mapCloseBtn">← BACK TO ROOM</button>
+      <button class="map-close nb-btn" id="mapCloseBtn">← BACK TO ROOM</button>
     </div>
     <div class="map-body">
     <div class="map-left" id="mapLeft">
@@ -35204,6 +35255,17 @@ function renderBriefRoster(scenarioId) {
   }));
 }
 
+// v1.286 (D.46): on the paper map every card in a zone is the same whole number of rules tall: three, or four when
+// one card's words need it (a long name or a wrapped row of badges), so the cards and the lines round them stay on the rules.
+function fitScenarioCards(info) {
+  const list = info.querySelector('.sc-list');
+  if (!list || !list.closest('.nb-paper')) return;
+  list.style.removeProperty('--sc-rows');
+  const rule = parseFloat(getComputedStyle(list).getPropertyValue('--nb-rule')) || 26;
+  let h = 0;
+  list.querySelectorAll('.sc-card').forEach(c => { h = Math.max(h, c.scrollHeight); });
+  if (h) list.style.setProperty('--sc-rows', Math.max(3, Math.ceil((h + 4) / rule)));
+}
 // v1.146 (D.8 step 1): a pin click and openMap both show a zone through here; the chosen pin is marked
 // `.selected` and the right column scrolls back to its top.
 function selectMapZone(sc) {
@@ -35252,6 +35314,7 @@ function selectMapZone(sc) {
       info.querySelectorAll('.sc-card:not(.locked)').forEach(card => {
         card.addEventListener('click', () => openScenarioBrief(card.dataset.id));
       });
+      fitScenarioCards(info);   // v1.286
       return;
     }
     // Single-scenario pin (legacy path — kept for forward compatibility).

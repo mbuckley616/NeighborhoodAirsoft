@@ -5,7 +5,7 @@
 // every line of text has its baseline within 3 px of a rule; every filled block is a whole number of rules tall;
 // every text colour holds 4.5 : 1 against the paper; the sticky-note buttons still click, and the pad's cursor rings
 // them in red dashes. v1.284 adds the title, settings, PAUSED and the forfeit question; v1.285 the
-// message card (messages, the bed, the calendar, the Pickup Game board and its online panel).
+// message card (messages, the bed, the calendar, the Pickup Game board and its online panel); v1.286 the map.
 import { boot, check } from './lib/game.mjs';
 import { lineReport, contrast } from './lib/notebook.mjs';
 const g = await boot(); const { page } = g;
@@ -101,6 +101,37 @@ const ph = await page.evaluate(() => { openPhone(); const c = document.querySele
   const r = { phone: c.classList.contains('phone'), paper: c.classList.contains('nb-paper') };
   document.getElementById('modalCloseBtn').click(); r.after = c.classList.contains('nb-paper'); return r; });
 check('the flip phone is still a phone, and the card is paper again after it', ph.phone && !ph.paper && ph.after, ph);
+
+// 1c) v1.286: the map screen, every zone, at two window sizes; every scenario card holds its words inside its four rules
+const mapPage = '#worldMap .map-content';
+for (const vp of [{ width: 1280, height: 720 }, { width: 1600, height: 900 }]) {
+  await page.setViewportSize(vp);
+  await page.evaluate(() => { isScenarioUnlocked = () => true; isZoneUnlocked = () => true; Game._mapZone = null; openMap(); });
+  await page.evaluate(() => document.fonts.ready);
+  const zones = await page.evaluate(() => [...document.querySelectorAll('#worldMap .pin')].map(p => p.dataset.scenario));
+  let worst = 0, n = 0; const bad = [], spill = [];
+  for (const z of zones) {
+    await page.evaluate(z => selectMapZone(z), z);
+    const rep = await lineReport(page, mapPage);
+    for (const x of rep) { n++; worst = Math.max(worst, Math.abs(x.d)); if (Math.abs(x.d) > 3) bad.push({ z, ...x }); }
+    for (const b of await blocks(mapPage)) if (Math.abs(b.h / 26 - Math.round(b.h / 26)) > 0.02) bad.push({ z, block: b });
+    spill.push(...await page.evaluate(() => [...document.querySelectorAll('#worldMap .sc-card')]
+      .filter(c => c.scrollHeight > c.clientHeight + 1).map(c => c.dataset.id + ':' + c.scrollHeight + '>' + c.clientHeight)));
+    if (z === zones[0] || z === 'winnmark_ct') await g.shot(`notebook-map-${vp.width}-${z}`);
+  }
+  console.log(`   the map at ${vp.width}x${vp.height}: ${zones.length} zones, ${n} lines, worst baseline ${worst.toFixed(1)} px from a rule`);
+  check(`the map at ${vp.width}x${vp.height}: every line on a rule and every block whole rules, in every zone`, !bad.length, bad.slice(0, 5));
+  check(`the map at ${vp.width}x${vp.height}: every scenario card holds its words`, !spill.length, spill.slice(0, 5));
+  const end = await page.evaluate(() => { const i = document.getElementById('scenarioInfo'); i.scrollTop = i.scrollHeight; return i.scrollTop; });
+  const rep = await lineReport(page, mapPage);
+  check(`the map at ${vp.width}x${vp.height}: scrolled to the end of the list, still on the rules`, rep.every(x => Math.abs(x.d) <= 3), { end, off: rep.filter(x => Math.abs(x.d) > 3).slice(0, 3) });
+}
+await page.setViewportSize({ width: 1280, height: 720 });
+await page.evaluate(() => { const c = document.querySelector('#worldMap .sc-card:not(.locked)'); c.click(); });
+check('a card on the paper map opens its briefing', await page.evaluate(() => document.getElementById('scenarioBriefModal').classList.contains('active')));
+await page.evaluate(() => document.getElementById('briefCancelBtn').click());
+await page.evaluate(() => document.getElementById('mapCloseBtn').click());
+check('← BACK TO ROOM on the paper map goes home', (await g.mode()) === 'bedroom');
 
 // 2) the map's popup briefing
 await page.evaluate(() => { isScenarioUnlocked = () => true; openScenarioBrief('bunratty_sean'); });

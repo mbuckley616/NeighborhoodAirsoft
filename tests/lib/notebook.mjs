@@ -6,7 +6,7 @@ export const lineReport = (page, sel) => page.evaluate((sel) => {
   if (!root || root.offsetParent === null && getComputedStyle(root).position !== 'fixed') return null;
   const RULE = parseFloat(getComputedStyle(root).getPropertyValue('--nb-rule')) || 26;
   const r0 = root.getBoundingClientRect(), origin = r0.top - root.scrollTop;
-  const skip = '.nb-btn, .reward, .rs-cell, .rs-damage, .brief-objective, .nb-box, canvas, svg, button, input, kbd';
+  const skip = '.nb-btn, .reward, .rs-cell, .rs-damage, .brief-objective, .nb-box, .sc-card, .map-area, canvas, svg, button, input, kbd';
   const out = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n; (n = walker.nextNode());) {
