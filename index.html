@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.278</div>
+  <div class="version">v1.279</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24720,7 +24720,7 @@ let loadoutPickerSlot = -1;
 // slowly in a panel with the slot-1 gun in hand, and a leader line from each body part to what is equipped there: eye
 // pro, chest, arms, legs, feet, belt and holster, the gun. The worn gear has no meshes on the kid yet (step 2, a group
 // at a time); the lines name it. Part points are in the average kid's local frame (createKid's group scale applies).
-const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '' };
+const LOADOUT_KID = { renderer: null, scene: null, camera: null, kid: null, gun: null, yaw: 0, gear: null, gearSig: '', turn: 0 };   // v1.279: turn, the pad's
 const LOADOUT_KID_PARTS = [
   { key: 'eyes',  part: 'EYES',  p: [0, 1.27, 0.15],      side: 'L' },   // the kid faces +z; eyes at 1.27 (head top 1.47)
   { key: 'chest', part: 'CHEST', p: [0, 0.92, 0.13],      side: 'L' },
@@ -24923,7 +24923,7 @@ function updateLoadoutKid(dt) {
 }
 function drawLoadoutKid() {
   const L = LOADOUT_KID;
-  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw);   // swings between three-quarter views, gun side and front to camera
+  L.kid.group.rotation.y = -0.45 + 0.35 * Math.sin(L.yaw) + (L.turn || 0);   // swings between three-quarter views, gun side and front to camera; v1.279: plus the pad's turn
   L.kid.group.updateMatrixWorld(true);
   L.renderer.render(L.scene, L.camera);
   const items = loadoutKidItems(), svg = document.getElementById('loKidLabels');
@@ -26092,6 +26092,73 @@ const PAD_LOOK_PX = 1150;       // full right stick = this many mouse pixels a s
 const PAD_BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9, L3: 10, R3: 11,
                   UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const Pad = { active: false, prev: [], move: { x: 0, z: 0 }, sprintLatch: false, ads: false, fire: false };
+// v1.279 (backlog D.38, Michael: B, the hints then the drags): while the pad is in use every on-screen hint names the
+// pad's button, not the key: the E prompts at the doors, shop, mirror, bed and board say A, the ladder's W / S / Space
+// say the stick and A, the tutorial's steps, the ammo box, the jam and rack bars, the slot hint, and the pause and
+// forfeit buttons. Touching the keyboard or the mouse (a real key or click, or the mouse moved) puts the keys back.
+const PAD_WORDS = [
+  [/<kbd>W<\/kbd> <kbd>A<\/kbd> <kbd>S<\/kbd> <kbd>D<\/kbd>/g, 'the <kbd>Left Stick</kbd>'],
+  [/Hold <kbd>Shift<\/kbd>/g, 'Click <kbd>L3</kbd> (press the left stick)'],
+  [/<kbd>Right-Mouse<\/kbd>/g, '<kbd>LT</kbd>'],
+  [/Click <kbd>Left-Mouse<\/kbd>/g, 'Pull <kbd>RT</kbd>'],
+  [/<kbd>Left-Mouse<\/kbd>/g, '<kbd>RT</kbd>'],
+  [/<kbd>R<\/kbd>/g, '<kbd>X</kbd>'],
+  [/<kbd>E<\/kbd>/g, '<kbd>A</kbd>'],
+  [/<kbd>Space<\/kbd>/g, '<kbd>A</kbd>'],
+  [/<kbd>W<\/kbd>/g, '<kbd>Stick ↑</kbd>'],
+  [/<kbd>S<\/kbd>/g, '<kbd>Stick ↓</kbd>'],
+  [/Click & hold LMB/g, 'Hold RT'],
+  [/Click LMB/g, 'Pull RT'],
+  [/Click or V to swing/g, 'Pull RT to swing'],
+  [/(Hold|HOLD) LMB/g, '$1 RT'],
+  [/CLICK TO FIRE/g, 'RT TO FIRE'],
+  [/(Hold|HOLD) R\b/g, '$1 X'],
+  [/\bR TO FLIP/g, 'X TO FLIP'],
+  [/\bF TO FORFEIT/g, 'BACK TO FORFEIT'],
+];
+function padWords(s) {
+  if (!Pad.active || !s) return s;
+  for (const [re, to] of PAD_WORDS) s = s.replace(re, to);
+  return s;
+}
+// the hints written into the page itself: [element, the keys' words, the pad's words]
+const PAD_STATIC_HINTS = [
+  ['#pauseResumeBtn', 'RESUME <kbd>ESC</kbd>', 'RESUME <kbd>START</kbd>'],
+  ['#pauseForfeitBtn', 'FORFEIT <kbd>F</kbd>', 'FORFEIT <kbd>BACK</kbd>'],
+  ['#forfeitKeepBtn', 'KEEP PLAYING <kbd>ESC</kbd>', 'KEEP PLAYING <kbd>B</kbd>'],
+  ['#forfeitYesBtn', 'FORFEIT <kbd>ENTER</kbd>', 'FORFEIT <kbd>A</kbd>'],
+  ['#jamBar .jam-label', 'JAMMED — HOLD R TO CLEAR', 'JAMMED — HOLD X TO CLEAR'],
+  ['#cockBar .cock-hint', 'Hold LMB · release at FULL', 'Hold RT · release at FULL'],
+  ['#workbenchScreen .wb-vp-hint', 'Drag to rotate · scroll to zoom', 'Right stick to turn · LT / RT to zoom'],
+];
+function padHintsRefresh() {
+  for (const [sel, keys, pad] of PAD_STATIC_HINTS) {
+    const el = document.querySelector(sel);
+    if (el) el.innerHTML = Pad.active ? pad : keys;
+  }
+  if (Game.mode === 'scenario' && Game.gun) { updateAmmoHud(); updateLoadoutHud(); }
+  if (Tutorial.active && !Tutorial.done) {
+    const base = Tutorial._reloadBaseline;
+    Tutorial._renderStep();
+    Tutorial._reloadBaseline = base;
+  }
+}
+function padSetActive(on) {
+  if (Pad.active === on) return;
+  Pad.active = on;
+  if (on) document.getElementById('pauseHint').style.display = 'none';
+  else {   // the keys again: let go of whatever the pad was holding, and put the cursor away
+    Pad.move.x = Pad.move.z = 0;
+    if (Pad.sprintLatch) { Pad.sprintLatch = false; Game.keys['ShiftLeft'] = false; }
+    padCursorShow(false);
+  }
+  padHintsRefresh();
+}
+document.addEventListener('keydown', e => { if (e.isTrusted && Pad.active) padSetActive(false); }, true);
+document.addEventListener('mousedown', e => { if (e.isTrusted && Pad.active) padSetActive(false); }, true);
+document.addEventListener('mousemove', e => {
+  if (e.isTrusted && Pad.active && Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) > 3) padSetActive(false);
+}, true);
 function padStick(x, y) {
   const m = Math.hypot(x, y);
   if (m < PAD_DEAD) return { x: 0, y: 0, m: 0 };
@@ -26219,6 +26286,26 @@ function padCursorMove(ls, rs, pressed, dt) {
     padCursorPlace(PadCursor.x, PadCursor.y);
   }
 }
+// v1.279 (D.38, the drags): the workbench's gun turns with the right stick (sideways always; up and down while the
+// cursor is on the gun, else it scrolls as before) and LT / RT zoom out and in, as the mouse's drag and wheel do. On the
+// Loadout screen the right stick's sideways push turns the kid. Returns true when the stick's up and down are used.
+const PAD_TURN = 2.4;   // rad/s at full stick
+function padTurnViews(rs, now, dt) {
+  if (Game.mode === 'workbench' && WB.active) {
+    const onGun = document.elementFromPoint(PadCursor.x, PadCursor.y) === document.getElementById('wbCanvas');
+    if (rs.x !== 0 || (onGun && rs.y !== 0)) WB.autoRotate = false;
+    WB.yaw += rs.x * PAD_TURN * dt;
+    if (onGun) WB.pitch = Math.max(-1.2, Math.min(1.2, WB.pitch + rs.y * PAD_TURN * 0.6 * dt));
+    if (now(PAD_BTN.LT)) WB.dist = Math.min(2.0, WB.dist + 0.9 * dt);
+    if (now(PAD_BTN.RT)) WB.dist = Math.max(0.4, WB.dist - 0.9 * dt);
+    return onGun;
+  }
+  if (Game.mode === 'loadoutMgr' && LOADOUT_KID.kid && rs.x !== 0) {
+    LOADOUT_KID.turn = (LOADOUT_KID.turn || 0) + rs.x * PAD_TURN * dt;
+    drawLoadoutKid();
+  }
+  return false;
+}
 function padClick() {
   const el = PadCursor.hover;
   if (!el) return;
@@ -26266,7 +26353,7 @@ function pollGamepad(dt) {
   const was = i => !!prev[i], now = i => !!btn[i];
   const pressed = i => now(i) && !was(i), released = i => !now(i) && was(i);
   if (btn.some(Boolean) || ls.m > 0 || rs.m > 0) {
-    if (!Pad.active) { Pad.active = true; document.getElementById('pauseHint').style.display = 'none'; }
+    if (!Pad.active) padSetActive(true);   // v1.279: and the hints turn to the pad's buttons
   }
   Pad.prev = btn;
   if (!Pad.active) return;
@@ -26288,9 +26375,10 @@ function pollGamepad(dt) {
     return;
   }
   if (onScreen) {
+    const rsUsed = padTurnViews(rs, now, dt);   // v1.279: the workbench gun and the Loadout kid
     if (pressed(PAD_BTN.A)) padClick();
     else if (pressed(PAD_BTN.B)) padBack();
-    else padCursorMove(ls, rs, pressed, dt);
+    else padCursorMove(ls, rsUsed ? { x: rs.x, y: 0, m: rs.m } : rs, pressed, dt);
     return;
   }
   if (!inMatch && Game.mode !== 'bedroom') { Pad.move.x = Pad.move.z = 0; return; }
@@ -26576,7 +26664,7 @@ function ladderPromptText() {
 function updateLadderPrompt() {
   const el = document.getElementById('interactPrompt');
   if (!el) return;
-  const t = ladderPromptText();
+  const t = padWords(ladderPromptText());   // v1.279: the stick and A on a pad
   if (t) { if (el.innerHTML !== t) el.innerHTML = t; el.style.display = 'block'; }
   else if (el.style.display !== 'none') el.style.display = 'none';
 }
@@ -27278,7 +27366,7 @@ function updateInteractables() {
   Game.focusedInteractable = best;
   const prompt = document.getElementById('interactPrompt');
   if (best) {
-    prompt.innerHTML = `<kbd>E</kbd> &nbsp; ${best.prompt}`;
+    prompt.innerHTML = padWords(`<kbd>E</kbd> &nbsp; ${best.prompt}`);   // v1.279: A on a pad
     prompt.style.display = 'block';
   } else {
     prompt.style.display = 'none';
@@ -27761,6 +27849,7 @@ function updateAmmoHud() {
     s.textContent = 'READY · CLICK TO FIRE';
     s.className = 'status ready';
   }
+  if (Pad.active) s.textContent = padWords(s.textContent);   // v1.279 (D.38): RT, X and BACK on a pad
 }
 
 function updateLoadoutHud() {
@@ -27810,7 +27899,7 @@ function updateLoadoutHud() {
     }
     container.appendChild(div);
   }
-  hintEl.textContent = hint;
+  hintEl.textContent = padWords(hint);   // v1.279
 }
 
 function updateProgressBars() {
@@ -33011,9 +33100,9 @@ const Tutorial = {
     if (this._instrEl) {
       // The TAG beat shows live progress.
       if (beat.id === 'tag') {
-        this._instrEl.innerHTML = `Hold <kbd>Left-Mouse</kbd> to re-cock, release to fire. Tag all three — <strong>${this.dummiesTagged}/${this.dummiesTotal}</strong> down.`;
+        this._instrEl.innerHTML = padWords(`Hold <kbd>Left-Mouse</kbd> to re-cock, release to fire. Tag all three — <strong>${this.dummiesTagged}/${this.dummiesTotal}</strong> down.`);   // v1.279
       } else {
-        this._instrEl.innerHTML = beat.instr;
+        this._instrEl.innerHTML = padWords(beat.instr);   // v1.279: the pad's buttons while it is in use
       }
       this._instrEl.classList.remove('done');
     }

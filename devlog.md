@@ -11943,3 +11943,41 @@ most of the round. That is the same fault v1.184 fixed for allies (Michael: C on
 ### Still open
 - An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
   or like a wave arriving late is for a playtest of a crew match.
+
+## v1.279 — Pad button names in the hints, and the pad turns the workbench gun and the Loadout kid
+Michael answered D.38's leftover with B (18 Oct): the hints, then the drags. With a pad in hand only the range bench
+and the squad-order hint named pad buttons. Every other hint still named a key: the E prompt at every door and at the
+shop, mirror, bed and board; the treehouse ladder's W / S / Space; the tutorial's WASD, Shift, both mouse buttons and
+R; the ammo box (HOLD LMB TO RACK, CLICK TO FIRE, R TO FLIP, F TO FORFEIT), the jam and rack bars and the slot hint; and
+the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens the pad could click but not turn the
+gun or the kid.
+- While the pad is in use, the hints name its buttons (`padWords`, `PAD_STATIC_HINTS`). E is A. The ladder says
+  Stick ↑ climb, and on the ladder Stick ↑ up · Stick ↓ down · A let go. The tutorial says the Left Stick, Click L3,
+  LT, Pull RT and X. The ammo box says HOLD RT TO RACK, RT TO FIRE, X TO FLIP and BACK TO FORFEIT. Pause shows RESUME
+  START and FORFEIT BACK, and the forfeit question shows KEEP PLAYING B and FORFEIT A. Those are the buttons the pad
+  already used for each (v1.241–v1.242).
+- A real key press, a real mouse click, or the mouse moved more than 3 px puts every hint back on the keys, puts away
+  the pad's cursor, and lets go of a held stick and sprint. The next touch of the pad turns them back. The pad's own
+  clicks and key presses are synthetic events, so they never count as the keyboard.
+- The drags: on the workbench the right stick's sideways push turns the gun, its up and down tilt it while the cursor
+  is on the gun (elsewhere it still scrolls), and RT / LT zoom in and out, the same limits as the mouse's drag and
+  wheel. The viewport's hint says so. On the Loadout screen the sideways push turns the kid, on top of his slow swing.
+  Full stick is 2.4 rad/s. Parts were already mounted by clicking, so nothing else on the workbench needed the mouse.
+### Verified
+- `tests/pad-hints.test.mjs` (new). The bedroom's prompt reads "E Use the computer" with keys, "A Use the computer"
+  with the pad, and E again after a real mouse move or a key press. At the ladder foot it reads "W climb" with keys and
+  "Stick ↑ climb" with the pad, and climbing by the stick shows "Stick ↑ up · Stick ↓ down · A let go". With the pad
+  the ammo box reads MAG EMPTY · BACK TO FORFEIT and the jam bar HOLD X. Start pauses with RESUME START / FORFEIT
+  BACK, Back asks with KEEP PLAYING B / FORFEIT A, and a key press brings ESC, F, ENTER and HOLD R back. The tutorial's
+  five steps name the Left Stick and L3, LT, Pull RT and X, and R again after a mouse move. On the workbench, half a
+  second of full right stick turned the gun 1.20 rad and stopped its own turning. With the cursor on the gun the stick
+  tilted it 0.20 → 0.68 rad, and RT took the zoom 0.90 → 0.45 and LT back to 0.90. On the Loadout screen a second of
+  stick turned the kid 2.40 rad.
+- The suites that read these hints or drive the pad pass: backyard-range, bedroom-settings, calendar, crew,
+  forfeit-ask, front-door, gamepad, gamepad-screens, hats, ladder-prompt, loadout-gear, loadout-kid, pad-orders,
+  pause-menu, pickup, pool-noodle, shorts, sneakers, squad-hud, texts, tops, under-parts, walkie, workbench-labels.
+  The whole suite takes about five hours on one machine here, so the rest is left to CI's shards.
+### Still open
+- The HUD's slot numbers (1–4) are still keys. On a pad Y/RB/LB pick slots, and the d-pad does too in a match
+  without teammates. Michael's list didn't name them.
+- Whether "Stick ↑" and "Click L3 (press the left stick)" read well on a real pad is for Michael's hands.
