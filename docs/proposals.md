@@ -95,3 +95,22 @@ then shows a score you can earn next to one you mostly can't, which teaches hold
 it. The "how far off" line is ~10 lines in the range's BB hook.
 **Risk.** Low. It's the range only, and no match changes. A target at 8 m in the line of the 15 m one must not hide it.
 **Recommendation.** Do the 8 m move. Leave the miss distance for after Michael has shot it himself.
+
+## 2026-10-20 — Deal the free-for-all starts fresh each round (v1.272)
+**Why.** Since v1.265–v1.267 every free-for-all start is hidden and the same on every load, which is what Michael
+asked for. The kids stand on the same starts too, so the same kid hunts you in every replay. In Last Kid Standing,
+Sean's AK (from `ffa_1`, 34.9 m off) tagged me in 5 of 6 rounds. In the Ten-Way, Eric's MP5 (37.1 m off) did the
+same, 5 of 6 (critic, 20 Oct). A pushing player meets the same AK at the same second. A kid's free-for-all is a
+scramble where you never know who's round the next hedge. The fixed deal makes it a set piece you solve once.
+**What.** Keep the hidden starts and the player's start as they are. In a full free-for-all (all of a map's `ffa_N`
+used), shuffle which kid gets which `ffa_N` at BEGIN, from the match's seeded random, so the layout stays the same
+and only the deal changes. The Pickup Game's subsets keep their fixed order, since "in this order every subset
+keeps the rule".
+**Cost.** Part of one builder session: a shuffle of the anchors over `enemySetup` in `startScenario`'s ffa branch
+(for the four full free-for-alls), plus a test that two BEGINs deal at least two kids differently and every start is
+still used once. `ffa-starts` and `lamplight-starts` read the starts, not the kids, so they should hold.
+**Risk.** Low. Each start passes the hidden rule whoever stands on it. What changes is who your nearest gun is. A
+sniper dealt the start nearest you (`ffa_2` in Bunratty, 23.7 m) could make some rounds harder than any today, so
+the test should log the opening tag time over a few deals.
+**Recommendation.** Do it, unless Michael wants a free-for-all to be the same puzzle every time. One line in
+decisions would settle that.
