@@ -46,16 +46,24 @@ check('held: Space does not jump', t1.velY <= 0, t1.velY);
 check('held: the trigger fires nothing', t1.ammo === 0 && t1.shots === 0, t1);
 check('held: a BB does not tag you', t1.hit === 0 && t1.respawns === 1, t1);
 check('the flag box counts it down', /BACK AT YOUR BASE · PLAY IN 8/.test(t1.hud), t1.hud);
-await g.spin(7 * 60);
-const t2 = await page.evaluate(() => ({ hold: Game.player._holdT, moved: Math.hypot(Game.player.pos.x - Game.scenario.playerStart.pos.x, Game.player.pos.z - Game.scenario.playerStart.pos.z) }));
-check('still held at 9 s', t2.hold > 0.5 && t2.moved < 0.02, t2);
-await g.spin(75);
+// CI fix-up (20 Oct): stepped in the page to the moment of release. Between evaluates the page's own frame loop also
+// steps the game on the real clock, so on CI (9/10, ea49739) the hold had already run out 0.65 s before the old fixed
+// count of frames ended, and the grace read 1.35 against "just begun".
 const t3 = await page.evaluate(() => {
-  const P = Game.player, st = Game.scenario.playerStart.pos;
-  return { hold: P._holdT, moved: Math.hypot(P.pos.x - st.x, P.pos.z - st.z), grace: +P._graceT.toFixed(2),
-    hud: document.getElementById('timerHud').textContent.replace(/\s+/g, ' ').trim() };
+  const P = Game.player, st = Game.scenario.playerStart.pos, from = () => Math.hypot(P.pos.x - st.x, P.pos.z - st.z);
+  let at9 = null, rel = null, steps = 0;
+  const left0 = P._holdT;
+  for (; steps < 60 * 12 && P._holdT > 0; steps++) {
+    if (at9 == null && P._holdT <= 1.0) at9 = { hold: +P._holdT.toFixed(2), moved: from() };
+    stepGame(1 / 60);
+  }
+  rel = { hold: P._holdT, heldFor: +(10 - left0 + steps / 60).toFixed(2), grace: +P._graceT.toFixed(2), moved0: from() };
+  for (let i = 0; i < 60; i++) stepGame(1 / 60);
+  return { at9, ...rel, moved: from(), hud: document.getElementById('timerHud').textContent.replace(/\s+/g, ' ').trim() };
 });
-check('at 10 s you are let go and walk off (with the 2 s grace just begun)', t3.hold === 0 && t3.moved > 0.3 && t3.grace > 1.5 && t3.grace <= 2, t3);
+check('still held at 9 s', t3.at9 && t3.at9.hold > 0.5 && t3.at9.moved < 0.02, t3.at9);
+check('at 10 s you are let go, with the 2 s grace just begun, and walk off', t3.hold === 0 && Math.abs(t3.heldFor - 10) < 0.05
+  && t3.grace > 1.9 && t3.grace <= 2 && t3.moved0 < 0.02 && t3.moved > 0.3, t3);
 check('and the flag box drops the countdown', !/BACK AT YOUR BASE/.test(t3.hud), t3.hud);
 const t4 = await page.evaluate(() => {
   Game.keys.KeyW = false; Game.keys.KeyD = false;
