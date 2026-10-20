@@ -11981,3 +11981,39 @@ gun or the kid.
 - The HUD's slot numbers (1–4) are still keys. On a pad Y/RB/LB pick slots, and the d-pad does too in a match
   without teammates. Michael's list didn't name them.
 - Whether "Stick ↑" and "Click L3 (press the left stick)" read well on a real pad is for Michael's hands.
+
+## v1.280 — Capture the flag: ten seconds at your base after a tag
+Michael's D.47 (18 Oct): "Capture the Flag needs a respawn timer, where enemies/teammates cannot start shooting again
+until they've been in their base for 10 seconds. The player should suffer the same penalty. You cannot move or shoot
+after you get back to your base for 10 seconds." Before, a kid tagged in Flags on Bellfield walked back to his base and
+redeployed the moment he got there (after at least a second out). You were put back at your start and could move and
+fire at once, with 2 s in which nothing tagged you.
+- A kid tagged in capture the flag still walks back to his base, hand up, as before. There he now waits
+  `CTF_HOLD_SEC` (10 s), still out: he doesn't fire, can't take or return a flag, and nothing tags him. Then he
+  redeploys as before. Allies and enemies alike.
+- You come back at your start held for 10 s. You can look round, but W/A/S/D and the stick don't move you, and Space,
+  the trigger and the pool noodle do nothing. You can't take or send home a flag, and nothing tags you. The flag box
+  counts it down: "BACK AT YOUR BASE · PLAY IN 7", or, when a flag is on the move, the news with "· YOU PLAY IN 7"
+  after it. The respawn's 2 s grace now starts as you are let go, not as you arrive. Without that, a kid at your base
+  could tag you on your first step.
+- Only capture the flag has the hold. The VIP matches, the Pickup Game and the Last Saturday keep their respawns as
+  they were (D.48 and D.49 ask about those).
+- `tests/ctf.test.mjs`'s played rounds wanted both flag runners to walk 150 m. With a 10 s wait per tag a round can
+  now end on two flags well inside its 150 s: 0–2 at 67 s with Andrew tagged four times and 102 m walked. The bar is
+  now a metre for each second played, which is still 150 m over a full round. Its HUD check (Mason has our flag, in
+  red) failed while you were held, because the countdown had replaced the flag news. That is why the countdown now
+  follows the news.
+### Verified
+- `tests/ctf-hold.test.mjs` (new), on Flags on Bellfield. Tagged, you came back at your start with a 10 s hold. Two
+  seconds of W and D held moved you 0.00 m, Space didn't jump, the trigger fired 0 BBs, a BB didn't tag you, and the
+  flag box read "BACK AT YOUR BASE · PLAY IN 8". At 9 s you were still held. At 10 s you were let go with 1.5–2 s of
+  grace left, walked off, and the trigger fired. Mason (theirs) reached his base 6.95 s after his tag and played
+  again at 16.95 s, a wait of 10.00 s. Evan (ours) arrived at 5.72 s and played again at 15.72 s. Neither fired, held
+  a flag or could be tagged while he waited. Protect Ryan's respawn has no hold.
+- `ctf` (with its two changes), `ctf-clock`, `bellfield`, `northcliff`, `crew-roster`, `crew-balance` and `squad-hud`
+  pass. In ctf's kids-only rounds (you parked out of the fight) Andrew walked 128–242 m with 5–8 tags, and Mason
+  267–488 m.
+### Still open
+- Whether 10 s at the base makes Flags on Bellfield drag, or lets one side run away with it, is for a playtest. With
+  you parked out of the fight, the kids-only rounds went 0–2 to them at 67 s and 126 s, and 0–1 at 150 s.
+- The 2 s grace after the hold is unchanged. How long it should be, and whether kids get one, is D.49 (in decisions).
