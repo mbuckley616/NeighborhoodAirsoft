@@ -12029,3 +12029,23 @@ RELOAD". Every match keeps "F TO FORFEIT", and with a pad, "BACK TO FORFEIT" (v1
   with the pad and F TO FORFEIT with the keys.
 ### Still open
 - Nothing.
+
+## v1.282 — Nobody takes the VIP's cover
+The critic (20 Oct, Found in play): in Protect Ryan, Mitchell (theirs, anchor `bulb_car1`) took Priya's plank as his
+cover and stood inside her, centres 0.17 m apart. He was within 0.5 m of her for 36 s of a 60 s round in 1 of 3 rounds,
+and ended at her spot in 3 of 6 played rounds. A player saw two kids in one body, with a second kid in the VIP's cover.
+Reproduced here before the fix: in 2 of 4 rounds of 60 s Mitchell took her plank as his `homeCover` and stood
+within 0.5 m of her for 10.4 s and 27.5 s, hiding and peeking from it.
+- A kid choosing cover now skips any cover a living VIP of either side holds as hers (`vipHoldsCover`). That applies
+  in all three ways a kid picks a new cover: the dash out of incoming fire (`nearestShieldingCover`), the reposition
+  pick, and a bound (`pickBoundCover`). Only the VIPs' covers are kept free. Any other shared cover is still left to
+  v1.33's soft crowding penalty, so the matches without a VIP pick as before.
+### Verified
+- `tests/vip-cover.test.mjs` (new): six rounds of 60 s of Protect Ryan, you untouchable. Priya holds her plank in
+  every round, no kid takes it, and no kid is within 0.5 m of her for over 1 s. The nearest anyone came was 0.84–1.05
+  m. The same probe that found 2 of 4 rounds before found 0 of 4 after, nearest 1.79 m.
+- `vip`, `vip-spawn`, `bulb-sight` and `idle-ally` pass, and so does the stuck-kid sweep of both VIP matches
+  (`bunratty_vip`, `lot_vip_night`), three ways each, 90 s.
+### Still open
+- Mitchell now holds `bulb_car1` and the cover round it. Whether Priya's side still guards her well enough is for a
+  playtest; `vip`'s "no VIP falls in the first 8 s" and the trade checks pass.

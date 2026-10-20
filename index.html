@@ -2118,7 +2118,7 @@
     <button class="start-btn" id="newGameNoBtn">BACK</button>
   </div>
   <button class="start-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
-  <div class="version">v1.281</div>
+  <div class="version">v1.282</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -30779,6 +30779,15 @@ function coverShieldsFrom(c, ePos, dir) {
 // v1.67: nearest suitable cover (height ≥ 0.5) within `maxDist` that would
 // shield the kid from threat direction `dir`; falls back to nearest cover at all
 // if none specifically shields (moving beats standing exposed).
+// v1.282 (critic, 20 Oct, Found in play): in Protect Ryan, Mitchell took Priya's plank (their VIP's own cover) as his and
+// stood inside her, centres 0.17 m apart, for 10-36 s of a round. Nobody takes cover a living VIP is holding: not by the
+// incoming-fire dash, the reposition pick or a bound.
+function vipHoldsCover(e, c) {
+  for (const o of (Game.scenario && Game.scenario.enemies) || []) {
+    if (o !== e && o.vip && o.homeCover === c && o.health > 0 && o.state !== 'retreating') return true;
+  }
+  return false;
+}
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
@@ -30788,7 +30797,7 @@ function nearestShieldingCover(e, dir, maxDist = 14) {
   let bestW = null, bestWD = Infinity, bestAnyW = null, bestAnyWD = Infinity;
   const threat = { x: e.pos.x - dir.x, z: e.pos.z - dir.z };
   for (const c of cover) {
-    if ((c.h || 0) < 0.5 || c === e.homeCover) continue;
+    if ((c.h || 0) < 0.5 || c === e.homeCover || vipHoldsCover(e, c)) continue;   // v1.282: not a VIP's
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
     const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
     if (d > maxDist) continue;
@@ -30843,6 +30852,7 @@ function pickBoundCover(e, coverList, playerPos) {
   let best = null, bestScore = -Infinity;
   for (const c of coverList) {
     if (c === e._boundCover) continue;                  // not the one we're at
+    if (vipHoldsCover(e, c)) continue;                  // v1.282: nor a VIP's
     // v1.139 fix-up: nor, for 6 s, one dropped as failed (wedged, or no gain) on the way to it. After the 1.5 s rest
     // he picked it again, slid back into the same wedge, and with the direct push between the two (each undoing the
     // other) stood 3–4 s along one wall in 'advancing' (the lot at night: Mason at (−17.3, −14.2)).
@@ -32614,7 +32624,7 @@ function updateEnemies(dt) {
             if (e.weapon === 'sniper')  maxRepositionDist = 3 + aggression * 3;  // 3..6m, small lateral moves
             if (e.role === 'defender')  maxRepositionDist = Math.min(maxRepositionDist, 5); // never abandon zone
             let candidates = Game.scenario.cover.filter(c => {
-              if (e.coverMemory.includes(c) || c === e.homeCover) return false;
+              if (e.coverMemory.includes(c) || c === e.homeCover || vipHoldsCover(e, c)) return false;   // v1.282: not a VIP's
               const cx = (c.minX + c.maxX) / 2;
               const cz = (c.minZ + c.maxZ) / 2;
               // For defenders, distance is measured from anchor, not current pos
