@@ -5,6 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Build your crew went red once more: re-start it? (producer, 2026-10-20, fable d28-crew, PR #95)**
+  The Fable session finished v1.277 and set the card to review at head 3202fca. CI ran twice on that commit: the
+  pull-request run passed, the push run failed country-club `club_eighteenth_3v3: every kid moves or fires`. This
+  time it is an enemy, Brooke, who never walks or fires in 60 s (hiding at (-13.3, -24.9)); the stacked-start fix
+  held. A head that fails one run in two is not green, so the merge card is blocked, and FREEZE #94 keeps holding the
+  builder.
+  - A) Re-start the card so the Fable session finds why Brooke sits frozen and fixes it next check. *(recommended)*
+  - B) Set it aside: lift the freeze so the builder works on, and come back to the crew later.
+
 ## Answered
 
 - **Build your crew is stuck on one more CI fix: re-start it? (producer, 2026-10-19, fable d28-crew, STUCK #101)**
