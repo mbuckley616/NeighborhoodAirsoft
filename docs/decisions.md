@@ -7,6 +7,80 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Notebook-paper screens: how far does the paper go? (deep-work session, 2026-10-20, fable d46-notebook-ui)**
+  Every screen today is a dark glass panel with orange buttons, typed in Courier and Georgia. The notebook look turns a
+  screen into a page torn out of a school notebook: cream paper, blue ruled lines, a red margin, three-ring holes, a
+  ripped top edge, writing in blue ballpoint (Patrick Hand) with headings in black marker (Permanent Marker), and
+  buttons as yellow sticky notes outlined in pen. Both fonts are free to ship and would be embedded in index.html
+  (about 72 KB), so nothing is fetched from the internet. Rough mock-ups, made by restyling the live game in headless
+  Chromium (the real thing gets tidied up):
+  the briefing ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-08-briefing.png),
+  [paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-briefing.png)),
+  the result card ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-11-result.png),
+  [paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-result.png)),
+  the title ([paper](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-A-title.png)),
+  and the in-match HUD as taped scraps ([now](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/now-09-hud.png),
+  [scraps](https://github.com/mbuckley616/NeighborhoodAirsoft/raw/auto/fable-d46-notebook-ui/docs/prototypes/d46/proto-B-hud.png)).
+  Readability: blue ink on the paper is 12.9 : 1 contrast, red pen 5.7 : 1, green 4.8 : 1 (4.5 is the usual floor);
+  handwriting is kept at 14 px or larger and the small labels (CASH, BBs) stay in the plainest hand; the controller's
+  focus becomes a thick dashed red ring around the sticky note, never colour alone.
+  - A) Every menu and card becomes a notebook page: title, map, briefing, result, PAUSED and the forfeit question,
+    settings, shop, workbench and loadout, the Pickup Game board, the bedroom's prompts. The in-match HUD keeps its
+    dark panels so it reads against any sky, and only takes the handwriting for its labels. About 3–4 sessions, one
+    group of screens per version, the briefing first. *(recommended)*
+  - B) A, and the HUD too, as scraps of notebook paper taped to the corners (the mock-up above). One more session. The
+    risk: cream scraps over a bright daytime street read less sharply than dark panels, and they hide a little more of
+    the field.
+  - C) The briefing card only, on the next build, for you to play with before deciding between A and B.
+  Michael: **A) Every menu and card on paper; HUD stays dark** — "A but please make sure all text is actually in-line with the lines on the paper. It's horrible to read when it just overlaps without care. If it is larger, Like the boxes in the result card, maybe fill the boxes in or something. The text is just hard to read when it overlaps with the lines of the paper." (2026-10-20)
+
+- **D.48 Jog back to your spawn when you are tagged: in which matches, and who steers? (builder, 2026-10-20, backlog D.48)**
+  Today a tag that doesn't end your match does one of two things. In the matches where you come back (capture the
+  flag, Protect Ryan's VIP matches, the Pickup Game and the Last Saturday) you are put back at your start in one frame.
+  In the other team matches, a spare life (from armour or a match's own lives) costs one and you stay where you are.
+  Your note asks for a jog back to your side's spawn with the gun pointed at the sky, and control back at the base.
+  Kids already do this: they walk back with a hand up, untouchable, and BBs pass through them.
+  - A) **The coming-back matches only, walked for you:** in those four kinds, a tag turns you round and jogs you to your
+    start at a kid's retreat pace (3.2 m/s), gun up. You can look round but not steer or fire, and nothing tags you. At
+    the start you get control back, after capture the flag's 10 s hold (v1.280). The other team matches stay as they are.
+  - B) **A, but you steer:** gun up, no firing, nothing tags you, and you walk yourself back. Control comes back when you
+    reach your start, and an arrow points the way.
+  - C) **A, and every team match with a spare life:** a tag that costs a life also jogs you home, as the Last Saturday
+    does, rather than leaving you where you were.
+  Builder's lean: A. It is what kids do already. It keeps the camera off a teleport, and it doesn't change how armour
+  plays in the one-life ladder matches.
+  Michael: **B) A, but you steer** — you walk yourself back, gun up, no firing, nothing tags you, an arrow points the way. (2026-10-20)
+
+- **D.49 Spawn camping: what grace after a respawn? (builder, 2026-10-20, backlog D.49)**
+  Today, in the matches where you come back, a respawn gives you 2 s in which nothing tags you (`VIP_GRACE`, v1.170).
+  Capture the flag adds its 10 s hold at the base (v1.280), untouchable, before that 2 s starts. A kid has no grace:
+  he is out while he walks back, and fair game from the moment he redeploys at his base. A kid standing over your start
+  can still empty your lives at the end of the 2 s.
+  - A) **3 s, ended early by your own shot:** after you are let go at your base nothing tags you for 3 s, unless you
+    fire first. The same rule for kids. The HUD shows a small countdown on you.
+  - B) **5 s**, otherwise as A.
+  - C) **A, and a no-camp ring:** kids won't fire into the other side's base (8 m round its start) while someone there
+    is in grace, and they move off it.
+  - D) **Leave it at 2 s.**
+  Builder's lean: A. 3 s is enough to reach cover from every start we have. Ending it on your own shot stops grace from
+  being an attack.
+  Michael: **A) 3 s, ended early by your own shot; kids too.** (2026-10-20)
+
+- **D.50 The Tick-Tock and a weapons balance pass (builder, 2026-10-20, backlog D.50)**
+  The Tick-Tock ($55) is an automatic that ticks out 2 BBs a second when held. Automatics skip the semi-auto lockout on
+  a fresh click (v1.20), so clicking fast fires a BB per click: tapped, it shoots faster than it does held, with the
+  cheap guns' best accuracy and reach. Measured headless: clicked six times a second for 3 s it fired 18 BBs; held
+  for 3 s, 6. That is what you found.
+  - A) **Fix the taps:** no automatic fires faster tapped than held. A click inside the gun's own cycle waits for it.
+    Prices are unchanged.
+  - B) **A, and raise the Tick-Tock to $75.**
+  - C) **A, then a balance table first:** all 16 guns in one table (price, BBs a second, spread, reach, BBs per tag
+    against a kid at 10 and 20 m, measured headless) with the changes I'd make, for your OK before any of them is built.
+  - D) **Leave it.**
+  Builder's lean: C. A is a fix whatever you choose, and the table gives you numbers to judge "the best gun for the
+  price" before any price moves.
+  Michael: **C) A, then a balance table first** — fix the taps, then the 16-gun table for his OK before any change. (2026-10-20)
+
 - **Build your crew went red once more: re-start it? (producer, 2026-10-20, fable d28-crew, PR #95)**
   The Fable session finished v1.277 and set the card to review at head 3202fca. CI ran twice on that commit: the
   pull-request run passed, the push run failed country-club `club_eighteenth_3v3: every kid moves or fires`. This
