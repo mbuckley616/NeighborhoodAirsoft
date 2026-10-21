@@ -126,10 +126,14 @@ check('Clear Sprayer: its BBs curve hard: the middle one 0.9-2 m off line at 15 
 check('Ghost Mini: steady (over twice the Sprayer\'s share within 0.5 m at 15 m)', GH.within50 > 2 * SP.within50, [GH.within50, SP.within50]);
 check('Ghost Mini: about one burst in five jams (12-30%); the Sprayer and Tick-Tock never', GH.jamShare >= 0.12 && GH.jamShare <= 0.3 && SP.jamShare === 0 && TT.jamShare === 0, [GH.jamShare, SP.jamShare, TT.jamShare]);
 check('Tick-Tock: 2 BBs a second (1.5-2.5)', TT.perSec >= 1.5 && TT.perSec <= 2.5, TT.perSec);
-check('Tick-Tock: the most accurate (the best share within 0.5 m) and the longest carry of the four',
-  ['rattle', 'sprayer', 'ghost'].every(k => TT.within50 >= R[k].within50 && TT.carry > R[k].carry), Object.fromEntries(Object.keys(NEW).map(k => [k, [R[k].within50, R[k].carry]])));
+// v1.295 (D.50, Michael: A): the Tick-Tock is accurate up close only (39 m of carry and 0.12 m off at 15 m before),
+// and the Ghost Mini fires 6 a second, not 10
+check('Tick-Tock: accurate up close: the middle BB under 0.45 m off at 15 m, at least the Ghost Mini\'s share within 0.5 m',
+  TT.off15 < 0.45 && TT.within50 >= GH.within50, [TT.off15, TT.within50, GH.within50]);
+check('Tick-Tock: about 28 m of carry (24-32), short of the 35-39 m of the rifle and the Bolt Pistol', TT.carry >= 24 && TT.carry <= 32, TT.carry);
+check('Ghost Mini: about 6 BBs a second (5-7)', GH.perSec >= 5 && GH.perSec <= 7, GH.perSec);
 check('Rattle Can: all three faults: slow (under 3/s), curving (under 30% within 0.5 m) and jamming (15-35% of bursts)', RC.perSec < 3 && RC.within50 < 0.3 && RC.jamShare >= 0.15 && RC.jamShare <= 0.35, RC);
-check('every clear gun costs less than the Bucket Gun', Object.values(NEW).every(v => v[1] < 110));
+check('every clear gun costs less than the Bucket Gun ($65 since v1.295)', Object.values(NEW).every(v => v[1] < 65) && await page.evaluate(() => GUN_MAGS.bucket.price) === 65);
 
 // v1.292 (backlog D.50, Michael: C): an automatic tapped fast fired a BB a click, whatever its rate: the Tick-Tock (2 a
 // second held) fired 18 BBs in 3 s at six clicks a second. Every automatic now: 3 s held, and 3 s tapped at six and at

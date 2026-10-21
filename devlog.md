@@ -12428,3 +12428,27 @@ right button let go anywhere lowers the aim. A pad's LT was already read by its 
   that ran on the result card. The suite now also gives him 99 lives (5 of 5 green, and once beside `settings`).
 ### Still open
 - Nothing for a playtest beyond seeing the room come up unzoomed.
+
+## v1.295 — Three guns rebalanced: the Tick-Tock, the Ghost Mini and the Bucket Gun
+Backlog D.50 step 2, Michael's A (21 Oct) on the 16-gun table: "fix the three guns". The table showed the $55
+Tick-Tock beating the $85 Spring Assault Rifle and the $95 Bolt Pistol in every column, the $45 Ghost Mini firing 10
+BBs a second and tagging at 20 m almost as well as the $130 MAC-10, and the $110 Bucket Gun as the worst value in the
+shop.
+- Tick-Tock: its BB is slower (50 → 38 m/s) and wider (spread 0.14 → 0.30). It is still the steadiest of the cheap
+  automatics at 15 m, but it now reaches about 30 m, so the rifle (35 m) and the Bolt Pistol (39 m) keep the long
+  shots. Its price stays $55, and its shop line now says it drops off past about 25 metres.
+- Ghost Mini: 10 → 6 BBs a second (`cyclicRPM` 600 → 360). Its spread, reach and one-burst-in-five jam are unchanged.
+  Its price stays $45.
+- Bucket Gun: $110 → $65. It shoots as it did. Every clear automatic still costs less.
+### Verified
+- Measured the table's way (from the hip, standing, 80 seeded BBs): the Tick-Tock's middle BB is 0.23 m off line at
+  15 m (0.14 before; 90% inside 0.35 m) and its level shot reaches the grass at 29.7 m (38.7 before). The table's A
+  said about 0.3 m and 28 m.
+- `tests/clear-guns.test.mjs`, rules changed to match Michael's A. Its check that the Tick-Tock carries furthest of the
+  four is replaced: under 0.45 m off at 15 m, 24–32 m of carry (29.8 measured), and the Ghost Mini at 5–7 BBs a second
+  (6.8 held over 3 s). The Bucket Gun is $65 and every clear gun is under it. Tapped, no automatic beats its held rate:
+  the Ghost Mini fires 19 held, 18 at six taps a second and 18 at twelve.
+- These suites pass: `clear-guns`, `backyard-guns`, `gun-bucket`, `shop-gun-kinds`, `shop-pics`, `sell-back` and `smoke`.
+### Still open
+- Whether the Tick-Tock still feels worth $55 at 30 m, and the Ghost Mini worth $45 at 6 a second, is for a playtest.
+- A Bucket Gun bought at $110 before this sells back from the new price (`gunSellQuote`): $65, or half after 3 matches, not the $110 paid.

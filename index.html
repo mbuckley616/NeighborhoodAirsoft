@@ -2620,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.294</div>
+  <div class="version">v1.295</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4602,7 +4602,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_sixshooter', label: 'Spare Cylinder (6)', price: 3 } ],
   },
   bucket: {
-    displayName: 'Bucket Gun', baseCap: 600, price: 110, ownFlag: 'bucket',
+    displayName: 'Bucket Gun', baseCap: 600, price: 65, ownFlag: 'bucket',   // v1.295 (D.50, Michael: A): $110 → $65, the worst value in the shop
     blurb: 'Battery-powered, with a bucket of BBs on top. It never stops, but the BBs come out slow and soft and drift off past ten metres.',
     mags: [ { flag: 'bucket_mag_1000', cap: 1000, price: 25 } ],
     spares: [ { key: 'spare_mag_bucket', label: 'Spare BB Bottle (600)', price: 15 } ],
@@ -4632,7 +4632,7 @@ const GUN_MAGS = {
   },
   ticktock: {
     displayName: 'Tick-Tock', baseCap: 60, price: 55, ownFlag: 'ticktock', cheap: true,
-    blurb: 'A clear wind-up rifle. Dead accurate and the longest reach of the cheap ones, but it ticks out two BBs a second.',
+    blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second and they drop off past about 25 metres.',
     mags: [], spares: [],
   },
 };
@@ -5393,13 +5393,15 @@ const GUN_SPECS = {
   },
   ghost: {     // Ghost Mini: steady, but about one burst in five jams
     fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
-    cyclicRPM: 600, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.45,
+    cyclicRPM: 360, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.45,   // v1.295 (D.50, Michael: A): 10 → 6 a second
     curveOnsetDistance: 10, curveStrengthMax: 12, burstJam: 0.2,
     pelletsPerShot: () => 1, cockTime: 0.5, cockType: 'charge', displayName: 'Ghost Mini',
   },
-  ticktock: {  // Tick-Tock: dead accurate, the longest reach of the cheap ones, 2 BBs a second
+  ticktock: {  // Tick-Tock: accurate up close, 2 BBs a second
+    // v1.295 (backlog D.50, Michael: A, 21 Oct): it beat the $85 rifle and the $95 Bolt Pistol at everything, so its BB
+    // is slower (50 → 38 m/s) and wider (0.14 → 0.30): about 28 m of reach, and the long shots are theirs again
     fireMode: 'auto', weightClass: 'medium', playerSpeedMult: 1.0,
-    cyclicRPM: 120, muzzleVelocity: 50, baseSpread: 0.14, adsSpreadMult: 0.3,
+    cyclicRPM: 120, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.3,
     curveOnsetDistance: 20, curveStrengthMax: 6,
     pelletsPerShot: () => 1, cockTime: 0.6, cockType: 'charge', displayName: 'Tick-Tock',
   },
@@ -21221,7 +21223,7 @@ function buildFPGhost() {
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, -0.022, -0.01, 0.085);
   return _clearGunFinish(group, M, 'ghost', knob);
 }
-// Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Dead accurate, two BBs a second.
+// Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Accurate up close, two BBs a second.
 function buildFPTickTock() {
   const group = new THREE.Group(), M = _clearGunMats();
   _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.30), M.clear, 0, 0.01, -0.10);                 // receiver
