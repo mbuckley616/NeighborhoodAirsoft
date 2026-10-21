@@ -12302,3 +12302,298 @@ The mirror (NEW GAME's look picker, and the bathroom's) shares the loadout's car
   five), `hats`, `shorts`, `sneakers`, `tops`, `smoke`, `harness` and `notebook`.
 ### Still open
 - The mirror is a long page and scrolls past the Shirt front row at 720 px. Its scroll does not snap to the rules.
+
+## v1.290 — Tagged, you walk yourself home
+Backlog D.48, Michael's B (20 Oct): "you walk yourself back, gun up, no firing, nothing tags you, an arrow points the
+way". In the matches where you come back (capture the flag, the VIP matches, the Pickup Game and the Last Saturday) a
+tag used to put you back at your start in one frame. Now you stay where you were tagged and walk home yourself:
+- The gun swings up to point at the sky. You can't aim, fire or swing the noodle, and you can't take a flag.
+- Nothing tags you, and no kid picks you as a target (`opposingCombatants` leaves you out), so nobody wastes BBs on
+  you on the way.
+- A panel at the top of the screen says BACK TO YOUR START with the distance, and an arrow turns to point at it.
+- Within 2 m of your start you are back: the respawn's 2 s grace starts there, and in capture the flag the 10 s hold
+  (v1.280) first. Lives refill at the tag (VIP and Flags) or stay spent (Pickup, Last Saturday), as before.
+- Online play keeps the jump home, because a guest follows the host's word on where you are.
+The respawn's grace and hold moved into `playerBackHome()`, and the walk is `startPlayerWalkHome()` and
+`playerWalkHomeStep()` in `stepGame`.
+### Verified
+- `tests/vip.test.mjs` walks it in Protect Ryan. Tagged 8.5 m from the start, you stay 8.5 m out. A second BB tags
+  nothing, the trigger fires nothing, ADS stays 0 and no kid has you as a target. The arrow reads ±3.14 rad with the
+  start behind you and 0 with it ahead. The gun is fully up after half a second. Facing home and holding W, you are
+  back in 2.83 s at 1.98 m, with 2.0 s of grace, the panel gone and the gun down. The next tag sends you walking again.
+- The suites that tagged you and read the teleport now walk you home first: `ctf` (you drop the flag and walk from
+  where you were), `ctf-hold`, `pickup-lives`, `last-saturday-lives` (its sprinting player turns and walks home before
+  sprinting at the bulb again) and `pickup-fernando` (its player walks home before charging again). Fernando landed 11
+  of 22 hits with the AK, no two lives inside 2 s.
+- These suites pass: `vip`, `ctf`, `ctf-hold`, `ctf-clock`, `pickup-lives`, `pickup-clock`, `pickup-fernando`,
+  `last-saturday`, `last-saturday-lives`, `damage-report`, `result-stats`, `online` and `smoke`.
+### Still open
+- Whether the walk home feels like a fair price is for a playtest. From the far side of a big map it can be 40 m or
+  more, about 10 s.
+- The gun's raised pose (pitched up 66°, lifted 7 cm) wants a look on screen with each gun.
+- The grace itself is still 2 s, not ended by your shot: that is D.49, next.
+
+## v1.291 — Spawn grace: 3 s, ended by your own shot, kids too
+Backlog D.49, Michael's A (20 Oct): "3 s, ended early by your own shot; kids too". In the matches where you come back
+you had 2 s after a respawn in which nothing tagged you, and kids had none. A kid standing over your start could empty
+your lives as the 2 s ran out, and you could camp a kid's base the same way.
+- Your grace is 3 s (`VIP_GRACE`). In capture the flag it starts as the 10 s hold ends, as before.
+- Your own shot ends it at once (`doFire`), so it can't be used to attack.
+- The panel at the top that pointed you home now counts it down: NOTHING TAGS YOU · 3 · TILL YOU FIRE. It stays off
+  in the 0.8 s after a Pickup Game's clock runs out, which also sets a grace.
+- Kids get the same. In a match where you come back (`comesBackMatch`: VIP, capture the flag, the Pickup Game and the
+  Last Saturday), a kid who walks back to his base redeploys with 3 s in which a BB doesn't tag him. His own shot
+  ends it (`spawnEnemyBB`). In the other team matches a kid's respawn is as it was.
+- Online, your friend's kid gets the same 3 s as you (it shares `VIP_GRACE`).
+### Verified
+- `tests/vip.test.mjs`, Protect Ryan. Back home after the walk, you have 3.0 s of grace and the panel reads NOTHING
+  TAGS YOU · 3 with no arrow. A BB in it tags nothing. Half a second later one shot fires, and it takes the grace to 0
+  and the panel away. Owen, tagged, walks back in 2.9 s and redeploys with 3.0 s. A BB of yours in it leaves him on
+  98 lives, and his own shot takes it to 0.
+- `ctf-hold`: let go after the 10 s hold, the grace reads 3.0. `pickup-lives` and `last-saturday-lives`: 3 s of cover
+  after a tag, and the next tag lands 3.08 s later. In their real rounds no two lives went inside 2 s.
+- These suites pass: `vip`, `ctf`, `ctf-hold`, `ctf-clock`, `pickup-lives`, `pickup-clock`, `pickup-fernando`,
+  `last-saturday`, `last-saturday-lives`, `damage-report`, `online`, `briefing-lives` and `smoke`.
+### Still open
+- Kids still aim at you in your grace and at each other in theirs. The BBs do nothing, but a kid can stand over your
+  start and fire at you for the whole 3 s. Michael's C (keeping kids off a base in grace) is what would change that.
+- Whether 3 s reaches cover from every start is for a playtest.
+
+## v1.292 — An automatic fires no faster tapped than held
+Backlog D.50, Michael's C (20 Oct): "fix the taps, then the 16-gun table for his OK before any change". This is the
+fix. The table comes next, for his OK.
+Automatics skip the semi-auto lockout on a fresh click (v1.20), and each click fired at once, whatever the gun's own
+cycle. So the $55 Tick-Tock, which fires 2 BBs a second when held, fired a BB a click when tapped: 18 in 3 s at six
+clicks a second. Every automatic but the Rattle Can could beat its held rate that way once clicked fast enough.
+- A click inside the gun's cycle since its last shot now waits for it. The held stream picks up the time already gone
+  and fires when the cycle is done. A click let go before then fires nothing.
+- The time is counted as `_sinceShot` in `updateGun`, frame by frame the way the held stream counts its cycle, so a
+  tap at the edge of the cycle lands on the same frame a held shot would.
+  - Counted from the round's clock instead, taps at twelve a second still beat held on the fast guns: 36 against
+    30 on the AK, because that clock is one frame behind the stream.
+- A click that waits still makes the burst's jam roll, as a click that fires does (v1.250).
+### Verified
+- `tests/clear-guns.test.mjs` now fires every automatic for 3 s three ways, held and tapped at six and at twelve
+  clicks a second (two frames down each).
+  - held / six / twelve: Tick-Tock 6 / 6 / 6 (was 18 at six), Rattle Can 6 / 6 / 6, Clear Sprayer 19 / 18 / 18,
+    Ghost Mini 30 / 18 / 24, Bucket Gun 22 / 18 / 18, AK and UMP 30 / 18 / 24, MP5 41 / 18 / 36,
+    MAC-10 55 / 18 / 36.
+  - Its held-rate checks reset the gun between tries. A try just after the last one's stream would now rightly wait
+    out the cycle.
+- These suites pass: `clear-guns`, `backyard-guns`, `burst-pose`, `gun-ak`, `gun-mac10`, `gun-mp5`, `gun-ump`,
+  `gun-bucket`, `gamepad` and `smoke`.
+### Still open
+- The 16-gun balance table for Michael's OK (the rest of D.50's C). No price or rate changes until he has seen it.
+
+## v1.293 — Owen stops standing inside Mitchell
+The critic (21 Oct, Found in play): in Protect Ryan, after v1.282 kept everyone off Priya's cover, Owen moved in on
+Mitchell instead, 1.8 m from her. Their centres were 0.01–0.17 m apart for 27–56 s of a 90 s round, in 4 of 8 rounds.
+Reproduced here before the fix, 4 rounds of 90 s with you untouchable: 27.7 s in one round and 2.8 s in another. In
+both, Owen had repositioned to the cover Mitchell held (`homeCover`). Both worked out the same spot behind it, so they
+stood in one body.
+- When a kid repositions, cover a living teammate already holds is left out, as long as any other cover is in reach
+  (`teammateHoldsCover`). On a tight spot he still doubles up rather than freezing, as v1.67's defend rule does.
+- This applies on every map, but only to the reposition pick. A dash out of fire and a bound pick as before.
+  - In the check below Owen still ends up on Mitchell's cover by one of those for 0–9 s a round, standing apart
+    along it, which looks like two kids behind one car.
+### Verified
+- Probe, 8 rounds of 90 s after the fix: Owen and Mitchell never shared a cover by the reposition pick. Their worst
+  round had them within 0.35 m for 3.7 s, on neighbouring boxes of one car. Five rounds had none.
+- `tests/vip-cover.test.mjs` adds 4 rounds of 90 s. Owen and Mitchell were within 0.35 m for 0.2, 0, 0 and 0.3 s;
+  the check allows 6.
+- These suites pass: `vip-cover`, `vip`, `cover-fire`, `idle-ally`, `bulb-sight` and the stuck-kid sweep of
+  `bunratty_vip`, `lot_vip_night`, `bellfield_ctf` and `winnmark_ffa` (three ways each, 90 s).
+### Still open
+- The full stuck-kid sweep did not run here: every reposition on every map now prefers a free cover. The weekly run
+  (or `check`) will show whether a kid anywhere ends up exposed for want of one.
+- Friday Night Lights' Nathan and Malik on one spot at their start (the critic's other bug) is a different cause: they
+  stand where they spawn, before any cover is picked. Not taken this run.
+- The critic's proposal of one rule that keeps every kid a body's width apart is still Michael's to promote.
+
+## v1.294 — Aim held as a match ends stays in the match
+Backlog B.12 (Michael, 21 Oct): hold aim as a game ends, go back to the room, and the view is still zoomed in.
+Reproduced here: with the right button held to the end of a Bunratty match, the room came up at 55° instead of 75°,
+and letting the button go there changed nothing. It stayed that way until the next match. Two things kept it:
+- The right button's let-go counted only in a match (`mouseup`), so in the room the aim never came down.
+- Nothing put the aim or the camera's field of view back when you came home (`enterBedroom`).
+Now coming home sets the aim to none and the camera to your settings' field of view on the first frame, and the
+right button let go anywhere lowers the aim. A pad's LT was already read by its state in a match, so it needed nothing.
+### Verified
+- `tests/settings.test.mjs` adds the case at the settings' 90°: aimed to 66° with the button held, the match ends,
+  BACK TO YOUR ROOM, and the room is at 90° with the aim at 0, still with the button down and after it is let go.
+  Before the fix the same steps left the room at the aimed angle (a throwaway check: 55° against 75°).
+- These suites pass: `settings`, `smoke`, `pause-menu`, `one-ending`, `gamepad`, `gamepad-screens`, `result-stats`.
+- Not a v1.294 change: `gamepad` was red on the branch since v1.291. Its player is untouchable through `_graceT`,
+  which your own shot now ends, so after RT fired Sean tagged him out in 3 runs of 4 and every button check after
+  that ran on the result card. The suite now also gives him 99 lives (5 of 5 green, and once beside `settings`).
+### Still open
+- Nothing for a playtest beyond seeing the room come up unzoomed.
+
+## v1.295 — Three guns rebalanced: the Tick-Tock, the Ghost Mini and the Bucket Gun
+Backlog D.50 step 2, Michael's A (21 Oct) on the 16-gun table: "fix the three guns". The table showed the $55
+Tick-Tock beating the $85 Spring Assault Rifle and the $95 Bolt Pistol in every column, the $45 Ghost Mini firing 10
+BBs a second and tagging at 20 m almost as well as the $130 MAC-10, and the $110 Bucket Gun as the worst value in the
+shop.
+- Tick-Tock: its BB is slower (50 → 38 m/s) and wider (spread 0.14 → 0.30). It is still the steadiest of the cheap
+  automatics at 15 m, but it now reaches about 30 m, so the rifle (35 m) and the Bolt Pistol (39 m) keep the long
+  shots. Its price stays $55, and its shop line now says it drops off past about 25 metres.
+- Ghost Mini: 10 → 6 BBs a second (`cyclicRPM` 600 → 360). Its spread, reach and one-burst-in-five jam are unchanged.
+  Its price stays $45.
+- Bucket Gun: $110 → $65. It shoots as it did. Every clear automatic still costs less.
+### Verified
+- Measured the table's way (from the hip, standing, 80 seeded BBs): the Tick-Tock's middle BB is 0.23 m off line at
+  15 m (0.14 before; 90% inside 0.35 m) and its level shot reaches the grass at 29.7 m (38.7 before). The table's A
+  said about 0.3 m and 28 m.
+- `tests/clear-guns.test.mjs`, rules changed to match Michael's A. Its check that the Tick-Tock carries furthest of the
+  four is replaced: under 0.45 m off at 15 m, 24–32 m of carry (29.8 measured), and the Ghost Mini at 5–7 BBs a second
+  (6.8 held over 3 s). The Bucket Gun is $65 and every clear gun is under it. Tapped, no automatic beats its held rate:
+  the Ghost Mini fires 19 held, 18 at six taps a second and 18 at twelve.
+- These suites pass: `clear-guns`, `backyard-guns`, `gun-bucket`, `shop-gun-kinds`, `shop-pics`, `sell-back` and `smoke`.
+### Still open
+- Whether the Tick-Tock still feels worth $55 at 30 m, and the Ghost Mini worth $45 at 6 a second, is for a playtest.
+- A Bucket Gun bought at $110 before this sells back from the new price (`gunSellQuote`): $65, or half after 3 matches, not the $110 paid.
+
+## v1.296 — airsoft.com is the early-2000s website again
+Backlog D.52 (Michael, 21 Oct): "We're going to need to revert the Website/Airsoft.com UI to the previous version,
+where it looks like a website from the early 2000s." The notebook pass (v1.287) kept the shop's browser window, its
+title bar and address bar, but put the page inside on paper: ruled lines, a margin, handwriting and sticky-note
+buttons.
+- The page is no longer paper (`.shop-body` loses `nb-paper`), and the 75 lines of `#shopScreen .nb-paper` rules from
+  v1.287 are gone. No shop code changed in v1.287, so the styles from before it apply as they did: the dark AIRSOFT.COM
+  banner, the beige tabs, the blue DETAILS buttons and the dashed rows.
+- Every other notebook screen (the loadout, the workbench, the mirror and the rest) stays on paper.
+### Verified
+- The shop's computed styles against the build before the notebook merge, 14 elements (window, page, banner, logo,
+  tagline, account box, tabs, active tab, a row, its name, price and button, the footer): font, size, colour,
+  background, padding, border and corners are the same on all 14.
+- `tests/notebook.test.mjs`: its shop checks (every tab's text on the rules) now check that every tab is not paper
+  and not in the hand. DETAILS, BUY and the close box still work.
+- These suites pass: `notebook`, `shop-pics`, `shop-tabs`, `shop-gun-kinds`, `sell-back` and `smoke`.
+### Still open
+- Nothing for a playtest beyond a look at the shop.
+
+## v1.297 — A new teammate comes up on the result card
+Backlog D.53 (Michael, 21 Oct): recruiting from the phone felt awkward, nothing sent you to the phone, and nothing
+said a friend now wanted in. His pick in decisions was A: a "New teammate!" card on the result screen.
+- The first win of a match that brings a kid's ask (Winnmark's last for Eric, Bunratty's last for Sean and then Nick,
+  the Stoneglen hold for Alex, Bellfield's flags for Diego) shows a box on the result card under the cash line. It
+  holds the kid drawn in 3D with his own gun, his name and gun, three lines on who he is and why he wants in, and
+  two buttons, YES, YOU'RE IN and NOT YET.
+- YES takes him in, as the phone's YES does, and marks his text read. NOT YET leaves his text on the phone, unread
+  and still asking, as it was before. The box then shows what you said, or the next kid ("AND ANOTHER ONE!") when
+  the match brought two.
+- No card on a loss, on winning the match again, or online. The phone still asks as before.
+- The kid is drawn through the damage report's renderer (`drawKidPortrait`), so the result screen makes no new
+  WebGL context and its shaders are already warm from the title. The briefing's lineup (D.54) can use it too.
+- The lines are new, written from each kid's texts and character entry. Michael may want to rewrite them.
+### Verified
+- `tests/crew-roster.test.mjs`, new checks, 32 of 32 pass. Winnmark's last match won: Eric's card shows his name,
+  his MP5, the lines and both buttons, with 5,959 of his pixels on the 120 × 150 canvas. The box is 8 rules (208 px)
+  and every line and button sits inside it. YES puts Eric in the crew and in the save, and marks his text read.
+  Winning the same match again shows no card, and neither does losing Bunratty's last. Winning Bunratty's last shows
+  Sean, NOT YET brings up Nick, and YES takes Nick while Sean's ask stays open and unread on the phone.
+- These suites pass: `crew-roster`, `notebook`, `result-stats`, `result-text`, `smoke`, `crew`, `crew-field`, `gamepad-screens`.
+### Still open
+- Whether three lines and a still figure make enough of an event of it is for a playtest. The kid does not move.
+
+## v1.298 — The briefing lines both sides up as 3D kids
+Backlog D.54 (Michael, 21 Oct): "show each player lined up / posing with their weapons" before a match, not only
+names. His pick in decisions was A: the briefing card shows both sides as 3D kids.
+- The map's briefing (the card with Bench / Bring and START) now shows a lineup. Your side is on the left, you first,
+  then your allies and crew. Theirs is on the right. Each kid is drawn in his clothes holding the gun he will carry,
+  and your own kid wears your gear. Under each one are his name, his gun and his lives, and under each crew kid his
+  Bench button. A benched kid stays in the line, faded, with Bring under him.
+- A side of up to five stands in one row. A bigger side stands in two rows (the Big Game with a full crew puts your
+  six in two rows of three). The card widens for the lineup, up to 880 px.
+- Your crew kids wear your crew colour, as they do in the match. A VIP, Seth and the tutorial don't.
+- The kids are drawn with the result card's `drawKidPortrait` (v1.297), through the damage report's renderer. Each
+  drawing is kept, so a kid is built once per look and gun. Opening the Big Game cold took 1.3 s in headless
+  software GL. After that it opens in a few milliseconds, including after a Bench or Bring.
+- The loading card with BEGIN keeps its list beside the field map, since there is no room for a lineup there. Option
+  B (a screen of its own) was not chosen.
+### Verified
+- `tests/notebook.test.mjs`, new checks on the Big Game with all five in your crew. You and your five are left of
+  their five, and every kid is drawn: 2,856–4,463 of his pixels on a 102 × 117 canvas. Yours stand in two rows of
+  three, with Bench under each crew kid and not under you. Theirs stand in one row. All 38 lines of text sit on the
+  rules (worst 2.5 px off).
+- `tests/crew-field.test.mjs` passes unchanged: its Bench and Bring clicks on the briefing still bench Nick and bring
+  him back.
+- These suites pass: `notebook`, `crew-field`, `smoke`, `vip`, `ctf`, `rival`, `last-saturday`, `pickup-kids`, `gamepad-screens`.
+### Still open
+- Whether 68 px kids read well enough on a real screen, and whether the gun and lives lines are worth their room
+  under each kid, is for a look in play. The kids stand still.
+
+## v1.299 — The real house numbers are out of the game file
+Backlog D.55 step 1, the reference-picture finding from 16 Oct: `index.html` ships to players and the repo is public,
+and its comments carried real house numbers. Seth's on Winnmark was there, and Michael's old house by the Bunratty
+hero house in three places.
+- Fourteen comment lines change and no code does. Winnmark's house list loses all eight numbers (N1 stays "Seth's").
+  Every "235" by the Bunratty hero house, which also covered its retaining wall and the trampoline in its yard, now
+  says "Michael's" or "the hero house".
+- Old devlog entries still carry the number. They are not rewritten (the devlog is append-only), so the number stays
+  in the repo's history and in `devlog.md`. Michael may want that weighed.
+### Verified
+- No house number before Winnmark or Bunratty is left in `index.html`, nor "Seth(625)" or "235's" (grep, 0 matches).
+  `parsecheck` and `smoke` pass.
+### Still open
+- Nothing for a playtest.
+
+## v1.300 — The Riverside Market sign reads in full
+Backlog D.55 step 2, the reference-picture finding from 16 Oct: the lot's store sign read "IVERSIDE MARKE". The name
+was drawn at 54 px Georgia on a 512 px canvas, and at that size it is 557 px wide in headless Chromium.
+- A new `fitSignText` draws a sign's name at the size asked, or smaller in 2 px steps until it fits inside the canvas
+  with 20 px clear each side. The lot's sign now draws at 44 px.
+- The other name signs on buildings go through it too. "WILLOW BEND COUNTRY CLUB" at 34 px was also wider than its
+  512 px (538) and now draws at 28 px. The store's inside sign and the school's sign already fitted, and they come
+  out at 44 and 40 px.
+- How wide a name draws depends on the player's fonts: where Georgia is installed it may stay larger. It fits either way.
+### Verified
+- `tests/market-lot.test.mjs`, a new check on the lot's first match. The store sign's name has 30 px clear on the
+  left of its 512 px canvas and 29 px on the right.
+- These suites pass: `market-lot`, `grocery-store`, `country-club`, `high-school`, `smoke`.
+### Still open
+- Nothing for a playtest beyond a look at the store front.
+
+## v1.301 — Winnmark's golf course and lake show
+Backlog D.55 step 3, the reference-picture finding from 16 Oct (`docs/refs/winnmark.md` gaps 8 and 9). The golf
+course past the north tree wall was buried. Its fairway, green, flag, bunkers and cart path sat at about y 0.01, where
+Winnmark's slope puts the ground 1-3 m high, so only the west corner showed. The lake at y -0.02 lay under the
+ground's gentle roll, so from above it showed as broken patches.
+- `winnmarkGroundY` now eases to 0 past the back tree wall (from z -35 to -42) and past the shore (from x -37 to -42).
+  The golf course and the lake lie on flat ground, and the back yards drop to the course as the real ones do.
+  Inside those lines the ground is exactly as it was, and nobody plays past them (the tree wall, `lakeBlocker`).
+- The fairway is 22 m deep from z -42 (it was 26 m from z -39, where the ground is still coming down). The lake sits
+  at y 0.05 and its shore at 0.06.
+- Not done: gap 9's second half, a 40 × 30 m pond north-west of the bulb with a creek running south. That changes the
+  map's edge and is the Winnmark rebuild card's (D.51).
+### Verified
+- `tests/winnmark-trees.test.mjs`, new checks. The ground under the whole fairway (x -50 to 50, z -64 to -42) is at
+  most 0, below the fairway at 0.005 and the green at 0.01. The lake is above the ground at all 1,264 points sampled
+  over its water. At 5,928 points inside the tree wall and the shore, the ground is identical to the old formula.
+- A plan view from 110 m up (a throwaway, before and after): before, a corner of the fairway and three strips of
+  water. After, the whole fairway with its green, bunkers and path, and the lake in one piece. From a back yard the
+  fairway now shows through the trunks.
+- These suites pass: `winnmark-trees`, `winnmark-road`, `winnmark-props`, `winnmark-fort`, `winnmark-cars`, `layout-same`, `smoke`.
+### Still open
+- The bank down to the course is steep at the east end (3 m over 7 m) but out of reach. A look in play.
+
+## v1.302 — Every cheap automatic jams
+Backlog D.56 (Michael, 21 Oct): "All of the 'cheap' automatics should have a fairly high jamming rate, I think only
+one of those guns has that now." The four cheap clear-plastic automatics (v1.250) each had one fault of their own.
+The Ghost Mini jammed about one burst in five and the Rattle Can one in four. The Clear Sprayer and the Tick-Tock
+never jammed.
+- The Clear Sprayer and the Tick-Tock now jam one burst in five (`burstJam` 0.2), the same as the Ghost Mini. The
+  Rattle Can stays at one in four, so it is still the worst of them. A jam is cleared by holding R, as before.
+- Their shop lines say so. The Bucket Gun ($65) is not one of the cheap four (its own design, not clear plastic), so
+  it still never jams. No kid carries any of these guns.
+- "Fairly high" is read as the Ghost Mini's one in five, the rate Michael already had in front of him. A different
+  number is a one-line change.
+### Verified
+- `tests/clear-guns.test.mjs` fires 200 one-second bursts with each gun. Jams: the Sprayer 21%, the Ghost Mini 20%,
+  the Tick-Tock 18%, the Rattle Can 24%, the Bucket Gun 0%. The old check that the Sprayer and the Tick-Tock never
+  jam is replaced by one that each of the three jams 12-30% of bursts, plus a check that the Bucket Gun never does.
+  Rates, accuracy and reach are unchanged (Tick-Tock 2.0 a second, 29.8 m of carry).
+- These suites pass: `clear-guns`, `shop-gun-kinds`, `backyard-guns`, `shop-pics`, `smoke`.
+### Still open
+- Whether a jam in one burst in five makes the Tick-Tock, at two BBs a second, feel worse than the others is for a
+  playtest. Its bursts are short, so a jam costs it more time per BB.

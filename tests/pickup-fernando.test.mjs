@@ -43,13 +43,15 @@ for (let r = 0; r < 8; r++) {
   rounds.push(await page.evaluate(() => {
     const P = Game.player, hits = [];
     const orig = applyBBHit;
-    window.applyBBHit = (bb, c) => { if (c === P && !(P._graceT > 0)) hits.push({ by: bb.enemyRef ? bb.enemyRef.charId : '?', t: +Game.scenario.roundTime.toFixed(1) }); return orig(bb, c); };
+    window.applyBBHit = (bb, c) => { if (c === P && !(P._graceT > 0) && !P._goingHome) hits.push({ by: bb.enemyRef ? bb.enemyRef.charId : '?', t: +Game.scenario.roundTime.toFixed(1) }); return orig(bb, c); };
     try {
       for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
         const foes = Game.scenario.enemies.filter(e => e.team !== 'player' && e.health > 0);
         const near = foes.sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z))[0];
         if (near) { P.yaw = Math.atan2(-(near.pos.x - P.pos.x), -(near.pos.z - P.pos.z)); P.pitch = 0; }
         Game.keys.KeyW = !!near && Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4;
+        // v1.290 (D.48): tagged, you walk yourself home before you go at them again
+        if (P._goingHome) { const st = Game.scenario.playerStart.pos; P.yaw = Math.atan2(-(st.x - P.pos.x), -(st.z - P.pos.z)); Game.keys.KeyW = true; }
         stepGame(1 / 60);
       }
     } finally { window.applyBBHit = orig; Game.keys.KeyW = false; }

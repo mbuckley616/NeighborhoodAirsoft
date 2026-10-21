@@ -57,6 +57,25 @@ for (const id of ladder.ids.filter(i => !SCENARIOS_VIP.includes(i))) {
   });
   check(`${id}: the player spawns clear of every obstacle`, !start.player, start);
   check(`${id}: every kid spawns clear of every obstacle`, start.kids.every(k => !k.stuck), start.kids.filter(k => k.stuck));
+  // v1.300 (D.55 step 2): the store's name fits its sign: "RIVERSIDE MARKET" with a clear margin each side, not "IVERSIDE MARKE"
+  if (id === ladder.ids[0]) {
+    const signs = await page.evaluate(() => {
+      const out = [];
+      Game.scene.traverse(m => {
+        const cv = m.isMesh && m.material && m.material.map && m.material.map.image;
+        if (!cv || !cv.getContext || cv.width !== 512) return;
+        const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, bg = [d[0], d[1], d[2]];
+        let lo = cv.width, hi = -1;
+        for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) {
+          const i = (y * cv.width + x) * 4;
+          if (Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]) > 90) { lo = Math.min(lo, x); hi = Math.max(hi, x); }
+        }
+        out.push({ h: cv.height, left: lo, right: cv.width - 1 - hi });
+      });
+      return out;
+    });
+    check('the lot\'s store sign: the name has at least 8 px clear each side of its 512 px', signs.length >= 1 && signs.every(s => s.left >= 8 && s.right >= 8), signs);
+  }
   const r = await page.evaluate(() => {
     // v1.141: the player is untaggable, but a hit on him is a life lost on his side in a real round (one life: the
     // round). The enemy kids aim at him a great deal, so his side's losses count his hits too (backlog Found in play).
