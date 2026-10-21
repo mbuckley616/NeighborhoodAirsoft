@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
+- **D.54 The pre-match lineup: what it shows and where (builder, 2026-10-21, backlog D.54)**
+  Today the briefing lists both sides by name (with Bench / Bring for your crew since v1.274). You asked for each
+  kid shown lined up and posing with his gun instead.
+  - A) **The briefing card shows both sides as 3D kids**, yours on the left and theirs on the right, each in his
+    clothes holding the gun he will carry, his name under him; Bench / Bring stay under your kids. Big matches (up
+    to 8 a side) stand in two rows. *(recommended)*
+  - B) **A, but on its own screen** between the briefing and BEGIN: the two lines face each other across the
+    screen for a couple of seconds, then the match.
+  - C) **Your side only**, as A; the other side stays names, so who you face is still a surprise.
+  Builder's lean: A. It keeps one screen, and the loadout's 3D kid (v1.132) already draws a kid in his clothes with
+  a gun, so it is the same model several times over.
+  Michael: **A) The briefing card shows both sides as 3D kids** (control room). (2026-10-21)
+
 - **D.53 A new teammate: how the game tells you (builder, 2026-10-21, backlog D.53)**
   Today each of your five crew kids (Eric, Sean, Nick, Alex, Diego) asks to join by text once a story match is won
   (`SUMMER_TEXTS` with `ask`). The text sits on the phone with YES / NOT YET under it, and nothing on the result card
@@ -19,115 +34,40 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Only a nudge:** a "1 new text" badge on the result card and the phone lit in the room; the ask stays on the phone.
   Builder's lean: A. It makes the moment hard to miss, and it is one card the game already has the parts for (the
   result screen, the briefing's kid models).
+  Michael: **A) A "New teammate!" card on the result screen** (control room). (2026-10-21)
 
-- **D.54 The pre-match lineup: what it shows and where (builder, 2026-10-21, backlog D.54)**
-  Today the briefing lists both sides by name (with Bench / Bring for your crew since v1.274). You asked for each
-  kid shown lined up and posing with his gun instead.
-  - A) **The briefing card shows both sides as 3D kids**, yours on the left and theirs on the right, each in his
-    clothes holding the gun he will carry, his name under him; Bench / Bring stay under your kids. Big matches (up
-    to 8 a side) stand in two rows. *(recommended)*
-  - B) **A, but on its own screen** between the briefing and BEGIN: the two lines face each other across the
-    screen for a couple of seconds, then the match.
-  - C) **Your side only**, as A; the other side stays names, so who you face is still a surprise.
-  Builder's lean: A. It keeps one screen, and the loadout's 3D kid (v1.132) already draws a kid in his clothes with
-  a gun, so it is the same model several times over.
+- **Online play: go on to teams, and push-to-talk with them? (local session, 2026-10-21, backlog D.2 and D.10)**
+  Step 1 has been on itch since 17 Oct (v1.230): PLAY ONLINE on the Pickup Game board, a 1v1 on Winnmark with a friend
+  by a four-letter room code. Steps 2 and 3 were left waiting for your look at it, but nobody asked you, so nothing has
+  moved since. Push-to-talk on the walkie (your A of 3 Oct) waits on online play too.
+  - A) **Step 2 next, as a card:** teams online, the board's kids filling the empty spots, and push-to-talk on the
+    walkie for the people playing. *(recommended: it is the step you planned, and it brings push-to-talk with it)*
+  - B) **Steps 2 and 3 together:** A, plus a list of open rooms and a Campaign / Online / Settings title. The room list
+    needs your own matchmaker (option B of 14 Oct), a small server someone has to run.
+  - C) **Not yet:** you want to try step 1 first. Reply with what to fix, or "played it", and the card follows.
+  - D) **Drop online play for now.**
+  Michael: **A) Step 2 next, as a card: teams online, the board's kids filling the empty spots, push-to-talk on the walkie** (control room). (2026-10-21)
 
-- **D.48 Jog back to your spawn when you are tagged: in which matches, and who steers? (builder, 2026-10-20, backlog D.48)**
-  Today a tag that doesn't end your match does one of two things. In the matches where you come back (capture the
-  flag, Protect Ryan's VIP matches, the Pickup Game and the Last Saturday) you are put back at your start in one frame.
-  In the other team matches, a spare life (from armour or a match's own lives) costs one and you stay where you are.
-  Your note asks for a jog back to your side's spawn with the gun pointed at the sky, and control back at the base.
-  Kids already do this: they walk back with a hand up, untouchable, and BBs pass through them.
-  - A) **The coming-back matches only, walked for you:** in those four kinds, a tag turns you round and jogs you to your
-    start at a kid's retreat pace (3.2 m/s), gun up. You can look round but not steer or fire, and nothing tags you. At
-    the start you get control back, after capture the flag's 10 s hold (v1.280). The other team matches stay as they are.
-  - B) **A, but you steer:** gun up, no firing, nothing tags you, and you walk yourself back. Control comes back when you
-    reach your start, and an arrow points the way.
-  - C) **A, and every team match with a spare life:** a tag that costs a life also jogs you home, as the Last Saturday
-    does, rather than leaving you where you were.
-  Builder's lean: A. It is what kids do already. It keeps the camera off a teleport, and it doesn't change how armour
-  plays in the one-life ladder matches.
+- **Views past the edge from your pictures: with each map's rebuild, or now? (local session, 2026-10-21, backlog D.25)**
+  Each guide in `docs/refs/` has a "Past the edge" section: what your pictures show beyond each map's bounds. You chose
+  real scale for every map (16 Oct), so each map is rebuilt on its own card, and the rebuild redoes its edges anyway.
+  Bunratty's and the Hollow's edges are in the card proposed today ("Bunratty and the Hollow at real scale").
+  - A) **With each map's rebuild:** no work thrown away; the other maps keep today's generic views until their card.
+    *(recommended)*
+  - B) **Now, on today's maps (one card for the other six maps):** you see the real views sooner; most of it is redone
+    when each map is rebuilt.
+  Michael: **A) With each map's rebuild** (control room). (2026-10-21)
 
-- **D.49 Spawn camping: what grace after a respawn? (builder, 2026-10-20, backlog D.49)**
-  Today, in the matches where you come back, a respawn gives you 2 s in which nothing tags you (`VIP_GRACE`, v1.170).
-  Capture the flag adds its 10 s hold at the base (v1.280), untouchable, before that 2 s starts. A kid has no grace:
-  he is out while he walks back, and fair game from the moment he redeploys at his base. A kid standing over your start
-  can still empty your lives at the end of the 2 s.
-  - A) **3 s, ended early by your own shot:** after you are let go at your base nothing tags you for 3 s, unless you
-    fire first. The same rule for kids. The HUD shows a small countdown on you.
-  - B) **5 s**, otherwise as A.
-  - C) **A, and a no-camp ring:** kids won't fire into the other side's base (8 m round its start) while someone there
-    is in grace, and they move off it.
-  - D) **Leave it at 2 s.**
-  Builder's lean: A. 3 s is enough to reach cover from every start we have. Ending it on your own shot stops grace from
-  being an attack.
-
-- **D.50 The Tick-Tock and a weapons balance pass (builder, 2026-10-20, backlog D.50)**
-  The Tick-Tock ($55) is an automatic that ticks out 2 BBs a second when held. Automatics skip the semi-auto lockout on
-  a fresh click (v1.20), so clicking fast fires a BB per click: tapped, it shoots faster than it does held, with the
-  cheap guns' best accuracy and reach. Measured headless: clicked six times a second for 3 s it fired 18 BBs; held
-  for 3 s, 6. That is what you found.
-  - A) **Fix the taps:** no automatic fires faster tapped than held. A click inside the gun's own cycle waits for it.
-    Prices are unchanged.
-  - B) **A, and raise the Tick-Tock to $75.**
-  - C) **A, then a balance table first:** all 16 guns in one table (price, BBs a second, spread, reach, BBs per tag
-    against a kid at 10 and 20 m, measured headless) with the changes I'd make, for your OK before any of them is built.
-  - D) **Leave it.**
-  Builder's lean: C. A is a fix whatever you choose, and the table gives you numbers to judge "the best gun for the
-  price" before any price moves.
-
-- **D.50 step 2: the 16-gun balance table, and what to change (builder, 2026-10-21, backlog D.50)**
-  Your C on the Tick-Tock: the taps are fixed (v1.292, no automatic fires faster tapped than held), and here is the
-  table before any price or gun moves. Measured headless on v1.292, every gun as sold with no accessories:
-  - BBs a second: as fast as the trigger allows. An automatic is held; a spring gun is cocked and fired in a loop.
-  - Off line at 15 m: the middle BB's distance from the aim point, from the hip.
-  - Reach: where a level shot from chest height reaches the grass.
-  - BBs per tag: aimed at the chest of a kid standing still at 10 and 20 m, 80 pulls each, seeded. It measures the
-    gun's own scatter only, so 1 means every BB lands; in a real fight he moves and you sway.
-  - Move speed: what the gun does to your walking speed.
-  | Gun | Price | Kind | Mag | BBs a second | Off line at 15 m | Reach | BBs per tag at 10 m | at 20 m | Move speed |
-  |---|---|---|---|---|---|---|---|---|---|
-  | Spring Pistol | $0 | semi | 1 | 1 | 0.56 m | 22 m | 1.1 | 20 | ×1.15 |
-  | Rattle Can | $25 | auto | 50 | 2 | 2.21 m | 14 m | 8.9 | — | ×1.1 |
-  | Clear Sprayer | $35 | auto | 120 | 6.17 | 1.46 m | 16 m | 3.5 | — | ×1.1 |
-  | Ghost Mini | $45 | auto | 80 | 10 | 0.25 m | 30 m | 1 | 1.3 | ×1.1 |
-  | Tick-Tock | $55 | auto | 60 | 2 | 0.12 m | 39 m | 1 | 1 | ×1 |
-  | Spring Shotgun | $60 | semi, 2–3 BBs | 40 | 1.83 | 0.50 m | 23 m | 1 | 8.2 | ×1 |
-  | Six-Shooter | $70 | semi | 6 | 1.5 | 0.49 m | 24 m | 1 | 10 | ×1.15 |
-  | Thunder Pump | $75 | semi, 4–5 BBs | 30 | 3.67 | 0.88 m | 20 m | 1.5 | 14.9 | ×1 |
-  | Spring Assault Rifle | $85 | semi | 25 | 1.17 | 0.16 m | 35 m | 1 | 1.1 | ×0.85 |
-  | Bolt Pistol | $95 | semi | 8 | 0.83 | 0.11 m | 39 m | 1 | 1 | ×1.1 |
-  | Bucket Gun | $110 | auto | 600 | 7.17 | 1.00 m | 17 m | 1.3 | 80 | ×0.95 |
-  | Spring Sniper Rifle | $120 | semi | 15 | 0.83 | 0.05 m | 58 m | 1 | 1 | ×0.75 |
-  | MAC-10 | $130 | auto | 50 | 18.33 | 0.29 m | 30 m | 1 | 1.7 | ×1.15 |
-  | UMP | $170 | auto | 100 | 10 | 0.14 m | 38 m | 1 | 1 | ×1.05 |
-  | MP5 | $180 | auto | 150 | 13.5 | 0.13 m | 40 m | 1 | 1 | ×1.05 |
-  | AK-47 | $240 | auto | 350 | 10 | 0.11 m | 44 m | 1 | 1 | ×0.85 |
-  What the table says:
-  - The **Tick-Tock** ($55) beats the Spring Assault Rifle ($85) and the Bolt Pistol ($95) in every column, and the
-    rifle slows you down as well. It has the most BBs a second of the three (2), the reach of the MP5 (39 m) and one
-    BB a tag at 20 m.
-  - The **Ghost Mini** ($45) fires 10 BBs a second, tags at 20 m almost as well as the MAC-10 ($130), and has twice
-    its mag. Its one fault is a jam in about one burst in five.
-  - The **Bucket Gun** ($110) is the worst value in the shop. It reaches 17 m, it takes 80 BBs a tag at 20 m, and
-    only its 600-BB hopper is better than the $35 Clear Sprayer.
-  - The rest climb with price: the spring guns trade rate for reach, and the four big automatics cost $130–240 for
-    18, 10, 13.5 and 10 BBs a second with the best reach.
-  - A) **Change the three:**
-    - Tick-Tock: accurate up close only. A slower BB (50 → 38 m/s) and a wider spread (0.14 → 0.30), for about 28 m
-      of reach and 0.3 m off line at 15 m. The rifle and the Bolt Pistol keep the long shots. The price stays.
-    - Ghost Mini: 10 → 6 BBs a second.
-    - Bucket Gun: $110 → $65.
-    
-    Each is measured again before it ships. *(recommended)*
-  - B) **Prices only:** the Tick-Tock $55 → $90, the Ghost Mini $45 → $80, the Bucket Gun $110 → $65. How the guns
-    shoot stays as it is.
-  - C) **The Tick-Tock only**, as in A.
-  - D) **Leave them**: the tap fix was enough.
-  Builder's lean: A. The Tick-Tock and the Ghost Mini are cheap guns by design, so fixing their faults keeps them
-  cheap and still makes the dearer guns worth buying. The Bucket Gun only needs a price that fits it.
-
-## Answered
+- **Recorded voices with VoiceStudio: when? (local session, 2026-10-21, backlog D.9)**
+  On 2 Oct you chose more lines now with the browser's voices, and recorded voices later. The lines are done (v1.150:
+  every kid has his own, 544 in all). The recorded voices never got a card, so they will not come back unless you say.
+  Recording runs VoiceStudio on a computer, which a cloud session cannot do, so it would be done in a local session with
+  you; the game would then play the clips from inside the one HTML file, with the browser voice as the fallback.
+  - A) **Now:** a card writes every kid's script and the clip player; you and a local session record them.
+  - B) **After the map rebuilds:** parked until the last map card lands, and raised again then. *(recommended: the maps
+    are what you asked for most recently, and the recording needs an evening of yours)*
+  - C) **Drop it:** the browser voices stay.
+  Michael: **A) Now: a card writes every kid's script and the clip player; you and a local session record them** (control room). (2026-10-21)
 
 - **D.50 step 2: the 16-gun balance table, and what to change (builder, 2026-10-21, backlog D.50)**
   The table and options are in the builder's entry on auto/build (A change the Tick-Tock, the Ghost Mini and the
@@ -599,7 +539,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 - **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
   You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
-  that BBs punch through, homemade bullseyes, every BB from your real bag, based on 235 Bunratty Court's backyard and
+  that BBs punch through, homemade bullseyes, every BB from your real bag, based on your old house's backyard on Bunratty Court and
   pool deck. Whatever you pick: no kids, no clock, no money won; cans knock off and can be stood back up, bottles
   break, paper keeps every hole, bullseyes show where each BB landed and its ring; E at the bench stands everything
   back up; the gun, gear and BBs are your loadout's. The cloud can't open Zillow, so a few screenshots of the yard
