@@ -8,23 +8,19 @@ On 19 Oct The Old Gates' test runs filled the GitHub account's shared pool of 40
 them. Every Airsoft PR, docs included, ran all ten hour-long shards, and every push to a branch with an open PR ran them
 twice (once for the push, once for the PR).
 
-## What CI does now (`.github/workflows/check.yml`)
-- **Pushes to branches no longer run CI on their own.** A branch is tested through its pull request. Main is tested after
-  every merge. Any branch can still be run by hand from the Actions tab (every suite).
+## What CI does now (`.github/workflows/check.yml`; basic tests, Michael in chat, 20 Oct 2026)
+Michael, for every game: "This is a game I am making for fun, and do not plan to ever charge for. We don't need bulletproof
+testing in this manner. Why can't we just have basic tests?" Every suite boots the whole game; the full run of 175 suites
+is about 300 minutes in ten shards, and it ran on main after each merge, in the same pool of runners as The Old Gates'.
+- **Pushes to branches do not run CI on their own.** A branch is tested through its pull request.
 - **A docs-only PR runs no game suites**: only `docs/` or `.md` files (`devlog.md`, `CLAUDE.md`) changed. Parse still runs.
-- **A code PR runs only the suites its change can reach**, plus four quick ones (`smoke`, `autosave`, `map-screen`,
-  `pause-menu`), in one shard per ~24 minutes of suites. `tests/lib/select.mjs` decides, with `tests/lib/toplevel.cjs`:
-  - each changed line of `index.html`'s script sits inside one top-level function or constant; that name counts. A line
-    inside one entry of a big table (`SCENARIOS`, `CHARACTERS`, `GUN_SPECS`, `VOICE_LINES`, `Game` …) counts as that entry's
-    key: a change to Protect Ryan's entry names `bunratty_vip`, not `SCENARIOS`.
-  - the functions that call a changed name count too (one step), unless more than twelve do, or the caller is one most
-    suites use to drive the game (`stepGame`, named by 99 of 170 suites to move the clock).
-  - a suite runs when its own file mentions one of those names, or when the suite itself changed.
-  - blank and comment-only lines, the version label, and new lines in `run.mjs`'s table of suite times count for nothing.
-- **Some changes run everything**: the page outside the script (its HTML and CSS), the test harness (`tests/lib/`,
-  `tests/run.mjs`, the vendored three.js), CI, packages, `parsecheck`, and any selection worth more than half the full run.
-- **Main runs every suite after each merge**, and the next merge does not cancel a run in progress. A break the selection
-  missed shows there. A new commit on a PR still cancels that PR's older run.
+- **A code PR runs the smoke set and the suites it adds or edits** (`tests/lib/select.mjs`): `smoke`, `autosave`,
+  `map-screen` and `pause-menu`, about three minutes of suites in one shard. The selection by the names a change reaches
+  (19 Oct, `tests/lib/toplevel.cjs`) is gone.
+- **Every suite runs once a week**, Sunday at 06:00 UTC, and on any branch when `check` is run by hand from the Actions tab.
+  Main no longer runs every suite after each merge. The producer files each red of the weekly run in the backlog for the
+  builder.
+- **A new commit on a PR cancels that PR's older run.**
 - **One check, `gate`,** says whether a PR is fit to merge: parse passed, and the suites passed or were not needed. It
   replaces the old `headless` check.
 
