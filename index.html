@@ -2620,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.293</div>
+  <div class="version">v1.294</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -22877,6 +22877,12 @@ function enterBedroom() {
   Game.player.hitsTaken = 0;
   Game.player.bounds = Scenes.bedroom.bounds;
   Game.player.obstacles = Scenes.bedroom.obstacles;
+  // v1.294 (backlog B.12, Michael 21 Oct): aim held as a match ends no longer comes home. The right button's let-go
+  // only counted in a match, so the room kept the aimed view (and field of view) until the next one.
+  Game.player.ads = 0;
+  Game.player.adsTarget = 0;
+  Game.camera.fov = Settings.fov;
+  Game.camera.updateProjectionMatrix();
 
   // Hide combat HUD
   document.getElementById('ammoHud').style.display = 'none';
@@ -26575,7 +26581,7 @@ document.addEventListener('mousedown', e => {
 });
 
 document.addEventListener('mouseup', e => {
-  if (e.button === 2 && Game.mode === 'scenario') {
+  if (e.button === 2) {   // v1.294 (B.12): let go anywhere, not only in a match
     Game.player.adsTarget = 0;
   }
   if (e.button === 0 && Game.mode === 'scenario') {

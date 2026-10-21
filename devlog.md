@@ -12409,3 +12409,22 @@ stood in one body.
 - Friday Night Lights' Nathan and Malik on one spot at their start (the critic's other bug) is a different cause: they
   stand where they spawn, before any cover is picked. Not taken this run.
 - The critic's proposal of one rule that keeps every kid a body's width apart is still Michael's to promote.
+
+## v1.294 — Aim held as a match ends stays in the match
+Backlog B.12 (Michael, 21 Oct): hold aim as a game ends, go back to the room, and the view is still zoomed in.
+Reproduced here: with the right button held to the end of a Bunratty match, the room came up at 55° instead of 75°,
+and letting the button go there changed nothing. It stayed that way until the next match. Two things kept it:
+- The right button's let-go counted only in a match (`mouseup`), so in the room the aim never came down.
+- Nothing put the aim or the camera's field of view back when you came home (`enterBedroom`).
+Now coming home sets the aim to none and the camera to your settings' field of view on the first frame, and the
+right button let go anywhere lowers the aim. A pad's LT was already read by its state in a match, so it needed nothing.
+### Verified
+- `tests/settings.test.mjs` adds the case at the settings' 90°: aimed to 66° with the button held, the match ends,
+  BACK TO YOUR ROOM, and the room is at 90° with the aim at 0, still with the button down and after it is let go.
+  Before the fix the same steps left the room at the aimed angle (a throwaway check: 55° against 75°).
+- These suites pass: `settings`, `smoke`, `pause-menu`, `one-ending`, `gamepad`, `gamepad-screens`, `result-stats`.
+- Not a v1.294 change: `gamepad` was red on the branch since v1.291. Its player is untouchable through `_graceT`,
+  which your own shot now ends, so after RT fired Sean tagged him out in 3 runs of 4 and every button check after
+  that ran on the result card. The suite now also gives him 99 lives (5 of 5 green, and once beside `settings`).
+### Still open
+- Nothing for a playtest beyond seeing the room come up unzoomed.
