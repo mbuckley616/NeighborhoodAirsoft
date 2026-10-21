@@ -46,7 +46,7 @@ const WEIGHTS = {
   'layout-same.test.mjs': 122, 'loadout-gear.test.mjs': 48, 'loadout-kid.test.mjs': 23, 'lot-ffa-opening.test.mjs': 82,
   'lot-hollow-polish.test.mjs': 97, 'map-screen.test.mjs': 35, 'map-table.test.mjs': 8, 'market-lot.test.mjs': 164,
   'mirror.test.mjs': 49, 'music.test.mjs': 7, 'night-lights-allies.test.mjs': 95, 'night-lights-spawn.test.mjs': 76,
-  'night-prowl.test.mjs': 31, 'northcliff.test.mjs': 194, 'one-ending.test.mjs': 59, 'online.test.mjs': 117,
+  'night-prowl.test.mjs': 31, 'notebook.test.mjs': 240, 'northcliff.test.mjs': 194, 'one-ending.test.mjs': 59, 'online.test.mjs': 117,
   'opening-hold.test.mjs': 87, 'out-shot.test.mjs': 54, 'out-walk-off.test.mjs': 25, 'pad-orders.test.mjs': 30,
   'pause-menu.test.mjs': 49, 'pickup.test.mjs': 117, 'pickup-clock.test.mjs': 88, 'pickup-fernando.test.mjs': 173,
   'pickup-ffa.test.mjs': 111, 'pickup-kids.test.mjs': 46, 'pickup-lives.test.mjs': 64, 'pincer.test.mjs': 38,
