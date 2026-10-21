@@ -12553,3 +12553,26 @@ was drawn at 54 px Georgia on a 512 px canvas, and at that size it is 557 px wid
 - These suites pass: `market-lot`, `grocery-store`, `country-club`, `high-school`, `smoke`.
 ### Still open
 - Nothing for a playtest beyond a look at the store front.
+
+## v1.301 — Winnmark's golf course and lake show
+Backlog D.55 step 3, the reference-picture finding from 16 Oct (`docs/refs/winnmark.md` gaps 8 and 9). The golf
+course past the north tree wall was buried. Its fairway, green, flag, bunkers and cart path sat at about y 0.01, where
+Winnmark's slope puts the ground 1-3 m high, so only the west corner showed. The lake at y -0.02 lay under the
+ground's gentle roll, so from above it showed as broken patches.
+- `winnmarkGroundY` now eases to 0 past the back tree wall (from z -35 to -42) and past the shore (from x -37 to -42).
+  The golf course and the lake lie on flat ground, and the back yards drop to the course as the real ones do.
+  Inside those lines the ground is exactly as it was, and nobody plays past them (the tree wall, `lakeBlocker`).
+- The fairway is 22 m deep from z -42 (it was 26 m from z -39, where the ground is still coming down). The lake sits
+  at y 0.05 and its shore at 0.06.
+- Not done: gap 9's second half, a 40 × 30 m pond north-west of the bulb with a creek running south. That changes the
+  map's edge and is the Winnmark rebuild card's (D.51).
+### Verified
+- `tests/winnmark-trees.test.mjs`, new checks. The ground under the whole fairway (x -50 to 50, z -64 to -42) is at
+  most 0, below the fairway at 0.005 and the green at 0.01. The lake is above the ground at all 1,264 points sampled
+  over its water. At 5,928 points inside the tree wall and the shore, the ground is identical to the old formula.
+- A plan view from 110 m up (a throwaway, before and after): before, a corner of the fairway and three strips of
+  water. After, the whole fairway with its green, bunkers and path, and the lake in one piece. From a back yard the
+  fairway now shows through the trunks.
+- These suites pass: `winnmark-trees`, `winnmark-road`, `winnmark-props`, `winnmark-fort`, `winnmark-cars`, `layout-same`, `smoke`.
+### Still open
+- The bank down to the course is steep at the east end (3 m over 7 m) but out of reach. A look in play.

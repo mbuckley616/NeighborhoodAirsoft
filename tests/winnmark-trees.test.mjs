@@ -42,5 +42,33 @@ await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAn
 await g.shot('winnmark-trees');
 const calls = await page.evaluate(() => { Game.renderer.render(Game.scene, Game.camera); return Game.renderer.info.render.calls; });
 console.log('  draw calls, looking down the street:', calls);
+// v1.301 (D.55 step 3): the golf course and the lake lie on the ground, not under it
+await g.scenario('winnmark_seth_house');
+const lay = await page.evaluate(() => {
+  const gy = Game.scenario.groundY, s = Game.scene;
+  let fairwayMax = -9, lakeOver = 0, lakeN = 0;
+  for (let x = -50; x <= 50; x += 2) for (let z = -64; z <= -42; z += 1) fairwayMax = Math.max(fairwayMax, gy(x, z));
+  let lake = null, fairway = null, green = null;
+  s.traverse(m => {
+    if (!m.isMesh || !m.geometry || m.geometry.type !== 'PlaneGeometry' && m.geometry.type !== 'CircleGeometry') return;
+    const p = m.geometry.parameters;
+    if (p.width === 20 && p.height === 80) lake = m;
+    if (p.width === 100 && p.height === 22) fairway = m;
+    if (p.radius === 5 && Math.abs(m.position.z + 48) < 0.01) green = m;
+  });
+  for (let x = -57; x <= -42; x += 1) for (let z = -39; z <= 39; z += 1) { lakeN++; if (gy(x, z) < lake.position.y) lakeOver++; }
+  // in play nothing moved: the back yards and the bulb keep their ground
+  const before = (x, z) => { let u = Math.max(0, Math.min(1, (x - 38) / (-32 - 38))); const sm = u * u * (3 - 2 * u);
+    return 3.0 * (1 - sm) + 0.25 * Math.sin(z * 0.12 + 0.5) * Math.cos(x * 0.1); };
+  let inPlay = 0, n = 0;
+  for (let x = -37; x <= 40; x += 1) for (let z = -35; z <= 40; z += 1) { n++; if (Math.abs(gy(x, z) - before(x, z)) > 1e-9) inPlay++; }
+  inPlay = { changed: inPlay, of: n };
+  return { fairwayMax: +fairwayMax.toFixed(4), fairwayY: fairway && fairway.position.y, greenY: green && green.position.y,
+    lakeY: lake && lake.position.y, lakeOver, lakeN, inPlay };
+});
+check('the fairway, green and bunkers are above the ground under them (ground ≤ 0.004 m there, the fairway at 0.005)',
+  lay.fairwayY === 0.005 && lay.greenY === 0.01 && lay.fairwayMax <= 0.004, lay);
+check('the lake is above the ground over its whole water (x -57 to -42)', lay.lakeOver === lay.lakeN, lay);
+check('the ground inside the tree wall and the shore (x -37 to 40, z -35 to 40) is as it was', lay.inPlay.changed === 0 && lay.inPlay.of > 5000, lay.inPlay);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

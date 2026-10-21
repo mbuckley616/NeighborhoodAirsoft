@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.300</div>
+  <div class="version">v1.301</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13527,7 +13527,11 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const s = u * u * (3 - 2 * u);           // smoothstep: flat-ish high bench, then drop
     let h = 3.0 * (1 - s);                    // v1.28n: +3.0 at east entry, ~0 by the bulb (was 4.5 — still too steep)
     h += 0.25 * Math.sin(z * 0.12 + 0.5) * Math.cos(x * 0.1);  // gentle cross-roll
-    return h;
+    // v1.301 (D.55 step 3, docs/refs/winnmark.md gaps 8-9): past the back tree wall (z -35) the ground falls to the
+    // golf course, and past the shore (x -37) to the lake, both flat at 0, so the fairway and the water lie on it
+    // instead of under it. Nobody plays past either line (the tree wall, lakeBlocker).
+    const fz = Math.max(0, Math.min(1, (z + 42) / 7)), fx = Math.max(0, Math.min(1, (x + 42) / 5));
+    return h * fz * fz * (3 - 2 * fz) * fx * fx * (3 - 2 * fx);
   }
   const groundY = winnmarkGroundY;
   // Terrain normal (finite differences) — used to tilt flat decal pads onto the slope.
@@ -13631,7 +13635,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.4, metalness: 0.2 })
   );
   lake.rotation.x = -Math.PI / 2;
-  lake.position.set(-48, -0.02, 0);
+  lake.position.set(-48, 0.05, 0);   // v1.301: on the flat ground past the shore (was -0.02, under the roll)
   lake.receiveShadow = true;
   scene.add(lake);
   // Shore — a thin tan strip between lake and grass
@@ -13640,7 +13644,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     new THREE.MeshStandardMaterial({ color: 0xb8a070, roughness: 1.0 })
   );
   shore.rotation.x = -Math.PI / 2;
-  shore.position.set(-38, 0.01, 0);
+  shore.position.set(-38, 0.06, 0);   // v1.301
   shore.receiveShadow = true;
   scene.add(shore);
 
@@ -13656,9 +13660,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   //
   // Fairway — a wide brighter-green plane north of the tree wall.
   const fairwayMat = new THREE.MeshStandardMaterial({ color: 0x7aa850, roughness: 1.0 });
-  const fairway = new THREE.Mesh(new THREE.PlaneGeometry(100, 26), fairwayMat);
+  // v1.301: 22 m deep from z -42, where the ground has come down to the course (was 26 m from z -39, buried)
+  const fairway = new THREE.Mesh(new THREE.PlaneGeometry(100, 22), fairwayMat);
   fairway.rotation.x = -Math.PI / 2;
-  fairway.position.set(0, 0.005, -52);
+  fairway.position.set(0, 0.005, -53);
   fairway.receiveShadow = true;
   scene.add(fairway);
   // Putting green — a small darker patch (richer fairway color, closer-cut grass)
