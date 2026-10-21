@@ -124,7 +124,9 @@ for (const gt of Object.keys(NEW)) {
 check('Clear Sprayer: about 6 BBs a second (5-7)', SP.perSec >= 5 && SP.perSec <= 7, SP.perSec);
 check('Clear Sprayer: its BBs curve hard: the middle one 0.9-2 m off line at 15 m (about a 3 m circle), under 30% within 0.5 m', SP.off15 >= 0.9 && SP.off15 <= 2 && SP.within50 < 0.3, [SP.off15, SP.within50]);
 check('Ghost Mini: steady (over twice the Sprayer\'s share within 0.5 m at 15 m)', GH.within50 > 2 * SP.within50, [GH.within50, SP.within50]);
-check('Ghost Mini: about one burst in five jams (12-30%); the Sprayer and Tick-Tock never', GH.jamShare >= 0.12 && GH.jamShare <= 0.3 && SP.jamShare === 0 && TT.jamShare === 0, [GH.jamShare, SP.jamShare, TT.jamShare]);
+// v1.302 (backlog D.56, Michael 21 Oct: "All of the 'cheap' automatics should have a fairly high jamming rate"): all four jam
+check('Ghost Mini, Clear Sprayer and Tick-Tock: about one burst in five jams (12-30%)', [GH, SP, TT].every(r => r.jamShare >= 0.12 && r.jamShare <= 0.3), [GH.jamShare, SP.jamShare, TT.jamShare]);
+check('the Bucket Gun ($65, not one of the cheap four) never jams', BK.jamShare === 0, BK.jamShare);
 check('Tick-Tock: 2 BBs a second (1.5-2.5)', TT.perSec >= 1.5 && TT.perSec <= 2.5, TT.perSec);
 // v1.295 (D.50, Michael: A): the Tick-Tock is accurate up close only (39 m of carry and 0.12 m off at 15 m before),
 // and the Ghost Mini fires 6 a second, not 10

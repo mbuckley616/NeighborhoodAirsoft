@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.301</div>
+  <div class="version">v1.302</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4577,7 +4577,7 @@ const GUN_MAGS = {
   },
   sprayer: {
     displayName: 'Clear Sprayer', baseCap: 120, price: 35, ownFlag: 'sprayer', cheap: true,
-    blurb: 'A little see-through battery SMG. Six BBs a second, and every one of them curves off somewhere new.',
+    blurb: 'A little see-through battery SMG. Six BBs a second, every one of them curves off somewhere new, and about one burst in five it jams.',
     mags: [], spares: [],
   },
   ghost: {
@@ -4587,7 +4587,7 @@ const GUN_MAGS = {
   },
   ticktock: {
     displayName: 'Tick-Tock', baseCap: 60, price: 55, ownFlag: 'ticktock', cheap: true,
-    blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second and they drop off past about 25 metres.',
+    blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second, they drop off past about 25 metres, and about one burst in five it jams.',
     mags: [], spares: [],
   },
 };
@@ -5339,11 +5339,13 @@ const GUN_SPECS = {
     displayName: 'Bolt Pistol',
   },
   // v1.250 (backlog D.37, Michael: B): the cheap clear-plastic automatics. `burstJam` is the chance a burst jams (it
-  // goes a few BBs in first); R held clears it, as any jam.
+  // goes a few BBs in first); R held clears it, as any jam. v1.302 (backlog D.56, Michael 21 Oct: "All of the 'cheap'
+  // automatics should have a fairly high jamming rate"): all four jam, the Sprayer and the Tick-Tock one burst in five
+  // as the Ghost Mini does, the Rattle Can one in four.
   sprayer: {   // Clear Sprayer: 6 BBs a second, every one curves hard (about a 3 m circle at 15 m)
     fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
     cyclicRPM: 360, muzzleVelocity: 32, baseSpread: 0.55, adsSpreadMult: 0.8,
-    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12,
+    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12, burstJam: 0.2,   // v1.302 (D.56): it jams too
     pelletsPerShot: () => 1, cockTime: 0.4, cockType: 'switch', displayName: 'Clear Sprayer',
   },
   ghost: {     // Ghost Mini: steady, but about one burst in five jams
@@ -5357,7 +5359,7 @@ const GUN_SPECS = {
     // is slower (50 → 38 m/s) and wider (0.14 → 0.30): about 28 m of reach, and the long shots are theirs again
     fireMode: 'auto', weightClass: 'medium', playerSpeedMult: 1.0,
     cyclicRPM: 120, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.3,
-    curveOnsetDistance: 20, curveStrengthMax: 6,
+    curveOnsetDistance: 20, curveStrengthMax: 6, burstJam: 0.2,   // v1.302 (D.56): it jams too
     pelletsPerShot: () => 1, cockTime: 0.6, cockType: 'charge', displayName: 'Tick-Tock',
   },
   rattle: {    // Rattle Can: all three faults at once

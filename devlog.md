@@ -12576,3 +12576,24 @@ ground's gentle roll, so from above it showed as broken patches.
 - These suites pass: `winnmark-trees`, `winnmark-road`, `winnmark-props`, `winnmark-fort`, `winnmark-cars`, `layout-same`, `smoke`.
 ### Still open
 - The bank down to the course is steep at the east end (3 m over 7 m) but out of reach. A look in play.
+
+## v1.302 — Every cheap automatic jams
+Backlog D.56 (Michael, 21 Oct): "All of the 'cheap' automatics should have a fairly high jamming rate, I think only
+one of those guns has that now." The four cheap clear-plastic automatics (v1.250) each had one fault of their own.
+The Ghost Mini jammed about one burst in five and the Rattle Can one in four. The Clear Sprayer and the Tick-Tock
+never jammed.
+- The Clear Sprayer and the Tick-Tock now jam one burst in five (`burstJam` 0.2), the same as the Ghost Mini. The
+  Rattle Can stays at one in four, so it is still the worst of them. A jam is cleared by holding R, as before.
+- Their shop lines say so. The Bucket Gun ($65) is not one of the cheap four (its own design, not clear plastic), so
+  it still never jams. No kid carries any of these guns.
+- "Fairly high" is read as the Ghost Mini's one in five, the rate Michael already had in front of him. A different
+  number is a one-line change.
+### Verified
+- `tests/clear-guns.test.mjs` fires 200 one-second bursts with each gun. Jams: the Sprayer 21%, the Ghost Mini 20%,
+  the Tick-Tock 18%, the Rattle Can 24%, the Bucket Gun 0%. The old check that the Sprayer and the Tick-Tock never
+  jam is replaced by one that each of the three jams 12-30% of bursts, plus a check that the Bucket Gun never does.
+  Rates, accuracy and reach are unchanged (Tick-Tock 2.0 a second, 29.8 m of carry).
+- These suites pass: `clear-guns`, `shop-gun-kinds`, `backyard-guns`, `shop-pics`, `smoke`.
+### Still open
+- Whether a jam in one burst in five makes the Tick-Tock, at two BBs a second, feel worse than the others is for a
+  playtest. Its bursts are short, so a jam costs it more time per BB.
