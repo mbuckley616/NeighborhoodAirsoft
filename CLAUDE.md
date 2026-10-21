@@ -15,9 +15,10 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 - `docs/decisions.md` — questions for Michael and his answers; nothing is a spec without a `Michael:` line.
 - `docs/critic.md`, `docs/proposals.md` — the critic's playtest reports and its unapproved ideas.
 - `tests/` — Playwright suites against headless Chromium. `npm test` runs them all; `node tests/run.mjs smoke` runs one;
-  `node tests/run.mjs --shard 2/4` runs a quarter. CI (`docs/pipeline.md`, 19 Oct 2026): main runs every suite in ten
-  shards after each merge; a PR runs only the suites its change can reach (`node tests/lib/select.mjs --base=main` shows
-  which), a docs-only PR none; the one check to read on a PR is `gate`.
+  `node tests/run.mjs --shard 2/4` runs a quarter. CI (`docs/pipeline.md`; basic tests, Michael 20 Oct 2026): a PR runs the
+  smoke set and the suites it adds or edits (`node tests/lib/select.mjs --base=main` shows which), a docs-only PR none; the
+  one check to read on a PR is `gate`. Every suite runs once a week (Sunday 06:00 UTC), not after each merge, and on any
+  branch when `check` is run by hand. The producer files each red of the weekly run in the backlog for the builder.
 - `scripts/parsecheck.mjs` syntax-checks the inline script. `node scripts/tag.mjs bump` bumps the version on the title screen.
 
 ## A session
@@ -26,7 +27,11 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 3. Edit `index.html` with targeted edits. It is stored with LF line endings (a Windows checkout may show CRLF; match the file) and has literal Unicode (’ — ·) in strings; match both.
    Mark new code with a `// v1.NN:` comment the way the file already does.
 4. `node scripts/parsecheck.mjs` after every edit batch.
-5. Verify in headless Chromium, not by reading the code: add or extend a test in `tests/`. Drive time with
+5. Verify in headless Chromium, not by reading the code: run the suites of the area you changed (`node tests/run.mjs <name>`),
+   or a check script of your own in `tests/tmp/` that you throw away. **Basic tests, not bulletproof ones** (Michael, 20 Oct
+   2026): this is a game made for fun, and every suite boots the whole game. Add a suite to `tests/` only for something that
+   would hurt to lose unnoticed (a save, a crash, a rule of play other systems lean on); otherwise extend one that exists, or
+   keep the check to yourself. A picture for Michael is not a suite. Drive time with
    `g.spin(n)` (fixed 1/60 calls of `stepGame`), never timeouts. `g.scenario(id)` enters any scenario past its lock.
 6. `node scripts/tag.mjs bump` — the version on the title screen is how Michael confirms which build he's running.
 7. Append the devlog entry, update the backlog, commit.

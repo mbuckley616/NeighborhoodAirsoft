@@ -5,11 +5,15 @@ name: check
 # push to a branch with an open PR ran the full suite twice, once for the push and once for the PR. A new commit on a PR
 # cancels that PR's older run. `gate` is the one check that says whether a pull request is fit to merge: green when parse
 # passed and the suites passed or were not needed. Merging still waits for Michael's approval.
+# 20 Oct 2026 (Michael in chat, for every game: basic tests, not bulletproof ones): a pull request runs the smoke set and the
+# suites it adds or edits, a docs-only one none. Main no longer runs every suite after each merge (about 300 minutes in ten
+# shards); every suite runs on Sunday at 06:00 UTC, and whenever check is run by hand (Actions, check, Run workflow, on any
+# branch).
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 0'
 concurrency:
   group: check-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
