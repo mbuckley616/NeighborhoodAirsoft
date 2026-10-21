@@ -12471,3 +12471,27 @@ buttons.
 - These suites pass: `notebook`, `shop-pics`, `shop-tabs`, `shop-gun-kinds`, `sell-back` and `smoke`.
 ### Still open
 - Nothing for a playtest beyond a look at the shop.
+
+## v1.297 — A new teammate comes up on the result card
+Backlog D.53 (Michael, 21 Oct): recruiting from the phone felt awkward, nothing sent you to the phone, and nothing
+said a friend now wanted in. His pick in decisions was A: a "New teammate!" card on the result screen.
+- The first win of a match that brings a kid's ask (Winnmark's last for Eric, Bunratty's last for Sean and then Nick,
+  the Stoneglen hold for Alex, Bellfield's flags for Diego) shows a box on the result card under the cash line. It
+  holds the kid drawn in 3D with his own gun, his name and gun, three lines on who he is and why he wants in, and
+  two buttons, YES, YOU'RE IN and NOT YET.
+- YES takes him in, as the phone's YES does, and marks his text read. NOT YET leaves his text on the phone, unread
+  and still asking, as it was before. The box then shows what you said, or the next kid ("AND ANOTHER ONE!") when
+  the match brought two.
+- No card on a loss, on winning the match again, or online. The phone still asks as before.
+- The kid is drawn through the damage report's renderer (`drawKidPortrait`), so the result screen makes no new
+  WebGL context and its shaders are already warm from the title. The briefing's lineup (D.54) can use it too.
+- The lines are new, written from each kid's texts and character entry. Michael may want to rewrite them.
+### Verified
+- `tests/crew-roster.test.mjs`, new checks, 32 of 32 pass. Winnmark's last match won: Eric's card shows his name,
+  his MP5, the lines and both buttons, with 5,959 of his pixels on the 120 × 150 canvas. The box is 8 rules (208 px)
+  and every line and button sits inside it. YES puts Eric in the crew and in the save, and marks his text read.
+  Winning the same match again shows no card, and neither does losing Bunratty's last. Winning Bunratty's last shows
+  Sean, NOT YET brings up Nick, and YES takes Nick while Sean's ask stays open and unread on the phone.
+- These suites pass: `crew-roster`, `notebook`, `result-stats`, `result-text`, `smoke`, `crew`, `crew-field`, `gamepad-screens`.
+### Still open
+- Whether three lines and a still figure make enough of an event of it is for a playtest. The kid does not move.

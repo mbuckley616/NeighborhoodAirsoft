@@ -113,5 +113,64 @@ const m = await page.evaluate(() => ({ mode: Game.mode,
 // v1.274 (D.28 step 2): the crew takes the field. v1.275 (step 3): with the whole ladder done, Lights Out is too, so on
 // this replay Seth plays for the other side (tests/crew-balance)
 check('a full crew plays Squad Up as your five, with Seth on the other side', m.mode === 'scenario' && m.ours.join() === m.want.join() && m.seth !== 'player', m);
+// v1.297 (D.53, Michael: A): the win that brings an ask puts a New teammate card on the result screen, the kid in 3D
+await page.evaluate(() => {
+  Game.persist.crew = []; Game.persist.textsRead = {};
+  for (const t of SUMMER_TEXTS) if (t.ask) delete Game.persist.completed[t.after];
+});
+const winNow = () => page.evaluate(() => { for (const e of Game.scenario.enemies) if (e.team !== 'player') e.health = 0; endScenario('win'); });
+const card = () => page.evaluate(() => {
+  const el = document.getElementById('resultTeammate'), r = el.getBoundingClientRect();
+  const cv = el.querySelector('canvas');
+  let inked = 0;
+  if (cv) { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 0xf3) + Math.abs(d[i + 1] - 0xee) + Math.abs(d[i + 2] - 0xdd) > 60) inked++; }
+  const btns = [...el.querySelectorAll('button')].map(b => { const q = b.getBoundingClientRect(); return { t: b.textContent, inside: q.bottom <= r.bottom + 0.5 && q.top >= r.top }; });
+  return { on: el.classList.contains('on') && el.offsetHeight > 0, h: el.offsetHeight,
+    head: (el.querySelector('.rt-head') || {}).textContent, name: (el.querySelector('.rt-name') || {}).textContent,
+    done: (el.querySelector('.rt-done') || {}).textContent, intro: (el.querySelector('.rt-intro') || {}).textContent,
+    inked, btns, textInside: [...el.querySelectorAll('.rt-text > div')].every(d => d.getBoundingClientRect().bottom <= r.bottom + 0.5) };
+});
+const answer = yes => page.evaluate(yes => document.querySelector(`#resultTeammate button[data-yes="${yes ? 1 : 0}"]`).click(), yes);
+await g.scenario('winnmark_night_team_2v2');
+await g.spin(3);
+await winNow(); await g.spin(3);
+await page.evaluate(() => document.fonts.ready);
+const c1 = await card();
+await g.shot('crew-teammate-card');
+check('Winnmark\'s last win: a New teammate card for Eric, his gun, his lines, YES / NOT YET',
+  c1.on && c1.head === 'NEW TEAMMATE!' && /^ERIC wants in your crew/.test(c1.name) && /MP5/.test(c1.name) && c1.intro.length > 60 && c1.btns.length === 2, c1);
+check('the card draws Eric in 3D (over 1500 pixels of him on its canvas)', c1.inked > 1500, c1.inked);
+check('the card is 8 rules tall and everything on it fits inside', c1.h === 8 * 26 && c1.btns.every(b => b.inside) && c1.textInside, c1);
+await answer(true);
+const a1 = await page.evaluate(() => ({ crew: crewMembers(), read: !!Game.persist.textsRead.askEric, done: document.querySelector('#resultTeammate .rt-done').textContent,
+  btns: document.querySelectorAll('#resultTeammate button').length, saved: JSON.parse(localStorage.getItem(SAVE_KEY)).persist.crew }));
+check('YES: Eric is in (saved), his text is read, the card says so', a1.crew.join() === 'eric' && a1.read && a1.done === 'Eric is in your crew.' && !a1.btns && (a1.saved || []).join() === 'eric', a1);
+// the same match won again brings no card
+await page.evaluate(() => document.getElementById('navAgainBtn').click());
+await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
+await page.evaluate(() => document.getElementById('introBeginBtn').click());
+await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000 });
+await winNow(); await g.spin(3);
+const c2 = await card();
+check('winning it again: no card', !c2.on, c2);
+// a loss brings none; Bunratty's last win brings Sean, then Nick
+await g.scenario('bunratty_night_team_2v2');
+await g.spin(3);
+await page.evaluate(() => endScenario('lose')); await g.spin(3);
+const c3 = await card();
+check('a loss of Bunratty\'s last: no card', !c3.on, c3);
+await g.scenario('bunratty_night_team_2v2');
+await g.spin(3);
+await winNow(); await g.spin(3);
+const c4 = await card();
+check('Bunratty\'s last win: Sean first', c4.on && /^SEAN wants in/.test(c4.name) && /AK/.test(c4.name), c4);
+await answer(false);
+const c5 = await card();
+check('NOT YET to Sean: Nick comes up next ("AND ANOTHER ONE!"), on 8 rules', c5.on && c5.head === 'AND ANOTHER ONE!' && /^NICK wants in/.test(c5.name) && c5.h === 208 && c5.btns.every(b => b.inside) && c5.textInside, c5);
+await answer(true);
+const a2 = await page.evaluate(() => ({ crew: crewMembers(), seanOpen: crewAskOpen('sean'), seanRead: !!Game.persist.textsRead.askSean,
+  nickRead: !!Game.persist.textsRead.askNick, done: document.querySelector('#resultTeammate .rt-done').textContent, unread: summerUnreadCount() }));
+check('YES to Nick: Eric and Nick in; Sean\'s ask still open on the phone, unread', a2.crew.join() === 'eric,nick' && a2.seanOpen && !a2.seanRead && a2.nickRead && a2.done === 'Nick is in your crew.', a2);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
