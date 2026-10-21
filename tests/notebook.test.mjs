@@ -207,7 +207,30 @@ await page.evaluate(() => document.fonts.ready);
 await g.shot('notebook-popup');
 onRules('the map\'s briefing popup', await lineReport(page, '#scenarioBriefModal .brief-card'));
 wholeRules('the map\'s briefing popup', await blocks('#scenarioBriefModal .brief-card'));
+// v1.298 (D.54, Michael: A): the popup lines both sides up as 3D kids; the big game with a full crew, two rows of yours
 await page.evaluate(() => document.getElementById('briefCancelBtn').click());
+await page.evaluate(() => { Game.persist.crew = ['eric', 'sean', 'nick', 'alex', 'diego']; crewBench.clear(); openScenarioBrief('hollow_big_battle'); });
+await page.evaluate(() => document.fonts.ready);
+await g.shot('notebook-lineup');
+onRules('the briefing popup\'s lineup (the big game, a full crew)', await lineReport(page, '#scenarioBriefModal .brief-card'));
+const lu = await page.evaluate(() => {
+  const side = sel => [...document.querySelectorAll(`#briefRoster ${sel} .lu-kid`)].map(k => {
+    const cv = k.querySelector('canvas'), d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    let inked = 0; for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 0xf3) + Math.abs(d[i + 1] - 0xee) + Math.abs(d[i + 2] - 0xdd) > 60) inked++;
+    const r = k.getBoundingClientRect();
+    return { name: k.querySelector('.brief-name').textContent, inked, x: Math.round(r.left), y: Math.round(r.top), bench: !!k.querySelector('[data-bench]') };
+  });
+  const [you, them] = [...document.querySelectorAll('#briefRoster .brief-lineup > .brief-section')];
+  return { yours: side('.brief-lineup > .brief-section:first-child'), theirs: side('.brief-lineup > .brief-section:last-child'),
+    youRight: you.getBoundingClientRect().right, themLeft: them.getBoundingClientRect().left };
+});
+console.log(`   lineup: ${lu.yours.map(k => k.name + ' ' + k.inked).join(', ')} | ${lu.theirs.map(k => k.name + ' ' + k.inked).join(', ')}`);
+check('the lineup: you and your five on the left, their five on the right, every kid drawn (over 800 pixels each)',
+  lu.yours.length === 6 && lu.yours[0].name === 'You' && lu.theirs.length === 5 && lu.youRight <= lu.themLeft &&
+  [...lu.yours, ...lu.theirs].every(k => k.inked > 800), lu);
+check('your six stand in two rows of three, each crew kid with Bench under him; theirs in one row of five',
+  new Set(lu.yours.map(k => k.y)).size === 2 && new Set(lu.theirs.map(k => k.y)).size === 1 && lu.yours.slice(1).every(k => k.bench) && !lu.yours[0].bench, lu);
+await page.evaluate(() => { Game.persist.crew = []; document.getElementById('briefCancelBtn').click(); });
 check('← Back closes the popup', await page.evaluate(() => !document.getElementById('scenarioBriefModal').classList.contains('active')));
 
 // 3) the briefing before BEGIN

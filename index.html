@@ -2151,6 +2151,20 @@
   .nb-paper .wallet-cash { color: var(--nb-green); font-weight: 400; }
   .nb-paper .wallet-low { color: var(--nb-red); }
   #scenarioBriefModal .brief-card.nb-paper { max-width: 500px; }
+  /* v1.298 (D.54, Michael: A): the lineup. Both sides stand as 3D kids, yours left and theirs right, a kid a column,
+     five across at most (two rows past that); under each his name, gun and lives, and Bench / Bring under your crew */
+  #scenarioBriefModal .brief-card.nb-paper.lineup { max-width: min(880px, 96vw); width: auto; }
+  .nb-paper .brief-lineup { display: flex; gap: 0 22px; align-items: flex-start; }
+  .nb-paper .brief-lineup .brief-section { flex: none; }
+  .nb-paper .lu-kids { display: grid; grid-template-columns: repeat(var(--lu-cols, 1), 68px); gap: 0 6px; }
+  .nb-paper .brief-lineup .brief-combatant.lu-kid { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 0;
+    width: 68px; text-align: center; font-size: 15px; }
+  .nb-paper .lu-kid .lu-fig { width: 68px; height: calc(var(--nb-rule) * 3); display: block; }
+  .nb-paper .lu-kid .brief-name, .nb-paper .lu-kid .brief-gun, .nb-paper .lu-kid .brief-lives { justify-self: auto; max-width: 68px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .nb-paper .lu-kid .brief-gun { font-size: 13px; }
+  .nb-paper .lu-kid .brief-lives { font-size: 13px; }
+  .nb-paper .lu-kid .brief-bench { margin: 3px 0; height: 20px; box-sizing: border-box; }
   #scenarioBriefModal .nb-paper .brief-loc { font-size: 15px; color: var(--nb-red); margin: 0; }
   #scenarioBriefModal .nb-paper .brief-title { font-size: 24px; margin: 0 0 var(--nb-rule); }
   #scenarioBriefModal .nb-paper .brief-desc { font-size: 17px; color: var(--nb-ink); font-style: normal; margin: 0 0 var(--nb-rule); }
@@ -2560,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.297</div>
+  <div class="version">v1.298</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6512,6 +6526,7 @@ function renderBriefingRosterHTML(brief, opts) {
   const bench = !!(opts && opts.bench && brief.crewMatch);   // v1.274: the pre-match briefing can bench a crew kid
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
   const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
+  if (opts && opts.lineup) return renderBriefingLineupHTML(brief, bench, lifeStr, youGun);   // v1.298 (D.54)
   const row = (c, side) =>
     `<div class="brief-combatant ${side}">
        <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
@@ -6543,6 +6558,51 @@ function renderBriefingRosterHTML(brief, opts) {
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
   if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;   // v1.196
   return html;
+}
+
+// v1.298 (backlog D.54, Michael: A, 21 Oct): the map's briefing shows both sides lined up as 3D kids, each in his
+// clothes with the gun he will carry (drawn after the HTML is in, by drawBriefingLineup), his name, gun and lives
+// under him, and Bench / Bring under your crew kids. Five across a side at most; a bigger side stands in two rows.
+function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const wearsCrew = (c, side) => side === 'ally' && !c.vip && c.charId !== 'seth' && !brief.tutorial;
+  const cell = (c, side, extra) => {
+    const lives = extra && extra.benched ? 'on the bench' : c.lives === 'you' ? (brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)) : lifeStr(c.lives);
+    return `<div class="brief-combatant ${side} lu-kid${extra && extra.benched ? ' benched' : ''}" title="${esc(c.name + ' · ' + c.gun + ' · ' + lives)}">
+      <canvas class="lu-fig" width="102" height="117" data-kid="${c.charId || ''}" data-gun="${c.gunType || 'pistol'}" data-crew="${wearsCrew(c, side) ? 1 : 0}"${c.lives === 'you' ? ' data-you="1"' : ''}></canvas>
+      <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span><span class="brief-gun">${c.gun}</span><span class="brief-lives">${lives}</span>
+      ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}${extra && extra.benched ? `<button class="brief-bench" data-unbench="${c.charId}">Bring</button>` : ''}
+    </div>`;
+  };
+  const cols = n => n <= 5 ? n : Math.ceil(n / 2);
+  const benched = bench ? crewMembers().filter(id => crewBench.has(id)) : [];
+  const yours = [cell({ name: 'You', charId: 'you', gun: youGun, gunType: Game.persist.equipped.gun, lives: 'you' }, 'you')]
+    .concat(brief.allies.map(c => cell(c, 'ally')))
+    .concat(benched.map(id => cell({ name: CHARACTERS[id].name, charId: id, gun: getGunDisplayName(CREW_GUNS[id]), gunType: CREW_GUNS[id], lives: 0 }, 'ally', { benched: true })));
+  const theirs = brief.enemies.map(c => cell(c, 'enemy'));
+  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');
+  let html = `<div class="brief-lineup">
+    <div class="brief-section"><div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
+      <div class="lu-kids" style="--lu-cols:${cols(yours.length)}">${yours.join('')}</div></div>
+    <div class="brief-section"><div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
+      <div class="lu-kids" style="--lu-cols:${cols(theirs.length)}">${theirs.join('')}</div></div>
+  </div>`;
+  html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
+  if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;
+  return html;
+}
+function drawBriefingLineup(root) {
+  const cc = crewColor();
+  for (const cv of root.querySelectorAll('canvas.lu-fig')) {
+    try {
+      if (cv.dataset.you) { drawKidPortrait(cv, Game.persist.look, Game.persist.equipped.gun, -0.45, loadoutKidGearKeys()); continue; }
+      const ch = CHARACTERS[cv.dataset.kid];
+      if (!ch) continue;
+      const look = cc != null && cv.dataset.crew === '1' ? Object.assign({}, ch, { crewColor: cc }) : ch;
+      drawKidPortrait(cv, look, cv.dataset.gun, cv.closest('.enemy') ? 0.45 : -0.45);
+    } catch (e) { console.warn('lineup', e); }
+  }
 }
 
 const SCENARIOS = {
@@ -35428,8 +35488,8 @@ const CREW_INTROS = {
 };
 // A kid drawn in 3D onto a 2D canvas, three-quarter on, through the damage report's renderer (its shaders are warm
 // from the title, and no new WebGL context is made). The canvas may be up to DAMAGE_W x DAMAGE_H.
-const KID_PORTRAIT = { scene: null, camera: null, kid: null, sig: '' };
-function drawKidPortrait(canvas, look, gun, yaw = -0.5) {
+const KID_PORTRAIT = { scene: null, camera: null, kid: null, sig: '', cache: new Map() };
+function drawKidPortrait(canvas, look, gun, yaw = -0.5, gear = null) {
   initDamageReport();
   const K = KID_PORTRAIT, r = DAMAGE_REPORT.renderer;
   const w = Math.min(DAMAGE_W, canvas.width), h = Math.min(DAMAGE_H, canvas.height);
@@ -35439,10 +35499,19 @@ function drawKidPortrait(canvas, look, gun, yaw = -0.5) {
     const l = new THREE.DirectionalLight(0xffffff, 0.7); l.position.set(1.5, 3, 3); K.scene.add(l);
     K.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
   }
-  const sig = JSON.stringify([look, gun]);
+  const sig = JSON.stringify([look, gun, gear, yaw, w, h]);
+  // v1.298: a lineup draws a dozen kids each time it opens, so each drawing is kept and a kid is built once
+  const ctx = canvas.getContext('2d');
+  const hit = K.cache.get(sig);
+  if (hit) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(hit, (canvas.width - w) / 2, (canvas.height - h) / 2);
+    return;
+  }
   if (K.sig !== sig) {
     if (K.kid) K.scene.remove(K.kid.group);
     K.kid = createKid(Object.assign({}, look), gun);
+    if (gear) buildKidGear(K.kid, gear);
     K.scene.add(K.kid.group); K.sig = sig;
   }
   const kid = K.kid.group;
@@ -35456,9 +35525,12 @@ function drawKidPortrait(canvas, look, gun, yaw = -0.5) {
   r.setViewport(0, 0, w, h); r.setScissor(0, 0, w, h);
   r.render(K.scene, K.camera);
   r.setScissorTest(false);
-  const ctx = canvas.getContext('2d');
+  const keep = document.createElement('canvas'); keep.width = w; keep.height = h;
+  keep.getContext('2d').drawImage(r.domElement, 0, DAMAGE_H - h, w, h, 0, 0, w, h);
+  if (K.cache.size >= 96) K.cache.delete(K.cache.keys().next().value);
+  K.cache.set(sig, keep);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(r.domElement, 0, DAMAGE_H - h, w, h, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+  ctx.drawImage(keep, (canvas.width - w) / 2, (canvas.height - h) / 2);
 }
 // The kids whose asks this result brings: the match's first win, his text due after it, and he is not in yet
 function teammateAsksFor(scenarioId, outcome, wonBefore) {
@@ -35617,7 +35689,9 @@ function openScenarioBrief(scenarioId) {
 // v1.274 (D.28 step 2): the briefing's roster, where a crew kid can be benched or brought back
 function renderBriefRoster(scenarioId) {
   const el = document.getElementById('briefRoster');
-  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true });
+  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true, lineup: true });   // v1.298 (D.54): as a lineup
+  el.closest('.brief-card').classList.add('lineup');
+  drawBriefingLineup(el);
   el.querySelectorAll('[data-bench],[data-unbench]').forEach(b => b.addEventListener('click', e => {
     e.stopPropagation();
     if (b.dataset.bench) crewBench.add(b.dataset.bench); else crewBench.delete(b.dataset.unbench);

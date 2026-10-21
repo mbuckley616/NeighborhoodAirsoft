@@ -12495,3 +12495,30 @@ said a friend now wanted in. His pick in decisions was A: a "New teammate!" card
 - These suites pass: `crew-roster`, `notebook`, `result-stats`, `result-text`, `smoke`, `crew`, `crew-field`, `gamepad-screens`.
 ### Still open
 - Whether three lines and a still figure make enough of an event of it is for a playtest. The kid does not move.
+
+## v1.298 — The briefing lines both sides up as 3D kids
+Backlog D.54 (Michael, 21 Oct): "show each player lined up / posing with their weapons" before a match, not only
+names. His pick in decisions was A: the briefing card shows both sides as 3D kids.
+- The map's briefing (the card with Bench / Bring and START) now shows a lineup. Your side is on the left, you first,
+  then your allies and crew. Theirs is on the right. Each kid is drawn in his clothes holding the gun he will carry,
+  and your own kid wears your gear. Under each one are his name, his gun and his lives, and under each crew kid his
+  Bench button. A benched kid stays in the line, faded, with Bring under him.
+- A side of up to five stands in one row. A bigger side stands in two rows (the Big Game with a full crew puts your
+  six in two rows of three). The card widens for the lineup, up to 880 px.
+- Your crew kids wear your crew colour, as they do in the match. A VIP, Seth and the tutorial don't.
+- The kids are drawn with the result card's `drawKidPortrait` (v1.297), through the damage report's renderer. Each
+  drawing is kept, so a kid is built once per look and gun. Opening the Big Game cold took 1.3 s in headless
+  software GL. After that it opens in a few milliseconds, including after a Bench or Bring.
+- The loading card with BEGIN keeps its list beside the field map, since there is no room for a lineup there. Option
+  B (a screen of its own) was not chosen.
+### Verified
+- `tests/notebook.test.mjs`, new checks on the Big Game with all five in your crew. You and your five are left of
+  their five, and every kid is drawn: 2,856–4,463 of his pixels on a 102 × 117 canvas. Yours stand in two rows of
+  three, with Bench under each crew kid and not under you. Theirs stand in one row. All 38 lines of text sit on the
+  rules (worst 2.5 px off).
+- `tests/crew-field.test.mjs` passes unchanged: its Bench and Bring clicks on the briefing still bench Nick and bring
+  him back.
+- These suites pass: `notebook`, `crew-field`, `smoke`, `vip`, `ctf`, `rival`, `last-saturday`, `pickup-kids`, `gamepad-screens`.
+### Still open
+- Whether 68 px kids read well enough on a real screen, and whether the gun and lives lines are worth their room
+  under each kid, is for a look in play. The kids stand still.
