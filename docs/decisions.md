@@ -51,6 +51,11 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.50 step 2: the 16-gun balance table, and what to change (builder, 2026-10-21, backlog D.50)**
+  The table and options are in the builder's entry on auto/build (A change the Tick-Tock, the Ghost Mini and the
+  Bucket Gun; B prices only; C the Tick-Tock only; D leave them).
+  Michael: **A) Change the three: Tick-Tock accurate up close only (about 28 m reach), Ghost Mini 10 → 6 BBs a second, Bucket Gun $110 → $65** (control room). (2026-10-21)
+
 - **Notebook-paper screens: how far does the paper go? (deep-work session, 2026-10-20, fable d46-notebook-ui)**
   Every screen today is a dark glass panel with orange buttons, typed in Courier and Georgia. The notebook look turns a
   screen into a page torn out of a school notebook: cream paper, blue ruled lines, a red margin, three-ring holes, a
