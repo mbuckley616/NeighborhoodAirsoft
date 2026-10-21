@@ -12537,3 +12537,19 @@ hero house in three places.
   `parsecheck` and `smoke` pass.
 ### Still open
 - Nothing for a playtest.
+
+## v1.300 — The Riverside Market sign reads in full
+Backlog D.55 step 2, the reference-picture finding from 16 Oct: the lot's store sign read "IVERSIDE MARKE". The name
+was drawn at 54 px Georgia on a 512 px canvas, and at that size it is 557 px wide in headless Chromium.
+- A new `fitSignText` draws a sign's name at the size asked, or smaller in 2 px steps until it fits inside the canvas
+  with 20 px clear each side. The lot's sign now draws at 44 px.
+- The other name signs on buildings go through it too. "WILLOW BEND COUNTRY CLUB" at 34 px was also wider than its
+  512 px (538) and now draws at 28 px. The store's inside sign and the school's sign already fitted, and they come
+  out at 44 and 40 px.
+- How wide a name draws depends on the player's fonts: where Georgia is installed it may stay larger. It fits either way.
+### Verified
+- `tests/market-lot.test.mjs`, a new check on the lot's first match. The store sign's name has 30 px clear on the
+  left of its 512 px canvas and 29 px on the right.
+- These suites pass: `market-lot`, `grocery-store`, `country-club`, `high-school`, `smoke`.
+### Still open
+- Nothing for a playtest beyond a look at the store front.
