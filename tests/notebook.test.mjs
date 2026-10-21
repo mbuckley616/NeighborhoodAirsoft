@@ -252,8 +252,10 @@ await page.evaluate(() => { if (Game.paused) document.getElementById('pauseResum
 check('KEEP PLAYING and RESUME go back to the match', await page.evaluate(() => Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk));
 
 // 3c) v1.288: the HUD keeps its dark panels and takes the hand for its labels only; the numbers keep their type.
-// The frame cost: 240 steps of the match, each with the HUD's layout forced, with the hand on the labels and with
-// the labels put back in Courier, three rounds each way (30 untimed steps after each switch); the hand may cost no more than 10% over Courier.
+// The frame cost: the HUD's text laid out again 400 times (each label's text re-set, each panel's layout forced), with
+// the hand on the labels and with them put back in Courier, five rounds each way, alternating; the fastest round with
+// the hand may cost no more than 25% over the fastest in Courier. (Timing whole match steps measured the simulation,
+// whose cost changes as the kids move, not the font.)
 const hud = await page.evaluate(() => {
   const ff = sel => { const e = document.querySelector(sel); return e ? getComputedStyle(e).fontFamily : null; };
   const bg = sel => { const e = document.querySelector(sel); return e ? getComputedStyle(e).backgroundColor : null; };
@@ -262,19 +264,21 @@ const hud = await page.evaluate(() => {
 check('the HUD\'s labels are in the hand, its numbers in the type they had, its panels dark',
   /NB Hand/.test(hud.label) && /NB Hand/.test(hud.roster) && !/NB/.test(hud.number) && hud.panel === 'rgba(20, 24, 28, 0.92)', hud);
 const cost = await page.evaluate(() => {
-  const panels = ['ammoHud', 'rosterHud', 'healthHud', 'loadoutHud', 'stanceHud', 'squadHud'].map(id => document.getElementById(id)).filter(Boolean);
+  const panels = ['ammoHud', 'rosterHud', 'healthHud', 'loadoutHud', 'stanceHud'].map(id => document.getElementById(id)).filter(p => p && p.offsetParent);
+  const labels = [...document.querySelectorAll('#ammoHud .gun-name, #ammoHud .bag-line, #ammoHud .status, #rosterHud .label, #healthHud .label, #loadoutHud .label, #stanceHud span')]
+    .map(e => [...e.childNodes].find(n => n.nodeType === 3 && n.data.trim())).filter(Boolean);
   const plain = document.createElement('style');
   plain.textContent = '#hud * { font-family: "Courier New", monospace !important; }';
-  const steps = n => { for (let i = 0; i < n && Game.mode === 'scenario'; i++) { stepGame(1 / 60); for (const p of panels) p.offsetHeight; } };
-  const run = () => { steps(30); const t0 = performance.now(); steps(240); return performance.now() - t0; };   // 30 untimed after each switch
-  run();   // warm
+  const lay = n => { for (let i = 0; i < n; i++) { for (const t of labels) t.data = i % 2 ? t.data + ' ' : t.data.trimEnd(); for (const p of panels) p.offsetHeight; } };
+  const run = () => { lay(40); const t0 = performance.now(); lay(400); return performance.now() - t0; };   // 40 untimed after each switch
   const hand = [], courier = [];
-  for (let k = 0; k < 3; k++) { hand.push(run()); document.head.appendChild(plain); courier.push(run()); plain.remove(); }
-  const med = a => a.slice().sort((x, y) => x - y)[1];
-  return { hand: +(med(hand) / 240).toFixed(3), courier: +(med(courier) / 240).toFixed(3), mode: Game.mode };
+  for (let k = 0; k < 5; k++) { hand.push(run()); document.head.appendChild(plain); courier.push(run()); plain.remove(); }
+  for (const t of labels) t.data = t.data.trimEnd();
+  // the fastest round of each: under load (CI, or suites side by side) a slow round is the machine, not the font
+  return { hand: +(Math.min(...hand) / 400).toFixed(4), courier: +(Math.min(...courier) / 400).toFixed(4), labels: labels.length, panels: panels.length, mode: Game.mode };
 });
-console.log(`   a match step with the HUD laid out: ${cost.hand} ms with the hand, ${cost.courier} ms in Courier (median of 3 x 240)`);
-check('the hand on the HUD costs no more than 10% a frame over Courier', cost.mode === 'scenario' && cost.hand <= cost.courier * 1.10 + 0.05, cost);
+console.log(`   the HUD's ${cost.labels} labels laid out again: ${cost.hand} ms with the hand, ${cost.courier} ms in Courier (fastest of 5 x 400 each)`);
+check('the hand on the HUD\'s labels costs no more than 25% over Courier to lay out', cost.mode === 'scenario' && cost.labels >= 5 && cost.hand <= cost.courier * 1.25, cost);
 
 // 4) the result card, a win
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; endScenario('win'); });

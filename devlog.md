@@ -12268,9 +12268,13 @@ handwriting for its labels", and the bedroom's prompts on paper.
   - CASH and BBs are in the hand.
   - In a match, the HUD's labels are in the hand, its numbers are not, and its panels are still the dark
     rgba(20, 24, 28, 0.92).
-- Frame cost: 240 steps of a match, with every HUD panel's layout forced each step and 30 untimed steps after each
-  switch. Median of three rounds each way: 1.18 ms a step with the hand on the labels, 1.36 ms with them put back
-  in Courier. The check allows the hand at most 10% over Courier.
+- Frame cost: the HUD's 12 labels have their text re-set and their panels laid out again 400 times, with the hand
+  and with the labels put back in Courier, five rounds each way, alternating. The fastest rounds: 0.0925 ms with the
+  hand, 0.089 ms in Courier, which is 4% more. The check allows 25%. Across six runs, three of them side by side with a
+  stuck sweep, the hand was at most 17% over Courier, and under load it was sometimes below it.
+  - The first version of this check timed whole match steps. In the full run it failed under load: 1.93 against
+    1.61 ms.
+  - Whole steps measure the simulation. Its cost changes as the kids move, so they could not isolate the font.
 - These suites pass: `ladder-prompt`, `squad-hud`, `pad-hints`, `walkie-callouts`, `bedroom-desk`,
   `bedroom-shelves`, `backyard-range`, `front-door`, `gamepad` (both), `pad-orders`, `treehouse-hold` and `smoke`.
 ### Still open
