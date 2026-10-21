@@ -49,6 +49,57 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder's lean: C. A is a fix whatever you choose, and the table gives you numbers to judge "the best gun for the
   price" before any price moves.
 
+- **D.50 step 2: the 16-gun balance table, and what to change (builder, 2026-10-21, backlog D.50)**
+  Your C on the Tick-Tock: the taps are fixed (v1.292, no automatic fires faster tapped than held), and here is the
+  table before any price or gun moves. Measured headless on v1.292, every gun as sold with no accessories:
+  - BBs a second: as fast as the trigger allows. An automatic is held; a spring gun is cocked and fired in a loop.
+  - Off line at 15 m: the middle BB's distance from the aim point, from the hip.
+  - Reach: where a level shot from chest height reaches the grass.
+  - BBs per tag: aimed at the chest of a kid standing still at 10 and 20 m, 80 pulls each, seeded. It measures the
+    gun's own scatter only, so 1 means every BB lands; in a real fight he moves and you sway.
+  - Move speed: what the gun does to your walking speed.
+  | Gun | Price | Kind | Mag | BBs a second | Off line at 15 m | Reach | BBs per tag at 10 m | at 20 m | Move speed |
+  |---|---|---|---|---|---|---|---|---|---|
+  | Spring Pistol | $0 | semi | 1 | 1 | 0.56 m | 22 m | 1.1 | 20 | ×1.15 |
+  | Rattle Can | $25 | auto | 50 | 2 | 2.21 m | 14 m | 8.9 | — | ×1.1 |
+  | Clear Sprayer | $35 | auto | 120 | 6.17 | 1.46 m | 16 m | 3.5 | — | ×1.1 |
+  | Ghost Mini | $45 | auto | 80 | 10 | 0.25 m | 30 m | 1 | 1.3 | ×1.1 |
+  | Tick-Tock | $55 | auto | 60 | 2 | 0.12 m | 39 m | 1 | 1 | ×1 |
+  | Spring Shotgun | $60 | semi, 2–3 BBs | 40 | 1.83 | 0.50 m | 23 m | 1 | 8.2 | ×1 |
+  | Six-Shooter | $70 | semi | 6 | 1.5 | 0.49 m | 24 m | 1 | 10 | ×1.15 |
+  | Thunder Pump | $75 | semi, 4–5 BBs | 30 | 3.67 | 0.88 m | 20 m | 1.5 | 14.9 | ×1 |
+  | Spring Assault Rifle | $85 | semi | 25 | 1.17 | 0.16 m | 35 m | 1 | 1.1 | ×0.85 |
+  | Bolt Pistol | $95 | semi | 8 | 0.83 | 0.11 m | 39 m | 1 | 1 | ×1.1 |
+  | Bucket Gun | $110 | auto | 600 | 7.17 | 1.00 m | 17 m | 1.3 | 80 | ×0.95 |
+  | Spring Sniper Rifle | $120 | semi | 15 | 0.83 | 0.05 m | 58 m | 1 | 1 | ×0.75 |
+  | MAC-10 | $130 | auto | 50 | 18.33 | 0.29 m | 30 m | 1 | 1.7 | ×1.15 |
+  | UMP | $170 | auto | 100 | 10 | 0.14 m | 38 m | 1 | 1 | ×1.05 |
+  | MP5 | $180 | auto | 150 | 13.5 | 0.13 m | 40 m | 1 | 1 | ×1.05 |
+  | AK-47 | $240 | auto | 350 | 10 | 0.11 m | 44 m | 1 | 1 | ×0.85 |
+  What the table says:
+  - The **Tick-Tock** ($55) beats the Spring Assault Rifle ($85) and the Bolt Pistol ($95) in every column, and the
+    rifle slows you down as well. It has the most BBs a second of the three (2), the reach of the MP5 (39 m) and one
+    BB a tag at 20 m.
+  - The **Ghost Mini** ($45) fires 10 BBs a second, tags at 20 m almost as well as the MAC-10 ($130), and has twice
+    its mag. Its one fault is a jam in about one burst in five.
+  - The **Bucket Gun** ($110) is the worst value in the shop. It reaches 17 m, it takes 80 BBs a tag at 20 m, and
+    only its 600-BB hopper is better than the $35 Clear Sprayer.
+  - The rest climb with price: the spring guns trade rate for reach, and the four big automatics cost $130–240 for
+    18, 10, 13.5 and 10 BBs a second with the best reach.
+  - A) **Change the three:**
+    - Tick-Tock: accurate up close only. A slower BB (50 → 38 m/s) and a wider spread (0.14 → 0.30), for about 28 m
+      of reach and 0.3 m off line at 15 m. The rifle and the Bolt Pistol keep the long shots. The price stays.
+    - Ghost Mini: 10 → 6 BBs a second.
+    - Bucket Gun: $110 → $65.
+    
+    Each is measured again before it ships. *(recommended)*
+  - B) **Prices only:** the Tick-Tock $55 → $90, the Ghost Mini $45 → $80, the Bucket Gun $110 → $65. How the guns
+    shoot stays as it is.
+  - C) **The Tick-Tock only**, as in A.
+  - D) **Leave them**: the tap fix was enough.
+  Builder's lean: A. The Tick-Tock and the Ghost Mini are cheap guns by design, so fixing their faults keeps them
+  cheap and still makes the dearer guns worth buying. The Bucket Gun only needs a price that fits it.
+
 ## Answered
 
 - **Notebook-paper screens: how far does the paper go? (deep-work session, 2026-10-20, fable d46-notebook-ui)**
