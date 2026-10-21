@@ -12302,3 +12302,33 @@ The mirror (NEW GAME's look picker, and the bathroom's) shares the loadout's car
   five), `hats`, `shorts`, `sneakers`, `tops`, `smoke`, `harness` and `notebook`.
 ### Still open
 - The mirror is a long page and scrolls past the Shirt front row at 720 px. Its scroll does not snap to the rules.
+
+## v1.290 — Tagged, you walk yourself home
+Backlog D.48, Michael's B (20 Oct): "you walk yourself back, gun up, no firing, nothing tags you, an arrow points the
+way". In the matches where you come back (capture the flag, the VIP matches, the Pickup Game and the Last Saturday) a
+tag used to put you back at your start in one frame. Now you stay where you were tagged and walk home yourself:
+- The gun swings up to point at the sky. You can't aim, fire or swing the noodle, and you can't take a flag.
+- Nothing tags you, and no kid picks you as a target (`opposingCombatants` leaves you out), so nobody wastes BBs on
+  you on the way.
+- A panel at the top of the screen says BACK TO YOUR START with the distance, and an arrow turns to point at it.
+- Within 2 m of your start you are back: the respawn's 2 s grace starts there, and in capture the flag the 10 s hold
+  (v1.280) first. Lives refill at the tag (VIP and Flags) or stay spent (Pickup, Last Saturday), as before.
+- Online play keeps the jump home, because a guest follows the host's word on where you are.
+The respawn's grace and hold moved into `playerBackHome()`, and the walk is `startPlayerWalkHome()` and
+`playerWalkHomeStep()` in `stepGame`.
+### Verified
+- `tests/vip.test.mjs` walks it in Protect Ryan. Tagged 8.5 m from the start, you stay 8.5 m out. A second BB tags
+  nothing, the trigger fires nothing, ADS stays 0 and no kid has you as a target. The arrow reads ±3.14 rad with the
+  start behind you and 0 with it ahead. The gun is fully up after half a second. Facing home and holding W, you are
+  back in 2.83 s at 1.98 m, with 2.0 s of grace, the panel gone and the gun down. The next tag sends you walking again.
+- The suites that tagged you and read the teleport now walk you home first: `ctf` (you drop the flag and walk from
+  where you were), `ctf-hold`, `pickup-lives`, `last-saturday-lives` (its sprinting player turns and walks home before
+  sprinting at the bulb again) and `pickup-fernando` (its player walks home before charging again). Fernando landed 11
+  of 22 hits with the AK, no two lives inside 2 s.
+- These suites pass: `vip`, `ctf`, `ctf-hold`, `ctf-clock`, `pickup-lives`, `pickup-clock`, `pickup-fernando`,
+  `last-saturday`, `last-saturday-lives`, `damage-report`, `result-stats`, `online` and `smoke`.
+### Still open
+- Whether the walk home feels like a fair price is for a playtest. From the far side of a big map it can be 40 m or
+  more, about 10 s.
+- The gun's raised pose (pitched up 66°, lifted 7 cm) wants a look on screen with each gun.
+- The grace itself is still 2 s, not ended by your shot: that is D.49, next.

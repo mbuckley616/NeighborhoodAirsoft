@@ -141,18 +141,47 @@ check('Protect Ryan: from up the hill (2 m+ above her, 20 m+ off) no line reache
 check('Protect Ryan: the court is laid out as before, with the barricade the one obstacle added', !bar.err && bar.extra.length === 1 && bar.gone.length === 0, bar);
 
 // --- the player's respawn, its grace, and the two endings (Bunratty)
+// v1.290 (backlog D.48, Michael: B): tagged, you are no longer put at your start in one frame. You walk yourself home,
+// gun up: no aim, no shot, nothing tags you, no kid picks you, and an arrow points to your start. Back within 2 m of it,
+// the 2 s grace starts.
 await g.scenario('bunratty_vip');
 const resp = await page.evaluate(() => {
-  const st = Game.scenario.playerStart;
-  Game.player.pos.x += 8; Game.player.pos.z += 3;
-  applyBBHit({}, Game.player);
-  const out = { mode: Game.mode, back: Math.hypot(Game.player.pos.x - st.pos.x, Game.player.pos.z - st.pos.z), hits: Game.player.hitsTaken, grace: Game.player._graceT, n: Game.scenario.playerRespawns };
-  applyBBHit({}, Game.player);    // inside the grace: nothing
-  out.inGrace = Game.player.hitsTaken;
+  const P = Game.player, st = Game.scenario.playerStart;
+  const back = () => +Math.hypot(P.pos.x - st.pos.x, P.pos.z - st.pos.z).toFixed(2);
+  const rot = () => +((document.getElementById('homeArrow').style.transform.match(/-?[\d.]+/) || [NaN])[0]);
+  P.pos.x += 8; P.pos.z += 3;
+  const was = back();
+  applyBBHit({}, P);
+  const out = { mode: Game.mode, was, back: back(), going: !!P._goingHome, hits: P.hitsTaken, grace: P._graceT, n: Game.scenario.playerRespawns };
+  applyBBHit({}, P);    // walking home: nothing
+  out.whileWalking = P.hitsTaken;
+  Game.gun.cocked = true; Game.gun.ammo = Math.max(Game.gun.ammo, 3); Game.gun.fireCooldown = 0; Game.gun.jammed = false;
+  const ammo = Game.gun.ammo, shots = Game.scenario.stats.shots;
+  onLmbDown(); stepGame(1 / 60); onLmbUp();
+  out.fired = (ammo - Game.gun.ammo) + (Game.scenario.stats.shots - shots);
+  P.adsTarget = 1; stepGame(1 / 60); out.ads = P.adsTarget;
+  out.picked = Game.scenario.enemies.filter(e => opposingCombatants(e).includes(P)).length;
+  const home = Math.atan2(-(st.pos.x - P.pos.x), -(st.pos.z - P.pos.z));
+  P.yaw = home + Math.PI; stepGame(1 / 60); out.arrowAway = rot();
+  P.yaw = home; stepGame(1 / 60); out.arrowHome = rot();
+  out.hud = document.getElementById('homeHud').style.display; out.hudText = document.getElementById('homeHud').textContent;
+  // walk yourself home: face the start and hold W
+  Game.keys.KeyW = true;
+  let f = 0;
+  for (; f < 60 * 20 && P._goingHome && Game.mode === 'scenario'; f++) {
+    P.yaw = Math.atan2(-(st.pos.x - P.pos.x), -(st.pos.z - P.pos.z));
+    stepGame(1 / 60);
+    if (f === 30) out.gunUp = +(P._gunUp || 0).toFixed(2);
+  }
+  Game.keys.KeyW = false;
+  out.walk = { s: +(f / 60).toFixed(2), going: !!P._goingHome, back: back(), grace: +P._graceT.toFixed(2), hud: document.getElementById('homeHud').style.display, hits: P.hitsTaken };
   for (let i = 0; i < 125; i++) stepGame(1 / 60);
-  Game.player.pos.x += 5;
-  applyBBHit({}, Game.player);    // grace over: tagged out again, back again
-  out.after = { mode: Game.mode, n: Game.scenario.playerRespawns, back: Math.hypot(Game.player.pos.x - st.pos.x, Game.player.pos.z - st.pos.z) };
+  out.gunDown = +(P._gunUp || 0).toFixed(2);
+  P.pos.x += 5;
+  applyBBHit({}, P);    // grace over: tagged out again, walking home again
+  out.after = { mode: Game.mode, n: Game.scenario.playerRespawns, going: !!P._goingHome };
+  P.pos.copy(st.pos); stepGame(1 / 60);
+  out.after.backAgain = !P._goingHome && P._graceT > 1.9;
   // a non-VIP of theirs tagged: a life spent, the round goes on
   const owen = Game.scenario.enemies.find(e => e.name === 'Owen');
   applyBBHit({}, owen);
@@ -160,8 +189,16 @@ const resp = await page.evaluate(() => {
   return out;
 });
 console.log('   respawn:', JSON.stringify(resp));
-check('tagged out, you come back at your start with your lives back and 2 s of grace', resp.mode === 'scenario' && resp.back < 0.01 && resp.hits === 0 && resp.grace === 2 && resp.n === 1, resp);
-check('inside the grace a hit does nothing; after it, the next tag sends you back again', resp.inGrace === 0 && resp.after.mode === 'scenario' && resp.after.n === 2 && resp.after.back < 0.01, resp);
+check('tagged out, you stay where you were, lives back, walking home (no jump to the start)', resp.mode === 'scenario' && resp.was > 5
+  && Math.abs(resp.back - resp.was) < 0.01 && resp.going && resp.hits === 0 && resp.n === 1, resp);
+check('walking home: a BB does not tag you, the trigger fires nothing, you cannot aim, no kid picks you',
+  resp.whileWalking === 0 && resp.fired === 0 && resp.ads === 0 && resp.picked === 0, resp);
+check('walking home: the arrow points to your start (behind you: turned round; ahead: straight up)',
+  Math.abs(Math.abs(resp.arrowAway) - Math.PI) < 0.05 && Math.abs(resp.arrowHome) < 0.05 && resp.hud === 'block' && /BACK TO YOUR START · \d+ m/.test(resp.hudText), resp);
+check('walking home: the gun points at the sky', resp.gunUp === 1, resp.gunUp);
+check('you steer yourself home; within 2 m of it the 2 s grace starts and the arrow goes', !resp.walk.going && resp.walk.back <= 2
+  && resp.walk.s < 10 && resp.walk.grace > 1.9 && resp.walk.hud === 'none' && resp.gunDown === 0, resp.walk);
+check('after the grace the next tag sends you walking home again', resp.after.mode === 'scenario' && resp.after.n === 2 && resp.after.going && resp.after.backAgain, resp.after);
 check('a tagged kid who is not a VIP spends a life and the round goes on', resp.owen === 98 && resp.modeAfterOwen === 'scenario', resp);
 const ending = async (who, fresh = true) => {
   if (fresh) await g.scenario('bunratty_vip');   // the win goes on from the respawn checks' entry

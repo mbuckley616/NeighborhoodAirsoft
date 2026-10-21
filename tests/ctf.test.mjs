@@ -74,7 +74,8 @@ const rules = await page.evaluate(() => {
   P.pos.set(0, 0, 3);
   applyBBHit({ team: 'enemy', canDamage: true }, P);
   out.drop = { dropped: theirs.dropped && !theirs.carrier, at: [+theirs.pos.x.toFixed(1), +theirs.pos.z.toFixed(1)],
-    youAt: [+P.pos.x.toFixed(1), +P.pos.z.toFixed(1)], respawns: Game.scenario.playerRespawns, mode: Game.mode };
+    youAt: [+P.pos.x.toFixed(1), +P.pos.z.toFixed(1)], respawns: Game.scenario.playerRespawns, mode: Game.mode, going: !!P._goingHome };
+  P.pos.copy(Game.scenario.playerStart.pos); playerWalkHomeStep(0);   // v1.290 (D.48): you walk home (vip.test walks it)
   step(); out.drop.hud = hud();
   // one of theirs touching it sends it home
   const mason = Game.scenario.enemies.find(e => e.name === 'Mason');
@@ -97,8 +98,8 @@ console.log('   rules:', JSON.stringify(rules));
 check('walking onto their flag picks it up, and the HUD says to bring it home', rules.take.carrier && /BRING IT HOME/.test(rules.take.hud.label) && rules.take.hud.shown === 'block', rules.take);
 check('the carried flag rides on your back', Math.hypot(rules.carried.flagAt[0] - 5, rules.carried.flagAt[1]) < 1 && rules.carried.up > 0.2, rules.carried);
 check('carried to your base it scores 1-0 and goes back to theirs', rules.score.score.ours === 1 && rules.score.score.theirs === 0 && rules.score.back && rules.score.caps === 1 && /1\s*–\s*0/.test(rules.score.hud.value), rules.score);
-check('tagged carrying it, you drop it where you were and come back at your start',
-  rules.drop.dropped && Math.hypot(rules.drop.at[0], rules.drop.at[1] - 3) < 0.8 && Math.abs(rules.drop.youAt[0] - 34.5) < 0.1 && rules.drop.respawns === 1 && rules.drop.mode === 'scenario', rules.drop);
+check('tagged carrying it, you drop it where you were and walk home from there',
+  rules.drop.dropped && Math.hypot(rules.drop.at[0], rules.drop.at[1] - 3) < 0.8 && rules.drop.going && Math.hypot(rules.drop.youAt[0], rules.drop.youAt[1] - 3) < 0.1 && rules.drop.respawns === 1 && rules.drop.mode === 'scenario', rules.drop);
 check('a kid of their side touching it sends it home', rules.returned.home && rules.returned.log && rules.returned.log.ev === 'return', rules.returned);
 check('Mason taking ours shows on the HUD, in red', rules.theyTake.carrier && /MASON HAS OUR FLAG/.test(rules.theyTake.hud.label) && rules.theyTake.urgent, rules.theyTake);
 check('tagged, he drops it where he was', rules.theyDrop.dropped && Math.hypot(rules.theyDrop.at[0] - 10, rules.theyDrop.at[1] - 20) < 0.8 && rules.theyDrop.masonState === 'retreating', rules.theyDrop);

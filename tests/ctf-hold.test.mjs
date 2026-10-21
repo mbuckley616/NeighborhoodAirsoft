@@ -19,10 +19,13 @@ const t0 = await page.evaluate(() => {
   P.hitsTaken = P.maxHits - 1;
   P.pos.set(0, 0, 3);
   applyBBHit({ team: 'enemy', canDamage: true }, P);
-  return { hold: P._holdT, at: [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)], start: [+Game.scenario.playerStart.pos.x.toFixed(2), +Game.scenario.playerStart.pos.z.toFixed(2)],
+  // v1.290 (D.48): a tag sends you walking home (vip.test walks it); the hold starts as you reach your start
+  const walking = !!P._goingHome && !(P._holdT > 0);
+  P.pos.copy(Game.scenario.playerStart.pos); playerWalkHomeStep(0);
+  return { walking, hold: P._holdT, at: [+P.pos.x.toFixed(2), +P.pos.z.toFixed(2)], start: [+Game.scenario.playerStart.pos.x.toFixed(2), +Game.scenario.playerStart.pos.z.toFixed(2)],
     respawns: Game.scenario.playerRespawns, mode: Game.mode };
 });
-check('tagged, you come back at your start held for 10 s', t0.mode === 'scenario' && t0.respawns === 1 && t0.hold === 10
+check('tagged, you walk home and are held 10 s at your start', t0.walking && t0.mode === 'scenario' && t0.respawns === 1 && t0.hold === 10
   && t0.at[0] === t0.start[0] && t0.at[1] === t0.start[1], t0);
 await page.evaluate(() => { Game.keys.KeyW = true; Game.keys.KeyD = true; });
 await g.spin(120);

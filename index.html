@@ -697,6 +697,14 @@
     text-transform: uppercase;
   }
   #stanceHud .active { color: var(--ui-accent); font-weight: bold; }
+  /* v1.290 (D.48): tagged in a match where you come back, you walk yourself home; the arrow points to your start */
+  #homeHud {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 3px;
+    padding: 6px 14px; display: none; color: #ddd; text-align: center; white-space: nowrap;
+    font-family: var(--nb-hand); font-size: 15px; letter-spacing: 1px;
+  }
+  #homeHud .home-arrow { display: inline-block; font-size: 26px; line-height: 26px; color: var(--ui-accent); vertical-align: middle; margin-right: 8px; }
 
   /* === MENUS === */
   .menu-overlay {
@@ -2578,6 +2586,7 @@
     <span id="stanceStand">STAND</span> · <span id="stanceSprint">SPRINT</span> · <span id="stanceCrouch">CROUCH</span> · <span id="stanceSlide">SLIDE</span> · <span id="stanceAir">AIR</span> · <span id="stanceAds">ADS</span>
   </div>
   <div id="interactPrompt"></div>
+  <div id="homeHud"><span class="home-arrow" id="homeArrow">&#x2191;</span><span id="homeText">BACK TO YOUR START</span></div>  <!-- v1.290 (D.48) -->
   <!-- v1.57: tutorial coaching banner — only shown during the tutorial scenario.
        Top-center: a step label + instruction line + a small progress dot row. -->
   <div id="tutorialHud" style="display:none;">
@@ -2611,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.289</div>
+  <div class="version">v1.290</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4906,7 +4915,7 @@ function renderPoolNoodle(c) {
 }
 function startNoodleSwing() {
   if (Game.mode !== 'scenario' || Game.paused || Game.forfeitAsk || !noodleCarried()) return false;
-  if (Game.player._holdT > 0) return false;   // v1.280 (D.47)
+  if (Game.player._holdT > 0 || Game.player._goingHome) return false;   // v1.280 (D.47; v1.290: walking home)
   const N = Game.noodle;
   if (N.t >= 0 || N.cd > 0) return false;
   if (Game.held.using) { Game.held.using = false; Game.held.useProgress = 0; Game.held.useKind = null; Game.held._feedingActive = false; }
@@ -22873,6 +22882,7 @@ function enterBedroom() {
   document.getElementById('ammoHud').style.display = 'none';
   document.getElementById('healthHud').style.display = 'none';
   document.getElementById('stanceHud').style.display = 'none';
+  document.getElementById('homeHud').style.display = 'none';   // v1.290
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
@@ -24143,6 +24153,7 @@ function startScenario(built) {
   Game.scenario.playerRespawns = 0;
   Game.player._graceT = 0;
   Game.player._holdT = 0;   // v1.280
+  Game.player._goingHome = false; Game.player._gunUp = 0;   // v1.290
   Game.player.pitch = 0;
   Game.player.hitsTaken = 0;
   // v1.28h: base lives default to 1 (one hit and you're out) — was a flat 3.
@@ -24520,6 +24531,7 @@ function endScenario(outcome) {
   document.getElementById('ammoHud').style.display = 'none';
   document.getElementById('healthHud').style.display = 'none';
   document.getElementById('stanceHud').style.display = 'none';
+  document.getElementById('homeHud').style.display = 'none';   // v1.290
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
@@ -27884,7 +27896,7 @@ const UNJAM_TIME = 2.0;          // seconds to unjam (hold R)
 const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked during this time
 
 function doFire() {
-  if (Game.player._holdT > 0) return;   // v1.280 (D.47): no shot while held at your base
+  if (Game.player._holdT > 0 || Game.player._goingHome) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home)
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)
   playShot();
   Game.gun.ammo = Math.max(0, Game.gun.ammo - pelletsFired);
@@ -28242,6 +28254,9 @@ function updateHeldMesh(dt) {
     const hipPitch = hipRotX + (convPitch - hipRotX) * CONV;
     fpGun.rotation.y = hipYaw + (adsRotY - hipYaw) * a + (p.bobRotY || 0);
     fpGun.rotation.x = hipPitch + (adsRotX - hipPitch) * a + cockTilt + (fpGun.userData.kick || 0) * 0.25 + (p.bobRotX || 0);
+    // v1.290 (D.48): walking home after a tag, the gun points at the sky
+    const up = p._gunUp || 0;
+    if (up > 0) { fpGun.rotation.x += up * 1.15; fpGun.position.y += up * 0.07; fpGun.position.z += up * 0.05; }
     fpGun.rotation.z = (p.bobRotZ || 0);
 
     // v1.27b: aim the laser at screen-center now that the gun pose is final this
@@ -29479,7 +29494,7 @@ function shotWhileOut(c, bb) {
 // distinct player-hit vs enemy-hit effects exactly as before.
 function applyBBHit(bb, c) {
   if (c === Game.player) {
-    if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
+    if (Game.player._graceT > 0 || Game.player._goingHome) return true;   // v1.170: just back from a VIP-match respawn (v1.290: or walking home)
     // v1.263 (decisions "A trade on the last tag counts as a loss", Michael: A, 16 Oct): once the round is won (your
     // last tag landed and the win waits its 600 ms to show), a BB already in the air no longer tags you: a trade is yours.
     if (Game.scenario.wonRound === Game.roundSeq && Game.mode === 'scenario') return true;
@@ -29498,10 +29513,10 @@ function applyBBHit(bb, c) {
     // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
     if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
-      if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
+      if (Game.scenario.vip || Game.scenario.ctf) startPlayerWalkHome();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag; v1.290: on foot)
       else endScenario('lose');
     } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && (SCENARIOS[Game.scenario.active].pickup || SCENARIOS[Game.scenario.active].tagSendsHome)) {
-      respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
+      startPlayerWalkHome(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
       // (v1.251: and in The Last Saturday, `tagSendsHome`)
     }
   } else {
@@ -29536,10 +29551,59 @@ function respawnPlayerVip(keepHits) {
   if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
-  Game.player._graceT = VIP_GRACE;
-  if (Game.scenario.ctf) { Game.player._holdT = CTF_HOLD_SEC; Game.player._graceT = CTF_HOLD_SEC + VIP_GRACE; }   // v1.280 (D.47)
+  Game.player._goingHome = false;
+  playerBackHome();
   Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
   updateHealthHud();
+}
+// The grace (and capture the flag's hold) as you are back at your start.
+function playerBackHome() {
+  Game.player._graceT = VIP_GRACE;
+  if (Game.scenario.ctf) { Game.player._holdT = CTF_HOLD_SEC; Game.player._graceT = CTF_HOLD_SEC + VIP_GRACE; }   // v1.280 (D.47)
+}
+// v1.290 (backlog D.48, Michael: B, 20 Oct: "you walk yourself back, gun up, no firing, nothing tags you, an arrow points
+// the way"): a tag that sends you back to your start no longer puts you there in one frame. You walk yourself home with
+// the gun pointed at the sky: you can't aim, fire or swing, nothing tags you, kids don't pick you as a target and you
+// can't take a flag, and an arrow at the top of the screen points to your start. Within HOME_REACH of it you are back:
+// the respawn's grace (and capture the flag's hold) starts there. Online play keeps the jump home (its guest follows
+// the host's word on where you are).
+const HOME_REACH = 2.0;
+function startPlayerWalkHome(keepHits) {
+  const st = Game.scenario.playerStart;
+  if (!st || Net.active) { respawnPlayerVip(keepHits); return; }
+  if (!keepHits) Game.player.hitsTaken = 0;
+  Game.player.sliding = false;
+  Game.player.adsTarget = 0;
+  Game.player._graceT = 0;
+  Game.player._holdT = 0;
+  Game.player._goingHome = true;
+  Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
+  updateHealthHud();
+  playerWalkHomeStep(0);
+}
+function playerWalkHomeStep(dt) {
+  const P = Game.player, st = Game.scenario.playerStart;
+  P._gunUp = P._goingHome ? Math.min(1, (P._gunUp || 0) + dt * 4) : Math.max(0, (P._gunUp || 0) - dt * 4);
+  const hud = document.getElementById('homeHud');
+  if (!P._goingHome || !st) { if (hud && hud.style.display !== 'none') hud.style.display = 'none'; return; }
+  P.adsTarget = 0;
+  const dx = st.pos.x - P.pos.x, dz = st.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+  if (d <= HOME_REACH) {
+    P._goingHome = false;
+    playerBackHome();
+    if (hud) hud.style.display = 'none';
+    return;
+  }
+  if (!hud) return;
+  if (hud.style.display !== 'block') hud.style.display = 'block';
+  // forward is (-sin yaw, -cos yaw); a start to your right turns the arrow clockwise
+  let rel = Math.atan2(-dx, -dz) - P.yaw;
+  rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  const arrow = document.getElementById('homeArrow');
+  if (arrow) arrow.style.transform = `rotate(${(-rel).toFixed(2)}rad)`;
+  const txt = document.getElementById('homeText');
+  const line = `BACK TO YOUR START · ${Math.round(d)} m`;
+  if (txt && txt.textContent !== line) txt.textContent = line;
 }
 
 // v1.189 (backlog D.15; decisions "After Bellfield's four", Michael: A): CAPTURE THE FLAG. One flag a side, each on its
@@ -29564,7 +29628,7 @@ const CTF_HOLD_SEC = 10;
 function ctfSide(c) { return combatantTeam(c) === combatantTeam(Game.player) ? 'ours' : 'theirs'; }
 function ctfOther(side) { return side === 'ours' ? 'theirs' : 'ours'; }
 function ctfAlive(c) {
-  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits && !(Game.player._holdT > 0);   // v1.280: not while held at base
+  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits && !(Game.player._holdT > 0) && !Game.player._goingHome;   // v1.280: not while held at base (v1.290: or walking home)
   return c.health > 0 && c.state !== 'retreating';
 }
 function ctfCarrying(c) {
@@ -31487,7 +31551,7 @@ function opposingCombatants(e) {
   for (const c of listCombatants()) {
     if (c === e) continue;
     // alive?
-    if (c === Game.player) { if (Game.player.hitsTaken >= Game.player.maxHits) continue; }
+    if (c === Game.player) { if (Game.player.hitsTaken >= Game.player.maxHits || Game.player._goingHome) continue; }   // v1.290: not while walking home
     else { if (c.health <= 0 || c.state === 'retreating') continue; }
     if (combatantTeam(c) === myTeam) continue;
     out.push(c);
@@ -33774,6 +33838,7 @@ function stepGame(dt) {
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
     if (Game.player._holdT > 0) Game.player._holdT = Math.max(0, Game.player._holdT - dt);   // v1.280 (D.47)
+    playerWalkHomeStep(dt);   // v1.290 (D.48)
     updateSquad(dt);   // v1.248 (D.35)
     voiceStep();   // v1.256 (D.32): lines waiting on the voice cooldowns
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
