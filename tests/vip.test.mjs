@@ -174,18 +174,36 @@ const resp = await page.evaluate(() => {
     if (f === 30) out.gunUp = +(P._gunUp || 0).toFixed(2);
   }
   Game.keys.KeyW = false;
-  out.walk = { s: +(f / 60).toFixed(2), going: !!P._goingHome, back: back(), grace: +P._graceT.toFixed(2), hud: document.getElementById('homeHud').style.display, hits: P.hitsTaken };
-  for (let i = 0; i < 125; i++) stepGame(1 / 60);
+  out.walk = { s: +(f / 60).toFixed(2), going: !!P._goingHome, back: back(), grace: +P._graceT.toFixed(2), hits: P.hitsTaken,
+    hud: document.getElementById('homeHud').style.display, hudText: document.getElementById('homeHud').textContent, arrow: document.getElementById('homeArrow').style.display };
+  // v1.291 (D.49): the 3 s grace counts down, and your own shot ends it
+  applyBBHit({}, P); out.walk.inGrace = P.hitsTaken;
+  for (let i = 0; i < 30; i++) stepGame(1 / 60);
+  Game.gun.cocked = true; Game.gun.ammo = Math.max(Game.gun.ammo, 3); Game.gun.fireCooldown = 0; Game.gun.jammed = false;
+  const shots2 = Game.scenario.stats.shots;
+  onLmbDown(); stepGame(1 / 60); onLmbUp();
+  out.shot = { fired: Game.scenario.stats.shots - shots2, grace: P._graceT, hud: document.getElementById('homeHud').style.display };
+  for (let i = 0; i < 60; i++) stepGame(1 / 60);
   out.gunDown = +(P._gunUp || 0).toFixed(2);
   P.pos.x += 5;
   applyBBHit({}, P);    // grace over: tagged out again, walking home again
   out.after = { mode: Game.mode, n: Game.scenario.playerRespawns, going: !!P._goingHome };
   P.pos.copy(st.pos); stepGame(1 / 60);
-  out.after.backAgain = !P._goingHome && P._graceT > 1.9;
+  out.after.backAgain = !P._goingHome && P._graceT > 2.9;
   // a non-VIP of theirs tagged: a life spent, the round goes on
   const owen = Game.scenario.enemies.find(e => e.name === 'Owen');
   applyBBHit({}, owen);
   out.owen = owen.lives; out.modeAfterOwen = Game.mode;
+  // v1.291 (D.49): he walks back, and redeploys with the same 3 s grace; a BB does not tag him in it, his own shot ends it
+  P._graceT = 1e9;
+  let f2 = 0;
+  for (; f2 < 60 * 40 && owen.state === 'retreating' && Game.mode === 'scenario'; f2++) stepGame(1 / 60);
+  out.kid = { back: owen.state !== 'retreating', s: +(f2 / 60).toFixed(1), grace: +(owen._graceT || 0).toFixed(2) };
+  applyBBHit({ owner: 'player' }, owen);
+  out.kid.livesAfterBB = owen.lives; out.kid.state = owen.state;
+  spawnEnemyBB(owen, P.pos.clone());
+  out.kid.graceAfterShot = owen._graceT;
+  P._graceT = 0;
   return out;
 });
 console.log('   respawn:', JSON.stringify(resp));
@@ -196,10 +214,14 @@ check('walking home: a BB does not tag you, the trigger fires nothing, you canno
 check('walking home: the arrow points to your start (behind you: turned round; ahead: straight up)',
   Math.abs(Math.abs(resp.arrowAway) - Math.PI) < 0.05 && Math.abs(resp.arrowHome) < 0.05 && resp.hud === 'block' && /BACK TO YOUR START · \d+ m/.test(resp.hudText), resp);
 check('walking home: the gun points at the sky', resp.gunUp === 1, resp.gunUp);
-check('you steer yourself home; within 2 m of it the 2 s grace starts and the arrow goes', !resp.walk.going && resp.walk.back <= 2
-  && resp.walk.s < 10 && resp.walk.grace > 1.9 && resp.walk.hud === 'none' && resp.gunDown === 0, resp.walk);
+check('you steer yourself home; within 2 m of it the 3 s grace starts (v1.291), the arrow goes and the panel counts it', !resp.walk.going && resp.walk.back <= 2
+  && resp.walk.s < 10 && resp.walk.grace > 2.9 && resp.walk.hud === 'block' && resp.walk.arrow === 'none' && /NOTHING TAGS YOU · 3/.test(resp.walk.hudText)
+  && resp.walk.inGrace === 0 && resp.gunDown === 0, resp.walk);
+check('your own shot ends the grace, and its panel', resp.shot.fired === 1 && resp.shot.grace === 0 && resp.shot.hud === 'none', resp.shot);
 check('after the grace the next tag sends you walking home again', resp.after.mode === 'scenario' && resp.after.n === 2 && resp.after.going && resp.after.backAgain, resp.after);
 check('a tagged kid who is not a VIP spends a life and the round goes on', resp.owen === 98 && resp.modeAfterOwen === 'scenario', resp);
+check('he walks back and redeploys with 3 s in which a BB does not tag him; his own shot ends it (v1.291)', resp.kid.back && resp.kid.grace > 2.9
+  && resp.kid.livesAfterBB === 98 && resp.kid.state !== 'retreating' && resp.kid.graceAfterShot === 0, resp.kid);
 const ending = async (who, fresh = true) => {
   if (fresh) await g.scenario('bunratty_vip');   // the win goes on from the respawn checks' entry
   await page.evaluate((who) => { const e = Game.scenario.enemies.find(k => k.name === who); applyBBHit({}, e); }, who);

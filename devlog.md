@@ -12332,3 +12332,29 @@ The respawn's grace and hold moved into `playerBackHome()`, and the walk is `sta
   more, about 10 s.
 - The gun's raised pose (pitched up 66°, lifted 7 cm) wants a look on screen with each gun.
 - The grace itself is still 2 s, not ended by your shot: that is D.49, next.
+
+## v1.291 — Spawn grace: 3 s, ended by your own shot, kids too
+Backlog D.49, Michael's A (20 Oct): "3 s, ended early by your own shot; kids too". In the matches where you come back
+you had 2 s after a respawn in which nothing tagged you, and kids had none. A kid standing over your start could empty
+your lives as the 2 s ran out, and you could camp a kid's base the same way.
+- Your grace is 3 s (`VIP_GRACE`). In capture the flag it starts as the 10 s hold ends, as before.
+- Your own shot ends it at once (`doFire`), so it can't be used to attack.
+- The panel at the top that pointed you home now counts it down: NOTHING TAGS YOU · 3 · TILL YOU FIRE. It stays off
+  in the 0.8 s after a Pickup Game's clock runs out, which also sets a grace.
+- Kids get the same. In a match where you come back (`comesBackMatch`: VIP, capture the flag, the Pickup Game and the
+  Last Saturday), a kid who walks back to his base redeploys with 3 s in which a BB doesn't tag him. His own shot
+  ends it (`spawnEnemyBB`). In the other team matches a kid's respawn is as it was.
+- Online, your friend's kid gets the same 3 s as you (it shares `VIP_GRACE`).
+### Verified
+- `tests/vip.test.mjs`, Protect Ryan. Back home after the walk, you have 3.0 s of grace and the panel reads NOTHING
+  TAGS YOU · 3 with no arrow. A BB in it tags nothing. Half a second later one shot fires, and it takes the grace to 0
+  and the panel away. Owen, tagged, walks back in 2.9 s and redeploys with 3.0 s. A BB of yours in it leaves him on
+  98 lives, and his own shot takes it to 0.
+- `ctf-hold`: let go after the 10 s hold, the grace reads 3.0. `pickup-lives` and `last-saturday-lives`: 3 s of cover
+  after a tag, and the next tag lands 3.08 s later. In their real rounds no two lives went inside 2 s.
+- These suites pass: `vip`, `ctf`, `ctf-hold`, `ctf-clock`, `pickup-lives`, `pickup-clock`, `pickup-fernando`,
+  `last-saturday`, `last-saturday-lives`, `damage-report`, `online`, `briefing-lives` and `smoke`.
+### Still open
+- Kids still aim at you in your grace and at each other in theirs. The BBs do nothing, but a kid can stand over your
+  start and fire at you for the whole 3 s. Michael's C (keeping kids off a base in grace) is what would change that.
+- Whether 3 s reaches cover from every start is for a playtest.

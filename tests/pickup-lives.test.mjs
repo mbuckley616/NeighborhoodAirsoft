@@ -26,15 +26,15 @@ const ours0 = await page.evaluate(() => pickupLivesLeft().ours);
 const d1 = await away();
 const h1 = await hit();
 console.log('   first tag', d1.toFixed(1), 'm from the start:', JSON.stringify(h1), 'side lives before', ours0);
-check('a tag costs one life and puts you back at your start, with 2 s of cover', h1.mode === 'scenario' && h1.home && h1.max === 3 && h1.hits === 1
-  && h1.atStart && h1.grace === 2 && h1.ours === ours0 - 1 && h1.respawns === 1, h1);
+check('a tag costs one life and puts you back at your start, with 3 s of cover (v1.291)', h1.mode === 'scenario' && h1.home && h1.max === 3 && h1.hits === 1
+  && h1.atStart && h1.grace === 3 && h1.ours === ours0 - 1 && h1.respawns === 1, h1);
 const h2 = await hit(5);
 check('the rest of a shotgun blast lands in the cover: still one life gone', h2.hits === 1 && h2.mode === 'scenario', h2);
-await g.spin(125);   // 2.08 s: the cover is gone
+await g.spin(185);   // 3.08 s: the cover is gone (v1.291: 3 s)
 await away();
 const h3 = await hit();
 check('after the cover a second tag costs a second life, back at the start again', h3.hits === 2 && h3.atStart && h3.mode === 'scenario' && h3.ours === ours0 - 2, h3);
-await g.spin(125);
+await g.spin(185);
 const h4 = await hit();
 await g.spin(60);
 await page.waitForFunction(() => Game.mode === 'result', null, { timeout: 10000 }).catch(() => {});

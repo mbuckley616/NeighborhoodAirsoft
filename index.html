@@ -2620,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.290</div>
+  <div class="version">v1.291</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -27897,6 +27897,7 @@ const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked durin
 
 function doFire() {
   if (Game.player._holdT > 0 || Game.player._goingHome) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home)
+  Game.player._graceT = 0;   // v1.291 (D.49): your own shot ends the respawn's grace
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)
   playShot();
   Game.gun.ammo = Math.max(0, Game.gun.ammo - pelletsFired);
@@ -29140,6 +29141,7 @@ function spawnEnemyBB(enemy, targetPos) {
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
   if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
+  if (enemy._graceT > 0) enemy._graceT = 0;   // v1.291 (D.49): his own shot ends his grace
   // v1.183 (D.16 B): no shot while his body is still turning onto the line (it turns in about 0.2 s)
   if (targetPos && typeof enemy.yaw === 'number') {
     const want = Math.atan2(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z);
@@ -29521,6 +29523,7 @@ function applyBBHit(bb, c) {
     }
   } else {
     if (c.remote) return netTagRemote(bb, c);   // v1.230 (D.2): your friend, online
+    if (c._graceT > 0 && c.health > 0 && c.state !== 'retreating') return true;   // v1.291 (D.49): just redeployed at his base
     if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c, bb); return true; }   // v1.237 (D.33): out already (v1.261: where)
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, bb.owner === 'player' ? npcHitCategory(c) : 'npcHit');   // react before dying/retreating (v1.256: maybe an excuse)
@@ -29538,7 +29541,15 @@ function applyBBHit(bb, c) {
 
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
 // seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
-const VIP_GRACE = 2.0;
+// v1.291 (backlog D.49, Michael: A, 20 Oct: "3 s, ended early by your own shot; kids too"): was 2 s, kids had none. Your
+// own shot ends it at once (doFire), and so does a kid's (spawnEnemyBB). A kid who walks back to his base in a match
+// where you come back (comesBackMatch) gets the same 3 s as he redeploys, and nothing tags him in it. While yours runs,
+// the panel at the top says how long is left.
+const VIP_GRACE = 3.0;
+function comesBackMatch() {
+  const def = SCENARIOS[Game.scenario.active];
+  return !!(Game.scenario.vip || Game.scenario.ctf || (def && (def.pickup || def.tagSendsHome)));
+}
 // v1.221 (decisions "Pickup Game: what is a life for you?", Michael: A): `keepHits` for the Pickup Game, where each tag is
 // one of your lives gone (the HUD and the clock's count keep it) and the rest of a shotgun blast lands in the grace.
 function respawnPlayerVip(keepHits) {
@@ -29585,17 +29596,32 @@ function playerWalkHomeStep(dt) {
   const P = Game.player, st = Game.scenario.playerStart;
   P._gunUp = P._goingHome ? Math.min(1, (P._gunUp || 0) + dt * 4) : Math.max(0, (P._gunUp || 0) - dt * 4);
   const hud = document.getElementById('homeHud');
-  if (!P._goingHome || !st) { if (hud && hud.style.display !== 'none') hud.style.display = 'none'; return; }
+  if (!P._goingHome || !st) {
+    // v1.291 (D.49): back and let go, the grace counts down in the same panel
+    const left = P._graceT > 0 && !(P._holdT > 0) && P._graceT <= VIP_GRACE + 0.01 && Game.scenario.winCondition !== '__finished__' && comesBackMatch() ? Math.ceil(P._graceT) : 0;
+    if (hud) {
+      if (!left) { if (hud.style.display !== 'none') hud.style.display = 'none'; }
+      else {
+        const line = `NOTHING TAGS YOU · ${left} · TILL YOU FIRE`;
+        const txt = document.getElementById('homeText'), arrow = document.getElementById('homeArrow');
+        if (txt && txt.textContent !== line) txt.textContent = line;
+        if (arrow && arrow.style.display !== 'none') arrow.style.display = 'none';
+        if (hud.style.display !== 'block') hud.style.display = 'block';
+      }
+    }
+    return;
+  }
   P.adsTarget = 0;
   const dx = st.pos.x - P.pos.x, dz = st.pos.z - P.pos.z, d = Math.hypot(dx, dz);
   if (d <= HOME_REACH) {
     P._goingHome = false;
     playerBackHome();
-    if (hud) hud.style.display = 'none';
+    playerWalkHomeStep(0);   // v1.291: the grace's panel from this frame
     return;
   }
   if (!hud) return;
   if (hud.style.display !== 'block') hud.style.display = 'block';
+  { const arrow = document.getElementById('homeArrow'); if (arrow && arrow.style.display === 'none') arrow.style.display = ''; }
   // forward is (-sin yaw, -cos yaw); a start to your right turns the arrow clockwise
   let rel = Math.atan2(-dx, -dz) - P.yaw;
   rel = Math.atan2(Math.sin(rel), Math.cos(rel));
@@ -33372,6 +33398,7 @@ function updateEnemies(dt) {
           e.state = 'deploying';
           e.stateTime = 0;
           e._deployStuck = 0; // fresh deploy — clear any stale wedge counter
+          e._graceT = comesBackMatch() ? VIP_GRACE : 0;   // v1.291 (D.49)
           break;
         }
         // Retreat jog — a touch quicker than a normal advance (they're bailing).
@@ -33837,6 +33864,7 @@ function stepGame(dt) {
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
+    for (const k of Game.scenario.enemies) if (k._graceT > 0 && !k.remote) k._graceT = Math.max(0, k._graceT - dt);   // v1.291 (D.49)
     if (Game.player._holdT > 0) Game.player._holdT = Math.max(0, Game.player._holdT - dt);   // v1.280 (D.47)
     playerWalkHomeStep(dt);   // v1.290 (D.48)
     updateSquad(dt);   // v1.248 (D.35)

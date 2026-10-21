@@ -65,8 +65,8 @@ const t3 = await page.evaluate(() => {
   return { at9, ...rel, moved: from(), hud: document.getElementById('timerHud').textContent.replace(/\s+/g, ' ').trim() };
 });
 check('still held at 9 s', t3.at9 && t3.at9.hold > 0.5 && t3.at9.moved < 0.02, t3.at9);
-check('at 10 s you are let go, with the 2 s grace just begun, and walk off', t3.hold === 0 && Math.abs(t3.heldFor - 10) < 0.05
-  && t3.grace > 1.9 && t3.grace <= 2 && t3.moved0 < 0.02 && t3.moved > 0.3, t3);
+check('at 10 s you are let go, with the 3 s grace just begun (v1.291), and walk off', t3.hold === 0 && Math.abs(t3.heldFor - 10) < 0.05
+  && t3.grace > 2.9 && t3.grace <= 3 && t3.moved0 < 0.02 && t3.moved > 0.3, t3);
 check('and the flag box drops the countdown', !/BACK AT YOUR BASE/.test(t3.hud), t3.hud);
 const t4 = await page.evaluate(() => {
   Game.keys.KeyW = false; Game.keys.KeyD = false;
