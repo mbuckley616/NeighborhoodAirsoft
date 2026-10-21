@@ -39,7 +39,7 @@ const probe = (gt) => page.evaluate((gt) => {
   const step = () => stepGame(1 / 60);
   const mine = () => Game.scenario.bbs.filter(b => b.owner === 'player');
   const clear = () => { for (const b of Game.scenario.bbs) b.mesh && b.mesh.parent && b.mesh.parent.remove(b.mesh); Game.scenario.bbs.length = 0; };
-  const cock = () => { Game.gun.jammed = false; Game.gun.cocked = true; Game.gun.cockProgress = 0; Game.gun.ammo = Game.gun.maxAmmo; };
+  const cock = () => { Game.gun.jammed = false; Game.gun.cocked = true; Game.gun.cockProgress = 0; Game.gun.ammo = Game.gun.maxAmmo; Game.gun._sinceShot = null; };   // v1.292: a fresh trigger each time
   // BBs out in one held second, five tries, jams cleared between (and counted)
   let fired = 0, n = 0;
   withSeededRandom('clear-guns-rate:' + gt, () => {
@@ -130,5 +130,38 @@ check('Tick-Tock: the most accurate (the best share within 0.5 m) and the longes
   ['rattle', 'sprayer', 'ghost'].every(k => TT.within50 >= R[k].within50 && TT.carry > R[k].carry), Object.fromEntries(Object.keys(NEW).map(k => [k, [R[k].within50, R[k].carry]])));
 check('Rattle Can: all three faults: slow (under 3/s), curving (under 30% within 0.5 m) and jamming (15-35% of bursts)', RC.perSec < 3 && RC.within50 < 0.3 && RC.jamShare >= 0.15 && RC.jamShare <= 0.35, RC);
 check('every clear gun costs less than the Bucket Gun', Object.values(NEW).every(v => v[1] < 110));
+
+// v1.292 (backlog D.50, Michael: C): an automatic tapped fast fired a BB a click, whatever its rate: the Tick-Tock (2 a
+// second held) fired 18 BBs in 3 s at six clicks a second. Every automatic now: 3 s held, and 3 s tapped at six and at
+// twelve clicks a second (two frames down each), counted by trigger pulls that fired.
+const taps = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player._graceT = 1e9;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const out = {};
+  for (const [gt, spec] of Object.entries(GUN_SPECS)) {
+    if (spec.fireMode !== 'auto') continue;
+    Object.assign(Game.gun, { type: gt, fireMode: 'auto', cyclicRPM: spec.cyclicRPM, maxAmmo: 9999, ammo: 9999, jammed: false, cocked: true, _jamIn: 0, _sinceShot: null });
+    const S = Game.scenario.stats, run = (every) => {
+      Game.gun._sinceShot = null; Game.gun.ammo = 9999; Game.gun.jammed = false; Game.gun.cocked = true;
+      const a = S.shots;
+      for (let f = 0; f < 180; f++) {
+        if (every ? f % every === 0 : f === 0) { Game.mouseLMB = true; onLmbDown(); }
+        stepGame(1 / 60); Game.gun._jamIn = 0; Game.gun.jammed = false;
+        if (every && f % every === 1) { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); }
+      }
+      Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp();
+      for (let f = 0; f < 60; f++) stepGame(1 / 60);
+      Game.scenario.bbs.length = 0;
+      return S.shots - a;
+    };
+    out[gt] = { rpm: spec.cyclicRPM, held: run(0), six: run(10), twelve: run(5) };
+  }
+  Game.player._graceT = 0;
+  return out;
+});
+console.log('   3 s held / tapped 6 a second / tapped 12 a second:', JSON.stringify(taps));
+check('Tick-Tock: tapped six or twelve times a second it fires no more than held (6-7 in 3 s; 18 at six taps before v1.292)',
+  taps.ticktock && taps.ticktock.six <= taps.ticktock.held && taps.ticktock.twelve <= taps.ticktock.held && taps.ticktock.held <= 7, taps.ticktock);
+check('no automatic fires faster tapped than held', Object.values(taps).every(t => t.six <= t.held && t.twelve <= t.held), taps);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

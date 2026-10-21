@@ -12358,3 +12358,29 @@ your lives as the 2 s ran out, and you could camp a kid's base the same way.
 - Kids still aim at you in your grace and at each other in theirs. The BBs do nothing, but a kid can stand over your
   start and fire at you for the whole 3 s. Michael's C (keeping kids off a base in grace) is what would change that.
 - Whether 3 s reaches cover from every start is for a playtest.
+
+## v1.292 — An automatic fires no faster tapped than held
+Backlog D.50, Michael's C (20 Oct): "fix the taps, then the 16-gun table for his OK before any change". This is the
+fix. The table comes next, for his OK.
+Automatics skip the semi-auto lockout on a fresh click (v1.20), and each click fired at once, whatever the gun's own
+cycle. So the $55 Tick-Tock, which fires 2 BBs a second when held, fired a BB a click when tapped: 18 in 3 s at six
+clicks a second. Every automatic but the Rattle Can could beat its held rate that way once clicked fast enough.
+- A click inside the gun's cycle since its last shot now waits for it. The held stream picks up the time already gone
+  and fires when the cycle is done. A click let go before then fires nothing.
+- The time is counted as `_sinceShot` in `updateGun`, frame by frame the way the held stream counts its cycle, so a
+  tap at the edge of the cycle lands on the same frame a held shot would.
+  - Counted from the round's clock instead, taps at twelve a second still beat held on the fast guns: 36 against
+    30 on the AK, because that clock is one frame behind the stream.
+- A click that waits still makes the burst's jam roll, as a click that fires does (v1.250).
+### Verified
+- `tests/clear-guns.test.mjs` now fires every automatic for 3 s three ways, held and tapped at six and at twelve
+  clicks a second (two frames down each).
+  - held / six / twelve: Tick-Tock 6 / 6 / 6 (was 18 at six), Rattle Can 6 / 6 / 6, Clear Sprayer 19 / 18 / 18,
+    Ghost Mini 30 / 18 / 24, Bucket Gun 22 / 18 / 18, AK and UMP 30 / 18 / 24, MP5 41 / 18 / 36,
+    MAC-10 55 / 18 / 36.
+  - Its held-rate checks reset the gun between tries. A try just after the last one's stream would now rightly wait
+    out the cycle.
+- These suites pass: `clear-guns`, `backyard-guns`, `burst-pose`, `gun-ak`, `gun-mac10`, `gun-mp5`, `gun-ump`,
+  `gun-bucket`, `gamepad` and `smoke`.
+### Still open
+- The 16-gun balance table for Michael's OK (the rest of D.50's C). No price or rate changes until he has seen it.

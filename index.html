@@ -2620,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.291</div>
+  <div class="version">v1.292</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24200,6 +24200,7 @@ function startScenario(built) {
   Game.gun.cyclicRPM = spec.cyclicRPM || 0;
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
+  Game.gun._sinceShot = null;   // v1.292
   Game.gun.maxAmmo = getMaxAmmoForGun(Game.gun.type);
   // v1.60: snapshot the carried-gear weight penalty for this match (loadout is
   // fixed once the round starts, so compute once instead of every movement frame).
@@ -26940,6 +26941,22 @@ function onLmbDown() {
     // v1.20: auto guns bypass the fireCooldown gate — their rate is governed
     // by the cyclic timer in updateGun, not the semi-mode lockout.
     const cooldownOk = Game.gun.fireMode === 'auto' || Game.gun.fireCooldown <= 0;
+    // v1.292 (backlog D.50, Michael: C, 20 Oct): a fresh click on an automatic fired at once, whatever its cycle, so
+    // tapped the Tick-Tock (2 BBs a second held) fired a BB a click: 18 in 3 s at six clicks a second, against 6 held.
+    // A click inside the gun's own cycle since its last shot now waits for it: the held stream picks up the time already
+    // gone and fires when the cycle is done, and a click let go before then fires nothing. No automatic fires faster
+    // tapped than held.
+    if (Game.gun.cocked && Game.gun.ammo > 0 && Game.gun.fireMode === 'auto') {
+      const cycle = 60 / Math.max(1, Game.gun.cyclicRPM);
+      const since = Game.gun._sinceShot ?? 1e9;
+      if (since < cycle - 1e-6) {
+        Game.gun.autoFireTimer = since;
+        const bj = getGunSpec(Game.gun.type).burstJam || 0;   // v1.250: the burst's jam roll, as on a click that fires
+        Game.gun._jamIn = (bj && gameRandom() < bj) ? 1 + Math.floor(gameRandom() * 2) : 0;
+        Game.gun._bursts = (Game.gun._bursts || 0) + 1;
+        return;
+      }
+    }
     if (Game.gun.cocked && Game.gun.ammo > 0 && cooldownOk) {
       doFire();
       // v1.20: AUTO guns stay cocked between shots (bolt cycles internally) —
@@ -27898,6 +27915,7 @@ const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked durin
 function doFire() {
   if (Game.player._holdT > 0 || Game.player._goingHome) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home)
   Game.player._graceT = 0;   // v1.291 (D.49): your own shot ends the respawn's grace
+  Game.gun._sinceShot = 0;   // v1.292 (D.50): an automatic's next click waits out its cycle from here (counted in updateGun)
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)
   playShot();
   Game.gun.ammo = Math.max(0, Game.gun.ammo - pelletsFired);
@@ -27955,6 +27973,8 @@ function updateGun(dt) {
     }
   }
 
+  // v1.292 (D.50): time since the gun's last shot, counted as the held stream counts its cycle (see onLmbDown)
+  Game.gun._sinceShot = (Game.gun._sinceShot ?? 1e9) + dt;
   // === v1.20: AUTO-FIRE cycle ===
   // For auto-mode guns: while LMB is held, gun is cocked, ammo > 0, and not
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
