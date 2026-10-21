@@ -49,6 +49,36 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder's lean: C. A is a fix whatever you choose, and the table gives you numbers to judge "the best gun for the
   price" before any price moves.
 
+- **Online play: go on to teams, and push-to-talk with them? (local session, 2026-10-21, backlog D.2 and D.10)**
+  Step 1 has been on itch since 17 Oct (v1.230): PLAY ONLINE on the Pickup Game board, a 1v1 on Winnmark with a friend
+  by a four-letter room code. Steps 2 and 3 were left waiting for your look at it, but nobody asked you, so nothing has
+  moved since. Push-to-talk on the walkie (your A of 3 Oct) waits on online play too.
+  - A) **Step 2 next, as a card:** teams online, the board's kids filling the empty spots, and push-to-talk on the
+    walkie for the people playing. *(recommended: it is the step you planned, and it brings push-to-talk with it)*
+  - B) **Steps 2 and 3 together:** A, plus a list of open rooms and a Campaign / Online / Settings title. The room list
+    needs your own matchmaker (option B of 14 Oct), a small server someone has to run.
+  - C) **Not yet:** you want to try step 1 first. Reply with what to fix, or "played it", and the card follows.
+  - D) **Drop online play for now.**
+
+- **Views past the edge from your pictures: with each map's rebuild, or now? (local session, 2026-10-21, backlog D.25)**
+  Each guide in `docs/refs/` has a "Past the edge" section: what your pictures show beyond each map's bounds. You chose
+  real scale for every map (16 Oct), so each map is rebuilt on its own card, and the rebuild redoes its edges anyway.
+  Bunratty's and the Hollow's edges are in the card proposed today ("Bunratty and the Hollow at real scale").
+  - A) **With each map's rebuild:** no work thrown away; the other maps keep today's generic views until their card.
+    *(recommended)*
+  - B) **Now, on today's maps (one card for the other six maps):** you see the real views sooner; most of it is redone
+    when each map is rebuilt.
+
+- **Recorded voices with VoiceStudio: when? (local session, 2026-10-21, backlog D.9)**
+  On 2 Oct you chose more lines now with the browser's voices, and recorded voices later. The lines are done (v1.150:
+  every kid has his own, 544 in all). The recorded voices never got a card, so they will not come back unless you say.
+  Recording runs VoiceStudio on a computer, which a cloud session cannot do, so it would be done in a local session with
+  you; the game would then play the clips from inside the one HTML file, with the browser voice as the fallback.
+  - A) **Now:** a card writes every kid's script and the clip player; you and a local session record them.
+  - B) **After the map rebuilds:** parked until the last map card lands, and raised again then. *(recommended: the maps
+    are what you asked for most recently, and the recording needs an evening of yours)*
+  - C) **Drop it:** the browser voices stay.
+
 ## Answered
 
 - **D.50 step 2: the 16-gun balance table, and what to change (builder, 2026-10-21, backlog D.50)**
@@ -521,7 +551,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 - **The backyard shooting range (D.40): where is it and what is on it? (builder, 2026-10-15)**
   You asked for a range in the backyard to test guns and setups outside a match: coke cans, bottles, paper stood up
-  that BBs punch through, homemade bullseyes, every BB from your real bag, based on 235 Bunratty Court's backyard and
+  that BBs punch through, homemade bullseyes, every BB from your real bag, based on your old house's backyard on Bunratty Court and
   pool deck. Whatever you pick: no kids, no clock, no money won; cans knock off and can be stood back up, bottles
   break, paper keeps every hole, bullseyes show where each BB landed and its ring; E at the bench stands everything
   back up; the gun, gear and BBs are your loadout's. The cloud can't open Zillow, so a few screenshots of the yard
