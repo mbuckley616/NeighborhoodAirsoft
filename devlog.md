@@ -11943,3 +11943,362 @@ most of the round. That is the same fault v1.184 fixed for allies (Michael: C on
 ### Still open
 - An added cautious kid now walks out after about half a minute. Whether that feels like a kid coming to find you
   or like a wave arriving late is for a playtest of a crew match.
+
+## v1.279 — Pad button names in the hints, and the pad turns the workbench gun and the Loadout kid
+Michael answered D.38's leftover with B (18 Oct): the hints, then the drags. With a pad in hand only the range bench
+and the squad-order hint named pad buttons. Every other hint still named a key: the E prompt at every door and at the
+shop, mirror, bed and board; the treehouse ladder's W / S / Space; the tutorial's WASD, Shift, both mouse buttons and
+R; the ammo box (HOLD LMB TO RACK, CLICK TO FIRE, R TO FLIP, F TO FORFEIT), the jam and rack bars and the slot hint; and
+the pause and forfeit buttons (ESC, F, ENTER). On the workbench and Loadout screens the pad could click but not turn the
+gun or the kid.
+- While the pad is in use, the hints name its buttons (`padWords`, `PAD_STATIC_HINTS`). E is A. The ladder says
+  Stick ↑ climb, and on the ladder Stick ↑ up · Stick ↓ down · A let go. The tutorial says the Left Stick, Click L3,
+  LT, Pull RT and X. The ammo box says HOLD RT TO RACK, RT TO FIRE, X TO FLIP and BACK TO FORFEIT. Pause shows RESUME
+  START and FORFEIT BACK, and the forfeit question shows KEEP PLAYING B and FORFEIT A. Those are the buttons the pad
+  already used for each (v1.241–v1.242).
+- A real key press, a real mouse click, or the mouse moved more than 3 px puts every hint back on the keys, puts away
+  the pad's cursor, and lets go of a held stick and sprint. The next touch of the pad turns them back. The pad's own
+  clicks and key presses are synthetic events, so they never count as the keyboard.
+- The drags: on the workbench the right stick's sideways push turns the gun, its up and down tilt it while the cursor
+  is on the gun (elsewhere it still scrolls), and RT / LT zoom in and out, the same limits as the mouse's drag and
+  wheel. The viewport's hint says so. On the Loadout screen the sideways push turns the kid, on top of his slow swing.
+  Full stick is 2.4 rad/s. Parts were already mounted by clicking, so nothing else on the workbench needed the mouse.
+### Verified
+- `tests/pad-hints.test.mjs` (new). The bedroom's prompt reads "E Use the computer" with keys, "A Use the computer"
+  with the pad, and E again after a real mouse move or a key press. At the ladder foot it reads "W climb" with keys and
+  "Stick ↑ climb" with the pad, and climbing by the stick shows "Stick ↑ up · Stick ↓ down · A let go". With the pad
+  the ammo box reads MAG EMPTY · BACK TO FORFEIT and the jam bar HOLD X. Start pauses with RESUME START / FORFEIT
+  BACK, Back asks with KEEP PLAYING B / FORFEIT A, and a key press brings ESC, F, ENTER and HOLD R back. The tutorial's
+  five steps name the Left Stick and L3, LT, Pull RT and X, and R again after a mouse move. On the workbench, half a
+  second of full right stick turned the gun 1.20 rad and stopped its own turning. With the cursor on the gun the stick
+  tilted it 0.20 → 0.68 rad, and RT took the zoom 0.90 → 0.45 and LT back to 0.90. On the Loadout screen a second of
+  stick turned the kid 2.40 rad.
+- The suites that read these hints or drive the pad pass: backyard-range, bedroom-settings, calendar, crew,
+  forfeit-ask, front-door, gamepad, gamepad-screens, hats, ladder-prompt, loadout-gear, loadout-kid, pad-orders,
+  pause-menu, pickup, pool-noodle, shorts, sneakers, squad-hud, texts, tops, under-parts, walkie, workbench-labels.
+  The whole suite takes about five hours on one machine here, so the rest is left to CI's shards.
+### Still open
+- The HUD's slot numbers (1–4) are still keys. On a pad Y/RB/LB pick slots, and the d-pad does too in a match
+  without teammates. Michael's list didn't name them.
+- Whether "Stick ↑" and "Click L3 (press the left stick)" read well on a real pad is for Michael's hands.
+
+## v1.280 — Capture the flag: ten seconds at your base after a tag
+Michael's D.47 (18 Oct): "Capture the Flag needs a respawn timer, where enemies/teammates cannot start shooting again
+until they've been in their base for 10 seconds. The player should suffer the same penalty. You cannot move or shoot
+after you get back to your base for 10 seconds." Before, a kid tagged in Flags on Bellfield walked back to his base and
+redeployed the moment he got there (after at least a second out). You were put back at your start and could move and
+fire at once, with 2 s in which nothing tagged you.
+- A kid tagged in capture the flag still walks back to his base, hand up, as before. There he now waits
+  `CTF_HOLD_SEC` (10 s), still out: he doesn't fire, can't take or return a flag, and nothing tags him. Then he
+  redeploys as before. Allies and enemies alike.
+- You come back at your start held for 10 s. You can look round, but W/A/S/D and the stick don't move you, and Space,
+  the trigger and the pool noodle do nothing. You can't take or send home a flag, and nothing tags you. The flag box
+  counts it down: "BACK AT YOUR BASE · PLAY IN 7", or, when a flag is on the move, the news with "· YOU PLAY IN 7"
+  after it. The respawn's 2 s grace now starts as you are let go, not as you arrive. Without that, a kid at your base
+  could tag you on your first step.
+- Only capture the flag has the hold. The VIP matches, the Pickup Game and the Last Saturday keep their respawns as
+  they were (D.48 and D.49 ask about those).
+- `tests/ctf.test.mjs`'s played rounds wanted both flag runners to walk 150 m. With a 10 s wait per tag a round can
+  now end on two flags well inside its 150 s: 0–2 at 67 s with Andrew tagged four times and 102 m walked. The bar is
+  now a metre for each second played, which is still 150 m over a full round. Its HUD check (Mason has our flag, in
+  red) failed while you were held, because the countdown had replaced the flag news. That is why the countdown now
+  follows the news.
+### Verified
+- `tests/ctf-hold.test.mjs` (new), on Flags on Bellfield. Tagged, you came back at your start with a 10 s hold. Two
+  seconds of W and D held moved you 0.00 m, Space didn't jump, the trigger fired 0 BBs, a BB didn't tag you, and the
+  flag box read "BACK AT YOUR BASE · PLAY IN 8". At 9 s you were still held. At 10 s you were let go with 1.5–2 s of
+  grace left, walked off, and the trigger fired. Mason (theirs) reached his base 6.95 s after his tag and played
+  again at 16.95 s, a wait of 10.00 s. Evan (ours) arrived at 5.72 s and played again at 15.72 s. Neither fired, held
+  a flag or could be tagged while he waited. Protect Ryan's respawn has no hold.
+- `ctf` (with its two changes), `ctf-clock`, `bellfield`, `northcliff`, `crew-roster`, `crew-balance` and `squad-hud`
+  pass. In ctf's kids-only rounds (you parked out of the fight) Andrew walked 128–242 m with 5–8 tags, and Mason
+  267–488 m.
+### Still open
+- Whether 10 s at the base makes Flags on Bellfield drag, or lets one side run away with it, is for a playtest. With
+  you parked out of the fight, the kids-only rounds went 0–2 to them at 67 s and 126 s, and 0–1 at 150 s.
+- The 2 s grace after the hold is unchanged. How long it should be, and whether kids get one, is D.49 (in decisions).
+
+## v1.281 — The range's ammo box says the back door reloads
+The critic (19 Oct, Found in play): at the backyard range, once the mag is empty, the ammo box read "MAG EMPTY · F TO
+FORFEIT". There is nothing to forfeit at the range. F walks you inside (v1.257), and going in and back out by the back
+door is how the starter loadout refills the gun from the bag. At the range the box now reads "MAG EMPTY · BACK DOOR TO
+RELOAD". Every match keeps "F TO FORFEIT", and with a pad, "BACK TO FORFEIT" (v1.279).
+### Verified
+- `tests/backyard-range.test.mjs` has a new check: with the Spring Pistol's mag empty at the range, the box reads "MAG
+  EMPTY · BACK DOOR TO RELOAD". The suite passes. `pad-hints` passes, and it still reads BACK TO FORFEIT in a match
+  with the pad and F TO FORFEIT with the keys.
+### Still open
+- Nothing.
+
+## v1.282 — Nobody takes the VIP's cover
+The critic (20 Oct, Found in play): in Protect Ryan, Mitchell (theirs, anchor `bulb_car1`) took Priya's plank as his
+cover and stood inside her, centres 0.17 m apart. He was within 0.5 m of her for 36 s of a 60 s round in 1 of 3 rounds,
+and ended at her spot in 3 of 6 played rounds. A player saw two kids in one body, with a second kid in the VIP's cover.
+Reproduced here before the fix: in 2 of 4 rounds of 60 s Mitchell took her plank as his `homeCover` and stood
+within 0.5 m of her for 10.4 s and 27.5 s, hiding and peeking from it.
+- A kid choosing cover now skips any cover a living VIP of either side holds as hers (`vipHoldsCover`). That applies
+  in all three ways a kid picks a new cover: the dash out of incoming fire (`nearestShieldingCover`), the reposition
+  pick, and a bound (`pickBoundCover`). Only the VIPs' covers are kept free. Any other shared cover is still left to
+  v1.33's soft crowding penalty, so the matches without a VIP pick as before.
+### Verified
+- `tests/vip-cover.test.mjs` (new): six rounds of 60 s of Protect Ryan, you untouchable. Priya holds her plank in
+  every round, no kid takes it, and no kid is within 0.5 m of her for over 1 s. The nearest anyone came was 0.84–1.05
+  m. The same probe that found 2 of 4 rounds before found 0 of 4 after, nearest 1.79 m.
+- `vip`, `vip-spawn`, `bulb-sight` and `idle-ally` pass, and so does the stuck-kid sweep of both VIP matches
+  (`bunratty_vip`, `lot_vip_night`), three ways each, 90 s.
+### Still open
+- Mitchell now holds `bulb_car1` and the cover round it. Whether Priya's side still guards her well enough is for a
+  playtest; `vip`'s "no VIP falls in the first 8 s" and the trade checks pass.
+
+## v1.283 — Notebook paper, part 1: the briefing and the result card
+Michael asked (D.46, control room, 17 Oct) for every menu and card to look like pages a kid tore out of a school
+notebook and wrote on. He picked A on 20 Oct (d66-notebook-paper): every menu and card goes on paper, and the in-match
+HUD keeps its dark panels. He added that every line of text has to sit on the ruled lines, and that larger blocks like
+the result card's boxes get a filled background so no lines show through them. The work goes one group of screens per
+version, briefing first. This version does the briefing before BEGIN, the map's briefing popup and the result card.
+- One shared look, `.nb-paper`. It is cream paper with light blue rules every 26 px (`--nb-rule`), a red margin, three
+  binder holes and a ripped top edge. The edge is a CSS mask, so it holds on a card that scrolls. Writing is blue
+  ballpoint in Patrick Hand, headings are black marker in Permanent Marker, and the buttons (`.nb-btn`) are yellow
+  sticky notes outlined in pen, each tilted a little. Both fonts are embedded in index.html as base64 woff2, Latin only:
+  24 KB and 30 KB, about 72 KB of text. Patrick Hand is SIL OFL and Permanent Marker is Apache 2.0. Nothing is fetched.
+- How text stays on the rules. Inside a page every line box is one rule high, and every vertical margin, padding and
+  fixed height is a whole number of rules. A smaller label inside a line (CASH, OBJECTIVE, BEST) gets a shorter
+  line-height, so it can't make its line taller. Each rule is drawn 6 px above the bottom of its band, which is where
+  the hand's baseline falls. The big marker headings (the outcome, the match name on the popup) take two rules and are
+  nudged 2–3 px down onto the second one.
+- Filled blocks: the EARNED box, the four stat boxes, the damage report, the objective and the field map. Each is
+  filled with paper, outlined in pencil and a whole number of rules tall. The map is drawn 312 px tall (12 rules) with
+  `object-fit: contain`, so it stays square. The damage figure's frame is 6 rules.
+- A long roster (the Big Game's eleven rows) scrolls inside the page, and it scrolls a whole rule at a time (scroll
+  snap). The page's height is rounded down to a whole number of rules (CSS `round()`, with a plain fallback), so
+  scrolled to the end, the roster still sits on the rules. Before this the page ran off a 720 px screen.
+- Colours on the paper: ink 12.4 : 1, pencil 8.2 : 1, red and green pen 6.2 : 1, marker 16.8 : 1. The light text
+  colours the dark panels used (#9a8f7c and #ddd) are overridden on paper, including the damage list's inline grey.
+  The pad's cursor used to ring what it would click in yellow, which would vanish on a sticky note. On paper it rings
+  it in thick red dashes.
+- Nothing else changes: the same elements, ids and handlers. Only classes were added in the HTML (`nb-paper`,
+  `nb-btn`), and the HUD, the title, the map and the rest are untouched until their own versions.
+### Verified
+- `tests/notebook.test.mjs` (new; its helpers are in `tests/lib/notebook.mjs`). Both fonts load with nothing fetched
+  from the network. It walks the baseline of every line of text on each page (outside the filled blocks and the
+  buttons):
+  - the popup: 11 lines
+  - Bunratty's briefing: 19 lines
+  - the Big Game's briefing: 43 lines, both at the top and scrolled to the end of its roster
+  - the result card after a win: 11 lines
+  - the result card after a loss with a three-hit damage report: 7 lines
+  On every page the worst baseline is 2.5 px from a rule. Every filled block and button is a whole number of rules
+  tall. The lowest text contrast on any page is 6.16 : 1. Both briefings and the loss card fit on a 1280×720 screen.
+  ← Back, BEGIN, Play Again and ← BACK TO YOUR ROOM work on paper, with no page errors.
+- These suites pass: `smoke`, `briefing-lives`, `result-stats`, `result-text`, `damage-report`,
+  `damage-report-first`, `gamepad-screens` (the pad's cursor over the briefing and the result card), `pause-menu`,
+  `forfeit-ask`, `crew-roster` (Bench and Bring on the paper roster), `map-screen`, `wallet`, `deploy-progress`,
+  `pad-hints` and `harness`.
+### Still open
+- Whether Patrick Hand reads well enough at 15–17 px on a real screen, and whether the tilted sticky notes feel right,
+  is for Michael's eye. Screenshots are in tests/out/notebook-*.png when the suite runs.
+- Next: the title, PAUSED, the forfeit question and settings (v1.284), then the map, shop, workbench, loadout, the
+  Pickup Game board and the bedroom's prompts.
+
+## v1.284 — Notebook paper, part 2: the title, PAUSED, the forfeit question and settings
+The second group of screens for D.46 (decision A, 20 Oct), in the same `.nb-paper` look as v1.283.
+- The title. Its words now sit on a notebook page in the middle of the old dusk gradient: NEIGHBORHOOD AIRSOFT in
+  black marker over two rules each, SUMMER · 2003 in red pen, and ENTER MIKE'S ROOM / CONTINUE as yellow sticky
+  notes. SETTINGS is a plain paper note under them, and NEW GAME's "start over?" question is in red pen. The title's
+  elements are wrapped in one `<div class="title-page nb-paper">`. Every id is unchanged, and the version stays in the
+  screen's corner.
+- PAUSED and the forfeit question. Each is a small page with its heading in marker and its line in ballpoint. RESUME,
+  SETTINGS and KEEP PLAYING are sticky notes. Both FORFEIT buttons are paper notes outlined in red pen, so the one
+  that ends the match looks different from the ones that don't. The key hints (ESC, F, ENTER) are in the hand at
+  13 px.
+- Settings: one row per setting on one rule each. The sliders and the checkbox are in ink blue. Defaults is a paper
+  note and Done is a sticky note.
+- The marker headings at 28–30 px take two rules and are nudged 9 px down, so their baseline lands on the second rule.
+  The 44–46 px ones need 3 px.
+### Verified
+- `tests/notebook.test.mjs` now opens these screens as well. Baselines, worst distance from a rule:
+  - the title: 2 lines, 0.5 px
+  - settings: 13 lines, 1.5 px
+  - PAUSED: 2 lines, 1.5 px
+  - the forfeit question: 2 lines, 1.5 px
+  
+  Every sticky note is a whole number of rules tall, the title page fits a 720 px screen, and the lowest contrast is
+  still 6.16 : 1. SETTINGS → Done, Escape → PAUSED → FORFEIT → KEEP PLAYING → RESUME all work on paper, and the
+  v1.283 pages still pass.
+- These suites pass: `pause-menu`, `forfeit-ask`, `settings`, `bedroom-settings`, `gamepad-screens`, `smoke`,
+  `harness`, `autosave` (NEW GAME's question), `desk-start`, `pointer-lock`, `pad-hints`, `mirror` and `online`.
+### Still open
+- The title's paper on the dusk gradient is plain. A desk or a binder behind it would be a new picture, and that is
+  Michael's call.
+- Next: the map screen, the messages and calendar, the Pickup Game board, then the shop, workbench and loadout.
+
+## v1.285 — Notebook paper, part 3: messages, the bed, the calendar and the Pickup Game board
+The third group of screens for D.46 (decision A). One shared message card (`#modalScreen`) holds a lot of the game's
+screens between matches. It now goes on paper, so these screens are on paper:
+- the plain messages: Locked, Save not loaded, Your friend left
+- the bed's summer so far and its delete question
+- the summer calendar
+- the Pickup Game board and its PLAY ONLINE panel
+- What each looks like on paper:
+  - Messages: the title is in marker over two rules and the body is in ballpoint. OK and CLOSE are sticky notes.
+  - The bed's rows were written with inline spacing for the dark card (3 px padding, 10–16 px margins, 11–13 px
+    type). On paper that spacing is overridden to whole rules and the type to 15–17 px. DELETE SAVE and DELETE are
+    paper notes outlined in red, and KEEP is a sticky note (the three buttons now carry `nb-btn`).
+  - The calendar: each month is a filled block with one rule per week. This month's days are highlighted in yellow,
+    today is ringed in ink, and the last Saturday is double-ringed in red.
+  - The Pickup Game board: every choice is a word boxed in pen, 22 px on a 26 px rule. The picked one is highlighted
+    and ringed. A kid on the other side is struck through. PLAY is a sticky note. The online panel's room code is in red
+    marker.
+- The flip phone stays a phone. `openPhone` takes the paper off the card, and `closeModal` puts it back.
+### Verified
+- `tests/notebook.test.mjs` opens each of these on paper. Baselines, worst distance from a rule:
+  - a message: 2 lines, 1.5 px
+  - the summer so far: 20 lines, 2.5 px
+  - the delete question: 2 lines, 1.5 px
+  - the calendar: 122 lines, 2.5 px
+  - the board: 12 lines, 2.5 px (and again after picking Night)
+  - the online panel: 6 lines, 2.5 px
+  
+  Every note is a whole number of rules tall and each page fits on 720 px. KEEP goes back to the summer so far.
+  Night picks on the board. The phone opens as a phone, and the card is paper again after it.
+- These suites pass: `bed-summer`, `calendar`, `crew-roster`, `online`, `pickup` (all six), `rival`, `texts`,
+  `gamepad-screens`, `bedroom-bed`, `squad-hud`, `crew` (all five) and `smoke`.
+### Still open
+- The board is a tall page. With four-a-side and every row filled it reaches the bottom of a 720 px screen, and it
+  scrolls past that (that scroll does not snap to the rules).
+- Next: the map screen, then the shop, the workbench and the loadout.
+
+## v1.286 — Notebook paper, part 4: the map screen
+The fourth group of screens for D.46 (decision A): the map.
+- The whole map window is a notebook page now. THE NEIGHBORHOOD is in marker, CHOOSE YOUR BATTLEFIELD in red pen and
+  ← BACK TO ROOM is a sticky note.
+- The map drawing is unchanged, as if a printed map were taped onto the page: two strips of tape and a small shadow.
+  Its pin labels keep the print font and their own line height, so a label is the same size as before (with the
+  page's rule for a line-height they had grown to 32 px and two overlapped at 1024×640, which `map-screen` caught).
+- The zone's name and its "n of 16 won" are written on the rules. Each scenario card is a filled block with a red
+  line across the top: green when the match is won, inked round when it is NEXT, pencil grey when it is locked. Each
+  card's name is in marker. START is a small sticky note.
+- The cards are three rules tall, so 12 Winnmark cards show at 1280×720 (`map-screen` asks for at least 10).
+  `fitScenarioCards` checks a zone's cards after they are drawn. If any card's words need a fourth rule (a long name,
+  or a row of badges that wraps, as in Night Team 2v2), every card in that zone takes four. That keeps the rows even
+  and on the rules.
+- The list's height is rounded down to a whole number of rules (CSS `round()`), and it scrolls a rule at a time, so
+  the lines round the cards stay on the rules when it is scrolled to the end. The window itself still fills the
+  screen as before.
+### Verified
+- `tests/notebook.test.mjs` opens the map at 1280×720 and at 1600×900, every zone unlocked, and goes through all 8
+  zones. In each:
+  - every line is on a rule: 32 lines, worst 2.5 px
+  - every card and button is a whole number of rules tall
+  - no card's words spill out of it
+  - scrolled to the end, the list is still on the rules
+  
+  A card still opens its briefing and ← BACK TO ROOM goes home.
+- `map-screen` passes at all five sizes:
+  - 1280×720: 12 of 16 cards in view, the map fills 98% of its column
+  - 1366×768: 12 in view
+  - 1920×1080: all 16
+  - 1024×640: 6 in view, where every card needs four rules
+  - 800×1000: stacked
+  
+  No two pin labels overlap. `map-table`, `gamepad-screens`, `front-door`, `desk-start`, `smoke`, `last-saturday`,
+  `northcliff`, `market-lot`, `country-club`, `high-school`, `grocery-store` and `bellfield` pass.
+### Still open
+- Cards in view on Winnmark, counted the same way on main's build: 10 at 1280×720 on the dark map, 12 on paper;
+  6 at 1024×640 on both. Whether the smaller card type (11–14 px) reads well enough is for a playtest.
+- Next: the shop, the workbench and the loadout.
+
+## v1.287 — Notebook paper, part 5: the loadout, the workbench and the shop
+The fifth group of screens for D.46 (decision A).
+- The loadout and the workbench are notebook pages now: the title in marker, CLOSE a sticky note, the column titles in
+  red pen. Their lists (equipment slots, the gun picker, available items, worn gear; guns, accessory slots, the
+  locker) are written on the rules. Each row has no vertical padding or margin, and its outline is a box-shadow that
+  takes no room, so a row of one or two lines is one or two rules high.
+  - Slot numbers are red marker figures, not dark badges.
+  - The picked row (the workbench's gun, a selected slot) is highlighted and ringed in ink.
+  - The kid's picture is set 15 rules tall and the gun's viewport 14. The weight readout is a filled block.
+  - The weight tier keeps its four colours on the dark mirror card. On paper it uses darker pen colours of the same
+    four (`weightTier(...).ink`), because the light green read at 2.1 : 1 on the paper.
+  - The gun picker's grey spans got class names (`lo-pk-icon`, `lo-pk-sub`) so the paper can recolour them.
+- The shop keeps its browser window: the blue title bar, the close box and the address bar are still the computer.
+  airsoft.com's page inside the window is the paper.
+  - AIRSOFT.COM is in marker, and the balance is a sticky note in the corner.
+  - The tabs are marker tabs over an ink line, and the gun kinds are words boxed in pen.
+  - Each item is a row three rules high. Its picture is two rules tall, its name and lines are on the rules, and its
+    price is in green marker. BUY and DETAILS are small sticky notes.
+  - A gun's page has its photo in a filled block eight rules tall, with its caption on the last rule. The colour,
+    accessory and slot pickers follow the same look.
+- The test helper now finds a line's baseline from the text's own glyph box less the font's descent. It used to put
+  a probe element beside the text, but in a flex row (the gun picker's rows) that probe became a flex item of its
+  own. Every page measured before reads exactly as it did.
+### Verified
+- `tests/notebook.test.mjs` adds these pages. Baselines, worst distance from a rule:
+  - the loadout: 25 lines, 2.5 px
+  - the loadout with the gun picker open: 32 lines, 2.5 px
+  - the workbench: 41 lines, 2.5 px
+  - the shop's five tabs, at the top and scrolled to the end: 21–35 lines each, 2.5 px
+  - a gun's page: 19 lines, 2.5 px
+  - the page after a purchase: 19 lines, 2.5 px
+  
+  DETAILS, BUY, the close box and CLOSE work. The lowest contrast is 6.16 : 1.
+- These suites pass: `autosave`, `backyard-guns`, `clear-guns`, `gamepad-screens`, `hats`, `loadout-gear`,
+  `loadout-kid`, `pad-hints`, `pool-noodle`, `sell-back`, `shop-gun-kinds`, `shop-pics`, `shop-tabs`, `shorts`,
+  `sneakers`, `tops`, `under-parts`, `utility-belt`, `walkie` (both), `workbench-labels`, `weight` and `smoke`.
+### Still open
+- The shop is airsoft.com seen on Mike's computer, and a website on notebook paper is a stretch of the fiction. It is
+  done because decision A named the shop. If Michael would rather the website look like a 2003 website again, that
+  is one block of CSS and a class to take off.
+- The mirror (the new-game look picker) shares the loadout's card but is not on paper yet.
+
+## v1.288 — Notebook paper, part 6: the HUD's labels and the bedroom's prompts
+The last part of decision A: "The in-match HUD keeps its dark panels so it reads against any sky, and only takes the
+handwriting for its labels", and the bedroom's prompts on paper.
+- The HUD's labels are now in the hand at 13–14 px: the gun's name, Bag, Cash and READY under it, PLAYERS ON THE
+  FIELD, HITS TAKEN, LOADOUT (1-4) and its hint, the stance row, the squad order, the range's tally, the tutorial's
+  step and the bedroom's CASH and BBs. The panels stay dark, and the numbers (the ammo count, the clock, the cash)
+  keep the type they had.
+- The "E to …" prompt (the bedroom's, and the ladder's in a match) is a strip torn off a page. It is one rule of
+  ballpoint on cream, with its blue line under the words and ragged top and bottom edges, and its key on a sticky
+  note. The labels floating over the room's things are paper tags in ink. The one you can use now is a sticky note
+  ringed in ink.
+### Verified
+- `tests/notebook.test.mjs`:
+  - The prompt is paper in the hand, ink on paper at 12.4 : 1.
+  - The room's labels are paper tags in ink.
+  - CASH and BBs are in the hand.
+  - In a match, the HUD's labels are in the hand, its numbers are not, and its panels are still the dark
+    rgba(20, 24, 28, 0.92).
+- Frame cost: the HUD's 12 labels have their text re-set and their panels laid out again 400 times, with the hand
+  and with the labels put back in Courier, five rounds each way, alternating. The fastest rounds: 0.0925 ms with the
+  hand, 0.089 ms in Courier, which is 4% more. The check allows 25%. Across six runs, three of them side by side with a
+  stuck sweep, the hand was at most 17% over Courier, and under load it was sometimes below it.
+  - The first version of this check timed whole match steps. In the full run it failed under load: 1.93 against
+    1.61 ms.
+  - Whole steps measure the simulation. Its cost changes as the kids move, so they could not isolate the font.
+- These suites pass: `ladder-prompt`, `squad-hud`, `pad-hints`, `walkie-callouts`, `bedroom-desk`,
+  `bedroom-shelves`, `backyard-range`, `front-door`, `gamepad` (both), `pad-orders`, `treehouse-hold` and `smoke`.
+### Still open
+- Whether 13–14 px handwriting reads at a glance in a firefight is for a playtest. The HUD selector list in this
+  version's CSS block can put any label back in the print.
+
+## v1.289 — Notebook paper, part 7: the mirror
+The mirror (NEW GAME's look picker, and the bathroom's) shares the loadout's card and was the one menu still dark
+(v1.287's Still open). It is on paper now, which finishes decision A.
+- The card is a page: The Mirror in marker, DONE a sticky note, and the kid's picture 15 rules tall (292×390, the
+  same 3:4 as its 300×400 drawing).
+- The mirror's rows were written with inline styles for the dark card, so the paper overrides them:
+  - each row's name is on one rule in red pen
+  - its choices are words boxed in pen on the next rule (22 px on a 26 px rule), the picked one highlighted and
+    ringed
+  - the colour swatches are 22 px, the picked one ringed in ink
+  - YOUR CREW is in marker a rule below, and the crew-name box is white with a pen outline
+  
+  Nothing in how the mirror works changed. The only change in its code is the card's two classes.
+### Verified
+- `tests/notebook.test.mjs`: the mirror has 12 lines and the worst baseline is 2.5 px from a rule, before and after
+  picking a height. The picked height is saved, the picture is a whole number of rules, and DONE goes back to the
+  room.
+- These suites pass: `mirror`, `desk-start` (NEW GAME opens on the mirror), `autosave`, `crew-roster`, `crew` (all
+  five), `hats`, `shorts`, `sneakers`, `tops`, `smoke`, `harness` and `notebook`.
+### Still open
+- The mirror is a long page and scrolls past the Shirt front row at 720 px. Its scroll does not snap to the rules.

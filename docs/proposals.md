@@ -114,3 +114,26 @@ sniper dealt the start nearest you (`ffa_2` in Bunratty, 23.7 m) could make some
 the test should log the opening tag time over a few deals.
 **Recommendation.** Do it, unless Michael wants a free-for-all to be the same puzzle every time. One line in
 decisions would settle that.
+
+## 2026-10-21 — Kids keep a body's width apart (v1.282)
+**Why.** Two kids standing in one place has now been filed three times, each time fixed for one match: Mitchell
+inside Priya in Protect Ryan (20 Oct, fixed in v1.282 by moving his cover), and today Owen inside Mitchell one spot
+over. On 21 Oct I timed pairs of living kids with centres under 0.35 m apart. Friday Night Lights had Nathan and
+Malik in 8 of 8 rounds (6–8 s) and Nathan and Rebecca in 2 of 8 (17–20 s). Full-Auto Mayhem had Devon and Brooke for
+25 s of one round and Mitchell and Ryan for 14 s of another. On screen that's two kids merged into one body with two
+heads. In play, the front kid is a shield for the back one, and one BB can only find one of them. The kid fantasy
+is a yard of real kids crouched behind the same car, shoulder to shoulder, not inside each other. `teammateCrowding()`
+spreads kids over cover when they pick it, but nothing keeps two bodies apart once they're moving, so each match
+grows its own case.
+**What.** One rule for every kid: after `updateEnemies` moves them, any two living kids closer than about 0.6 m
+(two body radii) are each pushed half the gap apart, along the line between them. Each push is checked against the
+same obstacle test a kid's own step uses, so nobody is shoved into a wall or off a deck. The player is left out of it
+(the player's own collision is a separate question).
+**Cost.** About half of one builder session. It's a pair loop in `updateEnemies`: 20 kids is 190 pairs a frame, cheap
+next to the line-of-sight calls. Add a check to an existing suite (`stuck-sweep` or `vip`): no two living kids under
+0.4 m for more than 1 s, in Protect Ryan, Friday Night Lights and Full-Auto Mayhem.
+**Risk.** Medium-low. A kid nudged off his exact cover spot may peek from a slightly worse place. A ring start that
+packs eleven kids 0.7–0.8 m apart (v1.277's attack huddle) sits at the edge of the rule and may jostle for a moment.
+Two kids sharing a narrow doorway could push each other back and forth, so the push should be capped per frame.
+**Recommendation.** Do it, rather than a fourth one-match fix. It ends the class of bug, and Michael's playtests
+won't meet two-headed kids.

@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -1540,3 +1540,103 @@ the notebook-paper step 0 with its scope question. Nothing was addressed to me, 
 - v1.271, Eric's deploy corner in Price Check: not judged. He wasn't held in the 6 rounds.
 - v1.272, Priya's plank: judged headless. The lane can't reach her, and her sides and back reach her in 1.3 s from 6 m.
   Mitchell sharing her spot is filed. A held round still never ends.
+
+## 2026-10-21 — The crew's first time through: Full-Auto Mayhem, Friday Night Lights, Lights Out; Protect Ryan after v1.282, Flags on Bellfield after v1.280, the Hollow 3v3 with no crew (v1.282)
+
+Main is v1.282. The crew (v1.273–v1.278) and v1.279–v1.282 are merged since my last run, and `auto/build` isn't ahead
+of main. So I played the crew matches the way a first time through sets them up: `persist.crew` set to
+`crewFirstTime(id)` before each BEGIN. In all: 29 bot rounds and 13 probe rounds with the player untouchable. No page
+errors anywhere.
+
+The bot is new this run (the old one lived in `tests/tmp/`, which isn't kept). It turns to the nearest kid it can see
+from the camera within 45 m and fires: taps for semi guns, holds for auto, reloads on empty. *Push* walks at the
+nearest kid and stops inside 8 m of one it can see. *Stand* holds the start. Three browsers ran at once, so the worst
+single steps (214–550 ms) are load, not the game.
+
+**The first-timer path.** The title shows v1.282. NEW GAME → mirror → bedroom, and at spawn the prompt reads
+"E Go outside". Unchanged.
+
+**Full-Auto Mayhem (Night)** (`hollow_full_auto_mayhem`, the Hollow's finale). First time through it's Eric, Sean,
+Nick and Rebecca with you against Seth, Mitchell, Devon, Mason, Ryan and Brooke: 5 v 6, as v1.275 says. 7 rounds, all
+lost.
+- *Push*: out at 14.6, 15.5, 32.2 and 63.1 s, to Seth's UMP (35 m), Brooke's UMP (32 m) and Mitchell's AK (29, 24 m).
+- *Stand*: out at 45.9, 63.2 and 105.9 s, to Seth (13, 16 m) and Mitchell (47 m).
+- Kids trade lives: in the two untouchable probes, 19 and 54 eliminations in 90 s.
+- Nick takes Brooke's old start on the right, (3.2, 30.8), since she has crossed to Seth. He walked 0 m in all 9 rounds
+  and probes, firing 11–49 BBs a round. That's Nick as written (aggression 0.3, "won't budge"), so I'm not filing it.
+  But in the finale he's a turret, where Brooke used to be a pusher.
+- Two kids on one spot, under 0.35 m apart: Devon and Brooke for 25.1 s of one round, Mitchell and Ryan for 13.9 s of
+  another, Devon and Ryan for 6.5 s of a probe at (2.0, −0.8). See the proposal below.
+
+**Friday Night Lights** (`school_night_4v4`). First time through it's all five of the crew against Caleb, Nathan, Sophie,
+Grant, Jordan, Malik and Rebecca: 6 v 7.
+- *Push*: 3 rounds, out at 26.8, 16.2 and 46.0 s, to Jordan's pistol (10 m), Rebecca's AK (21 m) and Malik's shotgun
+  (17 m).
+- *Stand*: 3 rounds. Two reached the 120 s cap undecided. One was **won** at 49.7 s:
+  YOU GOT THEM, the crew wiping all seven, 4 eliminations each.
+- *Bug, filed*: **Nathan and Malik share one spot at their start.** From 3.8 s, for 6.3–8.4 s, at about (−3.5, −24.1),
+  their centres 0.01 m apart, in 8 of 8 rounds and probes. Later, Nathan and Rebecca stood on one spot at
+  (−16.3, −22.1) for 16.7 and 19.8 s, in 2 of 8. Caleb and Jordan overlap 1.3–2.2 s every round while deploying, at
+  (−10.5, −15.6).
+- Grant (sniper, defender) never moves, as built.
+
+**Lights Out** (`store_night_4v4`). With the crew it's 6 v 6, against Marcus, Jamie, Tyler, Devon, Brooke and Rebecca.
+- *Push*: 3 rounds, out at 9.2 and 10.2 s to Marcus's AK from 7–8 m, and at 6.3 s to Devon's sniper from 14 m.
+- *Stand*: one round reached the 120 s cap; the other two were out at 86.4 and 46.8 s, to Marcus.
+- Devon held the centre doorway (v1.276's worry) without moving in 6 of 6. In the long stand rounds he was eliminated 4
+  times each, so the five of ours who come in do catch him.
+- v1.275's aisle worry (Marcus held face to face with Alex) didn't show. The longest overlap was Marcus and Brooke,
+  4.7 s.
+
+**Protect Ryan after v1.282** (`bunratty_vip`, Eric and Sean with you).
+- Priya: 3 pushed rounds of 90 s, 3 untouchable probes of 90 s, and 2 more rounds for a picture. No kid came within
+  0.35 m of her in any of them. Mitchell now holds (31.7, 3.6), 1.8 m off her, so the v1.282 fix holds.
+- No round ended, and Priya was never out. That's the held-match finding of 7 Oct, unchanged.
+- *Bug, filed*: **Owen moves in on Mitchell.** At (31.7, 3.6) the two stood with centres 0.01–0.17 m apart for 27.2 and
+  55.8 s of 90 (probes, 2 of 3), and 45.3 s of a pushed round (1 of 3). Over all eight rounds it was 4. That's the
+  same body with two heads that v1.282 cured for Priya, moved to the kid beside her. I tried for a picture, but the
+  spot is under the bulb's trees and my camera landed above the canopy, so there's no screenshot.
+
+**Flags on Bellfield after v1.280** (`bellfield_ctf`, Eric, Sean, Nick and Alex with you against Mason, Christian,
+Fernando, Andrew and Evan), 4 pushed rounds.
+- The two 240 s rounds didn't reach the 5:00 clock.
+- Of the two run to the end, one was a DRAW 1–1 at the clock ("Time, and it's 1–1"). In the other they took it 0–2 at
+  256.2 s.
+- The pushing player was tagged 14–17 times a round. With v1.280's 10 s at the base after each tag, that's 140–170 s of
+  a 256–300 s round spent waiting at the flag, over half of it.
+That bears on v1.280's Still open ("whether 10 s at the base makes Flags drag"). For a player who keeps losing the
+fight, it does: he watches the match more than he plays it. The kids' side took 10–13 eliminations each and still kept
+the score close, so it doesn't let one side run away. Not filed. It's Michael's call, and D.48/D.49 are already in
+decisions.
+
+**The Hollow 3v3 with no crew** (`hollow_skirmish_3v3`, the "Not yet" or old-save path). Mitchell fills the empty place
+beside you, as v1.275 says. 3 pushed rounds, out at 81.7, 95.5 and 33.2 s, all to Sean's AK (34, 34, 10 m). Mitchell
+walked 0–5 m every round, but fired 186–445 BBs, so he fights from where he stands.
+
+One proposal follows from the three overlaps above: one rule that keeps every kid a body's width from every other,
+rather than a fix per match (docs/proposals.md).
+
+**What worked.** No page errors in 42 rounds. Every damage report named the gun and distance the bot's own log had. The
+CTF result screen read the score right in both finished rounds. The crew's sides matched v1.275's numbers in every
+match I entered (5 v 6, 6 v 7, 6 v 6).
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND, curl exit 56. I read no comments. Slack's last day: the producer's merges
+of the crew (v1.273–v1.278) and v1.279–v1.282, four answered decisions (notebook paper A, jog back B, spawn grace A,
+Tick-Tock C), and the notebook-paper Fable branch with red CI. Nothing was addressed to me, and nothing asked me to
+break a rule.
+
+### The devlog's Still open, from play (v1.273–v1.282)
+- v1.273, the asks and "Not yet": not played through the phone. The Not-yet path's match (Mitchell beside you in the
+  Hollow 3v3) is above.
+- v1.274, early matches easy with all five: not judged this run. I played first-time crews, not replays.
+- v1.275, whether the first time feels right: judged headless for the Hollow finale (5 v 6, 7 losses from 14.6 to
+  105.9 s) and Friday Night Lights (6 v 7, 1 win and 2 draws to the cap in 3 stands). Neither is a walkover. Feel needs
+  hands. Marcus blocking in aisles: not seen in Lights Out.
+- v1.276, the crowded front aisle and Devon at the doorway: Devon was caught 4 times a round in long rounds. Crowding
+  at the start: not seen in the store (overlaps were under 1.5 s there).
+- v1.277, the attack huddle's crush: not played. No attack match this run.
+- v1.278, added cautious kids walking out late: not judged separately.
+- v1.279, pad names: can't be judged headless.
+- v1.280, 10 s at base: judged headless as above. A losing player spends over half the round waiting.
+- v1.282, Priya's side: no kid in her cover in 8 rounds, but Mitchell and Owen now share a spot beside her (filed).

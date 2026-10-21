@@ -1,11 +1,11 @@
 // Run every *.test.mjs in this folder, one browser each, and report. `node tests/run.mjs saves` runs one.
 // v1.145: `node tests/run.mjs --shard 2/4` runs the second quarter (CI runs six in parallel jobs since v1.160, backlog B.4);
-// `--list` prints the files it would run and stops.
+// `--list` prints the files it would run and stops; `--changed BASE` runs only the suites a change since BASE can reach.
 import fs from 'fs'; import path from 'path'; import { spawnSync } from 'child_process'; import { fileURLToPath } from 'url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const flag = name => { const i = args.indexOf(name); return i < 0 ? null : (args.splice(i, 2)[1] ?? ''); };
-const shardArg = flag('--shard');
+const shardArg = flag('--shard'), changedArg = flag('--changed');
 const listOnly = args.includes('--list'); if (listOnly) args.splice(args.indexOf('--list'), 1);
 const only = args[0];
 
@@ -46,14 +46,14 @@ const WEIGHTS = {
   'layout-same.test.mjs': 122, 'loadout-gear.test.mjs': 48, 'loadout-kid.test.mjs': 23, 'lot-ffa-opening.test.mjs': 82,
   'lot-hollow-polish.test.mjs': 97, 'map-screen.test.mjs': 35, 'map-table.test.mjs': 8, 'market-lot.test.mjs': 164,
   'mirror.test.mjs': 49, 'music.test.mjs': 7, 'night-lights-allies.test.mjs': 95, 'night-lights-spawn.test.mjs': 76,
-  'night-prowl.test.mjs': 31, 'northcliff.test.mjs': 194, 'one-ending.test.mjs': 59, 'online.test.mjs': 117,
+  'night-prowl.test.mjs': 31, 'notebook.test.mjs': 240, 'northcliff.test.mjs': 194, 'one-ending.test.mjs': 59, 'online.test.mjs': 117,
   'opening-hold.test.mjs': 87, 'out-shot.test.mjs': 54, 'out-walk-off.test.mjs': 25, 'pad-orders.test.mjs': 30,
   'pause-menu.test.mjs': 49, 'pickup.test.mjs': 117, 'pickup-clock.test.mjs': 88, 'pickup-fernando.test.mjs': 173,
   'pickup-ffa.test.mjs': 111, 'pickup-kids.test.mjs': 46, 'pickup-lives.test.mjs': 64, 'pincer.test.mjs': 38,
   'pocket.test.mjs': 115, 'pointer-lock.test.mjs': 16, 'pool-noodle.test.mjs': 94, 'result-stats.test.mjs': 32,
   'result-text.test.mjs': 28, 'retreat-progress.test.mjs': 219, 'rival.test.mjs': 82, 'road-slide.test.mjs': 106,
   'school-kids.test.mjs': 53, 'sell-back.test.mjs': 51, 'seth-shotgun.test.mjs': 134, 'settings.test.mjs': 31,
-  'shard.test.mjs': 2, 'shop-gun-kinds.test.mjs': 45, 'shop-pics.test.mjs': 156, 'shop-tabs.test.mjs': 89,
+  'shard.test.mjs': 2, 'select.test.mjs': 2, 'shop-gun-kinds.test.mjs': 45, 'shop-pics.test.mjs': 156, 'shop-tabs.test.mjs': 89,
   'shorts.test.mjs': 53, 'smoke.test.mjs': 48, 'sneakers.test.mjs': 24, 'spawn-facing.test.mjs': 428,
   'squad-hud.test.mjs': 189, 'squad-orders.test.mjs': 206, 'stuck-sweep-1.test.mjs': 485,
   'stuck-sweep-10.test.mjs': 182, 'stuck-sweep-11.test.mjs': 269, 'stuck-sweep-12.test.mjs': 271,
@@ -80,6 +80,13 @@ function shardOf(files, k, n) {
 }
 
 let files = fs.readdirSync(here).filter(f => f.endsWith('.test.mjs') && (!only || f.startsWith(only))).sort();
+// 19 Oct 2026 (Michael in chat, the Old Gates' pipeline ported): `--changed BASE` (CI on a pull request) keeps only the suites
+// the change since BASE can reach, by tests/lib/select.mjs, before the shard split; main and a plain run take every suite.
+if (changedArg && !only) {
+  const { selectSuites } = await import('./lib/select.mjs'); const sel = selectSuites({ base: changedArg });
+  console.log(`selection: ${sel.mode}, ${sel.reason}`);
+  if (sel.mode !== 'full') { const keep = new Set(sel.suites.map(s => s + '.test.mjs')); files = files.filter(f => keep.has(f)); }
+}
 if (shardArg !== null) {
   const m = /^(\d+)\/(\d+)$/.exec(shardArg);
   if (!m || +m[1] < 1 || +m[1] > +m[2]) { console.error('usage: run.mjs [prefix] [--shard k/n] [--list]'); process.exit(2); }
