@@ -2399,81 +2399,8 @@
   #workbenchScreen .nb-paper .wb-locker { margin: var(--nb-rule) 0 0; }
   #workbenchScreen .nb-paper .wb-locker-item { padding-left: 6px; padding-right: 6px; font-size: 15px; }
   #workbenchScreen .nb-paper .wb-locker-empty { color: var(--nb-pencil); font-style: normal; font-size: 15px; padding: 0; text-align: left; }
-  /* the shop: the window's title and address bars stay; airsoft.com's page is the paper */
-  #shopScreen .shop-body.nb-paper { padding: 0 24px 0 66px !important; font-size: 16px; }
-  #shopScreen .nb-paper .shop-header { background: none; color: var(--nb-ink); padding: var(--nb-rule) 0 0; margin: 0 0 var(--nb-rule);
-    border: none; min-height: calc(var(--nb-rule) * 3); }
-  #shopScreen .nb-paper .shop-logo { font-family: var(--nb-marker); font-size: 32px; color: #17171c; letter-spacing: 1px;
-    line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 5px; }
-  #shopScreen .nb-paper .shop-logo .dot { color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-tagline { font-size: 15px; color: var(--nb-pencil); margin: 0; }
-  #shopScreen .nb-paper .shop-account { top: var(--nb-rule); right: 0; padding: 0 14px; border: none; border-radius: 0; font-size: 14px;
-    color: var(--nb-ink); background: var(--nb-sticky); box-shadow: inset 0 0 0 1.5px var(--nb-ink), 3px 3px 0 rgba(29,42,107,0.8);
-    transform: rotate(1deg); }
-  #shopScreen .nb-paper .shop-account strong { font-size: 16px; color: var(--nb-green); font-weight: 400; }
-  #shopScreen .nb-paper .account-bag strong { color: var(--nb-ink); }
-  #shopScreen .nb-paper .shop-categories { background: none; border: none; padding: 0; margin: 0 0 var(--nb-rule); gap: 6px;
-    box-shadow: inset 0 -2px 0 var(--nb-ink); }
-  #shopScreen .nb-paper .cat-tab { font-family: var(--nb-marker); font-weight: 400; font-size: 15px; color: var(--nb-pencil); margin: 0;
-    padding: 0 14px; border: none; border-radius: 6px 6px 0 0; background: rgba(29,42,107,0.06); }
-  #shopScreen .nb-paper .cat-tab:hover { background: rgba(255,226,64,0.45); color: var(--nb-ink); }
-  #shopScreen .nb-paper .cat-tab.active { color: var(--nb-red); background: var(--nb-sticky); margin: 0;
-    box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-items { padding: 0; min-height: calc(var(--nb-rule) * 12); }
-  #shopScreen .nb-paper .shop-section-header { margin: 0; padding: 0; border: none; font-size: 15px; font-weight: 400; color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-section-header ~ .shop-section-header { margin-top: var(--nb-rule); }
-  #shopScreen .nb-paper .shop-section-sub { font-size: 13px; color: var(--nb-pencil); }
-  #shopScreen .nb-paper .shop-gun-kinds { gap: 0 8px; margin: 0 0 var(--nb-rule); }
-  #shopScreen .nb-paper .shop-gun-kind { font-family: var(--nb-hand); font-size: 14px; font-weight: 400; height: 22px; line-height: 22px !important;
-    margin: 2px 0; padding: 0 10px; border: none; border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5); }
-  #shopScreen .nb-paper .shop-gun-kind.active { color: var(--nb-ink); background: rgba(255,226,64,0.85); box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-item { padding: 0; min-height: calc(var(--nb-rule) * 3); align-items: flex-start; border: none;
-    box-shadow: inset 0 -1px 0 rgba(29,42,107,0.25); }
-  #shopScreen .nb-paper .shop-item-icon { width: calc(var(--nb-rule) * 2); height: calc(var(--nb-rule) * 2); border: none; background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.45); }
-  #shopScreen .nb-paper .shop-item-icon.pic { background: #fff; }
-  #shopScreen .nb-paper .shop-item-icon { margin-top: calc(var(--nb-rule) / 2); }
-  #shopScreen .nb-paper .shop-item-buy { margin-top: 4px; }
-  #shopScreen .nb-paper .shop-item-name { font-size: 17px; font-weight: 400; color: var(--nb-ink); margin: 0; }
-  #shopScreen .nb-paper .shop-item-desc { font-size: 14px; color: var(--nb-pencil); }
-  #shopScreen .nb-paper #shopItems > .shop-item-desc { padding: 0 !important; }   /* the armour's total and the mounted-parts line */
-  #shopScreen .nb-paper .shop-item-price { font-family: var(--nb-marker); font-weight: 400; font-size: 20px; color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-item-buy { font-family: var(--nb-marker); font-weight: 400; font-size: 14px; color: var(--nb-ink); padding: 0 14px;
-    height: 34px; border: none; border-radius: 2px; background: var(--nb-sticky); box-shadow: inset 0 0 0 2px var(--nb-ink), 2px 2px 0 rgba(29,42,107,0.8); }
-  #shopScreen .nb-paper .shop-item-buy:hover:not(:disabled) { background: #ffe873; }
-  #shopScreen .nb-paper .shop-item-buy:disabled { color: var(--nb-pencil); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(74,74,88,0.5); }
-  #shopScreen .nb-paper .shop-gun-row .shop-item-buy { background: var(--nb-paper); }
-  #shopScreen .nb-paper .shop-sell-btn { color: var(--nb-red); background: var(--nb-paper); box-shadow: inset 0 0 0 2px var(--nb-red), 2px 2px 0 rgba(179,38,30,0.7); }
-  #shopScreen .nb-paper .shop-eq-tag, #shopScreen .nb-paper .shop-owned-tag, #shopScreen .nb-paper .shop-slot-tag {
-    font-size: 12px; font-weight: 400; background: none; padding: 0 0 0 4px; color: var(--nb-green); line-height: 18px !important; }
-  #shopScreen .nb-paper .shop-owned-tag, #shopScreen .nb-paper .shop-slot-tag { color: var(--nb-pencil); }
-  #shopScreen .nb-paper .shop-back-btn { font-family: var(--nb-hand); font-size: 15px; height: 22px; line-height: 22px !important; margin: 2px 0 calc(var(--nb-rule) + 2px);
-    padding: 0 12px; border: none; border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.6); }
-  #shopScreen .nb-paper .shop-flash { font-size: 15px; color: var(--nb-ink); background: rgba(255,226,64,0.6); border: none; border-radius: 0;
-    padding: 0 10px; margin: 0 0 var(--nb-rule); }
-  #shopScreen .nb-paper .shop-gun-photo { margin: 0 0 var(--nb-rule); padding: 0 8px; border: none; box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.45); }
-  #shopScreen .nb-paper .shop-gun-photo img { height: 182px; width: auto; aspect-ratio: 420 / 190; }
-  #shopScreen .nb-paper .shop-gun-photo-cap { font-size: 14px; color: var(--nb-pencil); font-style: normal; margin: 0; }
-  #shopScreen .nb-paper .shop-color-grid { gap: 0 10px; margin: 0; }
-  #shopScreen .nb-paper .shop-color-cell { padding: 0 4px; border: none; border-radius: 0; height: calc(var(--nb-rule) * 3);
-    background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.4); }
-  #shopScreen .nb-paper .shop-color-cell.equipped { box-shadow: inset 0 0 0 2px var(--nb-green); }
-  #shopScreen .nb-paper .shop-color-swatch { width: 22px; height: 22px; margin: 2px auto 2px; }
-  #shopScreen .nb-paper .shop-color-name { font-size: 14px; color: var(--nb-ink); }
-  #shopScreen .nb-paper .shop-color-tag { font-size: 14px; color: var(--nb-pencil); margin: 0; }
-  #shopScreen .nb-paper .shop-color-cell.equipped .shop-color-tag { color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-attach-picker { gap: 0 8px; margin: 0; }
-  #shopScreen .nb-paper .shop-attach-cell { font-size: 14px; height: 22px; line-height: 22px !important; margin: 2px 0; padding: 0 10px; border: none;
-    border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5); }
-  #shopScreen .nb-paper .shop-attach-cell.equipped { background: rgba(255,226,64,0.85); color: var(--nb-ink); font-weight: 400; box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-acc-slot { padding: 0 10px; margin: 0 0 var(--nb-rule); border: none; border-radius: 0; background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.4); }
-  #shopScreen .nb-paper .shop-acc-slot-head { margin: 0; }
-  #shopScreen .nb-paper .shop-acc-slot-label { font-size: 13px; font-weight: 400; color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-acc-slot-cur { font-size: 15px; color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-acc-slot-cur i, #shopScreen .nb-paper .shop-acc-empty-note { color: var(--nb-pencil); font-style: normal; font-size: 14px; }
-  #shopScreen .nb-paper .shop-footer { background: none; border: none; padding: 0; margin: var(--nb-rule) 0 0; font-size: 13px; color: var(--nb-pencil); }
+  /* v1.296 (backlog D.52, Michael 21 Oct): airsoft.com is the early-2000s website again, not paper; its v1.287 rules
+     are gone and the page keeps the styles above it had before */
   /* -- v1.288 (D.46): the in-match HUD keeps its dark panels (they read against any sky) and takes the hand for its
      labels only; the numbers stay in the type they had. The bedroom's prompts are on paper: the "E to …" prompt is a
      strip torn off a page, one rule with its line under the words, and the labels over the room are paper tags. -- */
@@ -2620,7 +2547,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.295</div>
+  <div class="version">v1.296</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2887,7 +2814,7 @@
       <span class="ab-label">Address:</span>
       <span class="ab-url">http://www.airsoft.com/store</span>
     </div>
-    <div class="shop-body nb-paper">   <!-- v1.287 (D.46): airsoft.com's page on paper -->
+    <div class="shop-body">   <!-- v1.296 (D.52): the 2000s website again, not paper (v1.287) -->
       <div class="shop-header">
         <div class="shop-logo">AIRSOFT<span class="dot">.</span>COM</div>
         <div class="shop-tagline">Your #1 source for tactical gear &amp; BBs since 1998</div>

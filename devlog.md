@@ -12452,3 +12452,22 @@ shop.
 ### Still open
 - Whether the Tick-Tock still feels worth $55 at 30 m, and the Ghost Mini worth $45 at 6 a second, is for a playtest.
 - A Bucket Gun bought at $110 before this sells back from the new price (`gunSellQuote`): $65, or half after 3 matches, not the $110 paid.
+
+## v1.296 — airsoft.com is the early-2000s website again
+Backlog D.52 (Michael, 21 Oct): "We're going to need to revert the Website/Airsoft.com UI to the previous version,
+where it looks like a website from the early 2000s." The notebook pass (v1.287) kept the shop's browser window, its
+title bar and address bar, but put the page inside on paper: ruled lines, a margin, handwriting and sticky-note
+buttons.
+- The page is no longer paper (`.shop-body` loses `nb-paper`), and the 75 lines of `#shopScreen .nb-paper` rules from
+  v1.287 are gone. No shop code changed in v1.287, so the styles from before it apply as they did: the dark AIRSOFT.COM
+  banner, the beige tabs, the blue DETAILS buttons and the dashed rows.
+- Every other notebook screen (the loadout, the workbench, the mirror and the rest) stays on paper.
+### Verified
+- The shop's computed styles against the build before the notebook merge, 14 elements (window, page, banner, logo,
+  tagline, account box, tabs, active tab, a row, its name, price and button, the footer): font, size, colour,
+  background, padding, border and corners are the same on all 14.
+- `tests/notebook.test.mjs`: its shop checks (every tab's text on the rules) now check that every tab is not paper
+  and not in the hand. DETAILS, BUY and the close box still work.
+- These suites pass: `notebook`, `shop-pics`, `shop-tabs`, `shop-gun-kinds`, `sell-back` and `smoke`.
+### Still open
+- Nothing for a playtest beyond a look at the shop.

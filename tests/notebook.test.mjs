@@ -181,29 +181,23 @@ for (const [name, open, sel, shot] of [
 await page.evaluate(() => document.getElementById('wbCloseBtn').click());
 check('CLOSE on the paper workbench goes home', (await g.mode()) === 'bedroom');
 
-// 1e) v1.287: the shop's page, every tab, a gun's details page, scrolled to the end of the longest list
+// 1e) v1.287 put the shop's page on paper; v1.296 (backlog D.52, Michael 21 Oct) made airsoft.com the early-2000s
+// website again. Its page is not paper, every tab, and DETAILS, BUY and the close box still work.
 await page.evaluate(() => { hideAllMenus(); Game.mode = 'bedroom'; Game.persist.cash = 500; openShop(); });
 const shopTabs = await page.evaluate(() => SHOP_TABS.slice());
-const shopPage = '#shopScreen .shop-body';
 for (const tab of shopTabs) {
-  await page.evaluate(t => { shopState.activeTab = t; shopState.view = 'list'; shopState.detailGun = null; renderShop();
-    document.querySelector('#shopScreen .shop-body').scrollTop = 0; }, tab);
-  await page.evaluate(() => document.fonts.ready);
-  await g.shot('notebook-shop-' + tab.toLowerCase());
-  onRules(`the shop's ${tab} tab`, await lineReport(page, shopPage));
-  await page.evaluate(() => { const b = document.querySelector('#shopScreen .shop-body'); b.scrollTop = b.scrollHeight; });
-  onRules(`the shop's ${tab} tab scrolled to its end`, await lineReport(page, shopPage));
+  const look = await page.evaluate(t => { shopState.activeTab = t; shopState.view = 'list'; shopState.detailGun = null; renderShop();
+    const b = document.querySelector('#shopScreen .shop-body');
+    return { paper: !!b.closest('.nb-paper') || !!b.querySelector('.nb-paper'), font: getComputedStyle(document.querySelector('#shopScreen .shop-logo')).fontFamily }; }, tab);
+  check(`the shop's ${tab} tab is the 2000s website, not paper`, !look.paper && !/NB Hand|NB Marker|Comic Sans/i.test(look.font), look);
 }
+await g.shot('notebook-shop-website');
 await page.evaluate(() => { shopState.activeTab = 'Guns'; shopState.view = 'list'; renderShop(); document.querySelector('#shopScreen .shop-body').scrollTop = 0;
   document.querySelector('#shopItems .shop-item:not(.owned) .shop-item-buy').click(); });
-await page.evaluate(() => document.fonts.ready);
-await g.shot('notebook-shop-gun');
-check('DETAILS on paper opens a gun\'s page', await page.evaluate(() => shopState.view === 'gun'));
-onRules('a gun\'s page in the shop', await lineReport(page, shopPage));
+check('DETAILS opens a gun\'s page', await page.evaluate(() => shopState.view === 'gun'));
 const bought = await page.evaluate(() => { const cash = Game.persist.cash; const b = [...document.querySelectorAll('#shopItems .shop-item-buy')].find(x => !x.disabled && /BUY/i.test(x.textContent));
   if (b) b.click(); return { had: !!b, spent: cash - Game.persist.cash }; });
-check('BUY on the paper shop still buys', bought.had && bought.spent > 0, bought);
-onRules('the shop after a purchase (its note on top)', await lineReport(page, shopPage));
+check('BUY in the shop still buys', bought.had && bought.spent > 0, bought);
 await page.evaluate(() => document.getElementById('shopCloseBtn').click());
 check('the shop\'s close box goes home', (await g.mode()) === 'bedroom');
 
