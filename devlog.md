@@ -12522,3 +12522,18 @@ names. His pick in decisions was A: the briefing card shows both sides as 3D kid
 ### Still open
 - Whether 68 px kids read well enough on a real screen, and whether the gun and lives lines are worth their room
   under each kid, is for a look in play. The kids stand still.
+
+## v1.299 — The real house numbers are out of the game file
+Backlog D.55 step 1, the reference-picture finding from 16 Oct: `index.html` ships to players and the repo is public,
+and its comments carried real house numbers. Seth's on Winnmark was there, and Michael's old house by the Bunratty
+hero house in three places.
+- Fourteen comment lines change and no code does. Winnmark's house list loses all eight numbers (N1 stays "Seth's").
+  Every "235" by the Bunratty hero house, which also covered its retaining wall and the trampoline in its yard, now
+  says "Michael's" or "the hero house".
+- Old devlog entries still carry the number. They are not rewritten (the devlog is append-only), so the number stays
+  in the repo's history and in `devlog.md`. Michael may want that weighed.
+### Verified
+- No house number before Winnmark or Bunratty is left in `index.html`, nor "Seth(625)" or "235's" (grep, 0 matches).
+  `parsecheck` and `smoke` pass.
+### Still open
+- Nothing for a playtest.

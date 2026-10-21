@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.298</div>
+  <div class="version">v1.299</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -11005,9 +11005,9 @@ function buildSethBackyardScene() {
 //
 // Houses: 8 total, distributed along the curving road. Seth's is the
 // easternmost on the north side — the player enters near it.
-// Numbering (matches the satellite house numbers loosely):
-//   N1=Seth(625), N2=720, N3=730, N4=740 (lakeside corner)
-//   S1=620, S2=700, S3=710, S4=750 (lakeside corner)
+// Numbering (v1.299: the real house numbers are out; the repo and the game are public):
+//   N1=Seth's, N2, N3, N4 (lakeside corner)
+//   S1, S2, S3, S4 (lakeside corner)
 // ---------------------------------------------------------------------
 
 // --- Shared neighborhood-house builder ---
@@ -13822,7 +13822,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   houseObs.push(buildSuburbanHouse(scene, {
     x: 24, z: -15, width: 9, depth: 7,
     brickColor: 0xb8634a, roofColor: 0x4a3a2a, faceDir: 'south', detail: true,
-  })); // Seth's (625 Winnmark Ct)
+  })); // Seth's
   houseObs.push(buildSuburbanHouse(scene, {
     x:  8, z: -16, width: 8, depth: 7,
     brickColor: 0xa05238, roofColor: 0x5a4838, faceDir: 'south', detail: true,
@@ -14586,7 +14586,7 @@ function buildWinnmarkCulDeSacScene(_v, tod)  { return buildWinnmarkCourtScene('
 //     grid) terminating in a cul-de-sac bulb — matches the satellite of
 //     the real Bunratty Ct off Sentinae Chase Dr.
 //   - French-eclectic STUCCO + STONE house palette (cream/tan walls, warm
-//     brown hip roofs) — the reference property at 235 Bunratty.
+//     brown hip roofs) — the reference property, Michael's old house.
 //   - The CHATTAHOOCHEE RIVER as the signature backdrop on the SOUTH side,
 //     downhill past a stacked-stone retaining wall + forest. (Winnmark used
 //     a golf course + lake; Bunratty uses river + woods.)
@@ -14807,9 +14807,9 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // (We don't push these to obstacles — they're unreachable backdrop.)
   }
 
-  // === Stacked-stone retaining wall — behind 235 BUNRATTY ONLY (the hero house) ===
+  // === Stacked-stone retaining wall — behind MICHAEL'S ONLY (the hero house) ===
   // From the reference photos (image 7): a stacked-stone wall with square
-  // pillars sits along the south edge of 235's backyard, holding the lawn
+  // pillars sits along the south edge of the hero house's backyard, holding the lawn
   // above the river drop. It is NOT a map-spanning wall — it's specific to
   // this one property. (The rest of the south edge is handled by the tree
   // wall + river blocker.) Gets an AABB so it reads as solid cover.
@@ -14819,7 +14819,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8a8276, roughness: 0.96 });
     const wallZ = 30;
     const wallH = 1.1;
-    const x0 = 24, x1 = 42;    // just behind 235 only
+    const x0 = 24, x1 = 42;    // just behind the hero house only
     const segLen = 4.0;
     // v1.8: the wall sits at the south lawn edge ground height (the lowest
     // playable grade) and still holds the lawn above the river drop beyond it.
@@ -14891,7 +14891,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // === Houses — 7, irregular placement (not tidy rows) ===
   // French-eclectic stucco+stone palette: cream/tan stucco bodies, warm brown
   // hip roofs, light trim. Faces toward the lane. House index 6 is the hero
-  // (235 Bunratty) ringing the bulb — the showpiece for a future marquee
+  // (Michael's) ringing the bulb — the showpiece for a future marquee
   // scenario. Downhill (south, river-side) houses get walk-out lower-level
   // visual treatment below.
   const houseObs = [];
@@ -14908,7 +14908,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     { x: -30, z: 16,  w: 8, d: 7, faceDir: 'north', side: 'south' },
     { x: -8,  z: 18,  w: 9, d: 7, faceDir: 'north', side: 'south' },
     { x: 12,  z: 17,  w: 8, d: 7, faceDir: 'north', side: 'south' },
-    // Hero house (235 Bunratty) ringing the bulb's south side, faces the bulb.
+    // Hero house (Michael's) ringing the bulb's south side, faces the bulb.
     { x: 33,  z: 17,  w: 11, d: 8, faceDir: 'north', side: 'south', hero: true },
   ];
   const houseCenters = [];
@@ -15255,13 +15255,13 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     }
   }
 
-  // A round backyard TRAMPOLINE in 235's backyard (replaces the old play-fort).
+  // A round backyard TRAMPOLINE in the hero house's backyard (replaces the old play-fort).
   // Low cylindrical frame + dark jump mat + a ring of safety-net poles. Sits on
-  // the upper lawn of 235's tiered backyard. Decorative + light collision on the
+  // the upper lawn of the hero house's tiered backyard. Decorative + light collision on the
   // frame ring; counts as cover (you can crouch behind the frame/pads).
   {
     const tramGroup = new THREE.Group();
-    const tx = 28, tz = 25; // 235's backyard, between the house (back face z=21) and the retaining wall (z=30)
+    const tx = 28, tz = 25; // the hero house's backyard, between the house (back face z=21) and the retaining wall (z=30)
     tramGroup.position.set(tx, 0, tz);
     const R = 1.8;          // trampoline radius
     const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5, metalness: 0.5 });
@@ -15300,7 +15300,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // v1.53: round trampoline → true cylinder so you don't snag on phantom corners.
     const tramObs = { minX: tx - R, maxX: tx + R, minZ: tz - R, maxZ: tz + R,
       shape: 'cylinder', cx: tx, cz: tz, radius: R, h: 0.95, mesh: tramGroup, surface: 'metal' };
-    sinkObs(tramObs, tx, tz);  // v1.8: sit on 235's sloped backyard
+    sinkObs(tramObs, tx, tz);  // v1.8: sit on the hero house's sloped backyard
     coverList.push(tramObs);
     coverByHouse[6] = coverByHouse[6] || [];
     coverByHouse[6].push(tramObs);
