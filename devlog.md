@@ -12384,3 +12384,28 @@ clicks a second. Every automatic but the Rattle Can could beat its held rate tha
   `gun-bucket`, `gamepad` and `smoke`.
 ### Still open
 - The 16-gun balance table for Michael's OK (the rest of D.50's C). No price or rate changes until he has seen it.
+
+## v1.293 — Owen stops standing inside Mitchell
+The critic (21 Oct, Found in play): in Protect Ryan, after v1.282 kept everyone off Priya's cover, Owen moved in on
+Mitchell instead, 1.8 m from her. Their centres were 0.01–0.17 m apart for 27–56 s of a 90 s round, in 4 of 8 rounds.
+Reproduced here before the fix, 4 rounds of 90 s with you untouchable: 27.7 s in one round and 2.8 s in another. In
+both, Owen had repositioned to the cover Mitchell held (`homeCover`). Both worked out the same spot behind it, so they
+stood in one body.
+- When a kid repositions, cover a living teammate already holds is left out, as long as any other cover is in reach
+  (`teammateHoldsCover`). On a tight spot he still doubles up rather than freezing, as v1.67's defend rule does.
+- This applies on every map, but only to the reposition pick. A dash out of fire and a bound pick as before.
+  - In the check below Owen still ends up on Mitchell's cover by one of those for 0–9 s a round, standing apart
+    along it, which looks like two kids behind one car.
+### Verified
+- Probe, 8 rounds of 90 s after the fix: Owen and Mitchell never shared a cover by the reposition pick. Their worst
+  round had them within 0.35 m for 3.7 s, on neighbouring boxes of one car. Five rounds had none.
+- `tests/vip-cover.test.mjs` adds 4 rounds of 90 s. Owen and Mitchell were within 0.35 m for 0.2, 0, 0 and 0.3 s;
+  the check allows 6.
+- These suites pass: `vip-cover`, `vip`, `cover-fire`, `idle-ally`, `bulb-sight` and the stuck-kid sweep of
+  `bunratty_vip`, `lot_vip_night`, `bellfield_ctf` and `winnmark_ffa` (three ways each, 90 s).
+### Still open
+- The full stuck-kid sweep did not run here: every reposition on every map now prefers a free cover. The weekly run
+  (or `check`) will show whether a kid anywhere ends up exposed for want of one.
+- Friday Night Lights' Nathan and Malik on one spot at their start (the critic's other bug) is a different cause: they
+  stand where they spawn, before any cover is picked. Not taken this run.
+- The critic's proposal of one rule that keeps every kid a body's width apart is still Michael's to promote.

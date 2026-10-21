@@ -2620,7 +2620,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.292</div>
+  <div class="version">v1.293</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -31395,6 +31395,14 @@ function vipHoldsCover(e, c) {
   }
   return false;
 }
+// v1.293: a living teammate of e (not out, not walking back) holds c as his cover
+function teammateHoldsCover(e, c) {
+  const myTeam = e.team || 'enemy';
+  for (const o of (Game.scenario && Game.scenario.enemies) || []) {
+    if (o !== e && o.homeCover === c && (o.team || 'enemy') === myTeam && o.health > 0 && o.state !== 'retreating') return true;
+  }
+  return false;
+}
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
@@ -33243,6 +33251,10 @@ function updateEnemies(dt) {
             // wall, wedged in the corner on the way, and held fire there at the wall for the rest of the round
             // (tests/cover-fire: up to 62 held pulls a minute).
             candidates = candidates.filter(c => { const sp = coverStandPos(c, tgt.pos, 0.35); return kidWalkClear(e, sp.x, sp.z); });
+            // v1.293 (critic, 21 Oct, Found in play): in Protect Ryan, Owen repositioned to the cover Mitchell held and stood
+            // inside him (both work out the same spot from the same cover), centres 0.01-0.17 m apart for 27-56 s of a 90 s
+            // round in 4 of 8 rounds. Cover a living teammate already holds is left out while any other is in reach.
+            { const free = candidates.filter(c => !teammateHoldsCover(e, c)); if (free.length) candidates = free; }
             // v1.67: DEFEND anti-crowding. Prefer candidates that aren't already
             // occupied by a teammate, so the squad fans out across different cover
             // instead of stacking. Only narrow to the un-crowded subset if it's
