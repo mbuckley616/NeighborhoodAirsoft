@@ -81,5 +81,29 @@ const won = await page.evaluate(() => {
   return damageReportHtml('win');
 });
 check('a win with no life lost: no report', won === '', won);
+
+// v1.322 (backlog D.62, Michael 22 Oct: "a red 'flash' around the peripherals of the player's view when they are hit"):
+// each hit on you turns the edges of the view red at full strength, fading over 0.5 s of game time, over the scope too.
+await page.evaluate(() => buildPickupScenario({ map: 'winnmark', size: 3, tod: 'day', lives: 3, clock: 0 }));
+await g.scenario('pickup_game');
+await g.spin(10);
+const op = () => page.evaluate(() => ({ op: +getComputedStyle(document.getElementById('damageVignette')).opacity, n: Game.hurtFlashes,
+  z: +getComputedStyle(document.getElementById('damageVignette')).zIndex, scopeZ: +getComputedStyle(document.getElementById('scopeOverlay')).zIndex,
+  bg: getComputedStyle(document.getElementById('damageVignette')).backgroundImage }));
+const f0 = await op();
+await hitYou(0.6, 0, 'front');
+const f1 = await op();
+await g.spin(12);
+const f2 = await op();
+await g.spin(30);
+const f3 = await op();
+console.log('  hit flash', JSON.stringify({ f0: f0.op, f1: f1.op, f2: f2.op, f3: f3.op, n: f3.n, z: f1.z, scopeZ: f1.scopeZ }));
+check('no flash before a hit', f0.op === 0 && f0.n === 0, f0);
+check('a hit on you: the edges go red at once, nearly full strength', f1.n === 1 && f1.op > 0.9 && /radial-gradient/.test(f1.bg) && /rgba\(170, 0, 0, 0\.9\)/.test(f1.bg), f1);
+check('still showing 0.2 s later, gone by 0.7 s', f2.op > 0.4 && f2.op < f1.op && f3.op === 0, { f1: f1.op, f2: f2.op, f3: f3.op });
+check('it sits over the scope (a scoped player sees it)', f1.z > f1.scopeZ, f1);
+const graced = await page.evaluate(() => { Game.player._graceT = 3; applyBBHit({ enemyRef: null }, Game.player); stepGame(1 / 60);
+  return { n: Game.hurtFlashes, op: +getComputedStyle(document.getElementById('damageVignette')).opacity }; });
+check('no flash for a BB that does not count (your 3 s grace)', graced.n === 1 && graced.op === 0, graced);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

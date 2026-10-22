@@ -13540,3 +13540,33 @@ sounds the same, whoever's BB it was. In a team match you couldn't tell your tag
 ### Still open
 - **For a playtest:** the size (40 px) and the 0.3 s. There is no sound of its own; the existing hit sound plays as
   before.
+
+## v1.322 — A red flash when you're hit
+Backlog D.62, Michael's note (control room, 22 Oct): "There should be a red 'flash' around the peripherals of the
+player's view when they are hit ... The audio alone is not enough of a cue, as many bullets hitting near the player
+can sound similar."
+- **What was wrong:** there was a flash, but nobody could see it. A hit added a soft inset shadow (`#damageVignette`)
+  and took it off 50 ms later, on a `setTimeout`, with a 0.05 s transition in. It was gone before it had shown.
+- **The new flash:** a hit turns the edges of the view red. It is a radial band, clear in the middle 55% and dark red
+  at the very edge, so the middle stays clear to aim through.
+  - It starts at full strength and fades over 0.5 s of game time (`HURT_FLASH_SEC`, `hurtFlashStep`), so a hit is
+    still on screen a quarter-second later. Its opacity is the square root of the time left, so it holds strong and
+    then goes.
+  - It runs on game steps, so pausing the game holds the flash.
+  - It sits over the sniper scope's black mask, so a scoped player sees it too. It tints the HUD panels red while it
+    lasts.
+- **Only real hits flash.** A BB that doesn't count (your 3 s grace, walking home, the round already won) gives none,
+  since only the hit that counts calls it. Online, a hit from your friend flashes too, as it already called it.
+### Verified
+- **`tests/damage-report.test.mjs`, extended.** In a Pickup Game with three lives, a real BB lands on you:
+  - Before the hit nothing shows. On the hit the edges go to 0.98 opacity.
+  - 0.2 s later it is at 0.75, and by 0.7 s it is gone.
+  - It sits over the scope (z 7, the scope's mask 6).
+  - A BB in your grace counts nothing and gives no flash.
+- **By eye:** screenshots on the Riverside Market lot at the hit and a quarter-second after. The red band runs round
+  all four edges at the hit, with the middle clear.
+- **These suites pass:** `damage-report`, `smoke`, `online`, `notebook`, `vip`, `result-stats`, `pickup-clock` and
+  `out-shot`.
+### Still open
+- **For a playtest:** strength and length (0.5 s; 0.9 opacity at the edge). There is no side to it: a hit from
+  behind flashes the same as one from the front. Showing where a hit came from would be a separate idea.

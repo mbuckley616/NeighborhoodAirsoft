@@ -32,7 +32,7 @@
   /* v1.321 (D.60): the hit marker, an X round the middle of the screen when your BB tags a kid of the other side */
   #hitMarker {
     position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%);
-    pointer-events: none; opacity: 0; z-index: 6;
+    pointer-events: none; opacity: 0; z-index: 7;   /* over the scope's mask (6) */
   }
   #hitMarker path { stroke: #fff; stroke-width: 3; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(0,0,0,0.9)); }
   #hitMarker.out path { stroke: #ff3b30; }
@@ -563,16 +563,14 @@
   #bedroomHud .pad-line { display: none; margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--ui-border); font-size: 11px; color: #aaa; letter-spacing: 1px; }
   #bedroomHud .pad-key { font-size: 10px; color: var(--ui-accent); letter-spacing: 1.5px; margin-right: 4px; }
 
+  /* v1.322 (D.62): the hit flash, a red band round the edges of the view; its opacity is set each game step */
   #damageVignette {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    box-shadow: inset 0 0 200px 40px rgba(231, 76, 60, 0);
-    transition: box-shadow 0.4s ease-out;
-  }
-  #damageVignette.flash {
-    box-shadow: inset 0 0 200px 40px rgba(231, 76, 60, 0.7);
-    transition: box-shadow 0.05s;
+    opacity: 0;
+    z-index: 7;   /* over the scope's mask (6), so a scoped player sees it too */
+    background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(200, 20, 20, 0) 55%, rgba(200, 20, 20, 0.55) 80%, rgba(170, 0, 0, 0.9) 100%);
   }
 
   #adsVignette {
@@ -2584,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.321</div>
+  <div class="version">v1.322</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -25931,6 +25929,7 @@ function startScenario(built) {
   Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
   Game.hitMarkerT = 0; Game.hitMarkers = 0;   // v1.321 (D.60)
+  Game.hurtFlashT = 0; Game.hurtFlashes = 0; hurtFlashStep(0);   // v1.322 (D.62)
   { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
     if (gm && typeof gm[gt] === 'number') gm[gt]++; }
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
@@ -26345,6 +26344,7 @@ function endScenario(outcome) {
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   Game.hitMarkerT = 0; hitMarkerStep(0);   // v1.321 (D.60)
+  Game.hurtFlashT = 0; hurtFlashStep(0);   // v1.322 (D.62)
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
   document.getElementById('adsVignette').style.opacity = '0';
   { const so = document.getElementById('scopeOverlay'); if (so) so.style.opacity = '0'; }
@@ -30409,10 +30409,22 @@ function updateRosterHud() {
   list.innerHTML = rows.join('');
 }
 
+// v1.322 (backlog D.62, Michael 22 Oct: "a red 'flash' around the peripherals of the player's view when they are hit
+// ... The audio alone is not enough of a cue, as many bullets hitting near the player can sound similar"). The old
+// flash was a 50 ms pulse of a soft inset shadow, gone before it showed. Now a hit turns the edges of the view red at
+// full strength and it fades over HURT_FLASH_SEC of game time, the middle of the view left clear to aim through.
+const HURT_FLASH_SEC = 0.5;
 function flashDamage() {
+  Game.hurtFlashT = HURT_FLASH_SEC;
+  Game.hurtFlashes = (Game.hurtFlashes || 0) + 1;
+  hurtFlashStep(0);
+}
+function hurtFlashStep(dt) {
   const v = document.getElementById('damageVignette');
-  v.classList.add('flash');
-  setTimeout(() => v.classList.remove('flash'), 50);
+  if (!v) return;
+  if (Game.hurtFlashT > 0) Game.hurtFlashT = Math.max(0, Game.hurtFlashT - dt);
+  const k = (Game.hurtFlashT || 0) / HURT_FLASH_SEC;
+  v.style.opacity = k > 0 ? Math.sqrt(k).toFixed(3) : '0';   // holds strong, then goes
 }
 
 function updateStanceHud() {
@@ -35759,6 +35771,7 @@ function stepGame(dt) {
     updateEnemies(dt);
     kidWinceStep(dt);   // v1.261 (D.45): after the kids have posed themselves
     hitMarkerStep(dt);   // v1.321 (D.60)
+    hurtFlashStep(dt);   // v1.322 (D.62)
     if (Net.active) netStep(dt);   // v1.230 (D.2)
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
