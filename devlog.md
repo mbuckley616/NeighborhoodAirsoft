@@ -13197,3 +13197,39 @@ random, pointed north, back up the wall. He reached z 13.6, a metre short of the
 ### Still open
 - Nothing new for a playtest. The card's open looks are v1.310's: the neighbour east of the bulb mostly behind trees,
   and the far bank's haze at 250-300 m.
+
+## v1.312 — Winnmark's and Northcliff's real house fronts
+Backlog D.55 step 4: the real house styles from Michael's reference pictures, built where today's houses stand and at
+today's size (Bunratty's were done by the D.51 card in v1.304-v1.305, so this step is Winnmark and Northcliff). Both
+streets built the same detailed colonial (v1.104): a 2.3 m hip roof in brown, one small cross gable, a hooded door,
+corner boards, orange-red or tan brick. The guides (docs/refs/winnmark.md gap 5, northcliff.md gap 2 part one) describe
+something else.
+- **A `look` on the detailed house** (`buildHouseDetail`): the roof's rise, quoins, fieldstone, a belt course all
+  round, one to three front gables, a two-storey arched entry, a three-sided bay, arched upstairs windows, a shutter
+  palette. A house with no look builds as before, so Bellfield and the treehouse yard are unchanged.
+- **Winnmark's eight**, the three finishes in turn along each row: A rose-tan brick, B deep red brick with cream quoins
+  and a cream belt course, C beige stucco with cream quoins. Every house has the guide's steep grey-brown roof (4 m
+  rise, about 45 degrees), a two-storey arched entry (two columns, an arch at 4.3 m, a fanlight over the door and a
+  tall arched window over that) and a three-sided bay two storeys high. A has one front gable, B two, C three, with the
+  gables in the wall's own finish. Shutters near-black, dark brown or navy.
+- **Northcliff's six**, to the guide's palette: two off-white stucco and two tan stucco, with fieldstone at the corners,
+  round the arched entry and on the entry gable, arched upstairs windows and two or three gables (a bay on the tan
+  ones); two red brick with slate-blue shutters. Brown and grey roofs.
+- **Not built:** the side garage wings. They would make the houses wider than today's boxes; the rebuild cards take
+  them at real scale. Everything new is visual and stands within 0.3 m of the wall below head height, so collision,
+  cover and every match's layout are as before.
+### Verified
+- **`tests/houses.test.mjs`, extended:** six of Winnmark's eight houses carry quoins and two are plain brick; every
+  Winnmark roof rises 4 m; four of Northcliff's six are fieldstone. Each house is 16-17 meshes (the cap is 20), its
+  collision box the same 8-9 x 7 m, and walking into Seth's front wall still stops at it. Draw calls looking at
+  Seth's house 646, down Winnmark's street 928.
+- **These suites pass:** `smoke`, `houses`, `house-backs`, `northcliff`, `yard-props`, `backdrop`, `layout-same`
+  (every match's cover the same) and `winnmark-road`. No page errors.
+- Headless pictures of both streets checked by eye: the quoins, belt course, bays and arches line up on the walls,
+  the gables sit in the roof's slope, the fieldstone reads at the corners and the entry.
+### Still open
+- **For Michael's look:** whether the 4 m roofs and the arched entries read like the street. The gables are taller
+  than the old ones; Winnmark's now stand above its tree wall from the street.
+- **Not run here:** the full suite (180 suites take about two hours on this machine). Nothing in play moved, so the AI
+  suites were left to the weekly run.
+- Next in D.55: step 5, tall pines over pine straw where the guides put them.
