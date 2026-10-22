@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.308</div>
+  <div class="version">v1.309</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7235,6 +7235,7 @@ const SCENARIOS = {
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
+    enemySpawnCluster: 'cluster_bulb_night',   // v1.309: out of the lane's line (see the placement)
     enemySetup: [
       { charId: 'ryan',     weapon: 'pistol', anchor: 'house2_backyard', role: 'skirmisher' },
       { charId: 'mitchell', weapon: 'pistol', anchor: 'house5_backyard', role: 'skirmisher' },
@@ -7254,6 +7255,7 @@ const SCENARIOS = {
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
+    enemySpawnCluster: 'cluster_bulb_night',   // v1.309: out of the lane's line (see the placement)
     enemySetup: [
       { charId: 'sean',     weapon: 'ak47',    anchor: 'house1_backyard', team: 'player' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'house2_backyard' },
@@ -7345,7 +7347,7 @@ const SCENARIOS = {
       { charId: 'mason',    weapon: 'sniper', anchor: 'a_fort'   },
       { charId: 'ryan',     weapon: 'shotgun',anchor: 'a_creek'  },
     ],
-    enemySpawnCluster: 'cluster_north',
+    enemySpawnCluster: 'cluster_north_night',   // v1.309: out of your start's line (see the placement)
     winCondition: 'last_team_standing',
     npcLives: 5,
     rewards: { win: 110, lose: 26 },
@@ -7369,7 +7371,7 @@ const SCENARIOS = {
       { charId: 'ryan',   weapon: 'pistol',  anchor: 'a_right'  },
       { charId: 'mason',  weapon: 'sniper',  anchor: 'a_fort'   },
     ],
-    enemySpawnCluster: 'cluster_north',
+    enemySpawnCluster: 'cluster_north_night',   // v1.309: out of your start's line (see the placement)
     winCondition: 'last_team_standing',
     npcLives: 5,
     rewards: { win: 85, lose: 20 },
@@ -7478,7 +7480,7 @@ const SCENARIOS = {
       { charId: 'mason',    weapon: 'mac10',  anchor: 'a_fort'   },
       { charId: 'ryan',     weapon: 'ak47',   anchor: 'a_creek'  },
     ],
-    enemySpawnCluster: 'cluster_north',
+    enemySpawnCluster: 'cluster_north_night',   // v1.309: out of your start's line (see the placement)
     winCondition: 'last_team_standing',
     npcLives: 5,
     rewards: { win: 130, lose: 30 },
@@ -16150,6 +16152,11 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // Enemy spawn clusters — one staging area per map end.
     cluster_bulb:      { pos: P(BULB.x, BULB.z), cover: null }, // east bulb (defenders)
     cluster_lane_west: { pos: P(-35, 0),         cover: null }, // west entry (attackers) — moved west off the curb props (v1.26)
+    // v1.309 (D.51 step 4; the night rule of no line from a start, Michael A on Lamplight, 15 Oct): the night matches'
+    // huddle. The bulb-end huddle on the lane, (18, 0), looked 38-40 m straight down it to lane_west, and Mitchell's AR
+    // had a line to your start at BEGIN. This is the bulb's north yard, east of house 2: 57 m out, as cluster_bulb is,
+    // and no line from any point of the huddle's ring to a step round your start at any height a kid shoots or looks from.
+    cluster_bulb_night: { pos: P(33, -19), cover: null },
     // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): Last Kid Standing's starts. From lane_west
     // Sean's backyard was 23.7 m off and you were the nearest start he had (Nick 44.7 m). Each start is out of the
     // others' sight (muzzle 1.05 m to chest 0.95 m, from points 0.6 m round each) in both of the street's layouts (the
@@ -17147,6 +17154,12 @@ function buildHollowScene(variant, timeOfDay) {
     // Staging clusters (one per team end)
     cluster_north: { pos: P(0, -33),  cover: null },
     cluster_south: { pos: P(0, 33),   cover: null },
+    // v1.309 (D.51 step 4; the night rule of no line from a start, Michael A on Lamplight, 15 Oct): the night team
+    // matches' huddle. From cluster_north, 64 m straight up the field, Mason's sniper (and in Full-Auto Mayhem Mitchell
+    // and Ryan) had a line to your start at the south fort. This is the thicket north-east of the north fort, 61.5 m
+    // out, and no point of the huddle's ring sees your start or a step round it, at any height, in the woods of the
+    // three night matches that use it.
+    cluster_north_night: { pos: P(19, -27), cover: null },
     // v1.265 (decisions, Michael: A, the lot's rule on every free-for-all): the Ten-Way Free-for-All's starts. Four
     // pairs were 9.5–14.7 m apart, Brooke 14.7 m from your midfield start among them. Each start is 19.5 m or more
     // from every other, and every kid has another kid's start nearer than yours, in the Pickup Game's order

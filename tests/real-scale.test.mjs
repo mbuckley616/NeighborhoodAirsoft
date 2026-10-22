@@ -237,6 +237,40 @@ check('the Hollow: logs and deadfall round the field\'s edge (not its middle), 3
 check('the Hollow: nothing past the box is solid', hol.solid === 0, hol.solid);
 check('the Hollow: the camera sees 350 m', hol.far === 350, hol.far);
 check('the Hollow: at most 1,450 draw calls in any of five views', Math.max(...Object.values(hol.calls)) <= 1450, hol.calls);
+// v1.309 (D.51 step 4): the 28 matches on the two maps. Each builds and starts with no page error; in each match with
+// sides, your side and theirs start 29-70 m apart (Michael 1A: "starts stay 30-70 m apart, so the fights keep today's
+// distances"; 1v1 with Sean is 29.8); and at night no kid of theirs starts with a line to your start, or a step round
+// it, at any height a kid shoots or looks from (the night rule, Michael A on Lamplight, 15 Oct; the taggers of
+// Infection carry no guns). The free-for-alls' starts are tests/ffa-starts'.
+const ids28 = await page.evaluate(() => Object.keys(SCENARIOS).filter(k => ['buildBunrattyCourtScene', 'buildHollowScene'].includes(SCENARIOS[k].builderFn)));
+const m28 = [];
+for (const id of ids28) {
+  const e0 = g.errs.length;
+  await g.scenario(id);
+  const r = await page.evaluate(() => {
+    const P = Game.player, sc = SCENARIOS[Game.scenario.active], obs = P.obstacles, G = (x, z) => scenarioGroundY(x, z) || 0;
+    const at = { x: P.pos.x, z: P.pos.z }, kids = Game.scenario.enemies.map(e => ({ n: e.character.name, team: e.team, tag: e.behavior === 'tagger', ...(e._spawnPos || e.pos) }));
+    const foes = kids.filter(k => k.team === 'enemy'), mine = [at, ...kids.filter(k => k.team === 'player')];
+    let sep = Infinity; for (const a of mine) for (const b of foes) sep = Math.min(sep, Math.hypot(a.x - b.x, a.z - b.z));
+    const lines = [];
+    if (sc.timeOfDay === 'night') for (const f of foes) if (!f.tag) for (const [dx, dz] of [[0, 0], [-2, -2], [-2, 2], [1.2, -2], [1.2, 2]])
+      for (const h of [1.05, 1.18, 1.35, 1.6]) for (const th of [0.95, 1.35]) {
+        const tx = at.x + dx, tz = at.z + dz;
+        if (hasLineOfSight(f.x, G(f.x, f.z) + h, f.z, tx, G(tx, tz) + th, tz, obs)) lines.push(f.n);
+      }
+    const out = { id: Game.scenario.active, mode: Game.mode, night: sc.timeOfDay === 'night', sides: foes.length > 0 && sc.winCondition !== 'survive_untagged',
+      sep: isFinite(sep) ? +sep.toFixed(1) : null, lines: [...new Set(lines)] };
+    endScenario('lose');
+    return out;
+  });
+  await g.spin(30);
+  r.errs = g.errs.length - e0;
+  m28.push(r);
+}
+console.log('  ', JSON.stringify(m28.map(r => [r.id, r.sep, r.lines.length, r.errs])));
+check('the 28 matches on the two maps all build and start, with no page error', m28.length === 28 && m28.every(r => r.mode === 'scenario' && r.errs === 0), m28.filter(r => r.mode !== 'scenario' || r.errs));
+check('in every match with sides, the two sides start 29-70 m apart (Michael 1A)', m28.filter(r => r.sides).every(r => r.sep >= 29 && r.sep <= 70), m28.filter(r => r.sides && !(r.sep >= 29 && r.sep <= 70)));
+check('at night nobody on their side starts with a line to your start', m28.filter(r => r.night).length >= 8 && m28.every(r => r.lines.length === 0), m28.filter(r => r.lines.length));
 // back in the bedroom the camera's reach is the usual 200 m again
 const far2 = await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); return Game.camera.far; });
 check('the bedroom puts the camera back to 200 m', far2 === 200, far2);

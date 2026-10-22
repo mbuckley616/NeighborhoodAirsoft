@@ -13041,3 +13041,80 @@ only, so the middle where the fights are stays as clear as it was.
 - **Ground, trees and match distances still to come.** The ground's colour and unevenness and the trees greyer and
   taller (the guide's gaps 2-3) would change how the field looks in play. Step 4 checks every match's distances
   (first contact, starts).
+
+## v1.309 — The 28 matches measured, and the night starts out of sight
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 4: the 28 matches on the two maps checked against their new ground
+and re-anchored where they needed it. Michael's 1A (21 Oct) kept each match on a today-sized part of the real place,
+with "starts 30-70 m apart, so the fights keep today's distances". Steps 1-3 kept every start, anchor and piece of cover
+in the box where it was, except the moves already logged (`hero_backyard`, `ffa_5`, `ffa_6`). So this step was mostly
+measuring, and moving what the measurements showed to be wrong.
+- **What I measured.** All 28 matches on v1.302 (main, before the card) and on v1.308, two rounds of 90 s each, with
+  you standing at your start and untaggable so the kids play their whole plan. For each I took the distance between
+  the sides' starts, which kids of theirs have a line to your start, and the time and distance of the first shot and
+  the middle shot.
+  - **The sides' starts are where they were:** 29.8-67.7 m apart on Bunratty, 62.5 m in the Hollow's team matches,
+    the rest within 0.2 m of where they were. Four moved 0.7-2.4 m: Storm the Court, 2v4, Four on Four and The Last
+    Saturday.
+  - **The first shot comes as it did,** 2.4-8.4 s in, at 33-64 m. Two matches changed:
+    - 1v1 with Sean waits 12.2 s, from 5.7, and the first shot is at 13 m, from 23 m. The bigger houses (v1.305) break
+      the line through the yards.
+    - Four on Four's first shot came at 56.7 m in one round, from 39.4 m.
+  - **Fewer long shots.** The middle shot is at 2.5-47 m on both maps, as before. The share of shots past 40 m fell in
+    Four on Four (0.80-0.86 to 0.40-0.62) and in the Hollow's 3v3 and Big Game, and is about the same elsewhere.
+  - **The briefings name no distances on these two maps,** so none had to change.
+- **The night starts were in sight, before the card too.** The night rule is "no line from a start" (Michael A on
+  Lamplight, 15 Oct: nobody can see your start at BEGIN). I checked it at any height a kid shoots or looks from (1.05,
+  1.18, 1.35 and 1.6 m) to your chest and head, at your start and a step round it. Five of the eight night matches
+  broke it, on main as well:
+  - **Lights Out on the Lane:** Mitchell, from 37.8 m.
+  - **Night Game: Sean Has Your Back:** all four of theirs, 37.8-40.4 m. Their huddle stood on the lane at the bulb's
+    mouth, (18, 0), and looked straight down it to your start.
+  - **The Hollow's Night Game:** Mason's sniper, across the field from the north huddle at 63 m.
+  - **Full-Auto Mayhem:** Mitchell and Ryan, the same way.
+  - **2v4 at Night:** clear at chest height, but the same huddle.
+
+  Each map now has a night huddle, used by its night team matches only:
+  - **Bunratty's `cluster_bulb_night`,** at (33, −19): the bulb's north yard, east of house 2. It is 57 m from your
+    start, as the day huddle is.
+  - **The Hollow's `cluster_north_night`,** at (19, −27): the thicket north-east of the north fort, 61.5 m out.
+
+  They were found by a search of the map for spots from which no point of the huddle's ring (1.6 m round) sees you. The
+  Hollow's spot is in all three night matches' woods, which are seeded per match. The kids walk from there to the
+  anchors they held before. Day matches and the forts' night matches are untouched. Infection in the Dark's taggers
+  carry no guns, so the rule doesn't apply to them.
+- **No other start moved.** The free-for-alls keep the lot's rule (tests/ffa-starts, after v1.305's `ffa_5`).
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - All 28 matches build and start with no page error.
+  - In every match with sides, the two sides start 29-70 m apart. The nearest are 1v1 with Sean at 29.8 m and the
+    Hollow's Infection's tagger at 16.4 m, which is left out: a survive match, not sides.
+  - In all eight night matches, no kid of theirs has a line from his start to yours. Before this version the check
+    found five matches that failed it.
+- **Night shots, played, v1.308 → v1.309, two rounds each:**
+  | Match | First shot before | First shot now |
+  |---|---|---|
+  | Lights Out on the Lane | 4.0 s, 33 m | 16.2 s, 16-35 m |
+  | Night Game 2v2 | 2.4 s, 39 m | 4.5-4.8 s, 37 m |
+  | The Hollow's Night Game | 2.4 s, 55 m | 3.3-5.2 s, 48-51 m |
+  | 2v4 at Night | 2.4 s, 60 m | 2.4 s, 57 m (at an ally) |
+  | Full-Auto Mayhem | 2.5-4.0 s, 54 m | 4.0-4.2 s, 53-55 m |
+- **Played taggable** at your start, four rounds of 20 s in each of the five:
+  - Lights Out: first tagged at 18.6-19 s, against 11.6-14.2 on main.
+  - One tag at 15.4 s in the Night Game 2v2 and one at 9.2 s in 2v4 at Night. Both came after a kid walked in.
+  - No other tag in 20 s.
+- **The stuck-kid sweep** (`tests/lib/stuck-sweep.mjs`, 3 ways each, up to 90 s) ran on all 12 Hollow matches and
+  Bunratty's two night matches, with the new huddles, and passed: no kid held a moving state for over 15 s. The worst
+  was 7 s (Devon chasing in Infection in the Dark). No page errors. Bunratty's other 14 were swept in v1.305 and none
+  of their starts moved since.
+- **These suites pass:** `real-scale`, `layout-same`, `opening-hold`, `fort-spawn`, `idle-ally`, `spawn-facing`,
+  `deploy-progress`, `briefing-lives`, `crew-balance`, `crew-roster`, `rival`, `laser`, `squad-hud`, `result-text`,
+  `burst-pose`, `ffa-starts` and `smoke`.
+### Still open
+- **The first contact in most team matches is past 40 m:** 37-64 m, as it was before the card. That is the band
+  Michael kept with 1A ("the fights keep today's distances"), not the guns' 10-40. Pulling it in would mean moving
+  the starts closer or slowing the first shot, and that is a call about play for him, not a re-anchoring.
+- **For a playtest:** whether the night huddles' longer walk changes the night matches' feel. Lights Out's first shot
+  now comes at 16 s instead of 4, which fits its briefing ("the other waits in the dark").
+- **Next: step 5,** past the edge for both maps. The far bank's houses and the few on the river's Dunwoody side are
+  built in the maps already (v1.303, v1.307). What is left is the guide's "At the edge" items still missing, and a look
+  at the far bank's haze.
