@@ -13176,3 +13176,24 @@ v1.307-v1.308. Two of the Bunratty guide's were still missing, both east of the 
 - **The rest of the full run:** `ffa-starts` failed once on the Hollow free-for-all (Eric tags you at 6.4 s). It does
   the same on main, 1 round in 15, and is filed under Found in play. Ten other suites timed out loading the page, with
   four shards and two probes sharing four cores. The ones re-run alone so far pass.
+
+## v1.311 — Mitchell round house 5's corner
+Card `fable/d51-bunratty-hollow` (backlog D.51), the fault v1.310 left before review: `tests/taggers.test.mjs` failed
+on this branch since v1.305's bigger houses. In Bunratty Infection, Mitchell came down the 3.5 m side yard between
+houses 4 and 5 and slid south along house 5's west wall (x 3.65) toward its corner at z 12.9, with the player 30 m east
+and 12 m south. Only the south part of his step gets through a wall: 0.0197 m a step, just under the tagger's "no
+progress" mark (`zStuckD`, 0.02). So he was counted wedged, and the wall-follow's sidestep, whose side was picked once at
+random, pointed north, back up the wall. He reached z 13.6, a metre short of the corner, and went back, all round.
+- **The fix:** on a fresh wedge, if the last step slid him along something (5 mm or more, and along the sidestep's line),
+  the sidestep goes the way the slide was going. A tagger in a real dead end does not slide, so the old flip after
+  0.5 s of no progress still gets him out of those. v1.310's tried fix (a lower stuck mark) is not used: it left Nick
+  short in 1 round of 4.
+- It is the taggers' own wall-follow only. The gunners' states and every map's layout are as before.
+### Verified
+- **`tests/taggers`:** Mitchell reaches the standing player at 24 s in both passes (1/60 steps and the mixed 0.05 s
+  steps), against 33 m short before. The other five taggers reach him at 10-20 s as before. Five runs in a row green,
+  and once more run beside `tests/rival`.
+- **`npm test`**, in two parallel shards: 180 of 180 suites pass, `ffa-starts` included this time.
+### Still open
+- Nothing new for a playtest. The card's open looks are v1.310's: the neighbour east of the bulb mostly behind trees,
+  and the far bank's haze at 250-300 m.
