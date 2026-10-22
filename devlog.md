@@ -13512,3 +13512,31 @@ each match? Like maybe you get an extra $0.50 per hit?" A match paid only its wi
   (`HIT_BONUS`).
 - **Shown nowhere during the match.** The HUD's cash doesn't count the bonus as you go, and there is no hit marker
   yet (D.60, next).
+
+## v1.321 — Hit markers
+Backlog D.60, Michael's note (control room, 22 Oct): "I also think adding hit markers would be cool as well, to
+confirm you were the one to hit someone." Before, the only sign of your own tag was the hit sound, and every tag
+sounds the same, whoever's BB it was. In a team match you couldn't tell your tag from a teammate's.
+- **The marker:** when your BB (or the noodle) tags a kid of the other side, a white X shows round the middle of the
+  screen (`#hitMarker`, `showHitMarker`). It is four short strokes outside the reticle, so it hides nothing you aim
+  at. It pops a little larger and fades over 0.3 s (`HIT_MARKER_SEC`), counted in game steps.
+- **Red when he is out for good:** the X is red when the tag took his last life.
+- **No marker for:**
+  - a kid already out (walking back, or hand up);
+  - a teammate;
+  - a kid in his 3 s grace after coming back.
+  None of those is a tag. Online, a tag on your friend's kid shows it too.
+- **Hidden** when the match ends.
+- **v1.320's comments** in `index.html` said v1.319. They now say v1.320.
+### Verified
+- **`tests/result-stats.test.mjs`, extended.** In Aisle Wars, with a real BB flown into each kid:
+  - No marker shows before a hit. Tagging their kid shows a white X at full opacity, and 20 steps later it is gone.
+  - Shooting the same kid again as he walks back out gives none, and neither does shooting your teammate.
+  - Tagging a kid on his last life gives a red X, and his lives read 0.
+- **By eye:** screenshots of the white and the red X over the Riverside Market lot. Both read clearly against the
+  store front and a car.
+- **These suites pass:** `result-stats`, `smoke`, `online`, `pool-noodle`, `squad-hud`, `notebook`, `vip`,
+  `ctf-clock` and `out-shot`.
+### Still open
+- **For a playtest:** the size (40 px) and the 0.3 s. There is no sound of its own; the existing hit sound plays as
+  before.

@@ -29,6 +29,13 @@
     pointer-events: none;
     z-index: 10;
   }
+  /* v1.321 (D.60): the hit marker, an X round the middle of the screen when your BB tags a kid of the other side */
+  #hitMarker {
+    position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%);
+    pointer-events: none; opacity: 0; z-index: 6;
+  }
+  #hitMarker path { stroke: #fff; stroke-width: 3; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(0,0,0,0.9)); }
+  #hitMarker.out path { stroke: #ff3b30; }
   #crosshair {
     position: absolute;
     left: 50%; top: 50%;
@@ -1117,7 +1124,7 @@
     letter-spacing: 2px;
     color: #aaa;
   }
-  #resultScreen .reward-bonus { margin-left: 10px; letter-spacing: 0.5px; color: #ddd; }   /* v1.319 (D.59) */
+  #resultScreen .reward-bonus { margin-left: 10px; letter-spacing: 0.5px; color: #ddd; }   /* v1.320 (D.59) */
   #resultScreen .reward-amount {
     font-size: 22px;
     font-weight: bold;
@@ -2180,7 +2187,7 @@
   #resultScreen .nb-paper .flavor { font-size: 17px; color: var(--nb-ink); margin: 0 0 var(--nb-rule); }
   #resultScreen .nb-paper .reward { padding: calc(var(--nb-rule) / 2) 16px; margin: 0; }
   #resultScreen .nb-paper .reward-label { font-size: 14px; color: var(--nb-pencil); }
-  #resultScreen .nb-paper .reward-bonus { color: var(--nb-ink); letter-spacing: 0; }   /* v1.319 (D.59) */
+  #resultScreen .nb-paper .reward-bonus { color: var(--nb-ink); letter-spacing: 0; }   /* v1.320 (D.59) */
   #resultScreen .nb-paper .reward-amount { font-family: var(--nb-marker); font-size: 24px; color: var(--nb-green); font-weight: 400; }
   #resultScreen .nb-paper .result-wallet { font-size: 16px; margin: 0; }
   #resultScreen .nb-paper .result-stats { margin: 0 0 var(--nb-rule); }
@@ -2486,6 +2493,7 @@
 <!-- === HUD === -->
 <div id="hud">
   <div id="crosshair"><svg id="reticleSvg" viewBox="-50 -50 100 100" width="100" height="100"></svg></div>
+  <div id="hitMarker"><svg viewBox="-20 -20 40 40" width="40" height="40"><path d="M-13,-13 L-5,-5 M13,-13 L5,-5 M-13,13 L-5,5 M13,13 L5,5"/></svg></div>
   <div id="redDotReticle"></div>
   <div id="damageVignette"></div>
   <div id="adsVignette"></div>
@@ -2576,7 +2584,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.320</div>
+  <div class="version">v1.321</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -25922,6 +25930,7 @@ function startScenario(built) {
   VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; VOICE.recentLines = []; VOICE.pending = [];   // v1.150: the speech cooldown runs on the round clock (v1.256: no lines left waiting)
   Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
+  Game.hitMarkerT = 0; Game.hitMarkers = 0;   // v1.321 (D.60)
   { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
     if (gm && typeof gm[gt] === 'number') gm[gt]++; }
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
@@ -26119,9 +26128,9 @@ function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
   st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0,
-    foe: combatantTeam(c) !== combatantTeam(Game.player) });   // v1.319 (D.59): a hit the bonus pays for
+    foe: combatantTeam(c) !== combatantTeam(Game.player) });   // v1.320 (D.59): a hit the bonus pays for
 }
-// v1.319 (backlog D.59, Michael 22 Oct: "some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get
+// v1.320 (backlog D.59, Michael 22 Oct: "some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get
 // an extra $0.50 per hit?"): every hit you land on a kid of the other side pays HIT_BONUS on top of the match's pay,
 // won or lost. Cash is whole dollars, so it pays $1 for every two hits, the odd one dropped. A Pickup Game (it pays a
 // little, never the ladder's money), the tutorial's targets and a forfeit pay none.
@@ -26335,6 +26344,7 @@ function endScenario(outcome) {
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
+  Game.hitMarkerT = 0; hitMarkerStep(0);   // v1.321 (D.60)
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
   document.getElementById('adsVignette').style.opacity = '0';
   { const so = document.getElementById('scopeOverlay'); if (so) so.style.opacity = '0'; }
@@ -26397,7 +26407,7 @@ function endScenario(outcome) {
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
-  const hitBonus = matchHitBonus(outcome), basePay = cashEarned;   // v1.319 (D.59)
+  const hitBonus = matchHitBonus(outcome), basePay = cashEarned;   // v1.320 (D.59)
   cashEarned += hitBonus.cash;
   Game.scenario.hitBonus = { hits: hitBonus.hits, cash: hitBonus.cash, base: basePay };
   Game.persist.cash += cashEarned;
@@ -26567,7 +26577,7 @@ function endScenario(outcome) {
   }
   if (rewardEl) {
     if (cashEarned > 0) {
-      // v1.319 (D.59): the hit bonus says what it paid for
+      // v1.320 (D.59): the hit bonus says what it paid for
       const hb = hitBonus.cash > 0 ? ` <span class="reward-bonus">$${basePay} + $${hitBonus.cash} hit bonus (${hitBonus.hits} hits)</span>` : '';
       rewardEl.innerHTML = `<span class="reward-label">EARNED${hb}</span> <span class="reward-amount">+$${cashEarned}</span>`;
     } else {
@@ -31370,8 +31380,28 @@ function applyBBHit(bb, c) {
     if (bb.enemyRef && bb.enemyRef !== c && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
+    if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   }
   return true;
+}
+// v1.321 (backlog D.60, Michael 22 Oct: "hit markers would be cool as well, to confirm you were the one to hit
+// someone"): your BB (or noodle) tagging a kid of the other side puts a white X round the middle of the screen for
+// HIT_MARKER_SEC, red when the tag put him out for good. A kid already out, a teammate and a kid in his grace give none.
+const HIT_MARKER_SEC = 0.3;
+function showHitMarker(c) {
+  if (combatantTeam(c) === combatantTeam(Game.player)) return;
+  Game.hitMarkerT = HIT_MARKER_SEC;
+  Game.hitMarkerOut = c.health <= 0 && c.state !== 'retreating' && !((c.lives | 0) > 0);
+  Game.hitMarkers = (Game.hitMarkers || 0) + 1;
+}
+function hitMarkerStep(dt) {
+  const el = document.getElementById('hitMarker');
+  if (!el) return;
+  if (Game.hitMarkerT > 0) Game.hitMarkerT = Math.max(0, Game.hitMarkerT - dt);
+  const k = Game.mode === 'scenario' ? (Game.hitMarkerT || 0) / HIT_MARKER_SEC : 0;
+  el.style.opacity = k > 0 ? Math.min(1, 0.35 + k).toFixed(2) : '0';
+  el.style.transform = `translate(-50%, -50%) scale(${(1 + 0.25 * k).toFixed(3)})`;
+  el.classList.toggle('out', !!Game.hitMarkerOut && k > 0);
 }
 
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
@@ -35728,6 +35758,7 @@ function stepGame(dt) {
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
     updateEnemies(dt);
     kidWinceStep(dt);   // v1.261 (D.45): after the kids have posed themselves
+    hitMarkerStep(dt);   // v1.321 (D.60)
     if (Net.active) netStep(dt);   // v1.230 (D.2)
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
@@ -37123,6 +37154,7 @@ function netTagRemote(bb, c) {
   if (c._graceT > 0) return true;
   c.lives = Math.max(0, (c.lives | 0) - 1);
   if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);
+  if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
   if (c.lives > 0) {
