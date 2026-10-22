@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.302</div>
+  <div class="version">v1.303</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -14607,6 +14607,105 @@ function buildWinnmarkCulDeSacScene(_v, tod)  { return buildWinnmarkCourtScene('
 // Returns the same shape as buildWinnmarkCourtScene so the generic
 // enterScenario placement system works without changes. Placements +
 // playerSpawns tables are populated and ready for scenarios next session.
+// v1.303 (D.51 step 1): the real place round Bunratty's bulb, in the map's own frame. n points from the bulb toward the
+// river (the real SSE), the river's line runs along (nz, -nx); its middle is s = 190 m out, 64 m wide, the water at -26 m.
+const BR_REAL = { bx: 34, bz: 2, nx: 0.3816, nz: 0.9243, s: 190, half: 32, waterY: -26, bedY: -28 };
+
+// v1.303 (D.51 step 1): scenery past a map's fence at real scale, merged into one vertex-coloured mesh (plus one for lit
+// windows at night) so a few thousand trees cost two draw calls. Items: { k: 'tree' | 'pine', x, y, z, h, r, col },
+// { k: 'house', x, y, z, yaw, w, d, h, wall, roof }, { k: 'box', x, y, z, yaw, w, h, d, col } and { k: 'strip', pts, w, col }
+// (a ribbon laid on the ground: pts are [x, y, z] down its middle). Nothing in it is solid: it is never an obstacle.
+function buildMergedScenery(items, night, seedKey) {
+  const rnd = _mulberry32(_hashStringToSeed(seedKey || 'scenery'));
+  const P = [], N = [], C = [], LP = [], LN = [], LC = [], _c = new THREE.Color();
+  function tri(a, b, c, col, lit) {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    _c.setHex(col);
+    const p = lit ? LP : P, n = lit ? LN : N, cc = lit ? LC : C;
+    for (const v of [a, b, c]) { p.push(v[0], v[1], v[2]); n.push(nx, ny, nz); cc.push(_c.r, _c.g, _c.b); }
+  }
+  function face(pts, col, inside, lit) {   // a convex polygon (3-4 points) wound to face away from `inside`
+    const a = pts[0], b = pts[1], c = pts[2];
+    const nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+    const ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+    const nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const q = (nx * (a[0] - inside[0]) + ny * (a[1] - inside[1]) + nz * (a[2] - inside[2])) < 0 ? pts.slice().reverse() : pts;
+    tri(q[0], q[1], q[2], col, lit);
+    if (q.length === 4) tri(q[0], q[2], q[3], col, lit);
+  }
+  const frame = (x, z, yaw) => { const s = Math.sin(yaw), c = Math.cos(yaw); return (lx, ly, lz) => [x + lx * c + lz * s, ly, z - lx * s + lz * c]; };
+  function box(T, y0, w, h, d, col, topCol) {
+    const x0 = -w / 2, x1 = w / 2, z0 = -d / 2, z1 = d / 2, y1 = y0 + h, inside = T(0, y0 + h / 2, 0);
+    face([T(x0, y0, z1), T(x1, y0, z1), T(x1, y1, z1), T(x0, y1, z1)], col, inside);
+    face([T(x0, y0, z0), T(x1, y0, z0), T(x1, y1, z0), T(x0, y1, z0)], col, inside);
+    face([T(x0, y0, z0), T(x0, y0, z1), T(x0, y1, z1), T(x0, y1, z0)], col, inside);
+    face([T(x1, y0, z0), T(x1, y0, z1), T(x1, y1, z1), T(x1, y1, z0)], col, inside);
+    face([T(x0, y1, z0), T(x1, y1, z0), T(x1, y1, z1), T(x0, y1, z1)], topCol != null ? topCol : col, inside);
+  }
+  if (!_bdIcosa) { const gi = new THREE.IcosahedronGeometry(1, 0).toNonIndexed(); _bdIcosa = Array.from(gi.attributes.position.array); gi.dispose(); }
+  const stats = { trees: 0, houses: 0 };
+  for (const it of items) {
+    if (it.k === 'tree' || it.k === 'pine') {
+      const T = frame(it.x, it.z, rnd() * 6.283), y = it.y - 0.3;
+      if (it.k === 'pine') {   // a loblolly: a bare trunk to half its height, a narrow cone above
+        box(T, y, 0.45, it.h * 0.62, 0.45, 0x4a3424);
+        const apex = T(0, y + it.h, 0), base = y + it.h * 0.42;
+        for (let i = 0; i < 7; i++) {
+          const a0 = i / 7 * 6.283, a1 = (i + 1) / 7 * 6.283;
+          face([T(Math.cos(a0) * it.r, base, Math.sin(a0) * it.r), T(Math.cos(a1) * it.r, base, Math.sin(a1) * it.r), apex], it.col, T(0, base + 1, 0));
+        }
+      } else {                 // a hardwood: trunk clear to well over your head, one big crown
+        box(T, y, 0.55, it.h - it.r * 1.2, 0.55, 0x4a3828);
+        const cy = y + it.h - it.r * 0.9, sy = 0.85;
+        for (let i = 0; i < _bdIcosa.length; i += 9) {
+          const v = j => T(_bdIcosa[i + j] * it.r, cy + _bdIcosa[i + j + 1] * it.r * sy, _bdIcosa[i + j + 2] * it.r);
+          face([v(0), v(3), v(6)], it.col, T(0, cy, 0));
+        }
+      }
+      stats.trees++;
+    } else if (it.k === 'house') {   // a big house: two storeys over a walk-out, a hip roof, rows of windows on its face
+      const T = frame(it.x, it.z, it.yaw), y = it.y - 0.4, w = it.w, d = it.d, h = it.h;
+      box(T, y, w, h + 0.4, d, it.wall);
+      const o = 0.6, top = y + h + 0.4, rh = Math.min(w, d) * 0.32, rIn = Math.min(w / 2 - 0.5, d / 2);
+      const A = T(-w / 2 - o, top, -d / 2 - o), Bq = T(w / 2 + o, top, -d / 2 - o), Cq = T(w / 2 + o, top, d / 2 + o), D = T(-w / 2 - o, top, d / 2 + o);
+      const R1 = T(-w / 2 - o + rIn, top + rh, 0), R2 = T(w / 2 + o - rIn, top + rh, 0), mid = T(0, top + rh * 0.3, 0);
+      face([A, Bq, R2, R1], it.roof, mid); face([D, Cq, R2, R1], it.roof, mid); face([A, D, R1], it.roof, mid); face([Bq, Cq, R2], it.roof, mid);
+      const zf = d / 2 + 0.05, n = Math.max(3, Math.round(w / 3.4));
+      for (let row = 0; row < Math.floor(h / 3.1); row++) for (let i = 0; i < n; i++) {
+        const wx = -w / 2 + (i + 0.5) * w / n, wy = y + 1.4 + row * 3.1, lit = night && rnd() < 0.3;
+        face([T(wx - 0.65, wy, zf), T(wx + 0.65, wy, zf), T(wx + 0.65, wy + 1.5, zf), T(wx - 0.65, wy + 1.5, zf)], lit ? 0xffd890 : 0x2a3440, T(wx, wy, 0), lit);
+      }
+      stats.houses++;
+    } else if (it.k === 'box') {
+      box(frame(it.x, it.z, it.yaw || 0), it.y, it.w, it.h, it.d, it.col, it.top);
+    } else if (it.k === 'strip') {
+      for (let i = 0; i + 1 < it.pts.length; i++) {
+        const a = it.pts[i], b = it.pts[i + 1], dx = b[0] - a[0], dz = b[2] - a[2], l = Math.hypot(dx, dz) || 1;
+        const ox = -dz / l * it.w / 2, oz = dx / l * it.w / 2;
+        face([[a[0] + ox, a[1], a[2] + oz], [b[0] + ox, b[1], b[2] + oz], [b[0] - ox, b[1], b[2] - oz], [a[0] - ox, a[1], a[2] - oz]], it.col, [a[0], -1000, a[2]]);
+      }
+    }
+  }
+  const group = new THREE.Group();
+  group.name = 'realScenery';
+  const mk = (p, n, c, mat) => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+    geo.computeBoundingSphere();
+    const m = new THREE.Mesh(geo, mat); m.matrixAutoUpdate = false; m.userData.backdrop = true;
+    group.add(m); return m;
+  };
+  if (P.length) mk(P, N, C, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  if (LP.length) mk(LP, LN, LC, new THREE.MeshBasicMaterial({ vertexColors: true }));
+  group.userData.stats = stats;
+  group.userData.backdrop = true;
+  return group;
+}
+
 function buildBunrattyCourtScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
 
@@ -14618,7 +14717,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // sky instead of green haze.) Night still shares the common moonlit treatment.
   const _night = (timeOfDay === 'night');
   const { sun } = applyTimeOfDay(scene, timeOfDay, {
-    dayBg: 0x88a8c8, dayFog: [35, 82],
+    dayBg: 0x88a8c8, dayFog: [45, 400],   // v1.303 (D.51 step 1): out from [35, 82], so the street, the river and the far bank show
     sunColor: 0xfff0c8, sunInt: 1.0, sunPos: [-18, 30, 14],
     dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.42,
     nightFog: [20, 66], moonPos: [-20, 38, -16],
@@ -14681,7 +14780,38 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // --- Gentle rolling micro-relief for natural, non-planar feel (small). ---
     h += 0.35 * Math.sin(x * 0.13 + 1.7) * Math.cos(z * 0.11 - 0.6);
 
+    return bunrattyRealScale(x, z, h);
+  }
+  // v1.303 (D.51 step 1, Michael: real scale; each match fenced to a today-sized part, 1A): past the fenced play box
+  // the ground is the real place's. Every term below is exactly zero inside the box (x -40..44, z -32..30) and its tree
+  // walls, so the matches play on the ground they always had. West of the entry the street climbs on to the fork with
+  // Sentinae Chase (4.2 m more, so the fork stands 14.5 m over the bulb); south and south-east the lots end at a bluff
+  // and the woods fall 22-24 m at up to ~31° to the floodplain, then a 3 m clay cut to the river, ~190 m from the bulb
+  // across its line (docs/refs/bunratty.md: 200-210 m SSE of the end); the far bank climbs 52 m. East of the bulb the
+  // creek's ravine runs down to the river ~90 m out. s is the distance from the bulb toward the river, q along it.
+  function bunrattyRealScale(x, z, h) {
+    const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
+    const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
+    const ss = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+    if (x < -42) h += 4.2 * ss((-42 - x) / 120);                               // the street climbs to the fork
+    const sb = q > -80 ? 34 + 0.37 * Math.min(0, q) : 4.4 + 0.12 * (q + 80);    // the bluff line, kept 3-7 m off the box
+    const f = ss((s - sb) / 55);
+    if (f > 0) {
+      const flood = -24 + 2 * ss((150 - s) / 120);                               // the floodplain, -22 up the slope's foot
+      h += (flood - h) * f;
+    }
+    if (s > 222) h = Math.max(h, -24 + 52 * ss((s - 226) / 75));                 // the far bank
+    const bed = -12 - 13 * ss((s + 40) / 200);                                   // the creek, falling to the river
+    h = Math.min(h, bed + 0.38 * Math.abs(q - 92));
+    h = Math.min(h, BR_REAL.bedY + 1.3 * Math.max(0, Math.abs(s - BR_REAL.s) - 31));   // the river's channel and clay cut
     return h;
+  }
+  // The mown field on the floodplain below (the Hollow's, seen from up here): 0 outside it, 1 in it, soft at the edges.
+  function bunrattyFieldK(x, z) {
+    const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
+    const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
+    const e = Math.min(s - 112, 152 - s, q + 75, -10 - q);
+    return Math.max(0, Math.min(1, e / 6));
   }
   // Expose to the generic systems via the returned scene object (below).
   const groundY = bunrattyGroundY;
@@ -14758,60 +14888,76 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // plane (then rotated -90° about X to lie flat → its local Y maps to world
   // -Z). We displace each vertex's local-Z (becomes world +Y) by groundY at
   // that world (x,z). 96×96 segments over 150m ≈ 1.5m grid — plenty smooth.
-  const groundGeo = new THREE.PlaneGeometry(150, 150, 96, 96);
+  // v1.303 (D.51 step 1): the ground runs on past the box to the river and up the far bank (x -250..350, z -150..350).
+  // Inside 150 x 150 m the grid is the old one vertex for vertex (1.5625 m); past it the cells grow to 6 m. A colour per
+  // vertex (times the old grass) browns the woods' floor past the tree walls, reds the river's clay cut and lightens the
+  // mown field on the floodplain, so the lawns in play keep their colour exactly.
+  const groundGeo = new THREE.BufferGeometry();
   {
-    const pos = groundGeo.attributes.position;
-    // After ground.rotation.x = -PI/2, a local vertex (lx, ly, lz) lands at
-    // world (lx, lz, -ly). So world X = lx, world Z = -ly, and the local Z we
-    // set becomes the world Y (height). Sample groundY at the WORLD coords.
-    for (let i = 0; i < pos.count; i++) {
-      const lx = pos.getX(i);          // local X  → world X
-      const ly = pos.getY(i);          // local Y  → world -Z
-      const wx = lx;
-      const wz = -ly;
-      pos.setZ(i, bunrattyGroundY(wx, wz));
+    const axis = (lo, hi) => {
+      const v = [];
+      for (let c = lo; c < -75 - 1e-6; c += 6) v.push(c);
+      for (let i = 0; i <= 96; i++) v.push(-75 + 150 * i / 96);
+      for (let c = 75 + 6; c < hi - 1e-6; c += 6) v.push(c);
+      v.push(hi); return v;
+    };
+    const xs = axis(-250, 350), zs = axis(-150, 350);
+    const pos = [], col = [], idx = [];
+    const B0 = { minX: -40, maxX: 44, minZ: -32, maxZ: 30 };
+    const mix = (a, b, t) => a + (b - a) * t;
+    for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
+      const x = xs[i], z = zs[j], y = bunrattyGroundY(x, z);
+      pos.push(x, y, z);
+      // multipliers on 0x567a3c: leaf litter 0x5a5232, red clay 0x8a5a3a, the mown field 0x6e8a44
+      const out = Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+      const w = Math.max(0, Math.min(1, (out - 6) / 10));
+      let r = mix(1, 1.05, w), g = mix(1, 0.67, w), bl = mix(1, 0.83, w);
+      const ds = Math.abs((BR_REAL.nx * (x - BR_REAL.bx) + BR_REAL.nz * (z - BR_REAL.bz)) - BR_REAL.s);
+      const clay = Math.max(0, Math.min(1, (40 - ds) / 4));
+      r = mix(r, 1.6, clay); g = mix(g, 0.74, clay); bl = mix(bl, 0.97, clay);
+      const fl = bunrattyFieldK(x, z);
+      r = mix(r, 1.28, fl); g = mix(g, 1.13, fl); bl = mix(bl, 1.13, fl);
+      col.push(r, g, bl);
     }
-    pos.needsUpdate = true;
+    const W = xs.length;
+    for (let j = 0; j + 1 < zs.length; j++) for (let i = 0; i + 1 < W; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    groundGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    groundGeo.setIndex(idx);
     groundGeo.computeVertexNormals();
   }
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x567a3c, roughness: 1.0 })
+    new THREE.MeshStandardMaterial({ color: 0x567a3c, roughness: 1.0, vertexColors: true })
   );
-  ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // === River backdrop on the SOUTH side (downhill) ===
-  // The Chattahoochee bends past the south treeline, below the grade. We sell
-  // the drop by placing the river plane LOWER than the grass (y=-1.6) and a
-  // stacked-stone retaining wall up at lawn height holding the lots back.
-  // It's outside the playable bounds (south wall at z≈32 blocks the player),
-  // so it's purely visible-but-walled-off — same trick as Winnmark's golf.
-  const riverY = -1.6;
-  const river = new THREE.Mesh(
-    new THREE.PlaneGeometry(120, 26),
-    new THREE.MeshStandardMaterial({ color: 0x3a5a64, roughness: 0.35, metalness: 0.25 })
-  );
-  river.rotation.x = -Math.PI / 2;
-  river.position.set(2, riverY, 54);
-  river.receiveShadow = true;
-  scene.add(river);
-  // A muddy/sandy near bank between the wall base and the water.
-  const bank = new THREE.Mesh(
-    new THREE.PlaneGeometry(120, 10),
-    new THREE.MeshStandardMaterial({ color: 0x8a7a56, roughness: 1.0 })
-  );
-  bank.rotation.x = -Math.PI / 2;
-  bank.position.set(2, riverY + 0.05, 42);
-  bank.receiveShadow = true;
-  scene.add(bank);
-  // Far bank treeline (across the river) — distant, just silhouettes over water.
-  for (let i = 0; i < 16; i++) {
-    const x = -40 + i * 6 + rng(-1.2, 1.2);
-    // Sit on the far (lower) bank level via baseY so trunk AND canopy drop together.
-    addSuburbanTree(scene, x, 66 + rng(-2, 2), { leafR: rng(2.2, 3.0), trunkH: rng(4.0, 5.6), baseY: riverY, detail: true });   // v1.125
-    // (We don't push these to obstacles — they're unreachable backdrop.)
+  // === The river (v1.303, D.51 step 1) ===
+  // It used to be a plane at y -1.6 under 5-9 m of grass (docs/refs/bunratty.md gap 7), with 16 far-bank trees buried
+  // to their crowns. Now it lies at its real distance, in the channel bunrattyRealScale cuts: murky green-brown water
+  // (docs/refs/chattahoochee.md), clipped to the ground so the edge skirt never flattens round it. The woods, the field
+  // and the far bank are bunrattyScenery's, below. The 80 numbers the far-bank trees drew (four each, and one for the
+  // leaf colour) are still drawn, so every match's cover lands where it always has.
+  for (let i = 0; i < 80; i++) rng(0, 1);
+  {
+    const R0 = BR_REAL, cx = R0.bx + R0.nx * R0.s, cz = R0.bz + R0.nz * R0.s;
+    // where the river's middle crosses the ground's west (x -250) and east (x 350) edges
+    const qW = (-250 - cx) / R0.nz, qE = (350 - cx) / R0.nz, len = qE - qW, qm = (qW + qE) / 2;
+    const water = new THREE.Mesh(
+      new THREE.PlaneGeometry(len, R0.half * 2 + 6),
+      new THREE.MeshStandardMaterial({ color: 0x5f6a4c, roughness: 0.32, metalness: 0.18 })
+    );
+    water.rotation.order = 'YXZ';
+    water.rotation.y = Math.atan2(R0.nx, R0.nz);   // the plane's width (local x) along the river
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(cx + R0.nz * qm, R0.waterY, cz - R0.nx * qm);
+    water.receiveShadow = true;
+    water.name = 'bunrattyRiver';
+    scene.add(water);
   }
 
   // === Stacked-stone retaining wall — behind MICHAEL'S ONLY (the hero house) ===
@@ -14985,9 +15131,25 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   }
 
   // v1.127: the road, the bulb and the kerbs (Winnmark's builder; the hero house's drive drops the bulb's kerb)
+  // v1.303 (D.51 step 1): past the entry the road runs on 120 m, up 4.2 m and bending west, to the fork with Sentinae
+  // Chase (210 m in all, as the real court). The lane's own samples stay where they were: the extension is laid on
+  // t < -0.06 at the same step in t, so buildStreetRoad's points from the entry to the bulb are the old ones.
+  const RX_K = 120;
+  const bunrattyRoad = (() => {
+    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (Math.hypot(roadPoint(t).x - BULB.x, roadPoint(t).z - BULB.z) < 5) { tEnd = t; break; }
+    const dt = (tEnd + 0.06) / 190, T0 = -0.06 - RX_K * dt;
+    const E0 = roadPoint(-0.06), d0 = roadDeriv(-0.06), l0 = Math.hypot(d0.x, d0.z);
+    const E1 = { x: E0.x - d0.x / l0 * 35, z: E0.z - d0.z / l0 * 35 }, E2 = { x: -125, z: 22 }, E3 = { x: -160, z: 18 };
+    const ext = u => { const m = 1 - u; return {
+      x: m*m*m*E0.x + 3*m*m*u*E1.x + 3*m*u*u*E2.x + u*u*u*E3.x, z: m*m*m*E0.z + 3*m*m*u*E1.z + 3*m*u*u*E2.z + u*u*u*E3.z }; };
+    const u = t => (-0.06 - t) / (-0.06 - T0);
+    const point = t => t >= -0.06 ? roadPoint(t) : ext(u(t));
+    const deriv = t => { if (t >= -0.06) return roadDeriv(t); const a = ext(Math.max(0, u(t) - 0.002)), b = ext(Math.min(1, u(t) + 0.002)); return { x: a.x - b.x, z: a.z - b.z }; };
+    return { point, deriv, T0, fork: E3, ext };
+  })();
   buildStreetRoad(scene, {
-    point: roadPoint, deriv: roadDeriv, groundY, groundNormal, asphMat: roadMat, houseCenters,
-    ASPH: 3.45, bulb: { x: BULB.x, z: BULB.z, r: BULB.r }, T0: -0.06, NS: 190,
+    point: bunrattyRoad.point, deriv: bunrattyRoad.deriv, groundY, groundNormal, asphMat: roadMat, houseCenters,
+    ASPH: 3.45, bulb: { x: BULB.x, z: BULB.z, r: BULB.r }, T0: bunrattyRoad.T0, NS: 190 + RX_K,
     manholes: [[0.18, 0.7], [0.62, -0.8]], drains: [[0.3, -1], [0.55, 1], [0.83, -1]],
     cracks: [[0.09, 5.2, 0.4], [0.42, 6.0, -0.3], [0.74, 5.0, 0.25]], patch: 0.5,
   });
@@ -15505,6 +15667,65 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     }
   }
 
+  // === v1.303 (D.51 step 1): past the fence, at real scale ===
+  // The woods all round (tall hardwoods and loblolly pines, trunks clear well over your head), down the bluff, on the
+  // floodplain round the mown field and up the far bank, with big houses along its top; the street's woods up to the
+  // fork, and the fork itself: Sentinae Chase crossing, the grass island with its lantern lamp. Its own seeded numbers,
+  // so no match's cover moves; one mesh by day, two at night; nothing within 6 m of the bounds and nothing solid.
+  {
+    const R0 = BR_REAL, rs = _mulberry32(_hashStringToSeed('bunratty-real|' + (_night ? 'n' : 'd')));
+    const rr = (a, b) => a + (b - a) * rs();
+    const B0 = { minX: -40, maxX: 44, minZ: -32, maxZ: 30 };
+    const items = [];
+    const LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a], PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+    const ext = [];
+    for (let i = 0; i <= 60; i++) ext.push(bunrattyRoad.ext(i / 60));
+    const SC_X = bunrattyRoad.fork.x - 9;   // Sentinae Chase's middle, running north-south past the fork
+    const nearRoad = (x, z, r) => {
+      if (Math.abs(x - SC_X) < r) return true;
+      for (const p of ext) if (Math.abs(p.x - x) < r && Math.abs(p.z - z) < r && Math.hypot(p.x - x, p.z - z) < r) return true;
+      return false;
+    };
+    const sq = (x, z) => { const dx = x - R0.bx, dz = z - R0.bz; return [R0.nx * dx + R0.nz * dz, R0.nz * dx - R0.nx * dz]; };
+    for (let gx = -250; gx <= 350; gx += 9) for (let gz = -150; gz <= 350; gz += 9) {
+      const x = gx + rr(-3.5, 3.5), z = gz + rr(-3.5, 3.5);
+      const pick = rs(), kind = rs(), hh = rs(), cc = rs();
+      const out = Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+      if (out < 12) continue;   // a crown is up to 4.8 m across its trunk: nothing within 6 m of the bounds
+      const dB = Math.hypot(x - R0.bx, z - R0.bz);
+      if (dB > 400 || (dB > 170 && pick < 0.35)) continue;
+      if (z < -36 && Math.abs(x - 2) < 50 + (-32 - z)) continue;   // the backs of the Sentinae Chase houses (the edge backdrop's)
+      const [s] = sq(x, z);
+      if (Math.abs(s - R0.s) < R0.half + 5) continue;                // the river
+      if (bunrattyFieldK(x, z) > 0.05) continue;                     // the field
+      if (nearRoad(x, z, 8)) continue;                               // the street up to the fork, and Sentinae Chase
+      if (pick < 0.2) continue;
+      if (s > 128 && s < R0.s - R0.half - 5 && pick < 0.85) continue;   // the bank itself is open: brush, logs, the water through it
+      const y = groundY(x, z);
+      if (kind < 0.35) items.push({ k: 'pine', x, y, z, h: 14 + hh * 7, r: 2.6 + cc * 1.2, col: PINE[Math.floor(cc * PINE.length) % PINE.length] });
+      else items.push({ k: 'tree', x, y, z, h: 12 + hh * 6, r: 3.2 + cc * 1.6, col: LEAF[Math.floor(cc * LEAF.length) % LEAF.length] });
+    }
+    // big houses along the far bank's top, facing the river
+    const WALLS = [0xd6c9ae, 0x9a958c, 0x8a8278, 0xe0d8c8, 0xc8b89a], ROOFS = [0x5e4a40, 0x4a4440, 0x3e4248, 0x5a4a3e];
+    for (let q = -320; q <= 340; q += rr(48, 70)) {
+      const s = 318 + rr(-6, 10), x = R0.bx + R0.nx * s + R0.nz * q, z = R0.bz + R0.nz * s - R0.nx * q;
+      if (x < -245 || x > 345 || z > 345 || Math.hypot(x - R0.bx, z - R0.bz) > 430) continue;
+      items.push({ k: 'house', x, y: groundY(x, z), z, yaw: Math.atan2(-R0.nx, -R0.nz), w: rr(20, 27), d: rr(14, 18), h: 6.6,
+        wall: WALLS[Math.floor(rs() * WALLS.length) % WALLS.length], roof: ROOFS[Math.floor(rs() * ROOFS.length) % ROOFS.length] });
+    }
+    // Sentinae Chase and the fork: asphalt laid on the ground, a mown island in the Y with the black lantern lamp
+    const scPts = []; for (let z = -150; z <= 200; z += 5) scPts.push([SC_X, groundY(SC_X, z) + 0.07, z]);
+    items.push({ k: 'strip', pts: scPts, w: 7.4, col: 0x6a6b6b });
+    const isl = { x: bunrattyRoad.fork.x + 2, z: bunrattyRoad.fork.z + 9 }, iy = groundY(isl.x, isl.z);
+    items.push({ k: 'box', x: isl.x, y: iy - 0.2, z: isl.z, w: 6, h: 0.3, d: 9, col: 0x6e8a44, yaw: 0.3 });
+    items.push({ k: 'box', x: isl.x, y: iy, z: isl.z, w: 0.16, h: 3.4, d: 0.16, col: 0x1a1a1a });
+    items.push({ k: 'box', x: isl.x, y: iy + 3.1, z: isl.z, w: 0.5, h: 0.65, d: 0.5, col: _night ? 0xffd890 : 0x2a2a28, top: 0x1a1a1a });
+    items.push({ k: 'box', x: isl.x + 1.5, y: iy, z: isl.z - 2.5, w: 0.08, h: 2.6, d: 0.08, col: 0x8a8a8a });
+    items.push({ k: 'box', x: isl.x + 1.5, y: iy + 2.35, z: isl.z - 2.5, w: 0.9, h: 0.2, d: 0.03, col: 0x2a6a3a });
+    const grp = buildMergedScenery(items, _night, 'bunratty-real');
+    scene.add(grp);
+  }
+
   // === Collect obstacles ===
   // River sits well south (z≈42-66) and below grade; the south tree wall at
   // z≈33 + a blocker keep the player out of the drop. The retaining wall AABB
@@ -15525,6 +15746,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     placements,
     playerSpawns,
     groundY,   // v1.8: terrain height function for the generic physics systems
+    viewFar: 450,   // v1.303 (D.51 step 1): the camera sees out to the far bank (the other maps keep 200)
   };
 }
 
@@ -22885,6 +23107,7 @@ function enterBedroom() {
   Game.interactables = [];
   Scenes.bedroom = buildBedroomScene();
   Game.scene = Scenes.bedroom.scene;
+  if (Game.camera.far !== 200) { Game.camera.far = 200; Game.camera.updateProjectionMatrix(); }   // v1.303 (D.51)
   Game.scenario.groundY = null;   // v1.8: bedroom is flat
 
   // Reset player at bedroom spawn
@@ -23102,11 +23325,8 @@ const EDGE_BACKDROPS = {
     S: { from: 13, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     E: { from: 8, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
   },
-  buildBunrattyCourtScene: {
-    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    W: { from: 9, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    E: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    S: { from: 43, bands: [['houses', 22], ['trees', 30]] },                         // past the pond
+  buildBunrattyCourtScene: {   // v1.303 (D.51 step 1): the woods, the street to the fork and the river are the map's own now
+    N: { from: 9, bands: [['trees', 20], ['houses', 22], ['trees', 30]] },          // the backs of the Sentinae Chase houses
   },
   buildHollowScene: {
     N: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
@@ -23525,6 +23745,7 @@ function enterScenario(scenarioId) {
     const _seedKey = (sc.seedFrom || scenarioId) + '|' + (sc.seedArg || sc.builderArg || 'default');   // v1.272: seedArg keeps a variant on its base layout
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
+    Game.camera.far = built.viewFar || 200; Game.camera.updateProjectionMatrix();   // v1.303 (D.51): a real-scale map sees further
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');
     return;

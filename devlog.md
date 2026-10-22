@@ -12597,3 +12597,74 @@ never jammed.
 ### Still open
 - Whether a jam in one burst in five makes the Tick-Tock, at two BBs a second, feel worse than the others is for a
   playtest. Its bursts are short, so a jam costs it more time per BB.
+
+## v1.303 — Bunratty past its fence is the real place
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 1 of 5. Michael chose real scale (16 Oct), with each match fenced
+to a part of the real street about today's size, and the two maps sharing an edge view (1A and 2A, 21 Oct). This step
+builds the ground and the street past the fence. The 16 matches play on the same ground as before, and nothing inside
+the box moved. Steps 2 to 5 are his house and the street's houses at real size, the Hollow's field on the river, the
+28 matches re-anchored, and the edge views.
+- **The street runs on to the fork.** Past the west entry the road climbs another 120 m to the fork with Sentinae Chase,
+  bending west. That makes it 210 m from the fork to the bulb, as the real court is. The fork stands 13.6 m over the
+  bulb (Michael: "more than 10 m"). Sentinae Chase crosses there, with a mown island in the Y, a black lantern lamp and
+  a street sign. The road is the same ribbon with gutter and kerbs, laid at the same step along the curve, so the
+  lane's samples from the entry to the bulb are the old ones.
+- **The lots end at a bluff, and the woods fall to the river.** Past the south fence the ground keeps today's level
+  for 3-7 m. Then it falls 22-24 m, at up to about 31°, to a floodplain. A 3 m clay cut drops to the water, which is
+  ~190 m out from the bulb across the river's line. The guide puts the river 200-210 m SSE of the court's end. East of
+  the bulb, the creek's ravine runs down to the river about 90 m out. The far bank climbs 52 m, with five big stucco
+  and brick houses along its top facing the water. The mown field on the floodplain is the Hollow's, seen from above;
+  step 3 builds it as a map.
+- **The buried river is fixed** (Found in play, docs/refs/bunratty.md gap 7). The old plane at y −1.6 sat under 5-9 m
+  of grass, with 16 far-bank trees buried to their crowns. All of it is gone. The new water is murky green-brown
+  (0x5f6a4c, from the Chattahoochee guide), lies at −26 m in its channel and is clipped to the ground.
+- **About 1,650 trees stand in the woods all round:** loblolly pines 14-21 m tall and hardwoods 12-18 m, with trunks
+  clear well over head height. They are thinner on the riverbank, so the water shows through. The trees, the far-bank
+  houses and the fork are one vertex-coloured mesh (two at night, for the lit windows), built by a new
+  `buildMergedScenery` that the Hollow will use too. None of it is solid, and none of it stands within 6 m of the
+  bounds. The ground under it browns to leaf litter past the tree walls and reddens at the clay cut. Inside the box
+  the colour per vertex is 1, so the lawns in play look as they did.
+- **The ground mesh grew** from 150 x 150 m to 600 x 500 m. Inside the old 150 m square it keeps the same grid
+  (1.56 m), vertex for vertex. Past that the cells are 6 m.
+- **The view reaches further.** Bunratty's day fog moved out from 35-82 m to 45-400 m. The camera's far plane is 450 m
+  on this map (`viewFar` on the built scene) and goes back to 200 m in the bedroom and on every other map. Night is
+  unchanged (fog 20-66 m).
+- **Cover is unchanged.** The 80 random numbers the old far-bank trees drew are still drawn, so every match's cover
+  lands where it did. The scenery uses its own seeded numbers.
+- **The edge backdrop** (`EDGE_BACKDROPS.buildBunrattyCourtScene`) keeps only its north side: woods, then the backs of
+  the Sentinae Chase houses, as the guide's gap 8 has it. The map now builds its own west, south and east.
+### Verified
+- New `tests/real-scale.test.mjs`. Its checks:
+  - The fork stands 13.58 m over the bulb.
+  - The ground in the box, and 2-3 m round it, matches v1.302's formula to 4e-16 m.
+  - The river is under water at all 51 points sampled along it, with a bank above the water on both sides at every one.
+  - 1,653 trees and 5 far-bank houses, none of them solid; the nearest vertex is 8.25 m outside the bounds.
+  - Of 867 rays from eye height on the hero lawn, 5 reach the water and 90 the far bank. From the bulb, 7 reach the
+    far bank.
+  - The camera's far plane is 450 m in play and 200 m back in the bedroom.
+- **Cover:** all 316 of `bunratty_team_4v4`'s obstacles are identical to main's (the same bounds hashed).
+- **Draw calls,** measured in six views against v1.302:
+  | View | v1.302 | v1.303 |
+  |---|---|---|
+  | Bulb | 401 | 401 |
+  | Entry, looking in | 1,650 | 1,636 |
+  | Lawn | 1,153 | 1,153 |
+  | North | 1,435 | 1,403 |
+  | Bulb, looking west | 1,531 | 1,519 |
+  | Mid-street | 629 | 626 |
+
+  The test holds 2,060: the decision's rule, a quarter over today, applied to today's worst view. The decision's
+  figure of 1,240 came from a lighter view. Triangles in the scene went from 237k to 311k.
+- Building the map takes 663 ms against 513 ms on v1.302.
+- These suites pass: `real-scale`, `bunratty-road`, `bunratty-polish`, `backdrop`, `bulb-sight`, `house-backs`,
+  `houses`, `layout-same`, `smoke`.
+### Still open
+- **The water can't be seen from the bulb.** The card asked for it, but at real scale it is out of sight. The bulb
+  sits at the lawns' height, and the lawn's edge 28 m out hides anything more than about 8° down; the water is 26 m
+  below and 190 m away. The bulb sees the far bank, and the back lawn sees the water. Step 2's terraces, with the back
+  lawn 4.3 m under the main floor, may open the view a little. The test asks for the far bank from the bulb and the
+  water from the lawn.
+- **The far bank reads hazy at 250-300 m** under the longer fog. Whether the far houses should come forward or the fog
+  thin further is a look for step 5 and a playtest.
+- **The street's houses past the fence wait for step 2,** when the houses go to real size. The road up to the fork runs
+  through woods for now.
