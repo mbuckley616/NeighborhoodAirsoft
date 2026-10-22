@@ -1117,6 +1117,7 @@
     letter-spacing: 2px;
     color: #aaa;
   }
+  #resultScreen .reward-bonus { margin-left: 10px; letter-spacing: 0.5px; color: #ddd; }   /* v1.319 (D.59) */
   #resultScreen .reward-amount {
     font-size: 22px;
     font-weight: bold;
@@ -2179,6 +2180,7 @@
   #resultScreen .nb-paper .flavor { font-size: 17px; color: var(--nb-ink); margin: 0 0 var(--nb-rule); }
   #resultScreen .nb-paper .reward { padding: calc(var(--nb-rule) / 2) 16px; margin: 0; }
   #resultScreen .nb-paper .reward-label { font-size: 14px; color: var(--nb-pencil); }
+  #resultScreen .nb-paper .reward-bonus { color: var(--nb-ink); letter-spacing: 0; }   /* v1.319 (D.59) */
   #resultScreen .nb-paper .reward-amount { font-family: var(--nb-marker); font-size: 24px; color: var(--nb-green); font-weight: 400; }
   #resultScreen .nb-paper .result-wallet { font-size: 16px; margin: 0; }
   #resultScreen .nb-paper .result-stats { margin: 0 0 var(--nb-rule); }
@@ -2574,7 +2576,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.319</div>
+  <div class="version">v1.320</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -26116,7 +26118,19 @@ function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0, damage: [] 
 function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
-  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0,
+    foe: combatantTeam(c) !== combatantTeam(Game.player) });   // v1.319 (D.59): a hit the bonus pays for
+}
+// v1.319 (backlog D.59, Michael 22 Oct: "some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get
+// an extra $0.50 per hit?"): every hit you land on a kid of the other side pays HIT_BONUS on top of the match's pay,
+// won or lost. Cash is whole dollars, so it pays $1 for every two hits, the odd one dropped. A Pickup Game (it pays a
+// little, never the ladder's money), the tutorial's targets and a forfeit pay none.
+const HIT_BONUS = 0.5;
+function matchHitBonus(outcome) {
+  const def = SCENARIOS[Game.scenario.active], st = Game.scenario.stats;
+  if (!st || !def || def.pickup || def.range || def.tutorial || outcome === 'forfeit') return { hits: 0, cash: 0 };
+  const hits = st.tags.filter(t => t.foe).length;
+  return { hits, cash: Math.floor(hits * HIT_BONUS) };
 }
 // v1.238 (backlog D.34, Michael 14 Oct: "a 'damage report' after you've been eliminated from a match that shows where
 // you were shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that
@@ -26290,7 +26304,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   html += dmgHtml;
   el.innerHTML = html;
   if (dmgHtml) { try { drawDamageReport(); } catch (e) { console.warn('damage report', e); } }
-  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
+  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou, hitBonus: Game.scenario.hitBonus || null,
     time: Game.scenario.roundTime || 0, best, opened, reach, rival, damage: dmgHtml ? (st.damage || []).slice() : [] };
 }
 
@@ -26383,6 +26397,9 @@ function endScenario(outcome) {
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
+  const hitBonus = matchHitBonus(outcome), basePay = cashEarned;   // v1.319 (D.59)
+  cashEarned += hitBonus.cash;
+  Game.scenario.hitBonus = { hits: hitBonus.hits, cash: hitBonus.cash, base: basePay };
   Game.persist.cash += cashEarned;
   if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup) {   // v1.201: a pickup game is no step on the ladder
     Game.persist.completed[Game.scenario.active] = true;
@@ -26550,7 +26567,9 @@ function endScenario(outcome) {
   }
   if (rewardEl) {
     if (cashEarned > 0) {
-      rewardEl.innerHTML = `<span class="reward-label">EARNED</span> <span class="reward-amount">+$${cashEarned}</span>`;
+      // v1.319 (D.59): the hit bonus says what it paid for
+      const hb = hitBonus.cash > 0 ? ` <span class="reward-bonus">$${basePay} + $${hitBonus.cash} hit bonus (${hitBonus.hits} hits)</span>` : '';
+      rewardEl.innerHTML = `<span class="reward-label">EARNED${hb}</span> <span class="reward-amount">+$${cashEarned}</span>`;
     } else {
       rewardEl.innerHTML = `<span class="reward-label">NO REWARD</span> <span class="reward-amount">$0</span>`;
     }
@@ -37427,7 +37446,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
   const foot = locked
     ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + (num - 1) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
     : `<div class="sc-card-foot">
-        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}</span>
+        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}${sc.tutorial || sc.pickup ? '' : ' · +50¢ A HIT'}</span>
         <button class="sc-go" data-launch="${scenarioId}">START</button>
       </div>`;
   return `

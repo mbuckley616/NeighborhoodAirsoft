@@ -13477,3 +13477,38 @@ only, as his note asked.
   fix is next: a taller wall and better crenellations on the fort. The new field can also be set on the night match.
 - A kid wedged on his way home is still sent there at once by the v1.164 watchdog, so a few comebacks are about
   20 s rather than 30.
+
+## v1.320 — A hit bonus: 50¢ for every hit
+Backlog D.59, Michael's note (control room, 22 Oct): "Can we have some sort of 'Bonus' system to give you extra $ in
+each match? Like maybe you get an extra $0.50 per hit?" A match paid only its win or loss money: $2-$11 a win, from
+`scaledReward`. Landing ten hits on the way to a loss paid the same as hiding.
+- **The rule:** every hit you land on a kid of the other side pays 50¢ on top of the match's pay, won or lost
+  (`HIT_BONUS`, `matchHitBonus`). Each hit on a kid is a tag, so the bonus counts the result screen's tags. A tag now
+  records whether the kid was on the other side, so hits on your own team pay nothing.
+- **Whole dollars:** cash has always been whole dollars, so the bonus pays $1 for every two hits and drops the odd
+  50¢. Seven hits pay $3.
+- **Where it pays nothing:** a forfeit, the tutorial's targets and a Pickup Game. The board's games pay "a little"
+  ($3 a win), Michael's choice when it was built, and a 5-life 1v1 there would have paid more in bonus than the win.
+- **Where you see it:**
+  - On the result card, by the pay: "EARNED $7 + $3 hit bonus (7 hits) +$10".
+  - On every ladder card of the map screen, after the pay: "WIN +$7 · LOSE +$2 · +50¢ A HIT".
+### Verified
+- **`tests/result-stats.test.mjs`, extended.** In Aisle Wars ($7 a win) you land five hits on their kids and one on
+  each of your three:
+  - The tags mark five as the other side's.
+  - The win pays $9: $7 and a $2 bonus, the fifth 50¢ dropped. The card reads "$7 + $2 hit bonus (5 hits)" and +$9.
+  - Six hits pay $3 in a loss, and nothing in a forfeit or a Pickup Game.
+  - The map card has "+50¢ A HIT", and the tutorial's card does not.
+  - The first section's one-tag win pays no bonus (half a dollar, dropped), so its IN REACH line is unchanged.
+- **By eye:** the result card with seven hits, in the notebook style: the bonus reads in ink beside EARNED. The map
+  cards at 1024x700, 1280x720 and 1920x1080: the pay line never runs under START or out of its card. At 1024 it wraps
+  to two lines, as long pay lines already did.
+- **These suites pass:** `result-stats`, `autosave`, `bellfield`, `ctf-clock`, `last-saturday`, `map-screen`,
+  `notebook`, `one-ending`, `online`, `pickup`, `pickup-clock`, `pickup-ffa`, `pool-noodle`, `wallet`, `smoke`,
+  `result-text`, `country-club`, `grocery-store`, `high-school`, `northcliff` and `sell-back`.
+### Still open
+- **For Michael:** whether 50¢ is right. A ladder win pays up to $20, and every 10 hits add $5,
+  so the shop's guns come sooner. How many hits a real round lands is for a playtest. The amount is one number
+  (`HIT_BONUS`).
+- **Shown nowhere during the match.** The HUD's cash doesn't count the bonus as you go, and there is no hit marker
+  yet (D.60, next).
