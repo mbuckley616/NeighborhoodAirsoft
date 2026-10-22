@@ -12753,3 +12753,84 @@ to take the terraces. The street's other houses keep their size for now.
   - The side yard as the one way from the front to the back.
   - The four matches whose `hero_backyard` kid now starts by the steps.
 - The house's stucco reads paler than the photos' cream under the day light, as the other houses do.
+
+## v1.305 — The street's houses at real size
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, second part. v1.304 built Michael's house at about its real size,
+so it stood twice as big as the six 8-9 m colonials round it. The guide calls the court's houses "very large and
+spacious", 15-25 m across, in mixed styles (docs/refs/bunratty.md, "The buildings"). The colonials were Winnmark's house
+with its shutters and blue windows, seven times over. Each match is fenced to a today-sized part of the street (1A), so
+the houses could not grow to full size without eating the yards the matches fight in. They grow as far as the lots
+allow, and the street's look comes from the guide instead.
+- **Six new houses** (`BR_NEIGHBOURS`, built by `buildBunrattyNeighbours`). Each keeps its old front line and grows
+  back and sideways. Three of them have a two-bay garage wing, set 1.2 m back, with a concrete apron to the drive.
+  | House | Style | Main block | Garage wing |
+  |---|---|---|---|
+  | 0 (north, Sean's) | grey-beige stucco | 13 x 10 m | 5.4 x 5 m |
+  | 1 (north) | cream, columned portico | 15 x 10 m | — |
+  | 2 (north) | tan-grey brick | 13 x 10 m | 6 x 6.5 m |
+  | 3 (south) | cream stucco | 12 x 9.5 m | — |
+  | 4 (south) | brick | 11 x 9 m | 5.5 x 5.5 m |
+  | 5 (south, by Michael's) | grey-beige stucco | 10.8 x 9.5 m | — |
+
+  The old houses were 8-9 x 7 m. The guide's three styles:
+  - **Stucco:** French-eclectic, with heavy cream trim, quoins up the front corners, arched windows downstairs and a
+    steep hip roof with a front cross gable.
+  - **Brick:** white trim, twin front gables, and an arched portico with its own gable.
+  - **Portico:** a two-storey portico on four columns under a balustrade.
+
+  Every house has double wood doors under a lit fanlight, up a three-riser stoop, with lanterns either side. It has
+  mulch beds along the front, a chimney, windows on all sides, and a back door with a step. All six are baked into one
+  group: 22 draw calls together, where the colonials cost about 15 meshes each.
+- **The north lawns bank up over the kerb** (gap 5d). From a metre past the asphalt they rise 1.4 m over 5.5 m, 21° at
+  the steepest (the kids walk 25°). They are level from there to the houses and the woods behind. The bank fades out
+  past the west entry and before the bulb. `bunrattyNorthBank`, added to the ground; nothing on the road or south of it
+  moves.
+- **Drives** run to each garage wing, or to the door, and the kerb drops there (`dx` on the house's entry, which
+  `buildStreetRoad`'s kerb now reads, falling back to `x`, so Winnmark is unchanged). The mailboxes and bins follow
+  the drives.
+- **Cover and anchors stay put.** The scatter trees still steer round the old footprints, so every number they draw is
+  drawn as before. Trees that stand on the new houses (or within 0.8 m) are taken out again. A backyard prop that lands
+  on a bigger house goes out 1.5 m behind it.
+  - Every `houseN_backyard` anchor and every start stands at least 0.9 m clear of the new walls.
+  - One start moved: the free-for-all's `ffa_5` (Priya), from (18.5, 18.5) to (16.5, 20). The bank lifts your
+    `ffa_side` start between houses 1 and 2 by 1.4 m, and from there you and she saw each other across the street.
+    The new spot is the nearest that keeps the lot's rule.
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - The six main blocks measure 13 x 10, 15 x 10, 13 x 10, 12 x 9.5, 11 x 9 and 10.8 x 9.5 m, in all three styles.
+  - The six cost 22 draw calls.
+  - Every backyard anchor and start is at least 0.9 m clear of them. A flood of the kids' walkable cells from the bulb
+    reaches every one.
+  - The bank is 1.4 m in front of the north houses and 20.9° at the steepest, with nothing on the road or south of it.
+  - The ground everywhere else in the box is still v1.302's, to 1e-9 m.
+  - Two new views of the street join the draw-call test. All eight views are inside the 2,060 budget.
+- **Draw calls in the same four views,** on v1.304 and v1.305:
+  | View | v1.304 | v1.305 |
+  |---|---|---|
+  | Down the street | 834 | 816 |
+  | Along the lane | 461 | 453 |
+  | North lawn | 630 | 582 |
+  | The entry | 1,547 | 1,475 |
+
+  Triangles in the scene went from 317k to 306k.
+- **Changed tests.** These pinned Winnmark's colonial on Bunratty and now check Bunratty's own houses:
+  - `houses`: no colonial is left on Bunratty.
+  - `house-backs`: each of the six has a door on its back wall, and nothing on the back below 2 m stands more than
+    0.3 m off the wall.
+  - `bunratty-polish`: no colonial is left on Bunratty.
+  - `bunratty-road`: the kerb drops at the new drives.
+- **These suites pass:** `real-scale`, `bunratty-road`, `bunratty-polish`, `houses`, `house-backs`, `ffa-starts` (after
+  the `ffa_5` move), `fence-bound`, `layout-same`, `smoke`, `bulb-sight`, `vip-spawn`, `backdrop`, `kid-hold`,
+  `last-saturday`, `pincer` and `cover-fire`.
+- **The stuck-kid sweep on all 16 Bunratty matches** (3 ways each, up to 90 s) passed: no kid holds a moving state for
+  over 15 s. The worst was 5 s (Nick, chasing, behind house 2's back wall in Infection). No page errors, by day or at
+  night; at night the windows and fanlights light.
+### Still open
+- **The houses are about two-thirds of real size.** The real ones are 15-25 m across on 50-60 m lots. Growing them
+  further would eat the yards the matches use. A larger play area for some matches would make room, but that is a
+  design call: Michael's 1A kept each match today-sized.
+- **The garages face the street, not the side.** The guide's houses have side-entry garages. The wings face the street
+  because the lots have no room for a court beside them.
+- **What only a playtest can judge:** the north bank as cover (a kid crouched at its top looks down onto the lane), and
+  the narrower side yards between the bigger houses and the fences.
+- **D.40's backyard range matched to Michael's terraces is the rest of step 2.**
