@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.306</div>
+  <div class="version">v1.307</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16311,6 +16311,9 @@ function buildBunrattyCourtSceneDefault(_v, tod) { return buildBunrattyCourtScen
 // Follows the Bunratty builder contract exactly: groundY single-source-of-
 // truth, sinkObs/groundNormal/layOnSlope, displaced ground, obstacle AABBs,
 // placements + playerSpawns tables, and the standard scene return object.
+// v1.307 (D.51 step 3): the Hollow's river at real scale: the near bank's clay cut starts at cutX (past the tree ranks'
+// west end), the bed, the water, and the far (Dunwoody) bank's cut at farX, 62 m across.
+const HW = { cutX: -43.8, bedY: -3.4, waterY: -2.5, farX: -106 };
 function buildHollowScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
 
@@ -16323,7 +16326,7 @@ function buildHollowScene(variant, timeOfDay) {
   const _night = (timeOfDay === 'night');
   const { sun } = applyTimeOfDay(scene, timeOfDay, {
     // Bright clear blue sky; fog gives gentle river haze in the distance.
-    dayBg: 0x8fc4ec, dayFog: [40, 120],
+    dayBg: 0x8fc4ec, dayFog: [45, 320],   // v1.307 (D.51 step 3): out from [40, 120], so the far bank and the bluff show
     // HIGH NOON: sun almost straight overhead, bright and near-white-warm.
     sunColor: 0xfff6e0, sunInt: 2.0, sunPos: [6, 48, 10],
     // Slightly higher fill than the raking version (noon shadows are short).
@@ -16396,6 +16399,21 @@ function buildHollowScene(variant, timeOfDay) {
     // Gentle natural micro-relief — FADED OUT inside the creek channel so the
     // streambed stays smooth (water clipping came from this wobble).
     h += 0.28 * (1 - inChannel) * Math.sin(x * 0.12 + 0.6) * Math.cos(z * 0.10 - 1.1);
+    return hollowRealScale(x, z, h);   // v1.307
+  }
+  // v1.307 (D.51 step 3, Michael: real scale, each match on a today-sized part (1A), the maps sharing an edge view (2A);
+  // docs/refs/chattahoochee.md gaps 5-6): past the play box the ground is the real place's. Every term is zero inside
+  // the box and on the perimeter tree ranks (x -43.6 to 52, z to ±44), so the matches play on the ground they had. Past
+  // the ranks' west end the bank's clay cut drops 2.4 m to the river's bed (HW), the river runs 62 m wide, the far (Dunwoody)
+  // bank rises from its own clay cut 46 m up a ~30° wooded slope. East of the field the floodplain runs on 14 m, then
+  // the bluff climbs 24 m, up to the backs of the Bunratty houses.
+  function hollowRealScale(x, z, h) {
+    const ss = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+    if (x < HW.cutX) {
+      h += (HW.bedY - h) * ss((HW.cutX - x) / 1.8);
+      if (x < HW.farX) h = HW.bedY + 2.6 * ss((HW.farX - x) / 2) + 46 * ss((HW.farX - 3 - x) / 110);
+    }
+    if (x > 58) h += 24 * ss((x - 60) / 56);
     return h;
   }
   const groundY = hollowGroundY;
@@ -16444,23 +16462,47 @@ function buildHollowScene(variant, timeOfDay) {
   }
 
   // === Ground — forest floor, DISPLACED plane ===
-  const groundGeo = new THREE.PlaneGeometry(150, 150, 96, 96);
+  // v1.307 (D.51 step 3): the ground runs on past the box to the far bank and up the bluff (x -300..260, z -260..260).
+  // Inside 150 x 150 m the grid is the old one vertex for vertex (1.5625 m); past it the cells grow to 6 m. A colour
+  // per vertex (times the old floor) browns the woods' floor past the tree ranks and reddens the river's clay cuts, so
+  // the field in play keeps its colour exactly.
+  const groundGeo = new THREE.BufferGeometry();
   {
-    const pos = groundGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const lx = pos.getX(i);
-      const ly = pos.getY(i);
-      pos.setZ(i, groundY(lx, -ly));
+    const axis = (lo, hi) => {
+      const v = [];
+      for (let c = lo; c < -75 - 1e-6; c += 6) v.push(c);
+      for (let i = 0; i <= 96; i++) v.push(-75 + 150 * i / 96);
+      for (let c = 75 + 6; c < hi - 1e-6; c += 6) v.push(c);
+      v.push(hi); return v;
+    };
+    const xs = axis(-300, 260), zs = axis(-260, 260);
+    const pos = [], col = [], idx = [], mix = (a, b, t) => a + (b - a) * t;
+    for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
+      const x = xs[i], z = zs[j];
+      pos.push(x, groundY(x, z), z);
+      // multipliers on 0x3a4a2a: leaf litter past the ranks, red clay at the two cuts
+      const out = Math.max(-38 - x, x - 52, Math.abs(z) - 44);
+      const w = Math.max(0, Math.min(1, (out - 2) / 8));
+      let r = mix(1, 1.15, w), g = mix(1, 0.8, w), b = mix(1, 0.95, w);
+      const clay = Math.max(0, Math.min(1, Math.max(1.2 - Math.abs(x - (HW.cutX - 1)), 1.8 - Math.abs(x - (HW.farX - 1.4)))));
+      r = mix(r, 1.6, clay); g = mix(g, 0.74, clay); b = mix(b, 0.97, clay);
+      col.push(r, g, b);
     }
-    pos.needsUpdate = true;
+    const W = xs.length;
+    for (let j = 0; j + 1 < zs.length; j++) for (let i = 0; i + 1 < W; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    groundGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    groundGeo.setIndex(idx);
     groundGeo.computeVertexNormals();
   }
   // Dark earthy forest-floor green (dirt-and-leaf-litter, not lawn).
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x3a4a2a, roughness: 1.0 })
+    new THREE.MeshStandardMaterial({ color: 0x3a4a2a, roughness: 1.0, vertexColors: true })
   );
-  ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
@@ -16489,55 +16531,32 @@ function buildHollowScene(variant, timeOfDay) {
   // it's clearly visible from shore (the old river sat ~18m past the wall and
   // ~1.7m down → invisible). The creek main run drains into it at the mouth.
   // ===================================================================
-  const RIVER_Y = -1.0;                 // river surface height (world Y)
+  const RIVER_Y = -1.0;                 // the creek's level at its mouth inside the box (v1.307: the river is HW.waterY)
   const treeObs = [];   // collidable trunks (river treeline is scenic, not pushed)
   {
-    // Main river body — vivid blue, wide, surface clearly above the channel bed.
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x2f6f9e, roughness: 0.22, metalness: 0.18,
-      transparent: true, opacity: 0.95,
-    });
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(30, 170), waterMat);
+    // v1.307 (D.51 step 3, docs/refs/chattahoochee.md gaps 4-6): the river at real scale, in the channel the ground
+    // cuts past the bank's clay cut: 62 m of murky olive water (Michael: "more green/dark/murky"), opaque and matt, so
+    // the cyan sheet, its shallows strip, the mud strip and the flat far-side strip are gone. The far bank and its
+    // houses are the scenery's, below.
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(HW.cutX + 1 - (HW.farX - 2), 560),
+      new THREE.MeshStandardMaterial({ color: 0x3e4430, roughness: 0.55, metalness: 0 }));   // reads #928f5c-ish under the noon sun
     water.rotation.x = -Math.PI / 2;
-    water.position.set(-54, RIVER_Y, 0);          // body extends far west
-    water.receiveShadow = true;
+    water.position.set((HW.cutX + 1 + HW.farX - 2) / 2, HW.waterY, 0);
+    water.receiveShadow = true; water.name = 'hollowRiver';
     scene.add(water);
-    // Near-edge shallows strip right at the bank (brighter blue-green), reaching
-    // in to x≈-39 so it's visible the moment you crest the bank.
-    const shallowMat = new THREE.MeshStandardMaterial({
-      color: 0x3f97b0, roughness: 0.28, metalness: 0.12, transparent: true, opacity: 0.92,
-    });
-    const shallow = new THREE.Mesh(new THREE.PlaneGeometry(8, 170), shallowMat);
-    shallow.rotation.x = -Math.PI / 2;
-    shallow.position.set(-42, RIVER_Y + 0.05, 0);
-    scene.add(shallow);
-    // Near bank lip — a sloped dark mud strip from grass (x≈-38) down to water.
-    const bankMat = new THREE.MeshStandardMaterial({ color: 0x3a2f1e, roughness: 1.0 });
-    const bank = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 170), bankMat);
-    bank.rotation.x = -Math.PI / 2;
-    bank.rotation.z = 0;
-    bank.position.set(-38.5, RIVER_Y + 0.45, 0);
-    scene.add(bank);
-    // Far-side LAND strip (other side of the river) — raised a touch.
-    const farLand = new THREE.Mesh(
-      new THREE.PlaneGeometry(34, 170),
-      new THREE.MeshStandardMaterial({ color: 0x32421f, roughness: 1.0 })
-    );
-    farLand.rotation.x = -Math.PI / 2;
-    farLand.position.set(-78, RIVER_Y + 1.0, 0);
-    scene.add(farLand);
-    // Far-side DENSE tree wall (scenic only, no collision — player can't reach).
+    // v1.307: the 26 far-side trees are gone with the flat strip they stood on, but they are still built (into a
+    // scene nobody sees) so their random numbers are drawn and every match's woods and cover land where they did
+    const nowhere = new THREE.Scene();
     for (let i = 0; i < 26; i++) {
       const fx = rng(-92, -68);
       const fz = -80 + i * 6.3 + rng(-1.5, 1.5);
       const fsh = gameRandom() < 0.5 ? 'pine' : 'round';
-      addSuburbanTree(scene, fx, fz, {
+      addSuburbanTree(nowhere, fx, fz, {
         shape: fsh, leafR: rng(2.2, 3.4), trunkH: rng(3.8, 6.5),
         leafColor: fsh === 'pine' ? (gameRandom() < 0.5 ? 0x254526 : 0x2c5230)
                                   : (gameRandom() < 0.5 ? 0x34521f : 0x3e5e26),
-        baseY: RIVER_Y + 1.0, detail: true,   // v1.126: the round ones are Winnmark's low-poly tree
+        baseY: RIVER_Y + 1.0, detail: true,
       });
-      // (intentionally NOT pushed to treeObs — unreachable backdrop)
     }
     // Hard blocker so the player can't enter the water/cross.
     // (Pushed into obstacles list at the end.)
@@ -16649,8 +16668,8 @@ function buildHollowScene(variant, timeOfDay) {
   // ===================================================================
   const creekObs = [];
   {
-    const creekMat = new THREE.MeshStandardMaterial({
-      color: 0x2f6f9e, roughness: 0.22, metalness: 0.16,
+    const creekMat = new THREE.MeshStandardMaterial({   // v1.307: murky, a shade darker than the river (was 0x2f6f9e)
+      color: 0x353a26, roughness: 0.5, metalness: 0,
       transparent: true, opacity: 0.92, side: THREE.DoubleSide,
     });
     // Water-surface level at a creek point: floor + fill, but eased to the
@@ -16661,6 +16680,10 @@ function buildHollowScene(variant, timeOfDay) {
       if (x < -30) {
         const t = Math.max(0, Math.min(1, (-30 - x) / 12));  // 0 at -30 → 1 at -42
         lvl = lvl * (1 - t) + (RIVER_Y) * t;
+      }
+      if (x < -36) {   // v1.307: the river lies lower now (HW.waterY): the creek runs down to it at the mouth
+        const t = Math.min(1, (-36 - x) / 7), k = t * t * (3 - 2 * t);
+        lvl = creekWaterY(-36, z) * (1 - k) + HW.waterY * k;
       }
       return lvl;
     }
@@ -17154,6 +17177,98 @@ function buildHollowScene(variant, timeOfDay) {
     ffa_west:{ pos: P(-34, -18.5), yaw: -Math.PI / 2 },   // v1.265: the free-for-all's, in the west woods facing east (v1.267: 11 m south-west, 30 m from every kid)
   };
 
+  // === v1.307 (D.51 step 3): past the box, at real scale ===
+  // The floodplain woods up and down the river and the bluff behind the field (tall hardwoods, a minority of pines),
+  // thicket and deadfall between the bounds and the tree ranks (Michael: "pretty thick" off the trails), the near bank's
+  // driftwood and a fallen tree lying into the water, across the river the far bank's wooded slope with big houses up
+  // top and a few houses down against the water with their docks, and the dirt trail down the bluff into the field,
+  // with the WIZARD HOLLOW sign on a big oak at its head. Its own seeded numbers, so no match's cover moves; one mesh
+  // by day, two at night, and nothing solid. The thicket stands from 2 m past the bounds; BBs are dropped there.
+  {
+    const rs = _mulberry32(_hashStringToSeed('hollow-real|' + (_night ? 'n' : 'd'))), rr = (a, b) => a + (b - a) * rs();
+    const items = [], gY = groundY;
+    const LEAF = [0x4f5839, 0x5d6b3a, 0x4a5a32, 0x566634, 0x45522e], PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+    const SHRUB = [0x4f5d31, 0x46542c, 0x56643a], LOG = 0x706855, DEAD = 0x595d59, DRIFT = 0x6a5b48, BLEACH = 0xc9b79b;
+    const TRAIL_Z = 10;   // the trail comes down the bluff into the field from the east
+    const outBox = (x, z) => Math.max(-38 - x, x - 44, Math.abs(z) - 36);
+    // the woods: nothing within the tree ranks (x to 52, z to ±44) or 12 m of the bounds, nothing in the river
+    for (let gx = -300; gx <= 260; gx += 10) for (let gz = -260; gz <= 260; gz += 10) {
+      const x = gx + rr(-4, 4), z = gz + rr(-4, 4), pick = rs(), kind = rs(), hh = rs(), cc = rs();
+      if (Math.max(-50 - x, x - 56, Math.abs(z) - 48) < 0) continue;
+      if (x < HW.cutX + 2 && x > HW.farX - 3) continue;                              // the river
+      if (Math.hypot(x, z) > 330 || (Math.hypot(x, z) > 190 && pick < 0.35) || pick < 0.12) continue;
+      if (x > 50 && Math.abs(z - TRAIL_Z) < 3.5) continue;                           // the trail
+      if (x < HW.farX && x > -160 && pick < 0.45) continue;                          // the far slope, open enough to see up
+      const y = gY(x, z);
+      if (kind < 0.22) items.push({ k: 'pine', x, y, z, h: 16 + hh * 8, r: 2.6 + cc * 1.2, col: PINE[Math.floor(cc * PINE.length) % PINE.length] });
+      else items.push({ k: 'tree', x, y, z, h: 16 + hh * 9, r: 3.6 + cc * 1.8, col: LEAF[Math.floor(cc * LEAF.length) % LEAF.length] });
+    }
+    // the thicket round the field: shrubs and deadfall between the bounds and the ranks, and on east past them
+    for (let i = 0; i < 260; i++) {
+      const side = rs(), t = rs(), d = rr(2.2, 13);
+      let x, z;
+      if (side < 0.36) { x = -40 + t * 92; z = -36 - d; }
+      else if (side < 0.72) { x = -40 + t * 92; z = 36 + d; }
+      else { x = 44 + d; z = -44 + t * 88; }
+      if (x > 44 && Math.abs(z - TRAIL_Z) < 3) continue;
+      if (x < HW.cutX + 1.5) continue;
+      const y = gY(x, z), c = rs();
+      if (c < 0.7) items.push({ k: 'tree', x, y: y + 0.25, z, h: rr(1.3, 2.6), r: rr(0.8, 1.5), col: SHRUB[Math.floor(c * 10) % SHRUB.length] });
+      else if (c < 0.88) items.push({ k: 'box', x, y: y - 0.1, z, yaw: rr(0, 3.14), w: rr(4, 8), h: rr(0.35, 0.5), d: rr(0.35, 0.5), col: LOG });
+      else items.push({ k: 'box', x, y: y - 0.1, z, yaw: rr(0, 3.14), w: rr(2.5, 4.5), h: rr(0.9, 1.4), d: rr(1.6, 2.6), col: DEAD });
+    }
+    // the near bank: shrubs along the top of the cut, driftwood piles and a fallen tree lying out into the water
+    for (let z = -150; z <= 150; z += rr(4, 9)) items.push({ k: 'tree', x: HW.cutX + rr(-0.2, 1.2), y: gY(HW.cutX + 0.5, z) + 0.2, z, h: rr(2, 3.6), r: rr(1, 1.7), col: SHRUB[Math.floor(rs() * 3) % 3] });
+    for (const [z, n] of [[-58, 6], [22, 5], [96, 7]]) for (let i = 0; i < n; i++)
+      items.push({ k: 'box', x: HW.cutX - 2.5 + rr(-1.5, 1.5), y: HW.waterY - 0.2 + rr(0, 0.9), z: z + rr(-2.5, 2.5), yaw: rr(0, 3.14), w: rr(3, 6), h: 0.35, d: 0.35, col: i % 2 ? DRIFT : BLEACH });
+    {
+      const z0 = -18, len = 13;   // a whole tree down from the bank, its crown in the water
+      items.push({ k: 'box', x: HW.cutX - len / 2 + 0.5, y: HW.waterY - 0.1, z: z0 + 1.5, yaw: -0.22, w: len, h: 0.55, d: 0.55, col: BLEACH });
+      for (let i = 0; i < 6; i++) items.push({ k: 'box', x: HW.cutX - len + rr(0, 3), y: HW.waterY - 0.2, z: z0 + rr(-2, 4), yaw: rr(0, 3.14), w: rr(2, 4), h: 0.18, d: 0.18, col: BLEACH });
+    }
+    // across the river: big houses up the far bank, facing the water, and a few down against it with their docks
+    const WALLS = [0xd8d0bc, 0xd6c9ae, 0x9a958c, 0x8a8278, 0xe0d8c8], ROOFS = [0x5e4a40, 0x4a4440, 0x3e4248];
+    for (let z = -210; z <= 210; z += rr(48, 66)) {
+      const x = -196 + rr(-6, 8);
+      items.push({ k: 'house', x, y: gY(x, z), z, yaw: Math.PI / 2, w: rr(20, 27), d: rr(14, 18), h: 6.6,
+        wall: WALLS[Math.floor(rs() * WALLS.length) % WALLS.length], roof: ROOFS[Math.floor(rs() * ROOFS.length) % ROOFS.length] });
+    }
+    for (const z of [-64, 14, 78]) {
+      const x = HW.farX - 9, y = gY(x, z);
+      items.push({ k: 'house', x, y, z, yaw: Math.PI / 2, w: rr(14, 18), d: rr(11, 13), h: 6.6, wall: WALLS[Math.floor(rs() * 5) % 5], roof: ROOFS[Math.floor(rs() * 3) % 3] });
+      const dy = HW.waterY + 0.7, dx0 = HW.farX + 0.5;   // the dock: a deck on posts out from the clay cut
+      items.push({ k: 'box', x: dx0 + 2.5, y: dy, z: z + 9, w: 6, h: 0.15, d: 2.6, col: 0x8a7a64 });
+      for (const [px, pz] of [[0.3, 7.9], [0.3, 10.1], [5.2, 7.9], [5.2, 10.1]]) items.push({ k: 'box', x: dx0 + px, y: HW.bedY, z: z + pz, w: 0.2, h: dy - HW.bedY, d: 0.2, col: 0x5a4a38 });
+    }
+    // the trail: leaf-covered dirt down the bluff and into the field, on a mown verge where it leaves the woods
+    const tPts = (x0, x1, lift) => { const p = []; for (let x = x1; x >= x0; x -= 3) p.push([x, gY(x, TRAIL_Z + 0.4 * Math.sin(x * 0.07)) + lift, TRAIL_Z + 0.4 * Math.sin(x * 0.07)]); return p; };
+    items.push({ k: 'strip', pts: tPts(44, 64, 0.05), w: 5, col: 0x4a5c38 });   // (the guide's colours, darkened for the noon sun)
+    items.push({ k: 'strip', pts: tPts(33, 150, 0.08), w: 1.8, col: 0x5e564c });
+    for (let x = 47; x < 130; x += rr(3, 7)) for (const s of [-1, 1])   // deadfall heaped along its sides, cut rounds
+      if (rs() < 0.6) items.push({ k: 'box', x, y: gY(x, TRAIL_Z + s * 2.2) - 0.1, z: TRAIL_Z + s * rr(1.8, 2.8), yaw: rr(-0.5, 0.5), w: rr(1.5, 3.5), h: rr(0.4, 0.9), d: rr(0.6, 1.2), col: rs() < 0.7 ? DEAD : 0x2e2e29 });
+    // the big oak at the trail's head (the sign's)
+    const OAK = { x: 45.6, z: TRAIL_Z - 2.6 };
+    items.push({ k: 'tree', x: OAK.x, y: gY(OAK.x, OAK.z), z: OAK.z, h: 22, r: 5.5, col: LEAF[1] });
+    items.push({ k: 'box', x: OAK.x, y: gY(OAK.x, OAK.z) - 0.2, z: OAK.z, w: 0.8, h: 10, d: 0.8, col: 0x564e46 });
+    scene.add(buildMergedScenery(items, _night, 'hollow-real'));
+    // the sign: a hand-lettered weathered board nailed to the oak at 1.5 m, facing the field
+    {
+      const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128;
+      const c = cv.getContext('2d');
+      c.fillStyle = '#979b91'; c.fillRect(0, 0, 512, 128);
+      c.strokeStyle = 'rgba(70,72,66,0.35)'; c.lineWidth = 2;
+      for (let y = 10; y < 128; y += 14) { c.beginPath(); c.moveTo(0, y + rr(-3, 3)); c.lineTo(512, y + rr(-3, 3)); c.stroke(); }   // the grain
+      c.fillStyle = '#2c2a26'; c.font = 'bold 54px "Comic Sans MS", "Marker Felt", cursive'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.save(); c.translate(256, 66); c.rotate(-0.02); c.fillText('WIZARD HOLLOW', 0, 0); c.restore();
+      const sx = OAK.x - 0.42, sy = gY(OAK.x, OAK.z) + 1.5, g = new THREE.Group(); g.name = 'wizardHollowSign';
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.3, 0.95), new THREE.MeshStandardMaterial({ color: 0x6e665c, roughness: 1 }));
+      back.position.set(sx + 0.02, sy, OAK.z); g.add(back);
+      const board = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.2), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), roughness: 1 }));
+      board.rotation.y = -Math.PI / 2; board.position.set(sx - 0.005, sy, OAK.z); g.add(board);
+      scene.add(g);
+    }
+  }
+
   // === Legacy return scaffolding ===
   let enemies = [];
   let spawn = playerSpawns.team_b.pos.clone();   // default: player on Team B (south)
@@ -17181,6 +17296,7 @@ function buildHollowScene(variant, timeOfDay) {
     playerSpawns,
     groundY,
     creekZones: creekObs,   // future wade-slow hook (not yet in physics)
+    viewFar: 350,   // v1.307 (D.51 step 3): the camera sees the far bank and the bluff (the other maps keep 200)
     // v1.36f: explicit team-base positions at the two FORTS, so the colored
     // ground markers line up with the fort the team actually spawns/fights in
     // (the generic enemy marker uses the anchor centroid, which on this map
@@ -23933,11 +24049,10 @@ const EDGE_BACKDROPS = {
   buildBunrattyCourtScene: {   // v1.303 (D.51 step 1): the woods, the street to the fork and the river are the map's own now
     N: { from: 9, bands: [['trees', 20], ['houses', 22], ['trees', 30]] },          // the backs of the Sentinae Chase houses
   },
+  // v1.307 (D.51 step 3): the woods, the river and the far bank are the map's own now (no houses on the floodplain);
+  // what stays is the backs of the Bunratty houses along the top of the bluff behind the field, and the woods past them
   buildHollowScene: {
-    N: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
-    S: { from: 9, bands: [['trees', 30], ['houses', 22], ['trees', 40]] },
-    E: { from: 9, bands: [['trees', 22], ['houses', 22], ['trees', 40]] },
-    W: { from: 54, bands: [['trees', 50]] },                                          // past the river
+    E: { from: 66, bands: [['houses', 22], ['trees', 40]] },
   },
   buildMarketLotScene: {
     N: { from: 20, bands: [['trees', 8], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },   // behind the store

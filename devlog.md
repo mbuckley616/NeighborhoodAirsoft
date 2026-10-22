@@ -12914,3 +12914,88 @@ map, so the range now stands in it.
   the far bullseye on the tree reads at 20 m in the shade.
 - The range is always by day, as it was.
 - Step 2 is done. Next comes step 3, the Hollow's field on its river frontage below Bunratty.
+
+## v1.307 — The Hollow on its river, below Bunratty
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 3, first part. Michael: "the Hollow's field was below Bunratty,
+on its own river frontage; murky water, brush and logs; the WIZARD HOLLOW sign at the trailhead; from the field you
+saw big houses up the far bank and a few houses against the river on the opposite (Dunwoody) bank". His answers of 21
+Oct were 1A and 2A: each match keeps a today-sized play area, and the two maps share an edge view. So the field, its
+forts, pallets, trees and the 12 matches stay exactly as they were, and the place round them is now the real one.
+Before this, the Hollow ended in a cyan river 22 m wide and a flat strip of 26 trees across it.
+- **The ground runs on** past the box, to the far bank and up the bluff (x −300..260, z −260..260). Inside 150 x 150 m
+  the grid is the old one, vertex for vertex; past it the cells are 6 m. A new `hollowRealScale` adds the real place's
+  terms, and every one is zero inside the box and on its tree ranks:
+  - **West, the river.** Past the ranks' west end the bank's clay cut drops 2.4 m to the bed. The river runs 62 m
+    wide (the guide says 70-100; the constants are in `HW`). The far bank rises from its own clay cut 46 m, up a
+    slope of about 30°.
+  - **East, the bluff.** The floodplain runs on 14 m past the ranks, then the bluff climbs 24 m to where the backs of
+    the Bunratty houses stand.
+  - The floor browns to leaf litter past the ranks, and the two cuts are red clay. The colour is per vertex, and it is
+    1 in the field, so the field looks as it did.
+- **The river is murky.** It is opaque, matt olive (0x3e4430), and reads close to the guide's #928f5c under the noon
+  sun. It sits at −2.5, so the bank is 1.5 m over the water. The creek is a shade darker (it was the same cyan), and
+  outside the box it now runs down to the lower river at its mouth instead of hanging at the old level. The shallows
+  strip, the mud strip and the flat far-side strip are gone. The 26 far-side trees are still built, into a scene
+  nothing draws, so every random number they drew is drawn and every match's woods land where they did.
+- **The scenery past the box** is one merged mesh, two at night, with its own seeded numbers, and none of it is solid:
+  - Floodplain woods up and down the river and on the bluff. They are tall hardwoods with clear trunks and about a
+    fifth pines, in the guide's lighter canopy colours.
+  - Thicket (Michael: "pretty thick" off the trails): about 175 shrubs with logs and grey deadfall, between the bounds
+    and the tree ranks and east past them.
+  - Shrubs along the top of the near bank, three driftwood piles, and a whole fallen tree lying out into the water,
+    its crown bleached.
+  - Across the river, eight big houses along the top of the far bank, facing the water. Three more stand down
+    against the water, each with a dock on posts.
+  - The trail: leaf-covered dirt on a mown verge, coming down the bluff from the east into the field at z 10. Deadfall
+    and cut rounds are heaped along its sides.
+- **The sign.** WIZARD HOLLOW is hand-lettered on a weathered grey board (0x979b91, from the photo). It is nailed at
+  1.5 m to a big oak at the trail's head, 1.2 m past the east bounds, facing the field. The board is 0.8 x 0.2 m, a
+  little bigger than the photo's 0.6 x 0.15, so it reads from the bounds.
+- **The edge backdrop** (`EDGE_BACKDROPS.buildHollowScene`) keeps only its east side: the backs of the Bunratty houses
+  along the top of the bluff, 66 m out, and the woods past them. The guide and Michael have no houses on the
+  floodplain, so the north and south house bands are gone, and so is the west band (the map builds its own).
+- **The view reaches further.** Day fog moved out from 40-120 m to 45-320 m, and the camera sees 350 m on this map.
+  Night is unchanged (fog 14-58 m).
+### Verified
+- **Cover is unchanged.** I built all 12 Hollow matches on v1.306 and on v1.307 in one run and compared every obstacle's
+  numbers to the millimetre. There are 472-474 obstacles a match, and none differ. Your start and every kid's spawn
+  are the same. Where the kids stood a few real frames after BEGIN differed in two matches, but it differs as much
+  between two runs of the same build: those frames come from the page's own clock. No page errors in any of the 24
+  builds, by day or at night.
+- **`tests/real-scale.test.mjs`, extended with the Hollow.** Its checks:
+  - The ground in the box and on its tree ranks is v1.306's formula, to 5e-15 m.
+  - The river is under water at all 315 points sampled across it, with a bank above the water on both sides at all
+    20 places sampled along it (the 21st, z 0, is the creek's mouth, which cuts the near bank).
+  - The far bank climbs 47.7 m over the water, and the bluff 24.1 m over the field's east edge.
+  - From the west edge, at eye height, 304 rays reach the water and 193 the far bank.
+  - The sign stands 1.17 m past the bounds, its top 1.66 m up.
+  - Nothing past the box is an obstacle, and the camera sees 350 m.
+- **Draw calls and triangles** in the same five views, v1.306 → v1.307:
+  | View | v1.306 (calls, triangles) | v1.307 (calls, triangles) |
+  |---|---|---|
+  | Among the trees | 826, 124k | 820, 189k |
+  | West edge | 1,167, 157k | 1,167, 224k |
+  | East | 1,080, 138k | 1,004, 194k |
+  | North fort | 562, 104k | 562, 170k |
+  | South fort | 256, 67k | 254, 133k |
+
+  The test holds 1,450, the decision's budget. Building the map takes 704 ms, against 403.
+- **`backdrop`:** the Hollow's day backdrop passes the old checks. At night the fog closes at 58 m, short of the bluff's
+  houses at 66 m, so none is built; the test now expects that for the Hollow at night.
+- **These suites pass:** `real-scale`, `backdrop`, `lot-hollow-polish`, `hollow-fort`, `hollow-held`, `ffa-starts`,
+  `pickup-ffa`, `idle-ally`, `fort-spawn`, `spawn-facing`, `cover-fire`, `kid-hold` and `smoke`.
+### Still open
+- **Logs as cover in the field** are left to step 4. The guide's 6-10 logs and deadfall piles in play would move routes
+  and sight lines, so they belong with the re-anchoring of the 12 matches. This version keeps the field exactly as it
+  was, and the brush and logs stand past the bounds.
+- **The river is 62 m wide,** where the guide's estimate is 70-100 m. That kept the far bank's houses inside the 320 m
+  fog from the field. A playtest can say whether it reads too narrow.
+- **The two maps don't line up metre for metre.** They share an edge view (2A): Bunratty sees the field below it, and
+  the Hollow sees the bluff and the backs of the houses at its top.
+- **For a playtest:**
+  - The longer view by day: the field now shows woods 300 m out where the fog closed at 120. The AI does not see by
+    fog, so play is the same.
+  - Whether the sign reads from the bounds.
+  - The water's colour against the photos.
+- **Next:** the rest of step 3 if Michael wants more in the field itself (the ground's colour and unevenness, the
+  trees greyer and taller, gaps 2-3), then step 4, the 28 matches re-anchored, and step 5, the edges.

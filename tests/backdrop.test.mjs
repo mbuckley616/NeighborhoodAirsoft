@@ -48,6 +48,9 @@ const res = await page.evaluate((FNS) => {
 }, FNS);
 for (const [k, r] of Object.entries(res)) {
   console.log('  ', k, JSON.stringify({ meshes: r.meshes, tris: r.tris, near: r.near, ...(r.stats || {}) }));
+  // v1.307 (D.51 step 3): the Hollow's woods, river and far bank are its own; the backdrop keeps only the Bunratty
+  // houses along the bluff's top, 66 m out, which the night's fog (58 m) hides, so at night none is built
+  if (k === 'Hollow night') { check(`${k}: none is built past the night's fog, and no obstacle was added`, !r.ok && r.obsSame, r); continue; }
   check(`${k}: a backdrop is built into the map's own scene`, r.ok && r.inScene, r);
   // the store at night: its fog closes at 52 m, so the lot, the road and the shops across it are all that show
   if (k === 'GroceryStore night') check(`${k}: the lot, cars and shops in it`, r.stats && r.stats.shops >= 4 && r.stats.cars >= 10, r.stats);

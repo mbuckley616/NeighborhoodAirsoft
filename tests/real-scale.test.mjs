@@ -169,6 +169,66 @@ check('Bunratty: in the guide\'s three styles, stucco, brick and the columned po
 check('Bunratty: the six cost at most 24 draw calls together', street.meshes > 0 && street.meshes <= 24, street.meshes);
 check('Bunratty: every backyard anchor and start stands at least 0.9 m clear of the houses', Object.values(street.clear).every(v => v >= 0.9), street.clear);
 check('Bunratty: a kid can walk from the bulb to every backyard anchor and start', Object.values(street.reach).every(v => v), street.reach);
+// v1.307 (D.51 step 3): the Hollow on its river frontage below Bunratty. The ground in the box and on its tree ranks is
+// v1.306's; past them the bank's clay cut drops to a river 62 m wide that lies in its channel, the far bank climbs
+// with houses on it, and the bluff rises behind the field. The water and the far bank show from the west edge, the
+// Wizard Hollow sign stands at the trail's head just past the east bounds, nothing past the box is solid, and the
+// map stays inside its budget (1,450 draw calls, decisions D.51).
+await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); });
+await g.scenario('hollow_skirmish_3v3');
+const hol = await page.evaluate(() => {
+  const sc = Game.scenario, gY = sc.groundY, out = {};
+  const seg = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1; let t = ((px - ax) * dx + (pz - az) * dz) / l2; t = Math.max(0, Math.min(1, t)); return Math.hypot(px - ax - t * dx, pz - az - t * dz); };
+  const old = (x, z) => {   // v1.306's hollowGroundY
+    let u = Math.max(0, Math.min(1, (x + 46) / 92)), h = 1.6 * u * u * (3 - 2 * u);
+    const d = Math.min(seg(x, z, -42, 0, 21, 0), seg(x, z, -6, -15, -6, -1), seg(x, z, 16, 2, 16, 18));
+    let inC = 0; if (d < 4) { const k = 1 - d / 4; inC = k * k * (3 - 2 * k); h -= 1.8 * inC; }
+    if (x < -38) h -= 1.4 * Math.max(0, Math.min(1, (-38 - x) / 8));
+    return h + 0.28 * (1 - inC) * Math.sin(x * 0.12 + 0.6) * Math.cos(z * 0.10 - 1.1);
+  };
+  let d = 0; for (let x = -43.6; x <= 52; x += 1.3) for (let z = -44; z <= 44; z += 1.3) d = Math.max(d, Math.abs(gY(x, z) - old(x, z)));
+  out.boxDiff = d;
+  let under = 0, n = 0, banks = 0, bn = 0;
+  for (let z = -150; z <= 150; z += 15) {
+    for (let x = HW.cutX - 2.5; x >= HW.farX + 1; x -= 4) { n++; if (gY(x, z) < HW.waterY - 0.3) under++; }
+    if (z === 0) continue;   // the creek's mouth cuts the near bank there
+    bn++; if (gY(HW.cutX + 0.5, z) > HW.waterY + 1 && gY(HW.farX - 6, z) > HW.waterY + 1) banks++;
+  }
+  out.river = { under, n, banks, bn, waterY: Game.scene.getObjectByName('hollowRiver')?.position.y, width: HW.cutX - HW.farX, farTop: +(gY(HW.farX - 120, 0) - HW.waterY).toFixed(1), bluff: +(gY(130, 0) - gY(40, 0)).toFixed(1) };
+  Game.scene.updateMatrixWorld(true);
+  const all = []; Game.scene.traverse(o => { if (o.isMesh) all.push(o); });
+  const ray = new THREE.Raycaster(); let wet = 0, far = 0;
+  for (const z0 of [-20, 0, 20]) {
+    const eye = new THREE.Vector3(-37.6, gY(-37.6, z0) + 1.6, z0);
+    for (let a = -60; a <= 60; a += 4) for (let p = 4; p >= -14; p -= 2) {
+      const yaw = a * Math.PI / 180, pt = p * Math.PI / 180;
+      ray.set(eye, new THREE.Vector3(-Math.cos(yaw) * Math.cos(pt), Math.sin(pt), Math.sin(yaw) * Math.cos(pt)));
+      const h = ray.intersectObjects(all, false); if (!h.length) continue;
+      if (h[0].object.name === 'hollowRiver') wet++;
+      if (h[0].point.x < HW.farX - 3) far++;
+    }
+  }
+  out.view = { wet, far };
+  const sign = Game.scene.getObjectByName('wizardHollowSign');
+  if (sign) { const b = new THREE.Box3().setFromObject(sign); out.sign = { past: +(b.min.x - 44).toFixed(2), y: +(b.max.y - gY(b.min.x, (b.min.z + b.max.z) / 2)).toFixed(2), z: +((b.min.z + b.max.z) / 2).toFixed(1) }; }
+  out.solid = Game.player.obstacles.filter(o => o.mesh && (o.mesh.name === 'realScenery' || o.mesh.name === 'wizardHollowSign' || o.mesh.name === 'hollowRiver')).length;
+  out.far = Game.camera.far;
+  out.calls = {};
+  for (const [name, x, z, yaw, pitch] of [['trees', 28, 12, -Math.PI / 2 + 0.4, 0.1], ['west', -36, 0, Math.PI / 2, -0.08], ['east', 30, 10, -Math.PI / 2, 0.06], ['north', 0, -33, Math.PI, 0], ['south', 2, 30, 0, 0]]) {
+    Game.player.pos.set(x, gY(x, z), z); stepGame(1 / 60); Game.player.yaw = yaw; Game.player.pitch = pitch; Game.camera.updateMatrixWorld(true);
+    Game.renderer.render(Game.scene, Game.camera); out.calls[name] = Game.renderer.info.render.calls;
+  }
+  return out;
+});
+console.log('  ', JSON.stringify(hol));
+check('the Hollow: the ground in the box and on its tree ranks is v1.306\'s', hol.boxDiff < 1e-9, hol.boxDiff);
+check('the Hollow: the river, 62 m wide, lies under water from bank to bank, a bank above it either side', hol.river.under === hol.river.n && hol.river.banks === hol.river.bn && Math.abs(hol.river.width - 62) < 0.5 && hol.river.waterY === -2.5, hol.river);
+check('the Hollow: the far bank climbs 40 m and more, the bluff behind the field 20 m and more', hol.river.farTop >= 40 && hol.river.bluff >= 20, hol.river);
+check('the Hollow: from the west edge you see the water and the far bank', hol.view.wet >= 10 && hol.view.far >= 10, hol.view);
+check('the Hollow: the Wizard Hollow sign stands at the trail\'s head, 1-3 m past the east bounds, about 1.5 m up', hol.sign && hol.sign.past > 0.5 && hol.sign.past < 3 && hol.sign.y > 1.5 && hol.sign.y < 1.9, hol.sign);
+check('the Hollow: nothing past the box is solid', hol.solid === 0, hol.solid);
+check('the Hollow: the camera sees 350 m', hol.far === 350, hol.far);
+check('the Hollow: at most 1,450 draw calls in any of five views', Math.max(...Object.values(hol.calls)) <= 1450, hol.calls);
 // back in the bedroom the camera's reach is the usual 200 m again
 const far2 = await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); return Game.camera.far; });
 check('the bedroom puts the camera back to 200 m', far2 === 200, far2);
