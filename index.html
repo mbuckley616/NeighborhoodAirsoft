@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.313</div>
+  <div class="version">v1.314</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -35888,7 +35888,11 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
   const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
   const strip = (es, fields) => { const o = Object.assign({}, es); for (const f of fields) delete o[f]; return o; };
-  const spare = () => strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives']);   // a place past the match's own (v1.275: not its flag run or lives)
+  // v1.314 (critic, 22 Oct): with Seth turned and no other ally, slots and kept are empty, and a kid put in a spare place
+  // got no anchor, so the scene dropped him (Lights Out replayed played 1 v 2): the place Seth left is the spare one then
+  const left0 = turned ? sc.enemySetup.find(es => es.charId === 'seth' && es.team === 'player') : null;
+  const spare = () => (slots[0] || kept[0] || !left0) ? strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives'])   // a place past the match's own (v1.275: not its flag run or lives)
+    : strip(left0, ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives', 'behavior', 'statsOverride', 'team']);
   // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
   const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
   // v1.275: the street's kids, then Garrett and Colin, who play with Seth once Bellfield's flags are done ("u havent met

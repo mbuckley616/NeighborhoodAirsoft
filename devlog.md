@@ -13273,3 +13273,28 @@ tree, 7-11 m tall.
   new trunks in play, so new cover. This step only turned existing trees into pines.
 - **D.55 step 6** (the twins' course) waits on a question in decisions: its two matches are built round the treehouse
   the answer removes.
+
+## v1.314 — Winnmark replayed: the place Seth leaves is filled
+The critic's 22 Oct report (Found in play): once Lights Out (`winnmark_night_team_2v2`) is won, Seth turns rival and
+crosses to their side (v1.275), and replaying a Winnmark team match with him you play alone. Lights Out and Two on Two
+played 1 v 2, Outnumbered 1 v 3, while the briefing listed Jamie (or your crew kids) beside you. The cause is the one
+the critic found: `crewSides` puts the kids it adds in a spare place copied from `slots[0] || kept[0]`, the match's own
+allies. In these three matches Seth was the only ally, so with him gone both are empty. Each kid put there got an entry
+with no anchor, and the scene builder dropped him.
+- **The fix:** when Seth has turned and no other ally of the match's own is left, the spare place is the one he left
+  (his anchor, `house2_backyard`). His VIP, role, start, behaviour, stats and team are stripped, as for any spare place.
+  Where a match still has an ally of its own, nothing changes.
+### Verified
+- **`tests/crew-field.test.mjs`, extended:** with Lights Out won, each match below is played and the kids on the field
+  are compared with `crewSetup`. On v1.313 all four failed: your side was empty on the field.
+  | Crew | Match | Your side | Their side |
+  |---|---|---|---|
+  | none | Lights Out | Jamie | Seth and Trey |
+  | none | Two on Two | Jamie | Seth and Trey |
+  | Eric | Lights Out | Eric | Seth and Trey |
+  | Eric and Sean | Outnumbered | Eric and Sean | Seth, Trey and Brooke |
+- **These suites pass:** `crew-field`, `crew`, `crew-balance`, `crew-roster`, `crew-spawn-bounds`, `rival` and `smoke`.
+### Still open
+- **The briefing's prose** still reads "You and Seth against Trey and Brooke" once he has turned. The roster under it
+  is right. Words for the turned-Seth replays are writing for Michael's taste, so this version left them alone.
+- **For a playtest:** your ally now starts in Seth's old backyard, where Seth used to start.

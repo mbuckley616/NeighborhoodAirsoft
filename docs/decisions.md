@@ -19,7 +19,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     of the yard is the course.
   - C) **The course now, and the two treehouse matches move** with the treehouse to another yard. That yard needs
     a design call of its own, and until then the two matches are closed.
-  Until this is answered the builder goes on with step 7 (Northcliff's pool) and the Found-in-play bugs.
+  Until this is answered the builder goes on with the Found-in-play bugs.
+
+- **Northcliff's pool (D.55 step 7): which matches, and where on the ladder? (builder, 2026-10-22)**
+  Your answer of 16 Oct (decision 9, A) makes the pool its own small map with its own matches, as Bellfield was. The
+  guide (docs/refs/northcliff.md gap 6) has the real club: a 25 x 12 m pool in a concrete deck, the clubhouse on its
+  north end, two tennis courts east of it in a dark 3 m fence, the spur road and its parking. The pool stops bodies,
+  not BBs, as the country club's does. Bellfield opened with two matches after Northcliff's treehouse, and two more
+  came the next day.
+  - A) **A 1v1 round the courts and a night game at the pool**, after Bellfield on the ladder *(recommended: the
+    guide's suggestion; the courts' fences and the clubhouse are the hook, so it doesn't repeat Pool's Closed at the
+    club)*
+  - B) **A 1v1 and a 3v3, as Bellfield opened**, after Bellfield
+  - C) **One match only for now, a 3v3 on the deck and courts**, the pool's look first
+  - D) **A free-for-all**, the whole neighbourhood at the pool (it was the hub), plus a 1v1
 
 ## Answered
 
