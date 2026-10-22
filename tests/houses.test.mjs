@@ -50,6 +50,32 @@ await g.shot('houses-winnmark-seth');
 const calls = await page.evaluate(() => { Game.renderer.render(Game.scene, Game.camera); return Game.renderer.info.render.calls; });
 console.log('  draw calls, looking at Seth\'s house:', calls);
 
+// v1.312 (D.55 step 4): the street's three real finishes. B and C carry cream quoins, B the belt course all round,
+// every house the steep roof (4 m rise, was 2.3) and the arched entry; Northcliff's four stucco houses are fieldstone
+const looks = () => page.evaluate(() => {
+  const out = [];
+  Game.scene.traverse(o => {
+    if (!o.isGroup) return;
+    const front = o.children.find(c => c.isGroup && c.children.some(k => k.userData && k.userData.part));
+    if (!front) return;
+    const parts = front.children.filter(k => k.userData.part).map(k => k.userData.part);
+    const roof = o.children.find(c => c.isMesh && c.material.side === THREE.DoubleSide && !c.userData.part);
+    let rise = null;
+    if (roof) { roof.geometry.computeBoundingBox(); const bb = roof.geometry.boundingBox; rise = +(bb.max.y - bb.min.y).toFixed(2); }
+    out.push({ at: [+o.position.x.toFixed(0), +o.position.z.toFixed(0)], quoin: parts.includes('quoin'), stone: parts.includes('stone'), rise });
+  });
+  return out;
+});
+const wl = await looks();
+console.log('  winnmark looks', JSON.stringify(wl));
+check('Winnmark: six of the eight houses have quoins (B and C), two plain rose-tan brick (A)', wl.length === 8 && wl.filter(h => h.quoin).length === 6, wl.map(h => h.quoin));
+check('Winnmark: every roof rises 4 m (was 2.3)', wl.every(h => h.rise === 4), wl.map(h => h.rise));
+await page.evaluate(() => endScenario('lose'));
+await g.scenario('northcliff_1v1_evan');
+await g.spin(10);
+const nl = await looks();
+console.log('  northcliff looks', JSON.stringify(nl));
+check('Northcliff: four stucco houses with fieldstone, two brick without', nl.length === 6 && nl.filter(h => h.stone).length === 4, nl.map(h => h.stone));
 await page.evaluate(() => endScenario('lose'));
 await g.scenario('bunratty_sean');
 await g.spin(10);

@@ -13197,3 +13197,126 @@ random, pointed north, back up the wall. He reached z 13.6, a metre short of the
 ### Still open
 - Nothing new for a playtest. The card's open looks are v1.310's: the neighbour east of the bulb mostly behind trees,
   and the far bank's haze at 250-300 m.
+
+## v1.312 — Winnmark's and Northcliff's real house fronts
+Backlog D.55 step 4: the real house styles from Michael's reference pictures, built where today's houses stand and at
+today's size (Bunratty's were done by the D.51 card in v1.304-v1.305, so this step is Winnmark and Northcliff). Both
+streets built the same detailed colonial (v1.104): a 2.3 m hip roof in brown, one small cross gable, a hooded door,
+corner boards, orange-red or tan brick. The guides (docs/refs/winnmark.md gap 5, northcliff.md gap 2 part one) describe
+something else.
+- **A `look` on the detailed house** (`buildHouseDetail`): the roof's rise, quoins, fieldstone, a belt course all
+  round, one to three front gables, a two-storey arched entry, a three-sided bay, arched upstairs windows, a shutter
+  palette. A house with no look builds as before, so Bellfield and the treehouse yard are unchanged.
+- **Winnmark's eight**, the three finishes in turn along each row: A rose-tan brick, B deep red brick with cream quoins
+  and a cream belt course, C beige stucco with cream quoins. Every house has the guide's steep grey-brown roof (4 m
+  rise, about 45 degrees), a two-storey arched entry (two columns, an arch at 4.3 m, a fanlight over the door and a
+  tall arched window over that) and a three-sided bay two storeys high. A has one front gable, B two, C three, with the
+  gables in the wall's own finish. Shutters near-black, dark brown or navy.
+- **Northcliff's six**, to the guide's palette: two off-white stucco and two tan stucco, with fieldstone at the corners,
+  round the arched entry and on the entry gable, arched upstairs windows and two or three gables (a bay on the tan
+  ones); two red brick with slate-blue shutters. Brown and grey roofs.
+- **Not built:** the side garage wings. They would make the houses wider than today's boxes; the rebuild cards take
+  them at real scale. Everything new is visual and stands within 0.3 m of the wall below head height, so collision,
+  cover and every match's layout are as before.
+### Verified
+- **`tests/houses.test.mjs`, extended:** six of Winnmark's eight houses carry quoins and two are plain brick; every
+  Winnmark roof rises 4 m; four of Northcliff's six are fieldstone. Each house is 16-17 meshes (the cap is 20), its
+  collision box the same 8-9 x 7 m, and walking into Seth's front wall still stops at it. Draw calls looking at
+  Seth's house 646, down Winnmark's street 928.
+- **These suites pass:** `smoke`, `houses`, `house-backs`, `northcliff`, `yard-props`, `backdrop`, `layout-same`
+  (every match's cover the same) and `winnmark-road`. No page errors.
+- Headless pictures of both streets checked by eye: the quoins, belt course, bays and arches line up on the walls,
+  the gables sit in the roof's slope, the fieldstone reads at the corners and the entry.
+### Still open
+- **For Michael's look:** whether the 4 m roofs and the arched entries read like the street. The gables are taller
+  than the old ones; Winnmark's now stand above its tree wall from the street.
+- **Not run here:** the full suite (180 suites take about two hours on this machine). Nothing in play moved, so the AI
+  suites were left to the weekly run.
+- Next in D.55: step 5, tall pines over pine straw where the guides put them.
+
+## v1.313 — Tall pines over pine straw
+Backlog D.55 step 5: "tall pines over pine straw where the guides put them". Two guides put them: Winnmark (gap 4,
+"trees are a third of the real height ... mix pines into the walls and back yards, about 40 %") and Northcliff (gap 1,
+"the real street is under 25-30 m pines and hardwoods with pine straw beneath"). The Hollow's trees are the D.51 card's,
+and the club, school and store guides' pines belong to those maps' own steps. Both streets had only the round low-poly
+tree, 7-11 m tall.
+- **The loblolly** (`_buildPineDetail`, `addSuburbanTree` with `shape: 'loblolly'`): a straight bare trunk of
+  12-18 m in the guide's bark, a few dead stubs below the crown, three live limbs into a crown of lumpy clumps stacked
+  over its top few metres. Two meshes a tree, as the round one. Its collision cylinder is the trunk, as tall as the trunk.
+- **Winnmark:** about 40 % of the tree walls, the back-yard trees and the trees past the fairway and the lake are pines,
+  12-15 m. The front-yard ornamentals stay round.
+- **Northcliff:** about 40 % of the walls and the creek bank and half the yard oaks are pines, 13-18 m. The lawn goes
+  from 0x58803e to the guide's darker canopy green (0x5e6a3c).
+- **Pine straw** (`addPineStraw`, one mesh a map): a disc on the ground under each pine in and round the yards, and on
+  Northcliff a bed either side of each front walk. Winnmark's is the guide's 0x8a6a4a. Northcliff's is a shade under the
+  guide's #9a8066, which read salmon in full sun.
+- **Nothing in play moved.** Which tree is a pine comes from a hash of its spot, not from the round's random numbers,
+  so every tree, cover piece and prop stands where it did. Each pine keeps its trunk's place and radius (0.32-0.42 m).
+  Only the trunk's height grows, and no kid sees or shoots over a 3-5 m trunk anyway.
+### Verified
+- **`tests/winnmark-trees.test.mjs`, extended:**
+  - 89 of Winnmark's 243 trees are pines (37 %), with 12-15 m trunks and the same 0.32 m radius, over pine straw.
+  - Northcliff has 65 pines of 151 trees, 13-18 m.
+  - Bunratty has none.
+  - Every tree still has its crown.
+- **`layout-same`** (every match's cover the same) passes.
+- **Draw calls** in seven views on both streets are 3-9 more than v1.312: 919-1,659 on Winnmark, 317-699 on Northcliff.
+- **These suites pass:** `smoke`, `winnmark-trees`, `northcliff`, `houses`, `yard-props`, `whole-block` and
+  `night-prowl`.
+- **The stuck-kid sweep** on all 19 Winnmark and Northcliff matches, two ways each (at your start, and walked 10 m
+  toward the nearest kid), passed.
+  No kid held a moving state for over 15 s: the worst was Brooke advancing for 3 s in Bellfield After Dark. No page errors.
+### Still open
+- **For Michael's look:** the pines' height against the houses, and whether Winnmark wants its hardwoods taller too
+  (the guide's 14-18 m). That changes the round trees' crowns, which kids stand under.
+- **Not built:** Northcliff's guide also asks for 14-20 new pines on the verges and in the front yards. Those would be
+  new trunks in play, so new cover. This step only turned existing trees into pines.
+- **D.55 step 6** (the twins' course) waits on a question in decisions: its two matches are built round the treehouse
+  the answer removes.
+
+## v1.314 — Winnmark replayed: the place Seth leaves is filled
+The critic's 22 Oct report (Found in play): once Lights Out (`winnmark_night_team_2v2`) is won, Seth turns rival and
+crosses to their side (v1.275), and replaying a Winnmark team match with him you play alone. Lights Out and Two on Two
+played 1 v 2, Outnumbered 1 v 3, while the briefing listed Jamie (or your crew kids) beside you. The cause is the one
+the critic found: `crewSides` puts the kids it adds in a spare place copied from `slots[0] || kept[0]`, the match's own
+allies. In these three matches Seth was the only ally, so with him gone both are empty. Each kid put there got an entry
+with no anchor, and the scene builder dropped him.
+- **The fix:** when Seth has turned and no other ally of the match's own is left, the spare place is the one he left
+  (his anchor, `house2_backyard`). His VIP, role, start, behaviour, stats and team are stripped, as for any spare place.
+  Where a match still has an ally of its own, nothing changes.
+### Verified
+- **`tests/crew-field.test.mjs`, extended:** with Lights Out won, each match below is played and the kids on the field
+  are compared with `crewSetup`. On v1.313 all four failed: your side was empty on the field.
+  | Crew | Match | Your side | Their side |
+  |---|---|---|---|
+  | none | Lights Out | Jamie | Seth and Trey |
+  | none | Two on Two | Jamie | Seth and Trey |
+  | Eric | Lights Out | Eric | Seth and Trey |
+  | Eric and Sean | Outnumbered | Eric and Sean | Seth, Trey and Brooke |
+- **These suites pass:** `crew-field`, `crew`, `crew-balance`, `crew-roster`, `crew-spawn-bounds`, `rival` and `smoke`.
+### Still open
+- **The briefing's prose** still reads "You and Seth against Trey and Brooke" once he has turned. The roster under it
+  is right. Words for the turned-Seth replays are writing for Michael's taste, so this version left them alone.
+- **For a playtest:** your ally now starts in Seth's old backyard, where Seth used to start.
+
+## v1.315 — The attack huddle spreads out
+The critic's 22 Oct report (Found in play): in The Last Saturday with the first-time crew, Garrett, Colin, Brooke and
+Trey start within 0.42 m of each other beside the car, Colin and Brooke 0.05 m apart. On screen it is one body with four
+heads. v1.277's 1.4 m spread of crew-match starts leaves out the attack huddle, whose ring is its own. The ring is 1.4 m
+across, and with 14 kids in the match its places are 0.63 m apart. Those that fall in cover are pushed out of it by
+`findClearSpawn` along the same axis, so they land on one edge together.
+- **The fix:** in a crew match (the match's sides differ from its own), each huddle kid's start keeps 0.75 m
+  (`CREW_HUDDLE_GAP`) from the huddle starts already placed. `crewSpreadStart` takes the gap, and its search steps by
+  the smaller of 0.75 m and the gap. The huddle stays where it was, and matches without the crew are untouched.
+### Verified
+- **`tests/crew-spawn-bounds.test.mjs`, extended:** in all 31 team matches, with all five in the crew and with the
+  first-time crew, no two huddle kids start under 0.74 m apart.
+  - On v1.314 the same check failed in Bunratty 2v2 and 2v4, the Hollow's Big Game, and Bellfield's 3v3 and flags,
+    among others (the saved output was cut short). The worst pairs were Mitchell and Priya 0.01 m apart in Bunratty
+    2v2 with all five, and Mitchell and Owen 0.33 m in 2v4.
+  - The 1.4 m and 1.0 m rules outside the huddle still pass.
+- **These suites pass:** `crew-spawn-bounds`, `lamplight-starts`, `last-saturday`, `last-saturday-lives` and `smoke`.
+### Still open
+- **Not swept:** the stuck-kid sweep was not run with the crew on these matches. The huddle kids walk to their
+  anchors from starts at most a step from before.
+- Friday Night Lights' shared post (Nathan and Malik, Found in play) is a different case and is still open.
