@@ -8,7 +8,7 @@ await g.bedroom();
 
 const res = await page.evaluate(() => {
   const out = {};
-  for (const fn of ['buildWinnmarkCourtScene', 'buildBunrattyCourtScene']) {
+  for (const fn of ['buildWinnmarkCourtScene', 'buildBunrattyCourtScene', 'buildNorthcliffScene']) {
     const built = window[fn](undefined, 'day');
     const trees = built.obstacles.filter(o => o.shape === 'cylinder' && o.surface === 'hard' && o.mesh && o.mesh.isMesh && o.mesh.geometry);
     const bushes = built.obstacles.filter(o => o.surface === 'soft' && o.mesh && o.mesh.isMesh && !o.shape);
@@ -16,8 +16,12 @@ const res = await page.evaluate(() => {
       r: o.radius }));
     const bu = bushes.map(o => ({ detail: !!o.mesh.userData.plantDetail, halfW: +(o.maxX - o.minX).toFixed(2) }));
     let meshes = 0; built.scene.traverse(m => { if (m.isMesh) meshes++; });
+    // v1.313 (D.55 step 5): the tall loblollies, their trunks' height and radius, and the pine straw under them
+    const pines = trees.filter(o => o.mesh.userData.loblolly);
     out[fn] = { trees: tr.length, treeDetail: tr.filter(t => t.detail).length, withCrown: tr.filter(t => t.crown).length,
-      bushes: bu.length, bushDetail: bu.filter(b => b.detail).length, meshes };
+      bushes: bu.length, bushDetail: bu.filter(b => b.detail).length, meshes,
+      pines: pines.length, pineH: pines.length ? [Math.min(...pines.map(o => o.h)), Math.max(...pines.map(o => o.h))].map(v => +v.toFixed(1)) : null,
+      pineR: pines.length ? Math.min(...pines.map(o => o.radius)) : null, straw: !!built.scene.getObjectByName('pineStraw') };
     built.scene.traverse(m => { m.geometry && m.geometry.dispose && m.geometry.dispose(); });
   }
   return out;
@@ -27,6 +31,11 @@ const wm = res.buildWinnmarkCourtScene;
 check('Winnmark: trees found', wm.trees > 100, wm.trees);
 check('every Winnmark tree is the low-poly tree, with its crown', wm.treeDetail === wm.trees && wm.withCrown === wm.trees, wm);
 check('every Winnmark foundation bush is the clumped shrub', wm.bushes > 10 && wm.bushDetail === wm.bushes, wm);
+check('Winnmark: a third to a half of its trees are tall pines, 12-15 m trunks of the same radius, over pine straw',
+  wm.pines / wm.trees > 0.3 && wm.pines / wm.trees < 0.5 && wm.pineH[0] >= 12 && wm.pineH[1] <= 15 && wm.pineR >= 0.32 && wm.straw, wm);
+const nc = res.buildNorthcliffScene;
+check('Northcliff: tall pines (13-18 m trunks) over pine straw', nc.pines >= 14 && nc.pineH[0] >= 13 && nc.pineH[1] <= 18 && nc.straw, nc);
+check('Bunratty: no pines from this (its trees are the D.51 card\'s)', res.buildBunrattyCourtScene.pines === 0, res.buildBunrattyCourtScene.pines);
 for (const fn of ['buildBunrattyCourtScene']) {
   const r = res[fn];
   // v1.125 (D.3 step 4): Bunratty's trees and bushes are Winnmark's

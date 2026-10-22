@@ -13233,3 +13233,43 @@ something else.
 - **Not run here:** the full suite (180 suites take about two hours on this machine). Nothing in play moved, so the AI
   suites were left to the weekly run.
 - Next in D.55: step 5, tall pines over pine straw where the guides put them.
+
+## v1.313 — Tall pines over pine straw
+Backlog D.55 step 5: "tall pines over pine straw where the guides put them". Two guides put them: Winnmark (gap 4,
+"trees are a third of the real height ... mix pines into the walls and back yards, about 40 %") and Northcliff (gap 1,
+"the real street is under 25-30 m pines and hardwoods with pine straw beneath"). The Hollow's trees are the D.51 card's,
+and the club, school and store guides' pines belong to those maps' own steps. Both streets had only the round low-poly
+tree, 7-11 m tall.
+- **The loblolly** (`_buildPineDetail`, `addSuburbanTree` with `shape: 'loblolly'`): a straight bare trunk of
+  12-18 m in the guide's bark, a few dead stubs below the crown, three live limbs into a crown of lumpy clumps stacked
+  over its top few metres. Two meshes a tree, as the round one. Its collision cylinder is the trunk, as tall as the trunk.
+- **Winnmark:** about 40 % of the tree walls, the back-yard trees and the trees past the fairway and the lake are pines,
+  12-15 m. The front-yard ornamentals stay round.
+- **Northcliff:** about 40 % of the walls and the creek bank and half the yard oaks are pines, 13-18 m. The lawn goes
+  from 0x58803e to the guide's darker canopy green (0x5e6a3c).
+- **Pine straw** (`addPineStraw`, one mesh a map): a disc on the ground under each pine in and round the yards, and on
+  Northcliff a bed either side of each front walk. Winnmark's is the guide's 0x8a6a4a. Northcliff's is a shade under the
+  guide's #9a8066, which read salmon in full sun.
+- **Nothing in play moved.** Which tree is a pine comes from a hash of its spot, not from the round's random numbers,
+  so every tree, cover piece and prop stands where it did. Each pine keeps its trunk's place and radius (0.32-0.42 m).
+  Only the trunk's height grows, and no kid sees or shoots over a 3-5 m trunk anyway.
+### Verified
+- **`tests/winnmark-trees.test.mjs`, extended:**
+  - 89 of Winnmark's 243 trees are pines (37 %), with 12-15 m trunks and the same 0.32 m radius, over pine straw.
+  - Northcliff has 65 pines of 151 trees, 13-18 m.
+  - Bunratty has none.
+  - Every tree still has its crown.
+- **`layout-same`** (every match's cover the same) passes.
+- **Draw calls** in seven views on both streets are 3-9 more than v1.312: 919-1,659 on Winnmark, 317-699 on Northcliff.
+- **These suites pass:** `smoke`, `winnmark-trees`, `northcliff`, `houses`, `yard-props`, `whole-block` and
+  `night-prowl`.
+- **The stuck-kid sweep** on all 19 Winnmark and Northcliff matches, two ways each (at your start, and walked 10 m
+  toward the nearest kid), passed.
+  No kid held a moving state for over 15 s: the worst was Brooke advancing for 3 s in Bellfield After Dark. No page errors.
+### Still open
+- **For Michael's look:** the pines' height against the houses, and whether Winnmark wants its hardwoods taller too
+  (the guide's 14-18 m). That changes the round trees' crowns, which kids stand under.
+- **Not built:** Northcliff's guide also asks for 14-20 new pines on the verges and in the front yards. Those would be
+  new trunks in play, so new cover. This step only turned existing trees into pines.
+- **D.55 step 6** (the twins' course) waits on a question in decisions: its two matches are built round the treehouse
+  the answer removes.

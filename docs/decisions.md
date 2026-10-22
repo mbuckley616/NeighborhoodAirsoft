@@ -5,6 +5,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
+  Your answer of 16 Oct (decision 10, A) reworks the treehouse yard into the twins' course: open to the trees, no
+  fence, the gravel road 3-4 m above the yard's far side, their plywood and sandbag bunkers, and no treehouse. Both of
+  the yard's matches are built round the treehouse, though. In King of the Treehouse, Connor holds the platform and
+  watches the yard from it. In Hold the Treehouse (your D.7 A, v1.144), you hold the platform for 90 s while the twins
+  climb the ladder after you. With no treehouse, neither works as it is.
+  - A) **Both become course matches.** King of the Treehouse becomes King of the Course: Connor holds the biggest
+    sandbag bunker in the middle. Hold the Treehouse becomes Hold the Bunker: 90 s in that bunker while the twins come
+    at it from the house end and Evan shoots from the road bank. The climbing goes. *(recommended: it is the yard you
+    remember, and the ladder fights are what the D.7 towers asked for, so they could come back somewhere that had one)*
+  - B) **The course, and the treehouse stays** in one oak at the tree line for those two matches. Every other part
+    of the yard is the course.
+  - C) **The course now, and the two treehouse matches move** with the treehouse to another yard. That yard needs
+    a design call of its own, and until then the two matches are closed.
+  Until this is answered the builder goes on with step 7 (Northcliff's pool) and the Found-in-play bugs.
+
 ## Answered
 
 - **Bunratty and the Hollow at real scale (D.51): how do 28 matches stay fightable on streets 2.5 times longer? (deep-work session, 2026-10-21, card `fable/d51-bunratty-hollow`)**
