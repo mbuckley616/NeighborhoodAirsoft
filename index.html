@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.314</div>
+  <div class="version">v1.315</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24205,11 +24205,14 @@ function enterBedroom() {
 // of cover (rings 0.75 m apart out to 6 m, twelve points on each); the spot itself when nothing nearer is free.
 // 1.4 m is the ally fan's own step (v1.33), so the fan is left as it was and only a real stack moves.
 const CREW_START_GAP = 1.4;
-function crewSpreadStart(x, z, taken, bounds, obstacles) {
-  const free = (qx, qz) => taken.every(t => Math.hypot(t.x - qx, t.z - qz) >= CREW_START_GAP);
+// v1.315: `gap` for the attack huddle's own ring (CREW_HUDDLE_GAP)
+const CREW_HUDDLE_GAP = 0.75;
+function crewSpreadStart(x, z, taken, bounds, obstacles, gap = CREW_START_GAP) {
+  const free = (qx, qz) => taken.every(t => Math.hypot(t.x - qx, t.z - qz) >= gap);
   if (free(x, z)) return { x, z };
   const m = 0.8;
-  for (let r = 0.75; r <= 6.01; r += 0.75) for (let k = 0; k < 12; k++) {
+  const step = Math.min(0.75, gap);
+  for (let r = step; r <= 6.01; r += step) for (let k = 0; k < 12; k++) {
     const a = k / 12 * Math.PI * 2;
     const qx = x + Math.cos(a) * r, qz = z + Math.sin(a) * r;
     if (bounds && (qx < bounds.minX + m || qx > bounds.maxX - m || qz < bounds.minZ + m || qz > bounds.maxZ - m)) continue;
@@ -24893,6 +24896,10 @@ function enterScenario(scenarioId) {
     // stacked there (the Last Saturday's Garrett, Colin, Brooke and Trey within 0.4 m). Huddle kids keep their ring.
     const crewSpread = sc.enemySetup !== (SCENARIOS[scenarioId] || {}).enemySetup;
     const takenStarts = playerSpawnPos ? [{ x: playerSpawnPos.x, z: playerSpawnPos.z }] : [];
+    // v1.315 (critic, 22 Oct): the huddle keeps its ring, but the ring's kids that start in cover are pushed out of it to
+    // one edge: the Last Saturday's Garrett, Colin, Brooke and Trey came out of the car within 0.42 m of each other
+    // (Colin and Brooke 0.05 m), one body with four heads. Huddle starts keep CREW_HUDDLE_GAP from each other.
+    const huddleStarts = [];
 
     for (const es of sc.enemySetup) {
       const placement = built.placements[es.anchor];
@@ -24972,6 +24979,11 @@ function enterScenario(scenarioId) {
       if (crewSpread && !perch && !(joinsEnemyHuddle && !es.spawnAt)) {   // v1.277: see crewSpread (a shared start too)
         const p = crewSpreadStart(spawnPos.x, spawnPos.z, takenStarts, built.bounds, built.obstacles);
         spawnPos.x = p.x; spawnPos.z = p.z;
+      }
+      if (crewSpread && !perch && joinsEnemyHuddle && !es.spawnAt) {   // v1.315: the huddle's own, closer spacing
+        const p = crewSpreadStart(spawnPos.x, spawnPos.z, huddleStarts, built.bounds, built.obstacles, CREW_HUDDLE_GAP);
+        spawnPos.x = p.x; spawnPos.z = p.z;
+        huddleStarts.push({ x: spawnPos.x, z: spawnPos.z });
       }
       takenStarts.push({ x: spawnPos.x, z: spawnPos.z });
 

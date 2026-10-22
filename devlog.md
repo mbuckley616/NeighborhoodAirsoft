@@ -13298,3 +13298,24 @@ with no anchor, and the scene builder dropped him.
 - **The briefing's prose** still reads "You and Seth against Trey and Brooke" once he has turned. The roster under it
   is right. Words for the turned-Seth replays are writing for Michael's taste, so this version left them alone.
 - **For a playtest:** your ally now starts in Seth's old backyard, where Seth used to start.
+
+## v1.315 — The attack huddle spreads out
+The critic's 22 Oct report (Found in play): in The Last Saturday with the first-time crew, Garrett, Colin, Brooke and
+Trey start within 0.42 m of each other beside the car, Colin and Brooke 0.05 m apart. On screen it is one body with four
+heads. v1.277's 1.4 m spread of crew-match starts leaves out the attack huddle, whose ring is its own. The ring is 1.4 m
+across, and with 14 kids in the match its places are 0.63 m apart. Those that fall in cover are pushed out of it by
+`findClearSpawn` along the same axis, so they land on one edge together.
+- **The fix:** in a crew match (the match's sides differ from its own), each huddle kid's start keeps 0.75 m
+  (`CREW_HUDDLE_GAP`) from the huddle starts already placed. `crewSpreadStart` takes the gap, and its search steps by
+  the smaller of 0.75 m and the gap. The huddle stays where it was, and matches without the crew are untouched.
+### Verified
+- **`tests/crew-spawn-bounds.test.mjs`, extended:** in all 31 team matches, with all five in the crew and with the
+  first-time crew, no two huddle kids start under 0.74 m apart.
+  - On v1.314 the same check failed in 13 matches. The worst pairs were Mitchell and Priya 0.01 m apart in Bunratty
+    2v2 with all five, and Mitchell and Owen 0.33 m in 2v4.
+  - The 1.4 m and 1.0 m rules outside the huddle still pass.
+- **These suites pass:** `crew-spawn-bounds`, `lamplight-starts`, `last-saturday`, `last-saturday-lives` and `smoke`.
+### Still open
+- **Not swept:** the stuck-kid sweep was not run with the crew on these matches. The huddle kids walk to their
+  anchors from starts at most a step from before.
+- Friday Night Lights' shared post (Nathan and Malik, Found in play) is a different case and is still open.
