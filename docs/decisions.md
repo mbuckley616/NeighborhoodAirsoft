@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
   Your answer of 16 Oct (decision 10, A) reworks the treehouse yard into the twins' course: open to the trees, no
   fence, the gravel road 3-4 m above the yard's far side, their plywood and sandbag bunkers, and no treehouse. Both of
@@ -20,6 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **The course now, and the two treehouse matches move** with the treehouse to another yard. That yard needs
     a design call of its own, and until then the two matches are closed.
   Until this is answered the builder goes on with the Found-in-play bugs.
+  Michael: **A — Both become course matches**. (2026-10-22)
 
 - **Northcliff's pool (D.55 step 7): which matches, and where on the ladder? (builder, 2026-10-22)**
   Your answer of 16 Oct (decision 9, A) makes the pool its own small map with its own matches, as Bellfield was. The
@@ -33,8 +36,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **A 1v1 and a 3v3, as Bellfield opened**, after Bellfield
   - C) **One match only for now, a 3v3 on the deck and courts**, the pool's look first
   - D) **A free-for-all**, the whole neighbourhood at the pool (it was the hub), plus a 1v1
-
-## Answered
+  Michael: **A — A 1v1 round the courts and a night game at the pool**, after Bellfield on the ladder. (2026-10-22)
 
 - **Bunratty and the Hollow at real scale (D.51): how do 28 matches stay fightable on streets 2.5 times longer? (deep-work session, 2026-10-21, card `fable/d51-bunratty-hollow`)**
   You chose real scale throughout (16 Oct). Bunratty Court really runs about 210 m from the fork to the bulb (the game's
