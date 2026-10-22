@@ -29,7 +29,7 @@ const fire = await page.evaluate(({ OLD, NEW, SPOTS }) => {
   let hit = 0; const real = window.applyBBHit; window.applyBBHit = (bb, c) => { if (c === owen) hit++; };
   const out = {};
   // v1.272: Protect Ryan's barricade (1.5 m, Priya's cover) now stands in the fort; the control fires with it lifted out
-  const all = Game.player.obstacles.slice(), bar = all.find(o => o.h === 1.5 && o.minX > 29 && o.maxX < 30.6);
+  const all = Game.player.obstacles.slice(), bar = all.find(o => o.h === 1.6 && o.minX > 29 && o.maxX < 30.6);
   for (const [key, at, keep] of [['old', OLD, false], ['new', NEW, true], ['oldBar', OLD, true]]) {
     Game.player.obstacles.length = 0; for (const o of all) if (keep || o !== bar) Game.player.obstacles.push(o);
     const per = []; let los = 0;

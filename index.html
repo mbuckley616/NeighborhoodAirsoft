@@ -15909,6 +15909,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const backwardZ = hc.side === 'north' ? -1 : +1;
     const yardCenterZ = hc.z + backwardZ * 9;   // shallower than Winnmark — woods crowd in
     coverByHouse[i] = [];
+    const movedCover = [];   // v1.305
     const numCover = 3 + Math.floor(gameRandom() * 2);
     for (let j = 0; j < numCover; j++) {
       let cx = hc.x + rng(-5, 5);
@@ -15917,7 +15918,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       // the garage, on the terrace's east end by the steps, and on the lawn
       if (hc.hero) [cx, cz] = [[38.4, 12.6], [41.7, 29.2], [31.0, 41.6], [42.4, 10.4]][j];
       // v1.305: a piece that lands on the street's bigger house (or 0.9 m round it) goes out behind it
-      else for (let pass = 0; pass < 2; pass++) for (const r of hc.plan.rects) if (cx > r.minX - 0.9 && cx < r.maxX + 0.9 && cz > r.minZ - 0.9 && cz < r.maxZ + 0.9) cz = hc.plan.k < 0 ? r.minZ - 1.5 : r.maxZ + 1.5;
+      else {
+        // the yard's anchor (houseN_backyard, below) and the pieces this house has placed: a moved piece stands 2.2 m and
+        // more off the anchor and 0.6 m off the others, stepping 2 m at a time along the wall; a later piece that lands
+        // on a moved one steps aside the same way (two pressed together make one block a kid is pushed out of)
+        const ax = hc.x + (i % 2 ? 1 : -1), az = hc.z + backwardZ * 9;
+        const near = (x, z) => coverByHouse[i].some(o => x > o.minX - 1.4 && x < o.maxX + 1.4 && z > o.minZ - 1.1 && z < o.maxZ + 1.1);
+        let moved = false;
+        for (let pass = 0; pass < 2; pass++) for (const r of hc.plan.rects) if (cx > r.minX - 0.9 && cx < r.maxX + 0.9 && cz > r.minZ - 0.9 && cz < r.maxZ + 0.9) { cz = hc.plan.k < 0 ? r.minZ - 1.5 : r.maxZ + 1.5; moved = true; }
+        if (moved) {
+          const x0 = cx;
+          for (const s of [0, 2, -2, 4, -4, 6, -6]) { cx = x0 + s; if (Math.hypot(cx - ax, cz - az) >= 2.2 && !near(cx, cz)) break; }
+          movedCover.push([cx, cz]);
+        } else for (let n = 0; n < 4 && movedCover.some(([mx, mz]) => Math.abs(cx - mx) < 2.2 && Math.abs(cz - mz) < 1.9); n++) cx += cx < ax ? -2 : 2;
+      }
       const kind = gameRandom();
       let cobj;
       const cgy = groundY(cx, cz);
@@ -16027,12 +16041,12 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // 1.5 m tall stands just in front of her inside the fort, between the corner bins, and is the cover she holds (closer to
     // her than the back wall, so the line over it to her head, not only her chest, is shut too).
     if (variant === 'vip') {
-      const bx0 = fortX - 0.4, bx1 = fortX + 0.05, bz0 = fortZ - 1.05, bz1 = fortZ + 1.05, bh = 1.5;
+      const bx0 = fortX - 0.4, bx1 = fortX + 0.05, bz0 = fortZ - 1.05, bz1 = fortZ + 1.05, bh = 1.6;   // v1.305: 1.6 m (was 1.5): the north lawns' bank (1.4 m) lifts a shooter on houses 1 and 2's lawns into a line over 1.5 m to her head
       const bg = new THREE.Group();
       const boardMats = [new THREE.MeshStandardMaterial({ color: 0xb8925a, roughness: 0.92 }), new THREE.MeshStandardMaterial({ color: 0xa47e4a, roughness: 0.92 })];
-      for (let i = 0; i < 5; i++) {   // five boards, each a little off true, as kids stack them
-        const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.28, 2.1 - (i % 2) * 0.12), boardMats[i % 2]);
-        b.position.set((bx0 + bx1) / 2 + (i % 2 ? 0.06 : -0.06), 0.15 + i * 0.3, (bz0 + bz1) / 2 + (i % 2 ? 0.05 : -0.04));
+      for (let i = 0; i < 6; i++) {   // six boards, each a little off true, as kids stack them (v1.305: five, under 1.5 m)
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.26, 2.1 - (i % 2) * 0.12), boardMats[i % 2]);
+        b.position.set((bx0 + bx1) / 2 + (i % 2 ? 0.06 : -0.06), 0.14 + i * 0.265, (bz0 + bz1) / 2 + (i % 2 ? 0.05 : -0.04));
         b.rotation.y = (i % 2 ? 0.02 : -0.015); b.castShadow = b.receiveShadow = true; bg.add(b);
       }
       const postMat = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: 0.95 });

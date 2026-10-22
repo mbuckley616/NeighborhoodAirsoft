@@ -12790,11 +12790,18 @@ allow, and the street's look comes from the guide instead.
   the drives.
 - **Cover and anchors stay put.** The scatter trees still steer round the old footprints, so every number they draw is
   drawn as before. Trees that stand on the new houses (or within 0.8 m) are taken out again. A backyard prop that lands
-  on a bigger house goes out 1.5 m behind it.
+  on a bigger house goes out 1.5 m behind it, at least 2.2 m from the yard's anchor and clear of the props already
+  there, stepping 2 m along the wall to find room. A later prop that would land on it steps aside the same way. The
+  first try put one plywood stack against another behind Sean's house, and Protect Ryan's Ryan, who starts there, was
+  pushed 1.95 m off his anchor.
   - Every `houseN_backyard` anchor and every start stands at least 0.9 m clear of the new walls.
   - One start moved: the free-for-all's `ffa_5` (Priya), from (18.5, 18.5) to (16.5, 20). The bank lifts your
     `ffa_side` start between houses 1 and 2 by 1.4 m, and from there you and she saw each other across the street.
     The new spot is the nearest that keeps the lot's rule.
+- **Protect Ryan's barricade is 1.6 m, from 1.5** (six boards, not five). It is the one in front of Priya, built in
+  v1.272 (Michael: A) so that nothing from up the street reaches her chest or head. Over 1.5 m, 32 spots on the
+  banked lawns of houses 1 and 2, 18-30 m off, saw her head. The bank lifts them 1.4 m, and 0.8 m would still leave 17.
+  At 1.6 m there are none.
 ### Verified
 - **`tests/real-scale.test.mjs`, extended:**
   - The six main blocks measure 13 x 10, 15 x 10, 13 x 10, 12 x 9.5, 11 x 9 and 10.8 x 9.5 m, in all three styles.
@@ -12819,11 +12826,17 @@ allow, and the street's look comes from the guide instead.
     0.3 m off the wall.
   - `bunratty-polish`: no colonial is left on Bunratty.
   - `bunratty-road`: the kerb drops at the new drives.
+  - `vip` and `vip-spawn`: the barricade is found at 1.6 m. Their sight checks are unchanged: from up the hill, no line
+    reaches her chest or head (0 of 544).
 - **These suites pass:** `real-scale`, `bunratty-road`, `bunratty-polish`, `houses`, `house-backs`, `ffa-starts` (after
-  the `ffa_5` move), `fence-bound`, `layout-same`, `smoke`, `bulb-sight`, `vip-spawn`, `backdrop`, `kid-hold`,
-  `last-saturday`, `pincer` and `cover-fire`.
+  the `ffa_5` move), `fence-bound`, `layout-same`, `smoke`, `bulb-sight`, `vip`, `vip-spawn`, `vip-cover`, `backdrop`,
+  `kid-hold`, `last-saturday`, `pincer`, `cover-fire`, `last-kid`, `pickup`, `pickup-ffa`, `pickup-kids`, `crew-field`,
+  `crew-spawn-bounds`, `crew-balance`, `kid-cells`, `rival`, `cars`, `car-side-fire`, `idle-ally`, `taggers`, `yard-props`,
+  `opening-hold`, `briefing-lives`, `one-ending`, `backyard-range` and `backyard-guns`.
+  `lamplight-starts`, on Bellfield, failed once ("a tagged kid comes back at his yard start") with three browsers
+  running beside it. It passed alone on the same build; this change does not touch Bellfield.
 - **The stuck-kid sweep on all 16 Bunratty matches** (3 ways each, up to 90 s) passed: no kid holds a moving state for
-  over 15 s. The worst was 5 s (Nick, chasing, behind house 2's back wall in Infection). No page errors, by day or at
+  over 15 s. The worst was 4.5 s (Nick, chasing, behind house 2's back wall in Infection). No page errors, by day or at
   night; at night the windows and fanlights light.
 ### Still open
 - **The houses are about two-thirds of real size.** The real ones are 15-25 m across on 50-60 m lots. Growing them
@@ -12831,6 +12844,8 @@ allow, and the street's look comes from the guide instead.
   design call: Michael's 1A kept each match today-sized.
 - **The garages face the street, not the side.** The guide's houses have side-entry garages. The wings face the street
   because the lots have no room for a court beside them.
+- **Protect Ryan's barricade is 10 cm taller than Michael's 1.5 m.** That keeps his rule from v1.272 (no line to her
+  head) with the bank in. The other way would be no bank by houses 1 and 2.
 - **What only a playtest can judge:** the north bank as cover (a kid crouched at its top looks down onto the lane), and
   the narrower side yards between the bigger houses and the fences.
 - **D.40's backyard range matched to Michael's terraces is the rest of step 2.**
