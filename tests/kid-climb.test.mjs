@@ -3,6 +3,7 @@
 // there; once the player has left the platform he climbs back down. Connor, placed on the platform, never leaves it.
 // A kid tagged on the ladder drops to the grass; `climb: false` keeps a kid on the ground. Time through stepGame.
 import { boot, check } from './lib/game.mjs';
+import { treehouseYard, TH_KING } from './lib/treehouse-yard.mjs';   // v1.316: the treehouse yard is test-only now
 const g = await boot(); const { page } = g;
 
 const climbRound = () => page.evaluate(() => {
@@ -34,7 +35,7 @@ const climbRound = () => page.evaluate(() => {
 });
 
 const rounds = [];
-for (let r = 0; r < 3; r++) { await g.scenario('stoneglen_treehouse'); rounds.push(await climbRound()); }
+for (let r = 0; r < 3; r++) { await (await treehouseYard(page), g.scenario(TH_KING)); rounds.push(await climbRound()); }
 for (const [i, r] of rounds.entries()) console.log('  round', i, JSON.stringify(r));
 check('with the player on the platform, Haden climbs up in under 15 s, every round', rounds.every(r => r.upAt > 0 && r.upAt < 15), rounds.map(r => r.upAt));
 check('on the way he never stands still for 1.5 s (out of the fort, round to the ladder)', rounds.every(r => r.maxStand < 1.5), rounds.map(r => r.maxStand));
@@ -48,7 +49,7 @@ check('Connor (placed up there) never leaves the platform, player up or down', r
 const starts = [[11, -8.4], [-4, -13], [8, 12], [2, -11.5], [-15, 10]];
 const fromAt = [];
 for (const [sx, sz] of starts) {
-  await g.scenario('stoneglen_treehouse');
+  await (await treehouseYard(page), g.scenario(TH_KING));
   fromAt.push(await page.evaluate(([sx, sz]) => {
     applyBBHit = () => {};
     const p = Game.player; Game.mouse.locked = true;
@@ -61,7 +62,7 @@ for (const [sx, sz] of starts) {
 check('from five corners of the yard he reaches the platform inside 15 s', fromAt.every(r => r.upAt > 0 && r.upAt < 15), fromAt);
 
 // the player on the ladder counts as up; at the gate, nobody heads for the ladder
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 const onLad = await page.evaluate(() => {
   applyBBHit = () => {};
   const h = Game.scenario.enemies.find(e => !e.perch), L = Game.scenario.ladders[0];
@@ -77,7 +78,7 @@ check('with the player at the start, Haden never heads for the ladder (10 s)', o
 check('with the player on the ladder, Haden heads for it', onLad.goes, onLad);
 
 // tagged on the ladder: he drops to the grass, and (out for good in a skirmish) stays there
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 const drop = await page.evaluate(() => {
   applyBBHit = () => {};
   const p = Game.player; Game.mouse.locked = true;
@@ -94,7 +95,7 @@ const drop = await page.evaluate(() => {
 check('a kid tagged 1.5 m up the ladder drops to the grass and stays there', drop.at > 1.5 && drop.endY === 0 && drop.monotone && !drop.lad && !drop.perch, drop);
 
 // climb: false keeps a kid on the ground
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 const stay = await page.evaluate(() => {
   applyBBHit = () => {};
   const p = Game.player; Game.mouse.locked = true;

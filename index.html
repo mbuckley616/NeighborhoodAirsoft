@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.315</div>
+  <div class="version">v1.316</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5926,10 +5926,10 @@ const VOICE_LINES = {
     taunt:         ["Connor, where is he?", "Come out, come out!", "You're in OUR yard!", "Connor, cover me!", "I'm gonna get you!"],
   },
   connor: {
-    playerHit:     ["Got him! Haden, did you see?", "Yes! YES!", "Treehouse rules!", "Tagged! Ha ha!", "From up here, dude!"],
+    playerHit:     ["Got him! Haden, did you see?", "Yes! YES!", "Bunker rules!", "Tagged! Ha ha!", "Right over the bags, dude!"],
     npcHit:        ["Haden, AVENGE ME.", "Augh! Haden!", "No way! Haden, he got me!", "OW. Okay. That's one.", "He got me! Get him!"],
-    playerSpotted: ["Haden! He's right there!", "I see him, I see him!", "There! By the fort!", "Got him from up here!"],
-    taunt:         ["Haden, go around!", "You can't climb up here!", "This is OUR treehouse!", "Come on, I dare you!", "Haden, where'd he go?"],
+    playerSpotted: ["Haden! He's right there!", "I see him, I see him!", "There! By the fort!", "Got eyes on him from the bunker!"],
+    taunt:         ["Haden, go around!", "You'll never get in here!", "This is OUR bunker!", "Come on, I dare you!", "Haden, where'd he go?"],
   },
   // Bellfield Court: Mason the sportsman, Christian the excitable one, Fernando and Diego the pair.
   mason: {
@@ -7798,16 +7798,19 @@ const SCENARIOS = {
   },
 
   // --- v1.138: the twins' treehouse at Stoneglen Close (D.7, Michael: A) ---
+  // v1.316 (D.55 step 6, Michael: A on "The twins' course"): the yard is their course now and the treehouse is gone, so
+  // King of the Treehouse is King of the Course: Connor holds the big sandbag bunker where the oak stood. The id stays
+  // (saves, the phone's texts and the ladder key off it).
   stoneglen_treehouse: {
     region: 'northcliff', street: 'stoneglen_close',
-    name: 'Stoneglen Close', scenarioName: 'King of the Treehouse',
-    desc: "The twins have a real treehouse: a platform up in the big oak in their backyard, with a plywood rail and a ladder. Connor has it, and from up there he can see the whole yard. Haden starts at the fort by the west fence and comes looking for you. Get to the ladder and climb it (W at the foot, looking at it; S to climb down), or tag Connor from the ground. Jumping off the platform is quicker than the ladder, but the drop takes all your stamina. One hit each.",
-    builderFn: 'buildTreehouseYardScene',
+    name: 'Stoneglen Close', scenarioName: 'King of the Course',
+    desc: "The twins built a course in their backyard: plywood walls with firing slots, tyre stacks, a pallet wall, a little plywood tower, and in the middle a big sandbag bunker. Connor has the bunker, and from in there he can see most of the yard. Haden starts at the fort by the west trees and comes looking for you. Work your way up the course from cover to cover and tag them both. One hit each.",
+    builderFn: 'buildTwinsCourseScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
-    playerSpawn: 'behind_shed',   // v1.185: was side_gate, in Connor's sight from the platform (decisions, Michael: A)
+    playerSpawn: 'behind_shed',   // v1.185: out of Connor's sight (decisions, Michael: A); v1.316: out of the bunker's
     enemySetup: [
-      { charId: 'connor', weapon: 'mp5',    anchor: 'treehouse', perch: 'treehouse', role: 'defender' },
+      { charId: 'connor', weapon: 'mp5',    anchor: 'bunker', role: 'defender' },
       { charId: 'haden',  weapon: 'pistol', anchor: 'fort', role: 'skirmisher' },
     ],
     winCondition: 'kill_all',
@@ -7816,21 +7819,25 @@ const SCENARIOS = {
   },
 
   // --- v1.144: hold the treehouse while the twins climb up after you (D.7, Michael: A) ---
+  // v1.316 (D.55 step 6, Michael: A): Hold the Bunker. 90 s in the big bunker while the twins come from the house end
+  // and Evan shoots from the nest under the road bank. The climbing goes; v1.165's rule (Michael: C) stays in its new
+  // form: Evan holds fire until the first twin is close (holdUntilNear).
   stoneglen_hold_treehouse: {
     region: 'northcliff', street: 'stoneglen_close',
-    name: 'Stoneglen Close', scenarioName: 'Hold the Treehouse',
-    desc: "This time the treehouse is yours, and the twins want it back. Haden and Connor come out of the house and climb the ladder after you, one at a time; a tagged twin drops off and walks back to the patio to come again. Evan stays down by the shed, and once a twin is on the ladder he shoots at anything above the rail. Keep low behind the plywood, watch the gap over the ladder, and don't let them over the top. Survive 90 seconds.",
-    builderFn: 'buildTreehouseYardScene',
+    name: 'Stoneglen Close', scenarioName: 'Hold the Bunker',
+    desc: "This time the big bunker is yours, and the twins want it back. Haden and Connor come out of the house and up the course at you; a tagged twin walks back to the patio and comes again. Evan is in the sandbag nest under the road bank behind you, and once a twin gets close he shoots at anything showing over the bags. Keep low, watch the way in on the west side, and don't let them in. Survive 90 seconds.",
+    builderFn: 'buildTwinsCourseScene',
     builderArg: 'default',
     scenarioType: 'defend',
-    resultHold: 'the treehouse',
-    playerSpawn: 'treehouse',
+    resultHold: 'the bunker',
+    openingHoldSec: 5,   // v1.316: nobody fires for 5 s (2.5 elsewhere): the twins come up the course before they shoot
+    playerSpawn: 'bunker',
     enemySpawnCluster: 'cluster_patio',
     enemySetup: [
       { charId: 'haden',  weapon: 'ump',     anchor: 'boxes_w', role: 'attacker', flank: 'L' },
       { charId: 'connor', weapon: 'shotgun', anchor: 'boxes_e', role: 'attacker', flank: 'R' },
-      // v1.165 (Michael: C): Evan holds fire until the first twin reaches the foot of the ladder (about 8 s)
-      { charId: 'evan',   weapon: 'mp5',     anchor: 'shed',    role: 'defender', climb: false, holdUntilLadder: true },
+      // v1.165 (Michael: C), v1.316: Evan holds fire until a twin is within 7 m of you
+      { charId: 'evan',   weapon: 'mp5',     anchor: 'road_bank', role: 'defender', holdUntilNear: 7 },
     ],
     winCondition: 'survive_timer',
     timerSec: 90,
@@ -18210,6 +18217,9 @@ function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('def
 // A small fenced yard behind a house with a big oak in the middle. The treehouse is a 3.4 x 3.2 m platform 2.6 m
 // up on the oak, with a plywood rail and a gap over the ladder on its south side. Climbing: `built.ladders` (see
 // updateLadder); a kid can hold the platform: `built.perches` (enemySetup `perch`, see kidGroundY).
+// v1.316 (D.55 step 6, Michael: A): no match is played here any more: the twins' yard is their course
+// (buildTwinsCourseScene). The yard is kept as the game's only ladder and perch, which the climbing suites drive
+// (tests/lib/treehouse-yard.mjs) and D.7's towers can reuse.
 // =====================================================================
 const TREEHOUSE_TOP = 2.6;   // the platform's floor top: where feet stand up there
 function buildTreehouseYardScene(variant, timeOfDay) {
@@ -18393,6 +18403,238 @@ function buildTreehouseYardScene(variant, timeOfDay) {
     name: 'Stoneglen Close', scenarioName: '', desc: '',
     placements, playerSpawns, groundY, ladders, perches,
     teamBases: { player: { x: -13, z: 14 }, enemy: { x: 0, z: -6 } },
+  };
+}
+
+// =====================================================================
+// v1.316 (backlog D.55 step 6; docs/refs/northcliff.md gap 7; decisions 16 Oct, 10 A, and 22 Oct, A): STONEGLEN CLOSE —
+// THE TWINS' COURSE. The yard behind their house as Michael remembers it: open, flat and lined by trees, no fence;
+// along the far end a private gravel road 3.5 m up on a grassy bank ("we would rarely play up there"), and the
+// bunkers they built: a big sandbag bunker in the middle (where the treehouse's oak stood), plywood walls with firing
+// slots, a pallet wall, tyre stacks, a low plywood tower and a smaller sandbag nest under the bank. The shed, their
+// kid fort, the boxes, bins, ply stack and picnic table stand where they stood. The bank's foot is in play (the
+// ground rises 1.2 m by the north bound); the road is not. Same house, same street out front.
+// =====================================================================
+const TWINS_BANK = { toe: -22, top: -28, h: 3.5 };   // the bank: flat south of z = toe, the road's level north of z = top
+function twinsCourseGroundY(x, z) {
+  if (z >= TWINS_BANK.toe) return 0;
+  if (z <= TWINS_BANK.top) return TWINS_BANK.h;
+  const t = (TWINS_BANK.toe - z) / (TWINS_BANK.toe - TWINS_BANK.top);
+  return TWINS_BANK.h * t * t * (3 - 2 * t);
+}
+function buildTwinsCourseScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x9ab8d0, dayFog: [40, 100],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-14, 30, 16],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
+    nightFog: [16, 50], moonPos: [14, 32, -16],
+    shadow: { size: 2048, extent: 34, far: 80 },
+  });
+  const groundY = twinsCourseGroundY;
+  const rng = (a, b) => a + gameRandom() * (b - a);
+  const obstacles = [], cover = [];
+  const box = (minX, maxX, minZ, maxZ, h, baseY = 0, extra = {}) => ({ minX, maxX, minZ, maxZ, h, baseY, surface: 'hard', ...extra });
+  const coverAt = (o) => { obstacles.push(o); cover.push(o); return o; };
+  const std = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 });
+
+  // --- the lawn, the patio, the bank and the gravel road on top ---
+  {
+    const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), std(0x5a8a40));
+    lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn);
+    const patio = new THREE.Mesh(new THREE.BoxGeometry(12, 0.06, 4), std(0xb8b0a4));
+    patio.position.set(0, 0.03, 15); patio.receiveShadow = true; scene.add(patio);
+    // the bank: a strip across the whole view, its rows on the ground fn; the woods' floor past it at the road's level
+    const segZ = 12, bank = new THREE.PlaneGeometry(120, TWINS_BANK.toe - TWINS_BANK.top, 1, segZ);
+    bank.rotateX(-Math.PI / 2);
+    const bp = bank.attributes.position;
+    for (let i = 0; i < bp.count; i++) {
+      const z = bp.getZ(i) + (TWINS_BANK.toe + TWINS_BANK.top) / 2;
+      bp.setZ(i, z); bp.setY(i, groundY(0, z) + 0.01);
+    }
+    bank.computeVertexNormals();
+    const bankM = new THREE.Mesh(bank, std(0x58823c)); bankM.receiveShadow = true; scene.add(bankM);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 50), std(0x4e6a34));
+    floor.rotation.x = -Math.PI / 2; floor.position.set(0, TWINS_BANK.h, TWINS_BANK.top - 25); floor.receiveShadow = true; scene.add(floor);
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(120, 4), std(0x9a948a));
+    road.rotation.x = -Math.PI / 2; road.position.set(0, TWINS_BANK.h + 0.02, TWINS_BANK.top - 3.5); road.receiveShadow = true; scene.add(road);
+    for (const dz of [-1.6, 1.6]) {   // the wheel ruts' darker gravel
+      const rut = new THREE.Mesh(new THREE.PlaneGeometry(120, 0.5), std(0x87817a));
+      rut.rotation.x = -Math.PI / 2; rut.position.set(0, TWINS_BANK.h + 0.03, TWINS_BANK.top - 3.5 + dz * 0.55); scene.add(rut);
+    }
+  }
+  // --- the house at the south end, back to the yard ---
+  obstacles.push(buildSuburbanHouse(scene, { x: 0, z: 21, width: 13, depth: 8, brickColor: 0xc8b090, roofColor: 0x4a3a2a, faceDir: 'south', detail: true }));
+
+  // --- sandbag walls: bags laid in courses, merged into one mesh a wall; each wall one collision box ---
+  const bagMats = { a: std(0x9a8a5e), b: std(0x8a7a52), c: std(0xa89a6c) };
+  const sandbags = (minX, maxX, minZ, maxZ, h) => {
+    const g = new THREE.Group(), bk = {}, add = _propAdder(bk);
+    const alongX = (maxX - minX) >= (maxZ - minZ), len = alongX ? maxX - minX : maxZ - minZ, th = alongX ? maxZ - minZ : maxX - minX;
+    const rows = Math.max(1, Math.round(h / 0.19)), rh = h / rows, bl = 0.62;
+    for (let r = 0; r < rows; r++) {
+      const off = (r % 2) * bl / 2, inset = r * 0.025;   // courses offset half a bag; the wall leans in a little
+      for (let s = -off; s < len - 0.05; s += bl) {
+        const a = Math.max(0, s), b = Math.min(len, s + bl), w = b - a - 0.03;
+        if (w < 0.12) continue;
+        const c = (a + b) / 2, k = 'abc'[(r * 7 + Math.round(s * 3)) % 3];
+        const geo = new THREE.BoxGeometry(alongX ? w : th - 2 * inset, rh * 0.96, alongX ? th - 2 * inset : w);
+        const y = rh * (r + 0.5);
+        if (alongX) add(k, geo, minX + c, y, (minZ + maxZ) / 2, 0, 0, 0);
+        else add(k, geo, (minX + maxX) / 2, y, minZ + c, 0, 0, 0);
+      }
+    }
+    _propMerge(g, bk, bagMats); scene.add(g);
+    return coverAt(box(minX, maxX, minZ, maxZ, h, 0, { mesh: g, surface: 'soft' }));
+  };
+  // the big bunker: a ring of bags 0.9 m high round a 3.2 x 2.4 m floor, its way in on the house side. Chest-high, as
+  // the club's redoubts: crouched you are under it, standing your head and gun are over it (a kid's muzzle is 0.92-1.18
+  // m up, so 1.15 m bags kept Connor from ever seeing out)
+  const BK = { x: 0, z: -6 }, bkH = 0.9;
+  // (the way in is on the west side: a gap facing the house let the twins shoot straight in from the patio)
+  const bunker = {
+    n: sandbags(BK.x - 2.2, BK.x + 2.2, BK.z - 1.8, BK.z - 1.2, bkH),
+    s: sandbags(BK.x - 2.2, BK.x + 2.2, BK.z + 1.2, BK.z + 1.8, bkH),
+    e: sandbags(BK.x + 1.6, BK.x + 2.2, BK.z - 1.2, BK.z + 1.2, bkH),
+    wn: sandbags(BK.x - 2.2, BK.x - 1.6, BK.z - 1.2, BK.z - 0.5, bkH),
+    ws: sandbags(BK.x - 2.2, BK.x - 1.6, BK.z + 0.5, BK.z + 1.2, bkH),
+  };
+  // the nest under the bank: an L of bags, Evan's
+  const nest = sandbags(-7.4, -4.6, -21.4, -20.8, 0.9);
+  sandbags(-7.4, -6.8, -20.8, -19.4, 0.9);
+
+  // --- plywood walls with a firing slot (a 20 cm gap at 1.0-1.2 m that BBs pass through), on 2x4 legs ---
+  const plyMat = std(0xc4a06a), plyDark = std(0x6a4a30);
+  const slotWall = (cx, cz, len, alongX) => {
+    const g = new THREE.Group(), th = 0.08, w = alongX ? len : th, d = alongX ? th : len;
+    const mesh = (geo, mat, y, dx = 0, dz = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(cx + dx, y, cz + dz); m.castShadow = m.receiveShadow = true; g.add(m); };
+    mesh(new THREE.BoxGeometry(w, 1.0, d), plyMat, 0.5);
+    mesh(new THREE.BoxGeometry(w, 0.3, d), plyMat, 1.35);
+    for (const s of [-1, 1]) mesh(new THREE.BoxGeometry(alongX ? 0.09 : 0.2, 1.55, alongX ? 0.2 : 0.09), plyDark, 0.775, alongX ? s * (len / 2 - 0.05) : 0, alongX ? 0 : s * (len / 2 - 0.05));
+    scene.add(g);
+    const hw = w / 2 + 0.03, hd = d / 2 + 0.03;
+    const low = coverAt(box(cx - hw, cx + hw, cz - hd, cz + hd, 1.0, 0, { mesh: g }));
+    obstacles.push(box(cx - hw, cx + hw, cz - hd, cz + hd, 0.3, 1.2, { mesh: g, noStand: true }));
+    return low;
+  };
+  const plyW = slotWall(-8, -12, 2.4, true);
+  const plyE = slotWall(6.5, -1.5, 2.4, true);
+  slotWall(-5.5, 2.5, 2.2, false);
+  // a pallet wall: three pallets on edge, slats and blocks
+  {
+    const g = new THREE.Group(), bk = {}, add = _propAdder(bk), mats = { slat: std(0xa8885a), blk: std(0x7a5a3a) };
+    const x0 = 3.6, z0 = 8.5;
+    for (let p = 0; p < 3; p++) {
+      const px = x0 + p * 1.22;
+      for (let s = 0; s < 6; s++) add('slat', new THREE.BoxGeometry(1.18, 0.09, 0.02), px, 0.12 + s * 0.2, z0 - 0.06);
+      for (let s = 0; s < 6; s++) add('slat', new THREE.BoxGeometry(1.18, 0.09, 0.02), px, 0.12 + s * 0.2, z0 + 0.06);
+      for (const dx of [-0.54, 0, 0.54]) add('blk', new THREE.BoxGeometry(0.1, 1.2, 0.1), px + dx, 0.6, z0);
+    }
+    _propMerge(g, bk, mats); scene.add(g);
+    coverAt(box(x0 - 0.62, x0 + 2 * 1.22 + 0.62, z0 - 0.1, z0 + 0.1, 1.2, 0, { mesh: g }));
+  }
+  // tyre stacks
+  const tyreMat = std(0x1e1e1e);
+  const tyres = (cx, cz, n) => {
+    const g = new THREE.Group();
+    for (let i = 0; i < n; i++) {
+      const t = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.17, 8, 16), tyreMat);
+      t.rotation.x = Math.PI / 2; t.position.set(cx + (i % 2) * 0.04, 0.17 + i * 0.3, cz); t.castShadow = true; g.add(t);
+    }
+    scene.add(g);
+    return coverAt(box(cx - 0.6, cx + 0.6, cz - 0.6, cz + 0.6, 0.17 + n * 0.3, 0, { mesh: g, surface: 'soft' }));
+  };
+  tyres(-13, -8, 3); tyres(12.5, 6, 3); tyres(13.4, 6.9, 2);
+  // the low plywood tower: a sheathed box on four posts, the top open, nobody climbs it
+  {
+    const g = new THREE.Group(), tx = -12.5, tz = -17, s = 1.7, h = 1.9;
+    for (const [dx, dz, w, d] of [[0, -s / 2, s, 0.06], [0, s / 2, s, 0.06], [-s / 2, 0, 0.06, s], [s / 2, 0, 0.06, s]]) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h - 0.3, d), plyMat); m.position.set(tx + dx, 0.3 + (h - 0.3) / 2, tz + dz); m.castShadow = m.receiveShadow = true; g.add(m);
+    }
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, h + 0.15, 0.12), plyDark); m.position.set(tx + dx * (s / 2 - 0.02), (h + 0.15) / 2, tz + dz * (s / 2 - 0.02)); m.castShadow = true; g.add(m);
+    }
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.3, 0.03), std(0xe8e0c8)); sign.position.set(tx + 0.1, 1.5, tz + s / 2 + 0.05); sign.rotation.z = -0.05; g.add(sign);
+    scene.add(g);
+    coverAt(box(tx - s / 2 - 0.06, tx + s / 2 + 0.06, tz - s / 2 - 0.06, tz + s / 2 + 0.06, h, 0, { mesh: g }));
+  }
+
+  // --- what stayed: the shed, the twins' kid fort, boxes, bins, a ply stack, the picnic table ---
+  {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 2.4), std(0x7a8a6a)); body.position.set(11, 1.1, -11); body.castShadow = body.receiveShadow = true; g.add(body);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.12, 2.8), std(0x4a4038)); roof.position.set(11, 2.3, -11); roof.rotation.x = 0.12; roof.castShadow = true; g.add(roof);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.04), std(0x5a6a4a)); door.position.set(11, 0.9, -9.78); g.add(door);
+    scene.add(g);
+    coverAt(box(9.4, 12.6, -12.2, -9.8, 2.3, 0, { mesh: g, courseShed: true }));
+  }
+  const fort = buildKidFort(scene, -10, -2, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });
+  for (const w of fort) { obstacles.push(w); cover.push(w); }
+  const boxE = coverAt(addHomeDepotBox(scene, 9, 2, { w: 1.3, h: 1.05, d: 1.0, facing: 0.2, detail: true }));
+  coverAt(addHomeDepotBox(scene, 9.8, 3.3, { w: 1.0, h: 0.9, d: 0.9, facing: -0.3, detail: true }));
+  const boxW = coverAt(addHomeDepotBox(scene, -5, 7, { w: 1.2, h: 1.0, d: 1.0, facing: 0.5, detail: true }));
+  coverAt(addHomeDepotBox(scene, 4.5, -11, { w: 1.2, h: 1.0, d: 1.0, facing: -0.4, detail: true }));
+  for (const [bx, bz, v] of [[-13.6, 12.5, 'garbage'], [-12.8, 12.5, 'recycle'], [13.2, 9, 'garbage']]) coverAt(addCurbsideBin(scene, bx, bz, { variant: v, facing: Math.PI, detail: true }));
+  {
+    const st = buildPlyStack(4, 0, 6, 0.37); scene.add(st);
+    coverAt({ minX: 3.2, maxX: 4.8, minZ: 5.55, maxZ: 6.45, h: 0.55, baseY: 0, mesh: st, surface: 'hard' });
+  }
+  {   // the picnic table on the patio: standable (0.75 m)
+    const wood = std(0x8a6a48), g = new THREE.Group();
+    const top_ = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.8), wood); top_.position.set(4, 0.75, 13.5); top_.castShadow = true; g.add(top_);
+    for (const sz of [-0.6, 0.6]) { const b = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.05, 0.28), wood); b.position.set(4, 0.45, 13.5 + sz); g.add(b); }
+    for (const sx of [-0.75, 0.75]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.75, 1.4), wood); l.position.set(4 + sx, 0.37, 13.5); g.add(l); }
+    scene.add(g);
+    obstacles.push({ minX: 3.05, maxX: 4.95, minZ: 13.1, maxZ: 13.9, h: 0.78, baseY: 0, mesh: g, surface: 'hard', bbPass: false });
+  }
+
+  // --- the trees: no fence; the sides are tree lines with undergrowth, the bank has trees on it and the woods run on
+  //     past the road. Round hardwoods and tall loblollies mixed, as on Northcliff Trace (v1.313).
+  const tree = (x, z, big) => {
+    const pine = ((Math.abs(Math.round(x * 7 + z * 13)) % 5) < 2);
+    return addSuburbanTree(scene, x, z, pine
+      ? { detail: true, shape: 'loblolly', trunkR: 0.34, trunkH: rng(12, 16), leafR: rng(2.4, 3), baseY: groundY(x, z) }
+      : { detail: true, trunkH: big ? rng(5, 6.5) : rng(4, 5.5), leafR: rng(2.6, 3.2), baseY: groundY(x, z) });
+  };
+  for (const sx of [-1, 1]) {
+    for (let z = -20; z <= 13; z += 4.2) obstacles.push(tree(sx * (19.2 + rng(-0.6, 0.6)), z + rng(-0.8, 0.8), true));
+    for (let z = -18; z <= 12; z += 5.5) obstacles.push(tree(sx * (23 + rng(-1, 1)), z + rng(-1, 1), false));
+    for (let z = -19; z <= 12; z += 3.4) obstacles.push(addBush(scene, sx * (17.9 + rng(-0.3, 0.3)), z + rng(-0.6, 0.6), rng(1.1, 1.6), rng(0.7, 1.0), rng(0.9, 1.3), null, 0, { detail: true }));
+  }
+  for (let x = -22; x <= 22; x += 5.2) obstacles.push(tree(x + rng(-1, 1), -25.6 + rng(-0.6, 0.6), true));   // on the bank
+  for (const z of [-36, -41.5, -47]) for (let x = -34; x <= 34; x += 5.5) tree(x + rng(-1.4, 1.4), z + rng(-1.5, 1.5), z !== -36);   // past the road
+  for (const [x, z] of [[-14.5, -13], [14.5, 13]]) obstacles.push(addSuburbanTree(scene, x + rng(-0.3, 0.3), z + rng(-0.3, 0.3), { detail: true, trunkH: rng(3.6, 4.4), leafR: rng(2.2, 2.6) }));
+  if (_night) addStreetlamp(scene, -3, 16.2, groundY, true);   // a porch light's worth
+
+  const V = (x, z) => new THREE.Vector3(x, groundY(x, z), z);
+  const placements = {
+    bunker: { pos: V(BK.x + 0.6, BK.z), cover: bunker.s },            // Connor's: inside (findClearSpawn keeps 0.75 m off the bags), the house-side bags his
+    shed: { pos: V(11, -8.4), cover: obstacles.find(o => o.courseShed) },
+    fort: { pos: V(-11, -2), cover: fort[0] },
+    boxes_e: { pos: V(10, 0.6), cover: boxE },
+    boxes_w: { pos: V(-5.2, 5.6), cover: boxW },
+    ply_w: { pos: V(-8, -13), cover: plyW },
+    ply_e: { pos: V(6.5, -0.6), cover: plyE },
+    road_bank: { pos: V(-6, -22.2), cover: nest },                  // Evan's: in the nest under the bank, 16 m behind the bunker
+    cluster_back: { pos: V(2, -17), cover: null },
+    cluster_patio: { pos: V(2, 12.5), cover: null },
+  };
+  const playerSpawns = {
+    side_gate: { pos: V(-13, 14.4), yaw: -0.55 },                   // by the bins at the west side of the patio, facing up the yard
+    // King of the Course (v1.185's rule, kept): behind the shed, out of Connor's sight from the bunker; faces past
+    // the shed's south-east corner down the yard
+    behind_shed: { pos: V(14.5, -12), yaw: 2.5 },
+    bunker: { pos: V(BK.x + 0.6, BK.z), yaw: 0 },                    // Hold the Bunker: inside it, facing the house
+  };
+  return {
+    scene,
+    spawn: playerSpawns.side_gate.pos.clone(), spawnYaw: playerSpawns.side_gate.yaw,
+    bounds: { minX: -17.5, maxX: 17.5, minZ: -24, maxZ: 16.4 },
+    cover, obstacles, enemies: [],
+    name: 'Stoneglen Close', scenarioName: '', desc: '',
+    placements, playerSpawns, groundY,
+    teamBases: { player: { x: -13, z: 14 }, enemy: { x: BK.x, z: BK.z } },
   };
 }
 
@@ -24373,6 +24615,13 @@ const EDGE_BACKDROPS = {
     W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
   },
+  // v1.316: the twins' course. N has its own bank, road and woods; the sides a tree band before the neighbours
+  // (docs/refs/northcliff.md gap 9)
+  buildTwinsCourseScene: {
+    W: { from: 9, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 9, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 18, bands: [['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },   // the street out front
+  },
   buildTreehouseYardScene: {
     N: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     W: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
@@ -25012,6 +25261,7 @@ function enterScenario(scenarioId) {
         enemy.startAt = { x: spawnPos.x, z: spawnPos.z, huddle: !!(joinsEnemyHuddle && !es.spawnAt) };   // v1.277: where he started
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
+        if (es.holdUntilNear) enemy.holdUntilNear = es.holdUntilNear;   // v1.316: no shot until a teammate is this close to you
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
         if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
@@ -25422,6 +25672,7 @@ function startScenario(built) {
   { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
     if (gm && typeof gm[gt] === 'number') gm[gt]++; }
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
+  Game.scenario.attackNear = false;      // v1.316: set when a kid first comes within holdUntilNear of you
   Game.scene = built.scene;
   // Stop bedroom theme — scenario will play in silence (or its own theme later)
   stopMusic();
@@ -30425,8 +30676,12 @@ function coverInFrontTop(enemy, dirX, dirZ, reach = 1.6) {
 // with a line to the spawn (Devon in Two in the Yards, 37 m) had been tagging a
 // player who hadn't moved yet at ~1.5 s, in a one-life match.
 const OPENING_HOLD_SEC = 2.5;
+// v1.316: a match may hold longer (`openingHoldSec`): Hold the Bunker, where the twins had about 8 s of ladder to climb
+// before anyone could tag you, and on the open course Haden's UMP tagged a player standing at the start at 2.8 s.
 function inOpeningHold() {
-  return Game.mode === 'scenario' && (Game.scenario.roundTime || 0) < OPENING_HOLD_SEC;
+  if (Game.mode !== 'scenario') return false;
+  const sc = SCENARIOS[Game.scenario.active];
+  return (Game.scenario.roundTime || 0) < ((sc && sc.openingHoldSec) || OPENING_HOLD_SEC);
 }
 
 // v1.176: the kids' clock, in simulated seconds (plus 1, so a stamp taken at BEGIN is truthy). Their spotted memory,
@@ -30459,6 +30714,13 @@ function spawnEnemyBB(enemy, targetPos) {
   // the ladder, tagged a standing player at 2.7-9.6 s in 8 of 8 rounds, before the twins climbed. He holds until the
   // first twin reaches the foot of the ladder, then shoots at anything above the rail as before.
   if (enemy.holdUntilLadder && !Game.scenario.ladderReached) return;
+  // v1.316 (D.55 step 6): the same rule on the twins' course, with no ladder: Evan in the nest behind Hold the Bunker
+  // holds until the first twin is within holdUntilNear metres of the player. Once set it stays set for the round.
+  if (enemy.holdUntilNear && !Game.scenario.attackNear) {
+    const P = Game.player.pos;
+    if (!Game.scenario.enemies.some(k => k !== enemy && k.health > 0 && k.team !== 'player' && Math.hypot(k.pos.x - P.x, k.pos.z - P.z) < enemy.holdUntilNear)) return;
+    Game.scenario.attackNear = true;
+  }
   // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
   if (enemy._hasLOSNow) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
@@ -35725,7 +35987,7 @@ const SUMMER_TEXTS = [
   { id: 'northcliff', from: 'Eric',    after: 'lot_night_4v4',
     text: "seths old friend evan lives up in northcliff now. seth says evan is better than all of us. hills and a creek. august is gonna be crazy" },
   { id: 'treehouse',  from: 'Rebecca', after: 'stoneglen_treehouse',
-    text: "the twins have a REAL treehouse?? with a ladder?? not fair" },
+    text: "the twins built a whole COURSE?? with sandbags?? not fair" },   // v1.316: was the treehouse
   // v1.273: the twins split, Andrew to Seth and Alex to you
   { id: 'askAlex',    from: 'Alex',    after: 'stoneglen_hold_treehouse', ask: 'alex',
     text: "andrews going with seth. evan talked him into it. im not. can i run with ur crew?" },

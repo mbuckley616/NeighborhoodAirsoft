@@ -13320,3 +13320,65 @@ across, and with 14 kids in the match its places are 0.63 m apart. Those that fa
 - **Not swept:** the stuck-kid sweep was not run with the crew on these matches. The huddle kids walk to their
   anchors from starts at most a step from before.
 - Friday Night Lights' shared post (Nathan and Malik, Found in play) is a different case and is still open.
+
+## v1.316 — The twins' course
+Backlog D.55 step 6, Michael's two answers: rework the treehouse yard into the twins' course, "open to the trees, no
+fence; the gravel road 3-4 m above the yard; no treehouse" (16 Oct), and A on what becomes of its two matches, "both
+become course matches" (22 Oct). The guide (`docs/refs/northcliff.md`, gap 7) has the yard as Michael remembers it:
+open, flat, lined by trees, a raised private road along the far end, and bunkers and cover the twins built themselves.
+The game had a 34 x 31 m square in a 1.8 m board fence round an oak with a treehouse in it.
+- **The course** (`buildTwinsCourseScene`). The house, patio and street are where they were.
+  - **The edges:** the fence is gone. The sides are tree lines (round hardwoods and tall loblollies, as on Northcliff
+    Trace) with undergrowth. The yard runs 8 m deeper, to a grassy bank that climbs to a gravel road 3.5 m up, with
+    trees on the bank and woods past the road. The bank's foot is in play, to 0.9 m up at the north bound; the road is
+    not.
+  - **The bunkers:** a big sandbag bunker where the oak stood. It is a ring of bags 0.9 m high round a 3.2 x 2.4 m
+    floor, with its way in on the west side. There is also a sandbag nest under the bank, three plywood walls with a
+    firing slot (BBs go through the 20 cm gap at 1.0-1.2 m), a pallet wall, three tyre stacks and a low plywood tower.
+    The shed, the twins' kid fort, the boxes, bins, ply stack and picnic table stand where they stood.
+- **King of the Course** (was King of the Treehouse). Connor holds the bunker and Haden comes from the fort. Your start
+  stays behind the shed, and the v1.185 rule still holds: there is no line to it from anywhere in the bunker.
+- **Hold the Bunker** (was Hold the Treehouse): 90 s in the bunker. The twins come up the course from the house, and a
+  tagged twin walks back to the patio and comes again. Evan shoots from the nest under the bank, 16 m behind you.
+  - **Evan's hold:** v1.165's rule (Michael: C) stays in a new form. Evan holds fire until a twin is within 7 m of you
+    (`holdUntilNear`), where before he held until a twin was on the ladder.
+  - **A longer opening hold:** the match holds everyone's fire for 5 s (`openingHoldSec`; 2.5 s everywhere else). With
+    no ladder to climb, Haden's UMP tagged a player standing at the start from the patio at 2.8 s in 6 of 6 rounds.
+    The ladder used to give about 8 s.
+- **The bags are 0.9 m.** The AI aims at your chest at standing height (0.98 m up) even when you crouch, and the
+  twins' muzzles are 0.92 m up. So no height of bag both hides you from their eyes and lets Connor see out. At
+  1.15 m Connor never once had a line out of the bunker. At 0.9 m the bags still stop the BBs: in 60 s of Hold the
+  Bunker you take 47 hits crouched, against 411 standing.
+- **The ids stay** (`stoneglen_treehouse`, `stoneglen_hold_treehouse`), so saves, the ladder order and Alex's ask
+  after the defend are unchanged. Rebecca's text and the twins' treehouse lines now talk about the course.
+- **The treehouse yard is kept, unplayed.** It is the game's only ladder and perch, which `treehouse`, `kid-climb`,
+  `ladder-prompt` and `pad-hints` drive. `tests/lib/treehouse-yard.mjs` puts the two old matches back as test-only
+  scenarios, and D.7's towers can reuse it.
+### Verified
+- **`treehouse-start`, rewritten:**
+  - The course has no ladder, nobody perched, and no wall over 20 m long. The bunker has five 0.9 m bag walls. The
+    yard is flat to the bank, 0.91 m up at the bound, with the road at 3.5 m.
+  - There is no line to your start from 25 spots in the bunker, crouched or standing, at four heights: 0 of 200. The
+    old side gate is in sight from 25 of 25.
+  - Standing at the start in 6 rounds, Connor never had a line and Haden's first tag came at 10.2-11.6 s. As a
+    control, at the side gate Connor tags you at 3.0-3.3 s. Walking out 1.5 s toward the bunker, Connor has a line at
+    1.2 s.
+- **`treehouse-hold`, rewritten**, untaggable for 60 s, with a twin tagged once he has spent 3 s within 12 m:
+  - Haden came within 12 m 7 times and Connor 4 times, Connor to 2.6 m.
+  - Evan stayed within 0.9 m of his nest. He hit a standing player 266 times and a crouched one 25.
+  - The timer wins the round.
+- **`treehouse-evan`, rewritten:** in 6 rounds standing at the start, nobody tagged you before 5.2 s (Haden, 5.2-5.4
+  s), and Evan fired nothing before a twin was close. In an untaggable round, the first twin came within 7 m at 7.8 s:
+  Evan fired 0 BBs before then and 157 after.
+- **These suites pass:** `treehouse` (the ladder on the kept yard), `kid-climb`, `ladder-prompt`, `pad-hints` and
+  `layout-same`, plus the suites listed below.
+  - The rest: `smoke`, `northcliff`, `bellfield`, `crew-roster`, `backdrop`, `texts` and `voices`.
+- **The stuck-kid sweep** on both matches, three ways each, up to 90 s: the worst hold was 1 s. No page errors.
+### Still open
+- **For Michael's look:** the course's layout. The road on its bank can't be seen from the yard at eye height: you see
+  the bank and the trees on it.
+- **Hold the Bunker's 5 s opening hold** is this version's own call, made to keep the old match's grace. It is two
+  numbers to change (`openingHoldSec`, Evan's 7 m) if it plays too soft.
+- **The twins' guns** are unchanged (UMP, MP5, shotgun, pistol). The guide's side question, whether they should carry
+  the best guns in the game, was never asked.
+- **D.55 step 7** (Northcliff's pool map, Michael: A, a 1v1 round the courts and a night game) is next.

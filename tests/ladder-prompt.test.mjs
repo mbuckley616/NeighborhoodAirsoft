@@ -2,9 +2,10 @@
 // prompt reads "W climb"; on the ladder it lists W / S / Space; up top in the rail's gap, looking out, "S climb down";
 // anywhere else, and after the round, it is hidden. Time through stepGame.
 import { boot, check } from './lib/game.mjs';
+import { treehouseYard, TH_KING } from './lib/treehouse-yard.mjs';   // v1.316: the treehouse yard is test-only now
 const g = await boot(); const { page } = g;
 
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 await page.evaluate(() => { Game.player.invuln = true; applyBBHit = () => {}; });
 
 const at = (o) => page.evaluate((o) => {
