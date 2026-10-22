@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.318</div>
+  <div class="version">v1.319</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7542,12 +7542,13 @@ const SCENARIOS = {
   hollow_defend_south_fort: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Hold the South Fort',
-    desc: "You claimed the south fort and now Seth's whole crew wants it — five of them pushing up, and they don't quit. Tag one and he runs back and comes again, but they stage close so they're back fast. Use the firing windows on all four walls, watch the front port and the creek flank at the same time, and hold for 90 seconds before they call it.",
+    desc: "You claimed the south fort and now Seth's whole crew wants it — five of them pushing up, and they don't quit. Tag one and he has to run all the way back to the north fort before he comes again, so every tag buys you time. Use the firing windows on all four walls, watch the front port and the creek flank at the same time, and hold for 90 seconds before they call it.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'defend',
     playerSpawn: 'team_b',
     enemySpawnCluster: 'redoubt_e',
+    enemyRespawnCluster: 'cluster_north',   // v1.319 (B.13): tagged, they go back to the north fort, 65 m off
     enemySetup: [
       { charId: 'seth',     weapon: 'ar',      anchor: 'b_center', role: 'attacker' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'b_left',   role: 'attacker' },
@@ -25537,6 +25538,15 @@ function enterScenario(scenarioId) {
         // scenario type is 'defend'.
         enemy._spawnPos = spawnPos.clone();
         enemy._deployAnchor = placement.pos.clone();
+        // v1.319 (backlog B.13, Michael 22 Oct: "move the enemy spawn point to the opposite base, so that shooting an
+        // enemy has a greater effect / longer cooldown"): a match can send its tagged attackers back to another
+        // staging point than the one they set out from. They still open from their own huddle; tagged, they walk to
+        // a ring round enemyRespawnCluster and come again from there.
+        if (sc.enemyRespawnCluster && esTeam === 'enemy' && built.placements[sc.enemyRespawnCluster]) {
+          const rc = built.placements[sc.enemyRespawnCluster].pos, ang = setupIdx * 1.3;
+          const clear = findClearSpawn(rc.x + Math.cos(ang) * 1.6, rc.z + Math.sin(ang) * 1.6, built.obstacles, 0.4);
+          enemy._respawnPos = new THREE.Vector3(clear.x, 0, clear.z);
+        }
         if (deployTarget) {
           enemy.deployTarget = deployTarget;
           enemy.state = startState;
@@ -35199,7 +35209,7 @@ function updateEnemies(dt) {
         // disable, not a kill. They face away from the player while running back.
         e.mesh.group.position.y = 0;
         setKidCrouch(e.mesh, 0);
-        const back = e._spawnPos || e._deployAnchor || e.pos;
+        const back = e._respawnPos || e._spawnPos || e._deployAnchor || e.pos;   // v1.319: _respawnPos, see enemyRespawnCluster
         const dxb = back.x - e.pos.x, dzb = back.z - e.pos.z;
         const db = Math.sqrt(dxb*dxb + dzb*dzb);
         // Face the direction of travel (toward spawn) instead of the player.

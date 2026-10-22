@@ -13443,3 +13443,37 @@ D.55 step 7, the second of Michael's two pool matches ("a night game at the pool
 - **For a playtest:** the balance. In three probe rounds with the first-time crew (six a side), our side lost two and
   won one. The 69 m between the starts makes for a slow opening: the first tag came at 22-26 s.
 - **For Michael's look:** the club at night. Only three lamps and the pool light it.
+
+## v1.319 — Hold the South Fort: tagged attackers go back to the north fort
+Backlog B.13, Michael's note (control room, 22 Oct): Hold the South Fort is "very very difficult". He offered two
+fixes and asked for either: move the enemy spawn to the opposite base, "so that shooting an enemy has a greater effect /
+longer cooldown before they can get involved again", or improve the fort. This version takes the first, for this match
+only, as his note asked.
+- **What was wrong:** the five attackers huddle at the east redoubt, 44 m from your fort. A tagged kid jogged back
+  there and came again, and was back within 25 m of you 17.5-19.1 s after the tag. Over 90 s they spent 67-70
+  attacker-seconds within 25 m of the fort.
+- **What changed:** a new scenario field, `enemyRespawnCluster`. A tagged attacker walks back to a ring round its
+  point, not to his own start, and comes again from there. Hold the South Fort sends them to `cluster_north`, behind
+  the north fort and 65 m from yours.
+  - **The opening is unchanged.** They still set out from the redoubt huddle, so the first push reaches you as
+    before, about 10 s in.
+  - **Moving the huddle as well** was tried and left out. The first kid then reached 25 m at 19-21 s of the 90, and
+    the attackers spent 25-28 seconds near the fort in all. That is most of the match without a fight.
+- **The briefing** no longer says "they stage close so they're back fast". It now says a tagged kid runs back to the
+  north fort, so every tag buys time.
+- **Hold the Fort (Night)** is unchanged. Michael's note named the day match.
+### Verified
+- **`tests/hollow-fort.test.mjs`, extended.** In 90 s untaggable and crouched in the fort, an attacker who spends
+  2 s within 22 m of you is tagged:
+  - All five start by the redoubt, and every one's way back is behind the north fort (z −31.5 to −34.4).
+  - The first reaches 25 m at 9.8-11.5 s, as before.
+  - A tagged kid now takes 28.8-35.4 s on average to come back within 25 m, was 17.5-19.1. The test's limit is 24 s.
+  - 10-12 tags in the round, was 15-16. They spent 40-46 attacker-seconds within 25 m, was 67-70.
+  - Three runs, two of them side by side under load, all pass.
+- **The stuck-kid sweep** on Hold the South Fort, three ways: the worst hold was 2.5 s. No page errors.
+- **These suites pass:** `hollow-fort`, `retreat-progress`, `fort-spawn`, `result-text`, `rival` and `smoke`.
+### Still open
+- **For a playtest:** whether it is now right, too soft or still too hard. If it is still too hard, Michael's other
+  fix is next: a taller wall and better crenellations on the fort. The new field can also be set on the night match.
+- A kid wedged on his way home is still sent there at once by the v1.164 watchdog, so a few comebacks are about
+  20 s rather than 30.
