@@ -13443,3 +13443,130 @@ D.55 step 7, the second of Michael's two pool matches ("a night game at the pool
 - **For a playtest:** the balance. In three probe rounds with the first-time crew (six a side), our side lost two and
   won one. The 69 m between the starts makes for a slow opening: the first tag came at 22-26 s.
 - **For Michael's look:** the club at night. Only three lamps and the pool light it.
+
+## v1.319 — Hold the South Fort: tagged attackers go back to the north fort
+Backlog B.13, Michael's note (control room, 22 Oct): Hold the South Fort is "very very difficult". He offered two
+fixes and asked for either: move the enemy spawn to the opposite base, "so that shooting an enemy has a greater effect /
+longer cooldown before they can get involved again", or improve the fort. This version takes the first, for this match
+only, as his note asked.
+- **What was wrong:** the five attackers huddle at the east redoubt, 44 m from your fort. A tagged kid jogged back
+  there and came again, and was back within 25 m of you 17.5-19.1 s after the tag. Over 90 s they spent 67-70
+  attacker-seconds within 25 m of the fort.
+- **What changed:** a new scenario field, `enemyRespawnCluster`. A tagged attacker walks back to a ring round its
+  point, not to his own start, and comes again from there. Hold the South Fort sends them to `cluster_north`, behind
+  the north fort and 65 m from yours.
+  - **The opening is unchanged.** They still set out from the redoubt huddle, so the first push reaches you as
+    before, about 10 s in.
+  - **Moving the huddle as well** was tried and left out. The first kid then reached 25 m at 19-21 s of the 90, and
+    the attackers spent 25-28 seconds near the fort in all. That is most of the match without a fight.
+- **The briefing** no longer says "they stage close so they're back fast". It now says a tagged kid runs back to the
+  north fort, so every tag buys time.
+- **Hold the Fort (Night)** is unchanged. Michael's note named the day match.
+### Verified
+- **`tests/hollow-fort.test.mjs`, extended.** In 90 s untaggable and crouched in the fort, an attacker who spends
+  2 s within 22 m of you is tagged:
+  - All five start by the redoubt, and every one's way back is behind the north fort (z −31.5 to −34.4).
+  - The first reaches 25 m at 9.8-11.5 s, as before.
+  - A tagged kid now takes 28.8-35.4 s on average to come back within 25 m, was 17.5-19.1. The test's limit is 24 s.
+  - 10-12 tags in the round, was 15-16. They spent 40-46 attacker-seconds within 25 m, was 67-70.
+  - Three runs, two of them side by side under load, all pass.
+- **The stuck-kid sweep** on Hold the South Fort, three ways: the worst hold was 2.5 s. No page errors.
+- **These suites pass:** `hollow-fort`, `retreat-progress`, `fort-spawn`, `result-text`, `rival` and `smoke`.
+### Still open
+- **For a playtest:** whether it is now right, too soft or still too hard. If it is still too hard, Michael's other
+  fix is next: a taller wall and better crenellations on the fort. The new field can also be set on the night match.
+- A kid wedged on his way home is still sent there at once by the v1.164 watchdog, so a few comebacks are about
+  20 s rather than 30.
+
+## v1.320 — A hit bonus: 50¢ for every hit
+Backlog D.59, Michael's note (control room, 22 Oct): "Can we have some sort of 'Bonus' system to give you extra $ in
+each match? Like maybe you get an extra $0.50 per hit?" A match paid only its win or loss money: $2-$11 a win, from
+`scaledReward`. Landing ten hits on the way to a loss paid the same as hiding.
+- **The rule:** every hit you land on a kid of the other side pays 50¢ on top of the match's pay, won or lost
+  (`HIT_BONUS`, `matchHitBonus`). Each hit on a kid is a tag, so the bonus counts the result screen's tags. A tag now
+  records whether the kid was on the other side, so hits on your own team pay nothing.
+- **Whole dollars:** cash has always been whole dollars, so the bonus pays $1 for every two hits and drops the odd
+  50¢. Seven hits pay $3.
+- **Where it pays nothing:** a forfeit, the tutorial's targets and a Pickup Game. The board's games pay "a little"
+  ($3 a win), Michael's choice when it was built, and a 5-life 1v1 there would have paid more in bonus than the win.
+- **Where you see it:**
+  - On the result card, by the pay: "EARNED $7 + $3 hit bonus (7 hits) +$10".
+  - On every ladder card of the map screen, after the pay: "WIN +$7 · LOSE +$2 · +50¢ A HIT".
+### Verified
+- **`tests/result-stats.test.mjs`, extended.** In Aisle Wars ($7 a win) you land five hits on their kids and one on
+  each of your three:
+  - The tags mark five as the other side's.
+  - The win pays $9: $7 and a $2 bonus, the fifth 50¢ dropped. The card reads "$7 + $2 hit bonus (5 hits)" and +$9.
+  - Six hits pay $3 in a loss, and nothing in a forfeit or a Pickup Game.
+  - The map card has "+50¢ A HIT", and the tutorial's card does not.
+  - The first section's one-tag win pays no bonus (half a dollar, dropped), so its IN REACH line is unchanged.
+- **By eye:** the result card with seven hits, in the notebook style: the bonus reads in ink beside EARNED. The map
+  cards at 1024x700, 1280x720 and 1920x1080: the pay line never runs under START or out of its card. At 1024 it wraps
+  to two lines, as long pay lines already did.
+- **These suites pass:** `result-stats`, `autosave`, `bellfield`, `ctf-clock`, `last-saturday`, `map-screen`,
+  `notebook`, `one-ending`, `online`, `pickup`, `pickup-clock`, `pickup-ffa`, `pool-noodle`, `wallet`, `smoke`,
+  `result-text`, `country-club`, `grocery-store`, `high-school`, `northcliff` and `sell-back`.
+### Still open
+- **For Michael:** whether 50¢ is right. A ladder win pays up to $20, and every 10 hits add $5,
+  so the shop's guns come sooner. How many hits a real round lands is for a playtest. The amount is one number
+  (`HIT_BONUS`).
+- **Shown nowhere during the match.** The HUD's cash doesn't count the bonus as you go, and there is no hit marker
+  yet (D.60, next).
+
+## v1.321 — Hit markers
+Backlog D.60, Michael's note (control room, 22 Oct): "I also think adding hit markers would be cool as well, to
+confirm you were the one to hit someone." Before, the only sign of your own tag was the hit sound, and every tag
+sounds the same, whoever's BB it was. In a team match you couldn't tell your tag from a teammate's.
+- **The marker:** when your BB (or the noodle) tags a kid of the other side, a white X shows round the middle of the
+  screen (`#hitMarker`, `showHitMarker`). It is four short strokes outside the reticle, so it hides nothing you aim
+  at. It pops a little larger and fades over 0.3 s (`HIT_MARKER_SEC`), counted in game steps.
+- **Red when he is out for good:** the X is red when the tag took his last life.
+- **No marker for:**
+  - a kid already out (walking back, or hand up);
+  - a teammate;
+  - a kid in his 3 s grace after coming back.
+  None of those is a tag. Online, a tag on your friend's kid shows it too.
+- **Hidden** when the match ends.
+- **v1.320's comments** in `index.html` said v1.319. They now say v1.320.
+### Verified
+- **`tests/result-stats.test.mjs`, extended.** In Aisle Wars, with a real BB flown into each kid:
+  - No marker shows before a hit. Tagging their kid shows a white X at full opacity, and 20 steps later it is gone.
+  - Shooting the same kid again as he walks back out gives none, and neither does shooting your teammate.
+  - Tagging a kid on his last life gives a red X, and his lives read 0.
+- **By eye:** screenshots of the white and the red X over the Riverside Market lot. Both read clearly against the
+  store front and a car.
+- **These suites pass:** `result-stats`, `smoke`, `online`, `pool-noodle`, `squad-hud`, `notebook`, `vip`,
+  `ctf-clock` and `out-shot`.
+### Still open
+- **For a playtest:** the size (40 px) and the 0.3 s. There is no sound of its own; the existing hit sound plays as
+  before.
+
+## v1.322 — A red flash when you're hit
+Backlog D.62, Michael's note (control room, 22 Oct): "There should be a red 'flash' around the peripherals of the
+player's view when they are hit ... The audio alone is not enough of a cue, as many bullets hitting near the player
+can sound similar."
+- **What was wrong:** there was a flash, but nobody could see it. A hit added a soft inset shadow (`#damageVignette`)
+  and took it off 50 ms later, on a `setTimeout`, with a 0.05 s transition in. It was gone before it had shown.
+- **The new flash:** a hit turns the edges of the view red. It is a radial band, clear in the middle 55% and dark red
+  at the very edge, so the middle stays clear to aim through.
+  - It starts at full strength and fades over 0.5 s of game time (`HURT_FLASH_SEC`, `hurtFlashStep`), so a hit is
+    still on screen a quarter-second later. Its opacity is the square root of the time left, so it holds strong and
+    then goes.
+  - It runs on game steps, so pausing the game holds the flash.
+  - It sits over the sniper scope's black mask, so a scoped player sees it too. It tints the HUD panels red while it
+    lasts.
+- **Only real hits flash.** A BB that doesn't count (your 3 s grace, walking home, the round already won) gives none,
+  since only the hit that counts calls it. Online, a hit from your friend flashes too, as it already called it.
+### Verified
+- **`tests/damage-report.test.mjs`, extended.** In a Pickup Game with three lives, a real BB lands on you:
+  - Before the hit nothing shows. On the hit the edges go to 0.98 opacity.
+  - 0.2 s later it is at 0.75, and by 0.7 s it is gone.
+  - It sits over the scope (z 7, the scope's mask 6).
+  - A BB in your grace counts nothing and gives no flash.
+- **By eye:** screenshots on the Riverside Market lot at the hit and a quarter-second after. The red band runs round
+  all four edges at the hit, with the middle clear.
+- **These suites pass:** `damage-report`, `smoke`, `online`, `notebook`, `vip`, `result-stats`, `pickup-clock` and
+  `out-shot`.
+### Still open
+- **For a playtest:** strength and length (0.5 s; 0.9 opacity at the edge). There is no side to it: a hit from
+  behind flashes the same as one from the front. Showing where a hit came from would be a separate idea.

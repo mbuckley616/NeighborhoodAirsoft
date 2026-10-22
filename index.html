@@ -29,6 +29,13 @@
     pointer-events: none;
     z-index: 10;
   }
+  /* v1.321 (D.60): the hit marker, an X round the middle of the screen when your BB tags a kid of the other side */
+  #hitMarker {
+    position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%);
+    pointer-events: none; opacity: 0; z-index: 7;   /* over the scope's mask (6) */
+  }
+  #hitMarker path { stroke: #fff; stroke-width: 3; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 1.5px rgba(0,0,0,0.9)); }
+  #hitMarker.out path { stroke: #ff3b30; }
   #crosshair {
     position: absolute;
     left: 50%; top: 50%;
@@ -556,16 +563,14 @@
   #bedroomHud .pad-line { display: none; margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--ui-border); font-size: 11px; color: #aaa; letter-spacing: 1px; }
   #bedroomHud .pad-key { font-size: 10px; color: var(--ui-accent); letter-spacing: 1.5px; margin-right: 4px; }
 
+  /* v1.322 (D.62): the hit flash, a red band round the edges of the view; its opacity is set each game step */
   #damageVignette {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    box-shadow: inset 0 0 200px 40px rgba(231, 76, 60, 0);
-    transition: box-shadow 0.4s ease-out;
-  }
-  #damageVignette.flash {
-    box-shadow: inset 0 0 200px 40px rgba(231, 76, 60, 0.7);
-    transition: box-shadow 0.05s;
+    opacity: 0;
+    z-index: 7;   /* over the scope's mask (6), so a scoped player sees it too */
+    background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(200, 20, 20, 0) 55%, rgba(200, 20, 20, 0.55) 80%, rgba(170, 0, 0, 0.9) 100%);
   }
 
   #adsVignette {
@@ -1117,6 +1122,7 @@
     letter-spacing: 2px;
     color: #aaa;
   }
+  #resultScreen .reward-bonus { margin-left: 10px; letter-spacing: 0.5px; color: #ddd; }   /* v1.320 (D.59) */
   #resultScreen .reward-amount {
     font-size: 22px;
     font-weight: bold;
@@ -2179,6 +2185,7 @@
   #resultScreen .nb-paper .flavor { font-size: 17px; color: var(--nb-ink); margin: 0 0 var(--nb-rule); }
   #resultScreen .nb-paper .reward { padding: calc(var(--nb-rule) / 2) 16px; margin: 0; }
   #resultScreen .nb-paper .reward-label { font-size: 14px; color: var(--nb-pencil); }
+  #resultScreen .nb-paper .reward-bonus { color: var(--nb-ink); letter-spacing: 0; }   /* v1.320 (D.59) */
   #resultScreen .nb-paper .reward-amount { font-family: var(--nb-marker); font-size: 24px; color: var(--nb-green); font-weight: 400; }
   #resultScreen .nb-paper .result-wallet { font-size: 16px; margin: 0; }
   #resultScreen .nb-paper .result-stats { margin: 0 0 var(--nb-rule); }
@@ -2484,6 +2491,7 @@
 <!-- === HUD === -->
 <div id="hud">
   <div id="crosshair"><svg id="reticleSvg" viewBox="-50 -50 100 100" width="100" height="100"></svg></div>
+  <div id="hitMarker"><svg viewBox="-20 -20 40 40" width="40" height="40"><path d="M-13,-13 L-5,-5 M13,-13 L5,-5 M-13,13 L-5,5 M13,13 L5,5"/></svg></div>
   <div id="redDotReticle"></div>
   <div id="damageVignette"></div>
   <div id="adsVignette"></div>
@@ -2574,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.318</div>
+  <div class="version">v1.322</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7542,12 +7550,13 @@ const SCENARIOS = {
   hollow_defend_south_fort: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Hold the South Fort',
-    desc: "You claimed the south fort and now Seth's whole crew wants it — five of them pushing up, and they don't quit. Tag one and he runs back and comes again, but they stage close so they're back fast. Use the firing windows on all four walls, watch the front port and the creek flank at the same time, and hold for 90 seconds before they call it.",
+    desc: "You claimed the south fort and now Seth's whole crew wants it — five of them pushing up, and they don't quit. Tag one and he has to run all the way back to the north fort before he comes again, so every tag buys you time. Use the firing windows on all four walls, watch the front port and the creek flank at the same time, and hold for 90 seconds before they call it.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'defend',
     playerSpawn: 'team_b',
     enemySpawnCluster: 'redoubt_e',
+    enemyRespawnCluster: 'cluster_north',   // v1.319 (B.13): tagged, they go back to the north fort, 65 m off
     enemySetup: [
       { charId: 'seth',     weapon: 'ar',      anchor: 'b_center', role: 'attacker' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'b_left',   role: 'attacker' },
@@ -25537,6 +25546,15 @@ function enterScenario(scenarioId) {
         // scenario type is 'defend'.
         enemy._spawnPos = spawnPos.clone();
         enemy._deployAnchor = placement.pos.clone();
+        // v1.319 (backlog B.13, Michael 22 Oct: "move the enemy spawn point to the opposite base, so that shooting an
+        // enemy has a greater effect / longer cooldown"): a match can send its tagged attackers back to another
+        // staging point than the one they set out from. They still open from their own huddle; tagged, they walk to
+        // a ring round enemyRespawnCluster and come again from there.
+        if (sc.enemyRespawnCluster && esTeam === 'enemy' && built.placements[sc.enemyRespawnCluster]) {
+          const rc = built.placements[sc.enemyRespawnCluster].pos, ang = setupIdx * 1.3;
+          const clear = findClearSpawn(rc.x + Math.cos(ang) * 1.6, rc.z + Math.sin(ang) * 1.6, built.obstacles, 0.4);
+          enemy._respawnPos = new THREE.Vector3(clear.x, 0, clear.z);
+        }
         if (deployTarget) {
           enemy.deployTarget = deployTarget;
           enemy.state = startState;
@@ -25910,6 +25928,8 @@ function startScenario(built) {
   VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; VOICE.recentLines = []; VOICE.pending = [];   // v1.150: the speech cooldown runs on the round clock (v1.256: no lines left waiting)
   Game.scenario._startCalled = false;   // v1.151: the start call, once a round (Game.scenario persists between rounds)
   Game.scenario.stats = newMatchStats();   // v1.193: what the result screen tells you about your match
+  Game.hitMarkerT = 0; Game.hitMarkers = 0;   // v1.321 (D.60)
+  Game.hurtFlashT = 0; Game.hurtFlashes = 0; hurtFlashStep(0);   // v1.322 (D.62)
   { const gm = Game.persist.gunMatches, gt = Game.persist.equipped.gun;   // v1.262 (D.44): one more match for the gun you carry
     if (gm && typeof gm[gt] === 'number') gm[gt]++; }
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
@@ -26106,7 +26126,19 @@ function newMatchStats() { return { shots: 0, tags: [], hitOnYou: 0, damage: [] 
 function noteMatchTag(bb, c) {
   const st = Game.scenario.stats;
   const from = bb.spawnPos || bb.pos;
-  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0 });
+  st.tags.push({ name: c.name || 'a kid', dist: Math.hypot(c.pos.x - from.x, c.pos.z - from.z), t: Game.scenario.roundTime || 0,
+    foe: combatantTeam(c) !== combatantTeam(Game.player) });   // v1.320 (D.59): a hit the bonus pays for
+}
+// v1.320 (backlog D.59, Michael 22 Oct: "some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get
+// an extra $0.50 per hit?"): every hit you land on a kid of the other side pays HIT_BONUS on top of the match's pay,
+// won or lost. Cash is whole dollars, so it pays $1 for every two hits, the odd one dropped. A Pickup Game (it pays a
+// little, never the ladder's money), the tutorial's targets and a forfeit pay none.
+const HIT_BONUS = 0.5;
+function matchHitBonus(outcome) {
+  const def = SCENARIOS[Game.scenario.active], st = Game.scenario.stats;
+  if (!st || !def || def.pickup || def.range || def.tutorial || outcome === 'forfeit') return { hits: 0, cash: 0 };
+  const hits = st.tags.filter(t => t.foe).length;
+  return { hits, cash: Math.floor(hits * HIT_BONUS) };
 }
 // v1.238 (backlog D.34, Michael 14 Oct: "a 'damage report' after you've been eliminated from a match that shows where
 // you were shot on your player mesh, and by what weapon. If you have multiple lives, it should show each shot that
@@ -26280,7 +26312,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   html += dmgHtml;
   el.innerHTML = html;
   if (dmgHtml) { try { drawDamageReport(); } catch (e) { console.warn('damage report', e); } }
-  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou,
+  Game.scenario.lastResult = { tags: st.tags.length, shots: st.shots, hitOnYou: st.hitOnYou, hitBonus: Game.scenario.hitBonus || null,
     time: Game.scenario.roundTime || 0, best, opened, reach, rival, damage: dmgHtml ? (st.damage || []).slice() : [] };
 }
 
@@ -26311,6 +26343,8 @@ function endScenario(outcome) {
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
   document.getElementById('timerHud').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
+  Game.hitMarkerT = 0; hitMarkerStep(0);   // v1.321 (D.60)
+  Game.hurtFlashT = 0; hurtFlashStep(0);   // v1.322 (D.62)
   { const rd = document.getElementById('redDotReticle'); if (rd) rd.style.display = 'none'; }
   document.getElementById('adsVignette').style.opacity = '0';
   { const so = document.getElementById('scopeOverlay'); if (so) so.style.opacity = '0'; }
@@ -26373,6 +26407,9 @@ function endScenario(outcome) {
   let cashEarned = 0;
   if (outcome === 'win') cashEarned = scaledReward(reward.win);
   else if (outcome === 'lose' || outcome === 'infected') cashEarned = scaledReward(reward.lose);
+  const hitBonus = matchHitBonus(outcome), basePay = cashEarned;   // v1.320 (D.59)
+  cashEarned += hitBonus.cash;
+  Game.scenario.hitBonus = { hits: hitBonus.hits, cash: hitBonus.cash, base: basePay };
   Game.persist.cash += cashEarned;
   if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup) {   // v1.201: a pickup game is no step on the ladder
     Game.persist.completed[Game.scenario.active] = true;
@@ -26540,7 +26577,9 @@ function endScenario(outcome) {
   }
   if (rewardEl) {
     if (cashEarned > 0) {
-      rewardEl.innerHTML = `<span class="reward-label">EARNED</span> <span class="reward-amount">+$${cashEarned}</span>`;
+      // v1.320 (D.59): the hit bonus says what it paid for
+      const hb = hitBonus.cash > 0 ? ` <span class="reward-bonus">$${basePay} + $${hitBonus.cash} hit bonus (${hitBonus.hits} hits)</span>` : '';
+      rewardEl.innerHTML = `<span class="reward-label">EARNED${hb}</span> <span class="reward-amount">+$${cashEarned}</span>`;
     } else {
       rewardEl.innerHTML = `<span class="reward-label">NO REWARD</span> <span class="reward-amount">$0</span>`;
     }
@@ -30370,10 +30409,22 @@ function updateRosterHud() {
   list.innerHTML = rows.join('');
 }
 
+// v1.322 (backlog D.62, Michael 22 Oct: "a red 'flash' around the peripherals of the player's view when they are hit
+// ... The audio alone is not enough of a cue, as many bullets hitting near the player can sound similar"). The old
+// flash was a 50 ms pulse of a soft inset shadow, gone before it showed. Now a hit turns the edges of the view red at
+// full strength and it fades over HURT_FLASH_SEC of game time, the middle of the view left clear to aim through.
+const HURT_FLASH_SEC = 0.5;
 function flashDamage() {
+  Game.hurtFlashT = HURT_FLASH_SEC;
+  Game.hurtFlashes = (Game.hurtFlashes || 0) + 1;
+  hurtFlashStep(0);
+}
+function hurtFlashStep(dt) {
   const v = document.getElementById('damageVignette');
-  v.classList.add('flash');
-  setTimeout(() => v.classList.remove('flash'), 50);
+  if (!v) return;
+  if (Game.hurtFlashT > 0) Game.hurtFlashT = Math.max(0, Game.hurtFlashT - dt);
+  const k = (Game.hurtFlashT || 0) / HURT_FLASH_SEC;
+  v.style.opacity = k > 0 ? Math.sqrt(k).toFixed(3) : '0';   // holds strong, then goes
 }
 
 function updateStanceHud() {
@@ -31341,8 +31392,28 @@ function applyBBHit(bb, c) {
     if (bb.enemyRef && bb.enemyRef !== c && bb.enemyRef.health > 0) tryNpcSpeak(bb.enemyRef, 'playerHit');
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
+    if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   }
   return true;
+}
+// v1.321 (backlog D.60, Michael 22 Oct: "hit markers would be cool as well, to confirm you were the one to hit
+// someone"): your BB (or noodle) tagging a kid of the other side puts a white X round the middle of the screen for
+// HIT_MARKER_SEC, red when the tag put him out for good. A kid already out, a teammate and a kid in his grace give none.
+const HIT_MARKER_SEC = 0.3;
+function showHitMarker(c) {
+  if (combatantTeam(c) === combatantTeam(Game.player)) return;
+  Game.hitMarkerT = HIT_MARKER_SEC;
+  Game.hitMarkerOut = c.health <= 0 && c.state !== 'retreating' && !((c.lives | 0) > 0);
+  Game.hitMarkers = (Game.hitMarkers || 0) + 1;
+}
+function hitMarkerStep(dt) {
+  const el = document.getElementById('hitMarker');
+  if (!el) return;
+  if (Game.hitMarkerT > 0) Game.hitMarkerT = Math.max(0, Game.hitMarkerT - dt);
+  const k = Game.mode === 'scenario' ? (Game.hitMarkerT || 0) / HIT_MARKER_SEC : 0;
+  el.style.opacity = k > 0 ? Math.min(1, 0.35 + k).toFixed(2) : '0';
+  el.style.transform = `translate(-50%, -50%) scale(${(1 + 0.25 * k).toFixed(3)})`;
+  el.classList.toggle('out', !!Game.hitMarkerOut && k > 0);
 }
 
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
@@ -35199,7 +35270,7 @@ function updateEnemies(dt) {
         // disable, not a kill. They face away from the player while running back.
         e.mesh.group.position.y = 0;
         setKidCrouch(e.mesh, 0);
-        const back = e._spawnPos || e._deployAnchor || e.pos;
+        const back = e._respawnPos || e._spawnPos || e._deployAnchor || e.pos;   // v1.319: _respawnPos, see enemyRespawnCluster
         const dxb = back.x - e.pos.x, dzb = back.z - e.pos.z;
         const db = Math.sqrt(dxb*dxb + dzb*dzb);
         // Face the direction of travel (toward spawn) instead of the player.
@@ -35699,6 +35770,8 @@ function stepGame(dt) {
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
     updateEnemies(dt);
     kidWinceStep(dt);   // v1.261 (D.45): after the kids have posed themselves
+    hitMarkerStep(dt);   // v1.321 (D.60)
+    hurtFlashStep(dt);   // v1.322 (D.62)
     if (Net.active) netStep(dt);   // v1.230 (D.2)
     if (Game.scenario.ctf) updateFlags(dt);   // v1.189
     updateLaserDiagHud();
@@ -37094,6 +37167,7 @@ function netTagRemote(bb, c) {
   if (c._graceT > 0) return true;
   c.lives = Math.max(0, (c.lives | 0) - 1);
   if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);
+  if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
   if (c.lives > 0) {
@@ -37417,7 +37491,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
   const foot = locked
     ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + (num - 1) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
     : `<div class="sc-card-foot">
-        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}</span>
+        <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}${sc.tutorial || sc.pickup ? '' : ' · +50¢ A HIT'}</span>
         <button class="sc-go" data-launch="${scenarioId}">START</button>
       </div>`;
   return `

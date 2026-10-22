@@ -79,5 +79,70 @@ check('a win with no hits on you', rules.clean === 'Not a mark on you.', rules.c
 check('else the first tag', rules.first === 'Your first tag: Sean, from 6 m.', rules.first);
 check('the same kid twice is not a double', rules.sameKid === 'Your first tag: Sean, from 6 m.', rules.sameKid);
 check('time reads 0:00, 1:00, 2:05', rules.time.join(' ') === '0:00 1:00 2:05', rules.time);
+
+// v1.320 (backlog D.59, Michael 22 Oct: "an extra $0.50 per hit"): each hit you land on a kid of the other side pays
+// 50¢ on top of the match's pay, won or lost; cash is whole dollars, so $1 for every two hits. Hits on your own side,
+// a forfeit, the tutorial and a Pickup Game pay none. Aisle Wars (win $7, lose $2): five hits on their kids and one on each of yours.
+await g.scenario('lot_team_3v3');
+const bonus = await page.evaluate(() => {
+  Game.player._graceT = 1e9; Game.persist.cash = 0;
+  const E = Game.scenario.enemies, foes = E.filter(e => e.team !== 'player'), mates = E.filter(e => e.team === 'player');
+  const shot = (c) => { c._graceT = 0; applyBBHit({ owner: 'player', pos: c.pos.clone(), spawnPos: c.pos.clone().add(new THREE.Vector3(10, 0, 0)) }, c); };
+  // a tagged kid is back in the game at once, so the five hits can land on three kids
+  for (let i = 0; i < 5; i++) { const c = foes[i % foes.length]; c.health = c.maxHealth; c.state = 'advancing'; shot(c); }
+  for (const m of mates) shot(m);
+  const tags = Game.scenario.stats.tags.map(t => t.foe);
+  endScenario('win');
+  return { tags, mates: mates.length, cash: Game.persist.cash, hb: Game.scenario.lastResult.hitBonus, reward: document.getElementById('rewardText').innerText };
+});
+console.log('  hit bonus', JSON.stringify(bonus));
+check('five hits on their side and one on each of yours: the tags know which', bonus.tags.filter(f => f).length === 5 && bonus.mates >= 2 && bonus.tags.filter(f => !f).length === bonus.mates, bonus);
+check('a win with five hits pays $7 and a $2 hit bonus (the fifth 50¢ dropped)', bonus.cash === 9 && bonus.hb.base === 7 && bonus.hb.cash === 2 && bonus.hb.hits === 5, bonus);
+check('the card says so', /\+\$9/.test(bonus.reward) && /\$7 \+ \$2 hit bonus \(5 hits\)/.test(bonus.reward), bonus.reward);
+const noBonus = await page.evaluate(() => {
+  const st = Game.scenario.stats; st.tags = Array.from({ length: 6 }, () => ({ name: 'Tyler', dist: 10, t: 1, foe: true }));
+  const lost = matchHitBonus('lose').cash, forfeit = matchHitBonus('forfeit').cash;
+  const def = SCENARIOS[Game.scenario.active]; def.pickup = true; const pickup = matchHitBonus('win').cash; delete def.pickup;
+  return { lost, forfeit, pickup };
+});
+check('six hits pay $3 in a loss too, nothing in a forfeit or a Pickup Game', noBonus.lost === 3 && noBonus.forfeit === 0 && noBonus.pickup === 0, noBonus);
+const card = await page.evaluate(() => renderScenarioCard('lot_team_3v3', 2, false));
+const tut = await page.evaluate(() => renderScenarioCard('winnmark_tutorial', 1, true));
+check('the map card tells you: +50¢ A HIT (not on the tutorial\'s)', /WIN \+\$7 · LOSE \+\$2 · \+50¢ A HIT/.test(card) && !/A HIT/.test(tut), card.slice(0, 600));
+
+// v1.321 (backlog D.60, Michael 22 Oct: "hit markers ... to confirm you were the one to hit someone"): your BB that tags
+// a kid of the other side puts an X round the middle of the screen for 0.3 s, red when he is out for good. A teammate,
+// a kid already out or a kid in his 3 s grace gives none. Aisle Wars again, with a real BB flown into each kid.
+await g.scenario('lot_team_3v3');
+await page.evaluate(() => { Game.player._graceT = 1e9; });
+await g.spin(200);   // past the opening hold
+const marker = await page.evaluate(() => {
+  const E = Game.scenario.enemies, foe = E.find(e => e.team !== 'player'), mate = E.find(e => e.team === 'player');
+  const el = document.getElementById('hitMarker');
+  const fly = (c) => {
+    const target = c.pos.clone(); target.y += 1.0;
+    const dir = new THREE.Vector3(1, 0, 0), bb = makeBB(target.clone().addScaledVector(dir, -0.6), dir.clone().multiplyScalar(40), 'player', null, null, combatantView(Game.player).team);
+    bb.curveStrength = 0; Game.scenario.bbs.push(bb);
+    for (let i = 0; i < 2; i++) stepGame(1 / 60);
+  };
+  const look = () => ({ n: Game.hitMarkers, op: +getComputedStyle(el).opacity, red: el.classList.contains('out') });
+  const before = look();
+  fly(foe); const hit = look();
+  for (let i = 0; i < 20; i++) stepGame(1 / 60);
+  const after = look();
+  fly(foe); const whileOut = look();   // he is walking back, out
+  for (let i = 0; i < 20; i++) stepGame(1 / 60);
+  mate._graceT = 0; fly(mate); const onMate = look();
+  // his last life: the tag puts him out for good, and the X is red
+  foe.state = 'advancing'; foe.health = foe.maxHealth; foe.lives = 1; foe._graceT = 0;
+  fly(foe); const last = look();
+  return { before, hit, after, whileOut, onMate, last, lives: foe.lives, mode: Game.mode };
+});
+console.log('  hit marker', JSON.stringify(marker));
+check('no marker before a hit', marker.before.n === 0 && marker.before.op === 0, marker.before);
+check('a tag on their kid shows a white X', marker.hit.n === 1 && marker.hit.op > 0.9 && !marker.hit.red, marker.hit);
+check('it is gone a third of a second later', marker.after.op === 0, marker.after);
+check('none for a kid already out, or for your own teammate', marker.whileOut.n === 1 && marker.onMate.n === 1 && marker.onMate.op === 0, marker);
+check('the tag on his last life shows a red X', marker.last.n === 2 && marker.last.red && marker.last.op > 0.9 && marker.lives === 0, marker.last);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

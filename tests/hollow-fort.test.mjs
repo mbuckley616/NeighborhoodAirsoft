@@ -88,5 +88,40 @@ const inWall = await page.evaluate(() => {
   return bad;
 });
 check('no post or pole stands inside a fort wall (the flag poles were in the back walls)', inWall.length === 0, inWall);
+// v1.319 (backlog B.13, Michael 22 Oct: Hold the South Fort is very hard; "move the enemy spawn point to the opposite
+// base, so that shooting an enemy has a greater effect / longer cooldown"). The five still open from their huddle by the
+// east redoubt; tagged, they walk back to the north fort and come again from there. 90 s with you untaggable in the
+// fort, crouched; an attacker who has spent 2 s within 22 m of you is tagged, as you would tag him. Before: back
+// within 25 m 17.5-19.1 s after a tag, 67-70 attacker-seconds within 25 m, 15-16 tags.
+await g.scenario('hollow_defend_south_fort');
+const hold = await page.evaluate(() => {
+  const orig = applyBBHit; let hits = 0;
+  applyBBHit = (bb, t) => { if (t === Game.player) { hits++; return true; } return orig(bb, t); };
+  const p = Game.player; Game.mouse.locked = true; p.crouching = true;
+  const E = Game.scenario.enemies, nf = Game.scenario.placements ? Game.scenario.placements.cluster_north : null;
+  const homes = E.map(e => ({ id: e.charId, start: [+e.pos.x.toFixed(1), +e.pos.z.toFixed(1)], back: e._respawnPos ? [+e._respawnPos.x.toFixed(1), +e._respawnPos.z.toFixed(1)] : null }));
+  const inT = {}, tagAt = {}, backs = []; let near = 0, firstNear = null, tags = 0;
+  for (let i = 0; i < 60 * 90 && Game.mode === 'scenario'; i++) {
+    stepGame(1 / 60);
+    for (const e of E) {
+      if (e.health <= 0 || e.state === 'retreating') { inT[e.charId] = 0; continue; }
+      const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z);
+      if (d < 25) {
+        near += 1 / 60; if (firstNear == null) firstNear = +(i / 60).toFixed(1);
+        if (tagAt[e.charId] != null) { backs.push(+(i / 60 - tagAt[e.charId]).toFixed(1)); tagAt[e.charId] = null; }
+      }
+      inT[e.charId] = d < 22 ? (inT[e.charId] || 0) + 1 / 60 : 0;
+      if (inT[e.charId] > 2) { inT[e.charId] = 0; eliminateEnemy(e); tags++; tagAt[e.charId] = i / 60; }
+    }
+  }
+  applyBBHit = orig;
+  return { homes, hits, tags, firstNear, near: Math.round(near), backs, backAvg: backs.length ? +(backs.reduce((a, b) => a + b, 0) / backs.length).toFixed(1) : null, you: [+p.pos.x.toFixed(1), +p.pos.z.toFixed(1)] };
+});
+console.log('  south fort', JSON.stringify(hold));
+check('Hold the South Fort: the five open from the east redoubt (z under 5) and go back to the north fort (z under -28)',
+  hold.homes.length === 5 && hold.homes.every(h => h.start[1] < 5 && h.back && h.back[1] < -28 && Math.abs(h.back[0]) < 5), hold.homes);
+check('the first of them still reaches 25 m of the fort inside 15 s', hold.firstNear != null && hold.firstNear < 15, hold.firstNear);
+check('a tagged attacker takes 24 s or more on average to come back within 25 m (was 17.5-19.1)', hold.backs.length >= 3 && hold.backAvg >= 24, hold.backs);
+check('and they keep coming: 5 or more tags in 90 s', hold.tags >= 5, hold.tags);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
