@@ -31,7 +31,7 @@ const rule = await page.evaluate(() => {
 const finales = rule.filter(r => r.finale);
 const fin = Object.fromEntries(finales.map(r => [r.id, `${r.ours}v${r.theirs}`]));
 console.log('   finales, first time:', JSON.stringify(fin));
-check('31 team matches on the ladder, 8 of them a zone\'s finale', rule.length === 31 && finales.length === 8, rule.length);
+check('32 team matches on the ladder (v1.318: + Night Swim), 8 of them a zone\'s finale', rule.length === 32 && finales.length === 8, rule.length);
 const ordinary = rule.filter(r => !r.finale && r.theirs - r.ours !== r.theirsOwn - r.oursOwn);
 check('every ordinary team match keeps its own margin the first time through (their side grows as yours does)', ordinary.length === 0, ordinary);
 const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 2

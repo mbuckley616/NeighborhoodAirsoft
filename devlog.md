@@ -13320,3 +13320,126 @@ across, and with 14 kids in the match its places are 0.63 m apart. Those that fa
 - **Not swept:** the stuck-kid sweep was not run with the crew on these matches. The huddle kids walk to their
   anchors from starts at most a step from before.
 - Friday Night Lights' shared post (Nathan and Malik, Found in play) is a different case and is still open.
+
+## v1.316 — The twins' course
+Backlog D.55 step 6, Michael's two answers: rework the treehouse yard into the twins' course, "open to the trees, no
+fence; the gravel road 3-4 m above the yard; no treehouse" (16 Oct), and A on what becomes of its two matches, "both
+become course matches" (22 Oct). The guide (`docs/refs/northcliff.md`, gap 7) has the yard as Michael remembers it:
+open, flat, lined by trees, a raised private road along the far end, and bunkers and cover the twins built themselves.
+The game had a 34 x 31 m square in a 1.8 m board fence round an oak with a treehouse in it.
+- **The course** (`buildTwinsCourseScene`). The house, patio and street are where they were.
+  - **The edges:** the fence is gone. The sides are tree lines (round hardwoods and tall loblollies, as on Northcliff
+    Trace) with undergrowth. The yard runs 8 m deeper, to a grassy bank that climbs to a gravel road 3.5 m up, with
+    trees on the bank and woods past the road. The bank's foot is in play, to 0.9 m up at the north bound; the road is
+    not.
+  - **The bunkers:** a big sandbag bunker where the oak stood. It is a ring of bags 0.9 m high round a 3.2 x 2.4 m
+    floor, with its way in on the west side. There is also a sandbag nest under the bank, three plywood walls with a
+    firing slot (BBs go through the 20 cm gap at 1.0-1.2 m), a pallet wall, three tyre stacks and a low plywood tower.
+    The shed, the twins' kid fort, the boxes, bins, ply stack and picnic table stand where they stood.
+- **King of the Course** (was King of the Treehouse). Connor holds the bunker and Haden comes from the fort. Your start
+  stays behind the shed, and the v1.185 rule still holds: there is no line to it from anywhere in the bunker.
+- **Hold the Bunker** (was Hold the Treehouse): 90 s in the bunker. The twins come up the course from the house, and a
+  tagged twin walks back to the patio and comes again. Evan shoots from the nest under the bank, 16 m behind you.
+  - **Evan's hold:** v1.165's rule (Michael: C) stays in a new form. Evan holds fire until a twin is within 7 m of you
+    (`holdUntilNear`), where before he held until a twin was on the ladder.
+  - **A longer opening hold:** the match holds everyone's fire for 5 s (`openingHoldSec`; 2.5 s everywhere else). With
+    no ladder to climb, Haden's UMP tagged a player standing at the start from the patio at 2.8 s in 6 of 6 rounds.
+    The ladder used to give about 8 s.
+- **The bags are 0.9 m.** The AI aims at your chest at standing height (0.98 m up) even when you crouch, and the
+  twins' muzzles are 0.92 m up. So no height of bag both hides you from their eyes and lets Connor see out. At
+  1.15 m Connor never once had a line out of the bunker. At 0.9 m the bags still stop the BBs: in 60 s of Hold the
+  Bunker you take 47 hits crouched, against 411 standing.
+- **The ids stay** (`stoneglen_treehouse`, `stoneglen_hold_treehouse`), so saves, the ladder order and Alex's ask
+  after the defend are unchanged. Rebecca's text and the twins' treehouse lines now talk about the course.
+- **The treehouse yard is kept, unplayed.** It is the game's only ladder and perch, which `treehouse`, `kid-climb`,
+  `ladder-prompt` and `pad-hints` drive. `tests/lib/treehouse-yard.mjs` puts the two old matches back as test-only
+  scenarios, and D.7's towers can reuse it.
+### Verified
+- **`treehouse-start`, rewritten:**
+  - The course has no ladder, nobody perched, and no wall over 20 m long. The bunker has five 0.9 m bag walls. The
+    yard is flat to the bank, 0.91 m up at the bound, with the road at 3.5 m.
+  - There is no line to your start from 25 spots in the bunker, crouched or standing, at four heights: 0 of 200. The
+    old side gate is in sight from 25 of 25.
+  - Standing at the start in 6 rounds, Connor never had a line and Haden's first tag came at 10.2-11.6 s. As a
+    control, at the side gate Connor tags you at 3.0-3.3 s. Walking out 1.5 s toward the bunker, Connor has a line at
+    1.2 s.
+- **`treehouse-hold`, rewritten**, untaggable for 60 s, with a twin tagged once he has spent 3 s within 12 m:
+  - Haden came within 12 m 7 times and Connor 4 times, Connor to 2.6 m.
+  - Evan stayed within 0.9 m of his nest. He hit a standing player 266 times and a crouched one 25.
+  - The timer wins the round.
+- **`treehouse-evan`, rewritten:** in 6 rounds standing at the start, nobody tagged you before 5.2 s (Haden, 5.2-5.4
+  s), and Evan fired nothing before a twin was close. In an untaggable round, the first twin came within 7 m at 7.8 s:
+  Evan fired 0 BBs before then and 157 after.
+- **These suites pass:** `treehouse` (the ladder on the kept yard), `kid-climb`, `ladder-prompt`, `pad-hints` and
+  `layout-same`, plus the suites listed below.
+  - The rest: `smoke`, `northcliff`, `bellfield`, `crew-roster`, `backdrop`, `texts` and `voices`.
+- **The stuck-kid sweep** on both matches, three ways each, up to 90 s: the worst hold was 1 s. No page errors.
+### Still open
+- **For Michael's look:** the course's layout. The road on its bank can't be seen from the yard at eye height: you see
+  the bank and the trees on it.
+- **Hold the Bunker's 5 s opening hold** is this version's own call, made to keep the old match's grace. It is two
+  numbers to change (`openingHoldSec`, Evan's 7 m) if it plays too soft.
+- **The twins' guns** are unchanged (UMP, MP5, shotgun, pistol). The guide's side question, whether they should carry
+  the best guns in the game, was never asked.
+- **D.55 step 7** (Northcliff's pool map, Michael: A, a 1v1 round the courts and a night game) is next.
+
+## v1.317 — The Northcliff pool, and Round the Courts
+Backlog D.55 step 7, first part. Michael chose the pool as a small map of its own (16 Oct) and A on its matches (22
+Oct): "a 1v1 round the courts and a night game at the pool, after Bellfield on the ladder". The guide
+(`docs/refs/northcliff.md`, gap 6) has the club from the satellite pictures. It was the neighbourhood's hub, and the
+game didn't have it.
+- **The map** (`buildNorthcliffPoolScene`), flat, 73 x 43 m in play:
+  - **The pool:** 25 x 12 m in a pale concrete deck. The deep end is darker and there are lane ropes, a lifeguard
+    chair, loungers and umbrellas. As at the country club, the water stops a body and not a BB.
+  - **The clubhouse** stands on the deck's north end: 11 x 11 m, stucco, a grey roof, a snack window onto the deck and
+    a SWIM & TENNIS sign over the door to the parking.
+  - **The courts:** two blue courts east of the pool with their lines and nets, in a green surround and a dark 3 m
+    chain-link fence. The fence stops a body, but BBs and sight lines go through it, so the fight round the courts is
+    about its four gates (two on the west, one north, one south). On the courts are benches by the net posts, a ball
+    hopper, a rolled tarp and a ball machine.
+  - **Round the edges:** a pump house and hedges between the pool and the courts, the spur road along the north with
+    six cars in the parking, and trees round all of it, with the side creek's woods past the courts.
+  - **New street:** "Northcliff Pool" in the Northcliff region, with views past the edge.
+- **Round the Courts** (`pool_1v1_christian`), after Flags on Bellfield and before Hold the Creek Fort. Christian has
+  not had a 1v1 of his own. He starts with a pistol on the far court. You start in the lee of the pump house, 37.7 m
+  off and out of his sight. One hit each, $80 for the win.
+### Verified
+- **`tests/northcliff.test.mjs`, extended:**
+  - The ladder has the match between the flags and the creek fort.
+  - The water is 25 x 12 m and stops a body but lets BBs through. The fence's eight runs are 3 m high, stop a body and
+    let BBs and sight lines through, and the west gate lets you through.
+  - None of 8 lines from Christian's start reaches yours.
+  - Standing at the start for 60 s, nobody tagged you, and Christian came looking, walking 33.3 m.
+- **`tests/bellfield.test.mjs`:** after the flags the pool opens, and the creek fort opens only after the pool.
+- **These suites pass:** `northcliff`, `bellfield` and the ones below.
+  `smoke`, `map-screen`, `crew-roster`, `crew-balance` and `backdrop`.
+- **The stuck-kid sweep** on Round the Courts, three ways: the worst hold was 1 s. No page errors.
+### Still open
+- **For Michael's look:** the club against his memory: where the clubhouse sits, the courts' fence (dark and see-through,
+  3 m), and whether the parking and the road read.
+- **For a playtest:** whether a see-through fence makes the courts fun or a shooting gallery. Christian on the far court
+  can see you through it once you leave the pump house's lee.
+- **Christian has a 1v1 of his own** now, which was this version's pick. The decision named the match, not the kid.
+- **Not built yet:** the night game at the pool (Michael's A, the second match). That is the next item.
+
+## v1.318 — Night Swim
+D.55 step 7, the second of Michael's two pool matches ("a night game at the pool", 22 Oct, A).
+- **Night Swim** (`pool_night_3v3`), after Round the Courts and before Hold the Creek Fort. The pool's water glows and
+  the three lamps (two over the parking, one at the courts' south-west corner) are lit. The rest of the club is dark.
+  - **The sides:** Haden (UMP) and Connor (MP5) are with you at the west end of the parking. Mason (AK), Christian
+    (shotgun) and Diego (MP5) came in by the courts. They huddle at the courts' far corner and go out to the near
+    court, the pump house and past the deck's south loungers.
+  - **The rules:** three lives for every kid but you, last team standing, $110 for the win. With your crew it is a crew
+    match like any other team match: the sides grow.
+- The writing (the name, the briefing) is this version's, from the decision's "a night game at the pool".
+### Verified
+- **`tests/northcliff.test.mjs`, extended:** with you untaggable, standing at the start for 120 s, the first BB to
+  reach you came at 28.8 s, and both sides traded lives (our side lost 14, theirs 9). In three probe rounds the first
+  tag came at 22.6-25.6 s. The match is on the ladder after Round the Courts.
+- **`tests/bellfield.test.mjs`:** after the pool's 1v1 the night game opens, and the creek fort opens only after both.
+- **The stuck-kid sweep** on Night Swim, three ways: the worst hold was 5 s (Andrew, advancing). No page errors.
+- **These suites pass:** `northcliff`, `bellfield`, `crew-balance`, `crew-spawn-bounds`, `smoke` and `map-screen`.
+### Still open
+- **For a playtest:** the balance. In three probe rounds with the first-time crew (six a side), our side lost two and
+  won one. The 69 m between the starts makes for a slow opening: the first tag came at 22-26 s.
+- **For Michael's look:** the club at night. Only three lamps and the pool light it.

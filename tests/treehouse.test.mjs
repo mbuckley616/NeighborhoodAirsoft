@@ -2,9 +2,10 @@
 // with W (looking at it) and climb down with S, a drop of 1.5 m or more empties your stamina, and a kid holds the
 // platform. Keys through Game.keys and a real Space keydown, time through stepGame.
 import { boot, check } from './lib/game.mjs';
+import { treehouseYard, TH_KING } from './lib/treehouse-yard.mjs';   // v1.316: the treehouse yard is test-only now
 const g = await boot(); const { page } = g;
 
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 await page.evaluate(() => { Game.player.invuln = true; applyBBHit = () => {}; });   // nothing ends the round while we climb
 
 const map = await page.evaluate(() => {
@@ -34,7 +35,7 @@ check('over 20 s Connor never leaves the platform (0 steps off its floor, feet a
 check('he fires at the player at the side gate, from up there (every BB starts above 3 m)', hold.shots > 0 && hold.minShotY > 3, hold);
 
 // a fresh round, the player at the gate: Haden comes for him or shoots (v1.138: as a fort defender he did neither in 60 s)
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 const haden60 = await page.evaluate(() => {
   applyBBHit = () => {};
   const h = Game.scenario.enemies.find(e => !e.perch), o = spawnEnemyBB; let fired = 0, walked = 0;

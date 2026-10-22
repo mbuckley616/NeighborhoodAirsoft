@@ -21,8 +21,8 @@ const ladder = await page.evaluate(() => {
 });
 check('Northcliff comes after the market lot (v1.155: then Hollins Ridge High; v1.157: then Willow Bend)',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club,grocery_store', ladder.keys);
-check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen treehouse (v1.138) and its defend (v1.144), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the creek-fort defend, then the night 4v4 (v1.131)',
-  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen course\'s two (v1.138, v1.144; the course v1.316), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the pool\'s 1v1 (v1.317) and night game (v1.318), the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,pool_1v1_christian,pool_night_3v3,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -117,6 +117,60 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
+// v1.317 (D.55 step 7, Michael: A): the Northcliff pool, its own small map, and Round the Courts, a 1v1 with Christian
+await g.scenario('pool_1v1_christian');
+const pool = await page.evaluate(() => {
+  const p = Game.player, c = Game.scenario.enemies[0], obs = p.obstacles, sc = SCENARIOS.pool_1v1_christian;
+  const water = obs.find(o => o.surface === 'water'), fence = obs.filter(o => o.courtFence);
+  // from where Christian starts, at his eye and crouched, to the player at four heights: no line
+  let seen = 0;
+  for (const my of [0.9, 1.3]) for (const y of [0.5, 0.9, 1.2, 1.5]) if (hasLineOfSight(c.pos.x, my, c.pos.z, p.pos.x, y, p.pos.z, obs)) seen++;
+  // the fence: bodies stop at it, BBs and eyes go through; the water: bodies stop, BBs go through
+  const fenceBody = collidesObstacles(6, 5, 0.3), gateBody = collidesObstacles(6, 11, 0.3);
+  const fenceEyes = hasLineOfSight(0, 1.3, 5, 14, 1.3, 5, obs.filter(o => o.courtFence));
+  return { name: sc.scenarioName, street: REGIONS.northcliff.streets[sc.street], who: c.charId, gun: c.weapon,
+    dist: +Math.hypot(p.pos.x - c.pos.x, p.pos.z - c.pos.z).toFixed(1), seen,
+    water: water && { w: +(water.maxX - water.minX).toFixed(1), d: +(water.maxZ - water.minZ).toFixed(1), bbPass: !!water.bbPass, body: collidesObstacles((water.minX + water.maxX) / 2, (water.minZ + water.maxZ) / 2, 0.3) },
+    fence: { n: fence.length, h: fence.length ? Math.min(...fence.map(o => o.h)) : 0, bbPass: fence.every(o => o.bbPass), body: fenceBody, gate: !gateBody, eyes: fenceEyes } };
+});
+console.log('  pool', JSON.stringify(pool));
+check('Round the Courts is a 1v1 with Christian (pistol) at the Northcliff Pool', pool.name === 'Round the Courts' && pool.street === 'Northcliff Pool' && pool.who === 'christian' && pool.gun === 'pistol', pool);
+check('the pool is 25 x 12 m of water that stops a body, not a BB', pool.water && pool.water.w === 25 && pool.water.d === 12 && pool.water.bbPass && pool.water.body, pool.water);
+check('the courts\' 3 m fence stops a body but not a BB or an eye, and its west gate lets you through', pool.fence.n >= 8 && pool.fence.h === 3 && pool.fence.bbPass && pool.fence.body && pool.fence.gate && pool.fence.eyes, pool.fence);
+check('you start 30-45 m from Christian, out of his sight (0 of 8 lines)', pool.dist > 30 && pool.dist < 45 && pool.seen === 0, pool);
+const poolRound = await page.evaluate(() => {
+  const hits = []; const o = applyBBHit; applyBBHit = (bb, t) => { if (t === Game.player) { hits.push(+Game.scenario.roundTime.toFixed(1)); return true; } return o(bb, t); };
+  const c = Game.scenario.enemies[0], x0 = c.pos.x, z0 = c.pos.z; let far = 0;
+  for (let i = 0; i < 60 * 60 && Game.mode === 'scenario'; i++) { stepGame(1 / 60); far = Math.max(far, Math.hypot(c.pos.x - x0, c.pos.z - z0)); }
+  applyBBHit = o; return { first: hits[0] ?? null, far: +far.toFixed(1) };
+});
+console.log('  pool round', JSON.stringify(poolRound));
+check('standing at the start, nobody tags you in the first 12 s, and in 60 s Christian comes looking (walks over 15 m)', (poolRound.first === null || poolRound.first >= 12) && poolRound.far > 15, poolRound);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+await g.spin(60);
+
+// v1.318: Night Swim, the night game at the pool: three a side as written (crew matches add more), the huddle at the
+// courts' far corner; the player is untaggable and stands at the start
+await g.scenario('pool_night_3v3');
+const swim = await page.evaluate(() => {
+  const sc = SCENARIOS.pool_night_3v3, P = Game.player;
+  const hits = []; const o = applyBBHit; applyBBHit = (bb, t) => { if (t === P) { hits.push(+Game.scenario.roundTime.toFixed(1)); return true; } return o(bb, t); };
+  const E = Game.scenario.enemies, lost = { player: 0, enemy: 0 }, prev = new Map(E.map(e => [e, e.lives]));
+  for (let i = 0; i < 60 * 120 && Game.mode === 'scenario'; i++) {
+    stepGame(1 / 60);
+    for (const e of E) { if (e.lives < prev.get(e)) { lost[e.team === 'player' ? 'player' : 'enemy'] += prev.get(e) - e.lives; prev.set(e, e.lives); } }
+  }
+  applyBBHit = o;
+  return { night: sc.timeOfDay === 'night', name: sc.scenarioName, ours: sc.enemySetup.filter(e => e.team === 'player').length, theirs: sc.enemySetup.filter(e => e.team !== 'player').length,
+    lives: sc.npcLives, first: hits[0] ?? null, lost };
+});
+console.log('  night swim', JSON.stringify(swim));
+check('Night Swim: a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'Night Swim' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
+check('standing at the start, nobody tags you in the first 10 s', swim.first === null || swim.first >= 10, swim);
+check('in 120 s both sides lose lives', swim.lost.player > 0 && swim.lost.enemy > 0, swim.lost);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+await g.spin(60);
+
 // screenshots by eye: down the street from the east entry, and across the low yards to the creek
 await g.scenario('northcliff_1v1_evan');
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });

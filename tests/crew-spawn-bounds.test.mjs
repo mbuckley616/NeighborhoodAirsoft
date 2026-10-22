@@ -43,7 +43,7 @@ for (const crew of ['all', 'first']) for (const id of ids) {
 }
 const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
-check(`${ids.length} team matches entered with all five in the crew`, ids.length === 31 && out.every(r => r.kids > 0), ids.length);
+check(`${ids.length} team matches entered with all five in the crew`, ids.length === 32 && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
 check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, 0.75 m inside it)', near.length === 0, near);
 
