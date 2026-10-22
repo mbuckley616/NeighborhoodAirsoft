@@ -12668,3 +12668,88 @@ the box moved. Steps 2 to 5 are his house and the street's houses at real size, 
   thin further is a look for step 5 and a playtest.
 - **The street's houses past the fence wait for step 2,** when the houses go to real size. The road up to the fork runs
   through woods for now.
+
+## v1.304 — Michael's house and its terraces
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, first part. Michael's notes put most of the action at his house:
+the front and back yards, and the driveway in front of the garage. The game had a small colonial there, 11 x 8 m. It
+had no garage, no motor court and no pool, and a flat yard with a trampoline. This version builds the house at about
+its real size from the guide (docs/refs/bunratty.md gaps 1-3 and its D.40 section). The play area runs south behind it
+to take the terraces. The street's other houses keep their size for now.
+- **The house.** A new `buildBunrattyHeroHouse` builds it. The main block is 15.7 x 12 m, two storeys at the front.
+  It has cream stucco (0xd6c9ae), cream trim and a hipped dark-brown roof. A front cross gable stands over a three-light
+  bay window. The entry tower is stacked stone, 3.8 m wide, and rises over the eaves with its own hip roof. It has an
+  arched window over double wood doors, six steps up from the front walk, and a lantern either side. On the east end
+  is the garage wing, 8 x 10 m, with three stained-wood doors (0x704723) and a carriage lantern between each pair.
+  Its doors face north onto a concrete motor court that runs from the bulb's rim. The guide offered this or widening
+  the whole east edge. The bulb's kerb now drops across the court, not where the old drive was. The house is baked into
+  one mesh per material (about 20 draw calls). It collides as five boxes: the main block, the gable front, the bay,
+  the tower and the garage.
+- **The walk-out.** The ground behind the house is cut 3.2 m below the main floor (`bunrattyHeroCut`). From the deck
+  down:
+  - The white main-floor deck with its balustrade, on square posts. You walk under it. Its stair comes down along the
+    garage's back wall.
+  - The terrace, with French doors under the deck. The freeform pool (0x7ed1c7) and its spa sit on a pale pool deck
+    inside a closed black fence 1.2 m high. BBs pass through it; bodies don't.
+  - A stacked-stone wall (0x5c4b37, today's light grey was wrong), 1.1 m down to the lawn. A low parapet on the
+    terrace side keeps you from stepping off it. Stone steps go down at the east end and a grass bank at the west.
+  - The lawn, which falls another 1.2 m toward the woods and then drops away. It holds the trampoline (Michael: a
+    trampoline, no playset) and a stone fire pit with its curved seat wall and pillar.
+
+  West of the house, a side yard ramps down from the front lawn to the terrace. The neighbour's yard stays at its old
+  height behind a stone lot-line wall, a 1 m parapet on his side. Every step in the ground lies on a line of the ground
+  mesh's grid, under the house or a wall, so no ledge shows.
+- **The bounds** run south to z 47 for x 16.4-44. Elsewhere the river blocker still stops you at z 30.
+- **Cover and anchors.** Michael's yard props draw the same numbers as before. They now stand where the fights were:
+  two on the motor court, one at the terrace's east end by the steps, one on the lawn.
+  - `hero_backyard` moves to the terrace's east end (41.6, 31), used by Nick, Tyler and Marcus in four matches.
+  - Last Kid Standing's sixth start (`ffa_6`, Owen) was where the garage now stands. It moves to the lawn
+    (36.5, 44.5). The terrace's east end was the first try, and it saw house 4's start over the lot-line wall.
+  - The trees of the old walls and the scatter that stood on the lot are built and taken out again, so they still
+    draw their numbers. The scatter steers round the old house's footprint for the same reason, and the rest of every
+    match's cover lands where it did.
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - The main block is 15.7 x 12.1 m and the garage wing 8 x 10.2 m.
+  - The main floor is at 1.93 m, the terrace at −1.27 m (3.2 m down) and the lawn at −2.94 m.
+  - A flood of the kids' walkable cells from the bulb reaches the motor court, the side yard, under the deck, the
+    terrace's east end, the lawn and the fire pit, and not the pool.
+  - The largest ground step anywhere a kid can walk on the lot is 0.43 m in half a metre (the limit is 0.45). It is at
+    the terrace's corner under the deck's west end.
+  - The terrace sees the far bank (176 rays) and the water (3). The lawn sees the water (5).
+  - Changed checks: the ground test now leaves out Michael's lot, the "nothing within 6 m" test measures from the two
+    play areas, and the lawn's view point moved from the flat yard at z 27 (the pool now) to z 42.
+- **`bunratty-road`:** the hero's driveway drop moved from x 33 to the motor court at x 39. It passes.
+- **Cover:** against v1.303, only Michael's own props and the trampoline moved, in Four on Four, Last Kid Standing and
+  The Last Saturday. That is 4-5 of 46-47 pieces; the rest are the same to the centimetre.
+- **Draw calls** (v1.303 → v1.304), with the old trees on the lot gone:
+  | View | v1.303 | v1.304 |
+  |---|---|---|
+  | Bulb | 401 | 401 |
+  | Entry | 1,636 | 1,547 |
+  | North | 1,403 | 1,314 |
+  | Bulb looking west | 1,519 | 1,529 |
+  | Mid-street | 626 | 531 |
+  | Looking at the house from the bulb | 436 | 350 |
+  | The lawn looking up at the house | 1,206 | 1,433 |
+  | Terrace's east end looking out | — | 1,827 |
+
+  All are inside the 2,060 budget. The scene has 317k triangles, against 334k.
+- These suites pass: `real-scale`, `bunratty-road`, `bunratty-polish`, `houses`, `house-backs`, `bulb-sight`,
+  `ffa-starts` (Last Kid Standing and the Pickup Game's 3- to 7-way, nobody in sight), `vip-spawn`, `layout-same`,
+  `fence-bound`, `kid-hold`, `last-saturday`, `pincer`, `cover-fire` and `smoke`.
+- **The stuck-kid sweep on all 16 Bunratty matches** (3 ways each, up to 90 s): no kid holds a moving state for over
+  15 s. The worst was 6 s (Sean, advancing). No page errors, by day or at night; at night the windows and the bay light.
+### Still open
+- **The bulb no longer sees the far bank.** v1.303 found 7 rays of it past the small colonial. Michael's house at its
+  real size now stands between the bulb and the river, as it does on the real court. The test now asks for the far bank
+  from his terrace.
+- **The street's other six houses are still the 8-9 m colonials,** so his house is now twice their size. Growing them,
+  with the north-side lawns banking over the kerb, is the rest of step 2. So is D.40's backyard range matched to these
+  terraces.
+- **What only a playtest can judge:**
+  - The motor court's fights: the garage doors face the bulb, a turn from the side-entry in the pictures, because
+    the east bounds leave no room.
+  - The lawn as a pocket below the wall, reached only by the steps and the grass bank.
+  - The side yard as the one way from the front to the back.
+  - The four matches whose `hero_backyard` kid now starts by the steps.
+- The house's stucco reads paler than the photos' cream under the day light, as the other houses do.

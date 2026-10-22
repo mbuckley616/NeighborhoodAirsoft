@@ -20,7 +20,9 @@ const res = await page.evaluate(() => {
     const d = Math.hypot(x - 34, z - 2); if (d < 13) { const k = 1 - d / 13; h -= 1.3 * k * k * (3 - 2 * k); }
     return h + 0.35 * Math.sin(x * 0.13 + 1.7) * Math.cos(z * 0.11 - 0.6);
   };
-  for (let x = B.minX - 2; x <= B.maxX + 2; x += 1.7) for (let z = B.minZ - 2; z <= B.maxZ + 3; z += 1.7) maxDiff = Math.max(maxDiff, Math.abs(gY(x, z) - old(x, z)));
+  // v1.304: the old box (x -40..44, z -32..30), but for Michael's lot behind his house (x 8 and east, z 22 and south),
+  // which bunrattyHeroCut cuts into its terraces
+  for (let x = -42; x <= 46; x += 1.7) for (let z = -34; z <= 33; z += 1.7) if (!(x >= 8 && z >= 22)) maxDiff = Math.max(maxDiff, Math.abs(gY(x, z) - old(x, z)));
   out.boxDiff = maxDiff;
   // the river lies in its channel: under the water along its whole length, the bank above it either side
   const water = built.scene.getObjectByName('bunrattyRiver');
@@ -38,11 +40,14 @@ const res = await page.evaluate(() => {
   const sc = built.scene.getObjectByName('realScenery');
   out.stats = sc && sc.userData.stats;
   out.solid = built.obstacles.filter(o => o.mesh && sc && (o.mesh === sc || sc.children.includes(o.mesh))).length;
+  // v1.304: the play area is the old box and, south of it, Michael's terraces and lawn (x 16.4..44, z to 47); the rest of
+  // the bounds' south strip is behind the river blocker
+  const areas = [{ minX: -40, maxX: 44, minZ: -32, maxZ: 30 }, { minX: 16.4, maxX: 44, minZ: 22, maxZ: B.maxZ }];
   let near = Infinity;
   if (sc) sc.traverse(m => {
     if (!m.isMesh) return;
     const p = m.geometry.attributes.position.array;
-    for (let i = 0; i < p.length; i += 3) near = Math.min(near, Math.max(B.minX - p[i], p[i] - B.maxX, B.minZ - p[i + 2], p[i + 2] - B.maxZ));
+    for (let i = 0; i < p.length; i += 3) for (const A of areas) near = Math.min(near, Math.max(A.minX - p[i], p[i] - A.maxX, A.minZ - p[i + 2], p[i + 2] - A.maxZ));
   });
   out.near = +near.toFixed(2);
   out.viewFar = built.viewFar;
@@ -77,8 +82,10 @@ const view = await page.evaluate(() => {
     }
     return { wet, far };
   };
-  const out = { bulb: look(34, 2), lawn: look(33, 27), far: Game.camera.far, calls: {} };
-  for (const [name, x, z, yaw] of [['bulb', 34, 2, 0], ['entry', -36, 0, -Math.PI / 2], ['lawn', 30, 27, 0], ['north', 0, -29, Math.PI]]) {
+  // v1.304: the back lawn is now below the terrace wall (it was the flat yard at z 27, where the pool is)
+  const out = { bulb: look(34, 2), terrace: look(41.5, 31), lawn: look(33, 42), far: Game.camera.far, calls: {} };
+  for (const [name, x, z, yaw] of [['bulb', 34, 2, 0], ['entry', -36, 0, -Math.PI / 2], ['lawn', 30, 42, 0], ['north', 0, -29, Math.PI],
+    ['house', 30, 1, Math.PI], ['terrace', 41.5, 31, 0.6]]) {
     Game.player.pos.x = x; Game.player.pos.z = z; Game.player.yaw = yaw; Game.player.pitch = -0.05; stepGame(1 / 60);
     Game.player.yaw = yaw; Game.player.pitch = -0.05; Game.camera.updateMatrixWorld(true);
     Game.renderer.render(Game.scene, Game.camera); out.calls[name] = Game.renderer.info.render.calls;
@@ -86,12 +93,43 @@ const view = await page.evaluate(() => {
   return out;
 });
 console.log('  ', JSON.stringify(view));
-check('Bunratty: from the bulb you see the far bank across the river', view.bulb.far >= 3, view.bulb);
+// v1.304: Michael's house, at its real size, now stands between the bulb and the river (v1.303 saw 7 rays' worth of far bank
+// past the small colonial); the far bank shows from his terrace instead, over the woods
+check('Bunratty: from the terrace you see the far bank across the river', view.terrace.far >= 3, view.terrace);
 check('Bunratty: from the back lawn you see the water', view.lawn.wet >= 3, view.lawn);
 check('Bunratty: the camera sees out to the far bank (450 m)', view.far === 450, view.far);
 // the budget is the decision's rule (a quarter over today) on today's worst view: v1.302 drew 1,650 calls looking in from
 // the entry (the decision's 1,240 was a lighter view), so 2,060; v1.303 draws 1,636 there
-check('Bunratty: at most 2,060 draw calls in any of four views', Math.max(...Object.values(view.calls)) <= 2060, view.calls);
+check('Bunratty: at most 2,060 draw calls in any of six views', Math.max(...Object.values(view.calls)) <= 2060, view.calls);
+// v1.304 (D.51 step 2): Michael's house at about its real size, a walk-out: the terrace a storey under the main floor, the
+// lawn under the terrace wall; every part of the lot a kid can stand on joins the bulb, and no step he could walk off is
+// left in the open (each is under a wall or the house)
+const hero = await page.evaluate(() => {
+  const obs = Game.player.obstacles, gY = Game.scenario.groundY;
+  const main = obs.find(o => o.mesh && o.mesh.name === 'bunrattyHeroHouse');
+  if (!main) return { main: false };
+  const deck = obs.find(o => o.surface === 'wood' && o.minX === BR_HERO.deckX0);
+  const garage = obs.find(o => o.minX === BR_HERO.x1 && o.maxX === BR_HERO.gx1);
+  const F = deck.baseY + 0.25, T = gY(41.5, 30);
+  const C = kidFreeCells(), b = C.b, c = LADDER_CELL;
+  const cell = (x, z) => Math.round((x - b.minX) / c) * C.nz + Math.round((z - b.minZ) / c);
+  const seen = new Uint8Array(C.nx * C.nz), q = [cell(34, 2)]; seen[q[0]] = 1;
+  while (q.length) { const k = q.pop(), i = Math.floor(k / C.nz), j = k % C.nz;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= C.nx || jj >= C.nz) continue; const kk = ii * C.nz + jj; if (!seen[kk] && C.free[kk]) { seen[kk] = 1; q.push(kk); } } }
+  const reach = Object.fromEntries([['court', 40, 12], ['sideYard', 18.8, 26], ['underDeck', 30, 28.6], ['terraceEnd', 41.5, 30], ['lawn', 30, 42], ['firePit', 34, 45.5], ['pool', 31.8, 33]].map(([n, x, z]) => [n, !!seen[cell(x, z)]]));
+  let step = 0, at = null;
+  for (let x = 15; x <= 44; x += c) for (let z = 20; z <= 47; z += c) {
+    if (!seen[cell(x, z)]) continue;
+    for (const [dx, dz] of [[c, 0], [0, c]]) { if (!seen[cell(x + dx, z + dz)]) continue; const d = Math.abs(gY(x + dx, z + dz) - gY(x, z)); if (d > step) { step = d; at = [x, z]; } }
+  }
+  return { main: true, size: [main.maxX - main.minX, main.maxZ - main.minZ], garage: garage && [garage.maxX - garage.minX, garage.maxZ - garage.minZ],
+    F: +F.toFixed(2), T: +T.toFixed(2), lawn: +gY(30, 42).toFixed(2), reach, step: +step.toFixed(3), at, bounds: Game.scenario.bounds };
+});
+console.log('  ', JSON.stringify(hero));
+check('Bunratty: Michael\'s house is the big one (main block 15 x 12 m, the garage wing 8 m wide)', hero.main && hero.size[0] >= 15 && hero.size[1] >= 12 && hero.garage && hero.garage[0] >= 8, hero);
+check('Bunratty: his terrace lies a storey (3.2 m) under the main floor, the lawn a metre and more under that', Math.abs(hero.F - hero.T - 3.2) < 0.05 && hero.lawn < hero.T - 1.1, hero);
+check('Bunratty: from the bulb a kid can walk to the motor court, down the side yard, under the deck, to the terrace\'s end and the lawn', Object.entries(hero.reach).every(([k, v]) => k === 'pool' ? !v : v), hero.reach);
+check('Bunratty: nowhere a kid can walk on the lot does the ground step more than 0.45 m in half a metre', hero.step <= 0.45, hero);
 // back in the bedroom the camera's reach is the usual 200 m again
 const far2 = await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); return Game.camera.far; });
 check('the bedroom puts the camera back to 200 m', far2 === 200, far2);
