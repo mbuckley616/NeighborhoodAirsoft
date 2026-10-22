@@ -13413,7 +13413,7 @@ function buildStreetRoad(scene, opt) {
     let k = 1;
     for (const hc of houseCenters) {
       const onSide = hc.side === 'north' ? z < zRoad : z > zRoad;
-      if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - hc.x) - 2.1) / 0.5)));
+      if (onSide) k = Math.min(k, Math.max(0, Math.min(1, (Math.abs(x - (hc.dx ?? hc.x)) - 2.1) / 0.5)));   // v1.305: dx, a drive off the house's middle
     }
     return k;
   };
@@ -14611,6 +14611,26 @@ function buildWinnmarkCulDeSacScene(_v, tod)  { return buildWinnmarkCourtScene('
 // river (the real SSE), the river's line runs along (nz, -nx); its middle is s = 190 m out, 64 m wide, the water at -26 m.
 const BR_REAL = { bx: 34, bz: 2, nx: 0.3816, nz: 0.9243, s: 190, half: 32, waterY: -26, bedY: -28 };
 
+// v1.305 (D.51 step 2, docs/refs/bunratty.md gap 5d): on the uphill (north) side the lawns bank up over the kerb, 1.4 m
+// over 5.5 m from a metre past the asphalt's edge (21° at the steepest, under the 25° the kids walk), level from there to
+// the houses and the woods behind; it fades out past the west entry and before the bulb. The lane's middle is the map's
+// S-curve (RA, RC1, RC2, RB in buildBunrattyCourtScene), tabled by x.
+const BR_LANE_Z = (() => {
+  const t = [];
+  for (let i = 0; i <= 400; i++) { const s = i / 400, m = 1 - s; t.push([-38 * m * m * m - 42 * m * m * s + 42 * m * s * s + 34 * s * s * s, -30 * m * m * s + 36 * m * s * s + 2 * s * s * s]); }
+  return t;
+})();
+function bunrattyNorthBank(x, z) {
+  if (x <= -46 || x >= 32) return 0;
+  const xc = Math.max(-38, Math.min(34, x));
+  let lo = 0, hi = BR_LANE_Z.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (BR_LANE_Z[m][0] < xc) lo = m; else hi = m; }
+  const a = BR_LANE_Z[lo], b = BR_LANE_Z[hi], zc = a[1] + (b[1] - a[1]) * (xc - a[0]) / ((b[0] - a[0]) || 1);
+  const d = zc - z - 4.45; if (d <= 0) return 0;
+  const ss = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+  return 1.4 * ss(d / 5.5) * ss((x + 46) / 8) * ss((32 - x) / 8);
+}
+
 // v1.304 (D.51 step 2, docs/refs/bunratty.md gaps 1-3, "Michael's house, front" and the D.40 section): Michael's house
 // at about its real size, where the small colonial stood. Cream stucco, a hipped dark-brown roof, a front cross gable
 // over a bay window, a two-storey stacked-stone entry tower with an arched window over double wood doors up six steps,
@@ -14886,6 +14906,238 @@ function buildBunrattyHeroHouse(scene, o) {
   return { group, obstacles };
 }
 
+// v1.305 (D.51 step 2, docs/refs/bunratty.md "The buildings", gaps 4, 5c-d and 12): the street's other six houses at about
+// real size, where the 9 x 7 m colonials stood. Each keeps its front line and grows back and sideways, to 11-15 m by
+// 9-10 m, three of them with a two-bay garage wing set 1.2 m back; the lots' anchors and starts stay where they were.
+// The guide's three styles: 'stucco' (French-eclectic: heavy cream trim and quoins, arched windows below, a steep hip
+// with a front cross gable), 'brick' (tan-grey, white trim, twin front gables and an arched portico) and 'portico' (cream,
+// a two-storey portico on four columns under a balustrade). f: 's' faces the street to the south (the north row), 'n'
+// the north; x0..x1 the main block, zf its front, d its depth; wing { x0, x1, d }.
+const BR_NEIGHBOURS = [
+  { f: 's', style: 'stucco',  x0: -35,   x1: -22,  zf: -12.5, d: 10,  wall: 0x9a958c, roof: 0x55575b, wing: { x0: -22, x1: -16.6, d: 5 } },
+  { f: 's', style: 'portico', x0: -13.5, x1: 1.5,  zf: -14.5, d: 10,  wall: 0xd8ccb2, roof: 0x5d6064 },
+  { f: 's', style: 'brick',   x0: 8,     x1: 21,   zf: -12.5, d: 10,  wall: 0x8a8278, roof: 0x55575b, wing: { x0: 21, x1: 27, d: 6.5 } },
+  { f: 'n', style: 'stucco',  x0: -34,   x1: -22,  zf: 12.5,  d: 9.5, wall: 0xd3c5a8, roof: 0x5e4a40 },
+  { f: 'n', style: 'brick',   x0: -10.5, x1: 0.5,  zf: 14.5,  d: 9,   wall: 0x8f8578, roof: 0x5a4c42, wing: { x0: -16, x1: -10.5, d: 5.5 } },
+  { f: 'n', style: 'stucco',  x0: 4,     x1: 14.8, zf: 13.5,  d: 9.5, wall: 0x9f998e, roof: 0x55575b },
+];
+// v1.305: a house's footprint boxes (main block, then the wing), the door's x and the drive's (the wing's middle, or the door's)
+function brNeighbourPlan(h) {
+  const k = h.f === 's' ? -1 : 1, zr = (v0, v1) => [Math.min(h.zf + k * v0, h.zf + k * v1), Math.max(h.zf + k * v0, h.zf + k * v1)];
+  const [mz0, mz1] = zr(0, h.d), rects = [{ minX: h.x0, maxX: h.x1, minZ: mz0, maxZ: mz1 }];
+  if (h.wing) { const [wz0, wz1] = zr(1.2, 1.2 + h.wing.d); rects.push({ minX: h.wing.x0, maxX: h.wing.x1, minZ: wz0, maxZ: wz1 }); }
+  const doorX = (h.x0 + h.x1) / 2;
+  return { k, zr, rects, doorX, driveX: h.wing ? (h.wing.x0 + h.wing.x1) / 2 : doorX };
+}
+
+// v1.305: all six built into one root and baked by material (the walls one mesh per house, the rest shared), so the
+// street's houses cost about 18 draw calls. Returns the group and, per house, its obstacles (main block first, with
+// .mesh), its main floor F and its plan.
+function buildBunrattyNeighbours(scene, o) {
+  const gY = o.groundY, night = !!o.night, root = new THREE.Group();
+  const M = (c, x = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, x));
+  const DS = THREE.DoubleSide;
+  const trimCream = M(0xc7b9a0, { roughness: 0.7 }), trimWhite = M(0xeae6dc, { roughness: 0.7 });
+  const door = M(0x4a3020, { roughness: 0.7 }), found = M(0x8f877a, { roughness: 0.97 }), capStone = M(0xcac0b0, { roughness: 0.9 });
+  const glass = M(0x2e3a44, { roughness: 0.25, metalness: 0.2, emissive: 0x101820, emissiveIntensity: 0.4 });
+  const lit = night ? M(0xffe0a0, { roughness: 0.4, emissive: 0xffc070, emissiveIntensity: 0.85 }) : glass;
+  const lantern = M(0x1a1a1a, { roughness: 0.5, metalness: 0.4 });
+  const garWood = M(0x704723, { roughness: 0.75 }), garWhite = M(0xe2ddd2, { roughness: 0.7 }), groove = M(0x4a3a2a, { roughness: 0.8 });
+  const conc = M(0xd8d2c8, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const mulch = M(0x2a2420, { roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const roofs = new Map(), roofMat = c => { if (!roofs.has(c)) roofs.set(c, M(c, { roughness: 0.85, side: DS })); return roofs.get(c); };
+  const box = (mat, x0, x1, y0, y1, z0, z1, cast = true) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.castShadow = cast; root.add(m); return m;
+  };
+  const tris = (mat, pts) => {
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pts.flat(), 3)); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, mat); m.castShadow = true; root.add(m); return m;
+  };
+  const hip = (mat, x0, x1, z0, z1, y, rise, ov = 0.5) => {   // as the hero house's: the ridge along the longer side
+    x0 -= ov; x1 += ov; z0 -= ov; z1 += ov;
+    const w = x1 - x0, d = z1 - z0, inset = Math.min(w, d) / 2, A = [x0, y, z0], B = [x1, y, z0], C = [x1, y, z1], D = [x0, y, z1];
+    if (w >= d) { const R1 = [x0 + inset, y + rise, (z0 + z1) / 2], R2 = [x1 - inset, y + rise, (z0 + z1) / 2]; tris(mat, [A, R1, R2, A, R2, B, D, C, R2, D, R2, R1, A, D, R1, B, R2, C]); }
+    else { const R1 = [(x0 + x1) / 2, y + rise, z0 + inset], R2 = [(x0 + x1) / 2, y + rise, z1 - inset]; tris(mat, [A, R1, B, B, R1, R2, B, R2, C, D, C, R2, D, R2, R1, A, D, R1]); }
+  };
+  const win = (f, x, z, y, w, h, trim, opt = {}) => {   // as the hero house's
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = { n: Math.PI, s: 0 }[f];
+    const add = (geo, mat, px, py, pz) => { const m = new THREE.Mesh(geo, mat); m.position.set(px, py, pz); g.add(m); };
+    const gm = opt.lit ? lit : glass;
+    add(new THREE.BoxGeometry(w + 0.24, h + 0.24, 0.06), trim, 0, h / 2, 0.03);
+    add(new THREE.BoxGeometry(w, h, 0.08), gm, 0, h / 2, 0.06);
+    add(new THREE.BoxGeometry(w + 0.36, 0.1, 0.16), trim, 0, -0.08, 0.08);
+    add(new THREE.BoxGeometry(0.06, h, 0.1), trim, 0, h / 2, 0.08);
+    if (h > 1.3) add(new THREE.BoxGeometry(w, 0.06, 0.1), trim, 0, h * 0.62, 0.08);
+    if (opt.arch) {
+      add(new THREE.CircleGeometry(w / 2 + 0.12, 12, 0, Math.PI), trim, 0, h, 0.035);
+      add(new THREE.CircleGeometry(w / 2, 12, 0, Math.PI), gm, 0, h, 0.075);
+    }
+    root.add(g);
+  };
+  const patch = (mat, x0, x1, z0, z1, lift) => {   // a ground patch laid on the terrain
+    const st = 0.78, nx = Math.max(1, Math.ceil((x1 - x0) / st)), nz = Math.max(1, Math.ceil((z1 - z0) / st)), p = [];
+    const at = (i, k) => { const x = x0 + (x1 - x0) * i / nx, z = z0 + (z1 - z0) * k / nz; return [x, gY(x, z) + lift, z]; };
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) { const a = at(i, k), b = at(i + 1, k), c = at(i, k + 1), d = at(i + 1, k + 1); p.push(a, c, b, b, c, d); }
+    const m = tris(mat, p); m.castShadow = false; m.receiveShadow = true;
+  };
+
+  const houses = [];
+  BR_NEIGHBOURS.forEach((h, hi) => {
+    const P = brNeighbourPlan(h), k = P.k, zr = P.zr, Z = v => h.zf + k * v, fr = h.f, bk = h.f === 's' ? 'n' : 's';
+    const obstacles = [];
+    const ob = (x0, x1, z0, z1, baseY, top) => { const b = { minX: x0, maxX: x1, minZ: z0, maxZ: z1, baseY, h: top - baseY, surface: 'hard' }; obstacles.push(b); return b; };
+    const bxv = (mat, x0, x1, y0, y1, v0, v1, cast) => { const [a, b] = zr(v0, v1); return box(mat, x0, x1, y0, y1, a, b, cast); };
+    const wall = M(h.wall, { roughness: 0.95 }), roof = roofMat(h.roof);
+    const face3 = (a, b, c) => tris(wall, k < 0 ? [a, b, c] : [b, a, c]);   // a gable's face, wound to face the street
+    const trim = h.style === 'stucco' ? trimCream : trimWhite;
+    const isLit = (i, row) => (i * 7 + row * 3 + hi * 5) % 5 === 0;
+    // the levels: the main floor 0.45 m over the highest ground along the front; the walls go 0.3 m under the lowest
+    let fMax = -Infinity, low = Infinity;
+    for (let x = h.x0; x <= h.x1 + 1e-6; x += 0.5) fMax = Math.max(fMax, gY(x, Z(-0.3)));
+    for (const r of P.rects) for (let x = r.minX; x <= r.maxX + 1e-6; x += 1) for (let z = r.minZ; z <= r.maxZ + 1e-6; z += 1) low = Math.min(low, gY(x, z));
+    const F = fMax + 0.45, B = low - 0.3, top = F + 5.9, W = h.x1 - h.x0, mid = P.doorX, half = Math.min(W, h.d) / 2 + 0.55;
+    const rise = (h.style === 'stucco' ? 0.5 : 0.38) * Math.min(W, h.d);
+    // --- the main block
+    bxv(wall, h.x0, h.x1, B, top, 0, h.d);
+    bxv(found, h.x0 - 0.06, h.x1 + 0.06, B, F, -0.06, h.d + 0.06, false);                    // the water table under the main floor
+    bxv(trim, h.x0 - 0.12, h.x1 + 0.12, top - 0.28, top, -0.12, h.d + 0.12);                  // the frieze under the eaves
+    bxv(trim, h.x0 - 0.05, h.x1 + 0.05, F + 3.0, F + 3.16, -0.05, h.d + 0.05, false);         // a belt course between the floors
+    hip(roof, h.x0, h.x1, ...zr(0, h.d), top, rise, 0.55);
+    ob(h.x0, h.x1, ...zr(0, h.d), B, top + rise);
+    // a chimney through the roof at the end away from the wing
+    const chX = h.wing && h.wing.x0 >= h.x1 - 0.01 ? h.x0 + 1.4 : h.x1 - 1.4;
+    bxv(h.style === 'brick' ? wall : found, chX - 0.6, chX + 0.6, top - 1, top + rise * 0.8 + 0.7, h.d * 0.45, h.d * 0.45 + 1.2);
+    bxv(capStone, chX - 0.7, chX + 0.7, top + rise * 0.8 + 0.7, top + rise * 0.8 + 0.82, h.d * 0.45 - 0.1, h.d * 0.45 + 1.3, false);
+    // a front cross gable over x gx0..gx1, standing p out from the face, its roof's ridge running back into the hip
+    const gables = [];
+    const gable = (gx0, gx1, p) => {
+      const gm = (gx0 + gx1) / 2, gr = (gx1 - gx0) * (h.style === 'stucco' ? 0.55 : 0.45), vb = gr * half / rise + 0.3;
+      if (p > 0) {
+        bxv(wall, gx0, gx1, B, top, -p, 0.2); bxv(found, gx0 - 0.06, gx1 + 0.06, B, F, -p - 0.06, 0, false);
+        bxv(trim, gx0 - 0.12, gx1 + 0.12, top - 0.28, top, -p - 0.12, 0);
+        ob(gx0, gx1, ...zr(-p, 0), B, top + gr);
+      }
+      const zF = Z(-p - 0.01), zO = Z(-p - 0.45), zB = Z(vb), e0 = gx0 - 0.4, e1 = gx1 + 0.4, ry = top + gr + 0.05;
+      face3([gx0, top, zF], [gx1, top, zF], [gm, top + gr, zF]);
+      tris(roof, [[e0, top - 0.25, zO], [gm, ry, zO], [gm, ry, zB], [e0, top - 0.25, zO], [gm, ry, zB], [e0, top - 0.25, zB],
+        [e1, top - 0.25, zO], [gm, ry, zO], [gm, ry, zB], [e1, top - 0.25, zO], [gm, ry, zB], [e1, top - 0.25, zB]]);
+      win(fr, gm, Z(-p - 0.01), F + 3.55, 1.2, 1.6, trim, { arch: true, lit: isLit(gables.length, 9) });
+      win(fr, gm, Z(-p - 0.01), top + 0.3, 0.55, 0.35, trim, { arch: true });                  // the attic vent
+      gables.push([gx0, gx1, p]);
+    };
+    if (h.style === 'stucco') gable(h.wing && h.wing.x1 <= h.x0 + 0.01 ? h.x1 - 4 : h.x0, h.wing && h.wing.x1 <= h.x0 + 0.01 ? h.x1 : h.x0 + 4, 0.6);
+    if (h.style === 'brick') { gable(h.x0, h.x0 + 4, 0.5); gable(h.x1 - 4, h.x1, 0.5); }
+    // stucco: quoins up the front corners
+    if (h.style === 'stucco') for (const [cx, s] of [[h.x0, 1], [h.x1, -1]]) {
+      const gp = gables.find(g => Math.abs(g[0] - cx) < 0.01 || Math.abs(g[1] - cx) < 0.01), v0 = gp ? -gp[2] : 0;
+      for (let i = 0; i < 8; i++) { const y = F + 0.1 + i * 0.68, w = i % 2 ? 0.45 : 0.75; bxv(trim, s > 0 ? cx - 0.05 : cx - w, s > 0 ? cx + w : cx + 0.05, y, y + 0.36, v0 - 0.05, v0 + 0.3, false); }
+    }
+    // --- the entry at the middle of the front
+    const gS = gY(mid, Z(-1.6));
+    const stoop = (x0, x1, v0) => {   // three risers from the ground up to the main floor, out from v0
+      for (let i = 0; i < 3; i++) bxv(capStone, x0, x1, gS - 0.3, gS + (F - gS) * (i + 1) / 3, v0 - 1.2 + i * 0.4, v0, false);
+      ob(x0, x1, ...zr(v0 - 1.2, v0), gS - 0.3, F);
+    };
+    let entryV = 0;
+    if (h.style === 'portico') {   // a two-storey portico on four columns under a balustrade, on a stone floor
+      const px0 = mid - 2.8, px1 = mid + 2.8, pv = -2.4;
+      bxv(capStone, px0, px1, B, F, pv, 0, false); ob(px0, px1, ...zr(pv, 0), B, F);
+      stoop(mid - 1.6, mid + 1.6, pv);
+      for (const cx of [px0 + 0.35, mid - 0.95, mid + 0.95, px1 - 0.35]) {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, top - 0.5 - F, 10), trimWhite);
+        c.position.set(cx, (F + top - 0.5) / 2, Z(pv + 0.3)); c.castShadow = true; root.add(c);
+        bxv(trimWhite, cx - 0.3, cx + 0.3, F, F + 0.25, pv + 0.0, pv + 0.6, false);
+      }
+      bxv(trimWhite, px0 - 0.1, px1 + 0.1, top - 0.5, top, pv - 0.1, 0);                     // the entablature
+      for (let i = 0; i <= 14; i++) { const bx = px0 + (px1 - px0) * i / 14; bxv(trimWhite, bx - 0.05, bx + 0.05, top, top + 0.75, pv + 0.05, pv + 0.15, false); }
+      bxv(trimWhite, px0 - 0.1, px1 + 0.1, top + 0.75, top + 0.85, pv - 0.02, pv + 0.22, false);   // the balustrade's rail
+      for (const s of [-1, 1]) bxv(trimWhite, mid + s * 2.8 - 0.06, mid + s * 2.8 + 0.06, top, top + 0.85, pv + 0.1, 0, false);
+      win(fr, mid, Z(-0.01), F + 3.55, 1.3, 1.8, trim, { arch: true, lit: true });          // the window over the door
+    } else if (h.style === 'brick') {   // an arched portico: a projecting entry with its own gable
+      const ex0 = mid - 1.5, ex1 = mid + 1.5, ev = -1.4, et = F + 3.2, egr = 1.3;
+      bxv(wall, ex0, ex1, B, et, ev, 0.2); bxv(trim, ex0 - 0.1, ex1 + 0.1, et - 0.2, et, ev - 0.1, 0);
+      face3([ex0, et, Z(ev - 0.01)], [ex1, et, Z(ev - 0.01)], [mid, et + egr, Z(ev - 0.01)]);
+      const eo = Z(ev - 0.35), eb = Z(0.1);
+      tris(roof, [[ex0 - 0.3, et - 0.2, eo], [mid, et + egr + 0.05, eo], [mid, et + egr + 0.05, eb], [ex0 - 0.3, et - 0.2, eo], [mid, et + egr + 0.05, eb], [ex0 - 0.3, et - 0.2, eb],
+        [ex1 + 0.3, et - 0.2, eo], [mid, et + egr + 0.05, eo], [mid, et + egr + 0.05, eb], [ex1 + 0.3, et - 0.2, eo], [mid, et + egr + 0.05, eb], [ex1 + 0.3, et - 0.2, eb]]);
+      ob(ex0, ex1, ...zr(ev, 0), B, et + egr);
+      entryV = ev;
+      stoop(mid - 1.3, mid + 1.3, ev);
+    } else stoop(mid - 1.3, mid + 1.3, 0);
+    // the door: double wood doors under a lit fanlight, a lantern either side
+    {
+      const zd = Z(entryV - 0.05), zt = Z(entryV - 0.02);
+      const [da, db] = zr(entryV - 0.1, entryV - 0.04);
+      box(trim, mid - 1.0, mid + 1.0, F, F + 2.7, ...zr(entryV - 0.06, entryV), false);
+      box(door, mid - 0.76, mid - 0.02, F, F + 2.5, da, db, false); box(door, mid + 0.02, mid + 0.76, F, F + 2.5, da, db, false);
+      const fl = new THREE.Mesh(new THREE.CircleGeometry(0.7, 12, 0, Math.PI), lit); fl.position.set(mid, F + 2.52, zd); fl.rotation.y = fr === 'n' ? Math.PI : 0; root.add(fl);
+      const ar = new THREE.Mesh(new THREE.CircleGeometry(0.86, 12, 0, Math.PI), trim); ar.position.set(mid, F + 2.5, zt); ar.rotation.y = fr === 'n' ? Math.PI : 0; root.add(ar);
+      if (h.style !== 'portico') for (const lx of [mid - 1.3, mid + 1.3]) { bxv(lantern, lx - 0.12, lx + 0.12, F + 1.8, F + 2.25, entryV - 0.3, entryV - 0.05, false); bxv(lit, lx - 0.08, lx + 0.08, F + 1.85, F + 2.18, entryV - 0.32, entryV - 0.29, false); }
+    }
+    // the front's windows, in bays clear of the door, the gables and the portico
+    const nb = Math.max(3, Math.round(W / 3.1)), bw = W / nb;
+    for (let i = 0; i < nb; i++) {
+      const x = h.x0 + bw * (i + 0.5);
+      const inGable = gables.find(g => x > g[0] - 0.3 && x < g[1] + 0.3), clearDoor = Math.abs(x - mid) > (h.style === 'portico' ? 3.4 : 1.9);
+      const vf = inGable ? -inGable[2] - 0.01 : -0.01;
+      if (clearDoor) win(fr, x, Z(vf), F + 0.7, 1.15, 1.85, trim, { arch: h.style === 'stucco', lit: isLit(i, 0) });
+      if (!inGable && Math.abs(x - mid) > (h.style === 'portico' ? 3.4 : 1.2)) win(fr, x, Z(-0.01), F + 3.6, 1.05, 1.5, trim, { lit: isLit(i, 1) });
+    }
+    // the back: a door at the middle with a step, and two rows of windows
+    win(bk, mid - 1.4, Z(h.d + 0.01), F + 0.4, 1.5, 2.1, trim, { lit: isLit(hi, 2) });
+    {
+      const [da, db] = zr(h.d + 0.02, h.d + 0.08), gB = gY(mid + 1.1, Z(h.d + 0.8));
+      box(trim, mid + 0.4, mid + 1.8, Math.min(F, gB + 0.2) , F + 2.3, ...zr(h.d, h.d + 0.05), false);
+      box(door, mid + 0.5, mid + 1.7, Math.min(F, gB + 0.2), F + 2.2, da, db, false);
+      if (F - gB > 0.25) { bxv(capStone, mid + 0.3, mid + 1.9, gB - 0.3, (F + gB) / 2, h.d, h.d + 0.28, false); }   // a step within a body's width of the wall
+    }
+    for (let i = 0; i < nb; i++) {
+      const x = h.x0 + bw * (i + 0.5);
+      if (Math.abs(x - mid) > 2.3) win(bk, x, Z(h.d + 0.01), F + 0.7, 1.15, 1.7, trim, { lit: isLit(i, 3) });
+      win(bk, x, Z(h.d + 0.01), F + 3.6, 1.05, 1.5, trim, { lit: isLit(i, 4) });
+    }
+    // the ends' windows
+    for (const [ex, f] of [[h.x0, 'w'], [h.x1, 'e']]) {
+      if (h.wing && ((f === 'e' && h.wing.x0 >= h.x1 - 0.01) || (f === 'w' && h.wing.x1 <= h.x0 + 0.01))) continue;
+      for (const v of [h.d * 0.3, h.d * 0.72]) {
+        const g = new THREE.Group(); g.position.set(ex + (f === 'e' ? 0.01 : -0.01), F + 3.6, Z(v)); g.rotation.y = f === 'e' ? Math.PI / 2 : -Math.PI / 2;
+        const a = new THREE.Mesh(new THREE.BoxGeometry(1.29, 1.74, 0.06), trim); a.position.set(0, 0.75, 0.03); g.add(a);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.5, 0.08), isLit(Math.round(v), 5) ? lit : glass); b.position.set(0, 0.75, 0.06); g.add(b);
+        root.add(g);
+      }
+    }
+    // mulch beds along the front either side of the entry
+    patch(mulch, h.x0 + 0.2, mid - 1.5, ...zr(-1.3, 0), 0.03);
+    patch(mulch, mid + 1.5, h.x1 - 0.2, ...zr(-1.3, 0), 0.03);
+    // --- the garage wing: two doors onto a concrete apron that meets the drive, a lantern between them
+    if (h.wing) {
+      const w = h.wing, v0 = 1.2, v1 = 1.2 + w.d, gw = w.x1 - w.x0;
+      let G = -Infinity; for (let x = w.x0; x <= w.x1 + 1e-6; x += 0.5) G = Math.max(G, gY(x, Z(v0 - 0.3)));
+      G += 0.04;
+      const gtop = G + 3.5;
+      bxv(wall, w.x0, w.x1, B, gtop, v0, v1);
+      bxv(trim, w.x0 - 0.12, w.x1 + 0.12, gtop - 0.25, gtop, v0 - 0.12, v1 + 0.12);
+      hip(roof, w.x0, w.x1, ...zr(v0, v1), gtop, Math.min(gw, w.d) * 0.4, 0.45);
+      ob(w.x0, w.x1, ...zr(v0, v1), B, gtop + Math.min(gw, w.d) * 0.4);
+      const dw = 2.3, gap = (gw - 2 * dw) / 3, gm = h.style === 'brick' ? garWhite : garWood;
+      for (let i = 0; i < 2; i++) {
+        const x0 = w.x0 + gap + i * (dw + gap), x1 = x0 + dw;
+        bxv(trim, x0 - 0.12, x1 + 0.12, G, G + 2.32, v0 - 0.04, v0, false);
+        bxv(gm, x0, x1, G, G + 2.2, v0 - 0.09, v0 - 0.03, false);
+        for (let r = 1; r < 4; r++) bxv(groove, x0 + 0.05, x1 - 0.05, G + r * 0.55 - 0.02, G + r * 0.55 + 0.02, v0 - 0.1, v0 - 0.08, false);
+      }
+      const lx = (w.x0 + w.x1) / 2; bxv(lantern, lx - 0.1, lx + 0.1, G + 1.8, G + 2.2, v0 - 0.22, v0 - 0.02, false); bxv(lit, lx - 0.07, lx + 0.07, G + 1.85, G + 2.15, v0 - 0.24, v0 - 0.21, false);
+      patch(conc, w.x0 - 0.3, w.x1 + 0.3, ...zr(-1.6, v0), 0.04);
+    }
+    houses.push({ obstacles, F, plan: P });
+  });
+  const group = bakeByMaterial(root, 'bunrattyNeighbours');
+  scene.add(group);
+  for (const hh of houses) hh.obstacles[0].mesh = group;
+  return { group, houses };
+}
+
 // v1.303 (D.51 step 1): scenery past a map's fence at real scale, merged into one vertex-coloured mesh (plus one for lit
 // windows at night) so a few thousand trees cost two draw calls. Items: { k: 'tree' | 'pine', x, y, z, h, r, col },
 // { k: 'house', x, y, z, yaw, w, d, h, wall, roof }, { k: 'box', x, y, z, yaw, w, h, d, col } and { k: 'strip', pts, w, col }
@@ -15022,7 +15274,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   //   • The playable box is z∈[-32,30], x∈[-40,44]; we shape across that.
   // v1.304 (D.51 step 2): the box grew south behind Michael's house (z to 47 for x 16.4..44), which bunrattyHeroCut cuts.
   function bunrattyGroundY(x, z) {
-    return bunrattyHeroCut(x, z, bunrattyRealScale(x, z, bunrattyBaseY(x, z)));
+    return bunrattyHeroCut(x, z, bunrattyRealScale(x, z, bunrattyBaseY(x, z) + bunrattyNorthBank(x, z)));   // v1.305: the north bank
   }
   function bunrattyBaseY(x, z) {
     // --- North→South fall: a secondary grade. North edge (z=-33) sits a little
@@ -15330,9 +15582,6 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // scenario. Downhill (south, river-side) houses get walk-out lower-level
   // visual treatment below.
   const houseObs = [];
-  // Stucco palette options (warm creams/tans from the photos).
-  const STUCCO = [0xddd0b8, 0xd6c8ac, 0xcfc0a2, 0xe2d6c0, 0xc8b89a];
-  const BROWNROOF = [0x6a4a38, 0x5e4330, 0x6e5240, 0x5a4632];
   // Each entry: x, z, w, d, faceDir, side ('north'|'south'), hero?
   const houseDefs = [
     // North of lane (faces south toward road). Staggered, angled-feeling.
@@ -15352,75 +15601,22 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // which the scatter trees still steer round so every number they draw is drawn as before.
   const HERO_OLD = { minX: 27.5, maxX: 38.5, minZ: 13, maxZ: 21 };
   let heroHouse = null;
+  // v1.305 (D.51 step 2): the other six are the street's real houses (BR_NEIGHBOURS), on the same lots with the same
+  // front lines; OLD_FOOT keeps the colonials' footprints, which the scatter trees still steer round (the same numbers).
+  const neighbours = buildBunrattyNeighbours(scene, { groundY, night: _night });
+  const OLD_FOOT = houseDefs.filter(hd => !hd.hero).map(hd => ({ minX: hd.x - hd.w / 2, maxX: hd.x + hd.w / 2, minZ: hd.z - hd.d / 2, maxZ: hd.z + hd.d / 2 }));
+  const NEIGH_RECTS = neighbours.houses.flatMap(hh => hh.plan.rects);
   for (let i = 0; i < houseDefs.length; i++) {
     const hd = houseDefs[i];
-    if (hd.hero) {
-      heroHouse = buildBunrattyHeroHouse(scene, { groundY, F: BRH.F, T: BRH.T, G: BRH.G, night: _night });
-      houseObs.push(...heroHouse.obstacles);
-      houseCenters.push({ x: 39, z: 19, side: 'south', hero: true });
+    if (!hd.hero) {
+      const hh = neighbours.houses[i];
+      houseObs.push(...hh.obstacles);
+      houseCenters.push({ x: hd.x, z: hd.z, side: hd.side, hero: false, dx: hh.plan.driveX, plan: hh.plan });
       continue;
     }
-    const brick = hd.hero ? 0xe2d6c0 : STUCCO[i % STUCCO.length];
-    const roof = hd.hero ? 0x6a4a38 : BROWNROOF[i % BROWNROOF.length];
-    // v1.24a: foundation skirt depth = how far the LOWEST footprint corner sits
-    // below the pad center, + margin, so the downhill side never floats.
-    const padCenterY = groundY(hd.x, hd.z);
-    const hw = hd.w / 2, hdp = hd.d / 2;
-    let minCorner = Infinity;
-    for (const sx of [-hw, hw]) for (const sz of [-hdp, hdp]) {
-      minCorner = Math.min(minCorner, groundY(hd.x + sx, hd.z + sz));
-    }
-    const skirtDepth = Math.max(0.6, (padCenterY - minCorner) + 1.0);
-    const obs = buildSuburbanHouse(scene, {
-      x: hd.x, z: hd.z, width: hd.w, depth: hd.d,
-      brickColor: brick, roofColor: roof, trimColor: 0xeae0d0,
-      faceDir: hd.faceDir, skirt: skirtDepth, detail: true,   // v1.125: Winnmark's house (D.3 step 4)
-    });
-    houseObs.push(obs);
-    houseCenters.push({ x: hd.x, z: hd.z, side: hd.side, hero: !!hd.hero });
-
-    // v1.8: sit the house on the slope. The pad height is groundY at the
-    // house center; the whole mesh group + AABB lift to it.
-    const padY = groundY(hd.x, hd.z);
-    sinkObs(obs, hd.x, hd.z);
-
-    // --- Downhill walk-out treatment for SOUTH (river-side) houses ---
-    // Now PHYSICAL: the pad sits at padY, but the south (river) face's ground is
-    // lower. The exposed lower level + deck columns reach down to that lower
-    // ground, so the house genuinely reads as perched over the falling grade.
-    if (hd.side === 'south') {
-      const podMat = new THREE.MeshStandardMaterial({ color: 0xcabfa6, roughness: 0.95 });
-      // Ground height at the south (downhill) face of the footprint.
-      const southZ = hd.z + hd.d * 0.5;
-      const lowY = groundY(hd.x, southZ + 1.0);   // a touch beyond the wall
-      // Podium spans from the lower ground up to the main floor (padY).
-      const podTop = padY + 0.1;                  // just under the first floor
-      const podBot = lowY - 0.2;                  // foot sunk into lower ground
-      const podH = Math.max(1.2, podTop - podBot);
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(hd.w * 0.96, podH, hd.d * 0.5), podMat);
-      pod.position.set(hd.x, podBot + podH / 2, hd.z + hd.d * 0.32);
-      pod.castShadow = pod.receiveShadow = true;
-      scene.add(pod);
-      // White deck cantilevered off the main-floor level on the river side.
-      const deckMat = new THREE.MeshStandardMaterial({ color: 0xeee8dc, roughness: 0.7 });
-      const deckY = padY + 2.3;
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(hd.w * 0.92, 0.18, hd.d * 0.55), deckMat);
-      deck.position.set(hd.x, deckY, hd.z + hd.d * 0.36);
-      deck.castShadow = true;
-      scene.add(deck);
-      // Support columns reaching from the deck down to the LOWER ground.
-      const colH = Math.max(1.5, deckY - lowY);
-      for (let c = -1; c <= 1; c++) {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, colH, 8), deckMat);
-        col.position.set(hd.x + c * (hd.w * 0.35), lowY + colH / 2, hd.z + hd.d * 0.58);
-        col.castShadow = true;
-        scene.add(col);
-      }
-      // Simple deck railing (thin top rail).
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(hd.w * 0.92, 0.06, 0.05), deckMat);
-      rail.position.set(hd.x, deckY + 0.6, hd.z + hd.d * 0.62);
-      scene.add(rail);
-    }
+    heroHouse = buildBunrattyHeroHouse(scene, { groundY, F: BRH.F, T: BRH.T, G: BRH.G, night: _night });
+    houseObs.push(...heroHouse.obstacles);
+    houseCenters.push({ x: 39, z: 19, side: 'south', hero: true });
   }
 
   // v1.127: the road, the bulb and the kerbs (Winnmark's builder; the hero house's drive drops the bulb's kerb)
@@ -15452,9 +15648,10 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   for (const hc of houseCenters) {
     if (hc.hero) continue;   // v1.304: Michael's drive is the motor court
     // Find the nearest road centerline z at this house's x (the lane wiggles).
+    const dxv = hc.dx;   // v1.305: to the garage wing's apron, or the door
     let nearestZ = 0, best = Infinity;
     for (const p of roadCenterline) {
-      const d = Math.abs(p.x - hc.x);
+      const d = Math.abs(p.x - dxv);
       if (d < best) { best = d; nearestZ = p.z; }
     }
     const houseFront = hc.side === 'north' ? hc.z + 3.5 : hc.z - 3.5;
@@ -15469,7 +15666,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     for (let p = 0; p < nPad; p++) {
       const pz = minZ + span * (p / (nPad - 1));
       const pad = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.0), drivewayMat);
-      layOnSlope(pad, hc.x, pz, 0.025);
+      layOnSlope(pad, dxv, pz, 0.025);
       pad.receiveShadow = true;
       scene.add(pad);
     }
@@ -15586,7 +15783,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // East wall — closes behind the bulb (x≈44).
   treeWall(44, -32, 44, 33, { outwardSign: 1, spacing: 2.7 });
 
-  const scatterAvoid = [...houseObs.filter(h => !heroHouse.obstacles.includes(h)), HERO_OLD];
+  const scatterAvoid = [...OLD_FOOT, HERO_OLD];   // v1.305: the old footprints, so the numbers drawn are the same
   // Extra inner forest scatter — Bunratty's lots are carved out of woods, so
   // sprinkle standalone trees between houses + in the deep yards for texture
   // and natural cover/sightline breaks.
@@ -15624,7 +15821,9 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   for (let i = treeObs.length - 1; i >= 0; i--) {
     const t = treeObs[i], tx = (t.minX + t.maxX) / 2, tz = (t.minZ + t.maxZ) / 2;
     const inLot = tx > BR_HERO.sideX0 - 0.6 && tz > 8 && (tx < 43.2 || (tz < BR_HERO.z1 + 0.6 && tx < 45.2));
-    if (!inLot) continue;
+    // v1.305: and those on the street's new houses (their footprints and 0.8 m round them)
+    const inHouse = NEIGH_RECTS.some(r => tx > r.minX - 0.8 && tx < r.maxX + 0.8 && tz > r.minZ - 0.8 && tz < r.maxZ + 0.8);
+    if (!inLot && !inHouse) continue;
     if (t.mesh) { scene.remove(t.mesh); if (t.mesh.userData.crown) scene.remove(t.mesh.userData.crown); }
     treeObs.splice(i, 1);
   }
@@ -15634,7 +15833,10 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const frontZ = hc.z + towardRoad * 4.0;
     // v1.304: Michael's two bushes flank his front steps, and his ornamental is the big oak on the front lawn's west end
-    const [b1x, b1z, b2x, b2z] = hc.hero ? [25.7, 13.8, 31.4, 13.9] : [hc.x - 1.8, frontZ, hc.x + 1.8, frontZ];
+    // v1.305: the street's houses' flank their doors, clear of the stoop (or the portico's floor)
+    const bOff = hc.plan && (BR_NEIGHBOURS[houseCenters.indexOf(hc)].style === 'portico' ? 3.5 : 2.3);
+    const [b1x, b1z, b2x, b2z] = hc.hero ? [25.7, 13.8, 31.4, 13.9]
+      : [hc.plan.doorX - bOff, frontZ, hc.plan.doorX + bOff, frontZ];
     bushObs.push(addBush(scene, b1x, b1z, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(b1x, b1z), { detail: true }));   // v1.125
     bushObs.push(addBush(scene, b2x, b2z, rng(1.0, 1.4), rng(0.6, 0.9), rng(0.9, 1.2), null, groundY(b2x, b2z), { detail: true }));
     if (gameRandom() < 0.6) {
@@ -15658,13 +15860,14 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   const BR_SHOULDER = 1.1;        // sit this far onto the grass beyond the pavement
   for (const hc of houseCenters) {
     // nearest centerline sample to this house
+    const hx = hc.dx ?? hc.x;   // v1.305: at the drive's end
     let best = roadCenterline[0], bestD = Infinity;
     for (const p of roadCenterline) {
-      const d = (p.x - hc.x) ** 2 + (p.z - hc.z) ** 2;
+      const d = (p.x - hx) ** 2 + (p.z - hc.z) ** 2;
       if (d < bestD) { bestD = d; best = p; }
     }
     // unit direction from the road point toward the house ("toward grass")
-    let dirX = hc.x - best.x, dirZ = hc.z - best.z;
+    let dirX = hx - best.x, dirZ = hc.z - best.z;
     const dl = Math.hypot(dirX, dirZ) || 1; dirX /= dl; dirZ /= dl;
     // base point: just off the pavement edge on the grass side
     const baseX = best.x + dirX * (BR_ROAD_HALF + BR_SHOULDER);
@@ -15693,7 +15896,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     for (const p of roadCenterline) { const d = Math.abs(p.x - hc.x); if (d < best) { best = d; nearestZ = p.z; } }
     const towardRoad = hc.side === 'north' ? +1 : -1;
     const binZ = nearestZ + towardRoad * 1.5;
-    const binBaseX = (hc.hero ? 33 : hc.x) + (gameRandom() < 0.5 ? 1.6 : -1.6);   // v1.304: Michael's stand where they did
+    const binBaseX = (hc.hero ? 33 : hc.dx) + (gameRandom() < 0.5 ? 1.6 : -1.6);   // v1.304: Michael's stand where they did
     const facing = hc.side === 'north' ? Math.PI : 0;
     const order = gameRandom() < 0.5 ? ['garbage', 'recycle'] : ['recycle', 'garbage'];
     curbsideBins.push(sinkObs(addCurbsideBin(scene, binBaseX - 0.4, binZ, { variant: order[0], facing, detail: true }), binBaseX - 0.4, binZ));
@@ -15713,6 +15916,8 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       // v1.304: Michael's yard junk goes where the fights were (docs/refs/bunratty.md): on the motor court in front of
       // the garage, on the terrace's east end by the steps, and on the lawn
       if (hc.hero) [cx, cz] = [[38.4, 12.6], [41.7, 29.2], [31.0, 41.6], [42.4, 10.4]][j];
+      // v1.305: a piece that lands on the street's bigger house (or 0.9 m round it) goes out behind it
+      else for (let pass = 0; pass < 2; pass++) for (const r of hc.plan.rects) if (cx > r.minX - 0.9 && cx < r.maxX + 0.9 && cz > r.minZ - 0.9 && cz < r.maxZ + 0.9) cz = hc.plan.k < 0 ? r.minZ - 1.5 : r.maxZ + 1.5;
       const kind = gameRandom();
       let cobj;
       const cgy = groundY(cx, cz);

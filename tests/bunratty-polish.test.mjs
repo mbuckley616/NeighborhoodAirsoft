@@ -23,7 +23,8 @@ const res = await page.evaluate(() => {
   return t;
 });
 console.log('  ', JSON.stringify(res));
-check('every Bunratty house is the detailed house', res.house >= 6 && res.houseDetail === res.house, res);
+// v1.305 (D.51 step 2): the street's houses are Bunratty's own now (tests/real-scale.test.mjs), not Winnmark's
+check('no Winnmark colonial is left on Bunratty', res.house === 0, res);
 check('every Bunratty car is the detailed car', res.car >= 2 && res.carDetail === res.car, res);
 check('every Bunratty tree and bush is the low-poly one', res.tree > 50 && res.treeDetail === res.tree && res.bush > 10 && res.bushDetail === res.bush, res);
 check('bins, boxes and plywood stacks are the detailed props', (res.props.bin || 0) > 10 && (res.props.box || 0) > 0 && (res.props.plystack || 0) >= 0, res.props);

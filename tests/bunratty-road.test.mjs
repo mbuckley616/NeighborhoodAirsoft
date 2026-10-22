@@ -47,7 +47,8 @@ const res = await page.evaluate(() => {
   // the road runs out through the west tree-wall gap (x −40)
   out.westEnd = hitY(asph, -40.5, P(0).z) !== null;
   // the kerb top (3.45 + 0.61 m out) along both sides of the lane: full height away from the driveways, dropped across
-  const drives = [[-28, -1], [-6, -1], [16, -1], [-30, 1], [-8, 1], [12, 1], [39, 1]];   // houseDefs' x (v1.304: the hero's is its motor court's, 39), and side (−1 north)
+  // v1.305: the street's houses' drives run to their garage wings or doors (BR_NEIGHBOURS); the hero's is its motor court's, 39
+  const drives = [...BR_NEIGHBOURS.map(h => [brNeighbourPlan(h).driveX, h.f === 's' ? -1 : 1]), [39, 1]];   // x, and side (−1 north)
   const kerb = road.kerb || [];
   const full = [], dropped = [];
   for (let t = 0.02; t <= 0.9; t += 0.004) {
