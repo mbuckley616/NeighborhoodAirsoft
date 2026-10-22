@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.316</div>
+  <div class="version">v1.317</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6405,7 +6405,7 @@ const REGIONS = {
   },
   northcliff: {
     name: "Northcliff / Martin's Landing",
-    streets: { northcliff_trace: 'Northcliff Trace', stoneglen_close: 'Stoneglen Close', bellfield_ct: 'Bellfield Court' },
+    streets: { northcliff_trace: 'Northcliff Trace', stoneglen_close: 'Stoneglen Close', bellfield_ct: 'Bellfield Court', northcliff_pool: 'Northcliff Pool' },   // v1.317: the pool
     direction: 'north',
   },
 };
@@ -7973,6 +7973,23 @@ const SCENARIOS = {
     winCondition: 'last_team_standing',
     npcLives: 99,
     rewards: { win: 120, lose: 28 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.317: the Northcliff pool, a 1v1 round the tennis courts (D.55 step 7, Michael: A, after Bellfield) ---
+  pool_1v1_christian: {
+    region: 'northcliff', street: 'northcliff_pool',
+    name: 'Northcliff Pool', scenarioName: 'Round the Courts',
+    desc: "The pool is where the whole neighborhood ends up, but at this hour it's just you and Christian. He's out on the far tennis court, and the courts are all fence: three metres of dark chain-link with a gate on the west side, one at each end and one more by the parking. BBs go through the fence, you don't, so pick your gate. You start behind the pump house between the pool and the courts. One pistol each, one hit.",
+    builderFn: 'buildNorthcliffPoolScene',
+    builderArg: 'default',
+    scenarioType: 'skirmish',
+    playerSpawn: 'pump_house_w',
+    enemySetup: [
+      { charId: 'christian', weapon: 'pistol', anchor: 'court_b_far', role: 'skirmisher' },
+    ],
+    winCondition: 'kill_all',
+    rewards: { win: 80, lose: 18 },
     playerLives: 1, armorMult: 1,
   },
 
@@ -18639,6 +18656,197 @@ function buildTwinsCourseScene(variant, timeOfDay) {
 }
 
 // =====================================================================
+// v1.317 (backlog D.55 step 7; docs/refs/northcliff.md gap 6; decisions 16 Oct, 9 A, and 22 Oct, A): THE NORTHCLIFF
+// POOL, the swim and tennis club where the neighbourhood met, as a small map of its own (as Bellfield Court is). From
+// the guide: a 25 x 12 m pool in a pale concrete deck about 4 m wide, the clubhouse (11 x 11 m, grey roof) on the
+// deck's north end, two blue tennis courts side by side east of the pool (32 x 34 m together, in a green surround and
+// a dark 3 m chain-link fence), the spur road along the north side with its parking, and trees all round. The pool
+// stops bodies, not BBs (as the country club's); the courts' fence stops bodies, and BBs and eyes go through it, so a
+// fight round the courts is about the gates. Flat. North is −z; the courts' long axis runs north-south.
+// =====================================================================
+function buildNorthcliffPoolScene(variant, timeOfDay) {
+  const scene = new THREE.Scene();
+  const _night = (timeOfDay === 'night');
+  applyTimeOfDay(scene, timeOfDay, {
+    dayBg: 0x9ab8d0, dayFog: [45, 120],
+    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-16, 30, 14],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.4,
+    nightFog: [18, 55], moonPos: [16, 32, -14],
+    shadow: { size: 2048, extent: 44, far: 90 },
+  });
+  const groundY = () => 0;
+  const rng = (a, b) => a + gameRandom() * (b - a);
+  const obstacles = [], cover = [];
+  const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, ...o });
+  const mesh = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (shadow) m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
+  const flat = (w, d, color, x, z, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), std(color, { roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; scene.add(m); return m; };
+  const box = (minX, maxX, minZ, maxZ, h, surface = 'hard', extra = {}) => { const o = { minX, maxX, minZ, maxZ, h, surface, baseY: 0, ...extra }; obstacles.push(o); return o; };
+  const coverBox = (...a) => { const o = box(...a); cover.push(o); return o; };
+
+  // --- the ground: grass, the road and its parking along the north, the deck, the courts' surround and courts ---
+  flat(200, 200, 0x5e7a3e, 0, 0, 0);
+  flat(200, 7, 0x3e4044, 0, -24.5, 0.006);              // the spur road
+  flat(44, 6, 0x4a4c50, -8, -17.5, 0.008);              // the parking along it
+  for (let x = -29; x <= 13; x += 3) flat(0.1, 5, 0xd8d4c8, x, -17.5, 0.010);   // the bays' lines
+  flat(33, 21, 0xe8dccf, -13, 9.5, 0.012);              // the deck x∈[-29.5,3.5], z∈[-1,20]
+  flat(3, 6, 0xd8d0c4, -15.5, -15.5 + 4.5, 0.011);      // the walk from the parking to the clubhouse door
+  flat(32, 34, 0x3e6a4a, 22, 3, 0.012);                 // the courts' green surround x∈[6,38], z∈[-14,20]
+  const lineMat = std(0xf2f2ee, { roughness: 1 });
+  for (const cx of [14, 30]) {
+    flat(10.97, 23.77, 0x3a5e9a, cx, 3, 0.014);          // the court, blue
+    for (const [w, d, x, z] of [[10.97, 0.08, cx, 3 - 11.88], [10.97, 0.08, cx, 3 + 11.88], [0.08, 23.77, cx - 5.48, 3], [0.08, 23.77, cx + 5.48, 3],
+      [0.08, 23.77, cx - 4.11, 3], [0.08, 23.77, cx + 4.11, 3], [8.23, 0.08, cx, 3 - 6.4], [8.23, 0.08, cx, 3 + 6.4], [0.08, 12.8, cx, 3]]) {
+      const l = new THREE.Mesh(new THREE.PlaneGeometry(w, d), lineMat); l.rotation.x = -Math.PI / 2; l.position.set(x, 0.016, z); scene.add(l);
+    }
+  }
+
+  // --- the pool: 25 x 12 m, coping, the water darker at the deep end, lane ropes; stops bodies, not BBs ---
+  const PX0 = -25.5, PX1 = -0.5, PZ0 = 4, PZ1 = 16, PCX = (PX0 + PX1) / 2, PCZ = (PZ0 + PZ1) / 2;
+  {
+    mesh(new THREE.BoxGeometry(PX1 - PX0 + 0.8, 0.1, PZ1 - PZ0 + 0.8), std(0xf4f0e8), PCX, 0.05, PCZ, false);
+    const waterMat = std(0x7ad8ec, { roughness: 0.15, metalness: 0.1, emissive: _night ? 0x0a4a6a : 0x000000, emissiveIntensity: _night ? 0.7 : 0 });
+    mesh(new THREE.BoxGeometry(PX1 - PX0, 0.04, PZ1 - PZ0), waterMat, PCX, 0.1, PCZ, false);
+    mesh(new THREE.BoxGeometry(8, 0.045, PZ1 - PZ0), std(0x4ab0d0, { roughness: 0.15 }), PX0 + 4, 0.101, PCZ, false);
+    for (const lz of [PZ0 + 3, PZ0 + 6, PZ0 + 9]) mesh(new THREE.BoxGeometry(PX1 - PX0, 0.06, 0.06), std(lz === PZ0 + 6 ? 0xd03030 : 0xf0f0f0), PCX, 0.13, lz, false);
+    box(PX0, PX1, PZ0, PZ1, 1.0, 'water', { bbPass: true, noStand: true });
+    for (const lx of [PX0 + 2, PX1 - 2]) for (const s of [-0.25, 0.25]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 6), std(0xc8c8c8, { metalness: 0.7 }), lx + s, 0.5, PZ0 - 0.15, false);
+    // the lifeguard chair on the south side, mid-pool (2.4 m, a post you can't pass)
+    const lgx = PCX, lgz = PZ1 + 1.4;
+    mesh(new THREE.BoxGeometry(0.9, 0.08, 0.7), std(0xf2f0ea), lgx, 1.9, lgz);
+    for (const [dx, dz] of [[-0.4, -0.3], [0.4, -0.3], [-0.4, 0.3], [0.4, 0.3]]) mesh(new THREE.BoxGeometry(0.08, 1.9, 0.08), std(0xf2f0ea), lgx + dx, 0.95, lgz + dz);
+    mesh(new THREE.BoxGeometry(0.9, 0.7, 0.08), std(0xd03030), lgx, 2.3, lgz + 0.35);
+    box(lgx - 0.5, lgx + 0.5, lgz - 0.4, lgz + 0.4, 2.4, 'wood');
+    // loungers on the deck's long sides (crouch cover, 0.5 m), umbrellas between them
+    const loungeMat = std(0xf2f0ea), padMat = std(0x2a6a8a);
+    for (const [lz, xs] of [[1.6, [-24, -20, -6, -2]], [18.4, [-23, -19, -8, -4]]]) for (const lx of xs) {
+      mesh(new THREE.BoxGeometry(0.75, 0.3, 2.0), loungeMat, lx, 0.3, lz);
+      mesh(new THREE.BoxGeometry(0.7, 0.08, 1.9), padMat, lx, 0.48, lz);
+      coverBox(lx - 0.4, lx + 0.4, lz - 1.0, lz + 1.0, 0.5, 'soft');
+    }
+    for (const [ux, uz] of [[-22, 1.6], [-4, 1.6], [-21, 18.4], [-6, 18.4]]) {
+      mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 6), std(0xd8d8d8, { metalness: 0.5 }), ux, 1.2, uz, false);
+      mesh(new THREE.ConeGeometry(1.4, 0.5, 8), std(uz < 10 ? 0x2a6a8a : 0xe8e0c8), ux, 2.45, uz);
+      box(ux - 0.06, ux + 0.06, uz - 0.06, uz + 0.06, 2.4, 'metal');
+    }
+  }
+
+  // --- the clubhouse on the deck's north end: 11 x 11 m, stucco, a grey roof, a snack window onto the deck ---
+  {
+    const x0 = -21, x1 = -10, z0 = -12, z1 = -1, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, H = 3.6;
+    mesh(new THREE.BoxGeometry(x1 - x0, H, z1 - z0), std(0xd8d0bc), cx, H / 2, cz);
+    mesh(new THREE.BoxGeometry(x1 - x0 + 1.2, 0.3, z1 - z0 + 1.2), std(0x6a6a70), cx, H + 0.15, cz);
+    const roof = mesh(new THREE.ConeGeometry((x1 - x0) * 0.78, 2.0, 4), std(0x6a6a70), cx, H + 1.3, cz); roof.rotation.y = Math.PI / 4;
+    mesh(new THREE.BoxGeometry(3.2, 1.1, 0.1), std(0x2a2a2a), cx + 2, 1.6, z1 + 0.04, false);                 // the snack window
+    mesh(new THREE.BoxGeometry(3.6, 0.12, 0.6), std(0x6a6a70), cx + 2, 1.05, z1 + 0.3);                     // its counter
+    mesh(new THREE.BoxGeometry(1.0, 2.1, 0.1), std(0x3a5a6a), cx - 3, 1.05, z1 + 0.04, false);               // the door to the deck
+    mesh(new THREE.BoxGeometry(1.0, 2.1, 0.1), std(0x3a5a6a), cx - 2.5, 1.05, z0 - 0.04, false);             // and to the parking
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64;
+    const c2 = cv.getContext('2d'); c2.fillStyle = '#2a4a5a'; c2.fillRect(0, 0, 512, 64);
+    c2.fillStyle = '#f2ead8'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    fitSignText(c2, 'SWIM & TENNIS', 256, 34, 36, 'Georgia', 512 - 40);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(6, 0.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
+    sign.position.set(cx, 2.9, z0 - 0.08); sign.rotation.y = Math.PI; scene.add(sign);
+    coverBox(x0, x1, z0, z1, H);
+  }
+  // the pump house between the deck and the courts, and a hedge either side of it
+  mesh(new THREE.BoxGeometry(3, 2.4, 4), std(0xc8c0ac), 4.6, 1.2, -5);
+  mesh(new THREE.BoxGeometry(3.4, 0.2, 4.4), std(0x6a6a70), 4.6, 2.5, -5);
+  coverBox(3.1, 6.1, -7, -3, 2.4);
+  for (const [z0, z1] of [[-12, -8.5], [1, 6], [12, 19]]) {
+    mesh(new THREE.BoxGeometry(1.0, 1.1, z1 - z0), std(0x2f5a2a), 4.4, 0.55, (z0 + z1) / 2);
+    coverBox(3.9, 4.9, z0, z1, 1.1, 'soft');
+  }
+
+  // --- the courts' fence: dark chain-link 3 m high on posts, two gates on the west, one each north and south ---
+  {
+    const meshMat = new THREE.MeshStandardMaterial({ color: 0x1e2a22, roughness: 0.6, metalness: 0.3, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false });
+    const postMat = std(0x1e2a22, { metalness: 0.4 });
+    const FX0 = 6, FX1 = 38, FZ0 = -14, FZ1 = 20, H = 3;
+    const run = (x0, z0, x1, z1) => {
+      const alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0), len = alongX ? Math.abs(x1 - x0) : Math.abs(z1 - z0);
+      const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(len, H), meshMat); p.position.set(cx, H / 2, cz); if (!alongX) p.rotation.y = Math.PI / 2; scene.add(p);
+      mesh(new THREE.BoxGeometry(alongX ? len : 0.05, 0.05, alongX ? 0.05 : len), postMat, cx, H, cz, false);   // the top rail
+      for (let s = 0; s <= len + 0.01; s += 3) mesh(new THREE.CylinderGeometry(0.04, 0.04, H, 6), postMat, alongX ? Math.min(x0, x1) + s : cx, H / 2, alongX ? cz : Math.min(z0, z1) + s, false);
+      box(Math.min(x0, x1) - 0.05, Math.max(x0, x1) + 0.05, Math.min(z0, z1) - 0.05, Math.max(z0, z1) + 0.05, H, 'metal', { bbPass: true, courtFence: true });
+    };
+    run(FX0, FZ0, FX0, -3); run(FX0, -1, FX0, 10); run(FX0, 12, FX0, FZ1);            // west, gates at z −3…−1 and 10…12
+    run(FX0, FZ0, 21, FZ0); run(23, FZ0, FX1, FZ0);                                   // north, the gate at x 21…23
+    run(FX0, FZ1, 13, FZ1); run(15, FZ1, FX1, FZ1);                                   // south, the gate at x 13…15
+    run(FX1, FZ0, FX1, FZ1);                                                          // east
+    // the nets: a cord over a dark mesh, 0.9 m; they stop bodies, not BBs
+    for (const cx of [14, 30]) {
+      mesh(new THREE.BoxGeometry(12.8, 0.85, 0.03), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }), cx, 0.5, 3, false);
+      mesh(new THREE.BoxGeometry(12.8, 0.07, 0.05), std(0xf2f2ee), cx, 0.93, 3, false);
+      for (const s of [-1, 1]) mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.07, 8), postMat, cx + s * 6.4, 0.53, 3, false);
+      box(cx - 6.45, cx + 6.45, 2.95, 3.05, 0.95, 'soft', { bbPass: true, noStand: true });
+    }
+    // on the courts: a bench by each net post outside the lines, a ball hopper, a rolled tarp, a ball machine
+    for (const [bx, bz] of [[7.4, 1.4], [20.6, 4.6], [23.4, 1.4], [36.6, 4.6]]) {
+      mesh(new THREE.BoxGeometry(0.5, 0.06, 2.0), std(0x2a4a3a), bx, 0.45, bz);
+      for (const s of [-0.8, 0.8]) mesh(new THREE.BoxGeometry(0.45, 0.45, 0.06), std(0x2a2a2a), bx, 0.22, bz + s, false);
+      coverBox(bx - 0.28, bx + 0.28, bz - 1.0, bz + 1.0, 0.5, 'wood');
+    }
+    mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), std(0x8a8a8a, { metalness: 0.5 }), 18, 0.35, -9);
+    coverBox(17.7, 18.3, -9.3, -8.7, 0.7, 'metal');
+    mesh(new THREE.CylinderGeometry(0.4, 0.4, 5.5, 12), std(0x2a4a3a), 30, 0.4, 17.5).rotation.z = Math.PI / 2;
+    coverBox(27.2, 32.8, 17.1, 17.9, 0.8, 'soft');
+    mesh(new THREE.BoxGeometry(0.9, 0.9, 1.2), std(0x3a3a3e), 34, 0.45, -11);
+    coverBox(33.5, 34.5, -11.6, -10.4, 0.9, 'metal');
+  }
+
+  // --- the parking: cars in the bays, a few gaps; a streetlamp or two ---
+  const carObs = [];
+  const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d8, 0x2a2a2a, 0x4a5a3a, 0xc8b890];
+  for (const [i, cx] of [-27.5, -21.5, -18.5, -9.5, -0.5, 8.5].entries()) {
+    const o = addCar(scene, cx, -17.4, { orientation: Math.PI / 2 + (i % 2 ? 0.05 : -0.04), color: CAR_COLORS[i % CAR_COLORS.length], detail: true });
+    obstacles.push(o); cover.push(o); carObs.push(o);
+  }
+  const lampObs = [];
+  for (const [lx, lz] of [[-24, -20.6], [2, -20.6], [3, 19.5]]) {
+    const lamp = addStreetlamp(scene, lx, lz, groundY, _night);
+    if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
+  }
+  obstacles.push(...lampObs);
+
+  // --- trees all round, the club in the woods; the side creek's ravine past the courts on the east ---
+  for (let x = -40; x <= 44; x += 4.8) obstacles.push(addSuburbanTree(scene, x + rng(-1, 1), 24.5 + rng(-1, 1), { detail: true, trunkH: rng(5, 6.5), leafR: rng(2.6, 3.2) }));
+  for (let z = -16; z <= 22; z += 4.6) {
+    obstacles.push(addSuburbanTree(scene, -35.5 + rng(-1, 1), z + rng(-1, 1), { detail: true, shape: (z | 0) % 2 ? 'loblolly' : 'round', trunkH: (z | 0) % 2 ? rng(12, 15) : rng(5, 6.5), leafR: rng(2.4, 3) }));
+    obstacles.push(addSuburbanTree(scene, 42 + rng(-1, 1), z + rng(-1, 1), { detail: true, trunkH: rng(5, 6.5), leafR: rng(2.6, 3.2) }));
+  }
+  for (const [x, z] of [[-31, 0], [-31, 12], [-2, -9], [0, 21.5]]) obstacles.push(addBush(scene, x, z, 1.4, 1.0, 1.2, null, 0, { detail: true }));
+  for (let x = -40; x <= 44; x += 6) addSuburbanTree(scene, x + rng(-1.5, 1.5), -31 + rng(-1, 1), { detail: true, shape: (x / 6 | 0) % 2 ? 'loblolly' : 'round', trunkH: rng(6, 14), leafR: rng(2.6, 3.2) });   // across the road
+
+  const V = (x, z) => new THREE.Vector3(x, 0, z);
+  const placements = {
+    court_b_far: { pos: V(33, 15.5), cover: cover.find(o => o.minX === 27.2) },
+    court_a_far: { pos: V(10, 16), cover: null },
+    court_b_near: { pos: V(34, -9), cover: cover.find(o => o.minX === 33.5) },
+    pump_house: { pos: V(2.2, -5), cover: cover.find(o => o.minX === 3.1) },
+    snack_bar: { pos: V(-12, 1.2), cover: null },
+    deck_west: { pos: V(-27.5, 10), cover: null },
+    parking_w: { pos: V(-24, -14.5), cover: carObs[0] },
+    parking_e: { pos: V(8.5, -14.5), cover: carObs[5] },
+  };
+  const playerSpawns = {
+    parking_west: { pos: V(-29, -15), yaw: -Math.PI / 2 },   // the west end of the parking, facing east along it
+    // Round the Courts: in the lee of the pump house from the far court (no line from Christian's start), 38 m off,
+    // facing past its south-west corner toward the courts' west gates
+    pump_house_w: { pos: V(1.4, -5), yaw: -2.2 },
+  };
+  return {
+    scene,
+    spawn: playerSpawns.parking_west.pos.clone(), spawnYaw: playerSpawns.parking_west.yaw,
+    bounds: { minX: -33, maxX: 40, minZ: -21, maxZ: 22 },
+    cover, obstacles, enemies: [],
+    name: 'Northcliff Pool', scenarioName: '', desc: '',
+    placements, playerSpawns, groundY,
+    teamBases: { player: { x: -29, z: -15 }, enemy: { x: 33, z: 15.5 } },
+  };
+}
+
+// =====================================================================
 // v1.257 (backlog D.40, Michael: A on "The backyard range: where is it, and what's on it?"): THE RANGE, in your own
 // backyard, out the back door in the bedroom's hall. Try a gun or a setup outside a match: no kids, no clock, no money,
 // but every BB comes out of your bag as in a match (it is the match code with nobody else in it, `winCondition:
@@ -24627,6 +24835,13 @@ const EDGE_BACKDROPS = {
     W: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     E: { from: 6, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     S: { from: 18, bands: [['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },   // the street out front
+  },
+  // v1.317: the Northcliff pool: the spur road north, then houses; trees everywhere else (the club is in the woods)
+  buildNorthcliffPoolScene: {
+    N: { from: 12, bands: [['trees', 8], ['houses', 22], ['trees', 30]] },
+    S: { from: 6, bands: [['trees', 14], ['houses', 22], ['trees', 30]] },
+    W: { from: 6, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },
+    E: { from: 6, bands: [['trees', 40]] },   // the side creek's ravine
   },
   buildBellfieldCourtScene: {
     N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
@@ -35717,6 +35932,7 @@ const PIN_SCENARIO_GROUPS = {
     'bellfield_defend_fort',     // v1.187: hold the bulb fort (Michael: C, more Bellfield Court)
     'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night
     'bellfield_ctf',             // v1.189: Flags on Bellfield, capture the flag (D.15, Michael: A)
+    'pool_1v1_christian',        // v1.317: the Northcliff pool, a 1v1 round the courts (D.55 step 7, Michael: A)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
