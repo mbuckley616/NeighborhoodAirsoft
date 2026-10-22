@@ -5,6 +5,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **More tutorials (D.61): how should the game teach squad orders and the speed loader? (builder, 2026-10-22)**
+  Your note asks whether the game needs more tutorials, for the team commands and the speed loader, and whether a
+  25-50 BB speed loader should be given for that tutorial. Today the only tutorial is Backyard Basics, five steps:
+  move, aim, fire, tag the three dummies, reload. Nothing teaches the orders (Q or the d-pad, v1.248/v1.255) or the
+  speed loader. The first match with teammates is the third on the ladder.
+  - A) **Tips at the moment they matter**, no new match. The first match with teammates opens with a coach banner on
+    the orders, and you give one to clear it. The first time you run dry carrying a loader, a banner shows how to use
+    it. Each tip shows once, and the tutorial gives you a free 25-BB speed loader. *(recommended: it teaches each
+    thing when you can use it, adds no match to the ladder, and the free loader means the tip comes in your first
+    real matches)*
+  - B) **Two more steps in Backyard Basics:** load and use a speed loader (a free 25-BB one, yours to keep), then give
+    a dummy teammate a follow-me order. The tutorial grows from five steps to seven.
+  - C) **A second tutorial match**, "Squad Basics", after the first 1v1: you and two teammates against three kids,
+    coached through the orders and the loader, with the free 25-BB loader.
+  - D) **Not now:** leave the tutorial as it is.
+
 ## Answered
 
 - **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
