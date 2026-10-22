@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.310</div>
+  <div class="version">v1.311</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -33340,6 +33340,15 @@ function updateEnemies(dt) {
           let px = -zdzP / d, pz = zdxP / d;
           if (!e._zSide) e._zSide = gameRandom() < 0.5 ? 1 : -1;
           if (e._zStuck > 0.5) { e._zSide *= -1; e._zStuck = 0; }
+          // v1.311: a fresh wedge that came from a slide along a wall sidesteps the way the slide was going. Down
+          // v1.305's longer house walls, with the player well off to one side, the slide's step fell under zStuckD
+          // (Mitchell, 0.0197 m along house 5's west wall in Bunratty Infection), and the sidestep sent him back up
+          // the wall a metre short of its corner, over and over.
+          else if (!sideCommitted) {
+            const mvx = e.pos.x - bX, mvz = e.pos.z - bZ;
+            const along = mvx * (-zdzP / d) + mvz * (zdxP / d);
+            if (Math.hypot(mvx, mvz) >= 0.005 && Math.abs(along) > 0.003) e._zSide = Math.sign(along);
+          }
           px *= e._zSide; pz *= e._zSide;
           const ss = speed * zdt;
           const sx = e.pos.x + px * ss, sz = e.pos.z + pz * ss;
