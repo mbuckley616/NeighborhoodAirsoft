@@ -13311,7 +13311,8 @@ across, and with 14 kids in the match its places are 0.63 m apart. Those that fa
 ### Verified
 - **`tests/crew-spawn-bounds.test.mjs`, extended:** in all 31 team matches, with all five in the crew and with the
   first-time crew, no two huddle kids start under 0.74 m apart.
-  - On v1.314 the same check failed in 13 matches. The worst pairs were Mitchell and Priya 0.01 m apart in Bunratty
+  - On v1.314 the same check failed in Bunratty 2v2 and 2v4, the Hollow's Big Game, and Bellfield's 3v3 and flags,
+    among others (the saved output was cut short). The worst pairs were Mitchell and Priya 0.01 m apart in Bunratty
     2v2 with all five, and Mitchell and Owen 0.33 m in 2v4.
   - The 1.4 m and 1.0 m rules outside the huddle still pass.
 - **These suites pass:** `crew-spawn-bounds`, `lamplight-starts`, `last-saturday`, `last-saturday-lives` and `smoke`.
