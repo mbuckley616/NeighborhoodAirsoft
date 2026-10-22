@@ -13133,7 +13133,7 @@ v1.307-v1.308. Two of the Bunratty guide's were still missing, both east of the 
   stand high up on the far side and face across it. The guide puts Cartier Ct and River Cliff Dr there.
 - **How they are built:** in the map's one merged scenery mesh, with their own seeded numbers, so the woods, the far
   bank's houses and every match's cover draw as before. The trees keep off their footprints: 31 fewer, 1,622 in all.
-  Nothing is solid, and nothing stands within 6 m of the bounds; the nearest is the pool deck, 9.5 m past them.
+  Nothing is solid, and nothing stands within 6 m of the bounds; the nearest is the neighbour's eave, 6.9 m past them.
 - **Not built:** the neighbour's drive beside Michael's. It would have to cross the bounds' 6 m margin.
 ### Verified
 - **`tests/real-scale.test.mjs`:**
@@ -13161,4 +13161,18 @@ v1.307-v1.308. Two of the Bunratty guide's were still missing, both east of the 
   the trunks. Whether it should show more is a look for a playtest.
 - **The far bank reads hazy at 250-300 m** by day (v1.303's open item). Left as it is. Thinning the fog further would
   show the edge of the built ground on other views.
-- **The card's five steps are done.** What only a playtest can judge is collected under each version's Still open.
+- **The card's five steps are done, but one fault stays before review.** The full suite, run here in four parallel
+  shards, found `tests/taggers.test.mjs` failing. In Bunratty Infection, Mitchell starts in house 3's backyard and
+  walks 81 m in 45 s. He then slides up and down house 5's west wall, at x 3.6 and z 13.5-19.6, in the 3.5 m side yard
+  between houses 4 and 5, and ends 33 m from the player. Every round fails at 1/60 steps and at the mixed steps alike.
+  The same happens on v1.308 and v1.309: it came with v1.305's bigger houses, though `taggers` passed in that
+  session's run.
+  - **Why:** he is not blocked. Sliding north along the wall toward the street, the slide's step falls to 0.0197 m,
+    just under the tagger's "no progress" mark (`zStuckD`, 0.02). He is counted wedged a metre short of the corner
+    and sidesteps back south, again and again: the v1.125 case, on a longer wall.
+  - **Tried:** counting as stuck only a step under 30% of his stride as well. Mitchell then reached the player in
+    every round (25-36 s). But Nick ended 24 m short in 1 round of 4, so the change is not pushed.
+  - The next session fixes it before the card goes to review.
+- **The rest of the full run:** `ffa-starts` failed once on the Hollow free-for-all (Eric tags you at 6.4 s). It does
+  the same on main, 1 round in 15, and is filed under Found in play. Ten other suites timed out loading the page, with
+  four shards and two probes sharing four cores. The ones re-run alone so far pass.
