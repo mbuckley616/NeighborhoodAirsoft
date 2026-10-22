@@ -3,9 +3,9 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
-Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21).
+Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22).
 
 ## 2026-09-28 — First-timer path, tutorial, Bunratty day and night, Hollow 3v3 (v1.86)
 
@@ -1640,3 +1640,111 @@ break a rule.
 - v1.279, pad names: can't be judged headless.
 - v1.280, 10 s at base: judged headless as above. A losing player spends over half the round waiting.
 - v1.282, Priya's side: no kid in her cover in 8 rounds, but Mitchell and Owen now share a spot beside her (filed).
+
+## 2026-10-22 — Lights Out on Winnmark first time and replayed, the New teammate card, the walk home in the Last Saturday, Protect Ryan and Flags; the attack huddle's starts (v1.302)
+
+Main is v1.302 (v1.290–v1.302 merged last night) and `auto/build` isn't ahead of it. The Fable branch with v1.303–v1.310
+(Bunratty and the Hollow at real scale) isn't merged, so I didn't play it. The bot is new again: it aims at the nearest
+kid it can see within 45 m, cocks and fires the Spring Pistol (hold to pull, let go, click), walks by the kids' own
+route grid (`kidFieldTo`), and walks itself home when tagged. Every match ran with the crew a first time through has
+(`crewFirstTime`). In all, 44 rounds and probes. No page errors in any of them. Smoke passes.
+
+**The first-timer path.** The title shows v1.302. NEW GAME → mirror → bedroom, and at spawn the prompt reads
+"E Go outside". Unchanged.
+
+**Lights Out, Winnmark's finale** (`winnmark_night_team_2v2`, you and Seth against Trey and Brooke). With the starter
+Spring Pistol it's hard:
+- 4 rounds, all lost. Pushing, out at 9.7 and 11.0 s, both times to Trey's pistol from 7.4–7.6 m. Standing, out at
+  22.6 s (Brooke's shotgun, 13.7 m) and 31.8 s (Trey, 8.3 m). The bot fired 3–7 shots a round and landed one BB in all
+  four.
+- So for the card I won it once untouchable: YOU GOT THEM at 28 s, Seth still up.
+
+**The New teammate card (v1.297)** came up on that win: ERIC, MP5, his three lines, YES, YOU'RE IN and NOT YET, inside
+its box on the rules. It's a proper moment on the paper. Winning Lights Out again showed no card, as built. Screenshot
+docs/critic/2026-10-22-new-teammate-eric.png.
+
+**Bug, filed: replay a Winnmark team match after Lights Out is won and you play it alone.** Once Lights Out is done,
+Seth turns rival and crosses to their side in Winnmark's team matches (v1.275). Where Seth was your only ally, the
+place he leaves is never filled:
+- The briefing promises someone in it. For Lights Out with no crew it lists "YOUR SIDE: You, Jamie". The prose still
+  says "You and Seth against Trey and Brooke", but Seth is listed under OPPONENTS.
+- The match builds no ally. The field map on the same card shows no green dot.
+- It's 1 v 2 against Seth and Trey, where the first time was 2 v 2. I played it once untouchable and it ran alone.
+- It's the same with your crew: with Eric and Sean in it, `crewSetup` puts both on your side and the match has neither.
+  That's Eric left out of the very match that brought him.
+- The same in Two on Two (`winnmark_team_2v2`: Jamie promised, 1 v 2) and Outnumbered (`winnmark_team_2v3`: Marcus or
+  Eric promised, 1 v 3). The Winnmark 3v3 is fine (Devon and Ryan built).
+- The cause, from reading `crewSides`: with Seth gone, the match has no ally entry left to copy (`slots` and `kept`
+  are empty). So `spare()` gives each of your kids an entry with no anchor, and the scene builder drops him.
+Screenshot docs/critic/2026-10-22-lights-out-replayed-jamie-promised.png.
+
+**The walk home (v1.290) and the 3 s grace (v1.291)**, pushed every round:
+- *The Last Saturday*, 7 rounds, out at 27.1–36.9 s each time, on the third tag. The 14 walks home were 15.7–35 m and
+  took 3.5–8.2 s. Walking took 10.5–14 s of each round, 37–44%.
+- *Protect Ryan*, 3 rounds of 120 s. One was won at 116 s; two ran to the cap. Tagged 5–7 times a round; walks of
+  17–49 m took 3.8–11.9 s. 46–51 s of every 120 went to walking, about 40%.
+- *Flags on Bellfield*, 2 rounds of 150 s, 7 tags each, neither finished in 150 s. With v1.280's 10 s hold after each
+  walk, 103 and 108.5 s of the 150 went on walking home and waiting at the base: 69–72%. The walk is v1.290's; the hold
+  is Michael's own D.47 ("in their base for 10 seconds"), and kids pay the same. So I'm not proposing a change, only
+  giving him the number.
+- The grace held up: no BB tagged the player in it. But in 2 of the 14 Last Saturday returns a kid was waiting within
+  15 m of the start. In one, Andrew and Colin were 7–9 m off, and 6 of their BBs landed in the grace (all ignored).
+  v1.291's Still open (kids aim at you in your grace) is real, but it's 2 in 14.
+
+**Bug, filed: the Last Saturday's attack huddle stacks four kids on one spot.** With the first-time crew it's you and
+five against Seth and his seven. All eight start in the attack huddle (`startAt.huddle`), which v1.277 left out of its
+1.4 m spread. Four of them start on the same line, z −0.66:
+- Garrett (31.17, −0.66), Colin (30.81, −0.66), Brooke (30.76, −0.66) and Trey (31.02, −0.84).
+- Colin and Brooke are 0.05 m apart, and all four within 0.42 m. Same in every build: the layout is seeded.
+- In a 10 s probe they stood under 0.35 m apart in five pairs, for 1.0–3.4 s each. Trey moved under 2 m in 10 s.
+- On screen it's one body with four heads in it beside the car.
+The other seven big team matches' huddles start 0.37–0.79 m apart. Overlaps over 1 s there:
+- Friday Night Lights: Caleb and Jordan 1.9 s, Nathan and Malik 1.1 s.
+- The Portables: Caleb and Jordan 1.9 s.
+- The Eighteenth: Trey and Garrett 2.3 s.
+That's v1.277's Still open ("a playtest may see the crush"), and 21 Oct's proposal would cover it. Screenshot
+docs/critic/2026-10-22-last-saturday-four-kids-one-spot.png.
+
+**Attack the North Fort** (`hollow_attack_north_fort`, you alone against five). Pushing, out at 3.0 and 4.3 s to
+Mason's MP5 from 29.1 m, 6 m from the start. Standing, both rounds reached 120 s with no shot either way, and so did
+3 untouchable probes of 90 s: the defenders hold and never show. That's as built. The attacker has to go in, and the
+first step out meets Mason.
+
+**Two in the Yards** (`winnmark_two_in_the_yards`, the tenth Winnmark match). 4 rounds, all lost to Devon's sniper.
+Standing, out at 4.9 and 5.0 s from 35 m. Pushing, out at 5.4 and 5.9 s from 13.5–15 m. That's v1.101's 2.5 s hold
+doing what it promised: the tag moved from 1.5 s to 5 s. But a first-timer standing still on one life is still out
+before he's read the field. Not filed: Michael chose A over moving Devon's start (C) on 29 Sep. Friday Night Lights got
+the start move (v1.177) for the same shape, if he wants it here.
+
+**What worked.**
+- No page errors in 44 rounds.
+- Every tag in the walk-home matches sent the player walking. No BB on the walk counted: 31 landed in all, every one
+  ignored.
+- The kids' own 3 s after redeploying showed nothing odd.
+- With one browser running, the worst step was 9–25 ms. The worst steps of 100–430 ms came with three browsers at once.
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND and curl exits 56. I read no comments. Slack's last day: the producer
+merged v1.290–v1.302, and the Fable session posted v1.303–v1.310 (Bunratty and the Hollow at real scale, PR #121, not
+on main). Nothing was addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.283–v1.302)
+- v1.283–v1.289, the notebook paper:
+  - Whether the handwriting reads, and whether the sticky notes and the 68 px kids look right, can't be judged headless.
+  - The briefing card and the result card both laid out clean at 1280×720 in my screenshots.
+- v1.290, whether the walk home is a fair price:
+  - Judged headless above: about 40% of the round in the Last Saturday and Protect Ryan.
+  - In Flags it's 69–72%, once the 10 s hold is added.
+  - Walks run 3.5–11.9 s.
+  - The gun's raised pose: not looked at.
+- v1.291, whether 3 s reaches cover: I didn't test moving to cover in the grace. Kids at the start in it: 2 of 14
+  returns.
+- v1.292, v1.295 and v1.302, the guns:
+  - Not played. The bot carried the Spring Pistol everywhere.
+  - Whether the Tick-Tock feels worth $55 now needs hands.
+- v1.294, the room coming up unzoomed: not checked in play (its suite covers it).
+- v1.296, the shop: not looked at.
+- v1.297, the card: seen and it works (above). Whether a still figure is enough of an event needs Michael's eye.
+- v1.298, the lineup: the loading card I saw keeps its list, as built. On a replay that list names a kid the match
+  never builds (the bug above).
+- v1.300 and v1.301, the sign and the golf course: not looked at.
