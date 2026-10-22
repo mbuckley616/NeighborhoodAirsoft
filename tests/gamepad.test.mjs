@@ -43,7 +43,9 @@ check('no "click to capture" note while the pad is in use', b1.hint === 'none', 
 // 2) a match, no pointer lock
 await page.evaluate(() => { Game.persist.loadoutSlots[1] = { kind: 'spare_mag', refId: 'spare_mag_10' }; });
 await g.scenario('bunratty_sean');
-await page.evaluate(() => { Game.mouse.locked = false; Game.player._graceT = 1e9; });
+// 21 Oct fix-up: and lives to spare, since v1.291 your own shot ends the grace (RT fires below); Sean tagged him
+// out after it in 3 runs of 4, and every button after that was pressed on the result card
+await page.evaluate(() => { Game.mouse.locked = false; Game.player._graceT = 1e9; Game.player.maxHits = 99; });
 await g.spin(10);
 const m0 = await P();
 await axes([0, -1, 0, 0]);

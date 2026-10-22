@@ -697,6 +697,14 @@
     text-transform: uppercase;
   }
   #stanceHud .active { color: var(--ui-accent); font-weight: bold; }
+  /* v1.290 (D.48): tagged in a match where you come back, you walk yourself home; the arrow points to your start */
+  #homeHud {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--ui-bg); border: 1px solid var(--ui-border); border-radius: 3px;
+    padding: 6px 14px; display: none; color: #ddd; text-align: center; white-space: nowrap;
+    font-family: var(--nb-hand); font-size: 15px; letter-spacing: 1px;
+  }
+  #homeHud .home-arrow { display: inline-block; font-size: 26px; line-height: 26px; color: var(--ui-accent); vertical-align: middle; margin-right: 8px; }
 
   /* === MENUS === */
   .menu-overlay {
@@ -2143,6 +2151,20 @@
   .nb-paper .wallet-cash { color: var(--nb-green); font-weight: 400; }
   .nb-paper .wallet-low { color: var(--nb-red); }
   #scenarioBriefModal .brief-card.nb-paper { max-width: 500px; }
+  /* v1.298 (D.54, Michael: A): the lineup. Both sides stand as 3D kids, yours left and theirs right, a kid a column,
+     five across at most (two rows past that); under each his name, gun and lives, and Bench / Bring under your crew */
+  #scenarioBriefModal .brief-card.nb-paper.lineup { max-width: min(880px, 96vw); width: auto; }
+  .nb-paper .brief-lineup { display: flex; gap: 0 22px; align-items: flex-start; }
+  .nb-paper .brief-lineup .brief-section { flex: none; }
+  .nb-paper .lu-kids { display: grid; grid-template-columns: repeat(var(--lu-cols, 1), 68px); gap: 0 6px; }
+  .nb-paper .brief-lineup .brief-combatant.lu-kid { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 0;
+    width: 68px; text-align: center; font-size: 15px; }
+  .nb-paper .lu-kid .lu-fig { width: 68px; height: calc(var(--nb-rule) * 3); display: block; }
+  .nb-paper .lu-kid .brief-name, .nb-paper .lu-kid .brief-gun, .nb-paper .lu-kid .brief-lives { justify-self: auto; max-width: 68px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .nb-paper .lu-kid .brief-gun { font-size: 13px; }
+  .nb-paper .lu-kid .brief-lives { font-size: 13px; }
+  .nb-paper .lu-kid .brief-bench { margin: 3px 0; height: 20px; box-sizing: border-box; }
   #scenarioBriefModal .nb-paper .brief-loc { font-size: 15px; color: var(--nb-red); margin: 0; }
   #scenarioBriefModal .nb-paper .brief-title { font-size: 24px; margin: 0 0 var(--nb-rule); }
   #scenarioBriefModal .nb-paper .brief-desc { font-size: 17px; color: var(--nb-ink); font-style: normal; margin: 0 0 var(--nb-rule); }
@@ -2174,6 +2196,19 @@
   #resultScreen .nb-paper .rs-dmg-row span[style] { color: var(--nb-pencil) !important; }
   #resultScreen .nb-paper .rs-dmg-row[style] { color: var(--nb-pencil) !important; }
   #resultScreen .nb-paper .rs-dmg-n { font-family: Arial, sans-serif; line-height: 14px !important; background: var(--nb-red); }
+  /* v1.297 (D.53, Michael: A): a kid's ask to join, on the result card of the win that brings it; 8 rules tall */
+  #resultScreen .result-teammate { display: none; gap: 12px; text-align: left; margin: 0 0 var(--nb-rule); padding: 0 12px 0 0;
+    height: calc(var(--nb-rule) * 8); box-sizing: border-box; overflow: hidden; }
+  #resultScreen .result-teammate.on { display: flex; }
+  #resultScreen .rt-fig { flex: none; width: 120px; height: calc(var(--nb-rule) * 8); }
+  #resultScreen .rt-fig canvas { width: 120px; height: 100%; display: block; }
+  #resultScreen .rt-text { flex: 1; min-width: 0; color: var(--nb-ink); font-size: 15px; }
+  #resultScreen .rt-head { font-family: var(--nb-marker); font-size: 22px; color: var(--nb-red); }
+  #resultScreen .rt-name { font-size: 16px; }
+  #resultScreen .rt-gun { color: var(--nb-pencil); font-size: 14px; }
+  #resultScreen .rt-done { color: var(--nb-green); font-size: 16px; }
+  #resultScreen .rt-btns { display: flex; gap: 10px; }
+  #resultScreen .rt-btns .nb-btn { font-size: 16px !important; }
   #resultScreen .nb-paper .reload-note { font-size: 15px; color: var(--nb-pencil); margin: 0 0 var(--nb-rule); }
   #resultScreen .nb-paper .result-nav { gap: 0 12px; margin: 0; }
   #resultScreen .nb-paper .nav-btn { font-size: 16px !important; padding: 0 14px !important; }
@@ -2391,81 +2426,8 @@
   #workbenchScreen .nb-paper .wb-locker { margin: var(--nb-rule) 0 0; }
   #workbenchScreen .nb-paper .wb-locker-item { padding-left: 6px; padding-right: 6px; font-size: 15px; }
   #workbenchScreen .nb-paper .wb-locker-empty { color: var(--nb-pencil); font-style: normal; font-size: 15px; padding: 0; text-align: left; }
-  /* the shop: the window's title and address bars stay; airsoft.com's page is the paper */
-  #shopScreen .shop-body.nb-paper { padding: 0 24px 0 66px !important; font-size: 16px; }
-  #shopScreen .nb-paper .shop-header { background: none; color: var(--nb-ink); padding: var(--nb-rule) 0 0; margin: 0 0 var(--nb-rule);
-    border: none; min-height: calc(var(--nb-rule) * 3); }
-  #shopScreen .nb-paper .shop-logo { font-family: var(--nb-marker); font-size: 32px; color: #17171c; letter-spacing: 1px;
-    line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 5px; }
-  #shopScreen .nb-paper .shop-logo .dot { color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-tagline { font-size: 15px; color: var(--nb-pencil); margin: 0; }
-  #shopScreen .nb-paper .shop-account { top: var(--nb-rule); right: 0; padding: 0 14px; border: none; border-radius: 0; font-size: 14px;
-    color: var(--nb-ink); background: var(--nb-sticky); box-shadow: inset 0 0 0 1.5px var(--nb-ink), 3px 3px 0 rgba(29,42,107,0.8);
-    transform: rotate(1deg); }
-  #shopScreen .nb-paper .shop-account strong { font-size: 16px; color: var(--nb-green); font-weight: 400; }
-  #shopScreen .nb-paper .account-bag strong { color: var(--nb-ink); }
-  #shopScreen .nb-paper .shop-categories { background: none; border: none; padding: 0; margin: 0 0 var(--nb-rule); gap: 6px;
-    box-shadow: inset 0 -2px 0 var(--nb-ink); }
-  #shopScreen .nb-paper .cat-tab { font-family: var(--nb-marker); font-weight: 400; font-size: 15px; color: var(--nb-pencil); margin: 0;
-    padding: 0 14px; border: none; border-radius: 6px 6px 0 0; background: rgba(29,42,107,0.06); }
-  #shopScreen .nb-paper .cat-tab:hover { background: rgba(255,226,64,0.45); color: var(--nb-ink); }
-  #shopScreen .nb-paper .cat-tab.active { color: var(--nb-red); background: var(--nb-sticky); margin: 0;
-    box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-items { padding: 0; min-height: calc(var(--nb-rule) * 12); }
-  #shopScreen .nb-paper .shop-section-header { margin: 0; padding: 0; border: none; font-size: 15px; font-weight: 400; color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-section-header ~ .shop-section-header { margin-top: var(--nb-rule); }
-  #shopScreen .nb-paper .shop-section-sub { font-size: 13px; color: var(--nb-pencil); }
-  #shopScreen .nb-paper .shop-gun-kinds { gap: 0 8px; margin: 0 0 var(--nb-rule); }
-  #shopScreen .nb-paper .shop-gun-kind { font-family: var(--nb-hand); font-size: 14px; font-weight: 400; height: 22px; line-height: 22px !important;
-    margin: 2px 0; padding: 0 10px; border: none; border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5); }
-  #shopScreen .nb-paper .shop-gun-kind.active { color: var(--nb-ink); background: rgba(255,226,64,0.85); box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-item { padding: 0; min-height: calc(var(--nb-rule) * 3); align-items: flex-start; border: none;
-    box-shadow: inset 0 -1px 0 rgba(29,42,107,0.25); }
-  #shopScreen .nb-paper .shop-item-icon { width: calc(var(--nb-rule) * 2); height: calc(var(--nb-rule) * 2); border: none; background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.45); }
-  #shopScreen .nb-paper .shop-item-icon.pic { background: #fff; }
-  #shopScreen .nb-paper .shop-item-icon { margin-top: calc(var(--nb-rule) / 2); }
-  #shopScreen .nb-paper .shop-item-buy { margin-top: 4px; }
-  #shopScreen .nb-paper .shop-item-name { font-size: 17px; font-weight: 400; color: var(--nb-ink); margin: 0; }
-  #shopScreen .nb-paper .shop-item-desc { font-size: 14px; color: var(--nb-pencil); }
-  #shopScreen .nb-paper #shopItems > .shop-item-desc { padding: 0 !important; }   /* the armour's total and the mounted-parts line */
-  #shopScreen .nb-paper .shop-item-price { font-family: var(--nb-marker); font-weight: 400; font-size: 20px; color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-item-buy { font-family: var(--nb-marker); font-weight: 400; font-size: 14px; color: var(--nb-ink); padding: 0 14px;
-    height: 34px; border: none; border-radius: 2px; background: var(--nb-sticky); box-shadow: inset 0 0 0 2px var(--nb-ink), 2px 2px 0 rgba(29,42,107,0.8); }
-  #shopScreen .nb-paper .shop-item-buy:hover:not(:disabled) { background: #ffe873; }
-  #shopScreen .nb-paper .shop-item-buy:disabled { color: var(--nb-pencil); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(74,74,88,0.5); }
-  #shopScreen .nb-paper .shop-gun-row .shop-item-buy { background: var(--nb-paper); }
-  #shopScreen .nb-paper .shop-sell-btn { color: var(--nb-red); background: var(--nb-paper); box-shadow: inset 0 0 0 2px var(--nb-red), 2px 2px 0 rgba(179,38,30,0.7); }
-  #shopScreen .nb-paper .shop-eq-tag, #shopScreen .nb-paper .shop-owned-tag, #shopScreen .nb-paper .shop-slot-tag {
-    font-size: 12px; font-weight: 400; background: none; padding: 0 0 0 4px; color: var(--nb-green); line-height: 18px !important; }
-  #shopScreen .nb-paper .shop-owned-tag, #shopScreen .nb-paper .shop-slot-tag { color: var(--nb-pencil); }
-  #shopScreen .nb-paper .shop-back-btn { font-family: var(--nb-hand); font-size: 15px; height: 22px; line-height: 22px !important; margin: 2px 0 calc(var(--nb-rule) + 2px);
-    padding: 0 12px; border: none; border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.6); }
-  #shopScreen .nb-paper .shop-flash { font-size: 15px; color: var(--nb-ink); background: rgba(255,226,64,0.6); border: none; border-radius: 0;
-    padding: 0 10px; margin: 0 0 var(--nb-rule); }
-  #shopScreen .nb-paper .shop-gun-photo { margin: 0 0 var(--nb-rule); padding: 0 8px; border: none; box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.45); }
-  #shopScreen .nb-paper .shop-gun-photo img { height: 182px; width: auto; aspect-ratio: 420 / 190; }
-  #shopScreen .nb-paper .shop-gun-photo-cap { font-size: 14px; color: var(--nb-pencil); font-style: normal; margin: 0; }
-  #shopScreen .nb-paper .shop-color-grid { gap: 0 10px; margin: 0; }
-  #shopScreen .nb-paper .shop-color-cell { padding: 0 4px; border: none; border-radius: 0; height: calc(var(--nb-rule) * 3);
-    background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.4); }
-  #shopScreen .nb-paper .shop-color-cell.equipped { box-shadow: inset 0 0 0 2px var(--nb-green); }
-  #shopScreen .nb-paper .shop-color-swatch { width: 22px; height: 22px; margin: 2px auto 2px; }
-  #shopScreen .nb-paper .shop-color-name { font-size: 14px; color: var(--nb-ink); }
-  #shopScreen .nb-paper .shop-color-tag { font-size: 14px; color: var(--nb-pencil); margin: 0; }
-  #shopScreen .nb-paper .shop-color-cell.equipped .shop-color-tag { color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-attach-picker { gap: 0 8px; margin: 0; }
-  #shopScreen .nb-paper .shop-attach-cell { font-size: 14px; height: 22px; line-height: 22px !important; margin: 2px 0; padding: 0 10px; border: none;
-    border-radius: 2px; color: var(--nb-ink); background: var(--nb-paper); box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.5); }
-  #shopScreen .nb-paper .shop-attach-cell.equipped { background: rgba(255,226,64,0.85); color: var(--nb-ink); font-weight: 400; box-shadow: inset 0 0 0 2px var(--nb-ink); }
-  #shopScreen .nb-paper .shop-acc-slot { padding: 0 10px; margin: 0 0 var(--nb-rule); border: none; border-radius: 0; background: var(--nb-paper);
-    box-shadow: inset 0 0 0 1.5px rgba(29,42,107,0.4); }
-  #shopScreen .nb-paper .shop-acc-slot-head { margin: 0; }
-  #shopScreen .nb-paper .shop-acc-slot-label { font-size: 13px; font-weight: 400; color: var(--nb-red); }
-  #shopScreen .nb-paper .shop-acc-slot-cur { font-size: 15px; color: var(--nb-green); }
-  #shopScreen .nb-paper .shop-acc-slot-cur i, #shopScreen .nb-paper .shop-acc-empty-note { color: var(--nb-pencil); font-style: normal; font-size: 14px; }
-  #shopScreen .nb-paper .shop-footer { background: none; border: none; padding: 0; margin: var(--nb-rule) 0 0; font-size: 13px; color: var(--nb-pencil); }
+  /* v1.296 (backlog D.52, Michael 21 Oct): airsoft.com is the early-2000s website again, not paper; its v1.287 rules
+     are gone and the page keeps the styles above it had before */
   /* -- v1.288 (D.46): the in-match HUD keeps its dark panels (they read against any sky) and takes the hand for its
      labels only; the numbers stay in the type they had. The bedroom's prompts are on paper: the "E to …" prompt is a
      strip torn off a page, one rule with its line under the words, and the labels over the room are paper tags. -- */
@@ -2578,6 +2540,7 @@
     <span id="stanceStand">STAND</span> · <span id="stanceSprint">SPRINT</span> · <span id="stanceCrouch">CROUCH</span> · <span id="stanceSlide">SLIDE</span> · <span id="stanceAir">AIR</span> · <span id="stanceAds">ADS</span>
   </div>
   <div id="interactPrompt"></div>
+  <div id="homeHud"><span class="home-arrow" id="homeArrow">&#x2191;</span><span id="homeText">BACK TO YOUR START</span></div>  <!-- v1.290 (D.48) -->
   <!-- v1.57: tutorial coaching banner — only shown during the tutorial scenario.
        Top-center: a step label + instruction line + a small progress dot row. -->
   <div id="tutorialHud" style="display:none;">
@@ -2611,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.289</div>
+  <div class="version">v1.302</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2852,6 +2815,7 @@
     <div class="flavor" id="flavorText"></div>
     <div class="reward" id="rewardText"></div>
     <div class="result-wallet" id="resultWallet"></div>   <!-- v1.260 (D.43) -->
+    <div class="result-teammate nb-box" id="resultTeammate"></div>   <!-- v1.297 (D.53) -->
     <div class="result-stats" id="resultStats"></div>   <!-- v1.193 -->
     <div class="reload-note" id="reloadNote"></div>
     <div class="result-nav" id="resultNav">
@@ -2878,7 +2842,7 @@
       <span class="ab-label">Address:</span>
       <span class="ab-url">http://www.airsoft.com/store</span>
     </div>
-    <div class="shop-body nb-paper">   <!-- v1.287 (D.46): airsoft.com's page on paper -->
+    <div class="shop-body">   <!-- v1.296 (D.52): the 2000s website again, not paper (v1.287) -->
       <div class="shop-header">
         <div class="shop-logo">AIRSOFT<span class="dot">.</span>COM</div>
         <div class="shop-tagline">Your #1 source for tactical gear &amp; BBs since 1998</div>
@@ -4593,7 +4557,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_sixshooter', label: 'Spare Cylinder (6)', price: 3 } ],
   },
   bucket: {
-    displayName: 'Bucket Gun', baseCap: 600, price: 110, ownFlag: 'bucket',
+    displayName: 'Bucket Gun', baseCap: 600, price: 65, ownFlag: 'bucket',   // v1.295 (D.50, Michael: A): $110 → $65, the worst value in the shop
     blurb: 'Battery-powered, with a bucket of BBs on top. It never stops, but the BBs come out slow and soft and drift off past ten metres.',
     mags: [ { flag: 'bucket_mag_1000', cap: 1000, price: 25 } ],
     spares: [ { key: 'spare_mag_bucket', label: 'Spare BB Bottle (600)', price: 15 } ],
@@ -4613,7 +4577,7 @@ const GUN_MAGS = {
   },
   sprayer: {
     displayName: 'Clear Sprayer', baseCap: 120, price: 35, ownFlag: 'sprayer', cheap: true,
-    blurb: 'A little see-through battery SMG. Six BBs a second, and every one of them curves off somewhere new.',
+    blurb: 'A little see-through battery SMG. Six BBs a second, every one of them curves off somewhere new, and about one burst in five it jams.',
     mags: [], spares: [],
   },
   ghost: {
@@ -4623,7 +4587,7 @@ const GUN_MAGS = {
   },
   ticktock: {
     displayName: 'Tick-Tock', baseCap: 60, price: 55, ownFlag: 'ticktock', cheap: true,
-    blurb: 'A clear wind-up rifle. Dead accurate and the longest reach of the cheap ones, but it ticks out two BBs a second.',
+    blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second, they drop off past about 25 metres, and about one burst in five it jams.',
     mags: [], spares: [],
   },
 };
@@ -4906,7 +4870,7 @@ function renderPoolNoodle(c) {
 }
 function startNoodleSwing() {
   if (Game.mode !== 'scenario' || Game.paused || Game.forfeitAsk || !noodleCarried()) return false;
-  if (Game.player._holdT > 0) return false;   // v1.280 (D.47)
+  if (Game.player._holdT > 0 || Game.player._goingHome) return false;   // v1.280 (D.47; v1.290: walking home)
   const N = Game.noodle;
   if (N.t >= 0 || N.cd > 0) return false;
   if (Game.held.using) { Game.held.using = false; Game.held.useProgress = 0; Game.held.useKind = null; Game.held._feedingActive = false; }
@@ -5375,23 +5339,27 @@ const GUN_SPECS = {
     displayName: 'Bolt Pistol',
   },
   // v1.250 (backlog D.37, Michael: B): the cheap clear-plastic automatics. `burstJam` is the chance a burst jams (it
-  // goes a few BBs in first); R held clears it, as any jam.
+  // goes a few BBs in first); R held clears it, as any jam. v1.302 (backlog D.56, Michael 21 Oct: "All of the 'cheap'
+  // automatics should have a fairly high jamming rate"): all four jam, the Sprayer and the Tick-Tock one burst in five
+  // as the Ghost Mini does, the Rattle Can one in four.
   sprayer: {   // Clear Sprayer: 6 BBs a second, every one curves hard (about a 3 m circle at 15 m)
     fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
     cyclicRPM: 360, muzzleVelocity: 32, baseSpread: 0.55, adsSpreadMult: 0.8,
-    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12,
+    curveOnsetDistance: 2, curveStrengthMax: 30, curveStrengthMin: 12, burstJam: 0.2,   // v1.302 (D.56): it jams too
     pelletsPerShot: () => 1, cockTime: 0.4, cockType: 'switch', displayName: 'Clear Sprayer',
   },
   ghost: {     // Ghost Mini: steady, but about one burst in five jams
     fireMode: 'auto', weightClass: 'light', playerSpeedMult: 1.1,
-    cyclicRPM: 600, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.45,
+    cyclicRPM: 360, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.45,   // v1.295 (D.50, Michael: A): 10 → 6 a second
     curveOnsetDistance: 10, curveStrengthMax: 12, burstJam: 0.2,
     pelletsPerShot: () => 1, cockTime: 0.5, cockType: 'charge', displayName: 'Ghost Mini',
   },
-  ticktock: {  // Tick-Tock: dead accurate, the longest reach of the cheap ones, 2 BBs a second
+  ticktock: {  // Tick-Tock: accurate up close, 2 BBs a second
+    // v1.295 (backlog D.50, Michael: A, 21 Oct): it beat the $85 rifle and the $95 Bolt Pistol at everything, so its BB
+    // is slower (50 → 38 m/s) and wider (0.14 → 0.30): about 28 m of reach, and the long shots are theirs again
     fireMode: 'auto', weightClass: 'medium', playerSpeedMult: 1.0,
-    cyclicRPM: 120, muzzleVelocity: 50, baseSpread: 0.14, adsSpreadMult: 0.3,
-    curveOnsetDistance: 20, curveStrengthMax: 6,
+    cyclicRPM: 120, muzzleVelocity: 38, baseSpread: 0.30, adsSpreadMult: 0.3,
+    curveOnsetDistance: 20, curveStrengthMax: 6, burstJam: 0.2,   // v1.302 (D.56): it jams too
     pelletsPerShot: () => 1, cockTime: 0.6, cockType: 'charge', displayName: 'Tick-Tock',
   },
   rattle: {    // Rattle Can: all three faults at once
@@ -6560,6 +6528,7 @@ function renderBriefingRosterHTML(brief, opts) {
   const bench = !!(opts && opts.bench && brief.crewMatch);   // v1.274: the pre-match briefing can bench a crew kid
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
   const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
+  if (opts && opts.lineup) return renderBriefingLineupHTML(brief, bench, lifeStr, youGun);   // v1.298 (D.54)
   const row = (c, side) =>
     `<div class="brief-combatant ${side}">
        <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
@@ -6591,6 +6560,51 @@ function renderBriefingRosterHTML(brief, opts) {
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
   if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;   // v1.196
   return html;
+}
+
+// v1.298 (backlog D.54, Michael: A, 21 Oct): the map's briefing shows both sides lined up as 3D kids, each in his
+// clothes with the gun he will carry (drawn after the HTML is in, by drawBriefingLineup), his name, gun and lives
+// under him, and Bench / Bring under your crew kids. Five across a side at most; a bigger side stands in two rows.
+function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const wearsCrew = (c, side) => side === 'ally' && !c.vip && c.charId !== 'seth' && !brief.tutorial;
+  const cell = (c, side, extra) => {
+    const lives = extra && extra.benched ? 'on the bench' : c.lives === 'you' ? (brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)) : lifeStr(c.lives);
+    return `<div class="brief-combatant ${side} lu-kid${extra && extra.benched ? ' benched' : ''}" title="${esc(c.name + ' · ' + c.gun + ' · ' + lives)}">
+      <canvas class="lu-fig" width="102" height="117" data-kid="${c.charId || ''}" data-gun="${c.gunType || 'pistol'}" data-crew="${wearsCrew(c, side) ? 1 : 0}"${c.lives === 'you' ? ' data-you="1"' : ''}></canvas>
+      <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span><span class="brief-gun">${c.gun}</span><span class="brief-lives">${lives}</span>
+      ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}${extra && extra.benched ? `<button class="brief-bench" data-unbench="${c.charId}">Bring</button>` : ''}
+    </div>`;
+  };
+  const cols = n => n <= 5 ? n : Math.ceil(n / 2);
+  const benched = bench ? crewMembers().filter(id => crewBench.has(id)) : [];
+  const yours = [cell({ name: 'You', charId: 'you', gun: youGun, gunType: Game.persist.equipped.gun, lives: 'you' }, 'you')]
+    .concat(brief.allies.map(c => cell(c, 'ally')))
+    .concat(benched.map(id => cell({ name: CHARACTERS[id].name, charId: id, gun: getGunDisplayName(CREW_GUNS[id]), gunType: CREW_GUNS[id], lives: 0 }, 'ally', { benched: true })));
+  const theirs = brief.enemies.map(c => cell(c, 'enemy'));
+  const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');
+  let html = `<div class="brief-lineup">
+    <div class="brief-section"><div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
+      <div class="lu-kids" style="--lu-cols:${cols(yours.length)}">${yours.join('')}</div></div>
+    <div class="brief-section"><div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
+      <div class="lu-kids" style="--lu-cols:${cols(theirs.length)}">${theirs.join('')}</div></div>
+  </div>`;
+  html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
+  if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;
+  return html;
+}
+function drawBriefingLineup(root) {
+  const cc = crewColor();
+  for (const cv of root.querySelectorAll('canvas.lu-fig')) {
+    try {
+      if (cv.dataset.you) { drawKidPortrait(cv, Game.persist.look, Game.persist.equipped.gun, -0.45, loadoutKidGearKeys()); continue; }
+      const ch = CHARACTERS[cv.dataset.kid];
+      if (!ch) continue;
+      const look = cc != null && cv.dataset.crew === '1' ? Object.assign({}, ch, { crewColor: cc }) : ch;
+      drawKidPortrait(cv, look, cv.dataset.gun, cv.closest('.enemy') ? 0.45 : -0.45);
+    } catch (e) { console.warn('lineup', e); }
+  }
 }
 
 const SCENARIOS = {
@@ -10993,9 +11007,9 @@ function buildSethBackyardScene() {
 //
 // Houses: 8 total, distributed along the curving road. Seth's is the
 // easternmost on the north side — the player enters near it.
-// Numbering (matches the satellite house numbers loosely):
-//   N1=Seth(625), N2=720, N3=730, N4=740 (lakeside corner)
-//   S1=620, S2=700, S3=710, S4=750 (lakeside corner)
+// Numbering (v1.299: the real house numbers are out; the repo and the game are public):
+//   N1=Seth's, N2, N3, N4 (lakeside corner)
+//   S1, S2, S3, S4 (lakeside corner)
 // ---------------------------------------------------------------------
 
 // --- Shared neighborhood-house builder ---
@@ -13515,7 +13529,11 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const s = u * u * (3 - 2 * u);           // smoothstep: flat-ish high bench, then drop
     let h = 3.0 * (1 - s);                    // v1.28n: +3.0 at east entry, ~0 by the bulb (was 4.5 — still too steep)
     h += 0.25 * Math.sin(z * 0.12 + 0.5) * Math.cos(x * 0.1);  // gentle cross-roll
-    return h;
+    // v1.301 (D.55 step 3, docs/refs/winnmark.md gaps 8-9): past the back tree wall (z -35) the ground falls to the
+    // golf course, and past the shore (x -37) to the lake, both flat at 0, so the fairway and the water lie on it
+    // instead of under it. Nobody plays past either line (the tree wall, lakeBlocker).
+    const fz = Math.max(0, Math.min(1, (z + 42) / 7)), fx = Math.max(0, Math.min(1, (x + 42) / 5));
+    return h * fz * fz * (3 - 2 * fz) * fx * fx * (3 - 2 * fx);
   }
   const groundY = winnmarkGroundY;
   // Terrain normal (finite differences) — used to tilt flat decal pads onto the slope.
@@ -13619,7 +13637,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.4, metalness: 0.2 })
   );
   lake.rotation.x = -Math.PI / 2;
-  lake.position.set(-48, -0.02, 0);
+  lake.position.set(-48, 0.05, 0);   // v1.301: on the flat ground past the shore (was -0.02, under the roll)
   lake.receiveShadow = true;
   scene.add(lake);
   // Shore — a thin tan strip between lake and grass
@@ -13628,7 +13646,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     new THREE.MeshStandardMaterial({ color: 0xb8a070, roughness: 1.0 })
   );
   shore.rotation.x = -Math.PI / 2;
-  shore.position.set(-38, 0.01, 0);
+  shore.position.set(-38, 0.06, 0);   // v1.301
   shore.receiveShadow = true;
   scene.add(shore);
 
@@ -13644,9 +13662,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   //
   // Fairway — a wide brighter-green plane north of the tree wall.
   const fairwayMat = new THREE.MeshStandardMaterial({ color: 0x7aa850, roughness: 1.0 });
-  const fairway = new THREE.Mesh(new THREE.PlaneGeometry(100, 26), fairwayMat);
+  // v1.301: 22 m deep from z -42, where the ground has come down to the course (was 26 m from z -39, buried)
+  const fairway = new THREE.Mesh(new THREE.PlaneGeometry(100, 22), fairwayMat);
   fairway.rotation.x = -Math.PI / 2;
-  fairway.position.set(0, 0.005, -52);
+  fairway.position.set(0, 0.005, -53);
   fairway.receiveShadow = true;
   scene.add(fairway);
   // Putting green — a small darker patch (richer fairway color, closer-cut grass)
@@ -13810,7 +13829,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   houseObs.push(buildSuburbanHouse(scene, {
     x: 24, z: -15, width: 9, depth: 7,
     brickColor: 0xb8634a, roofColor: 0x4a3a2a, faceDir: 'south', detail: true,
-  })); // Seth's (625 Winnmark Ct)
+  })); // Seth's
   houseObs.push(buildSuburbanHouse(scene, {
     x:  8, z: -16, width: 8, depth: 7,
     brickColor: 0xa05238, roofColor: 0x5a4838, faceDir: 'south', detail: true,
@@ -14574,7 +14593,7 @@ function buildWinnmarkCulDeSacScene(_v, tod)  { return buildWinnmarkCourtScene('
 //     grid) terminating in a cul-de-sac bulb — matches the satellite of
 //     the real Bunratty Ct off Sentinae Chase Dr.
 //   - French-eclectic STUCCO + STONE house palette (cream/tan walls, warm
-//     brown hip roofs) — the reference property at 235 Bunratty.
+//     brown hip roofs) — the reference property, Michael's old house.
 //   - The CHATTAHOOCHEE RIVER as the signature backdrop on the SOUTH side,
 //     downhill past a stacked-stone retaining wall + forest. (Winnmark used
 //     a golf course + lake; Bunratty uses river + woods.)
@@ -14795,9 +14814,9 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // (We don't push these to obstacles — they're unreachable backdrop.)
   }
 
-  // === Stacked-stone retaining wall — behind 235 BUNRATTY ONLY (the hero house) ===
+  // === Stacked-stone retaining wall — behind MICHAEL'S ONLY (the hero house) ===
   // From the reference photos (image 7): a stacked-stone wall with square
-  // pillars sits along the south edge of 235's backyard, holding the lawn
+  // pillars sits along the south edge of the hero house's backyard, holding the lawn
   // above the river drop. It is NOT a map-spanning wall — it's specific to
   // this one property. (The rest of the south edge is handled by the tree
   // wall + river blocker.) Gets an AABB so it reads as solid cover.
@@ -14807,7 +14826,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8a8276, roughness: 0.96 });
     const wallZ = 30;
     const wallH = 1.1;
-    const x0 = 24, x1 = 42;    // just behind 235 only
+    const x0 = 24, x1 = 42;    // just behind the hero house only
     const segLen = 4.0;
     // v1.8: the wall sits at the south lawn edge ground height (the lowest
     // playable grade) and still holds the lawn above the river drop beyond it.
@@ -14879,7 +14898,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // === Houses — 7, irregular placement (not tidy rows) ===
   // French-eclectic stucco+stone palette: cream/tan stucco bodies, warm brown
   // hip roofs, light trim. Faces toward the lane. House index 6 is the hero
-  // (235 Bunratty) ringing the bulb — the showpiece for a future marquee
+  // (Michael's) ringing the bulb — the showpiece for a future marquee
   // scenario. Downhill (south, river-side) houses get walk-out lower-level
   // visual treatment below.
   const houseObs = [];
@@ -14896,7 +14915,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     { x: -30, z: 16,  w: 8, d: 7, faceDir: 'north', side: 'south' },
     { x: -8,  z: 18,  w: 9, d: 7, faceDir: 'north', side: 'south' },
     { x: 12,  z: 17,  w: 8, d: 7, faceDir: 'north', side: 'south' },
-    // Hero house (235 Bunratty) ringing the bulb's south side, faces the bulb.
+    // Hero house (Michael's) ringing the bulb's south side, faces the bulb.
     { x: 33,  z: 17,  w: 11, d: 8, faceDir: 'north', side: 'south', hero: true },
   ];
   const houseCenters = [];
@@ -15243,13 +15262,13 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     }
   }
 
-  // A round backyard TRAMPOLINE in 235's backyard (replaces the old play-fort).
+  // A round backyard TRAMPOLINE in the hero house's backyard (replaces the old play-fort).
   // Low cylindrical frame + dark jump mat + a ring of safety-net poles. Sits on
-  // the upper lawn of 235's tiered backyard. Decorative + light collision on the
+  // the upper lawn of the hero house's tiered backyard. Decorative + light collision on the
   // frame ring; counts as cover (you can crouch behind the frame/pads).
   {
     const tramGroup = new THREE.Group();
-    const tx = 28, tz = 25; // 235's backyard, between the house (back face z=21) and the retaining wall (z=30)
+    const tx = 28, tz = 25; // the hero house's backyard, between the house (back face z=21) and the retaining wall (z=30)
     tramGroup.position.set(tx, 0, tz);
     const R = 1.8;          // trampoline radius
     const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5, metalness: 0.5 });
@@ -15288,7 +15307,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     // v1.53: round trampoline → true cylinder so you don't snag on phantom corners.
     const tramObs = { minX: tx - R, maxX: tx + R, minZ: tz - R, maxZ: tz + R,
       shape: 'cylinder', cx: tx, cz: tz, radius: R, h: 0.95, mesh: tramGroup, surface: 'metal' };
-    sinkObs(tramObs, tx, tz);  // v1.8: sit on 235's sloped backyard
+    sinkObs(tramObs, tx, tz);  // v1.8: sit on the hero house's sloped backyard
     coverList.push(tramObs);
     coverByHouse[6] = coverByHouse[6] || [];
     coverByHouse[6].push(tramObs);
@@ -16419,6 +16438,14 @@ function buildHollowSceneDefault(_v, tod) { return buildHollowScene('default', t
 // Playable box: x∈[-38,38], z∈[-29,27]. Team A (enemies) start at the store,
 // Team B (player) at the road side.
 // =====================================================================
+// v1.300 (D.55 step 2, the reference pictures' finding): a sign's name is drawn as large as asked but never wider than
+// its canvas less a margin each side: "RIVERSIDE MARKET" at 54 px Georgia was wider than its 512 px and read
+// "IVERSIDE MARKE". Every name sign on a building goes through here.
+function fitSignText(c, text, x, y, px, family, maxW) {
+  do { c.font = `bold ${px}px ${family}`; } while (c.measureText(text).width > maxW && (px -= 2) > 8);
+  c.fillText(text, x, y);
+  return px;
+}
 function buildMarketLotScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
   const _night = (timeOfDay === 'night');
@@ -16480,8 +16507,8 @@ function buildMarketLotScene(variant, timeOfDay) {
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96;
     const c2 = cv.getContext('2d');
     c2.fillStyle = '#f4efe2'; c2.fillRect(0, 0, 512, 96);
-    c2.fillStyle = '#2f6a3a'; c2.font = 'bold 54px Georgia'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
-    c2.fillText('RIVERSIDE MARKET', 256, 50);
+    c2.fillStyle = '#2f6a3a'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    fitSignText(c2, 'RIVERSIDE MARKET', 256, 50, 54, 'Georgia', 512 - 40);   // v1.300
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(16, 3), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
     sign.position.set(cx, 5.3, frontZ + 0.05); scene.add(sign);
     box(cx - W / 2, cx + W / 2, frontZ - D, frontZ, H);
@@ -17785,8 +17812,8 @@ function buildHighSchoolScene(variant, timeOfDay) {
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64;
     const c2 = cv.getContext('2d');
     c2.fillStyle = '#e8e2d2'; c2.fillRect(0, 0, 512, 64);
-    c2.fillStyle = '#5a2a22'; c2.font = 'bold 40px Georgia'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
-    c2.fillText('HOLLINS RIDGE HIGH', 256, 34);
+    c2.fillStyle = '#5a2a22'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    fitSignText(c2, 'HOLLINS RIDGE HIGH', 256, 34, 40, 'Georgia', 512 - 40);   // v1.300
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(14, 1.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
     sign.position.set(-7.5, 4.9, frontZ + 0.1); scene.add(sign);
     box(cx - W / 2, cx + W / 2, frontZ - D, frontZ, H);
@@ -18084,8 +18111,8 @@ function buildCountryClubScene(variant, timeOfDay) {
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 64;
     const c2 = cv.getContext('2d');
     c2.fillStyle = '#2f4a3a'; c2.fillRect(0, 0, 512, 64);
-    c2.fillStyle = '#e8d8a0'; c2.font = 'bold 34px Georgia'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
-    c2.fillText('WILLOW BEND COUNTRY CLUB', 256, 34);
+    c2.fillStyle = '#e8d8a0'; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    fitSignText(c2, 'WILLOW BEND COUNTRY CLUB', 256, 34, 34, 'Georgia', 512 - 40);   // v1.300
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(14, 1.75), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
     sign.position.set(-12, 4.4, frontZ + 0.1); scene.add(sign);
     box(cx - W / 2, cx + W / 2, frontZ - D, frontZ, H);
@@ -18429,7 +18456,7 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     const enter = canvasTex(256, 32, (c) => { c.fillStyle = '#2f6a3a'; c.fillRect(0, 0, 256, 32); c.fillStyle = '#fff'; c.font = 'bold 20px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ENTER  ·  EXIT', 128, 17); });
     const em = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.28), new THREE.MeshBasicMaterial({ map: enter })); em.position.set(11, 2.95, 17.44); em.rotation.y = Math.PI; scene.add(em);
     // the store's name on the back wall over the centre doorway, seen from the checkouts
-    const name = canvasTex(512, 80, (c) => { c.fillStyle = '#f4efe2'; c.fillRect(0, 0, 512, 80); c.fillStyle = '#2f6a3a'; c.font = 'bold 46px Georgia'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('RIVERSIDE MARKET', 256, 42); });
+    const name = canvasTex(512, 80, (c) => { c.fillStyle = '#f4efe2'; c.fillRect(0, 0, 512, 80); c.fillStyle = '#2f6a3a'; c.textAlign = 'center'; c.textBaseline = 'middle'; fitSignText(c, 'RIVERSIDE MARKET', 256, 42, 46, 'Georgia', 512 - 40); });   // v1.300
     const nm = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), new THREE.MeshBasicMaterial({ map: name })); nm.position.set(0, 4.3, -17.98); scene.add(nm);
   }
 
@@ -21212,7 +21239,7 @@ function buildFPGhost() {
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, -0.022, -0.01, 0.085);
   return _clearGunFinish(group, M, 'ghost', knob);
 }
-// Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Dead accurate, two BBs a second.
+// Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Accurate up close, two BBs a second.
 function buildFPTickTock() {
   const group = new THREE.Group(), M = _clearGunMats();
   _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.30), M.clear, 0, 0.01, -0.10);                 // receiver
@@ -22868,11 +22895,18 @@ function enterBedroom() {
   Game.player.hitsTaken = 0;
   Game.player.bounds = Scenes.bedroom.bounds;
   Game.player.obstacles = Scenes.bedroom.obstacles;
+  // v1.294 (backlog B.12, Michael 21 Oct): aim held as a match ends no longer comes home. The right button's let-go
+  // only counted in a match, so the room kept the aimed view (and field of view) until the next one.
+  Game.player.ads = 0;
+  Game.player.adsTarget = 0;
+  Game.camera.fov = Settings.fov;
+  Game.camera.updateProjectionMatrix();
 
   // Hide combat HUD
   document.getElementById('ammoHud').style.display = 'none';
   document.getElementById('healthHud').style.display = 'none';
   document.getElementById('stanceHud').style.display = 'none';
+  document.getElementById('homeHud').style.display = 'none';   // v1.290
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
@@ -24143,6 +24177,7 @@ function startScenario(built) {
   Game.scenario.playerRespawns = 0;
   Game.player._graceT = 0;
   Game.player._holdT = 0;   // v1.280
+  Game.player._goingHome = false; Game.player._gunUp = 0;   // v1.290
   Game.player.pitch = 0;
   Game.player.hitsTaken = 0;
   // v1.28h: base lives default to 1 (one hit and you're out) — was a flat 3.
@@ -24189,6 +24224,7 @@ function startScenario(built) {
   Game.gun.cyclicRPM = spec.cyclicRPM || 0;
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
+  Game.gun._sinceShot = null;   // v1.292
   Game.gun.maxAmmo = getMaxAmmoForGun(Game.gun.type);
   // v1.60: snapshot the carried-gear weight penalty for this match (loadout is
   // fixed once the round starts, so compute once instead of every movement frame).
@@ -24520,6 +24556,7 @@ function endScenario(outcome) {
   document.getElementById('ammoHud').style.display = 'none';
   document.getElementById('healthHud').style.display = 'none';
   document.getElementById('stanceHud').style.display = 'none';
+  document.getElementById('homeHud').style.display = 'none';   // v1.290
   document.getElementById('loadoutHud').style.display = 'none';
   document.getElementById('rosterHud').style.display = 'none';
   if (Game.squadWheel || Game.squadFlashT > 0) closeSquadWheel(false); document.getElementById('squadHud').style.display = 'none';   // v1.248
@@ -24761,6 +24798,8 @@ function endScenario(outcome) {
   }
 
   renderMatchStats(outcome, _openBefore, _cashBefore, _wonBefore);   // v1.193; v1.196 the rival line
+  Game.scenario.teammateAnswers = [];
+  renderTeammateCard(scDef && !scDef.online ? teammateAsksFor(Game.scenario.active, outcome, _wonBefore) : [], null);   // v1.297 (D.53)
   { const w = document.getElementById('resultWallet'); if (w) w.innerHTML = walletHTML(); }   // v1.260 (D.43)
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
@@ -26562,7 +26601,7 @@ document.addEventListener('mousedown', e => {
 });
 
 document.addEventListener('mouseup', e => {
-  if (e.button === 2 && Game.mode === 'scenario') {
+  if (e.button === 2) {   // v1.294 (B.12): let go anywhere, not only in a match
     Game.player.adsTarget = 0;
   }
   if (e.button === 0 && Game.mode === 'scenario') {
@@ -26928,6 +26967,22 @@ function onLmbDown() {
     // v1.20: auto guns bypass the fireCooldown gate — their rate is governed
     // by the cyclic timer in updateGun, not the semi-mode lockout.
     const cooldownOk = Game.gun.fireMode === 'auto' || Game.gun.fireCooldown <= 0;
+    // v1.292 (backlog D.50, Michael: C, 20 Oct): a fresh click on an automatic fired at once, whatever its cycle, so
+    // tapped the Tick-Tock (2 BBs a second held) fired a BB a click: 18 in 3 s at six clicks a second, against 6 held.
+    // A click inside the gun's own cycle since its last shot now waits for it: the held stream picks up the time already
+    // gone and fires when the cycle is done, and a click let go before then fires nothing. No automatic fires faster
+    // tapped than held.
+    if (Game.gun.cocked && Game.gun.ammo > 0 && Game.gun.fireMode === 'auto') {
+      const cycle = 60 / Math.max(1, Game.gun.cyclicRPM);
+      const since = Game.gun._sinceShot ?? 1e9;
+      if (since < cycle - 1e-6) {
+        Game.gun.autoFireTimer = since;
+        const bj = getGunSpec(Game.gun.type).burstJam || 0;   // v1.250: the burst's jam roll, as on a click that fires
+        Game.gun._jamIn = (bj && gameRandom() < bj) ? 1 + Math.floor(gameRandom() * 2) : 0;
+        Game.gun._bursts = (Game.gun._bursts || 0) + 1;
+        return;
+      }
+    }
     if (Game.gun.cocked && Game.gun.ammo > 0 && cooldownOk) {
       doFire();
       // v1.20: AUTO guns stay cocked between shots (bolt cycles internally) —
@@ -27884,7 +27939,9 @@ const UNJAM_TIME = 2.0;          // seconds to unjam (hold R)
 const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked during this time
 
 function doFire() {
-  if (Game.player._holdT > 0) return;   // v1.280 (D.47): no shot while held at your base
+  if (Game.player._holdT > 0 || Game.player._goingHome) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home)
+  Game.player._graceT = 0;   // v1.291 (D.49): your own shot ends the respawn's grace
+  Game.gun._sinceShot = 0;   // v1.292 (D.50): an automatic's next click waits out its cycle from here (counted in updateGun)
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)
   playShot();
   Game.gun.ammo = Math.max(0, Game.gun.ammo - pelletsFired);
@@ -27942,6 +27999,8 @@ function updateGun(dt) {
     }
   }
 
+  // v1.292 (D.50): time since the gun's last shot, counted as the held stream counts its cycle (see onLmbDown)
+  Game.gun._sinceShot = (Game.gun._sinceShot ?? 1e9) + dt;
   // === v1.20: AUTO-FIRE cycle ===
   // For auto-mode guns: while LMB is held, gun is cocked, ammo > 0, and not
   // jammed, fire at cyclicRPM. The bolt cycles internally — no slide animation
@@ -28242,6 +28301,9 @@ function updateHeldMesh(dt) {
     const hipPitch = hipRotX + (convPitch - hipRotX) * CONV;
     fpGun.rotation.y = hipYaw + (adsRotY - hipYaw) * a + (p.bobRotY || 0);
     fpGun.rotation.x = hipPitch + (adsRotX - hipPitch) * a + cockTilt + (fpGun.userData.kick || 0) * 0.25 + (p.bobRotX || 0);
+    // v1.290 (D.48): walking home after a tag, the gun points at the sky
+    const up = p._gunUp || 0;
+    if (up > 0) { fpGun.rotation.x += up * 1.15; fpGun.position.y += up * 0.07; fpGun.position.z += up * 0.05; }
     fpGun.rotation.z = (p.bobRotZ || 0);
 
     // v1.27b: aim the laser at screen-center now that the gun pose is final this
@@ -29125,6 +29187,7 @@ function spawnEnemyBB(enemy, targetPos) {
   // returning here guarantees zero BBs from a flagged enemy.
   if (enemy.noFire) return;
   if (inOpeningHold()) return;   // v1.101: catches suppression and reaction rounds too
+  if (enemy._graceT > 0) enemy._graceT = 0;   // v1.291 (D.49): his own shot ends his grace
   // v1.183 (D.16 B): no shot while his body is still turning onto the line (it turns in about 0.2 s)
   if (targetPos && typeof enemy.yaw === 'number') {
     const want = Math.atan2(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z);
@@ -29479,7 +29542,7 @@ function shotWhileOut(c, bb) {
 // distinct player-hit vs enemy-hit effects exactly as before.
 function applyBBHit(bb, c) {
   if (c === Game.player) {
-    if (Game.player._graceT > 0) return true;   // v1.170: just back from a VIP-match respawn
+    if (Game.player._graceT > 0 || Game.player._goingHome) return true;   // v1.170: just back from a VIP-match respawn (v1.290: or walking home)
     // v1.263 (decisions "A trade on the last tag counts as a loss", Michael: A, 16 Oct): once the round is won (your
     // last tag landed and the win waits its 600 ms to show), a BB already in the air no longer tags you: a trade is yours.
     if (Game.scenario.wonRound === Game.roundSeq && Game.mode === 'scenario') return true;
@@ -29498,14 +29561,15 @@ function applyBBHit(bb, c) {
     // v1.90: only a live round can be lost (a BB landing after the result is up changes nothing)
     if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
-      if (Game.scenario.vip || Game.scenario.ctf) respawnPlayerVip();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag)
+      if (Game.scenario.vip || Game.scenario.ctf) startPlayerWalkHome();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag; v1.290: on foot)
       else endScenario('lose');
     } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && (SCENARIOS[Game.scenario.active].pickup || SCENARIOS[Game.scenario.active].tagSendsHome)) {
-      respawnPlayerVip(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
+      startPlayerWalkHome(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
       // (v1.251: and in The Last Saturday, `tagSendsHome`)
     }
   } else {
     if (c.remote) return netTagRemote(bb, c);   // v1.230 (D.2): your friend, online
+    if (c._graceT > 0 && c.health > 0 && c.state !== 'retreating') return true;   // v1.291 (D.49): just redeployed at his base
     if (c.health <= 0 || c.state === 'retreating') { shotWhileOut(c, bb); return true; }   // v1.237 (D.33): out already (v1.261: where)
     if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);   // v1.193: your tag, for the result screen
     tryNpcSpeak(c, bb.owner === 'player' ? npcHitCategory(c) : 'npcHit');   // react before dying/retreating (v1.256: maybe an excuse)
@@ -29523,7 +29587,15 @@ function applyBBHit(bb, c) {
 
 // v1.170 (D.15): tagged out in a VIP match, you walk back in at your start with your lives refilled and VIP_GRACE
 // seconds in which nothing tags you. The gun keeps what is in it; anything you were doing with it is let go.
-const VIP_GRACE = 2.0;
+// v1.291 (backlog D.49, Michael: A, 20 Oct: "3 s, ended early by your own shot; kids too"): was 2 s, kids had none. Your
+// own shot ends it at once (doFire), and so does a kid's (spawnEnemyBB). A kid who walks back to his base in a match
+// where you come back (comesBackMatch) gets the same 3 s as he redeploys, and nothing tags him in it. While yours runs,
+// the panel at the top says how long is left.
+const VIP_GRACE = 3.0;
+function comesBackMatch() {
+  const def = SCENARIOS[Game.scenario.active];
+  return !!(Game.scenario.vip || Game.scenario.ctf || (def && (def.pickup || def.tagSendsHome)));
+}
 // v1.221 (decisions "Pickup Game: what is a life for you?", Michael: A): `keepHits` for the Pickup Game, where each tag is
 // one of your lives gone (the HUD and the clock's count keep it) and the rest of a shotgun blast lands in the grace.
 function respawnPlayerVip(keepHits) {
@@ -29536,10 +29608,74 @@ function respawnPlayerVip(keepHits) {
   if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
-  Game.player._graceT = VIP_GRACE;
-  if (Game.scenario.ctf) { Game.player._holdT = CTF_HOLD_SEC; Game.player._graceT = CTF_HOLD_SEC + VIP_GRACE; }   // v1.280 (D.47)
+  Game.player._goingHome = false;
+  playerBackHome();
   Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
   updateHealthHud();
+}
+// The grace (and capture the flag's hold) as you are back at your start.
+function playerBackHome() {
+  Game.player._graceT = VIP_GRACE;
+  if (Game.scenario.ctf) { Game.player._holdT = CTF_HOLD_SEC; Game.player._graceT = CTF_HOLD_SEC + VIP_GRACE; }   // v1.280 (D.47)
+}
+// v1.290 (backlog D.48, Michael: B, 20 Oct: "you walk yourself back, gun up, no firing, nothing tags you, an arrow points
+// the way"): a tag that sends you back to your start no longer puts you there in one frame. You walk yourself home with
+// the gun pointed at the sky: you can't aim, fire or swing, nothing tags you, kids don't pick you as a target and you
+// can't take a flag, and an arrow at the top of the screen points to your start. Within HOME_REACH of it you are back:
+// the respawn's grace (and capture the flag's hold) starts there. Online play keeps the jump home (its guest follows
+// the host's word on where you are).
+const HOME_REACH = 2.0;
+function startPlayerWalkHome(keepHits) {
+  const st = Game.scenario.playerStart;
+  if (!st || Net.active) { respawnPlayerVip(keepHits); return; }
+  if (!keepHits) Game.player.hitsTaken = 0;
+  Game.player.sliding = false;
+  Game.player.adsTarget = 0;
+  Game.player._graceT = 0;
+  Game.player._holdT = 0;
+  Game.player._goingHome = true;
+  Game.scenario.playerRespawns = (Game.scenario.playerRespawns || 0) + 1;
+  updateHealthHud();
+  playerWalkHomeStep(0);
+}
+function playerWalkHomeStep(dt) {
+  const P = Game.player, st = Game.scenario.playerStart;
+  P._gunUp = P._goingHome ? Math.min(1, (P._gunUp || 0) + dt * 4) : Math.max(0, (P._gunUp || 0) - dt * 4);
+  const hud = document.getElementById('homeHud');
+  if (!P._goingHome || !st) {
+    // v1.291 (D.49): back and let go, the grace counts down in the same panel
+    const left = P._graceT > 0 && !(P._holdT > 0) && P._graceT <= VIP_GRACE + 0.01 && Game.scenario.winCondition !== '__finished__' && comesBackMatch() ? Math.ceil(P._graceT) : 0;
+    if (hud) {
+      if (!left) { if (hud.style.display !== 'none') hud.style.display = 'none'; }
+      else {
+        const line = `NOTHING TAGS YOU · ${left} · TILL YOU FIRE`;
+        const txt = document.getElementById('homeText'), arrow = document.getElementById('homeArrow');
+        if (txt && txt.textContent !== line) txt.textContent = line;
+        if (arrow && arrow.style.display !== 'none') arrow.style.display = 'none';
+        if (hud.style.display !== 'block') hud.style.display = 'block';
+      }
+    }
+    return;
+  }
+  P.adsTarget = 0;
+  const dx = st.pos.x - P.pos.x, dz = st.pos.z - P.pos.z, d = Math.hypot(dx, dz);
+  if (d <= HOME_REACH) {
+    P._goingHome = false;
+    playerBackHome();
+    playerWalkHomeStep(0);   // v1.291: the grace's panel from this frame
+    return;
+  }
+  if (!hud) return;
+  if (hud.style.display !== 'block') hud.style.display = 'block';
+  { const arrow = document.getElementById('homeArrow'); if (arrow && arrow.style.display === 'none') arrow.style.display = ''; }
+  // forward is (-sin yaw, -cos yaw); a start to your right turns the arrow clockwise
+  let rel = Math.atan2(-dx, -dz) - P.yaw;
+  rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  const arrow = document.getElementById('homeArrow');
+  if (arrow) arrow.style.transform = `rotate(${(-rel).toFixed(2)}rad)`;
+  const txt = document.getElementById('homeText');
+  const line = `BACK TO YOUR START · ${Math.round(d)} m`;
+  if (txt && txt.textContent !== line) txt.textContent = line;
 }
 
 // v1.189 (backlog D.15; decisions "After Bellfield's four", Michael: A): CAPTURE THE FLAG. One flag a side, each on its
@@ -29564,7 +29700,7 @@ const CTF_HOLD_SEC = 10;
 function ctfSide(c) { return combatantTeam(c) === combatantTeam(Game.player) ? 'ours' : 'theirs'; }
 function ctfOther(side) { return side === 'ours' ? 'theirs' : 'ours'; }
 function ctfAlive(c) {
-  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits && !(Game.player._holdT > 0);   // v1.280: not while held at base
+  if (c === Game.player) return Game.player.hitsTaken < Game.player.maxHits && !(Game.player._holdT > 0) && !Game.player._goingHome;   // v1.280: not while held at base (v1.290: or walking home)
   return c.health > 0 && c.state !== 'retreating';
 }
 function ctfCarrying(c) {
@@ -31285,6 +31421,14 @@ function vipHoldsCover(e, c) {
   }
   return false;
 }
+// v1.293: a living teammate of e (not out, not walking back) holds c as his cover
+function teammateHoldsCover(e, c) {
+  const myTeam = e.team || 'enemy';
+  for (const o of (Game.scenario && Game.scenario.enemies) || []) {
+    if (o !== e && o.homeCover === c && (o.team || 'enemy') === myTeam && o.health > 0 && o.state !== 'retreating') return true;
+  }
+  return false;
+}
 function nearestShieldingCover(e, dir, maxDist = 14) {
   const cover = Game.scenario && Game.scenario.cover;
   if (!cover) return null;
@@ -31487,7 +31631,7 @@ function opposingCombatants(e) {
   for (const c of listCombatants()) {
     if (c === e) continue;
     // alive?
-    if (c === Game.player) { if (Game.player.hitsTaken >= Game.player.maxHits) continue; }
+    if (c === Game.player) { if (Game.player.hitsTaken >= Game.player.maxHits || Game.player._goingHome) continue; }   // v1.290: not while walking home
     else { if (c.health <= 0 || c.state === 'retreating') continue; }
     if (combatantTeam(c) === myTeam) continue;
     out.push(c);
@@ -33133,6 +33277,10 @@ function updateEnemies(dt) {
             // wall, wedged in the corner on the way, and held fire there at the wall for the rest of the round
             // (tests/cover-fire: up to 62 held pulls a minute).
             candidates = candidates.filter(c => { const sp = coverStandPos(c, tgt.pos, 0.35); return kidWalkClear(e, sp.x, sp.z); });
+            // v1.293 (critic, 21 Oct, Found in play): in Protect Ryan, Owen repositioned to the cover Mitchell held and stood
+            // inside him (both work out the same spot from the same cover), centres 0.01-0.17 m apart for 27-56 s of a 90 s
+            // round in 4 of 8 rounds. Cover a living teammate already holds is left out while any other is in reach.
+            { const free = candidates.filter(c => !teammateHoldsCover(e, c)); if (free.length) candidates = free; }
             // v1.67: DEFEND anti-crowding. Prefer candidates that aren't already
             // occupied by a teammate, so the squad fans out across different cover
             // instead of stacking. Only narrow to the un-crowded subset if it's
@@ -33308,6 +33456,7 @@ function updateEnemies(dt) {
           e.state = 'deploying';
           e.stateTime = 0;
           e._deployStuck = 0; // fresh deploy — clear any stale wedge counter
+          e._graceT = comesBackMatch() ? VIP_GRACE : 0;   // v1.291 (D.49)
           break;
         }
         // Retreat jog — a touch quicker than a normal advance (they're bailing).
@@ -33773,7 +33922,9 @@ function stepGame(dt) {
     updateFragments(dt);
     Game.scenario.roundTime = (Game.scenario.roundTime || 0) + dt;   // v1.101
     if (Game.player._graceT > 0) Game.player._graceT = Math.max(0, Game.player._graceT - dt);   // v1.170
+    for (const k of Game.scenario.enemies) if (k._graceT > 0 && !k.remote) k._graceT = Math.max(0, k._graceT - dt);   // v1.291 (D.49)
     if (Game.player._holdT > 0) Game.player._holdT = Math.max(0, Game.player._holdT - dt);   // v1.280 (D.47)
+    playerWalkHomeStep(dt);   // v1.290 (D.48)
     updateSquad(dt);   // v1.248 (D.35)
     voiceStep();   // v1.256 (D.32): lines waiting on the voice cooldowns
     if (Game.scenario.range) rangeStep(dt);   // v1.257 (D.40)
@@ -35339,6 +35490,107 @@ function phoneAnswer(id, yes, btn) {
   }
 }
 
+// v1.297 (backlog D.53, Michael: A, 21 Oct): the win that brings a kid's ask puts a "New teammate!" card on the result
+// screen: the kid in 3D with his own gun, a few lines on who he is and why he wants in, and YES / NOT YET right there.
+// YES takes him in and reads his text; NOT YET leaves the text on the phone, unread, as it was. Only the first win of
+// that match brings the card (Bunratty's last match brings two kids, one after the other); the phone still asks too.
+const CREW_INTROS = {
+  eric:  "From Ridgestone Court. Short, quick and loud. He has texted you every morning since school let out and played for whichever side was a kid short. Now he wants to be on yours.",
+  sean:  "Your brother. Curly hair, an AK and a finger that never leaves the trigger. All week he said your crew wasn't a real one. He has changed his mind. Don't tell Mom.",
+  nick:  "From Bunratty Court. Big, calm and patient: he waits for you to stop moving. Where Sean goes, Nick goes, so he's asking too.",
+  alex:  "One of the twins from Northcliff Trace. Andrew went over to Seth's crew. Alex didn't, and he'd like Andrew to watch him win.",
+  diego: "From Bellfield Court. He fought you on his own street and hasn't stopped talking about it. Colin went to Seth's. Diego would rather run with you.",
+};
+// A kid drawn in 3D onto a 2D canvas, three-quarter on, through the damage report's renderer (its shaders are warm
+// from the title, and no new WebGL context is made). The canvas may be up to DAMAGE_W x DAMAGE_H.
+const KID_PORTRAIT = { scene: null, camera: null, kid: null, sig: '', cache: new Map() };
+function drawKidPortrait(canvas, look, gun, yaw = -0.5, gear = null) {
+  initDamageReport();
+  const K = KID_PORTRAIT, r = DAMAGE_REPORT.renderer;
+  const w = Math.min(DAMAGE_W, canvas.width), h = Math.min(DAMAGE_H, canvas.height);
+  if (!K.scene) {
+    K.scene = new THREE.Scene();
+    K.scene.add(new THREE.HemisphereLight(0xfff4e0, 0x404050, 0.95));
+    const l = new THREE.DirectionalLight(0xffffff, 0.7); l.position.set(1.5, 3, 3); K.scene.add(l);
+    K.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
+  }
+  const sig = JSON.stringify([look, gun, gear, yaw, w, h]);
+  // v1.298: a lineup draws a dozen kids each time it opens, so each drawing is kept and a kid is built once
+  const ctx = canvas.getContext('2d');
+  const hit = K.cache.get(sig);
+  if (hit) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(hit, (canvas.width - w) / 2, (canvas.height - h) / 2);
+    return;
+  }
+  if (K.sig !== sig) {
+    if (K.kid) K.scene.remove(K.kid.group);
+    K.kid = createKid(Object.assign({}, look), gun);
+    if (gear) buildKidGear(K.kid, gear);
+    K.scene.add(K.kid.group); K.sig = sig;
+  }
+  const kid = K.kid.group;
+  kid.rotation.set(0, 0, 0); kid.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(kid), tall = box.max.y - box.min.y;
+  const cy = box.min.y + tall / 2, dist = tall / 2 / Math.tan(15 * Math.PI / 180) * 1.1;
+  kid.rotation.y = yaw; kid.updateMatrixWorld(true);
+  K.camera.aspect = w / h; K.camera.updateProjectionMatrix();
+  K.camera.position.set(0, cy, dist); K.camera.lookAt(0, cy, 0); K.camera.updateMatrixWorld(true);
+  r.setScissorTest(true); r.setClearColor(0xf3eedd, 1);
+  r.setViewport(0, 0, w, h); r.setScissor(0, 0, w, h);
+  r.render(K.scene, K.camera);
+  r.setScissorTest(false);
+  const keep = document.createElement('canvas'); keep.width = w; keep.height = h;
+  keep.getContext('2d').drawImage(r.domElement, 0, DAMAGE_H - h, w, h, 0, 0, w, h);
+  if (K.cache.size >= 96) K.cache.delete(K.cache.keys().next().value);
+  K.cache.set(sig, keep);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(keep, (canvas.width - w) / 2, (canvas.height - h) / 2);
+}
+// The kids whose asks this result brings: the match's first win, his text due after it, and he is not in yet
+function teammateAsksFor(scenarioId, outcome, wonBefore) {
+  if (outcome !== 'win' || wonBefore) return [];
+  return SUMMER_TEXTS.filter(t => t.ask && t.after === scenarioId && crewAskOpen(t.ask)).map(t => t.ask);
+}
+function renderTeammateCard(queue, said) {
+  const el = document.getElementById('resultTeammate');
+  if (!el) return;
+  Game.scenario.teammateQueue = queue;
+  if (!queue.length && !said) { el.classList.remove('on'); el.innerHTML = ''; return; }
+  el.classList.add('on');
+  const id = queue[0];
+  if (!id) {   // the last answer stays up in place of the buttons
+    el.innerHTML = `<div class="rt-fig"><canvas width="120" height="150"></canvas></div><div class="rt-text">` +
+      `<div class="rt-head">NEW TEAMMATE!</div><div class="rt-done">${said.text}</div></div>`;
+    try { drawKidPortrait(el.querySelector('canvas'), CHARACTERS[said.id], CREW_GUNS[said.id]); } catch (e) { console.warn('teammate card', e); }
+    return;
+  }
+  const ch = CHARACTERS[id];
+  el.innerHTML = `<div class="rt-fig"><canvas width="120" height="150"></canvas></div><div class="rt-text">` +
+    `<div class="rt-head">${said ? 'AND ANOTHER ONE!' : 'NEW TEAMMATE!'}</div>` +
+    `<div class="rt-name"><b>${ch.name.toUpperCase()}</b> wants in your crew <span class="rt-gun">· ${getGunDisplayName(CREW_GUNS[id])}</span></div>` +
+    `<div class="rt-intro">${CREW_INTROS[id] || ''}</div>` +
+    `<div class="rt-btns"><button class="nb-btn" data-yes="1">Yes, you're in</button><button class="nb-btn" data-yes="0">Not yet</button></div></div>`;
+  try { drawKidPortrait(el.querySelector('canvas'), ch, CREW_GUNS[id]); } catch (e) { console.warn('teammate card', e); }
+  el.querySelectorAll('.rt-btns button').forEach(b => b.addEventListener('click', () => teammateAnswer(id, b.dataset.yes === '1')));
+}
+function teammateAnswer(id, yes) {
+  const q = (Game.scenario.teammateQueue || []).filter(k => k !== id);
+  const name = CHARACTERS[id].name;
+  let text;
+  if (yes && crewTakeIn(id)) {
+    const t = SUMMER_TEXTS.find(t => t.ask === id);
+    Game.persist.textsRead = Game.persist.textsRead || {};
+    Game.persist.textsRead[t.id] = true;
+    text = `${name} is in your crew.`;
+  } else {
+    text = `Not yet. ${name}'s text is on your phone.`;
+  }
+  (Game.scenario.teammateAnswers = Game.scenario.teammateAnswers || []).push({ id, yes: !!yes });
+  autoSave();
+  renderTeammateCard(q, { id, text });
+}
+
 // Human-readable reason a scenario is locked (for greyed rows / pickers).
 function scenarioLockReason(scenarioId) {
   const ctx = findScenarioListContext(scenarioId);
@@ -35452,7 +35704,9 @@ function openScenarioBrief(scenarioId) {
 // v1.274 (D.28 step 2): the briefing's roster, where a crew kid can be benched or brought back
 function renderBriefRoster(scenarioId) {
   const el = document.getElementById('briefRoster');
-  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true });
+  el.innerHTML = renderBriefingRosterHTML(getScenarioBriefing(scenarioId), { bench: true, lineup: true });   // v1.298 (D.54): as a lineup
+  el.closest('.brief-card').classList.add('lineup');
+  drawBriefingLineup(el);
   el.querySelectorAll('[data-bench],[data-unbench]').forEach(b => b.addEventListener('click', e => {
     e.stopPropagation();
     if (b.dataset.bench) crewBench.add(b.dataset.bench); else crewBench.delete(b.dataset.unbench);

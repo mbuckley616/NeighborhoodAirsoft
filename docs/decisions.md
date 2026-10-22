@@ -54,6 +54,55 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Bunratty and the Hollow at real scale (D.51): how do 28 matches stay fightable on streets 2.5 times longer? (deep-work session, 2026-10-21, card `fable/d51-bunratty-hollow`)**
+  You chose real scale throughout (16 Oct). Bunratty Court really runs about 210 m from the fork to the bulb (the game's
+  lane is 85 m), with lots 50-60 m wide and houses 15-25 m across; the Hollow's field grows the same way. The guns are
+  tuned for 10-40 m (a BB is sure inside 10 m and wanders past it), and the kids' fight logic is built round the same
+  band: a kid with a pistol starts working into a fight at 30 m, one with a UMP or MP5 at 50 m.
+
+  What the matches do today, measured headless (all 28, two rounds each, 90 s, you standing at your start and
+  untaggable so the kids play their whole plan; the matches where the kids wait for you to come, like Nick Won't Budge,
+  Storm the Court and the fort attacks, fire nothing in that test):
+  - Your side starts 30-69 m from theirs on Bunratty (1v1 with Sean 30 m, Four on Four 54 m, Hold the Cul-de-Sac 69 m),
+    64-65 m in the Hollow's team matches.
+  - The first shot comes 2.4-8 s in, at 33-64 m.
+  - The middle shot of a match is fired at 18-39 m on Bunratty and 33-39 m in the Hollow's team matches. Already 48% of
+    the shots in Four on Four and Protect Ryan, and 38-44% in the Hollow's Big Game and Night Game, are fired past 40 m.
+  - Walking speeds: you 3.6 m/s (5.8 sprinting), a kid 2.5-3.5 m/s. At 2.5 times today's distances the sides would
+    start 75-170 m apart: 20-50 s of walking before anyone is in range.
+
+  1. **How the matches stay fightable.**
+     - A) **Each match plays a part of the real-scale street.** The whole street and the Hollow are built at real size,
+       and each match is fenced to a play area about today's size, placed where you say the fights were: the bulb, your
+       house, the motor court and the back terraces for most; the fork or the middle of the street for a few. Past a
+       match's edge the rest of the street is scenery behind yards, hedges and woods, and different matches can use
+       different parts. Starts stay 30-70 m apart, so the fights keep today's distances. *(recommended: the measurements
+       say today's maps are already at the top of the band, and this keeps every match close to how it plays while the
+       street around you is the real one)*
+     - B) **The whole street in play** for every match, with more starts spread along it. The sides start 75-170 m
+       apart; matches open with a long walk, more shots are fired past 40 m, and the small matches (1v1 with Sean, The
+       Brothers) feel empty.
+     - C) **A for the small and night matches, a bigger area for the big ones:** Four on Four, Protect Ryan, The Last
+       Saturday, the Big Game and Full-Auto Mayhem get an area about 1.5 times today's (about 130 x 90 m), with starts
+       45-100 m apart. These are the matches that already fire half their shots past 40 m.
+
+  2. **How the two maps join.** Your house's back yard is about 200 m from the river, 20-30 m higher, down woods at
+     25-40°. Nobody fights on that slope.
+     - A) **Two maps that share an edge view.** From Bunratty's back terraces you look down through the trees to the
+       water with the field below. From the Hollow you see the far bank's big houses across the water, and up behind
+       you the woods rising to the backs of the Bunratty houses. Each map keeps its own cost. *(recommended)*
+     - B) **One connected piece of ground** from the bulb down to the river field, built once. Each map's matches still
+       use their own area. The Hollow's river turns from the west edge to the south, and walking from one map to the
+       other is possible in the scenery. It costs about both maps' draws together, today about 1,240 (Bunratty) plus
+       1,170 (the Hollow) draw calls, before merging the far parts.
+
+  The cost either way: today Bunratty draws about 1,240 calls and the Hollow about 1,170. The budget I would hold is
+  a quarter more: Bunratty at most 1,550 and the Hollow at most 1,450. The houses and woods past a match's edge are
+  merged into a few meshes, as the edge views of v1.252 are. The fog moves out (today it closes in at 82 m on
+  Bunratty), so you can see far enough down a 210 m street to know you are on it.
+  Michael: **A** — each match fenced to a today-sized part of the real-scale street (1A), and the two maps share an edge view (2A); answered on the control room card. (21 Oct 2026)
+
+
 - **D.54 The pre-match lineup: what it shows and where (builder, 2026-10-21, backlog D.54)**
   Today the briefing lists both sides by name (with Bench / Bring for your crew since v1.274). You asked for each
   kid shown lined up and posing with his gun instead.

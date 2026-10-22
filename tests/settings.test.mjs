@@ -128,5 +128,21 @@ else {
   check('moving the effects slider sets the bus to 60%', audio.sets.length > 0 && near(audio.sets.at(-1), 0.6), audio.sets);
   check('closing settings mid-match goes back to the match', audio.mode === 'scenario', audio.mode);
 }
+// v1.294 (backlog B.12): the right button held as the match ends; home is at the settings' 90°, not still aimed,
+// and the button let go in the room leaves it there
+await page.evaluate(() => { if (Game.paused) closePauseMenu(); Game.mouse.locked = true; });   // back in play from the menu
+await page.mouse.down({ button: 'right' });
+await g.spin(60);
+const held = await page.evaluate(() => Game.camera.fov);
+await page.evaluate(() => endScenario('lose'));
+await g.spin(30);
+await page.evaluate(() => document.getElementById('returnBtn').click());
+await g.spin(60);
+const home = await page.evaluate(() => ({ mode: Game.mode, fov: Game.camera.fov, ads: Game.player.ads }));
+await page.mouse.up({ button: 'right' });
+await g.spin(30);
+const homeUp = await page.evaluate(() => Game.camera.fov);
+check('aim held to the end of the match: home at 90°, not aimed', held < 80 && home.mode === 'bedroom' && home.ads === 0
+  && Math.abs(home.fov - 90) < 0.5 && Math.abs(homeUp - 90) < 0.5, { held, home, homeUp });
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

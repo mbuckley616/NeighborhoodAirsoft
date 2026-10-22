@@ -16,20 +16,23 @@ await g.spin(10);
 const hit = (n = 1) => page.evaluate(n => {
   for (let i = 0; i < n; i++) applyBBHit({ canDamage: true, team: 'enemy', owner: 'enemy' }, Game.player);
   const st = Game.scenario.playerStart;
-  return { mode: Game.mode, hits: Game.player.hitsTaken, max: Game.player.maxHits, grace: +Game.player._graceT.toFixed(2),
+  // v1.290 (D.48): a tag sends you walking home; the walk itself is vip.test's, so here you are put at the start
+  const home = !!Game.player._goingHome;
+  if (home) { Game.player.pos.copy(st.pos); playerWalkHomeStep(0); }
+  return { mode: Game.mode, home, hits: Game.player.hitsTaken, max: Game.player.maxHits, grace: +Game.player._graceT.toFixed(2),
     atStart: Game.player.pos.distanceTo(st.pos) < 0.01, respawns: Game.scenario.playerRespawns || 0 };
 }, n);
 const away = () => page.evaluate(() => { Game.player.pos.x += 6; Game.player.pos.z += 2; return Game.player.pos.distanceTo(Game.scenario.playerStart.pos); });
 await away();
 const h1 = await hit();
-check('a tag costs one of your three lives and puts you back at the west end, with 2 s of cover', h1.mode === 'scenario' && h1.max === 3 && h1.hits === 1 && h1.atStart && h1.grace === 2 && h1.respawns === 1, h1);
+check('a tag costs one of your three lives and puts you back at the west end, with 3 s of cover (v1.291)', h1.mode === 'scenario' && h1.home && h1.max === 3 && h1.hits === 1 && h1.atStart && h1.grace === 3 && h1.respawns === 1, h1);
 const h2 = await hit(4);
 check('the rest of a burst lands in the cover: still one life gone', h2.hits === 1 && h2.mode === 'scenario', h2);
-await g.spin(125);
+await g.spin(185);
 await away();
 const h3 = await hit();
 check('after the cover a second tag costs a second life, back at the start again', h3.hits === 2 && h3.atStart && h3.mode === 'scenario', h3);
-await g.spin(125);
+await g.spin(185);
 const h4 = await hit();
 await g.spin(60);
 const end = await page.evaluate(() => ({ mode: Game.mode }));
@@ -43,6 +46,8 @@ for (const sprint of [false, false, false, true, true, true]) {
     const losses = []; let last = 0;
     if (sprint) { Game.keys.KeyW = true; Game.keys.ShiftLeft = true; Game.player.yaw = -Math.PI / 2; }   // east, toward the bulb
     for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
+      // v1.290 (D.48): tagged, the sprinter turns and walks himself home, then sprints at the bulb again
+      if (sprint) { const P = Game.player, st = Game.scenario.playerStart.pos; P.yaw = P._goingHome ? Math.atan2(-(st.x - P.pos.x), -(st.z - P.pos.z)) : -Math.PI / 2; }
       stepGame(1 / 60);
       if (Game.player.hitsTaken !== last) { losses.push(+(Game.scenario.roundTime || 0).toFixed(2)); last = Game.player.hitsTaken; }
     }
