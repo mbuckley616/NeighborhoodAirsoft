@@ -47,7 +47,8 @@ const res = await page.evaluate(() => {
   // the road runs out through the west tree-wall gap (x −40)
   out.westEnd = hitY(asph, -40.5, P(0).z) !== null;
   // the kerb top (3.45 + 0.61 m out) along both sides of the lane: full height away from the driveways, dropped across
-  const drives = [[-28, -1], [-6, -1], [16, -1], [-30, 1], [-8, 1], [12, 1], [33, 1]];   // houseDefs' x, and side (−1 north)
+  // v1.305: the street's houses' drives run to their garage wings or doors (BR_NEIGHBOURS); the hero's is its motor court's, 39
+  const drives = [...BR_NEIGHBOURS.map(h => [brNeighbourPlan(h).driveX, h.f === 's' ? -1 : 1]), [39, 1]];   // x, and side (−1 north)
   const kerb = road.kerb || [];
   const full = [], dropped = [];
   for (let t = 0.02; t <= 0.9; t += 0.004) {
@@ -62,14 +63,14 @@ const res = await page.evaluate(() => {
       if (dist > 2.7) full.push(hgt); else if (dist < 2.0) dropped.push(hgt);
     }
   }
-  // round the bulb: full except across the hero house's drive (x 33, south)
+  // round the bulb: full except across the hero house's drive (v1.304: its motor court, x 39, south)
   const bulbFull = [], bulbDrop = [];
   for (let a = 0; a < Math.PI * 2; a += 0.02) {
     const x = 34 + Math.cos(a) * (6.5 + 0.61), z = 2 + Math.sin(a) * (6.5 + 0.61);
     if (x < 30) continue;   // the mouth where the lane comes in
     const y = hitY(kerb, x, z); if (y === null) continue;
     const hgt = y - gY(x, z) - 0.06;
-    if (z > 2 && Math.abs(x - 33) < 2.0) bulbDrop.push(hgt); else if (z <= 2 || Math.abs(x - 33) > 2.7) bulbFull.push(hgt);
+    if (z > 2 && Math.abs(x - 39) < 2.0) bulbDrop.push(hgt); else if (z <= 2 || Math.abs(x - 39) > 2.7) bulbFull.push(hgt);
   }
   const stat = a => a.length ? { n: a.length, min: +Math.min(...a).toFixed(3), max: +Math.max(...a).toFixed(3) } : { n: 0 };
   out.kerbFull = stat(full); out.kerbDropped = stat(dropped); out.bulbFull = stat(bulbFull); out.bulbDrop = stat(bulbDrop);

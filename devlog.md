@@ -12597,3 +12597,603 @@ never jammed.
 ### Still open
 - Whether a jam in one burst in five makes the Tick-Tock, at two BBs a second, feel worse than the others is for a
   playtest. Its bursts are short, so a jam costs it more time per BB.
+
+## v1.303 — Bunratty past its fence is the real place
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 1 of 5. Michael chose real scale (16 Oct), with each match fenced
+to a part of the real street about today's size, and the two maps sharing an edge view (1A and 2A, 21 Oct). This step
+builds the ground and the street past the fence. The 16 matches play on the same ground as before, and nothing inside
+the box moved. Steps 2 to 5 are his house and the street's houses at real size, the Hollow's field on the river, the
+28 matches re-anchored, and the edge views.
+- **The street runs on to the fork.** Past the west entry the road climbs another 120 m to the fork with Sentinae Chase,
+  bending west. That makes it 210 m from the fork to the bulb, as the real court is. The fork stands 13.6 m over the
+  bulb (Michael: "more than 10 m"). Sentinae Chase crosses there, with a mown island in the Y, a black lantern lamp and
+  a street sign. The road is the same ribbon with gutter and kerbs, laid at the same step along the curve, so the
+  lane's samples from the entry to the bulb are the old ones.
+- **The lots end at a bluff, and the woods fall to the river.** Past the south fence the ground keeps today's level
+  for 3-7 m. Then it falls 22-24 m, at up to about 31°, to a floodplain. A 3 m clay cut drops to the water, which is
+  ~190 m out from the bulb across the river's line. The guide puts the river 200-210 m SSE of the court's end. East of
+  the bulb, the creek's ravine runs down to the river about 90 m out. The far bank climbs 52 m, with five big stucco
+  and brick houses along its top facing the water. The mown field on the floodplain is the Hollow's, seen from above;
+  step 3 builds it as a map.
+- **The buried river is fixed** (Found in play, docs/refs/bunratty.md gap 7). The old plane at y −1.6 sat under 5-9 m
+  of grass, with 16 far-bank trees buried to their crowns. All of it is gone. The new water is murky green-brown
+  (0x5f6a4c, from the Chattahoochee guide), lies at −26 m in its channel and is clipped to the ground.
+- **About 1,650 trees stand in the woods all round:** loblolly pines 14-21 m tall and hardwoods 12-18 m, with trunks
+  clear well over head height. They are thinner on the riverbank, so the water shows through. The trees, the far-bank
+  houses and the fork are one vertex-coloured mesh (two at night, for the lit windows), built by a new
+  `buildMergedScenery` that the Hollow will use too. None of it is solid, and none of it stands within 6 m of the
+  bounds. The ground under it browns to leaf litter past the tree walls and reddens at the clay cut. Inside the box
+  the colour per vertex is 1, so the lawns in play look as they did.
+- **The ground mesh grew** from 150 x 150 m to 600 x 500 m. Inside the old 150 m square it keeps the same grid
+  (1.56 m), vertex for vertex. Past that the cells are 6 m.
+- **The view reaches further.** Bunratty's day fog moved out from 35-82 m to 45-400 m. The camera's far plane is 450 m
+  on this map (`viewFar` on the built scene) and goes back to 200 m in the bedroom and on every other map. Night is
+  unchanged (fog 20-66 m).
+- **Cover is unchanged.** The 80 random numbers the old far-bank trees drew are still drawn, so every match's cover
+  lands where it did. The scenery uses its own seeded numbers.
+- **The edge backdrop** (`EDGE_BACKDROPS.buildBunrattyCourtScene`) keeps only its north side: woods, then the backs of
+  the Sentinae Chase houses, as the guide's gap 8 has it. The map now builds its own west, south and east.
+### Verified
+- New `tests/real-scale.test.mjs`. Its checks:
+  - The fork stands 13.58 m over the bulb.
+  - The ground in the box, and 2-3 m round it, matches v1.302's formula to 4e-16 m.
+  - The river is under water at all 51 points sampled along it, with a bank above the water on both sides at every one.
+  - 1,653 trees and 5 far-bank houses, none of them solid; the nearest vertex is 8.25 m outside the bounds.
+  - Of 867 rays from eye height on the hero lawn, 5 reach the water and 90 the far bank. From the bulb, 7 reach the
+    far bank.
+  - The camera's far plane is 450 m in play and 200 m back in the bedroom.
+- **Cover:** all 316 of `bunratty_team_4v4`'s obstacles are identical to main's (the same bounds hashed).
+- **Draw calls,** measured in six views against v1.302:
+  | View | v1.302 | v1.303 |
+  |---|---|---|
+  | Bulb | 401 | 401 |
+  | Entry, looking in | 1,650 | 1,636 |
+  | Lawn | 1,153 | 1,153 |
+  | North | 1,435 | 1,403 |
+  | Bulb, looking west | 1,531 | 1,519 |
+  | Mid-street | 629 | 626 |
+
+  The test holds 2,060: the decision's rule, a quarter over today, applied to today's worst view. The decision's
+  figure of 1,240 came from a lighter view. Triangles in the scene went from 237k to 311k.
+- Building the map takes 663 ms against 513 ms on v1.302.
+- These suites pass: `real-scale`, `bunratty-road`, `bunratty-polish`, `backdrop`, `bulb-sight`, `house-backs`,
+  `houses`, `layout-same`, `smoke`.
+### Still open
+- **The water can't be seen from the bulb.** The card asked for it, but at real scale it is out of sight. The bulb
+  sits at the lawns' height, and the lawn's edge 28 m out hides anything more than about 8° down; the water is 26 m
+  below and 190 m away. The bulb sees the far bank, and the back lawn sees the water. Step 2's terraces, with the back
+  lawn 4.3 m under the main floor, may open the view a little. The test asks for the far bank from the bulb and the
+  water from the lawn.
+- **The far bank reads hazy at 250-300 m** under the longer fog. Whether the far houses should come forward or the fog
+  thin further is a look for step 5 and a playtest.
+- **The street's houses past the fence wait for step 2,** when the houses go to real size. The road up to the fork runs
+  through woods for now.
+
+## v1.304 — Michael's house and its terraces
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, first part. Michael's notes put most of the action at his house:
+the front and back yards, and the driveway in front of the garage. The game had a small colonial there, 11 x 8 m. It
+had no garage, no motor court and no pool, and a flat yard with a trampoline. This version builds the house at about
+its real size from the guide (docs/refs/bunratty.md gaps 1-3 and its D.40 section). The play area runs south behind it
+to take the terraces. The street's other houses keep their size for now.
+- **The house.** A new `buildBunrattyHeroHouse` builds it. The main block is 15.7 x 12 m, two storeys at the front.
+  It has cream stucco (0xd6c9ae), cream trim and a hipped dark-brown roof. A front cross gable stands over a three-light
+  bay window. The entry tower is stacked stone, 3.8 m wide, and rises over the eaves with its own hip roof. It has an
+  arched window over double wood doors, six steps up from the front walk, and a lantern either side. On the east end
+  is the garage wing, 8 x 10 m, with three stained-wood doors (0x704723) and a carriage lantern between each pair.
+  Its doors face north onto a concrete motor court that runs from the bulb's rim. The guide offered this or widening
+  the whole east edge. The bulb's kerb now drops across the court, not where the old drive was. The house is baked into
+  one mesh per material (about 20 draw calls). It collides as five boxes: the main block, the gable front, the bay,
+  the tower and the garage.
+- **The walk-out.** The ground behind the house is cut 3.2 m below the main floor (`bunrattyHeroCut`). From the deck
+  down:
+  - The white main-floor deck with its balustrade, on square posts. You walk under it. Its stair comes down along the
+    garage's back wall.
+  - The terrace, with French doors under the deck. The freeform pool (0x7ed1c7) and its spa sit on a pale pool deck
+    inside a closed black fence 1.2 m high. BBs pass through it; bodies don't.
+  - A stacked-stone wall (0x5c4b37, today's light grey was wrong), 1.1 m down to the lawn. A low parapet on the
+    terrace side keeps you from stepping off it. Stone steps go down at the east end and a grass bank at the west.
+  - The lawn, which falls another 1.2 m toward the woods and then drops away. It holds the trampoline (Michael: a
+    trampoline, no playset) and a stone fire pit with its curved seat wall and pillar.
+
+  West of the house, a side yard ramps down from the front lawn to the terrace. The neighbour's yard stays at its old
+  height behind a stone lot-line wall, a 1 m parapet on his side. Every step in the ground lies on a line of the ground
+  mesh's grid, under the house or a wall, so no ledge shows.
+- **The bounds** run south to z 47 for x 16.4-44. Elsewhere the river blocker still stops you at z 30.
+- **Cover and anchors.** Michael's yard props draw the same numbers as before. They now stand where the fights were:
+  two on the motor court, one at the terrace's east end by the steps, one on the lawn.
+  - `hero_backyard` moves to the terrace's east end (41.6, 31), used by Nick, Tyler and Marcus in four matches.
+  - Last Kid Standing's sixth start (`ffa_6`, Owen) was where the garage now stands. It moves to the lawn
+    (36.5, 44.5). The terrace's east end was the first try, and it saw house 4's start over the lot-line wall.
+  - The trees of the old walls and the scatter that stood on the lot are built and taken out again, so they still
+    draw their numbers. The scatter steers round the old house's footprint for the same reason, and the rest of every
+    match's cover lands where it did.
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - The main block is 15.7 x 12.1 m and the garage wing 8 x 10.2 m.
+  - The main floor is at 1.93 m, the terrace at −1.27 m (3.2 m down) and the lawn at −2.94 m.
+  - A flood of the kids' walkable cells from the bulb reaches the motor court, the side yard, under the deck, the
+    terrace's east end, the lawn and the fire pit, and not the pool.
+  - The largest ground step anywhere a kid can walk on the lot is 0.43 m in half a metre (the limit is 0.45). It is at
+    the terrace's corner under the deck's west end.
+  - The terrace sees the far bank (176 rays) and the water (3). The lawn sees the water (5).
+  - Changed checks: the ground test now leaves out Michael's lot, the "nothing within 6 m" test measures from the two
+    play areas, and the lawn's view point moved from the flat yard at z 27 (the pool now) to z 42.
+- **`bunratty-road`:** the hero's driveway drop moved from x 33 to the motor court at x 39. It passes.
+- **Cover:** against v1.303, only Michael's own props and the trampoline moved, in Four on Four, Last Kid Standing and
+  The Last Saturday. That is 4-5 of 46-47 pieces; the rest are the same to the centimetre.
+- **Draw calls** (v1.303 → v1.304), with the old trees on the lot gone:
+  | View | v1.303 | v1.304 |
+  |---|---|---|
+  | Bulb | 401 | 401 |
+  | Entry | 1,636 | 1,547 |
+  | North | 1,403 | 1,314 |
+  | Bulb looking west | 1,519 | 1,529 |
+  | Mid-street | 626 | 531 |
+  | Looking at the house from the bulb | 436 | 350 |
+  | The lawn looking up at the house | 1,206 | 1,433 |
+  | Terrace's east end looking out | — | 1,827 |
+
+  All are inside the 2,060 budget. The scene has 317k triangles, against 334k.
+- These suites pass: `real-scale`, `bunratty-road`, `bunratty-polish`, `houses`, `house-backs`, `bulb-sight`,
+  `ffa-starts` (Last Kid Standing and the Pickup Game's 3- to 7-way, nobody in sight), `vip-spawn`, `layout-same`,
+  `fence-bound`, `kid-hold`, `last-saturday`, `pincer`, `cover-fire` and `smoke`.
+- **The stuck-kid sweep on all 16 Bunratty matches** (3 ways each, up to 90 s): no kid holds a moving state for over
+  15 s. The worst was 6 s (Sean, advancing). No page errors, by day or at night; at night the windows and the bay light.
+### Still open
+- **The bulb no longer sees the far bank.** v1.303 found 7 rays of it past the small colonial. Michael's house at its
+  real size now stands between the bulb and the river, as it does on the real court. The test now asks for the far bank
+  from his terrace.
+- **The street's other six houses are still the 8-9 m colonials,** so his house is now twice their size. Growing them,
+  with the north-side lawns banking over the kerb, is the rest of step 2. So is D.40's backyard range matched to these
+  terraces.
+- **What only a playtest can judge:**
+  - The motor court's fights: the garage doors face the bulb, a turn from the side-entry in the pictures, because
+    the east bounds leave no room.
+  - The lawn as a pocket below the wall, reached only by the steps and the grass bank.
+  - The side yard as the one way from the front to the back.
+  - The four matches whose `hero_backyard` kid now starts by the steps.
+- The house's stucco reads paler than the photos' cream under the day light, as the other houses do.
+
+## v1.305 — The street's houses at real size
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, second part. v1.304 built Michael's house at about its real size,
+so it stood twice as big as the six 8-9 m colonials round it. The guide calls the court's houses "very large and
+spacious", 15-25 m across, in mixed styles (docs/refs/bunratty.md, "The buildings"). The colonials were Winnmark's house
+with its shutters and blue windows, seven times over. Each match is fenced to a today-sized part of the street (1A), so
+the houses could not grow to full size without eating the yards the matches fight in. They grow as far as the lots
+allow, and the street's look comes from the guide instead.
+- **Six new houses** (`BR_NEIGHBOURS`, built by `buildBunrattyNeighbours`). Each keeps its old front line and grows
+  back and sideways. Three of them have a two-bay garage wing, set 1.2 m back, with a concrete apron to the drive.
+  | House | Style | Main block | Garage wing |
+  |---|---|---|---|
+  | 0 (north, Sean's) | grey-beige stucco | 13 x 10 m | 5.4 x 5 m |
+  | 1 (north) | cream, columned portico | 15 x 10 m | — |
+  | 2 (north) | tan-grey brick | 13 x 10 m | 6 x 6.5 m |
+  | 3 (south) | cream stucco | 12 x 9.5 m | — |
+  | 4 (south) | brick | 11 x 9 m | 5.5 x 5.5 m |
+  | 5 (south, by Michael's) | grey-beige stucco | 10.8 x 9.5 m | — |
+
+  The old houses were 8-9 x 7 m. The guide's three styles:
+  - **Stucco:** French-eclectic, with heavy cream trim, quoins up the front corners, arched windows downstairs and a
+    steep hip roof with a front cross gable.
+  - **Brick:** white trim, twin front gables, and an arched portico with its own gable.
+  - **Portico:** a two-storey portico on four columns under a balustrade.
+
+  Every house has double wood doors under a lit fanlight, up a three-riser stoop, with lanterns either side. It has
+  mulch beds along the front, a chimney, windows on all sides, and a back door with a step. All six are baked into one
+  group: 22 draw calls together, where the colonials cost about 15 meshes each.
+- **The north lawns bank up over the kerb** (gap 5d). From a metre past the asphalt they rise 1.4 m over 5.5 m, 21° at
+  the steepest (the kids walk 25°). They are level from there to the houses and the woods behind. The bank fades out
+  past the west entry and before the bulb. `bunrattyNorthBank`, added to the ground; nothing on the road or south of it
+  moves.
+- **Drives** run to each garage wing, or to the door, and the kerb drops there (`dx` on the house's entry, which
+  `buildStreetRoad`'s kerb now reads, falling back to `x`, so Winnmark is unchanged). The mailboxes and bins follow
+  the drives.
+- **Cover and anchors stay put.** The scatter trees still steer round the old footprints, so every number they draw is
+  drawn as before. Trees that stand on the new houses (or within 0.8 m) are taken out again. A backyard prop that lands
+  on a bigger house goes out 1.5 m behind it, at least 2.2 m from the yard's anchor and clear of the props already
+  there, stepping 2 m along the wall to find room. A later prop that would land on it steps aside the same way. The
+  first try put one plywood stack against another behind Sean's house, and Protect Ryan's Ryan, who starts there, was
+  pushed 1.95 m off his anchor.
+  - Every `houseN_backyard` anchor and every start stands at least 0.9 m clear of the new walls.
+  - One start moved: the free-for-all's `ffa_5` (Priya), from (18.5, 18.5) to (16.5, 20). The bank lifts your
+    `ffa_side` start between houses 1 and 2 by 1.4 m, and from there you and she saw each other across the street.
+    The new spot is the nearest that keeps the lot's rule.
+- **Protect Ryan's barricade is 1.6 m, from 1.5** (six boards, not five). It is the one in front of Priya, built in
+  v1.272 (Michael: A) so that nothing from up the street reaches her chest or head. Over 1.5 m, 32 spots on the
+  banked lawns of houses 1 and 2, 18-30 m off, saw her head. The bank lifts them 1.4 m, and 0.8 m would still leave 17.
+  At 1.6 m there are none.
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - The six main blocks measure 13 x 10, 15 x 10, 13 x 10, 12 x 9.5, 11 x 9 and 10.8 x 9.5 m, in all three styles.
+  - The six cost 22 draw calls.
+  - Every backyard anchor and start is at least 0.9 m clear of them. A flood of the kids' walkable cells from the bulb
+    reaches every one.
+  - The bank is 1.4 m in front of the north houses and 20.9° at the steepest, with nothing on the road or south of it.
+  - The ground everywhere else in the box is still v1.302's, to 1e-9 m.
+  - Two new views of the street join the draw-call test. All eight views are inside the 2,060 budget.
+- **Draw calls in the same four views,** on v1.304 and v1.305:
+  | View | v1.304 | v1.305 |
+  |---|---|---|
+  | Down the street | 834 | 816 |
+  | Along the lane | 461 | 453 |
+  | North lawn | 630 | 582 |
+  | The entry | 1,547 | 1,475 |
+
+  Triangles in the scene went from 317k to 306k.
+- **Changed tests.** These pinned Winnmark's colonial on Bunratty and now check Bunratty's own houses:
+  - `houses`: no colonial is left on Bunratty.
+  - `house-backs`: each of the six has a door on its back wall, and nothing on the back below 2 m stands more than
+    0.3 m off the wall.
+  - `bunratty-polish`: no colonial is left on Bunratty.
+  - `bunratty-road`: the kerb drops at the new drives.
+  - `vip` and `vip-spawn`: the barricade is found at 1.6 m. Their sight checks are unchanged: from up the hill, no line
+    reaches her chest or head (0 of 544).
+- **These suites pass:** `real-scale`, `bunratty-road`, `bunratty-polish`, `houses`, `house-backs`, `ffa-starts` (after
+  the `ffa_5` move), `fence-bound`, `layout-same`, `smoke`, `bulb-sight`, `vip`, `vip-spawn`, `vip-cover`, `backdrop`,
+  `kid-hold`, `last-saturday`, `pincer`, `cover-fire`, `last-kid`, `pickup`, `pickup-ffa`, `pickup-kids`, `crew-field`,
+  `crew-spawn-bounds`, `crew-balance`, `kid-cells`, `rival`, `cars`, `car-side-fire`, `idle-ally`, `taggers`, `yard-props`,
+  `opening-hold`, `briefing-lives`, `one-ending`, `backyard-range` and `backyard-guns`.
+  `lamplight-starts`, on Bellfield, failed once ("a tagged kid comes back at his yard start") with three browsers
+  running beside it. It passed alone on the same build; this change does not touch Bellfield.
+- **The stuck-kid sweep on all 16 Bunratty matches** (3 ways each, up to 90 s) passed: no kid holds a moving state for
+  over 15 s. The worst was 4.5 s (Nick, chasing, behind house 2's back wall in Infection). No page errors, by day or at
+  night; at night the windows and fanlights light.
+### Still open
+- **The houses are about two-thirds of real size.** The real ones are 15-25 m across on 50-60 m lots. Growing them
+  further would eat the yards the matches use. A larger play area for some matches would make room, but that is a
+  design call: Michael's 1A kept each match today-sized.
+- **The garages face the street, not the side.** The guide's houses have side-entry garages. The wings face the street
+  because the lots have no room for a court beside them.
+- **Protect Ryan's barricade is 10 cm taller than Michael's 1.5 m.** That keeps his rule from v1.272 (no line to her
+  head) with the bank in. The other way would be no bank by houses 1 and 2.
+- **What only a playtest can judge:** the north bank as cover (a kid crouched at its top looks down onto the lane), and
+  the narrower side yards between the bigger houses and the fences.
+- **D.40's backyard range matched to Michael's terraces is the rest of step 2.**
+
+## v1.306 — The range is Michael's backyard
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, last part: D.40's leftover. The range (v1.257) was laid out from
+memory before any pictures came: a flat yard 25 x 31 m behind a small house, a board fence round it, a square pool on
+one side. The guide's D.40 section (docs/refs/bunratty.md) describes the real one: a walk-out terrace under the main
+deck, the pool in its black fence, a stacked-stone wall down to a lawn strip that falls toward the woods, the fire pit
+at its upper end, and "the lawn strip is a natural lane, ~30-35 m from the fire-pit end to the hammock end, the stone
+wall on one side and the drop on the other, with the woods as the backstop". v1.304 already built all of that for the
+map, so the range now stands in it.
+- **The same ground and the same house.** Bunratty's ground functions (`bunrattyGroundY` and its parts, and `BRH`, the
+  house's levels) moved out of `buildBunrattyCourtScene` to the top level, unchanged, and the range builds
+  `buildBunrattyHeroHouse` on them in the map's own coordinates. The trampoline became `buildBackyardTrampoline`,
+  shared by both; the map still draws its one random number for its turn, so its cover lands where it did.
+- **The way out.** You come out of the French doors onto the terrace under the deck, facing the pool. The way down is
+  round the pool's fence and down the stone steps at the terrace's east end to the lawn, about 25 m to the bench.
+- **The lane.** The bench (the same folding table) stands on the lawn past the fire pit, across the lane, and you shoot
+  west along the lawn. The stone wall and the terrace are on your right, and the drop to the woods on your left. The
+  targets are v1.257's (Michael: A), at the same distances: the six cans on their plank across two cinder blocks at
+  8 m, the three bottles on a crate at 11, the two sheets of paper at 12.5 and 13.5, and the near bullseye on its easel
+  at 15. The far bullseye is nailed to a tree at the hammock end, 20 m. A hammock hangs between that tree and another.
+  The trampoline stands by the wall, out of the line (Michael: a trampoline, no playset). The targets face the bench,
+  east, so the hit code checks the plane x = target, not z.
+- **The lawn falls toward the woods,** so knocked cans and broken glass now come to rest on the ground under them
+  (`range.restY`), not at y 0.
+- **Past the lot:** the woods round it and down the bluff, the river and the far bank, the field below, and the
+  neighbour's house over the lot-line wall. They are one merged mesh with nothing solid, by the map's rules: the
+  map's tree spacing and thinning, and nothing within 6 m of the box. The camera sees 330 m and the fog runs 45-320 m,
+  so the water shows.
+- **The spawn.** The French doors are under the deck, and the spawn clearer took the deck (2.95 m overhead) for
+  something in the way. It pushed you 11 m west into the side yard. A built scene can now say its spawn's y is its feet
+  (`spawnFootY`), which only the range does.
+### Verified
+- **`tests/backyard-range.test.mjs`,** changed where it pinned the old yard. The firing spot is `range.line` at the
+  ground's height, facing west. The near-board shots go along −x, the paper's "through" is measured in x, and a can at
+  rest is measured from the ground under it. Every target check passes as before:
+  - The can is knocked off and rests 0.033 m over the grass, with the other five up.
+  - The bottle breaks into 8 shards, all on the ground.
+  - The paper takes a hole and the BB goes through.
+  - Dead centre on the far bullseye from the bench scores 8, at 20 m, with the drop.
+  - The near board scores 10 and 6.
+  - There are 8 marks, the tally reads right, and E at the bench resets all of it.
+  - The back door and F take you home with the BBs.
+- **New checks in the same suite:**
+  - You start at the doors, with their prompt.
+  - A flood of walkable cells from the doors reaches the steps, the bench and the hammock end, and not the pool.
+  - The bench stands 1.97 m below the terrace.
+  - From the bench, 5 rays at eye height reach the river.
+- **Draw calls and triangles,** v1.305 → v1.306:
+  | View | v1.305 (calls, triangles) | v1.306 (calls, triangles) |
+  |---|---|---|
+  | At the door | 209, 22k | 125, 44k |
+  | At the bench | 199, 20k | 122, 44k |
+  | Down the yard | 182, 13k | 121, 44k |
+
+  The house is baked and the woods are one mesh, so the calls fall and the triangles double. Building the yard takes
+  330 ms, against 104 ms.
+- **These suites pass:** `backyard-range`, `backyard-guns`, `real-scale`, `bunratty-road`, `layout-same` (every match's
+  cover the same, after the trampoline's move into its own function), `ffa-starts`, `houses`, `kid-hold` and `smoke`. No
+  page errors.
+### Still open
+- **For a playtest:** whether the 25 m walk from the doors to the bench is worth the look, and whether the bench
+  belongs on the terrace's east end instead, over the wall, which the guide calls a second firing point. Also whether
+  the far bullseye on the tree reads at 20 m in the shade.
+- The range is always by day, as it was.
+- Step 2 is done. Next comes step 3, the Hollow's field on its river frontage below Bunratty.
+
+## v1.307 — The Hollow on its river, below Bunratty
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 3, first part. Michael: "the Hollow's field was below Bunratty,
+on its own river frontage; murky water, brush and logs; the WIZARD HOLLOW sign at the trailhead; from the field you
+saw big houses up the far bank and a few houses against the river on the opposite (Dunwoody) bank". His answers of 21
+Oct were 1A and 2A: each match keeps a today-sized play area, and the two maps share an edge view. So the field, its
+forts, pallets, trees and the 12 matches stay exactly as they were, and the place round them is now the real one.
+Before this, the Hollow ended in a cyan river 22 m wide and a flat strip of 26 trees across it.
+- **The ground runs on** past the box, to the far bank and up the bluff (x −300..260, z −260..260). Inside 150 x 150 m
+  the grid is the old one, vertex for vertex; past it the cells are 6 m. A new `hollowRealScale` adds the real place's
+  terms, and every one is zero inside the box and on its tree ranks:
+  - **West, the river.** Past the ranks' west end the bank's clay cut drops 2.4 m to the bed. The river runs 62 m
+    wide (the guide says 70-100; the constants are in `HW`). The far bank rises from its own clay cut 46 m, up a
+    slope of about 30°.
+  - **East, the bluff.** The floodplain runs on 14 m past the ranks, then the bluff climbs 24 m to where the backs of
+    the Bunratty houses stand.
+  - The floor browns to leaf litter past the ranks, and the two cuts are red clay. The colour is per vertex, and it is
+    1 in the field, so the field looks as it did.
+- **The river is murky.** It is opaque, matt olive (0x3e4430), and reads close to the guide's #928f5c under the noon
+  sun. It sits at −2.5, so the bank is 1.5 m over the water. The creek is a shade darker (it was the same cyan), and
+  outside the box it now runs down to the lower river at its mouth instead of hanging at the old level. The shallows
+  strip, the mud strip and the flat far-side strip are gone. The 26 far-side trees are still built, into a scene
+  nothing draws, so every random number they drew is drawn and every match's woods land where they did.
+- **The scenery past the box** is one merged mesh, two at night, with its own seeded numbers, and none of it is solid:
+  - Floodplain woods up and down the river and on the bluff. They are tall hardwoods with clear trunks and about a
+    fifth pines, in the guide's lighter canopy colours.
+  - Thicket (Michael: "pretty thick" off the trails): about 175 shrubs with logs and grey deadfall, between the bounds
+    and the tree ranks and east past them.
+  - Shrubs along the top of the near bank, three driftwood piles, and a whole fallen tree lying out into the water,
+    its crown bleached.
+  - Across the river, eight big houses along the top of the far bank, facing the water. Three more stand down
+    against the water, each with a dock on posts.
+  - The trail: leaf-covered dirt on a mown verge, coming down the bluff from the east into the field at z 10. Deadfall
+    and cut rounds are heaped along its sides.
+- **The sign.** WIZARD HOLLOW is hand-lettered on a weathered grey board (0x979b91, from the photo). It is nailed at
+  1.5 m to a big oak at the trail's head, 1.2 m past the east bounds, facing the field. The board is 0.8 x 0.2 m, a
+  little bigger than the photo's 0.6 x 0.15, so it reads from the bounds.
+- **The edge backdrop** (`EDGE_BACKDROPS.buildHollowScene`) keeps only its east side: the backs of the Bunratty houses
+  along the top of the bluff, 66 m out, and the woods past them. The guide and Michael have no houses on the
+  floodplain, so the north and south house bands are gone, and so is the west band (the map builds its own).
+- **The view reaches further.** Day fog moved out from 40-120 m to 45-320 m, and the camera sees 350 m on this map.
+  Night is unchanged (fog 14-58 m).
+### Verified
+- **Cover is unchanged.** I built all 12 Hollow matches on v1.306 and on v1.307 in one run and compared every obstacle's
+  numbers to the millimetre. There are 472-474 obstacles a match, and none differ. Your start and every kid's spawn
+  are the same. Where the kids stood a few real frames after BEGIN differed in two matches, but it differs as much
+  between two runs of the same build: those frames come from the page's own clock. No page errors in any of the 24
+  builds, by day or at night.
+- **`tests/real-scale.test.mjs`, extended with the Hollow.** Its checks:
+  - The ground in the box and on its tree ranks is v1.306's formula, to 5e-15 m.
+  - The river is under water at all 315 points sampled across it, with a bank above the water on both sides at all
+    20 places sampled along it (the 21st, z 0, is the creek's mouth, which cuts the near bank).
+  - The far bank climbs 47.7 m over the water, and the bluff 24.1 m over the field's east edge.
+  - From the west edge, at eye height, 304 rays reach the water and 193 the far bank.
+  - The sign stands 1.17 m past the bounds, its top 1.66 m up.
+  - Nothing past the box is an obstacle, and the camera sees 350 m.
+- **Draw calls and triangles** in the same five views, v1.306 → v1.307:
+  | View | v1.306 (calls, triangles) | v1.307 (calls, triangles) |
+  |---|---|---|
+  | Among the trees | 826, 124k | 820, 189k |
+  | West edge | 1,167, 157k | 1,167, 224k |
+  | East | 1,080, 138k | 1,004, 194k |
+  | North fort | 562, 104k | 562, 170k |
+  | South fort | 256, 67k | 254, 133k |
+
+  The test holds 1,450, the decision's budget. Building the map takes 704 ms, against 403.
+- **`backdrop`:** the Hollow's day backdrop passes the old checks. At night the fog closes at 58 m, short of the bluff's
+  houses at 66 m, so none is built; the test now expects that for the Hollow at night.
+- **These suites pass:** `real-scale`, `backdrop`, `lot-hollow-polish`, `hollow-fort`, `hollow-held`, `ffa-starts`,
+  `pickup-ffa`, `idle-ally`, `fort-spawn`, `spawn-facing`, `cover-fire`, `kid-hold` and `smoke`.
+### Still open
+- **Logs as cover in the field** are left to step 4. The guide's 6-10 logs and deadfall piles in play would move routes
+  and sight lines, so they belong with the re-anchoring of the 12 matches. This version keeps the field exactly as it
+  was, and the brush and logs stand past the bounds.
+- **The river is 62 m wide,** where the guide's estimate is 70-100 m. That kept the far bank's houses inside the 320 m
+  fog from the field. A playtest can say whether it reads too narrow.
+- **The two maps don't line up metre for metre.** They share an edge view (2A): Bunratty sees the field below it, and
+  the Hollow sees the bluff and the backs of the houses at its top.
+- **For a playtest:**
+  - The longer view by day: the field now shows woods 300 m out where the fog closed at 120. The AI does not see by
+    fog, so play is the same.
+  - Whether the sign reads from the bounds.
+  - The water's colour against the photos.
+- **Next:** the rest of step 3 if Michael wants more in the field itself (the ground's colour and unevenness, the
+  trees greyer and taller, gaps 2-3), then step 4, the 28 matches re-anchored, and step 5, the edges.
+
+## v1.308 — Logs and deadfall round the Hollow's field
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 3, second part: the brush and logs. Michael: "a lot more brush /
+fallen logs / small to medium plants & bushes scattered around this area. It was relatively clear in this space, but
+around the 'battlefield' and off of the main trails, it was pretty thick". v1.307 put the thicket past the bounds.
+This version puts the guide's logs and deadfall (docs/refs/chattahoochee.md gap 1) into play, round the field's edge
+only, so the middle where the fights are stays as clear as it was.
+- **Ten fixed spots for logs and three for deadfall piles,** all in the ring between the field and the box's edge:
+  - **Logs:** 4.5-5.5 m long, lying along x or z. They are 0.48 m high: crouch cover, and BBs stop on them.
+  - **Deadfall:** a heap of grey branches, 3.2 x 2.4 m and 1.2 m high, with a soft surface.
+
+  The trees are seeded per match, so each spot is taken only where it is clear. A spot is skipped unless it is:
+  - 0.6 m from every trunk and piece of cover;
+  - 3.5 m from every start and anchor;
+  - 7 m from the forts;
+  - 4.5 m from the creek.
+
+  A match gets 4-8 pieces. They go on the end of `coverList`, so no placement's index moves.
+- Nothing else in the field moved.
+### Verified
+- **All 12 Hollow matches were built on v1.307 and v1.308 in one run.** Every v1.307 obstacle is there to the
+  millimetre, and 4-8 new ones were added per match (Juggernaut and the Ten-Way 4-5, the night matches up to 8). Your
+  start is the same in every match. No page errors.
+- **`tests/real-scale.test.mjs`:** the Hollow has logs and a deadfall pile, all at the field's edge, the nearest
+  3.5 m or more from any start or anchor.
+- **The AI suites on the Hollow pass:** `ffa-starts` (nobody in sight of anybody at the Ten-Way's starts), `kid-hold`,
+  `cover-fire`, `hollow-held`, `hollow-fort`, `fort-spawn`, `idle-ally`, `spawn-facing`, `pickup-ffa` and
+  `lot-hollow-polish`.
+- **`idle-ally`:**
+  - It failed once of four runs here. Rebecca walked 34.4 m on her own, but went 25.9 s idle without boredom.
+  - That is correct play: each kid's threshold is drawn from 25-30 s, and she moved on before hers came. The check
+    wanted boredom past 25 s, which disagrees with that threshold.
+  - It now asks the same of 30 s, the fault it guards (an ally idle to 30 s and never bored), which the next check
+    already bounds.
+  - Three more runs on v1.308 pass. Three on v1.307 pass, with idle times of 25.3-29.1 s.
+### Still open
+- **Fewer pieces than the guide's 6-10 logs and 2-4 piles.** The seeded woods fill the edge, and a spot is skipped
+  rather than moved. Whether there should be more, and whether the middle should get any, is a playtest call. Michael
+  said the field was "relatively clear".
+- **Ground, trees and match distances still to come.** The ground's colour and unevenness and the trees greyer and
+  taller (the guide's gaps 2-3) would change how the field looks in play. Step 4 checks every match's distances
+  (first contact, starts).
+
+## v1.309 — The 28 matches measured, and the night starts out of sight
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 4: the 28 matches on the two maps checked against their new ground
+and re-anchored where they needed it. Michael's 1A (21 Oct) kept each match on a today-sized part of the real place,
+with "starts 30-70 m apart, so the fights keep today's distances". Steps 1-3 kept every start, anchor and piece of cover
+in the box where it was, except the moves already logged (`hero_backyard`, `ffa_5`, `ffa_6`). So this step was mostly
+measuring, and moving what the measurements showed to be wrong.
+- **What I measured.** All 28 matches on v1.302 (main, before the card) and on v1.308, two rounds of 90 s each, with
+  you standing at your start and untaggable so the kids play their whole plan. For each I took the distance between
+  the sides' starts, which kids of theirs have a line to your start, and the time and distance of the first shot and
+  the middle shot.
+  - **The sides' starts are where they were:** 29.8-67.7 m apart on Bunratty, 62.5 m in the Hollow's team matches,
+    the rest within 0.2 m of where they were. Four moved 0.7-2.4 m: Storm the Court, 2v4, Four on Four and The Last
+    Saturday.
+  - **The first shot comes as it did,** 2.4-8.4 s in, at 33-64 m. Two matches changed:
+    - 1v1 with Sean waits 12.2 s, from 5.7, and the first shot is at 13 m, from 23 m. The bigger houses (v1.305) break
+      the line through the yards.
+    - Four on Four's first shot came at 56.7 m in one round, from 39.4 m.
+  - **Fewer long shots.** The middle shot is at 2.5-47 m on both maps, as before. The share of shots past 40 m fell in
+    Four on Four (0.80-0.86 to 0.40-0.62) and in the Hollow's 3v3 and Big Game, and is about the same elsewhere.
+  - **The briefings name no distances on these two maps,** so none had to change.
+- **The night starts were in sight, before the card too.** The night rule is "no line from a start" (Michael A on
+  Lamplight, 15 Oct: nobody can see your start at BEGIN). I checked it at any height a kid shoots or looks from (1.05,
+  1.18, 1.35 and 1.6 m) to your chest and head, at your start and a step round it. Five of the eight night matches
+  broke it, on main as well:
+  - **Lights Out on the Lane:** Mitchell, from 37.8 m.
+  - **Night Game: Sean Has Your Back:** all four of theirs, 37.8-40.4 m. Their huddle stood on the lane at the bulb's
+    mouth, (18, 0), and looked straight down it to your start.
+  - **The Hollow's Night Game:** Mason's sniper, across the field from the north huddle at 63 m.
+  - **Full-Auto Mayhem:** Mitchell and Ryan, the same way.
+  - **2v4 at Night:** clear at chest height, but the same huddle.
+
+  Each map now has a night huddle, used by its night team matches only:
+  - **Bunratty's `cluster_bulb_night`,** at (33, −19): the bulb's north yard, east of house 2. It is 57 m from your
+    start, as the day huddle is.
+  - **The Hollow's `cluster_north_night`,** at (19, −27): the thicket north-east of the north fort, 61.5 m out.
+
+  They were found by a search of the map for spots from which no point of the huddle's ring (1.6 m round) sees you. The
+  Hollow's spot is in all three night matches' woods, which are seeded per match. The kids walk from there to the
+  anchors they held before. Day matches and the forts' night matches are untouched. Infection in the Dark's taggers
+  carry no guns, so the rule doesn't apply to them.
+- **No other start moved.** The free-for-alls keep the lot's rule (tests/ffa-starts, after v1.305's `ffa_5`).
+### Verified
+- **`tests/real-scale.test.mjs`, extended:**
+  - All 28 matches build and start with no page error.
+  - In every match with sides, the two sides start 29-70 m apart. The nearest are 1v1 with Sean at 29.8 m and the
+    Hollow's Infection's tagger at 16.4 m, which is left out: a survive match, not sides.
+  - In all eight night matches, no kid of theirs has a line from his start to yours. Before this version the check
+    found five matches that failed it.
+- **Night shots, played, v1.308 → v1.309, two rounds each:**
+  | Match | First shot before | First shot now |
+  |---|---|---|
+  | Lights Out on the Lane | 4.0 s, 33 m | 16.2 s, 16-35 m |
+  | Night Game 2v2 | 2.4 s, 39 m | 4.5-4.8 s, 37 m |
+  | The Hollow's Night Game | 2.4 s, 55 m | 3.3-5.2 s, 48-51 m |
+  | 2v4 at Night | 2.4 s, 60 m | 2.4 s, 57 m (at an ally) |
+  | Full-Auto Mayhem | 2.5-4.0 s, 54 m | 4.0-4.2 s, 53-55 m |
+- **Played taggable** at your start, four rounds of 20 s in each of the five:
+  - Lights Out: first tagged at 18.6-19 s, against 11.6-14.2 on main.
+  - One tag at 15.4 s in the Night Game 2v2 and one at 9.2 s in 2v4 at Night. Both came after a kid walked in.
+  - No other tag in 20 s.
+- **The stuck-kid sweep** (`tests/lib/stuck-sweep.mjs`, 3 ways each, up to 90 s) ran on all 12 Hollow matches and
+  Bunratty's two night matches, with the new huddles, and passed: no kid held a moving state for over 15 s. The worst
+  was 7 s (Devon chasing in Infection in the Dark). No page errors. Bunratty's other 14 were swept in v1.305 and none
+  of their starts moved since.
+- **These suites pass:** `real-scale`, `layout-same`, `opening-hold`, `fort-spawn`, `idle-ally`, `spawn-facing`,
+  `deploy-progress`, `briefing-lives`, `crew-balance`, `crew-roster`, `rival`, `laser`, `squad-hud`, `result-text`,
+  `burst-pose`, `ffa-starts` and `smoke`.
+### Still open
+- **The first contact in most team matches is past 40 m:** 37-64 m, as it was before the card. That is the band
+  Michael kept with 1A ("the fights keep today's distances"), not the guns' 10-40. Pulling it in would mean moving
+  the starts closer or slowing the first shot, and that is a call about play for him, not a re-anchoring.
+- **For a playtest:** whether the night huddles' longer walk changes the night matches' feel. Lights Out's first shot
+  now comes at 16 s instead of 4, which fits its briefing ("the other waits in the dark").
+- **Next: step 5,** past the edge for both maps. The far bank's houses and the few on the river's Dunwoody side are
+  built in the maps already (v1.303, v1.307). What is left is the guide's "At the edge" items still missing, and a look
+  at the far bank's haze.
+
+## v1.310 — East of the bulb: the neighbour and the ravine's far side
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 5: past the edge for both maps. Most of it was built with the
+ground. Step 1 (v1.303) built the far bank's big houses over Bunratty's river. Step 3 (v1.307) built the Hollow's far
+bank, with its houses along the top and three down at the water with docks, and the backs of the Bunratty houses on
+the bluff (`EDGE_BACKDROPS.buildHollowScene`, east side). The Hollow guide's "At the edge" items 4-8 were all done in
+v1.307-v1.308. Two of the Bunratty guide's were still missing, both east of the bulb:
+- **The neighbour east of the bulb** (docs/refs/bunratty.md gap 10). The guide: "the real one has a house east of it
+  (grey roof, its own pool)". He stands past Michael's garage wing, at x 51.5-68.5: a light-sided house 17 x 12.5 m
+  with a grey hip roof, facing the street. His pool is behind, in a pale deck. The ground there falls 0.6-1.2 m from
+  his front to his back.
+- **The ravine's far side** (gap 8, east). Across the creek's ravine, about 130 m out from the bulb, three big houses
+  stand high up on the far side and face across it. The guide puts Cartier Ct and River Cliff Dr there.
+- **How they are built:** in the map's one merged scenery mesh, with their own seeded numbers, so the woods, the far
+  bank's houses and every match's cover draw as before. The trees keep off their footprints: 31 fewer, 1,622 in all.
+  Nothing is solid, and nothing stands within 6 m of the bounds; the nearest is the neighbour's eave, 6.9 m past them.
+- **Not built:** the neighbour's drive beside Michael's. It would have to cross the bounds' 6 m margin.
+### Verified
+- **`tests/real-scale.test.mjs`:**
+  - Nine houses now stand past the fence, against five.
+  - Nothing past the fence is solid, and the nearest vertex is still 6 m or more out.
+  - Draw calls in the eight views:
+
+    | View | Calls |
+    |---|---|
+    | Bulb | 408 |
+    | Entry | 1,475 |
+    | Lawn | 1,367 |
+    | North | 1,261 |
+    | House | 338 |
+    | Terrace | 1,731 |
+    | Street | 815 |
+    | Street west | 453 |
+
+    All are inside the 2,060 budget. The houses only add triangles to a mesh that is already drawn.
+  - The Hollow's five views are unchanged, at 254-1,183 against its 1,450 budget.
+- **These suites pass:** `real-scale`, `layout-same` (every match's cover the same), `backdrop`, `bunratty-polish`,
+  `bunratty-road`, `bulb-sight`, `houses` and `smoke`.
+### Still open
+- **The neighbour is mostly hidden** behind the east tree walls from the bulb and the motor court. It shows between
+  the trunks. Whether it should show more is a look for a playtest.
+- **The far bank reads hazy at 250-300 m** by day (v1.303's open item). Left as it is. Thinning the fog further would
+  show the edge of the built ground on other views.
+- **The card's five steps are done, but one fault stays before review.** The full suite, run here in four parallel
+  shards, found `tests/taggers.test.mjs` failing. In Bunratty Infection, Mitchell starts in house 3's backyard and
+  walks 81 m in 45 s. He then slides up and down house 5's west wall, at x 3.6 and z 13.5-19.6, in the 3.5 m side yard
+  between houses 4 and 5, and ends 33 m from the player. Every round fails at 1/60 steps and at the mixed steps alike.
+  The same happens on v1.308 and v1.309: it came with v1.305's bigger houses, though `taggers` passed in that
+  session's run.
+  - **Why:** he is not blocked. Sliding north along the wall toward the street, the slide's step falls to 0.0197 m,
+    just under the tagger's "no progress" mark (`zStuckD`, 0.02). He is counted wedged a metre short of the corner
+    and sidesteps back south, again and again: the v1.125 case, on a longer wall.
+  - **Tried:** counting as stuck only a step under 30% of his stride as well. Mitchell then reached the player in
+    every round (25-36 s). But Nick ended 24 m short in 1 round of 4, so the change is not pushed.
+  - The next session fixes it before the card goes to review.
+- **The rest of the full run:** `ffa-starts` failed once on the Hollow free-for-all (Eric tags you at 6.4 s). It does
+  the same on main, 1 round in 15, and is filed under Found in play. Ten other suites timed out loading the page, with
+  four shards and two probes sharing four cores. The ones re-run alone so far pass.
+
+## v1.311 — Mitchell round house 5's corner
+Card `fable/d51-bunratty-hollow` (backlog D.51), the fault v1.310 left before review: `tests/taggers.test.mjs` failed
+on this branch since v1.305's bigger houses. In Bunratty Infection, Mitchell came down the 3.5 m side yard between
+houses 4 and 5 and slid south along house 5's west wall (x 3.65) toward its corner at z 12.9, with the player 30 m east
+and 12 m south. Only the south part of his step gets through a wall: 0.0197 m a step, just under the tagger's "no
+progress" mark (`zStuckD`, 0.02). So he was counted wedged, and the wall-follow's sidestep, whose side was picked once at
+random, pointed north, back up the wall. He reached z 13.6, a metre short of the corner, and went back, all round.
+- **The fix:** on a fresh wedge, if the last step slid him along something (5 mm or more, and along the sidestep's line),
+  the sidestep goes the way the slide was going. A tagger in a real dead end does not slide, so the old flip after
+  0.5 s of no progress still gets him out of those. v1.310's tried fix (a lower stuck mark) is not used: it left Nick
+  short in 1 round of 4.
+- It is the taggers' own wall-follow only. The gunners' states and every map's layout are as before.
+### Verified
+- **`tests/taggers`:** Mitchell reaches the standing player at 24 s in both passes (1/60 steps and the mixed 0.05 s
+  steps), against 33 m short before. The other five taggers reach him at 10-20 s as before. Five runs in a row green,
+  and once more run beside `tests/rival`.
+- **`npm test`**, in two parallel shards: 180 of 180 suites pass, `ffa-starts` included this time.
+### Still open
+- Nothing new for a playtest. The card's open looks are v1.310's: the neighbour east of the bulb mostly behind trees,
+  and the far bank's haze at 250-300 m.

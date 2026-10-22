@@ -122,7 +122,7 @@ const bar = await page.evaluate(() => {
 await g.scenario('bunratty_vip');
 const sight = await page.evaluate(() => {
   const gyf = Game.scenario.groundY, obs = Game.player.obstacles, p = Game.scenario.enemies.find(e => e.name === 'Priya');
-  const at = obs.filter(o => o.h === 1.5 && o.minX > 28.8 && o.maxX < 30.6 && o.minZ < p.pos.z && o.maxZ > p.pos.z);
+  const at = obs.filter(o => o.h === 1.6 && o.minX > 28.8 && o.maxX < 30.6 && o.minZ < p.pos.z && o.maxZ > p.pos.z);
   const gy = gyf(p.pos.x, p.pos.z);
   const lines = (list) => { let n = 0, chest = 0, head = 0;
     for (let x = -20; x <= 22; x++) for (let z = -8; z <= 8; z++) {
@@ -134,8 +134,10 @@ const sight = await page.evaluate(() => {
     now: lines(obs), without: lines(obs.filter(o => !at.includes(o))) };
 });
 console.log('   Protect Ryan barricade:', JSON.stringify(bar), JSON.stringify(sight));
-check("Protect Ryan: a 1.5 m barricade stands inside the bulb fort's back wall at Priya's spot, and it is the cover she holds",
-  sight.n === 1 && sight.h === 1.5 && sight.cover && sight.off < 1, sight);
+// v1.305: 1.6 m since the north lawns bank 1.4 m over the kerb (D.51 step 2): over 1.5 m, 32 lines from the lawns of
+// houses 1 and 2 reached her head
+check("Protect Ryan: a 1.6 m barricade stands inside the bulb fort's back wall at Priya's spot, and it is the cover she holds",
+  sight.n === 1 && sight.h === 1.6 && sight.cover && sight.off < 1, sight);
 check('Protect Ryan: from up the hill (2 m+ above her, 20 m+ off) no line reaches her chest or head; without it many do',
   sight.now.n > 300 && sight.now.chest === 0 && sight.now.head === 0 && sight.without.chest > 100 && sight.without.head > 100, sight);
 check('Protect Ryan: the court is laid out as before, with the barricade the one obstacle added', !bar.err && bar.extra.length === 1 && bar.gone.length === 0, bar);

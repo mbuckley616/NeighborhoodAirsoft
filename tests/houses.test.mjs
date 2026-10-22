@@ -54,8 +54,9 @@ await page.evaluate(() => endScenario('lose'));
 await g.scenario('bunratty_sean');
 await g.spin(10);
 const br = await houses();
-// v1.125 (D.3 step 4): Bunratty builds Winnmark's house too, with the same footprints
-check('Bunratty builds the detailed house', br.length > 0 && br.every(h => h.detail), br.map(h => h.detail));
-check('Bunratty houses cost at most 20 meshes each', br.every(h => h.meshes <= 20), br.map(h => h.meshes));
+// v1.125 (D.3 step 4) built Winnmark's house on Bunratty too; v1.305 (D.51 step 2) gave the street its own six at about
+// real size (tests/real-scale.test.mjs measures them), so no Winnmark colonial stands there now
+const brOwn = await page.evaluate(() => !!Game.scene.getObjectByName('bunrattyNeighbours'));
+check('Bunratty builds its own street\'s houses, not the colonial', br.length === 0 && brOwn, { colonials: br.length, brOwn });
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
