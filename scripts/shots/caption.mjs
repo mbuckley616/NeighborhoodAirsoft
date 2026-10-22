@@ -47,14 +47,30 @@ const framed = (img, kicker, text) => `<!doctype html><html><body style="margin:
   </div>
   <img src="${url(img)}" style="position:absolute;left:304px;top:218px;width:1312px;height:738px;border:3px solid #f4e9d8;box-shadow:0 18px 50px rgba(0,0,0,.6)">
   </body></html>`;
-// the cover: the fort and the fight, the title up in the sky
-const cover = (img, c) => `<!doctype html><html><body style="margin:0;width:630px;height:500px;overflow:hidden;position:relative;background:#000">
+// the cover: the fight, with the title on a scrap of the start screen's notebook paper (v1.3xx's title page): the
+// same two fonts, lifted from index.html (Permanent Marker for the title, Patrick Hand for the red pen)
+const NB_FONTS = [...fs.readFileSync(path.join(here, '..', '..', 'index.html'), 'utf8')
+  .matchAll(/@font-face \{ font-family: 'NB (?:Hand|Marker)';[\s\S]*?\}/g)].map(m => m[0]).join('\n');
+const TORN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='10'%3E%3Cpath d='M0 10V5L5 1L11 6L17 2L23 7L29 1L35 5L41 2L46 6V10Z'/%3E%3C/svg%3E") 0 0 / 46px 10px repeat-x, linear-gradient(#000, #000) 0 9px / 100% calc(100% - 9px) no-repeat`;
+const cover = (img, c) => `<!doctype html><html><head><style>${NB_FONTS}
+  .scrap { position:absolute; left:92px; top:16px; width:446px; height:178px; transform:rotate(-2deg);
+    filter:drop-shadow(4px 6px 0 rgba(0,0,0,.35)) drop-shadow(0 10px 18px rgba(0,0,0,.35)); }
+  .page { position:absolute; inset:0; -webkit-mask:${TORN}; mask:${TORN};
+    background:
+      radial-gradient(circle at 18px 50px, #1b1d22 0 6px, rgba(27,29,34,0) 7px) 0 0 / 36px 84px repeat-y,
+      linear-gradient(90deg, transparent 38px, #e48c8c 38px, #e48c8c 40px, transparent 40px),
+      repeating-linear-gradient(180deg, transparent 0 20px, #a9c4e4 20px 21px, transparent 21px 26px),
+      #fbf8ef;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 10px 6px 46px; box-sizing:border-box; }
+  .t { font-family:'NB Marker'; font-size:43px; line-height:46px; color:#17171c; text-align:center; letter-spacing:1px; }
+  .s { font-family:'NB Hand'; font-size:20px; color:#b3261e; letter-spacing:5px; margin-top:8px; }
+  .tape { position:absolute; top:-12px; width:92px; height:28px; background:rgba(246,238,200,.72);
+    box-shadow:0 1px 2px rgba(0,0,0,.2); }
+</style></head><body style="margin:0;width:630px;height:500px;overflow:hidden;position:relative;background:#000">
   <img src="${url(img)}" style="position:absolute;left:${-c.x * 630 / c.w}px;top:${-c.y * 630 / c.w}px;width:${1920 * 630 / c.w}px;height:${1080 * 630 / c.w}px">
-  <div style="position:absolute;left:0;right:0;top:0;height:200px;background:linear-gradient(180deg,rgba(10,12,16,.75) 0%,rgba(10,12,16,.45) 60%,rgba(10,12,16,0) 100%)"></div>
-  <div style="position:absolute;left:0;right:0;top:26px;text-align:center">
-    <div style="${FONT}font-weight:bold;font-size:50px;line-height:1;color:#f4e9d8;letter-spacing:1px;text-shadow:3px 3px 0 #000">NEIGHBORHOOD<br>AIRSOFT</div>
-    <div style="font-family:'Courier New',monospace;font-weight:bold;font-size:16px;letter-spacing:6px;color:#ff8c42;margin-top:12px;text-shadow:2px 2px 0 #000">SUMMER · 2003</div>
-  </div></body></html>`;
+  <div class="scrap"><div class="page"><div class="t">NEIGHBORHOOD<br>AIRSOFT</div><div class="s">SUMMER · 2003</div></div>
+    <div class="tape" style="left:34px;transform:rotate(-8deg)"></div><div class="tape" style="right:26px;transform:rotate(6deg)"></div></div>
+</body></html>`;
 
 fs.rmSync(FINAL, { recursive: true, force: true });
 fs.mkdirSync(CAPT, { recursive: true });
@@ -63,6 +79,7 @@ const shoot = async (html, w, h, scale, out) => {
   const p = await b.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: scale });
   const tmp = path.join(FINAL, '_page.html'); fs.writeFileSync(tmp, html);
   await p.goto(url(tmp)); await p.waitForFunction(() => [...document.images].every(i => i.complete && i.naturalWidth));
+  await p.evaluate(() => document.fonts.ready);
   await p.screenshot({ path: out }); await p.close();
 };
 for (const [i, [name, kicker, text, layout]] of PICKS.entries()) {
