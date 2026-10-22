@@ -13118,3 +13118,47 @@ measuring, and moving what the measurements showed to be wrong.
 - **Next: step 5,** past the edge for both maps. The far bank's houses and the few on the river's Dunwoody side are
   built in the maps already (v1.303, v1.307). What is left is the guide's "At the edge" items still missing, and a look
   at the far bank's haze.
+
+## v1.310 — East of the bulb: the neighbour and the ravine's far side
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 5: past the edge for both maps. Most of it was built with the
+ground. Step 1 (v1.303) built the far bank's big houses over Bunratty's river. Step 3 (v1.307) built the Hollow's far
+bank, with its houses along the top and three down at the water with docks, and the backs of the Bunratty houses on
+the bluff (`EDGE_BACKDROPS.buildHollowScene`, east side). The Hollow guide's "At the edge" items 4-8 were all done in
+v1.307-v1.308. Two of the Bunratty guide's were still missing, both east of the bulb:
+- **The neighbour east of the bulb** (docs/refs/bunratty.md gap 10). The guide: "the real one has a house east of it
+  (grey roof, its own pool)". He stands past Michael's garage wing, at x 51.5-68.5: a light-sided house 17 x 12.5 m
+  with a grey hip roof, facing the street. His pool is behind, in a pale deck. The ground there falls 0.6-1.2 m from
+  his front to his back.
+- **The ravine's far side** (gap 8, east). Across the creek's ravine, about 130 m out from the bulb, three big houses
+  stand high up on the far side and face across it. The guide puts Cartier Ct and River Cliff Dr there.
+- **How they are built:** in the map's one merged scenery mesh, with their own seeded numbers, so the woods, the far
+  bank's houses and every match's cover draw as before. The trees keep off their footprints: 31 fewer, 1,622 in all.
+  Nothing is solid, and nothing stands within 6 m of the bounds; the nearest is the pool deck, 9.5 m past them.
+- **Not built:** the neighbour's drive beside Michael's. It would have to cross the bounds' 6 m margin.
+### Verified
+- **`tests/real-scale.test.mjs`:**
+  - Nine houses now stand past the fence, against five.
+  - Nothing past the fence is solid, and the nearest vertex is still 6 m or more out.
+  - Draw calls in the eight views:
+
+    | View | Calls |
+    |---|---|
+    | Bulb | 408 |
+    | Entry | 1,475 |
+    | Lawn | 1,367 |
+    | North | 1,261 |
+    | House | 338 |
+    | Terrace | 1,731 |
+    | Street | 815 |
+    | Street west | 453 |
+
+    All are inside the 2,060 budget. The houses only add triangles to a mesh that is already drawn.
+  - The Hollow's five views are unchanged, at 254-1,183 against its 1,450 budget.
+- **These suites pass:** `real-scale`, `layout-same` (every match's cover the same), `backdrop`, `bunratty-polish`,
+  `bunratty-road`, `bulb-sight`, `houses` and `smoke`.
+### Still open
+- **The neighbour is mostly hidden** behind the east tree walls from the bulb and the motor court. It shows between
+  the trunks. Whether it should show more is a look for a playtest.
+- **The far bank reads hazy at 250-300 m** by day (v1.303's open item). Left as it is. Thinning the fog further would
+  show the edge of the built ground on other views.
+- **The card's five steps are done.** What only a playtest can judge is collected under each version's Still open.

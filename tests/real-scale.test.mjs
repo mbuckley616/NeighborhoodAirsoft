@@ -69,6 +69,9 @@ check('Bunratty: the north lawns bank 1.4 m over the kerb, under 25°, and nothi
 check('Bunratty: the river lies in its channel, not under the grass, along its whole length', res.waterY < -20 && res.river.n >= 30 && res.river.under === res.river.n, res.river);
 check('Bunratty: the banks stand over the water on both sides', res.river.banks === res.river.n, res.river);
 check('Bunratty: the woods, the far-bank houses and the fork are built', res.stats && res.stats.trees >= 1000 && res.stats.houses >= 4, res.stats);
+// v1.310 (D.51 step 5, docs/refs/bunratty.md gaps 8 and 10): east of the bulb, the neighbour past Michael's garage with
+// his pool, and three houses up the far side of the creek's ravine (five on the far bank, so nine)
+check('Bunratty: the neighbour east of the bulb and the houses across the ravine are built (nine houses past the fence)', res.stats && res.stats.houses >= 9, res.stats);
 check('Bunratty: none of it is solid, and none of it stands within 6 m of the bounds (BBs drop at 5)', res.solid === 0 && res.near >= 6, res);
 
 // in play: the far bank shows from the bulb, the water from the back lawn; the camera sees that far; draw calls in budget

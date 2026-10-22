@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.309</div>
+  <div class="version">v1.310</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -16237,6 +16237,20 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       return false;
     };
     const sq = (x, z) => { const dx = x - R0.bx, dz = z - R0.bz; return [R0.nx * dx + R0.nz * dz, R0.nz * dx - R0.nx * dz]; };
+    // v1.310 (D.51 step 5; docs/refs/bunratty.md gaps 8 and 10): east of the bulb. The neighbour past Michael's garage,
+    // set lower on the falling ground, grey roof, its pool behind; across the creek's ravine a few houses high up on its
+    // far side, facing it. Their own seeded numbers (so the trees, houses and every match's cover draw as before); the
+    // trees keep off their footprints.
+    const east = [], er = _mulberry32(_hashStringToSeed('bunratty-east|' + (_night ? 'n' : 'd'))), err = (a, b) => a + (b - a) * er();
+    east.push({ k: 'house', x: 60, z: 15, yaw: Math.PI, w: 17, d: 12.5, h: 6.6, wall: 0xd8d0bc, roof: 0x4a4c50 });
+    for (const sR of [-12, 22, 54]) {
+      const qR = 132 + err(-4, 6), x = R0.bx + R0.nx * sR + R0.nz * qR, z = R0.bz + R0.nz * sR - R0.nx * qR;
+      east.push({ k: 'house', x, z, yaw: Math.atan2(-R0.nz, R0.nx), w: err(19, 25), d: err(13, 16), h: 6.6,
+        wall: [0xe0d8c8, 0x9a958c, 0xc8b89a][Math.floor(er() * 3) % 3], roof: [0x4a4440, 0x3e4248, 0x5e4a40][Math.floor(er() * 3) % 3] });
+    }
+    for (const hs of east) hs.y = groundY(hs.x, hs.z);
+    const onEast = (x, z) => east.some(hs => Math.hypot(x - hs.x, z - hs.z) < Math.max(hs.w, hs.d) / 2 + 3) ||
+      (x > 53 && x < 67 && z > 22 && z < 32);   // the neighbour's pool deck
     for (let gx = -250; gx <= 350; gx += 9) for (let gz = -150; gz <= 350; gz += 9) {
       const x = gx + rr(-3.5, 3.5), z = gz + rr(-3.5, 3.5);
       const pick = rs(), kind = rs(), hh = rs(), cc = rs();
@@ -16251,6 +16265,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       if (nearRoad(x, z, 8)) continue;                               // the street up to the fork, and Sentinae Chase
       if (pick < 0.2) continue;
       if (s > 128 && s < R0.s - R0.half - 5 && pick < 0.85) continue;   // the bank itself is open: brush, logs, the water through it
+      if (onEast(x, z)) continue;                                    // v1.310: the houses east of the bulb
       const y = groundY(x, z);
       if (kind < 0.35) items.push({ k: 'pine', x, y, z, h: 14 + hh * 7, r: 2.6 + cc * 1.2, col: PINE[Math.floor(cc * PINE.length) % PINE.length] });
       else items.push({ k: 'tree', x, y, z, h: 12 + hh * 6, r: 3.2 + cc * 1.6, col: LEAF[Math.floor(cc * LEAF.length) % LEAF.length] });
@@ -16263,6 +16278,11 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
       items.push({ k: 'house', x, y: groundY(x, z), z, yaw: Math.atan2(-R0.nx, -R0.nz), w: rr(20, 27), d: rr(14, 18), h: 6.6,
         wall: WALLS[Math.floor(rs() * WALLS.length) % WALLS.length], roof: ROOFS[Math.floor(rs() * ROOFS.length) % ROOFS.length] });
     }
+    // v1.310: the east houses, and the neighbour's pool (water in a pale deck, a step under his back door)
+    items.push(...east);
+    { const py = groundY(60, 27);
+      items.push({ k: 'box', x: 60, y: py - 0.15, z: 27, w: 13, h: 0.4, d: 8, col: 0xd8d2c4 });
+      items.push({ k: 'box', x: 60, y: py - 0.15, z: 27, w: 9, h: 0.43, d: 4.5, col: 0x7ed1c7 }); }
     // Sentinae Chase and the fork: asphalt laid on the ground, a mown island in the Y with the black lantern lamp
     const scPts = []; for (let z = -150; z <= 200; z += 5) scPts.push([SC_X, groundY(SC_X, z) + 0.07, z]);
     items.push({ k: 'strip', pts: scPts, w: 7.4, col: 0x6a6b6b });
