@@ -13421,3 +13421,25 @@ game didn't have it.
   can see you through it once you leave the pump house's lee.
 - **Christian has a 1v1 of his own** now, which was this version's pick. The decision named the match, not the kid.
 - **Not built yet:** the night game at the pool (Michael's A, the second match). That is the next item.
+
+## v1.318 — Night Swim
+D.55 step 7, the second of Michael's two pool matches ("a night game at the pool", 22 Oct, A).
+- **Night Swim** (`pool_night_3v3`), after Round the Courts and before Hold the Creek Fort. The pool's water glows and
+  the three lamps (two over the parking, one at the courts' south-west corner) are lit. The rest of the club is dark.
+  - **The sides:** Haden (UMP) and Connor (MP5) are with you at the west end of the parking. Mason (AK), Christian
+    (shotgun) and Diego (MP5) came in by the courts. They huddle at the courts' far corner and go out to the near
+    court, the pump house and past the deck's south loungers.
+  - **The rules:** three lives for every kid but you, last team standing, $110 for the win. With your crew it is a crew
+    match like any other team match: the sides grow.
+- The writing (the name, the briefing) is this version's, from the decision's "a night game at the pool".
+### Verified
+- **`tests/northcliff.test.mjs`, extended:** with you untaggable, standing at the start for 120 s, the first BB to
+  reach you came at 28.8 s, and both sides traded lives (our side lost 14, theirs 9). In three probe rounds the first
+  tag came at 22.6-25.6 s. The match is on the ladder after Round the Courts.
+- **`tests/bellfield.test.mjs`:** after the pool's 1v1 the night game opens, and the creek fort opens only after both.
+- **The stuck-kid sweep** on Night Swim, three ways: the worst hold was 5 s (Andrew, advancing). No page errors.
+- **These suites pass:** `northcliff`, `bellfield`, `crew-balance`, `crew-spawn-bounds`, `smoke` and `map-screen`.
+### Still open
+- **For a playtest:** the balance. In three probe rounds with the first-time crew (six a side), our side lost two and
+  won one. The 69 m between the starts makes for a slow opening: the first tag came at 22-26 s.
+- **For Michael's look:** the club at night. Only three lamps and the pool light it.

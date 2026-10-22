@@ -21,8 +21,8 @@ const ladder = await page.evaluate(() => {
 });
 check('Northcliff comes after the market lot (v1.155: then Hollins Ridge High; v1.157: then Willow Bend)',
   ladder.keys.join() === 'winnmark_court,bunratty_court,hollow,market_lot,northcliff,high_school,country_club,grocery_store', ladder.keys);
-check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen course\'s two (v1.138, v1.144; the course v1.316), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the pool\'s 1v1 (v1.317), the creek-fort defend, then the night 4v4 (v1.131)',
-  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,pool_1v1_christian,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
+check('Northcliff runs the 1v1 opener, the twins 3v3, the Stoneglen course\'s two (v1.138, v1.144; the course v1.316), Bellfield Court\'s four (v1.186-v1.188) and its capture the flag (v1.189), the pool\'s 1v1 (v1.317) and night game (v1.318), the creek-fort defend, then the night 4v4 (v1.131)',
+  ladder.ids.join() === 'northcliff_1v1_evan,northcliff_twins_3v3,stoneglen_treehouse,stoneglen_hold_treehouse,bellfield_1v1_mason,bellfield_3v3,bellfield_defend_fort,bellfield_night_4v4,bellfield_ctf,pool_1v1_christian,pool_night_3v3,northcliff_defend_creek,northcliff_night_4v4', ladder.ids);
 check('no zone is "coming soon" any more', !ladder.coming);
 check('Northcliff is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the lot opens the first Northcliff scenario only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -146,6 +146,28 @@ const poolRound = await page.evaluate(() => {
 });
 console.log('  pool round', JSON.stringify(poolRound));
 check('standing at the start, nobody tags you in the first 12 s, and in 60 s Christian comes looking (walks over 15 m)', (poolRound.first === null || poolRound.first >= 12) && poolRound.far > 15, poolRound);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+await g.spin(60);
+
+// v1.318: Night Swim, the night game at the pool: three a side as written (crew matches add more), the huddle at the
+// courts' far corner; the player is untaggable and stands at the start
+await g.scenario('pool_night_3v3');
+const swim = await page.evaluate(() => {
+  const sc = SCENARIOS.pool_night_3v3, P = Game.player;
+  const hits = []; const o = applyBBHit; applyBBHit = (bb, t) => { if (t === P) { hits.push(+Game.scenario.roundTime.toFixed(1)); return true; } return o(bb, t); };
+  const E = Game.scenario.enemies, lost = { player: 0, enemy: 0 }, prev = new Map(E.map(e => [e, e.lives]));
+  for (let i = 0; i < 60 * 120 && Game.mode === 'scenario'; i++) {
+    stepGame(1 / 60);
+    for (const e of E) { if (e.lives < prev.get(e)) { lost[e.team === 'player' ? 'player' : 'enemy'] += prev.get(e) - e.lives; prev.set(e, e.lives); } }
+  }
+  applyBBHit = o;
+  return { night: sc.timeOfDay === 'night', name: sc.scenarioName, ours: sc.enemySetup.filter(e => e.team === 'player').length, theirs: sc.enemySetup.filter(e => e.team !== 'player').length,
+    lives: sc.npcLives, first: hits[0] ?? null, lost };
+});
+console.log('  night swim', JSON.stringify(swim));
+check('Night Swim: a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'Night Swim' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
+check('standing at the start, nobody tags you in the first 10 s', swim.first === null || swim.first >= 10, swim);
+check('in 120 s both sides lose lives', swim.lost.player > 0 && swim.lost.enemy > 0, swim.lost);
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
 await g.spin(60);
 

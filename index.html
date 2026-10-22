@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.317</div>
+  <div class="version">v1.318</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7990,6 +7990,30 @@ const SCENARIOS = {
     ],
     winCondition: 'kill_all',
     rewards: { win: 80, lose: 18 },
+    playerLives: 1, armorMult: 1,
+  },
+
+  // --- v1.318: the night game at the pool (D.55 step 7, Michael: A) ---
+  pool_night_3v3: {
+    region: 'northcliff', street: 'northcliff_pool',
+    name: 'Northcliff Pool', scenarioName: 'Night Swim',
+    desc: "Somebody left the pool lights on, and the whole neighborhood heard about it. The twins are with you at the parking lot; Mason, Christian and Diego came in over the fence by the tennis courts. The pool glows, three lamps light the parking and the courts' far corner, and the rest of the club is dark. The courts' fence stops you but not a BB. Three a side, three lives for every kid but you, last team standing.",
+    builderFn: 'buildNorthcliffPoolScene',
+    builderArg: 'default',
+    timeOfDay: 'night',
+    scenarioType: 'skirmish',
+    playerSpawn: 'parking_west',
+    enemySetup: [
+      { charId: 'haden',     weapon: 'ump',     anchor: 'snack_bar',    team: 'player' },
+      { charId: 'connor',    weapon: 'mp5',     anchor: 'parking_e',    team: 'player' },
+      { charId: 'mason',     weapon: 'ak47',    anchor: 'court_a_far' },
+      { charId: 'christian', weapon: 'shotgun', anchor: 'pump_house' },
+      { charId: 'diego',     weapon: 'mp5',     anchor: 'deck_south' },
+    ],
+    enemySpawnCluster: 'cluster_courts',
+    winCondition: 'last_team_standing',
+    npcLives: 3,
+    rewards: { win: 110, lose: 26 },
     playerLives: 1, armorMult: 1,
   },
 
@@ -18828,6 +18852,8 @@ function buildNorthcliffPoolScene(variant, timeOfDay) {
     deck_west: { pos: V(-27.5, 10), cover: null },
     parking_w: { pos: V(-24, -14.5), cover: carObs[0] },
     parking_e: { pos: V(8.5, -14.5), cover: carObs[5] },
+    deck_south: { pos: V(-8, 20.5), cover: null },                 // v1.318: past the deck's south loungers
+    cluster_courts: { pos: V(36, 18), cover: null },               // v1.318: Night Swim's huddle, the courts' far corner
   };
   const playerSpawns = {
     parking_west: { pos: V(-29, -15), yaw: -Math.PI / 2 },   // the west end of the parking, facing east along it
@@ -35933,6 +35959,7 @@ const PIN_SCENARIO_GROUPS = {
     'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night
     'bellfield_ctf',             // v1.189: Flags on Bellfield, capture the flag (D.15, Michael: A)
     'pool_1v1_christian',        // v1.317: the Northcliff pool, a 1v1 round the courts (D.55 step 7, Michael: A)
+    'pool_night_3v3',            // v1.318: Night Swim, the night game at the pool
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
