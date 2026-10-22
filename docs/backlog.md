@@ -318,6 +318,7 @@ Fable card on the control room and Michael starts it from there.
 56. ~~All of the 'cheap' automatics should have a fairly high jamming rate, I think only one of those guns has that now. (Michael, control room, 2026-10-21)~~ — done, v1.302 (all four cheap clear automatics jam: the Clear Sprayer and the Tick-Tock now one burst in five, as the Ghost Mini; the Rattle Can stays one in four; `tests/clear-guns.test.mjs`)
 59. Can we have some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get an extra $0.50 per hit? (Michael, control room, 2026-10-22) (57 and 58 are taken by the open docs/crew-captains PR.)
 60. I also think adding hit markers would be cool as well, to confirm you were the one to hit someone. (Michael, control room, 2026-10-22)
+61. I'm wondering if we need more tutorials to explain some of the other game mechanics, like the team commands, and using a speed loader. Maybe a 25-50 bb speed loader should be given to you for that tutorial? (Michael, control room, 2026-10-22)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
