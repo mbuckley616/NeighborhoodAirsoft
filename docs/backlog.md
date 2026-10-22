@@ -28,6 +28,7 @@ Fable card on the control room and Michael starts it from there.
 10. ~~The 'Settings' button/label is always visible when on controller in the bedroom. It also generally looks odd in that place, as it sits on top of the $ and BB tracker. recommend looking at this and figuring out how to clean it up. (Michael, control room, 2026-10-16)~~ — done, v1.254 (on a pad the button goes and the cash box says START Settings; with the mouse it sits under the box, not on it; `tests/bedroom-settings.test.mjs`)
 11. ~~There is no button to activate the command wheel (Q on keyboard) on the controller. I am thinking the D Pad may make the most sense for this? (Michael, control room, 2026-10-16)~~ — done, v1.255 (Michael: A; in a match with teammates the d-pad gives the orders at once and the wheel flashes the one given, slots stay on Y/RB and LB; with no teammates the d-pad still picks slots; `tests/pad-orders.test.mjs`)
 12. ~~If you hold down aim when a game ends, and you return to the room, your view is still zoomed in, which is disorienting. (Michael, control room, 2026-10-21)~~ — done, v1.294 (coming home resets the aim and the field of view; the right button let go anywhere lowers it; `tests/settings.test.mjs`)
+13. Chattahoochee River 'Hold the South Fort' level is very very difficult. I would propose that we either move the enemy spawn point to the opposite base, so that shooting an enemy has a greater effect / longer cooldown before they can get involved again, or we add a retaining wall along with the crenellations of the fort so that there is better protection. I would like for either the fort(s) to be improved to be more advantageous for the people inside, or for this particular level to be mitigated somehow by changing the spawn location of the enemies. (Michael, control room, 2026-10-22)
 
 ## C. Check in play (from the devlog's "Still open")
 1. ~~Enemy laser-to-sky: confirm fixed on Bunratty with a living kid after v1.83–v1.85.~~ — done, v1.91 (standing test, none found)
@@ -319,6 +320,7 @@ Fable card on the control room and Michael starts it from there.
 59. Can we have some sort of 'Bonus' system to give you extra $ in each match? Like maybe you get an extra $0.50 per hit? (Michael, control room, 2026-10-22) (57 and 58 are taken by the open docs/crew-captains PR.)
 60. I also think adding hit markers would be cool as well, to confirm you were the one to hit someone. (Michael, control room, 2026-10-22)
 61. I'm wondering if we need more tutorials to explain some of the other game mechanics, like the team commands, and using a speed loader. Maybe a 25-50 bb speed loader should be given to you for that tutorial? (Michael, control room, 2026-10-22)
+62. There should be a red 'flash' around the peripherals of the player's view when they are hit, indicating that they have been hit. The audio alone is not enough of a cue, as many bullets hitting near the player can sound similar. (Michael, control room, 2026-10-22)
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
