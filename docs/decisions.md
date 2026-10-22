@@ -9,7 +9,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Your note asks whether the game needs more tutorials, for the team commands and the speed loader, and whether a
   25-50 BB speed loader should be given for that tutorial. Today the only tutorial is Backyard Basics, five steps:
   move, aim, fire, tag the three dummies, reload. Nothing teaches the orders (Q or the d-pad, v1.248/v1.255) or the
-  speed loader. The first match with teammates is the third on the ladder.
+  speed loader. The first match with a teammate is Two on Two, seventh on Winnmark's ladder.
   - A) **Tips at the moment they matter**, no new match. The first match with teammates opens with a coach banner on
     the orders, and you give one to clear it. The first time you run dry carrying a loader, a banner shows how to use
     it. Each tip shows once, and the tutorial gives you a free 25-BB speed loader. *(recommended: it teaches each
