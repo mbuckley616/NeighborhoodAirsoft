@@ -12849,3 +12849,68 @@ allow, and the street's look comes from the guide instead.
 - **What only a playtest can judge:** the north bank as cover (a kid crouched at its top looks down onto the lane), and
   the narrower side yards between the bigger houses and the fences.
 - **D.40's backyard range matched to Michael's terraces is the rest of step 2.**
+
+## v1.306 — The range is Michael's backyard
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 2, last part: D.40's leftover. The range (v1.257) was laid out from
+memory before any pictures came: a flat yard 25 x 31 m behind a small house, a board fence round it, a square pool on
+one side. The guide's D.40 section (docs/refs/bunratty.md) describes the real one: a walk-out terrace under the main
+deck, the pool in its black fence, a stacked-stone wall down to a lawn strip that falls toward the woods, the fire pit
+at its upper end, and "the lawn strip is a natural lane, ~30-35 m from the fire-pit end to the hammock end, the stone
+wall on one side and the drop on the other, with the woods as the backstop". v1.304 already built all of that for the
+map, so the range now stands in it.
+- **The same ground and the same house.** Bunratty's ground functions (`bunrattyGroundY` and its parts, and `BRH`, the
+  house's levels) moved out of `buildBunrattyCourtScene` to the top level, unchanged, and the range builds
+  `buildBunrattyHeroHouse` on them in the map's own coordinates. The trampoline became `buildBackyardTrampoline`,
+  shared by both; the map still draws its one random number for its turn, so its cover lands where it did.
+- **The way out.** You come out of the French doors onto the terrace under the deck, facing the pool. The way down is
+  round the pool's fence and down the stone steps at the terrace's east end to the lawn, about 25 m to the bench.
+- **The lane.** The bench (the same folding table) stands on the lawn past the fire pit, across the lane, and you shoot
+  west along the lawn. The stone wall and the terrace are on your right, and the drop to the woods on your left. The
+  targets are v1.257's (Michael: A), at the same distances: the six cans on their plank across two cinder blocks at
+  8 m, the three bottles on a crate at 11, the two sheets of paper at 12.5 and 13.5, and the near bullseye on its easel
+  at 15. The far bullseye is nailed to a tree at the hammock end, 20 m. A hammock hangs between that tree and another.
+  The trampoline stands by the wall, out of the line (Michael: a trampoline, no playset). The targets face the bench,
+  east, so the hit code checks the plane x = target, not z.
+- **The lawn falls toward the woods,** so knocked cans and broken glass now come to rest on the ground under them
+  (`range.restY`), not at y 0.
+- **Past the lot:** the woods round it and down the bluff, the river and the far bank, the field below, and the
+  neighbour's house over the lot-line wall. They are one merged mesh with nothing solid, by the map's rules: the
+  map's tree spacing and thinning, and nothing within 6 m of the box. The camera sees 330 m and the fog runs 45-320 m,
+  so the water shows.
+- **The spawn.** The French doors are under the deck, and the spawn clearer took the deck (2.95 m overhead) for
+  something in the way. It pushed you 11 m west into the side yard. A built scene can now say its spawn's y is its feet
+  (`spawnFootY`), which only the range does.
+### Verified
+- **`tests/backyard-range.test.mjs`,** changed where it pinned the old yard. The firing spot is `range.line` at the
+  ground's height, facing west. The near-board shots go along −x, the paper's "through" is measured in x, and a can at
+  rest is measured from the ground under it. Every target check passes as before:
+  - The can is knocked off and rests 0.033 m over the grass, with the other five up.
+  - The bottle breaks into 8 shards, all on the ground.
+  - The paper takes a hole and the BB goes through.
+  - Dead centre on the far bullseye from the bench scores 8, at 20 m, with the drop.
+  - The near board scores 10 and 6.
+  - There are 8 marks, the tally reads right, and E at the bench resets all of it.
+  - The back door and F take you home with the BBs.
+- **New checks in the same suite:**
+  - You start at the doors, with their prompt.
+  - A flood of walkable cells from the doors reaches the steps, the bench and the hammock end, and not the pool.
+  - The bench stands 1.97 m below the terrace.
+  - From the bench, 5 rays at eye height reach the river.
+- **Draw calls and triangles,** v1.305 → v1.306:
+  | View | v1.305 (calls, triangles) | v1.306 (calls, triangles) |
+  |---|---|---|
+  | At the door | 209, 22k | 125, 44k |
+  | At the bench | 199, 20k | 122, 44k |
+  | Down the yard | 182, 13k | 121, 44k |
+
+  The house is baked and the woods are one mesh, so the calls fall and the triangles double. Building the yard takes
+  330 ms, against 104 ms.
+- **These suites pass:** `backyard-range`, `backyard-guns`, `real-scale`, `bunratty-road`, `layout-same` (every match's
+  cover the same, after the trampoline's move into its own function), `ffa-starts`, `houses`, `kid-hold` and `smoke`. No
+  page errors.
+### Still open
+- **For a playtest:** whether the 25 m walk from the doors to the bench is worth the look, and whether the bench
+  belongs on the terrace's east end instead, over the wall, which the guide calls a second firing point. Also whether
+  the far bullseye on the tree reads at 20 m in the shade.
+- The range is always by day, as it was.
+- Step 2 is done. Next comes step 3, the Hollow's field on its river frontage below Bunratty.

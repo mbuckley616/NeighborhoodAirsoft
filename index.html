@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.305</div>
+  <div class="version">v1.306</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -14906,6 +14906,50 @@ function buildBunrattyHeroHouse(scene, o) {
   return { group, obstacles };
 }
 
+// v1.306: Michael's round backyard trampoline (v1.53's, out of buildBunrattyCourtScene so the range has it too): a low
+// frame ring, a dark jump mat, a ring of net poles. Returns the group at (tx, 0, tz) and its cylinder obstacle.
+function buildBackyardTrampoline(tx, tz, rotY) {
+  const tramGroup = new THREE.Group();
+  tramGroup.position.set(tx, 0, tz);
+  const R = 1.8;          // trampoline radius
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5, metalness: 0.5 });
+  const padMat   = new THREE.MeshStandardMaterial({ color: 0x2a4a8a, roughness: 0.8 }); // blue spring pad
+  const matMat   = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.9 });  // dark jump mat
+  const netMat   = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.9, transparent: true, opacity: 0.35 });
+  // Outer frame ring (torus) at jump height (~0.85m).
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(R, 0.09, 8, 24), frameMat);
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.85; ring.castShadow = true; tramGroup.add(ring);
+  // Blue spring-pad annulus just inside the ring.
+  const pad = new THREE.Mesh(new THREE.RingGeometry(R * 0.78, R, 24), padMat);
+  pad.rotation.x = -Math.PI / 2; pad.position.y = 0.86; tramGroup.add(pad);
+  // Dark jump mat (the bouncy surface).
+  const mat = new THREE.Mesh(new THREE.CircleGeometry(R * 0.78, 24), matMat);
+  mat.rotation.x = -Math.PI / 2; mat.position.y = 0.84; mat.receiveShadow = true; tramGroup.add(mat);
+  // Four legs (W-frame approximated as simple verticals + feet).
+  for (let a = 0; a < 4; a++) {
+    const ang = a * Math.PI / 2 + Math.PI / 4;
+    const lx = Math.cos(ang) * R * 0.85, lz = Math.sin(ang) * R * 0.85;
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.85, 6), frameMat);
+    leg.position.set(lx, 0.425, lz); leg.castShadow = true; tramGroup.add(leg);
+  }
+  // Safety-net poles + a faint net cylinder around the top.
+  const poleH = 2.0;
+  for (let a = 0; a < 6; a++) {
+    const ang = a * Math.PI / 3;
+    const px = Math.cos(ang) * R, pz = Math.sin(ang) * R;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, poleH, 6), frameMat);
+    pole.position.set(px, 0.85 + poleH / 2, pz); pole.castShadow = true; tramGroup.add(pole);
+  }
+  const net = new THREE.Mesh(new THREE.CylinderGeometry(R, R, poleH, 20, 1, true), netMat);
+  net.position.y = 0.85 + poleH / 2; tramGroup.add(net);
+  tramGroup.rotation.y = rotY;
+  // Light collision on the frame footprint (counts as cover — h = frame height).
+  // v1.53: round trampoline → true cylinder so you don't snag on phantom corners.
+  const obs = { minX: tx - R, maxX: tx + R, minZ: tz - R, maxZ: tz + R,
+    shape: 'cylinder', cx: tx, cz: tz, radius: R, h: 0.95, mesh: tramGroup, surface: 'metal' };
+  return { group: tramGroup, obs };
+}
+
 // v1.305 (D.51 step 2, docs/refs/bunratty.md "The buildings", gaps 4, 5c-d and 12): the street's other six houses at about
 // real size, where the 9 x 7 m colonials stood. Each keeps its front line and grows back and sideways, to 11-15 m by
 // 9-10 m, three of them with a two-bay garage wing set 1.2 m back; the lots' anchors and starts stay where they were.
@@ -15233,6 +15277,137 @@ function buildMergedScenery(items, night, seedKey) {
   return group;
 }
 
+// v1.306 (D.51 step 2, the range): Bunratty's ground, hoisted out of buildBunrattyCourtScene unchanged so the
+// backyard range (buildBackyardRangeScene) stands on the same ground behind Michael's house.
+// ===================================================================
+// TERRAIN — v1.8: real z-varying ground (the deferred v1.7 feature).
+// ===================================================================
+// Lore-matched grade (see devlog): the lots are carved from woods on a bluff
+// above the Chattahoochee. The NORTH tree-line is HIGH ground; the land falls
+// away SOUTH toward the river. Layered on top is a gentler WEST→EAST grade so
+// the cul-de-sac bulb (east) sits NESTLED LOW — "aggressive uphill to the
+// bulb" from the player's westward attack, now physical instead of cosmetic.
+//
+// groundY(x,z) is THE single source of truth for ground height. The displaced
+// ground mesh, player physics, BB bounces, enemy feet, and every placed object
+// all read from it. Total relief ≈ 6m (dramatic) — real high/low advantage.
+//
+// Design constraints that keep it from breaking gameplay:
+//   • C1-smooth everywhere (no vertical cliffs) so collision/movement never
+//     traps the player or an AI on a wall of terrain.
+//   • Max local slope is gentle enough (~25°) that the radius-based AABB
+//     collision still reads correctly — objects sit ON the slope, not in it.
+//   • The playable box is z∈[-32,30], x∈[-40,44]; we shape across that.
+// v1.304 (D.51 step 2): the box grew south behind Michael's house (z to 47 for x 16.4..44), which bunrattyHeroCut cuts.
+function bunrattyGroundY(x, z) {
+  return bunrattyHeroCut(x, z, bunrattyRealScale(x, z, bunrattyBaseY(x, z) + bunrattyNorthBank(x, z)));   // v1.305: the north bank
+}
+function bunrattyBaseY(x, z) {
+  // --- North→South fall: a secondary grade. North edge (z=-33) sits a little
+  //     higher than the south lawn edge (z≈37). Kept modest so the dominant
+  //     read is the WEST→EAST street grade below. ~2.5m. ---
+  const zN = -33, zS = 37;
+  let t = (z - zN) / (zS - zN);            // 0 at north, 1 at south edge
+  t = Math.max(0, Math.min(1, t));
+  const sFall = t * t * (3 - 2 * t);       // smoothstep
+  let h = 2.5 * (1 - sFall);               // +2.5 at north, ~0 at south
+
+  // --- WEST→EAST street grade: THE dominant grade (v1.28f). The map runs from
+  //     the WEST lane entry (x≈-30..-35, where attackers push IN from) DOWN to
+  //     the cul-de-sac bulb + plank fort at the EAST end (BULB.x≈34). So the
+  //     WEST entry is the HIGH ground and the EAST fort sits LOW — anyone
+  //     pushing the lane toward the fort comes downhill. Total street relief
+  //     ≈ 9m: a flattish high bench at the west entry, then it falls away east
+  //     into the basin. ---
+  const xW = -36, xE = 40;
+  let u = (x - xW) / (xE - xW);            // 0 at west entry (high), 1 at east bulb (low)
+  u = Math.max(0, Math.min(1, u));
+  const sLane = u * u * (3 - 2 * u);       // smoothstep: flat-ish high bench, then drop
+  h += 9.0 * (1 - sLane);                  // +9 at west entry, ~0 by the east bulb
+
+  // --- Bulb basin dimple: scoop the immediate cul-de-sac (BULB ≈ x=34, z=2) a
+  //     touch lower so it genuinely sits in a hollow at the bottom of the hill —
+  //     attackers cresting the lane look DOWN into the fort. ---
+  const dBulb = Math.hypot(x - 34, z - 2);
+  if (dBulb < 13) {
+    const k = 1 - dBulb / 13;
+    h -= 1.3 * (k * k * (3 - 2 * k));
+  }
+
+  // --- Gentle rolling micro-relief for natural, non-planar feel (small). ---
+  h += 0.35 * Math.sin(x * 0.13 + 1.7) * Math.cos(z * 0.11 - 0.6);
+
+  return h;
+}
+// v1.304 (D.51 step 2, docs/refs/bunratty.md gaps 2-3 and the D.40 section): Michael's house is a walk-out. Behind it
+// the ground is cut to the terrace, 3.2 m under the main floor (BRH.T), from the house's back wall (the step is under
+// the house) to the stacked-stone wall; below the wall the lawn lies 1.1 m lower and falls 1.2 m more toward the woods,
+// then the woods drop away. West of the house a side yard ramps down from the front lawn to the terrace (z 22-31), and
+// west of that a stone wall holds the neighbour's yard (x 15.6-17.2), which keeps its old ground. The wall's step has
+// two ways round it: a grass bank at the west end and stone steps at the east. Past the bounds the cut fades out (east)
+// or meets the falling woods (south). Steps sit on the ground mesh's grid lines (1.5625 m) so walls hide them.
+function bunrattyHeroCut(x, z, h) {
+  if (z < 22 || x < 8 || x > 49) return h;
+  const H = BR_HERO, T = BRH.T, cl = v => v < 0 ? 0 : v > 1 ? 1 : v, ss = v => { v = cl(v); return v * v * (3 - 2 * v); };
+  const kR = cl((z - 22) / 9);                                                         // the side yard's ramp
+  const k = x <= H.x0 ? kR : Math.max(kR, (z >= 25.6 ? 1 : 0) * ss((x - H.x0) / 4.7));  // the terrace, from under the house
+  let cut = h + (T - h) * k;
+  const kStep = z >= 36.7 ? 1 : 0, kBank = ss((z - 35) / 3.6), kSteps = cl((z - 35.6) / 2.8);
+  let kl;
+  if (x < H.bankX1) kl = kBank;
+  else if (x < H.bankX1 + 1) kl = kBank + (kStep - kBank) * ss(x - H.bankX1);
+  else if (x > H.stepX0 && x < H.stepX1) kl = kSteps;
+  else kl = kStep;
+  cut -= kl * 1.1 + 1.2 * cl((z - 37.5) / 9.5);                                       // the wall's drop, then the lawn's fall
+  if (z > H.lawnZ1) cut -= 0.55 * (z - H.lawnZ1);                                     // past the lawn the woods drop away
+  cut = Math.max(cut, -21.5);
+  let m;
+  if (x >= H.cutX && x <= 44) m = 1;
+  else if (x > 44) m = 1 - ss((x - 44) / 5);
+  else m = ss((x - 8) / (H.cutX - 8)) * ss((z - H.lawnZ1) / 4);
+  return h + m * (Math.min(h, cut) - h);
+}
+// v1.303 (D.51 step 1, Michael: real scale; each match fenced to a today-sized part, 1A): past the fenced play box
+// the ground is the real place's. Every term below is exactly zero inside the box (x -40..44, z -32..30) and its tree
+// walls, so the matches play on the ground they always had. West of the entry the street climbs on to the fork with
+// Sentinae Chase (4.2 m more, so the fork stands 14.5 m over the bulb); south and south-east the lots end at a bluff
+// and the woods fall 22-24 m at up to ~31° to the floodplain, then a 3 m clay cut to the river, ~190 m from the bulb
+// across its line (docs/refs/bunratty.md: 200-210 m SSE of the end); the far bank climbs 52 m. East of the bulb the
+// creek's ravine runs down to the river ~90 m out. s is the distance from the bulb toward the river, q along it.
+function bunrattyRealScale(x, z, h) {
+  const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
+  const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
+  const ss = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+  if (x < -42) h += 4.2 * ss((-42 - x) / 120);                               // the street climbs to the fork
+  const sb = q > -80 ? 34 + 0.37 * Math.min(0, q) : 4.4 + 0.12 * (q + 80);    // the bluff line, kept 3-7 m off the box
+  const f = ss((s - sb) / 55);
+  if (f > 0) {
+    const flood = -24 + 2 * ss((150 - s) / 120);                               // the floodplain, -22 up the slope's foot
+    h += (flood - h) * f;
+  }
+  if (s > 222) h = Math.max(h, -24 + 52 * ss((s - 226) / 75));                 // the far bank
+  const bed = -12 - 13 * ss((s + 40) / 200);                                   // the creek, falling to the river
+  h = Math.min(h, bed + 0.38 * Math.abs(q - 92));
+  h = Math.min(h, BR_REAL.bedY + 1.3 * Math.max(0, Math.abs(s - BR_REAL.s) - 31));   // the river's channel and clay cut
+  return h;
+}
+// The mown field on the floodplain below (the Hollow's, seen from up here): 0 outside it, 1 in it, soft at the edges.
+function bunrattyFieldK(x, z) {
+  const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
+  const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
+  const e = Math.min(s - 112, 152 - s, q + 75, -10 - q);
+  return Math.max(0, Math.min(1, e / 6));
+}
+// v1.304: how far (x, z) is outside the bounds' southern extension behind Michael's house (negative inside it)
+const brHeroOut = (x, z) => Math.max(BR_HERO.cutX - x, x - 44, 22 - z, z - BR_HERO.lawnZ1);
+// v1.304: the hero house's levels, from the old ground at the foot of its front steps: the main floor 0.9 m up (six
+// steps), the terrace a storey (3.2 m) under it, the garage floor at the motor court's highest point by its doors.
+const BRH = (() => {
+  const F = bunrattyBaseY(28.5, 11.9) + 0.9;
+  let G = -Infinity; for (let x = BR_HERO.x1; x <= BR_HERO.gx1; x += 0.5) G = Math.max(G, bunrattyBaseY(x, BR_HERO.gz0 - 0.3));
+  return { F, T: F - 3.2, G: G + 0.04 };
+})();
+
 function buildBunrattyCourtScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
 
@@ -15253,134 +15428,6 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
 
   const rng = (min, max) => min + gameRandom() * (max - min);
 
-  // ===================================================================
-  // TERRAIN — v1.8: real z-varying ground (the deferred v1.7 feature).
-  // ===================================================================
-  // Lore-matched grade (see devlog): the lots are carved from woods on a bluff
-  // above the Chattahoochee. The NORTH tree-line is HIGH ground; the land falls
-  // away SOUTH toward the river. Layered on top is a gentler WEST→EAST grade so
-  // the cul-de-sac bulb (east) sits NESTLED LOW — "aggressive uphill to the
-  // bulb" from the player's westward attack, now physical instead of cosmetic.
-  //
-  // groundY(x,z) is THE single source of truth for ground height. The displaced
-  // ground mesh, player physics, BB bounces, enemy feet, and every placed object
-  // all read from it. Total relief ≈ 6m (dramatic) — real high/low advantage.
-  //
-  // Design constraints that keep it from breaking gameplay:
-  //   • C1-smooth everywhere (no vertical cliffs) so collision/movement never
-  //     traps the player or an AI on a wall of terrain.
-  //   • Max local slope is gentle enough (~25°) that the radius-based AABB
-  //     collision still reads correctly — objects sit ON the slope, not in it.
-  //   • The playable box is z∈[-32,30], x∈[-40,44]; we shape across that.
-  // v1.304 (D.51 step 2): the box grew south behind Michael's house (z to 47 for x 16.4..44), which bunrattyHeroCut cuts.
-  function bunrattyGroundY(x, z) {
-    return bunrattyHeroCut(x, z, bunrattyRealScale(x, z, bunrattyBaseY(x, z) + bunrattyNorthBank(x, z)));   // v1.305: the north bank
-  }
-  function bunrattyBaseY(x, z) {
-    // --- North→South fall: a secondary grade. North edge (z=-33) sits a little
-    //     higher than the south lawn edge (z≈37). Kept modest so the dominant
-    //     read is the WEST→EAST street grade below. ~2.5m. ---
-    const zN = -33, zS = 37;
-    let t = (z - zN) / (zS - zN);            // 0 at north, 1 at south edge
-    t = Math.max(0, Math.min(1, t));
-    const sFall = t * t * (3 - 2 * t);       // smoothstep
-    let h = 2.5 * (1 - sFall);               // +2.5 at north, ~0 at south
-
-    // --- WEST→EAST street grade: THE dominant grade (v1.28f). The map runs from
-    //     the WEST lane entry (x≈-30..-35, where attackers push IN from) DOWN to
-    //     the cul-de-sac bulb + plank fort at the EAST end (BULB.x≈34). So the
-    //     WEST entry is the HIGH ground and the EAST fort sits LOW — anyone
-    //     pushing the lane toward the fort comes downhill. Total street relief
-    //     ≈ 9m: a flattish high bench at the west entry, then it falls away east
-    //     into the basin. ---
-    const xW = -36, xE = 40;
-    let u = (x - xW) / (xE - xW);            // 0 at west entry (high), 1 at east bulb (low)
-    u = Math.max(0, Math.min(1, u));
-    const sLane = u * u * (3 - 2 * u);       // smoothstep: flat-ish high bench, then drop
-    h += 9.0 * (1 - sLane);                  // +9 at west entry, ~0 by the east bulb
-
-    // --- Bulb basin dimple: scoop the immediate cul-de-sac (BULB ≈ x=34, z=2) a
-    //     touch lower so it genuinely sits in a hollow at the bottom of the hill —
-    //     attackers cresting the lane look DOWN into the fort. ---
-    const dBulb = Math.hypot(x - 34, z - 2);
-    if (dBulb < 13) {
-      const k = 1 - dBulb / 13;
-      h -= 1.3 * (k * k * (3 - 2 * k));
-    }
-
-    // --- Gentle rolling micro-relief for natural, non-planar feel (small). ---
-    h += 0.35 * Math.sin(x * 0.13 + 1.7) * Math.cos(z * 0.11 - 0.6);
-
-    return h;
-  }
-  // v1.304 (D.51 step 2, docs/refs/bunratty.md gaps 2-3 and the D.40 section): Michael's house is a walk-out. Behind it
-  // the ground is cut to the terrace, 3.2 m under the main floor (BRH.T), from the house's back wall (the step is under
-  // the house) to the stacked-stone wall; below the wall the lawn lies 1.1 m lower and falls 1.2 m more toward the woods,
-  // then the woods drop away. West of the house a side yard ramps down from the front lawn to the terrace (z 22-31), and
-  // west of that a stone wall holds the neighbour's yard (x 15.6-17.2), which keeps its old ground. The wall's step has
-  // two ways round it: a grass bank at the west end and stone steps at the east. Past the bounds the cut fades out (east)
-  // or meets the falling woods (south). Steps sit on the ground mesh's grid lines (1.5625 m) so walls hide them.
-  function bunrattyHeroCut(x, z, h) {
-    if (z < 22 || x < 8 || x > 49) return h;
-    const H = BR_HERO, T = BRH.T, cl = v => v < 0 ? 0 : v > 1 ? 1 : v, ss = v => { v = cl(v); return v * v * (3 - 2 * v); };
-    const kR = cl((z - 22) / 9);                                                         // the side yard's ramp
-    const k = x <= H.x0 ? kR : Math.max(kR, (z >= 25.6 ? 1 : 0) * ss((x - H.x0) / 4.7));  // the terrace, from under the house
-    let cut = h + (T - h) * k;
-    const kStep = z >= 36.7 ? 1 : 0, kBank = ss((z - 35) / 3.6), kSteps = cl((z - 35.6) / 2.8);
-    let kl;
-    if (x < H.bankX1) kl = kBank;
-    else if (x < H.bankX1 + 1) kl = kBank + (kStep - kBank) * ss(x - H.bankX1);
-    else if (x > H.stepX0 && x < H.stepX1) kl = kSteps;
-    else kl = kStep;
-    cut -= kl * 1.1 + 1.2 * cl((z - 37.5) / 9.5);                                       // the wall's drop, then the lawn's fall
-    if (z > H.lawnZ1) cut -= 0.55 * (z - H.lawnZ1);                                     // past the lawn the woods drop away
-    cut = Math.max(cut, -21.5);
-    let m;
-    if (x >= H.cutX && x <= 44) m = 1;
-    else if (x > 44) m = 1 - ss((x - 44) / 5);
-    else m = ss((x - 8) / (H.cutX - 8)) * ss((z - H.lawnZ1) / 4);
-    return h + m * (Math.min(h, cut) - h);
-  }
-  // v1.303 (D.51 step 1, Michael: real scale; each match fenced to a today-sized part, 1A): past the fenced play box
-  // the ground is the real place's. Every term below is exactly zero inside the box (x -40..44, z -32..30) and its tree
-  // walls, so the matches play on the ground they always had. West of the entry the street climbs on to the fork with
-  // Sentinae Chase (4.2 m more, so the fork stands 14.5 m over the bulb); south and south-east the lots end at a bluff
-  // and the woods fall 22-24 m at up to ~31° to the floodplain, then a 3 m clay cut to the river, ~190 m from the bulb
-  // across its line (docs/refs/bunratty.md: 200-210 m SSE of the end); the far bank climbs 52 m. East of the bulb the
-  // creek's ravine runs down to the river ~90 m out. s is the distance from the bulb toward the river, q along it.
-  function bunrattyRealScale(x, z, h) {
-    const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
-    const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
-    const ss = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
-    if (x < -42) h += 4.2 * ss((-42 - x) / 120);                               // the street climbs to the fork
-    const sb = q > -80 ? 34 + 0.37 * Math.min(0, q) : 4.4 + 0.12 * (q + 80);    // the bluff line, kept 3-7 m off the box
-    const f = ss((s - sb) / 55);
-    if (f > 0) {
-      const flood = -24 + 2 * ss((150 - s) / 120);                               // the floodplain, -22 up the slope's foot
-      h += (flood - h) * f;
-    }
-    if (s > 222) h = Math.max(h, -24 + 52 * ss((s - 226) / 75));                 // the far bank
-    const bed = -12 - 13 * ss((s + 40) / 200);                                   // the creek, falling to the river
-    h = Math.min(h, bed + 0.38 * Math.abs(q - 92));
-    h = Math.min(h, BR_REAL.bedY + 1.3 * Math.max(0, Math.abs(s - BR_REAL.s) - 31));   // the river's channel and clay cut
-    return h;
-  }
-  // The mown field on the floodplain below (the Hollow's, seen from up here): 0 outside it, 1 in it, soft at the edges.
-  function bunrattyFieldK(x, z) {
-    const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz;
-    const s = BR_REAL.nx * dx + BR_REAL.nz * dz, q = BR_REAL.nz * dx - BR_REAL.nx * dz;
-    const e = Math.min(s - 112, 152 - s, q + 75, -10 - q);
-    return Math.max(0, Math.min(1, e / 6));
-  }
-  // v1.304: how far (x, z) is outside the bounds' southern extension behind Michael's house (negative inside it)
-  const brHeroOut = (x, z) => Math.max(BR_HERO.cutX - x, x - 44, 22 - z, z - BR_HERO.lawnZ1);
-  // v1.304: the hero house's levels, from the old ground at the foot of its front steps: the main floor 0.9 m up (six
-  // steps), the terrace a storey (3.2 m) under it, the garage floor at the motor court's highest point by its doors.
-  const BRH = (() => {
-    const F = bunrattyBaseY(28.5, 11.9) + 0.9;
-    let G = -Infinity; for (let x = BR_HERO.x1; x <= BR_HERO.gx1; x += 0.5) G = Math.max(G, bunrattyBaseY(x, BR_HERO.gz0 - 0.3));
-    return { F, T: F - 3.2, G: G + 0.04 };
-  })();
   // Expose to the generic systems via the returned scene object (below).
   const groundY = bunrattyGroundY;
 
@@ -15960,46 +16007,9 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
   // the upper lawn of the hero house's tiered backyard. Decorative + light collision on the
   // frame ring; counts as cover (you can crouch behind the frame/pads).
   {
-    const tramGroup = new THREE.Group();
     const tx = 26.5, tz = 42.4; // v1.304: on the lawn below the terrace wall (Michael: a trampoline, no playset)
-    tramGroup.position.set(tx, 0, tz);
-    const R = 1.8;          // trampoline radius
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.5, metalness: 0.5 });
-    const padMat   = new THREE.MeshStandardMaterial({ color: 0x2a4a8a, roughness: 0.8 }); // blue spring pad
-    const matMat   = new THREE.MeshStandardMaterial({ color: 0x1a1a1f, roughness: 0.9 });  // dark jump mat
-    const netMat   = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.9, transparent: true, opacity: 0.35 });
-    // Outer frame ring (torus) at jump height (~0.85m).
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(R, 0.09, 8, 24), frameMat);
-    ring.rotation.x = Math.PI / 2; ring.position.y = 0.85; ring.castShadow = true; tramGroup.add(ring);
-    // Blue spring-pad annulus just inside the ring.
-    const pad = new THREE.Mesh(new THREE.RingGeometry(R * 0.78, R, 24), padMat);
-    pad.rotation.x = -Math.PI / 2; pad.position.y = 0.86; tramGroup.add(pad);
-    // Dark jump mat (the bouncy surface).
-    const mat = new THREE.Mesh(new THREE.CircleGeometry(R * 0.78, 24), matMat);
-    mat.rotation.x = -Math.PI / 2; mat.position.y = 0.84; mat.receiveShadow = true; tramGroup.add(mat);
-    // Four legs (W-frame approximated as simple verticals + feet).
-    for (let a = 0; a < 4; a++) {
-      const ang = a * Math.PI / 2 + Math.PI / 4;
-      const lx = Math.cos(ang) * R * 0.85, lz = Math.sin(ang) * R * 0.85;
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.85, 6), frameMat);
-      leg.position.set(lx, 0.425, lz); leg.castShadow = true; tramGroup.add(leg);
-    }
-    // Safety-net poles + a faint net cylinder around the top.
-    const poleH = 2.0;
-    for (let a = 0; a < 6; a++) {
-      const ang = a * Math.PI / 3;
-      const px = Math.cos(ang) * R, pz = Math.sin(ang) * R;
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, poleH, 6), frameMat);
-      pole.position.set(px, 0.85 + poleH / 2, pz); pole.castShadow = true; tramGroup.add(pole);
-    }
-    const net = new THREE.Mesh(new THREE.CylinderGeometry(R, R, poleH, 20, 1, true), netMat);
-    net.position.y = 0.85 + poleH / 2; tramGroup.add(net);
-    tramGroup.rotation.y = rng(-0.3, 0.3);
+    const { group: tramGroup, obs: tramObs } = buildBackyardTrampoline(tx, tz, rng(-0.3, 0.3));   // v1.306: shared with the range
     scene.add(tramGroup);
-    // Light collision on the frame footprint (counts as cover — h = frame height).
-    // v1.53: round trampoline → true cylinder so you don't snag on phantom corners.
-    const tramObs = { minX: tx - R, maxX: tx + R, minZ: tz - R, maxZ: tz + R,
-      shape: 'cylinder', cx: tx, cz: tz, radius: R, h: 0.95, mesh: tramGroup, surface: 'metal' };
     sinkObs(tramObs, tx, tz);  // v1.8: sit on the hero house's sloped backyard
     coverList.push(tramObs);
     coverByHouse[6] = coverByHouse[6] || [];
@@ -17973,112 +17983,151 @@ function buildTreehouseYardScene(variant, timeOfDay) {
 // 'range'`, which never ends on its own). Downrange from the bench: six cans on a plank (knocked off, and they can be
 // shot along the grass), three bottles on a crate (they break), two sheets of paper on stakes (a BB punches through and
 // leaves its hole), two cardboard bullseyes at about 15 and 20 m (each BB leaves a mark, and its ring is scored). E at
-// the bench stands everything back up; E at the back door (or F) goes back inside. Laid out from a memory of a
-// Bunratty Court yard, no pictures yet: the house to the south with a deck, the pool to the east, a board fence round.
-// Playable box: x∈[-12.5,12.5], z∈[-21.5,9.6]. The player faces −z downrange.
+// the bench stands everything back up; E at the back door (or F) goes back inside.
+// v1.306 (D.51 step 2, D.40's leftover; docs/refs/bunratty.md, its D.40 section): the yard is now Michael's own, on
+// Bunratty's ground with his house and terraces (bunrattyGroundY, buildBunrattyHeroHouse), where v1.257 had a flat yard
+// from memory. You come out of the French doors onto the terrace under the deck, go round the pool's fence to the
+// stone steps and down to the lawn. The bench stands past the fire pit and the lane runs west along the lawn, the
+// stone wall on one side and the drop to the woods on the other, with the woods for a backstop: the cans 8 m out, the
+// bottles 11, the paper 12-13, the near bullseye on its easel at 15 and the far one on a tree at the hammock end, 20 m.
+// The trampoline stands by the wall (Michael: a trampoline, no playset). In Bunratty's coordinates; playable box:
+// x∈[17.6,43.6], z∈[27,46.6]. Downrange is −x, so the targets face +x.
 // =====================================================================
 const RANGE_RINGS = [[0.035, 10], [0.08, 8], [0.13, 6], [0.18, 4], [0.23, 2]];   // bullseye: radius (m) → score
 const RANGE_CAN_R = 0.033, RANGE_CAN_H = 0.122, RANGE_REACH = 1.6;
 function buildBackyardRangeScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
-  applyTimeOfDay(scene, 'day', {
-    dayBg: 0x9ab8d0, dayFog: [40, 90],
-    sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-14, 30, 16],
-    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
-    nightFog: [16, 50], moonPos: [14, 32, -16],
-    shadow: { size: 2048, extent: 26, far: 70 },
+  const { sun } = applyTimeOfDay(scene, 'day', {
+    dayBg: 0x88a8c8, dayFog: [45, 320],   // v1.306: Bunratty's sky and sun; far enough to see down to the river
+    sunColor: 0xfff0c8, sunInt: 1.0, sunPos: [-18, 30, 14],
+    dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.42,
+    nightFog: [16, 50], moonPos: [-20, 38, -16],
+    shadow: { size: 2048, extent: 26, far: 80 },
   });
-  const groundY = () => 0;
+  {   // v1.306: the yard is 48 m from the origin, so the sun's shadow box is moved over it
+    const C = new THREE.Vector3(31, 0, 37);
+    sun.position.add(C); sun.target.position.copy(C); scene.add(sun.target);
+  }
+  const groundY = bunrattyGroundY, gY = groundY;
   const obstacles = [];
   const box = (minX, maxX, minZ, maxZ, h, baseY = 0, extra = {}) => ({ minX, maxX, minZ, maxZ, h, baseY, surface: 'hard', ...extra });
   const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, ...o });
   const mesh = (geo, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+  const lowY = (x, z, hw, hd) => { let y = Infinity; for (const sx of [-hw, 0, hw]) for (const sz of [-hd, 0, hd]) y = Math.min(y, gY(x + sx, z + sz)); return y; };
 
-  // --- the lawn, the deck off the back of the house ---
-  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), std(0x5a8a40, { roughness: 1 }));
-  lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn);
+  // --- the ground: Bunratty's, round the lot (x 0..75, z 0..75 on the map's own 1.5625 m grid, so the terrace's steps
+  //     fall on grid lines as they do there), then 6 m cells out past the river; coloured as the map colours it
+  const B0 = { minX: -40, maxX: 44, minZ: -32, maxZ: 30 };
   {
-    const deckMat = std(0x9a7a58), deckDark = std(0x7a5e42);
-    for (let i = 0; i < 18; i++) mesh(new THREE.BoxGeometry(9, 0.05, 0.19), i % 4 ? deckMat : deckDark, -0.5, 0.025, 6.6 + i * 0.19).castShadow = false;
-  }
-  // --- the house to the south, its back to the yard; its back door (v1.216's, in the middle) is the one you came out of ---
-  obstacles.push(buildSuburbanHouse(scene, { x: 0, z: 14, width: 14, depth: 8, brickColor: 0xc8b8a0, roofColor: 0x4a3a2a, faceDir: 'south', porch: false, detail: true }));
-  const DOOR = { x: 0, z: 9.2 };
-  // --- a 1.8 m board fence round the yard, to the house's corners ---
-  {
-    const boardMat = std(0x8a6a48, { roughness: 0.95 }), railMat = std(0x6a5038, { roughness: 0.95 });
-    const run = (x1, z1, x2, z2) => {
-      const alongX = Math.abs(x2 - x1) > Math.abs(z2 - z1), len = alongX ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
-      const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2, g = new THREE.Group();
-      mesh(new THREE.BoxGeometry(alongX ? len : 0.05, 1.8, alongX ? 0.05 : len), boardMat, cx, 0.9, cz, g);
-      for (let s = 0; s <= len; s += 2.4) mesh(new THREE.BoxGeometry(0.12, 1.9, 0.12), railMat, alongX ? Math.min(x1, x2) + s : cx, 0.95, alongX ? cz : Math.min(z1, z2) + s, g);
-      scene.add(g);
-      obstacles.push(box(Math.min(x1, x2) - 0.06, Math.max(x1, x2) + 0.06, Math.min(z1, z2) - 0.06, Math.max(z1, z2) + 0.06, 1.8, 0, { mesh: g }));
+    const axis = (lo, i0, i1, hi) => {
+      const v = [], a = -75 + 150 * i0 / 96, b = -75 + 150 * i1 / 96;
+      for (let c = lo; c < a - 1e-6; c += 6) v.push(c);
+      for (let i = i0; i <= i1; i++) v.push(-75 + 150 * i / 96);
+      for (let c = b + 6; c < hi - 1e-6; c += 6) v.push(c);
+      v.push(hi); return v;
     };
-    run(-13, -22, 13, -22); run(-13, -22, -13, 10); run(13, -22, 13, 10);
-    run(-13, 10, -7, 10); run(7, 10, 13, 10);
+    const xs = axis(-110, 48, 96, 230), zs = axis(-40, 48, 96, 290);
+    const pos = [], col = [], idx = [], mix = (a, b, t) => a + (b - a) * t;
+    for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
+      const x = xs[i], z = zs[j];
+      pos.push(x, gY(x, z), z);
+      const out = Math.min(Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ), brHeroOut(x, z));
+      const w = Math.max(0, Math.min(1, (out - 6) / 10));
+      let r = mix(1, 1.05, w), g = mix(1, 0.67, w), bl = mix(1, 0.83, w);
+      const ds = Math.abs((BR_REAL.nx * (x - BR_REAL.bx) + BR_REAL.nz * (z - BR_REAL.bz)) - BR_REAL.s);
+      const clay = Math.max(0, Math.min(1, (40 - ds) / 4));
+      r = mix(r, 1.6, clay); g = mix(g, 0.74, clay); bl = mix(bl, 0.97, clay);
+      const fl = bunrattyFieldK(x, z);
+      r = mix(r, 1.28, fl); g = mix(g, 1.13, fl); bl = mix(bl, 1.13, fl);
+      col.push(r, g, bl);
+    }
+    const W = xs.length;
+    for (let j = 0; j + 1 < zs.length; j++) for (let i = 0; i + 1 < W; i++) { const a = j * W + i, b = a + 1, c = a + W, d = c + 1; idx.push(a, c, b, b, c, d); }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    geo.setIndex(idx); geo.computeVertexNormals();
+    const ground = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x567a3c, roughness: 1.0, vertexColors: true }));
+    ground.receiveShadow = true; scene.add(ground);
+    // the river below, murky, in the channel the ground cuts (as the map's)
+    const R0 = BR_REAL, cx = R0.bx + R0.nx * R0.s, cz = R0.bz + R0.nz * R0.s;
+    const qW = (-110 - cx) / R0.nz, qE = (230 - cx) / R0.nz, len = qE - qW, qm = (qW + qE) / 2;
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(len, R0.half * 2 + 6), std(0x5f6a4c, { roughness: 0.32, metalness: 0.18 }));
+    water.rotation.order = 'YXZ'; water.rotation.y = Math.atan2(R0.nx, R0.nz); water.rotation.x = -Math.PI / 2;
+    water.position.set(cx + R0.nz * qm, R0.waterY, cz - R0.nx * qm); water.receiveShadow = true; water.name = 'rangeRiver';
+    scene.add(water);
   }
-  // --- the pool on the east side, with its coping; the water stops bodies, not BBs ---
+  // --- Michael's house and its terraces, as on the map: the deck, the pool in its fence, the stone wall and steps,
+  //     the fire pit; and the trampoline by the wall
+  const hero = buildBunrattyHeroHouse(scene, { groundY, F: BRH.F, T: BRH.T, G: BRH.G, night: false });
+  obstacles.push(...hero.obstacles);
   {
-    const px0 = 6, px1 = 11.5, pz0 = 0.5, pz1 = 8;
-    const pcx = (px0 + px1) / 2, pcz = (pz0 + pz1) / 2;
-    mesh(new THREE.BoxGeometry(px1 - px0 + 0.8, 0.08, pz1 - pz0 + 0.8), std(0xe8e2d4), pcx, 0.04, pcz).castShadow = false;
-    mesh(new THREE.BoxGeometry(px1 - px0, 0.04, pz1 - pz0), std(0x3aa0c8, { roughness: 0.15, metalness: 0.1 }), pcx, 0.085, pcz).castShadow = false;
-    mesh(new THREE.BoxGeometry(px1 - px0, 0.045, (pz1 - pz0) * 0.35), std(0x2a86b0, { roughness: 0.15 }), pcx, 0.086, pz0 + (pz1 - pz0) * 0.175).castShadow = false;
-    for (const s of [-0.25, 0.25]) mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.0, 6), std(0xc8c8c8, { metalness: 0.7 }), px0 + 0.8 + s, 0.5, pz1 + 0.12);
-    obstacles.push(box(px0, px1, pz0, pz1, 1.0, 0, { surface: 'water', bbPass: true, noStand: true }));
-    // two loungers on the deck side
-    for (const lz of [3, 5.4]) { mesh(new THREE.BoxGeometry(0.7, 0.3, 1.8), std(0xf0f0f0), 4.4, 0.15, lz); obstacles.push(box(4.05, 4.75, lz - 0.9, lz + 0.9, 0.3)); }
+    const tx = 24, tz = 39.6, { group, obs } = buildBackyardTrampoline(tx, tz, 0.2), y = lowY(tx, tz, 1.8, 1.8);
+    group.position.y = y; obs.baseY = y; scene.add(group); obstacles.push(obs);
   }
-  // --- the bench: a folding table at the firing line ---
-  const BENCH = { x: 0, z: 6.0 };
+  // the French doors you came out of, on the terrace under the deck
+  const DOOR = { x: 30.4, z: 27.3 };
+  // --- the bench: a folding table past the fire pit, across the lane; you stand on its east side and shoot west ---
+  const BENCH = { x: 40.6, z: 44.4 }, LINE = { x: 41.4, z: 44.4 };
   {
-    const g = new THREE.Group(), top = std(0xd8d0c0), leg = std(0x606060, { metalness: 0.5 });
-    mesh(new THREE.BoxGeometry(1.8, 0.05, 0.7), top, BENCH.x, 0.74, BENCH.z, g);
-    for (const [dx, dz] of [[-0.8, -0.28], [0.8, -0.28], [-0.8, 0.28], [0.8, 0.28]]) mesh(new THREE.BoxGeometry(0.04, 0.72, 0.04), leg, BENCH.x + dx, 0.36, BENCH.z + dz, g);
-    mesh(new THREE.BoxGeometry(0.3, 0.14, 0.2), std(0x3a6a3a), BENCH.x + 0.5, 0.84, BENCH.z, g);    // a BB bottle box
-    mesh(new THREE.BoxGeometry(0.4, 0.02, 0.3), std(0xf4f0e0), BENCH.x - 0.4, 0.775, BENCH.z + 0.05, g);   // the score pad
+    const g = new THREE.Group(), top = std(0xd8d0c0), leg = std(0x606060, { metalness: 0.5 }), by = lowY(BENCH.x, BENCH.z, 0.35, 0.9);
+    mesh(new THREE.BoxGeometry(0.7, 0.05, 1.8), top, BENCH.x, by + 0.74, BENCH.z, g);
+    for (const [dx, dz] of [[-0.28, -0.8], [0.28, -0.8], [-0.28, 0.8], [0.28, 0.8]]) mesh(new THREE.BoxGeometry(0.04, 0.8, 0.04), leg, BENCH.x + dx, by + 0.34, BENCH.z + dz, g);
+    mesh(new THREE.BoxGeometry(0.2, 0.14, 0.3), std(0x3a6a3a), BENCH.x, by + 0.84, BENCH.z + 0.5, g);    // a BB bottle box
+    mesh(new THREE.BoxGeometry(0.3, 0.02, 0.4), std(0xf4f0e0), BENCH.x + 0.05, by + 0.775, BENCH.z - 0.4, g);   // the score pad
     scene.add(g);
-    obstacles.push(box(BENCH.x - 0.9, BENCH.x + 0.9, BENCH.z - 0.35, BENCH.z + 0.35, 0.77, 0, { mesh: g }));
+    obstacles.push(box(BENCH.x - 0.35, BENCH.x + 0.35, BENCH.z - 0.9, BENCH.z + 0.9, 0.77, by, { mesh: g }));
   }
-  const R = { door: DOOR, bench: BENCH, cans: [], bottles: [], papers: [], eyes: [], shards: [], marks: [],
-    stats: { cans: 0, bottles: 0, holes: 0, eyeHits: 0, last: null } };
+  const R = { door: DOOR, bench: BENCH, line: LINE, cans: [], bottles: [], papers: [], eyes: [], shards: [], marks: [],
+    stats: { cans: 0, bottles: 0, holes: 0, eyeHits: 0, last: null }, restY: (x, z) => gY(x, z) };
   // --- six cans on a plank across two cinder blocks, 8 m out ---
   {
-    const block = std(0x9a9a96), plank = std(0x9a7650);
-    for (const bx of [-1.6, 1.6]) { mesh(new THREE.BoxGeometry(0.2, 0.4, 0.4), block, bx, 0.2, -2); obstacles.push(box(bx - 0.1, bx + 0.1, -2.2, -1.8, 0.4)); }
-    mesh(new THREE.BoxGeometry(3.6, 0.04, 0.25), plank, 0, 0.42, -2);
+    const block = std(0x9a9a96), plank = std(0x9a7650), cx = LINE.x - 8, cz = LINE.z;
+    const py = Math.max(gY(cx, cz - 1.6), gY(cx, cz + 1.6)) + 0.4;
+    for (const bz of [cz - 1.6, cz + 1.6]) { const b0 = gY(cx, bz) - 0.05; mesh(new THREE.BoxGeometry(0.4, py - b0, 0.2), block, cx, (py + b0) / 2, bz); obstacles.push(box(cx - 0.2, cx + 0.2, bz - 0.1, bz + 0.1, py - b0, b0)); }
+    mesh(new THREE.BoxGeometry(0.25, 0.04, 3.6), plank, cx, py + 0.02, cz);
     const colors = [0xc0302a, 0x2a5aa8, 0xc0302a, 0x3a8a3a, 0xd8d8d0, 0xc0302a];
     for (let i = 0; i < 6; i++) {
       const g = new THREE.Group();
       mesh(new THREE.CylinderGeometry(RANGE_CAN_R, RANGE_CAN_R, RANGE_CAN_H, 12), std(colors[i], { roughness: 0.4, metalness: 0.5 }), 0, 0, 0, g);
       mesh(new THREE.CylinderGeometry(RANGE_CAN_R * 0.92, RANGE_CAN_R, 0.008, 12), std(0xd0d0d0, { metalness: 0.8, roughness: 0.3 }), 0, RANGE_CAN_H / 2, 0, g);
-      const home = new THREE.Vector3(-1.5 + i * 0.6, 0.44 + RANGE_CAN_H / 2, -2);
+      const home = new THREE.Vector3(cx, py + 0.04 + RANGE_CAN_H / 2, cz - 1.5 + i * 0.6);
       g.position.copy(home); scene.add(g);
       R.cans.push({ g, home, pos: g.position, vel: new THREE.Vector3(), spin: new THREE.Vector3(), state: 'up' });
     }
   }
   // --- three bottles on an upturned crate, 11 m out ---
   {
-    mesh(new THREE.BoxGeometry(0.5, 0.36, 0.36), std(0x8a6a48), 3.5, 0.18, -5);
-    obstacles.push(box(3.25, 3.75, -5.18, -4.82, 0.36));
+    const cx = LINE.x - 10.8, cz = LINE.z + 0.8, cy = lowY(cx, cz, 0.18, 0.25);
+    mesh(new THREE.BoxGeometry(0.36, 0.36, 0.5), std(0x8a6a48), cx, cy + 0.18, cz);
+    obstacles.push(box(cx - 0.18, cx + 0.18, cz - 0.25, cz + 0.25, 0.36, cy));
     const glass = [0x2a6a2a, 0x6a3a1a, 0xc8d8d0];
     for (let i = 0; i < 3; i++) {
       const g = new THREE.Group(), mat = std(glass[i], { roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.8 });
       mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.17, 10), mat, 0, 0.085, 0, g);
       mesh(new THREE.CylinderGeometry(0.012, 0.03, 0.09, 8), mat, 0, 0.215, 0, g);
-      g.position.set(3.32 + i * 0.18, 0.36, -5); scene.add(g);
-      R.bottles.push({ g, x: g.position.x, z: -5, y0: 0.36, h: 0.26, color: glass[i], state: 'up' });
+      g.position.set(cx, cy + 0.36, cz - 0.18 + i * 0.18); scene.add(g);
+      R.bottles.push({ g, x: cx, z: g.position.z, y0: cy + 0.36, h: 0.26, color: glass[i], state: 'up' });
     }
   }
-  // --- two sheets of paper on stakes, about 12-13 m out; a BB goes straight through ---
-  for (const [x, z] of [[-4.5, -6], [6.2, -7]]) {
-    mesh(new THREE.BoxGeometry(0.03, 1.25, 0.03), std(0x8a6a48), x, 0.62, z - 0.02);
+  // --- two sheets of paper on stakes, about 12-13 m out, facing the bench; a BB goes straight through ---
+  for (const [x, z] of [[29, 43.2], [28, 45.6]]) {
+    const y0 = gY(x, z);
+    mesh(new THREE.BoxGeometry(0.03, 1.25, 0.03), std(0x8a6a48), x - 0.02, y0 + 0.62, z);
     const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.216, 0.279), new THREE.MeshStandardMaterial({ color: 0xf8f6f0, roughness: 1, side: THREE.DoubleSide }));
-    paper.position.set(x, 1.1, z); scene.add(paper);
-    R.papers.push({ x, y: 1.1, z, w: 0.216, h: 0.279, mesh: paper });
+    paper.rotation.y = Math.PI / 2; paper.position.set(x, y0 + 1.1, z); scene.add(paper);
+    R.papers.push({ x, y: y0 + 1.1, z, w: 0.216, h: 0.279, mesh: paper });
   }
-  // --- two homemade bullseyes on easels, about 15 and 20 m out ---
+  // --- the hammock end: two trees with a hammock slung between them; the far bullseye is nailed to the nearer ---
+  const H1 = { x: 21, z: 44.6 }, H2 = { x: 19.6, z: 40.4 };
+  for (const t of [H1, H2]) obstacles.push(addSuburbanTree(scene, t.x, t.z, { detail: true, trunkH: 5, leafR: 2.8, trunkR: 0.3, leafColor: 0x3a5a2a, baseY: lowY(t.x, t.z, 0.3, 0.3) }));
+  {   // the hammock: a flattened tube sagging 0.55 m between the trunks, 1.25 m up at its ends
+    const n = 10, pts = [], y0 = gY(H1.x, H1.z) + 1.25;
+    for (let i = 0; i <= n; i++) { const u = i / n; pts.push(new THREE.Vector3(H1.x + (H2.x - H1.x) * u, -0.55 * Math.sin(Math.PI * u) * 4, H1.z + (H2.z - H1.z) * u)); }
+    const sling = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.32, 6, false), std(0xc8b48a, { side: THREE.DoubleSide }));
+    sling.scale.set(1, 0.25, 1); sling.position.y = y0; sling.castShadow = true; scene.add(sling);
+  }
+  // --- two homemade bullseyes: the near one on an easel about 15 m out, the far one on the tree at 20 ---
   {
     const cv = document.createElement('canvas'); cv.width = cv.height = 256;
     const c = cv.getContext('2d');
@@ -18091,28 +18140,47 @@ function buildBackyardRangeScene(variant, timeOfDay) {
     }
     c.fillStyle = '#2a2a2a'; c.font = 'bold 16px sans-serif'; c.fillText('10', 120, 134);
     const tex = new THREE.CanvasTexture(cv);
-    for (const [x, z, label] of [[1, -9.5, 'near'], [-2.5, -14.5, 'far']]) {
-      const easel = std(0x7a5e42);
-      for (const dx of [-0.22, 0.22]) mesh(new THREE.BoxGeometry(0.04, 1.3, 0.04), easel, x + dx, 0.62, z - 0.06).rotation.x = -0.08;
-      mesh(new THREE.BoxGeometry(0.6, 0.04, 0.06), easel, x, 0.72, z - 0.03);
+    for (const [x, z, label] of [[26.5, 43.6, 'near'], [H1.x + 0.36, H1.z, 'far']]) {
+      const y0 = gY(x, z), easel = std(0x7a5e42);
+      if (label === 'near') {
+        for (const dz of [-0.22, 0.22]) mesh(new THREE.BoxGeometry(0.04, 1.3, 0.04), easel, x - 0.06, y0 + 0.62, z + dz).rotation.z = 0.08;
+        mesh(new THREE.BoxGeometry(0.06, 0.04, 0.6), easel, x - 0.03, y0 + 0.72, z);
+      }
       const board = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshStandardMaterial({ map: tex, roughness: 1, side: THREE.DoubleSide }));
-      board.position.set(x, 1.0, z); scene.add(board);
-      R.eyes.push({ x, y: 1.0, z, w: 0.5, h: 0.5, label, mesh: board });
+      board.rotation.y = Math.PI / 2; board.position.set(x, y0 + 1.0, z); scene.add(board);
+      R.eyes.push({ x, y: y0 + 1.0, z, w: 0.5, h: 0.5, label, mesh: board });
     }
   }
-  // --- shrubs along the fences, trees beyond them ---
-  for (const [x, z] of [[-12, -16], [-12, -6], [12, -12], [12, -4], [-5, -21], [6, -21]]) obstacles.push(addBush(scene, x, z, 1.3, 0.9, 1.1, null, 0, { detail: true }));
-  for (const [x, z] of [[-11, 4], [10.5, -19]]) obstacles.push(addSuburbanTree(scene, x, z, { detail: true, trunkH: 4, leafR: 2.4 }));
-  for (let x = -24; x <= 24; x += 4.5) addSuburbanTree(scene, x + (x % 3), -26, { detail: true, trunkH: 5, leafR: 2.8 });
-  for (let z = -20; z <= 8; z += 4.5) for (const sx of [-1, 1]) addSuburbanTree(scene, sx * 17.5, z + sx, { detail: true, trunkH: 5, leafR: 2.6 });
+  // --- the woods round the lot and down the bluff to the river, the neighbour's house over the lot-line wall: one
+  //     merged mesh, nothing solid, nothing within 6 m of the box
+  {
+    const rs = _mulberry32(_hashStringToSeed('range-woods')), rr = (a, b) => a + (b - a) * rs();
+    const RB = { minX: 17.6, maxX: 43.6, minZ: 27, maxZ: 46.6 }, items = [];
+    const LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a], PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+    for (let gx = -100; gx <= 220; gx += 9) for (let gz = 0; gz <= 280; gz += 9) {   // the map's spacing and thinning
+      const x = gx + rr(-3.5, 3.5), z = gz + rr(-3.5, 3.5), pick = rs(), kind = rs(), hh = rs(), cc = rs();
+      if (Math.hypot(x - BR_REAL.bx, z - BR_REAL.bz) > 170 && pick < 0.35) continue;
+      if (Math.max(RB.minX - x, x - RB.maxX, RB.minZ - z, z - RB.maxZ) < 12) continue;
+      if (z < 30 && x > -12 && x < 60) continue;                                   // the houses and the street
+      const dx = x - BR_REAL.bx, dz = z - BR_REAL.bz, s = BR_REAL.nx * dx + BR_REAL.nz * dz;
+      if (Math.abs(s - BR_REAL.s) < BR_REAL.half + 5 || bunrattyFieldK(x, z) > 0.05 || pick < 0.2) continue;
+      if (s > 128 && s < BR_REAL.s - BR_REAL.half - 5 && pick < 0.85) continue;   // the bank is open to the water
+      const y = gY(x, z);
+      if (kind < 0.35) items.push({ k: 'pine', x, y, z, h: 14 + hh * 7, r: 2.6 + cc * 1.2, col: PINE[Math.floor(cc * PINE.length) % PINE.length] });
+      else items.push({ k: 'tree', x, y, z, h: 12 + hh * 6, r: 3.2 + cc * 1.6, col: LEAF[Math.floor(cc * LEAF.length) % LEAF.length] });
+    }
+    const nb = BR_NEIGHBOURS[5];   // the neighbour's back, across the lot-line wall
+    items.push({ k: 'house', x: (nb.x0 + nb.x1) / 2, y: gY(nb.x1, nb.zf + nb.d), z: nb.zf + nb.d / 2, yaw: 0, w: nb.x1 - nb.x0, d: nb.d, h: 6.6, wall: nb.wall, roof: nb.roof });
+    scene.add(buildMergedScenery(items, false, 'range-woods'));
+  }
 
   return {
     scene,
-    spawn: new THREE.Vector3(DOOR.x, 0, DOOR.z), spawnYaw: 0,
-    bounds: { minX: -12.5, maxX: 12.5, minZ: -21.5, maxZ: 9.6 },
+    spawn: new THREE.Vector3(DOOR.x, gY(DOOR.x, DOOR.z), DOOR.z), spawnYaw: Math.PI,   // out of the doors, facing the pool
+    bounds: { minX: 17.6, maxX: 43.6, minZ: 27, maxZ: 46.6 },
     cover: [], obstacles, enemies: [], placements: {}, playerSpawns: {},
     name: 'Your Backyard', scenarioName: 'The Range', desc: '',
-    groundY, range: R,
+    groundY, range: R, viewFar: 330, spawnFootY: true,   // the spawn's y is its feet: the deck over the doors is not in the way
   };
 }
 // the bedroom's back door: the range is written as SCENARIOS.backyard_range when you go out (as the Pickup Game is),
@@ -18167,17 +18235,18 @@ function rangeSegBox(a, b, minX, maxX, minY, maxY, minZ, maxZ) {
   }
   return t0;
 }
-// where a→b crosses a target facing +z (the plane z = T.z) inside its w×h, or null
+// where a→b crosses a target facing +x (the plane x = T.x) inside its w×h, or null (v1.306: +x, was +z; the lane
+// runs west along Michael's lawn)
 function rangeSegPlate(a, b, T) {
-  if ((a.z - T.z) * (b.z - T.z) > 0 || a.z === b.z) return null;
-  const t = (T.z - a.z) / (b.z - a.z), x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
-  if (Math.abs(x - T.x) > T.w / 2 || Math.abs(y - T.y) > T.h / 2) return null;
-  return { t, x, y };
+  if ((a.x - T.x) * (b.x - T.x) > 0 || a.x === b.x) return null;
+  const t = (T.x - a.x) / (b.x - a.x), z = a.z + (b.z - a.z) * t, y = a.y + (b.y - a.y) * t;
+  if (Math.abs(z - T.z) > T.w / 2 || Math.abs(y - T.y) > T.h / 2) return null;
+  return { t, z, y };
 }
 function rangeMark(x, y, z, r, color) {
   for (const s of [1, -1]) {
     const m = new THREE.Mesh(new THREE.CircleGeometry(r, 8), new THREE.MeshBasicMaterial({ color }));
-    m.position.set(x, y, z + s * 0.002); if (s < 0) m.rotation.y = Math.PI;
+    m.position.set(x + s * 0.002, y, z); m.rotation.y = s * Math.PI / 2;
     Game.scene.add(m); Game.scenario.range.marks.push(m);
   }
 }
@@ -18213,13 +18282,13 @@ function rangeBBHit(bb, a) {
     playImpactShatter(at);
     S.last = 'a bottle';
   } else if (best.kind === 'paper') {
-    rangeMark(best.x, best.y, best.ref.z, 0.0045, 0x1a1a1a);
+    rangeMark(best.ref.x, best.y, best.z, 0.0045, 0x1a1a1a);
     S.holes++;
     S.last = 'the paper';
     return 'pass';
   } else {
-    const T = best.ref, r = Math.hypot(best.x - T.x, best.y - T.y), ring = RANGE_RINGS.find(([rr]) => r <= rr);
-    rangeMark(best.x, best.y, T.z, 0.006, 0x101010);
+    const T = best.ref, r = Math.hypot(best.z - T.z, best.y - T.y), ring = RANGE_RINGS.find(([rr]) => r <= rr);
+    rangeMark(T.x, best.y, best.z, 0.006, 0x101010);
     S.eyeHits++;
     S.last = `the ${T.label} bullseye: ${ring ? ring[1] : 'on the board'}`;
     S.lastRing = ring ? ring[1] : 0;
@@ -18239,8 +18308,9 @@ function rangeStep(dt) {
     c.g.rotation.x += c.spin.x * dt; c.g.rotation.y += c.spin.y * dt; c.g.rotation.z += c.spin.z * dt;
     const B = Game.scenario.bounds;
     c.pos.x = Math.max(B.minX, Math.min(B.maxX, c.pos.x)); c.pos.z = Math.max(B.minZ, Math.min(B.maxZ, c.pos.z));
-    if (c.pos.y <= RANGE_CAN_R && c.vel.y < 0) {
-      c.pos.y = RANGE_CAN_R;
+    const gy = R.restY(c.pos.x, c.pos.z);   // v1.306: the lawn falls toward the woods
+    if (c.pos.y <= gy + RANGE_CAN_R && c.vel.y < 0) {
+      c.pos.y = gy + RANGE_CAN_R;
       c.vel.y *= -0.3; c.vel.x *= 0.6; c.vel.z *= 0.6; c.spin.multiplyScalar(0.5);
       if (c.vel.length() < 0.4) { c.state = 'down'; c.vel.set(0, 0, 0); c.g.rotation.set(Math.PI / 2, c.g.rotation.y, 0); }
     }
@@ -18250,7 +18320,8 @@ function rangeStep(dt) {
     s.vel.y -= 9.8 * dt;
     s.m.position.addScaledVector(s.vel, dt);
     s.m.rotation.y += s.spin * dt;
-    if (s.m.position.y <= 0.004) { s.m.position.y = 0.004; s.still = true; }
+    const gy = R.restY(s.m.position.x, s.m.position.z) + 0.004;
+    if (s.m.position.y <= gy) { s.m.position.y = gy; s.still = true; }
   }
 }
 function updateRangeHud() {
@@ -24627,7 +24698,7 @@ function enterScenario(scenarioId) {
   // fixed spawn could land inside a bin/box/pile and trap the player ("stuck in
   // random obstacles that change every time"). findClearSpawn pushes to clear air.
   if (built.spawn && built.obstacles) {
-    const cleared = findClearSpawn(built.spawn.x, built.spawn.z, built.obstacles, 0.4, built.spawn.y > 0.01 ? built.spawn.y : null);
+    const cleared = findClearSpawn(built.spawn.x, built.spawn.z, built.obstacles, 0.4, (built.spawnFootY || built.spawn.y > 0.01) ? built.spawn.y : null);   // v1.306: the range's door is under the deck, below y 0
     built.spawn.x = cleared.x;
     built.spawn.z = cleared.z;
   }

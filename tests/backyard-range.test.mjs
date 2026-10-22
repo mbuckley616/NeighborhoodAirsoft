@@ -4,6 +4,9 @@
 // grass, a bottle breaks, paper keeps a hole and lets the BB through, a bullseye keeps a mark and scores its ring);
 // E at the bench stands everything back up; E at the back door takes you home with the gun's BBs back in the bag.
 // Shots are BBs aimed straight at a target (makeBB, no curve) from the eye; the trigger path is checked once for cost.
+// v1.306 (D.51 step 2): the yard is Michael's on Bunratty, the lane running west (−x) along his lawn from the bench
+// past the fire pit; the ground is the map's, so the player is put down at the ground's height and the rest checks
+// measure from it.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -36,6 +39,31 @@ check('E takes you out back: a match with the range, no kids, no briefing', out.
 check('no roster and no lives on screen; the range tally is', out.roster === 'none' && out.health === 'none' && out.hud === 'block' && /THE RANGE/.test(out.hudText), out);
 check('the gun is loaded from your bag', out.ammo > 0 && out.bag === bag0 - out.ammo, { bag0, bag: out.bag, ammo: out.ammo });
 check('you start at the back door, its prompt showing', /Go back inside/.test(out.prompt), out.prompt);
+// v1.306: Michael's yard. From the French doors you can walk round the pool's fence and down the stone steps to the bench
+// and on down the lane to the hammock, and not into the pool; the river shows from the bench, past the drop
+const yard = await page.evaluate(() => {
+  const R = Game.scenario.range, C = kidFreeCells(), b = C.b, c = LADDER_CELL;
+  const cell = (x, z) => Math.round((x - b.minX) / c) * C.nz + Math.round((z - b.minZ) / c);
+  const seen = new Uint8Array(C.nx * C.nz), q = [cell(R.door.x, R.door.z)]; seen[q[0]] = 1;
+  while (q.length) { const k = q.pop(), i = Math.floor(k / C.nz), j = k % C.nz;
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= C.nx || jj >= C.nz) continue; const kk = ii * C.nz + jj; if (!seen[kk] && C.free[kk]) { seen[kk] = 1; q.push(kk); } } }
+  const reach = Object.fromEntries([['door', R.door.x, R.door.z], ['line', R.line.x, R.line.z], ['steps', 40.5, 37], ['hammock', 22.5, 42.5], ['pool', 31.8, 33]].map(([n, x, z]) => [n, !!seen[cell(x, z)]]));
+  const gY = Game.scenario.groundY, eye = new THREE.Vector3(R.line.x, gY(R.line.x, R.line.z) + 1.6, R.line.z), ray = new THREE.Raycaster();
+  Game.scene.updateMatrixWorld(true);
+  const all = []; Game.scene.traverse(o => { if (o.isMesh) all.push(o); });
+  let wet = 0;
+  for (let a = -90; a <= 90; a += 3) for (let p = 2; p >= -16; p -= 1) {
+    const yaw = a * Math.PI / 180, pt = p * Math.PI / 180;
+    ray.set(eye, new THREE.Vector3(Math.sin(yaw) * Math.cos(pt), Math.sin(pt), Math.cos(yaw) * Math.cos(pt)));
+    const h = ray.intersectObjects(all, false); if (h.length && h[0].object.name === 'rangeRiver') wet++;
+  }
+  return { reach, wet, lawnDrop: +(gY(R.door.x, R.door.z) - gY(R.line.x, R.line.z)).toFixed(2) };
+});
+console.log('   yard:', JSON.stringify(yard));
+check('from the back door you can walk to the steps, the bench and the hammock end, and not into the pool',
+  yard.reach.line && yard.reach.steps && yard.reach.hammock && !yard.reach.pool, yard.reach);
+check('the bench stands on the lawn, below the terrace you came out on', yard.lawnDrop > 1.5, yard.lawnDrop);
+check('from the bench you see the river down past the drop', yard.wet >= 3, yard.wet);
 
 // a real trigger pull costs a real BB
 const pull = await page.evaluate(() => {
@@ -52,7 +80,8 @@ await page.evaluate(() => {
   // hits, 10 marks, for 3 and 8).
   for (const ob of Game.scenario.bbs) if (ob._whistle) bbWhistleStop(ob);
   Game.scenario.bbs.length = 0;
-  Game.player.pos.set(Game.scenario.range.bench.x, 0, Game.scenario.range.bench.z - 0.8); Game.player.yaw = 0;
+  const L = Game.scenario.range.line;
+  Game.player.pos.set(L.x, Game.scenario.groundY(L.x, L.z), L.z); Game.player.yaw = Math.PI / 2;
   window._shoot = (x, y, z) => {
     const eye = new THREE.Vector3(Game.player.pos.x, Game.player.pos.y + Game.player.eyeOffset, Game.player.pos.z);
     const dir = new THREE.Vector3(x, y, z).sub(eye).normalize();
@@ -70,17 +99,17 @@ const shots = await page.evaluate(() => {
   for (let i = 0; i < 30; i++) stepGame(1 / 60);
   res.canFlying = can.state; res.canMoved = +can.pos.distanceTo(home).toFixed(2);
   for (let i = 0; i < 240; i++) stepGame(1 / 60);
-  res.canRest = can.state; res.canY = +can.pos.y.toFixed(3); res.othersUp = R.cans.filter(c => c !== can && c.state === 'up').length;
+  res.canRest = can.state; res.canY = +(can.pos.y - R.restY(can.pos.x, can.pos.z)).toFixed(3); res.othersUp = R.cans.filter(c => c !== can && c.state === 'up').length;
   _shoot(bot.x, bot.y0 + 0.08, bot.z); for (let i = 0; i < 60; i++) stepGame(1 / 60);
   res.bottle = bot.state; res.bottleShown = bot.g.visible; res.shards = R.shards.length; res.shardsDown = R.shards.every(s => s.still);
   const pb = _shoot(pap.x + 0.03, pap.y - 0.05, pap.z);
   for (let i = 0; i < 14; i++) stepGame(1 / 60);
-  res.holes = R.stats.holes; res.pastPaper = pb.pos.z < pap.z - 0.5;
+  res.holes = R.stats.holes; res.pastPaper = pb.pos.x < pap.x - 0.5;
   for (let i = 0; i < 120; i++) stepGame(1 / 60);
   _shoot(far.x, far.y, far.z); for (let i = 0; i < 40; i++) stepGame(1 / 60);
   res.farLast = R.stats.last; res.farRing = R.stats.lastRing;
   // the rings themselves: BBs from half a metre in front of the near board, straight on (no drop to speak of)
-  const close = (dx) => { const bb = makeBB(new THREE.Vector3(near.x + dx, near.y, near.z + 0.5), new THREE.Vector3(0, 0, -90), 'player', null, null, 'player');
+  const close = (dz) => { const bb = makeBB(new THREE.Vector3(near.x + 0.5, near.y, near.z + dz), new THREE.Vector3(-90, 0, 0), 'player', null, null, 'player');
     bb.curveStrength = 0; Game.scenario.bbs.push(bb); for (let i = 0; i < 10; i++) stepGame(1 / 60); return R.stats.lastRing; };
   res.nearCentre = close(0); res.nearRing = close(0.1); res.nearLast = R.stats.last;
   res.marks = R.marks.length; res.stats = Object.assign({}, R.stats);
@@ -104,7 +133,7 @@ check('an empty mag at the range reads "MAG EMPTY · BACK DOOR TO RELOAD"', empt
 // the bench: E stands everything back up
 const reset = await page.evaluate(() => {
   const R = Game.scenario.range;
-  Game.player.pos.set(R.bench.x, 0, R.bench.z - 0.6); for (let i = 0; i < 2; i++) stepGame(1 / 60);
+  Game.player.pos.set(R.line.x, Game.scenario.groundY(R.line.x, R.line.z), R.line.z); for (let i = 0; i < 2; i++) stepGame(1 / 60);
   return { prompt: document.getElementById('interactPrompt').textContent.trim() };
 });
 check('at the bench the prompt reads "Stand everything back up"', /Stand everything back up/.test(reset.prompt), reset.prompt);
@@ -121,7 +150,7 @@ check('E at the bench: six cans on the plank, three bottles, no glass, clean pap
 // home by the back door
 const home = await page.evaluate(() => {
   const R = Game.scenario.range;
-  Game.player.pos.set(R.door.x, 0, R.door.z); for (let i = 0; i < 2; i++) stepGame(1 / 60);
+  Game.player.pos.set(R.door.x, Game.scenario.groundY(R.door.x, R.door.z), R.door.z); for (let i = 0; i < 2; i++) stepGame(1 / 60);
   return { ammo: Game.gun.ammo, bag: Game.persist.bag };
 });
 await page.keyboard.press('KeyE');
