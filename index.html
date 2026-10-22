@@ -2574,7 +2574,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.307</div>
+  <div class="version">v1.308</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -17176,6 +17176,55 @@ function buildHollowScene(variant, timeOfDay) {
     midfield:{ pos: P(0, 0),    yaw: 0 },
     ffa_west:{ pos: P(-34, -18.5), yaw: -Math.PI / 2 },   // v1.265: the free-for-all's, in the west woods facing east (v1.267: 11 m south-west, 30 m from every kid)
   };
+
+  // === v1.308 (D.51 step 3, docs/refs/chattahoochee.md gap 1; Michael: "relatively clear in this space, but around the
+  // 'battlefield' and off of the main trails, it was pretty thick"): fallen logs and deadfall piles round the field's
+  // edge, inside the box, as cover; the middle stays as it was. Fixed spots, each taken only where it is clear of every
+  // trunk and piece of cover by 0.6 m, 3.5 m from every start and anchor, 7 m from the forts and 4.5 m from the creek
+  // (the trees are seeded per match, so a match can have fewer). Logs lie along x or z (0.48 m: crouch cover, BBs
+  // stop); a deadfall pile is 1.2 m of grey branches. Pushed onto the end of coverList, so no placement's index moves.
+  {
+    const barkMat = new THREE.MeshStandardMaterial({ color: 0x706855, roughness: 1 }), endMat = new THREE.MeshStandardMaterial({ color: 0x9a8a68, roughness: 1 });
+    const deadMat = new THREE.MeshStandardMaterial({ color: 0x595d59, roughness: 1 });
+    const solid = [...treeObs, ...coverList, ...redoubtObs, ...fortObs];
+    const pts = [...Object.values(placements).map(p => p.pos), ...Object.values(playerSpawns).map(p => p.pos)];
+    const fits = (x0, x1, z0, z1, keep) => {
+      if (solid.some(o => o.maxX > x0 - 0.6 && o.minX < x1 + 0.6 && o.maxZ > z0 - 0.6 && o.minZ < z1 + 0.6)) return false;
+      const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, r = Math.hypot(x1 - x0, z1 - z0) / 2;
+      if (pts.some(p => Math.hypot(p.x - cx, p.z - cz) < r + keep)) return false;
+      if (Math.hypot(cx + 2, cz + 30) < 7 + r || Math.hypot(cx - 2, cz - 30) < 7 + r) return false;
+      if (creekDist(cx, cz) < 4.5 + r) return false;
+      return true;
+    };
+    const LOGS = [[-35, -28, 5, 'x'], [-34.5, 9, 5.5, 'z'], [-33, 30.5, 5, 'x'], [40, -31, 5, 'x'], [41, 12, 4.5, 'z'], [39, 31.5, 5, 'x'],
+      [-20, -33.5, 5, 'x'], [22, -33.5, 4.5, 'x'], [-18, 33.5, 5, 'x'], [25, 33.5, 4.5, 'x']];
+    for (const [x, z, len, ax] of LOGS) {
+      const R = 0.24, hw = ax === 'x' ? len / 2 : R, hd = ax === 'x' ? R : len / 2;
+      if (!fits(x - hw, x + hw, z - hd, z + hd, 3.5)) continue;
+      const g = new THREE.Group();
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 1.1, len, 9), barkMat);
+      log.rotation.z = Math.PI / 2; if (ax === 'z') log.rotation.y = Math.PI / 2;
+      log.position.y = R; log.castShadow = log.receiveShadow = true; g.add(log);
+      for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.CircleGeometry(R * 0.95, 9), endMat); e.position.set(ax === 'x' ? s * (len / 2 + 0.005) : 0, R, ax === 'z' ? s * (len / 2 + 0.005) : 0); e.rotation.y = ax === 'x' ? s * Math.PI / 2 : (s > 0 ? 0 : Math.PI); g.add(e); }
+      g.position.set(x, 0, z); scene.add(g);
+      const obs = { minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd, h: 2 * R, surface: 'wood', mesh: g, baseY: 0, hollowLog: true };
+      sinkObs(obs, x, z); coverList.push(obs); solid.push(obs);
+    }
+    for (const [x, z] of [[-36, -12], [42, -19], [-36, 21]]) {
+      const w = 3.2, d = 2.4;
+      if (!fits(x - w / 2, x + w / 2, z - d / 2, z + d / 2, 3.5)) continue;
+      const g = new THREE.Group();
+      for (let i = 0; i < 9; i++) {   // grey branches heaped criss-cross
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 2.6 + (i % 3) * 0.5, 5), deadMat);
+        b.rotation.z = Math.PI / 2 - 0.25 + (i % 2) * 0.5; b.rotation.y = i * 0.7;
+        b.position.set(((i * 37) % 7 - 3) * 0.3, 0.2 + (i % 4) * 0.25, ((i * 53) % 5 - 2) * 0.35); b.castShadow = true; g.add(b);
+      }
+      const core = new THREE.Mesh(new THREE.SphereGeometry(1, 7, 5), deadMat); core.scale.set(w * 0.45, 0.75, d * 0.45); core.position.y = 0.3; g.add(core);
+      g.position.set(x, 0, z); scene.add(g);
+      const obs = { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, h: 1.2, surface: 'soft', mesh: g, baseY: 0, hollowDeadfall: true };
+      sinkObs(obs, x, z); coverList.push(obs); solid.push(obs);
+    }
+  }
 
   // === v1.307 (D.51 step 3): past the box, at real scale ===
   // The floodplain woods up and down the river and the bluff behind the field (tall hardwoods, a minority of pines),

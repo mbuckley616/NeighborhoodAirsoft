@@ -12999,3 +12999,45 @@ Before this, the Hollow ended in a cyan river 22 m wide and a flat strip of 26 t
   - The water's colour against the photos.
 - **Next:** the rest of step 3 if Michael wants more in the field itself (the ground's colour and unevenness, the
   trees greyer and taller, gaps 2-3), then step 4, the 28 matches re-anchored, and step 5, the edges.
+
+## v1.308 — Logs and deadfall round the Hollow's field
+Card `fable/d51-bunratty-hollow` (backlog D.51), step 3, second part: the brush and logs. Michael: "a lot more brush /
+fallen logs / small to medium plants & bushes scattered around this area. It was relatively clear in this space, but
+around the 'battlefield' and off of the main trails, it was pretty thick". v1.307 put the thicket past the bounds.
+This version puts the guide's logs and deadfall (docs/refs/chattahoochee.md gap 1) into play, round the field's edge
+only, so the middle where the fights are stays as clear as it was.
+- **Ten fixed spots for logs and three for deadfall piles,** all in the ring between the field and the box's edge:
+  - **Logs:** 4.5-5.5 m long, lying along x or z. They are 0.48 m high: crouch cover, and BBs stop on them.
+  - **Deadfall:** a heap of grey branches, 3.2 x 2.4 m and 1.2 m high, with a soft surface.
+
+  The trees are seeded per match, so each spot is taken only where it is clear. A spot is skipped unless it is:
+  - 0.6 m from every trunk and piece of cover;
+  - 3.5 m from every start and anchor;
+  - 7 m from the forts;
+  - 4.5 m from the creek.
+
+  A match gets 4-8 pieces. They go on the end of `coverList`, so no placement's index moves.
+- Nothing else in the field moved.
+### Verified
+- **All 12 Hollow matches were built on v1.307 and v1.308 in one run.** Every v1.307 obstacle is there to the
+  millimetre, and 4-8 new ones were added per match (Juggernaut and the Ten-Way 4-5, the night matches up to 8). Your
+  start is the same in every match. No page errors.
+- **`tests/real-scale.test.mjs`:** the Hollow has logs and a deadfall pile, all at the field's edge, the nearest
+  3.5 m or more from any start or anchor.
+- **The AI suites on the Hollow pass:** `ffa-starts` (nobody in sight of anybody at the Ten-Way's starts), `kid-hold`,
+  `cover-fire`, `hollow-held`, `hollow-fort`, `fort-spawn`, `idle-ally`, `spawn-facing`, `pickup-ffa` and
+  `lot-hollow-polish`.
+- **`idle-ally`:**
+  - It failed once of four runs here. Rebecca walked 34.4 m on her own, but went 25.9 s idle without boredom.
+  - That is correct play: each kid's threshold is drawn from 25-30 s, and she moved on before hers came. The check
+    wanted boredom past 25 s, which disagrees with that threshold.
+  - It now asks the same of 30 s, the fault it guards (an ally idle to 30 s and never bored), which the next check
+    already bounds.
+  - Three more runs on v1.308 pass. Three on v1.307 pass, with idle times of 25.3-29.1 s.
+### Still open
+- **Fewer pieces than the guide's 6-10 logs and 2-4 piles.** The seeded woods fill the edge, and a spot is skipped
+  rather than moved. Whether there should be more, and whether the middle should get any, is a playtest call. Michael
+  said the field was "relatively clear".
+- **Ground, trees and match distances still to come.** The ground's colour and unevenness and the trees greyer and
+  taller (the guide's gaps 2-3) would change how the field looks in play. Step 4 checks every match's distances
+  (first contact, starts).

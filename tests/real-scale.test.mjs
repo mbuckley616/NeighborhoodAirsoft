@@ -213,6 +213,13 @@ const hol = await page.evaluate(() => {
   if (sign) { const b = new THREE.Box3().setFromObject(sign); out.sign = { past: +(b.min.x - 44).toFixed(2), y: +(b.max.y - gY(b.min.x, (b.min.z + b.max.z) / 2)).toFixed(2), z: +((b.min.z + b.max.z) / 2).toFixed(1) }; }
   out.solid = Game.player.obstacles.filter(o => o.mesh && (o.mesh.name === 'realScenery' || o.mesh.name === 'wizardHollowSign' || o.mesh.name === 'hollowRiver')).length;
   out.far = Game.camera.far;
+  // v1.308: logs and deadfall round the field's edge, clear of every start and anchor and of the creek
+  const lb = withSeededRandom('hollow_skirmish_3v3|logs', () => buildHollowScene('default', 'day'));
+  const sp = [...Object.values(lb.placements), ...Object.values(lb.playerSpawns)].map(p => p.pos);
+  const lg = lb.cover.filter(o => o.hollowLog || o.hollowDeadfall);
+  const gap = o => Math.min(...sp.map(p => Math.hypot(Math.max(o.minX - p.x, 0, p.x - o.maxX), Math.max(o.minZ - p.z, 0, p.z - o.maxZ))));
+  out.logs = { logs: lg.filter(o => o.hollowLog).length, piles: lg.filter(o => o.hollowDeadfall).length, nearest: +Math.min(...lg.map(gap)).toFixed(2),
+    edge: lg.every(o => Math.max(Math.abs((o.minX + o.maxX) / 2 - 3), Math.abs((o.minZ + o.maxZ) / 2)) > 30) };
   out.calls = {};
   for (const [name, x, z, yaw, pitch] of [['trees', 28, 12, -Math.PI / 2 + 0.4, 0.1], ['west', -36, 0, Math.PI / 2, -0.08], ['east', 30, 10, -Math.PI / 2, 0.06], ['north', 0, -33, Math.PI, 0], ['south', 2, 30, 0, 0]]) {
     Game.player.pos.set(x, gY(x, z), z); stepGame(1 / 60); Game.player.yaw = yaw; Game.player.pitch = pitch; Game.camera.updateMatrixWorld(true);
@@ -226,6 +233,7 @@ check('the Hollow: the river, 62 m wide, lies under water from bank to bank, a b
 check('the Hollow: the far bank climbs 40 m and more, the bluff behind the field 20 m and more', hol.river.farTop >= 40 && hol.river.bluff >= 20, hol.river);
 check('the Hollow: from the west edge you see the water and the far bank', hol.view.wet >= 10 && hol.view.far >= 10, hol.view);
 check('the Hollow: the Wizard Hollow sign stands at the trail\'s head, 1-3 m past the east bounds, about 1.5 m up', hol.sign && hol.sign.past > 0.5 && hol.sign.past < 3 && hol.sign.y > 1.5 && hol.sign.y < 1.9, hol.sign);
+check('the Hollow: logs and deadfall round the field\'s edge (not its middle), 3.5 m and more from every start and anchor', hol.logs.logs >= 3 && hol.logs.piles >= 1 && hol.logs.nearest >= 3.5 && hol.logs.edge, hol.logs);
 check('the Hollow: nothing past the box is solid', hol.solid === 0, hol.solid);
 check('the Hollow: the camera sees 350 m', hol.far === 350, hol.far);
 check('the Hollow: at most 1,450 draw calls in any of five views', Math.max(...Object.values(hol.calls)) <= 1450, hol.calls);
