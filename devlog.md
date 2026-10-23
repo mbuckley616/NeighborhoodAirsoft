@@ -13817,3 +13817,30 @@ sections (D.64) come next, before batch 2.
   pump.
 - **For Michael's eye:** `tests/out/gun-semishotgun-side.png` and `gun-semishotgun-aimed.png` (the post in the
   ghost ring).
+
+## v1.329 — The workbench's guns in sections
+Backlog D.64, Michael's note (control room, 22 Oct): "if we add more guns, I think we need to reconsider the workbench
+menu, and have collapsible sections by Gun Type." With batch 1 in (v1.325-v1.328) the list had 21 guns, one long
+column past the bottom of the page, owned and not mixed together.
+- **Now** the list has a header for each kind, the shop's four (PISTOLS, SHOTGUNS, RIFLES, AUTOMATICS, from
+  `GUN_KINDS`), and each header folds its section.
+  - Each header shows an arrow (▾ open, ▸ shut), the kind, and how many of its guns you own ("2 of 4").
+  - A section starts open if you own one of its guns or the gun on the bench is in it. A kind you own nothing of
+    starts shut, so a new player sees their pistols and three headers.
+  - A click on a header opens or shuts it. The choice holds when the workbench is closed and opened again, until the
+    game is reloaded.
+  - The guns keep the shop's order inside their section. A click on a gun puts it on the bench as before.
+- **On the notebook paper** each header is one rule high, in the marker hand with a red arrow, so every line still
+  sits on a rule. The first try had a margin, and `notebook` caught its lines off the rules.
+### Verified
+- **`tests/shop-gun-kinds.test.mjs`, extended.** Owning the Spring Pistol, the FAMAS and the Electric Pistol:
+  - The headers read PISTOLS open 2 of 4, SHOTGUNS shut 0 of 3, RIFLES open 1 of 5, AUTOMATICS shut 0 of 9. The list
+    shows the 4 pistols and 5 rifles in order, and nothing from the shut kinds.
+  - A click on SHOTGUNS opens it (12 guns shown). A click on PISTOLS shuts it (8 shown) and leaves SHOTGUNS open.
+  - A click on the FAMAS puts it on the bench, and the sections stay as they were. Closed and opened again, the
+    workbench keeps them.
+  - A picture: `tests/out/workbench-kinds.png`.
+- **These suites pass:** `shop-gun-kinds`, `notebook`, `workbench-labels`, `under-parts`, `pad-hints` and `smoke`.
+### Still open
+- **For a playtest:** whether a shut kind should stay shut across reloads (it is not saved). On a pad, each header is
+  a target for the cursor like any other clickable.

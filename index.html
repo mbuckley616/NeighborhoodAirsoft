@@ -1399,6 +1399,13 @@
   #workbenchScreen .wb-gun-icon { font-size: 16px; color: var(--ui-accent); width: 20px; text-align: center; }
   #workbenchScreen .wb-gun-nm { font-size: 12px; color: var(--ui-text); }
   #workbenchScreen .wb-gun-sub { font-size: 9px; color: #888; }
+  /* v1.329 (D.64): a header for each gun kind, folding its section */
+  #workbenchScreen .wb-kind { display: flex; align-items: baseline; gap: 6px; cursor: pointer; margin: 8px 0 4px; padding: 2px 0; user-select: none; }
+  #workbenchScreen .wb-kind:first-child { margin-top: 0; }
+  #workbenchScreen .wb-kind-arrow { width: 12px; color: var(--ui-accent); }
+  #workbenchScreen .wb-kind-nm { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ui-text); font-weight: bold; }
+  #workbenchScreen .wb-kind-n { margin-left: auto; font-size: 9px; color: #888; }
+  #workbenchScreen .wb-kind:hover .wb-kind-nm { color: var(--ui-accent); }
   /* Center viewport */
   #workbenchScreen .wb-viewport {
     position: relative; width: 100%; height: 360px; background: radial-gradient(ellipse at center, #2a2f36 0%, #14171b 100%);
@@ -2419,6 +2426,11 @@
   #workbenchScreen .nb-paper .wb-gun-icon { color: var(--nb-red); }
   #workbenchScreen .nb-paper .wb-gun-nm { font-size: 16px; color: var(--nb-ink); }
   #workbenchScreen .nb-paper .wb-gun-sub { font-size: 13px; color: var(--nb-pencil); }
+  #workbenchScreen .nb-paper .wb-kind { margin: 0 !important; padding: 0 !important; height: var(--nb-rule); }   /* v1.329: a header is one rule */
+  #workbenchScreen .nb-paper .wb-kind > span { line-height: var(--nb-rule) !important; }
+  #workbenchScreen .nb-paper .wb-kind-nm { font-family: var(--nb-marker); font-size: 16px; color: var(--nb-ink); letter-spacing: 1px; }   /* v1.329 */
+  #workbenchScreen .nb-paper .wb-kind-arrow { color: var(--nb-red); }
+  #workbenchScreen .nb-paper .wb-kind-n { font-family: var(--nb-hand); font-size: 13px; color: var(--nb-pencil); }
   #workbenchScreen .nb-paper .wb-viewport { height: calc(var(--nb-rule) * 14); border: none; border-radius: 0;
     box-shadow: 2px 3px 0 rgba(29,42,107,0.25); }
   #workbenchScreen .nb-paper .wb-viewport * { line-height: normal !important; }
@@ -2582,7 +2594,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.328</div>
+  <div class="version">v1.329</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24307,6 +24319,7 @@ const WB = {
   gunGroup: null, turntable: null,
   gunType: null,
   selSlot: null,          // { slot:'sight'|'rail', railIndex }
+  kindOpen: {},           // v1.329 (D.64): a gun kind's section opened or closed by hand (else open if you own one of its guns)
   yaw: 0.5, pitch: 0.2, dist: 0.9,
   dragging: false, lastX: 0, lastY: 0,
   autoRotate: true,
@@ -24725,16 +24738,36 @@ function renderWorkbench() {
   // --- Gun list ---
   const gl = document.getElementById('wbGunList');
   gl.innerHTML = '';
-  for (const gt of GUN_ORDER) {
-    const cfg = GUN_MAGS[gt];
-    const owned = !!Game.persist.owned[cfg.ownFlag] || gt === 'pistol';
-    const div = document.createElement('div');
-    div.className = 'wb-gun' + (gt === WB.gunType ? ' active' : '') + (owned ? '' : ' locked');
-    const cap = getGunAccessoryCap(gt);
-    div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
-      `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}` : 'Not owned'}</div></div>`;
-    if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
-    gl.appendChild(div);
+  // v1.329 (backlog D.64, Michael 22 Oct: "reconsider the workbench menu, and have collapsible sections by Gun Type"):
+  // the guns sit under a header for each kind, as the shop's (GUN_KINDS), each header folding its section away. A
+  // section starts open when you own one of its guns, or when the gun on the bench is in it; a click on its header
+  // opens or closes it until the game is closed.
+  const isOwned = gt => !!Game.persist.owned[GUN_MAGS[gt].ownFlag] || gt === 'pistol';
+  for (const kind of GUN_KINDS) {
+    const guns = GUN_ORDER.filter(gt => gunKind(gt) === kind.id);
+    if (!guns.length) continue;
+    const nOwned = guns.filter(isOwned).length;
+    const open = WB.kindOpen[kind.id] ?? (nOwned > 0 || guns.includes(WB.gunType));
+    const head = document.createElement('div');
+    head.className = 'wb-kind' + (open ? ' open' : '');
+    head.dataset.kind = kind.id;
+    head.innerHTML = `<span class="wb-kind-arrow">${open ? '▾' : '▸'}</span><span class="wb-kind-nm">${kind.name}</span>` +
+      `<span class="wb-kind-n">${nOwned} of ${guns.length}</span>`;
+    head.addEventListener('click', () => { WB.kindOpen[kind.id] = !open; renderWorkbench(); });
+    gl.appendChild(head);
+    if (!open) continue;
+    for (const gt of guns) {
+      const cfg = GUN_MAGS[gt];
+      const owned = isOwned(gt);
+      const div = document.createElement('div');
+      div.className = 'wb-gun' + (gt === WB.gunType ? ' active' : '') + (owned ? '' : ' locked');
+      div.dataset.gun = gt;
+      const cap = getGunAccessoryCap(gt);
+      div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
+        `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}` : 'Not owned'}</div></div>`;
+      if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
+      gl.appendChild(div);
+    }
   }
 
   // --- Slot list (right) ---
