@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
+  Your note: "list all equipment slots available, and if empty, clearly state that it's an empty slot. We should be
+  able to click on an empty slot, and then see a list of all of the equipment we have that can be placed in that
+  slot." The four numbered slots already work that way: slot 1 is your gun, an empty 2-4 says "Empty · Click to equip",
+  and a click opens the things you own that fit it under the row. What doesn't: your worn gear. Eye pro, armor (chest,
+  arms, knees) and shoes sit in a separate WORN GEAR section below, and an empty zone says "nothing" on the kid's
+  labels or "No armor owned", with no row to click.
+  - A) **One list of every slot:** hands (your gun), slots 2-4, eyes, chest, arms, knees and feet, each its own row
+    saying "Empty slot" when empty. A click on any row lists what you own that fits it, or says "Nothing you own fits
+    this — airsoft.com sells …". The WORN GEAR section goes into it. *(recommended: one place, one rule for every slot)*
+  - B) **Two lists, the same rule in both:** the four numbered slots as they are; WORN GEAR gets a row per zone (eyes,
+    chest, arms, knees, feet), "Empty slot" and a picker on each.
+  - C) **Wording only:** "Empty slot" everywhere a slot is empty, the picker titled "Fits slot 2:", and an empty
+    picker says what to buy. No new rows.
+
 ## Answered
 
 - **Cheaper BBs (D.66): how much cheaper, and the new packs? (builder, 2026-10-23)**
