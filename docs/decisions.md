@@ -5,6 +5,32 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Weather, seasons and holidays (D.70): what to build first? (producer, 2026-10-23)**
+  Your note: "I would love to hear proposals around weather/seasons/holiday modes - Halloween, Christmas, etc. for
+  holidays, but also conditions like rain, wind, snow, etc." Every match today is a dry summer day or night. Halloween
+  is a week away.
+  - A) **Weather as a match setting:** rain, wind and snow on the Pickup Game board and on a few ladder matches. Rain
+    and snow cut how far you see, wind pushes BBs sideways, snow lies on roofs and lawns.
+  - B) **Holiday looks first:** Halloween (pumpkins, fake webs, kids in costumes, porch lights by night) and later
+    Christmas (lights, inflatables), shown around the real dates or switched on from the Pickup Game board. Nothing
+    about play changes. *(recommended: Halloween is next week, and it is contained work the builder can start now)*
+  - C) **Seasons through the summer calendar:** the bedroom calendar runs on past August into fall and winter, and the
+    maps change with it (leaves, bare trees, snow), holidays included.
+  - D) **Not now:** keep it on the list.
+
+- **Go-cart races and golf carts (D.71, D.72): which one, and how? (producer, 2026-10-23)**
+  Your notes: "a 'racing mode' where you race go-cart frames (no engine) down a hill, and try not to get shot by a group
+  of enemies all shooting at you" and "vehicles like golf carts as well." Nothing in the game moves you but your feet
+  today.
+  - A) **The go-cart race first:** a new match type on a hill (Bunratty's slope), you coast down in an engineless frame,
+    steering and braking, while kids along the route shoot at you; reach the bottom with lives left. Golf carts later.
+    *(recommended: gravity only, no engine, one map, and it is the new kind of match you asked for in D.15)*
+  - B) **Golf carts first:** a cart parked on a few maps that you (and a teammate) can drive around in a match.
+  - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
+  - D) **Not now:** keep them on the list.
+
+## Answered
+
 - **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
   Your note: "list all equipment slots available, and if empty, clearly state that it's an empty slot. We should be
   able to click on an empty slot, and then see a list of all of the equipment we have that can be placed in that
@@ -19,8 +45,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     chest, arms, knees, feet), "Empty slot" and a picker on each.
   - C) **Wording only:** "Empty slot" everywhere a slot is empty, the picker titled "Fits slot 2:", and an empty
     picker says what to buy. No new rows.
-
-## Answered
+  Michael: **A) One list of every slot**. (23 Oct 2026)
 
 - **Cheaper BBs (D.66): how much cheaper, and the new packs? (builder, 2026-10-23)**
   Your note asks for BBs 3x to 5x cheaper ("2000-4000 rounds for like 15 bucks"), and for the shop's pictures to match
