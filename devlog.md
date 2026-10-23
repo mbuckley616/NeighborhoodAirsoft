@@ -13605,3 +13605,51 @@ available BBs."
 - **For a playtest:** whether the swap back to the pulled mag is welcome or confusing. A spare mag of a different size
   from your gun's mag holds the gun's mag after a swap, so a 10-round spare can read 15 once you swap a 20-round mag
   into the pouch. Nothing is lost either way.
+
+## v1.324 — Squad Basics, the second tutorial
+Backlog D.61, Michael's answer C (control room, 22 Oct): "a second tutorial match, Squad Basics, after the first 1v1:
+you and two teammates against three kids, coached through the orders and the loader, with the free 25-BB loader."
+Nothing in the game taught the squad orders (Q, or the d-pad) or the speed loader; the first match with teammates was
+Two on Two, seventh on Winnmark's ladder.
+- **Where it is:** Winnmark's third match, after Just You and Seth and before Seth's Got a Shotgun
+  (`winnmark_squad_basics`). Winnmark now has 17 matches. A save that has already won past it finds it open and can
+  skip it; a save that won Just You and Seth but not the shotgun duel plays it first.
+- **The match:** you, Seth and Trey against Brooke, Jamie and Marcus on the cul-de-sac, last team standing, three
+  lives. Their side has pistols and goes easy (aggression 0.2, fire rate 0.5, accuracy 0.35). Pays $15 a win and $5 a
+  loss, and like Backyard Basics no hit bonus. The card says TUTORIAL. Seth and Trey stay in it whoever is in your crew.
+- **The coach's banner, three steps** (the `Tutorial` module now has a kind, 'basics' or 'squad', and Squad Basics'
+  beats):
+  1. **Give an order.** "Hold Q, move the mouse toward FOLLOW ME and let go" (on a pad, the d-pad). Any order moves it
+     on. The orders and the order box work in this tutorial; Backyard Basics still has none.
+  2. **The speed loader.** "Fire a few shots, then press 2 and hold Left-Mouse to feed BBs into your mag." BBs moving
+     from the loader into the mag move it on. With no loader in any slot the step is skipped.
+  3. **Win it as a team.** Counts the tags, "0/3 down", and names PUSH UP and FIND COVER.
+  Nobody fires, on either side, until step 3 shows, so the first two steps are learned in peace. Kids still move, and
+  you can tag them early.
+- **Seth's loader:** the first time you play it, Seth gives you a 25-BB speed loader, yours to keep (`giveSethsLoader`,
+  a new `sl_25` tier the shop doesn't sell). It goes in your first empty slot, or slot 2 if none is empty, and is
+  filled from your bag at once. It is given once (`sethLoaderGiven` in the save).
+### Verified
+- **`tests/squad-basics.test.mjs`, new** (a ladder match and a gift in the save):
+  - It sits after Just You and Seth: locked before that win, open after it. It locks the shotgun duel until it is won.
+  - With 200 BBs and empty slots, BEGIN puts the 25-BB loader in slot 2 with 25 BBs. The bag ends at 165 (10 in the
+    gun, 25 in the loader). Step 1 shows and orders can be given.
+  - 600 steps (10 s) in, every kid still holds fire and you have taken no hit.
+  - An order moves it to step 2. The order box (24-219 px across, top left) is clear of the coach's banner (320-960).
+  - Six shots down, a feed fills the mag from the loader (19 left) and moves it to step 3. Every kid can fire then,
+    and the banner reads 0/3.
+  - Tagging the three wins it and opens the shotgun duel. The loader is still yours in slot 2.
+  - A replay gives no second loader, and yours fills to 25 again.
+- **By playing it headless:** three rounds standing at the start after an order. The squad won one in 65 s; twice
+  the other side won at 80 and 109 s with Jamie and Marcus left, since you never fired. Nothing wedged, and no page
+  errors.
+- **Updated for 17 Winnmark matches:** `map-screen` (17 cards, "2 of 17 won") and `calendar` (8 of 17 won is now
+  Tuesday 10 June, was 8 of 16 on Wednesday 11 June).
+- **These suites pass:** `squad-basics`, `calendar`, `map-screen`, `bed-summer`, `front-door`, `pad-hints`,
+  `squad-hud`, `crew-roster`, `rival` and `smoke`.
+### Still open
+- **For a playtest:** whether their side is too easy or too hard once step 3 lets them fire, and whether the steps
+  read clearly. No new summer text comes with it; Seth's text after Just You and Seth still talks about his shotgun.
+- **Backyard Basics' last step** still says "Press R to reload from your speed loader". You have no loader yet then,
+  and R reloads nothing (it clears a jam and flips a taped mag); the step only waits for the key. Left as it was, for
+  Michael to say whether it should change.

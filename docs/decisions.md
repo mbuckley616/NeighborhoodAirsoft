@@ -5,6 +5,31 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Cheaper BBs (D.66): how much cheaper, and the new packs? (builder, 2026-10-23)**
+  Your note asks for BBs 3x to 5x cheaper ("2000-4000 rounds for like 15 bucks"), and for the shop's pictures to match
+  how they're sold: 500 in a little tube with a spigot, 1,000-2,000 in a tall bottle, more than 2,000 in a bag. Today
+  the shop sells 100 for $5, 500 for $20, 2,000 for $70 and 5,000 for $150 (3-5¢ a BB). Cash is whole dollars, and a
+  ladder win pays $2-$20, so a gun's 350-round drum costs $10-$18 to fill today. Every option draws the new pictures.
+  - A) **3x cheaper:** 100 for $2, 500 for $7, 2,000 for $23, 5,000 for $50.
+  - B) **5x cheaper:** 100 for $1, 500 for $4, 2,000 for $14, 5,000 for $30. *(recommended: closest to your $15 for
+    2,000-4,000, and BBs stop deciding which gun you can afford to shoot)*
+  - C) **Real prices, a bag size added:** 500 for $3, 2,000 for $10, 5,000 for $20, and a 10,000 bag for $35; the
+    100 pack goes.
+  - D) Leave the prices; only the pictures change.
+
+- **More guns (D.63): how many, and in what order? (builder, 2026-10-23)**
+  Your note wants 30-50 guns in the end: electric semi-auto rifles and pistols, burst rifles, LMGs, one or two more
+  snipers, more SMGs and automatic rifles, a semi-auto shotgun, and a FAMAS spring rifle that plays like the Spring
+  Assault Rifle. There are 16 today. Each new gun needs a model, a first-person pose, its spec, its mags and spare mags,
+  a shop price and a place on the workbench, and the workbench (D.64) wants its sections by gun type before the list
+  doubles.
+  - A) **In batches of four to six, the FAMAS first:** batch 1 is the FAMAS, an electric semi-auto pistol, an
+    electric semi-auto rifle, a burst rifle and a semi-auto shotgun; then the workbench sections (D.64); then LMGs,
+    snipers and SMGs in later batches. *(recommended: each batch is playable and testable on its own)*
+  - B) **The FAMAS alone now,** the rest after the workbench and loadout passes (D.64, D.65).
+  - C) **The workbench sections first (D.64),** then guns in batches as in A.
+  - D) **All of it in one Fable card,** guns, workbench and loadout together.
+
 ## Answered
 
 - **More tutorials (D.61): how should the game teach squad orders and the speed loader? (builder, 2026-10-22)**
