@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Cheaper BBs (D.66): how much cheaper, and the new packs? (builder, 2026-10-23)**
   Your note asks for BBs 3x to 5x cheaper ("2000-4000 rounds for like 15 bucks"), and for the shop's pictures to match
   how they're sold: 500 in a little tube with a spigot, 1,000-2,000 in a tall bottle, more than 2,000 in a bag. Today
@@ -16,6 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Real prices, a bag size added:** 500 for $3, 2,000 for $10, 5,000 for $20, and a 10,000 bag for $35; the
     100 pack goes.
   - D) Leave the prices; only the pictures change.
+  Michael: **B) 5x cheaper** (2026-10-23)
 
 - **More guns (D.63): how many, and in what order? (builder, 2026-10-23)**
   Your note wants 30-50 guns in the end: electric semi-auto rifles and pistols, burst rifles, LMGs, one or two more
@@ -29,8 +32,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **The FAMAS alone now,** the rest after the workbench and loadout passes (D.64, D.65).
   - C) **The workbench sections first (D.64),** then guns in batches as in A.
   - D) **All of it in one Fable card,** guns, workbench and loadout together.
-
-## Answered
+  Michael: **A) In batches of four to six, the FAMAS first** (2026-10-23)
 
 - **More tutorials (D.61): how should the game teach squad orders and the speed loader? (builder, 2026-10-22)**
   Your note asks whether the game needs more tutorials, for the team commands and the speed loader, and whether a
