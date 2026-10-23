@@ -1,4 +1,4 @@
-// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327 the Burst Rifle, at the end), the Electric Pistol ($110) and the Electric
+// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327-v1.328 the Burst Rifle and the Semi-Auto Shotgun, at the end), the Electric Pistol ($110) and the Electric
 // Rifle ($150). A battery cycles the spring, so nothing is cocked between shots: every pull fires, up to 5 and 6 a
 // second, where their spring kin (the Spring Pistol and the Spring Assault Rifle) fire, then want the slide or the
 // charging handle. Run dry, a new mag is racked in as on any gun. Checked: the shop, the spec against the kin, a
@@ -188,5 +188,60 @@ check('Burst Rifle: held down 2 s, still three; a second pull inside the burst a
 check('Burst Rifle: pulled as fast as a finger goes, 6-9 BBs a second (about two bursts), and it stays cocked', B.fastPerSec >= 6 && B.fastPerSec <= 9 && B.stillCocked, [B.fastPerSec, B.stillCocked]);
 check('Burst Rifle: with two left it fires the two, then wants a new mag racked; the rack takes', B.lastTwo === 2 && B.dryCocked === false && B.rackedCocked === true, B);
 check('Burst Rifle: let go of the gun (a slot swap) and the burst stops after the first BB', B.swapped === 1, B.swapped);
+
+// v1.328 (D.63, batch 1): the Semi-Auto Shotgun, electric too: the spring shotgun's 2-3 BBs a pull, no pump
+const ssShop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="SHOTGUNS"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'Semi-Auto Shotgun');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const text = document.querySelector('#shopScreen').textContent;
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun, says: /Electric semi/.test(text) };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  return out;
+});
+console.log('   SHOTGUNS: ' + ssShop.names.join(' · '));
+check('Semi-Auto Shotgun: under SHOTGUNS after the Thunder Pump with its picture, $160 from its page, in your hands; the page says electric semi',
+  JSON.stringify(ssShop.names) === '["Spring Shotgun","Thunder Pump","Semi-Auto Shotgun"]' && ssShop.pic && ssShop.paid === 160 && ssShop.equipped === 'semishotgun' && ssShop.says, ssShop);
+await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'semishotgun' }; });
+await g.scenario('bunratty_sean');
+const SS = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const up = () => { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); };
+  const pull = () => { Game.mouseLMB = true; onLmbDown(); step(); step(); up(); step(); };
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo };
+  for (let i = 0; i < 30; i++) step();
+  // five pulls a second apart: BBs out of each
+  const per = [];
+  for (let k = 0; k < 5; k++) { const a = Game.gun.ammo; pull(); per.push(a - Game.gun.ammo); for (let i = 0; i < 57; i++) step(); }
+  out.per = per; out.cockedAfter = Game.gun.cocked;
+  // pulled every 3 frames for 2 s: pulls that fired
+  Game.gun.ammo = Game.gun.maxAmmo;
+  let fired = 0;
+  for (let k = 0; k < 40; k++) { const a = Game.gun.ammo; pull(); if (Game.gun.ammo < a) fired++; }
+  out.pullsPerSec = fired / 2;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  return out;
+});
+await g.shot('gun-semishotgun-aimed');
+console.log('   semishotgun ' + JSON.stringify(SS));
+check('Semi-Auto Shotgun: its own first-person gun, 60 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°)', SS.mesh === 'semishotgun' && SS.max === 60 && SS.hands && SS.sightErrDeg < 0.6, SS);
+check('Semi-Auto Shotgun: five pulls a second apart, each throws 2-3 BBs, and it stays cocked (no pump)', SS.per.length === 5 && SS.per.every(n => n >= 2 && n <= 3) && SS.cockedAfter, SS.per);
+check('Semi-Auto Shotgun: pulled as fast as a finger goes, 2-2.5 pulls fire a second (its cycle)', SS.pullsPerSec >= 2 && SS.pullsPerSec <= 2.5, SS.pullsPerSec);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

@@ -13781,3 +13781,39 @@ Backlog D.63, batch 1 (Michael: A), its fourth gun: "burst rifles". The first gu
   clicked) and the AK-47.
 - **For Michael's eye:** `tests/out/gun-burst-side.png`.
 - **Batch 1 still owes** the semi-auto shotgun.
+
+## v1.328 — The Semi-Auto Shotgun
+Backlog D.63, batch 1 (Michael: A), its fifth and last gun: "A semi auto shotgun would also be really fun as well."
+Batch 1 is done with it: the FAMAS, the Electric Pistol, the Electric Rifle, the Burst Rifle and this. The workbench
+sections (D.64) come next, before batch 2.
+- **How it shoots:** the Spring Shotgun's cloud, 2 or 3 BBs a pull, with no pump between. It is electric (v1.326's
+  rule), up to 2.5 pulls a second. Run dry, a new mag is racked once with its charging handle. Every other number is
+  the Spring Shotgun's: speed, spread, curve, how fast you move.
+- **The shop:** $160 under SHOTGUNS, after the Thunder Pump. It has a 60-round mag, a 90-round mag ($20) and a spare
+  ($14). The page says "Electric semi (a BB a pull, up to 3/s)"; the line rounds 2.5 up, and the blurb gives the real
+  figure.
+- **The model** is a Benelli-style tactical shotgun on the spring shotgun's receiver, barrel and tube:
+  - A smooth olive forend where the ribbed pump was.
+  - An olive pistol grip behind the trigger guard and a straight stock, where the wrist and the sporting stock were.
+  - A side saddle of four red shells with brass bases on the left of the receiver, and a charging handle on the
+    right, which racks a new mag.
+  - The sights are new. The bead gives way to a front post, and a ghost ring stands at the back of the rail, so
+    aimed, the post sits in the middle of the ring. It has its own aimed pose for that line (the Spring Shotgun's
+    aims at its bead).
+  - The kids' blocky version is the Spring Shotgun's.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:**
+  - SHOTGUNS reads Spring Shotgun, Thunder Pump, Semi-Auto Shotgun. It has its picture, is bought for $160, and the
+    page says electric semi.
+  - In Sean's match, five pulls a second apart throw 2, 2, 3, 2 and 2 BBs, and it stays cocked.
+  - Pulled every 3 frames for 2 s, 2.5 pulls a second fire.
+  - Aimed, the front post is 0.07° off the reticle. Both hands are on it.
+- **Updated for 21 guns:** `gun-parts` (54 parts, none loose), `shop-gun-kinds` (SHOTGUNS 3), `shop-pics` (21
+  distinct pictures), `backyard-guns`, `under-parts` (12 long guns). `fp-hands` and `loadout-kid` check it too.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `under-parts`, `loadout-kid`, `gun-shotgun` and `smoke`.
+### Still open
+- **For a playtest:** whether 7 BBs a second up close is too much for $160. The Thunder Pump ($75) throws 4-5 a
+  pump.
+- **For Michael's eye:** `tests/out/gun-semishotgun-side.png` and `gun-semishotgun-aimed.png` (the post in the
+  ghost ring).

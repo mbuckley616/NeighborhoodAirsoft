@@ -28,9 +28,9 @@ const all = await read();
 console.log('   ' + JSON.stringify(all));
 const kinds = await page.evaluate(() => ({ order: GUN_ORDER.map(gt => [gt, gunKind(gt)]), names: Object.fromEntries(GUN_ORDER.map(gt => [gt, GUN_MAGS[gt].displayName])) }));
 check('five chips: ALL and the four kinds, with their counts', JSON.stringify(all.chips) ===
-  '["ALL (20)","PISTOLS (4)","SHOTGUNS (2)","RIFLES (5)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
+  '["ALL (21)","PISTOLS (4)","SHOTGUNS (3)","RIFLES (5)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
 check('ALL: four headers in order, each once', JSON.stringify(all.groups.map(x => x.kind)) === '["PISTOLS","SHOTGUNS","RIFLES","AUTOMATICS"]', all.groups.map(x => x.kind));
-check('all twenty guns (v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 20
+check('all 21 guns (v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 21
   && kinds.order.every(([gt, k]) => all.groups.find(x => x.kind === k).guns.includes(kinds.names[gt])), all.groups);
 check('the pistols are the Spring Pistol, Six-Shooter, Bolt Pistol and Electric Pistol (v1.326)', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol"]', all.groups[0].guns);
 check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, MAC-10 and AK-47', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","MAC-10","AK-47"]', all.groups[3].guns);
@@ -51,6 +51,6 @@ await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[dat
 const pis = await read();
 check('PISTOLS shows its four', pis.groups.length === 1 && pis.groups[0].guns.length === 4, pis.groups);
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
-check('ALL shows the twenty again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 20);
+check('ALL shows the 21 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 21);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
