@@ -2582,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.322</div>
+  <div class="version">v1.324</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4806,9 +4806,10 @@ function describeSlot(idx) {
       kind: 'spare_mag',
       icon: '▮',
       name: SPARE_MAG_LABEL[slot.refId] || `Spare ${cap}-rd Mag`,
-      desc: 'Single use. Swap-in reload.',
+      desc: 'Fills from your bag every match. Swap-in reload.',   // v1.323 (B.14): kept, not used up
       magCap: cap,
       refId: slot.refId,
+      bbs: (Game.gun.spareAmmo || {})[idx] || 0,   // v1.323: what it holds in this match
     };
   }
   return null;
@@ -4964,6 +4965,7 @@ Game.noodle = { t: -1, cd: 0 };
 
 // === SPEED LOADER TIERS ===
 const SPEED_LOADER_TIERS = {
+  sl_25:  { capacity: 25,  name: 'Speed Loader (25)',  price: 0 },    // v1.324 (D.61): Seth's, given in Squad Basics; not sold
   sl_50:  { capacity: 50,  name: 'Speed Loader (50)',  price: 15 },
   sl_100: { capacity: 100, name: 'Speed Loader (100)', price: 25 },
   sl_200: { capacity: 200, name: 'Speed Loader (200)', price: 50 },
@@ -5113,6 +5115,26 @@ function refillEquippedSpeedLoadersFromBag() {
     sl.currentBBs += take;
     Game.persist.bag -= take;
   }
+}
+
+// v1.323 (backlog B.14, Michael 22 Oct: a spare mag "should persist between rounds and refill with available BBs"):
+// a spare mag is gear you keep, not used up. At BEGIN each one in a slot that fits your gun loads from the bag, after
+// the gun's mag and the taped twin (up to its size, or the gun's mag if that is smaller), into Game.gun.spareAmmo by
+// slot. The swap trades mags: the fresh one goes in and the one you pulled goes in the pouch with what it had left, so
+// the slot stays and no BB is lost. Whatever is left in them goes back in the bag when the match ends.
+function fillSpareMagsFromBag() {
+  Game.gun.spareAmmo = {};
+  Game.persist.loadoutSlots.forEach((slot, i) => {
+    if (!slot || slot.kind !== 'spare_mag') return;
+    if (MAG_GUN_FIT[slot.refId] && MAG_GUN_FIT[slot.refId] !== Game.gun.type) return;
+    const take = Math.min((describeSlot(i) || {}).magCap || 0, Game.gun.maxAmmo, Game.persist.bag);
+    Game.gun.spareAmmo[i] = take;
+    Game.persist.bag -= take;
+  });
+}
+function returnSpareMagsToBag() {
+  for (const i in Game.gun.spareAmmo || {}) Game.persist.bag += Game.gun.spareAmmo[i];
+  Game.gun.spareAmmo = {};
 }
 
 // Return every EQUIPPED speed loader's remaining BBs to the bag (round end).
@@ -6455,6 +6477,7 @@ function scaledReward(v) { return Math.ceil((v || 0) / 10); }
 // where each combatant is { name, charId, gun, lives }.
 // ---------------------------------------------------------------------
 function describeWinCondition(sc) {
+  if (sc.tutorial === 'squad') return 'Run your squad — give an order, use the speed loader, tag all three';   // v1.324 (D.61)
   if (sc.tutorial) return 'Learn the ropes — tag the practice targets';   // v1.57
   if (sc.vip) return 'Tag their VIP, keep yours safe — everyone else comes back';   // v1.170
   if (sc.ctf) return `Carry their flag home to yours — first to ${sc.ctf.toWin || 2}${sc.ctf.clock ? `, or most flags in ${Math.floor(sc.ctf.clock / 60)}:${String(sc.ctf.clock % 60).padStart(2, '0')}` : ''}; everyone comes back`;   // v1.189; v1.191: the clock
@@ -6662,6 +6685,30 @@ const SCENARIOS = {
     winCondition: 'kill_all',
     rewards: { win: 20, lose: 6 },
     playerLives: 1, armorMult: 1,
+  },
+
+  // v1.324 (backlog D.61, Michael: C): SQUAD BASICS, the second tutorial, after the first 1v1. Seth and Trey on your
+  // side against Brooke, Jamie and Marcus, coached through the squad orders and the speed loader (Tutorial, kind
+  // 'squad'); Seth hands you a 25-BB loader the first time. Nobody fires until the third step, and their side goes easy.
+  winnmark_squad_basics: {
+    region: 'horseshoe_bend', street: 'winnmark_ct',
+    name: 'Winnmark Court', scenarioName: 'Squad Basics',
+    desc: "Seth and Trey are on your side today, against Brooke, Jamie and Marcus. Seth's going to show you how to run a squad: tell your team where to go, and keep a speed loader on you for when the mag runs low. He's even giving you one. They'll go easy on you. (Mostly.)",
+    builderFn: 'buildWinnmarkCourtScene',
+    builderArg: 'cul_de_sac',
+    scenarioType: 'skirmish',
+    playerSpawn: 'road_east',
+    tutorial: 'squad',
+    enemySetup: [
+      { charId: 'seth',   weapon: 'pistol', anchor: 'house2_backyard', team: 'player' },
+      { charId: 'trey',   weapon: 'pistol', anchor: 'house1_backyard', team: 'player' },
+      { charId: 'brooke', weapon: 'pistol', anchor: 'house7_backyard', statsOverride: { aggression: 0.2, fireRate: 0.5, accuracy: 0.35 } },
+      { charId: 'jamie',  weapon: 'pistol', anchor: 'house6_backyard', statsOverride: { aggression: 0.2, fireRate: 0.5, accuracy: 0.35 } },
+      { charId: 'marcus', weapon: 'pistol', anchor: 'trey_backyard',   statsOverride: { aggression: 0.2, fireRate: 0.5, accuracy: 0.35 } },
+    ],
+    winCondition: 'last_team_standing',
+    rewards: { win: 15, lose: 5 },
+    playerLives: 3, armorMult: 1,
   },
 
   // === SKIRMISH — 1v1 Seth, shotgun edition (he pushes you) ===
@@ -26006,6 +26053,7 @@ function startScenario(built) {
   Game.gun.tapedMag = !!(getUnderPart(Game.gun.type) || {}).tapedMag;
   Game.gun.tapedAmmo = Game.gun.tapedMag ? Math.min(Game.gun.maxAmmo, Game.persist.bag) : 0;
   Game.persist.bag -= Game.gun.tapedAmmo;
+  fillSpareMagsFromBag();   // v1.323 (B.14): the spare mags in your slots load next
   Game.gun.flipT = 0;
   Game.gun._rHeld = false;
   // v1.50: then top off any equipped speed loaders from what's left in the bag
@@ -26382,6 +26430,7 @@ function endScenario(outcome) {
   Game.gun.ammo = 0;
   Game.persist.bag += Game.gun.tapedAmmo || 0;   // v1.169: and the taped twin mag's
   Game.gun.tapedAmmo = 0;
+  returnSpareMagsToBag();   // v1.323 (B.14): and the spare mags'
   Game.gun.flipT = 0;
   // v1.50: also return any BBs still inside equipped speed loaders to the bag,
   // so nothing is lost between rounds and they refill cleanly next start.
@@ -27585,7 +27634,7 @@ function getAvailableSlotItems() {
       out.push({
         icon: '▮',
         name: def.name,
-        desc: 'Single-use mag swap.',
+        desc: 'Mag swap; fills from your bag every match.',   // v1.323 (B.14)
         detail: `x${avail}`,
         slotData: { kind: 'spare_mag', refId: def.refId },
       });
@@ -28029,7 +28078,7 @@ function renderGunDetail(c, gt) {
 
   // Spare mags (consumables — carried in a loadout slot)
   if (cfg.spares.length) {
-    c.appendChild(shopSectionHeader('Spare Mags', 'Consumable — equip in a slot for an instant in-match reload'));
+    c.appendChild(shopSectionHeader('Spare Mags', 'Yours to keep — carry one in a slot; it fills from your bag every match'));
     for (const sp of cfg.spares) {
       const held = Game.persist.consumables[sp.key] || 0;
       const sLocked = sp.needsFlag && !Game.persist.owned[sp.needsFlag];
@@ -28815,6 +28864,7 @@ function onLmbDown() {
       playReloadClick();
       return;
     }
+    if (heldSlot.bbs <= 0) { playReloadClick(); return; }   // v1.323 (B.14): an empty spare mag dry-clicks
     Game.held.using = true;
     Game.held.useProgress = 0;
     Game.held.useDuration = 0.4;
@@ -29891,6 +29941,7 @@ function updateGun(dt) {
             sl.currentBBs -= n;
             Game.held._feedAccum -= n;
             Game.held._feedingActive = true;
+            if (Tutorial.active) Tutorial.notify('fed');   // v1.324 (D.61)
             // periodic soft tick as BBs rattle in
             if (!Game.held._feedTickT || performance.now() - Game.held._feedTickT > 90) {
               playReloadClick();
@@ -29913,10 +29964,11 @@ function updateGun(dt) {
       // Spare mag is still a timed swap (slap a fresh mag in), unchanged.
       Game.held.useProgress += dt;
       if (Game.held.useProgress >= Game.held.useDuration) {
-        Game.gun.ammo = Math.min(Game.held.useMagCap, Game.gun.maxAmmo);
-        const slot = Game.persist.loadoutSlots[Game.held.slotIdx];
-        Game.persist.consumables[slot.refId] = Math.max(0, (Game.persist.consumables[slot.refId] || 0) - 1);
-        Game.persist.loadoutSlots[Game.held.slotIdx] = null;
+        // v1.323 (B.14): swap mags; the one pulled goes in the pouch with what it had left, and the slot stays
+        if (!Game.gun.spareAmmo) Game.gun.spareAmmo = {};
+        const fresh = Game.gun.spareAmmo[Game.held.slotIdx] || 0;
+        Game.gun.spareAmmo[Game.held.slotIdx] = Game.gun.ammo;
+        Game.gun.ammo = fresh;
         Game.held.slotIdx = 0;
         playReloadClick();
         Game.held.using = false;
@@ -30229,7 +30281,7 @@ function updateLoadoutHud() {
     } else if (!slot) {
       div.innerHTML = `${keyEl}<span class="slot-icon">+</span><span>empty</span>`;
     } else {
-      div.innerHTML = `${keyEl}<span class="slot-icon">${desc.icon}</span><span>${desc.name}</span>`;
+      div.innerHTML = `${keyEl}<span class="slot-icon">${desc.icon}</span><span>${desc.name}${desc.kind === 'spare_mag' && Game.mode === 'scenario' ? ` · ${desc.bbs}` : ''}</span>`;   // v1.323: its BBs
       if (isHeld && desc.kind === 'gun') {
         // Cock-action hint varies per gun type
         const cockVerb = Game.gun.cockType === 'pump' ? 'pump the forestock'
@@ -30247,7 +30299,7 @@ function updateLoadoutHud() {
       } else if (isHeld && desc.kind === 'noodle') {
         hint = 'Click or V to swing. Get close.';   // v1.249
       } else if (isHeld && desc.kind === 'spare_mag') {
-        hint = 'Hold LMB to slam in the fresh mag.';
+        hint = desc.bbs <= 0 ? 'Spare mag is empty. Switch back.' : 'Hold LMB to slam in the fresh mag.';   // v1.323
       }
     }
     container.appendChild(div);
@@ -31311,7 +31363,7 @@ function kidIsOutStanding(c) {
 // in OUT_WALK_STUCK s) he stops where he is. A kid on a ladder, a perch or a platform, and the tutorial's, stay put.
 const OUT_WALK_AFTER = 4.0, OUT_WALK_SPEED = 1.5, OUT_WALK_STUCK = 2.0;
 function outKidWalkOff(e, dt) {
-  if (Tutorial.active || e.perch || e._lad || e._climbed || e._dropY != null || !kidIsOutStanding(e)) return;
+  if ((Tutorial.active && Tutorial.kind !== 'squad') || e.perch || e._lad || e._climbed || e._dropY != null || !kidIsOutStanding(e)) return;
   e._outT = (e._outT || 0) + dt;
   if (e._outT < OUT_WALK_AFTER || e._offField) return;
   const goal = e._spawnPos || e.anchorPos;
@@ -31795,7 +31847,7 @@ function squadMates() {
   return (Game.scenario && Game.scenario.enemies || []).filter(e => e.team === 'player' && e.behavior !== 'tagger');
 }
 function squadCanOrder() {
-  return Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk && !Tutorial.active && squadMates().some(e => e.health > 0 && !e.vip);
+  return Game.mode === 'scenario' && !Game.paused && !Game.forfeitAsk && !(Tutorial.active && Tutorial.kind !== 'squad') && squadMates().some(e => e.health > 0 && !e.vip);
 }
 function openSquadWheel() {
   if (!squadCanOrder()) return false;
@@ -31867,6 +31919,7 @@ function giveSquadOrder(key) {
   S.squadReply = who ? { name: who.name, line, until: (S.roundTime || 0) + 3.5 } : null;
   if (who) squadWalkieSay(who, line);
   updateSquadHud();
+  if (Tutorial.active) Tutorial.notify('ordered');   // v1.324 (D.61)
 }
 // a walkie line: heard wherever he is (no distance cut-off), a click of the talk button first
 function squadWalkieSay(e, line) {
@@ -31899,7 +31952,7 @@ function updateSquadHud() {
   const hud = document.getElementById('squadHud');
   if (!hud) return;
   const S = Game.scenario;
-  if (Game.mode !== 'scenario' || !S || !squadMates().length || Tutorial.active) { hud.style.display = 'none'; return; }
+  if (Game.mode !== 'scenario' || !S || !squadMates().length || (Tutorial.active && Tutorial.kind !== 'squad')) { hud.style.display = 'none'; return; }   // v1.324: Squad Basics shows it
   hud.style.display = 'block';
   const order = S.squadOrder ? SQUAD_ORDERS[S.squadOrder].label : 'NONE';
   const r = S.squadReply && (S.roundTime || 0) < S.squadReply.until ? S.squadReply : null;
@@ -32803,7 +32856,7 @@ function eliminateEnemy(e) {
     if (typeof e.lives === 'number') e.lives = 0;   // v1.34: last life spent
     e.hitFlash = 0.6;
     updateRosterHud();
-    if (Tutorial.active) Tutorial.notify('tagged');   // v1.57: count practice-dummy tags
+    if (Tutorial.active && e.team !== 'player') Tutorial.notify('tagged');   // v1.57: count practice-dummy tags (v1.324: theirs only)
     checkWinCondition();
   }
 }
@@ -35532,6 +35585,9 @@ const Tutorial = {
   _reloadBaseline: 0,
   _stepEnteredAt: 0,
   _bannerEl: null, _stepEl: null, _instrEl: null, _dotsEl: null,
+  kind: 'basics',          // v1.324 (D.61): 'basics' (Backyard Basics) or 'squad' (Squad Basics)
+  beats: null,             // the kind's list: BEATS or SQUAD_BEATS
+  loaderSlot: -1,          // v1.324: the slot Seth's loader is in
 
   BEATS: [
     { id: 'move',   label: 'STEP 1 OF 5 · MOVE',
@@ -35546,6 +35602,19 @@ const Tutorial = {
       instr: 'Running low? Press <kbd>R</kbd> to reload from your speed loader. Do it now to finish up.' },
   ],
 
+  // v1.324 (backlog D.61, Michael: C): Squad Basics' three beats. An instr may be a function (for the slot's key and
+  // the pad's buttons). Nobody fires until the third beat (begin holds them, _renderStep lets them go).
+  SQUAD_BEATS: [
+    { id: 'order',  label: 'STEP 1 OF 3 · GIVE AN ORDER',
+      instr: () => Pad.active
+        ? 'Seth and Trey take orders from you. Press <kbd>D-PAD ←</kbd> for FOLLOW ME; the other three are on the d-pad too.'
+        : 'Seth and Trey take orders from you. Hold <kbd>Q</kbd>, move the mouse toward FOLLOW ME and let go. The order holds until you give another.' },
+    { id: 'loader', label: 'STEP 2 OF 3 · THE SPEED LOADER',
+      instr: () => `Seth gave you his old speed loader; it fills from your bag every match. Fire a few shots, then ${Pad.active ? 'change slots with <kbd>RB</kbd>' : `press <kbd>${Tutorial.loaderSlot + 1}</kbd>`} and hold <kbd>Left-Mouse</kbd> to feed BBs into your mag. ${Pad.active ? '<kbd>LB</kbd>' : 'Press <kbd>1</kbd>'} goes back to your gun.` },
+    { id: 'win',    label: 'STEP 3 OF 3 · WIN IT AS A TEAM',
+      instr: () => `They can shoot now. Tag all three with your squad — <strong>${Tutorial.dummiesTagged}/${Tutorial.dummiesTotal}</strong> down. PUSH UP sends your team in; FIND COVER pulls them back.` },
+  ],
+
   // Called from enterScenario when sc.tutorial is true. `built` is the scene
   // bundle; we pull the marker spot + count the practice dummies from it.
   begin(built) {
@@ -35553,6 +35622,9 @@ const Tutorial = {
     this.step = 0;
     this.done = false;
     this.dummiesTagged = 0;
+    const sc = SCENARIOS[Game.scenario.active] || {};
+    this.kind = sc.tutorial === 'squad' ? 'squad' : 'basics';
+    this.beats = this.kind === 'squad' ? this.SQUAD_BEATS : this.BEATS;
     // The MOVE marker: a point a short walk in front of the player spawn, toward
     // the dummies. enterScenario stashes it on built.tutorialMarker; fall back to
     // a sensible offset from spawn if absent.
@@ -35560,7 +35632,11 @@ const Tutorial = {
       ? built.tutorialMarker.clone()
       : (built.spawn ? built.spawn.clone() : new THREE.Vector3(0, 0, 0));
     // A glowing ground ring + floating beacon so the spot is unmistakable.
-    this._spawnMarkerMesh(built.scene, this.movePos);
+    if (this.kind === 'basics') this._spawnMarkerMesh(built.scene, this.movePos);
+    if (this.kind === 'squad') {   // v1.324: everyone holds fire until the third beat, and Seth's loader goes in a slot
+      for (const e of built.enemies || []) if (!e.noFire) { e.noFire = true; e._tutHold = true; }
+      this.loaderSlot = giveSethsLoader();
+    }
     // Count the practice dummies — hostiles only (the ally coach doesn't count).
     this.dummiesTotal = (built.enemies || []).filter(e => e.team !== 'player').length;
     this.startAmmo = Game.gun ? Game.gun.ammo : 0;
@@ -35612,24 +35688,25 @@ const Tutorial = {
 
   _renderStep() {
     if (!this.active || this.done) return;
-    const beat = this.BEATS[this.step];
+    const beat = this.beats[this.step];
     if (!beat) return;
     // Capture the reload baseline the moment that beat becomes active, so a later
     // ammo rise reads as "they reloaded".
     if (beat.id === 'reload' && Game.gun) this._reloadBaseline = Game.gun.ammo;
+    if (beat.id === 'win') for (const e of Game.scenario.enemies || []) if (e._tutHold) { e.noFire = false; e._tutHold = false; }   // v1.324
     if (this._stepEl)  this._stepEl.textContent = beat.label;
     if (this._instrEl) {
       // The TAG beat shows live progress.
       if (beat.id === 'tag') {
         this._instrEl.innerHTML = padWords(`Hold <kbd>Left-Mouse</kbd> to re-cock, release to fire. Tag all three — <strong>${this.dummiesTagged}/${this.dummiesTotal}</strong> down.`);   // v1.279
       } else {
-        this._instrEl.innerHTML = padWords(beat.instr);   // v1.279: the pad's buttons while it is in use
+        this._instrEl.innerHTML = padWords(typeof beat.instr === 'function' ? beat.instr() : beat.instr);   // v1.324: or a function   // v1.279: the pad's buttons while it is in use
       }
       this._instrEl.classList.remove('done');
     }
     if (this._dotsEl) {
       let html = '';
-      for (let i = 0; i < this.BEATS.length; i++) {
+      for (let i = 0; i < this.beats.length; i++) {
         const cls = i < this.step ? 'tut-dot done' : (i === this.step ? 'tut-dot active' : 'tut-dot');
         html += `<div class="${cls}"></div>`;
       }
@@ -35641,10 +35718,10 @@ const Tutorial = {
   _advance() {
     if (!this.active || this.done) return;
     // Leaving the MOVE beat → retire the ground marker.
-    if (this.BEATS[this.step] && this.BEATS[this.step].id === 'move') this._removeMarkerMesh();
+    if (this.beats[this.step] && this.beats[this.step].id === 'move') this._removeMarkerMesh();
     if (this._instrEl) this._instrEl.classList.add('done');
     this.step++;
-    if (this.step >= this.BEATS.length) {
+    if (this.step >= this.beats.length) {
       // All beats taught. If the dummies are already all tagged the kill_all win
       // will fire on its own; otherwise we simply finish the coaching overlay and
       // let the player mop up (the win still resolves via kill_all). To make the
@@ -35671,13 +35748,15 @@ const Tutorial = {
   // Event signals from gameplay code (fire / tag). Polled beats are in update().
   notify(evt) {
     if (!this.active || this.done) return;
-    const beat = this.BEATS[this.step];
+    const beat = this.beats[this.step];
     if (!beat) return;
     if (evt === 'fired' && beat.id === 'fire') {
       this._advance();
+    } else if ((evt === 'ordered' && beat.id === 'order') || (evt === 'fed' && beat.id === 'loader')) {
+      this._advance();   // v1.324 (D.61)
     } else if (evt === 'tagged') {
       this.dummiesTagged++;
-      if (beat.id === 'tag') {
+      if (beat.id === 'tag' || beat.id === 'win') {
         this._renderStep();   // refresh the X/Y counter
         if (this.dummiesTagged >= this.dummiesTotal) this._advance();
       }
@@ -35691,8 +35770,9 @@ const Tutorial = {
       const s = 1 + Math.sin(performance.now() * 0.004) * 0.12;
       this._markerMesh.scale.set(s, 1, s);
     }
-    const beat = this.BEATS[this.step];
+    const beat = this.beats[this.step];
     if (!beat) return;
+    if (beat.id === 'loader' && this.loaderSlot < 0) { this._advance(); return; }   // v1.324: no loader in a slot, no step
     // A small grace so a beat can't auto-complete on the same frame it appears.
     if (performance.now() - this._stepEnteredAt < 250) return;
 
@@ -35712,6 +35792,28 @@ const Tutorial = {
 
   // The reload beat baseline is captured in _renderStep when that beat shows.
 };
+
+// v1.324 (backlog D.61, Michael: C, "with the free 25-BB loader"): the first Squad Basics gives you Seth's old 25-BB
+// speed loader, yours to keep, in your first empty slot (slot 2 if none is empty; what was there goes back to the
+// closet). After that it is the loader in your slots, or the first one you own. It is filled from the bag at once,
+// since BEGIN has already loaded the others. Returns the slot it is in, or -1 if it is in none.
+function giveSethsLoader() {
+  const P = Game.persist;
+  if (!P.sethLoaderGiven) {
+    P.sethLoaderGiven = true;
+    P.speedLoaders.push({ id: newSpeedLoaderId(), tier: 'sl_25', currentBBs: 0, fromSeth: true });
+    const sl = P.speedLoaders[P.speedLoaders.length - 1];
+    let i = -1;
+    for (let k = 1; k < getUnlockedSlotCount(); k++) if (!P.loadoutSlots[k]) { i = k; break; }
+    if (i < 0) i = 1;
+    P.loadoutSlots[i] = { kind: 'speed_loader', refId: sl.id };
+    sl.currentBBs = Math.min(SPEED_LOADER_TIERS.sl_25.capacity, P.bag);
+    P.bag -= sl.currentBBs;
+    updateLoadoutHud(); updateAmmoHud();
+    return i;
+  }
+  return P.loadoutSlots.findIndex(s => s && s.kind === 'speed_loader');
+}
 
 // v1.86: one simulation step, split out of tick() so the headless tests can drive
 // the game in fixed 1/60 steps (tests/lib/game.mjs spin()). tick() = step + render.
@@ -35963,6 +36065,7 @@ const PIN_SCENARIO_GROUPS = {
   winnmark_court: [
     'winnmark_tutorial',
     'winnmark_seth_house',
+    'winnmark_squad_basics',   // v1.324 (D.61)
     'winnmark_seth_shotgun_duel',
     'winnmark_ffa',
     'winnmark_cul_de_sac',

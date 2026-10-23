@@ -28,7 +28,8 @@ check('the objective says carry their flag home, first to 2', /flag/i.test(card.
 check('the map card has a FLAGS badge and ♥ ∞', /⚑ FLAGS/.test(card.card) && /♥ ∞/.test(card.card), card.card);
 check('every kid comes back (99 lives), and so do you', card.lives.every(x => x.endsWith(':99')) && /You .* comes back/.test(card.roster), [card.lives, card.roster]);
 check('it sits after Lamplight on Bellfield and before the creek fort, opening only on the night match',
-  card.at === card.night + 1 && card.creek === card.at + 1 && !card.before && card.after.flags && !card.after.creek, card);
+  card.at === card.night + 1 && card.creek > card.at &&   // v1.317-v1.318's pool matches come between
+  !card.before && card.after.flags && !card.after.creek, card);
 
 // --- the flags as built
 await g.scenario(ID);

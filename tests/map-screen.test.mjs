@@ -49,7 +49,7 @@ for (const [w, h] of [[1280, 720], [1366, 768], [1920, 1080], [1024, 640]]) {
   check(`${w}x${h}: map left, scenarios right`, m.area.r <= m.info.l && m.info.t < m.area.b, { area: m.area, info: m.info });
   check(`${w}x${h}: every pin sits on the map`, m.pinsIn);
   check(`${w}x${h}: opens on Winnmark, its pin marked`, /Winnmark/.test(m.name) && m.selected.join() === 'winnmark_court' && !m.empty, m);
-  check(`${w}x${h}: all 16 Winnmark scenarios listed, at least 5 in view, the rest scroll (or all fit)`, m.rows === 16 && m.visible >= 5 && (m.scroll || m.visible === 16), m);
+  check(`${w}x${h}: all 17 Winnmark scenarios listed, at least 5 in view, the rest scroll (or all fit)`, m.rows === 17 && m.visible >= 5 && (m.scroll || m.visible === 17), m);
   check(`${w}x${h}: the cards sit at least two across`, m.cols >= 2, m.cols);
   if (w === 1280) check('1280x720: at least 10 Winnmark cards in view (7 rows in v1.146)', m.visible >= 10, m.visible);
   if (w === 1280) await g.shot('map-screen-1280');
@@ -127,11 +127,11 @@ const cards = await page.evaluate(() => {
   return out;
 });
 console.log(`   cards: ${cards.count}; next ${cards.next}; ${cards.locked.length} locked; #1 reads "${cards.texts[cards.ids[0]]}"`);
-check('cards follow the zone order, numbered 1..16', cards.ids.join() === cards.group.join() && cards.nums.join() === cards.group.map((_, i) => i + 1).join(), cards);
-check('the zone counts its won matches', cards.count === '2 of 16 won', cards.count);
+check('cards follow the zone order, numbered 1..17', cards.ids.join() === cards.group.join() && cards.nums.join() === cards.group.map((_, i) => i + 1).join(), cards);
+check('the zone counts its won matches', cards.count === '2 of 17 won', cards.count);
 check('won cards say DONE', cards.done.join() === cards.group.slice(0, 2).join() && /✓ DONE/.test(cards.texts[cards.group[0]]), cards.done);
 check('exactly one NEXT, the first open match not yet won', cards.next.length === 1 && cards.next[0] === cards.unlocked.find(id => !cards.done.includes(id)) && /NEXT/.test(cards.texts[cards.next[0]]), cards);
-check('locked cards are the ones the ladder locks, say which card opens them, and have no START', cards.locked.length === 16 - cards.unlocked.length && cards.locked.length > 0 && cards.locked.every(id => /🔒/.test(cards.texts[id]) && cards.texts[id].includes('Win #' + cards.group.indexOf(id) + ' to unlock') && !/START/.test(cards.texts[id])), cards.locked);
+check('locked cards are the ones the ladder locks, say which card opens them, and have no START', cards.locked.length === 17 - cards.unlocked.length && cards.locked.length > 0 && cards.locked.every(id => /🔒/.test(cards.texts[id]) && cards.texts[id].includes('Win #' + cards.group.indexOf(id) + ' to unlock') && !/START/.test(cards.texts[id])), cards.locked);
 check('a card shows matchup, lives and pay', cards.texts[cards.group[0]].includes(cards.match0) && /♥ \d+ (life|lives)/.test(cards.texts[cards.group[0]]) && /WIN \+\$\d+ · LOSE \+\$\d+/.test(cards.texts[cards.group[0]]), cards.texts[cards.group[0]]);
 check('night and defend matches carry their badges', (!cards.night || /🌙 NIGHT/.test(cards.texts[cards.night])) && (!cards.defend || /🛡 DEFEND/.test(cards.texts[cards.defend])), { n: cards.night, d: cards.defend });
 

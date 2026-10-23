@@ -13570,3 +13570,86 @@ can sound similar."
 ### Still open
 - **For a playtest:** strength and length (0.5 s; 0.9 opacity at the edge). There is no side to it: a hit from
   behind flashes the same as one from the front. Showing where a hit came from would be a separate idea.
+
+## v1.323 — Spare mags are kept
+Backlog B.14, Michael's note (control room, 22 Oct): "Buying and adding an extra magazine to a loadout slot causes the
+magazine to be consumed/disappear once it's used in a match. It should persist between rounds and refill with
+available BBs."
+- **What was wrong:** a spare mag was built as a one-shot. The swap took one off your count of that mag and emptied
+  its slot, so a mag bought for $ was gone after one reload. Its BBs also came from nowhere: the swap filled the gun to
+  the spare's size without touching the bag, and the BBs left in the mag you pulled were lost.
+- **Now a spare mag is gear you keep,** like a speed loader:
+  - At BEGIN each spare mag in a slot that fits your gun loads from the bag (`fillSpareMagsFromBag`), after the gun's
+    mag and the taped twin, before the speed loaders. It loads up to its size, or the gun's mag if that is smaller.
+  - The swap trades mags. The fresh one goes in; the one you pulled goes in the pouch with what it had left. The slot
+    stays, so you can swap back to it.
+  - An empty spare mag dry-clicks, and the slot hint says it is empty. In a match the slot shows the BBs it holds
+    ("Spare 10-rd Pistol Mag · 10").
+  - At the end of the match whatever is left in them goes back in the bag (`returnSpareMagsToBag`), and the next match
+    fills them again.
+- **The words:** the slot, the loadout list and the shop no longer call it single-use or a consumable. The shop's
+  header says "Yours to keep — carry one in a slot; it fills from your bag every match".
+- **Mags already lost** in a save from before this build are not given back: the old swap took them off the count,
+  and nothing records how many there were.
+### Verified
+- **`tests/wallet.test.mjs`, extended.** With the Spring Pistol (10-round mag), one 10-round spare mag in slot 2 and
+  100 BBs in the bag:
+  - BEGIN loads 10 in the gun and 10 in the spare, and leaves 80 in the bag.
+  - With 3 left in the gun, the swap gives 10 in the gun and 3 in the slot. The mag is still in the slot, you still
+    own one, and you hold the gun again.
+  - A win puts 93 back in the bag: the 80, the gun's 10 and the slot's 3.
+  - The next match fills the spare to 10 again (73 left in the bag).
+  - A spare emptied to 0 dry-clicks: the gun keeps its 2, the slot stays.
+- **These suites pass:** `wallet`, `fp-hands`, `gamepad`, `pad-orders`, `sell-back` and `smoke`.
+### Still open
+- **For a playtest:** whether the swap back to the pulled mag is welcome or confusing. A spare mag of a different size
+  from your gun's mag holds the gun's mag after a swap, so a 10-round spare can read 15 once you swap a 20-round mag
+  into the pouch. Nothing is lost either way.
+
+## v1.324 — Squad Basics, the second tutorial
+Backlog D.61, Michael's answer C (control room, 22 Oct): "a second tutorial match, Squad Basics, after the first 1v1:
+you and two teammates against three kids, coached through the orders and the loader, with the free 25-BB loader."
+Nothing in the game taught the squad orders (Q, or the d-pad) or the speed loader; the first match with teammates was
+Two on Two, seventh on Winnmark's ladder.
+- **Where it is:** Winnmark's third match, after Just You and Seth and before Seth's Got a Shotgun
+  (`winnmark_squad_basics`). Winnmark now has 17 matches. A save that has already won past it finds it open and can
+  skip it; a save that won Just You and Seth but not the shotgun duel plays it first.
+- **The match:** you, Seth and Trey against Brooke, Jamie and Marcus on the cul-de-sac, last team standing, three
+  lives. Their side has pistols and goes easy (aggression 0.2, fire rate 0.5, accuracy 0.35). Pays $15 a win and $5 a
+  loss, and like Backyard Basics no hit bonus. The card says TUTORIAL. Seth and Trey stay in it whoever is in your crew.
+- **The coach's banner, three steps** (the `Tutorial` module now has a kind, 'basics' or 'squad', and Squad Basics'
+  beats):
+  1. **Give an order.** "Hold Q, move the mouse toward FOLLOW ME and let go" (on a pad, the d-pad). Any order moves it
+     on. The orders and the order box work in this tutorial; Backyard Basics still has none.
+  2. **The speed loader.** "Fire a few shots, then press 2 and hold Left-Mouse to feed BBs into your mag." BBs moving
+     from the loader into the mag move it on. With no loader in any slot the step is skipped.
+  3. **Win it as a team.** Counts the tags, "0/3 down", and names PUSH UP and FIND COVER.
+  Nobody fires, on either side, until step 3 shows, so the first two steps are learned in peace. Kids still move, and
+  you can tag them early.
+- **Seth's loader:** the first time you play it, Seth gives you a 25-BB speed loader, yours to keep (`giveSethsLoader`,
+  a new `sl_25` tier the shop doesn't sell). It goes in your first empty slot, or slot 2 if none is empty, and is
+  filled from your bag at once. It is given once (`sethLoaderGiven` in the save).
+### Verified
+- **`tests/squad-basics.test.mjs`, new** (a ladder match and a gift in the save):
+  - It sits after Just You and Seth: locked before that win, open after it. It locks the shotgun duel until it is won.
+  - With 200 BBs and empty slots, BEGIN puts the 25-BB loader in slot 2 with 25 BBs. The bag ends at 165 (10 in the
+    gun, 25 in the loader). Step 1 shows and orders can be given.
+  - 600 steps (10 s) in, every kid still holds fire and you have taken no hit.
+  - An order moves it to step 2. The order box (24-219 px across, top left) is clear of the coach's banner (320-960).
+  - Six shots down, a feed fills the mag from the loader (19 left) and moves it to step 3. Every kid can fire then,
+    and the banner reads 0/3.
+  - Tagging the three wins it and opens the shotgun duel. The loader is still yours in slot 2.
+  - A replay gives no second loader, and yours fills to 25 again.
+- **By playing it headless:** three rounds standing at the start after an order. The squad won one in 65 s; twice
+  the other side won at 80 and 109 s with Jamie and Marcus left, since you never fired. Nothing wedged, and no page
+  errors.
+- **Updated for 17 Winnmark matches:** `map-screen` (17 cards, "2 of 17 won") and `calendar` (8 of 17 won is now
+  Tuesday 10 June, was 8 of 16 on Wednesday 11 June).
+- **These suites pass:** `squad-basics`, `calendar`, `map-screen`, `bed-summer`, `front-door`, `pad-hints`,
+  `squad-hud`, `crew-roster`, `rival` and `smoke`.
+### Still open
+- **For a playtest:** whether their side is too easy or too hard once step 3 lets them fire, and whether the steps
+  read clearly. No new summer text comes with it; Seth's text after Just You and Seth still talks about his shotgun.
+- **Backyard Basics' last step** still says "Press R to reload from your speed loader". You have no loader yet then,
+  and R reloads nothing (it clears a jam and flips a taped mag); the step only waits for the key. Left as it was, for
+  Michael to say whether it should change.
