@@ -63,5 +63,16 @@ check('a red dot bought from Mods', /Bought/.test(b.flash) && b.cash === a.cash 
 // an old save's remembered tab falls back to the first
 const back = await page.evaluate(() => { closeShop(); shopState.activeTab = 'Loadout'; openShop(); const t = shopState.activeTab; closeShop(); return t; });
 check('a stale tab name opens on Guns', back === 'Guns', back);
+// v1.330 (backlog D.66, Michael: B): BBs five times cheaper, sold as a tube, a spigot tube, a bottle and a bag
+const bbs = await page.evaluate(() => {
+  const packs = SHOP_CATALOG.filter(x => x.category === 'BBs').map(x => [x.name, x.price]);
+  Game.persist.cash = 20; Game.persist.bag = 0;
+  const r = purchaseItem('bbs_2000');
+  return { packs, ok: r && r.ok, cash: Game.persist.cash, bag: Game.persist.bag };
+});
+console.log('   BB packs: ' + JSON.stringify(bbs.packs));
+check('the BB packs: 100 (tube) $1, 500 (dispenser) $4, 2,000 (bottle) $14, 5,000 (bag) $30, five times cheaper than $5/$20/$70/$150',
+  JSON.stringify(bbs.packs) === '[["100 BBs (tube)",1],["500 BBs (dispenser)",4],["2,000 BBs (bottle)",14],["5,000 BBs (bag)",30]]', bbs.packs);
+check('$20 buys the 2,000 bottle: $6 left, 2,000 in the bag', bbs.ok && bbs.cash === 6 && bbs.bag === 2000, bbs);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

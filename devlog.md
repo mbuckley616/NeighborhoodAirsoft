@@ -13653,3 +13653,241 @@ Two on Two, seventh on Winnmark's ladder.
 - **Backyard Basics' last step** still says "Press R to reload from your speed loader". You have no loader yet then,
   and R reloads nothing (it clears a jam and flips a taped mag); the step only waits for the key. Left as it was, for
   Michael to say whether it should change.
+
+## v1.325 — The FAMAS
+Backlog D.63, Michael's answer A (control room, 23 Oct): new guns in batches of four to six, the FAMAS first. His
+note: "I specifically would love to see a FAMAS added as a spring rifle. It can be functionally identical to the
+current spring rifle, but it was a spring rifle I used growing up." This is the first gun of batch 1; the electric
+semi-auto pistol and rifle, the burst rifle and the semi-auto shotgun follow.
+- **How it shoots:** exactly as the Spring Assault Rifle. Its spec is the AR's, copied number for number: semi, the
+  charging handle after every shot, 45 m/s, the same spread and curve, 0.85 speed. The same weight (8), the same slots
+  (a sight, two rails and an under-barrel), the same reticle.
+- **The shop:** $85, under RIFLES between the Spring Assault Rifle and the Spring Sniper Rifle. Its page sells a
+  40-round mag ($20) and a spare 25-round FAMAS mag ($10), as the AR's does. The spare goes in a loadout slot like any
+  other and fits only the FAMAS.
+- **The model** (`buildFPFamas`) is a bullpup, as the real one: the mag sits behind the pistol grip in the butt, a big
+  trigger guard runs round the grip, a ribbed handguard with the bipod folded along it, a short barrel with a flash
+  hider and an orange tip, and the carry handle along the top over 60% of the gun. The handle carries both sights, the
+  front post with its two ears and a rear aperture, and the charging lever hangs under it.
+- **Held and aimed as the AR:** the grip is where the AR's is and the front post's tip is at the same height, so the
+  hip and aimed poses are the AR's. The off hand holds the handguard (there is no foregrip). An optic sits on the carry
+  handle.
+- **Seen from outside:** your kid on the loadout screen (and a friend online) holds a bullpup in the kids' blocky
+  style: the body, the carry handle, the mag behind the grip. It had fallen back to the pistol's. No kid carries one.
+### Verified
+- **`tests/gun-famas.test.mjs`, new:**
+  - RIFLES lists the Spring Assault Rifle, the FAMAS and the Spring Sniper Rifle. The FAMAS has its picture, costs
+    $85 from its page, and its page has the 40-round mag and the spare.
+  - Its spec differs from the AR's in nothing but the name; the same weight and the same slots.
+  - The model: the mag 1.9 cm behind the grip, the carry handle over 60% of the gun's 45 cm, an orange tip.
+  - In Sean's match: its own first-person gun with 25 in the mag; one BB a pull, then the charging handle before the
+    next; aimed, the front post is 0.14° off the reticle; both hands on it.
+- **Updated for 17 guns:** `gun-parts` (every one of the FAMAS's 52 parts joins the gun; the charging lever first hung
+  4 mm under the handle and was moved up to it), `shop-gun-kinds`, `shop-pics`, `backyard-guns`, and `fp-hands`, which
+  now checks the FAMAS's hands too.
+- **These suites pass:** `gun-famas`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `gun-ar`, `loadout-kid` (the kid's gun now checked with the FAMAS too) and `smoke`.
+### Still open
+- **For Michael's eye:** the FAMAS against the one he had (`tests/out/gun-famas-side.png`, and aimed in
+  `tests/out/gun-famas-aimed.png`). It is drawn dark grey and black; say if his was another colour.
+
+## v1.326 — The Electric Pistol and the Electric Rifle
+Backlog D.63, batch 1 (Michael: A), its second and third guns: "semi-auto rifles and pistols (electric)". Every
+semi-auto gun in the game was a spring gun: a BB, then the slide, the pump, the bolt or the charging handle before the
+next. These two have a battery to do that.
+- **How they shoot:** a BB on every pull of the trigger, with nothing to cock between, as fast as a finger goes up to
+  the gun's own cycle: 5 a second for the pistol, 6 for the rifle. Held down, the trigger fires one BB; they are not
+  automatics. Run dry, the new mag is racked in once (the slide, the charging handle), as on every gun, and then it
+  fires again a pull at a time.
+  - The engine change is small: a spec can say `electric` with a `semiRPM`. After a shot an electric gun stays
+    cocked and waits out its cycle instead of the spring guns' 0.25 s lockout and a cock.
+  - Otherwise each shoots as its spring kin: the Electric Pistol as the Spring Pistol (its BB a little faster, 34 m/s
+    against 30, and it moves you a hair slower, 1.12 against 1.15), the Electric Rifle as the Spring Assault Rifle,
+    every number the same.
+- **The shop:** the Electric Pistol is $110 under PISTOLS, after the Bolt Pistol, with an 18-round mag, a 30-round mag
+  ($15) and a spare ($6). The Electric Rifle is $150 under RIFLES, after the FAMAS, with a 30-round mag, a 60-round
+  mag ($20) and a spare ($10). Their pages say "Electric semi (a BB a pull, up to 5/s)" (or 6/s).
+  - The prices are against their kin ($0 and $85): no cocking is worth a lot in a fight.
+- **The models** are their kin's with a battery in them, so the grips, sights, hands and poses are the kin's:
+  - The pistol has a tan frame and grip, a fire selector with a red dot on the left, and a black battery cap under
+    the grip with a green charge light.
+  - The rifle has tan furniture and a black mag, a battery box along the stock with its light, a fire selector, and
+    a fluted sleeve that makes the barrel 10 cm longer, with the orange tip at its end.
+  - The kids' blocky version of the rifle (your kid on the loadout screen, a friend online) is the AR's. The pistol
+    is the pistol's.
+### Verified
+- **`tests/gun-electric.test.mjs`, new.** Each one is checked against its spring kin in Sean's match:
+  - The shop: each under its kind with its picture, bought from its page for $110 and $150. The page says electric
+    and sells the spare.
+  - Five pulls a second apart fire five BBs, and each gun stays cocked. The Spring Pistol and the Spring Assault
+    Rifle fire one, then wait for a cock.
+  - Pulled twenty times a second for 2 s: 4 a second from the pistol and 5 from the rifle, no faster than the cycle.
+  - Held down 2 s: one BB.
+  - The last BB leaves it uncocked, and a rack on a full mag takes.
+  - Aimed, the front post is 0.15° (pistol) and 0.42° (rifle) off the reticle. Both hands are on each gun.
+- **Updated for 19 guns:** `gun-parts` (40 and 62 parts, none loose), `shop-gun-kinds` (PISTOLS 4, RIFLES 4),
+  `shop-pics` (19 distinct pictures), `backyard-guns`. `fp-hands` checks both guns' hands, and `loadout-kid` the
+  Electric Rifle.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid` and `smoke`.
+### Still open
+- **For a playtest:** whether 5-6 a second is too strong for the price, against the $85 spring rifle you have to
+  cock each time. A fast clicker gets close to the Tick-Tock's rate with a rifle's reach.
+- **For Michael's eye:** `tests/out/gun-epistol-side.png` and `gun-erifle-side.png`. The names are plain ("Electric
+  Pistol", "Electric Rifle"), after "Spring Pistol"; say if they want real-gun names, as the AK-47 and MP5 have.
+- **Batch 1 still owes** the burst rifle and the semi-auto shotgun.
+
+## v1.327 — The Burst Rifle
+Backlog D.63, batch 1 (Michael: A), its fourth gun: "burst rifles". The first gun in the game that fires a burst.
+- **How it shoots:** every pull of the trigger fires three BBs, 1/12 s apart (720 a minute inside the burst). The
+  burst finishes whether you hold the trigger or let it go, and a pull during the burst adds nothing. Held down, it
+  fires one burst, not a stream. The next burst can start a quarter-second after the last BB, so a fast finger gets
+  about two bursts a second, 7.5 BBs.
+  - It is electric (v1.326's rule): nothing to cock between pulls. Run dry, a new mag is racked in once with the
+    charging handle. If the mag runs out mid-burst, the burst stops there.
+  - The engine change: a spec can say `burst: 3`. The first BB goes on the pull, and `updateGun` fires the rest at
+    the gun's cycle. The burst stops if you put the gun away (a slot swap), it jams, the taped mags flip or the
+    noodle swings.
+  - Each BB is the Spring Assault Rifle's: 45 m/s, the same spread and curve. It moves you at 0.83 (the AR 0.85).
+- **The shop:** $210 under RIFLES, after the Electric Rifle. It has a 90-round mag, a 150-round mag ($22) and a spare
+  ($12). Its page says "3-round burst, a pull at a time (electric)". It is priced between the UMP ($170) and the
+  AK-47 ($240), which streams 10 a second.
+- **The model** is an electric M16A2 on the spring rifle's receiver, so the grip, the sights and the poses are the
+  AR's:
+  - The A2's fixed stock, which ends where the AR's does so it stays out of the aimed view.
+  - The round ribbed handguard round the AR's square one, and no vertical foregrip; the off hand holds the
+    handguard.
+  - A grey mag, a fire selector with a red dot, and a green battery light.
+  - The kids' blocky version is the AR's.
+- **A test I had left red in v1.325:** `under-parts` counted 8 long guns and 8 short ones. It now counts 11 long guns
+  (the FAMAS, the Electric Rifle and the Burst Rifle have the under-barrel slot) and 9 short ones (the Electric Pistol
+  has none). The game was right; the count was stale.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:**
+  - The shop: RIFLES reads Spring Assault Rifle, FAMAS, Electric Rifle, Burst Rifle, Spring Sniper Rifle. The Burst
+    Rifle has its picture, is bought for $210, and its page says 3-round burst.
+  - In Sean's match, a two-frame pull fires 3 BBs, the third 10 frames after the first.
+  - Held down 2 s it fires 3. A second pull inside the burst gives 3, not 6.
+  - Pulled every 3 frames for 2 s, it fires 7.5 a second and stays cocked.
+  - With 2 left, a pull fires the 2, and the gun wants a rack; the rack takes. A slot swap right after the pull stops
+    the burst at 1.
+  - Aimed, the front post is 0.43° off the reticle. Both hands are on it.
+- **Updated for 20 guns:** `gun-parts` (60 parts, none loose), `shop-gun-kinds` (RIFLES 5), `shop-pics` (20 distinct
+  pictures), `backyard-guns`, `under-parts` (above). `fp-hands` and `loadout-kid` check the Burst Rifle too.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `shop-tabs`,
+  `backyard-guns`, `loadout-kid`, `under-parts`, `workbench-labels` and `smoke`.
+### Still open
+- **For a playtest:** whether three BBs a pull at $210 sits right between the Electric Rifle ($150, 6 a second
+  clicked) and the AK-47.
+- **For Michael's eye:** `tests/out/gun-burst-side.png`.
+- **Batch 1 still owes** the semi-auto shotgun.
+
+## v1.328 — The Semi-Auto Shotgun
+Backlog D.63, batch 1 (Michael: A), its fifth and last gun: "A semi auto shotgun would also be really fun as well."
+Batch 1 is done with it: the FAMAS, the Electric Pistol, the Electric Rifle, the Burst Rifle and this. The workbench
+sections (D.64) come next, before batch 2.
+- **How it shoots:** the Spring Shotgun's cloud, 2 or 3 BBs a pull, with no pump between. It is electric (v1.326's
+  rule), up to 2.5 pulls a second. Run dry, a new mag is racked once with its charging handle. Every other number is
+  the Spring Shotgun's: speed, spread, curve, how fast you move.
+- **The shop:** $160 under SHOTGUNS, after the Thunder Pump. It has a 60-round mag, a 90-round mag ($20) and a spare
+  ($14). The page says "Electric semi (a BB a pull, up to 3/s)"; the line rounds 2.5 up, and the blurb gives the real
+  figure.
+- **The model** is a Benelli-style tactical shotgun on the spring shotgun's receiver, barrel and tube:
+  - A smooth olive forend where the ribbed pump was.
+  - An olive pistol grip behind the trigger guard and a straight stock, where the wrist and the sporting stock were.
+  - A side saddle of four red shells with brass bases on the left of the receiver, and a charging handle on the
+    right, which racks a new mag.
+  - The sights are new. The bead gives way to a front post, and a ghost ring stands at the back of the rail, so
+    aimed, the post sits in the middle of the ring. It has its own aimed pose for that line (the Spring Shotgun's
+    aims at its bead).
+  - The kids' blocky version is the Spring Shotgun's.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:**
+  - SHOTGUNS reads Spring Shotgun, Thunder Pump, Semi-Auto Shotgun. It has its picture, is bought for $160, and the
+    page says electric semi.
+  - In Sean's match, five pulls a second apart throw 2, 2, 3, 2 and 2 BBs, and it stays cocked.
+  - Pulled every 3 frames for 2 s, 2.5 pulls a second fire.
+  - Aimed, the front post is 0.07° off the reticle. Both hands are on it.
+- **Updated for 21 guns:** `gun-parts` (54 parts, none loose), `shop-gun-kinds` (SHOTGUNS 3), `shop-pics` (21
+  distinct pictures), `backyard-guns`, `under-parts` (12 long guns). `fp-hands` and `loadout-kid` check it too.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `under-parts`, `loadout-kid`, `gun-shotgun` and `smoke`.
+### Still open
+- **For a playtest:** whether 7 BBs a second up close is too much for $160. The Thunder Pump ($75) throws 4-5 a
+  pump.
+- **For Michael's eye:** `tests/out/gun-semishotgun-side.png` and `gun-semishotgun-aimed.png` (the post in the
+  ghost ring).
+
+## v1.329 — The workbench's guns in sections
+Backlog D.64, Michael's note (control room, 22 Oct): "if we add more guns, I think we need to reconsider the workbench
+menu, and have collapsible sections by Gun Type." With batch 1 in (v1.325-v1.328) the list had 21 guns, one long
+column past the bottom of the page, owned and not mixed together.
+- **Now** the list has a header for each kind, the shop's four (PISTOLS, SHOTGUNS, RIFLES, AUTOMATICS, from
+  `GUN_KINDS`), and each header folds its section.
+  - Each header shows an arrow (▾ open, ▸ shut), the kind, and how many of its guns you own ("2 of 4").
+  - A section starts open if you own one of its guns or the gun on the bench is in it. A kind you own nothing of
+    starts shut, so a new player sees their pistols and three headers.
+  - A click on a header opens or shuts it. The choice holds when the workbench is closed and opened again, until the
+    game is reloaded.
+  - The guns keep the shop's order inside their section. A click on a gun puts it on the bench as before.
+- **On the notebook paper** each header is one rule high, in the marker hand with a red arrow, so every line still
+  sits on a rule. The first try had a margin, and `notebook` caught its lines off the rules.
+### Verified
+- **`tests/shop-gun-kinds.test.mjs`, extended.** Owning the Spring Pistol, the FAMAS and the Electric Pistol:
+  - The headers read PISTOLS open 2 of 4, SHOTGUNS shut 0 of 3, RIFLES open 1 of 5, AUTOMATICS shut 0 of 9. The list
+    shows the 4 pistols and 5 rifles in order, and nothing from the shut kinds.
+  - A click on SHOTGUNS opens it (12 guns shown). A click on PISTOLS shuts it (8 shown) and leaves SHOTGUNS open.
+  - A click on the FAMAS puts it on the bench, and the sections stay as they were. Closed and opened again, the
+    workbench keeps them.
+  - A picture: `tests/out/workbench-kinds.png`.
+- **These suites pass:** `shop-gun-kinds`, `notebook`, `workbench-labels`, `under-parts`, `pad-hints` and `smoke`.
+### Still open
+- **For a playtest:** whether a shut kind should stay shut across reloads (it is not saved). On a pad, each header is
+  a target for the cursor like any other clickable.
+
+## v1.330 — BBs five times cheaper, in tubes, bottles and bags
+Backlog D.66, Michael's answer B (control room, 23 Oct): five times cheaper. His note: "you can pretty commonly (even
+today) buy like 2000-4000 rounds for like 15 bucks... 500 BBs should be a little plastic cylinder with a little
+spigot/dispenser, 1000-2000 could be just tall cylinders (look almost like a coke bottle), and anything above 2,000
+could be in bags."
+- **The prices:** 100 for $1 (was $5), 500 for $4 (was $20), 2,000 for $14 (was $70), 5,000 for $30 (was $150). That
+  is 0.6-1¢ a BB, where it was 3-5¢. A 350-round AK drum now costs about $2-$4 to fill from the bag, where it cost
+  $10-$18, against $2-$20 for a win.
+- **The packs and their pictures,** drawn in the shop as before from models:
+  - 100: a short clear tube with a yellow screw cap ("100 BBs (tube)").
+  - 500: a clear tube with a blue cap and a spigot tipped up off it, with its flip lid ("500 BBs (dispenser)").
+  - 2,000: a tall clear bottle like a soda bottle, with a shoulder, a neck, a red cap and a label round it ("2,000
+    BBs (bottle)").
+  - 5,000: a big flat foil bag the size of a book, with a sealed strip and a hang hole at the top, a label, and a
+    window full of BBs ("5,000 BBs (bag)").
+  - Each container shows the BBs through the plastic. The descriptions say what each is.
+- Nothing else costs BBs differently: the bag, the mags and the loaders work as before.
+### Verified
+- **`tests/shop-tabs.test.mjs`, extended:** the four packs are `100 BBs (tube)` $1, `500 BBs (dispenser)` $4,
+  `2,000 BBs (bottle)` $14 and `5,000 BBs (bag)` $30. With $20 and an empty bag, the bottle leaves $6 and 2,000 BBs.
+- **`tests/shop-pics.test.mjs`:** four distinct pictures at 112 px. The tube fills 61% of its square, the dispenser
+  44%, the bottle 33% and the bag 59%; each runs at least 86% of the way top to bottom. The bottle's rule is now over
+  20% (the packs' is 30%), since a soda bottle is narrow by design; it fills 33%.
+- **These suites pass:** `shop-tabs`, `shop-pics`, `autosave` (it buys the 100 tube) and `smoke`. A picture of the
+  four is in `tests/out/bb-packs.png`.
+### Still open
+- **For a playtest:** BBs no longer weigh on what you can afford, as the recommendation meant; cash now goes almost
+  all to guns and gear. Whether the win pay should come down with it is Michael's call.
+
+## v1.331 — Two starts that faced the wrong way
+Found in play (builder, 23 Oct): `tests/spawn-facing.test.mjs` had been red on two matches since v1.316-v1.317. It runs
+weekly, not on a PR, so nobody had fixed it.
+- **Hold the Bunker** (`stoneglen_hold_treehouse`): the bunker start's yaw was 0, which faces north, toward Evan's
+  sandbag nest under the road bank behind you. The twins come from the house to the south. The start's own comment
+  said "facing the house". It is now yaw π, and you start looking down the course at the twins: 10° off the kids'
+  middle, where it was 170°.
+- **Round the Courts** (`pool_1v1_christian`): you start in the lee of the pump house, facing past its south-west
+  corner, and the corner was 1.9 m in front of your eyes (the rule is 2 m). The start moves 0.5 m west, so the corner
+  is 2.4 m ahead. The line to Christian still runs into the pump house, and the facing is unchanged (3°).
+### Verified
+- **`spawn-facing` passes:** no start faces the kids from behind (Hold the Bunker 10°), and none has an obstacle under
+  2 m ahead (Round the Courts 2.4 m).
+- **These suites pass:** `spawn-facing`, `treehouse-hold`, `treehouse-evan` and `northcliff`.
+### Still open
+- **For a playtest:** in Hold the Bunker Evan is now behind you from the first second. That is what the briefing
+  says, and he holds fire until a twin is within 7 m.
