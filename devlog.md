@@ -13570,3 +13570,38 @@ can sound similar."
 ### Still open
 - **For a playtest:** strength and length (0.5 s; 0.9 opacity at the edge). There is no side to it: a hit from
   behind flashes the same as one from the front. Showing where a hit came from would be a separate idea.
+
+## v1.323 — Spare mags are kept
+Backlog B.14, Michael's note (control room, 22 Oct): "Buying and adding an extra magazine to a loadout slot causes the
+magazine to be consumed/disappear once it's used in a match. It should persist between rounds and refill with
+available BBs."
+- **What was wrong:** a spare mag was built as a one-shot. The swap took one off your count of that mag and emptied
+  its slot, so a mag bought for $ was gone after one reload. Its BBs also came from nowhere: the swap filled the gun to
+  the spare's size without touching the bag, and the BBs left in the mag you pulled were lost.
+- **Now a spare mag is gear you keep,** like a speed loader:
+  - At BEGIN each spare mag in a slot that fits your gun loads from the bag (`fillSpareMagsFromBag`), after the gun's
+    mag and the taped twin, before the speed loaders. It loads up to its size, or the gun's mag if that is smaller.
+  - The swap trades mags. The fresh one goes in; the one you pulled goes in the pouch with what it had left. The slot
+    stays, so you can swap back to it.
+  - An empty spare mag dry-clicks, and the slot hint says it is empty. In a match the slot shows the BBs it holds
+    ("Spare 10-rd Pistol Mag · 10").
+  - At the end of the match whatever is left in them goes back in the bag (`returnSpareMagsToBag`), and the next match
+    fills them again.
+- **The words:** the slot, the loadout list and the shop no longer call it single-use or a consumable. The shop's
+  header says "Yours to keep — carry one in a slot; it fills from your bag every match".
+- **Mags already lost** in a save from before this build are not given back: the old swap took them off the count,
+  and nothing records how many there were.
+### Verified
+- **`tests/wallet.test.mjs`, extended.** With the Spring Pistol (10-round mag), one 10-round spare mag in slot 2 and
+  100 BBs in the bag:
+  - BEGIN loads 10 in the gun and 10 in the spare, and leaves 80 in the bag.
+  - With 3 left in the gun, the swap gives 10 in the gun and 3 in the slot. The mag is still in the slot, you still
+    own one, and you hold the gun again.
+  - A win puts 93 back in the bag: the 80, the gun's 10 and the slot's 3.
+  - The next match fills the spare to 10 again (73 left in the bag).
+  - A spare emptied to 0 dry-clicks: the gun keeps its 2, the slot stays.
+- **These suites pass:** `wallet`, `fp-hands`, `gamepad`, `pad-orders`, `sell-back` and `smoke`.
+### Still open
+- **For a playtest:** whether the swap back to the pulled mag is welcome or confusing. A spare mag of a different size
+  from your gun's mag holds the gun's mag after a swap, so a 10-round spare can read 15 once you swap a 20-round mag
+  into the pouch. Nothing is lost either way.

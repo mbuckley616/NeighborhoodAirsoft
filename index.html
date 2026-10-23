@@ -2582,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.322</div>
+  <div class="version">v1.323</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4806,9 +4806,10 @@ function describeSlot(idx) {
       kind: 'spare_mag',
       icon: '▮',
       name: SPARE_MAG_LABEL[slot.refId] || `Spare ${cap}-rd Mag`,
-      desc: 'Single use. Swap-in reload.',
+      desc: 'Fills from your bag every match. Swap-in reload.',   // v1.323 (B.14): kept, not used up
       magCap: cap,
       refId: slot.refId,
+      bbs: (Game.gun.spareAmmo || {})[idx] || 0,   // v1.323: what it holds in this match
     };
   }
   return null;
@@ -5113,6 +5114,26 @@ function refillEquippedSpeedLoadersFromBag() {
     sl.currentBBs += take;
     Game.persist.bag -= take;
   }
+}
+
+// v1.323 (backlog B.14, Michael 22 Oct: a spare mag "should persist between rounds and refill with available BBs"):
+// a spare mag is gear you keep, not used up. At BEGIN each one in a slot that fits your gun loads from the bag, after
+// the gun's mag and the taped twin (up to its size, or the gun's mag if that is smaller), into Game.gun.spareAmmo by
+// slot. The swap trades mags: the fresh one goes in and the one you pulled goes in the pouch with what it had left, so
+// the slot stays and no BB is lost. Whatever is left in them goes back in the bag when the match ends.
+function fillSpareMagsFromBag() {
+  Game.gun.spareAmmo = {};
+  Game.persist.loadoutSlots.forEach((slot, i) => {
+    if (!slot || slot.kind !== 'spare_mag') return;
+    if (MAG_GUN_FIT[slot.refId] && MAG_GUN_FIT[slot.refId] !== Game.gun.type) return;
+    const take = Math.min((describeSlot(i) || {}).magCap || 0, Game.gun.maxAmmo, Game.persist.bag);
+    Game.gun.spareAmmo[i] = take;
+    Game.persist.bag -= take;
+  });
+}
+function returnSpareMagsToBag() {
+  for (const i in Game.gun.spareAmmo || {}) Game.persist.bag += Game.gun.spareAmmo[i];
+  Game.gun.spareAmmo = {};
 }
 
 // Return every EQUIPPED speed loader's remaining BBs to the bag (round end).
@@ -26006,6 +26027,7 @@ function startScenario(built) {
   Game.gun.tapedMag = !!(getUnderPart(Game.gun.type) || {}).tapedMag;
   Game.gun.tapedAmmo = Game.gun.tapedMag ? Math.min(Game.gun.maxAmmo, Game.persist.bag) : 0;
   Game.persist.bag -= Game.gun.tapedAmmo;
+  fillSpareMagsFromBag();   // v1.323 (B.14): the spare mags in your slots load next
   Game.gun.flipT = 0;
   Game.gun._rHeld = false;
   // v1.50: then top off any equipped speed loaders from what's left in the bag
@@ -26382,6 +26404,7 @@ function endScenario(outcome) {
   Game.gun.ammo = 0;
   Game.persist.bag += Game.gun.tapedAmmo || 0;   // v1.169: and the taped twin mag's
   Game.gun.tapedAmmo = 0;
+  returnSpareMagsToBag();   // v1.323 (B.14): and the spare mags'
   Game.gun.flipT = 0;
   // v1.50: also return any BBs still inside equipped speed loaders to the bag,
   // so nothing is lost between rounds and they refill cleanly next start.
@@ -27585,7 +27608,7 @@ function getAvailableSlotItems() {
       out.push({
         icon: '▮',
         name: def.name,
-        desc: 'Single-use mag swap.',
+        desc: 'Mag swap; fills from your bag every match.',   // v1.323 (B.14)
         detail: `x${avail}`,
         slotData: { kind: 'spare_mag', refId: def.refId },
       });
@@ -28029,7 +28052,7 @@ function renderGunDetail(c, gt) {
 
   // Spare mags (consumables — carried in a loadout slot)
   if (cfg.spares.length) {
-    c.appendChild(shopSectionHeader('Spare Mags', 'Consumable — equip in a slot for an instant in-match reload'));
+    c.appendChild(shopSectionHeader('Spare Mags', 'Yours to keep — carry one in a slot; it fills from your bag every match'));
     for (const sp of cfg.spares) {
       const held = Game.persist.consumables[sp.key] || 0;
       const sLocked = sp.needsFlag && !Game.persist.owned[sp.needsFlag];
@@ -28815,6 +28838,7 @@ function onLmbDown() {
       playReloadClick();
       return;
     }
+    if (heldSlot.bbs <= 0) { playReloadClick(); return; }   // v1.323 (B.14): an empty spare mag dry-clicks
     Game.held.using = true;
     Game.held.useProgress = 0;
     Game.held.useDuration = 0.4;
@@ -29913,10 +29937,11 @@ function updateGun(dt) {
       // Spare mag is still a timed swap (slap a fresh mag in), unchanged.
       Game.held.useProgress += dt;
       if (Game.held.useProgress >= Game.held.useDuration) {
-        Game.gun.ammo = Math.min(Game.held.useMagCap, Game.gun.maxAmmo);
-        const slot = Game.persist.loadoutSlots[Game.held.slotIdx];
-        Game.persist.consumables[slot.refId] = Math.max(0, (Game.persist.consumables[slot.refId] || 0) - 1);
-        Game.persist.loadoutSlots[Game.held.slotIdx] = null;
+        // v1.323 (B.14): swap mags; the one pulled goes in the pouch with what it had left, and the slot stays
+        if (!Game.gun.spareAmmo) Game.gun.spareAmmo = {};
+        const fresh = Game.gun.spareAmmo[Game.held.slotIdx] || 0;
+        Game.gun.spareAmmo[Game.held.slotIdx] = Game.gun.ammo;
+        Game.gun.ammo = fresh;
         Game.held.slotIdx = 0;
         playReloadClick();
         Game.held.using = false;
@@ -30229,7 +30254,7 @@ function updateLoadoutHud() {
     } else if (!slot) {
       div.innerHTML = `${keyEl}<span class="slot-icon">+</span><span>empty</span>`;
     } else {
-      div.innerHTML = `${keyEl}<span class="slot-icon">${desc.icon}</span><span>${desc.name}</span>`;
+      div.innerHTML = `${keyEl}<span class="slot-icon">${desc.icon}</span><span>${desc.name}${desc.kind === 'spare_mag' && Game.mode === 'scenario' ? ` · ${desc.bbs}` : ''}</span>`;   // v1.323: its BBs
       if (isHeld && desc.kind === 'gun') {
         // Cock-action hint varies per gun type
         const cockVerb = Game.gun.cockType === 'pump' ? 'pump the forestock'
@@ -30247,7 +30272,7 @@ function updateLoadoutHud() {
       } else if (isHeld && desc.kind === 'noodle') {
         hint = 'Click or V to swing. Get close.';   // v1.249
       } else if (isHeld && desc.kind === 'spare_mag') {
-        hint = 'Hold LMB to slam in the fresh mag.';
+        hint = desc.bbs <= 0 ? 'Spare mag is empty. Switch back.' : 'Hold LMB to slam in the fresh mag.';   // v1.323
       }
     }
     container.appendChild(div);
