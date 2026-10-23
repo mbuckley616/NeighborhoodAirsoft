@@ -2582,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.325</div>
+  <div class="version">v1.326</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3977,6 +3977,7 @@ const Game = {
       spare_mag_bucket: 0,
       spare_mag_boltpistol: 0,
       spare_mag_famas: 0,         // v1.325 (D.63)
+      spare_mag_epistol: 0, spare_mag_erifle: 0,   // v1.326
     },
     equipped: {
       gun: 'pistol',
@@ -4166,13 +4167,15 @@ const MAG_GUN_FIT = {
   spare_mag_bucket: 'bucket',
   spare_mag_boltpistol: 'boltpistol',
   spare_mag_famas: 'famas',   // v1.325 (D.63)
+  spare_mag_epistol: 'epistol', spare_mag_erifle: 'erifle',   // v1.326
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
 // v1.168 (backlog D.14 A, Michael: D): the four backyard guns join the end.
 const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol',
   'sprayer', 'ghost', 'ticktock', 'rattle',   // v1.250 (D.37): the cheap clear automatics
-  'famas'];   // v1.325 (D.63, Michael: A): the first of the new guns
+  'famas',   // v1.325 (D.63, Michael: A): the first of the new guns
+  'epistol', 'erifle'];   // v1.326: the electric semi-autos
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -4193,6 +4196,8 @@ function getMaxAmmoForGun(gunType) {
     return 25;
   }
   if (gunType === 'famas') return Game.persist.owned.famas_mag_40 ? 40 : 25;   // v1.325: the AR's mags
+  if (gunType === 'epistol') return Game.persist.owned.epistol_mag_30 ? 30 : 18;   // v1.326
+  if (gunType === 'erifle') return Game.persist.owned.erifle_mag_60 ? 60 : 30;
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -4316,6 +4321,8 @@ const GUN_ACCESSORY_CAP = {
   boltpistol: { sight: 1, rails: 1 },
   sprayer: { sight: 1, rails: 1 }, ghost: { sight: 1, rails: 1 }, ticktock: { sight: 1, rails: 2 }, rattle: { sight: 1, rails: 1 },   // v1.250
   famas:   { sight: 1, rails: 2, under: 1 },   // v1.325
+  epistol: { sight: 1, rails: 1 },              // v1.326
+  erifle:  { sight: 1, rails: 2, under: 1 },
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -4611,8 +4618,23 @@ const GUN_MAGS = {
     mags: [ { flag: 'famas_mag_40', cap: 40, price: 20 } ],
     spares: [ { key: 'spare_mag_famas', label: 'Spare FAMAS Mag (25)', price: 10 } ],
   },
+  // v1.326 (backlog D.63, batch 1): the electric semi-autos. A battery cycles the spring, so there is nothing to cock:
+  // every pull of the trigger fires, as fast as you can pull it, up to the gun's own cycle. A new mag still needs the
+  // first round racked in (the slide, or the charging handle).
+  epistol: {
+    displayName: 'Electric Pistol', baseCap: 18, price: 110, ownFlag: 'epistol',
+    blurb: 'A battery pistol in a tan frame. No slide to rack between shots: every pull of the trigger fires, about five a second if your finger keeps up.',
+    mags: [ { flag: 'epistol_mag_30', cap: 30, price: 15 } ],
+    spares: [ { key: 'spare_mag_epistol', label: 'Spare Electric Pistol Mag (18)', price: 6 } ],
+  },
+  erifle: {
+    displayName: 'Electric Rifle', baseCap: 30, price: 150, ownFlag: 'erifle',
+    blurb: 'A battery rifle that shoots like the spring rifle, without the charging handle: a BB every pull, about six a second, and it reaches as far.',
+    mags: [ { flag: 'erifle_mag_60', cap: 60, price: 20 } ],
+    spares: [ { key: 'spare_mag_erifle', label: 'Spare Electric Rifle Mag (30)', price: 10 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','famas','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','ar','famas','erifle','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -4797,6 +4819,7 @@ function describeSlot(idx) {
       spare_mag_mac10_100: 100,
       spare_mag_thunder: 30, spare_mag_sixshooter: 6, spare_mag_bucket: 600, spare_mag_boltpistol: 8,   // v1.168
       spare_mag_famas: 25,   // v1.325
+      spare_mag_epistol: 18, spare_mag_erifle: 30,   // v1.326
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -4815,6 +4838,7 @@ function describeSlot(idx) {
       spare_mag_thunder: 'Spare Thunder Shell Box (30)', spare_mag_sixshooter: 'Spare Cylinder (6)',   // v1.168
       spare_mag_bucket: 'Spare BB Bottle (600)', spare_mag_boltpistol: 'Spare 8-rd Bolt Pistol Mag',
       spare_mag_famas: 'Spare 25-rd FAMAS Mag',   // v1.325
+      spare_mag_epistol: 'Spare 18-rd Electric Pistol Mag', spare_mag_erifle: 'Spare 30-rd Electric Rifle Mag',   // v1.326
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -4999,6 +5023,7 @@ const GUN_WEIGHT = {
   sixshooter: 2, boltpistol: 3, thunder: 5, bucket: 6,   // v1.168
   rattle: 2, sprayer: 2.5, ghost: 2.5, ticktock: 4,       // v1.250: hollow plastic
   famas: 8,                                               // v1.325: the AR's weight
+  epistol: 2.5, erifle: 8.5,                              // v1.326: a battery adds a little
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -5010,6 +5035,7 @@ const MAG_WEIGHT = {
   spare_mag_mac10: 0.8, spare_mag_mac10_100: 1.2,
   spare_mag_thunder: 1.0, spare_mag_sixshooter: 0.3, spare_mag_bucket: 1.6, spare_mag_boltpistol: 0.5,   // v1.168
   spare_mag_famas: 1.2,   // v1.325
+  spare_mag_epistol: 0.6, spare_mag_erifle: 1.3,   // v1.326
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -5418,6 +5444,11 @@ const GUN_SPECS = {
 };
 // v1.325 (backlog D.63, Michael: A): the FAMAS shoots exactly as the Spring Assault Rifle, so it takes the AR's spec
 GUN_SPECS.famas = Object.assign({}, GUN_SPECS.ar, { displayName: 'FAMAS' });
+// v1.326 (D.63, batch 1): the electric semi-autos. `electric`: the gun stays cocked after a shot and a fresh pull
+// fires again once `semiRPM`'s cycle is done (the spring guns wait FIRE_LOCKOUT and a cock). They shoot as their
+// spring kin otherwise; the pistol's BB is a little faster (a battery spring, 30 → 34 m/s).
+GUN_SPECS.epistol = Object.assign({}, GUN_SPECS.pistol, { electric: true, semiRPM: 300, muzzleVelocity: 34, playerSpeedMult: 1.12, displayName: 'Electric Pistol' });
+GUN_SPECS.erifle = Object.assign({}, GUN_SPECS.ar, { electric: true, semiRPM: 360, displayName: 'Electric Rifle' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;
@@ -20598,13 +20629,14 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || !weapon;   // v1.168
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || !weapon;   // v1.168; v1.326
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
     case 'sniper':  return 0.26;   // long barrel — hand well forward
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'ar':
+    case 'erifle':  // v1.326
     case 'ak47':    return 0.16;   // handguard ahead of the mag
     case 'famas':   return 0.15;   // v1.325: the bullpup's handguard, ahead of the grip
     case 'mp5':
@@ -20648,7 +20680,8 @@ function buildEnemyGunMesh(weapon) {
       grip(wood);
       break;
     }
-    case 'ar': {
+    case 'ar':
+    case 'erifle': {   // v1.326: the Electric Rifle in the kids' blocky style is the AR
       box(0.045, 0.07, 0.40, black, 0, 0, 0.18);         // long barrel/receiver
       box(0.05, 0.13, 0.07, black, 0, -0.10, 0.06);      // tall magazine
       box(0.035, 0.04, 0.10, black, 0, 0.06, 0.04);      // carry-handle/optic riser
@@ -22325,6 +22358,60 @@ function buildFPFamas() {
   return group;
 }
 
+// v1.326 (backlog D.63, batch 1): the electric semi-autos are their spring kin's guns with a battery in them, so
+// each is built on its kin's model (the grip, the sights and the poses are the kin's) and dressed apart: the pistol in
+// a tan frame with a fire selector and a battery cap under the grip, the rifle in tan furniture with a battery box
+// on its stock, a fire selector and a longer, fluted barrel. `_recolor` swaps one colour for another on every part.
+function _recolor(group, fromHex, mat) {
+  group.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHex() === fromHex) o.material = mat; });
+}
+function buildFPElectricPistol() {
+  const group = buildFPGun();
+  const tan = new THREE.MeshStandardMaterial({ color: 0xb59a6e, roughness: 0.65, metalness: 0.05 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6 });
+  const red = new THREE.MeshStandardMaterial({ color: 0xd8342a, roughness: 0.5 });
+  const green = new THREE.MeshStandardMaterial({ color: 0x48e070, roughness: 0.4, emissive: 0x1c8a34, emissiveIntensity: 0.8 });
+  _recolor(group, 0x1a1a1c, tan);   // the frame, the grip and the guard
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  // fire selector on the left of the frame, over the grip: a black lever with a red dot
+  add(new THREE.BoxGeometry(0.004, 0.010, 0.020), black, -0.021, 0.010, -0.005);
+  add(new THREE.BoxGeometry(0.002, 0.004, 0.004), red, -0.0235, 0.012, -0.012);
+  // battery cap: a black plate under the grip, taller than the spring pistol's baseplate, with a charge light
+  const grip = group.getObjectByName('grip');
+  add(new THREE.BoxGeometry(0.042, 0.016, 0.056), black, 0, -0.052, 0, grip).name = 'battery';
+  add(new THREE.BoxGeometry(0.006, 0.004, 0.004), green, 0, -0.050, 0.0285, grip);
+  // the front sight is the post at the slide's end
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.17) < 1e-6 && Math.abs(o.position.y - 0.067) < 1e-6) o.userData.frontSight = true; });
+  group.userData.gunType = 'epistol';
+  return group;
+}
+function buildFPElectricRifle() {
+  const group = buildFPAR();
+  const tan = new THREE.MeshStandardMaterial({ color: 0xb59a6e, roughness: 0.65, metalness: 0.05 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0x2b2c30, roughness: 0.35, metalness: 0.65 });
+  const red = new THREE.MeshStandardMaterial({ color: 0xd8342a, roughness: 0.5 });
+  const green = new THREE.MeshStandardMaterial({ color: 0x48e070, roughness: 0.4, emissive: 0x1c8a34, emissiveIntensity: 0.8 });
+  _recolor(group, 0x1d1d22, tan);   // the lower, the magwell, the grip, the buffer and the stock
+  _recolor(group, 0x2848a0, black); // a black mag, not the spring rifle's blue
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); group.add(m); return m; };
+  // battery box along the stock's top
+  add(new THREE.BoxGeometry(0.030, 0.020, 0.060), black, 0, 0.0565, 0.095).name = 'battery';
+  add(new THREE.BoxGeometry(0.006, 0.004, 0.004), green, 0, 0.068, 0.072);
+  // fire selector on the left of the lower, above the grip
+  add(new THREE.BoxGeometry(0.004, 0.008, 0.020), black, -0.021, 0.003, -0.012);
+  add(new THREE.BoxGeometry(0.002, 0.004, 0.004), red, -0.0235, 0.005, -0.018);
+  // the longer, fluted barrel: a sleeve over the spring rifle's and the orange tip carried out to its end
+  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.10, 10), metal);
+  sleeve.rotation.x = Math.PI / 2; sleeve.position.set(0, 0.045, -0.43); group.add(sleeve);
+  for (const [dx, dy] of [[0.0108, 0], [-0.0108, 0], [0, 0.0108], [0, -0.0108]]) add(new THREE.BoxGeometry(0.002, 0.002, 0.08), black, dx, 0.045 + dy, -0.43);
+  group.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHex() === 0xff7a1a) o.position.z = -0.49; });
+  // the front post is the AR's
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.245) < 1e-6 && Math.abs(o.position.y - 0.085) < 1e-6) o.userData.frontSight = true; });
+  group.userData.gunType = 'erifle';
+  return group;
+}
+
 // === FP SNIPER (bolt-action, no scope by default) ===
 function buildFPSniper() {
   const group = new THREE.Group();
@@ -23237,6 +23324,8 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
   else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
+  else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
+  else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -23279,6 +23368,8 @@ const FP_HANDS = {
   rattle:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
   famas:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.004, -0.150], hw: 0.022, hh: 0.024 }, underHand: true },   // v1.325: the AR's grip, the handguard
+  epistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.326: the pistol's
+  erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
@@ -23490,6 +23581,8 @@ const FP_GUN_MOUNT = {
   ticktock: { barrelY: 0.010, sideX: 0.0275, railZ: -0.18, railLen: 0.09, underY: -0.028, sightY: 0.0595, sightZ: -0.08, sightScale: 1.0 },
   rattle:  { barrelY: 0.010, sideX: 0.030, railZ: -0.08, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.05, sightScale: 0.85 },
   famas:   { barrelY: 0.012, sideX: 0.022, railZ: -0.130, railLen: 0.08, underY: -0.020, sightY: 0.079, sightZ: -0.06, sightScale: 1.0 },   // v1.325: the optic on the carry handle
+  epistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.326: the pistol's
+  erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -24146,6 +24239,8 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
   else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
+  else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
+  else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
@@ -26172,6 +26267,8 @@ function startScenario(built) {
   // v1.20: auto-fire fields
   Game.gun.fireMode = spec.fireMode || 'semi';
   Game.gun.cyclicRPM = spec.cyclicRPM || 0;
+  Game.gun.electric = !!spec.electric;   // v1.326
+  Game.gun.semiRPM = spec.semiRPM || 0;
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
   Game.gun._sinceShot = null;   // v1.292
@@ -27756,6 +27853,8 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_mac10',    name: 'Spare 50-rd MAC-10 Mag' },
     { refId: 'spare_mag_mac10_100',name: 'Spare 100-rd MAC-10 Mag' },
     { refId: 'spare_mag_famas',    name: 'Spare 25-rd FAMAS Mag' },   // v1.325
+    { refId: 'spare_mag_epistol',  name: 'Spare 18-rd Electric Pistol Mag' },   // v1.326
+    { refId: 'spare_mag_erifle',   name: 'Spare 30-rd Electric Rifle Mag' },
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -28032,9 +28131,9 @@ function renderBBsTab(c, between) {
 // under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
 // entry here; a gun missing from it goes by its fire mode (automatic or rifle).
 const GUN_KINDS = [
-  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol'] },
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol'] },   // v1.326: the electrics after their spring kin
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder'] },
-  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'sniper'] },   // v1.325: the FAMAS by the AR
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'sniper'] },   // v1.325: the FAMAS by the AR
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'mac10', 'ak47'] },   // v1.250: the cheap clear ones first
 ];
 function gunKind(gt) {
@@ -28263,7 +28362,7 @@ function renderGunDetail(c, gt) {
 function gunBlurb(gt) {
   const s = getGunSpec(gt);
   // v1.168: the pump and the hammer read as themselves (the spring shotgun said "rack slide")
-  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));
+  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : s.electric ? `Electric semi (a BB a pull, up to ${Math.round(s.semiRPM / 60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));   // v1.326: the electrics
   const weight = ({light:'Light, fast', medium:'Medium', heavy:'Heavy, slower', very_heavy:'Very heavy, slowest'})[s.weightClass] || 'Medium';
   return `${mode} · ${weight} · muzzle ${s.muzzleVelocity} m/s`;
 }
@@ -28968,6 +29067,12 @@ function onLmbDown() {
         Game.gun._jamIn = (bj && gameRandom() < bj) ? 1 + Math.floor(gameRandom() * 2) : 0;
         Game.gun._bursts = (Game.gun._bursts || 0) + 1;
         // Don't mark LMB consumed — the held trigger keeps the stream alive.
+      } else if (Game.gun.electric) {
+        // v1.326 (D.63): an electric semi stays cocked; the next pull fires once its cycle is done. Run dry, a new mag
+        // is racked in as on any gun.
+        Game.gun.fireCooldown = 60 / Math.max(1, Game.gun.semiRPM);
+        Game.lmbConsumed = true;
+        if (Game.gun.ammo === 0) { Game.gun.cocked = false; Game.gun.cockProgress = 0; }
       } else {
         Game.gun.cocked = false;
         Game.gun.cockProgress = 0;
@@ -30166,7 +30271,7 @@ function updateHeldMesh(dt) {
       // via adsYCorr when a red-dot/scope is mounted, so this only affects irons.
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'famas') {   // v1.325: the AR's poses (its post's tip is at the same height)
+    } else if (gunType === 'famas' || gunType === 'erifle') {   // v1.325: the AR's poses (its post's tip is at the same height); v1.326: and the Electric Rifle's
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -30707,6 +30812,8 @@ const RETICLE_SPECS = {
   ghost:   { style: 'circle_cross', baseGap: 10, ringR: 9, centerDot: 1.3 },
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
   famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's
+  epistol: { style: 'ring_ticks', baseGap: 9,  ringR: 9,  centerDot: 1.4 },   // v1.326: the pistol's
+  erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }

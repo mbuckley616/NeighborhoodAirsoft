@@ -13690,3 +13690,49 @@ semi-auto pistol and rifle, the burst rifle and the semi-auto shotgun follow.
 ### Still open
 - **For Michael's eye:** the FAMAS against the one he had (`tests/out/gun-famas-side.png`, and aimed in
   `tests/out/gun-famas-aimed.png`). It is drawn dark grey and black; say if his was another colour.
+
+## v1.326 — The Electric Pistol and the Electric Rifle
+Backlog D.63, batch 1 (Michael: A), its second and third guns: "semi-auto rifles and pistols (electric)". Every
+semi-auto gun in the game was a spring gun: a BB, then the slide, the pump, the bolt or the charging handle before the
+next. These two have a battery to do that.
+- **How they shoot:** a BB on every pull of the trigger, with nothing to cock between, as fast as a finger goes up to
+  the gun's own cycle: 5 a second for the pistol, 6 for the rifle. Held down, the trigger fires one BB; they are not
+  automatics. Run dry, the new mag is racked in once (the slide, the charging handle), as on every gun, and then it
+  fires again a pull at a time.
+  - The engine change is small: a spec can say `electric` with a `semiRPM`. After a shot an electric gun stays
+    cocked and waits out its cycle instead of the spring guns' 0.25 s lockout and a cock.
+  - Otherwise each shoots as its spring kin: the Electric Pistol as the Spring Pistol (its BB a little faster, 34 m/s
+    against 30, and it moves you a hair slower, 1.12 against 1.15), the Electric Rifle as the Spring Assault Rifle,
+    every number the same.
+- **The shop:** the Electric Pistol is $110 under PISTOLS, after the Bolt Pistol, with an 18-round mag, a 30-round mag
+  ($15) and a spare ($6). The Electric Rifle is $150 under RIFLES, after the FAMAS, with a 30-round mag, a 60-round
+  mag ($20) and a spare ($10). Their pages say "Electric semi (a BB a pull, up to 5/s)" (or 6/s).
+  - The prices are against their kin ($0 and $85): no cocking is worth a lot in a fight.
+- **The models** are their kin's with a battery in them, so the grips, sights, hands and poses are the kin's:
+  - The pistol has a tan frame and grip, a fire selector with a red dot on the left, and a black battery cap under
+    the grip with a green charge light.
+  - The rifle has tan furniture and a black mag, a battery box along the stock with its light, a fire selector, and
+    a fluted sleeve that makes the barrel 10 cm longer, with the orange tip at its end.
+  - The kids' blocky version of the rifle (your kid on the loadout screen, a friend online) is the AR's. The pistol
+    is the pistol's.
+### Verified
+- **`tests/gun-electric.test.mjs`, new.** Each one is checked against its spring kin in Sean's match:
+  - The shop: each under its kind with its picture, bought from its page for $110 and $150. The page says electric
+    and sells the spare.
+  - Five pulls a second apart fire five BBs, and each gun stays cocked. The Spring Pistol and the Spring Assault
+    Rifle fire one, then wait for a cock.
+  - Pulled twenty times a second for 2 s: 4 a second from the pistol and 5 from the rifle, no faster than the cycle.
+  - Held down 2 s: one BB.
+  - The last BB leaves it uncocked, and a rack on a full mag takes.
+  - Aimed, the front post is 0.15° (pistol) and 0.42° (rifle) off the reticle. Both hands are on each gun.
+- **Updated for 19 guns:** `gun-parts` (40 and 62 parts, none loose), `shop-gun-kinds` (PISTOLS 4, RIFLES 4),
+  `shop-pics` (19 distinct pictures), `backyard-guns`. `fp-hands` checks both guns' hands, and `loadout-kid` the
+  Electric Rifle.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid` and `smoke`.
+### Still open
+- **For a playtest:** whether 5-6 a second is too strong for the price, against the $85 spring rifle you have to
+  cock each time. A fast clicker gets close to the Tick-Tock's rate with a rifle's reach.
+- **For Michael's eye:** `tests/out/gun-epistol-side.png` and `gun-erifle-side.png`. The names are plain ("Electric
+  Pistol", "Electric Rifle"), after "Spring Pistol"; say if they want real-gun names, as the AK-47 and MP5 have.
+- **Batch 1 still owes** the burst rifle and the semi-auto shotgun.

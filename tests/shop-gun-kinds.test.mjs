@@ -28,11 +28,11 @@ const all = await read();
 console.log('   ' + JSON.stringify(all));
 const kinds = await page.evaluate(() => ({ order: GUN_ORDER.map(gt => [gt, gunKind(gt)]), names: Object.fromEntries(GUN_ORDER.map(gt => [gt, GUN_MAGS[gt].displayName])) }));
 check('five chips: ALL and the four kinds, with their counts', JSON.stringify(all.chips) ===
-  '["ALL (17)","PISTOLS (3)","SHOTGUNS (2)","RIFLES (3)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
+  '["ALL (19)","PISTOLS (4)","SHOTGUNS (2)","RIFLES (4)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
 check('ALL: four headers in order, each once', JSON.stringify(all.groups.map(x => x.kind)) === '["PISTOLS","SHOTGUNS","RIFLES","AUTOMATICS"]', all.groups.map(x => x.kind));
-check('all seventeen guns (v1.250: four clear automatics; v1.325: the FAMAS), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 17
+check('all nineteen guns (v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 19
   && kinds.order.every(([gt, k]) => all.groups.find(x => x.kind === k).guns.includes(kinds.names[gt])), all.groups);
-check('the pistols are the Spring Pistol, Six-Shooter and Bolt Pistol', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol"]', all.groups[0].guns);
+check('the pistols are the Spring Pistol, Six-Shooter, Bolt Pistol and Electric Pistol (v1.326)', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol"]', all.groups[0].guns);
 check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, MAC-10 and AK-47', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","MAC-10","AK-47"]', all.groups[3].guns);
 await g.shot('shop-gun-kinds-all');
 
@@ -49,8 +49,8 @@ const back = await read();
 check('details of the first automatic, then back: still on AUTOMATICS', detail === 'rattle' && back.active === 'AUTOMATICS' && back.groups.length === 1, { detail, back: back.active });
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="PISTOLS"]').click());
 const pis = await read();
-check('PISTOLS shows its three', pis.groups.length === 1 && pis.groups[0].guns.length === 3, pis.groups);
+check('PISTOLS shows its four', pis.groups.length === 1 && pis.groups[0].guns.length === 4, pis.groups);
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
-check('ALL shows the seventeen again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 17);
+check('ALL shows the nineteen again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 19);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
