@@ -28,9 +28,9 @@ const all = await read();
 console.log('   ' + JSON.stringify(all));
 const kinds = await page.evaluate(() => ({ order: GUN_ORDER.map(gt => [gt, gunKind(gt)]), names: Object.fromEntries(GUN_ORDER.map(gt => [gt, GUN_MAGS[gt].displayName])) }));
 check('five chips: ALL and the four kinds, with their counts', JSON.stringify(all.chips) ===
-  '["ALL (16)","PISTOLS (3)","SHOTGUNS (2)","RIFLES (2)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
+  '["ALL (17)","PISTOLS (3)","SHOTGUNS (2)","RIFLES (3)","AUTOMATICS (9)"]' && all.active === 'ALL', all.chips);
 check('ALL: four headers in order, each once', JSON.stringify(all.groups.map(x => x.kind)) === '["PISTOLS","SHOTGUNS","RIFLES","AUTOMATICS"]', all.groups.map(x => x.kind));
-check('all sixteen guns (v1.250: four clear automatics), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 16
+check('all seventeen guns (v1.250: four clear automatics; v1.325: the FAMAS), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 17
   && kinds.order.every(([gt, k]) => all.groups.find(x => x.kind === k).guns.includes(kinds.names[gt])), all.groups);
 check('the pistols are the Spring Pistol, Six-Shooter and Bolt Pistol', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol"]', all.groups[0].guns);
 check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, MAC-10 and AK-47', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","MAC-10","AK-47"]', all.groups[3].guns);
@@ -51,6 +51,6 @@ await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[dat
 const pis = await read();
 check('PISTOLS shows its three', pis.groups.length === 1 && pis.groups[0].guns.length === 3, pis.groups);
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
-check('ALL shows the sixteen again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 16);
+check('ALL shows the seventeen again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 17);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

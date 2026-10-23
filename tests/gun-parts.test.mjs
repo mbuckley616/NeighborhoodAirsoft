@@ -41,6 +41,6 @@ for (const [gt, v] of Object.entries(r)) {
   console.log(`   ${gt.padEnd(10)} ${v.n} parts, loose: ${JSON.stringify(v.floating)}`);
   check(`${gt}: every part joins the gun (no gap over 3 mm)`, v.n > 10 && v.floating.length === 0, v.floating);
 }
-check('all sixteen guns checked (v1.250: the clear automatics)', Object.keys(r).length === 16, Object.keys(r));
+check('all seventeen guns checked (v1.250: the clear automatics; v1.325: the FAMAS)', Object.keys(r).length === 17, Object.keys(r));
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

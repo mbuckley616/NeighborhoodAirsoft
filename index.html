@@ -2582,7 +2582,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.324</div>
+  <div class="version">v1.325</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3976,6 +3976,7 @@ const Game = {
       spare_mag_sixshooter: 0,
       spare_mag_bucket: 0,
       spare_mag_boltpistol: 0,
+      spare_mag_famas: 0,         // v1.325 (D.63)
     },
     equipped: {
       gun: 'pistol',
@@ -4164,12 +4165,14 @@ const MAG_GUN_FIT = {
   spare_mag_sixshooter: 'sixshooter',
   spare_mag_bucket: 'bucket',
   spare_mag_boltpistol: 'boltpistol',
+  spare_mag_famas: 'famas',   // v1.325 (D.63)
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
 // v1.168 (backlog D.14 A, Michael: D): the four backyard guns join the end.
 const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol',
-  'sprayer', 'ghost', 'ticktock', 'rattle'];   // v1.250 (D.37): the cheap clear automatics
+  'sprayer', 'ghost', 'ticktock', 'rattle',   // v1.250 (D.37): the cheap clear automatics
+  'famas'];   // v1.325 (D.63, Michael: A): the first of the new guns
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -4189,6 +4192,7 @@ function getMaxAmmoForGun(gunType) {
     if (Game.persist.owned.ar_mag_40) return 40;
     return 25;
   }
+  if (gunType === 'famas') return Game.persist.owned.famas_mag_40 ? 40 : 25;   // v1.325: the AR's mags
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -4311,6 +4315,7 @@ const GUN_ACCESSORY_CAP = {
   bucket:  { sight: 1, rails: 2, under: 1 },
   boltpistol: { sight: 1, rails: 1 },
   sprayer: { sight: 1, rails: 1 }, ghost: { sight: 1, rails: 1 }, ticktock: { sight: 1, rails: 2 }, rattle: { sight: 1, rails: 1 },   // v1.250
+  famas:   { sight: 1, rails: 2, under: 1 },   // v1.325
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -4598,8 +4603,16 @@ const GUN_MAGS = {
     blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second, they drop off past about 25 metres, and about one burst in five it jams.',
     mags: [], spares: [],
   },
+  // v1.325 (backlog D.63, Michael: A, batch 1): the FAMAS, the spring rifle Michael grew up with. It shoots exactly as
+  // the Spring Assault Rifle (Michael: "functionally identical"); only the gun in your hands is different.
+  famas: {
+    displayName: 'FAMAS', baseCap: 25, price: 85, ownFlag: 'famas',
+    blurb: 'A French bullpup spring rifle with a carry handle the length of the gun. Shoots like the Spring Assault Rifle: pull the charging handle for every shot.',
+    mags: [ { flag: 'famas_mag_40', cap: 40, price: 20 } ],
+    spares: [ { key: 'spare_mag_famas', label: 'Spare FAMAS Mag (25)', price: 10 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','shotgun','thunder','ar','famas','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -4783,6 +4796,7 @@ function describeSlot(idx) {
       spare_mag_mac10: 50,
       spare_mag_mac10_100: 100,
       spare_mag_thunder: 30, spare_mag_sixshooter: 6, spare_mag_bucket: 600, spare_mag_boltpistol: 8,   // v1.168
+      spare_mag_famas: 25,   // v1.325
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -4800,6 +4814,7 @@ function describeSlot(idx) {
       spare_mag_mac10_100: 'Spare 100-rd MAC-10 Mag',
       spare_mag_thunder: 'Spare Thunder Shell Box (30)', spare_mag_sixshooter: 'Spare Cylinder (6)',   // v1.168
       spare_mag_bucket: 'Spare BB Bottle (600)', spare_mag_boltpistol: 'Spare 8-rd Bolt Pistol Mag',
+      spare_mag_famas: 'Spare 25-rd FAMAS Mag',   // v1.325
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -4983,6 +4998,7 @@ const GUN_WEIGHT = {
   pistol: 2, mac10: 3, mp5: 5, ump: 5, shotgun: 6, ar: 8, ak47: 8, sniper: 10,
   sixshooter: 2, boltpistol: 3, thunder: 5, bucket: 6,   // v1.168
   rattle: 2, sprayer: 2.5, ghost: 2.5, ticktock: 4,       // v1.250: hollow plastic
+  famas: 8,                                               // v1.325: the AR's weight
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -4993,6 +5009,7 @@ const MAG_WEIGHT = {
   spare_mag_ump: 1.4, spare_mag_ump_200: 1.8,
   spare_mag_mac10: 0.8, spare_mag_mac10_100: 1.2,
   spare_mag_thunder: 1.0, spare_mag_sixshooter: 0.3, spare_mag_bucket: 1.6, spare_mag_boltpistol: 0.5,   // v1.168
+  spare_mag_famas: 1.2,   // v1.325
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -5399,6 +5416,8 @@ const GUN_SPECS = {
     pelletsPerShot: () => 1, cockTime: 0.4, cockType: 'switch', displayName: 'Rattle Can',
   },
 };
+// v1.325 (backlog D.63, Michael: A): the FAMAS shoots exactly as the Spring Assault Rifle, so it takes the AR's spec
+GUN_SPECS.famas = Object.assign({}, GUN_SPECS.ar, { displayName: 'FAMAS' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;
@@ -20587,6 +20606,7 @@ function gunForegripZ(weapon) {
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'ar':
     case 'ak47':    return 0.16;   // handguard ahead of the mag
+    case 'famas':   return 0.15;   // v1.325: the bullpup's handguard, ahead of the grip
     case 'mp5':
     case 'ump':     return 0.12;   // compact body
     case 'mac10':   return 0.06;
@@ -20633,6 +20653,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.05, 0.13, 0.07, black, 0, -0.10, 0.06);      // tall magazine
       box(0.035, 0.04, 0.10, black, 0, 0.06, 0.04);      // carry-handle/optic riser
       box(0.05, 0.09, 0.10, dark, 0, -0.01, -0.08);      // stock
+      grip();
+      break;
+    }
+    case 'famas': {   // v1.325 (D.63): a bullpup, the mag behind the grip, the carry handle along the top
+      box(0.05, 0.08, 0.34, black, 0, 0, 0.05);          // body, from the butt to the handguard
+      box(0.025, 0.025, 0.12, dark, 0, 0.01, 0.27);      // barrel
+      box(0.025, 0.02, 0.30, dark, 0, 0.075, 0.08);      // carry handle
+      box(0.04, 0.10, 0.06, dark, 0, -0.08, -0.07);      // mag, behind the grip
       grip();
       break;
     }
@@ -22195,6 +22223,108 @@ function buildFPAR() {
   return group;
 }
 
+// v1.325 (backlog D.63, Michael: A, batch 1): the FAMAS, a bullpup spring rifle. Everything behind the grip is the
+// gun: the mag sits behind the pistol grip and the butt runs back from it, and a carry handle the length of the gun
+// carries both sights, the front post over the handguard and a rear aperture over the mag. The grip and the irons are
+// where the Spring Assault Rifle has them (grip at z 0.01, the post's tip at y 0.085), so it aims and is held the same;
+// the off hand holds the ribbed handguard, as on the AK, instead of a foregrip. The charging handle is under the
+// carry handle, as on the real one.
+function buildFPFamas() {
+  const group = new THREE.Group();
+  const bodyMat   = new THREE.MeshStandardMaterial({ color: 0x2a2b2e, roughness: 0.6,  metalness: 0.15 });
+  const handleMat = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.5,  metalness: 0.3 });
+  const barrelMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4,  metalness: 0.6 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: 0x0b0b0d, roughness: 0.75 });
+  const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const box = (w, h, d, mat, x, y, z, name) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    if (name) m.name = name;
+    group.add(m);
+    return m;
+  };
+
+  // === Body: the receiver runs from the handguard back to the butt ===
+  box(0.042, 0.050, 0.200, bodyMat, 0, 0.020, 0.025, 'body');        // z -0.075 .. 0.125
+  box(0.044, 0.050, 0.075, bodyMat, 0, -0.012, 0.0875);              // the butt's lower half, behind the magwell
+  box(0.040, 0.030, 0.100, bodyMat, 0, -0.015, -0.010);              // the lower, over the grip and the trigger
+  box(0.046, 0.072, 0.008, accentMat, 0, 0.007, 0.129);              // rubber butt pad
+  box(0.010, 0.026, 0.060, accentMat, 0.022, 0.030, 0.085);          // cheek rest, left (the side your face is on)
+  box(0.010, 0.026, 0.060, accentMat, -0.022, 0.030, 0.085);         // ...and right (it swaps for lefties)
+  // === Handguard: ribbed, under the front of the carry handle ===
+  box(0.044, 0.048, 0.110, bodyMat, 0, 0.004, -0.130, 'handguard'); // z -0.185 .. -0.075
+  for (let i = 0; i < 5; i++) box(0.046, 0.034, 0.004, accentMat, 0, 0.004, -0.170 + i * 0.020);           // vertical ribs
+  // the bipod, folded along both sides of the handguard
+  box(0.004, 0.006, 0.100, barrelMat, 0.025, -0.008, -0.135);
+  box(0.004, 0.006, 0.100, barrelMat, -0.025, -0.008, -0.135);
+
+  // === Barrel + flash hider + orange tip ===
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.090, 10), barrelMat);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.position.set(0, 0.012, -0.230);
+  group.add(barrel);
+  const hider = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.030, 10), accentMat);
+  hider.rotation.x = Math.PI / 2;
+  hider.position.set(0, 0.012, -0.285);
+  group.add(hider);
+  const orangeTip = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.016, 10), orangeMat);
+  orangeTip.rotation.x = Math.PI / 2;
+  orangeTip.position.set(0, 0.012, -0.308);
+  group.add(orangeTip);
+
+  // === Carry handle, the length of the gun ===
+  box(0.020, 0.012, 0.270, handleMat, 0, 0.073, -0.055, 'carryHandle');   // z -0.19 .. 0.08
+  box(0.018, 0.024, 0.016, handleMat, 0, 0.055, -0.170);                  // front leg
+  box(0.018, 0.024, 0.016, handleMat, 0, 0.055, 0.062);                   // rear leg
+  // front sight: two ears and the post between them (the post's tip at y 0.085, as the AR's)
+  const fsL = box(0.004, 0.012, 0.010, handleMat, 0.008, 0.085, -0.178); fsL.userData.ironSight = true;
+  const fsR = box(0.004, 0.012, 0.010, handleMat, -0.008, 0.085, -0.178); fsR.userData.ironSight = true;
+  const fsPost = box(0.004, 0.006, 0.004, accentMat, 0, 0.082, -0.178); fsPost.userData.ironSight = true; fsPost.userData.frontSight = true;
+  // rear sight: an aperture block with a hole you look through (two cheeks and a bridge below the hole)
+  const rsL = box(0.006, 0.014, 0.010, handleMat, 0.007, 0.086, 0.045); rsL.userData.ironSight = true;
+  const rsR = box(0.006, 0.014, 0.010, handleMat, -0.007, 0.086, 0.045); rsR.userData.ironSight = true;
+
+  // === Charging handle, under the carry handle (the cocking part) ===
+  const chargeGroup = new THREE.Group();
+  const chargeLever = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.010, 0.030), accentMat);
+  chargeLever.position.set(0, 0.0, 0.0);
+  chargeGroup.add(chargeLever);
+  const chargeTab = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.006, 0.008), handleMat);
+  chargeTab.position.set(0, 0.0, 0.016);
+  chargeGroup.add(chargeTab);
+  chargeGroup.position.set(0, 0.062, -0.120);   // hangs from the carry handle
+  chargeGroup.userData.baseZ = chargeGroup.position.z;
+  group.add(chargeGroup);
+
+  // === Pistol grip, where the AR's is, with the FAMAS's big trigger guard round the whole hand ===
+  const grip = box(0.034, 0.070, 0.034, bodyMat, 0, -0.055, 0.010, 'grip');
+  grip.rotation.x = -0.35;
+  box(0.030, 0.005, 0.080, accentMat, 0, -0.095, -0.012);            // guard bottom, under the grip's foot
+  box(0.030, 0.065, 0.005, accentMat, 0, -0.0625, -0.050);           // guard front, from the lower to the bottom
+  const trigger = box(0.012, 0.016, 0.006, accentMat, 0, -0.037, -0.030, 'trigger');
+  trigger.rotation.x = 0.2;
+
+  // === Magazine: behind the grip, in the butt ===
+  box(0.034, 0.016, 0.040, bodyMat, 0, -0.030, 0.074);               // magwell lip
+  const mag = box(0.026, 0.080, 0.032, accentMat, 0, -0.062, 0.076, 'mag');
+  mag.rotation.x = 0.08;
+  const magBase = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.008, 0.036), handleMat);
+  magBase.position.set(0, -0.042, 0);
+  mag.add(magBase);
+
+  // === Default hipfire pose (the AR's) ===
+  group.position.set(0.13, -0.20, -0.32);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+
+  group.userData.cockingParts = [chargeGroup];
+  group.userData.cockingOffset = 0.04;
+  group.userData.gunType = 'famas';
+
+  Game.camera.add(group);
+  return group;
+}
+
 // === FP SNIPER (bolt-action, no scope by default) ===
 function buildFPSniper() {
   const group = new THREE.Group();
@@ -23106,6 +23236,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
+  else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -23147,6 +23278,7 @@ const FP_HANDS = {
   ghost:   { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   rattle:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
+  famas:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.004, -0.150], hw: 0.022, hh: 0.024 }, underHand: true },   // v1.325: the AR's grip, the handguard
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
@@ -23357,6 +23489,7 @@ const FP_GUN_MOUNT = {
   ghost:   { barrelY: 0.010, sideX: 0.0275, railZ: -0.07, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.06, sightScale: 0.85 },
   ticktock: { barrelY: 0.010, sideX: 0.0275, railZ: -0.18, railLen: 0.09, underY: -0.028, sightY: 0.0595, sightZ: -0.08, sightScale: 1.0 },
   rattle:  { barrelY: 0.010, sideX: 0.030, railZ: -0.08, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.05, sightScale: 0.85 },
+  famas:   { barrelY: 0.012, sideX: 0.022, railZ: -0.130, railLen: 0.08, underY: -0.020, sightY: 0.079, sightZ: -0.06, sightScale: 1.0 },   // v1.325: the optic on the carry handle
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -24012,6 +24145,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
+  else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
@@ -27621,6 +27755,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_ump_200',  name: 'Spare 200-rd UMP Mag' },
     { refId: 'spare_mag_mac10',    name: 'Spare 50-rd MAC-10 Mag' },
     { refId: 'spare_mag_mac10_100',name: 'Spare 100-rd MAC-10 Mag' },
+    { refId: 'spare_mag_famas',    name: 'Spare 25-rd FAMAS Mag' },   // v1.325
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -27899,7 +28034,7 @@ function renderBBsTab(c, between) {
 const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol'] },
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder'] },
-  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'sniper'] },
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'sniper'] },   // v1.325: the FAMAS by the AR
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'mac10', 'ak47'] },   // v1.250: the cheap clear ones first
 ];
 function gunKind(gt) {
@@ -30031,6 +30166,10 @@ function updateHeldMesh(dt) {
       // via adsYCorr when a red-dot/scope is mounted, so this only affects irons.
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'famas') {   // v1.325: the AR's poses (its post's tip is at the same height)
+      hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
+      adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
+      hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'sniper') {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.085, z: -0.27 };
@@ -30567,6 +30706,7 @@ const RETICLE_SPECS = {
   sprayer: { style: 'wide_ticks', baseGap: 16, ringR: 0, centerDot: 1.5 },   // v1.250
   ghost:   { style: 'circle_cross', baseGap: 10, ringR: 9, centerDot: 1.3 },
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
+  famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }

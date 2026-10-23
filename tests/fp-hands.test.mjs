@@ -7,7 +7,7 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol'];
+const GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol', 'famas'];   // v1.325: the FAMAS
 
 // Measures the held thing's hands in camera space. `root` is fpGun, fpLoader or fpMag.
 const probe = (which) => page.evaluate((which) => {

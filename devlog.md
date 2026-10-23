@@ -13653,3 +13653,40 @@ Two on Two, seventh on Winnmark's ladder.
 - **Backyard Basics' last step** still says "Press R to reload from your speed loader". You have no loader yet then,
   and R reloads nothing (it clears a jam and flips a taped mag); the step only waits for the key. Left as it was, for
   Michael to say whether it should change.
+
+## v1.325 — The FAMAS
+Backlog D.63, Michael's answer A (control room, 23 Oct): new guns in batches of four to six, the FAMAS first. His
+note: "I specifically would love to see a FAMAS added as a spring rifle. It can be functionally identical to the
+current spring rifle, but it was a spring rifle I used growing up." This is the first gun of batch 1; the electric
+semi-auto pistol and rifle, the burst rifle and the semi-auto shotgun follow.
+- **How it shoots:** exactly as the Spring Assault Rifle. Its spec is the AR's, copied number for number: semi, the
+  charging handle after every shot, 45 m/s, the same spread and curve, 0.85 speed. The same weight (8), the same slots
+  (a sight, two rails and an under-barrel), the same reticle.
+- **The shop:** $85, under RIFLES between the Spring Assault Rifle and the Spring Sniper Rifle. Its page sells a
+  40-round mag ($20) and a spare 25-round FAMAS mag ($10), as the AR's does. The spare goes in a loadout slot like any
+  other and fits only the FAMAS.
+- **The model** (`buildFPFamas`) is a bullpup, as the real one: the mag sits behind the pistol grip in the butt, a big
+  trigger guard runs round the grip, a ribbed handguard with the bipod folded along it, a short barrel with a flash
+  hider and an orange tip, and the carry handle along the top over 60% of the gun. The handle carries both sights, the
+  front post with its two ears and a rear aperture, and the charging lever hangs under it.
+- **Held and aimed as the AR:** the grip is where the AR's is and the front post's tip is at the same height, so the
+  hip and aimed poses are the AR's. The off hand holds the handguard (there is no foregrip). An optic sits on the carry
+  handle.
+- **Seen from outside:** your kid on the loadout screen (and a friend online) holds a bullpup in the kids' blocky
+  style: the body, the carry handle, the mag behind the grip. It had fallen back to the pistol's. No kid carries one.
+### Verified
+- **`tests/gun-famas.test.mjs`, new:**
+  - RIFLES lists the Spring Assault Rifle, the FAMAS and the Spring Sniper Rifle. The FAMAS has its picture, costs
+    $85 from its page, and its page has the 40-round mag and the spare.
+  - Its spec differs from the AR's in nothing but the name; the same weight and the same slots.
+  - The model: the mag 1.9 cm behind the grip, the carry handle over 60% of the gun's 45 cm, an orange tip.
+  - In Sean's match: its own first-person gun with 25 in the mag; one BB a pull, then the charging handle before the
+    next; aimed, the front post is 0.14° off the reticle; both hands on it.
+- **Updated for 17 guns:** `gun-parts` (every one of the FAMAS's 52 parts joins the gun; the charging lever first hung
+  4 mm under the handle and was moved up to it), `shop-gun-kinds`, `shop-pics`, `backyard-guns`, and `fp-hands`, which
+  now checks the FAMAS's hands too.
+- **These suites pass:** `gun-famas`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `gun-ar`, `loadout-kid` (the kid's gun now checked with the FAMAS too) and `smoke`.
+### Still open
+- **For Michael's eye:** the FAMAS against the one he had (`tests/out/gun-famas-side.png`, and aimed in
+  `tests/out/gun-famas-aimed.png`). It is drawn dark grey and black; say if his was another colour.
