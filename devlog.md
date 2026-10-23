@@ -13844,3 +13844,32 @@ column past the bottom of the page, owned and not mixed together.
 ### Still open
 - **For a playtest:** whether a shut kind should stay shut across reloads (it is not saved). On a pad, each header is
   a target for the cursor like any other clickable.
+
+## v1.330 — BBs five times cheaper, in tubes, bottles and bags
+Backlog D.66, Michael's answer B (control room, 23 Oct): five times cheaper. His note: "you can pretty commonly (even
+today) buy like 2000-4000 rounds for like 15 bucks... 500 BBs should be a little plastic cylinder with a little
+spigot/dispenser, 1000-2000 could be just tall cylinders (look almost like a coke bottle), and anything above 2,000
+could be in bags."
+- **The prices:** 100 for $1 (was $5), 500 for $4 (was $20), 2,000 for $14 (was $70), 5,000 for $30 (was $150). That
+  is 0.6-1¢ a BB, where it was 3-5¢. A 350-round AK drum now costs about $2-$4 to fill from the bag, where it cost
+  $10-$18, against $2-$20 for a win.
+- **The packs and their pictures,** drawn in the shop as before from models:
+  - 100: a short clear tube with a yellow screw cap ("100 BBs (tube)").
+  - 500: a clear tube with a blue cap and a spigot tipped up off it, with its flip lid ("500 BBs (dispenser)").
+  - 2,000: a tall clear bottle like a soda bottle, with a shoulder, a neck, a red cap and a label round it ("2,000
+    BBs (bottle)").
+  - 5,000: a big flat foil bag the size of a book, with a sealed strip and a hang hole at the top, a label, and a
+    window full of BBs ("5,000 BBs (bag)").
+  - Each container shows the BBs through the plastic. The descriptions say what each is.
+- Nothing else costs BBs differently: the bag, the mags and the loaders work as before.
+### Verified
+- **`tests/shop-tabs.test.mjs`, extended:** the four packs are `100 BBs (tube)` $1, `500 BBs (dispenser)` $4,
+  `2,000 BBs (bottle)` $14 and `5,000 BBs (bag)` $30. With $20 and an empty bag, the bottle leaves $6 and 2,000 BBs.
+- **`tests/shop-pics.test.mjs`:** four distinct pictures at 112 px. The tube fills 61% of its square, the dispenser
+  44%, the bottle 33% and the bag 59%; each runs at least 86% of the way top to bottom. The bottle's rule is now over
+  20% (the packs' is 30%), since a soda bottle is narrow by design; it fills 33%.
+- **These suites pass:** `shop-tabs`, `shop-pics`, `autosave` (it buys the 100 tube) and `smoke`. A picture of the
+  four is in `tests/out/bb-packs.png`.
+### Still open
+- **For a playtest:** BBs no longer weigh on what you can afford, as the recommendation meant; cash now goes almost
+  all to guns and gear. Whether the win pay should come down with it is Michael's call.

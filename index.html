@@ -2594,7 +2594,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.329</div>
+  <div class="version">v1.330</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -5507,17 +5507,19 @@ function getGunSpec(gunType) {
 // === SHOP CATALOG ===
 const SHOP_CATALOG = [
   // === BBs (home stash quantities) ===
-  { id:'bbs_100', category:'BBs', name:'100 BBs', price:5,
-    desc:'A small bag of 0.20g BBs. Adds 100 to your home stash.',
+  // v1.330 (backlog D.66, Michael: B, 23 Oct): five times cheaper (5¢ → 1¢ to 3¢ → 0.6¢ a BB), and sold as they are
+  // really sold: a tube, a tube with a spigot, a tall bottle and a big bag
+  { id:'bbs_100', category:'BBs', name:'100 BBs (tube)', price:1,
+    desc:'A short clear tube of 0.20g BBs. Adds 100 to your home stash.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>{Game.persist.bag+=100;}, buttonLabel:()=>'BUY' },
-  { id:'bbs_500', category:'BBs', name:'500 BBs (bulk)', price:20,
-    desc:'A bulk bag. Better value per BB. Adds 500 to your home stash.',
+  { id:'bbs_500', category:'BBs', name:'500 BBs (dispenser)', price:4,
+    desc:'A clear tube with a spigot on the cap to pour from. Adds 500 to your home stash.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>{Game.persist.bag+=500;}, buttonLabel:()=>'BUY' },
-  { id:'bbs_2000', category:'BBs', name:'2,000 BBs (case)', price:70,
-    desc:'A full case. The serious-restock option. Adds 2,000 to your home stash.',
+  { id:'bbs_2000', category:'BBs', name:'2,000 BBs (bottle)', price:14,
+    desc:'A tall bottle, about the size of a soda. The serious restock. Adds 2,000 to your home stash.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>{Game.persist.bag+=2000;}, buttonLabel:()=>'BUY' },
-  { id:'bbs_5000', category:'BBs', name:'5,000 BBs (bulk case)', price:150,
-    desc:'Best per-BB value. For drum-fed autos that eat ammo. Adds 5,000.',
+  { id:'bbs_5000', category:'BBs', name:'5,000 BBs (bag)', price:30,
+    desc:'A big flat bag the size of a book. Best per-BB value, for drum-fed autos that eat ammo. Adds 5,000.',
     isOwned:()=>false, isLocked:()=>false, apply:()=>{Game.persist.bag+=5000;}, buttonLabel:()=>'BUY' },
 
   // === Loadout: slot unlocks ===
@@ -24492,7 +24494,8 @@ function shopModPic(aid, w, h) {
   });
 }
 // v1.211 (D.23): the Ammo tab. A speed loader is its own model (the one you hold in a match), longer for the bigger
-// ones; a BB pack is a clear bag of BBs with a card header, and the two cases are cardboard boxes, the bulk case wider.
+// ones; a BB pack is a clear bag of BBs with a card header, and the two cases are cardboard boxes, the bulk case wider
+// (v1.330: a tube, a spigot tube, a bottle and a bag now).
 function shopAmmoPic(id, w, h) {
   return shopPic('ammo:' + id, w, h, () => {
     const holder = new THREE.Group();
@@ -24506,53 +24509,61 @@ function shopAmmoPic(id, w, h) {
       holder.rotation.z = 0.6;   // laid corner to corner, so the long tube fills the square
       return { obj: holder, fit: [ld], pad: 1.1 };
     }
+    // v1.330 (backlog D.66, Michael 22 Oct: "500 BBs should be a little plastic cylinder with a little spigot/dispenser,
+    // 1000-2000 could be just tall cylinders (look almost like a coke bottle), and anything above 2,000 could be in
+    // bags"): 100 in a short clear tube with a screw cap, 500 in a clear tube with a flip-up spigot on its cap, 2,000 in a
+    // tall clear bottle with a shoulder, a neck and a label round it, 5,000 in a big flat foil bag the size of a book.
     const n = +id.slice(4);
     const bbMat = new THREE.MeshStandardMaterial({ color: 0xf4f1e6, roughness: 0.35 });
-    if (n <= 500) {
-      const big = n >= 500, bw = big ? 0.2 : 0.13, bh = big ? 0.26 : 0.18, bd = big ? 0.07 : 0.05;
-      const fill = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.9, bh * 0.72, bd * 0.8), bbMat);
-      fill.position.y = -bh * 0.12; holder.add(fill);
-      const bbGeo = new THREE.SphereGeometry(0.009, 6, 5);   // a few BBs pressing at the plastic
-      for (let i = 0; i < (big ? 40 : 24); i++) {
-        const bb = new THREE.Mesh(bbGeo, bbMat);
-        bb.position.set((((i * 37) % 19) / 19 - 0.5) * bw * 0.85, -bh * 0.12 + (((i * 53) % 23) / 23 - 0.5) * bh * 0.68, bd * 0.4);
-        holder.add(bb);
+    const clear = new THREE.MeshStandardMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.3, roughness: 0.1 });
+    const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); holder.add(m); return m; };
+    if (n <= 2000) {
+      // a clear plastic container full of BBs: [radius, body height, cap colour]
+      const [r, bh, capCol] = n <= 100 ? [0.065, 0.09, 0xe0b020] : n <= 500 ? [0.065, 0.16, 0x2a6fd1] : [0.09, 0.30, 0xc93030];
+      mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, bh * 0.94, 18), bbMat, 0, -bh * 0.03);   // the BBs inside
+      mesh(new THREE.CylinderGeometry(r, r, bh, 18), clear);
+      const bbGeo = new THREE.SphereGeometry(r * 0.13, 6, 5);   // BBs pressing at the plastic
+      for (let i = 0; i < 28; i++) {
+        const a = -0.9 + (((i * 37) % 19) / 19) * 1.8, yy = (((i * 53) % 23) / 23 - 0.5) * bh * 0.85;
+        mesh(bbGeo, bbMat, Math.sin(a) * r * 0.92, yy, Math.cos(a) * r * 0.92);
       }
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(bw, bh * 0.86, bd),
-        new THREE.MeshStandardMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.35, roughness: 0.15 }));
-      bag.position.y = -bh * 0.07; holder.add(bag);
-      const card = new THREE.Mesh(new THREE.BoxGeometry(bw * 1.02, bh * 0.16, bd * 0.3),
-        new THREE.MeshStandardMaterial({ color: big ? 0x2a6fd1 : 0xe0b020, roughness: 0.6 }));
-      card.position.y = bh * 0.43; holder.add(card);
-      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, bd * 0.32, 10), new THREE.MeshStandardMaterial({ color: 0x222222 }));
-      hole.rotation.x = Math.PI / 2; hole.position.y = bh * 0.45; holder.add(hole);
-      const label = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.22, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
-      label.position.set(0, bh * 0.05, bd / 2 + 0.002); holder.add(label);
-      const band = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.05, 0.003), new THREE.MeshStandardMaterial({ color: 0xc93030 }));
-      band.position.set(0, bh * 0.12, bd / 2 + 0.003); holder.add(band);
-      holder.rotation.set(0.12, 0.38, 0);
-      return { obj: holder, fit: [holder], pad: 1.12 };
+      let top = bh / 2;
+      if (n >= 2000) {   // the bottle's shoulder and neck
+        mesh(new THREE.CylinderGeometry(r * 0.38, r, 0.06, 18), clear, 0, top + 0.03);
+        mesh(new THREE.CylinderGeometry(r * 0.34, r * 0.86, 0.05, 18), bbMat, 0, top + 0.022);
+        mesh(new THREE.CylinderGeometry(r * 0.38, r * 0.38, 0.03, 18), clear, 0, top + 0.075);
+        top += 0.09;
+        const label = mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, bh * 0.36, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide }), 0, -bh * 0.05);
+        label.rotation.y = 0.5;
+        mesh(new THREE.CylinderGeometry(r * 1.02, r * 1.02, bh * 0.07, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0xc93030, side: THREE.DoubleSide }), 0, bh * 0.07);
+      } else {
+        mesh(new THREE.CylinderGeometry(r * 1.01, r * 1.01, bh * 0.3, 18, 1, true), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide }), 0, -bh * 0.08);
+      }
+      const capR = n >= 2000 ? r * 0.42 : r * 1.04, capH = n >= 2000 ? 0.035 : 0.03;
+      mesh(new THREE.CylinderGeometry(capR, capR, capH, 18), new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.5 }), 0, top + capH / 2);
+      if (n === 500) {   // the spigot: a little spout tipped up off the cap, with its flip lid
+        const spout = mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.05, 10), new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.5 }), r * 0.45, top + capH + 0.018);
+        spout.rotation.z = -0.5;
+        const lid = mesh(new THREE.BoxGeometry(0.03, 0.006, 0.026), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 }), r * 0.05, top + capH + 0.035);
+        lid.rotation.z = 0.7;
+      }
+      holder.rotation.set(0.25, 0.4, 0);
+      return { obj: holder, fit: [holder], pad: 1.0 };
     }
-    // a cardboard case: 2,000 a cube-ish box, 5,000 a wide one with hand holes
-    const wide = n >= 5000, cw = wide ? 0.42 : 0.26, ch = wide ? 0.22 : 0.22, cd = wide ? 0.28 : 0.24;
-    const cardMat = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: 0.85 });
-    const box = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cd), cardMat); holder.add(box);
-    const tape = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.003, cd + 0.002), new THREE.MeshStandardMaterial({ color: 0xd9c9a0, roughness: 0.4 }));
-    tape.position.y = ch / 2 + 0.001; holder.add(tape);
-    const flap = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.002, 0.004, 0.003), new THREE.MeshStandardMaterial({ color: 0x8a6538 }));
-    flap.position.set(0, ch / 2 - 0.001, 0); holder.add(flap);
-    const label = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.4, 0.002), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }));
-    label.position.set(-cw * 0.08, -ch * 0.05, cd / 2 + 0.002); holder.add(label);
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.55, ch * 0.08, 0.003), new THREE.MeshStandardMaterial({ color: wide ? 0x2a6fd1 : 0xc93030 }));
-    stripe.position.set(-cw * 0.08, ch * 0.08, cd / 2 + 0.003); holder.add(stripe);
-    const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.003, 14), bbMat);   // a BB printed on the side
-    dot.rotation.x = Math.PI / 2; dot.position.set(cw * 0.33, 0, cd / 2 + 0.002); holder.add(dot);
-    if (wide) for (const sx of [-1, 1]) {
-      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.025, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a1c10 }));
-      hand.position.set(sx * (cw / 2 + 0.001), ch * 0.28, 0); holder.add(hand);
-    }
-    holder.rotation.set(0.42, 0.55, 0);   // a three-quarter view from above: the front, the side and the taped top
-    return { obj: holder, fit: [holder], pad: 1.1 };
+    // the bag: a big flat foil pouch, tall as a book, a heat-sealed strip and a hang hole at the top, a label and a
+    // window showing the BBs
+    const bw = 0.30, bh = 0.40, bd = 0.06;
+    mesh(new THREE.BoxGeometry(bw, bh, bd), new THREE.MeshStandardMaterial({ color: 0x24324a, roughness: 0.35, metalness: 0.5 }));
+    mesh(new THREE.BoxGeometry(bw * 1.01, bh * 0.08, bd * 0.4), new THREE.MeshStandardMaterial({ color: 0x9aa4b4, roughness: 0.3, metalness: 0.6 }), 0, bh * 0.46);
+    const hole = mesh(new THREE.CylinderGeometry(0.014, 0.014, bd * 0.42, 12), new THREE.MeshStandardMaterial({ color: 0x111111 }), 0, bh * 0.465);
+    hole.rotation.x = Math.PI / 2;
+    mesh(new THREE.BoxGeometry(bw * 0.8, bh * 0.2, 0.003), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }), 0, bh * 0.2, bd / 2 + 0.002);
+    mesh(new THREE.BoxGeometry(bw * 0.8, bh * 0.05, 0.004), new THREE.MeshStandardMaterial({ color: 0xc93030 }), 0, bh * 0.27, bd / 2 + 0.003);
+    mesh(new THREE.BoxGeometry(bw * 0.6, bh * 0.32, 0.003), bbMat, 0, -bh * 0.17, bd / 2 + 0.002);   // the window, full of BBs
+    const bbGeo = new THREE.SphereGeometry(0.011, 6, 5);
+    for (let i = 0; i < 30; i++) mesh(bbGeo, bbMat, (((i * 37) % 19) / 19 - 0.5) * bw * 0.55, -bh * 0.17 + (((i * 53) % 23) / 23 - 0.5) * bh * 0.28, bd / 2 + 0.006);
+    holder.rotation.set(0.15, 0.45, 0);
+    return { obj: holder, fit: [holder], pad: 1.08 };
   });
 }
 // v1.212 (D.23): the gun page's magazines. The mag is the one you hold to reload in a match (buildFPMag), taller for

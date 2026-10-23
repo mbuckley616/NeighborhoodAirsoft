@@ -132,8 +132,10 @@ const ammoRows = await page.evaluate(() => [...document.querySelectorAll('#shopS
 check('the Ammo tab\'s 7 rows (4 BB packs, 3 speed loaders) each have a picture in place of the glyph',
   ammoRows.length === 7 && ammoRows.every(r => r.pic && r.glyph === ''), ammoRows);
 const am = await measure();
-check('the ammo pictures are drawn at 112×112: the packs fill over 30% of the pixels, the thin loaders over 8%', am.length === 7 &&
-  am.every((i, k) => i.w === 112 && i.h === 112 && i.fill > (k < 4 ? 0.3 : 0.08)), am.map(i => i.fill));
+// v1.330 (D.66): the 2,000 pack is a tall bottle now, as Michael asked ("look almost like a coke bottle"), so it fills
+// less of its square than a bag: over 20%
+check('the ammo pictures are drawn at 112×112: the packs fill over 30% of the pixels (the tall 2,000 bottle 20%), the thin loaders over 8%', am.length === 7 &&
+  am.every((i, k) => i.w === 112 && i.h === 112 && i.fill > (k === 2 ? 0.2 : k < 4 ? 0.3 : 0.08)), am.map(i => i.fill));
 check('each ammo item fills its frame across or top to bottom (at least 80%)', am.every(i => Math.max(i.spanX, i.spanY) >= 0.8),
   am.map(i => [i.spanX, i.spanY]));
 check('no two ammo rows share a picture', new Set(am.map(i => i.hash)).size === 7);
