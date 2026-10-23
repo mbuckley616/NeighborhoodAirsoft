@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **More tutorials (D.61): how should the game teach squad orders and the speed loader? (builder, 2026-10-22)**
   Your note asks whether the game needs more tutorials, for the team commands and the speed loader, and whether a
   25-50 BB speed loader should be given for that tutorial. Today the only tutorial is Backyard Basics, five steps:
@@ -20,8 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **A second tutorial match**, "Squad Basics", after the first 1v1: you and two teammates against three kids,
     coached through the orders and the loader, with the free 25-BB loader.
   - D) **Not now:** leave the tutorial as it is.
-
-## Answered
+  Michael: **C) A second tutorial match, Squad Basics** (control room, 22 Oct 2026)
 
 - **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
   Your answer of 16 Oct (decision 10, A) reworks the treehouse yard into the twins' course: open to the trees, no
