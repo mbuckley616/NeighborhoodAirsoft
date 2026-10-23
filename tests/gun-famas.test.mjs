@@ -14,7 +14,8 @@ await g.bedroom();
 await page.evaluate(() => { Game.persist.cash = 1000; openShop(); document.querySelector('#shopScreen .shop-gun-kind[data-kind="RIFLES"]').click(); });
 const rifles = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim()));
 console.log('   RIFLES:', rifles.join(' · '));
-check('RIFLES lists the Spring Assault Rifle, the FAMAS, the Spring Sniper Rifle', JSON.stringify(rifles) === '["Spring Assault Rifle","FAMAS","Spring Sniper Rifle"]', rifles);
+// (v1.326-v1.327 put the Electric Rifle and the Burst Rifle after it, so the check is the FAMAS's place, not the whole list)
+check('RIFLES lists the FAMAS straight after the Spring Assault Rifle', rifles.indexOf('FAMAS') === rifles.indexOf('Spring Assault Rifle') + 1 && rifles.indexOf('FAMAS') > 0, rifles);
 const buy = await page.evaluate(() => {
   const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'FAMAS');
   const pic = !!row.querySelector('img');
