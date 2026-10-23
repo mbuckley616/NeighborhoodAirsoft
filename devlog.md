@@ -13873,3 +13873,21 @@ could be in bags."
 ### Still open
 - **For a playtest:** BBs no longer weigh on what you can afford, as the recommendation meant; cash now goes almost
   all to guns and gear. Whether the win pay should come down with it is Michael's call.
+
+## v1.331 — Two starts that faced the wrong way
+Found in play (builder, 23 Oct): `tests/spawn-facing.test.mjs` had been red on two matches since v1.316-v1.317. It runs
+weekly, not on a PR, so nobody had fixed it.
+- **Hold the Bunker** (`stoneglen_hold_treehouse`): the bunker start's yaw was 0, which faces north, toward Evan's
+  sandbag nest under the road bank behind you. The twins come from the house to the south. The start's own comment
+  said "facing the house". It is now yaw π, and you start looking down the course at the twins: 10° off the kids'
+  middle, where it was 170°.
+- **Round the Courts** (`pool_1v1_christian`): you start in the lee of the pump house, facing past its south-west
+  corner, and the corner was 1.9 m in front of your eyes (the rule is 2 m). The start moves 0.5 m west, so the corner
+  is 2.4 m ahead. The line to Christian still runs into the pump house, and the facing is unchanged (3°).
+### Verified
+- **`spawn-facing` passes:** no start faces the kids from behind (Hold the Bunker 10°), and none has an obstacle under
+  2 m ahead (Round the Courts 2.4 m).
+- **These suites pass:** `spawn-facing`, `treehouse-hold`, `treehouse-evan` and `northcliff`.
+### Still open
+- **For a playtest:** in Hold the Bunker Evan is now behind you from the first second. That is what the briefing
+  says, and he holds fire until a twin is within 7 m.

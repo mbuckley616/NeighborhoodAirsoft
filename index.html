@@ -2594,7 +2594,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.330</div>
+  <div class="version">v1.331</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -18824,7 +18824,7 @@ function buildTwinsCourseScene(variant, timeOfDay) {
     // King of the Course (v1.185's rule, kept): behind the shed, out of Connor's sight from the bunker; faces past
     // the shed's south-east corner down the yard
     behind_shed: { pos: V(14.5, -12), yaw: 2.5 },
-    bunker: { pos: V(BK.x + 0.6, BK.z), yaw: 0 },                    // Hold the Bunker: inside it, facing the house
+    bunker: { pos: V(BK.x + 0.6, BK.z), yaw: Math.PI },              // Hold the Bunker: inside it, facing the house (v1.331: it faced Evan's nest behind)
   };
   return {
     scene,
@@ -19017,7 +19017,7 @@ function buildNorthcliffPoolScene(variant, timeOfDay) {
     parking_west: { pos: V(-29, -15), yaw: -Math.PI / 2 },   // the west end of the parking, facing east along it
     // Round the Courts: in the lee of the pump house from the far court (no line from Christian's start), 38 m off,
     // facing past its south-west corner toward the courts' west gates
-    pump_house_w: { pos: V(1.4, -5), yaw: -2.2 },
+    pump_house_w: { pos: V(0.9, -5), yaw: -2.2 },   // v1.331: 0.5 m further west, the pump house's corner 2.5 m ahead (1.9 before)
   };
   return {
     scene,
