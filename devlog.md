@@ -13736,3 +13736,48 @@ next. These two have a battery to do that.
 - **For Michael's eye:** `tests/out/gun-epistol-side.png` and `gun-erifle-side.png`. The names are plain ("Electric
   Pistol", "Electric Rifle"), after "Spring Pistol"; say if they want real-gun names, as the AK-47 and MP5 have.
 - **Batch 1 still owes** the burst rifle and the semi-auto shotgun.
+
+## v1.327 — The Burst Rifle
+Backlog D.63, batch 1 (Michael: A), its fourth gun: "burst rifles". The first gun in the game that fires a burst.
+- **How it shoots:** every pull of the trigger fires three BBs, 1/12 s apart (720 a minute inside the burst). The
+  burst finishes whether you hold the trigger or let it go, and a pull during the burst adds nothing. Held down, it
+  fires one burst, not a stream. The next burst can start a quarter-second after the last BB, so a fast finger gets
+  about two bursts a second, 7.5 BBs.
+  - It is electric (v1.326's rule): nothing to cock between pulls. Run dry, a new mag is racked in once with the
+    charging handle. If the mag runs out mid-burst, the burst stops there.
+  - The engine change: a spec can say `burst: 3`. The first BB goes on the pull, and `updateGun` fires the rest at
+    the gun's cycle. The burst stops if you put the gun away (a slot swap), it jams, the taped mags flip or the
+    noodle swings.
+  - Each BB is the Spring Assault Rifle's: 45 m/s, the same spread and curve. It moves you at 0.83 (the AR 0.85).
+- **The shop:** $210 under RIFLES, after the Electric Rifle. It has a 90-round mag, a 150-round mag ($22) and a spare
+  ($12). Its page says "3-round burst, a pull at a time (electric)". It is priced between the UMP ($170) and the
+  AK-47 ($240), which streams 10 a second.
+- **The model** is an electric M16A2 on the spring rifle's receiver, so the grip, the sights and the poses are the
+  AR's:
+  - The A2's fixed stock, which ends where the AR's does so it stays out of the aimed view.
+  - The round ribbed handguard round the AR's square one, and no vertical foregrip; the off hand holds the
+    handguard.
+  - A grey mag, a fire selector with a red dot, and a green battery light.
+  - The kids' blocky version is the AR's.
+- **A test I had left red in v1.325:** `under-parts` counted 8 long guns and 8 short ones. It now counts 11 long guns
+  (the FAMAS, the Electric Rifle and the Burst Rifle have the under-barrel slot) and 9 short ones (the Electric Pistol
+  has none). The game was right; the count was stale.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:**
+  - The shop: RIFLES reads Spring Assault Rifle, FAMAS, Electric Rifle, Burst Rifle, Spring Sniper Rifle. The Burst
+    Rifle has its picture, is bought for $210, and its page says 3-round burst.
+  - In Sean's match, a two-frame pull fires 3 BBs, the third 10 frames after the first.
+  - Held down 2 s it fires 3. A second pull inside the burst gives 3, not 6.
+  - Pulled every 3 frames for 2 s, it fires 7.5 a second and stays cocked.
+  - With 2 left, a pull fires the 2, and the gun wants a rack; the rack takes. A slot swap right after the pull stops
+    the burst at 1.
+  - Aimed, the front post is 0.43° off the reticle. Both hands are on it.
+- **Updated for 20 guns:** `gun-parts` (60 parts, none loose), `shop-gun-kinds` (RIFLES 5), `shop-pics` (20 distinct
+  pictures), `backyard-guns`, `under-parts` (above). `fp-hands` and `loadout-kid` check the Burst Rifle too.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `shop-tabs`,
+  `backyard-guns`, `loadout-kid`, `under-parts`, `workbench-labels` and `smoke`.
+### Still open
+- **For a playtest:** whether three BBs a pull at $210 sits right between the Electric Rifle ($150, 6 a second
+  clicked) and the AK-47.
+- **For Michael's eye:** `tests/out/gun-burst-side.png`.
+- **Batch 1 still owes** the semi-auto shotgun.

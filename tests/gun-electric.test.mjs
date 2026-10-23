@@ -1,4 +1,4 @@
-// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos, the Electric Pistol ($110) and the Electric
+// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327 the Burst Rifle, at the end), the Electric Pistol ($110) and the Electric
 // Rifle ($150). A battery cycles the spring, so nothing is cocked between shots: every pull fires, up to 5 and 6 a
 // second, where their spring kin (the Spring Pistol and the Spring Assault Rifle) fire, then want the slide or the
 // charging handle. Run dry, a new mag is racked in as on any gun. Checked: the shop, the spec against the kin, a
@@ -103,5 +103,90 @@ for (const [gt, [name, , , kin]] of Object.entries(NEW)) {
   check(`${name}: held down, one BB (not an automatic)`, r.held === 1, r.held);
   check(`${name}: run dry it wants a new mag racked in, and the rack takes`, r.dryCocked === false && r.rackedCocked === true, r);
 }
+
+// v1.327 (D.63, batch 1): the Burst Rifle, electric too: a pull fires three BBs 1/12 s apart, held or let go
+const burstShop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="RIFLES"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'Burst Rifle');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const text = document.querySelector('#shopScreen').textContent;
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun, says: /3-round burst/.test(text) };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  return out;
+});
+console.log('   RIFLES: ' + burstShop.names.join(' · '));
+check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst',
+  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Electric Rifle","Burst Rifle","Spring Sniper Rifle"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
+await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'burst' }; });
+await g.scenario('bunratty_sean');
+const B = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const S = Game.scenario.stats;
+  const up = () => { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); };
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo };
+  for (let i = 0; i < 30; i++) step();
+  // one quick pull (two frames), watched frame by frame
+  let a = Game.gun.ammo; const at = [];
+  Game.mouseLMB = true; onLmbDown(); at.push(a - Game.gun.ammo);
+  for (let f = 1; f <= 30; f++) { if (f === 2) up(); step(); at.push(a - Game.gun.ammo); }
+  out.quick = a - Game.gun.ammo;
+  out.burstFrames = at.indexOf(3);
+  // a pull held down 2 s
+  for (let i = 0; i < 30; i++) step();
+  a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown(); for (let i = 0; i < 120; i++) step(); up(); step();
+  out.held = a - Game.gun.ammo;
+  // a second pull inside the burst adds nothing
+  for (let i = 0; i < 30; i++) step();
+  a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown(); step(); up(); step(); Game.mouseLMB = true; onLmbDown(); step(); up();
+  for (let i = 0; i < 30; i++) step();
+  out.doubled = a - Game.gun.ammo;
+  // pulled as fast as a finger goes (every 3 frames) for 2 s
+  for (let i = 0; i < 30; i++) step();
+  a = Game.gun.ammo;
+  for (let k = 0; k < 40; k++) { Game.mouseLMB = true; onLmbDown(); step(); step(); up(); step(); }
+  for (let i = 0; i < 30; i++) step();
+  out.fastPerSec = (a - Game.gun.ammo) / 2;
+  out.stillCocked = Game.gun.cocked;
+  // two left: the burst fires the two and the gun wants a new mag racked
+  Game.gun.ammo = 2;
+  Game.mouseLMB = true; onLmbDown(); step(); up(); for (let i = 0; i < 30; i++) step();
+  out.lastTwo = 2 - Game.gun.ammo; out.dryCocked = Game.gun.cocked;
+  Game.gun.ammo = Game.gun.maxAmmo;
+  Game.mouseLMB = true; onLmbDown(); for (let i = 0; i < 90; i++) step(); up();
+  for (let i = 0; i < 30; i++) step();
+  out.rackedCocked = Game.gun.cocked;
+  // let go of the gun mid-burst (a slot swap): the burst stops
+  a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown(); up(); Game.held.slotIdx = 1; for (let i = 0; i < 30; i++) step(); Game.held.slotIdx = 0;
+  out.swapped = a - Game.gun.ammo;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  return out;
+});
+await g.shot('gun-burst-aimed');
+console.log('   burst ' + JSON.stringify(B));
+check('Burst Rifle: its own first-person gun, 90 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°)', B.mesh === 'burst' && B.max === 90 && B.hands && B.sightErrDeg < 0.6, B);
+check('Burst Rifle: a quick pull fires three BBs, the third 10 frames after the first (1/12 s apart)', B.quick === 3 && B.burstFrames === 10, [B.quick, B.burstFrames]);
+check('Burst Rifle: held down 2 s, still three; a second pull inside the burst adds none', B.held === 3 && B.doubled === 3, [B.held, B.doubled]);
+check('Burst Rifle: pulled as fast as a finger goes, 6-9 BBs a second (about two bursts), and it stays cocked', B.fastPerSec >= 6 && B.fastPerSec <= 9 && B.stillCocked, [B.fastPerSec, B.stillCocked]);
+check('Burst Rifle: with two left it fires the two, then wants a new mag racked; the rack takes', B.lastTwo === 2 && B.dryCocked === false && B.rackedCocked === true, B);
+check('Burst Rifle: let go of the gun (a slot swap) and the burst stops after the first BB', B.swapped === 1, B.swapped);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
