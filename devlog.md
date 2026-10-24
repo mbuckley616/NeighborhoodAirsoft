@@ -13891,3 +13891,40 @@ weekly, not on a PR, so nobody had fixed it.
 ### Still open
 - **For a playtest:** in Hold the Bunker Evan is now behind you from the first second. That is what the briefing
   says, and he holds fire until a twin is within 7 m.
+
+## v1.332 — Online: a tag walks you home, and your friend's shots are heard
+Backlog B.15, Michael's note (control room, 23 Oct) after playing his brother online: "getting shot should leverage the
+new 'return to your base' system; and I did not hear audio of my brother's shots passing by me or impacting near me,
+all of his sounds were nearly silent."
+- **The walk home.** Online play had kept the old jump: a tag put you back at your start in one frame, because v1.290
+  left it out ("its guest follows the host's word on where you are"). Now a tag online works as it does in a Pickup
+  Game against kids. You walk yourself home, gun up, with the arrow and BACK TO YOUR START · N m at the top. You can't
+  aim or fire, and nothing tags you on the way. At your start the 2 s grace starts, as before.
+  - Each game now says in its ~30-a-second message whether its player is walking home or in his grace (`g`). The other
+    game shows him walking with his gun up in the air, as a tagged kid holds his.
+  - The host's game is the referee, and it tags nobody who is walking home or in his grace. It no longer moves the
+    guest's kid back to his start when it tags him: the guest walks there, and the host sees him walk.
+  - A shot from a player walking home is dropped. His own game won't fire one anyway.
+- **His shots.** Your friend's shot arrived and flew, but it played no sound: `netSpawnShot` built the BB and never
+  called `playShot`. A kid's shot plays one from where he stands (`spawnEnemyBB`). Now your friend's shot is heard from
+  where he is, panned and fading with distance like a kid's. The whistle of a BB going past you and the sound of it
+  landing already played for every BB, his too, so the gunshot was the missing piece. A whistle with no shot before it
+  is easy to miss, which may be why all of it sounded nearly silent.
+### Verified
+- **`tests/online.test.mjs`, extended** (two headless games over the stub transport):
+  - The guest's shot is heard on the host's screen, 0.39 m from where the host sees the guest.
+  - Tagged, the host walks home: `_goingHome` is set, the arrow reads BACK TO YOUR START · 5 m, and the guest sees him
+    with his gun all the way up (`g` 2, raise 1). Three more shots from the guest tag nothing.
+  - Put a step from his start, the host is back and in his grace.
+  - The same from the other side: the guest walks home and the host sees him gun up. Three shots from the host tag
+    nothing, and back at his start the host sees him there to within 0 cm.
+  - The rest of the suite holds: the lives agree on both screens, the last tag ends it for both, nothing is paid, and a
+    dropped friend ends it cleanly. 21 of 21 checks.
+- **These suites pass:** `online`, `smoke`, `pickup-lives`, `vip`, `vip-spawn`. `vip-cover` is flaky in this
+  container, and not from this change: Owen and Mitchell stood together 18-46 s in one round of four in 2 of 4 runs
+  here, and in 1 of 2 runs on main's code (24.5 s). Offline, none of this change's code runs. It is filed under Found
+  in play.
+### Still open
+- **For a playtest with your brother:** whether his shots are now loud enough at 20-30 m. They are as loud as a kid's
+  at the same distance. Over a real connection the walk home may lag a frame or two on the other screen, as his
+  steps do.

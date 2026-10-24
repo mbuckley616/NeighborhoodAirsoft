@@ -2594,7 +2594,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.331</div>
+  <div class="version">v1.332</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -31973,10 +31973,13 @@ function playerBackHome() {
 // can't take a flag, and an arrow at the top of the screen points to your start. Within HOME_REACH of it you are back:
 // the respawn's grace (and capture the flag's hold) starts there. Online play keeps the jump home (its guest follows
 // the host's word on where you are).
+// v1.332 (backlog B.15, Michael 23 Oct: "getting shot should leverage the new 'return to your base' system"): online
+// too. Each player walks himself home; his game says so in its ~30-a-second word (`g`), and the other game shows him
+// gun up and lets nothing tag him till he is back and his grace is gone.
 const HOME_REACH = 2.0;
 function startPlayerWalkHome(keepHits) {
   const st = Game.scenario.playerStart;
-  if (!st || Net.active) { respawnPlayerVip(keepHits); return; }
+  if (!st) { respawnPlayerVip(keepHits); return; }
   if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
@@ -37592,7 +37595,7 @@ function netReceive(m) {
       const p = netVec(m.p);
       if (!p || Net.phase !== 'play' || (host ? m.t !== 's' : m.t !== 'h')) return;
       if (host && (m.r | 0) < Net.kidRespawns) return;   // sent before he heard he was tagged: he is back at his start
-      Net.kidTarget = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0 };
+      Net.kidTarget = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: (m.g | 0) === 2 ? 2 : (m.g | 0) === 1 ? 1 : 0 };   // v1.332: g, walking home (2) or in his grace (1)
       if (!host && typeof m.rt === 'number' && isFinite(m.rt)) Game.scenario.roundTime = m.rt;   // the host's clock
       return;
     }
@@ -37604,7 +37607,7 @@ function netReceive(m) {
       P.hitsTaken = n;
       if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;
       playHitOnPlayer(); flashDamage();
-      if (P.hitsTaken < P.maxHits) { respawnPlayerVip(true); Game.scenario.playerRespawns = m.r | 0; }
+      if (P.hitsTaken < P.maxHits) { startPlayerWalkHome(true); Game.scenario.playerRespawns = m.r | 0; }   // v1.332 (B.15): on foot
       else updateHealthHud();
       return;
     }
@@ -37710,7 +37713,7 @@ function netStep(dt) {
   if (Net.sendT < 0) Net.sendT = 0;
   const P = Game.player;
   const m = { t: Net.role === 'host' ? 'h' : 's', p: [netR(P.pos.x), netR(P.pos.y), netR(P.pos.z)], y: netR(P.yaw), c: P.crouching ? 1 : 0,
-    r: Game.scenario.playerRespawns || 0 };
+    r: Game.scenario.playerRespawns || 0, g: P._goingHome ? 2 : P._graceT > 0 ? 1 : 0 };   // v1.332 (B.15): walking home, or in the grace
   if (Net.role === 'host') m.rt = netR(Game.scenario.roundTime || 0);
   netSend(m);
 }
@@ -37725,25 +37728,29 @@ function netSpawnShot(m, k) {
   const o = netVec(m.o), v = netVec(m.v), cd = netVec(m.cd);
   if (!o || !v || !cd || Game.mode !== 'scenario' || k.health <= 0) return;
   if (Math.hypot(o[0] - k.pos.x, o[2] - k.pos.z) > 4) return;   // a shot from where he isn't
+  if (Net.kidTarget && Net.kidTarget.g === 2) return;   // v1.332: walking home, his gun is up
   const bb = makeBB(new THREE.Vector3(...o), new THREE.Vector3(...v), 'enemy', k,
     { curveOnsetDistance: +m.co || 4, curveStrengthMax: 0 }, combatantTeam(k));
   bb.curveDir.set(...cd);
   bb.curveStrength = Math.max(0, Math.min(60, +m.cs || 0));
   Game.scenario.bbs.push(bb);
+  // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): his shot fired silently here. Now it
+  // is heard from where he is, as a kid's shot is (spawnEnemyBB); its whistle past you and its hits sounded already.
+  playShot(o[0], o[2]);
 }
 // The host's game tagged the guest's kid: a life gone and back to his start, as yours (v1.221)
+// v1.332 (B.15): he walks back himself; nothing tags him while his game says he is walking home or in his grace
 function netTagRemote(bb, c) {
-  if (c._graceT > 0) return true;
+  if (c._graceT > 0 || (Net.kidTarget && Net.kidTarget.g > 0)) return true;
   c.lives = Math.max(0, (c.lives | 0) - 1);
   if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);
   if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
   if (c.lives > 0) {
-    c._graceT = VIP_GRACE;
+    c._graceT = VIP_GRACE;   // till his word that he is walking home comes back
     Net.kidRespawns++;
-    c.pos.copy(c._netStart);
-    Net.kidTarget = { x: c.pos.x, y: c.pos.y, z: c.pos.z, yaw: Net.kidTarget ? Net.kidTarget.yaw : 0, c: 0 };
+    if (Net.kidTarget) Net.kidTarget.g = 2;   // v1.332: no jump to his start; he walks there, gun up
   } else c.health = 0;
   netSend({ t: 'tag', n: Net.opts.lives - c.lives, r: Net.kidRespawns });
   updateRosterHud();
@@ -37779,7 +37786,10 @@ function netDriveRemote(e, dt) {
   e._walkInt = (e._walkInt || 0) + (Math.min(1, e._animSpeed / 3) - (e._walkInt || 0)) * Math.min(1, dt * 6);
   const gaitV = Math.hypot(e._gaitVF, e._gaitVS);
   if (gaitV > 0.05) e._walkPhase = (e._walkPhase || 0) + 2 * Math.PI * kidGaitCadence(gaitV, e.mesh.scaleXZ || 1) * dt;
-  setKidGunHold(e.mesh, e.weapon, 1, 0);
+  // v1.332 (B.15): walking home after a tag, his gun is up in the air, as a tagged kid's
+  e._hitRaise = T.g === 2 ? Math.min(1, (e._hitRaise || 0) + dt * 4) : 0;
+  if (e._hitRaise > 0) setKidHitPose(e.mesh, e._hitRaise);
+  else setKidGunHold(e.mesh, e.weapon, 1, 0);
   setKidWalk(e.mesh, e._walkPhase || 0, e._walkInt, e._gaitVF, e._gaitVS);
   const torso = e.mesh.parts && e.mesh.parts.torso;
   if (torso) {
