@@ -73,8 +73,9 @@ const down = await at(-1.45, 0);
 check('looking down you see it', down.inView >= 4, down);
 await g.shot('walkie-look-down');
 const turned = await at(-1.45, 2.2);
+// v1.333: looking down, the body (and the walkie on its belt) slides back to show the feet, so it is not forward then
 check('turned round, it is still on your left and still in view looking down',
-  turned.right < -0.1 && turned.fwd > 0 && turned.inView >= 4, turned);
+  turned.right < -0.1 && turned.fwd > -0.25 && turned.inView >= 4, turned);
 const crouched = await at(-1.45, 0, true);
 check('crouched, it rides lower with your hip and stays in view', crouched.up < ahead.up - 0.15 && crouched.inView >= 4, crouched);
 await at(0, 0, false);
@@ -90,6 +91,64 @@ const walked = await page.evaluate(() => {
   return { mode: Game.mode, moved: +Math.hypot(P.pos.x - x0, P.pos.z - z0).toFixed(2), off: +Math.hypot(c.x - P.pos.x, c.z - P.pos.z).toFixed(3) };
 });
 check('walking 1.5 s, the walkie stays at your hip', walked.mode === 'scenario' && walked.moved > 1 && walked.off < 0.3, walked);
+
+// v1.333 (backlog B.16, Michael: "Can we just add the whole body mesh to the first person view?"): the walkie is on
+// your own kid's belt now, a body under the camera: legs, shoes and torso shown, head and arms (and the kid's gun)
+// hidden, the shoes on the ground standing and crouched, the legs walking when you walk, and your look on it
+const body = (pitch, crouch, walk) => page.evaluate(([pitch, crouch, walk]) => {
+  const P = Game.player, U = fpWalkie.userData, po = U.kid.pose;
+  P.crouching = !!crouch; Game.mouse.locked = true; Game.keys['KeyW'] = !!walk;
+  const legX = [];
+  for (let i = 0; i < 60; i++) { P.pitch = pitch; stepGame(1 / 60); legX.push(po.legL.rotation.x); }
+  Game.keys['KeyW'] = false; P.crouching = false;
+  Game.camera.updateMatrixWorld(true); fpWalkie.updateMatrixWorld(true);
+  const shown = m => { for (let o = m; o; o = o.parent) if (!o.visible) return false; return true; };
+  const box = m => new THREE.Box3().setFromObject(m);
+  const inView = (bb) => {   // corners of a box in front of the camera and on the screen
+    let n = 0;
+    for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) {
+      const v = new THREE.Vector3(x, y, z), c = v.clone().applyMatrix4(Game.camera.matrixWorldInverse), q = v.clone().project(Game.camera);
+      if (c.z < 0 && Math.abs(q.x) < 1 && Math.abs(q.y) < 1) n++;
+    }
+    return n;
+  };
+  const soles = Math.min(box(po.shoeL).min.y, box(po.shoeR).min.y) - P.pos.y;
+  const torso = box(po.torso);
+  return {
+    walkieOnBody: U.walkie && U.walkie.parent === U.kid.group,
+    hidden: [U.kid.head, po.neck, po.hair, po.gunGroup, po.rigR.shoulder, po.rigL.shoulder].every(m => !m || !shown(m)) && po.headExtras.every(e => !shown(e.mesh)),
+    shown: [po.legL, po.legR, po.shoeL, po.shoeR, po.torso].every(shown),
+    noShadow: (() => { let n = 0; U.kid.group.traverse(m => { if (m.isMesh && m.castShadow) n++; }); return n === 0; })(),
+    soles: +soles.toFixed(3), torsoTop: +(torso.max.y - P.pos.y).toFixed(3), eye: +P.eyeOffset.toFixed(3),
+    shoesInView: inView(box(po.shoeL)) + inView(box(po.shoeR)), torsoInView: inView(torso),
+    legSwing: +(Math.max(...legX.slice(20)) - Math.min(...legX.slice(20))).toFixed(3),
+  };
+}, [pitch, crouch, walk]);
+const lookAhead = await body(0, 0, 0);
+check('the walkie is on your kid\'s belt; legs, shoes and torso shown, head, arms and his gun hidden, no shadow',
+  lookAhead.walkieOnBody && lookAhead.hidden && lookAhead.shown && lookAhead.noShadow, lookAhead);
+check('looking ahead the body is out of view, and the torso stays under the eye',
+  lookAhead.shoesInView === 0 && lookAhead.torsoInView === 0 && lookAhead.torsoTop < lookAhead.eye - 0.15, lookAhead);
+const lookDown = await body(-1.3, 0, 0);
+check('looking down you see your torso and your shoes, which stand on the ground',
+  lookDown.torsoInView > 0 && lookDown.shoesInView > 0 && Math.abs(lookDown.soles) < 0.03 && lookDown.legSwing < 0.01, lookDown);
+await g.shot('fp-body-down');
+const crouchDown = await body(-1.3, 1, 0);
+check('crouched, the shoes stay on the ground and the torso drops under the lower eye',
+  Math.abs(crouchDown.soles) < 0.05 && crouchDown.torsoTop < crouchDown.eye - 0.1 && crouchDown.torsoTop < lookDown.torsoTop - 0.3, crouchDown);
+const walkDown = await body(-1.2, 0, 1);
+check('walking, the legs stride (the left leg swings) and the shoes stay near the ground',
+  walkDown.legSwing > 0.2 && walkDown.soles > -0.05 && walkDown.soles < 0.15, walkDown);
+// your look: a new shirt colour is worn on the body at the next match
+const relook = await page.evaluate(() => {
+  const old = fpWalkie.userData.kid;
+  Game.persist.look = Object.assign({}, Game.persist.look, { shirtColor: 0xcc2222, top: null });
+  setFPBody(fpWalkie);
+  const k = fpWalkie.userData.kid;
+  return { rebuilt: k !== old, shirt: k.torso.material.color.getHex(), parts: fpWalkie.children.length };
+});
+check('a new look is worn on the body when it is set up again (one body, the new shirt)',
+  relook.rebuilt && relook.shirt === 0xcc2222 && relook.parts === 1, relook);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
