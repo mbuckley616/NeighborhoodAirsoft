@@ -2594,7 +2594,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.332</div>
+  <div class="version">v1.333</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -24993,25 +24993,70 @@ function addWalkieParts(add, ox, oy, oz) {
   add('led', box(0.006, 0.004, 0.006), ox, oy + 0.019, oz + 0.026);             // the transmit light
 }
 let fpWalkie = null;
+// v1.333 (backlog B.16, Michael: "Looking down in game shows nothing, but the walkie talkie is visible and shows as
+// floating. Can we just add the whole body mesh to the first person view?"): your own kid under the camera, your look,
+// your gear and the walkie on its belt: legs, shoes, torso and what is worn on them. The head (with the face, hair,
+// hat and eye pro) and the arms are hidden (the hands holding the gun are the view's own), and so is the kid's gun.
+// It casts no shadow (a headless one would follow you round). `fpWalkie` is the root, which follows your feet and
+// yaw, not the camera's pitch; userData.walkie is the walkie on the body's belt, userData.kid the body.
 function buildFPWalkie() {
-  const hip = new THREE.Group();          // follows the player's feet and yaw, not the camera's pitch
-  const w = new THREE.Group();
-  const b = {}; const add = _propAdder(b);
-  addWalkieParts(add, 0, 0, 0);
-  _propMerge(w, b, walkieMats());
-  w.rotation.set(0.25, Math.PI - 0.35, 0);   // faces forward (the view looks down −z), tipped out from the hip
-  hip.add(w);
-  hip.userData.walkie = w;
+  const hip = new THREE.Group();
+  hip.userData.sig = '';
+  setFPBody(hip);
   return hip;
 }
-// Each step after the camera is placed: the hip sits under the eye and swings with the yaw. The clip is at about 57%
-// of the eye height down (belt 0.57 under eyes 1.27 on a kid), left of centre and a hand forward.
-function updateFPWalkie(bobY) {
-  if (!fpWalkie) return;
-  const P = Game.player;
-  fpWalkie.position.set(P.pos.x, P.pos.y + P.eyeOffset + (bobY || 0), P.pos.z);
+// (Re)builds the body when your look or gear has changed since the last match.
+function setFPBody(root) {
+  const look = Object.assign({}, Game.persist.look), gk = loadoutKidGearKeys();
+  const sig = JSON.stringify([look, gk]);
+  if (root.userData.sig === sig && root.userData.kid) return;
+  if (root.userData.kid) root.remove(root.userData.kid.group);
+  const kid = createKid(look, 'pistol'), gear = buildKidGear(kid, gk), po = kid.pose;
+  for (const m of [kid.head, po.neck, po.hair, po.gunGroup, po.rigR.shoulder, po.rigL.shoulder]) if (m) m.visible = false;
+  for (const ex of po.headExtras) ex.mesh.visible = false;
+  kid.group.traverse(m => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = true; } });
+  root.add(kid.group);
+  root.userData.kid = kid;
+  root.userData.walkie = kid.group.children.find(c => c.userData.kidGear === 'walkie');
+  root.userData.sig = sig;
+  root.userData.phase = 0; root.userData.vf = 0; root.userData.vs = 0; root.userData.last = null;
+}
+// Each step after the camera is placed: the body stands under the eye, 12 cm back (32 cm looking straight down),
+// and turns with the yaw. Its
+// eyes (1.27 m up the average kid) are held at the camera: the kid's height is stretched to your eye height
+// (1.35 m standing), and on a crouch or a slide it crouches as the kids do and squashes the rest of the way, so the
+// shoes stay on the ground. Its legs walk with your real speed, in the kids' planted-foot gait (setKidWalk).
+const FP_BODY_BACK = 0.12, FP_BODY_BACK_DOWN = 0.2, FP_BODY_EYE = 1.27;
+function updateFPWalkie(bobY, dt) {
+  if (!fpWalkie || !fpWalkie.userData.kid) return;
+  const P = Game.player, U = fpWalkie.userData, kid = U.kid, g = kid.group;
+  const eye = P.eyeOffset, stand = P.eyeOffsetStand || 1.35, low = P.eyeOffsetCrouch || 0.8;
+  const crouch = Math.max(0, Math.min(1, (stand - eye) / Math.max(0.1, stand - low)));
+  const drop = setKidCrouch(kid, crouch);
+  // the walk, from this step's move in your own frame (forward along your view, sideways to your left)
+  let vf = 0, vs = 0;
+  if (U.last && dt > 0) {
+    const dx = P.pos.x - U.last.x, dz = P.pos.z - U.last.z;
+    if (Math.hypot(dx, dz) < 1) {   // not a teleport (a respawn, the walk home's start)
+      const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+      vf = (-dx * sy - dz * cy) / dt; vs = -(dx * cy - dz * sy) / dt;
+    }
+  }
+  U.last = { x: P.pos.x, z: P.pos.z };
+  const ease = dt > 0 ? Math.min(1, dt * 8) : 1;
+  U.vf += (vf - U.vf) * ease; U.vs += (vs - U.vs) * ease;
+  const v = Math.hypot(U.vf, U.vs);
+  if (P.onGround !== false && v > 0.05) {
+    const reach = (kid.scaleXZ || 1) * (kid.pose.legL.scale.y / (kid.pose.base.legScaleY || 1));
+    U.phase += 2 * Math.PI * kidGaitCadence(v, reach) * (dt || 0);
+    setKidWalk(kid, U.phase, Math.min(1, v / 3), U.vf, U.vs);
+  }
+  g.scale.y = eye / (FP_BODY_EYE - drop);
+  fpWalkie.position.set(P.pos.x, P.pos.y + (bobY || 0), P.pos.z);
   fpWalkie.rotation.set(0, P.yaw, 0);
-  fpWalkie.userData.walkie.position.set(-0.17, -P.eyeOffset * 0.57, -0.1);
+  // the root's +z is behind you; looking down, the body slides back to show the feet past the belly
+  g.position.set(0, 0, FP_BODY_BACK + FP_BODY_BACK_DOWN * Math.max(0, -Math.sin(P.pitch || 0)));
+  g.rotation.set(0, Math.PI, 0);        // the kid faces +z; the view looks down -z
 }
 
 function forfeitScenario() {
@@ -26541,8 +26586,10 @@ function startScenario(built) {
   // Move camera to scenario scene
   built.scene.add(Game.camera);
   if (!fpWalkie) fpWalkie = buildFPWalkie();   // v1.149: the walkie at your hip lives in the match's scene (D.10)
+  else setFPBody(fpWalkie);   // v1.333 (B.16): your body, rebuilt if your look or gear changed
+  fpWalkie.userData.last = null;
   built.scene.add(fpWalkie);
-  updateFPWalkie(0);
+  updateFPWalkie(0, 0);
   showPauseHint();
   // v1.189: capture the flag: the two flags and their bases, in the scene the match is played in
   Game.scenario.ctf = Game.scenario.ctfDef ? ctfSetup(Game.scenario.ctfDef, built) : null;
@@ -29509,7 +29556,7 @@ function updatePlayer(dt) {
     Game.camera.rotation.y = Game.player.yaw;
     Game.camera.rotation.x = Game.player.pitch;
     Game.camera.rotation.z = 0;
-    updateFPWalkie(0);   // v1.149
+    updateFPWalkie(0, dt);   // v1.149
     return;
   }
 
@@ -29753,7 +29800,7 @@ function updatePlayer(dt) {
   let roll = bobX * 0.08;
   if (Game.player.sliding) roll += 0.08;
   Game.camera.rotation.z = roll;
-  updateFPWalkie(bobY);   // v1.149
+  updateFPWalkie(bobY, dt);   // v1.149 (v1.333: the body walks)
 
   // === v1.40: AIM SWAY + VIEWMODEL BOB ===
   // One smoothed "instability" value (Game.player.sway) feeds the reticle bloom

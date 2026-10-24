@@ -13928,3 +13928,39 @@ all of his sounds were nearly silent."
 - **For a playtest with your brother:** whether his shots are now loud enough at 20-30 m. They are as loud as a kid's
   at the same distance. Over a real connection the walk home may lag a frame or two on the other screen, as his
   steps do.
+
+## v1.333 — Your own body when you look down
+Backlog B.16, Michael's note (control room, 23 Oct): "Looking down in game shows nothing, but the walkie talkie is
+visible and shows as floating. Can we just add the whole body mesh to the first person view?" The walkie had hung at
+your hip on its own since v1.149, with nothing under it.
+- **The body.** In a match your own kid now stands under the camera, built as the Loadout kid is: your look from the
+  mirror (height, build, shirt or top, jeans or shorts, sneakers), the gear you wear (chest rig or plate carrier, knee
+  pads, the belt and holster, gear shoes) and the walkie on its belt. The head, with the face, hair, hat and eye pro,
+  is hidden, and so are the arms and the kid's own gun: the hands holding your gun are the view's, as before. The body
+  casts no shadow, since a headless one would follow you round.
+- **Where it stands.** Its eyes are held at the camera: the kid is stretched to your eye height (1.35 m standing, 6%
+  over the kid's own 1.27 m). It stands 12 cm behind the eye looking ahead and slides back to 32 cm looking straight
+  down, so you see your belly, belt and shoes past it rather than the top of your shoulders. Crouched or sliding, it
+  crouches as the kids do (legs bent, body leaning in) and squashes the rest of the way, so the shoes stay on the
+  ground and the torso stays under the lower eye.
+- **It walks.** The legs walk in the kids' planted-foot gait (v1.171) at your real speed, forward, back or sideways,
+  and stop when you do. A jump to a new place (a respawn) is not read as a step.
+- **Your look.** A new look or new gear is put on the body at the next match.
+### Verified
+- **`tests/walkie.test.mjs`, extended:**
+  - The walkie is the body's, on its belt. Legs, shoes and torso show; head, neck, hair, the arms and the kid's gun
+    don't; no part casts a shadow.
+  - Looking ahead none of the body is on screen, and the torso's top is 0.21 m under the eye.
+  - Looking down (75°) both shoes and the torso are on screen, and the soles sit on the ground (0 cm).
+  - Crouched, the soles stay on the ground and the torso's top drops from 1.14 m to 0.65 m, under the 0.8 m eye.
+  - Walking, the left leg swings through 1.2 rad and the soles stay on the ground.
+  - A new shirt colour is on the body when it is set up again, and there is one body, not two.
+  - The walkie's old checks hold: out of view ahead, on your left at the hip (0.59 m up), in view looking down, lower
+    crouched, with you walking. Looking down it is now 17 cm behind the eye rather than in front, with the body.
+- **These suites pass:** `walkie`, `walkie-callouts`, `smoke`, `online`, `settings`, `grip`, `mirror`, `loadout-gear`,
+  `pickup-lives` and `gait`. `fp-hands` passed its first 91 checks with none failing before this container's 10-minute
+  limit stopped it; three suites run side by side here crashed or timed out a browser tab and passed alone.
+### Still open
+- **For a playtest:** whether the body reads right at a glance: how far back it sits when you look down, whether the
+  stretched kid looks too long in the leg, and the crouch, which squashes the body by up to a third to keep your feet
+  on the ground. The gun in your hands can pass through the chest when you look straight down, as in most shooters.
