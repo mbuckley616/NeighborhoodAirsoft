@@ -13891,3 +13891,137 @@ weekly, not on a PR, so nobody had fixed it.
 ### Still open
 - **For a playtest:** in Hold the Bunker Evan is now behind you from the first second. That is what the briefing
   says, and he holds fire until a twin is within 7 m.
+
+## v1.332 — Online: a tag walks you home, and your friend's shots are heard
+Backlog B.15, Michael's note (control room, 23 Oct) after playing his brother online: "getting shot should leverage the
+new 'return to your base' system; and I did not hear audio of my brother's shots passing by me or impacting near me,
+all of his sounds were nearly silent."
+- **The walk home.** Online play had kept the old jump: a tag put you back at your start in one frame, because v1.290
+  left it out ("its guest follows the host's word on where you are"). Now a tag online works as it does in a Pickup
+  Game against kids. You walk yourself home, gun up, with the arrow and BACK TO YOUR START · N m at the top. You can't
+  aim or fire, and nothing tags you on the way. At your start the 2 s grace starts, as before.
+  - Each game now says in its ~30-a-second message whether its player is walking home or in his grace (`g`). The other
+    game shows him walking with his gun up in the air, as a tagged kid holds his.
+  - The host's game is the referee, and it tags nobody who is walking home or in his grace. It no longer moves the
+    guest's kid back to his start when it tags him: the guest walks there, and the host sees him walk.
+  - A shot from a player walking home is dropped. His own game won't fire one anyway.
+- **His shots.** Your friend's shot arrived and flew, but it played no sound: `netSpawnShot` built the BB and never
+  called `playShot`. A kid's shot plays one from where he stands (`spawnEnemyBB`). Now your friend's shot is heard from
+  where he is, panned and fading with distance like a kid's. The whistle of a BB going past you and the sound of it
+  landing already played for every BB, his too, so the gunshot was the missing piece. A whistle with no shot before it
+  is easy to miss, which may be why all of it sounded nearly silent.
+### Verified
+- **`tests/online.test.mjs`, extended** (two headless games over the stub transport):
+  - The guest's shot is heard on the host's screen, 0.39 m from where the host sees the guest.
+  - Tagged, the host walks home: `_goingHome` is set, the arrow reads BACK TO YOUR START · 5 m, and the guest sees him
+    with his gun all the way up (`g` 2, raise 1). Three more shots from the guest tag nothing.
+  - Put a step from his start, the host is back and in his grace.
+  - The same from the other side: the guest walks home and the host sees him gun up. Three shots from the host tag
+    nothing, and back at his start the host sees him there to within 0 cm.
+  - The rest of the suite holds: the lives agree on both screens, the last tag ends it for both, nothing is paid, and a
+    dropped friend ends it cleanly. 21 of 21 checks.
+- **These suites pass:** `online`, `smoke`, `pickup-lives`, `vip`, `vip-spawn`. `vip-cover` is flaky in this
+  container, and not from this change: Owen and Mitchell stood together 18-46 s in one round of four in 2 of 4 runs
+  here, and in 1 of 2 runs on main's code (24.5 s). Offline, none of this change's code runs. It is filed under Found
+  in play.
+### Still open
+- **For a playtest with your brother:** whether his shots are now loud enough at 20-30 m. They are as loud as a kid's
+  at the same distance. Over a real connection the walk home may lag a frame or two on the other screen, as his
+  steps do.
+
+## v1.333 — Your own body when you look down
+Backlog B.16, Michael's note (control room, 23 Oct): "Looking down in game shows nothing, but the walkie talkie is
+visible and shows as floating. Can we just add the whole body mesh to the first person view?" The walkie had hung at
+your hip on its own since v1.149, with nothing under it.
+- **The body.** In a match your own kid now stands under the camera, built as the Loadout kid is: your look from the
+  mirror (height, build, shirt or top, jeans or shorts, sneakers), the gear you wear (chest rig or plate carrier, knee
+  pads, the belt and holster, gear shoes) and the walkie on its belt. The head, with the face, hair, hat and eye pro,
+  is hidden, and so are the arms and the kid's own gun: the hands holding your gun are the view's, as before. The body
+  casts no shadow, since a headless one would follow you round.
+- **Where it stands.** Its eyes are held at the camera: the kid is stretched to your eye height (1.35 m standing, 6%
+  over the kid's own 1.27 m). It stands 12 cm behind the eye looking ahead and slides back to 32 cm looking straight
+  down, so you see your belly, belt and shoes past it rather than the top of your shoulders. Crouched or sliding, it
+  crouches as the kids do (legs bent, body leaning in) and squashes the rest of the way, so the shoes stay on the
+  ground and the torso stays under the lower eye.
+- **It walks.** The legs walk in the kids' planted-foot gait (v1.171) at your real speed, forward, back or sideways,
+  and stop when you do. A jump to a new place (a respawn) is not read as a step.
+- **Your look.** A new look or new gear is put on the body at the next match.
+### Verified
+- **`tests/walkie.test.mjs`, extended:**
+  - The walkie is the body's, on its belt. Legs, shoes and torso show; head, neck, hair, the arms and the kid's gun
+    don't; no part casts a shadow.
+  - Looking ahead none of the body is on screen, and the torso's top is 0.21 m under the eye.
+  - Looking down (75°) both shoes and the torso are on screen, and the soles sit on the ground (0 cm).
+  - Crouched, the soles stay on the ground and the torso's top drops from 1.14 m to 0.65 m, under the 0.8 m eye.
+  - Walking, the left leg swings through 1.2 rad and the soles stay on the ground.
+  - A new shirt colour is on the body when it is set up again, and there is one body, not two.
+  - The walkie's old checks hold: out of view ahead, on your left at the hip (0.59 m up), in view looking down, lower
+    crouched, with you walking. Looking down it is now 17 cm behind the eye rather than in front, with the body.
+- **These suites pass:** `walkie`, `walkie-callouts`, `smoke`, `online`, `settings`, `grip`, `mirror`, `loadout-gear`,
+  `pickup-lives` and `gait`. `fp-hands` passed its first 91 checks with none failing before this container's 10-minute
+  limit stopped it; three suites run side by side here crashed or timed out a browser tab and passed alone.
+### Still open
+- **For a playtest:** whether the body reads right at a glance: how far back it sits when you look down, whether the
+  stretched kid looks too long in the leg, and the crouch, which squashes the body by up to a third to keep your feet
+  on the ground. The gun in your hands can pass through the chest when you look straight down, as in most shooters.
+
+## v1.334 — Every slot in one list
+Backlog D.65, Michael's answer A (23 Oct): one list of every slot. His note: "list all equipment slots available, and
+if empty, clearly state that it's an empty slot. We should be able to click on an empty slot, and then see a list of
+all of the equipment we have that can be placed in that slot." The four numbered slots already had empty rows and a
+picker, but eye pro, armor and shoes sat in a separate WORN GEAR section with "No armor owned" and nothing to click.
+- **One list.** The Loadout's middle column, now "Your Slots", has nine rows: 1 your gun, slots 2-4, then E eyes,
+  C chest, A arms, K knees and F feet. The WORN GEAR section under the columns is gone into it.
+- **Empty says so.** An empty slot reads "Empty slot", with "click to see what fits" under it. The feet always wear
+  your sneakers, so they are never empty: other pairs swap with them.
+- **One rule for every row.** A click on any row opens its picker under it: what you own that fits there, with
+  "Take it off" (or "Take it out" for slots 2-4) first when something is in it. A full slot 2-4 used to empty on a
+  click; it opens the picker too now, and a speed loader taken out still pours its BBs back into the bag. When nothing
+  you own fits, the picker says so and what airsoft.com sells for it ("Nothing you own fits this — airsoft.com sells
+  knee pads.").
+- The gun row, the locked rows and the Available Items column work as before.
+### Verified
+- **`tests/loadout-gear.test.mjs`, extended:**
+  - Nine rows, the five worn ones among them, and no WORN GEAR section. On a bare save slot 2 and the eyes, chest,
+    arms and knees say "Empty slot", and the feet "Sneakers".
+  - With nothing owned, the eyes' picker says airsoft.com sells safety glasses, goggles and a mesh mask, and slot 2's
+    spare mags and speed loaders.
+  - Owning two eye pros, the picker lists both; a click wears the mesh mask and the row names it; its picker then
+    offers the goggles and Take it off, and Take it off empties it.
+  - Knee pads go on from the knees' picker, the row names them and the Loadout kid wears them.
+  - A spare mag goes into slot 2 from its picker; full, the picker offers Take it out, which empties the slot.
+- **These suites pass:** `loadout-gear`, `utility-belt`, `notebook` and `gamepad-screens`.
+### Still open
+- **For a playtest:** at 1280×720 the list runs past the bottom of the paper and the card scrolls, as it did with
+  the old WORN GEAR section. Whether nine rows want to be shorter (or the worn five in a second column) is for a look.
+
+## v1.335 — The M249, a light machine gun
+Backlog D.63, batch 2 (Michael: A, batches of four to six). Batch 1 was the FAMAS, the electrics, the Burst Rifle and
+the Semi-Auto Shotgun (v1.325-v1.328); his note also asks for LMGs, one or two more snipers and more SMGs, and this is
+batch 2's first gun.
+- **The gun.** The M249, $320, last under AUTOMATICS on airsoft.com and the workbench: a battery light machine gun
+  with an olive box of 800 BBs hung under the left of the receiver, a short belt running up into its feed, a bipod
+  folded under the barrel, a heat shield, a feed cover with the rear sight at its back and a front post on a tall
+  block by the orange tip. Its own first-person model, with both hands on it (the AK's grip, the off hand under the
+  handguard ahead of the box), and a blocky one for the Loadout kid and your own body.
+- **How it shoots.** Full auto at 12.5 BBs a second (the AK's 10) with a BB that flies as straight and nearly as fast
+  (52 m/s, the AK's 55), a little wider from the hip. The trade is the weight: 15 lb, the heaviest gun, and you walk
+  at the sniper's 0.75, the slowest of any. A new box takes a 1 s rack of its charging handle (the AK's 0.6 s).
+- **Its box.** 800 BBs, a 1,500-BB box for $55, and a spare 800 box for $35 (4.5 lb in a slot). Slots, the
+  workbench's rails, optic and under-barrel slot work as on the AK.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended** (the batch suite):
+  - AUTOMATICS lists ten guns, the M249 last, with its picture; its page sells it for $320 and puts it in your
+    hands, and says full-auto and "Very heavy, slowest".
+  - Its walk (0.75) is the slowest of all 22 guns, its 15 lb the heaviest (the next is the sniper's 10), its BB 52 m/s.
+  - In a match: its own model, 800 in the box, both hands on it; aimed, the front post's tip is 0.09° off the
+    reticle; held down 2 s it fires 25 BBs.
+- **`gun-parts`:** the M249's 54 parts all join the gun. The suites that count the guns go from 21 to 22
+  (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`, `shop-gun-kinds`, `shop-pics`, `under-parts`).
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid`, `under-parts`, `loadout-gear` and `smoke`, each alone. `fp-hands` crashed its browser tab once run
+  beside `gun-electric`, and passed alone.
+### Still open
+- **For a playtest:** whether 12.5 a second from 800 BBs is worth the slowest walk, or whether it wants to be slower
+  still to aim. Nothing in the game yet rewards lying down with its bipod (there is no prone); the bipod is only
+  folded. Batch 2 goes on with a second sniper and the SMGs.

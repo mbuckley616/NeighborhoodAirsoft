@@ -2,7 +2,8 @@
 // games joined through a stub transport (no network in CI), as PLAY ONLINE on the Pickup Game board joins them through
 // PeerJS. The host opens a room and gets a code, the guest joins with it, both press BEGIN, and a 1v1 on Winnmark runs
 // with the host's game as the referee. Checked: each sees the other where he is; the guest's tag reaches the host and
-// the host's reaches the guest, and the lives agree on both screens; the last tag ends it for both, with nothing paid
+// the host's reaches the guest, and the lives agree on both screens; v1.332 (B.15): a tagged player walks home, gun up
+// on the other screen, and nothing tags him on the way; the friend's shots are heard; the last tag ends it for both, with nothing paid
 // and the bags as they were; a dropped friend ends the match cleanly for the other; nothing loads at startup; and the
 // PeerJS adapter maps its events and errors.
 import { boot, check } from './lib/game.mjs';
@@ -137,15 +138,33 @@ const score = async () => ({
   guest: await b.evaluate(() => ({ myHits: Game.player.hitsTaken, hisLives: Net.kid.lives, left: pickupLivesLeft(), mode: Game.mode })),
 });
 
+// v1.332 (B.15): a tagged player walks home himself; this one is put a step from his start and the game walks him in
+const walkIn = async p => { await p.evaluate(() => { const P = Game.player, st = Game.scenario.playerStart;
+  P.pos.set(st.pos.x + 0.5, scenarioGroundY(st.pos.x + 0.5, st.pos.z), st.pos.z); P.vel.set(0, 0, 0); }); await run(6); };
+// His shot, heard here: the host's game counts the shots it plays from somewhere else (a kid's or the friend's)
+await a.evaluate(() => { window.__heard = []; const f = window.playShot; window.playShot = (x, z) => { if (x !== undefined) window.__heard.push([x, z]); return f(x, z); }; });
+
 // The guest tags the host
 let s1, tries = 0;
 await face(b, a, 3.5);
 do { await shoot(b); await run(30); s1 = await score(); tries++; } while (s1.host.myHits === 0 && tries < 6);
+const heard = await a.evaluate(() => ({ n: window.__heard.length, d: window.__heard.length ? +Math.hypot(window.__heard[0][0] - Net.kid.pos.x, window.__heard[0][1] - Net.kid.pos.z).toFixed(2) : null }));
+check("the guest's shots are heard on the host's screen, from where the guest is", heard.n >= tries && heard.d < 1.5, { heard, tries });
 console.log('   after the guest shoots', tries, 'times:', JSON.stringify(s1));
 check("the guest's tag reaches the host: one of the host's lives gone on both screens",
   s1.host.myHits === 1 && s1.guest.hisLives === 2 && s1.host.left.ours === 2 && s1.guest.left.theirs === 2 && s1.host.mode === 'scenario', s1);
-const hostBack = await a.evaluate(() => ({ d: +Math.hypot(Game.player.pos.x - Game.scenario.playerStart.pos.x, Game.player.pos.z - Game.scenario.playerStart.pos.z).toFixed(2), resp: Game.scenario.playerRespawns, grace: Game.player._graceT }));
-check('the host goes back to his start, as in a pickup game', hostBack.d < 0.5 && hostBack.resp === 1, hostBack);
+const hostWalk = await a.evaluate(() => ({ home: Game.player._goingHome, resp: Game.scenario.playerRespawns, hud: document.getElementById('homeHud').style.display,
+  text: document.getElementById('homeText').textContent }));
+const guestSeesWalk = await b.evaluate(() => ({ g: Net.kidTarget && Net.kidTarget.g, raise: +(Net.kid._hitRaise || 0).toFixed(2) }));
+check('the host walks back to his start, as in a pickup game: the arrow shows, and the guest sees him gun up',
+  hostWalk.home && hostWalk.resp === 1 && hostWalk.hud === 'block' && /BACK TO YOUR START/.test(hostWalk.text) && guestSeesWalk.g === 2 && guestSeesWalk.raise === 1,
+  { hostWalk, guestSeesWalk });
+for (let i = 0; i < 3; i++) { await shoot(b); await run(30); }
+const sWalk = await score();
+check('nothing tags the host while he walks home', sWalk.host.myHits === 1 && sWalk.guest.hisLives === 2, sWalk);
+await walkIn(a);
+const hostBack = await a.evaluate(() => ({ home: Game.player._goingHome, grace: Game.player._graceT > 0 }));
+check('back at his start he plays again, in his grace', !hostBack.home && hostBack.grace, hostBack);
 
 // The host tags the guest
 await run(130);   // past his 2 s of cover
@@ -156,13 +175,23 @@ console.log('   after the host shoots', tries, 'times:', JSON.stringify(s2));
 check("the host's tag reaches the guest: the lives agree on both screens (2 and 2)",
   s2.guest.myHits === 1 && s2.host.hisLives === 2 && s2.host.left.ours === 2 && s2.host.left.theirs === 2
   && s2.guest.left.ours === 2 && s2.guest.left.theirs === 2, s2);
-const guestBack = await b.evaluate(() => ({ back: Math.hypot(Game.player.pos.x - Game.scenario.playerStart.pos.x, Game.player.pos.z - Game.scenario.playerStart.pos.z) < 0.5, grace: Game.player._graceT > 0 }));
+const guestWalk = await b.evaluate(() => ({ home: Game.player._goingHome, resp: Game.scenario.playerRespawns }));
+await run(4);
+const hostSeesWalk = await a.evaluate(() => ({ g: Net.kidTarget && Net.kidTarget.g, raise: +(Net.kid._hitRaise || 0).toFixed(2) }));
+for (let i = 0; i < 3; i++) { await shoot(a); await run(30); }
+const sWalk2 = await score();
+check('the guest walks home too, the host sees him gun up, and nothing tags him on the way',
+  guestWalk.home && guestWalk.resp === 1 && hostSeesWalk.g === 2 && hostSeesWalk.raise === 1 && sWalk2.guest.myHits === 1 && sWalk2.host.hisLives === 2,
+  { guestWalk, hostSeesWalk, sWalk2 });
+await walkIn(b);
+const guestBack = await b.evaluate(() => ({ back: Math.hypot(Game.player.pos.x - Game.scenario.playerStart.pos.x, Game.player.pos.z - Game.scenario.playerStart.pos.z) < 2.0 && !Game.player._goingHome, grace: Game.player._graceT > 0 }));
 await run(10);
 const hostSees = await where();
-check('the guest goes back to his start, and the host sees him there', guestBack.back && hostSees.hostSeesGuest < 0.1, { guestBack, hostSees });
+check('the guest gets back to his start, and the host sees him there', guestBack.back && guestBack.grace && hostSees.hostSeesGuest < 0.1, { guestBack, hostSees });
 
 // The guest takes the host's last two lives: the match ends on both, the host lost and the guest won
 for (let n = 0; n < 2; n++) {
+  await walkIn(a);   // v1.332: back from his walk home
   await run(130);
   let s; tries = 0;
   await face(b, a, 3.5);
