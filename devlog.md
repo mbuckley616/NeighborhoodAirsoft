@@ -14025,3 +14025,29 @@ batch 2's first gun.
 - **For a playtest:** whether 12.5 a second from 800 BBs is worth the slowest walk, or whether it wants to be slower
   still to aim. Nothing in the game yet rewards lying down with its bipod (there is no prone); the bipod is only
   folded. Batch 2 goes on with a second sniper and the SMGs.
+
+## v1.336 — The L96, a second sniper
+Backlog D.63, batch 2: Michael's note asks for "1 or 2 other snipers". The Spring Sniper Rifle was the only one.
+- **The gun.** The L96, $190, under RIFLES after the Spring Sniper Rifle: an Accuracy International-style bolt gun in
+  olive with a black cheek riser on the comb, a spacer behind the butt pad, a short box mag ahead of the trigger guard
+  and a muzzle brake behind the orange tip. It is built on the spring sniper's action, barrel, bolt and sights, so
+  your hands and the aimed picture are the sniper's; the Loadout kid holds the sniper's blocky rifle.
+- **How it shoots.** A heavier spring: its BB leaves at 85 m/s (the sniper's 75), starts tighter (0.10, 0.12), flies
+  straight for 30 m (25) before it wobbles, and wobbles less when it does. The price is the bolt, 1.3 s to work
+  (1.1), a 10-round mag (15; a 20-round one for $22, spares $8) and 11 lb, a pound over the sniper.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:** RIFLES ends Spring Sniper Rifle · L96, with its picture; $190 from its
+  page puts it in your hands. Against the sniper's spec: faster, tighter, straight further, a slower bolt, both semi
+  bolt guns. In a match: its own model, 10 in the mag, both hands on it, the front post on the reticle aimed; a pull
+  fires one BB and leaves it wanting its bolt.
+- The suites that count the guns go from 22 to 23, RIFLES from five to six.
+- **Its sights:** first built at the sniper's aimed height, the L96's post sat 2.5° under the reticle (2.47-2.54°
+  measured). The sniper's own aimed height is the same and was left alone: its post moved to the muzzle in v1.225
+  and its aimed height did not follow, so the Spring Sniper Rifle's irons aim about 2.5° low too. The L96 has its
+  own aimed height, and its post is 0.09° off.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid`, `under-parts` and `smoke`. `gun-electric` and `fp-hands` each crashed a browser tab once when run
+  beside other suites, and passed alone.
+### Still open
+- **For a playtest:** whether one more second of reach is worth a slower bolt and ten to a mag. The Spring Sniper
+  Rifle's irons aiming 2.5° low (above) is worth a look; it is filed under Found in play. The SMGs are next in batch 2.
