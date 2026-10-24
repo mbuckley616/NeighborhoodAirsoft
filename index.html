@@ -2596,7 +2596,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.334</div>
+  <div class="version">v1.336</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -3990,6 +3990,8 @@ const Game = {
       spare_mag_epistol: 0, spare_mag_erifle: 0,   // v1.326
       spare_mag_burst: 0,         // v1.327
       spare_mag_semishotgun: 0,   // v1.328
+      spare_mag_m249: 0,          // v1.335 (D.63 batch 2)
+      spare_mag_l96: 0,           // v1.336
     },
     equipped: {
       gun: 'pistol',
@@ -4182,6 +4184,8 @@ const MAG_GUN_FIT = {
   spare_mag_epistol: 'epistol', spare_mag_erifle: 'erifle',   // v1.326
   spare_mag_burst: 'burst',   // v1.327
   spare_mag_semishotgun: 'semishotgun',   // v1.328
+  spare_mag_m249: 'm249',   // v1.335
+  spare_mag_l96: 'l96',   // v1.336
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -4191,7 +4195,9 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'famas',   // v1.325 (D.63, Michael: A): the first of the new guns
   'epistol', 'erifle',   // v1.326: the electric semi-autos
   'burst',   // v1.327: the burst rifle
-  'semishotgun'];   // v1.328: the semi-auto shotgun
+  'semishotgun',   // v1.328: the semi-auto shotgun
+  'm249',   // v1.335 (D.63 batch 2): the light machine gun
+  'l96'];   // v1.336: the second sniper
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -4216,6 +4222,8 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'erifle') return Game.persist.owned.erifle_mag_60 ? 60 : 30;
   if (gunType === 'burst') return Game.persist.owned.burst_mag_150 ? 150 : 90;   // v1.327
   if (gunType === 'semishotgun') return Game.persist.owned.semishotgun_mag_90 ? 90 : 60;   // v1.328
+  if (gunType === 'm249') return Game.persist.owned.m249_mag_1500 ? 1500 : 800;   // v1.335: its box
+  if (gunType === 'l96') return Game.persist.owned.l96_mag_20 ? 20 : 10;   // v1.336
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -4343,6 +4351,8 @@ const GUN_ACCESSORY_CAP = {
   erifle:  { sight: 1, rails: 2, under: 1 },
   burst:   { sight: 1, rails: 2, under: 1 },   // v1.327
   semishotgun: { sight: 1, rails: 2, under: 1 },   // v1.328
+  m249:    { sight: 1, rails: 2, under: 1 },   // v1.335
+  l96:     { sight: 1, rails: 2, under: 1 },   // v1.336: the sniper's
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -4667,8 +4677,22 @@ const GUN_MAGS = {
     mags: [ { flag: 'semishotgun_mag_90', cap: 90, price: 20 } ],
     spares: [ { key: 'spare_mag_semishotgun', label: 'Spare Semi-Auto Shotgun Mag (60)', price: 14 } ],
   },
+  // v1.335 (backlog D.63, Michael: A, batch 2): the light machine gun, a battery M249 fed from a box under it
+  m249: {
+    displayName: 'M249', baseCap: 800, price: 320, ownFlag: 'm249',
+    blurb: 'A battery light machine gun with a box of BBs hung under it and a bipod folded under the barrel. Twelve BBs a second and a box that lasts, but it is the heaviest gun in the shop and you walk slowest with it.',
+    mags: [ { flag: 'm249_mag_1500', cap: 1500, price: 55 } ],
+    spares: [ { key: 'spare_mag_m249', label: 'Spare M249 Box (800)', price: 35 } ],
+  },
+  // v1.336 (backlog D.63, batch 2): the second sniper, an L96 that out-reaches the Spring Sniper Rifle for a slower bolt
+  l96: {
+    displayName: 'L96', baseCap: 10, price: 190, ownFlag: 'l96',
+    blurb: 'An olive bolt-action sniper with a cheek riser and a heavy spring. Its BB flies faster and straighter than the Spring Sniper Rifle\'s and reaches further, but the bolt is stiffer to work and the mag holds ten.',
+    mags: [ { flag: 'l96_mag_20', cap: 20, price: 22 } ],
+    spares: [ { key: 'spare_mag_l96', label: 'Spare L96 Mag (10)', price: 8 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47'];   // v1.250: the cheap automatics lead their kind
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','mac10','ak47','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -4856,6 +4880,8 @@ function describeSlot(idx) {
       spare_mag_epistol: 18, spare_mag_erifle: 30,   // v1.326
       spare_mag_burst: 90,   // v1.327
       spare_mag_semishotgun: 60,   // v1.328
+      spare_mag_m249: 800,   // v1.335
+      spare_mag_l96: 10,   // v1.336
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -4877,6 +4903,8 @@ function describeSlot(idx) {
       spare_mag_epistol: 'Spare 18-rd Electric Pistol Mag', spare_mag_erifle: 'Spare 30-rd Electric Rifle Mag',   // v1.326
       spare_mag_burst: 'Spare 90-rd Burst Rifle Mag',   // v1.327
       spare_mag_semishotgun: 'Spare 60-rd Semi-Auto Shotgun Mag',   // v1.328
+      spare_mag_m249: 'Spare 800-rd M249 Box',   // v1.335
+      spare_mag_l96: 'Spare 10-rd L96 Mag',   // v1.336
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -5064,6 +5092,8 @@ const GUN_WEIGHT = {
   epistol: 2.5, erifle: 8.5,                              // v1.326: a battery adds a little
   burst: 8.5,                                             // v1.327
   semishotgun: 7,                                         // v1.328
+  m249: 15,                                               // v1.335: the heaviest gun
+  l96: 11,                                                // v1.336: the heavy spring and barrel
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -5078,6 +5108,8 @@ const MAG_WEIGHT = {
   spare_mag_epistol: 0.6, spare_mag_erifle: 1.3,   // v1.326
   spare_mag_burst: 1.6,   // v1.327
   spare_mag_semishotgun: 1.4,   // v1.328
+  spare_mag_m249: 4.5,   // v1.335
+  spare_mag_l96: 0.8,   // v1.336
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -5497,6 +5529,12 @@ GUN_SPECS.burst = Object.assign({}, GUN_SPECS.ar, { electric: true, burst: 3, cy
 // v1.328 (D.63, batch 1): the Semi-Auto Shotgun, the spring shotgun's 2-3 BBs a pull with nothing to pump (electric,
 // 2.5 pulls a second at most); a new mag is racked with its charging handle
 GUN_SPECS.semishotgun = Object.assign({}, GUN_SPECS.shotgun, { electric: true, semiRPM: 150, cockType: 'charge', cockTime: 0.6, displayName: 'Semi-Auto Shotgun' });
+// v1.335 (D.63, batch 2): the M249, the AK's straight-flying BB at 12.5 a second from an 800-BB box, a little wider
+// from the hip; the slowest walk of any gun (the sniper's), and a new box takes a long rack of its charging handle
+GUN_SPECS.m249 = Object.assign({}, GUN_SPECS.ak47, { weightClass: 'very_heavy', playerSpeedMult: 0.75, cyclicRPM: 750, muzzleVelocity: 52, baseSpread: 0.40, adsSpreadMult: 0.35, curveOnsetDistance: 18, curveStrengthMax: 9, cockTime: 1.0, displayName: 'M249' });
+// v1.336 (D.63, batch 2): the L96, the sniper's bolt gun with a heavier spring: its BB 85 m/s (75), tighter (0.10,
+// 0.12) and straight for 30 m (25) before it wobbles, less when it does; the bolt takes 1.3 s (1.1)
+GUN_SPECS.l96 = Object.assign({}, GUN_SPECS.sniper, { muzzleVelocity: 85, baseSpread: 0.10, adsSpreadMult: 0.2, curveOnsetDistance: 30, curveStrengthMax: 5, cockTime: 1.3, displayName: 'L96' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;
@@ -20683,9 +20721,11 @@ function isSmallGun(weapon) {
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
-    case 'sniper':  return 0.26;   // long barrel — hand well forward
+    case 'sniper':
+    case 'l96':     return 0.26;   // long barrel — hand well forward (v1.336: and the L96's)
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
+    case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
     case 'ar':
     case 'erifle':  // v1.326
     case 'burst':   // v1.327
@@ -20751,7 +20791,8 @@ function buildEnemyGunMesh(weapon) {
       grip();
       break;
     }
-    case 'sniper': {
+    case 'sniper':
+    case 'l96': {   // v1.336: the L96 in the kids' blocky style is the sniper
       box(0.04, 0.05, 0.56, black, 0, 0, 0.26);          // very long thin barrel
       box(0.045, 0.045, 0.14, dark, 0, 0.07, 0.10);      // scope tube up top
       box(0.05, 0.10, 0.14, wood, 0, -0.02, -0.06);      // bolt-gun wood stock
@@ -20764,6 +20805,14 @@ function buildEnemyGunMesh(weapon) {
       mag.rotation.x = 0.5;                              // ...curved forward
       box(0.05, 0.09, 0.12, wood, 0, -0.01, -0.08);      // wood stock
       grip(wood);
+      break;
+    }
+    case 'm249': {   // v1.335 (D.63): the box under it, the bipod folded under the barrel
+      box(0.05, 0.075, 0.46, black, 0, 0, 0.20);         // receiver, handguard and barrel
+      box(0.06, 0.10, 0.09, new THREE.MeshStandardMaterial({ color: 0x4b5226, roughness: 0.75 }), -0.01, -0.08, 0.07);   // the box
+      box(0.03, 0.02, 0.14, dark, 0, -0.045, 0.33);      // the bipod's legs
+      box(0.045, 0.08, 0.12, black, 0, -0.01, -0.09);    // stock
+      grip();
       break;
     }
     case 'mp5':
@@ -22683,6 +22732,25 @@ function buildFPSniper() {
   return group;
 }
 
+// v1.336 (backlog D.63, Michael: A, batch 2): the L96, an Accuracy International-style bolt sniper on the spring
+// sniper's action, barrel, bolt and sights (so its hands and aimed picture are the sniper's): the stock and forend
+// olive, a black cheek riser on the comb, a spacer behind the butt pad, a short box mag under the receiver ahead of
+// the trigger guard, and a muzzle brake on the barrel behind the orange tip.
+function buildFPL96() {
+  const group = buildFPSniper();
+  const olive = new THREE.MeshStandardMaterial({ color: 0x56603a, roughness: 0.75 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6, metalness: 0.2 });
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); group.add(m); return m; };
+  for (const n of ['forend', 'stock']) { const o = group.getObjectByName(n); if (o) o.material = olive; }
+  add(new THREE.BoxGeometry(0.030, 0.012, 0.064), black, 0, 0.0615, 0.118).name = 'cheekriser';
+  add(new THREE.BoxGeometry(0.036, 0.096, 0.006), black, 0, 0.001, 0.169);
+  add(new THREE.BoxGeometry(0.022, 0.030, 0.040), black, 0, -0.028, -0.048).name = 'mag';
+  const brake = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, 0.0115, 0.022, 10), black);
+  brake.rotation.x = Math.PI / 2; brake.position.set(0, 0.02, -0.352); group.add(brake);
+  group.userData.gunType = 'l96';
+  return group;
+}
+
 // ======================================================================
 // FP AUTO-WEAPON MESHES (v1.23a) — AK-47, MP5, UMP, MAC-10
 // ----------------------------------------------------------------------
@@ -22831,6 +22899,73 @@ function buildFPAK() {
   group.userData.cockingParts = [chargeGroup];
   group.userData.cockingOffset = 0.035;
   group.userData.gunType = 'ak47';
+  Game.camera.add(group);
+  return group;
+}
+
+// v1.335 (backlog D.63, Michael: A, batch 2): the M249, a battery light machine gun drawn at the AK's scale (about
+// ×0.67): a long receiver under a feed cover with the rear sight at its back, a pistol grip and trigger guard, a
+// solid stock, a ribbed handguard ahead of the box, a heat shield over the barrel, a front post on a tall block near
+// the orange tip, a bipod folded under the barrel, the olive box of BBs hung under the left of the receiver with a
+// short belt running up into its feed, and a charging handle on the right (what racks a new box).
+function buildFPM249() {
+  const group = new THREE.Group();
+  const black = new THREE.MeshStandardMaterial({ color: 0x1b1c1d, roughness: 0.55, metalness: 0.3 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x2a2b2c, roughness: 0.4, metalness: 0.6 });
+  const olive = new THREE.MeshStandardMaterial({ color: 0x4b5226, roughness: 0.8 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.7 });
+  const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (geo, mat, x, y, z, name, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; parent.add(m); return m; };
+  const tube = (r, len, mat, x, y, z, name) => { const m = add(new THREE.CylinderGeometry(r, r, len, 10), mat, x, y, z, name); m.rotation.x = Math.PI / 2; return m; };
+  // the receiver and the feed cover on it, the rear sight's two ears at the cover's back
+  add(new THREE.BoxGeometry(0.046, 0.056, 0.20), black, 0, 0.010, -0.06, 'receiver');
+  add(new THREE.BoxGeometry(0.044, 0.016, 0.12), black, 0, 0.046, -0.07, 'feedcover');
+  add(new THREE.BoxGeometry(0.004, 0.006, 0.050), steel, 0.023, 0.046, -0.07);   // the cover's hinge line
+  const rs = add(new THREE.BoxGeometry(0.020, 0.010, 0.014), black, 0, 0.059, -0.02); rs.userData.ironSight = true;
+  for (const sx of [-0.0065, 0.0065]) add(new THREE.BoxGeometry(0.007, 0.010, 0.006), black, sx, 0.069, -0.02).userData.ironSight = true;
+  // the handguard ahead of the box, its ribs, and the heat shield over the barrel
+  add(new THREE.BoxGeometry(0.050, 0.036, 0.10), black, 0, 0.000, -0.21, 'handguard');
+  for (let i = 0; i < 4; i++) add(new THREE.BoxGeometry(0.052, 0.004, 0.006), steel, 0, -0.019, -0.175 - i * 0.022);
+  tube(0.010, 0.29, steel, 0, 0.022, -0.305, 'barrel');
+  add(new THREE.BoxGeometry(0.030, 0.012, 0.11), black, 0, 0.036, -0.215, 'heatshield');
+  tube(0.007, 0.10, steel, 0, 0.004, -0.31, 'gastube');
+  // the front sight: a tall block on the barrel and its post (the tip at y 0.071)
+  add(new THREE.BoxGeometry(0.014, 0.028, 0.016), black, 0, 0.044, -0.40);
+  const post = add(new THREE.BoxGeometry(0.004, 0.014, 0.004), black, 0, 0.064, -0.40);
+  post.userData.frontSight = true;
+  tube(0.012, 0.024, orangeMat, 0, 0.022, -0.462, 'tip');
+  // the bipod, folded along the gas tube: a yoke and two legs with their feet
+  add(new THREE.BoxGeometry(0.032, 0.012, 0.012), steel, 0, 0.002, -0.37);
+  for (const sx of [-0.011, 0.011]) {
+    tube(0.004, 0.12, steel, sx, -0.006, -0.31);
+    add(new THREE.BoxGeometry(0.008, 0.008, 0.010), black, sx, -0.008, -0.248);
+  }
+  // the box of BBs under the left of the receiver, its lid and the short belt up into the feed
+  add(new THREE.BoxGeometry(0.052, 0.090, 0.082), olive, -0.012, -0.060, -0.085, 'mag');
+  add(new THREE.BoxGeometry(0.054, 0.006, 0.084), black, -0.012, -0.016, -0.085);
+  for (let i = 0; i < 3; i++) add(new THREE.CylinderGeometry(0.003, 0.003, 0.010, 6), brass, -0.027, 0.000 + i * 0.008, -0.085).rotation.z = Math.PI / 2;
+  add(new THREE.BoxGeometry(0.004, 0.024, 0.014), black, -0.025, 0.006, -0.085);   // the feed port's lip
+  // the pistol grip, the trigger guard and trigger
+  const grip = add(new THREE.BoxGeometry(0.032, 0.07, 0.03), black, 0, -0.05, 0.03, 'grip'); grip.rotation.x = -0.25;
+  add(new THREE.BoxGeometry(0.012, 0.016, 0.004), black, 0, -0.026, -0.030);
+  add(new THREE.BoxGeometry(0.012, 0.004, 0.050), black, 0, -0.033, -0.005);
+  const trig = add(new THREE.BoxGeometry(0.006, 0.016, 0.005), steel, 0, -0.022, -0.010, 'trigger'); trig.rotation.x = 0.2;
+  // the solid stock, its toe and the butt pad
+  add(new THREE.BoxGeometry(0.036, 0.050, 0.12), black, 0, 0.004, 0.10, 'stock');
+  add(new THREE.BoxGeometry(0.032, 0.030, 0.08), black, 0, -0.030, 0.12);
+  add(new THREE.BoxGeometry(0.038, 0.078, 0.012), black, 0, -0.006, 0.166, 'buttpad');
+  // the charging handle on the right
+  const charge = new THREE.Group();
+  add(new THREE.BoxGeometry(0.030, 0.012, 0.018), steel, 0.030, 0.020, 0, null, charge);
+  charge.position.set(0, 0, -0.10);
+  charge.userData.baseZ = charge.position.z;
+  group.add(charge);
+  group.position.set(0.13, -0.20, -0.31);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [charge];
+  group.userData.cockingOffset = 0.04;
+  group.userData.gunType = 'm249';
   Game.camera.add(group);
   return group;
 }
@@ -23469,6 +23604,8 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
+  else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
+  else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -23497,6 +23634,8 @@ const FP_HANDS = {
   ar:      { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },
   sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  l96:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.336: the sniper's stock, so its hands
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
   ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
@@ -23515,6 +23654,7 @@ const FP_HANDS = {
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
+  m249:    { r: { c: [0, -0.050, 0.030], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.000, -0.21], hw: 0.025, hh: 0.018 }, underHand: true },   // v1.335: the AK's grip, the handguard ahead of the box
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
@@ -23711,6 +23851,7 @@ const FP_GUN_MOUNT = {
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
+  l96:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.336: the sniper's
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
   mp5:     { barrelY: 0.010, sideX: 0.016, railZ: -0.16,  railLen: 0.07,  underY: -0.010, sightY: 0.030, sightZ: -0.05,  sightScale: 0.95 },
   ump:     { barrelY: 0.012, sideX: 0.015, railZ: -0.155, railLen: 0.06,  underY: -0.006, sightY: 0.052, sightZ: -0.05,  sightScale: 0.95 },
@@ -23730,6 +23871,7 @@ const FP_GUN_MOUNT = {
   erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
   burst:   { barrelY: 0.035, sideX: 0.028, railZ: -0.185, railLen: 0.10,  underY: 0.010, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.327: rails outside the round handguard
   semishotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.328: the shotgun's
+  m249:    { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.335: the optic on the feed cover
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -24391,6 +24533,8 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
+  else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
+  else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
@@ -28053,6 +28197,8 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_erifle',   name: 'Spare 30-rd Electric Rifle Mag' },
     { refId: 'spare_mag_burst',    name: 'Spare 90-rd Burst Rifle Mag' },   // v1.327
     { refId: 'spare_mag_semishotgun', name: 'Spare 60-rd Semi-Auto Shotgun Mag' },   // v1.328
+    { refId: 'spare_mag_m249',    name: 'Spare 800-rd M249 Box' },   // v1.335
+    { refId: 'spare_mag_l96',     name: 'Spare 10-rd L96 Mag' },   // v1.336
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -28331,8 +28477,8 @@ function renderBBsTab(c, between) {
 const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol'] },   // v1.326: the electrics after their spring kin
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'semishotgun'] },   // v1.328
-  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'sniper'] },   // v1.325: the FAMAS by the AR
-  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'mac10', 'ak47'] },   // v1.250: the cheap clear ones first
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'mac10', 'ak47', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last
 ];
 function gunKind(gt) {
   const k = GUN_KINDS.find(k => k.guns.includes(gt));
@@ -30509,6 +30655,14 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.085, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
+    } else if (gunType === 'l96') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle
+      hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
+      hipRotY = 0.10; hipRotX = -0.05;
+    } else if (gunType === 'm249') {   // v1.335: the AK's hold; aimed, the front post's tip (y 0.071) in the rear notch
+      hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
+      adsPos  = { x: 0.0,  y: -0.071, z: -0.28 };
+      hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'ak47') {
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.07, z: -0.28 };
@@ -30635,7 +30789,7 @@ function updateHeldMesh(dt) {
       if (part.userData && typeof part.userData.baseZ === 'number') {
         part.position.z = part.userData.baseZ + offset;
         // Sniper bolt: slight upward bob mid-pull (suggests rotation-then-pull motion)
-        if (gunType === 'sniper' && typeof part.userData.baseY === 'number') {
+        if ((gunType === 'sniper' || gunType === 'l96') && typeof part.userData.baseY === 'number') {   // v1.336: and the L96's
           const bob = Math.sin(cockAmt * Math.PI) * 0.012;
           part.position.y = part.userData.baseY + bob;
         }
@@ -31046,6 +31200,8 @@ const RETICLE_SPECS = {
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
+  m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
+  l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }

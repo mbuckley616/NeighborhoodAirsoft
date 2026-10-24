@@ -13994,3 +13994,60 @@ picker, but eye pro, armor and shoes sat in a separate WORN GEAR section with "N
 ### Still open
 - **For a playtest:** at 1280×720 the list runs past the bottom of the paper and the card scrolls, as it did with
   the old WORN GEAR section. Whether nine rows want to be shorter (or the worn five in a second column) is for a look.
+
+## v1.335 — The M249, a light machine gun
+Backlog D.63, batch 2 (Michael: A, batches of four to six). Batch 1 was the FAMAS, the electrics, the Burst Rifle and
+the Semi-Auto Shotgun (v1.325-v1.328); his note also asks for LMGs, one or two more snipers and more SMGs, and this is
+batch 2's first gun.
+- **The gun.** The M249, $320, last under AUTOMATICS on airsoft.com and the workbench: a battery light machine gun
+  with an olive box of 800 BBs hung under the left of the receiver, a short belt running up into its feed, a bipod
+  folded under the barrel, a heat shield, a feed cover with the rear sight at its back and a front post on a tall
+  block by the orange tip. Its own first-person model, with both hands on it (the AK's grip, the off hand under the
+  handguard ahead of the box), and a blocky one for the Loadout kid and your own body.
+- **How it shoots.** Full auto at 12.5 BBs a second (the AK's 10) with a BB that flies as straight and nearly as fast
+  (52 m/s, the AK's 55), a little wider from the hip. The trade is the weight: 15 lb, the heaviest gun, and you walk
+  at the sniper's 0.75, the slowest of any. A new box takes a 1 s rack of its charging handle (the AK's 0.6 s).
+- **Its box.** 800 BBs, a 1,500-BB box for $55, and a spare 800 box for $35 (4.5 lb in a slot). Slots, the
+  workbench's rails, optic and under-barrel slot work as on the AK.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended** (the batch suite):
+  - AUTOMATICS lists ten guns, the M249 last, with its picture; its page sells it for $320 and puts it in your
+    hands, and says full-auto and "Very heavy, slowest".
+  - Its walk (0.75) is the slowest of all 22 guns, its 15 lb the heaviest (the next is the sniper's 10), its BB 52 m/s.
+  - In a match: its own model, 800 in the box, both hands on it; aimed, the front post's tip is 0.09° off the
+    reticle; held down 2 s it fires 25 BBs.
+- **`gun-parts`:** the M249's 54 parts all join the gun. The suites that count the guns go from 21 to 22
+  (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`, `shop-gun-kinds`, `shop-pics`, `under-parts`).
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid`, `under-parts`, `loadout-gear` and `smoke`, each alone. `fp-hands` crashed its browser tab once run
+  beside `gun-electric`, and passed alone.
+### Still open
+- **For a playtest:** whether 12.5 a second from 800 BBs is worth the slowest walk, or whether it wants to be slower
+  still to aim. Nothing in the game yet rewards lying down with its bipod (there is no prone); the bipod is only
+  folded. Batch 2 goes on with a second sniper and the SMGs.
+
+## v1.336 — The L96, a second sniper
+Backlog D.63, batch 2: Michael's note asks for "1 or 2 other snipers". The Spring Sniper Rifle was the only one.
+- **The gun.** The L96, $190, under RIFLES after the Spring Sniper Rifle: an Accuracy International-style bolt gun in
+  olive with a black cheek riser on the comb, a spacer behind the butt pad, a short box mag ahead of the trigger guard
+  and a muzzle brake behind the orange tip. It is built on the spring sniper's action, barrel, bolt and sights, so
+  your hands and the aimed picture are the sniper's; the Loadout kid holds the sniper's blocky rifle.
+- **How it shoots.** A heavier spring: its BB leaves at 85 m/s (the sniper's 75), starts tighter (0.10, 0.12), flies
+  straight for 30 m (25) before it wobbles, and wobbles less when it does. The price is the bolt, 1.3 s to work
+  (1.1), a 10-round mag (15; a 20-round one for $22, spares $8) and 11 lb, a pound over the sniper.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:** RIFLES ends Spring Sniper Rifle · L96, with its picture; $190 from its
+  page puts it in your hands. Against the sniper's spec: faster, tighter, straight further, a slower bolt, both semi
+  bolt guns. In a match: its own model, 10 in the mag, both hands on it, the front post on the reticle aimed; a pull
+  fires one BB and leaves it wanting its bolt.
+- The suites that count the guns go from 22 to 23, RIFLES from five to six.
+- **Its sights:** first built at the sniper's aimed height, the L96's post sat 2.5° under the reticle (2.47-2.54°
+  measured). The sniper's own aimed height is the same and was left alone: its post moved to the muzzle in v1.225
+  and its aimed height did not follow, so the Spring Sniper Rifle's irons aim about 2.5° low too. The L96 has its
+  own aimed height, and its post is 0.09° off.
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid`, `under-parts` and `smoke`. `gun-electric` and `fp-hands` each crashed a browser tab once when run
+  beside other suites, and passed alone.
+### Still open
+- **For a playtest:** whether one more second of reach is worth a slower bolt and ten to a mag. The Spring Sniper
+  Rifle's irons aiming 2.5° low (above) is worth a look; it is filed under Found in play. The SMGs are next in batch 2.
