@@ -13994,3 +13994,34 @@ picker, but eye pro, armor and shoes sat in a separate WORN GEAR section with "N
 ### Still open
 - **For a playtest:** at 1280×720 the list runs past the bottom of the paper and the card scrolls, as it did with
   the old WORN GEAR section. Whether nine rows want to be shorter (or the worn five in a second column) is for a look.
+
+## v1.335 — The M249, a light machine gun
+Backlog D.63, batch 2 (Michael: A, batches of four to six). Batch 1 was the FAMAS, the electrics, the Burst Rifle and
+the Semi-Auto Shotgun (v1.325-v1.328); his note also asks for LMGs, one or two more snipers and more SMGs, and this is
+batch 2's first gun.
+- **The gun.** The M249, $320, last under AUTOMATICS on airsoft.com and the workbench: a battery light machine gun
+  with an olive box of 800 BBs hung under the left of the receiver, a short belt running up into its feed, a bipod
+  folded under the barrel, a heat shield, a feed cover with the rear sight at its back and a front post on a tall
+  block by the orange tip. Its own first-person model, with both hands on it (the AK's grip, the off hand under the
+  handguard ahead of the box), and a blocky one for the Loadout kid and your own body.
+- **How it shoots.** Full auto at 12.5 BBs a second (the AK's 10) with a BB that flies as straight and nearly as fast
+  (52 m/s, the AK's 55), a little wider from the hip. The trade is the weight: 15 lb, the heaviest gun, and you walk
+  at the sniper's 0.75, the slowest of any. A new box takes a 1 s rack of its charging handle (the AK's 0.6 s).
+- **Its box.** 800 BBs, a 1,500-BB box for $55, and a spare 800 box for $35 (4.5 lb in a slot). Slots, the
+  workbench's rails, optic and under-barrel slot work as on the AK.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended** (the batch suite):
+  - AUTOMATICS lists ten guns, the M249 last, with its picture; its page sells it for $320 and puts it in your
+    hands, and says full-auto and "Very heavy, slowest".
+  - Its walk (0.75) is the slowest of all 22 guns, its 15 lb the heaviest (the next is the sniper's 10), its BB 52 m/s.
+  - In a match: its own model, 800 in the box, both hands on it; aimed, the front post's tip is 0.09° off the
+    reticle; held down 2 s it fires 25 BBs.
+- **`gun-parts`:** the M249's 54 parts all join the gun. The suites that count the guns go from 21 to 22
+  (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`, `shop-gun-kinds`, `shop-pics`, `under-parts`).
+- **These suites pass:** `gun-electric`, `gun-parts`, `fp-hands`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`,
+  `loadout-kid`, `under-parts`, `loadout-gear` and `smoke`, each alone. `fp-hands` crashed its browser tab once run
+  beside `gun-electric`, and passed alone.
+### Still open
+- **For a playtest:** whether 12.5 a second from 800 BBs is worth the slowest walk, or whether it wants to be slower
+  still to aim. Nothing in the game yet rewards lying down with its bipod (there is no prone); the bipod is only
+  folded. Batch 2 goes on with a second sniper and the SMGs.
