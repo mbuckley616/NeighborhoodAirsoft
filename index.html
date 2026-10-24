@@ -1344,6 +1344,7 @@
     gap: 8px;
   }
   #loadoutScreen .picker-item:hover { background: rgba(255,140,66,0.2); }
+  #loadoutScreen .picker-none { color: #888; font-style: italic; padding: 6px 10px; font-size: 11px; }   /* v1.334 (D.65) */
   /* v1.28g: Worn Gear (eyewear/armor/shoes) section in the closet */
   #loadoutScreen .lo-worn { margin-top: 14px; border-top: 1px solid var(--ui-border); padding-top: 12px; }
   #loadoutScreen #loWornList { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -2414,6 +2415,7 @@
   #loadoutScreen .nb-paper .lo-weight-row { height: var(--nb-rule); align-items: baseline; }
   #loadoutScreen .nb-paper .lo-weight-value { line-height: 18px !important; }
   #loadoutScreen .nb-paper .picker-item { font-size: 15px; white-space: nowrap; }
+  #loadoutScreen .nb-paper .picker-none { font-size: 15px; color: var(--nb-pencil); font-style: normal; padding: 0; }   /* v1.334 */
   #loadoutScreen .nb-paper .picker-item .lo-pk-icon { color: var(--nb-red) !important; }
   #loadoutScreen .nb-paper .picker-item .lo-pk-sub { color: var(--nb-pencil) !important; font-size: 14px; }
   #workbenchScreen .nb-paper :is(.wb-gun, .wb-locker-item) { align-items: flex-start; }
@@ -2594,7 +2596,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.331</div>
+  <div class="version">v1.334</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2902,7 +2904,7 @@
         <svg id="loKidLabels" viewBox="0 0 280 380"></svg>
       </div>
       <div class="loadout-col">
-        <div class="col-title">Equipment Slots (1-4)</div>
+        <div class="col-title">Your Slots</div>   <!-- v1.334 (D.65, Michael: A): every slot in one list -->
         <div id="loSlotsList"></div>
       </div>
       <div class="loadout-col">
@@ -2910,11 +2912,7 @@
         <div id="loPoolList"></div>
       </div>
     </div>
-    <div class="lo-worn">
-      <div class="col-title">Worn Gear — Eye Pro · Armor · Shoes</div>
-      <div id="loWornList"></div>
-    </div>
-    <div class="loadout-hint">Click an empty slot to equip · Click an equipped item to remove · Slot 1 is your gun (always). Buy new gear at airsoft.com.</div>
+    <div class="loadout-hint">Click any slot to see what you own that fits it · Slot 1 is your gun (always). Buy new gear at airsoft.com.</div>
   </div>
 </div>
 
@@ -24993,25 +24991,70 @@ function addWalkieParts(add, ox, oy, oz) {
   add('led', box(0.006, 0.004, 0.006), ox, oy + 0.019, oz + 0.026);             // the transmit light
 }
 let fpWalkie = null;
+// v1.333 (backlog B.16, Michael: "Looking down in game shows nothing, but the walkie talkie is visible and shows as
+// floating. Can we just add the whole body mesh to the first person view?"): your own kid under the camera, your look,
+// your gear and the walkie on its belt: legs, shoes, torso and what is worn on them. The head (with the face, hair,
+// hat and eye pro) and the arms are hidden (the hands holding the gun are the view's own), and so is the kid's gun.
+// It casts no shadow (a headless one would follow you round). `fpWalkie` is the root, which follows your feet and
+// yaw, not the camera's pitch; userData.walkie is the walkie on the body's belt, userData.kid the body.
 function buildFPWalkie() {
-  const hip = new THREE.Group();          // follows the player's feet and yaw, not the camera's pitch
-  const w = new THREE.Group();
-  const b = {}; const add = _propAdder(b);
-  addWalkieParts(add, 0, 0, 0);
-  _propMerge(w, b, walkieMats());
-  w.rotation.set(0.25, Math.PI - 0.35, 0);   // faces forward (the view looks down −z), tipped out from the hip
-  hip.add(w);
-  hip.userData.walkie = w;
+  const hip = new THREE.Group();
+  hip.userData.sig = '';
+  setFPBody(hip);
   return hip;
 }
-// Each step after the camera is placed: the hip sits under the eye and swings with the yaw. The clip is at about 57%
-// of the eye height down (belt 0.57 under eyes 1.27 on a kid), left of centre and a hand forward.
-function updateFPWalkie(bobY) {
-  if (!fpWalkie) return;
-  const P = Game.player;
-  fpWalkie.position.set(P.pos.x, P.pos.y + P.eyeOffset + (bobY || 0), P.pos.z);
+// (Re)builds the body when your look or gear has changed since the last match.
+function setFPBody(root) {
+  const look = Object.assign({}, Game.persist.look), gk = loadoutKidGearKeys();
+  const sig = JSON.stringify([look, gk]);
+  if (root.userData.sig === sig && root.userData.kid) return;
+  if (root.userData.kid) root.remove(root.userData.kid.group);
+  const kid = createKid(look, 'pistol'), gear = buildKidGear(kid, gk), po = kid.pose;
+  for (const m of [kid.head, po.neck, po.hair, po.gunGroup, po.rigR.shoulder, po.rigL.shoulder]) if (m) m.visible = false;
+  for (const ex of po.headExtras) ex.mesh.visible = false;
+  kid.group.traverse(m => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = true; } });
+  root.add(kid.group);
+  root.userData.kid = kid;
+  root.userData.walkie = kid.group.children.find(c => c.userData.kidGear === 'walkie');
+  root.userData.sig = sig;
+  root.userData.phase = 0; root.userData.vf = 0; root.userData.vs = 0; root.userData.last = null;
+}
+// Each step after the camera is placed: the body stands under the eye, 12 cm back (32 cm looking straight down),
+// and turns with the yaw. Its
+// eyes (1.27 m up the average kid) are held at the camera: the kid's height is stretched to your eye height
+// (1.35 m standing), and on a crouch or a slide it crouches as the kids do and squashes the rest of the way, so the
+// shoes stay on the ground. Its legs walk with your real speed, in the kids' planted-foot gait (setKidWalk).
+const FP_BODY_BACK = 0.12, FP_BODY_BACK_DOWN = 0.2, FP_BODY_EYE = 1.27;
+function updateFPWalkie(bobY, dt) {
+  if (!fpWalkie || !fpWalkie.userData.kid) return;
+  const P = Game.player, U = fpWalkie.userData, kid = U.kid, g = kid.group;
+  const eye = P.eyeOffset, stand = P.eyeOffsetStand || 1.35, low = P.eyeOffsetCrouch || 0.8;
+  const crouch = Math.max(0, Math.min(1, (stand - eye) / Math.max(0.1, stand - low)));
+  const drop = setKidCrouch(kid, crouch);
+  // the walk, from this step's move in your own frame (forward along your view, sideways to your left)
+  let vf = 0, vs = 0;
+  if (U.last && dt > 0) {
+    const dx = P.pos.x - U.last.x, dz = P.pos.z - U.last.z;
+    if (Math.hypot(dx, dz) < 1) {   // not a teleport (a respawn, the walk home's start)
+      const cy = Math.cos(P.yaw), sy = Math.sin(P.yaw);
+      vf = (-dx * sy - dz * cy) / dt; vs = -(dx * cy - dz * sy) / dt;
+    }
+  }
+  U.last = { x: P.pos.x, z: P.pos.z };
+  const ease = dt > 0 ? Math.min(1, dt * 8) : 1;
+  U.vf += (vf - U.vf) * ease; U.vs += (vs - U.vs) * ease;
+  const v = Math.hypot(U.vf, U.vs);
+  if (P.onGround !== false && v > 0.05) {
+    const reach = (kid.scaleXZ || 1) * (kid.pose.legL.scale.y / (kid.pose.base.legScaleY || 1));
+    U.phase += 2 * Math.PI * kidGaitCadence(v, reach) * (dt || 0);
+    setKidWalk(kid, U.phase, Math.min(1, v / 3), U.vf, U.vs);
+  }
+  g.scale.y = eye / (FP_BODY_EYE - drop);
+  fpWalkie.position.set(P.pos.x, P.pos.y + (bobY || 0), P.pos.z);
   fpWalkie.rotation.set(0, P.yaw, 0);
-  fpWalkie.userData.walkie.position.set(-0.17, -P.eyeOffset * 0.57, -0.1);
+  // the root's +z is behind you; looking down, the body slides back to show the feet past the belly
+  g.position.set(0, 0, FP_BODY_BACK + FP_BODY_BACK_DOWN * Math.max(0, -Math.sin(P.pitch || 0)));
+  g.rotation.set(0, Math.PI, 0);        // the kid faces +z; the view looks down -z
 }
 
 function forfeitScenario() {
@@ -26541,8 +26584,10 @@ function startScenario(built) {
   // Move camera to scenario scene
   built.scene.add(Game.camera);
   if (!fpWalkie) fpWalkie = buildFPWalkie();   // v1.149: the walkie at your hip lives in the match's scene (D.10)
+  else setFPBody(fpWalkie);   // v1.333 (B.16): your body, rebuilt if your look or gear changed
+  fpWalkie.userData.last = null;
   built.scene.add(fpWalkie);
-  updateFPWalkie(0);
+  updateFPWalkie(0, 0);
   showPauseHint();
   // v1.189: capture the flag: the two flags and their bases, in the scene the match is played in
   Game.scenario.ctf = Game.scenario.ctfDef ? ctfSetup(Game.scenario.ctfDef, built) : null;
@@ -27753,6 +27798,41 @@ function closeLoadout() {
   showPauseHint();
 }
 
+// v1.334 (D.65): the places on your kid, for the one list. worn() is what is on it now ({ name, detail } or null),
+// fits() what else you own that goes there (each with its wear()), takeOff() empties it.
+const LOADOUT_WORN_SLOTS = [
+  { key: 'eyes', letter: 'E', label: 'Eyes', icon: '◓', sells: 'safety glasses, goggles and a mesh mask',
+    worn: () => { const id = Game.persist.equipped.eyewear; return id && id !== 'none' && EYEWEAR[id] ? { name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp) } : null; },
+    fits: () => Object.keys(EYEWEAR).filter(id => id !== 'none' && Game.persist.ownedEquipment.eyewear[id] && Game.persist.equipped.eyewear !== id)
+      .map(id => ({ name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp), wear: () => equipEyewear(id) })),
+    takeOff: () => equipEyewear('none') },
+  ...[['chest', 'C', 'Chest', 'a foam chest rig and a plate-carrier vest'], ['arms', 'A', 'Arms', 'elbow pads'], ['legs', 'K', 'Knees', 'knee pads']]
+    .map(([zone, letter, label, sells]) => ({ key: zone, letter, label, icon: '⛊', sells,
+      worn: () => { const id = (Game.persist.equipped.armor || {})[zone]; return id && ARMOR[id] ? { name: ARMOR[id].name, detail: wornHits(ARMOR[id].hp) } : null; },
+      fits: () => Object.keys(ARMOR).filter(id => ARMOR[id].zone === zone && Game.persist.ownedEquipment.armor[id] && (Game.persist.equipped.armor || {})[zone] !== id)
+        .map(id => ({ name: ARMOR[id].name, detail: wornHits(ARMOR[id].hp), wear: () => { Game.persist.equipped.armor[zone] = id; } })),
+      takeOff: () => { delete Game.persist.equipped.armor[zone]; } })),
+  // your sneakers are always on, so the feet are never empty: other pairs swap with them
+  { key: 'feet', letter: 'F', label: 'Feet', icon: '👟', sells: 'trail runners, track spikes and cross-trainers',
+    worn: () => { const id = Game.persist.equipped.shoes || 'none'; return { name: id === 'none' || !SHOES[id] ? 'Sneakers' : SHOES[id].name, detail: '' }; },
+    fits: () => Object.keys(SHOES).filter(id => (id === 'none' || Game.persist.ownedEquipment.shoes[id]) && (Game.persist.equipped.shoes || 'none') !== id)
+      .map(id => ({ name: id === 'none' ? 'Sneakers' : SHOES[id].name, detail: id === 'none' ? 'your own pair' : '', wear: () => equipShoes(id) })),
+    takeOff: null },
+];
+function wornHits(hp) { return hp ? `+${hp} hit${hp > 1 ? 's' : ''}` : ''; }
+function loadoutPickerItem(picker, icon, name, detail, onClick) {
+  const pi = document.createElement('div');
+  pi.className = 'picker-item';
+  pi.innerHTML = `<span class="lo-pk-icon" style="color:var(--ui-accent)">${icon}</span> ${name} <span class="lo-pk-sub" style="color:#888; margin-left:auto">${detail || ''}</span>`;
+  pi.addEventListener('click', () => { onClick(); loadoutPickerSlot = -1; renderLoadoutManager(); });
+  picker.appendChild(pi);
+}
+function loadoutPickerNone(picker, sells, more) {
+  const d = document.createElement('div');
+  d.className = 'picker-none';
+  d.textContent = (more ? 'Nothing else you own fits this' : 'Nothing you own fits this') + ` — airsoft.com sells ${sells}.`;
+  picker.appendChild(d);
+}
 function renderLoadoutManager() {
   const unlocked = getUnlockedSlotCount();
   const slotsList = document.getElementById('loSlotsList');
@@ -27779,23 +27859,16 @@ function renderLoadoutManager() {
         renderLoadoutManager();
       });
     } else if (!slot) {
-      div.innerHTML = `${keyEl}<span class="lo-slot-icon">+</span><div class="lo-slot-info"><div class="lo-slot-name">Empty</div><div class="lo-slot-desc">Click to equip</div></div>`;
+      div.innerHTML = `${keyEl}<span class="lo-slot-icon">+</span><div class="lo-slot-info"><div class="lo-slot-name">Empty slot</div><div class="lo-slot-desc">Click to see what fits</div></div>`;   // v1.334 (D.65)
       div.addEventListener('click', () => {
         loadoutPickerSlot = (loadoutPickerSlot === i) ? -1 : i;
         renderLoadoutManager();
       });
     } else {
-      div.innerHTML = `${keyEl}<span class="lo-slot-icon">${desc.icon}</span><div class="lo-slot-info"><div class="lo-slot-name">${desc.name}</div><div class="lo-slot-desc">${desc.desc}</div></div>`;
-      div.title = 'Click to unequip';
+      // v1.334 (D.65, Michael: A): a full slot opens its picker too, with "Take it out" first (it used to empty on a click)
+      div.innerHTML = `${keyEl}<span class="lo-slot-icon">${desc.icon}</span><div class="lo-slot-info"><div class="lo-slot-name">${desc.name}</div><div class="lo-slot-desc">${desc.desc} · click to change</div></div>`;
       div.addEventListener('click', () => {
-        // v1.50: if unequipping a speed loader, return its remaining BBs to the bag.
-        const slotData = Game.persist.loadoutSlots[i];
-        if (slotData && slotData.kind === 'speed_loader') {
-          const sl = Game.persist.speedLoaders.find(s => s.id === slotData.refId);
-          returnSpeedLoaderToBag(sl);
-        }
-        Game.persist.loadoutSlots[i] = null;
-        loadoutPickerSlot = -1;
+        loadoutPickerSlot = (loadoutPickerSlot === i) ? -1 : i;
         renderLoadoutManager();
       });
     }
@@ -27831,34 +27904,54 @@ function renderLoadoutManager() {
       slotsList.appendChild(picker);
     }
 
-    // Picker for empty equipment slots
-    if (loadoutPickerSlot === i && !slot && !locked && !isGun) {
+    // Picker for equipment slots 2-4 (v1.334: full ones too, to take out or swap)
+    if (loadoutPickerSlot === i && !locked && !isGun) {
       const picker = document.createElement('div');
       picker.className = 'picker';
       const avail = getAvailableSlotItems();
-      if (avail.length === 0) {
-        const empty = document.createElement('div');
-        empty.style.color = '#888';
-        empty.style.fontStyle = 'italic';
-        empty.style.padding = '6px 10px';
-        empty.style.fontSize = '11px';
-        empty.textContent = 'No equipment available — buy some at airsoft.com.';
-        picker.appendChild(empty);
-      } else {
-        for (const item of avail) {
-          const pi = document.createElement('div');
-          pi.className = 'picker-item';
-          pi.innerHTML = `<span style="color:var(--ui-accent)">${item.icon}</span> ${item.name} <span style="color:#888; margin-left:auto">${item.detail}</span>`;
-          pi.addEventListener('click', () => {
-            Game.persist.loadoutSlots[i] = item.slotData;
-            loadoutPickerSlot = -1;
-            renderLoadoutManager();
-          });
-          picker.appendChild(pi);
+      const takeOut = () => {
+        // v1.50: if unequipping a speed loader, return its remaining BBs to the bag.
+        const slotData = Game.persist.loadoutSlots[i];
+        if (slotData && slotData.kind === 'speed_loader') {
+          const sl = Game.persist.speedLoaders.find(s => s.id === slotData.refId);
+          returnSpeedLoaderToBag(sl);
         }
+        Game.persist.loadoutSlots[i] = null;
+      };
+      if (slot) loadoutPickerItem(picker, '×', 'Take it out', 'leaves the slot empty', () => takeOut());
+      if (avail.length === 0 && !slot) loadoutPickerNone(picker, 'spare mags and speed loaders');
+      for (const item of avail) {
+        loadoutPickerItem(picker, item.icon, item.name, item.detail, () => { takeOut(); Game.persist.loadoutSlots[i] = item.slotData; });
       }
       slotsList.appendChild(picker);
     }
+  }
+
+  // v1.334 (backlog D.65, Michael: A, "One list of every slot"): what you wear is in the same list, a row for each
+  // place on your kid (eyes, chest, arms, knees, feet) under the four numbered slots. An empty one says "Empty slot";
+  // a click on any row lists what you own that fits it (and "Take it off" when something is on), or says what
+  // airsoft.com sells for it. The old WORN GEAR section below the columns is gone into it.
+  for (const W of LOADOUT_WORN_SLOTS) {
+    const on = W.worn();
+    const div = document.createElement('div');
+    div.className = 'lo-slot worn' + (on ? '' : ' empty');
+    div.dataset.worn = W.key;
+    div.innerHTML = `<span class="lo-slot-key">${W.letter}</span><span class="lo-slot-icon">${on ? W.icon : '+'}</span><div class="lo-slot-info">` +
+      `<div class="lo-slot-name">${on ? on.name : 'Empty slot'}</div><div class="lo-slot-desc">${W.label}${on && on.detail ? ' · ' + on.detail : ''} · click to ${on ? 'change' : 'see what fits'}</div></div>`;
+    div.addEventListener('click', () => {
+      loadoutPickerSlot = (loadoutPickerSlot === W.key) ? -1 : W.key;
+      renderLoadoutManager();
+    });
+    slotsList.appendChild(div);
+    if (loadoutPickerSlot !== W.key) continue;
+    const picker = document.createElement('div');
+    picker.className = 'picker';
+    const fits = W.fits();
+    if (on && W.takeOff) loadoutPickerItem(picker, '×', 'Take it off', 'leaves the slot empty', W.takeOff);
+    for (const f of fits) loadoutPickerItem(picker, W.icon, f.name, f.detail, f.wear);
+    if (!fits.length && !on) loadoutPickerNone(picker, W.sells);
+    else if (!fits.length) loadoutPickerNone(picker, W.sells, true);
+    slotsList.appendChild(picker);
   }
 
   // Available items pool (reference)
@@ -27890,7 +27983,6 @@ function renderLoadoutManager() {
     }
   }
 
-  renderClosetWornGear();
   renderLoadoutWeight();
   // v1.132: a gun swap re-builds the kid (the gun is in its hands); a gear change only re-labels
   // v1.133: a gear change re-builds it too, since the kid now wears the gear
@@ -27921,85 +28013,6 @@ function renderLoadoutWeight() {
   noteEl.textContent = pen > 0
     ? `Gun ${w.gunW.toFixed(1)} lb + gear ${w.gearW.toFixed(1)} lb. Gear slows you ${pen}% (on top of your gun's handling).`
     : `Gun ${w.gunW.toFixed(1)} lb. No extra gear weight — full speed.`;
-}
-
-// v1.28g: Worn Gear (eyewear / armor / shoes) management from the closet — the
-// same equip actions the shop's Equipment tab offers, but here you manage only
-// gear you OWN (buying still happens at airsoft.com). Eyewear & shoes are
-// single-select; armor is one piece per body zone (click equipped to remove).
-function renderClosetWornGear() {
-  const host = document.getElementById('loWornList');
-  if (!host) return;
-  host.innerHTML = '';
-
-  const mkGroup = (label) => {
-    const g = document.createElement('div');
-    g.className = 'lo-worn-group';
-    const l = document.createElement('div');
-    l.className = 'lo-worn-label';
-    l.textContent = label;
-    g.appendChild(l);
-    host.appendChild(g);
-    return g;
-  };
-  const mkItem = (group, { icon, name, detail, equipped, onClick }) => {
-    const it = document.createElement('div');
-    it.className = 'lo-worn-item' + (equipped ? ' equipped' : '');
-    it.innerHTML = `<span class="lo-worn-icon">${icon}</span><span>${name}</span>` +
-      `<span class="lo-worn-tag">${equipped ? 'EQUIPPED' : (detail || '')}</span>`;
-    it.addEventListener('click', () => { onClick(); renderLoadoutManager(); });
-    group.appendChild(it);
-  };
-
-  // --- Eye Pro (single-select; 'none' always available) ---
-  const eg = mkGroup('Eye Pro');
-  const curEye = Game.persist.equipped.eyewear || 'none';
-  let anyEye = false;
-  for (const id in EYEWEAR) {
-    const owned = id === 'none' || !!Game.persist.ownedEquipment.eyewear[id];
-    if (!owned) continue;
-    anyEye = true;
-    const e = EYEWEAR[id];
-    mkItem(eg, {
-      icon: '◓', name: e.name,
-      detail: e.hp ? `+${e.hp} hit${e.hp>1?'s':''}` : '',
-      equipped: curEye === id,
-      onClick: () => equipEyewear(id),
-    });
-  }
-  if (!anyEye) { const d = document.createElement('div'); d.className='lo-worn-empty'; d.textContent='No eye pro owned.'; eg.appendChild(d); }
-
-  // --- Body Armor (one piece per zone; click equipped to remove) ---
-  const ag = mkGroup('Body Armor');
-  let anyArmor = false;
-  for (const id in ARMOR) {
-    if (!Game.persist.ownedEquipment.armor[id]) continue;
-    anyArmor = true;
-    const a = ARMOR[id];
-    const equipped = Game.persist.equipped.armor[a.zone] === id;
-    mkItem(ag, {
-      icon: '⛊', name: a.name,
-      detail: `+${a.hp} ${a.zone}`,
-      equipped,
-      onClick: () => toggleArmor(id),
-    });
-  }
-  if (!anyArmor) { const d = document.createElement('div'); d.className='lo-worn-empty'; d.textContent='No armor owned.'; ag.appendChild(d); }
-
-  // --- Shoes (single-select; 'none' always available) ---
-  const sg = mkGroup('Shoes');
-  const curShoe = Game.persist.equipped.shoes || 'none';
-  for (const id in SHOES) {
-    const owned = id === 'none' || !!Game.persist.ownedEquipment.shoes[id];
-    if (!owned) continue;
-    const s = SHOES[id];
-    mkItem(sg, {
-      icon: '👟', name: s.name,
-      detail: '',
-      equipped: curShoe === id,
-      onClick: () => equipShoes(id),
-    });
-  }
 }
 
 // Build list of available equippable items (not already in slots)
@@ -29509,7 +29522,7 @@ function updatePlayer(dt) {
     Game.camera.rotation.y = Game.player.yaw;
     Game.camera.rotation.x = Game.player.pitch;
     Game.camera.rotation.z = 0;
-    updateFPWalkie(0);   // v1.149
+    updateFPWalkie(0, dt);   // v1.149
     return;
   }
 
@@ -29753,7 +29766,7 @@ function updatePlayer(dt) {
   let roll = bobX * 0.08;
   if (Game.player.sliding) roll += 0.08;
   Game.camera.rotation.z = roll;
-  updateFPWalkie(bobY);   // v1.149
+  updateFPWalkie(bobY, dt);   // v1.149 (v1.333: the body walks)
 
   // === v1.40: AIM SWAY + VIEWMODEL BOB ===
   // One smoothed "instability" value (Game.player.sway) feeds the reticle bloom
@@ -31973,10 +31986,13 @@ function playerBackHome() {
 // can't take a flag, and an arrow at the top of the screen points to your start. Within HOME_REACH of it you are back:
 // the respawn's grace (and capture the flag's hold) starts there. Online play keeps the jump home (its guest follows
 // the host's word on where you are).
+// v1.332 (backlog B.15, Michael 23 Oct: "getting shot should leverage the new 'return to your base' system"): online
+// too. Each player walks himself home; his game says so in its ~30-a-second word (`g`), and the other game shows him
+// gun up and lets nothing tag him till he is back and his grace is gone.
 const HOME_REACH = 2.0;
 function startPlayerWalkHome(keepHits) {
   const st = Game.scenario.playerStart;
-  if (!st || Net.active) { respawnPlayerVip(keepHits); return; }
+  if (!st) { respawnPlayerVip(keepHits); return; }
   if (!keepHits) Game.player.hitsTaken = 0;
   Game.player.sliding = false;
   Game.player.adsTarget = 0;
@@ -37592,7 +37608,7 @@ function netReceive(m) {
       const p = netVec(m.p);
       if (!p || Net.phase !== 'play' || (host ? m.t !== 's' : m.t !== 'h')) return;
       if (host && (m.r | 0) < Net.kidRespawns) return;   // sent before he heard he was tagged: he is back at his start
-      Net.kidTarget = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0 };
+      Net.kidTarget = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: (m.g | 0) === 2 ? 2 : (m.g | 0) === 1 ? 1 : 0 };   // v1.332: g, walking home (2) or in his grace (1)
       if (!host && typeof m.rt === 'number' && isFinite(m.rt)) Game.scenario.roundTime = m.rt;   // the host's clock
       return;
     }
@@ -37604,7 +37620,7 @@ function netReceive(m) {
       P.hitsTaken = n;
       if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;
       playHitOnPlayer(); flashDamage();
-      if (P.hitsTaken < P.maxHits) { respawnPlayerVip(true); Game.scenario.playerRespawns = m.r | 0; }
+      if (P.hitsTaken < P.maxHits) { startPlayerWalkHome(true); Game.scenario.playerRespawns = m.r | 0; }   // v1.332 (B.15): on foot
       else updateHealthHud();
       return;
     }
@@ -37710,7 +37726,7 @@ function netStep(dt) {
   if (Net.sendT < 0) Net.sendT = 0;
   const P = Game.player;
   const m = { t: Net.role === 'host' ? 'h' : 's', p: [netR(P.pos.x), netR(P.pos.y), netR(P.pos.z)], y: netR(P.yaw), c: P.crouching ? 1 : 0,
-    r: Game.scenario.playerRespawns || 0 };
+    r: Game.scenario.playerRespawns || 0, g: P._goingHome ? 2 : P._graceT > 0 ? 1 : 0 };   // v1.332 (B.15): walking home, or in the grace
   if (Net.role === 'host') m.rt = netR(Game.scenario.roundTime || 0);
   netSend(m);
 }
@@ -37725,25 +37741,29 @@ function netSpawnShot(m, k) {
   const o = netVec(m.o), v = netVec(m.v), cd = netVec(m.cd);
   if (!o || !v || !cd || Game.mode !== 'scenario' || k.health <= 0) return;
   if (Math.hypot(o[0] - k.pos.x, o[2] - k.pos.z) > 4) return;   // a shot from where he isn't
+  if (Net.kidTarget && Net.kidTarget.g === 2) return;   // v1.332: walking home, his gun is up
   const bb = makeBB(new THREE.Vector3(...o), new THREE.Vector3(...v), 'enemy', k,
     { curveOnsetDistance: +m.co || 4, curveStrengthMax: 0 }, combatantTeam(k));
   bb.curveDir.set(...cd);
   bb.curveStrength = Math.max(0, Math.min(60, +m.cs || 0));
   Game.scenario.bbs.push(bb);
+  // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): his shot fired silently here. Now it
+  // is heard from where he is, as a kid's shot is (spawnEnemyBB); its whistle past you and its hits sounded already.
+  playShot(o[0], o[2]);
 }
 // The host's game tagged the guest's kid: a life gone and back to his start, as yours (v1.221)
+// v1.332 (B.15): he walks back himself; nothing tags him while his game says he is walking home or in his grace
 function netTagRemote(bb, c) {
-  if (c._graceT > 0) return true;
+  if (c._graceT > 0 || (Net.kidTarget && Net.kidTarget.g > 0)) return true;
   c.lives = Math.max(0, (c.lives | 0) - 1);
   if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);
   if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
   if (c.lives > 0) {
-    c._graceT = VIP_GRACE;
+    c._graceT = VIP_GRACE;   // till his word that he is walking home comes back
     Net.kidRespawns++;
-    c.pos.copy(c._netStart);
-    Net.kidTarget = { x: c.pos.x, y: c.pos.y, z: c.pos.z, yaw: Net.kidTarget ? Net.kidTarget.yaw : 0, c: 0 };
+    if (Net.kidTarget) Net.kidTarget.g = 2;   // v1.332: no jump to his start; he walks there, gun up
   } else c.health = 0;
   netSend({ t: 'tag', n: Net.opts.lives - c.lives, r: Net.kidRespawns });
   updateRosterHud();
@@ -37779,7 +37799,10 @@ function netDriveRemote(e, dt) {
   e._walkInt = (e._walkInt || 0) + (Math.min(1, e._animSpeed / 3) - (e._walkInt || 0)) * Math.min(1, dt * 6);
   const gaitV = Math.hypot(e._gaitVF, e._gaitVS);
   if (gaitV > 0.05) e._walkPhase = (e._walkPhase || 0) + 2 * Math.PI * kidGaitCadence(gaitV, e.mesh.scaleXZ || 1) * dt;
-  setKidGunHold(e.mesh, e.weapon, 1, 0);
+  // v1.332 (B.15): walking home after a tag, his gun is up in the air, as a tagged kid's
+  e._hitRaise = T.g === 2 ? Math.min(1, (e._hitRaise || 0) + dt * 4) : 0;
+  if (e._hitRaise > 0) setKidHitPose(e.mesh, e._hitRaise);
+  else setKidGunHold(e.mesh, e.weapon, 1, 0);
   setKidWalk(e.mesh, e._walkPhase || 0, e._walkInt, e._gaitVF, e._gaitVS);
   const torso = e.mesh.parts && e.mesh.parts.torso;
   if (torso) {
