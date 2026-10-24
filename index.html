@@ -1344,6 +1344,7 @@
     gap: 8px;
   }
   #loadoutScreen .picker-item:hover { background: rgba(255,140,66,0.2); }
+  #loadoutScreen .picker-none { color: #888; font-style: italic; padding: 6px 10px; font-size: 11px; }   /* v1.334 (D.65) */
   /* v1.28g: Worn Gear (eyewear/armor/shoes) section in the closet */
   #loadoutScreen .lo-worn { margin-top: 14px; border-top: 1px solid var(--ui-border); padding-top: 12px; }
   #loadoutScreen #loWornList { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -2414,6 +2415,7 @@
   #loadoutScreen .nb-paper .lo-weight-row { height: var(--nb-rule); align-items: baseline; }
   #loadoutScreen .nb-paper .lo-weight-value { line-height: 18px !important; }
   #loadoutScreen .nb-paper .picker-item { font-size: 15px; white-space: nowrap; }
+  #loadoutScreen .nb-paper .picker-none { font-size: 15px; color: var(--nb-pencil); font-style: normal; padding: 0; }   /* v1.334 */
   #loadoutScreen .nb-paper .picker-item .lo-pk-icon { color: var(--nb-red) !important; }
   #loadoutScreen .nb-paper .picker-item .lo-pk-sub { color: var(--nb-pencil) !important; font-size: 14px; }
   #workbenchScreen .nb-paper :is(.wb-gun, .wb-locker-item) { align-items: flex-start; }
@@ -2594,7 +2596,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.333</div>
+  <div class="version">v1.334</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -2902,7 +2904,7 @@
         <svg id="loKidLabels" viewBox="0 0 280 380"></svg>
       </div>
       <div class="loadout-col">
-        <div class="col-title">Equipment Slots (1-4)</div>
+        <div class="col-title">Your Slots</div>   <!-- v1.334 (D.65, Michael: A): every slot in one list -->
         <div id="loSlotsList"></div>
       </div>
       <div class="loadout-col">
@@ -2910,11 +2912,7 @@
         <div id="loPoolList"></div>
       </div>
     </div>
-    <div class="lo-worn">
-      <div class="col-title">Worn Gear — Eye Pro · Armor · Shoes</div>
-      <div id="loWornList"></div>
-    </div>
-    <div class="loadout-hint">Click an empty slot to equip · Click an equipped item to remove · Slot 1 is your gun (always). Buy new gear at airsoft.com.</div>
+    <div class="loadout-hint">Click any slot to see what you own that fits it · Slot 1 is your gun (always). Buy new gear at airsoft.com.</div>
   </div>
 </div>
 
@@ -27800,6 +27798,41 @@ function closeLoadout() {
   showPauseHint();
 }
 
+// v1.334 (D.65): the places on your kid, for the one list. worn() is what is on it now ({ name, detail } or null),
+// fits() what else you own that goes there (each with its wear()), takeOff() empties it.
+const LOADOUT_WORN_SLOTS = [
+  { key: 'eyes', letter: 'E', label: 'Eyes', icon: '◓', sells: 'safety glasses, goggles and a mesh mask',
+    worn: () => { const id = Game.persist.equipped.eyewear; return id && id !== 'none' && EYEWEAR[id] ? { name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp) } : null; },
+    fits: () => Object.keys(EYEWEAR).filter(id => id !== 'none' && Game.persist.ownedEquipment.eyewear[id] && Game.persist.equipped.eyewear !== id)
+      .map(id => ({ name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp), wear: () => equipEyewear(id) })),
+    takeOff: () => equipEyewear('none') },
+  ...[['chest', 'C', 'Chest', 'a foam chest rig and a plate-carrier vest'], ['arms', 'A', 'Arms', 'elbow pads'], ['legs', 'K', 'Knees', 'knee pads']]
+    .map(([zone, letter, label, sells]) => ({ key: zone, letter, label, icon: '⛊', sells,
+      worn: () => { const id = (Game.persist.equipped.armor || {})[zone]; return id && ARMOR[id] ? { name: ARMOR[id].name, detail: wornHits(ARMOR[id].hp) } : null; },
+      fits: () => Object.keys(ARMOR).filter(id => ARMOR[id].zone === zone && Game.persist.ownedEquipment.armor[id] && (Game.persist.equipped.armor || {})[zone] !== id)
+        .map(id => ({ name: ARMOR[id].name, detail: wornHits(ARMOR[id].hp), wear: () => { Game.persist.equipped.armor[zone] = id; } })),
+      takeOff: () => { delete Game.persist.equipped.armor[zone]; } })),
+  // your sneakers are always on, so the feet are never empty: other pairs swap with them
+  { key: 'feet', letter: 'F', label: 'Feet', icon: '👟', sells: 'trail runners, track spikes and cross-trainers',
+    worn: () => { const id = Game.persist.equipped.shoes || 'none'; return { name: id === 'none' || !SHOES[id] ? 'Sneakers' : SHOES[id].name, detail: '' }; },
+    fits: () => Object.keys(SHOES).filter(id => (id === 'none' || Game.persist.ownedEquipment.shoes[id]) && (Game.persist.equipped.shoes || 'none') !== id)
+      .map(id => ({ name: id === 'none' ? 'Sneakers' : SHOES[id].name, detail: id === 'none' ? 'your own pair' : '', wear: () => equipShoes(id) })),
+    takeOff: null },
+];
+function wornHits(hp) { return hp ? `+${hp} hit${hp > 1 ? 's' : ''}` : ''; }
+function loadoutPickerItem(picker, icon, name, detail, onClick) {
+  const pi = document.createElement('div');
+  pi.className = 'picker-item';
+  pi.innerHTML = `<span class="lo-pk-icon" style="color:var(--ui-accent)">${icon}</span> ${name} <span class="lo-pk-sub" style="color:#888; margin-left:auto">${detail || ''}</span>`;
+  pi.addEventListener('click', () => { onClick(); loadoutPickerSlot = -1; renderLoadoutManager(); });
+  picker.appendChild(pi);
+}
+function loadoutPickerNone(picker, sells, more) {
+  const d = document.createElement('div');
+  d.className = 'picker-none';
+  d.textContent = (more ? 'Nothing else you own fits this' : 'Nothing you own fits this') + ` — airsoft.com sells ${sells}.`;
+  picker.appendChild(d);
+}
 function renderLoadoutManager() {
   const unlocked = getUnlockedSlotCount();
   const slotsList = document.getElementById('loSlotsList');
@@ -27826,23 +27859,16 @@ function renderLoadoutManager() {
         renderLoadoutManager();
       });
     } else if (!slot) {
-      div.innerHTML = `${keyEl}<span class="lo-slot-icon">+</span><div class="lo-slot-info"><div class="lo-slot-name">Empty</div><div class="lo-slot-desc">Click to equip</div></div>`;
+      div.innerHTML = `${keyEl}<span class="lo-slot-icon">+</span><div class="lo-slot-info"><div class="lo-slot-name">Empty slot</div><div class="lo-slot-desc">Click to see what fits</div></div>`;   // v1.334 (D.65)
       div.addEventListener('click', () => {
         loadoutPickerSlot = (loadoutPickerSlot === i) ? -1 : i;
         renderLoadoutManager();
       });
     } else {
-      div.innerHTML = `${keyEl}<span class="lo-slot-icon">${desc.icon}</span><div class="lo-slot-info"><div class="lo-slot-name">${desc.name}</div><div class="lo-slot-desc">${desc.desc}</div></div>`;
-      div.title = 'Click to unequip';
+      // v1.334 (D.65, Michael: A): a full slot opens its picker too, with "Take it out" first (it used to empty on a click)
+      div.innerHTML = `${keyEl}<span class="lo-slot-icon">${desc.icon}</span><div class="lo-slot-info"><div class="lo-slot-name">${desc.name}</div><div class="lo-slot-desc">${desc.desc} · click to change</div></div>`;
       div.addEventListener('click', () => {
-        // v1.50: if unequipping a speed loader, return its remaining BBs to the bag.
-        const slotData = Game.persist.loadoutSlots[i];
-        if (slotData && slotData.kind === 'speed_loader') {
-          const sl = Game.persist.speedLoaders.find(s => s.id === slotData.refId);
-          returnSpeedLoaderToBag(sl);
-        }
-        Game.persist.loadoutSlots[i] = null;
-        loadoutPickerSlot = -1;
+        loadoutPickerSlot = (loadoutPickerSlot === i) ? -1 : i;
         renderLoadoutManager();
       });
     }
@@ -27878,34 +27904,54 @@ function renderLoadoutManager() {
       slotsList.appendChild(picker);
     }
 
-    // Picker for empty equipment slots
-    if (loadoutPickerSlot === i && !slot && !locked && !isGun) {
+    // Picker for equipment slots 2-4 (v1.334: full ones too, to take out or swap)
+    if (loadoutPickerSlot === i && !locked && !isGun) {
       const picker = document.createElement('div');
       picker.className = 'picker';
       const avail = getAvailableSlotItems();
-      if (avail.length === 0) {
-        const empty = document.createElement('div');
-        empty.style.color = '#888';
-        empty.style.fontStyle = 'italic';
-        empty.style.padding = '6px 10px';
-        empty.style.fontSize = '11px';
-        empty.textContent = 'No equipment available — buy some at airsoft.com.';
-        picker.appendChild(empty);
-      } else {
-        for (const item of avail) {
-          const pi = document.createElement('div');
-          pi.className = 'picker-item';
-          pi.innerHTML = `<span style="color:var(--ui-accent)">${item.icon}</span> ${item.name} <span style="color:#888; margin-left:auto">${item.detail}</span>`;
-          pi.addEventListener('click', () => {
-            Game.persist.loadoutSlots[i] = item.slotData;
-            loadoutPickerSlot = -1;
-            renderLoadoutManager();
-          });
-          picker.appendChild(pi);
+      const takeOut = () => {
+        // v1.50: if unequipping a speed loader, return its remaining BBs to the bag.
+        const slotData = Game.persist.loadoutSlots[i];
+        if (slotData && slotData.kind === 'speed_loader') {
+          const sl = Game.persist.speedLoaders.find(s => s.id === slotData.refId);
+          returnSpeedLoaderToBag(sl);
         }
+        Game.persist.loadoutSlots[i] = null;
+      };
+      if (slot) loadoutPickerItem(picker, '×', 'Take it out', 'leaves the slot empty', () => takeOut());
+      if (avail.length === 0 && !slot) loadoutPickerNone(picker, 'spare mags and speed loaders');
+      for (const item of avail) {
+        loadoutPickerItem(picker, item.icon, item.name, item.detail, () => { takeOut(); Game.persist.loadoutSlots[i] = item.slotData; });
       }
       slotsList.appendChild(picker);
     }
+  }
+
+  // v1.334 (backlog D.65, Michael: A, "One list of every slot"): what you wear is in the same list, a row for each
+  // place on your kid (eyes, chest, arms, knees, feet) under the four numbered slots. An empty one says "Empty slot";
+  // a click on any row lists what you own that fits it (and "Take it off" when something is on), or says what
+  // airsoft.com sells for it. The old WORN GEAR section below the columns is gone into it.
+  for (const W of LOADOUT_WORN_SLOTS) {
+    const on = W.worn();
+    const div = document.createElement('div');
+    div.className = 'lo-slot worn' + (on ? '' : ' empty');
+    div.dataset.worn = W.key;
+    div.innerHTML = `<span class="lo-slot-key">${W.letter}</span><span class="lo-slot-icon">${on ? W.icon : '+'}</span><div class="lo-slot-info">` +
+      `<div class="lo-slot-name">${on ? on.name : 'Empty slot'}</div><div class="lo-slot-desc">${W.label}${on && on.detail ? ' · ' + on.detail : ''} · click to ${on ? 'change' : 'see what fits'}</div></div>`;
+    div.addEventListener('click', () => {
+      loadoutPickerSlot = (loadoutPickerSlot === W.key) ? -1 : W.key;
+      renderLoadoutManager();
+    });
+    slotsList.appendChild(div);
+    if (loadoutPickerSlot !== W.key) continue;
+    const picker = document.createElement('div');
+    picker.className = 'picker';
+    const fits = W.fits();
+    if (on && W.takeOff) loadoutPickerItem(picker, '×', 'Take it off', 'leaves the slot empty', W.takeOff);
+    for (const f of fits) loadoutPickerItem(picker, W.icon, f.name, f.detail, f.wear);
+    if (!fits.length && !on) loadoutPickerNone(picker, W.sells);
+    else if (!fits.length) loadoutPickerNone(picker, W.sells, true);
+    slotsList.appendChild(picker);
   }
 
   // Available items pool (reference)
@@ -27937,7 +27983,6 @@ function renderLoadoutManager() {
     }
   }
 
-  renderClosetWornGear();
   renderLoadoutWeight();
   // v1.132: a gun swap re-builds the kid (the gun is in its hands); a gear change only re-labels
   // v1.133: a gear change re-builds it too, since the kid now wears the gear
@@ -27968,85 +28013,6 @@ function renderLoadoutWeight() {
   noteEl.textContent = pen > 0
     ? `Gun ${w.gunW.toFixed(1)} lb + gear ${w.gearW.toFixed(1)} lb. Gear slows you ${pen}% (on top of your gun's handling).`
     : `Gun ${w.gunW.toFixed(1)} lb. No extra gear weight — full speed.`;
-}
-
-// v1.28g: Worn Gear (eyewear / armor / shoes) management from the closet — the
-// same equip actions the shop's Equipment tab offers, but here you manage only
-// gear you OWN (buying still happens at airsoft.com). Eyewear & shoes are
-// single-select; armor is one piece per body zone (click equipped to remove).
-function renderClosetWornGear() {
-  const host = document.getElementById('loWornList');
-  if (!host) return;
-  host.innerHTML = '';
-
-  const mkGroup = (label) => {
-    const g = document.createElement('div');
-    g.className = 'lo-worn-group';
-    const l = document.createElement('div');
-    l.className = 'lo-worn-label';
-    l.textContent = label;
-    g.appendChild(l);
-    host.appendChild(g);
-    return g;
-  };
-  const mkItem = (group, { icon, name, detail, equipped, onClick }) => {
-    const it = document.createElement('div');
-    it.className = 'lo-worn-item' + (equipped ? ' equipped' : '');
-    it.innerHTML = `<span class="lo-worn-icon">${icon}</span><span>${name}</span>` +
-      `<span class="lo-worn-tag">${equipped ? 'EQUIPPED' : (detail || '')}</span>`;
-    it.addEventListener('click', () => { onClick(); renderLoadoutManager(); });
-    group.appendChild(it);
-  };
-
-  // --- Eye Pro (single-select; 'none' always available) ---
-  const eg = mkGroup('Eye Pro');
-  const curEye = Game.persist.equipped.eyewear || 'none';
-  let anyEye = false;
-  for (const id in EYEWEAR) {
-    const owned = id === 'none' || !!Game.persist.ownedEquipment.eyewear[id];
-    if (!owned) continue;
-    anyEye = true;
-    const e = EYEWEAR[id];
-    mkItem(eg, {
-      icon: '◓', name: e.name,
-      detail: e.hp ? `+${e.hp} hit${e.hp>1?'s':''}` : '',
-      equipped: curEye === id,
-      onClick: () => equipEyewear(id),
-    });
-  }
-  if (!anyEye) { const d = document.createElement('div'); d.className='lo-worn-empty'; d.textContent='No eye pro owned.'; eg.appendChild(d); }
-
-  // --- Body Armor (one piece per zone; click equipped to remove) ---
-  const ag = mkGroup('Body Armor');
-  let anyArmor = false;
-  for (const id in ARMOR) {
-    if (!Game.persist.ownedEquipment.armor[id]) continue;
-    anyArmor = true;
-    const a = ARMOR[id];
-    const equipped = Game.persist.equipped.armor[a.zone] === id;
-    mkItem(ag, {
-      icon: '⛊', name: a.name,
-      detail: `+${a.hp} ${a.zone}`,
-      equipped,
-      onClick: () => toggleArmor(id),
-    });
-  }
-  if (!anyArmor) { const d = document.createElement('div'); d.className='lo-worn-empty'; d.textContent='No armor owned.'; ag.appendChild(d); }
-
-  // --- Shoes (single-select; 'none' always available) ---
-  const sg = mkGroup('Shoes');
-  const curShoe = Game.persist.equipped.shoes || 'none';
-  for (const id in SHOES) {
-    const owned = id === 'none' || !!Game.persist.ownedEquipment.shoes[id];
-    if (!owned) continue;
-    const s = SHOES[id];
-    mkItem(sg, {
-      icon: '👟', name: s.name,
-      detail: '',
-      equipped: curShoe === id,
-      onClick: () => equipShoes(id),
-    });
-  }
 }
 
 // Build list of available equippable items (not already in slots)

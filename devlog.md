@@ -13964,3 +13964,33 @@ your hip on its own since v1.149, with nothing under it.
 - **For a playtest:** whether the body reads right at a glance: how far back it sits when you look down, whether the
   stretched kid looks too long in the leg, and the crouch, which squashes the body by up to a third to keep your feet
   on the ground. The gun in your hands can pass through the chest when you look straight down, as in most shooters.
+
+## v1.334 — Every slot in one list
+Backlog D.65, Michael's answer A (23 Oct): one list of every slot. His note: "list all equipment slots available, and
+if empty, clearly state that it's an empty slot. We should be able to click on an empty slot, and then see a list of
+all of the equipment we have that can be placed in that slot." The four numbered slots already had empty rows and a
+picker, but eye pro, armor and shoes sat in a separate WORN GEAR section with "No armor owned" and nothing to click.
+- **One list.** The Loadout's middle column, now "Your Slots", has nine rows: 1 your gun, slots 2-4, then E eyes,
+  C chest, A arms, K knees and F feet. The WORN GEAR section under the columns is gone into it.
+- **Empty says so.** An empty slot reads "Empty slot", with "click to see what fits" under it. The feet always wear
+  your sneakers, so they are never empty: other pairs swap with them.
+- **One rule for every row.** A click on any row opens its picker under it: what you own that fits there, with
+  "Take it off" (or "Take it out" for slots 2-4) first when something is in it. A full slot 2-4 used to empty on a
+  click; it opens the picker too now, and a speed loader taken out still pours its BBs back into the bag. When nothing
+  you own fits, the picker says so and what airsoft.com sells for it ("Nothing you own fits this — airsoft.com sells
+  knee pads.").
+- The gun row, the locked rows and the Available Items column work as before.
+### Verified
+- **`tests/loadout-gear.test.mjs`, extended:**
+  - Nine rows, the five worn ones among them, and no WORN GEAR section. On a bare save slot 2 and the eyes, chest,
+    arms and knees say "Empty slot", and the feet "Sneakers".
+  - With nothing owned, the eyes' picker says airsoft.com sells safety glasses, goggles and a mesh mask, and slot 2's
+    spare mags and speed loaders.
+  - Owning two eye pros, the picker lists both; a click wears the mesh mask and the row names it; its picker then
+    offers the goggles and Take it off, and Take it off empties it.
+  - Knee pads go on from the knees' picker, the row names them and the Loadout kid wears them.
+  - A spare mag goes into slot 2 from its picker; full, the picker offers Take it out, which empties the slot.
+- **These suites pass:** `loadout-gear`, `utility-belt`, `notebook` and `gamepad-screens`.
+### Still open
+- **For a playtest:** at 1280×720 the list runs past the bottom of the paper and the card scrolls, as it did with
+  the old WORN GEAR section. Whether nine rows want to be shorter (or the worn five in a second column) is for a look.

@@ -126,5 +126,65 @@ await page.evaluate(() => {
 });
 await page.locator('#loKidCanvas').screenshot({ path: 'tests/out/loadout-gear-kid2.png' }).catch(() => {});
 await page.evaluate(() => closeLoadout());
+
+// v1.334 (backlog D.65, Michael: A, "One list of every slot"): hands, slots 2-4, eyes, chest, arms, knees and feet in
+// one list, "Empty slot" on each empty one, a click on any row lists what you own that fits it or says what
+// airsoft.com sells; the WORN GEAR section is gone into it
+const one = await page.evaluate(() => {
+  const P = Game.persist;
+  P.ownedEquipment = { eyewear: {}, armor: {}, shoes: {} }; P.equipped.eyewear = 'none'; P.equipped.armor = {}; P.equipped.shoes = 'none';
+  P.owned.slot_3 = false; P.owned.slot_4 = false; P.loadoutSlots = [P.loadoutSlots[0], null, null, null];
+  openLoadout();
+  const rows = () => [...document.querySelectorAll('#loSlotsList .lo-slot')];
+  const names = () => rows().map(d => d.querySelector('.lo-slot-name').textContent);
+  const picks = () => [...document.querySelectorAll('#loSlotsList .picker .picker-item, #loSlotsList .picker .picker-none')].map(d => d.textContent.replace(/\s+/g, ' ').trim());
+  const row = key => document.querySelector(`#loSlotsList .lo-slot[data-worn="${key}"]`);
+  const out = { worn: !!document.getElementById('loWornList'), n: rows().length, names: names(),
+    worn5: ['eyes', 'chest', 'arms', 'legs', 'feet'].map(k => !!row(k)) };
+  row('eyes').click(); out.eyesNone = picks();
+  rows()[1].click(); out.slotNone = picks();
+  // own two eye pros and knee pads: the picker lists them, a click wears one, and its row names it
+  P.ownedEquipment.eyewear.goggles_smoke = true; P.ownedEquipment.eyewear.mesh_mask = true; P.ownedEquipment.armor.knee_pads = true;
+  loadoutPickerSlot = -1; renderLoadoutManager();
+  row('eyes').click(); out.eyesPick = picks();
+  [...document.querySelectorAll('#loSlotsList .picker-item')].find(d => /Mesh Mask/.test(d.textContent)).click();
+  out.eyesOn = [P.equipped.eyewear, row('eyes').querySelector('.lo-slot-name').textContent, row('eyes').classList.contains('empty')];
+  row('eyes').click(); out.eyesSwap = picks();
+  [...document.querySelectorAll('#loSlotsList .picker-item')].find(d => /Take it off/.test(d.textContent)).click();
+  out.eyesOff = [P.equipped.eyewear, row('eyes').querySelector('.lo-slot-name').textContent];
+  row('legs').click();
+  [...document.querySelectorAll('#loSlotsList .picker-item')].find(d => /Knee Pads/.test(d.textContent)).click();
+  out.knees = [P.equipped.armor.legs, row('legs').querySelector('.lo-slot-name').textContent, LOADOUT_KID.gear.legs.length];
+  row('feet').click(); out.feet = picks();
+  // a full numbered slot opens its picker too, with Take it out
+  P.consumables = P.consumables || {};
+  for (const k of Object.keys(MAG_GUN_FIT)) if (MAG_GUN_FIT[k] === P.equipped.gun) P.consumables[k] = 1;
+  loadoutPickerSlot = -1; renderLoadoutManager();
+  rows()[1].click(); out.slotPick = picks();
+  [...document.querySelectorAll('#loSlotsList .picker-item')].find(d => /Spare/.test(d.textContent))?.click();
+  out.slotFull = [JSON.stringify(P.loadoutSlots[1]), names()[1]];
+  rows()[1].click(); out.slotFullPick = picks();
+  [...document.querySelectorAll('#loSlotsList .picker-item')].find(d => /Take it out/.test(d.textContent))?.click();
+  out.slotOut = [P.loadoutSlots[1], names()[1]];
+  return out;
+});
+check('one list: hands, slots 2-4, eyes, chest, arms, knees, feet; no WORN GEAR section',
+  !one.worn && one.n === 9 && one.worn5.every(Boolean), one);
+check('an empty slot says "Empty slot" (slot 2, eyes, chest, arms, knees); the feet wear your sneakers',
+  one.names[1] === 'Empty slot' && one.names.slice(4, 8).every(n => n === 'Empty slot') && one.names[8] === 'Sneakers', one.names);
+check('nothing owned: the picker says what airsoft.com sells for it',
+  one.eyesNone.length === 1 && /Nothing you own fits this — airsoft.com sells safety glasses/.test(one.eyesNone[0])
+  && one.slotNone.length === 1 && /spare mags and speed loaders/.test(one.slotNone[0]), [one.eyesNone, one.slotNone]);
+check('eyes: the picker lists the two you own; a click wears one and the row names it; the row then offers the other and Take it off',
+  one.eyesPick.length === 2 && one.eyesOn[0] === 'mesh_mask' && one.eyesOn[1] === 'Full Mesh Mask' && !one.eyesOn[2]
+  && one.eyesSwap.some(t => /Take it off/.test(t)) && one.eyesSwap.some(t => /Smoke Goggles/.test(t)) && !one.eyesSwap.some(t => /Mesh Mask/.test(t)), one);
+check('Take it off empties the eyes', one.eyesOff[0] === 'none' && one.eyesOff[1] === 'Empty slot', one.eyesOff);
+check('knees: knee pads go on from the picker, the row names them, and the Loadout kid wears them',
+  one.knees[0] === 'knee_pads' && one.knees[1] === 'Knee Pads' && one.knees[2] > 0, one.knees);
+check('feet: no other pair owned, the picker says what airsoft.com sells', one.feet.length === 1 && /Nothing else you own fits this — airsoft.com sells trail runners/.test(one.feet[0]), one.feet);
+check('slot 2: a spare mag goes in from the picker; full, its picker offers Take it out, which empties it',
+  /spare_mag/.test(one.slotFull[0]) && one.slotFullPick.some(t => /Take it out/.test(t)) && one.slotOut[0] === null && one.slotOut[1] === 'Empty slot', one);
+await g.shot('loadout-one-list');
+await page.evaluate(() => closeLoadout());
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
