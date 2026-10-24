@@ -5,29 +5,9 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Weather, seasons and holidays (D.70): what to build first? (producer, 2026-10-23)**
-  Your note: "I would love to hear proposals around weather/seasons/holiday modes - Halloween, Christmas, etc. for
-  holidays, but also conditions like rain, wind, snow, etc." Every match today is a dry summer day or night. Halloween
-  is a week away.
-  - A) **Weather as a match setting:** rain, wind and snow on the Pickup Game board and on a few ladder matches. Rain
-    and snow cut how far you see, wind pushes BBs sideways, snow lies on roofs and lawns.
-  - B) **Holiday looks first:** Halloween (pumpkins, fake webs, kids in costumes, porch lights by night) and later
-    Christmas (lights, inflatables), shown around the real dates or switched on from the Pickup Game board. Nothing
-    about play changes. *(recommended: Halloween is next week, and it is contained work the builder can start now)*
-  - C) **Seasons through the summer calendar:** the bedroom calendar runs on past August into fall and winter, and the
-    maps change with it (leaves, bare trees, snow), holidays included.
-  - D) **Not now:** keep it on the list.
+(none)
 
-- **Go-cart races and golf carts (D.71, D.72): which one, and how? (producer, 2026-10-23)**
-  Your notes: "a 'racing mode' where you race go-cart frames (no engine) down a hill, and try not to get shot by a group
-  of enemies all shooting at you" and "vehicles like golf carts as well." Nothing in the game moves you but your feet
-  today.
-  - A) **The go-cart race first:** a new match type on a hill (Bunratty's slope), you coast down in an engineless frame,
-    steering and braking, while kids along the route shoot at you; reach the bottom with lives left. Golf carts later.
-    *(recommended: gravity only, no engine, one map, and it is the new kind of match you asked for in D.15)*
-  - B) **Golf carts first:** a cart parked on a few maps that you (and a teammate) can drive around in a match.
-  - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
-  - D) **Not now:** keep them on the list.
+## Answered
 
 - **Hand-me-downs and the BB rule (D.28 step 4): how do they work? (Fable, 2026-10-24)**
   Your spec: you give a crew kid a gun you own (your old one goes to Nick when you buy better) and some gear with small
@@ -75,8 +55,33 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   My recommendation is A. It keeps your rule (his gun, his BBs; your gun, your BBs) and caps what one match can cost.
   No kid ever stands there out of BBs, and nothing is lost by trying a gun on a kid. B is a fair choice if you want
   handing over to feel final.
+  Michael: **A** — A loan at the loadout, capped BBs, eyes and feet only. (control room, 2026-10-24)
 
-## Answered
+- **Weather, seasons and holidays (D.70): what to build first? (producer, 2026-10-23)**
+  Your note: "I would love to hear proposals around weather/seasons/holiday modes - Halloween, Christmas, etc. for
+  holidays, but also conditions like rain, wind, snow, etc." Every match today is a dry summer day or night. Halloween
+  is a week away.
+  - A) **Weather as a match setting:** rain, wind and snow on the Pickup Game board and on a few ladder matches. Rain
+    and snow cut how far you see, wind pushes BBs sideways, snow lies on roofs and lawns.
+  - B) **Holiday looks first:** Halloween (pumpkins, fake webs, kids in costumes, porch lights by night) and later
+    Christmas (lights, inflatables), shown around the real dates or switched on from the Pickup Game board. Nothing
+    about play changes. *(recommended: Halloween is next week, and it is contained work the builder can start now)*
+  - C) **Seasons through the summer calendar:** the bedroom calendar runs on past August into fall and winter, and the
+    maps change with it (leaves, bare trees, snow), holidays included.
+  - D) **Not now:** keep it on the list.
+  Michael: **B** — Holiday looks first: Halloween now. (2026-10-23)
+
+- **Go-cart races and golf carts (D.71, D.72): which one, and how? (producer, 2026-10-23)**
+  Your notes: "a 'racing mode' where you race go-cart frames (no engine) down a hill, and try not to get shot by a group
+  of enemies all shooting at you" and "vehicles like golf carts as well." Nothing in the game moves you but your feet
+  today.
+  - A) **The go-cart race first:** a new match type on a hill (Bunratty's slope), you coast down in an engineless frame,
+    steering and braking, while kids along the route shoot at you; reach the bottom with lives left. Golf carts later.
+    *(recommended: gravity only, no engine, one map, and it is the new kind of match you asked for in D.15)*
+  - B) **Golf carts first:** a cart parked on a few maps that you (and a teammate) can drive around in a match.
+  - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
+  - D) **Not now:** keep them on the list.
+  Michael: **A** — The go-cart race first; golf carts later. (2026-10-23)
 
 - **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
   Your note: "list all equipment slots available, and if empty, clearly state that it's an empty slot. We should be
