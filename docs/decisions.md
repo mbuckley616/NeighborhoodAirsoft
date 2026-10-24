@@ -29,6 +29,53 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
   - D) **Not now:** keep them on the list.
 
+- **Hand-me-downs and the BB rule (D.28 step 4): how do they work? (Fable, 2026-10-24)**
+  Your spec: you give a crew kid a gun you own (your old one goes to Nick when you buy better) and some gear with small
+  gains. A kid on his own gun brings his own BBs. A kid on a gun you handed him uses yours. You asked for a count of how
+  many BBs a crew fires before this is built, so I counted it headless. That was 56 rounds: two of each of the 28 team
+  matches that take a crew, with the crew you'd have the first time. You stood still and could not be tagged, so the kids
+  fought it out. A round stopped when one side had nobody standing, or at 4 minutes (10 rounds ran that long).
+  - **Each kid, BBs a match on his own gun:** Sean (AK-47) 237 on average, half the rounds under 183, from 24 to 1,167.
+    Alex (AK-47) 213, half under 153, from 10 to 546. Nick (Spring Assault Rifle) 46, half under 31, from 4 to 205.
+    Eric (MP5) 39, half under 34, from 3 to 153. Diego (MP5) 28, half under 26, from 15 to 59. An AK kid fires 5-8
+    times what an MP5 or rifle kid does, about 100 BBs a minute against 15-25.
+  - **The whole crew, a match:** 354 in a typical round (400 on average), from 20 to 1,419. Bunratty, where only Eric
+    has joined, 20-430. The Hollow 71-1,419. Bellfield on, with four or five kids, 99-1,278. The Last Saturday 462 and 545.
+  - **Against your bag:** at 1¢ a BB (the 100 tube; 0.6¢ in the 5,000 bag), a typical round of the crew's fire is
+    worth $2-$3.50, and a long one up to $14. The late team matches pay $10-$20 a win. You take at most your gun's mag
+    and your spare mags into a match (an AK drum is 350). A kid today never runs out, and a person's own fire can't be
+    counted headless.
+  - **What the numbers mean for the rule:** on their own guns none of this comes out of your bag, as your spec says. It
+    only does for a kid on a gun you handed him, and only an automatic costs much: an AK in a kid's hands burns a
+    5,000 bag in about 20 matches, a spring rifle hardly at all. The kids' own guns are already good (two AKs, two MP5s
+    and the Spring Assault Rifle, $85-$240 guns), so a hand-me-down is an upgrade only once you own the late guns
+    (the AK, the Burst Rifle, the Electric Rifle). Before that it is a choice of how a kid fights.
+  - **What the spec leaves open:** where you hand a gun over, whether it comes back, what happens when a kid on your
+    gun runs dry, what gear a kid can take, and whether your old gun goes to Nick automatically.
+  - A) **A loan at the loadout, a capped load from your bag, eyes and feet only.** *(recommended)*
+    - **Where:** the loadout screen gets a CREW row, each kid with the gun he carries. Pick a kid, then a gun you own,
+      or HIS OWN. The briefing's lineup already shows each kid's gun, so you see it there before BEGIN.
+    - **Does it come back:** yes. You own one of each gun, so a gun a kid carries is not in your rack. Take it back on
+      the same row, free. Selling it, or carrying it yourself, asks you to take it back first.
+    - **His BBs:** at BEGIN he loads from your bag the way you do: the gun's mag, with your mag upgrades, plus one more
+      mag's worth. What he hasn't fired goes back in the bag at the end. When it runs out he goes back to his own gun and
+      his own BBs for the rest of the match. With an empty bag he starts on his own gun. So your bag never pays more than
+      two mags a kid a match: 700-1,000 for an AK, 300-400 for an MP5, 50-80 for a spring rifle
+      (the range is your mag upgrade).
+    - **Gear:** eyewear and shoes only, from what you own, lent the same way. Any eyewear gives +0.05 aim (Sean 0.60 to
+      0.65), and any shoes +5% speed. No armor: a kid takes one hit a life, so a chest rig would double him.
+    - **Your old gun:** when you buy a gun and put your old one down, you're asked "Give your <old gun> to Nick?"
+      YES / KEEP IT. It isn't automatic, since Nick's own rifle beats a Spring Pistol or a shotgun.
+  - B) **As A, but a handed gun is his for good.** A true hand-me-down: you can't take it back, only buy another. Fewer
+    screens, and a slip costs you the gun.
+  - C) **As A, but no cap on his BBs.** He draws from your bag shot by shot until it is empty, then goes to his own gun.
+    That is closest to "uses yours", but an AK kid can burn 1,100 BBs (about $9) in a long match.
+  - D) **As A, and the old gun goes to Nick automatically** whenever the new one is the better gun (by its price), with
+    no question.
+  My recommendation is A. It keeps your rule (his gun, his BBs; your gun, your BBs) and caps what one match can cost.
+  No kid ever stands there out of BBs, and nothing is lost by trying a gun on a kid. B is a fair choice if you want
+  handing over to feel final.
+
 ## Answered
 
 - **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
