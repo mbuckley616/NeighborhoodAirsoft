@@ -1,4 +1,4 @@
-// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327-v1.328 the Burst Rifle and the Semi-Auto Shotgun, at the end), the Electric Pistol ($110) and the Electric
+// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327-v1.328 the Burst Rifle and the Semi-Auto Shotgun, and since v1.335 batch 2's M249, at the end), the Electric Pistol ($110) and the Electric
 // Rifle ($150). A battery cycles the spring, so nothing is cocked between shots: every pull fires, up to 5 and 6 a
 // second, where their spring kin (the Spring Pistol and the Spring Assault Rifle) fire, then want the slide or the
 // charging handle. Run dry, a new mag is racked in as on any gun. Checked: the shop, the spec against the kin, a
@@ -243,5 +243,58 @@ console.log('   semishotgun ' + JSON.stringify(SS));
 check('Semi-Auto Shotgun: its own first-person gun, 60 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°)', SS.mesh === 'semishotgun' && SS.max === 60 && SS.hands && SS.sightErrDeg < 0.6, SS);
 check('Semi-Auto Shotgun: five pulls a second apart, each throws 2-3 BBs, and it stays cocked (no pump)', SS.per.length === 5 && SS.per.every(n => n >= 2 && n <= 3) && SS.cockedAfter, SS.per);
 check('Semi-Auto Shotgun: pulled as fast as a finger goes, 2-2.5 pulls fire a second (its cycle)', SS.pullsPerSec >= 2 && SS.pullsPerSec <= 2.5, SS.pullsPerSec);
+// v1.335 (D.63, batch 2): the M249, a battery light machine gun: full auto from an 800-BB box, the slowest walk
+const lmgShop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="AUTOMATICS"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'M249');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const text = document.querySelector('#shopScreen').textContent;
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun, says: /Full-auto/.test(text), slowest: /Very heavy, slowest/.test(text) };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  const S = getGunSpec('m249');
+  out.speed = S.playerSpeedMult; out.minOther = Math.min(...ALL_GUN_TYPES.filter(t => t !== 'm249').map(t => getGunSpec(t).playerSpeedMult));
+  out.weight = GUN_WEIGHT.m249; out.maxOtherWeight = Math.max(...Object.entries(GUN_WEIGHT).filter(([t]) => t !== 'm249').map(([, w]) => w));
+  out.vel = [S.muzzleVelocity, getGunSpec('ak47').muzzleVelocity];
+  return out;
+});
+console.log('   AUTOMATICS: ' + lmgShop.names.join(' · '));
+check('M249: last under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
+  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 10 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
+check('M249: you walk no slower with any gun (0.75), it is the heaviest (15 lb), and its BB is near the AK\'s', lmgShop.speed === 0.75 && lmgShop.speed <= lmgShop.minOther && lmgShop.weight > lmgShop.maxOtherWeight && Math.abs(lmgShop.vel[0] - lmgShop.vel[1]) <= 5, lmgShop);
+await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm249' }; });
+await g.scenario('bunratty_sean');
+const LM = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo, ammo0: Game.gun.ammo };
+  for (let i = 0; i < 30; i++) step();
+  // held down 2 s: BBs out
+  const a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown();
+  for (let i = 0; i < 120; i++) step();
+  Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp();
+  out.held2s = a - Game.gun.ammo;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  return out;
+});
+await g.shot('gun-m249-aimed');
+console.log('   m249 ' + JSON.stringify(LM));
+check('M249: its own first-person gun, 800 in the box, both hands on it, aimed the front post on the reticle (under 0.6°)', LM.mesh === 'm249' && LM.max === 800 && LM.hands && LM.sightErrDeg < 0.6, LM);
+check('M249: held down 2 s it fires 23-26 BBs (12.5 a second)', LM.held2s >= 23 && LM.held2s <= 26, LM.held2s);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
