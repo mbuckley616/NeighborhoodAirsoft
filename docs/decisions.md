@@ -5,6 +5,10 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+(none)
+
+## Answered
+
 - **Weather, seasons and holidays (D.70): what to build first? (producer, 2026-10-23)**
   Your note: "I would love to hear proposals around weather/seasons/holiday modes - Halloween, Christmas, etc. for
   holidays, but also conditions like rain, wind, snow, etc." Every match today is a dry summer day or night. Halloween
@@ -17,6 +21,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Seasons through the summer calendar:** the bedroom calendar runs on past August into fall and winter, and the
     maps change with it (leaves, bare trees, snow), holidays included.
   - D) **Not now:** keep it on the list.
+  Michael: **B** — Holiday looks first: Halloween now. (2026-10-23)
 
 - **Go-cart races and golf carts (D.71, D.72): which one, and how? (producer, 2026-10-23)**
   Your notes: "a 'racing mode' where you race go-cart frames (no engine) down a hill, and try not to get shot by a group
@@ -28,8 +33,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **Golf carts first:** a cart parked on a few maps that you (and a teammate) can drive around in a match.
   - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
   - D) **Not now:** keep them on the list.
-
-## Answered
+  Michael: **A** — The go-cart race first; golf carts later. (2026-10-23)
 
 - **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
   Your note: "list all equipment slots available, and if empty, clearly state that it's an empty slot. We should be
