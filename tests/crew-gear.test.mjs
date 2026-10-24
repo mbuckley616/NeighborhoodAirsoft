@@ -40,15 +40,21 @@ const round = async (bag, opts = {}) => {
       eric: e.weapon, ericLoan: !!e.crewLoan, sean: (Game.scenario.enemies.find(e => e.charId === 'sean').character || {}).accuracy };
   });
   await g.spin(opts.frames || 60 * 60);
-  const mid = await page.evaluate(() => {
+  let mid = await page.evaluate(() => {
     const d = Game.scenario.enemies.find(e => e.charId === 'diego');
     if (!d) return {};
     const gg = d.mesh.gunGroup;
-    return { weapon: d.weapon, left: d.crewLoan.bbs, dry: !!d.crewLoan.dry, parts: gg.userData.gunParts.every(c => c.parent === gg), kids: gg.children.length };
+    const out = { weapon: d.weapon, left: d.crewLoan.bbs, dry: !!d.crewLoan.dry, parts: gg.userData.gunParts.every(c => c.parent === gg), kids: gg.children.length };
+    return out;
   });
-  await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
-  const end = await page.evaluate(() => Game.persist.bag);
-  return { bag, start, mid, end };
+  // (read and end in one call: the page's own frame loop runs between calls, and Diego fires on)
+  const end = await page.evaluate(() => {
+    const d = Game.scenario.enemies.find(e => e.charId === 'diego'), left = d && d.crewLoan ? d.crewLoan.bbs : null;
+    if (Game.mode === 'scenario') endScenario('lose');
+    return { bag: Game.persist.bag, left };
+  });
+  if (end.left != null) mid.left = end.left;
+  return { bag, start, mid, end: end.bag };
 };
 
 let r = await round(5000);

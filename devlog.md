@@ -14083,8 +14083,8 @@ yours." The measurement that came first (decisions, 24 Oct): an AK kid fires abo
   - The Spring Pistol you carry can't be lent; Diego takes your AK-47, Sean your smoke goggles, Nick your trail shoes;
     the AK can't be sold while Diego has it; all three survive a save and reload.
   - The Big Game's setup: Diego on the AK-47 as a loan, Eric on his own MP5; Sean's aim 0.65, Nick's speed 0.85 to 0.8925.
-  - A 5,000 bag at BEGIN: you load 10, Diego 700, nobody else draws (4,290 left). In a minute he fired 75-111 of them
-    (three runs) and the bag ended at 5,000 less exactly what he fired.
+  - A 5,000 bag at BEGIN: you load 10, Diego 700, nobody else draws (4,290 left). In a minute he fired 75-113 of them
+    (four runs) and the bag ended at 5,000 less exactly what he fired.
   - A 40 bag: you 10, Diego the last 30; he runs dry, is back on his MP5 (its model's pieces in his gun group) and the
     bag ends at 10. A 10 bag: he starts on his MP5. An empty bag: the setup already has him on it. Benched: the bag
     pays your 10 and gets them back.
@@ -14092,7 +14092,11 @@ yours." The measurement that came first (decisions, 24 Oct): an AK kid fires abo
     the AK passes it from Diego. The shop's TAKE BACK FROM ALEX returns it; buying the MP5 asks "Give your AK-47 to
     Nick?" and YES lends it.
   - An old save with no `crewGear` loads with nothing lent, every kid on his own gun.
-- **These suites pass:** `crew-gear` (three runs), and those listed in the PR comment.
+- **These suites pass, each alone:** `crew-gear` (four runs), `smoke`, `crew`, `crew-field`, `crew-balance`,
+  `crew-roster`, `crew-spawn-bounds` (every check, slow to close), `loadout-gear`, `loadout-kid`, `gamepad-screens`,
+  `notebook`, `autosave`, `shop-gun-kinds`, `shop-tabs`, `workbench-labels`, `kid-hold`, `burst-pose` and
+  `damage-report-first`. The whole of `npm test` is not yet run here: three shards side by side crashed browser tabs
+  in about half the suites (crew-gear among them, which passes alone), so it goes one suite at a time, about five hours.
 ### Still open
 - **For a playtest:** whether 700 BBs an AK kid a match (two mags) is the right cap, and whether the YOUR CREW rows
   want to sit higher on the Loadout (they come after the nine slots, so the card scrolls to them at 1280×720).
