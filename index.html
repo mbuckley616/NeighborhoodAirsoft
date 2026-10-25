@@ -2416,6 +2416,12 @@
   #loadoutScreen .nb-paper .lo-weight-value { line-height: 18px !important; }
   #loadoutScreen .nb-paper .picker-item { font-size: 15px; white-space: nowrap; }
   #loadoutScreen .nb-paper .picker-none { font-size: 15px; color: var(--nb-pencil); font-style: normal; padding: 0; }   /* v1.334 */
+  /* v1.337 (D.28 step 4): the crew's rows under your slots */
+  #loadoutScreen .lo-crew-head { font-weight: 700; color: var(--ui-accent); margin-top: 8px; padding: 2px 4px; }
+  #loadoutScreen .picker-sub { color: #aaa; font-size: 11px; padding: 4px 10px 0; text-transform: uppercase; }
+  #loadoutScreen .nb-paper .lo-crew-head { font-family: var(--nb-marker); color: var(--nb-red); font-size: 17px; line-height: var(--nb-rule);
+    margin: 0; padding: 0; }
+  #loadoutScreen .nb-paper .picker-sub { color: var(--nb-red); font-size: 13px; line-height: var(--nb-rule); padding: 0; text-transform: none; }
   #loadoutScreen .nb-paper .picker-item .lo-pk-icon { color: var(--nb-red) !important; }
   #loadoutScreen .nb-paper .picker-item .lo-pk-sub { color: var(--nb-pencil) !important; font-size: 14px; }
   #workbenchScreen .nb-paper :is(.wb-gun, .wb-locker-item) { align-items: flex-start; }
@@ -2596,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.336</div>
+  <div class="version">v1.337</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -4034,6 +4040,7 @@ const Game = {
     completed: {},
     textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
     crew: [],                   // v1.273 (D.28 step 1): the kids of CREW_ROSTER who have joined, in order
+    crewGear: {},               // v1.337 (D.28 step 4): what you have lent each crew kid, { kid: { gun, eyewear, shoes } }
     gunMatches: {},             // v1.262 (D.44): per gun bought, how many matches it has been into (for selling it back)
   },
 };
@@ -4730,8 +4737,9 @@ function buyEquipment(kind, id) {
   Game.persist.ownedEquipment[kind][id] = true;
   return { ok:true };
 }
-function equipEyewear(id) { if (id==='none'||Game.persist.ownedEquipment.eyewear[id]) Game.persist.equipped.eyewear = id; }
-function equipShoes(id)   { if (id==='none'||Game.persist.ownedEquipment.shoes[id]) Game.persist.equipped.shoes = id; }
+// v1.337 (D.28 step 4): wearing what a crew kid has takes it back from him (free)
+function equipEyewear(id) { if (id==='none'||Game.persist.ownedEquipment.eyewear[id]) { if (id !== 'none') crewTakeBack('eyewear', id); Game.persist.equipped.eyewear = id; } }
+function equipShoes(id)   { if (id==='none'||Game.persist.ownedEquipment.shoes[id]) { if (id !== 'none') crewTakeBack('shoes', id); Game.persist.equipped.shoes = id; } }
 function toggleArmor(id) {
   const piece = ARMOR[id]; if (!piece) return;
   if (!Game.persist.ownedEquipment.armor[id]) return;
@@ -4774,7 +4782,7 @@ function buyGunSpare(gunType, spareKey) {
 }
 function buyGun(gunType) {
   const cfg = GUN_MAGS[gunType]; if (!cfg) return { ok:false };
-  if (Game.persist.owned[cfg.ownFlag]) { Game.persist.equipped.gun = gunType; return { ok:true, equipped:true }; }
+  if (Game.persist.owned[cfg.ownFlag]) { const from = crewTakeBack('gun', gunType); Game.persist.equipped.gun = gunType; return { ok:true, equipped:true, from }; }   // v1.337: back from a crew kid
   if (Game.persist.cash < cfg.price) return { ok:false, reason:'cash' };
   Game.persist.cash -= cfg.price;
   Game.persist.owned[cfg.ownFlag] = true;
@@ -4806,6 +4814,7 @@ function gunSellQuote(gunType) {
 }
 function sellGun(gunType) {
   const q = gunSellQuote(gunType); if (!q) return { ok:false };
+  if (crewLoanHolder('gun', gunType)) return { ok:false, reason:'lent' };   // v1.337: take it back from him first
   const p = Game.persist, cfg = GUN_MAGS[gunType];
   for (const part of q.parts) {
     p.accessories = p.accessories.filter(a => a.id !== part.id);
@@ -6749,7 +6758,7 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   const benched = bench ? crewMembers().filter(id => crewBench.has(id)) : [];
   const yours = [cell({ name: 'You', charId: 'you', gun: youGun, gunType: Game.persist.equipped.gun, lives: 'you' }, 'you')]
     .concat(brief.allies.map(c => cell(c, 'ally')))
-    .concat(benched.map(id => cell({ name: CHARACTERS[id].name, charId: id, gun: getGunDisplayName(CREW_GUNS[id]), gunType: CREW_GUNS[id], lives: 0 }, 'ally', { benched: true })));
+    .concat(benched.map(id => cell({ name: CHARACTERS[id].name, charId: id, gun: getGunDisplayName(crewGun(id)), gunType: crewGun(id), lives: 0 }, 'ally', { benched: true })));
   const theirs = brief.enemies.map(c => cell(c, 'enemy'));
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
     : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');
@@ -21460,6 +21469,7 @@ function createKid(profile, weapon = 'pistol') {
   // Gun in right hand (oriented to point along +Z when group faces +Z).
   // v1.28e: silhouette now matches the enemy's actual weapon class.
   const gunGroup = buildEnemyGunMesh(weapon);
+  gunGroup.userData.gunParts = gunGroup.children.slice();   // v1.337: the gun's own pieces (crewKidOwnGun swaps them)
   gunGroup.position.set(-0.27, 0.62, 0.1);   // v1.78: kid's RIGHT side (was +0.27, read left-handed)
   group.add(gunGroup);
 
@@ -24780,6 +24790,7 @@ function shopIconImg(iconEl, url, alt, data) {
 
 function workbenchSelectGun(gunType) {
   WB.gunType = gunType;
+  crewTakeBack('gun', gunType);   // v1.337: a gun a crew kid has comes back to you
   Game.persist.equipped.gun = gunType;  // keep equipped gun in sync with what you're customizing
   ensureGunSlots(gunType);
   if (WB.gunGroup) { WB.turntable.remove(WB.gunGroup); WB.gunGroup = null; }
@@ -24917,7 +24928,7 @@ function renderWorkbench() {
       div.dataset.gun = gt;
       const cap = getGunAccessoryCap(gt);
       div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
-        `<div class="wb-gun-sub">${owned ? `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}` : 'Not owned'}</div></div>`;
+        `<div class="wb-gun-sub">${owned ? (crewLoanHolder('gun', gt) ? `With ${CHARACTERS[crewLoanHolder('gun', gt)].name} · click to take it back` : `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}`) : 'Not owned'}</div></div>`;   // v1.337
       if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
       gl.appendChild(div);
     }
@@ -26159,6 +26170,7 @@ function enterScenario(scenarioId) {
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
         if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
+        if (es.crewLoan) enemy.crewLoan = { gun: enemy.weapon, own: CREW_GUNS[es.charId], bbs: 0, loaded: null };   // v1.337: your gun, your BBs
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
@@ -26660,6 +26672,7 @@ function startScenario(built) {
   // v1.50: then top off any equipped speed loaders from what's left in the bag
   // (mag gets first claim). Loaders are reusable — they arrive full each round.
   refillEquippedSpeedLoadersFromBag();
+  crewLoadLoans();   // v1.337 (D.28 step 4): then a crew kid on a gun of yours loads from what is left
   Game.gun.cocked = true;           // starts cocked, ready to fire
   Game.gun.cockProgress = 0;
   Game.gun.cockReleasing = false;
@@ -27038,6 +27051,7 @@ function endScenario(outcome) {
   // v1.50: also return any BBs still inside equipped speed loaders to the bag,
   // so nothing is lost between rounds and they refill cleanly next start.
   returnEquippedSpeedLoadersToBag();
+  crewReturnLoans();   // v1.337: and what the crew didn't fire of yours
   if (Net.active) netRestoreBag();   // v1.230: online, your bag is as it was before the match
   // v1.257 (D.40): out of the range by the back door (or F): straight home, the BBs left in the gun back in the bag
   if (SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].range) {
@@ -27948,7 +27962,7 @@ const LOADOUT_WORN_SLOTS = [
   { key: 'eyes', letter: 'E', label: 'Eyes', icon: '◓', sells: 'safety glasses, goggles and a mesh mask',
     worn: () => { const id = Game.persist.equipped.eyewear; return id && id !== 'none' && EYEWEAR[id] ? { name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp) } : null; },
     fits: () => Object.keys(EYEWEAR).filter(id => id !== 'none' && Game.persist.ownedEquipment.eyewear[id] && Game.persist.equipped.eyewear !== id)
-      .map(id => ({ name: EYEWEAR[id].name, detail: wornHits(EYEWEAR[id].hp), wear: () => equipEyewear(id) })),
+      .map(id => ({ name: EYEWEAR[id].name, detail: crewLoanHolder('eyewear', id) ? CHARACTERS[crewLoanHolder('eyewear', id)].name + ' has them · takes them back' : wornHits(EYEWEAR[id].hp), wear: () => equipEyewear(id) })),   // v1.337
     takeOff: () => equipEyewear('none') },
   ...[['chest', 'C', 'Chest', 'a foam chest rig and a plate-carrier vest'], ['arms', 'A', 'Arms', 'elbow pads'], ['legs', 'K', 'Knees', 'knee pads']]
     .map(([zone, letter, label, sells]) => ({ key: zone, letter, label, icon: '⛊', sells,
@@ -27960,7 +27974,7 @@ const LOADOUT_WORN_SLOTS = [
   { key: 'feet', letter: 'F', label: 'Feet', icon: '👟', sells: 'trail runners, track spikes and cross-trainers',
     worn: () => { const id = Game.persist.equipped.shoes || 'none'; return { name: id === 'none' || !SHOES[id] ? 'Sneakers' : SHOES[id].name, detail: '' }; },
     fits: () => Object.keys(SHOES).filter(id => (id === 'none' || Game.persist.ownedEquipment.shoes[id]) && (Game.persist.equipped.shoes || 'none') !== id)
-      .map(id => ({ name: id === 'none' ? 'Sneakers' : SHOES[id].name, detail: id === 'none' ? 'your own pair' : '', wear: () => equipShoes(id) })),
+      .map(id => ({ name: id === 'none' ? 'Sneakers' : SHOES[id].name, detail: id === 'none' ? 'your own pair' : crewLoanHolder('shoes', id) ? CHARACTERS[crewLoanHolder('shoes', id)].name + ' has them · takes them back' : '', wear: () => equipShoes(id) })),   // v1.337
     takeOff: null },
 ];
 function wornHits(hp) { return hp ? `+${hp} hit${hp > 1 ? 's' : ''}` : ''; }
@@ -28029,8 +28043,10 @@ function renderLoadoutManager() {
         const isCurrent = Game.persist.equipped.gun === g;
         const spec = getGunSpec(g);
         const magSize = getMaxAmmoForGun(g);
-        pi.innerHTML = `<span class="lo-pk-icon" style="color:var(--ui-accent)">⌐</span> ${spec.displayName}${isCurrent ? ' <span class="lo-pk-sub" style="color:#888">· equipped</span>' : ''} <span class="lo-pk-sub" style="color:#888; margin-left:auto">${spec.muzzleVelocity} m/s · ${magSize} BB mag</span>`;
+        const lentTo = crewLoanHolder('gun', g);   // v1.337 (D.28 step 4): a crew kid has it; picking it takes it back
+        pi.innerHTML = `<span class="lo-pk-icon" style="color:var(--ui-accent)">⌐</span> ${spec.displayName}${isCurrent ? ' <span class="lo-pk-sub" style="color:#888">· equipped</span>' : ''} <span class="lo-pk-sub" style="color:#888; margin-left:auto">${lentTo ? CHARACTERS[lentTo].name + ' has it · takes it back' : `${spec.muzzleVelocity} m/s · ${magSize} BB mag`}</span>`;
         pi.addEventListener('click', () => {
+          crewTakeBack('gun', g);
           Game.persist.equipped.gun = g;
           // v1.60: drop any equipped spare mags that don't fit the new gun — they'd
           // only dry-click in-match. Speed loaders are gun-agnostic, so leave them.
@@ -28098,6 +28114,8 @@ function renderLoadoutManager() {
     slotsList.appendChild(picker);
   }
 
+  renderLoadoutCrew(slotsList);   // v1.337 (D.28 step 4)
+
   // Available items pool (reference)
   const poolList = document.getElementById('loPoolList');
   poolList.innerHTML = '';
@@ -28132,6 +28150,55 @@ function renderLoadoutManager() {
   // v1.133: a gear change re-builds it too, since the kid now wears the gear
   if (LOADOUT_KID.kid && Game.mode === 'loadoutMgr') {
     if (LOADOUT_KID.gun !== Game.persist.equipped.gun || LOADOUT_KID.gearSig !== JSON.stringify(loadoutKidGearKeys())) renderLoadoutKid(); else drawLoadoutKid();
+  }
+}
+
+// v1.337 (D.28 step 4, Michael: A, "a loan at the loadout"): a CREW row under your slots for each kid in your crew, with
+// the gun he carries and what of yours he has on. A click lists, for his gun, HIS OWN first and then each gun you own
+// that you aren't carrying (one another kid has passes to him), and for his eyes and feet what you own and aren't
+// wearing, or Take it back.
+function renderLoadoutCrew(list) {
+  const crew = crewMembers();
+  if (!crew.length) return;
+  const head = document.createElement('div');
+  head.className = 'lo-crew-head';
+  head.textContent = 'Your Crew';
+  list.appendChild(head);
+  for (const kid of crew) {
+    const ch = CHARACTERS[kid], gun = crewLent(kid, 'gun'), eye = crewLent(kid, 'eyewear'), shoe = crewLent(kid, 'shoes');
+    const key = 'crew:' + kid;
+    const div = document.createElement('div');
+    div.className = 'lo-slot crew';
+    div.dataset.crew = kid;
+    const gear = [eye && EYEWEAR[eye].name, shoe && SHOES[shoe].name].filter(Boolean).join(', ');
+    div.innerHTML = `<span class="lo-slot-key">${ch.name[0]}</span><span class="lo-slot-icon">⌐</span><div class="lo-slot-info">` +
+      `<div class="lo-slot-name">${ch.name} · ${getGunDisplayName(gun || CREW_GUNS[kid])}</div>` +
+      `<div class="lo-slot-desc">${gun ? 'your gun, your BBs' : 'his own gun and BBs'}${gear ? ' · ' + gear : ''} · click to change</div></div>`;
+    div.addEventListener('click', () => { loadoutPickerSlot = (loadoutPickerSlot === key) ? -1 : key; renderLoadoutManager(); });
+    list.appendChild(div);
+    if (loadoutPickerSlot !== key) continue;
+    const picker = document.createElement('div');
+    picker.className = 'picker crew-picker';
+    const sub = t => { const d = document.createElement('div'); d.className = 'picker-sub'; d.textContent = t; picker.appendChild(d); };
+    sub('Gun');
+    loadoutPickerItem(picker, gun ? '⌐' : '✓', `His own ${getGunDisplayName(CREW_GUNS[kid])}`, gun ? 'gives yours back' : 'carrying it', () => crewLend(kid, 'gun', null));
+    for (const g of getOwnedGunTypes()) {
+      if (g === crewYours('gun') || g === gun) continue;
+      const other = crewLoanHolder('gun', g);
+      loadoutPickerItem(picker, '⌐', getGunDisplayName(g), (other ? 'from ' + CHARACTERS[other].name + ' · ' : '') + `${CREW_LOAN_MAGS * getMaxAmmoForGun(g)} of your BBs a match`, () => crewLend(kid, 'gun', g));
+    }
+    for (const [kind, label, table, owned, gain] of [['eyewear', 'Eyes', EYEWEAR, Game.persist.ownedEquipment.eyewear, 'steadier aim'], ['shoes', 'Feet', SHOES, Game.persist.ownedEquipment.shoes, '5% faster']]) {
+      sub(label);
+      const on = crewLent(kid, kind);
+      if (on) loadoutPickerItem(picker, '×', `Take back the ${table[on].name}`, 'gives them back', () => crewLend(kid, kind, null));
+      const ids = Object.keys(table).filter(id => id !== 'none' && owned[id] && id !== on && crewYours(kind) !== id);
+      for (const id of ids) {
+        const other = crewLoanHolder(kind, id);
+        loadoutPickerItem(picker, kind === 'shoes' ? '👟' : '◓', table[id].name, (other ? 'from ' + CHARACTERS[other].name + ' · ' : '') + gain, () => crewLend(kid, kind, id));
+      }
+      if (!on && !ids.length) { const d = document.createElement('div'); d.className = 'picker-none'; d.textContent = `Nothing you own and aren't wearing — airsoft.com sells ${kind === 'shoes' ? 'shoes' : 'eyewear'}.`; picker.appendChild(d); }
+    }
+    list.appendChild(picker);
   }
 }
 
@@ -28569,7 +28636,8 @@ function renderGunDetail(c, gt) {
   const isEquipped = Game.persist.equipped.gun === gt;
 
   // Gun header / buy-or-equip
-  c.appendChild(shopSectionHeader(cfg.displayName, owned ? (isEquipped ? 'Equipped' : 'Owned') : '$' + cfg.price));
+  const lentTo = owned && crewLoanHolder('gun', gt);   // v1.337 (D.28 step 4): a crew kid has it
+  c.appendChild(shopSectionHeader(cfg.displayName, owned ? (isEquipped ? 'Equipped' : lentTo ? 'With ' + CHARACTERS[lentTo].name : 'Owned') : '$' + cfg.price));
   const gunRow = document.createElement('div');
   gunRow.className = 'shop-item' + (owned ? ' owned' : '');
   gunRow.innerHTML = `<div class="shop-item-icon">⌐</div>`;
@@ -28591,15 +28659,46 @@ function renderGunDetail(c, gt) {
   const gbtn = document.createElement('button');
   gbtn.className = 'shop-item-buy';
   if (isEquipped) { gbtn.textContent = 'EQUIPPED'; gbtn.disabled = true; }
-  else if (owned) { gbtn.textContent = 'EQUIP'; gbtn.addEventListener('click', () => { buyGun(gt); shopState.flash = `Equipped ${cfg.displayName}`; renderShop(); }); }
+  else if (owned) {
+    gbtn.textContent = lentTo ? `TAKE BACK FROM ${CHARACTERS[lentTo].name.toUpperCase()}` : 'EQUIP';   // v1.337: carrying it takes it back
+    gbtn.addEventListener('click', () => { const r = buyGun(gt); shopState.flash = r.from ? `${CHARACTERS[r.from].name} gave back your ${cfg.displayName}` : `Equipped ${cfg.displayName}`; renderShop(); });
+  }
   else {
     const cantAfford = Game.persist.cash < cfg.price;
     gbtn.textContent = cantAfford ? 'NEED $' + cfg.price : 'BUY $' + cfg.price;
     gbtn.disabled = cantAfford;
-    gbtn.addEventListener('click', () => { const r = buyGun(gt); if (r.ok) playShopChaching(); shopState.flash = r.ok ? `Bought ${cfg.displayName}` : `Couldn't buy: ${r.reason}`; renderShop(); });
+    gbtn.addEventListener('click', () => {
+      const old = Game.persist.equipped.gun;
+      const r = buyGun(gt); if (r.ok) playShopChaching(); shopState.flash = r.ok ? `Bought ${cfg.displayName}` : `Couldn't buy: ${r.reason}`;
+      // v1.337 (D.28 step 4, Michael: A): you put your old gun down; Nick is asked, not given it (his own rifle beats some)
+      shopState.handDown = r.ok && !r.equipped && old && old !== gt && crewMembers().includes('nick') ? { gun: old, for: gt } : null;
+      renderShop();
+    });
   }
   gunRow.appendChild(gbtn);
   c.appendChild(gunRow);
+
+  // v1.337: "Give your <old gun> to Nick?" YES / KEEP IT, under the gun you just bought
+  const hd = shopState.handDown;
+  if (hd && hd.for === gt && crewLoanOwned('gun', hd.gun) && crewYours('gun') !== hd.gun) {
+    const hrow = document.createElement('div');
+    hrow.className = 'shop-item shop-handdown-row';
+    const has = crewLent('nick', 'gun');
+    hrow.innerHTML = `<div class="shop-item-icon">⌐</div><div class="shop-item-info"><div class="shop-item-name">Give your ${getGunDisplayName(hd.gun)} to Nick?</div>` +
+      `<div class="shop-item-desc">He'd carry it instead of ${has ? 'your ' + getGunDisplayName(has) : 'his own ' + getGunDisplayName(CREW_GUNS.nick)}, on your BBs. Take it back any time at the loadout.</div></div>`;
+    for (const [label, give] of [['YES', true], ['KEEP IT', false]]) {
+      const b = document.createElement('button');
+      b.className = 'shop-item-buy shop-handdown-' + (give ? 'yes' : 'no');
+      b.textContent = label;
+      b.addEventListener('click', () => {
+        shopState.handDown = null;
+        if (give && crewLend('nick', 'gun', hd.gun)) shopState.flash = `Nick has your ${getGunDisplayName(hd.gun)}`;
+        renderShop();
+      });
+      hrow.appendChild(b);
+    }
+    c.appendChild(hrow);
+  }
 
   // v1.262 (D.44): sell it back. The first press asks, the second sells.
   const q = gunSellQuote(gt);
@@ -28612,9 +28711,11 @@ function renderGunDetail(c, gt) {
       : `Half back: it has been into ${q.used} matches (full price only within ${SELL_FREE_MATCHES}).`;
     srow.innerHTML = `<div class="shop-item-icon">$</div>` +
       `<div class="shop-item-info"><div class="shop-item-name">Sell it back</div>` +
-      `<div class="shop-item-desc">${why}${extras ? ` ${extras[0].toUpperCase() + extras.slice(1)} go with it.` : ''} You paid $${q.paid}.</div></div>`;
+      `<div class="shop-item-desc">${why}${extras ? ` ${extras[0].toUpperCase() + extras.slice(1)} go with it.` : ''} You paid $${q.paid}.` +
+      `${lentTo ? ` ${CHARACTERS[lentTo].name} has it: take it back first.` : ''}</div></div>`;   // v1.337
     const sbtn = document.createElement('button');
     sbtn.className = 'shop-item-buy shop-sell-btn';
+    if (lentTo) sbtn.disabled = true;
     const armed = shopState.sellArm === gt;
     sbtn.textContent = armed ? `SURE? SELL $${q.value}` : `SELL $${q.value}`;
     sbtn.addEventListener('click', () => {
@@ -28747,7 +28848,7 @@ function renderEquipmentTab(c) {
     const equipped = curEye === id;
     c.appendChild(equipRow({
       icon: '◓', name: e.name,
-      desc: (e.hp ? `+${e.hp} hit${e.hp>1?'s':''} protection. ` : '') + (e.view ? `View: ${e.view.label}${e.view.mesh?' (mesh)':''}.` : 'No view change.'),
+      desc: (e.hp ? `+${e.hp} hit${e.hp>1?'s':''} protection. ` : '') + (e.view ? `View: ${e.view.label}${e.view.mesh?' (mesh)':''}.` : 'No view change.') + crewLentNote('eyewear', id),
       price: e.price, owned, equipped,
       onBuy: () => buyEquipment('eyewear', id),
       onEquip: () => equipEyewear(id),
@@ -28785,7 +28886,7 @@ function renderEquipmentTab(c) {
     const equipped = curShoe === id;
     c.appendChild(equipRow({
       icon: '👟', name: s.name,
-      desc: s.desc || 'Standard sneakers — no bonuses.',
+      desc: (s.desc || 'Standard sneakers — no bonuses.') + crewLentNote('shoes', id),
       price: s.price, owned, equipped,
       onBuy: () => buyEquipment('shoes', id),
       onEquip: () => equipShoes(id), pic: ['shoes', id],
@@ -28793,6 +28894,8 @@ function renderEquipmentTab(c) {
   }
 }
 
+// v1.337 (D.28 step 4): a line on a thing a crew kid has of yours
+function crewLentNote(kind, id) { const k = crewLoanHolder(kind, id); return k ? ` ${CHARACTERS[k].name} has them: wearing them takes them back.` : ''; }
 // Generic equip-style row: BUY when unowned, EQUIP/EQUIPPED when owned.
 function equipRow({ icon, name, desc, price, owned, equipped, locked, onBuy, onEquip, equipLabel, pic }) {
   const row = document.createElement('div');
@@ -31829,6 +31932,9 @@ function spawnEnemyBB(enemy, targetPos) {
     bb.intendedTarget = enemy._targetRef || null;
     Game.scenario.bbs.push(bb);
   }
+  // v1.337 (D.28 step 4): a kid on a gun you lent him fires your BBs; out of them, he goes back to his own gun
+  const loan = enemy.crewLoan;
+  if (loan && enemy.weapon === loan.gun) { loan.bbs = Math.max(0, loan.bbs - pelletCount); if (loan.bbs <= 0) crewKidOwnGun(enemy); }
   playShot(enemy.pos.x, enemy.pos.z);  // v1.21: positional — heard louder + panned from enemy's location
 }
 
@@ -37119,6 +37225,101 @@ function crewTakeIn(id) {
 // to him. Solo matches never take the crew. With nobody in the crew every match is exactly as before. The crew sizes
 // and the odds are step 3's (rebalancing); the bench is the briefing's and is not saved.
 const CREW_GUNS = { eric: 'mp5', sean: 'ak47', nick: 'ar', alex: 'ak47', diego: 'mp5' };   // each kid's own gun
+// v1.337 (D.28 step 4, Michael: A on "Hand-me-downs and the BB rule"): a loan at the loadout. You lend a crew kid a
+// gun you own, or eyewear or shoes; you own one of each, so what a kid has is not yours to carry or wear until you take
+// it back (free). A kid on his own gun brings his own BBs; a kid on a gun you lent him loads from your bag at BEGIN the
+// way you do (the gun's mag, with your mag upgrades, and one more), and what he hasn't fired goes back in the bag at the
+// end. When it runs out he goes back to his own gun; with an empty bag he starts on it. Eyewear gives +0.05 aim and
+// shoes +5% speed; no armor (a kid takes one hit a life). The gun you carry and what you wear can't be lent.
+const CREW_LOAN_AIM = 0.05, CREW_LOAN_SPEED = 1.05, CREW_LOAN_MAGS = 2;
+function crewGearOf(kid) { const g = (Game.persist.crewGear || {})[kid]; return g && typeof g === 'object' ? g : {}; }
+function crewLoanOwned(kind, id) {
+  if (kind === 'gun') return !!GUN_MAGS[id] && (id === 'pistol' || !!Game.persist.owned[GUN_MAGS[id].ownFlag]);
+  if (kind === 'eyewear') return !!EYEWEAR[id] && id !== 'none' && !!(Game.persist.ownedEquipment.eyewear || {})[id];
+  if (kind === 'shoes') return !!SHOES[id] && id !== 'none' && !!(Game.persist.ownedEquipment.shoes || {})[id];
+  return false;
+}
+// What you have lent this kid of this kind ('gun' | 'eyewear' | 'shoes'), or null
+function crewLent(kid, kind) {
+  const id = crewGearOf(kid)[kind];
+  return id && crewMembers().includes(kid) && crewLoanOwned(kind, id) ? id : null;
+}
+// The crew kid who has this of yours, or null
+function crewLoanHolder(kind, id) {
+  if (!id) return null;
+  return crewMembers().find(kid => crewLent(kid, kind) === id) || null;
+}
+function crewYours(kind) {
+  const e = Game.persist.equipped;
+  return kind === 'gun' ? e.gun : (e[kind] || 'none');
+}
+// Lend it (id) or take his back (id null). Something another kid has passes from him; what you carry can't be lent.
+function crewLend(kid, kind, id) {
+  if (!crewMembers().includes(kid)) return false;
+  if (!Game.persist.crewGear || typeof Game.persist.crewGear !== 'object') Game.persist.crewGear = {};
+  const g = Object.assign({}, crewGearOf(kid));
+  if (id == null) delete g[kind];
+  else {
+    if (!crewLoanOwned(kind, id) || crewYours(kind) === id) return false;
+    const holder = crewLoanHolder(kind, id);
+    if (holder && holder !== kid) crewLend(holder, kind, null);
+    g[kind] = id;
+  }
+  Game.persist.crewGear[kid] = g;
+  return true;
+}
+// Take it back from whoever has it; returns the kid who had it, or null
+function crewTakeBack(kind, id) {
+  const kid = crewLoanHolder(kind, id);
+  if (kid) crewLend(kid, kind, null);
+  return kid;
+}
+// The gun a crew kid takes into a match: yours when you lent him one and the bag has BBs for it, else his own
+function crewGun(kid) {
+  const g = crewLent(kid, 'gun');
+  return g && Game.persist.bag > 0 ? g : CREW_GUNS[kid];
+}
+// The small gains of what you lent him, as a statsOverride on his profile (or null)
+function crewGearStats(kid) {
+  const ch = CHARACTERS[kid]; if (!ch) return null;
+  const o = {};
+  if (crewLent(kid, 'eyewear')) o.accuracy = Math.min(1, (ch.accuracy ?? 0.5) + CREW_LOAN_AIM);
+  if (crewLent(kid, 'shoes')) o.moveSpeed = (ch.moveSpeed ?? 1.0) * CREW_LOAN_SPEED;
+  return Object.keys(o).length ? o : null;
+}
+// At BEGIN, after your own gun, mags and loaders: each kid on a gun of yours loads from what the bag has left
+function crewLoadLoans() {
+  for (const e of Game.scenario.enemies || []) {
+    const L = e.crewLoan;
+    if (!L || L.loaded != null) continue;
+    const take = Math.max(0, Math.min(CREW_LOAN_MAGS * getMaxAmmoForGun(L.gun), Game.persist.bag));
+    Game.persist.bag -= take;
+    L.bbs = take; L.loaded = take;
+    if (take > 0) { const gm = Game.persist.gunMatches; if (gm && typeof gm[L.gun] === 'number') gm[L.gun]++; }   // (it counts as a match for selling it back)
+    else crewKidOwnGun(e);
+  }
+}
+// At the end: what they haven't fired goes back in the bag
+function crewReturnLoans() {
+  for (const e of Game.scenario.enemies || []) {
+    const L = e.crewLoan;
+    if (!L || !L.bbs) continue;
+    Game.persist.bag += L.bbs; L.bbs = 0;
+  }
+}
+// Out of your BBs (or none to start with): back to his own gun and his own BBs for the rest of the match
+function crewKidOwnGun(e) {
+  const L = e.crewLoan;
+  if (!L || e.weapon === L.own) return;
+  e.weapon = L.own; L.dry = true;
+  if (e.pendingBurst) e.pendingBurst.length = 0;
+  const gg = e.mesh && e.mesh.gunGroup;
+  if (!gg) return;
+  for (const c of gg.userData.gunParts || []) gg.remove(c);
+  const fresh = buildEnemyGunMesh(L.own), parts = fresh.children.slice();
+  for (const c of parts) gg.add(c);
+  gg.userData.gunParts = parts;
+}
 const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean' };
 const crewBench = new Set();
 function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); }
@@ -37244,7 +37445,10 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   for (const kid of fielded) { const i = slots.findIndex(es => es.charId === kid); if (i >= 0) { at.set(kid, i); free.splice(free.indexOf(i), 1); } }
   for (const kid of fielded) {
     const i = at.has(kid) ? at.get(kid) : free.length ? free.shift() : -1;
-    out.push(Object.assign(i >= 0 ? Object.assign({}, slots[i]) : spare(), { charId: kid, weapon: CREW_GUNS[kid], team: 'player' }));
+    const es = Object.assign(i >= 0 ? Object.assign({}, slots[i]) : spare(), { charId: kid, weapon: crewGun(kid), team: 'player' });
+    if (es.weapon !== CREW_GUNS[kid]) es.crewLoan = true;   // v1.337: on a gun you lent him
+    const gs = crewGearStats(kid); if (gs) es.statsOverride = Object.assign({}, es.statsOverride || {}, gs);   // v1.337: his eyes and feet
+    out.push(es);
   }
   let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
   for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }

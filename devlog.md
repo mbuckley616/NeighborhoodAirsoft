@@ -14051,3 +14051,53 @@ Backlog D.63, batch 2: Michael's note asks for "1 or 2 other snipers". The Sprin
 ### Still open
 - **For a playtest:** whether one more second of reach is worth a slower bolt and ten to a mag. The Spring Sniper
   Rifle's irons aiming 2.5° low (above) is worth a look; it is filed under Found in play. The SMGs are next in batch 2.
+
+## v1.337 — Lend your crew a gun
+Backlog D.28 step 4 (card fable/d28-handmedowns), Michael's answer A on "Hand-me-downs and the BB rule" (24 Oct): a loan
+at the loadout, a capped load from your bag, eyes and feet only. His spec: "you give a crew kid a gun you own (your old
+one goes to Nick when you buy better)... A kid on his own gun brings his own BBs; a kid on a gun you handed him uses
+yours." The measurement that came first (decisions, 24 Oct): an AK kid fires about 100 BBs a minute, an MP5 or rifle kid
+15-25, so an uncapped AK in a kid's hands could cost a long match 1,100 of your BBs.
+- **Where.** The Loadout's list gets a YOUR CREW part under your slots: a row for each kid in your crew with the gun
+  he carries ("Diego · AK-47 · your gun, your BBs", or "his own gun and BBs") and what of yours he has on. A click lists
+  his own gun first, then every gun you own that you aren't carrying, each with what it costs you a match ("700 of your
+  BBs a match"), then his eyes and feet: what you own and aren't wearing, or "Take back the ...". A gun another kid has
+  passes from him ("from Diego"). The briefing's lineup shows the gun as before.
+- **It comes back.** You own one of each, so what a kid has isn't yours to carry until you take it back, free. Picking
+  it as your own gun (the Loadout's gun picker, the workbench, the shop's EQUIP, which reads "TAKE BACK FROM ALEX")
+  takes it back, and each says who has it first. Selling a gun a kid has is refused until you take it back. The gun you
+  carry and what you wear can't be lent.
+- **His BBs.** At BEGIN, after your own gun, mags and loaders have loaded, a kid on your gun loads from what the bag has
+  left: two of its mags at your mag upgrades (an AK 700 or 1,000, an MP5 300 or 400, a spring rifle 50 or 80). Each BB
+  he fires is counted; what he hasn't fired goes back in the bag at the end, as yours does. Out of them, he goes back to
+  his own gun (its model swapped into his hands) and his own BBs for the rest of the match. With the bag empty he
+  starts on his own gun, and the briefing already shows it. A benched kid takes nothing. A match a kid plays on your
+  gun counts toward its sell-back count, as your own matches do.
+- **Gear.** Eyewear gives him +0.05 aim (Sean 0.60 to 0.65), shoes +5% speed; it's on his profile for the match only,
+  and he doesn't wear it on his model yet. No armor.
+- **Your old gun.** Buying a gun with Nick in your crew asks under it "Give your AK-47 to Nick?" YES / KEEP IT, saying
+  what he'd carry it instead of. YES lends it to him as the Loadout would.
+- **Saves.** `crewGear` in the save: { kid: { gun, eyewear, shoes } }. An old save has none and plays as today.
+### Verified
+- **`tests/crew-gear.test.mjs`, new** (a save rule and a rule of play the BB counts lean on):
+  - The Spring Pistol you carry can't be lent; Diego takes your AK-47, Sean your smoke goggles, Nick your trail shoes;
+    the AK can't be sold while Diego has it; all three survive a save and reload.
+  - The Big Game's setup: Diego on the AK-47 as a loan, Eric on his own MP5; Sean's aim 0.65, Nick's speed 0.85 to 0.8925.
+  - A 5,000 bag at BEGIN: you load 10, Diego 700, nobody else draws (4,290 left). In a minute he fired 75-113 of them
+    (four runs) and the bag ended at 5,000 less exactly what he fired.
+  - A 40 bag: you 10, Diego the last 30; he runs dry, is back on his MP5 (its model's pieces in his gun group) and the
+    bag ends at 10. A 10 bag: he starts on his MP5. An empty bag: the setup already has him on it. Benched: the bag
+    pays your 10 and gets them back.
+  - The Loadout lists five crew rows; Sean's picker starts with his own AK-47 and takes the goggles back; lending Alex
+    the AK passes it from Diego. The shop's TAKE BACK FROM ALEX returns it; buying the MP5 asks "Give your AK-47 to
+    Nick?" and YES lends it.
+  - An old save with no `crewGear` loads with nothing lent, every kid on his own gun.
+- **These suites pass, each alone:** `crew-gear` (four runs), `smoke`, `crew`, `crew-field`, `crew-balance`,
+  `crew-roster`, `crew-spawn-bounds` (every check, slow to close), `loadout-gear`, `loadout-kid`, `gamepad-screens`,
+  `notebook`, `autosave`, `shop-gun-kinds`, `shop-tabs`, `workbench-labels`, `kid-hold`, `burst-pose` and
+  `damage-report-first`. The whole of `npm test` is not yet run here: three shards side by side crashed browser tabs
+  in about half the suites (crew-gear among them, which passes alone), so it goes one suite at a time, about five hours.
+### Still open
+- **For a playtest:** whether 700 BBs an AK kid a match (two mags) is the right cap, and whether the YOUR CREW rows
+  want to sit higher on the Loadout (they come after the nine slots, so the card scrolls to them at 1280×720).
+- A kid wearing goggles or shoes you lent him doesn't show them on his model; it's only his aim and speed.
