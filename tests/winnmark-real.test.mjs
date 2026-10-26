@@ -138,6 +138,77 @@ check('Winnmark: from the entry you see down the street past 150 m', view.past >
 check('Winnmark: the camera sees down the street (380 m)', view.far === 380, view.far);
 check('Winnmark: at most 2,060 draw calls in any of seven views', Math.max(...Object.values(view.calls)) <= 2060, view.calls);
 await g.shot('winnmark-real-entry');
+// v1.341 (step 4; Michael 26 Oct: A): Seth's nine matches play in his area, the other eight in the box
+const SA_IDS = ['winnmark_seth_house', 'winnmark_seth_shotgun_duel', 'winnmark_ffa', 'winnmark_sniper_overwatch', 'winnmark_team_2v2',
+  'winnmark_defend_treehouse', 'winnmark_two_in_the_yards', 'winnmark_night_prowl', 'winnmark_night_team_2v2'];
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
+await g.scenario('winnmark_sniper_overwatch');
+const sa = await page.evaluate((SA_IDS) => {
+  const out = {}, B = Game.scenario.bounds, H = WM_SETH;
+  const wm = Object.entries(SCENARIOS).filter(([id, sc]) => sc.builderFn === 'buildWinnmarkCourtScene');
+  out.inArea = wm.filter(([, sc]) => winnmarkArea(sc.builderArg) === 'seth').map(([id]) => id).sort();
+  out.size = [B.maxX - B.minX, B.maxZ - B.minZ];
+  const inB = (x, z, m = 0) => x >= B.minX + m && x <= B.maxX - m && z >= B.minZ + m && z <= B.maxZ - m;
+  out.holds = { pad: inB(H.drive, 21), road: inB(H.drive, 0), patio: inB(H.x, 45), creek: inB(H.x, winnmarkCreekZ(H.x) + 2), northLawn: inB(H.x, -10) };
+  // every start and anchor of the area in its bounds and clear of everything solid (one build, as the match's)
+  const built = withSeededRandom('x|seth_yards', () => buildWinnmarkCourtScene('seth_yards', 'day'));
+  const pts = [...Object.entries(built.placements), ...Object.entries(built.playerSpawns)].filter(([, p]) => p.pos.x > 50);
+  out.anchors = pts.length;
+  out.bad = pts.filter(([k, p]) => !inB(p.pos.x, p.pos.z, 0.5) || collidesObstacles(p.pos.x, p.pos.z, 0.3)).map(([k]) => k);
+  out.trey = +Math.hypot(built.placements.trey_overwatch.pos.x - H.drive, built.placements.trey_overwatch.pos.z - 21).toFixed(1);
+  // its wood is solid: trunks in the bounds; the merged scenery keeps 3 m and more outside them
+  out.trunks = built.obstacles.filter(o => o.shape === 'cylinder' && inB(o.cx, o.cz)).length;
+  const sc = built.scene.getObjectByName('realScenery'); let near = Infinity;
+  sc.traverse(m => { if (!m.isMesh) return; const p = m.geometry.attributes.position.array;
+    for (let i = 0; i < p.length; i += 3) if (_wmPolyNear(WM_REAL.creek, p[i], p[i + 2]).d > 1.5) near = Math.min(near, Math.max(B.minX - p[i], p[i] - B.maxX, B.minZ - p[i + 2], p[i + 2] - B.maxZ)); });
+  out.sceneryOut = +near.toFixed(2);
+  // draw calls in five views of the area
+  applyBBHit = () => true; for (const e of Game.scenario.enemies || []) e.update = () => {};
+  out.calls = {};
+  for (const [name, x, z, yaw] of [['east', 130, 0, Math.PI / 2], ['drive', 108, 6, Math.PI], ['patio', 100, 52, 0], ['creek', 92, 62, 0.4], ['north', 98, -10, Math.PI]]) {
+    Game.player.pos.x = x; Game.player.pos.z = z; Game.player.yaw = yaw; Game.player.pitch = -0.05; stepGame(1 / 60);
+    Game.player.yaw = yaw; Game.player.pitch = -0.05; Game.camera.updateMatrixWorld(true);
+    Game.renderer.render(Game.scene, Game.camera); out.calls[name] = Game.renderer.info.render.calls;
+  }
+  return out;
+}, SA_IDS);
+console.log('  ', JSON.stringify(sa));
+check("Winnmark: Seth's nine matches play in his area, the other eight in the box", JSON.stringify(sa.inArea) === JSON.stringify([...SA_IDS].sort()), sa.inArea);
+check("Winnmark: Seth's area is about today's box (70-80 m a side) and holds the road, his driveway's pad, the patio, the creek and the north lawn",
+  sa.size.every(v => v >= 70 && v <= 80) && Object.values(sa.holds).every(Boolean), sa);
+check("Winnmark: every start and anchor in Seth's area is inside it and clear of everything solid", sa.anchors >= 20 && sa.bad.length === 0, sa.bad);
+check("Winnmark: Trey's overwatch is 45-55 m from Seth's driveway (Michael: A)", sa.trey >= 45 && sa.trey <= 55, sa.trey);
+check("Winnmark: Seth's area's wood is solid trunks, the merged scenery (the creek's water aside) 3 m or more outside it", sa.trunks >= 25 && sa.sceneryOut >= 3, sa);
+check("Winnmark: at most 2,060 draw calls in five views of Seth's area", Math.max(...Object.values(sa.calls)) <= 2060, sa.calls);
+// the night matches: no kid's start has a line to yours or your side's (muzzle 1.05 m to chest 0.95 m)
+for (const id of ['winnmark_night_prowl', 'winnmark_night_team_2v2']) {
+  await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
+  await g.scenario(id);
+  const seen = await page.evaluate(() => {
+    const G = (x, z) => scenarioGroundY(x, z) || 0, obs = Game.player.obstacles;
+    const sees = (a, b) => hasLineOfSight(a.x, G(a.x, a.z) + 1.05, a.z, b.x, G(b.x, b.z) + 0.95, b.z, obs);
+    const ours = [Game.player.pos, ...Game.scenario.enemies.filter(e => e.team === 'player').map(e => e._spawnPos || e.pos)];
+    const theirs = Game.scenario.enemies.filter(e => e.team !== 'player');
+    return theirs.flatMap(e => ours.filter(o => sees(e._spawnPos || e.pos, o) || sees(o, e._spawnPos || e.pos)).map(() => e.character.name));
+  });
+  check(`Winnmark: ${id}: no line from any start to yours at night`, seen.length === 0, seen);
+}
+// Two on Two: the first shot comes inside the guns' 10-40 m band (you stand at your start and can't be tagged)
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
+await g.scenario('winnmark_team_2v2');
+const first = await page.evaluate(() => {
+  const hit = applyBBHit; applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
+  let d = null, t = 0; const o = spawnEnemyBB;
+  // the first shot's range: from the shooter to the nearest kid (or you) on the other side
+  const foes = e => [...(e.team === 'player' ? [] : [Game.player.pos]), ...Game.scenario.enemies.filter(k => k.team !== e.team && k.health > 0).map(k => k.pos)];
+  spawnEnemyBB = (e, tg) => { if (d == null && !inOpeningHold()) d = Math.min(...foes(e).map(p => Math.hypot(e.pos.x - p.x, e.pos.z - p.z))); return o(e, tg); };
+  for (let f = 0; f < 60 * 60 && d == null && Game.mode === 'scenario'; f++) { stepGame(1 / 60); t = f / 60; }
+  spawnEnemyBB = o;
+  return { d: d && +d.toFixed(1), t: +t.toFixed(1) };
+});
+console.log('   Two on Two, first shot:', JSON.stringify(first));
+check('Winnmark: Two on Two in Seth\'s area: the first shot is fired at 10-40 m', first.d != null && first.d >= 10 && first.d <= 40, first);
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
 const far2 = await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); return Game.camera.far; });
 check('Winnmark: the camera goes back to 200 m in the bedroom', far2 === 200, far2);
 check('no page errors', g.errs.length === 0, g.errs);
