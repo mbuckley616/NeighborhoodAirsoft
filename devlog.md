@@ -14603,3 +14603,18 @@ areas by day and compared them with the guide. Two things were still missing or 
   - `spawn-facing`, `result-text`, `notebook` and `crew-gear` lost their tab or timed out while two browsers ran
     beside a third, then passed alone.
   - `crew-spawn-bounds` and `crew` ran in the full `npm test`, below.
+- **`npm test` here, up to its two-hour limit:** 84 of 185 suites ran, `ai-clock` to `last-saturday` in alphabetical order,
+  with `crew` (23 checks) and `crew-spawn-bounds` among them. Two failed:
+  - `bunratty-road`'s pin on Winnmark's road vertex counts was this card's own change. v1.338 ran the street on 195 m
+    to Winnmark Dr with the same ribbon, so the asphalt went 1,539 → 3,339 and the kerbs 9,384 → 18,576; the bulb (280)
+    and the marks (594) are the same. Earlier sessions hadn't run this suite. The pin now holds the real street's
+    counts, and the suite passes.
+  - `idle-ally` (the Hollow's night game, which this card doesn't touch) had Rebecca 9.6 m from her start against a
+    10 m line. Alone it passes.
+### Still open
+- **The other 101 suites** (`last-saturday` onwards) are owed to `npm test` next session, before the card goes to review.
+- **For Michael's look:**
+  - The west edge: the course, the tree line and the row of houses past it, from the bulb and from the north yards.
+  - The green, bunkers and cart path, now past the lots' fences.
+  - The out kid's walk round the car, in Storm the Cul-de-Sac.
+- The houses past the edges are the plain merged kind. At 150 m and more in the day fog that is all they need to be.
