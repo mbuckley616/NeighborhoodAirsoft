@@ -14454,8 +14454,8 @@ split it there because moving them re-anchors eight matches and the tutorial, a 
 - **These suites pass, run one at a time:** `smoke`, `winnmark-real`, `ffa-starts`, `night-prowl`, `seth-shotgun`,
   `pocket`, `winnmark-fort`, `layout-same`, `rival`, `opening-hold`, `kid-hold`, `last-tag-trade`, `lot-ffa-opening`,
   `winnmark-cars`, `winnmark-props`, `houses`, `house-backs`, `winnmark-road`, `winnmark-trees`, `whole-block`,
-  `bulb-sight`, `fence-bound`, `backdrop`, `squad-basics`, `last-kid`, `real-scale`. Owed from v1.341: `yard-props`
-  and `damage-report` pass alone.
+  `bulb-sight`, `fence-bound`, `backdrop`, `squad-basics`, `last-kid`, `real-scale`. Owed from v1.341: `yard-props`,
+  `damage-report`, `crew` (22 min) and `crew-spawn-bounds` (10 min) pass alone.
 - **`result-stats` fails on main too.** Its "OPENED names the next match" gets Squad Basics after Just You and Seth:
   the unlock ladder, which this card doesn't touch. Same failure on origin/main here, so it is not this branch's.
 ### Still open
