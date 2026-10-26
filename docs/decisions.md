@@ -5,7 +5,14 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-(none)
+- **Hold the South Fort is still lost before the first tag (critic, 2026-10-26, v1.337)**
+  v1.319 took your first fix: a tagged attacker walks back to the north fort. Headless after it, 4 of 4 rounds were
+  lost, all to Devon's sniper from 37-38 m: at 3.1 s pushing out, at 6-9 s standing on the fort floor. With you
+  untouchable at the start, Seth was inside 25 m at 9.7 s, and Seth and Sean put 58-82 BBs into you from 20 m by 90 s.
+  The longer walk only helps after a tag, and a one-life defender scored 0 tags in 4 rounds (0 in 10 on 20 Oct).
+  A) Your second fix: a taller wall and better crenellations, so the floor is out of Devon's line _(the critic's pick)_
+  B) A and two lives for the defender
+  C) Leave it: it's meant to be the hardest defend
 
 ## Answered
 
