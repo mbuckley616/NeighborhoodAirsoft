@@ -14250,3 +14250,44 @@ bulb's lots. Nothing in the box moved again.
   slopes past the wall's foot. They are 60-110 m from any play area.
 - The houses keep the detailed house's own front: no garage wing or side-load garage door yet. The driveway runs to
   the garage end of the front.
+
+## v1.340 — Seth's sunken lot
+Card `fable/d51-winnmark` (backlog D.51), step 3. This step builds Seth's lot from Michael's notes ("very steep
+driveway, his house / lot was kind of sunken down off the road"; "a really big deck off the main floor, and a crazy
+Hot Tub, almost the size of his pool, underneath his deck"; the back yard "further downward sloping, heavily forested
+area with a small creek") and his answer 2A: mid-street on the south side. It sits at x 100, 130 m from the bulb.
+Most fights were in that driveway and that back yard, so this is the heart of the play area step 4 moves his matches
+into. Nothing in the box moved.
+- **The driveway and the pad.** The driveway drops 2.4 m off the road over 16 m, a 15 % grade, to a flat concrete pad
+  in front of the garage end. The guide asks for 2-3 m at 12-15 %. The front lawn is sunk with it, and the ground
+  banks back up to the neighbours' lawns over 6 m each side.
+- **The house** is the red brick with cream quoins and belt course (look B), 24 x 15 m, the biggest on the street.
+  Its main floor stands 0.35 m over the pad. The back is a walk-out over the patio, 3 m below, with French doors and
+  four windows.
+- **The big deck** is 16 x 5.5 m off the main floor (the street's other decks are 12 x 3.8). It stands on five posts
+  with a rail round it and a stair down its west end.
+- **The hot tub** is under the deck, sunk into the patio: 3.6 m across, its rim 0.45 m up, a step on its open side.
+  The deck's underside is 2.25 m over its rim. You can't walk into it (an obstacle 0.9 m high), and BBs
+  hit it.
+- **The pool** is on the patio past the deck, 9.5 x 4.6 m in a coping. The water sits just under the coping's top,
+  so no hole is cut in the ground. You can't walk into it, but BBs fly over it.
+- **The patio** is flagstone, 30 m across and 15 m deep, with slate-blue and rust stones in it (the guide's listing A
+  terrace).
+- **The back yard** falls from the patio's edge through the woods to the creek, 3.3 m under the patio at the yard's
+  foot. Seven stepping stones cross the creek there. To make room for that fall, the creek's bed is now 2-3 m deeper
+  along its whole way, from −2.4 m at its east end to −6.9 m where it meets the course's creek. The course's creek
+  falls from the pond to −8.2 m in its ravine.
+- The scenery's trees keep off the lot down to the patio's edge. The woods below it are as thick as anywhere in the
+  shared wood.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The pad is 2.40 m under the road, down a 15.0 % driveway, and flat in front of the house.
+  - The house is 24 m across, its main floor 3.00 m over the patio.
+  - The hot tub is 3.6 m across, inside the big deck's footprint, its 0.9 m obstacle 1.8 m under the deck's
+    underside.
+  - The pool lies on the patio, and the creek runs 3.3 m under the patio at the yard's foot.
+  - Everything from v1.338-v1.339 still holds, with the deeper creek: both creeks still fall all the way, in a channel
+    under their banks at all 106 points.
+- **Cover.** All 17 matches by day and at night have the same obstacles as v1.339 between x −40 and 60, where all
+  the matches' obstacles are. One tree past the west wall (x −57, z 33, outside the bounds) stands 6.5 cm lower,
+  where the wood's floor follows the deeper creek.

@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.339</div>
+  <div class="version">v1.340</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13934,9 +13934,10 @@ const WM_REAL = {
   dr: [[235, -190], [235, 0], [233, 80], [210, 140], [160, 170], [100, 182], [20, 190], [-60, 196]],
   pond: { x: -105, z: -68, rx: 46, rz: 30, bed: -1.4, water: -0.3 },
   // Seth's creek [x, z, bed y], from the east through the shared wood to the course's creek west of the bulb
-  creek: [[262, 86, -1.8], [200, 72, -2.1], [130, 60, -2.5], [70, 58, -2.8], [10, 63, -3.1], [-50, 60, -3.4], [-100, 30, -3.7]],
-  // the course's creek, out of the pond's south end and south along the course
-  course: [[-104, -39, -1.2], [-101, 0, -2.6], [-100, 30, -3.7], [-110, 100, -4.6], [-118, 190, -5.4]],
+  // v1.340 (step 3): 2-3 m deeper than v1.338's, so Seth's back yard falls 3-4 m from his patio to it, as Michael's notes
+  creek: [[262, 86, -2.4], [200, 72, -3.6], [130, 60, -4.6], [70, 58, -5.3], [10, 63, -5.9], [-50, 60, -6.4], [-100, 30, -6.9]],
+  // the course's creek, out of the pond's south end and south along the course, in its ravine
+  course: [[-104, -39, -1.2], [-101, 0, -4.0], [-100, 30, -6.9], [-110, 100, -7.6], [-118, 190, -8.2]],
   // house sites for step 2, kept clear of the trees here: [x, z, half-width, half-depth]
   sites: [[48, -22], [80, -22], [112, -22], [144, -22], [176, -22], [208, -22], [100, 22], [156, 22], [206, 22]].map(([x, z]) => [x, z, 14, 12]),
 };
@@ -13997,6 +13998,32 @@ function winnmarkLotY(L, z, r) {
   if (d <= WM_LOT.wallD) return L.T;
   return Math.min(r, L.T - 0.9 + 0.15 * Math.max(0, d - 44));   // the yard below the wall, meeting the falling ground by 54 m
 }
+// v1.340 (D.51 step 3; Michael's notes and answer 2A; docs/refs/winnmark.md gap 1): Seth's lot, mid-street on the south
+// side, 130 m from the bulb. The driveway drops 2.4 m off the road over 16 m (15 %, "very steep") to the pad, and the
+// house is sunk with it; its back is a walk-out over a flagstone patio, the "really big deck" off the main floor over it
+// with the hot tub "almost the size of his pool" sunk into the patio under the deck, the pool beyond on the patio, and the
+// back yard falling on through the woods to the creek, 3-4 m under the patio. Levels: P the pad, F the main floor,
+// T the patio; the house's front at z 22, its back at 37; the patio to z 52.
+const WM_SETH = (() => {
+  const x = 100, S = winnmarkStreetY(x), P = S - 2.4, F = P + 0.35, T = F - 3.0;
+  return { x, S, P, F, T, w: 24, front: 22, back: 37, patio: 52, half: 18, deck: { x0: 88.5, x1: 104.5, z1: 42.5 },
+    tub: { x: 96.5, z: 40.2, r: 1.8 }, pool: { x0: 100.5, x1: 110, z0: 45.4, z1: 50 }, drive: 108.6 };
+})();
+function winnmarkSethY(x, z, r) {
+  const H = WM_SETH, ax = Math.abs(x - H.x);
+  if (z < 4 || ax > H.half + 6) return r;
+  const cz = winnmarkCreekZ(x);
+  if (z > cz) return r;
+  let y;
+  if (z < 5) y = H.S + (r - H.S) * (5 - z);                                              // the road's edge
+  else if (z < 21) y = H.S + (H.P - H.S) * (z - 5) / 16;                                   // the driveway and the sunk front lawn
+  else if (z < 29) y = H.P;                                                                // the pad, and under the house's front
+  else if (z < H.back) y = H.P + (H.T - H.P) * _wmSS((z - 29) / 7.5);                      // under the house
+  else if (z <= H.patio) y = H.T;                                                          // the patio
+  else y = H.T + (r - H.T) * _wmSS((z - H.patio) / (cz - H.patio));                     // down through the woods to the creek
+  const k = 1 - _wmSS((ax - H.half) / 6);
+  return r + (y - r) * k;
+}
 function winnmarkRealScale(x, z, h) {
   const B = WM_REAL.box;
   const out = Math.max(B.minX - x, x - B.maxX, B.minZ - z, z - B.maxZ);
@@ -14019,6 +14046,7 @@ function winnmarkRealScale(x, z, h) {
   r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
   const lot = winnmarkLotAt(x, z);   // v1.339: the street's lots past the box, terraced behind their walk-outs
   if (lot) r = winnmarkLotY(lot, z, r);
+  r = winnmarkSethY(x, z, r);        // v1.340: Seth's sunken lot
   // west of the box the course: flat, but for the pond and the creeks' ravines
   if (x < -40) r *= 1 - _wmSS((-40 - x) / 30);
   const P = WM_REAL.pond, e = Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz);
@@ -14046,7 +14074,7 @@ function buildWinnmarkLots(scene, o) {
   const IRON = mat('iron', 0x18181a, { roughness: 0.5, metalness: 0.55 }), TRIM = mat('trim', 0xe6dfd0, { roughness: 0.6 });
   const GLASS = mat('glass', 0x2e3a44, { roughness: 0.25, metalness: 0.2, emissive: 0x101820, emissiveIntensity: 0.4 });
   const LIT = o.night ? mat('lit', 0xffe0a0, { roughness: 0.4, emissive: 0xffc070, emissiveIntensity: 0.85 }) : GLASS;
-  const CONC = mat('conc', 0xa8a49c, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const CONC = mat('conc', 0x8e8a82, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   // a black picket fence 1.2 m high from (x0, z0) to (x1, z1), each picket on the ground under it (or on `y` if given)
   const fence = (x0, z0, x1, z1, y) => {
     const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / 0.16)), posts = Math.max(1, Math.round(len / 2.4));
@@ -14066,6 +14094,18 @@ function buildWinnmarkLots(scene, o) {
       add(IRON, x - 0.04, x + 0.04, b - 0.1, b + 1.28, z - 0.04, z + 0.04); lo = Math.min(lo, b); hi = Math.max(hi, b);
     }
     ob(x0 - 0.1, x1 + 0.1, z0 - 0.1, z1 + 0.1, lo, hi + 1.2, { surface: 'metal', bbPass: true });
+  };
+  const patch = (key, x0, x1, z0, z1, lift, skip) => {   // a patch laid on the ground, facing up
+    const st = 0.75, nx = Math.max(1, Math.ceil((x1 - x0) / st)), nz = Math.max(1, Math.ceil((z1 - z0) / st)), p = [];
+    const at = (x, z) => [x, gY(x, z) + lift, z];
+    for (let k = 0; k < nz; k++) for (let i = 0; i < nx; i++) {
+      const xA = x0 + (x1 - x0) * i / nx, xB = x0 + (x1 - x0) * (i + 1) / nx, zA = z0 + (z1 - z0) * k / nz, zB = z0 + (z1 - z0) * (k + 1) / nz;
+      if (skip && skip((xA + xB) / 2, (zA + zB) / 2)) continue;
+      const a = at(xA, zA), b = at(xB, zA), c = at(xA, zB), d = at(xB, zB); p.push(a, c, b, b, c, d);
+    }
+    if (!p.length) return;
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flat(), 3)); geo.computeVertexNormals();
+    (parts[key] = parts[key] || []).push({ geo, m: new THREE.Matrix4() });
   };
   for (const L of WM_LOTS) {
     const s = L.sgn, LK = looks[L.look], w = L.w, D = WM_LOT.depth, hw = w / 2;
@@ -14121,19 +14161,87 @@ function buildWinnmarkLots(scene, o) {
     // the driveway to the garage end: the street's edge to the front, on the ground
     const gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2);
     drives.push({ x: gx, z: zc, side: s < 0 ? 'north' : 'south', dx: gx });
+    patch(CONC, gx - 2.4, gx + 2.4, Math.min(s * 3.6, zFront), Math.max(s * 3.6, zFront), 0.035);
+  }
+  // v1.340 (step 3): Seth's lot (WM_SETH): the house sunk with its pad, the walk-out over the flagstone patio, the big deck
+  // over it, the hot tub sunk into the patio under the deck, the pool on the patio past it, the steep driveway, and
+  // stepping stones over the creek at the foot of the yard
+  const seth = {};
+  {
+    const H = WM_SETH, LK = looks.B, hw = H.w / 2, D = H.back - H.front, zc = (H.front + H.back) / 2, F = H.F, T = H.T;
+    const hob = buildSuburbanHouse(scene, { x: H.x, z: zc, width: H.w, depth: D, trimColor: 0xe6dfd0, brickColor: LK.brick, roofColor: 0x6a6660,
+      faceDir: 'north', detail: true, look: { ...LK.look, bay: 1 } });
+    hob.mesh.position.y = F; hob.baseY = T - 0.1; hob.h = F - T + 0.1 + 5.5; hob.mesh.name = 'sethHouse';
+    obstacles.push(hob); seth.house = hob;
+    const WALL = mat('wallB', LK.brick, { roughness: 0.92 });
+    add(WALL, H.x - hw + 0.02, H.x + hw - 0.02, T - 0.1, F, H.front + 0.02, H.back - 0.02);
+    const zb = H.back + 0.04;
+    for (const dx of [-9, -5.5, -2, 2, 5.5, 9]) {
+      const door = dx === -2 || dx === 2, ww = door ? 1.7 : 1.1, top = door ? T + 2.3 : T + 2.1, bot = door ? T + 0.02 : T + 0.9;
+      add(TRIM, H.x + dx - ww / 2 - 0.12, H.x + dx + ww / 2 + 0.12, bot - 0.08, top + 0.12, zb, zb + 0.06);
+      add(dx === 2 ? LIT : GLASS, H.x + dx - ww / 2, H.x + dx + ww / 2, bot, top, zb, zb + 0.1);
+    }
+    // the flagstone patio, slate blue, rust and tan stones in it (the guide's listing A terrace)
+    const FLAG = mat('flag', 0x77736d, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const STN1 = mat('stn1', 0x9a7a62, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const STN2 = mat('stn2', 0x6e7a88, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const P = H.pool, inPool = (x, z) => x > P.x0 - 0.1 && x < P.x1 + 0.1 && z > P.z0 - 0.1 && z < P.z1 + 0.1;
+    const inTub = (x, z) => Math.hypot(x - H.tub.x, z - H.tub.z) < H.tub.r + 0.1;
+    patch(FLAG, H.x - 15, H.x + 15, H.back, H.patio, 0.03);
+    for (let i = 0; i < 26; i++) {
+      const x = H.x - 14 + ((i * 7.31) % 28), z = H.back + 0.6 + ((i * 3.77) % (H.patio - H.back - 1.2)), w = 0.5 + (i % 3) * 0.2;
+      if (inPool(x, z) || inTub(x, z) || inPool(x + w, z + w) || inTub(x + w, z + w)) continue;
+      add(i % 2 ? STN1 : STN2, x, x + w, T + 0.03, T + 0.045, z, z + w * 0.8);
+    }
+    // the big deck off the main floor: 16 x 5.5 m, posts along its edge, the rail, a stair down its west end
+    const dx0 = H.deck.x0, dx1 = H.deck.x1, dz0 = H.back, dz1 = H.deck.z1;
+    add(WOOD, dx0, dx1, F - 0.3, F, dz0, dz1);
+    ob(dx0, dx1, dz0, dz1, F - 0.3, F + 1.05, { surface: 'wood', sethDeck: true });
+    for (const px of [dx0 + 0.12, dx0 + 4, dx0 + 8, dx0 + 12, dx1 - 0.12]) {
+      add(POST, px - 0.09, px + 0.09, T, F - 0.3, dz1 - 0.3, dz1 - 0.12); ob(px - 0.09, px + 0.09, dz1 - 0.3, dz1 - 0.12, T, F - 0.3);
+    }
+    const rail = (ax, az, bx, bz) => {
+      const len = Math.hypot(bx - ax, bz - az), n = Math.round(len / 0.14);
+      for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; add(WOOD, x - 0.025, x + 0.025, F, F + 0.95, z - 0.025, z + 0.025); }
+      add(POST, Math.min(ax, bx) - 0.05, Math.max(ax, bx) + 0.05, F + 0.95, F + 1.03, Math.min(az, bz) - 0.05, Math.max(az, bz) + 0.05);
+    };
+    rail(dx0 + 0.05, dz1 - 0.05, dx1 - 0.05, dz1 - 0.05); rail(dx1 - 0.05, dz0, dx1 - 0.05, dz1 - 0.05); rail(dx0 + 0.05, dz0 + 1.3, dx0 + 0.05, dz1 - 0.05);
     {
-      const za = s * 3.6, zf = zFront, st = 0.75, nz = Math.ceil(Math.abs(zf - za) / st), p = [];
-      const at = (x, z) => [x, gY(x, z) + 0.035, z];
-      for (let k = 0; k < nz; k++) {
-        const zA = za + (zf - za) * k / nz, zB = za + (zf - za) * (k + 1) / nz;
-        for (let i = 0; i < 6; i++) { const xA = gx - 2.4 + 4.8 * i / 6, xB = gx - 2.4 + 4.8 * (i + 1) / 6;
-          const a = at(xA, zA), b = at(xB, zA), c = at(xA, zB), d = at(xB, zB); p.push(a, c, b, b, c, d); }
-      }
-      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flat(), 3));
-      // wound so the patch faces up on either side of the street
-      if (s < 0) { const a = geo.attributes.position.array; for (let i = 0; i < a.length; i += 9) for (let j = 0; j < 3; j++) { const t = a[i + 3 + j]; a[i + 3 + j] = a[i + 6 + j]; a[i + 6 + j] = t; } }
-      geo.computeVertexNormals();
-      (parts[CONC] = parts[CONC] || []).push({ geo, m: new THREE.Matrix4() });
+      const sx0 = dx0, sx1 = dx0 - 4.2, n = 15, sz0 = dz0 + 0.05, sz1 = dz0 + 1.25;
+      for (let i = 0; i < n; i++) { const y = F - (F - T) * (i + 1) / n, x = sx0 + (sx1 - sx0) * i / n, xn = sx0 + (sx1 - sx0) * (i + 1) / n; add(WOOD, Math.min(x, xn) - 0.01, Math.max(x, xn) + 0.01, y - 0.05, y, sz0, sz1); }
+      for (const px of [sx0 - 0.1, (sx0 + sx1) / 2]) add(POST, px - 0.07, px + 0.07, T, F - (F - T) * (sx0 - px) / (sx0 - sx1) - 0.25, sz1 - 0.14, sz1);
+      ob(sx1, sx0, sz0, sz1, T, F);
+    }
+    // the hot tub, sunk into the patio under the deck: 3.6 m across, its rim 0.45 m up, a step on its open side
+    const COPE = mat('cope', 0xd8d0c0, { roughness: 0.8 }), WATER = mat('water', 0x3a8a9c, { roughness: 0.15, metalness: 0.1, emissive: 0x0a2a32, emissiveIntensity: o.night ? 0.8 : 0.1 });
+    {
+      const t = H.tub, ring = new THREE.CylinderGeometry(t.r, t.r, 0.45, 28, 1, true), cap = new THREE.RingGeometry(t.r - 0.22, t.r + 0.02, 28);
+      (parts[COPE] = parts[COPE] || []).push({ geo: ring, m: new THREE.Matrix4().makeTranslation(t.x, T + 0.225, t.z) });
+      (parts[COPE] = parts[COPE] || []).push({ geo: cap, m: new THREE.Matrix4().makeTranslation(t.x, T + 0.45, t.z).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      (parts[WATER] = parts[WATER] || []).push({ geo: new THREE.CircleGeometry(t.r - 0.2, 28), m: new THREE.Matrix4().makeTranslation(t.x, T + 0.36, t.z).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      add(COPE, t.x - 0.5, t.x + 0.5, T, T + 0.22, t.z + t.r - 0.05, t.z + t.r + 0.4);
+      ob(t.x - t.r, t.x + t.r, t.z - t.r, t.z + t.r, T, T + 0.9, { surface: 'hard', sethTub: true });
+      seth.tub = t;
+    }
+    // the pool on the patio past the deck: 9.5 x 4.6 m, a coping round it; you can't walk into it, BBs fly over it
+    {
+      add(COPE, P.x0 - 0.35, P.x1 + 0.35, T + 0.03, T + 0.1, P.z0 - 0.35, P.z0);
+      add(COPE, P.x0 - 0.35, P.x1 + 0.35, T + 0.03, T + 0.1, P.z1, P.z1 + 0.35);
+      add(COPE, P.x0 - 0.35, P.x0, T + 0.03, T + 0.1, P.z0, P.z1);
+      add(COPE, P.x1, P.x1 + 0.35, T + 0.03, T + 0.1, P.z0, P.z1);
+      (parts[WATER] = parts[WATER] || []).push({ geo: new THREE.PlaneGeometry(P.x1 - P.x0, P.z1 - P.z0), m: new THREE.Matrix4().makeTranslation((P.x0 + P.x1) / 2, T + 0.06, (P.z0 + P.z1) / 2).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      ob(P.x0, P.x1, P.z0, P.z1, T, T + 0.6, { surface: 'hard', bbPass: true, sethPool: true });
+      seth.pool = P;
+    }
+    // the steep driveway, from the street down to the pad in front of the garage end, and the pad
+    patch(CONC, H.drive - 2.6, H.drive + 2.6, 3.6, H.front, 0.035);
+    patch(CONC, H.drive - 4.6, H.x + hw - 0.2, H.front - 4, H.front, 0.04);
+    drives.push({ x: H.drive, z: zc, side: 'south', dx: H.drive });
+    // stepping stones over the creek at the foot of the yard
+    const ROCK = mat('rock', 0x7a746a, { roughness: 0.97 });
+    for (let i = -3; i <= 3; i++) {
+      const sx = H.x - 3 + i * 0.25, sz = winnmarkCreekZ(sx) + i * 0.55, y = _wmPolyNear(WM_REAL.creek, sx, sz).y;
+      add(ROCK, sx - 0.32, sx + 0.32, y - 0.2, y + 0.42, sz - 0.25, sz + 0.25);
     }
   }
   const root = new THREE.Group(); root.name = 'winnmarkLots';
@@ -14143,7 +14251,7 @@ function buildWinnmarkLots(scene, o) {
     root.add(m);
   }
   scene.add(root);
-  return { obstacles, drives, root };
+  return { obstacles, drives, root, seth };
 }
 
 function buildWinnmarkCourtScene(variant, timeOfDay) {
@@ -15306,7 +15414,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     for (const hs of houses) hs.y = groundY(hs.x, hs.z);
     const onHouse = (x, z) => houses.some(hs => Math.abs(x - hs.x) < 15 && Math.abs(z - hs.z) < 13) ||
       R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd) ||
-      WM_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44);   // v1.339: the houses, decks and terraces
+      WM_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44) ||   // v1.339: the houses, decks and terraces
+      (Math.abs(x - WM_SETH.x) < WM_SETH.half + 2 && z > 3 && z < WM_SETH.patio + 1.5);       // v1.340: Seth's lot to the patio's edge
     // trees on a jittered 7 m grid, by what lies there
     const P = R.pond;
     for (let gx = -206; gx <= 306; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
@@ -15374,6 +15483,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     playerSpawns,
     groundY,   // v1.28l: terrain height fn for the generic physics/spawn systems
     viewFar: 380,   // v1.338 (D.51 step 1): the camera sees down the street to Winnmark Dr (the other maps keep 200)
+    wmSeth: wmLots.seth,   // v1.340 (D.51 step 3): Seth's house, hot tub and pool (WM_SETH has the levels)
   };
 }
 

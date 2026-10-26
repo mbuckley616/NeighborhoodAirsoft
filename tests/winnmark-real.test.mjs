@@ -70,6 +70,21 @@ const res = await page.evaluate(() => {
   });
   out.lots = lots;
   out.wallOnGrid = Math.abs((70 - WM_LOT.wallD) / WM_LOT.cell - Math.round((70 - WM_LOT.wallD) / WM_LOT.cell)) < 1e-9;
+  // v1.340 (step 3): Seth's lot. Its pad 2-3 m under the road down a 12-15 % driveway; the walk-out over the patio;
+  // the hot tub under the big deck with room to stand at it; the pool on the patio; the yard down to the creek
+  const H = WM_SETH, S = built.wmSeth, deck = built.obstacles.find(o => o.sethDeck), tub = built.obstacles.find(o => o.sethTub), pool = built.obstacles.find(o => o.sethPool);
+  out.seth = {
+    padBelowRoad: +(gY(H.drive, 0) - gY(H.drive, 21)).toFixed(2),
+    driveGrade: +((gY(H.drive, 5) - gY(H.drive, 21)) / 16 * 100).toFixed(1),
+    padFlat: +Math.abs(gY(H.drive, 21.5) - gY(H.drive + 3, 28.5)).toFixed(3),
+    walk: +(H.F - gY(H.x, 45)).toFixed(2),
+    tubUnderDeck: !!(deck && tub && tub.minX >= deck.minX && tub.maxX <= deck.maxX && tub.minZ >= deck.minZ - 0.01 && tub.maxZ <= deck.maxZ + 0.01),
+    tubWidth: tub && +(tub.maxX - tub.minX).toFixed(2), poolSize: pool && [+(pool.maxX - pool.minX).toFixed(2), +(pool.maxZ - pool.minZ).toFixed(2)],
+    headroom: deck && tub && +(deck.baseY - (tub.baseY + tub.h)).toFixed(2),
+    poolOnPatio: pool && Math.abs(gY((pool.minX + pool.maxX) / 2, (pool.minZ + pool.maxZ) / 2) - H.T) < 1e-9,
+    creekBelowPatio: +(H.T - _wmPolyNear(WM_REAL.creek, H.x, winnmarkCreekZ(H.x)).y).toFixed(2),
+    house: S && S.house && [+(S.house.maxX - S.house.minX).toFixed(2), +(S.house.maxZ - S.house.minZ).toFixed(2)],
+  };
   out.viewFar = built.viewFar;
   out.bounds = B;
   return out;
@@ -88,6 +103,10 @@ check('Winnmark: seven houses on the street past the box, 20-24 m across and 15 
 check('Winnmark: each main floor 0.35 m over its front lawn, a walk-out 3 m over its terrace', res.lots.every(l => l.floor === 0.35 && l.walk === 3), res.lots);
 check('Winnmark: each terrace flat to its wall, the yard below it 0.9 m or more lower, the wall on a ground grid line', res.wallOnGrid && res.lots.every(l => l.terraceFlat < 1e-9 && l.below >= 0.9), res.lots);
 check('Winnmark: each deck at the main floor, 2.7 m or more over the terrace (you walk under it)', res.lots.every(l => l.deck === 0 && l.deckOver >= 2.7), res.lots);
+check("Winnmark: Seth's pad is 2-3 m under the road, down a 12-15 % driveway, flat in front of the house", res.seth.padBelowRoad >= 2 && res.seth.padBelowRoad <= 3 && res.seth.driveGrade >= 12 && res.seth.driveGrade <= 15.5 && res.seth.padFlat < 1e-9, res.seth);
+check("Winnmark: Seth's house is a 24 m walk-out, its main floor 3 m over the patio", res.seth.house && res.seth.house[0] === 24 && res.seth.walk === 3, res.seth);
+check("Winnmark: the hot tub (3.6 m across, as big as half the pool) sits under the big deck, with 1.5 m or more over its rim", res.seth.tubUnderDeck && res.seth.tubWidth === 3.6 && res.seth.headroom >= 1.5, res.seth);
+check("Winnmark: the pool lies on the patio, and the creek runs 3-4 m under it at the foot of the yard", res.seth.poolOnPatio && res.seth.creekBelowPatio >= 3 && res.seth.creekBelowPatio <= 4, res.seth);
 
 // in play: you see down the street to Winnmark Dr; the camera sees that far; draw calls in budget
 await g.scenario('winnmark_team_3v3');
