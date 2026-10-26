@@ -14101,3 +14101,50 @@ yours." The measurement that came first (decisions, 24 Oct): an AK kid fires abo
 - **For a playtest:** whether 700 BBs an AK kid a match (two mags) is the right cap, and whether the YOUR CREW rows
   want to sit higher on the Loadout (they come after the nine slots, so the card scrolls to them at 1280×720).
 - A kid wearing goggles or shoes you lent him doesn't show them on his model; it's only his aim and speed.
+
+## v1.338 — Winnmark past its tree walls is the real place
+Card `fable/d51-winnmark` (backlog D.51, second card), step 1 of 5. Michael chose real scale (16 Oct), with Seth's
+house mid-street on the south side. On 26 Oct he answered A to the card's question (decisions, "three matches need
+Seth's yard and the far end of the street at once"): each match goes into one fenced area about today's size, and the
+three matches that spanned both get a few briefing words changed. The plan, measured on main in step 0 (25 Oct): the
+whole street at real size, with two play areas. **Seth's** (about 80 x 75 m) runs from the north lawns across from his
+house, down his driveway, round the deck and the hot tub and through his back yard to the creek. It takes both 1v1s
+with Seth, Every Kid for Themselves, Two in the Yards, After Dark, Two on Two, Lights Out, Trey on Overwatch and Defend
+the Treehouse. **The bulb** (about 80 x 70 m) is today's box at its west end: the bulb, its fort and cars, and the last
+two lots each side. It takes the tutorial, Backyard Basics, Squad Basics, Storm the Cul-de-Sac, Hold the Fort, Last
+Stand at the Fort, Outnumbered, Squad Up and The Whole Block. `buildSethBackyardScene`, an early scene no match uses,
+stays as it is. The draw-call budget is 2,060, a quarter over the worst view measured in step 0.
+
+This step builds the real place round today's box. Nothing inside the box or its tree walls moved, so all 17 matches
+play as before.
+- **The map's frame.** The bulb stays at (−30, 0) and the street runs east, as it does in the real place (the entry
+  east, the bulb west, the course north). Winnmark Dr is at x 235, 265 m from the bulb's middle, as the guide measures
+  the real court. Seth's lot will be mid-street on the south side at x 100, 130 m from the bulb (step 3).
+- **The street runs on to Winnmark Dr.** Past the box's east entry the road runs about 195 m further on. It is the
+  same ribbon with its gutter and rolled kerb, laid at the same step along the curve, so the box's road samples are the
+  old ones. It meets Winnmark Dr, which runs north to Steeplechase and south round the shared wood to the south-west.
+  The street rises 1.5 m on the way, so Winnmark Dr stands 4.6 m over the bulb. The guide says 3-5 m; the steepest
+  2 m of it is 1.4 %.
+- **The lots fall away from the street.** Front lawns are flat for 16 m each side of the middle. Behind them the north
+  lots fall to the golf course at 0 m, 42 m out by the box and 55 m out east of it, so the houses there will back
+  onto the fairway. The south lots fall 3 m for the walk-outs, then the shared wood falls on to the creek's banks.
+- **The creek and the pond.** Seth's creek runs west through the shared wood, 58-72 m off the street's middle, 1.4 m
+  wide. It falls from −1.8 m to −3.7 m on its way to the course's creek, which leaves the pond's south end and runs
+  south along the course 70 m west of the bulb. Each lies in a channel cut into its clay banks. The pond is 92 x 60 m
+  on the course north-west of the bulb (guide gap 9), with its water over its whole bed. The old 20 x 80 m lake strip
+  just past the west tree wall is gone; it wasn't in the real place.
+- **The canopy.** About 1,180 tall trees stand past the walls, 42 % of them loblolly pines 18-24 m high, the rest
+  hardwoods 16-23 m. They are thick in the shared wood and thinned to a row of trunks along the north lots' backs,
+  with clumps on the course. There are 30 houses, all scenery: Winnmark Dr's both sides of it (the inner row backs
+  onto the shared wood, as the guide has it), across the course facing it, and past the Dr. Nine 28 x 24 m house
+  sites along the street are kept clear for step 2. The houses are the merged low-poly kind Bunratty's far bank uses.
+  Like Bunratty's, it is one vertex-coloured mesh (two at night, for lit windows) from `buildMergedScenery`, with its
+  own seeded numbers. None of it is solid, and none of it stands within 7 m of the bounds.
+- **The ground** grew from a 140 m square to 520 x 430 m, with 6 m cells past the old 1.46 m grid, which is kept
+  vertex for vertex. A colour per vertex browns the woods' floor, mows the course in 9 m stripes and reddens the
+  creeks' clay. It is exactly 1 in the box and 6 m round it, so the lawns in play look as they did.
+- **The view.** The day fog moved out from 35-80 m to 45-320 m, and the camera's far plane is 380 m on this map (night
+  is unchanged at 22-70 m). Through the tree wall's road gap you now see the street run on to Winnmark Dr.
+- **The edge backdrop.** `EDGE_BACKDROPS` has no Winnmark entry any more. Its four sides, a ring of generic houses
+  and trees, are the map's own now.
+### Verified
