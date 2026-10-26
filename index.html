@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.342</div>
+  <div class="version">v1.343</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7060,7 +7060,7 @@ const SCENARIOS = {
       { charId: 'devon',  weapon: 'sniper',  anchor: 'cul_de_sac_plank', role: 'defender' },
       { charId: 'marcus', weapon: 'shotgun', anchor: 'house4_backyard',   role: 'skirmisher' },
       { charId: 'seth',   weapon: 'pistol',  anchor: 'seth_backyard',     role: 'skirmisher' },
-      { charId: 'brooke', weapon: 'pistol',  anchor: 'house2_backyard',   role: 'skirmisher' },
+      { charId: 'brooke', weapon: 'pistol',  anchor: 'house7_backyard',   role: 'skirmisher' },   // v1.343: the bulb's south lawn (house2 is your side's spot now)
     ],
     winCondition: 'kill_all',
     rewards: { win: 70, lose: 16 },
@@ -14089,6 +14089,10 @@ const WM_SA = {
   bounds: { minX: 64.8, maxX: 135.2, minZ: -12, maxZ: 64 },
   fort: { x: 126, z: 32 },   // Defend the Treehouse: the plank fort in the wood on the lot east of Seth's
 };
+// v1.343 (D.51 step 4, second part): the bulb's play area on its real lots, 84 x 54 m: the bulb, the street to the box's
+// old mouth, the north front lawns, and the south lawns, side yards and terraces to their walls. The tutorials and the
+// six matches that played in the box play here; the box is retired.
+const WM_BA = { bounds: { minX: -44, maxX: 40, minZ: -14, maxZ: 40 } };
 function winnmarkArea(variant) { return (variant === 'seth_house' || variant === 'treehouse' || variant === 'seth_yards') ? 'seth' : 'bulb'; }
 
 // v1.339 (D.51 step 2): build WM_LOTS' houses and yards. The house is the detailed one with its street look (v1.312) at
@@ -14298,7 +14302,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   const _area = winnmarkArea(variant);   // v1.341 (D.51 step 4): 'seth' (WM_SA) or 'bulb' (today's box)
   // v1.342 (step 4, second part): the bulb's end at real size (WM_BULB_LOTS) in place of the box, where the match doesn't
   // play in the box: Seth's area's matches see the real bulb down the street, not today's half-size houses
-  const _realBulb = _area === 'seth';
+  const _realBulb = true;   // v1.343: every match now (the bulb's area plays on its real lots, and the box is retired)
 
   // === Lighting / sky (v1.35: day or night) ===
   const _night = (timeOfDay === 'night');
@@ -15275,7 +15279,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
 
   // === Map bounds ===
   const boxBounds = { minX: -36, maxX: 40, minZ: -33, maxZ: 37 };
-  const bounds = _area === 'seth' ? Object.assign({}, WM_SA.bounds) : boxBounds;   // v1.341: Seth's area, or the box
+  const bounds = Object.assign({}, _area === 'seth' ? WM_SA.bounds : WM_BA.bounds);   // v1.341: Seth's area; v1.343: or the bulb's
 
   // === Placements table — named anchor positions + nearby cover refs ===
   // Scenarios reference these by string name in `enemySetup[i].anchor`.
@@ -15485,6 +15489,146 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     Object.assign(playerSpawns, SAS);
   }
 
+  // === v1.343 (D.51 step 4, second part; Michael 26 Oct: A): the bulb's play area (WM_BA) ===
+  // The tutorials and the bulb's six matches play at the street's west end on its real lots (WM_BULB_LOTS): the bulb
+  // with the plank fort and two cars in it, the street from the bulb to the mouth of today's box, the north front lawns
+  // and their driveways, and on the south side the front lawns, the side yards falling past the walk-outs and the
+  // terraces under the decks, to their stone walls. The box's start and anchor names are moved here, as Seth's area
+  // did, so a match keeps its kids, guns and roles. Its cover is its own, under its own seed: cars in the driveways and
+  // the bulb, bins out, boxes, a plywood stack, AC units in the side yards, grills and firewood on the terraces, the
+  // street cover the box had, and trunks, shrubs and a hedge baked into one mesh per material.
+  if (_area === 'bulb') {
+    const V = (x, z) => new THREE.Vector3(x, 0, z);
+    const BAP = {
+      cul_de_sac_car1:  { pos: V(-33.8, -6.5) },   // west of the north car in the bulb
+      cul_de_sac_car2:  { pos: V(-29.8, 7.2) },    // west of the south car
+      cul_de_sac_plank: { pos: V(-32.4, 0) },      // behind the fort
+      house1_backyard:  { pos: V(23, 9.5) },       // your side: the south lawn by the street's east end
+      house2_backyard:  { pos: V(19.5, -10) },     // your side: the north lawn, by the east house's shrubs
+      trey_backyard:    { pos: V(-18, -10.5) },    // the north lawn by the bulb, beside its driveway car
+      house7_backyard:  { pos: V(-36.5, 13) },     // the south lawn by the bulb, its west side
+      house6_backyard:  { pos: V(-10, 24.5) },     // the side yard between the south houses
+      house4_backyard:  { pos: V(-5.8, 18.5) },    // the same side yard, nearer the street
+      seth_backyard:    { pos: V(4, 37.2) },       // the terrace behind the middle south house, by its firewood
+      brooke_backyard:  { pos: V(-37.8, 26) },     // the bulb house's west side yard
+      road_east_north:  { pos: V(28, -3) }, road_east_south: { pos: V(28, 4.5) },
+      road_mid_north:   { pos: V(8, -1.5) }, road_mid_south:  { pos: V(8, 6.5) },
+      tut_dummy_1: { pos: V(16, -2) }, tut_dummy_2: { pos: V(13, 2) }, tut_dummy_3: { pos: V(10, -1) }, tut_coach: { pos: V(26, -4) },
+      treehouse_push_e: { pos: V(-6, 22) }, treehouse_push_w: { pos: V(-10, 30) },
+      cluster_road_east: { pos: V(31, 0) },
+      cluster_treehouse: { pos: V(-18, 37.2) },   // the bulb house's terrace
+      cluster_bulb:      { pos: V(-31, 0) },
+      cluster_west:      { pos: V(-36, -8) },
+      trey_overwatch:    { pos: V(-22, -12) },
+      ffa_1: { pos: V(22, -11) }, ffa_2: { pos: V(-38, -9) }, ffa_3: { pos: V(-26, 37.2) }, ffa_4: { pos: V(14, 37.2) },
+    };
+    const BAS = {
+      road_east:      { pos: V(32, 0), yaw: Math.PI / 2 },          // the box's mouth, facing west down the street
+      bulb_center:    { pos: V(-32.5, 0), yaw: -Math.PI / 2 },      // behind the fort, facing east up the street
+      seth_yard_west: { pos: V(-2, 37.2), yaw: Math.PI },
+      east_fort:      { pos: V(35.5, 0), yaw: Math.PI / 2 },
+    };
+    const keep = [...Object.entries(BAP).filter(([k]) => !/^ffa_/.test(k)).map(([, p]) => p), ...Object.values(BAS)].map(p => p.pos);
+    const clearOf = (x, z, d) => keep.every(p => Math.hypot(p.x - x, p.z - z) >= d);
+    withSeededRandom('winnmark-bulb-area', () => {
+      const BA = WM_BA.bounds, r = (a, b) => a + (b - a) * gameRandom();
+      const cover = (o, name) => { if (!o) return o; coverList.push(o); if (o._stacked) coverList.push(o._stacked); if (name) BAP[name].cover = o; return o; };
+      const box = (x, z, w, h, d, color, surface, extra) => {   // a plain prop, built at the ground and sunk onto it
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.9 }));
+        m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+        return sinkObs(Object.assign({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, h, mesh: m, surface }, extra || {}), x, z);
+      };
+      const car = (x, z, yaw, c) => sinkObs(addCar(scene, x, z, { orientation: yaw, color: carColors[c], groundNormalFn: groundNormal, detail: true }), x, z);
+      const ply = (x, z) => {   // a plywood stack on sleepers with a lawn chair on it (v1.115's)
+        const gy = groundY(x, z), st = buildPlyStack(x, gy, z, Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1); scene.add(st);
+        return { minX: x - 0.8, maxX: x + 0.8, minZ: z - 0.45, maxZ: z + 0.45, h: 0.55, baseY: gy, mesh: st, surface: 'hard' };
+      };
+      // the bulb: the plank fort in its middle, its solid back wall to the street, and a car parked at each side
+      const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });
+      seatFortOnSlope(fortWalls, -29, 0);
+      for (const w of fortWalls) coverList.push(w);
+      BAP.cul_de_sac_plank.cover = fortWalls[0];
+      cover(car(-31, -6.5, 0.15, 0), 'cul_de_sac_car1');
+      cover(car(-27, 7.2, -0.2, 1), 'cul_de_sac_car2');
+      // the driveways' cars, nose to the house
+      cover(car(5.7, -9.5, Math.PI / 2, 2));                          // the middle north house
+      cover(car(-14.2, -10.5, Math.PI / 2, 4), 'trey_backyard');      // the bulb's north house
+      cover(car(1.7, 10.5, -Math.PI / 2, 5));                         // the middle south house
+      cover(car(-16.2, 12, -Math.PI / 2, 6));                         // the bulb's south house
+      // the bins out at the kerbs, boxes, a plywood stack
+      for (const [x, z, v] of [[8.6, -4.3, 'garbage'], [9.9, -4.3, 'recycle'], [-11.4, -3.3, 'garbage'], [4.6, 8, 'recycle'], [-19.5, 7, 'garbage'], [24.4, -2.4, 'recycle'],
+        [8.8, -12.4, 'garbage'], [8.8, -11.2, 'recycle'], [-11.3, -12.4, 'garbage'], [-11.3, -11.2, 'recycle'],   // and by the garages
+        [-1.2, 12.4, 'garbage'], [-1.2, 11.2, 'recycle'], [-19.1, 15.4, 'garbage'], [-19.1, 14.2, 'recycle']])
+        cover(sinkObs(addCurbsideBin(scene, x, z, { variant: v, facing: z < 2 ? Math.PI : 0, detail: true }), x, z));
+      cover(sinkObs(addHomeDepotBox(scene, 21.5, 8.2, { w: 1.3, h: 1.1, d: 1.1, facing: 0.1, detail: true }), 21.5, 8.2), 'house1_backyard');
+      cover(sinkObs(addHomeDepotBox(scene, -36.5, -7, { w: 1.2, h: 1.0, d: 1.0, facing: 0.3, detail: true }), -36.5, -7));
+      cover(sinkObs(addHomeDepotBox(scene, -4, 9.5, { w: 1.3, h: 1.15, d: 1.1, facing: 0, detail: true }), -4, 9.5));
+      cover(ply(-24, -11.5), 'trey_overwatch');   // a plywood stack on the bulb's north lawn
+      // the side yards' AC units, the terraces' grills and firewood
+      cover(box(-11.8, 23.5, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'house6_backyard');
+      cover(box(-3.3, 19, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'house4_backyard');
+      cover(box(23.3, 20, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'));
+      cover(box(-36.2, 25, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'brooke_backyard');
+      cover(box(4, 38.4, 2.2, 0.9, 0.8, 0x6a4e3a, 'wood'), 'seth_backyard');
+      cover(box(15, 37.5, 0.8, 1.1, 0.6, 0x1e1e20, 'metal'));
+      cover(box(-18, 38.4, 2.2, 0.9, 0.8, 0x6a4e3a, 'wood'));
+      cover(box(-30, 37.5, 0.8, 1.1, 0.6, 0x1e1e20, 'metal'));
+      // the street cover the box had, staggered down the street (the box's own draws were its, these are the area's)
+      {
+        let acc = 6, side = 1, prev = roadCenterline[0];
+        for (let i = 1; i < roadCenterline.length; i++) {
+          const p = roadCenterline[i], dx = p.x - prev.x, dz = p.z - prev.z; acc += Math.hypot(dx, dz); prev = p;
+          if (acc < 6 || p.x < -18 || p.x > 27) continue;
+          acc = 0;
+          const tl = Math.hypot(dx, dz) || 1, x = p.x - dz / tl * 2.2 * side, z = p.z + dx / tl * 2.2 * side;
+          side *= -1;
+          const kind = gameRandom(), yaw = r(-Math.PI, Math.PI);
+          if (!clearOf(x, z, 2.5)) continue;
+          if (kind < 0.3) cover(car(x, z, Math.atan2(dz, dx) + r(-0.3, 0.3), Math.floor(gameRandom() * carColors.length)));
+          else if (kind < 0.62) cover(sinkObs(addHomeDepotBox(scene, x, z, { w: r(1.0, 1.4), h: r(0.95, 1.2), d: r(0.95, 1.2), facing: yaw, detail: true }), x, z));
+          else if (kind < 0.85) cover(sinkObs(addCurbsideBin(scene, x, z, { variant: gameRandom() < 0.5 ? 'garbage' : 'recycle', facing: yaw, detail: true }), x, z));
+          else cover(ply(x, z));
+        }
+      }
+      // trunks on the lawns and in the side yards, shrubs along the house fronts, kept off the anchors
+      const wood = new THREE.Group(), straw = [];
+      const tree = (x, z, pine, hr) => (pine && straw.push({ x, z, r: 2.4 + 0.6 * hr }), saObs.push(pine
+        ? addSuburbanTree(wood, x, z, { shape: 'loblolly', detail: true, trunkR: 0.34 + 0.1 * hr, trunkH: 12 + 3 * hr, leafR: 2.8 + 0.8 * hr, baseY: groundY(x, z), leafColor: hr < 0.5 ? 0x34482a : 0x3c5232 })
+        : addSuburbanTree(wood, x, z, { detail: true, trunkR: 0.3 + 0.14 * hr, trunkH: 4.5 + 2.5 * hr, leafR: 2.6 + 1.0 * hr, baseY: groundY(x, z), leafColor: hr < 0.5 ? 0x3a5a2a : 0x4a6a35 })));
+      for (const [x, z, pine] of [[-40, -10, 1], [-27, -8.5, 0], [-3, -9, 1], [12, -11.5, 0], [31, -9, 1], [-41, 4, 0], [-40.5, 18, 0],
+        [-8, 12, 1], [12, 10.5, 0], [28.5, 12, 1], [-9.5, 31.5, 0], [24.5, 26.5, 0], [-40.5, 34, 1], [-6.5, 36, 0]]) {
+        if (!clearOf(x, z, 2.5)) continue;
+        tree(x + r(-0.6, 0.6), z + r(-0.6, 0.6), pine, gameRandom());
+      }
+      addPineStraw(scene, straw, groundY, 0x8a6a4a);   // the pine straw under the pines (v1.313)
+      for (const L of WM_BULB_LOTS) {   // the foundation shrubs along each house's front, in the lot's own beds
+        if (L.x > 40) continue;
+        const f = (L.front || WM_LOT.front) * L.sgn, hw = L.w / 2, gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2);
+        for (let x = L.x - hw + 1.2; x < L.x + hw - 1; x += 2.6) {
+          if (Math.abs(x - gx) < 3.4 || !clearOf(x, f - L.sgn * 1.2, 2)) continue;
+          const z = f - L.sgn * 1.1, w = r(1.1, 1.6);
+          saObs.push(addBush(wood, x, z, w, r(0.8, 1.15), w * 0.8, gameRandom() < 0.5 ? 0x3e5a30 : 0x4a6a3a, groundY(x, z), { detail: true }));
+        }
+      }
+      cover(addBush(scene, 18, -11.8, 1.8, 1.1, 1.4, 0x3e5a30, groundY(18, -11.8), { detail: true }), 'house2_backyard');
+      // the hedge: across the gaps between the north houses at the area's north edge, and down its west edge past the bulb
+      const hedge = (ax, az, bx, bz) => {
+        const n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 1.5));
+        for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; saObs.push(addBush(wood, x, z, 1.6, 1.25, 1.2, 0x2e4a26, groundY(x, z), { detail: true })); }
+      };
+      hedge(-44.6, -14.7, -33.6, -14.7); hedge(-10.6, -14.7, 2, -14.7); hedge(26, -14.7, 35.6, -14.7);
+      hedge(-44.6, -13.2, -44.6, BA.maxZ);
+      scene.add(bakeByMaterial(wood, 'bulbAreaWood'));
+      // the street's lamps, lit at night
+      for (const [x, s] of [[-14, -1], [3, 1], [20, -1], [-40, 1]]) {
+        const z = x < -25 ? 9.5 : roadZAt(x) + s * 5.05;
+        const lamp = addStreetlamp(scene, x, z, groundY, _night); if (lamp.userData.obstacles) saObs.push(...lamp.userData.obstacles);
+      }
+    });
+    Object.assign(placements, BAP);
+    Object.assign(playerSpawns, BAS);
+  }
+
   // === Map bounds (legacy return shape) ===
   let enemies = [];
   let spawn = playerSpawns.road_east.pos.clone();
@@ -15619,8 +15763,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       if (Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz) < 1.18) continue;            // the pond and its edge
       if (Math.min(_wmPolyNear(R.creek, x, z).d, _wmPolyNear(R.course, x, z).d) < 2.5) continue;
       if (onHouse(x, z)) continue;
-      if (_area === 'seth') {   // v1.341: Seth's area has its own solid wood; these crowns keep 3 m clear of it
-        const SB = WM_SA.bounds, m = (pine ? 3 + cr : 4.5 + 1.8 * cr) + 3;
+      {   // v1.341: Seth's area has its own solid wood; these crowns keep 3 m clear of it (v1.343: and of the bulb's)
+        const SB = _area === 'seth' ? WM_SA.bounds : WM_BA.bounds, m = (pine ? 3 + cr : 4.5 + 1.8 * cr) + (_area === 'seth' ? 3 : 6);   // v1.343: 6 m off the bulb's (the box's rule)
         if (x > SB.minX - m && x < SB.maxX + m && z > SB.minZ - m && z < SB.maxZ + m) continue;
       }
       const dC = 42 + 13 * _wmSS((x - 50) / 20);

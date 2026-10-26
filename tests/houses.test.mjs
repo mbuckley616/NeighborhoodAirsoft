@@ -6,7 +6,7 @@ const g = await boot(); const { page } = g;
 
 async function houses() {
   return page.evaluate(() => Game.player.obstacles
-    .filter(o => o.h === 5.5 && o.surface === 'hard' && o.mesh && o.mesh.isGroup)
+    .filter(o => o.mesh && o.mesh.isGroup && o.surface === 'hard' && (o.h === 5.5 || o.mesh.userData.wmLot))   // v1.343: or a Winnmark lot's real-size house
     .map(o => {
       let meshes = 0, tris = 0, detail = false;
       o.mesh.traverse(m => {
@@ -21,19 +21,21 @@ async function houses() {
     }));
 }
 
-await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
+await g.scenario('winnmark_cul_de_sac');   // v1.343: the bulb's area, on its real lots (the box is retired)
 // The page's own frame loop keeps the round running while the houses are inspected; on a slow CI runner that is
 // long enough for Seth to tag a one-life player, the round ends, and the walk below goes nowhere (CI, v1.105: -8).
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 await g.spin(10);
-const wm = await houses();
+// v1.343 (D.51 step 4): the four real-size houses whose middles stand in the bulb's area (the street's others are
+// winnmark-real's to measure)
+const wm = (await houses()).filter(h => h.at[0] > -44 && h.at[0] < 40);
 console.log('  winnmark', JSON.stringify(wm));
-check('Winnmark has eight houses', wm.length === 8, wm.length);
+check('Winnmark\'s bulb area has four houses', wm.length === 4, wm.length);
 check('every Winnmark house is the detailed house', wm.every(h => h.detail), wm.map(h => h.detail));
 check('each costs at most 20 meshes', wm.every(h => h.meshes <= 20), wm.map(h => h.meshes));
-check('collision boxes keep their footprints (8–9 × 7 m, 5.5 m tall)', wm.every(h => [8, 9].includes(h.size[0]) && h.size[1] === 7), wm.map(h => h.size));
+check('collision boxes are the real houses\' footprints (21–23 × 15 m)', wm.every(h => h.size[0] >= 21 && h.size[0] <= 23 && h.size[1] === 15), wm.map(h => h.size));
 
-// the player can't walk into a house: pushed against Seth's front wall, he stops at it
+// the player can't walk into a house: pushed against the middle north house's front wall (z −14), he stops at it
 const stop = await page.evaluate(() => {
   Game.mouse.locked = true;   // updatePlayer moves no one without it; CI's Chromium may refuse the real pointer lock
   Game.player.pos.x = 24; Game.player.pos.z = -8; Game.player.yaw = 0;
@@ -42,7 +44,7 @@ const stop = await page.evaluate(() => {
   const ku = new KeyboardEvent('keyup', { code: 'KeyW', key: 'w' }); document.dispatchEvent(ku);
   return { z: +Game.player.pos.z.toFixed(2), mode: Game.mode };
 });
-check('walking north into Seth\'s house stops at its front wall (z −11.5)', stop.mode === 'scenario' && stop.z > -11.5 && stop.z < -10.5, stop);
+check('walking north into a house stops at its front wall (z −14)', stop.mode === 'scenario' && stop.z > -14 && stop.z < -13, stop);
 
 await page.evaluate(() => { Game.player.pos.x = 24; Game.player.pos.z = -4; Game.player.yaw = 0; Game.player.pitch = 0.15; stepGame(1 / 60); Game.player.pitch = 0.15; });
 await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -70,7 +72,7 @@ const looks = () => page.evaluate(() => {
 });
 const wl = await looks();
 console.log('  winnmark looks', JSON.stringify(wl));
-check('Winnmark: six of the eight houses have quoins (B and C), two plain rose-tan brick (A)', wl.length === 8 && wl.filter(h => h.quoin).length === 6, wl.map(h => h.quoin));
+check('Winnmark: three of the bulb area\'s four houses have quoins (B and C), one plain rose-tan brick (A)', wl.length === 4 && wl.filter(h => h.quoin).length === 3, wl.map(h => h.quoin));
 check('Winnmark: every roof rises 4 m (was 2.3)', wl.every(h => h.rise === 4), wl.map(h => h.rise));
 await page.evaluate(() => endScenario('lose'));
 await g.scenario('northcliff_1v1_evan');

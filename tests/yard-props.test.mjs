@@ -5,7 +5,7 @@
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 const res = [];
-// v1.341: Winnmark's box props through a match in the box (Seth's 1v1 bakes the box into a view)
+// v1.343: Winnmark's props through a match in the bulb's area (the box is retired)
 for (const id of ['winnmark_cul_de_sac', 'bunratty_sean', 'northcliff_twins_3v3', 'bellfield_3v3']) {
   await g.scenario(id);
   res.push(await page.evaluate((id) => {

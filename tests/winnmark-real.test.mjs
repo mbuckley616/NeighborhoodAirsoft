@@ -2,7 +2,7 @@
 // part of the street, A). Winnmark Court past its tree walls is the real place: the street runs on to Winnmark Dr, 265 m
 // from the bulb, rising 3-5 m from the bulb as the real one falls; the north lots fall to the golf course, the south lots
 // into one shared wood with a creek in it that runs to the course; the pond lies north-west of the bulb, under water, not
-// grass. None of it is solid, none of it stands within 6 m of the bounds, the ground in the box is the old ground, and the
+// grass. None of it is solid, none of it stands within 6 m of the bounds, the ground in the box is the real one (v1.343), and the
 // map stays inside its draw-call budget (2,060: a quarter over v1.337's worst view, 1,651, decisions D.51).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -22,6 +22,9 @@ const res = await page.evaluate(() => {
   let boxDiff = 0;
   for (let x = R.box.minX; x <= R.box.maxX; x += 0.7) for (let z = R.box.minZ; z <= R.box.maxZ; z += 0.7) boxDiff = Math.max(boxDiff, Math.abs(gY(x, z) - old(x, z)));
   out.boxDiff = boxDiff;
+  let realDiff = 0;   // v1.343
+  for (let x = R.box.minX; x <= R.box.maxX; x += 0.7) for (let z = R.box.minZ; z <= R.box.maxZ; z += 0.7) realDiff = Math.max(realDiff, Math.abs(gY(x, z) - winnmarkRealScale(x, z, 0, true)));
+  out.realDiff = realDiff;
   // the street: its length from the bulb's middle to Winnmark Dr, and its rise
   out.length = R.drX - (-30);
   out.rise = +(gY(R.drX - 6, 0) - gY(-30, 0)).toFixed(2);
@@ -90,7 +93,7 @@ const res = await page.evaluate(() => {
   return out;
 });
 console.log('  ', JSON.stringify(res));
-check('Winnmark: the ground in the box and its tree walls is the old ground', res.boxDiff < 1e-9, res.boxDiff);
+check('Winnmark: the ground where the box was is the real street\'s (v1.343: the box is retired)', res.realDiff < 1e-9 && res.boxDiff > 1, res);
 check('Winnmark: the street runs 265 m from the bulb to Winnmark Dr (the real court)', res.length === 265, res.length);
 check('Winnmark: the street rises 3-5 m from the bulb to Winnmark Dr, and never steeper than 2 %', res.rise >= 3 && res.rise <= 5 && res.streetGrade <= 2, res);
 check('Winnmark: the north lots fall to the course at 0', res.north.every(([f, b]) => f > 3 && Math.abs(b) < 0.01), res.north);
@@ -186,7 +189,7 @@ const sa = await page.evaluate((SA_IDS) => {
   return out;
 }, SA_IDS);
 console.log('  ', JSON.stringify(sa));
-check("Winnmark: Seth's nine matches play in his area, the other eight in the box", JSON.stringify(sa.inArea) === JSON.stringify([...SA_IDS].sort()), sa.inArea);
+check("Winnmark: Seth's nine matches play in his area, the other eight in the bulb's", JSON.stringify(sa.inArea) === JSON.stringify([...SA_IDS].sort()), sa.inArea);
 check("Winnmark: Seth's area is about today's box (70-80 m a side) and holds the road, his driveway's pad, the patio, the creek and the north lawn",
   sa.size.every(v => v >= 70 && v <= 80) && Object.values(sa.holds).every(Boolean), sa);
 check("Winnmark: every start and anchor in Seth's area is inside it and clear of everything solid", sa.anchors >= 20 && sa.bad.length === 0, sa.bad);
@@ -225,6 +228,55 @@ const first = await page.evaluate(() => {
 });
 console.log('   Two on Two, first shot:', JSON.stringify(first));
 check('Winnmark: Two on Two in Seth\'s area: the first shot is fired at 10-40 m', first.d != null && first.d >= 10 && first.d <= 40, first);
+// v1.343 (step 4, second part): the bulb's eight matches play in its area on the real lots, and nothing of the box is left
+const BA_IDS = ['winnmark_tutorial', 'winnmark_squad_basics', 'winnmark_cul_de_sac', 'winnmark_defend_culdesac', 'winnmark_team_2v3',
+  'winnmark_whole_block', 'winnmark_team_3v3', 'winnmark_last_stand'];
+const ba = await page.evaluate((BA_IDS) => {
+  const out = {};
+  const wm = Object.entries(SCENARIOS).filter(([, sc]) => sc.builderFn === 'buildWinnmarkCourtScene');
+  out.inArea = wm.filter(([, sc]) => winnmarkArea(sc.builderArg) === 'bulb').map(([id]) => id).sort();
+  const built = withSeededRandom('x|cul_de_sac', () => buildWinnmarkCourtScene('cul_de_sac', 'day')), B = built.bounds;
+  out.size = [B.maxX - B.minX, B.maxZ - B.minZ];
+  const inB = (x, z, m = 0) => x >= B.minX + m && x <= B.maxX - m && z >= B.minZ + m && z <= B.maxZ - m;
+  out.holds = { bulb: inB(-30, 0) && inB(-41, 0), mouth: inB(32, 0), northLawn: inB(14, -12), terrace: inB(10, 37), sideYard: inB(-7, 24) };
+  const pts = [...Object.entries(built.placements), ...Object.entries(built.playerSpawns)];
+  out.anchors = pts.length;
+  out.bad = pts.filter(([, p]) => !inB(p.pos.x, p.pos.z, 0.5) || collidesObstacles(p.pos.x, p.pos.z, 0.3)).map(([k]) => k);
+  out.boxHouses = built.obstacles.filter(o => o.mesh && o.mesh.isGroup && o.maxX - o.minX >= 7 && o.maxX - o.minX < 10 && o.maxZ - o.minZ < 10 && o.h > 4).length;   // 8-9 by 7 m (not a lamp)
+  out.lots = built.obstacles.filter(o => o.mesh && o.mesh.userData.wmLot && o.maxX > B.minX && o.minX < B.maxX).length;
+  out.fort = []; built.scene.traverse(m => { if (m.userData.fortDetail) { const v = new THREE.Vector3(); m.getWorldPosition(v); out.fort.push([+v.x.toFixed(1), +v.z.toFixed(1)]); } });
+  out.trunks = built.obstacles.filter(o => o.shape === 'cylinder' && inB(o.cx, o.cz)).length;
+  const sc = built.scene.getObjectByName('realScenery'); let near = Infinity;
+  sc.traverse(m => { if (!m.isMesh) return; const p = m.geometry.attributes.position.array;
+    for (let i = 0; i < p.length; i += 3) near = Math.min(near, Math.max(B.minX - p[i], p[i] - B.maxX, B.minZ - p[i + 2], p[i + 2] - B.maxZ)); });
+  out.sceneryOut = +near.toFixed(2);
+  return out;
+}, BA_IDS);
+console.log('  ', JSON.stringify(ba));
+check("Winnmark: the bulb's eight matches play in its area", JSON.stringify(ba.inArea) === JSON.stringify([...BA_IDS].sort()), ba.inArea);
+check("Winnmark: the bulb's area is about today's box (80-90 by 50-60 m) and holds the bulb, the box's old mouth, a north lawn, a terrace and a side yard",
+  ba.size[0] >= 80 && ba.size[0] <= 90 && ba.size[1] >= 50 && ba.size[1] <= 60 && Object.values(ba.holds).every(Boolean), ba);
+check("Winnmark: every start and anchor in the bulb's area is inside it and clear of everything solid", ba.anchors >= 30 && ba.bad.length === 0, ba.bad);
+check("Winnmark: in the bulb's area nothing of the box is left (its half-size houses); six real lots reach into it, 10 or more solid trunks stand in it",
+  ba.boxHouses === 0 && ba.lots === 6 && ba.trunks >= 10, ba);
+check("Winnmark: the plank fort stands in the middle of the real bulb, and only there", ba.fort.length === 1 && Math.hypot(ba.fort[0][0] + 29, ba.fort[0][1]) < 1, ba.fort);
+check("Winnmark: the merged scenery stands 6 m or more outside the bulb's area (BBs drop at 5)", ba.sceneryOut >= 6, ba.sceneryOut);
+// the team matches: the first shot comes inside the guns' 10-40 m band (you stand at your start and can't be tagged)
+for (const id of ['winnmark_team_2v3', 'winnmark_team_3v3']) {
+  await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
+  await g.scenario(id);
+  const f = await page.evaluate(() => {
+    const hit = applyBBHit; applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
+    let d = null, t = 0; const o = spawnEnemyBB;
+    const foes = e => [...(e.team === 'player' ? [] : [Game.player.pos]), ...Game.scenario.enemies.filter(k => k.team !== e.team && k.health > 0).map(k => k.pos)];
+    spawnEnemyBB = (e, tg) => { if (d == null && !inOpeningHold()) d = Math.min(...foes(e).map(p => Math.hypot(e.pos.x - p.x, e.pos.z - p.z))); return o(e, tg); };
+    for (let f = 0; f < 60 * 60 && d == null && Game.mode === 'scenario'; f++) { stepGame(1 / 60); t = f / 60; }
+    spawnEnemyBB = o; applyBBHit = hit;
+    return { d: d && +d.toFixed(1), t: +t.toFixed(1) };
+  });
+  console.log(`   ${id}, first shot:`, JSON.stringify(f));
+  check(`Winnmark: ${id} in the bulb's area: the first shot is fired at 10-40 m`, f.d != null && f.d >= 10 && f.d <= 40, f);
+}
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
 const far2 = await page.evaluate(() => { Game.mode = 'result'; enterBedroom(); return Game.camera.far; });
 check('Winnmark: the camera goes back to 200 m in the bedroom', far2 === 200, far2);
