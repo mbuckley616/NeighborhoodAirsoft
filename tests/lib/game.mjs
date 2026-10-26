@@ -7,6 +7,7 @@
 //   await g.scenario('winnmark_seth_house'); // straight into a match (locks bypassed), past BEGIN
 //   await g.spin(600);                       // 600 fixed 1/60 steps of stepGame()
 //   await g.shot('seth-house');              // tests/out/seth-house.png
+//   boot({ scale: 1.5 })                     // a 1280x720 page drawn at 1920x1080 (scripts/shots, the store screenshots)
 //
 // Software GL runs the scene at a few fps, so anything timing-sensitive is driven with spin(),
 // never waitForTimeout.
@@ -44,7 +45,7 @@ export async function boot(opts = {}) {
   const errs = [];
   const open = async () => {
     browser = await chromium.launch(launch);
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: opts.scale || 1 });
     cur = await ctx.newPage();
     cur.on('pageerror', e => errs.push(e.message.slice(0, 200)));
     await cur.goto('file://' + file);

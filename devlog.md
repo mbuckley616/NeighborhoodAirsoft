@@ -14618,3 +14618,42 @@ areas by day and compared them with the guide. Two things were still missing or 
   - The green, bunkers and cart path, now past the lots' fences.
   - The out kid's walk round the car, in Storm the Cul-de-Sac.
 - The houses past the edges are the plain merged kind. At 150 m and more in the day fog that is all they need to be.
+
+## v1.345 — Hold the South Fort: a blast wall, a taller wall and taller merlons
+Backlog B.17, Michael's A on "Hold the South Fort is still lost before the first tag" (26 Oct): "a taller wall and
+better crenellations", so the fort floor is out of Devon's line from the north. The critic lost 4 of 4 rounds to Devon
+from 37-38 m in 3-9 s, with 0 tags; v1.319's longer walk home only helps after a tag.
+- **What was wrong:** with you untaggable at your start for 30 s, every BB that reached you on the floor came in by
+  the port, the 2.8 m doorway in the front wall, open to the north: Seth and Sean from 20 m, Devon from 37 m. The first
+  landed 9.2-13.5 s in standing, 8.5-14.8 s crouched (Devon's at 8.5). Standing, 27-72 reached you in the 30 s.
+- **A blast wall before the port**, 1.6 m out from it, as tall as the fort (2.6 m) and 4.4 m wide, the port's 2.8 m
+  and 0.8 m more each side: three stacked logs under grey scrap boards, from the map guide's log-cabin course
+  (docs/refs/chattahoochee.md). You walk out of the port, along it and round either end.
+- **The taller wall:** with the port closed, the BBs came over the window sills instead, at a crouched head (36-41 in
+  30 s crouched, with the blast wall alone). The solid wall under the windows goes from 0.75 m to 1.15 m (tried 1.05 m:
+  Devon still cleared it by 3 cm). Crouched (eye 0.8 m) you are under it; standing (eye 1.35 m, where your BBs leave
+  from) you shoot out of a 0.7 m slot, the window's top unchanged at 1.85 m.
+- **Better crenellations:** the deck's merlons go from 0.9 m to 1.25 m and 0.5 to 0.6 m wide, the crenels from 0.45
+  to 0.35 m. Crouched on the deck you are under them and shoot through a crenel; standing, your eye is just over.
+- **Only in Hold the South Fort.** It builds the Hollow as the variant `south_fort_walls`, laid out under the default
+  seed (`seedArg`), so the woods are where they were. The 3v3s, the Big Battle and the night defend keep the fort as it
+  was, since a team match has a side in each fort.
+### Verified
+- **`tests/hollow-fort.test.mjs`, extended:**
+  - The 3v3's south fort has no blast wall and its 0.75 m sills. In Hold the South Fort the blast wall stands at
+    z 25.4, x -0.24 to 4.24 (the port x 0.6-3.4), 2.6 m tall, with 5 sills of 1.15 m and 13 merlons of 1.25 m.
+  - Standing at either front window, BBs from your eye go out north and out to the side (past z 25).
+  - From the port you walk into the blast wall (stopped at z 26.5), along it and out round its end to (7.6, 18.3).
+  - 30 s at your start, untaggable: crouched 0-3 BBs reached you, the first at 22 s or later (three runs); standing
+    5-8, the first at 16.4-20.4 s, all Sean's, through a window at an angle. The check: crouched, 10 or fewer, none in
+    the first 10 s.
+  - v1.319's checks still pass: the five open from the east redoubt, the first inside 25 m at 8.6-8.7 s, a tagged kid
+    back within 25 m 27 s after on average, 16 tags in 90 s.
+- **The stuck-kid sweep** on Hold the South Fort, three ways: the worst hold was 2.5 s. No page errors.
+- **These suites pass:** `hollow-fort` (three runs, one beside `spawn-facing`), `result-text`, `rival`, `fort-spawn`,
+  `retreat-progress`, `spawn-facing` (your start still faces the field, nothing within 4.9 m ahead) and `smoke`.
+### Still open
+- **For a playtest:** whether it is now winnable and not too safe. A kid can still tag you standing at a window or on
+  the deck, and Devon still has to be found and answered from 37 m. Hold the Fort (Night) is unchanged; the variant
+  can be set on it too.
+- Devon sometimes walks right up into the gap between the blast wall and the port; whether that reads well needs eyes.

@@ -88,6 +88,8 @@ const inWall = await page.evaluate(() => {
   return bad;
 });
 check('no post or pole stands inside a fort wall (the flag poles were in the back walls)', inWall.length === 0, inWall);
+check('v1.345: the 3v3\'s south fort has no blast wall and its 0.75 m sill', await page.evaluate(() =>
+  !Game.player.obstacles.some(o => o.blastWall) && Game.player.obstacles.filter(o => o.h === 0.75 && o.minZ > 26 && o.maxZ < 34).length >= 5));
 // v1.319 (backlog B.13, Michael 22 Oct: Hold the South Fort is very hard; "move the enemy spawn point to the opposite
 // base, so that shooting an enemy has a greater effect / longer cooldown"). The five still open from their huddle by the
 // east redoubt; tagged, they walk back to the north fort and come again from there. 90 s with you untaggable in the
@@ -123,5 +125,57 @@ check('Hold the South Fort: the five open from the east redoubt (z under 5) and 
 check('the first of them still reaches 25 m of the fort inside 15 s', hold.firstNear != null && hold.firstNear < 15, hold.firstNear);
 check('a tagged attacker takes 24 s or more on average to come back within 25 m (was 17.5-19.1)', hold.backs.length >= 3 && hold.backAvg >= 24, hold.backs);
 check('and they keep coming: 5 or more tags in 90 s', hold.tags >= 5, hold.tags);
+// v1.345 (backlog B.17, Michael: A on "Hold the South Fort is still lost before the first tag", 26 Oct: "a taller wall
+// and better crenellations"). Every BB that tagged you on the floor came in by the open port (Devon from 37 m, Seth and
+// Sean from 20 m), or over the 0.75 m sill of a window at a crouched head. In this match the south fort has a blast wall
+// 1.6 m out from the port, a 1.15 m solid wall under its windows and 1.25 m merlons; the 3v3's fort is as it was (above).
+await g.scenario('hollow_defend_south_fort');
+const walls = await page.evaluate(() => {
+  const O = Game.player.obstacles, bw = O.filter(o => o.blastWall), gy = scenarioGroundY(2, 33);
+  return { bw: bw.map(o => ({ minX: +o.minX.toFixed(2), maxX: +o.maxX.toFixed(2), z: +((o.minZ + o.maxZ) / 2).toFixed(2), h: o.h })),
+    sills: O.filter(o => o.h === 1.15 && o.minZ > 26 && o.maxZ < 34).length,
+    merlons: O.filter(o => o.noStand && o.h === 1.25 && o.minZ > 26 && o.maxZ < 34).length, gy };
+});
+check('the south fort has a blast wall before its port (x 0.6–3.4, wall z 27), as tall as the fort, and 1.15 m sills',
+  walls.bw.length === 1 && walls.bw[0].minX < 0.4 && walls.bw[0].maxX > 3.6 && walls.bw[0].z > 25 && walls.bw[0].z < 26 && walls.bw[0].h >= 2.5 && walls.sills >= 5 && walls.merlons >= 10, walls);
+// standing at the front-right window you still shoot out, past the blast wall's end
+const out2 = await page.evaluate(() => {
+  const p = Game.player, gy = scenarioGroundY(2, 33), res = [];
+  for (const [x, tx] of [[4.45, 4.45], [4.45, 9.25], [-0.45, -0.45], [-0.45, -5.25]]) {   // the windows: x 4.0–4.9, −0.9–0
+    const at = new THREE.Vector3(x, gy + 1.35, 27.6), v = new THREE.Vector3(tx - x, 0, -12).normalize().multiplyScalar(60);
+    const bb = makeBB(at, v, 'player', null, null, 'player'); bb.curveStrength = 0; Game.scenario.bbs.push(bb);
+    for (let i = 0; i < 4; i++) stepGame(1 / 60);
+    res.push({ gone: !Game.scenario.bbs.includes(bb), z: +bb.pos.z.toFixed(2) });
+  }
+  return res;
+});
+check('standing at a front window (eye 1.35 m) your BBs go out, north and out to the side', out2.every(r => r.z < 25), out2);
+// from the floor you walk out of the port and round the blast wall's end into the field
+const round = await page.evaluate(() => {
+  const p = Game.player; Game.mouse.locked = true; p.crouching = false;
+  const go = (yaw, n) => { p.yaw = yaw; Game.keys.KeyW = true; for (let i = 0; i < n; i++) stepGame(1 / 60); Game.keys.KeyW = false; };
+  const gy = scenarioGroundY(2, 30); p.pos.set(2, gy, 28.6); p.vel.set(0, 0, 0); p.velY = 0; p.onGround = true;
+  go(0, 30); const atWall = +p.pos.z.toFixed(2);   // north, up to the blast wall
+  go(-Math.PI / 2, 80);                             // east along it
+  go(0, 120);                                       // north again, past its end
+  return { atWall, x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) };
+});
+check('out of the port you meet the blast wall, walk along it and out round its end', round.atWall > 25.6 && round.z < 22, round);
+// 30 s at your start, untaggable, crouched and then standing: how many BBs reach you. On main before v1.345, crouched,
+// the first came by the port at 8.5-14.8 s (Devon's at 8.5); with the blast wall alone 36-41 came over the 0.75 m sill;
+// with the 1.15 m sill too, 2-3, the first at 17-22 s.
+for (const crouch of [true, false]) {
+  await g.scenario('hollow_defend_south_fort');
+  const r = await page.evaluate(([crouch]) => {
+    const p = Game.player; Game.mouse.locked = true; p.crouching = crouch;
+    const orig = applyBBHit; let n = 0, first = null, t = 0; const by = {};
+    applyBBHit = (bb, c) => { if (c === Game.player) { n++; if (first == null) first = +t.toFixed(1); const w = bb.enemyRef ? bb.enemyRef.charId : '?'; by[w] = (by[w] || 0) + 1; return true; } return orig(bb, c); };
+    for (let i = 0; i < 60 * 30 && Game.mode === 'scenario'; i++) { stepGame(1 / 60); t += 1 / 60; }
+    applyBBHit = orig;
+    return { n, first, by };
+  }, [crouch]);
+  console.log(`  ${crouch ? 'crouched' : 'standing'} at the start, 30 s:`, JSON.stringify(r));
+  if (crouch) check('crouched at your start, 10 or fewer BBs reach you in 30 s, none in the first 10 s', r.n <= 10 && (r.first == null || r.first >= 10), r);
+}
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

@@ -3,3 +3,5 @@ tests/out/
 tests/tmp/
 *.log
 .DS_Store
+scripts/trailer/out/
+scripts/shots/out/

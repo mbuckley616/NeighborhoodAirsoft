@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.344</div>
+  <div class="version">v1.345</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -7750,7 +7750,8 @@ const SCENARIOS = {
     name: 'Chattahoochee River', scenarioName: 'Hold the South Fort',
     desc: "You claimed the south fort and now Seth's whole crew wants it — five of them pushing up, and they don't quit. Tag one and he has to run all the way back to the north fort before he comes again, so every tag buys you time. Use the firing windows on all four walls, watch the front port and the creek flank at the same time, and hold for 90 seconds before they call it.",
     builderFn: 'buildHollowScene',
-    builderArg: 'default',
+    builderArg: 'south_fort_walls',   // v1.345 (B.17, Michael: A): the south fort's blast wall and taller merlons
+    seedArg: 'default',               // the woods as before
     scenarioType: 'defend',
     playerSpawn: 'team_b',
     enemySpawnCluster: 'redoubt_e',
@@ -18266,7 +18267,9 @@ function buildHollowScene(variant, timeOfDay) {
     // shoot out the window. Movement is still fully blocked by the lower band.
     // axis 'x' = wall runs along X (front/back walls); 'z' = along Z (sides).
     function windowedWall(cxw, czw, span, axis, nWin) {
-      const winB = 0.75, winT = 1.85;        // window opening 0.75m–1.85m (v1.47)
+      // v1.345 (B.17, Michael: A, "a taller wall"): the walled fort's solid wall is 1.15 m, so crouched (eye 0.8 m) you
+      // are under the sill, and standing (eye 1.35 m, where your BBs leave from) you fire out of a 0.7 m slot.
+      const winB = o.walls ? 1.15 : 0.75, winT = 1.85;        // window opening 0.75m–1.85m (v1.47)
       // Sill at 0.75m (a standing ~1.05m muzzle is mid-opening, not clipping the
       // lower band). Top raised to 1.85m (v1.47, was 1.55) for a taller 1.1m
       // firing slot now that the wall is 2.6m. Lower band 0–0.75m still blocks
@@ -18366,17 +18369,20 @@ function buildHollowScene(variant, timeOfDay) {
       list.push({ minX: deckMinX, maxX: deckMaxX, minZ: deckMinZ, maxZ: deckMaxZ, h: deckT, surface: 'hard', baseY: deckTop - deckT });
     }
     // crenellations: merlons along a wall's top over the deck's run
+    // v1.345 (B.17, Michael: A): the walled fort's merlons are 1.25 m (crouched on the deck, eye 0.8 m, you are under
+    // them; standing, your eye is just over) and its crenels 0.35 m, where the others' are 0.9 m and 0.45 m.
+    const merH = o.walls ? 1.25 : 0.9;
     function merlons(axis, at, from, to) {
-      const mw = 0.5, gap = 0.45, len = to - from, n = Math.max(1, Math.floor((len + gap) / (mw + gap)));
+      const mw = o.walls ? 0.6 : 0.5, gap = o.walls ? 0.35 : 0.45, len = to - from, n = Math.max(1, Math.floor((len + gap) / (mw + gap)));
       const used = n * mw + (n - 1) * gap, start = from + (len - used) / 2;
       for (let i = 0; i < n; i++) {
         const c = start + mw / 2 + i * (mw + gap);
         const w = axis === 'x' ? mw : th + 0.02, d = axis === 'x' ? th + 0.02 : mw;
         const mx = axis === 'x' ? c : at, mz = axis === 'x' ? at : c;
-        const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.9, d), i % 2 ? palletMat : palletMatDark);
-        m.position.set(mx, deckTop + 0.45, mz); m.castShadow = true; grp.add(m);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, merH, d), i % 2 ? palletMat : palletMatDark);
+        m.position.set(mx, deckTop + merH / 2, mz); m.castShadow = true; grp.add(m);
         list.push({ minX: mx - w / 2 - 0.04, maxX: mx + w / 2 + 0.04, minZ: mz - d / 2 - 0.04, maxZ: mz + d / 2 + 0.04,
-                    h: 0.9, surface: 'hard', baseY: deckTop, noStand: true });
+                    h: merH, surface: 'hard', baseY: deckTop, noStand: true });
       }
     }
     merlons('x', frontZ, leftX, rightX);
@@ -18415,6 +18421,37 @@ function buildHollowScene(variant, timeOfDay) {
       }
       list.push({ minX: Math.min(stripIn, stripOut), maxX: Math.max(stripIn, stripOut), minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1),
                   h: deckTop, surface: 'hard', baseY: 0, bbPass: true, ramp: { z0, z1, y0, y1: deckTop, foot: FOOT, land: LAND } });
+    }
+    // v1.345 (B.17, Michael: A on "Hold the South Fort is still lost before the first tag", 26 Oct: "a taller wall and
+    // better crenellations", his B.13 note's "retaining wall"): every BB that tagged you on the fort floor came in by the
+    // port, 2.8 m wide and open to the north (Devon from 37 m, Seth and Sean from 20 m). The walled fort has a blast
+    // wall 1.6 m out from the port, as tall as the fort's walls and 1.6 m wider than the port: three stacked logs (the
+    // map guide's log-cabin course, docs/refs/chattahoochee.md) under grey scrap boards. You walk round either end
+    // into the port; the floor is out of a straight line from the field.
+    if (o.walls) {
+      const bwW = portGap + 1.6, bwT = 0.4, bwZ = frontZ + facing * 1.6, logR = 0.19, sink = 0.3;
+      const logMat = new THREE.MeshStandardMaterial({ color: 0x706855, roughness: 1.0 });
+      const boardMat = new THREE.MeshStandardMaterial({ color: 0x979b91, roughness: 0.95 });
+      for (let i = 0; i < 3; i++) {
+        const lg = new THREE.Mesh(new THREE.CylinderGeometry(logR, logR * 1.06, bwW + 0.2 - i * 0.12, 9), logMat);
+        lg.rotation.z = Math.PI / 2; lg.position.set(cx + (i - 1) * 0.04, logR + i * logR * 1.9, bwZ);
+        lg.castShadow = lg.receiveShadow = true; grp.add(lg);
+      }
+      const logTop = logR * 2 * 2.9, nb = 7, bw = bwW / nb;
+      for (let i = 0; i < nb; i++) {   // boards nailed upright above the logs, a little uneven
+        const bh = wallH - logTop + 0.12 - (i % 3) * 0.07;
+        const bd = new THREE.Mesh(new THREE.BoxGeometry(bw - 0.03, bh, 0.06), i % 2 ? boardMat : plywoodMat);
+        bd.position.set(cx - bwW / 2 + bw * (i + 0.5), logTop - 0.12 + bh / 2, bwZ + facing * 0.12);
+        bd.castShadow = bd.receiveShadow = true; grp.add(bd);
+      }
+      for (const ex of [-1, 1]) {   // a post at each end the boards are nailed to, down into the ground
+        const pp = new THREE.Mesh(new THREE.BoxGeometry(0.14, wallH + sink, 0.14), postMat);
+        pp.position.set(cx + ex * (bwW / 2 - 0.07), (wallH - sink) / 2, bwZ + facing * 0.12); grp.add(pp);
+      }
+      const under = new THREE.Mesh(new THREE.BoxGeometry(bwW, sink, bwT), logMat);   // the bottom log bedded in, on a slope
+      under.position.set(cx, -sink / 2, bwZ); grp.add(under);
+      list.push({ minX: cx - bwW / 2 - 0.04, maxX: cx + bwW / 2 + 0.04, minZ: bwZ - bwT / 2 - 0.04, maxZ: bwZ + bwT / 2 + 0.04,
+                  h: wallH, surface: 'hard', baseY: 0, blastWall: true });
     }
     // Asymmetric extra: Team A gets a tire stack out front; Team B a lean-to.
     if (o.frontTires) {
@@ -18459,7 +18496,8 @@ function buildHollowScene(variant, timeOfDay) {
   fortObs.push(...addFort(-2, -30, { facing: 1, flagColor: 0xc0392b, lookoutSide: -1, frontTires: true }));
   // Team B fort — SOUTH end (z≈30), front/port faces NORTH (-z toward midfield),
   // BLUE flag, ramp on the RIGHT (v1.259: the lean-to is gone).
-  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1 }));
+  // v1.345 (B.17): in Hold the South Fort (variant 'south_fort_walls') it has the blast wall and the taller merlons.
+  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1, walls: variant === 'south_fort_walls' }));
 
   // ===================================================================
   // ANCHORS & SPAWNS
