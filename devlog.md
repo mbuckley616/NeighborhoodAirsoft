@@ -14541,11 +14541,12 @@ of the two areas Michael's answer A (26 Oct) set out.
 - Several of these lost their tab or timed out entering a match while two browsers ran on this 4-core machine: `ffa-starts`,
   `squad-basics`, `real-scale`, `last-kid`, `squad-hud`, `winnmark-props` and `damage-report`. Every one of them passes
   alone. `result-stats` fails on main too (v1.342), the unlock ladder.
-- **Not run here (time):** `pickup`, `pickup-kids`, `pickup-clock`, `voices`, `walkie-callouts`, `mirror`,
-  `out-walk-off`, `map-screen`, `hats`, `jump`, `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`,
-  `crew-balance`, `crew-gear`, `spawn-facing`, `crew-spawn-bounds` and `crew`. `pickup` builds the 3v3 on Winnmark,
-  which is the bulb's area now; it ran past 10 minutes beside nothing else before I stopped it. It goes first next
-  session.
+- **Run directly** (`node tests/<name>.test.mjs`): `pickup` (every map at 2v2 by night and 3v3 or 4v4 by day, Winnmark's
+  in the bulb's area now), `pickup-kids`, `pickup-clock` and `map-screen` pass. `pickup` hung past 10 minutes twice
+  under `run.mjs` and finished in under 7 run directly.
+- **Owed first next session (time):** `spawn-facing` (ran past my 280 s cap), `voices`, `walkie-callouts`, `mirror`,
+  `out-walk-off`, `hats`, `jump`, `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`, `crew-balance`,
+  `crew-gear`, `crew-spawn-bounds` and `crew`.
 ### Still open
 - **For Michael's look:** the bulb's area is the street's end as it is, with no tree walls. The hedge down its west edge
   and the open street to the east are its edges. He should also judge whether the team matches' far side (their spots by
