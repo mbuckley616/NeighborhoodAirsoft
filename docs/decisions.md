@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Hold the South Fort is still lost before the first tag (critic, 2026-10-26, v1.337)**
   v1.319 took your first fix: a tagged attacker walks back to the north fort. Headless after it, 4 of 4 rounds were
   lost, all to Devon's sniper from 37-38 m: at 3.1 s pushing out, at 6-9 s standing on the fort floor. With you
@@ -13,8 +15,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   A) Your second fix: a taller wall and better crenellations, so the floor is out of Devon's line _(the critic's pick)_
   B) A and two lives for the defender
   C) Leave it: it's meant to be the hardest defend
-
-## Answered
+  Michael: **A) Taller wall and better crenellations**. (2026-10-26)
 
 - **Winnmark at real scale (D.51): three matches need Seth's yard and the far end of the street at once (deep-work session, 2026-10-25, card `fable/d51-winnmark`)**
   You chose real scale (16 Oct), with Seth's house mid-street on the south side (answer 2A), and for Bunratty each match
