@@ -13971,6 +13971,31 @@ function winnmarkCreekZ(x) {
   for (let i = 0; i + 1 < C.length; i++) if (x >= C[i + 1][0]) return C[i][1] + (C[i + 1][1] - C[i][1]) * (x - C[i][0]) / (C[i + 1][0] - C[i][0]);
   return C[C.length - 1][1];
 }
+// v1.339 (D.51 step 2; docs/refs/winnmark.md, "The houses" and "The ground"): the street's lots past the box, at real
+// size. Each house is 20-24 m across and 15 m deep, its front 14 m off the street's middle; the main floor stands 0.35 m
+// over the front lawn and the back is a walk-out, the terrace 3 m under the main floor with the deck over it; the terrace
+// runs back to a stone wall at the lot's back line of the ground grid, the yard 0.9 m or more below it, a black picket
+// fence along the wall and down each side. North lots face south and back onto the course; south lots face north and
+// back onto the shared wood. Seth's (x 100, south) is step 3's own lot. look: WM_LOOK's A, B or C.
+const WM_LOTS = [
+  { x: 48, side: 'n', look: 'C', w: 22 }, { x: 80, side: 'n', look: 'A', w: 24 }, { x: 112, side: 'n', look: 'B', w: 21 },
+  { x: 144, side: 'n', look: 'C', w: 23 }, { x: 176, side: 'n', look: 'A', w: 20 }, { x: 208, side: 'n', look: 'B', w: 22 },
+  { x: 156, side: 's', look: 'B', w: 23 }, { x: 206, side: 's', look: 'C', w: 21 },
+];
+const WM_LOT = { half: 16, front: 14, depth: 15, walk: 3.0, wallD: 39.375, cell: 140 / 96 };   // wallD: a line of the ground grid
+for (const L of WM_LOTS) { const S = winnmarkStreetY(L.x); L.F = S + 0.35; L.T = L.F - WM_LOT.walk; L.sgn = L.side === 'n' ? -1 : 1; }
+function winnmarkLotAt(x, z) {
+  for (const L of WM_LOTS) if (Math.abs(x - L.x) < WM_LOT.half && z * L.sgn > 0) return L;
+  return null;
+}
+// the lot's ground: the front lawn, the side yards falling to the terrace, the terrace, and the yard below its wall
+function winnmarkLotY(L, z, r) {
+  const d = z * L.sgn, S = L.F - 0.35;
+  if (d < 16) return r;
+  if (d < 29) return S + (L.T - S) * _wmSS((d - 16) / 12);
+  if (d <= WM_LOT.wallD) return L.T;
+  return Math.min(r, L.T - 0.9);
+}
 function winnmarkRealScale(x, z, h) {
   const B = WM_REAL.box;
   const out = Math.max(B.minX - x, x - B.maxX, B.minZ - z, z - B.maxZ);
@@ -13988,6 +14013,8 @@ function winnmarkRealScale(x, z, h) {
     const walk = S - 3 * _wmSS((z - 16) / 16);
     r = z <= cz ? walk + (bank - walk) * _wmSS((z - 30) / Math.max(1, cz - 30)) : bank + 0.05 * (z - cz);
   }
+  const lot = winnmarkLotAt(x, z);   // v1.339: the street's lots past the box, terraced behind their walk-outs
+  if (lot) r = winnmarkLotY(lot, z, r);
   // Winnmark Dr's lots stand on its own level, falling away from it into the wood and the course
   const dr = _wmPolyNear(WM_REAL.dr, x, z);
   r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
@@ -13999,6 +14026,121 @@ function winnmarkRealScale(x, z, h) {
   r = Math.min(r, c1.y + 0.45 * Math.min(1, c1.d / 0.9) + 0.3 * Math.max(0, c1.d - 0.9));
   r = Math.min(r, c2.y + 0.45 * Math.min(1, c2.d / 1.2) + 0.3 * Math.max(0, c2.d - 1.2));
   return h + (r - h) * _wmSS(out / 8);
+}
+
+// v1.339 (D.51 step 2): build WM_LOTS' houses and yards. The house is the detailed one with its street look (v1.312) at
+// real size, lifted to its main floor; under it the walk-out storey in its own wall, French doors and windows on the back;
+// the deck over the terrace (stained boards, posts, a rail, a stair down its end); the terrace's stone wall with its cap;
+// black picket fences along the wall and down the lot lines; a driveway from the street to the garage end. Everything
+// but the houses is baked into one mesh per material. Returns the obstacles and the driveways (for the kerb drops).
+function buildWinnmarkLots(scene, o) {
+  const gY = o.groundY, looks = o.looks, obstacles = [], drives = [];
+  const parts = {}, mats = {};
+  const mat = (key, c, x = {}) => { if (!mats[key]) mats[key] = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, x)); return key; };
+  const add = (key, x0, x1, y0, y1, z0, z1) => {
+    (parts[key] = parts[key] || []).push({ geo: new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), m: new THREE.Matrix4().makeTranslation((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) });
+  };
+  const ob = (x0, x1, z0, z1, y0, y1, extra) => obstacles.push(Object.assign({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1), baseY: y0, h: y1 - y0, surface: 'hard' }, extra || {}));
+  const WOOD = mat('wood', 0x6a4e3a), POST = mat('post', 0x47382d), STONE = mat('stone', 0x8a8070, { roughness: 0.97 }), CAP = mat('cap', 0xb8b0a0);
+  const IRON = mat('iron', 0x18181a, { roughness: 0.5, metalness: 0.55 }), TRIM = mat('trim', 0xe6dfd0, { roughness: 0.6 });
+  const GLASS = mat('glass', 0x2e3a44, { roughness: 0.25, metalness: 0.2, emissive: 0x101820, emissiveIntensity: 0.4 });
+  const LIT = o.night ? mat('lit', 0xffe0a0, { roughness: 0.4, emissive: 0xffc070, emissiveIntensity: 0.85 }) : GLASS;
+  const CONC = mat('conc', 0xa8a49c, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  // a black picket fence 1.2 m high from (x0, z0) to (x1, z1), each picket on the ground under it (or on `y` if given)
+  const fence = (x0, z0, x1, z1, y) => {
+    const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / 0.16)), posts = Math.max(1, Math.round(len / 2.4));
+    for (let i = 0; i <= n; i++) {
+      const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n, b = y != null ? y : gY(x, z);
+      add(IRON, x - 0.012, x + 0.012, b - 0.1, b + 1.2, z - 0.012, z + 0.012);
+    }
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i <= posts; i++) {
+      const x = x0 + (x1 - x0) * i / posts, z = z0 + (z1 - z0) * i / posts, b = y != null ? y : gY(x, z);
+      add(IRON, x - 0.04, x + 0.04, b - 0.1, b + 1.28, z - 0.04, z + 0.04); lo = Math.min(lo, b); hi = Math.max(hi, b);
+      if (i < posts) {   // the rails, a section at a time so they follow the ground
+        const xb = x0 + (x1 - x0) * (i + 1) / posts, zb = z0 + (z1 - z0) * (i + 1) / posts, bb = y != null ? y : gY(xb, zb), yr = Math.min(b, bb);
+        for (const ry of [0.12, 1.08]) add(IRON, Math.min(x, xb) - 0.02, Math.max(x, xb) + 0.02, yr + ry, yr + ry + 0.04 + Math.abs(bb - b), Math.min(z, zb) - 0.02, Math.max(z, zb) + 0.02);
+      }
+    }
+    ob(x0 - 0.1, x1 + 0.1, z0 - 0.1, z1 + 0.1, lo, hi + 1.2, { surface: 'metal', bbPass: true });
+  };
+  for (const L of WM_LOTS) {
+    const s = L.sgn, LK = looks[L.look], w = L.w, D = WM_LOT.depth, hw = w / 2;
+    const zc = s * (WM_LOT.front + D / 2), zFront = s * WM_LOT.front, zBack = s * (WM_LOT.front + D), F = L.F, T = L.T;
+    const z0 = Math.min(zFront, zBack), z1 = Math.max(zFront, zBack);
+    // the house, at real size, lifted to its main floor
+    const hob = buildSuburbanHouse(scene, { x: L.x, z: zc, width: w, depth: D, trimColor: 0xe6dfd0, brickColor: LK.brick,
+      roofColor: [0x6e6a62, 0x686660, 0x726c62][Math.round(L.x / 32) % 3], faceDir: s < 0 ? 'south' : 'north', detail: true,
+      look: { ...LK.look, bay: (Math.round(L.x / 32) % 2) ? 1 : -1 } });
+    hob.mesh.position.y = F;
+    hob.baseY = T - 0.1; hob.h = F - T + 0.1 + 5.5;
+    obstacles.push(hob);
+    // the walk-out storey under it, in its own wall; French doors and two windows each side on the back
+    const WALL = mat('wall' + L.look, LK.brick, { roughness: 0.92 });
+    add(WALL, L.x - hw + 0.02, L.x + hw - 0.02, T - 0.1, F, z0 + 0.02, z1 - 0.02);
+    const zb = zBack + s * 0.04;
+    for (const dx of [-7.5, -4.5, 0, 4.5, 7.5]) {
+      if (Math.abs(dx) > hw - 1.5) continue;
+      const ww = dx === 0 ? 1.8 : 1.1, top = dx === 0 ? T + 2.3 : T + 2.1, bot = dx === 0 ? T + 0.02 : T + 0.9;
+      add(TRIM, L.x + dx - ww / 2 - 0.12, L.x + dx + ww / 2 + 0.12, bot - 0.08, top + 0.12, Math.min(zb, zb + s * 0.06), Math.max(zb, zb + s * 0.06));
+      add((L.x + dx) % 3 < 1 ? LIT : GLASS, L.x + dx - ww / 2, L.x + dx + ww / 2, bot, top, Math.min(zb, zb + s * 0.1), Math.max(zb, zb + s * 0.1));
+    }
+    // the deck over the terrace: 12 x 3.8 m at the main floor, on posts, a rail round it, a stair down its east end
+    const dx0 = L.x - 6, dx1 = L.x + 6, dz0 = zBack, dz1 = zBack + s * 3.8, dzA = Math.min(dz0, dz1), dzB = Math.max(dz0, dz1);
+    add(WOOD, dx0, dx1, F - 0.25, F, dzA, dzB);
+    ob(dx0, dx1, dzA, dzB, F - 0.25, F + 1.05, { surface: 'wood' });
+    for (const px of [dx0 + 0.12, L.x - 2, L.x + 2, dx1 - 0.12]) {
+      const pz = dz1 - s * 0.12;
+      add(POST, px - 0.08, px + 0.08, T, F - 0.25, pz - 0.08, pz + 0.08); ob(px - 0.08, px + 0.08, pz - 0.08, pz + 0.08, T, F - 0.25);
+    }
+    const rail = (ax, az, bx, bz) => {
+      const len = Math.hypot(bx - ax, bz - az), n = Math.round(len / 0.14);
+      for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; add(WOOD, x - 0.025, x + 0.025, F, F + 0.95, z - 0.025, z + 0.025); }
+      add(POST, Math.min(ax, bx) - 0.05, Math.max(ax, bx) + 0.05, F + 0.95, F + 1.03, Math.min(az, bz) - 0.05, Math.max(az, bz) + 0.05);
+    };
+    rail(dx0 + 0.05, dz1 - s * 0.05, dx1 - 0.05, dz1 - s * 0.05); rail(dx0 + 0.05, dz0, dx0 + 0.05, dz1 - s * 0.05); rail(dx1 - 0.05, dz0, dx1 - 0.05, dz0 + s * 1.2);
+    {
+      const sx0 = dx1, sx1 = dx1 + 4.2, n = 15, sz0 = dz0 + s * 1.3, sz1 = dz0 + s * 2.4;
+      for (let i = 0; i < n; i++) { const y = F - (F - T) * (i + 1) / n, x = sx0 + (sx1 - sx0) * i / n; add(WOOD, x, x + (sx1 - sx0) / n + 0.02, y - 0.05, y, Math.min(sz0, sz1), Math.max(sz0, sz1)); }
+      add(POST, sx0, sx1, T, F - 0.2, Math.min(sz0, sz1) - 0.04, Math.min(sz0, sz1));
+      ob(sx0, sx1, Math.min(sz0, sz1), Math.max(sz0, sz1), T, F);
+    }
+    // the terrace's stone wall along the back line (one grid cell thick, so the ground's step is under it), capped,
+    // the fence on it; the fences down both lot lines from the house's back corners to past the wall
+    const wd0 = s * WM_LOT.wallD, wd1 = s * (WM_LOT.wallD + WM_LOT.cell), wz0 = Math.min(wd0, wd1), wz1 = Math.max(wd0, wd1);
+    const lx0 = L.x - WM_LOT.half + 0.2, lx1 = L.x + WM_LOT.half - 0.2;
+    let low = Infinity; for (let x = lx0; x <= lx1; x += 2) low = Math.min(low, gY(x, wd1 + s * 0.05));
+    add(STONE, lx0, lx1, low - 0.3, T + 0.05, wz0, wz1); add(CAP, lx0 - 0.03, lx1 + 0.03, T + 0.05, T + 0.12, wz0 - 0.03, wz1 + 0.03);
+    ob(lx0, lx1, wz0, wz1, low - 0.3, T + 0.12, { surface: 'hard' });
+    const fz = s * (WM_LOT.wallD + WM_LOT.cell / 2);
+    fence(lx0, fz, lx1, fz, T + 0.12);
+    for (const fx of [lx0, lx1]) fence(fx, s * (WM_LOT.front + D), fx, s * (WM_LOT.wallD + WM_LOT.cell + 9));
+    // the driveway to the garage end: the street's edge to the front, on the ground
+    const gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2);
+    drives.push({ x: gx, z: zc, side: s < 0 ? 'north' : 'south', dx: gx });
+    {
+      const za = s * 3.6, zf = zFront, st = 0.75, nz = Math.ceil(Math.abs(zf - za) / st), p = [];
+      const at = (x, z) => [x, gY(x, z) + 0.035, z];
+      for (let k = 0; k < nz; k++) {
+        const zA = za + (zf - za) * k / nz, zB = za + (zf - za) * (k + 1) / nz;
+        for (let i = 0; i < 6; i++) { const xA = gx - 2.4 + 4.8 * i / 6, xB = gx - 2.4 + 4.8 * (i + 1) / 6;
+          const a = at(xA, zA), b = at(xB, zA), c = at(xA, zB), d = at(xB, zB); p.push(a, c, b, b, c, d); }
+      }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flat(), 3));
+      // wound so the patch faces up on either side of the street
+      if (s < 0) { const a = geo.attributes.position.array; for (let i = 0; i < a.length; i += 9) for (let j = 0; j < 3; j++) { const t = a[i + 3 + j]; a[i + 3 + j] = a[i + 6 + j]; a[i + 6 + j] = t; } }
+      geo.computeVertexNormals();
+      (parts[CONC] = parts[CONC] || []).push({ geo, m: new THREE.Matrix4() });
+    }
+  }
+  const root = new THREE.Group(); root.name = 'winnmarkLots';
+  for (const k in parts) {
+    const m = new THREE.Mesh(_houseMergeParts(parts[k]), mats[k]);
+    m.castShadow = k !== CONC && k !== GLASS && k !== 'lit'; m.receiveShadow = true; m.userData.part = k;
+    root.add(m);
+  }
+  scene.add(root);
+  return { obstacles, drives, root };
 }
 
 function buildWinnmarkCourtScene(variant, timeOfDay) {
@@ -14119,14 +14261,15 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // play keep their colour. The old lake strip west of the bulb is gone: the real pond lies north-west on the course.
   const groundGeo = new THREE.BufferGeometry();
   {
-    const axis = (lo, hi) => {
+    const axis = (lo, hi, nFine = 96) => {   // v1.339: nFine past 96 runs the fine grid on east over the lots, at the same step
       const v = [];
       for (let c = lo; c < -70 - 1e-6; c += 6) v.push(c);
-      for (let i = 0; i <= 96; i++) v.push(-70 + 140 * i / 96);
-      for (let c = 70 + 6; c < hi - 1e-6; c += 6) v.push(c);
+      for (let i = 0; i <= nFine; i++) v.push(-70 + 140 * i / 96);
+      const end = v[v.length - 1];
+      for (let c = end + 6; c < hi - 1e-6; c += 6) v.push(c);
       v.push(hi); return v;
     };
-    const xs = axis(-210, 310), zs = axis(-200, 230);
+    const xs = axis(-210, 310, 157), zs = axis(-200, 230);
     const pos = [], col = [], idx = [], B0 = WM_REAL.box, mix = (a, b, t) => a + (b - a) * t, P = WM_REAL.pond;
     for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
       const x = xs[i], z = zs[j];
@@ -14435,7 +14578,9 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -9, z: 20, side: 'south' },
     { x: -17, z: 19, side: 'south' },
   ];
-  buildWinnmarkRoad(houseCenters);   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
+  // v1.339 (D.51 step 2): the street's houses past the box at real size, their walk-outs, decks, terraces and fences
+  const wmLots = buildWinnmarkLots(scene, { groundY, looks: WM_LOOK, night: _night });
+  buildWinnmarkRoad(houseCenters.concat(wmLots.drives));   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
   for (const hc of houseCenters) {
     // Driveway runs from the house front all the way to the ACTUAL road edge.
     // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
@@ -15157,7 +15302,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     for (let x = -150; x < 220; x += 44) house(x + rr(-6, 6), -158 + rr(-3, 3), 0);
     for (const hs of houses) hs.y = groundY(hs.x, hs.z);
     const onHouse = (x, z) => houses.some(hs => Math.abs(x - hs.x) < 15 && Math.abs(z - hs.z) < 13) ||
-      R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd);
+      R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd) ||
+      WM_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44);   // v1.339: the houses, decks and terraces
     // trees on a jittered 7 m grid, by what lies there
     const P = R.pond;
     for (let gx = -206; gx <= 306; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
@@ -15209,6 +15355,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   const obstacles = [
     ...houseObs, ...fences, ...treeObs, ...bushObs, ...coverList,
     ...curbsideBins, ...driveCars, lakeBlocker, ...lampObs,
+    ...wmLots.obstacles,   // v1.339: last, so every other obstacle keeps its place in the list
   ];
 
   return {
