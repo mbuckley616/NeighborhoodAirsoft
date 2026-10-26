@@ -56,6 +56,7 @@ await g.scenario('winnmark_cul_de_sac');   // v1.343: the bulb's area
 const lay = await page.evaluate(() => {
   const gy = Game.scenario.groundY, s = Game.scene;
   let fairwayMax = -9, lakeOver = 0, lakeN = 0;
+  // v1.344: the fairway plane is gone and the green moved 12 m north (z -60) onto the course, laid on the ground
   for (let x = -50; x <= 50; x += 2) for (let z = -64; z <= -42; z += 1) fairwayMax = Math.max(fairwayMax, gy(x, z));
   let lake = null, fairway = null, green = null;
   s.traverse(m => {
@@ -63,7 +64,7 @@ const lay = await page.evaluate(() => {
     const p = m.geometry.parameters;
     if (p.width === 20 && p.height === 80) lake = m;
     if (p.width === 100 && p.height === 22) fairway = m;
-    if (p.radius === 5 && Math.abs(m.position.z + 48) < 0.01) green = m;
+    if (p.radius === 5 && Math.abs(m.position.z + 60) < 0.01) green = m;
   });
   // v1.338 (D.51 step 1): the lake strip west of the bulb is gone; the real pond lies north-west on the course
   lake = s.getObjectByName('winnmarkPond');
@@ -74,11 +75,11 @@ const lay = await page.evaluate(() => {
   let inPlay = 0, n = 0;
   for (let x = -37; x <= 40; x += 1) for (let z = -35; z <= 40; z += 1) { n++; if (Math.abs(gy(x, z) - before(x, z)) > 1e-9) inPlay++; }
   inPlay = { changed: inPlay, of: n };
-  return { fairwayMax: +fairwayMax.toFixed(4), fairwayY: fairway && fairway.position.y, greenY: green && green.position.y,
+  return { fairwayMax: +fairwayMax.toFixed(4), fairwayY: fairway && fairway.position.y, greenY: green && +(green.position.y - gy(green.position.x, green.position.z)).toFixed(3),
     lakeY: lake && lake.position.y, lakeOver, lakeN, inPlay };
 });
-check('the fairway, green and bunkers are above the ground under them (ground ≤ 0.004 m there, the fairway at 0.005)',
-  lay.fairwayY === 0.005 && lay.greenY === 0.01 && lay.fairwayMax <= 0.004, lay);
+check('the green lies on the ground under it (0.03 m over it), and no fairway plane hangs over the yards (v1.344)',
+  lay.fairwayY === null && lay.greenY === 0.03, lay);
 check('the pond is above the ground over its whole water (v1.338: the pond north-west of the bulb, not the lake strip)', lay.lakeOver === lay.lakeN, lay);
 check('the ground in the bulb\'s area and round it (x -37 to 40, z -35 to 40) is the real street\'s', lay.inPlay.changed === 0 && lay.inPlay.of > 5000, lay.inPlay);
 check('no page errors', g.errs.length === 0, g.errs);

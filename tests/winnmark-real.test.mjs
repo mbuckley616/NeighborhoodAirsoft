@@ -88,6 +88,30 @@ const res = await page.evaluate(() => {
     creekBelowPatio: +(H.T - _wmPolyNear(WM_REAL.creek, H.x, winnmarkCreekZ(H.x)).y).toFixed(2),
     house: S && S.house && [+(S.house.maxX - S.house.minX).toFixed(2), +(S.house.maxZ - S.house.minZ).toFixed(2)],
   };
+  // v1.344 (step 5): past the course's west edge a row of houses and the woods, on 48 m more ground; the green, its flag,
+  // the bunkers, the cart path and the cart lie on the course past the lots, each on the ground under it (v1.301's
+  // fairway plane, which hung over the bulb's north yards since v1.342, is gone)
+  let west = 0, westWood = 0, edge = Infinity;
+  if (sc) sc.traverse(m => {
+    if (!m.isMesh) return;
+    const p = m.geometry.attributes.position.array;
+    for (let i = 0; i < p.length; i += 3) {
+      if (p[i] < R.westX - 10 && p[i] > R.westX - 34 && p[i + 1] - gY(p[i], p[i + 2]) > 5 && p[i + 1] - gY(p[i], p[i + 2]) < 7) west++;   // walls' tops
+      if (p[i] < -215) westWood++;
+      edge = Math.min(edge, p[i]);
+    }
+  });
+  let groundMinX = Infinity;
+  built.scene.traverse(m => { if (m.isMesh && m.geometry.index && m.material.vertexColors && m.material.color.getHex() === 0x5a8040) { const p = m.geometry.attributes.position.array; for (let i = 0; i < p.length; i += 3) groundMinX = Math.min(groundMinX, p[i]); } });
+  const golf = [], gone = [];
+  built.scene.traverse(m => {
+    const pa = m.geometry && m.geometry.parameters;
+    if (!pa) return;
+    if (pa.width === 100 && pa.height === 22) gone.push(m.position.y);
+    const flat = m.geometry.type === 'CircleGeometry' && m.rotation.x === -Math.PI / 2 && m.position.z < -50 && m.position.z > -75 && Math.abs(m.position.x) < 30;
+    if (flat) golf.push(+(m.position.y - gY(m.position.x, m.position.z)).toFixed(3));
+  });
+  out.edge5 = { west, westWood, edge: +edge.toFixed(1), groundMinX, golf: [Math.min(...golf), Math.max(...golf), golf.length], fairwayPlane: gone.length };
   out.viewFar = built.viewFar;
   out.bounds = B;
   return out;
@@ -110,6 +134,10 @@ check("Winnmark: Seth's pad is 2-3 m under the road, down a 12-15 % driveway, fl
 check("Winnmark: Seth's house is a 24 m walk-out, its main floor 3 m over the patio", res.seth.house && res.seth.house[0] === 24 && res.seth.walk === 3, res.seth);
 check("Winnmark: the hot tub (3.6 m across, as big as half the pool) sits under the big deck, with 1.5 m or more over its rim", res.seth.tubUnderDeck && res.seth.tubWidth === 3.6 && res.seth.headroom >= 1.5, res.seth);
 check("Winnmark: the pool lies on the patio, and the creek runs 3-4 m under it at the foot of the yard", res.seth.poolOnPatio && res.seth.creekBelowPatio >= 3 && res.seth.creekBelowPatio <= 4, res.seth);
+check('Winnmark: past the course to the west, a row of houses faces it, the woods behind them on the ground to x -258 (v1.344)',
+  res.edge5.west > 50 && res.edge5.westWood > 500 && res.edge5.groundMinX === -258 && res.edge5.edge >= -265 && res.stats.houses >= 38, res.edge5);
+check('Winnmark: the green, bunkers and cart path lie on the course 0.02-0.05 m over the ground, the fairway plane is gone (v1.344)',
+  res.edge5.golf[2] >= 18 && res.edge5.golf[0] >= 0.02 && res.edge5.golf[1] <= 0.05 && res.edge5.fairwayPlane === 0, res.edge5);
 
 // in play: you see down the street to Winnmark Dr; the camera sees that far; draw calls in budget
 await g.scenario('winnmark_team_3v3');
