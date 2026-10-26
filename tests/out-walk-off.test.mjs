@@ -12,13 +12,15 @@ await page.evaluate(() => {
   // fire one BB straight at a kid's chest from 0.6 m off, as `owner` on `team`; step until it lands or 0.1 s pass
   window._shootAt = (e, owner, team) => {
     const target = e.pos.clone(); target.y = (e.pos.y || 0) + 0.9;
-    const dir = new THREE.Vector3(1, 0, 0);
+    // v1.344: from the first side whose 0.6 m run-up is clear of anything solid (by the bulb's car since v1.343, +x wasn't)
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([x, z]) => new THREE.Vector3(x, 0, z));
+    const dir = dirs.find(v => [0.2, 0.4, 0.6].every(s => !collidesObstacles(target.x - v.x * s, target.z - v.z * s, 0.05))) || dirs[0];
     const bb = makeBB(target.clone().addScaledVector(dir, -0.6), dir.clone().multiplyScalar(40), owner, null, null, team);
     bb.curveStrength = 0;
     bb.spawnPos = target.clone().addScaledVector(dir, -10);
     Game.scenario.bbs.push(bb);
     for (let i = 0; i < 6 && Game.mode === 'scenario' && Game.scenario.bbs.includes(bb); i++) stepGame(1 / 60);
-    return { gone: !Game.scenario.bbs.includes(bb), x: +(bb.pos.x - e.pos.x).toFixed(2) };
+    return { gone: !Game.scenario.bbs.includes(bb), x: +((bb.pos.x - e.pos.x) * dir.x + (bb.pos.z - e.pos.z) * dir.z).toFixed(2) };
   };
 });
 await g.spin(200);

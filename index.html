@@ -32963,10 +32963,19 @@ function outKidWalkOff(e, dt) {
   kidTurnToward(e, Math.atan2(dx, dz), dt);
   e.mesh.group.rotation.y = e.yaw;
   const step = Math.min(d, OUT_WALK_SPEED * dt), nX = e.pos.x + dx / d * step, nZ = e.pos.z + dz / d * step;
-  if (!collidesObstacles(nX, nZ, 0.35)) { e.pos.x = nX; e.pos.z = nZ; }
+  if (!collidesObstacles(nX, nZ, 0.35)) { e.pos.x = nX; e.pos.z = nZ; e._offSide = 0; }
   else {
-    if (!collidesObstacles(nX, e.pos.z, 0.35)) e.pos.x = nX;
-    if (!collidesObstacles(e.pos.x, nZ, 0.35)) e.pos.z = nZ;
+    // v1.344: square on to something (the bulb's car sits right on the line from a tag in front of it to Seth's start
+    // behind it) the slide gains nothing: he steps sideways round it, and keeps stepping to that side until the way
+    // on is clear (sliding back to the line in between would undo each step)
+    const x0 = e.pos.x, z0 = e.pos.z, side = sd => { const sX = x0 - dz / d * step * sd, sZ = z0 + dx / d * step * sd;
+      if (collidesObstacles(sX, sZ, 0.35)) return false; e.pos.x = sX; e.pos.z = sZ; e._offSide = sd; return true; };
+    if (!(e._offSide && side(e._offSide))) {
+      e._offSide = 0;
+      if (!collidesObstacles(nX, e.pos.z, 0.35)) e.pos.x = nX;
+      if (!collidesObstacles(e.pos.x, nZ, 0.35)) e.pos.z = nZ;
+      if (Math.hypot(e.pos.x - x0, e.pos.z - z0) < step * 0.25) { e.pos.x = x0; e.pos.z = z0; side(1) || side(-1); }
+    }
   }
   const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
   if (e._offBest == null || dNow < e._offBest - 0.3) { e._offBest = dNow; e._offStuck = 0; }
@@ -34444,7 +34453,7 @@ function eliminateEnemy(e) {
   } else {
     // Permanent kill.
     e.health = 0;
-    e._outT = 0; e._walkingOff = false; e._offField = false; e._offBest = null; e._offStuck = 0;   // v1.264: his walk off starts now
+    e._outT = 0; e._walkingOff = false; e._offField = false; e._offBest = null; e._offStuck = 0; e._offSide = 0;   // v1.264: his walk off starts now
     if (typeof e.lives === 'number') e.lives = 0;   // v1.34: last life spent
     e.hitFlash = 0.6;
     updateRosterHud();
