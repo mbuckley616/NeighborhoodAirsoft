@@ -14297,3 +14297,19 @@ into. Nothing in the box moved.
   run of level ground. The scene is 1.10 M vertices: the houses' detail, the scenery, the bigger ground, the fences
   and the decks. Building the map takes 0.58-0.71 s after the first build (1.1 s cold), against 0.37-0.51 s on
   v1.337.
+- **Draw calls,** v1.339 → v1.340: bulb looking east 1,805 → 1,829; entry looking in 1,837 → 1,837; entry looking out
+  192 → 216; north yards 1,543 → 1,564; south yards 1,655 → 1,656; west 97 → 97; mid-street 515 → 539. The worst is
+  still 1,837 (budget 2,060).
+- **These suites pass,** run one at a time: `winnmark-real`, `ffa-starts`, `layout-same`, `smoke`, `houses`,
+  `house-backs`, `winnmark-road`, `winnmark-trees`, `whole-block`; `seth-shotgun` passed before the fences went to
+  quads. No page errors.
+### Still open
+- **None of it is in play yet.** Step 4 moves Seth's eight matches into his area: from the north lawns across the
+  street, down his driveway and round the deck, the tub and the pool to the creek. They get their starts, cover and
+  routes there, and Trey on Overwatch and Defend the Treehouse get their few briefing words (Michael's A). The
+  bulb's matches stay in today's box. Seth's area needs ways through the neighbours' fences and walls, and the
+  kids' route grid over its slopes.
+- **For a look:** the driveway's steepness (15 % is the guide's top), the hot tub's size against the pool (3.6 m
+  against 9.5 x 4.6 m: Michael's "almost the size of his pool"), and the patio's flagstone colour, which reads pale
+  grey in full sun.
+- The pool is a flat sheet of water in its coping, with no depth: no BB or kid can get into it to see.
