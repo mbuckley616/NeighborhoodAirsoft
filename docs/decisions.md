@@ -5,39 +5,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-- **Winnmark at real scale (D.51): three matches need Seth's yard and the far end of the street at once (deep-work session, 2026-10-25, card `fable/d51-winnmark`)**
-  You chose real scale (16 Oct), with Seth's house mid-street on the south side (answer 2A), and for Bunratty each match
-  fenced to a today-sized part of the street (1A, 21 Oct); the card applies that here. The real court runs about 265 m
-  from Winnmark Dr to the bulb, so mid-street puts Seth's driveway about 130 m from the bulb and 130 m from the street's
-  mouth. Today the whole street is 64 m, and every match uses it end to end.
-
-  What the 17 Winnmark matches do today, measured headless (one round of 60 s each, you standing at your start and
-  untaggable): the sides start 15-61 m apart; the first shot comes 2.3-6 s in, at 7-64 m; the team matches' first shot
-  is at 39-41 m, the edge of the guns' 10-40 m band; half of all shots are fired inside 8 m. The worst view costs 1,651
-  draw calls (the bulb), so the budget would be 2,060, a quarter over, as on Bunratty.
-
-  The plan, with no question in it: the whole street built at real size, and two fenced play areas about today's size.
-  **Seth's** (about 80 x 75 m): his lot and one neighbour each side, from the north houses' front lawns across the
-  street, down his driveway, round the deck and the hot tub, through the back yard to the creek. It takes both 1v1s with
-  Seth, Every Kid for Themselves, Two in the Yards, After Dark, Two on Two and Lights Out. **The bulb** (about 80 x 70 m):
-  the bulb with its plank fort, cars and the last two lots each side. It takes Backyard Basics, Squad Basics, Storm the
-  Cul-de-Sac, Hold the Fort, Last Stand at the Fort, Outnumbered and Squad Up. Starts stay 30-60 m apart, as today.
-  `buildSethBackyardScene`, an early scene no match uses any more, stays as it is.
-
-  Three matches don't fit one area: **Trey on Overwatch** (Seth at his place, Trey sniping "from the far end of the
-  street"), **The Whole Block** (Devon sniping from the bulb's fort, Seth and Brooke in the mid yards, "a gauntlet from
-  the road entry all the way to the cul-de-sac"), and **Defend the Treehouse** (your fort "by the woods at the mouth of
-  the street", the attackers coming through Seth's back yard). At real scale each pair of places is about 130 m apart.
-  - A) **Each goes into one area, and its briefing changes a few words.** Trey on Overwatch at Seth's, Trey on the deck
-    of the house across the street, 45-55 m from Seth's driveway; The Whole Block at the bulb, Seth and Brooke in the
-    bulb's yards, Devon on the fort; Defend the Treehouse at Seth's, the fort by the woods at the east edge of his
-    neighbour's lot, the attackers coming through his back yard as now. *(recommended: every match keeps today's
-    distances, and the briefings still say what happens)*
-  - B) **A third, longer area for those three:** the street from Seth's lot to the bulb, about 150 x 60 m. Their
-    briefings stay as they are, but the sides start 90-130 m apart: 25-40 s of walking before a pistol is in range, and
-    Trey's and Devon's sniper lines across it run past 100 m.
-  - C) **Seth's house the second lot from the bulb** instead of mid-street, so one area holds his lot and the bulb and
-    every match keeps today's shape. It goes back on your answer 2A.
+(none)
 
 ## Answered
 
