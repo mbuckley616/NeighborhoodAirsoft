@@ -14164,7 +14164,7 @@ play as before.
   obstacle counts and the same named anchors and starts. Three obstacles differ: trees past the west tree wall
   (x −54 to −58, z 22-34, outside the bounds), which now stand 0.4-1.4 m lower on the course's ground where the lake
   strip's flat was.
-- **Draw calls** in seven views of Two on Two on Two (`winnmark_team_3v3`), v1.337 → v1.338: bulb 1,679 → 1,677;
+- **Draw calls** in seven views of Squad Up (`winnmark_team_3v3`), v1.337 → v1.338: bulb 1,679 → 1,677;
   looking in from the entry 1,838 → 1,837; looking out of it 64 → 64; north yards 1,537 → 1,535; south yards
   1,632 → 1,631; looking west from the bulb 98 → 97; mid-street 387 → 387. The worst stays 1,837, inside the 2,060
   budget. Triangles in the scene went from 321k to 364k. Building the map takes 816 ms against 678 ms.
