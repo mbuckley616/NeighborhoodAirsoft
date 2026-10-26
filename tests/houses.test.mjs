@@ -58,6 +58,8 @@ const looks = () => page.evaluate(() => {
     if (!o.isGroup) return;
     const front = o.children.find(c => c.isGroup && c.children.some(k => k.userData && k.userData.part));
     if (!front) return;
+    // v1.339 (D.51 step 2): the street's real-size houses past the box are winnmark-real's to measure
+    const B = Game.scenario.bounds; if (o.position.x > B.maxX || o.position.x < B.minX) return;
     const parts = front.children.filter(k => k.userData.part).map(k => k.userData.part);
     const roof = o.children.find(c => c.isMesh && c.material.side === THREE.DoubleSide && !c.userData.part);
     let rise = null;

@@ -14213,3 +14213,40 @@ bulb's lots. Nothing in the box moved again.
 - **The ground's fine grid** (1.458 m) now runs east to x 159, over the lots Seth's play area will use. The trees of
   v1.338's scenery keep off every house, deck and terrace.
 ### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - Seven houses, 20-24 m across and 15 m deep.
+  - Every main floor stands 0.35 m over its front lawn and 3.00 m over its terrace.
+  - Every terrace is flat to its wall (0 m across it), and the yard below is 0.90 m lower.
+  - The wall sits on a line of the ground grid.
+  - Every deck is at the main floor, 2.75 m over the terrace.
+  - The first try failed it on the two lots by Winnmark Dr, where the Dr's own grade lifted their terraces (1.4-1.7 m
+    of walk-out). It also failed the north lots' yards, which ran on 0.37 m under the course past it. The lots now
+    take their ground after the Dr's, and the yards meet the falling ground by 54 m.
+- **Cover.** All 17 matches, by day and at night, have the same obstacles as v1.338 everywhere west of x 60, where
+  all the matches' obstacles are (hashed). The lots' obstacles come after them.
+- **Draw calls,** v1.338 → v1.339, in the same seven views:
+  | View | v1.338 | v1.339 |
+  |---|---|---|
+  | Bulb, looking east down the street | 1,677 | 1,805 |
+  | Entry, looking in | 1,837 | 1,837 |
+  | Entry, looking out | 64 | 192 |
+  | North yards | 1,535 | 1,543 |
+  | South yards | 1,631 | 1,655 |
+  | West | 97 | 97 |
+  | Mid-street | 387 | 515 |
+
+  The worst is still 1,837, inside the 2,060 budget. Each house is 16-17 meshes; everything else on the lots is 11
+  meshes in all.
+- **These suites pass:** `winnmark-real`, `houses` (its looks check now counts only the box's eight houses; the street's
+  real-size ones are `winnmark-real`'s), `house-backs`, `smoke`, `winnmark-road`, `ffa-starts`, `winnmark-trees`,
+  `layout-same`, `winnmark-cars`, `winnmark-fort`, `winnmark-props`, `whole-block`, `fence-bound` and `backdrop`. No
+  page errors.
+### Still open
+- **For Michael's look** (pictures in `tests/out/wm2-*.png` when the look script runs): the house backs from the
+  course, the deck from under it, and the street with its houses.
+- **The stair** is open treads on two posts, and there is no gap or gate in the terrace walls and fences. That matters
+  only where a lot is in play: step 4 opens the ways through Seth's area, and the guide asks that yards stay connected.
+- **Past x 159** (the lots at 176, 206 and 208) the ground is the coarse 6 m grid, so their walls' steps show as
+  slopes past the wall's foot. They are 60-110 m from any play area.
+- The houses keep the detailed house's own front: no garage wing or side-load garage door yet. The driveway runs to
+  the garage end of the front.
