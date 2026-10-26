@@ -13997,8 +13997,7 @@ for (const L of WM_LOTS) { const S = winnmarkStreetY(L.x); L.F = S + 0.35; L.T =
 // v1.342 (D.51 step 4, second part; Michael: real scale, 16 Oct): the bulb's end of the street at real size, in place of
 // today's box and its eight half-size houses: three lots each side about 34 m apart, the last two each side of the bulb
 // set back 17 m (front) round its 11 m circle, and the north lot at x 48 that reaches into the box. They are built where
-// the scene's ground is the real one (bulb true: Seth's area's matches for now; the bulb's own matches still play in the
-// box until they move onto these lots). The north lots by the bulb keep their terrace 0.6 m under the course at most, so
+// the scene's ground is the real one (bulb true: every match since v1.343, when the bulb's own matches moved onto them). The north lots by the bulb keep their terrace 0.6 m under the course at most, so
 // their walk-out is 2.5 m there; the south lots fall into the wood as the street's others do.
 const WM_BULB_LOTS = [
   { x: -22, side: 'n', look: 'A', w: 22, front: 17 }, { x: 14, side: 'n', look: 'B', w: 23 }, { x: 48, side: 'n', look: 'C', w: 24 },
@@ -15578,7 +15577,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
         let acc = 6, side = 1, prev = roadCenterline[0];
         for (let i = 1; i < roadCenterline.length; i++) {
           const p = roadCenterline[i], dx = p.x - prev.x, dz = p.z - prev.z; acc += Math.hypot(dx, dz); prev = p;
-          if (acc < 6 || p.x < -18 || p.x > 27) continue;
+          if (acc < 6 || p.x < -18 || p.x > 19) continue;   // not between your start and the tutorial's marker (a box at x 26 stood in its path)
           acc = 0;
           const tl = Math.hypot(dx, dz) || 1, x = p.x - dz / tl * 2.2 * side, z = p.z + dx / tl * 2.2 * side;
           side *= -1;

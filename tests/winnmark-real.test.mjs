@@ -261,6 +261,22 @@ check("Winnmark: in the bulb's area nothing of the box is left (its half-size ho
   ba.boxHouses === 0 && ba.lots === 6 && ba.trunks >= 10, ba);
 check("Winnmark: the plank fort stands in the middle of the real bulb, and only there", ba.fort.length === 1 && Math.hypot(ba.fort[0][0] + 29, ba.fort[0][1]) < 1, ba.fort);
 check("Winnmark: the merged scenery stands 6 m or more outside the bulb's area (BBs drop at 5)", ba.sceneryOut >= 6, ba.sceneryOut);
+// the tutorial: from your start you walk straight to its marker (a street box once stood in the way), and from the marker
+// you see all three targets
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);
+await g.scenario('winnmark_tutorial');
+const tut = await page.evaluate(() => {
+  Game.mouse.locked = true;
+  const m = Tutorial.movePos, p = Game.player.pos, G = (x, z) => scenarioGroundY(x, z) || 0;
+  document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }));
+  let f = 0;
+  for (; f < 60 * 8 && Tutorial.step === 0; f++) { Game.player.yaw = Math.atan2(-(m.x - p.x), -(m.z - p.z)); stepGame(1 / 60); }
+  document.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', key: 'w' }));
+  const seen = Game.scenario.enemies.filter(e => e.team !== 'player').filter(e => hasLineOfSight(m.x, G(m.x, m.z) + 1.5, m.z, e.pos.x, G(e.pos.x, e.pos.z) + 1.0, e.pos.z, Game.player.obstacles)).length;
+  return { step: Tutorial.step, t: +(f / 60).toFixed(1), seen };
+});
+console.log('   tutorial:', JSON.stringify(tut));
+check('Winnmark: the tutorial\'s first step: you walk from your start to its marker, and see all three targets from it', tut.step === 1 && tut.seen === 3, tut);
 // the team matches: the first shot comes inside the guns' 10-40 m band (you stand at your start and can't be tagged)
 for (const id of ['winnmark_team_2v3', 'winnmark_team_3v3']) {
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30);

@@ -14464,3 +14464,92 @@ split it there because moving them re-anchors eight matches and the tutorial, a 
   box. Then step 5, the views past the edges.
 - **For a look** (pictures in `tests/out/wm342-*.png` from the look script): the bulb's end from Seth's lawns, and the
   bulb from above. The lawns between the street and the houses have few trees against the guide's near-closed canopy.
+
+## v1.343 — The bulb's matches play on the real lots
+Card `fable/d51-winnmark` (backlog D.51), step 4, second part, second half. v1.342 built the bulb's end at real size, but
+only Seth's matches saw it: the tutorial, Squad Basics, Storm the Cul-de-Sac, Hold the Fort, Last Stand at the Fort,
+Outnumbered, Squad Up and The Whole Block still played in today's box, eight half-size houses round a 6 m bulb. This
+version moves those eight onto the real lots and retires the box. Every Winnmark match now plays on the real street, in one
+of the two areas Michael's answer A (26 Oct) set out.
+- **The bulb's area** (`WM_BA`) is 84 x 54 m: from the bulb's west edge to the box's old mouth (x -44 to 40), and from the
+  north houses' fronts to the south terraces' stone walls (z -14 to 40). It holds the 11 m bulb with the plank fort in its
+  middle and a car at each side, the street, the north front lawns and their driveways, and on the south side the front
+  lawns, the side yards that fall 3 m past the walk-outs, and the terraces under the decks. Four real houses stand in it,
+  and the two at x 48 and 44 reach into its east end. A hedge closes the gaps between the north houses and runs down the
+  west edge past the bulb. The street stays open to the east, as the box's mouth was, and the terrace walls close the south.
+- **The same names, new places**, as v1.341 did for Seth's area, so every match keeps its kids, guns and roles:
+  - The fort and the bulb's two cars are where `cul_de_sac_plank`, `_car1` and `_car2` were. You start Hold the Fort and
+    Last Stand behind the fort (`bulb_center`, -32.5, 0), and the attackers still huddle at the street's east end.
+  - The tutorial's targets, Seth's coaching spot and your start (32, 0) lie on the same street points as before, since
+    the bezier didn't move.
+  - Your side's spots (`house1`, `house2`) are the east lawns near your start. Theirs are by the bulb: the north lawn by
+    its driveway car (`trey`), its south lawn (`house7`), and the side yard between the south houses (`house6`, `house4`).
+    Seth in The Whole Block is on the middle terrace by its firewood (`seth_backyard`).
+  - One match's anchor changed. The Whole Block had Brooke at `house2`, which is your side's lawn now, 12 m from your
+    start. She takes `house7`, the bulb's south lawn: "dug into the yards off the bulb", as its briefing already said.
+- **Its cover** is its own, under its own seed, so every bulb match gets the same street:
+  - four cars in the driveways, and the box's staggered street cover laid by the same rule;
+  - fourteen bins at the kerbs and by the garages, three moving boxes and two plywood stacks;
+  - AC units in the side yards, firewood and grills on the terraces;
+  - 13 solid trunks on the lawns (six loblollies over pine straw);
+  - foundation shrubs along the house fronts, baked with the trunks and hedge into one mesh per material;
+  - four lamps for the night.
+  The merged scenery keeps 6 m off the area, the box's rule (BBs drop at 5).
+- **The box is retired.** Every match builds the real ground and the bulb's six lots. The box's code still runs, so the
+  random draws after it are what they were, but everything it builds west of x 60 is taken out again, as v1.342 did for
+  Seth's matches. No briefing changed.
+- **Suites changed where they pinned the box** (all 8 x 7 m houses and the box's ground, gone in every match now):
+  - `houses` and `house-backs` look at the four real houses in the bulb's area. `houses` walks into the middle north
+    house's front (z -14). `house-backs` walks from a terrace into the middle south house's walk-out back (z 29).
+  - `winnmark-road` measures the asphalt and kerbs on the real ground, round the 11 m bulb, against the real driveways.
+  - `winnmark-trees` counts the area's own trunks (10 or more; the box had a hundred) and checks that the ground in play
+    is the real street's.
+  - `winnmark-real`'s first check: where the box was, the ground is the real street's, not the old ground.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The bulb's eight matches build in its area; the area is 84 x 54 m and holds the bulb, the box's old mouth, a north
+    lawn, a terrace and a side yard.
+  - All 34 of its starts and anchors are inside it and clear of everything solid.
+  - None of the box's half-size houses is left, six real lots reach into the area, and 17 solid trunks stand in it.
+  - The fort stands at the bulb's middle (-29, 0). The scenery's nearest vertex is 7.08 m outside the area.
+  - Outnumbered's first shot comes at 39.9 m, 3.9 s in, and Squad Up's at 38.4 m, 4.5 s in (the kids open fire at
+    40 m; the box measured 39-41 m in step 0). Two on Two in Seth's area is 40.0 m, as before.
+- **Every bulb match** builds and starts with no page errors. The rest of their first shots, standing at your start:
+  - Storm the Cul-de-Sac and The Whole Block: the sniper behind the fort fires at 64.4 m, 2.5 s in, the same range the
+    box gave him.
+  - Hold the Fort: 22.2 m at 18 s. Last Stand: 34.3 m at 11 s.
+  - The tutorial and Squad Basics: nobody fires in 40 s.
+- **Draw calls** in seven views of each of the eight matches: 637 at the worst (from the bulb looking east in Squad Up).
+  The box's views were 1,837 at the worst. The budget is 2,060.
+- **The stuck-kid sweep** on the eight matches, three ways each, 90 s: no kid held a moving state in one spot longer than
+  2.5 s (the line is 15 s): Jamie in Outnumbered and Seth in The Whole Block, on their way in. Run again after the
+  street-cover fix below, with the same worst.
+- **The tutorial, step by step**, played headless with real keys and clicks: walk to the marker, aim, the first shot,
+  re-cock and tag the three targets, reload. All five steps passed and the match was won. The first try stopped 3.6 m
+  short of the marker. A moving box from the street cover stood 2.2 m off the street's middle at x 26, right in the
+  path from your start, so the street cover now keeps off the stretch from your start to the marker (x 19 to 32).
+  `winnmark-real` now walks that first step and checks the three targets can be seen from the marker.
+- **These suites pass, run one at a time:**
+  - the changed and Winnmark ones: `winnmark-real`, `houses`, `house-backs`, `winnmark-road`, `winnmark-trees`,
+    `yard-props`, `winnmark-props`, `winnmark-cars`, `winnmark-fort`, `whole-block`, `squad-basics`, `layout-same`,
+    `kid-hold`, `opening-hold`, `last-tag-trade`, `rival`, `fence-bound`, `bulb-sight`, `backdrop`, `ffa-starts`,
+    `night-prowl`, `seth-shotgun`, `pocket`, `last-kid`, `real-scale`;
+  - the rest: `smoke`, `damage-report`, `damage-report-first`, `pad-hints`, `squad-hud`, `autosave`, `settings`,
+    `briefing-lives`, `pickup-ffa`, `pickup-lives`, `online`, `voice-situations`, `cover-fire`, `out-shot`,
+    `front-door`, `calendar`, `harness`, `kid-climb`, `wince`, `sell-back`, `bedroom-settings`, `crew-field`,
+    `crew-roster`, `fort-spawn`. No page errors.
+- Several of these lost their tab or timed out entering a match while two browsers ran on this 4-core machine: `ffa-starts`,
+  `squad-basics`, `real-scale`, `last-kid`, `squad-hud`, `winnmark-props` and `damage-report`. Every one of them passes
+  alone. `result-stats` fails on main too (v1.342), the unlock ladder.
+- **Not run here (time):** `pickup`, `pickup-kids`, `pickup-clock`, `voices`, `walkie-callouts`, `mirror`,
+  `out-walk-off`, `map-screen`, `hats`, `jump`, `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`,
+  `crew-balance`, `crew-gear`, `spawn-facing`, `crew-spawn-bounds` and `crew`. `pickup` builds the 3v3 on Winnmark,
+  which is the bulb's area now; it ran past 10 minutes beside nothing else before I stopped it. It goes first next
+  session.
+### Still open
+- **For Michael's look:** the bulb's area is the street's end as it is, with no tree walls. The hedge down its west edge
+  and the open street to the east are its edges. He should also judge whether the team matches' far side (their spots by
+  the bulb, 50-70 m from your start) feels as it did.
+- **Next, step 5:** the views past the edges (the guide's "Past the edge": the fairway north and west, the shared wood
+  and Winnmark Dr's houses south, the street running on east). Most of it is the real place built since v1.338, so the
+  step is what the guide still lists that isn't there.
