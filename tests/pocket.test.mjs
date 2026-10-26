@@ -13,7 +13,7 @@ await g.scenario('winnmark_seth_house');
 // with nothing to step (seen 3 runs in 8: escapedAt null, 0 frames).
 await page.evaluate(() => { const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); }; });
 const run = (flank, pocket) => page.evaluate(([flank, pocket]) => {
-  const P = Game.player.pos, k = Game.scenario.enemies[0], cx = 0, cz = 10;
+  const P = Game.player.pos, k = Game.scenario.enemies[0], cx = 125, cz = 8;   // v1.341: on the east lot's front in Seth's area (the match's bounds)
   const box = (minX, maxX, minZ, maxZ) => ({ minX, maxX, minZ, maxZ, h: 6, baseY: scenarioGroundY(minX, minZ) - 1 });
   Game.player.obstacles = pocket ? [box(cx - 1.5, cx + 1.5, cz - 1.2, cz - 1.0), box(cx - 1.5, cx - 1.3, cz - 1.2, cz + 1.5), box(cx + 1.3, cx + 1.5, cz - 1.2, cz + 1.5)] : [];
   if (Game.scenario.cover) Game.scenario.cover = [];

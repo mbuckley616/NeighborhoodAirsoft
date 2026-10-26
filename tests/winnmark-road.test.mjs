@@ -8,7 +8,7 @@ await g.bedroom();
 
 const res = await page.evaluate(() => {
   const out = {};
-  const built = buildWinnmarkCourtScene('seth_house', 'day');
+  const built = buildWinnmarkCourtScene('cul_de_sac', 'day')   /* v1.341: the box's own build */;
   const road = {}; let discs = 0;
   built.scene.traverse(m => {
     if (!m.isMesh) return;
@@ -77,7 +77,7 @@ check('the kerb drops flat (under 2 cm) across each driveway', res.kerbDropped.n
 check('Bunratty has the same road since v1.127 (no discs; tests/bunratty-road.test.mjs checks it)', res.bunratty.discs === 0 && res.bunratty.wmRoad >= 4, res.bunratty);
 
 // a look down the street
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 await g.spin(10);
 await page.evaluate(() => { const p = Game.player; const put = () => { p.pos.x = 12; p.pos.z = 1; p.yaw = Math.PI / 2 - 0.25; p.pitch = -0.12; }; put(); stepGame(1 / 60); put(); });

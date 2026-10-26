@@ -42,7 +42,7 @@ const read = () => page.evaluate(() => Game.player.obstacles
     });
     return { detail: true, at: [+cx.toFixed(1), +cz.toFixed(1)], out: +out.toFixed(3), meshes, backDoor };
   }));
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 const wm = await read();
 console.log('  winnmark', JSON.stringify(wm));
@@ -53,7 +53,10 @@ check('each still costs at most 20 meshes', wm.every(h => h.meshes <= 20), wm.ma
 // walking at the back wall stops at it, the same as the front
 const stop = await page.evaluate(() => {
   Game.mouse.locked = true;
-  Game.player.pos.x = 8; Game.player.pos.z = -24; Game.player.yaw = Math.PI;
+  // v1.341: in a lane behind house 1 that the match's yard props leave clear (Storm the Cul-de-Sac's fall elsewhere)
+  const clear = x => !Game.player.obstacles.some(o => o.h < 4 && o.maxX > x - 0.6 && o.minX < x + 0.6 && o.maxZ > -24.5 && o.minZ < -19.6);
+  const lane = [8, 7, 9, 6, 10, 5, 11].find(clear);
+  Game.player.pos.x = lane; Game.player.pos.z = -24; Game.player.yaw = Math.PI;
   const kd = new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }); document.dispatchEvent(kd);
   for (let i = 0; i < 240; i++) stepGame(1 / 60);
   document.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', key: 'w' }));

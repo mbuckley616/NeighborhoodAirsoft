@@ -43,7 +43,7 @@ for (const fn of ['buildBunrattyCourtScene']) {
 }
 
 // a look down the street, and the draw-call cost
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 await g.spin(10);
 await page.evaluate(() => { Game.player.pos.x = 30; Game.player.pos.z = 12; Game.player.yaw = 1.2; Game.player.pitch = 0.05; stepGame(1 / 60); Game.player.yaw = 1.2; Game.player.pitch = 0.05; });
@@ -52,7 +52,7 @@ await g.shot('winnmark-trees');
 const calls = await page.evaluate(() => { Game.renderer.render(Game.scene, Game.camera); return Game.renderer.info.render.calls; });
 console.log('  draw calls, looking down the street:', calls);
 // v1.301 (D.55 step 3): the golf course and the lake lie on the ground, not under it
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 const lay = await page.evaluate(() => {
   const gy = Game.scenario.groundY, s = Game.scene;
   let fairwayMax = -9, lakeOver = 0, lakeN = 0;

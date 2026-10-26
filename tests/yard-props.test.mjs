@@ -5,7 +5,8 @@
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 const res = [];
-for (const id of ['winnmark_seth_house', 'bunratty_sean', 'northcliff_twins_3v3', 'bellfield_3v3']) {
+// v1.341: Winnmark's box props through a match in the box (Seth's 1v1 bakes the box into a view)
+for (const id of ['winnmark_cul_de_sac', 'bunratty_sean', 'northcliff_twins_3v3', 'bellfield_3v3']) {
   await g.scenario(id);
   res.push(await page.evaluate((id) => {
     const obs = Game.player.obstacles;

@@ -14313,3 +14313,99 @@ into. Nothing in the box moved.
   against 9.5 x 4.6 m: Michael's "almost the size of his pool"), and the patio's flagstone colour, which reads pale
   grey in full sun.
 - The pool is a flat sheet of water in its coping, with no depth: no BB or kid can get into it to see.
+
+## v1.341 — Seth's matches play round Seth's house
+Card `fable/d51-winnmark` (backlog D.51), step 4, first part. v1.338-v1.340 built the real street round today's box, and
+Seth's sunken lot mid-street, but every match still played in the box. Michael's answer A (26 Oct) puts each match in one
+fenced area about today's size. This version moves Seth's nine matches into his: Just You and Seth, Seth's Got a Shotgun,
+Every Kid for Themselves, Trey on Overwatch, Two on Two, Defend the Treehouse, Two in the Yards, After Dark and Lights Out.
+The other eight (the two tutorials, Storm the Cul-de-Sac, Hold the Fort, Last Stand, Outnumbered, Squad Up and The Whole
+Block) stay in the box, which is the bulb's area, and play exactly as before.
+- **The area.** 70 x 76 m round Seth's lot (x 65-135, z -12 to 64): the north lawns in front of the two houses across
+  the street, the street, his steep driveway and sunk front lawn, his side yards, the patio under the big deck with the
+  hot tub and the pool, the back yard falling to the creek, and the wood on the empty lots either side, over the creek to
+  a few metres past it. A hedge closes the gaps between the north houses, black picket lot-line fences mark the east and
+  west sides through the wood, and the street and the shared wood to the south are open past the edge, as the box's road
+  mouth is. A scene variant picks the area (`winnmarkArea`: 'seth_house', 'treehouse' and the new 'seth_yards').
+- **The same names, new places.** The area's starts and anchors keep the box's names (`road_east`, `seth_backyard`,
+  `trey_backyard`, `house2_backyard`...), so each moved match keeps its kids, guns and roles. You start at the street's
+  east end (130, 0), facing west. Seth's spot is on his patio past the hot tub, by a firewood stack, 59 m from you (the
+  box had him 28 m off; his matches' starts were 30-60 m in the plan). The others are on the north lawns by the cars in
+  the driveways, in the wood on the lots either side, and in his east side yard by a shed.
+- **Its cover** is its own, under its own seed, so every match here has the same wood and props, and the box's matches
+  draw exactly what they drew: five parked cars (two on the street, one in each north driveway, one halfway down Seth's
+  driveway), bins at the kerbs, moving boxes, a plywood stack, Trey's brick planter, a firewood stack and a grill on the
+  patio, AC units in the side yards, a garden shed, six fallen logs, 37 solid trunks (loblollies 12-15 m and hardwoods)
+  and about 25 shrubs in the wood. The merged scenery's trees keep 3 m and more outside the area. Three lamps light the
+  street at night.
+- **Briefings** (Michael's A: "a few briefing words change"). Trey on Overwatch: Trey snipes "from the front step of the
+  house across the street", behind its planter, 46 m from Seth's driveway (the answer had him on that house's deck, but
+  the decks are on the backs, facing the course, with no line to Seth's; the front step is the nearest place that has
+  one). Defend the Treehouse: the plank fort is "in the woods next door to Seth's", on the lot east of his, and Marcus and
+  Jamie still come up through his back yard. Every Kid for Themselves is "round Seth's place". The Whole Block stays in
+  the box; Seth and Brooke are "dug into the yards off the bulb" instead of "the mid yards".
+- **Every Kid for Themselves' starts** (Michael's A, 15 Oct, the lot's rule) were found by a search over the area with
+  the match's own obstacles: Seth in the shared wood behind the east lot by the creek, Trey in the west lot's wood, Brooke
+  over the creek in the far west corner, Jamie on the north lawn by the west house's driveway. No start can see another
+  or yours, they are 31 m and more apart, and every kid has another kid's start nearer than yours, in every Pickup Game
+  size. A first try put Seth on his own sunk front lawn 32 m from you; he walked in and tagged a player standing at the
+  start at 6.5 s, so no start is nearer you than 46 m now. One more: a start under the deck was moved out by the spawn
+  clearer (the deck's box counts as in the way), so the search keeps only spots the clearer leaves alone.
+- **Where the kids gather.** A match with two or more attackers huddles them before they deploy. With no huddle point
+  named, the game puts it on the street's middle line near their anchors, and in Two in the Yards and After Dark that was
+  the open street 33 m in front of you: you were tagged inside 10 s. Those two now gather at the foot of Seth's back
+  yard, and Two on Two and Lights Out in the west lot's front, both out of sight of your start.
+- **Draw calls.** From the area the street looks west into the box, whose eight houses, cover and trees are about 2,000
+  meshes: the view from the east end cost 2,362 calls, over the 2,060 budget. In a match in Seth's area the box is only a
+  view 25-170 m off, so its meshes are baked into one per look (`bakeMeshesByLook`: same colour, finish, sides and
+  texture), and the area's own wood is baked the same way (`bakeByMaterial`). The box's obstacles keep their numbers;
+  none of it is in reach. The box's own matches build it as before.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The nine matches build in Seth's area, the other eight in the box.
+  - The area is 70.4 x 76 m and holds the road, his driveway's pad, the patio, the creek and the north lawn.
+  - All 25 of its starts and anchors are inside it and clear of everything solid.
+  - Trey's overwatch is 46.0 m from Seth's driveway's pad (the answer's 45-55).
+  - 37 solid trunks in it; the scenery's nearest vertex (the creek's water aside) is 4.06 m outside it.
+  - Draw calls in five views: from the east end 395, down the driveway 151, on the patio 420, by the creek 417, on the
+    north lawn 209 (budget 2,060). The box's seven views are unchanged: 1,829 at the bulb, 1,837 at the entry, the most.
+  - At night (After Dark, Lights Out) no kid's start has a line to yours or your side's.
+  - Two on Two, standing at your start: the first shot comes 5.7 s in at 40.0 m (the kids open fire at 40 m; the box's
+    team matches measured 39-41 m in step 0). A first layout had Seth and Brooke meet round his house's front corner at
+    1 m at 16 s; the west start moved out onto the open front lots.
+- **`tests/ffa-starts.test.mjs`** passes unchanged: the five starts 31.3 m and more apart, none in sight, nearest to you
+  46.3 m; standing at your start, first tagged at 19.9 s in one round of three, not in 20 s in the other two (the critic's
+  v1.244 entry was 4.4-7.7 s before v1.265).
+- **`tests/night-prowl.test.mjs`**, changed: the critic's walk was to (5, −2), 27 m down the street from the box's
+  start; it is now 27 m down the street from the area's. Seth never stands in 'advancing' more than 0.6 s, and fires 8
+  times.
+- **Other suites changed where they pinned the box for a match that moved:** `houses`, `house-backs`, `winnmark-road`
+  and `winnmark-trees` inspect the box's houses, road and trees through Just You and Seth, which now bakes the box, so
+  they look through Storm the Cul-de-Sac instead (`house-backs` also picks a lane behind house 1 that that match's yard
+  props leave clear). `seth-shotgun` holds the duel on the area's street (x 124 westward) instead of the box's (x 10).
+  `pocket` builds its pocket at (125, 8) inside the area. `winnmark-fort`: Defend the Treehouse's own fort is the detailed
+  one; the bulb fort in that match is part of the baked view. `yard-props` measures Winnmark's props through Storm the
+  Cul-de-Sac too (in Seth's 1v1 they are baked).
+- **The stuck-kid sweep** (`ONLY=` the nine matches, three ways each, 90 s): Just You and Seth, Seth's Got a Shotgun,
+  Every Kid for Themselves, Trey on Overwatch, Two on Two, Defend the Treehouse and Two in the Yards, 21 runs, no kid
+  held a moving state in one spot longer than 3.5 s (the line is 15 s). Its tab crashed entering After Dark.
+- **These suites pass:** `smoke`, `winnmark-real`, `ffa-starts`, `night-prowl`, `seth-shotgun`, `houses`, `house-backs`,
+  `winnmark-road`, `winnmark-trees`, `winnmark-fort`, `winnmark-cars`, `winnmark-props`, `layout-same`, `whole-block`,
+  `rival`, `opening-hold`, `kid-hold`, `pocket`, `backdrop`, `fence-bound`, `bulb-sight`, `bedroom-settings`,
+  `briefing-lives`, `crew-balance`, `crew-field`, `crew-roster`, `crew-gear`, `damage-report-first`,
+  `harness`, `hats`, `jump`, `kid-climb`, `kid-clothes`, `last-tag-trade`, `lot-ffa-opening`, `map-screen`, `mirror`,
+  `out-shot`, `pickup-lives`, `pickup-ffa`, `result-text`, `sell-back`, `walkie-callouts`, `wallet`,
+  `wince`, `autosave`, `pad-hints`, `settings`. No page errors.
+- **Not yet passed here:** `last-kid`, `squad-basics` and `real-scale` (Bunratty) each lost their tab or timed out
+  entering a box or Bunratty match while two other browsers ran on this 4-core machine; none of them plays in Seth's
+  area. `crew-spawn-bounds` ran past my 15-minute cap. They, `crew`, and the sweep of After Dark and Lights Out are run
+  alone at the next session's start (below). Also owed: `yard-props` after its change (not re-run), `damage-report`
+  (failed beside the others with no line printed), and `result-stats`, whose "OPENED names the next match" got Squad
+  Basics after winning Just You and Seth: the unlock ladder, which this version doesn't touch; to be checked on main.
+### Still open
+- **For Michael's look:** the area's edges (the hedge, the side fences, the open street and wood past the bounds), the
+  front-step overwatch in place of a deck, and whether 59 m to Seth's spot in the 1v1s is too long a walk.
+- **Next in step 4:** the bulb's area at real size (the bulb's own lots, and the north lot at x 48 that reaches into the
+  box), then step 5, the views past the edges.
+- **Owed first next session:** `last-kid`, `squad-basics`, `real-scale`, `crew`, `crew-spawn-bounds`, `yard-props`,
+  `damage-report` and `result-stats` alone (`result-stats` on main too), and the sweep of After Dark and Lights Out.

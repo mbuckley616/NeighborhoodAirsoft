@@ -21,7 +21,7 @@ async function houses() {
     }));
 }
 
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 // The page's own frame loop keeps the round running while the houses are inspected; on a slow CI runner that is
 // long enough for Seth to tag a one-life player, the round ends, and the walk below goes nowhere (CI, v1.105: -8).
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
