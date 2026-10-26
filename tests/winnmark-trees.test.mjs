@@ -65,7 +65,10 @@ const lay = await page.evaluate(() => {
     if (p.width === 100 && p.height === 22) fairway = m;
     if (p.radius === 5 && Math.abs(m.position.z + 48) < 0.01) green = m;
   });
-  for (let x = -57; x <= -42; x += 1) for (let z = -39; z <= 39; z += 1) { lakeN++; if (gy(x, z) < lake.position.y) lakeOver++; }
+  // v1.338 (D.51 step 1): the lake strip west of the bulb is gone; the real pond lies north-west on the course
+  lake = s.getObjectByName('winnmarkPond');
+  const P = WM_REAL.pond;
+  for (let a = 0; a < 6.283; a += 0.1) for (const f of [0, 0.5, 0.95]) { lakeN++; if (gy(P.x + Math.cos(a) * P.rx * f, P.z + Math.sin(a) * P.rz * f) < lake.position.y) lakeOver++; }
   // in play nothing moved: the back yards and the bulb keep their ground
   const before = (x, z) => { let u = Math.max(0, Math.min(1, (x - 38) / (-32 - 38))); const sm = u * u * (3 - 2 * u);
     return 3.0 * (1 - sm) + 0.25 * Math.sin(z * 0.12 + 0.5) * Math.cos(x * 0.1); };
@@ -77,7 +80,7 @@ const lay = await page.evaluate(() => {
 });
 check('the fairway, green and bunkers are above the ground under them (ground ≤ 0.004 m there, the fairway at 0.005)',
   lay.fairwayY === 0.005 && lay.greenY === 0.01 && lay.fairwayMax <= 0.004, lay);
-check('the lake is above the ground over its whole water (x -57 to -42)', lay.lakeOver === lay.lakeN, lay);
+check('the pond is above the ground over its whole water (v1.338: the pond north-west of the bulb, not the lake strip)', lay.lakeOver === lay.lakeN, lay);
 check('the ground inside the tree wall and the shore (x -37 to 40, z -35 to 40) is as it was', lay.inPlay.changed === 0 && lay.inPlay.of > 5000, lay.inPlay);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

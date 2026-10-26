@@ -13920,13 +13920,94 @@ function buildStreetRoad(scene, opt) {
 //          : 'cul_de_sac'   → 3v1 vs Seth/Trey/Brooke spread across the street
 //   timeOfDay: 'day' (default) | 'night'
 // ----------------------------------------------------------------------
+// v1.338 (D.51, card fable/d51-winnmark, step 1; Michael: real scale, 16 Oct; each match fenced to a today-sized part
+// of the street, A, 26 Oct): Winnmark Court past today's box and its tree walls is the real place, in the map's own
+// frame (the bulb at (-30, 0), the street running east). docs/refs/winnmark.md: the court runs about 265 m from Winnmark
+// Dr to its bulb, nearly flat, falling 3-5 m west; the north lots back onto the golf course, the south lots onto one
+// shared wood with a small creek that runs to the course, Winnmark Dr's houses on its far side; the pond lies north-west
+// of the bulb, its creek running south along the course. Every term is exactly zero inside the box (WM_REAL.box), so the
+// matches play on the ground they always had; steps 2-4 build the houses, Seth's lot and the play areas on it.
+const WM_REAL = {
+  box: { minX: -40, maxX: 42, minZ: -38, maxZ: 42 },
+  drX: 235,                                             // Winnmark Dr at the court's mouth, 265 m from the bulb's centre
+  // Winnmark Dr: north to Steeplechase, south past the junction, then round the shared wood to the south-west
+  dr: [[235, -190], [235, 0], [233, 80], [210, 140], [160, 170], [100, 182], [20, 190], [-60, 196]],
+  pond: { x: -105, z: -68, rx: 46, rz: 30, bed: -1.4, water: -0.3 },
+  // Seth's creek [x, z, bed y], from the east through the shared wood to the course's creek west of the bulb
+  creek: [[262, 86, -1.8], [200, 72, -2.1], [130, 60, -2.5], [70, 58, -2.8], [10, 63, -3.1], [-50, 60, -3.4], [-100, 30, -3.7]],
+  // the course's creek, out of the pond's south end and south along the course
+  course: [[-104, -39, -1.2], [-101, 0, -2.6], [-100, 30, -3.7], [-110, 100, -4.6], [-118, 190, -5.4]],
+  // house sites for step 2, kept clear of the trees here: [x, z, half-width, half-depth]
+  sites: [[48, -22], [80, -22], [112, -22], [144, -22], [176, -22], [208, -22], [100, 22], [156, 22], [206, 22]].map(([x, z]) => [x, z, 14, 12]),
+};
+const _wmSS = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+// the street's own level: today's grade in the box (3 m at the entry), then 1.5 m more over the 197 m to Winnmark Dr
+function winnmarkStreetY(x) {
+  if (x >= 38) return 3.0 + 1.5 * _wmSS((x - 38) / 197);
+  return 3.0 * (1 - _wmSS((x - 38) / (-32 - 38)));
+}
+// nearest point on a polyline of [x, z, (y)] points: { d, y (interpolated third value), s (distance along it) }
+function _wmPolyNear(pts, x, z) {
+  let best = { d: Infinity, y: 0, s: 0 }, acc = 0;
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i], b = pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz, L = Math.sqrt(L2);
+    let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t);
+    if (d < best.d) best = { d, y: (a[2] || 0) + ((b[2] || 0) - (a[2] || 0)) * t, s: acc + L * t };
+    acc += L;
+  }
+  return best;
+}
+// Winnmark Dr's level along it: 4.5 m at the court's mouth (the court's own top), rising a little north to Steeplechase
+// and falling 2 m round the wood to the south-west, as the ground falls south and west
+function winnmarkDrY(near) {
+  const s0 = 190;   // the junction's distance along WM_REAL.dr
+  return near.s < s0 ? 4.5 + 0.004 * (s0 - near.s) : 4.5 - 2.0 * _wmSS((near.s - s0) / 330);
+}
+// the creek's z at x along the shared wood (WM_REAL.creek runs east to west)
+function winnmarkCreekZ(x) {
+  const C = WM_REAL.creek;
+  if (x >= C[0][0]) return C[0][1];
+  for (let i = 0; i + 1 < C.length; i++) if (x >= C[i + 1][0]) return C[i][1] + (C[i + 1][1] - C[i][1]) * (x - C[i][0]) / (C[i + 1][0] - C[i][0]);
+  return C[C.length - 1][1];
+}
+function winnmarkRealScale(x, z, h) {
+  const B = WM_REAL.box;
+  const out = Math.max(B.minX - x, x - B.maxX, B.minZ - z, z - B.maxZ);
+  if (out <= 0) return h;
+  const S = winnmarkStreetY(x);
+  let r;
+  if (z <= 0) {
+    // the north lots: flat front lawns, then the back yards fall to the course (at 0) 42 m out by the box, 55 m east
+    const dC = 42 + 13 * _wmSS((x - 50) / 20);
+    r = S * (1 - _wmSS((-z - 16) / (dC - 16)));
+    if (z < -130) r += 3 * _wmSS((-z - 130) / 30);                       // past the course, up to the houses across it
+  } else {
+    // the south lots: a walk-out's 3 m fall behind the houses, then the shared wood down to the creek's banks
+    const cz = winnmarkCreekZ(x), c = _wmPolyNear(WM_REAL.creek, x, z), bank = c.y + 1.2;
+    const walk = S - 3 * _wmSS((z - 16) / 16);
+    r = z <= cz ? walk + (bank - walk) * _wmSS((z - 30) / Math.max(1, cz - 30)) : bank + 0.05 * (z - cz);
+  }
+  // Winnmark Dr's lots stand on its own level, falling away from it into the wood and the course
+  const dr = _wmPolyNear(WM_REAL.dr, x, z);
+  r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
+  // west of the box the course: flat, but for the pond and the creeks' ravines
+  if (x < -40) r *= 1 - _wmSS((-40 - x) / 30);
+  const P = WM_REAL.pond, e = Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz);
+  r = Math.min(r, P.bed + 0.35 * Math.max(0, (e - 1) * 30 + 3.1));
+  const c1 = _wmPolyNear(WM_REAL.creek, x, z), c2 = _wmPolyNear(WM_REAL.course, x, z);
+  r = Math.min(r, c1.y + 0.45 * Math.min(1, c1.d / 0.9) + 0.3 * Math.max(0, c1.d - 0.9));
+  r = Math.min(r, c2.y + 0.45 * Math.min(1, c2.d / 1.2) + 0.3 * Math.max(0, c2.d - 1.2));
+  return h + (r - h) * _wmSS(out / 8);
+}
+
 function buildWinnmarkCourtScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
 
   // === Lighting / sky (v1.35: day or night) ===
   const _night = (timeOfDay === 'night');
   const { sun } = applyTimeOfDay(scene, timeOfDay, {
-    dayBg: 0x88a8c8, dayFog: [35, 80],
+    dayBg: 0x88a8c8, dayFog: [45, 320],   // v1.338 (D.51 step 1): out from [35, 80], so the street to Winnmark Dr and the course show
     sunColor: 0xfff0c8, sunInt: 1.1, sunPos: [20, 30, 12],
     dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.4,
     nightFog: [22, 70], moonPos: [22, 38, -18],
@@ -13954,7 +14035,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const fz = Math.max(0, Math.min(1, (z + 42) / 7)), fx = Math.max(0, Math.min(1, (x + 42) / 5));
     return h * fz * fz * (3 - 2 * fz) * fx * fx * (3 - 2 * fx);
   }
-  const groundY = winnmarkGroundY;
+  const groundY = (x, z) => winnmarkRealScale(x, z, winnmarkGroundY(x, z));   // v1.338: the real place past the box
   // Terrain normal (finite differences) — used to tilt flat decal pads onto the slope.
   function groundNormal(x, z) {
     const e = 0.6;
@@ -14031,43 +14112,69 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
 
   // === Ground — grass, DISPLACED plane (vertices raised to groundY) ===
   // Subdivided so the slope is smooth; same displacement trick as Bunratty.
-  const groundGeo = new THREE.PlaneGeometry(140, 140, 96, 96);
+  // v1.338 (D.51 step 1): the ground runs on past the box to Winnmark Dr and its houses, over the course and the pond,
+  // and through the shared wood (x -210..310, z -200..230). Inside 140 x 140 m the grid is the old one vertex for vertex
+  // (1.458 m); past it the cells are 6 m. A colour per vertex (times the old grass) browns the woods' floor, mows the
+  // course in stripes and reddens the creeks' clay banks; it is exactly 1 in the box and 6 m round it, so the lawns in
+  // play keep their colour. The old lake strip west of the bulb is gone: the real pond lies north-west on the course.
+  const groundGeo = new THREE.BufferGeometry();
   {
-    const pos = groundGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const lx = pos.getX(i);      // local X → world X
-      const ly = pos.getY(i);      // local Y → world -Z
-      pos.setZ(i, groundY(lx, -ly));
+    const axis = (lo, hi) => {
+      const v = [];
+      for (let c = lo; c < -70 - 1e-6; c += 6) v.push(c);
+      for (let i = 0; i <= 96; i++) v.push(-70 + 140 * i / 96);
+      for (let c = 70 + 6; c < hi - 1e-6; c += 6) v.push(c);
+      v.push(hi); return v;
+    };
+    const xs = axis(-210, 310), zs = axis(-200, 230);
+    const pos = [], col = [], idx = [], B0 = WM_REAL.box, mix = (a, b, t) => a + (b - a) * t, P = WM_REAL.pond;
+    for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
+      const x = xs[i], z = zs[j];
+      pos.push(x, groundY(x, z), z);
+      const out = Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+      const w = _wmSS((out - 6) / 10);
+      // what lies here: the course (north past the lots, and all round the pond west of the box), the woods, or lawn
+      const dC = 42 + 13 * _wmSS((x - 50) / 20), dr = _wmPolyNear(WM_REAL.dr, x, z).d;
+      const course = (x < -48 && z < 150) || (z < -dC - 3 && z > -128 && x < WM_REAL.drX - 14);
+      const lawn = dr < 34 || (z > -dC && z < 34 && x < WM_REAL.drX);
+      let r = 1, g = 1, bl = 1;
+      if (course) { const st = Math.floor((x + 1000) / 9) % 2; r = st ? 1.36 : 1.22; g = st ? 1.31 : 1.2; bl = st ? 1.25 : 1.12; }
+      else if (!lawn) { r = 1.05; g = 0.67; bl = 0.83; }                              // leaf litter 0x5e5635
+      const cd = Math.min(_wmPolyNear(WM_REAL.creek, x, z).d, _wmPolyNear(WM_REAL.course, x, z).d);
+      const clay = _wmSS((4 - cd) / 2.5), sand = _wmSS((1.12 - Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz)) / 0.08);
+      r = mix(r, 1.53, clay); g = mix(g, 0.83, clay); bl = mix(bl, 1.16, clay);
+      r = mix(r, 1.45, sand); g = mix(g, 1.05, sand); bl = mix(bl, 1.2, sand);
+      col.push(mix(1, r, w), mix(1, g, w), mix(1, bl, w));
     }
-    pos.needsUpdate = true;
+    const W = xs.length;
+    for (let j = 0; j + 1 < zs.length; j++) for (let i = 0; i + 1 < W; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    groundGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    groundGeo.setIndex(idx);
     groundGeo.computeVertexNormals();
   }
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x5a8040, roughness: 1.0 })
+    new THREE.MeshStandardMaterial({ color: 0x5a8040, roughness: 1.0, vertexColors: true })
   );
-  ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // === Lake on the west edge — flat blueish plane slightly below grass ===
-  const lake = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 80),
-    new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.4, metalness: 0.2 })
-  );
-  lake.rotation.x = -Math.PI / 2;
-  lake.position.set(-48, 0.05, 0);   // v1.301: on the flat ground past the shore (was -0.02, under the roll)
-  lake.receiveShadow = true;
-  scene.add(lake);
-  // Shore — a thin tan strip between lake and grass
-  const shore = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.5, 70),
-    new THREE.MeshStandardMaterial({ color: 0xb8a070, roughness: 1.0 })
-  );
-  shore.rotation.x = -Math.PI / 2;
-  shore.position.set(-38, 0.06, 0);   // v1.301
-  shore.receiveShadow = true;
-  scene.add(shore);
+  // === The pond (v1.338, D.51 step 1; docs/refs/winnmark.md gap 9) ===
+  // North-west of the bulb on the course, in the hollow winnmarkRealScale cuts for it; its creek leaves the south end.
+  {
+    const P = WM_REAL.pond;
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: 0x4a6a8a, roughness: 0.35, metalness: 0.15 }));
+    pond.rotation.x = -Math.PI / 2;
+    pond.scale.set(P.rx, P.rz, 1);
+    pond.position.set(P.x, P.water, P.z);
+    pond.name = 'winnmarkPond';
+    pond.receiveShadow = true;
+    scene.add(pond);
+  }
 
   // === Golf course backdrop ===
   // Past the north tree row (z < -30) sits a manicured fairway — Horseshoe Bend
@@ -14217,11 +14324,24 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // placement and the AI that sample it are untouched. Built once houseCenters exists (the driveway drops need it).
   function buildWinnmarkRoad(houseCenters) {
     // v1.127: the builder is shared with Bunratty's lane (buildStreetRoad); Winnmark passes its bezier and furniture.
+    // v1.338 (D.51 step 1): past the entry the road runs on about 195 m, up 1.5 m, to Winnmark Dr (265 m from the bulb,
+    // as the real court). The box's own samples stay where they were: the extension is laid on t < -0.13 at the same
+    // step in t, so buildStreetRoad's points from the entry to the bulb are the old ones.
+    const deriv0 = (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) });
+    const RX_K = 200, TA = -0.13;
+    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (Math.hypot(_wmRoadPoint(t).x + 30, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
+    const dt = (tEnd - TA) / 170, T0 = TA - RX_K * dt;
+    const E0 = _wmRoadPoint(TA), d0 = deriv0(TA), l0 = Math.hypot(d0.x, d0.z);
+    const E1 = { x: E0.x - d0.x / l0 * 50, z: E0.z - d0.z / l0 * 50 }, E2 = { x: 170, z: 1.5 }, E3 = { x: WM_REAL.drX + 1, z: 0 };
+    const ext = u => { const m = 1 - u; return {
+      x: m*m*m*E0.x + 3*m*m*u*E1.x + 3*m*u*u*E2.x + u*u*u*E3.x, z: m*m*m*E0.z + 3*m*m*u*E1.z + 3*m*u*u*E2.z + u*u*u*E3.z }; };
+    const uOf = t => (TA - t) / (TA - T0);
+    const point = t => t >= TA ? _wmRoadPoint(t) : ext(uOf(t));
+    const deriv = t => { if (t >= TA) return deriv0(t); const a = ext(Math.max(0, uOf(t) - 0.002)), b2 = ext(Math.min(1, uOf(t) + 0.002)); return { x: a.x - b2.x, z: a.z - b2.z }; };
     return buildStreetRoad(scene, {
-      point: _wmRoadPoint,
-      deriv: (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) }),
+      point, deriv,
       groundY, groundNormal, asphMat: roadMat, houseCenters,
-      ASPH: 3.45, bulb: { x: -30, z: 0, r: 6.3 }, T0: -0.13, NS: 170,
+      ASPH: 3.45, bulb: { x: -30, z: 0, r: 6.3 }, T0, NS: 170 + RX_K,
       manholes: [[0.22, -0.6], [0.58, 0.9]], drains: [[0.34, 1], [0.7, -1]],
       cracks: [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]], patch: 0.4,
     });
@@ -15004,6 +15124,84 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     }
   }
 
+  // === v1.338 (D.51 step 1): past the tree walls, at real scale ===
+  // The near-closed canopy of the real place (docs/refs/winnmark.md, "Trees and planting": loblolly pines bare to
+  // 12-15 m and hardwoods, 20-25 m tall) over the street's lots to Winnmark Dr, thick in the shared wood behind the
+  // south lots, thinned to trunks along the north lots' backs where the course shows through, in clumps on the course;
+  // Winnmark Dr round the wood with its houses, and the houses across the course and past the Dr; the creeks' water.
+  // The house sites of step 2 are kept clear. Its own seeded numbers, so no match's cover moves; one mesh by day, two
+  // at night (lit windows); nothing solid, nothing within 6 m of the bounds.
+  {
+    const rs = _mulberry32(_hashStringToSeed('winnmark-real|' + (_night ? 'n' : 'd'))), rr = (a, b) => a + (b - a) * rs();
+    const B0 = bounds, R = WM_REAL, items = [], houses = [];
+    const LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a], PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+    const WALL = [0xa88e80, 0x8a4a40, 0xb8a888, 0x9a7a68, 0xc8b89a], ROOF = [0x6e6a62, 0x625e58, 0x5a5650, 0x726c62];
+    const outB = (x, z) => Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+    const house = (x, z, yaw) => houses.push({ k: 'house', x, z, yaw, w: rr(18, 24), d: rr(13, 16), h: 6.4,
+      wall: WALL[Math.floor(rs() * WALL.length)], roof: ROOF[Math.floor(rs() * ROOF.length)] });
+    // Winnmark Dr's houses: along its inner side (their backs to the shared wood) and its outer side, 24 m off its middle
+    const drPts = R.dr;
+    for (let i = 1; i + 1 < drPts.length; i++) {
+      const a = drPts[i], b = drPts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L;
+      for (let s = 20; s < L - 10; s += 42) {
+        const px = a[0] + ux * s, pz = a[1] + uz * s;
+        for (const side of [1, -1]) {   // side 1: to the right going along it (west, then into the wood); -1: the other side
+          const nx = -uz * side, nz = ux * side, hx = px + nx * 24, hz = pz + nz * 24;
+          if ((hz < 14 && hx < R.drX) || R.sites.some(([sx, sz]) => Math.hypot(hx - sx, hz - sz) < 34)) continue;   // the court's own lots are step 2's
+          house(hx, hz, Math.atan2(-nx, -nz));
+        }
+      }
+    }
+    // north along the Dr past the court's mouth, its east side; and across the course, facing it
+    for (let z = -170; z < -20; z += 40) house(R.drX + 24, z + rr(-4, 4), -Math.PI / 2);
+    for (let x = -150; x < 220; x += 44) house(x + rr(-6, 6), -158 + rr(-3, 3), 0);
+    for (const hs of houses) hs.y = groundY(hs.x, hs.z);
+    const onHouse = (x, z) => houses.some(hs => Math.abs(x - hs.x) < 15 && Math.abs(z - hs.z) < 13) ||
+      R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd);
+    // trees on a jittered 7 m grid, by what lies there
+    const P = R.pond;
+    for (let gx = -206; gx <= 306; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
+      const x = gx + rr(-2.6, 2.6), z = gz + rr(-2.6, 2.6), pick = rs(), pine = rs() < 0.42, hr = rs(), cr = rs();
+      if (outB(x, z) < (pine ? 3 + cr : 4.5 + 1.8 * cr) + 6.5) continue;             // the box's own trees, and 6 m clear of it
+      const dr = _wmPolyNear(R.dr, x, z).d;
+      if (dr < 11 || (Math.abs(z) < 12 && x > 38 && x < R.drX)) continue;             // the roads and their verges
+      if (Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz) < 1.18) continue;            // the pond and its edge
+      if (Math.min(_wmPolyNear(R.creek, x, z).d, _wmPolyNear(R.course, x, z).d) < 2.5) continue;
+      if (onHouse(x, z)) continue;
+      const dC = 42 + 13 * _wmSS((x - 50) / 20);
+      let p;
+      if (x < -48 && z < 150) p = 0.05;                                               // the course west of the bulb
+      else if (z < -dC - 6 && z > -128) p = 0.03;                                     // the fairway north of the lots
+      else if (z <= -dC - 1 && z >= -dC - 6) p = 0.75;                                // the lots' back line, trunks over the course
+      else if (z < 0 && x < R.drX) p = 0.22;                                          // the north lots
+      else if (z > 0 && z < 34 && x < R.drX) p = 0.25;                                // the south lots' front and walk-out
+      else if (dr < 36) p = 0.3;                                                      // Winnmark Dr's lots
+      else p = 0.85;                                                                  // the woods
+      if (pick >= p) continue;
+      const y = groundY(x, z);
+      if (pine) items.push({ k: 'pine', x, z, y, h: 18 + 6 * hr, r: 3 + cr, col: PINE[Math.floor(cr * PINE.length) % PINE.length] });
+      else items.push({ k: 'tree', x, z, y, h: 16 + 7 * hr, r: 4.5 + 1.8 * cr, col: LEAF[Math.floor(cr * LEAF.length) % LEAF.length] });
+    }
+    // Winnmark Dr itself, and the creeks' water, laid on the ground point by point
+    const strip = (pts, w, col, lift, yOf) => {
+      const out = [];
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const a = pts[i], b = pts[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 4));
+        for (let k = (i ? 1 : 0); k <= n; k++) {
+          const t = k / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
+          out.push([x, (yOf ? yOf(a, b, t) : groundY(x, z)) + lift, z]);
+        }
+      }
+      items.push({ k: 'strip', pts: out, w, col });
+    };
+    strip(R.dr, 7.2, 0x4a4a48, 0.05);
+    const water = (a, b, t) => (a[2] + (b[2] - a[2]) * t) + 0.25;
+    strip(R.creek, 1.4, 0x4a5a48, 0, water);
+    strip(R.course, 1.8, 0x4a5a48, 0, water);
+    const real = buildMergedScenery([...items, ...houses], _night, 'winnmark-real');
+    scene.add(real);
+  }
+
   // === Collect obstacles ===
   // Player collision: houses, fences, tree trunks, bushes, cover items. The
   // lake is *not* an obstacle visually but we want to prevent walking onto it.
@@ -15025,6 +15223,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     placements,
     playerSpawns,
     groundY,   // v1.28l: terrain height fn for the generic physics/spawn systems
+    viewFar: 380,   // v1.338 (D.51 step 1): the camera sees down the street to Winnmark Dr (the other maps keep 200)
   };
 }
 
@@ -25487,12 +25686,8 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
 // `from` is where the scenery starts (metres past the bounds edge, past what the map already has there), `bands` what
 // stands from there outward, `street` a road running on out of the map at that lateral offset.
 const EDGE_BACKDROPS = {
-  buildWinnmarkCourtScene: {
-    N: { from: 33, bands: [['trees', 12], ['houses', 22], ['trees', 30]] },          // past the golf course
-    W: { from: 30, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the lake and its trees
-    S: { from: 13, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    E: { from: 8, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-  },
+  // v1.338 (D.51 step 1): Winnmark's course, pond, shared wood, the street to Winnmark Dr and the houses round them are
+  // the map's own now (winnmarkRealScale and its scenery), on every side, so it takes no backdrop
   buildBunrattyCourtScene: {   // v1.303 (D.51 step 1): the woods, the street to the fork and the river are the map's own now
     N: { from: 9, bands: [['trees', 20], ['houses', 22], ['trees', 30]] },          // the backs of the Sentinae Chase houses
   },
