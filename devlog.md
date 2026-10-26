@@ -14182,3 +14182,34 @@ play as before.
   - The scenery houses are the plain low-poly kind. Step 2's houses on the street are the detailed ones.
   - The creek is a flat strip of water in its channel, with no stones or footbridge yet. Those come with Seth's yard
     in step 3, where it is in play.
+
+## v1.339 — Winnmark's street houses at real size
+Card `fable/d51-winnmark` (backlog D.51), step 2. v1.338 ran the street on to Winnmark Dr at real length, with its lots
+still empty. This step builds the street's houses on those lots at their real size, from the guide ("The houses",
+"The ground"). Each is a walk-out with its deck over the terrace, and the terraced yards have black picket fences. Seth's
+lot (x 100, south) is step 3's own. The north lot at x 48 reaches 6 m into today's box, so it is step 4's, with the
+bulb's lots. Nothing in the box moved again.
+- **Seven houses,** five on the north side (x 80-208) and two on the south (x 156 and 206). Each is the detailed
+  house with the street's own look from v1.312: rose-tan brick, red brick with cream quoins and belt course, or beige
+  stucco, each with its steep grey roof, arched two-storey entry and bay. They are 20-24 m across and 15 m deep (the
+  guide: 18-25 by 14-18), with the front 14 m off the street's middle. North houses face south and back onto the
+  course; south houses face north and back onto the shared wood.
+- **Walk-outs.** The main floor stands 0.35 m over the front lawn. Behind the house the side yards fall 3 m to the
+  terrace, and the walk-out storey under the house shows on the back in its own wall, with French doors and two
+  windows each side. That is the three storeys at the back and two at the front of the guide's listing C.
+- **Decks.** Each house has a deck of brown-stained boards, 12 x 3.8 m, at the main floor, so 3 m over the terrace.
+  It stands on four posts with a rail round it and a stair down its east end. You can walk under it: the deck is
+  2.75 m over the terrace.
+- **Terraces and fences.** The terrace runs flat from the house back to a stacked-stone wall with a pale cap. The yard
+  below the wall is 0.9 m lower and meets the falling ground about 54 m out. The wall stands on a line of the ground's
+  grid, one cell thick, so the ground's step is under it. A black picket fence (1.2 m, a post every 2.4 m) runs along
+  the wall and down both lot lines. Its rails go picket to picket, so they step with the ground.
+- **Driveways.** Each house has a concrete driveway 4.8 m wide from the street to its garage end, and the kerb drops
+  across it. The road's driveway drops come from a separate list, so the bins, mailboxes and cars of the box's eight
+  houses draw the same random numbers as before.
+- **Collision.** The houses (from the terrace to the eaves), the decks, the deck posts, the stairs, the walls and the
+  fences (BBs pass through the fences, bodies don't) go at the end of the obstacle list. All of it is outside today's
+  bounds until step 4 moves Seth's matches there.
+- **The ground's fine grid** (1.458 m) now runs east to x 159, over the lots Seth's play area will use. The trees of
+  v1.338's scenery keep off every house, deck and terrace.
+### Verified

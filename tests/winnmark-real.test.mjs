@@ -60,6 +60,16 @@ const res = await page.evaluate(() => {
     for (let i = 0; i < p.length; i += 3) near = Math.min(near, Math.max(B.minX - p[i], p[i] - B.maxX, B.minZ - p[i + 2], p[i + 2] - B.maxZ));
   });
   out.near = +near.toFixed(2);
+  // v1.339 (step 2): the street's houses past the box at real size, each a walk-out over a terrace held by a stone wall
+  const lots = WM_LOTS.map(L => {
+    const s = L.sgn, hob = built.obstacles.find(o => o.mesh && o.mesh.isGroup && Math.abs((o.minX + o.maxX) / 2 - L.x) < 0.01 && Math.abs((o.minZ + o.maxZ) / 2 - s * 21.5) < 0.01);
+    const deck = built.obstacles.find(o => o.surface === 'wood' && Math.abs((o.minX + o.maxX) / 2 - L.x) < 0.01 && o.maxX - o.minX === 12);
+    return { x: L.x, size: hob && [+(hob.maxX - hob.minX).toFixed(2), +(hob.maxZ - hob.minZ).toFixed(2)], floor: hob && +(hob.mesh.position.y - gY(L.x, s * 12)).toFixed(2),
+      walk: +(L.F - gY(L.x, s * 34)).toFixed(2), terraceFlat: +Math.abs(gY(L.x - 9, s * 30) - gY(L.x + 9, s * 39)).toFixed(3), below: +(L.T - gY(L.x, s * 41)).toFixed(2),
+      deck: deck && +(deck.baseY + 0.25 - L.F).toFixed(3), deckOver: deck && +(deck.baseY - gY(L.x, s * 31)).toFixed(2) };
+  });
+  out.lots = lots;
+  out.wallOnGrid = Math.abs((70 - WM_LOT.wallD) / WM_LOT.cell - Math.round((70 - WM_LOT.wallD) / WM_LOT.cell)) < 1e-9;
   out.viewFar = built.viewFar;
   out.bounds = B;
   return out;
@@ -74,6 +84,10 @@ check('Winnmark: the creeks run downhill, in a channel under their banks along t
 check('Winnmark: the pond lies on the course over its whole water, and the old lake strip is gone', res.pond.y === -0.3 && res.pond.wet === res.pond.pn && res.lakeStrip === 0, res);
 check('Winnmark: the woods, Winnmark Dr\'s houses and the houses across the course are built', res.stats && res.stats.trees >= 1000 && res.stats.houses >= 15, res.stats);
 check('Winnmark: none of it is solid, and none of it stands within 6 m of the bounds (BBs drop at 5)', res.solid === 0 && res.near >= 6, res);
+check('Winnmark: seven houses on the street past the box, 20-24 m across and 15 m deep (the guide: 18-25 by 14-18)', res.lots.length === 7 && res.lots.every(l => l.size && l.size[0] >= 20 && l.size[0] <= 24 && l.size[1] === 15), res.lots);
+check('Winnmark: each main floor 0.35 m over its front lawn, a walk-out 3 m over its terrace', res.lots.every(l => l.floor === 0.35 && l.walk === 3), res.lots);
+check('Winnmark: each terrace flat to its wall, the yard below it 0.9 m or more lower, the wall on a ground grid line', res.wallOnGrid && res.lots.every(l => l.terraceFlat < 1e-9 && l.below >= 0.9), res.lots);
+check('Winnmark: each deck at the main floor, 2.7 m or more over the terrace (you walk under it)', res.lots.every(l => l.deck === 0 && l.deckOver >= 2.7), res.lots);
 
 // in play: you see down the street to Winnmark Dr; the camera sees that far; draw calls in budget
 await g.scenario('winnmark_team_3v3');

@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.338</div>
+  <div class="version">v1.339</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -13976,9 +13976,10 @@ function winnmarkCreekZ(x) {
 // over the front lawn and the back is a walk-out, the terrace 3 m under the main floor with the deck over it; the terrace
 // runs back to a stone wall at the lot's back line of the ground grid, the yard 0.9 m or more below it, a black picket
 // fence along the wall and down each side. North lots face south and back onto the course; south lots face north and
-// back onto the shared wood. Seth's (x 100, south) is step 3's own lot. look: WM_LOOK's A, B or C.
+// back onto the shared wood. Seth's (x 100, south) is step 3's own lot, and the north lot at x 48, which reaches into
+// today's box, is step 4's with the bulb's. look: WM_LOOK's A, B or C.
 const WM_LOTS = [
-  { x: 48, side: 'n', look: 'C', w: 22 }, { x: 80, side: 'n', look: 'A', w: 24 }, { x: 112, side: 'n', look: 'B', w: 21 },
+  { x: 80, side: 'n', look: 'A', w: 24 }, { x: 112, side: 'n', look: 'B', w: 21 },
   { x: 144, side: 'n', look: 'C', w: 23 }, { x: 176, side: 'n', look: 'A', w: 20 }, { x: 208, side: 'n', look: 'B', w: 22 },
   { x: 156, side: 's', look: 'B', w: 23 }, { x: 206, side: 's', look: 'C', w: 21 },
 ];
@@ -13994,7 +13995,7 @@ function winnmarkLotY(L, z, r) {
   if (d < 16) return r;
   if (d < 29) return S + (L.T - S) * _wmSS((d - 16) / 12);
   if (d <= WM_LOT.wallD) return L.T;
-  return Math.min(r, L.T - 0.9);
+  return Math.min(r, L.T - 0.9 + 0.15 * Math.max(0, d - 44));   // the yard below the wall, meeting the falling ground by 54 m
 }
 function winnmarkRealScale(x, z, h) {
   const B = WM_REAL.box;
@@ -14013,11 +14014,11 @@ function winnmarkRealScale(x, z, h) {
     const walk = S - 3 * _wmSS((z - 16) / 16);
     r = z <= cz ? walk + (bank - walk) * _wmSS((z - 30) / Math.max(1, cz - 30)) : bank + 0.05 * (z - cz);
   }
-  const lot = winnmarkLotAt(x, z);   // v1.339: the street's lots past the box, terraced behind their walk-outs
-  if (lot) r = winnmarkLotY(lot, z, r);
   // Winnmark Dr's lots stand on its own level, falling away from it into the wood and the course
   const dr = _wmPolyNear(WM_REAL.dr, x, z);
   r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
+  const lot = winnmarkLotAt(x, z);   // v1.339: the street's lots past the box, terraced behind their walk-outs
+  if (lot) r = winnmarkLotY(lot, z, r);
   // west of the box the course: flat, but for the pond and the creeks' ravines
   if (x < -40) r *= 1 - _wmSS((-40 - x) / 30);
   const P = WM_REAL.pond, e = Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz);
@@ -14049,18 +14050,20 @@ function buildWinnmarkLots(scene, o) {
   // a black picket fence 1.2 m high from (x0, z0) to (x1, z1), each picket on the ground under it (or on `y` if given)
   const fence = (x0, z0, x1, z1, y) => {
     const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / 0.16)), posts = Math.max(1, Math.round(len / 2.4));
+    let pv = null;
     for (let i = 0; i <= n; i++) {
       const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n, b = y != null ? y : gY(x, z);
       add(IRON, x - 0.012, x + 0.012, b - 0.1, b + 1.2, z - 0.012, z + 0.012);
+      if (pv) for (const ry of [0.12, 1.08]) {   // the rails, picket to picket, so they step with the ground
+        const yr = Math.min(b, pv.b) + ry;
+        add(IRON, Math.min(x, pv.x) - 0.02, Math.max(x, pv.x) + 0.02, yr, yr + 0.04, Math.min(z, pv.z) - 0.02, Math.max(z, pv.z) + 0.02);
+      }
+      pv = { x, z, b };
     }
     let lo = Infinity, hi = -Infinity;
     for (let i = 0; i <= posts; i++) {
       const x = x0 + (x1 - x0) * i / posts, z = z0 + (z1 - z0) * i / posts, b = y != null ? y : gY(x, z);
       add(IRON, x - 0.04, x + 0.04, b - 0.1, b + 1.28, z - 0.04, z + 0.04); lo = Math.min(lo, b); hi = Math.max(hi, b);
-      if (i < posts) {   // the rails, a section at a time so they follow the ground
-        const xb = x0 + (x1 - x0) * (i + 1) / posts, zb = z0 + (z1 - z0) * (i + 1) / posts, bb = y != null ? y : gY(xb, zb), yr = Math.min(b, bb);
-        for (const ry of [0.12, 1.08]) add(IRON, Math.min(x, xb) - 0.02, Math.max(x, xb) + 0.02, yr + ry, yr + ry + 0.04 + Math.abs(bb - b), Math.min(z, zb) - 0.02, Math.max(z, zb) + 0.02);
-      }
     }
     ob(x0 - 0.1, x1 + 0.1, z0 - 0.1, z1 + 0.1, lo, hi + 1.2, { surface: 'metal', bbPass: true });
   };
@@ -14102,7 +14105,7 @@ function buildWinnmarkLots(scene, o) {
     {
       const sx0 = dx1, sx1 = dx1 + 4.2, n = 15, sz0 = dz0 + s * 1.3, sz1 = dz0 + s * 2.4;
       for (let i = 0; i < n; i++) { const y = F - (F - T) * (i + 1) / n, x = sx0 + (sx1 - sx0) * i / n; add(WOOD, x, x + (sx1 - sx0) / n + 0.02, y - 0.05, y, Math.min(sz0, sz1), Math.max(sz0, sz1)); }
-      add(POST, sx0, sx1, T, F - 0.2, Math.min(sz0, sz1) - 0.04, Math.min(sz0, sz1));
+      for (const px of [sx0 + 0.1, (sx0 + sx1) / 2]) add(POST, px - 0.07, px + 0.07, T, F - (F - T) * (px - sx0) / (sx1 - sx0) - 0.25, Math.min(sz0, sz1), Math.min(sz0, sz1) + 0.14);
       ob(sx0, sx1, Math.min(sz0, sz1), Math.max(sz0, sz1), T, F);
     }
     // the terrace's stone wall along the back line (one grid cell thick, so the ground's step is under it), capped,
