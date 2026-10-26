@@ -14388,18 +14388,19 @@ Block) stay in the box, which is the bulb's area, and play exactly as before.
   Cul-de-Sac too (in Seth's 1v1 they are baked).
 - **The stuck-kid sweep** (`ONLY=` the nine matches, three ways each, 90 s): Just You and Seth, Seth's Got a Shotgun,
   Every Kid for Themselves, Trey on Overwatch, Two on Two, Defend the Treehouse and Two in the Yards, 21 runs, no kid
-  held a moving state in one spot longer than 3.5 s (the line is 15 s). Its tab crashed entering After Dark.
+  held a moving state in one spot longer than 3.5 s (the line is 15 s). Its tab crashed entering After Dark; run
+  alone, After Dark and Lights Out were clean too (worst 3.5 s), so all nine matches, 27 runs.
 - **These suites pass:** `smoke`, `winnmark-real`, `ffa-starts`, `night-prowl`, `seth-shotgun`, `houses`, `house-backs`,
   `winnmark-road`, `winnmark-trees`, `winnmark-fort`, `winnmark-cars`, `winnmark-props`, `layout-same`, `whole-block`,
   `rival`, `opening-hold`, `kid-hold`, `pocket`, `backdrop`, `fence-bound`, `bulb-sight`, `bedroom-settings`,
   `briefing-lives`, `crew-balance`, `crew-field`, `crew-roster`, `crew-gear`, `damage-report-first`,
   `harness`, `hats`, `jump`, `kid-climb`, `kid-clothes`, `last-tag-trade`, `lot-ffa-opening`, `map-screen`, `mirror`,
   `out-shot`, `pickup-lives`, `pickup-ffa`, `result-text`, `sell-back`, `walkie-callouts`, `wallet`,
-  `wince`, `autosave`, `pad-hints`, `settings`. No page errors.
-- **Not yet passed here:** `last-kid`, `squad-basics` and `real-scale` (Bunratty) each lost their tab or timed out
-  entering a box or Bunratty match while two other browsers ran on this 4-core machine; none of them plays in Seth's
-  area. `crew-spawn-bounds` ran past my 15-minute cap. They, `crew`, and the sweep of After Dark and Lights Out are run
-  alone at the next session's start (below). Also owed: `yard-props` after its change (not re-run), `damage-report`
+  `wince`, `autosave`, `last-kid`, `squad-basics`, `real-scale`, `pad-hints`, `settings`. No page errors.
+- `last-kid`, `squad-basics` and `real-scale` lost their tab or timed out entering a box or Bunratty match while two
+  other browsers ran on this 4-core machine; run alone, all three pass.
+- **Not yet passed here:** `crew-spawn-bounds` ran past my 15-minute cap; it and `crew` are run alone at the next
+  session's start (below). Also owed: `yard-props` after its change (not re-run), `damage-report`
   (failed beside the others with no line printed), and `result-stats`, whose "OPENED names the next match" got Squad
   Basics after winning Just You and Seth: the unlock ladder, which this version doesn't touch; to be checked on main.
 ### Still open
@@ -14407,5 +14408,5 @@ Block) stay in the box, which is the bulb's area, and play exactly as before.
   front-step overwatch in place of a deck, and whether 59 m to Seth's spot in the 1v1s is too long a walk.
 - **Next in step 4:** the bulb's area at real size (the bulb's own lots, and the north lot at x 48 that reaches into the
   box), then step 5, the views past the edges.
-- **Owed first next session:** `last-kid`, `squad-basics`, `real-scale`, `crew`, `crew-spawn-bounds`, `yard-props`,
-  `damage-report` and `result-stats` alone (`result-stats` on main too), and the sweep of After Dark and Lights Out.
+- **Owed first next session:** `crew`, `crew-spawn-bounds`, `yard-props`, `damage-report` and `result-stats` alone
+  (`result-stats` on main too).
