@@ -14291,3 +14291,9 @@ into. Nothing in the box moved.
 - **Cover.** All 17 matches by day and at night have the same obstacles as v1.339 between x −40 and 60, where all
   the matches' obstacles are. One tree past the west wall (x −57, z 33, outside the bounds) stands 6.5 cm lower,
   where the wood's floor follows the deeper creek.
+- **Vertices.** v1.339's fences were a box per picket and per rail piece, about 1,500 boxes a lot, and the street's
+  scene had grown to 1.45 M vertices against v1.337's 0.80 M. Two suites lost their page when run two at a time,
+  though each passes alone. Each picket and deck baluster is now one double-sided quad, and each rail is one box per
+  run of level ground. The scene is 1.10 M vertices: the houses' detail, the scenery, the bigger ground, the fences
+  and the decks. Building the map takes 0.58-0.71 s after the first build (1.1 s cold), against 0.37-0.51 s on
+  v1.337.
