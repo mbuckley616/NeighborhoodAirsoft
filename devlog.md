@@ -14554,3 +14554,52 @@ of the two areas Michael's answer A (26 Oct) set out.
 - **Next, step 5:** the views past the edges (the guide's "Past the edge": the fairway north and west, the shared wood
   and Winnmark Dr's houses south, the street running on east). Most of it is the real place built since v1.338, so the
   step is what the guide still lists that isn't there.
+
+## v1.344 — Past Winnmark's edges, and a kid out walks round the car
+Card `fable/d51-winnmark` (backlog D.51 with D.25's Winnmark edges), step 5 of 5, the views past the edges. Most of the
+guide's "Past the edge" list was built with the real place in v1.338: the course and its houses to the north, the shared
+wood and Winnmark Dr's houses to the south, the street running on east to the Dr. I photographed every edge of both play
+areas by day and compared them with the guide. Two things were still missing or wrong.
+- **West of the course was empty.** Past the pond the course ran bare to the ground's edge at x -210, where the guide
+  has the course, a tree line, a row of houses facing it, then woods. The course now stops at x -168
+  (`WM_REAL.westX`). Past it there is a tree line 12 m deep, eight houses at about x -190 facing east across the
+  course, on lawns, and the woods behind them. The ground runs 48 m further west, to x -258, to hold them. Its
+  coarse grid is the same 6 m step, so every old vertex is where it was. The houses and the new strip of woods use
+  their own seeded numbers, so no tree drawn before stands anywhere new. To plant the strip by the same rules as the
+  rest, the planting rules became one function (`plant`). Nothing in it is solid.
+- **v1.301's fairway sheet hung over the bulb's north yards.** It was a flat 100 x 22 m plane at y 0.005 from z -42 to
+  -64. Since v1.342 the north lots by the bulb run their yards down to z -50, as much as 1.5 m under it, so the sheet
+  floated over them. The green and one bunker floated 0.4-0.8 m. The sheet is gone, because the ground's own mowing
+  stripes are the fairway. The green, flag, both bunkers, the cart path and the golf cart move 12 m north onto the
+  course past the lots' fences, each set on the ground under it. The ten small trees along there stand on the
+  yards' ground now, not at 0.
+- **A kid out walked into the bulb's car and stayed there** (`out-walk-off`, one of the suites v1.343 still owed).
+  In Storm the Cul-de-Sac, Seth starts crouched behind the bulb's south car, and the car sits exactly on the line from
+  its far side to his start. Tagged on the far side, he walked 1 m, stood against the car and stopped 5 m short. Facing
+  it square on, the slide along each axis gained nothing. Now, when the slide gains less than a quarter of a step, he
+  steps sideways round whatever is in his way. He keeps to that side until the way on is clear, because sliding back
+  to the line between steps would undo each one. The 2 s "held up" stop still applies, so a long hedge can't keep
+  him walking. The test's BB, fired from 0.6 m behind him along +x, now started inside the car at his new spot on its
+  corner. It now fires from the first side whose 0.6 m run-up is clear, measured along the shot.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - Past the course to the west, 384 house-wall vertices stand 5-7 m up between x -178 and -202, and 23,315 vertices
+    of woods lie past x -215.
+  - The ground's west edge is at x -258, and the scenery's furthest vertex is at -263 (a crown's edge).
+  - The scenery now holds 38 houses (30 before) and 1,556 trees (1,184 before; most of the difference is the woods
+    where the course used to run to the edge).
+  - The 20 flat golf pieces (green, bunkers, cart path) lie 0.025-0.04 m over the ground under them, and no fairway
+    plane is left.
+- **`tests/winnmark-trees.test.mjs`:** the green lies 0.03 m over the ground at z -60. Its old check, that the sheet was
+  over the ground, is now that no sheet is left.
+- **`out-walk-off`, three runs:** Seth walks round the car's east end and stops 0.99 m from his start each time, with
+  every other check as before.
+- **Draw calls** in the edge views, before → after: from the bulb north 151 → 150, west 63 → 63, south 71 → 71,
+  east 235 → 235, north-west 66 → 65. `winnmark-real`'s seven views are 698 at the worst, inside the 2,060 budget.
+- **These suites pass, run one at a time:** `winnmark-real`, `winnmark-trees`, `backdrop`, `smoke`, `layout-same`,
+  `houses`, `real-scale`, `winnmark-props`, `out-walk-off`, `out-shot`.
+- **Owed from v1.343, all pass alone:** `spawn-facing`, `voices`, `walkie-callouts`, `mirror`, `hats`, `jump`,
+  `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`, `crew-balance`, `crew-gear`.
+  - `spawn-facing`, `result-text`, `notebook` and `crew-gear` lost their tab or timed out while two browsers ran
+    beside a third, then passed alone.
+  - `crew-spawn-bounds` and `crew` ran in the full `npm test`, below.
