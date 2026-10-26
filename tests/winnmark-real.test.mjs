@@ -162,6 +162,19 @@ const sa = await page.evaluate((SA_IDS) => {
   sc.traverse(m => { if (!m.isMesh) return; const p = m.geometry.attributes.position.array;
     for (let i = 0; i < p.length; i += 3) if (_wmPolyNear(WM_REAL.creek, p[i], p[i + 2]).d > 1.5) near = Math.min(near, Math.max(B.minX - p[i], p[i] - B.maxX, B.minZ - p[i + 2], p[i + 2] - B.maxZ)); });
   out.sceneryOut = +near.toFixed(2);
+  // v1.342 (step 4, second part): from Seth's area the bulb's end is the real place: six lots at real size round an 11 m
+  // bulb, the street falling 3 m from Winnmark Dr to it, and nothing of the box left (its half-size houses, tree walls)
+  const gS = built.groundY;
+  out.bulbLots = WM_BULB_LOTS.map(L => {
+    const f = L.front || WM_LOT.front, hob = built.obstacles.find(o => o.mesh && o.mesh.userData.wmLot && Math.abs((o.minX + o.maxX) / 2 - L.x) < 0.01 && Math.abs((o.minZ + o.maxZ) / 2 - L.sgn * (f + 7.5)) < 0.01);
+    return { x: L.x, size: hob && [+(hob.maxX - hob.minX).toFixed(2), +(hob.maxZ - hob.minZ).toFixed(2)], inScene: !!(hob && hob.mesh.parent === built.scene),
+      floor: +(L.F - gS(L.x, L.sgn * (f - 2))).toFixed(2), walk: +(L.F - gS(L.x, L.sgn * (f + 18))).toFixed(2) };
+  });
+  out.boxHouses = built.obstacles.filter(o => o.mesh && o.mesh.isGroup && o.maxX < 60 && o.maxX - o.minX < 10 && o.maxZ - o.minZ < 10 && o.h > 4).length;
+  out.westTrunks = built.obstacles.filter(o => o.shape === 'cylinder' && o.cx < 60).length;
+  out.streetFall = +(gS(WM_REAL.drX - 6, 0) - gS(-30, 0)).toFixed(2);
+  let bulbR = 0; built.scene.traverse(m => { if (m.userData && m.userData.wmRoad === 'bulb') { m.geometry.computeBoundingBox(); const b = m.geometry.boundingBox; bulbR = (b.max.x - b.min.x) / 2; } });
+  out.bulbR = +bulbR.toFixed(2);
   // draw calls in five views of the area
   applyBBHit = () => true; for (const e of Game.scenario.enemies || []) e.update = () => {};
   out.calls = {};
@@ -179,6 +192,10 @@ check("Winnmark: Seth's area is about today's box (70-80 m a side) and holds the
 check("Winnmark: every start and anchor in Seth's area is inside it and clear of everything solid", sa.anchors >= 20 && sa.bad.length === 0, sa.bad);
 check("Winnmark: Trey's overwatch is 45-55 m from Seth's driveway (Michael: A)", sa.trey >= 45 && sa.trey <= 55, sa.trey);
 check("Winnmark: Seth's area's wood is solid trunks, the merged scenery (the creek's water aside) 3 m or more outside it", sa.trunks >= 25 && sa.sceneryOut >= 3, sa);
+check("Winnmark: from Seth's area the bulb's six lots are built at real size (20-24 m by 15), each main floor 0.35 m over its lawn, a 2.5-3 m walk-out",
+  sa.bulbLots.length === 6 && sa.bulbLots.every(l => l.inScene && l.size && l.size[0] >= 20 && l.size[0] <= 24 && l.size[1] === 15 && l.floor === 0.35 && l.walk >= 2.5 && l.walk <= 3), sa.bulbLots);
+check("Winnmark: from Seth's area nothing of the box is left (its half-size houses, its tree walls), the bulb is 11 m across and 3 m under Winnmark Dr",
+  sa.boxHouses === 0 && sa.westTrunks === 0 && Math.abs(sa.bulbR - 11) < 0.1 && sa.streetFall >= 2.9 && sa.streetFall <= 3.1, sa);
 check("Winnmark: at most 2,060 draw calls in five views of Seth's area", Math.max(...Object.values(sa.calls)) <= 2060, sa.calls);
 // the night matches: no kid's start has a line to yours or your side's (muzzle 1.05 m to chest 0.95 m)
 for (const id of ['winnmark_night_prowl', 'winnmark_night_team_2v2']) {

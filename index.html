@@ -13947,8 +13947,12 @@ const WM_REAL = {
 };
 const _wmSS = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
 // the street's own level: today's grade in the box (3 m at the entry), then 1.5 m more over the 197 m to Winnmark Dr
-function winnmarkStreetY(x) {
+// v1.342 (D.51 step 4, second part): with the bulb's lots at real size (bulb true) the street falls only 1.5 m from the
+// box's entry to the bulb, so the bulb is 3 m under Winnmark Dr (the guide's 3-5 m) and its lots have room for walk-outs
+// over the course at 0
+function winnmarkStreetY(x, bulb) {
   if (x >= 38) return 3.0 + 1.5 * _wmSS((x - 38) / 197);
+  if (bulb) return 1.5 + 1.5 * (1 - _wmSS((x - 38) / (-32 - 38)));
   return 3.0 * (1 - _wmSS((x - 38) / (-32 - 38)));
 }
 // nearest point on a polyline of [x, z, (y)] points: { d, y (interpolated third value), s (distance along it) }
@@ -13990,15 +13994,31 @@ const WM_LOTS = [
 ];
 const WM_LOT = { half: 16, front: 14, depth: 15, walk: 3.0, wallD: 39.375, cell: 140 / 96 };   // wallD: a line of the ground grid
 for (const L of WM_LOTS) { const S = winnmarkStreetY(L.x); L.F = S + 0.35; L.T = L.F - WM_LOT.walk; L.sgn = L.side === 'n' ? -1 : 1; }
-function winnmarkLotAt(x, z) {
+// v1.342 (D.51 step 4, second part; Michael: real scale, 16 Oct): the bulb's end of the street at real size, in place of
+// today's box and its eight half-size houses: three lots each side about 34 m apart, the last two each side of the bulb
+// set back 17 m (front) round its 11 m circle, and the north lot at x 48 that reaches into the box. They are built where
+// the scene's ground is the real one (bulb true: Seth's area's matches for now; the bulb's own matches still play in the
+// box until they move onto these lots). The north lots by the bulb keep their terrace 0.6 m under the course at most, so
+// their walk-out is 2.5 m there; the south lots fall into the wood as the street's others do.
+const WM_BULB_LOTS = [
+  { x: -22, side: 'n', look: 'A', w: 22, front: 17 }, { x: 14, side: 'n', look: 'B', w: 23 }, { x: 48, side: 'n', look: 'C', w: 24 },
+  { x: -24, side: 's', look: 'B', w: 22, front: 17 }, { x: 10, side: 's', look: 'C', w: 23 }, { x: 44, side: 's', look: 'A', w: 21 },
+];
+for (const L of WM_BULB_LOTS) {
+  const S = winnmarkStreetY(L.x, true); L.bulb = true; L.sgn = L.side === 'n' ? -1 : 1; L.F = S + 0.35;
+  L.T = Math.max(L.F - WM_LOT.walk, L.sgn < 0 ? -0.6 : -Infinity);
+}
+const WM_BULB = { x: -30, z: 0, r: 11 };   // v1.342: the bulb at real size (the guide: 12-15 m; today's 6.3)
+function winnmarkLotAt(x, z, bulb) {
   for (const L of WM_LOTS) if (Math.abs(x - L.x) < WM_LOT.half && z * L.sgn > 0) return L;
+  if (bulb) for (const L of WM_BULB_LOTS) if (Math.abs(x - L.x) < WM_LOT.half && z * L.sgn > 0) return L;
   return null;
 }
 // the lot's ground: the front lawn, the side yards falling to the terrace, the terrace, and the yard below its wall
 function winnmarkLotY(L, z, r) {
-  const d = z * L.sgn, S = L.F - 0.35;
-  if (d < 16) return r;
-  if (d < 29) return S + (L.T - S) * _wmSS((d - 16) / 12);
+  const d = z * L.sgn, S = L.F - 0.35, f = L.front || WM_LOT.front;   // v1.342: f, the house's front off the street's middle
+  if (d < f + 2) return r;
+  if (d < f + 15) return S + (L.T - S) * _wmSS((d - f - 2) / 12);
   if (d <= WM_LOT.wallD) return L.T;
   return Math.min(r, L.T - 0.9 + 0.15 * Math.max(0, d - 44));   // the yard below the wall, meeting the falling ground by 54 m
 }
@@ -14028,11 +14048,11 @@ function winnmarkSethY(x, z, r) {
   const k = 1 - _wmSS((ax - H.half) / 6);
   return r + (y - r) * k;
 }
-function winnmarkRealScale(x, z, h) {
+function winnmarkRealScale(x, z, h, bulb) {   // v1.342: bulb, the box is the real place too (WM_BULB_LOTS)
   const B = WM_REAL.box;
   const out = Math.max(B.minX - x, x - B.maxX, B.minZ - z, z - B.maxZ);
-  if (out <= 0) return h;
-  const S = winnmarkStreetY(x);
+  if (out <= 0 && !bulb) return h;
+  const S = winnmarkStreetY(x, bulb);
   let r;
   if (z <= 0) {
     // the north lots: flat front lawns, then the back yards fall to the course (at 0) 42 m out by the box, 55 m east
@@ -14048,7 +14068,7 @@ function winnmarkRealScale(x, z, h) {
   // Winnmark Dr's lots stand on its own level, falling away from it into the wood and the course
   const dr = _wmPolyNear(WM_REAL.dr, x, z);
   r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
-  const lot = winnmarkLotAt(x, z);   // v1.339: the street's lots past the box, terraced behind their walk-outs
+  const lot = winnmarkLotAt(x, z, bulb);   // v1.339: the street's lots past the box, terraced behind their walk-outs
   if (lot) r = winnmarkLotY(lot, z, r);
   r = winnmarkSethY(x, z, r);        // v1.340: Seth's sunken lot
   // west of the box the course: flat, but for the pond and the creeks' ravines
@@ -14058,7 +14078,7 @@ function winnmarkRealScale(x, z, h) {
   const c1 = _wmPolyNear(WM_REAL.creek, x, z), c2 = _wmPolyNear(WM_REAL.course, x, z);
   r = Math.min(r, c1.y + 0.45 * Math.min(1, c1.d / 0.9) + 0.3 * Math.max(0, c1.d - 0.9));
   r = Math.min(r, c2.y + 0.45 * Math.min(1, c2.d / 1.2) + 0.3 * Math.max(0, c2.d - 1.2));
-  return h + (r - h) * _wmSS(out / 8);
+  return bulb ? r : h + (r - h) * _wmSS(out / 8);
 }
 // v1.341 (D.51 step 4; Michael 26 Oct: A, each match in one fenced area about today's size): Seth's play area on the
 // real-scale street, 72 x 76 m round his lot: the north lawns across from his house, the street, his driveway and side
@@ -14122,15 +14142,17 @@ function buildWinnmarkLots(scene, o) {
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flat(), 3)); geo.computeVertexNormals();
     (parts[key] = parts[key] || []).push({ geo, m: new THREE.Matrix4() });
   };
-  for (const L of WM_LOTS) {
-    const s = L.sgn, LK = looks[L.look], w = L.w, D = WM_LOT.depth, hw = w / 2;
-    const zc = s * (WM_LOT.front + D / 2), zFront = s * WM_LOT.front, zBack = s * (WM_LOT.front + D), F = L.F, T = L.T;
+  // v1.342 (step 4, second part): o.bulb builds the bulb's lots too (WM_BULB_LOTS), each house front `front` off the
+  // street, its driveway from o.roadEdge (the curved street's or the bulb's edge on its side)
+  for (const L of o.bulb ? WM_LOTS.concat(WM_BULB_LOTS) : WM_LOTS) {
+    const s = L.sgn, LK = looks[L.look], w = L.w, D = WM_LOT.depth, hw = w / 2, fr = L.front || WM_LOT.front;
+    const zc = s * (fr + D / 2), zFront = s * fr, zBack = s * (fr + D), F = L.F, T = L.T;
     const z0 = Math.min(zFront, zBack), z1 = Math.max(zFront, zBack);
     // the house, at real size, lifted to its main floor
     const hob = buildSuburbanHouse(scene, { x: L.x, z: zc, width: w, depth: D, trimColor: 0xe6dfd0, brickColor: LK.brick,
-      roofColor: [0x6e6a62, 0x686660, 0x726c62][Math.round(L.x / 32) % 3], faceDir: s < 0 ? 'south' : 'north', detail: true,
+      roofColor: [0x6e6a62, 0x686660, 0x726c62][(Math.round(L.x / 32) % 3 + 3) % 3], faceDir: s < 0 ? 'south' : 'north', detail: true,
       look: { ...LK.look, bay: (Math.round(L.x / 32) % 2) ? 1 : -1 } });
-    hob.mesh.position.y = F;
+    hob.mesh.position.y = F; hob.mesh.userData.wmLot = true;   // v1.342: a lot's house, not the box's
     hob.baseY = T - 0.1; hob.h = F - T + 0.1 + 5.5;
     obstacles.push(hob);
     // the walk-out storey under it, in its own wall; French doors and two windows each side on the back
@@ -14173,11 +14195,11 @@ function buildWinnmarkLots(scene, o) {
     ob(lx0, lx1, wz0, wz1, low - 0.3, T + 0.12, { surface: 'hard' });
     const fz = s * (WM_LOT.wallD + WM_LOT.cell / 2);
     fence(lx0, fz, lx1, fz, T + 0.12);
-    for (const fx of [lx0, lx1]) fence(fx, s * (WM_LOT.front + D), fx, s * (WM_LOT.wallD + WM_LOT.cell + 9));
+    for (const fx of [lx0, lx1]) fence(fx, s * (fr + D), fx, s * (WM_LOT.wallD + WM_LOT.cell + 9));
     // the driveway to the garage end: the street's edge to the front, on the ground
-    const gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2);
+    const gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2), ez = L.bulb && o.roadEdge ? o.roadEdge(gx, s) : s * 3.6;
     drives.push({ x: gx, z: zc, side: s < 0 ? 'north' : 'south', dx: gx });
-    patch(CONC, gx - 2.4, gx + 2.4, Math.min(s * 3.6, zFront), Math.max(s * 3.6, zFront), 0.035);
+    patch(CONC, gx - 2.4, gx + 2.4, Math.min(ez, zFront), Math.max(ez, zFront), 0.035);
   }
   // v1.340 (step 3): Seth's lot (WM_SETH): the house sunk with its pad, the walk-out over the flagstone patio, the big deck
   // over it, the hot tub sunk into the patio under the deck, the pool on the patio past it, the steep driveway, and
@@ -14274,6 +14296,9 @@ function buildWinnmarkLots(scene, o) {
 function buildWinnmarkCourtScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
   const _area = winnmarkArea(variant);   // v1.341 (D.51 step 4): 'seth' (WM_SA) or 'bulb' (today's box)
+  // v1.342 (step 4, second part): the bulb's end at real size (WM_BULB_LOTS) in place of the box, where the match doesn't
+  // play in the box: Seth's area's matches see the real bulb down the street, not today's half-size houses
+  const _realBulb = _area === 'seth';
 
   // === Lighting / sky (v1.35: day or night) ===
   const _night = (timeOfDay === 'night');
@@ -14306,7 +14331,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const fz = Math.max(0, Math.min(1, (z + 42) / 7)), fx = Math.max(0, Math.min(1, (x + 42) / 5));
     return h * fz * fz * (3 - 2 * fz) * fx * fx * (3 - 2 * fx);
   }
-  const groundY = (x, z) => winnmarkRealScale(x, z, winnmarkGroundY(x, z));   // v1.338: the real place past the box
+  const groundY = (x, z) => winnmarkRealScale(x, z, winnmarkGroundY(x, z), _realBulb);   // v1.338: the real place past the box
   // Terrain normal (finite differences) — used to tilt flat decal pads onto the slope.
   function groundNormal(x, z) {
     const e = 0.6;
@@ -14404,7 +14429,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
       const x = xs[i], z = zs[j];
       pos.push(x, groundY(x, z), z);
       const out = Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
-      const w = _wmSS((out - 6) / 10);
+      const w = _realBulb ? 1 : _wmSS((out - 6) / 10);   // v1.342: the box's lawns are the real place's too
       // what lies here: the course (north past the lots, and all round the pond west of the box), the woods, or lawn
       const dC = 42 + 13 * _wmSS((x - 50) / 20), dr = _wmPolyNear(WM_REAL.dr, x, z).d;
       const course = (x < -48 && z < 150) || (z < -dC - 3 && z > -128 && x < WM_REAL.drX - 14);
@@ -14613,7 +14638,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     return buildStreetRoad(scene, {
       point, deriv,
       groundY, groundNormal, asphMat: roadMat, houseCenters,
-      ASPH: 3.45, bulb: { x: -30, z: 0, r: 6.3 }, T0, NS: 170 + RX_K,
+      ASPH: 3.45, bulb: { x: -30, z: 0, r: _realBulb ? WM_BULB.r : 6.3 }, T0, NS: 170 + RX_K,   // v1.342: the real bulb's 11 m
       manholes: [[0.22, -0.6], [0.58, 0.9]], drains: [[0.34, 1], [0.7, -1]],
       cracks: [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]], patch: 0.4,
     });
@@ -14634,6 +14659,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // these are inspired by the warmer red-brick and tan-stucco palette from the
   // reference photos.
   const houseObs = [];
+  // v1.342: what is built from here to Seth's area is the box's (its houses, driveways, fences, trees, cover, cars, fort),
+  // but for the street's lots and road: with the bulb at real size it is taken out again (below), after the box has made
+  // its random draws, so every match's draws stay as they were
+  const _boxFrom = scene.children.length;
   // v1.15: houses pushed further from the road (bigger driveways) and spread
   // wider in X (~16m apart, was ~12). North row z=-15, south row z=19.
   // v1.312 (backlog D.55 step 4; docs/refs/winnmark.md gap 5): the street's three real finishes, in turn along each row:
@@ -14708,8 +14737,14 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -17, z: 19, side: 'south' },
   ];
   // v1.339 (D.51 step 2): the street's houses past the box at real size, their walk-outs, decks, terraces and fences
-  const wmLots = buildWinnmarkLots(scene, { groundY, looks: WM_LOOK, night: _night });
-  buildWinnmarkRoad(houseCenters.concat(wmLots.drives));   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
+  // v1.342: with the bulb at real size, its lots' driveways start at the curved street's edge or the bulb's on their side
+  const roadZAt = x => { let z = 0, b = Infinity; for (const p of roadCenterline) if (Math.abs(p.x - x) < b) { b = Math.abs(p.x - x); z = p.z; } return x > 34 ? 0 : z; };
+  const roadEdge = (x, s) => {
+    const dx = Math.abs(x - WM_BULB.x), bz = dx < WM_BULB.r + 0.6 ? Math.sqrt((WM_BULB.r + 0.6) ** 2 - dx * dx) : 0;
+    return s > 0 ? Math.max(roadZAt(x) + 3.6, bz) : Math.min(roadZAt(x) - 3.6, -bz);
+  };
+  const wmLots = buildWinnmarkLots(scene, { groundY, looks: WM_LOOK, night: _night, bulb: _realBulb, roadEdge });
+  buildWinnmarkRoad(_realBulb ? wmLots.drives : houseCenters.concat(wmLots.drives));   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
   for (const hc of houseCenters) {
     // Driveway runs from the house front all the way to the ACTUAL road edge.
     // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
@@ -15325,6 +15360,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // patio a firewood stack and a grill, his east side yard a shed. A hedge closes the gaps between the north houses, the
   // lot-line fences mark its east and west sides, and three lamps light the street at night.
   const saObs = [];
+  const _boxTo = scene.children.length, _coverFrom = coverList.length;   // v1.342: the box's own scene objects and cover end here
   if (_area === 'seth') {
     const V = (x, z) => new THREE.Vector3(x, 0, z);
     const SAP = {
@@ -15509,7 +15545,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the house X's). `side` says which shoulder; the arm overhangs toward the road.
   // v1.51: poles are now collision obstacles (collected into lampObs below).
   const lampObs = [];
-  {
+  if (!_realBulb) {   // v1.342: the box's lamps; the real bulb's end has none yet
     const ROAD_HALF_LAMP = 3.5;
     const LAMP_GRASS = 1.6;   // pole sits this far onto the grass beyond the pavement
     const lampSpotsXSide = [
@@ -15569,14 +15605,17 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const onHouse = (x, z) => houses.some(hs => Math.abs(x - hs.x) < 15 && Math.abs(z - hs.z) < 13) ||
       R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd) ||
       WM_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44) ||   // v1.339: the houses, decks and terraces
+      (_realBulb && WM_BULB_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44)) ||   // v1.342: the bulb's
       (Math.abs(x - WM_SETH.x) < WM_SETH.half + 2 && z > 3 && z < WM_SETH.patio + 1.5);       // v1.340: Seth's lot to the patio's edge
     // trees on a jittered 7 m grid, by what lies there
     const P = R.pond;
     for (let gx = -206; gx <= 306; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
       const x = gx + rr(-2.6, 2.6), z = gz + rr(-2.6, 2.6), pick = rs(), pine = rs() < 0.42, hr = rs(), cr = rs();
-      if (outB(x, z) < (pine ? 3 + cr : 4.5 + 1.8 * cr) + 6.5) continue;             // the box's own trees, and 6 m clear of it
+      if (!_realBulb && outB(x, z) < (pine ? 3 + cr : 4.5 + 1.8 * cr) + 6.5) continue;   // the box's own trees, and 6 m clear of it
       const dr = _wmPolyNear(R.dr, x, z).d;
       if (dr < 11 || (Math.abs(z) < 12 && x > 38 && x < R.drX)) continue;             // the roads and their verges
+      // v1.342: the real bulb's end: the street through the box and the bulb's verges (the draws above are made either way)
+      if (_realBulb && ((x > WM_BULB.x && x <= 38 && Math.abs(z - roadZAt(x)) < 12) || Math.hypot(x - WM_BULB.x, z - WM_BULB.z) < WM_BULB.r + 7)) continue;
       if (Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz) < 1.18) continue;            // the pond and its edge
       if (Math.min(_wmPolyNear(R.creek, x, z).d, _wmPolyNear(R.course, x, z).d) < 2.5) continue;
       if (onHouse(x, z)) continue;
@@ -15622,25 +15661,25 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // Player collision: houses, fences, tree trunks, bushes, cover items. The
   // lake is *not* an obstacle visually but we want to prevent walking onto it.
   const lakeBlocker = { minX: -52, maxX: -37, minZ: -40, maxZ: 40, h: 0.5, surface: 'hard' };
-  const obstacles = [
+  // v1.342: with the bulb at real size the box is gone: its scene objects west of Seth's area (x < 60) are taken out, and
+  // none of its obstacles or cover is kept (Defend the Treehouse's fort, built among them, stands at x 126 and stays)
+  if (_realBulb) {
+    scene.updateMatrixWorld(true);
+    const bb = new THREE.Box3(), c = new THREE.Vector3();
+    for (const o of scene.children.slice(_boxFrom, _boxTo)) {
+      if (o.userData.wmRoad || o.userData.wmLot || o.name === 'winnmarkLots') continue;
+      bb.setFromObject(o); if (bb.isEmpty()) continue;
+      if (bb.getCenter(c).x < 60) scene.remove(o);
+    }
+    const cx = o => o.minX != null ? (o.minX + o.maxX) / 2 : o.cx != null ? o.cx : o.center ? o.center.x : 0;
+    for (let i = _coverFrom - 1; i >= 0; i--) if (cx(coverList[i]) < 60) coverList.splice(i, 1);
+  }
+  const obstacles = _realBulb ? [...coverList, ...wmLots.obstacles, ...saObs] : [
     ...houseObs, ...fences, ...treeObs, ...bushObs, ...coverList,
     ...curbsideBins, ...driveCars, lakeBlocker, ...lampObs,
     ...wmLots.obstacles,   // v1.339: last, so every other obstacle keeps its place in the list
     ...saObs,              // v1.341: Seth's area's trunks, shrubs, hedge and lamps (none in the box's matches)
   ];
-
-  // v1.341: in Seth's area the box is a view down the street: baked by look (bakeMeshesByLook)
-  if (_area === 'seth') {
-    scene.updateMatrixWorld(true);
-    const far = [], c = new THREE.Vector3();
-    scene.traverse(m => {
-      if (!m.isMesh || m.isInstancedMesh || m.isSkinnedMesh || Array.isArray(m.material) || !m.visible) return;
-      if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
-      const bs = m.geometry.boundingSphere; c.copy(bs.center).applyMatrix4(m.matrixWorld);
-      if (c.x < 48 && bs.radius < 40) far.push(m);
-    });
-    scene.add(bakeMeshesByLook(far, 'winnmarkBoxBaked'));
-  }
 
   return {
     scene,
