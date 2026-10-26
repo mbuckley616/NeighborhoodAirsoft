@@ -14148,3 +14148,37 @@ play as before.
 - **The edge backdrop.** `EDGE_BACKDROPS` has no Winnmark entry any more. Its four sides, a ring of generic houses
   and trees, are the map's own now.
 ### Verified
+- **`tests/winnmark-real.test.mjs`, new.** Its checks:
+  - The ground in the box and its tree walls (x −40 to 42, z −38 to 42) is v1.337's formula, to 0 m.
+  - The street runs 265 m from the bulb's middle to Winnmark Dr. It rises 4.61 m, with no 2 m stretch steeper
+    than 1.42 %.
+  - The north lots stand at 3.2-3.8 m at their front lawns, with the course at 0 m behind them. The south lots fall
+    from 3.4-4.0 m at the front to −0.1-0.5 m in the wood and −1.3 to −0.5 m by the creek.
+  - Both creeks run downhill. At all 106 points sampled along them the water is over the bed and both banks stand
+    0.3 m or more above it; the two points left out are the pond's outlet and where the creeks meet. The pond's
+    water covers all 160 points sampled in it, and the lake strip is gone.
+  - There are 1,184 trees and 30 houses. None is an obstacle, and the nearest vertex is 7.16 m outside the bounds.
+  - From the entry, 8 of 36 rays down the street reach past x 150. The camera sees 380 m in play and 200 m back in
+    the bedroom.
+- **Cover.** All 17 Winnmark matches were built by day and at night, on main and on this branch, with the same
+  obstacle counts and the same named anchors and starts. Three obstacles differ: trees past the west tree wall
+  (x −54 to −58, z 22-34, outside the bounds), which now stand 0.4-1.4 m lower on the course's ground where the lake
+  strip's flat was.
+- **Draw calls** in seven views of Two on Two on Two (`winnmark_team_3v3`), v1.337 → v1.338: bulb 1,679 → 1,677;
+  looking in from the entry 1,838 → 1,837; looking out of it 64 → 64; north yards 1,537 → 1,535; south yards
+  1,632 → 1,631; looking west from the bulb 98 → 97; mid-street 387 → 387. The worst stays 1,837, inside the 2,060
+  budget. Triangles in the scene went from 321k to 364k. Building the map takes 816 ms against 678 ms.
+- **These suites pass:** `winnmark-real`, `winnmark-trees` (its lake check now measures the pond), `backdrop` (Winnmark
+  left out: it has no backdrop now), `layout-same`, `smoke`, `winnmark-road`, `winnmark-cars`, `winnmark-fort`,
+  `winnmark-props`, `houses`, `house-backs`, `ffa-starts`, `whole-block`, `seth-shotgun`, `night-prowl`, `real-scale`,
+  `fence-bound` and `bulb-sight`. No page errors. Run four at once on this 4-core machine, `winnmark-real` timed out
+  entering its match and `layout-same`'s page crashed; alone, each passes. Alone, entering a match takes 4.7 s
+  (5.5 s on main) and the heap is 131 MB (148 MB).
+### Still open
+- **Nothing in play changed yet.** Steps 2-4 put the real-size houses on the nine sites and the bulb's four lots,
+  build Seth's sunken lot with the deck, hot tub, pool and creek behind, and move the matches into the two areas.
+- **What a look can judge:**
+  - The course reads bright from above in the sun.
+  - The scenery houses are the plain low-poly kind. Step 2's houses on the street are the detailed ones.
+  - The creek is a flat strip of water in its channel, with no stones or footbridge yet. Those come with Seth's yard
+    in step 3, where it is in play.

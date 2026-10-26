@@ -14332,7 +14332,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (Math.hypot(_wmRoadPoint(t).x + 30, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
     const dt = (tEnd - TA) / 170, T0 = TA - RX_K * dt;
     const E0 = _wmRoadPoint(TA), d0 = deriv0(TA), l0 = Math.hypot(d0.x, d0.z);
-    const E1 = { x: E0.x - d0.x / l0 * 50, z: E0.z - d0.z / l0 * 50 }, E2 = { x: 170, z: 1.5 }, E3 = { x: WM_REAL.drX + 1, z: 0 };
+    const E1 = { x: E0.x - d0.x / l0 * 14, z: E0.z - d0.z / l0 * 14 }, E2 = { x: 120, z: 0 }, E3 = { x: WM_REAL.drX + 1, z: 0 };
     const ext = u => { const m = 1 - u; return {
       x: m*m*m*E0.x + 3*m*m*u*E1.x + 3*m*u*u*E2.x + u*u*u*E3.x, z: m*m*m*E0.z + 3*m*m*u*E1.z + 3*m*u*u*E2.z + u*u*u*E3.z }; };
     const uOf = t => (TA - t) / (TA - T0);
