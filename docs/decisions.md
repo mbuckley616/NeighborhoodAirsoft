@@ -7,6 +7,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.75, splitting index.html for a second builder (Michael, local session, 2026-10-26).** From 1 to 26 Oct The Old
+  Gates landed about 3.6 times Airsoft's commits; it runs about nine builder lanes, and Airsoft has one because the game
+  is one 22,000-line file (a second builder was declined on 29 Sep for that reason). Three questions, asked in the
+  session:
+  1. What players on itch.io get: A) the folder (index.html + js/), as The Old Gates ships; B) one file joined back
+     before each upload. Recommended A.
+     Michael: **A — the folder**. (2026-10-26)
+  2. How the two builders divide the work: A) maps vs. play (maps, scenes, scenarios and the map screen; guns, kids' AI,
+     combat, shop, saves, menus and the HUD); B) two of the same, both top-down. Recommended A.
+     Michael: **A — maps vs. play**. (2026-10-26)
+  3. When: A) after the Winnmark card lands, as the next card; B) pause Winnmark and split now. Recommended A.
+     Michael: **A — after Winnmark lands**. (2026-10-26)
+
 - **Hold the South Fort is still lost before the first tag (critic, 2026-10-26, v1.337)**
   v1.319 took your first fix: a tagged attacker walks back to the north fort. Headless after it, 4 of 4 rounds were
   lost, all to Devon's sniper from 37-38 m: at 3.1 s pushing out, at 6-9 s standing on the fort floor. With you
