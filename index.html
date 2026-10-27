@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.353</div>
+  <div class="version">v1.354</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -28260,8 +28260,6 @@ function fmtMatchTime(sec) {
   const s = Math.max(0, Math.round(sec));
   return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 }
-// The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened
-const scenarioUnlockedForResult = isScenarioUnlocked;
 function scenariosOpenNow() {
   return new Set(Object.keys(SCENARIOS).filter(id => findScenarioListContext(id) && scenarioUnlockedForResult(id)));
 }
@@ -38305,6 +38303,9 @@ function isScenarioUnlocked(scenarioId) {
   const prevId = ctx.ids[ctx.idx - 1];
   return !!Game.persist.completed[prevId];
 }
+// v1.354 (D.75, the split): moved here from beside scenariosOpenNow, because a classic script cannot read a function
+// declared in a later file while it loads. The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened
+const scenarioUnlockedForResult = isScenarioUnlocked;
 // =====================================================================
 // v1.194 (D.20 step 1, Michael: A on "A better game" 1 — a light summer story told in the bedroom): the summer of
 // 2003 on a wall calendar. Day 0 is Sunday 1 June; each zone of the ladder is a few weeks of it, and the date inside a
