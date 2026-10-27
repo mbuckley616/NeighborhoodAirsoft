@@ -1,4 +1,4 @@
-// Shared harness for Neighborhood Airsoft. Boots the single-file build in headless Chromium with
+// Shared harness for Neighborhood Airsoft. Boots the game (index.html and its js/ files) in headless Chromium with
 // three.js served locally (the CDN can be unreachable in CI and cloud sessions), and gets into the
 // bedroom or a scenario. Every test and every playtest script imports this.
 //
@@ -14,7 +14,7 @@
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..', '..');
@@ -25,9 +25,11 @@ export function localBuild(src = path.join(ROOT, 'index.html')) {
   fs.mkdirSync(TMP, { recursive: true });
   // v1.126: one file per process, so two suites booting different builds at once can't overwrite each other's copy
   const out = path.join(TMP, `index.local.${process.pid}.html`);
+  // v1.354 (D.75): the copy sits in tests/tmp/, so a split build's <script src="js/…"> tags point back at the js/ beside src
+  const jsUrl = pathToFileURL(path.join(path.dirname(path.resolve(src)), 'js')).href + '/';
   const html = fs.readFileSync(src, 'utf8').replace(
     /https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/three\.js\/r128\/three\.min\.js/,
-    '../vendor/three.min.js');
+    '../vendor/three.min.js').replace(/<script src="js\//g, () => `<script src="${jsUrl}`);
   fs.writeFileSync(out, html);
   return out;
 }
