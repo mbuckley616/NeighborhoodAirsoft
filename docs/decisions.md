@@ -5,6 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
+  music (a procedural C-major loop, `startMusic('bedroom')`); every match is silent but for the guns and the kids, and
+  the bedroom tune stops at BEGIN. New tracks would be made the same way (oscillators in the browser, no files), under the
+  Music volume in Settings, and kept low under the gunfire so a BB's crack and a kid's call still carry. Which first?
+  A) By mode: four short loops (day team matches and 1v1s, night matches, defends and anything on a clock, the zone
+     finales and the Last Saturday), plus a win and a lose sting on the result card.
+  B) By map: one loop per zone (Winnmark, Bunratty, the Hollow, the lot, Northcliff, the store, the school, Willow Bend),
+     each with its own feel, day and night alike.
+  C) Both: the mode sets the tempo and the mood, the zone picks the lead instrument.
+  D) Only the stings for now (win, lose, the last kid left), the matches stay quiet.
+  Builder recommends **A**: four loops cover every match and are quick to hear in play; C can grow from it later.
+
 ## Answered
 
 - **D.75, splitting index.html for a second builder (Michael, local session, 2026-10-26).** From 1 to 26 Oct The Old

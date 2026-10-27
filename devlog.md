@@ -14186,3 +14186,84 @@ model and was set to −0.058, 0.09° off.
   off the sight line).
 ### Still open
 - **For a playtest:** whether the swing from the hip to aimed still looks right with the gun sitting 2.7 cm higher.
+
+## v1.348 — The Vector, the last SMG of batch 2
+Backlog D.63, batch 2 (Michael: A, batches of four to six): his note asks for "other SMGs"; the P90 (v1.346) was the
+first, and this one finishes the batch (the M249, the L96, the P90, the Vector). The MP5, the UMP, the P90 and the
+MAC-10 were the SMGs.
+- **The gun.** The Vector, $230, under AUTOMATICS after the P90 on airsoft.com and the workbench: a short boxy black
+  upper with a rail along the top and flip-up irons, the slanted front that drops ahead of the trigger with the mag
+  under it, the pistol grip behind the mag, a shroud and short barrel, its own front grip under the shroud and a
+  folding stock. Its own first-person model with both hands on it (the grip and the front grip), and a blocky one for
+  the kids and the Loadout kid.
+- **How it shoots.** The MP5's full auto, faster than any SMG: 16.7 BBs a second (the MP5 13.3, the P90 15). Its
+  recoil system keeps it tighter aimed (0.28 of the hip spread, the MP5's 0.4); from the hip it is as wide as the MP5,
+  with the MP5's BB (50 m/s, flat to 14 m) and walk (1.05), at 5.5 lb (5). The trade is the mag: 100 BBs, empty in six
+  seconds held down. Aimed, you look over the front post.
+- **Its mag.** 100 BBs, a 200 mag for $28, a spare 100 for $12 (0.8 lb in a slot). It takes an optic on the top rail
+  between the irons and the side rails, but no under-barrel part: its own front grip is where one would go.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:** AUTOMATICS lists twelve guns, the Vector after the P90 with its picture;
+  its page sells it for $230 and puts it in your hands. Against the MP5: 1,000 a minute (800; the P90 and the UMP are
+  slower too), aimed spread 0.28 (0.4), a 100 mag (150), the same BB, flat range, walk and hip spread, both full auto. In
+  a match: its own model, 100 in the mag, both hands on it; aimed, the post's tip is 0.14° off the reticle; held
+  down 2 s it fires 34 BBs.
+- **`gun-parts`:** its 36 parts all join the gun (an optic's rail sat 7.6 mm over the top rail on the first try and
+  was lowered onto it). **`fp-hands`:** both hands touch the Vector (gap 0) and stay off the sight line; aimed both show on screen, at the hip the left hand on the front grip does and the right one on the grip sits under the screen's edge; both forearms leave by the bottom of the screen.
+- The suites that count the guns go from 24 to 25 (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`,
+  `shop-gun-kinds`, `shop-pics`, `gun-electric`); `under-parts` counts the Vector with the guns that have no under slot.
+- **These suites pass:** `gun-electric`, `fp-hands`, `gun-parts`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`, `loadout-kid` and `under-parts`, each run alone. Run beside two to five other suites here, `gun-electric`, `fp-hands`, `crew-balance` and `shop-pics` lost their browser (one software-GL browser takes three of the four cores), never at a check.
+### Still open
+- **For a playtest:** whether 16.7 a second from a 100 mag is a fair trade against the P90's 200 at 15, and whether the
+  tighter aimed spread makes it the best SMG at 10-14 m. A crew kid you lend it to fights with the default (pistol)
+  ranges, as with the M249, the L96 and the P90. Batch 2 is done; more guns (Michael's "a few more Automatic rifles")
+  would be a batch 3.
+
+## v1.349 — The briefings count the sides as built
+Found in play (critic, v1.337): eight team briefings said "N a side" and the match built another count the first time
+through. Night Swim said "Three a side" over a 6 v 6 roster; the Hollow skirmish "Three a side" over 4 v 4; the night
+4v4s on the lot, Bellfield, the store, Northcliff, the school and the club "Four a side" over 4 v 5 up to 6 v 7. The
+prose was written before your crew (v1.274-v1.275): the first-time crew fixes the sides, and a replay with a bigger crew
+grows yours, so no number written into the text can stay right.
+- **The fix:** the "N a side" in a briefing is read from the sides the match builds with your crew as it is (the same
+  `crewSetup` the roster under it comes from): "Six a side" when the two match, "Six of you against seven" when not. It
+  is done where the text is shown, on the briefing card and on the intro overlay, so the scenario prose stays as
+  written. Briefings without "a side" in them are untouched.
+### Verified
+- **`tests/crew-balance.test.mjs`, extended:** every team briefing with "a side" in it (8) says the sides as built,
+  for the crew you'd have the first time through and for a replay with all five: the first time through the Hollow skirmish "Four a side" (4 v 4), the lot "Four of you against five", Bellfield "Five a side", Night Swim and the store "Six a side", Northcliff, the school and the club "Six of you against seven". The intro overlay shows the same text through the same function. Night Swim the first time
+  through reads "Six a side".
+- **These suites pass:** `crew-balance` (every earlier check of it too: the sides themselves are unchanged).
+### Still open
+- The prose still names the kids written into each match ("You're with Eric and Rebecca"), which a crew kid can replace;
+  the roster under it is right. Worth a look if it reads wrong in play.
+
+## v1.350 — Halloween on the street houses
+Backlog D.70 (Michael: B, 23 Oct): holiday looks first, Halloween now: "pumpkins, fake webs, kids in costumes, porch
+lights by night; shown around the real dates or switched on from the Pickup Game board; play unchanged". This is the
+first step, the houses, and Halloween is four days off.
+- **When.** From 17 October to 1 November by the computer's clock (`holidayNow`); `Holiday.force` turns it on or off
+  whatever the date, for the Pickup Game board's switch (a later step) and the tests.
+- **What.** Every street house built by `buildSuburbanHouse` (Winnmark, Northcliff, Bellfield and the rest that use it)
+  gets two jack-o'-lanterns on its step either side of the door and a big one out by the walk, their carved faces
+  toward the street; fake cobwebs, a quarter web each, hung across its two front corners under the eaves; and a porch
+  light beside the door. By day the faces are dark carved holes and the light is off; by night the faces and the bulb
+  glow orange and the light throws a soft halo on the wall.
+- **Play unchanged.** Nothing is solid and nothing joins the obstacles, so BBs, kids and you pass as before. The whole
+  map's decorations are four merged meshes (lanterns and lamps, faces and bulbs, webs, the night halos), so a map draws
+  three more calls by day and four by night, and no house's own mesh count changes (`houses`' 20-mesh rule).
+### Verified
+- **`tests/holiday.test.mjs`, new** (a holiday that switches itself on by date would hurt to lose unnoticed):
+  - The dates: off on 16 Oct, on the 17th, the 31st and 1 Nov, off on 2 Nov and in July.
+  - Bellfield Court forced off: nothing built. Forced on by day: all seven houses, 21 lanterns, 14 webs, 7 porch
+    lights, no halo; the same obstacles as with it off (0 on this map, none the decorations); 806 draw calls against
+    803; the lanterns' lowest point 7 mm under the ground (y 0). By night (Lamplight on Bellfield): the halos too, four meshes.
+- **`houses`** (Winnmark's eight detailed houses, 20 meshes each at most, collision unchanged) passes with Halloween
+  on: 660 draw calls looking at Seth's house.
+- **These suites pass, each alone, with Halloween on by today's date:** `holiday`, `houses`, `smoke` and `real-scale` (Bunratty's eight views at most 1,731 draw calls, the Hollow's 1,183, as before: neither map has these houses). A night look in Northcliff (a check of my own, thrown away) shows the webs on the corners, the lanterns' faces lit and the porch glow by the door.
+### Still open
+- **For a look:** the lanterns' size and spacing, and whether the webs read as webs at a distance.
+- Bunratty's and the Hollow's houses are built by their own builders (the D.51 card's), not `buildSuburbanHouse`, so they
+  have no decorations yet; nor do the club, the store or the school. Next steps of D.70: kids in costumes, the Pickup
+  Game board's switch, then Bunratty's houses (Winnmark's real-scale rebuild on card fable/d51-winnmark may build its
+  houses another way: they pick it up if they keep `holidayFront`).
