@@ -36,10 +36,10 @@ const prog = await page.evaluate(() => {
   }
   return { out, n: summerTexts().length, unread: summerUnreadCount(), order: summerTexts().map(t => t.id) };
 });
-check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 9 && prog.out.every(o => o.day === o.calendar), prog.out);
+check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 11 && prog.out.every(o => o.day === o.calendar), prog.out);
 // the Hollow's chain stops at the big game; ladder order puts the big battle after the fort matches
-// v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew
-check('thirteen texts by the Hollow\'s big game, all unread, newest first', prog.n === 13 && prog.unread === 13 &&
+// v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew; v1.363: fifteen, with Seth's before Bunratty's finale and the big game
+check('fifteen texts by the Hollow\'s big game, all unread, newest first', prog.n === 15 && prog.unread === 15 &&
   prog.order[0] === 'bigGame' && prog.order[prog.order.length - 1] === 'start', prog);
 
 // Home: the phone shows 10 new; walk to it, E opens them, newest first, and reads them all
@@ -50,7 +50,7 @@ await page.evaluate(() => { const it = Game.interactables.find(i => i.type === '
 await g.spin(3);
 const near = await page.evaluate(() => ({ focus: Game.focusedInteractable && Game.focusedInteractable.type,
   prompt: document.getElementById('interactPrompt').textContent }));
-check('beside the nightstand, the prompt is "Check your phone (13 new)"', near.focus === 'phone' && /Check your phone \(13 new\)/.test(near.prompt), near);
+check('beside the nightstand, the prompt is "Check your phone (15 new)"', near.focus === 'phone' && /Check your phone \(15 new\)/.test(near.prompt), near);
 await g.shot('texts-phone');
 await page.keyboard.press('KeyE');
 const open = await page.evaluate(() => ({
@@ -61,9 +61,9 @@ const open = await page.evaluate(() => ({
   it: (() => { const it = Game.interactables.find(i => i.type === 'phone'); return { prompt: it.prompt, led: it._led.visible, chip: it._labelEl.textContent }; })(),
 }));
 check('E opens "Texts" over the bedroom', open.mode === 'modal' && open.title === 'Texts', open.mode);
-check('thirteen messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
-  open.msgs.length === 13 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[12].id === 'start' && open.msgs[12].date === 'Sun 1 Jun', open.msgs);
-check('opening them reads them all: none unread, thirteen kept in the save', open.unread === 0 && open.stored === 13, open);
+check('fifteen messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
+  open.msgs.length === 15 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[14].id === 'start' && open.msgs[14].date === 'Sun 1 Jun', open.msgs);
+check('opening them reads them all: none unread, fifteen kept in the save', open.unread === 0 && open.stored === 15, open);
 check('the phone.s light goes off and its prompt and chip say "Phone" again', open.it.prompt === 'Check your phone' && !open.it.led && /Phone$/.test(open.it.chip.trim()), open.it);
 await g.shot('texts-open');
 await page.evaluate(() => document.getElementById('modalCloseBtn').click());

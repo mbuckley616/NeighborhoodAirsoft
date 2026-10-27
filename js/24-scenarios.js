@@ -961,7 +961,7 @@ const SCENARIOS = {
   bunratty_night_team_2v2: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Night Game: Sean Has Your Back',
-    desc: "You and Sean against the brothers on the dark lane — three lives for every kid but you, respawning at their base until one side's out. Ryan and Mitchell fight as a pair and at least one's got a flashlight; let the beam tell you where they're pushing from. Stick with Sean, use the lamp pools, and finish a brother before the other can set up.",   // v1.182: promised everyone lives; you have one (playerLives 1)
+    desc: "You and Sean on the dark lane against Ryan and Seth, who came over from Winnmark with a Spring AR to play for the other side — three lives for every kid but you, respawning at their base until one side's out. They fight as a pair and at least one's got a flashlight; let the beam tell you where they're pushing from. Stick with Sean, use the lamp pools, and finish one before the other can set up.",   // v1.182: promised everyone lives; you have one (playerLives 1). v1.362 (D.28 step 5): Seth in Mitchell's place
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1489,7 +1489,8 @@ const SCENARIOS = {
   northcliff_night_4v4: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'Bellfield After Dark',
-    desc: "The Bellfield Court kids walked over after dinner: Mason, Christian, Diego, and Fernando with his rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
+    // v1.362 (D.28 step 5): Seth in Fernando's place (SETH_ZONE_MATCHES)
+    desc: "The Bellfield Court kids walked over after dinner, Mason, Christian and Diego, and Seth came up with them with a burst rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1802,7 +1803,8 @@ const SCENARIOS = {
   school_night_4v4: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
-    desc: "No game tonight, so the field's yours. Caleb, Nathan and Sophie are back, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
+    // v1.362 (D.28 step 5): Seth in Nathan's place (SETH_ZONE_MATCHES)
+    desc: "No game tonight, so the field's yours. Caleb and Sophie are back with Seth, who's carrying a P90 now, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     timeOfDay: 'night',
