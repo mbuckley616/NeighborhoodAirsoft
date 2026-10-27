@@ -31,6 +31,7 @@ function resultNavTo(scenarioId) {
   enterScenario(scenarioId);
 }
 document.getElementById('navAgainBtn').addEventListener('click', () => {
+  if (Net.active) { netRematch(); return; }   // v1.364 (D.67): online, REMATCH takes the room back to the board
   resultNavTo(Game._lastScenarioId);
 });
 document.getElementById('navPrevBtn').addEventListener('click', () => {

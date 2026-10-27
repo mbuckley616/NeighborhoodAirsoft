@@ -801,7 +801,7 @@ function voiceForCharId(charId) {
 
 // v1.256: `fill` fills a line's {name}; returns true when the line was said
 function tryNpcSpeak(enemy, category, fill) {
-  if (enemy && enemy.remote) return false;   // v1.230: your friend online speaks for himself
+  if (enemy && (enemy.remote || enemy.netBot)) return false;   // v1.230: your friend online speaks for himself (v1.364: and his kid, when he has left, has no lines)
   // v1.150: the cooldowns run on the round clock, not wall time, so a backgrounded tab or the headless
   // tests (which step a round far faster than real time) keep the same spacing as play.
   const now = Game.scenario?.roundTime || 0;
