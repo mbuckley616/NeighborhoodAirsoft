@@ -836,6 +836,30 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
+  // === RACE — v1.354 (backlog D.71, Michael: A, 23 Oct): the go-cart race down Bunratty's hill ===
+  // You coast a homemade cart from up the street past the entry to the bulb, gravity only, while five kids on the front
+  // lawns shoot at you. Three lives; a tag costs one and you roll on. Reach the bulb with one left and you win.
+  bunratty_go_cart: {
+    region: 'sentinel', street: 'bunratty_ct',
+    name: 'Bunratty Court', scenarioName: 'Downhill Derby',
+    desc: "Ryan built a go-cart out of a plank, a milk crate and four lawnmower wheels, and the whole street wants a shot at you on the way down. No engine: the hill does the work. A and D steer, S drags your feet to brake, W kicks you along when you're crawling. Five kids are posted on the front lawns down the lane. Shoot back if you can, but mostly just keep rolling. Three tags and you're out; make the cul-de-sac with one left.",
+    builderFn: 'buildBunrattyCourtScene',
+    builderArg: 'default',
+    scenarioType: 'race',
+    race: true,
+    playerSpawn: 'lane_west',
+    enemySetup: [
+      { charId: 'mitchell', weapon: 'ar',      anchor: 'race_n1', role: 'defender' },
+      { charId: 'priya',    weapon: 'mp5',     anchor: 'race_s1', role: 'defender' },
+      { charId: 'owen',     weapon: 'ar',      anchor: 'race_n2', role: 'defender' },
+      { charId: 'tyler',    weapon: 'shotgun', anchor: 'race_s2', role: 'defender' },
+      { charId: 'sean',     weapon: 'ak47',    anchor: 'race_n3', role: 'defender' },
+    ],
+    winCondition: 'race_finish',
+    rewards: { win: 70, lose: 18 },
+    playerLives: 3, armorMult: 1,
+  },
+
   // =====================================================================
   // v1.35 — NIGHT scenarios. Same maps, lit by moon + streetlamps, with at
   // least one enemy carrying a flashlight (handled by the night-flashlight

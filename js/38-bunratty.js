@@ -1614,6 +1614,12 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     hero_yard:   { pos: P(31, 28.6), yaw: 0 }, // v1.304: on the terrace under the deck
     ffa_side:    { pos: P(4.5, -17.5), yaw: Math.PI },      // v1.265: the free-for-all's, between houses 1 and 2, facing the lane
   };
+  // v1.354 (D.71): the go-cart race's kids, on the front lawns along the lane, each with a line onto the road
+  Object.assign(placements, {
+    race_n1: { pos: P(-24, -9), cover: null }, race_s1: { pos: P(-14, 10), cover: null },
+    race_n2: { pos: P(4, -10),  cover: null }, race_s2: { pos: P(5, 11),   cover: null },
+    race_n3: { pos: P(25, -9),  cover: null },
+  });
 
   // === Legacy return scaffolding ===
   let enemies = [];
@@ -1755,6 +1761,7 @@ function buildBunrattyCourtScene(variant, timeOfDay) {
     playerSpawns,
     groundY,   // v1.8: terrain height function for the generic physics systems
     viewFar: 450,   // v1.303 (D.51 step 1): the camera sees out to the far bank (the other maps keep 200)
+    raceRoad: { point: bunrattyRoad.point, T0: bunrattyRoad.T0, end: BULB },   // v1.354 (D.71): the go-cart's line down the street
   };
 }
 

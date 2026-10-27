@@ -854,6 +854,8 @@ function startScenario(built) {
   showPauseHint();
   // v1.189: capture the flag: the two flags and their bases, in the scene the match is played in
   Game.scenario.ctf = Game.scenario.ctfDef ? ctfSetup(Game.scenario.ctfDef, built) : null;
+  // v1.354 (D.71): the go-cart race: the cart, its line down the street, and you in it
+  Game.scenario.race = SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].race && built.raceRoad ? raceSetup(built) : null;
 
   // v1.57: arm the guided tutorial only for tutorial scenarios; otherwise make
   // sure any prior tutorial state + banner are cleared.

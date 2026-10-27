@@ -48,6 +48,124 @@ const ZOMBIE_TAG_RANGE   = 1.3;    // contact distance that infects the player
 const ZOMBIE_JOG_SPEED   = 3.55;   // ~ player jog (3.6) — most taggers
 const ZOMBIE_SPRINT_SPEED = 5.2;   // faster than player sprint — the 1-2 runners
 
+// v1.354 (backlog D.71, Michael: A, 23 Oct: "the go-cart race first, on Bunratty's slope, gravity only, kids along the
+// route shooting; reach the bottom with lives left"): a match with `race: true` puts you in a go-cart at the top of the
+// street (the map's `raceRoad`, from the fork; RACE.startX can start it further down) and the hill rolls you down it to
+// the bulb. The fork itself is flat, so you start just below it (RACE.startX) with Ryan's shove (RACE.shove m/s): 174 m
+// and 13.5 m down, and the run-up carries you over the 0.4 m rise west of the entry. The cart keeps to the road: A and D steer
+// it across the lane (RACE.half either side of the crown), S drags your feet (a brake), W kicks you along under
+// RACE.kickTop (a kid's push, no engine). Gravity along the road's own fall less rolling resistance and air drag sets the
+// speed. Anything solid on the lane stops the cart where it is. You sit (crouched eye and hitbox) and look and shoot as
+// in any match. A tag costs a life and RACE.grace seconds in which nothing tags you; you roll on. Reaching the end of the
+// road with a life left wins (RACE.finishShort m before it: the bulb's plank fort stands across its end); the
+// last tag loses, as in any match. The lane's parked cars, bins and planter make it a slalom.
+const RACE = { startX: -150, shove: 3, g: 9.8, roll: 0.015, drag: 0.004, brake: 4.5, kick: 1.3, kickTop: 2.6, steer: 2.6,
+  half: 2.6, top: 13, grace: 1.5, step: 0.5, finishShort: 3 };
+function raceSetup(built) {
+  const road = built.raceRoad, gY = built.groundY;
+  // the road's line from the fork to the bulb, resampled every RACE.step metres along it
+  const raw = [];
+  for (let i = 0; i <= 4000; i++) {
+    const t = road.T0 + (1 - road.T0) * i / 4000, p = road.point(t);
+    if (Math.hypot(p.x - road.end.x, p.z - road.end.z) < 5) { raw.push(p); break; }
+    raw.push(p);
+  }
+  const xs = [], zs = [];
+  let acc = 0;
+  for (let i = 0; i < raw.length; i++) {
+    if (i > 0) acc += Math.hypot(raw[i].x - raw[i - 1].x, raw[i].z - raw[i - 1].z);
+    if (i === 0 || acc >= RACE.step) { xs.push(raw[i].x); zs.push(raw[i].z); acc = 0; }
+  }
+  let s0 = 0;
+  for (let i = 0; i < xs.length; i++) if (xs[i] >= RACE.startX) { s0 = i * RACE.step; break; }
+  const R = { xs, zs, len: (xs.length - 1) * RACE.step, s: s0, d: -1.2, v: RACE.shove, gY, done: false, crashes: 0, topV: 0,
+    startS: s0, finishS: (xs.length - 1) * RACE.step - RACE.finishShort, mesh: buildGoCartMesh() };
+  built.scene.add(R.mesh);
+  Game.player.bounds = null;   // the road holds you, not the play box (the race starts west of it)
+  raceSync(R, 0);
+  const a = raceAt(R, R.s);
+  Game.player.yaw = Math.atan2(-a.dx, -a.dz);   // looking down the road
+  Game.scenario.playerStart = { pos: Game.player.pos.clone(), yaw: Game.player.yaw };
+  return R;
+}
+// the road's point and direction s metres along it
+function raceAt(R, s) {
+  const f = Math.max(0, Math.min(R.xs.length - 1.001, s / RACE.step)), i = Math.floor(f), k = f - i;
+  const dx = R.xs[i + 1] - R.xs[i], dz = R.zs[i + 1] - R.zs[i], l = Math.hypot(dx, dz) || 1;
+  return { x: R.xs[i] + dx * k, z: R.zs[i] + dz * k, dx: dx / l, dz: dz / l };
+}
+// where the cart stands at (s, d): d is metres to the right of the crown, looking down the road
+function racePos(R, s, d) {
+  const a = raceAt(R, s);
+  return { x: a.x - a.dz * d, z: a.z + a.dx * d, a };
+}
+function raceSync(R, grade) {
+  const c = racePos(R, R.s, R.d), y = R.gY(c.x, c.z), p = Game.player;
+  p.pos.set(c.x, y, c.z);
+  p.vel.set(c.a.dx * R.v, 0, c.a.dz * R.v);
+  R.mesh.position.set(c.x, y, c.z);
+  R.mesh.rotation.order = 'YXZ';
+  R.mesh.rotation.y = Math.atan2(c.a.dx, c.a.dz);
+  R.mesh.rotation.x = -Math.atan(grade);
+}
+// One step of the cart. Returns true in a race (updatePlayer then moves you no other way, as on a ladder).
+function updateCart(dt) {
+  const R = Game.scenario.race, p = Game.player, k = Game.keys || {};
+  if (!R) return false;
+  p.crouching = true; p.sprinting = false; p.sliding = false; p.airSprint = false;
+  p.onGround = true; p.velY = 0;
+  const q1 = raceAt(R, R.s + 1), q0 = raceAt(R, R.s - 1), h1 = R.gY(q1.x, q1.z), h0 = R.gY(q0.x, q0.z);
+  const grade = (h1 - h0) / 2;   // rise per metre down the road (negative downhill)
+  let acc = -RACE.g * grade - RACE.g * RACE.roll - RACE.drag * R.v * R.v;
+  const braking = !!k['KeyS'] || Pad.move.z > 0.5, kicking = !!k['KeyW'] || Pad.move.z < -0.5;
+  if (braking || R.done) acc -= RACE.brake;
+  if (kicking && !R.done && R.v < RACE.kickTop) acc += RACE.kick;
+  R.v = Math.max(0, Math.min(RACE.top, R.v + acc * dt));
+  let steer = (k['KeyD'] ? 1 : 0) - (k['KeyA'] ? 1 : 0);
+  if (!steer && Math.abs(Pad.move.x) > 0.2) steer = Pad.move.x;
+  const nd = Math.max(-RACE.half, Math.min(RACE.half, R.d + steer * RACE.steer * dt));
+  const ns = Math.min(R.len, R.s + R.v * dt);
+  // anything solid on the lane stops the cart (the sideways step is tried alone, so you can steer round it)
+  const blocked = (s, d) => { const c = racePos(R, s, d); return collidesObstacles(c.x, c.z, 0.5, R.gY(c.x, c.z) + 0.3); };
+  if (!blocked(ns, nd)) { R.s = ns; R.d = nd; }
+  else {
+    if (R.v > 1.5) { R.crashes++; R.v = 0; }
+    else R.v = 0;
+    if (!blocked(R.s, nd)) R.d = nd;
+  }
+  R.topV = Math.max(R.topV, R.v);
+  raceSync(R, grade);
+  if (!R.done && R.s >= R.finishS && Game.mode === 'scenario' && p.hitsTaken < p.maxHits) {
+    R.done = true;
+    R.finishT = Game.scenario.roundTime;
+    endScenarioLater('win', 800);
+  }
+  return true;
+}
+// The cart: a plywood deck on two 2x4 axles, four lawnmower wheels, a milk crate for a seat and a rope on the front axle.
+function buildGoCartMesh() {
+  const g = new THREE.Group();
+  const wood = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.9 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x8a6a42, roughness: 0.9 });
+  const tyre = new THREE.MeshStandardMaterial({ color: 0x1d1d1d, roughness: 0.95 });
+  const hub = new THREE.MeshStandardMaterial({ color: 0xd8c23a, roughness: 0.6 });
+  const crate = new THREE.MeshStandardMaterial({ color: 0x2f6fc0, roughness: 0.7 });
+  const box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+  box(0.5, 0.04, 1.5, wood, 0, 0.2, 0);                        // the deck
+  box(0.9, 0.07, 0.09, dark, 0, 0.15, 0.62);                   // front axle
+  box(0.9, 0.07, 0.09, dark, 0, 0.15, -0.6);                   // back axle
+  for (const [x, z] of [[-0.43, 0.62], [0.43, 0.62], [-0.43, -0.6], [0.43, -0.6]]) {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.07, 14), tyre);
+    w.rotation.z = Math.PI / 2; w.position.set(x, 0.14, z); g.add(w);
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.08, 10), hub);
+    h.rotation.z = Math.PI / 2; h.position.set(x, 0.14, z); g.add(h);
+  }
+  box(0.36, 0.28, 0.32, crate, 0, 0.36, -0.42);                // the milk crate seat
+  box(0.03, 0.03, 0.5, new THREE.MeshStandardMaterial({ color: 0xd9cfa8, roughness: 1 }), 0, 0.25, 0.4);   // the rope
+  g.userData.goCart = true;
+  return g;
+}
+
 // v1.138 (backlog D.7, Michael: A): LADDERS and the drop penalty. A scenario's `ladders` are climb zones (the
 // treehouse's). At a ladder's foot, looking at it, W climbs; S climbs down; at the top he steps off onto the floor.
 // From the floor, backing into the rail's gap with S takes the ladder down; walking off the edge is a drop.
@@ -199,7 +317,7 @@ function updatePlayer(dt) {
   easeStanceAndAds(dt);
 
   // v1.138: on a ladder, the ladder moves him (updateLadder); nothing below moves him
-  const onLadder = inScenario && updateLadder(dt);
+  const onLadder = inScenario && (updateCart(dt) || updateLadder(dt));   // v1.354 (D.71): in a go-cart the cart moves him
 
   // Look — sensitivity reduces with ADS
   // v1.192: the settings' mouse and aim sensitivity scale it, and invert look flips the pitch

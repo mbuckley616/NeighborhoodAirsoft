@@ -628,6 +628,8 @@ function applyBBHit(bb, c) {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) startPlayerWalkHome();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag; v1.290: on foot)
       else endScenario('lose');
+    } else if (Game.mode === 'scenario' && Game.scenario.race) {
+      Game.player._graceT = RACE.grace;   // v1.354 (D.71): a tag in the go-cart costs a life; you roll on
     } else if (Game.mode === 'scenario' && SCENARIOS[Game.scenario.active] && (SCENARIOS[Game.scenario.active].pickup || SCENARIOS[Game.scenario.active].tagSendsHome)) {
       startPlayerWalkHome(true);   // v1.221: in a Pickup Game a tag costs a life and sends you back to your start, as a kid walks back to base
       // (v1.251: and in The Last Saturday, `tagSendsHome`)

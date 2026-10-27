@@ -725,6 +725,7 @@ function checkWinCondition() {
   const winCondition = Game.scenario.winCondition || 'kill_all';
   // v1.189: capture the flag ends on the second flag home (updateFlags), never on tags
   if (Game.scenario.ctf) return;
+  if (Game.scenario.race) return;   // v1.354 (D.71): a race ends at the bottom of the hill (updateCart), never on tags
   // v1.170 (D.15): a VIP match ends on a VIP, and only on one: theirs out wins, ours out loses
   if (Game.scenario.vip) {
     const theirs = Game.scenario.enemies.find(e => e.vip && (e.team || 'enemy') !== 'player');

@@ -44,6 +44,7 @@ const PIN_SCENARIO_GROUPS = {
     'bunratty_infection',
     'bunratty_team_2v4',
     'bunratty_team_4v4',
+    'bunratty_go_cart',          // v1.354: Downhill Derby, the go-cart race (D.71)
     'bunratty_night_lane',
     'bunratty_vip',              // v1.170: VIP (D.15), before the capstone
     'bunratty_night_team_2v2',
@@ -170,6 +171,6 @@ function isScenarioUnlocked(scenarioId) {
   const prevId = ctx.ids[ctx.idx - 1];
   return !!Game.persist.completed[prevId];
 }
-// v1.354 (D.75, the split): moved here from beside scenariosOpenNow, because a classic script cannot read a function
+// v1.355 (D.75, the split): moved here from beside scenariosOpenNow, because a classic script cannot read a function
 // declared in a later file while it loads. The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened
 const scenarioUnlockedForResult = isScenarioUnlocked;
