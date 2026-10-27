@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.346</div>
+  <div class="version">v1.347</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -30868,9 +30868,9 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'sniper') {
+    } else if (gunType === 'sniper') {   // v1.347: aimed, the front post's tip (y 0.058) on the reticle (−0.085 since v1.225 put it 2.5° low)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
-      adsPos  = { x: 0.0,  y: -0.085, z: -0.27 };
+      adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
     } else if (gunType === 'l96') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };

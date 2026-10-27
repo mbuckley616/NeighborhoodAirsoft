@@ -14172,3 +14172,17 @@ MAC-10 were the only ones.
 - **For a playtest:** whether 15 a second from 200 BBs at a quicker walk outclasses the MP5 at the ranges kids fight
   at (it gives up 2 m of flat flight). The mag on top is see-through but doesn't show its BBs going down. A crew kid
   you lend it to fights with the default (pistol) ranges, as with the M249 and the L96. Batch 2 can take one more SMG.
+
+## v1.347 — The Spring Sniper Rifle's sights on the reticle
+Found in play (builder, v1.336): the Spring Sniper Rifle's iron sights aimed about 2.5° low. v1.225 moved its front
+post out to the muzzle and the aimed height (−0.085) stayed where the old sights had it, so aimed, the post's tip sat
+2.5° under the reticle and the picture down the irons didn't match where the BB goes. The L96 (v1.336) shares the
+model and was set to −0.058, 0.09° off.
+- **The fix:** the sniper's aimed height is −0.058, the L96's. The hip hold and the swing to aim are unchanged.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:** aimed with the Spring Sniper Rifle in Bunratty, the front post's tip is
+  0.09° off the reticle (it was 2.5°; the check is under 0.6°, as for every gun with irons in the suite).
+- **These suites pass, each alone:** `gun-electric`, `fp-hands` (the sniper's hands touch the gun, show aimed and stay
+  off the sight line).
+### Still open
+- **For a playtest:** whether the swing from the hip to aimed still looks right with the gun sitting 2.7 cm higher.

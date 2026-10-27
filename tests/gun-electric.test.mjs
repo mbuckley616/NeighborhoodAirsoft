@@ -398,5 +398,25 @@ await g.shot('gun-p90-aimed');
 console.log('   p90 ' + JSON.stringify(PS));
 check('P90: its own first-person gun, 200 in the mag, both hands on it, aimed the ring\'s post on the reticle (under 0.6°)', PS.mesh === 'p90' && PS.max === 200 && PS.hands && PS.sightErrDeg < 0.6, PS);
 check('P90: held down 2 s it fires 29-32 BBs (15 a second)', PS.held2s >= 29 && PS.held2s <= 32, PS.held2s);
+// v1.347 (Found in play, v1.336): the Spring Sniper Rifle's irons aimed 2.5° low (its aimed height stayed when v1.225
+// moved the front post to the muzzle); aimed, the post's tip is on the reticle as on the L96
+await page.evaluate(() => { Game.persist.owned.sniper = true; Game.persist.equipped.gun = 'sniper'; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'sniper' }; });
+await g.scenario('bunratty_sean');
+const SN = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  return { mesh: fpGun.userData.gunType, sightErrDeg: +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2) };
+});
+console.log('   sniper ' + JSON.stringify(SN));
+check('Spring Sniper Rifle: aimed, the front post\'s tip is on the reticle (under 0.6°; it was 2.5° low)', SN.mesh === 'sniper' && SN.sightErrDeg < 0.6, SN);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
