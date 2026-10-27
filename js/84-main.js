@@ -476,6 +476,7 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
     Game.persist.roomTour = { ticked: [] };   // v1.357 (D.76): a new save gets the look round the room once
     enterBedroom();
     openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
+    openStoryCards();   // v1.358 (D.77): over the mirror, the four story cards come first
   };
   const showAsk = (on) => {
     ask.style.display = on ? 'flex' : 'none';

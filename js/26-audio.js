@@ -430,6 +430,7 @@ function scheduleMatchBeat(beat, time, th) {
 const MUSIC_STINGS = {
   win:  [['C5', 0, 0.12], ['E5', 0.12, 0.12], ['G5', 0.24, 0.12], ['C6', 0.36, 0.7], ['G4', 0.36, 0.7], ['E4', 0.36, 0.7]],
   lose: [['G4', 0, 0.22], ['F4', 0.22, 0.22], ['D4', 0.44, 0.22], ['C4', 0.66, 0.9], ['A3', 0.66, 0.9]],
+  story: [['C4', 0, 1.4], ['G4', 0.25, 1.2], ['E5', 0.5, 1.0], ['D5', 0.95, 0.5], ['C5', 1.3, 1.4]],   // v1.358: the story cards
 };
 function playMusicSting(kind) {
   const notes = MUSIC_STINGS[kind];

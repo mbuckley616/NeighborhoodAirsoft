@@ -46,6 +46,20 @@ const kept = await saved();
 check('the save is untouched after BACK', kept && kept.cash === now.cash, kept);
 await page.evaluate(() => { document.getElementById('startBtn').click(); document.getElementById('newGameYesBtn').click(); });
 await page.waitForFunction(() => Game.mode === 'mirror' || Game.mode === 'bedroom', null, { timeout: 60000 });
+// v1.358 (D.77, Michael: C): a new save opens on the four story cards, over the mirror; Enter goes on, the last one leaves
+// the mirror; the title's STORY plays them again and Esc skips them
+const key = code => page.evaluate(c => document.dispatchEvent(new KeyboardEvent('keydown', { code: c, cancelable: true })), code);
+const card = () => page.evaluate(() => ({ open: Story.open, up: document.getElementById('storyScreen').classList.contains('active'), mode: Game.mode,
+  head: document.getElementById('storyHead').textContent, btn: document.getElementById('storyNextBtn').textContent, i: Story.i,
+  onTop: document.elementFromPoint(innerWidth / 2, innerHeight / 2).closest('#storyScreen') !== null }));
+const c0 = await card();
+check('a new game opens on the first story card, over the mirror', c0.open && c0.up && c0.mode === 'mirror' && c0.head === 'Friday, 30 May 2003' && c0.onTop, c0);
+for (let k = 0; k < 3; k++) await key('Enter');
+const c3 = await card();
+check('Enter goes through them to the fourth, which starts the summer', c3.open && c3.i === 3 && /START THE SUMMER/.test(c3.btn) && c3.mode === 'mirror', c3);
+await key('Enter');
+const c4 = await card();
+check('the last one closes the cards and leaves the mirror, still open', !c4.open && !c4.up && c4.mode === 'mirror', c4);
 await page.evaluate(() => { if (Game.mode === 'mirror') document.getElementById('mirrorDoneBtn').click(); });
 await page.waitForFunction(() => Game.mode === 'bedroom', null, { timeout: 60000 });
 const fresh = await saved(), def = await page.evaluate(() => DEFAULT_PERSIST.cash);
@@ -57,12 +71,12 @@ check('START OVER starts fresh, and the new game saves over the old one', fresh 
 const tour = () => page.evaluate(() => { const el = document.getElementById('roomTour'), t = Game.persist.roomTour;
   return { shown: el.style.display === 'block', text: el.textContent, ticked: t ? t.ticked.slice() : null, done: t ? !!t.done : null }; });
 const t0 = await tour();
-check('a new game opens the room with the note naming the computer, 0 of 4 (standing at the door ticks nothing)', t0.shown && /0 OF 4/.test(t0.text) && /computer/.test(t0.text) && !t0.done, t0);
+check('a new game opens the room with the note naming the phone (Eric\'s text), 0 of 4 (standing at the door ticks nothing)', t0.shown && /0 OF 4/.test(t0.text) && /Eric/.test(t0.text) && !t0.done, t0);
 const walkTo = test => page.evaluate(src => { const f = eval(src), it = Game.interactables.find(f);
   Game.player.pos.x = it.pos.x; Game.player.pos.z = it.pos.z; stepGame(1 / 60); return it.label; }, test);
 await walkTo('it => it.icon === "bed"');
 const t1 = await tour();
-check('walking up to the bed ticks it, and the note still names the computer first', t1.ticked.join() === 'bed' && /1 OF 4/.test(t1.text) && /computer/.test(t1.text), t1);
+check('walking up to the bed ticks it, and the note still names the phone first', t1.ticked.join() === 'bed' && /1 OF 4/.test(t1.text) && /Eric/.test(t1.text), t1);
 for (const f of ['it => it.icon === "computer"', 'it => it.icon === "phone"']) await walkTo(f);
 const t2a = await tour();
 check('the three looked at, the note names the front door', t2a.ticked.length === 3 && /front door/.test(t2a.text) && /3 OF 4/.test(t2a.text), t2a);
@@ -80,6 +94,11 @@ const t4 = await page.evaluate(() => { Game.persist.roomTour = { ticked: [] }; s
   const t = Game.persist.roomTour; delete Game.persist.roomTour; stepGame(1 / 60);
   return { on, skipped: t.done, off: document.getElementById('roomTour').style.display, old: document.getElementById('roomTour').style.display }; });
 check('X skips it; a save with no tour (one from before v1.357) shows no note', t4.on === 'block' && t4.skipped === true && t4.off === 'none', t4);
+
+const replay = await page.evaluate(() => { document.getElementById('titleStoryBtn').click(); return Story.open; });
+await key('Escape');
+const skipped = await card();
+check('the title\'s STORY plays them again, and Esc skips them', replay && !skipped.open && !skipped.up, { replay, skipped });
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

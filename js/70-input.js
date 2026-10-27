@@ -281,7 +281,7 @@ function padCycleSlot(dir) {
 // it would click is outlined. It shows only while the pad is in use and a screen is up.
 const PAD_CURSOR_PX = 1100;     // full left stick = this many pixels a second
 const PAD_BACK_IDS = ['settingsDoneBtn', 'newGameNoBtn', 'modalCloseBtn', 'briefCancelBtn', 'shopCloseBtn',
-                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'mirrorDoneBtn'];
+                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'storySkipBtn', 'mirrorDoneBtn'];   // v1.358: the story cards over the mirror
 const PadCursor = { x: 0, y: 0, shown: false, el: null, hover: null };
 function padScreenUp() {
   if (document.getElementById('settingsScreen').classList.contains('active')) return true;

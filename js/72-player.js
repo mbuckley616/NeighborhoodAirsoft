@@ -935,16 +935,17 @@ function updateInteractables(dt) {
 }
 
 // === v1.357 (D.76, Michael: A): A FIRST LOOK ROUND THE ROOM ===
-// A new save, once the mirror is closed, gets a sticky note naming one thing at a time: the computer to shop, the
-// phone's texts, the bed, and last the front door to play. The first three are ticked when you walk up to one (its
+// A new save, once the mirror is closed, gets a sticky note naming one thing at a time: the phone's texts (v1.358:
+// first, where Eric's text waits after the story cards), the computer to shop, the bed, and last the front door to
+// play. The first three are ticked when you walk up to one (its
 // "E to ..." prompt shows), in any order; the door when you go out by it or the map table (a new save starts at the
 // door, so walking up to it says nothing). The note names the first one not yet ticked. X (BACK on a pad) skips it.
 // Done or skipped, it never shows again. `Game.persist.roomTour` is set only by NEW GAME, so an older save never sees it.
 const ROOM_TOUR = [
+  { key: 'phone',    name: 'Phone',      is: it => it.icon === 'phone',   // v1.358 (D.77): first, Eric's text is waiting
+    text: 'Your phone buzzed: Eric. The kids text you here, and that’s how your crew grows.' },
   { key: 'computer', name: 'Computer',   is: it => it.icon === 'computer',
     text: 'The computer is airsoft.com: guns, BBs and gear, paid for with what you win.' },
-  { key: 'phone',    name: 'Phone',      is: it => it.icon === 'phone',
-    text: 'Your phone: the kids text you here, and that’s how your crew grows.' },
   { key: 'bed',      name: 'Bed',        is: it => it.icon === 'bed',
     text: 'Your bed shows how the summer’s going. The game saves itself as you play.' },
   { key: 'door',     name: 'Front door', is: it => it.label === 'Outside' || it.label === 'Map', onUse: true,
