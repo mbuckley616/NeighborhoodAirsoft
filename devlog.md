@@ -14140,3 +14140,35 @@ from 37-38 m in 3-9 s, with 0 tags; v1.319's longer walk home only helps after a
   the deck, and Devon still has to be found and answered from 37 m. Hold the Fort (Night) is unchanged; the variant
   can be set on it too.
 - Devon sometimes walks right up into the gap between the blast wall and the port; whether that reads well needs eyes.
+
+## v1.346 — The P90, a bullpup SMG
+Backlog D.63, batch 2 (Michael: A, batches of four to six): his note asks for "other SMGs"; after the M249 and the
+L96 (v1.335-v1.336) the SMGs are the batch's last step, and this is the first of them. The MP5, the UMP and the
+MAC-10 were the only ones.
+- **The gun.** The P90, $210, under AUTOMATICS after the UMP on airsoft.com and the workbench: a long low black
+  bullpup, its 200-BB mag lying smoke-clear along the top, a ring sight over the front with a post in it, a pistol grip
+  under the middle with the trigger ahead of it, and the off hand's stop at the front joined to the grip by the
+  thumbhole's bar. Its own first-person model with both hands on it (the grip and the front stop), and a blocky one
+  for the kids and the Loadout kid.
+- **How it shoots.** The MP5's full auto, faster: 15 BBs a second (13.3), a little tighter from the hip (0.30, 0.34),
+  and you walk at 1.1 (1.05), at 4.5 lb (5). Its short barrel is the trade: a slower BB (46 m/s, 50) that starts to
+  wobble at 12 m (14). Aimed, you look through the ring at the post's tip.
+- **Its mag.** 200 BBs, a 300 mag for $30, a spare 200 for $16 (1.2 lb in a slot). It takes an optic (on the ring)
+  and the side rails, but no under-barrel part: the off hand's stop is where a foregrip would go.
+### Verified
+- **`tests/gun-electric.test.mjs`, extended:** AUTOMATICS lists eleven guns, the P90 after the UMP with its picture;
+  its page sells it for $210 and puts it in your hands. Against the MP5: 900 a minute (800), 46 m/s (50), flat to
+  12 m (14), walk 1.1 (1.05), 4.5 lb (5), both full auto. In a match: its own model, 200 in the mag, both hands on it;
+  aimed, the post's tip is 0.15° off the reticle; held down 2 s it fires 31 BBs.
+- **`fp-hands`:** both hands touch the P90 (gap 0), show on screen at the hip and aimed, stay off the sight line, and
+  both forearms leave by the bottom of the screen. **`gun-parts`:** its 30 parts all join the gun.
+- The suites that count the guns go from 23 to 24 (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`,
+  `shop-gun-kinds`, `shop-pics`, `gun-electric`); `under-parts` counts the P90 with the guns that have no under slot.
+- **These suites pass, each alone:** `gun-electric` (twice; once it lost its browser tab to a screenshot under
+  load beside three other suites), `fp-hands`, `gun-parts`, `backyard-guns`, `loadout-kid`, `shop-gun-kinds`,
+  `shop-pics`, `under-parts`, `workbench-labels`, `crew-gear` and `smoke`. The whole of `npm test` is not run here
+  (one suite at a time it takes about five hours); CI runs the suites this version edits.
+### Still open
+- **For a playtest:** whether 15 a second from 200 BBs at a quicker walk outclasses the MP5 at the ranges kids fight
+  at (it gives up 2 m of flat flight). The mag on top is see-through but doesn't show its BBs going down. A crew kid
+  you lend it to fights with the default (pistol) ranges, as with the M249 and the L96. Batch 2 can take one more SMG.
