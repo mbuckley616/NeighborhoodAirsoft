@@ -30,7 +30,14 @@ for (const id of ids) {
       const yw = p.yaw + a * Math.PI / 180, ddx = -Math.sin(yw), ddz = -Math.cos(yw);
       for (const o of p.obstacles) { const t = obsRayDist(o, p.pos.x, p.pos.y + p.eyeOffset, p.pos.z, ddx, 0, ddz, 80); if (t != null && t < ahead) ahead = t; }
     }
-    return { id, fn: sc.builderFn, spawn: sc.playerSpawn || '-', type: sc.scenarioType, foes: foes.length, ang: Math.round(ang), ring, ahead: +ahead.toFixed(1) };
+    // v1.365 (Found in play, critic v1.353): your own base's flag pole, nearest and within 60° of straight ahead
+    let pole = null;
+    Game.scene.traverse(o => { const m = o.userData && o.userData.baseMarker; if (!m || m.color !== 0x3d7bd6) return;
+      const w = new THREE.Vector3(); m.pole.getWorldPosition(w);
+      const qx = w.x - p.pos.x, qz = w.z - p.pos.z, qd = Math.hypot(qx, qz) || 1e-6;
+      const qa = Math.acos(Math.max(-1, Math.min(1, (fx * qx + fz * qz) / qd))) * 180 / Math.PI;
+      if (qa <= 60 && (!pole || qd < pole)) pole = +qd.toFixed(2); });
+    return { id, fn: sc.builderFn, spawn: sc.playerSpawn || '-', type: sc.scenarioType, foes: foes.length, ang: Math.round(ang), ring, ahead: +ahead.toFixed(1), pole };
   }, id));
   await page.evaluate(() => { Game.mode = 'scenario'; endScenario('forfeit'); enterBedroom(); });
   await g.spin(5);
@@ -45,6 +52,10 @@ check('no scenario starts the player with the enemy kids behind them (>120°)', 
 // v1.140 (Found in play, critic v1.134): the lot free-for-all started you 0.9 m from a windshield
 const blind = rows.filter(r => r.ahead < 2);
 check('no scenario starts the player with an obstacle under 2 m ahead (±10°, eye height)', blind.length === 0, blind.map(r => r.id + ' ' + r.ahead));
+// v1.365: the blue base's 2.4 m pole stood 0.12-1.5 m dead ahead of your eye in 7 team matches (Night Swim, Northcliff,
+// Bellfield); a pole near your start now stands behind you
+const poled = rows.filter(r => r.pole != null && r.pole < 4);
+check('no team match starts with your base flag pole under 4 m ahead (within 60°)', poled.length === 0, poled.map(r => r.id + ' ' + r.pole));
 const ffa = rows.find(r => r.id === 'lot_ffa');
 check('lot_ffa: the start looks down the aisle, over 15 m clear', ffa && ffa.ahead > 15, ffa);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));

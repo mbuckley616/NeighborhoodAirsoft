@@ -425,11 +425,11 @@ function enterScenario(scenarioId) {
         const dE = Math.hypot(tb.enemy.x - ps.x, tb.enemy.z - ps.z);
         const playerBase = dP <= dE ? tb.player : tb.enemy;
         const enemyBase  = dP <= dE ? tb.enemy : tb.player;
-        addBaseMarker(built.scene, playerBase.x, playerBase.z, PLAYER_BLUE, gfn);
+        addBaseMarker(built.scene, playerBase.x, playerBase.z, PLAYER_BLUE, gfn, { poleAt: basePoleClearOfStart(playerBase, ps, built.spawnYaw) });
         addBaseMarker(built.scene, enemyBase.x, enemyBase.z, ENEMY_RED, gfn);
       } else {
         // Player base at the player's spawn point.
-        addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn);
+        addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn, { poleAt: basePoleClearOfStart(built.spawn, built.spawn, built.spawnYaw) });
         // Enemy base = centroid of enemy-team kids' fighting anchors (far end).
         let ex = 0, ez = 0, en = 0;
         for (const e of built.enemies) {
