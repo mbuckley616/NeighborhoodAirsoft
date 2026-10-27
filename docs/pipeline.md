@@ -57,5 +57,8 @@ hours (90th percentile 23) between its commit and main, for a tap on work Michae
 - **Drafts never merge.** The builder opens its PR as a draft and marks it ready when its run ends; the Fable session keeps
   its PR a draft until the card is finished.
 - **itch.io.** A merge made with the workflow's own token starts no push workflow, so after a merge that changed
-  `index.html` automerge starts `itch` on main by name. Every landing of game code ships to players.
+  `index.html` or `js/` automerge starts `itch` on main by name. Every landing of game code ships to players: the folder,
+  index.html and js/ (v1.355, D.75).
+- **The title's version** (v1.355): no branch edits it. After any merge automerge.yml runs `node scripts/tag.mjs stamp` on
+  main (the highest version in `docs/devlog/`), commits it with `[skip ci]`, and only then starts itch.
 - `DRY_RUN=1 GH_TOKEN=$(gh auth token) node scripts/automerge.mjs` says what it would merge and changes nothing.
