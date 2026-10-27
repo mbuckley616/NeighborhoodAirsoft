@@ -7,7 +7,7 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol', 'famas', 'epistol', 'erifle', 'burst', 'semishotgun', 'm249', 'l96'];   // v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96
+const GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol', 'famas', 'epistol', 'erifle', 'burst', 'semishotgun', 'm249', 'l96', 'p90'];   // v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90
 
 // Measures the held thing's hands in camera space. `root` is fpGun, fpLoader or fpMag.
 const probe = (which) => page.evaluate((which) => {
