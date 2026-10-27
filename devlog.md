@@ -14212,7 +14212,7 @@ MAC-10 were the SMGs.
   was lowered onto it). **`fp-hands`:** both hands touch the Vector (gap 0) and stay off the sight line; aimed both show on screen, at the hip the left hand on the front grip does and the right one on the grip sits under the screen's edge; both forearms leave by the bottom of the screen.
 - The suites that count the guns go from 24 to 25 (`backyard-guns`, `fp-hands`, `gun-parts`, `loadout-kid`,
   `shop-gun-kinds`, `shop-pics`, `gun-electric`); `under-parts` counts the Vector with the guns that have no under slot.
-- **These suites pass:** `gun-electric`, `fp-hands`, `gun-parts`, `shop-gun-kinds` and `shop-pics`, each run alone. Run beside two to five other suites here, `gun-electric`, `fp-hands`, `crew-balance` and `shop-pics` lost their browser (one software-GL browser takes three of the four cores), never at a check.
+- **These suites pass:** `gun-electric`, `fp-hands`, `gun-parts`, `shop-gun-kinds`, `shop-pics`, `backyard-guns`, `loadout-kid` and `under-parts`, each run alone. Run beside two to five other suites here, `gun-electric`, `fp-hands`, `crew-balance` and `shop-pics` lost their browser (one software-GL browser takes three of the four cores), never at a check.
 ### Still open
 - **For a playtest:** whether 16.7 a second from a 100 mag is a fair trade against the P90's 200 at 15, and whether the
   tighter aimed spread makes it the best SMG at 10-14 m. A crew kid you lend it to fights with the default (pistol)
