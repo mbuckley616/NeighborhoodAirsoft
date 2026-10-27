@@ -94,9 +94,13 @@ let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
 // door and the lanterns' faces glowing. Nothing is solid and nothing is added to the obstacles, so play is unchanged; it
 // is built as four merged meshes for the whole map (lanterns, faces and lights, webs, the night glow), so a map's draw
 // calls go up by four at most. Kids in costumes and the Pickup Game board's switch are the next steps.
-const Holiday = { force: null, match: null };   // 'halloween' or 'none' sets it whatever the date (force: tests; match: v1.352, the board); null: by date
+// v1.361 (B.18, Michael 27 Oct: "I don't want it to overlap with the summer theme - maybe we park that & a Christmas theme
+// for later expansions"): parked. No holiday look by the date or from the Pickup Game board while `parked` is set; the code
+// stays for a later expansion, and the tests still reach it with `force` (or by clearing `parked`).
+const Holiday = { force: null, match: null, parked: true };   // 'halloween' or 'none' sets it whatever the date (force: tests; match: v1.352, the board); null: by date
 function holidayNow(date) {
   if (Holiday.force) return Holiday.force === 'none' ? null : Holiday.force;
+  if (Holiday.parked) return null;   // v1.361: parked (B.18)
   if (Holiday.match) return Holiday.match === 'none' ? null : Holiday.match;   // v1.352: a Pickup Game's Holiday row
   return holidayByDate(date);
 }

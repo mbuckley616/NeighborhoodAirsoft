@@ -9,10 +9,34 @@ await g.bedroom();
 
 const dates = await page.evaluate(() => {
   Holiday.force = null;
-  return [[2026, 9, 16], [2026, 9, 17], [2026, 9, 31], [2026, 10, 1], [2026, 10, 2], [2027, 6, 4]].map(([y, m, d]) => holidayNow(new Date(y, m, d)));
+  return [[2026, 9, 16], [2026, 9, 17], [2026, 9, 31], [2026, 10, 1], [2026, 10, 2], [2027, 6, 4]].map(([y, m, d]) => holidayByDate(new Date(y, m, d)));
 });
 check('Halloween runs 17 Oct to 1 Nov by the date: off the 16th, on the 17th, the 31st and 1 Nov, off the 2nd and in July',
   JSON.stringify(dates) === '[null,"halloween","halloween","halloween",null,null]', dates);
+
+// v1.361 (B.18, Michael 27 Oct): the holidays are parked for a later expansion: nothing by the date, the board's row
+// hidden, and a pickup game asking for Halloween gets none. The checks after this one unpark it to keep the code tested.
+const parked = await page.evaluate(() => {
+  Holiday.force = null;
+  const r = { parked: Holiday.parked, onHalloween: holidayNow(new Date(2026, 9, 31)) };
+  for (const z of ZONE_LADDER) Game.persist.completed[zoneCapstoneId(z.key)] = true;
+  openPickupBoard();
+  r.rows = [...document.querySelectorAll('#modalBody .pk-label')].map(x => x.textContent);
+  r.holidayBtns = document.querySelectorAll('#modalBody .pk-opt[data-grp="holiday"]').length;
+  closeModal();
+  return r;
+});
+check('parked: nothing on 31 Oct, and the Pickup Game board has no Holiday row', parked.parked === true && parked.onHalloween === null && !parked.rows.includes('Holiday') && parked.holidayBtns === 0 && parked.rows.includes('Clock'), parked);
+await page.evaluate(() => { window.__realByDate = holidayByDate; holidayByDate = () => 'halloween'; });
+await g.scenario('bellfield_3v3');
+const parkedLadder = await page.evaluate(() => ({ decor: !!Game.scene.getObjectByName('holidayDecor'), costumes: Game.scenario.enemies.filter(e => e.mesh.costume).length, kids: Game.scenario.enemies.length }));
+await page.evaluate(() => { pickupState.map = 'bellfield'; pickupState.holiday = 'halloween'; buildPickupScenario(pickupState); });
+await g.scenario('pickup_game');
+const parkedPickup = await page.evaluate(() => ({ decor: !!Game.scene.getObjectByName('holidayDecor'), costumes: Game.scenario.enemies.filter(e => e.mesh.costume).length, kids: Game.scenario.enemies.length }));
+await page.evaluate(() => { holidayByDate = window.__realByDate; pickupState.holiday = 'date'; Holiday.parked = false; });
+console.log('   parked: ' + JSON.stringify({ parked, parkedLadder, parkedPickup }));
+check('parked, in season: a ladder match has no lanterns and no costumes', !parkedLadder.decor && parkedLadder.costumes === 0 && parkedLadder.kids > 0, parkedLadder);
+check('parked: a pickup game set to Halloween has none either', !parkedPickup.decor && parkedPickup.costumes === 0 && parkedPickup.kids > 0, parkedPickup);
 
 const read = () => page.evaluate(() => {
   const d = Game.scene.getObjectByName('holidayDecor');
@@ -199,6 +223,6 @@ check('Bunratty: every lantern on the ground stands within 5 cm of it, none insi
   bSpots.length === 21 && onGround.every(s => Math.abs(s.off) < 0.05) && bSpots.every(s => s.inside === 0), bSpots.filter(s => (!s.floor && Math.abs(s.off) >= 0.05) || s.inside));
 check('Bunratty by night: the porch glow too (four meshes)', bNight.decor && bNight.decor.night && bNight.decor.meshes.length === 4, bNight.decor);
 
-await page.evaluate(() => { Holiday.force = null; });
+await page.evaluate(() => { Holiday.force = null; Holiday.parked = true; });
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
