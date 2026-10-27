@@ -54,6 +54,10 @@ hours (90th percentile 23) between its commit and main, for a tap on work Michae
   `Approved by Michael: <sha>` from the repository's owner side, which the producer posts when he taps Approve. A held PR
   merges only at the approved head. A pipeline PR's later commits that leave the pipeline alone ride along; one that changes
   the pipeline again waits for a new tap, and the approved commit is merged by itself meanwhile.
+- **A conflict or a red gate stops a PR, and automerge tells nobody** (it skips it). The routine whose branch it is fixes
+  it at its next run; a branch no routine owns (a local or phone session's, the critic's) is the producer's: a docs-only one
+  it merges main into itself when both sides only added lines, anything else goes on the Desk as a blocker and in its Need
+  line until fixed (Michael, 27 Oct 2026, after PR #123 sat five days conflicting with its card waiting on "Claude (local)").
 - **Drafts never merge.** The builder opens its PR as a draft and marks it ready when its run ends; the Fable session keeps
   its PR a draft until the card is finished.
 - **itch.io.** A merge made with the workflow's own token starts no push workflow, so after a merge that changed
