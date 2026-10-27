@@ -17,7 +17,7 @@ check('Halloween runs 17 Oct to 1 Nov by the date: off the 16th, on the 17th, th
 const read = () => page.evaluate(() => {
   const d = Game.scene.getObjectByName('holidayDecor');
   const houses = []; Game.scene.traverse(o => { if (o.userData && o.userData.holidayFront) houses.push(o); });
-  const out = { houses: houses.length, obstacles: (Game.scenario.obstacles || []).length, decor: null };
+  const out = { houses: houses.length, obstacles: (Game.player.obstacles || []).length, decor: null };
   if (d) {
     const meshes = d.children.map(m => m.name);
     const bb = new THREE.Box3().setFromObject(d.getObjectByName('lanterns'));
@@ -26,7 +26,7 @@ const read = () => page.evaluate(() => {
     const pos = d.getObjectByName('lanterns').geometry.attributes.position;
     for (let i = 0; i < pos.count; i++) lowest = Math.min(lowest, pos.getY(i));
     out.decor = Object.assign({}, d.userData, { meshes, lowest: +lowest.toFixed(3), top: +bb.max.y.toFixed(2) });
-    const solid = (Game.scenario.obstacles || []).some(o => o.mesh && (o.mesh === d || d.children.includes(o.mesh)));
+    const solid = (Game.player.obstacles || []).some(o => o.mesh && (o.mesh === d || d.children.includes(o.mesh)));
     out.solid = solid;
   }
   // v1.351: the kids' costumes are counted on their own below, so the houses' draw calls are read without the kids
@@ -66,7 +66,7 @@ check('by night the porch lights glow too (four meshes)', night.decor && night.d
 const kids = () => page.evaluate(() => {
   Game.renderer.render(Game.scene, Game.camera);
   const calls = Game.renderer.info.render.calls;
-  return { calls, obstacles: (Game.scenario.obstacles || []).length, kids: Game.scenario.enemies.map(e => {
+  return { calls, obstacles: (Game.player.obstacles || []).length, kids: Game.scenario.enemies.map(e => {
     const c = e.mesh.costume, hat = e.mesh.hat;
     return { id: e.charId, team: e.team, want: kidCostumeFor(e.charId), costume: c ? c.id : null,
       head: !!(c && c.head), body: !!(c && c.body && c.body.children.length), bandana: !!(hat && hat.userData.crewBandana && hat.visible),
@@ -153,6 +153,51 @@ check('in season, a pickup game with Off has no lanterns and no costumes', !pkOf
 check('out of season, a pickup game with Halloween has the houses done up and kids in costume', pkOn.decor && pkOn.costumes > 0, pkOn);
 check('out of season, By the date has neither, nor does a ladder match', !pkDateJuly.decor && pkDateJuly.costumes === 0 && !ladderJuly.decor && ladderJuly.costumes === 0, [pkDateJuly, ladderJuly]);
 check('in season, the ladder match after an Off pickup game goes by the date again', ladderAfterOff.decor && ladderAfterOff.costumes > 0, ladderAfterOff);
+
+// v1.353 (D.70 step 4): Bunratty's houses are baked by their own builders, so each leaves a marker at its door with
+// spots of its own: three lanterns each, two webs under the eaves, a porch light only on the portico house (the others
+// have lanterns by the door). Every lantern stands on the ground (or the portico's floor) and outside every obstacle.
+const spots = () => page.evaluate(() => {
+  const out = [];
+  Game.scene.updateMatrixWorld(true);
+  Game.scene.traverse(o => {
+    const f = o.userData && o.userData.holidayFront;
+    if (!f || !f.lanterns) return;
+    const p = new THREE.Vector3(); o.getWorldPosition(p);
+    for (const [a, w, y, r] of f.lanterns) {
+      const x = p.x + f.fx * w - f.fz * a, z = p.z + f.fz * w + f.fx * a, by = p.y + y;
+      const ground = Game.scenario.groundY ? Game.scenario.groundY(x, z) : 0;
+      const inside = (Game.player.obstacles || []).filter(b => (b.shape === 'cylinder' ? Math.hypot(x - b.cx, z - b.cz) < r + b.radius
+          : x + r > b.minX && x - r < b.maxX && z + r > b.minZ && z - r < b.maxZ)
+        && by + 0.05 < (b.baseY || 0) + (b.h || 0) && by + r * 1.4 > (b.baseY || 0)).length;
+      out.push({ x: +x.toFixed(2), z: +z.toFixed(2), off: +(by - ground).toFixed(3), floor: y === 0, inside });
+    }
+  });
+  return out;
+});
+await page.evaluate(() => { Holiday.force = 'none'; });
+await g.scenario('bunratty_team_2v2');
+const bOff = await read();
+await page.evaluate(() => { Holiday.force = 'halloween'; });
+await g.scenario('bunratty_team_2v2');
+const bDay = await read();
+const bSpots = await spots();
+await page.evaluate(() => { const p = Game.player; p.pos.set(28.5, Game.scenario.groundY(28.5, 4) + 1.6, 4); p.yaw = Math.PI; p.pitch = -0.05; });
+await g.spin(2);
+await g.shot('holiday-bunratty-hero');
+await page.evaluate(() => { Holiday.force = 'halloween'; });
+await g.scenario('bunratty_night_team_2v2');
+const bNight = await read();
+console.log('   bunratty: ' + JSON.stringify({ bOff, bDay, bNight }));
+console.log('   bunratty lanterns: ' + JSON.stringify(bSpots));
+check('Bunratty forced off: nothing built', bOff.decor === null && bOff.houses === 7, bOff);
+check('Bunratty by day: the hero house and the six neighbours, three lanterns and two webs each, one porch light (the portico house\'s)',
+  bDay.decor && bDay.decor.houses === 7 && bDay.decor.lanterns === 21 && bDay.decor.webs === 14 && bDay.decor.lights === 1, bDay.decor);
+check('Bunratty: nothing solid, the same obstacles; three draw calls more by day', bDay.obstacles === bOff.obstacles && !bDay.solid && bDay.calls - bOff.calls <= 3, [bOff.obstacles, bDay.obstacles, bOff.calls, bDay.calls]);
+const onGround = bSpots.filter(s => !s.floor);
+check('Bunratty: every lantern on the ground stands within 5 cm of it, none inside a step, wall or house',
+  bSpots.length === 21 && onGround.every(s => Math.abs(s.off) < 0.05) && bSpots.every(s => s.inside === 0), bSpots.filter(s => (!s.floor && Math.abs(s.off) >= 0.05) || s.inside));
+check('Bunratty by night: the porch glow too (four meshes)', bNight.decor && bNight.decor.night && bNight.decor.meshes.length === 4, bNight.decor);
 
 await page.evaluate(() => { Holiday.force = null; });
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
