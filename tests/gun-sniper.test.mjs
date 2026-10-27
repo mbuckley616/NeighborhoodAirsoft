@@ -94,6 +94,8 @@ check('at least 1 cm of trigger shows under the stock', r.triggerShows >= 0.01, 
 check('the bipod is folded: two legs lying along the barrel, each under 1 cm tall', r.legsTall.length === 2 && r.legsTall.every(h => h < 0.01) && r.legsLong.every(l => l > 0.06), { tall: r.legsTall, long: r.legsLong });
 check('the under-barrel parts hang from the forend at the rail (within 5 mm of its underside)', Math.abs(r.underBottom - r.forendBottomAtRail) <= 0.005, { under: r.underBottom, forend: r.forendBottomAtRail });
 // before v1.225 the post's tip sat 2.6° below the eye line, centred
-check('aimed, the front sight\'s tip sits where it did (2.4–2.8° below the eye line, under 0.2° to the side)', r.aimed.belowDeg >= 2.4 && r.aimed.belowDeg <= 2.8 && Math.abs(r.aimed.sideDeg) < 0.2, r.aimed);
+// 27 Oct (stale since v1.347, found on the split's CI run): v1.347 put the aimed front post on the reticle (it sat 2.5°
+// low, so the sights aimed low); this check still wanted the old 2.4–2.8°. Now it wants v1.347's: on the eye line.
+check('aimed, the front sight\'s tip sits on the eye line (under 0.6° off it, under 0.2° to the side; v1.347)', Math.abs(r.aimed.belowDeg) < 0.6 && Math.abs(r.aimed.sideDeg) < 0.2, r.aimed);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

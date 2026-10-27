@@ -214,6 +214,9 @@ const Tutorial = {
     const beat = this.beats[this.step];
     if (!beat) return;
     if (beat.id === 'loader' && this.loaderSlot < 0) { this._advance(); return; }   // v1.324: no loader in a slot, no step
+    // v1.359 (Found in play, critic v1.337): an empty loader can't feed a BB, so the step could never end and nobody
+    // fired (they hold until step 3): a retry with the bag spent. An empty loader skips the step, as no loader does.
+    if (beat.id === 'loader' && tutorialLoaderBBs(this.loaderSlot) <= 0) { this._advance(); return; }
     // A small grace so a beat can't auto-complete on the same frame it appears.
     if (performance.now() - this._stepEnteredAt < 250) return;
 
@@ -234,6 +237,12 @@ const Tutorial = {
   // The reload beat baseline is captured in _renderStep when that beat shows.
 };
 
+// v1.359: the BBs in the speed loader in a slot (0 if the slot holds none)
+function tutorialLoaderBBs(i) {
+  const slot = Game.persist.loadoutSlots[i];
+  const sl = slot && slot.kind === 'speed_loader' ? Game.persist.speedLoaders.find(s => s.id === slot.refId) : null;
+  return sl ? sl.currentBBs || 0 : 0;
+}
 // v1.324 (backlog D.61, Michael: C, "with the free 25-BB loader"): the first Squad Basics gives you Seth's old 25-BB
 // speed loader, yours to keep, in your first empty slot (slot 2 if none is empty; what was there goes back to the
 // closet). After that it is the loader in your slots, or the first one you own. It is filled from the bag at once,
@@ -264,7 +273,7 @@ function stepGame(dt) {
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
-    updateInteractables();
+    updateInteractables(dt);
     updateBedroomLabels();   // v1.62 — project floating labels to screen each frame
     // Ambient bedroom animations
     if (Game.scene && Game.scene.userData) {
@@ -473,8 +482,10 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
       _accInstanceSeq = 1;
     }
     Game._saveEnabled = true;   // v1.218: autosave from the start
+    Game.persist.roomTour = { ticked: [] };   // v1.357 (D.76): a new save gets the look round the room once
     enterBedroom();
     openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
+    openStoryCards();   // v1.358 (D.77): over the mirror, the four story cards come first
   };
   const showAsk = (on) => {
     ask.style.display = on ? 'flex' : 'none';
