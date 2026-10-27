@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.74, the crew's hangout outside the bedroom: what is it, and what happens there? (builder, maps, 2026-10-27)**
+  Your note (23 Oct): your brother's idea, the upstairs landing outside your room as the crew's common room: a black
+  futon facing a TV on a raised platform in the corner, a black coffee table, a TV, and one long desk with two computer
+  spots. Today your bedroom opens south into a short hall (the bathroom and the closet off it) that ends at the front
+  door, and your crew is only names on the phone and the briefings until a match starts.
+  - A) **The landing, with your crew in it:** the hall opens onto a landing at the top of the stairs with the futon,
+    coffee table, the platform TV, the second TV and the two-seat desk; the kids you have taken into your crew sit or
+    stand there between matches (one more each time someone joins), each with a line when you walk up and press E. The
+    front door is down the stairs from it. Nothing else changes.
+  - B) **A, and the landing does a job:** the platform TV shows your crew's record against Seth's crew and the next
+    match, and the desk's second computer is where you pick who comes along to the next match.
+  - C) **Your picture first:** you send the mockup or a photo, it is written up in `docs/refs/landing.md` (no photo in the
+    repo), and A is built from it.
+  - D) **Not now:** keep it on the list.
+  Builder recommends **A**: it puts the crew you have been building (D.28) in front of you every time you come home, and
+  it is a contained scene change to the bedroom hub and the kids' poses; B's jobs can follow once you have walked round
+  it. If you have the mockup handy, C first gets the layout right the first time.
+
 ## Answered
 
 - **D.72, golf carts: where, and what do you do in one? (builder, 2026-10-27)**
