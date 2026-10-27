@@ -66,5 +66,18 @@ const other = await page.evaluate(() => {
 check('the duel is as it was: Seth on the Spring Shotgun at his own 0.55', other.duel.weapon === 'shotgun' && other.duel.aim == null && other.duel.base === 0.55, other.duel);
 check('a Northcliff pickup game keeps Fernando and his rifle, no Seth', other.pickup.includes('fernando:sniper') && !other.pickup.some(s => s.startsWith('seth')), other.pickup);
 check('his other matches keep the scenario\'s own sides (the duel, the Hollow at night, the lot\'s 3v3, Lamplight, the store)', other.same.length === 0, other.same);
+// v1.357 (Michael: C): a text from Seth the night before each of his zone matches; the school's tells you he's the other side
+const texts = await page.evaluate(() => {
+  const out = {};
+  for (const id of ['bunratty_night_team_2v2', 'hollow_big_battle', 'lot_night_4v4', 'northcliff_night_4v4', 'club_night_4v4']) {
+    const ctx = findScenarioListContext(id), prev = ctx.ids[ctx.idx - 1];
+    out[id] = SUMMER_TEXTS.filter(t => t.after === prev && t.from === 'Seth').map(t => t.text);
+  }
+  out.school = (SUMMER_TEXTS.find(t => t.id === 'school') || {}).text;
+  return out;
+});
+const missing = Object.entries(texts).filter(([k, v]) => k !== 'school' && v.length !== 1);
+check('Seth texts once after the match before each of his five new zone matches', missing.length === 0, texts);
+check('the school\'s text has him playing for the other side on Friday', /friday night im playing for them/.test(texts.school) && !/lets go see/.test(texts.school), texts.school);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
