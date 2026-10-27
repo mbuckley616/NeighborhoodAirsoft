@@ -94,13 +94,43 @@ function setupEntryLives(sc, es) {
 // v1.275) changes the sides, so the count is read from the sides as built: "Six a side", or "Six of you against seven"
 const SIDE_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 function sideCountDesc(scenarioId, desc) {
-  if (!desc || !/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/.test(desc)) return desc;
+  if (!desc) return desc;
   const setup = crewSetup(scenarioId) || [];
   const ours = setup.filter(es => es.team === 'player').length + 1, theirs = setup.length - ours + 1;
   const word = n => SIDE_WORDS[n] || String(n);
   const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
-  const says = ours === theirs ? `${cap(word(ours))} a side` : `${cap(word(ours))} of you against ${word(theirs)}`;
-  return desc.replace(/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/, says);
+  const says = ours === theirs ? `${word(ours)} a side` : `${word(ours)} of you against ${word(theirs)}`;
+  const counted = /\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/;
+  if (counted.test(desc)) return desc.replace(counted, cap(says));
+  if (/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) of you against\b/.test(desc)) return desc;   // written as built already
+  return desc + crewChangeLine(scenarioId, setup, says);   // v1.360
+}
+// v1.360 (Found in play, critic v1.353): a briefing with no count in it still names the sides as first written ("You
+// and Sean against the brothers, Ryan and Mitchell") while your crew changes them (3 v 3 with Owen and Priya). When the
+// sides as built differ from the written ones, one line after it says who is in and how many: "Today it's three a
+// side: Owen is with you, and Priya is with them."
+function crewChangeLine(scenarioId, setup, says) {
+  const sc = SCENARIOS[scenarioId];
+  const written = new Map((sc.enemySetup || []).map(es => [es.charId, es.team === 'player' ? 'ours' : 'theirs']));
+  const built = new Map(setup.map(es => [es.charId, es.team === 'player' ? 'ours' : 'theirs']));
+  const groups = { withYou: [], withThem: [], toYou: [], toThem: [], out: [] };
+  const name = id => (CHARACTERS[id] && CHARACTERS[id].name) || id;
+  for (const [id, side] of built) {
+    const was = written.get(id);
+    if (!was) groups[side === 'ours' ? 'withYou' : 'withThem'].push(name(id));
+    else if (was !== side) groups[side === 'ours' ? 'toYou' : 'toThem'].push(name(id));
+  }
+  for (const id of written.keys()) if (!built.has(id)) groups.out.push(name(id));
+  const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
+  const is = a => a.length > 1 ? 'are' : 'is';
+  const parts = [];
+  if (groups.withYou.length) parts.push(`${list(groups.withYou)} ${is(groups.withYou)} with you`);
+  if (groups.toYou.length) parts.push(`${list(groups.toYou)} ${is(groups.toYou)} on your side today`);
+  if (groups.withThem.length) parts.push(`${list(groups.withThem)} ${is(groups.withThem)} with them`);
+  if (groups.toThem.length) parts.push(`${list(groups.toThem)} ${is(groups.toThem)} on their side today`);
+  if (groups.out.length) parts.push(`${list(groups.out)} ${groups.out.length > 1 ? 'aren’t' : 'isn’t'} playing`);
+  if (!parts.length) return '';
+  return ` Today it’s ${says}: ${list(parts)}.`;
 }
 
 function getScenarioBriefing(scenarioId) {

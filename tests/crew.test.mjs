@@ -131,5 +131,30 @@ const save = await page.evaluate(() => {
 check('a save and load keeps the crew name and colour', save.kept.ok && save.kept.name === 'The Creek Rats' && save.kept.color === 0x2f8a3a, save.kept);
 check('an old save has no crew', save.old.name === '' && save.old.color === null, save.old);
 
+// v1.360 (Found in play, critic v1.353): a briefing without a count still named the sides as written ("You and Sean
+// against the brothers, Ryan and Mitchell") while your crew made it 3 v 3; now a line after it says who is in and how many
+const cl = await page.evaluate(() => {
+  const W = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  const out = { lines: 0, wrong: [], sean: null, quiet: null };
+  for (const id of Object.keys(SCENARIOS)) {
+    Game.persist.crew = crewFirstTime(id); Game.persist.completed = {}; crewBench.clear();
+    const b = getScenarioBriefing(id), m = b.desc.match(/ Today it’s (\w+) (a side|of you against (\w+)): (.*)\.$/);
+    if (id === 'bunratty_team_2v2') out.sean = { desc: b.desc, ours: b.allies.map(a => a.name), theirs: b.enemies.map(e => e.name) };
+    if (!m) continue;
+    out.lines++;
+    const ours = W.indexOf(m[1]), theirs = m[3] ? W.indexOf(m[3]) : ours;
+    const named = [...b.allies, ...b.enemies].filter(c => !(SCENARIOS[id].enemySetup || []).some(es => es.charId === c.charId)).every(c => m[4].includes(c.name));
+    if (ours !== b.allies.length + 1 || theirs !== b.enemies.length || !named) out.wrong.push({ id, line: m[0], ours: b.allies.length + 1, theirs: b.enemies.length });
+  }
+  Game.persist.crew = []; Game.persist.completed = {}; crewBench.clear();
+  out.quiet = getScenarioBriefing('winnmark_tutorial').desc;
+  return out;
+});
+console.log('   Sean Has Your Back:', JSON.stringify(cl.sean));
+check('Sean Has Your Back, first time through, says three a side and who is with you and with them',
+  /Today it’s three a side: \w+ is with you and \w+ is with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 2 && cl.sean.theirs.length === 3, cl.sean);
+check(`every briefing the crew changes (${cl.lines}) counts the sides as built and names each kid not in the match as written`, cl.lines >= 10 && cl.wrong.length === 0, cl.wrong);
+check('a match the crew does not change gets no line', !/Today it’s/.test(cl.quiet), cl.quiet);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
