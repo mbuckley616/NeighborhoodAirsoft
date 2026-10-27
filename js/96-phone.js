@@ -1,7 +1,7 @@
 function isRivalMatch(id) {
   const sc = SCENARIOS[id];
   if (!sc || sc.tutorial || sc.ffa || sc.winCondition === 'survive_untagged' || !findScenarioListContext(id)) return false;
-  return (sc.enemySetup || []).some(es => es.charId === 'seth' && es.team !== 'player');
+  return (sethSetup(id) || []).some(es => es.charId === 'seth' && es.team !== 'player');   // v1.356: his zone matches too
 }
 function rivalMatchIds() { return Object.keys(SCENARIOS).filter(isRivalMatch); }
 // { beaten, total } over the whole summer

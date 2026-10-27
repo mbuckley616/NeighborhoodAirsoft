@@ -393,6 +393,35 @@ function crewFinale(id) {
   return !!ctx && ctx.idx === ctx.ids.length - 1;
 }
 const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
+// v1.356 (D.28 step 5, Michael: C on "Seth in every zone", control room, 27 Oct): Seth turns up once in each zone as
+// the rival, on a better gun with better aim each time, at his best in the Last Saturday. One match per zone, mostly its
+// finale; where he was not in it he takes one kid's place (his spot, not his role), so every count stays the same. At
+// Winnmark it is the shotgun duel, as it was (the Spring Shotgun, his own 0.55). His other matches stay as they were.
+// Applied to the campaign's sides only: the Pickup Game, which builds its sides from these matches, keeps them as they are.
+const SETH_ZONE_MATCHES = {
+  bunratty_night_team_2v2: { weapon: 'ar',    aim: 0.60, takes: 'mitchell' },   // Night Game: Sean Has Your Back
+  hollow_big_battle:       { weapon: 'ump',   aim: 0.63 },                      // The Big Game
+  lot_night_4v4:           { weapon: 'mp5',   aim: 0.66 },                      // After Close
+  northcliff_night_4v4:    { weapon: 'burst', aim: 0.69, takes: 'fernando' },   // Bellfield After Dark
+  school_night_4v4:        { weapon: 'p90',   aim: 0.72, takes: 'nathan' },     // Friday Night Lights
+  club_night_4v4:          { weapon: 'ak47',  aim: 0.75 },                      // Night Swim
+  last_saturday:           { weapon: 'm249',  aim: 0.80 },                      // the Last Saturday
+};
+const sethSetupCache = {};
+// The match's own sides with Seth's zone match in them (the scenario's own enemySetup for any other match)
+function sethSetup(id) {
+  const sc = SCENARIOS[id], z = SETH_ZONE_MATCHES[id];
+  if (!sc || !z || !sc.enemySetup) return sc ? sc.enemySetup : undefined;
+  if (sethSetupCache[id] && sethSetupCache[id].src === sc.enemySetup) return sethSetupCache[id].setup;
+  const him = { weapon: z.weapon, statsOverride: { accuracy: z.aim } };
+  const setup = sc.enemySetup.map(es => {
+    if (es.charId === 'seth' && es.team !== 'player') return Object.assign({}, es, him);
+    if (z.takes && es.charId === z.takes && es.team !== 'player') return Object.assign({ charId: 'seth', anchor: es.anchor }, es.spawnAt ? { spawnAt: es.spawnAt } : {}, him);
+    return es;
+  });
+  sethSetupCache[id] = { src: sc.enemySetup, setup };
+  return setup;
+}
 // The crew you'd have the first time you play this match: each kid whose ask comes before it on the ladder
 function crewFirstTime(id) {
   const pos = crewLadderPos(id);
@@ -429,9 +458,9 @@ function crewWiderPool(id) {
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
 function crewSetup(id) {
   const sc = SCENARIOS[id];
-  if (!sc || !crewTeamMatch(id)) return sc ? sc.enemySetup : undefined;
+  if (!sc || !crewTeamMatch(id)) return sethSetup(id);   // v1.356: Seth's zone match
   const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
-  if (!crew.length && !first.length && !turned) return sc.enemySetup;
+  if (!crew.length && !first.length && !turned) return sethSetup(id);
   const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
   // v1.275: the first-time sides fix the match; then your crew as it is now plays it
   const base = crewSides(id, first, first, allies.length, null, false);
@@ -441,7 +470,7 @@ function crewSetup(id) {
 }
 // v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
 function crewSides(id, crew, fielded, alliesN, foeN, turned) {
-  const sc = SCENARIOS[id];
+  const sc = Object.assign({}, SCENARIOS[id], { enemySetup: sethSetup(id) });   // v1.356: Seth's zone match
   // v1.275: Seth turned rival leaves your side for theirs
   const setup = turned ? sc.enemySetup.filter(es => !(es.charId === 'seth' && es.team === 'player')) : sc.enemySetup;
   const sethFoe = turned || setup.some(es => es.charId === 'seth' && es.team !== 'player');
@@ -529,5 +558,5 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
 function crewScenario(id) {
   const sc = SCENARIOS[id];
   const setup = crewSetup(id);
-  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });
+  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });   // (v1.356: a copy in Seth's zone matches too)
 }

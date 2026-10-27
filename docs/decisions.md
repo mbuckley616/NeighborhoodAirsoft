@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Seth in every zone (D.28 step 5): which match in each zone, and on what gun? (deep-work session, 2026-10-27, card `fable/d28-seth`)**
   Your spec: Seth turns up once in every zone, a better gun and better aim each time, his best in the Last Saturday
   instead of the UMP he carries today. Where he plays now: Winnmark is his street (he coaches the tutorial, is your
@@ -46,8 +48,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   My reaction: C. The rival arc is told through the phone, as the rest of the summer is, and a text the night before is
   what makes the one match per zone feel like Gary turning up; it keeps the matches you have already balanced. B tidies
   the Hollow, where he is in nearly everything, but takes him out of ten matches that are about him today.
-
-## Answered
+  Michael: **C — the table, plus a text from Seth before each of his matches**. (control room, 2026-10-27)
 
 - **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
   music (a procedural C-major loop, `startMusic('bedroom')`); every match is silent but for the guns and the kids, and
