@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.72, golf carts: where, and what do you do in one? (builder, 2026-10-27)**
   Your note (23 Oct): "We could maybe incorporate vehicles like golf carts as well", and your A on D.71: the go-cart race
   first, golf carts later. The race shipped in v1.354: a cart that rolls on its own line down Bunratty's road, A and D
@@ -23,8 +25,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **B**: it is the race's sibling (a line to follow, kids along it, lives), so it is a contained
   build on what v1.354 made, and it plays as a new kind of match; A needs driving physics against every map's walls,
   houses and slopes, which is a much bigger change, and could come after if you like the carts.
-
-## Answered
+  Michael: **B) A ride-along match**. (2026-10-27, on the control room)
 
 - **Seth in every zone (D.28 step 5): which match in each zone, and on what gun? (deep-work session, 2026-10-27, card `fable/d28-seth`)**
   The session's table, one match per zone, mostly each zone's finale, rising from the Spring Shotgun (0.55 aim) at Winnmark
