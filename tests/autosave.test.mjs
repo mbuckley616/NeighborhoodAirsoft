@@ -70,6 +70,7 @@ check('START OVER starts fresh, and the new game saves over the old one', fresh 
 // (no roomTour) never sees it.
 const tour = () => page.evaluate(() => { const el = document.getElementById('roomTour'), t = Game.persist.roomTour;
   return { shown: el.style.display === 'block', text: el.textContent, ticked: t ? t.ticked.slice() : null, done: t ? !!t.done : null }; });
+await g.spin(1);   // the note is drawn by the first step home (CI read it before any step ran)
 const t0 = await tour();
 check('a new game opens the room with the note naming the phone (Eric\'s text), 0 of 4 (standing at the door ticks nothing)', t0.shown && /0 OF 4/.test(t0.text) && /Eric/.test(t0.text) && !t0.done, t0);
 const walkTo = test => page.evaluate(src => { const f = eval(src), it = Game.interactables.find(f);
