@@ -264,7 +264,7 @@ function stepGame(dt) {
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
-    updateInteractables();
+    updateInteractables(dt);
     updateBedroomLabels();   // v1.62 — project floating labels to screen each frame
     // Ambient bedroom animations
     if (Game.scene && Game.scene.userData) {
@@ -473,6 +473,7 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
       _accInstanceSeq = 1;
     }
     Game._saveEnabled = true;   // v1.218: autosave from the start
+    Game.persist.roomTour = { ticked: [] };   // v1.357 (D.76): a new save gets the look round the room once
     enterBedroom();
     openMirror();   // v1.108 (D.6, Michael: C): a new save opens on the mirror once; DONE goes to the bedroom
   };

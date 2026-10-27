@@ -527,6 +527,19 @@
     font-weight: bold;
   }
 
+  /* v1.357 (D.76): the look round the room, a sticky note top left */
+  #roomTour {
+    position: absolute; top: 24px; left: 24px; max-width: 320px; padding: 10px 14px 12px;
+    background: var(--nb-sticky, #fff1a1); color: var(--nb-ink, #1d2a6b); transform: rotate(-1.2deg);
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.45); font-family: var(--nb-hand, cursive); pointer-events: none;
+  }
+  #roomTour .rt-head { font-family: var(--nb-marker, cursive); font-size: 13px; letter-spacing: 1px; color: var(--nb-red, #b3261e); }
+  #roomTour .rt-text { font-size: 17px; line-height: 1.3; margin: 6px 0 8px; }
+  #roomTour .rt-list { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; color: var(--nb-pencil, #4a4a58); }
+  #roomTour .rt-list .now { color: var(--nb-ink, #1d2a6b); text-decoration: underline; }
+  #roomTour .rt-list .done { color: var(--nb-green, #2e6a2a); }
+  #roomTour .rt-skip { margin-top: 8px; font-size: 13px; color: var(--nb-pencil, #4a4a58); }
+  #roomTour kbd { font-family: var(--nb-marker, cursive); font-size: 12px; border: 1px solid currentColor; border-radius: 3px; padding: 0 4px; }
   #bedroomHud {
     position: absolute;
     top: 24px; right: 24px;
@@ -2578,6 +2591,7 @@
   </div>
   <div id="laserDiagHud" style="position:absolute;left:8px;top:8px;background:rgba(0,0,0,0.8);color:#9f9;border:1px solid #3a3;padding:8px 10px;border-radius:3px;font:12px monospace;white-space:pre;display:none;z-index:9999;pointer-events:none;"></div>
   <div id="bedroomLabels"></div>
+  <div id="roomTour" style="display:none;"></div>   <!-- v1.357 (D.76): the look round the room on a new save -->
   <div id="bedroomHud">
     <div class="cash-line"><span class="cash-label">CASH</span> <span id="cashAmount">$25</span></div>
     <div class="bag-line"><span class="bag-label">BBs</span> <span id="bedroomBag">15</span></div>

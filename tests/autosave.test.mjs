@@ -50,5 +50,36 @@ await page.evaluate(() => { if (Game.mode === 'mirror') document.getElementById(
 await page.waitForFunction(() => Game.mode === 'bedroom', null, { timeout: 60000 });
 const fresh = await saved(), def = await page.evaluate(() => DEFAULT_PERSIST.cash);
 check('START OVER starts fresh, and the new game saves over the old one', fresh && fresh.cash === def && fresh.done === 0, { fresh, def });
+
+// v1.357 (D.76, Michael: A): a new save gets a look round the room, a sticky note naming the door, the computer, the
+// phone and the bed; walking up to each ticks it; then it says so, goes and is saved as done. X skips it. An old save
+// (no roomTour) never sees it.
+const tour = () => page.evaluate(() => { const el = document.getElementById('roomTour'), t = Game.persist.roomTour;
+  return { shown: el.style.display === 'block', text: el.textContent, ticked: t ? t.ticked.slice() : null, done: t ? !!t.done : null }; });
+const t0 = await tour();
+check('a new game opens the room with the note naming the computer, 0 of 4 (standing at the door ticks nothing)', t0.shown && /0 OF 4/.test(t0.text) && /computer/.test(t0.text) && !t0.done, t0);
+const walkTo = test => page.evaluate(src => { const f = eval(src), it = Game.interactables.find(f);
+  Game.player.pos.x = it.pos.x; Game.player.pos.z = it.pos.z; stepGame(1 / 60); return it.label; }, test);
+await walkTo('it => it.icon === "bed"');
+const t1 = await tour();
+check('walking up to the bed ticks it, and the note still names the computer first', t1.ticked.join() === 'bed' && /1 OF 4/.test(t1.text) && /computer/.test(t1.text), t1);
+for (const f of ['it => it.icon === "computer"', 'it => it.icon === "phone"']) await walkTo(f);
+const t2a = await tour();
+check('the three looked at, the note names the front door', t2a.ticked.length === 3 && /front door/.test(t2a.text) && /3 OF 4/.test(t2a.text), t2a);
+await walkTo('it => it.label === "Outside"');
+const t2b = await tour();
+check('walking up to the door is not enough', t2b.ticked.length === 3, t2b);
+await page.evaluate(() => { document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); closeMap(); stepGame(1 / 60); });
+const t2 = await tour();
+check('all four ticked, it says that is your room', t2.shown && t2.ticked.length === 4 && /That’s your room/.test(t2.text), t2);
+await g.spin(310);
+const t3 = await tour(), t3disk = await page.evaluate(() => JSON.parse(localStorage.getItem(SAVE_KEY)).persist.roomTour);
+check('five seconds later the note is gone, done on the save', !t3.shown && t3.done && t3disk && t3disk.done === true, { t3, t3disk });
+const t4 = await page.evaluate(() => { Game.persist.roomTour = { ticked: [] }; stepGame(1 / 60); const on = document.getElementById('roomTour').style.display;
+  document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyX' })); stepGame(1 / 60);
+  const t = Game.persist.roomTour; delete Game.persist.roomTour; stepGame(1 / 60);
+  return { on, skipped: t.done, off: document.getElementById('roomTour').style.display, old: document.getElementById('roomTour').style.display }; });
+check('X skips it; a save with no tour (one from before v1.357) shows no note', t4.on === 'block' && t4.skipped === true && t4.off === 'none', t4);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

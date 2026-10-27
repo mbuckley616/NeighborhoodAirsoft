@@ -93,7 +93,9 @@ document.addEventListener('keydown', e => {
   }
   Game.keys[e.code] = true;
   // E to interact (bedroom)
+  if (e.code === 'KeyX' && Game.mode === 'bedroom' && !e.repeat) skipRoomTour();   // v1.357 (D.76)
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
+    roomTourUse(Game.focusedInteractable);   // v1.357 (D.76)
     Game.focusedInteractable.action();
   } else if (e.code === 'KeyE' && Game.mode === 'scenario' && Game.scenario.range && !e.repeat) rangeUse();   // v1.257 (D.40): one press, one use
   // v1.249 (D.36): V swings the pool noodle, if you carry one
@@ -485,6 +487,7 @@ function pollGamepad(dt) {
   if (Game.mode === 'bedroom') {
     if (pressed(PAD_BTN.A)) padKey('KeyE', true);
     else if (pressed(PAD_BTN.START)) openSettings();   // v1.242: the bedroom's SETTINGS
+    else if (pressed(PAD_BTN.BACK)) skipRoomTour();   // v1.357 (D.76): skips the look round the room
     return;
   }
   if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }
