@@ -1,11 +1,13 @@
 name: itch
-# Uploads the game to https://mbuckley616.itch.io/neighborhood-airsoft whenever index.html changes on main.
+# Uploads the game to https://mbuckley616.itch.io/neighborhood-airsoft whenever index.html or js/ changes on main.
+# v1.355 (D.75, Michael: A, ship the folder): players get index.html and the js/ files beside it, as classic script tags, so a
+# downloaded copy still opens by double-clicking. automerge.yml starts this by name after a merge (its own token starts no push).
 # Needs the repo secret BUTLER_API_KEY (an itch.io API key, created at https://itch.io/user/settings/api-keys);
 # until Michael adds it, the job skips itself rather than failing.
 on:
   push:
     branches: [main]
-    paths: [index.html]
+    paths: [index.html, 'js/**']
   workflow_dispatch:
 concurrency: itch
 jobs:
@@ -33,5 +35,6 @@ jobs:
       - name: Push to itch.io
         if: env.BUTLER_API_KEY != ''
         run: |
-          mkdir -p dist && cp index.html dist/index.html
+          mkdir -p dist/js && cp index.html dist/index.html && cp js/*.js dist/js/
+          find dist -type f | sort
           ./butler/butler push dist mbuckley616/neighborhood-airsoft:html5 --userversion "$(node scripts/tag.mjs)"

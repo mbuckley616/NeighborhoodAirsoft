@@ -282,6 +282,32 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Not now:** leave the tutorial as it is.
   Michael: **C) A second tutorial match, Squad Basics** (control room, 22 Oct 2026)
 
+- **The crew-first ladder and Crew Captains (local session, 2026-10-22, backlog D.57 and D.58)**
+  Michael asked for every scenario to be looked at zone by zone (does the title make sense, should it be a crew match,
+  how hard is it), because the crew plays in some matches and not others with no reason given; and whether there
+  should be Crew Captains besides Seth, each zone a progression against one opposing crew ending in a showdown. The
+  proposal, match by match, is `docs/crew_ladder.md`. In short:
+  - Your crew plays every match unless the match says why not: five types shown as a chip on the map card and a line
+    on the briefing (CREW, 1V1 CALLOUT, FREE-FOR-ALL, CLUTCH with your crew already tagged out, NO CREW YET for
+    Winnmark). Solo matches with no reason take the crew or become CLUTCH (the Hollow's fort matches first).
+  - Crew Captains: Seth (Winnmark, the Hollow, Willow Bend, the Last Saturday), Bunratty's, Marcus (the lot), Mason
+    (Northcliff), Jordan (Hollins Ridge), Tyler (the store, Seth's lieutenant). Each crew wears its own colour, has a
+    score line, opens its zone with a callout and plays its finale at plus one; beating it pins its bandana on your
+    wall. Crew kids, Seth's crew, captains' crews and Rebecca never play on the wrong side.
+  - Side matches that pay but don't gate (Winnmark 16 to 12 on the main line, Bunratty 15 to 14, the Hollow 12 to 9,
+    Northcliff 11 to 10); renames for every title with a headcount or a duplicate; the Big Game becomes the Hollow's
+    finale.
+  - Two answered decisions change: Winnmark's finale becomes the turn (Seth Picks Teams: you and Eric against Seth,
+    Trey and Brooke; was "Seth beside you"), and Sean and Nick ask after You and Nick (was "when Bunratty is done").
+  Michael: **All of it, with one change: retire Priya.** "I never knew anyone named Priya in my neighborhood, nor in my
+  childhood at all." Mitchell is Bunratty's captain instead, and Priya is swapped out for two kids he did know, both
+  on Bunratty (D.58):
+  - **Joe**: medium height, lean, curly blonde hair; fast and fairly agile, a good shot, moderately aggressive; carries
+    nicer, higher-end guns.
+  - **Chris**: tall and very athletic (he could dunk in 8th or 9th grade), medium build, Black; high aggression and
+    speed; a pistol, a shotgun or a cheap automatic.
+  (local session, 2026-10-22; first names only, the repo is public)
+
 - **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
   Your answer of 16 Oct (decision 10, A) reworks the treehouse yard into the twins' course: open to the trees, no
   fence, the gravel road 3-4 m above the yard's far side, their plywood and sandbag bunkers, and no treehouse. Both of

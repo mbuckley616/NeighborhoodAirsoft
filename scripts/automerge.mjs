@@ -10,7 +10,9 @@
 //     that leave the pipeline alone, or merge main in, ride along; if a later commit changes the pipeline again, the approved
 //     commit is merged by itself and the PR waits for a new approval. A held PR's approval covers its head only.
 // Main ships to players (itch.yml), but a merge made with the workflow's own token starts no push workflow, so after a merge
-// that changed index.html it starts `itch` on main by name. DRY_RUN=1 says what it would do and changes nothing.
+// that changed the game (index.html or js/, v1.355) itch is started on main by name: by automerge.yml's last step, after it has
+// stamped the title (scripts/tag.mjs stamp), when this runs there (it writes merged= and game= to $GITHUB_OUTPUT); by this
+// script itself when run anywhere else. DRY_RUN=1 says what it would do and changes nothing.
 const TOKEN = process.env.GH_TOKEN, REPO = process.env.REPO || 'mbuckley616/NeighborhoodAirsoft', DRY = !!process.env.DRY_RUN;
 const API = `https://api.github.com/repos/${REPO}`;
 const TRUSTED = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
@@ -27,6 +29,8 @@ async function all(path) { const out = []; for (let p = 1; ; p++) { const page =
 
 const PIPELINE = f => f.startsWith('.github/') || f.startsWith('tests/lib/') || f === 'tests/run.mjs' || f === 'scripts/automerge.mjs';
 const lowRisk = f => !PIPELINE(f);
+// v1.355 (D.75): the game is index.html and the js/ files it loads
+const GAME = f => f === 'index.html' || f.startsWith('js/');
 
 // green: the gate passed on that commit
 async function green(sha) {
@@ -90,10 +94,11 @@ for (const pr of await all('/pulls?state=open&base=main')) {
     }
     console.log(`#${n} ${pr.head.ref}: merging ${target.slice(0, 7)} (${why})`);
     if (!DRY) await gh(`/pulls/${n}/merge`, 'PUT', { sha: target, merge_method: 'merge', commit_title: `Merge ${pr.head.ref} (PR #${n}): ${pr.title}`.slice(0, 250), commit_message: `automerge: gate green on ${target.slice(0, 7)}; ${why}.` });
-    merged++; if (files.includes('index.html')) game = true;
+    merged++; if (files.some(GAME)) game = true;
   } catch (e) { console.log(`#${n}: ${e.message}`); }
 }
 
-if (game && !DRY)
+if (process.env.GITHUB_OUTPUT) (await import('fs')).appendFileSync(process.env.GITHUB_OUTPUT, `merged=${DRY ? 0 : merged}\ngame=${game && !DRY ? 1 : 0}\n`);
+else if (game && !DRY)
   try { await gh('/actions/workflows/itch.yml/dispatches', 'POST', { ref: 'main' }); console.log('started itch on main'); } catch (e) { console.log(`dispatch itch.yml: ${e.message}`); }
 console.log(`${merged} merged${DRY ? ' (dry run)' : ''}`);

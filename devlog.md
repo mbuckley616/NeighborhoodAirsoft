@@ -1,3 +1,5 @@
+> The archive, up to v1.354. Since v1.355 (27 Oct 2026, the split, backlog D.75) each version's entry is its own file in `docs/devlog/` (`v1.355.md`, …); nothing is added here.
+
 # Neighborhood Airsoft — Devlog
 
 ## Project Overview
