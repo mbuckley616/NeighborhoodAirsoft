@@ -5,6 +5,48 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Seth in every zone (D.28 step 5): which match in each zone, and on what gun? (deep-work session, 2026-10-27, card `fable/d28-seth`)**
+  Your spec: Seth turns up once in every zone, a better gun and better aim each time, his best in the Last Saturday
+  instead of the UMP he carries today. Where he plays now: Winnmark is his street (he coaches the tutorial, is your
+  teammate in five matches and plays you in eight, all on a pistol but the shotgun duel); the Hollow has him in eleven
+  of its twelve matches (mostly a UMP; an AR in the two daytime fort matches); the lot in Night Shift
+  (pistol) and After Close (UMP); the club in The Eighteenth and Night Swim (AK-47); and the Last Saturday (UMP).
+  Bunratty, Northcliff, the high school and inside the store never see him. His aim is 0.55 everywhere today (Brooke
+  0.75, Devon 0.85 the best of the kids). The texts around each zone already point at him: Sean's "u been at seths all
+  week. come home", his own "the big game was close and u know it", Eric's "seths old friend evan lives up in
+  northcliff", his "school starts tmrw … lets go see" and "tmrw. last saturday … my crew vs yours".
+  My table, one match per zone, the zone's finale where he can be the last thing in your way:
+
+  | Zone | His match | Gun (price) | Aim | Sides, first time through |
+  |---|---|---|---|---|
+  | Winnmark | Seth's Got a Shotgun (the duel; the finale is Lights Out, with him beside you) | Spring Shotgun ($60), as today | 0.55, as today | 1 v 1, as today |
+  | Bunratty | Night Game: Sean Has Your Back (finale), takes Mitchell's place | Spring AR ($85) | 0.60 | 3 v 4 as today; with Seth his crew fills their side (Ryan, Seth, Tyler, Brooke instead of Ryan, Mitchell, Priya, Owen) |
+  | The Hollow | The Big Game (his text follows it) | UMP ($170), as today | 0.63 | 5 v 5, unchanged |
+  | The lot | After Close (finale) | MP5 ($180) | 0.66 | 4 v 5, unchanged |
+  | Northcliff | Bellfield After Dark (finale), takes Fernando's place | Burst Rifle ($210) | 0.69 | 6 v 7 as today; Andrew and Evan cross to him, Garrett and Colin with him |
+  | High school | Friday Night Lights (finale), takes Nathan's place | P90 ($210) | 0.72 | 6 v 7 as today; Brooke crosses to him, Garrett and Colin with him |
+  | Country club | Night Swim (finale) | AK-47 ($240), as today | 0.75 | 6 v 7, unchanged |
+  | The store and the summer | The Last Saturday | M249 ($320), a light machine gun | 0.80 | 6 v 8, unchanged (you and your five v Seth and his seven) |
+
+  The step 3 rule keeps every count: a finale's side is fixed at yours plus one (plus two on the Last Saturday), so
+  adding Seth changes who is across from you, not how many; his crew kids standing with you there today cross to him,
+  as step 2 already does where he plays. Every gun on the list is one the kids can already carry (v1.337's loans). The
+  high school's text ("hollins ridge kids say the portables are theirs … lets go see") reads as Seth on your side; with
+  him across from you it becomes, for example, "hollins ridge kids say the portables are theirs. my crew is taking
+  them friday. bet ur crew cant". In the other zones the existing texts fit as they are.
+  - A) **The table, and Seth's other matches stay as they are** (his other thirteen at Winnmark, the Hollow's other ten, Night
+    Shift, The Eighteenth, on today's guns and his 0.55 aim). His one match per zone is the one where he is at his
+    zone's best.
+  - B) **The table, and "once per zone" strictly** outside Winnmark: he leaves the Hollow's other team and fort
+    matches, Night Shift and The Eighteenth (ten matches), each taking a kid from his crew at his spot on the same gun;
+    the free-for-alls and Infection keep him. Winnmark, his own street, keeps all of his.
+  - C) **A, plus a text from Seth before each of his matches**, to make each one an appointment (five new texts; the duel and the Last Saturday have his already;
+    e.g. before Bunratty's finale "heard ur playing night games on bunratty now. save me a spot. on the other team",
+    and the school's rewritten as above). *(recommended)*
+  My reaction: C. The rival arc is told through the phone, as the rest of the summer is, and a text the night before is
+  what makes the one match per zone feel like Gary turning up; it keeps the matches you have already balanced. B tidies
+  the Hollow, where he is in nearly everything, but takes him out of ten matches that are about him today.
+
 ## Answered
 
 - **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
