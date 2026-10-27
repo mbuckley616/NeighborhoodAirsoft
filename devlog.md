@@ -14302,3 +14302,25 @@ this puts it on the kids.
 - **For a look:** the costumes' sizes, and whether a cape reads too boxy at a distance. The briefing's 3D lineup and
   the result card's kids are drawn without costumes (they draw the kid's own look); worth matching if it reads odd.
 - Next steps of D.70: the Pickup Game board's switch, then Bunratty's and the other maps' own houses.
+
+## v1.352 — Halloween on the Pickup Game board
+Backlog D.70 step 3 (Michael: B, 23 Oct: holiday looks "shown around the real dates or switched on from the Pickup Game
+board; play unchanged"). v1.350 and v1.351 put Halloween on the houses and the kids by the date; this is the switch.
+- **The row.** The board has a Holiday row under the Clock: By the date (lit to start, and it says what that is today:
+  "Halloween" from 17 Oct to 1 Nov, "none" otherwise), Halloween, and Off. Halloween puts the lanterns, webs, porch lights
+  and costumes on in July; Off takes them off in October, for a plain game in the season.
+- **What it holds for.** Only the pickup match it builds, team or free-for-all: the choice is written into the match
+  (`pickup.holiday`) and read when the match is entered (`Holiday.match`). Every ladder match goes by the date, whatever
+  the last pickup game was. The online panel's 1v1 is unchanged (the D.2 card's).
+### Verified
+- **`tests/holiday.test.mjs`, extended:** the row reads By the date (with today's word), Halloween, Off, By the date lit;
+  a click lights Off. On Bellfield's pickup 2v2 in the season, Off builds no decorations and no costumes (3 kids). With the
+  date read as out of season: Halloween builds the houses' decorations and puts 2 of the 3 kids in costume (the third is
+  one who comes as himself); By the date builds neither, nor does Bellfield's ladder 3v3. Back in the season, the ladder
+  3v3 after an Off pickup game has the decorations and 7 of its 9 kids in costume.
+- **`pickup`, `pickup-ffa`:** their check of the board's lit picks now expects the Holiday row's By the date as well.
+- **These suites pass:** `holiday`, and the six `pickup` suites (`pickup`, `pickup-clock`, `pickup-fernando`,
+  `pickup-ffa`, `pickup-kids`, `pickup-lives`), each alone.
+### Still open
+- The board doesn't remember the row between visits (none of its rows are saved). Christmas would be a fourth button
+  when it comes. Next of D.70: Bunratty's and the other maps' own houses.

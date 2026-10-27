@@ -114,6 +114,46 @@ check('crouched, the head piece goes down with the head', crouch && crouch.dHead
 await g.spin(600);
 check('a night match plays 10 s with everyone in costume', (await page.evaluate(() => Game.mode)) !== 'title', null);
 
+// v1.352 (D.70 step 3): the Pickup Game board's Holiday row. By the date (lit to start), Halloween, Off; it holds for
+// the pickup match, houses and kids, and the next ladder match goes by the date again.
+const board = await page.evaluate(() => {
+  Holiday.force = null;
+  for (const z of ZONE_LADDER) Game.persist.completed[zoneCapstoneId(z.key)] = true;
+  openPickupBoard();
+  const grp = () => [...document.querySelectorAll('#modalBody .pk-opt[data-grp="holiday"]')];
+  const r = { opts: grp().map(x => x.textContent), on: grp().filter(x => x.classList.contains('on')).map(x => x.dataset.val) };
+  document.querySelector('#modalBody .pk-opt[data-grp="map"][data-val="bellfield"]').click();
+  document.querySelector('#modalBody .pk-opt[data-grp="holiday"][data-val="none"]').click();
+  r.lit = grp().filter(x => x.classList.contains('on')).map(x => x.dataset.val);
+  r.state = pickupState.holiday;
+  closeModal();
+  return r;
+});
+check('the board has a Holiday row, By the date (saying what that is today), Halloween and Off, By the date lit; a click lights Off',
+  board.opts.length === 3 && /^By the date/.test(board.opts[0]) && board.opts[1] === 'Halloween' && board.opts[2] === 'Off' && board.on.join() === 'date' && board.lit.join() === 'none', board);
+const pickupRead = async () => { const d = await read(); const k = await kids(); return { decor: !!d.decor, costumes: k.kids.filter(x => x.costume).length, kids: k.kids.length }; };
+await page.evaluate(() => buildPickupScenario(pickupState));
+await g.scenario('pickup_game');
+const pkOff = await pickupRead();
+// out of season (the date read as July), Halloween on the board puts it all on
+await page.evaluate(() => { window.__realByDate = holidayByDate; holidayByDate = () => null; pickupState.holiday = 'halloween'; buildPickupScenario(pickupState); });
+await g.scenario('pickup_game');
+const pkOn = await pickupRead();
+await page.evaluate(() => { pickupState.holiday = 'date'; buildPickupScenario(pickupState); });
+await g.scenario('pickup_game');
+const pkDateJuly = await pickupRead();
+await g.scenario('bellfield_3v3');
+const ladderJuly = await pickupRead();
+await page.evaluate(() => { holidayByDate = window.__realByDate; pickupState.holiday = 'none'; buildPickupScenario(pickupState); });
+await g.scenario('pickup_game');
+await g.scenario('bellfield_3v3');
+const ladderAfterOff = await pickupRead();
+console.log('   pickup: ' + JSON.stringify({ pkOff, pkOn, pkDateJuly, ladderJuly, ladderAfterOff }));
+check('in season, a pickup game with Off has no lanterns and no costumes', !pkOff.decor && pkOff.costumes === 0 && pkOff.kids > 0, pkOff);
+check('out of season, a pickup game with Halloween has the houses done up and kids in costume', pkOn.decor && pkOn.costumes > 0, pkOn);
+check('out of season, By the date has neither, nor does a ladder match', !pkDateJuly.decor && pkDateJuly.costumes === 0 && !ladderJuly.decor && ladderJuly.costumes === 0, [pkDateJuly, ladderJuly]);
+check('in season, the ladder match after an Off pickup game goes by the date again', ladderAfterOff.decor && ladderAfterOff.costumes > 0, ladderAfterOff);
+
 await page.evaluate(() => { Holiday.force = null; });
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

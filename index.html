@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.351</div>
+  <div class="version">v1.352</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -25782,9 +25782,13 @@ let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
 // door and the lanterns' faces glowing. Nothing is solid and nothing is added to the obstacles, so play is unchanged; it
 // is built as four merged meshes for the whole map (lanterns, faces and lights, webs, the night glow), so a map's draw
 // calls go up by four at most. Kids in costumes and the Pickup Game board's switch are the next steps.
-const Holiday = { force: null };   // 'halloween' or 'none' sets it whatever the date (for the board, and tests); null: by date
+const Holiday = { force: null, match: null };   // 'halloween' or 'none' sets it whatever the date (force: tests; match: v1.352, the board); null: by date
 function holidayNow(date) {
   if (Holiday.force) return Holiday.force === 'none' ? null : Holiday.force;
+  if (Holiday.match) return Holiday.match === 'none' ? null : Holiday.match;   // v1.352: a Pickup Game's Holiday row
+  return holidayByDate(date);
+}
+function holidayByDate(date) {
   const d = date || new Date(), m = d.getMonth(), day = d.getDate();
   return (m === 9 && day >= 17) || (m === 10 && day <= 1) ? 'halloween' : null;
 }
@@ -26310,6 +26314,8 @@ function enterScenario(scenarioId) {
   }
   Game.mode = 'scenario_intro';
   const sc = crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it
+  // v1.352 (D.70 step 3): a Pickup Game's Holiday row holds for its match (houses and kids); every other match goes by the date
+  Holiday.match = (sc && sc.pickup && PICKUP_HOLIDAYS.includes(sc.pickup.holiday) && sc.pickup.holiday !== 'date') ? sc.pickup.holiday : null;
   let built;
   // v1.35: time-of-day for this scenario ('day' default | 'night'), hoisted to
   // function scope so the night-flashlight pass below can read it.
@@ -37945,7 +37951,13 @@ const PICKUP_REWARDS = { win: 30, lose: 10 };   // scaledReward: $3 and $1
 // v1.204 (D.22 step 4, a clock): Off, or 3, 5 or 10 minutes. Time up, the side with more lives left wins (in a
 // free-for-all, you need more than any one kid); level is a draw, paid as a loss, as the flags' clock (v1.191).
 const PICKUP_CLOCKS = [0, 180, 300, 600];
-const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3, clock: 0, ours: null, theirs: null, ffaKids: null };
+// v1.352 (D.70 step 3, Michael: B, "shown around the real dates or switched on from the Pickup Game board"): the board's
+// Holiday row. By the date (the default) is Halloween from 17 Oct to 1 Nov and nothing the rest of the year; Halloween
+// puts the houses' lanterns and webs and the kids' costumes on whatever the date; Off takes them off in the season.
+// It holds for the pickup match only; the ladder's matches always go by the date.
+const PICKUP_HOLIDAYS = ['date', 'halloween', 'none'];
+const PICKUP_HOLIDAY_LABELS = { date: 'By the date', halloween: 'Halloween', none: 'Off' };
+const pickupState = { map: 'winnmark', mode: 'teams', size: 2, ways: 4, tod: 'day', lives: 3, clock: 0, holiday: 'date', ours: null, theirs: null, ffaKids: null };
 function pickupMapsOpen() { return PICKUP_MAPS.filter(m => isZoneUnlocked(m.zone)); }
 // The most a side can be on a map: its template's allies plus you, against its enemies, at most four
 function pickupMaxSize(m) {
@@ -38026,7 +38038,8 @@ function buildPickupScenario(opts) {
   const lives = PICKUP_LIVES.includes(opts.lives) ? opts.lives : 3;
   const tod = opts.tod === 'night' ? 'night' : 'day';
   const clock = PICKUP_CLOCKS.includes(opts.clock) ? opts.clock : 0;   // v1.204
-  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod, clock);
+  const holiday = PICKUP_HOLIDAYS.includes(opts.holiday) ? opts.holiday : 'date';   // v1.352
+  if (opts.mode === 'ffa' && m.ffa) return buildPickupFfa(m, opts, lives, tod, clock, holiday);
   let ours = t.enemySetup.filter(e => e.team === 'player').slice(0, size - 1);
   let theirs = t.enemySetup.filter(e => !e.team).slice(0, size);
   // v1.203: the kids you picked, each side at its own first spots
@@ -38047,13 +38060,13 @@ function buildPickupScenario(opts) {
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
     playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => pickupDayGun(e, tod)),   // v1.207
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
-    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock },
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock, holiday },
   };
   if (t.enemySpawnCluster) sc.enemySpawnCluster = t.enemySpawnCluster;
   SCENARIOS.pickup_game = sc;
   return sc;
 }
-function buildPickupFfa(m, opts, lives, tod, clock) {   // v1.202
+function buildPickupFfa(m, opts, lives, tod, clock, holiday = 'date') {   // v1.202
   const t = SCENARIOS[m.ffa];
   const ways = Math.max(3, Math.min(pickupMaxWays(m), opts.ways | 0));
   const kids = opts.ffaKids && opts.ffaKids.length === ways - 1   // v1.203: the kids you picked, at the first spots
@@ -38068,7 +38081,7 @@ function buildPickupFfa(m, opts, lives, tod, clock) {   // v1.202
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
     playerSpawn: t.playerSpawn, ffa: true, enemySetup: kids.map(e => Object.assign({}, e)), seedFrom: m.ffa,   // v1.267
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
-    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives, clock: clock || 0 },
+    rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, mode: 'ffa', ways, tod, lives, clock: clock || 0, holiday },
   };
   SCENARIOS.pickup_game = sc;
   return sc;
@@ -38108,6 +38121,7 @@ function pickupBoardHTML() {
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
     ${row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === pickupState.clock)).join(''))}
+    ${row('Holiday', PICKUP_HOLIDAYS.map(k => btn('holiday', k, PICKUP_HOLIDAY_LABELS[k] + (k === 'date' ? ` <span class="pk-count">${holidayByDate() ? 'Halloween' : 'none'}</span>` : ''), k === pickupState.holiday)).join(''))}
     <div class="pk-row"><button class="pk-play nb-btn" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button>
       <button class="pk-opt pk-online" id="pickupOnlineBtn">PLAY ONLINE</button></div>
   </div>`;
