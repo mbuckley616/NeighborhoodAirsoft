@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.348</div>
+  <div class="version">v1.349</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -6689,6 +6689,19 @@ function setupEntryLives(sc, es) {
   return 1;
 }
 
+// v1.349 (Found in play, critic v1.337): a briefing's "Four a side" is the match as first written; your crew (v1.274-
+// v1.275) changes the sides, so the count is read from the sides as built: "Six a side", or "Six of you against seven"
+const SIDE_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+function sideCountDesc(scenarioId, desc) {
+  if (!desc || !/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/.test(desc)) return desc;
+  const setup = crewSetup(scenarioId) || [];
+  const ours = setup.filter(es => es.team === 'player').length + 1, theirs = setup.length - ours + 1;
+  const word = n => SIDE_WORDS[n] || String(n);
+  const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+  const says = ours === theirs ? `${cap(word(ours))} a side` : `${cap(word(ours))} of you against ${word(theirs)}`;
+  return desc.replace(/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/, says);
+}
+
 function getScenarioBriefing(scenarioId) {
   const sc = SCENARIOS[scenarioId];
   if (!sc) return null;
@@ -6727,7 +6740,7 @@ function getScenarioBriefing(scenarioId) {
     ffa: !!sc.ffa,
     name: sc.name || '',
     scenarioName: sc.scenarioName || '',
-    desc: sc.desc || '',
+    desc: sideCountDesc(scenarioId, sc.desc || ''),   // v1.349: the count a side as built
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
     tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
@@ -26535,7 +26548,7 @@ function enterScenario(scenarioId) {
   // override what the builder emitted.
   if (sc.name) built.name = sc.name;
   if (sc.scenarioName) built.scenarioName = sc.scenarioName;
-  if (sc.desc) built.desc = sc.desc;
+  if (sc.desc) built.desc = sideCountDesc(scenarioId, sc.desc);   // v1.349: the count a side as built
 
   Scenes.scenarios[scenarioId] = built;
   Game.scenario.active = scenarioId;

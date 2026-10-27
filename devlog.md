@@ -14218,3 +14218,22 @@ MAC-10 were the SMGs.
   tighter aimed spread makes it the best SMG at 10-14 m. A crew kid you lend it to fights with the default (pistol)
   ranges, as with the M249, the L96 and the P90. Batch 2 is done; more guns (Michael's "a few more Automatic rifles")
   would be a batch 3.
+
+## v1.349 — The briefings count the sides as built
+Found in play (critic, v1.337): eight team briefings said "N a side" and the match built another count the first time
+through. Night Swim said "Three a side" over a 6 v 6 roster; the Hollow skirmish "Three a side" over 4 v 4; the night
+4v4s on the lot, Bellfield, the store, Northcliff, the school and the club "Four a side" over 4 v 5 up to 6 v 7. The
+prose was written before your crew (v1.274-v1.275): the first-time crew fixes the sides, and a replay with a bigger crew
+grows yours, so no number written into the text can stay right.
+- **The fix:** the "N a side" in a briefing is read from the sides the match builds with your crew as it is (the same
+  `crewSetup` the roster under it comes from): "Six a side" when the two match, "Six of you against seven" when not. It
+  is done where the text is shown, on the briefing card and on the intro overlay, so the scenario prose stays as
+  written. Briefings without "a side" in them are untouched.
+### Verified
+- **`tests/crew-balance.test.mjs`, extended:** every team briefing with "a side" in it (8) says the sides as built,
+  for the crew you'd have the first time through and for a replay with all five: the first time through the Hollow skirmish "Four a side" (4 v 4), the lot "Four of you against five", Bellfield "Five a side", Night Swim and the store "Six a side", Northcliff, the school and the club "Six of you against seven". The intro overlay shows the same text through the same function. Night Swim the first time
+  through reads "Six a side".
+- **These suites pass:** `crew-balance` (every earlier check of it too: the sides themselves are unchanged).
+### Still open
+- The prose still names the kids written into each match ("You're with Eric and Rebecca"), which a crew kid can replace;
+  the roster under it is right. Worth a look if it reads wrong in play.

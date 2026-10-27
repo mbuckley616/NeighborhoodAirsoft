@@ -131,5 +131,25 @@ check('an added kid who hides 25 s comes looking with 6 on his side; the match\'
   fill.added.every(k => k.bored) && fill.own.length > 0 && fill.own.every(k => !k.bored), fill);
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); Game.persist.crew = []; });
 await g.spin(2);
+// v1.349 (Found in play, critic v1.337): a briefing's "N a side" says the sides as built, the first time through and on a
+// replay with all five (Night Swim said "Three a side" over a 6 v 6 roster)
+const W = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+const says = await page.evaluate((ALL) => {
+  const out = [];
+  for (const id of Object.keys(SCENARIOS).filter(id => crewTeamMatch(id) && / a side\b/.test(SCENARIOS[id].desc || ''))) {
+    for (const [first, crew] of [[true, crewFirstTime(id)], [false, ALL]]) {
+      Game.persist.crew = crew; Game.persist.completed = {}; crewBench.clear();
+      const b = getScenarioBriefing(id);
+      const m = b.desc.match(/\b([A-Z][a-z]+) (a side|of you against ([a-z]+))\b/);
+      out.push({ id, first, crew: crew.length, ours: b.allies.length + 1, theirs: b.enemies.length, said: m ? m[0] : null, a: m && m[1].toLowerCase(), b: m && (m[3] || m[1].toLowerCase()) });
+    }
+  }
+  Game.persist.crew = []; Game.persist.completed = {};
+  return out;
+}, ALL);
+const wrong = says.filter(s => !s.said || W.indexOf(s.a) !== s.ours || W.indexOf(s.b) !== s.theirs);
+console.log('   ' + says.filter(s => s.first).map(s => `${s.id} "${s.said}" ${s.ours}v${s.theirs}`).join('; '));
+check(`every team briefing with "a side" in it (${says.length / 2}) says the sides as built, first time through and with all five`, says.length >= 16 && wrong.length === 0, wrong);
+check('Night Swim the first time through: "Six a side"', says.some(s => s.id === 'pool_night_3v3' && s.first && s.said === 'Six a side'), says.filter(s => s.id === 'pool_night_3v3'));
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
