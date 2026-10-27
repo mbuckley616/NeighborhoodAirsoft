@@ -198,7 +198,7 @@ function pickupBoardHTML() {
     ${row('When', btn('tod', 'day', 'Day', pickupState.tod === 'day') + btn('tod', 'night', 'Night', pickupState.tod === 'night'))}
     ${row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === pickupState.lives)).join(''))}
     ${row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === pickupState.clock)).join(''))}
-    ${row('Holiday', PICKUP_HOLIDAYS.map(k => btn('holiday', k, PICKUP_HOLIDAY_LABELS[k] + (k === 'date' ? ` <span class="pk-count">${holidayByDate() ? 'Halloween' : 'none'}</span>` : ''), k === pickupState.holiday)).join(''))}
+    ${Holiday.parked ? '' : row('Holiday', PICKUP_HOLIDAYS.map(k => btn('holiday', k, PICKUP_HOLIDAY_LABELS[k] + (k === 'date' ? ` <span class="pk-count">${holidayByDate() ? 'Halloween' : 'none'}</span>` : ''), k === pickupState.holiday)).join('')) /* v1.361: hidden while the holidays are parked (B.18) */}
     <div class="pk-row"><button class="pk-play nb-btn" id="pickupPlayBtn"${short ? ' disabled' : ''}>${short ? 'PICK THE KIDS' : 'PLAY'}</button>
       <button class="pk-opt pk-online" id="pickupOnlineBtn">PLAY ONLINE</button></div>
   </div>`;
