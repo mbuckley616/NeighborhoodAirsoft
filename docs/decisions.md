@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
   music (a procedural C-major loop, `startMusic('bedroom')`); every match is silent but for the guns and the kids, and
   the bedroom tune stops at BEGIN. New tracks would be made the same way (oscillators in the browser, no files), under the
@@ -16,6 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Both: the mode sets the tempo and the mood, the zone picks the lead instrument.
   D) Only the stings for now (win, lose, the last kid left), the matches stay quiet.
   Builder recommends **A**: four loops cover every match and are quick to hear in play; C can grow from it later.
+  Michael: **A — by mode: four loops plus win and lose stings**. (2026-10-27)
 
 - **D.76, a first look round the bedroom (Michael, control room, 2026-10-26; builder, 2026-10-27).** Today a NEW GAME
   opens on the mirror once, then drops you in the bedroom with only the floating labels over each thing (v1.62) and the
@@ -30,6 +33,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
      have played once; the rest stays as it is.
   D) Leave it: the labels are enough.
   Builder recommends **A**: it teaches by doing, as the match tutorial does, and costs a new player under a minute.
+  Michael: **A — a short guided walk on a new save**. (2026-10-27)
 
 - **D.77, setting the stage before the first match (Michael, control room, 2026-10-26; builder, 2026-10-27).** The
   story today is told in the bedroom with no cutscenes (D.20, Michael's A on 12 Oct): the calendar from 1 June, Eric's
@@ -42,8 +46,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   C) Both: the cards on a new save, then Eric's text in the room.
   D) Leave it: the texts and the calendar tell it as you play.
   Builder recommends **C**: the cards set the stage once, and Eric's text hands you to the room (it pairs with D.76).
-
-## Answered
+  Michael: **C — both: the cards, then Eric's text**. (2026-10-27)
 
 - **D.75, splitting index.html for a second builder (Michael, local session, 2026-10-26).** From 1 to 26 Oct The Old
   Gates landed about 3.6 times Airsoft's commits; it runs about nine builder lanes, and Airsoft has one because the game
