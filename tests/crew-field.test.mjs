@@ -24,7 +24,8 @@ const same = await page.evaluate(() => {
 });
 check(`a new game: every match tuned for nobody in your crew (of ${same.n}) plays its own sides`, same.empty.length === 0, same.empty);
 check(`with all five in, the ${same.solo} solo matches (the tutorial among them) still play alone`, same.soloChanged.length === 0 && !same.tut, same.soloChanged);
-check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 31 && same.jugg && same.out, same);
+// 32 since v1.318's Night Swim (the twins on your side at the pool)
+check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 32 && same.jugg && same.out, same);
 
 const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
   Game.persist.crew = crew; crewBench.clear(); (bench || []).forEach(k => crewBench.add(k));
@@ -133,5 +134,22 @@ check('Sean, benched from the briefing, sat out The Big Game: Eric, Nick and Reb
 // The bench is the briefing's, not the save's; the crew is the save's
 const sv = await page.evaluate(() => { crewBench.add('nick'); saveGame(); Game.persist.crew = []; loadGame(); return crewMembers().join(); });
 check('a save and load keeps the crew', sv === 'eric,sean,nick,alex,diego', sv);
+// v1.314 (critic, 22 Oct): once Lights Out is won Seth crosses over, and the place he leaves is filled. Before, a kid put
+// there had no anchor and the scene dropped him: Lights Out and Two on Two played 1 v 2, Outnumbered 1 v 3
+await page.evaluate(() => { crewBench.clear && crewBench.clear(); });
+for (const [crew, id] of [[[], 'winnmark_night_team_2v2'], [[], 'winnmark_team_2v2'], [['eric'], 'winnmark_night_team_2v2'], [['eric', 'sean'], 'winnmark_team_2v3']]) {
+  await page.evaluate(c => { Game.persist.completed[WINNMARK_FINALE] = true; Game.persist.crew = c; }, crew);
+  await g.scenario(id);
+  await g.spin(30);
+  const m = await page.evaluate(id => {
+    const want = crewSetup(id), kids = Game.scenario.enemies;
+    return { ours: kids.filter(e => e.team === 'player').map(e => e.charId).sort().join(),
+      wantOurs: want.filter(e => e.team === 'player').map(e => e.charId).sort().join(),
+      theirs: kids.filter(e => e.team !== 'player').map(e => e.charId).sort().join(), wantTheirs: want.filter(e => e.team !== 'player').length };
+  }, id);
+  check(`Seth turned, crew [${crew}], ${id}: your side on the field is the briefing's (${m.wantOurs}), not short; theirs ${m.theirs}`,
+    m.ours === m.wantOurs && m.ours.split(',').filter(Boolean).length >= Math.max(1, crew.length) && m.theirs.split(',').length === m.wantTheirs && /seth/.test(m.theirs), m);
+  await page.evaluate(() => endScenario('lose'));
+}
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

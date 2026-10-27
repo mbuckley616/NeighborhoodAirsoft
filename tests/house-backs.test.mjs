@@ -5,7 +5,7 @@
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 const read = () => page.evaluate(() => Game.player.obstacles
-  .filter(o => o.h === 5.5 && o.surface === 'hard' && o.mesh && o.mesh.isGroup)
+  .filter(o => o.mesh && o.mesh.isGroup && o.surface === 'hard' && (o.h === 5.5 || o.mesh.userData.wmLot))   // v1.343: or a Winnmark lot's real-size house
   .map(o => {
     const front = o.mesh.children.find(c => c.isGroup && c.children.some(k => k.isMesh && k.geometry.attributes.position.count > 500));
     if (!front) return { detail: false };
@@ -42,25 +42,29 @@ const read = () => page.evaluate(() => Game.player.obstacles
     });
     return { detail: true, at: [+cx.toFixed(1), +cz.toFixed(1)], out: +out.toFixed(3), meshes, backDoor };
   }));
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.343: the bulb's area, on its real lots (the box is retired)
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
-const wm = await read();
+const wm = (await read()).filter(h => !h.at || (h.at[0] > -44 && h.at[0] < 40));   // v1.343: the bulb area's four
 console.log('  winnmark', JSON.stringify(wm));
-check('Winnmark\'s eight houses are the detailed house', wm.length === 8 && wm.every(h => h.detail));
+check('Winnmark\'s four houses in the bulb\'s area are the detailed house', wm.length === 4 && wm.every(h => h.detail));
 check('each has a door on its back wall', wm.every(h => h.backDoor), wm.map(h => h.backDoor));
 check('below 2 m nothing on the back stands more than 0.3 m off the wall', wm.every(h => h.out <= 0.3), wm.map(h => h.out));
 check('each still costs at most 20 meshes', wm.every(h => h.meshes <= 20), wm.map(h => h.meshes));
 // walking at the back wall stops at it, the same as the front
 const stop = await page.evaluate(() => {
   Game.mouse.locked = true;
-  Game.player.pos.x = 8; Game.player.pos.z = -24; Game.player.yaw = Math.PI;
+  // v1.343: north from the terrace into the middle south house's walk-out back (z 29), in a lane under its deck that
+  // the posts and the terrace's props leave clear
+  const clear = x => !Game.player.obstacles.some(o => o.h < 4 && o.maxX > x - 0.6 && o.minX < x + 0.6 && o.maxZ > 29.2 && o.minZ < 37 && o.baseY < 0.5);
+  const lane = [10, 9, 11, 7, 13, 6].find(clear);
+  Game.player.pos.x = lane; Game.player.pos.z = 37; Game.player.yaw = 0;
   const kd = new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }); document.dispatchEvent(kd);
   for (let i = 0; i < 240; i++) stepGame(1 / 60);
   document.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', key: 'w' }));
   return { z: +Game.player.pos.z.toFixed(2), mode: Game.mode };
 });
-check('walking south into a house\'s back stops at its back wall (z −19.5)', stop.mode === 'scenario' && stop.z < -19.5 && stop.z > -20.5, stop);
-await page.evaluate(() => { Game.player.pos.x = 7; Game.player.pos.z = -27; Game.player.yaw = Math.PI; Game.player.pitch = 0.05; });
+check('walking north into a house\'s back stops at its back wall (z 29)', stop.mode === 'scenario' && stop.z > 29 && stop.z < 30, stop);
+await page.evaluate(() => { Game.player.pos.x = 10; Game.player.pos.z = 38; Game.player.yaw = 0; Game.player.pitch = 0.05; });
 await g.spin(2);
 await g.shot('house-backs');
 await page.evaluate(() => endScenario('lose'));

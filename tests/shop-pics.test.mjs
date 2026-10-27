@@ -29,7 +29,7 @@ const rows = await page.evaluate(() => [...document.querySelectorAll('#shopScree
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(),
   pic: !!r.querySelector('.shop-item-icon.pic img'), glyph: r.querySelector('.shop-item-icon').textContent })));
 const order = await page.evaluate(() => GUN_ORDER.slice());
-check('the Guns tab lists all 16 guns', rows.length === 16 && order.length === 16, rows.map(r => r.name));
+check('the Guns tab lists all 25 guns (v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector)', rows.length === 25 && order.length === 25, rows.map(r => r.name));
 check('every gun row has a picture in place of the ⌐ glyph', rows.every(r => r.pic && r.glyph === ''), rows.filter(r => !r.pic));
 const icons = await measure();
 check('the pictures are in GUN_ORDER, drawn at 112×112 for a 56 px box',
@@ -39,7 +39,7 @@ check('each gun fills its frame across (at least 80% of the width)', icons.every
   icons.map(i => [i.gun, i.spanX]));
 check('each picture has the gun drawn on it (at least 6% of its pixels)', icons.every(i => i.fill >= 0.06),
   icons.map(i => [i.gun, i.fill]));
-check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 16);
+check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 25);
 console.log('    icons (gun, drawn, span across, span down):', icons.map(i => `${i.gun} ${i.fill} ${i.spanX} ${i.spanY}`).join('; '));
 await g.shot('shop-pics-list');
 
@@ -132,8 +132,10 @@ const ammoRows = await page.evaluate(() => [...document.querySelectorAll('#shopS
 check('the Ammo tab\'s 7 rows (4 BB packs, 3 speed loaders) each have a picture in place of the glyph',
   ammoRows.length === 7 && ammoRows.every(r => r.pic && r.glyph === ''), ammoRows);
 const am = await measure();
-check('the ammo pictures are drawn at 112×112: the packs fill over 30% of the pixels, the thin loaders over 8%', am.length === 7 &&
-  am.every((i, k) => i.w === 112 && i.h === 112 && i.fill > (k < 4 ? 0.3 : 0.08)), am.map(i => i.fill));
+// v1.330 (D.66): the 2,000 pack is a tall bottle now, as Michael asked ("look almost like a coke bottle"), so it fills
+// less of its square than a bag: over 20%
+check('the ammo pictures are drawn at 112×112: the packs fill over 30% of the pixels (the tall 2,000 bottle 20%), the thin loaders over 8%', am.length === 7 &&
+  am.every((i, k) => i.w === 112 && i.h === 112 && i.fill > (k === 2 ? 0.2 : k < 4 ? 0.3 : 0.08)), am.map(i => i.fill));
 check('each ammo item fills its frame across or top to bottom (at least 80%)', am.every(i => Math.max(i.spanX, i.spanY) >= 0.8),
   am.map(i => [i.spanX, i.spanY]));
 check('no two ammo rows share a picture', new Set(am.map(i => i.hash)).size === 7);

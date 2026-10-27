@@ -8,7 +8,8 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const FNS = ['buildWinnmarkCourtScene', 'buildBunrattyCourtScene', 'buildHollowScene', 'buildMarketLotScene', 'buildNorthcliffScene',
+// v1.338 (D.51 step 1): Winnmark builds its own surroundings on every side (tests/winnmark-real.test.mjs), so it has none
+const FNS = ['buildBunrattyCourtScene', 'buildHollowScene', 'buildMarketLotScene', 'buildNorthcliffScene',
   'buildTreehouseYardScene', 'buildBellfieldCourtScene', 'buildHighSchoolScene', 'buildCountryClubScene', 'buildGroceryStoreScene'];
 const res = await page.evaluate((FNS) => {
   const out = {};

@@ -35,7 +35,9 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
    would hurt to lose unnoticed (a save, a crash, a rule of play other systems lean on); otherwise extend one that exists, or
    keep the check to yourself. A picture for Michael is not a suite. Drive time with
    `g.spin(n)` (fixed 1/60 calls of `stepGame`), never timeouts. `g.scenario(id)` enters any scenario past its lock.
-6. `node scripts/tag.mjs bump` — the version on the title screen is how Michael confirms which build he's running.
+6. `git fetch origin`, then `node scripts/tag.mjs bump` — the version on the title screen is how Michael confirms which build he's running.
+   Since 26 Oct the bump takes one above the highest version on main and every `auto/*` branch, so the builder and a Fable
+   branch working at once never share a number; a merge that conflicts on the tag line keeps the higher one.
 7. Append the devlog entry, update the backlog, commit.
 
 ## Devlog entry format (as the existing entries)
@@ -54,25 +56,29 @@ Times are Michael's (Central, set for CDT; the crons are UTC). The builder runs 
 - **Critic** — `auto/critic`, weekdays 6am. Plays headless, reads the itch.io comments, writes `docs/critic.md`, files bugs
   under backlog section `## Found in play`, at most two ideas in `docs/proposals.md` (Michael promotes them, nobody else).
 - **Producer** — `auto/producer`, every hour at :55 UTC since 16 Oct, so approvable work reaches Michael sooner (quick exit when nothing changed; no Slack posts 10pm-7am Central, at most one summary per 6 hours). Carries decisions to Michael in Slack, writes his answers into `docs/decisions.md`,
-  files his Slack notes into the backlog, and says which branches are ready to merge.
+  files his Slack notes into the backlog, writes the release notes after each landing, and carries the few PRs that wait for his Approve.
 - **Fable session** — `auto/fable-<id>`, model Fable, an hourly check at :35 that ends in a minute unless a `fable/<id>` card on
   the control room is queued, paused or answered (a cloud routine cannot fire another one, so nothing fires it: the schedule
   does). One cross-cutting item per card: the producer proposes the card once the item’s design is answered, Michael taps Start,
   the next check takes it. It raises its questions in `docs/decisions.md` and stops until they are answered; its PR
-  `Fable: <title>` is approved like any other. A finished branch (card at "review") that stops merging cleanly onto main is
-  the hourly check's too: it merges main in, runs parsecheck and the suites for the conflicted files, pushes, and leaves the
-  card at "review" with no version bump. When an approved Fable merge and an approved builder merge are both waiting, the
-  producer lands the Fable one first, and a merge card's `note` that names an order is followed.
+  `Fable: <title>` stays a draft until the card is finished, then lands like any other. A finished branch (card at "review")
+  that stops merging cleanly onto main is the hourly check's too: it merges main in, runs parsecheck and the suites for the
+  conflicted files, pushes, and leaves the card at "review" with no version bump.
 
 **The control room** (https://claude.ai/artifact/RMyBP48fGs4HJgijdPJYDq) is Michael's desk, with tabs for the Desk
 (decisions, merges, blockers, to-dos), Inbox, Roadmap, Team and Ideas. The producer keeps it in step with the repo
 and Slack through `ArtifactData`; he can answer and approve either there or in Slack.
 
-None of them pushes `main`. Code reaches `main` only after Michael approves (the control room's Approve button or ✅ in
-Slack), and the producer then merges **exactly the commit he approved** (`approved_sha` on the card) through GitHub, never
-anything the builder pushed after; later work gets a fresh Approve card. No local chat is needed to merge (Michael,
-29 Sep 2026). Docs-only branches (critic, producer) may be merged once green without asking. Cloud sessions commit to
-their branch and open or update their PR.
+None of them pushes `main`. **How a PR lands** (Michael in chat, 26 Oct 2026: "switch decided work to automerge on green like
+Old Gates"; `docs/pipeline.md`): the `automerge` workflow (`scripts/automerge.mjs`) merges a PR the minute its `gate` is green
+and it merges cleanly, and main then ships to itch.io. **Michael decides designs, not merges:** a PR that builds what he has
+already decided needs no tap. A **draft** PR never merges: the builder and the Fable session keep theirs drafts while a run
+is still working and mark them ready at the end. Two kinds wait for him: a PR labelled `hold` (put it on anything a player
+should not get before he has looked, and say why in the PR), and a PR that changes the pipeline itself (`.github/`,
+`tests/lib/`, `tests/run.mjs`, `scripts/automerge.mjs`). Those merge on the PR comment `Approved by Michael: <sha>`, which
+the producer posts when he taps Approve on the control room or ✅ in Slack; a held PR's approval covers that head only. An
+open design question is still a question in `docs/decisions.md` before anything is built. Cloud sessions commit to their
+branch and open or update their PR.
 
 ## The room — Slack #neighborhood-airsoft (channel id C0C50EAJKRC)
 Through the Slack connector (tools named `slack_*`; load them with ToolSearch).
@@ -91,9 +97,15 @@ Through the Slack connector (tools named `slack_*`; load them with ToolSearch).
 - Cross-cutting rewrites (online play, a voice pipeline over every line, a new map screen that touches every scenario entry,
   splitting `index.html`) are **Fable sessions**, marked **(Fable)** in the backlog: the builder skips them. Contained features
   and bug hunts are the builder’s (Opus).
-- While an open GitHub issue’s title begins `FREEZE:`, the builder ends its run at once and takes nothing. The Fable session opens it
-  when it takes a card that rewrites shared files (`freeze: true`); the producer closes it when that PR merges. A FREEZE with no
-  Fable card behind it for two hours is closed by the producer.
+- **Freeze.** The Fable session opens an issue `FREEZE: <title>` when it takes a card that rewrites shared code (`freeze: true`);
+  the producer closes it when that PR merges, or after two hours with no Fable card behind it. Its body names what the card
+  rewrites on an `Areas:` line: functions, scene builders, the scenario ids in `SCENARIOS`, test files (e.g. `Areas:
+  buildWinnmarkCourtScene, buildStreetRoad; SCENARIOS winnmark_*; tests/winnmark-*.test.mjs, tests/houses.test.mjs`). The
+  builder keeps working while it is open (Michael in chat, 26 Oct 2026: the old all-stop rule left the builder frozen about
+  60% of the time from 14 to 26 Oct): it skips any item whose change would touch a named area and takes the rest, and an item
+  that turns out to need one is reverted and left with a backlog note `waits for FREEZE: <title>`. A FREEZE with no `Areas:`
+  line freezes all of `index.html` and `tests/`, as before (the builder ends its run): only for a card that truly rewrites
+  across the file, such as splitting it, and the issue says why.
 
 ## Code map (line numbers drift; grep for the names)
 - `Game` — the global state object. `Game.mode`: title | bedroom | map | scenario_intro | scenario | result | modal | workbench.

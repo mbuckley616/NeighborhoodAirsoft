@@ -7,6 +7,239 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
+  music (a procedural C-major loop, `startMusic('bedroom')`); every match is silent but for the guns and the kids, and
+  the bedroom tune stops at BEGIN. New tracks would be made the same way (oscillators in the browser, no files), under the
+  Music volume in Settings, and kept low under the gunfire so a BB's crack and a kid's call still carry. Which first?
+  A) By mode: four short loops (day team matches and 1v1s, night matches, defends and anything on a clock, the zone
+     finales and the Last Saturday), plus a win and a lose sting on the result card.
+  B) By map: one loop per zone (Winnmark, Bunratty, the Hollow, the lot, Northcliff, the store, the school, Willow Bend),
+     each with its own feel, day and night alike.
+  C) Both: the mode sets the tempo and the mood, the zone picks the lead instrument.
+  D) Only the stings for now (win, lose, the last kid left), the matches stay quiet.
+  Builder recommends **A**: four loops cover every match and are quick to hear in play; C can grow from it later.
+  Michael: **A — by mode: four loops plus win and lose stings**. (2026-10-27)
+
+- **D.76, a first look round the bedroom (Michael, control room, 2026-10-26; builder, 2026-10-27).** Today a NEW GAME
+  opens on the mirror once, then drops you in the bedroom with only the floating labels over each thing (v1.62) and the
+  "press E" prompt when you are close. Nothing says that the front door (or the map table) is how you get to a match,
+  that the computer is the shop, or what the calendar, the phone, the bed, the Pickup Game board and the workbench do.
+  A) A short guided walk on a new save, after the mirror: a sticky note on screen names one thing at a time (the door
+     to play, the computer to shop, the phone's texts, the bed to save), each ticked off when you look at it or use it;
+     skippable, never shown again.
+  B) One "How the room works" card on a new save: a sketch of the room with each thing named and what it does; closed
+     with a click, kept on the pause menu.
+  C) Only the door: on a new save the door's label glows and says "Go play: your first match is outside" until you
+     have played once; the rest stays as it is.
+  D) Leave it: the labels are enough.
+  Builder recommends **A**: it teaches by doing, as the match tutorial does, and costs a new player under a minute.
+  Michael: **A — a short guided walk on a new save**. (2026-10-27)
+
+- **D.77, setting the stage before the first match (Michael, control room, 2026-10-26; builder, 2026-10-27).** The
+  story today is told in the bedroom with no cutscenes (D.20, Michael's A on 12 Oct): the calendar from 1 June, Eric's
+  and the others' texts, Seth's crew. A new save starts with no word of any of it. Which, if any?
+  A) Three or four story cards on a new save, before the mirror: drawn in the game's notebook style, a line or two each
+     (the last day of school, summer 2003, the street's kids and their airsoft guns, Seth's crew down the road), over a
+     short music sting; skippable, and replayable from the title screen.
+  B) A first text on the flip phone instead, from Eric, that says the same in his voice, waiting when you reach the
+     room; no cards.
+  C) Both: the cards on a new save, then Eric's text in the room.
+  D) Leave it: the texts and the calendar tell it as you play.
+  Builder recommends **C**: the cards set the stage once, and Eric's text hands you to the room (it pairs with D.76).
+  Michael: **C — both: the cards, then Eric's text**. (2026-10-27)
+
+- **D.75, splitting index.html for a second builder (Michael, local session, 2026-10-26).** From 1 to 26 Oct The Old
+  Gates landed about 3.6 times Airsoft's commits; it runs about nine builder lanes, and Airsoft has one because the game
+  is one 22,000-line file (a second builder was declined on 29 Sep for that reason). Three questions, asked in the
+  session:
+  1. What players on itch.io get: A) the folder (index.html + js/), as The Old Gates ships; B) one file joined back
+     before each upload. Recommended A.
+     Michael: **A — the folder**. (2026-10-26)
+  2. How the two builders divide the work: A) maps vs. play (maps, scenes, scenarios and the map screen; guns, kids' AI,
+     combat, shop, saves, menus and the HUD); B) two of the same, both top-down. Recommended A.
+     Michael: **A — maps vs. play**. (2026-10-26)
+  3. When: A) after the Winnmark card lands, as the next card; B) pause Winnmark and split now. Recommended A.
+     Michael: **A — after Winnmark lands**. (2026-10-26)
+
+- **Hold the South Fort is still lost before the first tag (critic, 2026-10-26, v1.337)**
+  v1.319 took your first fix: a tagged attacker walks back to the north fort. Headless after it, 4 of 4 rounds were
+  lost, all to Devon's sniper from 37-38 m: at 3.1 s pushing out, at 6-9 s standing on the fort floor. With you
+  untouchable at the start, Seth was inside 25 m at 9.7 s, and Seth and Sean put 58-82 BBs into you from 20 m by 90 s.
+  The longer walk only helps after a tag, and a one-life defender scored 0 tags in 4 rounds (0 in 10 on 20 Oct).
+  A) Your second fix: a taller wall and better crenellations, so the floor is out of Devon's line _(the critic's pick)_
+  B) A and two lives for the defender
+  C) Leave it: it's meant to be the hardest defend
+  Michael: **A) Taller wall and better crenellations**. (2026-10-26)
+
+- **Winnmark at real scale (D.51): three matches need Seth's yard and the far end of the street at once (deep-work session, 2026-10-25, card `fable/d51-winnmark`)**
+  You chose real scale (16 Oct), with Seth's house mid-street on the south side (answer 2A), and for Bunratty each match
+  fenced to a today-sized part of the street (1A, 21 Oct); the card applies that here. The real court runs about 265 m
+  from Winnmark Dr to the bulb, so mid-street puts Seth's driveway about 130 m from the bulb and 130 m from the street's
+  mouth. Today the whole street is 64 m, and every match uses it end to end.
+
+  What the 17 Winnmark matches do today, measured headless (one round of 60 s each, you standing at your start and
+  untaggable): the sides start 15-61 m apart; the first shot comes 2.3-6 s in, at 7-64 m; the team matches' first shot
+  is at 39-41 m, the edge of the guns' 10-40 m band; half of all shots are fired inside 8 m. The worst view costs 1,651
+  draw calls (the bulb), so the budget would be 2,060, a quarter over, as on Bunratty.
+
+  The plan, with no question in it: the whole street built at real size, and two fenced play areas about today's size.
+  **Seth's** (about 80 x 75 m): his lot and one neighbour each side, from the north houses' front lawns across the
+  street, down his driveway, round the deck and the hot tub, through the back yard to the creek. It takes both 1v1s with
+  Seth, Every Kid for Themselves, Two in the Yards, After Dark, Two on Two and Lights Out. **The bulb** (about 80 x 70 m):
+  the bulb with its plank fort, cars and the last two lots each side. It takes Backyard Basics, Squad Basics, Storm the
+  Cul-de-Sac, Hold the Fort, Last Stand at the Fort, Outnumbered and Squad Up. Starts stay 30-60 m apart, as today.
+  `buildSethBackyardScene`, an early scene no match uses any more, stays as it is.
+
+  Three matches don't fit one area: **Trey on Overwatch** (Seth at his place, Trey sniping "from the far end of the
+  street"), **The Whole Block** (Devon sniping from the bulb's fort, Seth and Brooke in the mid yards, "a gauntlet from
+  the road entry all the way to the cul-de-sac"), and **Defend the Treehouse** (your fort "by the woods at the mouth of
+  the street", the attackers coming through Seth's back yard). At real scale each pair of places is about 130 m apart.
+  - A) **Each goes into one area, and its briefing changes a few words.** Trey on Overwatch at Seth's, Trey on the deck
+    of the house across the street, 45-55 m from Seth's driveway; The Whole Block at the bulb, Seth and Brooke in the
+    bulb's yards, Devon on the fort; Defend the Treehouse at Seth's, the fort by the woods at the east edge of his
+    neighbour's lot, the attackers coming through his back yard as now. *(recommended: every match keeps today's
+    distances, and the briefings still say what happens)*
+  - B) **A third, longer area for those three:** the street from Seth's lot to the bulb, about 150 x 60 m. Their
+    briefings stay as they are, but the sides start 90-130 m apart: 25-40 s of walking before a pistol is in range, and
+    Trey's and Devon's sniper lines across it run past 100 m.
+  - C) **Seth's house the second lot from the bulb** instead of mid-street, so one area holds his lot and the bulb and
+    every match keeps today's shape. It goes back on your answer 2A.
+  Michael: **A — Each into one area, a few briefing words change**. (control room, 2026-10-26)
+
+- **Hand-me-downs and the BB rule (D.28 step 4): how do they work? (Fable, 2026-10-24)**
+  Your spec: you give a crew kid a gun you own (your old one goes to Nick when you buy better) and some gear with small
+  gains. A kid on his own gun brings his own BBs. A kid on a gun you handed him uses yours. You asked for a count of how
+  many BBs a crew fires before this is built, so I counted it headless. That was 56 rounds: two of each of the 28 team
+  matches that take a crew, with the crew you'd have the first time. You stood still and could not be tagged, so the kids
+  fought it out. A round stopped when one side had nobody standing, or at 4 minutes (10 rounds ran that long).
+  - **Each kid, BBs a match on his own gun:** Sean (AK-47) 237 on average, half the rounds under 183, from 24 to 1,167.
+    Alex (AK-47) 213, half under 153, from 10 to 546. Nick (Spring Assault Rifle) 46, half under 31, from 4 to 205.
+    Eric (MP5) 39, half under 34, from 3 to 153. Diego (MP5) 28, half under 26, from 15 to 59. An AK kid fires 5-8
+    times what an MP5 or rifle kid does, about 100 BBs a minute against 15-25.
+  - **The whole crew, a match:** 354 in a typical round (400 on average), from 20 to 1,419. Bunratty, where only Eric
+    has joined, 20-430. The Hollow 71-1,419. Bellfield on, with four or five kids, 99-1,278. The Last Saturday 462 and 545.
+  - **Against your bag:** at 1¢ a BB (the 100 tube; 0.6¢ in the 5,000 bag), a typical round of the crew's fire is
+    worth $2-$3.50, and a long one up to $14. The late team matches pay $10-$20 a win. You take at most your gun's mag
+    and your spare mags into a match (an AK drum is 350). A kid today never runs out, and a person's own fire can't be
+    counted headless.
+  - **What the numbers mean for the rule:** on their own guns none of this comes out of your bag, as your spec says. It
+    only does for a kid on a gun you handed him, and only an automatic costs much: an AK in a kid's hands burns a
+    5,000 bag in about 20 matches, a spring rifle hardly at all. The kids' own guns are already good (two AKs, two MP5s
+    and the Spring Assault Rifle, $85-$240 guns), so a hand-me-down is an upgrade only once you own the late guns
+    (the AK, the Burst Rifle, the Electric Rifle). Before that it is a choice of how a kid fights.
+  - **What the spec leaves open:** where you hand a gun over, whether it comes back, what happens when a kid on your
+    gun runs dry, what gear a kid can take, and whether your old gun goes to Nick automatically.
+  - A) **A loan at the loadout, a capped load from your bag, eyes and feet only.** *(recommended)*
+    - **Where:** the loadout screen gets a CREW row, each kid with the gun he carries. Pick a kid, then a gun you own,
+      or HIS OWN. The briefing's lineup already shows each kid's gun, so you see it there before BEGIN.
+    - **Does it come back:** yes. You own one of each gun, so a gun a kid carries is not in your rack. Take it back on
+      the same row, free. Selling it, or carrying it yourself, asks you to take it back first.
+    - **His BBs:** at BEGIN he loads from your bag the way you do: the gun's mag, with your mag upgrades, plus one more
+      mag's worth. What he hasn't fired goes back in the bag at the end. When it runs out he goes back to his own gun and
+      his own BBs for the rest of the match. With an empty bag he starts on his own gun. So your bag never pays more than
+      two mags a kid a match: 700-1,000 for an AK, 300-400 for an MP5, 50-80 for a spring rifle
+      (the range is your mag upgrade).
+    - **Gear:** eyewear and shoes only, from what you own, lent the same way. Any eyewear gives +0.05 aim (Sean 0.60 to
+      0.65), and any shoes +5% speed. No armor: a kid takes one hit a life, so a chest rig would double him.
+    - **Your old gun:** when you buy a gun and put your old one down, you're asked "Give your <old gun> to Nick?"
+      YES / KEEP IT. It isn't automatic, since Nick's own rifle beats a Spring Pistol or a shotgun.
+  - B) **As A, but a handed gun is his for good.** A true hand-me-down: you can't take it back, only buy another. Fewer
+    screens, and a slip costs you the gun.
+  - C) **As A, but no cap on his BBs.** He draws from your bag shot by shot until it is empty, then goes to his own gun.
+    That is closest to "uses yours", but an AK kid can burn 1,100 BBs (about $9) in a long match.
+  - D) **As A, and the old gun goes to Nick automatically** whenever the new one is the better gun (by its price), with
+    no question.
+  My recommendation is A. It keeps your rule (his gun, his BBs; your gun, your BBs) and caps what one match can cost.
+  No kid ever stands there out of BBs, and nothing is lost by trying a gun on a kid. B is a fair choice if you want
+  handing over to feel final.
+  Michael: **A** — A loan at the loadout, capped BBs, eyes and feet only. (control room, 2026-10-24)
+
+- **Weather, seasons and holidays (D.70): what to build first? (producer, 2026-10-23)**
+  Your note: "I would love to hear proposals around weather/seasons/holiday modes - Halloween, Christmas, etc. for
+  holidays, but also conditions like rain, wind, snow, etc." Every match today is a dry summer day or night. Halloween
+  is a week away.
+  - A) **Weather as a match setting:** rain, wind and snow on the Pickup Game board and on a few ladder matches. Rain
+    and snow cut how far you see, wind pushes BBs sideways, snow lies on roofs and lawns.
+  - B) **Holiday looks first:** Halloween (pumpkins, fake webs, kids in costumes, porch lights by night) and later
+    Christmas (lights, inflatables), shown around the real dates or switched on from the Pickup Game board. Nothing
+    about play changes. *(recommended: Halloween is next week, and it is contained work the builder can start now)*
+  - C) **Seasons through the summer calendar:** the bedroom calendar runs on past August into fall and winter, and the
+    maps change with it (leaves, bare trees, snow), holidays included.
+  - D) **Not now:** keep it on the list.
+  Michael: **B** — Holiday looks first: Halloween now. (2026-10-23)
+
+- **Go-cart races and golf carts (D.71, D.72): which one, and how? (producer, 2026-10-23)**
+  Your notes: "a 'racing mode' where you race go-cart frames (no engine) down a hill, and try not to get shot by a group
+  of enemies all shooting at you" and "vehicles like golf carts as well." Nothing in the game moves you but your feet
+  today.
+  - A) **The go-cart race first:** a new match type on a hill (Bunratty's slope), you coast down in an engineless frame,
+    steering and braking, while kids along the route shoot at you; reach the bottom with lives left. Golf carts later.
+    *(recommended: gravity only, no engine, one map, and it is the new kind of match you asked for in D.15)*
+  - B) **Golf carts first:** a cart parked on a few maps that you (and a teammate) can drive around in a match.
+  - C) **Both together, as a Fable card:** one vehicle system for carts and go-carts, then the race mode on it.
+  - D) **Not now:** keep them on the list.
+  Michael: **A** — The go-cart race first; golf carts later. (2026-10-23)
+
+- **The loadout screen (D.65): which slots get the "empty slot" rows and the picker? (builder, 2026-10-23)**
+  Your note: "list all equipment slots available, and if empty, clearly state that it's an empty slot. We should be
+  able to click on an empty slot, and then see a list of all of the equipment we have that can be placed in that
+  slot." The four numbered slots already work that way: slot 1 is your gun, an empty 2-4 says "Empty · Click to equip",
+  and a click opens the things you own that fit it under the row. What doesn't: your worn gear. Eye pro, armor (chest,
+  arms, knees) and shoes sit in a separate WORN GEAR section below, and an empty zone says "nothing" on the kid's
+  labels or "No armor owned", with no row to click.
+  - A) **One list of every slot:** hands (your gun), slots 2-4, eyes, chest, arms, knees and feet, each its own row
+    saying "Empty slot" when empty. A click on any row lists what you own that fits it, or says "Nothing you own fits
+    this — airsoft.com sells …". The WORN GEAR section goes into it. *(recommended: one place, one rule for every slot)*
+  - B) **Two lists, the same rule in both:** the four numbered slots as they are; WORN GEAR gets a row per zone (eyes,
+    chest, arms, knees, feet), "Empty slot" and a picker on each.
+  - C) **Wording only:** "Empty slot" everywhere a slot is empty, the picker titled "Fits slot 2:", and an empty
+    picker says what to buy. No new rows.
+  Michael: **A) One list of every slot**. (23 Oct 2026)
+
+- **Cheaper BBs (D.66): how much cheaper, and the new packs? (builder, 2026-10-23)**
+  Your note asks for BBs 3x to 5x cheaper ("2000-4000 rounds for like 15 bucks"), and for the shop's pictures to match
+  how they're sold: 500 in a little tube with a spigot, 1,000-2,000 in a tall bottle, more than 2,000 in a bag. Today
+  the shop sells 100 for $5, 500 for $20, 2,000 for $70 and 5,000 for $150 (3-5¢ a BB). Cash is whole dollars, and a
+  ladder win pays $2-$20, so a gun's 350-round drum costs $10-$18 to fill today. Every option draws the new pictures.
+  - A) **3x cheaper:** 100 for $2, 500 for $7, 2,000 for $23, 5,000 for $50.
+  - B) **5x cheaper:** 100 for $1, 500 for $4, 2,000 for $14, 5,000 for $30. *(recommended: closest to your $15 for
+    2,000-4,000, and BBs stop deciding which gun you can afford to shoot)*
+  - C) **Real prices, a bag size added:** 500 for $3, 2,000 for $10, 5,000 for $20, and a 10,000 bag for $35; the
+    100 pack goes.
+  - D) Leave the prices; only the pictures change.
+  Michael: **B) 5x cheaper** (2026-10-23)
+
+- **More guns (D.63): how many, and in what order? (builder, 2026-10-23)**
+  Your note wants 30-50 guns in the end: electric semi-auto rifles and pistols, burst rifles, LMGs, one or two more
+  snipers, more SMGs and automatic rifles, a semi-auto shotgun, and a FAMAS spring rifle that plays like the Spring
+  Assault Rifle. There are 16 today. Each new gun needs a model, a first-person pose, its spec, its mags and spare mags,
+  a shop price and a place on the workbench, and the workbench (D.64) wants its sections by gun type before the list
+  doubles.
+  - A) **In batches of four to six, the FAMAS first:** batch 1 is the FAMAS, an electric semi-auto pistol, an
+    electric semi-auto rifle, a burst rifle and a semi-auto shotgun; then the workbench sections (D.64); then LMGs,
+    snipers and SMGs in later batches. *(recommended: each batch is playable and testable on its own)*
+  - B) **The FAMAS alone now,** the rest after the workbench and loadout passes (D.64, D.65).
+  - C) **The workbench sections first (D.64),** then guns in batches as in A.
+  - D) **All of it in one Fable card,** guns, workbench and loadout together.
+  Michael: **A) In batches of four to six, the FAMAS first** (2026-10-23)
+
+- **More tutorials (D.61): how should the game teach squad orders and the speed loader? (builder, 2026-10-22)**
+  Your note asks whether the game needs more tutorials, for the team commands and the speed loader, and whether a
+  25-50 BB speed loader should be given for that tutorial. Today the only tutorial is Backyard Basics, five steps:
+  move, aim, fire, tag the three dummies, reload. Nothing teaches the orders (Q or the d-pad, v1.248/v1.255) or the
+  speed loader. The first match with a teammate is Two on Two, seventh on Winnmark's ladder.
+  - A) **Tips at the moment they matter**, no new match. The first match with teammates opens with a coach banner on
+    the orders, and you give one to clear it. The first time you run dry carrying a loader, a banner shows how to use
+    it. Each tip shows once, and the tutorial gives you a free 25-BB speed loader. *(recommended: it teaches each
+    thing when you can use it, adds no match to the ladder, and the free loader means the tip comes in your first
+    real matches)*
+  - B) **Two more steps in Backyard Basics:** load and use a speed loader (a free 25-BB one, yours to keep), then give
+    a dummy teammate a follow-me order. The tutorial grows from five steps to seven.
+  - C) **A second tutorial match**, "Squad Basics", after the first 1v1: you and two teammates against three kids,
+    coached through the orders and the loader, with the free 25-BB loader.
+  - D) **Not now:** leave the tutorial as it is.
+  Michael: **C) A second tutorial match, Squad Basics** (control room, 22 Oct 2026)
+
 - **The crew-first ladder and Crew Captains (local session, 2026-10-22, backlog D.57 and D.58)**
   Michael asked for every scenario to be looked at zone by zone (does the title make sense, should it be a crew match,
   how hard is it), because the crew plays in some matches and not others with no reason given; and whether there
@@ -32,6 +265,37 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - **Chris**: tall and very athletic (he could dunk in 8th or 9th grade), medium build, Black; high aggression and
     speed; a pistol, a shotgun or a cheap automatic.
   (local session, 2026-10-22; first names only, the repo is public)
+
+- **The twins' course (D.55 step 6): what happens to the two treehouse matches? (builder, 2026-10-22)**
+  Your answer of 16 Oct (decision 10, A) reworks the treehouse yard into the twins' course: open to the trees, no
+  fence, the gravel road 3-4 m above the yard's far side, their plywood and sandbag bunkers, and no treehouse. Both of
+  the yard's matches are built round the treehouse, though. In King of the Treehouse, Connor holds the platform and
+  watches the yard from it. In Hold the Treehouse (your D.7 A, v1.144), you hold the platform for 90 s while the twins
+  climb the ladder after you. With no treehouse, neither works as it is.
+  - A) **Both become course matches.** King of the Treehouse becomes King of the Course: Connor holds the biggest
+    sandbag bunker in the middle. Hold the Treehouse becomes Hold the Bunker: 90 s in that bunker while the twins come
+    at it from the house end and Evan shoots from the road bank. The climbing goes. *(recommended: it is the yard you
+    remember, and the ladder fights are what the D.7 towers asked for, so they could come back somewhere that had one)*
+  - B) **The course, and the treehouse stays** in one oak at the tree line for those two matches. Every other part
+    of the yard is the course.
+  - C) **The course now, and the two treehouse matches move** with the treehouse to another yard. That yard needs
+    a design call of its own, and until then the two matches are closed.
+  Until this is answered the builder goes on with the Found-in-play bugs.
+  Michael: **A — Both become course matches**. (2026-10-22)
+
+- **Northcliff's pool (D.55 step 7): which matches, and where on the ladder? (builder, 2026-10-22)**
+  Your answer of 16 Oct (decision 9, A) makes the pool its own small map with its own matches, as Bellfield was. The
+  guide (docs/refs/northcliff.md gap 6) has the real club: a 25 x 12 m pool in a concrete deck, the clubhouse on its
+  north end, two tennis courts east of it in a dark 3 m fence, the spur road and its parking. The pool stops bodies,
+  not BBs, as the country club's does. Bellfield opened with two matches after Northcliff's treehouse, and two more
+  came the next day.
+  - A) **A 1v1 round the courts and a night game at the pool**, after Bellfield on the ladder *(recommended: the
+    guide's suggestion; the courts' fences and the clubhouse are the hook, so it doesn't repeat Pool's Closed at the
+    club)*
+  - B) **A 1v1 and a 3v3, as Bellfield opened**, after Bellfield
+  - C) **One match only for now, a 3v3 on the deck and courts**, the pool's look first
+  - D) **A free-for-all**, the whole neighbourhood at the pool (it was the hub), plus a 1v1
+  Michael: **A — A 1v1 round the courts and a night game at the pool**, after Bellfield on the ladder. (2026-10-22)
 
 - **Bunratty and the Hollow at real scale (D.51): how do 28 matches stay fightable on streets 2.5 times longer? (deep-work session, 2026-10-21, card `fable/d51-bunratty-hollow`)**
   You chose real scale throughout (16 Oct). Bunratty Court really runs about 210 m from the fork to the bulb (the game's

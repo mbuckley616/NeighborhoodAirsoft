@@ -1,0 +1,35 @@
+name: automerge
+# 26 Oct 2026 (Michael in chat: "switch decided work to automerge on green like Old Gates"): a pull request merges the minute
+# it is ready, not when Michael taps Approve. Ready means `check`'s gate is green on its head, it merges cleanly, it is not a
+# draft, and either it leaves the pipeline alone and has no `hold` label, or Michael approved it: a comment on the PR
+# "Approved by Michael: <sha>", which the producer posts when he taps Approve on the control room. scripts/automerge.mjs is
+# the rule. It runs from main's copy: when a check run finishes, and every fifteen minutes in case GitHub drops an event.
+# Merging to main ships to players: after a merge that changed index.html it starts `itch` by name, because a merge made with
+# the workflow's own token starts no push workflow.
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: read
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node scripts/automerge.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}

@@ -4,6 +4,7 @@
 // is in use, they name its buttons, and a real key press or mouse move puts the keys back.
 // The pad here is a stand-in for navigator.getGamepads(), set button by button from the test.
 import { boot, check } from './lib/game.mjs';
+import { treehouseYard, TH_KING } from './lib/treehouse-yard.mjs';   // v1.316: the treehouse yard is test-only now
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
@@ -84,7 +85,7 @@ await g.spin(2);
 await page.keyboard.press('ShiftLeft');   // the keys again for the ladder's first look
 
 // 2) the treehouse ladder: W / S / Space become the stick and A
-await g.scenario('stoneglen_treehouse');
+await (await treehouseYard(page), g.scenario(TH_KING));
 await page.evaluate(() => { Game.player.invuln = true; applyBBHit = () => {}; Game.mouse.locked = true; });
 const foot = () => page.evaluate(() => {
   const p = Game.player; p.pos.x = 0; p.pos.y = 0; p.pos.z = -3.6; p.velY = 0; p.onGround = true; p.climbing = null;

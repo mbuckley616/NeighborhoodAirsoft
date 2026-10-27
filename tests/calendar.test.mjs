@@ -24,7 +24,7 @@ check('the last zone ends Friday 29 August; the big day is Saturday 30 August', 
 check('the dates fall on the right weekdays (4 July 2003 was a Friday, 1 August a Friday)', await page.evaluate(() =>
   summerDate(33).label === 'Friday 4 July' && summerDate(61).label === 'Friday 1 August'));
 
-// The date moves with the matches won: half of Winnmark's 16 → day 10; all of Winnmark (Bunratty opens) → 22 June
+// The date moves with the matches won: 8 of Winnmark's 17 (v1.324: Squad Basics made it 17) → day 9; all of Winnmark (Bunratty opens) → 22 June
 const prog = await page.evaluate(() => {
   const ids = PIN_SCENARIO_GROUPS.winnmark_court, out = {};
   ids.slice(0, 8).forEach(id => Game.persist.completed[id] = true);
@@ -43,7 +43,7 @@ const prog = await page.evaluate(() => {
   out.hollow = { day: summerDayIndex(), label: summerDate(summerDayIndex()).label, zone: summerZoneKey() };
   return out;
 });
-check('half of Winnmark won: Wednesday 11 June', prog.half === 'Wednesday 11 June', prog.half);
+check('8 of Winnmark\'s 17 won: Tuesday 10 June', prog.half === 'Tuesday 10 June', prog.half);
 check('all of Winnmark won: Sunday 22 June, in Bunratty', prog.zoneDone.label === 'Sunday 22 June' && prog.zoneDone.zone === 'bunratty_court', prog.zoneDone);
 check('the whole ladder won but the last Saturday: the last day of the store, Friday 29 August', prog.all.label === 'Friday 29 August' && prog.all.zone === 'grocery_store', prog.all);
 check('the last Saturday won too: Saturday 30 August (v1.205)', prog.big.label === 'Saturday 30 August', prog.big);
