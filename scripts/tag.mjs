@@ -1,11 +1,11 @@
 // The version shown on the title screen (<div class="version">v1.85</div> in index.html) and the number each session takes.
-//   node scripts/tag.mjs            -> prints the title's version, e.g. v1.354
+//   node scripts/tag.mjs            -> prints the title's version, e.g. v1.355
 //   node scripts/tag.mjs bump       -> chooses this session's version and starts its devlog file, docs/devlog/v1.355.md
 //   node scripts/tag.mjs stamp      -> sets the title to the highest version in docs/devlog/ (main does this after each landing)
 //   node scripts/tag.mjs set v2.00  -> sets the title explicitly
 // 26 Oct 2026: the builder works while a Fable branch is open, so a bump takes one above the highest version anywhere: here,
 // and on origin/main and every origin/auto/* branch (run `git fetch` first), so two branches never pick the same number.
-// v1.354 (D.75, two builder lanes): no branch edits the title's version line any more, because two branches editing the same
+// v1.355 (D.75, two builder lanes): no branch edits the title's version line any more, because two branches editing the same
 // line conflict on every merge. bump only chooses the number (for the devlog file and the `// v1.NN:` markers) and claims it
 // by writing the file's heading; automerge.yml stamps the title on main after each merge, from docs/devlog/.
 import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url'; import { execFileSync } from 'child_process';

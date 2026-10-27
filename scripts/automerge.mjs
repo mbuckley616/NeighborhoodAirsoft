@@ -10,7 +10,7 @@
 //     that leave the pipeline alone, or merge main in, ride along; if a later commit changes the pipeline again, the approved
 //     commit is merged by itself and the PR waits for a new approval. A held PR's approval covers its head only.
 // Main ships to players (itch.yml), but a merge made with the workflow's own token starts no push workflow, so after a merge
-// that changed the game (index.html or js/, v1.354) itch is started on main by name: by automerge.yml's last step, after it has
+// that changed the game (index.html or js/, v1.355) itch is started on main by name: by automerge.yml's last step, after it has
 // stamped the title (scripts/tag.mjs stamp), when this runs there (it writes merged= and game= to $GITHUB_OUTPUT); by this
 // script itself when run anywhere else. DRY_RUN=1 says what it would do and changes nothing.
 const TOKEN = process.env.GH_TOKEN, REPO = process.env.REPO || 'mbuckley616/NeighborhoodAirsoft', DRY = !!process.env.DRY_RUN;
@@ -29,7 +29,7 @@ async function all(path) { const out = []; for (let p = 1; ; p++) { const page =
 
 const PIPELINE = f => f.startsWith('.github/') || f.startsWith('tests/lib/') || f === 'tests/run.mjs' || f === 'scripts/automerge.mjs';
 const lowRisk = f => !PIPELINE(f);
-// v1.354 (D.75): the game is index.html and the js/ files it loads
+// v1.355 (D.75): the game is index.html and the js/ files it loads
 const GAME = f => f === 'index.html' || f.startsWith('js/');
 
 // green: the gate passed on that commit

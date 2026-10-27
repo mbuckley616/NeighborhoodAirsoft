@@ -1,5 +1,5 @@
 // Syntax-check the game's code with node. Run after every edit batch; CI runs it on every pull request and before each upload.
-// v1.354 (D.75, the split): the code lives in js/, one classic <script src="js/NN-name.js"> tag per file in index.html. It
+// v1.355 (D.75, the split): the code lives in js/, one classic <script src="js/NN-name.js"> tag per file in index.html. It
 // checks any inline <script> block, then every js/ file in tag order, then their concatenation in tag order (the files share
 // one global scope, so a top-level let/const/class declared in two files is a SyntaxError only the whole can show). It fails
 // on a js/*.js that no tag names, a tag whose file is missing, and a tag list that differs from scripts/split.mjs's CUTS (a new

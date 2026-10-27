@@ -1,4 +1,4 @@
-> The archive, up to v1.353. Since v1.354 (27 Oct 2026, the split, backlog D.75) each version's entry is its own file in `docs/devlog/` (`v1.354.md`, …); nothing is added here.
+> The archive, up to v1.354. Since v1.355 (27 Oct 2026, the split, backlog D.75) each version's entry is its own file in `docs/devlog/` (`v1.355.md`, …); nothing is added here.
 
 # Neighborhood Airsoft — Devlog
 
@@ -14877,3 +14877,43 @@ and baked into a few merged meshes, so they had no group to carry the door's pla
 - Winnmark's houses keep v1.350's decorations through `buildSuburbanHouse`; if the Winnmark card's rebuild builds them
   another way they need a marker too. The Hollow's houses across the river are scenery past the edge, left bare; the
   club, the store and the school have no houses. D.70's Halloween is done but for that; Christmas comes when Michael says.
+
+## v1.354 — Downhill Derby, the go-cart race
+Backlog D.71 (Michael: A, 23 Oct: "the go-cart race first, on Bunratty's slope, gravity only, kids along the route
+shooting; reach the bottom with lives left"). A new match type, `race`, and its first match on Bunratty Court.
+- **The ride.** You start in a homemade cart (a plywood deck, two 2x4 axles, four lawnmower wheels, a blue milk crate
+  for a seat) just below the fork with Sentinae Chase, 150 m up the street from the entry, with Ryan's shove (3 m/s).
+  The cart keeps to the road on its own line (`raceRoad`, the street's centreline from v1.303) and the hill does the
+  rest: gravity along the road's fall, less rolling resistance and air drag, up to 13 m/s. A and D steer it across the
+  lane, 2.6 m either side of the crown; S drags your feet (a brake); W kicks you along under 2.6 m/s, so a stall on the
+  flat is never the end (a kid's push, no engine). The fork itself is flat, and the street's micro-relief puts a 0.4 m
+  rise west of the entry: from below the fork the run-up carries you over it, from 80 m further down it doesn't, which
+  is why the race starts up there.
+- **The lane is a slalom.** The parked cars, bins and the planter stay where every Bunratty match has them, and
+  anything solid stops the cart dead; you steer round. The finish is 3 m short of the road's end, where the bulb's
+  plank fort stands across it.
+- **The kids.** Mitchell (AR), Priya (MP5), Owen (AR), Tyler (shotgun) and Sean (AK) hold the front lawns down the lane
+  as defenders and shoot as you pass. You sit (crouched eye and hitbox) and can look round and shoot back.
+- **Lives.** Three. A tag costs one and gives 1.5 s in which nothing tags you; you roll on. Reach the bulb with one left
+  and you win ($70); the third tag loses ($18), as in any match.
+- **The ladder.** Downhill Derby sits after Four on Four on Bunratty's ladder, before Night on the Lane. A save already
+  past Four on Four keeps everything open (the chain checks only the match before each one, and those are won).
+### Verified
+- **`tests/go-cart.test.mjs`, new:** you start at x −149.4, 13.6 m up, 13.0 m above the end of the road, in the cart in
+  the match's scene, crouched, three lives, no play box. A test driver that steers round what's on the lane (nothing
+  tagging it) reaches the bulb in 32.4 s with no crash at 12 m/s top, and that is a win on the save. Not steered, the
+  cart is stopped by a parked car at x −11.6. W from rest on the flat gets to 1.33 m/s in a second; S stops it. A tag
+  leaves you rolling at the same speed with 1.5 s of grace (a second BB in it does nothing); the third tag loses.
+- **With the kids shooting** (the same driver, no grace, my own runs, four rounds): every round reached the bulb, in
+  32.3-32.4 s, with 0, 1, 2 and 2 of the three lives lost; the kids fired 265-295 BBs a round and the first tag landed
+  at 22-30 s, in the second half of the lane.
+- **These suites pass:** `go-cart`, `map-table`, `rival`, `crew-spawn-bounds`, `spawn-facing` (the four walk the ladder
+  or every scenario; the race starts 80 m clear ahead) and `smoke`, each alone (spawn-facing and crew-spawn-bounds lost
+  their browser three at once, under load). Owed to CI's weekly run: the other suites that read
+  Bunratty's ladder or every scenario (`map-screen`, `calendar`, `crew-field`, `real-scale` and the like).
+### Still open
+- **For a playtest:** how hard it is. The test driver dodges only the cars, not the BBs, and still never lost; the
+  first 100 m (above the entry) have no kids, about 20 s of build-up. More kids, kids up the street, or a tighter
+  lane are easy turns once Michael has ridden it. The cart has no rolling sound yet, and your legs show standing
+  (crouched) in it rather than sat.
+- Golf carts (D.72) come after this, by his answer.

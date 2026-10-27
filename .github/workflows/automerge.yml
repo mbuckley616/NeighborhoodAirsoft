@@ -6,7 +6,7 @@ name: automerge
 # the rule. It runs from main's copy: when a check run finishes, and every fifteen minutes in case GitHub drops an event.
 # Merging to main ships to players: after a merge that changed index.html or js/ it starts `itch` by name, because a merge made
 # with the workflow's own token starts no push workflow.
-# v1.354 (D.75, two builder lanes): no branch edits the title's version line (two lanes would conflict on it every merge), so
+# v1.355 (D.75, two builder lanes): no branch edits the title's version line (two lanes would conflict on it every merge), so
 # after any merge this stamps the title on main with the highest version in docs/devlog/ (scripts/tag.mjs stamp), commits that
 # with [skip ci], and only then starts itch, so the title still tells Michael which build he is running.
 on:

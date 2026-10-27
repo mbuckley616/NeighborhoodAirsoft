@@ -6,14 +6,14 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 
 ## The files
 - `index.html` — the markup, the CSS, the title's version tag and one `<script src="js/NN-name.js">` tag per code file.
-- `js/` — the game's code, 37 files at the natural seams (since v1.354, backlog D.75; before that it was one inline script, so
+- `js/` — the game's code, 37 files at the natural seams (since v1.355, backlog D.75; before that it was one inline script, so
   history before 27 Oct 2026 is under `index.html`: `git log -L`, blame on an older commit). "The split layout" below is the
   rule book. Players get index.html and js/ from itch.io (https://mbuckley616.itch.io/neighborhood-airsoft),
   **Merging to `main` ships to players**: `.github/workflows/itch.yml` pushes the folder to itch.io with butler on every
   main change to index.html or js/ (the `BUTLER_API_KEY` secret is set). itch has no API for devlog posts, so after each release the producer drafts
   player-facing notes in the control room (`devlogs`) and Michael pastes them into an itch devlog post.
-- `docs/devlog/v1.NNN.md` — one file per version (since v1.354), written by the session that made it; `node scripts/tag.mjs bump`
-  starts it. `devlog.md` is the archive up to v1.353: never rewrite old entries, and add nothing to it.
+- `docs/devlog/v1.NNN.md` — one file per version (since v1.355), written by the session that made it; `node scripts/tag.mjs bump`
+  starts it. `devlog.md` is the archive up to v1.354: never rewrite old entries, and add nothing to it.
 - `docs/design_brief.md` — the pillars and scope. Every proposal argues from it.
 - `docs/backlog.md` — the open work, `~~strikethrough~~ — done, v1.NN` when finished.
 - `docs/decisions.md` — questions for Michael and his answers; nothing is a spec without a `Michael:` line.
@@ -115,7 +115,7 @@ Through the Slack connector (tools named `slack_*`; load them with ToolSearch).
   line freezes all of `index.html`, `js/` and `tests/`, as before (the builder ends its run): only for a card that truly rewrites
   across the file, such as splitting it, and the issue says why.
 
-## The split layout — `js/` (backlog D.75, v1.354)
+## The split layout — `js/` (backlog D.75, v1.355)
 Michael, 26 Oct 2026 (decisions, D.75): ship the folder, two builder lanes, maps and play. The rules, from The Old Gates' split:
 - **Classic scripts.** `index.html` holds one `<script src="js/NN-name.js">` tag per file after the three.js tag; no modules, no
   `fetch`: every file shares the one global scope exactly as the one script did, and a downloaded copy still opens by
@@ -123,7 +123,7 @@ Michael, 26 Oct 2026 (decisions, D.75): ship the folder, two builder lanes, maps
 - **No code may call into a later file while it loads.** A function declared in a later file does not exist yet while an earlier
   file's top-level code runs. A function *body* may name anything (it is resolved when called), but a call, a `const x = f`, a
   `setTimeout`/`requestAnimationFrame`/`.then` registered at load time may only reach its own file or earlier ones (a timer or
-  a microtask can run between two files). Event handlers fire after the page has loaded. The cut found one: v1.354 moved
+  a microtask can run between two files). Event handlers fire after the page has loaded. The cut found one: v1.355 moved
   `scenarioUnlockedForResult` beside `isScenarioUnlocked`.
 - **Top-level `let`/`const`/`class` are shared by every file**: the same name in two files is a SyntaxError in the later one,
   which `node --check` on one file cannot see; parsecheck checks the concatenation too. Two `function`s of one name are legal

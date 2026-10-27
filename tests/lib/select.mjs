@@ -4,7 +4,7 @@
 // change reaches with a full run on main after each merge (175 suites, about 300 minutes, in ten shards).
 //   node tests/lib/select.mjs --base=SHA [--head=SHA] [--github-output]   prints {mode, n, shards, suites, reason}
 //   node tests/lib/select.mjs --full [--github-output]                     every suite (the weekly run, a manual run)
-// Game code is everything that is not docs: index.html and, since the split (v1.354, D.75), the js/ files it loads.
+// Game code is everything that is not docs: index.html and, since the split (v1.355, D.75), the js/ files it loads.
 // mode 'none': only docs changed (docs/, or a .md file such as devlog.md or CLAUDE.md), no suite runs. 'some': the suites
 // below. 'full': everything, in run.mjs's ten shards.
 import fs from 'fs'; import path from 'path'; import { execFileSync } from 'child_process'; import { fileURLToPath } from 'url';
