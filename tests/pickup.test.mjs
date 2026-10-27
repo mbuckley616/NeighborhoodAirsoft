@@ -56,7 +56,8 @@ const played = await page.evaluate(() => {
     theirs: sc.enemySetup.filter(e => !e.team).length, npcLives: sc.npcLives, playerLives: sc.playerLives, desc: sc.desc };
 });
 console.log('  ', played.desc);
-check('the four picks are lit: Bunratty Court, 4v4, Night, 5', played.lit.join() === 'Bunratty Court,4v4,Night,5', played.lit);
+// v1.352: and the Holiday row's By the date, lit by default (it says what that is today)
+check('the four picks are lit: Bunratty Court, 4v4, Night, 5', played.lit.slice(0, 4).join() === 'Bunratty Court,4v4,Night,5' && played.lit.length === 5 && /^By the date/.test(played.lit[4]), played.lit);
 check('PLAY builds a night 4v4, five lives each, and opens its briefing', played.mode === 'scenario_intro' && !played.modal && played.name === 'Pickup Game: 4v4'
   && played.tod === 'night' && played.ours === 3 && played.theirs === 4 && played.npcLives === 5 && played.playerLives === 5, played);
 await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
