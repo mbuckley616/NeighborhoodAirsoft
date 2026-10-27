@@ -72,7 +72,7 @@ function applySettings() {
   if (a && a.ctx && Music.playing && Music.masterGain) {
     const g = Music.masterGain.gain;
     g.cancelScheduledValues(a.ctx.currentTime);
-    g.setValueAtTime(Music.volume * Settings.music, a.ctx.currentTime);
+    g.setValueAtTime(musicThemeVolume(Music.theme) * Settings.music, a.ctx.currentTime);   // v1.356: a match theme has its own level
   }
 }
 loadSettings();
@@ -118,6 +118,7 @@ function startMusic(themeName) {
   if (Music.playing) stopMusic();
   Music.theme = themeName;
   Music.playing = true;
+  Music.bpm = MATCH_THEMES[themeName] ? MATCH_THEMES[themeName].bpm : 116;   // v1.356: each match theme keeps its own tempo
   const ctx = Game.audio.ctx;
   // Master gain (so we can mute / fade)
   Music.masterGain = ctx.createGain();
@@ -125,7 +126,7 @@ function startMusic(themeName) {
   Music.masterGain.connect(ctx.destination);
   // Quick fade-in
   Music.masterGain.gain.setValueAtTime(0, ctx.currentTime);
-  Music.masterGain.gain.linearRampToValueAtTime(Music.volume * Settings.music, ctx.currentTime + 0.6);   // v1.192: the music volume
+  Music.masterGain.gain.linearRampToValueAtTime(musicThemeVolume(themeName) * Settings.music, ctx.currentTime + 0.6);   // v1.192: the music volume
   // Initialize beat clock
   Music.startTime = ctx.currentTime + 0.08;
   Music.currentBeat = -1;
@@ -252,6 +253,7 @@ const LEAD_PHRASES = [
 ];
 
 function scheduleBeat(beat, time) {
+  if (MATCH_THEMES[Music.theme]) { scheduleMatchBeat(beat, time, MATCH_THEMES[Music.theme]); return; }   // v1.356 (D.69)
   if (Music.theme !== 'bedroom') return;
   // Determine where we are in the 16-beat cycle (and which chord)
   const cycleBeat = ((beat % 16) + 16) % 16;
@@ -296,6 +298,165 @@ function scheduleBeat(beat, time) {
   }
 }
 
+// === v1.356 (D.69, Michael: A — by mode): MUSIC IN MATCHES ===
+// Four short loops, one per kind of match, made the bedroom tune's way (oscillators, no files) and kept under the
+// gunfire: day (team matches, 1v1s, free-for-alls), night, tense (defends and anything on a clock) and finale (each
+// zone's last match and the Last Saturday). A win and a lose sting on the result card. Each loop is four bars of four
+// beats: `bars` gives each bar's chord and bass, the drum lists name the beats (0-3) in a bar, `lead` is one 16-beat
+// phrase played on the cycles `leadOn` marks.
+const MATCH_THEMES = {
+  match_day: {
+    bpm: 124, volume: 0.085, kick: [0, 2], snare: [1, 3], hats: 2, hatVol: 0.6, stab: [1, 3], stabLen: 0.3, leadOn: [true, true, true, false],
+    bars: [
+      { chord: ['A2', 'C3', 'E3'], bass: ['A2', 'E3', 'A2', 'C3'] },
+      { chord: ['F2', 'A2', 'C3'], bass: ['F2', 'C3', 'F2', 'A2'] },
+      { chord: ['C3', 'E3', 'G3'], bass: ['C3', 'G2', 'C3', 'E3'] },
+      { chord: ['G2', 'B2', 'D3'], bass: ['G2', 'D3', 'G2', 'B2'] },
+    ],
+    lead: [
+      { beat: 0, note: 'A4', dur: 0.5, accent: 1 }, { beat: 0.5, note: 'C5', dur: 0.5 }, { beat: 1, note: 'E5', dur: 1 },
+      { beat: 2.5, note: 'D5', dur: 0.5 }, { beat: 3, note: 'C5', dur: 1 },
+      { beat: 4, note: 'A4', dur: 0.5, accent: 1 }, { beat: 4.5, note: 'C5', dur: 0.5 }, { beat: 5, note: 'F5', dur: 1.5 },
+      { beat: 7, note: 'E5', dur: 1 },
+      { beat: 8, note: 'G4', dur: 0.5, accent: 1 }, { beat: 8.5, note: 'C5', dur: 0.5 }, { beat: 9, note: 'E5', dur: 1 },
+      { beat: 10.5, note: 'G5', dur: 0.5 }, { beat: 11, note: 'E5', dur: 1 },
+      { beat: 12, note: 'D5', dur: 1, accent: 1 }, { beat: 13, note: 'B4', dur: 1 }, { beat: 14, note: 'G4', dur: 1.5 },
+    ],
+  },
+  match_night: {
+    bpm: 92, volume: 0.075, kick: [0], snare: [], hats: 1, hatVol: 0.35, stab: [2], stabLen: 1.2, leadOn: [false, true], wave: 'triangle',
+    bars: [
+      { chord: ['E3', 'G3', 'B3'], bass: ['E2', 'E2', 'B2', 'E2'] },
+      { chord: ['C3', 'E3', 'G3'], bass: ['C2', 'C2', 'G2', 'C2'] },
+      { chord: ['A2', 'C3', 'E3'], bass: ['A2', 'A2', 'E2', 'A2'] },
+      { chord: ['E3', 'G3', 'B3'], bass: ['E2', 'E2', 'B2', 'D3'] },
+    ],
+    lead: [
+      { beat: 0, note: 'E4', dur: 1.5, accent: 1 }, { beat: 2, note: 'G4', dur: 1 }, { beat: 3, note: 'B4', dur: 1 },
+      { beat: 4, note: 'C5', dur: 2, accent: 1 }, { beat: 6, note: 'B4', dur: 2 },
+      { beat: 8, note: 'A4', dur: 1.5, accent: 1 }, { beat: 10, note: 'G4', dur: 1 }, { beat: 11, note: 'E4', dur: 1 },
+      { beat: 12, note: 'D4', dur: 1 }, { beat: 13, note: 'E4', dur: 3, accent: 1 },
+    ],
+  },
+  match_tense: {
+    bpm: 140, volume: 0.08, kick: [0, 1, 2, 3], snare: [3], hats: 2, hatVol: 0.5, stab: [], stabLen: 0, bassEighths: true, leadOn: [false, true, true, true],
+    bars: [
+      { chord: ['D3', 'F3', 'A3'], bass: ['D2'] },
+      { chord: ['D3', 'F3', 'A3'], bass: ['D2'] },
+      { chord: ['F2', 'A2', 'C3'], bass: ['F2'] },
+      { chord: ['A2', 'C3', 'E3'], bass: ['A2'] },
+    ],
+    lead: [
+      { beat: 0, note: 'D5', dur: 0.5, accent: 1 }, { beat: 1, note: 'D5', dur: 0.5 }, { beat: 2, note: 'E5', dur: 0.5 }, { beat: 3, note: 'F5', dur: 0.5 },
+      { beat: 4, note: 'D5', dur: 0.5, accent: 1 }, { beat: 5, note: 'D5', dur: 0.5 }, { beat: 6, note: 'F5', dur: 0.5 }, { beat: 7, note: 'G5', dur: 0.5 },
+      { beat: 8, note: 'F5', dur: 0.5, accent: 1 }, { beat: 9, note: 'F5', dur: 0.5 }, { beat: 10, note: 'G5', dur: 0.5 }, { beat: 11, note: 'A5', dur: 0.5 },
+      { beat: 12, note: 'E5', dur: 0.5, accent: 1 }, { beat: 13, note: 'E5', dur: 0.5 }, { beat: 14, note: 'A5', dur: 1 }, { beat: 15, note: 'E5', dur: 0.5 },
+    ],
+  },
+  match_finale: {
+    bpm: 132, volume: 0.09, kick: [0, 2], snare: [1, 3], hats: 2, hatVol: 0.8, stab: [0, 1, 2, 3], stabLen: 0.25, leadOn: [true],
+    bars: [
+      { chord: ['A2', 'C3', 'E3'], bass: ['A2', 'A2', 'E3', 'A2'] },
+      { chord: ['F2', 'A2', 'C3'], bass: ['F2', 'F2', 'C3', 'F2'] },
+      { chord: ['G2', 'B2', 'D3'], bass: ['G2', 'G2', 'D3', 'G2'] },
+      { chord: ['A2', 'C3', 'E3'], bass: ['A2', 'E3', 'A2', 'G2'] },
+    ],
+    lead: [
+      { beat: 0, note: 'E5', dur: 1, accent: 1 }, { beat: 1, note: 'A5', dur: 1 }, { beat: 2, note: 'G5', dur: 0.5 }, { beat: 2.5, note: 'E5', dur: 0.5 }, { beat: 3, note: 'C5', dur: 1 },
+      { beat: 4, note: 'F5', dur: 1, accent: 1 }, { beat: 5, note: 'A5', dur: 1 }, { beat: 6, note: 'C6', dur: 2, accent: 1 },
+      { beat: 8, note: 'B5', dur: 1, accent: 1 }, { beat: 9, note: 'G5', dur: 1 }, { beat: 10, note: 'D5', dur: 0.5 }, { beat: 10.5, note: 'G5', dur: 0.5 }, { beat: 11, note: 'B5', dur: 1 },
+      { beat: 12, note: 'A5', dur: 1.5, accent: 1 }, { beat: 13.5, note: 'E5', dur: 0.5 }, { beat: 14, note: 'A5', dur: 2, accent: 1 },
+    ],
+  },
+};
+function musicThemeVolume(themeName) { return MATCH_THEMES[themeName] ? MATCH_THEMES[themeName].volume : Music.volume; }
+// Which loop a match plays: null for the backyard range (practice, not a match)
+function matchMusicTheme(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.range) return null;
+  if (!sc.pickup && !sc.online && (id === SUMMER_FINALE || crewFinale(id))) return 'match_finale';
+  if (sc.winCondition === 'survive_timer' || sc.winCondition === 'survive_untagged' ||
+      (sc.pickup && sc.pickup.clock) || (sc.ctf && sc.ctf.clock)) return 'match_tense';
+  return sc.timeOfDay === 'night' ? 'match_night' : 'match_day';
+}
+// At BEGIN: the match's loop takes over from the bedroom tune (or the range stays quiet)
+function startMatchMusic() {
+  const th = matchMusicTheme(Game.scenario.active);
+  if (th) startMusic(th); else stopMusic();
+}
+// One shared noise buffer for the match drums: a buffer a hit would be 40 allocations a second at 140 bpm
+function matchNoise() {
+  const ctx = Game.audio.ctx;
+  if (!Music.noise || Music.noise.sampleRate !== ctx.sampleRate) {
+    const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.12), ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    Music.noise = buf;
+  }
+  return Music.noise;
+}
+function playMatchNoiseHit(time, len, type, freq, vol) {
+  const ctx = Game.audio.ctx;
+  const src = ctx.createBufferSource();
+  src.buffer = matchNoise();
+  const filt = ctx.createBiquadFilter();
+  filt.type = type; filt.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol, time);
+  g.gain.exponentialRampToValueAtTime(0.001, time + len);
+  src.connect(filt).connect(g).connect(Music.masterGain);
+  src.start(time); src.stop(time + len + 0.02);
+}
+function scheduleMatchBeat(beat, time, th) {
+  const cycleBeat = ((beat % 16) + 16) % 16, b = cycleBeat % 4;
+  const bar = th.bars[Math.floor(cycleBeat / 4)];
+  const beatDur = 60 / th.bpm;
+  if (th.bassEighths) {
+    playBassNote(time, bar.bass[0], beatDur * 0.4);
+    playBassNote(time + beatDur / 2, bar.bass[0], beatDur * 0.4);
+  } else playBassNote(time, bar.bass[b], beatDur * 0.9);
+  if (th.kick.includes(b)) playKick(time);
+  if (th.snare.includes(b)) playMatchNoiseHit(time, 0.1, 'bandpass', 1800, 0.09);
+  for (let h = 0; h < th.hats; h++) playMatchNoiseHit(time + h * beatDur / 2, 0.035, 'highpass', 7000, 0.045 * th.hatVol * (h ? 0.7 : 1));
+  if (th.stab.includes(b)) playChordStab(time, bar.chord, beatDur * th.stabLen);
+  const cycleIdx = Math.floor(beat / 16);
+  if (!th.leadOn[cycleIdx % th.leadOn.length]) return;
+  for (const n of th.lead) {
+    if (n.beat >= cycleBeat && n.beat < cycleBeat + 1) {
+      playLeadNote(time + (n.beat - cycleBeat) * beatDur, n.note, n.dur * beatDur, n.accent || 0, th.wave);
+    }
+  }
+}
+// The result card's sting: a short run up for a win, down for a loss, at the music volume (M mutes it with the music)
+const MUSIC_STINGS = {
+  win:  [['C5', 0, 0.12], ['E5', 0.12, 0.12], ['G5', 0.24, 0.12], ['C6', 0.36, 0.7], ['G4', 0.36, 0.7], ['E4', 0.36, 0.7]],
+  lose: [['G4', 0, 0.22], ['F4', 0.22, 0.22], ['D4', 0.44, 0.22], ['C4', 0.66, 0.9], ['A3', 0.66, 0.9]],
+};
+function playMusicSting(kind) {
+  const notes = MUSIC_STINGS[kind];
+  if (!notes || !Game.audio?.ctx || !Music.enabled) return;
+  const ctx = Game.audio.ctx, t0 = ctx.currentTime + 0.05;
+  const out = ctx.createGain();
+  out.gain.value = 0.16 * Settings.music;
+  out.connect(ctx.destination);
+  for (const [name, at, dur] of notes) {
+    const freq = Music.notes[name];
+    const osc = ctx.createOscillator();
+    osc.type = kind === 'win' ? 'square' : 'triangle';
+    osc.frequency.setValueAtTime(freq, t0 + at);
+    if (kind === 'lose' && dur > 0.5) osc.frequency.linearRampToValueAtTime(freq * 0.97, t0 + at + dur);   // the last note sags
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass'; filt.frequency.value = 2200;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t0 + at);
+    g.gain.linearRampToValueAtTime(0.5, t0 + at + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + at + dur);
+    osc.connect(filt).connect(g).connect(out);
+    osc.start(t0 + at); osc.stop(t0 + at + dur + 0.05);
+  }
+  setTimeout(() => { try { out.disconnect(); } catch (e) {} }, 2000);
+  Music.lastSting = { kind, at: ctx.currentTime };
+}
+
 // === VOICE: BASS (walking, brass-like) ===
 function playBassNote(time, noteName, duration) {
   const ctx = Game.audio.ctx;
@@ -328,13 +489,13 @@ function playBassNote(time, noteName, duration) {
 }
 
 // === VOICE: LEAD (brassy, vaguely kazoo-ish) ===
-function playLeadNote(time, noteName, duration, accent) {
+function playLeadNote(time, noteName, duration, accent, wave) {
   const ctx = Game.audio.ctx;
   const freq = Music.notes[noteName];
   if (!freq) return;
   // Square wave is the punchy "brass-toon" sound
   const osc = ctx.createOscillator();
-  osc.type = 'square';
+  osc.type = wave || 'square';   // v1.356: the night loop's lead is a triangle
   osc.frequency.setValueAtTime(freq, time);
   // Optional pitch wobble on accent notes (vibrato-lite)
   if (accent > 0) {

@@ -697,8 +697,8 @@ function startScenario(built) {
   Game.scenario.ladderReached = false;   // v1.165: set when the first kid starts up a ladder (holdUntilLadder)
   Game.scenario.attackNear = false;      // v1.316: set when a kid first comes within holdUntilNear of you
   Game.scene = built.scene;
-  // Stop bedroom theme — scenario will play in silence (or its own theme later)
-  stopMusic();
+  // v1.356 (D.69): the bedroom theme gives way to the match's own loop (the range stays quiet)
+  startMatchMusic();
 
   // Reset player at scenario spawn
   Game.player.pos.copy(built.spawn);
@@ -1091,6 +1091,8 @@ function endScenario(outcome) {
   if (Net.active) netEnded(outcome);   // v1.230 (D.2): your friend's game ends too
   if (Game.paused) closePauseMenu();   // v1.239
   Game.mode = 'result';
+  stopMusic();   // v1.356 (D.69): the match loop stops, and the result card gets its sting
+  if (outcome === 'win' || outcome === 'lose' || outcome === 'infected') playMusicSting(outcome === 'win' ? 'win' : 'lose');
   // v1.67/v1.72: silence any BB whistles still attached to in-flight BBs —
   // updateBBs stops running in result mode, so without this a mid-swell whistle
   // would drone (notably when the player's FINAL life is taken while a BB is

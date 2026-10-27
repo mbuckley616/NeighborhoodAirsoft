@@ -108,6 +108,7 @@ document.addEventListener('keydown', e => {
     if (Music.enabled) {
       // Resume the current scene's theme
       if (Game.mode === 'bedroom') startMusic('bedroom');
+      else if (Game.mode === 'scenario') startMatchMusic();   // v1.356
     } else {
       stopMusic();
     }
