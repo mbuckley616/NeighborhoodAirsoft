@@ -38,7 +38,7 @@ const prog = await page.evaluate(() => {
 });
 check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 11 && prog.out.every(o => o.day === o.calendar), prog.out);
 // the Hollow's chain stops at the big game; ladder order puts the big battle after the fort matches
-// v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew; v1.357: fifteen, with Seth's before Bunratty's finale and the big game
+// v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew; v1.363: fifteen, with Seth's before Bunratty's finale and the big game
 check('fifteen texts by the Hollow\'s big game, all unread, newest first', prog.n === 15 && prog.unread === 15 &&
   prog.order[0] === 'bigGame' && prog.order[prog.order.length - 1] === 'start', prog);
 

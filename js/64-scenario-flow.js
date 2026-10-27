@@ -154,7 +154,7 @@ function enterScenario(scenarioId) {
     // The v1.276 clamp put the second and fourth allies on the same point where you start by an edge (Sean and Alex at
     // the club's 3v3, 0.00 m apart, and one stood all match: CI red on PR #95, STUCK #101), and extra kids at one anchor
     // stacked there (the Last Saturday's Garrett, Colin, Brooke and Trey within 0.4 m). Huddle kids keep their ring.
-    const crewSpread = sc.enemySetup !== sethSetup(scenarioId);   // v1.356: Seth's zone match is the match's own sides
+    const crewSpread = sc.enemySetup !== sethSetup(scenarioId);   // v1.362: Seth's zone match is the match's own sides
     const takenStarts = playerSpawnPos ? [{ x: playerSpawnPos.x, z: playerSpawnPos.z }] : [];
     // v1.315 (critic, 22 Oct): the huddle keeps its ring, but the ring's kids that start in cover are pushed out of it to
     // one edge: the Last Saturday's Garrett, Colin, Brooke and Trey came out of the car within 0.42 m of each other

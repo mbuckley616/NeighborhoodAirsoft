@@ -9,8 +9,8 @@ await g.bedroom();
 const list = await page.evaluate(() => ({ ids: rivalMatchIds(),
   ally: SCENARIOS.winnmark_team_2v2.enemySetup.find(e => e.charId === 'seth').team }));
 const has = id => list.ids.includes(id);
-// v1.356 (D.28 step 5): 24, with Bunratty's, Northcliff's and the school's finales, where Seth now plays the other side
-check('Seth\'s crew has 24 matches on the ladder, from his backyard to the last Saturday (v1.205; v1.356: 24, was 21)',
+// v1.362 (D.28 step 5): 24, with Bunratty's, Northcliff's and the school's finales, where Seth now plays the other side
+check('Seth\'s crew has 24 matches on the ladder, from his backyard to the last Saturday (v1.205; v1.362: 24, was 21)',
   list.ids.length === 24 && has('bunratty_night_team_2v2') && has('northcliff_night_4v4') && has('school_night_4v4') && has('last_saturday') && ['winnmark_seth_house', 'winnmark_cul_de_sac', 'hollow_big_battle', 'hollow_defend_south_fort_night',
     'lot_night_4v4', 'lot_vip_night', 'club_night_4v4'].every(has), list.ids);
 check('not the tutorial, the free-for-alls, Infection, or a match with Seth on your side',

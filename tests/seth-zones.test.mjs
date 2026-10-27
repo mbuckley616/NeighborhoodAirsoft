@@ -1,4 +1,4 @@
-// v1.356 (D.28 step 5, Michael: C on "Seth in every zone", 27 Oct): Seth turns up once in each zone as the rival, on a
+// v1.362 (D.28 step 5, Michael: C on "Seth in every zone", 27 Oct): Seth turns up once in each zone as the rival, on a
 // better gun with better aim each time, at his best in the Last Saturday; his crew is with him, every count stays as it
 // was, the Pickup Game and his other matches play as before. Booted into each match to read the kid the game built.
 import { boot, check } from './lib/game.mjs';
@@ -66,7 +66,7 @@ const other = await page.evaluate(() => {
 check('the duel is as it was: Seth on the Spring Shotgun at his own 0.55', other.duel.weapon === 'shotgun' && other.duel.aim == null && other.duel.base === 0.55, other.duel);
 check('a Northcliff pickup game keeps Fernando and his rifle, no Seth', other.pickup.includes('fernando:sniper') && !other.pickup.some(s => s.startsWith('seth')), other.pickup);
 check('his other matches keep the scenario\'s own sides (the duel, the Hollow at night, the lot\'s 3v3, Lamplight, the store)', other.same.length === 0, other.same);
-// v1.357 (Michael: C): a text from Seth the night before each of his zone matches; the school's tells you he's the other side
+// v1.363 (Michael: C): a text from Seth the night before each of his zone matches; the school's tells you he's the other side
 const texts = await page.evaluate(() => {
   const out = {};
   for (const id of ['bunratty_night_team_2v2', 'hollow_big_battle', 'lot_night_4v4', 'northcliff_night_4v4', 'club_night_4v4']) {

@@ -169,7 +169,7 @@ const SUMMER_TEXTS = [
     text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
   { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
     text: "infection at the cul de sac is the best game ever invented and i will not hear otherwise" },
-  // v1.357 (D.28 step 5, Michael: C): a text from Seth the night before each of his zone matches (SETH_ZONE_MATCHES)
+  // v1.363 (D.28 step 5, Michael: C): a text from Seth the night before each of his zone matches (SETH_ZONE_MATCHES)
   { id: 'sethBunratty', from: 'Seth',  after: 'bunratty_vip',
     text: "heard ur playing night games on bunratty now. save me a spot. on the other team. ryan says i can have mitchells" },
   { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
@@ -179,13 +179,13 @@ const SUMMER_TEXTS = [
     text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
   { id: 'askNick',    from: 'Nick',    after: 'bunratty_night_team_2v2', ask: 'nick',
     text: "if seans in ur crew im in ur crew. right? im in right?" },
-  { id: 'sethHollow', from: 'Seth',    after: 'hollow_defend_south_fort_night',   // v1.357
+  { id: 'sethHollow', from: 'Seth',    after: 'hollow_defend_south_fort_night',   // v1.363
     text: "big game tmrw. whole neighborhood. im on red and i got the ump. dont cry when u lose" },
   { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
     text: "the big game was close and u know it. my crew wants the north fort back" },
   { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
     text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
-  { id: 'sethLot',    from: 'Seth',    after: 'lot_vip_night',   // v1.357
+  { id: 'sethLot',    from: 'Seth',    after: 'lot_vip_night',   // v1.363
     text: "after close tmrw. the lot. i got an mp5 now. u wont hear me coming" },
   { id: 'northcliff', from: 'Eric',    after: 'lot_night_4v4',
     text: "seths old friend evan lives up in northcliff now. seth says evan is better than all of us. hills and a creek. august is gonna be crazy" },
@@ -204,13 +204,13 @@ const SUMMER_TEXTS = [
     text: "andrew and colin are with us now. and garrett. u havent met garrett. u will" },
   { id: 'askDiego',   from: 'Diego',   after: 'bellfield_ctf', ask: 'diego',
     text: "colin went to seths. id rather run with u. u got room in ur crew?" },
-  { id: 'sethNorthcliff', from: 'Seth', after: 'northcliff_defend_creek',   // v1.357
+  { id: 'sethNorthcliff', from: 'Seth', after: 'northcliff_defend_creek',   // v1.363
     text: "bellfield kids asked me to play w them tmrw night. got a burst rifle. three at a time. good luck" },
   { id: 'school',     from: 'Seth',    after: 'northcliff_night_4v4',
-    text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. friday night im playing for them. bet ur crew cant take em" },   // v1.357: he's the other side now (was "lets go see")
+    text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. friday night im playing for them. bet ur crew cant take em" },   // v1.363: he's the other side now (was "lets go see")
   { id: 'pool',       from: 'Brooke',  after: 'school_night_4v4',
     text: "the club shut the pool for the season. i know a gap in the hedge. bring a pistol" },
-  { id: 'sethClub',   from: 'Seth',    after: 'club_defend_gazebo',   // v1.357
+  { id: 'sethClub',   from: 'Seth',    after: 'club_defend_gazebo',   // v1.363
     text: "night swim at the club tmrw. me marcus jamie and devon on the veranda. i got the ak. wear something dark" },
   { id: 'store',      from: 'Eric',    after: 'club_night_4v4',
     text: "tylers dad is night manager at riverside market. tyler says we can get in before it opens. FOR REAL" },
@@ -404,7 +404,7 @@ function crewFinale(id) {
   return !!ctx && ctx.idx === ctx.ids.length - 1;
 }
 const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
-// v1.356 (D.28 step 5, Michael: C on "Seth in every zone", control room, 27 Oct): Seth turns up once in each zone as
+// v1.362 (D.28 step 5, Michael: C on "Seth in every zone", control room, 27 Oct): Seth turns up once in each zone as
 // the rival, on a better gun with better aim each time, at his best in the Last Saturday. One match per zone, mostly its
 // finale; where he was not in it he takes one kid's place (his spot, not his role), so every count stays the same. At
 // Winnmark it is the shotgun duel, as it was (the Spring Shotgun, his own 0.55). His other matches stay as they were.
@@ -469,7 +469,7 @@ function crewWiderPool(id) {
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
 function crewSetup(id) {
   const sc = SCENARIOS[id];
-  if (!sc || !crewTeamMatch(id)) return sethSetup(id);   // v1.356: Seth's zone match
+  if (!sc || !crewTeamMatch(id)) return sethSetup(id);   // v1.362: Seth's zone match
   const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
   if (!crew.length && !first.length && !turned) return sethSetup(id);
   const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
@@ -481,7 +481,7 @@ function crewSetup(id) {
 }
 // v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
 function crewSides(id, crew, fielded, alliesN, foeN, turned) {
-  const sc = Object.assign({}, SCENARIOS[id], { enemySetup: sethSetup(id) });   // v1.356: Seth's zone match
+  const sc = Object.assign({}, SCENARIOS[id], { enemySetup: sethSetup(id) });   // v1.362: Seth's zone match
   // v1.275: Seth turned rival leaves your side for theirs
   const setup = turned ? sc.enemySetup.filter(es => !(es.charId === 'seth' && es.team === 'player')) : sc.enemySetup;
   const sethFoe = turned || setup.some(es => es.charId === 'seth' && es.team !== 'player');
@@ -569,5 +569,5 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
 function crewScenario(id) {
   const sc = SCENARIOS[id];
   const setup = crewSetup(id);
-  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });   // (v1.356: a copy in Seth's zone matches too)
+  return !sc || setup === sc.enemySetup ? sc : Object.assign({}, sc, { enemySetup: setup });   // (v1.362: a copy in Seth's zone matches too)
 }

@@ -43,7 +43,7 @@ check('the school kids play only at the school', Object.values(info.playsAt).fla
   && SCHOOL.every(id => info.playsAt[id]), info.playsAt);
 const old = /\b(Tyler|Ryan|Mitchell|Priya|Owen|Marcus|Jamie|Trey|Bunratty)\b/;
 check('no school briefing names a borrowed kid', info.descs.every(d => !old.test(d)), info.descs.filter(d => old.test(d)));
-// v1.356 (D.28 step 5): Friday Night Lights has Seth in Nathan's place, and its briefing names him
+// v1.362 (D.28 step 5): Friday Night Lights has Seth in Nathan's place, and its briefing names him
 const foeName = (id, c) => id === 'school_night_4v4' && c === 'nathan' ? 'Seth' : c[0].toUpperCase() + c.slice(1);
 check('each briefing names its own enemies', IDS.every((id, i) => info.enemiesAt[id].every(c => info.descs[i].includes(foeName(id, c)))), info.enemiesAt);
 
