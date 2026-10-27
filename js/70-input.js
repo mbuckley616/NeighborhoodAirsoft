@@ -93,7 +93,9 @@ document.addEventListener('keydown', e => {
   }
   Game.keys[e.code] = true;
   // E to interact (bedroom)
+  if (e.code === 'KeyX' && Game.mode === 'bedroom' && !e.repeat) skipRoomTour();   // v1.357 (D.76)
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
+    roomTourUse(Game.focusedInteractable);   // v1.357 (D.76)
     Game.focusedInteractable.action();
   } else if (e.code === 'KeyE' && Game.mode === 'scenario' && Game.scenario.range && !e.repeat) rangeUse();   // v1.257 (D.40): one press, one use
   // v1.249 (D.36): V swings the pool noodle, if you carry one
@@ -108,6 +110,7 @@ document.addEventListener('keydown', e => {
     if (Music.enabled) {
       // Resume the current scene's theme
       if (Game.mode === 'bedroom') startMusic('bedroom');
+      else if (Game.mode === 'scenario') startMatchMusic();   // v1.356
     } else {
       stopMusic();
     }
@@ -278,7 +281,7 @@ function padCycleSlot(dir) {
 // it would click is outlined. It shows only while the pad is in use and a screen is up.
 const PAD_CURSOR_PX = 1100;     // full left stick = this many pixels a second
 const PAD_BACK_IDS = ['settingsDoneBtn', 'newGameNoBtn', 'modalCloseBtn', 'briefCancelBtn', 'shopCloseBtn',
-                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'mirrorDoneBtn'];
+                      'loadoutCloseBtn', 'wbCloseBtn', 'mapCloseBtn', 'storySkipBtn', 'mirrorDoneBtn'];   // v1.358: the story cards over the mirror
 const PadCursor = { x: 0, y: 0, shown: false, el: null, hover: null };
 function padScreenUp() {
   if (document.getElementById('settingsScreen').classList.contains('active')) return true;
@@ -484,6 +487,7 @@ function pollGamepad(dt) {
   if (Game.mode === 'bedroom') {
     if (pressed(PAD_BTN.A)) padKey('KeyE', true);
     else if (pressed(PAD_BTN.START)) openSettings();   // v1.242: the bedroom's SETTINGS
+    else if (pressed(PAD_BTN.BACK)) skipRoomTour();   // v1.357 (D.76): skips the look round the room
     return;
   }
   if (pressed(PAD_BTN.START)) { padKey('Escape', true); return; }

@@ -5,6 +5,25 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.72, golf carts: where, and what do you do in one? (builder, 2026-10-27)**
+  Your note (23 Oct): "We could maybe incorporate vehicles like golf carts as well", and your A on D.71: the go-cart race
+  first, golf carts later. The race shipped in v1.354: a cart that rolls on its own line down Bunratty's road, A and D
+  steering across the lane, S braking, the kids shooting as you pass. A golf cart is the first thing in the game you
+  would drive where you like, so the open part is what it is for.
+  - A) **A cart to drive in a match:** one parked by your start in a few day matches beside a course or a big lot
+    (Winnmark's bulb matches, which back on the golf course, and Willow Bend's), E to get in and out, W/S/A/D to drive
+    at up to about 7 m/s on the ground, no shooting while it moves; a tag in it counts as on foot. It gets you across
+    the map fast, and kids shoot at a cart they see.
+  - B) **A ride-along match:** Eric drives a golf cart round a set loop of the course and you ride on the back and
+    shoot, while kids in the trees and bunkers shoot at you; three lives, as the race. It reuses the race's way of
+    following a line, and you only aim.
+  - C) **Carts as cover:** parked golf carts in matches by the course that kids and you hide behind and can push a
+    little; nobody drives.
+  - D) **Not now:** keep it on the list.
+  Builder recommends **B**: it is the race's sibling (a line to follow, kids along it, lives), so it is a contained
+  build on what v1.354 made, and it plays as a new kind of match; A needs driving physics against every map's walls,
+  houses and slopes, which is a much bigger change, and could come after if you like the carts.
+
 ## Answered
 
 - **Seth in every zone (D.28 step 5): which match in each zone, and on what gun? (deep-work session, 2026-10-27, card `fable/d28-seth`)**

@@ -903,10 +903,11 @@ function updateBedroomLabels() {
   }
 }
 
-function updateInteractables() {
+function updateInteractables(dt) {
   if (Game.mode !== 'bedroom') {
     document.getElementById('interactPrompt').style.display = 'none';
     Game.focusedInteractable = null;
+    updateRoomTour(0);   // v1.357: the note hides off the bedroom
     return;
   }
   // Find closest interactable within 1.5m, in front of player
@@ -930,4 +931,67 @@ function updateInteractables() {
   } else {
     prompt.style.display = 'none';
   }
+  updateRoomTour(dt || 0);   // v1.357 (D.76)
+}
+
+// === v1.357 (D.76, Michael: A): A FIRST LOOK ROUND THE ROOM ===
+// A new save, once the mirror is closed, gets a sticky note naming one thing at a time: the phone's texts (v1.358:
+// first, where Eric's text waits after the story cards), the computer to shop, the bed, and last the front door to
+// play. The first three are ticked when you walk up to one (its
+// "E to ..." prompt shows), in any order; the door when you go out by it or the map table (a new save starts at the
+// door, so walking up to it says nothing). The note names the first one not yet ticked. X (BACK on a pad) skips it.
+// Done or skipped, it never shows again. `Game.persist.roomTour` is set only by NEW GAME, so an older save never sees it.
+const ROOM_TOUR = [
+  { key: 'phone',    name: 'Phone',      is: it => it.icon === 'phone',   // v1.358 (D.77): first, Eric's text is waiting
+    text: 'Your phone buzzed: Eric. The kids text you here, and that’s how your crew grows.' },
+  { key: 'computer', name: 'Computer',   is: it => it.icon === 'computer',
+    text: 'The computer is airsoft.com: guns, BBs and gear, paid for with what you win.' },
+  { key: 'bed',      name: 'Bed',        is: it => it.icon === 'bed',
+    text: 'Your bed shows how the summer’s going. The game saves itself as you play.' },
+  { key: 'door',     name: 'Front door', is: it => it.label === 'Outside' || it.label === 'Map', onUse: true,
+    text: 'The front door you’re by is the way outside: every match starts out there. The map table opens the same map.' },
+];
+const ROOM_TOUR_DONE_HOLD = 5;   // seconds the "that's the room" line stays up
+function roomTourActive() {
+  const t = Game.persist && Game.persist.roomTour;
+  return !!t && !t.done;
+}
+// E (A on a pad) on a thing in the room: the door's step ticks only this way
+function roomTourUse(it) {
+  if (!roomTourActive() || !it) return;
+  const t = Game.persist.roomTour;
+  if (!Array.isArray(t.ticked)) t.ticked = [];
+  for (const s of ROOM_TOUR) if (!t.ticked.includes(s.key) && s.is(it)) t.ticked.push(s.key);
+}
+function skipRoomTour() {
+  if (!roomTourActive()) return false;
+  Game.persist.roomTour.done = true;
+  autoSave();
+  updateRoomTour(0);
+  return true;
+}
+function updateRoomTour(dt) {
+  const el = document.getElementById('roomTour');
+  if (!el) return;
+  const t = Game.persist && Game.persist.roomTour;
+  if (Game.mode !== 'bedroom' || !t || t.done) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+  if (!Array.isArray(t.ticked)) t.ticked = [];
+  const f = Game.focusedInteractable;
+  if (f) for (const s of ROOM_TOUR) if (!s.onUse && !t.ticked.includes(s.key) && s.is(f)) t.ticked.push(s.key);
+  const next = ROOM_TOUR.find(s => !t.ticked.includes(s.key));
+  if (!next) {
+    t.doneT = (t.doneT || 0) + dt;
+    if (t.doneT >= ROOM_TOUR_DONE_HOLD) { t.done = true; delete t.doneT; autoSave(); el.style.display = 'none'; return; }
+  }
+  const skip = Pad.active ? '<kbd>BACK</kbd>' : '<kbd>X</kbd>';
+  const sig = t.ticked.join() + '|' + (next ? next.key : 'end') + '|' + skip;
+  if (el._sig !== sig) {
+    el._sig = sig;
+    el.innerHTML = `<div class="rt-head">A LOOK ROUND YOUR ROOM · ${t.ticked.length} OF ${ROOM_TOUR.length}</div>` +
+      `<div class="rt-text">${next ? next.text : 'That’s your room. The rest have their labels: the mirror, the calendar, the workbench, the Pickup Game board.'}</div>` +
+      `<div class="rt-list">${ROOM_TOUR.map(s => `<span class="${t.ticked.includes(s.key) ? 'done' : s === next ? 'now' : ''}">` +
+        `${t.ticked.includes(s.key) ? '✓' : '○'} ${s.name}</span>`).join('')}</div>` +
+      (next ? `<div class="rt-skip">${skip} skip the tour</div>` : '');
+  }
+  if (el.style.display !== 'block') el.style.display = 'block';
 }

@@ -47,6 +47,11 @@ const m1 = await S();
 check('A on NEW GAME starts it (the mirror opens)', m1.mode === 'mirror', m1.mode);
 await spin(2);
 check('the cursor stays up on the mirror', (await S()).shown);
+// v1.358 (D.77): a new save's story cards lie over the mirror; the first B skips them, the second is the mirror's DONE
+await tap(B.B);
+await spin(2);
+const sk = await page.evaluate(() => ({ story: Story.open, mode: Game.mode }));
+check('B skips the story cards over the mirror, and the mirror stays', !sk.story && sk.mode === 'mirror', sk);
 await tap(B.B);
 await page.waitForFunction(() => Game.mode === 'bedroom', null, { timeout: 60000 });
 await spin(2);

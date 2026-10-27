@@ -400,12 +400,62 @@ function openMirror() {
   renderMirrorPreview();
 }
 function closeMirror() {
+  closeStoryCards();   // v1.358: the cards come before the mirror; past the mirror they are done
   document.getElementById('mirrorScreen').classList.remove('active');
   autoSave();   // the look is part of the save (only once the player has opted in, as everywhere)
   Game.mode = 'bedroom';
   updateBedroomHud();
   showPauseHint();
 }
+
+// === v1.358 (D.77, Michael: C — the cards, then Eric's text): SETTING THE STAGE ===
+// A new save opens on four story cards on notebook paper, over the mirror (so the mirror is next, and its DONE, which
+// the cards cover, closes them too), with a short sting; NEXT or Enter goes on, SKIP or Esc closes them. The last one
+// hands you to the room, where Eric's first text (SUMMER_TEXTS 'start') waits on the phone, the room tour's first stop.
+// The title's STORY button plays them again, back to the title.
+const STORY_CARDS = [
+  { head: 'Friday, 30 May 2003', text: 'The last bell rings. No school till September: thirteen weeks of summer, and nothing you have to do.' },
+  { head: 'Everybody has one', text: 'Every kid on the street has an airsoft gun now. Spring pistols from the mall, a battery rifle if your parents caved. Eye pro on, and a tag is a tag.' },
+  { head: 'The streets', text: 'Winnmark, Bunratty, the Hollow down by the river, the lot behind the store: every street has its kids, and they all want the summer.' },
+  { head: 'Down the road', text: 'Seth has set up targets at the end of Winnmark, and he’s putting a crew together. By August somebody runs this neighborhood.' },
+];
+const Story = { open: false, i: 0, then: null };
+function openStoryCards(then) {
+  Story.open = true; Story.i = 0; Story.then = then || null;
+  document.getElementById('storyScreen').classList.add('active');
+  renderStoryCard();
+  playMusicSting('story');
+}
+function renderStoryCard() {
+  const c = STORY_CARDS[Story.i], last = Story.i === STORY_CARDS.length - 1;
+  document.getElementById('storyHead').textContent = c.head;
+  document.getElementById('storyText').textContent = c.text;
+  document.getElementById('storyDots').textContent = STORY_CARDS.map((_, k) => k === Story.i ? '●' : '○').join(' ');
+  document.getElementById('storyNextBtn').textContent = last ? 'START THE SUMMER ▶' : 'NEXT ▶';
+  document.getElementById('storySkipBtn').style.visibility = last ? 'hidden' : 'visible';
+}
+function nextStoryCard() {
+  if (!Story.open) return;
+  if (Story.i < STORY_CARDS.length - 1) { Story.i++; renderStoryCard(); } else closeStoryCards();
+}
+function closeStoryCards() {
+  if (!Story.open) return;
+  Story.open = false;
+  document.getElementById('storyScreen').classList.remove('active');
+  const then = Story.then; Story.then = null;
+  if (then) then();
+}
+document.getElementById('storyNextBtn').addEventListener('click', nextStoryCard);
+document.getElementById('storySkipBtn').addEventListener('click', closeStoryCards);
+document.getElementById('titleStoryBtn').addEventListener('click', () => { initAudio(); openStoryCards(); });
+// Enter, Space or → goes on; Esc skips. Caught first, so the mirror and the title never see these keys while the cards are up.
+document.addEventListener('keydown', e => {
+  if (!Story.open || e.repeat) return;
+  if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Space' || e.code === 'ArrowRight') nextStoryCard();
+  else if (e.code === 'Escape') closeStoryCards();
+  else return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
 
 // === LOADOUT MANAGEMENT SCREEN ===
 let loadoutPickerSlot = -1;
