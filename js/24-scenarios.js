@@ -1872,6 +1872,30 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
+  // --- v1.364 (backlog D.72, Michael: B, 27 Oct): the ride-along, Eric drives a golf cart round the course, you shoot ---
+  // Two laps of the loop up the cart path and round the fairway (the scene's rideLoop) on the cart's back seat while
+  // five kids in the bunkers and the trees shoot at you. Three lives; a tag costs one and he drives on (the race's rule).
+  club_cart_ride: {
+    region: 'horseshoe_bend', street: 'willow_bend_cc',
+    name: 'Willow Bend Country Club', scenarioName: 'Cart Path Only',
+    desc: "Eric found the key in one of the carts by the barn, and he's driving. You're on the back seat with your gun, facing wherever you like. He takes it up the cart path, along the top of the fairway, down by the east fence and back along the south lawn, twice round, slowing for the corners. Marcus, Jamie, Trey, Brooke and Devon are dug into the bunkers and the trees along the way, and you're the only thing on the course that moves. You can't steer and you can't get off: just shoot. Three tags and you're out; make two laps with one left.",
+    builderFn: 'buildCountryClubScene',
+    builderArg: 'ride',
+    scenarioType: 'race',
+    ride: true,
+    playerSpawn: 'team_b',
+    enemySetup: [
+      { charId: 'marcus', weapon: 'ump',     anchor: 'ride_green_bunker', role: 'defender' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'ride_green',        role: 'defender' },
+      { charId: 'trey',   weapon: 'mp5',     anchor: 'ride_fairway',      role: 'defender' },
+      { charId: 'brooke', weapon: 'ump',     anchor: 'ride_willow',       role: 'defender' },
+      { charId: 'devon',  weapon: 'ar',      anchor: 'ride_barn',         role: 'defender' },
+    ],
+    winCondition: 'race_finish',
+    rewards: { win: 120, lose: 28 },
+    playerLives: 3, armorMult: 1,
+  },
+
   // --- v1.158: hold the gazebo for 90 s against a push from the clubhouse lawn ---
   club_defend_gazebo: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',

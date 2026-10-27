@@ -112,6 +112,7 @@ function raceSync(R, grade) {
 function updateCart(dt) {
   const R = Game.scenario.race, p = Game.player, k = Game.keys || {};
   if (!R) return false;
+  if (R.ride) return updateRide(dt);   // v1.364 (D.72): the golf cart, Eric driving
   p.crouching = true; p.sprinting = false; p.sliding = false; p.airSprint = false;
   p.onGround = true; p.velY = 0;
   const q1 = raceAt(R, R.s + 1), q0 = raceAt(R, R.s - 1), h1 = R.gY(q1.x, q1.z), h0 = R.gY(q0.x, q0.z);
@@ -163,6 +164,132 @@ function buildGoCartMesh() {
   box(0.36, 0.28, 0.32, crate, 0, 0.36, -0.42);                // the milk crate seat
   box(0.03, 0.03, 0.5, new THREE.MeshStandardMaterial({ color: 0xd9cfa8, roughness: 1 }), 0, 0.25, 0.4);   // the rope
   g.userData.goCart = true;
+  return g;
+}
+
+// v1.364 (backlog D.72, Michael: B, 27 Oct: "a ride-along match, Eric drives a golf cart round a set loop of the course,
+// you ride on the back and shoot, kids in the trees and bunkers, three lives as the race"): a match with `race: true`
+// whose map gives a `rideLoop` (the corners of a closed loop) puts you on the back seat of a golf cart that Eric drives
+// round it RIDE.laps times. You only aim: W/A/S/D do nothing, and your view turns with the cart. He slows for the
+// corners (RIDE.slow) and opens up on the straights (RIDE.fast). Tags, lives and the grace are the race's (Game.scenario.race
+// is set, so applyBBHit and the tag count treat it as one); finishing the last lap with a life left wins.
+const RIDE = { laps: 2, fast: 5.6, slow: 3.0, accel: 1.6, fillet: 5, seat: 0.4, back: 0.95, step: 0.5, range: 15 };
+function rideSetup(built) {
+  const C = built.rideLoop, n = C.length, pts = [];
+  // the loop: straight runs between the corners, each corner rounded by an arc of radius RIDE.fillet
+  for (let i = 0; i < n; i++) {
+    const P = C[(i + n - 1) % n], c = C[i], N = C[(i + 1) % n];
+    let ax = P[0] - c[0], az = P[1] - c[1], bx = N[0] - c[0], bz = N[1] - c[1];
+    const la = Math.hypot(ax, az), lb = Math.hypot(bx, bz); ax /= la; az /= la; bx /= lb; bz /= lb;
+    const th = Math.acos(Math.max(-1, Math.min(1, ax * bx + az * bz))) / 2, t = RIDE.fillet / Math.tan(th);
+    let mx = ax + bx, mz = az + bz; const ml = Math.hypot(mx, mz); mx /= ml; mz /= ml;
+    const ox = c[0] + mx * RIDE.fillet / Math.sin(th), oz = c[1] + mz * RIDE.fillet / Math.sin(th);
+    const t1 = { x: c[0] + ax * t, z: c[1] + az * t }, t2 = { x: c[0] + bx * t, z: c[1] + bz * t };
+    let a1 = Math.atan2(t1.z - oz, t1.x - ox), a2 = Math.atan2(t2.z - oz, t2.x - ox), da = a2 - a1;
+    while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+    for (let k = 0; k <= 12; k++) { const a = a1 + da * k / 12; pts.push({ x: ox + Math.cos(a) * RIDE.fillet, z: oz + Math.sin(a) * RIDE.fillet }); }
+  }
+  pts.push(pts[0]);
+  // resampled every RIDE.step metres along it (the straights are the runs between one corner's arc and the next)
+  const xs = [pts[0].x], zs = [pts[0].z];
+  let carry = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const x0 = pts[i - 1].x, z0 = pts[i - 1].z, l = Math.hypot(pts[i].x - x0, pts[i].z - z0);
+    let at = RIDE.step - carry;
+    while (at <= l) { xs.push(x0 + (pts[i].x - x0) * at / l); zs.push(z0 + (pts[i].z - z0) * at / l); at += RIDE.step; }
+    carry = l - (at - RIDE.step);
+  }
+  const len = xs.length * RIDE.step;
+  // where he starts: s0 metres in, the point nearest the map's `rideStart`
+  let s0 = 0, bd = Infinity;
+  const st = built.rideStart || { x: xs[0], z: zs[0] };
+  for (let i = 0; i < xs.length; i++) { const d = Math.hypot(xs[i] - st.x, zs[i] - st.z); if (d < bd) { bd = d; s0 = i * RIDE.step; } }
+  // how sharply the loop turns round each point (radians over 4 m), which sets his speed there
+  const turn = xs.map((_, i) => {
+    const a = rideAt({ xs, zs, len }, i * RIDE.step - 2), b = rideAt({ xs, zs, len }, i * RIDE.step + 2);
+    return Math.abs(Math.atan2(a.dx * b.dz - a.dz * b.dx, a.dx * b.dx + a.dz * b.dz));
+  });
+  const R = { ride: true, xs, zs, len, turn, s: s0, startS: s0, finishS: s0 + RIDE.laps * len, v: RIDE.slow, d: 0,
+    gY: built.groundY, done: false, crashes: 0, topV: 0, lap: 1, mesh: buildGolfCartMesh() };
+  built.scene.add(R.mesh);
+  Game.player.bounds = null;   // the loop holds you, not the play box
+  const a = rideAt(R, R.s);
+  R.heading = Math.atan2(-a.dx, -a.dz);
+  rideSync(R);
+  Game.player.yaw = R.heading;   // looking where he drives
+  Game.scenario.playerStart = { pos: Game.player.pos.clone(), yaw: Game.player.yaw };
+  return R;
+}
+// the loop's point and direction s metres round it (any s: it wraps)
+function rideAt(R, s) {
+  const N = R.xs.length, f = ((s / RIDE.step) % N + N) % N, i = Math.floor(f), j = (i + 1) % N, k = f - i;
+  const dx = R.xs[j] - R.xs[i], dz = R.zs[j] - R.zs[i], l = Math.hypot(dx, dz) || 1;
+  return { x: R.xs[i] + dx * k, z: R.zs[i] + dz * k, dx: dx / l, dz: dz / l };
+}
+// the cart on the loop, and you on its back seat, RIDE.back metres behind its middle
+function rideSync(R) {
+  const a = rideAt(R, R.s), y = R.gY(a.x, a.z), p = Game.player;
+  R.mesh.position.set(a.x, y, a.z);
+  R.mesh.rotation.y = Math.atan2(a.dx, a.dz);
+  p.pos.set(a.x - a.dx * RIDE.back, y + RIDE.seat, a.z - a.dz * RIDE.back);
+  p.vel.set(a.dx * R.v, 0, a.dz * R.v);
+}
+// One step of the ride (from updateCart). Eric drives; you sit and aim.
+function updateRide(dt) {
+  const R = Game.scenario.race, p = Game.player;
+  p.crouching = true; p.sprinting = false; p.sliding = false; p.airSprint = false;
+  p.onGround = true; p.velY = 0;
+  // the corner ahead sets his speed: the sharpest turn in the next 8 m
+  let sharp = 0;
+  for (let ahead = 0; ahead <= 8; ahead += 1) sharp = Math.max(sharp, R.turn[Math.floor(((R.s + ahead) / RIDE.step) % R.xs.length)]);
+  const want = R.done ? 0 : sharp > 0.3 ? RIDE.slow : RIDE.fast;
+  R.v = R.v < want ? Math.min(want, R.v + RIDE.accel * dt) : Math.max(want, R.v - RIDE.accel * 2 * dt);
+  R.s += R.v * dt;
+  R.lap = Math.min(RIDE.laps, 1 + Math.floor((R.s - R.startS) / R.len));
+  R.topV = Math.max(R.topV, R.v);
+  // your view turns with the cart, as it would on its seat
+  const a = rideAt(R, R.s), h = Math.atan2(-a.dx, -a.dz);
+  let dh = h - R.heading;
+  while (dh > Math.PI) dh -= Math.PI * 2; while (dh < -Math.PI) dh += Math.PI * 2;
+  p.yaw += dh; R.heading = h;
+  rideSync(R);
+  if (!R.done && R.s >= R.finishS && Game.mode === 'scenario' && p.hitsTaken < p.maxHits) {
+    R.done = true;
+    R.finishT = Game.scenario.roundTime;
+    endScenarioLater('win', 800);
+  }
+  return true;
+}
+// The golf cart: a white tub on four wheels under a roof on four posts, a front bench and a back seat facing the way it
+// goes (you), the club's bag rack between them; Eric in the driver's seat.
+function buildGolfCartMesh() {
+  const g = new THREE.Group();
+  const body = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.5 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.8 });
+  const seat = new THREE.MeshStandardMaterial({ color: 0x2f4a3a, roughness: 0.7 });
+  const box = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  box(1.2, 0.35, 2.5, body, 0, 0.42, 0);                       // the tub
+  box(1.2, 0.5, 0.35, body, 0, 0.62, 1.12);                    // the cowl at the front
+  box(1.1, 0.12, 0.5, seat, 0, 0.72, 0.2);                     // the front bench
+  box(1.1, 0.45, 0.1, seat, 0, 0.98, -0.05);                   // its back
+  box(1.1, 0.12, 0.45, seat, 0, 0.72, -0.85);                  // the back seat, where you ride
+  box(1.25, 0.06, 1.9, body, 0, 1.95, 0.25);                   // the roof
+  for (const [x, z] of [[-0.56, 1.0], [0.56, 1.0], [-0.56, -0.5], [0.56, -0.5]]) box(0.05, 1.3, 0.05, dark, x, 1.3, z);
+  for (const [x, z] of [[-0.6, 0.85], [0.6, 0.85], [-0.6, -0.85], [0.6, -0.85]]) {
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.16, 12), dark);
+    w.rotation.z = Math.PI / 2; w.position.set(x, 0.22, z); g.add(w);
+  }
+  box(0.3, 0.3, 0.04, dark, -0.3, 1.0, 0.85);                  // the wheel's column and wheel
+  // Eric at the wheel, sat: a kid crouched most of the way puts his head at a seated height
+  if (typeof CHARACTERS !== 'undefined' && CHARACTERS.eric) {
+    const eric = createKid(CHARACTERS.eric, 'pistol');
+    eric.group.position.set(-0.3, 0.45, 0.25);
+    setKidCrouch(eric, 0.85);
+    if (eric.gunGroup) eric.gunGroup.visible = false;
+    g.add(eric.group);
+    g.userData.eric = eric;
+  }
+  g.userData.golfCart = true;
   return g;
 }
 
