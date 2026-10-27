@@ -255,6 +255,10 @@ function spawnEnemyBB(enemy, targetPos) {
     if (!Game.scenario.enemies.some(k => k !== enemy && k.health > 0 && k.team !== 'player' && Math.hypot(k.pos.x - P.x, k.pos.z - P.z) < enemy.holdUntilNear)) return;
     Game.scenario.attackNear = true;
   }
+  // v1.364 (D.72): on the course a kid lets the cart come to him: no shot at it past RIDE.range (as it passes, not as
+  // it drives at him down a run from 25 m)
+  if (Game.scenario.race && Game.scenario.race.ride && targetPos && Math.hypot(targetPos.x - Game.player.pos.x, targetPos.z - Game.player.pos.z) < 1.5 &&
+      Math.hypot(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z) > RIDE.range) return;
   // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
   if (enemy._hasLOSNow) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by

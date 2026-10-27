@@ -100,6 +100,7 @@ const PIN_SCENARIO_GROUPS = {
   country_club: [
     'club_1v1_brooke',
     'club_eighteenth_3v3',
+    'club_cart_ride',        // v1.364: Cart Path Only, the golf-cart ride-along (D.72)
     'club_defend_gazebo',    // v1.158
     'club_night_4v4',        // v1.158: the zone capstone
   ],

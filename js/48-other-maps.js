@@ -710,7 +710,7 @@ function buildCountryClubScene(variant, timeOfDay) {
       coverList.push(o); return o;
     };
     for (const x of [25, 29, 33]) cart(x, -19.2, 0);
-    cart(5.2, -6, 0); cart(5.2, 14, Math.PI);
+    if (variant !== 'ride') { cart(5.2, -6, 0); cart(5.2, 14, Math.PI); }   // v1.364 (D.72): the ride's cart has the path
     // the ball washer and bench by the green, and the 18th's yardage stone
     mesh(new THREE.BoxGeometry(2.0, 0.45, 0.6), std(0x8a6a3a), 14, 0.45, -4);
     coverList.push(box(13, 15, -4.3, -3.7, 0.5, 'wood'));
@@ -818,6 +818,13 @@ function buildCountryClubScene(variant, timeOfDay) {
     cluster_north: { pos: P(-12, -25.5), cover: null },
     cluster_south: { pos: P(4, 26), cover: null },
     cluster_course: { pos: P(-1, -10), cover: null },   // v1.158: the defend's attackers stage on the lawn below the veranda
+    // v1.364 (D.72): the ride-along's kids, in the bunkers and the trees round the loop, 10-16 m off it (closer, a kid
+    // with no lead on a passing cart tagged you three times in the first 8 s)
+    ride_green_bunker: A(13.5, -15),    // the greenside bunker, 14 m off the north run
+    ride_green:        A(22, -12.5),    // on the green's far side, 11.5 m off it
+    ride_fairway:      A(25, 13),       // by the willow past the pond, inside the loop, 10 m off the east run
+    ride_willow:       A(-7, 12.5),     // behind the tree on the lawn, 12 m off the west run
+    ride_barn:         A(29, -17),      // among the carts by the barn, 16 m off the north run
   };
   const playerSpawns = {
     gazebo: { pos: P(-31, 22), yaw: -Math.PI / 2 },   // v1.158: the defend, inside the gazebo, facing out of the way in (east), toward the course
@@ -837,6 +844,10 @@ function buildCountryClubScene(variant, timeOfDay) {
     playerSpawns,
     groundY,
     teamBases: { player: { x: 5.5, z: 27 }, enemy: { x: -12, z: -25.5 } },
+    // v1.364 (D.72): the ride-along's loop: up the cart path, east along the fairway's head, down by the east trees and
+    // back along the south lawn, the corners rounded as Eric drives them; he starts by the halfway hut
+    rideLoop: [[5, -1], [35, -1], [35, 25.5], [5, 25.5]],
+    rideStart: { x: 5, z: 19 },
   };
 }
 function buildCountryClubSceneDefault(_v, tod) { return buildCountryClubScene('default', tod); }
