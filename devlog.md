@@ -14324,3 +14324,37 @@ board; play unchanged"). v1.350 and v1.351 put Halloween on the houses and the k
 ### Still open
 - The board doesn't remember the row between visits (none of its rows are saved). Christmas would be a fourth button
   when it comes. Next of D.70: Bunratty's and the other maps' own houses.
+
+## v1.353 — Halloween on Bunratty's houses
+Backlog D.70 step 4 (Michael: B, 23 Oct: "pumpkins, fake webs, kids in costumes, porch lights by night; shown around the
+real dates or switched on from the Pickup Game board; play unchanged"). v1.350 put Halloween on every house built by
+`buildSuburbanHouse`; Bunratty's seven are built by their own builders (the D.51 card's hero house and six neighbours)
+and baked into a few merged meshes, so they had no group to carry the door's place and got nothing.
+- **How.** Each of Bunratty's houses now leaves an empty marker at its door's threshold (`holidayDoorMarker`) with the
+  spots its builder picks, and `addHolidayDecor` reads those where a marker gives them (the other maps' houses are
+  built exactly as before). The markers sit beside the baked groups, which stay meshes only.
+- **Michael's house.** A jack-o'-lantern either side of the foot of the six stone steps and a big one beside the front
+  walk, all on the sloping ground; cobwebs under the eaves at the cross gable's west corner and the main block's east
+  one. No porch light: the tower's two lanterns already light the door.
+- **The six neighbours.** Two lanterns either side of the stoop's foot, out past the foundation shrubs, and one out by
+  the walk; on the portico house the two stand on the portico's floor. Webs under the eaves at both front corners, on
+  the gable's face where a gable stands at the corner. Only the portico house gets the porch light (the others have
+  lanterns by the door of their own).
+- **Play unchanged.** Nothing is solid; the decorations are still the same four merged meshes a map.
+- **A test fix on the way.** `holiday`'s "nothing solid" check read `Game.scenario.obstacles`, which doesn't exist
+  (0 both sides, so it could never fail); it reads `Game.player.obstacles` now: Bellfield 109 and 109.
+### Verified
+- **`tests/holiday.test.mjs`, extended:** Bunratty's 2v2 forced off builds nothing. Forced on by day: 7 houses, 21
+  lanterns, 14 webs, 1 porch light; 325 obstacles with it and without, none of them the decorations; 892 → 895 draw calls.
+  All 21 lanterns checked one by one: the 18 on the ground stand at it (0 cm off), the portico's two on its floor, and
+  none overlaps a step, wall, shrub or trunk (6 did on the first try, against the foundation shrubs and a tree, by a few
+  cm; moved out). By night (the night 2v2) the porch glow is there too, four meshes.
+- A look of my own (thrown away): Michael's house from the bulb, a north-row stucco house from the street, a south-row
+  house at night; lanterns read beside the steps, the webs sit in the corners, the faces glow at night.
+- **These suites pass:** `holiday`, `real-scale`, `bunratty-polish`, `bunratty-road`, `backyard-range` (the range uses
+  the hero house) and `smoke`, two at a time.
+### Still open
+- **For a look:** whether the hero house's walk lantern and the webs high on its corners read from the street.
+- Winnmark's houses keep v1.350's decorations through `buildSuburbanHouse`; if the Winnmark card's rebuild builds them
+  another way they need a marker too. The Hollow's houses across the river are scenery past the edge, left bare; the
+  club, the store and the school have no houses. D.70's Halloween is done but for that; Christmas comes when Michael says.

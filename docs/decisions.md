@@ -17,6 +17,32 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   D) Only the stings for now (win, lose, the last kid left), the matches stay quiet.
   Builder recommends **A**: four loops cover every match and are quick to hear in play; C can grow from it later.
 
+- **D.76, a first look round the bedroom (Michael, control room, 2026-10-26; builder, 2026-10-27).** Today a NEW GAME
+  opens on the mirror once, then drops you in the bedroom with only the floating labels over each thing (v1.62) and the
+  "press E" prompt when you are close. Nothing says that the front door (or the map table) is how you get to a match,
+  that the computer is the shop, or what the calendar, the phone, the bed, the Pickup Game board and the workbench do.
+  A) A short guided walk on a new save, after the mirror: a sticky note on screen names one thing at a time (the door
+     to play, the computer to shop, the phone's texts, the bed to save), each ticked off when you look at it or use it;
+     skippable, never shown again.
+  B) One "How the room works" card on a new save: a sketch of the room with each thing named and what it does; closed
+     with a click, kept on the pause menu.
+  C) Only the door: on a new save the door's label glows and says "Go play: your first match is outside" until you
+     have played once; the rest stays as it is.
+  D) Leave it: the labels are enough.
+  Builder recommends **A**: it teaches by doing, as the match tutorial does, and costs a new player under a minute.
+
+- **D.77, setting the stage before the first match (Michael, control room, 2026-10-26; builder, 2026-10-27).** The
+  story today is told in the bedroom with no cutscenes (D.20, Michael's A on 12 Oct): the calendar from 1 June, Eric's
+  and the others' texts, Seth's crew. A new save starts with no word of any of it. Which, if any?
+  A) Three or four story cards on a new save, before the mirror: drawn in the game's notebook style, a line or two each
+     (the last day of school, summer 2003, the street's kids and their airsoft guns, Seth's crew down the road), over a
+     short music sting; skippable, and replayable from the title screen.
+  B) A first text on the flip phone instead, from Eric, that says the same in his voice, waiting when you reach the
+     room; no cards.
+  C) Both: the cards on a new save, then Eric's text in the room.
+  D) Leave it: the texts and the calendar tell it as you play.
+  Builder recommends **C**: the cards set the stage once, and Eric's text hands you to the room (it pairs with D.76).
+
 ## Answered
 
 - **D.75, splitting index.html for a second builder (Michael, local session, 2026-10-26).** From 1 to 26 Oct The Old
