@@ -14267,3 +14267,38 @@ first step, the houses, and Halloween is four days off.
   have no decorations yet; nor do the club, the store or the school. Next steps of D.70: kids in costumes, the Pickup
   Game board's switch, then Bunratty's houses (Winnmark's real-scale rebuild on card fable/d51-winnmark may build its
   houses another way: they pick it up if they keep `holidayFront`).
+
+## v1.351 — Kids in costumes
+Backlog D.70 step 2 (Michael: B, 23 Oct: "pumpkins, fake webs, kids in costumes, porch lights by night; shown around
+the real dates or switched on from the Pickup Game board; play unchanged"). v1.350 put Halloween on the street houses;
+this puts it on the kids.
+- **Who.** In the season (17 Oct to 1 Nov, or `Holiday.force`), every kid built for a match, both sides and in every
+  mode, comes in a homemade costume. His name picks it, so a kid wears the same one in every match: Andrew and Connor
+  are witches, Evan and Diego devils, Christian and Fernando skeletons, Haden a vampire. One kid in six (Trey, Mason, five
+  more) is too old for it and comes as himself. Across all 32 kids: 6 witches, 6 devils, 5 vampires, 5 cats, 3
+  skeletons, 7 in their own clothes.
+- **What.** A witch: a tall black hat with a purple band, bent back a little, and a dark purple-lined cape. A vampire: a
+  black cape lined red, tied over the shoulders, and a stand-up collar behind his head. A skeleton: a black front painted
+  with a breastbone, ribs and hips. A devil: two red horns and a red tail with an arrow tip. A cat: black ears with pink
+  insides and a black tail curling up behind.
+- **What stays.** A kid in a hat of his own keeps it and wears only the costume's body part. Your crew's bandana stays
+  on under the brim, the horns or the ears, so your side still reads as yours. The head pieces lower with his head on a
+  crouch; the cape, bones and tail ride the torso. Nothing changes a hitbox, nothing joins the obstacles, and the hit
+  flash is still the shirt's.
+### Verified
+- **`tests/holiday.test.mjs`, extended:** forced off, no kid in Bellfield's 3v3 is in costume. Forced on, all nine kids
+  of both sides wear the costume their name picks, each with its body part, the hat costumes their head piece; your four
+  wear the crew bandana under them; the obstacles are the same (0). All five costumes are worn across the game's kids,
+  and some come as themselves. Each kid wears the same costume in Bellfield's night 4v4. Crouched, a head piece drops
+  0.2475 m with the head (0.2475). The night match plays 10 s in costume with no page errors. Looking down the street the
+  whole match goes from 803 draw calls (no Halloween) to 814 (the houses' 3, so about 8 for the kids' costumes). The
+  houses' own three-call check now counts with the kids hidden (654 → 657): where the kids stand when it is read moved
+  them in and out of view by a few calls under load (812 once).
+- A close look of my own (thrown away): the six side by side in the street; the witch's hat, the vampire's collar and the
+  horns read at 5 m, the ears and the skeleton's ribs after they were made bigger.
+- **These suites pass** with Halloween on by today's date: `holiday`, `smoke`, `real-scale`, `walkie`, `tops`, `bunratty-polish`,
+  `lot-hollow-polish`, the six `crew` suites, `wince`, `out-shot`, `houses` and `winnmark-cars`, each alone.
+### Still open
+- **For a look:** the costumes' sizes, and whether a cape reads too boxy at a distance. The briefing's 3D lineup and
+  the result card's kids are drawn without costumes (they draw the kid's own look); worth matching if it reads odd.
+- Next steps of D.70: the Pickup Game board's switch, then Bunratty's and the other maps' own houses.

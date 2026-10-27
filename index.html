@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.350</div>
+  <div class="version">v1.351</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -20760,6 +20760,8 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
   const ch = statsOverride ? Object.assign({}, baseCh, statsOverride) : baseCh;
   // v1.200: an ally of yours wears your crew's bandana (a copy of the profile, so CHARACTERS is never changed)
   const kid = createKid(crewColor != null ? Object.assign({}, ch, { crewColor }) : ch, weapon);
+  const costume = kidCostumeFor(charId);   // v1.351 (D.70 step 2): Halloween costumes, every match kid
+  if (costume) addKidCostume(kid, costume, ch);
   kid.group.position.copy(pos);
   scene.add(kid.group);
 
@@ -25889,6 +25891,83 @@ function addHolidayDecor(built, timeOfDay) {
   group.userData = { holiday: 'halloween', houses: houses.length, lanterns, webs: nWebs, lights, night };
   built.scene.add(group);
   return group;
+}
+
+// v1.351 (backlog D.70 step 2, Michael: B, "kids in costumes"): in Halloween season every kid in a match, both sides,
+// wears a homemade costume picked by his name, so the same kid wears the same one every match: a witch's hat and cape,
+// a vampire's cape and stand-up collar, a skeleton's bones on a black front, a devil's horns and tail, or cat ears and a
+// tail; one kid in six is too old for it and comes as himself. A kid in a hat of his own keeps it and wears only the
+// costume's body part; the crew bandana stays on under the ears, horns or brim, so you can still tell your side. It is
+// all looks: the head pieces lower with his head (headExtras), the rest rides the torso, nothing changes a hitbox.
+const KID_COSTUMES = {
+  witch:    { head: 'witchHat', body: 'cape', cape: 0x2a1f3a, lining: 0x4a2f6a },
+  vampire:  { body: 'cape', cape: 0x161416, lining: 0x9a1a22, collar: true },
+  skeleton: { body: 'bones' },
+  devil:    { head: 'horns', body: 'tail', tail: 0xb8241e },
+  cat:      { head: 'ears', body: 'tail', tail: 0x1c1c1e },
+};
+const KID_COSTUME_ORDER = ['witch', 'vampire', 'skeleton', 'devil', 'cat', null];
+function kidCostumeFor(charId) {
+  if (holidayNow() !== 'halloween') return null;
+  return KID_COSTUME_ORDER[_hashStringToSeed('costume|' + charId) % KID_COSTUME_ORDER.length];
+}
+function addKidCostume(kid, id, p) {
+  const c = KID_COSTUMES[id];
+  if (!c) return null;
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  const pieces = { head: null, body: null };
+  const ownHat = kid.hat && !kid.hat.userData.crewBandana;
+  if (c.head && !ownHat) {
+    const b = {}; const add = _propAdder(b);
+    const mats = { dark: _kidFaceMat('costume', 0x1a1a1c, 0.9), red: _kidFaceMat('costumeRed', 0xc42a20, 0.6),
+      band: _kidFaceMat('costumeBand', 0x6a3a8a, 0.9), pink: _kidFaceMat('costumePink', 0xe8a0a8, 0.9) };
+    const top = p.hairStyle === 'curly' ? 1.535 : p.hairStyle === 'wavy' ? 1.49 : 1.47;   // the top of his hair
+    if (c.head === 'witchHat') {
+      add('dark', new THREE.CylinderGeometry(0.27, 0.27, 0.016, 16), 0, top + 0.008, 0);   // the brim
+      add('band', new THREE.CylinderGeometry(0.162, 0.168, 0.05, 12), 0, top + 0.04, 0);
+      add('dark', new THREE.ConeGeometry(0.16, 0.4, 12), 0.02, top + 0.21, -0.02, -0.12, 0, -0.1);   // the crown, bent back a little
+    } else if (c.head === 'horns') {
+      for (const sx of [-1, 1]) add('red', new THREE.ConeGeometry(0.045, 0.15, 8), sx * 0.09, top + 0.06, 0.05, 0, 0, -sx * 0.35);
+    } else if (c.head === 'ears') {
+      for (const sx of [-1, 1]) {
+        add('dark', new THREE.ConeGeometry(0.075, 0.14, 4), sx * 0.1, top + 0.055, 0.02, 0, Math.PI / 4, -sx * 0.15);
+        add('pink', box(0.06, 0.06, 0.01), sx * 0.1, top + 0.035, 0.058, 0, 0, -sx * 0.15);
+      }
+    }
+    const g = new THREE.Group(); g.userData.costume = id;
+    _propMerge(g, b, mats);
+    kid.group.add(g);
+    kid.pose.headExtras.push({ mesh: g, baseY: g.position.y });
+    pieces.head = g;
+  }
+  // the body part, on the torso (its frame: centre 0, 0.42 x 0.5 x 0.24, front face z 0.113)
+  const b = {}; const add = _propAdder(b);
+  const mats = { cape: _kidFaceMat('costumeCape', c.cape || 0x1a1a1c, 0.9), lining: _kidFaceMat('costumeLining', c.lining || 0x1a1a1c, 0.8),
+    bone: _kidFaceMat('costumeBone', 0xece8dc, 0.7), black: _kidFaceMat('costume', 0x1a1a1c, 0.9), tail: _kidFaceMat('costumeTail', c.tail || 0x1a1a1c, 0.7) };
+  if (c.body === 'cape') {
+    add('cape', box(0.46, 0.6, 0.02), 0, -0.04, -0.142);        // from the shoulders to the backs of his knees' tops
+    add('lining', box(0.44, 0.58, 0.006), 0, -0.04, -0.13);
+    add('cape', box(0.05, 0.03, 0.26), 0.2, 0.245, 0);          // over each shoulder to the front, tied at the neck
+    add('cape', box(0.05, 0.03, 0.26), -0.2, 0.245, 0);
+    if (c.collar) add('lining', box(0.4, 0.16, 0.016), 0, 0.33, -0.135, -0.3, 0, 0);   // the stand-up collar behind his head
+  } else if (c.body === 'bones') {
+    add('black', box(0.36, 0.42, 0.008), 0, 0.0, 0.12);         // a black front, painted
+    add('bone', box(0.045, 0.32, 0.004), 0, 0.03, 0.126);        // the breastbone
+    for (let i = 0; i < 4; i++) for (const sx of [-1, 1])
+      add('bone', box(0.13, 0.03, 0.004), sx * 0.085, 0.15 - i * 0.065, 0.126, 0, 0, sx * (0.12 + i * 0.04));   // the ribs
+    add('bone', box(0.18, 0.04, 0.004), 0, -0.17, 0.126);       // the hips
+  } else if (c.body === 'tail') {
+    // out from the back of his belt: a cat's curls up behind him, a devil's hangs down to an arrow tip
+    add('tail', box(0.03, 0.03, 0.3), 0, -0.2, -0.24, id === 'devil' ? -0.55 : 0.55, 0, 0);
+    if (id === 'devil') add('tail', new THREE.ConeGeometry(0.045, 0.07, 4), 0, -0.294, -0.394, -2.12, 0, 0);
+  }
+  const g = new THREE.Group(); g.userData.costume = id;
+  _propMerge(g, b, mats);
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  kid.torso.add(g);
+  pieces.body = g;
+  kid.costume = Object.assign({ id }, pieces);
+  return kid.costume;
 }
 
 function addEdgeBackdrop(built, builderFn, timeOfDay) {
