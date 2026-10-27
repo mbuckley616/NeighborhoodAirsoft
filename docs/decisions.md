@@ -7,6 +7,13 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Seth in every zone (D.28 step 5): which match in each zone, and on what gun? (deep-work session, 2026-10-27, card `fable/d28-seth`)**
+  The session's table, one match per zone, mostly each zone's finale, rising from the Spring Shotgun (0.55 aim) at Winnmark
+  through the Spring AR, UMP, MP5, Burst Rifle and P90 to the AK-47 and an M249 (0.80) in the Last Saturday; team sizes
+  unchanged. Options: A) the table, his other matches as today; B) the table, strictly once per zone; C) A, plus a text from
+  Seth before each of his matches *(recommended)*. The full table is in this entry on auto/fable-d28-seth.
+  Michael: **C — A, plus a text from Seth before each of his matches**. (2026-10-27, control room)
+
 - **D.69, music in matches (Michael, control room, 2026-10-23; builder, 2026-10-27).** Today only the bedroom has
   music (a procedural C-major loop, `startMusic('bedroom')`); every match is silent but for the guns and the kids, and
   the bedroom tune stops at BEGIN. New tracks would be made the same way (oscillators in the browser, no files), under the
