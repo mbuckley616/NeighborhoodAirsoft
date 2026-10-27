@@ -2602,7 +2602,7 @@
   </div>
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   </div>
-  <div class="version">v1.349</div>
+  <div class="version">v1.350</div>
 </div>
 
 <!-- === WORLD MAP === -->
@@ -11812,6 +11812,8 @@ function buildSuburbanHouse(scene, {
   addSideWin(-1, 2); addSideWin(1, 2);
   }
 
+  // v1.350 (D.70): where the front door is, for the holiday looks (addHolidayDecor), in the house's own frame
+  group.userData.holidayFront = { fx: faceVec.x, fz: faceVec.z, d: frontDepth, half: (faceDir === 'east' || faceDir === 'west') ? depth / 2 : width / 2, h: wallH, porch };
   scene.add(group);
 
   // Return the AABB obstacle for collision/BB hits.
@@ -25771,6 +25773,124 @@ const _BD_PINE = [0x2a4a2a, 0x2e5030, 0x264426];
 const _BD_CARS = [0x8a2020, 0x20304a, 0xc8c8c8, 0x2a2a2a, 0x5a6a7a, 0xd8d0b0, 0x2a4a2a];
 let _bdIcosa = null;   // unit icosahedron, as a flat triangle list
 
+// v1.350 (backlog D.70, Michael: B, 23 Oct: "holiday looks first, Halloween now ... shown around the real dates or
+// switched on from the Pickup Game board; play unchanged"), step 1: the houses. From 17 October to 1 November by the
+// computer's clock, every street house built by buildSuburbanHouse gets two jack-o'-lanterns on its step and one out on
+// the walk, fake cobwebs across its two front corners under the eaves, and by night a lit orange porch light beside the
+// door and the lanterns' faces glowing. Nothing is solid and nothing is added to the obstacles, so play is unchanged; it
+// is built as four merged meshes for the whole map (lanterns, faces and lights, webs, the night glow), so a map's draw
+// calls go up by four at most. Kids in costumes and the Pickup Game board's switch are the next steps.
+const Holiday = { force: null };   // 'halloween' or 'none' sets it whatever the date (for the board, and tests); null: by date
+function holidayNow(date) {
+  if (Holiday.force) return Holiday.force === 'none' ? null : Holiday.force;
+  const d = date || new Date(), m = d.getMonth(), day = d.getDate();
+  return (m === 9 && day >= 17) || (m === 10 && day <= 1) ? 'halloween' : null;
+}
+let _webTex = null, _haloTex = null;
+function holidayWebTexture() {
+  if (_webTex) return _webTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const c = cv.getContext('2d');
+  c.strokeStyle = 'rgba(245,245,240,0.9)'; c.lineWidth = 1.6;
+  const spokes = 6, R = 124;   // a quarter web hung from the top-left corner
+  for (let i = 0; i <= spokes; i++) { const a = (i / spokes) * Math.PI / 2; c.beginPath(); c.moveTo(2, 2); c.lineTo(2 + Math.cos(a) * R, 2 + Math.sin(a) * R); c.stroke(); }
+  c.lineWidth = 1.1;
+  for (let r = 18; r < R; r += 17) {
+    c.beginPath();
+    for (let i = 0; i <= spokes; i++) { const a = (i / spokes) * Math.PI / 2, rr = r * (i % 2 ? 0.93 : 1); const px = 2 + Math.cos(a) * rr, py = 2 + Math.sin(a) * rr; if (i) c.lineTo(px, py); else c.moveTo(px, py); }
+    c.stroke();
+  }
+  return (_webTex = new THREE.CanvasTexture(cv));
+}
+function holidayHaloTexture() {
+  if (_haloTex) return _haloTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d'), gr = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(255,170,70,0.85)'); gr.addColorStop(0.35, 'rgba(255,140,40,0.35)'); gr.addColorStop(1, 'rgba(255,120,30,0)');
+  c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
+  return (_haloTex = new THREE.CanvasTexture(cv));
+}
+// One merged geometry from many: each piece's non-indexed triangles moved by its matrix, coloured, uv kept
+function holidayMerge(pieces) {
+  let n = 0;
+  const parts = pieces.map(p => { const g = p.geo.index ? p.geo.toNonIndexed() : p.geo; g.applyMatrix4(p.m); n += g.attributes.position.count; return { g, c: p.c }; });
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+  let o = 0;
+  for (const { g, c } of parts) {
+    const k = g.attributes.position.count;
+    pos.set(g.attributes.position.array, o * 3);
+    if (g.attributes.normal) nor.set(g.attributes.normal.array, o * 3);
+    if (g.attributes.uv) uv.set(g.attributes.uv.array, o * 2);
+    for (let i = 0; i < k; i++) { col[(o + i) * 3] = c.r; col[(o + i) * 3 + 1] = c.g; col[(o + i) * 3 + 2] = c.b; }
+    o += k;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return geo;
+}
+function addHolidayDecor(built, timeOfDay) {
+  if (!built || !built.scene || holidayNow() !== 'halloween') return null;
+  const night = timeOfDay === 'night';
+  const houses = [];
+  built.scene.updateMatrixWorld(true);
+  built.scene.traverse(o => { if (o.userData && o.userData.holidayFront) houses.push(o); });
+  if (!houses.length) return null;
+  const body = [], glow = [], webs = [], halos = [];
+  const C = hex => new THREE.Color(hex);
+  const ORANGE = C(0xe8741c), ORANGE2 = C(0xd8661a), STEM = C(0x4e5a22), LAMP = C(0x2a2a2a);
+  const FACE = night ? C(0xffc040) : C(0x3a1c08), BULB = night ? C(0xffb050) : C(0xc8c0a8);
+  const sphere = new THREE.SphereGeometry(1, 10, 7), stem = new THREE.CylinderGeometry(0.025, 0.035, 0.09, 6);
+  const box = new THREE.BoxGeometry(1, 1, 1), web = new THREE.PlaneGeometry(1, 1), halo = new THREE.PlaneGeometry(1, 1);
+  const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), Sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+  const at = (hm, x, y, z, yaw, sx, sy, sz) => { Q.setFromAxisAngle(Y, yaw); return new THREE.Matrix4().multiplyMatrices(hm, M.compose(V.set(x, y, z), Q, Sc.set(sx, sy, sz))); };
+  let lanterns = 0, nWebs = 0, lights = 0;
+  houses.forEach((h, hi) => {
+    const f = h.userData.holidayFront, hm = h.matrixWorld;
+    const rx = -f.fz, rz = f.fx;                    // along the front, to the door's right
+    const yaw = Math.atan2(f.fx, f.fz);            // a piece's +z faces the street
+    const lantern = (along, out, y, r) => {
+      const x = f.fx * (f.d + out) + rx * along, z = f.fz * (f.d + out) + rz * along;
+      body.push({ geo: sphere.clone(), m: at(hm, x, y + r * 0.72, z, yaw, r, r * 0.75, r), c: (hi + lanterns) % 2 ? ORANGE : ORANGE2 });
+      body.push({ geo: stem.clone(), m: at(hm, x, y + r * 1.44 + 0.03, z, yaw, r / 0.2, 1, r / 0.2), c: STEM });
+      // the carved face on the street side: two eyes and a mouth
+      const fe = r * 0.86, fm = r * 0.9, fy = y + r * 0.72;   // the sphere's face is nearer the middle off its axis
+      for (const ex of [-0.38, 0.38]) glow.push({ geo: box.clone(), m: at(hm, x + f.fx * fe + rx * ex * r, fy + r * 0.22, z + f.fz * fe + rz * ex * r, yaw, r * 0.24, r * 0.2, r * 0.12), c: FACE });
+      glow.push({ geo: box.clone(), m: at(hm, x + f.fx * fm, fy - r * 0.22, z + f.fz * fm, yaw, r * 0.7, r * 0.14, r * 0.12), c: FACE });
+      lanterns++;
+    };
+    const step = f.porch ? 0.12 : 0;
+    lantern(-0.78, 0.45, step, 0.2);               // either side of the door on the step
+    lantern(0.82, 0.5, step, 0.16);
+    lantern(1.5, 2.4, 0, 0.24);                    // and a big one out by the walk
+    // the porch light, beside the door at 2.2 m: a dark box with the bulb's face lit at night
+    const lx = f.fx * (f.d + 0.07) + rx * -0.85, lz = f.fz * (f.d + 0.07) + rz * -0.85;
+    body.push({ geo: box.clone(), m: at(hm, lx, 2.2, lz, yaw, 0.16, 0.24, 0.12), c: LAMP });
+    glow.push({ geo: box.clone(), m: at(hm, lx + f.fx * 0.065, 2.2, lz + f.fz * 0.065, yaw, 0.11, 0.17, 0.01), c: BULB });
+    lights++;
+    if (night) halos.push({ geo: halo.clone(), m: at(hm, lx + f.fx * 0.09, 2.2, lz + f.fz * 0.09, yaw, 1.1, 1.1, 1), c: C(0xffffff) });
+    // cobwebs across the two front corners under the eaves: a quarter web from each corner, 1.3 m across
+    for (const side of [-1, 1]) {
+      const s = 1.3, cx = f.fx * (f.d + 0.06) + rx * side * (f.half - s / 2), cz = f.fz * (f.d + 0.06) + rz * side * (f.half - s / 2);
+      // the plane's uv (0,1) is the web's corner, on its local -x, which faces the door's right: the left one is mirrored
+      webs.push({ geo: web.clone(), m: at(hm, cx, f.h - 0.1 - s / 2, cz, yaw, side > 0 ? s : -s, s, 1), c: C(0xffffff) });
+      nWebs++;
+    }
+  });
+  const group = new THREE.Group();
+  group.name = 'holidayDecor';
+  const add = (pieces, mat, name) => { if (!pieces.length) return; const m = new THREE.Mesh(holidayMerge(pieces), mat); m.name = name; m.matrixAutoUpdate = false; group.add(m); };
+  add(body, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 }), 'lanterns');
+  add(glow, new THREE.MeshBasicMaterial({ vertexColors: true }), 'faces');
+  add(webs, new THREE.MeshBasicMaterial({ map: holidayWebTexture(), transparent: true, side: THREE.DoubleSide, depthWrite: false }), 'webs');
+  add(halos, new THREE.MeshBasicMaterial({ map: holidayHaloTexture(), transparent: true, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }), 'porchGlow');
+  group.userData = { holiday: 'halloween', houses: houses.length, lanterns, webs: nWebs, lights, night };
+  built.scene.add(group);
+  return group;
+}
+
 function addEdgeBackdrop(built, builderFn, timeOfDay) {
   const cfg = EDGE_BACKDROPS[builderFn];
   if (!cfg || !built || !built.scene || !built.bounds) return null;
@@ -26131,6 +26251,7 @@ function enterScenario(scenarioId) {
     const _seedKey = (sc.seedFrom || scenarioId) + '|' + (sc.seedArg || sc.builderArg || 'default');   // v1.272: seedArg keeps a variant on its base layout
     built = withSeededRandom(_seedKey, () => builder(sc.builderArg || undefined, _tod));
     addEdgeBackdrop(built, sc.builderFn, _tod);   // v1.252 (D.24): scenery past the edge, never solid
+    addHolidayDecor(built, _tod);   // v1.350 (D.70): Halloween on the houses round its date, never solid
     Game.camera.far = built.viewFar || 200; Game.camera.updateProjectionMatrix();   // v1.303 (D.51): a real-scale map sees further
   } else {
     showModal('Coming Soon', 'This scenario is locked in v1. More coming in future builds.');

@@ -14237,3 +14237,33 @@ grows yours, so no number written into the text can stay right.
 ### Still open
 - The prose still names the kids written into each match ("You're with Eric and Rebecca"), which a crew kid can replace;
   the roster under it is right. Worth a look if it reads wrong in play.
+
+## v1.350 — Halloween on the street houses
+Backlog D.70 (Michael: B, 23 Oct): holiday looks first, Halloween now: "pumpkins, fake webs, kids in costumes, porch
+lights by night; shown around the real dates or switched on from the Pickup Game board; play unchanged". This is the
+first step, the houses, and Halloween is four days off.
+- **When.** From 17 October to 1 November by the computer's clock (`holidayNow`); `Holiday.force` turns it on or off
+  whatever the date, for the Pickup Game board's switch (a later step) and the tests.
+- **What.** Every street house built by `buildSuburbanHouse` (Winnmark, Northcliff, Bellfield and the rest that use it)
+  gets two jack-o'-lanterns on its step either side of the door and a big one out by the walk, their carved faces
+  toward the street; fake cobwebs, a quarter web each, hung across its two front corners under the eaves; and a porch
+  light beside the door. By day the faces are dark carved holes and the light is off; by night the faces and the bulb
+  glow orange and the light throws a soft halo on the wall.
+- **Play unchanged.** Nothing is solid and nothing joins the obstacles, so BBs, kids and you pass as before. The whole
+  map's decorations are four merged meshes (lanterns and lamps, faces and bulbs, webs, the night halos), so a map draws
+  three more calls by day and four by night, and no house's own mesh count changes (`houses`' 20-mesh rule).
+### Verified
+- **`tests/holiday.test.mjs`, new** (a holiday that switches itself on by date would hurt to lose unnoticed):
+  - The dates: off on 16 Oct, on the 17th, the 31st and 1 Nov, off on 2 Nov and in July.
+  - Bellfield Court forced off: nothing built. Forced on by day: all seven houses, 21 lanterns, 14 webs, 7 porch
+    lights, no halo; the same obstacles as with it off (0 on this map, none the decorations); 806 draw calls against
+    803; the lanterns' lowest point 7 mm under the ground (y 0). By night (Lamplight on Bellfield): the halos too, four meshes.
+- **`houses`** (Winnmark's eight detailed houses, 20 meshes each at most, collision unchanged) passes with Halloween
+  on: 660 draw calls looking at Seth's house.
+- **These suites pass, each alone, with Halloween on by today's date:** `holiday`, `houses`, `smoke` and `real-scale` (Bunratty's eight views at most 1,731 draw calls, the Hollow's 1,183, as before: neither map has these houses). A night look in Northcliff (a check of my own, thrown away) shows the webs on the corners, the lanterns' faces lit and the porch glow by the door.
+### Still open
+- **For a look:** the lanterns' size and spacing, and whether the webs read as webs at a distance.
+- Bunratty's and the Hollow's houses are built by their own builders (the D.51 card's), not `buildSuburbanHouse`, so they
+  have no decorations yet; nor do the club, the store or the school. Next steps of D.70: kids in costumes, the Pickup
+  Game board's switch, then Bunratty's houses (Winnmark's real-scale rebuild on card fable/d51-winnmark may build its
+  houses another way: they pick it up if they keep `holidayFront`).
