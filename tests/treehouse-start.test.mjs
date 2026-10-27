@@ -77,7 +77,10 @@ check('no hit by Connor before 6 s, and none at all before 5 s, in any round (wa
 const gate = [];
 for (let r = 0; r < 3; r++) { await g.scenario('stoneglen_treehouse'); gate.push(await round({ n: 60 * 8, at: [-13, 14.4], yaw: -0.55 })); }
 for (const [i, r] of gate.entries()) console.log('  gate', i, JSON.stringify(r));
-check('control: at the side gate Connor tags him inside 5 s, every round', gate.every(r => r.firstConnor && r.firstConnor.at < 5), gate.map(r => r.firstConnor));
+// 27 Oct: Connor's first tag at the gate lands anywhere from 3.0 to 6.0 s (a miss or two first), so a time bar there
+// failed one round in a few; the control is that the gate is open to him: a line from the first frame, and a tag in the 8 s
+check('control: at the side gate Connor has a line from the start and tags him, every round',
+  gate.every(r => r.cLineFirst === 0 && r.firstConnor), gate.map(r => [r.cLineFirst, r.firstConnor]));
 
 // --- the start is not a hole: step out past the shed's corner toward the ladder and Connor sees him ---
 const out = [];

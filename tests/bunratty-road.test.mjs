@@ -4,7 +4,10 @@
 // house's off the bulb too). Raycasts check the asphalt covers the old road (centreline ±3.4 m and the bulb), sits
 // 3–9 cm over the ground, and the kerb heights. Winnmark's road must come out as it was before the builder moved.
 import { boot, check } from './lib/game.mjs';
-const WM_V126 = { asphalt: 1539, bulb: 280, kerb: 9384, marks: 594 };   // Winnmark's road vertex counts on v1.126 (positions matched too, by probe)
+// Winnmark's road vertex counts on v1.126 (positions matched too, by probe). v1.338 (D.51, Winnmark at real scale): the
+// street runs on 195 m past the box to Winnmark Dr with the same ribbon at the same step, so the asphalt and kerbs grew
+// (1539 and 9384 on v1.126); the bulb and the marks are the same pieces
+const WM_V126 = { asphalt: 3339, bulb: 280, kerb: 18576, marks: 594 };
 const g = await boot(); const { page } = g;
 await g.bedroom();
 

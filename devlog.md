@@ -14102,6 +14102,523 @@ yours." The measurement that came first (decisions, 24 Oct): an AK kid fires abo
   want to sit higher on the Loadout (they come after the nine slots, so the card scrolls to them at 1280×720).
 - A kid wearing goggles or shoes you lent him doesn't show them on his model; it's only his aim and speed.
 
+## v1.338 — Winnmark past its tree walls is the real place
+Card `fable/d51-winnmark` (backlog D.51, second card), step 1 of 5. Michael chose real scale (16 Oct), with Seth's
+house mid-street on the south side. On 26 Oct he answered A to the card's question (decisions, "three matches need
+Seth's yard and the far end of the street at once"): each match goes into one fenced area about today's size, and the
+three matches that spanned both get a few briefing words changed. The plan, measured on main in step 0 (25 Oct): the
+whole street at real size, with two play areas. **Seth's** (about 80 x 75 m) runs from the north lawns across from his
+house, down his driveway, round the deck and the hot tub and through his back yard to the creek. It takes both 1v1s
+with Seth, Every Kid for Themselves, Two in the Yards, After Dark, Two on Two, Lights Out, Trey on Overwatch and Defend
+the Treehouse. **The bulb** (about 80 x 70 m) is today's box at its west end: the bulb, its fort and cars, and the last
+two lots each side. It takes the tutorial, Backyard Basics, Squad Basics, Storm the Cul-de-Sac, Hold the Fort, Last
+Stand at the Fort, Outnumbered, Squad Up and The Whole Block. `buildSethBackyardScene`, an early scene no match uses,
+stays as it is. The draw-call budget is 2,060, a quarter over the worst view measured in step 0.
+
+This step builds the real place round today's box. Nothing inside the box or its tree walls moved, so all 17 matches
+play as before.
+- **The map's frame.** The bulb stays at (−30, 0) and the street runs east, as it does in the real place (the entry
+  east, the bulb west, the course north). Winnmark Dr is at x 235, 265 m from the bulb's middle, as the guide measures
+  the real court. Seth's lot will be mid-street on the south side at x 100, 130 m from the bulb (step 3).
+- **The street runs on to Winnmark Dr.** Past the box's east entry the road runs about 195 m further on. It is the
+  same ribbon with its gutter and rolled kerb, laid at the same step along the curve, so the box's road samples are the
+  old ones. It meets Winnmark Dr, which runs north to Steeplechase and south round the shared wood to the south-west.
+  The street rises 1.5 m on the way, so Winnmark Dr stands 4.6 m over the bulb. The guide says 3-5 m; the steepest
+  2 m of it is 1.4 %.
+- **The lots fall away from the street.** Front lawns are flat for 16 m each side of the middle. Behind them the north
+  lots fall to the golf course at 0 m, 42 m out by the box and 55 m out east of it, so the houses there will back
+  onto the fairway. The south lots fall 3 m for the walk-outs, then the shared wood falls on to the creek's banks.
+- **The creek and the pond.** Seth's creek runs west through the shared wood, 58-72 m off the street's middle, 1.4 m
+  wide. It falls from −1.8 m to −3.7 m on its way to the course's creek, which leaves the pond's south end and runs
+  south along the course 70 m west of the bulb. Each lies in a channel cut into its clay banks. The pond is 92 x 60 m
+  on the course north-west of the bulb (guide gap 9), with its water over its whole bed. The old 20 x 80 m lake strip
+  just past the west tree wall is gone; it wasn't in the real place.
+- **The canopy.** About 1,180 tall trees stand past the walls, 42 % of them loblolly pines 18-24 m high, the rest
+  hardwoods 16-23 m. They are thick in the shared wood and thinned to a row of trunks along the north lots' backs,
+  with clumps on the course. There are 30 houses, all scenery: Winnmark Dr's both sides of it (the inner row backs
+  onto the shared wood, as the guide has it), across the course facing it, and past the Dr. Nine 28 x 24 m house
+  sites along the street are kept clear for step 2. The houses are the merged low-poly kind Bunratty's far bank uses.
+  Like Bunratty's, it is one vertex-coloured mesh (two at night, for lit windows) from `buildMergedScenery`, with its
+  own seeded numbers. None of it is solid, and none of it stands within 7 m of the bounds.
+- **The ground** grew from a 140 m square to 520 x 430 m, with 6 m cells past the old 1.46 m grid, which is kept
+  vertex for vertex. A colour per vertex browns the woods' floor, mows the course in 9 m stripes and reddens the
+  creeks' clay. It is exactly 1 in the box and 6 m round it, so the lawns in play look as they did.
+- **The view.** The day fog moved out from 35-80 m to 45-320 m, and the camera's far plane is 380 m on this map (night
+  is unchanged at 22-70 m). Through the tree wall's road gap you now see the street run on to Winnmark Dr.
+- **The edge backdrop.** `EDGE_BACKDROPS` has no Winnmark entry any more. Its four sides, a ring of generic houses
+  and trees, are the map's own now.
+### Verified
+- **`tests/winnmark-real.test.mjs`, new.** Its checks:
+  - The ground in the box and its tree walls (x −40 to 42, z −38 to 42) is v1.337's formula, to 0 m.
+  - The street runs 265 m from the bulb's middle to Winnmark Dr. It rises 4.61 m, with no 2 m stretch steeper
+    than 1.42 %.
+  - The north lots stand at 3.2-3.8 m at their front lawns, with the course at 0 m behind them. The south lots fall
+    from 3.4-4.0 m at the front to −0.1-0.5 m in the wood and −1.3 to −0.5 m by the creek.
+  - Both creeks run downhill. At all 106 points sampled along them the water is over the bed and both banks stand
+    0.3 m or more above it; the two points left out are the pond's outlet and where the creeks meet. The pond's
+    water covers all 160 points sampled in it, and the lake strip is gone.
+  - There are 1,184 trees and 30 houses. None is an obstacle, and the nearest vertex is 7.16 m outside the bounds.
+  - From the entry, 8 of 36 rays down the street reach past x 150. The camera sees 380 m in play and 200 m back in
+    the bedroom.
+- **Cover.** All 17 Winnmark matches were built by day and at night, on main and on this branch, with the same
+  obstacle counts and the same named anchors and starts. Three obstacles differ: trees past the west tree wall
+  (x −54 to −58, z 22-34, outside the bounds), which now stand 0.4-1.4 m lower on the course's ground where the lake
+  strip's flat was.
+- **Draw calls** in seven views of Squad Up (`winnmark_team_3v3`), v1.337 → v1.338: bulb 1,679 → 1,677;
+  looking in from the entry 1,838 → 1,837; looking out of it 64 → 64; north yards 1,537 → 1,535; south yards
+  1,632 → 1,631; looking west from the bulb 98 → 97; mid-street 387 → 387. The worst stays 1,837, inside the 2,060
+  budget. Triangles in the scene went from 321k to 364k. Building the map takes 816 ms against 678 ms.
+- **These suites pass:** `winnmark-real`, `winnmark-trees` (its lake check now measures the pond), `backdrop` (Winnmark
+  left out: it has no backdrop now), `layout-same`, `smoke`, `winnmark-road`, `winnmark-cars`, `winnmark-fort`,
+  `winnmark-props`, `houses`, `house-backs`, `ffa-starts`, `whole-block`, `seth-shotgun`, `night-prowl`, `real-scale`,
+  `fence-bound` and `bulb-sight`. No page errors. Run four at once on this 4-core machine, `winnmark-real` timed out
+  entering its match and `layout-same`'s page crashed; alone, each passes. Alone, entering a match takes 4.7 s
+  (5.5 s on main) and the heap is 131 MB (148 MB).
+### Still open
+- **Nothing in play changed yet.** Steps 2-4 put the real-size houses on the nine sites and the bulb's four lots,
+  build Seth's sunken lot with the deck, hot tub, pool and creek behind, and move the matches into the two areas.
+- **What a look can judge:**
+  - The course reads bright from above in the sun.
+  - The scenery houses are the plain low-poly kind. Step 2's houses on the street are the detailed ones.
+  - The creek is a flat strip of water in its channel, with no stones or footbridge yet. Those come with Seth's yard
+    in step 3, where it is in play.
+
+## v1.339 — Winnmark's street houses at real size
+Card `fable/d51-winnmark` (backlog D.51), step 2. v1.338 ran the street on to Winnmark Dr at real length, with its lots
+still empty. This step builds the street's houses on those lots at their real size, from the guide ("The houses",
+"The ground"). Each is a walk-out with its deck over the terrace, and the terraced yards have black picket fences. Seth's
+lot (x 100, south) is step 3's own. The north lot at x 48 reaches 6 m into today's box, so it is step 4's, with the
+bulb's lots. Nothing in the box moved again.
+- **Seven houses,** five on the north side (x 80-208) and two on the south (x 156 and 206). Each is the detailed
+  house with the street's own look from v1.312: rose-tan brick, red brick with cream quoins and belt course, or beige
+  stucco, each with its steep grey roof, arched two-storey entry and bay. They are 20-24 m across and 15 m deep (the
+  guide: 18-25 by 14-18), with the front 14 m off the street's middle. North houses face south and back onto the
+  course; south houses face north and back onto the shared wood.
+- **Walk-outs.** The main floor stands 0.35 m over the front lawn. Behind the house the side yards fall 3 m to the
+  terrace, and the walk-out storey under the house shows on the back in its own wall, with French doors and two
+  windows each side. That is the three storeys at the back and two at the front of the guide's listing C.
+- **Decks.** Each house has a deck of brown-stained boards, 12 x 3.8 m, at the main floor, so 3 m over the terrace.
+  It stands on four posts with a rail round it and a stair down its east end. You can walk under it: the deck is
+  2.75 m over the terrace.
+- **Terraces and fences.** The terrace runs flat from the house back to a stacked-stone wall with a pale cap. The yard
+  below the wall is 0.9 m lower and meets the falling ground about 54 m out. The wall stands on a line of the ground's
+  grid, one cell thick, so the ground's step is under it. A black picket fence (1.2 m, a post every 2.4 m) runs along
+  the wall and down both lot lines. Its rails go picket to picket, so they step with the ground.
+- **Driveways.** Each house has a concrete driveway 4.8 m wide from the street to its garage end, and the kerb drops
+  across it. The road's driveway drops come from a separate list, so the bins, mailboxes and cars of the box's eight
+  houses draw the same random numbers as before.
+- **Collision.** The houses (from the terrace to the eaves), the decks, the deck posts, the stairs, the walls and the
+  fences (BBs pass through the fences, bodies don't) go at the end of the obstacle list. All of it is outside today's
+  bounds until step 4 moves Seth's matches there.
+- **The ground's fine grid** (1.458 m) now runs east to x 159, over the lots Seth's play area will use. The trees of
+  v1.338's scenery keep off every house, deck and terrace.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - Seven houses, 20-24 m across and 15 m deep.
+  - Every main floor stands 0.35 m over its front lawn and 3.00 m over its terrace.
+  - Every terrace is flat to its wall (0 m across it), and the yard below is 0.90 m lower.
+  - The wall sits on a line of the ground grid.
+  - Every deck is at the main floor, 2.75 m over the terrace.
+  - The first try failed it on the two lots by Winnmark Dr, where the Dr's own grade lifted their terraces (1.4-1.7 m
+    of walk-out). It also failed the north lots' yards, which ran on 0.37 m under the course past it. The lots now
+    take their ground after the Dr's, and the yards meet the falling ground by 54 m.
+- **Cover.** All 17 matches, by day and at night, have the same obstacles as v1.338 everywhere west of x 60, where
+  all the matches' obstacles are (hashed). The lots' obstacles come after them.
+- **Draw calls,** v1.338 → v1.339, in the same seven views:
+  | View | v1.338 | v1.339 |
+  |---|---|---|
+  | Bulb, looking east down the street | 1,677 | 1,805 |
+  | Entry, looking in | 1,837 | 1,837 |
+  | Entry, looking out | 64 | 192 |
+  | North yards | 1,535 | 1,543 |
+  | South yards | 1,631 | 1,655 |
+  | West | 97 | 97 |
+  | Mid-street | 387 | 515 |
+
+  The worst is still 1,837, inside the 2,060 budget. Each house is 16-17 meshes; everything else on the lots is 11
+  meshes in all.
+- **These suites pass:** `winnmark-real`, `houses` (its looks check now counts only the box's eight houses; the street's
+  real-size ones are `winnmark-real`'s), `house-backs`, `smoke`, `winnmark-road`, `ffa-starts`, `winnmark-trees`,
+  `layout-same`, `winnmark-cars`, `winnmark-fort`, `winnmark-props`, `whole-block`, `fence-bound` and `backdrop`. No
+  page errors.
+### Still open
+- **For Michael's look** (pictures in `tests/out/wm2-*.png` when the look script runs): the house backs from the
+  course, the deck from under it, and the street with its houses.
+- **The stair** is open treads on two posts, and there is no gap or gate in the terrace walls and fences. That matters
+  only where a lot is in play: step 4 opens the ways through Seth's area, and the guide asks that yards stay connected.
+- **Past x 159** (the lots at 176, 206 and 208) the ground is the coarse 6 m grid, so their walls' steps show as
+  slopes past the wall's foot. They are 60-110 m from any play area.
+- The houses keep the detailed house's own front: no garage wing or side-load garage door yet. The driveway runs to
+  the garage end of the front.
+
+## v1.340 — Seth's sunken lot
+Card `fable/d51-winnmark` (backlog D.51), step 3. This step builds Seth's lot from Michael's notes ("very steep
+driveway, his house / lot was kind of sunken down off the road"; "a really big deck off the main floor, and a crazy
+Hot Tub, almost the size of his pool, underneath his deck"; the back yard "further downward sloping, heavily forested
+area with a small creek") and his answer 2A: mid-street on the south side. It sits at x 100, 130 m from the bulb.
+Most fights were in that driveway and that back yard, so this is the heart of the play area step 4 moves his matches
+into. Nothing in the box moved.
+- **The driveway and the pad.** The driveway drops 2.4 m off the road over 16 m, a 15 % grade, to a flat concrete pad
+  in front of the garage end. The guide asks for 2-3 m at 12-15 %. The front lawn is sunk with it, and the ground
+  banks back up to the neighbours' lawns over 6 m each side.
+- **The house** is the red brick with cream quoins and belt course (look B), 24 x 15 m, the biggest on the street.
+  Its main floor stands 0.35 m over the pad. The back is a walk-out over the patio, 3 m below, with French doors and
+  four windows.
+- **The big deck** is 16 x 5.5 m off the main floor (the street's other decks are 12 x 3.8). It stands on five posts
+  with a rail round it and a stair down its west end.
+- **The hot tub** is under the deck, sunk into the patio: 3.6 m across, its rim 0.45 m up, a step on its open side.
+  The deck's underside is 2.25 m over its rim. You can't walk into it (an obstacle 0.9 m high), and BBs
+  hit it.
+- **The pool** is on the patio past the deck, 9.5 x 4.6 m in a coping. The water sits just under the coping's top,
+  so no hole is cut in the ground. You can't walk into it, but BBs fly over it.
+- **The patio** is flagstone, 30 m across and 15 m deep, with slate-blue and rust stones in it (the guide's listing A
+  terrace).
+- **The back yard** falls from the patio's edge through the woods to the creek, 3.3 m under the patio at the yard's
+  foot. Seven stepping stones cross the creek there. To make room for that fall, the creek's bed is now 2-3 m deeper
+  along its whole way, from −2.4 m at its east end to −6.9 m where it meets the course's creek. The course's creek
+  falls from the pond to −8.2 m in its ravine.
+- The scenery's trees keep off the lot down to the patio's edge. The woods below it are as thick as anywhere in the
+  shared wood.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The pad is 2.40 m under the road, down a 15.0 % driveway, and flat in front of the house.
+  - The house is 24 m across, its main floor 3.00 m over the patio.
+  - The hot tub is 3.6 m across, inside the big deck's footprint, its 0.9 m obstacle 1.8 m under the deck's
+    underside.
+  - The pool lies on the patio, and the creek runs 3.3 m under the patio at the yard's foot.
+  - Everything from v1.338-v1.339 still holds, with the deeper creek: both creeks still fall all the way, in a channel
+    under their banks at all 106 points.
+- **Cover.** All 17 matches by day and at night have the same obstacles as v1.339 between x −40 and 60, where all
+  the matches' obstacles are. One tree past the west wall (x −57, z 33, outside the bounds) stands 6.5 cm lower,
+  where the wood's floor follows the deeper creek.
+- **Vertices.** v1.339's fences were a box per picket and per rail piece, about 1,500 boxes a lot, and the street's
+  scene had grown to 1.45 M vertices against v1.337's 0.80 M. Two suites lost their page when run two at a time,
+  though each passes alone. Each picket and deck baluster is now one double-sided quad, and each rail is one box per
+  run of level ground. The scene is 1.10 M vertices: the houses' detail, the scenery, the bigger ground, the fences
+  and the decks. Building the map takes 0.58-0.71 s after the first build (1.1 s cold), against 0.37-0.51 s on
+  v1.337.
+- **Draw calls,** v1.339 → v1.340: bulb looking east 1,805 → 1,829; entry looking in 1,837 → 1,837; entry looking out
+  192 → 216; north yards 1,543 → 1,564; south yards 1,655 → 1,656; west 97 → 97; mid-street 515 → 539. The worst is
+  still 1,837 (budget 2,060).
+- **These suites pass,** run one at a time: `winnmark-real`, `ffa-starts`, `layout-same`, `smoke`, `houses`,
+  `house-backs`, `winnmark-road`, `winnmark-trees`, `whole-block`; `seth-shotgun` passed before the fences went to
+  quads. No page errors.
+### Still open
+- **None of it is in play yet.** Step 4 moves Seth's eight matches into his area: from the north lawns across the
+  street, down his driveway and round the deck, the tub and the pool to the creek. They get their starts, cover and
+  routes there, and Trey on Overwatch and Defend the Treehouse get their few briefing words (Michael's A). The
+  bulb's matches stay in today's box. Seth's area needs ways through the neighbours' fences and walls, and the
+  kids' route grid over its slopes.
+- **For a look:** the driveway's steepness (15 % is the guide's top), the hot tub's size against the pool (3.6 m
+  against 9.5 x 4.6 m: Michael's "almost the size of his pool"), and the patio's flagstone colour, which reads pale
+  grey in full sun.
+- The pool is a flat sheet of water in its coping, with no depth: no BB or kid can get into it to see.
+
+## v1.341 — Seth's matches play round Seth's house
+Card `fable/d51-winnmark` (backlog D.51), step 4, first part. v1.338-v1.340 built the real street round today's box, and
+Seth's sunken lot mid-street, but every match still played in the box. Michael's answer A (26 Oct) puts each match in one
+fenced area about today's size. This version moves Seth's nine matches into his: Just You and Seth, Seth's Got a Shotgun,
+Every Kid for Themselves, Trey on Overwatch, Two on Two, Defend the Treehouse, Two in the Yards, After Dark and Lights Out.
+The other eight (the two tutorials, Storm the Cul-de-Sac, Hold the Fort, Last Stand, Outnumbered, Squad Up and The Whole
+Block) stay in the box, which is the bulb's area, and play exactly as before.
+- **The area.** 70 x 76 m round Seth's lot (x 65-135, z -12 to 64): the north lawns in front of the two houses across
+  the street, the street, his steep driveway and sunk front lawn, his side yards, the patio under the big deck with the
+  hot tub and the pool, the back yard falling to the creek, and the wood on the empty lots either side, over the creek to
+  a few metres past it. A hedge closes the gaps between the north houses, black picket lot-line fences mark the east and
+  west sides through the wood, and the street and the shared wood to the south are open past the edge, as the box's road
+  mouth is. A scene variant picks the area (`winnmarkArea`: 'seth_house', 'treehouse' and the new 'seth_yards').
+- **The same names, new places.** The area's starts and anchors keep the box's names (`road_east`, `seth_backyard`,
+  `trey_backyard`, `house2_backyard`...), so each moved match keeps its kids, guns and roles. You start at the street's
+  east end (130, 0), facing west. Seth's spot is on his patio past the hot tub, by a firewood stack, 59 m from you (the
+  box had him 28 m off; his matches' starts were 30-60 m in the plan). The others are on the north lawns by the cars in
+  the driveways, in the wood on the lots either side, and in his east side yard by a shed.
+- **Its cover** is its own, under its own seed, so every match here has the same wood and props, and the box's matches
+  draw exactly what they drew: five parked cars (two on the street, one in each north driveway, one halfway down Seth's
+  driveway), bins at the kerbs, moving boxes, a plywood stack, Trey's brick planter, a firewood stack and a grill on the
+  patio, AC units in the side yards, a garden shed, six fallen logs, 37 solid trunks (loblollies 12-15 m and hardwoods)
+  and about 25 shrubs in the wood. The merged scenery's trees keep 3 m and more outside the area. Three lamps light the
+  street at night.
+- **Briefings** (Michael's A: "a few briefing words change"). Trey on Overwatch: Trey snipes "from the front step of the
+  house across the street", behind its planter, 46 m from Seth's driveway (the answer had him on that house's deck, but
+  the decks are on the backs, facing the course, with no line to Seth's; the front step is the nearest place that has
+  one). Defend the Treehouse: the plank fort is "in the woods next door to Seth's", on the lot east of his, and Marcus and
+  Jamie still come up through his back yard. Every Kid for Themselves is "round Seth's place". The Whole Block stays in
+  the box; Seth and Brooke are "dug into the yards off the bulb" instead of "the mid yards".
+- **Every Kid for Themselves' starts** (Michael's A, 15 Oct, the lot's rule) were found by a search over the area with
+  the match's own obstacles: Seth in the shared wood behind the east lot by the creek, Trey in the west lot's wood, Brooke
+  over the creek in the far west corner, Jamie on the north lawn by the west house's driveway. No start can see another
+  or yours, they are 31 m and more apart, and every kid has another kid's start nearer than yours, in every Pickup Game
+  size. A first try put Seth on his own sunk front lawn 32 m from you; he walked in and tagged a player standing at the
+  start at 6.5 s, so no start is nearer you than 46 m now. One more: a start under the deck was moved out by the spawn
+  clearer (the deck's box counts as in the way), so the search keeps only spots the clearer leaves alone.
+- **Where the kids gather.** A match with two or more attackers huddles them before they deploy. With no huddle point
+  named, the game puts it on the street's middle line near their anchors, and in Two in the Yards and After Dark that was
+  the open street 33 m in front of you: you were tagged inside 10 s. Those two now gather at the foot of Seth's back
+  yard, and Two on Two and Lights Out in the west lot's front, both out of sight of your start.
+- **Draw calls.** From the area the street looks west into the box, whose eight houses, cover and trees are about 2,000
+  meshes: the view from the east end cost 2,362 calls, over the 2,060 budget. In a match in Seth's area the box is only a
+  view 25-170 m off, so its meshes are baked into one per look (`bakeMeshesByLook`: same colour, finish, sides and
+  texture), and the area's own wood is baked the same way (`bakeByMaterial`). The box's obstacles keep their numbers;
+  none of it is in reach. The box's own matches build it as before.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The nine matches build in Seth's area, the other eight in the box.
+  - The area is 70.4 x 76 m and holds the road, his driveway's pad, the patio, the creek and the north lawn.
+  - All 25 of its starts and anchors are inside it and clear of everything solid.
+  - Trey's overwatch is 46.0 m from Seth's driveway's pad (the answer's 45-55).
+  - 37 solid trunks in it; the scenery's nearest vertex (the creek's water aside) is 4.06 m outside it.
+  - Draw calls in five views: from the east end 395, down the driveway 151, on the patio 420, by the creek 417, on the
+    north lawn 209 (budget 2,060). The box's seven views are unchanged: 1,829 at the bulb, 1,837 at the entry, the most.
+  - At night (After Dark, Lights Out) no kid's start has a line to yours or your side's.
+  - Two on Two, standing at your start: the first shot comes 5.7 s in at 40.0 m (the kids open fire at 40 m; the box's
+    team matches measured 39-41 m in step 0). A first layout had Seth and Brooke meet round his house's front corner at
+    1 m at 16 s; the west start moved out onto the open front lots.
+- **`tests/ffa-starts.test.mjs`** passes unchanged: the five starts 31.3 m and more apart, none in sight, nearest to you
+  46.3 m; standing at your start, first tagged at 19.9 s in one round of three, not in 20 s in the other two (the critic's
+  v1.244 entry was 4.4-7.7 s before v1.265).
+- **`tests/night-prowl.test.mjs`**, changed: the critic's walk was to (5, −2), 27 m down the street from the box's
+  start; it is now 27 m down the street from the area's. Seth never stands in 'advancing' more than 0.6 s, and fires 8
+  times.
+- **Other suites changed where they pinned the box for a match that moved:** `houses`, `house-backs`, `winnmark-road`
+  and `winnmark-trees` inspect the box's houses, road and trees through Just You and Seth, which now bakes the box, so
+  they look through Storm the Cul-de-Sac instead (`house-backs` also picks a lane behind house 1 that that match's yard
+  props leave clear). `seth-shotgun` holds the duel on the area's street (x 124 westward) instead of the box's (x 10).
+  `pocket` builds its pocket at (125, 8) inside the area. `winnmark-fort`: Defend the Treehouse's own fort is the detailed
+  one; the bulb fort in that match is part of the baked view. `yard-props` measures Winnmark's props through Storm the
+  Cul-de-Sac too (in Seth's 1v1 they are baked).
+- **The stuck-kid sweep** (`ONLY=` the nine matches, three ways each, 90 s): Just You and Seth, Seth's Got a Shotgun,
+  Every Kid for Themselves, Trey on Overwatch, Two on Two, Defend the Treehouse and Two in the Yards, 21 runs, no kid
+  held a moving state in one spot longer than 3.5 s (the line is 15 s). Its tab crashed entering After Dark; run
+  alone, After Dark and Lights Out were clean too (worst 3.5 s), so all nine matches, 27 runs.
+- **These suites pass:** `smoke`, `winnmark-real`, `ffa-starts`, `night-prowl`, `seth-shotgun`, `houses`, `house-backs`,
+  `winnmark-road`, `winnmark-trees`, `winnmark-fort`, `winnmark-cars`, `winnmark-props`, `layout-same`, `whole-block`,
+  `rival`, `opening-hold`, `kid-hold`, `pocket`, `backdrop`, `fence-bound`, `bulb-sight`, `bedroom-settings`,
+  `briefing-lives`, `crew-balance`, `crew-field`, `crew-roster`, `crew-gear`, `damage-report-first`,
+  `harness`, `hats`, `jump`, `kid-climb`, `kid-clothes`, `last-tag-trade`, `lot-ffa-opening`, `map-screen`, `mirror`,
+  `out-shot`, `pickup-lives`, `pickup-ffa`, `result-text`, `sell-back`, `walkie-callouts`, `wallet`,
+  `wince`, `autosave`, `last-kid`, `squad-basics`, `real-scale`, `pad-hints`, `settings`. No page errors.
+- `last-kid`, `squad-basics` and `real-scale` lost their tab or timed out entering a box or Bunratty match while two
+  other browsers ran on this 4-core machine; run alone, all three pass.
+- **Not yet passed here:** `crew-spawn-bounds` ran past my 15-minute cap; it and `crew` are run alone at the next
+  session's start (below). Also owed: `yard-props` after its change (not re-run), `damage-report`
+  (failed beside the others with no line printed), and `result-stats`, whose "OPENED names the next match" got Squad
+  Basics after winning Just You and Seth: the unlock ladder, which this version doesn't touch; to be checked on main.
+### Still open
+- **For Michael's look:** the area's edges (the hedge, the side fences, the open street and wood past the bounds), the
+  front-step overwatch in place of a deck, and whether 59 m to Seth's spot in the 1v1s is too long a walk.
+- **Next in step 4:** the bulb's area at real size (the bulb's own lots, and the north lot at x 48 that reaches into the
+  box), then step 5, the views past the edges.
+- **Owed first next session:** `crew`, `crew-spawn-bounds`, `yard-props`, `damage-report` and `result-stats` alone
+  (`result-stats` on main too).
+
+## v1.342 — The bulb's end at real size, seen from Seth's
+Card `fable/d51-winnmark` (backlog D.51), step 4, second part, first half. v1.341 put Seth's nine matches in their own area
+mid-street, but looking west from there you still saw today's box: eight half-size houses (8-9 m across) packed round a
+6 m bulb behind a wall of 7 m trees, baked into one mesh per look. The real street (Michael: real scale, 16 Oct) runs on
+at the same size all the way to its bulb. This version builds that end of it at real size. For now only Seth's matches
+see it: the eight matches that play in the box (the tutorials, Storm the Cul-de-Sac, Hold the Fort, Last Stand,
+Outnumbered, Squad Up, The Whole Block) still play in the box, unchanged, until v1.343 moves them onto these lots. I
+split it there because moving them re-anchors eight matches and the tutorial, a session of its own.
+- **Six lots** (`WM_BULB_LOTS`), the street's houses at real size as v1.339 built them: walk-outs with a deck over a
+  flat terrace, its stone wall, black picket fences and a driveway. Three each side, about 34 m apart: north at x -22,
+  14 and 48 (the lot v1.339 left because it reached into the box), south at -24, 10 and 44. The two by the bulb stand
+  17 m back from the street's middle, not 14, so their lawns clear the bulb. Looks continue the rows' turn (rose-tan
+  brick, red brick with quoins, beige stucco). Their driveways start at the curved street's edge, or the bulb's.
+- **The bulb is 11 m across** (the guide: 12-15 m; the box's was 6.3 m). The kerb runs round it, open at the street.
+- **The street falls 3 m from Winnmark Dr to the bulb**, inside the guide's 3-5 m: 1.5 m over the box's 70 m, not
+  3 m. That leaves the north lots by the bulb room for a walk-out over the course at 0. The one by the bulb keeps its
+  terrace at most 0.6 m under the course, so its walk-out is 2.5 m, not 3. Doors and windows still fit under the
+  main floor.
+- **The scenery's woods** now fill the box's ground as they fill the rest of the street, kept off the road, the
+  bulb's verge and the lots. The trees are drawn from the same seeded numbers as before; the box's cells were skipped
+  after their draws, so no tree elsewhere moved.
+- **The box is gone from Seth's matches.** It is still built, so the box's random draws (and every match's after them)
+  are what they were. Then everything of it west of x 60 is taken out of the scene: its houses, driveways, fences,
+  tree walls, cover, cars, the bulb's fort and its four lamps. None of its obstacles or AI cover is kept.
+  Defend the Treehouse's fort (x 126) is built in the same stretch of code, and stays. This replaces v1.341's bake
+  of the box (`bakeMeshesByLook` is kept for the next step).
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - From Seth's area the six lots are built: 20-24 m by 15 m, each main floor 0.35 m over its lawn.
+  - Walk-outs are 2.53 m at the north lot by the bulb and 3.00 m at the other five.
+  - No half-size house and no box trunk is left west of x 60.
+  - The bulb is 11.0 m across, and the street falls 3.00 m from Winnmark Dr to it.
+  - Everything from v1.338-v1.341 still holds. In the box's matches the ground in the box is the old ground (to 0 m).
+- **Draw calls** in Seth's area, v1.341 → v1.342: east end 395 → 462, down the driveway 151 → 151, on the patio
+  420 → 457, by the creek 417 → 484, north lawn 209 → 214. The worst is 484, against the budget of 2,060. The box's
+  views (its own matches) are unchanged, 1,837 at the worst.
+- **Seth's matches play as before.** `ffa-starts`: every start 31.3 m or more from every other, none in sight, every
+  Pickup Game size keeps the rule. `night-prowl`: Seth never stands in 'advancing' longer than 0.6 s, fires 16 times.
+  `seth-shotgun` and `pocket` pass. The stuck-kid sweep on all nine matches, three ways each, 90 s: worst hold 2.5 s
+  (the line is 15 s).
+- **These suites pass, run one at a time:** `smoke`, `winnmark-real`, `ffa-starts`, `night-prowl`, `seth-shotgun`,
+  `pocket`, `winnmark-fort`, `layout-same`, `rival`, `opening-hold`, `kid-hold`, `last-tag-trade`, `lot-ffa-opening`,
+  `winnmark-cars`, `winnmark-props`, `houses`, `house-backs`, `winnmark-road`, `winnmark-trees`, `whole-block`,
+  `bulb-sight`, `fence-bound`, `backdrop`, `squad-basics`, `last-kid`, `real-scale`. Owed from v1.341: `yard-props`,
+  `damage-report`, `crew` (22 min) and `crew-spawn-bounds` (10 min) pass alone.
+- **`result-stats` fails on main too.** Its "OPENED names the next match" gets Squad Basics after Just You and Seth:
+  the unlock ladder, which this card doesn't touch. Same failure on origin/main here, so it is not this branch's.
+### Still open
+- **Next, v1.343:** the bulb's eight matches and the tutorial move onto these lots. That means fencing the bulb's area,
+  re-anchoring starts, cover and routes on the real lots, going through the tutorial step by step, and retiring the
+  box. Then step 5, the views past the edges.
+- **For a look** (pictures in `tests/out/wm342-*.png` from the look script): the bulb's end from Seth's lawns, and the
+  bulb from above. The lawns between the street and the houses have few trees against the guide's near-closed canopy.
+
+## v1.343 — The bulb's matches play on the real lots
+Card `fable/d51-winnmark` (backlog D.51), step 4, second part, second half. v1.342 built the bulb's end at real size, but
+only Seth's matches saw it: the tutorial, Squad Basics, Storm the Cul-de-Sac, Hold the Fort, Last Stand at the Fort,
+Outnumbered, Squad Up and The Whole Block still played in today's box, eight half-size houses round a 6 m bulb. This
+version moves those eight onto the real lots and retires the box. Every Winnmark match now plays on the real street, in one
+of the two areas Michael's answer A (26 Oct) set out.
+- **The bulb's area** (`WM_BA`) is 84 x 54 m: from the bulb's west edge to the box's old mouth (x -44 to 40), and from the
+  north houses' fronts to the south terraces' stone walls (z -14 to 40). It holds the 11 m bulb with the plank fort in its
+  middle and a car at each side, the street, the north front lawns and their driveways, and on the south side the front
+  lawns, the side yards that fall 3 m past the walk-outs, and the terraces under the decks. Four real houses stand in it,
+  and the two at x 48 and 44 reach into its east end. A hedge closes the gaps between the north houses and runs down the
+  west edge past the bulb. The street stays open to the east, as the box's mouth was, and the terrace walls close the south.
+- **The same names, new places**, as v1.341 did for Seth's area, so every match keeps its kids, guns and roles:
+  - The fort and the bulb's two cars are where `cul_de_sac_plank`, `_car1` and `_car2` were. You start Hold the Fort and
+    Last Stand behind the fort (`bulb_center`, -32.5, 0), and the attackers still huddle at the street's east end.
+  - The tutorial's targets, Seth's coaching spot and your start (32, 0) lie on the same street points as before, since
+    the bezier didn't move.
+  - Your side's spots (`house1`, `house2`) are the east lawns near your start. Theirs are by the bulb: the north lawn by
+    its driveway car (`trey`), its south lawn (`house7`), and the side yard between the south houses (`house6`, `house4`).
+    Seth in The Whole Block is on the middle terrace by its firewood (`seth_backyard`).
+  - One match's anchor changed. The Whole Block had Brooke at `house2`, which is your side's lawn now, 12 m from your
+    start. She takes `house7`, the bulb's south lawn: "dug into the yards off the bulb", as its briefing already said.
+- **Its cover** is its own, under its own seed, so every bulb match gets the same street:
+  - four cars in the driveways, and the box's staggered street cover laid by the same rule;
+  - fourteen bins at the kerbs and by the garages, three moving boxes and two plywood stacks;
+  - AC units in the side yards, firewood and grills on the terraces;
+  - 13 solid trunks on the lawns (six loblollies over pine straw);
+  - foundation shrubs along the house fronts, baked with the trunks and hedge into one mesh per material;
+  - four lamps for the night.
+  The merged scenery keeps 6 m off the area, the box's rule (BBs drop at 5).
+- **The box is retired.** Every match builds the real ground and the bulb's six lots. The box's code still runs, so the
+  random draws after it are what they were, but everything it builds west of x 60 is taken out again, as v1.342 did for
+  Seth's matches. No briefing changed.
+- **Suites changed where they pinned the box** (all 8 x 7 m houses and the box's ground, gone in every match now):
+  - `houses` and `house-backs` look at the four real houses in the bulb's area. `houses` walks into the middle north
+    house's front (z -14). `house-backs` walks from a terrace into the middle south house's walk-out back (z 29).
+  - `winnmark-road` measures the asphalt and kerbs on the real ground, round the 11 m bulb, against the real driveways.
+  - `winnmark-trees` counts the area's own trunks (10 or more; the box had a hundred) and checks that the ground in play
+    is the real street's.
+  - `winnmark-real`'s first check: where the box was, the ground is the real street's, not the old ground.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - The bulb's eight matches build in its area; the area is 84 x 54 m and holds the bulb, the box's old mouth, a north
+    lawn, a terrace and a side yard.
+  - All 34 of its starts and anchors are inside it and clear of everything solid.
+  - None of the box's half-size houses is left, six real lots reach into the area, and 17 solid trunks stand in it.
+  - The fort stands at the bulb's middle (-29, 0). The scenery's nearest vertex is 7.08 m outside the area.
+  - Outnumbered's first shot comes at 39.9 m, 3.9 s in, and Squad Up's at 38.4 m, 4.5 s in (the kids open fire at
+    40 m; the box measured 39-41 m in step 0). Two on Two in Seth's area is 40.0 m, as before.
+- **Every bulb match** builds and starts with no page errors. The rest of their first shots, standing at your start:
+  - Storm the Cul-de-Sac and The Whole Block: the sniper behind the fort fires at 64.4 m, 2.5 s in, the same range the
+    box gave him.
+  - Hold the Fort: 22.2 m at 18 s. Last Stand: 34.3 m at 11 s.
+  - The tutorial and Squad Basics: nobody fires in 40 s.
+- **Draw calls** in seven views of each of the eight matches: 637 at the worst (from the bulb looking east in Squad Up).
+  The box's views were 1,837 at the worst. The budget is 2,060.
+- **The stuck-kid sweep** on the eight matches, three ways each, 90 s: no kid held a moving state in one spot longer than
+  2.5 s (the line is 15 s): Jamie in Outnumbered and Seth in The Whole Block, on their way in. Run again after the
+  street-cover fix below, with the same worst.
+- **The tutorial, step by step**, played headless with real keys and clicks: walk to the marker, aim, the first shot,
+  re-cock and tag the three targets, reload. All five steps passed and the match was won. The first try stopped 3.6 m
+  short of the marker. A moving box from the street cover stood 2.2 m off the street's middle at x 26, right in the
+  path from your start, so the street cover now keeps off the stretch from your start to the marker (x 19 to 32).
+  `winnmark-real` now walks that first step and checks the three targets can be seen from the marker.
+- **These suites pass, run one at a time:**
+  - the changed and Winnmark ones: `winnmark-real`, `houses`, `house-backs`, `winnmark-road`, `winnmark-trees`,
+    `yard-props`, `winnmark-props`, `winnmark-cars`, `winnmark-fort`, `whole-block`, `squad-basics`, `layout-same`,
+    `kid-hold`, `opening-hold`, `last-tag-trade`, `rival`, `fence-bound`, `bulb-sight`, `backdrop`, `ffa-starts`,
+    `night-prowl`, `seth-shotgun`, `pocket`, `last-kid`, `real-scale`;
+  - the rest: `smoke`, `damage-report`, `damage-report-first`, `pad-hints`, `squad-hud`, `autosave`, `settings`,
+    `briefing-lives`, `pickup-ffa`, `pickup-lives`, `online`, `voice-situations`, `cover-fire`, `out-shot`,
+    `front-door`, `calendar`, `harness`, `kid-climb`, `wince`, `sell-back`, `bedroom-settings`, `crew-field`,
+    `crew-roster`, `fort-spawn`. No page errors.
+- Several of these lost their tab or timed out entering a match while two browsers ran on this 4-core machine: `ffa-starts`,
+  `squad-basics`, `real-scale`, `last-kid`, `squad-hud`, `winnmark-props` and `damage-report`. Every one of them passes
+  alone. `result-stats` fails on main too (v1.342), the unlock ladder.
+- **Run directly** (`node tests/<name>.test.mjs`): `pickup` (every map at 2v2 by night and 3v3 or 4v4 by day, Winnmark's
+  in the bulb's area now), `pickup-kids`, `pickup-clock` and `map-screen` pass. `pickup` hung past 10 minutes twice
+  under `run.mjs` and finished in under 7 run directly.
+- **Owed first next session (time):** `spawn-facing` (ran past my 280 s cap), `voices`, `walkie-callouts`, `mirror`,
+  `out-walk-off`, `hats`, `jump`, `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`, `crew-balance`,
+  `crew-gear`, `crew-spawn-bounds` and `crew`.
+### Still open
+- **For Michael's look:** the bulb's area is the street's end as it is, with no tree walls. The hedge down its west edge
+  and the open street to the east are its edges. He should also judge whether the team matches' far side (their spots by
+  the bulb, 50-70 m from your start) feels as it did.
+- **Next, step 5:** the views past the edges (the guide's "Past the edge": the fairway north and west, the shared wood
+  and Winnmark Dr's houses south, the street running on east). Most of it is the real place built since v1.338, so the
+  step is what the guide still lists that isn't there.
+
+## v1.344 — Past Winnmark's edges, and a kid out walks round the car
+Card `fable/d51-winnmark` (backlog D.51 with D.25's Winnmark edges), step 5 of 5, the views past the edges. Most of the
+guide's "Past the edge" list was built with the real place in v1.338: the course and its houses to the north, the shared
+wood and Winnmark Dr's houses to the south, the street running on east to the Dr. I photographed every edge of both play
+areas by day and compared them with the guide. Two things were still missing or wrong.
+- **West of the course was empty.** Past the pond the course ran bare to the ground's edge at x -210, where the guide
+  has the course, a tree line, a row of houses facing it, then woods. The course now stops at x -168
+  (`WM_REAL.westX`). Past it there is a tree line 12 m deep, eight houses at about x -190 facing east across the
+  course, on lawns, and the woods behind them. The ground runs 48 m further west, to x -258, to hold them. Its
+  coarse grid is the same 6 m step, so every old vertex is where it was. The houses and the new strip of woods use
+  their own seeded numbers, so no tree drawn before stands anywhere new. To plant the strip by the same rules as the
+  rest, the planting rules became one function (`plant`). Nothing in it is solid.
+- **v1.301's fairway sheet hung over the bulb's north yards.** It was a flat 100 x 22 m plane at y 0.005 from z -42 to
+  -64. Since v1.342 the north lots by the bulb run their yards down to z -50, as much as 1.5 m under it, so the sheet
+  floated over them. The green and one bunker floated 0.4-0.8 m. The sheet is gone, because the ground's own mowing
+  stripes are the fairway. The green, flag, both bunkers, the cart path and the golf cart move 12 m north onto the
+  course past the lots' fences, each set on the ground under it. The ten small trees along there stand on the
+  yards' ground now, not at 0.
+- **A kid out walked into the bulb's car and stayed there** (`out-walk-off`, one of the suites v1.343 still owed).
+  In Storm the Cul-de-Sac, Seth starts crouched behind the bulb's south car, and the car sits exactly on the line from
+  its far side to his start. Tagged on the far side, he walked 1 m, stood against the car and stopped 5 m short. Facing
+  it square on, the slide along each axis gained nothing. Now, when the slide gains less than a quarter of a step, he
+  steps sideways round whatever is in his way. He keeps to that side until the way on is clear, because sliding back
+  to the line between steps would undo each one. The 2 s "held up" stop still applies, so a long hedge can't keep
+  him walking. The test's BB, fired from 0.6 m behind him along +x, now started inside the car at his new spot on its
+  corner. It now fires from the first side whose 0.6 m run-up is clear, measured along the shot.
+### Verified
+- **`tests/winnmark-real.test.mjs`, extended:**
+  - Past the course to the west, 384 house-wall vertices stand 5-7 m up between x -178 and -202, and 23,315 vertices
+    of woods lie past x -215.
+  - The ground's west edge is at x -258, and the scenery's furthest vertex is at -263 (a crown's edge).
+  - The scenery now holds 38 houses (30 before) and 1,556 trees (1,184 before; most of the difference is the woods
+    where the course used to run to the edge).
+  - The 20 flat golf pieces (green, bunkers, cart path) lie 0.025-0.04 m over the ground under them, and no fairway
+    plane is left.
+- **`tests/winnmark-trees.test.mjs`:** the green lies 0.03 m over the ground at z -60. Its old check, that the sheet was
+  over the ground, is now that no sheet is left.
+- **`out-walk-off`, three runs:** Seth walks round the car's east end and stops 0.99 m from his start each time, with
+  every other check as before.
+- **Draw calls** in the edge views, before → after: from the bulb north 151 → 150, west 63 → 63, south 71 → 71,
+  east 235 → 235, north-west 66 → 65. `winnmark-real`'s seven views are 698 at the worst, inside the 2,060 budget.
+- **These suites pass, run one at a time:** `winnmark-real`, `winnmark-trees`, `backdrop`, `smoke`, `layout-same`,
+  `houses`, `real-scale`, `winnmark-props`, `out-walk-off`, `out-shot`.
+- **Owed from v1.343, all pass alone:** `spawn-facing`, `voices`, `walkie-callouts`, `mirror`, `hats`, `jump`,
+  `kid-clothes`, `wallet`, `result-text`, `bed-summer`, `notebook`, `crew-balance`, `crew-gear`.
+  - `spawn-facing`, `result-text`, `notebook` and `crew-gear` lost their tab or timed out while two browsers ran
+    beside a third, then passed alone.
+  - `crew-spawn-bounds` and `crew` ran in the full `npm test`, below.
+- **`npm test` here, up to its two-hour limit:** 84 of 185 suites ran, `ai-clock` to `last-saturday` in alphabetical order,
+  with `crew` (23 checks) and `crew-spawn-bounds` among them. Two failed:
+  - `bunratty-road`'s pin on Winnmark's road vertex counts was this card's own change. v1.338 ran the street on 195 m
+    to Winnmark Dr with the same ribbon, so the asphalt went 1,539 → 3,339 and the kerbs 9,384 → 18,576; the bulb (280)
+    and the marks (594) are the same. Earlier sessions hadn't run this suite. The pin now holds the real street's
+    counts, and the suite passes.
+  - `idle-ally` (the Hollow's night game, which this card doesn't touch) had Rebecca 9.6 m from her start against a
+    10 m line. Alone it passes.
+### Still open
+- **The other 101 suites** (`last-saturday` onwards) are owed to `npm test` next session, before the card goes to review.
+- **For Michael's look:**
+  - The west edge: the course, the tree line and the row of houses past it, from the bulb and from the north yards.
+  - The green, bunkers and cart path, now past the lots' fences.
+  - The out kid's walk round the car, in Storm the Cul-de-Sac.
+- The houses past the edges are the plain merged kind. At 150 m and more in the day fog that is all they need to be.
+
 ## v1.345 — Hold the South Fort: a blast wall, a taller wall and taller merlons
 Backlog B.17, Michael's A on "Hold the South Fort is still lost before the first tag" (26 Oct): "a taller wall and
 better crenellations", so the fort floor is out of Devon's line from the north. The critic lost 4 of 4 rounds to Devon

@@ -45,7 +45,8 @@ for (const [i, c] of res.cmp.entries()) {
   check(`${nm}: KEEP OUT on the back wall, fewer meshes than the slab fort`, c.paint && c.meshesB < c.meshesA, c);
 }
 check('Winnmark cul-de-sac: the bulb fort is the detailed fort', res.wm_culdesac.forts >= 1 && res.wm_culdesac.detail === res.wm_culdesac.forts, res.wm_culdesac);
-check('Winnmark treehouse: both forts are the detailed fort', res.wm_treehouse.forts >= 2 && res.wm_treehouse.detail === res.wm_treehouse.forts, res.wm_treehouse);
+// v1.341 (D.51 step 4): Defend the Treehouse plays in Seth's area, where the box (and its bulb fort) is baked into a view
+check('Winnmark treehouse: its fort is the detailed fort', res.wm_treehouse.forts >= 1 && res.wm_treehouse.detail === res.wm_treehouse.forts, res.wm_treehouse);
 check('Bunratty: the bulb fort is the detailed fort (v1.125)', res.bunratty.forts >= 1 && res.bunratty.detail === res.bunratty.forts, res.bunratty);
 
 // a look at the bulb fort from the attackers' side

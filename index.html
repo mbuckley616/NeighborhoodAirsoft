@@ -6915,7 +6915,7 @@ const SCENARIOS = {
     name: "Seth's House", scenarioName: 'Seth\'s Got a Shotgun',
     desc: "Seth's been bragging about his new shotgun all week. He's not staying back. Close in fast or keep well back — his pellets spread, and the farther out you are, the fewer of them find you.",   // v1.181: was "past 14m and he can't touch you"; he reaches 20 m and more
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
     enemySetup: [
@@ -6930,9 +6930,9 @@ const SCENARIOS = {
   winnmark_ffa: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
     name: 'Winnmark Court', scenarioName: 'Every Kid for Themselves',
-    desc: "Five-way free-for-all across the whole street. No teams, no friends — everyone's a target, and everyone's shooting at you the second they see you. Keep moving, watch your back, and be the last one standing.",
+    desc: "Five-way free-for-all round Seth's place. No teams, no friends — everyone's a target, and everyone's shooting at you the second they see you. Keep moving, watch your back, and be the last one standing.",
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
     ffa: true,
@@ -6944,10 +6944,10 @@ const SCENARIOS = {
     // the FFA actually develops instead of resolving in the first three seconds.
     enemySetup: [
       // v1.265: the hidden starts (ffa_1–4, Michael: A); in this order every Pickup Game subset keeps the rule too
-      { charId: 'seth',   weapon: 'pistol',  anchor: 'ffa_1' }, // NE, Seth's own backyard
-      { charId: 'trey',   weapon: 'pistol',  anchor: 'ffa_2' }, // north, the side yard between houses 1 and 2
-      { charId: 'brooke', weapon: 'shotgun', anchor: 'ffa_3' }, // SW
-      { charId: 'jamie',  weapon: 'pistol',  anchor: 'ffa_4' }, // south, between houses 4 and 5
+      { charId: 'seth',   weapon: 'pistol',  anchor: 'ffa_1' }, // v1.341: the shared wood behind the east lot
+      { charId: 'trey',   weapon: 'pistol',  anchor: 'ffa_2' }, // the west lot's wood
+      { charId: 'brooke', weapon: 'shotgun', anchor: 'ffa_3' }, // over the creek, the far corner
+      { charId: 'jamie',  weapon: 'pistol',  anchor: 'ffa_4' }, // the north lawn
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 45, lose: 10 },
@@ -6978,14 +6978,14 @@ const SCENARIOS = {
   winnmark_sniper_overwatch: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
     name: 'Winnmark Court', scenarioName: 'Trey on Overwatch',
-    desc: "Seth's set up at his place again, but this time Trey's playing sniper from the far end of the street. You won't get to Seth without crossing Trey's sight line. Use the houses.",
+    desc: "Seth's set up at his place again, but this time Trey's playing sniper from the front step of the house across the street. You won't get to Seth without crossing Trey's sight line. Use the cars and the trees.",   // v1.341 (D.51, Michael: A): was "from the far end of the street"
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'attack',
     playerSpawn: 'road_east',
     enemySetup: [
       { charId: 'seth', weapon: 'pistol', anchor: 'seth_backyard',    role: 'skirmisher' },
-      { charId: 'trey', weapon: 'sniper', anchor: 'cul_de_sac_plank', role: 'defender' },
+      { charId: 'trey', weapon: 'sniper', anchor: 'trey_overwatch',   role: 'defender' },   // v1.341: across the street from Seth's
     ],
     winCondition: 'kill_all',
     rewards: { win: 35, lose: 10 },
@@ -6998,9 +6998,10 @@ const SCENARIOS = {
     name: 'Winnmark Court', scenarioName: 'Two on Two',
     desc: "You and Seth team up against Trey and Brooke. Seth'll push with you — call your shots, focus one of them down, and don't let them split you up. Trey and Brooke fight as a pair too, so expect them to gang up.",
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
+    enemySpawnCluster: 'cluster_west',   // v1.341: they gather out of sight (the west lot's wood), not on the open street
     enemySetup: [
       { charId: 'seth',   weapon: 'pistol',  anchor: 'house2_backyard', team: 'player' },
       { charId: 'trey',   weapon: 'pistol',  anchor: 'trey_backyard'   },
@@ -7015,7 +7016,7 @@ const SCENARIOS = {
   winnmark_defend_treehouse: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
     name: 'Winnmark Court', scenarioName: 'Defend the Treehouse',
-    desc: "You grabbed the plank fort by the woods at the mouth of the street first — best spot on Winnmark, and you're not giving it up. Marcus is back from his cousin's and brought Jamie, and they're cutting through Seth's backyard to flush you out. Hold the fort for 90 seconds before their moms call them in.",
+    desc: "You grabbed the plank fort in the woods next door to Seth's first — best spot on Winnmark, and you're not giving it up. Marcus is back from his cousin's and brought Jamie, and they're cutting through Seth's backyard to flush you out. Hold the fort for 90 seconds before their moms call them in.",
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'treehouse',
     scenarioType: 'defend',
@@ -7061,9 +7062,10 @@ const SCENARIOS = {
     name: 'Winnmark Court', scenarioName: 'Two in the Yards',
     desc: "Jamie and Devon are loose somewhere in the backyards. Devon's got the sniper and he's patient — he'll let Jamie flush you out, then take the shot. Don't get caught in the open between houses.",
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
+    enemySpawnCluster: 'cluster_treehouse',   // v1.341: they gather out of sight (the foot of Seth's back yard), not on the open street
     enemySetup: [
       { charId: 'jamie', weapon: 'pistol', anchor: 'house2_backyard', role: 'skirmisher' },
       { charId: 'devon', weapon: 'sniper', anchor: 'brooke_backyard', role: 'skirmisher' },
@@ -7100,7 +7102,7 @@ const SCENARIOS = {
   winnmark_whole_block: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
     name: 'Winnmark Court', scenarioName: 'The Whole Block',
-    desc: "Word got around. Seth, Brooke, Marcus, and Devon are all out — Devon on the sniper up at the fort, Marcus charging with the shotgun, Seth and Brooke dug into the mid yards. This is the big one. Take your time and pick them apart.",
+    desc: "Word got around. Seth, Brooke, Marcus, and Devon are all out — Devon on the sniper up at the fort, Marcus charging with the shotgun, Seth and Brooke dug into the yards off the bulb. This is the big one. Take your time and pick them apart.",
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'cul_de_sac',
     scenarioType: 'attack',
@@ -7109,7 +7111,7 @@ const SCENARIOS = {
       { charId: 'devon',  weapon: 'sniper',  anchor: 'cul_de_sac_plank', role: 'defender' },
       { charId: 'marcus', weapon: 'shotgun', anchor: 'house4_backyard',   role: 'skirmisher' },
       { charId: 'seth',   weapon: 'pistol',  anchor: 'seth_backyard',     role: 'skirmisher' },
-      { charId: 'brooke', weapon: 'pistol',  anchor: 'house2_backyard',   role: 'skirmisher' },
+      { charId: 'brooke', weapon: 'pistol',  anchor: 'house7_backyard',   role: 'skirmisher' },   // v1.343: the bulb's south lawn (house2 is your side's spot now)
     ],
     winCondition: 'kill_all',
     rewards: { win: 70, lose: 16 },
@@ -7445,10 +7447,11 @@ const SCENARIOS = {
     name: 'Winnmark Court', scenarioName: 'After Dark',
     desc: "Nobody called the game on account of dark. Seth and Devon are still out there in the yards — and at least one of them's got a flashlight, so watch for the beam swinging across the grass. The streetlamps give you pools of light to fight around, but the gaps between them are black. Use the dark; don't get caught in a beam.",
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
+    enemySpawnCluster: 'cluster_treehouse',   // v1.341: they gather out of sight (the foot of Seth's back yard), not on the open street
     enemySetup: [
       { charId: 'seth',  weapon: 'pistol', anchor: 'house2_backyard', role: 'skirmisher' },
       { charId: 'devon', weapon: 'sniper', anchor: 'brooke_backyard', role: 'skirmisher' },
@@ -7464,10 +7467,11 @@ const SCENARIOS = {
     name: 'Winnmark Court', scenarioName: 'Night Game: Two on Two',
     desc: "Two-on-two, but at night. You and Seth against Trey and Brooke, three lives for every kid but you, respawning at their base flags until one side's wiped out. One of them's running a flashlight — it'll give away their push, but it'll also pin you if you're caught in the open. Fight around the lamps and the dark stretches between them.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildWinnmarkCourtScene',
-    builderArg: 'cul_de_sac',
+    builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'road_east',
+    enemySpawnCluster: 'cluster_west',   // v1.341: they gather out of sight (the west lot's wood), not on the open street
     enemySetup: [
       { charId: 'seth',   weapon: 'pistol',  anchor: 'house2_backyard', team: 'player' },
       { charId: 'trey',   weapon: 'pistol',  anchor: 'trey_backyard'   },
@@ -13974,13 +13978,390 @@ function buildStreetRoad(scene, opt) {
 //          : 'cul_de_sac'   → 3v1 vs Seth/Trey/Brooke spread across the street
 //   timeOfDay: 'day' (default) | 'night'
 // ----------------------------------------------------------------------
+// v1.338 (D.51, card fable/d51-winnmark, step 1; Michael: real scale, 16 Oct; each match fenced to a today-sized part
+// of the street, A, 26 Oct): Winnmark Court past today's box and its tree walls is the real place, in the map's own
+// frame (the bulb at (-30, 0), the street running east). docs/refs/winnmark.md: the court runs about 265 m from Winnmark
+// Dr to its bulb, nearly flat, falling 3-5 m west; the north lots back onto the golf course, the south lots onto one
+// shared wood with a small creek that runs to the course, Winnmark Dr's houses on its far side; the pond lies north-west
+// of the bulb, its creek running south along the course. Every term is exactly zero inside the box (WM_REAL.box), so the
+// matches play on the ground they always had; steps 2-4 build the houses, Seth's lot and the play areas on it.
+const WM_REAL = {
+  box: { minX: -40, maxX: 42, minZ: -38, maxZ: 42 },
+  drX: 235,                                             // Winnmark Dr at the court's mouth, 265 m from the bulb's centre
+  // Winnmark Dr: north to Steeplechase, south past the junction, then round the shared wood to the south-west
+  dr: [[235, -190], [235, 0], [233, 80], [210, 140], [160, 170], [100, 182], [20, 190], [-60, 196]],
+  pond: { x: -105, z: -68, rx: 46, rz: 30, bed: -1.4, water: -0.3 },
+  // Seth's creek [x, z, bed y], from the east through the shared wood to the course's creek west of the bulb
+  // v1.340 (step 3): 2-3 m deeper than v1.338's, so Seth's back yard falls 3-4 m from his patio to it, as Michael's notes
+  creek: [[262, 86, -2.4], [200, 72, -3.6], [130, 60, -4.6], [70, 58, -5.3], [10, 63, -5.9], [-50, 60, -6.4], [-100, 30, -6.9]],
+  // the course's creek, out of the pond's south end and south along the course, in its ravine
+  course: [[-104, -39, -1.2], [-101, 0, -4.0], [-100, 30, -6.9], [-110, 100, -7.6], [-118, 190, -8.2]],
+  // house sites for step 2, kept clear of the trees here: [x, z, half-width, half-depth]
+  westX: -168,   // v1.344 (D.51 step 5): the course's west edge; past it a tree line, a row of houses facing it, the woods
+  sites: [[48, -22], [80, -22], [112, -22], [144, -22], [176, -22], [208, -22], [100, 22], [156, 22], [206, 22]].map(([x, z]) => [x, z, 14, 12]),
+};
+const _wmSS = v => { v = v < 0 ? 0 : v > 1 ? 1 : v; return v * v * (3 - 2 * v); };
+// the street's own level: today's grade in the box (3 m at the entry), then 1.5 m more over the 197 m to Winnmark Dr
+// v1.342 (D.51 step 4, second part): with the bulb's lots at real size (bulb true) the street falls only 1.5 m from the
+// box's entry to the bulb, so the bulb is 3 m under Winnmark Dr (the guide's 3-5 m) and its lots have room for walk-outs
+// over the course at 0
+function winnmarkStreetY(x, bulb) {
+  if (x >= 38) return 3.0 + 1.5 * _wmSS((x - 38) / 197);
+  if (bulb) return 1.5 + 1.5 * (1 - _wmSS((x - 38) / (-32 - 38)));
+  return 3.0 * (1 - _wmSS((x - 38) / (-32 - 38)));
+}
+// nearest point on a polyline of [x, z, (y)] points: { d, y (interpolated third value), s (distance along it) }
+function _wmPolyNear(pts, x, z) {
+  let best = { d: Infinity, y: 0, s: 0 }, acc = 0;
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i], b = pts[i + 1], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz, L = Math.sqrt(L2);
+    let t = ((x - a[0]) * dx + (z - a[1]) * dz) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const d = Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t);
+    if (d < best.d) best = { d, y: (a[2] || 0) + ((b[2] || 0) - (a[2] || 0)) * t, s: acc + L * t };
+    acc += L;
+  }
+  return best;
+}
+// Winnmark Dr's level along it: 4.5 m at the court's mouth (the court's own top), rising a little north to Steeplechase
+// and falling 2 m round the wood to the south-west, as the ground falls south and west
+function winnmarkDrY(near) {
+  const s0 = 190;   // the junction's distance along WM_REAL.dr
+  return near.s < s0 ? 4.5 + 0.004 * (s0 - near.s) : 4.5 - 2.0 * _wmSS((near.s - s0) / 330);
+}
+// the creek's z at x along the shared wood (WM_REAL.creek runs east to west)
+function winnmarkCreekZ(x) {
+  const C = WM_REAL.creek;
+  if (x >= C[0][0]) return C[0][1];
+  for (let i = 0; i + 1 < C.length; i++) if (x >= C[i + 1][0]) return C[i][1] + (C[i + 1][1] - C[i][1]) * (x - C[i][0]) / (C[i + 1][0] - C[i][0]);
+  return C[C.length - 1][1];
+}
+// v1.339 (D.51 step 2; docs/refs/winnmark.md, "The houses" and "The ground"): the street's lots past the box, at real
+// size. Each house is 20-24 m across and 15 m deep, its front 14 m off the street's middle; the main floor stands 0.35 m
+// over the front lawn and the back is a walk-out, the terrace 3 m under the main floor with the deck over it; the terrace
+// runs back to a stone wall at the lot's back line of the ground grid, the yard 0.9 m or more below it, a black picket
+// fence along the wall and down each side. North lots face south and back onto the course; south lots face north and
+// back onto the shared wood. Seth's (x 100, south) is step 3's own lot, and the north lot at x 48, which reaches into
+// today's box, is step 4's with the bulb's. look: WM_LOOK's A, B or C.
+const WM_LOTS = [
+  { x: 80, side: 'n', look: 'A', w: 24 }, { x: 112, side: 'n', look: 'B', w: 21 },
+  { x: 144, side: 'n', look: 'C', w: 23 }, { x: 176, side: 'n', look: 'A', w: 20 }, { x: 208, side: 'n', look: 'B', w: 22 },
+  { x: 156, side: 's', look: 'B', w: 23 }, { x: 206, side: 's', look: 'C', w: 21 },
+];
+const WM_LOT = { half: 16, front: 14, depth: 15, walk: 3.0, wallD: 39.375, cell: 140 / 96 };   // wallD: a line of the ground grid
+for (const L of WM_LOTS) { const S = winnmarkStreetY(L.x); L.F = S + 0.35; L.T = L.F - WM_LOT.walk; L.sgn = L.side === 'n' ? -1 : 1; }
+// v1.342 (D.51 step 4, second part; Michael: real scale, 16 Oct): the bulb's end of the street at real size, in place of
+// today's box and its eight half-size houses: three lots each side about 34 m apart, the last two each side of the bulb
+// set back 17 m (front) round its 11 m circle, and the north lot at x 48 that reaches into the box. They are built where
+// the scene's ground is the real one (bulb true: every match since v1.343, when the bulb's own matches moved onto them). The north lots by the bulb keep their terrace 0.6 m under the course at most, so
+// their walk-out is 2.5 m there; the south lots fall into the wood as the street's others do.
+const WM_BULB_LOTS = [
+  { x: -22, side: 'n', look: 'A', w: 22, front: 17 }, { x: 14, side: 'n', look: 'B', w: 23 }, { x: 48, side: 'n', look: 'C', w: 24 },
+  { x: -24, side: 's', look: 'B', w: 22, front: 17 }, { x: 10, side: 's', look: 'C', w: 23 }, { x: 44, side: 's', look: 'A', w: 21 },
+];
+for (const L of WM_BULB_LOTS) {
+  const S = winnmarkStreetY(L.x, true); L.bulb = true; L.sgn = L.side === 'n' ? -1 : 1; L.F = S + 0.35;
+  L.T = Math.max(L.F - WM_LOT.walk, L.sgn < 0 ? -0.6 : -Infinity);
+}
+const WM_BULB = { x: -30, z: 0, r: 11 };   // v1.342: the bulb at real size (the guide: 12-15 m; today's 6.3)
+function winnmarkLotAt(x, z, bulb) {
+  for (const L of WM_LOTS) if (Math.abs(x - L.x) < WM_LOT.half && z * L.sgn > 0) return L;
+  if (bulb) for (const L of WM_BULB_LOTS) if (Math.abs(x - L.x) < WM_LOT.half && z * L.sgn > 0) return L;
+  return null;
+}
+// the lot's ground: the front lawn, the side yards falling to the terrace, the terrace, and the yard below its wall
+function winnmarkLotY(L, z, r) {
+  const d = z * L.sgn, S = L.F - 0.35, f = L.front || WM_LOT.front;   // v1.342: f, the house's front off the street's middle
+  if (d < f + 2) return r;
+  if (d < f + 15) return S + (L.T - S) * _wmSS((d - f - 2) / 12);
+  if (d <= WM_LOT.wallD) return L.T;
+  return Math.min(r, L.T - 0.9 + 0.15 * Math.max(0, d - 44));   // the yard below the wall, meeting the falling ground by 54 m
+}
+// v1.340 (D.51 step 3; Michael's notes and answer 2A; docs/refs/winnmark.md gap 1): Seth's lot, mid-street on the south
+// side, 130 m from the bulb. The driveway drops 2.4 m off the road over 16 m (15 %, "very steep") to the pad, and the
+// house is sunk with it; its back is a walk-out over a flagstone patio, the "really big deck" off the main floor over it
+// with the hot tub "almost the size of his pool" sunk into the patio under the deck, the pool beyond on the patio, and the
+// back yard falling on through the woods to the creek, 3-4 m under the patio. Levels: P the pad, F the main floor,
+// T the patio; the house's front at z 22, its back at 37; the patio to z 52.
+const WM_SETH = (() => {
+  const x = 100, S = winnmarkStreetY(x), P = S - 2.4, F = P + 0.35, T = F - 3.0;
+  return { x, S, P, F, T, w: 24, front: 22, back: 37, patio: 52, half: 18, deck: { x0: 88.5, x1: 104.5, z1: 42.5 },
+    tub: { x: 96.5, z: 40.2, r: 1.8 }, pool: { x0: 100.5, x1: 110, z0: 45.4, z1: 50 }, drive: 108.6 };
+})();
+function winnmarkSethY(x, z, r) {
+  const H = WM_SETH, ax = Math.abs(x - H.x);
+  if (z < 4 || ax > H.half + 6) return r;
+  const cz = winnmarkCreekZ(x);
+  if (z > cz) return r;
+  let y;
+  if (z < 5) y = H.S + (r - H.S) * (5 - z);                                              // the road's edge
+  else if (z < 21) y = H.S + (H.P - H.S) * (z - 5) / 16;                                   // the driveway and the sunk front lawn
+  else if (z < 29) y = H.P;                                                                // the pad, and under the house's front
+  else if (z < H.back) y = H.P + (H.T - H.P) * _wmSS((z - 29) / 7.5);                      // under the house
+  else if (z <= H.patio) y = H.T;                                                          // the patio
+  else y = H.T + (r - H.T) * _wmSS((z - H.patio) / (cz - H.patio));                     // down through the woods to the creek
+  const k = 1 - _wmSS((ax - H.half) / 6);
+  return r + (y - r) * k;
+}
+function winnmarkRealScale(x, z, h, bulb) {   // v1.342: bulb, the box is the real place too (WM_BULB_LOTS)
+  const B = WM_REAL.box;
+  const out = Math.max(B.minX - x, x - B.maxX, B.minZ - z, z - B.maxZ);
+  if (out <= 0 && !bulb) return h;
+  const S = winnmarkStreetY(x, bulb);
+  let r;
+  if (z <= 0) {
+    // the north lots: flat front lawns, then the back yards fall to the course (at 0) 42 m out by the box, 55 m east
+    const dC = 42 + 13 * _wmSS((x - 50) / 20);
+    r = S * (1 - _wmSS((-z - 16) / (dC - 16)));
+    if (z < -130) r += 3 * _wmSS((-z - 130) / 30);                       // past the course, up to the houses across it
+  } else {
+    // the south lots: a walk-out's 3 m fall behind the houses, then the shared wood down to the creek's banks
+    const cz = winnmarkCreekZ(x), c = _wmPolyNear(WM_REAL.creek, x, z), bank = c.y + 1.2;
+    const walk = S - 3 * _wmSS((z - 16) / 16);
+    r = z <= cz ? walk + (bank - walk) * _wmSS((z - 30) / Math.max(1, cz - 30)) : bank + 0.05 * (z - cz);
+  }
+  // Winnmark Dr's lots stand on its own level, falling away from it into the wood and the course
+  const dr = _wmPolyNear(WM_REAL.dr, x, z);
+  r = Math.max(r, winnmarkDrY(dr) - 0.07 * Math.max(0, dr.d - 9));
+  const lot = winnmarkLotAt(x, z, bulb);   // v1.339: the street's lots past the box, terraced behind their walk-outs
+  if (lot) r = winnmarkLotY(lot, z, r);
+  r = winnmarkSethY(x, z, r);        // v1.340: Seth's sunken lot
+  // west of the box the course: flat, but for the pond and the creeks' ravines
+  if (x < -40) r *= 1 - _wmSS((-40 - x) / 30);
+  const P = WM_REAL.pond, e = Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz);
+  r = Math.min(r, P.bed + 0.35 * Math.max(0, (e - 1) * 30 + 3.1));
+  const c1 = _wmPolyNear(WM_REAL.creek, x, z), c2 = _wmPolyNear(WM_REAL.course, x, z);
+  r = Math.min(r, c1.y + 0.45 * Math.min(1, c1.d / 0.9) + 0.3 * Math.max(0, c1.d - 0.9));
+  r = Math.min(r, c2.y + 0.45 * Math.min(1, c2.d / 1.2) + 0.3 * Math.max(0, c2.d - 1.2));
+  return bulb ? r : h + (r - h) * _wmSS(out / 8);
+}
+// v1.341 (D.51 step 4; Michael 26 Oct: A, each match in one fenced area about today's size): Seth's play area on the
+// real-scale street, 72 x 76 m round his lot: the north lawns across from his house, the street, his driveway and side
+// yards, the patio under the deck, the back yard down over the creek, and the wood on the lots either side. Nine matches
+// play here (builderArg 'seth_house', 'treehouse' or 'seth_yards'); the rest stay in the bulb's box. Its starts and
+// anchors keep the box's names (seth_backyard, trey_backyard, road_east...), so a match moved here keeps its enemySetup.
+const WM_SA = {
+  bounds: { minX: 64.8, maxX: 135.2, minZ: -12, maxZ: 64 },
+  fort: { x: 126, z: 32 },   // Defend the Treehouse: the plank fort in the wood on the lot east of Seth's
+};
+// v1.343 (D.51 step 4, second part): the bulb's play area on its real lots, 84 x 54 m: the bulb, the street to the box's
+// old mouth, the north front lawns, and the south lawns, side yards and terraces to their walls. The tutorials and the
+// six matches that played in the box play here; the box is retired.
+const WM_BA = { bounds: { minX: -44, maxX: 40, minZ: -14, maxZ: 40 } };
+function winnmarkArea(variant) { return (variant === 'seth_house' || variant === 'treehouse' || variant === 'seth_yards') ? 'seth' : 'bulb'; }
+
+// v1.339 (D.51 step 2): build WM_LOTS' houses and yards. The house is the detailed one with its street look (v1.312) at
+// real size, lifted to its main floor; under it the walk-out storey in its own wall, French doors and windows on the back;
+// the deck over the terrace (stained boards, posts, a rail, a stair down its end); the terrace's stone wall with its cap;
+// black picket fences along the wall and down the lot lines; a driveway from the street to the garage end. Everything
+// but the houses is baked into one mesh per material. Returns the obstacles and the driveways (for the kerb drops).
+function buildWinnmarkLots(scene, o) {
+  const gY = o.groundY, looks = o.looks, obstacles = [], drives = [];
+  const parts = {}, mats = {};
+  const mat = (key, c, x = {}) => { if (!mats[key]) mats[key] = new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.9 }, x)); return key; };
+  const add = (key, x0, x1, y0, y1, z0, z1) => {
+    (parts[key] = parts[key] || []).push({ geo: new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), m: new THREE.Matrix4().makeTranslation((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2) });
+  };
+  const ob = (x0, x1, z0, z1, y0, y1, extra) => obstacles.push(Object.assign({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1), baseY: y0, h: y1 - y0, surface: 'hard' }, extra || {}));
+  const WOOD = mat('wood', 0x6a4e3a), BAL = mat('bal', 0x6a4e3a, { side: THREE.DoubleSide }), POST = mat('post', 0x47382d), STONE = mat('stone', 0x8a8070, { roughness: 0.97 }), CAP = mat('cap', 0xb8b0a0);
+  const IRON = mat('iron', 0x18181a, { roughness: 0.5, metalness: 0.55, side: THREE.DoubleSide }), TRIM = mat('trim', 0xe6dfd0, { roughness: 0.6 });
+  const GLASS = mat('glass', 0x2e3a44, { roughness: 0.25, metalness: 0.2, emissive: 0x101820, emissiveIntensity: 0.4 });
+  const LIT = o.night ? mat('lit', 0xffe0a0, { roughness: 0.4, emissive: 0xffc070, emissiveIntensity: 0.85 }) : GLASS;
+  const CONC = mat('conc', 0x8e8a82, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  // a black picket fence 1.2 m high from (x0, z0) to (x1, z1), each picket on the ground under it (or on `y` if given)
+  const fence = (x0, z0, x1, z1, y) => {
+    const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / 0.16)), posts = Math.max(1, Math.round(len / 2.4));
+    // each picket one quad across the fence's line (double-sided), the rails a box per run of level ground, so they
+    // step with the ground where it steps (the fence was 1.5k boxes a lot and doubled the map's vertices)
+    const yaw = Math.atan2(-(z1 - z0), x1 - x0);
+    let run = null;
+    const endRun = (x, z) => { if (run) for (const ry of [0.12, 1.08]) add(IRON, Math.min(run.x, x) - 0.02, Math.max(run.x, x) + 0.02, run.b + ry, run.b + ry + 0.04, Math.min(run.z, z) - 0.02, Math.max(run.z, z) + 0.02); };
+    for (let i = 0; i <= n; i++) {
+      const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n, b = y != null ? y : gY(x, z);
+      (parts[IRON] = parts[IRON] || []).push({ geo: new THREE.PlaneGeometry(0.03, 1.3), m: new THREE.Matrix4().makeTranslation(x, b + 0.55, z).multiply(new THREE.Matrix4().makeRotationY(yaw)) });
+      if (!run) run = { x, z, b };
+      else if (Math.abs(b - run.b) > 0.04 || i === n) { endRun(x, z); run = { x, z, b }; }
+    }
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i <= posts; i++) {
+      const x = x0 + (x1 - x0) * i / posts, z = z0 + (z1 - z0) * i / posts, b = y != null ? y : gY(x, z);
+      add(IRON, x - 0.04, x + 0.04, b - 0.1, b + 1.28, z - 0.04, z + 0.04); lo = Math.min(lo, b); hi = Math.max(hi, b);
+    }
+    ob(x0 - 0.1, x1 + 0.1, z0 - 0.1, z1 + 0.1, lo, hi + 1.2, { surface: 'metal', bbPass: true });
+  };
+  const patch = (key, x0, x1, z0, z1, lift, skip) => {   // a patch laid on the ground, facing up
+    const st = 0.75, nx = Math.max(1, Math.ceil((x1 - x0) / st)), nz = Math.max(1, Math.ceil((z1 - z0) / st)), p = [];
+    const at = (x, z) => [x, gY(x, z) + lift, z];
+    for (let k = 0; k < nz; k++) for (let i = 0; i < nx; i++) {
+      const xA = x0 + (x1 - x0) * i / nx, xB = x0 + (x1 - x0) * (i + 1) / nx, zA = z0 + (z1 - z0) * k / nz, zB = z0 + (z1 - z0) * (k + 1) / nz;
+      if (skip && skip((xA + xB) / 2, (zA + zB) / 2)) continue;
+      const a = at(xA, zA), b = at(xB, zA), c = at(xA, zB), d = at(xB, zB); p.push(a, c, b, b, c, d);
+    }
+    if (!p.length) return;
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flat(), 3)); geo.computeVertexNormals();
+    (parts[key] = parts[key] || []).push({ geo, m: new THREE.Matrix4() });
+  };
+  // v1.342 (step 4, second part): o.bulb builds the bulb's lots too (WM_BULB_LOTS), each house front `front` off the
+  // street, its driveway from o.roadEdge (the curved street's or the bulb's edge on its side)
+  for (const L of o.bulb ? WM_LOTS.concat(WM_BULB_LOTS) : WM_LOTS) {
+    const s = L.sgn, LK = looks[L.look], w = L.w, D = WM_LOT.depth, hw = w / 2, fr = L.front || WM_LOT.front;
+    const zc = s * (fr + D / 2), zFront = s * fr, zBack = s * (fr + D), F = L.F, T = L.T;
+    const z0 = Math.min(zFront, zBack), z1 = Math.max(zFront, zBack);
+    // the house, at real size, lifted to its main floor
+    const hob = buildSuburbanHouse(scene, { x: L.x, z: zc, width: w, depth: D, trimColor: 0xe6dfd0, brickColor: LK.brick,
+      roofColor: [0x6e6a62, 0x686660, 0x726c62][(Math.round(L.x / 32) % 3 + 3) % 3], faceDir: s < 0 ? 'south' : 'north', detail: true,
+      look: { ...LK.look, bay: (Math.round(L.x / 32) % 2) ? 1 : -1 } });
+    hob.mesh.position.y = F; hob.mesh.userData.wmLot = true;   // v1.342: a lot's house, not the box's
+    hob.baseY = T - 0.1; hob.h = F - T + 0.1 + 5.5;
+    obstacles.push(hob);
+    // the walk-out storey under it, in its own wall; French doors and two windows each side on the back
+    const WALL = mat('wall' + L.look, LK.brick, { roughness: 0.92 });
+    add(WALL, L.x - hw + 0.02, L.x + hw - 0.02, T - 0.1, F, z0 + 0.02, z1 - 0.02);
+    const zb = zBack + s * 0.04;
+    for (const dx of [-7.5, -4.5, 0, 4.5, 7.5]) {
+      if (Math.abs(dx) > hw - 1.5) continue;
+      const ww = dx === 0 ? 1.8 : 1.1, top = dx === 0 ? T + 2.3 : T + 2.1, bot = dx === 0 ? T + 0.02 : T + 0.9;
+      add(TRIM, L.x + dx - ww / 2 - 0.12, L.x + dx + ww / 2 + 0.12, bot - 0.08, top + 0.12, Math.min(zb, zb + s * 0.06), Math.max(zb, zb + s * 0.06));
+      add((L.x + dx) % 3 < 1 ? LIT : GLASS, L.x + dx - ww / 2, L.x + dx + ww / 2, bot, top, Math.min(zb, zb + s * 0.1), Math.max(zb, zb + s * 0.1));
+    }
+    // the deck over the terrace: 12 x 3.8 m at the main floor, on posts, a rail round it, a stair down its east end
+    const dx0 = L.x - 6, dx1 = L.x + 6, dz0 = zBack, dz1 = zBack + s * 3.8, dzA = Math.min(dz0, dz1), dzB = Math.max(dz0, dz1);
+    add(WOOD, dx0, dx1, F - 0.25, F, dzA, dzB);
+    ob(dx0, dx1, dzA, dzB, F - 0.25, F + 1.05, { surface: 'wood' });
+    for (const px of [dx0 + 0.12, L.x - 2, L.x + 2, dx1 - 0.12]) {
+      const pz = dz1 - s * 0.12;
+      add(POST, px - 0.08, px + 0.08, T, F - 0.25, pz - 0.08, pz + 0.08); ob(px - 0.08, px + 0.08, pz - 0.08, pz + 0.08, T, F - 0.25);
+    }
+    const rail = (ax, az, bx, bz) => {
+      const len = Math.hypot(bx - ax, bz - az), n = Math.round(len / 0.14);
+      const ry = new THREE.Matrix4().makeRotationY(Math.atan2(-(bz - az), bx - ax));   // v1.340: each baluster a quad across the rail's line
+      for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; (parts[BAL] = parts[BAL] || []).push({ geo: new THREE.PlaneGeometry(0.05, 0.95), m: new THREE.Matrix4().makeTranslation(x, F + 0.475, z).multiply(ry) }); }
+      add(POST, Math.min(ax, bx) - 0.05, Math.max(ax, bx) + 0.05, F + 0.95, F + 1.03, Math.min(az, bz) - 0.05, Math.max(az, bz) + 0.05);
+    };
+    rail(dx0 + 0.05, dz1 - s * 0.05, dx1 - 0.05, dz1 - s * 0.05); rail(dx0 + 0.05, dz0, dx0 + 0.05, dz1 - s * 0.05); rail(dx1 - 0.05, dz0, dx1 - 0.05, dz0 + s * 1.2);
+    {
+      const sx0 = dx1, sx1 = dx1 + 4.2, n = 15, sz0 = dz0 + s * 1.3, sz1 = dz0 + s * 2.4;
+      for (let i = 0; i < n; i++) { const y = F - (F - T) * (i + 1) / n, x = sx0 + (sx1 - sx0) * i / n; add(WOOD, x, x + (sx1 - sx0) / n + 0.02, y - 0.05, y, Math.min(sz0, sz1), Math.max(sz0, sz1)); }
+      for (const px of [sx0 + 0.1, (sx0 + sx1) / 2]) add(POST, px - 0.07, px + 0.07, T, F - (F - T) * (px - sx0) / (sx1 - sx0) - 0.25, Math.min(sz0, sz1), Math.min(sz0, sz1) + 0.14);
+      ob(sx0, sx1, Math.min(sz0, sz1), Math.max(sz0, sz1), T, F);
+    }
+    // the terrace's stone wall along the back line (one grid cell thick, so the ground's step is under it), capped,
+    // the fence on it; the fences down both lot lines from the house's back corners to past the wall
+    const wd0 = s * WM_LOT.wallD, wd1 = s * (WM_LOT.wallD + WM_LOT.cell), wz0 = Math.min(wd0, wd1), wz1 = Math.max(wd0, wd1);
+    const lx0 = L.x - WM_LOT.half + 0.2, lx1 = L.x + WM_LOT.half - 0.2;
+    let low = Infinity; for (let x = lx0; x <= lx1; x += 2) low = Math.min(low, gY(x, wd1 + s * 0.05));
+    add(STONE, lx0, lx1, low - 0.3, T + 0.05, wz0, wz1); add(CAP, lx0 - 0.03, lx1 + 0.03, T + 0.05, T + 0.12, wz0 - 0.03, wz1 + 0.03);
+    ob(lx0, lx1, wz0, wz1, low - 0.3, T + 0.12, { surface: 'hard' });
+    const fz = s * (WM_LOT.wallD + WM_LOT.cell / 2);
+    fence(lx0, fz, lx1, fz, T + 0.12);
+    for (const fx of [lx0, lx1]) fence(fx, s * (fr + D), fx, s * (WM_LOT.wallD + WM_LOT.cell + 9));
+    // the driveway to the garage end: the street's edge to the front, on the ground
+    const gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2), ez = L.bulb && o.roadEdge ? o.roadEdge(gx, s) : s * 3.6;
+    drives.push({ x: gx, z: zc, side: s < 0 ? 'north' : 'south', dx: gx });
+    patch(CONC, gx - 2.4, gx + 2.4, Math.min(ez, zFront), Math.max(ez, zFront), 0.035);
+  }
+  // v1.340 (step 3): Seth's lot (WM_SETH): the house sunk with its pad, the walk-out over the flagstone patio, the big deck
+  // over it, the hot tub sunk into the patio under the deck, the pool on the patio past it, the steep driveway, and
+  // stepping stones over the creek at the foot of the yard
+  const seth = {};
+  {
+    const H = WM_SETH, LK = looks.B, hw = H.w / 2, D = H.back - H.front, zc = (H.front + H.back) / 2, F = H.F, T = H.T;
+    const hob = buildSuburbanHouse(scene, { x: H.x, z: zc, width: H.w, depth: D, trimColor: 0xe6dfd0, brickColor: LK.brick, roofColor: 0x6a6660,
+      faceDir: 'north', detail: true, look: { ...LK.look, bay: 1 } });
+    hob.mesh.position.y = F; hob.baseY = T - 0.1; hob.h = F - T + 0.1 + 5.5; hob.mesh.name = 'sethHouse';
+    obstacles.push(hob); seth.house = hob;
+    const WALL = mat('wallB', LK.brick, { roughness: 0.92 });
+    add(WALL, H.x - hw + 0.02, H.x + hw - 0.02, T - 0.1, F, H.front + 0.02, H.back - 0.02);
+    const zb = H.back + 0.04;
+    for (const dx of [-9, -5.5, -2, 2, 5.5, 9]) {
+      const door = dx === -2 || dx === 2, ww = door ? 1.7 : 1.1, top = door ? T + 2.3 : T + 2.1, bot = door ? T + 0.02 : T + 0.9;
+      add(TRIM, H.x + dx - ww / 2 - 0.12, H.x + dx + ww / 2 + 0.12, bot - 0.08, top + 0.12, zb, zb + 0.06);
+      add(dx === 2 ? LIT : GLASS, H.x + dx - ww / 2, H.x + dx + ww / 2, bot, top, zb, zb + 0.1);
+    }
+    // the flagstone patio, slate blue, rust and tan stones in it (the guide's listing A terrace)
+    const FLAG = mat('flag', 0x77736d, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const STN1 = mat('stn1', 0x9a7a62, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const STN2 = mat('stn2', 0x6e7a88, { roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    const P = H.pool, inPool = (x, z) => x > P.x0 - 0.1 && x < P.x1 + 0.1 && z > P.z0 - 0.1 && z < P.z1 + 0.1;
+    const inTub = (x, z) => Math.hypot(x - H.tub.x, z - H.tub.z) < H.tub.r + 0.1;
+    patch(FLAG, H.x - 15, H.x + 15, H.back, H.patio, 0.03);
+    for (let i = 0; i < 26; i++) {
+      const x = H.x - 14 + ((i * 7.31) % 28), z = H.back + 0.6 + ((i * 3.77) % (H.patio - H.back - 1.2)), w = 0.5 + (i % 3) * 0.2;
+      if (inPool(x, z) || inTub(x, z) || inPool(x + w, z + w) || inTub(x + w, z + w)) continue;
+      add(i % 2 ? STN1 : STN2, x, x + w, T + 0.03, T + 0.045, z, z + w * 0.8);
+    }
+    // the big deck off the main floor: 16 x 5.5 m, posts along its edge, the rail, a stair down its west end
+    const dx0 = H.deck.x0, dx1 = H.deck.x1, dz0 = H.back, dz1 = H.deck.z1;
+    add(WOOD, dx0, dx1, F - 0.3, F, dz0, dz1);
+    ob(dx0, dx1, dz0, dz1, F - 0.3, F + 1.05, { surface: 'wood', sethDeck: true });
+    for (const px of [dx0 + 0.12, dx0 + 4, dx0 + 8, dx0 + 12, dx1 - 0.12]) {
+      add(POST, px - 0.09, px + 0.09, T, F - 0.3, dz1 - 0.3, dz1 - 0.12); ob(px - 0.09, px + 0.09, dz1 - 0.3, dz1 - 0.12, T, F - 0.3);
+    }
+    const rail = (ax, az, bx, bz) => {
+      const len = Math.hypot(bx - ax, bz - az), n = Math.round(len / 0.14);
+      const ry = new THREE.Matrix4().makeRotationY(Math.atan2(-(bz - az), bx - ax));   // v1.340: each baluster a quad across the rail's line
+      for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; (parts[BAL] = parts[BAL] || []).push({ geo: new THREE.PlaneGeometry(0.05, 0.95), m: new THREE.Matrix4().makeTranslation(x, F + 0.475, z).multiply(ry) }); }
+      add(POST, Math.min(ax, bx) - 0.05, Math.max(ax, bx) + 0.05, F + 0.95, F + 1.03, Math.min(az, bz) - 0.05, Math.max(az, bz) + 0.05);
+    };
+    rail(dx0 + 0.05, dz1 - 0.05, dx1 - 0.05, dz1 - 0.05); rail(dx1 - 0.05, dz0, dx1 - 0.05, dz1 - 0.05); rail(dx0 + 0.05, dz0 + 1.3, dx0 + 0.05, dz1 - 0.05);
+    {
+      const sx0 = dx0, sx1 = dx0 - 4.2, n = 15, sz0 = dz0 + 0.05, sz1 = dz0 + 1.25;
+      for (let i = 0; i < n; i++) { const y = F - (F - T) * (i + 1) / n, x = sx0 + (sx1 - sx0) * i / n, xn = sx0 + (sx1 - sx0) * (i + 1) / n; add(WOOD, Math.min(x, xn) - 0.01, Math.max(x, xn) + 0.01, y - 0.05, y, sz0, sz1); }
+      for (const px of [sx0 - 0.1, (sx0 + sx1) / 2]) add(POST, px - 0.07, px + 0.07, T, F - (F - T) * (sx0 - px) / (sx0 - sx1) - 0.25, sz1 - 0.14, sz1);
+      ob(sx1, sx0, sz0, sz1, T, F);
+    }
+    // the hot tub, sunk into the patio under the deck: 3.6 m across, its rim 0.45 m up, a step on its open side
+    const COPE = mat('cope', 0xd8d0c0, { roughness: 0.8 }), WATER = mat('water', 0x3a8a9c, { roughness: 0.15, metalness: 0.1, emissive: 0x0a2a32, emissiveIntensity: o.night ? 0.8 : 0.1 });
+    {
+      const t = H.tub, ring = new THREE.CylinderGeometry(t.r, t.r, 0.45, 28, 1, true), cap = new THREE.RingGeometry(t.r - 0.22, t.r + 0.02, 28);
+      (parts[COPE] = parts[COPE] || []).push({ geo: ring, m: new THREE.Matrix4().makeTranslation(t.x, T + 0.225, t.z) });
+      (parts[COPE] = parts[COPE] || []).push({ geo: cap, m: new THREE.Matrix4().makeTranslation(t.x, T + 0.45, t.z).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      (parts[WATER] = parts[WATER] || []).push({ geo: new THREE.CircleGeometry(t.r - 0.2, 28), m: new THREE.Matrix4().makeTranslation(t.x, T + 0.36, t.z).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      add(COPE, t.x - 0.5, t.x + 0.5, T, T + 0.22, t.z + t.r - 0.05, t.z + t.r + 0.4);
+      ob(t.x - t.r, t.x + t.r, t.z - t.r, t.z + t.r, T, T + 0.9, { surface: 'hard', sethTub: true });
+      seth.tub = t;
+    }
+    // the pool on the patio past the deck: 9.5 x 4.6 m, a coping round it; you can't walk into it, BBs fly over it
+    {
+      add(COPE, P.x0 - 0.35, P.x1 + 0.35, T + 0.03, T + 0.1, P.z0 - 0.35, P.z0);
+      add(COPE, P.x0 - 0.35, P.x1 + 0.35, T + 0.03, T + 0.1, P.z1, P.z1 + 0.35);
+      add(COPE, P.x0 - 0.35, P.x0, T + 0.03, T + 0.1, P.z0, P.z1);
+      add(COPE, P.x1, P.x1 + 0.35, T + 0.03, T + 0.1, P.z0, P.z1);
+      (parts[WATER] = parts[WATER] || []).push({ geo: new THREE.PlaneGeometry(P.x1 - P.x0, P.z1 - P.z0), m: new THREE.Matrix4().makeTranslation((P.x0 + P.x1) / 2, T + 0.06, (P.z0 + P.z1) / 2).multiply(new THREE.Matrix4().makeRotationX(-Math.PI / 2)) });
+      ob(P.x0, P.x1, P.z0, P.z1, T, T + 0.6, { surface: 'hard', bbPass: true, sethPool: true });
+      seth.pool = P;
+    }
+    // the steep driveway, from the street down to the pad in front of the garage end, and the pad
+    patch(CONC, H.drive - 2.6, H.drive + 2.6, 3.6, H.front, 0.035);
+    patch(CONC, H.drive - 4.6, H.x + hw - 0.2, H.front - 4, H.front, 0.04);
+    drives.push({ x: H.drive, z: zc, side: 'south', dx: H.drive });
+    // stepping stones over the creek at the foot of the yard
+    const ROCK = mat('rock', 0x7a746a, { roughness: 0.97 });
+    for (let i = -3; i <= 3; i++) {
+      const sx = H.x - 3 + i * 0.25, sz = winnmarkCreekZ(sx) + i * 0.55, y = _wmPolyNear(WM_REAL.creek, sx, sz).y;
+      add(ROCK, sx - 0.32, sx + 0.32, y - 0.2, y + 0.42, sz - 0.25, sz + 0.25);
+    }
+  }
+  const root = new THREE.Group(); root.name = 'winnmarkLots';
+  for (const k in parts) {
+    const m = new THREE.Mesh(_houseMergeParts(parts[k]), mats[k]);
+    m.castShadow = k !== CONC && k !== GLASS && k !== 'lit'; m.receiveShadow = true; m.userData.part = k;
+    root.add(m);
+  }
+  scene.add(root);
+  return { obstacles, drives, root, seth };
+}
+
 function buildWinnmarkCourtScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
+  const _area = winnmarkArea(variant);   // v1.341 (D.51 step 4): 'seth' (WM_SA) or 'bulb' (today's box)
+  // v1.342 (step 4, second part): the bulb's end at real size (WM_BULB_LOTS) in place of the box, where the match doesn't
+  // play in the box: Seth's area's matches see the real bulb down the street, not today's half-size houses
+  const _realBulb = true;   // v1.343: every match now (the bulb's area plays on its real lots, and the box is retired)
 
   // === Lighting / sky (v1.35: day or night) ===
   const _night = (timeOfDay === 'night');
   const { sun } = applyTimeOfDay(scene, timeOfDay, {
-    dayBg: 0x88a8c8, dayFog: [35, 80],
+    dayBg: 0x88a8c8, dayFog: [45, 320],   // v1.338 (D.51 step 1): out from [35, 80], so the street to Winnmark Dr and the course show
     sunColor: 0xfff0c8, sunInt: 1.1, sunPos: [20, 30, 12],
     dayAmbColor: 0xb8c8d8, dayAmbInt: 0.5, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.4,
     nightFog: [22, 70], moonPos: [22, 38, -18],
@@ -14008,7 +14389,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const fz = Math.max(0, Math.min(1, (z + 42) / 7)), fx = Math.max(0, Math.min(1, (x + 42) / 5));
     return h * fz * fz * (3 - 2 * fz) * fx * fx * (3 - 2 * fx);
   }
-  const groundY = winnmarkGroundY;
+  const groundY = (x, z) => winnmarkRealScale(x, z, winnmarkGroundY(x, z), _realBulb);   // v1.338: the real place past the box
   // Terrain normal (finite differences) — used to tilt flat decal pads onto the slope.
   function groundNormal(x, z) {
     const e = 0.6;
@@ -14085,43 +14466,70 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
 
   // === Ground — grass, DISPLACED plane (vertices raised to groundY) ===
   // Subdivided so the slope is smooth; same displacement trick as Bunratty.
-  const groundGeo = new THREE.PlaneGeometry(140, 140, 96, 96);
+  // v1.338 (D.51 step 1): the ground runs on past the box to Winnmark Dr and its houses, over the course and the pond,
+  // and through the shared wood (x -210..310, z -200..230). Inside 140 x 140 m the grid is the old one vertex for vertex
+  // (1.458 m); past it the cells are 6 m. A colour per vertex (times the old grass) browns the woods' floor, mows the
+  // course in stripes and reddens the creeks' clay banks; it is exactly 1 in the box and 6 m round it, so the lawns in
+  // play keep their colour. The old lake strip west of the bulb is gone: the real pond lies north-west on the course.
+  const groundGeo = new THREE.BufferGeometry();
   {
-    const pos = groundGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const lx = pos.getX(i);      // local X → world X
-      const ly = pos.getY(i);      // local Y → world -Z
-      pos.setZ(i, groundY(lx, -ly));
+    const axis = (lo, hi, nFine = 96) => {   // v1.339: nFine past 96 runs the fine grid on east over the lots, at the same step
+      const v = [];
+      for (let c = lo; c < -70 - 1e-6; c += 6) v.push(c);
+      for (let i = 0; i <= nFine; i++) v.push(-70 + 140 * i / 96);
+      const end = v[v.length - 1];
+      for (let c = end + 6; c < hi - 1e-6; c += 6) v.push(c);
+      v.push(hi); return v;
+    };
+    const xs = axis(-258, 310, 157), zs = axis(-200, 230);   // v1.344: 48 m more west, for the houses past the course
+    const pos = [], col = [], idx = [], B0 = WM_REAL.box, mix = (a, b, t) => a + (b - a) * t, P = WM_REAL.pond;
+    for (let j = 0; j < zs.length; j++) for (let i = 0; i < xs.length; i++) {
+      const x = xs[i], z = zs[j];
+      pos.push(x, groundY(x, z), z);
+      const out = Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+      const w = _realBulb ? 1 : _wmSS((out - 6) / 10);   // v1.342: the box's lawns are the real place's too
+      // what lies here: the course (north past the lots, and all round the pond west of the box), the woods, or lawn
+      const dC = 42 + 13 * _wmSS((x - 50) / 20), dr = _wmPolyNear(WM_REAL.dr, x, z).d;
+      const course = x > WM_REAL.westX && ((x < -48 && z < 150) || (z < -dC - 3 && z > -128 && x < WM_REAL.drX - 14));
+      const lawn = dr < 34 || (z > -dC && z < 34 && x < WM_REAL.drX) || (x < WM_REAL.westX - 8 && x > WM_REAL.westX - 36 && z > -178 && z < 160);   // v1.344: the west houses' lots
+      let r = 1, g = 1, bl = 1;
+      if (course) { const st = Math.floor((x + 1000) / 9) % 2; r = st ? 1.36 : 1.22; g = st ? 1.31 : 1.2; bl = st ? 1.25 : 1.12; }
+      else if (!lawn) { r = 1.05; g = 0.67; bl = 0.83; }                              // leaf litter 0x5e5635
+      const cd = Math.min(_wmPolyNear(WM_REAL.creek, x, z).d, _wmPolyNear(WM_REAL.course, x, z).d);
+      const clay = _wmSS((4 - cd) / 2.5), sand = _wmSS((1.12 - Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz)) / 0.08);
+      r = mix(r, 1.53, clay); g = mix(g, 0.83, clay); bl = mix(bl, 1.16, clay);
+      r = mix(r, 1.45, sand); g = mix(g, 1.05, sand); bl = mix(bl, 1.2, sand);
+      col.push(mix(1, r, w), mix(1, g, w), mix(1, bl, w));
     }
-    pos.needsUpdate = true;
+    const W = xs.length;
+    for (let j = 0; j + 1 < zs.length; j++) for (let i = 0; i + 1 < W; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    groundGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    groundGeo.setIndex(idx);
     groundGeo.computeVertexNormals();
   }
   const ground = new THREE.Mesh(
     groundGeo,
-    new THREE.MeshStandardMaterial({ color: 0x5a8040, roughness: 1.0 })
+    new THREE.MeshStandardMaterial({ color: 0x5a8040, roughness: 1.0, vertexColors: true })
   );
-  ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // === Lake on the west edge — flat blueish plane slightly below grass ===
-  const lake = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 80),
-    new THREE.MeshStandardMaterial({ color: 0x2a4a78, roughness: 0.4, metalness: 0.2 })
-  );
-  lake.rotation.x = -Math.PI / 2;
-  lake.position.set(-48, 0.05, 0);   // v1.301: on the flat ground past the shore (was -0.02, under the roll)
-  lake.receiveShadow = true;
-  scene.add(lake);
-  // Shore — a thin tan strip between lake and grass
-  const shore = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.5, 70),
-    new THREE.MeshStandardMaterial({ color: 0xb8a070, roughness: 1.0 })
-  );
-  shore.rotation.x = -Math.PI / 2;
-  shore.position.set(-38, 0.06, 0);   // v1.301
-  shore.receiveShadow = true;
-  scene.add(shore);
+  // === The pond (v1.338, D.51 step 1; docs/refs/winnmark.md gap 9) ===
+  // North-west of the bulb on the course, in the hollow winnmarkRealScale cuts for it; its creek leaves the south end.
+  {
+    const P = WM_REAL.pond;
+    const pond = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: 0x4a6a8a, roughness: 0.35, metalness: 0.15 }));
+    pond.rotation.x = -Math.PI / 2;
+    pond.scale.set(P.rx, P.rz, 1);
+    pond.position.set(P.x, P.water, P.z);
+    pond.name = 'winnmarkPond';
+    pond.receiveShadow = true;
+    scene.add(pond);
+  }
 
   // === Golf course backdrop ===
   // Past the north tree row (z < -30) sits a manicured fairway — Horseshoe Bend
@@ -14133,31 +14541,29 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // at z ≈ -34 (north backyard tree perimeter), so the player never gets close
   // enough to interact. (v1.15: pushed north to clear the deeper backyards.)
   //
-  // Fairway — a wide brighter-green plane north of the tree wall.
-  const fairwayMat = new THREE.MeshStandardMaterial({ color: 0x7aa850, roughness: 1.0 });
+  // Fairway — a wide brighter-green plane north of the tree wall (v1.344: gone, below).
   // v1.301: 22 m deep from z -42, where the ground has come down to the course (was 26 m from z -39, buried)
-  const fairway = new THREE.Mesh(new THREE.PlaneGeometry(100, 22), fairwayMat);
-  fairway.rotation.x = -Math.PI / 2;
-  fairway.position.set(0, 0.005, -53);
-  fairway.receiveShadow = true;
-  scene.add(fairway);
+  // v1.344 (D.51 step 5): gone. Since v1.342 the bulb's north lots run their yards down to z -50, up to 1.5 m under it,
+  // so it hung over them; the ground's own mowing stripes are the fairway. The green, its flag, the bunkers, the cart
+  // path and the cart move 12 m north onto the course past the lots' fences, each laid on the ground under it.
+  const _golfY = (x, z, lift) => groundY(x, z) + lift, GZ = -12;
   // Putting green — a small darker patch (richer fairway color, closer-cut grass)
   const greenMat = new THREE.MeshStandardMaterial({ color: 0x6a9840, roughness: 1.0 });
   const green = new THREE.Mesh(new THREE.CircleGeometry(5, 24), greenMat);
   green.rotation.x = -Math.PI / 2;
-  green.position.set(8, 0.01, -48);
+  green.position.set(8, _golfY(8, -48 + GZ, 0.03), -48 + GZ);
   green.receiveShadow = true;
   scene.add(green);
   // Flagstick on the green
   const stickMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.7 });
   const flagstick = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 6), stickMat);
-  flagstick.position.set(8, 1.1, -48);
+  flagstick.position.set(8, _golfY(8, -48 + GZ, 1.1), -48 + GZ);
   flagstick.castShadow = true;
   scene.add(flagstick);
   // Red flag
   const golfFlagMat = new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: 0.6 });
   const golfFlag = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.5), golfFlagMat);
-  golfFlag.position.set(8, 2.0, -47.7);
+  golfFlag.position.set(8, _golfY(8, -48 + GZ, 2.0), -47.7 + GZ);
   scene.add(golfFlag);
 
   // Sand bunker — kidney-shaped patch of sand (approximate with one ellipse +
@@ -14165,13 +14571,13 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   const sandMat = new THREE.MeshStandardMaterial({ color: 0xe6d098, roughness: 1.0 });
   const bunker1 = new THREE.Mesh(new THREE.CircleGeometry(3.5, 20), sandMat);
   bunker1.rotation.x = -Math.PI / 2;
-  bunker1.position.set(-2, 0.012, -46);
+  bunker1.position.set(-2, _golfY(-2, -46 + GZ, 0.035), -46 + GZ);
   bunker1.scale.set(1.4, 1, 0.7);
   bunker1.receiveShadow = true;
   scene.add(bunker1);
   const bunker2 = new THREE.Mesh(new THREE.CircleGeometry(2.0, 18), sandMat);
   bunker2.rotation.x = -Math.PI / 2;
-  bunker2.position.set(1, 0.013, -45);
+  bunker2.position.set(1, _golfY(1, -45 + GZ, 0.04), -45 + GZ);
   bunker2.scale.set(1.2, 1, 0.8);
   scene.add(bunker2);
 
@@ -14182,17 +14588,17 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const t = i / 16;
     // Curved from west to east across the fairway, dipping slightly south
     const cpX = -28 + t * 56;
-    const cpZ = -55 + Math.sin(t * Math.PI) * 3;
+    const cpZ = -55 + Math.sin(t * Math.PI) * 3 + GZ;
     const seg = new THREE.Mesh(new THREE.CircleGeometry(0.9, 10), cartPathMat);
     seg.rotation.x = -Math.PI / 2;
-    seg.position.set(cpX, 0.008, cpZ);
+    seg.position.set(cpX, _golfY(cpX, cpZ, 0.025), cpZ);
     scene.add(seg);
   }
 
   // Distant golf cart — small white-ish box with a green roof, sitting on the
   // cart path. Won't be reachable; purely scenery.
   const cartGroup = new THREE.Group();
-  cartGroup.position.set(15, 0, -53);
+  cartGroup.position.set(15, _golfY(15, -53 + GZ, 0), -53 + GZ);
   const cartBodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.7 });
   const cartRoofMat = new THREE.MeshStandardMaterial({ color: 0x4a7038, roughness: 0.7 });
   const cartBody = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 1.2), cartBodyMat);
@@ -14227,7 +14633,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     const z = -52 + (gameRandom() - 0.5) * 3;
     const trunkH = 3.5 + gameRandom() * 1.5;
     const leafR = 2.2 + gameRandom() * 0.6;
-    addSuburbanTree(scene, x, z, { trunkH, leafR, detail: true });
+    addSuburbanTree(scene, x, z, { trunkH, leafR, detail: true, baseY: groundY(x, z) });   // v1.344: on the lots' fallen yards
   }
 
   // === Road — a curving asphalt strip approximated by many segment quads ===
@@ -14271,11 +14677,24 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // placement and the AI that sample it are untouched. Built once houseCenters exists (the driveway drops need it).
   function buildWinnmarkRoad(houseCenters) {
     // v1.127: the builder is shared with Bunratty's lane (buildStreetRoad); Winnmark passes its bezier and furniture.
+    // v1.338 (D.51 step 1): past the entry the road runs on about 195 m, up 1.5 m, to Winnmark Dr (265 m from the bulb,
+    // as the real court). The box's own samples stay where they were: the extension is laid on t < -0.13 at the same
+    // step in t, so buildStreetRoad's points from the entry to the bulb are the old ones.
+    const deriv0 = (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) });
+    const RX_K = 200, TA = -0.13;
+    let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (Math.hypot(_wmRoadPoint(t).x + 30, _wmRoadPoint(t).z) < 5) { tEnd = t; break; }
+    const dt = (tEnd - TA) / 170, T0 = TA - RX_K * dt;
+    const E0 = _wmRoadPoint(TA), d0 = deriv0(TA), l0 = Math.hypot(d0.x, d0.z);
+    const E1 = { x: E0.x - d0.x / l0 * 14, z: E0.z - d0.z / l0 * 14 }, E2 = { x: 120, z: 0 }, E3 = { x: WM_REAL.drX + 1, z: 0 };
+    const ext = u => { const m = 1 - u; return {
+      x: m*m*m*E0.x + 3*m*m*u*E1.x + 3*m*u*u*E2.x + u*u*u*E3.x, z: m*m*m*E0.z + 3*m*m*u*E1.z + 3*m*u*u*E2.z + u*u*u*E3.z }; };
+    const uOf = t => (TA - t) / (TA - T0);
+    const point = t => t >= TA ? _wmRoadPoint(t) : ext(uOf(t));
+    const deriv = t => { if (t >= TA) return deriv0(t); const a = ext(Math.max(0, uOf(t) - 0.002)), b2 = ext(Math.min(1, uOf(t) + 0.002)); return { x: a.x - b2.x, z: a.z - b2.z }; };
     return buildStreetRoad(scene, {
-      point: _wmRoadPoint,
-      deriv: (t) => ({ x: 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z: 2 * (1 - t) * (7 - 0) + 2 * t * (0 - 7) }),
+      point, deriv,
       groundY, groundNormal, asphMat: roadMat, houseCenters,
-      ASPH: 3.45, bulb: { x: -30, z: 0, r: 6.3 }, T0: -0.13, NS: 170,
+      ASPH: 3.45, bulb: { x: -30, z: 0, r: _realBulb ? WM_BULB.r : 6.3 }, T0, NS: 170 + RX_K,   // v1.342: the real bulb's 11 m
       manholes: [[0.22, -0.6], [0.58, 0.9]], drains: [[0.34, 1], [0.7, -1]],
       cracks: [[0.12, 5.5, 0.5], [0.47, 6.2, -0.35], [0.82, 4.8, 0.2]], patch: 0.4,
     });
@@ -14296,6 +14715,10 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // these are inspired by the warmer red-brick and tan-stucco palette from the
   // reference photos.
   const houseObs = [];
+  // v1.342: what is built from here to Seth's area is the box's (its houses, driveways, fences, trees, cover, cars, fort),
+  // but for the street's lots and road: with the bulb at real size it is taken out again (below), after the box has made
+  // its random draws, so every match's draws stay as they were
+  const _boxFrom = scene.children.length;
   // v1.15: houses pushed further from the road (bigger driveways) and spread
   // wider in X (~16m apart, was ~12). North row z=-15, south row z=19.
   // v1.312 (backlog D.55 step 4; docs/refs/winnmark.md gap 5): the street's three real finishes, in turn along each row:
@@ -14369,7 +14792,15 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     { x: -9, z: 20, side: 'south' },
     { x: -17, z: 19, side: 'south' },
   ];
-  buildWinnmarkRoad(houseCenters);   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
+  // v1.339 (D.51 step 2): the street's houses past the box at real size, their walk-outs, decks, terraces and fences
+  // v1.342: with the bulb at real size, its lots' driveways start at the curved street's edge or the bulb's on their side
+  const roadZAt = x => { let z = 0, b = Infinity; for (const p of roadCenterline) if (Math.abs(p.x - x) < b) { b = Math.abs(p.x - x); z = p.z; } return x > 34 ? 0 : z; };
+  const roadEdge = (x, s) => {
+    const dx = Math.abs(x - WM_BULB.x), bz = dx < WM_BULB.r + 0.6 ? Math.sqrt((WM_BULB.r + 0.6) ** 2 - dx * dx) : 0;
+    return s > 0 ? Math.max(roadZAt(x) + 3.6, bz) : Math.min(roadZAt(x) - 3.6, -bz);
+  };
+  const wmLots = buildWinnmarkLots(scene, { groundY, looks: WM_LOOK, night: _night, bulb: _realBulb, roadEdge });
+  buildWinnmarkRoad(_realBulb ? wmLots.drives : houseCenters.concat(wmLots.drives));   // v1.116: the road, the bulb and the kerbs (the driveway drops need houseCenters)
   for (const hc of houseCenters) {
     // Driveway runs from the house front all the way to the ACTUAL road edge.
     // v1.76: the road is a curving bezier (bulges south), so the near edge isn't
@@ -14813,9 +15244,12 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // wall — "Seth never pushes." It belongs only to the treehouse defend, where
   // the player actually spawns behind it (playerSpawn 'east_fort') and attackers
   // come from the far west cluster, nowhere near x=33.
+  // v1.341 (D.51 step 4, Michael: A): the fort is in the wood on the lot east of Seth's now, the attackers coming up
+  // through his back yard; the box's mouth (33, 0) has no fort in any match.
   if (variant === 'treehouse') {
-    const fw = buildKidFort(scene, 33, 0, { faceDir: 'W', width: 3.8, depth: 2.4, detail: true });  // v1.76: taller walls + corner bins; v1.114: the built-up fort
-    seatFortOnSlope(fw, 33, 0);
+    const FT = WM_SA.fort;
+    const fw = buildKidFort(scene, FT.x, FT.z, { faceDir: 'W', width: 3.8, depth: 2.4, detail: true });  // v1.76: taller walls + corner bins; v1.114: the built-up fort
+    seatFortOnSlope(fw, FT.x, FT.z);
     for (const w of fw) coverList.push(w);
   }
 
@@ -14896,7 +15330,8 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   }
 
   // === Map bounds ===
-  const bounds = { minX: -36, maxX: 40, minZ: -33, maxZ: 37 };
+  const boxBounds = { minX: -36, maxX: 40, minZ: -33, maxZ: 37 };
+  const bounds = Object.assign({}, _area === 'seth' ? WM_SA.bounds : WM_BA.bounds);   // v1.341: Seth's area; v1.343: or the bulb's
 
   // === Placements table — named anchor positions + nearby cover refs ===
   // Scenarios reference these by string name in `enemySetup[i].anchor`.
@@ -14973,6 +15408,279 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     east_fort:        { pos: new THREE.Vector3(35.5, 0, 0), yaw: Math.PI / 2 },
   };
 
+  // === v1.341 (D.51 step 4; Michael 26 Oct: A): Seth's play area (WM_SA) ===
+  // A match in Seth's area plays on his lot and the lots round it on the real-scale street, with the box's start and
+  // anchor names moved here. Its cover is its own, under its own seed, so every match here has the same woods and props
+  // and the box's matches draw what they drew. The wood on the south lots is solid trunks (the scenery's are left out
+  // round it), with shrubs and fallen logs; the street and the north lawns get parked cars, bins and boxes; Seth's
+  // patio a firewood stack and a grill, his east side yard a shed. A hedge closes the gaps between the north houses, the
+  // lot-line fences mark its east and west sides, and three lamps light the street at night.
+  const saObs = [];
+  const _boxTo = scene.children.length, _coverFrom = coverList.length;   // v1.342: the box's own scene objects and cover end here
+  if (_area === 'seth') {
+    const V = (x, z) => new THREE.Vector3(x, 0, z);
+    const SAP = {
+      seth_backyard:   { pos: V(93, 46) },    // on the patio past the hot tub, by the firewood
+      house1_backyard: { pos: V(100.5, -8) }, // the north lawn across from his house
+      house2_backyard: { pos: V(84, -8.5) },  // the north lawn, by the west house's driveway car
+      trey_backyard:   { pos: V(71.5, -8) },  // the north lawn's west end
+      house4_backyard: { pos: V(127, 44) },   // the east lot's wood
+      brooke_backyard: { pos: V(114, 45.5) }, // his east side yard, below the patio's corner, by the shed
+      house6_backyard: { pos: V(73.5, 30) },  // the west lot's wood
+      house7_backyard: { pos: V(83, 19) },    // the west lot's front, by its shrub over Seth's sunk lawn
+      road_east_north: { pos: V(126, -3) }, road_east_south: { pos: V(126, 3) },
+      road_mid_north:  { pos: V(100, -3) }, road_mid_south:  { pos: V(100, 3) },
+      treehouse_push_e: { pos: V(116.5, 39) }, treehouse_push_w: { pos: V(113, 52) },
+      cluster_road_east: { pos: V(130, 0) },
+      cluster_treehouse: { pos: V(100, 56.5) },   // the foot of his back yard, above the creek
+      cluster_west:    { pos: V(70, 20) },    // the west lot's front, out of sight of the street's east end
+      trey_overwatch:  { pos: V(73.5, -8.8) },   // Trey on Overwatch: the front step of the house across the street, behind its planter
+      // Every Kid for Themselves (Michael: A, 15 Oct, the lot's rule): found by a search over the area, each out of sight
+      // of every other and of yours, 27 m or more apart, every kid nearer another kid's start than yours, in every
+      // Pickup Game size, none where the spawn clearer would move it, and none within 46 m of yours (Seth on his own sunk
+      // front lawn, 32 m off, walked in and tagged a player standing at his start at 6.5 s): Seth in the shared wood by the
+      // creek behind the east lot, Trey in the west lot's wood, Brooke over the creek in its far west corner, Jamie on the
+      // north lawn by the west house's driveway
+      ffa_1: { pos: V(126.8, 62) }, ffa_2: { pos: V(75.8, 32) }, ffa_3: { pos: V(66.8, 62) }, ffa_4: { pos: V(84.8, -10) },
+    };
+    const SAS = {
+      road_east:      { pos: V(130, 0), yaw: Math.PI / 2 },       // the street's east end, facing west down it
+      east_fort:      { pos: V(WM_SA.fort.x + 3.5, WM_SA.fort.z), yaw: Math.PI / 2 },   // behind the fort, facing west
+      seth_yard_west: { pos: V(90, 50), yaw: Math.PI },
+    };
+    // the trees keep off the starts and anchors (the free-for-all's starts were found among the trees, so not those)
+    const keep = [...Object.entries(SAP).filter(([k]) => !/^ffa_/.test(k)).map(([, p]) => p), ...Object.values(SAS)].map(p => p.pos);
+    const clearOf = (x, z, d) => keep.every(p => Math.hypot(p.x - x, p.z - z) >= d);
+    withSeededRandom('winnmark-seth-area', () => {
+      const SA = WM_SA.bounds, H = WM_SETH, r = (a, b) => a + (b - a) * gameRandom();
+      const cover = (o, name) => { if (!o) return o; coverList.push(o); if (o._stacked) coverList.push(o._stacked); if (name) SAP[name].cover = o; return o; };
+      const onSethLot = (x, z, m) => Math.abs(x - H.x) < H.half + m && z > 3 && z < H.patio + 1 + m;
+      const creekD = (x, z) => _wmPolyNear(WM_REAL.creek, x, z).d;
+      const FT = WM_SA.fort, nearFort = (x, z, d) => variant === 'treehouse' && Math.hypot(x - FT.x, z - FT.z) < d;
+      const box = (x, z, w, h, d, color, surface, extra) => {   // a plain prop, built at the ground and sunk onto it
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.9 }));
+        m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+        return sinkObs(Object.assign({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, h, mesh: m, surface }, extra || {}), x, z);
+      };
+      const BARK = new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 0.97 });
+      const log = (x, z, len, alongZ) => {   // a fallen trunk lying on the ground, waist-low cover
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, len, 10), BARK);
+        if (alongZ) m.rotation.x = Math.PI / 2; else m.rotation.z = Math.PI / 2;
+        m.position.set(x, 0.3, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+        const hx = alongZ ? 0.36 : len / 2, hz = alongZ ? len / 2 : 0.36;
+        return sinkObs({ minX: x - hx, maxX: x + hx, minZ: z - hz, maxZ: z + hz, h: 0.62, mesh: m, surface: 'wood' }, x, z);
+      };
+      // the street and the north lawns: parked cars, the bins out, boxes; the cars first, they're the big cover
+      const car = (x, z, yaw, c) => addCar(scene, x, z, { orientation: yaw, color: carColors[c], groundNormalFn: groundNormal, detail: true });
+      cover(sinkObs(car(84, -2.2, 0, 0), 84, -2.2));
+      cover(sinkObs(car(121, 2.2, Math.PI, 1), 121, 2.2));
+      cover(sinkObs(car(88.8, -9.2, Math.PI / 2, 2), 88.8, -9.2), 'house2_backyard');   // the west house's driveway
+      cover(sinkObs(car(104.7, -9, Math.PI / 2, 4), 104.7, -9), 'house1_backyard');      // the east house's driveway
+      cover(sinkObs(car(H.drive, 13, -Math.PI / 2, 5), H.drive, 13));                     // halfway down Seth's driveway
+      for (const [x, z, v] of [[92.4, -4.7, 'garbage'], [93.7, -4.7, 'recycle'], [112.2, 4.9, 'garbage'], [113.5, 4.9, 'recycle'], [70.5, 4.9, 'garbage']])
+        cover(sinkObs(addCurbsideBin(scene, x, z, { variant: v, facing: z < 0 ? Math.PI : 0, detail: true }), x, z));
+      cover(sinkObs(addHomeDepotBox(scene, 71.5, -10.3, { w: 1.3, h: 1.1, d: 1.1, facing: 0, detail: true }), 71.5, -10.3), 'trey_backyard');
+      cover(sinkObs(addHomeDepotBox(scene, 125, -9.5, { w: 1.2, h: 1.0, d: 1.0, facing: 0.2, detail: true }), 125, -9.5));
+      cover(sinkObs(addHomeDepotBox(scene, 73, 12, { w: 1.3, h: 1.15, d: 1.1, facing: 0, detail: true }), 73, 12));
+      cover(box(127, 12.5, 1.6, 0.6, 0.9, 0xc8a878, 'hard'));   // a plywood stack
+      // Trey's planter on the front step across the street: a low brick wall with shrubs in it
+      cover(box(73.5, -10.5, 2.4, 0.85, 0.7, 0x8a4a40, 'hard'), 'trey_overwatch');
+      // Seth's lot: a firewood stack and a grill on the patio, the AC units in the side yards, a shed in the east one
+      cover(box(90.4, 48.6, 2.2, 0.9, 0.8, 0x6a4e3a, 'wood'), 'seth_backyard');
+      cover(box(106.4, 40, 0.8, 1.1, 0.6, 0x1e1e20, 'metal'));
+      cover(box(86.8, 30, 1.0, 0.95, 1.0, 0x9a9a96, 'metal')); cover(box(113.2, 31, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'));
+      cover(box(116.6, 48.8, 2.6, 2.3, 2.4, 0x7a6a52, 'wood'), 'brooke_backyard');
+      // the wood: fallen logs, then trunks on a jittered 6 m grid and shrubs, kept off the anchors, his lot and the creek
+      const wood = new THREE.Group();
+      cover(log(72, 32.4, 4.5, false), 'house6_backyard'); cover(log(127, 46.6, 4, false), 'house4_backyard');
+      cover(log(84, 54.6, 4, false)); cover(log(118.5, 56, 3.5, false)); cover(log(73, 50, 3.8, true)); cover(log(124, 52.4, 3.6, false));
+      cover(addBush(scene, 81.4, 17.6, 1.8, 1.1, 1.5, 0x3e5a30, groundY(81.4, 17.6), { detail: true }), 'house7_backyard');
+      for (let gx = SA.minX + 2; gx < SA.maxX; gx += 6) for (let gz = 9; gz < SA.maxZ + 2; gz += 6) {
+        const x = gx + r(-2, 2), z = gz + r(-2, 2), pick = gameRandom(), pine = gameRandom() < 0.45, hr = gameRandom();
+        if (x < SA.minX + 0.6 || x > SA.maxX - 0.6 || z > SA.maxZ - 0.4) continue;
+        if (onSethLot(x, z, 1.5) || creekD(x, z) < 1.6 || nearFort(x, z, 4.5) || !clearOf(x, z, 2.5)) continue;
+        if (saObs.some(o => o.cx != null && Math.hypot(o.cx - x, o.cz - z) < 3.5)) continue;
+        if (pick >= (z < 20 ? 0.3 : 0.7)) continue;
+        const by = groundY(x, z);
+        saObs.push(pine
+          ? addSuburbanTree(wood, x, z, { shape: 'loblolly', detail: true, trunkR: 0.34 + 0.1 * hr, trunkH: 12 + 3 * hr, leafR: 2.8 + 0.8 * hr, baseY: by, leafColor: hr < 0.5 ? 0x34482a : 0x3c5232 })
+          : addSuburbanTree(wood, x, z, { detail: true, trunkR: 0.3 + 0.14 * hr, trunkH: 4.5 + 2.5 * hr, leafR: 2.6 + 1.0 * hr, baseY: by, leafColor: hr < 0.5 ? 0x3a5a2a : 0x4a6a35 }));
+      }
+      for (let i = 0; i < 30; i++) {
+        const x = r(SA.minX + 1, SA.maxX - 1), z = r(14, SA.maxZ - 1), w = r(1.3, 2.2), h = r(0.9, 1.3);
+        if (onSethLot(x, z, 0.5) || creekD(x, z) < 1.8 || nearFort(x, z, 4.5) || !clearOf(x, z, 2.5)) continue;
+        if (saObs.some(o => Math.hypot((o.minX + o.maxX) / 2 - x, (o.minZ + o.maxZ) / 2 - z) < 1.6 + w / 2)) continue;
+        saObs.push(addBush(wood, x, z, w, h, w * r(0.8, 1.1), gameRandom() < 0.5 ? 0x3e5a30 : 0x4a6a3a, groundY(x, z), { detail: true }));
+      }
+      // the hedge across the gaps between the north houses, at the area's north edge
+      for (const [a, b] of [[64.6, 68], [92.4, 101.2], [122.8, 135.4]]) {
+        const n = Math.max(1, Math.round((b - a) / 1.5));
+        for (let i = 0; i <= n; i++) { const x = a + (b - a) * i / n; saObs.push(addBush(wood, x, -12.7, 1.6, 1.25, 1.2, 0x2e4a26, groundY(x, -12.7), { detail: true })); }
+      }
+      // the trunks, crowns, shrubs and hedge baked into one mesh per material: the street looks west into the box's
+      // ~1,800 draw calls, and 160 more meshes here put the view from the east end at 2,350 (budget 2,060)
+      scene.add(bakeByMaterial(wood, 'sethAreaWood'));
+      // the lot-line fences down the east and west sides, black pickets (the street's, v1.339), outside the bounds
+      {
+        const parts = [], IRON = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.5, metalness: 0.55, side: THREE.DoubleSide });
+        for (const fx of [SA.minX - 0.3, SA.maxX + 0.3]) {
+          const z0 = 5.5, z1 = SA.maxZ + 4, n = Math.round((z1 - z0) / 0.16), posts = Math.round((z1 - z0) / 2.4);
+          for (let i = 0; i <= n; i++) { const z = z0 + (z1 - z0) * i / n; parts.push({ geo: new THREE.PlaneGeometry(0.03, 1.3), m: new THREE.Matrix4().makeTranslation(fx, groundY(fx, z) + 0.55, z).multiply(new THREE.Matrix4().makeRotationY(Math.PI / 2)) }); }
+          for (let i = 0; i < posts; i++) {
+            const za = z0 + (z1 - z0) * i / posts, zb = z0 + (z1 - z0) * (i + 1) / posts, ya = groundY(fx, za), yb = groundY(fx, zb), L = Math.hypot(zb - za, yb - ya);
+            parts.push({ geo: new THREE.BoxGeometry(0.08, 1.38, 0.08), m: new THREE.Matrix4().makeTranslation(fx, ya + 0.59, za) });
+            for (const ry of [0.14, 1.1]) parts.push({ geo: new THREE.BoxGeometry(0.04, 0.04, L), m: new THREE.Matrix4().makeTranslation(fx, (ya + yb) / 2 + ry, (za + zb) / 2).multiply(new THREE.Matrix4().makeRotationX(-Math.atan2(yb - ya, zb - za))) });
+          }
+        }
+        const m = new THREE.Mesh(_houseMergeParts(parts), IRON); m.castShadow = true; m.name = 'sethAreaFences'; scene.add(m);
+      }
+      // the street's lamps over Seth's end, lit at night (After Dark's "pools of light")
+      for (const [x, z] of [[73, 5.1], [97, -5.1], [124, 5.1]]) { const lamp = addStreetlamp(scene, x, z, groundY, _night); if (lamp.userData.obstacles) saObs.push(...lamp.userData.obstacles); }
+    });
+    Object.assign(placements, SAP);
+    Object.assign(playerSpawns, SAS);
+  }
+
+  // === v1.343 (D.51 step 4, second part; Michael 26 Oct: A): the bulb's play area (WM_BA) ===
+  // The tutorials and the bulb's six matches play at the street's west end on its real lots (WM_BULB_LOTS): the bulb
+  // with the plank fort and two cars in it, the street from the bulb to the mouth of today's box, the north front lawns
+  // and their driveways, and on the south side the front lawns, the side yards falling past the walk-outs and the
+  // terraces under the decks, to their stone walls. The box's start and anchor names are moved here, as Seth's area
+  // did, so a match keeps its kids, guns and roles. Its cover is its own, under its own seed: cars in the driveways and
+  // the bulb, bins out, boxes, a plywood stack, AC units in the side yards, grills and firewood on the terraces, the
+  // street cover the box had, and trunks, shrubs and a hedge baked into one mesh per material.
+  if (_area === 'bulb') {
+    const V = (x, z) => new THREE.Vector3(x, 0, z);
+    const BAP = {
+      cul_de_sac_car1:  { pos: V(-33.8, -6.5) },   // west of the north car in the bulb
+      cul_de_sac_car2:  { pos: V(-29.8, 7.2) },    // west of the south car
+      cul_de_sac_plank: { pos: V(-32.4, 0) },      // behind the fort
+      house1_backyard:  { pos: V(23, 9.5) },       // your side: the south lawn by the street's east end
+      house2_backyard:  { pos: V(19.5, -10) },     // your side: the north lawn, by the east house's shrubs
+      trey_backyard:    { pos: V(-18, -10.5) },    // the north lawn by the bulb, beside its driveway car
+      house7_backyard:  { pos: V(-36.5, 13) },     // the south lawn by the bulb, its west side
+      house6_backyard:  { pos: V(-10, 24.5) },     // the side yard between the south houses
+      house4_backyard:  { pos: V(-5.8, 18.5) },    // the same side yard, nearer the street
+      seth_backyard:    { pos: V(4, 37.2) },       // the terrace behind the middle south house, by its firewood
+      brooke_backyard:  { pos: V(-37.8, 26) },     // the bulb house's west side yard
+      road_east_north:  { pos: V(28, -3) }, road_east_south: { pos: V(28, 4.5) },
+      road_mid_north:   { pos: V(8, -1.5) }, road_mid_south:  { pos: V(8, 6.5) },
+      tut_dummy_1: { pos: V(16, -2) }, tut_dummy_2: { pos: V(13, 2) }, tut_dummy_3: { pos: V(10, -1) }, tut_coach: { pos: V(26, -4) },
+      treehouse_push_e: { pos: V(-6, 22) }, treehouse_push_w: { pos: V(-10, 30) },
+      cluster_road_east: { pos: V(31, 0) },
+      cluster_treehouse: { pos: V(-18, 37.2) },   // the bulb house's terrace
+      cluster_bulb:      { pos: V(-31, 0) },
+      cluster_west:      { pos: V(-36, -8) },
+      trey_overwatch:    { pos: V(-22, -12) },
+      ffa_1: { pos: V(22, -11) }, ffa_2: { pos: V(-38, -9) }, ffa_3: { pos: V(-26, 37.2) }, ffa_4: { pos: V(14, 37.2) },
+    };
+    const BAS = {
+      road_east:      { pos: V(32, 0), yaw: Math.PI / 2 },          // the box's mouth, facing west down the street
+      bulb_center:    { pos: V(-32.5, 0), yaw: -Math.PI / 2 },      // behind the fort, facing east up the street
+      seth_yard_west: { pos: V(-2, 37.2), yaw: Math.PI },
+      east_fort:      { pos: V(35.5, 0), yaw: Math.PI / 2 },
+    };
+    const keep = [...Object.entries(BAP).filter(([k]) => !/^ffa_/.test(k)).map(([, p]) => p), ...Object.values(BAS)].map(p => p.pos);
+    const clearOf = (x, z, d) => keep.every(p => Math.hypot(p.x - x, p.z - z) >= d);
+    withSeededRandom('winnmark-bulb-area', () => {
+      const BA = WM_BA.bounds, r = (a, b) => a + (b - a) * gameRandom();
+      const cover = (o, name) => { if (!o) return o; coverList.push(o); if (o._stacked) coverList.push(o._stacked); if (name) BAP[name].cover = o; return o; };
+      const box = (x, z, w, h, d, color, surface, extra) => {   // a plain prop, built at the ground and sunk onto it
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color, roughness: 0.9 }));
+        m.position.set(x, h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+        return sinkObs(Object.assign({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, h, mesh: m, surface }, extra || {}), x, z);
+      };
+      const car = (x, z, yaw, c) => sinkObs(addCar(scene, x, z, { orientation: yaw, color: carColors[c], groundNormalFn: groundNormal, detail: true }), x, z);
+      const ply = (x, z) => {   // a plywood stack on sleepers with a lawn chair on it (v1.115's)
+        const gy = groundY(x, z), st = buildPlyStack(x, gy, z, Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1); scene.add(st);
+        return { minX: x - 0.8, maxX: x + 0.8, minZ: z - 0.45, maxZ: z + 0.45, h: 0.55, baseY: gy, mesh: st, surface: 'hard' };
+      };
+      // the bulb: the plank fort in its middle, its solid back wall to the street, and a car parked at each side
+      const fortWalls = buildKidFort(scene, -29, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true });
+      seatFortOnSlope(fortWalls, -29, 0);
+      for (const w of fortWalls) coverList.push(w);
+      BAP.cul_de_sac_plank.cover = fortWalls[0];
+      cover(car(-31, -6.5, 0.15, 0), 'cul_de_sac_car1');
+      cover(car(-27, 7.2, -0.2, 1), 'cul_de_sac_car2');
+      // the driveways' cars, nose to the house
+      cover(car(5.7, -9.5, Math.PI / 2, 2));                          // the middle north house
+      cover(car(-14.2, -10.5, Math.PI / 2, 4), 'trey_backyard');      // the bulb's north house
+      cover(car(1.7, 10.5, -Math.PI / 2, 5));                         // the middle south house
+      cover(car(-16.2, 12, -Math.PI / 2, 6));                         // the bulb's south house
+      // the bins out at the kerbs, boxes, a plywood stack
+      for (const [x, z, v] of [[8.6, -4.3, 'garbage'], [9.9, -4.3, 'recycle'], [-11.4, -3.3, 'garbage'], [4.6, 8, 'recycle'], [-19.5, 7, 'garbage'], [24.4, -2.4, 'recycle'],
+        [8.8, -12.4, 'garbage'], [8.8, -11.2, 'recycle'], [-11.3, -12.4, 'garbage'], [-11.3, -11.2, 'recycle'],   // and by the garages
+        [-1.2, 12.4, 'garbage'], [-1.2, 11.2, 'recycle'], [-19.1, 15.4, 'garbage'], [-19.1, 14.2, 'recycle']])
+        cover(sinkObs(addCurbsideBin(scene, x, z, { variant: v, facing: z < 2 ? Math.PI : 0, detail: true }), x, z));
+      cover(sinkObs(addHomeDepotBox(scene, 21.5, 8.2, { w: 1.3, h: 1.1, d: 1.1, facing: 0.1, detail: true }), 21.5, 8.2), 'house1_backyard');
+      cover(sinkObs(addHomeDepotBox(scene, -36.5, -7, { w: 1.2, h: 1.0, d: 1.0, facing: 0.3, detail: true }), -36.5, -7));
+      cover(sinkObs(addHomeDepotBox(scene, -4, 9.5, { w: 1.3, h: 1.15, d: 1.1, facing: 0, detail: true }), -4, 9.5));
+      cover(ply(-24, -11.5), 'trey_overwatch');   // a plywood stack on the bulb's north lawn
+      // the side yards' AC units, the terraces' grills and firewood
+      cover(box(-11.8, 23.5, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'house6_backyard');
+      cover(box(-3.3, 19, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'house4_backyard');
+      cover(box(23.3, 20, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'));
+      cover(box(-36.2, 25, 1.0, 0.95, 1.0, 0x9a9a96, 'metal'), 'brooke_backyard');
+      cover(box(4, 38.4, 2.2, 0.9, 0.8, 0x6a4e3a, 'wood'), 'seth_backyard');
+      cover(box(15, 37.5, 0.8, 1.1, 0.6, 0x1e1e20, 'metal'));
+      cover(box(-18, 38.4, 2.2, 0.9, 0.8, 0x6a4e3a, 'wood'));
+      cover(box(-30, 37.5, 0.8, 1.1, 0.6, 0x1e1e20, 'metal'));
+      // the street cover the box had, staggered down the street (the box's own draws were its, these are the area's)
+      {
+        let acc = 6, side = 1, prev = roadCenterline[0];
+        for (let i = 1; i < roadCenterline.length; i++) {
+          const p = roadCenterline[i], dx = p.x - prev.x, dz = p.z - prev.z; acc += Math.hypot(dx, dz); prev = p;
+          if (acc < 6 || p.x < -18 || p.x > 19) continue;   // not between your start and the tutorial's marker (a box at x 26 stood in its path)
+          acc = 0;
+          const tl = Math.hypot(dx, dz) || 1, x = p.x - dz / tl * 2.2 * side, z = p.z + dx / tl * 2.2 * side;
+          side *= -1;
+          const kind = gameRandom(), yaw = r(-Math.PI, Math.PI);
+          if (!clearOf(x, z, 2.5)) continue;
+          if (kind < 0.3) cover(car(x, z, Math.atan2(dz, dx) + r(-0.3, 0.3), Math.floor(gameRandom() * carColors.length)));
+          else if (kind < 0.62) cover(sinkObs(addHomeDepotBox(scene, x, z, { w: r(1.0, 1.4), h: r(0.95, 1.2), d: r(0.95, 1.2), facing: yaw, detail: true }), x, z));
+          else if (kind < 0.85) cover(sinkObs(addCurbsideBin(scene, x, z, { variant: gameRandom() < 0.5 ? 'garbage' : 'recycle', facing: yaw, detail: true }), x, z));
+          else cover(ply(x, z));
+        }
+      }
+      // trunks on the lawns and in the side yards, shrubs along the house fronts, kept off the anchors
+      const wood = new THREE.Group(), straw = [];
+      const tree = (x, z, pine, hr) => (pine && straw.push({ x, z, r: 2.4 + 0.6 * hr }), saObs.push(pine
+        ? addSuburbanTree(wood, x, z, { shape: 'loblolly', detail: true, trunkR: 0.34 + 0.1 * hr, trunkH: 12 + 3 * hr, leafR: 2.8 + 0.8 * hr, baseY: groundY(x, z), leafColor: hr < 0.5 ? 0x34482a : 0x3c5232 })
+        : addSuburbanTree(wood, x, z, { detail: true, trunkR: 0.3 + 0.14 * hr, trunkH: 4.5 + 2.5 * hr, leafR: 2.6 + 1.0 * hr, baseY: groundY(x, z), leafColor: hr < 0.5 ? 0x3a5a2a : 0x4a6a35 })));
+      for (const [x, z, pine] of [[-40, -10, 1], [-27, -8.5, 0], [-3, -9, 1], [12, -11.5, 0], [31, -9, 1], [-41, 4, 0], [-40.5, 18, 0],
+        [-8, 12, 1], [12, 10.5, 0], [28.5, 12, 1], [-9.5, 31.5, 0], [24.5, 26.5, 0], [-40.5, 34, 1], [-6.5, 36, 0]]) {
+        if (!clearOf(x, z, 2.5)) continue;
+        tree(x + r(-0.6, 0.6), z + r(-0.6, 0.6), pine, gameRandom());
+      }
+      addPineStraw(scene, straw, groundY, 0x8a6a4a);   // the pine straw under the pines (v1.313)
+      for (const L of WM_BULB_LOTS) {   // the foundation shrubs along each house's front, in the lot's own beds
+        if (L.x > 40) continue;
+        const f = (L.front || WM_LOT.front) * L.sgn, hw = L.w / 2, gx = L.x + (Math.round(L.x / 32) % 2 ? 1 : -1) * (hw - 3.2);
+        for (let x = L.x - hw + 1.2; x < L.x + hw - 1; x += 2.6) {
+          if (Math.abs(x - gx) < 3.4 || !clearOf(x, f - L.sgn * 1.2, 2)) continue;
+          const z = f - L.sgn * 1.1, w = r(1.1, 1.6);
+          saObs.push(addBush(wood, x, z, w, r(0.8, 1.15), w * 0.8, gameRandom() < 0.5 ? 0x3e5a30 : 0x4a6a3a, groundY(x, z), { detail: true }));
+        }
+      }
+      cover(addBush(scene, 18, -11.8, 1.8, 1.1, 1.4, 0x3e5a30, groundY(18, -11.8), { detail: true }), 'house2_backyard');
+      // the hedge: across the gaps between the north houses at the area's north edge, and down its west edge past the bulb
+      const hedge = (ax, az, bx, bz) => {
+        const n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / 1.5));
+        for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n; saObs.push(addBush(wood, x, z, 1.6, 1.25, 1.2, 0x2e4a26, groundY(x, z), { detail: true })); }
+      };
+      hedge(-44.6, -14.7, -33.6, -14.7); hedge(-10.6, -14.7, 2, -14.7); hedge(26, -14.7, 35.6, -14.7);
+      hedge(-44.6, -13.2, -44.6, BA.maxZ);
+      scene.add(bakeByMaterial(wood, 'bulbAreaWood'));
+      // the street's lamps, lit at night
+      for (const [x, s] of [[-14, -1], [3, 1], [20, -1], [-40, 1]]) {
+        const z = x < -25 ? 9.5 : roadZAt(x) + s * 5.05;
+        const lamp = addStreetlamp(scene, x, z, groundY, _night); if (lamp.userData.obstacles) saObs.push(...lamp.userData.obstacles);
+      }
+    });
+    Object.assign(placements, BAP);
+    Object.assign(playerSpawns, BAS);
+  }
+
   // === Map bounds (legacy return shape) ===
   let enemies = [];
   let spawn = playerSpawns.road_east.pos.clone();
@@ -14982,7 +15690,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   if (variant === 'seth_house') {
     // Player spawns at the eastern end of the road (just inside the entry),
     // looking west — Seth's backyard is to the northwest behind house index 0.
-    spawn = new THREE.Vector3(32, 0, 0);
+    spawn = playerSpawns.road_east.pos.clone();   // v1.341: Seth's area's east end
     spawnYaw = Math.PI / 2; // facing west
     name = "Seth's House";
     scenarioName = 'Just You and Seth';
@@ -14998,7 +15706,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   } else if (variant === 'cul_de_sac' || variant === 'treehouse') {
     // Player spawns at the eastern entry looking west — has to push through
     // the whole street with 3 hostiles waiting.
-    spawn = new THREE.Vector3(32, 0, 0);
+    spawn = playerSpawns.road_east.pos.clone();   // v1.341: Seth's area's east end
     spawnYaw = Math.PI / 2;
     name = 'Winnmark Court';
     scenarioName = '3-on-1 at the Cul-de-Sac';
@@ -15033,7 +15741,7 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
   // the house X's). `side` says which shoulder; the arm overhangs toward the road.
   // v1.51: poles are now collision obstacles (collected into lampObs below).
   const lampObs = [];
-  {
+  if (!_realBulb) {   // v1.342: the box's lamps; the real bulb's end has none yet
     const ROAD_HALF_LAMP = 3.5;
     const LAMP_GRASS = 1.6;   // pole sits this far onto the grass beyond the pavement
     const lampSpotsXSide = [
@@ -15058,13 +15766,135 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     }
   }
 
+  // === v1.338 (D.51 step 1): past the tree walls, at real scale ===
+  // The near-closed canopy of the real place (docs/refs/winnmark.md, "Trees and planting": loblolly pines bare to
+  // 12-15 m and hardwoods, 20-25 m tall) over the street's lots to Winnmark Dr, thick in the shared wood behind the
+  // south lots, thinned to trunks along the north lots' backs where the course shows through, in clumps on the course;
+  // Winnmark Dr round the wood with its houses, and the houses across the course and past the Dr; the creeks' water.
+  // The house sites of step 2 are kept clear. Its own seeded numbers, so no match's cover moves; one mesh by day, two
+  // at night (lit windows); nothing solid, nothing within 6 m of the bounds.
+  {
+    const rs = _mulberry32(_hashStringToSeed('winnmark-real|' + (_night ? 'n' : 'd'))), rr = (a, b) => a + (b - a) * rs();
+    const B0 = boxBounds, R = WM_REAL, items = [], houses = [];   // v1.341: the box's, in either area
+    const LEAF = [0x3e6a2e, 0x4a7834, 0x365e2a, 0x567c38, 0x2e5226, 0x46703a], PINE = [0x2a4a2a, 0x2e5030, 0x264426];
+    const WALL = [0xa88e80, 0x8a4a40, 0xb8a888, 0x9a7a68, 0xc8b89a], ROOF = [0x6e6a62, 0x625e58, 0x5a5650, 0x726c62];
+    const outB = (x, z) => Math.max(B0.minX - x, x - B0.maxX, B0.minZ - z, z - B0.maxZ);
+    const house = (x, z, yaw) => houses.push({ k: 'house', x, z, yaw, w: rr(18, 24), d: rr(13, 16), h: 6.4,
+      wall: WALL[Math.floor(rs() * WALL.length)], roof: ROOF[Math.floor(rs() * ROOF.length)] });
+    // Winnmark Dr's houses: along its inner side (their backs to the shared wood) and its outer side, 24 m off its middle
+    const drPts = R.dr;
+    for (let i = 1; i + 1 < drPts.length; i++) {
+      const a = drPts[i], b = drPts[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / L, uz = (b[1] - a[1]) / L;
+      for (let s = 20; s < L - 10; s += 42) {
+        const px = a[0] + ux * s, pz = a[1] + uz * s;
+        for (const side of [1, -1]) {   // side 1: to the right going along it (west, then into the wood); -1: the other side
+          const nx = -uz * side, nz = ux * side, hx = px + nx * 24, hz = pz + nz * 24;
+          if ((hz < 14 && hx < R.drX) || R.sites.some(([sx, sz]) => Math.hypot(hx - sx, hz - sz) < 34)) continue;   // the court's own lots are step 2's
+          house(hx, hz, Math.atan2(-nx, -nz));
+        }
+      }
+    }
+    // north along the Dr past the court's mouth, its east side; and across the course, facing it
+    for (let z = -170; z < -20; z += 40) house(R.drX + 24, z + rr(-4, 4), -Math.PI / 2);
+    for (let x = -150; x < 220; x += 44) house(x + rr(-6, 6), -158 + rr(-3, 3), 0);
+    // v1.344 (D.51 step 5; docs/refs/winnmark.md "Past the edge", W: the course, trees, houses, trees): past the
+    // course's west edge a row of houses faces it across its tree line, the woods behind them. Their own seeded numbers,
+    // so nothing drawn before or after them moves
+    {
+      const rw = _mulberry32(_hashStringToSeed('winnmark-west|' + (_night ? 'n' : 'd'))), wr = (a, b) => a + (b - a) * rw();
+      for (let z = -170; z < 156; z += 44) houses.push({ k: 'house', x: R.westX - 22 + wr(-2, 2), z: z + wr(-5, 5), yaw: Math.PI / 2,
+        w: wr(18, 24), d: wr(13, 16), h: 6.4, wall: WALL[Math.floor(rw() * WALL.length)], roof: ROOF[Math.floor(rw() * ROOF.length)] });
+    }
+    for (const hs of houses) hs.y = groundY(hs.x, hs.z);
+    const onHouse = (x, z) => houses.some(hs => Math.abs(x - hs.x) < 15 && Math.abs(z - hs.z) < 13) ||
+      R.sites.some(([sx, sz, hw, hd]) => Math.abs(x - sx) < hw && Math.abs(z - sz) < hd) ||
+      WM_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44) ||   // v1.339: the houses, decks and terraces
+      (_realBulb && WM_BULB_LOTS.some(L => Math.abs(x - L.x) < 18 && z * L.sgn > 6 && z * L.sgn < 44)) ||   // v1.342: the bulb's
+      (Math.abs(x - WM_SETH.x) < WM_SETH.half + 2 && z > 3 && z < WM_SETH.patio + 1.5);       // v1.340: Seth's lot to the patio's edge
+    // trees on a jittered 7 m grid, by what lies there
+    const P = R.pond;
+    // v1.344: what each draw plants, a function so the west strip past the old ground's edge plants by the same rules
+    const plant = (x, z, pick, pine, hr, cr) => {
+      if (!_realBulb && outB(x, z) < (pine ? 3 + cr : 4.5 + 1.8 * cr) + 6.5) return;   // the box's own trees, and 6 m clear of it
+      const dr = _wmPolyNear(R.dr, x, z).d;
+      if (dr < 11 || (Math.abs(z) < 12 && x > 38 && x < R.drX)) return;             // the roads and their verges
+      // v1.342: the real bulb's end: the street through the box and the bulb's verges (the draws above are made either way)
+      if (_realBulb && ((x > WM_BULB.x && x <= 38 && Math.abs(z - roadZAt(x)) < 12) || Math.hypot(x - WM_BULB.x, z - WM_BULB.z) < WM_BULB.r + 7)) return;
+      if (Math.hypot((x - P.x) / P.rx, (z - P.z) / P.rz) < 1.18) return;            // the pond and its edge
+      if (Math.min(_wmPolyNear(R.creek, x, z).d, _wmPolyNear(R.course, x, z).d) < 2.5) return;
+      if (onHouse(x, z)) return;
+      {   // v1.341: Seth's area has its own solid wood; these crowns keep 3 m clear of it (v1.343: and of the bulb's)
+        const SB = _area === 'seth' ? WM_SA.bounds : WM_BA.bounds, m = (pine ? 3 + cr : 4.5 + 1.8 * cr) + (_area === 'seth' ? 3 : 6);   // v1.343: 6 m off the bulb's (the box's rule)
+        if (x > SB.minX - m && x < SB.maxX + m && z > SB.minZ - m && z < SB.maxZ + m) return;
+      }
+      const dC = 42 + 13 * _wmSS((x - 50) / 20);
+      let p;
+      if (x < R.westX) p = x > R.westX - 12 ? 0.7 : x > R.westX - 36 ? 0.3 : 0.85;    // v1.344: past the course, west
+      else if (x < -48 && z < 150) p = 0.05;                                          // the course west of the bulb
+      else if (z < -dC - 6 && z > -128) p = 0.03;                                     // the fairway north of the lots
+      else if (z <= -dC - 1 && z >= -dC - 6) p = 0.75;                                // the lots' back line, trunks over the course
+      else if (z < 0 && x < R.drX) p = 0.22;                                          // the north lots
+      else if (z > 0 && z < 34 && x < R.drX) p = 0.25;                                // the south lots' front and walk-out
+      else if (dr < 36) p = 0.3;                                                      // Winnmark Dr's lots
+      else p = 0.85;                                                                  // the woods
+      if (pick >= p) return;
+      const y = groundY(x, z);
+      if (pine) items.push({ k: 'pine', x, z, y, h: 18 + 6 * hr, r: 3 + cr, col: PINE[Math.floor(cr * PINE.length) % PINE.length] });
+      else items.push({ k: 'tree', x, z, y, h: 16 + 7 * hr, r: 4.5 + 1.8 * cr, col: LEAF[Math.floor(cr * LEAF.length) % LEAF.length] });
+    };
+    for (let gx = -206; gx <= 306; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
+      const x = gx + rr(-2.6, 2.6), z = gz + rr(-2.6, 2.6), pick = rs(), pine = rs() < 0.42, hr = rs(), cr = rs();
+      plant(x, z, pick, pine, hr, cr);
+    }
+    {   // v1.344: the woods behind the west houses, on the ground's new 48 m, under their own numbers
+      const rw = _mulberry32(_hashStringToSeed('winnmark-west-trees|' + (_night ? 'n' : 'd'))), wr = (a, b) => a + (b - a) * rw();
+      for (let gx = -255; gx < -206; gx += 7) for (let gz = -196; gz <= 226; gz += 7) {
+        const x = gx + wr(-2.6, 2.6), z = gz + wr(-2.6, 2.6), pick = rw(), pine = rw() < 0.42, hr = rw(), cr = rw();
+        plant(x, z, pick, pine, hr, cr);
+      }
+    }
+    // Winnmark Dr itself, and the creeks' water, laid on the ground point by point
+    const strip = (pts, w, col, lift, yOf) => {
+      const out = [];
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const a = pts[i], b = pts[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 4));
+        for (let k = (i ? 1 : 0); k <= n; k++) {
+          const t = k / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
+          out.push([x, (yOf ? yOf(a, b, t) : groundY(x, z)) + lift, z]);
+        }
+      }
+      items.push({ k: 'strip', pts: out, w, col });
+    };
+    strip(R.dr, 7.2, 0x4a4a48, 0.05);
+    const water = (a, b, t) => (a[2] + (b[2] - a[2]) * t) + 0.25;
+    strip(R.creek, 1.4, 0x4a5a48, 0, water);
+    strip(R.course, 1.8, 0x4a5a48, 0, water);
+    const real = buildMergedScenery([...items, ...houses], _night, 'winnmark-real');
+    scene.add(real);
+  }
+
   // === Collect obstacles ===
   // Player collision: houses, fences, tree trunks, bushes, cover items. The
   // lake is *not* an obstacle visually but we want to prevent walking onto it.
   const lakeBlocker = { minX: -52, maxX: -37, minZ: -40, maxZ: 40, h: 0.5, surface: 'hard' };
-  const obstacles = [
+  // v1.342: with the bulb at real size the box is gone: its scene objects west of Seth's area (x < 60) are taken out, and
+  // none of its obstacles or cover is kept (Defend the Treehouse's fort, built among them, stands at x 126 and stays)
+  if (_realBulb) {
+    scene.updateMatrixWorld(true);
+    const bb = new THREE.Box3(), c = new THREE.Vector3();
+    for (const o of scene.children.slice(_boxFrom, _boxTo)) {
+      if (o.userData.wmRoad || o.userData.wmLot || o.name === 'winnmarkLots') continue;
+      bb.setFromObject(o); if (bb.isEmpty()) continue;
+      if (bb.getCenter(c).x < 60) scene.remove(o);
+    }
+    const cx = o => o.minX != null ? (o.minX + o.maxX) / 2 : o.cx != null ? o.cx : o.center ? o.center.x : 0;
+    for (let i = _coverFrom - 1; i >= 0; i--) if (cx(coverList[i]) < 60) coverList.splice(i, 1);
+  }
+  const obstacles = _realBulb ? [...coverList, ...wmLots.obstacles, ...saObs] : [
     ...houseObs, ...fences, ...treeObs, ...bushObs, ...coverList,
     ...curbsideBins, ...driveCars, lakeBlocker, ...lampObs,
+    ...wmLots.obstacles,   // v1.339: last, so every other obstacle keeps its place in the list
+    ...saObs,              // v1.341: Seth's area's trunks, shrubs, hedge and lamps (none in the box's matches)
   ];
 
   return {
@@ -15079,7 +15909,48 @@ function buildWinnmarkCourtScene(variant, timeOfDay) {
     placements,
     playerSpawns,
     groundY,   // v1.28l: terrain height fn for the generic physics/spawn systems
+    viewFar: 380,   // v1.338 (D.51 step 1): the camera sees down the street to Winnmark Dr (the other maps keep 200)
+    wmSeth: wmLots.seth,   // v1.340 (D.51 step 3): Seth's house, hot tub and pool (WM_SETH has the levels)
   };
+}
+
+// v1.341 (D.51 step 4): in a match in Seth's area the box down the street (its eight houses, cover, cars, trees and fort,
+// ~2,000 meshes) is only a view, 25-170 m off: every mesh of it baked into one mesh per look (colour, finish, sides,
+// texture), as bakeByMaterial does for one material. The obstacles keep their numbers, and nothing in the box is in reach.
+function bakeMeshesByLook(meshes, name) {
+  const key = m => { const M = m.material; return [M.type, M.color && M.color.getHex(), M.emissive && M.emissive.getHex(), M.emissiveIntensity,
+    M.roughness, M.metalness, M.side, M.transparent, M.opacity, M.polygonOffset && M.polygonOffsetFactor, M.flatShading, M.map && M.map.uuid,
+    M.vertexColors, M.alphaTest, M.depthWrite].join('|'); };
+  const buckets = new Map(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3();
+  for (const m of meshes) {
+    const k = key(m); let b = buckets.get(k);
+    if (!b) buckets.set(k, b = { mat: m.material, p: [], n: [], uv: m.material.map ? [] : null, c: m.material.vertexColors ? [] : null, cast: false, recv: false });
+    b.cast = b.cast || m.castShadow; b.recv = b.recv || m.receiveShadow;
+    const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+    if (!g.attributes.normal) g.computeVertexNormals();
+    const pa = g.attributes.position, na = g.attributes.normal, ua = g.attributes.uv, ca = g.attributes.color;
+    nm.getNormalMatrix(m.matrixWorld);
+    for (let i = 0; i < pa.count; i++) {
+      v.fromBufferAttribute(pa, i).applyMatrix4(m.matrixWorld); b.p.push(v.x, v.y, v.z);
+      nv.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); b.n.push(nv.x, nv.y, nv.z);
+      if (b.uv) b.uv.push(ua ? ua.getX(i) : 0, ua ? ua.getY(i) : 0);
+      if (b.c) b.c.push(ca ? ca.getX(i) : 1, ca ? ca.getY(i) : 1, ca ? ca.getZ(i) : 1);
+    }
+    g.dispose();
+    if (m.parent) m.parent.remove(m);
+  }
+  const out = new THREE.Group(); out.name = name;
+  for (const b of buckets.values()) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(b.p, 3));
+    geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.n, 3));
+    if (b.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
+    if (b.c) geo.setAttribute('color', new THREE.Float32BufferAttribute(b.c, 3));
+    geo.computeBoundingSphere();
+    const mesh = new THREE.Mesh(geo, b.mat); mesh.castShadow = b.cast; mesh.receiveShadow = b.recv; mesh.matrixAutoUpdate = false;
+    out.add(mesh);
+  }
+  return out;
 }
 
 // Thin wrappers so the SCENARIOS table can name a builder per-variant.
@@ -25719,12 +26590,8 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
 // `from` is where the scenery starts (metres past the bounds edge, past what the map already has there), `bands` what
 // stands from there outward, `street` a road running on out of the map at that lateral offset.
 const EDGE_BACKDROPS = {
-  buildWinnmarkCourtScene: {
-    N: { from: 33, bands: [['trees', 12], ['houses', 22], ['trees', 30]] },          // past the golf course
-    W: { from: 30, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the lake and its trees
-    S: { from: 13, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    E: { from: 8, street: { at: 1 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-  },
+  // v1.338 (D.51 step 1): Winnmark's course, pond, shared wood, the street to Winnmark Dr and the houses round them are
+  // the map's own now (winnmarkRealScale and its scenery), on every side, so it takes no backdrop
   buildBunrattyCourtScene: {   // v1.303 (D.51 step 1): the woods, the street to the fork and the river are the map's own now
     N: { from: 9, bands: [['trees', 20], ['houses', 22], ['trees', 30]] },          // the backs of the Sentinae Chase houses
   },
@@ -32579,10 +33446,19 @@ function outKidWalkOff(e, dt) {
   kidTurnToward(e, Math.atan2(dx, dz), dt);
   e.mesh.group.rotation.y = e.yaw;
   const step = Math.min(d, OUT_WALK_SPEED * dt), nX = e.pos.x + dx / d * step, nZ = e.pos.z + dz / d * step;
-  if (!collidesObstacles(nX, nZ, 0.35)) { e.pos.x = nX; e.pos.z = nZ; }
+  if (!collidesObstacles(nX, nZ, 0.35)) { e.pos.x = nX; e.pos.z = nZ; e._offSide = 0; }
   else {
-    if (!collidesObstacles(nX, e.pos.z, 0.35)) e.pos.x = nX;
-    if (!collidesObstacles(e.pos.x, nZ, 0.35)) e.pos.z = nZ;
+    // v1.344: square on to something (the bulb's car sits right on the line from a tag in front of it to Seth's start
+    // behind it) the slide gains nothing: he steps sideways round it, and keeps stepping to that side until the way
+    // on is clear (sliding back to the line in between would undo each step)
+    const x0 = e.pos.x, z0 = e.pos.z, side = sd => { const sX = x0 - dz / d * step * sd, sZ = z0 + dx / d * step * sd;
+      if (collidesObstacles(sX, sZ, 0.35)) return false; e.pos.x = sX; e.pos.z = sZ; e._offSide = sd; return true; };
+    if (!(e._offSide && side(e._offSide))) {
+      e._offSide = 0;
+      if (!collidesObstacles(nX, e.pos.z, 0.35)) e.pos.x = nX;
+      if (!collidesObstacles(e.pos.x, nZ, 0.35)) e.pos.z = nZ;
+      if (Math.hypot(e.pos.x - x0, e.pos.z - z0) < step * 0.25) { e.pos.x = x0; e.pos.z = z0; side(1) || side(-1); }
+    }
   }
   const dNow = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
   if (e._offBest == null || dNow < e._offBest - 0.3) { e._offBest = dNow; e._offStuck = 0; }
@@ -34060,7 +34936,7 @@ function eliminateEnemy(e) {
   } else {
     // Permanent kill.
     e.health = 0;
-    e._outT = 0; e._walkingOff = false; e._offField = false; e._offBest = null; e._offStuck = 0;   // v1.264: his walk off starts now
+    e._outT = 0; e._walkingOff = false; e._offField = false; e._offBest = null; e._offStuck = 0; e._offSide = 0;   // v1.264: his walk off starts now
     if (typeof e.lives === 'number') e.lives = 0;   // v1.34: last life spent
     e.hitFlash = 0.6;
     updateRosterHud();

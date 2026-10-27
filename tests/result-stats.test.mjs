@@ -9,8 +9,9 @@ await g.bedroom();
 const setup = await page.evaluate(() => {
   Game.persist.completed = { winnmark_tutorial: true };
   Game.persist.cash = GUN_MAGS.shotgun.price - 1;
-  return { cash: Game.persist.cash, nextOpen: scenarioUnlockedForResult('winnmark_seth_shotgun_duel'),
-    nextName: SCENARIOS.winnmark_seth_shotgun_duel.scenarioName };
+  // v1.324 (D.61) put Squad Basics after Seth's House, ahead of the shotgun duel: it is the match this one opens
+  return { cash: Game.persist.cash, nextOpen: scenarioUnlockedForResult('winnmark_squad_basics'),
+    nextName: SCENARIOS.winnmark_squad_basics.scenarioName };
 });
 check('the next match starts locked', setup.nextOpen === false, setup);
 await g.scenario('winnmark_seth_house');

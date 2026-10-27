@@ -8,7 +8,7 @@ await g.bedroom();
 
 const res = await page.evaluate(() => {
   const out = {};
-  const built = buildWinnmarkCourtScene('seth_house', 'day');
+  const built = buildWinnmarkCourtScene('cul_de_sac', 'day')   /* v1.341: the box's own build */;
   const road = {}; let discs = 0;
   built.scene.traverse(m => {
     if (!m.isMesh) return;
@@ -21,7 +21,7 @@ const res = await page.evaluate(() => {
   // the same bezier as _wmRoadPoint, and the ground (any obstacle's groundY is not exposed; sample the asphalt's own builder)
   const P = t => ({ x: (1 - t) * (1 - t) * 34 + 2 * (1 - t) * t * 4 + t * t * -30, z: 2 * (1 - t) * t * 7 });
   const D = t => { const x = 2 * (1 - t) * (4 - 34) + 2 * t * (-30 - 4), z = 2 * (1 - t) * 7 - 2 * t * 7, l = Math.hypot(x, z); return { nx: -z / l, nz: x / l }; };
-  const gY = (x, z) => { const u = Math.max(0, Math.min(1, (x - 38) / (-32 - 38))), s = u * u * (3 - 2 * u); return 3.0 * (1 - s) + 0.25 * Math.sin(z * 0.12 + 0.5) * Math.cos(x * 0.1); };
+  const gY = built.groundY;   // v1.343: the real street's ground (the box is retired), as the match's
   const ray = new THREE.Raycaster(); const down = new THREE.Vector3(0, -1, 0);
   const hitY = (list, x, z) => { ray.set(new THREE.Vector3(x, 30, z), down); const h = ray.intersectObjects(list, false); return h.length ? h[0].point.y : null; };
   const asph = [...(road.asphalt || []), ...(road.bulb || [])];
@@ -35,21 +35,21 @@ const res = await page.evaluate(() => {
       const dy = y - gY(x, z); lo = Math.min(lo, dy); hi = Math.max(hi, dy);
     }
   }
-  for (let r = 0; r <= 6.01; r += 1) for (let a = 0; a < Math.PI * 2; a += 0.3) {
+  for (let r = 0; r <= 10.01; r += 1) for (let a = 0; a < Math.PI * 2; a += 0.3) {
     const x = -30 + Math.cos(a) * r, z = Math.sin(a) * r, y = hitY(asph, x, z); n++;
     if (y === null) { miss++; continue; }
     const dy = y - gY(x, z); lo = Math.min(lo, dy); hi = Math.max(hi, dy);
   }
   out.cover = { n, miss, lo: +lo.toFixed(3), hi: +hi.toFixed(3) };
   // the kerb top (3.45 + 0.61 m out) along both sides: full height away from driveways, dropped across them
-  const drives = [[24, -1], [8, -1], [-8, -1], [-18, -1], [22, 1], [7, 1], [-9, 1], [-17, 1]];   // houseCenters' x, and the side (−1 north)
+  const drives = [[-14.2, -1], [5.7, -1], [39.2, -1], [-16.2, 1], [1.7, 1], [51.3, 1]];   // v1.343: the bulb's real lots' driveways, and the side (−1 north)
   const kerb = road.kerb || [];
   const full = [], dropped = [];
   for (let t = 0.02; t <= 0.8; t += 0.005) {
     const p = P(t), d = D(t);
     for (const side of [-1, 1]) {
       const x = p.x + d.nx * side * 4.06, z = p.z + d.nz * side * 4.06;
-      if (Math.hypot(x + 30, z) < 7.2) continue;
+      if (Math.hypot(x + 30, z) < 11.9) continue;   // v1.343: the real bulb's 11 m
       const north = z < p.z ? -1 : 1;
       const dist = Math.min(...drives.filter(([, s]) => s === north).map(([dx]) => Math.abs(x - dx)));
       const y = hitY(kerb, x, z); if (y === null) continue;
@@ -77,7 +77,7 @@ check('the kerb drops flat (under 2 cm) across each driveway', res.kerbDropped.n
 check('Bunratty has the same road since v1.127 (no discs; tests/bunratty-road.test.mjs checks it)', res.bunratty.discs === 0 && res.bunratty.wmRoad >= 4, res.bunratty);
 
 // a look down the street
-await g.scenario('winnmark_seth_house');
+await g.scenario('winnmark_cul_de_sac');   // v1.341: a match in the box (Seth's 1v1 plays in his area now, the box baked to a view)
 await page.evaluate(() => { const hit = applyBBHit; applyBBHit = (bb, who) => who === Game.player ? undefined : hit(bb, who); });
 await g.spin(10);
 await page.evaluate(() => { const p = Game.player; const put = () => { p.pos.x = 12; p.pos.z = 1; p.yaw = Math.PI / 2 - 0.25; p.pitch = -0.12; }; put(); stepGame(1 / 60); put(); });

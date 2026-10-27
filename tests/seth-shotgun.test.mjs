@@ -23,8 +23,10 @@ for (const d of [12, 12, 16, 16, 16, 20, 20, 20, 24, 24, 28, 28]) {
     window.applyBBHit = (bb, c) => { if (c === Game.player) hits++; else return real(bb, c); };
     window.spawnEnemyBB = (e, ...a) => { shots++; return bb0(e, ...a); };
     const s = Game.scenario.enemies[0], P = Game.player;
+    // v1.341 (D.51 step 4): the duel is in Seth's area, so on its open street (x 124 west to 96), not the box's
+    const X = 124;
     for (let f = 0; f < 60 * 23 && Game.mode === 'scenario'; f++) {   // 3 s of opening hold, then 20 s
-      P.pos.x = 10; P.pos.z = 0; s.pos.x = 10 - d; s.pos.z = 0; stepGame(1 / 60);
+      P.pos.x = X; P.pos.z = 0; s.pos.x = X - d; s.pos.z = 0; stepGame(1 / 60);
     }
     window.applyBBHit = real; window.spawnEnemyBB = bb0;
     return { d, shots, hits };
