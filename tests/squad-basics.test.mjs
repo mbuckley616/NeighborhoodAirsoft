@@ -59,5 +59,17 @@ await enter();
 const again = await page.evaluate(() => ({ loaders: Game.persist.speedLoaders.length, slot: Tutorial.loaderSlot, bbs: describeSlot(Tutorial.loaderSlot).ref.currentBBs }));
 check('a replay gives no second loader; yours fills again', again.loaders === 1 && again.slot === 1 && again.bbs === 25, again);
 await page.evaluate(() => endScenario('forfeit'));
+// v1.359 (Found in play, critic v1.337): a retry with the bag spent: the loader starts empty, so step 2 could never end
+// and nobody fired. Now an empty loader skips the step, and step 3 lets everyone fire.
+await page.evaluate(() => { enterBedroom(); const P = Game.persist; P.bag = 0; for (const sl of P.speedLoaders) sl.currentBBs = 0; });
+await enter();
+await page.evaluate(() => giveSquadOrder('follow'));
+await page.waitForFunction(() => /STEP 2 OF 3/.test(document.getElementById('tutStep').textContent), null, { timeout: 5000 }).catch(() => {});
+await g.spin(30);
+await page.waitForFunction(() => /STEP 3 OF 3/.test(document.getElementById('tutStep').textContent), null, { timeout: 5000 }).catch(() => {});
+const dry = await page.evaluate(() => ({ bbs: describeSlot(Tutorial.loaderSlot).ref.currentBBs, step: document.getElementById('tutStep').textContent,
+  free: Game.scenario.enemies.filter(e => e.team !== 'player').every(e => !e.noFire) }));
+check('with the bag and the loader empty, the order goes straight to step 3 and they can shoot', dry.bbs === 0 && /STEP 3 OF 3/.test(dry.step) && dry.free, dry);
+await page.evaluate(() => endScenario('forfeit'));
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
