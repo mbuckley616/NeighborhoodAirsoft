@@ -355,7 +355,7 @@ each builder works its own lane's items top-down and skips the other's. A new it
    - Push the wall where the TV stand is flush with the west wall: no bump-out (the recess's 0.5 m west jut goes; the recess runs to the landing's west wall, x -2.4), and the desk extends all the way to that wall, the 45° TV corner unit at its west end.
    - A GameCube (or a console like it) plugged into the TV, in the cabinet(s) under the TV.
    - Video game cases and DVD cases in the storage under the TV, and loose DVDs / game discs around the TV.
-   - A Guitar Hero guitar leaned against the wall near the TV. (Guitar Hero came out in Nov 2005, after the game's summer of 2003: asked Michael in chat, 28 Oct; the rest needn't wait.)
+   - ~~A Guitar Hero guitar leaned against the wall near the TV.~~ Michael (28 Oct, in chat): swap it for something from 2003, "like a DDR dance pad or a second controller" (Guitar Hero came out in Nov 2005, after the game's summer). A DDR dance pad on the floor by the TV, a second GameCube controller on its cord beside it.
    - 2-3 Game Boy Advances and a few Game Boy cartridges scattered around the room.
    - A few sport balls (a football, a soccer ball, a tennis ball).
    - A few airsoft accessories on the coffee table and on the desks (this replaces his earlier "desk tops empty" for these; still no computers).
