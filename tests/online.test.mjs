@@ -247,7 +247,7 @@ check('after it, a pickup game on the board is the plain one (a kid, not your fr
 // The PeerJS adapter, against a stand-in Peer: the room id, the events, the errors
 const adapter = await a.evaluate(async () => {
   const made = [], calls = [];
-  class FakeCall { constructor(peer) { this.peer = peer; this.h = {}; this.answered = false; this.closed = false; } on(k, f) { this.h[k] = f; } answer() { this.answered = true; } close() { this.closed = true; if (this.h.close) this.h.close(); } }   // v1.367
+  class FakeCall { constructor(peer) { this.peer = peer; this.h = {}; this.answered = false; this.closed = false; } on(k, f) { this.h[k] = f; } answer() { this.answered = true; } close() { this.closed = true; if (this.h.close) this.h.close(); } }   // v1.370
   class FakeEmitter { constructor() { this.h = {}; } on(k, f) { (this.h[k] = this.h[k] || []).push(f); } fire(k, ...v) { (this.h[k] || []).forEach(f => f(...v)); } }
   class FakeConn extends FakeEmitter { constructor(id, opts) { super(); this.peer = id; this.opts = opts; this.open = false; this.sent = []; } send(m) { this.sent.push(m); } close() { this.fire('close'); } }
   class FakePeer extends FakeEmitter { constructor(id) { super(); this.id = id; made.push(this); } connect(id, opts) { this.conn = new FakeConn(id, opts); return this.conn; } call(id, st) { const c = new FakeCall(id); c.st = st; calls.push(c); return c; } disconnect() { this.gone = true; } destroy() {} }
@@ -263,7 +263,7 @@ const adapter = await a.evaluate(async () => {
   await new Promise(r => setTimeout(r, 0));
   const gp = made[1]; gp.fire('open');
   const gc = gp.conn;
-  // v1.367 (D.10): the walkie. The guest calls the host by the room's id and hangs up on a stream of none; a call to
+  // v1.370 (D.10): the walkie. The guest calls the host by the room's id and hangs up on a stream of none; a call to
   // the guest is answered only from a link the game takes (the host's, as 'host'), and its sound comes through
   const voice = [];
   hnd.voiceOk = pid => pid === 'host'; hnd.voiceIn = (pid, st) => voice.push(pid + ':' + (st ? st.id : 'none'));
@@ -286,7 +286,7 @@ console.log('   adapter', JSON.stringify(adapter));
 check('the PeerJS adapter: the room is nbhd-airsoft-<code>, the guest joins it, and its events and errors come through',
   adapter.hostId === 'nbhd-airsoft-KXRB' && adapter.guestTo === 'nbhd-airsoft-KXRB' && adapter.ser === 'json'
   && adapter.sent.length === 1 && adapter.log.join('|') === 'ready KXRB|connected|data {"t":"s"}|closed|error noroom', adapter);
-check('v1.367: the adapter’s walkie: a guest calls the host’s room id with his mic and hangs up with none; a call from the host is answered and heard, one from anyone else turned away',
+check('v1.370: the adapter’s walkie: a guest calls the host’s room id with his mic and hangs up with none; a call from the host is answered and heard, one from anyone else turned away',
   adapter.outTo === 'nbhd-airsoft-KXRB' && adapter.outSt === 'mic' && adapter.hungUp && adapter.callIn.hostAnswered && !adapter.callIn.foeAnswered
   && adapter.callIn.foeClosed && adapter.voice.join() === 'host:hostmic', adapter);
 

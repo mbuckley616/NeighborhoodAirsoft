@@ -96,7 +96,7 @@ each builder works its own lane's items top-down and skips the other's. A new it
    on Winnmark by room code~~ — done, v1.230 (PLAY ONLINE on the Pickup Game board; the host's game referees; nothing on
    the line; `tests/online.test.mjs`). Step 2 (teams, the board's kids filling the empty spots) and step 3 (a room list,
    which needs Michael's own matchmaker, option B, and a Campaign / Online / Settings title) wait for his look at step 1. Michael: **A**, step 2 next as a card, with push-to-talk on the walkie (control room, 21 Oct). Owner: card fable/d2-online-teams, 21 Oct.
-   ~~Step 2's teams~~ — done, v1.366 (a room of up to eight by its code, Blue and Red, each side's empty slots kids its people pick; the host's board sets map, size, day or night, lives and clock; a dropped friend's kid plays on; REMATCH; `tests/online-teams.test.mjs`). ~~Push-to-talk~~ — done, v1.367 (hold T, or R3 on a pad, to talk over the walkie to the people on your side only; the browser asks for the mic on the first hold; "Walkie online" in the settings mutes it). Step 3 (a room list and a Campaign / Online / Settings title) is still to come, with its own card.
+   ~~Step 2's teams~~ — done, v1.366 (a room of up to eight by its code, Blue and Red, each side's empty slots kids its people pick; the host's board sets map, size, day or night, lives and clock; a dropped friend's kid plays on; REMATCH; `tests/online-teams.test.mjs`). ~~Push-to-talk~~ — done, v1.370 (hold T, or R3 on a pad, to talk over the walkie to the people on your side only; the browser asks for the mic on the first hold; "Walkie online" in the settings mutes it). Step 3 (a room list and a Campaign / Online / Settings title) is still to come, with its own card.
 3. [maps] Meshes across the board need a cleanup / polish pass. Houses, cars, people, trees, roads, etc. (Michael, 2026-09-29)
    **(design)** — Michael: **D**, one map end to end, Winnmark first, each step shown to him before
    the next (control room, 30 Sep). ~~Step 1, Winnmark's houses~~ — done, v1.104 (hip roofs with eaves, cross gable,
@@ -183,7 +183,7 @@ each builder works its own lane's items top-down and skips the other's. A new it
    your hip in a match, seen when you look down; `tests/walkie.test.mjs`). ~~The callouts over it~~ — done, v1.268 (a
    teammate past earshot, 24 m, is heard over the walkie instead of not at all: the talk button's click, his voice, the
    line on the squad box; one walkie line every 4 s at most; enemies and free-for-alls unchanged;
-   `tests/walkie-callouts.test.mjs`). D.10 A is complete. ~~Push-to-talk~~ — done, v1.367 (online, to your own side over the walkie; card fable/d2-online-teams).
+   `tests/walkie-callouts.test.mjs`). D.10 A is complete. ~~Push-to-talk~~ — done, v1.370 (online, to your own side over the walkie; card fable/d2-online-teams).
 11. ~~What next after the walkie (builder, 3 Oct). Michael: **A**, the critic's "last kid comes looking" (proposals,
    1 Oct; control room, 4 Oct).~~ — done, v1.152 (in team and kill-all rounds the last one or two kids of a side who
    neither move 2 m nor fire with a line for 25–30 s march to find you; an advancing kid stuck in a pocket twice

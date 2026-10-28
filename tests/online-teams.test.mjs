@@ -7,7 +7,7 @@
 // from its own side; each sees everyone where they are, kids and Bluey included; tags in either game, and on Bluey,
 // are the host's, and every count agrees; a dropped friend's spot is taken by his kid on the host's AI and the match
 // ends normally; REMATCH takes the room back to the board with whoever is still in it.
-// v1.367 (D.10's push-to-talk): the walkie on a stub mic (no real one headless): the host and Bluey are Blue, Reddy is
+// v1.370 (D.10's push-to-talk): the walkie on a stub mic (no real one headless): the host and Bluey are Blue, Reddy is
 // Red with kids. The host is told Bluey's link and Bluey the host's, Reddy nobody's; holding T asks for the mic, calls
 // Bluey and nobody else, and opens the track only while it is held; a call from Reddy is turned away; Bluey's key
 // shows on the host's screen, Reddy's does not and goes to nobody on Blue; the settings' mute hangs up; Bluey's drop ends his call.
@@ -21,10 +21,10 @@ for (const p of [H, R]) await p.evaluate(() => {
     window.__h = h; window.__out = [];
     Promise.resolve().then(() => h.ready(code));
     return { send: (m, to) => window.__out.push({ m: JSON.stringify(m), to: to || null }), drop: id => { (window.__dropped = window.__dropped || []).push(id); },
-      voice: (st, pids) => { window.__voice = { on: !!st, pids: pids.slice() }; window.__voiceCalls = (window.__voiceCalls || 0) + 1; },   // v1.367
+      voice: (st, pids) => { window.__voice = { on: !!st, pids: pids.slice() }; window.__voiceCalls = (window.__voiceCalls || 0) + 1; },   // v1.370
       close: () => { window.__closedTx = (window.__closedTx || 0) + 1; } };
   };
-  // v1.367: the mic is a silent stream from Web Audio, counted each time it is asked for
+  // v1.370: the mic is a silent stream from Web Audio, counted each time it is asked for
   NetVoice.getMic = () => { window.__micAsked = (window.__micAsked || 0) + 1; const c = new AudioContext(); return Promise.resolve(c.createMediaStreamDestination().stream); };
 });
 // One evaluate a game: what reached it, two steps, what it sends. The host's go to the guest they name, or to all;
@@ -133,7 +133,7 @@ console.log('   where', JSON.stringify(err));
 check('everyone sees everyone where he is: people within 10 cm (Bluey reaches Reddy through the host), kids within 40 cm',
   err.blueyMoved > 1 && Object.entries(err).every(([k, v]) => k === 'blueyMoved' || (k === 'kids' ? v < 0.4 : v < 0.1)), err);
 
-// v1.367 (D.10): the walkie to your own side
+// v1.370 (D.10): the walkie to your own side
 const talk = p => p.evaluate(() => ({ hud: document.getElementById('netTalkHud').textContent, shown: document.getElementById('netTalkHud').style.display,
   on: document.getElementById('netTalkHud').classList.contains('on'), mates: JSON.stringify(NetVoice.mates), voice: window.__voice || null,
   asked: window.__micAsked || 0, talking: NetVoice.talking, track: NetVoice.mic ? NetVoice.mic.getAudioTracks().map(t => t.enabled).join() : '' }));
@@ -241,7 +241,7 @@ const dropH = await H.evaluate(() => { const k = Net.ents.get('net_p2'); return 
 const dropR = await R.evaluate(() => ({ mode: Game.mode, hud: document.getElementById('netHud').textContent, remote: Net.ents.get('net_p2').remote }));
 const dropV = await H.evaluate(() => ({ voice: window.__voice, mates: JSON.stringify(NetVoice.mates), heard: NetVoice.heard.size, hud: document.getElementById('netTalkHud').style.display }));
 console.log('   drop', JSON.stringify(dropH), JSON.stringify(dropR), JSON.stringify(dropV));
-check('v1.367: Bluey’s drop ends the walkie with him: no calls out, his call in gone, the hint hidden', dropV.voice.pids.length === 0 && dropV.mates === '{}' && dropV.heard === 0 && dropV.hud === 'none', dropV);
+check('v1.370: Bluey’s drop ends the walkie with him: no calls out, his call in gone, the hint hidden', dropV.voice.pids.length === 0 && dropV.mates === '{}' && dropV.heard === 0 && dropV.hud === 'none', dropV);
 check('a dropped friend’s spot is taken by a kid: Blue’s, on the host’s AI with his lives left, and Reddy is told',
   dropH.mode === 'scenario' && !dropH.remote && dropH.bot && dropH.state !== 'online' && dropH.lives >= 1 && dropH.team === 'player'
   && dropR.mode === 'scenario' && /BLUEY LEFT · A KID PLAYS THE SPOT/.test(dropR.hud) && dropR.remote, { dropH, dropR });

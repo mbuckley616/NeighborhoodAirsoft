@@ -454,7 +454,7 @@ function pollGamepad(dt) {
     if (!Pad.active) padSetActive(true);   // v1.279: and the hints turn to the pad's buttons
   }
   Pad.prev = btn;
-  Pad.talk = false;   // v1.367: held R3 talks on the walkie online (netTalkPoll), only in a match
+  Pad.talk = false;   // v1.370: held R3 talks on the walkie online (netTalkPoll), only in a match
   if (!Pad.active) return;
   const inMatch = Game.mode === 'scenario';
   // v1.242 (D.38 step 2): every screen that wants the mouse gets the pad's cursor
