@@ -115,6 +115,7 @@ function gunForegripZ(weapon) {
     case 'vector':  return 0.17;   // v1.348: its front grip
     case 'g36':     return 0.17;   // v1.371: its handguard
     case 'aug':     return 0.22;   // v1.372: its folding foregrip
+    case 'm4':      return 0.18;   // v1.373: its handguard
     case 'mac10':   return 0.06;
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
@@ -227,6 +228,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.025, 0.025, 0.12, dark, 0, 0, 0.33);          // the barrel
       box(0.03, 0.03, 0.18, dark, 0, 0.05, 0.10);        // the top rail
       box(0.025, 0.07, 0.025, dark, 0, -0.07, 0.22);     // the foregrip
+      grip();
+      break;
+    }
+    case 'm4': {   // v1.373 (D.63): a black carbine, the curved black mag, a flat-top rail, the sliding stock
+      box(0.045, 0.07, 0.38, black, 0, 0, 0.16);         // receiver, handguard and barrel
+      box(0.035, 0.13, 0.05, dark, 0, -0.10, 0.07);       // the curved mag
+      box(0.03, 0.03, 0.30, dark, 0, 0.05, 0.12);        // the flat-top rail
+      box(0.04, 0.07, 0.10, black, 0, 0, -0.10);         // the sliding stock
       grip();
       break;
     }

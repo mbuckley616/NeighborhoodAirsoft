@@ -56,6 +56,10 @@ console.log('   steered: ' + JSON.stringify(run));
 check('steered round the lane\'s cars, nothing tagging you, the hill takes you to the bulb in under 45 s with no crash',
   run.finish != null && run.finish < 45 && run.crashes === 0 && run.s >= run.finishS, run);
 check('and that is a win', run.mode === 'result' && run.won, run);
+const card = () => page.evaluate(() => ({ outcome: document.getElementById('outcomeText').textContent, flavor: document.getElementById('flavorText').textContent }));
+// v1.375 (Found in play, critic v1.372): the win read "The last one's out" with every kid still in
+const winCard = await card();
+check('the win card says you made it down, not that the last one is out (v1.375)', /MADE IT DOWN/.test(winCard.outcome) && /rolls to a stop in the bulb/.test(winCard.flavor) && !/last one/i.test(winCard.flavor), winCard);
 check('top speed between 8 and 13 m/s', run.top >= 8 && run.top <= 13, run.top);
 
 await page.evaluate(() => { Game.keys = {}; });
@@ -90,6 +94,8 @@ const tags = await page.evaluate(() => {
 console.log('   tags: ' + JSON.stringify(tags));
 check('a tag costs a life and you roll on, with 1.5 s in which nothing tags you', tags.one.hits === 1 && tags.one.mode === 'scenario' && tags.one.grace === 1.5 && tags.one.v === tags.one.v0 && tags.inGrace === 1, tags);
 check('the third tag loses', tags.two.hits === 2 && tags.two.mode === 'scenario' && tags.three.hits === 3 && tags.three.mode !== 'scenario', tags);
+const loseCard = await card();
+check('the loss card says how far was left to go (v1.375)', /YOU'RE OUT/.test(loseCard.outcome) && /m still to go/.test(loseCard.flavor) && !/angles/.test(loseCard.flavor), loseCard);
 
 check('it sits on Bunratty\'s ladder after Four on Four', await page.evaluate(() => {
   const ids = PIN_SCENARIO_GROUPS.bunratty_court; return ids[ids.indexOf('bunratty_go_cart') - 1] === 'bunratty_team_4v4'; }));

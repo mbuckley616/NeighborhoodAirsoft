@@ -31,6 +31,7 @@ const FP_GUN_MOUNT = {
   vector:  { barrelY: 0.000, sideX: 0.018, railZ: -0.10, railLen: 0.07,  underY: -0.020, sightY: 0.0325, sightZ: -0.03,  sightScale: 0.9 },   // v1.348: an optic on the top rail between the irons
   g36:     { barrelY: -0.005, sideX: 0.020, railZ: -0.22, railLen: 0.08,  underY: -0.034, sightY: 0.0365, sightZ: -0.04,  sightScale: 0.95 },   // v1.371: an optic on the top rail between the irons
   aug:     { barrelY: -0.012, sideX: 0.015, railZ: -0.20, railLen: 0.06,  underY: -0.026, sightY: 0.0355, sightZ: -0.03,  sightScale: 0.95 },   // v1.372: an optic on the top rail between the irons
+  m4:      { barrelY: -0.005, sideX: 0.024, railZ: -0.21, railLen: 0.08,  underY: -0.032, sightY: 0.0375, sightZ: -0.04,  sightScale: 0.95 },   // v1.373: an optic on the top rail between the irons
   mac10:   { barrelY: 0.020, sideX: 0.016, railZ: -0.065, railLen: 0.05,  underY: 0.004, sightY: 0.032, sightZ: -0.04,  sightScale: 0.85 },
   // v1.168: the backyard guns (the bucket's sight sits on its carry-handle rail, above the hopper)
   thunder: { barrelY: 0.040, sideX: 0.025, railZ: -0.06,  railLen: 0.07,  underY: 0.008, sightY: 0.0525, sightZ: -0.06, sightScale: 1.0 },
@@ -715,6 +716,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'vector')  mesh = buildFPVector();        // v1.348
   else if (gunType === 'g36')     mesh = buildFPG36();           // v1.371
   else if (gunType === 'aug')     mesh = buildFPAUG();           // v1.372
+  else if (gunType === 'm4')      mesh = buildFPM4();            // v1.373
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);

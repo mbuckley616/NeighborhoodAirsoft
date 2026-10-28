@@ -270,6 +270,7 @@ function giveSethsLoader() {
 function stepGame(dt) {
   pollGamepad(dt);   // v1.241 (D.38)
   updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
+  if (Game.mode !== 'bedroom') updateRoomTour(0);   // v1.374: the room-tour note hides off the bedroom (updateInteractables runs only in it)
   if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
