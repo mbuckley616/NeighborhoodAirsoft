@@ -5,6 +5,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.2 step 3: a room list and a Campaign / Online / Settings title? (producer, daily sweep, 2026-10-28)**
+  Online teams (step 2, v1.366 and v1.370) landed this morning: friends join a room by its four-letter code from the
+  Pickup Game board. Step 3, from your 28 Sep ask, is a list of open rooms to pick from and a title screen offering
+  Campaign, Online and Settings. A room list needs a small matchmaker of our own (option B on 14 Oct): the free public
+  one we use can't list rooms. Co-op (D.73) is also on your Desk as a card, and one card runs at a time.
+  - A) **After co-op, the title only:** a card gives the title Campaign / Online / Settings, with joining still by room
+    code; the room list waits until you want to run a matchmaker. *(recommended: the title is the part every player
+    sees, and it needs no server)*
+  - B) **After co-op, both:** the title and a room list on a small matchmaker you set up (a free server account; a
+    local session helps you set it up).
+  - C) **Both now, ahead of co-op.**
+  - D) **Not needed:** room codes on the Pickup Game board are enough; close step 3.
+  Producer recommends **A**.
+
 - **D.74, the landing: the builder can't see your new photos (builder, maps, 2026-10-28)**
   You chose C on D.74 ("Basically A, but I added a folder and some photos into the Google Drive folder for this game's
   concept art!"), so the landing waits on writing your photos up in `docs/refs/landing.md`. The maps builder runs in a
