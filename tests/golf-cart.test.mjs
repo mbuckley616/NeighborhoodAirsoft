@@ -19,6 +19,9 @@ const ride = async (secs, keys) => {
     }, keys);
     if (m !== 'scenario') break;
   }
+  // v1.375: the win lands 0.8 s of wall clock after the finish (endScenarioLater's timer), which a finish in the last
+  // chunk did not always get before the read (58.6 s in, 28 Oct); wait for it when he has finished
+  await page.waitForFunction(() => Game.mode !== 'scenario' || !Game.scenario.race.done, null, { timeout: 5000 }).catch(() => {});
   return page.evaluate(() => { const R = Game.scenario.race; return { mode: Game.mode, s: +(R.s - R.startS).toFixed(1), lap: R.lap,
     len: +R.len.toFixed(1), finish: R.finishT, top: +R.topV.toFixed(2), won: !!Game.persist.completed.club_cart_ride }; });
 };
@@ -59,6 +62,11 @@ check('your view turns with the cart round the corner (no mouse)', turned.yaw < 
 
 const done = await ride(60, false);
 check('Eric drives two laps on his own and that is a win', done.mode !== 'scenario' && done.won && done.finish > 30 && done.finish < 60 && done.top <= 5.6, done);
+const card = () => page.evaluate(() => ({ outcome: document.getElementById('outcomeText').textContent, flavor: document.getElementById('flavorText').textContent }));
+// v1.375 (Found in play, critic v1.372): the win read "The last one's out" with all five still in
+const winCard = await card();
+check('the win card says the laps are done and that you tagged none of the five, who are still in (v1.375)',
+  /TWO LAPS/.test(winCard.outcome) && /never tagged one/.test(winCard.flavor) && /Marcus/.test(winCard.flavor) && !/last one/i.test(winCard.flavor), winCard);
 
 await page.evaluate(() => { delete Game.persist.completed.club_cart_ride; });
 await g.scenario('club_cart_ride');
@@ -76,6 +84,8 @@ const tags = await page.evaluate(() => {
 });
 check('a tag costs a life and he drives on, with 1.5 s in which nothing tags you', tags.one.hits === 1 && tags.one.mode === 'scenario' && tags.one.grace === 1.5 && tags.inGrace === 1 && tags.moved > 5, tags);
 check('the third tag loses', tags.two.hits === 2 && tags.two.mode === 'scenario' && tags.three.hits === 3 && tags.three.mode !== 'scenario' && !tags.three.won, tags);
+const loseCard = await card();
+check('the loss card says where Eric stopped the cart, not "too many angles" (v1.375)', /YOU'RE OUT/.test(loseCard.outcome) && /Eric stops the cart/.test(loseCard.flavor) && !/angles/.test(loseCard.flavor), loseCard);
 
 // the kids shoot at you as you pass: in the first lap with nothing tagging you, some of them fire
 await g.scenario('club_cart_ride');

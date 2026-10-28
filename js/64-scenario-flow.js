@@ -1248,6 +1248,7 @@ function endScenario(outcome) {
   const _vipTheirs = Game.scenario.vip ? (Game.scenario.enemies || []).find(e => e.vip && e.team !== 'player') : null;
   const _vipOurs = Game.scenario.vip ? (Game.scenario.enemies || []).find(e => e.vip && e.team === 'player') : null;
   const _ctf = Game.scenario.ctf;   // v1.189
+  const _race = Game.scenario.race;   // v1.375: the derby's cart or the cart ride
   if (outcome === 'win' && _vipTheirs) {
     outcomeEl.textContent = 'YOU GOT THEM';
     outcomeEl.className = 'outcome win';
@@ -1301,6 +1302,25 @@ function endScenario(outcome) {
     outcomeEl.textContent = `THEY TOOK IT ${_ctf.score.theirs}–${_ctf.score.ours}`;
     outcomeEl.className = 'outcome lose';
     flavorEl.textContent = `Our blue flag ends up on their lawn for the second time. ${allStr} wave it at you from the top of the bulb. "Run it back?"`;
+  } else if (_race && (outcome === 'win' || outcome === 'lose')) {
+    // v1.375 (Found in play, critic v1.372): the derby and the cart ride are won at the finish, not by tagging everyone,
+    // so their lines say how far you got and how many you tagged on the way, not "the last one's out"
+    const _in = foes.filter(e => e.health > 0).length, _out = foes.length - _in;
+    const _tags = _out === 0 ? 'You never tagged one of them' : _out === foes.length ? `You tagged all ${foes.length} of them on the way` : `You tagged ${_out} of the ${foes.length} on the way`;
+    if (outcome === 'win') {
+      outcomeEl.textContent = _race.ride ? 'TWO LAPS, YOU MADE IT' : 'YOU MADE IT DOWN';
+      outcomeEl.className = 'outcome win';
+      flavorEl.textContent = _race.ride
+        ? `Eric pulls the cart back up to the barn. ${_tags}, and ${_in ? joinNames(foes.filter(e => e.health > 0).map(e => e.name)) + ' still ' + (_in > 1 ? 'pop' : 'pops') + ' up out of the bunkers and the trees, waving' : 'nobody was left to wave you in'}. "Same time tomorrow?"`
+        : `The cart rolls to a stop in the bulb. ${_tags}. ${primaryName} jogs down the hill: "No way. My turn in that thing."`;
+    } else {
+      const _left = Math.max(0, Math.round(_race.finishS - _race.s));   // metres, for the derby
+      outcomeEl.textContent = "YOU'RE OUT";
+      outcomeEl.className = 'outcome lose';
+      flavorEl.textContent = _race.ride
+        ? `Eric stops the cart ${_race.s - _race.startS < _race.len ? 'before the first lap is done' : 'on the second lap'}. ${_tags}. ${allStr} climb out of the bunkers grinning. "Run it back?"`
+        : `You climb out of the cart with ${_left} m still to go. ${_tags}. ${allStr} come down off the lawns laughing. "Run it back?"`;
+    }
   } else if (outcome === 'win') {
     if (wonByTimer) {
       // Survive-timer win: the attackers' moms called them in
