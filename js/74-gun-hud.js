@@ -10,7 +10,7 @@ const UNJAM_TIME = 2.0;          // seconds to unjam (hold R)
 const FIRE_LOCKOUT = 0.25;       // post-fire window — cocking is locked during this time
 
 function doFire() {
-  if (Game.player._holdT > 0 || Game.player._goingHome || Game.player._netOut) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home; v1.364: or out, online)
+  if (Game.player._holdT > 0 || Game.player._goingHome || Game.player._netOut) return;   // v1.280 (D.47): no shot while held at your base (v1.290: or walking home; v1.366: or out, online)
   Game.player._graceT = 0;   // v1.291 (D.49): your own shot ends the respawn's grace
   Game.gun._sinceShot = 0;   // v1.292 (D.50): an automatic's next click waits out its cycle from here (counted in updateGun)
   const pelletsFired = fireBB();   // returns BBs consumed (shotgun fires 2-3)

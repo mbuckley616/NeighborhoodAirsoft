@@ -1,4 +1,4 @@
-// v1.364 (backlog D.2 step 2, card fable/d2-online-teams; Michael: A on "go on to teams", 21 Oct, with D.67 and D.68):
+// v1.366 (backlog D.2 step 2, card fable/d2-online-teams; Michael: A on "go on to teams", 21 Oct, with D.67 and D.68):
 // a room of three through a stub transport (no network in CI; tests/online.test.mjs keeps the 1v1 and the PeerJS
 // adapter). Two are headless games, the host and Reddy; the third, Bluey, is played from here as messages, because a
 // third game in software GL ran this machine out of memory (three games in a plain pickup match reached 13.7 GB of

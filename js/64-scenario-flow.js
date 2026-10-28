@@ -425,11 +425,11 @@ function enterScenario(scenarioId) {
         const dE = Math.hypot(tb.enemy.x - ps.x, tb.enemy.z - ps.z);
         const playerBase = dP <= dE ? tb.player : tb.enemy;
         const enemyBase  = dP <= dE ? tb.enemy : tb.player;
-        addBaseMarker(built.scene, playerBase.x, playerBase.z, PLAYER_BLUE, gfn);
+        addBaseMarker(built.scene, playerBase.x, playerBase.z, PLAYER_BLUE, gfn, { poleAt: basePoleClearOfStart(playerBase, ps, built.spawnYaw) });
         addBaseMarker(built.scene, enemyBase.x, enemyBase.z, ENEMY_RED, gfn);
       } else {
         // Player base at the player's spawn point.
-        addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn);
+        addBaseMarker(built.scene, built.spawn.x, built.spawn.z, PLAYER_BLUE, gfn, { poleAt: basePoleClearOfStart(built.spawn, built.spawn, built.spawnYaw) });
         // Enemy base = centroid of enemy-team kids' fighting anchors (far end).
         let ex = 0, ez = 0, en = 0;
         for (const e of built.enemies) {
@@ -856,6 +856,8 @@ function startScenario(built) {
   Game.scenario.ctf = Game.scenario.ctfDef ? ctfSetup(Game.scenario.ctfDef, built) : null;
   // v1.354 (D.71): the go-cart race: the cart, its line down the street, and you in it
   Game.scenario.race = SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].race && built.raceRoad ? raceSetup(built) : null;
+  // v1.364 (D.72): the golf-cart ride, Eric driving the map's loop and you on the back
+  if (SCENARIOS[Game.scenario.active] && SCENARIOS[Game.scenario.active].ride && built.rideLoop) Game.scenario.race = rideSetup(built);
 
   // v1.57: arm the guided tutorial only for tutorial scenarios; otherwise make
   // sure any prior tutorial state + banner are cleared.

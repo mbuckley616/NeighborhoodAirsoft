@@ -20,8 +20,8 @@ const ladder = await page.evaluate(() => {
   return { keys, ids, before, after, afterFirst, region: REGIONS.horseshoe_bend.streets.willow_bend_cc };
 });
 check('Willow Bend comes after Hollins Ridge High (v1.159: and before the store)', ladder.keys.slice(-3).join() === 'high_school,country_club,grocery_store', ladder.keys);
-check('the club runs the 1v1 opener, the 3v3, then the gazebo defend and the night 4v4 (v1.158)',
-  ladder.ids.join() === 'club_1v1_brooke,club_eighteenth_3v3,club_defend_gazebo,club_night_4v4', ladder.ids);
+check('the club runs the 1v1 opener, the 3v3, the cart ride (v1.364), then the gazebo defend and the night 4v4 (v1.158)',
+  ladder.ids.join() === 'club_1v1_brooke,club_eighteenth_3v3,club_cart_ride,club_defend_gazebo,club_night_4v4', ladder.ids);
 check('its street is in Horseshoe Bend', ladder.region === 'Willow Bend Country Club', ladder.region);
 check('the club is locked on a new save', !ladder.before.zone && !ladder.before.first, ladder.before);
 check('clearing the school opens the opener only', ladder.after.zone && ladder.after.first && !ladder.after.second, ladder.after);
@@ -56,7 +56,7 @@ check('after the school the pin is live and lists every scenario, only the opene
 await g.shot('country-club-map');
 await page.evaluate(() => { delete Game.persist.completed[zoneCapstoneId('high_school')]; closeMap(); });
 
-for (const id of ladder.ids) {
+for (const id of ladder.ids.filter(id => id !== 'club_cart_ride')) {   // v1.364: the cart ride is tests/golf-cart's
   await g.scenario(id);
   const start = await page.evaluate(() => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);

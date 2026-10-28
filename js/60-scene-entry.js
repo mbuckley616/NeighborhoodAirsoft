@@ -148,6 +148,19 @@ function findClearSpawn(x, z, obstacles, radius = 0.4, footY = null) {
 // center to flag the base from a distance. No obstacle entry, no collision —
 // BBs and bodies pass straight through. Returns the THREE.Group (added to scene)
 // so the caller can keep a handle if needed.
+// v1.365 (Found in play, critic v1.353): where your own base's pole stands. A base centred on or just ahead of your
+// start put the 2.4 m pole in your face as the match opened (7 team matches, 0.12-1.5 m from your eye, through the
+// crosshair). A pole within 3.5 m of your start moves 2 m behind you, pulled in to 0.6 m inside the ring if that is
+// past it, so it still marks the base. Otherwise it stays at the centre.
+function basePoleClearOfStart(base, start, yaw, radius = 4.2) {
+  if (!base || !start || typeof yaw !== 'number') return null;
+  if (Math.hypot(base.x - start.x, base.z - start.z) >= 3.5) return null;
+  let px = start.x + Math.sin(yaw) * 2, pz = start.z + Math.cos(yaw) * 2;
+  const d = Math.hypot(px - base.x, pz - base.z), r = radius - 0.6;
+  if (d > r) { px = base.x + (px - base.x) * r / d; pz = base.z + (pz - base.z) * r / d; }
+  return { x: px, z: pz };
+}
+
 function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
   const radius = opts.radius ?? 4.2;
   const gy = (typeof groundYFn === 'function') ? groundYFn(x, z) : 0;
@@ -186,7 +199,12 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
   );
   pole.position.y = poleH / 2;
   pole.castShadow = true;
-  group.add(pole);
+  // v1.365: the pole and pennant stand at `opts.poleAt` (world x/z, inside the disc) when given, so they need not be
+  // planted in front of your eyes at your start (Night Swim's was 0.12 m from them)
+  const flagRig = new THREE.Group();
+  if (opts.poleAt) flagRig.position.set(opts.poleAt.x - x, 0, opts.poleAt.z - z);
+  group.add(flagRig);
+  flagRig.add(pole);
 
   // Pennant: a flat triangle hanging off the top of the pole (double-sided).
   const flagGeo = new THREE.BufferGeometry();
@@ -203,7 +221,8 @@ function addBaseMarker(scene, x, z, color, groundYFn, opts = {}) {
       color, roughness: 0.85, metalness: 0, side: THREE.DoubleSide,
     })
   );
-  group.add(flag);
+  flagRig.add(flag);
+  group.userData.baseMarker = { color, pole: flagRig };
 
   scene.add(group);
   return group;

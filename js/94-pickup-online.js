@@ -270,7 +270,7 @@ function playPickupGame() {
 // sends where he is ~30 times a second; each shot is sent once (where from, which way, its curve) and flies in both
 // games, but only the host's copy can tag. On each screen the other player is a kid in his own look with his own gun.
 // Nothing is on the line: no pay, no ladder, and the BBs in your bag are put back as they were.
-// v1.364 (backlog D.2 step 2, card fable/d2-online-teams; Michael: A on "Online play: go on to teams", 21 Oct, with
+// v1.366 (backlog D.2 step 2, card fable/d2-online-teams; Michael: A on "Online play: go on to teams", 21 Oct, with
 // D.67 "the host should be able to pick the zone/map and time of day ... and rematches" and D.68 "an NPC Draft to fill
 // empty slots"): TEAMS ONLINE. The room takes up to eight people. The host's board sets the match as the Pickup Game
 // board does (any opened map, 1v1 up to its biggest team size, day or night, lives, the clock); everyone in the room is
@@ -613,7 +613,7 @@ function netDropped(pid) {
     if (Net.phase === 'begin' && Net.localReady && netAllReady()) netGo();
   }
 }
-// v1.364 (D.2 step 3): his kid stays where he is, with his look, his gun and his lives left, and the host's game plays him
+// v1.366 (D.2 step 3): his kid stays where he is, with his look, his gun and his lives left, and the host's game plays him
 function netBotTakeover(e) {
   e.remote = false;
   e.netBot = true;
@@ -1068,7 +1068,7 @@ function netResultCard(outcome) {
   document.getElementById('rewardText').textContent = 'Online match: nothing on the line.';
   document.getElementById('reloadNote').textContent = '';
   for (const id of ['navPrevBtn', 'navNextBtn']) document.getElementById(id).disabled = true;
-  // v1.364 (D.67): REMATCH takes the room back to the board, everyone still in it, for the host to start again
+  // v1.366 (D.67): REMATCH takes the room back to the board, everyone still in it, for the host to start again
   const again = document.getElementById('navAgainBtn');
   if (again.dataset.netLabel == null) again.dataset.netLabel = again.textContent;
   const stays = outcome !== 'forfeit' && Net.active;

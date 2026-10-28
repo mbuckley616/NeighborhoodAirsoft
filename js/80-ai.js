@@ -900,7 +900,7 @@ function updateEnemies(dt) {
   }
   for (const e of Game.scenario.enemies) {
     e._lastDt = dt;   // so getTarget's re-eval cadence timer can tick
-    if (e.remote) { netDriveRemote(e, dt); continue; }   // v1.230 (D.2): another player online, moved by his own game (v1.364: out or in, and every kid in a guest's game)
+    if (e.remote) { netDriveRemote(e, dt); continue; }   // v1.230 (D.2): another player online, moved by his own game (v1.366: out or in, and every kid in a guest's game)
     if (e.health <= 0) {
       // v1.25 ZOMBIE MODE: taggers aren't permanently out — they go down where
       // they were hit and REVIVE in place after a fixed delay, then resume the

@@ -255,6 +255,10 @@ function spawnEnemyBB(enemy, targetPos) {
     if (!Game.scenario.enemies.some(k => k !== enemy && k.health > 0 && k.team !== 'player' && Math.hypot(k.pos.x - P.x, k.pos.z - P.z) < enemy.holdUntilNear)) return;
     Game.scenario.attackNear = true;
   }
+  // v1.364 (D.72): on the course a kid lets the cart come to him: no shot at it past RIDE.range (as it passes, not as
+  // it drives at him down a run from 25 m)
+  if (Game.scenario.race && Game.scenario.race.ride && targetPos && Math.hypot(targetPos.x - Game.player.pos.x, targetPos.z - Game.player.pos.z) < 1.5 &&
+      Math.hypot(targetPos.x - enemy.pos.x, targetPos.z - enemy.pos.z) > RIDE.range) return;
   // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
   if (enemy._hasLOSNow) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
@@ -383,7 +387,7 @@ function spawnEnemyBB(enemy, targetPos) {
     // "I'm being shot at by <enemy>" and prioritize them (anti-tunnel-vision).
     bb.intendedTarget = enemy._targetRef || null;
     Game.scenario.bbs.push(bb);
-    if (Net.active && Net.role === 'host') netShot(bb, enemy);   // v1.364 (D.2 step 2): online, the host's kids' shots fly in every game
+    if (Net.active && Net.role === 'host') netShot(bb, enemy);   // v1.366 (D.2 step 2): online, the host's kids' shots fly in every game
   }
   // v1.337 (D.28 step 4): a kid on a gun you lent him fires your BBs; out of them, he goes back to his own gun
   const loan = enemy.crewLoan;
@@ -614,7 +618,7 @@ function applyBBHit(bb, c) {
     if (Game.scenario.wonRound === Game.roundSeq && Game.mode === 'scenario') return true;
     Game.player.hitsTaken++;
     if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;   // v1.193
-    if (Net.active) netTaggedBy(bb, Game.player);   // v1.230: your friend tagged you (v1.364: whichever friend, online)
+    if (Net.active) netTaggedBy(bb, Game.player);   // v1.230: your friend tagged you (v1.366: whichever friend, online)
     if (Game.scenario.stats && bb.pos) noteDamageOnYou(bb);   // v1.238 (D.34): where, by whom, with what
     playHitOnPlayer();
     // Shooter taunts the player after a hit (only enemy-fired BBs carry enemyRef).
@@ -627,7 +631,7 @@ function applyBBHit(bb, c) {
     if (Game.player.hitsTaken >= Game.player.maxHits && Game.mode === 'scenario') {
       if (Game.scenario.ctf) ctfDrop(Game.player);   // v1.189: a flag you carried falls where you were tagged
       if (Game.scenario.vip || Game.scenario.ctf) startPlayerWalkHome();   // v1.170: in VIP you come back; only your VIP matters (v1.189: and in capture the flag; v1.290: on foot)
-      else if (Net.active && Net.phase === 'play') netPlayerOut();   // v1.364 (D.2 step 2): online, out, you watch your side play on
+      else if (Net.active && Net.phase === 'play') netPlayerOut();   // v1.366 (D.2 step 2): online, out, you watch your side play on
       else endScenario('lose');
     } else if (Game.mode === 'scenario' && Game.scenario.race) {
       Game.player._graceT = RACE.grace;   // v1.354 (D.71): a tag in the go-cart costs a life; you roll on
@@ -650,7 +654,7 @@ function applyBBHit(bb, c) {
     playHitOnEnemy();
     eliminateEnemy(c);          // decides: permanent kill OR run-back-and-respawn
     if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
-    if (Net.active) netTaggedBy(bb, c);   // v1.364 (D.2 step 2): a friend's tag online, shown in his game
+    if (Net.active) netTaggedBy(bb, c);   // v1.366 (D.2 step 2): a friend's tag online, shown in his game
   }
   return true;
 }

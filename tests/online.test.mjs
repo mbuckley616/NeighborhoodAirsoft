@@ -19,7 +19,7 @@ check('nothing online loads at startup', idle.peer === 'undefined' && idle.scrip
 const stub = p => p.evaluate(() => {
   Net.makeTransport = (role, code, h) => {
     window.__h = h; window.__out = [];
-    window.__k = () => Net.ents.get(Net.role === 'host' ? 'net_p1' : 'net_p0');   // v1.364: the other player's kid
+    window.__k = () => Net.ents.get(Net.role === 'host' ? 'net_p1' : 'net_p0');   // v1.366: the other player's kid
     Promise.resolve().then(() => h.ready(code));
     return { send: m => window.__out.push(JSON.stringify(m)), close: () => { window.__closedTx = (window.__closedTx || 0) + 1; } };
   };
@@ -66,8 +66,8 @@ async function join(code) {
 }
 async function begin() {
   await pump(b, a);   // hello
-  await pump(a, b);   // v1.364: the room, with the guest on Red
-  await a.evaluate(() => document.getElementById('netStartBtn').click());   // v1.364: the host starts it
+  await pump(a, b);   // v1.366: the room, with the guest on Red
+  await a.evaluate(() => document.getElementById('netStartBtn').click());   // v1.366: the host starts it
   await pump(a, b);   // match
   const intro = [await A.mode(), await B.mode()];
   await a.evaluate(() => document.getElementById('introBeginBtn').click());
@@ -210,7 +210,7 @@ const ra = await res(a), rb = await res(b);
 console.log('   host', JSON.stringify(ra), '\n   guest', JSON.stringify(rb));
 check('the last tag ends it for both: the host lost, the guest won', ra.mode === 'result' && rb.mode === 'result'
   && /lose|out/.test(ra.out) && /win/.test(rb.out) && /Guesty got you/.test(ra.flavor) && /You beat Hosty/.test(rb.flavor), { ra, rb });
-check('nothing on the line: cash, bag and wins as they were; REMATCH is the host\'s (v1.364), not a Play Again', ra.cash === a0.cash && rb.cash === b0.cash
+check('nothing on the line: cash, bag and wins as they were; REMATCH is the host\'s (v1.366), not a Play Again', ra.cash === a0.cash && rb.cash === b0.cash
   && ra.bag === a0.bag && rb.bag === b0.bag && ra.done === a0.done && rb.done === b0.done && !ra.again && rb.again, { a0, b0, ra, rb });
 
 // Back home; a second match, and the guest drops out of it
@@ -221,7 +221,7 @@ const h2 = await host();
 await join(h2.code);
 await begin();
 await run(60);
-// v1.364 (D.2 step 3): a dropped friend's kid plays on in the host's game; the guest, cut off, is told the host left
+// v1.366 (D.2 step 3): a dropped friend's kid plays on in the host's game; the guest, cut off, is told the host left
 await a.evaluate(() => window.__h.closed('g1'));   // the guest's browser went away
 await run(120);
 const drop = await a.evaluate(() => { const k = __k(); return { mode: Game.mode, remote: k.remote, bot: k.netBot, state: k.state, net: Net.active,
