@@ -1180,6 +1180,9 @@ function endScenario(outcome) {
     Game.scenario.range = null;
     updateRangeHud();
     enterBedroom();
+    // v1.376 (D.74): home up the stairs, at their top facing into the landing
+    const st = Scenes.bedroom.stairsSpawn;
+    if (st) { Game.player.pos.copy(st); Game.player.yaw = Scenes.bedroom.stairsYaw; }
     saveGame();
     return;
   }

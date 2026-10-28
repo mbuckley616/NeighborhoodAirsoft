@@ -1,5 +1,5 @@
-// v1.257 (backlog D.40, Michael: A): the backyard range, out the back door in the bedroom's hall. Checked: the door and
-// its prompt (the front door still has the spawn), E takes you out with no briefing and no kids, roster or lives, the
+// v1.257 (backlog D.40, Michael: A): the backyard range, out the back door in the bedroom's hall (since v1.376, D.74: down
+// the stairs at the landing's south-east corner, still `back_door`). Checked: the stairs and their prompt, E takes you out with no briefing and no kids, roster or lives, the
 // gun loads from your bag; each target does its own thing (a can is knocked off the plank and comes to rest on the
 // grass, a bottle breaks, paper keeps a hole and lets the BB through, a bullseye keeps a mark and scores its ring);
 // E at the bench stands everything back up; E at the back door takes you home with the gun's BBs back in the bag.
@@ -14,14 +14,14 @@ await g.spin(30);
 const hall = await page.evaluate(() => {
   const d = Game.interactables.find(i => i.type === 'back_door');
   const atSpawn = Game.focusedInteractable && Game.focusedInteractable.type;
-  Game.player.pos.set(d.pos.x + 0.2, 0, d.pos.z); Game.player.yaw = Math.PI / 2;
+  Game.player.pos.set(d.pos.x, 0, d.pos.z - 0.2); Game.player.yaw = Math.PI;   // v1.376: at the top of the stairs, facing down them
   for (let i = 0; i < 3; i++) stepGame(1 / 60);
   return { door: !!d, atSpawn, focused: Game.focusedInteractable && Game.focusedInteractable.type,
     prompt: document.getElementById('interactPrompt').textContent.trim(), label: d && d._labelEl && d._labelEl.textContent.trim() };
 });
-check('the hall has a back door, labelled BACKYARD', hall.door && /backyard/i.test(hall.label || ''), hall.label);
-check('at spawn the front door still has the prompt', hall.atSpawn === 'front_door', hall.atSpawn);
-check('beside the back door its prompt reads "Go out back (the range)"', hall.focused === 'back_door' && /Go out back/.test(hall.prompt), hall.prompt);
+check('the stairs have the way out back, labelled BACKYARD', hall.door && /backyard/i.test(hall.label || ''), hall.label);
+check('at spawn it is not in reach (it is on the landing, not in the hall)', hall.atSpawn !== 'back_door', hall.atSpawn);
+check('at the top of the stairs its prompt reads "Go out back (the range)"', hall.focused === 'back_door' && /Go out back/.test(hall.prompt), hall.prompt);
 
 const bag0 = await page.evaluate(() => Game.persist.bag);
 await page.evaluate(() => { Game.mouse.locked = true; });
@@ -156,8 +156,14 @@ const home = await page.evaluate(() => {
 await page.keyboard.press('KeyE');
 await g.spin(5);
 const back = await page.evaluate(() => ({ mode: Game.mode, bag: Game.persist.bag, ammo: Game.gun.ammo, hud: document.getElementById('rangeHud').style.display,
-  result: document.getElementById('resultScreen')?.style.display, range: !!Game.scenario.range }));
+  result: document.getElementById('resultScreen')?.style.display, range: !!Game.scenario.range,
+  pos: [Game.player.pos.x, Game.player.pos.z].map(v => +v.toFixed(2)), yaw: +Game.player.yaw.toFixed(2),
+  focused: Game.focusedInteractable && Game.focusedInteractable.type }));
 check('E at the back door: home to the bedroom, no result screen', back.mode === 'bedroom' && back.hud === 'none' && !back.range, back);
+// v1.376 (D.74): you come back up the stairs, at their top, facing north into the landing
+const L = await page.evaluate(() => Scenes.bedroom.landing);
+check('home at the top of the stairs, facing into the landing, the stairs\' prompt in reach',
+  back.pos[0] > L.stairX0 && back.pos[0] < L.stairX1 && back.pos[1] > L.z1 - 0.7 && back.pos[1] < L.z1 && Math.abs(back.yaw) < 0.6 && back.focused === 'back_door', { back, L });
 check('the BBs left in the gun go back in the bag; the ones fired are spent', back.bag === home.bag + home.ammo && back.bag === bag0 - 1, { bag0, home, back });
 // F out there goes home too
 await page.evaluate(() => enterRange());
