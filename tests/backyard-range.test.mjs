@@ -161,8 +161,9 @@ const back = await page.evaluate(() => ({ mode: Game.mode, bag: Game.persist.bag
   focused: Game.focusedInteractable && Game.focusedInteractable.type }));
 check('E at the back door: home to the bedroom, no result screen', back.mode === 'bedroom' && back.hud === 'none' && !back.range, back);
 // v1.376 (D.74): you come back up the stairs, at their top, facing north into the landing
-check('home at the top of the stairs (x 1.4-2.4, z 8.9-9.6), facing into the landing, the stairs\' prompt in reach',
-  back.pos[0] > 1.4 && back.pos[0] < 2.4 && back.pos[1] > 8.9 && back.pos[1] < 9.6 && Math.abs(back.yaw) < 0.6 && back.focused === 'back_door', back);
+const L = await page.evaluate(() => Scenes.bedroom.landing);
+check('home at the top of the stairs, facing into the landing, the stairs\' prompt in reach',
+  back.pos[0] > L.stairX0 && back.pos[0] < L.stairX1 && back.pos[1] > L.z1 - 0.7 && back.pos[1] < L.z1 && Math.abs(back.yaw) < 0.6 && back.focused === 'back_door', { back, L });
 check('the BBs left in the gun go back in the bag; the ones fired are spent', back.bag === home.bag + home.ammo && back.bag === bag0 - 1, { bag0, home, back });
 // F out there goes home too
 await page.evaluate(() => enterRange());

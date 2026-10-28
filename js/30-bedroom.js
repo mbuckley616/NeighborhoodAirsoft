@@ -120,13 +120,15 @@ function buildBedroomScene() {
   // Place doorway centered in that east half so it's clearly inside the bedroom.
   const BCL_DOORWAY_X = (HALL_W/2 + BR_W/2) / 2 + 0.3;   // ≈ 2.2, gives a sensible bedroom-side approach
   // v1.376 (D.74, docs/refs/landing.md): the upstairs landing south of the hall, the hallway west to Sean's room and the
-  // top of the stairs, at the real place's sizes (±0.3 m) in this room's frame
+  // top of the stairs. The guide's real sizes are an adult's; the player and the crew are kids (1.5 m), and at real size
+  // the landing read undersized and the hallway cramped (Michael, 28 Oct). So the rooms are drawn about 1.35 times the
+  // real ones, as the bedroom and its hall already are, and the furniture keeps its real size.
   const LAND = {
-    x0: -2.4, x1: 2.4, z0: BR_D/2 + HALL_D, z1: 9.6, h: 2.7,       // the landing: 4.8 x 4.7 m, a flat 2.7 m ceiling
-    recessX0: -1.4, recessX1: 1.3, recessZ: 10.35,                  // the desk recess in the south wall
-    stairX0: 1.4, stairX1: 2.4,                                     // the stairwell going south from the south wall line
-    hallZ0: 6.8, hallZ1: 7.9, hallX0: -6.9, hallH: 2.6,             // the hallway to Sean's room, off the west wall
-    winZ: 6.6, winW: 1.75, winSill: 0.85, winH: 1.35,               // the pair of windows in the east wall
+    x0: -3.3, x1: 3.3, z0: BR_D/2 + HALL_D, z1: 11.2, h: 2.9,      // the landing: 6.6 x 6.3 m (real 4.8 x 4.7), a 2.9 m ceiling
+    recessX0: -2.1, recessX1: 1.8, recessZ: 12.0,                   // the desk recess in the south wall, 3.9 x 0.8 m
+    stairX0: 1.9, stairX1: 3.3,                                     // the stairwell going south from the south wall line, 1.4 m wide
+    hallZ0: 7.4, hallZ1: 9.1, hallX0: -9.5, hallH: 2.8,             // the hallway to Sean's room, 1.7 x 6.2 m (real 1.1 x 4.5)
+    winZ: 8.25, winW: 2.1, winSill: 0.8, winH: 1.5,                 // the pair of windows in the east wall, in line with the hallway
   };
 
   // ============================================================
@@ -1448,17 +1450,17 @@ function buildBedroomScene() {
     plane(L.hallX0, L.x0, L.hallZ0, L.hallZ1, 0, carpet);
     plane(L.x0, L.x1, L.z0, L.z1, L.h, ceilMat, true);
     plane(L.recessX0, L.recessX1, L.z1, L.recessZ, L.h, ceilMat, true);
-    plane(-0.7, L.stairX1, L.z1, 11.6, L.h, ceilMat, true);
+    // (the stairwell's ceiling is with the stairs, below)
     plane(L.hallX0, L.x0, L.hallZ0, L.hallZ1, L.hallH, ceilMat, true);
 
     // North wall: the hall's opening (x -0.8..0.8) and the bifold closet at the east end
-    const clX0 = 1.0, clX1 = 2.3;
+    const clX0 = 1.4, clX1 = 3.0;
     box(L.x0 - T, -HALL_W/2, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
     box(HALL_W/2, clX0, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
     box(clX1, L.x1 + T, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
     box(-HALL_W/2, HALL_W/2, 2.1, L.h, L.z0 - T/2, L.z0 + T/2, landWall);   // over the opening
     box(clX0, clX1, 2.08, L.h, L.z0 - T/2, L.z0 + T/2, landWall);           // over the closet
-    box(clX0, clX1, 0, 2.08, 4.3, 4.35, wallCream);                         // the closet's back
+    box(clX0, clX1, 0, 2.08, L.z0 - 0.6, L.z0 - 0.55, wallCream);           // the closet's back
     const bif = buildBifoldDoor(clX1 - clX0 - 0.04, 2.05);
     bif.position.set((clX0 + clX1) / 2, 0, L.z0 + 0.03);
     scene.add(bif);
@@ -1490,8 +1492,7 @@ function buildBedroomScene() {
     box(L.x0 - T, L.recessX0, 0, L.h, L.z1, L.z1 + T, landWall);
     box(L.recessX0 - T, L.recessX0, 0, L.h, L.z1, L.recessZ, landWall);
     box(L.recessX0 - T, L.recessX1 + T, 0, L.h, L.recessZ, L.recessZ + T, landWall);
-    box(L.recessX1, L.stairX0, -3, L.h, L.z1, 10.6, landWall);
-    box(L.stairX0, L.stairX1, 2.2, L.h, L.z1 - T/2, L.z1 + T/2, landWall);   // the bulkhead over the stairs
+    box(L.stairX0, L.stairX1, 2.4, L.h, L.z1 - T/2, L.z1 + T/2, landWall);   // the bulkhead over the stairs
 
     // West wall with the hallway's opening (no door)
     box(L.x0 - T, L.x0, 0, L.h, L.z0 - T/2, L.hallZ0, landWall);
@@ -1509,14 +1510,14 @@ function buildBedroomScene() {
     box(L.x0, L.x0 + 0.015, 0, BASE, L.z0 + T/2, L.hallZ0, trimMat);
     box(L.x0, L.x0 + 0.015, 0, BASE, L.hallZ1, L.z1, trimMat);
 
-    // The hallway to Sean's room: 1.1 m wide, 4.5 m long, two shut six-panel doors at its west end
+    // The hallway to Sean's room, two shut six-panel doors at its west end
     const hz = (L.hallZ0 + L.hallZ1) / 2;
     box(L.hallX0, L.x0, 0, L.hallH, L.hallZ0 - T, L.hallZ0, landWall);
     box(L.hallX0, L.x0, 0, L.hallH, L.hallZ1, L.hallZ1 + T, landWall);
     box(L.hallX0 - T, L.hallX0, 0, L.hallH, L.hallZ0 - T, L.hallZ1 + T, landWall);
     box(L.hallX0, L.x0, 0, BASE, L.hallZ0, L.hallZ0 + 0.015, trimMat);
     box(L.hallX0, L.x0, 0, BASE, L.hallZ1 - 0.015, L.hallZ1, trimMat);
-    const seanX = -6.3;
+    const seanX = L.hallX0 + 0.65;
     const seanDoor = buildDoor(0.8, 2.03);
     seanDoor.position.set(seanX, 0, L.hallZ0 + 0.025); scene.add(seanDoor);
     addCasing(seanX - 0.43, 1.03, L.hallZ0 + 0.02, 0.05, 2.08, 'x');
@@ -1528,47 +1529,54 @@ function buildBedroomScene() {
     addCasing(L.hallX0 + 0.02, 1.03, hz + 0.43, 0.05, 2.08, 'z');
     addCasing(L.hallX0 + 0.02, 2.08, hz, 0.96, 0.08, 'z');
     // the attic hatch, the return-air grille, two recessed lights
-    box(-4.95, -4.05, L.hallH - 0.012, L.hallH, hz - 0.3, hz + 0.3, trimMat);
-    box(-4.9, -4.1, L.hallH - 0.016, L.hallH - 0.012, hz - 0.25, hz + 0.25, ceilMat);
-    box(-3.35, -2.85, L.hallH - 0.01, L.hallH, hz - 0.2, hz + 0.2, new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.8 }));
+    const hatchX = L.x0 - 3.0, grilleX = L.x0 - 0.9;
+    box(hatchX - 0.45, hatchX + 0.45, L.hallH - 0.012, L.hallH, hz - 0.3, hz + 0.3, trimMat);
+    box(hatchX - 0.4, hatchX + 0.4, L.hallH - 0.016, L.hallH - 0.012, hz - 0.25, hz + 0.25, ceilMat);
+    box(grilleX - 0.25, grilleX + 0.25, L.hallH - 0.01, L.hallH, hz - 0.2, hz + 0.2, new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.8 }));
     const canMat = new THREE.MeshStandardMaterial({ color: 0xfff8e8, emissive: 0xfff2d8, emissiveIntensity: 0.8 });
-    for (const x of [-3.8, -5.9]) {
+    for (const x of [L.x0 - 1.4, L.x0 - 4.8]) {
       const can = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.01, 16), canMat);
       can.position.set(x, L.hallH - 0.006, hz); scene.add(can);
     }
-    const hallLight = new THREE.PointLight(0xfff0dc, 0.35, 4.5, 1.6);
-    hallLight.position.set(-4.6, 2.3, hz); scene.add(hallLight);
+    const hallLight = new THREE.PointLight(0xfff0dc, 0.35, 6, 1.6);
+    hallLight.position.set(L.x0 - 3.2, L.hallH - 0.4, hz); scene.add(hallLight);
 
     // The drum light in the middle of the landing's ceiling
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.12, 20),
       new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4e0, emissiveIntensity: 0.7 }));
     drum.position.set(0, L.h - 0.06, (L.z0 + L.z1) / 2); scene.add(drum);
-    const landLight = new THREE.PointLight(0xfff0dc, 0.4, 7.5, 1.6);
+    const landLight = new THREE.PointLight(0xfff0dc, 0.45, 9, 1.6);
     landLight.position.set(0, L.h - 0.35, (L.z0 + L.z1) / 2); scene.add(landLight);
 
     // The stairs: four steps down south along the east wall to a square platform 0.76 m down, then the flight turns
     // west and goes on down out of sight (to the kitchen). A black handrail on the east wall. Not walkable: the
     // stairwell's top is an invisible wall, and E there goes out to the range.
-    const RISE = 0.19, RUN = 0.25;
+    const RISE = 0.19, RUN = 0.28, SW = L.stairX1 - L.stairX0;
+    const pz0 = L.z1 + RUN * 4, pz1 = pz0 + SW, wEnd = L.stairX0 - RUN * 8;   // the platform; the flight's last step in view
     for (let i = 0; i < 4; i++) box(L.stairX0, L.stairX1, -3, -RISE * (i + 1), L.z1 + RUN * i, L.z1 + RUN * (i + 1), carpet);
-    box(L.stairX0, L.stairX1, -3, -RISE * 4, 10.6, 11.6, carpet);
-    for (let j = 0; j < 8; j++) box(L.stairX0 - RUN * (j + 1), L.stairX0 - RUN * j, -3, -RISE * (5 + j), 10.6, 11.6, carpet);
-    box(L.stairX1, L.stairX1 + T, -3, L.h, L.z1, 11.7, landWall);   // the east wall on down
-    box(-0.7, L.stairX1 + T, -3, L.h, 11.6, 11.7, landWall);        // the stairwell's south wall
-    box(-0.8, -0.7, -3, L.h, 10.6, 11.7, landWall);                 // its west end, past the last step in view
-    box(-0.7, L.stairX0, -3, L.h, 10.5, 10.6, landWall);            // under the recess, the flight's north side
+    box(L.stairX0, L.stairX1, -3, -RISE * 4, pz0, pz1, carpet);
+    for (let j = 0; j < 8; j++) box(L.stairX0 - RUN * (j + 1), L.stairX0 - RUN * j, -3, -RISE * (5 + j), pz0, pz1, carpet);
+    box(L.recessX1, L.stairX0, -3, L.h, L.z1, pz0, landWall);          // the stairwell's west side, past the recess
+    box(L.stairX1, L.stairX1 + T, -3, L.h, L.z1, pz1 + T, landWall);   // the east wall on down
+    box(wEnd, L.stairX1 + T, -3, L.h, pz1, pz1 + T, landWall);         // the stairwell's south wall
+    box(wEnd - T, wEnd, -3, L.h, pz0, pz1 + T, landWall);              // its west end, past the last step in view
+    box(wEnd, L.stairX0, -3, L.h, pz0 - T, pz0, landWall);             // under the recess, the flight's north side
+    plane(wEnd, L.stairX1, L.z1, pz1, L.h, ceilMat, true);
     box(L.stairX0, L.stairX1, -0.02, 0, L.z1 - 0.03, L.z1, trimMat);   // the top step's nosing
-    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, Math.hypot(1.0, RISE * 4) + 0.3, 10), blackMat);
-    rail.rotation.x = Math.atan2(RISE * 4, 1.0) - Math.PI / 2;   // high at the top step, falling south
-    rail.position.set(L.stairX1 - 0.07, 0.86 - RISE * 2, L.z1 + 0.5); scene.add(rail);
+    const railRun = RUN * 4;
+    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, Math.hypot(railRun, RISE * 4) + 0.3, 10), blackMat);
+    rail.rotation.x = Math.atan2(RISE * 4, railRun) - Math.PI / 2;   // high at the top step, falling south
+    rail.position.set(L.stairX1 - 0.07, 0.86 - RISE * 2, L.z1 + railRun / 2); scene.add(rail);
 
     // The desk build: one white built-in piece filling the recess. From the east: a drawer pedestal, the first computer
     // spot, a second pedestal, the second spot, and at the west end the corner unit cut at 45° (open shelves), its top
     // the TV platform, 0.39 m over the desk. Desk tops empty (Michael).
     const DESK_Y = 0.76, DESK_D = 0.6, dz0 = L.recessZ - DESK_D;
-    box(-0.7, L.recessX1, DESK_Y - 0.035, DESK_Y, dz0, L.recessZ, deskMat);
+    const cX = L.recessX0 + 0.85, R = L.recessZ;   // the corner unit's east side; the recess's back
+    const pedE = [L.recessX1 - 0.5, L.recessX1], pedW = [cX + 1.1, cX + 1.6];   // the drawer pedestals
+    box(cX, L.recessX1, DESK_Y - 0.035, DESK_Y, dz0, L.recessZ, deskMat);
     const knob = new THREE.MeshStandardMaterial({ color: 0xb8b8b0, roughness: 0.4, metalness: 0.5 });
-    for (const [px0, px1] of [[0.88, L.recessX1], [-0.14, 0.28]]) {
+    for (const [px0, px1] of [pedE, pedW]) {
       box(px0, px1, 0, DESK_Y - 0.035, dz0 + 0.02, L.recessZ, deskMat);
       for (let k = 0; k < 3; k++) {
         const y0 = 0.06 + k * 0.215;
@@ -1576,9 +1584,9 @@ function buildBedroomScene() {
         box((px0 + px1) / 2 - 0.05, (px0 + px1) / 2 + 0.05, y0 + 0.14, y0 + 0.155, dz0 - 0.01, dz0 + 0.005, knob);
       }
     }
-    box(-0.7, L.recessX1, DESK_Y - 0.035, DESK_Y, L.recessZ - 0.015, L.recessZ, deskMat);
+    box(cX, L.recessX1, DESK_Y - 0.035, DESK_Y, L.recessZ - 0.015, L.recessZ, deskMat);
     const PLAT_Y = 1.15;
-    const cornerPts = [[-1.4, 10.35], [-0.7, 10.35], [-0.7, 9.95], [-1.0, 9.65], [-1.4, 9.65]];
+    const X0 = L.recessX0, cornerPts = [[X0, R], [cX, R], [cX, R - 0.4], [X0 + 0.5, R - 0.75], [X0, R - 0.75]];
     const cs = new THREE.Shape();
     cornerPts.forEach(([x, z], i) => (i ? cs.lineTo(x, -z) : cs.moveTo(x, -z)));
     const corner = new THREE.Mesh(new THREE.ExtrudeGeometry(cs, { depth: PLAT_Y, bevelEnabled: false }), deskMat);
@@ -1587,7 +1595,7 @@ function buildBedroomScene() {
     const shelfMat = new THREE.MeshStandardMaterial({ color: 0xc9c5bb, roughness: 0.8 });
     for (const y of [0.32, 0.78]) {
       const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.34), shelfMat);
-      sh.rotation.y = 3 * Math.PI / 4; sh.position.set(-0.85 + 0.004, y, 9.8 - 0.004); scene.add(sh);
+      sh.rotation.y = 3 * Math.PI / 4; sh.position.set((cX + X0 + 0.5) / 2 + 0.004, y, R - 0.575 - 0.004); scene.add(sh);
     }
     // Michael's TV on the platform: a CRT, facing north-east into the room
     const tv = new THREE.Group();
@@ -1598,12 +1606,12 @@ function buildBedroomScene() {
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.29),
       new THREE.MeshStandardMaterial({ color: 0x1c2a36, emissive: 0x24384a, emissiveIntensity: 0.6, roughness: 0.2 }));
     screen.position.set(0, 0.21, 0.201); tv.add(screen);
-    tv.position.set(-1.03, PLAT_Y, 10.0); tv.rotation.y = 3 * Math.PI / 4;
+    tv.position.set(X0 + 0.42, PLAT_Y, R - 0.4); tv.rotation.y = 3 * Math.PI / 4;
     scene.add(tv);
-    obstacles.push({ minX: L.recessX0, maxX: L.recessX1, minZ: 9.65, maxZ: L.recessZ, h: PLAT_Y });
+    obstacles.push({ minX: L.recessX0, maxX: L.recessX1, minZ: R - 0.75, maxZ: L.recessZ, h: PLAT_Y });
 
     // Two black office chairs at the computer spots, pulled out, facing the desk
-    const chairs = [{ x: 0.58, z: 9.3 }, { x: -0.42, z: 9.3 }];
+    const chairZ = dz0 - 0.45, chairs = [{ x: (pedW[1] + pedE[0]) / 2, z: chairZ }, { x: (cX + pedW[0]) / 2, z: chairZ }];
     for (const c of chairs) {
       const g = new THREE.Group();
       const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.08, 0.44), blackMat); seat.position.y = 0.46; g.add(seat);
@@ -1620,7 +1628,7 @@ function buildBedroomScene() {
     }
 
     // The black futon under the east windows, turned 28° from facing west toward the TV, the coffee table before it
-    const F = { x: 1.54, z: L.winZ }, fYaw = Math.atan2(-Math.cos(28 * Math.PI / 180), Math.sin(28 * Math.PI / 180));
+    const F = { x: L.x1 - 0.86, z: L.winZ }, fYaw = Math.atan2(-Math.cos(28 * Math.PI / 180), Math.sin(28 * Math.PI / 180));
     const toWorld = (lx, lz, o) => ({ x: o.x + lx * Math.cos(fYaw) + lz * Math.sin(fYaw), z: o.z - lx * Math.sin(fYaw) + lz * Math.cos(fYaw) });
     const futon = new THREE.Group();
     const fBox = (w, h, d, x, y, z, mat, rx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; futon.add(m); };
@@ -1655,7 +1663,7 @@ function buildBedroomScene() {
       { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
       { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5 },
       { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5 },
-      { x: -1.85, z: 8.75, yaw: Math.atan2(F.x + 1.85, F.z - 8.75), seatY: 0 },
+      { x: L.x0 + 0.6, z: L.hallZ1 + 0.8, yaw: Math.atan2(F.x - (L.x0 + 0.6), F.z - (L.hallZ1 + 0.8)), seatY: 0 },
     ];
     const crewSeats = [];
     const crew = crewMembers();
@@ -1770,6 +1778,6 @@ function buildBedroomScene() {
     bounds,
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
-    crewSeats: landing.crewSeats,
+    crewSeats: landing.crewSeats, landing: LAND,
   };
 }

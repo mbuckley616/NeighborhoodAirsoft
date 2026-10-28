@@ -29,14 +29,20 @@ const walk = (x, z, yaw, frames) => page.evaluate(([x, z, yaw, n]) => {
     prompt: document.getElementById('interactPrompt').textContent.trim() };
 }, [x, z, yaw, frames]);
 const s = await page.evaluate(() => [Scenes.bedroom.spawn.x, Scenes.bedroom.spawn.z]);
-const south = await walk(s[0] - 0.3, s[1], Math.PI, 150);
-check('from the spawn, walking south goes through the open door onto the landing (z past 7)', south.z > 7, south);
-const hall = await walk(-2.0, 7.35, Math.PI / 2, 300);
-check('west down the hallway you reach Sean\'s door at its end (x -6.9) and stop there', hall.x < -6.2 && hall.x > -6.9 && Math.abs(hall.z - 7.35) < 0.3, hall);
-const top = await walk(0, 8.45, -Math.PI / 2, 150);   // between the coffee table and the desk chairs
-check('east along the south wall you reach the top of the stairs, past the futon and table', top.x > 1.5 && top.x < 2.4, top);
-const down = await walk(1.9, 9.0, Math.PI, 120);
-check('and not down them: an invisible wall at the top (z stays short of 9.6)', down.z < 9.6 && down.z > 9.0, down);
+const L = await page.evaluate(() => Scenes.bedroom.landing);
+// sized for kids, not to the real (adult) measurements (Michael, 28 Oct: "remember these are meant to be children")
+check('the landing is roomy for kids: at least 6 x 6 m under a 2.8 m+ ceiling (real 4.8 x 4.7 x 2.7)',
+  L.x1 - L.x0 >= 6 && L.z1 - L.z0 >= 6 && L.h >= 2.8, L);
+check('the hallway is at least as wide as the bedroom\'s hall (1.6 m; real 1.1) and 6 m long', L.hallZ1 - L.hallZ0 >= 1.6 && L.x0 - L.hallX0 >= 6, L);
+const south = await walk(s[0] - 0.3, s[1], Math.PI, 200);
+check('from the spawn, walking south goes through the open door onto the landing (2 m past the door)', south.z > L.z0 + 2, south);
+const hz = (L.hallZ0 + L.hallZ1) / 2;
+const hall = await walk(L.x0 + 0.4, hz, Math.PI / 2, 400);
+check('west down the hallway you reach its end (Sean\'s door) and stop there', hall.x < L.hallX0 + 0.7 && hall.x > L.hallX0 && Math.abs(hall.z - hz) < 0.3, { hall, end: L.hallX0 });
+const top = await walk(0, L.z1 - 1.2, -Math.PI / 2, 200);   // between the coffee table and the desk chairs
+check('east along the south wall you reach the top of the stairs, past the futon and table', top.x > L.stairX0 && top.x < L.stairX1, { top, stairs: [L.stairX0, L.stairX1] });
+const down = await walk((L.stairX0 + L.stairX1) / 2, L.z1 - 0.6, Math.PI, 120);
+check('and not down them: an invisible wall at the top (z stays short of the top step)', down.z < L.z1 && down.z > L.z1 - 0.6, { down, top: L.z1 });
 check('there E is "Go out back (the range)"', down.focused === 'back_door' && /Go out back/.test(down.prompt), down);
 
 // the map table is the way out
@@ -57,8 +63,8 @@ const crew = await page.evaluate(() => {
 console.log('   crew:', JSON.stringify(crew.seats));
 check('five crew kids on the landing, in the order they joined', crew.seats.map(c => c.id).join() === 'diego,eric,alex,sean,nick' && crew.its.join() === crew.seats.map(c => c.id).join(), crew);
 check('the first two on the futon under the east window, the next two at the desk chairs, the fifth standing',
-  crew.seats.slice(0, 2).every(c => c.seated && c.x > 0.6 && c.z > 5.5 && c.z < 7.7) &&
-  crew.seats.slice(2, 4).every(c => c.seated && c.z > 9 && c.z < 9.6) && !crew.seats[4].seated && crew.seats.every(c => c.inScene && c.z > 4.9), crew.seats);
+  crew.seats.slice(0, 2).every(c => c.seated && c.x > L.x1 - 2 && Math.abs(c.z - L.winZ) < 1.1) &&
+  crew.seats.slice(2, 4).every(c => c.seated && c.z > L.z1 - 1 && c.z < L.z1) && !crew.seats[4].seated && crew.seats.every(c => c.inScene && c.z > L.z0), crew.seats);
 check('nobody holds a gun in the house', crew.seats.every(c => c.gun === false), crew.seats);
 const talk = await page.evaluate(() => {
   const it = Game.interactables.find(i => i.crewId === 'sean');
