@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.73: how co-op works, a friend in your bedroom and your campaign (Fable, card fable/d73-coop, 2026-10-28)**
   You asked (23 Oct) for a friend to "come over to hang out" in your bedroom and play at your side in all your
   campaign matches. It builds on the online teams that landed this morning: your game stays the referee and runs every
@@ -35,6 +37,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   A drop works as in online teams: a kid takes their place till the match ends, and they are gone from your room; if you
   leave, their game goes back to its own title. Single player is unchanged when nobody joins.
   Deep-work session recommends **1A 2A 3A 4A**.
+  Michael: **B) As A, but your friend gets the match money too (1B)**: 1B 2A 3A 4A. (2026-10-28, control room)
 
 - **D.2 step 3: a room list and a Campaign / Online / Settings title? (producer, daily sweep, 2026-10-28)**
   Online teams (step 2, v1.366 and v1.370) landed this morning: friends join a room by its four-letter code from the
@@ -49,8 +52,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Both now, ahead of co-op.**
   - D) **Not needed:** room codes on the Pickup Game board are enough; close step 3.
   Producer recommends **A**.
-
-## Answered
+  Michael: **B) After co-op, both: the title and a room list on a small matchmaker you set up.** (2026-10-28, control room)
 
 - **D.74, the landing: the builder can't see your new photos (builder, maps, 2026-10-28)**
   You chose C on D.74 ("Basically A, but I added a folder and some photos into the Google Drive folder for this game's
