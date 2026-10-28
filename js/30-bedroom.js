@@ -40,18 +40,31 @@ function paintMapTablePaper(paper) {
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
 }
 // v1.376 (D.74): a crew kid sitting on the landing's futon or a desk chair. His hips at the seat (`seatY` in metres),
-// his legs angled down from the hip to the floor in front, his hands in his lap. Starts from setKidCrouch's rest pose.
-function poseKidSeated(kid, seatY) {
+// his hands in his lap. Starts from setKidCrouch's rest pose.
+// v1.382 (B.19, Michael: "their legs phase through the futon"): the leg was one straight box from the hip to the floor,
+// through the seat and its frame. Now the thigh lies level on the seat, out past its front edge (`edge`, metres in
+// front of the hips), and a shin (the leg's own box, a second one) hangs from the knee to the shoe on the floor.
+function poseKidSeated(kid, seatY, edge = 0.2) {
   const po = kid.pose;
   if (!po) return;
   setKidCrouch(kid, 0);
-  const b = po.base, LEG = 0.55, hip = Math.min(LEG - 0.02, seatY / (kid.scaleY || 1));
-  const drop = LEG - hip, th = Math.acos(Math.min(1, hip / LEG)) + 0.25;   // a little past the floor's angle: feet forward, knees up
-  for (const [leg, shoe, x] of [[po.legL, po.shoeL, b.legL_x], [po.legR, po.shoeR, b.legR_x]]) {
-    leg.rotation.x = -th;
-    leg.position.set(x, hip - (LEG / 2) * Math.cos(th), (LEG / 2) * Math.sin(th));
-    shoe.position.set(x, b.shoe_y, LEG * Math.sin(th) + 0.02);
+  const b = po.base, LEG = 0.55, sy = kid.scaleY || 1, sxz = kid.scaleXZ || 1;
+  const hip = Math.min(LEG - 0.02, seatY / sy), drop = LEG - hip;
+  const TH = 0.18, BACK = 0.05;                        // the leg box's depth (its thickness lying down); thigh behind the hip
+  const knee = (edge + 0.015) / sxz + TH / 2;          // the shin's middle, just clear of the seat's front edge
+  const thighY = hip + TH / 2 + 0.005, thighLen = knee + TH / 2 + BACK;
+  const shinTop = thighY - TH / 2, shoeTop = b.shoe_y + 0.04, shinLen = Math.max(0.05, shinTop - shoeTop + 0.03);
+  if (!po.seatShins) {
+    po.seatShins = [po.legL, po.legR].map(leg => { const m = new THREE.Mesh(leg.geometry, leg.material); m.castShadow = true; kid.group.add(m); return m; });
   }
+  [[po.legL, po.shoeL, po.seatShins[0], b.legL_x], [po.legR, po.shoeR, po.seatShins[1], b.legR_x]].forEach(([leg, shoe, shin, x]) => {
+    leg.rotation.set(Math.PI / 2, 0, 0);               // the box's long axis forward, level
+    leg.scale.y = b.legScaleY * thighLen / LEG;
+    leg.position.set(x, thighY, thighLen / 2 - BACK);
+    shin.scale.set(1, shinLen / LEG, 1);
+    shin.position.set(x, shoeTop - 0.03 + shinLen / 2, knee);
+    shoe.position.set(x, b.shoe_y, knee + 0.04);
+  });
   po.torso.position.y = b.torso_y - drop;
   po.torso.rotation.x = -0.06;
   po.rigR.shoulder.position.set(b.shoulderR_x, b.shoulder_y - drop, 0);
@@ -130,7 +143,8 @@ function buildBedroomScene() {
   // real ones, as the bedroom and its hall already are, and the furniture keeps its real size.
   const LAND = {
     x0: -3.3, x1: 3.3, z0: BR_D/2 + HALL_D, z1: 11.2, h: 2.9,      // the landing: 6.6 x 6.3 m (real 4.8 x 4.7), a 2.9 m ceiling
-    recessX0: -2.1, recessX1: 1.8, recessZ: 12.0,                   // the desk recess in the south wall, 3.9 x 0.8 m
+    recessX0: -3.3, recessX1: 1.8, recessZ: 12.0,                   // the desk recess in the south wall, 5.1 x 0.8 m
+    // v1.382 (D.78, Michael: no bump-out): the recess runs on to the landing's west wall (it was -2.1, a 1.2 m jut)
     stairX0: 1.9, stairX1: 3.3,                                     // the stairwell going south from the south wall line, 1.4 m wide
     hallZ0: 7.4, hallZ1: 9.1, hallX0: -9.5, hallH: 2.8,             // the hallway to Sean's room, 1.7 x 6.2 m (real 1.1 x 4.5)
     winZ: 8.25, winW: 2.1, winSill: 0.8, winH: 1.5,                 // the pair of windows in the east wall, in line with the hallway
@@ -1548,15 +1562,13 @@ function buildBedroomScene() {
     outside.rotation.y = -Math.PI / 2; outside.position.set(L.x1 + 2.0, 1.5, L.winZ);
     scene.add(outside);
 
-    // South wall: west of the recess; the recess (west jut, back, east side); the stairwell beyond it
-    box(L.x0 - T, L.recessX0, 0, L.h, L.z1, L.z1 + T, landWall);
-    box(L.recessX0 - T, L.recessX0, 0, L.h, L.z1, L.recessZ, landWall);
+    // South wall: the recess's back (v1.382: from the west wall, no jut), the stairwell beyond it
     box(L.recessX0 - T, L.recessX1 + T, 0, L.h, L.recessZ, L.recessZ + T, landWall);
     box(L.stairX0, L.stairX1, 2.4, L.h, L.z1 - T/2, L.z1 + T/2, landWall);   // the bulkhead over the stairs
 
     // West wall with the hallway's opening (no door)
     box(L.x0 - T, L.x0, 0, L.h, L.z0 - T/2, L.hallZ0, landWall);
-    box(L.x0 - T, L.x0, 0, L.h, L.hallZ1, L.z1 + T, landWall);
+    box(L.x0 - T, L.x0, 0, L.h, L.hallZ1, L.recessZ + T, landWall);   // v1.382: on past the recess's end
     box(L.x0 - T, L.x0, 2.1, L.h, L.hallZ0, L.hallZ1, landWall);
     addCasing(L.x0 + 0.01, 1.04, L.hallZ0, 0.05, 2.12, 'z');
     addCasing(L.x0 + 0.01, 1.04, L.hallZ1, 0.05, 2.12, 'z');
@@ -1566,7 +1578,6 @@ function buildBedroomScene() {
     box(L.x0, -HALL_W/2, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
     box(HALL_W/2, clX0, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
     box(L.x1 - 0.015, L.x1, 0, BASE, L.z0 + T/2, L.z1, trimMat);
-    box(L.x0, L.recessX0, 0, BASE, L.z1 - 0.015, L.z1, trimMat);
     box(L.x0, L.x0 + 0.015, 0, BASE, L.z0 + T/2, L.hallZ0, trimMat);
     box(L.x0, L.x0 + 0.015, 0, BASE, L.hallZ1, L.z1, trimMat);
 
@@ -1631,9 +1642,10 @@ function buildBedroomScene() {
     // The desk build: one white built-in piece filling the recess. From the east: a drawer pedestal, the first computer
     // spot, a second pedestal, the second spot, and at the west end the corner unit cut at 45° (open shelves), its top
     // the TV platform, 0.39 m over the desk. Desk tops empty (Michael).
+    // v1.382 (D.78): the build runs to the west wall, the corner unit in the corner; the second pedestal stands midway.
     const DESK_Y = 0.76, DESK_D = 0.6, dz0 = L.recessZ - DESK_D;
     const cX = L.recessX0 + 0.85, R = L.recessZ;   // the corner unit's east side; the recess's back
-    const pedE = [L.recessX1 - 0.5, L.recessX1], pedW = [cX + 1.1, cX + 1.6];   // the drawer pedestals
+    const pedE = [L.recessX1 - 0.5, L.recessX1], pedWx = (cX + pedE[0]) / 2, pedW = [pedWx - 0.25, pedWx + 0.25];   // the drawer pedestals
     box(cX, L.recessX1, DESK_Y - 0.035, DESK_Y, dz0, L.recessZ, deskMat);
     const knob = new THREE.MeshStandardMaterial({ color: 0xb8b8b0, roughness: 0.4, metalness: 0.5 });
     for (const [px0, px1] of [pedE, pedW]) {
@@ -1687,8 +1699,12 @@ function buildBedroomScene() {
       obstacles.push({ minX: c.x - 0.25, maxX: c.x + 0.25, minZ: c.z - 0.27, maxZ: c.z + 0.23, h: 1.05 });
     }
 
-    // The black futon under the east windows, turned 28° from facing west toward the TV, the coffee table before it
-    const F = { x: L.x1 - 0.86, z: L.winZ }, fYaw = Math.atan2(-Math.cos(28 * Math.PI / 180), Math.sin(28 * Math.PI / 180));
+    // The black futon, the coffee table before it
+    // v1.382 (D.78, Michael: "more to the center of the room, facing the TV"): out from under the east windows to the
+    // middle, square to the TV in the south-west corner; the walk from the bedroom's door to the stairs passes east of
+    // it, the one to Sean's hallway west of it. The table is the futon's width (1.8 x 0.9 m, was 0.9 x 0.45).
+    const F = { x: -0.5, z: 8.4 }, tvAt = { x: L.recessX0 + 0.42, z: L.recessZ - 0.4 };
+    const fYaw = Math.atan2(tvAt.x - F.x, tvAt.z - F.z);
     const toWorld = (lx, lz, o) => ({ x: o.x + lx * Math.cos(fYaw) + lz * Math.sin(fYaw), z: o.z - lx * Math.sin(fYaw) + lz * Math.cos(fYaw) });
     const futon = new THREE.Group();
     const fBox = (w, h, d, x, y, z, mat, rx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; futon.add(m); };
@@ -1702,27 +1718,33 @@ function buildBedroomScene() {
     futon.position.set(F.x, 0, F.z); futon.rotation.y = fYaw;
     scene.add(futon);
     const table = new THREE.Group();
-    const top = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.45), blackMat); top.position.y = 0.42; table.add(top);
-    const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.02, 0.4), blackMat); shelf.position.y = 0.12; table.add(shelf);
+    const TW = 1.8, TD = 0.9;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(TW, 0.04, TD), blackMat); top.position.y = 0.42; table.add(top);
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.08, 0.02, TD - 0.08), blackMat); shelf.position.y = 0.12; table.add(shelf);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.42, 0.04), blackMat); leg.position.set(sx * 0.42, 0.21, sz * 0.2); table.add(leg);
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), blackMat); leg.position.set(sx * (TW / 2 - 0.04), 0.21, sz * (TD / 2 - 0.04)); table.add(leg);
     }
-    const T0 = toWorld(0, 1.0, F);
+    const T0 = toWorld(0, 1.3, F);
     table.position.set(T0.x, 0, T0.z); table.rotation.y = fYaw;
     scene.add(table);
-    // their footprints, as the boxes round them
-    const aabb = (o, hw, hd, h) => {
-      const ex = hw * Math.abs(Math.cos(fYaw)) + hd * Math.abs(Math.sin(fYaw)), ez = hw * Math.abs(Math.sin(fYaw)) + hd * Math.abs(Math.cos(fYaw));
-      return { minX: o.x - ex, maxX: Math.min(L.x1, o.x + ex), minZ: o.z - ez, maxZ: o.z + ez, h };
+    // their footprints: turned 45° in the room, one box round each would block a square half again as big, so each
+    // is a row of boxes along its length (v1.382)
+    const footprint = (o, hw, hd, h, n) => {
+      for (let k = 0; k < n; k++) {
+        const c = toWorld(-hw + (k + 0.5) * (2 * hw / n), 0, o), sw = hw / n;
+        const ex = sw * Math.abs(Math.cos(fYaw)) + hd * Math.abs(Math.sin(fYaw)), ez = sw * Math.abs(Math.sin(fYaw)) + hd * Math.abs(Math.cos(fYaw));
+        obstacles.push({ minX: c.x - ex, maxX: c.x + ex, minZ: c.z - ez, maxZ: c.z + ez, h });
+      }
     };
-    obstacles.push(aabb(F, 0.95, 0.42, 0.95), aabb(T0, 0.45, 0.225, 0.44));
+    footprint(F, 0.95, 0.42, 0.95, 4);
+    footprint(T0, TW / 2, TD / 2, 0.44, 4);
 
     // The crew, in the order they joined: two on the futon, two at the desk chairs, the fifth by the hallway
     const seats = [
-      { ...toWorld(-0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
-      { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
-      { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5 },
-      { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5 },
+      { ...toWorld(-0.45, 0.06, F), yaw: fYaw, seatY: 0.44, edge: 0.33 },   // v1.382 (B.19): the seat's front edge 0.33 m before the hips
+      { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44, edge: 0.33 },
+      { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5, edge: 0.2 },
+      { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5, edge: 0.2 },
       { x: L.x0 + 0.6, z: L.hallZ1 + 0.8, yaw: Math.atan2(F.x - (L.x0 + 0.6), F.z - (L.hallZ1 + 0.8)), seatY: 0 },
     ];
     const crewSeats = [];
@@ -1732,11 +1754,11 @@ function buildBedroomScene() {
       if (!s || !ch) return;
       const kid = createKid(ch, CREW_GUNS[id] || 'pistol');
       kid.gunGroup.visible = false;   // no guns in the house
-      if (s.seatY) poseKidSeated(kid, s.seatY); else setKidCrouch(kid, 0);
+      if (s.seatY) poseKidSeated(kid, s.seatY, s.edge); else setKidCrouch(kid, 0);
       kid.group.position.set(s.x, 0, s.z); kid.group.rotation.y = s.yaw;
       scene.add(kid.group);
       if (!s.seatY) obstacles.push({ minX: s.x - 0.25, maxX: s.x + 0.25, minZ: s.z - 0.25, maxZ: s.z + 0.25, h: 1.6 });
-      crewSeats.push({ id, x: s.x, z: s.z, seated: !!s.seatY, group: kid.group });
+      crewSeats.push({ id, x: s.x, z: s.z, seated: !!s.seatY, group: kid.group, onFuton: i < 2 });
       const it = {
         type: 'crew_kid', crewId: id, line: -1,
         box: new THREE.Box3().setFromObject(kid.group),
@@ -1759,7 +1781,7 @@ function buildBedroomScene() {
       action: () => enterRange(),
     });
     return {
-      obstacles, crewSeats,
+      obstacles, crewSeats, futon, table,   // v1.382: the tests look at them
       stairsSpawn: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 0, stairsZ), stairsYaw: 0.35,   // facing into the landing
     };
   }
@@ -1838,7 +1860,7 @@ function buildBedroomScene() {
     bounds,
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
-    crewSeats: landing.crewSeats, landing: LAND,
+    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table,
     vault: { wallH: BR_H, ridgeH: BR_RIDGE, dormerH: AL_H, winTop: WIN_BOTTOM + WIN_H + WIN_W / 2 },   // v1.378
   };
 }
