@@ -1245,6 +1245,16 @@
     background: #1d2614; color: #b9c7a6; border: 1px solid #1d2614; }
   #modalBody .ph-ask button[data-yes="0"] { background: transparent; color: #1d2614; }
   #modalBody .ph-ask.ph-later { font-weight: normal; opacity: 0.75; }
+  /* v1.380 (D.73): co-op, from the phone */
+  #modalBody .ph-coop-btn { margin: 0 0 8px; justify-content: center; }
+  #modalBody .ph-coop-btn button { background: #b9c7a6; color: #1d2614; border-color: #b9c7a6; }
+  #modalBody .ph-coop .ph-text, #modalBody .ph-coop .ph-ask { margin: 6px 0; }
+  #modalBody .ph-coop-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; margin: 6px 0; }
+  #modalBody .ph-coop-in { font: inherit; font-size: 12px; padding: 2px 5px; width: 9em; background: #d3dcc4; color: #1d2614; border: 1px solid #5d6a52; }
+  #modalBody .ph-coop-code { width: 4.5em; text-transform: uppercase; letter-spacing: .2em; }
+  #modalBody .ph-coop-code-big { font-size: 34px; letter-spacing: .3em; font-weight: bold; text-align: center; margin: 4px 0; }
+  #modalBody .ph-coop-err { font-size: 11px; color: #8a1d10; font-weight: bold; margin: 4px 0; }
+  #modalBody .ph-coop-small { font-size: 10px; opacity: .7; margin: 6px 0; }
 
   /* === LOADOUT SCREEN === */
   #loadoutScreen .loadout-card, #mirrorScreen .loadout-card {   /* v1.107: the mirror shares the card */
@@ -3125,6 +3135,7 @@
 <script src="js/90-progression.js"></script>
 <script src="js/92-summer-crew.js"></script>
 <script src="js/94-pickup-online.js"></script>
+<script src="js/95-coop.js"></script>
 <script src="js/96-phone.js"></script>
 <script src="js/97-map-screen.js"></script>
 <script src="js/98-boot.js"></script>

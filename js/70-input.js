@@ -95,8 +95,10 @@ document.addEventListener('keydown', e => {
   // E to interact (bedroom)
   if (e.code === 'KeyX' && Game.mode === 'bedroom' && !e.repeat) skipRoomTour();   // v1.357 (D.76)
   if (e.code === 'KeyE' && Game.mode === 'bedroom' && Game.focusedInteractable) {
-    roomTourUse(Game.focusedInteractable);   // v1.357 (D.76)
-    Game.focusedInteractable.action();
+    if (!(Net.active && Net.coop && coopBlocks(Game.focusedInteractable))) {   // v1.380 (D.73): at a friend's, only he starts matches, shops...
+      roomTourUse(Game.focusedInteractable);   // v1.357 (D.76)
+      Game.focusedInteractable.action();
+    }
   } else if (e.code === 'KeyE' && Game.mode === 'scenario' && Game.scenario.range && !e.repeat) rangeUse();   // v1.257 (D.40): one press, one use
   // v1.249 (D.36): V swings the pool noodle, if you carry one
   if (e.code === 'KeyV' && Game.mode === 'scenario' && !e.repeat) startNoodleSwing();
