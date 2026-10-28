@@ -1075,8 +1075,9 @@ const ROOM_TOUR = [
     text: 'The computer is airsoft.com: guns, BBs and gear, paid for with what you win.' },
   { key: 'bed',      name: 'Bed',        is: it => it.icon === 'bed',
     text: 'Your bed shows how the summer’s going. The game saves itself as you play.' },
-  { key: 'door',     name: 'Front door', is: it => it.label === 'Outside' || it.label === 'Map', onUse: true,
-    text: 'The front door you’re by is the way outside: every match starts out there. The map table opens the same map.' },
+  // v1.376 (D.74, Michael: matches from the map table only): the step is the map table's; the key stays for old saves
+  { key: 'door',     name: 'Map table',  is: it => it.label === 'Map', onUse: true,
+    text: 'The map table is the way out: every match starts from its map. The stairs on the landing go down to the backyard range.' },
 ];
 const ROOM_TOUR_DONE_HOLD = 5;   // seconds the "that's the room" line stays up
 function roomTourActive() {

@@ -39,6 +39,44 @@ function paintMapTablePaper(paper) {
   };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
 }
+// v1.376 (D.74): a crew kid sitting on the landing's futon or a desk chair. His hips at the seat (`seatY` in metres),
+// his legs angled down from the hip to the floor in front, his hands in his lap. Starts from setKidCrouch's rest pose.
+function poseKidSeated(kid, seatY) {
+  const po = kid.pose;
+  if (!po) return;
+  setKidCrouch(kid, 0);
+  const b = po.base, LEG = 0.55, hip = Math.min(LEG - 0.02, seatY / (kid.scaleY || 1));
+  const drop = LEG - hip, th = Math.acos(Math.min(1, hip / LEG)) + 0.25;   // a little past the floor's angle: feet forward, knees up
+  for (const [leg, shoe, x] of [[po.legL, po.shoeL, b.legL_x], [po.legR, po.shoeR, b.legR_x]]) {
+    leg.rotation.x = -th;
+    leg.position.set(x, hip - (LEG / 2) * Math.cos(th), (LEG / 2) * Math.sin(th));
+    shoe.position.set(x, b.shoe_y, LEG * Math.sin(th) + 0.02);
+  }
+  po.torso.position.y = b.torso_y - drop;
+  po.torso.rotation.x = -0.06;
+  po.rigR.shoulder.position.set(b.shoulderR_x, b.shoulder_y - drop, 0);
+  po.rigL.shoulder.position.set(b.shoulderL_x, b.shoulder_y - drop, 0);
+  for (const rig of [po.rigR, po.rigL]) { rig.shoulder.rotation.x = -0.45; rig.elbow.rotation.x = -0.9; }
+  po.neck.position.y = b.neck_y - drop;
+  po.head.position.y = b.head_y - drop;
+  if (po.hair) po.hair.position.y = b.hair_y - drop;
+  if (po.headExtras) for (const ex of po.headExtras) ex.mesh.position.y = ex.baseY - drop;
+}
+// v1.376 (D.74, Michael: A): what each crew kid says when you walk up to him on the landing and press E, a line a press
+const CREW_HOME_LINES = {
+  eric:  ['“Again? I’m ready when you are.”', '“I’ve been reading the map. Seth’s crew always comes up the same side.”', '“Your TV’s tiny, man.”'],
+  sean:  ['“I’ve been working on my aim. Don’t laugh.”', '“The AK’s loud, but nobody argues with it.”', '“Is there any more of that pizza?”'],
+  nick:  ['“You gotta keep moving, dude. That’s the whole secret.”', '“I’d sit in a bush all day with the AR if you let me.”', '“This futon is way comfier than it looks.”'],
+  alex:  ['“Andrew says hey. He still thinks you got lucky.”', '“Two lives each next time? I’m just saying.”', '“Whose turn is it on the computer?”'],
+  diego: ['“Tch. Fernando wants a rematch. Let him wait.”', '“The MP5 eats BBs. Worth it.”', '“Don’t tell anyone I fell asleep on your futon.”'],
+};
+function crewHomeTalk(it) {
+  const lines = CREW_HOME_LINES[it.crewId] || ['“Hey.”'];
+  it.line = (it.line + 1) % lines.length;
+  const name = (CHARACTERS[it.crewId] || {}).name || '';
+  it.prompt = `${name}: ${lines[it.line]}`;
+  if (typeof kidSayLine === 'function') kidSayLine({ pos: it.pos, charId: it.crewId }, lines[it.line].replace(/[“”]/g, ''));
+}
 function buildBedroomScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x9bbfe0);   // soft daylight sky as backdrop
@@ -81,6 +119,15 @@ function buildBedroomScene() {
   // South-wall stretch east of the hallway is x ∈ [HALL_W/2, BR_W/2] = [0.8, 3.0]
   // Place doorway centered in that east half so it's clearly inside the bedroom.
   const BCL_DOORWAY_X = (HALL_W/2 + BR_W/2) / 2 + 0.3;   // ≈ 2.2, gives a sensible bedroom-side approach
+  // v1.376 (D.74, docs/refs/landing.md): the upstairs landing south of the hall, the hallway west to Sean's room and the
+  // top of the stairs, at the real place's sizes (±0.3 m) in this room's frame
+  const LAND = {
+    x0: -2.4, x1: 2.4, z0: BR_D/2 + HALL_D, z1: 9.6, h: 2.7,       // the landing: 4.8 x 4.7 m, a flat 2.7 m ceiling
+    recessX0: -1.4, recessX1: 1.3, recessZ: 10.35,                  // the desk recess in the south wall
+    stairX0: 1.4, stairX1: 2.4,                                     // the stairwell going south from the south wall line
+    hallZ0: 6.8, hallZ1: 7.9, hallX0: -6.9, hallH: 2.6,             // the hallway to Sean's room, off the west wall
+    winZ: 6.6, winW: 1.75, winSill: 0.85, winH: 1.35,               // the pair of windows in the east wall
+  };
 
   // ============================================================
   // MATERIALS
@@ -259,8 +306,7 @@ function buildBedroomScene() {
   hclDoorHeader.position.set(HALL_W/2, 2.1 + (BR_H - 2.1)/2, hclDoorZ);
   scene.add(hclDoorHeader);
 
-  // Hall south wall (player's "back" when entering)
-  addWall(0, hallSouthZ, HALL_W, 'x');
+  // v1.376 (D.74): the hall's south end is open onto the landing (its door stands open, below)
 
   // ============================================================
   // BATHROOM + HALL CLOSET (blocked interior walls — just enough to render)
@@ -413,14 +459,12 @@ function buildBedroomScene() {
   scene.add(bclDoor);
 
   // Bedroom suite entry door — at the SOUTH END of the hall, where the player spawns.
-  // This is the door you'd walk through coming from the rest of the house.
-  // For now it's non-functional / closed; just visible architecture.
-  // Hinge on the east edge, swings open into the hall (north + west).
-  // For simplicity, render it as a closed door across the hall opening.
-  const entryDoorW = HALL_W * 0.95;
+  // v1.376 (D.74, Michael: the real door between his room and the landing): drawn open, hinged on the east jamb and
+  // swung out against the landing side, so the hall walks straight through onto the landing.
+  const entryDoorW = 0.82;
   const entryDoor = buildDoor(entryDoorW, 2.05);
-  entryDoor.position.set(0, 0, hallSouthZ - 0.025);
-  entryDoor.rotation.y = 0;             // closed across the south end of the hall
+  entryDoor.position.set(HALL_W/2 - 0.03, 0, hallSouthZ + entryDoorW/2 + 0.03);
+  entryDoor.rotation.y = Math.PI / 2;   // open: the slab lies north-south along the opening's east edge
   scene.add(entryDoor);
   // Casing for the entry door
   const entryCasingL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.10, 0.08), trimMat);
@@ -443,20 +487,8 @@ function buildBedroomScene() {
   addCasing(-HALL_W/2 - 0.02, 1.025, bathDoorTop, 0.05, 2.10, 'z');
   addCasing(-HALL_W/2 - 0.02, 1.025, bathDoorBot, 0.05, 2.10, 'z');
   addCasing(-HALL_W/2 - 0.02, 2.10, bathDoorZ, bathDoorW + 0.1, 0.08, 'z');
-  // v1.257 (D.40, Michael: A): the back door, on the hall's west wall between the bathroom and the entry door; it
-  // goes out to the backyard range. Drawn closed against the wall, as the entry door is, with a glass panel.
-  const backDoorZ = (bathDoorBot + hallSouthZ) / 2, backDoorW = 0.8;
-  const backDoor = buildDoor(backDoorW * 0.95, 2.05);
-  backDoor.position.set(-HALL_W/2 + 0.03, 0, backDoorZ);
-  backDoor.rotation.y = -Math.PI / 2;
-  scene.add(backDoor);
-  const backGlass = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.6, 0.42),
-    new THREE.MeshStandardMaterial({ color: 0xbfe0f0, emissive: 0x6a9ab8, emissiveIntensity: 0.5, roughness: 0.2 }));
-  backGlass.position.set(-HALL_W/2 + 0.075, 1.45, backDoorZ);
-  scene.add(backGlass);
-  addCasing(-HALL_W/2 + 0.02, 1.025, backDoorZ - backDoorW/2, 0.05, 2.10, 'z');
-  addCasing(-HALL_W/2 + 0.02, 1.025, backDoorZ + backDoorW/2, 0.05, 2.10, 'z');
-  addCasing(-HALL_W/2 + 0.02, 2.10, backDoorZ, backDoorW + 0.1, 0.08, 'z');
+  // v1.376 (D.74, Michael 28 Oct): v1.257's back door is gone (the real house had none there); the hall's west wall is
+  // plain, and the way to the range is the stairs at the landing's south-east corner (buildLanding, below).
   // Hall closet casing (bifold)
   addCasing(HALL_W/2 + 0.02, 1.025, hclDoorTop, 0.05, 2.10, 'z');
   addCasing(HALL_W/2 + 0.02, 1.025, hclDoorBot, 0.05, 2.10, 'z');
@@ -1306,29 +1338,10 @@ function buildBedroomScene() {
     action: () => openWorkbench(),
   });
 
-  // v1.88: the hall's entry door goes outside (backlog A.1, Michael chose A). The one
-  // itch.io complaint was "cant go outside": the door you spawn with your back to was a
-  // wall with no prompt. It now opens the world map, same as the map table (which stays).
-  // Its trigger sits just inside the door, so at spawn it is the nearest interactable
-  // and "Go outside" is the first prompt a new player sees.
-  Game.interactables.push({
-    type: 'front_door',
-    box: new THREE.Box3().setFromObject(entryDoor),
-    pos: new THREE.Vector3(HALL_X, 1.0, hallSouthZ - 0.3),
-    prompt: 'Go outside',
-    label: 'Outside', icon: 'outside', labelY: 2.0,
-    action: () => openMap(),
-  });
-
-  // v1.257 (D.40): the back door → the backyard range
-  Game.interactables.push({
-    type: 'back_door',
-    box: new THREE.Box3().setFromObject(backDoor),
-    pos: new THREE.Vector3(-HALL_W/2 + 0.4, 1.0, backDoorZ),
-    prompt: 'Go out back (the range)',
-    label: 'Backyard', icon: 'outside', labelY: 1.6,
-    action: () => enterRange(),
-  });
+  // v1.376 (D.74, Michael 28 Oct: "from the map table only"): v1.88's "Go outside" on the hall's entry door is gone;
+  // that door is open onto the landing now, and every match starts from the map table. The range's way out (v1.257's
+  // `back_door`) moved to the top of the stairs: buildLanding pushes it, with the crew.
+  const landing = buildLanding();
 
   // Bathroom door → placeholder
   Game.interactables.push({
@@ -1389,6 +1402,301 @@ function buildBedroomScene() {
   });
 
   // ============================================================
+  // v1.376 (D.74, Michael: A, from his photos and floor plan in docs/refs/landing.md): THE LANDING
+  // ============================================================
+  // The common room outside his room: tan walls, beige carpet, white trim; the white built-in desk in the south wall's
+  // recess with the TV platform at its west end (the corner unit cut at 45°, a CRT on top facing the room), two black
+  // office chairs, the desk tops empty (Michael); the black futon under the east windows turned toward the TV with
+  // the black coffee table; a bifold closet; the hallway west to Sean's room (both doors shut); the stairs down in the
+  // south-east corner, no door, an invisible wall at the top and E there for the backyard range. The kids you have
+  // taken into your crew are here, in the order they joined: the futon, the desk chairs, then by the hallway.
+  function buildLanding() {
+    const L = LAND;
+    const landWall = new THREE.MeshStandardMaterial({ color: 0xd8c4ae, roughness: 0.95 });
+    const carpet = new THREE.MeshStandardMaterial({ color: 0xc8beb2, roughness: 1.0 });   // the guide's #d4ccc2, a touch down for the sun on the floor
+    const deskMat = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: 0.6 });
+    const blackMat = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.7 });
+    const futonMat = new THREE.MeshStandardMaterial({ color: 0x1e1e22, roughness: 0.95 });
+    const obstacles = [];
+    // The room's sun comes in from the north through the bedroom window and, with no shadows, through every wall: a
+    // face turned north out here would be in full sun. Those faces take the colour at half, about what the rest of the
+    // landing gets from its own light.
+    const _north = new Map();
+    const northFaced = mat => {
+      if (!_north.has(mat)) { const m = mat.clone(); m.color.multiplyScalar(0.5); _north.set(mat, [mat, mat, mat, mat, mat, m]); }
+      return _north.get(mat);
+    };
+    // an axis-aligned box from its extents
+    function box(x0, x1, y0, y1, z0, z1, mat) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), mat.isMaterial ? northFaced(mat) : mat);
+      m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+      scene.add(m);
+      return m;
+    }
+    function plane(x0, x1, z0, z1, y, mat, down) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), mat);
+      m.rotation.x = down ? Math.PI / 2 : -Math.PI / 2;
+      m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
+      scene.add(m);
+      return m;
+    }
+    const T = 0.1, BASE = 0.12;   // wall thickness; baseboard height
+
+    // Floors and ceilings: the landing, the recess, the hallway, the stairwell's ceiling
+    plane(L.x0, L.x1, L.z0, L.z1, 0, carpet);
+    plane(L.recessX0, L.recessX1, L.z1, L.recessZ, 0, carpet);
+    plane(L.hallX0, L.x0, L.hallZ0, L.hallZ1, 0, carpet);
+    plane(L.x0, L.x1, L.z0, L.z1, L.h, ceilMat, true);
+    plane(L.recessX0, L.recessX1, L.z1, L.recessZ, L.h, ceilMat, true);
+    plane(-0.7, L.stairX1, L.z1, 11.6, L.h, ceilMat, true);
+    plane(L.hallX0, L.x0, L.hallZ0, L.hallZ1, L.hallH, ceilMat, true);
+
+    // North wall: the hall's opening (x -0.8..0.8) and the bifold closet at the east end
+    const clX0 = 1.0, clX1 = 2.3;
+    box(L.x0 - T, -HALL_W/2, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
+    box(HALL_W/2, clX0, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
+    box(clX1, L.x1 + T, 0, L.h, L.z0 - T/2, L.z0 + T/2, landWall);
+    box(-HALL_W/2, HALL_W/2, 2.1, L.h, L.z0 - T/2, L.z0 + T/2, landWall);   // over the opening
+    box(clX0, clX1, 2.08, L.h, L.z0 - T/2, L.z0 + T/2, landWall);           // over the closet
+    box(clX0, clX1, 0, 2.08, 4.3, 4.35, wallCream);                         // the closet's back
+    const bif = buildBifoldDoor(clX1 - clX0 - 0.04, 2.05);
+    bif.position.set((clX0 + clX1) / 2, 0, L.z0 + 0.03);
+    scene.add(bif);
+    addCasing(clX0, 1.04, L.z0 + 0.03, 0.05, 2.08, 'x');
+    addCasing(clX1, 1.04, L.z0 + 0.03, 0.05, 2.08, 'x');
+    addCasing((clX0 + clX1) / 2, 2.1, L.z0 + 0.03, clX1 - clX0 + 0.1, 0.08, 'x');
+    addCasing(-HALL_W/2, 1.04, L.z0 + 0.03, 0.05, 2.12, 'x');
+    addCasing(HALL_W/2, 1.04, L.z0 + 0.03, 0.05, 2.12, 'x');
+    addCasing(0, 2.12, L.z0 + 0.03, HALL_W + 0.1, 0.08, 'x');
+
+    // East wall with the pair of double-hung windows; trees outside, as through the bedroom window
+    const wz0 = L.winZ - L.winW/2, wz1 = L.winZ + L.winW/2, wTop = L.winSill + L.winH;
+    box(L.x1, L.x1 + T, 0, L.h, L.z0 - T/2, wz0, landWall);
+    box(L.x1, L.x1 + T, 0, L.h, wz1, L.z1, landWall);
+    box(L.x1, L.x1 + T, 0, L.winSill, wz0, wz1, landWall);
+    box(L.x1, L.x1 + T, wTop, L.h, wz0, wz1, landWall);
+    const glass = new THREE.Mesh(new THREE.PlaneGeometry(L.winW, L.winH),
+      new THREE.MeshStandardMaterial({ color: 0xdcefff, transparent: true, opacity: 0.18, roughness: 0.1 }));
+    glass.rotation.y = -Math.PI / 2; glass.position.set(L.x1 + 0.05, L.winSill + L.winH/2, L.winZ);
+    scene.add(glass);
+    for (const z of [wz0, L.winZ, wz1]) box(L.x1 - 0.03, L.x1 + 0.06, L.winSill, wTop, z - 0.04, z + 0.04, trimMat);   // jambs and the middle post
+    for (const y of [L.winSill, L.winSill + L.winH/2, wTop]) box(L.x1 - 0.03, L.x1 + 0.06, y - 0.035, y + 0.035, wz0, wz1, trimMat);   // sill, meeting rails, head
+    box(L.x1 - 0.08, L.x1, L.winSill - 0.05, L.winSill - 0.01, wz0 - 0.08, wz1 + 0.08, trimMat);   // the stool
+    const outside = new THREE.Mesh(new THREE.PlaneGeometry(6, 4.5), new THREE.MeshBasicMaterial({ map: outsideTex }));
+    outside.rotation.y = -Math.PI / 2; outside.position.set(L.x1 + 2.0, 1.5, L.winZ);
+    scene.add(outside);
+
+    // South wall: west of the recess; the recess (west jut, back, east side); the stairwell beyond it
+    box(L.x0 - T, L.recessX0, 0, L.h, L.z1, L.z1 + T, landWall);
+    box(L.recessX0 - T, L.recessX0, 0, L.h, L.z1, L.recessZ, landWall);
+    box(L.recessX0 - T, L.recessX1 + T, 0, L.h, L.recessZ, L.recessZ + T, landWall);
+    box(L.recessX1, L.stairX0, -3, L.h, L.z1, 10.6, landWall);
+    box(L.stairX0, L.stairX1, 2.2, L.h, L.z1 - T/2, L.z1 + T/2, landWall);   // the bulkhead over the stairs
+
+    // West wall with the hallway's opening (no door)
+    box(L.x0 - T, L.x0, 0, L.h, L.z0 - T/2, L.hallZ0, landWall);
+    box(L.x0 - T, L.x0, 0, L.h, L.hallZ1, L.z1 + T, landWall);
+    box(L.x0 - T, L.x0, 2.1, L.h, L.hallZ0, L.hallZ1, landWall);
+    addCasing(L.x0 + 0.01, 1.04, L.hallZ0, 0.05, 2.12, 'z');
+    addCasing(L.x0 + 0.01, 1.04, L.hallZ1, 0.05, 2.12, 'z');
+    addCasing(L.x0 + 0.01, 2.12, (L.hallZ0 + L.hallZ1) / 2, L.hallZ1 - L.hallZ0 + 0.1, 0.08, 'z');
+
+    // Baseboards
+    box(L.x0, -HALL_W/2, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
+    box(HALL_W/2, clX0, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
+    box(L.x1 - 0.015, L.x1, 0, BASE, L.z0 + T/2, L.z1, trimMat);
+    box(L.x0, L.recessX0, 0, BASE, L.z1 - 0.015, L.z1, trimMat);
+    box(L.x0, L.x0 + 0.015, 0, BASE, L.z0 + T/2, L.hallZ0, trimMat);
+    box(L.x0, L.x0 + 0.015, 0, BASE, L.hallZ1, L.z1, trimMat);
+
+    // The hallway to Sean's room: 1.1 m wide, 4.5 m long, two shut six-panel doors at its west end
+    const hz = (L.hallZ0 + L.hallZ1) / 2;
+    box(L.hallX0, L.x0, 0, L.hallH, L.hallZ0 - T, L.hallZ0, landWall);
+    box(L.hallX0, L.x0, 0, L.hallH, L.hallZ1, L.hallZ1 + T, landWall);
+    box(L.hallX0 - T, L.hallX0, 0, L.hallH, L.hallZ0 - T, L.hallZ1 + T, landWall);
+    box(L.hallX0, L.x0, 0, BASE, L.hallZ0, L.hallZ0 + 0.015, trimMat);
+    box(L.hallX0, L.x0, 0, BASE, L.hallZ1 - 0.015, L.hallZ1, trimMat);
+    const seanX = -6.3;
+    const seanDoor = buildDoor(0.8, 2.03);
+    seanDoor.position.set(seanX, 0, L.hallZ0 + 0.025); scene.add(seanDoor);
+    addCasing(seanX - 0.43, 1.03, L.hallZ0 + 0.02, 0.05, 2.08, 'x');
+    addCasing(seanX + 0.43, 1.03, L.hallZ0 + 0.02, 0.05, 2.08, 'x');
+    addCasing(seanX, 2.08, L.hallZ0 + 0.02, 0.96, 0.08, 'x');
+    const endDoor = buildDoor(0.8, 2.03);
+    endDoor.rotation.y = Math.PI / 2; endDoor.position.set(L.hallX0 + 0.025, 0, hz); scene.add(endDoor);
+    addCasing(L.hallX0 + 0.02, 1.03, hz - 0.43, 0.05, 2.08, 'z');
+    addCasing(L.hallX0 + 0.02, 1.03, hz + 0.43, 0.05, 2.08, 'z');
+    addCasing(L.hallX0 + 0.02, 2.08, hz, 0.96, 0.08, 'z');
+    // the attic hatch, the return-air grille, two recessed lights
+    box(-4.95, -4.05, L.hallH - 0.012, L.hallH, hz - 0.3, hz + 0.3, trimMat);
+    box(-4.9, -4.1, L.hallH - 0.016, L.hallH - 0.012, hz - 0.25, hz + 0.25, ceilMat);
+    box(-3.35, -2.85, L.hallH - 0.01, L.hallH, hz - 0.2, hz + 0.2, new THREE.MeshStandardMaterial({ color: 0xbdb8ae, roughness: 0.8 }));
+    const canMat = new THREE.MeshStandardMaterial({ color: 0xfff8e8, emissive: 0xfff2d8, emissiveIntensity: 0.8 });
+    for (const x of [-3.8, -5.9]) {
+      const can = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.01, 16), canMat);
+      can.position.set(x, L.hallH - 0.006, hz); scene.add(can);
+    }
+    const hallLight = new THREE.PointLight(0xfff0dc, 0.35, 4.5, 1.6);
+    hallLight.position.set(-4.6, 2.3, hz); scene.add(hallLight);
+
+    // The drum light in the middle of the landing's ceiling
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.12, 20),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4e0, emissiveIntensity: 0.7 }));
+    drum.position.set(0, L.h - 0.06, (L.z0 + L.z1) / 2); scene.add(drum);
+    const landLight = new THREE.PointLight(0xfff0dc, 0.4, 7.5, 1.6);
+    landLight.position.set(0, L.h - 0.35, (L.z0 + L.z1) / 2); scene.add(landLight);
+
+    // The stairs: four steps down south along the east wall to a square platform 0.76 m down, then the flight turns
+    // west and goes on down out of sight (to the kitchen). A black handrail on the east wall. Not walkable: the
+    // stairwell's top is an invisible wall, and E there goes out to the range.
+    const RISE = 0.19, RUN = 0.25;
+    for (let i = 0; i < 4; i++) box(L.stairX0, L.stairX1, -3, -RISE * (i + 1), L.z1 + RUN * i, L.z1 + RUN * (i + 1), carpet);
+    box(L.stairX0, L.stairX1, -3, -RISE * 4, 10.6, 11.6, carpet);
+    for (let j = 0; j < 8; j++) box(L.stairX0 - RUN * (j + 1), L.stairX0 - RUN * j, -3, -RISE * (5 + j), 10.6, 11.6, carpet);
+    box(L.stairX1, L.stairX1 + T, -3, L.h, L.z1, 11.7, landWall);   // the east wall on down
+    box(-0.7, L.stairX1 + T, -3, L.h, 11.6, 11.7, landWall);        // the stairwell's south wall
+    box(-0.8, -0.7, -3, L.h, 10.6, 11.7, landWall);                 // its west end, past the last step in view
+    box(-0.7, L.stairX0, -3, L.h, 10.5, 10.6, landWall);            // under the recess, the flight's north side
+    box(L.stairX0, L.stairX1, -0.02, 0, L.z1 - 0.03, L.z1, trimMat);   // the top step's nosing
+    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, Math.hypot(1.0, RISE * 4) + 0.3, 10), blackMat);
+    rail.rotation.x = Math.atan2(RISE * 4, 1.0) - Math.PI / 2;   // high at the top step, falling south
+    rail.position.set(L.stairX1 - 0.07, 0.86 - RISE * 2, L.z1 + 0.5); scene.add(rail);
+
+    // The desk build: one white built-in piece filling the recess. From the east: a drawer pedestal, the first computer
+    // spot, a second pedestal, the second spot, and at the west end the corner unit cut at 45° (open shelves), its top
+    // the TV platform, 0.39 m over the desk. Desk tops empty (Michael).
+    const DESK_Y = 0.76, DESK_D = 0.6, dz0 = L.recessZ - DESK_D;
+    box(-0.7, L.recessX1, DESK_Y - 0.035, DESK_Y, dz0, L.recessZ, deskMat);
+    const knob = new THREE.MeshStandardMaterial({ color: 0xb8b8b0, roughness: 0.4, metalness: 0.5 });
+    for (const [px0, px1] of [[0.88, L.recessX1], [-0.14, 0.28]]) {
+      box(px0, px1, 0, DESK_Y - 0.035, dz0 + 0.02, L.recessZ, deskMat);
+      for (let k = 0; k < 3; k++) {
+        const y0 = 0.06 + k * 0.215;
+        box(px0 + 0.015, px1 - 0.015, y0, y0 + 0.2, dz0 + 0.005, dz0 + 0.02, deskMat);
+        box((px0 + px1) / 2 - 0.05, (px0 + px1) / 2 + 0.05, y0 + 0.14, y0 + 0.155, dz0 - 0.01, dz0 + 0.005, knob);
+      }
+    }
+    box(-0.7, L.recessX1, DESK_Y - 0.035, DESK_Y, L.recessZ - 0.015, L.recessZ, deskMat);
+    const PLAT_Y = 1.15;
+    const cornerPts = [[-1.4, 10.35], [-0.7, 10.35], [-0.7, 9.95], [-1.0, 9.65], [-1.4, 9.65]];
+    const cs = new THREE.Shape();
+    cornerPts.forEach(([x, z], i) => (i ? cs.lineTo(x, -z) : cs.moveTo(x, -z)));
+    const corner = new THREE.Mesh(new THREE.ExtrudeGeometry(cs, { depth: PLAT_Y, bevelEnabled: false }), deskMat);
+    corner.rotation.x = -Math.PI / 2;   // the shape's (x, y) → the floor's (x, -z), extruded up
+    scene.add(corner);
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0xc9c5bb, roughness: 0.8 });
+    for (const y of [0.32, 0.78]) {
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.34), shelfMat);
+      sh.rotation.y = 3 * Math.PI / 4; sh.position.set(-0.85 + 0.004, y, 9.8 - 0.004); scene.add(sh);
+    }
+    // Michael's TV on the platform: a CRT, facing north-east into the room
+    const tv = new THREE.Group();
+    const tvBody = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.4, 0.4), blackMat);
+    tvBody.position.y = 0.2; tv.add(tvBody);
+    const tvBack = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.12), blackMat);
+    tvBack.position.set(0, 0.19, -0.24); tv.add(tvBack);
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.29),
+      new THREE.MeshStandardMaterial({ color: 0x1c2a36, emissive: 0x24384a, emissiveIntensity: 0.6, roughness: 0.2 }));
+    screen.position.set(0, 0.21, 0.201); tv.add(screen);
+    tv.position.set(-1.03, PLAT_Y, 10.0); tv.rotation.y = 3 * Math.PI / 4;
+    scene.add(tv);
+    obstacles.push({ minX: L.recessX0, maxX: L.recessX1, minZ: 9.65, maxZ: L.recessZ, h: PLAT_Y });
+
+    // Two black office chairs at the computer spots, pulled out, facing the desk
+    const chairs = [{ x: 0.58, z: 9.3 }, { x: -0.42, z: 9.3 }];
+    for (const c of chairs) {
+      const g = new THREE.Group();
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.08, 0.44), blackMat); seat.position.y = 0.46; g.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.06), blackMat); back.position.set(0, 0.8, -0.22); back.rotation.x = -0.1; g.add(back);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.36, 8), knob); post.position.y = 0.24; g.add(post);
+      for (let k = 0; k < 5; k++) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.28), blackMat);
+        const a = k / 5 * Math.PI * 2;
+        leg.position.set(Math.sin(a) * 0.14, 0.06, Math.cos(a) * 0.14); leg.rotation.y = a; g.add(leg);
+      }
+      g.position.set(c.x, 0, c.z);
+      scene.add(g);
+      obstacles.push({ minX: c.x - 0.25, maxX: c.x + 0.25, minZ: c.z - 0.27, maxZ: c.z + 0.23, h: 1.05 });
+    }
+
+    // The black futon under the east windows, turned 28° from facing west toward the TV, the coffee table before it
+    const F = { x: 1.54, z: L.winZ }, fYaw = Math.atan2(-Math.cos(28 * Math.PI / 180), Math.sin(28 * Math.PI / 180));
+    const toWorld = (lx, lz, o) => ({ x: o.x + lx * Math.cos(fYaw) + lz * Math.sin(fYaw), z: o.z - lx * Math.sin(fYaw) + lz * Math.cos(fYaw) });
+    const futon = new THREE.Group();
+    const fBox = (w, h, d, x, y, z, mat, rx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; futon.add(m); };
+    fBox(1.9, 0.16, 0.74, 0, 0.36, 0.02, futonMat);              // the seat mattress
+    fBox(1.9, 0.62, 0.16, 0, 0.72, -0.32, futonMat, -0.22);      // the back mattress, leaning back
+    fBox(1.84, 0.05, 0.7, 0, 0.26, 0.0, blackMat);               // the frame
+    for (const sx of [-1, 1]) {
+      fBox(0.05, 0.5, 0.78, sx * 0.97, 0.3, 0.0, blackMat);      // the arms
+      fBox(0.05, 0.05, 0.6, sx * 0.97, 0.58, 0.02, blackMat);
+    }
+    futon.position.set(F.x, 0, F.z); futon.rotation.y = fYaw;
+    scene.add(futon);
+    const table = new THREE.Group();
+    const top = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.45), blackMat); top.position.y = 0.42; table.add(top);
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.02, 0.4), blackMat); shelf.position.y = 0.12; table.add(shelf);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.42, 0.04), blackMat); leg.position.set(sx * 0.42, 0.21, sz * 0.2); table.add(leg);
+    }
+    const T0 = toWorld(0, 1.0, F);
+    table.position.set(T0.x, 0, T0.z); table.rotation.y = fYaw;
+    scene.add(table);
+    // their footprints, as the boxes round them
+    const aabb = (o, hw, hd, h) => {
+      const ex = hw * Math.abs(Math.cos(fYaw)) + hd * Math.abs(Math.sin(fYaw)), ez = hw * Math.abs(Math.sin(fYaw)) + hd * Math.abs(Math.cos(fYaw));
+      return { minX: o.x - ex, maxX: Math.min(L.x1, o.x + ex), minZ: o.z - ez, maxZ: o.z + ez, h };
+    };
+    obstacles.push(aabb(F, 0.95, 0.42, 0.95), aabb(T0, 0.45, 0.225, 0.44));
+
+    // The crew, in the order they joined: two on the futon, two at the desk chairs, the fifth by the hallway
+    const seats = [
+      { ...toWorld(-0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
+      { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
+      { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5 },
+      { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5 },
+      { x: -1.85, z: 8.75, yaw: Math.atan2(F.x + 1.85, F.z - 8.75), seatY: 0 },
+    ];
+    const crewSeats = [];
+    const crew = crewMembers();
+    crew.forEach((id, i) => {
+      const s = seats[i], ch = CHARACTERS[id];
+      if (!s || !ch) return;
+      const kid = createKid(ch, CREW_GUNS[id] || 'pistol');
+      kid.gunGroup.visible = false;   // no guns in the house
+      if (s.seatY) poseKidSeated(kid, s.seatY); else setKidCrouch(kid, 0);
+      kid.group.position.set(s.x, 0, s.z); kid.group.rotation.y = s.yaw;
+      scene.add(kid.group);
+      if (!s.seatY) obstacles.push({ minX: s.x - 0.25, maxX: s.x + 0.25, minZ: s.z - 0.25, maxZ: s.z + 0.25, h: 1.6 });
+      crewSeats.push({ id, x: s.x, z: s.z, seated: !!s.seatY, group: kid.group });
+      const it = {
+        type: 'crew_kid', crewId: id, line: -1,
+        box: new THREE.Box3().setFromObject(kid.group),
+        pos: new THREE.Vector3(s.x, 1.0, s.z),
+        prompt: `Talk to ${ch.name}`,
+        label: ch.name, icon: 'crew', labelY: s.seatY ? 1.5 : 1.85,
+        action: () => crewHomeTalk(it),
+      };
+      Game.interactables.push(it);
+    });
+
+    // The top of the stairs → the backyard range (v1.257's back door, moved here)
+    const stairsZ = L.z1 - 0.35;
+    Game.interactables.push({
+      type: 'back_door',
+      box: new THREE.Box3(new THREE.Vector3(L.stairX0, -1, L.z1 - 0.1), new THREE.Vector3(L.stairX1, 2.2, L.z1 + 1.0)),
+      pos: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 1.0, stairsZ),
+      prompt: 'Go out back (the range)',
+      label: 'Backyard', icon: 'outside', labelY: 1.7,
+      action: () => enterRange(),
+    });
+    return {
+      obstacles, crewSeats,
+      stairsSpawn: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 0, stairsZ), stairsYaw: 0.35,   // facing into the landing
+    };
+  }
+
+  // ============================================================
   // SPAWN + BOUNDS + OBSTACLES
   // ============================================================
   // Player spawns at south end of hall, facing north (into bedroom)
@@ -1396,13 +1704,13 @@ function buildBedroomScene() {
   const spawnYaw = 0;   // facing -Z (north)
 
   // Bounds: encompass everything (with a tiny padding)
-  // maxZ is tight against the entry door at the south end of the hall
-  // so the player can't walk through it.
+  // v1.376 (D.74): out to the hallway's end in the west and the desk recess's back wall in the south; the blockers
+  // below keep you on the floor you can walk (the stairwell's top is an invisible wall).
   const bounds = {
-    minX: -BR_W/2 - BATH_W - 0.4,
+    minX: LAND.hallX0 - 0.5,
     maxX: BCL_EAST + 0.4,
     minZ: -BR_D/2 - AL_DEPTH - 0.4,
-    maxZ: hallSouthZ - 0.1,
+    maxZ: LAND.recessZ - 0.05,
   };
 
   // Obstacle approach: block everything OUTSIDE the walkable L (bedroom + alcove + hall),
@@ -1422,9 +1730,17 @@ function buildBedroomScene() {
     // East of bedroom (outside east wall, north of big closet)
     { minX: BR_W/2, maxX: bounds.maxX, minZ: -BR_D/2, maxZ: BR_D/2 },
     // South of bedroom, west of hall — covers bathroom area and any empty pockets
-    { minX: bounds.minX, maxX: -HALL_W/2, minZ: BR_D/2, maxZ: bounds.maxZ },
+    { minX: bounds.minX, maxX: -HALL_W/2, minZ: BR_D/2, maxZ: hallSouthZ },
     // South of bedroom, east of hall — covers hall closet area, big closet, and pockets
-    { minX: HALL_W/2, maxX: bounds.maxX, minZ: BR_D/2, maxZ: bounds.maxZ },
+    { minX: HALL_W/2, maxX: bounds.maxX, minZ: BR_D/2, maxZ: hallSouthZ },
+    // v1.376 (D.74): round the landing, its hallway and the desk recess; the stairwell's top
+    { minX: bounds.minX, maxX: LAND.x0, minZ: hallSouthZ, maxZ: LAND.hallZ0 },          // west of the landing, north of its hallway
+    { minX: bounds.minX, maxX: LAND.x0, minZ: LAND.hallZ1, maxZ: bounds.maxZ },        // and south of it
+    { minX: bounds.minX, maxX: LAND.hallX0, minZ: LAND.hallZ0, maxZ: LAND.hallZ1 },    // the hallway's end wall (the far-end door)
+    { minX: LAND.x1, maxX: bounds.maxX, minZ: hallSouthZ, maxZ: bounds.maxZ },         // east of the landing (the window wall)
+    { minX: bounds.minX, maxX: LAND.recessX0, minZ: LAND.z1, maxZ: bounds.maxZ },      // the south wall west of the recess
+    { minX: LAND.recessX1, maxX: bounds.maxX, minZ: LAND.z1, maxZ: bounds.maxZ },      // the recess's east side and the stairwell's top
+    ...landing.obstacles,
 
     // === Furniture obstacles (inside the L) ===
     // Bed (footprint) — against the east wall, headboard east
@@ -1453,5 +1769,7 @@ function buildBedroomScene() {
     spawnYaw,
     bounds,
     obstacles,
+    stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
+    crewSeats: landing.crewSeats,
   };
 }

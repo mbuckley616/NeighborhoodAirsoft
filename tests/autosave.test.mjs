@@ -80,14 +80,14 @@ const t1 = await tour();
 check('walking up to the bed ticks it, and the note still names the phone first', t1.ticked.join() === 'bed' && /1 OF 4/.test(t1.text) && /Eric/.test(t1.text), t1);
 for (const f of ['it => it.icon === "computer"', 'it => it.icon === "phone"']) await walkTo(f);
 const t2a = await tour();
-check('the three looked at, the note names the front door', t2a.ticked.length === 3 && /front door/.test(t2a.text) && /3 OF 4/.test(t2a.text), t2a);
-await walkTo('it => it.label === "Outside"');
+check('the three looked at, the note names the map table (v1.376: matches start from it only)', t2a.ticked.length === 3 && /map table is the way out/.test(t2a.text) && /3 OF 4/.test(t2a.text), t2a);
+await walkTo('it => it.label === "Map"');
 const t2b = await tour();
-check('walking up to the door is not enough', t2b.ticked.length === 3, t2b);
+check('walking up to the map table is not enough', t2b.ticked.length === 3, t2b);
 // v1.374 (Found in play, critic v1.372): the note stayed up over the map, the briefing, the match and the result card
 const onMap = await page.evaluate(() => { document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); stepGame(1 / 60);
   return { mode: Game.mode, shown: document.getElementById('roomTour').style.display === 'block' }; });
-check('out of the door, the map is open and the note is gone from over it (v1.374)', onMap.mode === 'map' && !onMap.shown, onMap);
+check('E at the map table: the map is open and the note is gone from over it (v1.374)', onMap.mode === 'map' && !onMap.shown, onMap);
 await page.evaluate(() => { closeMap(); stepGame(1 / 60); });
 const t2 = await tour();
 check('all four ticked, it says that is your room', t2.shown && t2.ticked.length === 4 && /That’s your room/.test(t2.text), t2);
