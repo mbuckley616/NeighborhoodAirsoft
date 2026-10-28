@@ -141,8 +141,10 @@ stay exactly as the game has them** (the photos' are a later family's).
   The coffee table was very large, about the futon's width: about 1.8 m by 0.9 m, twice the v1.376 table.
 - **The kids on the futon** have their legs inside it (B.19): hips on the mattress, knees over its front edge.
 - **What was in the room** (the landing was the brothers' games room): a GameCube plugged into the TV, kept in the
-  cabinet under it; game cases and DVD cases in that storage, loose DVDs and game discs around the TV; a Guitar Hero
-  guitar leaning on the wall near the TV; two or three Game Boy Advances and a few Game Boy cartridges lying about;
+  cabinet under it; game cases and DVD cases in that storage, loose DVDs and game discs around the TV; a DDR dance
+  pad on the floor by the TV and a second controller on its cord (Michael swapped the Guitar Hero guitar he first
+  named for these, 28 Oct: Guitar Hero is from 2005, the game's summer is 2003); two or three Game Boy Advances and
+  a few Game Boy cartridges lying about;
   a football, a soccer ball and a tennis ball; a few airsoft things (goggles, a speedloader, a BB bottle, a mag) on
   the coffee table and the desks. Still no computers on the desks.
 
