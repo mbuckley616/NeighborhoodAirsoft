@@ -270,16 +270,31 @@ function playPickupGame() {
 // sends where he is ~30 times a second; each shot is sent once (where from, which way, its curve) and flies in both
 // games, but only the host's copy can tag. On each screen the other player is a kid in his own look with his own gun.
 // Nothing is on the line: no pay, no ladder, and the BBs in your bag are put back as they were.
+// v1.366 (backlog D.2 step 2, card fable/d2-online-teams; Michael: A on "Online play: go on to teams", 21 Oct, with
+// D.67 "the host should be able to pick the zone/map and time of day ... and rematches" and D.68 "an NPC Draft to fill
+// empty slots"): TEAMS ONLINE. The room takes up to eight people. The host's board sets the match as the Pickup Game
+// board does (any opened map, 1v1 up to its biggest team size, day or night, lives, the clock); everyone in the room is
+// on Blue (the host's side, the map's own start) or Red, and each side's slots nobody takes are kids, picked by the
+// people on that side from the kids who play on that street. The host's game is still the referee, and now runs every
+// kid too: it sends where everyone is ~20 times a second (`w`), and each other game moves its kids and people from that.
+// Every shot is sent once and flies in every game; only the host's copy tags. A tagged player walks home as before;
+// one with no lives left is out and watches with his gun up while his side plays on, and the match ends when a side has
+// nobody left (or on the clock). A friend who drops out of a match leaves his kid behind: the host's game plays him as
+// one of its own for the rest of the match. After it, REMATCH on the host's card takes everyone back to the room.
+// The link is a star: each guest talks only to the host, who passes on what the others need.
 // `Net.makeTransport` is the one function that knows about PeerJS; the tests swap it for a stub (no network in CI).
 const NET_PEERJS_URL = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
 const NET_PEER_PREFIX = 'nbhd-airsoft-';
 const NET_CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O: they read as 1 and 0
 const NET_SEND_SEC = { host: 1 / 20, guest: 1 / 30 };
-const NET_FRIEND = 'net_friend';   // the other player's CHARACTERS entry while a match is up
+const NET_HOST_ID = 'net_p0';   // each person's CHARACTERS entry while a match is up: net_p0 the host, net_p1... the guests
+const NET_MAX_PEOPLE = 8;
+const NET_SIDES = ['A', 'B'];
+const NET_SIDE_NAMES = { A: 'Blue', B: 'Red' };
 const Net = {
-  active: false, role: null, phase: 'idle', tx: null, code: null, name: 'Friend',
-  remote: null, opts: null, kid: null, kidTarget: null, kidRespawns: 0, built: null,
-  localReady: false, remoteReady: false, begin: null, starts: null, sendT: 0, bagSaved: null, error: null,
+  active: false, role: null, phase: 'idle', tx: null, code: null, name: 'Friend', error: null,
+  me: null, people: [], kids: { A: [], B: [] }, opts: null, lobby: null, roster: null, ents: new Map(), nextSlot: 1,
+  ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0, bagSaved: null, hudT: 0,
   makeTransport: null,   // set below to netPeerTransport
 };
 function netVersion() { const v = document.querySelector('#titleScreen .version, .version'); return v ? v.textContent.trim() : '?'; }
@@ -298,14 +313,22 @@ function netCleanLook(look) {
   return out;
 }
 function netCleanGun(g) { return ALL_GUN_TYPES.includes(g) ? g : 'pistol'; }
+function netCleanId(id) { return typeof id === 'string' && /^[a-z0-9_]{1,24}$/.test(id) ? id : null; }
 function netVec(a) {
   return Array.isArray(a) && a.length === 3 && a.every(n => typeof n === 'number' && isFinite(n) && Math.abs(n) < 1e4) ? a : null;
 }
 const netR = n => Math.round(n * 1000) / 1000;
-function netSend(m) { if (Net.tx) { try { Net.tx.send(m); } catch (e) {} } }
+// To one guest (`to`, his link id), or with no `to` to every guest; a guest's only link is the host
+function netSend(m, to) { if (Net.tx) { try { Net.tx.send(m, to); } catch (e) {} } }
+function netSendOthers(m, notPid) { for (const p of Net.people) if (p.pid && p.pid !== notPid && !p.gone) netSend(m, p.pid); }
 
-// --- the PeerJS transport: start(role, code, handlers) -> { send, close } ---
-// handlers: ready(code) (host: the room is open; guest: joined), connected() (host: the friend is in), data(m), closed(), error(kind)
+// --- the PeerJS transport: start(role, code, handlers) -> { send(m, to), close() } ---
+// handlers: ready(code) (host: the room is open; guest: joined), connected(pid) (host: a friend is in), data(m, pid),
+// closed(pid) (host: that friend's link; guest: the host's), error(kind)
+// v1.370 (D.10): and the walkie. voice(stream, pids) calls each of those links (a guest's 'host', or a friend's
+// PeerJS id, which the host passes on to his side) with your mic, and hangs up the others, or all with no stream;
+// voiceOk(pid) says whether a call from that link is taken, and voiceIn(pid, stream) hands on its sound (null: gone).
+// The calls go one way, each friend calling each of his side with his own mic, so nobody is sent a side's voice twice.
 function netLoadPeerJs() {
   return new Promise((res, rej) => {
     if (window.Peer) return res();
@@ -317,17 +340,28 @@ function netLoadPeerJs() {
   });
 }
 function netPeerTransport(role, code, h) {
-  let peer = null, conn = null, closed = false;
-  const wire = c => {
-    conn = c;
+  let peer = null, closed = false;
+  const conns = new Map();   // the host's: one a friend, by his peer id; the guest's: the host's, as 'host'
+  const calls = new Map();   // v1.370: the walkie's calls out, by link id
+  const hostId = NET_PEER_PREFIX + code;
+  const anyOpen = () => [...conns.values()].some(c => c.open);
+  const wire = (c, pid) => {
+    conns.set(pid, c);
+    let gone = false;
+    const lost = () => {
+      if (gone || closed) return;
+      gone = true; conns.delete(pid);
+      if (role === 'guest') closed = true;
+      h.closed(pid);
+    };
     c.on('open', () => {
       if (closed) return;
-      if (role === 'host') { h.connected(); try { peer.disconnect(); } catch (e) {} }   // the room code is free again; the link stays
+      if (role === 'host') h.connected(pid);
       else h.ready(code);
     });
-    c.on('data', d => { if (closed) return; try { h.data(typeof d === 'string' ? JSON.parse(d) : d); } catch (e) {} });
-    c.on('close', () => { if (!closed) { closed = true; h.closed(); } });
-    c.on('error', () => { if (!closed) { closed = true; h.closed(); } });
+    c.on('data', d => { if (closed) return; try { h.data(typeof d === 'string' ? JSON.parse(d) : d, pid); } catch (e) {} });
+    c.on('close', lost);
+    c.on('error', lost);
   };
   netLoadPeerJs().then(() => {
     if (closed) return;
@@ -335,23 +369,53 @@ function netPeerTransport(role, code, h) {
     peer.on('open', () => {
       if (closed) return;
       if (role === 'host') h.ready(code);
-      else wire(peer.connect(NET_PEER_PREFIX + code, { reliable: true, serialization: 'json' }));
+      else wire(peer.connect(NET_PEER_PREFIX + code, { reliable: true, serialization: 'json' }), 'host');
+    });
+    peer.on('call', call => {   // v1.370: a friend on your side keys his walkie for the first time
+      const pid = role === 'guest' && call.peer === hostId ? 'host' : call.peer;
+      if (closed || !h.voiceOk || !h.voiceOk(pid)) { try { call.close(); } catch (e) {} return; }
+      try { call.answer(); } catch (e) { return; }
+      call.on('stream', st => { if (!closed) h.voiceIn(pid, st); });
+      call.on('close', () => { if (!closed) h.voiceIn(pid, null); });
     });
     peer.on('connection', c => {
-      if (role !== 'host' || conn) { c.on('open', () => { try { c.close(); } catch (e) {} }); return; }   // one friend a room
-      wire(c);
+      if (role !== 'host' || conns.size >= NET_MAX_PEOPLE - 1) { c.on('open', () => { try { c.close(); } catch (e) {} }); return; }
+      wire(c, c.peer || ('p' + conns.size));
     });
     peer.on('error', err => {
       if (closed) return;
       const t = err && err.type;
-      if (conn && conn.open) return;   // the matchmaker going away mid-match is not the match's business
+      if (anyOpen()) return;   // the matchmaker going away mid-match is not the match's business
+      if (role === 'host' && t !== 'unavailable-id' && t !== 'browser-incompatible' && peer.open === false && conns.size) return;
       closed = true;
       h.error(t === 'unavailable-id' ? 'taken' : t === 'peer-unavailable' ? 'noroom' : t === 'browser-incompatible' ? 'browser' : 'net');
     });
   }).catch(() => { if (!closed) { closed = true; h.error('load'); } });
   return {
-    send(m) { if (conn && conn.open) conn.send(m); },
-    close() { closed = true; try { if (conn) conn.close(); } catch (e) {} try { if (peer) peer.destroy(); } catch (e) {} },
+    send(m, to) {
+      if (to) { const c = conns.get(to); if (c && c.open) c.send(m); }
+      else for (const c of conns.values()) if (c.open) c.send(m);
+    },
+    drop(pid) { const c = conns.get(pid); conns.delete(pid); try { if (c) c.close(); } catch (e) {} },
+    voice(stream, pids) {   // v1.370
+      for (const [pid, c] of calls) if (!stream || !pids.includes(pid)) { calls.delete(pid); try { c.close(); } catch (e) {} }
+      if (!stream || !peer || closed) return;
+      for (const pid of pids) {
+        if (calls.has(pid)) continue;
+        let c = null;
+        try { c = peer.call(pid === 'host' ? hostId : pid, stream); } catch (e) {}
+        if (!c) continue;
+        calls.set(pid, c);
+        const off = () => { if (calls.get(pid) === c) calls.delete(pid); };
+        c.on('close', off); c.on('error', off);
+      }
+    },
+    close() {
+      closed = true;
+      for (const c of [...conns.values(), ...calls.values()]) { try { c.close(); } catch (e) {} }
+      conns.clear(); calls.clear();
+      try { if (peer) peer.destroy(); } catch (e) {}
+    },
   };
 }
 Net.makeTransport = netPeerTransport;
@@ -363,41 +427,155 @@ const NET_ERRORS = {
   load: 'Couldn’t reach the matchmaker. Check your internet and try again.',
   net: 'Couldn’t reach your friend. Some school and office Wi-Fi blocks this; try another network.',
   ver: 'You and your friend have different versions of the game. Both of you reload the page and try again.',
+  full: 'That room is full.',
+  started: 'That room’s match has started. Join when it is back in the room.',
 };
+
+// --- the room: who is on which side, and the kids who fill the rest ---
+function netMap() { return PICKUP_MAPS.find(k => k.key === (Net.opts || pickupState).map) || PICKUP_MAPS[0]; }
+function netOnSide(side) { return Net.people.filter(p => p.side === side && !p.gone); }
+function netKidsNeeded(side) { return Math.max(0, Net.opts.size - netOnSide(side).length); }
+function netMostOnASide() { return Math.max(...NET_SIDES.map(s => netOnSide(s).length)); }
+// The host's board settings as the room's: teams only, at least as big as the most people on a side
+function netHostOpts() {
+  const open = pickupMapsOpen(), most = netMostOnASide();
+  let m = open.find(k => k.key === pickupState.map && pickupMaxSize(k) >= most) || open.find(k => pickupMaxSize(k) >= most) || open[0];
+  pickupState.map = m.key;
+  pickupState.size = Math.max(most, 1, Math.min(pickupMaxSize(m), pickupState.size));
+  Net.opts = { map: m.key, mode: 'teams', size: pickupState.size, tod: pickupState.tod === 'night' ? 'night' : 'day',
+    lives: PICKUP_LIVES.includes(pickupState.lives) ? pickupState.lives : 3, clock: PICKUP_CLOCKS.includes(pickupState.clock) ? pickupState.clock : 0 };
+  return Net.opts;
+}
+// Each side's kids: kids of this street, none on both sides, as many as the side has empty slots; a side short of
+// picks is filled from the board's defaults (Blue from the map's allies, Red from its other side) unless `keepShort`
+function netNormalizeKids(keepShort) {
+  const m = netMap(), pool = pickupPool(m).map(k => k.charId), t = SCENARIOS[m.template];
+  const defs = { A: t.enemySetup.filter(e => e.team === 'player').map(e => e.charId), B: t.enemySetup.filter(e => !e.team).map(e => e.charId) };
+  for (const side of NET_SIDES) {
+    const other = Net.kids[side === 'A' ? 'B' : 'A'] || [], n = netKidsNeeded(side);
+    let ids = (Net.kids[side] || []).filter(id => pool.includes(id) && !other.includes(id)).slice(0, n);
+    if (!keepShort) for (const id of defs[side].concat(defs[side === 'A' ? 'B' : 'A'], pool)) {
+      if (ids.length >= n) break;
+      if (pool.includes(id) && !ids.includes(id) && !other.includes(id)) ids.push(id);
+    }
+    Net.kids[side] = ids;
+  }
+}
+function netRoomReady() {
+  return Net.people.some(p => p.id !== NET_HOST_ID && !p.gone) && NET_SIDES.every(s => Net.kids[s].length === netKidsNeeded(s));
+}
+// The host tells each guest what the room is now
+function netSendLobby() {
+  if (Net.role !== 'host') return;
+  const people = Net.people.filter(p => !p.gone).map(p => ({ id: p.id, name: p.name, side: p.side }));
+  for (const p of Net.people) if (p.pid && !p.gone) netSend({ t: 'lobby', opts: Net.opts, people, kids: Net.kids, you: p.id }, p.pid);
+}
+function netRoomChanged(keepShort) { netHostOpts(); netNormalizeKids(keepShort); netSendLobby(); renderNetPanel(); }
+// A pick on a side's kids (the host's own click, or a guest's 'kid' for his side): off if on, else on, in place of the last when full
+function netToggleKid(side, id) {
+  const ids = Net.kids[side], other = Net.kids[side === 'A' ? 'B' : 'A'];
+  if (!pickupPool(netMap()).some(k => k.charId === id) || other.includes(id)) return;
+  if (ids.includes(id)) ids.splice(ids.indexOf(id), 1);
+  else { if (ids.length >= netKidsNeeded(side)) ids.pop(); if (netKidsNeeded(side) > 0) ids.push(id); }
+  netRoomChanged(true);
+}
+function netMoveSide(p, side) {
+  if (!NET_SIDES.includes(side) || p.side === side || p.id === NET_HOST_ID) return;
+  if (netOnSide(side).length >= pickupMaxSize(netMap())) return;
+  p.side = side;
+  netRoomChanged(false);
+}
 
 // --- the panel on the Pickup Game board ---
 function netPanelHTML() {
-  const s = pickupState, busy = Net.phase === 'lobby';
-  const clock = s.clock ? pickupClockText(s.clock) + ' on the clock' : 'no clock';
+  const busy = Net.phase === 'lobby', inRoom = busy && (Net.role === 'host' ? !!Net.code : !!Net.lobby);
   const status = Net.error ? `<div class="pk-net-err" id="netStatus">${NET_ERRORS[Net.error] || NET_ERRORS.net}</div>`
-    : busy && Net.role === 'host' && Net.code ? `<div class="pk-net-code" id="netCode">${Net.code}</div><div class="pk-note" id="netStatus">Waiting for your friend. Tell them the code; they press PLAY ONLINE on their board, type it and press JOIN.</div>`
-    : busy ? `<div class="pk-note" id="netStatus">${Net.role === 'host' ? 'Opening a room…' : 'Looking for the room…'}</div>` : '<div class="pk-note" id="netStatus"></div>';
+    : busy && !inRoom ? `<div class="pk-note" id="netStatus">${Net.role === 'host' ? 'Opening a room…' : 'Looking for the room…'}</div>` : '<div class="pk-note" id="netStatus"></div>';
+  const back = `<div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'LEAVE THE ROOM' : '◀ BACK TO THE BOARD'}</button></div>`;
+  const privacy = `<div class="pk-note pk-net-privacy">Online play connects your computer straight to your friends’, so each of you can see the others’ internet address, as in any voice chat. A free public service (PeerJS) passes on the room code to start it. Play with friends you know.</div>`;
+  if (inRoom) return `<div class="pk-board">${netRoomHTML()}${status}${privacy}${back}</div>`;
   return `<div class="pk-board">
-    <div class="pk-note">Play a friend over the internet: a 1v1 on Winnmark Court, ${s.tod === 'night' ? 'after dark' : 'in the afternoon'}, ${s.lives === 1 ? 'one life' : s.lives + ' lives'} each, ${clock} (the host’s board sets these). Nothing on the line: no pay, and your save is untouched.</div>
+    <div class="pk-note">Play friends over the internet, up to eight of you: teams on any map the host has opened, and kids from the street in every slot nobody takes. The host’s board sets the match. Nothing on the line: no pay, and your save is untouched.</div>
     <div class="pk-row"><div class="pk-label">Your name</div><div class="pk-btns"><input class="pk-input" id="netName" maxlength="14" value="${netCleanName(Net.name)}"${busy ? ' disabled' : ''}></div></div>
     <div class="pk-row"><div class="pk-label">Host</div><div class="pk-btns"><button class="pk-opt" id="netHostBtn"${busy ? ' disabled' : ''}>HOST A ROOM</button></div></div>
     <div class="pk-row"><div class="pk-label">Join</div><div class="pk-btns"><input class="pk-input" id="netJoinCode" maxlength="4" placeholder="CODE" autocomplete="off"${busy ? ' disabled' : ''}><button class="pk-opt" id="netJoinBtn"${busy ? ' disabled' : ''}>JOIN</button></div></div>
-    ${status}
-    <div class="pk-note pk-net-privacy">Online play connects your computer straight to your friend’s, so each of you can see the other’s internet address, as in any voice chat. A free public service (PeerJS) passes on the room code to start it. Play with friends you know.</div>
-    <div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'CANCEL' : '◀ BACK TO THE BOARD'}</button></div>
+    ${status}${privacy}${back}
   </div>`;
+}
+// The room: the code, the host's settings (buttons for him, words for a guest), the two sides and their kids
+function netRoomHTML() {
+  const host = Net.role === 'host', o = Net.opts, m = netMap(), most = netMostOnASide();
+  const meP = Net.people.find(p => p.id === Net.me) || { side: 'A' };
+  const row = (label, inner, id) => `<div class="pk-row"${id ? ` id="${id}"` : ''}><div class="pk-label">${label}</div><div class="pk-btns">${inner}</div></div>`;
+  const btn = (grp, val, label, on, off) => `<button class="pk-opt${on ? ' on' : ''}" data-grp="${grp}" data-val="${val}"${off ? ' disabled' : ''}>${label}</button>`;
+  const name = id => (CHARACTERS[id] || { name: id }).name;
+  let html = `<div class="pk-net-code" id="netCode">${Net.code || ''}</div>`;
+  html += `<div class="pk-note" id="netRoomNote">${host ? 'Your room. Friends press PLAY ONLINE on their board, type the code and press JOIN. Set the match, then START.'
+    : `${(Net.people.find(p => p.id === NET_HOST_ID) || { name: 'The host' }).name}’s room. The host sets the match and starts it.`}</div>`;
+  if (host) {
+    html += row('Where', pickupMapsOpen().map(k => btn('map', k.key, k.name, k.key === o.map, pickupMaxSize(k) < most)).join(''));
+    html += row('How many', [1, 2, 3, 4].filter(n => n <= pickupMaxSize(m)).map(n => btn('size', n, `${n}v${n}`, n === o.size, n < most)).join(''));
+    html += row('When', btn('tod', 'day', 'Day', o.tod === 'day') + btn('tod', 'night', 'Night', o.tod === 'night'));
+    html += row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === o.lives)).join(''));
+    html += row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === o.clock)).join(''));
+  } else {
+    html += `<div class="pk-note" id="netMatchNote">${o.size}v${o.size} on ${m.name}, ${o.tod === 'night' ? 'after dark' : 'in the afternoon'}, ${o.lives === 1 ? 'one life' : o.lives + ' lives'} each, ${o.clock ? pickupClockText(o.clock) + ' on the clock' : 'no clock'}.</div>`;
+  }
+  const pool = pickupPool(m);
+  for (const side of NET_SIDES) {
+    const ppl = netOnSide(side), mine = meP.side === side, need = netKidsNeeded(side), kids = Net.kids[side] || [];
+    const who = ppl.map(p => `<b>${p.name}</b>`).concat(kids.map(name)).join(', ') || 'nobody yet';
+    const move = !mine && meP.id !== NET_HOST_ID && ppl.length < pickupMaxSize(m) ? ` <button class="pk-opt" data-grp="side" data-val="${side}">MOVE HERE</button>` : '';
+    html += row(`${NET_SIDE_NAMES[side]}${mine ? ' (you)' : ''} <span class="pk-count">${ppl.length + kids.length}/${o.size}</span>`, `<span class="pk-net-side" id="netSide${side}">${who}</span>${move}`);
+    if (mine && need > 0) {
+      const other = Net.kids[side === 'A' ? 'B' : 'A'];
+      html += row(`Kids <span class="pk-count">${kids.length}/${need}</span>`, pool.map(k => {
+        const on = kids.includes(k.charId), off = !on && other.includes(k.charId);
+        return `<button class="pk-opt pk-kid${on ? ' on' : ''}${off ? ' off' : ''}" data-grp="kid" data-val="${k.charId}"${off ? ' disabled' : ''}>${CHARACTERS[k.charId].name}</button>`;
+      }).join(''), 'netKids');
+    }
+  }
+  if (host) {
+    const ok = netRoomReady(), alone = !Net.people.some(p => p.id !== NET_HOST_ID && !p.gone);
+    html += `<div class="pk-row"><button class="pk-play nb-btn" id="netStartBtn"${ok ? '' : ' disabled'}>${ok ? 'START' : alone ? 'WAITING FOR FRIENDS' : 'PICK THE KIDS'}</button></div>`;
+  }
+  return html;
 }
 function renderNetPanel() {
   const body = document.getElementById('modalBody');
   if (!body || !document.getElementById('modalScreen').classList.contains('active')) return;
+  if (Game.mode !== 'modal') return;
   body.innerHTML = netPanelHTML();
   const name = body.querySelector('#netName');
-  name.addEventListener('input', () => { Net.name = netCleanName(name.value); try { localStorage.setItem('na_online_name', Net.name); } catch (e) {} });
-  body.querySelector('#netHostBtn').addEventListener('click', () => netHost());
-  body.querySelector('#netJoinBtn').addEventListener('click', () => netJoin(body.querySelector('#netJoinCode').value));
-  body.querySelector('#netJoinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') netJoin(ev.target.value); });
-  name.addEventListener('keydown', ev => ev.stopPropagation());   // typing a name is not walking
+  if (name) {
+    name.addEventListener('input', () => { Net.name = netCleanName(name.value); try { localStorage.setItem('na_online_name', Net.name); } catch (e) {} });
+    name.addEventListener('keydown', ev => ev.stopPropagation());   // typing a name is not walking
+    body.querySelector('#netHostBtn').addEventListener('click', () => netHost());
+    body.querySelector('#netJoinBtn').addEventListener('click', () => netJoin(body.querySelector('#netJoinCode').value));
+    body.querySelector('#netJoinCode').addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') netJoin(ev.target.value); });
+  }
+  body.querySelectorAll('.pk-opt[data-grp]').forEach(b => b.addEventListener('click', () => netPanelClick(b.dataset.grp, b.dataset.val)));
+  const start = body.querySelector('#netStartBtn');
+  if (start) start.addEventListener('click', () => netStartRoom());
   body.querySelector('#netBackBtn').addEventListener('click', () => {
     if (Net.phase === 'lobby') netClose();
     Net.error = null;
     document.getElementById('modalTitle').textContent = 'Pickup Game';
     renderPickupBoard();
   });
+}
+function netPanelClick(grp, v) {
+  const meP = Net.people.find(p => p.id === Net.me);
+  if (grp === 'kid') {
+    if (!meP) return;
+    if (Net.role === 'host') netToggleKid(meP.side, v); else netSend({ t: 'kid', id: v });
+  } else if (grp === 'side') {
+    if (Net.role === 'guest') netSend({ t: 'side', side: v });
+  } else if (Net.role === 'host') {
+    pickupState[grp] = (grp === 'size' || grp === 'lives' || grp === 'clock') ? +v : v;
+    if (grp === 'map') Net.kids = { A: [], B: [] };   // another street, other kids
+    netRoomChanged(false);
+  }
 }
 function openNetPanel() {
   try { const n = localStorage.getItem('na_online_name'); if (n) Net.name = netCleanName(n); } catch (e) {}
@@ -407,13 +585,20 @@ function openNetPanel() {
 }
 function netOpen(role, code) {
   netClose();
-  Object.assign(Net, { active: true, role, phase: 'lobby', code, error: null, remote: null, kid: null, kidTarget: null,
-    kidRespawns: 0, localReady: false, remoteReady: false, begin: null, built: null, starts: null, sendT: 0 });
+  Object.assign(Net, { active: true, role, phase: 'lobby', code, error: null, me: role === 'host' ? NET_HOST_ID : null,
+    people: [], kids: { A: [], B: [] }, lobby: null, roster: null, nextSlot: 1 });
+  netResetMatch();
+  if (role === 'host') {
+    Net.people.push({ id: NET_HOST_ID, pid: null, name: netCleanName(Net.name), look: Game.persist.look, gun: Game.persist.equipped.gun, side: 'A' });
+    netHostOpts(); netNormalizeKids(false);
+  }
   const tx = Net.makeTransport(role, code, {
     ready: c => { if (Net.tx !== tx) return; Net.code = c; if (role === 'guest') netSend({ t: 'hello', ver: netVersion(), name: netCleanName(Net.name), look: Game.persist.look, gun: Game.persist.equipped.gun }); renderNetPanel(); },
     connected: () => {},
-    data: m => { if (Net.tx === tx) netReceive(m); },
-    closed: () => { if (Net.tx === tx) netLost(); },
+    data: (m, pid) => { if (Net.tx === tx) netReceive(m, pid); },
+    closed: pid => { if (Net.tx !== tx) return; if (role === 'host') netDropped(pid); else netLost(); },
+    voiceOk: pid => Net.tx === tx && netVoiceOk(pid),   // v1.370 (D.10)
+    voiceIn: (pid, st) => { if (Net.tx === tx) netVoiceIn(pid, st); },
     error: kind => {
       if (Net.tx !== tx) return;
       if (kind === 'taken' && role === 'host' && (Net._tries = (Net._tries || 0) + 1) < 4) { netOpen('host', netNewCode()); return; }
@@ -423,64 +608,156 @@ function netOpen(role, code) {
   Net.tx = tx;
   renderNetPanel();
 }
+function netResetMatch() {
+  for (const id of Object.keys(CHARACTERS)) if (/^net_p\d+$/.test(id)) delete CHARACTERS[id];
+  if (Game.player) Game.player._netOut = false;
+  netVoiceStop(false);   // v1.370: the walkie's calls end with the match (your mic stays yours till you leave the room)
+  Object.assign(Net, { roster: null, ents: new Map(), ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0 });
+}
 function netHost() { Net._tries = 0; netOpen('host', netNewCode()); }
 function netJoin(code) {
   code = netCleanCode(code);
   if (code.length !== 4) { Net.error = 'noroom'; renderNetPanel(); return; }
   netOpen('guest', code);
 }
-// Closes the link and forgets the match. Safe to call any time.
+// Closes the link and forgets the room. Safe to call any time.
 function netClose() {
   const tx = Net.tx;
   Net.tx = null;
   if (tx) { try { tx.close(); } catch (e) {} }
+  netVoiceStop(true);   // v1.370: and the browser's mic is let go
   if (Net.bagSaved != null) { Game.persist.bag = Net.bagSaved; Net.bagSaved = null; }
-  Object.assign(Net, { active: false, role: null, phase: 'idle', kid: null, kidTarget: null, built: null, begin: null });
-  delete CHARACTERS[NET_FRIEND];
+  Object.assign(Net, { active: false, role: null, phase: 'idle', people: [], lobby: null, me: null });
+  netResetMatch();
+  netHud('');
+  const again = document.getElementById('navAgainBtn');
+  if (again && again.dataset.netLabel != null) { again.textContent = again.dataset.netLabel; delete again.dataset.netLabel; }
+}
+// The host: a friend's link closed. In the room he is gone from his side; in a match his kid plays on (the host's AI).
+function netDropped(pid) {
+  const p = Net.people.find(x => x.pid === pid);
+  if (!p || p.gone) return;
+  p.gone = true;
+  if (Net.phase === 'lobby') { Net.people.splice(Net.people.indexOf(p), 1); netRoomChanged(false); return; }
+  const e = Net.ents.get(p.id);
+  if (e && (Net.phase === 'begin' || Net.phase === 'play')) {
+    netBotTakeover(e);
+    netVoiceGone(p.id);   // v1.370
+    const line = `${p.name.toUpperCase()} LEFT · A KID PLAYS THE SPOT`;
+    netHud(line);
+    netSendOthers({ t: 'gone', id: p.id, name: p.name });
+    if (Net.phase === 'begin' && Net.localReady && netAllReady()) netGo();
+  }
+}
+// v1.366 (D.2 step 3): his kid stays where he is, with his look, his gun and his lives left, and the host's game plays him
+function netBotTakeover(e) {
+  e.remote = false;
+  e.netBot = true;
+  e._netT = null;
+  e._graceT = 0;
+  if (e.health > 0) { e.state = 'hiding'; e.stateTime = 0; e.homeCover = null; e.targetPos = null; e.pendingBurst = []; }
+  updateRosterHud();
+}
+// A short line on the screen in a match (who left)
+function netHud(line, sec = 4) {
+  const hud = document.getElementById('netHud');
+  if (!hud) return;
+  hud.textContent = line;
+  hud.style.display = line ? 'block' : 'none';
+  Net.hudT = line ? sec : 0;
 }
 
-// --- the match ---
-function netReceive(m) {
+// --- the messages ---
+function netReceive(m, pid) {
   if (!m || typeof m !== 'object' || typeof m.t !== 'string') return;
   const host = Net.role === 'host';
+  const from = host ? Net.people.find(p => p.pid === pid && !p.gone) : null;
   switch (m.t) {
     case 'hello': {   // a friend is in the room (host)
-      if (!host || Net.phase !== 'lobby') return;
-      if (m.ver !== netVersion()) { netSend({ t: 'nope', why: 'ver' }); netClose(); Net.error = 'ver'; renderNetPanel(); return; }
-      Net.remote = { name: netCleanName(m.name), look: netCleanLook(m.look), gun: netCleanGun(m.gun) };
-      Net.opts = { map: 'winnmark', mode: 'teams', size: 1, tod: pickupState.tod, lives: pickupState.lives, clock: pickupState.clock };
-      netSend({ t: 'match', ver: netVersion(), opts: Net.opts, name: netCleanName(Net.name), look: Game.persist.look, gun: Game.persist.equipped.gun });
-      netStartMatch();
+      if (!host || Net.people.some(p => p.pid === pid)) return;
+      const nope = why => { netSend({ t: 'nope', why }, pid); if (Net.tx && Net.tx.drop) Net.tx.drop(pid); };
+      if (m.ver !== netVersion()) return nope('ver');
+      if (Net.phase !== 'lobby') return nope('started');
+      const max = pickupMaxSize(netMap());
+      const side = NET_SIDES.slice().reverse().filter(s => netOnSide(s).length < Math.max(max, 1))
+        .sort((a, b) => netOnSide(a).length - netOnSide(b).length)[0];
+      if (!side || Net.people.filter(p => !p.gone).length >= NET_MAX_PEOPLE) return nope('full');
+      Net.people.push({ id: 'net_p' + (Net.nextSlot++), pid, name: netCleanName(m.name), look: netCleanLook(m.look), gun: netCleanGun(m.gun), side });
+      netRoomChanged(false);
       return;
     }
-    case 'match': {   // the host's settings and his kid (guest)
+    case 'lobby': {   // the room as the host has it (guest)
       if (host || Net.phase !== 'lobby') return;
-      if (m.ver !== netVersion()) { netClose(); Net.error = 'ver'; renderNetPanel(); return; }
-      const o = m.opts || {};
-      Net.opts = { map: 'winnmark', mode: 'teams', size: 1, tod: o.tod === 'night' ? 'night' : 'day',
+      const o = m.opts || {}, map = PICKUP_MAPS.find(k => k.key === o.map);
+      if (!map) return;
+      Net.phase = 'lobby';
+      Net.opts = { map: map.key, mode: 'teams', size: Math.max(1, Math.min(pickupMaxSize(map), o.size | 0)), tod: o.tod === 'night' ? 'night' : 'day',
         lives: PICKUP_LIVES.includes(o.lives) ? o.lives : 3, clock: PICKUP_CLOCKS.includes(o.clock) ? o.clock : 0 };
-      Net.remote = { name: netCleanName(m.name), look: netCleanLook(m.look), gun: netCleanGun(m.gun) };
+      Net.people = (Array.isArray(m.people) ? m.people : []).slice(0, NET_MAX_PEOPLE).filter(p => p && netCleanId(p.id))
+        .map(p => ({ id: p.id, name: netCleanName(p.name), side: p.side === 'B' ? 'B' : 'A' }));
+      const kids = m.kids || {}, pool = pickupPool(map).map(k => k.charId);
+      Net.kids = { A: (Array.isArray(kids.A) ? kids.A : []).filter(id => pool.includes(id)), B: (Array.isArray(kids.B) ? kids.B : []).filter(id => pool.includes(id)) };
+      Net.me = netCleanId(m.you);
+      Net.lobby = true;
+      renderNetPanel();
+      return;
+    }
+    case 'kid': if (host && from && Net.phase === 'lobby') netToggleKid(from.side, String(m.id)); return;
+    case 'side': if (host && from && Net.phase === 'lobby') netMoveSide(from, m.side); return;
+    case 'match': {   // the host's match: who is who and where (guest)
+      if (host || Net.phase !== 'lobby' || m.ver !== netVersion()) return;
+      if (!Array.isArray(m.roster) || !Net.opts) return;
+      Net.roster = m.roster.slice(0, 2 * 4 + 1).map(r => r && netCleanId(r.id) && {
+        id: r.id, side: r.side === 'B' ? 'B' : 'A', human: !!r.human, name: netCleanName(r.name), look: netCleanLook(r.look),
+        gun: netCleanGun(r.gun), anchor: typeof r.anchor === 'string' ? r.anchor : null,
+      }).filter(Boolean);
+      if (!Net.roster.some(r => r.id === Net.me)) return;
       netStartMatch();
       return;
     }
-    case 'nope': if (!host) { netClose(); Net.error = m.why === 'ver' ? 'ver' : 'net'; renderNetPanel(); } return;
-    case 'ready': Net.remoteReady = true; if (host && Net.localReady) netGo(); return;
+    case 'nope': if (!host) { netClose(); Net.error = NET_ERRORS[m.why] ? m.why : 'net'; renderNetPanel(); } return;
+    case 'ready':
+      if (!host || !from) return;
+      Net.ready.add(from.id);
+      if (Net.localReady && netAllReady()) netGo();
+      return;
     case 'go': {
       if (host || Net.phase !== 'begin') return;
-      const gs = netVec(m.gs), hs = netVec(m.hs);
-      if (gs && hs) Net.starts = { guest: new THREE.Vector3(...gs), host: new THREE.Vector3(...hs) };
+      Net.starts = {};
+      for (const [id, v] of Object.entries(m.starts || {})) { const p = netVec(v); if (p && netCleanId(id)) Net.starts[id] = new THREE.Vector3(...p); }
       netLaunch();
       return;
     }
-    case 's': case 'h': {   // where the other player is
-      const p = netVec(m.p);
-      if (!p || Net.phase !== 'play' || (host ? m.t !== 's' : m.t !== 'h')) return;
-      if (host && (m.r | 0) < Net.kidRespawns) return;   // sent before he heard he was tagged: he is back at his start
-      Net.kidTarget = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: (m.g | 0) === 2 ? 2 : (m.g | 0) === 1 ? 1 : 0 };   // v1.332: g, walking home (2) or in his grace (1)
-      if (!host && typeof m.rt === 'number' && isFinite(m.rt)) Game.scenario.roundTime = m.rt;   // the host's clock
+    case 's': {   // where a guest is (host)
+      const e = from && Net.ents.get(from.id), p = netVec(m.p);
+      if (!host || !e || !e.remote || !p || Net.phase !== 'play') return;
+      if ((m.r | 0) < (e._netResp || 0)) return;   // sent before he heard he was tagged: he is walking home
+      e._netT = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: (m.g | 0) === 2 ? 2 : (m.g | 0) === 1 ? 1 : 0 };   // v1.332: g, walking home (2) or in his grace (1)
       return;
     }
-    case 'f': if (Net.phase === 'play' && Net.kid) netSpawnShot(m, Net.kid); return;
+    case 'w': {   // where everyone is, from the host's game (guest)
+      if (host || Net.phase !== 'play' || !Array.isArray(m.e)) return;
+      if (typeof m.rt === 'number' && isFinite(m.rt)) Game.scenario.roundTime = m.rt;   // the host's clock
+      let roster = false;
+      for (const a of m.e) {
+        if (!Array.isArray(a) || a[0] === Net.me) continue;
+        const e = Net.ents.get(a[0]), p = netVec(a.slice(1, 4));
+        if (!e || !p) continue;
+        e._netT = { x: p[0], y: p[1], z: p[2], yaw: +a[4] || 0, c: +a[5] || 0, g: (a[6] | 0) === 2 ? 2 : (a[6] | 0) === 1 ? 1 : 0 };
+        const lives = Math.max(0, a[7] | 0);
+        if (lives !== e.lives) { if (lives < e.lives) e.hitFlash = 0.6; e.lives = lives; roster = true; }
+        const hp = lives > 0 ? (e.maxHealth || 1) : 0;
+        if ((e.health > 0) !== (hp > 0)) { e.health = hp; roster = true; }
+      }
+      if (roster) updateRosterHud();
+      return;
+    }
+    case 'f': {   // a shot: a guest's (host: it flies and can tag, and goes on to the others), or anyone's (guest: it flies)
+      if (Net.phase !== 'play') return;
+      if (host) { const e = from && Net.ents.get(from.id); if (e && e.remote && netSpawnShot(m, e)) netSendOthers(Object.assign({}, m, { id: from.id }), pid); }
+      else { const e = Net.ents.get(m.id); if (e) netSpawnShot(m, e); }
+      return;
+    }
     case 'tag': {   // the host's game tagged you (guest)
       if (host || Net.phase !== 'play') return;
       const P = Game.player, n = Math.max(0, m.n | 0);
@@ -488,70 +765,183 @@ function netReceive(m) {
       P.hitsTaken = n;
       if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;
       playHitOnPlayer(); flashDamage();
-      if (P.hitsTaken < P.maxHits) { startPlayerWalkHome(true); Game.scenario.playerRespawns = m.r | 0; }   // v1.332 (B.15): on foot
-      else updateHealthHud();
+      Game.scenario.playerRespawns = Math.max(0, (m.r | 0) - 1);
+      if (P.hitsTaken < P.maxHits) startPlayerWalkHome(true);   // v1.332 (B.15): on foot (it counts the respawn back up to m.r)
+      else netPlayerOut();
+      updateHealthHud();
       return;
     }
-    case 'ht': {   // you tagged the host (guest)
-      if (host || Net.phase !== 'play' || !Net.kid) return;
-      const n = Math.max(0, m.n | 0), k = Net.kid;
-      k.lives = Math.max(0, Net.opts.lives - n);
+    case 'ht': {   // your shot tagged someone, in the host's game (guest)
+      if (host || Net.phase !== 'play') return;
+      const k = Net.ents.get(m.id);
+      if (!k) return;
+      if (typeof m.l === 'number') { k.lives = Math.max(0, m.l | 0); if (!k.lives) k.health = 0; }
       k.hitFlash = 0.6;
       playHitOnEnemy();
+      showHitMarker(k);
       if (Game.scenario.stats) Game.scenario.stats.tags.push({ name: k.name, dist: +m.d || 0, t: Game.scenario.roundTime || 0 });
       updateRosterHud();
       return;
     }
+    case 'gone': {   // a friend left the match; his kid plays on in the host's game (guest)
+      if (host) return;
+      const line = `${netCleanName(m.name).toUpperCase()} LEFT · A KID PLAYS THE SPOT`;
+      if (Net.phase === 'play' || Net.phase === 'begin') netHud(line);
+      if (netCleanId(m.id)) netVoiceGone(m.id);   // v1.370
+      return;
+    }
+    case 'mates': {   // v1.370 (D.10): the walkie links of the people on your side (guest)
+      if (host || (Net.phase !== 'begin' && Net.phase !== 'matched') || !m.m || typeof m.m !== 'object') return;
+      const mine = Net.roster && Net.roster.find(r => r.id === Net.me);
+      NetVoice.mates = {};
+      for (const [id, link] of Object.entries(m.m)) {
+        const r = Net.roster && Net.roster.find(x => x.id === id);
+        if (r && r.human && mine && r.side === mine.side && id !== Net.me && typeof link === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(link)) NetVoice.mates[id] = link;
+      }
+      netVoiceLink();
+      return;
+    }
+    case 'ptt': {   // v1.370: a friend keyed his walkie, or let go: the host hears his side's, and passes it on to them
+      if (Net.phase !== 'play') return;
+      const on = !!m.on;
+      if (host) {
+        if (!from) return;
+        if (from.side === 'A') netHeard(from.id, on);
+        for (const p of netOnSide(from.side)) if (p.pid && p.id !== from.id) netSend({ t: 'ptt', id: from.id, on: on ? 1 : 0 }, p.pid);
+      } else if (netCleanId(m.id) && NetVoice.mates[m.id]) netHeard(m.id, on);
+      return;
+    }
     case 'end': {
       if (Net.phase !== 'play' && Net.phase !== 'begin') return;
-      const o = m.o === 'win' ? 'lose' : 'win';   // his win is your loss; his loss or his forfeit is your win
+      if (host) {   // a guest gave up the match (F): he is gone, and his kid plays on
+        if (from) { netDropped(pid); if (Net.tx && Net.tx.drop) Net.tx.drop(pid); }
+        return;
+      }
+      // the host's result is Blue's: Red flips it; the host leaving the match is Red's win and Blue's loss
+      const blue = (Net.roster.find(r => r.id === Net.me) || {}).side !== 'B';
+      const o = m.o === 'win' ? (blue ? 'win' : 'lose') : m.o === 'lose' ? (blue ? 'lose' : 'win') : (blue ? 'lose' : 'win');
       Net.phase = 'over';
       if (Game.mode === 'scenario') endScenario(o);
       return;
     }
-    case 'bye': netLost(); return;
+    case 'room': if (!host && Net.phase === 'over') netBackToRoom(); return;   // the host pressed REMATCH
+    case 'bye': if (!host) netLost(); return;
   }
 }
-// Both games build the same match: the host's board settings, Winnmark 1v1, and the one kid on the other side is the
-// other player (his look, his name, his gun) at the spot the board's own kid would take.
+function netAllReady() {
+  return Net.roster.every(r => !r.human || r.id === NET_HOST_ID || Net.ready.has(r.id) || (Net.people.find(p => p.id === r.id) || { gone: true }).gone);
+}
+// START (host): the roster, each person and kid with his side and his spot. Blue's spots are the map's start (the
+// host's) and its allies' anchors; Red's are its other side's. On each side the kids take the first spots (a kid on his
+// own spot keeps it, as on the board) and the friends the last ones.
+function netStartRoom() {
+  if (Net.role !== 'host' || Net.phase !== 'lobby' || !netRoomReady()) return;
+  const o = netHostOpts(), m = netMap(), t = SCENARIOS[m.template], pool = pickupPool(m);
+  const spots = { A: t.enemySetup.filter(e => e.team === 'player').slice(0, o.size - 1), B: t.enemySetup.filter(e => !e.team).slice(0, o.size) };
+  const roster = [];
+  for (const side of NET_SIDES) {
+    const friends = netOnSide(side).filter(p => p.id !== NET_HOST_ID), sp = spots[side];
+    const kidSpots = sp.slice(0, sp.length - friends.length);
+    pickupFill(kidSpots, Net.kids[side], pool, side === 'A' ? 'player' : undefined).forEach(e => {
+      const s = pickupDayGun(e, o.tod);
+      roster.push({ id: s.charId, side, gun: s.weapon, anchor: s.anchor, setup: s });
+    });
+    friends.forEach((p, i) => roster.push({ id: p.id, side, human: true, name: p.name, look: p.look, gun: p.gun, anchor: sp[sp.length - friends.length + i].anchor }));
+  }
+  const me = Net.people.find(p => p.id === NET_HOST_ID);
+  roster.push({ id: NET_HOST_ID, side: 'A', human: true, name: netCleanName(Net.name), look: me.look, gun: me.gun,
+    anchor: (spots.A[0] || spots.B[0]).anchor });   // the host stands at the map's start; the anchor only places his kid in the other games
+  Net.roster = roster;
+  Net.people = Net.people.filter(p => !p.gone);
+  const wire = roster.map(r => ({ id: r.id, side: r.side, human: !!r.human, name: r.name, look: r.look, gun: r.gun, anchor: r.anchor }));
+  netSendOthers({ t: 'match', ver: netVersion(), roster: wire });
+  netStartMatch();
+  // v1.370 (D.10): each person is told the walkie links of his own side, and only those ('host' for the host's)
+  if (Net.phase !== 'begin') return;
+  for (const p of Net.people) {
+    const m = {};
+    for (const q of netOnSide(p.side)) if (q.id !== p.id) m[q.id] = q.id === NET_HOST_ID ? 'host' : q.pid;
+    if (p.id === NET_HOST_ID) { delete m[NET_HOST_ID]; NetVoice.mates = m; }
+    else if (p.pid && !p.gone) netSend({ t: 'mates', m }, p.pid);
+  }
+  netVoiceLink();
+}
+// Every game builds the same match from the roster, from its own side: its own person is the player, the others
+// (people and kids) are kids in the scene, his side's on the player's team. In a guest's game every one of them is
+// moved by the host's word; in the host's game the people are, and the kids are its own.
 function netBuildMatch() {
-  const sc = buildPickupScenario(Net.opts);
-  const r = Net.remote;
-  CHARACTERS[NET_FRIEND] = Object.assign({}, CHARACTERS.seth, r.look, { name: r.name, flavor: { hit: '', win: '' } });
-  const spot = sc.enemySetup.find(e => !e.team) || sc.enemySetup[0];
-  sc.enemySetup = [{ charId: NET_FRIEND, weapon: r.gun, anchor: spot.anchor }];
-  sc.scenarioName = 'Online: 1v1';
-  sc.desc = `You against ${r.name} on Winnmark Court, ${Net.opts.tod === 'night' ? 'after dark' : 'in the afternoon'}. ` +
-    `${Net.opts.lives === 1 ? 'One life' : Net.opts.lives + ' lives'} each; a tag puts you back at your start` +
-    (Net.opts.clock ? `; more lives left at ${pickupClockText(Net.opts.clock)} wins.` : '.') + ' Nothing on the line.';
+  const o = Net.opts;
+  const sc = buildPickupScenario({ map: o.map, mode: 'teams', size: o.size, tod: o.tod, lives: o.lives, clock: o.clock, holiday: 'none' });
+  const mine = Net.roster.find(r => r.id === Net.me), host = Net.role === 'host';
+  const other = Net.roster.filter(r => r.side !== mine.side && r.human).map(r => r.name);
+  const mates = Net.roster.filter(r => r.side === mine.side && r.human && r.id !== Net.me).map(r => r.name);
+  sc.enemySetup = Net.roster.filter(r => r.id !== Net.me).map(r => {
+    if (r.human) CHARACTERS[r.id] = Object.assign({}, CHARACTERS.seth, r.look, { name: r.name, flavor: { hit: '', win: '' } });
+    const e = host && r.setup ? Object.assign({}, r.setup) : { charId: r.id, weapon: r.gun, anchor: r.anchor };
+    if (r.side === mine.side) e.team = 'player'; else delete e.team;
+    return e;
+  });
+  const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+  sc.scenarioName = `Online: ${o.size}v${o.size}`;
+  sc.desc = `${NET_SIDE_NAMES[mine.side]} against ${NET_SIDE_NAMES[mine.side === 'A' ? 'B' : 'A']} on ${netMap().name}, ${o.tod === 'night' ? 'after dark' : 'in the afternoon'}` +
+    (mates.length ? `, you with ${list(mates)}` : '') + (other.length ? `, against ${list(other)}` : '') + `; kids from the street fill the other spots. ` +
+    `${o.lives === 1 ? 'One life' : o.lives + ' lives'} each; a tag sends you back to your start, and with none left you watch till your side is done` +
+    (o.clock ? `; more lives left at ${pickupClockText(o.clock)} wins.` : '.') + ' Nothing on the line.';
   sc.rewards = { win: 0, lose: 0 };
   sc.online = true;
   return sc;
 }
 function netStartMatch() {
   Net.phase = 'matched';
+  netResetMatchKeepRoster();
   netBuildMatch();
   if (document.getElementById('modalScreen').classList.contains('active')) closeModal();
   enterScenario('pickup_game');
   if (Game.mode !== 'scenario_intro') { netClose(); return; }
   Net.phase = 'begin';
-  const k = Game.scenario.enemies.find(e => e.charId === NET_FRIEND);
-  if (k) { k.remote = true; k.lives = Net.opts.lives; k.mesh.group.visible = false; Net.kid = k; }
+  const host = Net.role === 'host';
+  for (const e of Game.scenario.enemies) {
+    const r = Net.roster.find(x => x.id === e.charId);
+    if (!r) continue;
+    Net.ents.set(r.id, e);
+    if (host && !r.human) continue;
+    e.remote = true;
+    e.mesh.group.visible = false;   // till his game says where he is
+    if (r.human) e.lives = Net.opts.lives;
+    if (host) e._netPid = (Net.people.find(p => p.id === r.id) || {}).pid;
+  }
 }
-// BEGIN on the briefing: the match starts when both have pressed it (the host says go)
+function netResetMatchKeepRoster() {
+  const roster = Net.roster;
+  netResetMatch();
+  Net.roster = roster;
+}
+// BEGIN on the briefing: the match starts when everyone has pressed it (the host says go)
 function netBegin(btn, built, begin) {
   if (Net.localReady) return;
   Net.localReady = true; Net.built = built; Net.begin = begin;
-  btn.textContent = `WAITING FOR ${Net.remote ? Net.remote.name.toUpperCase() : 'YOUR FRIEND'}…`;
+  const waitFor = Net.role === 'host' ? 'YOUR FRIENDS' : (Net.roster.find(r => r.id === NET_HOST_ID) || { name: 'the host' }).name.toUpperCase();
+  const others = Net.roster.filter(r => r.human && r.id !== Net.me);
+  btn.textContent = `WAITING FOR ${others.length === 1 ? others[0].name.toUpperCase() : waitFor}…`;
   btn.disabled = true;
-  netSend({ t: 'ready' });
-  if (Net.role === 'host' && Net.remoteReady) netGo();
+  if (Net.role === 'guest') netSend({ t: 'ready' });
+  else if (netAllReady()) netGo();
 }
+// Everyone's start: the host's at the map's start, a friend's at his spot (Blue's beside the host, as allies start;
+// Red's on his anchor, not in the kids' huddle), each kid where the host's game put him
 function netGo() {
-  const gs = Net.kid ? Net.kid.pos.clone() : new THREE.Vector3();
-  const hs = (Net.built && Net.built.spawn) ? Net.built.spawn.clone() : new THREE.Vector3();
-  Net.starts = { guest: gs, host: hs };
-  netSend({ t: 'go', gs: gs.toArray().map(netR), hs: hs.toArray().map(netR) });
+  if (Net.phase !== 'begin' || !Net.begin) return;
+  const starts = {}, pl = (Net.built && Net.built.placements) || {};
+  starts[NET_HOST_ID] = (Net.built && Net.built.spawn) ? Net.built.spawn.clone() : Game.player.pos.clone();
+  for (const [id, e] of Net.ents) {
+    const r = Net.roster.find(x => x.id === id);
+    starts[id] = (r && r.human && e.team !== 'player' && pl[r.anchor]) ? pl[r.anchor].pos.clone() : e.pos.clone();
+    if (r && r.human) e._netStartAt = starts[id].clone();
+  }
+  Net.starts = starts;
+  const wire = {};
+  for (const [id, v] of Object.entries(starts)) wire[id] = v.toArray().map(netR);
+  netSendOthers({ t: 'go', starts: wire });
   netLaunch();
 }
 function netLaunch() {
@@ -564,83 +954,132 @@ function netLaunch() {
 }
 // From startScenario: lives as the board says (no armor bonus online), each at his own start
 function netAfterStart() {
-  const P = Game.player, S = Net.starts;
+  const P = Game.player, S = Net.starts || {}, host = Net.role === 'host';
   P.maxHits = Net.opts.lives;
-  if (Net.role === 'guest' && S) {
-    P.pos.copy(S.guest);
-    P.yaw = Math.atan2(-(S.host.x - S.guest.x), -(S.host.z - S.guest.z));   // facing the host's start
-    Game.scenario.playerStart = { pos: S.guest.clone(), yaw: P.yaw };
+  P._netOut = false;
+  if (!host && S[Net.me]) {
+    P.pos.copy(S[Net.me]);
+    P.pos.y = scenarioGroundY(P.pos.x, P.pos.z);   // a start comes on the ground plane
+    const mySide = Net.roster.find(r => r.id === Net.me).side;
+    const foes = Net.roster.filter(r => r.side !== mySide && S[r.id]).map(r => S[r.id]);
+    if (foes.length) {
+      const fx = foes.reduce((a, v) => a + v.x, 0) / foes.length, fz = foes.reduce((a, v) => a + v.z, 0) / foes.length;
+      P.yaw = Math.atan2(-(fx - P.pos.x), -(fz - P.pos.z));   // facing the other side
+    }
+    Game.scenario.playerStart = { pos: P.pos.clone(), yaw: P.yaw };
   }
-  const k = Net.kid;
-  if (k) {
-    k._netStart = (Net.role === 'host' ? k.pos : (S ? S.host : k.pos)).clone();
-    k.pos.copy(k._netStart);
-    k.lives = Net.opts.lives;
-    k.state = 'online';
+  for (const [id, e] of Net.ents) {
+    const r = Net.roster.find(x => x.id === id);
+    if (!e.remote) continue;
+    const at = host ? e._netStartAt : S[id];
+    if (at) { e.pos.copy(at); e._netStart = at.clone(); }
+    if (r && r.human) e.lives = Net.opts.lives;
+    e.state = 'online';
   }
   Net.phase = 'play';
   Net.sendT = 0;
   updateHealthHud();
   updateRosterHud();
 }
-// Once a step in a match: send where you are
+// Out of lives online: you stay on the field gun up (nothing tags you, you can't fire) and watch your side play on
+function netPlayerOut() {
+  const P = Game.player;
+  if (P._netOut) return;
+  P._netOut = true;
+  if (!P._goingHome) startPlayerWalkHome(true);
+  if (Net.role === 'host') checkWinCondition();
+}
+// Once a step in a match: graces run down, and you send where you are (a guest) or where everyone is (the host)
 function netStep(dt) {
+  if (Net.hudT > 0 && (Net.hudT -= dt) <= 0) netHud('');
+  netTalkPoll();   // v1.370 (D.10)
+  netTalkHud();
   if (Net.phase !== 'play') return;
-  const k = Net.kid;
-  if (k && k._graceT > 0) k._graceT = Math.max(0, k._graceT - dt);
+  const P = Game.player, host = Net.role === 'host';
+  for (const e of Net.ents.values()) if (e.remote && e._graceT > 0) e._graceT = Math.max(0, e._graceT - dt);
+  if (P._netOut) {   // out: gun up for good, and the panel says why
+    P._goingHome = true; P._graceT = 0;
+    const txt = document.getElementById('homeText'), arrow = document.getElementById('homeArrow'), hud = document.getElementById('homeHud');
+    if (txt && txt.textContent !== 'YOU’RE OUT · YOUR SIDE PLAYS ON') txt.textContent = 'YOU’RE OUT · YOUR SIDE PLAYS ON';
+    if (arrow && arrow.style.display !== 'none') arrow.style.display = 'none';
+    if (hud && hud.style.display !== 'block') hud.style.display = 'block';
+  }
   Net.sendT -= dt;
   if (Net.sendT > 0) return;
   Net.sendT += NET_SEND_SEC[Net.role] || 0.05;
   if (Net.sendT < 0) Net.sendT = 0;
-  const P = Game.player;
-  const m = { t: Net.role === 'host' ? 'h' : 's', p: [netR(P.pos.x), netR(P.pos.y), netR(P.pos.z)], y: netR(P.yaw), c: P.crouching ? 1 : 0,
-    r: Game.scenario.playerRespawns || 0, g: P._goingHome ? 2 : P._graceT > 0 ? 1 : 0 };   // v1.332 (B.15): walking home, or in the grace
-  if (Net.role === 'host') m.rt = netR(Game.scenario.roundTime || 0);
-  netSend(m);
+  const g = P._goingHome ? 2 : P._graceT > 0 ? 1 : 0;   // v1.332 (B.15): walking home, or in the grace
+  if (!host) {
+    netSend({ t: 's', p: [netR(P.pos.x), netR(P.pos.y), netR(P.pos.z)], y: netR(P.yaw), c: P.crouching ? 1 : 0, r: Game.scenario.playerRespawns || 0, g });
+    return;
+  }
+  // the host: [id, x, y, z, yaw (as a camera's), crouch, g, lives] for himself, his friends and every kid
+  const e = [[NET_HOST_ID, netR(P.pos.x), netR(P.pos.y), netR(P.pos.z), netR(P.yaw), P.crouching ? 1 : 0, g, Math.max(0, P.maxHits - P.hitsTaken)]];
+  for (const [id, k] of Net.ents) {
+    if (k.remote) {
+      const T = k._netT || { x: k.pos.x, y: k.pos.y, z: k.pos.z, yaw: 0, c: 0, g: 0 };
+      e.push([id, netR(T.x), netR(T.y), netR(T.z), netR(T.yaw), T.c, T.g, Math.max(0, k.lives | 0)]);
+    } else {
+      const out = k.health <= 0 || k.state === 'retreating';
+      e.push([id, netR(k.pos.x), netR(k.pos.y), netR(k.pos.z), netR(k.yaw - Math.PI), netR((k.mesh.pose && k.mesh.pose.crouch) || 0),
+        out ? 2 : k._graceT > 0 ? 1 : 0, typeof k.lives === 'number' ? Math.max(0, k.lives) : (k.health > 0 ? 1 : 0)]);
+    }
+  }
+  netSend({ t: 'w', rt: netR(Game.scenario.roundTime || 0), e });
 }
-// Your shot, sent once as it leaves the gun
-function netShot(bb) {
+// A shot as it leaves the gun, sent once: yours (from fireBB), or on the host a kid's (spawnEnemyBB, `k`)
+function netShot(bb, k) {
   if (Net.phase !== 'play') return;
-  netSend({ t: 'f', o: bb.pos.toArray().map(netR), v: bb.vel.toArray().map(netR), cd: bb.curveDir.toArray().map(netR),
-    cs: netR(bb.curveStrength), co: netR(bb.curveOnsetDistance) });
+  const m = { t: 'f', o: bb.pos.toArray().map(netR), v: bb.vel.toArray().map(netR), cd: bb.curveDir.toArray().map(netR),
+    cs: netR(bb.curveStrength), co: netR(bb.curveOnsetDistance) };
+  if (Net.role === 'host') { m.id = k ? k.charId : NET_HOST_ID; netSend(m); }
+  else if (!k) netSend(m);
 }
-// His shot, flying the same way here. On the host it can tag you; on the guest only the host's copy counts.
+// Someone else's shot, flying the same way here. On the host it can tag; on a guest only the host's copy counts.
 function netSpawnShot(m, k) {
   const o = netVec(m.o), v = netVec(m.v), cd = netVec(m.cd);
-  if (!o || !v || !cd || Game.mode !== 'scenario' || k.health <= 0) return;
-  if (Math.hypot(o[0] - k.pos.x, o[2] - k.pos.z) > 4) return;   // a shot from where he isn't
-  if (Net.kidTarget && Net.kidTarget.g === 2) return;   // v1.332: walking home, his gun is up
+  if (!o || !v || !cd || Game.mode !== 'scenario') return false;
+  if (Math.hypot(o[0] - k.pos.x, o[2] - k.pos.z) > 4) return false;   // a shot from where he isn't
+  if (k.remote && k._netT && k._netT.g === 2) return false;   // v1.332: walking home, his gun is up
   const bb = makeBB(new THREE.Vector3(...o), new THREE.Vector3(...v), 'enemy', k,
     { curveOnsetDistance: +m.co || 4, curveStrengthMax: 0 }, combatantTeam(k));
   bb.curveDir.set(...cd);
   bb.curveStrength = Math.max(0, Math.min(60, +m.cs || 0));
   Game.scenario.bbs.push(bb);
-  // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): his shot fired silently here. Now it
-  // is heard from where he is, as a kid's shot is (spawnEnemyBB); its whistle past you and its hits sounded already.
+  // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): heard from where he is, as a kid's shot
   playShot(o[0], o[2]);
+  return true;
 }
-// The host's game tagged the guest's kid: a life gone and back to his start, as yours (v1.221)
-// v1.332 (B.15): he walks back himself; nothing tags him while his game says he is walking home or in his grace
+// The host's game: a BB from a friend's gun tagged `c` (the host, a kid or another friend). His game shows the hit.
+function netTaggedBy(bb, c) {
+  const shooter = bb.enemyRef, to = shooter && shooter.remote && shooter._netPid;
+  if (Net.role !== 'host' || Net.phase !== 'play' || !to) return;
+  const from = bb.spawnPos || bb.pos, at = c === Game.player ? Game.player.pos : c.pos;
+  const lives = c === Game.player ? Math.max(0, Game.player.maxHits - Game.player.hitsTaken) : (typeof c.lives === 'number' ? Math.max(0, c.lives) : (c.health > 0 ? 1 : 0));
+  netSend({ t: 'ht', id: c === Game.player ? NET_HOST_ID : c.charId, d: netR(Math.hypot(at.x - from.x, at.z - from.z)), l: lives }, to);
+}
+// The host's game tagged a friend's kid: a life gone and he walks back to his start, as you do (v1.221, v1.332)
 function netTagRemote(bb, c) {
-  if (c._graceT > 0 || (Net.kidTarget && Net.kidTarget.g > 0)) return true;
+  if (c._graceT > 0 || (c._netT && c._netT.g > 0) || c.lives <= 0) return true;
   c.lives = Math.max(0, (c.lives | 0) - 1);
   if (bb.owner === 'player' && Game.scenario.stats) noteMatchTag(bb, c);
   if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
-  if (c.lives > 0) {
-    c._graceT = VIP_GRACE;   // till his word that he is walking home comes back
-    Net.kidRespawns++;
-    if (Net.kidTarget) Net.kidTarget.g = 2;   // v1.332: no jump to his start; he walks there, gun up
-  } else c.health = 0;
-  netSend({ t: 'tag', n: Net.opts.lives - c.lives, r: Net.kidRespawns });
+  c._netResp = (c._netResp || 0) + 1;
+  if (c.lives > 0) c._graceT = VIP_GRACE;   // till his word that he is walking home comes back
+  else c.health = 0;
+  if (c._netT) c._netT.g = 2;   // v1.332: no jump to his start; he walks there, gun up
+  netSend({ t: 'tag', n: Net.opts.lives - c.lives, r: c._netResp }, c._netPid);
+  netTaggedBy(bb, c);
   updateRosterHud();
   if (c.lives <= 0) checkWinCondition();
   return true;
 }
-// The other player's kid, moved to where his game says he is, posed as a kid who walks, crouches and holds his gun up
+// Another player's kid (or, in a guest's game, any kid), moved to where his game says he is, posed as a kid who walks,
+// crouches and holds his gun up, or gun up in the air when he is tagged or out
 function netDriveRemote(e, dt) {
-  const T = Net.kidTarget;
+  const T = e._netT;
   if (!T) { e.mesh.group.visible = false; return; }
   e.mesh.group.visible = true;
   if (e.hitFlash > 0) e.hitFlash -= dt;
@@ -678,25 +1117,61 @@ function netDriveRemote(e, dt) {
     else torso.material.emissiveIntensity = 0;
   }
 }
-// From endScenario: tell the other game how it ended (the host decides tags and the clock; either may forfeit)
+// From endScenario: the host tells everyone how it ended (Blue's result: each guest's game reads it for his side); a
+// guest who leaves (F) tells the host, whose game hands his spot to his kid
 function netEnded(outcome) {
-  if (Net.phase === 'play' || Net.phase === 'begin') netSend({ t: 'end', o: outcome });
+  if (Net.phase === 'play' || Net.phase === 'begin') {
+    if (Net.role === 'host') netSend({ t: 'end', o: outcome });
+    else netSend({ t: 'end', o: 'forfeit' });
+  }
   Net.phase = 'over';
+  netHud('');
 }
 function netRestoreBag() { if (Net.bagSaved != null) { Game.persist.bag = Net.bagSaved; Net.bagSaved = null; } }
 function netResultCard(outcome) {
-  const who = Net.remote ? Net.remote.name : 'Your friend';
+  const mySide = (Net.roster && Net.roster.find(r => r.id === Net.me) || { side: 'A' }).side;
+  const others = (Net.roster || []).filter(r => r.human && r.side !== mySide).map(r => r.name);
+  const who = others.length === 1 ? others[0] : NET_SIDE_NAMES[mySide === 'A' ? 'B' : 'A'];
   document.getElementById('flavorText').textContent = outcome === 'win' ? `You beat ${who}.`
-    : outcome === 'forfeit' ? `You left the match with ${who}.` : `${who} got you this time.`;
+    : outcome === 'forfeit' ? `You left the match.` : `${who} got you this time.`;
   document.getElementById('rewardText').textContent = 'Online match: nothing on the line.';
   document.getElementById('reloadNote').textContent = '';
-  for (const id of ['navPrevBtn', 'navAgainBtn', 'navNextBtn']) document.getElementById(id).disabled = true;
+  for (const id of ['navPrevBtn', 'navNextBtn']) document.getElementById(id).disabled = true;
+  // v1.366 (D.67): REMATCH takes the room back to the board, everyone still in it, for the host to start again
+  const again = document.getElementById('navAgainBtn');
+  if (again.dataset.netLabel == null) again.dataset.netLabel = again.textContent;
+  const stays = outcome !== 'forfeit' && Net.active;
+  again.textContent = !stays ? 'REMATCH' : Net.role === 'host' ? 'REMATCH' : 'REMATCH: THE HOST’S CALL';
+  again.disabled = !(stays && Net.role === 'host');
 }
-// The link closed. In the lobby the board says so; in a match it ends (nothing paid, your bag put back) and you go home.
+// The result card's REMATCH (98-boot): the host takes everyone back to the room
+function netRematch() {
+  if (Net.role !== 'host' || Net.phase !== 'over') return;
+  netSendOthers({ t: 'room' });
+  netBackToRoom();
+}
+function netBackToRoom() {
+  document.getElementById('resultScreen').classList.remove('active');
+  cleanupScenarioScene();
+  enterBedroom();
+  Net.phase = 'lobby';
+  netResetMatch();
+  netHud('');
+  openPickupBoard();
+  openNetPanel();
+  if (Net.role === 'host') { Net.people = Net.people.filter(p => !p.gone); netRoomChanged(false); }
+}
+// The link to the host closed (a guest), or the room is given up. In the room the board says so; in a match it ends
+// (nothing paid, your bag put back) and you go home.
 function netLost() {
   const phase = Net.phase, mode = Game.mode;
   if (phase === 'lobby') { netClose(); Net.error = 'net'; renderNetPanel(); return; }
-  if (phase === 'over' || phase === 'idle') { netClose(); return; }
+  if (phase === 'over' || phase === 'idle') {
+    netClose();
+    const again = document.getElementById('navAgainBtn');
+    if (mode === 'result' && again) again.disabled = true;
+    return;
+  }
   Net.phase = 'over';
   if (mode === 'scenario') {
     endScenario('forfeit');
@@ -709,5 +1184,166 @@ function netLost() {
     cleanupScenarioScene();
     enterBedroom();
   }
-  showModal('Your friend left', 'The connection to your friend closed, so the match is over. Nothing was lost.');
+  showModal('The host left', 'The connection to the host closed, so the match is over. Nothing was lost.');
+}
+// =====================================================================
+// v1.370 (backlog D.10's push-to-talk, card fable/d2-online-teams step 2; Michael, D.10 A on 3 Oct: "a push to talk
+// mechanism to compliment" the walkie, for online play, and A on 21 Oct: "push-to-talk on the walkie for the people
+// playing"): THE WALKIE ONLINE. Hold T (R3 on a pad, a click of the right stick held) and your voice goes to the people
+// on your side, and only them, through the walkie's sound: the talk button's click, then the voice thin and crackly.
+// The browser asks for the microphone the first time you hold it in a match, never before; once it says yes the mic
+// stays open, silent, till you leave the room, and is live only while the key is held. Each person's game calls each
+// of his side's people straight (WebRTC audio over PeerJS, as the match's own link); the host tells each of them who
+// those are, so nobody on the other side is ever called or heard. "Walkie online" in the settings mutes them
+// and keeps yours shut. The kids' callouts stay as they were.
+const NET_TALK_KEY = 'KeyT';
+const NetVoice = {
+  mic: null, asking: false, denied: false, held: false, talking: false,
+  mates: {},            // the people on your side: { charId: walkie link }, from the host
+  heard: new Map(),     // the calls coming in, by link: { stream, el, src, gain }
+  speaking: new Set(),  // who on your side is talking now, by charId
+  getMic: () => navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }),   // the tests swap it
+};
+function netVoiceLinks() { return Object.values(NetVoice.mates); }
+function netVoiceOk(pid) { return Net.active && (Net.phase === 'begin' || Net.phase === 'play') && netVoiceLinks().includes(pid); }
+// Your calls out: one to each of your side's people while the mic is open and the walkie not muted
+function netVoiceLink() {
+  if (!Net.tx || !Net.tx.voice) return;
+  const on = NetVoice.mic && Settings.voiceChat && (Net.phase === 'begin' || Net.phase === 'play');
+  try { Net.tx.voice(on ? NetVoice.mic : null, on ? netVoiceLinks() : []); } catch (e) {}
+}
+function netMicTracks() { return (NetVoice.mic && NetVoice.mic.getAudioTracks) ? NetVoice.mic.getAudioTracks() : []; }
+// A teammate's voice: the walkie's band (thin, no boom, no hiss up top), a little grit, and as loud as a voice in the ear
+function netVoiceIn(pid, stream) {
+  const old = NetVoice.heard.get(pid);
+  if (old) { NetVoice.heard.delete(pid); try { old.src && old.src.disconnect(); } catch (e) {} if (old.el) { old.el.srcObject = null; } }
+  if (!stream || !netVoiceOk(pid)) return;
+  const v = { stream, el: null, src: null, gain: null };
+  try { const el = new Audio(); el.muted = true; el.srcObject = stream; const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); v.el = el; } catch (e) {}   // Chrome only feeds a call's sound to Web Audio while an element plays it
+  try {
+    initAudio();
+    const ctx = Game.audio && Game.audio.ctx;
+    if (ctx) {
+      const src = ctx.createMediaStreamSource(stream), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), sh = ctx.createWaveShaper(), g = ctx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = 450; hp.Q.value = 0.7;
+      lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.9;
+      const curve = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; curve[i] = Math.tanh(2.2 * x) / Math.tanh(2.2); }
+      sh.curve = curve;
+      g.gain.value = Settings.voiceChat ? 1.4 : 0;
+      src.connect(hp).connect(lp).connect(sh).connect(g).connect(ctx.destination);
+      v.src = src; v.gain = g;
+    }
+  } catch (e) {}
+  NetVoice.heard.set(pid, v);
+}
+// The mute in the settings, as it changes
+function netVoiceApply() {
+  for (const v of NetVoice.heard.values()) if (v.gain) v.gain.gain.value = Settings.voiceChat ? 1.4 : 0;
+  if (!Settings.voiceChat && NetVoice.talking) netTalkStop();
+  if (Net.active) netVoiceLink();
+}
+// A friend on your side left the match: his calls end
+function netVoiceGone(id) {
+  const link = NetVoice.mates[id];
+  if (!link) return;
+  delete NetVoice.mates[id];
+  NetVoice.speaking.delete(id);
+  netVoiceIn(link, null);
+  netVoiceLink();
+}
+// The end of a match (the calls) or of the room (and the mic)
+function netVoiceStop(all) {
+  if (NetVoice.talking) { NetVoice.talking = false; for (const t of netMicTracks()) t.enabled = false; }
+  NetVoice.held = false;
+  for (const pid of [...NetVoice.heard.keys()]) netVoiceIn(pid, null);
+  NetVoice.mates = {};
+  NetVoice.speaking.clear();
+  if (Net.tx && Net.tx.voice) { try { Net.tx.voice(null, []); } catch (e) {} }
+  if (all && NetVoice.mic) { for (const t of netMicTracks()) { try { t.stop(); } catch (e) {} } NetVoice.mic = null; }
+  if (all) NetVoice.denied = false;
+  netTalkHud();
+}
+// The walkie's talk button: a click going down, a lower one letting go
+function netWalkieClick(down) {
+  try {
+    const ctx = Game.audio && Game.audio.ctx;
+    if (!ctx) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(down ? 1400 : 900, t);
+    g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
+  } catch (e) {}
+}
+// Once a step: the key (or R3) held or let go
+function netTalkPoll() {
+  const held = !!(Game.keys[NET_TALK_KEY] || Pad.talk) && Game.mode === 'scenario' && !Game.paused && Net.phase === 'play';
+  if (held === NetVoice.held) return;
+  NetVoice.held = held;
+  if (held) netTalkStart(); else netTalkStop();
+}
+function netTalkStart() {
+  if (!Settings.voiceChat || !netVoiceLinks().length || NetVoice.talking) return;
+  if (!NetVoice.mic) { netMicAsk(); return; }
+  NetVoice.talking = true;
+  for (const t of netMicTracks()) t.enabled = true;
+  netWalkieClick(true);
+  netPttSend(true);
+  netTalkHud();
+}
+function netTalkStop() {
+  if (!NetVoice.talking) return;
+  NetVoice.talking = false;
+  for (const t of netMicTracks()) t.enabled = false;
+  netWalkieClick(false);
+  netPttSend(false);
+  netTalkHud();
+}
+// The first hold: the browser asks; a yes opens the mic shut, and talks at once if the key is still held
+function netMicAsk() {
+  if (NetVoice.asking || NetVoice.denied) return;
+  NetVoice.asking = true;
+  let p;
+  try { p = NetVoice.getMic(); } catch (e) { p = Promise.reject(e); }
+  Promise.resolve(p).then(stream => {
+    NetVoice.asking = false;
+    if (!Net.active || !stream) { if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop()); return; }
+    NetVoice.mic = stream;
+    for (const t of netMicTracks()) t.enabled = false;
+    netVoiceLink();
+    if (NetVoice.held) netTalkStart();
+  }, () => { NetVoice.asking = false; NetVoice.denied = true; netTalkHud(); });
+}
+// Your side hears that you keyed the walkie (the host passes a guest's on to the rest of his side)
+function netPttSend(on) {
+  const v = on ? 1 : 0;
+  if (Net.role === 'guest') { netSend({ t: 'ptt', on: v }); return; }
+  for (const p of netOnSide('A')) if (p.pid) netSend({ t: 'ptt', id: NET_HOST_ID, on: v }, p.pid);
+}
+function netHeard(id, on) {
+  if (on === NetVoice.speaking.has(id)) return;
+  if (on) NetVoice.speaking.add(id); else NetVoice.speaking.delete(id);
+  if (Settings.voiceChat) netWalkieClick(on);
+  netTalkHud();
+}
+// Bottom left in a match with people on your side: the key to hold, you talking, or who is
+function netTalkHud() {
+  const el = document.getElementById('netTalkHud');
+  if (!el) return;
+  const show = Net.active && Net.phase === 'play' && Game.mode === 'scenario' && netVoiceLinks().length > 0;
+  let html = '', on = false;
+  if (show) {
+    const key = Pad.active ? '<kbd>R3</kbd>' : '<kbd>T</kbd>';
+    const names = [...NetVoice.speaking].map(id => (Net.roster.find(r => r.id === id) || { name: 'Friend' }).name);
+    if (!Settings.voiceChat) html = '📻 Walkie muted · settings';
+    else if (NetVoice.talking) { html = '📻 TALKING TO YOUR SIDE'; on = true; }
+    else if (names.length) { html = `📻 ${names.join(', ')}`; on = true; }
+    else if (NetVoice.denied) html = '📻 No mic: the browser said no';
+    else if (NetVoice.asking) html = '📻 Allow the mic to talk…';
+    else html = `📻 hold ${key} to talk to your side`;
+  }
+  if (el.innerHTML !== html) el.innerHTML = html;
+  el.classList.toggle('on', on);
+  const disp = html ? 'block' : 'none';
+  if (el.style.display !== disp) el.style.display = disp;
 }

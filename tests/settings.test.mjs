@@ -14,9 +14,9 @@ const t0 = await page.evaluate(() => ({
   settings: { ...Settings },
 }));
 check('the title opens settings and stays on the title', t0.open && t0.mode === 'title', t0.mode);
-check('six rows: mouse, aim, music, effects, field of view, invert', t0.rows.length === 6, t0.rows);
-check('defaults: 1×, 1×, 100%, 100%, 75°, off', JSON.stringify(t0.settings) ===
-  JSON.stringify({ mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false }), t0.settings);
+check('seven rows: mouse, aim, music, effects, field of view, invert, and (v1.370) the walkie online', t0.rows.length === 7 && /walkie/i.test(t0.rows[6]), t0.rows);
+check('defaults: 1×, 1×, 100%, 100%, 75°, off, on', JSON.stringify(t0.settings) ===
+  JSON.stringify({ mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false, voiceChat: true }), t0.settings);
 await g.shot('settings-title');
 
 // Drive the controls as a player would: each input event applies and saves
@@ -31,10 +31,10 @@ const set = await page.evaluate(() => {
   return { settings: { ...Settings }, stored: JSON.parse(localStorage.getItem(SETTINGS_KEY)),
     labels: [...document.querySelectorAll('#settingsRows .settings-val')].map(v => v.textContent) };
 });
-const WANT = { mouseSens: 2, aimSens: 0.5, music: 0.5, effects: 0.25, fov: 90, invertY: true };
+const WANT = { mouseSens: 2, aimSens: 0.5, music: 0.5, effects: 0.25, fov: 90, invertY: true, voiceChat: true };
 check('the sliders and the box set every setting', JSON.stringify(set.settings) === JSON.stringify(WANT), set.settings);
 check('saved at once', JSON.stringify(set.stored) === JSON.stringify(WANT), set.stored);
-check('the values read 2.00×, 0.50×, 50%, 25%, 90°, On', set.labels.join(' ') === '2.00× 0.50× 50% 25% 90° On', set.labels);
+check('the values read 2.00×, 0.50×, 50%, 25%, 90°, On, On', set.labels.join(' ') === '2.00× 0.50× 50% 25% 90° On On', set.labels);
 await page.evaluate(() => document.getElementById('settingsDoneBtn').click());
 check('DONE closes it on the title', await page.evaluate(() =>
   !document.getElementById('settingsScreen').classList.contains('active') && Game.mode === 'title'));
@@ -46,7 +46,7 @@ const re = await page.evaluate(() => ({ ...Settings }));
 check('a reload keeps them', JSON.stringify(re) === JSON.stringify(WANT), re);
 const junk = await page.evaluate(() => sanitizeSettings({ mouseSens: 'x', aimSens: 99, music: -1, fov: 500, invertY: 'yes' }));
 check('junk is clamped to the ranges or the default', JSON.stringify(junk) ===
-  JSON.stringify({ mouseSens: 1, aimSens: 2, music: 0, effects: 1, fov: 100, invertY: false }), junk);
+  JSON.stringify({ mouseSens: 1, aimSens: 2, music: 0, effects: 1, fov: 100, invertY: false, voiceChat: true }), junk);
 
 // NEW GAME keeps them (they belong to the browser, not the save); the bedroom shows a SETTINGS button while the mouse is free
 await g.bedroom();
