@@ -121,6 +121,32 @@ check('the futon stands out in the room (1.5 m+ from the east windows), square t
 check('the coffee table is about the futon\'s width: 1.8 x 0.9 m', room.table.w === 1.8 && room.table.d === 0.9, room.table);
 const door2stairs = await walk(0, L.z0 + 0.3, Math.atan2(-((L.stairX0 + L.stairX1) / 2), -(L.z1 - 0.4 - L.z0 - 0.3)), 420);
 check('from the bedroom\'s door straight to the top of the stairs, nothing in the way', door2stairs.x > L.stairX0 && door2stairs.z > L.z1 - 0.8, door2stairs);
+// v1.383 (D.78 step 2): the games room's things. Each kind is there, and each rests on what it should: the GameCube and
+// the cases in the corner unit under the TV, the pad and the controller flat on the floor before it, the balls on the
+// floor, two airsoft things on the coffee table and two on the desks, a Game Boy Advance or two and the cartridges about.
+const things = await page.evaluate(() => {
+  const P = Scenes.bedroom.landingProps, L = Scenes.bedroom.landing; Game.scene.updateMatrixWorld(true);
+  const tv = { x: L.recessX0 + 0.42, z: L.recessZ - 0.4 };
+  const info = o => { const b = new THREE.Box3().setFromObject(o); return { y0: +b.min.y.toFixed(3), x: +o.position.x.toFixed(2), z: +o.position.z.toFixed(2),
+    toTV: +Math.hypot(o.position.x - tv.x, o.position.z - tv.z).toFixed(2), inScene: Game.scene.children.includes(o), tag: o.userData.ball || o.userData.thing || '' }; };
+  const out = {}; for (const k in P) out[k] = P[k].map(info);
+  return out;
+});
+console.log('   things:', JSON.stringify(Object.fromEntries(Object.entries(things).map(([k, v]) => [k, v.length]))));
+const near = (y, at) => Math.abs(y - at) < 0.012;
+check('a GameCube on the corner unit\'s lower shelf under the TV, its cases standing in the upper one',
+  things.gamecube.length === 1 && things.gamecube[0].toTV < 0.6 && near(things.gamecube[0].y0, 0.15) &&
+  things.cases.filter(c => near(c.y0, 0.61) && c.toTV < 0.6).length >= 5, { gc: things.gamecube, cases: things.cases });
+check('a DDR pad flat on the floor before the TV, a second controller beside it, both on cords',
+  things.ddrPad.length === 1 && near(things.ddrPad[0].y0, 0) && things.ddrPad[0].toTV < 1.3 &&
+  things.controller.length === 1 && near(things.controller[0].y0, 0) && things.cords.length >= 6, { pad: things.ddrPad, ctl: things.controller });
+check('loose discs about the TV, and 2-3 Game Boy Advances and a few cartridges about the room',
+  things.discs.filter(d => d.toTV < 1.5).length >= 2 && things.gba.length >= 2 && things.gba.length <= 3 && things.carts.length >= 3, { discs: things.discs, gba: things.gba, carts: things.carts });
+check('a football, a soccer ball and a tennis ball on the floor',
+  ['football', 'soccer', 'tennis'].every(t => things.balls.some(b => b.tag === t && near(b.y0, 0))), things.balls);
+check('airsoft things on the coffee table (top 0.44 m) and the desks (0.76 m), and every thing in the scene',
+  things.airsoft.filter(a => near(a.y0, 0.44)).length >= 2 && things.airsoft.filter(a => near(a.y0, 0.76)).length >= 2 &&
+  Object.values(things).flat().every(t => t.inScene), things.airsoft);
 const talk = await page.evaluate(() => {
   const it = Game.interactables.find(i => i.crewId === 'sean');
   Game.player.pos.x = it.pos.x; Game.player.pos.z = it.pos.z - 0.9; stepGame(1 / 60);

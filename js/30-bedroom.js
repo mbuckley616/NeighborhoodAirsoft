@@ -1770,6 +1770,173 @@ function buildBedroomScene() {
       Game.interactables.push(it);
     });
 
+    // v1.383 (D.78, step 2; docs/refs/landing.md, "Second pass": the landing was the brothers' games room): a GameCube in
+    // the corner unit's lower shelf, game and DVD cases standing in the upper one, a DDR pad on the floor before the TV
+    // and a second controller beside it, both on their cords to the GameCube; loose discs; Game Boy Advances and
+    // cartridges lying about; a football, a soccer ball and a tennis ball; goggles and a speedloader on the coffee table,
+    // a BB bottle and a mag on the desks. Nothing here blocks the walk: they are small, or flat on the floor.
+    const props = { gamecube: [], cases: [], ddrPad: [], controller: [], cords: [], discs: [], gba: [], carts: [], balls: [], airsoft: [] };
+    const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...o });
+    const put = (kind, obj, x, y, z, yaw = 0) => { obj.position.set(x, y, z); obj.rotation.y = yaw; scene.add(obj); props[kind].push(obj); return obj; };
+    const part = (g, w, h, d, m, x = 0, y = 0, z = 0) => { const p = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); p.position.set(x, y, z); g.add(p); return p; };
+    // the corner unit's 45° face: its middle, outward (into the room) and along it; an object turned SHELF_YAW has its
+    // +z out of the face and its x along it
+    const faceM = { x: (cX + X0 + 0.5) / 2, z: R - 0.575 }, SHELF_YAW = 3 * Math.PI / 4;
+    const onFace = (out, along) => ({ x: faceM.x + (out - along) * Math.SQRT1_2, z: faceM.z - (out + along) * Math.SQRT1_2 });
+    for (const y of [0.15, 0.61]) {   // a shelf board's lip under each opening
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.1), deskMat);
+      const p = onFace(0.03, 0); lip.position.set(p.x, y - 0.01, p.z); lip.rotation.y = SHELF_YAW; scene.add(lip);
+    }
+    // the GameCube (indigo), its handle at the back, the disc lid on top, two controller ports in front
+    const gcMat = mat(0x463a8c, { roughness: 0.45 }), gcDark = mat(0x2a2350);
+    const gc = new THREE.Group();
+    part(gc, 0.15, 0.11, 0.16, gcMat, 0, 0.055, 0);
+    part(gc, 0.11, 0.006, 0.11, gcDark, 0, 0.113, 0.0);
+    part(gc, 0.12, 0.02, 0.02, gcDark, 0, 0.1, -0.09);
+    for (const sx of [-1, 1]) part(gc, 0.022, 0.014, 0.004, gcDark, sx * 0.035, 0.03, 0.081);
+    const gcAt = onFace(0.02, -0.04);
+    put('gamecube', gc, gcAt.x, 0.15, gcAt.z, SHELF_YAW);
+    // the cases in the upper opening, standing on their edges: GameCube cases (black) and DVDs (black and clear blue)
+    const caseCols = [0x111114, 0x111114, 0x1c2a4a, 0x111114, 0x2b2b30, 0x111114, 0x1c2a4a];
+    caseCols.forEach((c, k) => {
+      const cs = new THREE.Group();
+      part(cs, 0.014, 0.19, 0.135, mat(c, { roughness: 0.35 }), 0, 0.095, 0);
+      part(cs, 0.0145, 0.02, 0.1, mat([0xd8402e, 0xf0c040, 0x3a8ad0, 0xe8e8e8][k % 4]), 0, 0.16, 0);   // the label on the spine
+      const p = onFace(0.0, -0.12 + k * 0.032);
+      put('cases', cs, p.x, 0.61, p.z, SHELF_YAW);
+    });
+    // a cord on the floor through points [x, y, z]: thin black rods between them
+    const cordMat = mat(0x141416, { roughness: 0.8 });
+    const cord = pts => {
+      for (let k = 1; k < pts.length; k++) {
+        const a = new THREE.Vector3(...pts[k - 1]), b = new THREE.Vector3(...pts[k]);
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, a.distanceTo(b), 5), cordMat);
+        rod.position.copy(a).add(b).multiplyScalar(0.5);
+        rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+        scene.add(rod); props.cords.push(rod);
+      }
+    };
+    const portAt = onFace(0.1, -0.04);
+    // the DDR pad, flat on the floor before the TV, its up arrow toward it: a drawn top on a soft black mat
+    const padCv = document.createElement('canvas'); padCv.width = 240; padCv.height = 268;
+    const pc = padCv.getContext('2d');
+    pc.fillStyle = '#16161c'; pc.fillRect(0, 0, 240, 268);
+    pc.fillStyle = '#2a2a36'; pc.fillRect(0, 0, 240, 28);
+    pc.fillStyle = '#c8c8d0'; pc.font = 'bold 13px sans-serif'; pc.fillText('SELECT', 40, 19); pc.fillText('START', 150, 19);
+    const cell = (i, j) => [8 + i * 76, 36 + j * 76];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const [x, y] = cell(i, j); pc.fillStyle = (i + j) % 2 ? '#3a3a4c' : '#242430'; pc.fillRect(x, y, 72, 72); }
+    const arrow = (i, j, ang, col) => {
+      const [x, y] = cell(i, j); pc.save(); pc.translate(x + 36, y + 36); pc.rotate(ang); pc.fillStyle = col;
+      pc.beginPath(); pc.moveTo(0, -26); pc.lineTo(24, 2); pc.lineTo(10, 2); pc.lineTo(10, 24); pc.lineTo(-10, 24); pc.lineTo(-10, 2); pc.lineTo(-24, 2); pc.closePath(); pc.fill(); pc.restore();
+    };
+    arrow(1, 0, 0, '#3f8cff'); arrow(1, 2, Math.PI, '#3f8cff'); arrow(0, 1, -Math.PI / 2, '#ff4fa0'); arrow(2, 1, Math.PI / 2, '#ff4fa0');
+    const pad = new THREE.Group();
+    part(pad, 0.82, 0.012, 0.92, mat(0x101014, { roughness: 0.9 }), 0, 0.006, 0);
+    const padTop = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.9), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(padCv), roughness: 0.7 }));
+    padTop.rotation.x = -Math.PI / 2; padTop.position.y = 0.0125; pad.add(padTop);
+    const padP = { x: -2.45, z: 10.6 }, tvP = { x: X0 + 0.42, z: R - 0.4 };
+    const padYaw = Math.atan2(padP.x - tvP.x, padP.z - tvP.z);   // its -z (the top of the drawing) toward the TV
+    put('ddrPad', pad, padP.x, 0, padP.z, padYaw);
+    const padEnd = { x: padP.x - Math.sin(padYaw) * 0.47, z: padP.z - Math.cos(padYaw) * 0.47 };
+    cord([[padEnd.x, 0.006, padEnd.z], [portAt.x - 0.1, 0.004, portAt.z + 0.05], [portAt.x, 0.004, portAt.z], [portAt.x, 0.18, portAt.z]]);
+    // the second controller (indigo, the yellow C-stick, the green A button) on the floor beside the pad, on its cord
+    const ctl = new THREE.Group();
+    part(ctl, 0.13, 0.03, 0.07, gcMat, 0, 0.022, 0);
+    for (const sx of [-1, 1]) { const grip = part(ctl, 0.04, 0.03, 0.06, gcMat, sx * 0.06, 0.02, 0.04); grip.rotation.y = sx * 0.4; }
+    part(ctl, 0.02, 0.012, 0.02, mat(0x2fa84f), 0.035, 0.042, -0.005);
+    part(ctl, 0.016, 0.014, 0.016, mat(0xf2c418), 0.02, 0.042, 0.022);
+    part(ctl, 0.016, 0.014, 0.016, mat(0x9a9aa4), -0.035, 0.042, -0.005);
+    const ctlP = { x: -1.95, z: 10.25 };
+    put('controller', ctl, ctlP.x, 0, ctlP.z, 0.6);
+    cord([[ctlP.x - 0.03, 0.01, ctlP.z + 0.05], [-2.1, 0.004, 10.95], [portAt.x + 0.05, 0.004, portAt.z - 0.02], [portAt.x + 0.02, 0.17, portAt.z]]);
+    // loose discs: on the floor by the TV, one on an open case, one on the desk, one on the coffee table
+    const discMat = mat(0xd8dde4, { roughness: 0.15, metalness: 0.6 }), miniMat = mat(0xc8ccd6, { roughness: 0.2, metalness: 0.5 });
+    const disc = (r, m, x, y, z) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.002, 24), m); put('discs', d, x, y + 0.001, z); return d; };
+    const openCase = new THREE.Group();
+    part(openCase, 0.135, 0.008, 0.19, mat(0x111114, { roughness: 0.35 }), -0.07, 0.004, 0);
+    part(openCase, 0.135, 0.008, 0.19, mat(0x111114, { roughness: 0.35 }), 0.07, 0.004, 0);
+    put('cases', openCase, -2.95, 0, 10.35, 0.3);
+    disc(0.06, discMat, -2.93 + 0.07 * Math.cos(0.3), 0.008, 10.35 - 0.07 * Math.sin(0.3));
+    disc(0.06, discMat, -3.0, 0, 10.95);
+    disc(0.04, miniMat, -1.75, 0, 10.6);   // a GameCube disc, out of its case
+    disc(0.06, discMat, -2.1, DESK_Y, 11.72);
+    // on the coffee table: table-frame (lx along it, lz across) to the world
+    const TT = 0.44;   // the table's top
+    const onTable = (lx, lz) => toWorld(lx, 1.3 + lz, F);
+    { const p = onTable(-0.2, 0.25); disc(0.04, miniMat, p.x, TT, p.z); }
+    // Game Boy Advances (indigo, glacier, flame), each a landscape body with its screen, d-pad and buttons
+    const gba = (color, opacity, p, y, yaw) => {
+      const g = new THREE.Group();
+      part(g, 0.145, 0.024, 0.082, mat(color, opacity < 1 ? { transparent: true, opacity, roughness: 0.3 } : { roughness: 0.4 }), 0, 0.012, 0);
+      part(g, 0.062, 0.002, 0.042, mat(0x1a2420, { roughness: 0.2 }), 0, 0.025, -0.004);
+      part(g, 0.016, 0.004, 0.016, mat(0x222226), -0.053, 0.025, 0);
+      for (const dx of [0.046, 0.06]) part(g, 0.01, 0.004, 0.01, mat(0x5a4a9a), dx, 0.025, dx === 0.06 ? -0.006 : 0.006);
+      return put('gba', g, p.x, y, p.z, yaw);
+    };
+    gba(0x3d3590, 1, onTable(0.55, -0.1), TT, fYaw + 0.4);
+    gba(0x9fc6e0, 0.75, toWorld(0, 0.12, F), 0.44, fYaw - 0.3);   // on the futon, between the two seats
+    gba(0xc8402e, 1, { x: 0.05, z: 11.72 }, DESK_Y, 0.2);
+    // Game Boy cartridges (grey, a coloured label) and a smaller GBA one
+    const cart = (p, y, yaw, w = 0.057, d = 0.065, lab = 0x3a7ad0) => {
+      const c = new THREE.Group();
+      part(c, w, 0.008, d, mat(0x8e8e96, { roughness: 0.5 }), 0, 0.004, 0);
+      part(c, w * 0.75, 0.001, d * 0.55, mat(lab), 0, 0.0085, -d * 0.1);
+      return put('carts', c, p.x, y, p.z, yaw);
+    };
+    cart(onTable(0.3, 0.28), TT, fYaw + 1.1, 0.057, 0.065, 0xd8402e);
+    cart({ x: 0.3, z: 11.55 }, DESK_Y, -0.5);
+    cart(toWorld(1.05, 0.7, F), 0, fYaw + 0.6, 0.057, 0.035, 0x2fa84f);
+    cart({ x: -1.6, z: 10.15 }, 0, 2.1);
+    // the balls: a football by the closet, a soccer ball under the east windows, a tennis ball under the desk
+    const fb = new THREE.Group();
+    const leather = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 10), mat(0x7a3b1c, { roughness: 0.8 }));
+    leather.scale.set(1, 1, 1.6); fb.add(leather);
+    part(fb, 0.012, 0.006, 0.08, mat(0xf2f0ea), 0, 0.09, 0);
+    for (let k = -2; k <= 2; k++) part(fb, 0.03, 0.006, 0.006, mat(0xf2f0ea), 0, 0.09, k * 0.016);
+    put('balls', fb, 2.55, 0.09, 5.65, 0.9).userData.ball = 'football';
+    const sb = new THREE.Group();
+    const sbR = 0.11;
+    sb.add(new THREE.Mesh(new THREE.SphereGeometry(sbR, 18, 12), mat(0xf4f4f0, { roughness: 0.7 })));
+    const ico = new THREE.IcosahedronGeometry(1, 0), seen = new Set(), pa = ico.attributes.position, blackPatch = mat(0x18181a, { roughness: 0.7 });
+    for (let k = 0; k < pa.count; k++) {
+      const v = new THREE.Vector3(pa.getX(k), pa.getY(k), pa.getZ(k)).normalize(), key = v.toArray().map(n => n.toFixed(3)).join();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const pent = new THREE.Mesh(new THREE.CircleGeometry(0.036, 5), blackPatch);
+      pent.position.copy(v).multiplyScalar(sbR + 0.0015);
+      pent.lookAt(v.clone().multiplyScalar(2));
+      sb.add(pent);
+    }
+    put('balls', sb, 2.95, sbR, 7.0, 0.4).userData.ball = 'soccer';
+    const tb = new THREE.Mesh(new THREE.SphereGeometry(0.034, 12, 9), mat(0xd4e157, { roughness: 0.95 }));
+    put('balls', tb, 1.05, 0.034, 11.78).userData.ball = 'tennis';
+    // the airsoft things: goggles and a speedloader on the coffee table, a BB bottle and a mag on the desks
+    const gog = new THREE.Group();
+    part(gog, 0.17, 0.055, 0.035, mat(0x1a1a1c), 0, 0.03, 0);
+    part(gog, 0.15, 0.04, 0.004, mat(0x5a7080, { transparent: true, opacity: 0.55, roughness: 0.1 }), 0, 0.032, 0.019);
+    part(gog, 0.012, 0.012, 0.2, mat(0x2a2a2e), -0.085, 0.012, -0.1);
+    part(gog, 0.012, 0.012, 0.2, mat(0x2a2a2e), 0.085, 0.012, -0.1);
+    { const p = onTable(-0.5, -0.08); put('airsoft', gog, p.x, TT, p.z, fYaw + 2.6).userData.thing = 'goggles'; }
+    const sl = new THREE.Group();
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.13, 12), mat(0xdfe8ee, { transparent: true, opacity: 0.45, roughness: 0.1 }));
+    tube.rotation.z = Math.PI / 2; tube.position.y = 0.022; sl.add(tube);
+    const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.09, 10), mat(0xf4f0e4));
+    fill.rotation.z = Math.PI / 2; fill.position.set(-0.015, 0.022, 0); sl.add(fill);
+    part(sl, 0.03, 0.03, 0.03, mat(0x1a1a1c), 0.07, 0.022, 0);
+    { const p = onTable(0.1, 0.15); put('airsoft', sl, p.x, TT, p.z, fYaw - 0.7).userData.thing = 'speedloader'; }
+    const bottle = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.13, 14), mat(0xf2f2ee, { roughness: 0.5 }));
+    body.position.y = 0.065; bottle.add(body);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0405, 0.0405, 0.05, 14), mat(0xd8402e));
+    band.position.y = 0.07; bottle.add(band);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.025, 10), mat(0x2a2a2e));
+    cap.position.y = 0.1425; bottle.add(cap);
+    put('airsoft', bottle, 1.45, DESK_Y, 11.7).userData.thing = 'bb bottle';
+    const mag = new THREE.Group();
+    part(mag, 0.15, 0.03, 0.06, mat(0x1c1c1e, { roughness: 0.5 }), 0, 0.015, 0);
+    part(mag, 0.02, 0.032, 0.064, mat(0x2a2a2e), 0.075, 0.016, 0);
+    put('airsoft', mag, -0.85, DESK_Y, 11.68, 0.35).userData.thing = 'mag';
+
     // The top of the stairs → the backyard range (v1.257's back door, moved here)
     const stairsZ = L.z1 - 0.35;
     Game.interactables.push({
@@ -1781,7 +1948,7 @@ function buildBedroomScene() {
       action: () => enterRange(),
     });
     return {
-      obstacles, crewSeats, futon, table,   // v1.382: the tests look at them
+      obstacles, crewSeats, futon, table, props,   // v1.382: the tests look at them
       stairsSpawn: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 0, stairsZ), stairsYaw: 0.35,   // facing into the landing
     };
   }
@@ -1860,7 +2027,7 @@ function buildBedroomScene() {
     bounds,
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
-    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table,
+    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table, landingProps: landing.props,
     vault: { wallH: BR_H, ridgeH: BR_RIDGE, dormerH: AL_H, winTop: WIN_BOTTOM + WIN_H + WIN_W / 2 },   // v1.378
   };
 }
