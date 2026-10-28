@@ -290,7 +290,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario' && (Net.active || (!Game.forfeitAsk && !Game.paused))) {   // v1.208: paused while F asks (v1.239: and in the pause menu; v1.230: never online, your friend's game runs on)
+  } else if (Game.mode === 'scenario' && ((Net.active && Net.phase !== 'coop') || (!Game.forfeitAsk && !Game.paused))) {   // v1.381: a match played alone with a friend at home pauses as any   // v1.208: paused while F asks (v1.239: and in the pause menu; v1.230: never online, your friend's game runs on)
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);

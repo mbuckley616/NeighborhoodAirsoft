@@ -3,12 +3,12 @@ function enterScenario(scenarioId) {
   // v1.48: hard progression guard — a locked scenario can never be entered,
   // regardless of which path tried to launch it. This is the last line of
   // defense behind the greyed rows / disabled nav buttons.
-  if (!isScenarioUnlocked(scenarioId)) {
+  if (!isScenarioUnlocked(scenarioId) && !(coopIsGuest() && Coop.match && Coop.match.id === scenarioId)) {   // v1.381 (D.73): a friend plays the host's match, open or not on his own save
     showModal('Locked', scenarioLockReason(scenarioId) || 'This scenario is locked.');
     return;
   }
   Game.mode = 'scenario_intro';
-  const sc = crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it
+  const sc = (Net.active && Net.coop && coopScenario(scenarioId)) || crewScenario(scenarioId);   // v1.274 (D.28 step 2): the match with your crew in it (v1.381, D.73: and your friend)
   // v1.352 (D.70 step 3): a Pickup Game's Holiday row holds for its match (houses and kids); every other match goes by the date
   Holiday.match = (sc && sc.pickup && PICKUP_HOLIDAYS.includes(sc.pickup.holiday) && sc.pickup.holiday !== 'date') ? sc.pickup.holiday : null;
   let built;
@@ -561,6 +561,7 @@ function enterScenario(scenarioId) {
     loadHint.textContent = 'Press BEGIN when ready.';
   }
 
+  if (sc.coop) coopEntered();   // v1.381 (D.73): the kids matched to who moves them
   // BEGIN button — start only when the player is ready (no auto-advance).
   const beginBtn = document.getElementById('introBeginBtn');
   const freshBegin = beginBtn.cloneNode(true);
@@ -576,7 +577,7 @@ function enterScenario(scenarioId) {
     }, 400);
   };
   // v1.230 (D.2): online, the match starts when both players have pressed BEGIN
-  freshBegin.addEventListener('click', () => (Net.active && sc.online) ? netBegin(freshBegin, built, begin) : begin());
+  freshBegin.addEventListener('click', () => (Net.active && (sc.online || sc.coop)) ? netBegin(freshBegin, built, begin) : begin());   // v1.381: and co-op
 }
 
 // ---------------------------------------------------------------------
@@ -1204,7 +1205,7 @@ function endScenario(outcome) {
   cashEarned += hitBonus.cash;
   Game.scenario.hitBonus = { hits: hitBonus.hits, cash: hitBonus.cash, base: basePay };
   Game.persist.cash += cashEarned;
-  if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup) {   // v1.201: a pickup game is no step on the ladder
+  if (outcome === 'win' && !SCENARIOS[Game.scenario.active].pickup && !coopGuestMatch()) {   // v1.201: a pickup game is no step on the ladder (v1.381, D.73 1B: nor a friend's match: the pay is all a friend takes home)
     Game.persist.completed[Game.scenario.active] = true;
   }
 
@@ -1400,7 +1401,7 @@ function endScenario(outcome) {
 
   renderMatchStats(outcome, _openBefore, _cashBefore, _wonBefore);   // v1.193; v1.196 the rival line
   Game.scenario.teammateAnswers = [];
-  renderTeammateCard(scDef && !scDef.online ? teammateAsksFor(Game.scenario.active, outcome, _wonBefore) : [], null);   // v1.297 (D.53)
+  renderTeammateCard(scDef && !scDef.online && !coopGuestMatch() ? teammateAsksFor(Game.scenario.active, outcome, _wonBefore) : [], null);   // v1.297 (D.53)
   { const w = document.getElementById('resultWallet'); if (w) w.innerHTML = walletHTML(); }   // v1.260 (D.43)
 
   // v1.39: reload note + nav buttons (Previous / Play Again / Next).
@@ -1440,6 +1441,7 @@ function endScenario(outcome) {
   }
 
   if (scDef && scDef.online) netResultCard(outcome);   // v1.230 (D.2)
+  if (coopGuestMatch()) coopResultCard();   // v1.381 (D.73): at a friend's, the next match is his call
   card.classList.add('active');
   autoSave();   // v1.218 (D.29): the match's pay, unlocks and stats are saved as the result shows, not only back home
 }

@@ -6,12 +6,15 @@
 // him; he can't start a match, shop, use the workbench or sleep (2A): only you can, and he is told so. Each game sends
 // where its own person is about 15 times a second (`b`), and moves the other's kid from that word. The host's game
 // says who is over (`coop`); either of you can end it from the phone, and a link that closes ends it too.
-// Step 2 takes him into your matches (3A, 4A), step 3 his share of the money (1B).
+// v1.381 takes him into your matches (3A, 4A), with his share of the money (1B).
 const COOP_SEND_SEC = 1 / 15;
 const Coop = {
   other: null,    // the other person: { id, name, look, gun } (the host's: his friend; the guest's: the host)
   kid: null,      // the other's kid in your room: { mesh, pos, yaw, ... }
   T: null,        // where the other's game last said he is
+  bAge: 0,        // v1.381: how long since it did
+  match: null,    // v1.381: the match you are in together, { id, sc }
+  friendArmor: 0, // v1.381: the host's: the friend's eyewear's extra hits
   sendT: 0,
 };
 function coopIsGuest() { return Net.active && Net.coop && Net.role === 'guest'; }
@@ -101,9 +104,13 @@ function coopReceive(m, pid) {
       if (Net.phase !== 'coop' || !Coop.other) return true;
       if (host && !Net.people.some(p => p.pid === pid && !p.gone)) return true;
       const p = netVec(m.p);
-      if (p) Coop.T = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: 0, here: m.h ? 1 : 0 };
+      if (p) { Coop.T = { x: p[0], y: p[1], z: p[2], yaw: +m.y || 0, c: m.c ? 1 : 0, g: 0, here: m.h ? 1 : 0 }; Coop.bAge = 0; }
       return true;
     }
+    // v1.381 (step 2): the host's match (cm), one he plays alone (cwait), and his going home from the result (home)
+    case 'cm': if (!host) coopMatchIn(m); return true;
+    case 'cwait': if (!host && Coop.other && Net.phase === 'coop') netHud(`${Coop.other.name.toUpperCase()} PLAYS THIS ONE ALONE · YOU WAIT HERE`, 6); return true;
+    case 'home': if (!host && Net.phase === 'coop') coopHostHome(); return true;
   }
   return false;
 }
@@ -145,7 +152,7 @@ function coopHostLeft(name) {
 // Forgets the other one and takes his kid out of the room (from netClose too)
 function coopReset() {
   if (Coop.kid && Coop.kid.mesh.group.parent) Coop.kid.mesh.group.parent.remove(Coop.kid.mesh.group);
-  Coop.kid = null; Coop.other = null; Coop.T = null; Coop.sendT = 0;
+  Coop.kid = null; Coop.other = null; Coop.T = null; Coop.sendT = 0; Coop.match = null;
 }
 
 // --- the other one's kid in your room ---
@@ -177,7 +184,8 @@ function coopStep(dt) {
 function coopDriveKid(dt) {
   const K = Coop.kid, T = Coop.T;
   if (!K) return;
-  if (!T || !T.here) { K.mesh.group.visible = false; return; }
+  Coop.bAge = (Coop.bAge || 0) + dt;
+  if (!T || !T.here || Coop.bAge > 1) { K.mesh.group.visible = false; return; }   // v1.381: gone quiet, he is out of the room
   K.mesh.group.visible = true;
   const px = K.pos.x, pz = K.pos.z, far = Math.hypot(T.x - K.pos.x, T.z - K.pos.z) > 2.5;
   if (far || !K.seen) K.pos.set(T.x, T.y, T.z);
@@ -207,4 +215,190 @@ function coopBlocks(it) {
   if (!coopIsGuest() || !Coop.other || !it || COOP_GUEST_USES.includes(it.type)) return false;
   netHud(`${Coop.other.name.toUpperCase()}’S ROOM · ONLY ${Coop.other.name.toUpperCase()} CAN DO THAT`);
   return true;
+}
+
+// =====================================================================
+// v1.381 (D.73 step 2; Michael: 3A, 4A): YOUR FRIEND IN YOUR MATCHES. When the host starts a match with a friend over,
+// his game sends it (`cm`: the match's id and its kids, as his game will build them) and the friend's game builds the
+// same match, past its own locks, with the host as an ally kid. 3A: in a match with teammates the friend takes the last
+// kid's place on your side; in one where you are alone he stands beside you and the other side is one kid bigger. 4A:
+// he plays with his own look and gun, with a full bag of BBs, and his own eyewear's extra hits. From there it is online
+// play's referee model (Net, v1.366): the host's game runs every kid and decides every tag, the friend's game sends only
+// where he is. A tag works as in your matches (you come back only where the match says so); with no lives left you
+// watch your side play on, and the match is lost when both of you are out. The result is the host's, and both games go
+// back to the room when the host does. A race, the ride-along, capture the flag, a VIP match, the zombie tag, a
+// free-for-all, the tutorial and the range are one player's: the friend waits at home through those, and is told so.
+function coopFits(id) {
+  const sc = SCENARIOS[id];
+  return !!sc && !sc.tutorial && !sc.range && !sc.race && !sc.ride && !sc.ctf && !sc.vip && !sc.ffa && !sc.pickup && !sc.online
+    && ['kill_all', 'last_team_standing', 'survive_timer'].includes(sc.winCondition || 'kill_all') && Array.isArray(sc.enemySetup) && sc.enemySetup.length > 0;
+}
+// A setup entry as it goes over the wire: plain values only, nothing that is the host's own (his loans)
+function coopCleanEntry(e) {
+  const out = {};
+  if (!e || typeof e !== 'object') return null;
+  for (const [k, v] of Object.entries(e)) {
+    if (!/^[A-Za-z]{1,24}$/.test(k) || k === 'crewLoan') continue;
+    if ((typeof v === 'number' && isFinite(v)) || typeof v === 'boolean' || (typeof v === 'string' && v.length <= 40)) out[k] = v;
+  }
+  if (!netCleanId(out.charId)) return null;
+  out.weapon = netCleanGun(out.weapon);
+  return out;
+}
+// 3A: the other side's extra kid, when you were alone: a kid of the same street not in this match
+function coopExtraFoe(sc, setup) {
+  const used = new Set(setup.map(e => e.charId)), foe = setup.find(e => !e.team);
+  if (!foe) return null;
+  for (const other of Object.values(SCENARIOS)) {
+    if (other.builderFn !== sc.builderFn || !Array.isArray(other.enemySetup)) continue;
+    for (const e of other.enemySetup) if (!e.team && CHARACTERS[e.charId] && !used.has(e.charId) && !/^net_p/.test(e.charId))
+      return Object.assign({}, foe, { charId: e.charId, weapon: e.weapon || foe.weapon });
+  }
+  return null;
+}
+function coopCharacter(id, who) { CHARACTERS[id] = Object.assign({}, CHARACTERS.seth, who.look, { name: who.name, flavor: { hit: '', win: '' } }); }
+// Who is who in the match, as Net's match code reads it: the two people on Blue (the player's side), the kids by side
+function coopRoster(setup) {
+  const me = Net.people.find(p => p.id === Net.me) || { name: Net.name };
+  const roster = setup.map(e => ({ id: e.charId, side: e.team === 'player' ? 'A' : 'B', human: /^net_p\d+$/.test(e.charId),
+    name: CHARACTERS[e.charId] ? CHARACTERS[e.charId].name : e.charId, gun: e.weapon, anchor: e.anchor || null }));
+  roster.push({ id: Net.me, side: 'A', human: true, name: netCleanName(me.name || Net.name), gun: Game.persist.equipped.gun, anchor: null });
+  return roster;
+}
+// From enterScenario: the match with your friend in it (the host), or the host's match (the friend); null for a match
+// co-op leaves alone (the friend waits at home)
+function coopScenario(id) {
+  if (!coopTogether()) return null;
+  if (Net.role === 'guest') return Coop.match && Coop.match.id === id ? Coop.match.sc : null;
+  if (Net.phase !== 'coop') return null;
+  if (!coopFits(id)) {
+    netSend({ t: 'cwait', id });
+    return null;
+  }
+  netResetMatch();   // the last match's people and kids forgotten, before this one's are set
+  const base = crewScenario(id), fid = Coop.other.id;
+  const setup = base.enemySetup.map(e => Object.assign({}, e));
+  coopCharacter(fid, Coop.other);
+  const friend = { charId: fid, weapon: Coop.other.gun, team: 'player' };
+  const allies = setup.filter(e => e.team === 'player');
+  if (allies.length) {   // he takes the last kid's place on your side
+    const last = allies[allies.length - 1];
+    friend.anchor = last.anchor;
+    setup.splice(setup.indexOf(last), 1, friend);
+  } else {               // he stands beside you, and the other side is one bigger
+    friend.anchor = (setup.find(e => !e.team) || {}).anchor;
+    setup.push(friend);
+    const extra = coopExtraFoe(base, setup);
+    if (extra) setup.push(extra);
+  }
+  const sc = Object.assign({}, base, { enemySetup: setup, coop: true });
+  Coop.match = { id, sc };
+  Net.roster = coopRoster(setup);
+  const me = Net.people.find(p => p.id === NET_HOST_ID);
+  netSend({ t: 'cm', id, ver: netVersion(), setup: setup.map(coopCleanEntry).filter(Boolean), host: { name: me.name, look: me.look, gun: me.gun } });
+  return sc;
+}
+// The friend: the host is starting a match. From the room (or the last result) into its briefing.
+function coopMatchIn(m) {
+  if (Net.phase !== 'coop' || !Coop.other || m.ver !== netVersion() || !SCENARIOS[m.id] || !coopFits(m.id) || !Array.isArray(m.setup)) return;
+  if (Game.mode === 'scenario' || Game.mode === 'scenario_intro') return;
+  const setup = m.setup.slice(0, 24).map(coopCleanEntry).filter(Boolean);
+  const mine = setup.findIndex(e => e.charId === Net.me);
+  if (mine < 0) return;
+  const h = m.host || {};
+  netResetMatch();
+  Coop.other.look = netCleanLook(h.look); Coop.other.gun = netCleanGun(h.gun);
+  coopCharacter(NET_HOST_ID, Coop.other);
+  setup.splice(mine, 1, { charId: NET_HOST_ID, weapon: Coop.other.gun, team: 'player', anchor: setup[mine].anchor });
+  Coop.match = { id: m.id, sc: Object.assign({}, SCENARIOS[m.id], { enemySetup: setup, coop: true }) };
+  Net.roster = coopRoster(setup);
+  coopLeaveScreens();
+  enterScenario(m.id);
+  if (Game.mode !== 'scenario_intro') { Coop.match = null; return; }
+}
+// Whatever the friend had open (a menu, the phone, the last result) gives way to the host's match or the room
+function coopLeaveScreens() {
+  if (document.getElementById('modalScreen').classList.contains('active')) closeModal();
+  if (typeof hideAllMenus === 'function') hideAllMenus();
+  if (Game.mode === 'result' || document.getElementById('resultScreen').classList.contains('active')) {
+    document.getElementById('resultScreen').classList.remove('active');
+    cleanupScenarioScene();
+  }
+  coopResetResultCard();
+}
+// From the end of enterScenario: the kids in the scene are matched to the roster; the friend's are all the host's
+// to move, and the host's game moves only the friend
+function coopEntered() {
+  const host = Net.role === 'host';
+  Net.phase = 'begin';
+  for (const e of Game.scenario.enemies) {
+    const r = Net.roster.find(x => x.id === e.charId);
+    if (!r || Net.ents.has(r.id)) continue;
+    Net.ents.set(r.id, e);
+    if (host && !r.human) continue;
+    e.remote = true;
+    e.mesh.group.visible = false;   // till his game says where he is
+    if (host) e._netPid = (Net.people.find(p => p.id === r.id) || {}).pid;
+  }
+  if (host) Coop.friendArmor = 0;
+}
+// From netAfterStart: the friend's lives in the host's game are the match's, with his own eyewear's extra hits
+function coopAfterStart() {
+  const P = Game.player, host = Net.role === 'host';
+  for (const [id, e] of Net.ents) {
+    const r = Net.roster.find(x => x.id === id);
+    if (!r || !r.human || !e.remote) continue;
+    e._netMax = host ? Math.max(1, P.maxHits - getArmorBonusHits() + (Coop.friendArmor || 0)) : (e.lives || 1);
+    e.lives = e._netMax;
+  }
+}
+// A tag sends you back to your start only where the match says so (The Last Saturday), as in your own matches
+function coopWalksHome() { const sc = SCENARIOS[Game.scenario.active]; return !!(sc && sc.tagSendsHome); }
+// One of you is out of lives: the match is lost when both are (a friend who dropped is a kid now, and doesn't count)
+function coopCheckOut() {
+  if (Net.role !== 'host' || Game.mode !== 'scenario') return;
+  const f = Coop.other && Net.ents.get(Coop.other.id);
+  const friendIn = !!(f && f.remote && f.lives > 0);
+  if (Game.player._netOut && !friendIn) endScenarioLater('lose', 600);
+  else checkWinCondition();
+}
+// The friend's result card: the money is his (1B), the next match is the host's call
+function coopGuestMatch() { return coopIsGuest() && !!Coop.match && Game.scenario.active === Coop.match.id; }
+function coopResultCard() {
+  const again = document.getElementById('navAgainBtn');
+  if (again.dataset.netLabel == null) again.dataset.netLabel = again.textContent;
+  again.textContent = `NEXT: ${(Coop.other ? Coop.other.name : 'THE HOST').toUpperCase()}’S CALL`;
+  again.disabled = true;
+  for (const id of ['navPrevBtn', 'navNextBtn']) document.getElementById(id).disabled = true;
+  const note = document.getElementById('reloadNote');
+  if (note) note.textContent = `At ${Coop.other ? Coop.other.name : 'your friend'}’s: the pay is yours; the win goes on their summer.`;
+}
+function coopResetResultCard() {
+  const again = document.getElementById('navAgainBtn');
+  if (again && again.dataset.netLabel != null) { again.textContent = again.dataset.netLabel; delete again.dataset.netLabel; }
+}
+// The match is over: both games are back to hanging out (the friend's result card waits for the host's next call)
+function coopMatchOver() {
+  Net.phase = 'coop';
+  netResetMatch();
+  netHud('');
+}
+// The host went home from the result (or the friend's game hears that he did)
+function coopHostHome() {
+  if (Net.role === 'host') { if (coopTogether()) netSend({ t: 'home' }); return; }
+  if (Game.mode === 'result' || Game.mode === 'scenario_intro') {
+    coopLeaveScreens();
+    const intro = document.getElementById('scenarioIntro'); if (intro) intro.style.display = 'none';
+    if (Game.scenario.active) cleanupScenarioScene();
+    enterBedroom();
+  }
+  Coop.match = null;
+}
+// The host: the friend pressed F. He sits the rest of this match out; his kid plays on, and he is still over.
+function coopFriendQuit(p) {
+  const e = Net.ents.get(p.id);
+  if (e && e.remote) netBotTakeover(e);
+  netVoiceGone(p.id);
+  netHud(`${p.name.toUpperCase()} SAT THIS ONE OUT · A KID PLAYS THE SPOT`);
+  coopCheckOut();
 }
