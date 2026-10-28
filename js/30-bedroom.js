@@ -1568,6 +1568,7 @@ function buildBedroomScene() {
     // hand: the sun stands high in the south-west.
     const eastView = (() => {
       const G = -3.3, X = L.x1 + T, parts = [];
+      let seed = 384; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // its own seed: the same view every time
       const flat = c => new THREE.MeshBasicMaterial({ color: c, fog: false });
       const shade = (c, k) => new THREE.Color(c).multiplyScalar(k).getHex();
       // a box with its faces shaded: west (toward you) mid, top light, north dark, south lit
@@ -1598,9 +1599,9 @@ function buildBedroomScene() {
       const c2 = cv.getContext('2d');
       c2.fillStyle = '#b9b3a6'; c2.fillRect(0, 0, 256, 256);
       for (let k = 0; k < 90; k++) {   // the trees' dapple
-        const r = 6 + gameRandom() * 22;
-        c2.fillStyle = `rgba(70, 66, 58, ${0.18 + gameRandom() * 0.25})`;
-        c2.beginPath(); c2.arc(gameRandom() * 256, gameRandom() * 256, r, 0, Math.PI * 2); c2.fill();
+        const r = 6 + rnd() * 22;
+        c2.fillStyle = `rgba(70, 66, 58, ${0.18 + rnd() * 0.25})`;
+        c2.beginPath(); c2.arc(rnd() * 256, rnd() * 256, r, 0, Math.PI * 2); c2.fill();
       }
       c2.strokeStyle = 'rgba(90, 86, 78, 0.6)'; c2.lineWidth = 1.5;
       for (const t of [64, 128, 192]) { c2.beginPath(); c2.moveTo(t, 0); c2.lineTo(t, 256); c2.moveTo(0, t); c2.lineTo(256, t); c2.stroke(); }   // the joints
@@ -1636,21 +1637,23 @@ function buildBedroomScene() {
       pool.rotation.x = -Math.PI / 2; pool.position.set(X + 22.5, G + 0.02, -2.0); pool.userData.view = 'pool';
       scene.add(pool); parts.push(pool);
       // trees between, half hiding the house and the pool
+      // (the one south-east of the window stands at the woods' edge, and is theirs)
       for (const [x, z, h, r] of [[13.5, -1.0, 9, 3.2], [15.0, 3.5, 11, 3.6], [16.5, 16.5, 12, 3.8], [12.5, 12.0, 8, 2.6], [19.5, -3.5, 10, 3.0]]) {
-        trunk(X + x, z, G, G + h - r, 0.22, 0x5b4a3a, 'trees');
-        crown(X + x, G + h - r * 0.4, z, r, 0x3e5e2e, 'trees');
-        crown(X + x + 0.8, G + h - r * 0.9, z + 0.9, r * 0.7, 0x4a6b34, 'trees');
+        const tag = z > 15 ? 'woods' : 'trees';
+        trunk(X + x, z, G, G + h - r, 0.22, 0x5b4a3a, tag);
+        crown(X + x, G + h - r * 0.4, z, r, 0x3e5e2e, tag);
+        crown(X + x + 0.8, G + h - r * 0.9, z + 0.9, r * 0.7, 0x4a6b34, tag);
       }
       // the woods to the south-east: tall dense oaks, sweetgums and poplars, crowns 14-24 m over the ground
       const woodsCols = [0x2f4d26, 0x3a5a2c, 0x35532a, 0x2a4422, 0x44633a];
       for (let k = 0; k < 46; k++) {
-        const ang = (22 + gameRandom() * 50) * Math.PI / 180, d = 13 + gameRandom() * 34;
-        const x = X + Math.cos(ang) * d, z = L.winZ + Math.sin(ang) * d, h = 14 + gameRandom() * 10, r = 3.2 + gameRandom() * 2.6;
+        const ang = (22 + rnd() * 50) * Math.PI / 180, d = 13 + rnd() * 34;
+        const x = X + Math.cos(ang) * d, z = L.winZ + Math.sin(ang) * d, h = 14 + rnd() * 10, r = 3.2 + rnd() * 2.6;
         if (k % 3 === 0) trunk(x, z, G, G + h - r, 0.3, 0x4a3f34, 'woods');
         crown(x, G + h, z, r, woodsCols[k % woodsCols.length], 'woods');
         crown(x + r * 0.4, G + h - r * 0.8, z - r * 0.3, r * 0.75, woodsCols[(k + 2) % woodsCols.length], 'woods');
       }
-      for (let k = 0; k < 14; k++) crown(X + 60 + gameRandom() * 20, G + 10 + gameRandom() * 6, -20 + k * 5.5, 6, 0x5b7a52, 'far');   // the tree line past the neighbours
+      for (let k = 0; k < 14; k++) crown(X + 60 + rnd() * 20, G + 10 + rnd() * 6, -20 + k * 5.5, 6, 0x5b7a52, 'far');   // the tree line past the neighbours
       // the crape myrtle right outside, south of the glass: five pale trunks fanning up from one root, small leaves and
       // the summer's pink flowers
       const cmX = X + 0.9, cmZ = L.winZ + L.winW / 2 + 0.2;
