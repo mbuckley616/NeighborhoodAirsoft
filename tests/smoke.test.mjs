@@ -31,7 +31,9 @@ check('a pointer lock refused by a throw is caught too', threw === null && g.err
 // of the night Hollow: 1,478 to 11,445), which crashed the long sweeps. Home and back twice, the count holds.
 const gpu = () => page.evaluate(() => { Game.renderer.render(Game.scene, Game.camera); const m = Game.renderer.info.memory; return { geometries: m.geometries, textures: m.textures }; });
 const inMatch = await gpu(), counts = [];
-for (let i = 0; i < 2; i++) { await page.evaluate(() => enterBedroom()); counts.push(await gpu()); await g.scenario('winnmark_tutorial'); await g.spin(60); counts.push(await gpu()); }
+// 28 Oct: a step in the room before counting, so the camera stands where the room puts it (the count is of what the
+// camera sees: the first look sometimes came before the room placed the camera, 813 one time and 538 the next)
+for (let i = 0; i < 2; i++) { await page.evaluate(() => enterBedroom()); await g.spin(2); counts.push(await gpu()); await g.scenario('winnmark_tutorial'); await g.spin(60); counts.push(await gpu()); }
 check('home and back twice, the GPU holds no more than one match', counts[3].geometries <= inMatch.geometries + 20 && counts[3].textures <= inMatch.textures + 2 && counts[2].geometries <= counts[0].geometries + 20, { inMatch, counts });
 check('no page errors after the scenes are freed', g.errs.length === errs0, g.errs.slice(errs0));
 await g.close();

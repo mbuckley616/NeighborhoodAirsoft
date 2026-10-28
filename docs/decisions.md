@@ -37,7 +37,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   A drop works as in online teams: a kid takes their place till the match ends, and they are gone from your room; if you
   leave, their game goes back to its own title. Single player is unchanged when nobody joins.
   Deep-work session recommends **1A 2A 3A 4A**.
-  Michael: **B) As A, but your friend gets the match money too (1B)**: 1B 2A 3A 4A. (2026-10-28, control room)
+  Michael: **B) As A, but your friend gets the match money too (1B 2A 3A 4A).** (2026-10-28, control room)
 
 - **D.2 step 3: a room list and a Campaign / Online / Settings title? (producer, daily sweep, 2026-10-28)**
   Online teams (step 2, v1.366 and v1.370) landed this morning: friends join a room by its four-letter code from the

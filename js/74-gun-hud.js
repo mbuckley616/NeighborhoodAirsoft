@@ -551,7 +551,10 @@ function updateAmmoHud() {
 
 function updateLoadoutHud() {
   const container = document.getElementById('loadoutSlotsHud');
-  container.innerHTML = '';
+  // v1.379: the four boxes are built as text and the DOM is touched only when it changes. They were torn down and
+  // rebuilt every step (four divs and their spans, 240 a second), and a long stepGame loop with no frame between
+  // piled them up: a 90 s round in one call grew Chromium by 1.3 GB, and three suites at once ran out of memory.
+  let html = '';
   const unlocked = getUnlockedSlotCount();
   const hintEl = document.getElementById('loadoutHint');
   let hint = '';
@@ -562,10 +565,9 @@ function updateLoadoutHud() {
     const desc = describeSlot(i);
     const isHeld = i === Game.held.slotIdx && slot;
 
-    const div = document.createElement('div');
-    div.className = 'slot';
-    if (isHeld) div.classList.add('held');
-    if (!slot || isLocked) div.classList.add('empty');
+    const div = { className: 'slot', innerHTML: '' };   // v1.379: a plain record, written out below
+    if (isHeld) div.className += ' held';
+    if (!slot || isLocked) div.className += ' empty';
 
     const keyEl = `<span class="slot-key">${i+1}</span>`;
     if (isLocked) {
@@ -594,9 +596,11 @@ function updateLoadoutHud() {
         hint = desc.bbs <= 0 ? 'Spare mag is empty. Switch back.' : 'Hold LMB to slam in the fresh mag.';   // v1.323
       }
     }
-    container.appendChild(div);
+    html += `<div class="${div.className}">${div.innerHTML}</div>`;
   }
-  hintEl.textContent = padWords(hint);   // v1.279
+  if (container._html !== html) { container.innerHTML = html; container._html = html; }   // v1.379
+  const hintText = padWords(hint);   // v1.279
+  if (hintEl.textContent !== hintText) hintEl.textContent = hintText;   // v1.379
 }
 
 function updateProgressBars() {
@@ -712,7 +716,7 @@ function updateHealthHud() {
 function updateRosterHud() {
   const list = document.getElementById('rosterList');
   if (!list || !Game.scenario || !Game.scenario.enemies) {
-    if (list) list.innerHTML = '';
+    if (list && list._html !== '') { list.innerHTML = ''; list._html = ''; }   // v1.379
     return;
   }
   const rows = [];
@@ -750,7 +754,8 @@ function updateRosterHud() {
       </div>
     `);
   }
-  list.innerHTML = rows.join('');
+  const html = rows.join('');
+  if (list._html !== html) { list.innerHTML = html; list._html = html; }   // v1.379: only when a row changes
 }
 
 // v1.322 (backlog D.62, Michael 22 Oct: "a red 'flash' around the peripherals of the player's view when they are hit
@@ -978,12 +983,14 @@ function updateEyewearOverlay() {
   const ov = document.getElementById('eyewearOverlay');
   if (!ov) return;
   const canvas = Game.renderer && Game.renderer.domElement;
-  const clear = () => { ov.style.display = 'none'; ov.className = ''; ov.innerHTML = ''; if (canvas) canvas.style.filter = ''; ov.dataset.frame = ''; };
+  // v1.379: clearing is skipped when there is nothing to clear (it ran every step with no eyewear on)
+  const clear = () => { if (ov.dataset.cleared === '1') return; ov.style.display = 'none'; ov.className = ''; ov.innerHTML = ''; if (canvas) canvas.style.filter = ''; ov.dataset.frame = ''; ov.dataset.cleared = '1'; };
   if (Game.mode !== 'scenario') { clear(); return; }
   const eq = getEquippedEyewear();
   const view = eq.view;
   if (!view) { clear(); return; }
 
+  ov.dataset.cleared = '';   // v1.379
   ov.style.display = 'block';
   ov.className = '';
   const style = view.frameStyle || 'glasses';
