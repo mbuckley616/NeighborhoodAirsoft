@@ -2,10 +2,38 @@
 // ---------------------------------------------------------------------
 // SCENE TRANSITIONS
 // ---------------------------------------------------------------------
+// v1.377 (Found in play, the per-entry leak): a scene left behind kept its geometries, materials and textures on the
+// GPU, since three.js frees them only on dispose(). Eight entries of the night Hollow took the renderer from 1,478
+// geometries to 11,445, which is what crashed the long stuck sweeps. When Game.scene moves on, whatever the old scene
+// holds that the new one (or the camera, with your gun on it) doesn't is disposed. A shared piece that is disposed
+// and later drawn again is simply uploaded again, so disposing is never wrong, only sometimes wasted.
+function sceneGPUResources(root, out, skip) {
+  const addTex = t => { if (t && t.isTexture) out.add(t); };
+  const visit = o => {
+    if (o === skip) return;
+    if (o.geometry) out.add(o.geometry);
+    if (o.isLight && o.shadow && o.shadow.map) out.add(o.shadow.map);   // the sun's shadow map is a render target of its own
+    const mats = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+    for (const m of mats) {
+      out.add(m);
+      for (const k in m) addTex(m[k]);
+      if (m.uniforms) for (const k in m.uniforms) addTex(m.uniforms[k] && m.uniforms[k].value);
+    }
+    for (const c of o.children) visit(c);
+  };
+  if (root) { addTex(root.background); addTex(root.environment); visit(root); }
+  return out;
+}
+function retireScene(oldScene, newScene) {
+  if (!oldScene || oldScene === newScene) return;
+  const keep = sceneGPUResources(Game.camera, sceneGPUResources(newScene, new Set()));
+  for (const r of sceneGPUResources(oldScene, new Set(), Game.camera)) if (!keep.has(r) && r.dispose) r.dispose();
+}
 function enterBedroom() {
   Game.mode = 'bedroom';
   Game.interactables = [];
   Scenes.bedroom = buildBedroomScene();
+  retireScene(Game.scene, Scenes.bedroom.scene);   // v1.377
   Game.scene = Scenes.bedroom.scene;
   if (Game.camera.far !== 200) { Game.camera.far = 200; Game.camera.updateProjectionMatrix(); }   // v1.303 (D.51)
   Game.scenario.groundY = null;   // v1.8: bedroom is flat
