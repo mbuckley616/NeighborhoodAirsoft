@@ -44,5 +44,29 @@ await page.evaluate(() => closeShop && closeShop());
 await page.evaluate(() => { Game.player.pos.set(0.5, 0, -2.1); Game.player.yaw = 0.75; Game.player.pitch = -0.3; });
 await g.spin(2);
 await g.shot('bedroom-desk');
+// v1.378 (D.74 step 2, docs/refs/landing.md): the room's shape. A vaulted ceiling from the east and west walls to a
+// north-south ridge, and the dormer's window arched: a half-round fanlight over the two sashes, under the dormer's own
+// flat ceiling. Rays straight up from the floor find the ceiling; rays at the window find glass in the arch, wall beside it.
+const vault = await page.evaluate(() => {
+  Game.scene.updateMatrixWorld(true);
+  const V = Scenes.bedroom.vault, rc = new THREE.Raycaster();
+  const first = (o, d, y0 = -1) => { rc.set(new THREE.Vector3(...o), new THREE.Vector3(...d).normalize()); const h = rc.intersectObjects(Game.scene.children, true).filter(h => h.object.visible && !h.object.isSprite && h.point.y > y0)[0]; return h ? { name: h.object.name, y: +h.point.y.toFixed(2), d: +h.distance.toFixed(2) } : null; };
+  const up = (x, z = 0.4) => first([x, 0.05, z], [0, 1, 0], 2.3);   // above the furniture
+  let win = null; Game.scene.traverse(o => { if (o.name === 'br_fanlight') win = o; });
+  const w = win.getWorldPosition(new THREE.Vector3());
+  return { V, east: up(2.9), mid: up(0, 1.6), west: up(-2.9), q: up(1.5),
+    arch: first([w.x + 0.15, w.y + 0.4, w.z + 1.5], [0, 0, -1]), corner: first([w.x + 0.64, w.y + 0.6, w.z + 1.5], [0, 0, -1]),
+    dormer: up(w.x, w.z + 0.4), rod: (() => { let r = null; Game.scene.traverse(o => { if (o.name === 'br_fan_rod') r = new THREE.Box3().setFromObject(o).max.y; }); return +r.toFixed(2); })() };
+});
+console.log('    vault', JSON.stringify(vault));
+const V = vault.V;
+check('the ceiling vaults: at the east and west walls it is the walls\' height, over the middle the ridge (1.3 m higher)',
+  V.ridgeH - V.wallH >= 1.0 && Math.abs(vault.east.y - V.wallH) < 0.15 && Math.abs(vault.west.y - V.wallH) < 0.15 && Math.abs(vault.mid.y - V.ridgeH) < 0.05
+  && vault.mid.name === 'br_vault' && Math.abs(vault.q.y - (V.wallH + V.ridgeH) / 2) < 0.05, vault);
+check('the window is arched: high in the arch you see out through the fanlight, beside its top the wall',
+  vault.arch && vault.arch.name === 'br_fanlight' && vault.corner && vault.corner.name === 'br_arch_wall', { arch: vault.arch, corner: vault.corner });
+check('the dormer keeps its own flat ceiling, lower than the vault and over the arch\'s top',
+  vault.dormer && Math.abs(vault.dormer.y - V.dormerH) < 0.02 && V.dormerH > V.winTop && V.dormerH < V.ridgeH, vault.dormer);
+check('the fan hangs where it did (2.5 m), on a rod up to the ridge', Math.abs(vault.rod - V.ridgeH) < 0.02, vault.rod);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
