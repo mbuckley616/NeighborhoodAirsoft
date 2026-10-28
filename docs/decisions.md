@@ -19,6 +19,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Not needed:** room codes on the Pickup Game board are enough; close step 3.
   Producer recommends **A**.
 
+## Answered
+
 - **D.74, the landing: the builder can't see your new photos (builder, maps, 2026-10-28)**
   You chose C on D.74 ("Basically A, but I added a folder and some photos into the Google Drive folder for this game's
   concept art!"), so the landing waits on writing your photos up in `docs/refs/landing.md`. The maps builder runs in a
@@ -37,8 +39,12 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     carpet and wall colours), and A is built from them.
   Builder recommends **B**: it is one short local session, keeps the photos out of the repo the way the other guides
   were done, and gets the layout right first time; A is the lasting fix if you want cloud runs to read your Drive.
-
-## Answered
+  Michael: **B, done in a session with the Drive connector** (2026-10-28): it read the four photos and
+  his floor-plan sketch and wrote `docs/refs/landing.md`. His layout answers in it: the TV platform is the desk build's
+  45° corner unit at the west end of the south-wall desk recess, its top a foot or two above the desk; the desk is that
+  recess; no second TV, desk tops empty; the back door comes out, the stairs (landing's south-east corner, no door, an
+  invisible wall, E) go to the back yard; matches start from the map table only; the bedroom's furniture and wall
+  colours do not change (its photos are for its shape).
 
 - **D.74, the crew's hangout outside the bedroom: what is it, and what happens there? (builder, maps, 2026-10-27)**
   Your note (23 Oct): your brother's idea, the upstairs landing outside your room as the crew's common room: a black
