@@ -57,7 +57,8 @@ const played = await page.evaluate(() => {
 });
 console.log('  ', played.desc);
 // v1.352: and the Holiday row's By the date, lit by default (it says what that is today)
-check('the four picks are lit: Bunratty Court, 4v4, Night, 5', played.lit.slice(0, 4).join() === 'Bunratty Court,4v4,Night,5' && played.lit.length === 5 && /^By the date/.test(played.lit[4]), played.lit);
+// 28 Oct fix-up: since v1.361 (B.18) the holidays are parked and the board hides the Holiday row, so nothing else is lit
+check('the four picks are lit: Bunratty Court, 4v4, Night, 5 (and no Holiday row while the holidays are parked)', played.lit.join() === 'Bunratty Court,4v4,Night,5', played.lit);
 check('PLAY builds a night 4v4, five lives each, and opens its briefing', played.mode === 'scenario_intro' && !played.modal && played.name === 'Pickup Game: 4v4'
   && played.tod === 'night' && played.ours === 3 && played.theirs === 4 && played.npcLives === 5 && played.playerLives === 5, played);
 await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
