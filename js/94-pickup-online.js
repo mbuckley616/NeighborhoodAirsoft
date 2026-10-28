@@ -325,6 +325,10 @@ function netSendOthers(m, notPid) { for (const p of Net.people) if (p.pid && p.p
 // --- the PeerJS transport: start(role, code, handlers) -> { send(m, to), close() } ---
 // handlers: ready(code) (host: the room is open; guest: joined), connected(pid) (host: a friend is in), data(m, pid),
 // closed(pid) (host: that friend's link; guest: the host's), error(kind)
+// v1.367 (D.10): and the walkie. voice(stream, pids) calls each of those links (a guest's 'host', or a friend's
+// PeerJS id, which the host passes on to his side) with your mic, and hangs up the others, or all with no stream;
+// voiceOk(pid) says whether a call from that link is taken, and voiceIn(pid, stream) hands on its sound (null: gone).
+// The calls go one way, each friend calling each of his side with his own mic, so nobody is sent a side's voice twice.
 function netLoadPeerJs() {
   return new Promise((res, rej) => {
     if (window.Peer) return res();
@@ -338,6 +342,8 @@ function netLoadPeerJs() {
 function netPeerTransport(role, code, h) {
   let peer = null, closed = false;
   const conns = new Map();   // the host's: one a friend, by his peer id; the guest's: the host's, as 'host'
+  const calls = new Map();   // v1.367: the walkie's calls out, by link id
+  const hostId = NET_PEER_PREFIX + code;
   const anyOpen = () => [...conns.values()].some(c => c.open);
   const wire = (c, pid) => {
     conns.set(pid, c);
@@ -365,6 +371,13 @@ function netPeerTransport(role, code, h) {
       if (role === 'host') h.ready(code);
       else wire(peer.connect(NET_PEER_PREFIX + code, { reliable: true, serialization: 'json' }), 'host');
     });
+    peer.on('call', call => {   // v1.367: a friend on your side keys his walkie for the first time
+      const pid = role === 'guest' && call.peer === hostId ? 'host' : call.peer;
+      if (closed || !h.voiceOk || !h.voiceOk(pid)) { try { call.close(); } catch (e) {} return; }
+      try { call.answer(); } catch (e) { return; }
+      call.on('stream', st => { if (!closed) h.voiceIn(pid, st); });
+      call.on('close', () => { if (!closed) h.voiceIn(pid, null); });
+    });
     peer.on('connection', c => {
       if (role !== 'host' || conns.size >= NET_MAX_PEOPLE - 1) { c.on('open', () => { try { c.close(); } catch (e) {} }); return; }
       wire(c, c.peer || ('p' + conns.size));
@@ -384,7 +397,25 @@ function netPeerTransport(role, code, h) {
       else for (const c of conns.values()) if (c.open) c.send(m);
     },
     drop(pid) { const c = conns.get(pid); conns.delete(pid); try { if (c) c.close(); } catch (e) {} },
-    close() { closed = true; for (const c of conns.values()) { try { c.close(); } catch (e) {} } conns.clear(); try { if (peer) peer.destroy(); } catch (e) {} },
+    voice(stream, pids) {   // v1.367
+      for (const [pid, c] of calls) if (!stream || !pids.includes(pid)) { calls.delete(pid); try { c.close(); } catch (e) {} }
+      if (!stream || !peer || closed) return;
+      for (const pid of pids) {
+        if (calls.has(pid)) continue;
+        let c = null;
+        try { c = peer.call(pid === 'host' ? hostId : pid, stream); } catch (e) {}
+        if (!c) continue;
+        calls.set(pid, c);
+        const off = () => { if (calls.get(pid) === c) calls.delete(pid); };
+        c.on('close', off); c.on('error', off);
+      }
+    },
+    close() {
+      closed = true;
+      for (const c of [...conns.values(), ...calls.values()]) { try { c.close(); } catch (e) {} }
+      conns.clear(); calls.clear();
+      try { if (peer) peer.destroy(); } catch (e) {}
+    },
   };
 }
 Net.makeTransport = netPeerTransport;
@@ -566,6 +597,8 @@ function netOpen(role, code) {
     connected: () => {},
     data: (m, pid) => { if (Net.tx === tx) netReceive(m, pid); },
     closed: pid => { if (Net.tx !== tx) return; if (role === 'host') netDropped(pid); else netLost(); },
+    voiceOk: pid => Net.tx === tx && netVoiceOk(pid),   // v1.367 (D.10)
+    voiceIn: (pid, st) => { if (Net.tx === tx) netVoiceIn(pid, st); },
     error: kind => {
       if (Net.tx !== tx) return;
       if (kind === 'taken' && role === 'host' && (Net._tries = (Net._tries || 0) + 1) < 4) { netOpen('host', netNewCode()); return; }
@@ -578,6 +611,7 @@ function netOpen(role, code) {
 function netResetMatch() {
   for (const id of Object.keys(CHARACTERS)) if (/^net_p\d+$/.test(id)) delete CHARACTERS[id];
   if (Game.player) Game.player._netOut = false;
+  netVoiceStop(false);   // v1.367: the walkie's calls end with the match (your mic stays yours till you leave the room)
   Object.assign(Net, { roster: null, ents: new Map(), ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0 });
 }
 function netHost() { Net._tries = 0; netOpen('host', netNewCode()); }
@@ -591,6 +625,7 @@ function netClose() {
   const tx = Net.tx;
   Net.tx = null;
   if (tx) { try { tx.close(); } catch (e) {} }
+  netVoiceStop(true);   // v1.367: and the browser's mic is let go
   if (Net.bagSaved != null) { Game.persist.bag = Net.bagSaved; Net.bagSaved = null; }
   Object.assign(Net, { active: false, role: null, phase: 'idle', people: [], lobby: null, me: null });
   netResetMatch();
@@ -607,6 +642,7 @@ function netDropped(pid) {
   const e = Net.ents.get(p.id);
   if (e && (Net.phase === 'begin' || Net.phase === 'play')) {
     netBotTakeover(e);
+    netVoiceGone(p.id);   // v1.367
     const line = `${p.name.toUpperCase()} LEFT · A KID PLAYS THE SPOT`;
     netHud(line);
     netSendOthers({ t: 'gone', id: p.id, name: p.name });
@@ -751,6 +787,28 @@ function netReceive(m, pid) {
       if (host) return;
       const line = `${netCleanName(m.name).toUpperCase()} LEFT · A KID PLAYS THE SPOT`;
       if (Net.phase === 'play' || Net.phase === 'begin') netHud(line);
+      if (netCleanId(m.id)) netVoiceGone(m.id);   // v1.367
+      return;
+    }
+    case 'mates': {   // v1.367 (D.10): the walkie links of the people on your side (guest)
+      if (host || (Net.phase !== 'begin' && Net.phase !== 'matched') || !m.m || typeof m.m !== 'object') return;
+      const mine = Net.roster && Net.roster.find(r => r.id === Net.me);
+      NetVoice.mates = {};
+      for (const [id, link] of Object.entries(m.m)) {
+        const r = Net.roster && Net.roster.find(x => x.id === id);
+        if (r && r.human && mine && r.side === mine.side && id !== Net.me && typeof link === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(link)) NetVoice.mates[id] = link;
+      }
+      netVoiceLink();
+      return;
+    }
+    case 'ptt': {   // v1.367: a friend keyed his walkie, or let go: the host hears his side's, and passes it on to them
+      if (Net.phase !== 'play') return;
+      const on = !!m.on;
+      if (host) {
+        if (!from) return;
+        if (from.side === 'A') netHeard(from.id, on);
+        for (const p of netOnSide(from.side)) if (p.pid && p.id !== from.id) netSend({ t: 'ptt', id: from.id, on: on ? 1 : 0 }, p.pid);
+      } else if (netCleanId(m.id) && NetVoice.mates[m.id]) netHeard(m.id, on);
       return;
     }
     case 'end': {
@@ -798,6 +856,15 @@ function netStartRoom() {
   const wire = roster.map(r => ({ id: r.id, side: r.side, human: !!r.human, name: r.name, look: r.look, gun: r.gun, anchor: r.anchor }));
   netSendOthers({ t: 'match', ver: netVersion(), roster: wire });
   netStartMatch();
+  // v1.367 (D.10): each person is told the walkie links of his own side, and only those ('host' for the host's)
+  if (Net.phase !== 'begin') return;
+  for (const p of Net.people) {
+    const m = {};
+    for (const q of netOnSide(p.side)) if (q.id !== p.id) m[q.id] = q.id === NET_HOST_ID ? 'host' : q.pid;
+    if (p.id === NET_HOST_ID) { delete m[NET_HOST_ID]; NetVoice.mates = m; }
+    else if (p.pid && !p.gone) netSend({ t: 'mates', m }, p.pid);
+  }
+  netVoiceLink();
 }
 // Every game builds the same match from the roster, from its own side: its own person is the player, the others
 // (people and kids) are kids in the scene, his side's on the player's team. In a guest's game every one of them is
@@ -925,6 +992,8 @@ function netPlayerOut() {
 // Once a step in a match: graces run down, and you send where you are (a guest) or where everyone is (the host)
 function netStep(dt) {
   if (Net.hudT > 0 && (Net.hudT -= dt) <= 0) netHud('');
+  netTalkPoll();   // v1.367 (D.10)
+  netTalkHud();
   if (Net.phase !== 'play') return;
   const P = Game.player, host = Net.role === 'host';
   for (const e of Net.ents.values()) if (e.remote && e._graceT > 0) e._graceT = Math.max(0, e._graceT - dt);
@@ -1116,4 +1185,165 @@ function netLost() {
     enterBedroom();
   }
   showModal('The host left', 'The connection to the host closed, so the match is over. Nothing was lost.');
+}
+// =====================================================================
+// v1.367 (backlog D.10's push-to-talk, card fable/d2-online-teams step 2; Michael, D.10 A on 3 Oct: "a push to talk
+// mechanism to compliment" the walkie, for online play, and A on 21 Oct: "push-to-talk on the walkie for the people
+// playing"): THE WALKIE ONLINE. Hold T (R3 on a pad, a click of the right stick held) and your voice goes to the people
+// on your side, and only them, through the walkie's sound: the talk button's click, then the voice thin and crackly.
+// The browser asks for the microphone the first time you hold it in a match, never before; once it says yes the mic
+// stays open, silent, till you leave the room, and is live only while the key is held. Each person's game calls each
+// of his side's people straight (WebRTC audio over PeerJS, as the match's own link); the host tells each of them who
+// those are, so nobody on the other side is ever called or heard. "Friends on the walkie" in the settings mutes them
+// and keeps yours shut. The kids' callouts stay as they were.
+const NET_TALK_KEY = 'KeyT';
+const NetVoice = {
+  mic: null, asking: false, denied: false, held: false, talking: false,
+  mates: {},            // the people on your side: { charId: walkie link }, from the host
+  heard: new Map(),     // the calls coming in, by link: { stream, el, src, gain }
+  speaking: new Set(),  // who on your side is talking now, by charId
+  getMic: () => navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }),   // the tests swap it
+};
+function netVoiceLinks() { return Object.values(NetVoice.mates); }
+function netVoiceOk(pid) { return Net.active && (Net.phase === 'begin' || Net.phase === 'play') && netVoiceLinks().includes(pid); }
+// Your calls out: one to each of your side's people while the mic is open and the walkie not muted
+function netVoiceLink() {
+  if (!Net.tx || !Net.tx.voice) return;
+  const on = NetVoice.mic && Settings.voiceChat && (Net.phase === 'begin' || Net.phase === 'play');
+  try { Net.tx.voice(on ? NetVoice.mic : null, on ? netVoiceLinks() : []); } catch (e) {}
+}
+function netMicTracks() { return (NetVoice.mic && NetVoice.mic.getAudioTracks) ? NetVoice.mic.getAudioTracks() : []; }
+// A teammate's voice: the walkie's band (thin, no boom, no hiss up top), a little grit, and as loud as a voice in the ear
+function netVoiceIn(pid, stream) {
+  const old = NetVoice.heard.get(pid);
+  if (old) { NetVoice.heard.delete(pid); try { old.src && old.src.disconnect(); } catch (e) {} if (old.el) { old.el.srcObject = null; } }
+  if (!stream || !netVoiceOk(pid)) return;
+  const v = { stream, el: null, src: null, gain: null };
+  try { const el = new Audio(); el.muted = true; el.srcObject = stream; const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); v.el = el; } catch (e) {}   // Chrome only feeds a call's sound to Web Audio while an element plays it
+  try {
+    initAudio();
+    const ctx = Game.audio && Game.audio.ctx;
+    if (ctx) {
+      const src = ctx.createMediaStreamSource(stream), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), sh = ctx.createWaveShaper(), g = ctx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = 450; hp.Q.value = 0.7;
+      lp.type = 'lowpass'; lp.frequency.value = 2600; lp.Q.value = 0.9;
+      const curve = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; curve[i] = Math.tanh(2.2 * x) / Math.tanh(2.2); }
+      sh.curve = curve;
+      g.gain.value = Settings.voiceChat ? 1.4 : 0;
+      src.connect(hp).connect(lp).connect(sh).connect(g).connect(ctx.destination);
+      v.src = src; v.gain = g;
+    }
+  } catch (e) {}
+  NetVoice.heard.set(pid, v);
+}
+// The mute in the settings, as it changes
+function netVoiceApply() {
+  for (const v of NetVoice.heard.values()) if (v.gain) v.gain.gain.value = Settings.voiceChat ? 1.4 : 0;
+  if (!Settings.voiceChat && NetVoice.talking) netTalkStop();
+  if (Net.active) netVoiceLink();
+}
+// A friend on your side left the match: his calls end
+function netVoiceGone(id) {
+  const link = NetVoice.mates[id];
+  if (!link) return;
+  delete NetVoice.mates[id];
+  NetVoice.speaking.delete(id);
+  netVoiceIn(link, null);
+  netVoiceLink();
+}
+// The end of a match (the calls) or of the room (and the mic)
+function netVoiceStop(all) {
+  if (NetVoice.talking) { NetVoice.talking = false; for (const t of netMicTracks()) t.enabled = false; }
+  NetVoice.held = false;
+  for (const pid of [...NetVoice.heard.keys()]) netVoiceIn(pid, null);
+  NetVoice.mates = {};
+  NetVoice.speaking.clear();
+  if (Net.tx && Net.tx.voice) { try { Net.tx.voice(null, []); } catch (e) {} }
+  if (all && NetVoice.mic) { for (const t of netMicTracks()) { try { t.stop(); } catch (e) {} } NetVoice.mic = null; }
+  if (all) NetVoice.denied = false;
+  netTalkHud();
+}
+// The walkie's talk button: a click going down, a lower one letting go
+function netWalkieClick(down) {
+  try {
+    const ctx = Game.audio && Game.audio.ctx;
+    if (!ctx) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(down ? 1400 : 900, t);
+    g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
+  } catch (e) {}
+}
+// Once a step: the key (or R3) held or let go
+function netTalkPoll() {
+  const held = !!(Game.keys[NET_TALK_KEY] || Pad.talk) && Game.mode === 'scenario' && !Game.paused && Net.phase === 'play';
+  if (held === NetVoice.held) return;
+  NetVoice.held = held;
+  if (held) netTalkStart(); else netTalkStop();
+}
+function netTalkStart() {
+  if (!Settings.voiceChat || !netVoiceLinks().length || NetVoice.talking) return;
+  if (!NetVoice.mic) { netMicAsk(); return; }
+  NetVoice.talking = true;
+  for (const t of netMicTracks()) t.enabled = true;
+  netWalkieClick(true);
+  netPttSend(true);
+  netTalkHud();
+}
+function netTalkStop() {
+  if (!NetVoice.talking) return;
+  NetVoice.talking = false;
+  for (const t of netMicTracks()) t.enabled = false;
+  netWalkieClick(false);
+  netPttSend(false);
+  netTalkHud();
+}
+// The first hold: the browser asks; a yes opens the mic shut, and talks at once if the key is still held
+function netMicAsk() {
+  if (NetVoice.asking || NetVoice.denied) return;
+  NetVoice.asking = true;
+  let p;
+  try { p = NetVoice.getMic(); } catch (e) { p = Promise.reject(e); }
+  Promise.resolve(p).then(stream => {
+    NetVoice.asking = false;
+    if (!Net.active || !stream) { if (stream && stream.getTracks) stream.getTracks().forEach(t => t.stop()); return; }
+    NetVoice.mic = stream;
+    for (const t of netMicTracks()) t.enabled = false;
+    netVoiceLink();
+    if (NetVoice.held) netTalkStart();
+  }, () => { NetVoice.asking = false; NetVoice.denied = true; netTalkHud(); });
+}
+// Your side hears that you keyed the walkie (the host passes a guest's on to the rest of his side)
+function netPttSend(on) {
+  const v = on ? 1 : 0;
+  if (Net.role === 'guest') { netSend({ t: 'ptt', on: v }); return; }
+  for (const p of netOnSide('A')) if (p.pid) netSend({ t: 'ptt', id: NET_HOST_ID, on: v }, p.pid);
+}
+function netHeard(id, on) {
+  if (on === NetVoice.speaking.has(id)) return;
+  if (on) NetVoice.speaking.add(id); else NetVoice.speaking.delete(id);
+  if (Settings.voiceChat) netWalkieClick(on);
+  netTalkHud();
+}
+// Bottom left in a match with people on your side: the key to hold, you talking, or who is
+function netTalkHud() {
+  const el = document.getElementById('netTalkHud');
+  if (!el) return;
+  const show = Net.active && Net.phase === 'play' && Game.mode === 'scenario' && netVoiceLinks().length > 0;
+  let html = '', on = false;
+  if (show) {
+    const key = Pad.active ? '<kbd>R3</kbd>' : '<kbd>T</kbd>';
+    const names = [...NetVoice.speaking].map(id => (Net.roster.find(r => r.id === id) || { name: 'Friend' }).name);
+    if (!Settings.voiceChat) html = '📻 Walkie muted · settings';
+    else if (NetVoice.talking) { html = '📻 TALKING TO YOUR SIDE'; on = true; }
+    else if (names.length) { html = `📻 ${names.join(', ')}`; on = true; }
+    else if (NetVoice.denied) html = '📻 No mic: the browser said no';
+    else if (NetVoice.asking) html = '📻 Allow the mic to talk…';
+    else html = `📻 hold ${key} to talk to your side`;
+  }
+  if (el.innerHTML !== html) el.innerHTML = html;
+  el.classList.toggle('on', on);
+  const disp = html ? 'block' : 'none';
+  if (el.style.display !== disp) el.style.display = disp;
 }

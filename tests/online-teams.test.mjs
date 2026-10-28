@@ -7,6 +7,10 @@
 // from its own side; each sees everyone where they are, kids and Bluey included; tags in either game, and on Bluey,
 // are the host's, and every count agrees; a dropped friend's spot is taken by his kid on the host's AI and the match
 // ends normally; REMATCH takes the room back to the board with whoever is still in it.
+// v1.367 (D.10's push-to-talk): the walkie on a stub mic (no real one headless): the host and Bluey are Blue, Reddy is
+// Red with kids. The host is told Bluey's link and Bluey the host's, Reddy nobody's; holding T asks for the mic, calls
+// Bluey and nobody else, and opens the track only while it is held; a call from Reddy is turned away; Bluey's key
+// shows on the host's screen, Reddy's does not and goes to nobody on Blue; the settings' mute hangs up; Bluey's drop ends his call.
 import { boot, check } from './lib/game.mjs';
 
 const G = [await boot(), await boot()];   // G[0] hosts, G[1] (Reddy) joins
@@ -17,8 +21,11 @@ for (const p of [H, R]) await p.evaluate(() => {
     window.__h = h; window.__out = [];
     Promise.resolve().then(() => h.ready(code));
     return { send: (m, to) => window.__out.push({ m: JSON.stringify(m), to: to || null }), drop: id => { (window.__dropped = window.__dropped || []).push(id); },
+      voice: (st, pids) => { window.__voice = { on: !!st, pids: pids.slice() }; window.__voiceCalls = (window.__voiceCalls || 0) + 1; },   // v1.367
       close: () => { window.__closedTx = (window.__closedTx || 0) + 1; } };
   };
+  // v1.367: the mic is a silent stream from Web Audio, counted each time it is asked for
+  NetVoice.getMic = () => { window.__micAsked = (window.__micAsked || 0) + 1; const c = new AudioContext(); return Promise.resolve(c.createMediaStreamDestination().stream); };
 });
 // One evaluate a game: what reached it, two steps, what it sends. The host's go to the guest they name, or to all;
 // Bluey's ('g2') are kept here in `toBluey`, and what he says goes in `fromBluey`.
@@ -27,12 +34,13 @@ const stepIn = (p, inbox, frames = 2) => p.evaluate(([inbox, frames]) => {
   for (let i = 0; i < frames && Game.mode !== 'title'; i++) if (Game.mode === 'scenario') stepGame(1 / 60);
   return (window.__out || []).splice(0);
 }, [inbox, frames]);
-let toHost = [], toReddy = [], toBluey = [], fromBluey = [];
+let toHost = [], toReddy = [], toBluey = [], fromBluey = [], hostSent = [];
 const bluey = m => fromBluey.push([JSON.stringify(m), 'g2']);
 let blueyState = null;   // where Bluey is, sent with each tick once the match is on
 async function tick(frames = 2) {
   if (blueyState) bluey(Object.assign({ t: 's' }, blueyState));
   const out = await stepIn(H, toHost.splice(0).concat(fromBluey.splice(0)), frames);
+  hostSent.push(...out.map(o => Object.assign(JSON.parse(o.m), { to: o.to })));
   for (const o of out) {
     if (!o.to || o.to === 'g1') toReddy.push([o.m, 'host']);
     if (!o.to || o.to === 'g2') toBluey.push(JSON.parse(o.m));
@@ -125,6 +133,59 @@ console.log('   where', JSON.stringify(err));
 check('everyone sees everyone where he is: people within 10 cm (Bluey reaches Reddy through the host), kids within 40 cm',
   err.blueyMoved > 1 && Object.entries(err).every(([k, v]) => k === 'blueyMoved' || (k === 'kids' ? v < 0.4 : v < 0.1)), err);
 
+// v1.367 (D.10): the walkie to your own side
+const talk = p => p.evaluate(() => ({ hud: document.getElementById('netTalkHud').textContent, shown: document.getElementById('netTalkHud').style.display,
+  on: document.getElementById('netTalkHud').classList.contains('on'), mates: JSON.stringify(NetVoice.mates), voice: window.__voice || null,
+  asked: window.__micAsked || 0, talking: NetVoice.talking, track: NetVoice.mic ? NetVoice.mic.getAudioTracks().map(t => t.enabled).join() : '' }));
+const pttTo = () => hostSent.splice(0).filter(m => m.t === 'ptt').map(m => `${m.to}:${m.id}:${m.on}`).join(',');
+const tm0 = await talk(H), tr0 = await talk(R), blMates = lastTo('mates');
+console.log('   walkie', JSON.stringify(tm0), JSON.stringify(tr0), JSON.stringify(blMates));
+check('the walkie: the host is told Bluey’s link and Bluey the host’s, Reddy (alone on Red) nobody’s; the hint shows on Blue only, and no mic is asked for',
+  tm0.mates === '{"net_p2":"g2"}' && blMates && JSON.stringify(blMates.m) === '{"net_p0":"host"}' && tr0.mates === '{}'
+  && /hold T to talk to your side/.test(tm0.hud) && tm0.shown === 'block' && tr0.shown === 'none' && tm0.asked === 0 && tr0.asked === 0, { tm0, tr0, blMates });
+hostSent.length = 0;
+await H.evaluate(() => { Game.keys.KeyT = true; });
+await run(6);
+const tm1 = await talk(H), sent1 = pttTo();
+await H.evaluate(() => { Game.keys.KeyT = false; });
+await run(4);
+const tm2 = await talk(H), sent2 = pttTo();
+console.log('   T held', JSON.stringify(tm1), sent1, '\n   let go', JSON.stringify(tm2), sent2);
+check('holding T asks for the mic once, calls Bluey and nobody else, and opens the track only while held; Bluey is told each way, Reddy never',
+  tm1.asked === 1 && tm1.voice && tm1.voice.on && tm1.voice.pids.join() === 'g2' && tm1.talking && tm1.track === 'true' && /TALKING TO YOUR SIDE/.test(tm1.hud) && tm1.on
+  && sent1 === 'g2:net_p0:1' && !tm2.talking && tm2.track === 'false' && tm2.voice.on && sent2 === 'g2:net_p0:0' && tm2.asked === 1, { tm1, tm2, sent1, sent2 });
+// Calls coming in: Bluey's is taken and played through the walkie's band; Reddy's is turned away
+const inc = await H.evaluate(() => { const st = new AudioContext().createMediaStreamDestination().stream;
+  const ok = [window.__h.voiceOk('g2'), window.__h.voiceOk('g1')]; window.__h.voiceIn('g2', st); window.__h.voiceIn('g1', st);
+  const v = NetVoice.heard.get('g2'); return { ok, heard: [...NetVoice.heard.keys()].join(), gain: v && v.gain ? v.gain.gain.value : null }; });
+// Bluey keys his walkie: the host sees it; Reddy's key reaches nobody on Blue
+bluey({ t: 'ptt', on: 1 });
+await run(2);
+const tm3 = await talk(H);
+bluey({ t: 'ptt', on: 0 });
+toHost.push([JSON.stringify({ t: 'ptt', on: 1 }), 'g1']);
+await run(2);
+const tm4 = await talk(H), sent4 = pttTo();
+await R.evaluate(() => { Game.keys.KeyT = true; });
+await run(4);
+await R.evaluate(() => { Game.keys.KeyT = false; });
+await run(2);
+const tr1 = await talk(R);
+console.log('   calls in', JSON.stringify(inc), '\n   Bluey talks', JSON.stringify(tm3), '\n   Reddy keys', JSON.stringify(tm4), sent4, JSON.stringify(tr1));
+check('a call from Bluey is played (through the band, at full), Reddy’s turned away; Bluey’s key shows on the host’s screen; Reddy’s shows nowhere on Blue, and his T asks for no mic',
+  inc.ok[0] && !inc.ok[1] && inc.heard === 'g2' && inc.gain > 1 && /Bluey/.test(tm3.hud) && tm3.on && !/Reddy|Bluey/.test(tm4.hud) && !tm4.on && sent4 === ''
+  && tr1.asked === 0 && !tr1.talking && tr1.shown === 'none', { inc, tm3, tm4, sent4, tr1 });
+// The settings' mute: the calls hang up, a call in goes quiet, and T does nothing
+await H.evaluate(() => { Settings.voiceChat = false; applySettings(); Game.keys.KeyT = true; });
+await run(4);
+const tm5 = await talk(H), mutedGain = await H.evaluate(() => NetVoice.heard.get('g2').gain.gain.value), sent5 = pttTo();
+await H.evaluate(() => { Game.keys.KeyT = false; Settings.voiceChat = true; applySettings(); });
+await run(2);
+const tm6 = await talk(H);
+console.log('   muted', JSON.stringify(tm5), mutedGain, sent5, JSON.stringify(tm6.voice));
+check('“Friends on the walkie” off: the calls hang up, Bluey goes quiet, T sends nothing; back on, Bluey is called again',
+  !tm5.voice.on && mutedGain === 0 && !tm5.talking && sent5 === '' && /muted/.test(tm5.hud) && tm6.voice.on && tm6.voice.pids.join() === 'g2', { tm5, mutedGain, sent5, tm6 });
+
 // The kids' shots fly in the guest's game
 await R.evaluate(() => { window.__kidShots = 0; const f = window.netSpawnShot; window.netSpawnShot = (m, k) => { if (!/^net_p/.test(m.id || '')) window.__kidShots++; return f(m, k); }; });
 let ks = 0;
@@ -178,7 +239,9 @@ await H.evaluate(() => { for (const e of Game.scenario.enemies) if (!e.remote) e
 await run(120);
 const dropH = await H.evaluate(() => { const k = Net.ents.get('net_p2'); return { mode: Game.mode, remote: k.remote, bot: k.netBot, state: k.state, lives: k.lives, team: k.team }; });
 const dropR = await R.evaluate(() => ({ mode: Game.mode, hud: document.getElementById('netHud').textContent, remote: Net.ents.get('net_p2').remote }));
-console.log('   drop', JSON.stringify(dropH), JSON.stringify(dropR));
+const dropV = await H.evaluate(() => ({ voice: window.__voice, mates: JSON.stringify(NetVoice.mates), heard: NetVoice.heard.size, hud: document.getElementById('netTalkHud').style.display }));
+console.log('   drop', JSON.stringify(dropH), JSON.stringify(dropR), JSON.stringify(dropV));
+check('v1.367: Bluey’s drop ends the walkie with him: no calls out, his call in gone, the hint hidden', dropV.voice.pids.length === 0 && dropV.mates === '{}' && dropV.heard === 0 && dropV.hud === 'none', dropV);
 check('a dropped friend’s spot is taken by a kid: Blue’s, on the host’s AI with his lives left, and Reddy is told',
   dropH.mode === 'scenario' && !dropH.remote && dropH.bot && dropH.state !== 'online' && dropH.lives >= 1 && dropH.team === 'player'
   && dropR.mode === 'scenario' && /BLUEY LEFT · A KID PLAYS THE SPOT/.test(dropR.hud) && dropR.remote, { dropH, dropR });

@@ -32,7 +32,7 @@ function initAudio() {
 // Mouse and aim sensitivity, music and effects volume, field of view and invert look. They belong to the browser,
 // not to a save: their own localStorage key, so NEW GAME and CONTINUE both keep them.
 const SETTINGS_KEY = 'neighborhoodAirsoft.settings.v1';
-const SETTINGS_DEFAULTS = { mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false };
+const SETTINGS_DEFAULTS = { mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false, voiceChat: true };   // v1.367: voiceChat, your friends on the walkie online (D.10)
 const SETTINGS_RANGES = {
   mouseSens: [0.25, 3, 0.05], aimSens: [0.25, 2, 0.05], music: [0, 1, 0.05], effects: [0, 1, 0.05], fov: [60, 100, 1],
 };
@@ -45,6 +45,7 @@ function sanitizeSettings(raw) {
       if (Number.isFinite(v)) out[k] = Math.max(r[0], Math.min(r[1], v));
     }
     if (typeof raw.invertY === 'boolean') out.invertY = raw.invertY;
+    if (typeof raw.voiceChat === 'boolean') out.voiceChat = raw.voiceChat;   // v1.367
   }
   return out;
 }
@@ -74,6 +75,7 @@ function applySettings() {
     g.cancelScheduledValues(a.ctx.currentTime);
     g.setValueAtTime(musicThemeVolume(Music.theme) * Settings.music, a.ctx.currentTime);   // v1.356: a match theme has its own level
   }
+  if (typeof netVoiceApply === 'function') netVoiceApply();   // v1.367: the walkie's mute, online
 }
 loadSettings();
 
