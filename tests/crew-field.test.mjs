@@ -37,7 +37,7 @@ const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
 
 // Two Against the World with Eric: you and Eric v 4 (Sean was its one friend); with all five, 6 v 4
 let s = await sides('bunratty_team_2v4', ['eric']);
-check('Two Against the World, Eric in: you and Eric v Ryan, Mitchell, Nick, Priya', s.ours.join() === 'eric' && s.theirs.join() === 'ryan,mitchell,nick,priya' && s.match === '2V4', s);
+check('Two Against the World, Eric in: you and Eric v Ryan, Mitchell, Nick, Joe', s.ours.join() === 'eric' && s.theirs.join() === 'ryan,mitchell,nick,joe' && s.match === '2V4', s);
 s = await sides('bunratty_team_2v4', ['eric', 'sean', 'nick', 'alex', 'diego']);
 check('Two Against the World, all five: 6 v 4, Nick swapped out of their side for a street kid',
   s.ours.length === 5 && !s.theirs.includes('nick') && s.theirs.length === 4 && s.match === '6V4', s);
