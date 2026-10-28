@@ -7,6 +7,38 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.73: how co-op works, a friend in your bedroom and your campaign (Fable, card fable/d73-coop, 2026-10-28)**
+  You asked (23 Oct) for a friend to "come over to hang out" in your bedroom and play at your side in all your
+  campaign matches. It builds on the online teams that landed this morning: your game stays the referee and runs every
+  kid, the friend's game sends only where they are, and a friend who drops is played on by a kid. Four things are open;
+  answer each with a letter (e.g. "1A 2A 3A 4A").
+  1. **Whose save changes.**
+     - A) **Yours only:** wins, money, the ladder and the summer move on your save; your friend's save is untouched.
+       *(recommended: one save stays the story, and nothing can be farmed by joining someone further along)*
+     - B) Yours, and your friend's bag gets the match's money too (their ladder stays where it is).
+     - C) Both: they also get the win on their own save, where that match is open there.
+  2. **Your friend in your bedroom.** They get in by a four-letter code from a CO-OP button on your phone, the way the
+     Pickup Game room works.
+     - A) **They walk around your room as a kid you can see** (their own look), and only you can start a match, shop, use
+       the workbench or sleep; they get a few words on screen saying so. *(recommended)*
+     - B) As A, and they can also open their own loadout (gun, eyewear, shoes from their own save) at the closet.
+     - C) They wait on a "Hanging out at <your name>'s" screen and only appear in the matches.
+  3. **Where they fit in a match.** Today a team match takes your crew, and solo matches (you alone against kids) take
+     nobody.
+     - A) **One slot of your side in every match:** in a team match they take a crew place (the last kid's), and in a
+       solo match they are added beside you with the other side one bigger. *(recommended: they are there "in all of your
+       matches", and the sides stay as tuned)*
+     - B) Team matches only; in a solo match they watch from your side's start, out of play.
+     - C) Added on top of your side in every match, the other side one bigger each time.
+  4. **Their kid and their gear.**
+     - A) **From their own save:** their look and the gun, eyewear and shoes they have on there, with a full bag of BBs for the
+       match as online play does. *(recommended: a friend with nothing yet still has the starter pistol)*
+     - B) A kid of yours: they play one of your crew kids, with that kid's look and gun.
+  A drop works as in online teams: a kid takes their place till the match ends, and they are gone from your room; if you
+  leave, their game goes back to its own title. Single player is unchanged when nobody joins.
+  Deep-work session recommends **1A 2A 3A 4A**.
+  Michael: **B) As A, but your friend gets the match money too (1B 2A 3A 4A).** (2026-10-28, control room)
+
 - **D.2 step 3: a room list and a Campaign / Online / Settings title? (producer, daily sweep, 2026-10-28)**
   Online teams (step 2, v1.366 and v1.370) landed this morning: friends join a room by its four-letter code from the
   Pickup Game board. Step 3, from your 28 Sep ask, is a list of open rooms to pick from and a title screen offering
