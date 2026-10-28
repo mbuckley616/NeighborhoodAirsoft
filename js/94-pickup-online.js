@@ -892,6 +892,7 @@ function netAfterStart() {
   P._netOut = false;
   if (!host && S[Net.me]) {
     P.pos.copy(S[Net.me]);
+    P.pos.y = scenarioGroundY(P.pos.x, P.pos.z);   // a start comes on the ground plane
     const mySide = Net.roster.find(r => r.id === Net.me).side;
     const foes = Net.roster.filter(r => r.side !== mySide && S[r.id]).map(r => S[r.id]);
     if (foes.length) {
