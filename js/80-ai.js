@@ -409,6 +409,7 @@ function combatantView(c) {
     return {
       pos: c.pos,
       get chestY() { return c.pos.y + (c.height ?? 1.5) * 0.65; },
+      get headY() { return c.pos.y + (c.eyeOffset ?? 1.35) - 0.03; },   // v1.382 (B.20): the eyes, crouched or standing
       height: c.height ?? 1.5,
       obstacles: c.obstacles,
       team: c.team || 'player',
@@ -422,6 +423,7 @@ function combatantView(c) {
   return {
     pos: c.pos,
     get chestY() { return c.pos.y + (1.5 * sY) * 0.65; },
+    get headY() { return c.pos.y + (1.26 - 0.2475 * ((c.mesh && c.mesh.pose && c.mesh.pose.crouch) || 0)) * sY; },   // v1.382 (B.20): the head box's centre (checkEnemyHit)
     height: 1.5 * sY,
     // Kids share the player's scenario obstacle list for LOS (same world).
     obstacles: (Game.player && Game.player.obstacles),
@@ -479,12 +481,27 @@ function opposingCombatants(e) {
 }
 
 // Does e have a clear line to combatant c? (muzzle → chest, scenario obstacles.)
+// v1.382 (B.20): or to his head, when only his head shows over a wall
 function _hasLOSTo(e, c) {
+  const v = combatantView(c);
+  return !!v && aiSightY(e, v) != null;
+}
+
+// v1.382 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind, and wait
+// for them to almost touch the wall before I shoot them"): every sight test ran from the muzzle to the target's CHEST,
+// so a player standing behind a fort wall or a log pile chest-high, head and gun over it, was invisible: the kid kept
+// walking at the wall and fired only once he could see the chest, or at a last-known spot he never had. The world Y
+// e can see on target view v: the chest if clear, else the head if it shows, else null.
+function aiSightY(e, v) {
   const sY = (e.mesh && e.mesh.scaleY) ?? 1.0;
   const muzzleY = (e.pos.y || 0) + 1.05 * sY;
-  const cp = _combatantPos(c);
-  return hasLineOfSight(e.pos.x, muzzleY, e.pos.z, cp.x, _combatantChestY(c), cp.z,
-                        Game.player && Game.player.obstacles);
+  const obs = v.obstacles || (Game.player && Game.player.obstacles);
+  const chestY = v.chestY;
+  if (hasLineOfSight(e.pos.x, muzzleY, e.pos.z, v.pos.x, chestY, v.pos.z, obs)) return chestY;
+  const headY = v.headY;
+  if (headY != null && headY > chestY + 0.05 &&
+      hasLineOfSight(e.pos.x, muzzleY, e.pos.z, v.pos.x, headY, v.pos.z, obs)) return headY;
+  return null;
 }
 
 // Threat/attractiveness score for e considering targeting c. LOWER = more
@@ -1220,6 +1237,7 @@ function updateEnemies(dt) {
             const headshotBias = ch.headshotBias ?? 0.1;
             const aimFrac = 0.65 + headshotBias * 0.30;
             target.y += tgt.height * aimFrac;
+            if (e._sightHead) target.y = tgt.headY;   // v1.382 (B.20): a head over a wall
           }
           // Add a touch of dispersion that scales with how far into the burst we are.
           // Suppression bursts use a wider, looser spread (set in `spread`).
@@ -1296,17 +1314,15 @@ function updateEnemies(dt) {
     // is the "covering fire / don't let up" behavior. Computed once here so the
     // peek/shoot/advance cases can all read it.
     {
-      const sYmem = e.mesh.scaleY ?? 1.0;
-      const muzzleYmem = (e.pos.y || 0) + 1.05 * sYmem;   // v1.180: from his real height (kidGroundY: the perch, or the ground under him, 0.35 m on the bulb); was the perch or 0
-      const playerChestYmem = tgt.chestY;
-      const losMem = hasLineOfSight(
-        e.pos.x, muzzleYmem, e.pos.z,
-        tgt.pos.x, playerChestYmem, tgt.pos.z,
-        tgt.obstacles
-      );
+      // v1.180: from his real height (kidGroundY: the perch, or the ground under him, 0.35 m on the bulb); was the perch or 0
+      // v1.382 (B.20): to the chest, or the head over a wall (aiSightY); `_sightHead` aims the shot there
+      const sightY = aiSightY(e, tgt);
+      const losMem = sightY != null;
+      e._sightHead = losMem && sightY !== tgt.chestY;
       if (losMem) {
         e._lastSawPlayer = e.stateTime !== undefined ? aiNow() : 0;   // v1.176: simulated time
         e._lastSeenPos = { x: tgt.pos.x, y: tgt.pos.y, z: tgt.pos.z };
+        e._lastSeenHeadUp = e._sightHead ? sightY - tgt.pos.y : null;   // v1.382: suppress the wall's top where his head was
       }
       // recentlySpotted = saw the player within the last RECENT_SPOT_WINDOW sec.
       // v1.36e: extended 1.8 → 3.2s so a kid who's seen you keeps pressuring the
@@ -1424,14 +1440,8 @@ function updateEnemies(dt) {
         const dd = Math.sqrt(dxd*dxd + dzd*dzd);
         // Reactive bail: if a real shot presents itself mid-deploy, take it.
         {
-          const sY = e.mesh.scaleY ?? 1.0;
-          const muzzleY = (e.pos.y || 0) + 1.05 * sY;   // v1.180: from his real height, as the shot itself (was the perch or 0)
-          const playerChestY = tgt.chestY;
-          const losNow = hasLineOfSight(
-            e.pos.x, muzzleY, e.pos.z,
-            tgt.pos.x, playerChestY, tgt.pos.z,
-            tgt.obstacles
-          );
+          // v1.180: from his real height, as the shot itself (was the perch or 0); v1.382 (B.20): a head over a wall counts
+          const losNow = aiSightY(e, tgt) != null;
           if (losNow && inFullRange) {
             e.state = 'hiding';
             e.stateTime = 0;
@@ -1632,13 +1642,14 @@ function updateEnemies(dt) {
               e._suppressCd = (e._suppressCd || 0) - dt;
               const lastSeen = e._lastSeenPos || tgt.pos;
               const sY2 = e.mesh.scaleY ?? 1.0;
+              const supUp = (e._lastSeenPos && e._lastSeenHeadUp != null) ? e._lastSeenHeadUp : 1.0;   // v1.382 (B.20): his head over the wall
               const losSup = hasLineOfSight(
                 e.pos.x, (e.pos.y||0)+1.05*sY2, e.pos.z,
-                lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z,
+                lastSeen.x, (lastSeen.y||0)+supUp, lastSeen.z,
                 tgt.obstacles
               );
               if (losSup && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 8) && !kidLineHeldHere(e)) {   // v1.271
-                const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
+                const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+supUp, lastSeen.z);
                 aimPt.x += (gameRandom()-0.5)*1.2; aimPt.z += (gameRandom()-0.5)*1.2;
                 // v1.74: bounding auto-gunners suppress with a short burst too.
                 queueSuppressionBurst(e, aimPt, 1.2);
@@ -1709,16 +1720,18 @@ function updateEnemies(dt) {
             const lastSeen = e._lastSeenPos || (tgt && tgt.pos);
             if (lastSeen && e.weapon !== 'sniper') {
               const sYs = e.mesh.scaleY ?? 1.0;
+              // v1.382 (B.20): a head seen over a wall is what he suppresses: the line and the aim go there, not to 1 m
+              const supUp = (e._lastSeenPos && e._lastSeenHeadUp != null) ? e._lastSeenHeadUp : 1.0;
               const losSupM = hasLineOfSight(
                 e.pos.x, (e.pos.y||0)+1.05*sYs, e.pos.z,
-                lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z,
+                lastSeen.x, (lastSeen.y||0)+supUp, lastSeen.z,
                 tgt.obstacles
               );
               // March-suppression reaches a bit past the weapon's far band — the
               // point is morale/pressure, not accuracy. Wider miss spread than a
               // committed shot since they're moving and the target may have moved.
               if (losSupM && e._suppressCd <= 0 && rawD < (ENGAGE_FAR + 10) && !kidLineHeldHere(e)) {   // v1.271
-                const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+1.0, lastSeen.z);
+                const aimPt = new THREE.Vector3(lastSeen.x, (lastSeen.y||0)+supUp, lastSeen.z);
                 const spread = 1.6 + rawD * 0.02;   // looser the farther/faster they are
                 aimPt.x += (gameRandom()-0.5)*spread;
                 aimPt.z += (gameRandom()-0.5)*spread;
@@ -1921,14 +1934,8 @@ function updateEnemies(dt) {
           e.advanceCheckTimer = (e.advanceCheckTimer || 0) + dt;
           if (e.advanceCheckTimer >= 1/6) {
             e.advanceCheckTimer = 0;
-            const sY = e.mesh.scaleY ?? 1.0;
-            const muzzleY = (e.pos.y || 0) + 1.05 * sY;   // v1.24a: terrain-relative
-            const playerChestY = tgt.chestY;
-            const losNow = hasLineOfSight(
-              e.pos.x, muzzleY, e.pos.z,
-              tgt.pos.x, playerChestY, tgt.pos.z,
-              tgt.obstacles
-            );
+            // v1.24a: terrain-relative; v1.382 (B.20): a head over a wall counts, so he stops and fires at it
+            const losNow = aiSightY(e, tgt) != null;
             const newDist = Math.sqrt(
               (tgt.pos.x - e.pos.x) ** 2 +
               (tgt.pos.z - e.pos.z) ** 2
@@ -2036,6 +2043,9 @@ function updateEnemies(dt) {
           const aimFrac = 0.65 + headshotBias * 0.30;
           const dropComp = Math.max(0, (distToPlayer - 5) * 0.012); // m of extra aim-up
           targetPos.y += tgt.height * aimFrac + dropComp;
+          // v1.382 (B.20): only his head shows over the wall: aim at it (the live head, or where it last was)
+          if (e._hasLOSNow && e._sightHead) targetPos.y = tgt.headY + dropComp;
+          else if (!e._hasLOSNow && e._lastSeenPos && e._lastSeenHeadUp != null) targetPos.y = e._lastSeenPos.y + e._lastSeenHeadUp + dropComp;
           const holdsBefore = e._lineHolds || 0;   // v1.367: did this pull fire, or hold at a blocked line?
           spawnEnemyBB(e, targetPos);
           const pullHeld = (e._lineHolds || 0) > holdsBefore;

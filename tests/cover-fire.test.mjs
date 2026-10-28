@@ -77,5 +77,44 @@ const within3 = (all.near + all.mid) / all.shots;
 check('under 5% of enemy shots hit an obstacle within 3 m', within3 < 0.05, { pct: +(within3 * 100).toFixed(1) });
 // shotguns fire several pellets a call, so compare trigger pulls with pulls that made any BB
 check('kids still shoot (under 25% of trigger pulls held)', all.held / Math.max(1, all.calls) < 0.25, { calls: all.calls, held: all.held });
+// v1.382 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind"): kids
+// tested their line to your chest only, so a head over a chest-high wall drew nothing (0 BBs in 40 s here, 178 in the
+// open). Hollow 3v3, you held 1 m behind a 40 m wall 1.25 m high: standing, your head shows and draws fire; crouched it
+// doesn't, and nothing comes.
+const overWall = {};
+for (const crouch of [false, true]) {
+  await g.scenario('hollow_skirmish_3v3');
+  await page.evaluate((crouch) => {
+    // the walk-in is 40 s of steps: in one evaluate, with the pointer lock headless Chromium sometimes grants, the
+    // browser grows about 70 MB a second (v1.379) and crashed here, so the steps go 60 to an evaluate
+    const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
+    const mk = makeBB; window.__wall = { atYou: 0, hit, mk };
+    window.makeBB = function (pos, vel, owner, ref) { if (owner === 'enemy' && ref && ref._targetRef === Game.player) window.__wall.atYou++; return mk.apply(this, arguments); };
+    const P = Game.player.pos, px = P.x, pz = P.z, gy = scenarioGroundY(px, pz);
+    const foes = Game.scenario.enemies.filter(k => k.team !== 'player');
+    // your two teammates out of the round, so the other side has only you to look for
+    for (const k of Game.scenario.enemies) if (k.team === 'player') { k.health = 0; if (typeof k.lives === 'number') k.lives = 0; }
+    let S = foes[0]; for (const k of foes) if (Math.hypot(k.pos.x - px, k.pos.z - pz) < Math.hypot(S.pos.x - px, S.pos.z - pz)) S = k;
+    const dx = S.pos.x - px, dz = S.pos.z - pz;
+    Game.player.obstacles.push(Math.abs(dx) > Math.abs(dz)
+      ? { minX: px + Math.sign(dx) - 0.1, maxX: px + Math.sign(dx) + 0.1, minZ: pz - 20, maxZ: pz + 20, h: 1.25, baseY: gy }
+      : { minX: px - 20, maxX: px + 20, minZ: pz + Math.sign(dz) - 0.1, maxZ: pz + Math.sign(dz) + 0.1, h: 1.25, baseY: gy });
+    Object.assign(window.__wall, { px, pz, crouch });
+  }, crouch);
+  for (let sec = 0; sec < 40; sec++) {
+    const live = await page.evaluate(() => {
+      const W = window.__wall, P = Game.player.pos;
+      for (let i = 0; i < 60 && Game.mode === 'scenario'; i++) { Game.player.crouching = W.crouch; P.x = W.px; P.z = W.pz; stepGame(1 / 60); }
+      return Game.mode === 'scenario';
+    });
+    if (!live) break;
+  }
+  overWall[crouch ? 'crouched' : 'standing'] = await page.evaluate(() => {
+    const W = window.__wall; window.makeBB = W.mk; window.applyBBHit = W.hit; return W.atYou;
+  });
+  if (await g.mode() === 'scenario') await page.evaluate(() => endScenario('forfeit'));
+  await page.evaluate(() => enterBedroom()); await g.spin(5);
+}
+check('your head over a chest-high wall draws fire (20+ BBs in 40 s), crouched behind it far less', overWall.standing >= 20 && overWall.crouched * 3 <= overWall.standing, overWall);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
