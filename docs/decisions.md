@@ -5,6 +5,25 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.74, the landing: the builder can't see your new photos (builder, maps, 2026-10-28)**
+  You chose C on D.74 ("Basically A, but I added a folder and some photos into the Google Drive folder for this game's
+  concept art!"), so the landing waits on writing your photos up in `docs/refs/landing.md`. The maps builder runs in a
+  cloud session with no Google Drive connector, and drive.google.com is outside its network allowance (28 Oct, 07:40 UTC:
+  the name does not resolve), so it cannot open the folder. Nothing else in the maps lane is open, so the lane is idle
+  until one of these:
+  - A) **Let the builder in:** add drive.google.com (and googleusercontent.com, where the images are served) to the maps
+    builder's environment network settings and share the concept-art folder by link; the next run writes the guide and
+    builds A from it.
+  - B) **A local session writes it up:** a session on your computer with the Drive connector writes
+    `docs/refs/landing.md` from the photos (words and measurements only, no photo) and pushes it; the next maps run builds A.
+  - C) **A from your note now, the photos after:** the builder builds A from your 23 Oct description (black futon facing a
+    corner platform TV, black coffee table, a second TV, a two-seat desk) on a PR labelled `hold`, and you check it
+    against your photos before players get it.
+  - D) **Describe it here:** a few lines in reply (where the stairs come up, which wall the futon and desk are on,
+    carpet and wall colours), and A is built from them.
+  Builder recommends **B**: it is one short local session, keeps the photos out of the repo the way the other guides
+  were done, and gets the layout right first time; A is the lasting fix if you want cloud runs to read your Drive.
+
 ## Answered
 
 - **D.74, the crew's hangout outside the bedroom: what is it, and what happens there? (builder, maps, 2026-10-27)**
