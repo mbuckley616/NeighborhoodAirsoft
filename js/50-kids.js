@@ -114,6 +114,7 @@ function gunForegripZ(weapon) {
     case 'p90':     return 0.14;   // v1.346: the front hand stop
     case 'vector':  return 0.17;   // v1.348: its front grip
     case 'g36':     return 0.17;   // v1.371: its handguard
+    case 'aug':     return 0.22;   // v1.372: its folding foregrip
     case 'mac10':   return 0.06;
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
@@ -216,6 +217,16 @@ function buildEnemyGunMesh(weapon) {
       box(0.04, 0.12, 0.05, dark, 0, -0.10, 0.10);       // the mag, under the slanted front
       box(0.035, 0.07, 0.035, dark, 0, -0.07, 0.17);     // the front grip
       box(0.03, 0.05, 0.12, dark, 0, 0, -0.11);          // the folding stock
+      grip();
+      break;
+    }
+    case 'aug': {   // v1.372 (D.63): an olive bullpup, the clear mag behind the grip, a long barrel, the foregrip
+      const olive = new THREE.MeshStandardMaterial({ color: 0x4f5a3c, roughness: 0.6 });
+      box(0.05, 0.08, 0.36, olive, 0, 0, 0.10);          // body, butt to front
+      box(0.04, 0.12, 0.05, new THREE.MeshStandardMaterial({ color: 0x7c8088, roughness: 0.3, transparent: true, opacity: 0.6 }), 0, -0.09, -0.06);   // the clear mag behind the grip
+      box(0.025, 0.025, 0.12, dark, 0, 0, 0.33);          // the barrel
+      box(0.03, 0.03, 0.18, dark, 0, 0.05, 0.10);        // the top rail
+      box(0.025, 0.07, 0.025, dark, 0, -0.07, 0.22);     // the foregrip
       grip();
       break;
     }

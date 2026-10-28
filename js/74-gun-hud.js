@@ -331,6 +331,10 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.055, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'aug') {   // v1.372: the G36C's hold; aimed, the front post's tip (y 0.053) on the reticle
+      hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
+      adsPos  = { x: 0.0,  y: -0.053, z: -0.28 };
+      hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'mac10') {        // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
@@ -846,6 +850,7 @@ const RETICLE_SPECS = {
   p90:     { style: 'circle_cross', baseGap: 10, ringR: 10, centerDot: 1.3 },   // v1.346: the UMP's, its ring a little wider
   vector:  { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },   // v1.348: the MP5's
   g36:     { style: 'circle_cross', baseGap: 11, ringR: 10, centerDot: 1.4 },   // v1.371: a little under the AK's
+  aug:     { style: 'circle_cross', baseGap: 10, ringR: 10, centerDot: 1.3 },   // v1.372: tighter than the G36C's
   mac10:   { style: 'wide_ticks', baseGap: 13, ringR: 0,  centerDot: 1.5 },
   thunder: { style: 'big_circle', baseGap: 28, ringR: 30, centerDot: 1.6 },   // v1.168: wider than the spring shotgun
   sixshooter: { style: 'ring_ticks', baseGap: 9, ringR: 9, centerDot: 1.4 },

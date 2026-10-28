@@ -1021,6 +1021,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_p90',     name: 'Spare 200-rd P90 Mag' },   // v1.346
     { refId: 'spare_mag_vector',  name: 'Spare 100-rd Vector Mag' },   // v1.348
     { refId: 'spare_mag_g36',     name: 'Spare 300-rd G36 Mag' },   // v1.371
+    { refId: 'spare_mag_aug',     name: 'Spare 330-rd AUG Mag' },   // v1.372
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1300,7 +1301,7 @@ const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol'] },   // v1.326: the electrics after their spring kin
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'semishotgun'] },   // v1.328
   { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper
-  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'mac10', 'ak47', 'g36', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'mac10', 'ak47', 'g36', 'aug', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it
 ];
 function gunKind(gt) {
   const k = GUN_KINDS.find(k => k.guns.includes(gt));

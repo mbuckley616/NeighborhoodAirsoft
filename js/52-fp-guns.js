@@ -950,6 +950,58 @@ function buildFPG36() {
   return group;
 }
 
+// v1.372 (backlog D.63, Michael: A, batch 3): the AUG, a bullpup rifle. A long olive body from the butt plate forward,
+// the smoky clear mag behind the pistol grip with its BBs showing, a top rail along it carrying flip-up irons (the
+// front post's tip is the aimed point), a round shroud and a long barrel ahead of the body, the folding foregrip under
+// the shroud, and the big trigger guard running from the grip to it. The charging handle sits on the left side.
+function buildFPAUG() {
+  const group = new THREE.Group();
+  const bodyMat   = new THREE.MeshStandardMaterial({ color: 0x4f5a3c, roughness: 0.65, metalness: 0.1 });
+  const matteMat  = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7,  metalness: 0.15 });
+  const steelMat  = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.4,  metalness: 0.55 });
+  const clearMat  = new THREE.MeshStandardMaterial({ color: 0x7c8088, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.55 });
+  const bbMat     = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 });
+  const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (geo, mat, x, y, z, name) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; group.add(m); return m; };
+  add(new THREE.BoxGeometry(0.040, 0.060, 0.36), bodyMat, 0, -0.015, 0.02, 'receiver');   // the body, butt to front
+  add(new THREE.BoxGeometry(0.042, 0.075, 0.014), matteMat, 0, -0.022, 0.205, 'buttpad');
+  add(new THREE.BoxGeometry(0.022, 0.012, 0.24), matteMat, 0, 0.021, -0.02);               // the top rail
+  for (let i = 0; i < 8; i++) add(new THREE.BoxGeometry(0.024, 0.003, 0.008), matteMat, 0, 0.0275, 0.08 - i * 0.028);   // its slots
+  const shroud = add(new THREE.CylinderGeometry(0.014, 0.014, 0.08, 12), bodyMat, 0, -0.012, -0.20, 'handguard');
+  shroud.rotation.x = Math.PI / 2;
+  const barrel = add(new THREE.CylinderGeometry(0.008, 0.008, 0.08, 10), steelMat, 0, -0.012, -0.28, 'barrel');
+  barrel.rotation.x = Math.PI / 2;
+  const tip = add(new THREE.CylinderGeometry(0.0105, 0.0105, 0.022, 10), orangeMat, 0, -0.012, -0.325, 'tip');
+  tip.rotation.x = Math.PI / 2;
+  // the pistol grip forward of the mag, the trigger ahead of it, and the clear mag behind it with the BBs inside
+  add(new THREE.BoxGeometry(0.030, 0.064, 0.030), bodyMat, 0, -0.078, -0.03).rotation.x = -0.2;
+  add(new THREE.BoxGeometry(0.006, 0.014, 0.005), steelMat, 0, -0.052, -0.065, 'trigger').rotation.x = 0.2;
+  const mag = add(new THREE.BoxGeometry(0.024, 0.11, 0.040), clearMat, 0, -0.092, 0.07, 'mag');
+  mag.rotation.x = 0.12;
+  for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(0.0055, 6, 5), bbMat, 0, -0.056 - i * 0.022, 0.072 + i * 0.003);
+  // the folding foregrip under the shroud, and the guard from it back to the grip
+  add(new THREE.BoxGeometry(0.024, 0.055, 0.024), bodyMat, 0, -0.052, -0.19);
+  add(new THREE.BoxGeometry(0.010, 0.006, 0.14), bodyMat, 0, -0.082, -0.11);
+  // the irons on the rail: a rear aperture and the front post on its base (the tip at y 0.053)
+  add(new THREE.BoxGeometry(0.020, 0.018, 0.016), matteMat, 0, 0.035, 0.07);
+  add(new THREE.BoxGeometry(0.018, 0.016, 0.012), matteMat, 0, 0.034, -0.12);
+  add(new THREE.BoxGeometry(0.003, 0.011, 0.003), steelMat, 0, 0.0475, -0.12).userData.frontSight = true;
+  const chargeGroup = new THREE.Group();
+  const knob = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.010, 0.018), steelMat);
+  knob.position.set(-0.024, 0.0, -0.10);
+  chargeGroup.add(knob);
+  chargeGroup.userData.baseZ = 0;
+  group.add(chargeGroup);
+  group.position.set(0.13, -0.20, -0.31);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [chargeGroup];
+  group.userData.cockingOffset = 0.04;
+  group.userData.gunType = 'aug';
+  Game.camera.add(group);
+  return group;
+}
+
 // ======================================================================
 // FP AUTO-WEAPON MESHES (v1.23a) — AK-47, MP5, UMP, MAC-10
 // ----------------------------------------------------------------------
@@ -1808,6 +1860,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'p90')     mesh = buildFPP90();           // v1.346
   else if (gunType === 'vector')  mesh = buildFPVector();        // v1.348
   else if (gunType === 'g36')     mesh = buildFPG36();           // v1.371
+  else if (gunType === 'aug')     mesh = buildFPAUG();           // v1.372
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -1844,6 +1897,7 @@ const FP_HANDS = {
   p90:     { r: { c: [0, -0.066, -0.02], rx: -0.15, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'grip', c: [0, -0.066, -0.15], rx: 0, gw: 0.014, gd: 0.0125, up: -0.005 } },   // v1.346: the grip and the front stop
   vector:  { r: { c: [0, -0.09, 0.06], rx: -0.2, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'grip', c: [0, -0.045, -0.20], rx: 0, gw: 0.013, gd: 0.013, up: -0.005 } },   // v1.348: the grip and its front grip
   g36:     { r: { c: [0, -0.068, 0.035], rx: -0.25, gw: 0.015, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, -0.012, -0.23], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.371: the grip and the handguard
+  aug:     { r: { c: [0, -0.078, -0.03], rx: -0.2, gw: 0.015, gd: 0.015, up: -0.012 }, l: { kind: 'grip', c: [0, -0.052, -0.19], rx: 0, gw: 0.013, gd: 0.013, up: -0.005 } },   // v1.372: the grip and the folding foregrip
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
