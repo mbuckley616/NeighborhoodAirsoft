@@ -89,7 +89,12 @@ function buildBedroomScene() {
   // +X = east, -X = west, +Z = south (toward player spawn), -Z = north (toward window).
   const BR_W = 6.0;            // bedroom width (E-W)
   const BR_D = 5.0;            // bedroom depth (N-S)
-  const BR_H = 2.6;            // ceiling height
+  const BR_H = 2.6;            // ceiling height (v1.378: the height of the east and west walls, where the vault starts)
+  // v1.378 (D.74 step 2, docs/refs/landing.md, shape only): Michael's room has a vaulted ceiling, rising from the short
+  // east and west walls to a ridge running north-south (real 2.4 m walls, a 3.8 m ridge), gabled on the north and south
+  // walls; the dormer keeps its own lower flat ceiling, high enough for the arched window's half-round fanlight.
+  const BR_RIDGE = 3.9;        // the ridge over the room's middle (x = 0)
+  const AL_H = 2.95;           // the dormer's flat ceiling, under the vault where it meets the north wall
   // Alcove: indented on the north wall, juts further north
   const AL_W = 2.4;            // alcove opening width (E-W along north wall)
   const AL_DEPTH = 1.0;        // alcove juts north by this much
@@ -200,9 +205,19 @@ function buildBedroomScene() {
     c.rotation.x = Math.PI / 2;
     c.position.set(cx, BR_H, cz);
     scene.add(c);
+    return c;
   }
-  addCeil(0, 0, BR_W, BR_D);
-  addCeil(AL_X, -BR_D/2 - AL_DEPTH/2, AL_W, AL_DEPTH);
+  addCeil(AL_X, -BR_D/2 - AL_DEPTH/2, AL_W, AL_DEPTH).position.y = AL_H;   // v1.378: the dormer's own flat ceiling
+  // v1.378: the room's vault, two slopes from the east and west walls' tops to the ridge (the flat ceiling is gone)
+  for (const side of [-1, 1]) {
+    const g = new THREE.BufferGeometry();
+    const e = side * BR_W/2, zN = -BR_D/2, zS = BR_D/2;
+    g.setAttribute('position', new THREE.Float32BufferAttribute([e, BR_H, zN, 0, BR_RIDGE, zN, 0, BR_RIDGE, zS, e, BR_H, zN, 0, BR_RIDGE, zS, e, BR_H, zS], 3));
+    g.computeVertexNormals();
+    const v = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0xf2ecdf, roughness: 1.0, side: THREE.DoubleSide }));
+    v.name = 'br_vault';
+    scene.add(v);
+  }
   addCeil(HALL_X, BR_D/2 + HALL_D/2, HALL_W, HALL_D);
   addCeil(HALL_X - HALL_W/2 - BATH_W/2, BR_D/2 + HALL_D/2, BATH_W, BATH_D);
   addCeil(HALL_X + HALL_W/2 + HCL_W/2, BR_D/2 + HCL_D/2, HCL_W, HCL_D);
@@ -237,8 +252,8 @@ function buildBedroomScene() {
   addWall((alW_right_start + BR_W/2) / 2, -BR_D/2, BR_W/2 - alW_right_start, 'x');
 
   // Alcove walls (three sides — west, north, east of the indented space)
-  addWall(AL_X - AL_W/2, -BR_D/2 - AL_DEPTH/2, AL_DEPTH, 'z');         // alcove west
-  addWall(AL_X + AL_W/2, -BR_D/2 - AL_DEPTH/2, AL_DEPTH, 'z');         // alcove east
+  addWall(AL_X - AL_W/2, -BR_D/2 - AL_DEPTH/2, AL_DEPTH, 'z', null, AL_H);   // alcove west
+  addWall(AL_X + AL_W/2, -BR_D/2 - AL_DEPTH/2, AL_DEPTH, 'z', null, AL_H);   // alcove east
   // Alcove north wall — has the window in it; built later with window cutout
   // For now, build it as two thin segments around a window opening
   const WIN_W = 1.4, WIN_H = 1.2, WIN_BOTTOM = 0.9;
@@ -246,16 +261,24 @@ function buildBedroomScene() {
   const winRight = AL_X + WIN_W/2;
   const alcoveNorthZ = -BR_D/2 - AL_DEPTH;
   // Left of window
-  addWall((AL_X - AL_W/2 + winLeft) / 2, alcoveNorthZ, winLeft - (AL_X - AL_W/2), 'x');
+  addWall((AL_X - AL_W/2 + winLeft) / 2, alcoveNorthZ, winLeft - (AL_X - AL_W/2), 'x', null, AL_H);
   // Right of window
-  addWall((winRight + AL_X + AL_W/2) / 2, alcoveNorthZ, (AL_X + AL_W/2) - winRight, 'x');
+  addWall((winRight + AL_X + AL_W/2) / 2, alcoveNorthZ, (AL_X + AL_W/2) - winRight, 'x', null, AL_H);
   // Below window (sill)
   const winSill = new THREE.Mesh(new THREE.BoxGeometry(WIN_W, WIN_BOTTOM, 0.1), wallCream);
   winSill.position.set(AL_X, WIN_BOTTOM/2, alcoveNorthZ);
   scene.add(winSill);
-  // Above window (header)
-  const winHeader = new THREE.Mesh(new THREE.BoxGeometry(WIN_W, BR_H - (WIN_BOTTOM + WIN_H), 0.1), wallCream);
-  winHeader.position.set(AL_X, WIN_BOTTOM + WIN_H + (BR_H - WIN_BOTTOM - WIN_H)/2, alcoveNorthZ);
+  // Above window (header). v1.378: cut round the arched window's half-round fanlight, up to the dormer's ceiling
+  const WIN_ARCH_R = WIN_W / 2;
+  const archShape = new THREE.Shape();
+  archShape.moveTo(-WIN_ARCH_R, 0);
+  archShape.lineTo(-WIN_ARCH_R, AL_H - WIN_BOTTOM - WIN_H);
+  archShape.lineTo(WIN_ARCH_R, AL_H - WIN_BOTTOM - WIN_H);
+  archShape.lineTo(WIN_ARCH_R, 0);
+  archShape.absarc(0, 0, WIN_ARCH_R, 0, Math.PI, false);
+  const winHeader = new THREE.Mesh(new THREE.ExtrudeGeometry(archShape, { depth: 0.1, bevelEnabled: false, curveSegments: 24 }), wallCream);
+  winHeader.position.set(AL_X, WIN_BOTTOM + WIN_H, alcoveNorthZ - 0.05);
+  winHeader.name = 'br_arch_wall';
   scene.add(winHeader);
 
   // South wall — has hallway opening centered AND big closet doorway in east half
@@ -275,6 +298,23 @@ function buildBedroomScene() {
   const bclDoorTopHeader = new THREE.Mesh(new THREE.BoxGeometry(BCL_DOORWAY_W, BR_H - 2.1, 0.1), wallCream);
   bclDoorTopHeader.position.set(BCL_DOORWAY_X, 2.1 + (BR_H - 2.1)/2, BR_D/2);
   scene.add(bclDoorTopHeader);
+
+  // v1.378: the gables over the north and south walls, up to the vault; the north one notched for the dormer's opening
+  for (const gz of [-BR_D/2, BR_D/2]) {
+    const gs = new THREE.Shape();
+    gs.moveTo(-BR_W/2, BR_H);
+    if (gz < 0) {
+      gs.lineTo(alW_left_end, BR_H); gs.lineTo(alW_left_end, AL_H);
+      gs.lineTo(alW_right_start, AL_H); gs.lineTo(alW_right_start, BR_H);
+    }
+    gs.lineTo(BR_W/2, BR_H);
+    gs.lineTo(0, BR_RIDGE);
+    gs.lineTo(-BR_W/2, BR_H);
+    const gable = new THREE.Mesh(new THREE.ExtrudeGeometry(gs, { depth: 0.1, bevelEnabled: false }), wallCream);
+    gable.position.z = gz - 0.05;
+    gable.name = 'br_gable';
+    scene.add(gable);
+  }
 
   // West wall (solid, two bookcases will sit against it)
   addWall(-BR_W/2, 0, BR_D, 'z');
@@ -527,6 +567,21 @@ function buildBedroomScene() {
   );
   glass.position.set(AL_X, WIN_BOTTOM + WIN_H/2, alcoveNorthZ - 0.05);
   scene.add(glass);
+
+  // v1.378: the half-round fanlight over the two sashes, with its arched trim and three sunburst bars
+  const fanlight = new THREE.Mesh(new THREE.CircleGeometry(WIN_ARCH_R, 24, 0, Math.PI), glass.material);
+  fanlight.position.set(AL_X, WIN_BOTTOM + WIN_H, alcoveNorthZ - 0.05);
+  fanlight.name = 'br_fanlight';
+  scene.add(fanlight);
+  const archTrim = new THREE.Mesh(new THREE.TorusGeometry(WIN_ARCH_R + 0.03, 0.04, 6, 24, Math.PI), trimMat);
+  archTrim.position.set(AL_X, WIN_BOTTOM + WIN_H, alcoveNorthZ);
+  scene.add(archTrim);
+  for (const a of [Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4]) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(WIN_ARCH_R, 0.04, 0.05), trimMat);
+    bar.position.set(AL_X + Math.cos(a) * WIN_ARCH_R / 2, WIN_BOTTOM + WIN_H + Math.sin(a) * WIN_ARCH_R / 2, alcoveNorthZ - 0.05);
+    bar.rotation.z = a;
+    scene.add(bar);
+  }
 
   // Window frame (mullions — vertical + horizontal cross)
   const mullV = new THREE.Mesh(new THREE.BoxGeometry(0.05, WIN_H, 0.06), trimMat);
@@ -1116,6 +1171,11 @@ function buildBedroomScene() {
     bladesRoot.add(armPivot);
   }
   fanGroup.add(bladesRoot);
+  // v1.378: the fan hangs at the height it always had, on a downrod from the vault's ridge
+  const fanRod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, BR_RIDGE - (BR_H - 0.10), 8), fanMount.material);
+  fanRod.position.y = (BR_RIDGE - (BR_H - 0.10)) / 2;
+  fanRod.name = 'br_fan_rod';
+  fanGroup.add(fanRod);
   fanGroup.position.set(0, BR_H - 0.10, 0);
   scene.add(fanGroup);
   scene.userData.fanBlades = bladesRoot;   // animate in tick
@@ -1779,5 +1839,6 @@ function buildBedroomScene() {
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
     crewSeats: landing.crewSeats, landing: LAND,
+    vault: { wallH: BR_H, ridgeH: BR_RIDGE, dormerH: AL_H, winTop: WIN_BOTTOM + WIN_H + WIN_W / 2 },   // v1.378
   };
 }
