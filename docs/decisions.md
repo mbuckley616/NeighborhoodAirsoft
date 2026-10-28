@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.2 step 3: a room list and a Campaign / Online / Settings title? (producer, daily sweep, 2026-10-28)**
   Online teams (step 2, v1.366 and v1.370) landed this morning: friends join a room by its four-letter code from the
   Pickup Game board. Step 3, from your 28 Sep ask, is a list of open rooms to pick from and a title screen offering
@@ -18,8 +20,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Both now, ahead of co-op.**
   - D) **Not needed:** room codes on the Pickup Game board are enough; close step 3.
   Producer recommends **A**.
-
-## Answered
+  Michael: **B) After co-op, both: the title and a room list on a small matchmaker you set up.** (2026-10-28, control room)
 
 - **D.74, the landing: the builder can't see your new photos (builder, maps, 2026-10-28)**
   You chose C on D.74 ("Basically A, but I added a folder and some photos into the Google Drive folder for this game's
