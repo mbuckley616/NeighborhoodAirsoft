@@ -31,6 +31,7 @@ const MAG_GUN_FIT = {
   spare_mag_l96: 'l96',   // v1.336
   spare_mag_p90: 'p90',   // v1.346
   spare_mag_vector: 'vector',   // v1.348
+  spare_mag_g36: 'g36',   // v1.371
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -44,7 +45,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'm249',   // v1.335 (D.63 batch 2): the light machine gun
   'l96',   // v1.336: the second sniper
   'p90',   // v1.346 (D.63 batch 2): the bullpup SMG
-  'vector'];   // v1.348 (D.63 batch 2): the last SMG of the batch
+  'vector',   // v1.348 (D.63 batch 2): the last SMG of the batch
+  'g36'];   // v1.371 (D.63 batch 3): the first of the automatic rifles
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -73,6 +75,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'l96') return Game.persist.owned.l96_mag_20 ? 20 : 10;   // v1.336
   if (gunType === 'p90') return Game.persist.owned.p90_mag_300 ? 300 : 200;   // v1.346: the top mag
   if (gunType === 'vector') return Game.persist.owned.vector_mag_200 ? 200 : 100;   // v1.348
+  if (gunType === 'g36') return Game.persist.owned.g36_mag_470 ? 470 : 300;   // v1.371: its clear mag
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -204,6 +207,7 @@ const GUN_ACCESSORY_CAP = {
   l96:     { sight: 1, rails: 2, under: 1 },   // v1.336: the sniper's
   p90:     { sight: 1, rails: 2 },   // v1.346: no under-barrel slot, the off hand's stop is there
   vector:  { sight: 1, rails: 2 },   // v1.348: no under-barrel slot, its own front grip is there
+  g36:     { sight: 1, rails: 2, under: 1 },   // v1.371
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -556,8 +560,15 @@ const GUN_MAGS = {
     mags: [ { flag: 'vector_mag_200', cap: 200, price: 28 } ],
     spares: [ { key: 'spare_mag_vector', label: 'Spare Vector Mag (100)', price: 12 } ],
   },
+  // v1.371 (backlog D.63, batch 3, "a few more Automatic rifles"): the G36C, a battery rifle after the AK-47
+  g36: {
+    displayName: 'G36C', baseCap: 300, price: 260, ownFlag: 'g36',
+    blurb: 'A short black battery rifle with a smoky see-through mag, a vented handguard and a skeleton stock that folds. It fires a little faster than the AK and stays tighter aimed, and you walk quicker with it, but its BB is a touch slower and its mag smaller.',
+    mags: [ { flag: 'g36_mag_470', cap: 470, price: 40 } ],
+    spares: [ { key: 'spare_mag_g36', label: 'Spare G36 Mag (300)', price: 20 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -751,6 +762,7 @@ function describeSlot(idx) {
       spare_mag_l96: 10,   // v1.336
       spare_mag_p90: 200,   // v1.346
       spare_mag_vector: 100,   // v1.348
+      spare_mag_g36: 300,   // v1.371
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -776,6 +788,7 @@ function describeSlot(idx) {
       spare_mag_l96: 'Spare 10-rd L96 Mag',   // v1.336
       spare_mag_p90: 'Spare 200-rd P90 Mag',   // v1.346
       spare_mag_vector: 'Spare 100-rd Vector Mag',   // v1.348
+      spare_mag_g36: 'Spare 300-rd G36 Mag',   // v1.371
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -967,6 +980,7 @@ const GUN_WEIGHT = {
   l96: 11,                                                // v1.336: the heavy spring and barrel
   p90: 4.5,                                               // v1.346: a short bullpup, lighter than the MP5
   vector: 5.5,                                            // v1.348: a little heavier than the MP5
+  g36: 7,                                                 // v1.371: a short rifle, lighter than the AK
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -985,6 +999,7 @@ const MAG_WEIGHT = {
   spare_mag_l96: 0.8,   // v1.336
   spare_mag_p90: 1.2,   // v1.346
   spare_mag_vector: 0.8,   // v1.348
+  spare_mag_g36: 1.4,   // v1.371
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1416,6 +1431,9 @@ GUN_SPECS.p90 = Object.assign({}, GUN_SPECS.mp5, { playerSpeedMult: 1.1, cyclicR
 // v1.348 (D.63, batch 2): the Vector, the MP5's full auto at 16.7 a second (13.3) from a 100 mag (150); its recoil
 // system keeps it tighter aimed (0.28 of the hip spread, 0.4) though as wide from the hip (0.34); the MP5's BB and walk
 GUN_SPECS.vector = Object.assign({}, GUN_SPECS.mp5, { cyclicRPM: 1000, adsSpreadMult: 0.28, displayName: 'Vector' });
+// v1.371 (D.63, batch 3): the G36C, the AK's full auto at 11.7 a second (10) from a 300 mag (350), tighter aimed (0.30
+// of the hip spread, 0.35) and a quicker walk (0.9, 0.85); its short barrel gives a slower BB (52 m/s, 55) straight for 18 m (20)
+GUN_SPECS.g36 = Object.assign({}, GUN_SPECS.ak47, { playerSpeedMult: 0.9, cyclicRPM: 700, muzzleVelocity: 52, adsSpreadMult: 0.30, curveOnsetDistance: 18, displayName: 'G36C' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

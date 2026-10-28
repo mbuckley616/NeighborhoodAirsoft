@@ -897,6 +897,59 @@ function buildFPVector() {
   return group;
 }
 
+// v1.371 (backlog D.63, Michael: A, batch 3): the G36C, the first of "a few more Automatic rifles". A dark grey
+// polymer receiver with a long top rail carrying flip-up irons (the front post's tip is the aimed point), a vented
+// handguard and short barrel ahead, the smoky see-through mag in its well with the BBs showing inside, the pistol
+// grip behind it, and the skeleton stock folded out behind. The charging handle sits under the rail's front, on top.
+function buildFPG36() {
+  const group = new THREE.Group();
+  const bodyMat   = new THREE.MeshStandardMaterial({ color: 0x232427, roughness: 0.6,  metalness: 0.2 });
+  const matteMat  = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7,  metalness: 0.15 });
+  const steelMat  = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.4,  metalness: 0.55 });
+  const clearMat  = new THREE.MeshStandardMaterial({ color: 0x7c8088, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.55 });
+  const bbMat     = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 });
+  const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (geo, mat, x, y, z, name) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; group.add(m); return m; };
+  add(new THREE.BoxGeometry(0.036, 0.050, 0.24), bodyMat, 0, -0.008, -0.04, 'receiver');
+  add(new THREE.BoxGeometry(0.022, 0.012, 0.30), matteMat, 0, 0.022, -0.06);              // the top rail
+  for (let i = 0; i < 10; i++) add(new THREE.BoxGeometry(0.024, 0.003, 0.008), matteMat, 0, 0.029, 0.07 - i * 0.028);   // its slots
+  add(new THREE.BoxGeometry(0.040, 0.044, 0.13), bodyMat, 0, -0.012, -0.225, 'handguard');
+  for (let i = 0; i < 4; i++) for (const sx of [-0.0205, 0.0205]) add(new THREE.BoxGeometry(0.002, 0.010, 0.016), matteMat, sx, -0.012, -0.19 - i * 0.026);   // its vents
+  const barrel = add(new THREE.CylinderGeometry(0.008, 0.008, 0.06, 10), steelMat, 0, -0.005, -0.32, 'barrel');
+  barrel.rotation.x = Math.PI / 2;
+  const tip = add(new THREE.CylinderGeometry(0.0105, 0.0105, 0.022, 10), orangeMat, 0, -0.005, -0.36, 'tip');
+  tip.rotation.x = Math.PI / 2;
+  // the clear mag, raked a little forward, with the BBs showing inside it
+  const mag = add(new THREE.BoxGeometry(0.024, 0.115, 0.042), clearMat, 0, -0.088, -0.095, 'mag');
+  mag.rotation.x = 0.18;
+  for (let i = 0; i < 4; i++) add(new THREE.SphereGeometry(0.0055, 6, 5), bbMat, 0, -0.050 - i * 0.022, -0.090 - i * 0.004);
+  add(new THREE.BoxGeometry(0.030, 0.064, 0.030), bodyMat, 0, -0.068, 0.035).rotation.x = -0.25;   // the pistol grip
+  add(new THREE.BoxGeometry(0.006, 0.014, 0.005), steelMat, 0, -0.040, -0.010, 'trigger').rotation.x = 0.2;
+  add(new THREE.BoxGeometry(0.010, 0.006, 0.07), bodyMat, 0, -0.052, -0.012);             // the trigger guard
+  // the skeleton stock: a top bar, a lower bar and the butt plate
+  add(new THREE.BoxGeometry(0.020, 0.016, 0.16), matteMat, 0, 0.000, 0.16);
+  add(new THREE.BoxGeometry(0.016, 0.012, 0.17), matteMat, 0, -0.040, 0.16);
+  add(new THREE.BoxGeometry(0.030, 0.075, 0.014), matteMat, 0, -0.024, 0.245, 'buttpad');
+  // the irons on the rail: a rear aperture and the front post on its base (the tip at y 0.055)
+  add(new THREE.BoxGeometry(0.020, 0.018, 0.016), matteMat, 0, 0.037, 0.06);
+  add(new THREE.BoxGeometry(0.018, 0.016, 0.012), matteMat, 0, 0.036, -0.18);
+  add(new THREE.BoxGeometry(0.003, 0.011, 0.003), steelMat, 0, 0.0495, -0.18).userData.frontSight = true;
+  const chargeGroup = new THREE.Group();
+  const knob = new THREE.Mesh(new THREE.BoxGeometry(0.010, 0.010, 0.018), steelMat);
+  knob.position.set(0, 0.012, -0.135);
+  chargeGroup.add(knob);
+  chargeGroup.userData.baseZ = 0;
+  group.add(chargeGroup);
+  group.position.set(0.13, -0.20, -0.31);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [chargeGroup];
+  group.userData.cockingOffset = 0.04;
+  group.userData.gunType = 'g36';
+  Game.camera.add(group);
+  return group;
+}
+
 // ======================================================================
 // FP AUTO-WEAPON MESHES (v1.23a) — AK-47, MP5, UMP, MAC-10
 // ----------------------------------------------------------------------
@@ -1754,6 +1807,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else if (gunType === 'p90')     mesh = buildFPP90();           // v1.346
   else if (gunType === 'vector')  mesh = buildFPVector();        // v1.348
+  else if (gunType === 'g36')     mesh = buildFPG36();           // v1.371
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -1789,6 +1843,7 @@ const FP_HANDS = {
   ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   p90:     { r: { c: [0, -0.066, -0.02], rx: -0.15, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'grip', c: [0, -0.066, -0.15], rx: 0, gw: 0.014, gd: 0.0125, up: -0.005 } },   // v1.346: the grip and the front stop
   vector:  { r: { c: [0, -0.09, 0.06], rx: -0.2, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'grip', c: [0, -0.045, -0.20], rx: 0, gw: 0.013, gd: 0.013, up: -0.005 } },   // v1.348: the grip and its front grip
+  g36:     { r: { c: [0, -0.068, 0.035], rx: -0.25, gw: 0.015, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, -0.012, -0.23], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.371: the grip and the handguard
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
