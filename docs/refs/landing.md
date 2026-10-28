@@ -131,6 +131,40 @@ stay exactly as the game has them** (the photos' are a later family's).
 2. **The bedroom's shape** — its own version after the landing: the vaulted ceiling and the arched dormer window,
    nothing else; furniture and colours exactly as they are (Michael, 28 Oct).
 
+## Second pass (Michael, after playing v1.376, 28 Oct; backlog D.78, B.19, D.79)
+"Landing is awesome, but a few changes." From his two screenshots and notes:
+- **The recess has no west jut.** In v1.376 a short wall closes the desk recess on the west, and the TV corner unit sits
+  against it. In the real room the recess's back wall runs on to the landing's west wall (x -2.4): the desk build
+  extends all the way to that wall, the 45° corner unit and its TV in that corner. This replaces "a short jut of wall
+  (about 0.5 m) closes the recess on the west" above (the photo's jut was read wrong).
+- **The futon and coffee table** stand more toward the middle of the room, facing the TV (not under the east windows).
+  The coffee table was very large, about the futon's width: about 1.8 m by 0.9 m, twice the v1.376 table.
+- **The kids on the futon** have their legs inside it (B.19): hips on the mattress, knees over its front edge.
+- **What was in the room** (the landing was the brothers' games room): a GameCube plugged into the TV, kept in the
+  cabinet under it; game cases and DVD cases in that storage, loose DVDs and game discs around the TV; a Guitar Hero
+  guitar leaning on the wall near the TV; two or three Game Boy Advances and a few Game Boy cartridges lying about;
+  a football, a soccer ball and a tennis ball; a few airsoft things (goggles, a speedloader, a BB bottle, a mag) on
+  the coffee table and the desks. Still no computers on the desks.
+
+## The view from the east window (Michael, 28 Oct; backlog D.79)
+His pictures, sent in chat (not kept in the repo): a listing photo of the house's garage side with the landing's window
+circled, and an aerial view with the window's cone of view drawn on it.
+- **Where the window is.** The house's garage side faces east onto a wide concrete driveway and turning area, with a
+  three-car garage (stained wood panel doors, cream stucco walls, coach lamps between the doors, a brown shingled hip
+  roof). The landing's window, a pair of dark-framed sashes with muntins, is on the upstairs wall at the south end of
+  that side, above the hedges and the southmost garage door, about 4 m over the driveway. A tall multi-trunk crape
+  myrtle grows right beside it on the south, its pale trunks and small leaves close in front of the glass.
+- **The cone of view** runs from about east-north-east (its north edge) to about south-east (its south edge). Looking
+  out and down: the driveway's concrete in dappled shade just below, a car or two parked on it, the tops of the
+  hedges along the house. Straight ahead (east) and across the driveway: the side of the neighbours' house, a big
+  house with a pale grey roof and a lower grey-roofed wing toward the window, a patio and a pool beside it, half hidden
+  by trees. To the south-east: tall, dense hardwood canopy (oak, sweetgum, poplar), the ground under it in shade.
+  The sky shows only in the top of the glass, over the trees.
+- **In the game's frame**: the window is the landing's east wall pair (x 2.4, centred z 6.6, sill 0.85 m), so the
+  view is out along +x: the driveway below the sill line, the neighbours' house from about 15° north of east to
+  20° south of east at 20-30 m, the woods from there to 45° south of east, the crape myrtle's trunks at the window's south (right-hand) side.
+  The bedroom's dormer looks north and keeps its own trees.
+
 ## Open (check in play)
-- The futon's exact place and angle.
+- The futon's exact place and angle (moved toward the middle, D.78).
 - Whether Sean's door and the far-end door should say anything when you press E.
