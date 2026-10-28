@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -1945,3 +1945,107 @@ nothing asked me to break a rule.
 - v1.350–v1.353, the lanterns', webs' and costumes' sizes: looks for Michael. In my two night frames they read.
   Bunratty's hero house: not looked at.
 - v1.352, the board's Holiday row: not played.
+
+## 2026-10-28 — A new save through the story cards and out the door, Cart Path Only, Seth's night matches (Sean Has Your Back, Bellfield After Dark, Night Swim, The Big Game), Protect Ryan after v1.368, Hold the South Fort after v1.367; the base flag behind you (v1.372)
+
+Played main at v1.372 (auto/build and auto/build-maps are level with it). One browser at a time. 29 rounds, a new save
+three times, and a sweep of the 34 team matches' starts. No page errors anywhere. Two bugs filed, both things a player
+sees on screen. My bot is new this run: it turns at 5 rad/s onto the nearest kid in sight, fires when it is within
+about 2°, and cocks the spring pistol by holding the button to full and letting go. Where a run topped up its
+magazine by cheating, I say so.
+
+**The room-tour note follows you into the match (new, filed).** v1.357's sticky note ("A LOOK ROUND YOUR ROOM · 0 OF
+4") stays on screen after you leave the bedroom. It sits over the map, the briefing, the match and the result card,
+top left, on top of the tutorial's STEP 1 OF 5 panel (`docs/critic/2026-10-28-room-note-in-tutorial.png`).
+- A first-timer meets it on the very first match. A new save starts you at the front door with "E Go outside" on screen,
+  and that is the obvious first move. So the note's first stop, the phone, is still unticked when the tutorial starts.
+- It still reads 0 OF 4 after the door. The door is ticked when you use it, but the note is never drawn again to show it.
+- Cause: the note is hidden by `updateInteractables`' `updateRoomTour(0)` when the mode isn't 'bedroom', but `stepGame`
+  only calls `updateInteractables` while the mode *is* 'bedroom'. So the hide never runs.
+- Steps: NEW GAME, Enter through the four cards, DONE on the mirror, E at the door. The note is still up on the map.
+  Click any pin, then BEGIN.
+- Skipped with X or finished, it is hidden, as it should be. Every older save is clear of it.
+
+**Cart Path Only says "The last one's out" when nobody is (new, filed).** Two laps done is a win, whoever is left. The
+result card takes the ordinary win branch: "YOU GOT THEM. The last one's out. Marcus, Jamie, Trey, Brooke, and Devon
+come walking out from behind cover." It says that on every win: in 9 of my 13 wins, 1 to 5 kids were still in. In the last one I let
+nothing tag me (`_graceT` held on, so "Not a mark on you" is my cheat) and fired no shot: 0 tags, 0 shots
+(`docs/critic/2026-10-28-cart-ride-result.png`).
+- A loss reads "Too many angles, not enough cover… regroup near the road".
+- `endScenario` has no lines for a ride or a race. The Downhill Derby takes the same branches: I saw its loss line, and
+  by the code its finish will say "The last one's out" too.
+- Steps: `g.scenario('club_cart_ride')`, don't shoot, ride two laps.
+
+**Cart Path Only, how hard** (v1.364's Still open), the starting Spring Pistol, 10 BBs:
+- *Shooting:* 4 wins of 4, tagged 0, 1, 2 and 0 times.
+  - With the magazine refilled, all five kids were out by 11.3–13.2 s in 3 of 4 runs, on lap one. The fourth missed
+    Devon for the whole ride: 45 shots, 4 refills.
+  - Brooke at the willow is in sight from the start, 13 m off: tagged at 0.7 s in 4 runs, before the cart has moved.
+  - After the last tag the ride goes on for about 55 s with nobody left. The second lap is empty.
+- *One shot, then nothing* (an early bot bug): won 7 of 9. The two losses were 3 tags at 27.7 and 46.8 s, from Jamie,
+  Trey and Brooke at 11–15 m. That matches the builder's "sitting still loses about half".
+- So any player who can aim wins it untagged. The kids hold fire until 15 m and each goes out to one BB. Proposal below.
+
+**Seth's zone matches** (v1.362: one per zone, each a better gun and better aim). Each time my bot walked at the
+nearest kid:
+- *Night Game: Sean Has Your Back* (`bunratty_night_team_2v2`, Seth with a Spring AR at 0.60): won 1 of 2. The win came
+  at 53 s with Seth out first (29 s), untagged; the loss was at 14 s, to Tyler's shotgun from 6 m. Your side is Sean
+  and **Mitchell**, against Ryan, Seth, Tyler and Brooke: v1.362's own "reads oddly" case on a crew-less save. I
+  wouldn't file it again; it goes once Eric joins. The RIVALS line counted the win ("1 of their 24 matches").
+- *Bellfield After Dark* (`northcliff_night_4v4`, Seth with the burst rifle at 0.69): lost 2 of 2, at 8.2 and 14.8 s,
+  to Evan at 26 m and Garrett at 22 m. One tag, on Seth, from 23 m.
+- *Night Swim* (`club_night_4v4`, Seth with an AK-47 at 0.75): lost 2 of 2, at 5.4 and 8.6 s. Seth tagged me in the
+  first from 33 m. Walking at seven kids by night is a bad plan whoever leads them, so this is not a read on him.
+- *The Big Game* (`hollow_big_battle`, Seth with a UMP at 0.63): lost 2 of 2, at 129.6 and 47.7 s, to Mitchell's AK
+  at 35 m and Devon's MP5 at 17 m. Seth was the one I tagged in both.
+- Whether 0.60 to 0.80 feels like Seth getting better, I can't say headless. He was the first one my bot tagged in 3
+  of the 4 matches it scored in, so he isn't hanging back.
+
+**Protect Ryan after v1.368** (`bunratty_vip`, Mitchell in the red cap, Joe with an AR): no read from me.
+- My bot walked out at Joe, got tagged, and never walked back to its start. In this match you must, so it spent 200 s
+  in the "BACK TO YOUR START" state, firing at Joe and Tyler inside 5 m, with nothing landing either way.
+- Standing still for 80 s: nobody tagged anybody. Mitchell sat at (30.8, 2) peeking, and Joe stayed 2.8 m or more from
+  him, as v1.368 says.
+- Whether Mitchell's 0.72 makes him harder to reach than Priya was needs a player who walks home.
+
+**Hold the South Fort after v1.367** (Devon's held-pull fix), standing in the port with the pistol: lost 2 of 2 at 17.4
+and 22.1 s, both to Sean's AK from 19–20 m, one in the back. Last run, crouched, I lasted 18–37 s; standing is worse,
+as before. I didn't time Devon this run.
+
+**Frame time:** the worst second of 60 steps was 0.3–3.9 s in most rounds. The Big Game reached 6.0 and 8.0 s, the
+fifth and sixth match in one page. That fits the geometry leak already filed (v1.370, about 1,420 per entry), though I
+didn't count geometries.
+
+**What worked:**
+- *The first-timer path.* NEW GAME opens the four story cards over the mirror, Enter steps through them, and the last
+  one says START THE SUMMER ▶. The mirror, then the hall at the door with "E Go outside" and the note naming the phone.
+- *The phone is easy to miss but not lost.* Walking straight at its label from the door, you snag on the bed and the
+  bed ticks first. Going round the foot of the bed, the phone's prompt shows in 0.2 s. Its spot is small: 16 of
+  about 1,250 grid cells I sampled focus it, against 29 for the bed and 207 for the Pickup board.
+- *The base flag (v1.365).* In all 33 team matches with a blue base it stands behind you: 2.0 m at 180°. In the Hollow's
+  six it is 1.4 m at 170°, and at Friday Night Lights 9.1 m at 28°, as before. None is inside a wall, a fence or a car.
+  Night Swim turned round: the pole is a clean line behind you, not a black band.
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND for mbuckley616.itch.io, so I read no comments. The host would have to be
+allowed in this environment's network settings.
+
+Slack's last day: the builder posted v1.356–v1.360, v1.364, v1.368–v1.369 and v1.371–v1.372; the maps builder v1.361,
+v1.365 and v1.367; the Fable session v1.362–v1.363, v1.366 and v1.370, and the geometry leak. Nothing was addressed to me
+and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.356–v1.372)
+- v1.356, the match music: not judged. There are no speakers headless.
+- v1.357: judged above. The note's place is fine in the room, but it doesn't stay there (filed).
+- v1.358: the four cards read in order, and Enter and the dots work. The words and the number are Michael's call.
+- v1.359: not replayed.
+- v1.360, the "Today it's three a side" line: not seen. A new save has no crew to bring.
+- v1.362: judged above, as far as a bot can. v1.363's texts: not read.
+- v1.364: judged above. Easy for anyone who aims, and the second lap is empty. Eric's crouched pose and the silent cart:
+  not looked at.
+- v1.365: judged above. Fixed.
+- v1.366 and v1.370, online play and the walkie: not played. It needs two people.
+- v1.367: Devon not timed this run.
+- v1.368: Joe's and Chris's looks, not looked at. Protect Ryan, no read (above).
+- v1.369, Caleb and Brooke passing: not looked at.
+- v1.371 and v1.372, the G36C and the AUG: not played. My bot is no judge of how a gun feels.

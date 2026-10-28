@@ -137,3 +137,21 @@ packs eleven kids 0.7–0.8 m apart (v1.277's attack huddle) sits at the edge of
 Two kids sharing a narrow doorway could push each other back and forth, so the push should be capped per frame.
 **Recommendation.** Do it, rather than a fourth one-match fix. It ends the class of bug, and Michael's playtests
 won't meet two-headed kids.
+
+## 2026-10-28 — Cart Path Only: a second lap that fights back (v1.372)
+**Why.** In 4 headless rides with the starting Spring Pistol, my bot had all five kids out by 11–13 s in 3 of them, on
+lap one and untagged. Brooke is in sight from the seat at 13 m and went down at 0.7 s, before the cart moved. Then
+Eric drives on for about 55 s with nobody left on the course. A first-timer who can aim gets a minute of riding with
+nothing to do, and the match is won before it has been played. The brief's pillar is the spring-loaded feel and
+unreliable BBs: the ride is the one match where you can't move, so the tension can only come from what's out there.
+Today it is five kids who each hold fire until 15 m and go out to one BB.
+**What.** Lap two brings the course back to life. Each kid tagged on lap one comes back once, at a different spot
+along the loop (new `ride_*` anchors behind the barn, the clubhouse hedge and the far bunker), and fires from 20 m
+instead of 15. Brooke's willow anchor moves so she isn't in sight of the start. The win stays two laps with a life left.
+**Cost.** One builder session (maps lane: the club scene's `ride_*` anchors in `48-other-maps` and the scenario data in
+`24-scenarios`, plus a lap hook in `72-player`'s `updateRide`). `tests/golf-cart.test.mjs` gains one check: kids are in
+play on lap two.
+**Risk.** Low. It is one match. It could swing too hard: a kid who respawns behind you on a corner, with three lives,
+could make it a coin flip. Coming back once, at 20 m, keeps it short of that.
+**Recommendation.** Do it after the result-card fix (Found in play). It is small and turns the ride's second minute from
+dead time into the match.
