@@ -486,6 +486,8 @@ function enterScenario(scenarioId) {
   Game.scenario.bbs = [];
   Game.scenario.stuckBBs = [];
   Game.scenario.fragments = [];
+  retireScene(Game.scene, built.scene);   // v1.377: the room or the last match leaves the GPU
+  for (const k in Scenes.scenarios) if (k !== scenarioId) delete Scenes.scenarios[k];
   Game.scenario.scene = built.scene;
   Game.scenario.startTime = performance.now() / 1000;
 
