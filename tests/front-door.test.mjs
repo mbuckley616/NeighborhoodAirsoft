@@ -6,6 +6,8 @@
 // along the south wall to the top of the stairs and not down them (the stairs' E is the range, backyard-range.test);
 // the map table opens the map; the crew you have taken in are on the landing (none with an empty crew; five in the
 // order they joined, two on the futon, two at the desk chairs, one standing), and E by one gives his lines in turn.
+// v1.382 (B.19, D.78): the futon kids' legs are on and in front of the seat, not in it; the recess runs to the west wall;
+// the futon stands in the middle square to the TV, the table 1.8 x 0.9 m; nothing between the bedroom's door and the stairs.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -62,10 +64,89 @@ const crew = await page.evaluate(() => {
 });
 console.log('   crew:', JSON.stringify(crew.seats));
 check('five crew kids on the landing, in the order they joined', crew.seats.map(c => c.id).join() === 'diego,eric,alex,sean,nick' && crew.its.join() === crew.seats.map(c => c.id).join(), crew);
-check('the first two on the futon under the east window, the next two at the desk chairs, the fifth standing',
-  crew.seats.slice(0, 2).every(c => c.seated && c.x > L.x1 - 2 && Math.abs(c.z - L.winZ) < 1.1) &&
+check('the first two on the futon in the middle of the room, the next two at the desk chairs, the fifth standing',
+  crew.seats.slice(0, 2).every(c => c.seated && Math.abs(c.x) < 1.5 && Math.abs(c.z - (L.z0 + L.z1) / 2) < 1.5) &&
   crew.seats.slice(2, 4).every(c => c.seated && c.z > L.z1 - 1 && c.z < L.z1) && !crew.seats[4].seated && crew.seats.every(c => c.inScene && c.z > L.z0), crew.seats);
 check('nobody holds a gun in the house', crew.seats.every(c => c.gun === false), crew.seats);
+// v1.382 (B.19): the two on the futon sit on it, not in it. In the futon's own frame (the kids face the way it does),
+// no box of their legs or shoes goes more than 1 cm into the seat mattress, the frame or an arm: the thighs lie on the
+// seat, the shins hang in front of it to the floor.
+const legs = await page.evaluate(() => {
+  const fu = Scenes.bedroom.futon; Game.scene.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(fu.matrixWorld).invert();
+  const parts = [];   // the futon's boxes, in its frame
+  for (const m of fu.children) if (!m.rotation.x) { m.geometry.computeBoundingBox(); parts.push(m.geometry.boundingBox.clone().applyMatrix4(m.matrix)); }
+  const out = [];
+  for (const c of Scenes.bedroom.crewSeats.filter(c => c.onFuton)) {
+    c.group.updateMatrixWorld(true);
+    let worst = 0, n = 0, lowest = 9, front = -9;
+    c.group.traverse(o => {
+      if (!o.isMesh || !o.geometry) return;
+      for (let a = o; a; a = a.parent) if (!a.visible) return;   // the gun, put away
+      o.geometry.computeBoundingBox();
+      const bb = o.geometry.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));   // one step: no box round a turned box
+      const centreY = (bb.min.y + bb.max.y) / 2;
+      if (centreY > 0.62) return;   // the torso and up sit above the seat
+      n++;
+      lowest = Math.min(lowest, bb.min.y);
+      for (const p of parts) {
+        const dx = Math.min(bb.max.x, p.max.x) - Math.max(bb.min.x, p.min.x), dy = Math.min(bb.max.y, p.max.y) - Math.max(bb.min.y, p.min.y), dz = Math.min(bb.max.z, p.max.z) - Math.max(bb.min.z, p.min.z);
+        if (dx > 0 && dy > 0 && dz > 0) worst = Math.max(worst, Math.min(dx, dy, dz));
+      }
+      if (bb.max.y < 0.3) front = Math.max(front, bb.min.z);
+    });
+    out.push({ id: c.id, boxes: n, worstInto: +worst.toFixed(3), lowest: +lowest.toFixed(3), shinsFrom: +front.toFixed(2) });
+  }
+  return out;
+});
+console.log('   futon legs:', JSON.stringify(legs));
+check('the two on the futon: no leg or shoe more than 1 cm into its seat, frame or arms; feet on the floor in front',
+  legs.length === 2 && legs.every(k => k.boxes >= 6 && k.worstInto <= 0.01 && k.lowest < 0.02 && k.shinsFrom > 0.39), legs);
+// v1.382 (D.78): the room as Michael's second pass has it
+const room = await page.evaluate(() => {
+  const L = Scenes.bedroom.landing, fu = Scenes.bedroom.futon, t = Scenes.bedroom.coffeeTable;
+  Game.scene.updateMatrixWorld(true);
+  const tb = new THREE.Box3().setFromObject(t), fb = new THREE.Box3().setFromObject(fu);
+  const fwd = { x: Math.sin(fu.rotation.y), z: Math.cos(fu.rotation.y) };
+  const tv = { x: L.recessX0 + 0.42, z: L.recessZ - 0.4 }, to = { x: tv.x - fu.position.x, z: tv.z - fu.position.z };
+  const d = Math.hypot(to.x, to.z);
+  const top = t.children[0].geometry.parameters;
+  return { recessX0: L.recessX0, x0: L.x0, futon: { x: +fu.position.x.toFixed(2), z: +fu.position.z.toFixed(2) },
+    facingTV: +(Math.acos(Math.min(1, (fwd.x * to.x + fwd.z * to.z) / d)) * 180 / Math.PI).toFixed(1), table: { w: top.width, d: top.depth },
+    tableBetween: (() => { const c = tb.getCenter(new THREE.Vector3()); return Math.hypot(tv.x - c.x, tv.z - c.z) < d; })(),
+    clearOfWindow: fb.max.x < L.x1 - 1.5 };
+});
+check('the desk recess runs to the landing\'s west wall (no jut)', room.recessX0 === room.x0, room);
+check('the futon stands out in the room (1.5 m+ from the east windows), square to the TV (within 3°), the table between', room.clearOfWindow && room.facingTV < 3 && room.tableBetween, room);
+check('the coffee table is about the futon\'s width: 1.8 x 0.9 m', room.table.w === 1.8 && room.table.d === 0.9, room.table);
+const door2stairs = await walk(0, L.z0 + 0.3, Math.atan2(-((L.stairX0 + L.stairX1) / 2), -(L.z1 - 0.4 - L.z0 - 0.3)), 420);
+check('from the bedroom\'s door straight to the top of the stairs, nothing in the way', door2stairs.x > L.stairX0 && door2stairs.z > L.z1 - 0.8, door2stairs);
+// v1.383 (D.78 step 2): the games room's things. Each kind is there, and each rests on what it should: the GameCube and
+// the cases in the corner unit under the TV, the pad and the controller flat on the floor before it, the balls on the
+// floor, two airsoft things on the coffee table and two on the desks, a Game Boy Advance or two and the cartridges about.
+const things = await page.evaluate(() => {
+  const P = Scenes.bedroom.landingProps, L = Scenes.bedroom.landing; Game.scene.updateMatrixWorld(true);
+  const tv = { x: L.recessX0 + 0.42, z: L.recessZ - 0.4 };
+  const info = o => { const b = new THREE.Box3().setFromObject(o); return { y0: +b.min.y.toFixed(3), x: +o.position.x.toFixed(2), z: +o.position.z.toFixed(2),
+    toTV: +Math.hypot(o.position.x - tv.x, o.position.z - tv.z).toFixed(2), inScene: Game.scene.children.includes(o), tag: o.userData.ball || o.userData.thing || '' }; };
+  const out = {}; for (const k in P) out[k] = P[k].map(info);
+  return out;
+});
+console.log('   things:', JSON.stringify(Object.fromEntries(Object.entries(things).map(([k, v]) => [k, v.length]))));
+const near = (y, at) => Math.abs(y - at) < 0.012;
+check('a GameCube on the corner unit\'s lower shelf under the TV, its cases standing in the upper one',
+  things.gamecube.length === 1 && things.gamecube[0].toTV < 0.6 && near(things.gamecube[0].y0, 0.15) &&
+  things.cases.filter(c => near(c.y0, 0.61) && c.toTV < 0.6).length >= 5, { gc: things.gamecube, cases: things.cases });
+check('a DDR pad flat on the floor before the TV, a second controller beside it, both on cords',
+  things.ddrPad.length === 1 && near(things.ddrPad[0].y0, 0) && things.ddrPad[0].toTV < 1.3 &&
+  things.controller.length === 1 && near(things.controller[0].y0, 0) && things.cords.length >= 6, { pad: things.ddrPad, ctl: things.controller });
+check('loose discs about the TV, and 2-3 Game Boy Advances and a few cartridges about the room',
+  things.discs.filter(d => d.toTV < 1.5).length >= 2 && things.gba.length >= 2 && things.gba.length <= 3 && things.carts.length >= 3, { discs: things.discs, gba: things.gba, carts: things.carts });
+check('a football, a soccer ball and a tennis ball on the floor',
+  ['football', 'soccer', 'tennis'].every(t => things.balls.some(b => b.tag === t && near(b.y0, 0))), things.balls);
+check('airsoft things on the coffee table (top 0.44 m) and the desks (0.76 m), and every thing in the scene',
+  things.airsoft.filter(a => near(a.y0, 0.44)).length >= 2 && things.airsoft.filter(a => near(a.y0, 0.76)).length >= 2 &&
+  Object.values(things).flat().every(t => t.inScene), things.airsoft);
 const talk = await page.evaluate(() => {
   const it = Game.interactables.find(i => i.crewId === 'sean');
   Game.player.pos.x = it.pos.x; Game.player.pos.z = it.pos.z - 0.9; stepGame(1 / 60);
@@ -80,6 +161,35 @@ const fewer = await page.evaluate(() => { Game.persist.crew = ['nick', 'eric']; 
   return Scenes.bedroom.crewSeats.map(c => c.id + (c.seated ? ':sits' : ':stands')); });
 check('two in the crew: both on the futon', fewer.join() === 'nick:sits,eric:sits', fewer);
 await page.evaluate(() => { Game.persist.crew = []; enterBedroom(); stepGame(1 / 60); });
+
+// v1.384 (D.79): out of the landing's east window, rays from inside through the panes: down onto the driveway, level
+// across it to the neighbours' house, south-east into the woods, and the crape myrtle right outside on the south side.
+const view = await page.evaluate(() => {
+  const L = Scenes.bedroom.landing; Game.scene.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster();
+  const tagOf = o => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.view) return a.userData.view; return null; };
+  const look = (from, to) => {
+    const o = new THREE.Vector3(...from), d = new THREE.Vector3(...to).sub(o).normalize();
+    rc.set(o, d); rc.far = 120;
+    const hits = rc.intersectObjects(Game.scene.children, true).filter(h => h.object.visible && !(h.object.material && h.object.material.transparent));
+    const h = hits.find(h => h.point.x > L.x1 + 0.05);   // the first thing past the wall
+    const first = hits[0];
+    return { tag: h ? tagOf(h.object) : 'sky', at: h ? h.point.toArray().map(v => +v.toFixed(1)) : null, blockedInside: !!first && first.point.x < L.x1 + 0.05 };
+  };
+  const ang = (deg, d, y) => [L.x1 + Math.cos(deg * Math.PI / 180) * d, y, L.winZ + Math.sin(deg * Math.PI / 180) * d];   // + south of east
+  return {
+    down: look([2.6, 1.45, L.winZ - 0.5], [L.x1 + 6, -3.3, L.winZ - 0.5]),
+    across: look([2.6, 1.6, L.winZ - 0.35], [L.x1 + 19.5, -1, L.winZ - 0.75]),
+    southEast: look([2.6, 1.9, L.winZ + 0.3], ang(35, 30, 8)),
+    myrtle: look([2.8, 1.95, L.winZ + 0.5], [L.x1 + 0.95, 2.6, L.winZ + L.winW / 2 + 0.6]),
+    count: Scenes.bedroom.eastView.length,
+  };
+});
+console.log('   east window:', JSON.stringify(view));
+check('out of the east window, down: the driveway', view.down.tag === 'driveway' && !view.down.blockedInside, view.down);
+check('across the driveway, level: the neighbours\' house, 18 m or more away', view.across.tag === 'neighbours' && view.across.at[0] > 3.3 + 18, view.across);
+check('to the south-east: the woods', view.southEast.tag === 'woods', view.southEast);
+check('right outside the glass on its south side: the crape myrtle', view.myrtle.tag === 'crape myrtle', view.myrtle);
 
 // the other hall prompt still wins where it should: at the hall closet
 const closet = await page.evaluate(() => {

@@ -40,18 +40,31 @@ function paintMapTablePaper(paper) {
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
 }
 // v1.376 (D.74): a crew kid sitting on the landing's futon or a desk chair. His hips at the seat (`seatY` in metres),
-// his legs angled down from the hip to the floor in front, his hands in his lap. Starts from setKidCrouch's rest pose.
-function poseKidSeated(kid, seatY) {
+// his hands in his lap. Starts from setKidCrouch's rest pose.
+// v1.382 (B.19, Michael: "their legs phase through the futon"): the leg was one straight box from the hip to the floor,
+// through the seat and its frame. Now the thigh lies level on the seat, out past its front edge (`edge`, metres in
+// front of the hips), and a shin (the leg's own box, a second one) hangs from the knee to the shoe on the floor.
+function poseKidSeated(kid, seatY, edge = 0.2) {
   const po = kid.pose;
   if (!po) return;
   setKidCrouch(kid, 0);
-  const b = po.base, LEG = 0.55, hip = Math.min(LEG - 0.02, seatY / (kid.scaleY || 1));
-  const drop = LEG - hip, th = Math.acos(Math.min(1, hip / LEG)) + 0.25;   // a little past the floor's angle: feet forward, knees up
-  for (const [leg, shoe, x] of [[po.legL, po.shoeL, b.legL_x], [po.legR, po.shoeR, b.legR_x]]) {
-    leg.rotation.x = -th;
-    leg.position.set(x, hip - (LEG / 2) * Math.cos(th), (LEG / 2) * Math.sin(th));
-    shoe.position.set(x, b.shoe_y, LEG * Math.sin(th) + 0.02);
+  const b = po.base, LEG = 0.55, sy = kid.scaleY || 1, sxz = kid.scaleXZ || 1;
+  const hip = Math.min(LEG - 0.02, seatY / sy), drop = LEG - hip;
+  const TH = 0.18, BACK = 0.05;                        // the leg box's depth (its thickness lying down); thigh behind the hip
+  const knee = (edge + 0.015) / sxz + TH / 2;          // the shin's middle, just clear of the seat's front edge
+  const thighY = hip + TH / 2 + 0.005, thighLen = knee + TH / 2 + BACK;
+  const shinTop = thighY - TH / 2, shoeTop = b.shoe_y + 0.04, shinLen = Math.max(0.05, shinTop - shoeTop + 0.03);
+  if (!po.seatShins) {
+    po.seatShins = [po.legL, po.legR].map(leg => { const m = new THREE.Mesh(leg.geometry, leg.material); m.castShadow = true; kid.group.add(m); return m; });
   }
+  [[po.legL, po.shoeL, po.seatShins[0], b.legL_x], [po.legR, po.shoeR, po.seatShins[1], b.legR_x]].forEach(([leg, shoe, shin, x]) => {
+    leg.rotation.set(Math.PI / 2, 0, 0);               // the box's long axis forward, level
+    leg.scale.y = b.legScaleY * thighLen / LEG;
+    leg.position.set(x, thighY, thighLen / 2 - BACK);
+    shin.scale.set(1, shinLen / LEG, 1);
+    shin.position.set(x, shoeTop - 0.03 + shinLen / 2, knee);
+    shoe.position.set(x, b.shoe_y, knee + 0.04);
+  });
   po.torso.position.y = b.torso_y - drop;
   po.torso.rotation.x = -0.06;
   po.rigR.shoulder.position.set(b.shoulderR_x, b.shoulder_y - drop, 0);
@@ -130,7 +143,8 @@ function buildBedroomScene() {
   // real ones, as the bedroom and its hall already are, and the furniture keeps its real size.
   const LAND = {
     x0: -3.3, x1: 3.3, z0: BR_D/2 + HALL_D, z1: 11.2, h: 2.9,      // the landing: 6.6 x 6.3 m (real 4.8 x 4.7), a 2.9 m ceiling
-    recessX0: -2.1, recessX1: 1.8, recessZ: 12.0,                   // the desk recess in the south wall, 3.9 x 0.8 m
+    recessX0: -3.3, recessX1: 1.8, recessZ: 12.0,                   // the desk recess in the south wall, 5.1 x 0.8 m
+    // v1.382 (D.78, Michael: no bump-out): the recess runs on to the landing's west wall (it was -2.1, a 1.2 m jut)
     stairX0: 1.9, stairX1: 3.3,                                     // the stairwell going south from the south wall line, 1.4 m wide
     hallZ0: 7.4, hallZ1: 9.1, hallX0: -9.5, hallH: 2.8,             // the hallway to Sean's room, 1.7 x 6.2 m (real 1.1 x 4.5)
     winZ: 8.25, winW: 2.1, winSill: 0.8, winH: 1.5,                 // the pair of windows in the east wall, in line with the hallway
@@ -1531,7 +1545,7 @@ function buildBedroomScene() {
     addCasing(HALL_W/2, 1.04, L.z0 + 0.03, 0.05, 2.12, 'x');
     addCasing(0, 2.12, L.z0 + 0.03, HALL_W + 0.1, 0.08, 'x');
 
-    // East wall with the pair of double-hung windows; trees outside, as through the bedroom window
+    // East wall with the pair of double-hung windows; the view out of them below (v1.384)
     const wz0 = L.winZ - L.winW/2, wz1 = L.winZ + L.winW/2, wTop = L.winSill + L.winH;
     box(L.x1, L.x1 + T, 0, L.h, L.z0 - T/2, wz0, landWall);
     box(L.x1, L.x1 + T, 0, L.h, wz1, L.z1, landWall);
@@ -1544,19 +1558,120 @@ function buildBedroomScene() {
     for (const z of [wz0, L.winZ, wz1]) box(L.x1 - 0.03, L.x1 + 0.06, L.winSill, wTop, z - 0.04, z + 0.04, trimMat);   // jambs and the middle post
     for (const y of [L.winSill, L.winSill + L.winH/2, wTop]) box(L.x1 - 0.03, L.x1 + 0.06, y - 0.035, y + 0.035, wz0, wz1, trimMat);   // sill, meeting rails, head
     box(L.x1 - 0.08, L.x1, L.winSill - 0.05, L.winSill - 0.01, wz0 - 0.08, wz1 + 0.08, trimMat);   // the stool
-    const outside = new THREE.Mesh(new THREE.PlaneGeometry(6, 4.5), new THREE.MeshBasicMaterial({ map: outsideTex }));
-    outside.rotation.y = -Math.PI / 2; outside.position.set(L.x1 + 2.0, 1.5, L.winZ);
-    scene.add(outside);
+    // v1.384 (D.79, Michael's listing photo and aerial view; docs/refs/landing.md, "The view from the east window"): the
+    // window is upstairs on the garage side, about 4 m over the driveway. Out along +x: the driveway's concrete in dappled
+    // shade below with a car on it and the hedge tops along the house; across it, from about 15° north of east to 20°
+    // south of it at 20-30 m, the neighbours' big house with its pale grey hip roof, a lower grey-roofed wing toward
+    // you and a patio and pool beside it, half hidden by trees; south-east of that, tall dense hardwoods; the crape
+    // myrtle's pale trunks and small leaves right outside the glass on its south side. It replaces v1.376's painted
+    // trees. Unlit and out of the room's fog (14-24 m, which would wash the neighbours out), each box's faces shaded by
+    // hand: the sun stands high in the south-west.
+    const eastView = (() => {
+      const G = -3.3, X = L.x1 + T, parts = [];
+      let seed = 384; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // its own seed: the same view every time
+      const flat = c => new THREE.MeshBasicMaterial({ color: c, fog: false });
+      const shade = (c, k) => new THREE.Color(c).multiplyScalar(k).getHex();
+      // a box with its faces shaded: west (toward you) mid, top light, north dark, south lit
+      const vbox = (x0, x1, y0, y1, z0, z1, c, tag) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0),
+          [flat(shade(c, 0.7)), flat(shade(c, 0.8)), flat(shade(c, 1.08)), flat(shade(c, 0.5)), flat(shade(c, 0.95)), flat(shade(c, 0.6))]);
+        m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      // a hip roof over [x0, x1] x [z0, z1] from y0, rise h: a four-sided pyramid stretched to the rectangle
+      const hip = (x0, x1, z0, z1, y0, h, c, tag) => {
+        const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1); g.rotateY(Math.PI / 4);
+        const m = new THREE.Mesh(g, flat(c)); m.scale.set((x1 - x0) * 1.08, h, (z1 - z0) * 1.08);
+        m.position.set((x0 + x1) / 2, y0 + h / 2, (z0 + z1) / 2); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      const crown = (x, y, z, r, c, tag) => {
+        const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), flat(c)); m.position.set(x, y, z); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      const trunk = (x, z, y0, y1, r, c, tag, lean = 0, dir = 0) => {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, y1 - y0, 7), flat(c));
+        m.position.set(x, (y0 + y1) / 2, z); m.rotation.set(Math.sin(dir) * lean, 0, Math.cos(dir) * lean); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      // the ground: the driveway and turning area (concrete, dappled), the lawns and the shade under the woods
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+      const c2 = cv.getContext('2d');
+      c2.fillStyle = '#b9b3a6'; c2.fillRect(0, 0, 256, 256);
+      for (let k = 0; k < 90; k++) {   // the trees' dapple
+        const r = 6 + rnd() * 22;
+        c2.fillStyle = `rgba(70, 66, 58, ${0.18 + rnd() * 0.25})`;
+        c2.beginPath(); c2.arc(rnd() * 256, rnd() * 256, r, 0, Math.PI * 2); c2.fill();
+      }
+      c2.strokeStyle = 'rgba(90, 86, 78, 0.6)'; c2.lineWidth = 1.5;
+      for (const t of [64, 128, 192]) { c2.beginPath(); c2.moveTo(t, 0); c2.lineTo(t, 256); c2.moveTo(0, t); c2.lineTo(256, t); c2.stroke(); }   // the joints
+      const drive = new THREE.Mesh(new THREE.PlaneGeometry(14, 22), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
+      drive.rotation.x = -Math.PI / 2; drive.position.set(X + 7, G, 7.5); drive.userData.view = 'driveway';
+      scene.add(drive); parts.push(drive);
+      const lawn = new THREE.Mesh(new THREE.PlaneGeometry(90, 70), flat(0x4f6b34));
+      lawn.rotation.x = -Math.PI / 2; lawn.position.set(X + 45, G - 0.02, 27); lawn.userData.view = 'lawn';
+      scene.add(lawn); parts.push(lawn);
+      const shadeFloor = new THREE.Mesh(new THREE.PlaneGeometry(50, 40), flat(0x2c3a22));
+      shadeFloor.rotation.x = -Math.PI / 2; shadeFloor.position.set(X + 34, G - 0.01, 42); shadeFloor.userData.view = 'woods';
+      scene.add(shadeFloor); parts.push(shadeFloor);
+      // the hedges along the house, their tops just below the sill's line of sight
+      vbox(X, X + 1.1, G, G + 1.3, -3.5, 5.6, 0x3f5a2c, 'hedge');
+      vbox(X, X + 1.1, G, G + 1.3, 10.6, 18.5, 0x3f5a2c, 'hedge');
+      // a car on the driveway, nose to the garage
+      addCar(scene, X + 6.2, 6.3, { detail: true, color: 0x8c9aa6, orientation: Math.PI });
+      const car = scene.children[scene.children.length - 1];
+      car.position.y = G; car.traverse(o => { o.userData.view = 'car'; });
+      // the neighbours' house: the main block, its pale grey hip roof, the lower wing toward the window
+      const wall = 0xd9cdb8, roof = 0xa9adb0;
+      vbox(X + 23, X + 36, G, G + 6.2, 0.5, 15.5, wall, 'neighbours');
+      hip(X + 23, X + 36, 0.5, 15.5, G + 6.2, 3.6, roof, 'neighbours');
+      vbox(X + 18.5, X + 23, G, G + 3.4, 5.5, 13.0, wall, 'neighbours');
+      hip(X + 18.5, X + 23, 5.5, 13.0, G + 3.4, 1.9, shade(roof, 0.95), 'neighbours');
+      for (const [z0, z1] of [[2.0, 3.6], [6.2, 7.8], [10.0, 11.6], [13.4, 14.8]]) vbox(X + 22.95, X + 23.0, G + 3.9, G + 5.5, z0, z1, 0x3c4650, 'neighbours');   // upstairs windows
+      for (const [z0, z1] of [[6.5, 8.0], [10.0, 11.8]]) vbox(X + 18.45, X + 18.5, G + 0.9, G + 2.6, z0, z1, 0x3c4650, 'neighbours');
+      // the patio and the pool on its north side
+      const patio = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), flat(0xc4baa8));
+      patio.rotation.x = -Math.PI / 2; patio.position.set(X + 22.5, G + 0.01, -2.0); patio.userData.view = 'pool';
+      scene.add(patio); parts.push(patio);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.4), flat(0x4fa3c8));
+      pool.rotation.x = -Math.PI / 2; pool.position.set(X + 22.5, G + 0.02, -2.0); pool.userData.view = 'pool';
+      scene.add(pool); parts.push(pool);
+      // trees between, half hiding the house and the pool
+      // (the one south-east of the window stands at the woods' edge, and is theirs)
+      for (const [x, z, h, r] of [[13.5, -1.0, 9, 3.2], [15.0, 3.5, 11, 3.6], [16.5, 16.5, 12, 3.8], [12.5, 12.0, 8, 2.6], [19.5, -3.5, 10, 3.0]]) {
+        const tag = z > 15 ? 'woods' : 'trees';
+        trunk(X + x, z, G, G + h - r, 0.22, 0x5b4a3a, tag);
+        crown(X + x, G + h - r * 0.4, z, r, 0x3e5e2e, tag);
+        crown(X + x + 0.8, G + h - r * 0.9, z + 0.9, r * 0.7, 0x4a6b34, tag);
+      }
+      // the woods to the south-east: tall dense oaks, sweetgums and poplars, crowns 14-24 m over the ground
+      const woodsCols = [0x2f4d26, 0x3a5a2c, 0x35532a, 0x2a4422, 0x44633a];
+      for (let k = 0; k < 46; k++) {
+        const ang = (22 + rnd() * 50) * Math.PI / 180, d = 13 + rnd() * 34;
+        const x = X + Math.cos(ang) * d, z = L.winZ + Math.sin(ang) * d, h = 14 + rnd() * 10, r = 3.2 + rnd() * 2.6;
+        if (k % 3 === 0) trunk(x, z, G, G + h - r, 0.3, 0x4a3f34, 'woods');
+        crown(x, G + h, z, r, woodsCols[k % woodsCols.length], 'woods');
+        crown(x + r * 0.4, G + h - r * 0.8, z - r * 0.3, r * 0.75, woodsCols[(k + 2) % woodsCols.length], 'woods');
+      }
+      for (let k = 0; k < 14; k++) crown(X + 60 + rnd() * 20, G + 10 + rnd() * 6, -20 + k * 5.5, 6, 0x5b7a52, 'far');   // the tree line past the neighbours
+      // the crape myrtle right outside, south of the glass: five pale trunks fanning up from one root, small leaves and
+      // the summer's pink flowers
+      const cmX = X + 0.9, cmZ = L.winZ + L.winW / 2 + 0.2;
+      for (let k = 0; k < 5; k++) trunk(cmX + (k - 2) * 0.08, cmZ + ((k * 7) % 5 - 2) * 0.06, G, L.winSill + 2.2 - (k % 2) * 0.8, 0.06, 0xcdbfae, 'crape myrtle', 0.12 + (k % 3) * 0.05, -1.2 + k * 0.6);
+      for (let k = 0; k < 22; k++) {
+        const a = k / 22 * Math.PI * 2 * 3, rr = 0.35 + (k % 4) * 0.22;
+        crown(cmX + 0.3 + Math.cos(a) * rr * 0.6, L.winSill + 1.7 + (k % 5) * 0.3, cmZ + 0.25 + Math.sin(a) * rr, 0.16 + (k % 3) * 0.05, k % 6 === 0 ? 0xc77a9a : (k % 2 ? 0x4c6e34 : 0x3d5c2b), 'crape myrtle');
+      }
+      return parts;
+    })();
 
-    // South wall: west of the recess; the recess (west jut, back, east side); the stairwell beyond it
-    box(L.x0 - T, L.recessX0, 0, L.h, L.z1, L.z1 + T, landWall);
-    box(L.recessX0 - T, L.recessX0, 0, L.h, L.z1, L.recessZ, landWall);
+    // South wall: the recess's back (v1.382: from the west wall, no jut), the stairwell beyond it
     box(L.recessX0 - T, L.recessX1 + T, 0, L.h, L.recessZ, L.recessZ + T, landWall);
     box(L.stairX0, L.stairX1, 2.4, L.h, L.z1 - T/2, L.z1 + T/2, landWall);   // the bulkhead over the stairs
 
     // West wall with the hallway's opening (no door)
     box(L.x0 - T, L.x0, 0, L.h, L.z0 - T/2, L.hallZ0, landWall);
-    box(L.x0 - T, L.x0, 0, L.h, L.hallZ1, L.z1 + T, landWall);
+    box(L.x0 - T, L.x0, 0, L.h, L.hallZ1, L.recessZ + T, landWall);   // v1.382: on past the recess's end
     box(L.x0 - T, L.x0, 2.1, L.h, L.hallZ0, L.hallZ1, landWall);
     addCasing(L.x0 + 0.01, 1.04, L.hallZ0, 0.05, 2.12, 'z');
     addCasing(L.x0 + 0.01, 1.04, L.hallZ1, 0.05, 2.12, 'z');
@@ -1566,7 +1681,6 @@ function buildBedroomScene() {
     box(L.x0, -HALL_W/2, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
     box(HALL_W/2, clX0, 0, BASE, L.z0 + T/2, L.z0 + T/2 + 0.015, trimMat);
     box(L.x1 - 0.015, L.x1, 0, BASE, L.z0 + T/2, L.z1, trimMat);
-    box(L.x0, L.recessX0, 0, BASE, L.z1 - 0.015, L.z1, trimMat);
     box(L.x0, L.x0 + 0.015, 0, BASE, L.z0 + T/2, L.hallZ0, trimMat);
     box(L.x0, L.x0 + 0.015, 0, BASE, L.hallZ1, L.z1, trimMat);
 
@@ -1631,9 +1745,10 @@ function buildBedroomScene() {
     // The desk build: one white built-in piece filling the recess. From the east: a drawer pedestal, the first computer
     // spot, a second pedestal, the second spot, and at the west end the corner unit cut at 45° (open shelves), its top
     // the TV platform, 0.39 m over the desk. Desk tops empty (Michael).
+    // v1.382 (D.78): the build runs to the west wall, the corner unit in the corner; the second pedestal stands midway.
     const DESK_Y = 0.76, DESK_D = 0.6, dz0 = L.recessZ - DESK_D;
     const cX = L.recessX0 + 0.85, R = L.recessZ;   // the corner unit's east side; the recess's back
-    const pedE = [L.recessX1 - 0.5, L.recessX1], pedW = [cX + 1.1, cX + 1.6];   // the drawer pedestals
+    const pedE = [L.recessX1 - 0.5, L.recessX1], pedWx = (cX + pedE[0]) / 2, pedW = [pedWx - 0.25, pedWx + 0.25];   // the drawer pedestals
     box(cX, L.recessX1, DESK_Y - 0.035, DESK_Y, dz0, L.recessZ, deskMat);
     const knob = new THREE.MeshStandardMaterial({ color: 0xb8b8b0, roughness: 0.4, metalness: 0.5 });
     for (const [px0, px1] of [pedE, pedW]) {
@@ -1687,8 +1802,12 @@ function buildBedroomScene() {
       obstacles.push({ minX: c.x - 0.25, maxX: c.x + 0.25, minZ: c.z - 0.27, maxZ: c.z + 0.23, h: 1.05 });
     }
 
-    // The black futon under the east windows, turned 28° from facing west toward the TV, the coffee table before it
-    const F = { x: L.x1 - 0.86, z: L.winZ }, fYaw = Math.atan2(-Math.cos(28 * Math.PI / 180), Math.sin(28 * Math.PI / 180));
+    // The black futon, the coffee table before it
+    // v1.382 (D.78, Michael: "more to the center of the room, facing the TV"): out from under the east windows to the
+    // middle, square to the TV in the south-west corner; the walk from the bedroom's door to the stairs passes east of
+    // it, the one to Sean's hallway west of it. The table is the futon's width (1.8 x 0.9 m, was 0.9 x 0.45).
+    const F = { x: -0.5, z: 8.4 }, tvAt = { x: L.recessX0 + 0.42, z: L.recessZ - 0.4 };
+    const fYaw = Math.atan2(tvAt.x - F.x, tvAt.z - F.z);
     const toWorld = (lx, lz, o) => ({ x: o.x + lx * Math.cos(fYaw) + lz * Math.sin(fYaw), z: o.z - lx * Math.sin(fYaw) + lz * Math.cos(fYaw) });
     const futon = new THREE.Group();
     const fBox = (w, h, d, x, y, z, mat, rx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); if (rx) m.rotation.x = rx; futon.add(m); };
@@ -1702,27 +1821,33 @@ function buildBedroomScene() {
     futon.position.set(F.x, 0, F.z); futon.rotation.y = fYaw;
     scene.add(futon);
     const table = new THREE.Group();
-    const top = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.45), blackMat); top.position.y = 0.42; table.add(top);
-    const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.02, 0.4), blackMat); shelf.position.y = 0.12; table.add(shelf);
+    const TW = 1.8, TD = 0.9;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(TW, 0.04, TD), blackMat); top.position.y = 0.42; table.add(top);
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(TW - 0.08, 0.02, TD - 0.08), blackMat); shelf.position.y = 0.12; table.add(shelf);
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.42, 0.04), blackMat); leg.position.set(sx * 0.42, 0.21, sz * 0.2); table.add(leg);
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), blackMat); leg.position.set(sx * (TW / 2 - 0.04), 0.21, sz * (TD / 2 - 0.04)); table.add(leg);
     }
-    const T0 = toWorld(0, 1.0, F);
+    const T0 = toWorld(0, 1.3, F);
     table.position.set(T0.x, 0, T0.z); table.rotation.y = fYaw;
     scene.add(table);
-    // their footprints, as the boxes round them
-    const aabb = (o, hw, hd, h) => {
-      const ex = hw * Math.abs(Math.cos(fYaw)) + hd * Math.abs(Math.sin(fYaw)), ez = hw * Math.abs(Math.sin(fYaw)) + hd * Math.abs(Math.cos(fYaw));
-      return { minX: o.x - ex, maxX: Math.min(L.x1, o.x + ex), minZ: o.z - ez, maxZ: o.z + ez, h };
+    // their footprints: turned 45° in the room, one box round each would block a square half again as big, so each
+    // is a row of boxes along its length (v1.382)
+    const footprint = (o, hw, hd, h, n) => {
+      for (let k = 0; k < n; k++) {
+        const c = toWorld(-hw + (k + 0.5) * (2 * hw / n), 0, o), sw = hw / n;
+        const ex = sw * Math.abs(Math.cos(fYaw)) + hd * Math.abs(Math.sin(fYaw)), ez = sw * Math.abs(Math.sin(fYaw)) + hd * Math.abs(Math.cos(fYaw));
+        obstacles.push({ minX: c.x - ex, maxX: c.x + ex, minZ: c.z - ez, maxZ: c.z + ez, h });
+      }
     };
-    obstacles.push(aabb(F, 0.95, 0.42, 0.95), aabb(T0, 0.45, 0.225, 0.44));
+    footprint(F, 0.95, 0.42, 0.95, 4);
+    footprint(T0, TW / 2, TD / 2, 0.44, 4);
 
     // The crew, in the order they joined: two on the futon, two at the desk chairs, the fifth by the hallway
     const seats = [
-      { ...toWorld(-0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
-      { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44 },
-      { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5 },
-      { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5 },
+      { ...toWorld(-0.45, 0.06, F), yaw: fYaw, seatY: 0.44, edge: 0.33 },   // v1.382 (B.19): the seat's front edge 0.33 m before the hips
+      { ...toWorld(0.45, 0.06, F), yaw: fYaw, seatY: 0.44, edge: 0.33 },
+      { x: chairs[0].x, z: chairs[0].z + 0.02, yaw: 0, seatY: 0.5, edge: 0.2 },
+      { x: chairs[1].x, z: chairs[1].z + 0.02, yaw: 0, seatY: 0.5, edge: 0.2 },
       { x: L.x0 + 0.6, z: L.hallZ1 + 0.8, yaw: Math.atan2(F.x - (L.x0 + 0.6), F.z - (L.hallZ1 + 0.8)), seatY: 0 },
     ];
     const crewSeats = [];
@@ -1732,11 +1857,11 @@ function buildBedroomScene() {
       if (!s || !ch) return;
       const kid = createKid(ch, CREW_GUNS[id] || 'pistol');
       kid.gunGroup.visible = false;   // no guns in the house
-      if (s.seatY) poseKidSeated(kid, s.seatY); else setKidCrouch(kid, 0);
+      if (s.seatY) poseKidSeated(kid, s.seatY, s.edge); else setKidCrouch(kid, 0);
       kid.group.position.set(s.x, 0, s.z); kid.group.rotation.y = s.yaw;
       scene.add(kid.group);
       if (!s.seatY) obstacles.push({ minX: s.x - 0.25, maxX: s.x + 0.25, minZ: s.z - 0.25, maxZ: s.z + 0.25, h: 1.6 });
-      crewSeats.push({ id, x: s.x, z: s.z, seated: !!s.seatY, group: kid.group });
+      crewSeats.push({ id, x: s.x, z: s.z, seated: !!s.seatY, group: kid.group, onFuton: i < 2 });
       const it = {
         type: 'crew_kid', crewId: id, line: -1,
         box: new THREE.Box3().setFromObject(kid.group),
@@ -1747,6 +1872,173 @@ function buildBedroomScene() {
       };
       Game.interactables.push(it);
     });
+
+    // v1.383 (D.78, step 2; docs/refs/landing.md, "Second pass": the landing was the brothers' games room): a GameCube in
+    // the corner unit's lower shelf, game and DVD cases standing in the upper one, a DDR pad on the floor before the TV
+    // and a second controller beside it, both on their cords to the GameCube; loose discs; Game Boy Advances and
+    // cartridges lying about; a football, a soccer ball and a tennis ball; goggles and a speedloader on the coffee table,
+    // a BB bottle and a mag on the desks. Nothing here blocks the walk: they are small, or flat on the floor.
+    const props = { gamecube: [], cases: [], ddrPad: [], controller: [], cords: [], discs: [], gba: [], carts: [], balls: [], airsoft: [] };
+    const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.6, ...o });
+    const put = (kind, obj, x, y, z, yaw = 0) => { obj.position.set(x, y, z); obj.rotation.y = yaw; scene.add(obj); props[kind].push(obj); return obj; };
+    const part = (g, w, h, d, m, x = 0, y = 0, z = 0) => { const p = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); p.position.set(x, y, z); g.add(p); return p; };
+    // the corner unit's 45° face: its middle, outward (into the room) and along it; an object turned SHELF_YAW has its
+    // +z out of the face and its x along it
+    const faceM = { x: (cX + X0 + 0.5) / 2, z: R - 0.575 }, SHELF_YAW = 3 * Math.PI / 4;
+    const onFace = (out, along) => ({ x: faceM.x + (out - along) * Math.SQRT1_2, z: faceM.z - (out + along) * Math.SQRT1_2 });
+    for (const y of [0.15, 0.61]) {   // a shelf board's lip under each opening
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.02, 0.1), deskMat);
+      const p = onFace(0.03, 0); lip.position.set(p.x, y - 0.01, p.z); lip.rotation.y = SHELF_YAW; scene.add(lip);
+    }
+    // the GameCube (indigo), its handle at the back, the disc lid on top, two controller ports in front
+    const gcMat = mat(0x463a8c, { roughness: 0.45 }), gcDark = mat(0x2a2350);
+    const gc = new THREE.Group();
+    part(gc, 0.15, 0.11, 0.16, gcMat, 0, 0.055, 0);
+    part(gc, 0.11, 0.006, 0.11, gcDark, 0, 0.113, 0.0);
+    part(gc, 0.12, 0.02, 0.02, gcDark, 0, 0.1, -0.09);
+    for (const sx of [-1, 1]) part(gc, 0.022, 0.014, 0.004, gcDark, sx * 0.035, 0.03, 0.081);
+    const gcAt = onFace(0.02, -0.04);
+    put('gamecube', gc, gcAt.x, 0.15, gcAt.z, SHELF_YAW);
+    // the cases in the upper opening, standing on their edges: GameCube cases (black) and DVDs (black and clear blue)
+    const caseCols = [0x111114, 0x111114, 0x1c2a4a, 0x111114, 0x2b2b30, 0x111114, 0x1c2a4a];
+    caseCols.forEach((c, k) => {
+      const cs = new THREE.Group();
+      part(cs, 0.014, 0.19, 0.135, mat(c, { roughness: 0.35 }), 0, 0.095, 0);
+      part(cs, 0.0145, 0.02, 0.1, mat([0xd8402e, 0xf0c040, 0x3a8ad0, 0xe8e8e8][k % 4]), 0, 0.16, 0);   // the label on the spine
+      const p = onFace(0.0, -0.12 + k * 0.032);
+      put('cases', cs, p.x, 0.61, p.z, SHELF_YAW);
+    });
+    // a cord on the floor through points [x, y, z]: thin black rods between them
+    const cordMat = mat(0x141416, { roughness: 0.8 });
+    const cord = pts => {
+      for (let k = 1; k < pts.length; k++) {
+        const a = new THREE.Vector3(...pts[k - 1]), b = new THREE.Vector3(...pts[k]);
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, a.distanceTo(b), 5), cordMat);
+        rod.position.copy(a).add(b).multiplyScalar(0.5);
+        rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+        scene.add(rod); props.cords.push(rod);
+      }
+    };
+    const portAt = onFace(0.1, -0.04);
+    // the DDR pad, flat on the floor before the TV, its up arrow toward it: a drawn top on a soft black mat
+    const padCv = document.createElement('canvas'); padCv.width = 240; padCv.height = 268;
+    const pc = padCv.getContext('2d');
+    pc.fillStyle = '#16161c'; pc.fillRect(0, 0, 240, 268);
+    pc.fillStyle = '#2a2a36'; pc.fillRect(0, 0, 240, 28);
+    pc.fillStyle = '#c8c8d0'; pc.font = 'bold 13px sans-serif'; pc.fillText('SELECT', 40, 19); pc.fillText('START', 150, 19);
+    const cell = (i, j) => [8 + i * 76, 36 + j * 76];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const [x, y] = cell(i, j); pc.fillStyle = (i + j) % 2 ? '#3a3a4c' : '#242430'; pc.fillRect(x, y, 72, 72); }
+    const arrow = (i, j, ang, col) => {
+      const [x, y] = cell(i, j); pc.save(); pc.translate(x + 36, y + 36); pc.rotate(ang); pc.fillStyle = col;
+      pc.beginPath(); pc.moveTo(0, -26); pc.lineTo(24, 2); pc.lineTo(10, 2); pc.lineTo(10, 24); pc.lineTo(-10, 24); pc.lineTo(-10, 2); pc.lineTo(-24, 2); pc.closePath(); pc.fill(); pc.restore();
+    };
+    arrow(1, 0, 0, '#3f8cff'); arrow(1, 2, Math.PI, '#3f8cff'); arrow(0, 1, -Math.PI / 2, '#ff4fa0'); arrow(2, 1, Math.PI / 2, '#ff4fa0');
+    const pad = new THREE.Group();
+    part(pad, 0.82, 0.012, 0.92, mat(0x101014, { roughness: 0.9 }), 0, 0.006, 0);
+    const padTop = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.9), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(padCv), roughness: 0.7 }));
+    padTop.rotation.x = -Math.PI / 2; padTop.position.y = 0.0125; pad.add(padTop);
+    const padP = { x: -2.45, z: 10.6 }, tvP = { x: X0 + 0.42, z: R - 0.4 };
+    const padYaw = Math.atan2(padP.x - tvP.x, padP.z - tvP.z);   // its -z (the top of the drawing) toward the TV
+    put('ddrPad', pad, padP.x, 0, padP.z, padYaw);
+    const padEnd = { x: padP.x - Math.sin(padYaw) * 0.47, z: padP.z - Math.cos(padYaw) * 0.47 };
+    cord([[padEnd.x, 0.006, padEnd.z], [portAt.x - 0.1, 0.004, portAt.z + 0.05], [portAt.x, 0.004, portAt.z], [portAt.x, 0.18, portAt.z]]);
+    // the second controller (indigo, the yellow C-stick, the green A button) on the floor beside the pad, on its cord
+    const ctl = new THREE.Group();
+    part(ctl, 0.13, 0.03, 0.07, gcMat, 0, 0.022, 0);
+    for (const sx of [-1, 1]) { const grip = part(ctl, 0.04, 0.03, 0.06, gcMat, sx * 0.06, 0.02, 0.04); grip.rotation.y = sx * 0.4; }
+    part(ctl, 0.02, 0.012, 0.02, mat(0x2fa84f), 0.035, 0.042, -0.005);
+    part(ctl, 0.016, 0.014, 0.016, mat(0xf2c418), 0.02, 0.042, 0.022);
+    part(ctl, 0.016, 0.014, 0.016, mat(0x9a9aa4), -0.035, 0.042, -0.005);
+    const ctlP = { x: -1.95, z: 10.25 };
+    put('controller', ctl, ctlP.x, 0, ctlP.z, 0.6);
+    cord([[ctlP.x - 0.03, 0.01, ctlP.z + 0.05], [-2.1, 0.004, 10.95], [portAt.x + 0.05, 0.004, portAt.z - 0.02], [portAt.x + 0.02, 0.17, portAt.z]]);
+    // loose discs: on the floor by the TV, one on an open case, one on the desk, one on the coffee table
+    const discMat = mat(0xd8dde4, { roughness: 0.15, metalness: 0.6 }), miniMat = mat(0xc8ccd6, { roughness: 0.2, metalness: 0.5 });
+    const disc = (r, m, x, y, z) => { const d = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.002, 24), m); put('discs', d, x, y + 0.001, z); return d; };
+    const openCase = new THREE.Group();
+    part(openCase, 0.135, 0.008, 0.19, mat(0x111114, { roughness: 0.35 }), -0.07, 0.004, 0);
+    part(openCase, 0.135, 0.008, 0.19, mat(0x111114, { roughness: 0.35 }), 0.07, 0.004, 0);
+    put('cases', openCase, -2.95, 0, 10.35, 0.3);
+    disc(0.06, discMat, -2.93 + 0.07 * Math.cos(0.3), 0.008, 10.35 - 0.07 * Math.sin(0.3));
+    disc(0.06, discMat, -3.0, 0, 10.95);
+    disc(0.04, miniMat, -1.75, 0, 10.6);   // a GameCube disc, out of its case
+    disc(0.06, discMat, -2.1, DESK_Y, 11.72);
+    // on the coffee table: table-frame (lx along it, lz across) to the world
+    const TT = 0.44;   // the table's top
+    const onTable = (lx, lz) => toWorld(lx, 1.3 + lz, F);
+    { const p = onTable(-0.2, 0.25); disc(0.04, miniMat, p.x, TT, p.z); }
+    // Game Boy Advances (indigo, glacier, flame), each a landscape body with its screen, d-pad and buttons
+    const gba = (color, opacity, p, y, yaw) => {
+      const g = new THREE.Group();
+      part(g, 0.145, 0.024, 0.082, mat(color, opacity < 1 ? { transparent: true, opacity, roughness: 0.3 } : { roughness: 0.4 }), 0, 0.012, 0);
+      part(g, 0.062, 0.002, 0.042, mat(0x1a2420, { roughness: 0.2 }), 0, 0.025, -0.004);
+      part(g, 0.016, 0.004, 0.016, mat(0x222226), -0.053, 0.025, 0);
+      for (const dx of [0.046, 0.06]) part(g, 0.01, 0.004, 0.01, mat(0x5a4a9a), dx, 0.025, dx === 0.06 ? -0.006 : 0.006);
+      return put('gba', g, p.x, y, p.z, yaw);
+    };
+    gba(0x3d3590, 1, onTable(0.55, -0.1), TT, fYaw + 0.4);
+    gba(0x9fc6e0, 0.75, toWorld(0, 0.12, F), 0.44, fYaw - 0.3);   // on the futon, between the two seats
+    gba(0xc8402e, 1, { x: 0.05, z: 11.72 }, DESK_Y, 0.2);
+    // Game Boy cartridges (grey, a coloured label) and a smaller GBA one
+    const cart = (p, y, yaw, w = 0.057, d = 0.065, lab = 0x3a7ad0) => {
+      const c = new THREE.Group();
+      part(c, w, 0.008, d, mat(0x8e8e96, { roughness: 0.5 }), 0, 0.004, 0);
+      part(c, w * 0.75, 0.001, d * 0.55, mat(lab), 0, 0.0085, -d * 0.1);
+      return put('carts', c, p.x, y, p.z, yaw);
+    };
+    cart(onTable(0.3, 0.28), TT, fYaw + 1.1, 0.057, 0.065, 0xd8402e);
+    cart({ x: 0.3, z: 11.55 }, DESK_Y, -0.5);
+    cart(toWorld(1.05, 0.7, F), 0, fYaw + 0.6, 0.057, 0.035, 0x2fa84f);
+    cart({ x: -1.6, z: 10.15 }, 0, 2.1);
+    // the balls: a football by the closet, a soccer ball under the east windows, a tennis ball under the desk
+    const fb = new THREE.Group();
+    const leather = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 10), mat(0x7a3b1c, { roughness: 0.8 }));
+    leather.scale.set(1, 1, 1.6); fb.add(leather);
+    part(fb, 0.012, 0.006, 0.08, mat(0xf2f0ea), 0, 0.09, 0);
+    for (let k = -2; k <= 2; k++) part(fb, 0.03, 0.006, 0.006, mat(0xf2f0ea), 0, 0.09, k * 0.016);
+    put('balls', fb, 2.55, 0.09, 5.65, 0.9).userData.ball = 'football';
+    const sb = new THREE.Group();
+    const sbR = 0.11;
+    sb.add(new THREE.Mesh(new THREE.SphereGeometry(sbR, 18, 12), mat(0xf4f4f0, { roughness: 0.7 })));
+    const ico = new THREE.IcosahedronGeometry(1, 0), seen = new Set(), pa = ico.attributes.position, blackPatch = mat(0x18181a, { roughness: 0.7 });
+    for (let k = 0; k < pa.count; k++) {
+      const v = new THREE.Vector3(pa.getX(k), pa.getY(k), pa.getZ(k)).normalize(), key = v.toArray().map(n => n.toFixed(3)).join();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const pent = new THREE.Mesh(new THREE.CircleGeometry(0.036, 5), blackPatch);
+      pent.position.copy(v).multiplyScalar(sbR + 0.0015);
+      pent.lookAt(v.clone().multiplyScalar(2));
+      sb.add(pent);
+    }
+    put('balls', sb, 2.95, sbR, 7.0, 0.4).userData.ball = 'soccer';
+    const tb = new THREE.Mesh(new THREE.SphereGeometry(0.034, 12, 9), mat(0xd4e157, { roughness: 0.95 }));
+    put('balls', tb, 1.05, 0.034, 11.78).userData.ball = 'tennis';
+    // the airsoft things: goggles and a speedloader on the coffee table, a BB bottle and a mag on the desks
+    const gog = new THREE.Group();
+    part(gog, 0.17, 0.055, 0.035, mat(0x1a1a1c), 0, 0.03, 0);
+    part(gog, 0.15, 0.04, 0.004, mat(0x5a7080, { transparent: true, opacity: 0.55, roughness: 0.1 }), 0, 0.032, 0.019);
+    part(gog, 0.012, 0.012, 0.2, mat(0x2a2a2e), -0.085, 0.012, -0.1);
+    part(gog, 0.012, 0.012, 0.2, mat(0x2a2a2e), 0.085, 0.012, -0.1);
+    { const p = onTable(-0.5, -0.08); put('airsoft', gog, p.x, TT, p.z, fYaw + 2.6).userData.thing = 'goggles'; }
+    const sl = new THREE.Group();
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.13, 12), mat(0xdfe8ee, { transparent: true, opacity: 0.45, roughness: 0.1 }));
+    tube.rotation.z = Math.PI / 2; tube.position.y = 0.022; sl.add(tube);
+    const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.09, 10), mat(0xf4f0e4));
+    fill.rotation.z = Math.PI / 2; fill.position.set(-0.015, 0.022, 0); sl.add(fill);
+    part(sl, 0.03, 0.03, 0.03, mat(0x1a1a1c), 0.07, 0.022, 0);
+    { const p = onTable(0.1, 0.15); put('airsoft', sl, p.x, TT, p.z, fYaw - 0.7).userData.thing = 'speedloader'; }
+    const bottle = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.13, 14), mat(0xf2f2ee, { roughness: 0.5 }));
+    body.position.y = 0.065; bottle.add(body);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0405, 0.0405, 0.05, 14), mat(0xd8402e));
+    band.position.y = 0.07; bottle.add(band);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.025, 10), mat(0x2a2a2e));
+    cap.position.y = 0.1425; bottle.add(cap);
+    put('airsoft', bottle, 1.45, DESK_Y, 11.7).userData.thing = 'bb bottle';
+    const mag = new THREE.Group();
+    part(mag, 0.15, 0.03, 0.06, mat(0x1c1c1e, { roughness: 0.5 }), 0, 0.015, 0);
+    part(mag, 0.02, 0.032, 0.064, mat(0x2a2a2e), 0.075, 0.016, 0);
+    put('airsoft', mag, -0.85, DESK_Y, 11.68, 0.35).userData.thing = 'mag';
 
     // The top of the stairs → the backyard range (v1.257's back door, moved here)
     const stairsZ = L.z1 - 0.35;
@@ -1759,7 +2051,7 @@ function buildBedroomScene() {
       action: () => enterRange(),
     });
     return {
-      obstacles, crewSeats,
+      obstacles, crewSeats, futon, table, props, eastView,   // v1.382: the tests look at them
       stairsSpawn: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 0, stairsZ), stairsYaw: 0.35,   // facing into the landing
     };
   }
@@ -1838,7 +2130,7 @@ function buildBedroomScene() {
     bounds,
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
-    crewSeats: landing.crewSeats, landing: LAND,
+    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table, landingProps: landing.props, eastView: landing.eastView,
     vault: { wallH: BR_H, ridgeH: BR_RIDGE, dormerH: AL_H, winTop: WIN_BOTTOM + WIN_H + WIN_W / 2 },   // v1.378
   };
 }
