@@ -55,7 +55,8 @@ const played = await page.evaluate(() => {
 });
 console.log('  ', played.desc);
 // v1.352: and the Holiday row's By the date, lit by default (it says what that is today)
-check('the picks are lit: Bunratty Court, Free-for-all, 6-way, Night, 1', played.lit.slice(0, 5).join() === 'Bunratty Court,Free-for-all,6-way,Night,1' && played.lit.length === 6 && /^By the date/.test(played.lit[5]), played.lit);
+// 28 Oct fix-up: since v1.361 (B.18) the holidays are parked and the board hides the Holiday row, so nothing else is lit
+check('the picks are lit: Bunratty Court, Free-for-all, 6-way, Night, 1 (and no Holiday row while the holidays are parked)', played.lit.join() === 'Bunratty Court,Free-for-all,6-way,Night,1', played.lit);
 check('PLAY builds a night 6-way free-for-all: Bunratty\'s first five, nobody on a side, one life each', played.mode === 'scenario_intro'
   && played.name === 'Pickup Game: 6-way free-for-all' && played.ffa === true && played.tod === 'night'
   && played.kids.join() === 'sean,nick,ryan,mitchell,priya' && played.teams === 0 && played.npcLives === 1 && played.playerLives === 1, played);
