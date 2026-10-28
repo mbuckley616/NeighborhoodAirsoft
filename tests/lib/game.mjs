@@ -104,7 +104,20 @@ export async function boot(opts = {}) {
     // v1.174: updatePlayer moves no one while the mouse is unlocked, and CI's headless Chromium sometimes refuses the
     // pointer lock BEGIN asks for, so a test holding W would stand still (country-club's pool walk, 6 Oct). Tests drive
     // the keys themselves: mark the lock taken. A real pointerlockchange still overwrites it.
-    await page.evaluate(() => { Game.mouse.locked = true; });
+    // 28 Oct (builder): headless Chromium does grant the lock at times, and while it is held a long stepGame loop in one
+    // evaluate grows the browser by about 70 MB a second (1.4 GB in a 20 s busy loop with the lock, 0 without), so
+    // three suites at once ran out of memory ("Target crashed"). Let go of a granted lock quietly (not a pause: the
+    // game only pauses when it thought it held the lock), then mark it taken as above.
+    await page.evaluate(async () => {
+      for (let i = 0; i < 20 && !document.pointerLockElement; i++) await new Promise(r => setTimeout(r, 25));
+      if (document.pointerLockElement) {
+        // the grant's own pointerlockchange may still be queued: let it land first, or the let-go reads as Escape
+        for (let i = 0; i < 20 && !Game.mouse.locked; i++) await new Promise(r => setTimeout(r, 25));
+        Game.mouse.locked = false;
+        await new Promise(r => { document.addEventListener('pointerlockchange', r, { once: true }); document.exitPointerLock(); setTimeout(r, 1000); });
+      }
+      Game.mouse.locked = true;
+    });
   };
   g.spin = (frames, dt = 1 / 60) => page.evaluate(([n, dt]) => { for (let i = 0; i < n && Game.mode !== 'title'; i++) stepGame(dt); return Game.mode; }, [frames, dt]);
   // Screenshots are for looking at, not assertions. Software GL on a slow CI runner can take longer than
