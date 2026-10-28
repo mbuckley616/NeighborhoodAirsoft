@@ -18,6 +18,7 @@ way: no photos, no house numbers, no residents' names in the repo.
 | Horseshoe Bend Country Club | Willow Bend Country Club | [country-club.md](country-club.md) |
 | Northcliff Trace, Stoneglen Close | Northcliff Trace, the treehouse yard | [northcliff.md](northcliff.md) |
 | Centennial High School | Hollins Ridge High | [high-school.md](high-school.md) |
+| The upstairs landing and Michael's bedroom (concept-art folder, 28 Oct) | The bedroom hub | [landing.md](landing.md) |
 
 Bellfield Court has no real counterpart and no folder. The game keeps its made-up names for the store, the club and the
 school (no real brands or school marks in the game).
