@@ -32,6 +32,7 @@ const MAG_GUN_FIT = {
   spare_mag_p90: 'p90',   // v1.346
   spare_mag_vector: 'vector',   // v1.348
   spare_mag_g36: 'g36',   // v1.371
+  spare_mag_aug: 'aug',   // v1.372
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -46,7 +47,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'l96',   // v1.336: the second sniper
   'p90',   // v1.346 (D.63 batch 2): the bullpup SMG
   'vector',   // v1.348 (D.63 batch 2): the last SMG of the batch
-  'g36'];   // v1.371 (D.63 batch 3): the first of the automatic rifles
+  'g36',   // v1.371 (D.63 batch 3): the first of the automatic rifles
+  'aug'];   // v1.372 (D.63 batch 3): the bullpup rifle
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -76,6 +78,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'p90') return Game.persist.owned.p90_mag_300 ? 300 : 200;   // v1.346: the top mag
   if (gunType === 'vector') return Game.persist.owned.vector_mag_200 ? 200 : 100;   // v1.348
   if (gunType === 'g36') return Game.persist.owned.g36_mag_470 ? 470 : 300;   // v1.371: its clear mag
+  if (gunType === 'aug') return Game.persist.owned.aug_mag_500 ? 500 : 330;   // v1.372: its clear mag
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -208,6 +211,7 @@ const GUN_ACCESSORY_CAP = {
   p90:     { sight: 1, rails: 2 },   // v1.346: no under-barrel slot, the off hand's stop is there
   vector:  { sight: 1, rails: 2 },   // v1.348: no under-barrel slot, its own front grip is there
   g36:     { sight: 1, rails: 2, under: 1 },   // v1.371
+  aug:     { sight: 1, rails: 2 },   // v1.372: no under-barrel slot, its own folding foregrip is there
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -567,8 +571,15 @@ const GUN_MAGS = {
     mags: [ { flag: 'g36_mag_470', cap: 470, price: 40 } ],
     spares: [ { key: 'spare_mag_g36', label: 'Spare G36 Mag (300)', price: 20 } ],
   },
+  // v1.372 (backlog D.63, batch 3): the AUG, a bullpup battery rifle: the mag behind the grip, so a long barrel in a short gun
+  aug: {
+    displayName: 'AUG', baseCap: 330, price: 290, ownFlag: 'aug',
+    blurb: 'An olive-green bullpup battery rifle: the clear mag sits behind the grip, so a long barrel fits in a short gun, with a folding foregrip under the front. Its BB is the fastest and straightest of the rifles short of a sniper, but it fires a little slower than the G36C.',
+    mags: [ { flag: 'aug_mag_500', cap: 500, price: 40 } ],
+    spares: [ { key: 'spare_mag_aug', label: 'Spare AUG Mag (330)', price: 20 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','aug','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -763,6 +774,7 @@ function describeSlot(idx) {
       spare_mag_p90: 200,   // v1.346
       spare_mag_vector: 100,   // v1.348
       spare_mag_g36: 300,   // v1.371
+      spare_mag_aug: 330,   // v1.372
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -789,6 +801,7 @@ function describeSlot(idx) {
       spare_mag_p90: 'Spare 200-rd P90 Mag',   // v1.346
       spare_mag_vector: 'Spare 100-rd Vector Mag',   // v1.348
       spare_mag_g36: 'Spare 300-rd G36 Mag',   // v1.371
+      spare_mag_aug: 'Spare 330-rd AUG Mag',   // v1.372
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -981,6 +994,7 @@ const GUN_WEIGHT = {
   p90: 4.5,                                               // v1.346: a short bullpup, lighter than the MP5
   vector: 5.5,                                            // v1.348: a little heavier than the MP5
   g36: 7,                                                 // v1.371: a short rifle, lighter than the AK
+  aug: 7.5,                                               // v1.372: a long barrel in a short body
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -1000,6 +1014,7 @@ const MAG_WEIGHT = {
   spare_mag_p90: 1.2,   // v1.346
   spare_mag_vector: 0.8,   // v1.348
   spare_mag_g36: 1.4,   // v1.371
+  spare_mag_aug: 1.5,   // v1.372
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1434,6 +1449,9 @@ GUN_SPECS.vector = Object.assign({}, GUN_SPECS.mp5, { cyclicRPM: 1000, adsSpread
 // v1.371 (D.63, batch 3): the G36C, the AK's full auto at 11.7 a second (10) from a 300 mag (350), tighter aimed (0.30
 // of the hip spread, 0.35) and a quicker walk (0.9, 0.85); its short barrel gives a slower BB (52 m/s, 55) straight for 18 m (20)
 GUN_SPECS.g36 = Object.assign({}, GUN_SPECS.ak47, { playerSpeedMult: 0.9, cyclicRPM: 700, muzzleVelocity: 52, adsSpreadMult: 0.30, curveOnsetDistance: 18, displayName: 'G36C' });
+// v1.372 (D.63, batch 3): the AUG, the AK's full auto at 10.8 a second (10) from a 330 mag (350); its long barrel in a
+// bullpup body gives the fastest BB of the rifles (58 m/s, 55) straight for 22 m (20), tighter aimed (0.28, 0.35), a quicker walk (0.88)
+GUN_SPECS.aug = Object.assign({}, GUN_SPECS.ak47, { playerSpeedMult: 0.88, cyclicRPM: 650, muzzleVelocity: 58, adsSpreadMult: 0.28, curveOnsetDistance: 22, displayName: 'AUG' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;
