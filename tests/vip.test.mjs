@@ -7,7 +7,8 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const MATCHES = { bunratty_vip: { ours: 'Ryan', theirs: 'Priya' }, lot_vip_night: { ours: 'Rebecca', theirs: 'Seth' } };
+const MATCHES = { bunratty_vip: { ours: 'Ryan', theirs: 'Mitchell' }, lot_vip_night: { ours: 'Rebecca', theirs: 'Seth' } };
+// v1.368 (D.58): Priya is retired; Mitchell is Protect Ryan's red VIP on her plank.
 
 // --- the map card and the briefing
 const card = await page.evaluate((ids) => ids.map(id => {
@@ -121,7 +122,7 @@ const bar = await page.evaluate(() => {
 }).catch(e => ({ err: String(e) }));
 await g.scenario('bunratty_vip');
 const sight = await page.evaluate(() => {
-  const gyf = Game.scenario.groundY, obs = Game.player.obstacles, p = Game.scenario.enemies.find(e => e.name === 'Priya');
+  const gyf = Game.scenario.groundY, obs = Game.player.obstacles, p = Game.scenario.enemies.find(e => e.name === 'Mitchell');
   const at = obs.filter(o => o.h === 1.6 && o.minX > 28.8 && o.maxX < 30.6 && o.minZ < p.pos.z && o.maxZ > p.pos.z);
   const gy = gyf(p.pos.x, p.pos.z);
   const lines = (list) => { let n = 0, chest = 0, head = 0;
@@ -136,7 +137,7 @@ const sight = await page.evaluate(() => {
 console.log('   Protect Ryan barricade:', JSON.stringify(bar), JSON.stringify(sight));
 // v1.305: 1.6 m since the north lawns bank 1.4 m over the kerb (D.51 step 2): over 1.5 m, 32 lines from the lawns of
 // houses 1 and 2 reached her head
-check("Protect Ryan: a 1.6 m barricade stands inside the bulb fort's back wall at Priya's spot, and it is the cover she holds",
+check("Protect Ryan: a 1.6 m barricade stands inside the bulb fort's back wall at their VIP's spot, and it is the cover he holds",
   sight.n === 1 && sight.h === 1.6 && sight.cover && sight.off < 1, sight);
 check('Protect Ryan: from up the hill (2 m+ above her, 20 m+ off) no line reaches her chest or head; without it many do',
   sight.now.n > 300 && sight.now.chest === 0 && sight.now.head === 0 && sight.without.chest > 100 && sight.without.head > 100, sight);
@@ -230,10 +231,10 @@ const ending = async (who, fresh = true) => {
   await page.waitForFunction(() => Game.mode !== 'scenario', null, { timeout: 5000 }).catch(() => {});
   return page.evaluate(() => ({ mode: Game.mode, title: (document.querySelector('#resultScreen h1, #resultScreen .result-title') || {}).textContent || '', outcome: Game.lastOutcome || null, txt: document.getElementById('resultScreen').textContent.replace(/\s+/g, ' ').slice(0, 140) }));
 };
-const winR = await ending('Priya', false), loseR = await ending('Ryan');
+const winR = await ending('Mitchell', false), loseR = await ending('Ryan');
 console.log('   their VIP tagged:', JSON.stringify(winR));
 console.log('   our VIP tagged:', JSON.stringify(loseR));
-check('their VIP tagged: the round is won, and the line names Priya, not "the last one"', winR.mode === 'result' && /YOU GOT THEM/.test(winR.txt) && /Priya pulls off the red cap/.test(winR.txt) && !/last one/i.test(winR.txt), winR.txt);
+check('their VIP tagged: the round is won, and the line names Mitchell, not "the last one"', winR.mode === 'result' && /YOU GOT THEM/.test(winR.txt) && /Mitchell pulls off the red cap/.test(winR.txt) && !/last one/i.test(winR.txt), winR.txt);
 check('our VIP tagged: the round is lost, and the result says they got Ryan', loseR.mode === 'result' && /THEY GOT RYAN/.test(loseR.txt) && /I was the VIP/.test(loseR.txt) && !/GOT THEM/.test(loseR.txt), loseR.txt);
 
 // v1.170 fix-up, v1.174: 5 s. Since v1.172 Night Shift's Rebecca starts on the briefing's anchor at (-14, 21) and was

@@ -177,5 +177,28 @@ for (const crouch of [true, false]) {
   console.log(`  ${crouch ? 'crouched' : 'standing'} at the start, 30 s:`, JSON.stringify(r));
   if (crouch) check('crouched at your start, 10 or fewer BBs reach you in 30 s, none in the first 10 s', r.n <= 10 && (r.first == null || r.first >= 10), r);
 }
+// v1.367 (Found in play, critic v1.353): Devon (sniper) stood 6.5-7.5 s at the blast wall's east end and in its gap, his
+// pulls held at the wall 2-3 s apart (the bolt cycle) until the move-on after three. Crouched at your start, untaggable,
+// 40 s a round: he never stands still there longer than 4 s (before: 6.5-7.3 s in 4 of 5 rounds; after: 0-3 s in 8).
+const stalls = [];
+for (let r = 0; r < 3; r++) {
+  await g.scenario('hollow_defend_south_fort');
+  stalls.push(await page.evaluate(() => {
+    const p = Game.player; p.maxHits = 999; p.crouching = true;
+    const d = Game.scenario.enemies.find(e => e.charId === 'devon'), bw = p.obstacles.find(o => o.blastWall);
+    let still = 0, worst = 0, at = null; const last = d.pos.clone();
+    for (let i = 1; i <= 60 * 40 && Game.mode === 'scenario'; i++) {
+      p._graceT = 1e9; p.crouching = true; stepGame(1 / 60);
+      if (i % 15) continue;
+      const mv = Math.hypot(d.pos.x - last.x, d.pos.z - last.z); last.copy(d.pos);
+      const near = d.pos.x > bw.minX - 1.2 && d.pos.x < bw.maxX + 1.2 && d.pos.z > bw.minZ - 0.6 && d.pos.z < bw.maxZ + 1.6;
+      if (mv < 0.05 && near && !d.out) { still += 0.25; if (still > worst) { worst = still; at = [+d.pos.x.toFixed(2), +d.pos.z.toFixed(2), d.state]; } }
+      else still = 0;
+    }
+    return { worst, at };
+  }));
+}
+console.log('  Devon standing still by the blast wall, 3 rounds:', JSON.stringify(stalls));
+check('Devon never stands still by the blast wall for more than 4 s', stalls.every(s => s.worst <= 4), stalls);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

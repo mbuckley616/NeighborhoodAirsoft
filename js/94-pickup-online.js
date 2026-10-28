@@ -12,11 +12,11 @@ const PICKUP_MAPS = [
   { key: 'bunratty',     zone: 'bunratty_court', name: 'Bunratty Court',          template: 'bunratty_team_4v4', ffa: 'bunratty_ffa' },
   { key: 'hollow',       zone: 'hollow',         name: 'The Hollow',              template: 'hollow_big_battle', ffa: 'hollow_ffa',
     // v1.202: the Ten-Way's first three share the south fort; take them spread out, one from each fort first
-    ffaOrder: ['seth', 'sean', 'devon', 'priya', 'mason', 'ryan', 'brooke', 'eric', 'rebecca'] },
+    ffaOrder: ['seth', 'sean', 'devon', 'joe', 'mason', 'ryan', 'brooke', 'eric', 'rebecca'] },
   { key: 'market_lot',   zone: 'market_lot',     name: 'Riverside Market lot',    template: 'lot_night_4v4', ffa: 'lot_ffa',
     // v1.265 (Michael: A on the free-for-all starts): Marcus and Jamie, its first two, both had your start nearer than
     // each other's, so a 3- or 4-way was them coming for you; in this order every size keeps the rule
-    ffaOrder: ['tyler', 'priya', 'brooke', 'owen', 'marcus', 'jamie'] },
+    ffaOrder: ['tyler', 'chris', 'brooke', 'owen', 'marcus', 'jamie'] },
   { key: 'northcliff',   zone: 'northcliff',     name: 'Northcliff Trace',        template: 'northcliff_night_4v4' },
   { key: 'bellfield',    zone: 'northcliff',     name: 'Bellfield Court',         template: 'bellfield_night_4v4' },
   { key: 'high_school',  zone: 'high_school',    name: 'Hollins Ridge High',      template: 'school_night_4v4' },

@@ -26,18 +26,18 @@ async function played(id, name, secs, at = [18.7, 1.4]) {
     return { shots, los, y: +k.pos.y.toFixed(2), t: +(f / 60).toFixed(1), out: k.health <= 0 };
   }, { name, secs, at });
 }
-const mitch = [], priya = [];
+const mitch = [], priya = [];   // v1.368 (D.58): Protect Ryan's VIP on the plank is Mitchell now (Priya retired); `priya` is that spot
 for (let r = 0; r < 3; r++) mitch.push(await played('bunratty_storm_the_court', 'Mitchell', 20));
 // v1.272 (Michael: A): Protect Ryan's 1.5 m barricade now stands in front of Priya, so she no longer sees down the lane
 // to (18.7, 1.4); the raised-bulb sight check is kept on a bulb spot she still covers, the north side at (34, 7), 5 m off
-for (let r = 0; r < 3; r++) priya.push(await played('bunratty_vip', 'Priya', 20, [34, 7]));
+for (let r = 0; r < 3; r++) priya.push(await played('bunratty_vip', 'Mitchell', 20, [34, 7]));
 console.log('   Storm the Court, Mitchell:', JSON.stringify(mitch));
-console.log('   Protect Ryan, Priya:', JSON.stringify(priya));
+console.log('   Protect Ryan, their VIP (Mitchell):', JSON.stringify(priya));
 check('Mitchell holds the raised bulb (y over 0.2)', mitch.every(r => r.y > 0.2), mitch);
 check('Mitchell sees the player in over half the samples every round (was 3 of 40)', mitch.every(r => r.los > 20), mitch);
 check('Mitchell fires 3 or more shots every round (was 1)', mitch.every(r => r.shots >= 3), mitch);
-check('Priya sees the player on the bulb in over half the samples every round (was 1 of 40 in the lane on v1.179)', priya.every(r => r.los > 20), priya);
-check('Priya fires 6 or more shots in at least 2 of 3 rounds (was 2-3)', priya.filter(r => r.shots >= 6).length >= 2, priya);
+check('Protect Ryan\'s VIP sees the player on the bulb in over half the samples every round (was 1 of 40 in the lane on v1.179)', priya.every(r => r.los > 20), priya);
+check('Protect Ryan\'s VIP fires 6 or more shots in at least 2 of 3 rounds (was 2-3)', priya.filter(r => r.shots >= 6).length >= 2, priya);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

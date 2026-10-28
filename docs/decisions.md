@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.74, the crew's hangout outside the bedroom: what is it, and what happens there? (builder, maps, 2026-10-27)**
   Your note (23 Oct): your brother's idea, the upstairs landing outside your room as the crew's common room: a black
   futon facing a TV on a raised platform in the corner, a black coffee table, a TV, and one long desk with two computer
@@ -22,8 +24,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Builder recommends **A**: it puts the crew you have been building (D.28) in front of you every time you come home, and
   it is a contained scene change to the bedroom hub and the kids' poses; B's jobs can follow once you have walked round
   it. If you have the mockup handy, C first gets the layout right the first time.
-
-## Answered
+  Michael: **C) Your picture first** — "Basically A, but I added a folder and some photos into the Google Drive folder for this game's concept art!" (2026-10-28)
 
 - **D.72, golf carts: where, and what do you do in one? (builder, 2026-10-27)**
   Your note (23 Oct): "We could maybe incorporate vehicles like golf carts as well", and your A on D.71: the go-cart race

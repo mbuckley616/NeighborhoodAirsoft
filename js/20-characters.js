@@ -121,15 +121,25 @@ const CHARACTERS = {
     aggression: 0.4, fireRate: 0.95, accuracy: 0.72, headshotBias: 0.12, hp: 1, moveSpeed: 0.95,
     flavor: { hit: '"Mm. Nice shot."', win: 'Mitchell lowers his gun, calm. "Patience, man. That\'s the whole game."' },
   },
-  // v1.25: two new Bunratty regulars built for the bounding-flank AI.
-  // Priya — the cleverest flanker on the street. Low-ish aggression but high
-  // map-sense: she bounds cover-to-cover and comes at you from the side. Quick.
-  priya: {
-    name: 'Priya', neighborhood: 'sentinel', street: 'bunratty_ct',
-    height: 'average', build: 'skinny', hairStyle: 'long', glasses: false,
-    hairColor: 0x1a1208, skinColor: 0xc18a5c, shirtColor: 0x3a7a6a, pantsColor: 0x2a2a30,
-    aggression: 0.6, fireRate: 1.0, accuracy: 0.7, headshotBias: 0.18, hp: 1, moveSpeed: 0.98,
-    flavor: { hit: '"Yep — flanked you."', win: 'Priya is already three steps to your left. "You never check your sides."' },
+  // v1.368 (D.58, decisions "The crew-first ladder and Crew Captains", Michael: "retire Priya"): Priya (v1.25's flanker)
+  // is gone from the street, and two Bunratty kids Michael knew take her places.
+  // Joe — medium height, lean, curly blond hair. Fast and fairly agile, a good shot, moderately aggressive; carries the
+  // nicer guns (an AR or a UMP).
+  joe: {
+    name: 'Joe', neighborhood: 'sentinel', street: 'bunratty_ct',
+    height: 'average', build: 'skinny', hairStyle: 'curly', glasses: false,
+    hairColor: 0xe0c87a, skinColor: 0xecc6a0, shirtColor: 0x2a4a6a, pantsColor: 0x6a6a72,
+    aggression: 0.55, fireRate: 1.05, accuracy: 0.7, headshotBias: 0.15, hp: 1, moveSpeed: 1.08,
+    flavor: { hit: '"Okay. Clean. I\'ll take that."', win: 'Joe flips his UMP\'s sling over his shoulder. "Should\'ve bought a better gun."' },
+  },
+  // Chris — tall (Garrett's height) and very athletic, medium build. High aggression and speed; a pistol, a shotgun or
+  // a cheap automatic, his aim middling.
+  chris: {
+    name: 'Chris', neighborhood: 'sentinel', street: 'bunratty_ct',
+    height: 'tall', build: 'average', hairStyle: 'short', glasses: false,
+    hairColor: 0x140e0a, skinColor: 0x5e3a24, shirtColor: 0xc8c8c0, pantsColor: 0x2a2a34,
+    aggression: 0.85, fireRate: 1.15, accuracy: 0.5, headshotBias: 0.1, hp: 1, moveSpeed: 1.15,
+    flavor: { hit: '"Man! I was already on you!"', win: 'Chris jogs back up the lane, barely breathing hard. "Too slow, man."' },
   },
   // Owen — the immovable anchor. Slow, heavy, very accurate; he plants behind
   // the best cover and lays down fire while the others move. The overwatch half
@@ -393,12 +403,19 @@ const VOICE_LINES = {
     playerSpotted: ["I have him.", "He's exposed.", "Ryan, hold him there.", "Lined up.", "He's by the planter."],
     taunt:         ["Take your time.", "I can wait all day.", "He'll show himself.", "Ryan, stop yelling.", "Still breathing out there?"],
   },
-  // Priya: the cleverest flanker on the street, comes at you from the side.
-  priya: {
-    playerHit:     ["Yep. Flanked you.", "You never check your sides.", "Told you. Sides.", "From the left, by the way.", "Didn't even see me."],
-    npcHit:        ["Okay, okay. Good.", "Hm. You checked.", "Fine. That's one.", "Nice. Didn't expect that."],
-    playerSpotted: ["Got him. Going wide.", "There. Watch me.", "Found him. Flanking.", "He's looking the wrong way."],
-    taunt:         ["Which side am I on?", "Keep watching the front.", "I'm already past you.", "Check your left. Or right."],
+  // v1.368 (D.58): Joe, the good shot with the nice gun: quick, a little smug about his gear.
+  joe: {
+    playerHit:     ["Got him. Clean.", "That's the UMP, man.", "Told you I'm quick.", "Right through the gap.", "Yep. Too easy."],
+    npcHit:        ["Okay. Clean. I'll take that.", "Huh. Didn't see you.", "Fine. Good shot.", "Ugh. My gun's better, though.", "Alright, I'm out."],
+    playerSpotted: ["Got him. Moving up.", "There, by the car.", "See him. I'm quick.", "He's on the left."],
+    taunt:         ["You need a better gun.", "I'm already moving.", "Can't keep up, huh?", "Still there? Okay."],
+  },
+  // Chris: the athlete, fast, loud, always charging; a cheap gun and he doesn't care.
+  chris: {
+    playerHit:     ["GOT HIM! Too slow!", "Ran right through you!", "That's what speed does!", "Ha! Couldn't catch me!", "Boom! Gone!"],
+    npcHit:        ["Man! I was already on you!", "No way! I was moving!", "Aw, come ON!", "Okay, okay! Next one!", "That's lucky, man!"],
+    playerSpotted: ["I see him! Going!", "He's mine! I'm going in!", "Right there! Charging!", "Cover me, I'm going!"],
+    taunt:         ["You can't outrun me!", "I'm coming right at you!", "Faster than you, man!", "Run, man, run!"],
   },
   // Owen: the immovable anchor. Slow, heavy, very accurate; he just waits.
   owen: {

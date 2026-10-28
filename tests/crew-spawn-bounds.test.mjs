@@ -29,6 +29,15 @@ for (const crew of ['all', 'first']) for (const id of ids) {
       if (a.h && b.h) { if (d < 0.74) bad.push(`${crew} ${id}: huddle ${a.n}-${b.n} ${d.toFixed(2)} m`); continue; }
       if (d < (a.h || b.h ? 1.0 : 1.39)) bad.push(`${crew} ${id}: ${a.n}${a.h ? '(h)' : ''}-${b.n}${b.h ? '(h)' : ''} ${d.toFixed(2)} m`);
     }
+    // v1.369 (Found in play, v1.282): and no two kids of one side hold one post (Friday Night Lights' Nathan and Malik
+    // walked to one point and stood in each other for 6-8 s)
+    const ks = Game.scenario.enemies.filter(e => !e.perch);
+    for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
+      const a = ks[i], b = ks[j];
+      if (a.team !== b.team) continue;
+      const d = Math.hypot(a.anchorPos.x - b.anchorPos.x, a.anchorPos.z - b.anchorPos.z);
+      if (d < 0.5) bad.push(`${crew} ${id}: post ${a.character?.name}-${b.character?.name} ${d.toFixed(2)} m`);
+    }
     return bad;
   }, [id, crew]));
   if (crew === 'first') { await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(30); continue; }
@@ -45,7 +54,7 @@ const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
 check(`${ids.length} team matches entered with all five in the crew`, ids.length === 32 && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
-check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, 0.75 m inside it)', near.length === 0, near);
+check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, 0.75 m inside it), nor two of one side hold one post', near.length === 0, near);
 
 // the club's 3v3 with all five: every kid on our side moves or fires in 40 s (Devon walked 0 m on CI, e6f626b)
 await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);

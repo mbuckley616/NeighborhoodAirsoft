@@ -742,15 +742,16 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
-  // === DEFEND (timer) — Priya & Owen, the bounding-overwatch pair (v1.25) ===
-  // Showcases the new cover-aware flank AI. Priya (fast, flanker lane) bounds
+  // === DEFEND (timer) — the flanker & Owen, the bounding-overwatch pair (v1.25) ===
+  // Showcases the new cover-aware flank AI. The flanker (fast, flanker lane) bounds
   // cover-to-cover up one side while Owen (slow, deadly-accurate anchor) holds
   // the lane and lays down fire. A third pusher keeps the center honest. The
-  // point: you can't just watch one lane — Priya WILL come from your flank.
+  // point: you can't just watch one lane — the flanker WILL come from your flank.
+  // v1.368 (D.58, Michael: retire Priya): Joe is the flanker, and the match is The Pincer (docs/crew_ladder.md's name).
   bunratty_pincer: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Priya\u2019s Pincer',
-    desc: "Priya figured out the yards on this street better than anyone — she'll bound cover-to-cover and come at you from the side while Owen pins you down from the lane with that scary-accurate AR. Sean keeps the middle busy. Hold the cul-de-sac for 90 seconds, but DON'T tunnel-vision the road — check your flanks or Priya tags you from the trees.",
+    name: 'Bunratty Court', scenarioName: 'The Pincer',
+    desc: "Joe figured out the yards on this street better than anyone — he'll bound cover-to-cover and come at you from the side while Owen pins you down from the lane with that scary-accurate AR. Sean keeps the middle busy. Hold the cul-de-sac for 90 seconds, but DON'T tunnel-vision the road — check your flanks or Joe tags you from the trees.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -758,7 +759,7 @@ const SCENARIOS = {
     playerSpawn: 'bulb_center',
     enemySpawnCluster: 'cluster_lane_west',
     enemySetup: [
-      { charId: 'priya', weapon: 'mp5', anchor: 'lane_west_north', role: 'attacker', flank: 'L' },
+      { charId: 'joe',   weapon: 'ump', anchor: 'lane_west_north', role: 'attacker', flank: 'L' },   // v1.368: was Priya
       { charId: 'sean',  weapon: 'ak47', anchor: 'lane_mid_south', role: 'attacker', flank: 'C' },
       { charId: 'owen',  weapon: 'ar',   anchor: 'lane_west_south', role: 'attacker', flank: 'R' },
     ],
@@ -784,7 +785,7 @@ const SCENARIOS = {
       { charId: 'nick',     weapon: 'ar',      anchor: 'ffa_2' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'ffa_3' },
       { charId: 'mitchell', weapon: 'pistol',  anchor: 'ffa_4' },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'ffa_5' },
+      { charId: 'chris',    weapon: 'mac10',   anchor: 'ffa_5' },   // v1.368: was Priya
       { charId: 'owen',     weapon: 'ar',      anchor: 'ffa_6' },
     ],
     winCondition: 'last_team_standing',
@@ -807,7 +808,7 @@ const SCENARIOS = {
     builderArg: 'default',
     playerSpawn: 'bulb_center',
     enemySetup: [
-      { charId: 'priya',    behavior: 'tagger', anchor: 'lane_west_north', zombieSprinter: true },
+      { charId: 'chris',    behavior: 'tagger', anchor: 'lane_west_north', zombieSprinter: true },   // v1.368: was Priya
       { charId: 'ryan',     behavior: 'tagger', anchor: 'house0_backyard', zombieSprinter: true },
       { charId: 'marcus',   behavior: 'tagger', anchor: 'house5_backyard' },
       { charId: 'sean',     behavior: 'tagger', anchor: 'lane_mid_south' },
@@ -820,11 +821,11 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
-  // === TEAM — 2v4 (You + Sean vs Ryan, Mitchell, Nick, Priya) ===
+  // === TEAM — 2v4 (You + Sean vs Ryan, Mitchell, Nick, Joe) ===
   bunratty_team_2v4: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Two Against the World',
-    desc: "Just you and Sean against four of them — Ryan, Mitchell, Nick, and Priya. This is a real underdog fight. They'll try to swarm you, so stay glued to Sean, never get caught alone, and whittle them down one at a time from cover. Winning this one means something.",
+    desc: "Just you and Sean against four of them — Ryan, Mitchell, Nick, and Joe. This is a real underdog fight. They'll try to swarm you, so stay glued to Sean, never get caught alone, and whittle them down one at a time from cover. Winning this one means something.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -834,20 +835,20 @@ const SCENARIOS = {
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'house2_backyard' },
       { charId: 'mitchell', weapon: 'ar',      anchor: 'house5_backyard' },
       { charId: 'nick',     weapon: 'ar',      anchor: 'hero_backyard'   },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'bulb_plank'      },
+      { charId: 'joe',      weapon: 'ump',     anchor: 'bulb_plank'      },   // v1.368: was Priya
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 65, lose: 16 },
     playerLives: 1, armorMult: 1,
   },
 
-  // === TEAM — 4v4 (You + Sean + Nick + Ryan vs Mitchell, Priya, Owen, Tyler) ===
+  // === TEAM — 4v4 (You + Sean + Nick + Ryan vs Mitchell, Chris, Owen, Tyler) ===
   // Tyler's from Winnmark Court one street over — kids cross streets for the big
   // games. He's the 7th NPC that makes a full 4v4 possible on this six-kid block.
   bunratty_team_4v4: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Four on Four',
-    desc: "The biggest game on the street: full four-on-four. You, Sean, Nick, and Ryan against Mitchell, Priya, Owen, and Tyler (he came over from Winnmark for this one). Both squads will focus-fire and cover lanes, so this is won by coordination — push together, finish targets together, and don't let your team get picked apart.",
+    desc: "The biggest game on the street: full four-on-four. You, Sean, Nick, and Ryan against Mitchell, Chris, Owen, and Tyler (he came over from Winnmark for this one). Both squads will focus-fire and cover lanes, so this is won by coordination — push together, finish targets together, and don't let your team get picked apart.",
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -857,7 +858,7 @@ const SCENARIOS = {
       { charId: 'nick',     weapon: 'ar',      anchor: 'house1_backyard', team: 'player' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'house2_backyard', team: 'player' },
       { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'bulb_car2'       },
+      { charId: 'chris',    weapon: 'mac10',   anchor: 'bulb_car2'       },   // v1.368: was Priya
       { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
       { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
     ],
@@ -880,7 +881,7 @@ const SCENARIOS = {
     playerSpawn: 'lane_west',
     enemySetup: [
       { charId: 'mitchell', weapon: 'ar',      anchor: 'race_n1', role: 'defender' },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'race_s1', role: 'defender' },
+      { charId: 'joe',      weapon: 'ump',     anchor: 'race_s1', role: 'defender' },   // v1.368: was Priya
       { charId: 'owen',     weapon: 'ar',      anchor: 'race_n2', role: 'defender' },
       { charId: 'tyler',    weapon: 'shotgun', anchor: 'race_s2', role: 'defender' },
       { charId: 'sean',     weapon: 'ak47',    anchor: 'race_n3', role: 'defender' },
@@ -1134,7 +1135,7 @@ const SCENARIOS = {
       { charId: 'mason',    weapon: 'sniper',  anchor: 'ffa_5' },
       { charId: 'sean',     weapon: 'ak47',    anchor: 'ffa_2' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'ffa_6' },
-      { charId: 'priya',    weapon: 'mp5',     anchor: 'ffa_4' },
+      { charId: 'joe',      weapon: 'ump',     anchor: 'ffa_4' },   // v1.368: was Priya
       { charId: 'brooke',   weapon: 'sniper',  anchor: 'ffa_7' },
     ],
     winCondition: 'last_team_standing',
@@ -1154,7 +1155,7 @@ const SCENARIOS = {
     playerSpawn: 'midfield',
     enemySetup: [
       { charId: 'eric',     behavior: 'tagger', anchor: 'a_fort',    zombieSprinter: true },
-      { charId: 'priya',    behavior: 'tagger', anchor: 'b_fort',    zombieSprinter: true },
+      { charId: 'chris',    behavior: 'tagger', anchor: 'b_fort',    zombieSprinter: true },   // v1.368: was Priya
       { charId: 'seth',     behavior: 'tagger', anchor: 'a_left'    },
       { charId: 'rebecca',  behavior: 'tagger', anchor: 'a_right'   },
       { charId: 'sean',     behavior: 'tagger', anchor: 'scatter_nw' },
@@ -1383,7 +1384,7 @@ const SCENARIOS = {
       { charId: 'marcus',  weapon: 'ak47',    anchor: 'ffa_1' },
       { charId: 'jamie',   weapon: 'ump',     anchor: 'ffa_2' },
       { charId: 'tyler',   weapon: 'shotgun', anchor: 'ffa_3' },
-      { charId: 'priya',   weapon: 'mp5',     anchor: 'ffa_4' },
+      { charId: 'chris',   weapon: 'mac10',   anchor: 'ffa_4' },   // v1.368: was Priya
       { charId: 'owen',    weapon: 'ar',      anchor: 'ffa_5' },
       { charId: 'brooke',  weapon: 'pistol',  anchor: 'ffa_6' },
     ],
@@ -2078,9 +2079,9 @@ const SCENARIOS = {
   bunratty_vip: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Protect Ryan',
-    desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Priya's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Mitchell, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Priya.",
+    desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Mitchell's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Joe, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Mitchell.",
     builderFn: 'buildBunrattyCourtScene',
-    builderArg: 'vip',   // v1.272: the default court plus a 1.5 m plank barricade at Priya's spot
+    builderArg: 'vip',   // v1.272: the default court plus a 1.5 m plank barricade at their VIP's spot
     seedArg: 'default',  // v1.272: laid out under the default seed, so every prop and tree stays where it was
     scenarioType: 'skirmish',
     playerSpawn: 'lane_west',
@@ -2089,8 +2090,8 @@ const SCENARIOS = {
       { charId: 'ryan',     weapon: 'pistol',  anchor: 'house0_backyard', team: 'player', vip: true, role: 'defender', lives: 1 },
       { charId: 'sean',     weapon: 'ak47',    anchor: 'house1_backyard', team: 'player' },
       { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
-      { charId: 'priya',    weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },
-      { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
+      { charId: 'mitchell', weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },   // v1.368 (D.58): their VIP, was Priya
+      { charId: 'joe',      weapon: 'ar',      anchor: 'house4_backyard' },   // v1.368: not Mitchell's old bulb_car1 (or bulb_car2): from the bulb Joe walked his advance through the fort and through Mitchell
       { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard', spawnAt: [37.5, -1.9] },   // v1.178 (D.18, Michael: C): starts and comes back behind the east car, out of Sean's line (the fort's walls are too low to stop it)
       { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
     ],

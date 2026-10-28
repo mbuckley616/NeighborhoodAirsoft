@@ -2036,7 +2036,9 @@ function updateEnemies(dt) {
           const aimFrac = 0.65 + headshotBias * 0.30;
           const dropComp = Math.max(0, (distToPlayer - 5) * 0.012); // m of extra aim-up
           targetPos.y += tgt.height * aimFrac + dropComp;
+          const holdsBefore = e._lineHolds || 0;   // v1.367: did this pull fire, or hold at a blocked line?
           spawnEnemyBB(e, targetPos);
+          const pullHeld = (e._lineHolds || 0) > holdsBefore;
           // v1.20: AUTO-WEAPON BURST. If the kid is carrying an auto gun, queue
           // 4-7 follow-up BBs at the gun's cyclic rate. The AI proceeds to the
           // normal 'hiding' state immediately — the burst fires from
@@ -2074,7 +2076,10 @@ function updateEnemies(dt) {
           // snipers we IGNORE the cuts above and impose a flat 2-3s cycle. This
           // is the only weapon with a hard floor; everything else keeps the
           // aggression/fireRate-driven cadence.
-          if (e.weapon === 'sniper') {
+          // v1.367 (Found in play, critic v1.353): but only after a shot. A held pull fires nothing, so there is no bolt to
+          // work: Devon in Hold the South Fort stood 6.5-7.5 s at the blast wall's end and in its gap, three held pulls
+          // 2-3 s apart before the move-on after three (v1.122) took him on.
+          if (e.weapon === 'sniper' && !pullHeld) {
             recovery = 2.0 + gameRandom() * 1.0;   // 2.0–3.0s between shots
           }
           e.nextStateChange = recovery;
