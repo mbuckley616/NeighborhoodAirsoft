@@ -59,7 +59,7 @@ console.log('  ', played.desc);
 check('the picks are lit: Bunratty Court, Free-for-all, 6-way, Night, 1 (and no Holiday row while the holidays are parked)', played.lit.join() === 'Bunratty Court,Free-for-all,6-way,Night,1', played.lit);
 check('PLAY builds a night 6-way free-for-all: Bunratty\'s first five, nobody on a side, one life each', played.mode === 'scenario_intro'
   && played.name === 'Pickup Game: 6-way free-for-all' && played.ffa === true && played.tod === 'night'
-  && played.kids.join() === 'sean,nick,ryan,mitchell,priya' && played.teams === 0 && played.npcLives === 1 && played.playerLives === 1, played);
+  && played.kids.join() === 'sean,nick,ryan,mitchell,chris' && played.teams === 0 && played.npcLives === 1 && played.playerLives === 1, played);
 await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
 const brief = await page.evaluate(() => document.getElementById('introRoster').textContent.replace(/\s+/g, ' '));
 check('the briefing\'s roster says EVERYONE ELSE (FREE-FOR-ALL)', /EVERYONE ELSE \(FREE-FOR-ALL\)/.test(brief), brief.slice(0, 300));

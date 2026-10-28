@@ -160,12 +160,24 @@ function enterScenario(scenarioId) {
     // one edge: the Last Saturday's Garrett, Colin, Brooke and Trey came out of the car within 0.42 m of each other
     // (Colin and Brooke 0.05 m), one body with four heads. Huddle starts keep CREW_HUDDLE_GAP from each other.
     const huddleStarts = [];
+    // v1.369 (Found in play, v1.282): a kid the crew's numbers put on a teammate's anchor holds his post CREW_START_GAP
+    // off the first kid's, not on it: the two walked to one point and stood in each other (Friday Night Lights' Nathan
+    // and Malik 0.01 m apart for 6-8 s in 8 of 8 rounds, later Caleb and Brooke for up to 4.5 s).
+    const takenPosts = {};
 
     for (const es of sc.enemySetup) {
       const placement = built.placements[es.anchor];
       if (!placement) {
         console.warn(`Scenario ${scenarioId}: unknown anchor "${es.anchor}"`);
         continue;
+      }
+      let post = placement.pos;   // v1.369
+      if (crewSpread && !es.perch) {
+        const team = es.team || (sc.ffa ? ('ffa_' + es.charId) : 'enemy');
+        const mine = takenPosts[team] || (takenPosts[team] = []);
+        const p = crewSpreadStart(post.x, post.z, mine, built.bounds, built.obstacles);
+        if (p.x !== post.x || p.z !== post.z) post = new THREE.Vector3(p.x, post.y, p.z);
+        mine.push({ x: post.x, z: post.z });
       }
 
       // Decide spawn position + whether this enemy deploys from a huddle.
@@ -180,7 +192,7 @@ function enterScenario(scenarioId) {
       if (es.spawnAt) {
         // v1.178 (D.18, Michael: C): a kid with his own start spawns (and respawns) there and walks to his anchor
         spawnPos = new THREE.Vector3(es.spawnAt[0], 0, es.spawnAt[1]);
-        deployTarget = placement.pos.clone();
+        deployTarget = post.clone();
         startState = 'deploying';
       } else if (joinsEnemyHuddle) {
         // Tight ring around the cluster center (~2.8m diameter).
@@ -192,7 +204,7 @@ function enterScenario(scenarioId) {
           0,
           clusterCenter.z + Math.sin(ang) * rad
         );
-        deployTarget = placement.pos.clone();
+        deployTarget = post.clone();
         startState = 'deploying';
         clusterIdx++;
       } else if (isAlly && playerSpawnPos && es.role !== 'defender') {   // v1.172: an ally defender (a VIP) starts on the anchor he holds
@@ -222,9 +234,9 @@ function enterScenario(scenarioId) {
         // v1.179: in a match whose start has no line to the field (Friday Night Lights, behind the concession stand),
         // the allies break from you and walk to the posts they hold, as a respawned ally already does. Brooke stood
         // beside you all round with nobody to see (Found in play, v1.178).
-        if (sc.allyDeploy) { deployTarget = placement.pos.clone(); startState = 'deploying'; }
+        if (sc.allyDeploy) { deployTarget = post.clone(); startState = 'deploying'; }
       } else {
-        spawnPos = placement.pos.clone();
+        spawnPos = post.clone();
       }
 
       // v1.138: a kid set to hold a perch (the treehouse) spawns up there, on his anchor
@@ -253,7 +265,7 @@ function enterScenario(scenarioId) {
         scene: built.scene,
         weapon: es.weapon || 'pistol',
         role: es.role || 'skirmisher',
-        anchorPos: placement.pos.clone(),
+        anchorPos: post.clone(),
         armorMult: sc.armorMult || 1,
         behavior: es.behavior || 'gunner',          // v1.25: 'tagger' for zombie mode
         zombieSprinter: !!es.zombieSprinter,
@@ -307,7 +319,7 @@ function enterScenario(scenarioId) {
         // of dying permanently). Stored on every enemy; only used when the
         // scenario type is 'defend'.
         enemy._spawnPos = spawnPos.clone();
-        enemy._deployAnchor = placement.pos.clone();
+        enemy._deployAnchor = post.clone();
         // v1.319 (backlog B.13, Michael 22 Oct: "move the enemy spawn point to the opposite base, so that shooting an
         // enemy has a greater effect / longer cooldown"): a match can send its tagged attackers back to another
         // staging point than the one they set out from. They still open from their own huddle; tagged, they walk to

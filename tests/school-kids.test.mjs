@@ -23,8 +23,10 @@ const info = await page.evaluate(([SCHOOL, IDS]) => {
     if (SCHOOL.includes(e.charId)) (playsAt[e.charId] = playsAt[e.charId] || []).push(sid);
     if (IDS.includes(sid)) ((e.team === 'player' ? alliesAt : enemiesAt)[sid] = (e.team === 'player' ? alliesAt : enemiesAt)[sid] || []).push(e.charId);
   }
-  const twinStats = { jordan: 'tyler', caleb: 'ryan', nathan: 'mitchell', sophie: 'priya', grant: 'owen', malik: 'jamie' };
+  const twinStats = { jordan: 'tyler', caleb: 'ryan', nathan: 'mitchell', grant: 'owen', malik: 'jamie' };
   const sameStats = Object.entries(twinStats).filter(([a, b]) => stats(CHARACTERS[a]) !== stats(CHARACTERS[b])).map(([a]) => a);
+  // v1.368 (D.58): Priya is retired, so Sophie is held to the numbers she took from her
+  if (stats(CHARACTERS.sophie) !== [0.6, 1.0, 0.7, 0.18, 0.98].join()) sameStats.push('sophie');
   const descs = IDS.map(id => SCENARIOS[id].desc);
   return { kids, playsAt, enemiesAt, alliesAt, sameStats, descs, ids: IDS.filter(id => SCENARIOS[id]) };
 }, [SCHOOL, IDS]);
