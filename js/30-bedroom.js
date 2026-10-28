@@ -1545,7 +1545,7 @@ function buildBedroomScene() {
     addCasing(HALL_W/2, 1.04, L.z0 + 0.03, 0.05, 2.12, 'x');
     addCasing(0, 2.12, L.z0 + 0.03, HALL_W + 0.1, 0.08, 'x');
 
-    // East wall with the pair of double-hung windows; trees outside, as through the bedroom window
+    // East wall with the pair of double-hung windows; the view out of them below (v1.384)
     const wz0 = L.winZ - L.winW/2, wz1 = L.winZ + L.winW/2, wTop = L.winSill + L.winH;
     box(L.x1, L.x1 + T, 0, L.h, L.z0 - T/2, wz0, landWall);
     box(L.x1, L.x1 + T, 0, L.h, wz1, L.z1, landWall);
@@ -1558,9 +1558,109 @@ function buildBedroomScene() {
     for (const z of [wz0, L.winZ, wz1]) box(L.x1 - 0.03, L.x1 + 0.06, L.winSill, wTop, z - 0.04, z + 0.04, trimMat);   // jambs and the middle post
     for (const y of [L.winSill, L.winSill + L.winH/2, wTop]) box(L.x1 - 0.03, L.x1 + 0.06, y - 0.035, y + 0.035, wz0, wz1, trimMat);   // sill, meeting rails, head
     box(L.x1 - 0.08, L.x1, L.winSill - 0.05, L.winSill - 0.01, wz0 - 0.08, wz1 + 0.08, trimMat);   // the stool
-    const outside = new THREE.Mesh(new THREE.PlaneGeometry(6, 4.5), new THREE.MeshBasicMaterial({ map: outsideTex }));
-    outside.rotation.y = -Math.PI / 2; outside.position.set(L.x1 + 2.0, 1.5, L.winZ);
-    scene.add(outside);
+    // v1.384 (D.79, Michael's listing photo and aerial view; docs/refs/landing.md, "The view from the east window"): the
+    // window is upstairs on the garage side, about 4 m over the driveway. Out along +x: the driveway's concrete in dappled
+    // shade below with a car on it and the hedge tops along the house; across it, from about 15° north of east to 20°
+    // south of it at 20-30 m, the neighbours' big house with its pale grey hip roof, a lower grey-roofed wing toward
+    // you and a patio and pool beside it, half hidden by trees; south-east of that, tall dense hardwoods; the crape
+    // myrtle's pale trunks and small leaves right outside the glass on its south side. It replaces v1.376's painted
+    // trees. Unlit and out of the room's fog (14-24 m, which would wash the neighbours out), each box's faces shaded by
+    // hand: the sun stands high in the south-west.
+    const eastView = (() => {
+      const G = -3.3, X = L.x1 + T, parts = [];
+      const flat = c => new THREE.MeshBasicMaterial({ color: c, fog: false });
+      const shade = (c, k) => new THREE.Color(c).multiplyScalar(k).getHex();
+      // a box with its faces shaded: west (toward you) mid, top light, north dark, south lit
+      const vbox = (x0, x1, y0, y1, z0, z1, c, tag) => {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0),
+          [flat(shade(c, 0.7)), flat(shade(c, 0.8)), flat(shade(c, 1.08)), flat(shade(c, 0.5)), flat(shade(c, 0.95)), flat(shade(c, 0.6))]);
+        m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      // a hip roof over [x0, x1] x [z0, z1] from y0, rise h: a four-sided pyramid stretched to the rectangle
+      const hip = (x0, x1, z0, z1, y0, h, c, tag) => {
+        const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1); g.rotateY(Math.PI / 4);
+        const m = new THREE.Mesh(g, flat(c)); m.scale.set((x1 - x0) * 1.08, h, (z1 - z0) * 1.08);
+        m.position.set((x0 + x1) / 2, y0 + h / 2, (z0 + z1) / 2); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      const crown = (x, y, z, r, c, tag) => {
+        const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), flat(c)); m.position.set(x, y, z); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      const trunk = (x, z, y0, y1, r, c, tag, lean = 0, dir = 0) => {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.8, r, y1 - y0, 7), flat(c));
+        m.position.set(x, (y0 + y1) / 2, z); m.rotation.set(Math.sin(dir) * lean, 0, Math.cos(dir) * lean); m.userData.view = tag;
+        scene.add(m); parts.push(m); return m;
+      };
+      // the ground: the driveway and turning area (concrete, dappled), the lawns and the shade under the woods
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256;
+      const c2 = cv.getContext('2d');
+      c2.fillStyle = '#b9b3a6'; c2.fillRect(0, 0, 256, 256);
+      for (let k = 0; k < 90; k++) {   // the trees' dapple
+        const r = 6 + gameRandom() * 22;
+        c2.fillStyle = `rgba(70, 66, 58, ${0.18 + gameRandom() * 0.25})`;
+        c2.beginPath(); c2.arc(gameRandom() * 256, gameRandom() * 256, r, 0, Math.PI * 2); c2.fill();
+      }
+      c2.strokeStyle = 'rgba(90, 86, 78, 0.6)'; c2.lineWidth = 1.5;
+      for (const t of [64, 128, 192]) { c2.beginPath(); c2.moveTo(t, 0); c2.lineTo(t, 256); c2.moveTo(0, t); c2.lineTo(256, t); c2.stroke(); }   // the joints
+      const drive = new THREE.Mesh(new THREE.PlaneGeometry(14, 22), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), fog: false }));
+      drive.rotation.x = -Math.PI / 2; drive.position.set(X + 7, G, 7.5); drive.userData.view = 'driveway';
+      scene.add(drive); parts.push(drive);
+      const lawn = new THREE.Mesh(new THREE.PlaneGeometry(90, 70), flat(0x4f6b34));
+      lawn.rotation.x = -Math.PI / 2; lawn.position.set(X + 45, G - 0.02, 27); lawn.userData.view = 'lawn';
+      scene.add(lawn); parts.push(lawn);
+      const shadeFloor = new THREE.Mesh(new THREE.PlaneGeometry(50, 40), flat(0x2c3a22));
+      shadeFloor.rotation.x = -Math.PI / 2; shadeFloor.position.set(X + 34, G - 0.01, 42); shadeFloor.userData.view = 'woods';
+      scene.add(shadeFloor); parts.push(shadeFloor);
+      // the hedges along the house, their tops just below the sill's line of sight
+      vbox(X, X + 1.1, G, G + 1.3, -3.5, 5.6, 0x3f5a2c, 'hedge');
+      vbox(X, X + 1.1, G, G + 1.3, 10.6, 18.5, 0x3f5a2c, 'hedge');
+      // a car on the driveway, nose to the garage
+      addCar(scene, X + 6.2, 6.3, { detail: true, color: 0x8c9aa6, orientation: Math.PI });
+      const car = scene.children[scene.children.length - 1];
+      car.position.y = G; car.traverse(o => { o.userData.view = 'car'; });
+      // the neighbours' house: the main block, its pale grey hip roof, the lower wing toward the window
+      const wall = 0xd9cdb8, roof = 0xa9adb0;
+      vbox(X + 23, X + 36, G, G + 6.2, 0.5, 15.5, wall, 'neighbours');
+      hip(X + 23, X + 36, 0.5, 15.5, G + 6.2, 3.6, roof, 'neighbours');
+      vbox(X + 18.5, X + 23, G, G + 3.4, 5.5, 13.0, wall, 'neighbours');
+      hip(X + 18.5, X + 23, 5.5, 13.0, G + 3.4, 1.9, shade(roof, 0.95), 'neighbours');
+      for (const [z0, z1] of [[2.0, 3.6], [6.2, 7.8], [10.0, 11.6], [13.4, 14.8]]) vbox(X + 22.95, X + 23.0, G + 3.9, G + 5.5, z0, z1, 0x3c4650, 'neighbours');   // upstairs windows
+      for (const [z0, z1] of [[6.5, 8.0], [10.0, 11.8]]) vbox(X + 18.45, X + 18.5, G + 0.9, G + 2.6, z0, z1, 0x3c4650, 'neighbours');
+      // the patio and the pool on its north side
+      const patio = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), flat(0xc4baa8));
+      patio.rotation.x = -Math.PI / 2; patio.position.set(X + 22.5, G + 0.01, -2.0); patio.userData.view = 'pool';
+      scene.add(patio); parts.push(patio);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.4), flat(0x4fa3c8));
+      pool.rotation.x = -Math.PI / 2; pool.position.set(X + 22.5, G + 0.02, -2.0); pool.userData.view = 'pool';
+      scene.add(pool); parts.push(pool);
+      // trees between, half hiding the house and the pool
+      for (const [x, z, h, r] of [[13.5, -1.0, 9, 3.2], [15.0, 3.5, 11, 3.6], [16.5, 16.5, 12, 3.8], [12.5, 12.0, 8, 2.6], [19.5, -3.5, 10, 3.0]]) {
+        trunk(X + x, z, G, G + h - r, 0.22, 0x5b4a3a, 'trees');
+        crown(X + x, G + h - r * 0.4, z, r, 0x3e5e2e, 'trees');
+        crown(X + x + 0.8, G + h - r * 0.9, z + 0.9, r * 0.7, 0x4a6b34, 'trees');
+      }
+      // the woods to the south-east: tall dense oaks, sweetgums and poplars, crowns 14-24 m over the ground
+      const woodsCols = [0x2f4d26, 0x3a5a2c, 0x35532a, 0x2a4422, 0x44633a];
+      for (let k = 0; k < 46; k++) {
+        const ang = (22 + gameRandom() * 50) * Math.PI / 180, d = 13 + gameRandom() * 34;
+        const x = X + Math.cos(ang) * d, z = L.winZ + Math.sin(ang) * d, h = 14 + gameRandom() * 10, r = 3.2 + gameRandom() * 2.6;
+        if (k % 3 === 0) trunk(x, z, G, G + h - r, 0.3, 0x4a3f34, 'woods');
+        crown(x, G + h, z, r, woodsCols[k % woodsCols.length], 'woods');
+        crown(x + r * 0.4, G + h - r * 0.8, z - r * 0.3, r * 0.75, woodsCols[(k + 2) % woodsCols.length], 'woods');
+      }
+      for (let k = 0; k < 14; k++) crown(X + 60 + gameRandom() * 20, G + 10 + gameRandom() * 6, -20 + k * 5.5, 6, 0x5b7a52, 'far');   // the tree line past the neighbours
+      // the crape myrtle right outside, south of the glass: five pale trunks fanning up from one root, small leaves and
+      // the summer's pink flowers
+      const cmX = X + 0.9, cmZ = L.winZ + L.winW / 2 + 0.2;
+      for (let k = 0; k < 5; k++) trunk(cmX + (k - 2) * 0.08, cmZ + ((k * 7) % 5 - 2) * 0.06, G, L.winSill + 2.2 - (k % 2) * 0.8, 0.06, 0xcdbfae, 'crape myrtle', 0.12 + (k % 3) * 0.05, -1.2 + k * 0.6);
+      for (let k = 0; k < 22; k++) {
+        const a = k / 22 * Math.PI * 2 * 3, rr = 0.35 + (k % 4) * 0.22;
+        crown(cmX + 0.3 + Math.cos(a) * rr * 0.6, L.winSill + 1.7 + (k % 5) * 0.3, cmZ + 0.25 + Math.sin(a) * rr, 0.16 + (k % 3) * 0.05, k % 6 === 0 ? 0xc77a9a : (k % 2 ? 0x4c6e34 : 0x3d5c2b), 'crape myrtle');
+      }
+      return parts;
+    })();
 
     // South wall: the recess's back (v1.382: from the west wall, no jut), the stairwell beyond it
     box(L.recessX0 - T, L.recessX1 + T, 0, L.h, L.recessZ, L.recessZ + T, landWall);
@@ -1948,7 +2048,7 @@ function buildBedroomScene() {
       action: () => enterRange(),
     });
     return {
-      obstacles, crewSeats, futon, table, props,   // v1.382: the tests look at them
+      obstacles, crewSeats, futon, table, props, eastView,   // v1.382: the tests look at them
       stairsSpawn: new THREE.Vector3((L.stairX0 + L.stairX1) / 2, 0, stairsZ), stairsYaw: 0.35,   // facing into the landing
     };
   }
@@ -2027,7 +2127,7 @@ function buildBedroomScene() {
     bounds,
     obstacles,
     stairsSpawn: landing.stairsSpawn, stairsYaw: landing.stairsYaw,   // v1.376: home from the range
-    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table, landingProps: landing.props,
+    crewSeats: landing.crewSeats, landing: LAND, futon: landing.futon, coffeeTable: landing.table, landingProps: landing.props, eastView: landing.eastView,
     vault: { wallH: BR_H, ridgeH: BR_RIDGE, dormerH: AL_H, winTop: WIN_BOTTOM + WIN_H + WIN_W / 2 },   // v1.378
   };
 }

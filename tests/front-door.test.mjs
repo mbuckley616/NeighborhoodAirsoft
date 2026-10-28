@@ -162,6 +162,35 @@ const fewer = await page.evaluate(() => { Game.persist.crew = ['nick', 'eric']; 
 check('two in the crew: both on the futon', fewer.join() === 'nick:sits,eric:sits', fewer);
 await page.evaluate(() => { Game.persist.crew = []; enterBedroom(); stepGame(1 / 60); });
 
+// v1.384 (D.79): out of the landing's east window, rays from inside through the panes: down onto the driveway, level
+// across it to the neighbours' house, south-east into the woods, and the crape myrtle right outside on the south side.
+const view = await page.evaluate(() => {
+  const L = Scenes.bedroom.landing; Game.scene.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster();
+  const tagOf = o => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.view) return a.userData.view; return null; };
+  const look = (from, to) => {
+    const o = new THREE.Vector3(...from), d = new THREE.Vector3(...to).sub(o).normalize();
+    rc.set(o, d); rc.far = 120;
+    const hits = rc.intersectObjects(Game.scene.children, true).filter(h => h.object.visible && !(h.object.material && h.object.material.transparent));
+    const h = hits.find(h => h.point.x > L.x1 + 0.05);   // the first thing past the wall
+    const first = hits[0];
+    return { tag: h ? tagOf(h.object) : 'sky', at: h ? h.point.toArray().map(v => +v.toFixed(1)) : null, blockedInside: !!first && first.point.x < L.x1 + 0.05 };
+  };
+  const ang = (deg, d, y) => [L.x1 + Math.cos(deg * Math.PI / 180) * d, y, L.winZ + Math.sin(deg * Math.PI / 180) * d];   // + south of east
+  return {
+    down: look([2.6, 1.45, L.winZ - 0.5], [L.x1 + 6, -3.3, L.winZ - 0.5]),
+    across: look([2.6, 1.6, L.winZ - 0.35], [L.x1 + 19.5, -1, L.winZ - 0.75]),
+    southEast: look([2.6, 1.9, L.winZ + 0.3], ang(35, 30, 8)),
+    myrtle: look([2.8, 1.95, L.winZ + 0.5], [L.x1 + 0.95, 2.6, L.winZ + L.winW / 2 + 0.6]),
+    count: Scenes.bedroom.eastView.length,
+  };
+});
+console.log('   east window:', JSON.stringify(view));
+check('out of the east window, down: the driveway', view.down.tag === 'driveway' && !view.down.blockedInside, view.down);
+check('across the driveway, level: the neighbours\' house, 18 m or more away', view.across.tag === 'neighbours' && view.across.at[0] > 3.3 + 18, view.across);
+check('to the south-east: the woods', view.southEast.tag === 'woods', view.southEast);
+check('right outside the glass on its south side: the crape myrtle', view.myrtle.tag === 'crape myrtle', view.myrtle);
+
 // the other hall prompt still wins where it should: at the hall closet
 const closet = await page.evaluate(() => {
   const it = Game.interactables.find(i => i.type === 'hall_closet');
