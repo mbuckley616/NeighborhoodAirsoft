@@ -113,6 +113,7 @@ function gunForegripZ(weapon) {
     case 'ump':     return 0.12;   // compact body
     case 'p90':     return 0.14;   // v1.346: the front hand stop
     case 'vector':  return 0.17;   // v1.348: its front grip
+    case 'g36':     return 0.17;   // v1.371: its handguard
     case 'mac10':   return 0.06;
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
@@ -215,6 +216,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.04, 0.12, 0.05, dark, 0, -0.10, 0.10);       // the mag, under the slanted front
       box(0.035, 0.07, 0.035, dark, 0, -0.07, 0.17);     // the front grip
       box(0.03, 0.05, 0.12, dark, 0, 0, -0.11);          // the folding stock
+      grip();
+      break;
+    }
+    case 'g36': {   // v1.371 (D.63): a short rifle, the smoky clear mag, a carry rail, the skeleton stock
+      box(0.045, 0.07, 0.38, black, 0, 0, 0.16);         // receiver, handguard and barrel
+      box(0.04, 0.13, 0.06, new THREE.MeshStandardMaterial({ color: 0x7c8088, roughness: 0.3, transparent: true, opacity: 0.6 }), 0, -0.10, 0.06);   // the clear mag
+      box(0.03, 0.03, 0.14, dark, 0, 0.05, 0.06);        // the top rail
+      box(0.03, 0.06, 0.12, dark, 0, 0, -0.09);          // the folding stock
       grip();
       break;
     }
