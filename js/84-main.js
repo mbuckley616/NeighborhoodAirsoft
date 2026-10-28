@@ -365,7 +365,7 @@ const SETTINGS_ROWS = [
   { key: 'effects',   label: 'Effects volume',    fmt: v => Math.round(v * 100) + '%' },
   { key: 'fov',       label: 'Field of view',     fmt: v => Math.round(v) + '°' },
   { key: 'invertY',   label: 'Invert look',       toggle: true },
-  { key: 'voiceChat', label: 'Friends on the walkie (online)', toggle: true },   // v1.367 (D.10): push-to-talk's mute
+  { key: 'voiceChat', label: 'Walkie online', toggle: true },   // v1.367 (D.10): push-to-talk's mute
 ];
 function renderSettings() {
   const rows = document.getElementById('settingsRows');

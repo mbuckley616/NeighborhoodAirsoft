@@ -183,7 +183,7 @@ await H.evaluate(() => { Game.keys.KeyT = false; Settings.voiceChat = true; appl
 await run(2);
 const tm6 = await talk(H);
 console.log('   muted', JSON.stringify(tm5), mutedGain, sent5, JSON.stringify(tm6.voice));
-check('“Friends on the walkie” off: the calls hang up, Bluey goes quiet, T sends nothing; back on, Bluey is called again',
+check('“Walkie online” off: the calls hang up, Bluey goes quiet, T sends nothing; back on, Bluey is called again',
   !tm5.voice.on && mutedGain === 0 && !tm5.talking && sent5 === '' && /muted/.test(tm5.hud) && tm6.voice.on && tm6.voice.pids.join() === 'g2', { tm5, mutedGain, sent5, tm6 });
 
 // The kids' shots fly in the guest's game

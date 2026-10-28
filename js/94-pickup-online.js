@@ -1194,7 +1194,7 @@ function netLost() {
 // The browser asks for the microphone the first time you hold it in a match, never before; once it says yes the mic
 // stays open, silent, till you leave the room, and is live only while the key is held. Each person's game calls each
 // of his side's people straight (WebRTC audio over PeerJS, as the match's own link); the host tells each of them who
-// those are, so nobody on the other side is ever called or heard. "Friends on the walkie" in the settings mutes them
+// those are, so nobody on the other side is ever called or heard. "Walkie online" in the settings mutes them
 // and keeps yours shut. The kids' callouts stay as they were.
 const NET_TALK_KEY = 'KeyT';
 const NetVoice = {

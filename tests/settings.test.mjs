@@ -14,7 +14,7 @@ const t0 = await page.evaluate(() => ({
   settings: { ...Settings },
 }));
 check('the title opens settings and stays on the title', t0.open && t0.mode === 'title', t0.mode);
-check('seven rows: mouse, aim, music, effects, field of view, invert, and (v1.367) the walkie online', t0.rows.length === 7 && /walkie/.test(t0.rows[6]), t0.rows);
+check('seven rows: mouse, aim, music, effects, field of view, invert, and (v1.367) the walkie online', t0.rows.length === 7 && /walkie/i.test(t0.rows[6]), t0.rows);
 check('defaults: 1×, 1×, 100%, 100%, 75°, off, on', JSON.stringify(t0.settings) ===
   JSON.stringify({ mouseSens: 1, aimSens: 1, music: 1, effects: 1, fov: 75, invertY: false, voiceChat: true }), t0.settings);
 await g.shot('settings-title');
