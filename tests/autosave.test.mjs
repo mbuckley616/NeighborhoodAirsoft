@@ -84,7 +84,11 @@ check('the three looked at, the note names the front door', t2a.ticked.length ==
 await walkTo('it => it.label === "Outside"');
 const t2b = await tour();
 check('walking up to the door is not enough', t2b.ticked.length === 3, t2b);
-await page.evaluate(() => { document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); closeMap(); stepGame(1 / 60); });
+// v1.374 (Found in play, critic v1.372): the note stayed up over the map, the briefing, the match and the result card
+const onMap = await page.evaluate(() => { document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); stepGame(1 / 60);
+  return { mode: Game.mode, shown: document.getElementById('roomTour').style.display === 'block' }; });
+check('out of the door, the map is open and the note is gone from over it (v1.374)', onMap.mode === 'map' && !onMap.shown, onMap);
+await page.evaluate(() => { closeMap(); stepGame(1 / 60); });
 const t2 = await tour();
 check('all four ticked, it says that is your room', t2.shown && t2.ticked.length === 4 && /That’s your room/.test(t2.text), t2);
 await g.spin(310);
@@ -100,6 +104,13 @@ const replay = await page.evaluate(() => { document.getElementById('titleStoryBt
 await key('Escape');
 const skipped = await card();
 check('the title\'s STORY plays them again, and Esc skips them', replay && !skipped.open && !skipped.up, { replay, skipped });
+
+// v1.374: a tour not yet done stays off the briefing and the match, and comes back home
+await page.evaluate(() => { Game.persist.roomTour = { ticked: [] }; });
+await g.scenario('winnmark_seth_house');
+await g.spin(2);
+const inMatch = await page.evaluate(() => ({ mode: Game.mode, shown: document.getElementById('roomTour').style.display === 'block' }));
+check('a new save\'s tour, not yet done: no note in a match (v1.374)', inMatch.mode === 'scenario' && !inMatch.shown, inMatch);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
