@@ -29,18 +29,18 @@ const all = await read();
 console.log('   ' + JSON.stringify(all));
 const kinds = await page.evaluate(() => ({ order: GUN_ORDER.map(gt => [gt, gunKind(gt)]), names: Object.fromEntries(GUN_ORDER.map(gt => [gt, GUN_MAGS[gt].displayName])) }));
 check('five chips: ALL and the four kinds, with their counts', JSON.stringify(all.chips) ===
-  '["ALL (27)","PISTOLS (4)","SHOTGUNS (3)","RIFLES (6)","AUTOMATICS (14)"]' && all.active === 'ALL', all.chips);
+  '["ALL (28)","PISTOLS (4)","SHOTGUNS (3)","RIFLES (6)","AUTOMATICS (15)"]' && all.active === 'ALL', all.chips);
 check('ALL: four headers in order, each once', JSON.stringify(all.groups.map(x => x.kind)) === '["PISTOLS","SHOTGUNS","RIFLES","AUTOMATICS"]', all.groups.map(x => x.kind));
-check('all 27 guns (v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 27
+check('all 28 guns (v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 28
   && kinds.order.every(([gt, k]) => all.groups.find(x => x.kind === k).guns.includes(kinds.names[gt])), all.groups);
 check('the pistols are the Spring Pistol, Six-Shooter, Bolt Pistol and Electric Pistol (v1.326)', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol"]', all.groups[0].guns);
-check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, P90 (v1.346), Vector (v1.348), MAC-10, AK-47, G36C (v1.371), AUG (v1.372) and M249 (v1.335)', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","P90","Vector","MAC-10","AK-47","G36C","AUG","M249"]', all.groups[3].guns);
+check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, P90 (v1.346), Vector (v1.348), MAC-10, AK-47, G36C (v1.371), M4 (v1.373), AUG (v1.372) and M249 (v1.335)', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","P90","Vector","MAC-10","AK-47","G36C","M4","AUG","M249"]', all.groups[3].guns);
 await g.shot('shop-gun-kinds-all');
 
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="AUTOMATICS"]').click());
 const auto = await read();
-check('AUTOMATICS shows only its fourteen (v1.335: the M249; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG), under its header', auto.active === 'AUTOMATICS' && auto.groups.length === 1
-  && auto.groups[0].kind === 'AUTOMATICS' && auto.groups[0].guns.length === 14, auto.groups);
+check('AUTOMATICS shows only its fifteen (v1.335: the M249; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4), under its header', auto.active === 'AUTOMATICS' && auto.groups.length === 1
+  && auto.groups[0].kind === 'AUTOMATICS' && auto.groups[0].guns.length === 15, auto.groups);
 await g.shot('shop-gun-kinds-auto');
 // a gun's details and back keep the chip
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-row .shop-item-buy').click());
@@ -52,7 +52,7 @@ await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[dat
 const pis = await read();
 check('PISTOLS shows its four', pis.groups.length === 1 && pis.groups[0].guns.length === 4, pis.groups);
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
-check('ALL shows the 27 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 27);
+check('ALL shows the 28 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 28);
 
 // v1.329 (backlog D.64, Michael 22 Oct: "reconsider the workbench menu, and have collapsible sections by Gun Type"): the
 // workbench's gun list under the same kinds, each header folding its section; a section with a gun you own starts open
@@ -74,7 +74,7 @@ const wb = () => page.evaluate(() => {
 const w0 = await wb();
 console.log('   workbench: ' + JSON.stringify(w0));
 check('workbench: a header for each kind, those with a gun you own open (PISTOLS 2 of 4, RIFLES 1 of 6), the rest shut',
-  JSON.stringify(w0.kinds) === '["PISTOLS open 2 of 4","SHOTGUNS shut 0 of 3","RIFLES open 1 of 6","AUTOMATICS shut 0 of 14"]', w0.kinds);
+  JSON.stringify(w0.kinds) === '["PISTOLS open 2 of 4","SHOTGUNS shut 0 of 3","RIFLES open 1 of 6","AUTOMATICS shut 0 of 15"]', w0.kinds);
 check('workbench: the open sections list their guns in the shop\'s order, nothing from the shut ones',
   JSON.stringify(w0.guns) === '["pistol","sixshooter","boltpistol","epistol","ar","famas","erifle","burst","sniper","l96"]', w0.guns);
 await page.evaluate(() => document.querySelector('#wbGunList .wb-kind[data-kind="SHOTGUNS"]').click());

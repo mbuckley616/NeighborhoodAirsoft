@@ -1,4 +1,4 @@
-// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327-v1.328 the Burst Rifle and the Semi-Auto Shotgun, and since v1.335-v1.348 batch 2's M249, L96, P90 and Vector, and since v1.371 batch 3's G36C and AUG, at the end), the Electric Pistol ($110) and the Electric
+// v1.326 (backlog D.63, Michael: A, batch 1): the electric semi-autos (and since v1.327-v1.328 the Burst Rifle and the Semi-Auto Shotgun, and since v1.335-v1.348 batch 2's M249, L96, P90 and Vector, and since v1.371 batch 3's G36C, AUG and M4, at the end), the Electric Pistol ($110) and the Electric
 // Rifle ($150). A battery cycles the spring, so nothing is cocked between shots: every pull fires, up to 5 and 6 a
 // second, where their spring kin (the Spring Pistol and the Spring Assault Rifle) fire, then want the slide or the
 // charging handle. Run dry, a new mag is racked in as on any gun. Checked: the shop, the spec against the kin, a
@@ -263,8 +263,8 @@ const lmgShop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + lmgShop.names.join(' · '));
-check('M249: last of the fourteen (v1.372) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
-  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 14 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
+check('M249: last of the fifteen (v1.373) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
+  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 15 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
 check('M249: you walk no slower with any gun (0.75), it is the heaviest (15 lb), and its BB is near the AK\'s', lmgShop.speed === 0.75 && lmgShop.speed <= lmgShop.minOther && lmgShop.weight > lmgShop.maxOtherWeight && Math.abs(lmgShop.vel[0] - lmgShop.vel[1]) <= 5, lmgShop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm249' }; });
 await g.scenario('bunratty_sean');
@@ -471,8 +471,8 @@ const g36Shop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + g36Shop.names.join(' · '));
-check('G36C: under AUTOMATICS after the AK-47, before the AUG (v1.372), with its picture, $260 from its page, in your hands',
-  g36Shop.names[g36Shop.names.indexOf('AK-47') + 1] === 'G36C' && g36Shop.names[g36Shop.names.indexOf('G36C') + 1] === 'AUG' && g36Shop.pic && g36Shop.paid === 260 && g36Shop.equipped === 'g36', g36Shop);
+check('G36C: under AUTOMATICS after the AK-47, before the M4 (v1.373), with its picture, $260 from its page, in your hands',
+  g36Shop.names[g36Shop.names.indexOf('AK-47') + 1] === 'G36C' && g36Shop.names[g36Shop.names.indexOf('G36C') + 1] === 'M4' && g36Shop.pic && g36Shop.paid === 260 && g36Shop.equipped === 'g36', g36Shop);
 check('G36C: against the AK faster (700 a minute, 600), tighter aimed (0.30, 0.35), a quicker walk (0.9, 0.85), a slower BB (52, 55) straight for 18 m (20), a 300 mag (350); the same hip spread',
   g36Shop.g36[0] === 700 && g36Shop.ak[0] === 600 && g36Shop.g36[5] < g36Shop.ak[5] && g36Shop.g36[3] > g36Shop.ak[3] && g36Shop.g36[1] < g36Shop.ak[1]
   && g36Shop.g36[2] < g36Shop.ak[2] && g36Shop.caps[0] === 300 && g36Shop.caps[1] === 350 && g36Shop.g36[6] === g36Shop.ak[6] && g36Shop.g36[4] === 'auto', g36Shop);
@@ -518,7 +518,7 @@ const augShop = await page.evaluate(() => {
   const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun };
   document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
   const U = getGunSpec('aug'), A = getGunSpec('ak47'), G = getGunSpec('g36');
-  const rifles = ['ar', 'famas', 'erifle', 'burst', 'ak47', 'g36', 'm249'].map(getGunSpec);
+  const rifles = ['ar', 'famas', 'erifle', 'burst', 'ak47', 'g36', 'm4', 'm249'].map(getGunSpec);   // v1.373: the M4
   out.aug = [U.cyclicRPM, U.muzzleVelocity, U.curveOnsetDistance, U.playerSpeedMult, U.fireMode, U.adsSpreadMult, U.baseSpread];
   out.ak = [A.cyclicRPM, A.muzzleVelocity, A.curveOnsetDistance, A.playerSpeedMult, A.fireMode, A.adsSpreadMult, A.baseSpread];
   out.g36rpm = G.cyclicRPM;
@@ -527,8 +527,8 @@ const augShop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + augShop.names.join(' · '));
-check('AUG: under AUTOMATICS after the G36C, before the M249, with its picture, $290 from its page, in your hands',
-  augShop.names[augShop.names.indexOf('G36C') + 1] === 'AUG' && augShop.names[augShop.names.indexOf('AUG') + 1] === 'M249' && augShop.pic && augShop.paid === 290 && augShop.equipped === 'aug', augShop);
+check('AUG: under AUTOMATICS after the M4 (v1.373), before the M249, with its picture, $290 from its page, in your hands',
+  augShop.names[augShop.names.indexOf('M4') + 1] === 'AUG' && augShop.names[augShop.names.indexOf('AUG') + 1] === 'M249' && augShop.pic && augShop.paid === 290 && augShop.equipped === 'aug', augShop);
 check('AUG: the fastest, straightest BB of the rifles (58 m/s, 22 m; the AK 55, 20), tighter aimed (0.28, 0.35), 650 a minute (the AK 600, the G36C 700), a 330 mag (350), the AK\'s hip spread, no under-barrel slot',
   augShop.aug[1] === 58 && augShop.aug[2] === 22 && augShop.fastest && augShop.aug[5] < augShop.ak[5] && augShop.aug[0] === 650 && augShop.ak[0] < 650 && augShop.g36rpm > 650
   && augShop.caps[0] === 330 && augShop.caps[1] === 350 && augShop.aug[6] === augShop.ak[6] && augShop.aug[4] === 'auto' && augShop.caps[2] === 0, augShop);
@@ -562,6 +562,63 @@ await g.shot('gun-aug-aimed');
 console.log('   aug ' + JSON.stringify(US));
 check('AUG: its own first-person gun, the mag behind the trigger, 330 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°)', US.mesh === 'aug' && US.bullpup && US.max === 330 && US.hands && US.sightErrDeg < 0.6, US);
 check('AUG: held down 2 s it fires 20-23 BBs (10.8 a second)', US.held2s >= 20 && US.held2s <= 23, US.held2s);
+// v1.373 (D.63, batch 3): the M4, the all-round automatic rifle, between the G36C and the AUG under AUTOMATICS
+const m4Shop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="AUTOMATICS"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'M4');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  const M = getGunSpec('m4'), A = getGunSpec('ak47'), G = getGunSpec('g36'), U = getGunSpec('aug');
+  out.m4 = [M.cyclicRPM, M.muzzleVelocity, M.curveOnsetDistance, M.playerSpeedMult, M.fireMode, M.adsSpreadMult, M.baseSpread];
+  out.ak = [A.cyclicRPM, A.muzzleVelocity, A.curveOnsetDistance, A.playerSpeedMult, A.fireMode, A.adsSpreadMult, A.baseSpread];
+  out.others = [G.cyclicRPM, U.cyclicRPM, G.adsSpreadMult, U.adsSpreadMult];
+  out.quickestRifle = ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96', 'ak47', 'g36', 'aug', 'm249'].every(gt => getGunSpec(gt).playerSpeedMult < M.playerSpeedMult);
+  out.caps = [GUN_MAGS.m4.baseCap, GUN_MAGS.ak47.baseCap, getGunAccessoryCap('m4').under || 0, GUN_WEIGHT.m4, GUN_WEIGHT.g36];
+  return out;
+});
+console.log('   AUTOMATICS: ' + m4Shop.names.join(' · '));
+check('M4: under AUTOMATICS after the G36C, before the AUG, with its picture, $275 from its page, in your hands',
+  m4Shop.names[m4Shop.names.indexOf('G36C') + 1] === 'M4' && m4Shop.names[m4Shop.names.indexOf('M4') + 1] === 'AUG' && m4Shop.pic && m4Shop.paid === 275 && m4Shop.equipped === 'm4', m4Shop);
+check('M4: the AK\'s BB (55 m/s, 20 m) at 720 a minute (the AK 600, more than the G36C and the AUG), aimed 0.32 (the AK 0.35, wider than the G36C and the AUG), the quickest walk of the rifles (0.92), a 300 mag, an under-barrel slot, the lightest rifle (6.5 lb)',
+  m4Shop.m4[0] === 720 && m4Shop.m4[1] === m4Shop.ak[1] && m4Shop.m4[2] === m4Shop.ak[2] && m4Shop.others[0] < 720 && m4Shop.others[1] < 720
+  && m4Shop.m4[5] === 0.32 && m4Shop.m4[5] < m4Shop.ak[5] && m4Shop.m4[5] > m4Shop.others[2] && m4Shop.m4[5] > m4Shop.others[3]
+  && m4Shop.m4[3] === 0.92 && m4Shop.quickestRifle && m4Shop.caps[0] === 300 && m4Shop.caps[2] === 1 && m4Shop.caps[3] < m4Shop.caps[4]
+  && m4Shop.m4[6] === m4Shop.ak[6] && m4Shop.m4[4] === 'auto', m4Shop);
+await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm4' }; });
+await g.scenario('bunratty_sean');
+const MS = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo };
+  for (let i = 0; i < 30; i++) step();
+  const a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown();
+  for (let i = 0; i < 120; i++) step();
+  Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp();
+  out.held2s = a - Game.gun.ammo;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  return out;
+});
+await g.shot('gun-m4-aimed');
+console.log('   m4 ' + JSON.stringify(MS));
+check('M4: its own first-person gun, 300 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°)', MS.mesh === 'm4' && MS.max === 300 && MS.hands && MS.sightErrDeg < 0.6, MS);
+check('M4: held down 2 s it fires 23-26 BBs (12 a second)', MS.held2s >= 23 && MS.held2s <= 26, MS.held2s);
 // v1.347 (Found in play, v1.336): the Spring Sniper Rifle's irons aimed 2.5° low (its aimed height stayed when v1.225
 // moved the front post to the muzzle); aimed, the post's tip is on the reticle as on the L96
 await page.evaluate(() => { Game.persist.owned.sniper = true; Game.persist.equipped.gun = 'sniper'; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'sniper' }; });
