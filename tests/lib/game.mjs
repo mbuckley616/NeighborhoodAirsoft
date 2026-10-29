@@ -97,7 +97,21 @@ export async function boot(opts = {}) {
     await page.evaluate(() => { isScenarioUnlocked = () => true; });
     await page.evaluate(id => enterScenario(id), id);
     await page.waitForFunction(() => { const b = document.getElementById('introBeginBtn'); return b && b.offsetParent !== null; }, null, { timeout: 90000 });
-    await page.evaluate(() => document.getElementById('introBeginBtn').click());
+    // 29 Oct (builder, issue #199): the page no longer asks headless Chromium for the lock at all (BEGIN, a click in a
+    // match, RESUME): a grant can come seconds late and be let go as late, and its events then read as Escape. The
+    // canvas's own requestPointerLock is a no-op from the first match on; a test that wants the real one deletes it.
+    // From BEGIN until the let-go below has settled, pointerlockchange events (a lock taken before, in the bedroom)
+    // are counted and kept from the game (a capture listener on window runs before the game's on document).
+    await page.evaluate(() => {
+      const c = Game.renderer.domElement;
+      if (!Object.prototype.hasOwnProperty.call(c, 'requestPointerLock')) c.requestPointerLock = function () {};
+      if (!window.__lockHold) {
+        window.__lockHold = { n: 0, hold: false };
+        window.addEventListener('pointerlockchange', e => { __lockHold.n++; if (__lockHold.hold) e.stopImmediatePropagation(); }, true);
+      }
+      __lockHold.n = 0; __lockHold.hold = true;
+      document.getElementById('introBeginBtn').click();
+    });
     // 18 Oct fix-up: 90 s, as the intro's wait above. BEGIN builds the match (and since v1.269 the kids' route grid):
     // 1-5 s locally for the night Hollow, and CI 86d93e2 timed out at 30 s on idle-ally's fourth match in one page.
     await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 90000 });
@@ -108,15 +122,20 @@ export async function boot(opts = {}) {
     // evaluate grows the browser by about 70 MB a second (1.4 GB in a 20 s busy loop with the lock, 0 without), so
     // three suites at once ran out of memory ("Target crashed"). Let go of a granted lock quietly (not a pause: the
     // game only pauses when it thought it held the lock), then mark it taken as above.
+    // 29 Oct (builder, issue #199): the let-go raced. Under load the grant's and the release's pointerlockchange could
+    // both land seconds late (6 s seen), after the 1 s wait had run out and the lock had been marked taken, and the game
+    // read the first as Escape: the match sat paused from its start, kids standing (4 of 12 matches in one page here;
+    // bellfield, ai-clock, pad-hints and about 26 suites red on main). Besides the no-op above, any lock still held is let
+    // go and its events held back until each grant has had its release (10 s at most); then the lock is marked taken
+    // and any pause shut.
     await page.evaluate(async () => {
-      for (let i = 0; i < 20 && !document.pointerLockElement; i++) await new Promise(r => setTimeout(r, 25));
-      if (document.pointerLockElement) {
-        // the grant's own pointerlockchange may still be queued: let it land first, or the let-go reads as Escape
-        for (let i = 0; i < 20 && !Game.mouse.locked; i++) await new Promise(r => setTimeout(r, 25));
-        Game.mouse.locked = false;
-        await new Promise(r => { document.addEventListener('pointerlockchange', r, { once: true }); document.exitPointerLock(); setTimeout(r, 1000); });
-      }
+      const wait = ms => new Promise(r => setTimeout(r, ms));
+      for (let i = 0; i < 20 && !document.pointerLockElement && __lockHold.n === 0; i++) await wait(25);
+      if (document.pointerLockElement) document.exitPointerLock();
+      for (let i = 0; i < 400 && (document.pointerLockElement || __lockHold.n % 2); i++) await wait(25);
+      __lockHold.hold = false;
       Game.mouse.locked = true;
+      if (Game.paused) closePauseMenu();
     });
   };
   g.spin = (frames, dt = 1 / 60) => page.evaluate(([n, dt]) => { for (let i = 0; i < n && Game.mode !== 'title'; i++) stepGame(dt); return Game.mode; }, [frames, dt]);

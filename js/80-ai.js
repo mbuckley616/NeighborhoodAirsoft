@@ -275,7 +275,7 @@ function nearestShieldingCover(e, dir, maxDist = 14) {
   // Hollow 3v3 ran from inside her fort for the one cover in reach, past its back wall, wedged in the corner, and
   // held fire into the wall from there for the rest of the round.
   let bestW = null, bestWD = Infinity, bestAnyW = null, bestAnyWD = Infinity;
-  const threat = { x: e.pos.x - dir.x, z: e.pos.z - dir.z };
+  const threat = { x: e.pos.x + dir.x * 20, z: e.pos.z + dir.z * 20 };   // v1.387: the shooter's side (was e.pos - dir)
   for (const c of cover) {
     if ((c.h || 0) < 0.5 || c === e.homeCover || vipHoldsCover(e, c)) continue;   // v1.282: not a VIP's
     const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
@@ -291,6 +291,140 @@ function nearestShieldingCover(e, dir, maxDist = 14) {
     }
   }
   return bestW || bestAnyW;
+}
+
+// v1.387 (D.81, Michael: A, by temperament): FIRE PRESSURE. Each BB that passes within 1.5 m of a kid it could hit adds
+// the weight of the gun that fired it, a pistol 1, a rifle, shotgun or SMG 2, a heavy automatic (the AK, the M249, the
+// G36C, the AUG, the M4) 3, and the sum fades by e every 1.5 s. Past FIRE_PRESS_LIMIT he reacts by his aggression (the
+// one he already has): under 0.4 he camps (down in his cover, peeking less, firing over the top), 0.4-0.7 he falls back
+// to cover farther from the fire, firing back as he goes, over 0.7 he shrugs it off and pushes. Snipers and defenders
+// camp: they hold their spot by design. FIRE_PRESS_CALM quiet seconds and he is himself again.
+const FIRE_PRESS_R = 1.5, FIRE_PRESS_TAU = 1.5, FIRE_PRESS_LIMIT = 8, FIRE_PRESS_CALM = 3;
+function bbPressWeight(bb) {
+  const spec = bb.owner === 'player' ? GUN_SPECS[Game.gun.type] : GUN_SPECS[bb.enemyRef && bb.enemyRef.weapon];
+  if (!spec) return 2;
+  if (spec.fireMode === 'auto' && (spec.weightClass === 'heavy' || spec.weightClass === 'very_heavy')) return 3;
+  if (spec.fireMode !== 'auto' && spec.weightClass === 'light') return 1;
+  return 2;
+}
+function firePressure(e, now) {
+  return (e._fireP || 0) * Math.exp(-Math.max(0, now - (e._firePT || now)) / FIRE_PRESS_TAU);
+}
+// called by updateBBs for a live BB within FIRE_PRESS_R of e; each BB counts once a kid
+function noteFirePressure(e, bb, now) {
+  if (!bb._pressed) bb._pressed = [];
+  if (bb._pressed.includes(e)) return;
+  bb._pressed.push(e);
+  e._fireP = firePressure(e, now) + bbPressWeight(bb);
+  e._firePT = now;
+  e._fireFrom = { x: bb.spawnPos.x, z: bb.spawnPos.z };
+}
+// the nearest cover minD-maxD m off that stands at least `gain` m farther from the fire than he does (falling back: 3-16 m
+// off, 2 m farther; camping: within 8 m, no more than 1 m nearer), and that he can walk to
+function fallBackCover(e, from, gain = 2, minD = 3, maxD = 16) {
+  const cover = Game.scenario && Game.scenario.cover;
+  if (!cover) return null;
+  const myD = Math.hypot(e.pos.x - from.x, e.pos.z - from.z);
+  let best = null, bestD = Infinity;
+  for (const c of cover) {
+    if ((c.h || 0) < 0.5 || c === e.homeCover || vipHoldsCover(e, c) || teammateHoldsCover(e, c)) continue;
+    const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+    const d = Math.hypot(cx - e.pos.x, cz - e.pos.z);
+    if (d < minD || d > maxD || d >= bestD) continue;
+    if (Math.hypot(cx - from.x, cz - from.z) < myD + gain) continue;
+    const sp = coverStandPos(c, from, 0.35);
+    if (!kidWalkClear(e, sp.x, sp.z)) continue;
+    best = c; bestD = d;
+  }
+  return best;
+}
+function kidFallBack(e, uf) {
+  const from = uf.from;
+  uf.moves = (uf.moves || 0) + 1;
+  uf.movedAt = aiNow();
+  const c = fallBackCover(e, from);
+  if (c) {
+    e.state = 'repositioning';
+    e.stateTime = 0;
+    e.targetPos = coverStandPos(c, from, 0.35);
+    e.homeCover = c;
+    if (!e.coverMemory) e.coverMemory = [];
+    e.coverMemory.push(c);
+    if (e.coverMemory.length > 2) e.coverMemory.shift();
+    return;
+  }
+  // no cover behind him: scramble straight away from the fire, 5 m if the way is clear, else get down where he is
+  const ax = e.pos.x - from.x, az = e.pos.z - from.z, al = Math.hypot(ax, az) || 1;
+  const tx = e.pos.x + ax / al * 5, tz = e.pos.z + az / al * 5;
+  if (kidWalkClear(e, tx, tz) && !collidesObstacles(tx, tz, 0.35)) {
+    e.state = 'repositioning';
+    e.stateTime = 0;
+    e.targetPos = new THREE.Vector3(tx, 0, tz);
+  } else {
+    e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1.2 + gameRandom() * 0.8;
+    setKidCrouch(e.mesh, 1);
+  }
+}
+// once a step, before the state machine: start, keep up or end his reaction to the fire on him
+function kidUnderFire(e, aggression, dt) {
+  const now = aiNow();
+  const uf = e._underFire;
+  if (uf) {
+    if (now - (e._firePT || 0) > FIRE_PRESS_CALM || e.state === 'retreating' || e.state === 'deploying' || e._flagRun || e._orderRun) {
+      e._underFire = null;
+      return;
+    }
+    if (e._fireFrom) uf.from = e._fireFrom;
+    if (uf.kind === 'fall') {
+      if (e.state === 'repositioning') {
+        // firing back as he goes: a loose round toward where the fire comes from, chest high, wide
+        e._ufShotCd = (e._ufShotCd || 0) - dt;
+        if (e._ufShotCd <= 0) {
+          e._ufShotCd = 0.45 + gameRandom() * 0.5;
+          spawnEnemyBB(e, new THREE.Vector3(uf.from.x + (gameRandom() - 0.5) * 3, (e.pos.y || 0) + 1.0, uf.from.z + (gameRandom() - 0.5) * 3));
+        }
+      } else if (e.state === 'hiding' && uf.moves < 3 && now - uf.movedAt > 2.5 && firePressure(e, now) > FIRE_PRESS_LIMIT * 1.5) {
+        kidFallBack(e, uf);   // still pinned where he fell back to: back again (three times an episode at most)
+      }
+    }
+    return;
+  }
+  if (e.noFire || e.vip || e._flagRun || e._orderRun || (Game.scenario && Game.scenario.race)) return;
+  if (e.state !== 'hiding' && e.state !== 'peeking' && e.state !== 'shooting' && e.state !== 'advancing' && e.state !== 'repositioning') return;
+  if (!e._fireFrom || firePressure(e, now) < FIRE_PRESS_LIMIT) return;
+  const kind = (aggression < 0.4 || e.weapon === 'sniper' || e.role === 'defender') ? 'camp' : (aggression <= 0.7 ? 'fall' : 'push');
+  const nu = e._underFire = { kind, since: now, from: e._fireFrom, moves: 0, movedAt: now };
+  e._underFireCount = (e._underFireCount || 0) + 1;   // tests
+  e._underFireKinds = e._underFireKinds || {};
+  e._underFireKinds[kind] = (e._underFireKinds[kind] || 0) + 1;
+  if (kind === 'camp') {
+    const dir = { x: nu.from.x - e.pos.x, z: nu.from.z - e.pos.z }, dl = Math.hypot(dir.x, dir.z) || 1;
+    dir.x /= dl; dir.z /= dl;
+    if (kidInCover(e) && coverShieldsFrom(e.homeCover, e.pos, dir)) {
+      e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1.2 + gameRandom() * 0.8;
+      setKidCrouch(e.mesh, 1);
+    } else if (e.role !== 'defender') {
+      const c = fallBackCover(e, nu.from, -1, 0, 8);   // the nearest cover, not toward the fire
+      if (c) {
+        e.state = 'repositioning'; e.stateTime = 0;
+        e.targetPos = coverStandPos(c, nu.from, 0.35);
+        e.homeCover = c;
+        if (!e.coverMemory) e.coverMemory = [];
+        e.coverMemory.push(c);
+        if (e.coverMemory.length > 2) e.coverMemory.shift();
+      } else {
+        e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1.2 + gameRandom() * 0.8;
+        setKidCrouch(e.mesh, 1);
+      }
+    } else {
+      e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1.2 + gameRandom() * 0.8;
+      setKidCrouch(e.mesh, 1);
+    }
+  } else if (kind === 'fall') {
+    kidFallBack(e, nu);
+  } else if (e.state !== 'advancing' && e.state !== 'shooting') {
+    e.state = 'advancing'; e.stateTime = 0; e.advanceCheckTimer = 0;
+  }
 }
 
 // v1.67: TEAMMATE CROWDING PENALTY. Returns a positive penalty that grows the
@@ -1290,6 +1424,7 @@ function updateEnemies(dt) {
     // Defenders are exempt entirely (they hold their fort by design).
     // Aggressive kids push a little closer still (~0.85x at max aggression).
     let ENGAGE_PUSH = ENGAGE_PUSH_BASE * (1.15 - aggression * 0.3);
+    if (e._underFire && e._underFire.kind === 'push') ENGAGE_PUSH *= 0.6;   // v1.387 (D.81): pushing, he closes right in
     const insidePushDist = distToPlayer <= ENGAGE_PUSH;
 
     // v1.74: RANGED AUTO-RIFLE "fire while you close." The AK (and spring AR) are
@@ -1346,6 +1481,9 @@ function updateEnemies(dt) {
     // We achieve this through repositioning bias below (target cover that's closer to
     // player). Sniper kids want to *hold* and won't push.
 
+    // v1.387 (D.81): under heavy fire he camps, falls back or pushes, by his aggression (kidUnderFire, above)
+    kidUnderFire(e, aggression, dt);
+
     // ── v1.67: REACT TO INCOMING FIRE ────────────────────────────────────────
     // A fresh near-miss (stamped by updateBBs within the last ~0.4s) makes the
     // kid respond, scaled by aggression as a "bravery" factor:
@@ -1372,7 +1510,9 @@ function updateEnemies(dt) {
       // Brave kids won't let it interrupt an active advance/peek/shoot; timid kids will.
       const interruptible = !committed && ((aggression < 0.5) ||
         (e.state !== 'advancing' && e.state !== 'peeking' && e.state !== 'shooting'));
-      if (fresh && reactCdOk && interruptible && e.weapon !== 'sniper') {
+      // v1.387 (D.81): not while he falls back or pushes under heavy fire (it would turn him round)
+      const ufBusy = e._underFire && e._underFire.kind !== 'camp';
+      if (fresh && reactCdOk && interruptible && e.weapon !== 'sniper' && !ufBusy) {
         e._reactCd = now67;
         const dir = e._incomingDir;
         const inCover = kidInCover(e);
@@ -1406,7 +1546,8 @@ function updateEnemies(dt) {
           if (newCover) {
             e.state = 'repositioning';
             e.stateTime = 0;
-            e.targetPos = coverStandPos(newCover, { x: e.pos.x - dir.x, z: e.pos.z - dir.z }, 0.35);
+            // v1.387: stand on the cover's far side from the shooter (dir points at him); it was e.pos - dir, the near side
+            e.targetPos = coverStandPos(newCover, { x: e.pos.x + dir.x * 20, z: e.pos.z + dir.z * 20 }, 0.35);
             e.homeCover = newCover;
             if (!e.coverMemory) e.coverMemory = [];
             e.coverMemory.push(newCover);
@@ -1561,7 +1702,8 @@ function updateEnemies(dt) {
           // use the wider fire-hold band here too (insideFireHold) so an AK gunner
           // keeps stringing bursts at the cover you ducked behind from range.
           const canEngageNow = hasShotFromHere || (e._recentlySpotted && insideFireHold && !inLongRange);
-          if (!canEngageNow) {
+          // v1.387 (D.81): camping or fallen back under heavy fire, he stays in his cover rather than marching out
+          if (!canEngageNow && !(e._underFire && e._underFire.kind !== 'push')) {
             // Either can't see the player, or they're farther than this weapon
             // wants to fight from → march in to close the distance.
             e.state = 'advancing';
@@ -1572,7 +1714,8 @@ function updateEnemies(dt) {
           // canEngageNow is true → fall through to the normal peek cycle below.
         }
 
-        if (e.stateTime > e.nextStateChange) {
+        // v1.387 (D.81): camping (or fallen back) under heavy fire, he stays down twice as long between peeks
+        if (e.stateTime > e.nextStateChange * (e._underFire && e._underFire.kind !== 'push' ? 2 : 1)) {
           e.state = 'peeking';
           e.stateTime = 0;
           // v1.21: playerSpotted — kid calls out as they peek. Only if in
@@ -2112,6 +2255,7 @@ function updateEnemies(dt) {
           // v1.122: three pulls in a row held at a blocked line (tests/cover-fire's Hollow 3v3: one kid in a
           // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
           let movedByHolds = false;
+          if (e._underFire && e._underFire.kind !== 'push') repositionChance = 0;   // v1.387 (D.81): he keeps his cover
           if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
           if (gameRandom() < repositionChance) {
             // Only consider cover within reposition range of current position.
