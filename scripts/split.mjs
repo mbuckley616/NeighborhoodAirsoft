@@ -65,6 +65,7 @@ export const CUTS = [
   ['90-progression.js',   'const PIN_SCENARIO_GROUPS',           'maps'],  // PIN_SCENARIO_GROUPS, ZONE_LADDER, isScenarioUnlocked
   ['92-summer-crew.js',   'const SUMMER_YEAR',                   'play'],  // the summer calendar and texts, the crew
   ['94-pickup-online.js', 'const PICKUP_MAPS',                   'play'],  // the Pickup Game board, online play
+  ['95-coop.js',          'const COOP_SEND_SEC',                 'play'],  // v1.380 (D.73): co-op, a friend in your room and your matches
   ['96-phone.js',         'function isRivalMatch(',              'play'],  // the rival's score, the phone, teammates' cards
   ['97-map-screen.js',    'function scenarioLockReason(',        'maps'],  // the map screen's cards, briefs and pins
   ['98-boot.js',          'function cleanupScenarioScene(',      'core'],  // the result screen's buttons, closing buttons, the first tick()

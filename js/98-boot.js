@@ -14,9 +14,10 @@ function cleanupScenarioScene() {
 
 document.getElementById('returnBtn').addEventListener('click', () => {
   document.getElementById('resultScreen').classList.remove('active');
-  if (Net.active) netClose();   // v1.230 (D.2)
+  if (Net.active && !Net.coop) netClose();   // v1.230 (D.2) (v1.381: a friend over stays over)
   cleanupScenarioScene();
   enterBedroom();
+  if (Net.active && Net.coop) coopHostHome();   // v1.381 (D.73): the host home, his friend's game follows
 });
 
 // v1.39: result-screen navigation — replay / previous / next without first
@@ -31,7 +32,7 @@ function resultNavTo(scenarioId) {
   enterScenario(scenarioId);
 }
 document.getElementById('navAgainBtn').addEventListener('click', () => {
-  if (Net.active) { netRematch(); return; }   // v1.366 (D.67): online, REMATCH takes the room back to the board
+  if (Net.active && !Net.coop) { netRematch(); return; }   // v1.366 (D.67): online, REMATCH takes the room back to the board
   resultNavTo(Game._lastScenarioId);
 });
 document.getElementById('navPrevBtn').addEventListener('click', () => {

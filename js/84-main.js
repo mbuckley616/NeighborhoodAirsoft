@@ -271,7 +271,8 @@ function stepGame(dt) {
   pollGamepad(dt);   // v1.241 (D.38)
   updateBedroomSettingsBtn();   // v1.192: SETTINGS top right in the bedroom while the mouse is free
   if (Game.mode !== 'bedroom') updateRoomTour(0);   // v1.374: the room-tour note hides off the bedroom (updateInteractables runs only in it)
-  if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);   // v1.132: the Loadout screen's kid turns
+  if (Game.mode === 'loadoutMgr') updateLoadoutKid(dt);
+  if (Net.active && Net.coop && Game.mode !== 'scenario') coopStep(dt);   // v1.380 (D.73): a friend over, in your room   // v1.132: the Loadout screen's kid turns
   if (Game.mode === 'bedroom') {
     updatePlayer(dt);
     updateInteractables(dt);
@@ -289,7 +290,7 @@ function stepGame(dt) {
         }
       }
     }
-  } else if (Game.mode === 'scenario' && (Net.active || (!Game.forfeitAsk && !Game.paused))) {   // v1.208: paused while F asks (v1.239: and in the pause menu; v1.230: never online, your friend's game runs on)
+  } else if (Game.mode === 'scenario' && ((Net.active && Net.phase !== 'coop') || (!Game.forfeitAsk && !Game.paused))) {   // v1.381: a match played alone with a friend at home pauses as any   // v1.208: paused while F asks (v1.239: and in the pause menu; v1.230: never online, your friend's game runs on)
     updatePlayer(dt);
     updateLadderPrompt();   // v1.142
     updateGun(dt);

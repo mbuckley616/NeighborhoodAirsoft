@@ -45,14 +45,17 @@ function openPhone() {
   const body = document.getElementById('modalBody');
   body.style.whiteSpace = 'normal';
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  body.innerHTML = `<div class="ph-screen">${texts.map(t => {
+  // v1.380 (D.73): CO-OP, a friend over (95-coop), above the texts
+  const coopLbl = Net.active && Net.coop ? (Coop.other ? (Net.role === 'host' ? `CO-OP · ${Coop.other.name} is over` : `CO-OP · at ${Coop.other.name}’s`) : 'CO-OP · waiting…') : 'CO-OP · have a friend over';
+  body.innerHTML = `<div class="ph-ask ph-coop-btn"><button id="phCoopBtn">${esc(coopLbl)}</button></div><div class="ph-screen">${texts.map(t => {
     const d = summerDate(t.day);
     return `<div class="ph-msg${t.read ? '' : ' new'}" data-id="${t.id}">
       <div class="ph-head"><span class="ph-from">${t.from.toUpperCase()}</span>${t.read ? '' : '<span class="ph-new">NEW</span>'}
         <span class="ph-date">${d.weekday.slice(0, 3)} ${d.date} ${SUMMER_MONTHS[d.month].name.slice(0, 3)}</span></div>
       <div class="ph-text">${esc(t.text)}</div>${phoneAskHTML(t)}</div>`;
   }).join('')}</div>`;
-  body.querySelectorAll('.ph-ask button').forEach(b => b.addEventListener('click', () => phoneAnswer(b.dataset.kid, b.dataset.yes === '1', b)));
+  body.querySelectorAll('.ph-msg .ph-ask button').forEach(b => b.addEventListener('click', () => phoneAnswer(b.dataset.kid, b.dataset.yes === '1', b)));
+  body.querySelector('#phCoopBtn').addEventListener('click', () => openCoopPanel());   // v1.380
   document.querySelector('#modalScreen .modal-card').classList.add('phone');
   document.querySelector('#modalScreen .modal-card').classList.remove('nb-paper');   // v1.285 (D.46): the phone is a phone, not paper
   document.getElementById('modalScreen').classList.add('active');

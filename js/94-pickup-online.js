@@ -296,6 +296,7 @@ const Net = {
   me: null, people: [], kids: { A: [], B: [] }, opts: null, lobby: null, roster: null, ents: new Map(), nextSlot: 1,
   ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0, bagSaved: null, hudT: 0,
   makeTransport: null,   // set below to netPeerTransport
+  coop: false, panel: null,   // v1.380 (D.73): a co-op link (95-coop), and which screen shows the link's state, the board's or the phone's
 };
 function netVersion() { const v = document.querySelector('#titleScreen .version, .version'); return v ? v.textContent.trim() : '?'; }
 function netNewCode() { let s = ''; for (let i = 0; i < 4; i++) s += NET_CODE_LETTERS[Math.floor(gameRandom() * NET_CODE_LETTERS.length)]; return s; }
@@ -429,6 +430,8 @@ const NET_ERRORS = {
   ver: 'You and your friend have different versions of the game. Both of you reload the page and try again.',
   full: 'That room is full.',
   started: 'That room’s match has started. Join when it is back in the room.',
+  kind: 'That code is for something else: a Pickup Game room joins from the board, co-op from the phone.',   // v1.380 (D.73)
+  busy: 'Your friend is out playing a match. Try again when they’re home.',
 };
 
 // --- the room: who is on which side, and the kids who fill the rest ---
@@ -488,6 +491,7 @@ function netMoveSide(p, side) {
 
 // --- the panel on the Pickup Game board ---
 function netPanelHTML() {
+  if (Net.active && Net.coop) return `<div class="pk-board"><div class="pk-note">A friend is over (co-op). Send them home from your phone to play online.</div><div class="pk-row"><button class="pk-opt" id="netBackBtn">◀ BACK TO THE BOARD</button></div></div>`;   // v1.380
   const busy = Net.phase === 'lobby', inRoom = busy && (Net.role === 'host' ? !!Net.code : !!Net.lobby);
   const status = Net.error ? `<div class="pk-net-err" id="netStatus">${NET_ERRORS[Net.error] || NET_ERRORS.net}</div>`
     : busy && !inRoom ? `<div class="pk-note" id="netStatus">${Net.role === 'host' ? 'Opening a room…' : 'Looking for the room…'}</div>` : '<div class="pk-note" id="netStatus"></div>';
@@ -542,6 +546,7 @@ function netRoomHTML() {
   return html;
 }
 function renderNetPanel() {
+  if (Net.panel === 'coop' || Net.coop) { renderCoopPanel(); return; }   // v1.380 (D.73): a co-op link's state shows on the phone
   const body = document.getElementById('modalBody');
   if (!body || !document.getElementById('modalScreen').classList.contains('active')) return;
   if (Game.mode !== 'modal') return;
@@ -580,12 +585,13 @@ function netPanelClick(grp, v) {
 function openNetPanel() {
   try { const n = localStorage.getItem('na_online_name'); if (n) Net.name = netCleanName(n); } catch (e) {}
   Net.error = null;
+  Net.panel = 'pickup';   // v1.380
   document.getElementById('modalTitle').textContent = 'Pickup Game: Online';
   renderNetPanel();
 }
-function netOpen(role, code) {
+function netOpen(role, code, coop = false) {   // v1.380 (D.73): `coop`, a friend coming over (95-coop)
   netClose();
-  Object.assign(Net, { active: true, role, phase: 'lobby', code, error: null, me: role === 'host' ? NET_HOST_ID : null,
+  Object.assign(Net, { active: true, role, coop: !!coop, phase: coop ? 'coop' : 'lobby', code, error: null, me: role === 'host' ? NET_HOST_ID : null,
     people: [], kids: { A: [], B: [] }, lobby: null, roster: null, nextSlot: 1 });
   netResetMatch();
   if (role === 'host') {
@@ -593,7 +599,7 @@ function netOpen(role, code) {
     netHostOpts(); netNormalizeKids(false);
   }
   const tx = Net.makeTransport(role, code, {
-    ready: c => { if (Net.tx !== tx) return; Net.code = c; if (role === 'guest') netSend({ t: 'hello', ver: netVersion(), name: netCleanName(Net.name), look: Game.persist.look, gun: Game.persist.equipped.gun }); renderNetPanel(); },
+    ready: c => { if (Net.tx !== tx) return; Net.code = c; if (role === 'guest') netSend({ t: 'hello', ver: netVersion(), name: netCleanName(Net.name), look: Game.persist.look, gun: Game.persist.equipped.gun, coop: coop ? 1 : 0 }); renderNetPanel(); },
     connected: () => {},
     data: (m, pid) => { if (Net.tx === tx) netReceive(m, pid); },
     closed: pid => { if (Net.tx !== tx) return; if (role === 'host') netDropped(pid); else netLost(); },
@@ -601,7 +607,7 @@ function netOpen(role, code) {
     voiceIn: (pid, st) => { if (Net.tx === tx) netVoiceIn(pid, st); },
     error: kind => {
       if (Net.tx !== tx) return;
-      if (kind === 'taken' && role === 'host' && (Net._tries = (Net._tries || 0) + 1) < 4) { netOpen('host', netNewCode()); return; }
+      if (kind === 'taken' && role === 'host' && (Net._tries = (Net._tries || 0) + 1) < 4) { netOpen('host', netNewCode(), coop); return; }
       netClose(); Net.error = kind; renderNetPanel();
     },
   });
@@ -627,7 +633,8 @@ function netClose() {
   if (tx) { try { tx.close(); } catch (e) {} }
   netVoiceStop(true);   // v1.370: and the browser's mic is let go
   if (Net.bagSaved != null) { Game.persist.bag = Net.bagSaved; Net.bagSaved = null; }
-  Object.assign(Net, { active: false, role: null, phase: 'idle', people: [], lobby: null, me: null });
+  Object.assign(Net, { active: false, role: null, phase: 'idle', people: [], lobby: null, me: null, coop: false });
+  coopReset();   // v1.380 (D.73): a friend who was over is gone
   netResetMatch();
   netHud('');
   const again = document.getElementById('navAgainBtn');
@@ -638,6 +645,7 @@ function netDropped(pid) {
   const p = Net.people.find(x => x.pid === pid);
   if (!p || p.gone) return;
   p.gone = true;
+  if (Net.phase === 'coop') { Net.people.splice(Net.people.indexOf(p), 1); coopGone(p.name); return; }   // v1.380 (D.73): he went home
   if (Net.phase === 'lobby') { Net.people.splice(Net.people.indexOf(p), 1); netRoomChanged(false); return; }
   const e = Net.ents.get(p.id);
   if (e && (Net.phase === 'begin' || Net.phase === 'play')) {
@@ -648,6 +656,7 @@ function netDropped(pid) {
     netSendOthers({ t: 'gone', id: p.id, name: p.name });
     if (Net.phase === 'begin' && Net.localReady && netAllReady()) netGo();
   }
+  if (Net.coop) { Net.people.splice(Net.people.indexOf(p), 1); coopReset(); }   // v1.381 (D.73): and co-op is over
 }
 // v1.366 (D.2 step 3): his kid stays where he is, with his look, his gun and his lives left, and the host's game plays him
 function netBotTakeover(e) {
@@ -672,10 +681,13 @@ function netReceive(m, pid) {
   if (!m || typeof m !== 'object' || typeof m.t !== 'string') return;
   const host = Net.role === 'host';
   const from = host ? Net.people.find(p => p.pid === pid && !p.gone) : null;
+  if (Net.coop && coopReceive(m, pid)) return;   // v1.380 (D.73): co-op's own words
   switch (m.t) {
     case 'hello': {   // a friend is in the room (host)
       if (!host || Net.people.some(p => p.pid === pid)) return;
+      if (Net.coop) { coopHello(m, pid); return; }   // v1.380 (D.73): a friend at your door
       const nope = why => { netSend({ t: 'nope', why }, pid); if (Net.tx && Net.tx.drop) Net.tx.drop(pid); };
+      if (m.coop) return nope('kind');
       if (m.ver !== netVersion()) return nope('ver');
       if (Net.phase !== 'lobby') return nope('started');
       const max = pickupMaxSize(netMap());
@@ -719,6 +731,7 @@ function netReceive(m, pid) {
     case 'ready':
       if (!host || !from) return;
       Net.ready.add(from.id);
+      if (Net.coop) Coop.friendArmor = Math.max(0, Math.min(6, m.a | 0));   // v1.381 (D.73, 4A): his eyewear's extra hits
       if (Net.localReady && netAllReady()) netGo();
       return;
     case 'go': {
@@ -766,7 +779,7 @@ function netReceive(m, pid) {
       if (Game.scenario.stats) Game.scenario.stats.hitOnYou++;
       playHitOnPlayer(); flashDamage();
       Game.scenario.playerRespawns = Math.max(0, (m.r | 0) - 1);
-      if (P.hitsTaken < P.maxHits) startPlayerWalkHome(true);   // v1.332 (B.15): on foot (it counts the respawn back up to m.r)
+      if (P.hitsTaken < P.maxHits) { if (!Net.coop || coopWalksHome()) startPlayerWalkHome(true); }   // v1.332 (B.15): on foot (it counts the respawn back up to m.r) (v1.381: in co-op, where the match sends you home)
       else netPlayerOut();
       updateHealthHud();
       return;
@@ -814,6 +827,7 @@ function netReceive(m, pid) {
     case 'end': {
       if (Net.phase !== 'play' && Net.phase !== 'begin') return;
       if (host) {   // a guest gave up the match (F): he is gone, and his kid plays on
+        if (from && Net.coop) { coopFriendQuit(from); return; }   // v1.381 (D.73): a friend over only sits this one out
         if (from) { netDropped(pid); if (Net.tx && Net.tx.drop) Net.tx.drop(pid); }
         return;
       }
@@ -924,7 +938,7 @@ function netBegin(btn, built, begin) {
   const others = Net.roster.filter(r => r.human && r.id !== Net.me);
   btn.textContent = `WAITING FOR ${others.length === 1 ? others[0].name.toUpperCase() : waitFor}…`;
   btn.disabled = true;
-  if (Net.role === 'guest') netSend({ t: 'ready' });
+  if (Net.role === 'guest') netSend(Net.coop ? { t: 'ready', a: getArmorBonusHits() } : { t: 'ready' });   // v1.381: co-op, with your eyewear's hits
   else if (netAllReady()) netGo();
 }
 // Everyone's start: the host's at the map's start, a friend's at his spot (Blue's beside the host, as allies start;
@@ -948,14 +962,16 @@ function netLaunch() {
   if (!Net.begin) return;
   const go = Net.begin; Net.begin = null;
   // a full bag for the match, and yours back as it was after it (endScenario)
-  Net.bagSaved = Game.persist.bag;
-  Game.persist.bag = Math.max(Game.persist.bag, 2000);
+  if (!Net.coop || Net.role === 'guest') {   // v1.381 (D.73): co-op's host plays from his own bag, as in any match of his
+    Net.bagSaved = Game.persist.bag;
+    Game.persist.bag = Math.max(Game.persist.bag, 2000);
+  }
   go();
 }
 // From startScenario: lives as the board says (no armor bonus online), each at his own start
 function netAfterStart() {
   const P = Game.player, S = Net.starts || {}, host = Net.role === 'host';
-  P.maxHits = Net.opts.lives;
+  if (!Net.coop) P.maxHits = Net.opts.lives;   // v1.381 (D.73): co-op keeps the match's lives and your eyewear's
   P._netOut = false;
   if (!host && S[Net.me]) {
     P.pos.copy(S[Net.me]);
@@ -973,9 +989,10 @@ function netAfterStart() {
     if (!e.remote) continue;
     const at = host ? e._netStartAt : S[id];
     if (at) { e.pos.copy(at); e._netStart = at.clone(); }
-    if (r && r.human) e.lives = Net.opts.lives;
+    if (r && r.human && !Net.coop) e.lives = Net.opts.lives;
     e.state = 'online';
   }
+  if (Net.coop) coopAfterStart();   // v1.381
   Net.phase = 'play';
   Net.sendT = 0;
   updateHealthHud();
@@ -987,7 +1004,7 @@ function netPlayerOut() {
   if (P._netOut) return;
   P._netOut = true;
   if (!P._goingHome) startPlayerWalkHome(true);
-  if (Net.role === 'host') checkWinCondition();
+  if (Net.role === 'host') { if (Net.coop) coopCheckOut(); else checkWinCondition(); }   // v1.381 (D.73): co-op is lost when both of you are out
 }
 // Once a step in a match: graces run down, and you send where you are (a guest) or where everyone is (the host)
 function netStep(dt) {
@@ -1066,14 +1083,15 @@ function netTagRemote(bb, c) {
   if (bb.owner === 'player') showHitMarker(c);   // v1.321 (D.60)
   playHitOnEnemy();
   c.hitFlash = 0.6;
-  c._netResp = (c._netResp || 0) + 1;
-  if (c.lives > 0) c._graceT = VIP_GRACE;   // till his word that he is walking home comes back
+  const walks = !Net.coop || coopWalksHome();   // v1.381 (D.73): in co-op a tag sends him home only where the match says so
+  if (walks) c._netResp = (c._netResp || 0) + 1;
+  if (c.lives > 0) c._graceT = walks ? VIP_GRACE : 0;   // till his word that he is walking home comes back
   else c.health = 0;
-  if (c._netT) c._netT.g = 2;   // v1.332: no jump to his start; he walks there, gun up
-  netSend({ t: 'tag', n: Net.opts.lives - c.lives, r: c._netResp }, c._netPid);
+  if (c._netT && walks) c._netT.g = 2;   // v1.332: no jump to his start; he walks there, gun up
+  netSend({ t: 'tag', n: (c._netMax || Net.opts.lives) - c.lives, r: c._netResp || 0 }, c._netPid);
   netTaggedBy(bb, c);
   updateRosterHud();
-  if (c.lives <= 0) checkWinCondition();
+  if (c.lives <= 0) { if (Net.coop) coopCheckOut(); else checkWinCondition(); }
   return true;
 }
 // Another player's kid (or, in a guest's game, any kid), moved to where his game says he is, posed as a kid who walks,
@@ -1120,10 +1138,12 @@ function netDriveRemote(e, dt) {
 // From endScenario: the host tells everyone how it ended (Blue's result: each guest's game reads it for his side); a
 // guest who leaves (F) tells the host, whose game hands his spot to his kid
 function netEnded(outcome) {
+  if (Net.coop && Net.phase === 'coop') return;   // v1.380 (D.73): your own match with a friend at home; co-op goes on
   if (Net.phase === 'play' || Net.phase === 'begin') {
     if (Net.role === 'host') netSend({ t: 'end', o: outcome });
     else netSend({ t: 'end', o: 'forfeit' });
   }
+  if (Net.coop) { coopMatchOver(); return; }   // v1.381 (D.73): back to hanging out
   Net.phase = 'over';
   netHud('');
 }
@@ -1165,6 +1185,7 @@ function netBackToRoom() {
 // (nothing paid, your bag put back) and you go home.
 function netLost() {
   const phase = Net.phase, mode = Game.mode;
+  if (phase === 'coop') { const had = Coop.other && Coop.other.name; netClose(); if (had) coopHostLeft(had); else { Net.error = 'net'; renderCoopPanel(); } return; }   // v1.380 (D.73)
   if (phase === 'lobby') { netClose(); Net.error = 'net'; renderNetPanel(); return; }
   if (phase === 'over' || phase === 'idle') {
     netClose();

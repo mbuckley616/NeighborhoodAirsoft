@@ -6,7 +6,7 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
 
 ## The files
 - `index.html` — the markup, the CSS, the title's version tag and one `<script src="js/NN-name.js">` tag per code file.
-- `js/` — the game's code, 37 files at the natural seams (since v1.355, backlog D.75; before that it was one inline script, so
+- `js/` — the game's code, 38 files at the natural seams (37 at the cut; v1.380 added `95-coop`) (since v1.355, backlog D.75; before that it was one inline script, so
   history before 27 Oct 2026 is under `index.html`: `git log -L`, blame on an older commit). "The split layout" below is the
   rule book. Players get index.html and js/ from itch.io (https://mbuckley616.itch.io/neighborhood-airsoft),
   **Merging to `main` ships to players**: `.github/workflows/itch.yml` pushes the folder to itch.io with butler on every
@@ -144,7 +144,7 @@ Two builders work at once, each on its own branch and PR, each owning its own `j
 
 | Lane | Branch | PR title | Owns |
 |---|---|---|---|
-| play | `auto/build` | Builder sessions | 12-saves, 14-gear, 20-characters, 26-audio, 50-kids, 52-fp-guns, 54-fp-gear, 66-menus-shop, 72-player, 74-gun-hud, 76-bbs, 78-bb-flight, 80-ai, 92-summer-crew, 94-pickup-online, 96-phone |
+| play | `auto/build` | Builder sessions | 12-saves, 14-gear, 20-characters, 26-audio, 50-kids, 52-fp-guns, 54-fp-gear, 66-menus-shop, 72-player, 74-gun-hud, 76-bbs, 78-bb-flight, 80-ai, 92-summer-crew, 94-pickup-online, 95-coop, 96-phone |
 | maps | `auto/build-maps` | Builder sessions (maps) | 24-scenarios, 30-bedroom, 32-street-kit, 34-scene-kit, 36-winnmark, 38-bunratty, 40-hollow, 42-market-lot, 44-northcliff, 46-range, 48-other-maps, 62-backdrops, 90-progression, 97-map-screen |
 | core (both) | — | — | 10-game, 18-renderer, 60-scene-entry, 64-scenario-flow, 70-input, 84-main, 98-boot, and `index.html` (markup, CSS) |
 
@@ -174,7 +174,7 @@ Two builders work at once, each on its own branch and PR, each owning its own `j
   `50-kids`. Movement and collisions, `updatePlayer`: `72-player`. Input and the gamepad: `70-input`.
 - Gear: `GUN_SPECS`, `SHOP_CATALOG`, mags and buying (`14-gear`); first-person guns and hands (`52-fp-guns`); accessories and the
   workbench (`54-fp-gear`); the shop, mirror and loadout screens (`66-menus-shop`). The crew and the summer: `92-summer-crew`;
-  the Pickup Game board and online play (`Net`): `94-pickup-online`; the phone: `96-phone`. `js/manifest.json` lists each
+  the Pickup Game board and online play (`Net`): `94-pickup-online`; co-op, a friend in your room and your matches on the same link (`Coop`): `95-coop`; the phone: `96-phone`. `js/manifest.json` lists each
   file's lines at the cut.
 
 ## Things that have bitten us (from the devlog)

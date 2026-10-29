@@ -849,6 +849,7 @@ function updateScenarioTimer(dt) {
   // already dead, checkWinCondition already triggered the win above)
   if (Game.scenario.timerRemaining <= 0) {
     Game.scenario.timerRemaining = 0;
+    if (Net.active && Net.role === 'guest') return;   // v1.381 (D.73): at a friend's, his game says when it's over
     // Mark as a timer-win so endScenario can show the right flavor
     Game.scenario.winByTimer = true;
     endScenarioLater('win', 400);
