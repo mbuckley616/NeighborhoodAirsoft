@@ -603,7 +603,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     team_a:  { pos: P(-2.5, -27.5), yaw: Math.PI },   // at the west doors
     midfield:{ pos: P(-1, 6), yaw: 0 },
     // v1.134: behind a car at the lot's east edge
-    ffa_edge:{ pos: P(36.25, -6), yaw: Math.PI },   // v1.391: in the east aisle, the east row's cars beside you, facing down it
+    ffa_edge:{ pos: P(35, -6), yaw: Math.PI },   // v1.391: mid-aisle in the east aisle, facing down it 15 m and more clear
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
