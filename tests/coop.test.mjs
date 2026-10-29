@@ -139,8 +139,8 @@ const dd = (u, v) => Math.hypot(u[0] - v[0], u[2] - v[2]);
 const seen = { hostSeesBluey: dd(pH.net_p1, pR.net_p1), blueySeesHost: dd(pR.net_p0, pH.net_p0), kids: Math.max(dd(pR.trey, pH.trey), dd(pR.brooke, pH.brooke)) };
 for (const k in seen) seen[k] = +seen[k].toFixed(3);
 console.log('   seen', JSON.stringify(seen));
-check('in the match each sees the other within 10 cm, and Bluey sees the kids within 40 cm of where the host’s game has them',
-  seen.hostSeesBluey < 0.1 && seen.blueySeesHost < 0.1 && seen.kids < 0.4, seen);
+check('in the match each sees the other within 10 cm, and Bluey sees the kids within 60 cm of where the host’s game has them',
+  seen.hostSeesBluey < 0.1 && seen.blueySeesHost < 0.1 && seen.kids < 0.6, seen);   // v1.387's kids sprint (~6.6 m/s) between 20/s sends
 
 // Bluey's tags are the host's game's: his BBs at Trey from 3 m (the host's game decides; Bluey's shows the hit)
 const nextTo = (p, id, dist) => p.evaluate(([id, dist]) => { const k = Net.ents.get(id), P = Game.player;
@@ -149,10 +149,14 @@ const shoot = (p, id) => p.evaluate(id => { const k = Net.ents.get(id), P = Game
   P.pitch = Math.atan2(k.pos.y + 0.85 - (P.pos.y + P.eyeOffset), Math.hypot(k.pos.x - P.pos.x, k.pos.z - P.pos.z));
   P.yaw = Math.atan2(-(k.pos.x - P.pos.x), -(k.pos.z - P.pos.z)); stepGame(1 / 60); Game.gun.ammo = Math.max(Game.gun.ammo, 5); return fireBB(); }, id);
 const treyLives = () => H.evaluate(() => Net.ents.get('trey').lives);
+// The host's kids hold their fire meanwhile: since v1.387 Trey fires back under pressure, and at 3 m he can tag Bluey
+// (one life here) out before his shot lands, after which the host rightly drops Bluey's shots (his gun is up)
+await H.evaluate(() => { window.__spawnEnemyBB = spawnEnemyBB; spawnEnemyBB = () => null; });
 const treyBefore = await treyLives(), blueyTagged = () => R.evaluate(() => Game.scenario.stats.tags.some(t => t.name === 'Trey'));
 let tries = 0;
 while (!(await blueyTagged()) && tries < 8 && await G[1].mode() === 'scenario') { await nextTo(R, 'trey', 3); await run(2); await shoot(R, 'trey'); await run(25); tries++; }
 const tag = { treyBefore, treyNow: await treyLives(), tries, blueyTags: await R.evaluate(() => Game.scenario.stats.tags.map(t => t.name).join()), modes: [await G[0].mode(), await G[1].mode()] };
+await H.evaluate(() => { spawnEnemyBB = window.__spawnEnemyBB; });
 console.log('   bluey’s tag', JSON.stringify(tag));
 check('Bluey’s shot at Trey tags him in the host’s game (a life gone), and Bluey’s game shows it as his tag', tag.treyNow < tag.treyBefore && /Trey/.test(tag.blueyTags), tag);
 
