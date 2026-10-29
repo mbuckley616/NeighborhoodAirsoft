@@ -1314,13 +1314,13 @@ const SCENARIOS = {
   lot_1v1_marcus: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Cart Return',
-    desc: "Marcus's mom is inside doing the big shop, which gives you two about forty minutes. He's somewhere up by the shops with his pistol, maybe under Guadalajara's arches; you're out by the road. The rows of parked cars run straight up at the doors, so every aisle is a lane he can see down — cross between the cars, crouch behind a bumper, and let him come to you. One hit each.",
+    desc: "Marcus's mom is inside doing the big shop, which gives you two about forty minutes. He's somewhere up on the walk by the store doors with his pistol; you're out by the road. The rows of parked cars run straight up at the doors, so every aisle is a lane he can see down — cross between the cars, crouch behind a bumper, and let him come to you. One hit each.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'marcus', weapon: 'pistol', anchor: 'a_store_w', role: 'skirmisher' },
+      { charId: 'marcus', weapon: 'pistol', anchor: 'a_store', role: 'skirmisher' },   // v1.391: on the walk, 48.5 m from you (the arches were 81 m)
     ],
     winCondition: 'kill_all',
     rewards: { win: 40, lose: 10 },
