@@ -57,7 +57,10 @@ check('camping, he takes cover and holds: no closer or farther by 3 m, and no ma
 
 const fall = await cases('m249', 12, 0.55);
 check('middling (0.55) under an M249: he falls back, in all 3 rounds', n(fall, r => r.kinds.fall && !r.kinds.push) === 3, fall.map(r => r.kinds));
-check('falling back, he ends 4 m or more farther from you, 2 of 3', n(fall, r => r.dEnd - r.d0 >= 4) >= 2, fall.map(r => [r.d0, r.dEnd]));
+// v1.391 (D.51, the lot at real scale): 2 m, the gain fallBackCover asks of the cover he falls back to. Cart Return's rows
+// run north-south now, so he comes down an aisle with a parked car every 2.7 m beside him and the next one back is the
+// nearest cover behind him (on the old lot, rows across his way, the next cover back was a row away: 4 m or more)
+check('falling back, he ends 2 m or more farther from you, 2 of 3', n(fall, r => r.dEnd - r.d0 >= 2) >= 2, fall.map(r => [r.d0, r.dEnd]));
 check('and fires back as he goes (a BB or more), 2 of 3', n(fall, r => r.back >= 1) >= 2, fall.map(r => r.back));
 
 const push = await cases('ak47', 10, 0.85);

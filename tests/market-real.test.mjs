@@ -27,8 +27,9 @@ const plan = await page.evaluate(() => {
   const cols = obs.filter(o => Math.abs(o.maxZ - (ML.stripZ + 3)) < 0.01 && o.h === 4.6);
   const fence = obs.filter(o => o.bbPass && o.h === 1.1);
   const tables = obs.filter(o => o.h === 0.78);
+  // (the fifth row's west half, x 38.3-44.6, is the east fence: solid on purpose)
   const outside = obs.filter(o => o.h < 6 && !inB((o.minX + o.maxX) / 2, (o.minZ + o.maxZ) / 2, -1.2)
-    && o !== store && !(o.maxX - o.minX > 30)).map(o => [+o.minX.toFixed(1), +o.minZ.toFixed(1), o.h]);
+    && o !== store && !(o.maxX - o.minX > 30) && !(o.minX > B.maxX - 0.5 && o.maxX < 44.8 && o.minZ > -16 && o.maxZ < 28)).map(o => [+o.minX.toFixed(1), +o.minZ.toFixed(1), o.h]);
   const pts = [...Object.entries(built.placements), ...Object.entries(built.playerSpawns)];
   const bad = pts.filter(([, p]) => !inB(p.pos.x, p.pos.z, 0.4) || collidesObstacles(p.pos.x, p.pos.z, 0.3)).map(([k]) => k);
   return { size: [+(B.maxX - B.minX).toFixed(1), +(B.maxZ - B.minZ).toFixed(1)], storeW: store && store.maxX - store.minX,

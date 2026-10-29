@@ -354,7 +354,9 @@ function buildMarketLotScene(variant, timeOfDay) {
       carObs.mesh.position.y += seated;
       resolveObox(carObs); resolveObox(carObs._stacked);
       pushCarObs(obstacles, carObs);
-      coverList.push(carObs);
+      // v1.391: the fifth row's west half is the area's east fence: solid, but past the edge, so nobody's cover (a kid
+      // falling back picked its cars and stood at the edge with his back to the fight)
+      if (c < ML.rows[ML.playRows]) coverList.push(carObs);
       carObsList.push(carObs);
     }
   }
@@ -415,8 +417,8 @@ function buildMarketLotScene(variant, timeOfDay) {
         }
         treeObs.push(addSuburbanTree(scene, c, z, { trunkH: (i + (z > 0)) % 2 ? 3.2 : 2.4, leafR: (i + (z > 0)) % 2 ? 2.6 : 1.9, baseY: 0.15, detail: true }));
       } else {
-        // the fifth row's west shrub stands in the area: solid, as the others
-        if (half) { const o = addBush(scene, c - 3.4, z, 2.6, 0.95, 1.5, 0x52602a, 0.15, { detail: true }); obstacles.push(o); coverList.push(o); }
+        // the fifth row's west shrub: solid, as the others
+        if (half) obstacles.push(addBush(scene, c - 3.4, z, 2.6, 0.95, 1.5, 0x52602a, 0.15, { detail: true }));   // v1.391: the fence's, not cover
         else addBush(far, c - 3.4, z, 2.6, 0.95, 1.5, 0x52602a, 0.15, { detail: true });
         addBush(far, c + 3.4, z, 2.6, 0.95, 1.5, 0x52602a, 0.15, { detail: true });
         if (half) { treeObs.push(addSuburbanTree(scene, c, z, { trunkH: 3.2, leafR: 2.6, baseY: 0.15, detail: true })); continue; }
