@@ -2052,7 +2052,7 @@ and nothing asked me to break a rule.
 
 ## 2026-10-29 — A new save from the hall to the map table and the landing; kids under fire (v1.387) in the Hollow 3v3, Bunratty's 4v4 and Bellfield's Twins; the Downhill Derby and Cart Path Only after v1.375 (v1.387)
 
-Played main at v1.387 (auto/build and auto/build-maps are level with it). Smoke 1 of 1 green. 25 rounds and a new save
+Played main at v1.387 (auto/build and auto/build-maps are level with it). Smoke 1 of 1 green. About 30 rounds and a new save
 twice. No page errors anywhere. One bug filed, a small one you can see. My bot this run turns onto the nearest kid in
 sight within 40 m and holds the trigger. **It refills the magazine when it runs dry and clears jams (a cheat), and it
 shoots the AK or the M249.** It can't work the spring pistol yet: in the derby it got one shot off a ride. Two of my
