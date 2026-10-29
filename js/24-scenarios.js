@@ -1306,13 +1306,15 @@ const SCENARIOS = {
   // ===================================================================
   // v1.102: RIVERSIDE MARKET LOT (East Roswell) — the parking-lot zone (D.1,
   // Michael: B). Car-to-car team fights across three rows of parked cars.
+  // v1.390 (D.51, real scale): the rows run north-south at the doors now, and the briefings say so (the rows, the truck
+  // the store side gathers behind, Guadalajara's arches and patio, four lot lights).
   // ===================================================================
 
   // --- v1.103: the zone's opener, 1v1 with Marcus ---
   lot_1v1_marcus: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Cart Return',
-    desc: "Marcus's mom is inside doing the big shop, which gives you two about forty minutes. He's somewhere by the store doors with his pistol; you're out by the road. It's rows of parked cars all the way across — crouch behind a bumper, never cross an aisle where he can see down it, and let him come to you. One hit each.",
+    desc: "Marcus's mom is inside doing the big shop, which gives you two about forty minutes. He's somewhere up by the shops with his pistol, maybe under Guadalajara's arches; you're out by the road. The rows of parked cars run straight up at the doors, so every aisle is a lane he can see down — cross between the cars, crouch behind a bumper, and let him come to you. One hit each.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1329,7 +1331,7 @@ const SCENARIOS = {
   lot_team_3v3: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Aisle Wars',
-    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus, Jamie and Tyler set up by the store doors; you've got Eric and Brooke at the road end. Three rows of parked cars between you — every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work down a row behind the bumpers, and let Brooke's rifle cover the crossings. Three lives for every kid but you, last team standing.",
+    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus, Jamie and Tyler set up by the box truck at the store end; you've got Eric and Brooke at the road end. The rows of parked cars run straight up at the doors between you — every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work up a row behind the bumpers, and let Brooke's rifle cover the crossings. Three lives for every kid but you, last team standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1352,7 +1354,7 @@ const SCENARIOS = {
   lot_defend_store: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Hold the Doors',
-    desc: "You called the store front, so now you have to keep it. Jamie, Tyler and Owen come up from the road, row by row, and a tagged kid walks back to the road and comes again. The truck and the dumpsters are your cover; the first row of cars is theirs. Watch both ends of the fire lane, not just the middle. Survive 90 seconds.",
+    desc: "You called the store front, so now you have to keep it. Jamie, Tyler and Owen come up from the road, row by row, and a tagged kid walks back to the road and comes again. The tower, the swings on the walk, the ice cage and the truck are your cover; the ends of the rows are theirs. Watch the aisles that run straight at you, and both ends of the fire lane. Survive 90 seconds.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -1374,7 +1376,7 @@ const SCENARIOS = {
   lot_ffa: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
-    desc: "No teams. Seven kids start hidden over the whole lot, each behind a car or the dumpsters, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
+    desc: "No teams. Seven kids start hidden over the whole lot, behind a car, the dumpsters or the tables on Guadalajara's patio, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1399,7 +1401,7 @@ const SCENARIOS = {
   lot_night_4v4: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'After Close',
-    desc: "The store's dark, the lot's empty but for the night-shift cars, and the lamps make three bright islands down the middle. Seth's crew holds the store front with Devon on the rifle by the truck; you've got Eric, Sean and Rebecca at the road. Four a side, four lives for every kid but you. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",
+    desc: "The store's dark, the lot's empty but for the night-shift cars, and the tall lot lights make four bright islands down the rows. Seth's crew holds the store front with Devon on the rifle by the truck; you've got Eric, Sean and Rebecca at the road. Four a side, four lives for every kid but you. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     timeOfDay: 'night',

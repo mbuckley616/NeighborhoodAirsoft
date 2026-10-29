@@ -93,20 +93,22 @@ for (const id of Object.keys(MATCHES)) {
 
 // v1.175 (D.17, Michael: B): Night Shift keeps Rebecca on the briefing's spot at (-14, 21) and puts a dumpster on the
 // aisle just north of it, her cover against the store end. It is Night Shift's alone: the other lot matches are unchanged.
+// v1.390 (D.51, the lot at real scale): her spot is the south end of the aisle at x -19, (-19, 21), the dumpster at
+// (-19, 19.6) as before; the lane is that aisle, and the store's west end is Guadalajara's arches (a_store_w).
 const dump = async (id) => { await g.scenario(id); return page.evaluate(() => {
-  const at = Game.player.obstacles.filter(o => o.minX < -14 && o.maxX > -14 && o.minZ < 19.6 && o.maxZ > 19.6);
+  const at = Game.player.obstacles.filter(o => o.minX < -19 && o.maxX > -19 && o.minZ < 19.6 && o.maxZ > 19.6);
   const reb = Game.scenario.enemies.find(e => e.name === 'Rebecca');
-  // does the line at chest height from her spot to Mason's lane (x -14, z 4; he tagged her from there before) hit it?
-  const blocks = (tx, tz) => at.some(o => { const n = 40; for (let i = 1; i < n; i++) { const t = i / n, x = -14 + (tx + 14) * t, z = 21 + (tz - 21) * t;
+  // does the line at chest height from her spot to Mason's lane (the aisle up to z 4) hit it?
+  const blocks = (tx, tz) => at.some(o => { const n = 40; for (let i = 1; i < n; i++) { const t = i / n, x = -19 + (tx + 19) * t, z = 21 + (tz - 21) * t;
     if (x > o.minX && x < o.maxX && z > o.minZ && z < o.maxZ && 1.0 < (o.baseY || 0) + o.h) return true; } return false; });
   return { n: at.length, h: at[0] ? at[0].h : null, rebCover: !!(reb && at.length && reb.homeCover === at[0]),
-    lane: blocks(-14, 4), fromStoreW: blocks(-18, -21), obs: Game.player.obstacles.length };
+    lane: blocks(-19, 4), fromStoreW: blocks(-24.5, -38.5), obs: Game.player.obstacles.length };
 }); };
 const dumpVip = await dump('lot_vip_night'), dumpLot = await dump('lot_night_4v4');
 console.log('   Night Shift dumpster:', JSON.stringify(dumpVip), '| Lights Out at that spot:', JSON.stringify(dumpLot));
 check("Night Shift: a dumpster stands just north of Rebecca's spot, 1.5 m tall, and it is the cover she holds",
   dumpVip.n === 1 && dumpVip.h === 1.5 && dumpVip.rebCover, dumpVip);
-check("Night Shift: it blocks her chest-high line to Mason's lane at x -14 and to his start by the store's west end",
+check("Night Shift: it blocks her chest-high line to Mason's lane up the aisle at x -19 and to the store's west end (v1.390)",
   dumpVip.lane && dumpVip.fromStoreW, dumpVip);
 check('the other lot night match has nothing there, one obstacle fewer', dumpLot.n === 0 && dumpLot.obs === dumpVip.obs - 1, dumpLot);
 
