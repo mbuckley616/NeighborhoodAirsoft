@@ -101,5 +101,35 @@ check('only teammates talk on the walkie', walk.flat().every(l => l.mate));
 const gaps = walk.flatMap(w => w.slice(1).map((l, j) => l.t - w[j].t));
 check('walkie lines 4 s apart or more', gaps.every(d => d >= 4 - 0.02), gaps);
 
+// --- v1.386 (D.80): static over the walkie. A line out of earshot opens a squelch, a crackling hiss as long as the
+// line and a squelch tail; rendered offline, the hiss is there under the line and gone after it.
+await g.scenario('winnmark_team_3v3');
+const fx = await page.evaluate(async () => {
+  const S = Game.scenario, P = Game.player.pos;
+  S.roundTime = 10; VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; WALKIE_FX.log.length = 0;
+  const mate = S.enemies.find(e => e.team === 'player');
+  for (const e of S.enemies) { e.pos.x = P.x; e.pos.z = P.z - 200; e._voiceCooldownUntil = 0; }
+  const real = Game.audio;
+  Game.audio = { ctx: new AudioContext() };
+  const said = tryNpcSpeak(mate, 'playerSpotted'), line = VOICE.log.at(-1);
+  const first = WALKIE_FX.log.at(-1), wasLive = !!WALKIE_FX.live;
+  const near = WALKIE_FX.log.length; mate.pos.z = P.z - 4; mate._voiceCooldownUntil = 0; VOICE.globalCooldownUntil = 0; S.roundTime = 20;
+  tryNpcSpeak(mate, 'teammate');
+  const nearAdds = WALKIE_FX.log.length - near;
+  // offline: 2.5 s of a 1.5 s line's static
+  const off = new OfflineAudioContext(1, 44100 * 2.5, 44100);
+  Game.audio = { ctx: off };
+  walkieStatic(off, 0.2, 1.5);
+  const buf = await off.startRendering(), d = buf.getChannelData(0);
+  const rms = (a, b) => { let q = 0; const i0 = Math.floor(a * 44100), i1 = Math.floor(b * 44100); for (let i = i0; i < i1; i++) q += d[i] * d[i]; return +Math.sqrt(q / (i1 - i0)).toFixed(4); };
+  Game.audio = real;
+  return { said, walkie: !!line?.walkie, words: String(line?.said || line?.line || '').split(/\s+/).length, first, wasLive, nearAdds,
+    before: rms(0, 0.18), under: rms(0.4, 1.6), tail: rms(1.7, 1.75), after: rms(2.0, 2.5) };
+});
+console.log('   ', JSON.stringify(fx));
+check('a walkie line brings its static, as long as the line (0.8-6 s)', fx.said && fx.walkie && fx.first && fx.first.dur >= 0.8 && fx.first.dur <= 6 && fx.first.crackles > 5 && fx.wasLive, fx);
+check('a teammate who speaks where he stands has no static', fx.nearAdds === 0, fx.nearAdds);
+check('rendered: silent before, a hiss under the line, a louder squelch tail, silent after', fx.before === 0 && fx.under > 0.005 && fx.tail > fx.under && fx.after < 0.0005, fx);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
