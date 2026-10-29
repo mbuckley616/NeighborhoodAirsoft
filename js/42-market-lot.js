@@ -580,7 +580,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     cluster_north: { pos: P(35, -21.9), cover: null },   // behind the truck: 3 m tall, it hides a head where a car does not
     // v1.391: Aisle Wars (by day) gathers in front of the west doors, in sight of the lot as the old lot's huddle was: hidden
     // behind the truck, your side walked up the east aisle unseen and met them round it at 5.5 m
-    cluster_doors: { pos: P(2.5, -27.2), cover: null },
+    cluster_doors: { pos: P(2.5, -24.5), cover: null },
     cluster_south: { pos: P(-11.5, 26.5), cover: null },
     // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts, each beside cover, out of sight of the others
     // and of yours, 18 m or more apart (Michael A, 15 Oct), and in the Pickup Game's order (tyler, chris, brooke, owen,
@@ -592,7 +592,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     ffa_3: { pos: P(35.5, -28), cover: null },
     ffa_4: { pos: P(10, -28), cover: null },
     ffa_5: { pos: P(2.5, 9.5), cover: null },
-    ffa_6: { pos: P(-16, -36), cover: null },   // v1.391: in the stalls before the strip (at (-20, -7) Jamie, nudged off his spot, saw her)
+    ffa_6: { pos: P(-10, -11), cover: null },   // v1.391: at the row-end island (at (-20, -7) Jamie, nudged off his spot, saw her)
   };
   const playerSpawns = {
     // at the road end of the east aisle beside the east row's cars, facing the store (yaw 0 faces -z): the truck stands
