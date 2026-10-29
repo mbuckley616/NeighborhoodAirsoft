@@ -41,9 +41,9 @@ check('the lot: the store is 92 m across and 70 m deep, with its west tower stan
   plan.storeW === 92 && plan.storeD === 70 && plan.tower, plan);
 check('the lot: every parked car in the rows lies east-west, its nose into its double row: the rows run north-south',
   plan.rowCars >= 30 && plan.ns === plan.rowCars, plan);
-check('the lot: five double rows in play on the 18 m pitch, an aisle straight at the west doors (x -1)',
+check('the lot: five double rows on the 18 m pitch (four in play, the fifth one\'s cars the east fence), an aisle straight at the west doors (x -1)',
   plan.rows === 5 && plan.doorsAisle === -1, plan);
-check("the lot: one area about today's size, widened west to Guadalajara's porch and patio (86 by 68 m at most)",
+check("the lot: one area about today's size, widened west to Guadalajara's porch and patio (90 by 70 m at most)",
   plan.size[0] >= 80 && plan.size[0] <= 90 && plan.size[1] <= 70 && plan.patioIn, plan.size);
 check("the lot: Guadalajara's four columns are solid, its patio fence stops a kid but not a BB, and its five tables are cover",
   plan.cols === 4 && plan.fence >= 3 && plan.tables === 5, plan);

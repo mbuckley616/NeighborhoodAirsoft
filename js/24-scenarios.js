@@ -1376,7 +1376,7 @@ const SCENARIOS = {
   lot_ffa: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
-    desc: "No teams. Seven kids start hidden over the whole lot, behind a car, the dumpsters or the tables on Guadalajara's patio, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
+    desc: "No teams. Seven kids start hidden over the whole lot, behind a car, on the walk or under Guadalajara's arches, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',

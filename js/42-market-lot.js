@@ -33,8 +33,8 @@ const ML = {
   storeX0: -7, storeX1: 85, storeD: 70, storeH: 9.5,
   stripX0: -42, stripX1: -7, stripZ: -42, stripD: 30, stripH: 6.5,
   rows: [-28, -10, 8, 26, 44, 62, 80, 98, 116],   // double-row centrelines; the aisles between them at -37, -19, -1, 17, 35 ...
-  playRows: 4,                                     // the first four whole rows are in play, and the west half of the fifth
-  area: { minX: -42.5, maxX: 43.3, minZ: -41.5, maxZ: 27 },
+  playRows: 4,                                     // the first four whole rows are in play; the fifth's west half is solid, the edge
+  area: { minX: -42.5, maxX: 38.3, minZ: -41.5, maxZ: 27 },   // v1.391: east edge at the aisle's side, the fifth row's cars its fence
   foutsZ: 34,
 };
 ML.rowZ1 = ML.rowZ0 + ML.stalls * ML.stall;        // 24.8: the rows' south end
@@ -556,7 +556,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     a_store:    A(14, -28.5),     // on the walk behind the patio swings
     a_store_w:  A(-24.5, -38.5),  // under Guadalajara's arches
     a_store_e:  A(22.5, -28.5),
-    a_truck:    A(39.8, -19),     // v1.391: at the truck's cab, where Devon's rifle sees down the east aisles (behind it he saw nobody)
+    a_truck:    A(37.3, -16.6),   // v1.391: at the truck's cab, where Devon's rifle sees down the east aisle (behind it he saw nobody)
     a_dumpster: A(-8.5, -40.5),   // behind the dumpsters at the store's west corner
     a_aisle_w:  A(-19, -9),
     a_aisle_e:  A(17, -9),
@@ -567,10 +567,10 @@ function buildMarketLotScene(variant, timeOfDay) {
     b_aisle_w:  A(-13.5, 19.5),
     b_aisle_e:  A(26.5, 16.5),
     b_corner_w: A(-25.5, 22.5),
-    b_corner_e: A(40.5, 24.5),
+    b_corner_e: A(37, 24.5),
     // Scatter for free-for-alls
     scatter_nw: { pos: P(-38, -24), cover: null },
-    scatter_ne: { pos: P(40, -24),  cover: null },
+    scatter_ne: { pos: P(37, -24),  cover: null },
     scatter_sw: { pos: P(-38, 22),  cover: null },
     scatter_se: { pos: P(37, 22),   cover: null },
     scatter_w:  { pos: P(-38, 5),   cover: null },
@@ -583,13 +583,14 @@ function buildMarketLotScene(variant, timeOfDay) {
     // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts, each beside cover, out of sight of the others
     // and of yours, 18 m or more apart (Michael A, 15 Oct), and in the Pickup Game's order (tyler, chris, brooke, owen,
     // marcus, jamie) every kid at every size has another kid's start nearer than yours. v1.390: found again by a search
-    // over the turned rows: 24.2 m apart at the least, the nearest kid 31.2 m from you. Tyler starts on Guadalajara's patio.
-    ffa_1: { pos: P(8.5, 11),     cover: null },
-    ffa_2: { pos: P(31, 20),      cover: null },
-    ffa_3: { pos: P(-33.5, -40),  cover: null },
-    ffa_4: { pos: P(-8, -34),     cover: null },
-    ffa_5: { pos: P(-12.5, 24.5), cover: null },
-    ffa_6: { pos: P(16, -28),     cover: null },
+    // over the turned rows: 25.5 m apart at the least, the nearest kid 29 m from you; v1.391 again, the east edge moved in. Jamie
+    // starts on Guadalajara's porch.
+    ffa_1: { pos: P(-30.5, 24.5), cover: null },
+    ffa_2: { pos: P(-41, -40), cover: null },
+    ffa_3: { pos: P(35.5, -28), cover: null },
+    ffa_4: { pos: P(10, -28), cover: null },
+    ffa_5: { pos: P(2.5, 9.5), cover: null },
+    ffa_6: { pos: P(-20, -7), cover: null },
   };
   const playerSpawns = {
     // at the road end of the east aisle beside the east row's cars, facing the store (yaw 0 faces -z): the truck stands
@@ -598,8 +599,8 @@ function buildMarketLotScene(variant, timeOfDay) {
     team_b:  { pos: P(36.5, 14.5), yaw: 0 },
     team_a:  { pos: P(-2.5, -27.5), yaw: Math.PI },   // at the west doors
     midfield:{ pos: P(-1, 6), yaw: 0 },
-    // v1.134: behind a car at the lot's east edge; v1.390: in an empty stall of the east row, facing out into the aisle
-    ffa_edge:{ pos: P(41.5, -10), yaw: Math.PI / 2 },
+    // v1.134: behind a car at the lot's east edge
+    ffa_edge:{ pos: P(35.5, 1), yaw: Math.PI },   // v1.391: in the east aisle, the east row's cars beside you, facing down it
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
