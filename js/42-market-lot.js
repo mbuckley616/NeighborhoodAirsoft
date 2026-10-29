@@ -585,14 +585,15 @@ function buildMarketLotScene(variant, timeOfDay) {
     // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts, each beside cover, out of sight of the others
     // and of yours, 18 m or more apart (Michael A, 15 Oct), and in the Pickup Game's order (tyler, chris, brooke, owen,
     // marcus, jamie) every kid at every size has another kid's start nearer than yours. v1.390: found again by a search
-    // over the turned rows: 25.5 m apart at the least, the nearest kid 29 m from you; v1.391 again, the east edge moved in. Jamie
-    // starts on Guadalajara's porch.
-    ffa_1: { pos: P(-30.5, 24.5), cover: null },
-    ffa_2: { pos: P(-41, -40), cover: null },
-    ffa_3: { pos: P(35.5, -28), cover: null },
-    ffa_4: { pos: P(10, -28), cover: null },
-    ffa_5: { pos: P(2.5, 9.5), cover: null },
-    ffa_6: { pos: P(-10, -11), cover: null },   // v1.391: at the row-end island (at (-20, -7) Jamie, nudged off his spot, saw her)
+    // over the turned rows; v1.391 again, the east edge moved in and kids seeing a head over a car (v1.385): hidden at chest
+    // height from every other start, and at head height from every start within 45 m (no set is hidden at head height
+    // across the whole lot: a car roof is lower than a head). 24.7 m apart at the least, the nearest kid 29.9 m from you.
+    ffa_1: { pos: P(10, 24.5), cover: null },
+    ffa_2: { pos: P(16, -28), cover: null },
+    ffa_3: { pos: P(-33.5, 26), cover: null },
+    ffa_4: { pos: P(-41, -40), cover: null },
+    ffa_5: { pos: P(2.5, -4), cover: null },
+    ffa_6: { pos: P(-8, -34), cover: null },
   };
   const playerSpawns = {
     // at the road end of the east aisle beside the east row's cars, facing the store (yaw 0 faces -z): the truck stands
@@ -602,7 +603,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     team_a:  { pos: P(-2.5, -27.5), yaw: Math.PI },   // at the west doors
     midfield:{ pos: P(-1, 6), yaw: 0 },
     // v1.134: behind a car at the lot's east edge
-    ffa_edge:{ pos: P(35.5, 1), yaw: Math.PI },   // v1.391: in the east aisle, the east row's cars beside you, facing down it
+    ffa_edge:{ pos: P(36.25, -6), yaw: Math.PI },   // v1.391: in the east aisle, the east row's cars beside you, facing down it
   };
 
   const allObs = [...obstacles, ...treeObs, ...lampObs, ...edge];
