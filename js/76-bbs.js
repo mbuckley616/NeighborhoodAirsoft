@@ -1151,6 +1151,7 @@ function walkieVoice(e, line) {   // v1.268: the sound of a walkie line, split o
       o.type = 'square'; o.frequency.setValueAtTime(1400, t);
       g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
+      walkieStatic(ctx, t, walkieLineSeconds(line));   // v1.386 (D.80)
     }
     if (typeof speechSynthesis === 'undefined') return;
     speechSynthesis.cancel();
@@ -1160,6 +1161,53 @@ function walkieVoice(e, line) {   // v1.268: the sound of a walkie line, split o
     u.volume = 0.45 * Settings.effects;
     speechSynthesis.speak(u);
   } catch (err) { /* no audio: the HUD still shows the line */ }
+}
+// v1.386 (backlog D.80, Michael: "a 'static' filter over it, to make it sound more scratchy"): the browser's speech
+// can't be put through a filter (speechSynthesis never reaches the AudioContext), so the radio is laid round it: a
+// squelch as the talk button opens, a band-limited hiss that crackles under the whole line, and a louder squelch tail
+// and the release click when it ends. The hiss's length is the line's, guessed from its words at the walkie's rate.
+const WALKIE_FX = { log: [], live: null };
+let _walkieNoiseBuf = null;
+function walkieLineSeconds(line) {
+  const words = String(line || '').trim().split(/\s+/).filter(Boolean).length;
+  return Math.min(6, Math.max(0.8, 0.35 + words * 0.34 / 1.15));
+}
+function walkieStatic(ctx, t, dur) {
+  if (WALKIE_FX.live) { try { WALKIE_FX.live.stop(); } catch (err) {} WALKIE_FX.live = null; }   // cut with the line it was under
+  if (!_walkieNoiseBuf || _walkieNoiseBuf.sampleRate !== ctx.sampleRate) {
+    // its own noise, from Math.random: gameRandom is the rounds' seeded stream and a sound must not move it
+    const len = Math.ceil(ctx.sampleRate * 1.0), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    _walkieNoiseBuf = buf;
+  }
+  const fx = Settings.effects, end = t + dur;
+  const src = ctx.createBufferSource(); src.buffer = _walkieNoiseBuf; src.loop = true;
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 450;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2100; bp.Q.value = 0.8;
+  const g = ctx.createGain();
+  src.connect(hp).connect(bp).connect(g).connect(sfxOut());
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.18 * fx, t + 0.02);          // the opening squelch
+  g.gain.linearRampToValueAtTime(0.045 * fx, t + 0.13);
+  let crackles = 0;
+  for (let c = t + 0.15; c < end - 0.05; c += 0.035 + Math.random() * 0.05) {   // the crackle: the hiss jumps and drops
+    const pop = Math.random() < 0.18;
+    g.gain.setValueAtTime((pop ? 0.1 + Math.random() * 0.07 : 0.03 + Math.random() * 0.03) * fx, c);
+    crackles++;
+  }
+  g.gain.setValueAtTime(0.045 * fx, end);
+  g.gain.linearRampToValueAtTime(0.22 * fx, end + 0.03);        // the squelch tail as the button lets go
+  g.gain.exponentialRampToValueAtTime(0.0005, end + 0.2);
+  src.start(t); src.stop(end + 0.22);
+  const o = ctx.createOscillator(), k = ctx.createGain();       // and its click
+  o.type = 'square'; o.frequency.setValueAtTime(1100, end + 0.2);
+  k.gain.setValueAtTime(0.0001, t); k.gain.setValueAtTime(0.04 * fx, end + 0.2); k.gain.exponentialRampToValueAtTime(0.001, end + 0.25);
+  o.connect(k).connect(sfxOut()); o.start(end + 0.2); o.stop(end + 0.26);
+  WALKIE_FX.live = { stop: () => { const n = ctx.currentTime; src.stop(n); o.stop(n); } };
+  src.onended = () => { if (WALKIE_FX.live && WALKIE_FX.live.src === src) WALKIE_FX.live = null; };
+  WALKIE_FX.live.src = src;
+  WALKIE_FX.log.push({ at: +(Game.scenario?.roundTime || 0).toFixed(2), dur: +dur.toFixed(2), crackles, band: [hp.frequency.value, bp.frequency.value] });
+  if (WALKIE_FX.log.length > 40) WALKIE_FX.log.shift();
 }
 function updateSquadHud() {
   const hud = document.getElementById('squadHud');
