@@ -592,7 +592,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     ffa_3: { pos: P(35.5, -28), cover: null },
     ffa_4: { pos: P(10, -28), cover: null },
     ffa_5: { pos: P(2.5, 9.5), cover: null },
-    ffa_6: { pos: P(-20, -7), cover: null },
+    ffa_6: { pos: P(-16, -36), cover: null },   // v1.391: in the stalls before the strip (at (-20, -7) Jamie, nudged off his spot, saw her)
   };
   const playerSpawns = {
     // at the road end of the east aisle beside the east row's cars, facing the store (yaw 0 faces -z): the truck stands
