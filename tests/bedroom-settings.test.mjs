@@ -27,6 +27,33 @@ await page.evaluate(() => document.getElementById('bedroomSettingsBtn').click())
 check('the button still opens settings', await page.evaluate(() => Game.mode === 'settings'));
 await page.evaluate(() => closeSettings());
 
+// v1.388 (Found in play, critic 29 Oct): a label behind a wall is hidden; the labels faded by distance only, so at a new
+// save's spawn MAP and LOADOUT floated on the hall's closet doors, and from the landing WORKBENCH over its wall
+const labels = (x, z, yaw, toward) => page.evaluate(([x, z, yaw, toward]) => {
+  if (toward) { const t = Game.interactables.find(i => i.label && i.label.startsWith(toward)); yaw = Math.atan2(-(t.pos.x - x), -(t.pos.z - z)); }
+  Game.player.pos.x = x; Game.player.pos.z = z; Game.player.yaw = yaw; Game.player.pitch = 0;
+  stepGame(1 / 60);
+  for (let i = 0; i < 7; i++) updateBedroomLabels();   // the wall test runs every 6 frames
+  const o = {}; for (const it of Game.interactables) if (it._labelEl) o[it.label] = { op: +it._labelEl.style.opacity, blocked: !!it._labelBlocked };
+  return o;
+}, [x, z, yaw, toward]);
+const L = (o, name) => { const it = Object.entries(o).find(([k]) => k.toLowerCase().includes(name)); return it && it[1]; };
+const sp = await page.evaluate(() => { const s = Scenes.bedroom.spawn, t = Scenes.bedroom.stairsSpawn; return [s.x, s.z, t.x, t.z]; });
+const atSpawn = await labels(sp[0], sp[1], 0);
+const inRoom = await labels(0, 2, 0);
+const fromStairs = await labels(sp[2], sp[3], 0, 'Workbench');
+const facing = {}; for (const n of ['Loadout', 'Map', 'Phone', 'Summer']) facing[n] = L(await labels(0, 0, 0, n), n.toLowerCase());
+console.log('   labels at the spawn:', JSON.stringify(atSpawn));
+console.log('   in the room:', JSON.stringify(inRoom));
+check('at the spawn, MAP and LOADOUT, behind the hall\'s walls, are hidden', L(atSpawn, 'map').op === 0 && L(atSpawn, 'map').blocked &&
+  L(atSpawn, 'loadout').op === 0 && L(atSpawn, 'loadout').blocked, [L(atSpawn, 'map'), L(atSpawn, 'loadout')]);
+check('standing in the bedroom, every label ahead of you shows: none is hidden by a wall', Object.values(inRoom).filter(v => v.blocked && v.op > 0).length === 0 &&
+  Object.values(inRoom).filter(v => v.op > 0).length >= 5, inRoom);
+check('from the middle of the bedroom, LOADOUT, MAP, the phone and the bed each show when you face them', Object.values(facing).every(v => v && v.op > 0 && !v.blocked), facing);
+check('from the top of the landing\'s stairs, WORKBENCH in the next room is hidden', L(fromStairs, 'workbench').op === 0 && L(fromStairs, 'workbench').blocked, L(fromStairs, 'workbench'));
+const cost = await page.evaluate(() => { const t0 = performance.now(); for (let i = 0; i < 60; i++) { _brLabelFrame += 5; updateBedroomLabels(); } return (performance.now() - t0) / 60; });
+console.log('   a frame that tests every label:', cost.toFixed(2), 'ms');
+
 // the pad
 await page.evaluate(() => {
   window.__pad = { buttons: Array(17).fill(0), axes: [0, 0, 0, 0] };
