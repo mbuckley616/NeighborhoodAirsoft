@@ -91,8 +91,11 @@ function buildMarketFront(scene, ob, cover, night) {
     B(t.w - 3, 0.25, 1.8, steel, t.c, 3.2, zf + 0.9);
     B(t.w + 0.4, 0.5, 4.4, white, t.c, t.h + 0.25, zc);
     if (west) {   // a dark standing-seam hipped roof with a small gable over its window
+      // v1.391: a four-sided cone turned square to the walls inside a group that squashes it to the tower's 4.4 m depth (scaled
+      // on the cone itself, the scale came before the turn and skewed it)
+      const rg = new THREE.Group(); rg.position.set(t.c, t.h + 0.5 + 2.1, zc); rg.scale.set(1, 1, 4.8 / (t.w + 1)); scene.add(rg);
       const roof = new THREE.Mesh(new THREE.ConeGeometry((t.w + 1) / Math.SQRT2, 4.2, 4, 1), seam);
-      roof.rotation.y = Math.PI / 4; roof.scale.set(1, 1, 4.8 / (t.w + 1)); roof.position.set(t.c, t.h + 0.5 + 2.1, zc); roof.castShadow = true; scene.add(roof);
+      roof.rotation.y = Math.PI / 4; roof.castShadow = true; rg.add(roof);
     } else {      // a full glass gable with a half-round fan window under a dark metal edge
       const sh = new THREE.Shape(); sh.moveTo(-t.w / 2, 0); sh.lineTo(t.w / 2, 0); sh.lineTo(0, 4.6); sh.lineTo(-t.w / 2, 0);
       const gab = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 4, bevelEnabled: false }), glass);
@@ -129,7 +132,7 @@ function buildMarketFront(scene, ob, cover, night) {
     for (let z = ML.walkZ + 0.6; z < ML.driveZ - 0.2; z += 1.0) paint.push({ k: 'strip', pts: [[T1.c - 2, 0.045, z], [T1.c + 2, 0.045, z]], w: 0.5, col: 0xece8dc });
     for (const [c, s] of [[-10, 1], [8, -1]]) for (const k of [0, 2]) {
       const z = mlStallZ(k), xa = c + s * 0.6, xb = c + s * (ML.stallD - 0.3);
-      paint.push({ k: 'strip', pts: [[xa, 0.04, z], [xb, 0.04, z]], w: ML.stall - 0.3, col: 0x3b76b2 });
+      paint.push({ k: 'strip', pts: [[xa, 0.04, z], [xb, 0.04, z]], w: ML.stall - 0.3, col: 0x2c5a8c });
     }
     scene.add(buildMergedScenery(paint, false, 'marketCrosswalk'));
     const yel = M(0xe0b828, { roughness: 0.6 });
@@ -510,17 +513,8 @@ function buildMarketLotScene(variant, timeOfDay) {
     }
   }
 
-  // === Past the area: woods round the centre (scenery) ===
-  {
-    const items = [], r2 = _mulberry32(_hashStringToSeed('marketWoods'));
-    const put = (x0, x1, z0, z1, n) => { for (let i = 0; i < n; i++) {
-      const pine = r2() < 0.55, h = pine ? 16 + r2() * 7 : 12 + r2() * 8;
-      items.push({ k: pine ? 'pine' : 'tree', x: x0 + r2() * (x1 - x0), y: 0, z: z0 + r2() * (z1 - z0), h, r: pine ? 2.2 + r2() : 3 + r2() * 2, col: pine ? 0x2e4a2c : [0x3e6a2e, 0x4a7834, 0x365e2a][Math.floor(r2() * 3)] });
-    } };
-    put(-90, -49, -110, 20, 140);           // west of the restaurant: the woods (the car wash and Eves Rd past them, step 5)
-    put(-50, 150, -150, -102, 160);         // behind the store and the strips
-    far.add(buildMergedScenery(items, _night, 'marketWoods'));
-  }
+  // v1.391 (step 5): past the centre (the woods behind the store and west of the restaurant, the warehouses, Fouts Rd's outparcels and
+  // Holcomb Bridge Rd, the car wash and Eves Rd, the second big box east): EDGE_BACKDROPS.buildMarketLotScene (step 5)
 
   // === Edge blockers: keep the player in the area ===
   const edge = [
@@ -562,7 +556,7 @@ function buildMarketLotScene(variant, timeOfDay) {
     a_store:    A(14, -28.5),     // on the walk behind the patio swings
     a_store_w:  A(-24.5, -38.5),  // under Guadalajara's arches
     a_store_e:  A(22.5, -28.5),
-    a_truck:    A(33, -21.5),     // the truck's north side
+    a_truck:    A(39.8, -19),     // v1.391: at the truck's cab, where Devon's rifle sees down the east aisles (behind it he saw nobody)
     a_dumpster: A(-8.5, -40.5),   // behind the dumpsters at the store's west corner
     a_aisle_w:  A(-19, -9),
     a_aisle_e:  A(17, -9),
@@ -582,6 +576,9 @@ function buildMarketLotScene(variant, timeOfDay) {
     scatter_w:  { pos: P(-38, 5),   cover: null },
     scatter_e:  { pos: P(35, 0),    cover: null },
     cluster_north: { pos: P(35, -21.9), cover: null },   // behind the truck: 3 m tall, it hides a head where a car does not
+    // v1.391: Aisle Wars (by day) gathers in front of the west doors, in sight of the lot as the old lot's huddle was: hidden
+    // behind the truck, your side walked up the east aisle unseen and met them round it at 5.5 m
+    cluster_doors: { pos: P(2.5, -27.2), cover: null },
     cluster_south: { pos: P(-11.5, 26.5), cover: null },
     // v1.134 (Found in play, Michael: B): the free-for-all's hidden starts, each beside cover, out of sight of the others
     // and of yours, 18 m or more apart (Michael A, 15 Oct), and in the Pickup Game's order (tyler, chris, brooke, owen,

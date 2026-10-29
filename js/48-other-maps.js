@@ -932,8 +932,12 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     // south, the front. v1.252 (D.24): the wall is open behind the glass, so the lot shows through it (addEdgeBackdrop);
     // its collision box is the whole wall as before, so BBs and kids stop at the glass
     box(-26.4, 26.4, 17.8, 18.4, 6);
-    for (const [x0, x1, y0, y1] of [[-26.4, -24, 0, H], [-2, 2, 0, H], [22, 26.4, 0, H], [-24, -2, 2.8, H], [2, 22, 2.8, H], [-24, -2, 0, 0.2], [2, 22, 0, 0.2]])
+    // v1.391 (D.51 step 4, the guide's item 9): the real front's clerestory, a band of glass from 3.2 to 5.4 m over the
+    // storefront glass between brick-coloured piers, so the daylight and the canopy outside show high on the front wall
+    for (const [x0, x1, y0, y1] of [[-26.4, -24, 0, H], [-2, 2, 0, H], [22, 26.4, 0, H], [-24, -2, 2.8, 3.2], [2, 22, 2.8, 3.2],
+      [-24, -2, 5.4, H], [2, 22, 5.4, H], [-24, -2, 0, 0.2], [2, 22, 0, 0.2]])
       mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, 0.6), wallMat, (x0 + x1) / 2, (y0 + y1) / 2, 18.1, false).receiveShadow = true;
+    for (const x of [-24, -18.5, -13, -7.5, -2, 2, 7, 12, 17, 22]) mesh(new THREE.BoxGeometry(0.7, 2.2, 0.6), wallMat, x, 4.3, 18.1, false);
     // the back wall of the sales floor, with three doorways into the stockroom (x -16.5…-13.5, -1.5…1.5, 13.5…16.5)
     for (const [x0, x1] of [[-25.8, -16.5], [-13.5, -1.5], [1.5, 13.5], [16.5, 25.8]]) wall(x0, x1, -18.6, -18.0);
     for (const dx of [-15, 0, 15]) {
@@ -951,10 +955,36 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     // the front: the glass and the automatic doors at x 8…14, daylight (or the dark lot) outside
     const glassMat = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4, transparent: true, opacity: _night ? 0.4 : 0.22, depthWrite: false });   // v1.252: see-through
     for (const [x0, x1] of [[-24, -2], [2, 22]]) mesh(new THREE.BoxGeometry(x1 - x0, 2.6, 0.04), glassMat, (x0 + x1) / 2, 1.5, 17.76, false);
+    for (const [x0, x1] of [[-24, -2], [2, 22]]) mesh(new THREE.BoxGeometry(x1 - x0, 2.2, 0.04), glassMat, (x0 + x1) / 2, 4.3, 17.9, false);   // v1.391
     for (let x = -24; x <= 22; x += 2) mesh(new THREE.BoxGeometry(0.08, 2.7, 0.08), std(0x8a8c8e, { metalness: 0.5 }), x, 1.45, 17.74, false);
     mesh(new THREE.BoxGeometry(6, 0.3, 0.3), std(0x2f6a3a), 11, 2.95, 17.6, false);
     const enter = canvasTex(256, 32, (c) => { c.fillStyle = '#2f6a3a'; c.fillRect(0, 0, 256, 32); c.fillStyle = '#fff'; c.font = 'bold 20px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ENTER  ·  EXIT', 128, 17); });
     const em = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.28), new THREE.MeshBasicMaterial({ map: enter })); em.position.set(11, 2.95, 17.44); em.rotation.y = Math.PI; scene.add(em);
+    // v1.391 (D.51 step 4): outside the glass, the real front as the lot has it: the walk, the red curb and the hatched
+    // fire lane, the charcoal canopy 2.5 m deep at 3.6 m on its tie-rods, and (the guide's item 8) the west entrance's
+    // glass vestibule built out from the front at x -20...-14 with its own ENTER · EXIT sign. All of it is past the
+    // bounds and none of it is solid; the floor inside is as it was.
+    {
+      const flatOut = (w, d, color, x, z, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), std(color, { roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; };
+      flatOut(56, 4.5, 0xa69e8f, 0, 18.4 + 2.25, 0.03);
+      flatOut(56, 0.22, 0xb03a36, 0, 22.9 + 0.11, 0.04);
+      const hatch = canvasTex(64, 64, (c) => { c.strokeStyle = '#d8b830'; c.lineWidth = 7; for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * 64, 64); c.lineTo(i * 64 + 64, 0); c.stroke(); } });
+      hatch.wrapS = hatch.wrapT = THREE.RepeatWrapping; hatch.repeat.set(56 / 3, 1);
+      const hm = new THREE.Mesh(new THREE.PlaneGeometry(56, 2.6), new THREE.MeshStandardMaterial({ map: hatch, transparent: true, roughness: 0.9, depthWrite: false }));
+      hm.rotation.x = -Math.PI / 2; hm.position.set(0, 0.035, 24.4); scene.add(hm);
+      const steel = std(0x26282e, { roughness: 0.6, metalness: 0.4 });
+      mesh(new THREE.BoxGeometry(56, 0.25, 2.5), steel, 0, 3.72, 18.4 + 1.25, false);
+      for (let x = -24; x <= 24; x += 6) { const r = mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.5, 5), steel, x, 4.75, 19.5, false); r.rotation.x = -Math.atan2(2.3, 1.9); }
+      const vg = new THREE.MeshBasicMaterial({ color: _night ? 0x10141c : 0xd8e8f4, transparent: true, opacity: _night ? 0.4 : 0.25, depthWrite: false });
+      const vf = std(0x8a8c8e, { metalness: 0.5 });
+      mesh(new THREE.BoxGeometry(6, 2.8, 0.04), vg, -17, 1.4, 21.8, false);
+      for (const x of [-20, -14]) mesh(new THREE.BoxGeometry(0.04, 2.8, 3.4), vg, x, 1.4, 20.1, false);
+      for (const [x, z] of [[-20, 21.8], [-14, 21.8], [-17, 21.8]]) mesh(new THREE.BoxGeometry(0.1, 2.9, 0.1), vf, x, 1.45, z, false);
+      mesh(new THREE.BoxGeometry(6.4, 0.25, 3.8), steel, -17, 2.95, 20.1, false);
+      // the doorway through the front glass into the vestibule, and its sign over it inside
+      mesh(new THREE.BoxGeometry(6, 0.3, 0.3), std(0x2f6a3a), -17, 2.95, 17.6, false);
+      const em2 = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.28), new THREE.MeshBasicMaterial({ map: enter })); em2.position.set(-17, 2.95, 17.44); em2.rotation.y = Math.PI; scene.add(em2);
+    }
     // the store's name on the back wall over the centre doorway, seen from the checkouts
     const name = canvasTex(512, 80, (c) => { c.fillStyle = '#f4efe2'; c.fillRect(0, 0, 512, 80); c.fillStyle = '#2f6a3a'; c.textAlign = 'center'; c.textBaseline = 'middle'; fitSignText(c, 'RIVERSIDE MARKET', 256, 42, 46, 'Georgia', 512 - 40); });   // v1.300
     const nm = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), new THREE.MeshBasicMaterial({ map: name })); nm.position.set(0, 4.3, -17.98); scene.add(nm);

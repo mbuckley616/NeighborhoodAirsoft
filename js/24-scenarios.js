@@ -1343,7 +1343,7 @@ const SCENARIOS = {
       { charId: 'jamie',  weapon: 'ump',    anchor: 'a_store_e' },
       { charId: 'tyler',  weapon: 'shotgun',anchor: 'a_truck'   },
     ],
-    enemySpawnCluster: 'cluster_north',
+    enemySpawnCluster: 'cluster_doors',   // v1.391: in front of the west doors (the night matches' huddle hides behind the truck)
     winCondition: 'last_team_standing',
     npcLives: 3,
     rewards: { win: 70, lose: 18 },
