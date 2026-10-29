@@ -785,8 +785,10 @@ const SCENARIOS = {
       { charId: 'nick',     weapon: 'ar',      anchor: 'ffa_2' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'ffa_3' },
       { charId: 'mitchell', weapon: 'pistol',  anchor: 'ffa_4' },
-      { charId: 'chris',    weapon: 'mac10',   anchor: 'ffa_5' },   // v1.368: was Priya
-      { charId: 'owen',     weapon: 'ar',      anchor: 'ffa_6' },
+      // v1.389: Owen and Chris swapped starts. Chris (v1.368, Priya's place) is quicker and pushier than she was: from
+      // ffa_5 he marched at Mitchell along a line past your start and tagged you standing there at 6-8 s
+      { charId: 'owen',     weapon: 'ar',      anchor: 'ffa_5' },
+      { charId: 'chris',    weapon: 'mac10',   anchor: 'ffa_6' },   // v1.368: was Priya
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 70, lose: 15 },
