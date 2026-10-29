@@ -250,10 +250,12 @@ function updateBBs(dt) {
       for (const e of Game.scenario.enemies) {
         if (e.health <= 0 || e.state === 'retreating') continue;
         if ((e.team || 'enemy') === bb.team) continue;       // own team's round
-        if (e._lastNearMiss && (now - e._lastNearMiss) < 0.25) continue;
         const dxm = bb.pos.x - e.pos.x, dzm = bb.pos.z - e.pos.z;
         const dym = bb.pos.y - ((e.pos.y || 0) + 1.0);       // ~chest height
-        if (dxm*dxm + dzm*dzm + dym*dym > NEAR_MISS_R2) continue;
+        const d2m = dxm*dxm + dzm*dzm + dym*dym;
+        if (d2m < FIRE_PRESS_R * FIRE_PRESS_R) noteFirePressure(e, bb, now);   // v1.387 (D.81): the fire on him, by gun
+        if (e._lastNearMiss && (now - e._lastNearMiss) < 0.25) continue;
+        if (d2m > NEAR_MISS_R2) continue;
         // Direction the shot came FROM = opposite the BB's horizontal travel.
         const vlen = Math.hypot(bb.vel.x, bb.vel.z) || 1;
         e._incomingDir = { x: -bb.vel.x / vlen, z: -bb.vel.z / vlen };
