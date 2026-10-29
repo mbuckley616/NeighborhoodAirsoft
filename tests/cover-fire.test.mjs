@@ -77,7 +77,7 @@ const within3 = (all.near + all.mid) / all.shots;
 check('under 5% of enemy shots hit an obstacle within 3 m', within3 < 0.05, { pct: +(within3 * 100).toFixed(1) });
 // shotguns fire several pellets a call, so compare trigger pulls with pulls that made any BB
 check('kids still shoot (under 25% of trigger pulls held)', all.held / Math.max(1, all.calls) < 0.25, { calls: all.calls, held: all.held });
-// v1.382 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind"): kids
+// v1.385 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind"): kids
 // tested their line to your chest only, so a head over a chest-high wall drew nothing (0 BBs in 40 s here, 178 in the
 // open). Hollow 3v3, you held 1 m behind a 40 m wall 1.25 m high: standing, your head shows and draws fire; crouched it
 // doesn't, and nothing comes.
