@@ -244,7 +244,8 @@ check('the Hollow: at most 1,450 draw calls in any of five views', Math.max(...O
 // sides, your side and theirs start 29-70 m apart (Michael 1A: "starts stay 30-70 m apart, so the fights keep today's
 // distances"; 1v1 with Sean is 29.8); and at night no kid of theirs starts with a line to your start, or a step round
 // it, at any height a kid shoots or looks from (the night rule, Michael A on Lamplight, 15 Oct; the taggers of
-// Infection carry no guns). The free-for-alls' starts are tests/ffa-starts'.
+// Infection carry no guns). The free-for-alls' starts are tests/ffa-starts'. Since v1.355 the maps have 29: the Downhill
+// Derby (`bunratty_go_cart`) is a race past kids posted down the lane, not two sides, so its starts are not a side's.
 const ids28 = await page.evaluate(() => Object.keys(SCENARIOS).filter(k => ['buildBunrattyCourtScene', 'buildHollowScene'].includes(SCENARIOS[k].builderFn)));
 const m28 = [];
 for (const id of ids28) {
@@ -261,7 +262,7 @@ for (const id of ids28) {
         const tx = at.x + dx, tz = at.z + dz;
         if (hasLineOfSight(f.x, G(f.x, f.z) + h, f.z, tx, G(tx, tz) + th, tz, obs)) lines.push(f.n);
       }
-    const out = { id: Game.scenario.active, mode: Game.mode, night: sc.timeOfDay === 'night', sides: foes.length > 0 && sc.winCondition !== 'survive_untagged',
+    const out = { id: Game.scenario.active, mode: Game.mode, night: sc.timeOfDay === 'night', sides: foes.length > 0 && sc.winCondition !== 'survive_untagged' && !sc.race,
       sep: isFinite(sep) ? +sep.toFixed(1) : null, lines: [...new Set(lines)] };
     endScenario('lose');
     return out;
@@ -271,7 +272,7 @@ for (const id of ids28) {
   m28.push(r);
 }
 console.log('  ', JSON.stringify(m28.map(r => [r.id, r.sep, r.lines.length, r.errs])));
-check('the 28 matches on the two maps all build and start, with no page error', m28.length === 28 && m28.every(r => r.mode === 'scenario' && r.errs === 0), m28.filter(r => r.mode !== 'scenario' || r.errs));
+check('the 29 matches on the two maps all build and start, with no page error', m28.length === 29 && m28.every(r => r.mode === 'scenario' && r.errs === 0), m28.filter(r => r.mode !== 'scenario' || r.errs));
 check('in every match with sides, the two sides start 29-70 m apart (Michael 1A)', m28.filter(r => r.sides).every(r => r.sep >= 29 && r.sep <= 70), m28.filter(r => r.sides && !(r.sep >= 29 && r.sep <= 70)));
 check('at night nobody on their side starts with a line to your start', m28.filter(r => r.night).length >= 8 && m28.every(r => r.lines.length === 0), m28.filter(r => r.lines.length));
 // back in the bedroom the camera's reach is the usual 200 m again
