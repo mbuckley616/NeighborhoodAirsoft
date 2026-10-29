@@ -7,6 +7,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **D.82: a Roblox version of the game (local session, 2026-10-29)**
+  You asked whether to port the game to Roblox for its reach and Robux sales. Nothing in the JS carries over: Roblox
+  runs Luau in Roblox Studio on its own engine, so it is a rebuild; what carries is the maps' layouts, the game modes,
+  the guns' numbers and the BB wobble. Roblox gives servers, matchmaking, voice and saves for free; it takes 30% of a
+  sale and DevEx pays about $0.0038 a Robux (30,000 to cash out), so 25-30¢ of a player's dollar reaches you; its
+  discovery favours multiplayer games people come back to, and most new places get next to no players.
+  - A) Port the whole game, campaign and all.
+  - B) **A light multiplayer spin-off:** the maps and the Pickup Game modes, a few spring guns and the BB wobble,
+    8-12 players as their own avatars, cosmetics for sale (no pay-to-win, no random paid items); the campaign stays on
+    itch. *(recommended)*
+  - C) Stay on itch only.
+  Michael: **B, parked**: "The spin off that is purely multiplayer and just leverages the maps / game modes would be
+  ideal. I don't want it to be super heavy weight and don't want to invest a ton of time into it." An idea to explore
+  at some point, not work for now (backlog D.82). (2026-10-29, local session)
+  Open when it starts: whether the real kids' names and the real streets go in a game sold to a young audience (ask
+  the people behind the characters first); and that it lives outside this repo (a Roblox place, Luau through Rojo),
+  tested in Studio by Michael rather than headless.
+
 - **D.81: kids under heavy fire, fall back, camp or push (builder, 2026-10-29)**
   You asked (control room, 28 Oct) for kids to react to the amount of fire on them: panickers who scramble away and
   fire wildly back, campers who stay in cover and pop out now and then, pushers who don't care and close in, with a big
