@@ -437,8 +437,8 @@ function buildMarketLotScene(variant, timeOfDay) {
   treeObs.push(addSuburbanTree(scene, A_.minX + 0.2, -27, { trunkH: 3.4, leafR: 3.0, baseY: 0.15, detail: true }));
   // Along the south verge, past the last islands: the trees in front of Fouts Rd
   for (let x = -40; x <= 150; x += 14) {
-    const o = addSuburbanTree(x > A_.maxX ? far : scene, x + 9, 28.6, { baseY: 0, detail: true });
-    if (x + 9 <= A_.maxX) treeObs.push(o);
+    const o = addSuburbanTree(x + 9 > ML.rows[ML.playRows] ? far : scene, x + 9, 28.6, { baseY: 0, detail: true });
+    if (x + 9 <= ML.rows[ML.playRows]) treeObs.push(o);   // v1.391: to the fence row, as the rows
   }
 
   // === CART CORRALS and strays — metal rails you can crouch behind ===
