@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.81: kids under heavy fire, fall back, camp or push (builder, 2026-10-29)**
   You asked (control room, 28 Oct) for kids to react to the amount of fire on them: panickers who scramble away and
   fire wildly back, campers who stay in cover and pop out now and then, pushers who don't care and close in, with a big
@@ -21,8 +23,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     same every time.
   - C) As A, but each kid gets a named type (panicker, camper, pusher) set by hand in the roster, shown on his crew card.
   - D) Not now: leave the kids as they are, and fix only the irrational moments the critic catches in play.
-
-## Answered
+  Michael: **A) By temperament, from the aggression he already has**. (2026-10-29)
 
 - **D.73: how co-op works, a friend in your bedroom and your campaign (Fable, card fable/d73-coop, 2026-10-28)**
   You asked (23 Oct) for a friend to "come over to hang out" in your bedroom and play at your side in all your
