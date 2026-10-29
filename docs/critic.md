@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -2049,3 +2049,105 @@ and nothing asked me to break a rule.
 - v1.368: Joe's and Chris's looks, not looked at. Protect Ryan, no read (above).
 - v1.369, Caleb and Brooke passing: not looked at.
 - v1.371 and v1.372, the G36C and the AUG: not played. My bot is no judge of how a gun feels.
+
+## 2026-10-29 — A new save from the hall to the map table and the landing; kids under fire (v1.387) in the Hollow 3v3, Bunratty's 4v4 and Bellfield's Twins; the Downhill Derby and Cart Path Only after v1.375 (v1.387)
+
+Played main at v1.387 (auto/build and auto/build-maps are level with it). Smoke 1 of 1 green. 25 rounds and a new save
+twice. No page errors anywhere. One bug filed, a small one you can see. My bot this run turns onto the nearest kid in
+sight within 40 m and holds the trigger. **It refills the magazine when it runs dry and clears jams (a cheat), and it
+shoots the AK or the M249.** It can't work the spring pistol yet: in the derby it got one shot off a ride. Two of my
+numbers come from the harness, not the game, and I've left them out: kids "all out" with the match still running at the
+end of a loop (the win fires on a real-time timeout, which a long loop inside one evaluate holds back), and label
+opacity read mid-fade.
+
+**The labels show through walls (new, filed).** `updateBedroomLabels` fades a label by distance and nothing else, and
+since v1.376 there are two rooms.
+- At a new save's spawn in the hall, MAP floats on the closet door to your left and LOADOUT on the one to your right,
+  in front of the things they name (`docs/critic/2026-10-29-labels-at-spawn.png`).
+- At the top of the landing's stairs, MIRROR and WORKBENCH float over the landing's wall, 7 m from things in the next
+  room, and SHOP shows faintly (`docs/critic/2026-10-29-labels-from-landing.png`). Looking out the east window, SHOP and
+  CALENDAR show faintly over the trees.
+- It doesn't stop anyone finding anything; a MAP sign on a closet door may even help a first-timer. But it reads as a
+  glitch.
+
+**The first-timer path after v1.376.** "Go outside" has gone (Michael: matches from the map table only).
+- NEW GAME, Enter through the four cards, DONE on the mirror. You stand in the hall at (0, 4.4), facing into the room.
+  The prompt on screen is "Open the workbench", and the note asks for the phone. The map table's step is fourth of four.
+- MAP is in view from the spawn, 5 m off on the left. Walking at it, its prompt "Open the neighborhood map" shows, E
+  opens the map, and the note ticks the map table. I'd call that findable.
+- Turning round, the hall door opens onto the landing. The stairs say "Go out back (the range)" and are labelled
+  BACKYARD. A kid looking for "outside" may well go there first. The range's HUD says "back door: inside", so it isn't a
+  dead end.
+- v1.374 fixed the note: with fixed steps it is hidden on the map, in the briefing and in a match.
+
+**Kids under heavy fire (v1.387's Still open).** These numbers count each kid's episodes (`_underFire`) and his distance
+from me when an episode starts and 4 s later. In matches with lives, a respawn can hide in that second number.
+- *Bunratty's 4v4* (`bunratty_team_4v4`, the bot walking at kids it can't see, 150 s):
+  - AK, round 1: won, all four out, never tagged, 9 episodes. Round 2: tagged at 7.3 s by Chris, a pusher (0.85), whose
+    episode began 33 m out.
+  - M249, round 1: lost at 79.6 s with two left (6 episodes). Round 2: 150 s, never tagged, one left (13 episodes).
+  - Owen (0.2) camped in every episode, 7 across the rounds, and held 39-40 m.
+  - Tyler (0.5) fell back each time, 5-7 m an episode, 6 times in one M249 round. Mitchell (0.4) fell back.
+  - Chris pushed: 27.8 to 22.1 m, and tagged out; 26.3 m to 34.3 (I can't tell a push undone from a respawn).
+  - So it reads as written: who you shoot at decides the answer, not your gun.
+- *The Hollow 3v3*, standing in the south fort: Seth (0.45) and Sean (0.55) fell back, Ryan (0.75) pushed. Our own Eric
+  (0.5) fell back 3-4 times a round from the other side's fire.
+- *Bellfield's Twins 3v3* (`northcliff_twins_3v3`, walking): 4 wins of 4, all four out each time, never tagged. Each
+  round had 5-7 episodes, with more pushes (2-4) than falls (1).
+- *Too easily under the AK, or not enough under the M249?* By the code they weigh the same, 3 a BB: both are heavy
+  automatics, and the M249 only fires faster (12.5 a second against the AK's 10). In Bunratty the M249 rounds had 6 and
+  13 episodes, and the full AK round had 9. If Michael wants the M249 to scare kids more than an AK, it needs its own
+  weight. The pistol case isn't judged: my bot can't fire it.
+
+**A head over a wall (v1.385's Still open).** The Hollow 3v3 from the south fort, AK. You start four a side on a new
+save: you, Eric, Rebecca and Mitchell against Seth, Sean, Ryan and Brooke. You have one life.
+- Standing: tagged at 41.5 and 35.9 s.
+- Crouched: 90 s untagged, twice.
+- Standing with the M249: 120 s untagged, twice. That may be the fire pressure keeping their heads down.
+- Walking out of the fort: tagged at 16.9 and 18.5 s.
+- So standing behind the fort wall now draws fire that crouching doesn't, as v1.385 meant. Whether it's too much is a
+  feel call. 36-41 s before the first tag doesn't feel like too much to me.
+
+**Downhill Derby and Cart Path Only (v1.375's lines).**
+- *The derby, with the AK:* won 2 of 2, all five tagged, 0 and 1 tags taken, a top speed of 12 m/s. The card says "YOU
+  MADE IT DOWN. The cart rolls to a stop in the bulb. You tagged all 5 of them on the way. Mitchell jogs down the hill:
+  'No way. My turn in that thing.'"
+- *The derby's loss line* (my first bot, stuck on the lane's slalom at 135 m): "You climb out of the cart with 37 m still
+  to go. You never tagged one of them…" The stops were my steering's fault, not the game's. The lane is never blocked
+  across: I scanned it every 0.5 m, and a line through the crown gets through the bins and cars at 128-139 m.
+- *Cart Path Only, with the AK:* "TWO LAPS, YOU MADE IT. Eric pulls the cart back up to the barn. You tagged all 5 of
+  them on the way, and nobody was left to wave you in." 29 shots. It's still easy, as last run's proposal says.
+
+**Winnmark's Last Stand** (`winnmark_last_stand`, AK, standing): 2 rounds of 120 s, never tagged, nobody tagged by me
+either. That was my bot's first version, which fired out to 70 m, so most of its 1,200 BBs a round fell short. The kids
+came in from 63 m to 34-38 m. Each round had 13 episodes: 8 pushes and 5 falls. This one isn't a read on the match.
+
+**The landing (v1.376-v1.384), looked at.** The black futon and coffee table, the doors and the balls on the floor are
+there. Out of the east window: the driveway with a dark car on it, the neighbours' house with its grey roof, the pool,
+the woods and the crape myrtle's pale trunks (`docs/critic/2026-10-29-landing-east-window.png`). Whether it looks like
+his view is Michael's call.
+
+**Frame time:** not measured fairly. I ran 3-5 browsers at once, and single steps reached 0.3-1.9 s under that load.
+The derby alone stayed at 23-37 ms a step at worst.
+
+### itch.io
+Still unreachable: WebFetch gets ENOTFOUND for mbuckley616.itch.io, so I read no comments. The host would have to be
+allowed in this environment's network settings.
+
+Slack's last day: v1.373-v1.387 from the two builders, co-op v1.380-v1.381 from the Fable session, the harness race
+fixed (PR #200), and the desk-start and real-scale reds fixed on main. Nothing was addressed to me and nothing asked me
+to break a rule.
+
+### The devlog's Still open, from play (v1.373-v1.387)
+- v1.373, how the M4 feels: not judged. A bot is no judge of a gun.
+- v1.374: judged, fixed.
+- v1.375: both lines seen, win and loss, and they read right. The ride is still easy.
+- v1.376, v1.378, v1.382-v1.384, the landing and the room: looked at, above. The scale, the ridge's height and the
+  fan's rod are Michael's eye; nothing looked broken. With no crew on a new save, I didn't see the kids on the futon.
+- v1.377 and v1.379: nothing to see.
+- v1.380-v1.381, co-op, and v1.386, the walkie's static: not played. They need two people and ears.
+- v1.385: judged above, as far as a bot can.
+- v1.387: judged above. The open question is the M249's weight. The pistol case and "your fire comes from where you
+  stood" are not judged.
+
+No proposals this run.
