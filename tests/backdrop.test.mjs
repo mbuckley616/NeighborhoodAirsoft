@@ -53,8 +53,11 @@ for (const [k, r] of Object.entries(res)) {
   // houses along the bluff's top, 66 m out, which the night's fog (58 m) hides, so at night none is built
   if (k === 'Hollow night') { check(`${k}: none is built past the night's fog, and no obstacle was added`, !r.ok && r.obsSame, r); continue; }
   check(`${k}: a backdrop is built into the map's own scene`, r.ok && r.inScene, r);
-  // the store at night: its fog closes at 52 m, so the lot, the road and the shops across it are all that show
-  if (k === 'GroceryStore night') check(`${k}: the lot, cars and shops in it`, r.stats && r.stats.shops >= 4 && r.stats.cars >= 10, r.stats);
+  // v1.392 (D.51, docs/refs/kroger.md item 7: the real centre has no houses near): the lot and the store get the real
+  // bands, shops, lots, roads and woods. The store at night: its fog closes at 52 m and the outparcels start at 69 m
+  // past the glass, so its own lot's cars are all that show
+  if (k === 'GroceryStore night') check(`${k}: the lot's cars in it`, r.stats && r.stats.cars >= 10, r.stats);
+  else if (k.startsWith('MarketLot') || k.startsWith('GroceryStore')) check(`${k}: shops and trees in it, no houses near`, r.stats && r.stats.shops >= 4 && r.stats.trees >= 40, r.stats);
   else check(`${k}: houses and trees in it`, r.stats && r.stats.houses >= 8 && r.stats.trees >= 40, r.stats);
   check(`${k}: nothing in it is an obstacle, and no obstacle was added`, r.obsSame && r.solid === 0, r);
   check(`${k}: nothing stands within 6 m of the bounds (BBs drop at 5)`, r.near >= 6, r.near);
