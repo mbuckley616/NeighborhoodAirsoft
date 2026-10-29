@@ -978,6 +978,7 @@ function buildBedroomLabels() {
     it._labelEl = el;
     // anchor point in world space: the interactable's footprint + labelY height
     it._labelWorld = new THREE.Vector3(it.pos.x, it.labelY != null ? it.labelY : 1.8, it.pos.z);
+    it._labelSeenAt = null;   // v1.388: its wall test runs on the first frame
   }
   layer.style.display = 'block';
 }
@@ -991,10 +992,42 @@ function hideBedroomLabels() {
 // the DOM chip. Off-screen / behind-camera labels are hidden; nearer ones fade
 // in; the focused (in-range) one gets the accent class.
 const _brLabelProj = new THREE.Vector3();
+// v1.388 (Found in play, critic 29 Oct): the labels faded by distance only, so MAP and LOADOUT floated on the hall's
+// closet doors at a new save's spawn and MIRROR and WORKBENCH over the landing's wall. A ray from the eye to each
+// label's anchor now hides it when an opaque, visible mesh stands more than 0.5 m short of the anchor (so the thing it
+// names, right under it, never hides it). Each label is tested every 6 frames, not every frame.
+const _brLabelRay = new THREE.Raycaster();
+const _brLabelDir = new THREE.Vector3(), _brLabelEye = new THREE.Vector3();
+let _brLabelFrame = 0;
+function bedroomLabelBlocked(it, cam) {
+  const eye = cam.getWorldPosition(_brLabelEye);
+  _brLabelDir.copy(it._labelWorld).sub(eye);
+  const len = _brLabelDir.length();
+  if (len < 0.6) return false;
+  _brLabelDir.multiplyScalar(1 / len);
+  // the room's walls are one-sided, seen from behind by a ray from the other room: so look both ways along the line
+  _brLabelRay.set(eye, _brLabelDir);
+  _brLabelRay.near = 0.05; _brLabelRay.far = len - 0.5;
+  if (bedroomLabelRayHits()) return true;
+  _brLabelRay.set(it._labelWorld, _brLabelDir.negate());
+  _brLabelRay.near = 0.5; _brLabelRay.far = len - 0.05;
+  return bedroomLabelRayHits();
+}
+function bedroomLabelRayHits() {
+  for (const h of _brLabelRay.intersectObjects(Game.scene.children, true)) {
+    const m = h.object.material;
+    if (!h.object.isMesh || !m || (m.transparent && m.opacity < 0.6) || m.visible === false) continue;   // glass and the like
+    let o = h.object, shown = true;
+    while (o) { if (!o.visible) { shown = false; break; } o = o.parent; }
+    if (shown) return true;
+  }
+  return false;
+}
 function updateBedroomLabels() {
   if (Game.mode !== 'bedroom') return;
   const cam = Game.camera;
   if (!cam) return;
+  _brLabelFrame++;
   const w = window.innerWidth, h = window.innerHeight;
   for (const it of Game.interactables) {
     const el = it._labelEl;
@@ -1019,6 +1052,12 @@ function updateBedroomLabels() {
     const dist = Math.sqrt(dx*dx + dz*dz);
     let op = 1;
     if (dist > 6) op = Math.max(0, 1 - (dist - 6) / 5);
+    // v1.388: a wall (or anything solid) between your eye and the label hides it; since v1.376 there are two rooms
+    if (op > 0 && (it._labelSeenAt == null || _brLabelFrame - it._labelSeenAt >= 6)) {
+      it._labelBlocked = bedroomLabelBlocked(it, cam);
+      it._labelSeenAt = _brLabelFrame;
+    }
+    if (it._labelBlocked) op = 0;
     el.style.opacity = op.toFixed(2);
     // focused highlight
     if (Game.focusedInteractable === it) {
