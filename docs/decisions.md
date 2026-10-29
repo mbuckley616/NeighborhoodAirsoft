@@ -5,6 +5,23 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.81: kids under heavy fire, fall back, camp or push (builder, 2026-10-29)**
+  You asked (control room, 28 Oct) for kids to react to the amount of fire on them: panickers who scramble away and
+  fire wildly back, campers who stay in cover and pop out now and then, pushers who don't care and close in, with a big
+  gun with thousands of BBs shaking a kid more than a pistol. Today nothing measures the fire on a kid: a near miss only
+  draws a voice line, and his one `aggression` number (0.2-0.88 a kid) sets how often he moves cover and how long he
+  hides, whatever is coming at him. Each option counts the BBs that pass within about 1.5 m of a kid over the last few
+  seconds, weighted by the gun that fired them (a pistol about 1, a rifle 2, the M249 and other big automatics 3), on
+  both sides, your crew included; past his limit he reacts.
+  - A) **By temperament, from the aggression he already has:** under 0.4 he camps (stays down in his cover, peeks less
+    often, fires over the top), 0.4-0.7 he falls back to the next cover away from the fire, firing back as he goes, over
+    0.7 he shrugs it off and pushes. Calms down after a few quiet seconds. *(recommended: Joe, Chris, Devon already read
+    as those kinds of kid, and nobody's numbers change)*
+  - B) One reaction for everyone: past his limit any kid falls back to cover further from the fire. Simplest, and the
+    same every time.
+  - C) As A, but each kid gets a named type (panicker, camper, pusher) set by hand in the roster, shown on his crew card.
+  - D) Not now: leave the kids as they are, and fix only the irrational moments the critic catches in play.
+
 ## Answered
 
 - **D.73: how co-op works, a friend in your bedroom and your campaign (Fable, card fable/d73-coop, 2026-10-28)**
