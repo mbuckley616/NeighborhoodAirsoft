@@ -24,6 +24,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Open when it starts: whether the real kids' names and the real streets go in a game sold to a young audience (ask
   the people behind the characters first); and that it lives outside this repo (a Roblox place, Luau through Rojo),
   tested in Studio by Michael rather than headless.
+  Estimate (local session, 29 Oct; a judgement, about ±50%): a first public version (Winnmark Court, one or two
+  Pickup modes, a few spring guns with the wobble, 8-12 players, a small cosmetics shop) is about 10-14 local sessions:
+  setup and Rojo 1, the map 1-2, guns and BBs the server can trust 2-3, one mode with lobby, teams and rounds 1-2, the
+  HUD 1, phone controls 1, the shop and Robux sales 1-2, publishing and playtest fixes 1-2. A smaller test of interest
+  (one map, one gun, one mode, two or three cosmetics, no phone controls) is 6-8. About 2-3 weeks at a session a day;
+  the cloud team can't run Roblox, so it is local sessions only. Michael's time is the real cost: 30-60 minutes of
+  Studio playtesting a session, about 8-15 hours in all. Publishing is free; $20-100 of sponsored ads would show
+  whether players stay. Each extra map adds about 1 session, each mode 1-2, and BB wobble that fights the
+  network 2-3 more.
 
 - **D.81: kids under heavy fire, fall back, camp or push (builder, 2026-10-29)**
   You asked (control room, 28 Oct) for kids to react to the amount of fire on them: panickers who scramble away and
