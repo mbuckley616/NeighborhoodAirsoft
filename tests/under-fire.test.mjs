@@ -19,6 +19,11 @@ async function round(gun, rate, agg) {
     for (let i = 0; i < 240; i++) stepGame(1 / 60);
     const e = Game.scenario.enemies.find(k => k.team !== 'player' && k.health > 0);
     e.character = Object.assign({}, e.character, { aggression: agg });
+    // v1.392 (D.51, the lot at real scale): every round from one spot, the open aisle east of the car column nearest
+    // his start, the cars 1.9 m to his west. On the turned rows his own start put him at a car's face some rounds and
+    // in the aisle others, and a stream begun inside that car never passed him (no fire, no episode)
+    e.pos.x = 32.5; e.pos.z = -9; e.mesh.group.position.x = 32.5; e.mesh.group.position.z = -9;
+    e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1; e.targetPos = null; e.homeCover = null;
     Game.gun.type = gun;
     const P = Game.player.pos, dist = () => Math.hypot(e.pos.x - P.x, e.pos.z - P.z);
     const d0 = dist(), states = {};

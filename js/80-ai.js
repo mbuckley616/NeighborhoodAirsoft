@@ -1542,7 +1542,19 @@ function updateEnemies(dt) {
               e._suppressCd = (1.6 - aggression * 0.6) + gameRandom()*0.5;
             }
           }
-          const newCover = nearestShieldingCover(e, dir, 14);
+          let newCover = nearestShieldingCover(e, dir, 14);
+          // v1.392 (D.51): camping, he keeps the camp's own rule (no cover more than 1 m nearer the fire) here too: on the
+          // lot's north-south rows the nearest car that shields him was the next one up the aisle, a timid kid walking
+          // 4-5 m toward an M249; he gets down where he is instead
+          const ufc = e._underFire && e._underFire.kind === 'camp' && e._underFire.from;
+          if (newCover && ufc) {
+            const sp = coverStandPos(newCover, { x: e.pos.x + dir.x * 20, z: e.pos.z + dir.z * 20 }, 0.35);
+            if (Math.hypot(sp.x - ufc.x, sp.z - ufc.z) < Math.hypot(e.pos.x - ufc.x, e.pos.z - ufc.z) - 1) {
+              newCover = null;
+              e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1.2 + gameRandom() * 0.8;
+              setKidCrouch(e.mesh, 1);
+            }
+          }
           if (newCover) {
             e.state = 'repositioning';
             e.stateTime = 0;
@@ -2256,7 +2268,9 @@ function updateEnemies(dt) {
           // fort corner, the muzzle line into the wall each time, 43–62 held pulls a minute) and he moves.
           let movedByHolds = false;
           if (e._underFire && e._underFire.kind !== 'push') repositionChance = 0;   // v1.387 (D.81): he keeps his cover
-          if ((e._lineHolds || 0) >= 3) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
+          // v1.392 (D.51): not while he camps: behind a lot car every cover in reach was nearer you, and the escape walked a
+          // timid kid up the aisle into an M249; the holds keep, and he moves once the episode is over (3 quiet seconds)
+          if ((e._lineHolds || 0) >= 3 && !(e._underFire && e._underFire.kind === 'camp')) { repositionChance = 1; e._lineHolds = 0; movedByHolds = true; }
           if (gameRandom() < repositionChance) {
             // Only consider cover within reposition range of current position.
             // v1.9: defenders are zone-locked — candidate cover must be within
