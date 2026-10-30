@@ -31,7 +31,10 @@ const plan = await page.evaluate(() => {
   const outside = obs.filter(o => o.h < 6 && !inB((o.minX + o.maxX) / 2, (o.minZ + o.maxZ) / 2, -1.2)
     && o !== store && !(o.maxX - o.minX > 30) && !(o.minX > B.maxX - 0.5 && o.maxX < 44.8 && o.minZ > -16 && o.maxZ < 28)).map(o => [+o.minX.toFixed(1), +o.minZ.toFixed(1), o.h]);
   const pts = [...Object.entries(built.placements), ...Object.entries(built.playerSpawns)];
+  // v1.392: against the lot's own obstacles (collidesObstacles reads the player's, here the bedroom's)
+  const was = Game.player.obstacles; Game.player.obstacles = obs;
   const bad = pts.filter(([, p]) => !inB(p.pos.x, p.pos.z, 0.4) || collidesObstacles(p.pos.x, p.pos.z, 0.3)).map(([k]) => k);
+  Game.player.obstacles = was;
   return { size: [+(B.maxX - B.minX).toFixed(1), +(B.maxZ - B.minZ).toFixed(1)], storeW: store && store.maxX - store.minX,
     storeD: store && store.maxZ - store.minZ, tower: !!tower, doorsAisle: ML.storeX0 + 6,
     rowCars: rowCars.length, ns, rows: rowsOf.size, cols: cols.length, fence: fence.length, tables: tables.length,
