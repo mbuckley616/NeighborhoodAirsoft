@@ -22,11 +22,17 @@ const EDGE_BACKDROPS = {
   buildHollowScene: {
     E: { from: 66, bands: [['houses', 22], ['trees', 40]] },
   },
+  // v1.391 (D.51 step 5, docs/refs/kroger.md item 7): the lot at real scale (bounds x -42.5..43.3, z -41.5..27) has the
+  // store, the strips, the rest of the rows and Fouts Rd of its own; past them the real centre has no houses near. N:
+  // past the store's 70 m, woods, Scott Rd and the long flat-roofed warehouses. S: past Fouts Rd, the outparcels and
+  // their lots, Holcomb Bridge Rd's five lanes, the woods across it. W: past the restaurant, the woods, the car wash and
+  // the gas station's canopy, Eves Rd, woods. E: past the far rows and the east strip, a tree belt, the second big box
+  // with its own lot, Old Scott Rd and the townhouses.
   buildMarketLotScene: {
-    N: { from: 20, bands: [['trees', 8], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },   // behind the store
-    S: { from: 13, bands: [['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },                  // across the road
-    W: { from: 7, bands: [['lot', 20], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
-    E: { from: 7, bands: [['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    N: { from: 62, bands: [['trees', 30], ['road', 10], ['shops', 30], ['trees', 40]] },
+    S: { from: 12, bands: [['shops', 18], ['lot', 30], ['road', 18], ['trees', 60]] },
+    W: { from: 5, bands: [['trees', 30], ['shops', 12], ['road', 10], ['trees', 40]] },
+    E: { from: 100, bands: [['trees', 20], ['lot', 40], ['shops', 30], ['road', 10], ['houses', 22], ['trees', 40]] },
   },
   buildNorthcliffScene: {
     N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
@@ -75,7 +81,9 @@ const EDGE_BACKDROPS = {
   buildGroceryStoreScene: {
     skirt: 0x45464a,   // asphalt: only the front windows look out, onto the store's own lot
     sky: { side: 'S', d: 110, color: 0x9cc8ea },   // indoors the background is the store's beige, so the windows get a sky of their own
-    S: { from: 6, bands: [['lot', 26], ['road', 10], ['shops', 22], ['trees', 8], ['houses', 22], ['trees', 40]] },
+    // v1.391 (D.51 step 5, the guide's item 9): past the walk, the fire lane and the front drive outside the glass, the
+    // lot to Fouts Rd, the outparcels, their lot, Holcomb Bridge Rd and the woods across it
+    S: { from: 15, bands: [['lot', 46], ['road', 8], ['shops', 18], ['lot', 30], ['road', 18], ['trees', 50]] },
   },
 };
 const _BD_WALLS = [0xd8d0bc, 0xc8b89a, 0xb8c4c8, 0xe0d8c8, 0x9aa894, 0xc4a888, 0xa8b0b8, 0xd4c4a0, 0xb89880, 0xe8e0d0];

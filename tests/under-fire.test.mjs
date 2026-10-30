@@ -19,6 +19,11 @@ async function round(gun, rate, agg) {
     for (let i = 0; i < 240; i++) stepGame(1 / 60);
     const e = Game.scenario.enemies.find(k => k.team !== 'player' && k.health > 0);
     e.character = Object.assign({}, e.character, { aggression: agg });
+    // v1.392 (D.51, the lot at real scale): every round from one spot, the open aisle east of the car column nearest
+    // his start, the cars 1.9 m to his west. On the turned rows his own start put him at a car's face some rounds and
+    // in the aisle others, and a stream begun inside that car never passed him (no fire, no episode)
+    e.pos.x = 32.5; e.pos.z = -9; e.mesh.group.position.x = 32.5; e.mesh.group.position.z = -9;
+    e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 1; e.targetPos = null; e.homeCover = null;
     Game.gun.type = gun;
     const P = Game.player.pos, dist = () => Math.hypot(e.pos.x - P.x, e.pos.z - P.z);
     const d0 = dist(), states = {};
@@ -57,7 +62,10 @@ check('camping, he takes cover and holds: no closer or farther by 3 m, and no ma
 
 const fall = await cases('m249', 12, 0.55);
 check('middling (0.55) under an M249: he falls back, in all 3 rounds', n(fall, r => r.kinds.fall && !r.kinds.push) === 3, fall.map(r => r.kinds));
-check('falling back, he ends 4 m or more farther from you, 2 of 3', n(fall, r => r.dEnd - r.d0 >= 4) >= 2, fall.map(r => [r.d0, r.dEnd]));
+// v1.391 (D.51, the lot at real scale): 2 m, the gain fallBackCover asks of the cover he falls back to. Cart Return's rows
+// run north-south now, so he comes down an aisle with a parked car every 2.7 m beside him and the next one back is the
+// nearest cover behind him (on the old lot, rows across his way, the next cover back was a row away: 4 m or more)
+check('falling back, he ends 2 m or more farther from you, 2 of 3', n(fall, r => r.dEnd - r.d0 >= 2) >= 2, fall.map(r => [r.d0, r.dEnd]));
 check('and fires back as he goes (a BB or more), 2 of 3', n(fall, r => r.back >= 1) >= 2, fall.map(r => r.back));
 
 const push = await cases('ak47', 10, 0.85);
