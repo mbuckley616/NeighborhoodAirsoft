@@ -176,6 +176,8 @@ function getScenarioBriefing(scenarioId) {
     desc: sideCountDesc(scenarioId, sc.desc || ''),   // v1.349: the count a side as built
     timeOfDay: sc.timeOfDay === 'night' ? 'night' : 'day',
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
+    captain: captainOfMatch(scenarioId),                      // v1.398 (D.57 step 3): the zone's captain's crew, and its score
+    captainScore: captainOfMatch(scenarioId) ? captainScore(captainOfMatch(scenarioId)) : null,
     tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
     // v1.274 (D.28 step 2): a team match takes your crew; who you left out
     crewMatch: crewTeamMatch(scenarioId) && crewMembers().length > 0 && matchType(scenarioId) !== 'clutch',   // v1.393: nobody to bench in a CLUTCH
@@ -217,6 +219,7 @@ function renderBriefingRosterHTML(brief, opts) {
   </div>`;
   // OPPONENTS
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : brief.captain && brief.enemies.length > 1 ? captainCrewName(brief.captain).toUpperCase()   // v1.398
     : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');   // v1.196
   html += `<div class="brief-section">
     <div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
@@ -225,6 +228,7 @@ function renderBriefingRosterHTML(brief, opts) {
   // Objective
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
   if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;   // v1.196
+  html += captainLineHTML(brief);   // v1.398
   return html;
 }
 
@@ -237,7 +241,7 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   const cell = (c, side, extra) => {
     const lives = extra && extra.benched ? 'on the bench' : c.lives === 'you' ? (brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)) : c.out ? 'already out' : lifeStr(c.lives);   // v1.393: CLUTCH
     return `<div class="brief-combatant ${side} lu-kid${extra && extra.benched ? ' benched' : ''}" title="${esc(c.name + ' · ' + c.gun + ' · ' + lives)}">
-      <canvas class="lu-fig" width="102" height="117" data-kid="${c.charId || ''}" data-gun="${c.gunType || 'pistol'}" data-crew="${wearsCrew(c, side) ? 1 : 0}"${c.lives === 'you' ? ' data-you="1"' : ''}></canvas>
+      <canvas class="lu-fig" width="102" height="117" data-kid="${c.charId || ''}" data-gun="${c.gunType || 'pistol'}" data-crew="${wearsCrew(c, side) ? 1 : 0}"${side === 'enemy' && !brief.tutorial && captainColorOf(c.charId) != null ? ` data-band="${captainColorOf(c.charId)}"` : ''}${c.lives === 'you' ? ' data-you="1"' : ''}></canvas>
       <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span><span class="brief-gun">${c.gun}</span><span class="brief-lives">${lives}</span>
       ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}${extra && extra.benched ? `<button class="brief-bench" data-unbench="${c.charId}">Bring</button>` : ''}
     </div>`;
@@ -249,6 +253,7 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
     .concat(benched.map(id => cell({ name: CHARACTERS[id].name, charId: id, gun: getGunDisplayName(crewGun(id)), gunType: crewGun(id), lives: 0 }, 'ally', { benched: true })));
   const theirs = brief.enemies.map(c => cell(c, 'enemy'));
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
+    : brief.captain && brief.enemies.length > 1 ? captainCrewName(brief.captain).toUpperCase()   // v1.398
     : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');
   let html = briefTypeHTML(brief) + `<div class="brief-lineup">
     <div class="brief-section"><div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
@@ -258,7 +263,14 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   </div>`;
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
   if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;
+  html += captainLineHTML(brief);   // v1.398
   return html;
+}
+// v1.398 (D.57 step 3): the captain's crew's score line, in its colour, under RIVALS
+function captainLineHTML(brief) {
+  if (!brief || !brief.captain) return '';
+  const hex = '#' + CAPTAIN_COLORS[captainCrewOf(brief.captain)].toString(16).padStart(6, '0');
+  return `<div class="brief-objective brief-captain" style="border-left-color:${hex}"><span class="brief-obj-label">CAPTAIN</span> ${captainCrewName(brief.captain)}: ${rivalScoreText(brief.captainScore)}</div>`;
 }
 // v1.393 (D.57 step 1): the match type's chip and line at the top of the briefing
 function briefTypeHTML(brief) {
@@ -272,7 +284,8 @@ function drawBriefingLineup(root) {
       if (cv.dataset.you) { drawKidPortrait(cv, Game.persist.look, Game.persist.equipped.gun, -0.45, loadoutKidGearKeys()); continue; }
       const ch = CHARACTERS[cv.dataset.kid];
       if (!ch) continue;
-      const look = cc != null && cv.dataset.crew === '1' ? Object.assign({}, ch, { crewColor: cc }) : ch;
+      const look = cc != null && cv.dataset.crew === '1' ? Object.assign({}, ch, { crewColor: cc })
+        : cv.dataset.band ? Object.assign({}, ch, { crewColor: +cv.dataset.band }) : ch;   // v1.398: their crew's colour
       drawKidPortrait(cv, look, cv.dataset.gun, cv.closest('.enemy') ? 0.45 : -0.45);
     } catch (e) { console.warn('lineup', e); }
   }

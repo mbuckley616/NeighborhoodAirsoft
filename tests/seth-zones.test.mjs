@@ -36,10 +36,15 @@ for (const [id, [gun, aim]] of Object.entries(WANT)) {
   const crossed = paper[id].all.ours.filter(k => SETH_CREW.includes(k));
   check(`${id}: none of Seth's crew on your side, and the match counts as a rival match`, crossed.length === 0 && paper[id].rival, crossed);
 }
-check('Bunratty: Seth in Mitchell\'s place; Northcliff: in Fernando\'s; the school: in Nathan\'s (nobody in your crew)',
-  !paper.bunratty_night_team_2v2.none.theirs.includes('mitchell') && !paper.northcliff_night_4v4.none.theirs.includes('fernando') &&
-  !paper.school_night_4v4.none.theirs.includes('nathan'),
-  [paper.bunratty_night_team_2v2.none.theirs, paper.northcliff_night_4v4.none.theirs, paper.school_night_4v4.none.theirs]);
+// v1.398 (D.57 step 3): Seth takes the kid's spot in the match as written (sethSetup); a captain's finale then brings
+// the captain's whole crew, so Mitchell, Fernando and Nathan play at other spots of theirs
+const spots = await page.evaluate(() => [['bunratty_night_team_2v2', 'mitchell'], ['northcliff_night_4v4', 'fernando'], ['school_night_4v4', 'nathan']].map(([id, k]) => {
+  const own = SCENARIOS[id].enemySetup.find(e => e.charId === k), s = sethSetup(id).find(e => e.charId === 'seth');
+  return { id, took: !!own && !!s && s.anchor === own.anchor && !sethSetup(id).some(e => e.charId === k) };
+}));
+check('Bunratty: Seth in Mitchell\'s place; Northcliff: in Fernando\'s; the school: in Nathan\'s (as written)', spots.every(x => x.took), spots);
+check('Mitchell plays his finale beside Seth (v1.398, the captain\'s whole crew)', paper.bunratty_night_team_2v2.none.theirs.includes('mitchell') &&
+  paper.bunratty_night_team_2v2.none.theirs.includes('seth'), paper.bunratty_night_team_2v2.none.theirs);
 
 // In the match itself: the kid built carries the gun and the aim
 for (const id of ['bunratty_night_team_2v2', 'northcliff_night_4v4', 'last_saturday']) {

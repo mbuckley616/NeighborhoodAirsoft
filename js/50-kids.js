@@ -873,7 +873,7 @@ function createKid(profile, weapon = 'pistol') {
     group.add(hat);
     if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
     headExtras.push(hat);
-  } else if (p.crewColor != null && CREW_COLORS.some(c => c.hex === p.crewColor)) {
+  } else if (p.crewColor != null && (CREW_COLORS.some(c => c.hex === p.crewColor) || Object.values(CAPTAIN_COLORS).includes(p.crewColor))) {   // v1.398: a captain's crew's
     // v1.200 (D.21, your crew): no hat on, so the crew's bandana in its colour; you and your allies wear it
     hat = buildKidHat('bandana_red', p.crewColor);
     hat.userData.crewBandana = true;

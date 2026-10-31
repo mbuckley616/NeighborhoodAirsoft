@@ -114,7 +114,12 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   const fern = r.kids.find(k => k.n === 'Fernando');
   // v1.362 (D.28 step 5): in Bellfield After Dark Seth has Fernando's spot (SETH_ZONE_MATCHES), and Fernando may stand with you
   // v1.393 (D.57 step 1): only where the match itself posts him (in Hold the Creek Fort he is a kid the street adds for your crew)
-  const posted = await page.evaluate(id => (SCENARIOS[id].enemySetup || []).some(es => es.charId === 'fernando' && es.team !== 'player'), id);
+  // (v1.398, D.57 step 3: in Bellfield After Dark, Mason's finale, Fernando is back in Mason's crew at another kid's spot)
+  const posted = await page.evaluate(id => {
+    const own = (SCENARIOS[id].enemySetup || []).find(es => es.charId === 'fernando' && es.team !== 'player');
+    const now = (crewSetup(id) || []).find(es => es.charId === 'fernando' && es.team !== 'player');
+    return !!own && !!now && now.anchor === own.anchor;
+  }, id);
   if (fern && fern.t !== 'player' && posted) check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
