@@ -1030,6 +1030,8 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_rpk',     name: 'Spare 600-rd RPK Drum' },   // v1.396
     { refId: 'spare_mag_spas',    name: 'Spare 45-rd SPAS Shells' },   // v1.398
     { refId: 'spare_mag_gas',     name: 'Spare 15-rd Gas Pistol Mag' },   // v1.399
+    { refId: 'spare_mag_thompson', name: 'Spare 100-rd Thompson Drum' },   // v1.403
+    { refId: 'spare_mag_m14',     name: 'Spare 30-rd M14 Mag' },   // v1.404
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1308,8 +1310,8 @@ function renderBBsTab(c, between) {
 const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol', 'gaspistol'] },   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'spas', 'semishotgun'] },   // v1.328; v1.398: the SPAS-12 before it
-  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it
-  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'mac10', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them
+  { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'm14', 'sniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it; v1.404: the M14 before the sniper
+  { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'thompson', 'mac10', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.403: the Thompson after the Vector
 ];
 function gunKind(gt) {
   const k = GUN_KINDS.find(k => k.guns.includes(gt));

@@ -303,7 +303,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'l96' || gunType === 'svd') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's)
+    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -330,6 +330,10 @@ function updateHeldMesh(dt) {
     } else if (gunType === 'vector') {   // v1.348: the MP5's hold; aimed, the front post's tip (y 0.051) on the reticle
       hipPos  = { x: 0.14, y: -0.19, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.051, z: -0.27 };
+      hipRotY = 0.10; hipRotX = -0.04;
+    } else if (gunType === 'thompson') {   // v1.403: the MP5's hold; aimed, the front blade's tip (y 0.038) on the reticle
+      hipPos  = { x: 0.14, y: -0.19, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.038, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.04;
     } else if (gunType === 'g36') {   // v1.371: the AK's hold; aimed, the front post's tip (y 0.055) on the reticle
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
@@ -879,12 +883,14 @@ const RETICLE_SPECS = {
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
   famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's
   epistol: { style: 'ring_ticks', baseGap: 9,  ringR: 9,  centerDot: 1.4 },   // v1.326: the pistol's
+  thompson: { style: 'circle_cross', baseGap: 9, ringR: 8,  centerDot: 1.3 },   // v1.403: the MP5's, a little tighter
   gaspistol: { style: 'ring_ticks', baseGap: 8,  ringR: 8,  centerDot: 1.4 },   // v1.399: the pistol's, a little tighter
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
+  m14:     { style: 'fine_cross', baseGap: 8,  ringR: 0,  centerDot: 1.2 },   // v1.404: the SVD's, a little wider
   svd:     { style: 'fine_cross', baseGap: 7,  ringR: 0,  centerDot: 1.1 },   // v1.395: the sniper's, a little wider
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };

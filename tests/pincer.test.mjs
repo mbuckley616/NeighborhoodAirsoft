@@ -51,7 +51,7 @@ check('Joe: Bunratty, medium height, lean, curly hair, a good shot (0.7), modera
 check("Chris: Bunratty, tall (Garrett's 1.12), medium build, aggressive (0.85) and the fastest (1.15), his aim middling",
   d58.chris.street === 'bunratty_ct' && d58.chris.scale === 1.12 && d58.chris.b === 'average' && d58.chris.agg === 0.85 && d58.chris.spd === 1.15 && d58.chris.acc === 0.5, d58.chris);
 check('each has his own lines in every situation (4 or more)', [...d58.joe.lines, ...d58.chris.lines].every(n => n >= 4), [d58.joe.lines, d58.chris.lines]);
-// v1.403 (D.57 step 4): + Joe in Mitchell's Whole Crew (was Four on Four), so eleven; Protect Ryan is Cover Nick
+// v1.406 (D.57 step 4): + Joe in Mitchell's Whole Crew (was Four on Four), so eleven; Protect Ryan is Cover Nick
 check("between them they take Priya's nine places, one in Cover Nick, where Mitchell is their red VIP on the plank, and Joe's in Mitchell's Whole Crew; the Pincer is The Pincer",
   d58.joeAt.length + d58.chrisAt.length === 11 && d58.vip === 'mitchell bulb_plank' && d58.pincer === 'The Pincer', d58);
 const played58 = [];

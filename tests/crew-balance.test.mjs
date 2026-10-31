@@ -34,19 +34,19 @@ console.log('   finales, first time:', JSON.stringify(fin));
 // v1.393 (D.57 step 1): + the 12 solo matches your crew now plays and the 2 CLUTCH, which have their own rules
 // (tests/match-type.test.mjs): their side at least yours, and a CLUTCH's sides as its own
 check('46 team matches on the ladder (v1.318: + Night Swim; v1.393: + 14 with crewPosts), 8 of them a zone\'s finale', rule.length === 46 && finales.length === 8 && rule.filter(r => r.posts).length === 14, rule.length);
-// v1.403 (D.57 step 4): Tyler's finale (Graveyard Shift) is at plus one though the Last Saturday ends its zone, and Down Two
+// v1.406 (D.57 step 4): Tyler's finale (Graveyard Shift) is at plus one though the Last Saturday ends its zone, and Down Two
 // and Down Two in the Dark are always two short: neither is an ordinary match
 const ordinary = rule.filter(r => !r.finale && !r.posts && !r.captainFinale && !r.downTwo && r.theirs - r.ours !== r.theirsOwn - r.oursOwn);
 check('every ordinary team match keeps its own margin the first time through (their side grows as yours does)', ordinary.length === 0, ordinary);
 const gy = rule.find(r => r.id === 'store_night_4v4'), d2 = rule.filter(r => r.downTwo);
-check('Graveyard Shift, Tyler\'s finale, is one more than you; Down Two and Down Two in the Dark are two more (v1.403)',
+check('Graveyard Shift, Tyler\'s finale, is one more than you; Down Two and Down Two in the Dark are two more (v1.406)',
   gy && gy.theirs === gy.ours + 1 && d2.length === 2 && d2.every(r => r.theirs === r.ours + 2), { gy, d2 });
-// v1.404 (D.57 step 4): Winnmark's finale is Seth Picks Teams, you and Eric v Seth, Trey and Brooke (was 2 v 2, Seth beside you)
+// v1.407 (D.57 step 4): Winnmark's finale is Seth Picks Teams, you and Eric v Seth, Trey and Brooke (was 2 v 2, Seth beside you)
 const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 3
   : r.id === 'last_saturday' ? r.theirs !== r.ours + 2 : r.theirs !== r.ours + 1);
 check('every finale: their side one more than yours, the Last Saturday two more, Seth Picks Teams 2 v 3', finBad.length === 0, finBad);
 // v1.402 (D.57 step 4): the Hollow's finale is the Big Game, last now (was Full-Auto Mayhem)
-// v1.405: Sean and Nick ask after You and Nick, so Bunratty's finale is your four v five (was 3 v 4)
+// v1.408: Sean and Nick ask after You and Nick, so Bunratty's finale is your four v five (was 3 v 4)
 check('the finales come out Bunratty 4v5, the Hollow 5v6, the lot 4v5, Northcliff 6v7, the school 6v7, Willow Bend 6v7, the Last Saturday 6v8',
   fin.bunratty_night_team_2v2 === '4v5' && fin.hollow_big_battle === '5v6' && fin.lot_night_4v4 === '4v5' &&
   fin.northcliff_night_4v4 === '6v7' && fin.school_night_4v4 === '6v7' && fin.club_night_4v4 === '6v7' && fin.last_saturday === '6v8', fin);
@@ -58,7 +58,7 @@ const fixed = await page.evaluate(() => {
     const n = crew => { Game.persist.crew = crew; return crewSetup(id).filter(e => e.team !== 'player').length; };
     Game.persist.completed = {};
     const a = n([]), b = n(crewFirstTime(id)), c = n(CREW_ROSTER.slice());
-    if ((a !== b || b !== c) && !DOWN_TWO.has(id)) bad.push(`${id}: ${a}/${b}/${c}`);   // v1.403: Down Two grows with you
+    if ((a !== b || b !== c) && !DOWN_TWO.has(id)) bad.push(`${id}: ${a}/${b}/${c}`);   // v1.406: Down Two grows with you
   }
   Game.persist.crew = [];
   return bad;
@@ -67,7 +67,7 @@ check('their side is fixed in every team match: the same with nobody, the first-
 
 // A replay with all five is easy, as the spec says; your side is never smaller than the first time
 let s = await count('bunratty_team_2v4', ALL, []);
-// v1.403 (D.57 step 4): Two Against the World is Down Two, always two short (was 6 v 4 with all five)
+// v1.406 (D.57 step 4): Two Against the World is Down Two, always two short (was 6 v 4 with all five)
 check('Down Two with all five: 6 v 8', s.match === '6V8', s);
 s = await count('northcliff_night_4v4', [], []);
 check('Northcliff\'s finale with nobody in your crew: the street fills your side to six, v seven', s.ours === 6 && s.theirs === 7, s);
@@ -103,7 +103,7 @@ s = await count('winnmark_team_3v3', ALL, ['winnmark_night_team_2v2']);
 check('Squad Up replayed after Lights Out with all five: your five v Seth and two, Trey with him', s.ours === 6 && s.theirs === 3 &&
   s.theirIds.includes('seth') && s.theirIds.includes('trey') && !s.oursIds.includes('seth'), s);
 s = await count('winnmark_night_team_2v2', ['eric'], ['winnmark_night_team_2v2']);
-check('Seth Picks Teams replayed with Eric: you and Eric v Seth and two (v1.404)', s.oursIds.join() === 'eric' && s.theirs === 3 && s.theirIds[0] === 'seth', s);
+check('Seth Picks Teams replayed with Eric: you and Eric v Seth and two (v1.407)', s.oursIds.join() === 'eric' && s.theirs === 3 && s.theirIds[0] === 'seth', s);
 
 // In the match: the field is the sides, the new kids play, nothing errors
 for (const [id, crew, done] of [['last_saturday', ALL, []], ['northcliff_night_4v4', [], []], ['bunratty_night_team_2v2', ['eric'], []],
@@ -160,7 +160,7 @@ const says = await page.evaluate((ALL) => {
 }, ALL);
 const wrong = says.filter(s => !s.said || W.indexOf(s.a) !== s.ours || W.indexOf(s.b) !== s.theirs);
 console.log('   ' + says.filter(s => s.first).map(s => `${s.id} "${s.said}" ${s.ours}v${s.theirs}`).join('; '));
-// v1.403: Mason's Last Stand and Graveyard Shift no longer say "Four a side" (each is one more than you now), so 6, was 8
+// v1.406: Mason's Last Stand and Graveyard Shift no longer say "Four a side" (each is one more than you now), so 6, was 8
 check(`every team briefing with "a side" in it (${says.length / 2}) says the sides as built, first time through and with all five`, says.length >= 12 && wrong.length === 0, wrong);
 check('Night Swim the first time through: "Six a side"', says.some(s => s.id === 'pool_night_3v3' && s.first && s.said === 'Six a side'), says.filter(s => s.id === 'pool_night_3v3'));
 check('no page errors', g.errs.length === 0, g.errs);

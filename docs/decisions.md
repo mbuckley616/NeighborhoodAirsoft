@@ -20,6 +20,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **The club's becomes "Seth's Night Swim"**, as a captain's finale; the pool keeps Night Swim.
   - D) **Another name.** Reply with it.
 
+- **What the play lane builds next, after gun batch 5 (producer, from the builder's 31 Oct report, 2026-10-31)**
+  Batch 5 is done: the SPAS-12, the Gas Pistol, the Thompson and the M14 (v1.398-v1.404) bring the shop to 34 guns.
+  The builder reports the play lane again has no ready item: everything else open is a Fable card or waits on your look.
+  What should it take next?
+  - A) **Gun batch 6, to 40** *(recommended)*: six more, one a version, in the neighborhood-kid tone (say a revolver,
+    a bullpup, a lever-action, a light machine gun, a burst SMG, a pump sniper), unless you name the kinds.
+  - B) **More homemade parts.** A second wave of workbench parts (scopes, mags, stocks) that fit the newer guns too.
+  - C) **Rest the play lane** until the crew-ladder card lands, then take what its playtest turns up.
+  - D) **Something else.** Reply in Slack with what you want next.
+  Recommendation: A. It is the direction you already set (30 to 50 guns, D.63), the builder knows the pattern, and guns
+  sit outside the crew-ladder card's frozen areas.
+
 ## Answered
 
 - **What the play lane builds next (producer, from the builder's 31 Oct report, 2026-10-31)**

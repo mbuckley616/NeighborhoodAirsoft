@@ -23,7 +23,7 @@ const lad = await page.evaluate(() => {
 });
 check('the store\'s list ends with the last Saturday, after the night match; it is the ladder\'s last card',
   lad.ids.slice(-2).join() === 'store_night_4v4,last_saturday' && lad.cap === 'last_saturday', lad.ids);
-// v1.403 (D.57 step 4): the store's night match is Graveyard Shift (was Lights Out)
+// v1.406 (D.57 step 4): the store's night match is Graveyard Shift (was Lights Out)
 check('it is locked on a new game and until the store\'s night match is won', !lad.lockedNew && !lad.beforeNight.open
   && /Graveyard Shift/.test(lad.beforeNight.reason), lad.beforeNight);
 check('with the night match won it opens, on Friday 29 August', lad.after.open && lad.after.day === 'Friday 29 August', lad.after);

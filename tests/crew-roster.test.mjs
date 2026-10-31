@@ -25,7 +25,7 @@ check('every kid on both rosters is a real character, Garrett and Colin among th
 check('Garrett and Colin are built, Garrett taller', ro.looks.every(l => l.ok) && ro.looks[0].scale > ro.looks[1].scale, ro.looks);
 check('Garrett and Colin have their own lines in every situation (4 or more)', ro.pools.flat().every(n => n >= 4), ro.pools);
 const askAt = Object.fromEntries(ro.asks.map(a => [a.kid, a]));
-check('one ask each, from the kid himself, at his moment: Eric after Winnmark, Sean and Nick after You and Nick (v1.405, was after Bunratty), Alex at Stoneglen, Diego at Bellfield',
+check('one ask each, from the kid himself, at his moment: Eric after Winnmark, Sean and Nick after You and Nick (v1.408, was after Bunratty), Alex at Stoneglen, Diego at Bellfield',
   ro.asks.length === 5 && ro.asks.every(a => a.from.toLowerCase() === a.kid) && askAt.eric.after === 'winnmark_night_team_2v2' &&
   askAt.sean.after === 'bunratty_team_2v1' && askAt.nick.after === 'bunratty_team_2v1' &&
   askAt.alex.after === 'stoneglen_hold_treehouse' && askAt.diego.after === 'bellfield_ctf', ro.asks);
@@ -98,7 +98,7 @@ const all = await page.evaluate(() => {
   closeMirror();
   return { opened, crew: crewMembers(), extra, row };
 });
-check('the asks open at Sean and Nick (You and Nick, v1.405), Alex (Stoneglen\'s hold), Diego (Bellfield\'s flags)',
+check('the asks open at Sean and Nick (You and Nick, v1.408), Alex (Stoneglen\'s hold), Diego (Bellfield\'s flags)',
   all.opened.join() === 'sean@bunratty_team_2v1,nick@bunratty_team_2v1,alex@stoneglen_hold_treehouse,diego@bellfield_ctf', all.opened);
 check('five in, in the order they joined; Seth, Garrett or anybody else can\'t join, even from a tampered save',
   all.crew.join() === 'eric,sean,nick,alex,diego' && !all.extra, all);
@@ -154,7 +154,7 @@ await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 9000
 await winNow(); await g.spin(3);
 const c2 = await card();
 check('winning it again: no card', !c2.on, c2);
-// a loss brings none; the win of You and Nick brings Sean, then Nick (v1.405, D.57 step 4: was Bunratty's last)
+// a loss brings none; the win of You and Nick brings Sean, then Nick (v1.408, D.57 step 4: was Bunratty's last)
 await g.scenario('bunratty_team_2v1');
 await g.spin(3);
 await page.evaluate(() => endScenario('lose')); await g.spin(3);

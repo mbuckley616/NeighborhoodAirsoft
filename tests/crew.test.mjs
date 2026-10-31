@@ -103,7 +103,7 @@ check('the match runs with the bandanas on (10 s)', run === 'scenario' || run ==
 await g.scenario('bunratty_vip');
 const k2 = await readKids();
 const vipOurs = k2.find(k => k.vip && k.team === 'player');
-check('Cover Nick (v1.403, was Protect Ryan): our VIP wears his blue cap, not the bandana', vipOurs && vipOurs.vipCap && !vipOurs.crew, vipOurs);
+check('Cover Nick (v1.406, was Protect Ryan): our VIP wears his blue cap, not the bandana', vipOurs && vipOurs.vipCap && !vipOurs.crew, vipOurs);
 check('…the allies without the cap wear it', k2.filter(k => k.team === 'player' && !k.vip).every(k => k.crew), k2);
 
 // The tutorial: Seth coaches on your side and wears none; no crew name over him
@@ -154,7 +154,7 @@ const cl = await page.evaluate(() => {
   return out;
 });
 console.log('   Sean Has Your Back:', JSON.stringify(cl.sean));
-// v1.405 (D.57 step 4): The Rematch (was Sean Has Your Back) is first played with Eric, Sean and Nick: four a side
+// v1.408 (D.57 step 4): The Rematch (was Sean Has Your Back) is first played with Eric, Sean and Nick: four a side
 check('The Rematch, first time through, says four a side and who is with you and with them',
   /Today it’s four a side: .+ with you and .+ with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 3 && cl.sean.theirs.length === 4, cl.sean);
 check(`every briefing the crew changes (${cl.lines}) counts the sides as built and names each kid not in the match as written`, cl.lines >= 10 && cl.wrong.length === 0, cl.wrong);

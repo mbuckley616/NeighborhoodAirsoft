@@ -102,6 +102,7 @@ function gunForegripZ(weapon) {
     case 'sniper':
     case 'l96':     // long barrel — hand well forward (v1.336: and the L96's)
     case 'svd':     return 0.26;   // v1.395: and the SVD's
+    case 'm14':     return 0.22;   // v1.404: its long walnut forend
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
@@ -116,6 +117,7 @@ function gunForegripZ(weapon) {
     case 'ump':     return 0.12;   // compact body
     case 'p90':     return 0.14;   // v1.346: the front hand stop
     case 'vector':  return 0.17;   // v1.348: its front grip
+    case 'thompson': return 0.19;  // v1.403: its wooden front grip
     case 'g36':     return 0.17;   // v1.371: its handguard
     case 'aug':     return 0.22;   // v1.372: its folding foregrip
     case 'm4':      return 0.18;   // v1.373: its handguard
@@ -187,6 +189,14 @@ function buildEnemyGunMesh(weapon) {
       grip(wood);
       break;
     }
+    case 'm14': {   // v1.404 (D.63): a long barrel over a full walnut stock, a straight box mag, no scope
+      box(0.035, 0.04, 0.50, black, 0, 0.02, 0.24);      // the long barrel and receiver
+      box(0.05, 0.06, 0.34, wood, 0, -0.02, 0.18);       // the walnut forend under it
+      box(0.05, 0.10, 0.16, wood, 0, -0.03, -0.08);      // the stock
+      box(0.035, 0.09, 0.05, dark, 0, -0.08, 0.06);      // the box mag
+      grip(wood);
+      break;
+    }
     case 'ak47':
     case 'rpk': {   // v1.396: the RPK in the kids' blocky style is the AK
       box(0.045, 0.07, 0.40, black, 0, 0, 0.18);         // receiver+barrel
@@ -225,6 +235,16 @@ function buildEnemyGunMesh(weapon) {
       box(0.035, 0.07, 0.035, dark, 0, -0.07, 0.17);     // the front grip
       box(0.03, 0.05, 0.12, dark, 0, 0, -0.11);          // the folding stock
       grip();
+      break;
+    }
+    case 'thompson': {   // v1.403 (D.63): a blued body and finned barrel, the round drum under it, wooden front grip and stock
+      box(0.045, 0.07, 0.24, black, 0, 0, 0.06);         // the receiver
+      box(0.03, 0.03, 0.16, dark, 0, 0, 0.25);           // the finned barrel
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.04, 14), dark);
+      drum.rotation.z = Math.PI / 2; drum.position.set(0, -0.09, 0.10); g.add(drum);   // the drum
+      box(0.035, 0.08, 0.035, wood, 0, -0.07, 0.19);     // the front grip
+      box(0.035, 0.06, 0.16, wood, 0, -0.02, -0.14);     // the stock
+      grip(wood);
       break;
     }
     case 'aug': {   // v1.372 (D.63): an olive bullpup, the clear mag behind the grip, a long barrel, the foregrip
