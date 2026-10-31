@@ -40,7 +40,11 @@ const want = {
 const got = Object.fromEntries(Object.keys(want).map(id => [id, sw(id)]));
 check("the plan's cases: the Hollow's Mitchell and Mason, Owen at the lot, Ryan at the club, Rebecca in the store",
   Object.keys(want).every(id => got[id] === want[id]), got);
-const kept = rows.filter(r => /^bunratty_|^northcliff_|^bellfield_|^school_/.test(r.id) && r.crew === 3 && r.swaps.length);
+// v1.405 (D.57 step 4): with Sean and Nick asking after You and Nick, Bunratty's finale is first played with three; the street
+// fills Seth's plus-one side with his crew, and the captain's finale (v1.401) gives their places to Mitchell's own kids, as
+// tests/captains.test.mjs checks. A captain's finale is left out here.
+const CAPTAIN_FINALE_IDS = await page.evaluate(() => Object.values(CAPTAIN_FINALES).flat());
+const kept = rows.filter(r => /^bunratty_|^northcliff_|^bellfield_|^school_/.test(r.id) && r.crew === 3 && r.swaps.length && !CAPTAIN_FINALE_IDS.includes(r.id));
 check("Bunratty, Northcliff and Hollins Ridge keep their sides (their crews at home, Seth's with Seth)", kept.length === 0, kept);
 
 // In play: a swapped match builds and runs with the swapped kids on the field
