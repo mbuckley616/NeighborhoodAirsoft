@@ -117,7 +117,9 @@ const cards = await page.evaluate(() => {
     locked: all.filter(c => c.classList.contains('locked')).map(c => c.dataset.id),
     unlocked: w.filter(id => isScenarioUnlocked(id)),
     texts: Object.fromEntries(all.map(c => [c.dataset.id, t(c)])),
-    nums: all.map(c => t(c.querySelector('.sc-card-num'))) };
+    nums: all.map(c => t(c.querySelector('.sc-card-num'))),
+    // v1.402 (D.57 step 4): a locked card names the main match that opens it (a side match opens nothing)
+    openers: Object.fromEntries(w.map((id, i) => [id, w.indexOf(prevMainMatchId(w, i)) + 1])) };
   const night = Object.keys(SCENARIOS).find(id => w.includes(id) && SCENARIOS[id].timeOfDay === 'night');
   const defend = Object.keys(SCENARIOS).find(id => w.includes(id) && SCENARIOS[id].scenarioType === 'defend');
   out.night = night; out.defend = defend;
@@ -131,7 +133,7 @@ check('cards follow the zone order, numbered 1..17', cards.ids.join() === cards.
 check('the zone counts its won matches', cards.count === '2 of 17 won', cards.count);
 check('won cards say DONE', cards.done.join() === cards.group.slice(0, 2).join() && /✓ DONE/.test(cards.texts[cards.group[0]]), cards.done);
 check('exactly one NEXT, the first open match not yet won', cards.next.length === 1 && cards.next[0] === cards.unlocked.find(id => !cards.done.includes(id)) && /NEXT/.test(cards.texts[cards.next[0]]), cards);
-check('locked cards are the ones the ladder locks, say which card opens them, and have no START', cards.locked.length === 17 - cards.unlocked.length && cards.locked.length > 0 && cards.locked.every(id => /🔒/.test(cards.texts[id]) && cards.texts[id].includes('Win #' + cards.group.indexOf(id) + ' to unlock') && !/START/.test(cards.texts[id])), cards.locked);
+check('locked cards are the ones the ladder locks, say which card opens them, and have no START', cards.locked.length === 17 - cards.unlocked.length && cards.locked.length > 0 && cards.locked.every(id => /🔒/.test(cards.texts[id]) && cards.texts[id].includes('Win #' + cards.openers[id] + ' to unlock') && !/START/.test(cards.texts[id])), cards.locked);
 check('a card shows matchup, lives and pay', cards.texts[cards.group[0]].includes(cards.match0) && /♥ \d+ (life|lives)/.test(cards.texts[cards.group[0]]) && /WIN \+\$\d+ · LOSE \+\$\d+/.test(cards.texts[cards.group[0]]), cards.texts[cards.group[0]]);
 check('night and defend matches carry their badges', (!cards.night || /🌙 NIGHT/.test(cards.texts[cards.night])) && (!cards.defend || /🛡 DEFEND/.test(cards.texts[cards.defend])), { n: cards.night, d: cards.defend });
 

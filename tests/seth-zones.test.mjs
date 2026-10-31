@@ -75,7 +75,7 @@ check('his other matches keep the scenario\'s own sides (the duel, the Hollow at
 const texts = await page.evaluate(() => {
   const out = {};
   for (const id of ['bunratty_night_team_2v2', 'hollow_big_battle', 'lot_night_4v4', 'northcliff_night_4v4', 'club_night_4v4']) {
-    const ctx = findScenarioListContext(id), prev = ctx.ids[ctx.idx - 1];
+    const ctx = findScenarioListContext(id), prev = prevMainMatchId(ctx.ids, ctx.idx);   // v1.402: the main match before (the side matches open with it)
     out[id] = SUMMER_TEXTS.filter(t => t.after === prev && t.from === 'Seth').map(t => t.text);
   }
   out.school = (SUMMER_TEXTS.find(t => t.id === 'school') || {}).text;

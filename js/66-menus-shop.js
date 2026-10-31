@@ -53,7 +53,8 @@ function profileSummaryHTML() {
 function nextLadderMatchId() {
   for (const z of ZONE_LADDER) {
     if (!isZoneUnlocked(z.key)) break;
-    const id = (PIN_SCENARIO_GROUPS[z.key] || []).find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+    const open = id => isScenarioUnlocked(id) && !Game.persist.completed[id];
+    const ids = PIN_SCENARIO_GROUPS[z.key] || [], id = ids.find(id => open(id) && !isSideMatch(id)) || ids.find(open);   // v1.402: the main line first
     if (id) return id;
   }
   return null;

@@ -1003,6 +1003,8 @@ const Game = {
       null,                     // slot 3 → equipment (locked by default)
     ],
     completed: {},
+    ladderV: 1402,              // v1.402 (D.57 step 4): a new save is on the new ladder order (12-saves' ladderKeepOpened)
+    ladderKept: {},             // v1.402: matches a save from before the reorder had open, kept open
     textsRead: {},              // v1.195 (D.20 step 2): ids of the summer texts you have read
     crew: [],                   // v1.273 (D.28 step 1): the kids of CREW_ROSTER who have joined, in order
     crewGear: {},               // v1.337 (D.28 step 4): what you have lent each crew kid, { kid: { gun, eyewear, shoes } }

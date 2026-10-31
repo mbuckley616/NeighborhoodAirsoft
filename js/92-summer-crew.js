@@ -179,11 +179,11 @@ const SUMMER_TEXTS = [
     text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
   { id: 'askNick',    from: 'Nick',    after: 'bunratty_night_team_2v2', ask: 'nick',
     text: "if seans in ur crew im in ur crew. right? im in right?" },
-  { id: 'sethHollow', from: 'Seth',    after: 'hollow_defend_south_fort_night',   // v1.363
+  { id: 'sethHollow', from: 'Seth',    after: 'hollow_infection_night',   // v1.363; v1.402: the night before the finale, now last
     text: "big game tmrw. whole neighborhood. im on red and i got the ump. dont cry when u lose" },
   { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
     text: "the big game was close and u know it. my crew wants the north fort back" },
-  { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
+  { id: 'lot',        from: 'Brooke',  after: 'hollow_big_battle',   // v1.402: the Hollow's finale opens the lot (was its last match)
     text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
   { id: 'sethLot',    from: 'Seth',    after: 'lot_vip_night',   // v1.363
     text: "after close tmrw. the lot. i got an mp5 now. u wont hear me coming" },

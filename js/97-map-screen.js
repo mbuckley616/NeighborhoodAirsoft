@@ -10,7 +10,7 @@ function scenarioLockReason(scenarioId) {
     const capName  = (prevCap && SCENARIOS[prevCap]?.scenarioName) || (prevZone.name + ' finale');
     return `Clear ${prevZone.name} (beat “${capName}”) to unlock this area.`;
   }
-  const prevId = ctx.ids[ctx.idx - 1];
+  const prevId = prevMainMatchId(ctx.ids, ctx.idx);   // v1.402: the main match that opens it
   const prevName = SCENARIOS[prevId]?.scenarioName || 'the previous scenario';
   return `Beat “${prevName}” to unlock.`;
 }
@@ -30,6 +30,11 @@ function scenarioMatchup(sc) {
   }
   return ((sc.enemies && sc.enemies.length) || 1) + 'V1';
 }
+// v1.402: the number of the card that opens this one (the main match before it; side matches open nothing)
+function scenarioOpenerNum(scenarioId, num) {
+  const ctx = findScenarioListContext(scenarioId), prev = ctx && prevMainMatchId(ctx.ids, ctx.idx);
+  return prev ? ctx.ids.indexOf(prev) + 1 : num - 1;
+}
 function renderScenarioCard(scenarioId, num, isNext) {
   const sc = SCENARIOS[scenarioId];
   if (!sc) return '';
@@ -42,13 +47,14 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.ctf) badges.push('⚑ FLAGS');                             // v1.189
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
+  if (isSideMatch(scenarioId)) badges.push('SIDE');             // v1.402 (D.57 step 4): pays, doesn't gate
   const brief = getScenarioBriefing(scenarioId);
   const lives = brief ? brief.player.lives : 1;
   const stamp = locked ? '' : completed ? '<span class="sc-card-stamp done">✓ DONE</span>'
               : isNext ? '<span class="sc-card-stamp next">NEXT</span>' : '';
   const cls = 'sc-card' + (locked ? ' locked' : '') + (completed ? ' done' : '') + (isNext && !locked ? ' next' : '');
   const foot = locked
-    ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + (num - 1) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
+    ? `<div class="sc-card-lock">${num > 1 ? 'Win #' + scenarioOpenerNum(scenarioId, num) + ' to unlock' : scenarioLockReason(scenarioId)}</div>`
     : `<div class="sc-card-foot">
         <span class="sc-card-pay">WIN +$${scaledReward(sc.rewards.win)} · LOSE +$${scaledReward(sc.rewards.lose)}${sc.tutorial || sc.pickup ? '' : ' · +50¢ A HIT'}</span>
         <button class="sc-go" data-launch="${scenarioId}">START</button>
@@ -172,7 +178,8 @@ function selectMapZone(sc) {
         return;
       }
       // v1.147 (D.8 step 2): cards, with a count of the zone's done matches; the first one not yet won is NEXT
-      const nextId = ids.find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+      const open = id => isScenarioUnlocked(id) && !Game.persist.completed[id];
+      const nextId = ids.find(id => open(id) && !isSideMatch(id)) || ids.find(open);   // v1.402: the main line first
       const doneN = ids.filter(id => Game.persist.completed[id]).length;
       info.innerHTML = `
         <div class="sc-name">${headerName}</div>
