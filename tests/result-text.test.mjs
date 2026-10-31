@@ -62,6 +62,25 @@ const ffaBy = await page.evaluate(() => {
 });
 console.log('  winnmark_ffa lose, tagged by Seth: ' + ffaBy);
 check('it names who got the last one on you', /^Too many angles, not enough cover\. Seth gets the last one on you/.test(ffaBy), ffaBy);
+// v1.394 (Found in play, critic 30 Oct): second-last out, the kid left has won; the card crowns him, not "the rest"
+const lastOne = await page.evaluate(() => {
+  const res = [];
+  for (const byWinner of [true, false]) {
+    Game.mode = 'scenario';
+    const foes = Game.scenario.enemies.filter(e => e.team !== 'player');
+    for (const e of foes) { e.health = 1; if (typeof e.lives === 'number') e.lives = 1; }
+    const win = foes[0];
+    for (const e of foes.slice(1)) { e.health = 0; if (typeof e.lives === 'number') e.lives = 0; }
+    Game.scenario.stats.damage = [{ part: 'chest', front: true, h: 0.6, lat: 0, by: byWinner ? win.name : foes[1].name, gun: 'MP5', dist: 9, t: 3, life: 1 }];
+    endScenario('lose');
+    res.push({ win: win.name, by: byWinner ? win.name : foes[1].name, text: document.getElementById('flavorText').textContent });
+  }
+  return res;
+});
+for (const l of lastOne) console.log(`  winnmark_ffa lose, one left (${l.win}), tagged by ${l.by}: ${l.text}`);
+check('one kid left: the card crowns him and drops "the rest keep going"',
+  lastOne.every(l => !/the rest keep going/.test(l.text) && new RegExp(`\\b${l.win} is the last kid standing`).test(l.text)
+    && new RegExp(`^Too many angles, not enough cover\\. ${l.by} gets the last one on you`).test(l.text)), lastOne.map(l => l.text));
 await page.evaluate(() => enterBedroom()); await g.spin(5);
 // An intermittent "Failed to execute 'connect' on 'AudioNode'" showed up once in three runs of this suite
 // (12 at once, never in the other suites). It's filed in the backlog (Found in play, v1.96) and reported

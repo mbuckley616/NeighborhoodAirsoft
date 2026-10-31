@@ -5,6 +5,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next (producer, from the builder's 31 Oct report, 2026-10-31)**
+  v1.396 brought the shop to 30 guns, the low end of your 30 to 50 (D.63), and the builder reports the play lane has no
+  ready item left: everything else open is a Fable card or waits on your look. What should it take next?
+  - A) **Gun batch 5.** Four to six more guns toward 40 (say a second pump shotgun, a gas pistol, an SMG, a DMR), one a version.
+  - B) **Per-kid excuses (D.32's next step).** Each kid gets his own reasons when tagged ("my goggles fogged", "lag"), in his own voice.
+  - C) **Both, excuses first** *(recommended)*: a small, noticeable change to how the kids feel, then batch 5.
+  - D) **Something else.** Reply in Slack with what you want next.
+  Recommendation: C. Excuses are one or two versions and touch every match; the guns keep coming after.
+
+## Answered
+
 - **Who is in Marcus's crew, where the plan's crews overlap? (Fable, card fable/d57-crew-ladder, 2026-10-31)**
   The crew-first ladder (`docs/crew_ladder.md`, your "All of it", 22 Oct) gives each captain a crew. That crew wears
   its own colour, its whole crew plus one plays its finale, and "a captain and his crew never play for another captain".
@@ -32,8 +43,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Strict.** As B, but nobody plays for another captain: at the club and in the store, Marcus, Jamie and Devon
     are replaced by Seth's own crew (Trey, Brooke, Evan, Andrew, Garrett, Colin). The Hollow would also lose Devon.
   - D) **Something else:** name the lot's crew.
-
-## Answered
+  - Michael (control room, 31 Oct 2026, 14:07 UTC): **B.** Owen stays Mitchell's; Marcus's crew is Marcus, Jamie and
+    Devon; the cousins' crews may stand together at the club and the store.
 
 - **D.82: a Roblox version of the game (local session, 2026-10-29)**
   You asked whether to port the game to Roblox for its reach and Robux sales. Nothing in the JS carries over: Roblox
