@@ -36,7 +36,8 @@ const prog = await page.evaluate(() => {
   }
   return { out, n: summerTexts().length, unread: summerUnreadCount(), order: summerTexts().map(t => t.id) };
 });
-check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 10 && prog.out.every(o => o.day === o.calendar), prog.out);
+check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 11 &&   // v1.405: + Sean's ask after You and Nick
+  prog.out.every(o => o.day === o.calendar), prog.out);
 // the Hollow's chain stops at the big game; ladder order puts the big battle after the fort matches
 // v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew; v1.363: fifteen, with Seth's before Bunratty's finale and the big game
 // v1.402 (D.57 step 4): the Big Game is the Hollow's finale now, so the night before it is fourteen, Seth's "big game tmrw" newest
