@@ -990,6 +990,62 @@ function buildFPVector() {
   return group;
 }
 
+// v1.403 (backlog D.63, Michael: A, batch 5): the Thompson, a drum-fed SMG in blued steel and walnut. A square
+// receiver with the cocking knob on top, a finned barrel with its compensator ahead, the round drum under the receiver
+// ahead of the trigger, a wooden pistol grip and a wooden front grip under the barrel, and a wooden stock behind. The
+// front blade on the barrel is the aimed point, over the rear sight's notch.
+function buildFPThompson() {
+  const group = new THREE.Group();
+  const bluedMat  = new THREE.MeshStandardMaterial({ color: 0x23252b, roughness: 0.35, metalness: 0.7 });
+  const darkMat   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.6,  metalness: 0.3 });
+  const woodMat   = new THREE.MeshStandardMaterial({ color: 0x6b3f22, roughness: 0.65, metalness: 0.0 });
+  const orangeMat = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (geo, mat, x, y, z, name) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; group.add(m); return m; };
+  add(new THREE.BoxGeometry(0.034, 0.040, 0.20), bluedMat, 0, 0.0, -0.02, 'receiver');
+  add(new THREE.BoxGeometry(0.030, 0.020, 0.12), bluedMat, 0, -0.026, 0.02);               // the frame over the grip
+  const barrel = add(new THREE.CylinderGeometry(0.009, 0.009, 0.17, 12), bluedMat, 0, 0.0, -0.205, 'barrel');
+  barrel.rotation.x = Math.PI / 2;
+  for (let i = 0; i < 6; i++) {                                                             // the cooling fins
+    const fin = add(new THREE.CylinderGeometry(0.0135, 0.0135, 0.006, 12), bluedMat, 0, 0.0, -0.135 - i * 0.014);
+    fin.rotation.x = Math.PI / 2;
+  }
+  const comp = add(new THREE.CylinderGeometry(0.0115, 0.0115, 0.032, 12), darkMat, 0, 0.0, -0.300, 'compensator');
+  comp.rotation.x = Math.PI / 2;
+  const tip = add(new THREE.CylinderGeometry(0.0115, 0.0115, 0.012, 12), orangeMat, 0, 0.0, -0.322, 'tip');
+  tip.rotation.x = Math.PI / 2;
+  // the round drum under the receiver, its face to the sides
+  const drum = add(new THREE.CylinderGeometry(0.050, 0.050, 0.032, 20), darkMat, 0, -0.062, -0.070, 'mag');
+  drum.rotation.z = Math.PI / 2;
+  for (const sx of [-0.0165, 0.0165]) {                                                     // the winding key's hub on each face
+    const hub = add(new THREE.CylinderGeometry(0.012, 0.012, 0.004, 12), bluedMat, sx, -0.062, -0.070);
+    hub.rotation.z = Math.PI / 2;
+  }
+  add(new THREE.BoxGeometry(0.026, 0.068, 0.032), woodMat, 0, -0.064, 0.055, 'grip').rotation.x = -0.25;   // the pistol grip
+  add(new THREE.BoxGeometry(0.006, 0.014, 0.005), darkMat, 0, -0.042, 0.010, 'trigger').rotation.x = 0.2;
+  add(new THREE.BoxGeometry(0.010, 0.006, 0.060), bluedMat, 0, -0.052, 0.008);              // the trigger guard
+  add(new THREE.BoxGeometry(0.020, 0.016, 0.030), bluedMat, 0, -0.014, -0.180);             // the front grip's mount
+  add(new THREE.BoxGeometry(0.024, 0.060, 0.028), woodMat, 0, -0.050, -0.180, 'foregrip');   // the wooden front grip
+  add(new THREE.BoxGeometry(0.026, 0.040, 0.16), woodMat, 0, -0.016, 0.160, 'stock');       // the wooden stock
+  add(new THREE.BoxGeometry(0.030, 0.075, 0.030), woodMat, 0, -0.034, 0.250, 'buttpad');
+  for (const sx of [-0.0055, 0.0055]) add(new THREE.BoxGeometry(0.005, 0.012, 0.014), bluedMat, sx, 0.026, 0.050);   // the rear sight's notch
+  add(new THREE.BoxGeometry(0.006, 0.020, 0.008), bluedMat, 0, 0.016, -0.262);              // the front sight's base
+  add(new THREE.BoxGeometry(0.003, 0.012, 0.003), bluedMat, 0, 0.032, -0.262).userData.frontSight = true;
+  const chargeGroup = new THREE.Group();
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.010, 10), bluedMat);
+  knob.position.set(0, 0.025, -0.060);
+  chargeGroup.add(knob);
+  chargeGroup.userData.baseZ = 0;
+  group.add(chargeGroup);
+  group.position.set(0.14, -0.19, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.04;
+  group.userData.cockingParts = [chargeGroup];
+  group.userData.cockingOffset = 0.03;
+  group.userData.gunType = 'thompson';
+  Game.camera.add(group);
+  return group;
+}
+
 // v1.371 (backlog D.63, Michael: A, batch 3): the G36C, the first of "a few more Automatic rifles". A dark grey
 // polymer receiver with a long top rail carrying flip-up irons (the front post's tip is the aimed point), a vented
 // handguard and short barrel ahead, the smoky see-through mag in its well with the BBs showing inside, the pistol
@@ -2039,6 +2095,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
+  else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -2093,6 +2150,7 @@ const FP_HANDS = {
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
   famas:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.004, -0.150], hw: 0.022, hh: 0.024 }, underHand: true },   // v1.325: the AR's grip, the handguard
   epistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.326: the pistol's
+  thompson: { r: { c: [0, -0.064, 0.055], rx: -0.25, gw: 0.014, gd: 0.017, up: -0.012 }, l: { kind: 'grip', c: [0, -0.050, -0.180], rx: 0, gw: 0.013, gd: 0.015, up: -0.005 } },   // v1.403: the wooden grip and front grip
   gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard

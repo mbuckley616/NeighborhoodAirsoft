@@ -263,8 +263,8 @@ const lmgShop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + lmgShop.names.join(' · '));
-check('M249: last of the sixteen (v1.396) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
-  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 16 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
+check('M249: last of the seventeen (v1.403) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
+  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 17 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
 check('M249: you walk no slower with any gun (0.75), it is the heaviest (15 lb), and its BB is near the AK\'s', lmgShop.speed === 0.75 && lmgShop.speed <= lmgShop.minOther && lmgShop.weight > lmgShop.maxOtherWeight && Math.abs(lmgShop.vel[0] - lmgShop.vel[1]) <= 5, lmgShop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm249' }; });
 await g.scenario('bunratty_sean');

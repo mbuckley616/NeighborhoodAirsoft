@@ -38,6 +38,7 @@ const MAG_GUN_FIT = {
   spare_mag_rpk: 'rpk',   // v1.396
   spare_mag_spas: 'spas',   // v1.398
   spare_mag_gas: 'gaspistol',   // v1.399
+  spare_mag_thompson: 'thompson',   // v1.403
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -58,7 +59,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'svd',   // v1.395 (D.63 batch 4): the battery sniper
   'rpk',   // v1.396 (D.63 batch 4): the second light machine gun
   'spas',   // v1.398 (D.63 batch 5): the second pump shotgun
-  'gaspistol'];   // v1.399 (D.63 batch 5): the gas blowback pistol
+  'gaspistol',   // v1.399 (D.63 batch 5): the gas blowback pistol
+  'thompson'];   // v1.403 (D.63 batch 5): the drum-fed SMG
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -92,6 +94,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm4') return Game.persist.owned.m4_mag_450 ? 450 : 300;   // v1.373: its black curved mag
   if (gunType === 'svd') return Game.persist.owned.svd_mag_30 ? 30 : 20;   // v1.395: its curved mag
   if (gunType === 'rpk') return Game.persist.owned.rpk_mag_1000 ? 1000 : 600;   // v1.396: its drum
+  if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
   if (gunType === 'spas') return Game.persist.owned.spas_mag_72 ? 72 : 45;   // v1.398: 15 shells of three, or 24
   if (gunType === 'sniper') {
@@ -232,6 +235,7 @@ const GUN_ACCESSORY_CAP = {
   rpk:     { sight: 1, rails: 2, under: 1 },   // v1.396: the AK's
   spas:    { sight: 1, rails: 2, under: 1 },   // v1.398: the shotgun's
   gaspistol: { sight: 1, rails: 1 },            // v1.399: the pistol's
+  thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -635,8 +639,16 @@ const GUN_MAGS = {
     mags: [ { flag: 'gas_mag_25', cap: 25, price: 16 } ],
     spares: [ { key: 'spare_mag_gas', label: 'Spare Gas Pistol Mag (15)', price: 9 } ],
   },
+  // v1.403 (backlog D.63, batch 5): the Thompson, a drum-fed SMG in wood and blued steel: the fastest, straightest BB of
+  // the SMGs and the slowest to fire, and the heaviest to carry
+  thompson: {
+    displayName: 'Thompson', baseCap: 100, price: 240, ownFlag: 'thompson',
+    blurb: 'A gangster-movie SMG in blued steel and walnut: a round drum under the gun, a finned barrel, a wooden front grip and stock. Its BB is the fastest and straightest of the SMGs, but it fires slower than any of them and it is heavy, so you walk slower.',
+    mags: [ { flag: 'thompson_mag_200', cap: 200, price: 30 } ],
+    spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','shotgun','thunder','spas','semishotgun','ar','famas','erifle','burst','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','shotgun','thunder','spas','semishotgun','ar','famas','erifle','burst','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -837,6 +849,7 @@ function describeSlot(idx) {
       spare_mag_rpk: 600,   // v1.396
       spare_mag_spas: 45,   // v1.398
       spare_mag_gas: 15,   // v1.399
+      spare_mag_thompson: 100,   // v1.403
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -869,6 +882,7 @@ function describeSlot(idx) {
       spare_mag_rpk: 'Spare 600-rd RPK Drum',   // v1.396
       spare_mag_spas: 'Spare 45-rd SPAS Shells',   // v1.398
       spare_mag_gas: 'Spare 15-rd Gas Pistol Mag',   // v1.399
+      spare_mag_thompson: 'Spare 100-rd Thompson Drum',   // v1.403
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1067,6 +1081,7 @@ const GUN_WEIGHT = {
   rpk: 11,                                                // v1.396: the AK's 8 with a long barrel and a drum; the M249 15
   spas: 8.5,                                              // v1.398: steel, heavier than the Spring Shotgun (6)
   gaspistol: 3,                                           // v1.399: a steel slide and a gas mag
+  thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -1092,6 +1107,7 @@ const MAG_WEIGHT = {
   spare_mag_rpk: 3,   // v1.396
   spare_mag_spas: 1.5,   // v1.398
   spare_mag_gas: 0.7,   // v1.399: a gas mag is heavy for its size
+  spare_mag_thompson: 1.4,   // v1.403: a drum
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1547,6 +1563,10 @@ GUN_SPECS.spas = Object.assign({}, GUN_SPECS.shotgun, { pelletsPerShot: () => 3,
 // v1.399 (D.63, batch 5): the Gas Pistol, the Electric Pistol's pull-a-shot (no slide to rack) at 4.5 a second (5), a
 // faster BB (40 m/s, 34) straight for 6 m (4), aimed 0.32 (0.4); the gas cools as the mag empties, the last BB at 80%
 // of the first's speed (gasFade); a heavier gun, a slower walk (1.1, 1.12)
+// v1.403 (D.63, batch 5): the Thompson, the MP5's full-auto at 560 a minute (800; the slowest SMG, the UMP 600), a
+// faster BB (54 m/s, 50) straight for 18 m (14), tighter (0.30, 0.34; aimed 0.36, 0.4), and a heavy gun, so a slower
+// walk (0.96, 1.05)
+GUN_SPECS.thompson = Object.assign({}, GUN_SPECS.mp5, { cyclicRPM: 560, muzzleVelocity: 54, curveOnsetDistance: 18, baseSpread: 0.30, adsSpreadMult: 0.36, playerSpeedMult: 0.96, displayName: 'Thompson' });
 GUN_SPECS.gaspistol = Object.assign({}, GUN_SPECS.pistol, { electric: true, gas: true, gasFade: 0.2, semiRPM: 270, muzzleVelocity: 40, curveOnsetDistance: 6, adsSpreadMult: 0.32, playerSpeedMult: 1.1, displayName: 'Gas Pistol' });
 
 function getGunSpec(gunType) {
