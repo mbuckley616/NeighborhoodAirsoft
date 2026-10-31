@@ -143,8 +143,10 @@ const cl = await page.evaluate(() => {
     if (!m) continue;
     out.lines++;
     const ours = W.indexOf(m[1]), theirs = m[3] ? W.indexOf(m[3]) : ours;
-    const named = [...b.allies, ...b.enemies].filter(c => !(SCENARIOS[id].enemySetup || []).some(es => es.charId === c.charId)).every(c => m[4].includes(c.name));
-    if (ours !== b.allies.length + 1 || theirs !== b.enemies.length || !named) out.wrong.push({ id, line: m[0], ours: b.allies.length + 1, theirs: b.enemies.length });
+    const named = [...b.allies.filter(a => !a.out), ...b.enemies].filter(c => !(SCENARIOS[id].enemySetup || []).some(es => es.charId === c.charId)).every(c => m[4].includes(c.name));
+    // (v1.397: a CLUTCH match's crew is out from the start, and the line counts only who plays)
+    const playing = b.allies.filter(a => !a.out).length;
+    if (ours !== playing + 1 || theirs !== b.enemies.length || !named) out.wrong.push({ id, line: m[0], ours: playing + 1, theirs: b.enemies.length });
   }
   Game.persist.crew = []; Game.persist.completed = {}; crewBench.clear();
   out.quiet = getScenarioBriefing('winnmark_tutorial').desc;
