@@ -65,8 +65,9 @@ check('The Last Saturday, all five: you and your five v Seth and seven, Brooke a
 // A small crew: places left go to the match's own allies; a benched kid's place stays empty
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick']);
 // v1.275: Brooke crossing keeps the side at the match's five (Ryan sits out), the 5 v 5 it was built as
-check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth, 5 v 5', s.ours.join() === 'eric,sean,nick,rebecca' &&
-  s.theirs.length === 5 && s.theirs.includes('brooke'), s);
+// v1.402 (D.57 step 4): the Big Game is the Hollow's finale now, so their side is one more than yours, 5 v 6
+check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth, 5 v 6', s.ours.join() === 'eric,sean,nick,rebecca' &&
+  s.theirs.length === 6 && s.theirs.includes('brooke') && s.match === '5V6', s);
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick'], ['nick']);
 check('The Big Game, Nick benched: his place stays empty, the briefing names him', s.ours.join() === 'eric,sean,rebecca' && s.benched.join() === 'Nick', s);
 s = await sides('hollow_skirmish_3v3', ['eric', 'sean']);
