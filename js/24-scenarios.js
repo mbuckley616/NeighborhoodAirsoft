@@ -666,7 +666,7 @@ const SCENARIOS = {
   bunratty_team_2v1: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'You and Nick',
-    desc: "Nick's on your side this time — two of you against Sean. You've got the numbers, so use them: have Nick pressure Sean from one side while you take the other, and don't let Sean pick you off one at a time. Should be a quick one.",
+    desc: "Nick's on your side this time, against Sean and Ryan. Have Nick pressure Sean from one side while you take the other, and don't let them pick you off one at a time. Should be a quick one.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -707,7 +707,7 @@ const SCENARIOS = {
   bunratty_storm_the_court: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Storm the Court',
-    desc: "The whole far end is dug in at the cul-de-sac. Mitchell's got the sniper up on the plank fort and he does not miss. Ryan's behind the cars with the shotgun, itching to rush you. Nick's the wall with the AR. Push the lane smart — use the parked cars and don't get caught in the open coming in.",
+    desc: "The whole far end is dug in at the cul-de-sac. Mitchell's got the sniper up on the plank fort and he does not miss. Ryan's behind the cars with the shotgun, itching to rush you. Joe and Owen hold the middle. Push the lane smart — use the parked cars and don't get caught in the open coming in.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'attack',
@@ -750,7 +750,7 @@ const SCENARIOS = {
   bunratty_hold_the_fort: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'Hold the Cul-de-Sac',
-    desc: "You got to the cul-de-sac fort first and they want it back. Ryan's barreling up the lane with the shotgun, Mitchell's covering him with the AR from the bends, and Sean's swinging wide through the yards with that AK — keep moving, his bursts will tear you up if you sit still. Ninety seconds until somebody's mom calls it. Use the cars and the fort and don't let them surround you.",
+    desc: "You got to the cul-de-sac fort first and they want it back. Ryan's barreling up the lane with the shotgun, Mitchell's covering him with the AR from the bends, and one of Mitchell's crew is swinging wide through the yards with an AK — keep moving, his bursts will tear you up if you sit still. Ninety seconds until somebody's mom calls it. Use the cars and the fort and don't let them surround you.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -777,7 +777,7 @@ const SCENARIOS = {
   bunratty_pincer: {
     region: 'sentinel', street: 'bunratty_ct',
     name: 'Bunratty Court', scenarioName: 'The Pincer',
-    desc: "Joe figured out the yards on this street better than anyone — he'll bound cover-to-cover and come at you from the side while Owen pins you down from the lane with that scary-accurate AR. Sean keeps the middle busy. Hold the cul-de-sac for 90 seconds, but DON'T tunnel-vision the road — check your flanks or Joe tags you from the trees.",
+    desc: "Joe figured out the yards on this street better than anyone — he'll bound cover-to-cover and come at you from the side while Owen pins you down from the lane with that scary-accurate AR. Mitchell keeps the middle busy. Hold the cul-de-sac for 90 seconds, but DON'T tunnel-vision the road — check your flanks or Joe tags you from the trees.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -1021,7 +1021,7 @@ const SCENARIOS = {
   hollow_skirmish_3v3: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'First Time in the Woods',
-    desc: "Everyone hikes out to the spot in the woods east of the river — pallet forts at both ends, a creek down the middle, and barely any sun under the canopy. You're with Eric and Rebecca against Seth's crew. Three a side, five lives for every kid but you, respawning at their fort, so it's a real grind. Work the pallet walls, watch the open lanes, and let Eric rush while you and Rebecca hold an angle.",   // v1.182: promised everyone lives; you have one (playerLives 1)
+    desc: "Everyone hikes out to the spot in the woods east of the river — pallet forts at both ends, a creek down the middle, and barely any sun under the canopy. Your crew's with you against Seth's. Three a side, five lives for every kid but you, respawning at their fort, so it's a real grind. Work the pallet walls, watch the open lanes, and let one of your crew rush while you hold an angle.",   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1075,7 +1075,7 @@ const SCENARIOS = {
   hollow_night_battle: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Night Game in the Woods',
-    desc: "Same woods, same five-on-five, but now it's pitch dark under the canopy and the whole crew came loaded for night. Red's dug into the north fort and most of them are running lights — flashlight beams swinging through the trees and red laser dots crisscrossing the dark. The beams tell you where they're pushing, but they'll see you too. You've got Eric, Sean, Brooke, and Rebecca on blue. Five lives for every kid but you, last fort standing. Move between the pallet walls, use the dark, and don't silhouette yourself crossing the creek.",
+    desc: "Same woods, same game, but now it's pitch dark under the canopy and the whole crew came loaded for night. Red's dug into the north fort and most of them are running lights — flashlight beams swinging through the trees and red laser dots crisscrossing the dark. The beams tell you where they're pushing, but they'll see you too. You've got your crew and Rebecca on blue. Five lives for every kid but you, last fort standing. Move between the pallet walls, use the dark, and don't silhouette yourself crossing the creek.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1127,7 +1127,7 @@ const SCENARIOS = {
   hollow_juggernaut: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Juggernauts',
-    desc: "Mitchell and Ryan went full juggernaut — each one's carrying a full-auto AK and takes THREE tags to put down for good. It's the five of you against the two of them, but they hit way harder than you do: your whole squad's on spring pistols (grab whatever you like) while they spray. Numbers and angles are your only edge — swarm them from multiple sides, make every shot count, and don't try to trade head-on with an AK. Put three on each and it's over.",
+    desc: "Trey and Brooke went full juggernaut — each one's carrying a full-auto AK and takes THREE tags to put down for good. It's your whole side against the two of them, but they hit way harder than you do: your whole squad's on spring pistols (grab whatever you like) while they spray. Numbers and angles are your only edge — swarm them from multiple sides, make every shot count, and don't try to trade head-on with an AK. Put three on each and it's over.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1206,7 +1206,7 @@ const SCENARIOS = {
   hollow_full_auto_mayhem: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Full-Auto Mayhem (Night)',
-    desc: "The gloves are off: ten kids in the dark woods and EVERY single one of them is running full-auto — AKs, MP5s, UMPs, MAC-10s, the works. Five on five, five lives for every kid but you, last team standing. The air's going to be solid with BBs, flashlight beams, and red laser dots. You're on blue with Eric, Sean, Brooke, and Rebecca; red's got the whole rest of the crew dug into the north fort. There's no trading at range in this one — pick your moments between the strings, use the trees and the creek, and push as a unit or get shredded.",
+    desc: "The gloves are off: ten kids in the dark woods and EVERY single one of them is running full-auto — AKs, MP5s, UMPs, MAC-10s, the works. Five lives for every kid but you, last team standing. The air's going to be solid with BBs, flashlight beams, and red laser dots. You're on blue with your crew and Rebecca; red's got Seth's crew dug into the north fort. There's no trading at range in this one — pick your moments between the strings, use the trees and the creek, and push as a unit or get shredded.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1388,7 +1388,7 @@ const SCENARIOS = {
   lot_defend_store: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Hold the Doors',
-    desc: "You called the store front, so now you have to keep it. Jamie, Tyler and Owen come up from the road, row by row, and a tagged kid walks back to the road and comes again. The tower, the swings on the walk, the ice cage and the truck are your cover; the ends of the rows are theirs. Watch the aisles that run straight at you, and both ends of the fire lane. Survive 90 seconds.",
+    desc: "You called the store front, so now you have to keep it. Marcus, Jamie, Tyler and Devon come up from the road, row by row, and a tagged kid walks back to the road and comes again. The tower, the swings on the walk, the ice cage and the truck are your cover; the ends of the rows are theirs. Watch the aisles that run straight at you, and both ends of the fire lane. Survive 90 seconds.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -1436,7 +1436,7 @@ const SCENARIOS = {
   lot_night_4v4: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'After Close',
-    desc: "The store's dark, the lot's empty but for the night-shift cars, and the tall lot lights make four bright islands down the rows. Seth's crew holds the store front with Devon on the rifle by the truck; you've got Eric, Sean and Rebecca at the road. Four a side, four lives for every kid but you. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",
+    desc: "The store's dark, the lot's empty but for the night-shift cars, and the tall lot lights make four bright islands down the rows. Marcus's crew and Seth hold the store front, with Devon on the rifle by the truck; your crew's at the road. Four a side, four lives for every kid but you. Stay out of the lamplight — anyone standing under a lamp is lit up for the whole lot.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1484,7 +1484,7 @@ const SCENARIOS = {
   northcliff_twins_3v3: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'The Stoneglen Twins',
-    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Andrew and Alex are with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives for every kid but you, last team standing.",
+    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Your crew's with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1507,7 +1507,7 @@ const SCENARIOS = {
   northcliff_defend_creek: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'Hold the Creek Fort',
-    desc: "The twins built their fort on the creek bank, and now it's yours to hold. Haden, Connor and Diego come down the hill from the street, yard by yard, and a tagged kid walks back up to the road and comes again. They have the high ground and you have the walls. Watch the yards either side of the fort, not just the slope in front of it. Survive 90 seconds.",
+    desc: "The twins built their fort on the creek bank, and now it's yours to hold. Haden and Connor come down the hill from the street with Mason's crew, yard by yard, and a tagged kid walks back up to the road and comes again. They have the high ground and you have the walls. Watch the yards either side of the fort, not just the slope in front of it. Survive 90 seconds.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     scenarioType: 'defend',
@@ -1628,7 +1628,7 @@ const SCENARIOS = {
   bellfield_3v3: {
     region: 'northcliff', street: 'bellfield_ct',
     name: 'Bellfield Court', scenarioName: 'Bellfield Bulb',
-    desc: "Andrew and Evan came with you to Bellfield Court for a rematch on the Bellfield kids' own street. Christian and Diego are behind the cars at the mouth of the bulb, and Fernando has the fort on the lawn at the top of it. You start at the bottom of the street. The backyards behind both rows are the long way round, behind the fence and out of the street's sight. Three lives for every kid but you, last team standing.",
+    desc: "Your crew came over to Bellfield Court for a rematch on the Bellfield kids' own street. Christian and Diego are behind the cars at the mouth of the bulb, and Fernando has the fort on the lawn at the top of it. You start at the bottom of the street. The backyards behind both rows are the long way round, behind the fence and out of the street's sight. Three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBellfieldCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1674,7 +1674,7 @@ const SCENARIOS = {
   bellfield_night_4v4: {
     region: 'northcliff', street: 'bellfield_ct',
     name: 'Bellfield Court', scenarioName: 'Lamplight on Bellfield',
-    desc: "The twins wanted a rematch on Bellfield's own street, after dark. Haden, Connor and Evan are with you at the bottom of the street. Mason and Christian have the cars at the mouth of the bulb, Diego the island, and Fernando the kid fort at the top of it. No rifle tonight; Fernando says the street's too short for it. Four streetlamps light the street in pools, and everything between them, and the backyards behind both rows, is dark. Four a side, four lives for every kid but you. Don't stand under a lamp.",
+    desc: "Your crew wanted a rematch on Bellfield's own street, after dark. You're at the bottom of the street. Mason and Christian have the cars at the mouth of the bulb, Diego the island, and Fernando the kid fort at the top of it. No rifle tonight; Fernando says the street's too short for it. Four streetlamps light the street in pools, and everything between them, and the backyards behind both rows, is dark. Four a side, four lives for every kid but you. Don't stand under a lamp.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBellfieldCourtScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1714,7 +1714,7 @@ const SCENARIOS = {
   bellfield_ctf: {
     region: 'northcliff', street: 'bellfield_ct',
     name: 'Bellfield Court', scenarioName: 'Flags on Bellfield',
-    desc: "Capture the flag on the Bellfield kids' street. Our blue flag is in the road by the entry; theirs is red, on the head house's lawn by the kid fort at the top of the bulb. Walk onto theirs to grab it and bring it back to ours to score; get tagged with it and you drop it where you stand. Andrew goes for their flag and Evan holds the street with you; Mason runs for ours. Fernando keeps their flag from the fort; Christian comes down the street at you. Everybody comes back when tagged, so trading tags gets you nowhere. First to two flags, or whoever has more when the five minutes are up; a tie counts for nothing.",
+    desc: "Capture the flag on the Bellfield kids' street. Our blue flag is in the road by the entry; theirs is red, on the head house's lawn by the kid fort at the top of the bulb. Walk onto theirs to grab it and bring it back to ours to score; get tagged with it and you drop it where you stand. Your crew goes for their flag or holds the street with you; Mason runs for ours. Fernando keeps their flag from the fort; Christian comes down the street at you. Everybody comes back when tagged, so trading tags gets you nowhere. First to two flags, or whoever has more when the five minutes are up; a tie counts for nothing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildBellfieldCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1755,7 +1755,7 @@ const SCENARIOS = {
   pool_night_3v3: {
     region: 'northcliff', street: 'northcliff_pool',
     name: 'Northcliff Pool', scenarioName: 'Night Swim',
-    desc: "Somebody left the pool lights on, and the whole neighborhood heard about it. The twins are with you at the parking lot; Mason, Christian and Diego came in over the fence by the tennis courts. The pool glows, three lamps light the parking and the courts' far corner, and the rest of the club is dark. The courts' fence stops you but not a BB. Three a side, three lives for every kid but you, last team standing.",
+    desc: "Somebody left the pool lights on, and the whole neighborhood heard about it. Your crew's at the parking lot; Mason, Christian and the twins came in over the fence by the tennis courts, with Evan and Andrew. The pool glows, three lamps light the parking and the courts' far corner, and the rest of the club is dark. The courts' fence stops you but not a BB. Three a side, three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildNorthcliffPoolScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1801,7 +1801,7 @@ const SCENARIOS = {
   school_portables_3v3: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'The Portables',
-    desc: "Caleb, Nathan and Sophie go to Hollins Ridge, and they've taken the school side: the doors, the staff cars and the portables. Eric and Rebecca are with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Nathan will sit back and pick; Sophie will come round the side. Three lives for every kid but you, last team standing.",
+    desc: "Caleb, Nathan and Sophie go to Hollins Ridge, and they've taken the school side: the doors, the staff cars and the portables. Your crew's with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Nathan will sit back and pick; Sophie will come round the side. Three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1848,7 +1848,7 @@ const SCENARIOS = {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
     // v1.362 (D.28 step 5): Seth in Nathan's place (SETH_ZONE_MATCHES)
-    desc: "No game tonight, so the field's yours. Caleb and Sophie are back with Seth, who's carrying a P90 now, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. You've got Eric, Rebecca and Brooke at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",
+    desc: "No game tonight, so the field's yours. Caleb and Sophie are back with Seth, who's carrying a P90 now, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. Your crew's at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildHighSchoolScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1897,7 +1897,7 @@ const SCENARIOS = {
   club_eighteenth_3v3: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'The Eighteenth',
-    desc: "Seth, Marcus and Jamie came over the back fence from Winnmark and took the clubhouse: the veranda, the pool and the cart barn. Sean and Trey are with you on the south lawn. The fairway's open apart from the willows and the pond, and the carts are the only cover on the green. Jamie will rush with the shotgun; Marcus likes the carts. Three lives for every kid but you, last team standing.",
+    desc: "Seth, Marcus and Jamie came over the back fence from Winnmark and took the clubhouse: the veranda, the pool and the cart barn. Your crew's with you on the south lawn. The fairway's open apart from the willows and the pond, and the carts are the only cover on the green. Jamie will rush with the shotgun; Marcus likes the carts. Three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildCountryClubScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1967,7 +1967,7 @@ const SCENARIOS = {
   club_night_4v4: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'Night Swim',
-    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. You've got Sean, Trey and Brooke by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives for every kid but you.",
+    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. Your crew's by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives for every kid but you.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildCountryClubScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -2014,7 +2014,7 @@ const SCENARIOS = {
   store_price_check_3v3: {
     region: 'east_roswell', street: 'riverside_market_inside',
     name: 'Inside Riverside Market', scenarioName: 'Price Check',
-    desc: "Marcus, Jamie and Tyler came in through the loading dock and hold the stockroom. Eric and Brooke are with you at the checkouts. There are three doorways through the back wall, and five aisles between you and them. Jamie's shotgun is made for an aisle; don't race him down one. The counters, the freezers and the produce are your cover out front; the pallets and the forklift are theirs. Three lives for every kid but you, last team standing.",
+    desc: "Marcus, Jamie and Tyler came in through the loading dock and hold the stockroom. Your crew's with you at the checkouts. There are three doorways through the back wall, and five aisles between you and them. Jamie's shotgun is made for an aisle; don't race him down one. The counters, the freezers and the produce are your cover out front; the pallets and the forklift are theirs. Three lives for every kid but you, last team standing.",   // v1.405 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildGroceryStoreScene',
     builderArg: 'default',
     scenarioType: 'skirmish',

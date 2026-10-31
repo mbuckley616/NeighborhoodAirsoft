@@ -165,6 +165,12 @@ const SUMMER_TEXTS = [
     text: "u been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric" },
   { id: 'askEric',    from: 'Eric',    after: 'winnmark_night_team_2v2', ask: 'eric',
     text: "sean texted me lol. im coming to bunratty either way. also. can i be in ur crew? for real" },
+  // v1.273: Bunratty done, your brother and your best friend ask. v1.405 (D.57 step 4, the plan's "Sean and Nick ask after
+  // You and Nick"): they ask after You and Nick, so the crew forms at home and holds Bunratty all zone
+  { id: 'askSean',    from: 'Sean',    after: 'bunratty_team_2v1', ask: 'sean',
+    text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
+  { id: 'askNick',    from: 'Nick',    after: 'bunratty_team_2v1', ask: 'nick',   // v1.405
+    text: "if seans in ur crew im in ur crew. right? im in right?" },
   { id: 'brothers',   from: 'Sean',    after: 'bunratty_brothers',
     text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
   { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
@@ -174,11 +180,6 @@ const SUMMER_TEXTS = [
     text: "heard ur playing night games on bunratty now. save me a spot. on the other team. mitchell says i can be his plus one" },
   { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
     text: "everybody is going to the hollow this week. the woods past the river, forts at both ends. seth is bringing his whole crew. bring BBs" },
-  // v1.273: Bunratty done, your brother and your best friend ask
-  { id: 'askSean',    from: 'Sean',    after: 'bunratty_night_team_2v2', ask: 'sean',
-    text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
-  { id: 'askNick',    from: 'Nick',    after: 'bunratty_night_team_2v2', ask: 'nick',
-    text: "if seans in ur crew im in ur crew. right? im in right?" },
   { id: 'sethHollow', from: 'Seth',    after: 'hollow_infection_night',   // v1.363; v1.402: the night before the finale, now last
     text: "big game tmrw. whole neighborhood. im on red and i got the ump. dont cry when u lose" },
   { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
