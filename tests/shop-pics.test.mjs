@@ -29,7 +29,7 @@ const rows = await page.evaluate(() => [...document.querySelectorAll('#shopScree
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(),
   pic: !!r.querySelector('.shop-item-icon.pic img'), glyph: r.querySelector('.shop-item-icon').textContent })));
 const order = await page.evaluate(() => GUN_ORDER.slice());
-check('the Guns tab lists all 30 guns (v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK)', rows.length === 30 && order.length === 30, rows.map(r => r.name));
+check('the Guns tab lists all 31 guns (v1.398: the SPAS-12; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK)', rows.length === 31 && order.length === 31, rows.map(r => r.name));
 check('every gun row has a picture in place of the ⌐ glyph', rows.every(r => r.pic && r.glyph === ''), rows.filter(r => !r.pic));
 const icons = await measure();
 check('the pictures are in GUN_ORDER, drawn at 112×112 for a 56 px box',
@@ -39,7 +39,7 @@ check('each gun fills its frame across (at least 80% of the width)', icons.every
   icons.map(i => [i.gun, i.spanX]));
 check('each picture has the gun drawn on it (at least 6% of its pixels)', icons.every(i => i.fill >= 0.06),
   icons.map(i => [i.gun, i.fill]));
-check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 30);
+check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 31);
 console.log('    icons (gun, drawn, span across, span down):', icons.map(i => `${i.gun} ${i.fill} ${i.spanX} ${i.spanY}`).join('; '));
 await g.shot('shop-pics-list');
 
