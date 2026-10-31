@@ -271,6 +271,38 @@ function buildFPShotgun() {
   return group;
 }
 
+// v1.398 (backlog D.63, Michael: A, batch 5): the SPAS-12, a second pump shotgun on the spring shotgun's receiver,
+// barrel, tube, pump and bead: all of it black, a vented shield along the top and sides of the barrel (its top under
+// the bead's line), a pistol grip behind the trigger guard, and a folding metal stock opened out behind: two rods back
+// from the receiver to a butt plate with its hook under. The pump is the shotgun's and still racks every shot.
+function buildFPSpas() {
+  const group = buildFPShotgun();
+  const black = new THREE.MeshStandardMaterial({ color: 0x101012, roughness: 0.55, metalness: 0.35 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.45, metalness: 0.6 });
+  const hole = new THREE.MeshStandardMaterial({ color: 0x030304, roughness: 0.9 });
+  const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; group.add(m); return m; };
+  group.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHex() !== 0xff7a1a) o.material = black; });
+  // the wrist and the sporting stock come off: a pistol grip and the folding stock go on
+  for (const n of ['wrist', 'stock']) { const o = group.getObjectByName(n); if (o) group.remove(o); }
+  add(new THREE.BoxGeometry(0.034, 0.075, 0.034), black, 0, -0.040, 0.012, -0.35).name = 'grip';
+  add(new THREE.BoxGeometry(0.030, 0.030, 0.030), black, 0, 0.005, 0.030).name = 'stockBlock';   // the hinge block behind the receiver
+  for (const x of [-0.012, 0.012]) add(new THREE.BoxGeometry(0.006, 0.008, 0.130), steel, x, 0.012, 0.105).name = 'stockRod';
+  add(new THREE.BoxGeometry(0.036, 0.060, 0.010), steel, 0, 0.000, 0.172).name = 'buttPlate';
+  add(new THREE.BoxGeometry(0.010, 0.030, 0.012), steel, 0, -0.038, 0.164, 0.5).name = 'hook';   // the hook under the plate
+  // the vented shield: a top plate and two side plates along the barrel, slots punched through each
+  add(new THREE.BoxGeometry(0.032, 0.004, 0.150), steel, 0, 0.0530, -0.215).name = 'shield';
+  for (const x of [-0.0145, 0.0145]) add(new THREE.BoxGeometry(0.003, 0.020, 0.150), steel, x, 0.043, -0.215);
+  for (let i = 0; i < 6; i++) {
+    const z = -0.155 - i * 0.024;
+    add(new THREE.BoxGeometry(0.016, 0.0012, 0.010), hole, 0, 0.0552, z);
+    for (const x of [-0.0160, 0.0160]) add(new THREE.BoxGeometry(0.0012, 0.008, 0.010), hole, x, 0.043, z);
+  }
+  // the bead is the front sight
+  group.traverse(o => { if (o.isMesh && o.geometry.type === 'SphereGeometry' && Math.abs(o.position.z + 0.31) < 1e-6) o.userData.frontSight = true; });
+  group.userData.gunType = 'spas';
+  return group;
+}
+
 // === FP ASSAULT RIFLE (M4-style with charging handle) ===
 // v1.328 (backlog D.63, batch 1): the Semi-Auto Shotgun, a Benelli-style tactical shotgun on the spring shotgun's
 // receiver, barrel, tube and bead: a smooth fixed forend in place of the ribbed pump, a pistol grip behind the trigger
@@ -1975,6 +2007,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'm4')      mesh = buildFPM4();            // v1.373
   else if (gunType === 'svd')     mesh = buildFPSVD();           // v1.395
   else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
+  else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -2017,6 +2050,7 @@ const FP_HANDS = {
   aug:     { r: { c: [0, -0.078, -0.03], rx: -0.2, gw: 0.015, gd: 0.015, up: -0.012 }, l: { kind: 'grip', c: [0, -0.052, -0.19], rx: 0, gw: 0.013, gd: 0.013, up: -0.005 } },   // v1.372: the grip and the folding foregrip
   m4:      { r: { c: [0, -0.066, 0.035], rx: -0.25, gw: 0.015, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, -0.007, -0.21], hw: 0.020, hh: 0.025 }, underHand: true },   // v1.373: the grip and the handguard
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
+  spas:    { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },   // v1.398: the Semi-Auto Shotgun's pistol grip, the shotgun's pump
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },

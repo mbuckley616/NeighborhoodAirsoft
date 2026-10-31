@@ -36,6 +36,25 @@ check('in front at 10 m an excuse from the any pool; running, the moving pool', 
 check('pushier kids make excuses more: about 60%, 40%, 15%',
   Math.abs(which.rate.high_agg - 0.6) < 0.04 && Math.abs(which.rate.mid_agg - 0.4) < 0.04 && Math.abs(which.rate.low_agg - 0.15) < 0.03, which.rate);
 
+// --- 1b. v1.397: each kid's own excuses, half the excuses he makes
+const own = await page.evaluate(() => {
+  const ids = Object.keys(CHARACTERS), cap = VOICE_LINE_WORD_CAP;
+  const missing = ids.filter(id => (VOICE_EXCUSES_OWN[id] || []).length < 4);
+  const long = Object.values(VOICE_EXCUSES_OWN).flat().filter(l => l.split(/\s+/).length > cap);
+  const all = Object.values(VOICE_EXCUSES_OWN).flat(), dup = all.filter((l, i) => all.indexOf(l) !== i);
+  const share = {};
+  for (const id of ['seth', 'owen', 'malik']) {
+    const spk = {}; let n = 0;
+    for (let i = 0; i < 2000; i++) { const why = ['any', 'behind', 'far', 'close', 'moving'][i % 5];
+      if (VOICE_EXCUSES_OWN[id].includes(pickVoiceLine(id, 'excuse_' + why, spk))) n++; }
+    share[id] = +(n / 2000).toFixed(3);
+  }
+  return { n: ids.length, missing, long, dup, share };
+});
+console.log('   own excuses:', own.n, 'kids; own share:', JSON.stringify(own.share));
+check('every kid has at least four excuses of his own, none over the word cap, none shared', !own.missing.length && !own.long.length && !own.dup.length, own);
+check('about half of a kid\'s excuses are his own', Object.values(own.share).every(s => Math.abs(s - 0.5) < 0.05), own.share);
+
 // --- 2. a real tag by you, with a teammate of his close by
 const tag = await page.evaluate(() => {
   const S = Game.scenario, P = Game.player.pos;
