@@ -1380,7 +1380,14 @@ function endScenario(outcome) {
       // v1.246 (Found in play, critic 15 Oct): nobody regroups with anybody in a free-for-all; name who got you
       const _dmg = (Game.scenario.stats && Game.scenario.stats.damage) || [];
       const _by = _dmg.length && _dmg[_dmg.length - 1].by;
-      flavorEl.textContent = `Too many angles, not enough cover. ${_by || 'Somebody'} gets the last one on you, and the rest keep going at each other. "Every kid for himself, dude."`;
+      // v1.394 (Found in play, critic 30 Oct): with one kid left he has just won; crown him, not "the rest"
+      const _left = (Game.scenario.enemies || []).filter(e => e.team !== 'player' && npcInFight(e));
+      const _win = _left.length === 1 ? (_left[0].name || 'a kid') : null;
+      flavorEl.textContent = !_win
+        ? `Too many angles, not enough cover. ${_by || 'Somebody'} gets the last one on you, and the rest keep going at each other. "Every kid for himself, dude."`
+        : _win === _by
+          ? `Too many angles, not enough cover. ${_by} gets the last one on you, and that's the round: ${_win} is the last kid standing. "Every kid for himself, dude."`
+          : `Too many angles, not enough cover. ${_by || 'Somebody'} gets the last one on you, and ${_win} is the last kid standing. "Every kid for himself, dude."`;
     } else if (multi) {
       flavorEl.textContent = `Too many angles, not enough cover. ${allStr} regroup ${regroupAt}. "Run it back?"`;
     } else {
