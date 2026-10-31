@@ -569,10 +569,20 @@ function crewSideRule(id, setup) {
   const bad = setup.filter(es => !es.vip && es.charId && (es.team === 'player' ? !sideAllyOk(es.charId, zoneCap) : !sideFoeOk(es.charId, zoneCap, crew)));
   if (!bad.length) return setup;
   const used = new Set(setup.map(es => es.charId));
+  // A kid of the zone's own crew on your side (the street making up your numbers) goes over to his captain's side, in
+  // place of a kid there from outside it (one the street added first), so the school's kids play for the school
+  const homeBound = bad.filter(es => es.team === 'player' && captainOf(es.charId) === zoneCap);
+  const swapIn = new Map();
+  for (const es of homeBound) {
+    const there = setup.filter(f => f.team !== 'player' && !f.vip && f.charId !== 'seth' && captainOf(f.charId) !== zoneCap && !swapIn.has(f))
+      .sort((a, b) => (b.crewFill ? 1 : 0) - (a.crewFill ? 1 : 0))[0];
+    if (there) { swapIn.set(there, es.charId); used.delete(there.charId); }
+  }
   const order = [zoneCap, zoneCap === 'marcus' ? 'seth' : zoneCap === 'seth' ? 'marcus' : 'seth', 'marcus']
     .filter((c, i, a) => a.indexOf(c) === i).flatMap(c => CAPTAIN_CREWS[c]);
   const out = [];
   for (const es of setup) {
+    if (swapIn.has(es)) { out.push(Object.assign({}, es, { charId: swapIn.get(es), sideSwap: es.charId })); continue; }
     if (!bad.includes(es)) { out.push(es); continue; }
     // an ally from another street's crew (never a captain), the streets in ladder order; nobody left, his place stays empty
     const k = es.team === 'player'

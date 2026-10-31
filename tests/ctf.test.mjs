@@ -47,7 +47,10 @@ check('enters as a capture-the-flag match, first to 2', built.mode === 'scenario
 check('two flags on clear ground in the match\'s scene: ours within 6 m of your start, theirs over 45 m off',
   built.flags.length === 2 && built.flags.every(f => f.clear && f.inScene) && built.flags[0].fromPlayer < 6 && built.flags[1].fromPlayer > 45, built.flags);
 check('the backyard lanes are on clear ground', built.lanes.length === 2 && built.lanes.every(l => l[2]), built.lanes);
-check('Andrew runs for their flag and Mason for ours', built.runners.join() === 'Andrew:player,Mason:enemy', built.runners);
+// v1.397 (D.57 step 2): your runner is the match's (Andrew as written; with no crew of yours, Seth's Andrew gives his
+// place to Ryan, the side rule)
+const RUN = (built.runners.find(r => r.endsWith(':player')) || 'Andrew:player').split(':')[0];
+check(`${RUN} runs for their flag and Mason for ours`, built.runners.join() === `${RUN}:player,Mason:enemy`, built.runners);
 
 // a look at their flag from the island, for Michael: tests/out/ctf-their-flag.png
 await page.evaluate(() => { Game.player.pos.set(-13, 0, -3.5); Game.player.yaw = Math.PI / 2; Game.player.pitch = -0.08; });
@@ -181,8 +184,8 @@ for (let r = 0; r < 4 && (r < 2 || !rounds.some(x => x.takes.length > 0)); r++) 
   // the round to walk in (Andrew, tagged 8 times in 150 s, walked 128 m). The bar is a metre for every second he was not
   // waiting at his base, at most 150 m: the old bar over a full round with no tags.
   const bar = (name) => Math.min(150, res.t - 10 * (res.tagsOf[name] || 0));
-  check(`round ${r + 1}: both runners walk over a metre for each second not held at base`, (res.walked.Andrew || 0) > bar('Andrew') && (res.walked.Mason || 0) > bar('Mason'),
-    { bars: { Andrew: bar('Andrew'), Mason: bar('Mason') }, walked: res.walked });
+  check(`round ${r + 1}: both runners walk over a metre for each second not held at base`, (res.walked[RUN] || 0) > bar(RUN) && (res.walked.Mason || 0) > bar('Mason'),
+    { bars: { [RUN]: bar(RUN), Mason: bar('Mason') }, walked: res.walked });
   check(`round ${r + 1}: no runner is held on his flag run within 1 m for over 4 s`, Object.values(res.wedge).every(t => t <= 4.1), res.wedge);
   check(`round ${r + 1}: the backyards and the street are both used`, res.lanes.includes('street') && res.lanes.some(x => x !== 'street'), res.lanes);
 }
