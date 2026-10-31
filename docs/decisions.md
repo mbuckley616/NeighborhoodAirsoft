@@ -5,6 +5,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next (producer, from the builder's 31 Oct report, 2026-10-31)**
+  v1.396 brought the shop to 30 guns, the low end of your 30 to 50 (D.63), and the builder reports the play lane has no
+  ready item left: everything else open is a Fable card or waits on your look. What should it take next?
+  - A) **Gun batch 5.** Four to six more guns toward 40 (say a second pump shotgun, a gas pistol, an SMG, a DMR), one a version.
+  - B) **Per-kid excuses (D.32's next step).** Each kid gets his own reasons when tagged ("my goggles fogged", "lag"), in his own voice.
+  - C) **Both, excuses first** *(recommended)*: a small, noticeable change to how the kids feel, then batch 5.
+  - D) **Something else.** Reply in Slack with what you want next.
+  Recommendation: C. Excuses are one or two versions and touch every match; the guns keep coming after.
+
 ## Answered
 
 - **D.82: a Roblox version of the game (local session, 2026-10-29)**
