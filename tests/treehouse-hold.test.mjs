@@ -12,14 +12,15 @@ const info = await page.evaluate(() => {
   const p = Game.player, sc = SCENARIOS.stoneglen_hold_treehouse;
   return { x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), onGround: p.onGround, type: sc.scenarioType, timer: sc.timerSec, name: sc.scenarioName,
     ladders: (Game.scenario.ladders || []).length,
-    kids: Game.scenario.enemies.map(e => ({ id: e.charId, x: +e.pos.x.toFixed(1), y: +e.pos.y.toFixed(2), z: +e.pos.z.toFixed(1), role: e.role, perch: !!e.perch })),
+    // v1.393 (D.57 step 1): your crew plays it now, and the street adds to their side; the match's own three are checked
+    kids: Game.scenario.enemies.filter(e => e.team !== 'player' && ['haden', 'connor', 'evan'].includes(e.charId)).map(e => ({ id: e.charId, x: +e.pos.x.toFixed(1), y: +e.pos.y.toFixed(2), z: +e.pos.z.toFixed(1), role: e.role, perch: !!e.perch })),
     group: PIN_SCENARIO_GROUPS.northcliff.indexOf('stoneglen_hold_treehouse') - PIN_SCENARIO_GROUPS.northcliff.indexOf('stoneglen_treehouse') };
 });
 console.log('  start', JSON.stringify(info));
 check('Hold the Bunker: the player starts on the ground inside the bunker (x within 1.6 m of its middle, z −7.2…−4.8)', info.name === 'Hold the Bunker' && info.y === 0 && info.onGround && Math.abs(info.x) < 1.6 && info.z > -7.2 && info.z < -4.8 && info.ladders === 0, info);
 check('a 90 s defend, right after King of the Course in Northcliff', info.type === 'defend' && info.timer === 90 && info.group === 1, info);
 const evan0 = info.kids.find(k => k.id === 'evan');
-check('three kids: the twins attack from the house end, Evan holds the nest under the bank, over 14 m behind you', info.kids.length === 3 && info.kids.every(k => !k.perch)
+check('the match\'s three: the twins attack from the house end, Evan holds the nest under the bank, over 14 m behind you', info.kids.length === 3 && info.kids.every(k => !k.perch)
   && info.kids.filter(k => k.role === 'attacker' && k.z > 8).length === 2 && evan0 && evan0.z < -20 && Math.hypot(evan0.x - info.x, evan0.z - info.z) > 14, info.kids);
 
 // 60 s with the player untaggable in the bunker; a twin who has been within 12 m of him for 3 s is tagged (as the
@@ -27,7 +28,9 @@ check('three kids: the twins attack from the house end, Evan holds the nest unde
 const round = (crouch) => page.evaluate((crouch) => {
   const hitsBy = {}; applyBBHit = (bb, t) => { if (t === Game.player) { const k = bb.enemyRef ? bb.enemyRef.charId : '?'; hitsBy[k] = (hitsBy[k] || 0) + 1; } };
   const p = Game.player; Game.mouse.locked = true; p.crouching = crouch;
-  const E = Game.scenario.enemies, evan = E.find(e => e.charId === 'evan');
+  // v1.393 (D.57 step 1): the twins and Evan as before; your crew holds its fire, so the twins' runs are theirs alone
+  for (const e of Game.scenario.enemies) if (e.team === 'player') e.noFire = true;
+  const E = Game.scenario.enemies.filter(e => ['haden', 'connor', 'evan'].includes(e.charId) && e.team !== 'player'), evan = E.find(e => e.charId === 'evan');
   const close = { haden: [], connor: [] }, nearest = { haden: 99, connor: 99 }, drops = []; let evanWalk = 0; const inT = {};
   const ex0 = evan.pos.x, ez0 = evan.pos.z;
   for (let i = 0; i < 60 * 60 && Game.mode === 'scenario'; i++) {

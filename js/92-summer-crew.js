@@ -615,7 +615,10 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
       const k = fromStreet(sethFoe); if (!k) break;
       const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
       // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
-      const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
+      // v1.393: in a solo match your crew now plays, a kid the street adds to a hold's attackers attacks with them (made a
+      // skirmisher, he waited at the huddle all of Hold the Portables, 120 s)
+      const keepRole = sc.crewPosts && spot.role === 'attacker';
+      const kid = Object.assign(strip(spot, (keepRole ? [] : ['role']).concat(['perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives'])), { charId: k.charId, weapon: k.weapon });
       if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
       kid.crewFill = true;   // v1.278: a kid the crew's numbers added comes looking when he has hidden too long (updateKidBoredom)
       them.push(kid);

@@ -24,8 +24,9 @@ const same = await page.evaluate(() => {
 });
 check(`a new game: every match tuned for nobody in your crew (of ${same.n}) plays its own sides`, same.empty.length === 0, same.empty);
 check(`with all five in, the ${same.solo} solo matches (the tutorial among them) still play alone`, same.soloChanged.length === 0 && !same.tut, same.soloChanged);
-// 32 since v1.318's Night Swim (the twins on your side at the pool)
-check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 32 && same.jugg && same.out, same);
+// 32 since v1.318's Night Swim (the twins on your side at the pool); 46 since v1.393 (D.57 step 1): + the 12 solo matches
+// your crew now plays and the 2 CLUTCH ones (`crewPosts`), so 32 solo matches are left, none changed by the crew
+check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 46 && same.solo === 32 && same.jugg && same.out, same);
 
 const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
   Game.persist.crew = crew; crewBench.clear(); (bench || []).forEach(k => crewBench.add(k));

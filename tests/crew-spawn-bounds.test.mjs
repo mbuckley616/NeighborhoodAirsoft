@@ -7,13 +7,17 @@
 // 3v3, 0.00 m apart; one walked 0 m all match) and extra kids at one anchor stacked there. Checked now as well: in every
 // team match, with all five and with the first-time crew, no two kids (you among them) start under 1.4 m apart, the
 // attack huddle's ring aside (1.0 m beside it); and the club's 3v3 with all five has every kid on our side moving or firing.
+// v1.393 (D.57 step 1): the 14 matches your crew plays from `crewPosts` (the solo matches turned crew, and CLUTCH) run
+// the same checks in tests/crew-spawn-bounds-posts.test.mjs, which sets CSB_POSTS: all 46 in one suite ran past
+// run.mjs's 10 minutes (it took 608 s for 32 on CI).
 import { boot, check } from './lib/game.mjs';
+const POSTS = !!globalThis.CSB_POSTS;
 const g = await boot(); const { page } = g;
 await g.bedroom();
 await g.spin(3);
 
 const ALL = ['eric', 'sean', 'nick', 'alex', 'diego'];
-const ids = await page.evaluate(() => Object.keys(SCENARIOS).filter(crewTeamMatch).sort((a, b) => crewLadderPos(a) - crewLadderPos(b)));
+const ids = await page.evaluate(posts => Object.keys(SCENARIOS).filter(id => crewTeamMatch(id) && !!SCENARIOS[id].crewPosts === posts).sort((a, b) => crewLadderPos(a) - crewLadderPos(b)), POSTS);
 const out = [], near = [];
 for (const crew of ['all', 'first']) for (const id of ids) {
   await page.evaluate(([all, crew, id]) => { Game.persist.crew = crew === 'all' ? all.slice() : crewFirstTime(id); Game.persist.completed = {}; crewBench.clear(); }, [ALL, crew, id]);
@@ -45,17 +49,21 @@ for (const crew of ['all', 'first']) for (const id of ids) {
     const B = Game.scenario.bounds, inside = p => !B || (p.x > B.minX && p.x < B.maxX && p.z > B.minZ && p.z < B.maxZ);
     const kids = Game.scenario.enemies;
     return { id, kids: kids.length, allies: kids.filter(e => e.team === 'player').length,
-      out: kids.filter(e => !inside(e.pos)).map(e => [e.character?.name, +e.pos.x.toFixed(1), +e.pos.z.toFixed(1)]) };
+      // v1.393: a hold's attackers huddle where they come from, and Hold the Doors' is on the verge, up to 0.8 m past the
+      // lot's south edge, as it was when the match was solo; the check is for your side and the posts
+      out: kids.filter(e => !inside(e.pos) && !(e.team !== 'player' && e.startAt.huddle && SCENARIOS[id].scenarioType === 'defend'))
+        .map(e => [e.character?.name, +e.pos.x.toFixed(1), +e.pos.z.toFixed(1)]) };
   }, id));
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(30);
 }
 const bad = out.filter(r => r.out.length);
 console.log('   allies with all five:', JSON.stringify(Object.fromEntries(out.map(r => [r.id, r.allies]))));
-check(`${ids.length} team matches entered with all five in the crew`, ids.length === 32 && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
+check(`${ids.length} team matches entered with all five in the crew`, ids.length === (POSTS ? 14 : 32) && /* v1.318: + Night Swim */ out.every(r => r.kids > 0), ids.length);
 check('every kid starts inside the field in every one', bad.length === 0, bad);
 check('no two kids start under 1.4 m apart (all five, and the first-time crew; 1.0 m beside the huddle, 0.75 m inside it), nor two of one side hold one post', near.length === 0, near);
 
+if (POSTS) { check('no page errors', g.errs.length === 0, g.errs); await g.close(); process.exit(); }
 // the club's 3v3 with all five: every kid on our side moves or fires in 40 s (Devon walked 0 m on CI, e6f626b)
 await page.evaluate(all => { Game.persist.crew = all.slice(); Game.persist.completed = {}; crewBench.clear(); }, ALL);
 await g.scenario('club_eighteenth_3v3');

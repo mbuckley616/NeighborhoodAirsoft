@@ -5,6 +5,34 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Who is in Marcus's crew, where the plan's crews overlap? (Fable, card fable/d57-crew-ladder, 2026-10-31)**
+  The crew-first ladder (`docs/crew_ladder.md`, your "All of it", 22 Oct) gives each captain a crew. That crew wears
+  its own colour, its whole crew plus one plays its finale, and "a captain and his crew never play for another captain".
+  The plan's table gives Owen to two captains: Mitchell's crew is Ryan, Owen, Joe and Chris, and Marcus's is "Jamie,
+  Owen and the lot's kids".
+
+  The lot has no kids of its own besides Marcus and Jamie. Its matches use:
+  - Marcus and Jamie;
+  - Tyler and Brooke (Seth's crew);
+  - Owen and Chris (Bunratty).
+
+  Marcus and Jamie also play on Seth's side:
+  - at the club, in all four of its fights;
+  - in the store, in all its matches but Tyler's callout.
+
+  The rule as written would take them out of those. The plan itself has Seth backing his cousin at the lot (Night
+  Shift, After Close).
+  - A) **Owen is Marcus's.** Marcus's crew is Marcus, Jamie and Owen. Mitchell's is Ryan, Joe and Chris, and a street
+    kid takes Owen's place in Bunratty's matches. The cousins' crews may stand together, so Marcus and Jamie keep their
+    places at the club and in the store.
+  - B) **Owen stays Mitchell's; Devon joins Marcus.** Marcus's crew is Marcus, Jamie and Devon. Devon is in no crew
+    today and plays the lot's and the store's night matches. The cousins' crews may stand together, as in A, so the
+    club, the store and Devon's matches with Seth stay as they are. *(recommended: Owen is a Bunratty kid, nothing at
+    the club or the store changes, and Marcus's finale has a crew of three behind him)*
+  - C) **Strict.** As B, but nobody plays for another captain: at the club and in the store, Marcus, Jamie and Devon
+    are replaced by Seth's own crew (Trey, Brooke, Evan, Andrew, Garrett, Colin). The Hollow would also lose Devon.
+  - D) **Something else:** name the lot's crew.
+
 ## Answered
 
 - **D.82: a Roblox version of the game (local session, 2026-10-29)**
