@@ -24,7 +24,7 @@ function scenarioMatchup(sc) {
   if (sc.tutorial) return 'TUTORIAL';                                  // v1.57: not a real matchup
   if (sc.ffa && sc.enemySetup) return (sc.enemySetup.length + 1) + '-WAY FFA';   // +1 for the player
   if (sc.enemySetup) {
-    const allies = sc.enemySetup.filter(es => es.team === 'player').length;
+    const allies = sc.enemySetup.filter(es => es.team === 'player' && !es.clutchOut).length;   // v1.393: a CLUTCH crew is out
     const foes   = sc.enemySetup.filter(es => (es.team || 'enemy') !== 'player').length;
     return (allies + 1) + 'V' + foes;                                  // +1 for the player
   }
@@ -58,6 +58,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
       <div class="sc-card-top">
         <span class="sc-card-num">${num}</span>
         <span class="sc-card-match">${scenarioMatchup(crewScenario(scenarioId))}</span>
+        ${brief && brief.matchType ? `<span class="sc-card-type sc-type-${brief.matchType}">${MATCH_TYPE_CHIPS[brief.matchType]}</span>` : ''}
         ${badges.map(t => `<span class="sc-card-badge">${t}</span>`).join('')}
         ${stamp}
       </div>
