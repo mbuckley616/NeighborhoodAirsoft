@@ -452,7 +452,9 @@ function updateHeldMesh(dt) {
     // For sniper: also add a slight vertical bob to suggest bolt rotation+pull.
     const cockingParts = fpGun.userData.cockingParts || [];
     const maxOffset = fpGun.userData.cockingOffset || 0.06;
-    const offset = cockAmt * maxOffset;
+    // v1.399 (D.63): a blowback gun's slide snaps back with each shot's kick and is home again in about 0.12 s
+    const blow = fpGun.userData.blowback ? Math.max(0, Math.min(1, ((fpGun.userData.kick || 0) - 0.35) / 0.45)) : 0;
+    const offset = Math.max(cockAmt, blow) * maxOffset;
     for (const part of cockingParts) {
       if (part.userData && typeof part.userData.baseZ === 'number') {
         part.position.z = part.userData.baseZ + offset;
@@ -877,6 +879,7 @@ const RETICLE_SPECS = {
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
   famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's
   epistol: { style: 'ring_ticks', baseGap: 9,  ringR: 9,  centerDot: 1.4 },   // v1.326: the pistol's
+  gaspistol: { style: 'ring_ticks', baseGap: 8,  ringR: 8,  centerDot: 1.4 },   // v1.399: the pistol's, a little tighter
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's

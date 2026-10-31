@@ -626,6 +626,36 @@ function buildFPElectricPistol() {
   group.userData.gunType = 'epistol';
   return group;
 }
+// v1.399 (backlog D.63, Michael: A, batch 5): the Gas Pistol, a green-gas blowback pistol on the spring pistol's
+// frame, slide, sights and grip: a bare steel slide on a black frame, wooden panels either side of the grip, a hammer
+// behind the slide, and the gas mag's brass fill valve under the grip. Every shot the gas throws the slide back
+// (`blowback`: updateHeldMesh moves the cocking parts with the shot's kick).
+function buildFPGasPistol() {
+  const group = buildFPGun();
+  const steel = new THREE.MeshStandardMaterial({ color: 0x9a9da3, roughness: 0.3, metalness: 0.8 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x0f0f11, roughness: 0.55, metalness: 0.2 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x6b3f22, roughness: 0.7, metalness: 0.0 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 });
+  _recolor(group, 0x252528, steel);   // the slide and the barrel
+  _recolor(group, 0x1a1a1c, black);   // the frame, the grip and the guard
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  const grip = group.getObjectByName('grip');
+  // wooden grip panels on both sides, each with two screws
+  for (const x of [-0.0205, 0.0205]) {
+    add(new THREE.BoxGeometry(0.003, 0.070, 0.044), wood, x, 0.002, 0, grip).name = 'gripPanel';
+    for (const y of [0.025, -0.022]) add(new THREE.BoxGeometry(0.002, 0.005, 0.005), steel, x + Math.sign(x) * 0.002, y, 0, grip);
+  }
+  // the hammer behind the slide, on the frame
+  add(new THREE.BoxGeometry(0.010, 0.016, 0.008), black, 0, 0.040, 0.031).name = 'hammer';
+  // the gas mag's baseplate with its brass fill valve
+  add(new THREE.BoxGeometry(0.042, 0.012, 0.056), black, 0, -0.050, 0, grip).name = 'gasMag';
+  add(new THREE.CylinderGeometry(0.004, 0.004, 0.004, 8), brass, 0, -0.0575, 0.008, grip).name = 'gasValve';
+  // the front sight is the post at the slide's end
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.17) < 1e-6 && Math.abs(o.position.y - 0.067) < 1e-6) o.userData.frontSight = true; });
+  group.userData.blowback = true;
+  group.userData.gunType = 'gaspistol';
+  return group;
+}
 function buildFPElectricRifle() {
   const group = buildFPAR();
   const tan = new THREE.MeshStandardMaterial({ color: 0xb59a6e, roughness: 0.65, metalness: 0.05 });
@@ -2008,6 +2038,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'svd')     mesh = buildFPSVD();           // v1.395
   else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
+  else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -2062,6 +2093,7 @@ const FP_HANDS = {
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
   famas:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.004, -0.150], hw: 0.022, hh: 0.024 }, underHand: true },   // v1.325: the AR's grip, the handguard
   epistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.326: the pistol's
+  gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
