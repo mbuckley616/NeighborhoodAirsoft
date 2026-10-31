@@ -39,8 +39,10 @@ const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
 }, [id, crew, bench]);
 
 // Two Against the World with Eric: you and Eric v 4 (Sean was its one friend); with all five, 6 v 4
-let s = await sides('bunratty_team_2v4', ['eric']);
-check('Down Two (v1.403, was Two Against the World), Eric in: you and Eric v Ryan, Mitchell, Nick, Joe', s.ours.join() === 'eric' && s.theirs.join() === 'ryan,mitchell,nick,joe' && s.match === '2V4', s);
+// v1.405 (D.57 step 4): Sean and Nick ask after You and Nick, so Down Two is tuned for Eric, Sean and Nick
+let s = await sides('bunratty_team_2v4', ['eric', 'sean', 'nick']);
+check('Down Two (v1.403, was Two Against the World), Eric, Sean and Nick in: your four v six of Mitchell\'s side, none of yours there', s.ours.join() === 'eric,sean,nick' &&
+  s.theirs.length === 6 && !s.theirs.some(k => ['eric', 'sean', 'nick'].includes(k)) && s.match === '4V6', s);
 s = await sides('bunratty_team_2v4', ['eric', 'sean', 'nick', 'alex', 'diego']);
 // v1.403 (D.57 step 4): Down Two is always two short, so all five play 6 v 8 (was 6 v 4)
 check('Down Two, all five: 6 v 8, Nick swapped out of their side for a street kid',
