@@ -85,7 +85,8 @@ const allies = k1.filter(k => k.team === 'player'), foes = k1.filter(k => k.team
 // v1.275 (D.28 step 3): the match is tuned for Eric, Sean and Nick in your crew, so with nobody in it the street fills
 // your side to their count: three allies, every one in the bandana
 check('Hollow 3v3: all three allies wear the orange crew bandana', allies.length === 3 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
-check('…and none of the other side does', foes.length >= 3 && foes.every(k => !k.crew), foes);
+// (v1.398, D.57 step 3: theirs wear their own crews' colours, never yours)
+check('…and none of the other side wears yours', foes.length >= 3 && foes.every(k => k.col !== 0xe07a1e), foes);
 const crouch = await page.evaluate(() => {
   const e = Game.scenario.enemies.find(k => k.team === 'player'); const h = e.mesh.hat;
   // v1.204 fix-up: stand him up first. Read from his pose mid-round (part crouched or leaning), the drop was 0.145-0.158
@@ -116,7 +117,7 @@ await page.evaluate(() => { Game.persist.look.crewName = '  '; Game.persist.look
 const h4 = await briefHead('hollow_skirmish_3v3');
 await g.scenario('hollow_skirmish_3v3');
 const k4 = await readKids();
-check('no name: YOUR SIDE; no colour: no bandanas', h4 === 'YOUR SIDE' && k4.every(k => !k.crew), { h4, k4 });
+check('no name: YOUR SIDE; no colour: no bandanas on your side', h4 === 'YOUR SIDE' && k4.filter(k => k.team === 'player').every(k => !k.crew), { h4, k4 });   // (v1.398: theirs wear their crews')
 
 // Saved, and an old save has no crew
 const save = await page.evaluate(() => {

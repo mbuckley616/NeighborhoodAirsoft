@@ -269,7 +269,9 @@ function crewColor() {
   return CREW_COLORS.some(k => k.hex === c) ? c : null;
 }
 function crewWornBy(sc, es, team) {
-  if (team !== 'player' || es.vip || sc.tutorial || es.charId === 'seth') return null;
+  // v1.398 (D.57 step 3): a kid on the other side wears his captain's crew's colour (none in the Pickup Game or online)
+  if (team !== 'player') return sc.tutorial || sc.pickup || sc.net || es.vip ? null : captainColorOf(es.charId);
+  if (es.vip || sc.tutorial || es.charId === 'seth') return null;
   return crewColor();
 }
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
