@@ -680,10 +680,17 @@ function crewSetupSides(id) {
   const ours1 = base.filter(es => es.team === 'player').length + 1;
   // v1.393: a solo match your crew now plays keeps its own kids, and the street makes them at least as many as you
   // (their side growing by your whole first-time crew would put eight kids in the Hollow's forts)
-  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1
+  // v1.403 (D.57 step 4): a captain's finale that is not his zone's last (the store's Graveyard Shift) is at plus one too
+  const theirs = id === SUMMER_FINALE ? ours1 + 2 : (crewFinale(id) || captainFinaleOf(id)) && id !== WINNMARK_FINALE ? ours1 + 1
     : sc.crewPosts && !allies.length ? Math.max(foes, ours1) : foes + ours1 - (allies.length + 1);
-  return crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+  const out = crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+  if (!DOWN_TWO.has(id)) return out;
+  // v1.403: Down Two is always two short, at any crew size: their side is fitted to yours as it takes the field
+  const oursNow = out.filter(es => es.team === 'player').length + 1;
+  return oursNow + 2 === out.length - oursNow + 1 ? out : crewSides(id, crew, crewFielded(), ours1 - 1, oursNow + 2, turned);
 }
+// v1.403 (D.57 step 4, the plan's "Down Two" and "Down Two in the Dark"): their side is always two more than yours
+const DOWN_TWO = new Set(['bunratty_team_2v4', 'hollow_2v4_night']);
 // v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
 function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const sc = Object.assign({}, SCENARIOS[id], { enemySetup: sethSetup(id) });   // v1.362: Seth's zone match
@@ -694,6 +701,9 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
   const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
   const kept = allies.filter(keep), slots = allies.filter(es => !keep(es));
+  // v1.403 (D.57 step 4): a crew kid who is your VIP (Cover Nick, the lot's Night Shift) plays in his cap, not twice
+  const keptCrew = kept.filter(es => crew.includes(es.charId)).map(es => es.charId);
+  if (keptCrew.length) fielded = fielded.filter(k => !keptCrew.includes(k));
   // Seth's crew on your side crosses over to him; the rest of the match's own allies wait to fill places
   const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
   const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
@@ -734,7 +744,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
     const gs = crewGearStats(kid); if (gs) es.statsOverride = Object.assign({}, es.statsOverride || {}, gs);   // v1.337: his eyes and feet
     out.push(es);
   }
-  let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
+  let left = alliesN - kept.length - crew.filter(k => !keptCrew.includes(k)).length;   // a benched kid's place stays empty (v1.403: a VIP of your crew counted once)
   for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }
   // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
   const them = [];

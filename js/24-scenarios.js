@@ -450,8 +450,8 @@ const SCENARIOS = {
   // === TEAM — 2v2 (You + Seth vs Trey + Brooke) ===
   winnmark_team_2v2: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
-    name: 'Winnmark Court', scenarioName: 'Two on Two',
-    desc: "You and Seth team up against Trey and Brooke. Seth'll push with you — call your shots, focus one of them down, and don't let them split you up. Trey and Brooke fight as a pair too, so expect them to gang up.",
+    name: 'Winnmark Court', scenarioName: "Seth's Wingman",   // v1.403 (D.57 step 4): was Two on Two
+    desc: "Seth needs a second for a two-on-two against Trey and Brooke, and he picked you. Push with him, call your shots, focus one of them down, and don't let them split you up. They fight as a pair too, so expect them to gang up.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     scenarioType: 'skirmish',
@@ -490,7 +490,7 @@ const SCENARIOS = {
   // === DEFEND (kill all) — Cul-de-sac fort defense ===
   winnmark_defend_culdesac: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
-    name: 'Winnmark Court', scenarioName: 'Hold the Fort',
+    name: 'Winnmark Court', scenarioName: 'Keep the Plank Fort',   // v1.403 (D.57 step 4): was Hold the Fort
     desc: "You got to the plank fort first. Seth, Trey, and Devon are coming up the road to push you out — and they don't quit. Tag one and he just runs back and comes again. Hold the bulb for 90 seconds. Use the cars and the fort.",
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'cul_de_sac',
@@ -533,8 +533,8 @@ const SCENARIOS = {
   // === TEAM — 2v3 (You + Seth vs Trey, Brooke, Jamie) ===
   winnmark_team_2v3: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
-    name: 'Winnmark Court', scenarioName: 'Outnumbered',
-    desc: "You and Seth against three of them — Trey, Brooke, and Jamie. They've got the numbers, so they'll try to corner you one at a time. Stick close to Seth, focus-fire whoever's exposed, and even the odds before they collapse on you.",
+    name: 'Winnmark Court', scenarioName: 'Short a Player',   // v1.403 (D.57 step 4): was Outnumbered
+    desc: "Seth's side is a player short today: you and Seth against Trey, Brooke and Jamie. They've got the numbers, so they'll try to corner you one at a time. Stick close to Seth, focus-fire whoever's exposed, and even the odds before they collapse on you.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'cul_de_sac',
     scenarioType: 'skirmish',
@@ -685,8 +685,8 @@ const SCENARIOS = {
   // holds deeper cover and takes the shot once Ryan moves you. The mid step.
   bunratty_brothers: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'The Brothers',
-    desc: "Ryan and Mitchell run this street as a team. Ryan's the one who'll come at you — fast, loud, right up in the yards. Mitchell sits back and waits for his brother to push you into the open. Break them up; don't let Ryan herd you onto Mitchell's line.",
+    name: 'Bunratty Court', scenarioName: 'The Brothers Call You Out',   // v1.403 (D.57 step 4): was The Brothers
+    desc: "Mitchell's heard about you. He and his brother Ryan run this street as a team, and they want you on your own, the two of them against you, while your crew watches from the curb. Ryan's the one who'll come at you, fast and loud, right up in the yards. Mitchell sits back and waits for his brother to push you into the open. Break them up; don't let Ryan herd you onto Mitchell's line.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -727,8 +727,8 @@ const SCENARIOS = {
   // === TEAM — 2v2 (You + Sean vs Ryan + Mitchell) ===
   bunratty_team_2v2: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Sean Has Your Back',
-    desc: "You and Sean against the brothers, Ryan and Mitchell. They fight as a pair — Ryan rushes, Mitchell covers — so you and Sean need to do the same. Focus one brother down fast before the other can set up, or they'll trade you out of the fight.",
+    name: 'Bunratty Court', scenarioName: 'The Rematch',   // v1.403 (D.57 step 4): was Sean Has Your Back
+    desc: "Mitchell wanted a rematch, and he brought Joe. The brothers fight as a pair, Ryan rushes and Mitchell covers, so your crew needs to do the same. Focus one of them down fast before the others can set up, or they'll trade you out of the fight.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -853,8 +853,8 @@ const SCENARIOS = {
   // === TEAM — 2v4 (You + Sean vs Ryan, Mitchell, Nick, Joe) ===
   bunratty_team_2v4: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Two Against the World',
-    desc: "Just you and Sean against four of them — Ryan, Mitchell, Nick, and Joe. This is a real underdog fight. They'll try to swarm you, so stay glued to Sean, never get caught alone, and whittle them down one at a time from cover. Winning this one means something.",
+    name: 'Bunratty Court', scenarioName: 'Down Two',   // v1.403 (D.57 step 4): was Two Against the World
+    desc: "Mitchell's crew plays you two up today, on purpose: however many you bring, they bring two more. They'll try to swarm you, so stay together, never get caught alone, and whittle them down one at a time from cover. Winning this one means something.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -876,8 +876,8 @@ const SCENARIOS = {
   // games. He's the 7th NPC that makes a full 4v4 possible on this six-kid block.
   bunratty_team_4v4: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Four on Four',
-    desc: "The biggest game on the street: full four-on-four. You, Sean, Nick, and Ryan against Mitchell, Chris, Owen, and Tyler (he came over from Winnmark for this one). Both squads will focus-fire and cover lanes, so this is won by coordination — push together, finish targets together, and don't let your team get picked apart.",
+    name: 'Bunratty Court', scenarioName: "Mitchell's Whole Crew",   // v1.403 (D.57 step 4): was Four on Four
+    desc: "The biggest game on the street: Mitchell brought his whole crew, Ryan, Owen, Joe and Chris. They focus-fire and cover lanes, so this is won by coordination: push together, finish targets together, and don't let your crew get picked apart.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -885,11 +885,12 @@ const SCENARIOS = {
     enemySetup: [
       { charId: 'sean',     weapon: 'ak47',    anchor: 'house0_backyard', team: 'player' },
       { charId: 'nick',     weapon: 'ar',      anchor: 'house1_backyard', team: 'player' },
-      { charId: 'ryan',     weapon: 'shotgun', anchor: 'house2_backyard', team: 'player' },
+      { charId: 'eric',     weapon: 'mp5',     anchor: 'house2_backyard', team: 'player' },   // v1.403: Ryan is Mitchell's crew
       { charId: 'mitchell', weapon: 'ar',      anchor: 'bulb_car1'       },
       { charId: 'chris',    weapon: 'mac10',   anchor: 'bulb_car2'       },   // v1.368: was Priya
       { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard' },
-      { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'hero_backyard'   },   // v1.403: Mitchell's whole crew (was Tyler)
+      { charId: 'joe',      weapon: 'ump',     anchor: 'bulb_plank'      },   // v1.403
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 80, lose: 20 },
@@ -990,8 +991,8 @@ const SCENARIOS = {
   // === Bunratty NIGHT — team battle, You + Sean vs Ryan + Mitchell ===
   bunratty_night_team_2v2: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Night Game: Sean Has Your Back',
-    desc: "You and Sean on the dark lane against Ryan and Seth, who came over from Winnmark with a Spring AR to play for the other side — three lives for every kid but you, respawning at their base until one side's out. They fight as a pair and at least one's got a flashlight; let the beam tell you where they're pushing from. Stick with Sean, use the lamp pools, and finish one before the other can set up.",   // v1.182: promised everyone lives; you have one (playerLives 1). v1.362 (D.28 step 5): Seth in Mitchell's place
+    name: 'Bunratty Court', scenarioName: 'When the Streetlights Come On',   // v1.403 (D.57 step 4): was Night Game: Sean Has Your Back
+    desc: "Mitchell's crew on the dark lane, and Seth came over from Winnmark with a Spring AR to be Mitchell's plus one. Three lives for every kid but you, respawning at their base until one side's out. At least one of them has a flashlight; let the beam tell you where they're pushing from. Stick together, use the lamp pools, and finish one before the next can set up.",   // v1.403 (D.57 step 4): for its new sides   // v1.182: promised everyone lives; you have one (playerLives 1). v1.362 (D.28 step 5): Seth in Mitchell's place
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1043,7 +1044,7 @@ const SCENARIOS = {
   hollow_big_battle: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'The Big Game',
-    desc: "The whole neighborhood showed up. Five on five in the woods, five lives for every kid but you, last team standing wins — this is the one everybody talks about. You're on blue with Eric, Rebecca, Sean, and Brooke; red's got Seth, Ryan, Mitchell, Mason, and Devon dug in at the north fort. Three guns on each side are full-auto, so the lanes get hot fast — use the creek and the pallet clusters, push as a team, and don't try to trade in the open. First fort to run out of lives loses.",
+    desc: "The whole neighborhood showed up for the one everybody talks about. Your crew's on blue; Seth's whole crew is on red, one more than you, dug in at the north fort, and Seth's got a UMP. Five lives for every kid but you, last team standing. The lanes get hot fast, so use the creek and the pallet clusters, push as a team, and don't try to trade in the open.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1099,8 +1100,8 @@ const SCENARIOS = {
   // --- 2v4 Night Team Deathmatch: You + Sean vs 4 ---
   hollow_2v4_night: {
     region: 'east_roswell', street: 'the_hollow',
-    name: 'Chattahoochee River', scenarioName: 'Two of Us, Four of Them (Night)',
-    desc: "Just you and Sean out in the dark woods against four of them — Seth, Devon, Ryan, and Mason are dug into the north fort and you're outnumbered two to one. Five lives for every kid but you, respawning at their fort, so it's a long, ugly grind in the dark — and one hit puts you out. They came loaded for night — flashlight beams and red laser dots sweeping the trees; let the lights tell you where they're pushing. Stick tight with Sean, trade smart, and don't get caught in the open.",   // v1.182: promised everyone lives; you have one (playerLives 1)
+    name: 'Chattahoochee River', scenarioName: 'Down Two in the Dark',   // v1.403 (D.57 step 4): was Two of Us, Four of Them (Night)
+    desc: "Seth's crew is dug into the north fort with two more than you, however many you bring. Five lives for every kid but you, respawning at their fort, so it's a long, ugly grind in the dark, and one hit puts you out. They came loaded for night: flashlight beams and red laser dots sweeping the trees; let the lights tell you where they're pushing. Stick together, trade smart, and don't get caught in the open.",   // v1.403 (D.57 step 4): for its new sides   // v1.182: promised everyone lives; you have one (playerLives 1)
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1239,8 +1240,8 @@ const SCENARIOS = {
   // --- ATTACK (day) — Storm the north fort, 5 dug-in defenders ---
   hollow_attack_north_fort: {
     region: 'east_roswell', street: 'the_hollow',
-    name: 'Chattahoochee River', scenarioName: 'Storm the North Fort',
-    desc: "Seth's whole crew got to the north fort first and dug in — five of them. Mitchell's up on the lookout with the sniper covering the whole approach, and the rest are spread across the front and side windows. You're coming up from the south end, so you can't trade in the open — use the pallet clusters and the creek line, peel them off one angle at a time, and clear the fort.",
+    name: 'Chattahoochee River', scenarioName: 'Take the North Fort',   // v1.403 (D.57 step 4): was Storm the North Fort
+    desc: "Seth's crew got to the north fort first and dug in, with a sniper up on the lookout covering the whole approach and the rest spread across the front and side windows. You're coming up from the south end with your crew, so you can't trade in the open: use the pallet clusters and the creek line, peel them off one angle at a time, and clear the fort.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'attack',
@@ -1311,8 +1312,8 @@ const SCENARIOS = {
   // --- DEFEND (night) — Hold the south fort against a 6-kid night push ---
   hollow_defend_south_fort_night: {
     region: 'east_roswell', street: 'the_hollow',
-    name: 'Chattahoochee River', scenarioName: 'Hold the Fort (Night)',
-    desc: "Same fort, pitch dark, and now six of them are coming — most running full-auto with lights and lasers, and they stage close so a tagged kid is back in seconds. They'll rush the front port and flank through the creek at the same time. Pick a wall, use the windows, swing to whichever side lights up, and survive 90 seconds in the dark.",
+    name: 'Chattahoochee River', scenarioName: 'Last One in the Fort',   // v1.403 (D.57 step 4): was Hold the Fort (Night)
+    desc: "Your crew's already tagged out on the sideline. It's you alone in the south fort, pitch dark, and six of Seth's crew are coming, most running full-auto with lights and lasers; they stage close, so a tagged kid is back in seconds. They'll rush the front port and flank through the creek at the same time. Pick a wall, use the windows, swing to whichever side lights up, and survive 90 seconds in the dark.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1361,8 +1362,8 @@ const SCENARIOS = {
   // --- On-ramp: 3v3 across the rows ---
   lot_team_3v3: {
     region: 'east_roswell', street: 'riverside_market',
-    name: 'Riverside Market', scenarioName: 'Aisle Wars',
-    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus, Jamie and Tyler set up by the box truck at the store end; you've got Eric and Brooke at the road end. The rows of parked cars run straight up at the doors between you — every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work up a row behind the bumpers, and let Brooke's rifle cover the crossings. Three lives for every kid but you, last team standing.",
+    name: 'Riverside Market', scenarioName: 'Cart Corral',   // v1.403 (D.57 step 4): was Aisle Wars
+    desc: "Saturday morning, and the lot behind Riverside Market is half full. Marcus's crew sets up by the box truck at the store end; your crew's at the road end. The rows of parked cars run straight up at the doors between you: every car is cover, every aisle is a long open lane. Don't stand in an aisle. Work up a row behind the bumpers, and keep a rifle on the crossings. Three lives for every kid but you, last team standing.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1407,7 +1408,7 @@ const SCENARIOS = {
   // --- v1.103: free-for-all across the whole lot ---
   lot_ffa: {
     region: 'east_roswell', street: 'riverside_market',
-    name: 'Riverside Market', scenarioName: 'Everybody for Themselves',
+    name: 'Riverside Market', scenarioName: 'Lot Free-for-All',   // v1.403 (D.57 step 4): was Everybody for Themselves
     desc: "No teams. Seven kids start hidden over the whole lot, behind a car, on the walk or under Guadalajara's arches, and anyone you see is a target. The aisles are long and open, so whoever crosses one first usually gets tagged. Stay in the rows, let the others find each other, and be the last one standing.",
     builderFn: 'buildMarketLotScene',
     builderArg: 'default',
@@ -1526,9 +1527,9 @@ const SCENARIOS = {
   // --- v1.131: the zone capstone, 4v4 at night against Bellfield Court ---
   northcliff_night_4v4: {
     region: 'northcliff', street: 'northcliff_trace',
-    name: 'Northcliff Trace', scenarioName: 'Bellfield After Dark',
+    name: 'Northcliff Trace', scenarioName: "Mason's Last Stand",   // v1.403 (D.57 step 4): was Bellfield After Dark
     // v1.362 (D.28 step 5): Seth in Fernando's place (SETH_ZONE_MATCHES)
-    desc: "The Bellfield Court kids walked over after dinner, Mason, Christian and Diego, and Seth came up with them with a burst rifle. They've taken the bulb and the high yard above it. You've got Andrew, Alex and Evan at the top of the street. Four streetlamps, and everything between them is dark. Four a side, four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",
+    desc: "Mason brought his whole crew over from Bellfield after dinner, Christian, Fernando, Haden and Connor, and Seth came up with them with a burst rifle. They've taken the bulb and the high yard above it, one more than you; your crew's at the top of the street. Four streetlamps, and everything between them is dark. Four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -2056,8 +2057,8 @@ const SCENARIOS = {
   // --- v1.160: the zone capstone, 4v4 with the lights off ---
   store_night_4v4: {
     region: 'east_roswell', street: 'riverside_market_inside',
-    name: 'Inside Riverside Market', scenarioName: 'Lights Out',
-    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Marcus, Jamie and Tyler are back, and they've brought Devon, who's set up with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. You've got Eric, Brooke and Rebecca at the checkouts. Four a side, four lives for every kid but you.",
+    name: 'Inside Riverside Market', scenarioName: 'Graveyard Shift',   // v1.403 (D.57 step 4): was Lights Out
+    desc: "The store's shut and the ceiling's dark. The coolers glow down the back aisle, the exit signs are red, and a few night lights hang over the floor; the aisles between them are black. Tyler's dad is on the night shift, and Tyler's brought everybody, one more than you: Marcus and Jamie, and Devon with the rifle in the stockroom's middle doorway, where he can see straight down aisle 3. Your crew's at the checkouts. Four lives for every kid but you.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildGroceryStoreScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -2120,8 +2121,8 @@ const SCENARIOS = {
   // VIP and you win; lose yours and you lose.
   bunratty_vip: {
     region: 'sentinel', street: 'bunratty_ct',
-    name: 'Bunratty Court', scenarioName: 'Protect Ryan',
-    desc: "Ryan's wearing the blue cap, so Ryan's the VIP: one tag on him and your side loses. Mitchell's in the red cap down in the bulb, behind the plank. Everyone else — you, Sean and Nick, Joe, Owen and Tyler — runs back and comes again when tagged, as often as it takes. Keep Ryan out of the open and go get Mitchell.",
+    name: 'Bunratty Court', scenarioName: 'Cover Nick',   // v1.403 (D.57 step 4): was Protect Ryan
+    desc: "Nick's wearing the blue cap, so Nick's the VIP: one tag on him and your side loses. Mitchell's in the red cap down in the bulb, behind the plank. Everyone else, you, your crew and Mitchell's, runs back and comes again when tagged, as often as it takes. Keep Nick out of the open and go get Mitchell.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildBunrattyCourtScene',
     builderArg: 'vip',   // v1.272: the default court plus a 1.5 m plank barricade at their VIP's spot
     seedArg: 'default',  // v1.272: laid out under the default seed, so every prop and tree stays where it was
@@ -2129,13 +2130,13 @@ const SCENARIOS = {
     playerSpawn: 'lane_west',
     vip: true,
     enemySetup: [
-      { charId: 'ryan',     weapon: 'pistol',  anchor: 'house0_backyard', team: 'player', vip: true, role: 'defender', lives: 1 },
+      { charId: 'nick',     weapon: 'pistol',  anchor: 'house0_backyard', team: 'player', vip: true, role: 'defender', lives: 1 },   // v1.403: your VIP is Nick (was Ryan, Mitchell's brother)
       { charId: 'sean',     weapon: 'ak47',    anchor: 'house1_backyard', team: 'player' },
-      { charId: 'nick',     weapon: 'ar',      anchor: 'house2_backyard', team: 'player' },
+      { charId: 'eric',     weapon: 'mp5',     anchor: 'house2_backyard', team: 'player' },
       { charId: 'mitchell', weapon: 'pistol',  anchor: 'bulb_plank', vip: true, role: 'defender', lives: 1 },   // v1.368 (D.58): their VIP, was Priya
       { charId: 'joe',      weapon: 'ar',      anchor: 'house4_backyard' },   // v1.368: not Mitchell's old bulb_car1 (or bulb_car2): from the bulb Joe walked his advance through the fort and through Mitchell
       { charId: 'owen',     weapon: 'ar',      anchor: 'house5_backyard', spawnAt: [37.5, -1.9] },   // v1.178 (D.18, Michael: C): starts and comes back behind the east car, out of Sean's line (the fort's walls are too low to stop it)
-      { charId: 'tyler',    weapon: 'shotgun', anchor: 'hero_backyard'   },
+      { charId: 'ryan',     weapon: 'shotgun', anchor: 'hero_backyard'   },   // v1.403: Ryan with his brother (was Tyler)
     ],
     winCondition: 'last_team_standing',
     npcLives: 99,
@@ -2147,7 +2148,7 @@ const SCENARIOS = {
   lot_vip_night: {
     region: 'east_roswell', street: 'riverside_market',
     name: 'Riverside Market', scenarioName: 'Night Shift',
-    desc: "Same dark lot, new rules. Rebecca's in the blue cap — she's your VIP, one tag and it's over. Seth's in the red cap, back by the dumpsters at the store's west corner. Everybody else comes back as many times as it takes, so trading tags gets you nowhere: get a line on Seth, and keep one on whoever's hunting Rebecca.",
+    desc: "Same dark lot, new rules. Eric's in the blue cap: he's your VIP, one tag and it's over. Marcus is in the red cap, back by the dumpsters at the store's west corner, and his cousin Seth came to back him up. Everybody else comes back as many times as it takes, so trading tags gets you nowhere: get a line on Marcus, and keep one on whoever's hunting Eric.",   // v1.403 (D.57 step 4): for its new sides
     builderFn: 'buildMarketLotScene',
     builderArg: 'vip_night',   // v1.175 (D.17): the default lot plus a dumpster at Rebecca's spot
     timeOfDay: 'night',
@@ -2155,13 +2156,13 @@ const SCENARIOS = {
     playerSpawn: 'team_b',
     vip: true,
     enemySetup: [
-      { charId: 'rebecca',  weapon: 'pistol', anchor: 'b_road_w',  team: 'player', vip: true, role: 'defender', lives: 1 },
-      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_road_e',  team: 'player' },
+      { charId: 'eric',     weapon: 'pistol', anchor: 'b_road_w',  team: 'player', vip: true, role: 'defender', lives: 1 },   // v1.403 (D.57 step 4): yours a crew kid (was Rebecca)
+      { charId: 'nick',     weapon: 'ar',     anchor: 'b_road_e',  team: 'player' },
       { charId: 'sean',     weapon: 'ak47',   anchor: 'b_aisle_w', team: 'player' },
-      { charId: 'seth',     weapon: 'pistol', anchor: 'a_dumpster', vip: true, role: 'defender', lives: 1 },
-      { charId: 'mitchell', weapon: 'ak47',   anchor: 'a_store'   },
-      { charId: 'mason',    weapon: 'mp5',    anchor: 'a_store_w' },
-      { charId: 'marcus',   weapon: 'ump',    anchor: 'a_store_e' },
+      { charId: 'marcus',   weapon: 'pistol', anchor: 'a_dumpster', vip: true, role: 'defender', lives: 1 },   // v1.403: theirs Marcus (was Seth)
+      { charId: 'jamie',    weapon: 'ak47',   anchor: 'a_store'   },
+      { charId: 'devon',    weapon: 'mp5',    anchor: 'a_store_w' },
+      { charId: 'seth',     weapon: 'ump',    anchor: 'a_store_e' },   // v1.403: Seth backs his cousin
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',

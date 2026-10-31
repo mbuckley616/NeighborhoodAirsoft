@@ -60,7 +60,8 @@ check('their side is fixed in every team match: the same with nobody, the first-
 
 // A replay with all five is easy, as the spec says; your side is never smaller than the first time
 let s = await count('bunratty_team_2v4', ALL, []);
-check('Two Against the World with all five: 6 v 4', s.match === '6V4', s);
+// v1.403 (D.57 step 4): Two Against the World is Down Two, always two short (was 6 v 4 with all five)
+check('Down Two with all five: 6 v 8', s.match === '6V8', s);
 s = await count('northcliff_night_4v4', [], []);
 check('Northcliff\'s finale with nobody in your crew: the street fills your side to six, v seven', s.ours === 6 && s.theirs === 7, s);
 s = await count('northcliff_night_4v4', ALL, [], ['nick', 'alex']);
