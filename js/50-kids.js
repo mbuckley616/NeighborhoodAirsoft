@@ -100,7 +100,8 @@ function isSmallGun(weapon) {
 function gunForegripZ(weapon) {
   switch (weapon) {
     case 'sniper':
-    case 'l96':     return 0.26;   // long barrel — hand well forward (v1.336: and the L96's)
+    case 'l96':     // long barrel — hand well forward (v1.336: and the L96's)
+    case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
@@ -175,7 +176,8 @@ function buildEnemyGunMesh(weapon) {
       break;
     }
     case 'sniper':
-    case 'l96': {   // v1.336: the L96 in the kids' blocky style is the sniper
+    case 'l96':     // v1.336: the L96 in the kids' blocky style is the sniper
+    case 'svd': {   // v1.395: and the SVD
       box(0.04, 0.05, 0.56, black, 0, 0, 0.26);          // very long thin barrel
       box(0.045, 0.045, 0.14, dark, 0, 0.07, 0.10);      // scope tube up top
       box(0.05, 0.10, 0.14, wood, 0, -0.02, -0.06);      // bolt-gun wood stock

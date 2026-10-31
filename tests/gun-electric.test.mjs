@@ -120,8 +120,8 @@ const burstShop = await page.evaluate(() => {
   return out;
 });
 console.log('   RIFLES: ' + burstShop.names.join(' · '));
-check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst',
-  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Electric Rifle","Burst Rifle","Spring Sniper Rifle","L96"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
+check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst (v1.395: the SVD last)',
+  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Electric Rifle","Burst Rifle","Spring Sniper Rifle","L96","SVD"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
 await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'burst' }; });
 await g.scenario('bunratty_sean');
 const B = await page.evaluate(() => {
@@ -314,8 +314,8 @@ const l96Shop = await page.evaluate(() => {
   return out;
 });
 console.log('   RIFLES: ' + l96Shop.names.join(' · '));
-check('L96: last under RIFLES, after the Spring Sniper Rifle, with its picture, $190 from its page, in your hands',
-  l96Shop.names[l96Shop.names.length - 1] === 'L96' && l96Shop.names[l96Shop.names.length - 2] === 'Spring Sniper Rifle' && l96Shop.pic && l96Shop.paid === 190 && l96Shop.equipped === 'l96', l96Shop);
+check('L96: under RIFLES right after the Spring Sniper Rifle (v1.395: the SVD after it), with its picture, $190 from its page, in your hands',
+  l96Shop.names[l96Shop.names.indexOf('Spring Sniper Rifle') + 1] === 'L96' && l96Shop.pic && l96Shop.paid === 190 && l96Shop.equipped === 'l96', l96Shop);
 check('L96: against the Spring Sniper Rifle a faster BB (85 m/s), tighter, straight further (30 m), a slower bolt (1.3 s); both semi bolt guns',
   l96Shop.l96[0] === 85 && l96Shop.l96[0] > l96Shop.sniper[0] && l96Shop.l96[1] < l96Shop.sniper[1] && l96Shop.l96[2] > l96Shop.sniper[2] && l96Shop.l96[3] > l96Shop.sniper[3] && l96Shop.l96[4] === 'semi' && l96Shop.l96[5] === 'bolt', l96Shop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'l96' }; });
@@ -639,5 +639,65 @@ const SN = await page.evaluate(() => {
 });
 console.log('   sniper ' + JSON.stringify(SN));
 check('Spring Sniper Rifle: aimed, the front post\'s tip is on the reticle (under 0.6°; it was 2.5° low)', SN.mesh === 'sniper' && SN.sightErrDeg < 0.6, SN);
+// v1.395 (D.63, batch 4): the SVD, a battery sniper: no bolt between shots, two pulls a second at most, last under RIFLES
+const svdShop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="RIFLES"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'SVD');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const text = document.querySelector('#shopScreen').textContent;
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun, says: /Electric semi/.test(text), spare: text.includes('Spare SVD Mag (20)') };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  const V = getGunSpec('svd'), S = getGunSpec('sniper');
+  out.svd = [V.muzzleVelocity, V.baseSpread, V.curveOnsetDistance, V.playerSpeedMult, V.fireMode, V.electric, V.semiRPM];
+  out.sniper = [S.muzzleVelocity, S.baseSpread, S.curveOnsetDistance, S.playerSpeedMult];
+  return out;
+});
+console.log('   RIFLES: ' + svdShop.names.join(' · '));
+check('SVD: last under RIFLES, after the L96, with its picture, $230 from its page, in your hands; the page says electric semi and sells its spare',
+  svdShop.names[svdShop.names.length - 1] === 'SVD' && svdShop.names[svdShop.names.length - 2] === 'L96' && svdShop.pic && svdShop.paid === 230 && svdShop.equipped === 'svd' && svdShop.says && svdShop.spare, svdShop);
+check('SVD: against the Spring Sniper Rifle a slower BB (70 m/s), wider, straight for less (22 m), a quicker walk; semi and electric at 120 a minute',
+  svdShop.svd[0] === 70 && svdShop.svd[0] < svdShop.sniper[0] && svdShop.svd[1] > svdShop.sniper[1] && svdShop.svd[2] < svdShop.sniper[2] && svdShop.svd[3] > svdShop.sniper[3] && svdShop.svd[4] === 'semi' && svdShop.svd[5] === true && svdShop.svd[6] === 120, svdShop);
+await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'svd' }; });
+await g.scenario('bunratty_sean');
+const SV = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const up = () => { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); };
+  const pull = () => { Game.mouseLMB = true; onLmbDown(); step(); step(); up(); step(); };
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo };
+  for (let i = 0; i < 30; i++) step();
+  // five pulls a second apart: one BB each, and nothing to work between them
+  const per = [];
+  for (let k = 0; k < 5; k++) { const a = Game.gun.ammo; pull(); per.push(a - Game.gun.ammo); for (let i = 0; i < 57; i++) step(); }
+  out.per = per; out.cockedAfter = Game.gun.cocked;
+  // pulled every 3 frames for 2 s: pulls that fired
+  Game.gun.ammo = Game.gun.maxAmmo;
+  let fired = 0;
+  for (let k = 0; k < 40; k++) { const a = Game.gun.ammo; pull(); if (Game.gun.ammo < a) fired++; }
+  out.pullsPerSec = fired / 2;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  out.noBolt = fpGun.userData.cockingParts.length === 1 && !fpGun.userData.cockingParts[0].userData.baseY && fpGun.userData.cockingParts[0].parent === fpGun;
+  return out;
+});
+await g.shot('gun-svd-aimed');
+console.log('   svd ' + JSON.stringify(SV));
+check('SVD: its own first-person gun, 20 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°), a charging handle and no bolt', SV.mesh === 'svd' && SV.max === 20 && SV.hands && SV.sightErrDeg < 0.6 && SV.noBolt, SV);
+check('SVD: five pulls a second apart fire one BB each and it stays cocked (no bolt)', SV.per.length === 5 && SV.per.every(n => n === 1) && SV.cockedAfter, SV.per);
+check('SVD: pulled as fast as a finger goes, 1.5-2.5 pulls fire a second (its cycle, 2)', SV.pullsPerSec >= 1.5 && SV.pullsPerSec <= 2.5, SV.pullsPerSec);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();

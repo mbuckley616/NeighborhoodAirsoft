@@ -34,6 +34,7 @@ const MAG_GUN_FIT = {
   spare_mag_g36: 'g36',   // v1.371
   spare_mag_aug: 'aug',   // v1.372
   spare_mag_m4: 'm4',   // v1.373
+  spare_mag_svd: 'svd',   // v1.395
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -50,7 +51,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'vector',   // v1.348 (D.63 batch 2): the last SMG of the batch
   'g36',   // v1.371 (D.63 batch 3): the first of the automatic rifles
   'aug',   // v1.372 (D.63 batch 3): the bullpup rifle
-  'm4'];   // v1.373 (D.63 batch 3): the all-round rifle
+  'm4',   // v1.373 (D.63 batch 3): the all-round rifle
+  'svd'];   // v1.395 (D.63 batch 4): the battery sniper
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -82,6 +84,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'g36') return Game.persist.owned.g36_mag_470 ? 470 : 300;   // v1.371: its clear mag
   if (gunType === 'aug') return Game.persist.owned.aug_mag_500 ? 500 : 330;   // v1.372: its clear mag
   if (gunType === 'm4') return Game.persist.owned.m4_mag_450 ? 450 : 300;   // v1.373: its black curved mag
+  if (gunType === 'svd') return Game.persist.owned.svd_mag_30 ? 30 : 20;   // v1.395: its curved mag
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -216,6 +219,7 @@ const GUN_ACCESSORY_CAP = {
   g36:     { sight: 1, rails: 2, under: 1 },   // v1.371
   aug:     { sight: 1, rails: 2 },   // v1.372: no under-barrel slot, its own folding foregrip is there
   m4:      { sight: 1, rails: 2, under: 1 },   // v1.373: a rail on every side of its handguard
+  svd:     { sight: 1, rails: 2, under: 1 },   // v1.395: the sniper's
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -589,8 +593,15 @@ const GUN_MAGS = {
     mags: [ { flag: 'm4_mag_450', cap: 450, price: 40 } ],
     spares: [ { key: 'spare_mag_m4', label: 'Spare M4 Mag (300)', price: 20 } ],
   },
+  // v1.395 (backlog D.63, batch 4): the SVD, a battery sniper: no bolt between shots, for a slower, wider BB than the bolt guns'
+  svd: {
+    displayName: 'SVD', baseCap: 20, price: 230, ownFlag: 'svd',
+    blurb: 'A long battery sniper in wood and black with a curved mag under it. There is no bolt to work: every pull fires, two a second at most. Its BB is a little slower and wider than the Spring Sniper Rifle\'s, and it is lighter to carry than either bolt gun.',
+    mags: [ { flag: 'svd_mag_30', cap: 30, price: 24 } ],
+    spares: [ { key: 'spare_mag_svd', label: 'Spare SVD Mag (20)', price: 10 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m4','aug','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m4','aug','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -787,6 +798,7 @@ function describeSlot(idx) {
       spare_mag_g36: 300,   // v1.371
       spare_mag_aug: 330,   // v1.372
       spare_mag_m4: 300,   // v1.373
+      spare_mag_svd: 20,   // v1.395
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -815,6 +827,7 @@ function describeSlot(idx) {
       spare_mag_g36: 'Spare 300-rd G36 Mag',   // v1.371
       spare_mag_aug: 'Spare 330-rd AUG Mag',   // v1.372
       spare_mag_m4: 'Spare 300-rd M4 Mag',   // v1.373
+      spare_mag_svd: 'Spare 20-rd SVD Mag',   // v1.395
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1009,6 +1022,7 @@ const GUN_WEIGHT = {
   g36: 7,                                                 // v1.371: a short rifle, lighter than the AK
   aug: 7.5,                                               // v1.372: a long barrel in a short body
   m4: 6.5,                                                // v1.373: the lightest of the rifles
+  svd: 9,                                                 // v1.395: lighter than the bolt guns (10, 11)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -1030,6 +1044,7 @@ const MAG_WEIGHT = {
   spare_mag_g36: 1.4,   // v1.371
   spare_mag_aug: 1.5,   // v1.372
   spare_mag_m4: 1.3,   // v1.373
+  spare_mag_svd: 0.9,   // v1.395
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1470,6 +1485,10 @@ GUN_SPECS.aug = Object.assign({}, GUN_SPECS.ak47, { playerSpeedMult: 0.88, cycli
 // v1.373 (D.63, batch 3): the M4, the AK's BB (55 m/s, straight for 20 m) at 12 a second (10) from a 300 mag (350), tighter
 // aimed (0.32, 0.35) but wider than the G36C (0.30) and the AUG (0.28), and the quickest walk of the rifles (0.92)
 GUN_SPECS.m4 = Object.assign({}, GUN_SPECS.ak47, { playerSpeedMult: 0.92, cyclicRPM: 720, adsSpreadMult: 0.32, displayName: 'M4' });
+// v1.395 (D.63, batch 4): the SVD, the sniper on a battery: nothing to cock between shots, at most two pulls a second
+// (120); a new mag is racked with the charging handle (0.7 s). For it, a slower BB (70 m/s, 75), wider (0.15, 0.12;
+// aimed 0.28, 0.25) and straight for 22 m (25); lighter, so a quicker walk (0.8, 0.75)
+GUN_SPECS.svd = Object.assign({}, GUN_SPECS.sniper, { electric: true, semiRPM: 120, cockType: 'charge', cockTime: 0.7, muzzleVelocity: 70, baseSpread: 0.15, adsSpreadMult: 0.28, curveOnsetDistance: 22, playerSpeedMult: 0.8, displayName: 'SVD' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

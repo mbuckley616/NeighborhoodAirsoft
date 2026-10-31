@@ -806,6 +806,37 @@ function buildFPL96() {
   return group;
 }
 
+// v1.395 (backlog D.63, Michael: A, batch 4): the SVD, a Dragunov-style battery sniper on the spring sniper's barrel,
+// sights and stock line (so its hands and aimed picture are the sniper's): the forend and stock in red-brown wood, a
+// black receiver cover, a curved black 20-round mag under the receiver ahead of the trigger guard, a slotted flash
+// hider behind the orange tip, and no bolt: a charging handle on the right racks a new mag.
+function buildFPSVD() {
+  const group = buildFPSniper();
+  const wood = new THREE.MeshStandardMaterial({ color: 0x7a3b22, roughness: 0.65 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6, metalness: 0.2 });
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  for (const n of ['forend', 'stock']) { const o = group.getObjectByName(n); if (o) o.material = wood; }
+  // the bolt comes off: a battery cycles it
+  for (const p of group.userData.cockingParts) group.remove(p);
+  add(new THREE.BoxGeometry(0.034, 0.010, 0.11), black, 0, 0.039, -0.04).name = 'cover';   // the receiver cover
+  const mag = add(new THREE.BoxGeometry(0.022, 0.050, 0.034), black, 0, -0.036, -0.050);
+  mag.rotation.x = 0.35; mag.name = 'mag';                                                   // curved forward
+  for (let i = 0; i < 3; i++) {                                                               // the flash hider's slots
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.0105, 0.0105, 0.006, 10), black);
+    r.rotation.x = Math.PI / 2; r.position.set(0, 0.02, -0.348 + i * 0.008); group.add(r);
+  }
+  const charge = new THREE.Group();
+  add(new THREE.BoxGeometry(0.010, 0.008, 0.016), black, 0, 0, 0, charge);
+  add(new THREE.CylinderGeometry(0.004, 0.004, 0.012, 8), black, 0.008, 0, 0, charge).rotation.z = Math.PI / 2;
+  charge.position.set(0.020, 0.026, -0.065);
+  charge.userData.baseZ = charge.position.z;
+  group.add(charge);
+  group.userData.cockingParts = [charge];
+  group.userData.cockingOffset = 0.035;
+  group.userData.gunType = 'svd';
+  return group;
+}
+
 // v1.346 (backlog D.63, Michael: A, batch 2): the P90, a bullpup SMG. A long low black body from the butt to a short
 // barrel, its 200-BB mag lying smoke-clear along the top behind a ring sight with a post in it (the post's tip is the
 // aimed point), a pistol grip under the middle with the trigger ahead of it, and the off hand's stop at the front,
@@ -1916,6 +1947,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'g36')     mesh = buildFPG36();           // v1.371
   else if (gunType === 'aug')     mesh = buildFPAUG();           // v1.372
   else if (gunType === 'm4')      mesh = buildFPM4();            // v1.373
+  else if (gunType === 'svd')     mesh = buildFPSVD();           // v1.395
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -1945,6 +1977,8 @@ const FP_HANDS = {
   sniper:  { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.225: the 700's pistol grip, behind the guard
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   l96:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.336: the sniper's stock, so its hands
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  svd:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.395: the sniper's stock, so its hands
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },

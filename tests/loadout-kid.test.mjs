@@ -46,7 +46,7 @@ await g.shot('loadout-kid');
 // every gun: swapping it re-builds the kid with that gun in its hands, without errors
 const guns = await page.evaluate(() => {
   const out = [];
-  for (const type of ['pistol', 'mp5', 'ump', 'ak47', 'shotgun', 'sniper', 'mac10', 'ar', 'famas', 'erifle', 'burst', 'semishotgun', 'm249', 'l96', 'p90', 'vector', 'g36', 'aug', 'm4']) {   // v1.373: the M4; v1.372: the AUG; v1.371: the G36C; v1.325: the FAMAS; v1.326: the Electric Rifle; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector
+  for (const type of ['pistol', 'mp5', 'ump', 'ak47', 'shotgun', 'sniper', 'mac10', 'ar', 'famas', 'erifle', 'burst', 'semishotgun', 'm249', 'l96', 'p90', 'vector', 'g36', 'aug', 'm4', 'svd']) {   // v1.395: the SVD; v1.373: the M4; v1.372: the AUG; v1.371: the G36C; v1.325: the FAMAS; v1.326: the Electric Rifle; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector
     let spec = null; try { spec = getGunSpec(type); } catch (e) {}
     if (!spec) continue;
     Game.persist.equipped.gun = type;

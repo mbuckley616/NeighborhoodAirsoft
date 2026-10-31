@@ -299,7 +299,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'l96') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle
+    } else if (gunType === 'l96' || gunType === 'svd') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -876,6 +876,7 @@ const RETICLE_SPECS = {
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
+  svd:     { style: 'fine_cross', baseGap: 7,  ringR: 0,  centerDot: 1.1 },   // v1.395: the sniper's, a little wider
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
 function getReticleSpec(gunType) { return RETICLE_SPECS[gunType] || RETICLE_SPECS.pistol; }

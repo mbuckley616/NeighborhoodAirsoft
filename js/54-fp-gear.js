@@ -24,6 +24,7 @@ const FP_GUN_MOUNT = {
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   l96:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.336: the sniper's
+  svd:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.395: the sniper's
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
   mp5:     { barrelY: 0.010, sideX: 0.016, railZ: -0.16,  railLen: 0.07,  underY: -0.010, sightY: 0.030, sightZ: -0.05,  sightScale: 0.95 },
   ump:     { barrelY: 0.012, sideX: 0.015, railZ: -0.155, railLen: 0.06,  underY: -0.006, sightY: 0.052, sightZ: -0.05,  sightScale: 0.95 },
@@ -717,6 +718,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'g36')     mesh = buildFPG36();           // v1.371
   else if (gunType === 'aug')     mesh = buildFPAUG();           // v1.372
   else if (gunType === 'm4')      mesh = buildFPM4();            // v1.373
+  else if (gunType === 'svd')     mesh = buildFPSVD();           // v1.395
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
