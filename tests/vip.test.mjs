@@ -7,7 +7,8 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const MATCHES = { bunratty_vip: { ours: 'Ryan', theirs: 'Mitchell' }, lot_vip_night: { ours: 'Rebecca', theirs: 'Seth' } };
+// v1.403 (D.57 step 4): Cover Nick (was Protect Ryan): your VIP is Nick, a crew kid; Night Shift's are Eric and Marcus (were Rebecca and Seth)
+const MATCHES = { bunratty_vip: { ours: 'Nick', theirs: 'Mitchell' }, lot_vip_night: { ours: 'Eric', theirs: 'Marcus' } };
 // v1.368 (D.58): Priya is retired; Mitchell is Protect Ryan's red VIP on her plank.
 
 // --- the map card and the briefing
@@ -97,7 +98,7 @@ for (const id of Object.keys(MATCHES)) {
 // (-19, 19.6) as before; the lane is that aisle, and the store's west end is Guadalajara's arches (a_store_w).
 const dump = async (id) => { await g.scenario(id); return page.evaluate(() => {
   const at = Game.player.obstacles.filter(o => o.minX < -19 && o.maxX > -19 && o.minZ < 19.6 && o.maxZ > 19.6);
-  const reb = Game.scenario.enemies.find(e => e.name === 'Rebecca');
+  const reb = Game.scenario.enemies.find(e => e.name === 'Eric');   // v1.403: your VIP on Rebecca's old spot
   // does the line at chest height from her spot to Mason's lane (the aisle up to z 4) hit it?
   const blocks = (tx, tz) => at.some(o => { const n = 40; for (let i = 1; i < n; i++) { const t = i / n, x = -19 + (tx + 19) * t, z = 21 + (tz - 21) * t;
     if (x > o.minX && x < o.maxX && z > o.minZ && z < o.maxZ && 1.0 < (o.baseY || 0) + o.h) return true; } return false; });
@@ -106,7 +107,7 @@ const dump = async (id) => { await g.scenario(id); return page.evaluate(() => {
 }); };
 const dumpVip = await dump('lot_vip_night'), dumpLot = await dump('lot_night_4v4');
 console.log('   Night Shift dumpster:', JSON.stringify(dumpVip), '| Lights Out at that spot:', JSON.stringify(dumpLot));
-check("Night Shift: a dumpster stands just north of Rebecca's spot, 1.5 m tall, and it is the cover she holds",
+check("Night Shift: a dumpster stands just north of your VIP's spot (Eric's, v1.403), 1.5 m tall, and it is the cover he holds",
   dumpVip.n === 1 && dumpVip.h === 1.5 && dumpVip.rebCover, dumpVip);
 check("Night Shift: it blocks her chest-high line to Mason's lane up the aisle at x -19 and to the store's west end (v1.390)",
   dumpVip.lane && dumpVip.fromStoreW, dumpVip);
@@ -233,11 +234,11 @@ const ending = async (who, fresh = true) => {
   await page.waitForFunction(() => Game.mode !== 'scenario', null, { timeout: 5000 }).catch(() => {});
   return page.evaluate(() => ({ mode: Game.mode, title: (document.querySelector('#resultScreen h1, #resultScreen .result-title') || {}).textContent || '', outcome: Game.lastOutcome || null, txt: document.getElementById('resultScreen').textContent.replace(/\s+/g, ' ').slice(0, 140) }));
 };
-const winR = await ending('Mitchell', false), loseR = await ending('Ryan');
+const winR = await ending('Mitchell', false), loseR = await ending('Nick');   // v1.403
 console.log('   their VIP tagged:', JSON.stringify(winR));
 console.log('   our VIP tagged:', JSON.stringify(loseR));
 check('their VIP tagged: the round is won, and the line names Mitchell, not "the last one"', winR.mode === 'result' && /YOU GOT THEM/.test(winR.txt) && /Mitchell pulls off the red cap/.test(winR.txt) && !/last one/i.test(winR.txt), winR.txt);
-check('our VIP tagged: the round is lost, and the result says they got Ryan', loseR.mode === 'result' && /THEY GOT RYAN/.test(loseR.txt) && /I was the VIP/.test(loseR.txt) && !/GOT THEM/.test(loseR.txt), loseR.txt);
+check('our VIP tagged: the round is lost, and the result says they got Nick', loseR.mode === 'result' && /THEY GOT NICK/.test(loseR.txt) && /I was the VIP/.test(loseR.txt) && !/GOT THEM/.test(loseR.txt), loseR.txt);
 
 // v1.170 fix-up, v1.174: 5 s. Since v1.172 Night Shift's Rebecca starts on the briefing's anchor at (-14, 21) and was
 // tagged at 8-36 s in 20 of 30 sampled rounds (CI, 6 Oct: 7.5 s), mostly by Mason (D.17). v1.175 (Michael: B): the
