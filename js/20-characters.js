@@ -602,6 +602,45 @@ const VOICE_EXCUSES = {
   moving: ["I was running! That doesn't count!", "Only 'cause I was moving, dude.", "I tripped! I totally tripped!", "You only got me 'cause I was out in the open."],
   any:    ["My gun jammed, I swear!", "The sun was in my eyes!", "That barely touched me!", "Whatever, your gun's way better than mine.", "I wasn't even ready!", "It bounced off a branch first!"],
 };
+// v1.397 (D.32's next step; Michael: C, 31 Oct, excuses first): each kid's own excuses, in his own voice. When a kid
+// you tag makes an excuse (npcHitCategory, the rate by his band as before), it is his own one time in two
+// (EXCUSE_OWN_SHARE) and otherwise the shared line that fits how he was tagged; so his own are things that fit any tag.
+const VOICE_EXCUSES_OWN = {
+  seth:      ["Hold up, my goggles fogged!", "My mom was calling me, dude!", "That one bounced off the shed!", "I tripped in my own yard!"],
+  trey:      ["I let you have that one.", "Pfft. I was going easy on you.", "My hopper jammed. Totally jammed.", "You'd never get that twice."],
+  brooke:    ["My scope got bumped, I swear!", "Ugh, my hair was in my eyes!", "That's the only one you get.", "My battery's dying, that's why."],
+  jamie:     ["Oh. My goggles fogged up, I think.", "I'm still learning these yards.", "I think my mag was empty.", "Sorry, I didn't know that was open."],
+  marcus:    ["I don't even know these yards!", "Y'all have home field, that's why!", "Back home I'd have smoked you.", "That fence came outta nowhere!"],
+  devon:     ["Wind took my shot. Lucky you.", "My scope's off a click.", "I was mid-reload. Doesn't count.", "Sun's right on my glass."],
+  tyler:     ["Aight, my shoe came untied.", "Man, I was getting a drink.", "I wasn't even playing yet, man.", "A bug flew in my goggles."],
+  garrett:   ["Seth's the one who left that gap.", "I was covering Seth, not me.", "That won't happen twice.", "My gun shoots left. Always has."],
+  sean:      ["My AK jammed, dude! JAMMED!", "I was reloading! No fair!", "I had you first, I swear!", "My batteries are dead, man!"],
+  nick:      ["Hm. Hard to hide this big.", "My mask was crooked.", "I was watching out for Ryan.", "Too big for that bush, I guess."],
+  ryan:      ["Mitchell didn't cover me!", "I tripped on a sprinkler!", "Hold up, my sling broke!", "Mitchell called the wrong side!"],
+  mitchell:  ["Ryan gave away my spot.", "My mag was dry.", "Glare on my goggles.", "Ryan was talking in my ear."],
+  joe:       ["My gun's better. You got lucky.", "My hop-up's set for long range.", "That cheap gun shouldn't even count.", "I'm still breaking in this gun."],
+  chris:     ["My shoe came off, dude!", "I'd have beat you, I swear!", "I was tired from all that running!", "That tree jumped in my way!"],
+  owen:      ["Hm. My leg fell asleep.", "Wasn't worth moving for.", "Gnats in my eyes. Fine.", "I let that one go."],
+  eric:      ["I was out of BBs! No fair!", "My hopper's empty, dude!", "I'm too short to see over that!", "That hit my gun, not me!"],
+  rebecca:   ["That hit my gun. Fine.", "My goggles fogged. Noted.", "You got lucky. Predictably.", "I lost count of your shots."],
+  andrew:    ["Ha, I'm too big to miss!", "My mask slid down, honest!", "I was giving you a thumbs up!", "Kinda hard to hide, dude."],
+  alex:      ["Technically that was a ricochet.", "I knew you'd try that. Mostly.", "Andrew was standing in my way.", "That's a gun hit, technically."],
+  evan:      ["My goggles fogged, but fair.", "Best of three. My gun jammed.", "Ha, I tripped. Still counts.", "My sling caught. Nice one, though."],
+  haden:     ["Connor was supposed to cover me!", "CONNOR! You left me!", "That was Connor's fault!", "Connor bumped my gun!"],
+  connor:    ["Haden, you left me hanging!", "HADEN! That's your fault!", "Haden was in my way!", "Haden said you were left!"],
+  mason:     ["Sun in my eyes. Still counts.", "My footing slipped. Good hit.", "Fair, but my mag was dry.", "Wet grass. No excuse, though."],
+  christian: ["NOT AGAIN! My gun hates me!", "I was about to shoot you!", "A bug flew in my mouth!", "That's so unfair! I sneezed!"],
+  fernando:  ["Diego was supposed to watch that side.", "Diego, why'd you move?", "My goggles fogged up.", "I was signaling Diego."],
+  diego:     ["Fernando gave me away.", "Fernando was too loud.", "My mag was half empty anyway.", "Hm. Fernando's fault."],
+  colin:     ["Seth said you'd be left!", "My gun's way slower than yours!", "My goggles slid down, dude!", "No fair, I was gonna win!"],
+  jordan:    ["Aw, I slipped on the steps.", "The portable's in my way, man.", "I was just looking around.", "Man, my strap got caught."],
+  caleb:     ["One more step and I had you!", "I was RIGHT there, though!", "I tripped over the hose!", "I was almost there! Doesn't count!"],
+  nathan:    ["My glasses fogged under the goggles.", "Statistically, that shouldn't have hit.", "You weren't supposed to go there.", "My glasses slipped."],
+  sophie:    ["Ugh, my gun pulls left.", "My hair got in my eyes.", "Lucky. Won't happen again.", "I was lining up a better shot."],
+  grant:     ["Huh. The car was in my way.", "Didn't hear you. Car alarm.", "Thought that car covered me.", "Too big for that car, I guess."],
+  malik:     ["My shotgun ran dry, dude!", "The shells stuck. I had you!", "Shotgun's slow to pump, man.", "Next time I'm getting closer."],
+};
+const EXCUSE_OWN_SHARE = 0.5;
 const EXCUSE_CHANCE = { high_agg: 0.6, mid_agg: 0.4, low_agg: 0.15 };
 const EXCUSE_FAR = 30, EXCUSE_CLOSE = 4;   // m from you
 function voiceBand(charId) {
@@ -698,7 +737,7 @@ const INFECTION_BARKS = [
 function voiceLinePools(charId, category) {
   if (category === 'infection') return { own: [], band: INFECTION_BARKS };
   if (category === 'teammate') return { own: [], band: VOICE_LINES_TEAMMATE };
-  if (category.startsWith('excuse_')) return { own: [], band: VOICE_EXCUSES[category.slice(7)] || [] };   // v1.256
+  if (category.startsWith('excuse_')) return { own: VOICE_EXCUSES_OWN[charId] || [], band: VOICE_EXCUSES[category.slice(7)] || [], ownShare: EXCUSE_OWN_SHARE };   // v1.256; v1.397: his own
   const own = VOICE_LINES[charId]?.[category] || [];
   const bandKey = voiceBand(charId);   // v1.256: shared with the excuses
   const band = VOICE_LINES_DEFAULT[bandKey]?.[category] || [];
@@ -712,7 +751,7 @@ function voiceLinePools(charId, category) {
 const VOICE_RECENT_PER_SPEAKER = 3;
 const VOICE_RECENT_GLOBAL = 2;
 function pickVoiceLine(charId, category, speaker) {
-  const { own, band } = voiceLinePools(charId, category);
+  const { own, band, ownShare = 0.7 } = voiceLinePools(charId, category);   // v1.397: ownShare (excuses 0.5)
   if (own.length + band.length === 0) return null;
   const recent = new Set([...(speaker?._recentLines || []), ...(VOICE.recentLines || [])]);
   let ownOk = own.filter(l => !recent.has(l));
@@ -724,7 +763,7 @@ function pickVoiceLine(charId, category, speaker) {
     if (ownOk.length + bandOk.length === 0) { ownOk = own; bandOk = band; }
   }
   let pool;
-  if (ownOk.length && bandOk.length) pool = gameRandom() < 0.7 ? ownOk : bandOk;
+  if (ownOk.length && bandOk.length) pool = gameRandom() < ownShare ? ownOk : bandOk;
   else pool = ownOk.length ? ownOk : bandOk;
   const line = pool[Math.floor(gameRandom() * pool.length)];
   if (speaker) {
