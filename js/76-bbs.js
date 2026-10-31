@@ -29,8 +29,11 @@ function fireBB() {
   pelletCount = Math.max(1, Math.min(pelletCount, Game.gun.ammo));
   // For multi-pellet shots, widen spread a bit so pellets actually spread
   const pelletSpreadBoost = pelletCount > 1 ? 1.6 : 1.0;
+  // v1.399 (D.63): a gas gun's BB slows as its mag empties, the gas cooling: full speed from a full mag, (1 - gasFade)
+  // of it for the last BB
+  const gasMult = Game.gun.gasFade ? 1 - Game.gun.gasFade * Math.max(0, Math.min(1, (Game.gun.maxAmmo - Game.gun.ammo) / Math.max(1, Game.gun.maxAmmo - 1))) : 1;
   for (let i = 0; i < pelletCount; i++) {
-    const vel = forward.clone().multiplyScalar(Game.gun.muzzleVelocity);
+    const vel = forward.clone().multiplyScalar(Game.gun.muzzleVelocity * gasMult);
     // base velocity jitter (gun's intrinsic accuracy) + movement cone (sway).
     const s = baseSpread * pelletSpreadBoost;
     const m = moveSpread * (Game.player.ads > 0 ? (1 - Game.player.ads * 0.6) : 1);

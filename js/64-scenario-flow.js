@@ -770,6 +770,7 @@ function startScenario(built) {
   Game.gun.cyclicRPM = spec.cyclicRPM || 0;
   Game.gun.electric = !!spec.electric;   // v1.326
   Game.gun.semiRPM = spec.semiRPM || 0;
+  Game.gun.gasFade = spec.gasFade || 0;   // v1.399: the Gas Pistol's gas cools as its mag empties
   Game.gun.burst = spec.burst || 0;   // v1.327
   Game.gun._burstLeft = 0;
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
