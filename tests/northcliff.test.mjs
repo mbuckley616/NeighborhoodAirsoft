@@ -113,7 +113,9 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   // v1.131: Fernando's rifle holds the high yard by the bulb, (-15, -28), as the briefings say
   const fern = r.kids.find(k => k.n === 'Fernando');
   // v1.362 (D.28 step 5): in Bellfield After Dark Seth has Fernando's spot (SETH_ZONE_MATCHES), and Fernando may stand with you
-  if (fern && fern.t !== 'player') check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
+  // v1.393 (D.57 step 1): only where the match itself posts him (in Hold the Creek Fort he is a kid the street adds for your crew)
+  const posted = await page.evaluate(id => (SCENARIOS[id].enemySetup || []).some(es => es.charId === 'fernando' && es.team !== 'player'), id);
+  if (fern && fern.t !== 'player' && posted) check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);

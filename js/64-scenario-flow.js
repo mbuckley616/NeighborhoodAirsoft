@@ -358,6 +358,10 @@ function enterScenario(scenarioId) {
           enemy.lives = lv;
           enemy.maxLives = lv;
         }
+        if (es.clutchOut) {   // v1.393 (D.57 step 1): CLUTCH, your crew kid is out already, hand up on the sideline, in nobody's lane
+          enemy.health = 0; if (typeof enemy.lives === 'number') enemy.lives = 0; enemy.clutchOut = true;
+          enemy._outT = OUT_WALK_AFTER; enemy._walkingOff = true; enemy._offField = true;
+        }
         built.enemies.push(enemy);
       }
       setupIdx++;

@@ -95,7 +95,7 @@ function setupEntryLives(sc, es) {
 const SIDE_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 function sideCountDesc(scenarioId, desc) {
   if (!desc) return desc;
-  const setup = crewSetup(scenarioId) || [];
+  const all = crewSetup(scenarioId) || [], setup = all.filter(es => !es.clutchOut);   // v1.393: a CLUTCH crew is out, and its line says so
   const ours = setup.filter(es => es.team === 'player').length + 1, theirs = setup.length - ours + 1;
   const word = n => SIDE_WORDS[n] || String(n);
   const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
@@ -103,7 +103,7 @@ function sideCountDesc(scenarioId, desc) {
   const counted = /\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) a side\b/;
   if (counted.test(desc)) return desc.replace(counted, cap(says));
   if (/\b(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve) of you against\b/.test(desc)) return desc;   // written as built already
-  return desc + crewChangeLine(scenarioId, setup, says);   // v1.360
+  return desc + crewChangeLine(scenarioId, all, says);   // v1.360
 }
 // v1.360 (Found in play, critic v1.353): a briefing with no count in it still names the sides as first written ("You
 // and Sean against the brothers, Ryan and Mitchell") while your crew changes them (3 v 3 with Owen and Priya). When the
@@ -112,10 +112,11 @@ function sideCountDesc(scenarioId, desc) {
 function crewChangeLine(scenarioId, setup, says) {
   const sc = SCENARIOS[scenarioId];
   const written = new Map((sc.enemySetup || []).map(es => [es.charId, es.team === 'player' ? 'ours' : 'theirs']));
-  const built = new Map(setup.map(es => [es.charId, es.team === 'player' ? 'ours' : 'theirs']));
+  const built = new Map(setup.map(es => [es.charId, es.clutchOut ? 'out' : es.team === 'player' ? 'ours' : 'theirs']));   // v1.393: CLUTCH's out kids
   const groups = { withYou: [], withThem: [], toYou: [], toThem: [], out: [] };
   const name = id => (CHARACTERS[id] && CHARACTERS[id].name) || id;
   for (const [id, side] of built) {
+    if (side === 'out') continue;   // v1.393: the type's line says they're out
     const was = written.get(id);
     if (!was) groups[side === 'ours' ? 'withYou' : 'withThem'].push(name(id));
     else if (was !== side) groups[side === 'ours' ? 'toYou' : 'toThem'].push(name(id));
@@ -149,6 +150,7 @@ function getScenarioBriefing(scenarioId) {
       lives: setupEntryLives(sc, es),
       vip: !!es.vip,   // v1.170
       crew: es.team === 'player' && crewMembers().includes(es.charId),   // v1.274
+      out: !!es.clutchOut,   // v1.393 (D.57 step 1): CLUTCH, out on the sideline from the start
     };
     if (es.team === 'player') allies.push(combatant);
     else enemies.push(combatant);
@@ -176,8 +178,11 @@ function getScenarioBriefing(scenarioId) {
     rival: isRivalMatch(scenarioId) ? rivalScore() : null,   // v1.196: Seth's crew, and the summer's score against them
     tutorial: !!sc.tutorial,                                  // v1.200: no crew name over Seth in the tutorial
     // v1.274 (D.28 step 2): a team match takes your crew; who you left out
-    crewMatch: crewTeamMatch(scenarioId) && crewMembers().length > 0,
+    crewMatch: crewTeamMatch(scenarioId) && crewMembers().length > 0 && matchType(scenarioId) !== 'clutch',   // v1.393: nobody to bench in a CLUTCH
     benched: crewTeamMatch(scenarioId) ? crewMembers().filter(id => crewBench.has(id)).map(id => CHARACTERS[id].name) : [],
+    // v1.393 (D.57 step 1): the match's type, its chip and its one line (why your crew plays, or why not)
+    matchType: matchType(scenarioId),
+    matchTypeLine: matchTypeLine(scenarioId, setup),
   };
 }
 
@@ -189,14 +194,15 @@ function renderBriefingRosterHTML(brief, opts) {
   const youGun = getGunDisplayName(Game.persist.equipped.gun);
   const lifeStr = n => n >= 99 ? 'comes back' : `${n} ${n === 1 ? 'life' : 'lives'}`;   // v1.170: VIP's ∞
   if (opts && opts.lineup) return renderBriefingLineupHTML(brief, bench, lifeStr, youGun);   // v1.298 (D.54)
+  const livesOf = c => c.out ? 'already out' : lifeStr(c.lives);   // v1.393: CLUTCH
   const row = (c, side) =>
     `<div class="brief-combatant ${side}">
        <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span>
        <span class="brief-gun">${c.gun}</span>
-       <span class="brief-lives">${lifeStr(c.lives)}</span>
+       <span class="brief-lives">${livesOf(c)}</span>
        ${bench && c.crew ? `<button class="brief-bench" data-bench="${c.charId}">Bench</button>` : ''}
      </div>`;
-  let html = '';
+  let html = briefTypeHTML(brief);   // v1.393 (D.57 step 1)
   // YOUR side (you + any allies)
   html += `<div class="brief-section">
     <div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
@@ -229,7 +235,7 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const wearsCrew = (c, side) => side === 'ally' && !c.vip && c.charId !== 'seth' && !brief.tutorial;
   const cell = (c, side, extra) => {
-    const lives = extra && extra.benched ? 'on the bench' : c.lives === 'you' ? (brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)) : lifeStr(c.lives);
+    const lives = extra && extra.benched ? 'on the bench' : c.lives === 'you' ? (brief.player.respawns ? 'comes back' : lifeStr(brief.player.lives)) : c.out ? 'already out' : lifeStr(c.lives);   // v1.393: CLUTCH
     return `<div class="brief-combatant ${side} lu-kid${extra && extra.benched ? ' benched' : ''}" title="${esc(c.name + ' · ' + c.gun + ' · ' + lives)}">
       <canvas class="lu-fig" width="102" height="117" data-kid="${c.charId || ''}" data-gun="${c.gunType || 'pistol'}" data-crew="${wearsCrew(c, side) ? 1 : 0}"${c.lives === 'you' ? ' data-you="1"' : ''}></canvas>
       <span class="brief-name">${c.name}${c.vip ? ' ★ VIP' : ''}</span><span class="brief-gun">${c.gun}</span><span class="brief-lives">${lives}</span>
@@ -244,7 +250,7 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   const theirs = brief.enemies.map(c => cell(c, 'enemy'));
   const enemyHeading = brief.ffa ? 'EVERYONE ELSE (FREE-FOR-ALL)'
     : (brief.rival && brief.enemies.length > 1 ? RIVAL_CREW.toUpperCase() : 'OPPONENTS');
-  let html = `<div class="brief-lineup">
+  let html = briefTypeHTML(brief) + `<div class="brief-lineup">
     <div class="brief-section"><div class="brief-heading brief-heading-you">${brief.allies.length && !brief.ffa && !brief.tutorial && crewName() ? crewName().toUpperCase() : 'YOUR SIDE'}</div>
       <div class="lu-kids" style="--lu-cols:${cols(yours.length)}">${yours.join('')}</div></div>
     <div class="brief-section"><div class="brief-heading brief-heading-enemy">${enemyHeading}</div>
@@ -253,6 +259,11 @@ function renderBriefingLineupHTML(brief, bench, lifeStr, youGun) {
   html += `<div class="brief-objective"><span class="brief-obj-label">OBJECTIVE</span> ${brief.winConditionText}</div>`;
   if (brief.rival) html += `<div class="brief-objective brief-rival"><span class="brief-obj-label">RIVALS</span> ${RIVAL_CREW}: ${rivalScoreText(brief.rival)}</div>`;
   return html;
+}
+// v1.393 (D.57 step 1): the match type's chip and line at the top of the briefing
+function briefTypeHTML(brief) {
+  if (!brief || !brief.matchType) return '';
+  return `<div class="brief-type brief-type-${brief.matchType}"><span class="brief-type-chip">${MATCH_TYPE_CHIPS[brief.matchType]}</span> <span class="brief-type-line">${brief.matchTypeLine}</span></div>`;
 }
 function drawBriefingLineup(root) {
   const cc = crewColor();
@@ -689,6 +700,7 @@ const SCENARIOS = {
     scenarioType: 'attack',
     playerSpawn: 'lane_west',
     enemySpawnCluster: 'cluster_bulb',
+    crewPosts: ['lane_west_north', 'lane_west_south', 'lane_mid_north', 'lane_mid_south', 'ffa_2'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'mitchell', weapon: 'sniper',  anchor: 'bulb_plank', role: 'defender' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'bulb_car1',  role: 'defender' },
@@ -731,6 +743,7 @@ const SCENARIOS = {
     scenarioType: 'defend',
     playerSpawn: 'bulb_center',
     enemySpawnCluster: 'cluster_lane_west',
+    crewPosts: ['bulb_plank', 'bulb_car1', 'bulb_car2', 'race_n3', 'ffa_5'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'lane_mid_north', role: 'attacker' },
       { charId: 'mitchell', weapon: 'ar',      anchor: 'lane_mid_south', role: 'attacker' },
@@ -758,6 +771,7 @@ const SCENARIOS = {
     resultHold: 'the cul-de-sac',   // v1.117: the lose line names what was held
     playerSpawn: 'bulb_center',
     enemySpawnCluster: 'cluster_lane_west',
+    crewPosts: ['bulb_plank', 'bulb_car1', 'bulb_car2', 'race_n3', 'ffa_5'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'joe',   weapon: 'ump', anchor: 'lane_west_north', role: 'attacker', flank: 'L' },   // v1.368: was Priya
       { charId: 'sean',  weapon: 'ak47', anchor: 'lane_mid_south', role: 'attacker', flank: 'C' },
@@ -1213,11 +1227,12 @@ const SCENARIOS = {
   hollow_attack_north_fort: {
     region: 'east_roswell', street: 'the_hollow',
     name: 'Chattahoochee River', scenarioName: 'Storm the North Fort',
-    desc: "Seth's whole crew got to the north fort first and dug in — five of them. Mitchell's up on the lookout with the sniper covering the whole approach, and the rest are spread across the front and side windows. You're coming up from the south end alone, so you can't trade in the open — use the pallet clusters and the creek line, peel them off one angle at a time, and clear the fort.",
+    desc: "Seth's whole crew got to the north fort first and dug in — five of them. Mitchell's up on the lookout with the sniper covering the whole approach, and the rest are spread across the front and side windows. You're coming up from the south end, so you can't trade in the open — use the pallet clusters and the creek line, peel them off one angle at a time, and clear the fort.",
     builderFn: 'buildHollowScene',
     builderArg: 'default',
     scenarioType: 'attack',
     playerSpawn: 'team_b',
+    crewPosts: ['b_fort', 'ffa_6', 'ffa_7', 'b_center', 'b_left'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'mitchell', weapon: 'sniper',  anchor: 'a_fort',   role: 'defender' },
       { charId: 'seth',     weapon: 'ar',       anchor: 'a_center', role: 'defender' },
@@ -1240,6 +1255,7 @@ const SCENARIOS = {
     timeOfDay: 'night',
     scenarioType: 'attack',
     playerSpawn: 'team_b',
+    crewPosts: ['b_fort', 'ffa_6', 'ffa_7', 'b_center', 'b_left'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'devon',    weapon: 'sniper',  anchor: 'a_fort',   role: 'defender' },
       { charId: 'seth',     weapon: 'ump',     anchor: 'a_center', role: 'defender' },
@@ -1265,6 +1281,7 @@ const SCENARIOS = {
     playerSpawn: 'team_b',
     enemySpawnCluster: 'redoubt_e',
     enemyRespawnCluster: 'cluster_north',   // v1.319 (B.13): tagged, they go back to the north fort, 65 m off
+    crewPosts: ['b_fort', 'ffa_6', 'ffa_7', 'cluster_south', 'b_center'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'seth',     weapon: 'ar',      anchor: 'b_center', role: 'attacker' },
       { charId: 'ryan',     weapon: 'shotgun', anchor: 'b_left',   role: 'attacker' },
@@ -1289,6 +1306,7 @@ const SCENARIOS = {
     scenarioType: 'defend',
     playerSpawn: 'team_b',
     enemySpawnCluster: 'redoubt_e',
+    crewPosts: ['ffa_7', 'ffa_6'],   // v1.393 (D.57 step 1): CLUTCH, your crew already out on the sideline here
     enemySetup: [
       { charId: 'seth',     weapon: 'ump',     anchor: 'b_center', role: 'attacker' },
       { charId: 'mitchell', weapon: 'ak47',    anchor: 'b_left',   role: 'attacker' },
@@ -1361,6 +1379,7 @@ const SCENARIOS = {
     resultHold: 'the doors',   // v1.117: the lose line names what was held
     playerSpawn: 'team_a',
     enemySpawnCluster: 'cluster_south',
+    crewPosts: ['ffa_6', 'a_dumpster', 'a_store', 'ffa_2', 'a_store_w'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'jamie', weapon: 'ump',     anchor: 'b_road_w', role: 'attacker', flank: 'L' },
       { charId: 'tyler', weapon: 'shotgun', anchor: 'b_road',   role: 'attacker', flank: 'C' },
@@ -1479,6 +1498,7 @@ const SCENARIOS = {
     resultHold: 'the creek fort',
     playerSpawn: 'creek_fort',
     enemySpawnCluster: 'cluster_road',
+    crewPosts: ['creek_fort', 'yard_s2', 'yard_s3', 'yard_s1', 'bulb_car_s'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'haden',  weapon: 'ump',     anchor: 'road_w',     role: 'attacker', flank: 'L' },
       { charId: 'connor', weapon: 'shotgun', anchor: 'road_mid_n', role: 'attacker', flank: 'C' },
@@ -1553,6 +1573,7 @@ const SCENARIOS = {
     openingHoldSec: 5,   // v1.316: nobody fires for 5 s (2.5 elsewhere): the twins come up the course before they shoot
     playerSpawn: 'bunker',
     enemySpawnCluster: 'cluster_patio',
+    crewPosts: ['ply_e', 'shed', 'ply_w', 'fort', 'bunker'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'haden',  weapon: 'ump',     anchor: 'boxes_w', role: 'attacker', flank: 'L' },
       { charId: 'connor', weapon: 'shotgun', anchor: 'boxes_e', role: 'attacker', flank: 'R' },
@@ -1621,6 +1642,7 @@ const SCENARIOS = {
     resultHold: 'the bulb fort',
     playerSpawn: 'fort',
     enemySpawnCluster: 'cluster_east',
+    crewPosts: ['bulb_fort', 'bulb_island', 'bulb_car_s', 'yard_s3', 'yard_n3'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'mason',     weapon: 'mp5',     anchor: 'front_n',    role: 'attacker', flank: 'L' },
       { charId: 'christian', weapon: 'shotgun', anchor: 'front_s',    role: 'attacker', flank: 'C' },
@@ -1793,6 +1815,7 @@ const SCENARIOS = {
     resultHold: 'the portables',
     playerSpawn: 'portables',
     enemySpawnCluster: 'cluster_field',
+    crewPosts: ['a_port_gap', 'a_port_w', 'b_court', 'b_stand', 'a_port_e'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'caleb',  weapon: 'ump',     anchor: 'a_container', role: 'attacker', flank: 'L' },   // v1.190: were Marcus, Jamie, Trey
       { charId: 'malik',  weapon: 'shotgun', anchor: 'a_port_e',    role: 'attacker', flank: 'C' },
@@ -1912,6 +1935,7 @@ const SCENARIOS = {
     resultHold: 'the gazebo',
     playerSpawn: 'gazebo',
     enemySpawnCluster: 'cluster_course',
+    crewPosts: ['b_gazebo', 'ride_willow', 'b_cart', 'b_wall', 'b_putt'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
     enemySetup: [
       { charId: 'marcus', weapon: 'ump',     anchor: 'b_wall',  role: 'attacker', flank: 'L' },
       { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_putt',  role: 'attacker', flank: 'C' },
@@ -2004,6 +2028,7 @@ const SCENARIOS = {
     resultHold: 'the service desk',
     playerSpawn: 'desk',
     enemySpawnCluster: 'cluster_north',
+    crewPosts: ['b_endcap', 'cluster_south'],   // v1.393 (D.57 step 1): CLUTCH, your crew already out on the sideline here
     enemySetup: [
       { charId: 'marcus', weapon: 'ump',     anchor: 'b_deli_s',  role: 'attacker', flank: 'L' },
       { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_frozen_s', role: 'attacker', flank: 'C' },

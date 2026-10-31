@@ -23,7 +23,7 @@ const rule = await page.evaluate(() => {
     const own = SCENARIOS[id].enemySetup, oursOwn = own.filter(e => e.team === 'player').length + 1, theirsOwn = own.length - oursOwn + 1;
     Game.persist.crew = crewFirstTime(id); Game.persist.completed = {}; crewBench.clear();
     const s = crewSetup(id), ours = s.filter(e => e.team === 'player').length + 1, theirs = s.length - ours + 1;
-    out.push({ id, finale: crewFinale(id), oursOwn, theirsOwn, ours, theirs, first: crewFirstTime(id).length });
+    out.push({ id, finale: crewFinale(id), oursOwn, theirsOwn, ours, theirs, first: crewFirstTime(id).length, posts: !!SCENARIOS[id].crewPosts });
   }
   Game.persist.crew = []; Game.persist.completed = {};
   return out;
@@ -31,8 +31,10 @@ const rule = await page.evaluate(() => {
 const finales = rule.filter(r => r.finale);
 const fin = Object.fromEntries(finales.map(r => [r.id, `${r.ours}v${r.theirs}`]));
 console.log('   finales, first time:', JSON.stringify(fin));
-check('32 team matches on the ladder (v1.318: + Night Swim), 8 of them a zone\'s finale', rule.length === 32 && finales.length === 8, rule.length);
-const ordinary = rule.filter(r => !r.finale && r.theirs - r.ours !== r.theirsOwn - r.oursOwn);
+// v1.393 (D.57 step 1): + the 12 solo matches your crew now plays and the 2 CLUTCH, which have their own rules
+// (tests/match-type.test.mjs): their side at least yours, and a CLUTCH's sides as its own
+check('46 team matches on the ladder (v1.318: + Night Swim; v1.393: + 14 with crewPosts), 8 of them a zone\'s finale', rule.length === 46 && finales.length === 8 && rule.filter(r => r.posts).length === 14, rule.length);
+const ordinary = rule.filter(r => !r.finale && !r.posts && r.theirs - r.ours !== r.theirsOwn - r.oursOwn);
 check('every ordinary team match keeps its own margin the first time through (their side grows as yours does)', ordinary.length === 0, ordinary);
 const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 2
   : r.id === 'last_saturday' ? r.theirs !== r.ours + 2 : r.theirs !== r.ours + 1);

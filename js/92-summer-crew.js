@@ -370,7 +370,62 @@ function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); 
 function crewTeamMatch(id) {
   const sc = SCENARIOS[id];
   if (!sc || sc.tutorial || sc.ffa || sc.pickup || sc.net || id === 'pickup_game') return false;
+  if (sc.crewPosts) return true;   // v1.393 (D.57 step 1): a solo match your crew now plays (or a CLUTCH, out already)
   return (sc.enemySetup || []).some(es => es.team === 'player');
+}
+// v1.393 (D.57 step 1, Michael: "All of it", decisions "The crew-first ladder and Crew Captains", 22 Oct; the plan is
+// docs/crew_ladder.md): your crew plays every match unless the match says why not. Each ladder match has one of five
+// types, a chip on its map card and one line on its briefing: CREW, 1V1 CALLOUT, FREE-FOR-ALL, CLUTCH (your crew starts
+// tagged out on the sideline: `crewPosts` with the type here) and NO CREW YET (Winnmark, until a replay with your crew).
+// The night solo on Bunratty's lane says why outright (SNUCK OUT), and the two rides have their own lines. A solo match
+// with no reason takes the crew: it has `crewPosts`, the anchors on your side your crew holds.
+const MATCH_TYPE_CHIPS = { crew: 'CREW', callout: '1V1 CALLOUT', ffa: 'FREE-FOR-ALL', clutch: 'CLUTCH', nocrew: 'NO CREW YET', solo: 'SNUCK OUT' };
+const MATCH_TYPES = {
+  bunratty_brothers: 'callout',                  // 1 v 2: the brothers call you out
+  stoneglen_treehouse: 'callout',                // the twins' rule, one at a time on their course
+  bunratty_night_lane: 'solo',                   // you snuck out alone
+  bunratty_go_cart: 'ffa',                       // the whole street shoots at the cart
+  club_cart_ride: 'crew',                        // Eric drives
+  hollow_defend_south_fort_night: 'clutch',
+  store_defend_desk: 'clutch',
+};
+const MATCH_TYPE_LINES = {
+  stoneglen_treehouse: "The twins' rule: one at a time on their course. Your crew watches from the fence.",
+  bunratty_go_cart: "The whole street shoots at the cart. Crews don't count on the hill.",
+  club_cart_ride: "Eric's driving. You shoot.",
+};
+// The match's type ('crew' | 'callout' | 'ffa' | 'clutch' | 'nocrew' | 'solo'), or null (the tutorials, the Pickup Game)
+function matchType(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.pickup || sc.net || id === 'pickup_game') return null;
+  if (MATCH_TYPES[id]) return MATCH_TYPES[id];
+  if (sc.ffa || sc.winCondition === 'survive_untagged') return 'ffa';
+  const ctx = findScenarioListContext(id);
+  if (ctx && ctx.group === 'winnmark_court') return crewTeamMatch(id) && crewFielded().length ? 'crew' : 'nocrew';
+  if (crewTeamMatch(id)) return 'crew';
+  return 'callout';
+}
+// The briefing's line for it, naming who is in from the sides as built
+function matchTypeLine(id, setup) {
+  const type = matchType(id);
+  if (!type) return '';
+  if (MATCH_TYPE_LINES[id]) return MATCH_TYPE_LINES[id];
+  const crew = crewMembers();
+  const name = k => (CHARACTERS[k] && CHARACTERS[k].name) || k;
+  const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
+  if (type === 'crew') {
+    const ours = (setup || crewSetup(id) || []).filter(es => es.team === 'player' && !es.clutchOut);
+    const inCrew = ours.filter(es => crew.includes(es.charId)).map(es => name(es.charId));
+    if (inCrew.length) return `Your crew's in: ${list(inCrew)}.`;
+    const others = ours.filter(es => !es.vip).map(es => name(es.charId));
+    return others.length ? `No crew yet: ${list(others)} ${others.length > 1 ? 'play' : 'plays'} with you today.` : "It's just you today.";
+  }
+  if (type === 'callout') return crew.length ? 'A callout. Your crew watches from the curb.' : 'A callout. Just you and them.';
+  if (type === 'ffa') return "Everybody for themselves. Crews don't count today.";
+  if (type === 'clutch') return crewFielded().length ? "Your crew's already out. It's on you." : "It's on you.";
+  if (type === 'nocrew') return "You're the new kid on Seth's street.";
+  if (type === 'solo') return crew.length ? "You snuck out alone. Your crew's asleep." : 'You snuck out alone.';
+  return '';
 }
 // The kids who play on this street with a gun of their own, in the order the matches list them
 // (v1.275: the kids who play against you there first, then the ones who stand with you)
@@ -473,10 +528,15 @@ function crewSetup(id) {
   const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
   if (!crew.length && !first.length && !turned) return sethSetup(id);
   const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
+  // v1.393 (D.57 step 1): a CLUTCH match keeps its own sides; your crew is there, out already, and nobody fills a place
+  if (MATCH_TYPES[id] === 'clutch') return crewSides(id, crew, crewFielded(), 0, foes, false);
   // v1.275: the first-time sides fix the match; then your crew as it is now plays it
   const base = crewSides(id, first, first, allies.length, null, false);
   const ours1 = base.filter(es => es.team === 'player').length + 1;
-  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1 : foes + ours1 - (allies.length + 1);
+  // v1.393: a solo match your crew now plays keeps its own kids, and the street makes them at least as many as you
+  // (their side growing by your whole first-time crew would put eight kids in the Hollow's forts)
+  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1
+    : sc.crewPosts && !allies.length ? Math.max(foes, ours1) : foes + ours1 - (allies.length + 1);
   return crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
 }
 // v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
@@ -496,7 +556,13 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   // v1.314 (critic, 22 Oct): with Seth turned and no other ally, slots and kept are empty, and a kid put in a spare place
   // got no anchor, so the scene dropped him (Lights Out replayed played 1 v 2): the place Seth left is the spare one then
   const left0 = turned ? sc.enemySetup.find(es => es.charId === 'seth' && es.team === 'player') : null;
-  const spare = () => (slots[0] || kept[0] || !left0) ? strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives'])   // a place past the match's own (v1.275: not its flag run or lives)
+  // v1.393 (D.57 step 1): a solo match your crew plays has no place of its own on your side: its `crewPosts` are the
+  // places, in turn; in a CLUTCH match they are the sideline, where each kid stands out from the start
+  let postN = 0;
+  const clutch = MATCH_TYPES[id] === 'clutch';
+  const spare = () => sc.crewPosts && !slots.length && !kept.length && !left0
+    ? Object.assign({ anchor: sc.crewPosts[postN++ % sc.crewPosts.length] }, clutch ? { role: 'defender', clutchOut: true } : {})
+    : (slots[0] || kept[0] || !left0) ? strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives'])   // a place past the match's own (v1.275: not its flag run or lives)
     : strip(left0, ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives', 'behavior', 'statsOverride', 'team']);
   // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
   const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
@@ -549,7 +615,10 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
       const k = fromStreet(sethFoe); if (!k) break;
       const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
       // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
-      const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
+      // v1.393: in a solo match your crew now plays, a kid the street adds to a hold's attackers attacks with them (made a
+      // skirmisher, he waited at the huddle all of Hold the Portables, 120 s)
+      const keepRole = sc.crewPosts && spot.role === 'attacker';
+      const kid = Object.assign(strip(spot, (keepRole ? [] : ['role']).concat(['perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives'])), { charId: k.charId, weapon: k.weapon });
       if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
       kid.crewFill = true;   // v1.278: a kid the crew's numbers added comes looking when he has hidden too long (updateKidBoredom)
       them.push(kid);
