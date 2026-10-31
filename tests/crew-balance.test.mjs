@@ -39,8 +39,9 @@ check('every ordinary team match keeps its own margin the first time through (th
 const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 2
   : r.id === 'last_saturday' ? r.theirs !== r.ours + 2 : r.theirs !== r.ours + 1);
 check('every finale: their side one more than yours, the Last Saturday two more, Lights Out still 2 v 2', finBad.length === 0, finBad);
+// v1.402 (D.57 step 4): the Hollow's finale is the Big Game, last now (was Full-Auto Mayhem)
 check('the finales come out Bunratty 3v4, the Hollow 5v6, the lot 4v5, Northcliff 6v7, the school 6v7, Willow Bend 6v7, the Last Saturday 6v8',
-  fin.bunratty_night_team_2v2 === '3v4' && fin.hollow_full_auto_mayhem === '5v6' && fin.lot_night_4v4 === '4v5' &&
+  fin.bunratty_night_team_2v2 === '3v4' && fin.hollow_big_battle === '5v6' && fin.lot_night_4v4 === '4v5' &&
   fin.northcliff_night_4v4 === '6v7' && fin.school_night_4v4 === '6v7' && fin.club_night_4v4 === '6v7' && fin.last_saturday === '6v8', fin);
 
 // Their side is fixed: the same number with nobody, the first-time crew or all five
