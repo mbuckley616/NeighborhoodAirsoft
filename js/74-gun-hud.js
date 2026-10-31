@@ -307,7 +307,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.071, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'ak47') {
+    } else if (gunType === 'ak47' || gunType === 'rpk') {   // v1.396: and the RPK, on the AK's sights
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.07, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -854,6 +854,7 @@ const RETICLE_SPECS = {
   ar:      { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },
   sniper:  { style: 'fine_cross', baseGap: 6,  ringR: 0,  centerDot: 1.0 },
   ak47:    { style: 'circle_cross', baseGap: 12, ringR: 11, centerDot: 1.4 },
+  rpk:     { style: 'circle_cross', baseGap: 12, ringR: 11, centerDot: 1.4 },   // v1.396: the AK's
   mp5:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },
   ump:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },
   p90:     { style: 'circle_cross', baseGap: 10, ringR: 10, centerDot: 1.3 },   // v1.346: the UMP's, its ring a little wider

@@ -108,7 +108,8 @@ function gunForegripZ(weapon) {
     case 'ar':
     case 'erifle':  // v1.326
     case 'burst':   // v1.327
-    case 'ak47':    return 0.16;   // handguard ahead of the mag
+    case 'ak47':    // handguard ahead of the mag
+    case 'rpk':     return 0.16;   // v1.396: and the RPK's
     case 'famas':   return 0.15;   // v1.325: the bullpup's handguard, ahead of the grip
     case 'mp5':
     case 'ump':     return 0.12;   // compact body
@@ -184,7 +185,8 @@ function buildEnemyGunMesh(weapon) {
       grip(wood);
       break;
     }
-    case 'ak47': {
+    case 'ak47':
+    case 'rpk': {   // v1.396: the RPK in the kids' blocky style is the AK
       box(0.045, 0.07, 0.40, black, 0, 0, 0.18);         // receiver+barrel
       const mag = box(0.05, 0.15, 0.07, dark, 0, -0.11, 0.05); // banana mag...
       mag.rotation.x = 0.5;                              // ...curved forward

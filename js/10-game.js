@@ -961,6 +961,7 @@ const Game = {
       spare_mag_aug: 0,           // v1.372 (D.63 batch 3)
       spare_mag_m4: 0,            // v1.373 (D.63 batch 3)
       spare_mag_svd: 0,           // v1.395 (D.63 batch 4)
+      spare_mag_rpk: 0,           // v1.396 (D.63 batch 4)
     },
     equipped: {
       gun: 'pistol',

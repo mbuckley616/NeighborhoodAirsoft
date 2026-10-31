@@ -1306,6 +1306,32 @@ function buildFPM249() {
   return group;
 }
 
+// v1.396 (backlog D.63, Michael: A, batch 4): the RPK, on the AK's receiver, wood, grip, stock and sights (so its hands
+// and aimed picture are the AK's): the banana mag gives way to a round drum, the barrel runs on 7 cm past the AK's
+// muzzle to the orange tip, and a bipod lies folded under it.
+function buildFPRPK() {
+  const group = buildFPAK();
+  const steel = new THREE.MeshStandardMaterial({ color: 0x2a2b2c, roughness: 0.4, metalness: 0.6 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x1b1c1d, roughness: 0.55, metalness: 0.3 });
+  const tube = (r, len, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 12), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); group.add(m); return m; };
+  const old = group.getObjectByName('mag'); if (old) group.remove(old);
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.036, 20), black);
+  drum.rotation.z = Math.PI / 2; drum.position.set(0, -0.078, -0.085); drum.name = 'mag'; group.add(drum);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.040, 12), steel);
+  hub.rotation.z = Math.PI / 2; hub.position.copy(drum.position); group.add(hub);
+  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.030, 0.040), black);
+  neck.position.set(0, -0.025, -0.075); group.add(neck);                                     // the drum's feed into the receiver
+  // the barrel on past the AK's muzzle, the tip moved to its end
+  tube(0.009, 0.10, steel, 0, 0.025, -0.44);   // from inside the AK's muzzle to the tip
+  group.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHex() === 0xff7a1a) o.position.z = -0.50; });
+  // the bipod folded under the barrel: a yoke and two legs
+  const yoke = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.012, 0.012), steel);
+  yoke.position.set(0, 0.012, -0.455); group.add(yoke);
+  for (const sx of [-0.010, 0.010]) tube(0.0035, 0.11, steel, sx, 0.008, -0.395);
+  group.userData.gunType = 'rpk';
+  return group;
+}
+
 // --- MP5: slim, compact, curved mag, slim handguard, retractable stock ---
 function buildFPMP5() {
   const group = new THREE.Group();
@@ -1948,6 +1974,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'aug')     mesh = buildFPAUG();           // v1.372
   else if (gunType === 'm4')      mesh = buildFPM4();            // v1.373
   else if (gunType === 'svd')     mesh = buildFPSVD();           // v1.395
+  else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
   else mesh = buildFPGun();   // fallback
   attachFpHands(mesh, gunType);   // v1.219 (D.30): your hands on it
   mesh.visible = false;
@@ -1981,6 +2008,7 @@ const FP_HANDS = {
   svd:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.395: the sniper's stock, so its hands
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
+  rpk:     { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },   // v1.396: the AK's
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
   ump:     { r: { c: [0, -0.045, 0.018], rx: -0.20, gw: 0.016, gd: 0.015, up: -0.012 }, l: { kind: 'support', c: [0, 0.012, -0.16], hw: 0.017, hh: 0.017 }, underHand: true },
   p90:     { r: { c: [0, -0.066, -0.02], rx: -0.15, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'grip', c: [0, -0.066, -0.15], rx: 0, gw: 0.014, gd: 0.0125, up: -0.005 } },   // v1.346: the grip and the front stop

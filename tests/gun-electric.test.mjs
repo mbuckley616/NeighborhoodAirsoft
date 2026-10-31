@@ -263,8 +263,8 @@ const lmgShop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + lmgShop.names.join(' · '));
-check('M249: last of the fifteen (v1.373) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
-  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 15 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
+check('M249: last of the sixteen (v1.396) under AUTOMATICS with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
+  lmgShop.names[lmgShop.names.length - 1] === 'M249' && lmgShop.names.length === 16 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
 check('M249: you walk no slower with any gun (0.75), it is the heaviest (15 lb), and its BB is near the AK\'s', lmgShop.speed === 0.75 && lmgShop.speed <= lmgShop.minOther && lmgShop.weight > lmgShop.maxOtherWeight && Math.abs(lmgShop.vel[0] - lmgShop.vel[1]) <= 5, lmgShop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm249' }; });
 await g.scenario('bunratty_sean');
@@ -528,7 +528,7 @@ const augShop = await page.evaluate(() => {
 });
 console.log('   AUTOMATICS: ' + augShop.names.join(' · '));
 check('AUG: under AUTOMATICS after the M4 (v1.373), before the M249, with its picture, $290 from its page, in your hands',
-  augShop.names[augShop.names.indexOf('M4') + 1] === 'AUG' && augShop.names[augShop.names.indexOf('AUG') + 1] === 'M249' && augShop.pic && augShop.paid === 290 && augShop.equipped === 'aug', augShop);
+  augShop.names[augShop.names.indexOf('M4') + 1] === 'AUG' && augShop.names[augShop.names.indexOf('AUG') + 1] === 'RPK' && augShop.pic && augShop.paid === 290 && augShop.equipped === 'aug', augShop);
 check('AUG: the fastest, straightest BB of the rifles (58 m/s, 22 m; the AK 55, 20), tighter aimed (0.28, 0.35), 650 a minute (the AK 600, the G36C 700), a 330 mag (350), the AK\'s hip spread, no under-barrel slot',
   augShop.aug[1] === 58 && augShop.aug[2] === 22 && augShop.fastest && augShop.aug[5] < augShop.ak[5] && augShop.aug[0] === 650 && augShop.ak[0] < 650 && augShop.g36rpm > 650
   && augShop.caps[0] === 330 && augShop.caps[1] === 350 && augShop.aug[6] === augShop.ak[6] && augShop.aug[4] === 'auto' && augShop.caps[2] === 0, augShop);
@@ -578,7 +578,7 @@ const m4Shop = await page.evaluate(() => {
   out.m4 = [M.cyclicRPM, M.muzzleVelocity, M.curveOnsetDistance, M.playerSpeedMult, M.fireMode, M.adsSpreadMult, M.baseSpread];
   out.ak = [A.cyclicRPM, A.muzzleVelocity, A.curveOnsetDistance, A.playerSpeedMult, A.fireMode, A.adsSpreadMult, A.baseSpread];
   out.others = [G.cyclicRPM, U.cyclicRPM, G.adsSpreadMult, U.adsSpreadMult];
-  out.quickestRifle = ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96', 'ak47', 'g36', 'aug', 'm249'].every(gt => getGunSpec(gt).playerSpeedMult < M.playerSpeedMult);
+  out.quickestRifle = ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96', 'svd', 'ak47', 'g36', 'aug', 'rpk', 'm249'].every(gt => getGunSpec(gt).playerSpeedMult < M.playerSpeedMult);
   out.caps = [GUN_MAGS.m4.baseCap, GUN_MAGS.ak47.baseCap, getGunAccessoryCap('m4').under || 0, GUN_WEIGHT.m4, GUN_WEIGHT.g36];
   return out;
 });
@@ -699,5 +699,64 @@ console.log('   svd ' + JSON.stringify(SV));
 check('SVD: its own first-person gun, 20 in the mag, both hands on it, aimed the front post on the reticle (under 0.6°), a charging handle and no bolt', SV.mesh === 'svd' && SV.max === 20 && SV.hands && SV.sightErrDeg < 0.6 && SV.noBolt, SV);
 check('SVD: five pulls a second apart fire one BB each and it stays cocked (no bolt)', SV.per.length === 5 && SV.per.every(n => n === 1) && SV.cockedAfter, SV.per);
 check('SVD: pulled as fast as a finger goes, 1.5-2.5 pulls fire a second (its cycle, 2)', SV.pullsPerSec >= 1.5 && SV.pullsPerSec <= 2.5, SV.pullsPerSec);
+// v1.396 (D.63, batch 4): the RPK, the second light machine gun, the AK with a long barrel and a drum, before the M249
+const rpkShop = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  document.querySelector('#shopScreen .shop-gun-kind[data-kind="AUTOMATICS"]').click();
+  const names = [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim());
+  const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === 'RPK');
+  const pic = !!row.querySelector('img');
+  row.querySelector('.shop-item-buy').click();
+  const cash0 = Game.persist.cash;
+  [...document.querySelectorAll('#shopScreen .shop-item-buy')].find(b => /^BUY \$/.test(b.textContent)).click();
+  const text = document.querySelector('#shopScreen').textContent;
+  const out = { names, pic, paid: cash0 - Game.persist.cash, equipped: Game.persist.equipped.gun, spare: text.includes('Spare RPK Drum (600)') };
+  document.querySelector('#shopScreen .shop-back-btn').click(); closeShop();
+  const R = getGunSpec('rpk'), A = getGunSpec('ak47'), M = getGunSpec('m249');
+  out.rpk = [R.cyclicRPM, R.muzzleVelocity, R.curveOnsetDistance, R.playerSpeedMult, R.fireMode, R.adsSpreadMult];
+  out.ak = [A.cyclicRPM, A.muzzleVelocity, A.curveOnsetDistance, A.playerSpeedMult, A.fireMode, A.adsSpreadMult];
+  out.m249Walk = M.playerSpeedMult;
+  out.weights = [GUN_WEIGHT.rpk, GUN_WEIGHT.ak47, GUN_WEIGHT.m249];
+  return out;
+});
+console.log('   AUTOMATICS: ' + rpkShop.names.join(' · '));
+check('RPK: under AUTOMATICS after the AUG, before the M249, with its picture, $280 from its page, in your hands; the page sells its spare drum',
+  rpkShop.names[rpkShop.names.indexOf('AUG') + 1] === 'RPK' && rpkShop.names[rpkShop.names.indexOf('RPK') + 1] === 'M249' && rpkShop.pic && rpkShop.paid === 280 && rpkShop.equipped === 'rpk' && rpkShop.spare, rpkShop);
+check('RPK: against the AK a slower trigger (550 a minute), a faster BB (57 m/s) straight further (23 m), aimed tighter, a slower walk (0.8) but quicker than the M249; heavier than the AK, lighter than the M249',
+  rpkShop.rpk[0] === 550 && rpkShop.rpk[0] < rpkShop.ak[0] && rpkShop.rpk[1] === 57 && rpkShop.rpk[1] > rpkShop.ak[1] && rpkShop.rpk[2] > rpkShop.ak[2] && rpkShop.rpk[5] < rpkShop.ak[5]
+  && rpkShop.rpk[3] < rpkShop.ak[3] && rpkShop.rpk[3] > rpkShop.m249Walk && rpkShop.rpk[4] === 'auto' && rpkShop.weights[0] > rpkShop.weights[1] && rpkShop.weights[0] < rpkShop.weights[2], rpkShop);
+await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'rpk' }; });
+await g.scenario('bunratty_sean');
+const RK = await page.evaluate(() => {
+  Game.player.maxHits = 999; Game.player.pitch = 0;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const step = () => stepGame(1 / 60);
+  const out = { mesh: fpGun && fpGun.userData.gunType, max: Game.gun.maxAmmo };
+  for (let i = 0; i < 30; i++) step();
+  const a = Game.gun.ammo;
+  Game.mouseLMB = true; onLmbDown();
+  for (let i = 0; i < 120; i++) step();
+  Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp();
+  out.held2s = a - Game.gun.ammo;
+  for (let i = 0; i < 30; i++) step();
+  Game.player.adsTarget = 1;
+  for (let i = 0; i < 30; i++) { Game.player.ads = 1; step(); }
+  fpGun.updateMatrix();
+  let tip = null, orange = null;
+  fpGun.traverse(o => { if (o.userData && o.userData.frontSight) tip = o; if (o.isMesh && o.material.color && o.material.color.getHex() === 0xff7a1a) orange = o; });
+  tip.geometry.computeBoundingBox();
+  const p = new THREE.Vector3(0, tip.geometry.boundingBox.max.y, 0).add(tip.position).applyMatrix4(fpGun.matrix);
+  out.sightErrDeg = +(Math.atan2(Math.hypot(p.x, p.y), -p.z) * 180 / Math.PI).toFixed(2);
+  out.hands = !!(fpGun.userData.fpHands && fpGun.userData.fpHands.r && fpGun.userData.fpHands.l);
+  const mag = fpGun.getObjectByName('mag');
+  out.drum = !!(mag && mag.geometry.type === 'CylinderGeometry');
+  out.tipZ = orange && +orange.position.z.toFixed(3);
+  return out;
+});
+await g.shot('gun-rpk-aimed');
+console.log('   rpk ' + JSON.stringify(RK));
+check('RPK: its own first-person gun, 600 in the drum, a round drum, the tip out past the AK\'s (z -0.50, the AK -0.40), both hands on it, aimed the front post on the reticle (under 0.6°)',
+  RK.mesh === 'rpk' && RK.max === 600 && RK.drum && RK.tipZ === -0.5 && RK.hands && RK.sightErrDeg < 0.6, RK);
+check('RPK: held down 2 s it fires 17-20 BBs (9.2 a second)', RK.held2s >= 17 && RK.held2s <= 20, RK.held2s);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
