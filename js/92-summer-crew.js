@@ -521,8 +521,73 @@ function crewWiderPool(id) {
   }
   return [...seen].filter(k => !CREW_KID_GUNS[k]).map(charId => ({ charId, weapon: crewKidGun(charId) }));
 }
+// v1.397 (D.57 step 2, the plan's side consistency; Michael: B on "Who is in Marcus's crew", control room, 31 Oct): each
+// captain's crew. Seth's and Marcus's are cousins' crews and may stand together (B); Devon is Marcus's.
+const CAPTAIN_CREWS = {
+  seth:     SETH_CREW_ROSTER,
+  marcus:   ['marcus', 'jamie', 'devon'],
+  mitchell: ['mitchell', 'ryan', 'owen', 'joe', 'chris'],
+  mason:    ['mason', 'christian', 'fernando', 'haden', 'connor'],
+  jordan:   ['jordan', 'caleb', 'nathan', 'sophie', 'grant', 'malik'],
+};
+// The crew each zone plays against (the store's captain is Tyler, Seth's lieutenant: Seth's crew)
+const ZONE_CAPTAINS = { winnmark_court: 'seth', bunratty_court: 'mitchell', hollow: 'seth', market_lot: 'marcus', northcliff: 'mason',
+  high_school: 'jordan', country_club: 'seth', grocery_store: 'seth' };
+// A kid of Seth's crew the street can bring in only once you know he's with Seth (Evan "lives up in northcliff now",
+// Andrew goes with Seth after the twins' treehouse, Garrett and Colin after Bellfield's flags)
+const SETH_CREW_KNOWN = { evan: 'lot_night_4v4', andrew: 'stoneglen_hold_treehouse', garrett: 'bellfield_ctf', colin: 'bellfield_ctf' };
+function captainOf(kid) {
+  for (const c in CAPTAIN_CREWS) if (CAPTAIN_CREWS[c].includes(kid)) return c;
+  return null;
+}
+// May this kid play against you in this zone? Your crew and Rebecca never; Seth's crew anywhere (Seth is the rival who
+// turns up everywhere, and his crew with him); Marcus's where Seth or Marcus captains; Mitchell's, Mason's and Jordan's
+// only on their own captain's street
+function sideFoeOk(kid, zoneCap, crew) {
+  if (crew.includes(kid) || kid === 'rebecca') return false;
+  const c = captainOf(kid);
+  if (!c || c === 'seth') return true;
+  if (c === 'marcus') return zoneCap === 'seth' || zoneCap === 'marcus';
+  return c === zoneCap;
+}
+// May this kid stand with you? Never one of Seth's crew or his cousin's, nor a kid against his own captain; a kid of
+// another street's crew may make up your numbers (every kid in the game is in some crew)
+function sideAllyOk(kid, zoneCap) {
+  const c = captainOf(kid);
+  return !c || (c !== 'seth' && c !== 'marcus' && c !== zoneCap);
+}
+// The plan's side rule on a match's sides: a kid on the wrong side is swapped at his spot (his gun, role and place kept,
+// so every count stays the same) for one who may play there, the zone's own crew first; an ally with nobody to take his
+// place is dropped (as a benched kid's place stays empty). Free-for-alls and callouts keep their kids; so does Winnmark,
+// your tryouts on Seth's street (a turned replay's crossing is crewSides' own). Your VIP is the match's (step 4 renames
+// Protect Ryan as Cover Nick).
+function crewSideRule(id, setup) {
+  const ctx = findScenarioListContext(id), type = matchType(id);
+  if (!setup || !ctx || !type || type === 'ffa' || type === 'callout' || ctx.group === 'winnmark_court') return setup;
+  const zoneCap = ZONE_CAPTAINS[ctx.group], crew = crewMembers(), pos = crewLadderPos(id);
+  const known = k => !SETH_CREW_KNOWN[k] || pos > crewLadderPos(SETH_CREW_KNOWN[k]);
+  const bad = setup.filter(es => !es.vip && es.charId && (es.team === 'player' ? !sideAllyOk(es.charId, zoneCap) : !sideFoeOk(es.charId, zoneCap, crew)));
+  if (!bad.length) return setup;
+  const used = new Set(setup.map(es => es.charId));
+  const order = [zoneCap, zoneCap === 'marcus' ? 'seth' : zoneCap === 'seth' ? 'marcus' : 'seth', 'marcus']
+    .filter((c, i, a) => a.indexOf(c) === i).flatMap(c => CAPTAIN_CREWS[c]);
+  const out = [];
+  for (const es of setup) {
+    if (!bad.includes(es)) { out.push(es); continue; }
+    // an ally from another street's crew (never a captain), the streets in ladder order; nobody left, his place stays empty
+    const k = es.team === 'player'
+      ? ['mitchell', 'mason', 'jordan'].flatMap(c => CAPTAIN_CREWS[c].slice(1)).find(k => !used.has(k) && sideAllyOk(k, zoneCap))
+      : order.find(k => k !== 'seth' && !used.has(k) && known(k) && sideFoeOk(k, zoneCap, crew));
+    if (!k && es.team === 'player') continue;
+    if (!k) { out.push(es); continue; }   // nobody left who may play here: the match keeps its kid (the suite names any)
+    used.add(k);
+    out.push(Object.assign({}, es, { charId: k, sideSwap: es.charId }));
+  }
+  return out;
+}
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
-function crewSetup(id) {
+function crewSetup(id) { return crewSideRule(id, crewSetupSides(id)); }   // v1.397: and the plan's side rule
+function crewSetupSides(id) {
   const sc = SCENARIOS[id];
   if (!sc || !crewTeamMatch(id)) return sethSetup(id);   // v1.362: Seth's zone match
   const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
