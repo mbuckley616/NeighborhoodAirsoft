@@ -364,7 +364,8 @@ function crewKidOwnGun(e) {
   for (const c of parts) gg.add(c);
   gg.userData.gunParts = parts;
 }
-const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean' };
+const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean',
+  winnmark_night_team_2v2: 'eric' };   // v1.404 (D.57 step 4): Seth Picks Teams, Eric beside you until he is in your crew
 const crewBench = new Set();
 function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); }
 function crewTeamMatch(id) {
@@ -427,7 +428,7 @@ function matchTypeLine(id, setup) {
   if (type === 'callout') return crew.length ? 'A callout. Your crew watches from the curb.' : 'A callout. Just you and them.';
   if (type === 'ffa') return "Everybody for themselves. Crews don't count today.";
   if (type === 'clutch') return crewFielded().length ? "Your crew's already out. It's on you." : "It's on you.";
-  if (type === 'nocrew') return "You're the new kid on Seth's street.";
+  if (type === 'nocrew') return id === WINNMARK_FINALE ? "Seth picked his team, and it isn't you. Eric's with you." : "You're the new kid on Seth's street.";   // v1.404: Seth Picks Teams
   if (type === 'solo') return crew.length ? "You snuck out alone. Your crew's asleep." : 'You snuck out alone.';
   return '';
 }
@@ -462,7 +463,7 @@ function crewFinale(id) {
   const ctx = findScenarioListContext(id);
   return !!ctx && ctx.idx === ctx.ids.length - 1;
 }
-const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
+const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // v1.404: Seth Picks Teams, where Seth turns (was Seth beside you, the last time)
 // v1.362 (D.28 step 5, Michael: C on "Seth in every zone", control room, 27 Oct): Seth turns up once in each zone as
 // the rival, on a better gun with better aim each time, at his best in the Last Saturday. One match per zone, mostly its
 // finale; where he was not in it he takes one kid's place (his spot, not his role), so every count stays the same. At

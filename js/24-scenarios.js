@@ -947,11 +947,12 @@ const SCENARIOS = {
     playerLives: 1, armorMult: 1,
   },
 
-  // === Winnmark NIGHT — team battle, You + Seth vs Trey + Brooke ===
+  // === Winnmark NIGHT — the finale. v1.404 (D.57 step 4, the plan's "Seth Picks Teams"): Seth turns here. He picks
+  // Trey and Brooke, and Eric, who came over to watch, plays with you: you and Eric v Seth, Trey and Brooke ===
   winnmark_night_team_2v2: {
     region: 'horseshoe_bend', street: 'winnmark_ct',
-    name: 'Winnmark Court', scenarioName: 'Night Game: Two on Two',
-    desc: "Two-on-two, but at night. You and Seth against Trey and Brooke, three lives for every kid but you, respawning at their base flags until one side's wiped out. One of them's running a flashlight — it'll give away their push, but it'll also pin you if you're caught in the open. Fight around the lamps and the dark stretches between them.",   // v1.182: promised everyone lives; you have one (playerLives 1)
+    name: 'Winnmark Court', scenarioName: 'Seth Picks Teams',   // v1.404: was Night Game: Two on Two
+    desc: "Night game on Winnmark, and Seth picks the teams. He picks Trey. He picks Brooke. He doesn't pick you. Eric came over to watch, so it's you and Eric against Seth's crew, three lives for every kid, you too, respawning at your flags until one side's out. One of them's running a flashlight: it gives away their push, and it'll pin you if you're caught in the open. Fight around the lamps and the dark stretches between them.",   // v1.404 (D.57 step 4): Seth Picks Teams
     builderFn: 'buildWinnmarkCourtScene',
     builderArg: 'seth_yards',   // v1.341 (D.51 step 4): Seth's area
     timeOfDay: 'night',
@@ -959,13 +960,14 @@ const SCENARIOS = {
     playerSpawn: 'road_east',
     enemySpawnCluster: 'cluster_west',   // v1.341: they gather out of sight (the west lot's wood), not on the open street
     enemySetup: [
-      { charId: 'seth',   weapon: 'pistol',  anchor: 'house2_backyard', team: 'player' },
+      { charId: 'eric',   weapon: 'pistol',  anchor: 'house2_backyard', team: 'player' },   // v1.404: Eric beside you (was Seth)
+      { charId: 'seth',   weapon: 'pistol',  anchor: 'seth_backyard', role: 'skirmisher' },   // v1.404: Seth turns
       { charId: 'trey',   weapon: 'pistol',  anchor: 'trey_backyard'   },
       { charId: 'brooke', weapon: 'shotgun', anchor: 'house7_backyard' },
     ],
     winCondition: 'last_team_standing',
     rewards: { win: 46, lose: 12 },
-    playerLives: 1, armorMult: 1,
+    playerLives: 3, armorMult: 1,   // v1.404: three lives at 2 v 3 (the plan: lost 4 of 4 at 2 v 2 with the starter pistol)
   },
 
   // === Bunratty NIGHT — skirmish, the brothers running the dark lane ===

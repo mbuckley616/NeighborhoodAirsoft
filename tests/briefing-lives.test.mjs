@@ -29,7 +29,11 @@ console.log('   briefings read:', scan.read, 'promising lives to everyone:', JSO
 check('no one-life briefing promises everyone lives or respawns', scan.promises.length === 0, scan.promises);
 check('every "N lives for every kid but you" names the kids\' real lives', scan.wrongCount.length === 0, scan.wrongCount);
 
-for (const [id, lives] of [['hollow_2v4_night', 5], ['hollow_skirmish_3v3', 5], ['bunratty_night_team_2v2', 3], ['winnmark_night_team_2v2', 3]]) {
+// v1.404 (D.57 step 4): Winnmark's finale, Seth Picks Teams, gives you three lives too, and its card says so
+await g.scenario('winnmark_night_team_2v2');
+const spt = await page.evaluate(() => ({ desc: document.getElementById('introDesc').textContent, playerLives: SCENARIOS.winnmark_night_team_2v2.playerLives }));
+check('Seth Picks Teams: three lives for you, and the card says three lives for every kid, you too', spt.playerLives === 3 && /three lives for every kid, you too/i.test(spt.desc), spt);
+for (const [id, lives] of [['hollow_2v4_night', 5], ['hollow_skirmish_3v3', 5], ['bunratty_night_team_2v2', 3]]) {
   await g.scenario(id);
   const card = await page.evaluate(id => ({ desc: document.getElementById('introDesc').textContent, playerLives: SCENARIOS[id].playerLives }), id);
   check(`${id} gives the player one life`, card.playerLives === 1, card.playerLives);

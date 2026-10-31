@@ -41,9 +41,10 @@ check('every ordinary team match keeps its own margin the first time through (th
 const gy = rule.find(r => r.id === 'store_night_4v4'), d2 = rule.filter(r => r.downTwo);
 check('Graveyard Shift, Tyler\'s finale, is one more than you; Down Two and Down Two in the Dark are two more (v1.403)',
   gy && gy.theirs === gy.ours + 1 && d2.length === 2 && d2.every(r => r.theirs === r.ours + 2), { gy, d2 });
-const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 2
+// v1.404 (D.57 step 4): Winnmark's finale is Seth Picks Teams, you and Eric v Seth, Trey and Brooke (was 2 v 2, Seth beside you)
+const finBad = finales.filter(r => r.id === 'winnmark_night_team_2v2' ? r.ours !== 2 || r.theirs !== 3
   : r.id === 'last_saturday' ? r.theirs !== r.ours + 2 : r.theirs !== r.ours + 1);
-check('every finale: their side one more than yours, the Last Saturday two more, Lights Out still 2 v 2', finBad.length === 0, finBad);
+check('every finale: their side one more than yours, the Last Saturday two more, Seth Picks Teams 2 v 3', finBad.length === 0, finBad);
 // v1.402 (D.57 step 4): the Hollow's finale is the Big Game, last now (was Full-Auto Mayhem)
 check('the finales come out Bunratty 3v4, the Hollow 5v6, the lot 4v5, Northcliff 6v7, the school 6v7, Willow Bend 6v7, the Last Saturday 6v8',
   fin.bunratty_night_team_2v2 === '3v4' && fin.hollow_big_battle === '5v6' && fin.lot_night_4v4 === '4v5' &&
@@ -101,7 +102,7 @@ s = await count('winnmark_team_3v3', ALL, ['winnmark_night_team_2v2']);
 check('Squad Up replayed after Lights Out with all five: your five v Seth and two, Trey with him', s.ours === 6 && s.theirs === 3 &&
   s.theirIds.includes('seth') && s.theirIds.includes('trey') && !s.oursIds.includes('seth'), s);
 s = await count('winnmark_night_team_2v2', ['eric'], ['winnmark_night_team_2v2']);
-check('Lights Out replayed with Eric: you and Eric v Seth and one', s.oursIds.join() === 'eric' && s.theirs === 2 && s.theirIds[0] === 'seth', s);
+check('Seth Picks Teams replayed with Eric: you and Eric v Seth and two (v1.404)', s.oursIds.join() === 'eric' && s.theirs === 3 && s.theirIds[0] === 'seth', s);
 
 // In the match: the field is the sides, the new kids play, nothing errors
 for (const [id, crew, done] of [['last_saturday', ALL, []], ['northcliff_night_4v4', [], []], ['bunratty_night_team_2v2', ['eric'], []],
