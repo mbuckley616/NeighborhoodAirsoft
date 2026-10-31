@@ -47,7 +47,6 @@ function renderScenarioCard(scenarioId, num, isNext) {
   if (sc.vip) badges.push('★ VIP');                               // v1.170
   if (sc.ctf) badges.push('⚑ FLAGS');                             // v1.189
   if (sc.timerSec && /survive/.test(sc.winCondition || '')) badges.push('⏱ ' + sc.timerSec + 's');
-  if (isSideMatch(scenarioId)) badges.push('SIDE');             // v1.402 (D.57 step 4): pays, doesn't gate
   const brief = getScenarioBriefing(scenarioId);
   const lives = brief ? brief.player.lives : 1;
   const stamp = locked ? '' : completed ? '<span class="sc-card-stamp done">✓ DONE</span>'
@@ -69,7 +68,7 @@ function renderScenarioCard(scenarioId, num, isNext) {
         ${stamp}
       </div>
       <div class="sc-card-title">${locked ? '🔒 ' : ''}${sc.scenarioName}</div>
-      <div class="sc-card-meta">${sc.name} · ♥ ${(sc.vip || sc.ctf) ? '∞' : lives + ' ' + (lives === 1 ? 'life' : 'lives')}</div>
+      <div class="sc-card-meta">${isSideMatch(scenarioId) ? '<span class="sc-card-side">SIDE</span> · ' : ''}${sc.name} · ♥ ${(sc.vip || sc.ctf) ? '∞' : lives + ' ' + (lives === 1 ? 'life' : 'lives')}</div>
       ${foot}
     </div>
   `;
