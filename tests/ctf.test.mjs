@@ -47,7 +47,7 @@ check('enters as a capture-the-flag match, first to 2', built.mode === 'scenario
 check('two flags on clear ground in the match\'s scene: ours within 6 m of your start, theirs over 45 m off',
   built.flags.length === 2 && built.flags.every(f => f.clear && f.inScene) && built.flags[0].fromPlayer < 6 && built.flags[1].fromPlayer > 45, built.flags);
 check('the backyard lanes are on clear ground', built.lanes.length === 2 && built.lanes.every(l => l[2]), built.lanes);
-// v1.397 (D.57 step 2): your runner is the match's (Andrew as written; with no crew of yours, Seth's Andrew gives his
+// v1.400 (D.57 step 2): your runner is the match's (Andrew as written; with no crew of yours, Seth's Andrew gives his
 // place to Ryan, the side rule)
 const RUN = (built.runners.find(r => r.endsWith(':player')) || 'Andrew:player').split(':')[0];
 check(`${RUN} runs for their flag and Mason for ours`, built.runners.join() === `${RUN}:player,Mason:enemy`, built.runners);

@@ -16,7 +16,7 @@ const same = await page.evaluate(() => {
   const empty = ids.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup && !crewFirstTime(id).length);
   Game.persist.crew = CREW_ROSTER.slice();
   const solo = ids.filter(id => !crewTeamMatch(id));
-  // (v1.398, D.57 step 3: a captain's notch on his aim copies the sides; the kids and their sides are what must not change)
+  // (v1.401, D.57 step 3: a captain's notch on his aim copies the sides; the kids and their sides are what must not change)
   const cast = s => (s || []).map(es => es.charId + ':' + (es.team || '')).join();
   const soloChanged = solo.filter(id => cast(crewSetup(id)) !== cast(sethSetup(id)));
   const team = ids.filter(crewTeamMatch);

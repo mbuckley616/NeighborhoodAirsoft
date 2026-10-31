@@ -269,7 +269,7 @@ function crewColor() {
   return CREW_COLORS.some(k => k.hex === c) ? c : null;
 }
 function crewWornBy(sc, es, team) {
-  // v1.398 (D.57 step 3): a kid on the other side wears his captain's crew's colour (none in the Pickup Game or online)
+  // v1.401 (D.57 step 3): a kid on the other side wears his captain's crew's colour (none in the Pickup Game or online)
   if (team !== 'player') return sc.tutorial || sc.pickup || sc.net || es.vip ? null : captainColorOf(es.charId);
   if (es.vip || sc.tutorial || es.charId === 'seth') return null;
   return crewColor();
@@ -1027,6 +1027,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_m4',      name: 'Spare 300-rd M4 Mag' },   // v1.373
     { refId: 'spare_mag_svd',     name: 'Spare 20-rd SVD Mag' },   // v1.395
     { refId: 'spare_mag_rpk',     name: 'Spare 600-rd RPK Drum' },   // v1.396
+    { refId: 'spare_mag_spas',    name: 'Spare 45-rd SPAS Shells' },   // v1.398
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1304,7 +1305,7 @@ function renderBBsTab(c, between) {
 // entry here; a gun missing from it goes by its fire mode (automatic or rifle).
 const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol'] },   // v1.326: the electrics after their spring kin
-  { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'semishotgun'] },   // v1.328
+  { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'spas', 'semishotgun'] },   // v1.328; v1.398: the SPAS-12 before it
   { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'sniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'mac10', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them
 ];

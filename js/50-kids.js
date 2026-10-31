@@ -104,6 +104,7 @@ function gunForegripZ(weapon) {
     case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
+    case 'spas':    return 0.18;   // v1.398: its pump
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
     case 'ar':
     case 'erifle':  // v1.326
@@ -151,7 +152,8 @@ function buildEnemyGunMesh(weapon) {
 
   switch (weapon) {
     case 'shotgun':
-    case 'semishotgun': {   // v1.328: the Semi-Auto Shotgun in the kids' blocky style is the shotgun
+    case 'semishotgun':     // v1.328: the Semi-Auto Shotgun in the kids' blocky style is the shotgun
+    case 'spas': {          // v1.398: and the SPAS-12
       box(0.05, 0.08, 0.42, black, 0, 0, 0.20);          // long receiver+barrel
       box(0.045, 0.05, 0.16, dark, 0, -0.05, 0.16);      // pump fore-grip slung under
       box(0.05, 0.10, 0.09, wood, 0, -0.02, -0.05);      // wood stock wrist
@@ -873,7 +875,7 @@ function createKid(profile, weapon = 'pistol') {
     group.add(hat);
     if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
     headExtras.push(hat);
-  } else if (p.crewColor != null && (CREW_COLORS.some(c => c.hex === p.crewColor) || Object.values(CAPTAIN_COLORS).includes(p.crewColor))) {   // v1.398: a captain's crew's
+  } else if (p.crewColor != null && (CREW_COLORS.some(c => c.hex === p.crewColor) || Object.values(CAPTAIN_COLORS).includes(p.crewColor))) {   // v1.401: a captain's crew's
     // v1.200 (D.21, your crew): no hat on, so the crew's bandana in its colour; you and your allies wear it
     hat = buildKidHat('bandana_red', p.crewColor);
     hat.userData.crewBandana = true;

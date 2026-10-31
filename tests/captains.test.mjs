@@ -1,4 +1,4 @@
-// v1.398 (D.57 step 3, the plan's Crew Captains; Michael: all of docs/crew_ladder.md, 22 Oct): each captain's crew
+// v1.401 (D.57 step 3, the plan's Crew Captains; Michael: all of docs/crew_ladder.md, 22 Oct): each captain's crew
 // wears its own colour, has a heading and a score line on the briefing, its captain's callout says whose, its finale is
 // the captain's whole crew with him in it at plus one, the captain is a notch better than his crew, and beating the
 // finale pins the crew's bandana over the Pickup board.

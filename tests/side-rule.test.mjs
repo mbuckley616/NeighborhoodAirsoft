@@ -1,4 +1,4 @@
-// v1.397 (D.57 step 2, docs/crew_ladder.md's side consistency; Michael: B on "Who is in Marcus's crew", 31 Oct): a kid
+// v1.400 (D.57 step 2, docs/crew_ladder.md's side consistency; Michael: B on "Who is in Marcus's crew", 31 Oct): a kid
 // in your crew is never against you outside a free-for-all or a callout, Rebecca never is, nobody in a captain's crew
 // stands with you after Winnmark, and a captain's crew plays only for its own captain (Seth's and Marcus's, the
 // cousins', together; Seth's crew is the rival's and turns up anywhere). A kid on the wrong side is swapped at his spot,

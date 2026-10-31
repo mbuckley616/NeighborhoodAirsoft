@@ -420,7 +420,7 @@ function matchTypeLine(id, setup) {
     const others = ours.filter(es => !es.vip).map(es => name(es.charId));
     return others.length ? `No crew yet: ${list(others)} ${others.length > 1 ? 'play' : 'plays'} with you today.` : "It's just you today.";
   }
-  // v1.398 (D.57 step 3): a captain's callout says whose
+  // v1.401 (D.57 step 3): a captain's callout says whose
   const ctx = findScenarioListContext(id), cap = ctx && ZONE_CAPTAIN_KID[ctx.group];
   const capIn = type === 'callout' && cap && cap !== 'seth' && (setup || crewSetup(id) || []).some(es => es.charId === cap && es.team !== 'player');
   if (capIn) return `${captainName(cap)} calls you out. ${crew.length ? 'Your crew watches from the curb.' : 'Just you and them.'}`;
@@ -525,7 +525,7 @@ function crewWiderPool(id) {
   }
   return [...seen].filter(k => !CREW_KID_GUNS[k]).map(charId => ({ charId, weapon: crewKidGun(charId) }));
 }
-// v1.397 (D.57 step 2, the plan's side consistency; Michael: B on "Who is in Marcus's crew", control room, 31 Oct): each
+// v1.400 (D.57 step 2, the plan's side consistency; Michael: B on "Who is in Marcus's crew", control room, 31 Oct): each
 // captain's crew. Seth's and Marcus's are cousins' crews and may stand together (B); Devon is Marcus's.
 const CAPTAIN_CREWS = {
   seth:     SETH_CREW_ROSTER,
@@ -599,7 +599,7 @@ function crewSideRule(id, setup) {
   }
   return out;
 }
-// v1.398 (D.57 step 3, the plan's Crew Captains): each captain's crew wears its own colour (a bandana, as yours does;
+// v1.401 (D.57 step 3, the plan's Crew Captains): each captain's crew wears its own colour (a bandana, as yours does;
 // colours none of the mirror's six, so yours never matches theirs), has a heading and a score line on the briefing,
 // calls you out with its captain's name, and plays its finale whole, the captain in it. Beating a captain's finale pins
 // his crew's bandana over the Pickup board in your room. Tyler captains the store for Seth: Seth's crew and colour.
@@ -665,7 +665,7 @@ function crewCaptainEdge(id, setup) {
   });
 }
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
-// (v1.397: and the plan's side rule; v1.398: a captain's finale whole, the captain a notch better)
+// (v1.400: and the plan's side rule; v1.401: a captain's finale whole, the captain a notch better)
 function crewSetup(id) { return crewCaptainEdge(id, crewCaptainFinale(id, crewSideRule(id, crewSetupSides(id)))); }
 function crewSetupSides(id) {
   const sc = SCENARIOS[id];

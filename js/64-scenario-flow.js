@@ -1097,7 +1097,7 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   const rivalId = Game.scenario.active;   // v1.196: a match against Seth's crew says how it went and the summer's score
   const rival = isRivalMatch(rivalId) ? rivalResultLine(rivalId, outcome, outcome === 'win' && !wonBefore) : '';
   if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
-  // v1.398 (D.57 step 3): the captain's crew's score, and his bandana for your wall the first time you beat his finale
+  // v1.401 (D.57 step 3): the captain's crew's score, and his bandana for your wall the first time you beat his finale
   const cap = captainOfMatch(rivalId);
   if (cap) html += `<div class="rs-new rs-captain"><span class="rs-tag">CAPTAIN</span> ${captainCrewName(cap)}: ${rivalScoreText(captainScore(cap))}.</div>`;
   const fin = captainFinaleOf(rivalId);

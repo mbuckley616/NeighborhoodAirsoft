@@ -1317,7 +1317,7 @@ function buildBedroomScene() {
   }
   pickupGroup.position.set(1.65, 1.5, -BR_D/2 + 0.062);
   scene.add(pickupGroup);
-  // v1.398 (D.57 step 3): each captain's crew you've beaten in its finale pins its bandana in a row over the board,
+  // v1.401 (D.57 step 3): each captain's crew you've beaten in its finale pins its bandana in a row over the board,
   // folded to a triangle, in the ladder's order (Tyler's is Seth's red, with a stripe)
   const won = captainBandanasWon();
   won.forEach((cap, i) => {

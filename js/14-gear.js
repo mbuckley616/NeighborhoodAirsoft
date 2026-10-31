@@ -36,6 +36,7 @@ const MAG_GUN_FIT = {
   spare_mag_m4: 'm4',   // v1.373
   spare_mag_svd: 'svd',   // v1.395
   spare_mag_rpk: 'rpk',   // v1.396
+  spare_mag_spas: 'spas',   // v1.398
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -54,7 +55,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'aug',   // v1.372 (D.63 batch 3): the bullpup rifle
   'm4',   // v1.373 (D.63 batch 3): the all-round rifle
   'svd',   // v1.395 (D.63 batch 4): the battery sniper
-  'rpk'];   // v1.396 (D.63 batch 4): the second light machine gun
+  'rpk',   // v1.396 (D.63 batch 4): the second light machine gun
+  'spas'];   // v1.398 (D.63 batch 5): the second pump shotgun
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -88,6 +90,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm4') return Game.persist.owned.m4_mag_450 ? 450 : 300;   // v1.373: its black curved mag
   if (gunType === 'svd') return Game.persist.owned.svd_mag_30 ? 30 : 20;   // v1.395: its curved mag
   if (gunType === 'rpk') return Game.persist.owned.rpk_mag_1000 ? 1000 : 600;   // v1.396: its drum
+  if (gunType === 'spas') return Game.persist.owned.spas_mag_72 ? 72 : 45;   // v1.398: 15 shells of three, or 24
   if (gunType === 'sniper') {
     if (Game.persist.owned.sniper_mag_25) return 25;
     return 15;
@@ -224,6 +227,7 @@ const GUN_ACCESSORY_CAP = {
   m4:      { sight: 1, rails: 2, under: 1 },   // v1.373: a rail on every side of its handguard
   svd:     { sight: 1, rails: 2, under: 1 },   // v1.395: the sniper's
   rpk:     { sight: 1, rails: 2, under: 1 },   // v1.396: the AK's
+  spas:    { sight: 1, rails: 2, under: 1 },   // v1.398: the shotgun's
 };
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -611,8 +615,16 @@ const GUN_MAGS = {
     mags: [ { flag: 'rpk_mag_1000', cap: 1000, price: 45 } ],
     spares: [ { key: 'spare_mag_rpk', label: 'Spare RPK Drum (600)', price: 28 } ],
   },
+  // v1.398 (backlog D.63, batch 5): the SPAS-12, a second pump shotgun: three BBs every pump, tighter and faster than the
+  // Spring Shotgun's two or three, for a slower pump and a heavier gun
+  spas: {
+    displayName: 'SPAS-12', baseCap: 45, price: 140, ownFlag: 'spas',
+    blurb: 'A heavy black pump shotgun with a vented shield over its barrel and a folding metal stock. Every pump throws three BBs, never two, in a tighter, faster cloud than the Spring Shotgun\'s. The pump is slower and the gun is heavier. Its shells hold 45 BBs, fifteen shots.',
+    mags: [ { flag: 'spas_mag_72', cap: 72, price: 22 } ],
+    spares: [ { key: 'spare_mag_spas', label: 'Spare SPAS Shells (45)', price: 14 } ],
+  },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','semishotgun','ar','famas','erifle','burst','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','shotgun','thunder','spas','semishotgun','ar','famas','erifle','burst','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -811,6 +823,7 @@ function describeSlot(idx) {
       spare_mag_m4: 300,   // v1.373
       spare_mag_svd: 20,   // v1.395
       spare_mag_rpk: 600,   // v1.396
+      spare_mag_spas: 45,   // v1.398
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -841,6 +854,7 @@ function describeSlot(idx) {
       spare_mag_m4: 'Spare 300-rd M4 Mag',   // v1.373
       spare_mag_svd: 'Spare 20-rd SVD Mag',   // v1.395
       spare_mag_rpk: 'Spare 600-rd RPK Drum',   // v1.396
+      spare_mag_spas: 'Spare 45-rd SPAS Shells',   // v1.398
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1037,6 +1051,7 @@ const GUN_WEIGHT = {
   m4: 6.5,                                                // v1.373: the lightest of the rifles
   svd: 9,                                                 // v1.395: lighter than the bolt guns (10, 11)
   rpk: 11,                                                // v1.396: the AK's 8 with a long barrel and a drum; the M249 15
+  spas: 8.5,                                              // v1.398: steel, heavier than the Spring Shotgun (6)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
 const MAG_WEIGHT = {
@@ -1060,6 +1075,7 @@ const MAG_WEIGHT = {
   spare_mag_m4: 1.3,   // v1.373
   spare_mag_svd: 0.9,   // v1.395
   spare_mag_rpk: 3,   // v1.396
+  spare_mag_spas: 1.5,   // v1.398
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1508,6 +1524,10 @@ GUN_SPECS.svd = Object.assign({}, GUN_SPECS.sniper, { electric: true, semiRPM: 1
 // a faster BB (57 m/s, 55) straight for 23 m (20), aimed 0.33 (0.35); heavier, so a slower walk (0.8, 0.85; the M249
 // 0.75), and the drum takes 0.9 s to rack (0.6)
 GUN_SPECS.rpk = Object.assign({}, GUN_SPECS.ak47, { cyclicRPM: 550, muzzleVelocity: 57, curveOnsetDistance: 23, adsSpreadMult: 0.33, playerSpeedMult: 0.8, cockTime: 0.9, displayName: 'RPK' });
+// v1.398 (D.63, batch 5): the SPAS-12, the Spring Shotgun's pump with three BBs every time (2-3), a faster BB (34 m/s, 30),
+// a tighter cloud (0.42, 0.55) that stays straight for longer (10 m, 8); for it a slower pump (1.0 s, 0.85) and a
+// slower walk (0.92, 1.0)
+GUN_SPECS.spas = Object.assign({}, GUN_SPECS.shotgun, { pelletsPerShot: () => 3, muzzleVelocity: 34, baseSpread: 0.42, curveOnsetDistance: 10, cockTime: 1.0, playerSpeedMult: 0.92, displayName: 'SPAS-12' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

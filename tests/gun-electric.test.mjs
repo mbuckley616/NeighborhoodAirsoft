@@ -205,8 +205,8 @@ const ssShop = await page.evaluate(() => {
   return out;
 });
 console.log('   SHOTGUNS: ' + ssShop.names.join(' · '));
-check('Semi-Auto Shotgun: under SHOTGUNS after the Thunder Pump with its picture, $160 from its page, in your hands; the page says electric semi',
-  JSON.stringify(ssShop.names) === '["Spring Shotgun","Thunder Pump","Semi-Auto Shotgun"]' && ssShop.pic && ssShop.paid === 160 && ssShop.equipped === 'semishotgun' && ssShop.says, ssShop);
+check('Semi-Auto Shotgun: under SHOTGUNS last (v1.398: after the SPAS-12) with its picture, $160 from its page, in your hands; the page says electric semi',
+  JSON.stringify(ssShop.names) === '["Spring Shotgun","Thunder Pump","SPAS-12","Semi-Auto Shotgun"]' && ssShop.pic && ssShop.paid === 160 && ssShop.equipped === 'semishotgun' && ssShop.says, ssShop);
 await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'semishotgun' }; });
 await g.scenario('bunratty_sean');
 const SS = await page.evaluate(() => {

@@ -78,7 +78,7 @@ const t4 = await page.evaluate(() => {
 check('let go, the trigger fires', t4 === 1, t4);
 
 // --- a kid on each side
-// (v1.397, D.57 step 2: the kid on yours is the match's first ally; Evan as written, Owen when the side rule takes
+// (v1.400, D.57 step 2: the kid on yours is the match's first ally; Evan as written, Owen when the side rule takes
 // Seth's Evan off your side)
 for (const name of ['Mason', null]) {
   await g.scenario(ID);
