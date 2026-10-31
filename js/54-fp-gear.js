@@ -25,6 +25,7 @@ const FP_GUN_MOUNT = {
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   l96:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.336: the sniper's
+  m14:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.404: the sniper's
   svd:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.395: the sniper's
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
   rpk:     { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },   // v1.396: the AK's
@@ -727,6 +728,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
+  else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);

@@ -120,8 +120,8 @@ const burstShop = await page.evaluate(() => {
   return out;
 });
 console.log('   RIFLES: ' + burstShop.names.join(' · '));
-check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst (v1.395: the SVD last)',
-  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Electric Rifle","Burst Rifle","Spring Sniper Rifle","L96","SVD"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
+check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst (v1.395: the SVD last; v1.404: the M14 after it)',
+  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Electric Rifle","Burst Rifle","M14","Spring Sniper Rifle","L96","SVD"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
 await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'burst' }; });
 await g.scenario('bunratty_sean');
 const B = await page.evaluate(() => {

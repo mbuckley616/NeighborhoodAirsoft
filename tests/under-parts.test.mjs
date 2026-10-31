@@ -90,7 +90,7 @@ const geo = await page.evaluate(() => {
 });
 for (const r of geo) console.log('  ', JSON.stringify(r));
 const longs = geo.filter(r => !('none' in r));
-check('every long gun (19, with the FAMAS, the Electric Rifle, the Burst Rifle, the Semi-Auto Shotgun, the M249 and the L96 since v1.325-v1.336, the G36C since v1.371 and the M4 since v1.373 the SVD since v1.395 and the RPK since v1.396, the SPAS-12 since v1.398) has the slot, every pistol and clear automatic (10, with the Electric Pistol and the Gas Pistol) and the P90, the Vector, the AUG and the Thompson (v1.346, v1.348, v1.372, v1.403, their front grips are there) none', longs.length === 19 && geo.filter(r => r.none).length === 14, geo.map(r => r.gt));
+check('every long gun (20, with the FAMAS, the Electric Rifle, the Burst Rifle, the Semi-Auto Shotgun, the M249 and the L96 since v1.325-v1.336, the G36C since v1.371 and the M4 since v1.373 the SVD since v1.395 and the RPK since v1.396, the SPAS-12 since v1.398, the M14 since v1.404) has the slot, every pistol and clear automatic (10, with the Electric Pistol and the Gas Pistol) and the P90, the Vector, the AUG and the Thompson (v1.346, v1.348, v1.372, v1.403, their front grips are there) none', longs.length === 20 && geo.filter(r => r.none).length === 14, geo.map(r => r.gt));
 check('the mag, sling and foregrip hang below the handguard (top within 1 cm of it, bottom 5-12 cm under)',
   longs.every(r => ['taped_mag', 'sling', 'foregrip'].every(k => r[k].maxY <= r.bottom + 0.01 && r[k].minY < r.bottom - 0.05 && r[k].minY > r.bottom - 0.12)), longs);
 check('the cardboard barrel runs ahead of the muzzle (10 cm or more past it)', longs.every(r => r.cardboard_barrel.minZ < r.frontZ - 0.1 && r.cardboard_barrel.maxZ > r.frontZ - 0.01), longs);
