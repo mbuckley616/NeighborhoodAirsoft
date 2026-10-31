@@ -154,8 +154,9 @@ const cl = await page.evaluate(() => {
   return out;
 });
 console.log('   Sean Has Your Back:', JSON.stringify(cl.sean));
-check('Sean Has Your Back, first time through, says three a side and who is with you and with them',
-  /Today it’s three a side: \w+ is with you and \w+ is with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 2 && cl.sean.theirs.length === 3, cl.sean);
+// v1.405 (D.57 step 4): The Rematch (was Sean Has Your Back) is first played with Eric, Sean and Nick: four a side
+check('The Rematch, first time through, says four a side and who is with you and with them',
+  /Today it’s four a side: .+ with you and .+ with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 3 && cl.sean.theirs.length === 4, cl.sean);
 check(`every briefing the crew changes (${cl.lines}) counts the sides as built and names each kid not in the match as written`, cl.lines >= 10 && cl.wrong.length === 0, cl.wrong);
 check('a match the crew does not change gets no line', !/Today it’s/.test(cl.quiet), cl.quiet);
 
