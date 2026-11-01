@@ -12,10 +12,12 @@ const ID = 'bellfield_ctf';
 // --- the card, the briefing and where it sits in Northcliff's chain
 const card = await page.evaluate((ID) => {
   const b = getScenarioBriefing(ID), ids = PIN_SCENARIO_GROUPS.northcliff, done = Game.persist.completed;
-  for (const id of ids.slice(0, ids.indexOf('bellfield_night_4v4'))) done[id] = true;
+  // v1.409: Lamplight on Bellfield is a side match since v1.402 (D.57), so the flags open on the bulb fort, the main-line
+  // match before them, and Lamplight need not be won
+  for (const id of ids.slice(0, ids.indexOf('bellfield_defend_fort'))) done[id] = true;
   done[zoneCapstoneId('market_lot')] = true;
   const before = isScenarioUnlocked(ID);
-  done.bellfield_night_4v4 = true;
+  done.bellfield_defend_fort = true;
   const after = { flags: isScenarioUnlocked(ID), creek: isScenarioUnlocked('northcliff_defend_creek') };
   for (const k of Object.keys(done)) delete done[k];
   return { win: b.winConditionText, lives: [...b.allies, ...b.enemies].map(c => c.name + ':' + c.lives),
@@ -27,7 +29,7 @@ console.log('   card:', JSON.stringify(card));
 check('the objective says carry their flag home, first to 2', /flag/i.test(card.win) && /first to 2/.test(card.win), card.win);
 check('the map card has a FLAGS badge and ♥ ∞', /⚑ FLAGS/.test(card.card) && /♥ ∞/.test(card.card), card.card);
 check('every kid comes back (99 lives), and so do you', card.lives.every(x => x.endsWith(':99')) && /You .* comes back/.test(card.roster), [card.lives, card.roster]);
-check('it sits after Lamplight on Bellfield and before the creek fort, opening only on the night match',
+check('it sits after Lamplight on Bellfield and before the creek fort, opening on the bulb fort (Lamplight is a side match, v1.402)',
   card.at === card.night + 1 && card.creek > card.at &&   // v1.317-v1.318's pool matches come between
   !card.before && card.after.flags && !card.after.creek, card);
 
