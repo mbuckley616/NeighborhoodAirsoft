@@ -39,6 +39,7 @@ const FP_GUN_MOUNT = {
   aug:     { barrelY: -0.012, sideX: 0.015, railZ: -0.20, railLen: 0.06,  underY: -0.026, sightY: 0.0355, sightZ: -0.03,  sightScale: 0.95 },   // v1.372: an optic on the top rail between the irons
   m4:      { barrelY: -0.005, sideX: 0.024, railZ: -0.21, railLen: 0.08,  underY: -0.032, sightY: 0.0375, sightZ: -0.04,  sightScale: 0.95 },   // v1.373: an optic on the top rail between the irons
   mac10:   { barrelY: 0.020, sideX: 0.016, railZ: -0.065, railLen: 0.05,  underY: 0.004, sightY: 0.032, sightZ: -0.04,  sightScale: 0.85 },
+  uzi:     { barrelY: 0.020, sideX: 0.016, railZ: -0.065, railLen: 0.05,  underY: 0.004, sightY: 0.032, sightZ: -0.04,  sightScale: 0.85 },   // v1.414: the MAC-10's
   // v1.168: the backyard guns (the bucket's sight sits on its carry-handle rail, above the hopper)
   thunder: { barrelY: 0.040, sideX: 0.025, railZ: -0.06,  railLen: 0.07,  underY: 0.008, sightY: 0.0525, sightZ: -0.06, sightScale: 1.0 },
   sixshooter: { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },
@@ -735,6 +736,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
+  else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();

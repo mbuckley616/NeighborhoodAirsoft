@@ -125,6 +125,7 @@ function gunForegripZ(weapon) {
     case 'aug':     return 0.22;   // v1.372: its folding foregrip
     case 'm4':      return 0.18;   // v1.373: its handguard
     case 'mac10':   return 0.06;
+    case 'uzi':     return 0.10;   // v1.414: under its front end
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
     case 'pistol':
@@ -288,6 +289,14 @@ function buildEnemyGunMesh(weapon) {
     case 'mac10': {
       box(0.06, 0.10, 0.16, black, 0, 0, 0.06);          // tiny boxy machine pistol
       box(0.04, 0.11, 0.05, dark, 0, -0.10, 0.03);       // short mag
+      grip();
+      break;
+    }
+    case 'uzi': {   // v1.414 (D.63): a longer box than the MAC-10's, the barrel nut, the mag up the grip, the stock folded
+      box(0.055, 0.09, 0.24, black, 0, 0, 0.09);         // the long boxy upper and lower
+      box(0.03, 0.03, 0.05, dark, 0, 0.01, 0.23);        // the barrel nut and the barrel
+      box(0.035, 0.12, 0.04, dark, 0, -0.10, 0.04);      // the mag up the grip
+      box(0.01, 0.03, 0.20, dark, 0.035, -0.01, 0.04);   // the stock folded along the right
       grip();
       break;
     }

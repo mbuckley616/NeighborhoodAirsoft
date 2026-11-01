@@ -44,6 +44,7 @@ const MAG_GUN_FIT = {
   spare_mag_ksg: 'ksg',   // v1.411
   spare_mag_lever: 'lever',   // v1.412
   spare_mag_m60: 'm60',   // v1.413
+  spare_mag_uzi: 'uzi',   // v1.414
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -70,7 +71,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'magnum',   // v1.410 (D.63 batch 6): the CO2 revolver
   'ksg',   // v1.411 (D.63 batch 6): the bullpup pump shotgun
   'lever',   // v1.412 (D.63 batch 6): the lever-action carbine
-  'm60'];   // v1.413 (D.63 batch 6): the belt-fed machine gun
+  'm60',   // v1.413 (D.63 batch 6): the belt-fed machine gun
+  'uzi'];   // v1.414 (D.63 batch 6): the burst SMG
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -107,6 +109,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm14') return Game.persist.owned.m14_mag_50 ? 50 : 30;   // v1.404: its box mag, or the long one
   if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
+  if (gunType === 'uzi') return Game.persist.owned.uzi_mag_120 ? 120 : 60;   // v1.414: its stick mag, or the long one
   if (gunType === 'm60') return Game.persist.owned.m60_mag_1000 ? 1000 : 500;   // v1.413: its ammo can, or the big one
   if (gunType === 'lever') return Game.persist.owned.lever_mag_16 ? 16 : 12;   // v1.412: its tube, or the long one
   if (gunType === 'ksg') return Game.persist.owned.ksg_mag_90 ? 90 : 60;   // v1.411: its two tubes, or the long ones
@@ -255,6 +258,7 @@ const GUN_ACCESSORY_CAP = {
   ksg:      { sight: 1, rails: 2, under: 1 },  // v1.411: the shotgun's
   lever:    { sight: 1, rails: 2, under: 1 },  // v1.412: the sniper's
   m60:      { sight: 1, rails: 2, under: 1 },  // v1.413: the M249's
+  uzi:      { sight: 1, rails: 1 },            // v1.414: the MAC-10's
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 function getGunAccessoryCap(gunType) {
@@ -675,6 +679,14 @@ const GUN_MAGS = {
     mags: [ { flag: 'lever_mag_16', cap: 16, price: 14 } ],
     spares: [ { key: 'spare_mag_lever', label: 'Spare Lever Gun BBs (12)', price: 6 } ],
   },
+  // v1.414 (backlog D.63, batch 6): the Uzi, a burst SMG: the electric switch set to three, a burst a pull, the BBs
+  // close together; a stick mag of 60 up the grip
+  uzi: {
+    displayName: 'Uzi', baseCap: 60, price: 180, ownFlag: 'uzi',
+    blurb: 'The boxy little SMG from every action movie, with its mag up the grip and a metal stock folded along its side. This one is electric with the switch set to burst: every pull rips out three BBs almost at once, closer together than a full-auto SMG throws them. Sixty in the stick mag; a long mag holds 120.',
+    mags: [ { flag: 'uzi_mag_120', cap: 120, price: 16 } ],
+    spares: [ { key: 'spare_mag_uzi', label: 'Spare Uzi Mag (60)', price: 9 } ],
+  },
   // v1.413 (backlog D.63, batch 6): the M60, the belt-fed machine gun from the old war movies: a slower beat than the
   // M249's for a faster, straighter BB; the heaviest gun in the shop, fed from an ammo can of 500
   m60: {
@@ -707,7 +719,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -914,6 +926,7 @@ function describeSlot(idx) {
       spare_mag_ksg: 60,   // v1.411
       spare_mag_lever: 12,   // v1.412
       spare_mag_m60: 500,   // v1.413
+      spare_mag_uzi: 60,   // v1.414
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -952,6 +965,7 @@ function describeSlot(idx) {
       spare_mag_ksg: 'Spare 60-rd KSG Shells',   // v1.411
       spare_mag_lever: 'Spare 12-rd Lever Gun BBs',   // v1.412
       spare_mag_m60: 'Spare 500-rd M60 Can',   // v1.413
+      spare_mag_uzi: 'Spare 60-rd Uzi Mag',   // v1.414
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1155,6 +1169,7 @@ const GUN_WEIGHT = {
   ksg: 7,                                                 // v1.411: two full tubes; the Spring Shotgun 6, the SPAS-12 8.5
   lever: 7,                                               // v1.412: walnut and brass, lighter than the AR (8)
   m60: 17,                                                // v1.413: steel, the heaviest gun (the M249 15)
+  uzi: 4,                                                 // v1.414: stamped steel, the MAC-10 (3) and the MP5 (5) between
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
@@ -1187,6 +1202,7 @@ const MAG_WEIGHT = {
   spare_mag_ksg: 1.4,   // v1.411
   spare_mag_lever: 0.3,   // v1.412
   spare_mag_m60: 3,   // v1.413: a full ammo can
+  spare_mag_uzi: 0.5,   // v1.414
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1672,6 +1688,11 @@ GUN_SPECS.lever = Object.assign({}, GUN_SPECS.sniper, { weightClass: 'heavy', co
 // 9.2) for a faster, straighter BB (58 m/s straight for 22 m; the M249 52 and 18), wide from the hip (0.42) but tight
 // aimed (0.30 of it); the slowest walk of any gun (0.72; the M249 and the sniper 0.75); a new can takes a long rack
 GUN_SPECS.m60 = Object.assign({}, GUN_SPECS.m249, { playerSpeedMult: 0.72, cyclicRPM: 600, muzzleVelocity: 58, baseSpread: 0.42, adsSpreadMult: 0.30, curveOnsetDistance: 22, curveStrengthMax: 9, cockTime: 1.1, displayName: 'M60' });
+// v1.414 (D.63, batch 6): the Uzi, a burst SMG on the MAC-10's frame: electric, three BBs a pull 1/20 s apart (the
+// Burst Rifle's 1/12), a BB between the MAC-10's and the MP5's (44 m/s; 38, 50), tighter than either from the hip
+// (0.30; 0.5, 0.34) and aimed (0.38 of it), straight for 12 m (7, 14); quick on its feet (1.1; the MAC-10 1.15, the
+// MP5 1.05)
+GUN_SPECS.uzi = Object.assign({}, GUN_SPECS.mac10, { fireMode: 'semi', electric: true, burst: 3, cyclicRPM: 1200, weightClass: 'medium', playerSpeedMult: 1.1, muzzleVelocity: 44, baseSpread: 0.30, adsSpreadMult: 0.38, curveOnsetDistance: 12, curveStrengthMax: 12, cockTime: 0.55, displayName: 'Uzi' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

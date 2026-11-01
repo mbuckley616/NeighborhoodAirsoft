@@ -263,8 +263,8 @@ const lmgShop = await page.evaluate(() => {
   return out;
 });
 console.log('   AUTOMATICS: ' + lmgShop.names.join(' · '));
-check('M249: last of the seventeen (v1.403) under AUTOMATICS but the M60 after it (v1.413), with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
-  lmgShop.names[lmgShop.names.length - 2] === 'M249' && lmgShop.names[lmgShop.names.length - 1] === 'M60' && lmgShop.names.length === 18 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
+check('M249: last of the seventeen (v1.403) under AUTOMATICS but the M60 after it (v1.413; v1.414: nineteen with the Uzi), with its picture, $320 from its page, in your hands; the page says full-auto and very heavy',
+  lmgShop.names[lmgShop.names.length - 2] === 'M249' && lmgShop.names[lmgShop.names.length - 1] === 'M60' && lmgShop.names.length === 19 && lmgShop.pic && lmgShop.paid === 320 && lmgShop.equipped === 'm249' && lmgShop.says && lmgShop.slowest, lmgShop);
 check('M249: you walk no slower with any gun but the M60 (0.75), it is the heaviest but for the M60 (15 lb), and its BB is near the AK\'s', lmgShop.speed === 0.75 && lmgShop.speed <= lmgShop.minOther && lmgShop.weight > lmgShop.maxOtherWeight && Math.abs(lmgShop.vel[0] - lmgShop.vel[1]) <= 5, lmgShop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'm249' }; });
 await g.scenario('bunratty_sean');
