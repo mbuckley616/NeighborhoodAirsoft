@@ -897,7 +897,7 @@ function buildNorthcliffPoolScene(variant, timeOfDay) {
     parking_w: { pos: V(-24, -14.5), cover: carObs[0] },
     parking_e: { pos: V(8.5, -14.5), cover: carObs[5] },
     deck_south: { pos: V(-8, 20.5), cover: null },                 // v1.318: past the deck's south loungers
-    cluster_courts: { pos: V(36, 18), cover: null },               // v1.318: Night Swim's huddle, the courts' far corner
+    cluster_courts: { pos: V(36, 18), cover: null },               // v1.318: After Hours at the Pool's huddle, the courts' far corner
   };
   const playerSpawns = {
     parking_west: { pos: V(-29, -15), yaw: -Math.PI / 2 },   // the west end of the parking, facing east along it

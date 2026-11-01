@@ -85,7 +85,7 @@ const PIN_SCENARIO_GROUPS = {
     'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night; v1.402: a side match
     'bellfield_ctf',             // v1.189: Flags on Bellfield, capture the flag (D.15, Michael: A)
     'pool_1v1_christian',        // v1.317: the Northcliff pool, a 1v1 round the courts (D.55 step 7, Michael: A)
-    'pool_night_3v3',            // v1.318: Night Swim, the night game at the pool
+    'pool_night_3v3',            // v1.318: the night game at the pool (After Hours at the Pool since v1.409)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],

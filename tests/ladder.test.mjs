@@ -97,5 +97,15 @@ check('an old save through Winnmark\'s free-for-all keeps the cul-de-sac open an
   old.b.ok && old.b.won && old.cul && old.sniper && !old.team, old);
 check('a save made on the new order keeps nothing extra on load', old.fresh.v === 1402 && old.fresh.kept === 0, old.fresh);
 
+// v1.409 (D.57, Michael: A on "Two matches called Night Swim"): no two matches share a title; the pool's night match is
+// After Hours at the Pool and the club's finale keeps Night Swim
+const names = await page.evaluate(() => {
+  const by = {};
+  for (const [id, sc] of Object.entries(SCENARIOS)) (by[sc.scenarioName] = by[sc.scenarioName] || []).push(id);
+  return { dup: Object.entries(by).filter(([, ids]) => ids.length > 1), pool: SCENARIOS.pool_night_3v3.scenarioName, club: SCENARIOS.club_night_4v4.scenarioName };
+});
+check('no two matches share a title: the pool\'s is After Hours at the Pool, the club\'s finale Night Swim',
+  names.dup.length === 0 && names.pool === 'After Hours at the Pool' && names.club === 'Night Swim', names);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

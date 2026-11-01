@@ -1754,7 +1754,7 @@ const SCENARIOS = {
   // --- v1.318: the night game at the pool (D.55 step 7, Michael: A) ---
   pool_night_3v3: {
     region: 'northcliff', street: 'northcliff_pool',
-    name: 'Northcliff Pool', scenarioName: 'Night Swim',
+    name: 'Northcliff Pool', scenarioName: 'After Hours at the Pool',   // v1.409 (D.57, Michael: A): the club's finale keeps Night Swim
     desc: "Somebody left the pool lights on, and the whole neighborhood heard about it. Your crew's at the parking lot; Mason, Christian and the twins came in over the fence by the tennis courts, with Evan and Andrew. The pool glows, three lamps light the parking and the courts' far corner, and the rest of the club is dark. The courts' fence stops you but not a BB. Three a side, three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildNorthcliffPoolScene',
     builderArg: 'default',

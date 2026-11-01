@@ -173,7 +173,7 @@ const swim = await page.evaluate(() => {
     lives: sc.npcLives, first: hits[0] ?? null, lost };
 });
 console.log('  night swim', JSON.stringify(swim));
-check('Night Swim: a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'Night Swim' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
+check('After Hours at the Pool (v1.409; Night Swim before): a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'After Hours at the Pool' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
 check('standing at the start, nobody tags you in the first 10 s', swim.first === null || swim.first >= 10, swim);
 check('in 120 s both sides lose lives', swim.lost.player > 0 && swim.lost.enemy > 0, swim.lost);
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
