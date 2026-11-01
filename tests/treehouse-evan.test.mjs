@@ -5,6 +5,9 @@
 // v1.316 (D.55 step 6, Michael: A): the match is Hold the Bunker and there is no ladder. Evan is in the nest under the
 // road bank, 16 m behind a player who starts facing the house, and the same rule holds in its new form: he holds fire
 // until the first twin is within 7 m of the player (holdUntilNear, Game.scenario.attackNear).
+// v1.413 (D.57): since v1.400's side rule Evan, Seth's crew, is swapped at the nest for Mason, Northcliff's captain, and
+// your crew plays the match (v1.393). "Evan" below is whoever holds the nest (holdUntilNear), and "a twin close" is a
+// kid of the other side, not one of your crew at the bunker's posts.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
@@ -15,14 +18,14 @@ for (let r = 0; r < 6; r++) {
   await g.scenario('stoneglen_hold_treehouse');
   rounds.push(await page.evaluate(() => {
     // the player stands at the start, one life, real hits; log the first tag and when the first twin came within 7 m
-    const E = Game.scenario.enemies, evan = E.find(e => e.charId === 'evan'), P = Game.player.pos;
+    const E = Game.scenario.enemies, evan = E.find(e => e.holdUntilNear), P = Game.player.pos;
     let t = 0, near = null, tagged = null, by = null, evanFirst = null;
     const hit = applyBBHit, seen = new Set();
-    window.applyBBHit = (bb, c) => { if (c === Game.player && tagged === null) { tagged = +t.toFixed(1); by = bb.enemyRef ? bb.enemyRef.charId : '?'; } return hit(bb, c); };
+    window.applyBBHit = (bb, c) => { if (c === Game.player && tagged === null) { tagged = +t.toFixed(1); by = bb.enemyRef ? (bb.enemyRef.holdUntilNear ? 'evan' : bb.enemyRef.charId) : '?'; } return hit(bb, c); };
     try {
       for (let f = 0; f < 40 * 60 && Game.mode === 'scenario'; f++) {
         stepGame(1 / 60); t += 1 / 60;
-        if (near === null && E.some(e => e !== evan && e.health > 0 && Math.hypot(e.pos.x - P.x, e.pos.z - P.z) < 7)) near = +t.toFixed(1);
+        if (near === null && E.some(e => e !== evan && e.team !== 'player' && e.health > 0 && Math.hypot(e.pos.x - P.x, e.pos.z - P.z) < 7)) near = +t.toFixed(1);
         for (const b of Game.scenario.bbs) if (b.enemyRef === evan && !seen.has(b)) { seen.add(b); if (evanFirst === null) evanFirst = +t.toFixed(1); }
       }
     } finally { window.applyBBHit = hit; }
@@ -41,18 +44,20 @@ check('Evan fires no BB before a twin is close', rounds.every(r => r.evanFirst =
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
 await g.scenario('stoneglen_hold_treehouse');
 const shots = await page.evaluate(() => {
-  const E = Game.scenario.enemies, evan = E.find(e => e.charId === 'evan');
+  const E = Game.scenario.enemies, evan = E.find(e => e.holdUntilNear);
   const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
-  let t = 0, before = 0, after = 0, nearAt = null; const seen = new Set();
-  for (let f = 0; f < 30 * 60 && Game.mode === 'scenario'; f++) {
+  let t = 0, before = 0, after = 0, nearAt = null, upAtNear = null; const seen = new Set();
+  for (let f = 0; f < 90 * 60 && Game.mode === 'scenario'; f++) {   // v1.413: the whole 90 s (a twin came close at 6.6-21 s)
     stepGame(1 / 60); t += 1 / 60;
-    if (nearAt === null && Game.scenario.attackNear) nearAt = +t.toFixed(1);
+    if (nearAt === null && Game.scenario.attackNear) { nearAt = +t.toFixed(1); upAtNear = evan.health > 0; }
     for (const b of Game.scenario.bbs) if (b.enemyRef === evan && !seen.has(b)) { seen.add(b); if (nearAt === null) before++; else after++; }
   }
   window.applyBBHit = hit;
-  return { nearAt, before, after };
+  return { who: evan.charId, nearAt, upAtNear, before, after };
 });
 check('Evan fires no BB before a twin is close (untaggable round)', shots.before === 0 && shots.nearAt !== null, shots);
 check('and once one is, he shoots at the player', shots.after > 0, shots);
+// v1.413: your crew left the nest kid alone until then (it had tagged him by 6 s in 4 of 4 rounds)
+check('the nest kid is still up when the first twin comes close (your crew left him alone)', shots.upAtNear === true, shots);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

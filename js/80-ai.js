@@ -609,6 +609,10 @@ function opposingCombatants(e) {
     if (c === Game.player) { if (Game.player.hitsTaken >= Game.player.maxHits || Game.player._goingHome) continue; }   // v1.290: not while walking home
     else { if (c.health <= 0 || c.state === 'retreating') continue; }
     if (combatantTeam(c) === myTeam) continue;
+    // v1.413 (D.57): a kid holding fire behind you until a foe is close (Hold the Bunker's nest, holdUntilNear) is
+    // down behind his bags, and your crew doesn't pick him until he opens up. Since the crew took the match (v1.393)
+    // they tagged him by 6 s in 4 of 4 rounds, before any twin came close, and the nest never played.
+    if (myTeam === 'player' && c.holdUntilNear && !Game.scenario.attackNear) continue;
     out.push(c);
   }
   return out;
