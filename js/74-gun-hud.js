@@ -279,7 +279,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.085, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'spas') {   // v1.398: the shotgun at the hip; aimed, the bead's top (y 0.060) on the reticle
+    } else if (gunType === 'spas' || gunType === 'ksg') {   // v1.411: the KSG has the SPAS-12's bead; v1.398: the shotgun at the hip; aimed, the bead's top (y 0.060) on the reticle
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.060, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -864,6 +864,7 @@ const RETICLE_SPECS = {
   pistol:  { style: 'ring_ticks', baseGap: 9,  ringR: 9,  centerDot: 1.4 },
   shotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },
   spas:    { style: 'big_circle', baseGap: 16, ringR: 18, centerDot: 1.6 },   // v1.398: the shotgun's, a little tighter
+  ksg:     { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.411: the shotgun's, a little wider
   ar:      { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },
   sniper:  { style: 'fine_cross', baseGap: 6,  ringR: 0,  centerDot: 1.0 },
   ak47:    { style: 'circle_cross', baseGap: 12, ringR: 11, centerDot: 1.4 },

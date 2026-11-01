@@ -106,6 +106,7 @@ function gunForegripZ(weapon) {
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
+    case 'ksg':     return 0.16;   // v1.411: its pump
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
     case 'ar':
     case 'erifle':  // v1.326
@@ -301,6 +302,13 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
       box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
       grip(dark);
+      break;
+    }
+    case 'ksg': {   // v1.411 (D.63): a stubby black bullpup, the barrel over two tubes, the pump, the body back to the butt
+      box(0.05, 0.08, 0.26, black, 0, 0, 0.18);           // barrel over the tubes
+      box(0.06, 0.05, 0.10, dark, 0, -0.05, 0.20);        // the pump
+      box(0.05, 0.10, 0.22, black, 0, -0.01, -0.04);      // the body back to the butt
+      grip();
       break;
     }
     case 'bucket': {
