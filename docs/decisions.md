@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
+- **Two matches called Night Swim (Fable, card fable/d57-crew-ladder, 2026-10-31)**
+  The crew-first ladder renames every title used twice (`docs/crew_ladder.md`, your "All of it", 22 Oct). One pair is
+  left that the plan could not see: it was written before the Northcliff pool existed (v1.317-v1.318).
+  - The **Northcliff pool's** night match (`pool_night_3v3`) is Night Swim: your crew at the parking lot v Mason,
+    Christian, the twins, Evan and Andrew, under the pool lights.
+  - **Willow Bend's finale** (`club_night_4v4`) is Night Swim too: Seth's own finale at the club, the one his text
+    names ("night swim at the club tmrw").
+
+  Which one changes, and to what?
+  - A) **The pool's becomes "After Hours at the Pool"**; the club keeps Night Swim, which Seth's text and his finale
+    already use. *(recommended: the finale keeps the name the story gives it, and the pool's says what it is)*
+  - B) **The pool's becomes "Pool Lights"**, after the lights somebody left on; the club keeps Night Swim.
+  - C) **The club's becomes "Seth's Night Swim"**, as a captain's finale; the pool keeps Night Swim.
+  - D) **Another name.** Reply with it.
+  - Michael (control room, 1 Nov 2026, 16:37 UTC): **A.** The pool’s becomes "After Hours at the Pool"; the club keeps Night Swim.
+
 - **What the play lane builds next, after gun batch 5 (producer, from the builder's 31 Oct report, 2026-10-31)**
   Batch 5 is done: the SPAS-12, the Gas Pistol, the Thompson and the M14 (v1.398-v1.404) bring the shop to 34 guns.
   The builder reports the play lane again has no ready item: everything else open is a Fable card or waits on your look.
@@ -16,8 +34,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply in Slack with what you want next.
   Recommendation: A. It is the direction you already set (30 to 50 guns, D.63), the builder knows the pattern, and guns
   sit outside the crew-ladder card's frozen areas.
-
-## Answered
+  - Michael (control room, 1 Nov 2026, 16:37 UTC): **A.** Gun batch 6, to 40.
 
 - **What the play lane builds next (producer, from the builder's 31 Oct report, 2026-10-31)**
   v1.396 brought the shop to 30 guns, the low end of your 30 to 50 (D.63), and the builder reports the play lane has no
