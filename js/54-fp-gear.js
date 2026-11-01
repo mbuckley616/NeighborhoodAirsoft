@@ -58,6 +58,7 @@ const FP_GUN_MOUNT = {
   burst:   { barrelY: 0.035, sideX: 0.028, railZ: -0.185, railLen: 0.10,  underY: 0.010, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.327: rails outside the round handguard
   semishotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.328: the shotgun's
   m249:    { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.335: the optic on the feed cover
+  m60:     { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.413: the M249's
 };
 
 // v1.40e: build one Picatinny side-rail bar (vertical slots facing outward),
@@ -733,6 +734,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
+  else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();

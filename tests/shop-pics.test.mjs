@@ -29,7 +29,7 @@ const rows = await page.evaluate(() => [...document.querySelectorAll('#shopScree
   name: r.querySelector('.shop-item-name').childNodes[0].textContent.trim(),
   pic: !!r.querySelector('.shop-item-icon.pic img'), glyph: r.querySelector('.shop-item-icon').textContent })));
 const order = await page.evaluate(() => GUN_ORDER.slice());
-check('the Guns tab lists all 37 guns (v1.412: the Lever Gun; v1.411: the KSG; v1.410: the Magnum; v1.404: the M14; v1.403: the Thompson; v1.399: the Gas Pistol; v1.398: the SPAS-12; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK)', rows.length === 37 && order.length === 37, rows.map(r => r.name));
+check('the Guns tab lists all 38 guns (v1.413: the M60; v1.412: the Lever Gun; v1.411: the KSG; v1.410: the Magnum; v1.404: the M14; v1.403: the Thompson; v1.399: the Gas Pistol; v1.398: the SPAS-12; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK)', rows.length === 38 && order.length === 38, rows.map(r => r.name));
 check('every gun row has a picture in place of the ⌐ glyph', rows.every(r => r.pic && r.glyph === ''), rows.filter(r => !r.pic));
 const icons = await measure();
 check('the pictures are in GUN_ORDER, drawn at 112×112 for a 56 px box',
@@ -39,7 +39,7 @@ check('each gun fills its frame across (at least 80% of the width)', icons.every
   icons.map(i => [i.gun, i.spanX]));
 check('each picture has the gun drawn on it (at least 6% of its pixels)', icons.every(i => i.fill >= 0.06),
   icons.map(i => [i.gun, i.fill]));
-check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 37);
+check('no two guns share a picture', new Set(icons.map(i => i.hash)).size === 38);
 console.log('    icons (gun, drawn, span across, span down):', icons.map(i => `${i.gun} ${i.fill} ${i.spanX} ${i.spanY}`).join('; '));
 await g.shot('shop-pics-list');
 

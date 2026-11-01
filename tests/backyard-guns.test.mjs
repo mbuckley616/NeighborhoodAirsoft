@@ -13,7 +13,7 @@ await page.evaluate(() => { Game.persist.cash = 1000; openShop(); });
 const rows = await page.evaluate(() => [...document.querySelectorAll('#shopScreen .shop-gun-row .shop-item-name')].map(e => e.childNodes[0].textContent.trim()));
 console.log('   Guns tab:', rows.join(' · '));
 const NEW = { thunder: 'Thunder Pump', sixshooter: 'Six-Shooter', bucket: 'Bucket Gun', boltpistol: 'Bolt Pistol' };
-check('the Guns tab lists 37 guns (v1.412), the four backyard ones among them', rows.length === 37 && Object.values(NEW).every(n => rows.includes(n)), rows);
+check('the Guns tab lists 38 guns (v1.413), the four backyard ones among them', rows.length === 38 && Object.values(NEW).every(n => rows.includes(n)), rows);
 for (const [gt, name] of Object.entries(NEW)) {
   const r = await page.evaluate(([gt, name]) => {
     const row = [...document.querySelectorAll('#shopScreen .shop-gun-row')].find(r => r.querySelector('.shop-item-name').childNodes[0].textContent.trim() === name);

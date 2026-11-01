@@ -307,7 +307,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'm249') {   // v1.335: the AK's hold; aimed, the front post's tip (y 0.071) in the rear notch
+    } else if (gunType === 'm249' || gunType === 'm60') {   // v1.413: and the M60, on the M249's sights   // v1.335: the AK's hold; aimed, the front post's tip (y 0.071) in the rear notch
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.071, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -897,6 +897,7 @@ const RETICLE_SPECS = {
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
+  m60:     { style: 'circle_cross', baseGap: 15, ringR: 14, centerDot: 1.4 },   // v1.413: the M249's, a little wider still
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
   m14:     { style: 'fine_cross', baseGap: 8,  ringR: 0,  centerDot: 1.2 },   // v1.404: the SVD's, a little wider
   lever:   { style: 'dot_cross',  baseGap: 9,  ringR: 6,  centerDot: 1.5 },   // v1.412: between the AR's and the sniper's

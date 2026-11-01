@@ -109,6 +109,7 @@ function gunForegripZ(weapon) {
     case 'spas':    return 0.18;   // v1.398: its pump
     case 'ksg':     return 0.16;   // v1.411: its pump
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
+    case 'm60':     return 0.22;   // v1.413: the M60's handguard, further out
     case 'ar':
     case 'erifle':  // v1.326
     case 'burst':   // v1.327
@@ -213,6 +214,15 @@ function buildEnemyGunMesh(weapon) {
       box(0.06, 0.10, 0.09, new THREE.MeshStandardMaterial({ color: 0x4b5226, roughness: 0.75 }), -0.01, -0.08, 0.07);   // the box
       box(0.03, 0.02, 0.14, dark, 0, -0.045, 0.33);      // the bipod's legs
       box(0.045, 0.08, 0.12, black, 0, -0.01, -0.09);    // stock
+      grip();
+      break;
+    }
+    case 'm60': {   // v1.413 (D.63): a long steel gun, the carry handle on the barrel, the green ammo can, the long stock
+      box(0.05, 0.075, 0.56, dark, 0, 0, 0.25);          // receiver, handguard and the long barrel
+      box(0.012, 0.05, 0.08, black, -0.035, 0.035, 0.30);  // the carry handle on the barrel's left
+      box(0.06, 0.10, 0.10, new THREE.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.75 }), -0.02, -0.09, 0.06);   // the ammo can
+      box(0.03, 0.02, 0.14, black, 0, -0.045, 0.40);     // the bipod's legs
+      box(0.045, 0.085, 0.16, black, 0, -0.015, -0.11);  // the long stock
       grip();
       break;
     }
