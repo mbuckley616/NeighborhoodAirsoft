@@ -13,8 +13,10 @@ async function played(id, name, secs, at = [18.7, 1.4]) {
   await g.scenario(id);
   return page.evaluate(({ name, secs, at }) => {
     window._bsHit = window._bsHit || applyBBHit; window._bsBB = window._bsBB || spawnEnemyBB;
-    window.applyBBHit = (bb, c) => c === Game.player ? undefined : window._bsHit(bb, c);
     const k = Game.scenario.enemies.find(e => e.name === name);
+    // v1.409: the bulb kid is untaggable too: since v1.408 Sean and Nick are on your side in Storm the Court and tagged
+    // Mitchell inside 20 s in 2 of 3 rounds, which measured the crew, not his sight line
+    window.applyBBHit = (bb, c) => c === Game.player || c === k ? undefined : window._bsHit(bb, c);
     let shots = 0, los = 0, f = 0;
     window.spawnEnemyBB = (e, ...a) => { if (e === k) shots++; return window._bsBB(e, ...a); };
     for (; f < secs * 60 && Game.mode === 'scenario'; f++) {
