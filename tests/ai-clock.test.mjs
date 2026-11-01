@@ -45,15 +45,21 @@ for (let r = 0; r < 3; r++) {
     let fired = 0; const o = spawnEnemyBB; spawnEnemyBB = (e, t) => { if (e === d) fired++; return o(e, t); };
     // fix-up (PR #75, CI on 2849a66: one round of three with 0 shots): the seconds he was alive with a line to someone,
     // so a round in which nobody came into his doorway's line, or he was tagged out early, is told apart from the fault
-    let losSecs = 0;
-    for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) { stepGame(1 / 60); if (d.health > 0 && d._hasLOSNow) losSecs += 1 / 60; }
+    // tests fix-up (weekly CI on ae19274, 1 Nov: fired 0 with 4.8 s of line): a sniper spends most of his line down, about
+    // 3 s backing off as the first kid closes and 2-3 s hidden between peeks (18 rounds here: 1-14 shots, 0.4-3.7 s up), so
+    // the rule is now on `upSecs`, the seconds he had a line while up (peeking or shooting), where a pull is due
+    let losSecs = 0, upSecs = 0;
+    for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
+      stepGame(1 / 60);
+      if (d.health > 0 && d._hasLOSNow) { losSecs += 1 / 60; if (d.state === 'peeking' || d.state === 'shooting') upSecs += 1 / 60; }
+    }
     spawnEnemyBB = o; applyBBHit = orig; performance.now = pn;
-    return { fired, losSecs: +losSecs.toFixed(1), at: [+d.pos.x.toFixed(1), +d.pos.z.toFixed(1)] };
+    return { fired, losSecs: +losSecs.toFixed(1), upSecs: +upSecs.toFixed(1), at: [+d.pos.x.toFixed(1), +d.pos.z.toFixed(1)] };
   }));
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
 console.log('  Devon, wall clock 5x:', JSON.stringify(rounds));
-check('Lights Out: with the wall clock racing, Devon holds the doorway and fires in every round he has a line for 1 s or more, and in at least one',
-  rounds.every(r => (r.losSecs < 1 || r.fired > 0) && Math.hypot(r.at[0] + 1, r.at[1] + 20) < 4) && rounds.some(r => r.fired > 0), rounds);
+check('Lights Out: with the wall clock racing, Devon holds the doorway and fires in every round he is up with a line for 1 s or more, and in at least one',
+  rounds.every(r => (r.upSecs < 1 || r.fired > 0) && Math.hypot(r.at[0] + 1, r.at[1] + 20) < 4) && rounds.some(r => r.fired > 0), rounds);
 await g.close();
