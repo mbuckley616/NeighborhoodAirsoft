@@ -29,11 +29,11 @@ const all = await read();
 console.log('   ' + JSON.stringify(all));
 const kinds = await page.evaluate(() => ({ order: GUN_ORDER.map(gt => [gt, gunKind(gt)]), names: Object.fromEntries(GUN_ORDER.map(gt => [gt, GUN_MAGS[gt].displayName])) }));
 check('five chips: ALL and the four kinds, with their counts', JSON.stringify(all.chips) ===
-  '["ALL (34)","PISTOLS (5)","SHOTGUNS (4)","RIFLES (8)","AUTOMATICS (17)"]' && all.active === 'ALL', all.chips);
+  '["ALL (37)","PISTOLS (6)","SHOTGUNS (5)","RIFLES (9)","AUTOMATICS (17)"]' && all.active === 'ALL', all.chips);
 check('ALL: four headers in order, each once', JSON.stringify(all.groups.map(x => x.kind)) === '["PISTOLS","SHOTGUNS","RIFLES","AUTOMATICS"]', all.groups.map(x => x.kind));
-check('all 34 guns (v1.404: the M14; v1.403: the Thompson; v1.399: the Gas Pistol; v1.398: the SPAS-12; v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 34
+check('all 37 guns (v1.412: the Lever Gun; v1.411: the KSG; v1.410: the Magnum; v1.404: the M14; v1.403: the Thompson; v1.399: the Gas Pistol; v1.398: the SPAS-12; v1.250: four clear automatics; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector; v1.371: the G36C; v1.372: the AUG; v1.373: the M4; v1.395: the SVD; v1.396: the RPK), each under its own kind', all.groups.reduce((n, x) => n + x.guns.length, 0) === 37
   && kinds.order.every(([gt, k]) => all.groups.find(x => x.kind === k).guns.includes(kinds.names[gt])), all.groups);
-check('the pistols are the Spring Pistol, Six-Shooter, Bolt Pistol, Electric Pistol (v1.326) and Gas Pistol (v1.399)', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol"]', all.groups[0].guns);
+check('the pistols are the Spring Pistol, Six-Shooter, Bolt Pistol, Electric Pistol (v1.326), Gas Pistol (v1.399) and Magnum (v1.410)', JSON.stringify(all.groups[0].guns) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol","Magnum"]', all.groups[0].guns);
 check('the automatics are the four clear ones (v1.250), the Bucket Gun, MP5, UMP, P90 (v1.346), Vector (v1.348), Thompson (v1.403), MAC-10, AK-47, G36C (v1.371), M4 (v1.373), AUG (v1.372), RPK (v1.396) and M249 (v1.335)', JSON.stringify(all.groups[3].guns) === '["Rattle Can","Clear Sprayer","Ghost Mini","Tick-Tock","Bucket Gun","MP5","UMP","P90","Vector","Thompson","MAC-10","AK-47","G36C","M4","AUG","RPK","M249"]', all.groups[3].guns);
 await g.shot('shop-gun-kinds-all');
 
@@ -50,9 +50,9 @@ const back = await read();
 check('details of the first automatic, then back: still on AUTOMATICS', detail === 'rattle' && back.active === 'AUTOMATICS' && back.groups.length === 1, { detail, back: back.active });
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="PISTOLS"]').click());
 const pis = await read();
-check('PISTOLS shows its five', pis.groups.length === 1 && pis.groups[0].guns.length === 5, pis.groups);
+check('PISTOLS shows its six', pis.groups.length === 1 && pis.groups[0].guns.length === 6, pis.groups);
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
-check('ALL shows the 34 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 34);
+check('ALL shows the 37 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 37);
 
 // v1.329 (backlog D.64, Michael 22 Oct: "reconsider the workbench menu, and have collapsible sections by Gun Type"): the
 // workbench's gun list under the same kinds, each header folding its section; a section with a gun you own starts open
@@ -73,16 +73,16 @@ const wb = () => page.evaluate(() => {
 });
 const w0 = await wb();
 console.log('   workbench: ' + JSON.stringify(w0));
-check('workbench: a header for each kind, those with a gun you own open (PISTOLS 2 of 5, RIFLES 1 of 8), the rest shut',
-  JSON.stringify(w0.kinds) === '["PISTOLS open 2 of 5","SHOTGUNS shut 0 of 4","RIFLES open 1 of 8","AUTOMATICS shut 0 of 17"]', w0.kinds);
+check('workbench: a header for each kind, those with a gun you own open (PISTOLS 2 of 6, RIFLES 1 of 9), the rest shut',
+  JSON.stringify(w0.kinds) === '["PISTOLS open 2 of 6","SHOTGUNS shut 0 of 5","RIFLES open 1 of 9","AUTOMATICS shut 0 of 17"]', w0.kinds);
 check('workbench: the open sections list their guns in the shop\'s order, nothing from the shut ones',
-  JSON.stringify(w0.guns) === '["pistol","sixshooter","boltpistol","epistol","gaspistol","ar","famas","erifle","burst","m14","sniper","l96","svd"]', w0.guns);
+  JSON.stringify(w0.guns) === '["pistol","sixshooter","boltpistol","epistol","gaspistol","magnum","ar","famas","lever","erifle","burst","m14","sniper","l96","svd"]', w0.guns);
 await page.evaluate(() => document.querySelector('#wbGunList .wb-kind[data-kind="SHOTGUNS"]').click());
 const w1 = await wb();
-check('workbench: a click on SHOTGUNS opens it (its four guns show, not owned)', w1.kinds[1] === 'SHOTGUNS open 0 of 4' && w1.guns.length === 17 && w1.guns.includes('semishotgun'), w1);
+check('workbench: a click on SHOTGUNS opens it (its five guns show, not owned)', w1.kinds[1] === 'SHOTGUNS open 0 of 5' && w1.guns.length === 20 && w1.guns.includes('semishotgun'), w1);
 await page.evaluate(() => document.querySelector('#wbGunList .wb-kind[data-kind="PISTOLS"]').click());
 const w2 = await wb();
-check('workbench: a click on PISTOLS folds it away; the rest stay as they were', w2.kinds[0] === 'PISTOLS shut 2 of 5' && w2.kinds[1] === 'SHOTGUNS open 0 of 4' && !w2.guns.includes('pistol') && w2.guns.length === 12, w2);
+check('workbench: a click on PISTOLS folds it away; the rest stay as they were', w2.kinds[0] === 'PISTOLS shut 2 of 6' && w2.kinds[1] === 'SHOTGUNS open 0 of 5' && !w2.guns.includes('pistol') && w2.guns.length === 14, w2);
 await page.evaluate(() => document.querySelector('#wbGunList .wb-gun[data-gun="famas"]').click());
 const w3 = await wb();
 check('workbench: a gun clicked in an open section goes on the bench, and the sections keep their state', w3.bench === 'famas' && JSON.stringify(w3.kinds) === JSON.stringify(w2.kinds), w3);

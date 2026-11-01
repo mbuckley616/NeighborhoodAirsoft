@@ -22,9 +22,11 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   spas:    { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.398: the shotgun's
+  ksg:     { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.411: the SPAS-12's
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   l96:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.336: the sniper's
+  lever:   { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.412: the sniper's
   m14:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.404: the sniper's
   svd:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.395: the sniper's
   ak47:    { barrelY: 0.018, sideX: 0.017, railZ: -0.185, railLen: 0.085, underY: 0.000, sightY: 0.055, sightZ: -0.05,  sightScale: 1.0 },
@@ -50,6 +52,7 @@ const FP_GUN_MOUNT = {
   famas:   { barrelY: 0.012, sideX: 0.022, railZ: -0.130, railLen: 0.08, underY: -0.020, sightY: 0.079, sightZ: -0.06, sightScale: 1.0 },   // v1.325: the optic on the carry handle
   epistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.326: the pistol's
   thompson: { barrelY: 0.000, sideX: 0.018, railZ: -0.06, railLen: 0.06, underY: -0.020, sightY: 0.026, sightZ: -0.02, sightScale: 0.9 },   // v1.403: an optic on the receiver's top
+  magnum:  { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },   // v1.410: the Six-Shooter's
   gaspistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.399: the pistol's
   erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
   burst:   { barrelY: 0.035, sideX: 0.028, railZ: -0.185, railLen: 0.10,  underY: 0.010, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.327: rails outside the round handguard
@@ -727,6 +730,9 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
+  else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
+  else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
+  else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();

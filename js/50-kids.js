@@ -95,7 +95,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || !weapon;   // v1.168; v1.326; v1.399
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || !weapon;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -103,9 +103,11 @@ function gunForegripZ(weapon) {
     case 'l96':     // long barrel — hand well forward (v1.336: and the L96's)
     case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'm14':     return 0.22;   // v1.404: its long walnut forend
+    case 'lever':   return 0.20;   // v1.412: its walnut forend
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
+    case 'ksg':     return 0.16;   // v1.411: its pump
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
     case 'ar':
     case 'erifle':  // v1.326
@@ -294,6 +296,28 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, silver, 0, 0.01, 0.0);      // cylinder
       box(0.025, 0.03, 0.17, silver, 0, 0.02, 0.10);     // barrel
       grip(wood);
+      break;
+    }
+    case 'magnum': {   // v1.410 (D.63): the Six-Shooter's shape in blued steel, a longer barrel with its underlug, a black grip
+      const blued = new THREE.MeshStandardMaterial({ color: 0x23272e, roughness: 0.35, metalness: 0.7 });
+      box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
+      box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
+      grip(dark);
+      break;
+    }
+    case 'lever': {   // v1.412 (D.63): a cowboy carbine, a barrel over its tube, a brass receiver, a walnut stock, the lever loop
+      box(0.03, 0.05, 0.44, black, 0, 0.02, 0.22);       // the barrel over the tube
+      box(0.045, 0.05, 0.22, wood, 0, -0.01, 0.16);      // the walnut forend
+      box(0.045, 0.06, 0.10, new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.7 }), 0, 0.0, 0.0);   // the brass receiver
+      box(0.045, 0.10, 0.16, wood, 0, -0.03, -0.12);     // the stock
+      box(0.02, 0.06, 0.08, dark, 0, -0.06, -0.02);      // the lever loop
+      break;
+    }
+    case 'ksg': {   // v1.411 (D.63): a stubby black bullpup, the barrel over two tubes, the pump, the body back to the butt
+      box(0.05, 0.08, 0.26, black, 0, 0, 0.18);           // barrel over the tubes
+      box(0.06, 0.05, 0.10, dark, 0, -0.05, 0.20);        // the pump
+      box(0.05, 0.10, 0.22, black, 0, -0.01, -0.04);      // the body back to the butt
+      grip();
       break;
     }
     case 'bucket': {
