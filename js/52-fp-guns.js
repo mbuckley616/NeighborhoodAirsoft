@@ -1948,6 +1948,78 @@ function buildFPMagnum() {
   group.userData.gunType = 'magnum';
   return group;
 }
+// v1.412 (backlog D.63, Michael: A, batch 6): the Lever Gun, a spring cowboy carbine on the sniper's stock, barrel and
+// sights: the stock and forend in walnut, a brass receiver, the bipod off, a tube under the barrel past the forend with
+// two barrel bands, a hammer at the receiver's back, and in place of the bolt the lever: a loop round the trigger and
+// behind it for the fingers, hinged at the guard's front, that swings down as you work it (`cockSwing`, updateHeldMesh).
+function buildFPLever() {
+  const group = buildFPSniper();
+  const walnut = new THREE.MeshStandardMaterial({ color: 0x86532c, roughness: 0.6 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.75 });
+  const blued = new THREE.MeshStandardMaterial({ color: 0x24272d, roughness: 0.35, metalness: 0.7 });
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  for (const n of ['forend', 'stock']) { const o = group.getObjectByName(n); if (o) o.material = walnut; }
+  const rec = group.getObjectByName('receiver'); if (rec) rec.material = brass;
+  for (const p of group.userData.cockingParts) group.remove(p);   // the bolt comes off: the lever works it
+  // the folded bipod comes off (its hinge and legs hang under the barrel at y -0.0123)
+  for (const o of group.children.slice()) if (o.isMesh && Math.abs(o.position.y + 0.0123) < 1e-6) group.remove(o);
+  const tube = add(new THREE.CylinderGeometry(0.0075, 0.0075, 0.15, 10), blued, 0, 0.002, -0.28);
+  tube.rotation.x = Math.PI / 2; tube.name = 'tube';
+  for (const z of [-0.262, -0.345]) add(new THREE.BoxGeometry(0.024, 0.036, 0.008), blued, 0, 0.012, z).name = 'band';
+  add(new THREE.BoxGeometry(0.008, 0.016, 0.010), blued, 0, 0.042, 0.016).name = 'hammer';
+  // the lever, hinged at the guard's front: the bar under the trigger and the loop behind it for the fingers
+  const lever = new THREE.Group();
+  add(new THREE.BoxGeometry(0.008, 0.005, 0.050), blued, 0, -0.012, 0.025, lever);   // the bar under the trigger
+  add(new THREE.BoxGeometry(0.008, 0.024, 0.005), blued, 0, -0.024, 0.052, lever);   // the loop's back
+  add(new THREE.BoxGeometry(0.008, 0.005, 0.030), blued, 0, -0.036, 0.037, lever);   // the loop's bottom
+  add(new THREE.BoxGeometry(0.008, 0.024, 0.005), blued, 0, -0.024, 0.022, lever);   // the loop's front
+  lever.position.set(0, -0.022, -0.020);
+  lever.name = 'lever';
+  lever.userData.cockSwing = 0.9;   // it swings down 52° at the full pull
+  group.add(lever);
+  group.userData.cockingParts = [lever];
+  group.userData.cockingOffset = 0.0;
+  group.userData.gunType = 'lever';
+  return group;
+}
+
+// v1.411 (backlog D.63, Michael: A, batch 6): the KSG, a bullpup pump shotgun on the spring shotgun's receiver,
+// barrel, pump and bead, all of it black: the one tube under the barrel becomes two side by side (the pump wraps them),
+// the wrist and sporting stock come off, a pistol grip goes behind the trigger guard, and a long boxy body runs back
+// from the receiver to the butt pad, the shells' loading ports on its belly; a flat rail along its top stays under the
+// bead's line. The pump is the shotgun's and still racks every shot.
+function buildFPKSG() {
+  const group = buildFPShotgun();
+  const black = new THREE.MeshStandardMaterial({ color: 0x0f1012, roughness: 0.6, metalness: 0.3 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x26282c, roughness: 0.45, metalness: 0.6 });
+  const port  = new THREE.MeshStandardMaterial({ color: 0x030304, roughness: 0.9 });
+  const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; group.add(m); return m; };
+  group.traverse(o => { if (o.isMesh && o.material && o.material.color && o.material.color.getHex() !== 0xff7a1a) o.material = black; });
+  for (const n of ['wrist', 'stock']) { const o = group.getObjectByName(n); if (o) group.remove(o); }
+  // the single tube goes; two go in its place, side by side under the barrel, and the pump's clamp widens round them
+  const tube = group.children.find(o => o.isMesh && o.geometry.type === 'CylinderGeometry' && Math.abs(o.position.y - 0.015) < 1e-6 && Math.abs(o.position.z + 0.21) < 1e-6);
+  if (tube) group.remove(tube);
+  for (const x of [-0.0125, 0.0125]) {
+    const t = add(new THREE.CylinderGeometry(0.0105, 0.0105, 0.20, 10), steel, x, 0.012, -0.20);
+    t.rotation.x = Math.PI / 2; t.name = 'tube';
+  }
+  const pump = (group.userData.cockingParts || [])[0];
+  if (pump) {
+    const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.020, 0.084), black);
+    clamp.position.set(0, 0.006, 0);
+    pump.add(clamp);
+  }
+  add(new THREE.BoxGeometry(0.034, 0.075, 0.034), black, 0, -0.040, 0.012, -0.35).name = 'grip';
+  // the bullpup body: from the receiver's back to the butt, the tubes' loading ports underneath
+  add(new THREE.BoxGeometry(0.044, 0.080, 0.20), black, 0, 0.005, 0.075).name = 'body';
+  add(new THREE.BoxGeometry(0.046, 0.086, 0.012), steel, 0, 0.005, 0.181).name = 'buttpad';
+  for (const x of [-0.011, 0.011]) add(new THREE.BoxGeometry(0.014, 0.002, 0.07), port, x, -0.0355, 0.09).name = 'port';
+  add(new THREE.BoxGeometry(0.022, 0.008, 0.15), steel, 0, 0.049, 0.06).name = 'bodyRail';
+  // the bead is the front sight
+  group.traverse(o => { if (o.isMesh && o.geometry.type === 'SphereGeometry' && Math.abs(o.position.z + 0.31) < 1e-6) o.userData.frontSight = true; });
+  group.userData.gunType = 'ksg';
+  return group;
+}
 
 // Bucket Gun: a blue electric hopper gun. A see-through bucket of BBs rides on top under a carry-handle sight rail.
 function buildFPBucket() {
@@ -2148,6 +2220,8 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
+  else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
+  else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();   // fallback
@@ -2184,6 +2258,8 @@ const FP_HANDS = {
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   m14:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.404: the sniper's stock, as the SVD's
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  lever:   { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.412: the sniper's stock and forend
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   rpk:     { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },   // v1.396: the AK's
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },
@@ -2195,6 +2271,7 @@ const FP_HANDS = {
   m4:      { r: { c: [0, -0.066, 0.035], rx: -0.25, gw: 0.015, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, -0.007, -0.21], hw: 0.020, hh: 0.025 }, underHand: true },   // v1.373: the grip and the handguard
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   spas:    { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },   // v1.398: the Semi-Auto Shotgun's pistol grip, the shotgun's pump
+  ksg:     { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.022, hh: 0.022 } },   // v1.411: the SPAS-12's grip and pump
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },

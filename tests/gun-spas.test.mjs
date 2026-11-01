@@ -25,8 +25,8 @@ const spShop = await page.evaluate(() => {
   return out;
 });
 console.log('   SHOTGUNS: ' + spShop.names.join(' · '));
-check('SPAS-12: under SHOTGUNS after the Thunder Pump, before the Semi-Auto Shotgun, with its picture, $140 from its page, in your hands; the page sells its spare shells',
-  JSON.stringify(spShop.names) === '["Spring Shotgun","Thunder Pump","SPAS-12","Semi-Auto Shotgun"]' && spShop.pic && spShop.paid === 140 && spShop.equipped === 'spas' && spShop.spare, spShop);
+check('SPAS-12: under SHOTGUNS after the Thunder Pump, before the KSG (v1.411) and the Semi-Auto Shotgun, with its picture, $140 from its page, in your hands; the page sells its spare shells',
+  JSON.stringify(spShop.names) === '["Spring Shotgun","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun"]' && spShop.pic && spShop.paid === 140 && spShop.equipped === 'spas' && spShop.spare, spShop);
 check('SPAS-12: against the Spring Shotgun always three BBs, a faster BB (34 m/s), tighter, straight for longer (10 m); a slower pump (1.0 s), a slower walk, heavier; a spring pump, not electric',
   spShop.pellets && spShop.spas[0] === 34 && spShop.spas[0] > spShop.shotgun[0] && spShop.spas[1] < spShop.shotgun[1] && spShop.spas[2] > spShop.shotgun[2] && spShop.spas[3] > spShop.shotgun[3]
   && spShop.spas[4] < spShop.shotgun[4] && spShop.weights[0] > spShop.weights[1] && spShop.spas[5] === 'semi' && !spShop.spas[6], spShop);
