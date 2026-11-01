@@ -1029,6 +1029,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_gas',     name: 'Spare 15-rd Gas Pistol Mag' },   // v1.399
     { refId: 'spare_mag_thompson', name: 'Spare 100-rd Thompson Drum' },   // v1.403
     { refId: 'spare_mag_m14',     name: 'Spare 30-rd M14 Mag' },   // v1.404
+    { refId: 'spare_mag_magnum',  name: 'Spare 6-rd Magnum Shells' },   // v1.410
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1305,7 +1306,7 @@ function renderBBsTab(c, between) {
 // under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
 // entry here; a gun missing from it goes by its fire mode (automatic or rifle).
 const GUN_KINDS = [
-  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol', 'gaspistol'] },   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'sixshooter', 'boltpistol', 'epistol', 'gaspistol', 'magnum'] },   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last; v1.410: the Magnum after it
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'thunder', 'spas', 'semishotgun'] },   // v1.328; v1.398: the SPAS-12 before it
   { id: 'RIFLES', name: 'Rifles', guns: ['ar', 'famas', 'erifle', 'burst', 'm14', 'sniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it; v1.404: the M14 before the sniper
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'thompson', 'mac10', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249'] },   // v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.403: the Thompson after the Vector
@@ -1570,7 +1571,7 @@ function renderGunDetail(c, gt) {
 function gunBlurb(gt) {
   const s = getGunSpec(gt);
   // v1.168: the pump and the hammer read as themselves (the spring shotgun said "rack slide")
-  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : s.burst ? `${s.burst}-round burst, a pull at a time (electric)` : s.gas ? `Gas blowback (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.electric ? `Electric semi (a BB a pull, up to ${Math.round(s.semiRPM / 60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));   // v1.326: the electrics
+  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : s.burst ? `${s.burst}-round burst, a pull at a time (electric)` : s.doubleAction ? `Double-action CO2 (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.gas ? `Gas blowback (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.electric ? `Electric semi (a BB a pull, up to ${Math.round(s.semiRPM / 60)}/s)` : (s.cockType === 'bolt' ? 'Bolt-action' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));   // v1.326: the electrics
   const weight = ({light:'Light, fast', medium:'Medium', heavy:'Heavy, slower', very_heavy:'Very heavy, slowest'})[s.weightClass] || 'Medium';
   return `${mode} · ${weight} · muzzle ${s.muzzleVelocity} m/s`;
 }

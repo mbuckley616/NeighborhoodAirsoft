@@ -25,8 +25,8 @@ const sh = await page.evaluate(() => {
   return out;
 });
 console.log('   PISTOLS: ' + sh.names.join(' · '));
-check('Gas Pistol: last under PISTOLS, after the Electric Pistol, with its picture and "Gas blowback" in its line, $130 from its page, in your hands; the page sells its spare mag',
-  JSON.stringify(sh.names) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol"]' && sh.pic && /Gas blowback/.test(sh.rowText)
+check('Gas Pistol: under PISTOLS after the Electric Pistol (the Magnum after it since v1.410), with its picture and "Gas blowback" in its line, $130 from its page, in your hands; the page sells its spare mag',
+  JSON.stringify(sh.names) === '["Spring Pistol","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol","Magnum"]' && sh.pic && /Gas blowback/.test(sh.rowText)
   && sh.paid === 130 && sh.equipped === 'gaspistol' && sh.spare, sh);
 check('Gas Pistol: against the Electric Pistol a faster BB (40 m/s), tighter aimed, straight for longer; a slower cycle (4.5/s), a slower walk, heavier; no cocking between pulls; a 20% gas fade',
   sh.gas[0] === 40 && sh.gas[0] > sh.ep[0] && sh.gas[1] < sh.ep[1] && sh.gas[2] > sh.ep[2] && sh.gas[3] < sh.ep[3] && sh.gas[4] < sh.ep[4]

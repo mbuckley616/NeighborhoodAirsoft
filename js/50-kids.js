@@ -95,7 +95,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || !weapon;   // v1.168; v1.326; v1.399
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || !weapon;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -294,6 +294,13 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, silver, 0, 0.01, 0.0);      // cylinder
       box(0.025, 0.03, 0.17, silver, 0, 0.02, 0.10);     // barrel
       grip(wood);
+      break;
+    }
+    case 'magnum': {   // v1.410 (D.63): the Six-Shooter's shape in blued steel, a longer barrel with its underlug, a black grip
+      const blued = new THREE.MeshStandardMaterial({ color: 0x23272e, roughness: 0.35, metalness: 0.7 });
+      box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
+      box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
+      grip(dark);
       break;
     }
     case 'bucket': {

@@ -40,6 +40,7 @@ const MAG_GUN_FIT = {
   spare_mag_gas: 'gaspistol',   // v1.399
   spare_mag_thompson: 'thompson',   // v1.403
   spare_mag_m14: 'm14',   // v1.404
+  spare_mag_magnum: 'magnum',   // v1.410
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -62,7 +63,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'spas',   // v1.398 (D.63 batch 5): the second pump shotgun
   'gaspistol',   // v1.399 (D.63 batch 5): the gas blowback pistol
   'thompson',   // v1.403 (D.63 batch 5): the drum-fed SMG
-  'm14'];   // v1.404 (D.63 batch 5): the marksman rifle
+  'm14',   // v1.404 (D.63 batch 5): the marksman rifle
+  'magnum'];   // v1.410 (D.63 batch 6): the CO2 revolver
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -128,6 +130,7 @@ function getMaxAmmoForGun(gunType) {
   // v1.168: the backyard guns. The six-shooter is six, always: its cylinder is the mag.
   if (gunType === 'thunder')    return Game.persist.owned.thunder_mag_50 ? 50 : 30;
   if (gunType === 'sixshooter') return 6;
+  if (gunType === 'magnum')     return 6;   // v1.410: six shells in the cylinder, always
   if (gunType === 'bucket')     return Game.persist.owned.bucket_mag_1000 ? 1000 : 600;
   if (gunType === 'boltpistol') return Game.persist.owned.boltpistol_mag_12 ? 12 : 8;
   if (GUN_MAGS[gunType] && GUN_MAGS[gunType].cheap) return GUN_MAGS[gunType].baseCap;   // v1.250: one mag, no upgrade
@@ -239,6 +242,7 @@ const GUN_ACCESSORY_CAP = {
   spas:    { sight: 1, rails: 2, under: 1 },   // v1.398: the shotgun's
   gaspistol: { sight: 1, rails: 1 },            // v1.399: the pistol's
   m14:      { sight: 1, rails: 2, under: 1 },  // v1.404: the sniper's
+  magnum:   { sight: 1, rails: 1 },            // v1.410: the Six-Shooter's
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 function getGunAccessoryCap(gunType) {
@@ -643,6 +647,14 @@ const GUN_MAGS = {
     mags: [ { flag: 'gas_mag_25', cap: 25, price: 16 } ],
     spares: [ { key: 'spare_mag_gas', label: 'Spare Gas Pistol Mag (15)', price: 9 } ],
   },
+  // v1.410 (backlog D.63, batch 6): the Magnum, a CO2 revolver: double-action, so every pull turns the cylinder and
+  // fires with nothing to thumb back, but the long pull is slow; six shells, a steady push from the CO2
+  magnum: {
+    displayName: 'Magnum', baseCap: 6, price: 150, ownFlag: 'magnum',
+    blurb: 'A heavy blued CO2 revolver with a long barrel and a rubber grip, the one from the older kid\'s birthday. Double-action: every pull turns the cylinder and fires, nothing to thumb back, but the pull is long, so about two and a half a second. Its BB flies faster and straighter than the Six-Shooter\'s and the CO2 pushes the sixth as hard as the first. Six shells; bring spares.',
+    mags: [],
+    spares: [ { key: 'spare_mag_magnum', label: 'Spare Magnum Shells (6)', price: 5 } ],
+  },
   // v1.404 (backlog D.63, batch 5): the M14, a marksman rifle between the rifles and the snipers: a battery semi in walnut
   m14: {
     displayName: 'M14', baseCap: 30, price: 200, ownFlag: 'm14',
@@ -659,7 +671,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','shotgun','thunder','spas','semishotgun','ar','famas','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','semishotgun','ar','famas','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -862,6 +874,7 @@ function describeSlot(idx) {
       spare_mag_gas: 15,   // v1.399
       spare_mag_thompson: 100,   // v1.403
       spare_mag_m14: 30,   // v1.404
+      spare_mag_magnum: 6,   // v1.410
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -896,6 +909,7 @@ function describeSlot(idx) {
       spare_mag_gas: 'Spare 15-rd Gas Pistol Mag',   // v1.399
       spare_mag_thompson: 'Spare 100-rd Thompson Drum',   // v1.403
       spare_mag_m14: 'Spare 30-rd M14 Mag',   // v1.404
+      spare_mag_magnum: 'Spare 6-rd Magnum Shells',   // v1.410
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1095,6 +1109,7 @@ const GUN_WEIGHT = {
   spas: 8.5,                                              // v1.398: steel, heavier than the Spring Shotgun (6)
   gaspistol: 3,                                           // v1.399: a steel slide and a gas mag
   m14: 9.5,                                               // v1.404: walnut and steel, between the AR and the bolt guns
+  magnum: 3.5,                                            // v1.410: a steel revolver and its CO2, the heaviest pistol
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
@@ -1123,6 +1138,7 @@ const MAG_WEIGHT = {
   spare_mag_gas: 0.7,   // v1.399: a gas mag is heavy for its size
   spare_mag_thompson: 1.4,   // v1.403: a drum
   spare_mag_m14: 0.8,   // v1.404
+  spare_mag_magnum: 0.4,   // v1.410: six loaded shells in a speed loader
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1588,6 +1604,12 @@ GUN_SPECS.m14 = Object.assign({}, GUN_SPECS.sniper, { electric: true, semiRPM: 1
 // walk (0.96, 1.05)
 GUN_SPECS.thompson = Object.assign({}, GUN_SPECS.mp5, { cyclicRPM: 560, muzzleVelocity: 54, curveOnsetDistance: 18, baseSpread: 0.30, adsSpreadMult: 0.36, playerSpeedMult: 0.96, displayName: 'Thompson' });
 GUN_SPECS.gaspistol = Object.assign({}, GUN_SPECS.pistol, { electric: true, gas: true, gasFade: 0.2, semiRPM: 270, muzzleVelocity: 40, curveOnsetDistance: 6, adsSpreadMult: 0.32, playerSpeedMult: 1.1, displayName: 'Gas Pistol' });
+// v1.410 (D.63, batch 6): the Magnum, the Six-Shooter's six-shell cylinder fired double-action: every pull fires
+// (`electric`: it stays cocked) at 2.5 a second, the long pull (the Gas Pistol 4.5); a faster BB (44 m/s, the
+// Six-Shooter 32, the Gas Pistol 40) straight for 9 m (5, 6), tighter (0.30, 0.36), and no fade: CO2 pushes the
+// last shell as hard as the first. Closing the cylinder on six fresh shells is the hammer's 0.35 s. Heavy for a
+// pistol, a slower walk (1.06; the Gas Pistol 1.1)
+GUN_SPECS.magnum = Object.assign({}, GUN_SPECS.sixshooter, { electric: true, doubleAction: true, semiRPM: 150, muzzleVelocity: 44, curveOnsetDistance: 9, curveStrengthMax: 14, baseSpread: 0.30, adsSpreadMult: 0.3, cockTime: 0.35, playerSpeedMult: 1.06, displayName: 'Magnum' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

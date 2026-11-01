@@ -1926,6 +1926,28 @@ function buildFPSixShooter() {
   Game.camera.add(group);
   return group;
 }
+// v1.410 (backlog D.63, Michael: A, batch 6): the Magnum, a CO2 revolver on the Six-Shooter's frame, cylinder, barrel,
+// sights and bird's-head grip: blued steel for the silver, a darker cylinder, a black rubber grip with a brass CO2
+// screw cap under the butt, a full-length underlug under the barrel round the ejector rod, and a vent rib on top
+// (the front blade stands on it, its tip where the Six-Shooter's is). Double-action: each shot's kick takes the hammer
+// back, and the cylinder stands a chamber on for every shell fired (`doubleAction`, updateHeldMesh).
+function buildFPMagnum() {
+  const group = buildFPSixShooter();
+  const blued = new THREE.MeshStandardMaterial({ color: 0x2a2f37, roughness: 0.3, metalness: 0.8 });
+  const cylMat = new THREE.MeshStandardMaterial({ color: 0x1d2128, roughness: 0.35, metalness: 0.8 });
+  const rubber = new THREE.MeshStandardMaterial({ color: 0x121212, roughness: 0.9, metalness: 0.0 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 });
+  _recolor(group, 0xb9bdc4, blued);    // the frame, top strap, barrel, ejector rod, guard and front blade
+  _recolor(group, 0x6d7178, cylMat);   // the cylinder and the hammer
+  _recolor(group, 0x7a4a24, rubber);   // the grip
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.018, 0.122), blued, 0, 0.025, -0.137).name = 'underlug';
+  _fpPart(group, new THREE.BoxGeometry(0.007, 0.006, 0.112), blued, 0, 0.0465, -0.136).name = 'ventRib';
+  _fpPart(group, new THREE.CylinderGeometry(0.006, 0.006, 0.004, 10), brass, 0, -0.1085, 0.0197).name = 'co2Cap';
+  group.userData.blowback = true;
+  group.userData.doubleAction = true;
+  group.userData.gunType = 'magnum';
+  return group;
+}
 
 // Bucket Gun: a blue electric hopper gun. A see-through bucket of BBs rides on top under a carry-handle sight rail.
 function buildFPBucket() {
@@ -2125,6 +2147,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'rpk')     mesh = buildFPRPK();           // v1.396
   else if (gunType === 'spas')    mesh = buildFPSpas();          // v1.398
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
+  else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();   // fallback
@@ -2185,6 +2208,7 @@ const FP_HANDS = {
   epistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.326: the pistol's
   thompson: { r: { c: [0, -0.064, 0.055], rx: -0.25, gw: 0.014, gd: 0.017, up: -0.012 }, l: { kind: 'grip', c: [0, -0.050, -0.180], rx: 0, gw: 0.013, gd: 0.015, up: -0.005 } },   // v1.403: the wooden grip and front grip
   gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
+  magnum:  { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.410: the Six-Shooter's
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
