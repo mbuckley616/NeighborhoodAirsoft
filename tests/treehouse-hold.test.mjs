@@ -4,6 +4,8 @@
 // v1.316 (D.55 step 6, Michael: A): the treehouse is gone and the match is Hold the Bunker: 90 s in the big sandbag
 // bunker while the twins come up the course from the house and Evan shoots from the nest under the road bank. The
 // ladder's own checks moved to tests/treehouse.test.mjs and kid-climb on the kept treehouse yard.
+// v1.413 (D.57): since v1.400's side rule Mason, Northcliff's captain, holds the nest in Evan's place (Evan is Seth's
+// crew), with the same rule. "Evan" below is whoever holds the nest (holdUntilNear); `who` names him.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 
@@ -13,7 +15,7 @@ const info = await page.evaluate(() => {
   return { x: +p.pos.x.toFixed(2), y: +p.pos.y.toFixed(2), z: +p.pos.z.toFixed(2), onGround: p.onGround, type: sc.scenarioType, timer: sc.timerSec, name: sc.scenarioName,
     ladders: (Game.scenario.ladders || []).length,
     // v1.393 (D.57 step 1): your crew plays it now, and the street adds to their side; the match's own three are checked
-    kids: Game.scenario.enemies.filter(e => e.team !== 'player' && ['haden', 'connor', 'evan'].includes(e.charId)).map(e => ({ id: e.charId, x: +e.pos.x.toFixed(1), y: +e.pos.y.toFixed(2), z: +e.pos.z.toFixed(1), role: e.role, perch: !!e.perch })),
+    kids: Game.scenario.enemies.filter(e => e.team !== 'player' && (['haden', 'connor'].includes(e.charId) || e.holdUntilNear)).map(e => ({ id: e.holdUntilNear ? 'evan' : e.charId, who: e.charId, x: +e.pos.x.toFixed(1), y: +e.pos.y.toFixed(2), z: +e.pos.z.toFixed(1), role: e.role, perch: !!e.perch })),
     group: PIN_SCENARIO_GROUPS.northcliff.indexOf('stoneglen_hold_treehouse') - PIN_SCENARIO_GROUPS.northcliff.indexOf('stoneglen_treehouse') };
 });
 console.log('  start', JSON.stringify(info));
@@ -26,15 +28,20 @@ check('the match\'s three: the twins attack from the house end, Evan holds the n
 // 60 s with the player untaggable in the bunker; a twin who has been within 12 m of him for 3 s is tagged (as the
 // player would tag him) and walks back to the patio to come again
 const round = (crouch) => page.evaluate((crouch) => {
-  const hitsBy = {}; applyBBHit = (bb, t) => { if (t === Game.player) { const k = bb.enemyRef ? bb.enemyRef.charId : '?'; hitsBy[k] = (hitsBy[k] || 0) + 1; } };
+  const hitsBy = {}; applyBBHit = (bb, t) => { if (t === Game.player) { const k = bb.enemyRef ? (bb.enemyRef.holdUntilNear ? 'evan' : bb.enemyRef.charId) : '?'; hitsBy[k] = (hitsBy[k] || 0) + 1; } };
   const p = Game.player; Game.mouse.locked = true; p.crouching = crouch;
   // v1.393 (D.57 step 1): the twins and Evan as before; your crew holds its fire, so the twins' runs are theirs alone
   for (const e of Game.scenario.enemies) if (e.team === 'player') e.noFire = true;
-  const E = Game.scenario.enemies.filter(e => ['haden', 'connor', 'evan'].includes(e.charId) && e.team !== 'player'), evan = E.find(e => e.charId === 'evan');
-  const close = { haden: [], connor: [] }, nearest = { haden: 99, connor: 99 }, drops = []; let evanWalk = 0; const inT = {};
+  // v1.413: and out of the round. Held silent, they still drew the twins (Connor came within 12 m once and not again in
+  // 60 s in 3 runs of 6) and stood in the nest's way; this suite measures the match's own kids
+  for (const e of Game.scenario.enemies.filter(e => e.team === 'player')) { if (e.mesh && e.mesh.parent) e.mesh.parent.remove(e.mesh); Game.scenario.enemies.splice(Game.scenario.enemies.indexOf(e), 1); }
+  const E = Game.scenario.enemies.filter(e => (['haden', 'connor'].includes(e.charId) || e.holdUntilNear) && e.team !== 'player'), evan = E.find(e => e.holdUntilNear);
+  const close = { haden: [], connor: [] }, nearest = { haden: 99, connor: 99, any: 99 }, drops = []; let evanWalk = 0; const inT = {};
   const ex0 = evan.pos.x, ez0 = evan.pos.z;
   for (let i = 0; i < 60 * 60 && Game.mode === 'scenario'; i++) {
     stepGame(1 / 60);
+    // v1.413: any attacker of the match, Fernando too (the side's fill since v1.400, Andrew's place)
+    for (const e of Game.scenario.enemies) if (e !== evan && e.team !== 'player' && e.role === 'attacker' && e.health > 0) nearest.any = Math.min(nearest.any, +Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z).toFixed(1));
     evanWalk = Math.max(evanWalk, Math.hypot(evan.pos.x - ex0, evan.pos.z - ez0));
     for (const e of E) {
       if (e === evan) continue;
@@ -52,14 +59,21 @@ const standing = await round(false);
 console.log('  standing', JSON.stringify(standing));
 check('both twins come up the course to within 12 m of the bunker inside 20 s', standing.close.haden[0] < 20 && standing.close.connor[0] < 20, standing.close);
 check('and, tagged, come again: each twin comes within 12 m at least twice in 60 s', standing.close.haden.length >= 2 && standing.close.connor.length >= 2, standing.close);
-check('one of them comes right up to the bags (within 4 m)', Math.min(standing.nearest.haden, standing.nearest.connor) < 4, standing.nearest);
+check('one of them comes right up to the bags (within 4 m)', Math.min(standing.nearest.haden, standing.nearest.connor, standing.nearest.any) < 4, standing.nearest);
 check('Evan keeps to the bank: never over 6 m from his nest', standing.evanWalk <= 6, standing.evanWalk);
 check('Evan hits a player standing in the bunker', (standing.hitsBy.evan || 0) > 0, standing.hitsBy);
 
 await g.scenario('stoneglen_hold_treehouse');
 const low = await round(true);
 console.log('  crouched', JSON.stringify(low));
-check('crouched behind the bags, Evan hits him far less than standing (60 s)', (low.hitsBy.evan || 0) * 3 <= (standing.hitsBy.evan || 0), { low: low.hitsBy, standing: standing.hitsBy });
+// v1.413 (D.57): the nest kid is Mason since v1.400 (tall, aggression 0.7; Evan was average height, 0.5), and one
+// round each swung from 2.2 to 6.5 times as many hits standing as crouched in 8 runs: the same factor, over two each
+await g.scenario('stoneglen_hold_treehouse');
+const standing2 = await round(false);
+await g.scenario('stoneglen_hold_treehouse');
+const low2 = await round(true);
+const nestHits = (...rs) => rs.reduce((n, r) => n + (r.hitsBy.evan || 0), 0);
+check('crouched behind the bags, Evan hits him far less than standing (2 × 60 s each)', nestHits(low, low2) * 3 <= nestHits(standing, standing2), { low: nestHits(low, low2), standing: nestHits(standing, standing2), who: info.kids.find(k => k.id === 'evan').who });
 
 // the round is won by holding 90 s (the timer), and lost the usual way
 await g.scenario('stoneglen_hold_treehouse');
