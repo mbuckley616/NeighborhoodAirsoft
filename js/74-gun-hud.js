@@ -303,7 +303,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14') {   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
+    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14' || gunType === 'lever') {   // v1.412: the Lever Gun's sights are the sniper's too   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -468,6 +468,8 @@ function updateHeldMesh(dt) {
           part.position.y = part.userData.baseY + bob;
         }
       }
+      // v1.412 (D.63): a lever swings down on its hinge as it is worked
+      if (part.userData && part.userData.cockSwing) part.rotation.x = cockAmt * part.userData.cockSwing;
       // v1.168: the six-shooter's cylinder turns a chamber as the hammer comes back
       if (part.userData && part.userData.cockSpin) part.rotation.y = cockAmt * part.userData.cockSpin;
       // v1.410 (D.63): a double-action revolver's cylinder stands a chamber on for each shell fired from it
@@ -593,6 +595,7 @@ function updateLoadoutHud() {
         const cockVerb = Game.gun.cockType === 'pump' ? 'pump the forestock'
                        : Game.gun.cockType === 'charge' ? 'pull the charging handle'
                        : Game.gun.cockType === 'bolt' ? 'cycle the bolt'
+                       : Game.gun.cockType === 'lever' ? 'work the lever'   // v1.412
                        : 'rack the slide';
         hint = Game.gun.jammed ? 'Hold R to clear the jam.'
              : !Game.gun.cocked ? `Click & hold LMB to ${cockVerb}.`
@@ -655,6 +658,7 @@ function updateProgressBars() {
       const cockText = Game.gun.cockType === 'pump'   ? 'PUMP FORESTOCK'
                      : Game.gun.cockType === 'charge' ? 'PULL CHARGING HANDLE'
                      : Game.gun.cockType === 'bolt'   ? 'CYCLE BOLT'
+                     : Game.gun.cockType === 'lever'  ? 'WORK LEVER'   // v1.412
                      : 'RACK SLIDE';
       cockLabel.textContent = cockText;
     }
@@ -895,6 +899,7 @@ const RETICLE_SPECS = {
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
   m14:     { style: 'fine_cross', baseGap: 8,  ringR: 0,  centerDot: 1.2 },   // v1.404: the SVD's, a little wider
+  lever:   { style: 'dot_cross',  baseGap: 9,  ringR: 6,  centerDot: 1.5 },   // v1.412: between the AR's and the sniper's
   svd:     { style: 'fine_cross', baseGap: 7,  ringR: 0,  centerDot: 1.1 },   // v1.395: the sniper's, a little wider
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };

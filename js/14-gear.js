@@ -42,6 +42,7 @@ const MAG_GUN_FIT = {
   spare_mag_m14: 'm14',   // v1.404
   spare_mag_magnum: 'magnum',   // v1.410
   spare_mag_ksg: 'ksg',   // v1.411
+  spare_mag_lever: 'lever',   // v1.412
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -66,7 +67,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'thompson',   // v1.403 (D.63 batch 5): the drum-fed SMG
   'm14',   // v1.404 (D.63 batch 5): the marksman rifle
   'magnum',   // v1.410 (D.63 batch 6): the CO2 revolver
-  'ksg'];   // v1.411 (D.63 batch 6): the bullpup pump shotgun
+  'ksg',   // v1.411 (D.63 batch 6): the bullpup pump shotgun
+  'lever'];   // v1.412 (D.63 batch 6): the lever-action carbine
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -103,6 +105,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm14') return Game.persist.owned.m14_mag_50 ? 50 : 30;   // v1.404: its box mag, or the long one
   if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
+  if (gunType === 'lever') return Game.persist.owned.lever_mag_16 ? 16 : 12;   // v1.412: its tube, or the long one
   if (gunType === 'ksg') return Game.persist.owned.ksg_mag_90 ? 90 : 60;   // v1.411: its two tubes, or the long ones
   if (gunType === 'spas') return Game.persist.owned.spas_mag_72 ? 72 : 45;   // v1.398: 15 shells of three, or 24
   if (gunType === 'sniper') {
@@ -247,6 +250,7 @@ const GUN_ACCESSORY_CAP = {
   m14:      { sight: 1, rails: 2, under: 1 },  // v1.404: the sniper's
   magnum:   { sight: 1, rails: 1 },            // v1.410: the Six-Shooter's
   ksg:      { sight: 1, rails: 2, under: 1 },  // v1.411: the shotgun's
+  lever:    { sight: 1, rails: 2, under: 1 },  // v1.412: the sniper's
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 function getGunAccessoryCap(gunType) {
@@ -659,6 +663,14 @@ const GUN_MAGS = {
     mags: [],
     spares: [ { key: 'spare_mag_magnum', label: 'Spare Magnum Shells (6)', price: 5 } ],
   },
+  // v1.412 (backlog D.63, batch 6): the Lever Gun, a spring cowboy carbine: work the lever every shot, quicker than a
+  // bolt, a BB faster and straighter than the AR's; a tube of twelve
+  lever: {
+    displayName: 'Lever Gun', baseCap: 12, price: 120, ownFlag: 'lever',
+    blurb: 'A cowboy carbine in walnut with a shiny brass receiver, like the one from the old westerns on TV. Work the lever down and up for every shot: slower than a slide, quicker than a bolt. Its BB flies faster and straighter than the Spring Assault Rifle\'s, and it is lighter to carry. Twelve in the tube under the barrel; a long tube holds sixteen.',
+    mags: [ { flag: 'lever_mag_16', cap: 16, price: 14 } ],
+    spares: [ { key: 'spare_mag_lever', label: 'Spare Lever Gun BBs (12)', price: 6 } ],
+  },
   // v1.411 (backlog D.63, batch 6): the KSG, a bullpup pump shotgun: two tubes under the barrel, a short gun for its
   // barrel, a short quick pump; a wider cloud than the Spring Shotgun's
   ksg: {
@@ -683,7 +695,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','ksg','semishotgun','ar','famas','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','ak47','g36','m4','aug','rpk','m249'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -888,6 +900,7 @@ function describeSlot(idx) {
       spare_mag_m14: 30,   // v1.404
       spare_mag_magnum: 6,   // v1.410
       spare_mag_ksg: 60,   // v1.411
+      spare_mag_lever: 12,   // v1.412
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -924,6 +937,7 @@ function describeSlot(idx) {
       spare_mag_m14: 'Spare 30-rd M14 Mag',   // v1.404
       spare_mag_magnum: 'Spare 6-rd Magnum Shells',   // v1.410
       spare_mag_ksg: 'Spare 60-rd KSG Shells',   // v1.411
+      spare_mag_lever: 'Spare 12-rd Lever Gun BBs',   // v1.412
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     return {
@@ -1125,6 +1139,7 @@ const GUN_WEIGHT = {
   m14: 9.5,                                               // v1.404: walnut and steel, between the AR and the bolt guns
   magnum: 3.5,                                            // v1.410: a steel revolver and its CO2, the heaviest pistol
   ksg: 7,                                                 // v1.411: two full tubes; the Spring Shotgun 6, the SPAS-12 8.5
+  lever: 7,                                               // v1.412: walnut and brass, lighter than the AR (8)
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
 // Spare-mag weights by refId (bigger drums weigh more).
@@ -1155,6 +1170,7 @@ const MAG_WEIGHT = {
   spare_mag_m14: 0.8,   // v1.404
   spare_mag_magnum: 0.4,   // v1.410: six loaded shells in a speed loader
   spare_mag_ksg: 1.4,   // v1.411
+  spare_mag_lever: 0.3,   // v1.412
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1631,6 +1647,11 @@ GUN_SPECS.magnum = Object.assign({}, GUN_SPECS.sixshooter, { electric: true, dou
 // quickest pump (0.7 s; the Spring Shotgun 0.85, the SPAS-12 1.0) and, short as it is, the quickest walk of the
 // shotguns (1.04; the others 0.92 to 1.0); 60 in its two tubes
 GUN_SPECS.ksg = Object.assign({}, GUN_SPECS.shotgun, { baseSpread: 0.62, curveOnsetDistance: 7, cockTime: 0.7, playerSpeedMult: 1.04, displayName: 'KSG' });
+// v1.412 (D.63, batch 6): the Lever Gun, the sniper's spring worked by a lever: every shot needs the lever (0.5 s;
+// the AR's charging handle 0.55, the sniper's bolt 1.1), a BB between the AR's and the sniper's (55 m/s, the AR 45,
+// the sniper 75) straight for 14 m (10, 25), tighter than the AR (0.22, 0.28), and lighter on its feet than the AR
+// (0.9, 0.85; the sniper 0.75); twelve in the tube
+GUN_SPECS.lever = Object.assign({}, GUN_SPECS.sniper, { weightClass: 'heavy', cockType: 'lever', cockTime: 0.5, muzzleVelocity: 55, baseSpread: 0.22, adsSpreadMult: 0.3, curveOnsetDistance: 14, curveStrengthMax: 10, playerSpeedMult: 0.9, displayName: 'Lever Gun' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

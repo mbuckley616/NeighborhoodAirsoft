@@ -103,6 +103,7 @@ function gunForegripZ(weapon) {
     case 'l96':     // long barrel — hand well forward (v1.336: and the L96's)
     case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'm14':     return 0.22;   // v1.404: its long walnut forend
+    case 'lever':   return 0.20;   // v1.412: its walnut forend
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
@@ -302,6 +303,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
       box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
       grip(dark);
+      break;
+    }
+    case 'lever': {   // v1.412 (D.63): a cowboy carbine, a barrel over its tube, a brass receiver, a walnut stock, the lever loop
+      box(0.03, 0.05, 0.44, black, 0, 0.02, 0.22);       // the barrel over the tube
+      box(0.045, 0.05, 0.22, wood, 0, -0.01, 0.16);      // the walnut forend
+      box(0.045, 0.06, 0.10, new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.7 }), 0, 0.0, 0.0);   // the brass receiver
+      box(0.045, 0.10, 0.16, wood, 0, -0.03, -0.12);     // the stock
+      box(0.02, 0.06, 0.08, dark, 0, -0.06, -0.02);      // the lever loop
       break;
     }
     case 'ksg': {   // v1.411 (D.63): a stubby black bullpup, the barrel over two tubes, the pump, the body back to the butt

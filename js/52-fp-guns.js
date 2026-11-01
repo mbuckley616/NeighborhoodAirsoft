@@ -1948,6 +1948,41 @@ function buildFPMagnum() {
   group.userData.gunType = 'magnum';
   return group;
 }
+// v1.412 (backlog D.63, Michael: A, batch 6): the Lever Gun, a spring cowboy carbine on the sniper's stock, barrel and
+// sights: the stock and forend in walnut, a brass receiver, the bipod off, a tube under the barrel past the forend with
+// two barrel bands, a hammer at the receiver's back, and in place of the bolt the lever: a loop round the trigger and
+// behind it for the fingers, hinged at the guard's front, that swings down as you work it (`cockSwing`, updateHeldMesh).
+function buildFPLever() {
+  const group = buildFPSniper();
+  const walnut = new THREE.MeshStandardMaterial({ color: 0x86532c, roughness: 0.6 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.75 });
+  const blued = new THREE.MeshStandardMaterial({ color: 0x24272d, roughness: 0.35, metalness: 0.7 });
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  for (const n of ['forend', 'stock']) { const o = group.getObjectByName(n); if (o) o.material = walnut; }
+  const rec = group.getObjectByName('receiver'); if (rec) rec.material = brass;
+  for (const p of group.userData.cockingParts) group.remove(p);   // the bolt comes off: the lever works it
+  // the folded bipod comes off (its hinge and legs hang under the barrel at y -0.0123)
+  for (const o of group.children.slice()) if (o.isMesh && Math.abs(o.position.y + 0.0123) < 1e-6) group.remove(o);
+  const tube = add(new THREE.CylinderGeometry(0.0075, 0.0075, 0.15, 10), blued, 0, 0.002, -0.28);
+  tube.rotation.x = Math.PI / 2; tube.name = 'tube';
+  for (const z of [-0.262, -0.345]) add(new THREE.BoxGeometry(0.024, 0.036, 0.008), blued, 0, 0.012, z).name = 'band';
+  add(new THREE.BoxGeometry(0.008, 0.016, 0.010), blued, 0, 0.042, 0.016).name = 'hammer';
+  // the lever, hinged at the guard's front: the bar under the trigger and the loop behind it for the fingers
+  const lever = new THREE.Group();
+  add(new THREE.BoxGeometry(0.008, 0.005, 0.050), blued, 0, -0.012, 0.025, lever);   // the bar under the trigger
+  add(new THREE.BoxGeometry(0.008, 0.024, 0.005), blued, 0, -0.024, 0.052, lever);   // the loop's back
+  add(new THREE.BoxGeometry(0.008, 0.005, 0.030), blued, 0, -0.036, 0.037, lever);   // the loop's bottom
+  add(new THREE.BoxGeometry(0.008, 0.024, 0.005), blued, 0, -0.024, 0.022, lever);   // the loop's front
+  lever.position.set(0, -0.022, -0.020);
+  lever.name = 'lever';
+  lever.userData.cockSwing = 0.9;   // it swings down 52° at the full pull
+  group.add(lever);
+  group.userData.cockingParts = [lever];
+  group.userData.cockingOffset = 0.0;
+  group.userData.gunType = 'lever';
+  return group;
+}
+
 // v1.411 (backlog D.63, Michael: A, batch 6): the KSG, a bullpup pump shotgun on the spring shotgun's receiver,
 // barrel, pump and bead, all of it black: the one tube under the barrel becomes two side by side (the pump wraps them),
 // the wrist and sporting stock come off, a pistol grip goes behind the trigger guard, and a long boxy body runs back
@@ -2186,6 +2221,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
+  else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();   // fallback
@@ -2221,6 +2257,8 @@ const FP_HANDS = {
   svd:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.395: the sniper's stock, so its hands
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   m14:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.404: the sniper's stock, as the SVD's
+            l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  lever:   { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.412: the sniper's stock and forend
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   rpk:     { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },   // v1.396: the AK's
