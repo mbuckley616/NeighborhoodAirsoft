@@ -307,7 +307,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'm249') {   // v1.335: the AK's hold; aimed, the front post's tip (y 0.071) in the rear notch
+    } else if (gunType === 'm249' || gunType === 'm60') {   // v1.413: and the M60, on the M249's sights   // v1.335: the AK's hold; aimed, the front post's tip (y 0.071) in the rear notch
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.071, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -347,7 +347,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.20, z: -0.31 };
       adsPos  = { x: 0.0,  y: -0.053, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'mac10') {        // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
+    } else if (gunType === 'mac10' || gunType === 'uzi') {        // v1.414: and the Uzi, on the MAC-10's sights   // v1.232: ADS Y is minus the new front post's tip (was −0.078, no sights)
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
@@ -881,6 +881,7 @@ const RETICLE_SPECS = {
   aug:     { style: 'circle_cross', baseGap: 10, ringR: 10, centerDot: 1.3 },   // v1.372: tighter than the G36C's
   m4:      { style: 'circle_cross', baseGap: 11, ringR: 10, centerDot: 1.3 },   // v1.373: between the G36C's and the AUG's
   mac10:   { style: 'wide_ticks', baseGap: 13, ringR: 0,  centerDot: 1.5 },
+  uzi:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },   // v1.414: tighter than the MAC-10's
   thunder: { style: 'big_circle', baseGap: 28, ringR: 30, centerDot: 1.6 },   // v1.168: wider than the spring shotgun
   sixshooter: { style: 'ring_ticks', baseGap: 9, ringR: 9, centerDot: 1.4 },
   bucket:  { style: 'wide_ticks', baseGap: 14, ringR: 0,  centerDot: 1.5 },
@@ -897,6 +898,7 @@ const RETICLE_SPECS = {
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
+  m60:     { style: 'circle_cross', baseGap: 15, ringR: 14, centerDot: 1.4 },   // v1.413: the M249's, a little wider still
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
   m14:     { style: 'fine_cross', baseGap: 8,  ringR: 0,  centerDot: 1.2 },   // v1.404: the SVD's, a little wider
   lever:   { style: 'dot_cross',  baseGap: 9,  ringR: 6,  centerDot: 1.5 },   // v1.412: between the AR's and the sniper's
