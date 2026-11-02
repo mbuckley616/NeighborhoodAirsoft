@@ -210,7 +210,10 @@ const SHOES = {
 // the same kind on two guns.
 const ATTACHMENTS = {
   red_dot:    { id:'red_dot', name:'Red-Dot Sight', slot:'sight', price:35, hipSpreadMult:0.85, desc:'Tightens hipfire spread ~15% and shows a glowing red reticle when you aim. Sits in the sight slot of any gun.' },
-  scope:      { id:'scope',  name:'4× Scope', slot:'sight', price:55, hipSpreadMult:0.8, adsZoomBonus:0.8, desc:'A magnified optic for the sight slot. Tightens hipfire ~20% and zooms further when you aim. One per gun.' },
+  scope:      { id:'scope',  name:'4× Scope', slot:'sight', price:55, hipSpreadMult:0.8, adsZoomBonus:0.8, scopeView:'glass', desc:'A magnified optic for the sight slot. Tightens hipfire ~20% and zooms further when you aim. One per gun.' },
+  // v1.418 (backlog D.83, Michael: A, more homemade parts): a dollar-store toy telescope taped to the top. It zooms under
+  // half what the 4× scope does, through a small lens with a marker cross; nothing for hip shots. Cheap is its point.
+  toy_scope:  { id:'toy_scope', name:'Taped-On Toy Scope', slot:'sight', price:14, hipSpreadMult:1.0, adsZoomBonus:0.35, scopeView:'toy', desc:'A toy telescope from the dollar store, duct-taped to the top of the gun on a cardboard shim. It zooms a little when you aim (under half the 4× Scope), but the lens is small, there’s a cross drawn on it in marker, and it does nothing for your shots from the hip. Sits in the sight slot of any gun.' },
   laser:      { id:'laser',  name:'Red Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, laserColor:'red', desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   laser_green:{ id:'laser_green', name:'Green Laser Sight', slot:'rail', price:34, hipSpreadMult:0.9, laserColor:'green', desc:'Rail-mounted green beam — brighter and easier to see than red, especially at night. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   flashlight: { id:'flashlight', name:'Tactical Flashlight', slot:'rail', price:18, hipSpreadMult:1.0, desc:'Rail-mounted working light that casts a real beam. Goes on a left or right rail.' },
@@ -393,6 +396,14 @@ function underPartMult(key) {
   const gun = Game.persist?.equipped?.gun;
   const d = gun ? getUnderPart(gun) : null;
   return (d && typeof d[key] === 'number') ? d[key] : 1;
+}
+// v1.418: the sight on a gun, and whether it is one you look through (the 4× scope, the toy scope): its scopeView or null
+function getMountedSight(gunType) {
+  return getMountedAccessories(gunType).find(a => ATTACHMENTS[a.type] && ATTACHMENTS[a.type].slot === 'sight') || null;
+}
+function gunScopeView(gunType) {
+  const s = getMountedSight(gunType);
+  return (s && ATTACHMENTS[s.type].scopeView) || null;
 }
 function gunHasAccessoryType(gunType, type) {
   return getMountedAccessories(gunType).some(a => a.type === type);

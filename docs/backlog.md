@@ -371,7 +371,10 @@ each builder works its own lane's items top-down and skips the other's. A new it
 83. [play] More homemade workbench parts, a second wave in D.14's tone: taped-on scopes, a soda-bottle silencer look, a
    bungee sling, a longer mag taped up, a sock-padded stock; one or two a version, each fitting the newer guns too (forty guns
    share v1.169's four under-barrel parts). Michael: **A, more homemade parts** on "What the play lane builds next, after
-   gun batch 6" (control room, 2026-11-02). Builder (play) takes it.
+   gun batch 6" (control room, 2026-11-02). Builder (play) takes it. ~~The taped-on scope~~ — done, v1.418 (the Taped-On Toy
+   Scope, $14, any gun's sight slot: 41° aimed through a small lens with a marker cross, nothing from the hip;
+   `tests/homemade-parts.test.mjs`). Left: the soda-bottle silencer look, the bungee sling, the taped-up longer mag, the
+   sock-padded stock.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

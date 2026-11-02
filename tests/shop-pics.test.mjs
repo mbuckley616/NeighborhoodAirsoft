@@ -158,7 +158,7 @@ const centred = await page.evaluate(() => Object.keys(ATTACHMENTS).map(aid => {
   const box = new THREE.Box3();
   const gun = buildBareGunMesh('ar'); const acc = ensureFPGunAccessory(gun, 'ar');
   updateFPGunAccessory(gun, 'ar', [{ type: aid, slot: ATTACHMENTS[aid].slot, placement: ATTACHMENTS[aid].slot === 'rail' ? 'left' : ATTACHMENTS[aid].slot }]);
-  const shown = [acc.redDotOptic, acc.scopeOptic, acc.laserUnit, acc.flashUnit, ...Object.values(acc.underParts.meshes)].filter(m => m && m.visible).length;
+  const shown = [acc.redDotOptic, acc.scopeOptic, acc.toyScopeOptic, acc.laserUnit, acc.flashUnit, ...Object.values(acc.underParts.meshes)].filter(m => m && m.visible).length;
   return [aid, shown];
 }));
 check('each part is the one thing mounted on its gun', centred.every(c => c[1] === 1), centred);
