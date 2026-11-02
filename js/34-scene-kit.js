@@ -652,7 +652,8 @@ function updateLaserDiagHud() {
 // so the seeded boards are untouched.
 function buildStreetRoad(scene, opt) {
   const { point, deriv, groundY, groundNormal, houseCenters } = opt;
-  const ASPH = opt.ASPH, BULB_C = { x: opt.bulb.x, z: opt.bulb.z }, BULB_R = opt.bulb.r;
+  // v1.420: `bulb` may be null (Northcliff Trace bends on out of the map instead of ending): the road then runs to t = 1
+  const ASPH = opt.ASPH, NOBULB = !opt.bulb, BULB_C = NOBULB ? { x: 1e6, z: 1e6 } : { x: opt.bulb.x, z: opt.bulb.z }, BULB_R = NOBULB ? 0 : opt.bulb.r;
   const LIFT = 0.06;
   const asphMat = opt.asphMat;
   const concMat = new THREE.MeshStandardMaterial({ color: 0x96928a, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
@@ -660,7 +661,7 @@ function buildStreetRoad(scene, opt) {
   const frameAt = (t) => { const p = point(t), d = deriv(t), l = Math.hypot(d.x, d.z); return { p, tx: d.x / l, tz: d.z / l, nx: -d.z / l, nz: d.x / l }; };
   const dBulb = (x, z) => Math.hypot(x - BULB_C.x, z - BULB_C.z);
   // the road ends inside the bulb; find the t where its centre is 5 m from the bulb's centre
-  let tEnd = 1; for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(point(t).x, point(t).z) < 5) { tEnd = t; break; }
+  let tEnd = 1; if (!NOBULB) for (let t = 0.8; t <= 1; t += 0.002) if (dBulb(point(t).x, point(t).z) < 5) { tEnd = t; break; }
   const T0 = opt.T0, NS = opt.NS;   // t < 0 runs the road out through the tree-wall gap at the entry
   const meshes = [];
   // --- asphalt ribbon (indexed, smooth)
@@ -679,7 +680,7 @@ function buildStreetRoad(scene, opt) {
     const m = new THREE.Mesh(g, asphMat); m.receiveShadow = true; m.userData.wmRoad = 'asphalt'; meshes.push(m);
   }
   // --- bulb (polar, indexed); a hair lower than the ribbon where they overlap
-  {
+  if (!NOBULB) {
     const rings = [0, 1.6, 3.2, 4.8, BULB_R], segs = 56, pos = [], idx = [];
     for (let r = 0; r < rings.length; r++) for (let k = 0; k < segs; k++) {
       const a = k / segs * Math.PI * 2, x = BULB_C.x + Math.cos(a) * rings[r], z = BULB_C.z + Math.sin(a) * rings[r];
@@ -725,7 +726,7 @@ function buildStreetRoad(scene, opt) {
       prev = { pts, inBulb };
     }
   }
-  {
+  if (!NOBULB) {
     const segs = 72; let prev = null;
     for (let k = 0; k <= segs; k++) {
       const a = k / segs * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
