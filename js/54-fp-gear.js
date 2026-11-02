@@ -578,6 +578,26 @@ function buildUnderParts(group, mount) {
     }
     meshes.sling = g;
   }
+  // v1.419 (D.83): bungee sling: a yellow-and-black striped cord sagging back from a steel hook under the handguard to
+  // a second hook toward the stock, shorter and tauter than the shoelace loop
+  {
+    const g = new THREE.Group();
+    const yel = new THREE.MeshStandardMaterial({ color: 0xe8c81e, roughness: 0.7 });
+    const blk = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.7 });
+    const hookMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc2, roughness: 0.35, metalness: 0.8 });
+    const r = 0.075, n = 10;
+    const cord = new THREE.Group();   // a half loop in the y-z plane, hanging down, squashed to a shallow sag
+    cord.rotation.y = Math.PI / 2; cord.scale.set(1, 0.55, 1); cord.position.set(0, y0, z0 + r); g.add(cord);
+    for (let i = 0; i < n; i++) {   // the cord in ten striped pieces
+      const seg = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0042, 6, 4, Math.PI / n), i % 2 ? blk : yel);
+      seg.rotation.z = Math.PI + i * Math.PI / n; cord.add(seg);
+    }
+    for (const zz of [z0, z0 + 2 * r]) {
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0018, 6, 12, Math.PI * 1.5), hookMat);
+      hook.rotation.y = Math.PI / 2; hook.position.set(0, y0 - 0.004, zz); g.add(hook);
+    }
+    meshes.bungee_sling = g;
+  }
   // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
   {
     const g = new THREE.Group();
