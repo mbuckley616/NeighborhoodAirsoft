@@ -5,7 +5,7 @@
 // v1.316 (D.55 step 6, Michael: A): the match is Hold the Bunker and there is no ladder. Evan is in the nest under the
 // road bank, 16 m behind a player who starts facing the house, and the same rule holds in its new form: he holds fire
 // until the first twin is within 7 m of the player (holdUntilNear, Game.scenario.attackNear).
-// v1.413 (D.57): since v1.400's side rule Evan, Seth's crew, is swapped at the nest for Mason, Northcliff's captain, and
+// v1.415 (D.57): since v1.400's side rule Evan, Seth's crew, is swapped at the nest for Mason, Northcliff's captain, and
 // your crew plays the match (v1.393). "Evan" below is whoever holds the nest (holdUntilNear), and "a twin close" is a
 // kid of the other side, not one of your crew at the bunker's posts.
 import { boot, check } from './lib/game.mjs';
@@ -47,7 +47,7 @@ const shots = await page.evaluate(() => {
   const E = Game.scenario.enemies, evan = E.find(e => e.holdUntilNear);
   const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
   let t = 0, before = 0, after = 0, nearAt = null, upAtNear = null; const seen = new Set();
-  for (let f = 0; f < 90 * 60 && Game.mode === 'scenario'; f++) {   // v1.413: the whole 90 s (a twin came close at 6.6-21 s)
+  for (let f = 0; f < 90 * 60 && Game.mode === 'scenario'; f++) {   // v1.415: the whole 90 s (a twin came close at 6.6-21 s)
     stepGame(1 / 60); t += 1 / 60;
     if (nearAt === null && Game.scenario.attackNear) { nearAt = +t.toFixed(1); upAtNear = evan.health > 0; }
     for (const b of Game.scenario.bbs) if (b.enemyRef === evan && !seen.has(b)) { seen.add(b); if (nearAt === null) before++; else after++; }
@@ -57,7 +57,7 @@ const shots = await page.evaluate(() => {
 });
 check('Evan fires no BB before a twin is close (untaggable round)', shots.before === 0 && shots.nearAt !== null, shots);
 check('and once one is, he shoots at the player', shots.after > 0, shots);
-// v1.413: your crew left the nest kid alone until then (it had tagged him by 6 s in 4 of 4 rounds)
+// v1.415: your crew left the nest kid alone until then (it had tagged him by 6 s in 4 of 4 rounds)
 check('the nest kid is still up when the first twin comes close (your crew left him alone)', shots.upAtNear === true, shots);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
