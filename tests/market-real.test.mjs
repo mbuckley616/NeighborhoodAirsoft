@@ -27,7 +27,7 @@ const plan = await page.evaluate(() => {
   const cols = obs.filter(o => Math.abs(o.maxZ - (ML.stripZ + 3)) < 0.01 && o.h === 4.6);
   const fence = obs.filter(o => o.bbPass && o.h === 1.1);
   const tables = obs.filter(o => o.h === 0.78);
-  // (the fifth row's west half, x 38.3-44.6, is the east fence: solid on purpose)
+  // (the fifth row's west half, x 38.5-44.6, is in play since v1.424, the hedge at 44 the east edge)
   const outside = obs.filter(o => o.h < 6 && !inB((o.minX + o.maxX) / 2, (o.minZ + o.maxZ) / 2, -1.2)
     && o !== store && !(o.maxX - o.minX > 30) && !(o.minX > B.maxX - 0.5 && o.maxX < 44.8 && o.minZ > -16 && o.maxZ < 28)).map(o => [+o.minX.toFixed(1), +o.minZ.toFixed(1), o.h]);
   const pts = [...Object.entries(built.placements), ...Object.entries(built.playerSpawns)];
@@ -106,6 +106,25 @@ const inside = await page.evaluate(() => {
 console.log('   inside:', JSON.stringify(inside));
 check('inside: the floor keeps its box (x ±25.6, z -29.6 to 17.6)', JSON.stringify(inside.B) === JSON.stringify([-25.6, 25.6, -29.6, 17.6]), inside.B);
 check('inside: the clerestory glass over both runs of the front glass, and the west vestibule outside', inside.clere === 2 && inside.vest === 1, inside);
+await leave();
+// v1.424 (B.22, Michael: "a random invisible wall ... extend it to the bushes nearby"): the east edge is the fifth row's
+// hedge. Walking east through its walk-through stall you stop at the hedge, not 5 m short; across the front drive, where no
+// hedge runs, at the cones
+await g.scenario('lot_1v1_marcus');
+const east = await page.evaluate(() => {
+  const hit = applyBBHit; window.applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
+  const walk = (x, z) => {
+    Game.player.pos.x = x; Game.player.pos.z = z; Game.player.yaw = -Math.PI / 2; Game.player.pitch = 0;
+    for (let f = 0; f < 240 && Game.mode === 'scenario'; f++) { Game.keys.KeyW = true; stepGame(1 / 60); }
+    Game.keys.KeyW = false; return +Game.player.pos.x.toFixed(2);
+  };
+  const hedge = []; Game.scene.traverse(o => { if (o.isMesh && Math.abs(o.position.x - ML.rows[ML.playRows]) < 0.01 && o.position.z > ML.rowZ0 && o.position.z < ML.rowZ1) hedge.push(o); });
+  let cones = 0; Game.scene.traverse(o => { if (o.userData.edgeCone) cones++; });
+  const r = { maxX: Game.scenario.bounds.maxX, row: walk(34, mlStallZ(4)), drive: walk(34, -23.5), cones, hedge: hedge.length };
+  window.applyBBHit = hit; return r;
+});
+check('the east edge is the fifth row\'s hedge: through its walk-through stall you reach it (x 42.5 or more, not past 43.4), and across the drive the cones',
+  east.maxX === 43.3 && east.row >= 42.5 && east.row <= 43.4 && east.drive >= 42.5 && east.drive <= 43.4 && east.cones === 6 && east.hedge > 0, east);
 await leave();
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

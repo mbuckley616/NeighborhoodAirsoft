@@ -2072,3 +2072,90 @@ function buildFortDetail(group, { W, D, H, t, back, wingL, wingR, seed }) {
   }
   group.userData.fortDetail = true;
 }
+// v1.423 (backlog B.21, Michael 2 Nov: Riverside Market's carts "no wheels, and there isn't that metal 'mesh' that covers
+// the framing of the cart"). A shopping cart as the real ones are: a wire-mesh basket wider at the handle end than at
+// the nose, its floor sloping up to the front; tube frame round its rim and corners; the red handle; a chassis of two
+// side rails on four casters, with the wire bottom rack between them. Local frame: the nose toward -z, the handle at +z,
+// 0.98 m to the rim, 1.02 m to the handle. Three meshes a cart (the wire, the steel, the rubber and plastic), so a lot of
+// them stays cheap. Used by the lot's corrals and strays (42-market-lot) and the store's carts (48-other-maps).
+let _cartMats = null;
+function makeShoppingCart(opt = {}) {
+  if (!_cartMats) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 32;
+    const c2 = cv.getContext('2d'); c2.fillStyle = '#fff'; c2.fillRect(0, 0, 32, 4); c2.fillRect(0, 0, 4, 32);
+    const tex = new THREE.CanvasTexture(cv); tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    _cartMats = {
+      wire: new THREE.MeshStandardMaterial({ color: 0xb4bac0, metalness: 0.6, roughness: 0.4, map: tex, alphaTest: 0.25, side: THREE.DoubleSide }),
+      steel: new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.7, roughness: 0.35 }),
+      dark: new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 }),
+      red: new THREE.MeshStandardMaterial({ color: 0xc0302a, roughness: 0.6 }),
+    };
+  }
+  const M = _cartMats, CELL = 0.045;
+  // the wire: quads (corners in order round the panel), the texture's cell CELL metres along each edge
+  const wp = [], wn = [], wu = [];
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const quad = (a, b, c, d) => {
+    const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(d, a)).normalize();
+    const u1 = a.distanceTo(b) / CELL, v1 = a.distanceTo(d) / CELL;
+    const uv = [[0, 0], [u1, 0], [u1, v1], [0, v1]], P = [a, b, c, d];
+    for (const i of [0, 1, 2, 0, 2, 3]) { wp.push(P[i].x, P[i].y, P[i].z); wn.push(n.x, n.y, n.z); wu.push(uv[i][0], uv[i][1]); }
+  };
+  // the basket's corners: rim (top) and floor, at the handle end (+z) and the nose (-z)
+  const rB = 0.28, rF = 0.24, zB = 0.40, zF = -0.50, yR = 0.98;
+  const fB = 0.25, fF = 0.21, zfB = 0.36, zfF = -0.42, yfB = 0.55, yfF = 0.60;
+  for (const s of [-1, 1]) quad(V(s * fB, yfB, zfB), V(s * fF, yfF, zfF), V(s * rF, yR, zF), V(s * rB, yR, zB));   // the sides
+  quad(V(-fF, yfF, zfF), V(fF, yfF, zfF), V(rF, yR, zF), V(-rF, yR, zF));        // the nose
+  quad(V(-fB, yfB, zfB), V(fB, yfB, zfB), V(fF, yfF, zfF), V(-fF, yfF, zfF));    // the floor
+  if (opt.gate !== false) quad(V(-fB, yfB + 0.02, zfB + 0.01), V(fB, yfB + 0.02, zfB + 0.01), V(rB - 0.01, yR - 0.03, zB), V(-rB + 0.01, yR - 0.03, zB));   // the back gate
+  quad(V(-0.19, 0.17, 0.33), V(0.19, 0.17, 0.33), V(0.17, 0.17, -0.36), V(-0.17, 0.17, -0.36));   // the bottom rack
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3));
+  wg.setAttribute('normal', new THREE.Float32BufferAttribute(wn, 3));
+  wg.setAttribute('uv', new THREE.Float32BufferAttribute(wu, 2));
+  // tubes between two points, merged by material into one geometry each
+  const parts = { steel: [], dark: [], red: [] };
+  const Y = new THREE.Vector3(0, 1, 0);
+  const tube = (mat, a, b, r = 0.011, seg = 5) => {
+    const len = a.distanceTo(b), geo = new THREE.CylinderGeometry(r, r, len, seg, 1, true);
+    const q = new THREE.Quaternion().setFromUnitVectors(Y, new THREE.Vector3().subVectors(b, a).normalize());
+    geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5), q, new THREE.Vector3(1, 1, 1)));
+    parts[mat].push(geo);
+  };
+  const rim = [V(-rB, yR, zB), V(-rF, yR, zF), V(rF, yR, zF), V(rB, yR, zB)];
+  for (let i = 0; i < 4; i++) tube('steel', rim[i], rim[(i + 1) % 4], 0.012);           // the rim, round the top
+  const flo = [V(-fB, yfB, zfB), V(-fF, yfF, zfF), V(fF, yfF, zfF), V(fB, yfB, zfB)];
+  for (let i = 0; i < 4; i++) { tube('steel', flo[i], flo[(i + 1) % 4]); tube('steel', flo[i], rim[i]); }   // the floor's edge and the corner posts
+  for (const s of [-1, 1]) {
+    tube('steel', V(s * rB, yR, zB), V(s * 0.29, 1.02, zB + 0.08), 0.013);               // the handle's arms
+    tube('steel', V(s * 0.21, 0.13, zfB + 0.04), V(s * 0.17, 0.12, zfF - 0.02), 0.014);   // the chassis rails
+    tube('steel', V(s * 0.21, 0.13, zfB + 0.04), V(s * fB, yfB, zfB), 0.014);            // the back legs
+    tube('steel', V(s * 0.17, 0.12, zfF - 0.02), V(s * fF, yfF, zfF), 0.012);            // the front legs
+    tube('steel', V(s * 0.19, 0.17, 0.33), V(s * 0.17, 0.17, -0.36), 0.008);            // the rack's sides
+  }
+  tube('red', V(-0.30, 1.02, zB + 0.08), V(0.30, 1.02, zB + 0.08), 0.022, 8);            // the handle's plastic grip
+  for (const [x, z] of [[-0.21, zfB + 0.04], [0.21, zfB + 0.04], [-0.17, zfF - 0.02], [0.17, zfF - 0.02]]) {
+    tube('dark', V(x - 0.018, 0.055, z), V(x + 0.018, 0.055, z), 0.055, 10);           // a caster wheel, axle across
+    tube('steel', V(x, 0.06, z), V(x, 0.125, z), 0.012, 5);                            // its fork
+  }
+  const merge = (list) => {
+    const pos = [], nor = [];
+    for (const geo of list) {
+      const g2 = geo.index ? geo.toNonIndexed() : geo;
+      pos.push(...g2.attributes.position.array); nor.push(...g2.attributes.normal.array);
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    return out;
+  };
+  const g = new THREE.Group(); g.userData.shoppingCart = true;
+  const wire = new THREE.Mesh(wg, M.wire); wire.userData.cartPart = 'wire'; g.add(wire);
+  const steel = new THREE.Mesh(merge(parts.steel), M.steel); steel.castShadow = true; steel.userData.cartPart = 'frame'; g.add(steel);
+  const rest = merge([...parts.dark, ...parts.red]);
+  // the rubber and the red grip share one mesh through two groups
+  const nDark = parts.dark.reduce((n, geo) => n + (geo.index ? geo.index.count : geo.attributes.position.count), 0);
+  rest.addGroup(0, nDark, 0); rest.addGroup(nDark, rest.attributes.position.count - nDark, 1);
+  const wr = new THREE.Mesh(rest, [M.dark, M.red]); wr.castShadow = true; wr.userData.cartPart = 'wheels'; g.add(wr);
+  return g;
+}
