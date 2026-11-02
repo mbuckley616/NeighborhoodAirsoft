@@ -101,10 +101,14 @@ function buildNorthcliffScene(variant, timeOfDay) {
     scene.add(new THREE.Mesh(_houseMergeParts(rocks), rockMat));
   }
 
-  // --- the road: the south leg from past the east corner (x 125), west along its bow to the west corner, round the
+  // --- the road: the south leg from the east corner (x 110), west along its bow to the west corner, round the
   // bend (centre (-26, -14), radius 15) and north up the west leg (x -41) out past the hilltop ---
+  // v1.422 (step 4): from the east corner too, where the loop turns north (centre (110, -14)): the east leg (x 125) runs
+  // down to it from the north, so the street seen from the area's east end bends away as the real one does
   const ROAD = [];
-  for (let x = 125; x > -26; x -= 1) ROAD.push({ x, z: zr(x) });
+  for (let z = -125; z < -14; z += 2) ROAD.push({ x: 125, z });
+  for (let k = 0; k <= 24; k++) { const a = (Math.PI / 2) * k / 24; ROAD.push({ x: 110 + 15 * Math.cos(a), z: -14 + 15 * Math.sin(a) }); }
+  for (let x = 109; x > -26; x -= 1) ROAD.push({ x, z: zr(x) });
   for (let k = 0; k <= 24; k++) { const a = Math.PI / 2 + (Math.PI / 2) * k / 24; ROAD.push({ x: -26 + 15 * Math.cos(a), z: -14 + 15 * Math.sin(a) }); }
   for (let z = -15; z >= -125; z -= 2) ROAD.push({ x: -41, z });
   const ROAD_S = [0];
