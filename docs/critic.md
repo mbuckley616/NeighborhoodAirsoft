@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -2223,5 +2223,115 @@ nothing asked me to break a rule.
   not a headless bot. The E prompt's missing wall check: nothing sits within 1.5 m through a wall today, as the entry
   says.
 - v1.389: judged above. Chris came first in 1 round of 5, at 26.7 s.
+
+No proposals this run.
+
+## 2026-11-02 — The crew-first ladder's main line, measured: Bunratty, the Hollow and Riverside Market with the crew (v1.416)
+
+Played main at v1.416 (auto/build and auto/build-maps are level with it). Smoke 1 of 1 green. About 125 rounds in
+six pages, no page errors anywhere. Nothing filed this run. The devlog has asked since v1.393 for "the critic measures
+the main line's win rates once the order is in", and this is that measure.
+
+**How I played it.** For each match, a save with every match before it on the ladder done and the crew who had asked
+by then taken in (Eric from Bunratty's first match, Sean and Nick from You and Nick; Alex and Diego ask in Northcliff,
+so the Hollow and the lot have three crew kids). The AK, for every match. My bot is new this run: it aims at the chest
+of the nearest foe it can see within 45 m and holds the trigger; when nobody within 30 m is in sight it walks straight
+at the nearest one. It refills its magazine and clears its jams (a cheat). It doesn't flank, peek or use cover, and it
+gets stuck on walls, so a timeout is the bot's, not the match's. For the defends I also ran it crouched where it
+stood. 4 rounds a match unless said.
+
+**A harness note for anyone writing a bot.** A win ends through `endScenarioLater`, a real `setTimeout` of 400-600 ms.
+A script that runs a whole round inside one `page.evaluate` never lets it fire: the first round of mine "timed out" at
+200 s with all four of Storm the Court's kids out. Run the round in chunks and yield between them. Not a game bug.
+
+**Bunratty, main line** (plan's difficulty in brackets, 1 easy to 5 brutal):
+
+| # | Match | Wins | Note |
+|---|---|---|---|
+| 1 | Just You and Sean (2) | 4 of 4 | 12.6-21.1 s |
+| 2 | Nick Won't Budge (2.5) | 0, 4 timeouts | the bot stuck on a wall 26 m from Nick; Nick never fired at it in 200 s |
+| 3 | You and Nick (2.5) | 4 of 4 | 11.6-17.8 s |
+| 4 | The Brothers Call You Out (3) | 4 of 4 | 21.1-27.7 s |
+| 5 | **Storm the Court (3)** | **0 of 8** | out at 9.9-29.8 s, 0-3 of the 4 tagged |
+| 6 | The Rematch (3) | 2 of 4 | |
+| 7 | Hold the Cul-de-Sac (3) | 4 of 4 | all on the clock |
+| 8 | The Pincer (3.5) | 3 of 4 | |
+| 9 | Last Kid Standing (4) | 3 of 4 | |
+| 10 | Infection at the Cul-de-Sac (3.5) | 1 of 4 | infected at 77-84 s |
+| 11 | Down Two (4) | 1 of 4 | |
+| 12 | **Mitchell's Whole Crew (3.5)** | **0 of 4** | out at 14.1-22.9 s, 0-2 of 5 tagged |
+| 14 | Cover Nick (3.5) | 0, 4 timeouts | nobody tagged either VIP in 200 s; my bot doesn't hunt the VIP |
+| 15 | When the Streetlights Come On (4) | 2 of 4 | |
+
+**The Hollow, main line:**
+
+| # | Match | Wins | Note |
+|---|---|---|---|
+| 1 | First Time in the Woods (3) | 3 of 4 | |
+| 2 | Take the North Fort (3.5) | 2 of 4 | |
+| 3 | Hold the South Fort (3.5) | 1 of 4 pushing, 2 of 3 crouched | |
+| 5 | **Last One in the Fort, CLUTCH (4)** | **0 of 7** | out at 12.5-51.7 s, pushing or crouched |
+| 6 | **Juggernauts (2, "a breather")** | 4 of 15 | 6 losses, 5 timeouts; see below |
+| 7 | **Down Two in the Dark (4)** | **0 of 4** | out at 14.2-24.8 s |
+| 8 | Ten-Way Free-for-All (4) | 0 of 4 | 1-6 of 9 tagged first |
+| 9 | Infection in the Dark (3.5) | 1 of 4 | |
+| 12 | **The Big Game, the finale (4)** | **0 of 4** | out at 17.9-199.4 s |
+
+**Riverside Market lot, main line:**
+
+| # | Match | Wins | Note |
+|---|---|---|---|
+| 1 | Cart Return (2) | 2 of 4 | lost at 6.2 and 6.3 s |
+| 2 | Cart Corral (3) | 1 of 4 | lost at 8.0-17.6 s |
+| 3 | Hold the Doors (3) | 0 of 4 pushing, 2 of 3 crouched | |
+| 4 | Lot Free-for-All (4) | 0 of 4 | |
+| 5 | Night Shift, VIP (4) | 0, 4 timeouts | as Cover Nick: neither VIP tagged in 200 s |
+| 6 | After Close (4) | 2 of 4 | |
+
+What I read from it. My bot is worse than a player, so the numbers run low across the board; it's the shape that
+matters. The start of each zone and the 1v1 callouts go the way the plan says. Four matches stand out against their
+neighbours, and all four sit early or mid-zone:
+- **Storm the Court** is the wall in Bunratty, 0 of 8 at position 5 of 15 (the plan says 4 → 3). Mitchell's four sit
+  behind cover at 31-40 m and never leave it. With the bot left at the start and only the crew playing, all three crew
+  kids were out by 95 s and the four defenders still sat there at 200 s, untouched and not firing at me: the match has
+  no clock, and nobody comes for you. A player who hangs back gets a round with no end; one who storms meets four
+  kids behind cover with three of his own.
+- **Mitchell's Whole Crew** (0 of 4) lands harder than Down Two (1 of 4) just before it, where the plan has it easier.
+- **Juggernauts** is no breather: 4 wins in 15. Four of its five timeouts ran 200 s with every
+  kid of mine out and Brooke (2 lives left) sitting 40-56 m off. She did not come for me. My bot was stuck at its
+  start, so I can't say she should have, but a last kid with lives may not get bored the way a last kid with one does.
+- **Last One in the Fort** (0 of 7) and **Down Two in the Dark** (0 of 4) back to back in the Hollow, with the finale
+  after them at 0 of 4. Three matches in a row that my bot can't take once.
+
+I would not tune on a bot's numbers. Storm the Court's stand-off is worth Michael's thumbs first: if a real kid can't
+get through it at Bunratty's fifth match, the summer stops there.
+
+**Not reproduced, not filed.** In one Juggernauts round both juggernauts read 0 lives and 0 health at 200 s with me
+still in, and no win. In 11 more rounds every round where both went down ended with the win scheduled at once
+(`endScenarioLater` logged). That first run had no logging, so it may have been the harness note above.
+
+**The Lot Free-for-All from its start, standing, not firing:** tagged at 7.3, 7.6 and 8.6 s in 3 rounds of 6, from
+28-43 m; the other 3 untagged at 12 s. Harsh for a free-for-all at real scale, but the 2.5 s hold holds.
+
+**Frame time:** not measured fairly; four browsers ran at once most of the run.
+
+### itch.io
+Still unreachable: the proxy refuses mbuckley616.itch.io (connect_rejected), so I read no comments. The host would
+have to be allowed in this environment's network settings.
+
+Slack's last day: v1.410-v1.416 (the Magnum through the Pump Sniper, 40 guns) landed and are on itch; the crew-first
+ladder card finished (v1.393-v1.415, PR #215); the play lane waits on Michael for what follows gun batch 6. Nothing
+was addressed to me and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.390-v1.416)
+- v1.393, v1.401, v1.402, v1.407, v1.408, v1.409, "the critic measures the main line's win rates": done above for
+  Bunratty, the Hollow and the lot. Winnmark, Northcliff and the last three zones are next run's.
+- v1.393, CLUTCH's sideline, and every "Michael's look" (chips, colours, bandanas, briefings, the renames): eyes only.
+- v1.392, the camping kid behind his car: not judged; my bot never got near one long enough.
+- v1.394, the free-for-all's loss card: nothing to judge (the entry says so); Last Kid Standing's one loss here was
+  not the second-last case.
+- v1.395-v1.416, the eleven new guns: each is "only a playtest says whether it feels worth it", and none is something
+  a bot holding the trigger can judge. I played every match with the AK.
+- v1.415, Hold the Bunker's nest: not played this run.
 
 No proposals this run.
