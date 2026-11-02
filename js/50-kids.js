@@ -109,6 +109,7 @@ function gunForegripZ(weapon) {
     case 'spas':    return 0.18;   // v1.398: its pump
     case 'ksg':     return 0.16;   // v1.411: its pump
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
+    case 'm60':     return 0.22;   // v1.413: the M60's handguard, further out
     case 'ar':
     case 'erifle':  // v1.326
     case 'burst':   // v1.327
@@ -124,6 +125,7 @@ function gunForegripZ(weapon) {
     case 'aug':     return 0.22;   // v1.372: its folding foregrip
     case 'm4':      return 0.18;   // v1.373: its handguard
     case 'mac10':   return 0.06;
+    case 'uzi':     return 0.10;   // v1.414: under its front end
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
     case 'pistol':
@@ -216,6 +218,15 @@ function buildEnemyGunMesh(weapon) {
       grip();
       break;
     }
+    case 'm60': {   // v1.413 (D.63): a long steel gun, the carry handle on the barrel, the green ammo can, the long stock
+      box(0.05, 0.075, 0.56, dark, 0, 0, 0.25);          // receiver, handguard and the long barrel
+      box(0.012, 0.05, 0.08, black, -0.035, 0.035, 0.30);  // the carry handle on the barrel's left
+      box(0.06, 0.10, 0.10, new THREE.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.75 }), -0.02, -0.09, 0.06);   // the ammo can
+      box(0.03, 0.02, 0.14, black, 0, -0.045, 0.40);     // the bipod's legs
+      box(0.045, 0.085, 0.16, black, 0, -0.015, -0.11);  // the long stock
+      grip();
+      break;
+    }
     case 'mp5':
     case 'ump': {
       box(0.05, 0.08, 0.26, black, 0, 0, 0.12);          // compact SMG body
@@ -278,6 +289,14 @@ function buildEnemyGunMesh(weapon) {
     case 'mac10': {
       box(0.06, 0.10, 0.16, black, 0, 0, 0.06);          // tiny boxy machine pistol
       box(0.04, 0.11, 0.05, dark, 0, -0.10, 0.03);       // short mag
+      grip();
+      break;
+    }
+    case 'uzi': {   // v1.414 (D.63): a longer box than the MAC-10's, the barrel nut, the mag up the grip, the stock folded
+      box(0.055, 0.09, 0.24, black, 0, 0, 0.09);         // the long boxy upper and lower
+      box(0.03, 0.03, 0.05, dark, 0, 0.01, 0.23);        // the barrel nut and the barrel
+      box(0.035, 0.12, 0.04, dark, 0, -0.10, 0.04);      // the mag up the grip
+      box(0.01, 0.03, 0.20, dark, 0.035, -0.01, 0.04);   // the stock folded along the right
       grip();
       break;
     }

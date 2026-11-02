@@ -1454,6 +1454,67 @@ function buildFPM249() {
   return group;
 }
 
+// v1.414 (backlog D.63, Michael: A, batch 6): the Uzi on the MAC-10's box, grip, mag, knob, trigger and sights (so its
+// hands and aimed picture are the MAC-10's): a longer upper with a ribbed top cover and the front ears on a post well
+// ahead, a lower handguard under the front, the barrel out through a big barrel nut to the orange tip, the grip
+// safety on the grip's back, and the wire stock swapped for the Uzi's metal stock folded along the right.
+function buildFPUzi() {
+  const group = buildFPMAC10();
+  const steel = new THREE.MeshStandardMaterial({ color: 0x23252a, roughness: 0.45, metalness: 0.55 });
+  const matte = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.7, metalness: 0.25 });
+  const add = (geo, mat, x, y, z, name) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; group.add(m); return m; };
+  // the wire stock comes off (its two rods, the plate and the link behind the box)
+  for (const o of group.children.slice()) if (o.isMesh && (o.position.z > 0.045 || (Math.abs(Math.abs(o.position.x) - 0.0275) < 1e-6 && Math.abs(o.position.y + 0.012) < 1e-6))) group.remove(o);
+  // the upper runs 6 cm further forward, with a ribbed top cover kept under the sight line (y 0.056)
+  add(new THREE.BoxGeometry(0.05, 0.05, 0.06), steel, 0, 0.015, -0.145, 'upper');
+  for (let i = 0; i < 5; i++) add(new THREE.BoxGeometry(0.046, 0.003, 0.006), matte, 0, 0.0415, -0.09 - i * 0.022);
+  add(new THREE.BoxGeometry(0.046, 0.022, 0.06), matte, 0, -0.022, -0.145, 'handguard');   // the plastic handguard under it
+  // the barrel through the barrel nut at the front, the orange tip at its end
+  const nut = add(new THREE.CylinderGeometry(0.016, 0.016, 0.014, 12), steel, 0, 0.02, -0.182, 'barrelnut'); nut.rotation.x = Math.PI / 2;
+  for (const o of group.children) if (o.isMesh && o.geometry.type === 'CylinderGeometry' && Math.abs(o.position.z + 0.13) < 1e-6) o.position.z = -0.20;   // the barrel
+  for (const o of group.children) if (o.isMesh && o.material && o.material.color && o.material.color.getHex() === 0xff7a1a) o.position.z = -0.233;   // the tip
+  // the grip safety on the grip's back
+  add(new THREE.BoxGeometry(0.026, 0.034, 0.006), matte, 0, -0.045, 0.004, 'gripsafety');
+  // the metal stock folded along the right side: two arms and the butt plate hinged at the back
+  for (const y of [0.002, -0.022]) add(new THREE.BoxGeometry(0.004, 0.005, 0.15), steel, 0.029, y, -0.035);
+  add(new THREE.BoxGeometry(0.006, 0.040, 0.012), steel, 0.029, -0.010, -0.112, 'stock');
+  add(new THREE.BoxGeometry(0.008, 0.012, 0.012), steel, 0.027, -0.010, 0.045);   // the hinge
+  group.userData.gunType = 'uzi';
+  return group;
+}
+
+// v1.413 (backlog D.63, Michael: A, batch 6): the M60 on the M249's receiver, feed cover, grip, front and rear sights (so
+// its hands and aimed picture are the M249's), in a greyer parkerized steel: the barrel runs on past the M249's muzzle
+// to a flash hider, a carry handle folds down on the barrel's left, the box becomes a green ammo can with a longer belt
+// of brass up into the feed, and the stock is the M60's long sloped butt.
+function buildFPM60() {
+  const group = buildFPM249();
+  const park = new THREE.MeshStandardMaterial({ color: 0x34373a, roughness: 0.6, metalness: 0.45 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x2a2b2c, roughness: 0.4, metalness: 0.6 });
+  const can = new THREE.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.75 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.35, metalness: 0.7 });
+  const add = (geo, mat, x, y, z, name) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (name) m.name = name; group.add(m); return m; };
+  const tube = (r, len, mat, x, y, z, name) => { const m = add(new THREE.CylinderGeometry(r, r, len, 10), mat, x, y, z, name); m.rotation.x = Math.PI / 2; return m; };
+  for (const n of ['receiver', 'feedcover', 'handguard', 'heatshield']) { const o = group.getObjectByName(n); if (o) o.material = park; }
+  // the barrel on past the M249's muzzle: the orange tip moves to the end of a slotted flash hider
+  tube(0.010, 0.08, steel, 0, 0.022, -0.49);
+  tube(0.013, 0.05, park, 0, 0.022, -0.545, 'flashhider');
+  const tip = group.getObjectByName('tip'); if (tip) tip.position.z = -0.582;
+  // the carry handle, folded down on the barrel's left: two posts and the grip bar
+  for (const z of [-0.26, -0.33]) add(new THREE.BoxGeometry(0.010, 0.008, 0.008), park, -0.016, 0.024, z);
+  add(new THREE.BoxGeometry(0.010, 0.012, 0.08), park, -0.024, 0.026, -0.295, 'carryhandle');
+  // the box becomes a green ammo can, with its latch, and a longer belt of brass up into the feed
+  const box = group.getObjectByName('mag');
+  if (box) { box.material = can; box.scale.set(1.05, 1.12, 1.2); }
+  add(new THREE.BoxGeometry(0.004, 0.020, 0.030), steel, -0.040, -0.040, -0.085);   // the can's latch
+  for (let i = 0; i < 5; i++) add(new THREE.CylinderGeometry(0.003, 0.003, 0.010, 6), brass, -0.027, -0.010 + i * 0.006, -0.105 + i * 0.010).rotation.z = Math.PI / 2;
+  // the M60's deeper sloped butt in place of the M249's stock, no longer (it would fill the aimed view)
+  const stock = group.getObjectByName('stock'); if (stock) stock.material = park;
+  add(new THREE.BoxGeometry(0.034, 0.036, 0.09), park, 0, -0.040, 0.115).rotation.x = 0.22;
+  group.userData.gunType = 'm60';
+  return group;
+}
+
 // v1.396 (backlog D.63, Michael: A, batch 4): the RPK, on the AK's receiver, wood, grip, stock and sights (so its hands
 // and aimed picture are the AK's): the banana mag gives way to a round drum, the barrel runs on 7 cm past the AK's
 // muzzle to the orange tip, and a bipod lies folded under it.
@@ -2222,6 +2283,8 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
+  else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
+  else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();   // fallback
@@ -2270,6 +2333,7 @@ const FP_HANDS = {
   aug:     { r: { c: [0, -0.078, -0.03], rx: -0.2, gw: 0.015, gd: 0.015, up: -0.012 }, l: { kind: 'grip', c: [0, -0.052, -0.19], rx: 0, gw: 0.013, gd: 0.013, up: -0.005 } },   // v1.372: the grip and the folding foregrip
   m4:      { r: { c: [0, -0.066, 0.035], rx: -0.25, gw: 0.015, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, -0.007, -0.21], hw: 0.020, hh: 0.025 }, underHand: true },   // v1.373: the grip and the handguard
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
+  uzi:     { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },   // v1.414: the MAC-10's
   spas:    { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },   // v1.398: the Semi-Auto Shotgun's pistol grip, the shotgun's pump
   ksg:     { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.022, hh: 0.022 } },   // v1.411: the SPAS-12's grip and pump
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
@@ -2290,6 +2354,7 @@ const FP_HANDS = {
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
   m249:    { r: { c: [0, -0.050, 0.030], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.000, -0.21], hw: 0.025, hh: 0.018 }, underHand: true },   // v1.335: the AK's grip, the handguard ahead of the box
+  m60:     { r: { c: [0, -0.050, 0.030], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.000, -0.21], hw: 0.025, hh: 0.018 }, underHand: true },   // v1.413: the M249's
 };
 // Where the elbows are, in camera space (below and behind the view, so the forearms leave by the bottom of the screen).
 const FP_ELBOW_R = [0.26, -0.56, -0.02], FP_ELBOW_L = [-0.36, -0.5, -0.06], FP_ELBOW_L_CUP = [-0.10, -0.56, -0.02];
