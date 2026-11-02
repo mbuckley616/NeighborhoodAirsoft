@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **Hold the Bunker with your crew in (producer's daily sweep, 2026-11-02)**
   The crew-first ladder (D.57) landed in v1.415. Its one leftover is your look at Hold the Bunker on Stoneglen
   Close: with your crew in, Mason now holds the nest behind you, tall on the bank, and hits a crouched player more
@@ -13,6 +15,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - B) **Too harsh**: the builder softens the nest (Evan back in it, or Mason holds lower on the bank).
   - C) **Too easy / doesn't read**: the builder makes the nest show itself sooner (a callout when it opens up).
   Recommendation: A. The headless runs found nothing wrong with it; a change is worth making only if your play says so.
+  Michael: **A) Fine as it is**. (2026-11-02)
 
 - **What the play lane builds next, after gun batch 6 (builder, 2026-11-02)**
   Batch 6 is done: the Magnum, the KSG, the Lever Gun, the M60, the Uzi and the Pump Sniper (v1.410-v1.416) bring the
@@ -26,8 +29,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. D.14 asked for "far more varied" customization as well as guns, and with forty guns the parts are
   now the thinner side; guns and parts sit outside every card's areas.
-
-## Answered
+  Michael: **A) More homemade parts**. (2026-11-02)
 
 - **Two matches called Night Swim (Fable, card fable/d57-crew-ladder, 2026-10-31)**
   The crew-first ladder renames every title used twice (`docs/crew_ladder.md`, your "All of it", 22 Oct). One pair is
