@@ -2,7 +2,7 @@
 //   Taped Twin Mag   — a second mag loaded from the bag, R flips the pair (0.6 s); 1.2 lb more to carry
 //   Shoelace Sling   — a sprint lasts longer; aiming in is slower
 //   PVC Foregrip     — a tighter cone while walking; 0.8 lb more to carry
-//   Cardboard Barrel — a tighter cone; slower BBs
+//   Cardboard Barrel — a tighter cone; slower BBs (on the MUZZLE slot since v1.420)
 // Bought in the shop's Mods tab and mounted at the workbench with real clicks; each part's mesh is checked under the
 // handguard (the barrel's in front of the muzzle) on every long gun; then each trade is measured in a match against
 // the bare gun.
@@ -30,7 +30,8 @@ const shop = await page.evaluate((PARTS) => {
 console.log('   shop:', JSON.stringify(shop));
 for (const [id, name] of Object.entries(PARTS)) {
   const r = shop[id];
-  check(`${name}: in the Mods tab as UNDER, bought for its price`, r && r.tag === 'UNDER' && r.paid === r.price && r.owned === 1, r);
+  const tag = id === 'cardboard_barrel' ? 'MUZZLE' : 'UNDER';   // v1.420: the cardboard moved to the muzzle slot
+  check(`${name}: in the Mods tab as ${tag}, bought for its price`, r && r.tag === tag && r.paid === r.price && r.owned === 1, r);
 }
 await g.shot('under-parts-shop');
 await page.evaluate(() => closeShop());
@@ -60,7 +61,7 @@ const wb = await page.evaluate(() => {
 });
 console.log('   workbench:', JSON.stringify(wb));
 check('the workbench: the AR has an Under-barrel row, the pistol none', wb.arRows.includes('Under-barrel') && !wb.pistolRows.includes('Under-barrel'), [wb.arRows, wb.pistolRows]);
-check('the workbench: the Under-barrel row offers the four parts and only them', wb.items.filter(i => i.compat).length === 4 && wb.items.filter(i => i.compat).every(i => /UNDER/.test(i.t)), wb.items);
+check('the workbench: the Under-barrel row offers the three under parts bought and only them (v1.420: the cardboard is a muzzle part)', wb.items.filter(i => i.compat).length === 3 && wb.items.filter(i => i.compat).every(i => /UNDER/.test(i.t)), wb.items);
 check('the workbench: a click mounts the foregrip, shown on the gun', wb.mountedName === 'PVC Foregrip' && wb.under === 'foregrip' && wb.fgMesh, wb);
 check('no part on a rail, no laser under, nothing under a pistol', !wb.onRail && !wb.onPistol && !wb.laserUnder, wb);
 
@@ -76,6 +77,7 @@ const geo = await page.evaluate(() => {
     const m = buildWorkbenchGun(gt);
     const up = m.userData.accessories.underParts;
     if (!cap.under) { out.push({ gt, none: !up }); continue; }
+    up.meshes.cardboard_barrel = m.userData.accessories.muzzleParts.meshes.cardboard_barrel;   // v1.420: on the muzzle slot
     m.updateWorldMatrix(true, true);
     const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
     const r = { gt, bottom: +up.bottom.toFixed(3), frontZ: +up.frontZ.toFixed(3) };
@@ -99,15 +101,15 @@ check('the cardboard barrel runs ahead of the muzzle (10 cm or more past it)', l
 const setUnder = (gt, type) => page.evaluate(([gt, type]) => {
   Game.persist.owned[gt] = true; Game.persist.equipped.gun = gt; Game.persist.bag = 5000;
   ensureGunSlots(gt);
-  if (type) { const i = getUnmountedInstances(type)[0] || makeAccessoryInstance(type); mountAccessory(gt, i.id, 'under', -1); }
-  else clearGunSlot(gt, 'under', -1);
+  clearGunSlot(gt, 'under', -1); clearGunSlot(gt, 'muzzle', -1);
+  if (type) { const i = getUnmountedInstances(type)[0] || makeAccessoryInstance(type); mountAccessory(gt, i.id, ATTACHMENTS[type].slot, -1); }   // v1.420: the cardboard on the muzzle
   Game.persist.loadoutSlots = [{ kind: 'gun' }, null, null, null];
   Game.persist.equipped.armor = {};
 }, [gt, type]);
 
 const measure = () => page.evaluate(() => {
-  const out = { mesh: fpGun && fpGun.userData.accessories && fpGun.userData.accessories.underParts &&
-    Object.keys(fpGun.userData.accessories.underParts.meshes).filter(k => fpGun.userData.accessories.underParts.meshes[k].visible) };
+  const acc = fpGun && fpGun.userData.accessories;   // v1.420: the under parts and the muzzle parts
+  const out = { mesh: acc && acc.underParts && [acc.underParts, acc.muzzleParts].flatMap(p => Object.keys(p.meshes).filter(k => p.meshes[k].visible)) };
   Game.player.maxHits = 999;
   Game.mouse.locked = true;   // updatePlayer moves no one without it; headless Chromium may refuse the real pointer lock
   const step = () => stepGame(1 / 60);

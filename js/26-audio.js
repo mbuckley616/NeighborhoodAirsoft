@@ -652,6 +652,10 @@ function playPlayerFootstep(heavy) {
 }
 
 function playShot(srcX, srcZ) {
+  // v1.420 (D.83): your own shot through a soda-bottle silencer is quieter (kids' shots are positional, as before)
+  const own = (srcX === undefined || srcZ === undefined);
+  const muffle = own ? underPartMult('shotVolumeMult') : 1;
+  playShot.lastOwnVol = own ? muffle : playShot.lastOwnVol;
   if (!Game.audio?.ctx) return;
   const ctx = Game.audio.ctx;
   const t = ctx.currentTime;
@@ -660,7 +664,7 @@ function playShot(srcX, srcZ) {
   // full volume, centered.
   const { pan, vol } = (srcX !== undefined && srcZ !== undefined)
     ? positionalAudio(srcX, srcZ, 30) // shot is loud — heard out to ~30m
-    : { pan: null, vol: 1 };
+    : { pan: null, vol: muffle };
   // Sharp transient (the spring "thwip")
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();

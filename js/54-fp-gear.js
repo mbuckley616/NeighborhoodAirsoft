@@ -273,11 +273,14 @@ function buildToyScopeOptic() {
 function ensureFPGunAccessory(group, gunType) {
   if (group.userData.accessories) return group.userData.accessories;
   const mount = FP_GUN_MOUNT[gunType] || FP_GUN_MOUNT.pistol;
-  const cap = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
+  const cap = getGunAccessoryCap(gunType);   // v1.420: with the muzzle and stock slots
   const railMat = new THREE.MeshStandardMaterial({ color: 0x202024, roughness: 0.5, metalness: 0.6 });
   const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x303036, roughness: 0.45, metalness: 0.6 });
-  // v1.169: the under-barrel parts, measured off the bare gun before anything is bolted on
-  const underParts = cap.under ? buildUnderParts(group, mount) : null;
+  // v1.169: the under-barrel parts, measured off the bare gun before anything is bolted on (v1.420: the muzzle's too,
+  // from the same measure, taken once before either is added)
+  const bare = (cap.under || cap.muzzle) ? measureGunForUnder(group, mount) : null;
+  const underParts = cap.under ? buildUnderParts(group, mount, bare) : null;
+  const muzzleParts = cap.muzzle ? buildMuzzleParts(group, mount, bare) : null;
 
   // ---- v1.40e: SIDE RAILS matching the data model. Guns have 1 or 2 rail slots
   // (GUN_ACCESSORY_CAP.rails). Slot 0 = LEFT rail, slot 1 = RIGHT rail. Each is a
@@ -426,7 +429,7 @@ function ensureFPGunAccessory(group, gunType) {
   const toyScopeOptic = buildToyScopeOptic(); toyScopeOptic.visible = false; sightAnchor.add(toyScopeOptic);   // v1.418
 
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
-    railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, gunGroup: group };
+    railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, muzzleParts, gunGroup: group };
   return group.userData.accessories;
 }
 
@@ -523,6 +526,11 @@ function updateFPGunAccessory(group, gunType, mountedOverride) {
     const underPl = mounted.find(a => a.slot === 'under');
     for (const k in acc.underParts.meshes) acc.underParts.meshes[k].visible = !!underPl && underPl.type === k;
   }
+  // v1.420: the homemade part on the muzzle slot
+  if (acc.muzzleParts) {
+    const muzzlePl = mounted.find(a => a.slot === 'muzzle');
+    for (const k in acc.muzzleParts.meshes) acc.muzzleParts.meshes[k].visible = !!muzzlePl && muzzlePl.type === k;
+  }
 }
 
 // v1.169 (backlog D.14 B): the four homemade under-barrel parts, built once per gun group and hidden. Where they go is
@@ -547,8 +555,8 @@ function measureGunForUnder(group, mount) {
   });
   return { bottom: bottom === null ? mount.barrelY - 0.022 : bottom, frontZ, frontY };
 }
-function buildUnderParts(group, mount) {
-  const m = measureGunForUnder(group, mount);
+function buildUnderParts(group, mount, measured) {
+  const m = measured || measureGunForUnder(group, mount);
   const meshes = {};
   const z0 = mount.railZ, y0 = m.bottom;
   const tapeMat = new THREE.MeshStandardMaterial({ color: 0x9ea3a8, roughness: 0.55, metalness: 0.35 });   // duct tape
@@ -610,7 +618,16 @@ function buildUnderParts(group, mount) {
     clamp.rotation.x = Math.PI / 2; clamp.position.set(0, y0 - 0.006, z0); g.add(clamp);
     meshes.foregrip = g;
   }
-  // Cardboard barrel: a paper-towel tube over the muzzle, with a band of tape where it meets the gun
+  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.underPart = k; group.add(meshes[k]); }
+  return { meshes, bottom: y0, frontZ: m.frontZ, frontY: m.frontY };
+}
+// v1.420 (D.83, Michael: A, two new slots): the homemade muzzle parts, on the front of the barrel as measured off the
+// bare gun (frontZ is the most forward point on the bore line, frontY its middle). Each its own group, hidden.
+function buildMuzzleParts(group, mount, measured) {
+  const m = measured || measureGunForUnder(group, mount);
+  const meshes = {};
+  const tapeMat = new THREE.MeshStandardMaterial({ color: 0x9ea3a8, roughness: 0.55, metalness: 0.35 });   // duct tape
+  // v1.169 Cardboard barrel (on the muzzle slot since v1.420): a paper-towel tube over the muzzle, with a band of tape where it meets the gun
   {
     const g = new THREE.Group();
     const cardMat = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.95 });
@@ -622,8 +639,40 @@ function buildUnderParts(group, mount) {
     band.rotation.x = Math.PI / 2; band.position.set(0, m.frontY, m.frontZ + 0.012); g.add(band);
     meshes.cardboard_barrel = g;
   }
-  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.underPart = k; group.add(meshes[k]); }
-  return { meshes, bottom: y0, frontZ: m.frontZ, frontY: m.frontY };
+  // v1.420 Soda-bottle silencer: a clear green two-liter bottle, neck back over the muzzle and taped there, its body
+  // out in front with a grey sock showing through, the cap on the far end with a hole for the BB
+  {
+    const g = new THREE.Group();
+    const bottleMat = new THREE.MeshStandardMaterial({ color: 0x5fae6a, roughness: 0.15, metalness: 0.05, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+    const sockMat = new THREE.MeshStandardMaterial({ color: 0x8a8d92, roughness: 0.95 });
+    const capMat = new THREE.MeshStandardMaterial({ color: 0xc8202a, roughness: 0.5 });
+    const labelMat = new THREE.MeshStandardMaterial({ color: 0xd8262e, roughness: 0.6 });
+    const y = m.frontY, z0 = m.frontZ;            // the bottle's neck goes back over the barrel's end
+    const R = 0.026, neckLen = 0.03, shoulder = 0.022, body = 0.12;
+    // the neck (taped to the barrel), narrowing from the shoulder to the cap end that faces the gun
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, 0.0115, neckLen, 16, 1, true), bottleMat);
+    neck.rotation.x = Math.PI / 2; neck.position.set(0, y, z0 + 0.016 - neckLen / 2); g.add(neck);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.016, 16), tapeMat);
+    band.rotation.x = Math.PI / 2; band.position.set(0, y, z0 + 0.008); g.add(band);
+    const zs = z0 + 0.016 - neckLen;              // where the shoulder starts
+    const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.0115, R, shoulder, 18, 1, true), bottleMat);
+    sh.rotation.x = -Math.PI / 2; sh.position.set(0, y, zs - shoulder / 2); g.add(sh);
+    const zb = zs - shoulder;                     // the body's back end
+    const bod = new THREE.Mesh(new THREE.CylinderGeometry(R, R, body, 18, 1, true), bottleMat);
+    bod.rotation.x = Math.PI / 2; bod.position.set(0, y, zb - body / 2); g.add(bod);
+    const lab = new THREE.Mesh(new THREE.CylinderGeometry(R + 0.0008, R + 0.0008, 0.04, 18, 1, true), labelMat);
+    lab.rotation.x = Math.PI / 2; lab.position.set(0, y, zb - body * 0.45); g.add(lab);
+    const sock = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.78, R * 0.78, body * 0.85, 12), sockMat);
+    sock.rotation.x = Math.PI / 2; sock.position.set(0, y, zb - body / 2); g.add(sock);
+    const end = new THREE.Mesh(new THREE.CylinderGeometry(R, R * 0.85, 0.012, 18), bottleMat);   // the bottle's base
+    end.rotation.x = Math.PI / 2; end.position.set(0, y, zb - body - 0.006); g.add(end);
+    const capRing = new THREE.Mesh(new THREE.TorusGeometry(0.009, 0.0035, 8, 16), capMat);   // a red cap, holed, at the front
+    capRing.position.set(0, y, zb - body - 0.0125); g.add(capRing);
+    g.userData.frontZ = zb - body - 0.016;
+    meshes.soda_silencer = g;
+  }
+  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.muzzlePart = k; group.add(meshes[k]); }
+  return { meshes, frontZ: m.frontZ, frontY: m.frontY };
 }
 
 // v1.27b/v1.40c: laser zero target, pinned to the camera at screen-center,
@@ -894,6 +943,7 @@ function shopModPic(aid, w, h) {
     let part, fit;
     if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : aid === 'toy_scope' ? acc.toyScopeOptic : acc.redDotOptic;   // v1.418
     else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
+    else if (a.slot === 'muzzle') part = acc.muzzleParts && acc.muzzleParts.meshes[aid];   // v1.420
     else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
       part = acc.flashUnit;
       const fb = part.userData.flashBodyGroup;
@@ -1105,6 +1155,12 @@ function computeWorkbenchLabelAnchors(gunType) {
     const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
     anchors.push({ slot: 'under', railIndex: -1, pos: new THREE.Vector3(0, (up ? up.bottom : m.barrelY - 0.02) - 0.13, m.railZ) });
   }
+  if (cap.muzzle) {   // v1.420: below the handguard, halfway between the right rail's label and the under-barrel's, so
+    // the three never stack in the bench's views (a label out at the tip crossed one of them on most guns)
+    const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
+    const yRight = m.barrelY - 0.05, yUnder = cap.under ? (up ? up.bottom : m.barrelY - 0.02) - 0.13 : m.barrelY - 0.19;
+    anchors.push({ slot: 'muzzle', railIndex: -1, pos: new THREE.Vector3(0, (yRight + yUnder) / 2, m.railZ) });
+  }
   WB.labelAnchors = anchors;
 }
 
@@ -1152,9 +1208,9 @@ function projectWorkbenchLabels(w, h) {
     el.style.display = behind ? 'none' : 'block';
     el.style.left = x + 'px';
     el.style.top = y + 'px';
-    let mountedId = a.slot === 'sight' ? slots.sight : a.slot === 'under' ? slots.under : (slots.rails && slots.rails[a.railIndex]);
+    let mountedId = a.slot === 'sight' ? slots.sight : (a.slot === 'under' || a.slot === 'muzzle' || a.slot === 'stock') ? slots[a.slot] : (slots.rails && slots.rails[a.railIndex]);   // v1.420
     const inst = mountedId ? getAccessoryInstance(mountedId) : null;
-    const labelName = a.slot === 'sight' ? 'Sight' : a.slot === 'under' ? 'Under' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
+    const labelName = a.slot === 'sight' ? 'Sight' : a.slot === 'under' ? 'Under' : a.slot === 'muzzle' ? 'Muzzle' : a.slot === 'stock' ? 'Stock' : (WB.labelAnchors.filter(x=>x.slot==='rail').length===1 ? 'Rail' : (a.railIndex===0?'Left':'Right'));
     el.textContent = inst ? `${labelName}: ${ATTACHMENTS[inst.type].name}` : `${labelName}: empty`;
     el.className = 'wb-vp-label' + (inst ? '' : ' empty');
   });
@@ -1191,7 +1247,7 @@ function renderWorkbench() {
       div.dataset.gun = gt;
       const cap = getGunAccessoryCap(gt);
       div.innerHTML = `<span class="wb-gun-icon">⌐</span><div><div class="wb-gun-nm">${cfg.displayName}</div>` +
-        `<div class="wb-gun-sub">${owned ? (crewLoanHolder('gun', gt) ? `With ${CHARACTERS[crewLoanHolder('gun', gt)].name} · click to take it back` : `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}`) : 'Not owned'}</div></div>`;   // v1.337
+        `<div class="wb-gun-sub">${owned ? (crewLoanHolder('gun', gt) ? `With ${CHARACTERS[crewLoanHolder('gun', gt)].name} · click to take it back` : `${cap.sight} sight · ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' · under' : ''}${cap.muzzle ? ' · muzzle' : ''}${cap.stock ? ' · stock' : ''}`) : 'Not owned'}</div></div>`;   // v1.337
       if (owned) div.addEventListener('click', () => workbenchSelectGun(gt));
       gl.appendChild(div);
     }
@@ -1223,6 +1279,8 @@ function renderWorkbench() {
       addSlotRow(cap.rails === 1 ? 'Rail' : (i === 0 ? 'Left rail' : 'Right rail'), 'rail', i, slots.rails[i]);
     }
     if (cap.under) addSlotRow('Under-barrel', 'under', -1, slots.under);   // v1.169
+    if (cap.muzzle) addSlotRow('Muzzle', 'muzzle', -1, slots.muzzle);     // v1.420
+    if (cap.stock) addSlotRow('Stock', 'stock', -1, slots.stock);
   } else {
     sl.innerHTML = '<div class="wb-locker-empty">Select a gun to customize.</div>';
   }
@@ -1252,7 +1310,7 @@ function renderWorkbench() {
     const compat = selKind && compatSlotType === selKind;
     const div = document.createElement('div');
     div.className = 'wb-locker-item ' + (selKind ? (compat ? 'compat' : 'incompat') : '');
-    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : compatSlotType === 'under' ? 'UNDER' : 'RAIL'}</span>` +
+    div.innerHTML = `<span class="wb-locker-tag">${compatSlotType === 'sight' ? 'SIGHT' : compatSlotType === 'under' ? 'UNDER' : compatSlotType === 'muzzle' ? 'MUZZLE' : compatSlotType === 'stock' ? 'STOCK' : 'RAIL'}</span>` +
       `<span>${def.name}</span><span style="margin-left:auto;color:#888">×${counts[type]}</span>`;
     if (compat) {
       div.addEventListener('click', () => {
