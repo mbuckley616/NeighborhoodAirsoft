@@ -117,6 +117,21 @@
     border-radius: 50%; background: #ff2a2a;
     box-shadow: 0 0 4px 1px rgba(255,40,40,0.8);
   }
+  /* v1.418: the taped-on toy scope: a smaller lens, a soft dark edge and a faint blue plastic tint, a cross drawn on
+     it in marker (short, thick, a little crooked), no red dot */
+  #scopeOverlay.toy .scope-mask {
+    background: radial-gradient(circle at center,
+      transparent 0%, transparent 17%, rgba(0,0,0,0.5) 19.5%, #000 21%, #000 100%);
+  }
+  #scopeOverlay.toy .scope-ring {
+    width: 42vmin; height: 42vmin;
+    box-shadow: inset 0 0 34px 16px rgba(0,0,0,0.75), inset 0 0 0 100vmin rgba(110,160,255,0.07), 0 0 0 3px rgba(150,30,25,0.9);
+  }
+  #scopeOverlay.toy .scope-cross-h,
+  #scopeOverlay.toy .scope-cross-v { background: rgba(18,20,34,0.72); border-radius: 2px; }
+  #scopeOverlay.toy .scope-cross-h { width: 13vmin; height: 3px; transform: translate(-50%, -50%) rotate(-4deg); }
+  #scopeOverlay.toy .scope-cross-v { height: 13vmin; width: 3px; transform: translate(-50%, -50%) rotate(-4deg); }
+  #scopeOverlay.toy .scope-dot { display: none; }
 
   #ammoHud {
     position: absolute;
@@ -2674,7 +2689,7 @@
   <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   <button class="start-btn nb-btn settings-open-btn" id="titleStoryBtn">STORY</button>   <!-- v1.358 (D.77): the cards again -->
   </div>
-  <div class="version">v1.416</div>
+  <div class="version">v1.419</div>
 </div>
 
 <!-- === WORLD MAP === -->
