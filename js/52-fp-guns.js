@@ -2009,6 +2009,45 @@ function buildFPMagnum() {
   group.userData.gunType = 'magnum';
   return group;
 }
+// v1.416 (backlog D.63, Michael: A, batch 6): the Pump Sniper, a spring sniper racked by a pump, on the spring sniper's
+// stock, barrel and sights (so its aimed picture is the sniper's): the bolt and the folded bipod come off, the forend is
+// cut back to 12 cm, a tube runs under the barrel to the muzzle, and a ribbed olive pump rides on it where the support
+// hand sits, sliding back 5 cm as you rack it (the shotgun's way: the pump is the cocking part and the hand goes with it);
+// a short box mag under the receiver.
+function buildFPPumpSniper() {
+  const group = buildFPSniper();
+  const plastic = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.75, metalness: 0.05 });
+  const olive = new THREE.MeshStandardMaterial({ color: 0x4a5a32, roughness: 0.8 });
+  const ribMat = new THREE.MeshStandardMaterial({ color: 0x343f23, roughness: 0.85 });
+  const blued = new THREE.MeshStandardMaterial({ color: 0x1a1c20, roughness: 0.4, metalness: 0.65 });
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  for (const p of group.userData.cockingParts) group.remove(p);   // the bolt comes off: the pump works it
+  for (const o of group.children.slice()) if (o.isMesh && Math.abs(o.position.y + 0.0123) < 1e-6) group.remove(o);   // the bipod
+  const stock = group.getObjectByName('stock'); if (stock) stock.material = plastic;
+  const oldForend = group.getObjectByName('forend'); if (oldForend) group.remove(oldForend);
+  // the short forend: the old one's profile cut at z -0.12, its tip slimmed
+  const prof = new THREE.Shape();
+  [[-0.120, 0.025], [-0.005, 0.025], [-0.005, -0.015], [-0.105, -0.015], [-0.120, -0.004]].forEach(([z, y], i) => i ? prof.lineTo(z, y) : prof.moveTo(z, y));
+  const fgeo = new THREE.ExtrudeGeometry(prof, { depth: 0.038, bevelEnabled: false });
+  fgeo.translate(0, 0, -0.019); fgeo.rotateY(-Math.PI / 2);
+  const forend = new THREE.Mesh(fgeo, plastic); forend.name = 'forend'; group.add(forend);
+  const tube = add(new THREE.CylinderGeometry(0.0075, 0.0075, 0.21, 10), blued, 0, 0.002, -0.225);
+  tube.rotation.x = Math.PI / 2; tube.name = 'tube';
+  add(new THREE.BoxGeometry(0.024, 0.032, 0.008), blued, 0, 0.011, -0.325).name = 'band';   // the band at the muzzle end
+  add(new THREE.BoxGeometry(0.022, 0.032, 0.040), plastic, 0, -0.028, -0.048).name = 'mag';
+  // the pump: a ribbed olive sleeve round the tube, under the barrel
+  const pump = new THREE.Group();
+  add(new THREE.BoxGeometry(0.038, 0.030, 0.085), olive, 0, 0.000, 0, pump);
+  for (let i = 0; i < 8; i++) add(new THREE.BoxGeometry(0.040, 0.032, 0.003), ribMat, 0, 0.000, 0.030 - i * 0.0085, pump);
+  pump.position.set(0, 0, -0.215);
+  pump.userData.baseZ = pump.position.z;
+  pump.name = 'pump';
+  group.add(pump);
+  group.userData.cockingParts = [pump];
+  group.userData.cockingOffset = 0.05;
+  group.userData.gunType = 'pumpsniper';
+  return group;
+}
 // v1.412 (backlog D.63, Michael: A, batch 6): the Lever Gun, a spring cowboy carbine on the sniper's stock, barrel and
 // sights: the stock and forend in walnut, a brass receiver, the bipod off, a tube under the barrel past the forend with
 // two barrel bands, a hammer at the receiver's back, and in place of the bolt the lever: a loop round the trigger and
@@ -2285,6 +2324,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
+  else if (gunType === 'pumpsniper') mesh = buildFPPumpSniper(); // v1.416
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();   // fallback
@@ -2319,6 +2359,8 @@ const FP_HANDS = {
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   svd:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.395: the sniper's stock, so its hands
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  pumpsniper: { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.416: the sniper's grip; the off hand on the pump
+            l: { kind: 'support', on: 'pump', c: [0, 0.003, 0], hw: 0.020, hh: 0.018 } },
   m14:     { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.404: the sniper's stock, as the SVD's
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   lever:   { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.412: the sniper's stock and forend

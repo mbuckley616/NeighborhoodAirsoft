@@ -24,7 +24,7 @@ const sh = await page.evaluate(() => {
 });
 console.log('   RIFLES: ' + sh.names.join(' · '));
 check('M14: under RIFLES between the Burst Rifle and the Spring Sniper Rifle, with its picture, $200 from its page, in your hands; the page says electric semi and sells its spare',
-  JSON.stringify(sh.names) === '["Spring Assault Rifle","FAMAS","Lever Gun","Electric Rifle","Burst Rifle","M14","Spring Sniper Rifle","L96","SVD"]'
+  JSON.stringify(sh.names) === '["Spring Assault Rifle","FAMAS","Lever Gun","Electric Rifle","Burst Rifle","M14","Spring Sniper Rifle","Pump Sniper","L96","SVD"]'
   && sh.pic && sh.paid === 200 && sh.equipped === 'm14' && sh.says && sh.spare, sh);
 check('M14: between the rifles and the SVD: a BB faster than every rifle (60 m/s) and slower than the SVD\'s, straight between (18 m), tighter than the AR, wider than the SVD; 3 pulls a second (the Electric Rifle 6, the SVD 2); the AR\'s walk',
   sh.m14.vel === 60 && sh.rifles.every(v => v < 60) && sh.m14.vel < sh.svd.vel && sh.m14.straight > sh.ar.straight && sh.m14.straight < sh.svd.straight

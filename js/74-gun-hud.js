@@ -303,7 +303,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14' || gunType === 'lever') {   // v1.412: the Lever Gun's sights are the sniper's too   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
+    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14' || gunType === 'lever' || gunType === 'pumpsniper') {   // v1.412: the Lever Gun's sights are the sniper's too; v1.416: and the Pump Sniper's   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -871,6 +871,7 @@ const RETICLE_SPECS = {
   ksg:     { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.411: the shotgun's, a little wider
   ar:      { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },
   sniper:  { style: 'fine_cross', baseGap: 6,  ringR: 0,  centerDot: 1.0 },
+  pumpsniper: { style: 'fine_cross', baseGap: 7, ringR: 0,  centerDot: 1.1 },   // v1.416: the sniper's, a little wider
   ak47:    { style: 'circle_cross', baseGap: 12, ringR: 11, centerDot: 1.4 },
   rpk:     { style: 'circle_cross', baseGap: 12, ringR: 11, centerDot: 1.4 },   // v1.396: the AK's
   mp5:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },
