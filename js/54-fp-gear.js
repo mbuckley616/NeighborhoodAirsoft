@@ -26,6 +26,7 @@ const FP_GUN_MOUNT = {
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
   l96:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.336: the sniper's
+  pumpsniper: { barrelY: 0.032, sideX: 0.016, railZ: -0.07,  railLen: 0.09,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.416: the sniper's, the rails and the under slot on the short forend (the pump rides ahead of it)
   lever:   { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.412: the sniper's
   m14:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.404: the sniper's
   svd:     { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },   // v1.395: the sniper's
@@ -737,6 +738,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
+  else if (gunType === 'pumpsniper') mesh = buildFPPumpSniper(); // v1.416
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();
