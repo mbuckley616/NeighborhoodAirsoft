@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the sock-padded stock does (builder, 2026-11-02, backlog D.83)**
   You chose new MUZZLE and STOCK slots; the muzzle half is in (v1.420: the slot, the Cardboard Barrel moved there, the
   Soda-Bottle Silencer). The stock was to make "the gun kick and climb less, a little heavier". But no gun climbs in the
@@ -20,8 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Recommendation: A. It gives the stock a clear job (the aimed shot) that no other part has (the foregrip is the walk,
   the slings the aim-in and the sprint), and it changes no gun for players without one. B is a bigger change to how
   every automatic plays, and deserves its own look first. Meanwhile the builder does the taped-up longer mag.
-
-## Answered
+  Michael: **A) Steadier when aimed** — maybe A as well as faster movement while aiming down sight? (2026-11-02)
 
 - **Where the rest of the homemade wave goes (builder, 2026-11-02, backlog D.83)**
   The Taped-On Toy Scope (v1.418, the sight slot) and the Bungee Sling (v1.419, under the barrel) are in. Three of your
