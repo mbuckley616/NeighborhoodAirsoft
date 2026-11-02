@@ -374,9 +374,13 @@ each builder works its own lane's items top-down and skips the other's. A new it
    gun batch 6" (control room, 2026-11-02). Builder (play) takes it. ~~The taped-on scope~~ — done, v1.418 (the Taped-On Toy
    Scope, $14, any gun's sight slot: 41° aimed through a small lens with a marker cross, nothing from the hip;
    `tests/homemade-parts.test.mjs`). ~~The bungee sling~~ — done, v1.419 (Bungee Sling, $10, under the barrel: aiming in a
-   third quicker, a wider cone on the move). Left: the soda-bottle silencer look, the taped-up longer mag, the sock-padded
-   stock, which need a slot to go in: **(design)**, asked in decisions (builder, 2 Nov: A new MUZZLE and STOCK slots, B all
-   under the barrel, C the silencer only; lean A).
+   third quicker, a wider cone on the move). The slots: Michael **A, two new slots on the long guns, MUZZLE and STOCK**
+   (control room, 2 Nov; decisions). ~~The MUZZLE slot and the soda-bottle silencer~~ — done, v1.420 (a Muzzle slot on all
+   29 long guns, the Cardboard Barrel moved there, old saves' with it; the Soda-Bottle Silencer, $9: your shots 0.4 as
+   loud, BBs 6 % slower). Left: the taped-up longer mag under the barrel (more BBs a mag, heavier, a slower reload),
+   and the STOCK slot with the sock-padded stock, whose effect is **(design)**: no gun climbs today, so "kicks and climbs
+   less" has nothing to act on; asked in decisions (builder, 2 Nov: A steadier aimed shots, B climb for the automatics
+   first, C a quicker settle after a sprint; lean A).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

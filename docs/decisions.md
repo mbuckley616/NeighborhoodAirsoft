@@ -5,7 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-(none)
+- **What the sock-padded stock does (builder, 2026-11-02, backlog D.83)**
+  You chose new MUZZLE and STOCK slots; the muzzle half is in (v1.420: the slot, the Cardboard Barrel moved there, the
+  Soda-Bottle Silencer). The stock was to make "the gun kick and climb less, a little heavier". But no gun climbs in the
+  game today: a shot only jolts the gun model on screen for a moment; where your BBs go never drifts up under fire. So a
+  padded stock has nothing to soften unless it does something else.
+  - A) **Steadier when aimed:** aimed shots a fifth tighter (the spread while aiming in), and the on-screen jolt halved;
+    0.6 lb more. Nothing new for the other guns.
+  - B) **Add climb to the automatics first:** holding the trigger on an automatic walks your aim up a little each shot
+    (you pull it back down), on every auto gun; the stock halves it, and halves the jolt; 0.6 lb more. A change every
+    automatic player will feel, padded stock or not.
+  - C) **Steadier after a sprint:** the wobble you carry for a moment after running settles twice as fast; 0.6 lb more.
+  - D) **Something else.** Reply with what you want.
+  Recommendation: A. It gives the stock a clear job (the aimed shot) that no other part has (the foregrip is the walk,
+  the slings the aim-in and the sprint), and it changes no gun for players without one. B is a bigger change to how
+  every automatic plays, and deserves its own look first. Meanwhile the builder does the taped-up longer mag.
 
 ## Answered
 

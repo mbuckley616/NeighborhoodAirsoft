@@ -1559,14 +1559,14 @@ function renderGunDetail(c, gt) {
   ensureGunSlots(gt);
   const slots = Game.persist.equipped.attachments[gt];
   c.appendChild(shopSectionHeader('Accessory Slots',
-    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' + 1 under-barrel' : ''} · customize at The Workbench (hall closet)`));
+    `${cap.sight} sight + ${cap.rails} rail${cap.rails!==1?'s':''}${cap.under ? ' + 1 under-barrel' : ''}${cap.muzzle ? ' + 1 muzzle' : ''}${cap.stock ? ' + 1 stock' : ''} · customize at The Workbench (hall closet)`));
   const summary = document.createElement('div');
   summary.className = 'shop-item-desc';
   summary.style.padding = '6px 2px';
   const mounted = getMountedAccessories(gt);
   if (mounted.length) {
     const parts = mounted.map(m => {
-      const where = m.slot === 'sight' ? 'sight' : m.slot === 'under' ? 'under-barrel' : (cap.rails === 1 ? 'rail' : m.placement);
+      const where = m.slot === 'sight' ? 'sight' : m.slot === 'under' ? 'under-barrel' : (m.slot === 'muzzle' || m.slot === 'stock') ? m.slot : (cap.rails === 1 ? 'rail' : m.placement);
       return `${ATTACHMENTS[m.type].name} (${where})`;
     });
     summary.textContent = 'Currently mounted: ' + parts.join(', ') + '.';
@@ -1590,7 +1590,7 @@ function renderAccessoriesTab(c) {
   for (const aid in ATTACHMENTS) {
     const a = ATTACHMENTS[aid];
     const owned = Game.persist.ownedEquipment.attachments[aid] || 0;
-    const slotTag = a.slot === 'sight' ? 'SIGHT' : a.slot === 'under' ? 'UNDER' : 'RAIL';   // v1.169
+    const slotTag = a.slot === 'sight' ? 'SIGHT' : a.slot === 'under' ? 'UNDER' : a.slot === 'muzzle' ? 'MUZZLE' : a.slot === 'stock' ? 'STOCK' : 'RAIL';   // v1.169, v1.420
     const row = document.createElement('div');
     row.className = 'shop-item' + (owned ? ' owned' : '');
     row.innerHTML = `<div class="shop-item-icon">⊹</div>` +

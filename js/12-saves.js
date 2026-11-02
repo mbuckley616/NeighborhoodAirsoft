@@ -86,6 +86,8 @@ function loadGame() {
     }
   }
   _accInstanceSeq = seq;
+  // v1.420 (D.83): bring every gun's slots up to date (a cardboard barrel saved on the under-barrel slot moves to the muzzle)
+  try { for (const gt in (Game.persist.equipped.attachments || {})) ensureGunSlots(gt); } catch (e) {}
   Game._saveEnabled = true;   // loading a save opts into auto-save this session
   return { ok: true };
 }
