@@ -458,14 +458,8 @@ function buildMarketLotScene(variant, timeOfDay) {
     const o = box(x - 1.75, x + 1.75, z - 0.7, z + 0.7, 1.05, 'metal');
     coverList.push(o); return o;
   };
-  function makeCartMesh(x, z, yaw = 0) {
-    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw;
-    const basket = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.9), new THREE.MeshStandardMaterial({ color: 0xa0a6aa, roughness: 0.4, metalness: 0.6, wireframe: true }));
-    basket.position.y = 0.7; g.add(basket);
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.85), railMat);
-    frame.position.y = 0.2; g.add(frame);
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0xc03028, roughness: 0.6 }));
-    handle.position.set(0, 1.0, -0.5); g.add(handle);
+  function makeCartMesh(x, z, yaw = 0) {   // v1.423 (B.21): the wire-basket cart on its casters, from the street kit
+    const g = makeShoppingCart(); g.position.set(x, 0, z); g.rotation.y = yaw;
     return g;
   }
   for (const [c, s, k] of CORRAL_STALLS) addCorral(c + s * 2.75, mlStallZ(k));
