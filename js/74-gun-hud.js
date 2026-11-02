@@ -258,7 +258,7 @@ function updateHeldMesh(dt) {
   // floating viewmodel would just clutter the lens. Threshold matches the overlay
   // fade-in (ads > 0.55 ≈ overlay near full) so the gun vanishes as the scope
   // takes over rather than popping.
-  const scopedFully = isGunHeld && gunHasAccessoryType(Game.gun.type, 'scope') && Game.player.ads > 0.55;
+  const scopedFully = isGunHeld && !!gunScopeView(Game.gun.type) && Game.player.ads > 0.55;   // v1.418: the toy scope too
   fpGun.visible = isGunHeld && !scopedFully && !swinging;
   if (fpLoader) fpLoader.visible = isLoader && !swinging;
   if (fpMag) fpMag.visible = isMag && !swinging;
@@ -393,9 +393,9 @@ function updateHeldMesh(dt) {
     let adsYCorr = 0;
     {
       const accR = fpGun.userData && fpGun.userData.accessories;
-      const sightPlR = getMountedAccessories(gunType).find(s => s.type === 'red_dot' || s.type === 'scope');
+      const sightPlR = getMountedSight(gunType);   // v1.418: any sight
       if (accR && sightPlR) {
-        const optic = sightPlR.type === 'scope' ? accR.scopeOptic : accR.redDotOptic;
+        const optic = sightPlR.type === 'scope' ? accR.scopeOptic : sightPlR.type === 'toy_scope' ? accR.toyScopeOptic : accR.redDotOptic;
         const anchor = accR.sightAnchor;
         if (optic && anchor) {
           // Dot height above the gun origin, in gun-local space (anchor Y + the
@@ -807,8 +807,10 @@ function updateStanceHud() {
   //  - scope: full scoped mask (circle + crosshair) that REPLACES the generic
   //    vignette, fading in with ADS; iron crosshair hidden behind it.
   const hasRedDot = gunHasAccessoryType(Game.gun.type, 'red_dot');
-  const hasScope  = gunHasAccessoryType(Game.gun.type, 'scope');
+  const scopeView = gunScopeView(Game.gun.type);   // v1.418: 'glass' (the 4× scope), 'toy' (the taped-on toy scope) or null
+  const hasScope  = !!scopeView;
   const scopeOv = document.getElementById('scopeOverlay');
+  if (scopeOv) scopeOv.classList.toggle('toy', scopeView === 'toy');
   const scopeActive = hasScope && p.ads > 0.15;
   if (scopeOv) scopeOv.style.opacity = scopeActive ? Math.min(1, (p.ads - 0.15) / 0.5).toFixed(2) : '0';
   // The generic dark vignette: suppressed under a scope (the scope mask owns the

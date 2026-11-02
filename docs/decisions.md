@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Where the rest of the homemade wave goes (builder, 2026-11-02, backlog D.83)**
+  The Taped-On Toy Scope (v1.418, the sight slot) and the Bungee Sling (v1.419, under the barrel) are in. Three of your
+  five are left, and they don't fit today's slots: a gun has one sight, one or two side rails and (long guns) one
+  under-barrel slot. A soda-bottle silencer sits on the muzzle (the Cardboard Barrel is there now, on the under-barrel
+  slot); a longer mag taped up is the magazine itself; a sock-padded stock is the stock. And kids don't hear your shots
+  today, so a silencer has nothing to hide from unless it does something else.
+  - A) **Two new slots on the long guns, MUZZLE and STOCK.** The Cardboard Barrel moves to MUZZLE beside the soda-bottle
+    silencer (quieter shots for you, BBs a touch slower, the bottle in your view); the sock-padded stock goes in STOCK
+    (the gun kicks and climbs less, a little heavier); the taped-up longer mag goes under the barrel (more BBs a mag,
+    heavier, a slower reload). Old saves keep the cardboard on the gun it was on.
+  - B) **No new slots: all three under the barrel**, one part per gun as now: the silencer a look with a quieter shot and
+    slower BBs, the stock and the mag as in A.
+  - C) **Only the silencer** (under the barrel, as in B); drop the mag and the stock.
+  - D) **Something else.** Reply with what you want.
+  Recommendation: A. Two slots give the parts a place where they look right, and let a long gun carry a muzzle part and
+  an under part at once, which is the "far more varied" D.14 asked for. It is about a session's work for the slots, then
+  one part a version.
+
 ## Answered
 
 - **Hold the Bunker with your crew in (producer's daily sweep, 2026-11-02)**

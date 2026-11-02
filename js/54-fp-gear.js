@@ -223,6 +223,51 @@ function buildScopeOptic() {
   return o;
 }
 
+// v1.418 (D.83): the TAPED-ON TOY SCOPE. A dollar-store telescope in three stepped plastic sections (red at the front,
+// yellow, a black eyepiece), lying on a folded cardboard shim on the rail and held by two bands of grey duct tape that
+// wrap the tube and run down round the rail. Origin = the foot on the rail, as the other optics.
+function buildToyScopeOptic() {
+  const o = new THREE.Group();
+  const red = new THREE.MeshStandardMaterial({ color: 0xc8302a, roughness: 0.45, metalness: 0.0 });
+  const yellow = new THREE.MeshStandardMaterial({ color: 0xe8c23a, roughness: 0.5, metalness: 0.0 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.6, metalness: 0.0 });
+  const tape = new THREE.MeshStandardMaterial({ color: 0x9a9ca0, roughness: 0.55, metalness: 0.25 });
+  const card = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: 0.95, metalness: 0.0 });
+  const glass = _opticMats().glass;
+  const shimH = 0.012, frontR = 0.016;
+  const lineY = shimH + frontR;        // the tube's centre: the shim, then the big front section resting on it
+  const shim = new THREE.Mesh(new THREE.BoxGeometry(0.022, shimH, 0.060), card);
+  shim.position.set(0, shimH / 2, -0.004); o.add(shim);
+  // three sections, front (-Z) to back: each a little narrower, as a pull-out telescope
+  const secs = [ { r: frontR, len: 0.050, z: -0.036, m: red }, { r: 0.0125, len: 0.040, z: 0.008, m: yellow }, { r: 0.0095, len: 0.022, z: 0.039, m: black } ];
+  for (const sc of secs) {
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(sc.r, sc.r, sc.len, 20), sc.m);
+    t.rotation.x = Math.PI / 2; t.position.set(0, lineY, sc.z); o.add(t);
+  }
+  // a black lip round the big lens, the front glass, and the back glass you look into
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(frontR, 0.0022, 8, 22), black);
+  lip.position.set(0, lineY, -0.061); o.add(lip);
+  const fg = new THREE.Mesh(new THREE.CircleGeometry(frontR - 0.001, 20), glass);
+  fg.position.set(0, lineY, -0.0615); fg.rotation.y = Math.PI; o.add(fg);
+  const bg = new THREE.Mesh(new THREE.CircleGeometry(0.008, 16), glass);
+  bg.position.set(0, lineY, 0.0502); o.add(bg);
+  // two duct-tape bands: a ring round the tube and the two sides of the loop down past the shim to under the rail
+  for (const z of [-0.030, 0.010]) {
+    const r = z < -0.01 ? frontR : 0.0125;
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.0012, r + 0.0012, 0.013, 20, 1, true), tape);
+    band.rotation.x = Math.PI / 2; band.position.set(0, lineY, z); o.add(band);
+    for (const sx of [-1, 1]) {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.0015, lineY + 0.004, 0.013), tape);
+      side.position.set(sx * 0.0122, (lineY - 0.004) / 2, z); o.add(side);
+    }
+    const under = new THREE.Mesh(new THREE.BoxGeometry(0.0259, 0.0015, 0.013), tape);
+    under.position.set(0, -0.0075, z); o.add(under);
+  }
+  o.userData.kind = 'toy_scope';
+  o.userData.sightLineY = lineY;
+  return o;
+}
+
 // Build (once) and return the accessory rig for a gun group. Stores refs on
 // group.userData.accessories. Visibility/placement set by updateFPGunAccessory().
 function ensureFPGunAccessory(group, gunType) {
@@ -378,9 +423,10 @@ function ensureFPGunAccessory(group, gunType) {
   }
   const redDotOptic = buildRedDotOptic(); redDotOptic.visible = false; sightAnchor.add(redDotOptic);
   const scopeOptic  = buildScopeOptic();  scopeOptic.visible  = false; sightAnchor.add(scopeOptic);
+  const toyScopeOptic = buildToyScopeOptic(); toyScopeOptic.visible = false; sightAnchor.add(toyScopeOptic);   // v1.418
 
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
-    railAnchors, sightAnchor, redDotOptic, scopeOptic, underParts, gunGroup: group };
+    railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, gunGroup: group };
   return group.userData.accessories;
 }
 
@@ -461,9 +507,10 @@ function updateFPGunAccessory(group, gunType, mountedOverride) {
   // v1.61: TOP-RAIL SIGHT — show the matching optic mesh (red-dot or scope). One
   // sight per gun; the glass + reticle render in-world, the HUD dot/scope overlay
   // handle the centered aim cue. No sight → both hidden.
-  const sightPl = mounted.find(a => a.type === 'red_dot' || a.type === 'scope');
+  const sightPl = mounted.find(a => ATTACHMENTS[a.type] && ATTACHMENTS[a.type].slot === 'sight');   // v1.418: any sight
   if (acc.redDotOptic) acc.redDotOptic.visible = !!sightPl && sightPl.type === 'red_dot';
   if (acc.scopeOptic)  acc.scopeOptic.visible  = !!sightPl && sightPl.type === 'scope';
+  if (acc.toyScopeOptic) acc.toyScopeOptic.visible = !!sightPl && sightPl.type === 'toy_scope';   // v1.418
   // v1.73: fold down the iron FRONT sight when an optic is mounted. On the AR the
   // tall front post sits right in the red-dot's lens view (playtest: "ironsight
   // gets in the way"). Tagged meshes (userData.ironSight) hide while an optic is
@@ -530,6 +577,26 @@ function buildUnderParts(group, mount) {
       knot.position.set(0, y0 - 0.002, zz); g.add(knot);
     }
     meshes.sling = g;
+  }
+  // v1.419 (D.83): bungee sling: a yellow-and-black striped cord sagging back from a steel hook under the handguard to
+  // a second hook toward the stock, shorter and tauter than the shoelace loop
+  {
+    const g = new THREE.Group();
+    const yel = new THREE.MeshStandardMaterial({ color: 0xe8c81e, roughness: 0.7 });
+    const blk = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: 0.7 });
+    const hookMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc2, roughness: 0.35, metalness: 0.8 });
+    const r = 0.075, n = 10;
+    const cord = new THREE.Group();   // a half loop in the y-z plane, hanging down, squashed to a shallow sag
+    cord.rotation.y = Math.PI / 2; cord.scale.set(1, 0.55, 1); cord.position.set(0, y0, z0 + r); g.add(cord);
+    for (let i = 0; i < n; i++) {   // the cord in ten striped pieces
+      const seg = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0042, 6, 4, Math.PI / n), i % 2 ? blk : yel);
+      seg.rotation.z = Math.PI + i * Math.PI / n; cord.add(seg);
+    }
+    for (const zz of [z0, z0 + 2 * r]) {
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0018, 6, 12, Math.PI * 1.5), hookMat);
+      hook.rotation.y = Math.PI / 2; hook.position.set(0, y0 - 0.004, zz); g.add(hook);
+    }
+    meshes.bungee_sling = g;
   }
   // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
   {
@@ -825,7 +892,7 @@ function shopModPic(aid, w, h) {
     holder.rotation.set(a.slot === 'under' ? -0.32 : 0.22, Math.PI / 2 - 0.42, 0);
     holder.updateMatrixWorld(true);
     let part, fit;
-    if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : acc.redDotOptic;
+    if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : aid === 'toy_scope' ? acc.toyScopeOptic : acc.redDotOptic;   // v1.418
     else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
     else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
       part = acc.flashUnit;
@@ -838,7 +905,7 @@ function shopModPic(aid, w, h) {
     const mine = new Set(); part.traverse(o => mine.add(o));
     const pale = new THREE.MeshStandardMaterial({ color: 0xc9cbcf, roughness: 0.7, metalness: 0.05 });
     gun.traverse(o => { if (o.isMesh && !mine.has(o) && !(o.material && o.material.transparent)) o.material = pale; });
-    return { obj: holder, fit: fit || [part], pad: aid === 'scope' ? 1.45 : a.slot === 'sight' ? 1.9 : 1.7 };
+    return { obj: holder, fit: fit || [part], pad: (aid === 'scope' || aid === 'toy_scope') ? 1.45 : a.slot === 'sight' ? 1.9 : 1.7 };
   });
 }
 // v1.211 (D.23): the Ammo tab. A speed loader is its own model (the one you hold in a match), longer for the bigger

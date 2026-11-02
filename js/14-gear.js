@@ -210,7 +210,10 @@ const SHOES = {
 // the same kind on two guns.
 const ATTACHMENTS = {
   red_dot:    { id:'red_dot', name:'Red-Dot Sight', slot:'sight', price:35, hipSpreadMult:0.85, desc:'Tightens hipfire spread ~15% and shows a glowing red reticle when you aim. Sits in the sight slot of any gun.' },
-  scope:      { id:'scope',  name:'4× Scope', slot:'sight', price:55, hipSpreadMult:0.8, adsZoomBonus:0.8, desc:'A magnified optic for the sight slot. Tightens hipfire ~20% and zooms further when you aim. One per gun.' },
+  scope:      { id:'scope',  name:'4× Scope', slot:'sight', price:55, hipSpreadMult:0.8, adsZoomBonus:0.8, scopeView:'glass', desc:'A magnified optic for the sight slot. Tightens hipfire ~20% and zooms further when you aim. One per gun.' },
+  // v1.418 (backlog D.83, Michael: A, more homemade parts): a dollar-store toy telescope taped to the top. It zooms under
+  // half what the 4× scope does, through a small lens with a marker cross; nothing for hip shots. Cheap is its point.
+  toy_scope:  { id:'toy_scope', name:'Taped-On Toy Scope', slot:'sight', price:14, hipSpreadMult:1.0, adsZoomBonus:0.35, scopeView:'toy', desc:'A toy telescope from the dollar store, duct-taped to the top of the gun on a cardboard shim. It zooms a little when you aim (under half the 4× Scope), but the lens is small, there’s a cross drawn on it in marker, and it does nothing for your shots from the hip. Sits in the sight slot of any gun.' },
   laser:      { id:'laser',  name:'Red Laser Sight', slot:'rail', price:28, hipSpreadMult:0.9, laserColor:'red', desc:'Rail-mounted red beam. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   laser_green:{ id:'laser_green', name:'Green Laser Sight', slot:'rail', price:34, hipSpreadMult:0.9, laserColor:'green', desc:'Rail-mounted green beam — brighter and easier to see than red, especially at night. Tightens hipfire spread ~10%. Goes on a left or right rail.' },
   flashlight: { id:'flashlight', name:'Tactical Flashlight', slot:'rail', price:18, hipSpreadMult:1.0, desc:'Rail-mounted working light that casts a real beam. Goes on a left or right rail.' },
@@ -219,6 +222,8 @@ const ATTACHMENTS = {
   // the jitter is in m/s, so a BB 15% slower would otherwise spread 1/0.85 wider.)
   taped_mag:  { id:'taped_mag', name:'Taped Twin Mag', slot:'under', price:22, weight:1.2, tapedMag:true, desc:'A second mag duct-taped upside down to the first. It comes loaded from your bag; press R to flip the pair over (0.6 s) and shoot the other one. It’s 1.2 lb more to carry. Long guns only.' },
   sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, but the strap tugs when you aim: aiming in is slower. Long guns only.' },
+  // v1.419 (D.83): the second wave's sling, the shoelace one's opposite: it snaps the gun up, and bounces it as you walk
+  bungee_sling: { id:'bungee_sling', name:'Bungee Sling', slot:'under', price:10, adsSpeedMult:1.35, moveSpreadMult:1.3, desc:'A bungee cord off the garage shelf, hooked under the barrel and back to the stock. It snaps the gun up to your eye, so aiming in is a third quicker, but it bounces as you walk: your shots spread wider on the move. Long guns only.' },
   foregrip:   { id:'foregrip', name:'PVC Foregrip', slot:'under', price:16, weight:0.8, moveSpreadMult:0.65, desc:'A stub of plumbing pipe, hose-clamped under the barrel. Your shots stay a third tighter while you walk, but it’s 0.8 lb more to carry. Long guns only.' },
   cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'under', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Long guns only.' },
 };
@@ -393,6 +398,14 @@ function underPartMult(key) {
   const gun = Game.persist?.equipped?.gun;
   const d = gun ? getUnderPart(gun) : null;
   return (d && typeof d[key] === 'number') ? d[key] : 1;
+}
+// v1.418: the sight on a gun, and whether it is one you look through (the 4× scope, the toy scope): its scopeView or null
+function getMountedSight(gunType) {
+  return getMountedAccessories(gunType).find(a => ATTACHMENTS[a.type] && ATTACHMENTS[a.type].slot === 'sight') || null;
+}
+function gunScopeView(gunType) {
+  const s = getMountedSight(gunType);
+  return (s && ATTACHMENTS[s.type].scopeView) || null;
 }
 function gunHasAccessoryType(gunType, type) {
   return getMountedAccessories(gunType).some(a => a.type === type);
