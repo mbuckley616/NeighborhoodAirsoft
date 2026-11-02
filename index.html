@@ -1031,6 +1031,9 @@
   }
   #worldMap .scenario-info .sc-card-match { font-weight: bold; color: #2a2520; }
   #worldMap .scenario-info .sc-card-badge { color: #8b3a2a; font-weight: bold; }
+  /* v1.393 (D.57 step 1): the match type's chip (CREW, 1V1 CALLOUT, FREE-FOR-ALL, CLUTCH, NO CREW YET) */
+  #worldMap .scenario-info .sc-card-type { color: #2a4d8b; font-weight: bold; border: 1px solid currentColor; padding: 0 3px; border-radius: 2px; }
+  #worldMap .scenario-info .sc-card-side { font-weight: bold; letter-spacing: 0.04em; }   /* v1.402 (D.57 step 4): a side match pays but does not gate */
   #worldMap .scenario-info .sc-card-stamp {
     margin-left: auto;
     font-weight: bold;
@@ -1930,6 +1933,11 @@
 
   .brief-rival { border-left-color: #e0503a; background: rgba(224,80,58,0.10); }   /* v1.196: Seth's crew */
   .brief-rival .brief-obj-label { color: #e0503a; }
+  .brief-captain { background: rgba(120,120,120,0.08); }   /* v1.401 (D.57 step 3): its border in the crew's colour */
+  /* v1.393 (D.57 step 1): the match type and why your crew plays or doesn't */
+  .brief-type { font-size: 12px; color: var(--ui-text); margin: 0 0 8px; }
+  .brief-type .brief-type-chip { font-size: 10px; letter-spacing: 1.5px; font-weight: bold; color: var(--ui-accent);
+    border: 1px solid currentColor; padding: 1px 5px; border-radius: 2px; margin-right: 4px; }
 
   /* ===== v1.39: Pre-start scenario details popup ===== */
   #scenarioBriefModal .brief-card {
@@ -2396,6 +2404,9 @@
   #worldMap .nb-paper .scenario-info .sc-card-stamp { font-weight: 400; }
   #worldMap .nb-paper .scenario-info .sc-card-match { color: var(--nb-ink); }
   #worldMap .nb-paper .scenario-info .sc-card-badge { color: var(--nb-red); }
+  #worldMap .nb-paper .scenario-info .sc-card-type { color: var(--nb-blue, #2a4d8b); font-weight: 400; }
+  .nb-paper .brief-type { font-size: 17px; color: var(--nb-ink); margin: 0; }   /* on the rules: no margin */
+  .nb-paper .brief-type .brief-type-chip { font-size: 14px; font-weight: 400; color: var(--nb-blue, #2a4d8b); }
   #worldMap .nb-paper .scenario-info .sc-card-stamp.next { color: var(--nb-red); }
   #worldMap .nb-paper .scenario-info .sc-card-stamp.done { color: var(--nb-green); }
   #worldMap .nb-paper .scenario-info .sc-card-title { font-family: var(--nb-marker); font-weight: 400; font-size: 14px; color: #17171c; }

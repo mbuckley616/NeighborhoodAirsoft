@@ -100,7 +100,8 @@ const hold = await page.evaluate(() => {
   const orig = applyBBHit; let hits = 0;
   applyBBHit = (bb, t) => { if (t === Game.player) { hits++; return true; } return orig(bb, t); };
   const p = Game.player; Game.mouse.locked = true; p.crouching = true;
-  const E = Game.scenario.enemies, nf = Game.scenario.placements ? Game.scenario.placements.cluster_north : null;
+  // v1.393 (D.57 step 1): your crew plays it now, so the five are their side
+  const E = Game.scenario.enemies.filter(e => e.team !== 'player'), nf = Game.scenario.placements ? Game.scenario.placements.cluster_north : null;
   const homes = E.map(e => ({ id: e.charId, start: [+e.pos.x.toFixed(1), +e.pos.z.toFixed(1)], back: e._respawnPos ? [+e._respawnPos.x.toFixed(1), +e._respawnPos.z.toFixed(1)] : null }));
   const inT = {}, tagAt = {}, backs = []; let near = 0, firstNear = null, tags = 0;
   for (let i = 0; i < 60 * 90 && Game.mode === 'scenario'; i++) {

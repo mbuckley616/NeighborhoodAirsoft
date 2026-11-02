@@ -153,6 +153,8 @@ the crew forms at home and holds it all zone.
 | 10 | Hold the Creek Fort | keep | crew | 3.5 | Diego attacks you today right after joining |
 | 11 | Bellfield After Dark (finale) | **Mason's Last Stand** | finale | 4.5 | it is played on Northcliff Trace |
 
+The pool (v1.317-v1.318) came after this plan: Round the Courts, and its night match, Night Swim until v1.409, now **After Hours at the Pool** (Michael: A, 1 Nov), so Willow Bend's finale keeps Night Swim.
+
 ### Hollins Ridge: Jordan's crew
 | # | Today | Proposed | Type | Diff | Note |
 |---|---|---|---|---|---|

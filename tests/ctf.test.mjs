@@ -12,10 +12,12 @@ const ID = 'bellfield_ctf';
 // --- the card, the briefing and where it sits in Northcliff's chain
 const card = await page.evaluate((ID) => {
   const b = getScenarioBriefing(ID), ids = PIN_SCENARIO_GROUPS.northcliff, done = Game.persist.completed;
-  for (const id of ids.slice(0, ids.indexOf('bellfield_night_4v4'))) done[id] = true;
+  // v1.409: Lamplight on Bellfield is a side match since v1.402 (D.57), so the flags open on the bulb fort, the main-line
+  // match before them, and Lamplight need not be won
+  for (const id of ids.slice(0, ids.indexOf('bellfield_defend_fort'))) done[id] = true;
   done[zoneCapstoneId('market_lot')] = true;
   const before = isScenarioUnlocked(ID);
-  done.bellfield_night_4v4 = true;
+  done.bellfield_defend_fort = true;
   const after = { flags: isScenarioUnlocked(ID), creek: isScenarioUnlocked('northcliff_defend_creek') };
   for (const k of Object.keys(done)) delete done[k];
   return { win: b.winConditionText, lives: [...b.allies, ...b.enemies].map(c => c.name + ':' + c.lives),
@@ -27,7 +29,7 @@ console.log('   card:', JSON.stringify(card));
 check('the objective says carry their flag home, first to 2', /flag/i.test(card.win) && /first to 2/.test(card.win), card.win);
 check('the map card has a FLAGS badge and ♥ ∞', /⚑ FLAGS/.test(card.card) && /♥ ∞/.test(card.card), card.card);
 check('every kid comes back (99 lives), and so do you', card.lives.every(x => x.endsWith(':99')) && /You .* comes back/.test(card.roster), [card.lives, card.roster]);
-check('it sits after Lamplight on Bellfield and before the creek fort, opening only on the night match',
+check('it sits after Lamplight on Bellfield and before the creek fort, opening on the bulb fort (Lamplight is a side match, v1.402)',
   card.at === card.night + 1 && card.creek > card.at &&   // v1.317-v1.318's pool matches come between
   !card.before && card.after.flags && !card.after.creek, card);
 
@@ -47,7 +49,10 @@ check('enters as a capture-the-flag match, first to 2', built.mode === 'scenario
 check('two flags on clear ground in the match\'s scene: ours within 6 m of your start, theirs over 45 m off',
   built.flags.length === 2 && built.flags.every(f => f.clear && f.inScene) && built.flags[0].fromPlayer < 6 && built.flags[1].fromPlayer > 45, built.flags);
 check('the backyard lanes are on clear ground', built.lanes.length === 2 && built.lanes.every(l => l[2]), built.lanes);
-check('Andrew runs for their flag and Mason for ours', built.runners.join() === 'Andrew:player,Mason:enemy', built.runners);
+// v1.400 (D.57 step 2): your runner is the match's (Andrew as written; with no crew of yours, Seth's Andrew gives his
+// place to Ryan, the side rule)
+const RUN = (built.runners.find(r => r.endsWith(':player')) || 'Andrew:player').split(':')[0];
+check(`${RUN} runs for their flag and Mason for ours`, built.runners.join() === `${RUN}:player,Mason:enemy`, built.runners);
 
 // a look at their flag from the island, for Michael: tests/out/ctf-their-flag.png
 await page.evaluate(() => { Game.player.pos.set(-13, 0, -3.5); Game.player.yaw = Math.PI / 2; Game.player.pitch = -0.08; });
@@ -181,8 +186,8 @@ for (let r = 0; r < 4 && (r < 2 || !rounds.some(x => x.takes.length > 0)); r++) 
   // the round to walk in (Andrew, tagged 8 times in 150 s, walked 128 m). The bar is a metre for every second he was not
   // waiting at his base, at most 150 m: the old bar over a full round with no tags.
   const bar = (name) => Math.min(150, res.t - 10 * (res.tagsOf[name] || 0));
-  check(`round ${r + 1}: both runners walk over a metre for each second not held at base`, (res.walked.Andrew || 0) > bar('Andrew') && (res.walked.Mason || 0) > bar('Mason'),
-    { bars: { Andrew: bar('Andrew'), Mason: bar('Mason') }, walked: res.walked });
+  check(`round ${r + 1}: both runners walk over a metre for each second not held at base`, (res.walked[RUN] || 0) > bar(RUN) && (res.walked.Mason || 0) > bar('Mason'),
+    { bars: { [RUN]: bar(RUN), Mason: bar('Mason') }, walked: res.walked });
   check(`round ${r + 1}: no runner is held on his flag run within 1 m for over 4 s`, Object.values(res.wedge).every(t => t <= 4.1), res.wedge);
   check(`round ${r + 1}: the backyards and the street are both used`, res.lanes.includes('street') && res.lanes.some(x => x !== 'street'), res.lanes);
 }

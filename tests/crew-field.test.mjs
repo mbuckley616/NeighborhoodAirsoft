@@ -16,7 +16,9 @@ const same = await page.evaluate(() => {
   const empty = ids.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup && !crewFirstTime(id).length);
   Game.persist.crew = CREW_ROSTER.slice();
   const solo = ids.filter(id => !crewTeamMatch(id));
-  const soloChanged = solo.filter(id => crewSetup(id) !== SCENARIOS[id].enemySetup);
+  // (v1.401, D.57 step 3: a captain's notch on his aim copies the sides; the kids and their sides are what must not change)
+  const cast = s => (s || []).map(es => es.charId + ':' + (es.team || '')).join();
+  const soloChanged = solo.filter(id => cast(crewSetup(id)) !== cast(sethSetup(id)));
   const team = ids.filter(crewTeamMatch);
   Game.persist.crew = [];
   return { empty, n: ids.length, solo: solo.length, soloChanged, team: team.length,
@@ -24,8 +26,9 @@ const same = await page.evaluate(() => {
 });
 check(`a new game: every match tuned for nobody in your crew (of ${same.n}) plays its own sides`, same.empty.length === 0, same.empty);
 check(`with all five in, the ${same.solo} solo matches (the tutorial among them) still play alone`, same.soloChanged.length === 0 && !same.tut, same.soloChanged);
-// 32 since v1.318's Night Swim (the twins on your side at the pool)
-check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 32 && same.jugg && same.out, same);
+// 32 since v1.318's Night Swim (the twins on your side at the pool); 46 since v1.393 (D.57 step 1): + the 12 solo matches
+// your crew now plays and the 2 CLUTCH ones (`crewPosts`), so 32 solo matches are left, none changed by the crew
+check(`${same.team} team matches take the crew, Juggernauts and Two Against the World among them`, same.team === 46 && same.solo === 32 && same.jugg && same.out, same);
 
 const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
   Game.persist.crew = crew; crewBench.clear(); (bench || []).forEach(k => crewBench.add(k));
@@ -36,11 +39,14 @@ const sides = (id, crew, bench) => page.evaluate(([id, crew, bench]) => {
 }, [id, crew, bench]);
 
 // Two Against the World with Eric: you and Eric v 4 (Sean was its one friend); with all five, 6 v 4
-let s = await sides('bunratty_team_2v4', ['eric']);
-check('Two Against the World, Eric in: you and Eric v Ryan, Mitchell, Nick, Joe', s.ours.join() === 'eric' && s.theirs.join() === 'ryan,mitchell,nick,joe' && s.match === '2V4', s);
+// v1.408 (D.57 step 4): Sean and Nick ask after You and Nick, so Down Two is tuned for Eric, Sean and Nick
+let s = await sides('bunratty_team_2v4', ['eric', 'sean', 'nick']);
+check('Down Two (v1.406, was Two Against the World), Eric, Sean and Nick in: your four v six of Mitchell\'s side, none of yours there', s.ours.join() === 'eric,sean,nick' &&
+  s.theirs.length === 6 && !s.theirs.some(k => ['eric', 'sean', 'nick'].includes(k)) && s.match === '4V6', s);
 s = await sides('bunratty_team_2v4', ['eric', 'sean', 'nick', 'alex', 'diego']);
-check('Two Against the World, all five: 6 v 4, Nick swapped out of their side for a street kid',
-  s.ours.length === 5 && !s.theirs.includes('nick') && s.theirs.length === 4 && s.match === '6V4', s);
+// v1.406 (D.57 step 4): Down Two is always two short, so all five play 6 v 8 (was 6 v 4)
+check('Down Two, all five: 6 v 8, Nick swapped out of their side for a street kid',
+  s.ours.length === 5 && !s.theirs.includes('nick') && s.theirs.length === 8 && s.match === '6V8', s);
 check('each crew kid carries his own gun (Eric MP5, Sean AK, Nick AR, Alex AK, Diego MP5)',
   s.guns.eric === 'mp5' && s.guns.sean === 'ak47' && s.guns.nick === 'ar' && s.guns.alex === 'ak47' && s.guns.diego === 'mp5', s.guns);
 // The named kid comes along until he is in the crew
@@ -54,7 +60,8 @@ check('You and Nick, Sean and Nick in: your three in the order they joined, and 
 s = await sides('winnmark_team_3v3', ['eric', 'sean', 'nick', 'alex', 'diego']);
 check('Squad Up, all five: Seth and your five (Trey\'s place goes to the crew)', s.ours.join() === 'seth,eric,sean,nick,alex,diego' && s.theirs.join() === 'brooke,jamie,marcus', s);
 s = await sides('bunratty_vip', ['eric', 'sean', 'nick', 'alex', 'diego']);
-check('Protect Ryan: Ryan (the VIP) and your five', s.ours[0] === 'ryan' && s.ours.length === 6, s);
+// v1.406 (D.57 step 4): Protect Ryan is Cover Nick; Nick, your VIP, is one of your five and plays once
+check('Cover Nick: Nick (the VIP) and the rest of your five', s.ours[0] === 'nick' && s.ours.length === 5 && new Set(s.ours).size === 5, s);
 // Seth on the other side: his crew crosses to him. The Last Saturday is 6 v 8, as the spec's finale
 s = await sides('last_saturday', ['eric', 'sean', 'nick', 'alex', 'diego']);
 check('The Last Saturday, all five: you and your five v Seth and seven, Brooke and Trey on his side, 6 v 8',
@@ -62,8 +69,9 @@ check('The Last Saturday, all five: you and your five v Seth and seven, Brooke a
 // A small crew: places left go to the match's own allies; a benched kid's place stays empty
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick']);
 // v1.275: Brooke crossing keeps the side at the match's five (Ryan sits out), the 5 v 5 it was built as
-check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth, 5 v 5', s.ours.join() === 'eric,sean,nick,rebecca' &&
-  s.theirs.length === 5 && s.theirs.includes('brooke'), s);
+// v1.402 (D.57 step 4): the Big Game is the Hollow's finale now, so their side is one more than yours, 5 v 6
+check('The Big Game, three in: Eric, Sean, Nick and Rebecca; Brooke crosses to Seth, 5 v 6', s.ours.join() === 'eric,sean,nick,rebecca' &&
+  s.theirs.length === 6 && s.theirs.includes('brooke') && s.match === '5V6', s);
 s = await sides('hollow_big_battle', ['eric', 'sean', 'nick'], ['nick']);
 check('The Big Game, Nick benched: his place stays empty, the briefing names him', s.ours.join() === 'eric,sean,rebecca' && s.benched.join() === 'Nick', s);
 s = await sides('hollow_skirmish_3v3', ['eric', 'sean']);

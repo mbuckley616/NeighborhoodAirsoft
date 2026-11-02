@@ -70,6 +70,7 @@ function loadGame() {
   catch (e) { return { ok: false, reason: 'corrupt' }; }
   if (!payload || !payload.persist) return { ok: false, reason: 'corrupt' };
 
+  ladderKeepOpened(payload.persist);   // v1.402 (D.57 step 4): before the merge, which would stamp an old save as new
   // Merge saved profile onto a pristine default so missing/newer fields are sane.
   const fresh = JSON.parse(JSON.stringify(DEFAULT_PERSIST));
   Game.persist = _deepMergePersist(fresh, payload.persist);

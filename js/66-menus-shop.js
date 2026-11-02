@@ -53,7 +53,8 @@ function profileSummaryHTML() {
 function nextLadderMatchId() {
   for (const z of ZONE_LADDER) {
     if (!isZoneUnlocked(z.key)) break;
-    const id = (PIN_SCENARIO_GROUPS[z.key] || []).find(id => isScenarioUnlocked(id) && !Game.persist.completed[id]);
+    const open = id => isScenarioUnlocked(id) && !Game.persist.completed[id];
+    const ids = PIN_SCENARIO_GROUPS[z.key] || [], id = ids.find(id => open(id) && !isSideMatch(id)) || ids.find(open);   // v1.402: the main line first
     if (id) return id;
   }
   return null;
@@ -269,7 +270,9 @@ function crewColor() {
   return CREW_COLORS.some(k => k.hex === c) ? c : null;
 }
 function crewWornBy(sc, es, team) {
-  if (team !== 'player' || es.vip || sc.tutorial || es.charId === 'seth') return null;
+  // v1.401 (D.57 step 3): a kid on the other side wears his captain's crew's colour (none in the Pickup Game or online)
+  if (team !== 'player') return sc.tutorial || sc.pickup || sc.net || es.vip ? null : captainColorOf(es.charId);
+  if (es.vip || sc.tutorial || es.charId === 'seth') return null;
   return crewColor();
 }
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };

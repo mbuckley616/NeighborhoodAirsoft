@@ -16,17 +16,17 @@ const PIN_SCENARIO_GROUPS = {
     'winnmark_seth_house',
     'winnmark_squad_basics',   // v1.324 (D.61)
     'winnmark_seth_shotgun_duel',
-    'winnmark_ffa',
+    'winnmark_ffa',              // v1.402: a side match
+    'winnmark_sniper_overwatch', // v1.402 (D.57 step 4): the 1 v 2 with the sniper before the 1 v 3
     'winnmark_cul_de_sac',
-    'winnmark_sniper_overwatch',
     'winnmark_team_2v2',
     'winnmark_defend_treehouse',
     'winnmark_defend_culdesac',
-    'winnmark_two_in_the_yards',
+    'winnmark_two_in_the_yards', // v1.402: a side match
     'winnmark_team_2v3',
-    'winnmark_whole_block',
+    'winnmark_whole_block',      // v1.402: a side match
     'winnmark_team_3v3',
-    'winnmark_last_stand',
+    'winnmark_last_stand',       // v1.402: a side match
     'winnmark_night_prowl',
     'winnmark_night_team_2v2',
   ],
@@ -45,7 +45,7 @@ const PIN_SCENARIO_GROUPS = {
     'bunratty_team_2v4',
     'bunratty_team_4v4',
     'bunratty_go_cart',          // v1.354: Downhill Derby, the go-cart race (D.71)
-    'bunratty_night_lane',
+    'bunratty_night_lane',       // v1.402: a side match
     'bunratty_vip',              // v1.170: VIP (D.15), before the capstone
     'bunratty_night_team_2v2',
   ],
@@ -54,15 +54,15 @@ const PIN_SCENARIO_GROUPS = {
     'hollow_skirmish_3v3',
     'hollow_attack_north_fort',
     'hollow_defend_south_fort',
-    'hollow_attack_north_fort_night',
+    'hollow_attack_north_fort_night',   // v1.402: a side match
     'hollow_defend_south_fort_night',
-    'hollow_big_battle',
-    'hollow_night_battle',
+    'hollow_juggernaut',                // v1.402 (D.57 step 4): a breather after the forts
     'hollow_2v4_night',
-    'hollow_juggernaut',
     'hollow_ffa',
     'hollow_infection_night',
-    'hollow_full_auto_mayhem',
+    'hollow_full_auto_mayhem',          // v1.402: a side match
+    'hollow_night_battle',              // v1.402: a side match, the Big Game at night
+    'hollow_big_battle',                // v1.402: the Hollow's finale
   ],
   // v1.102: Riverside Market lot (East Roswell) — the parking-lot zone (D.1).
   market_lot: [
@@ -82,10 +82,10 @@ const PIN_SCENARIO_GROUPS = {
     'bellfield_1v1_mason',       // v1.186: Bellfield Court, the Bellfield kids' own street (Michael: C)
     'bellfield_3v3',             // v1.186
     'bellfield_defend_fort',     // v1.187: hold the bulb fort (Michael: C, more Bellfield Court)
-    'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night
+    'bellfield_night_4v4',       // v1.188: Lamplight on Bellfield, the street at night; v1.402: a side match
     'bellfield_ctf',             // v1.189: Flags on Bellfield, capture the flag (D.15, Michael: A)
     'pool_1v1_christian',        // v1.317: the Northcliff pool, a 1v1 round the courts (D.55 step 7, Michael: A)
-    'pool_night_3v3',            // v1.318: Night Swim, the night game at the pool
+    'pool_night_3v3',            // v1.318: the night game at the pool (After Hours at the Pool since v1.409)
     'northcliff_defend_creek',   // v1.131
     'northcliff_night_4v4',      // v1.131: the zone capstone
   ],
@@ -147,10 +147,27 @@ const ZONE_LADDER = [
 function zoneLadderIndex(zoneKey) {
   return ZONE_LADDER.findIndex(z => z.key === zoneKey);
 }
-// The capstone (last) scenario id of a zone, or null if the zone has none.
+// v1.402 (D.57 step 4, Michael: all of docs/crew_ladder.md, 22 Oct): side matches. A zone's extra matches pay and count
+// toward the captains' and the rival's scores, but no longer gate the next match: a side match opens with the main match
+// before it, and the main match after it needs only that main match. So the long zones shorten with nothing deleted.
+const SIDE_MATCHES = new Set([
+  'winnmark_ffa', 'winnmark_two_in_the_yards', 'winnmark_whole_block', 'winnmark_last_stand',
+  'bunratty_night_lane',
+  'hollow_attack_north_fort_night', 'hollow_full_auto_mayhem', 'hollow_night_battle',
+  'bellfield_night_4v4',
+]);
+function isSideMatch(id) { return SIDE_MATCHES.has(id); }
+// The main match before a place in a zone's list (the one that opens it), or null at the zone's start
+function prevMainMatchId(ids, idx) {
+  for (let i = idx - 1; i >= 0; i--) if (!SIDE_MATCHES.has(ids[i])) return ids[i];
+  return null;
+}
+// The capstone (last main) scenario id of a zone, or null if the zone has none.
 function zoneCapstoneId(zoneKey) {
   const ids = PIN_SCENARIO_GROUPS[zoneKey];
-  return (ids && ids.length) ? ids[ids.length - 1] : null;
+  if (!ids || !ids.length) return null;
+  for (let i = ids.length - 1; i >= 0; i--) if (!SIDE_MATCHES.has(ids[i])) return ids[i];   // v1.402
+  return ids[ids.length - 1];
 }
 // Is a zone unlocked? Zone 0 always; zones 1+ need the prior zone's capstone done.
 function isZoneUnlocked(zoneKey) {
@@ -167,10 +184,34 @@ function isScenarioUnlocked(scenarioId) {
   if (!ctx) return true;                 // legacy single-pin scenarios: ungated
   // Already cleared it? Always replayable, regardless of chain state.
   if (Game.persist.completed[scenarioId]) return true;
+  if (Game.persist.ladderKept && Game.persist.ladderKept[scenarioId]) return true;   // v1.402: open before the reorder
   if (!isZoneUnlocked(ctx.group)) return false;
-  if (ctx.idx === 0) return true;        // first in the zone
-  const prevId = ctx.ids[ctx.idx - 1];
-  return !!Game.persist.completed[prevId];
+  const prevId = prevMainMatchId(ctx.ids, ctx.idx);   // v1.402: side matches don't gate
+  return !prevId || !!Game.persist.completed[prevId];
+}
+// v1.402: a save from before the reorder keeps every match it had open. Run once on load: each match the old order and
+// the old strict chain had opened but not yet won is kept open (`ladderKept`); wins stay wins, as `completed` is untouched.
+const LADDER_ORDER_BEFORE_V1402 = {
+  winnmark_court: ['winnmark_tutorial', 'winnmark_seth_house', 'winnmark_squad_basics', 'winnmark_seth_shotgun_duel', 'winnmark_ffa',
+    'winnmark_cul_de_sac', 'winnmark_sniper_overwatch', 'winnmark_team_2v2', 'winnmark_defend_treehouse', 'winnmark_defend_culdesac',
+    'winnmark_two_in_the_yards', 'winnmark_team_2v3', 'winnmark_whole_block', 'winnmark_team_3v3', 'winnmark_last_stand',
+    'winnmark_night_prowl', 'winnmark_night_team_2v2'],
+  hollow: ['hollow_skirmish_3v3', 'hollow_attack_north_fort', 'hollow_defend_south_fort', 'hollow_attack_north_fort_night',
+    'hollow_defend_south_fort_night', 'hollow_big_battle', 'hollow_night_battle', 'hollow_2v4_night', 'hollow_juggernaut', 'hollow_ffa',
+    'hollow_infection_night', 'hollow_full_auto_mayhem'],
+};
+const LADDER_VERSION = 1402;
+function ladderKeepOpened(persist) {
+  if (!persist || persist.ladderV >= LADDER_VERSION) return;
+  const done = persist.completed || {}, kept = Object.assign({}, persist.ladderKept || {});
+  const order = k => LADDER_ORDER_BEFORE_V1402[k] || PIN_SCENARIO_GROUPS[k] || [];
+  ZONE_LADDER.forEach((z, zi) => {
+    const prev = zi > 0 ? order(ZONE_LADDER[zi - 1].key) : null;
+    if (prev && !done[prev[prev.length - 1]]) return;            // the zone was locked
+    order(z.key).forEach((id, i, ids) => { if (!done[id] && (i === 0 || done[ids[i - 1]])) kept[id] = true; });
+  });
+  persist.ladderKept = kept;
+  persist.ladderV = LADDER_VERSION;
 }
 // v1.355 (D.75, the split): moved here from beside scenariosOpenNow, because a classic script cannot read a function
 // declared in a later file while it loads. The real unlock rule, kept apart from the tests' isScenarioUnlocked stand-in so "opened" always means opened

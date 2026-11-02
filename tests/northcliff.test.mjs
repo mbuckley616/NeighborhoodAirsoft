@@ -113,7 +113,14 @@ for (const id of ladder.ids.filter(i => i.startsWith('northcliff_'))) {
   // v1.131: Fernando's rifle holds the high yard by the bulb, (-15, -28), as the briefings say
   const fern = r.kids.find(k => k.n === 'Fernando');
   // v1.362 (D.28 step 5): in Bellfield After Dark Seth has Fernando's spot (SETH_ZONE_MATCHES), and Fernando may stand with you
-  if (fern && fern.t !== 'player') check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
+  // v1.393 (D.57 step 1): only where the match itself posts him (in Hold the Creek Fort he is a kid the street adds for your crew)
+  // (v1.401, D.57 step 3: in Bellfield After Dark, Mason's finale, Fernando is back in Mason's crew at another kid's spot)
+  const posted = await page.evaluate(id => {
+    const own = (SCENARIOS[id].enemySetup || []).find(es => es.charId === 'fernando' && es.team !== 'player');
+    const now = (crewSetup(id) || []).find(es => es.charId === 'fernando' && es.team !== 'player');
+    return !!own && !!now && now.anchor === own.anchor;
+  }, id);
+  if (fern && fern.t !== 'player' && posted) check(`${id}: Fernando holds the high yard and shoots from it`, Math.hypot(fern.at[0] + 15, fern.at[1] + 28) < 6 && fern.fired > 0, fern);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
@@ -166,7 +173,7 @@ const swim = await page.evaluate(() => {
     lives: sc.npcLives, first: hits[0] ?? null, lost };
 });
 console.log('  night swim', JSON.stringify(swim));
-check('Night Swim: a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'Night Swim' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
+check('After Hours at the Pool (v1.409; Night Swim before): a night match at the pool, the twins with you against three Bellfield kids, three lives each', swim.night && swim.name === 'After Hours at the Pool' && swim.ours === 2 && swim.theirs === 3 && swim.lives === 3, swim);
 check('standing at the start, nobody tags you in the first 10 s', swim.first === null || swim.first >= 10, swim);
 check('in 120 s both sides lose lives', swim.lost.player > 0 && swim.lost.enemy > 0, swim.lost);
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });

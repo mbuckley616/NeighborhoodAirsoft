@@ -11,7 +11,9 @@ await page.evaluate(() => { const hit = applyBBHit; window.applyBBHit = (bb, c) 
 await g.scenario('northcliff_twins_3v3');
 const staged = await page.evaluate(() => {
   Game.player._infected = true;
-  const a = Game.scenario.enemies.find(e => e.charId === 'andrew');
+  // v1.409: since v1.393 (D.57) your crew plays this match, so Andrew is there only with an older crew; the staging puts
+  // whichever kid of your side retreats on Andrew's spot
+  const a = Game.scenario.enemies.find(e => e.charId === 'andrew') || Game.scenario.enemies.find(e => e.team === 'player');
   a.pos.x = -6.4; a.pos.z = -0.95; a.state = 'retreating'; a.stateTime = 0; a._retreatStuck = 0; a._retreatBest = null;
   const real = collidesObstacles; let calls = 0;
   window.collidesObstacles = (x, z, r, ...rest) => {

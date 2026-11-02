@@ -25,9 +25,9 @@ check('every kid on both rosters is a real character, Garrett and Colin among th
 check('Garrett and Colin are built, Garrett taller', ro.looks.every(l => l.ok) && ro.looks[0].scale > ro.looks[1].scale, ro.looks);
 check('Garrett and Colin have their own lines in every situation (4 or more)', ro.pools.flat().every(n => n >= 4), ro.pools);
 const askAt = Object.fromEntries(ro.asks.map(a => [a.kid, a]));
-check('one ask each, from the kid himself, at his moment: Eric after Winnmark, Sean and Nick after Bunratty, Alex at Stoneglen, Diego at Bellfield',
+check('one ask each, from the kid himself, at his moment: Eric after Winnmark, Sean and Nick after You and Nick (v1.408, was after Bunratty), Alex at Stoneglen, Diego at Bellfield',
   ro.asks.length === 5 && ro.asks.every(a => a.from.toLowerCase() === a.kid) && askAt.eric.after === 'winnmark_night_team_2v2' &&
-  askAt.sean.after === 'bunratty_night_team_2v2' && askAt.nick.after === 'bunratty_night_team_2v2' &&
+  askAt.sean.after === 'bunratty_team_2v1' && askAt.nick.after === 'bunratty_team_2v1' &&
   askAt.alex.after === 'stoneglen_hold_treehouse' && askAt.diego.after === 'bellfield_ctf', ro.asks);
 check('the asks come in roster order through the summer', ro.asks.every((a, i) => i === 0 || a.day >= ro.asks[i - 1].day), ro.asks.map(a => a.day));
 check("Eric's \"sean from bunratty\" text is gone; Evan is Seth's old friend", !ro.oldText && /seths old friend evan/.test(ro.evan), ro.evan);
@@ -98,8 +98,8 @@ const all = await page.evaluate(() => {
   closeMirror();
   return { opened, crew: crewMembers(), extra, row };
 });
-check('the asks open at Sean and Nick (Bunratty\'s last), Alex (Stoneglen\'s hold), Diego (Bellfield\'s flags)',
-  all.opened.join() === 'sean@bunratty_night_team_2v2,nick@bunratty_night_team_2v2,alex@stoneglen_hold_treehouse,diego@bellfield_ctf', all.opened);
+check('the asks open at Sean and Nick (You and Nick, v1.408), Alex (Stoneglen\'s hold), Diego (Bellfield\'s flags)',
+  all.opened.join() === 'sean@bunratty_team_2v1,nick@bunratty_team_2v1,alex@stoneglen_hold_treehouse,diego@bellfield_ctf', all.opened);
 check('five in, in the order they joined; Seth, Garrett or anybody else can\'t join, even from a tampered save',
   all.crew.join() === 'eric,sean,nick,alex,diego' && !all.extra, all);
 check('the mirror: "In it · 5 of 5: Eric · Sean · Nick · Alex · Diego"', /In it · 5 of 5/.test(all.row) && /Eric · Sean · Nick · Alex · Diego/.test(all.row), all.row);
@@ -154,17 +154,17 @@ await page.waitForFunction(() => Game.mode === 'scenario', null, { timeout: 9000
 await winNow(); await g.spin(3);
 const c2 = await card();
 check('winning it again: no card', !c2.on, c2);
-// a loss brings none; Bunratty's last win brings Sean, then Nick
-await g.scenario('bunratty_night_team_2v2');
+// a loss brings none; the win of You and Nick brings Sean, then Nick (v1.408, D.57 step 4: was Bunratty's last)
+await g.scenario('bunratty_team_2v1');
 await g.spin(3);
 await page.evaluate(() => endScenario('lose')); await g.spin(3);
 const c3 = await card();
-check('a loss of Bunratty\'s last: no card', !c3.on, c3);
-await g.scenario('bunratty_night_team_2v2');
+check('a loss of You and Nick: no card', !c3.on, c3);
+await g.scenario('bunratty_team_2v1');
 await g.spin(3);
 await winNow(); await g.spin(3);
 const c4 = await card();
-check('Bunratty\'s last win: Sean first', c4.on && /^SEAN wants in/.test(c4.name) && /AK/.test(c4.name), c4);
+check('You and Nick won: Sean first', c4.on && /^SEAN wants in/.test(c4.name) && /AK/.test(c4.name), c4);
 await answer(false);
 const c5 = await card();
 check('NOT YET to Sean: Nick comes up next ("AND ANOTHER ONE!"), on 8 rules', c5.on && c5.head === 'AND ANOTHER ONE!' && /^NICK wants in/.test(c5.name) && c5.h === 208 && c5.btns.every(b => b.inside) && c5.textInside, c5);

@@ -85,7 +85,8 @@ const allies = k1.filter(k => k.team === 'player'), foes = k1.filter(k => k.team
 // v1.275 (D.28 step 3): the match is tuned for Eric, Sean and Nick in your crew, so with nobody in it the street fills
 // your side to their count: three allies, every one in the bandana
 check('Hollow 3v3: all three allies wear the orange crew bandana', allies.length === 3 && allies.every(k => k.crew && k.col === 0xe07a1e), allies);
-check('…and none of the other side does', foes.length >= 3 && foes.every(k => !k.crew), foes);
+// (v1.401, D.57 step 3: theirs wear their own crews' colours, never yours)
+check('…and none of the other side wears yours', foes.length >= 3 && foes.every(k => k.col !== 0xe07a1e), foes);
 const crouch = await page.evaluate(() => {
   const e = Game.scenario.enemies.find(k => k.team === 'player'); const h = e.mesh.hat;
   // v1.204 fix-up: stand him up first. Read from his pose mid-round (part crouched or leaning), the drop was 0.145-0.158
@@ -102,7 +103,7 @@ check('the match runs with the bandanas on (10 s)', run === 'scenario' || run ==
 await g.scenario('bunratty_vip');
 const k2 = await readKids();
 const vipOurs = k2.find(k => k.vip && k.team === 'player');
-check('Protect Ryan: our VIP wears his blue cap, not the bandana', vipOurs && vipOurs.vipCap && !vipOurs.crew, vipOurs);
+check('Cover Nick (v1.406, was Protect Ryan): our VIP wears his blue cap, not the bandana', vipOurs && vipOurs.vipCap && !vipOurs.crew, vipOurs);
 check('…the allies without the cap wear it', k2.filter(k => k.team === 'player' && !k.vip).every(k => k.crew), k2);
 
 // The tutorial: Seth coaches on your side and wears none; no crew name over him
@@ -116,7 +117,7 @@ await page.evaluate(() => { Game.persist.look.crewName = '  '; Game.persist.look
 const h4 = await briefHead('hollow_skirmish_3v3');
 await g.scenario('hollow_skirmish_3v3');
 const k4 = await readKids();
-check('no name: YOUR SIDE; no colour: no bandanas', h4 === 'YOUR SIDE' && k4.every(k => !k.crew), { h4, k4 });
+check('no name: YOUR SIDE; no colour: no bandanas on your side', h4 === 'YOUR SIDE' && k4.filter(k => k.team === 'player').every(k => !k.crew), { h4, k4 });   // (v1.401: theirs wear their crews')
 
 // Saved, and an old save has no crew
 const save = await page.evaluate(() => {
@@ -143,16 +144,19 @@ const cl = await page.evaluate(() => {
     if (!m) continue;
     out.lines++;
     const ours = W.indexOf(m[1]), theirs = m[3] ? W.indexOf(m[3]) : ours;
-    const named = [...b.allies, ...b.enemies].filter(c => !(SCENARIOS[id].enemySetup || []).some(es => es.charId === c.charId)).every(c => m[4].includes(c.name));
-    if (ours !== b.allies.length + 1 || theirs !== b.enemies.length || !named) out.wrong.push({ id, line: m[0], ours: b.allies.length + 1, theirs: b.enemies.length });
+    const named = [...b.allies.filter(a => !a.out), ...b.enemies].filter(c => !(SCENARIOS[id].enemySetup || []).some(es => es.charId === c.charId)).every(c => m[4].includes(c.name));
+    // (v1.400: a CLUTCH match's crew is out from the start, and the line counts only who plays)
+    const playing = b.allies.filter(a => !a.out).length;
+    if (ours !== playing + 1 || theirs !== b.enemies.length || !named) out.wrong.push({ id, line: m[0], ours: playing + 1, theirs: b.enemies.length });
   }
   Game.persist.crew = []; Game.persist.completed = {}; crewBench.clear();
   out.quiet = getScenarioBriefing('winnmark_tutorial').desc;
   return out;
 });
 console.log('   Sean Has Your Back:', JSON.stringify(cl.sean));
-check('Sean Has Your Back, first time through, says three a side and who is with you and with them',
-  /Today it’s three a side: \w+ is with you and \w+ is with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 2 && cl.sean.theirs.length === 3, cl.sean);
+// v1.408 (D.57 step 4): The Rematch (was Sean Has Your Back) is first played with Eric, Sean and Nick: four a side
+check('The Rematch, first time through, says four a side and who is with you and with them',
+  /Today it’s four a side: .+ with you and .+ with them\.$/.test(cl.sean.desc) && cl.sean.ours.length === 3 && cl.sean.theirs.length === 4, cl.sean);
 check(`every briefing the crew changes (${cl.lines}) counts the sides as built and names each kid not in the match as written`, cl.lines >= 10 && cl.wrong.length === 0, cl.wrong);
 check('a match the crew does not change gets no line', !/Today it’s/.test(cl.quiet), cl.quiet);
 

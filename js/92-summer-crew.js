@@ -165,25 +165,26 @@ const SUMMER_TEXTS = [
     text: "u been at seths all week. come home. 1v1 me on bunratty tmrw, nick gets winner. bring eric" },
   { id: 'askEric',    from: 'Eric',    after: 'winnmark_night_team_2v2', ask: 'eric',
     text: "sean texted me lol. im coming to bunratty either way. also. can i be in ur crew? for real" },
+  // v1.273: Bunratty done, your brother and your best friend ask. v1.408 (D.57 step 4, the plan's "Sean and Nick ask after
+  // You and Nick"): they ask after You and Nick, so the crew forms at home and holds Bunratty all zone
+  { id: 'askSean',    from: 'Sean',    after: 'bunratty_team_2v1', ask: 'sean',
+    text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
+  { id: 'askNick',    from: 'Nick',    after: 'bunratty_team_2v1', ask: 'nick',   // v1.408
+    text: "if seans in ur crew im in ur crew. right? im in right?" },
   { id: 'brothers',   from: 'Sean',    after: 'bunratty_brothers',
     text: "ryan and mitchell are SO mad. mitchell already wants a rematch at the cul de sac" },
   { id: 'infection',  from: 'Rebecca', after: 'bunratty_infection',
     text: "infection at the cul de sac is the best game ever invented and i will not hear otherwise" },
   // v1.363 (D.28 step 5, Michael: C): a text from Seth the night before each of his zone matches (SETH_ZONE_MATCHES)
   { id: 'sethBunratty', from: 'Seth',  after: 'bunratty_vip',
-    text: "heard ur playing night games on bunratty now. save me a spot. on the other team. ryan says i can have mitchells" },
+    text: "heard ur playing night games on bunratty now. save me a spot. on the other team. mitchell says i can be his plus one" },
   { id: 'hollow',     from: 'Eric',    after: 'bunratty_night_team_2v2',
     text: "everybody is going to the hollow this week. the woods past the river, forts at both ends. seth is bringing his whole crew. bring BBs" },
-  // v1.273: Bunratty done, your brother and your best friend ask
-  { id: 'askSean',    from: 'Sean',    after: 'bunratty_night_team_2v2', ask: 'sean',
-    text: "ok fine. ur crew is the real one. can i be in it? dont tell mom i said that" },
-  { id: 'askNick',    from: 'Nick',    after: 'bunratty_night_team_2v2', ask: 'nick',
-    text: "if seans in ur crew im in ur crew. right? im in right?" },
-  { id: 'sethHollow', from: 'Seth',    after: 'hollow_defend_south_fort_night',   // v1.363
+  { id: 'sethHollow', from: 'Seth',    after: 'hollow_infection_night',   // v1.363; v1.402: the night before the finale, now last
     text: "big game tmrw. whole neighborhood. im on red and i got the ump. dont cry when u lose" },
   { id: 'bigGame',    from: 'Seth',    after: 'hollow_big_battle',
     text: "the big game was close and u know it. my crew wants the north fort back" },
-  { id: 'lot',        from: 'Brooke',  after: 'hollow_full_auto_mayhem',
+  { id: 'lot',        from: 'Brooke',  after: 'hollow_big_battle',   // v1.402: the Hollow's finale opens the lot (was its last match)
     text: "marcus's mom does the big shop at riverside market saturday mornings. he'll be in the lot w his pistol lol" },
   { id: 'sethLot',    from: 'Seth',    after: 'lot_vip_night',   // v1.363
     text: "after close tmrw. the lot. i got an mp5 now. u wont hear me coming" },
@@ -364,13 +365,73 @@ function crewKidOwnGun(e) {
   for (const c of parts) gg.add(c);
   gg.userData.gunParts = parts;
 }
-const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean' };
+const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean',
+  winnmark_night_team_2v2: 'eric' };   // v1.407 (D.57 step 4): Seth Picks Teams, Eric beside you until he is in your crew
 const crewBench = new Set();
 function crewFielded() { return crewMembers().filter(id => !crewBench.has(id)); }
 function crewTeamMatch(id) {
   const sc = SCENARIOS[id];
   if (!sc || sc.tutorial || sc.ffa || sc.pickup || sc.net || id === 'pickup_game') return false;
+  if (sc.crewPosts) return true;   // v1.393 (D.57 step 1): a solo match your crew now plays (or a CLUTCH, out already)
   return (sc.enemySetup || []).some(es => es.team === 'player');
+}
+// v1.393 (D.57 step 1, Michael: "All of it", decisions "The crew-first ladder and Crew Captains", 22 Oct; the plan is
+// docs/crew_ladder.md): your crew plays every match unless the match says why not. Each ladder match has one of five
+// types, a chip on its map card and one line on its briefing: CREW, 1V1 CALLOUT, FREE-FOR-ALL, CLUTCH (your crew starts
+// tagged out on the sideline: `crewPosts` with the type here) and NO CREW YET (Winnmark, until a replay with your crew).
+// The night solo on Bunratty's lane says why outright (SNUCK OUT), and the two rides have their own lines. A solo match
+// with no reason takes the crew: it has `crewPosts`, the anchors on your side your crew holds.
+const MATCH_TYPE_CHIPS = { crew: 'CREW', callout: '1V1 CALLOUT', ffa: 'FREE-FOR-ALL', clutch: 'CLUTCH', nocrew: 'NO CREW YET', solo: 'SNUCK OUT' };
+const MATCH_TYPES = {
+  bunratty_brothers: 'callout',                  // 1 v 2: the brothers call you out
+  stoneglen_treehouse: 'callout',                // the twins' rule, one at a time on their course
+  bunratty_night_lane: 'solo',                   // you snuck out alone
+  bunratty_go_cart: 'ffa',                       // the whole street shoots at the cart
+  club_cart_ride: 'crew',                        // Eric drives
+  hollow_defend_south_fort_night: 'clutch',
+  store_defend_desk: 'clutch',
+};
+const MATCH_TYPE_LINES = {
+  stoneglen_treehouse: "The twins' rule: one at a time on their course. Your crew watches from the fence.",
+  bunratty_go_cart: "The whole street shoots at the cart. Crews don't count on the hill.",
+  club_cart_ride: "Eric's driving. You shoot.",
+};
+// The match's type ('crew' | 'callout' | 'ffa' | 'clutch' | 'nocrew' | 'solo'), or null (the tutorials, the Pickup Game)
+function matchType(id) {
+  const sc = SCENARIOS[id];
+  if (!sc || sc.tutorial || sc.pickup || sc.net || id === 'pickup_game') return null;
+  if (MATCH_TYPES[id]) return MATCH_TYPES[id];
+  if (sc.ffa || sc.winCondition === 'survive_untagged') return 'ffa';
+  const ctx = findScenarioListContext(id);
+  if (ctx && ctx.group === 'winnmark_court') return crewTeamMatch(id) && crewFielded().length ? 'crew' : 'nocrew';
+  if (crewTeamMatch(id)) return 'crew';
+  return 'callout';
+}
+// The briefing's line for it, naming who is in from the sides as built
+function matchTypeLine(id, setup) {
+  const type = matchType(id);
+  if (!type) return '';
+  if (MATCH_TYPE_LINES[id]) return MATCH_TYPE_LINES[id];
+  const crew = crewMembers();
+  const name = k => (CHARACTERS[k] && CHARACTERS[k].name) || k;
+  const list = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
+  if (type === 'crew') {
+    const ours = (setup || crewSetup(id) || []).filter(es => es.team === 'player' && !es.clutchOut);
+    const inCrew = ours.filter(es => crew.includes(es.charId)).map(es => name(es.charId));
+    if (inCrew.length) return `Your crew's in: ${list(inCrew)}.`;
+    const others = ours.filter(es => !es.vip).map(es => name(es.charId));
+    return others.length ? `No crew yet: ${list(others)} ${others.length > 1 ? 'play' : 'plays'} with you today.` : "It's just you today.";
+  }
+  // v1.401 (D.57 step 3): a captain's callout says whose
+  const ctx = findScenarioListContext(id), cap = ctx && ZONE_CAPTAIN_KID[ctx.group];
+  const capIn = type === 'callout' && cap && cap !== 'seth' && (setup || crewSetup(id) || []).some(es => es.charId === cap && es.team !== 'player');
+  if (capIn) return `${captainName(cap)} calls you out. ${crew.length ? 'Your crew watches from the curb.' : 'Just you and them.'}`;
+  if (type === 'callout') return crew.length ? 'A callout. Your crew watches from the curb.' : 'A callout. Just you and them.';
+  if (type === 'ffa') return "Everybody for themselves. Crews don't count today.";
+  if (type === 'clutch') return crewFielded().length ? "Your crew's already out. It's on you." : "It's on you.";
+  if (type === 'nocrew') return id === WINNMARK_FINALE ? "Seth picked his team, and it isn't you. Eric's with you." : "You're the new kid on Seth's street.";   // v1.407: Seth Picks Teams
+  if (type === 'solo') return crew.length ? "You snuck out alone. Your crew's asleep." : 'You snuck out alone.';
+  return '';
 }
 // The kids who play on this street with a gun of their own, in the order the matches list them
 // (v1.275: the kids who play against you there first, then the ones who stand with you)
@@ -403,7 +464,7 @@ function crewFinale(id) {
   const ctx = findScenarioListContext(id);
   return !!ctx && ctx.idx === ctx.ids.length - 1;
 }
-const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // Lights Out: Seth beside you, the last time
+const WINNMARK_FINALE = 'winnmark_night_team_2v2';   // v1.407: Seth Picks Teams, where Seth turns (was Seth beside you, the last time)
 // v1.362 (D.28 step 5, Michael: C on "Seth in every zone", control room, 27 Oct): Seth turns up once in each zone as
 // the rival, on a better gun with better aim each time, at his best in the Last Saturday. One match per zone, mostly its
 // finale; where he was not in it he takes one kid's place (his spot, not his role), so every count stays the same. At
@@ -466,19 +527,172 @@ function crewWiderPool(id) {
   }
   return [...seen].filter(k => !CREW_KID_GUNS[k]).map(charId => ({ charId, weapon: crewKidGun(charId) }));
 }
+// v1.400 (D.57 step 2, the plan's side consistency; Michael: B on "Who is in Marcus's crew", control room, 31 Oct): each
+// captain's crew. Seth's and Marcus's are cousins' crews and may stand together (B); Devon is Marcus's.
+const CAPTAIN_CREWS = {
+  seth:     SETH_CREW_ROSTER,
+  marcus:   ['marcus', 'jamie', 'devon'],
+  mitchell: ['mitchell', 'ryan', 'owen', 'joe', 'chris'],
+  mason:    ['mason', 'christian', 'fernando', 'haden', 'connor'],
+  jordan:   ['jordan', 'caleb', 'nathan', 'sophie', 'grant', 'malik'],
+};
+// The crew each zone plays against (the store's captain is Tyler, Seth's lieutenant: Seth's crew)
+const ZONE_CAPTAINS = { winnmark_court: 'seth', bunratty_court: 'mitchell', hollow: 'seth', market_lot: 'marcus', northcliff: 'mason',
+  high_school: 'jordan', country_club: 'seth', grocery_store: 'seth' };
+// A kid of Seth's crew the street can bring in only once you know he's with Seth (Evan "lives up in northcliff now",
+// Andrew goes with Seth after the twins' treehouse, Garrett and Colin after Bellfield's flags)
+const SETH_CREW_KNOWN = { evan: 'lot_night_4v4', andrew: 'stoneglen_hold_treehouse', garrett: 'bellfield_ctf', colin: 'bellfield_ctf' };
+function captainOf(kid) {
+  for (const c in CAPTAIN_CREWS) if (CAPTAIN_CREWS[c].includes(kid)) return c;
+  return null;
+}
+// May this kid play against you in this zone? Your crew and Rebecca never; Seth's crew anywhere (Seth is the rival who
+// turns up everywhere, and his crew with him); Marcus's where Seth or Marcus captains; Mitchell's, Mason's and Jordan's
+// only on their own captain's street
+function sideFoeOk(kid, zoneCap, crew) {
+  if (crew.includes(kid) || kid === 'rebecca') return false;
+  const c = captainOf(kid);
+  if (!c || c === 'seth') return true;
+  if (c === 'marcus') return zoneCap === 'seth' || zoneCap === 'marcus';
+  return c === zoneCap;
+}
+// May this kid stand with you? Never one of Seth's crew or his cousin's, nor a kid against his own captain; a kid of
+// another street's crew may make up your numbers (every kid in the game is in some crew)
+function sideAllyOk(kid, zoneCap) {
+  const c = captainOf(kid);
+  return !c || (c !== 'seth' && c !== 'marcus' && c !== zoneCap);
+}
+// The plan's side rule on a match's sides: a kid on the wrong side is swapped at his spot (his gun, role and place kept,
+// so every count stays the same) for one who may play there, the zone's own crew first; an ally with nobody to take his
+// place is dropped (as a benched kid's place stays empty). Free-for-alls and callouts keep their kids; so does Winnmark,
+// your tryouts on Seth's street (a turned replay's crossing is crewSides' own). Your VIP is the match's (step 4 renames
+// Protect Ryan as Cover Nick).
+function crewSideRule(id, setup) {
+  const ctx = findScenarioListContext(id), type = matchType(id);
+  if (!setup || !ctx || !type || type === 'ffa' || type === 'callout' || ctx.group === 'winnmark_court') return setup;
+  const zoneCap = ZONE_CAPTAINS[ctx.group], crew = crewMembers(), pos = crewLadderPos(id);
+  const known = k => !SETH_CREW_KNOWN[k] || pos > crewLadderPos(SETH_CREW_KNOWN[k]);
+  const bad = setup.filter(es => !es.vip && es.charId && (es.team === 'player' ? !sideAllyOk(es.charId, zoneCap) : !sideFoeOk(es.charId, zoneCap, crew)));
+  if (!bad.length) return setup;
+  const used = new Set(setup.map(es => es.charId));
+  // A kid of the zone's own crew on your side (the street making up your numbers) goes over to his captain's side, in
+  // place of a kid there from outside it (one the street added first), so the school's kids play for the school
+  const homeBound = bad.filter(es => es.team === 'player' && captainOf(es.charId) === zoneCap);
+  const swapIn = new Map();
+  for (const es of homeBound) {
+    const there = setup.filter(f => f.team !== 'player' && !f.vip && f.charId !== 'seth' && captainOf(f.charId) !== zoneCap && !swapIn.has(f))
+      .sort((a, b) => (b.crewFill ? 1 : 0) - (a.crewFill ? 1 : 0))[0];
+    if (there) { swapIn.set(there, es.charId); used.delete(there.charId); }
+  }
+  const order = [zoneCap, zoneCap === 'marcus' ? 'seth' : zoneCap === 'seth' ? 'marcus' : 'seth', 'marcus']
+    .filter((c, i, a) => a.indexOf(c) === i).flatMap(c => CAPTAIN_CREWS[c]);
+  const out = [];
+  for (const es of setup) {
+    if (swapIn.has(es)) { out.push(Object.assign({}, es, { charId: swapIn.get(es), sideSwap: es.charId })); continue; }
+    if (!bad.includes(es)) { out.push(es); continue; }
+    // an ally from another street's crew (never a captain), the streets in ladder order; nobody left, his place stays empty
+    const k = es.team === 'player'
+      ? ['mitchell', 'mason', 'jordan'].flatMap(c => CAPTAIN_CREWS[c].slice(1)).find(k => !used.has(k) && sideAllyOk(k, zoneCap))
+      : order.find(k => k !== 'seth' && !used.has(k) && known(k) && sideFoeOk(k, zoneCap, crew));
+    if (!k && es.team === 'player') continue;
+    if (!k) { out.push(es); continue; }   // nobody left who may play here: the match keeps its kid (the suite names any)
+    used.add(k);
+    out.push(Object.assign({}, es, { charId: k, sideSwap: es.charId }));
+  }
+  return out;
+}
+// v1.401 (D.57 step 3, the plan's Crew Captains): each captain's crew wears its own colour (a bandana, as yours does;
+// colours none of the mirror's six, so yours never matches theirs), has a heading and a score line on the briefing,
+// calls you out with its captain's name, and plays its finale whole, the captain in it. Beating a captain's finale pins
+// his crew's bandana over the Pickup board in your room. Tyler captains the store for Seth: Seth's crew and colour.
+const CAPTAIN_COLORS = { seth: 0xc0282a, marcus: 0x1f8a8a, mitchell: 0xe8e6dc, mason: 0x6e7468, jordan: 0xd0508a };
+const ZONE_CAPTAIN_KID = { winnmark_court: 'seth', bunratty_court: 'mitchell', hollow: 'seth', market_lot: 'marcus', northcliff: 'mason',
+  high_school: 'jordan', country_club: 'seth', grocery_store: 'tyler' };
+// Each captain's finale (the plan's: the Hollow's is the Big Game, the store's Graveyard Shift); any one of Seth's pins his
+const CAPTAIN_FINALES = { mitchell: ['bunratty_night_team_2v2'], seth: ['hollow_big_battle', 'club_night_4v4', 'last_saturday'],
+  marcus: ['lot_night_4v4'], mason: ['northcliff_night_4v4'], jordan: ['school_night_4v4'], tyler: ['store_night_4v4'] };
+const CAPTAIN_ORDER = ['mitchell', 'seth', 'marcus', 'mason', 'jordan', 'tyler'];
+const CAPTAIN_EDGE = 0.05, CAPTAIN_AIM_MAX = 0.8;   // a notch better than his crew, never past Seth's best (the Last Saturday)
+function captainCrewOf(cap) { return cap === 'tyler' ? 'seth' : cap; }
+function captainColorOf(kid) { const c = captainOf(kid); return c ? CAPTAIN_COLORS[c] : null; }
+function captainName(cap) { return (CHARACTERS[cap] && CHARACTERS[cap].name) || cap; }
+// The captain whose crew this match is against: its zone's, when his crew is on their side (null for Seth: RIVALS)
+function captainOfMatch(id) {
+  const ctx = findScenarioListContext(id), type = matchType(id);
+  if (!ctx || !type || type === 'ffa' || type === 'nocrew') return null;
+  const cap = ZONE_CAPTAIN_KID[ctx.group];
+  if (!cap || cap === 'seth') return null;
+  if (cap === 'tyler' && isRivalMatch(id)) return null;   // Seth there himself (the Last Saturday): his crew, RIVALS
+  const crew = CAPTAIN_CREWS[captainCrewOf(cap)];
+  return (sethSetup(id) || []).some(es => es.team !== 'player' && crew.includes(es.charId)) ? cap : null;
+}
+function captainMatchIds(cap) { return Object.keys(SCENARIOS).filter(id => captainOfMatch(id) === cap); }
+function captainScore(cap) {
+  const ids = captainMatchIds(cap);
+  return { beaten: ids.filter(id => Game.persist.completed[id]).length, total: ids.length };
+}
+function captainCrewName(cap) { return `${captainName(cap)}'s crew`; }
+function captainFinaleOf(id) { return CAPTAIN_ORDER.find(c => CAPTAIN_FINALES[c].includes(id)) || null; }
+function captainBandanaWon(cap) { return CAPTAIN_FINALES[cap].some(id => Game.persist.completed[id]); }
+function captainBandanasWon() { return CAPTAIN_ORDER.filter(captainBandanaWon); }
+// A captain's finale is his whole crew: anyone else on their side but Seth (his zone match) gives way to the captain's
+// kids while there are any, and the captain himself plays it
+function crewCaptainFinale(id, setup) {
+  const cap = captainFinaleOf(id);
+  if (!setup || !cap || cap === 'seth') return setup;
+  // (the cousins' crews stand together, Michael's B: Seth's at Marcus's finale, Marcus's at Tyler's)
+  const cousins = cap === 'marcus' || cap === 'tyler';
+  const crew = CAPTAIN_CREWS[captainCrewOf(cap)], ok = k => k === 'seth' || crew.includes(k) || (cousins && ['seth', 'marcus'].includes(captainOf(k)));
+  const out = setup.map(es => Object.assign({}, es)), used = new Set(out.map(es => es.charId));
+  const spare = () => crew.find(k => !used.has(k) && k !== 'seth');
+  for (const es of out) {
+    if (es.team === 'player' || es.vip || ok(es.charId)) continue;
+    const k = spare(); if (!k) break;
+    used.add(k); es.sideSwap = es.sideSwap || es.charId; es.charId = k;
+  }
+  if (!used.has(cap)) {
+    const es = [...out].reverse().find(es => es.team !== 'player' && !es.vip && es.charId !== 'seth');
+    if (es) { es.sideSwap = es.sideSwap || es.charId; es.charId = cap; }
+  }
+  return out;
+}
+// The captain a notch better than his crew in his own zone's matches (his aim), never past Seth's best
+function crewCaptainEdge(id, setup) {
+  const ctx = findScenarioListContext(id), cap = ctx && ZONE_CAPTAIN_KID[ctx.group];
+  if (!setup || !cap || cap === 'seth' || !setup.some(es => es.charId === cap && es.team !== 'player')) return setup;
+  return setup.map(es => {
+    if (es.charId !== cap || es.team === 'player' || (es.statsOverride && es.statsOverride.accuracy != null)) return es;
+    const aim = Math.min(CAPTAIN_AIM_MAX, ((CHARACTERS[cap] || {}).accuracy || 0.5) + CAPTAIN_EDGE);
+    return Object.assign({}, es, { statsOverride: Object.assign({}, es.statsOverride || {}, { accuracy: +aim.toFixed(2) }), captain: true });
+  });
+}
 // The match's sides with your crew in it: the scenario's own enemySetup when nothing changes
-function crewSetup(id) {
+// (v1.400: and the plan's side rule; v1.401: a captain's finale whole, the captain a notch better)
+function crewSetup(id) { return crewCaptainEdge(id, crewCaptainFinale(id, crewSideRule(id, crewSetupSides(id)))); }
+function crewSetupSides(id) {
   const sc = SCENARIOS[id];
   if (!sc || !crewTeamMatch(id)) return sethSetup(id);   // v1.362: Seth's zone match
   const crew = crewMembers(), first = crewFirstTime(id), turned = crewSethTurned(id);
   if (!crew.length && !first.length && !turned) return sethSetup(id);
   const allies = sc.enemySetup.filter(es => es.team === 'player'), foes = sc.enemySetup.length - allies.length;
+  // v1.393 (D.57 step 1): a CLUTCH match keeps its own sides; your crew is there, out already, and nobody fills a place
+  if (MATCH_TYPES[id] === 'clutch') return crewSides(id, crew, crewFielded(), 0, foes, false);
   // v1.275: the first-time sides fix the match; then your crew as it is now plays it
   const base = crewSides(id, first, first, allies.length, null, false);
   const ours1 = base.filter(es => es.team === 'player').length + 1;
-  const theirs = id === SUMMER_FINALE ? ours1 + 2 : crewFinale(id) && id !== WINNMARK_FINALE ? ours1 + 1 : foes + ours1 - (allies.length + 1);
-  return crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+  // v1.393: a solo match your crew now plays keeps its own kids, and the street makes them at least as many as you
+  // (their side growing by your whole first-time crew would put eight kids in the Hollow's forts)
+  // v1.406 (D.57 step 4): a captain's finale that is not his zone's last (the store's Graveyard Shift) is at plus one too
+  const theirs = id === SUMMER_FINALE ? ours1 + 2 : (crewFinale(id) || captainFinaleOf(id)) && id !== WINNMARK_FINALE ? ours1 + 1
+    : sc.crewPosts && !allies.length ? Math.max(foes, ours1) : foes + ours1 - (allies.length + 1);
+  const out = crewSides(id, crew, crewFielded(), ours1 - 1, Math.max(1, theirs), turned);
+  if (!DOWN_TWO.has(id)) return out;
+  // v1.406: Down Two is always two short, at any crew size: their side is fitted to yours as it takes the field
+  const oursNow = out.filter(es => es.team === 'player').length + 1;
+  return oursNow + 2 === out.length - oursNow + 1 ? out : crewSides(id, crew, crewFielded(), ours1 - 1, oursNow + 2, turned);
 }
+// v1.406 (D.57 step 4, the plan's "Down Two" and "Down Two in the Dark"): their side is always two more than yours
+const DOWN_TWO = new Set(['bunratty_team_2v4', 'hollow_2v4_night']);
 // v1.274's sides, with your side filled to `alliesN` and (v1.275) their side fitted to `foeN` when it is given
 function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const sc = Object.assign({}, SCENARIOS[id], { enemySetup: sethSetup(id) });   // v1.362: Seth's zone match
@@ -489,6 +703,9 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   const allies = setup.filter(es => es.team === 'player'), foes = setup.filter(es => es.team !== 'player');
   const keep = es => es.vip || es.charId === 'seth' || (es.charId === named && !crew.includes(named));
   const kept = allies.filter(keep), slots = allies.filter(es => !keep(es));
+  // v1.406 (D.57 step 4): a crew kid who is your VIP (Cover Nick, the lot's Night Shift) plays in his cap, not twice
+  const keptCrew = kept.filter(es => crew.includes(es.charId)).map(es => es.charId);
+  if (keptCrew.length) fielded = fielded.filter(k => !keptCrew.includes(k));
   // Seth's crew on your side crosses over to him; the rest of the match's own allies wait to fill places
   const crossing = sethFoe ? slots.filter(es => SETH_CREW_ROSTER.includes(es.charId)) : [];
   const own = slots.filter(es => !crew.includes(es.charId) && !crossing.includes(es));
@@ -496,7 +713,13 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
   // v1.314 (critic, 22 Oct): with Seth turned and no other ally, slots and kept are empty, and a kid put in a spare place
   // got no anchor, so the scene dropped him (Lights Out replayed played 1 v 2): the place Seth left is the spare one then
   const left0 = turned ? sc.enemySetup.find(es => es.charId === 'seth' && es.team === 'player') : null;
-  const spare = () => (slots[0] || kept[0] || !left0) ? strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives'])   // a place past the match's own (v1.275: not its flag run or lives)
+  // v1.393 (D.57 step 1): a solo match your crew plays has no place of its own on your side: its `crewPosts` are the
+  // places, in turn; in a CLUTCH match they are the sideline, where each kid stands out from the start
+  let postN = 0;
+  const clutch = MATCH_TYPES[id] === 'clutch';
+  const spare = () => sc.crewPosts && !slots.length && !kept.length && !left0
+    ? Object.assign({ anchor: sc.crewPosts[postN++ % sc.crewPosts.length] }, clutch ? { role: 'defender', clutchOut: true } : {})
+    : (slots[0] || kept[0] || !left0) ? strip(slots[0] || kept[0], ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives'])   // a place past the match's own (v1.275: not its flag run or lives)
     : strip(left0, ['vip', 'role', 'spawnAt', 'perch', 'ctf', 'lives', 'behavior', 'statsOverride', 'team']);
   // v1.275: a kid of the match's own who is not playing (your crew took his place) is free for the street to use
   const taken = new Set([...kept, ...foes, ...crossing].map(es => es.charId).concat(crew, 'seth'));
@@ -523,7 +746,7 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
     const gs = crewGearStats(kid); if (gs) es.statsOverride = Object.assign({}, es.statsOverride || {}, gs);   // v1.337: his eyes and feet
     out.push(es);
   }
-  let left = alliesN - kept.length - crew.length;   // a benched kid's place stays empty
+  let left = alliesN - kept.length - crew.filter(k => !keptCrew.includes(k)).length;   // a benched kid's place stays empty (v1.406: a VIP of your crew counted once)
   for (const es of own) { if (left <= 0) break; out.push(Object.assign({}, es)); taken.add(es.charId); left--; }
   // Their side: a crew kid there is swapped for a kid from the street at his spot; Seth's crew crosses over
   const them = [];
@@ -549,7 +772,10 @@ function crewSides(id, crew, fielded, alliesN, foeN, turned) {
       const k = fromStreet(sethFoe); if (!k) break;
       const spot = (spots.length ? spots : foes)[n++ % (spots.length || foes.length)];
       // (a spot's own start is kept: Lamplight's yard starts have no line to your entry, v1.178)
-      const kid = Object.assign(strip(spot, ['role', 'perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives']), { charId: k.charId, weapon: k.weapon });
+      // v1.393: in a solo match your crew now plays, a kid the street adds to a hold's attackers attacks with them (made a
+      // skirmisher, he waited at the huddle all of Hold the Portables, 120 s)
+      const keepRole = sc.crewPosts && spot.role === 'attacker';
+      const kid = Object.assign(strip(spot, (keepRole ? [] : ['role']).concat(['perch', 'vip', 'behavior', 'statsOverride', 'ctf', 'lives'])), { charId: k.charId, weapon: k.weapon });
       if (sc.ctf) kid.ctf = 'push';   // the flags keep a thin defence (Michael: C, v1.191): only their own keeper keeps it
       kid.crewFill = true;   // v1.278: a kid the crew's numbers added comes looking when he has hidden too long (updateKidBoredom)
       them.push(kid);

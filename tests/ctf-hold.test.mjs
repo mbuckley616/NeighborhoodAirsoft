@@ -78,11 +78,13 @@ const t4 = await page.evaluate(() => {
 check('let go, the trigger fires', t4 === 1, t4);
 
 // --- a kid on each side
-for (const name of ['Mason', 'Evan']) {
+// (v1.400, D.57 step 2: the kid on yours is the match's first ally; Evan as written, Owen when the side rule takes
+// Seth's Evan off your side)
+for (const name of ['Mason', null]) {
   await g.scenario(ID);
   const r = await page.evaluate(async (name) => {
     const P = Game.player; P.invuln = true; P._graceT = 1e9;
-    const k = Game.scenario.enemies.find(e => e.name === name);
+    const k = Game.scenario.enemies.find(e => name ? e.name === name : e.team === 'player');
     for (let i = 0; i < 300; i++) stepGame(1 / 60);   // into the round
     const home = k._spawnPos || k._deployAnchor;
     eliminateEnemy(k);
@@ -105,8 +107,8 @@ for (const name of ['Mason', 'Evan']) {
       shotsHeld, outAtHome, flagHeld, team: k.team || 'enemy' };
   }, name);
   console.log('  ', name, JSON.stringify(r));
-  check(`${name} (${r.team}), tagged, walks back and waits 10 s at his base before he plays again`, r.arrived != null && r.wait != null && r.wait >= 10 && r.wait < 11.2, r);
-  check(`${name} waits out: no shot, no flag, nothing to tag`, r.shotsHeld === 0 && !r.flagHeld && r.outAtHome, r);
+  check(`${name || "Your side's kid"} (${r.team}), tagged, walks back and waits 10 s at his base before he plays again`, r.arrived != null && r.wait != null && r.wait >= 10 && r.wait < 11.2, r);
+  check(`${name || "He"} waits out: no shot, no flag, nothing to tag`, r.shotsHeld === 0 && !r.flagHeld && r.outAtHome, r);
 }
 
 // --- a team match keeps its old respawn (no hold)

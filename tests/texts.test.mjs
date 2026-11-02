@@ -32,15 +32,17 @@ const prog = await page.evaluate(() => {
     Game.persist.completed[id] = true;
     const t = SUMMER_TEXTS.find(t => t.after === id);
     if (t) out.push({ id: t.id, after: id, day: summerDayAfter(id), calendar: summerDayIndex() });
-    if (id === 'hollow_big_battle') break ladder;   // stop partway through the Hollow
+    if (id === 'hollow_infection_night') break ladder;   // stop partway through the Hollow (v1.402: the night before the Big Game, its finale now)
   }
   return { out, n: summerTexts().length, unread: summerUnreadCount(), order: summerTexts().map(t => t.id) };
 });
-check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 11 && prog.out.every(o => o.day === o.calendar), prog.out);
+check('each text is dated on the day the calendar shows once its match is won', prog.out.length === 11 &&   // v1.408: + Sean's ask after You and Nick
+  prog.out.every(o => o.day === o.calendar), prog.out);
 // the Hollow's chain stops at the big game; ladder order puts the big battle after the fort matches
 // v1.273: thirteen, with Eric's, Sean's and Nick's asks to join your crew; v1.363: fifteen, with Seth's before Bunratty's finale and the big game
-check('fifteen texts by the Hollow\'s big game, all unread, newest first', prog.n === 15 && prog.unread === 15 &&
-  prog.order[0] === 'bigGame' && prog.order[prog.order.length - 1] === 'start', prog);
+// v1.402 (D.57 step 4): the Big Game is the Hollow's finale now, so the night before it is fourteen, Seth's "big game tmrw" newest
+check('fourteen texts the night before the Hollow\'s big game, all unread, newest first', prog.n === 14 && prog.unread === 14 &&
+  prog.order[0] === 'sethHollow' && prog.order[prog.order.length - 1] === 'start', prog);
 
 // Home: the phone shows 10 new; walk to it, E opens them, newest first, and reads them all
 await page.evaluate(() => enterBedroom());
@@ -50,7 +52,7 @@ await page.evaluate(() => { const it = Game.interactables.find(i => i.type === '
 await g.spin(3);
 const near = await page.evaluate(() => ({ focus: Game.focusedInteractable && Game.focusedInteractable.type,
   prompt: document.getElementById('interactPrompt').textContent }));
-check('beside the nightstand, the prompt is "Check your phone (15 new)"', near.focus === 'phone' && /Check your phone \(15 new\)/.test(near.prompt), near);
+check('beside the nightstand, the prompt is "Check your phone (14 new)"', near.focus === 'phone' && /Check your phone \(14 new\)/.test(near.prompt), near);
 await g.shot('texts-phone');
 await page.keyboard.press('KeyE');
 const open = await page.evaluate(() => ({
@@ -61,9 +63,9 @@ const open = await page.evaluate(() => ({
   it: (() => { const it = Game.interactables.find(i => i.type === 'phone'); return { prompt: it.prompt, led: it._led.visible, chip: it._labelEl.textContent }; })(),
 }));
 check('E opens "Texts" over the bedroom', open.mode === 'modal' && open.title === 'Texts', open.mode);
-check('fifteen messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
-  open.msgs.length === 15 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[14].id === 'start' && open.msgs[14].date === 'Sun 1 Jun', open.msgs);
-check('opening them reads them all: none unread, fifteen kept in the save', open.unread === 0 && open.stored === 15, open);
+check('fourteen messages, all marked NEW, newest first: Seth on the Hollow\'s big game first, Eric\'s first one last',
+  open.msgs.length === 14 && open.msgs.every(m => m.isNew) && open.msgs[0].from === 'SETH' && open.msgs[13].id === 'start' && open.msgs[13].date === 'Sun 1 Jun', open.msgs);
+check('opening them reads them all: none unread, fourteen kept in the save', open.unread === 0 && open.stored === 14, open);
 check('the phone.s light goes off and its prompt and chip say "Phone" again', open.it.prompt === 'Check your phone' && !open.it.led && /Phone$/.test(open.it.chip.trim()), open.it);
 await g.shot('texts-open');
 await page.evaluate(() => document.getElementById('modalCloseBtn').click());
@@ -78,7 +80,7 @@ const re = await page.evaluate(() => {
   return { ok: r.ok, before, after: summerUnreadCount(), newest: summerTexts()[0].id };
 });
 check('a save and load keeps them read', re.ok && re.before === 0, re);
-check('finishing the Hollow brings Brooke\'s text about the lot, the only new one', re.after === 1 && re.newest === 'lot', re);
+check('finishing the Hollow with the Big Game brings Seth\'s on it and Brooke\'s about the lot, the two new ones (v1.402)', re.after === 2 && re.newest === 'lot', re);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

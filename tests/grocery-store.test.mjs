@@ -119,7 +119,7 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
     }
     spawnEnemyBB = o; applyBBHit = orig;
     return { team, secs: Math.round((f - 1) / 60), shots, wiped: team ? wiped() : null, lostEnemy: livesLost('enemy'), lostAlly: livesLost('player'),
-      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, lost: k.maxLives - k.lives, front: st[i].front, back: st[i].back, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, out: !npcInFight(k) })) };
+      kids: kids.map((k, i) => ({ n: k.character?.name, t: k.team, walked: +st[i].path.toFixed(0), fired: fired[i], wedged: st[i].longest, lost: k.maxLives - k.lives, front: st[i].front, back: st[i].back, onTop: st[i].onTop, nearest: +st[i].minD.toFixed(1), opp: +st[i].oppD.toFixed(1), at: [+k.pos.x.toFixed(1), +k.pos.z.toFixed(1)], state: k.state, out: !npcInFight(k), clutch: !!k.clutchOut })) };   // v1.393 (D.57): a CLUTCH crew kid is out from the start
   });
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
@@ -130,7 +130,7 @@ for (const id of ladder.ids.filter(id => id !== 'last_saturday')) {   // v1.205:
   // on PR #95), our side reaches the stockroom more often, and Devon, holding its centre doorway, was tagged there with
   // Diego beside him before his first peek (1 round in 16 here, under four shards at once; he was out by 60 s in all 8
   // rounds sampled, twice with no shot).
-  check(`${id}: every kid moves or fires (or was tagged at his post, or no opponent came within 30 m)`, r.kids.every(k => k.walked > 5 || k.fired > 0 || k.lost > 0 || k.opp > 30), r.kids);
+  check(`${id}: every kid moves or fires (or was tagged at his post, or no opponent came within 30 m)`, r.kids.every(k => k.walked > 5 || k.fired > 0 || k.lost > 0 || k.opp > 30 || k.clutch), r.kids);
   check(`${id}: no kid ever stands on a shelf`, r.kids.every(k => k.onTop === 0), r.kids);
   if (r.team) {
     // v1.270 (producer, 16 Oct, CI on PR #83): or our side took the fight into the stockroom and they were tagged there.
