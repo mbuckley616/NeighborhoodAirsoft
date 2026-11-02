@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after gun batch 6 (builder, 2026-11-02)**
+  Batch 6 is done: the Magnum, the KSG, the Lever Gun, the M60, the Uzi and the Pump Sniper (v1.410-v1.416) bring the
+  shop to 40 guns, the middle of your 30-50 (D.63). The play lane again has no ready item: every other open play item
+  is a Fable card, an open design, or waits on your look. What should it take next?
+  - A) **More homemade parts** *(recommended)*: a second wave of workbench parts in the D.14 tone (taped-on scopes,
+    a soda-bottle silencer look, a bungee sling, a longer mag taped up, a sock-padded stock), one or two a version,
+    each fitting the newer guns too. Forty guns now share the four under-barrel parts of v1.169.
+  - B) **Gun batch 7, to 46**: six more, one a version, in the same tone (you name the kinds, or the builder picks).
+  - C) **Rest the play lane** until a card lands, then take what its playtest turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. D.14 asked for "far more varied" customization as well as guns, and with forty guns the parts are
+  now the thinner side; guns and parts sit outside every card's areas.
+
 ## Answered
 
 - **Two matches called Night Swim (Fable, card fable/d57-crew-ladder, 2026-10-31)**

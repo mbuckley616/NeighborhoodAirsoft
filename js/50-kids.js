@@ -104,6 +104,7 @@ function gunForegripZ(weapon) {
     case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'm14':     return 0.22;   // v1.404: its long walnut forend
     case 'lever':   return 0.20;   // v1.412: its walnut forend
+    case 'pumpsniper': return 0.22;   // v1.416: its pump
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
@@ -191,6 +192,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.045, 0.14, dark, 0, 0.07, 0.10);      // scope tube up top
       box(0.05, 0.10, 0.14, wood, 0, -0.02, -0.06);      // bolt-gun wood stock
       grip(wood);
+      break;
+    }
+    case 'pumpsniper': {   // v1.416 (D.63): the sniper's long barrel and black stock, the green pump under the barrel, no scope
+      box(0.04, 0.05, 0.56, black, 0, 0, 0.26);          // the long barrel
+      box(0.05, 0.06, 0.12, new THREE.MeshStandardMaterial({ color: 0x4a5a32, roughness: 0.8 }), 0, -0.03, 0.22);   // the green pump
+      box(0.05, 0.10, 0.16, dark, 0, -0.02, -0.06);      // the black plastic stock
+      box(0.03, 0.06, 0.05, dark, 0, -0.07, 0.06);       // the mag
+      grip(dark);
       break;
     }
     case 'm14': {   // v1.404 (D.63): a long barrel over a full walnut stock, a straight box mag, no scope
