@@ -48,8 +48,12 @@ for (let r = 0; r < 8; r++) {
       for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
         const foes = Game.scenario.enemies.filter(e => e.team !== 'player' && e.health > 0);
         const near = foes.sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z))[0];
-        if (near) { P.yaw = Math.atan2(-(near.pos.x - P.pos.x), -(near.pos.z - P.pos.z)); P.pitch = 0; }
-        Game.keys.KeyW = !!near && Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4;
+        // v1.420 (D.51, Northcliff at real scale): the street bends north at the west corner and the uphill yards are
+        // fenced, so you walk down the street to the bend (-28, -4) before you go straight at the nearest kid
+        const bend = P.pos.x > -24 && near && near.pos.x < -20;
+        const tx = bend ? -28 : near && near.pos.x, tz = bend ? -4 : near && near.pos.z;
+        if (near) { P.yaw = Math.atan2(-(tx - P.pos.x), -(tz - P.pos.z)); P.pitch = 0; }
+        Game.keys.KeyW = !!near && (bend || Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4);
         // v1.290 (D.48): tagged, you walk yourself home before you go at them again
         if (P._goingHome) { const st = Game.scenario.playerStart.pos; P.yaw = Math.atan2(-(st.x - P.pos.x), -(st.z - P.pos.z)); Game.keys.KeyW = true; }
         stepGame(1 / 60);

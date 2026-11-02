@@ -61,8 +61,9 @@ for (const id of ['northcliff_1v1_evan', 'northcliff_twins_3v3', 'northcliff_def
     P.pos.copy(save[0]); P.yaw = save[1];
     const hit = applyBBHit; applyBBHit = (bb, c) => c === Game.player ? undefined : hit(bb, c);
     let d = null, t = 0; const o = spawnEnemyBB;
-    const foes = e => [...(e.team === 'player' ? [] : [Game.player.pos]), ...Game.scenario.enemies.filter(k => k.team !== e.team && k.health > 0).map(k => k.pos)];
-    spawnEnemyBB = (e, tg) => { if (d == null && !inOpeningHold()) d = Math.min(...foes(e).map(p => Math.hypot(e.pos.x - p.x, e.pos.z - p.z))); return o(e, tg); };
+    // the range of the shot itself, shooter to the point he aims at (the nearest foe can stand 1 m away behind a corner
+    // while he fires at another 15 m off)
+    spawnEnemyBB = (e, tg) => { if (d == null && !inOpeningHold() && tg) d = Math.hypot(e.pos.x - tg.x, e.pos.z - tg.z); return o(e, tg); };
     for (let f = 0; f < 60 * 60 && d == null && Game.mode === 'scenario'; f++) { stepGame(1 / 60); t = f / 60; }
     spawnEnemyBB = o; applyBBHit = hit;
     return { seen, floating, worst, d: d && +d.toFixed(1), t: +t.toFixed(1) };
