@@ -3,6 +3,8 @@
 //   Taped-On Toy Scope (v1.418) — a sight: zooms under half the 4× Scope through a small lens with a marker cross;
 //                                 nothing for hip shots; $14.
 //   Bungee Sling (v1.419)       — under-barrel: aiming in a third quicker; a wider cone on the move; $10.
+//   MUZZLE slot (v1.420, Michael: A, two new slots) on every long gun; the Cardboard Barrel moves there, and an old save's
+//   moves with it. Soda-Bottle Silencer (v1.420) — muzzle: your shots 0.4 as loud to you, BBs 6 % slower; $9.
 // Checked: the shop's Mods tab, the workbench on old and new guns, the mesh on the rail, and a match aimed through it.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -181,6 +183,113 @@ console.log('   bungee in a match:', JSON.stringify(B2));
 const { bare: BB, bungee_sling: BS } = B2;
 check('Bungee Sling: on the gun in hand; aiming in takes a fifth less time or better', BS.mesh.length === 1 && BS.mesh[0] === 'bungee_sling' && BB.mesh.length === 0 && BS.adsIn <= BB.adsIn * 0.8, B2);
 check('Bungee Sling: the walking cone is a fifth wider or more; standing still, no change', BS.walk > BB.walk * 1.2 && Math.abs(BS.still / BB.still - 1) < 0.12, B2);
+
+// --- v1.420: the MUZZLE slot and the Soda-Bottle Silencer
+const mz = await page.evaluate(() => {
+  Game.persist.cash = 1000; Game.persist.owned.p90 = true; openShop();
+  [...document.querySelectorAll('#shopScreen .cat-tab')].find(t => t.textContent === 'Mods').click();
+  const rowOf = (name) => [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent.startsWith(name));
+  const out = {};
+  for (const [id, name] of [['soda_silencer', 'Soda-Bottle Silencer'], ['cardboard_barrel', 'Cardboard Barrel']]) {
+    const row = rowOf(name);
+    const cash0 = Game.persist.cash; row && row.querySelector('.shop-item-buy').click();
+    out[id] = { tag: row && row.querySelector('.shop-slot-tag').textContent, pic: !!(row && row.querySelector('img')), paid: cash0 - Game.persist.cash };
+  }
+  closeShop();
+  // the workbench: a Muzzle row on the AR and the P90, none on the pistol or the Uzi; it offers the two muzzle parts only
+  openWorkbench();
+  const rows = (gt) => { workbenchSelectGun(gt); return [...document.querySelectorAll('#wbSlotList .wb-slot-label')].map(e => e.textContent); };
+  out.rows = { pistol: rows('pistol'), uzi: rows('uzi'), p90: rows('p90'), ar: rows('ar') };
+  const muzzleRow = () => [...document.querySelectorAll('#wbSlotList .wb-slot')].find(r => r.querySelector('.wb-slot-label').textContent === 'Muzzle');
+  muzzleRow().click();
+  out.offered = [...document.querySelectorAll('#wbLockerList .wb-locker-item.compat')].map(e => e.textContent);
+  const it = [...document.querySelectorAll('#wbLockerList .wb-locker-item.compat')].find(e => e.textContent.includes('Soda-Bottle Silencer'));
+  if (it) it.click();
+  out.mounted = muzzleRow().querySelector('.wb-slot-val').textContent;
+  updateWorkbench(0);   // the floating labels are placed each frame
+  out.label = [...document.querySelectorAll('#wbVpLabels .wb-vp-label')].map(e => e.textContent);
+  out.meshShown = WB.gunGroup.userData.accessories.muzzleParts.meshes.soda_silencer.visible;
+  closeWorkbench();
+  const sil = getUnmountedInstances('cardboard_barrel')[0];
+  out.cardboardUnder = mountAccessory('ar', sil.id, 'under', -1).ok;
+  out.onPistol = mountAccessory('pistol', sil.id, 'muzzle', -1).ok;
+  const fg = makeAccessoryInstance('foregrip');
+  out.fgMuzzle = mountAccessory('ar', fg.id, 'muzzle', -1).ok;
+  out.fgUnder = mountAccessory('ar', fg.id, 'under', -1).ok;   // an under part and a muzzle part at once
+  out.both = getMountedAccessories('ar').filter(a => a.slot === 'under' || a.slot === 'muzzle').map(a => a.type);
+  // on every long gun: the bottle starts at the muzzle and runs on ahead of it, on the bore line
+  out.geo = [];
+  for (const gt of ALL_GUN_TYPES) {
+    const cap = getGunAccessoryCap(gt);
+    const m = buildWorkbenchGun(gt);
+    const mp = m.userData.accessories.muzzleParts;
+    if (!cap.muzzle) { out.geo.push({ gt, none: !mp }); continue; }
+    m.updateWorldMatrix(true, true);
+    const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
+    mp.meshes.soda_silencer.visible = true;
+    const b = new THREE.Box3().setFromObject(mp.meshes.soda_silencer).applyMatrix4(inv);
+    out.geo.push({ gt, back: +(b.max.z - mp.frontZ).toFixed(3), ahead: +(mp.frontZ - b.min.z).toFixed(3), x: +((b.max.x + b.min.x) / 2).toFixed(4), dy: +((b.max.y + b.min.y) / 2 - mp.frontY).toFixed(4) });
+  }
+  return out;
+});
+for (const r of mz.geo) console.log('  ', JSON.stringify(r));
+delete mz.geoLog; console.log('   muzzle:', JSON.stringify(Object.assign({}, mz, { geo: undefined })));
+check('Soda-Bottle Silencer: in the Mods tab as MUZZLE with its picture, $9; the Cardboard Barrel is a MUZZLE part now',
+  mz.soda_silencer.tag === 'MUZZLE' && mz.soda_silencer.pic && mz.soda_silencer.paid === 9 && mz.cardboard_barrel.tag === 'MUZZLE', mz);
+check('the workbench: a Muzzle row on the AR and the P90, none on the pistol or the Uzi; it offers the two muzzle parts only',
+  mz.rows.ar.includes('Muzzle') && mz.rows.p90.includes('Muzzle') && !mz.rows.pistol.includes('Muzzle') && !mz.rows.uzi.includes('Muzzle') &&
+  mz.offered.length === 2 && mz.offered.every(t => /MUZZLE/.test(t)), mz);
+check('the workbench: a click puts the silencer on the AR\'s muzzle, shown on the gun, with its label', mz.mounted === 'Soda-Bottle Silencer' && mz.meshShown && mz.label.includes('Muzzle: Soda-Bottle Silencer'), mz);
+check('no muzzle part under the barrel or on a pistol, no under part on the muzzle; a foregrip and the silencer on the AR at once',
+  !mz.cardboardUnder && !mz.onPistol && !mz.fgMuzzle && mz.fgUnder && mz.both.includes('foregrip') && mz.both.includes('soda_silencer'), mz);
+const mzLong = mz.geo.filter(r => !r.none);
+check('every long gun has the muzzle slot (the 24 with an under-barrel slot, the P90, the Vector, the AUG, the Thompson and the Tick-Tock: 29), the 11 others none',
+  mzLong.length === 29 && mz.geo.filter(r => r.none).length === 11, mz.geo.map(r => r.gt + (r.none ? '-' : '+')));
+check('on every one the bottle\'s neck is taped over the muzzle (back 1-3 cm over it) and it runs 15-20 cm ahead, on the bore line',
+  mzLong.every(r => r.back >= 0.01 && r.back <= 0.03 && r.ahead >= 0.15 && r.ahead <= 0.2 && Math.abs(r.x) < 0.002 && Math.abs(r.dy) < 0.002), mzLong);
+
+// an old save with the cardboard on the under-barrel slot: it loads onto the muzzle
+const mig = await page.evaluate(() => {
+  const gt = 'mp5';
+  Game.persist.owned.mp5 = true; ensureGunSlots(gt);
+  clearGunSlot(gt, 'under', -1); clearGunSlot(gt, 'muzzle', -1);
+  const cb = makeAccessoryInstance('cardboard_barrel');
+  Game.persist.equipped.attachments[gt].under = cb.id; cb.placement = 'under';   // as a v1.419 save had it
+  delete Game.persist.equipped.attachments[gt].muzzle;
+  Game._saveEnabled = true; saveGame(); loadGame();
+  const s = Game.persist.equipped.attachments[gt];
+  return { under: s.under, muzzle: s.muzzle === cb.id, placement: getAccessoryInstance(cb.id).placement, mounted: getMountedAccessories(gt).map(a => a.slot + ':' + a.type) };
+});
+console.log('   old save:', JSON.stringify(mig));
+check('an old save\'s cardboard barrel on the under-barrel slot loads onto the muzzle', mig.under === null && mig.muzzle && mig.placement === 'muzzle' && mig.mounted.includes('muzzle:cardboard_barrel'), mig);
+
+// in a match on the AR: on the gun in hand, the BB 6 % slower, your shot 0.4 as loud
+const S2 = {};
+for (const type of [null, 'soda_silencer']) {
+  await page.evaluate((type) => {
+    const gt = 'ar'; Game.persist.equipped.gun = gt; ensureGunSlots(gt);
+    clearGunSlot(gt, 'sight', -1); clearGunSlot(gt, 'under', -1); clearGunSlot(gt, 'muzzle', -1);
+    if (type) { const i = getUnmountedInstances(type)[0] || makeAccessoryInstance(type); mountAccessory(gt, i.id, 'muzzle', -1); }
+    Game.persist.loadoutSlots = [{ kind: 'gun', refId: gt }, null, null, null];
+  }, type);
+  await g.scenario('bunratty_sean');
+  S2[type || 'bare'] = await page.evaluate(() => {
+    Game.player.maxHits = 999;
+    for (const e of Game.scenario.enemies) e.noFire = true;
+    const mp = fpGun.userData.accessories.muzzleParts;
+    const mesh = Object.keys(mp.meshes).filter(k => mp.meshes[k].visible);
+    Game.gun.ammo = Game.gun.maxAmmo; Game.gun.cocked = true; Game.gun.fireCooldown = 0;
+    playShot.lastOwnVol = null;
+    doFire();
+    const bb = Game.scenario.bbs.filter(b => b.owner === 'player')[0];
+    return { mesh, speed: bb ? bb.vel.length() : null, vol: playShot.lastOwnVol, mv: Game.gun.muzzleVelocity };
+  });
+}
+await g.shot('homemade-parts-silencer');
+console.log('   silencer in a match:', JSON.stringify(S2));
+const { bare: SB, soda_silencer: SS } = S2;
+check('Soda-Bottle Silencer: on the gun in hand; the BB leaves 6 % slower', SS.mesh.length === 1 && SS.mesh[0] === 'soda_silencer' && SB.mesh.length === 0 && Math.abs(SS.mv / SB.mv - 0.94) < 0.005, S2);
+check('Soda-Bottle Silencer: your shot plays at 0.4 the bare gun\'s loudness', SB.vol === 1 && Math.abs(SS.vol - 0.4) < 1e-9, S2);
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

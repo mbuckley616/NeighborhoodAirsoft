@@ -225,7 +225,11 @@ const ATTACHMENTS = {
   // v1.419 (D.83): the second wave's sling, the shoelace one's opposite: it snaps the gun up, and bounces it as you walk
   bungee_sling: { id:'bungee_sling', name:'Bungee Sling', slot:'under', price:10, adsSpeedMult:1.35, moveSpreadMult:1.3, desc:'A bungee cord off the garage shelf, hooked under the barrel and back to the stock. It snaps the gun up to your eye, so aiming in is a third quicker, but it bounces as you walk: your shots spread wider on the move. Long guns only.' },
   foregrip:   { id:'foregrip', name:'PVC Foregrip', slot:'under', price:16, weight:0.8, moveSpreadMult:0.65, desc:'A stub of plumbing pipe, hose-clamped under the barrel. Your shots stay a third tighter while you walk, but it’s 0.8 lb more to carry. Long guns only.' },
-  cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'under', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Long guns only.' },
+  // v1.420 (D.83, Michael: A, two new slots): the cardboard barrel moves to the new MUZZLE slot
+  cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'muzzle', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Sits on the muzzle of any long gun.' },
+  // v1.420 (D.83): a soda bottle taped over the muzzle, stuffed with a sock. Your shots sound quieter to you (kids don't
+  // listen for them yet), and the BBs leave a touch slower through the cap's hole.
+  soda_silencer: { id:'soda_silencer', name:'Soda-Bottle Silencer', slot:'muzzle', price:9, velocityMult:0.94, shotVolumeMult:0.4, desc:'A two-liter bottle, a sock stuffed inside and a hole punched in the cap, duct-taped over the muzzle. Your shots come out a soft puff instead of a crack, but the BBs leave a touch slower through the cap. Sits on the muzzle of any long gun.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;
@@ -270,9 +274,13 @@ const GUN_ACCESSORY_CAP = {
   pumpsniper: { sight: 1, rails: 2, under: 1 },  // v1.416: the sniper's
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
+// v1.420 (D.83, Michael: A): the long guns without an under-barrel slot still have a muzzle and a stock
+const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1 };
+const HOMEMADE_SLOTS = ['under', 'muzzle', 'stock'];   // v1.420: the slots that take one homemade part each
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
-  return c.under ? c : Object.assign({ under: 0 }, c);   // v1.169: pistols have no under-barrel slot
+  const long = (c.under || LONG_GUNS_NO_UNDER[gunType]) ? 1 : 0;   // v1.420: MUZZLE and STOCK on every long gun
+  return Object.assign({ under: 0 }, c, { muzzle: long, stock: 0 });   // v1.169: pistols have no under-barrel slot
 }
 
 // =====================================================================
@@ -306,11 +314,22 @@ function ensureGunSlots(gunType) {
     const inst = getAccessoryInstance(overflow);
     if (inst) inst.placement = null;
   }
-  // v1.169: the under-barrel slot (null on a gun without one)
-  if (typeof g.under === 'undefined' || !cap.under) {
-    const inst = g.under && getAccessoryInstance(g.under);
-    if (inst) inst.placement = null;
-    g.under = null;
+  // v1.420: a save from before the MUZZLE slot has its cardboard barrel on the under-barrel slot: it moves to the muzzle
+  if (g.under) {
+    const inst = getAccessoryInstance(g.under), def = inst && ATTACHMENTS[inst.type];
+    if (def && def.slot !== 'under') {
+      if (def.slot === 'muzzle' && cap.muzzle && !g.muzzle) { g.muzzle = g.under; inst.placement = 'muzzle'; }
+      else inst.placement = null;
+      g.under = null;
+    }
+  }
+  // v1.169: the under-barrel slot (null on a gun without one); v1.420: the muzzle and stock slots the same way
+  for (const k of HOMEMADE_SLOTS) {
+    if (typeof g[k] === 'undefined' || !cap[k]) {
+      const inst = g[k] && getAccessoryInstance(g[k]);
+      if (inst) inst.placement = null;
+      g[k] = null;
+    }
   }
   return g;
 }
@@ -321,7 +340,7 @@ function findInstanceMount(instId) {
     const g = slots[gt];
     if (!g) continue;
     if (g.sight === instId) return { gunType: gt, slot: 'sight', railIndex: -1 };
-    if (g.under && g.under === instId) return { gunType: gt, slot: 'under', railIndex: -1 };   // v1.169
+    for (const k of HOMEMADE_SLOTS) if (g[k] && g[k] === instId) return { gunType: gt, slot: k, railIndex: -1 };   // v1.169, v1.420
     if (Array.isArray(g.rails)) {
       const ri = g.rails.indexOf(instId);
       if (ri >= 0) return { gunType: gt, slot: 'rail', railIndex: ri };
@@ -338,7 +357,7 @@ function clearGunSlot(gunType, slot, railIndex) {
   const g = ensureGunSlots(gunType);
   let prevId = null;
   if (slot === 'sight') { prevId = g.sight; g.sight = null; }
-  else if (slot === 'under') { prevId = g.under; g.under = null; }   // v1.169
+  else if (HOMEMADE_SLOTS.includes(slot)) { prevId = g[slot]; g[slot] = null; }   // v1.169, v1.420
   else { prevId = g.rails[railIndex]; g.rails[railIndex] = null; }
   const prev = prevId && getAccessoryInstance(prevId);
   if (prev) prev.placement = null;
@@ -354,9 +373,11 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   if (!def) return { ok:false, reason:'unknown-type' };
   if (slot === 'sight' && def.slot !== 'sight') return { ok:false, reason:'not-a-sight' };
   if (slot === 'rail'  && def.slot !== 'rail')  return { ok:false, reason:'not-a-rail' };
-  if (slot === 'under' && def.slot !== 'under') return { ok:false, reason:'not-an-under' };   // v1.169
-  if (def.slot === 'under' && slot !== 'under') return { ok:false, reason:'under-only' };
-  if (slot === 'under' && !getGunAccessoryCap(gunType).under) return { ok:false, reason:'no-under-slot' };
+  for (const k of HOMEMADE_SLOTS) {   // v1.169: the under-barrel slot; v1.420: the muzzle and the stock the same way
+    if (slot === k && def.slot !== k) return { ok:false, reason:'not-a-' + k };
+    if (def.slot === k && slot !== k) return { ok:false, reason:k + '-only' };
+    if (slot === k && !getGunAccessoryCap(gunType)[k]) return { ok:false, reason:'no-' + k + '-slot' };
+  }
   ensureGunSlots(gunType);
   // Pull this instance out of wherever it currently sits (no sharing).
   const prevMount = findInstanceMount(instId);
@@ -365,7 +386,7 @@ function mountAccessory(gunType, instId, slot, railIndex) {
   clearGunSlot(gunType, slot, railIndex);
   const g = Game.persist.equipped.attachments[gunType];
   if (slot === 'sight') { g.sight = instId; inst.placement = 'sight'; }
-  else if (slot === 'under') { g.under = instId; inst.placement = 'under'; }   // v1.169
+  else if (HOMEMADE_SLOTS.includes(slot)) { g[slot] = instId; inst.placement = slot; }   // v1.169, v1.420
   else { g.rails[railIndex] = instId; inst.placement = (railIndex === 0 ? 'left' : 'right'); }
   return { ok:true };
 }
@@ -383,7 +404,7 @@ function getMountedAccessories(gunType) {
       if (i) out.push({ type:i.type, slot:'rail', placement: idx===0?'left':'right' });
     });
   }
-  if (g.under) { const i = getAccessoryInstance(g.under); if (i) out.push({ type:i.type, slot:'under', placement:'under' }); }   // v1.169
+  for (const k of HOMEMADE_SLOTS) if (g[k]) { const i = getAccessoryInstance(g[k]); if (i) out.push({ type:i.type, slot:k, placement:k }); }   // v1.169, v1.420
   return out;
 }
 // v1.169: the homemade part on a gun's under-barrel slot (its ATTACHMENTS def), or null
@@ -391,13 +412,27 @@ function getUnderPart(gunType) {
   const g = Game.persist?.equipped?.attachments?.[gunType];
   if (!g || !g.under || !getGunAccessoryCap(gunType).under) return null;
   const i = getAccessoryInstance(g.under);
-  return (i && ATTACHMENTS[i.type]) || null;
+  return (i && ATTACHMENTS[i.type] && ATTACHMENTS[i.type].slot === 'under') ? ATTACHMENTS[i.type] : null;   // v1.420: not a muzzle part left there by an old save
 }
-// v1.169: one number from the equipped gun's under-barrel part (1 when there is none)
+// v1.420: the homemade part on a gun's muzzle or stock slot (its ATTACHMENTS def), or null
+function getGunPart(gunType, slot) {
+  if (slot === 'under') return getUnderPart(gunType);
+  const g = Game.persist?.equipped?.attachments?.[gunType];
+  if (!g || !g[slot] || !getGunAccessoryCap(gunType)[slot]) return null;
+  const i = getAccessoryInstance(g[slot]);
+  return (i && ATTACHMENTS[i.type] && ATTACHMENTS[i.type].slot === slot) ? ATTACHMENTS[i.type] : null;
+}
+// v1.169: one number from the equipped gun's under-barrel part (1 when there is none); v1.420: and its muzzle and
+// stock parts, multiplied
 function underPartMult(key) {
   const gun = Game.persist?.equipped?.gun;
-  const d = gun ? getUnderPart(gun) : null;
-  return (d && typeof d[key] === 'number') ? d[key] : 1;
+  let m = 1;
+  if (!gun) return m;
+  for (const k of HOMEMADE_SLOTS) {
+    const d = getGunPart(gun, k);
+    if (d && typeof d[key] === 'number') m *= d[key];
+  }
+  return m;
 }
 // v1.418: the sight on a gun, and whether it is one you look through (the 4× scope, the toy scope): its scopeView or null
 function getMountedSight(gunType) {
@@ -853,7 +888,7 @@ function gunSellQuote(gunType) {
   const spares = cfg.spares.filter(s => MAG_GUN_FIT[s.key] === gunType && (Game.persist.consumables[s.key] || 0) > 0);
   for (const s of spares) paid += s.price * Game.persist.consumables[s.key];
   const g = (Game.persist.equipped.attachments || {})[gunType] || {};
-  const parts = [g.sight, ...(Array.isArray(g.rails) ? g.rails : []), g.under].map(id => id && getAccessoryInstance(id)).filter(Boolean);
+  const parts = [g.sight, ...(Array.isArray(g.rails) ? g.rails : []), g.under, g.muzzle, g.stock].map(id => id && getAccessoryInstance(id)).filter(Boolean);
   for (const a of parts) paid += (ATTACHMENTS[a.type] || {}).price || 0;
   return { paid, value: full ? paid : Math.floor(paid / 2), full, used, mags, spares, parts };
 }
@@ -1268,8 +1303,10 @@ function computeLoadoutWeight() {
     gearW += w; parts.push({ label: ARMOR[id]?.name || 'Armor', w });
   }
   // v1.169: a homemade part on the gun's under-barrel slot (the taped mag, the foregrip) is carried gear too
-  const under = getUnderPart(Game.persist.equipped.gun);
-  if (under && under.weight) { gearW += under.weight; parts.push({ label: under.name, w: under.weight }); }
+  for (const k of HOMEMADE_SLOTS) {   // v1.169: the under-barrel part's weight; v1.420: and the muzzle's and the stock's
+    const part = getGunPart(Game.persist.equipped.gun, k);
+    if (part && part.weight) { gearW += part.weight; parts.push({ label: part.name, w: part.weight }); }
+  }
   return { gunW, gearW, total: gunW + gearW, parts };
 }
 
