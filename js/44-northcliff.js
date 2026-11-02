@@ -8,7 +8,7 @@
 // Six houses, 20 m apart, and no backyard fences: bigger yards and longer sightlines than Winnmark (the teaser's
 // promise), so the uphill yards are the sniper's ground. Layout draws from the scenario's seeded Math.random.
 // Playable box: x∈[-35,39], z∈[-33,33].
-// v1.420 (D.51): at real scale, the road bending north at the west end; the area x∈[-47,42], z∈[-40,33] (see below).
+// v1.421 (D.51): at real scale, the road bending north at the west end; the area x∈[-47,42], z∈[-40,33] (see below).
 // =====================================================================
 function buildNorthcliffScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
@@ -18,10 +18,10 @@ function buildNorthcliffScene(variant, timeOfDay) {
     sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-18, 34, 20],
     dayAmbColor: 0xb8c8d8, dayAmbInt: 0.48, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
     nightFog: [20, 66], moonPos: [18, 36, -20],
-    shadow: { size: 2048, extent: 52, far: 110 },   // v1.420: was 46 and 90, for the wider area
+    shadow: { size: 2048, extent: 52, far: 110 },   // v1.421: was 46 and 90, for the wider area
   });
 
-  // v1.420 (D.51, card fable/d51-northcliff, steps 1-3; Michael: real scale 16 Oct, B on the west end 2 Nov): the loop's
+  // v1.421 (D.51, card fable/d51-northcliff, steps 1-3; Michael: real scale 16 Oct, B on the west end 2 Nov): the loop's
   // south leg at its real ~130 m, houses of 15-17 m on ~30 m lots, the steeper hill, and at the west corner the road
   // bends north up the hill as the real loop does. Every match plays the west part of the leg, x -47..42, z -40..33;
   // the rest of the leg, the west leg past the area and the far houses are scenery (nothing of them is solid).
@@ -126,7 +126,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
     // v1.312 (backlog D.55 step 4; docs/refs/northcliff.md gap 2, part one): the street's palette and its stucco and
     // fieldstone fronts. Two off-white stucco and two tan stucco, fieldstone at the corners and round the arched
     // entry, two or three front gables and arched upstairs windows; two red brick with slate-blue shutters. Brown and
-    // grey roofs. v1.420: at real size (15-17 x 11 m, the fronts 13-17 m back from the kerb, lots about 30 m).
+    // grey roofs. v1.421: at real size (15-17 x 11 m, the fronts 13-17 m back from the kerb, lots about 30 m).
     { x: -14, side: 'north', w: 16, brick: 0xdcdad2, roof: 0x74605f, look: 'white', play: true },   // the corner house
     { x: 16, side: 'north', w: 17, brick: 0xa86a52, roof: 0x74605f, look: 'brick', play: true },
     { x: 50, side: 'north', w: 15, brick: 0xb8a888, roof: 0x6a666c, look: 'tan' },
@@ -240,7 +240,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
     const o = sinkObs(addHomeDepotBox(scene, ax, cz, { w: 1.3, h: 1.05, d: 1.0, facing: 0, detail: true }), ax, cz);
     coverList.push(o); anchorCover[key] = o;
   }
-  // v1.420: board privacy fences on two back-yard lot lines (the guide: "board privacy fences close some back yards at
+  // v1.421: board privacy fences on two back-yard lot lines (the guide: "board privacy fences close some back yards at
   // the sides"), 1.8 m, stained; each 2.4 m panel on the ground under it. Solid to bodies, BBs and eyes.
   const fenceObs = [];
   {
@@ -266,7 +266,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
     run(42.6, 4.5, 42.6, 33);     // and downhill of it
     const m = new THREE.Mesh(_houseMergeParts(parts), fMat); m.castShadow = m.receiveShadow = true; scene.add(m);
   }
-  // v1.420: the corner house's side lawn is a planted bed, pine straw under azaleas and boxwoods (the guide: "a curved
+  // v1.421: the corner house's side lawn is a planted bed, pine straw under azaleas and boxwoods (the guide: "a curved
   // mulched bed"), from the house's west wall almost to the west leg's kerb. Too thick to walk through, low enough to see
   // over (0.9 m): nobody hugs the house's west wall round its blind front corner; their side comes down the west leg,
   // in sight across the bed from the corner house's front yard.
@@ -382,7 +382,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
   };
   const playerSpawns = {
     road_east:   { pos: P(SPAWN_E[0], SPAWN_E[1]), yaw: Math.PI / 2 },   // the area's east edge, facing west down the street (yaw 0 faces -z)
-    bulb_center: { pos: P(-41, -31), yaw: Math.PI },      // v1.420: their base up the west leg, facing down to the bend
+    bulb_center: { pos: P(-41, -31), yaw: Math.PI },      // v1.421: their base up the west leg, facing down to the bend
     creek_fort:  { pos: P(-6, 30.4), yaw: 0 },            // v1.131: inside the twins' creek fort, facing up the hill
   };
   return {

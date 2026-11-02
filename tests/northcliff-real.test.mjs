@@ -1,4 +1,4 @@
-// v1.420 (backlog D.51, card fable/d51-northcliff; Michael 16 Oct: real scale 1 C; 21 Oct: each match in a fenced area
+// v1.421 (backlog D.51, card fable/d51-northcliff; Michael 16 Oct: real scale 1 C; 21 Oct: each match in a fenced area
 // about today's size; 2 Nov: B, the road bends north at the west end as the real loop does). Northcliff Trace at real
 // scale: the south leg about 130 m between its corners with the houses 15-17 m wide, the hill 7 m up behind the uphill
 // yards and down to the creek bank, and at the west corner the road turning north up the hill, their base on the corner
@@ -50,7 +50,7 @@ for (const id of ['northcliff_1v1_evan', 'northcliff_twins_3v3', 'northcliff_def
     const ours = [Game.player.pos.clone(), ...Game.scenario.enemies.filter(e => e.team === 'player').map(e => (e._spawnPos || e.pos).clone())];
     const theirs = Game.scenario.enemies.filter(e => e.team !== 'player');
     const seen = theirs.flatMap(e => ours.filter(o => sees(e._spawnPos || e.pos, o)).map(o => e.character.name + '→' + o.x.toFixed(1) + ',' + o.z.toFixed(1)));
-    // v1.420: every kid stands on the ground under him from the first step (a kid left at y 0 saw under a house up the hill)
+    // v1.421: every kid stands on the ground under him from the first step (a kid left at y 0 saw under a house up the hill)
     const floating = Game.scenario.enemies.filter(e => !e.perch && Math.abs(e.pos.y - G(e.pos.x, e.pos.z)) > 0.05).map(e => e.character.name);
     // draw calls from six views: the east end, mid-street, the bend, the high yard, the creek fort, their base
     const P = Game.player, save = [P.pos.clone(), P.yaw];

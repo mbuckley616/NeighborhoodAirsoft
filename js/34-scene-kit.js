@@ -652,7 +652,7 @@ function updateLaserDiagHud() {
 // so the seeded boards are untouched.
 function buildStreetRoad(scene, opt) {
   const { point, deriv, groundY, groundNormal, houseCenters } = opt;
-  // v1.420: `bulb` may be null (Northcliff Trace bends on out of the map instead of ending): the road then runs to t = 1
+  // v1.421: `bulb` may be null (Northcliff Trace bends on out of the map instead of ending): the road then runs to t = 1
   const ASPH = opt.ASPH, NOBULB = !opt.bulb, BULB_C = NOBULB ? { x: 1e6, z: 1e6 } : { x: opt.bulb.x, z: opt.bulb.z }, BULB_R = NOBULB ? 0 : opt.bulb.r;
   const LIFT = 0.06;
   const asphMat = opt.asphMat;

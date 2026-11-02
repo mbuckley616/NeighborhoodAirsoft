@@ -48,7 +48,7 @@ for (let r = 0; r < 8; r++) {
       for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
         const foes = Game.scenario.enemies.filter(e => e.team !== 'player' && e.health > 0);
         const near = foes.sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z))[0];
-        // v1.420 (D.51, Northcliff at real scale): the street bends north at the west corner and the uphill yards are
+        // v1.421 (D.51, Northcliff at real scale): the street bends north at the west corner and the uphill yards are
         // fenced, so you walk down the street to the bend (-28, -4) before you go straight at the nearest kid
         const bend = P.pos.x > -24 && near && near.pos.x < -20;
         const tx = bend ? -28 : near && near.pos.x, tz = bend ? -4 : near && near.pos.z;

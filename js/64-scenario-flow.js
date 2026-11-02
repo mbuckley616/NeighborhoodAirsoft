@@ -281,7 +281,7 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
-        // v1.420: on the ground under him from the first step, as kidGroundY puts him from the second: on a hill (Northcliff
+        // v1.421: on the ground under him from the first step, as kidGroundY puts him from the second: on a hill (Northcliff
         // Trace at real scale) a kid left at y 0 for the first step showed the other side a sight line under a house
         // standing up the slope, and they fired at that spot for three seconds
         else if (typeof built.groundY === 'function') enemy.pos.y = built.groundY(spawnPos.x, spawnPos.z);
