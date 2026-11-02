@@ -5,6 +5,25 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Northcliff Trace at real scale (D.51): the west end of the street (deep-work session, 2026-11-02, card `fable/d51-northcliff`)**
+  You chose real scale for every map, so Northcliff Trace grows to its real length: the loop's south leg is about 130 m
+  between its corners (the game's street is 72 m), with houses of 15-18 m on 30 m lots. Each match still plays in a
+  fenced area about today's size, here the west part of the street. One thing your answers don't settle is the west end
+  (`docs/refs/northcliff.md`, item 3). Today the street ends in a bulb, and their side starts there in three matches and
+  in the Pickup Game. The real street doesn't end: at the west corner the loop bends north.
+
+  Measured today (`docs/devlog/v1.417.md`): the bulb looks straight down 70 m of open road to your start. In Mason's
+  Last Stand at night, every one of their kids can see your start and your crew's from the bulb, which breaks the
+  night rule you set for Lamplight on Bellfield. In both team matches the first shots come at 49-57 m, past the 40 m
+  the guns are tuned for.
+
+  - A) **Keep the bulb** at the west end, with the kid fort and the two cars as their base. It is what players know.
+    The night rule and the 40 m band then need new cover across the bulb's mouth: parked cars or a hedge.
+  - B) **Bend the road north at the west corner, as the real loop does** (recommended). The road leaves the area
+    northward, and their base moves into the bend: the fort on the corner lot's lawn, with the corner house between it
+    and the straight. That is what the pictures show. It also ends the straight lane that breaks the night rule and
+    pushes the first shots out, because the corner hides their start from the street.
+
 ## Answered
 
 - **Hold the Bunker with your crew in (producer's daily sweep, 2026-11-02)**
