@@ -125,25 +125,33 @@ const bs = await page.evaluate(() => {
   const tag = row && row.querySelector('.shop-slot-tag').textContent;
   const cash0 = Game.persist.cash; row && row.querySelector('.shop-item-buy').click();
   const out = { tag, paid: cash0 - Game.persist.cash };
+  // v1.426: the Taped-Up Long Mag's row, bought in the same visit (a third page building guns ran CI's runner out of memory)
+  const lrow = [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent.startsWith('Taped-Up Long Mag'));
+  const lcash = Game.persist.cash; lrow && lrow.querySelector('.shop-item-buy').click();
+  out.long = { tag: lrow && lrow.querySelector('.shop-slot-tag').textContent, pic: !!(lrow && lrow.querySelector('img, canvas')), paid: lcash - Game.persist.cash };
   closeShop();
-  const geo = {};
+  const geo = {}, lgeo = {};
   for (const gt of ['ar', 'pumpsniper', 'm60', 'uzi']) {
     const m = buildWorkbenchGun(gt);
     const up = m.userData.accessories.underParts;
-    if (!up) { geo[gt] = 'no slot'; continue; }
+    if (!up) { geo[gt] = lgeo[gt] = 'no slot'; continue; }
     m.updateWorldMatrix(true, true);
     const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
     up.meshes.bungee_sling.visible = true;
     const b = new THREE.Box3().setFromObject(up.meshes.bungee_sling).applyMatrix4(inv);
     geo[gt] = { top: +(b.max.y - up.bottom).toFixed(3), sag: +(up.bottom - b.min.y).toFixed(3), len: +(b.max.z - b.min.z).toFixed(3) };
+    up.meshes.bungee_sling.visible = false; up.meshes.long_mag.visible = true;   // v1.426: the long mag on the same build
+    const lb = new THREE.Box3().setFromObject(up.meshes.long_mag).applyMatrix4(inv);
+    lgeo[gt] = { top: +(lb.max.y - up.bottom).toFixed(3), drop: +(up.bottom - lb.min.y).toFixed(3), cx: +((lb.max.x + lb.min.x) / 2).toFixed(4) };
   }
-  out.geo = geo;
+  out.geo = geo; out.long.geo = lgeo;
   return out;
 });
 console.log('   bungee:', JSON.stringify(bs));
 check('Bungee Sling: in the Mods tab as UNDER, bought for $10', bs.tag === 'UNDER' && bs.paid === 10, bs);
 check('Bungee Sling: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, a 3-6 cm sag, 15-18 cm long); the Uzi has no slot',
   ['ar', 'pumpsniper', 'm60'].every(gt => bs.geo[gt].top <= 0.01 && bs.geo[gt].sag > 0.03 && bs.geo[gt].sag < 0.06 && bs.geo[gt].len > 0.15 && bs.geo[gt].len < 0.18) && bs.geo.uzi === 'no slot', bs.geo);
+const lm = bs.long;   // v1.426: checked below with the long mag's matches
 const underMeasure = (type) => page.evaluate(async (type) => {
   const gt = 'ar';
   Game.persist.equipped.gun = gt; ensureGunSlots(gt);
@@ -412,42 +420,20 @@ check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk
 check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
 await g2.close();
 
-// --- v1.426: the Taped-Up Long Mag, in a third fresh browser (as the stock's, above): bought from the Mods tab as UNDER;
-// under the handguard on the long guns; in a match on the AR, half as many BBs again in the mag (the
-// HUD says so), a spare mag's swap and a speed loader's feed half as long again, 1 lb in the weight. The same numbers
-// bare, in a second match, to compare. (The off hand on it, on the MP5: fp-hands.)
+// --- v1.426: the Taped-Up Long Mag: bought from the Mods tab as UNDER and measured under the handguard on the long guns
+// in the first page (with the bungee sling, above); its matches in a third fresh browser (as the stock's). On the AR,
+// half as many BBs again in the mag (the HUD says so), a spare mag's swap and a speed loader's feed half as long again,
+// 1 lb in the weight. The same numbers bare, in a second match, to compare. (The off hand on it, on the MP5: fp-hands.)
 const g3 = await boot(); const page3 = g3.page;
 await g3.bedroom();
-const lm = await page3.evaluate(() => {
-  Game.persist.cash = 1000; Game.persist.owned.ar = true; Game.persist.owned.pumpsniper = true; Game.persist.owned.m60 = true; openShop();
-  [...document.querySelectorAll('#shopScreen .cat-tab')].find(t => t.textContent === 'Mods').click();
-  const row = [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent.startsWith('Taped-Up Long Mag'));
-  const tag = row && row.querySelector('.shop-slot-tag').textContent;
-  const pic = !!(row && row.querySelector('img, canvas'));
-  const cash0 = Game.persist.cash; row && row.querySelector('.shop-item-buy').click();
-  const out = { tag, pic, paid: cash0 - Game.persist.cash };
-  closeShop();
-  const geo = {};
-  for (const gt of ['ar', 'pumpsniper', 'm60', 'uzi']) {
-    const m = buildWorkbenchGun(gt);
-    const up = m.userData.accessories.underParts;
-    if (!up) { geo[gt] = 'no slot'; continue; }
-    m.updateWorldMatrix(true, true);
-    const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
-    up.meshes.long_mag.visible = true;
-    const b = new THREE.Box3().setFromObject(up.meshes.long_mag).applyMatrix4(inv);
-    geo[gt] = { top: +(b.max.y - up.bottom).toFixed(3), drop: +(up.bottom - b.min.y).toFixed(3), w: +(b.max.x - b.min.x).toFixed(3), cx: +((b.max.x + b.min.x) / 2).toFixed(4) };
-  }
-  out.geo = geo;
-  return out;
-});
 console.log('   long mag:', JSON.stringify(lm));
 check('Taped-Up Long Mag: in the Mods tab as UNDER with its picture, bought for $18', lm.tag === 'UNDER' && lm.pic && lm.paid === 18, lm);
 check('Taped-Up Long Mag: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, hanging 14-17 cm, centred); the Uzi has no slot',
   ['ar', 'pumpsniper', 'm60'].every(gt => lm.geo[gt].top <= 0.01 && lm.geo[gt].drop > 0.14 && lm.geo[gt].drop < 0.17 && Math.abs(lm.geo[gt].cx) < 0.005) && lm.geo.uzi === 'no slot', lm.geo);
 const LM = {};
 for (const type of ['long_mag', null]) {
-  const wallet = await page3.evaluate((type) => {
+  await page3.evaluate((type) => {
+    Game.persist.owned.ar = true;
     const gt = 'ar'; Game.persist.equipped.gun = gt; ensureGunSlots(gt);
     for (const k of ['sight', 'under', 'muzzle', 'stock']) clearGunSlot(gt, k, -1);
     if (type) { const i = getUnmountedInstances(type)[0] || makeAccessoryInstance(type); mountAccessory(gt, i.id, 'under', -1); }
