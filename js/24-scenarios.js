@@ -1549,6 +1549,7 @@ const SCENARIOS = {
       { charId: 'fernando',  weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },
     ],
     enemySpawnCluster: 'cluster_bulb',
+    enemyHoldNear: 30,   // v1.431: their side holds the bend until a foe is within 30 m of a kid's spot (see startScenario)
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 150, lose: 34 },

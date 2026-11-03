@@ -1671,6 +1671,10 @@ function updateEnemies(dt) {
         if (e._deployStuck > 1.0) {
           e._deployStuck = 0;
           e._deployBest = null;
+          // v1.431: a kid still holding his spot (holdNear) settles where the wedge left him, by his spot, instead of
+          // pushing on: on Northcliff at night Haden, boxed in 3 m short of his spot in their base, was handed to
+          // 'advancing', walked down the west leg and drew a 55-57 m first shot from your crew on the straight
+          if (e.holdNear && !e._holdFree) { e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 0.4 + gameRandom() * 0.6; break; }
           e.state = 'advancing';
           e.stateTime = 0;
           e.advanceCheckTimer = 0;
