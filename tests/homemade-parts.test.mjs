@@ -451,16 +451,30 @@ for (const type of ['long_mag', null]) {
     const out = { mag: Game.gun.ammo, max: Game.gun.maxAmmo, hud: document.getElementById('ammoMax').textContent,
       spare: (Game.gun.spareAmmo || {})[1] || 0,
       weight: computeLoadoutWeight().parts.filter(p => p.label === 'Taped-Up Long Mag').map(p => p.w) };
-    // the spare mag's swap: from a click to the mag in the gun
-    Game.gun.ammo = 3; Game.held.slotIdx = 1; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
-    let f = 0; while (Game.held.slotIdx === 1 && f < 300) { Game.mouseLMB = true; stepGame(1 / 60); f++; }
-    out.swap = +(f / 60).toFixed(3); out.afterSwap = Game.gun.ammo;
-    Game.mouseLMB = false; stepGame(1 / 60);
     // the speed loader's feed: BBs in the first half second held, from an empty mag (the AR's 25 would cap a second)
-    Game.gun.ammo = 0; Game.held.slotIdx = 2; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
-    for (let i = 0; i < 30; i++) { Game.mouseLMB = true; stepGame(1 / 60); }
-    out.fed = Game.gun.ammo;
-    Game.mouseLMB = false; stepGame(1 / 60);
+    const feed = (frames) => {
+      Game.persist.speedLoaders.find(l => l.id === Game.persist.loadoutSlots[2].refId).currentBBs = 50;   // a full loader each time
+      Game.gun.ammo = 0; Game.held.slotIdx = 2; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
+      for (let i = 0; i < frames; i++) { Game.mouseLMB = true; stepGame(1 / 60); }
+      const n = Game.gun.ammo; Game.mouseLMB = false; stepGame(1 / 60); return n;
+    };
+    out.fed = feed(30);
+    // the spare mag's swap: from a click to the mag in the gun
+    const swap = (from) => {
+      Game.gun.ammo = from; Game.held.slotIdx = 1; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
+      let f = 0; while (Game.held.slotIdx === 1 && f < 300) { Game.mouseLMB = true; stepGame(1 / 60); f++; }
+      const r = +(f / 60).toFixed(3); Game.mouseLMB = false; stepGame(1 / 60); return r;
+    };
+    out.swap = swap(3); out.afterSwap = Game.gun.ammo;
+    // v1.428 (critic, 3 Nov): the mag's size goes with the mag. With the spare in, the HUD and the loader's top-up
+    // are the spare's 25, and the pouch holds the long mag at 3 of its 38; swapping back puts the 38 back in the gun.
+    const pouch = describeSlot(1);
+    out.in = { max: Game.gun.maxAmmo, hud: document.getElementById('ammoMax').textContent, pouch: pouch.name, pouchBBs: pouch.bbs, pouchCap: pouch.magCap };
+    out.in.fed = feed(30); out.in.fedFull = feed(120);
+    Game.gun.ammo = 7;
+    out.back = { swap: swap(7) };
+    out.back.mag = Game.gun.ammo; out.back.max = Game.gun.maxAmmo; out.back.hud = document.getElementById('ammoMax').textContent;
+    out.back.pouch = describeSlot(1).name; out.back.pouchBBs = describeSlot(1).bbs;
     return out;
   });
   await page3.evaluate(() => endScenario('forfeit'));
@@ -473,5 +487,10 @@ check('Taped-Up Long Mag: the AR loads 38 (25 bare), and the HUD says so; the sp
 check('Taped-Up Long Mag: 1 lb in the loadout weight', LL.weight[0] === 1 && LB.weight.length === 0, LM);
 check('Taped-Up Long Mag: a spare mag swaps in 1.4-1.6 times as long (0.4 s bare)', Math.abs(LB.swap - 0.4) < 0.04 && LL.swap / LB.swap > 1.4 && LL.swap / LB.swap < 1.6 && LL.afterSwap === 25, LM);
 check('Taped-Up Long Mag: a speed loader feeds 1/1.5 as many BBs in half a second (about 13 against 20)', LB.fed >= 18 && LB.fed <= 20 && Math.abs(LL.fed / LB.fed - 1 / 1.5) < 0.06, LM);
+check('Taped-Up Long Mag: with the spare swapped in, the gun holds 25 (HUD 25), a speed loader tops it to 25 at the bare rate, and the pouch holds the long mag with its 3 of 38',
+  LL.in.max === 25 && LL.in.hud.startsWith('25') && LL.in.fedFull === 25 && LL.in.fed >= 18 && LL.in.fed <= 20 && LL.in.pouch === 'Taped-Up Long Mag' && LL.in.pouchBBs === 3 && LL.in.pouchCap === 38, LM);
+check('Taped-Up Long Mag: swapping it back in takes the long time and the gun holds 38 again with its 3; the spare is back in the pouch',
+  LL.back.mag === 3 && LL.back.max === 38 && LL.back.hud.startsWith('38') && LL.back.pouch === 'Spare 25-rd AR Mag' && LL.back.pouchBBs === 7 && LL.back.swap / LB.swap > 1.4, LM);
+check('bare AR: two plain mags trade without changing size (25 / 25)', LB.in.max === 25 && LB.back.max === 25 && LB.in.pouch === 'Spare 25-rd AR Mag' && LB.in.fedFull === 25, LM);
 check('no page errors (the long mag\'s matches)', g3.errs.length === 0, g3.errs);
 await g3.close();
