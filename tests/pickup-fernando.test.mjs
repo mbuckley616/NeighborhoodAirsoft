@@ -42,6 +42,7 @@ for (let r = 0; r < 8; r++) {
   await g.scenario('pickup_game');
   rounds.push(await page.evaluate(() => {
     const P = Game.player, hits = [];
+    let last = null, side = 0;
     const orig = applyBBHit;
     window.applyBBHit = (bb, c) => { if (c === P && !(P._graceT > 0) && !P._goingHome) hits.push({ by: bb.enemyRef ? bb.enemyRef.charId : '?', t: +Game.scenario.roundTime.toFixed(1) }); return orig(bb, c); };
     try {
@@ -50,15 +51,23 @@ for (let r = 0; r < 8; r++) {
         const near = foes.sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z))[0];
         // v1.421 (D.51, Northcliff at real scale): the street bends north at the west corner and the uphill yards are
         // fenced, so you walk down the street to the bend (-28, -4) before you go straight at the nearest kid
-        const bend = P.pos.x > -24 && near && near.pos.x < -20;
-        const tx = bend ? -28 : near && near.pos.x, tz = bend ? -4 : near && near.pos.z;
+        // Fix-up (PR #235, CI red on 0f47abb: 5 hits in 8 minutes, all his): walking straight at a kid in their back
+        // yard behind the corner house (x < -6, z < -18) wedged you on the gate fence at z -17 for the rest of the
+        // round, and the line to the bend ran square into a post at (-16.3, -3.9). So that yard is reached by the bend
+        // and up the west leg, and a walker held still for a second steps sideways, as a player would.
+        const back = !!near && near.pos.z < -18 && near.pos.x < -6;
+        const bend = P.pos.x > -24 && near && (near.pos.x < -20 || back);
+        const leg = !bend && back && P.pos.z > -24;
+        const tx = bend ? -28 : leg ? -40 : near && near.pos.x, tz = bend ? -4 : leg ? -26 : near && near.pos.z;
         if (near) { P.yaw = Math.atan2(-(tx - P.pos.x), -(tz - P.pos.z)); P.pitch = 0; }
-        Game.keys.KeyW = !!near && (bend || Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4);
+        Game.keys.KeyW = !!near && (bend || leg || Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4);
         // v1.290 (D.48): tagged, you walk yourself home before you go at them again
         if (P._goingHome) { const st = Game.scenario.playerStart.pos; P.yaw = Math.atan2(-(st.x - P.pos.x), -(st.z - P.pos.z)); Game.keys.KeyW = true; }
+        if (f % 60 === 0) { if (Game.keys.KeyW && last && Math.hypot(P.pos.x - last.x, P.pos.z - last.z) < 0.5) side = 30; last = { x: P.pos.x, z: P.pos.z }; }
+        Game.keys.KeyD = side-- > 0;
         stepGame(1 / 60);
       }
-    } finally { window.applyBBHit = orig; Game.keys.KeyW = false; }
+    } finally { window.applyBBHit = orig; Game.keys.KeyW = false; Game.keys.KeyD = false; }
     return { hits, out: Game.mode !== 'scenario', t: +Game.scenario.roundTime.toFixed(1) };
   }));
 }

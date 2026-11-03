@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Fernando's nest in a daytime Northcliff pickup game, now the street is real size (Fable, 2026-11-03, card fable/d51-northcliff)**
+  The Northcliff rebuild (PR #235) is finished, but one check fails every time, on CI and here: in a daytime 4v4
+  Pickup Game on Northcliff, Fernando lands 11-12 of the 14 hits on a player who walks at the nearest kid. On the old
+  street he landed about 45%. The check guards your call of 13 Oct (A: by day he keeps the high yard's nest with the AK)
+  and says under two-thirds. His own rate has not changed: about 1.4 tags a round, against 0.9-1.6 on the old street.
+  What changed is everyone else. Their base is now up the west leg, 55 m from the street behind the corner house, and
+  his nest sees down the street to the bend (it was placed that way for the night match's 10-40 m first shots). So
+  you walk through his lane first, he tags you, you walk home, and the other three rarely reach you (2-3 of 14 hits).
+  The night match and the ladder's four matches are not affected.
+  - A) **Leave it as it is.** The check measures his tags per round (at most the old street's 1.7) in place of his share.
+    Day pickup games on Northcliff stay a slow walk past one sniper's lane.
+  - B) **By day his nest moves 4-5 m back up the hill**, behind the corner house, so he can't see the street east of the
+    bend; he still holds the high yard with the AK. Night unchanged. Fewer tags from him, about the same from the rest.
+  - C) **By day the other three come down the west leg to the bend sooner**, so you meet them at the corner while he
+    covers it from the nest. His tags stay, theirs rise, and the street fight is a team fight again, as on the old street.
+  Recommendation: C. It fixes what actually changed (the rest of his side stopped coming) and keeps your nest call as
+  it is. B makes the day game quieter still. One version either way; the PR stays a draft until this is answered.
+
 - **Crew jerseys (builder, 2026-11-03, backlog D.84)**
   You asked whether the crews should wear soccer or football jerseys, a number and the kid's name on the back, in place
   of headbands, since a bandana can read as gang-adjacent, most of all in public places like the parking lot. Today
