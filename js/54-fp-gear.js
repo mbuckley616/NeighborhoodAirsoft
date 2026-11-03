@@ -281,6 +281,7 @@ function ensureFPGunAccessory(group, gunType) {
   const bare = (cap.under || cap.muzzle) ? measureGunForUnder(group, mount) : null;
   const underParts = cap.under ? buildUnderParts(group, mount, bare) : null;
   const muzzleParts = cap.muzzle ? buildMuzzleParts(group, mount, bare) : null;
+  const stockParts = cap.stock ? buildStockParts(group, measureGunForStock(group)) : null;   // v1.425: off the bare butt
 
   // ---- v1.40e: SIDE RAILS matching the data model. Guns have 1 or 2 rail slots
   // (GUN_ACCESSORY_CAP.rails). Slot 0 = LEFT rail, slot 1 = RIGHT rail. Each is a
@@ -429,7 +430,7 @@ function ensureFPGunAccessory(group, gunType) {
   const toyScopeOptic = buildToyScopeOptic(); toyScopeOptic.visible = false; sightAnchor.add(toyScopeOptic);   // v1.418
 
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
-    railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, muzzleParts, gunGroup: group };
+    railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, muzzleParts, stockParts, gunGroup: group };
   return group.userData.accessories;
 }
 
@@ -530,6 +531,11 @@ function updateFPGunAccessory(group, gunType, mountedOverride) {
   if (acc.muzzleParts) {
     const muzzlePl = mounted.find(a => a.slot === 'muzzle');
     for (const k in acc.muzzleParts.meshes) acc.muzzleParts.meshes[k].visible = !!muzzlePl && muzzlePl.type === k;
+  }
+  // v1.425: the homemade part on the stock slot
+  if (acc.stockParts) {
+    const stockPl = mounted.find(a => a.slot === 'stock');
+    for (const k in acc.stockParts.meshes) acc.stockParts.meshes[k].visible = !!stockPl && stockPl.type === k;
   }
 }
 
@@ -673,6 +679,62 @@ function buildMuzzleParts(group, mount, measured) {
   }
   for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.muzzlePart = k; group.add(meshes[k]); }
   return { meshes, frontZ: m.frontZ, frontY: m.frontY };
+}
+
+// v1.425 (D.83, Michael: A): the butt of the stock, measured off the bare gun: the rearmost point on the centre line
+// (the gun faces -Z, so the largest z), and the box round everything on the centre line in the last 5 cm before it.
+function measureGunForStock(group) {
+  group.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  const boxes = [];
+  group.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.visible || o.userData.fpHand) return;
+    if (o.material && o.material.transparent) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+    if (b.min.x > 0.004 || b.max.x < -0.004) return;   // off the centre line
+    boxes.push(b);
+  });
+  let rearZ = -Infinity;
+  for (const b of boxes) rearZ = Math.max(rearZ, b.max.z);
+  const LEN = 0.05, box = new THREE.Box3();
+  for (const b of boxes) if (b.max.z >= rearZ - LEN) {
+    box.expandByPoint(new THREE.Vector3(b.min.x, b.min.y, Math.max(b.min.z, rearZ - LEN)));
+    box.expandByPoint(new THREE.Vector3(b.max.x, b.max.y, rearZ));
+  }
+  return { rearZ, box };
+}
+// v1.425: the homemade stock parts, pulled over the butt as measured. Each its own group, hidden.
+function buildStockParts(group, m) {
+  const meshes = {};
+  const tapeMat = new THREE.MeshStandardMaterial({ color: 0x9ea3a8, roughness: 0.55, metalness: 0.35 });   // duct tape
+  // Sock-padded stock: a white tube sock stuffed over the last 6 cm of the butt, a toe bulging off its back, two stripes
+  // (red, blue) round the cuff and a band of duct tape at its top
+  {
+    const g = new THREE.Group();
+    const sockMat = new THREE.MeshStandardMaterial({ color: 0xeceae2, roughness: 0.95 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xc8322a, roughness: 0.9 });
+    const blueMat = new THREE.MeshStandardMaterial({ color: 0x2a4aa8, roughness: 0.9 });
+    const b = m.box, PAD = 0.005;
+    const w = Math.min(0.07, b.max.x - b.min.x) + 2 * PAD, h = Math.min(0.16, b.max.y - b.min.y) + 2 * PAD;
+    const cx = (b.min.x + b.max.x) / 2, cy = (b.min.y + b.max.y) / 2;
+    const zBack = m.rearZ + 0.004, len = 0.06, zc = zBack - len / 2;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, len), sockMat);
+    body.position.set(cx, cy, zc); g.add(body);
+    const toe = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), sockMat);   // the stuffed toe, round off the back
+    toe.scale.set(w * 0.96, h * 0.96, 0.03); toe.position.set(cx, cy, zBack); g.add(toe);
+    const zf = zBack - len;   // the cuff, toward the trigger
+    [[redMat, zf + 0.016], [blueMat, zf + 0.024]].forEach(([mat, z]) => {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(w + 0.002, h + 0.002, 0.004), mat);
+      st.position.set(cx, cy, z); g.add(st);
+    });
+    const tape = new THREE.Mesh(new THREE.BoxGeometry(w + 0.004, h + 0.004, 0.012), tapeMat);
+    tape.position.set(cx, cy, zf + 0.005); g.add(tape);
+    g.userData.rearZ = m.rearZ;
+    meshes.sock_stock = g;
+  }
+  for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.stockPart = k; group.add(meshes[k]); }
+  return { meshes, rearZ: m.rearZ, box: m.box };
 }
 
 // v1.27b/v1.40c: laser zero target, pinned to the camera at screen-center,
@@ -944,6 +1006,7 @@ function shopModPic(aid, w, h) {
     if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : aid === 'toy_scope' ? acc.toyScopeOptic : acc.redDotOptic;   // v1.418
     else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
     else if (a.slot === 'muzzle') part = acc.muzzleParts && acc.muzzleParts.meshes[aid];   // v1.420
+    else if (a.slot === 'stock') part = acc.stockParts && acc.stockParts.meshes[aid];   // v1.425
     else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
       part = acc.flashUnit;
       const fb = part.userData.flashBodyGroup;
@@ -1160,6 +1223,10 @@ function computeWorkbenchLabelAnchors(gunType) {
     const up = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.underParts;
     const yRight = m.barrelY - 0.05, yUnder = cap.under ? (up ? up.bottom : m.barrelY - 0.02) - 0.13 : m.barrelY - 0.19;
     anchors.push({ slot: 'muzzle', railIndex: -1, pos: new THREE.Vector3(0, (yRight + yUnder) / 2, m.railZ) });
+  }
+  if (cap.stock) {   // v1.425: under the butt of the stock
+    const sp = WB.gunGroup && WB.gunGroup.userData.accessories && WB.gunGroup.userData.accessories.stockParts;
+    if (sp) anchors.push({ slot: 'stock', railIndex: -1, pos: new THREE.Vector3(0, sp.box.min.y - 0.06, sp.rearZ - 0.03) });
   }
   WB.labelAnchors = anchors;
 }
