@@ -230,6 +230,10 @@ const ATTACHMENTS = {
   // v1.420 (D.83): a soda bottle taped over the muzzle, stuffed with a sock. Your shots sound quieter to you (kids don't
   // listen for them yet), and the BBs leave a touch slower through the cap's hole.
   soda_silencer: { id:'soda_silencer', name:'Soda-Bottle Silencer', slot:'muzzle', price:9, velocityMult:0.94, shotVolumeMult:0.4, desc:'A two-liter bottle, a sock stuffed inside and a hole punched in the cap, duct-taped over the muzzle. Your shots come out a soft puff instead of a crack, but the BBs leave a touch slower through the cap. Sits on the muzzle of any long gun.' },
+  // v1.425 (D.83, Michael: A, steadier when aimed, "as well as faster movement while aiming down sight"): a tube sock
+  // stuffed and pulled over the butt of the stock. Aimed, your shots stay a fifth tighter and you walk quicker with the
+  // gun up; the sock is a little more to carry.
+  sock_stock: { id:'sock_stock', name:'Sock-Padded Stock', slot:'stock', price:8, weight:0.4, adsSteadyMult:0.8, adsWalkMult:1.2, desc:'A tube sock stuffed with another sock and pulled over the butt of the stock, taped at the cuff. It sits soft and steady on your shoulder: aimed, your shots stay a fifth tighter, and you can walk quicker with the gun up. It’s 0.4 lb more to carry. Sits on the stock of any long gun.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;
@@ -280,7 +284,7 @@ const HOMEMADE_SLOTS = ['under', 'muzzle', 'stock'];   // v1.420: the slots that
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
   const long = (c.under || LONG_GUNS_NO_UNDER[gunType]) ? 1 : 0;   // v1.420: MUZZLE and STOCK on every long gun
-  return Object.assign({ under: 0 }, c, { muzzle: long, stock: 0 });   // v1.169: pistols have no under-barrel slot
+  return Object.assign({ under: 0 }, c, { muzzle: long, stock: long });   // v1.425: the STOCK slot opens   // v1.169: pistols have no under-barrel slot
 }
 
 // =====================================================================

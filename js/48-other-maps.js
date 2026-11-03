@@ -1112,16 +1112,10 @@ function buildGroceryStoreScene(variant, timeOfDay) {
     coverList.push(box(16.5, 22.5, 11.0, 12.0, 1.1, 'wood'));
     box(21.5, 22.5, 12.0, 15.0, 1.1, 'wood');
     // shopping carts by the doors, nested in a row (waist-high cover), and two loose ones
-    const cartMat = std(0xa8acb0, { metalness: 0.6, roughness: 0.4 }), handle = std(0xc0302a);
     const cart = (x, z, yaw, n = 1) => {
       const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw;
-      for (let k = 0; k < n; k++) {
-        const b = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.9), new THREE.MeshStandardMaterial({ color: 0xa8acb0, metalness: 0.6, roughness: 0.4, wireframe: true }));
-        b.position.set(0, 0.75, k * 0.3); g.add(b);
-        const bt = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.02, 0.85), cartMat); bt.position.set(0, 0.55, k * 0.3); g.add(bt);
-      }
-      const hd = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.05, 0.05), handle); hd.position.set(0, 1.0, (n - 1) * 0.3 + 0.48); g.add(hd);
-      for (const dx of [-0.22, 0.22]) for (const dz of [-0.35, (n - 1) * 0.3 + 0.35]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 8), std(0x1a1a1a)); w.rotation.z = Math.PI / 2; w.position.set(dx, 0.06, dz); g.add(w); }
+      // v1.423 (B.21): wire-basket carts on casters (the street kit's), nested 0.3 m apart, the gate up on all but the last
+      for (let k = 0; k < n; k++) { const c = makeShoppingCart({ gate: k === n - 1 }); c.position.z = k * 0.3; g.add(c); }
       scene.add(g);
       const len = 0.9 + (n - 1) * 0.3, c = Math.abs(Math.cos(yaw)), s = Math.abs(Math.sin(yaw));
       const cz = z + Math.cos(yaw) * (n - 1) * 0.15, cxx = x + Math.sin(yaw) * (n - 1) * 0.15;

@@ -129,5 +129,21 @@ for (const id of ladder.ids.filter(i => !SCENARIOS_VIP.includes(i))) {
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
+// v1.423 (B.21): the lot's and the store's carts are wire baskets on four casters, not a wireframe box with no wheels
+const carts = await page.evaluate(() => {
+  const out = {};
+  for (const [name, fn] of [['lot', () => buildMarketLotScene('default', 'day')], ['store', () => buildGroceryStoreScene('default', 'day')]]) {
+    const built = withSeededRandom('x|' + name, fn); built.scene.updateMatrixWorld(true);
+    const cs = []; built.scene.traverse(o => { if (o.userData.shoppingCart) cs.push(o); });
+    const parts = cs.map(c => { const p = {}; c.traverse(m => { if (m.isMesh) p[m.userData.cartPart] = m; }); return p; });
+    const wheelY = parts.map(p => p.wheels ? +new THREE.Box3().setFromObject(p.wheels).min.y.toFixed(3) : 9);
+    let wireframe = 0; built.scene.traverse(m => { if (m.isMesh && [].concat(m.material).some(x => x.wireframe)) wireframe++; });
+    out[name] = { carts: cs.length, whole: parts.filter(p => p.wire && p.frame && p.wheels && p.wire.material.map).length,
+      wheelY: [Math.min(...wheelY), Math.max(...wheelY)], wireframe };
+  }
+  return out;
+});
+for (const k of ['lot', 'store']) check(`${k}: every cart has its wire basket, frame and casters, the wheels on the ground`,
+  carts[k].carts >= 10 && carts[k].whole === carts[k].carts && carts[k].wheelY[0] >= 0 && carts[k].wheelY[1] < 0.01 && carts[k].wireframe === 0, carts[k]);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

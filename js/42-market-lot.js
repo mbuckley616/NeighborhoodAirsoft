@@ -34,7 +34,10 @@ const ML = {
   stripX0: -42, stripX1: -7, stripZ: -42, stripD: 30, stripH: 6.5,
   rows: [-28, -10, 8, 26, 44, 62, 80, 98, 116],   // double-row centrelines; the aisles between them at -37, -19, -1, 17, 35 ...
   playRows: 4,                                     // the first four whole rows are in play; the fifth's west half is solid, the edge
-  area: { minX: -42.5, maxX: 38.3, minZ: -41.5, maxZ: 27 },   // v1.391: east edge at the aisle's side, the fifth row's cars its fence
+  // v1.424 (B.22, Michael 2 Nov: the east border "feels somewhat arbitrary / is a random invisible wall ... extend it to the
+  // bushes nearby"): the east edge was at the aisle's side, x 38.3, 5 m short of the fifth row's hedge; it is the hedge's
+  // west face now, the fifth row's west half in play, and a line of the kids' cones carries it across the front drive
+  area: { minX: -42.5, maxX: 43.3, minZ: -41.5, maxZ: 27 },
   foutsZ: 34,
 };
 ML.rowZ1 = ML.rowZ0 + ML.stalls * ML.stall;        // 24.8: the rows' south end
@@ -354,8 +357,9 @@ function buildMarketLotScene(variant, timeOfDay) {
       carObs.mesh.position.y += seated;
       resolveObox(carObs); resolveObox(carObs._stacked);
       pushCarObs(obstacles, carObs);
-      // v1.391: the fifth row's west half is the area's east fence: solid, but past the edge, so nobody's cover (a kid
-      // falling back picked its cars and stood at the edge with his back to the fight)
+      // v1.391: the fifth row's west half is solid but nobody's cover: a kid falling back picked its cars and stood at the
+      // edge with his back to the fight. v1.424: in play now, its cars still stay off the kids' list, since their far
+      // side is the hedge and the edge (a kid falling back to one ended closer to you, \`under-fire\`); you can use them
       if (c < ML.rows[ML.playRows]) coverList.push(carObs);
       carObsList.push(carObs);
     }
@@ -458,14 +462,8 @@ function buildMarketLotScene(variant, timeOfDay) {
     const o = box(x - 1.75, x + 1.75, z - 0.7, z + 0.7, 1.05, 'metal');
     coverList.push(o); return o;
   };
-  function makeCartMesh(x, z, yaw = 0) {
-    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw;
-    const basket = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.9), new THREE.MeshStandardMaterial({ color: 0xa0a6aa, roughness: 0.4, metalness: 0.6, wireframe: true }));
-    basket.position.y = 0.7; g.add(basket);
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.85), railMat);
-    frame.position.y = 0.2; g.add(frame);
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0xc03028, roughness: 0.6 }));
-    handle.position.set(0, 1.0, -0.5); g.add(handle);
+  function makeCartMesh(x, z, yaw = 0) {   // v1.423 (B.21): the wire-basket cart on its casters, from the street kit
+    const g = makeShoppingCart(); g.position.set(x, 0, z); g.rotation.y = yaw;
     return g;
   }
   for (const [c, s, k] of CORRAL_STALLS) addCorral(c + s * 2.75, mlStallZ(k));
@@ -512,6 +510,20 @@ function buildMarketLotScene(variant, timeOfDay) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.5, 2.2), dMat);
       m.position.set(-8.2, 0.75, dz); m.castShadow = m.receiveShadow = true; scene.add(m);
       coverList.push(box(-9, -7.4, dz - 1.1, dz + 1.1, 1.5, 'metal'));
+    }
+  }
+
+  // v1.424: the east edge across the front drive and the fire lane, where no hedge runs: six orange cones the kids set
+  // out from the walk to the fifth row's north island, just past the edge (they stop nothing; the edge does)
+  {
+    const orange = new THREE.MeshStandardMaterial({ color: 0xf06a1a, roughness: 0.7 }), band = new THREE.MeshStandardMaterial({ color: 0xeeeeea, roughness: 0.5 });
+    const base = new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.9 });
+    for (let z = -28.5; z <= -16; z += 2.5) {
+      const g = new THREE.Group(); g.position.set(A_.maxX + 0.35, 0, z); g.userData.edgeCone = true;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.04, 0.36), base); b.position.y = 0.02; g.add(b);
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.15, 0.68, 12), orange); c.position.y = 0.38; c.castShadow = true; g.add(c);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.1, 0.12, 12), band); r.position.y = 0.46; g.add(r);
+      scene.add(g);
     }
   }
 
