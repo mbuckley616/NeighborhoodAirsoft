@@ -1317,19 +1317,25 @@ function buildBedroomScene() {
   }
   pickupGroup.position.set(1.65, 1.5, -BR_D/2 + 0.062);
   scene.add(pickupGroup);
-  // v1.401 (D.57 step 3): each captain's crew you've beaten in its finale pins its bandana in a row over the board,
-  // folded to a triangle, in the ladder's order (Tyler's is Seth's red, with a stripe)
+  // v1.401 (D.57 step 3): each captain's crew you've beaten in its finale pins its colours in a row over the board,
+  // in the ladder's order (Tyler's is Seth's red, with a stripe). v1.430 (D.84, Michael: A): a small jersey, its back
+  // to the room with the captain's number, where a folded bandana hung
   const won = captainBandanasWon();
   won.forEach((cap, i) => {
     const hex = CAPTAIN_COLORS[captainCrewOf(cap)];
-    const tri = new THREE.Shape(); tri.moveTo(-0.075, 0); tri.lineTo(0.075, 0); tri.lineTo(0, -0.11); tri.lineTo(-0.075, 0);
-    const band = new THREE.Mesh(new THREE.ShapeGeometry(tri), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.9, side: THREE.DoubleSide }));
-    band.name = 'captainBandana'; band.userData.captain = cap;
+    const tee = new THREE.Shape();   // a T: shoulders and short sleeves over the body, hung from the pin at its collar
+    tee.moveTo(-0.03, 0); tee.lineTo(-0.075, -0.008); tee.lineTo(-0.085, -0.045); tee.lineTo(-0.055, -0.05); tee.lineTo(-0.052, -0.13);
+    tee.lineTo(0.052, -0.13); tee.lineTo(0.055, -0.05); tee.lineTo(0.085, -0.045); tee.lineTo(0.075, -0.008); tee.lineTo(0.03, 0); tee.lineTo(-0.03, 0);
+    const band = new THREE.Mesh(new THREE.ShapeGeometry(tee), new THREE.MeshStandardMaterial({ color: hex, roughness: 0.9, side: THREE.DoubleSide }));
+    band.name = 'captainBandana'; band.userData.captain = cap; band.userData.jersey = true;
     band.position.set(1.65 + (i - (won.length - 1) / 2) * 0.17, 1.5 + 0.43, -BR_D/2 + 0.064);
-    band.rotation.z = (i % 2 ? -1 : 1) * 0.06;
+    band.rotation.z = (i % 2 ? -1 : 1) * 0.03;
+    const numTex = jerseyPrintTexture(kidJerseyNumber(cap), '', jerseyInk(hex), true);
+    const num = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), new THREE.MeshStandardMaterial({ map: numTex, transparent: true, alphaTest: 0.4, roughness: 0.9 }));
+    num.position.set(0, -0.075, 0.002); band.add(num);
     if (cap === 'tyler') {
-      const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.014), new THREE.MeshStandardMaterial({ color: 0x1e1e20, roughness: 0.9 }));
-      stripe.position.set(0, -0.025, 0.002); band.add(stripe);
+      const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.104, 0.012), new THREE.MeshStandardMaterial({ color: 0x1e1e20, roughness: 0.9 }));
+      stripe.position.set(0, -0.118, 0.002); band.add(stripe);
     }
     const pin = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), new THREE.MeshStandardMaterial({ color: 0xd8d8d8, roughness: 0.4 }));
     pin.position.set(0, -0.012, 0.01); band.add(pin);

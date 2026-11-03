@@ -284,8 +284,8 @@ function drawBriefingLineup(root) {
       if (cv.dataset.you) { drawKidPortrait(cv, Game.persist.look, Game.persist.equipped.gun, -0.45, loadoutKidGearKeys()); continue; }
       const ch = CHARACTERS[cv.dataset.kid];
       if (!ch) continue;
-      const look = cc != null && cv.dataset.crew === '1' ? Object.assign({}, ch, { crewColor: cc })
-        : cv.dataset.band ? Object.assign({}, ch, { crewColor: +cv.dataset.band }) : ch;   // v1.401: their crew's colour
+      const look = cc != null && cv.dataset.crew === '1' ? withKidJersey(ch, cv.dataset.kid, cc)   // v1.430 (D.84): in the jersey
+        : cv.dataset.band ? withKidJersey(ch, cv.dataset.kid, +cv.dataset.band) : ch;   // v1.401: their crew's colour
       drawKidPortrait(cv, look, cv.dataset.gun, cv.closest('.enemy') ? 0.45 : -0.45);
     } catch (e) { console.warn('lineup', e); }
   }

@@ -86,14 +86,14 @@ console.log('   night: ' + JSON.stringify(night));
 check('by night the porch lights glow too (four meshes)', night.decor && night.decor.night && night.decor.meshes.includes('porchGlow') && night.decor.meshes.length === 4, night.decor);
 
 // v1.351 (D.70 step 2): kids in costumes. Every match kid, both sides, wears the costume his name picks; the crew
-// bandana stays on; the head piece lowers with a crouch; nothing is added to the obstacles or changes a hit.
+// jersey (v1.430; the bandana before) stays on; the head piece lowers with a crouch; nothing is added to the obstacles or changes a hit.
 const kids = () => page.evaluate(() => {
   Game.renderer.render(Game.scene, Game.camera);
   const calls = Game.renderer.info.render.calls;
   return { calls, obstacles: (Game.player.obstacles || []).length, kids: Game.scenario.enemies.map(e => {
     const c = e.mesh.costume, hat = e.mesh.hat;
     return { id: e.charId, team: e.team, want: kidCostumeFor(e.charId), costume: c ? c.id : null,
-      head: !!(c && c.head), body: !!(c && c.body && c.body.children.length), bandana: !!(hat && hat.userData.crewBandana && hat.visible),
+      head: !!(c && c.head), body: !!(c && c.body && c.body.children.length), jersey: !!e.mesh.jersey,   // v1.430 (D.84): the crew's jersey, no bandana
       ownHat: !!(hat && !hat.userData.crewBandana) };
   }) };
 });
@@ -104,13 +104,13 @@ await page.evaluate(() => { Holiday.force = 'halloween'; });
 await g.scenario('bellfield_3v3');
 const dressed = await kids();
 await g.shot('holiday-costumes');
-console.log('   costumes: ' + JSON.stringify(dressed.kids.map(k => k.id + ':' + k.costume + (k.bandana ? '+bandana' : ''))) + ', calls ' + plain.calls + ' -> ' + dressed.calls);
+console.log('   costumes: ' + JSON.stringify(dressed.kids.map(k => k.id + ':' + k.costume + (k.jersey ? '+jersey' : ''))) + ', calls ' + plain.calls + ' -> ' + dressed.calls);
 check('forced off, no kid is in costume', plain.kids.every(k => k.costume === null && k.want === null), plain.kids);
 check('in season every kid of both sides wears the costume his name picks, a body part each',
   dressed.kids.length >= 6 && dressed.kids.every(k => k.costume === k.want && (!k.costume || k.body)) && dressed.kids.some(k => k.team === 'player' && k.costume) && dressed.kids.some(k => k.team !== 'player' && k.costume), dressed.kids);
 check('a kid in his own hat keeps it and wears no head piece; the others with a hat costume wear it',
   dressed.kids.every(k => !k.costume || !['witch', 'devil', 'cat'].includes(k.costume) || (k.ownHat ? !k.head : k.head)), dressed.kids);
-check('your side still wears the crew bandana under the costumes', dressed.kids.filter(k => k.team === 'player').every(k => k.bandana || k.ownHat), dressed.kids.filter(k => k.team === 'player'));
+check('your side still wears the crew jersey under the costumes', dressed.kids.filter(k => k.team === 'player').every(k => k.jersey), dressed.kids.filter(k => k.team === 'player'));
 check('nothing solid is added', dressed.obstacles === plain.obstacles, [plain.obstacles, dressed.obstacles]);
 const spread = await page.evaluate(() => {
   const n = {}; for (const id of Object.keys(CHARACTERS)) { const c = kidCostumeFor(id) || 'none'; n[c] = (n[c] || 0) + 1; }

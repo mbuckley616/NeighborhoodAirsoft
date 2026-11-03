@@ -34,8 +34,9 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
   // with near-zero aggression/fireRate). Clone the profile first so we never mutate
   // the shared CHARACTERS entry used by every other scenario.
   const ch = statsOverride ? Object.assign({}, baseCh, statsOverride) : baseCh;
-  // v1.200: an ally of yours wears your crew's bandana (a copy of the profile, so CHARACTERS is never changed)
-  const kid = createKid(crewColor != null ? Object.assign({}, ch, { crewColor }) : ch, weapon);
+  // v1.200: an ally of yours wears your crew's colour (a copy of the profile, so CHARACTERS is never changed);
+  // v1.430 (D.84): as its jersey, his name and number on the back
+  const kid = createKid(crewColor != null ? withKidJersey(ch, charId, crewColor) : ch, weapon);
   const costume = kidCostumeFor(charId);   // v1.351 (D.70 step 2): Halloween costumes, every match kid
   if (costume) addKidCostume(kid, costume, ch);
   kid.group.position.copy(pos);
@@ -777,6 +778,106 @@ function buildKidShorts(id, leg, skin, sx) {
   return g;
 }
 
+// v1.430 (D.84, Michael: A on "Crew jerseys", 3 Nov: "Jerseys for every crew, the bandanas go"). A kid in a crew wears
+// its jersey: your crew in your colour (you and your allies), each captain's crew in its captain's, Seth's in his red.
+// Kids in no crew (a 1v1's street kid, the Pickup Game's, the tutorial) wear their own clothes. The jersey is loose and
+// untucked over the shirt and belt, the sleeves in its colour with a cuff band, a V at the neck, the kid's name over a
+// big number on the back and the small number on the left chest; the ink is white, or navy on a pale jersey. Each kid
+// keeps one number all summer (kidJerseyNumber); yours is picked at the mirror with the name on your back.
+function kidJerseyColor(p) {
+  const c = p.crewColor;
+  return c != null && (CREW_COLORS.some(k => k.hex === c) || Object.values(CAPTAIN_COLORS).includes(c)) ? c : null;
+}
+function jerseyInk(hex) {
+  const c = new THREE.Color(hex);
+  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b > 0.55 ? 0x1a2238 : 0xf4f2ea;
+}
+// One number per kid, 1-99, the same every match: a hash of his id, stepped on past numbers already taken, kids in
+// id order; you have yours (look.jerseyNumber), and an ally whose number is yours wears the next one free.
+let _kidJerseyNums = null;
+function kidJerseyNumber(charId) {
+  if (!_kidJerseyNums) {
+    _kidJerseyNums = {};
+    const taken = new Set();
+    for (const id of Object.keys(CHARACTERS).sort()) {
+      let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      let n = 1 + (h % 99);
+      for (let i = 0; i < 99 && taken.has(n); i++) n = n % 99 + 1;
+      taken.add(n); _kidJerseyNums[id] = n;
+    }
+  }
+  let n = _kidJerseyNums[charId] || 0;
+  const mine = playerJerseyNumber();
+  if (n && n === mine) n = n % 99 + 1;
+  return n;
+}
+const JERSEY_NAME_MAX = 10;
+function cleanJerseyName(v) {
+  return String(v == null ? '' : v).replace(/[^A-Za-z0-9 .'\-]/g, '').replace(/\s+/g, ' ').replace(/^\s+/, '').slice(0, JERSEY_NAME_MAX).toUpperCase();
+}
+function cleanJerseyNumber(v) {
+  const n = parseInt(String(v == null ? '' : v).replace(/\D/g, '').slice(0, 2), 10);
+  return isFinite(n) && n >= 0 && n <= 99 ? n : null;
+}
+function playerJerseyNumber() {
+  const n = Game.persist && Game.persist.look ? cleanJerseyNumber(Game.persist.look.jerseyNumber) : null;
+  return n == null ? 10 : n;
+}
+// The profile's jersey fields: a match kid's, from his id; yours come with your look
+function withKidJersey(ch, charId, crewColor) {
+  return Object.assign({}, ch, { crewColor, jerseyNumber: kidJerseyNumber(charId), jerseyName: ch.name });
+}
+const _jerseyTex = {};
+function jerseyPrintTexture(num, name, ink, small) {
+  const key = num + '|' + (small ? '' : name) + '|' + ink + '|' + (small ? 's' : 'b');
+  if (_jerseyTex[key]) return _jerseyTex[key];
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = small ? 64 : 256;
+  const x = cv.getContext('2d');
+  x.fillStyle = '#' + ink.toString(16).padStart(6, '0');
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  if (small) {
+    x.font = 'bold 50px Arial, Helvetica, sans-serif'; x.fillText(String(num), 32, 35);
+  } else {
+    if (name) {
+      x.font = 'bold 52px Arial, Helvetica, sans-serif';
+      const w = x.measureText(name).width;
+      x.save(); x.translate(128, 38); if (w > 236) x.scale(236 / w, 1); x.fillText(name, 0, 0); x.restore();
+    }
+    x.font = 'bold 170px Arial, Helvetica, sans-serif'; x.fillText(String(num), 128, name ? 160 : 132);
+  }
+  const t = new THREE.CanvasTexture(cv);
+  t.needsUpdate = true;
+  return (_jerseyTex[key] = t);
+}
+function buildKidJersey(p, color, torso, uppers) {
+  const ink = jerseyInk(color);
+  const mats = { body: _kidFaceMat('jersey', color, 0.8), ink: _kidFaceMat('jerseyInk', ink, 0.8) };
+  const b = {}; const add = _propAdder(b);
+  const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+  add('body', box(0.434, 0.47, 0.254), 0, -0.025, 0);                       // loose, untucked over the belt
+  add('ink', box(0.436, 0.024, 0.256), 0, -0.248, 0);                       // the hem band
+  for (const sx of [-1, 1]) add('ink', box(0.016, 0.09, 0.006), sx * 0.03, 0.2, 0.128, 0, 0, sx * 0.55);   // the V at the neck
+  const g = new THREE.Group(); g.userData.crewJersey = color; g.name = 'crewJersey';
+  _propMerge(g, b, mats);
+  const num = cleanJerseyNumber(p.jerseyNumber);
+  const n = num == null ? 0 : num, name = cleanJerseyName(p.jerseyName);
+  g.userData.jerseyNumber = n; g.userData.jerseyName = name;
+  const print = (tex, w, x, y, z, ry) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w), new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.4, roughness: 0.8 }));
+    m.position.set(x, y, z); m.rotation.y = ry; g.add(m); return m;
+  };
+  print(jerseyPrintTexture(n, name, ink, false), 0.3, 0, 0.02, -0.1285, Math.PI).name = 'jerseyBack';
+  print(jerseyPrintTexture(n, '', ink, true), 0.075, 0.095, 0.12, 0.1285, 0).name = 'jerseyFront';
+  g.traverse(m => { if (m.isMesh) m.castShadow = false; });
+  torso.add(g);
+  for (const u of uppers) {                                                 // a band round each sleeve's end
+    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.114, 0.022, 0.134), mats.ink);
+    cuff.position.set(0, -0.098, 0); cuff.userData.jerseyCuff = true; u.add(cuff);
+  }
+  return g;
+}
+
 function createKid(profile, weapon = 'pistol') {
   // Default profile (back-compat with previous call signature)
   const p = {
@@ -784,8 +885,12 @@ function createKid(profile, weapon = 'pistol') {
     height: 'average', build: 'average', hairStyle: 'short', glasses: false,
     ...profile,
   };
-  const top = KID_TOPS[p.top] ? p.top : null;   // v1.198 (D.21 step 2): a top's colour is the shirt's
+  // v1.430 (D.84, Michael: A): a crew kid wears his crew's jersey over whatever he has on, so the shirt, its sleeves and
+  // trim take the crew's colour and a top (a tee, the hoodie) stays under it
+  const jersey = kidJerseyColor(p);
+  const top = jersey == null && KID_TOPS[p.top] ? p.top : null;   // v1.198 (D.21 step 2): a top's colour is the shirt's
   if (top) p.shirtColor = KID_TOPS[top].color;
+  if (jersey != null) p.shirtColor = jersey;
 
   const scaleY  = KID_HEIGHT_SCALE[p.height]  ?? 1.0;
   const scaleXZ = KID_BUILD_SCALE[p.build]    ?? 1.0;
@@ -947,13 +1052,8 @@ function createKid(profile, weapon = 'pistol') {
     group.add(hat);
     if (p.hairStyle === 'curly' && KID_HATS[p.hat].kind !== 'bandana') for (const m of headExtras) m.visible = false;
     headExtras.push(hat);
-  } else if (p.crewColor != null && (CREW_COLORS.some(c => c.hex === p.crewColor) || Object.values(CAPTAIN_COLORS).includes(p.crewColor))) {   // v1.401: a captain's crew's
-    // v1.200 (D.21, your crew): no hat on, so the crew's bandana in its colour; you and your allies wear it
-    hat = buildKidHat('bandana_red', p.crewColor);
-    hat.userData.crewBandana = true;
-    group.add(hat);
-    headExtras.push(hat);
   }
+  // v1.430 (D.84, Michael: A): the crew bandana (v1.200, v1.401) is gone; the crew's colour is the jersey (buildKidJersey)
 
   // v1.118 (backlog D.3 step 3, the kids: faces): the two black squares became a face on the head: eye whites, irises
   // and pupils, brows in the hair colour, a nose, ears and a mouth, and open glasses frames the eyes show through. It
@@ -967,6 +1067,7 @@ function createKid(profile, weapon = 'pistol') {
   group.add(gunGroup);
 
   buildKidClothes(p, { torso, shoeL, shoeR, shirt });   // v1.120: collar, hem and chest trim, belt, sneaker soles
+  const jerseyMesh = jersey != null ? buildKidJersey(p, jersey, torso, [armRig_R.upper, armRig_L.upper]) : null;   // v1.430
   // v1.198 (D.21 step 2): the top's front on the torso; a hoodie's sleeves run down the forearms to a cuff at the wrist
   let topMesh = null;
   if (top) {
@@ -981,6 +1082,7 @@ function createKid(profile, weapon = 'pistol') {
 
   return {
     group, head, torso, eyeL, eyeR, gunGroup, hat, top: topMesh, shorts,   // v1.197: hat; v1.198: top; v1.199: shorts [R, L]
+    jersey: jerseyMesh,                                                     // v1.430 (D.84): the crew jersey, or null
     parts: { head, torso, hairMesh, neck },
     // v1.14b: parts + their base transforms for a real crouch POSE (instead of
     // sinking the whole group into the ground). Feet stay planted; the body

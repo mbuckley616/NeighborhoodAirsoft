@@ -248,14 +248,15 @@ const LOOK_OPTIONS = [
   // v1.123 (D.6): the rows that waited on the v1.118 face and v1.120 shirt
   { key: 'eyeColor',  label: 'Eyes',   kind: 'swatch', opts: ['brown', 'hazel', 'green', 'blue', 'gray'] },
   { key: 'shirtFront', label: 'Shirt front', kind: 'text', opts: [['plain', 'Plain'], ['stripe', 'Stripe'], ['pocket', 'Pocket']] },
-  // v1.200 (D.21, your crew): a name and a colour; the colour is a bandana you and your allies wear
+  // v1.200 (D.21, your crew): a name and a colour; v1.430 (D.84): the colour is the jersey you and your allies wear
   { key: 'crewName', label: 'Crew name', kind: 'input', crew: true },
   { key: 'crewColor', label: 'Crew colour', kind: 'swatch', crew: true, get opts() { return [null, ...CREW_COLORS.map(c => c.hex)]; } },
+  { key: 'jersey', label: 'Your jersey · number and the name on the back', kind: 'jersey', crew: true },
 ];
 // v1.200 (D.21, "then your crew: a name and colors your allies wear too"; Michael: C on "A better game" 2). The crew is
 // set at the mirror under YOUR CREW. Its name heads your side on the briefing (YOUR SIDE until you name it); its colour
-// is a bandana worn by you (when no hat is on) and by every ally in a match, except a VIP (his cap), Seth (the rival)
-// and the tutorial. None takes the bandanas off.
+// is worn by you and by every ally in a match, except Seth (the rival) and the tutorial: since v1.430 (D.84, Michael: A)
+// as the crew's jersey, no longer a bandana, and a VIP wears it too, under his cap.
 const CREW_COLORS = [
   { hex: 0xe07a1e, name: 'orange' }, { hex: 0x2a5ad0, name: 'blue' }, { hex: 0x2f8a3a, name: 'green' },
   { hex: 0x6a3a9a, name: 'purple' }, { hex: 0xe0c020, name: 'yellow' }, { hex: 0x1e1e20, name: 'black' },
@@ -271,8 +272,9 @@ function crewColor() {
 }
 function crewWornBy(sc, es, team) {
   // v1.401 (D.57 step 3): a kid on the other side wears his captain's crew's colour (none in the Pickup Game or online)
-  if (team !== 'player') return sc.tutorial || sc.pickup || sc.net || es.vip ? null : captainColorOf(es.charId);
-  if (es.vip || sc.tutorial || es.charId === 'seth') return null;
+  // v1.430 (D.84): a VIP wears his crew's jersey under his cap (the bandana gave way to the cap on his head)
+  if (team !== 'player') return sc.tutorial || sc.pickup || sc.net ? null : captainColorOf(es.charId);
+  if (sc.tutorial || es.charId === 'seth') return null;
   return crewColor();
 }
 const MIRROR = { renderer: null, scene: null, camera: null, kid: null };
@@ -309,6 +311,33 @@ function renderMirrorOptions() {
     const r = document.createElement('div');
     r.className = 'mirror-row'; r.dataset.key = row.key;
     r.innerHTML = `<div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-bottom:4px">${row.label}</div>`;
+    if (row.kind === 'jersey') {   // v1.430 (D.84): your number (0-99) and the name on your back, typed
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+      const css = 'box-sizing:border-box;padding:6px 8px;border-radius:4px;font:inherit;font-size:14px;color:#f4e9d8;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25)';
+      const num = document.createElement('input');
+      num.type = 'text'; num.id = 'mirrorJerseyNumber'; num.maxLength = 2; num.inputMode = 'numeric'; num.placeholder = '#';
+      num.value = String(playerJerseyNumber()); num.style.cssText = 'width:52px;text-align:center;' + css;
+      const nm = document.createElement('input');
+      nm.type = 'text'; nm.id = 'mirrorJerseyName'; nm.maxLength = JERSEY_NAME_MAX; nm.placeholder = 'Name on the back';
+      nm.value = cleanJerseyName(look.jerseyName); nm.style.cssText = 'width:100%;max-width:200px;' + css;
+      for (const el of [num, nm]) for (const ev of ['keydown', 'keyup', 'keypress']) el.addEventListener(ev, e => e.stopPropagation());
+      num.addEventListener('input', () => {
+        const v = num.value.replace(/\D/g, '').slice(0, 2);
+        if (v !== num.value) num.value = v;
+        if (v !== '') { Game.persist.look.jerseyNumber = cleanJerseyNumber(v); renderMirrorPreview(); }
+      });
+      num.addEventListener('blur', () => { num.value = String(playerJerseyNumber()); });
+      nm.addEventListener('input', () => {
+        const v = cleanJerseyName(nm.value);
+        if (v !== nm.value) nm.value = v;
+        Game.persist.look.jerseyName = v; renderMirrorPreview();
+      });
+      wrap.appendChild(num); wrap.appendChild(nm);
+      r.appendChild(wrap);
+      box.appendChild(r);
+      continue;
+    }
     if (row.kind === 'input') {   // v1.200: the crew name, typed; the game's keys don't see it
       const inp = document.createElement('input');
       inp.type = 'text'; inp.id = 'mirrorCrewName'; inp.maxLength = CREW_NAME_MAX; inp.placeholder = 'Name your crew';

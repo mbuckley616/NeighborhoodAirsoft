@@ -1,7 +1,7 @@
 // v1.401 (D.57 step 3, the plan's Crew Captains; Michael: all of docs/crew_ladder.md, 22 Oct): each captain's crew
 // wears its own colour, has a heading and a score line on the briefing, its captain's callout says whose, its finale is
 // the captain's whole crew with him in it at plus one, the captain is a notch better than his crew, and beating the
-// finale pins the crew's bandana over the Pickup board.
+// finale pins the crew's colours over the Pickup board (v1.430, D.84: a jersey, a bandana before).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -63,13 +63,13 @@ await page.evaluate(() => { Game.persist.crew = ['eric', 'sean', 'nick']; Game.p
 await g.scenario('lot_team_3v3');
 await g.spin(60);
 const worn = await page.evaluate(() => Game.scenario.enemies.map(e => {
-  let hex = null; e.mesh.group.traverse(o => { if (o.userData && o.userData.crewBandana) o.traverse(m => { if (m.material && m.material.color && hex == null) hex = m.material.color.getHex(); }); });
-  return { kid: e.charId, team: e.team, hex, want: e.team === 'player' ? crewColor() : captainColorOf(e.charId) };
+  const hex = e.mesh.jersey ? e.mesh.jersey.userData.crewJersey : null;   // v1.430 (D.84): the jersey's colour
+  return { kid: e.charId, team: e.team, hex, want: e.team === 'player' ? crewColor() : captainColorOf(e.charId), bandana: !!(e.mesh.hat && e.mesh.hat.userData.crewBandana) };
 }));
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
 await g.spin(60);
-const wrongBand = worn.filter(w => w.hex !== w.want);
-check('in the lot, Marcus\'s kids wear teal, Seth\'s red, your crew your blue', wrongBand.length === 0 && worn.some(w => w.hex === 0x1f8a8a) && worn.some(w => w.hex === 0xc0282a) && worn.some(w => w.hex === 0x2a5ad0), worn);
+const wrongBand = worn.filter(w => w.hex !== w.want || w.bandana);
+check('in the lot, Marcus\'s kids wear teal jerseys, Seth\'s red, your crew your blue; no bandanas', wrongBand.length === 0 && worn.some(w => w.hex === 0x1f8a8a) && worn.some(w => w.hex === 0xc0282a) && worn.some(w => w.hex === 0x2a5ad0), worn);
 
 // The finale won: its result card says so, and the bandana is on your wall
 const won = await page.evaluate(() => {
@@ -83,15 +83,15 @@ const res = await page.evaluate(() => {
   endScenario('win');
   return document.getElementById('resultStats').textContent;
 });
-check('After Close won: "Marcus\'s crew\'s bandana goes on your wall."', /Marcus's crew's bandana goes on your wall/.test(res) && /CAPTAIN/.test(res), res.slice(0, 300));
+check('After Close won: "Marcus\'s crew\'s jersey goes on your wall."', /JERSEY Marcus's crew's jersey goes on your wall/.test(res) && /CAPTAIN/.test(res), res.slice(0, 300));
 await g.spin(30);
 const wall = await page.evaluate(() => {
   Game.persist.completed.bunratty_night_team_2v2 = true;
   enterBedroom();
-  const b = []; Game.scene.traverse(o => { if (o.name === 'captainBandana') b.push({ cap: o.userData.captain, hex: o.material.color.getHex(), y: +o.position.y.toFixed(2) }); });
+  const b = []; Game.scene.traverse(o => { if (o.name === 'captainBandana') b.push({ cap: o.userData.captain, hex: o.material.color.getHex(), y: +o.position.y.toFixed(2), jersey: !!o.userData.jersey, num: o.children.some(m => m.material && m.material.map) }); });
   return b;
 });
-check("the wall: Mitchell's white and Marcus's teal, in the ladder's order, over the board", wall.length === 2 && wall[0].cap === 'mitchell' && wall[1].cap === 'marcus' &&
+check("the wall: Mitchell's white jersey and Marcus's teal, numbered, in the ladder's order, over the board", wall.length === 2 && wall[0].cap === 'mitchell' && wall[1].cap === 'marcus' && wall.every(w => w.jersey && w.num) &&
   wall[1].hex === 0x1f8a8a, wall);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
