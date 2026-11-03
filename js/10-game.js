@@ -904,7 +904,8 @@ const Game = {
             hat: 'none',                              // v1.197 (D.21 step 1): a KID_HATS id, or none
             top: 'none',                              // v1.198 (D.21 step 2): a KID_TOPS id, or none (the shirt shows)
             shorts: 'none',                           // v1.199 (D.21 step 3): a KID_SHORTS id, or none (the jeans)
-            crewName: '', crewColor: null },          // v1.200 (D.21, your crew): its name and bandana colour, or none
+            crewName: '', crewColor: null,            // v1.200 (D.21, your crew): its name and colour, or none
+            jerseyNumber: 10, jerseyName: '' },      // v1.430 (D.84): your crew jersey's number and the name on its back
     ownedHats: {},              // v1.197: the hats you have bought (won ones are owned by their win)
     ownedTops: {},              // v1.198: the tops you have bought
     ownedShorts: {},            // v1.199: the shorts you have bought
