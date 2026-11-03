@@ -1045,12 +1045,13 @@ function describeSlot(idx) {
       spare_mag_pumpsniper: 'Spare 20-rd Pump Sniper Mag',   // v1.416
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
+    const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
     return {
       kind: 'spare_mag',
       icon: '▮',
-      name: SPARE_MAG_LABEL[slot.refId] || `Spare ${cap}-rd Mag`,
+      name: longIn ? 'Taped-Up Long Mag' : (SPARE_MAG_LABEL[slot.refId] || `Spare ${cap}-rd Mag`),
       desc: 'Fills from your bag every match. Swap-in reload.',   // v1.323 (B.14): kept, not used up
-      magCap: cap,
+      magCap: longIn ? Game.gun.spareCap[idx] : cap,
       refId: slot.refId,
       bbs: (Game.gun.spareAmmo || {})[idx] || 0,   // v1.323: what it holds in this match
     };
@@ -1413,19 +1414,30 @@ function refillEquippedSpeedLoadersFromBag() {
 // the gun's mag and the taped twin (up to its size, or the gun's mag if that is smaller), into Game.gun.spareAmmo by
 // slot. The swap trades mags: the fresh one goes in and the one you pulled goes in the pouch with what it had left, so
 // the slot stays and no BB is lost. Whatever is left in them goes back in the bag when the match ends.
+// v1.428 (Found in play, critic 3 Nov): a mag's size goes with the mag. Game.gun.spareCap holds each pouch's mag size
+// (a plain spare: its own, at most the gun's bare mag) and Game.gun.spareLong whether it holds the Taped-Up Long Mag;
+// Game.gun.magLong says the long mag is the one in the gun. The swap trades all three, so after a spare goes in the HUD
+// reads the spare's size, a speed loader tops it up to that, and the long mag waits in the pouch at its own 1.5×.
 function fillSpareMagsFromBag() {
   Game.gun.spareAmmo = {};
+  Game.gun.spareCap = {};
+  Game.gun.spareLong = {};
+  const bare = getMaxAmmoForGun(Game.gun.type);
+  Game.gun.magLong = Game.gun.maxAmmo > bare;
   Game.persist.loadoutSlots.forEach((slot, i) => {
     if (!slot || slot.kind !== 'spare_mag') return;
     if (MAG_GUN_FIT[slot.refId] && MAG_GUN_FIT[slot.refId] !== Game.gun.type) return;
-    const take = Math.min((describeSlot(i) || {}).magCap || 0, Game.gun.maxAmmo, Game.persist.bag);
+    const cap = Math.min((describeSlot(i) || {}).magCap || 0, bare);
+    const take = Math.min(cap, Game.persist.bag);
     Game.gun.spareAmmo[i] = take;
+    Game.gun.spareCap[i] = cap;
     Game.persist.bag -= take;
   });
 }
 function returnSpareMagsToBag() {
   for (const i in Game.gun.spareAmmo || {}) Game.persist.bag += Game.gun.spareAmmo[i];
   Game.gun.spareAmmo = {};
+  Game.gun.spareCap = {}; Game.gun.spareLong = {};   // v1.428
 }
 
 // Return every EQUIPPED speed loader's remaining BBs to the bag (round end).

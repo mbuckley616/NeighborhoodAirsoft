@@ -168,10 +168,12 @@ await g.scenario('pickup_game');
 const pkDateJuly = await pickupRead();
 await g.scenario('bellfield_3v3');
 const ladderJuly = await pickupRead();
-await page.evaluate(() => { holidayByDate = window.__realByDate; pickupState.holiday = 'none'; buildPickupScenario(pickupState); });
+// in season (the date read as Halloween; the real clock is only in season 17 Oct-1 Nov, so it can't be used here)
+await page.evaluate(() => { holidayByDate = () => 'halloween'; pickupState.holiday = 'none'; buildPickupScenario(pickupState); });
 await g.scenario('pickup_game');
 await g.scenario('bellfield_3v3');
 const ladderAfterOff = await pickupRead();
+await page.evaluate(() => { holidayByDate = window.__realByDate; });
 console.log('   pickup: ' + JSON.stringify({ pkOff, pkOn, pkDateJuly, ladderJuly, ladderAfterOff }));
 check('in season, a pickup game with Off has no lanterns and no costumes', !pkOff.decor && pkOff.costumes === 0 && pkOff.kids > 0, pkOff);
 check('out of season, a pickup game with Halloween has the houses done up and kids in costume', pkOn.decor && pkOn.costumes > 0, pkOn);

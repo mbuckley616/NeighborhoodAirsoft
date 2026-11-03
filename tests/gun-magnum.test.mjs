@@ -61,9 +61,10 @@ const MG = await page.evaluate(() => {
   out.pulls = pulls; out.speeds = speeds; out.hammerBack = hammer; out.cylChambers = cyl;
   out.hammerHome = +(ham.position.z - ham.userData.baseZ).toFixed(4);
   // dry: one more pull fires nothing
-  const n1 = Game.scenario.bbs.length;
+  // count new BBs, not the list's length: an earlier BB landing in these two steps leaves the list and read as -1
+  for (const b of Game.scenario.bbs) b.__beforeDry = true;
   Game.mouseLMB = true; onLmbDown(); step(); up(); step();
-  out.dryFired = Game.scenario.bbs.length - n1;
+  out.dryFired = Game.scenario.bbs.filter(b => !b.__beforeDry).length;
   // pulled as fast as a finger goes (every 4 frames) for 2 s from a full cylinder: at most 2.5 a second
   Game.gun.ammo = Game.gun.maxAmmo; Game.gun.cocked = true; Game.gun.cockProgress = 0; Game.gun.fireCooldown = 0;
   for (let i = 0; i < 30; i++) step();
