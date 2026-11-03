@@ -5,6 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
+- **Fernando's nest in a daytime Northcliff pickup game, now the street is real size (Fable, 2026-11-03, card fable/d51-northcliff)**
+  In a daytime 4v4 Pickup Game on the real-size Northcliff (PR #235), Fernando lands 11-12 of 14 hits on a player who
+  walks at the nearest kid: his nest sees down the street to the bend, and the other three sit 55 m up the west leg and
+  rarely reach you. His own rate is unchanged. (Full entry on auto/fable-d51-northcliff.)
+  - A) Leave it as it is; the check measures his tags per round.
+  - B) By day his nest moves 4-5 m back up the hill, behind the corner house.
+  - C) By day the other three come down the west leg to the bend sooner.
+  Recommendation: C.
+  Michael: **C) By day the other three come down the west leg to the bend sooner.** (2026-11-03)
+
 - **Crew jerseys (builder, 2026-11-03, backlog D.84)**
   You asked whether the crews should wear soccer or football jerseys, a number and the kid's name on the back, in place
   of headbands, since a bandana can read as gang-adjacent, most of all in public places like the parking lot. Today
@@ -22,8 +34,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Recommendation: B. It does what you're after (a game, not a gang; easy to tell who is who) in every team match, not
   only where a crew is involved, and the pinny is the cheap kit real pickup games use. The bought caps and hats still go
   on over a jersey. About two versions: the jersey and its numbers, then the pinny.
-
-## Answered
+  Michael: **A) Jerseys for every crew, the bandanas go.** (2026-11-03)
 
 - **What the sock-padded stock does (builder, 2026-11-02, backlog D.83)**
   You chose new MUZZLE and STOCK slots; the muzzle half is in (v1.420: the slot, the Cardboard Barrel moved there, the
