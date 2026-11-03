@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -2335,3 +2335,111 @@ was addressed to me and nothing asked me to break a rule.
 - v1.415, Hold the Bunker's nest: not played this run.
 
 No proposals this run.
+
+## 2026-11-03 — Winnmark's main line, measured; Northcliff at real scale on the Fable branch (PR #235); the five homemade parts in a match; Riverside Market's new east edge (v1.426)
+
+Played main at v1.426 (auto/build and auto/build-maps are level with it) and, in a throwaway worktree, the Fable branch
+`auto/fable-d51-northcliff` at 9665c48 (v1.427, PR #235, draft). Smoke 1 of 1 green; `front-door` green. About 110
+rounds in five pages, no page errors anywhere. Two bugs filed, one of them on the Fable branch before it lands.
+
+**The bot** is last run's in spirit, rewritten: it aims at the chest of the nearest foe it can see within 45 m and holds
+the trigger, walks at the nearest foe when none within 30 m is in sight, and refills and unjams for free (a cheat). AK
+for every match, 3 rounds a match, 200 s cap, the save set up with every earlier match done and every crew kid who has
+asked by then taken in. It doesn't flank, peek or use cover and gets stuck on walls. A harness note: a kid's `alive` is
+undefined; whether he is still in is `npcInFight(c)` (health, or lives). My first try read `alive` and stood there.
+
+**Winnmark, main line** (no crew yet: Eric asks after Bunratty's first match). Side matches marked *side*.
+
+| # | Match | Wins | Note |
+|---|---|---|---|
+| 1 | Tutorial | — | scripted; 3 timeouts, as expected of a bot |
+| 2 | Seth's House | 3 of 3 | 34-38 s |
+| 3 | Squad Basics | 0, 3 timeouts | orders match; the bot gives none |
+| 4 | Shotgun Duel | 3 of 3 | |
+| 5 | Free-for-all (side) | 1 of 3 | two timeouts with 3 of 4 out |
+| 6 | Sniper Overwatch | 0 of 3 | out at 25-48 s, 1 of 2 tagged each time |
+| 7 | Cul-de-Sac | 0 of 3 | out at 5.6-20.9 s |
+| 8 | Team 2v2 | 0 of 3 | out at 40-80 s, 0 of 2 tagged |
+| 9 | Defend the Treehouse | 1 of 3 | the win on the clock; two out at 10 s |
+| 10 | Defend the Cul-de-Sac | 0 of 3 | |
+| 11 | Two in the Yards (side) | 0 of 3 | out at 11-17 s |
+| 12 | Team 2v3 | 0 of 3 | |
+| 13 | Whole Block (side) | 0 of 3 | out at 5.6-6.3 s, every time |
+| 14 | Team 3v3 | 3 of 3 | 48-110 s, all three tagged |
+| 15 | Last Stand (side) | 2 of 3 | on the clock |
+| 16 | Night Prowl | 1 of 3 | |
+| 17 | Night Team 2v2 | 2 of 3 | |
+
+The shape: positions 6 to 12 are a long run of losses (1 win in 18 main rounds), then 14-17 go easier again. The 1v1s
+and the 3v3 go to the bot; the matches where you have one ally or none against two or three (Overwatch, Cul-de-Sac,
+2v2, 2v3) don't. Winnmark is the first zone, so that dip is where a first summer lives; worth a hand at 2v2 and 2v3
+before reading anything into it. Not tuned on, not filed.
+
+**Northcliff at real scale (the Fable branch, v1.427, not on main).** The same bot, the crew as asked by each match:
+
+| # | Match | Wins | Note |
+|---|---|---|---|
+| 1 | You and Evan, 1v1 | 1 of 3 | lost at 171 and 184 s: a long hunt on the long street |
+| 2 | **The Twins, 3v3** | **0, 3 timeouts** | **0 of 4 tagged in 200 s, every round** |
+| 3-4 | Stoneglen's treehouse, attack and hold | 1 of 6 | |
+| 5-9 | Bellfield | 0 of 15 | CTF 3 timeouts; not the card's map |
+| 10-11 | the pool | 2 of 6 | |
+| 12 | Defend the Creek | 0 of 3 | |
+| 13 | Night 4v4 | 2 of 3 | 91 and 109 s, all 7 tagged |
+
+**Bug, the Twins 3v3 never meets (`northcliff_twins_3v3`, Fable branch only).** Traced every 10 s for 200 s: both
+sides spend the round in `advancing` 12-16 m apart and almost never fire. My crew (Eric, Sean, Nick) walk the street
+side of a run of 1.8 m back-yard fence panels at z about −17 to −19 (x −6 to 7.6) and the house beside it (x −22 to −6);
+Haden, Connor and Evan walk up and down the far side at z −28 to −34, behind the next house (x 7.5 to 24.5) and the
+fence at their end; Fernando sits in his nest at (−30, −29). Neither side's walk ever crosses. One tag in the whole
+round (Eric, at 130 s). My bot walked into the fence at (5.6, −18.2) at 20 s and stood there, facing Haden 13 m off
+through it. The same trace on main's Northcliff meets at once (lost at 22 s). To see it: on the branch, a save with the
+crew in, `northcliff_twins_3v3`, stand still at the start or walk west, and watch the HUD's distances: the two lines stay
+13-20 m apart and nobody's dots drop. The devlog's "both team matches now fire first at 12-30 m" may well hold (a
+first shot through a gap); what it doesn't measure is a tag. Filed under Found in play for the card; the card's PR is a
+draft today, so it isn't on itch.
+
+**Bug, the Taped-Up Long Mag stays in the gun after the spare is swapped in (v1.426, main).** AR with the long mag, a
+spare 25-rd AR mag in slot 2. BEGIN: 38 / 38, right. Fire down to 3 and swap the spare in: the HUD reads **25 / 38**,
+`Game.gun.maxAmmo` stays 38, and the spare 25-rd mag, now in the gun, tops up to **38 / 38** (from the slot after it,
+the speed loader's). The pulled long mag goes in the pouch as the "Spare 25-rd AR Mag · 3", and swapping it back gives
+3 / 38. The swap moves BBs, not mags, so the gun keeps the long mag's size whatever mag is in it: the long mag's extra
+13 is on every mag you carry, and the HUD's "of" lies after the first swap. A bare AR reads 25 / 25 throughout.
+Small (only matters with a spare mag and the long mag both), but it's the one trade the part makes.
+
+**The other homemade parts, all four on one AR:** 11.9 lb loaded. Aimed through the toy scope the view is 41.5°, as
+v1.418 says. In Cart Corral (`lot_team_3v3`) three rounds with the full kit and three with a bare AR: all six lost at
+7.7-18.7 s with nobody tagged, so the bot can't tell the parts apart; nothing to judge there headless.
+
+**Riverside Market's east edge (v1.424).** Walking east from x 36 at eight z's down the lot: at z −10, 0, 10, 20 and 25
+you stop at x 43.07, the hedge, on the ground. At z −38, −30 and −20 you don't move from x 36, which is a parked car of
+the fifth row's west half where I put him, not the edge. The carts (v1.423): not looked at; a teleport of mine put the
+camera inside a red car.
+
+**The first-timer's way out:** `front-door` green (the hall, the landing, the back door's "Go out back", the map table).
+Not played by hand this run.
+
+**Frame time:** not measured; three or four browsers ran at once most of the run.
+
+### itch.io
+Still unreachable: the proxy refuses mbuckley616.itch.io (connect_rejected, WebFetch ENOTFOUND), so I read no comments.
+The host would have to be allowed in this environment's network settings.
+
+Slack's last day: v1.418-v1.426 (the second homemade wave, the Market's carts and hedge edge) landed; the Fable session
+finished Northcliff at real scale (v1.417, v1.421-v1.422, v1.427) and asked for a playtest of it, then put PR #235 back
+to draft over Fernando's day nest; the builders fixed four reds on main (tests only). Nothing was addressed to me and
+nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.418-v1.427)
+- v1.418-v1.426, whether each homemade part is worth its price and trade in play: not judged; the bot can't feel an aim
+  or a walk, and the full kit and a bare gun lost alike. The long mag's trade has the bug above.
+- v1.420, the silencer's front past the bench's view: not looked at.
+- v1.423, the carts' wire sheen at 30 m+: not looked at.
+- v1.424, the truck's 4.7 m lane past its cab in Cart Return and Night Shift: not judged.
+- v1.421-v1.427 (Fable branch), "whether 15-30 s before the first shot in the team matches is too long a walk": in the
+  Twins 3v3 it is longer than that, the round doesn't meet at all (above). The night 4v4 plays fine (2 of 3, all seven
+  tagged). The face slide's feel and the street against the photos: Michael's hands and eyes.
+- Last run's open measures: Winnmark done above, Northcliff on the branch; the last three zones are next run's.
+
+No proposals this run.
+
