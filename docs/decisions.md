@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Crew jerseys (builder, 2026-11-03, backlog D.84)**
+  You asked whether the crews should wear soccer or football jerseys, a number and the kid's name on the back, in place
+  of headbands, since a bandana can read as gang-adjacent, most of all in public places like the parking lot. Today
+  your crew's colour is a bandana you and your allies wear in every match but the tutorial (v1.200), each captain's crew
+  wears its own colour the same way (v1.401), and the other side has no marking of its own. Kids' shirts are the
+  tucked shirt from v1.120, so a jersey is a new top over it: a looser shirt in the crew colour with a white number on
+  the back and the name above it, and a small number on the front.
+  - A) **Jerseys for every crew, the bandanas go.** Your crew in your colour, each captain's crew in theirs, Seth's crew
+    in his; each kid keeps one number all summer (you pick yours at the mirror, by your name). Kids not in a crew (the
+    street's own kids in a 1v1, the Pickup Game's kids) wear their own clothes as now.
+  - B) **A as well as a pinny for the other side in team matches**: when the other side is not a crew, they wear a plain
+    mesh pinny over their shirt in a colour opposite yours, so every team match reads blue against orange at a glance.
+  - C) **Your choice at the mirror**: jersey or bandana for your crew; the captains' crews keep their bandanas.
+  - D) **Leave it**: bandanas stay.
+  Recommendation: B. It does what you're after (a game, not a gang; easy to tell who is who) in every team match, not
+  only where a crew is involved, and the pinny is the cheap kit real pickup games use. The bought caps and hats still go
+  on over a jersey. About two versions: the jersey and its numbers, then the pinny.
+
 ## Answered
 
 - **What the sock-padded stock does (builder, 2026-11-02, backlog D.83)**

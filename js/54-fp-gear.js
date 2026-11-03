@@ -578,6 +578,27 @@ function buildUnderParts(group, mount, measured) {
     }
     meshes.taped_mag = g;
   }
+  // v1.426 (D.83): the taped-up long mag: two mag bodies end to end under the handguard, black over a grey one, a wide
+  // band of duct tape over the join and two round the handguard, 15 cm long and raked back a little
+  {
+    const g = new THREE.Group();
+    const rake = new THREE.Group(); rake.position.set(0, y0, z0); rake.rotation.x = -0.12; g.add(rake);
+    const topMat = new THREE.MeshStandardMaterial({ color: 0x1e1f22, roughness: 0.45, metalness: 0.2 });
+    const lowMat = new THREE.MeshStandardMaterial({ color: 0x55585e, roughness: 0.45, metalness: 0.2 });
+    const top = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.075, 0.034), topMat);
+    top.position.set(0, -0.0375, 0); rake.add(top);
+    const low = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.075, 0.034), lowMat);
+    low.position.set(0, -0.1125, 0.004); rake.add(low);
+    const join = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.028, 0.040), tapeMat);
+    join.position.set(0, -0.075, 0.002); rake.add(join);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.006, 0.036), topMat);   // the bottom mag's floor plate
+    plate.position.set(0, -0.153, 0.004); rake.add(plate);
+    for (const dz of [-0.011, 0.011]) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.027, 0.03, 0.007), tapeMat);
+      band.position.set(0, y0 - 0.008, z0 + dz); g.add(band);
+    }
+    meshes.long_mag = g;
+  }
   // Shoelace sling: a red strap looping down from a knot under the handguard back toward the stock
   {
     const g = new THREE.Group();

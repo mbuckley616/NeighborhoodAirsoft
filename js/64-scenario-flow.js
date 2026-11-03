@@ -536,7 +536,7 @@ function enterScenario(scenarioId) {
   // Roster panel: allies / enemies / gear / lives, from the data table.
   const brief = getScenarioBriefing(scenarioId);
   document.getElementById('introRoster').innerHTML = renderBriefingRosterHTML(brief);
-  { const w = document.getElementById('introWallet'); if (w) w.innerHTML = walletHTML(getMaxAmmoForGun(Game.persist.equipped.gun)); }   // v1.260 (D.43)
+  { const w = document.getElementById('introWallet'); if (w) w.innerHTML = walletHTML(getMatchMagSize(Game.persist.equipped.gun)); }   // v1.260 (D.43); v1.426: the long mag's size
 
   // Birds-eye field map: enemy + ally + player starting positions, drawn from
   // the actually-spawned enemies (authoritative) and the resolved player spawn.
@@ -784,7 +784,7 @@ function startScenario(built) {
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
   Game.gun._sinceShot = null;   // v1.292
-  Game.gun.maxAmmo = getMaxAmmoForGun(Game.gun.type);
+  Game.gun.maxAmmo = getMatchMagSize(Game.gun.type);   // v1.426: half as much again with a Taped-Up Long Mag
   // v1.60: snapshot the carried-gear weight penalty for this match (loadout is
   // fixed once the round starts, so compute once instead of every movement frame).
   Game.scenario.weightSpeedMult = loadoutWeightSpeedMult();

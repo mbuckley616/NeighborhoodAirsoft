@@ -7,6 +7,8 @@
 //   moves with it. Soda-Bottle Silencer (v1.420) — muzzle: your shots 0.4 as loud to you, BBs 6 % slower; $9.
 //   STOCK slot (v1.425) on the same 29 long guns. Sock-Padded Stock (v1.425) — aimed, the cone a fifth tighter and a walk
 //   1.2 times as quick (Michael: A, and faster movement aimed); 0.4 lb; $8.
+//   Taped-Up Long Mag (v1.426) — under-barrel: the gun loads 1.5 times its mag; a spare-mag swap and a speed loader's
+//                                 feed take 1.5 times as long; 1 lb; $18.
 // Checked: the shop's Mods tab, the workbench on old and new guns, the mesh on the rail, and a match aimed through it.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -123,25 +125,33 @@ const bs = await page.evaluate(() => {
   const tag = row && row.querySelector('.shop-slot-tag').textContent;
   const cash0 = Game.persist.cash; row && row.querySelector('.shop-item-buy').click();
   const out = { tag, paid: cash0 - Game.persist.cash };
+  // v1.426: the Taped-Up Long Mag's row, bought in the same visit (a third page building guns ran CI's runner out of memory)
+  const lrow = [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent.startsWith('Taped-Up Long Mag'));
+  const lcash = Game.persist.cash; lrow && lrow.querySelector('.shop-item-buy').click();
+  out.long = { tag: lrow && lrow.querySelector('.shop-slot-tag').textContent, pic: !!(lrow && lrow.querySelector('img, canvas')), paid: lcash - Game.persist.cash };
   closeShop();
-  const geo = {};
+  const geo = {}, lgeo = {};
   for (const gt of ['ar', 'pumpsniper', 'm60', 'uzi']) {
     const m = buildWorkbenchGun(gt);
     const up = m.userData.accessories.underParts;
-    if (!up) { geo[gt] = 'no slot'; continue; }
+    if (!up) { geo[gt] = lgeo[gt] = 'no slot'; continue; }
     m.updateWorldMatrix(true, true);
     const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
     up.meshes.bungee_sling.visible = true;
     const b = new THREE.Box3().setFromObject(up.meshes.bungee_sling).applyMatrix4(inv);
     geo[gt] = { top: +(b.max.y - up.bottom).toFixed(3), sag: +(up.bottom - b.min.y).toFixed(3), len: +(b.max.z - b.min.z).toFixed(3) };
+    up.meshes.bungee_sling.visible = false; up.meshes.long_mag.visible = true;   // v1.426: the long mag on the same build
+    const lb = new THREE.Box3().setFromObject(up.meshes.long_mag).applyMatrix4(inv);
+    lgeo[gt] = { top: +(lb.max.y - up.bottom).toFixed(3), drop: +(up.bottom - lb.min.y).toFixed(3), cx: +((lb.max.x + lb.min.x) / 2).toFixed(4) };
   }
-  out.geo = geo;
+  out.geo = geo; out.long.geo = lgeo;
   return out;
 });
 console.log('   bungee:', JSON.stringify(bs));
 check('Bungee Sling: in the Mods tab as UNDER, bought for $10', bs.tag === 'UNDER' && bs.paid === 10, bs);
 check('Bungee Sling: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, a 3-6 cm sag, 15-18 cm long); the Uzi has no slot',
   ['ar', 'pumpsniper', 'm60'].every(gt => bs.geo[gt].top <= 0.01 && bs.geo[gt].sag > 0.03 && bs.geo[gt].sag < 0.06 && bs.geo[gt].len > 0.15 && bs.geo[gt].len < 0.18) && bs.geo.uzi === 'no slot', bs.geo);
+const lm = bs.long;   // v1.426: checked below with the long mag's matches
 const underMeasure = (type) => page.evaluate(async (type) => {
   const gt = 'ar';
   Game.persist.equipped.gun = gt; ensureGunSlots(gt);
@@ -409,3 +419,59 @@ check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk
 
 check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
 await g2.close();
+
+// --- v1.426: the Taped-Up Long Mag: bought from the Mods tab as UNDER and measured under the handguard on the long guns
+// in the first page (with the bungee sling, above); its matches in a third fresh browser (as the stock's). On the AR,
+// half as many BBs again in the mag (the HUD says so), a spare mag's swap and a speed loader's feed half as long again,
+// 1 lb in the weight. The same numbers bare, in a second match, to compare. (The off hand on it, on the MP5: fp-hands.)
+const g3 = await boot(); const page3 = g3.page;
+await g3.bedroom();
+console.log('   long mag:', JSON.stringify(lm));
+check('Taped-Up Long Mag: in the Mods tab as UNDER with its picture, bought for $18', lm.tag === 'UNDER' && lm.pic && lm.paid === 18, lm);
+check('Taped-Up Long Mag: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, hanging 14-17 cm, centred); the Uzi has no slot',
+  ['ar', 'pumpsniper', 'm60'].every(gt => lm.geo[gt].top <= 0.01 && lm.geo[gt].drop > 0.14 && lm.geo[gt].drop < 0.17 && Math.abs(lm.geo[gt].cx) < 0.005) && lm.geo.uzi === 'no slot', lm.geo);
+const LM = {};
+for (const type of ['long_mag', null]) {
+  await page3.evaluate((type) => {
+    Game.persist.owned.ar = true;
+    const gt = 'ar'; Game.persist.equipped.gun = gt; ensureGunSlots(gt);
+    for (const k of ['sight', 'under', 'muzzle', 'stock']) clearGunSlot(gt, k, -1);
+    if (type) { const i = getUnmountedInstances(type)[0] || makeAccessoryInstance(type); mountAccessory(gt, i.id, 'under', -1); }
+    Game.persist.bag = 2000;
+    Game.persist.speedLoaders = []; buySpeedLoader('sl_50');
+    const sl = Game.persist.speedLoaders[Game.persist.speedLoaders.length - 1];
+    Game.persist.loadoutSlots = [{ kind: 'gun', refId: gt }, { kind: 'spare_mag', refId: 'spare_mag_ar' }, { kind: 'speed_loader', refId: sl.id }, null];
+    return true;
+  }, type);
+  await g3.scenario('bunratty_sean');
+  LM[type || 'bare'] = await page3.evaluate(() => {
+    Game.player.maxHits = 999;
+    for (const e of Game.scenario.enemies) e.noFire = true;
+    for (let i = 0; i < 10; i++) stepGame(1 / 60);
+    const out = { mag: Game.gun.ammo, max: Game.gun.maxAmmo, hud: document.getElementById('ammoMax').textContent,
+      spare: (Game.gun.spareAmmo || {})[1] || 0,
+      weight: computeLoadoutWeight().parts.filter(p => p.label === 'Taped-Up Long Mag').map(p => p.w) };
+    // the spare mag's swap: from a click to the mag in the gun
+    Game.gun.ammo = 3; Game.held.slotIdx = 1; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
+    let f = 0; while (Game.held.slotIdx === 1 && f < 300) { Game.mouseLMB = true; stepGame(1 / 60); f++; }
+    out.swap = +(f / 60).toFixed(3); out.afterSwap = Game.gun.ammo;
+    Game.mouseLMB = false; stepGame(1 / 60);
+    // the speed loader's feed: BBs in the first half second held, from an empty mag (the AR's 25 would cap a second)
+    Game.gun.ammo = 0; Game.held.slotIdx = 2; Game.held.swapBlock = 0; Game.mouseLMB = true; onLmbDown();
+    for (let i = 0; i < 30; i++) { Game.mouseLMB = true; stepGame(1 / 60); }
+    out.fed = Game.gun.ammo;
+    Game.mouseLMB = false; stepGame(1 / 60);
+    return out;
+  });
+  await page3.evaluate(() => endScenario('forfeit'));
+  await page3.waitForFunction(() => Game.mode !== 'scenario');
+}
+console.log('   long mag in a match:', JSON.stringify(LM));
+const { bare: LB, long_mag: LL } = LM;
+check('Taped-Up Long Mag: the AR loads 38 (25 bare), and the HUD says so; the spare AR mag still loads its own 25',
+  LL.max === 38 && LL.mag === 38 && LB.max === 25 && LB.mag === 25 && LL.hud.startsWith('38') && LL.spare === 25 && LB.spare === 25, LM);
+check('Taped-Up Long Mag: 1 lb in the loadout weight', LL.weight[0] === 1 && LB.weight.length === 0, LM);
+check('Taped-Up Long Mag: a spare mag swaps in 1.4-1.6 times as long (0.4 s bare)', Math.abs(LB.swap - 0.4) < 0.04 && LL.swap / LB.swap > 1.4 && LL.swap / LB.swap < 1.6 && LL.afterSwap === 25, LM);
+check('Taped-Up Long Mag: a speed loader feeds 1/1.5 as many BBs in half a second (about 13 against 20)', LB.fed >= 18 && LB.fed <= 20 && Math.abs(LL.fed / LB.fed - 1 / 1.5) < 0.06, LM);
+check('no page errors (the long mag\'s matches)', g3.errs.length === 0, g3.errs);
+await g3.close();
