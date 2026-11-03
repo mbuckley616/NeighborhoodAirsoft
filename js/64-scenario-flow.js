@@ -1098,12 +1098,12 @@ function renderMatchStats(outcome, openBefore, cashBefore, wonBefore) {
   const rivalId = Game.scenario.active;   // v1.196: a match against Seth's crew says how it went and the summer's score
   const rival = isRivalMatch(rivalId) ? rivalResultLine(rivalId, outcome, outcome === 'win' && !wonBefore) : '';
   if (rival) html += `<div class="rs-new rs-rival"><span class="rs-tag">RIVALS</span> ${rival}</div>`;
-  // v1.401 (D.57 step 3): the captain's crew's score, and his bandana for your wall the first time you beat his finale
+  // v1.401 (D.57 step 3): the captain's crew's score, and his crew's jersey (v1.430; a bandana before) for your wall
   const cap = captainOfMatch(rivalId);
   if (cap) html += `<div class="rs-new rs-captain"><span class="rs-tag">CAPTAIN</span> ${captainCrewName(cap)}: ${rivalScoreText(captainScore(cap))}.</div>`;
   const fin = captainFinaleOf(rivalId);
   if (fin && outcome === 'win' && !wonBefore && CAPTAIN_FINALES[fin].filter(id => Game.persist.completed[id]).length === 1)
-    html += `<div class="rs-new rs-captain"><span class="rs-tag">BANDANA</span> ${captainCrewName(fin)}'s bandana goes on your wall.</div>`;
+    html += `<div class="rs-new rs-captain"><span class="rs-tag">JERSEY</span> ${captainCrewName(fin)}'s jersey goes on your wall.</div>`;
   for (const name of opened) html += `<div class="rs-new"><span class="rs-tag">OPENED</span> ${name}</div>`;
   if (reach.length) html += `<div class="rs-new"><span class="rs-tag">IN REACH</span> at the shop: ${reach.join(', ')}</div>`;
   const dmgHtml = damageReportHtml(outcome);   // v1.238 (D.34)
