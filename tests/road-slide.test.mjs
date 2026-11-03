@@ -21,6 +21,11 @@ for (const id of ids) {
       const p = Game.player;
       const start = { x: p.pos.x, z: p.pos.z };
       p._slides = 0;
+      // v1.427: the car he must get past is the long one nearest his start; 'past' is beyond its west end (the
+      // check was x < 27 on the old street, where that end sat; real scale moved the car to x 27.3–31.0)
+      const car = (p.obstacles || []).filter(o => o.shape === 'obox' && o.hx > 1.5 && o.hx > o.hz)
+        .sort((a, b) => Math.hypot(a.cx - p.pos.x, a.cz - p.pos.z) - Math.hypot(b.cx - p.pos.x, b.cz - p.pos.z))[0];
+      const carWest = car ? +car.minX.toFixed(2) : 27;
       p.yaw += off * Math.PI / 180;
       Game.keys.KeyW = true;
       let inside = 0, minX = p.pos.x;
@@ -32,7 +37,7 @@ for (const id of ids) {
         minX = Math.min(minX, p.pos.x);
       }
       Game.keys.KeyW = false;
-      return { start, end: { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }, minX: +minX.toFixed(2), inside, slides: p._slides || 0 };
+      return { start, end: { x: +p.pos.x.toFixed(2), z: +p.pos.z.toFixed(2) }, minX: +minX.toFixed(2), carWest, inside, slides: p._slides || 0 };
     }, { off });
     rows.push({ id, off, ...r });
     inside += r.inside; frames += 240;
@@ -41,7 +46,7 @@ for (const id of ids) {
   }
 }
 for (const r of rows) console.log(`   ${r.id} ${String(r.off).padStart(3)}°  start (${r.start.x}, ${r.start.z}) → (${r.end.x}, ${r.end.z})  slides ${r.slides}`);
-for (const r of rows) check(`${r.id} at ${r.off}°: holding W for 4 s gets him past the car (x under 27)`, r.minX < 27, r);
+for (const r of rows) check(`${r.id} at ${r.off}°: holding W for 4 s gets him past the car (x under its west end)`, r.minX < r.carWest, r);
 check('he never stands inside an obstacle', inside === 0, `${inside} of ${frames} frames`);
 
 // Square into the car's long side: the slide has nothing to take, so he stays put.

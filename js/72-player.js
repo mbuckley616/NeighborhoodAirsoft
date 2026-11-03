@@ -528,7 +528,10 @@ function updatePlayer(dt) {
     const mvx = nx - ox0, mvz = nz - oz0;
     const want = Math.hypot(mvx, mvz);
     const got = Math.hypot(Game.player.pos.x - ox0, Game.player.pos.z - oz0);
-    const o = want > 1e-6 && got < want * 0.5 ? blockingObstacle(nx, nz, r, footNow) : null;
+    // v1.427: not only when the split got under half the step. Square into a side a few degrees off an axis, the
+    // split let the step's small cross part through every frame (a 0.17 m/s creep along a car 3° off x at real
+    // scale); the face's own projection is the slide, so it is taken whenever it is clear.
+    const o = want > 1e-6 ? blockingObstacle(nx, nz, r, footNow) : null;
     const n = o ? obsAwayNormal(o, ox0, oz0) : null;
     if (n) {
       const into = mvx * n.x + mvz * n.z;
@@ -536,7 +539,7 @@ function updatePlayer(dt) {
         const out = n.d < r ? r + 0.0005 - n.d : 0;   // and back out to his radius, if he was touching closer
         let sx = ox0 + mvx + (out - into) * n.x, sz = oz0 + mvz + (out - into) * n.z;
         if (b) { sx = Math.max(b.minX, Math.min(b.maxX, sx)); sz = Math.max(b.minZ, Math.min(b.maxZ, sz)); }
-        if (Math.hypot(sx - ox0, sz - oz0) > got && !collidesObstacles(sx, sz, r, footNow)) {
+        if (!collidesObstacles(sx, sz, r, footNow)) {
           Game.player.pos.x = sx; Game.player.pos.z = sz;
           Game.player._slides = (Game.player._slides || 0) + 1;
         }
