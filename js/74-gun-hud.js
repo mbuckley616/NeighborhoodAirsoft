@@ -187,7 +187,7 @@ function updateGun(dt) {
         // button stays held; no BBs move.
         Game.held._feedingActive = false;
       } else {
-        const FEED_RATE = 40 / getReloadMult(Game.gun.type);   // BBs per second (v1.426: slower into a long taped mag)
+        const FEED_RATE = 40 / (Game.gun.magLong === false ? 1 : getReloadMult(Game.gun.type));   // BBs per second (v1.426: slower into a long taped mag; v1.428: only while it is the one in the gun)
         Game.held._feedAccum += dt * FEED_RATE;
         let n = Math.floor(Game.held._feedAccum);
         if (n > 0) {
@@ -222,9 +222,18 @@ function updateGun(dt) {
       if (Game.held.useProgress >= Game.held.useDuration) {
         // v1.323 (B.14): swap mags; the one pulled goes in the pouch with what it had left, and the slot stays
         if (!Game.gun.spareAmmo) Game.gun.spareAmmo = {};
-        const fresh = Game.gun.spareAmmo[Game.held.slotIdx] || 0;
-        Game.gun.spareAmmo[Game.held.slotIdx] = Game.gun.ammo;
+        const si = Game.held.slotIdx;
+        const fresh = Game.gun.spareAmmo[si] || 0;
+        Game.gun.spareAmmo[si] = Game.gun.ammo;
         Game.gun.ammo = fresh;
+        // v1.428: the mag's size and kind go with it (the long mag's 1.5× stays with the long mag)
+        if (!Game.gun.spareCap) Game.gun.spareCap = {};
+        if (!Game.gun.spareLong) Game.gun.spareLong = {};
+        const freshCap = Game.gun.spareCap[si] || Game.gun.maxAmmo, freshLong = !!Game.gun.spareLong[si];
+        Game.gun.spareCap[si] = Game.gun.maxAmmo;
+        Game.gun.spareLong[si] = !!Game.gun.magLong;
+        Game.gun.maxAmmo = freshCap;
+        Game.gun.magLong = freshLong;
         Game.held.slotIdx = 0;
         playReloadClick();
         Game.held.using = false;

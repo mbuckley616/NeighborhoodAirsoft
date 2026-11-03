@@ -606,7 +606,7 @@ function onLmbDown() {
     if (heldSlot.bbs <= 0) { playReloadClick(); return; }   // v1.323 (B.14): an empty spare mag dry-clicks
     Game.held.using = true;
     Game.held.useProgress = 0;
-    Game.held.useDuration = 0.4 * getReloadMult(Game.gun.type);   // v1.426: a long taped mag is slower to swap out
+    Game.held.useDuration = 0.4 * ((Game.gun.magLong === false && !(Game.gun.spareLong || {})[Game.held.slotIdx]) ? 1 : getReloadMult(Game.gun.type));   // v1.426: a long taped mag is slower to swap out (v1.428: in or out; two plain mags swap at 0.4 s)
     Game.held.useKind = 'spare_mag';
     Game.held.useMagCap = heldSlot.magCap;
   }
