@@ -344,18 +344,26 @@ check('every long gun has the stock slot (29), the 11 others none', stLong.lengt
 check('on every one the sock wraps the butt (4-8 mm proud on every side with its tape, its toe 0.4-2.5 cm past the end), 6-8 cm long, at most 8 cm wide and 17 cm tall',
   stLong.every(r => [r.side, r.top, r.bot].every(d => d >= 0.004 && d <= 0.008) && r.end >= 0.004 && r.end <= 0.025 && r.len >= 0.06 && r.len <= 0.08 && r.w <= 0.08 && r.h <= 0.17), stLong);
 
+check('no page errors', g.errs.length === 0, g.errs);
+await g.close();
+
+// v1.425: the stock's match runs in a fresh browser. A fourth match in the page that built every gun three times over
+// closed it (twice here, once on CI, at the match's entry or the shot after; three matches in it never did).
+const g2 = await boot(); const page2 = g2.page;
+await g2.bedroom();
 // in a match on the AR, the sock taken off and put back between measures (the gun's numbers are read at each shot and
 // step), each cone on the same seeded draws: on the gun in hand; aimed, the cone a fifth tighter; aimed, a walk 1.2
 // times as quick; 0.4 lb in the loadout weight
-await page.evaluate(() => {
+await page2.evaluate(() => {
+  Game.persist.owned.ar = true;
   const gt = 'ar'; Game.persist.equipped.gun = gt; ensureGunSlots(gt);
   for (const k of ['sight', 'under', 'muzzle', 'stock']) clearGunSlot(gt, k, -1);
   const i = getUnmountedInstances('sock_stock')[0] || makeAccessoryInstance('sock_stock');
   mountAccessory(gt, i.id, 'stock', -1);
   Game.persist.loadoutSlots = [{ kind: 'gun', refId: gt }, null, null, null];
 });
-await g.scenario('bunratty_sean');
-const S3 = await page.evaluate(() => {
+await g2.scenario('bunratty_sean');
+const S3 = await page2.evaluate(() => {
   Game.player.maxHits = 999;
   for (const e of Game.scenario.enemies) e.noFire = true;
   const sp = fpGun.userData.accessories.stockParts;
@@ -399,5 +407,5 @@ check('Sock-Padded Stock: aimed, the cone a fifth tighter, standing and walking;
   Math.abs(KS.aimed / KB.aimed - 0.8) < 0.02 && Math.abs(KS.aimedWalk / KB.aimedWalk - 0.8) < 0.02 && Math.abs(KS.hip / KB.hip - 1) < 0.005, S3);
 check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk / KB.walk > 1.1 && KS.walk / KB.walk < 1.25, S3);
 
-check('no page errors', g.errs.length === 0, g.errs);
-await g.close();
+check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
+await g2.close();
