@@ -5,6 +5,8 @@
 //   Bungee Sling (v1.419)       — under-barrel: aiming in a third quicker; a wider cone on the move; $10.
 //   MUZZLE slot (v1.420, Michael: A, two new slots) on every long gun; the Cardboard Barrel moves there, and an old save's
 //   moves with it. Soda-Bottle Silencer (v1.420) — muzzle: your shots 0.4 as loud to you, BBs 6 % slower; $9.
+//   STOCK slot (v1.425) on the same 29 long guns. Sock-Padded Stock (v1.425) — aimed, the cone a fifth tighter and a walk
+//   1.2 times as quick (Michael: A, and faster movement aimed); 0.4 lb; $8.
 // Checked: the shop's Mods tab, the workbench on old and new guns, the mesh on the rail, and a match aimed through it.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
@@ -218,11 +220,24 @@ const mz = await page.evaluate(() => {
   out.fgUnder = mountAccessory('ar', fg.id, 'under', -1).ok;   // an under part and a muzzle part at once
   out.both = getMountedAccessories('ar').filter(a => a.slot === 'under' || a.slot === 'muzzle').map(a => a.type);
   // on every long gun: the bottle starts at the muzzle and runs on ahead of it, on the bore line
-  out.geo = [];
+  // v1.425: and the sock-padded stock, measured on the same builds (a third pass of 40 guns ran the page out of memory):
+  // pulled over the butt, it wraps the last 5 cm of the centre line on every side and covers its end
+  out.geo = []; out.stockGeo = [];
   for (const gt of ALL_GUN_TYPES) {
     const cap = getGunAccessoryCap(gt);
     const m = buildWorkbenchGun(gt);
     const mp = m.userData.accessories.muzzleParts;
+    const sp = m.userData.accessories.stockParts;
+    if (!cap.stock) out.stockGeo.push({ gt, none: !sp });
+    else {
+      m.updateWorldMatrix(true, true);
+      const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
+      sp.meshes.sock_stock.visible = true;
+      const b = new THREE.Box3().setFromObject(sp.meshes.sock_stock).applyMatrix4(inv), u = sp.box;
+      const r3 = x => +x.toFixed(3);
+      out.stockGeo.push({ gt, side: r3(Math.min(u.min.x - b.min.x, b.max.x - u.max.x)), top: r3(b.max.y - u.max.y), bot: r3(u.min.y - b.min.y),
+        end: r3(b.max.z - sp.rearZ), len: r3(b.max.z - b.min.z), w: r3(b.max.x - b.min.x), h: r3(b.max.y - b.min.y) });
+    }
     if (!cap.muzzle) { out.geo.push({ gt, none: !mp }); continue; }
     m.updateWorldMatrix(true, true);
     const inv = new THREE.Matrix4().copy(m.matrixWorld).invert();
@@ -233,7 +248,7 @@ const mz = await page.evaluate(() => {
   return out;
 });
 for (const r of mz.geo) console.log('  ', JSON.stringify(r));
-delete mz.geoLog; console.log('   muzzle:', JSON.stringify(Object.assign({}, mz, { geo: undefined })));
+delete mz.geoLog; console.log('   muzzle:', JSON.stringify(Object.assign({}, mz, { geo: undefined, stockGeo: undefined })));
 check('Soda-Bottle Silencer: in the Mods tab as MUZZLE with its picture, $9; the Cardboard Barrel is a MUZZLE part now',
   mz.soda_silencer.tag === 'MUZZLE' && mz.soda_silencer.pic && mz.soda_silencer.paid === 9 && mz.cardboard_barrel.tag === 'MUZZLE', mz);
 check('the workbench: a Muzzle row on the AR and the P90, none on the pistol or the Uzi; it offers the two muzzle parts only',
@@ -291,5 +306,106 @@ const { bare: SB, soda_silencer: SS } = S2;
 check('Soda-Bottle Silencer: on the gun in hand; the BB leaves 6 % slower', SS.mesh.length === 1 && SS.mesh[0] === 'soda_silencer' && SB.mesh.length === 0 && Math.abs(SS.mv / SB.mv - 0.94) < 0.005, S2);
 check('Soda-Bottle Silencer: your shot plays at 0.4 the bare gun\'s loudness', SB.vol === 1 && Math.abs(SS.vol - 0.4) < 1e-9, S2);
 
+// --- v1.425: the STOCK slot and the Sock-Padded Stock (Michael: A, steadier when aimed, and quicker on the move aimed)
+const st = await page.evaluate(() => {
+  Game.persist.cash = 1000; openShop();
+  [...document.querySelectorAll('#shopScreen .cat-tab')].find(t => t.textContent === 'Mods').click();
+  const row = [...document.querySelectorAll('#shopScreen .shop-item')].find(r => r.querySelector('.shop-item-name').textContent.startsWith('Sock-Padded Stock'));
+  const cash0 = Game.persist.cash; row && row.querySelector('.shop-item-buy').click();
+  const out = { tag: row && row.querySelector('.shop-slot-tag').textContent, pic: !!(row && row.querySelector('img')), paid: cash0 - Game.persist.cash };
+  closeShop();
+  openWorkbench();
+  const rows = (gt) => { workbenchSelectGun(gt); return [...document.querySelectorAll('#wbSlotList .wb-slot-label')].map(e => e.textContent); };
+  out.rows = { pistol: rows('pistol'), uzi: rows('uzi'), p90: rows('p90'), ar: rows('ar') };
+  const stockRow = () => [...document.querySelectorAll('#wbSlotList .wb-slot')].find(r => r.querySelector('.wb-slot-label').textContent === 'Stock');
+  stockRow().click();
+  out.offered = [...document.querySelectorAll('#wbLockerList .wb-locker-item.compat')].map(e => e.textContent);
+  const it = [...document.querySelectorAll('#wbLockerList .wb-locker-item.compat')].find(e => e.textContent.includes('Sock-Padded Stock'));
+  if (it) it.click();
+  out.mounted = stockRow().querySelector('.wb-slot-val').textContent;
+  updateWorkbench(0);
+  out.label = [...document.querySelectorAll('#wbVpLabels .wb-vp-label')].map(e => e.textContent);
+  out.meshShown = WB.gunGroup.userData.accessories.stockParts.meshes.sock_stock.visible;
+  closeWorkbench();
+  const id = Game.persist.equipped.attachments.ar.stock;
+  out.onMuzzle = mountAccessory('ar', id, 'muzzle', -1).ok;
+  out.onPistol = mountAccessory('pistol', id, 'stock', -1).ok;
+  return out;
+});
+for (const r of mz.stockGeo) console.log('  ', JSON.stringify(r));
+console.log('   stock:', JSON.stringify(Object.assign({}, st, { geo: undefined })));
+check('Sock-Padded Stock: in the Mods tab as STOCK with its picture, bought for $8', st.tag === 'STOCK' && st.pic && st.paid === 8, st);
+check('the workbench: a Stock row on the AR and the P90, none on the pistol or the Uzi; it offers the sock; a click puts it on, shown, labelled',
+  st.rows.ar.includes('Stock') && st.rows.p90.includes('Stock') && !st.rows.pistol.includes('Stock') && !st.rows.uzi.includes('Stock') &&
+  st.offered.length === 1 && /STOCK/.test(st.offered[0]) && st.mounted === 'Sock-Padded Stock' && st.meshShown && st.label.includes('Stock: Sock-Padded Stock'), st);
+check('the sock goes on no muzzle and no pistol', !st.onMuzzle && !st.onPistol, st);
+const stLong = mz.stockGeo.filter(r => !r.none);
+check('every long gun has the stock slot (29), the 11 others none', stLong.length === 29 && mz.stockGeo.filter(r => r.none).length === 11, mz.stockGeo.map(r => r.gt + (r.none ? '-' : '+')));
+check('on every one the sock wraps the butt (4-8 mm proud on every side with its tape, its toe 0.4-2.5 cm past the end), 6-8 cm long, at most 8 cm wide and 17 cm tall',
+  stLong.every(r => [r.side, r.top, r.bot].every(d => d >= 0.004 && d <= 0.008) && r.end >= 0.004 && r.end <= 0.025 && r.len >= 0.06 && r.len <= 0.08 && r.w <= 0.08 && r.h <= 0.17), stLong);
+
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
+
+// v1.425: the stock's match runs in a fresh browser. A fourth match in the page that built every gun three times over
+// closed it (twice here, once on CI, at the match's entry or the shot after; three matches in it never did).
+const g2 = await boot(); const page2 = g2.page;
+await g2.bedroom();
+// in a match on the AR, the sock taken off and put back between measures (the gun's numbers are read at each shot and
+// step), each cone on the same seeded draws: on the gun in hand; aimed, the cone a fifth tighter; aimed, a walk 1.2
+// times as quick; 0.4 lb in the loadout weight
+await page2.evaluate(() => {
+  Game.persist.owned.ar = true;
+  const gt = 'ar'; Game.persist.equipped.gun = gt; ensureGunSlots(gt);
+  for (const k of ['sight', 'under', 'muzzle', 'stock']) clearGunSlot(gt, k, -1);
+  const i = getUnmountedInstances('sock_stock')[0] || makeAccessoryInstance('sock_stock');
+  mountAccessory(gt, i.id, 'stock', -1);
+  Game.persist.loadoutSlots = [{ kind: 'gun', refId: gt }, null, null, null];
+});
+await g2.scenario('bunratty_sean');
+const S3 = await page2.evaluate(() => {
+  Game.player.maxHits = 999;
+  for (const e of Game.scenario.enemies) e.noFire = true;
+  const sp = fpGun.userData.accessories.stockParts;
+  const sockId = Game.persist.equipped.attachments.ar.stock;
+  const mesh = Object.keys(sp.meshes).filter(k => sp.meshes[k].visible);
+  const fwd = new THREE.Vector3(0, 0, -1).applyEuler(Game.camera.rotation);
+  const mine = () => Game.scenario.bbs.filter(b => b.owner === 'player');
+  const clear = () => { for (const b of Game.scenario.bbs) b.mesh && b.mesh.parent && b.mesh.parent.remove(b.mesh); Game.scenario.bbs.length = 0; };
+  const cone = (ads, sway) => {
+    const a = []; const outer = _gameRng; _gameRng = _mulberry32(0x5eed1 + Math.round(sway * 10));
+    try {
+      for (let i = 0; i < 300; i++) {
+        clear(); Game.gun.ammo = Game.gun.maxAmmo; Game.player.ads = ads; Game.player.sway = sway; fireBB();
+        for (const b of mine()) a.push(Math.acos(Math.min(1, b.vel.clone().normalize().dot(fwd))) * 180 / Math.PI);
+      }
+    } finally { _gameRng = outer; }
+    clear(); a.sort((x, y) => x - y); return a[a.length >> 1];
+  };
+  Game.mouse.locked = true;
+  const p0 = Game.player.pos.clone(), yaw0 = Game.player.yaw;
+  const walk = () => {   // 2 s holding W with the gun up, from where the round starts
+    Game.player.pos.copy(p0); Game.player.yaw = yaw0; Game.player.vel && Game.player.vel.set(0, 0, 0);
+    Game.keys.KeyW = true;
+    for (let i = 0; i < 120; i++) { Game.player.adsTarget = 1; Game.player.ads = 1; stepGame(1 / 60); }
+    Game.keys.KeyW = false;
+    for (let i = 0; i < 30; i++) stepGame(1 / 60);
+    return +Game.player.pos.clone().sub(p0).setY(0).length().toFixed(3);
+  };
+  const measure = () => ({ hip: cone(0, 0), aimed: cone(1, 0), aimedWalk: cone(1, 0.8), walk: walk(),
+    weight: computeLoadoutWeight().parts.filter(p => p.label === 'Sock-Padded Stock').map(p => p.w) });
+  const sock = measure();
+  clearGunSlot('ar', 'stock', -1);
+  const bare = measure();
+  mountAccessory('ar', sockId, 'stock', -1);
+  return { bare, sock_stock: Object.assign(sock, { mesh }) };
+});
+console.log('   stock in a match:', JSON.stringify(S3));
+const { bare: KB, sock_stock: KS } = S3;
+check('Sock-Padded Stock: on the gun in hand, 0.4 lb in the loadout weight', KS.mesh.length === 1 && KS.mesh[0] === 'sock_stock' && KS.weight[0] === 0.4 && KB.weight.length === 0, S3);
+check('Sock-Padded Stock: aimed, the cone a fifth tighter, standing and walking; from the hip, no change',
+  Math.abs(KS.aimed / KB.aimed - 0.8) < 0.02 && Math.abs(KS.aimedWalk / KB.aimedWalk - 0.8) < 0.02 && Math.abs(KS.hip / KB.hip - 1) < 0.005, S3);
+check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk / KB.walk > 1.1 && KS.walk / KB.walk < 1.25, S3);
+
+check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
+await g2.close();

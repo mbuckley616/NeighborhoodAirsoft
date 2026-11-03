@@ -32,11 +32,13 @@ function fireBB() {
   // v1.399 (D.63): a gas gun's BB slows as its mag empties, the gas cooling: full speed from a full mag, (1 - gasFade)
   // of it for the last BB
   const gasMult = Game.gun.gasFade ? 1 - Game.gun.gasFade * Math.max(0, Math.min(1, (Game.gun.maxAmmo - Game.gun.ammo) / Math.max(1, Game.gun.maxAmmo - 1))) : 1;
+  // v1.425 (D.83): the sock-padded stock steadies the gun on your shoulder: aimed, the whole cone is a fifth tighter
+  const steady = 1 - Game.player.ads * (1 - underPartMult('adsSteadyMult'));
   for (let i = 0; i < pelletCount; i++) {
     const vel = forward.clone().multiplyScalar(Game.gun.muzzleVelocity * gasMult);
     // base velocity jitter (gun's intrinsic accuracy) + movement cone (sway).
-    const s = baseSpread * pelletSpreadBoost;
-    const m = moveSpread * (Game.player.ads > 0 ? (1 - Game.player.ads * 0.6) : 1);
+    const s = baseSpread * pelletSpreadBoost * steady;
+    const m = moveSpread * (Game.player.ads > 0 ? (1 - Game.player.ads * 0.6) : 1) * steady;
     vel.x += (gameRandom() - 0.5) * s + (gameRandom() - 0.5) * m;
     vel.y += (gameRandom() - 0.5) * s + (gameRandom() - 0.5) * m;
     vel.z += (gameRandom() - 0.5) * s;

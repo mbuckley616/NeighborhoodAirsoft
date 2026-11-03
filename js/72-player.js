@@ -494,7 +494,7 @@ function updatePlayer(dt) {
       const sprintActive = Game.player.sprinting || (Game.player.airSprint && !Game.player.onGround);
       if (Game.player.crouching) speed *= CROUCH_MULT;
       else if (sprintActive) speed *= SPRINT_MULT * (getEquippedShoeStats().sprintMult || 1);
-      speed *= 1 - Game.player.ads * (1 - ADS_MOVE_MULT);
+      speed *= 1 - Game.player.ads * (1 - Math.min(1, ADS_MOVE_MULT * underPartMult('adsWalkMult')));   // v1.425: the sock-padded stock
     }
     // Air control: reduced steering while jumping
     if (!Game.player.onGround) speed *= 0.7;
