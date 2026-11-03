@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the homemade wave (builder, 2026-11-03)**
+  D.83's second homemade wave is done: the toy scope, the bungee sling, the soda-bottle silencer, the sock-padded stock
+  and the taped-up long mag (v1.418-v1.428), with the new MUZZLE and STOCK slots on the 29 long guns. Crew jerseys
+  (D.84) landed in v1.430. The play lane again has no ready item: every other open play item is a Fable card, an open
+  design, or waits on your look. What should it take next?
+  - A) **Gun batch 7, to 46** *(recommended)*: six more, one a version, in the same backyard tone (you name the kinds,
+    or the builder picks from what the shop is thin on, e.g. a second revolver, a break-action shotgun, a cheap clear
+    bullpup, a DMR).
+  - B) **A third wave of homemade parts**: a taped-on flashlight for the night matches, a rubber-band bipod for the
+    LMGs and snipers, a foam-noodle cheek pad, and the like, one or two a version.
+  - C) **Rest the play lane** until a card lands (Northcliff at real scale, PR #235), then take what its playtest turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. You asked for 30-50 guns (D.63) and the shop has 40; with the parts' slots now filled out, guns
+  are the thinner side again, and both sit outside the open FREEZE's areas.
+
 ## Answered
 
 - **Fernando's nest in a daytime Northcliff pickup game, now the street is real size (Fable, 2026-11-03, card fable/d51-northcliff)**
