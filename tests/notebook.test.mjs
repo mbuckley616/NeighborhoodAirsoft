@@ -225,11 +225,12 @@ const lu = await page.evaluate(() => {
     youRight: you.getBoundingClientRect().right, themLeft: them.getBoundingClientRect().left };
 });
 console.log(`   lineup: ${lu.yours.map(k => k.name + ' ' + k.inked).join(', ')} | ${lu.theirs.map(k => k.name + ' ' + k.inked).join(', ')}`);
-check('the lineup: you and your five on the left, their five on the right, every kid drawn (over 800 pixels each)',
-  lu.yours.length === 6 && lu.yours[0].name === 'You' && lu.theirs.length === 5 && lu.youRight <= lu.themLeft &&
+// since v1.401 (D.57) the Big Game is Seth's crew of six, Seth and his five, so theirs stand in two rows of three as well
+check('the lineup: you and your five on the left, Seth\'s six on the right, every kid drawn (over 800 pixels each)',
+  lu.yours.length === 6 && lu.yours[0].name === 'You' && lu.theirs.length === 6 && lu.theirs[0].name === 'Seth' && lu.youRight <= lu.themLeft &&
   [...lu.yours, ...lu.theirs].every(k => k.inked > 800), lu);
-check('your six stand in two rows of three, each crew kid with Bench under him; theirs in one row of five',
-  new Set(lu.yours.map(k => k.y)).size === 2 && new Set(lu.theirs.map(k => k.y)).size === 1 && lu.yours.slice(1).every(k => k.bench) && !lu.yours[0].bench, lu);
+check('your six stand in two rows of three, each crew kid with Bench under him; theirs in two rows of three',
+  new Set(lu.yours.map(k => k.y)).size === 2 && new Set(lu.theirs.map(k => k.y)).size === 2 && lu.yours.slice(1).every(k => k.bench) && !lu.yours[0].bench, lu);
 await page.evaluate(() => { Game.persist.crew = []; document.getElementById('briefCancelBtn').click(); });
 check('← Back closes the popup', await page.evaluate(() => !document.getElementById('scenarioBriefModal').classList.contains('active')));
 
