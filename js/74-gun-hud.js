@@ -187,7 +187,7 @@ function updateGun(dt) {
         // button stays held; no BBs move.
         Game.held._feedingActive = false;
       } else {
-        const FEED_RATE = 40;                 // BBs per second
+        const FEED_RATE = 40 / getReloadMult(Game.gun.type);   // BBs per second (v1.426: slower into a long taped mag)
         Game.held._feedAccum += dt * FEED_RATE;
         let n = Math.floor(Game.held._feedAccum);
         if (n > 0) {

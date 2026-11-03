@@ -797,7 +797,7 @@ function renderLoadoutManager() {
         pi.className = 'picker-item';
         const isCurrent = Game.persist.equipped.gun === g;
         const spec = getGunSpec(g);
-        const magSize = getMaxAmmoForGun(g);
+        const magSize = getMatchMagSize(g);   // v1.426: with a long mag, its size
         const lentTo = crewLoanHolder('gun', g);   // v1.337 (D.28 step 4): a crew kid has it; picking it takes it back
         pi.innerHTML = `<span class="lo-pk-icon" style="color:var(--ui-accent)">⌐</span> ${spec.displayName}${isCurrent ? ' <span class="lo-pk-sub" style="color:#888">· equipped</span>' : ''} <span class="lo-pk-sub" style="color:#888; margin-left:auto">${lentTo ? CHARACTERS[lentTo].name + ' has it · takes it back' : `${spec.muzzleVelocity} m/s · ${magSize} BB mag`}</span>`;
         pi.addEventListener('click', () => {
