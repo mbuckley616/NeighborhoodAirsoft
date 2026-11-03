@@ -107,6 +107,14 @@ const PICKUP_DAY_GUNS = { fernando: 'ak47' };
 function pickupDayGun(e, tod) {
   return tod === 'day' && PICKUP_DAY_GUNS[e.charId] ? Object.assign({}, e, { weapon: PICKUP_DAY_GUNS[e.charId] }) : Object.assign({}, e);
 }
+// v1.429 (card fable/d51-northcliff; Michael: C, 3 Nov, "Fernando's nest in a daytime Northcliff pickup game"): by day
+// on the real-size Northcliff their side's three kids go to the bend's cars, down the west leg, not up it by their
+// base, so you meet them at the corner while Fernando covers it from the nest. By night the night match's spots stand.
+const PICKUP_DAY_ANCHORS = { northcliff: { bulb_car_n: 'bend_n', bulb_car_s: 'bend_s', bulb_fort: 'bend_w' } };
+function pickupDayAnchor(e, m, tod) {
+  const to = tod === 'day' && !e.team && PICKUP_DAY_ANCHORS[m.key] && PICKUP_DAY_ANCHORS[m.key][e.anchor];
+  return to ? Object.assign({}, e, { anchor: to }) : e;
+}
 function buildPickupScenario(opts) {
   const m = PICKUP_MAPS.find(k => k.key === opts.map);
   if (!m) return null;
@@ -135,7 +143,7 @@ function buildPickupScenario(opts) {
       `${lives === 1 ? 'One life' : lives + ' lives'} for everyone, you included; last side standing` +
       (clock ? `, or the side with more lives left at ${pickupClockText(clock)}.` : '.'),
     builderFn: t.builderFn, builderArg: t.builderArg, timeOfDay: tod, scenarioType: 'skirmish',
-    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => pickupDayGun(e, tod)),   // v1.207
+    playerSpawn: t.playerSpawn, enemySetup: ours.concat(theirs).map(e => pickupDayAnchor(pickupDayGun(e, tod), m, tod)),   // v1.207, v1.429
     winCondition: 'last_team_standing', npcLives: lives, playerLives: lives, armorMult: 1,
     rewards: Object.assign({}, PICKUP_REWARDS), pickup: { map: m.key, size, tod, lives, clock, holiday },
   };

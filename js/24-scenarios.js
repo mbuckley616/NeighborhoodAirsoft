@@ -1493,8 +1493,8 @@ const SCENARIOS = {
     enemySetup: [
       { charId: 'andrew',   weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
       { charId: 'alex',     weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
-      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n' },
-      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s' },
+      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n', holdNear: 40 },   // v1.429: up the leg until you're within 40 m
+      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s', holdNear: 40 },
       { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },   // v1.131: holds the high yard (was: huddled at the bulb and stayed)
     ],
     enemySpawnCluster: 'cluster_bulb',

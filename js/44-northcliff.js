@@ -367,6 +367,15 @@ function buildNorthcliffScene(variant, timeOfDay) {
     const lamp = addStreetlamp(scene, x, lz, groundY, _night);
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
   }
+  // v1.429 (card fable/d51-northcliff; critic 3 Nov): two cars parked at the bend, one on the inside kerb of the west
+  // leg's foot and one on the outside of the turn, so their side has cover where the street turns. Their base is up
+  // the west leg behind the corner house, and a kid sent from it straight at your crew walked the corner house's back
+  // yard while your crew walked its front: the Twins 3v3 went 200 s with nobody meeting. The Twins 3v3 and the day
+  // Pickup Game (Michael: C, 3 Nov) send their side down the leg to these first. Fixed colours and placed last, so the
+  // street's random draws (yards, trees, cars) are the same as before.
+  const bendCar = (x, z, orient, color) => { const o = sinkObs(addCar(scene, x, z, { orientation: orient, color, groundNormalFn: groundNormal, detail: true }), x, z); pushCarObs(coverList, o); return o; };
+  const bendCarIn = bendCar(-37.9, -11, Math.PI / 2, 0x6a8aa8);
+  const bendCarOut = bendCar(-38.6, -1.4, Math.PI * 0.75, 0xb09a6a);
 
   const bounds = { minX: -47, maxX: 42, minZ: -40, maxZ: 33 };
   const edge = [
@@ -383,6 +392,9 @@ function buildNorthcliffScene(variant, timeOfDay) {
     road_e_n: A('road_e_n'), road_e_s: A('road_e_s'), road_mid_n: A('road_mid_n'), road_mid_s: A('road_mid_s'),
     road_w: A('road_w'), cluster_road: A('cluster_road'),   // v1.131
     cluster_bulb: A('cluster_bulb'), cluster_east: A('cluster_east'),
+    // v1.429: the bend, behind its two cars on the side away from the street (kept out of ANCH, so keepClear's draws hold)
+    bend_n: { pos: P(-40, -12.4), cover: bendCarIn }, bend_s: { pos: P(-40, -9.4), cover: bendCarIn },
+    bend_w: { pos: P(-40.4, 0.2), cover: bendCarOut },
   };
   const playerSpawns = {
     road_east:   { pos: P(SPAWN_E[0], SPAWN_E[1]), yaw: Math.PI / 2 },   // the area's east edge, facing west down the street (yaw 0 faces -z)
@@ -398,6 +410,7 @@ function buildNorthcliffScene(variant, timeOfDay) {
     name: 'Northcliff Trace', scenarioName: '', desc: '',
     placements, playerSpawns, groundY,
     teamBases: { player: { x: 38, z: -3 }, enemy: { x: -41, z: -32 } },
+    fieldAdvance: true,   // v1.429: an advancing kid walks round the houses by the field (js/80-ai.js), not along them
   };
 }
 function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('default', tod); }

@@ -16,8 +16,12 @@ const build = await page.evaluate(() => {
   const ladder = SCENARIOS.northcliff_night_4v4.enemySetup.find(e => e.charId === 'fernando').weapon;
   const others = buildPickupScenario({ map: 'northcliff', size: 4, tod: 'day', lives: 3 }).enemySetup.filter(e => e.charId !== 'fernando')
     .every(e => e.weapon === SCENARIOS.northcliff_night_4v4.enemySetup.find(x => x.charId === e.charId).weapon);
-  return { day, night, moved, movedNight, ladder, others };
+  // v1.429 (Michael: C, 3 Nov): by day the other three go down the west leg to the bend's cars; by night the night match's spots
+  const spots = tod => buildPickupScenario({ map: 'northcliff', size: 4, tod, lives: 3 }).enemySetup.filter(e => !e.team && e.charId !== 'fernando').map(e => e.anchor).join();
+  return { day, night, moved, movedNight, ladder, others, dayTheirs: spots('day'), nightTheirs: spots('night') };
 });
+check('by day the other three take the bend (Michael: C, 3 Nov); by night the night match\'s spots up the leg',
+  build.dayTheirs === 'bend_n,bend_s,bend_w' && build.nightTheirs === 'bulb_car_n,bulb_car_s,bulb_fort', [build.dayTheirs, build.nightTheirs]);
 check('a Northcliff pickup 4v4 by day: Fernando in the high yard\'s nest, a defender, with his AK', build.day.anchor === 'yard_n3'
   && build.day.role === 'defender' && build.day.weapon === 'ak47', build.day);
 check('by night he keeps the rifle', build.night.anchor === 'yard_n3' && build.night.role === 'defender' && build.night.weapon === 'sniper', build.night);

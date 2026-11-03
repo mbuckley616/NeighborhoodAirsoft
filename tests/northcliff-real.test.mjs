@@ -75,5 +75,18 @@ for (const id of ['northcliff_1v1_evan', 'northcliff_twins_3v3', 'northcliff_def
   check(`${id}: the worst of six views stays inside 1,300 draw calls`, r.worst <= 1300, r.worst);
   await leave();
 }
+// v1.429 (critic, 3 Nov): the Twins 3v3 met nobody: 0 of 4 tagged in 3 of 3 rounds of 200 s, their side pressed on the
+// corner house's back and your crew on its front. Now an advancing kid walks round a house by the field (fieldAdvance)
+// and the twins hold up the leg until you're within 40 m. You can't be tagged here; the kids fight it out.
+await g.scenario('northcliff_twins_3v3');
+const meet = await page.evaluate(() => {
+  const hit = applyBBHit, tags = [];
+  applyBBHit = (bb, c) => { if (c === Game.player) return; const h0 = c.health, r = hit(bb, c); if (h0 > 0 && c.health <= 0) tags.push(+(Game.scenario.roundTime || 0).toFixed(0)); return r; };
+  try { for (let f = 0; f < 60 * 120 && Game.mode === 'scenario'; f++) stepGame(1 / 60); } finally { applyBBHit = hit; }
+  return tags;
+});
+console.log('   the Twins 3v3, kids tagged in 120 s at', JSON.stringify(meet));
+check('the Twins 3v3: the sides meet, two or more kids tagged in 120 s (0 in 200 s before v1.429; main\'s old street 3-5)', meet.length >= 2, meet);
+await leave();
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

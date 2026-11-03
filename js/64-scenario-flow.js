@@ -289,6 +289,7 @@ function enterScenario(scenarioId) {
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.holdUntilNear) enemy.holdUntilNear = es.holdUntilNear;   // v1.316: no shot until a teammate is this close to you
+        if (es.holdNear) enemy.holdNear = es.holdNear;                  // v1.429: holds his spot until a foe is this close to it
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
         if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
@@ -482,6 +483,7 @@ function enterScenario(scenarioId) {
   assignScenarioBBColors(Game.scenario.enemies);
   Game.scenario.cover = built.cover;
   Game.scenario.bounds = built.bounds;
+  Game.scenario.fieldAdvance = !!built.fieldAdvance;   // v1.429: advancing kids walk the field round houses (Northcliff)
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
   Game.scenario.ladders = built.ladders || null;   // v1.138: climb zones (the treehouse ladder)
   Game.scenario.perches = built.perches || null;   // v1.143: what a kid who climbs a ladder holds (kidLadderStep)
