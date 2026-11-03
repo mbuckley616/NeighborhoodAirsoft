@@ -2545,7 +2545,7 @@ function updateFpHands(group, gunType) {
   if (!H) return;
   if (H.under) {
     const under = getMountedAccessories(gunType).find(a => a.slot === 'under');
-    const onPart = !!under && (under.type === 'foregrip' || under.type === 'taped_mag');
+    const onPart = !!under && (under.type === 'foregrip' || under.type === 'taped_mag' || under.type === 'long_mag');   // v1.426: the long mag too
     for (const o of H.l) o.visible = !onPart;
     for (const o of H.under) o.visible = onPart;
   }

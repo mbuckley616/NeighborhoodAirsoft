@@ -224,6 +224,9 @@ const ATTACHMENTS = {
   sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, but the strap tugs when you aim: aiming in is slower. Long guns only.' },
   // v1.419 (D.83): the second wave's sling, the shoelace one's opposite: it snaps the gun up, and bounces it as you walk
   bungee_sling: { id:'bungee_sling', name:'Bungee Sling', slot:'under', price:10, adsSpeedMult:1.35, moveSpreadMult:1.3, desc:'A bungee cord off the garage shelf, hooked under the barrel and back to the stock. It snaps the gun up to your eye, so aiming in is a third quicker, but it bounces as you walk: your shots spread wider on the move. Long guns only.' },
+  // v1.426 (D.83, Michael: A, the taped mag goes under the barrel): a second mag's body taped onto the first, end to end,
+  // so it holds half as much again; it is heavier, and a long taped mag is slower to swap or top up
+  long_mag:   { id:'long_mag', name:'Taped-Up Long Mag', slot:'under', price:18, weight:1.0, magMult:1.5, reloadMult:1.5, desc:'Two mags duct-taped end to end and fed up through a hole cut in the floor of the first. Your gun loads half as many BBs again, but a mag that long is clumsy: swapping in a spare and feeding from a speed loader both take half as long again, and it’s 1 lb more to carry. Long guns only.' },
   foregrip:   { id:'foregrip', name:'PVC Foregrip', slot:'under', price:16, weight:0.8, moveSpreadMult:0.65, desc:'A stub of plumbing pipe, hose-clamped under the barrel. Your shots stay a third tighter while you walk, but it’s 0.8 lb more to carry. Long guns only.' },
   // v1.420 (D.83, Michael: A, two new slots): the cardboard barrel moves to the new MUZZLE slot
   cardboard_barrel: { id:'cardboard_barrel', name:'Cardboard Barrel', slot:'muzzle', price:6, hipSpreadMult:0.68, velocityMult:0.85, desc:'A paper-towel tube taped over the muzzle. It straightens the BBs out (a fifth tighter), but they rub the cardboard and leave slower, so they drop and wobble sooner. Sits on the muzzle of any long gun.' },
@@ -437,6 +440,14 @@ function underPartMult(key) {
     if (d && typeof d[key] === 'number') m *= d[key];
   }
   return m;
+}
+// v1.426 (D.83): the mag a gun loads in a match: its own, or half as much again with the Taped-Up Long Mag under it
+function getMatchMagSize(gunType) {
+  return Math.round(getMaxAmmoForGun(gunType) * ((getUnderPart(gunType) || {}).magMult || 1));
+}
+// v1.426: how much longer a reload takes on this gun (the long mag's 1.5; else 1)
+function getReloadMult(gunType) {
+  return (getUnderPart(gunType) || {}).reloadMult || 1;
 }
 // v1.418: the sight on a gun, and whether it is one you look through (the 4× scope, the toy scope): its scopeView or null
 function getMountedSight(gunType) {
@@ -936,7 +947,7 @@ function describeSlot(idx) {
       kind: 'gun',
       icon: '⌐',
       name: getGunDisplayName(Game.persist.equipped.gun),
-      desc: `Mag: ${getMaxAmmoForGun(Game.persist.equipped.gun)} rounds`,
+      desc: `Mag: ${getMatchMagSize(Game.persist.equipped.gun)} rounds`,   // v1.426: with a long mag, its size
     };
   }
   if (slot.kind === 'noodle') return { kind: 'noodle', icon: '〰', name: 'Pool Noodle', desc: 'V swings it · a hit tags' };   // v1.249
