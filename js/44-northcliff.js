@@ -8,6 +8,7 @@
 // Six houses, 20 m apart, and no backyard fences: bigger yards and longer sightlines than Winnmark (the teaser's
 // promise), so the uphill yards are the sniper's ground. Layout draws from the scenario's seeded Math.random.
 // Playable box: x∈[-35,39], z∈[-33,33].
+// v1.421 (D.51): at real scale, the road bending north at the west end; the area x∈[-47,42], z∈[-40,33] (see below).
 // =====================================================================
 function buildNorthcliffScene(variant, timeOfDay) {
   const scene = new THREE.Scene();
@@ -17,15 +18,30 @@ function buildNorthcliffScene(variant, timeOfDay) {
     sunColor: 0xfff0d0, sunInt: 1.2, sunPos: [-18, 34, 20],
     dayAmbColor: 0xb8c8d8, dayAmbInt: 0.48, dayHemiColor: 0xc8d8ff, dayHemiInt: 0.38,
     nightFog: [20, 66], moonPos: [18, 36, -20],
-    shadow: { size: 2048, extent: 46, far: 90 },
+    shadow: { size: 2048, extent: 52, far: 110 },   // v1.421: was 46 and 90, for the wider area
   });
 
-  // --- the hill: high at the north tree wall, smooth down to the road and on down to the creek bank ---
+  // v1.421 (D.51, card fable/d51-northcliff, steps 1-3; Michael: real scale 16 Oct, B on the west end 2 Nov): the loop's
+  // south leg at its real ~130 m, houses of 15-17 m on ~30 m lots, the steeper hill, and at the west corner the road
+  // bends north up the hill as the real loop does. Every match plays the west part of the leg, x -47..42, z -40..33;
+  // the rest of the leg, the west leg past the area and the far houses are scenery (nothing of them is solid).
+  // The south leg's centreline: z = NC_ZR(x), a gentle bow north between the corners (x -26 and 110).
+  const zr = (x) => { if (x <= -26 || x >= 110) return 1; const s = Math.sin(Math.PI * (x + 26) / 136); return 1 - 4 * s * s; };
+  // --- the hill: flat across the road, up 7 m to the back tree line north of it, steepest over the yards; south of
+  // it down 3.6 m to the creek bank at z 33, then the bank drops 4 m to the creek (z 38.5) and the far side rises ---
   function groundY(x, z) {
-    let u = (z + 36) / (32 + 36);
-    u = Math.max(0, Math.min(1, u));
-    let h = 4.2 * (1 - u * u * (3 - 2 * u));
-    if (z > 32) h -= Math.min(2.2, (z - 32) * 0.4);     // the creek bank
+    const d = z - zr(x);
+    let h = 0;
+    if (d < -4.5) {
+      const dn = -d, u = (dn - 4.5) / 34;
+      h = u <= 1 ? 7 * (0.6 * u + 0.4 * u * u * (3 - 2 * u)) : 7 + (dn - 38.5) * 0.12;
+    } else if (d > 4.5) {
+      const span = Math.max(4, 33 - zr(x) - 4.5);
+      let u = Math.min(1, (d - 4.5) / span);
+      h = -3.6 * u * u * (3 - 2 * u);
+      if (z > 33) h -= Math.min(4, (z - 33) * 0.9);   // the creek bank
+      if (z > 40.5) h += Math.min(6, (z - 40.5) * 0.35);   // the far side
+    }
     h += 0.2 * Math.sin(x * 0.11 + 0.7) * Math.cos(z * 0.09);
     return h;
   }
@@ -69,113 +85,146 @@ function buildNorthcliffScene(variant, timeOfDay) {
 
   // --- ground (displaced), the creek and its far bank ---
   {
-    const g = new THREE.PlaneGeometry(150, 150, 100, 100), pos = g.attributes.position;
-    for (let i = 0; i < pos.count; i++) pos.setZ(i, groundY(pos.getX(i), -pos.getY(i)));
+    const g = new THREE.PlaneGeometry(270, 250, 180, 166), pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + 10, z = -pos.getY(i) - 25; pos.setX(i, x); pos.setY(i, -z); pos.setZ(i, groundY(x, z)); }
     pos.needsUpdate = true; g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x5e6a3c, roughness: 1.0 }));   // v1.313: was 0x58803e
     m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(140, 5), new THREE.MeshStandardMaterial({ color: 0x3a5a6a, roughness: 0.25, metalness: 0.2 }));
-    water.rotation.x = -Math.PI / 2; water.position.set(0, groundY(0, 39) - 0.15 + 0.12, 39.5); scene.add(water);
-    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7468, roughness: 0.95 });
-    for (let i = 0; i < 26; i++) {   // creek stones along the near bank
-      const x = -60 + i * 4.8 + rng(-1, 1), z = 37 + rng(-0.6, 0.6), r = rng(0.3, 0.7);
-      const s = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rockMat);
-      s.position.set(x, groundY(x, z) + r * 0.3, z); s.rotation.set(rng(0, 3), rng(0, 3), 0); s.scale.y = 0.6; scene.add(s);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(260, 4.4), new THREE.MeshStandardMaterial({ color: 0x3a5a6a, roughness: 0.25, metalness: 0.2 }));
+    water.rotation.x = -Math.PI / 2; water.position.set(10, groundY(0, 38.5) + 0.3, 38.5); scene.add(water);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7468, roughness: 0.95 }), rocks = [];
+    for (let i = 0; i < 40; i++) {   // creek stones along the near bank, one mesh
+      const x = -70 + i * 4.8 + rng(-1, 1), z = 36.6 + rng(-0.6, 0.6), r = rng(0.3, 0.7);
+      rocks.push({ geo: new THREE.DodecahedronGeometry(r, 0), m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + r * 0.3, z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(rng(0, 3), rng(0, 3), 0)), new THREE.Vector3(1, 0.6, 1)) });
     }
+    scene.add(new THREE.Mesh(_houseMergeParts(rocks), rockMat));
   }
 
-  // --- the road: east entry → west bulb, along the slope ---
-  const RA = { x: 37, z: 1 }, RC = { x: 4, z: -5 }, RB = { x: -28, z: 0 };
-  const roadPoint = (t) => ({ x: (1 - t) * (1 - t) * RA.x + 2 * (1 - t) * t * RC.x + t * t * RB.x,
-                              z: (1 - t) * (1 - t) * RA.z + 2 * (1 - t) * t * RC.z + t * t * RB.z });
-  const roadDeriv = (t) => ({ x: 2 * (1 - t) * (RC.x - RA.x) + 2 * t * (RB.x - RC.x), z: 2 * (1 - t) * (RC.z - RA.z) + 2 * t * (RB.z - RC.z) });
-  const roadCenterline = [];
-  for (let i = 0; i <= 56; i++) roadCenterline.push(roadPoint(i / 56));
-  const roadZAt = (x) => { let bz = 0, bd = Infinity; for (const p of roadCenterline) { const d = Math.abs(p.x - x); if (d < bd) { bd = d; bz = p.z; } } return bz; };
-  const tAtX = (x) => { let bt = 0, bd = Infinity; for (let t = 0; t <= 1; t += 0.002) { const d = Math.abs(roadPoint(t).x - x); if (d < bd) { bd = d; bt = t; } } return bt; };
+  // --- the road: the south leg from the east corner (x 110), west along its bow to the west corner, round the
+  // bend (centre (-26, -14), radius 15) and north up the west leg (x -41) out past the hilltop ---
+  // v1.422 (step 4): from the east corner too, where the loop turns north (centre (110, -14)): the east leg (x 125) runs
+  // down to it from the north, so the street seen from the area's east end bends away as the real one does
+  const ROAD = [];
+  for (let z = -125; z < -14; z += 2) ROAD.push({ x: 125, z });
+  for (let k = 0; k <= 24; k++) { const a = (Math.PI / 2) * k / 24; ROAD.push({ x: 110 + 15 * Math.cos(a), z: -14 + 15 * Math.sin(a) }); }
+  for (let x = 109; x > -26; x -= 1) ROAD.push({ x, z: zr(x) });
+  for (let k = 0; k <= 24; k++) { const a = Math.PI / 2 + (Math.PI / 2) * k / 24; ROAD.push({ x: -26 + 15 * Math.cos(a), z: -14 + 15 * Math.sin(a) }); }
+  for (let z = -15; z >= -125; z -= 2) ROAD.push({ x: -41, z });
+  const ROAD_S = [0];
+  for (let i = 1; i < ROAD.length; i++) ROAD_S.push(ROAD_S[i - 1] + Math.hypot(ROAD[i].x - ROAD[i - 1].x, ROAD[i].z - ROAD[i - 1].z));
+  const ROAD_L = ROAD_S[ROAD_S.length - 1];
+  const roadSeg = (t) => {
+    const s = Math.max(0, Math.min(1, t)) * ROAD_L;
+    let lo = 0, hi = ROAD.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ROAD_S[mid] <= s) lo = mid; else hi = mid; }
+    return { i: lo, f: (s - ROAD_S[lo]) / Math.max(1e-6, ROAD_S[hi] - ROAD_S[lo]), j: hi };
+  };
+  const roadPoint = (t) => { const { i, f, j } = roadSeg(t); return { x: ROAD[i].x + (ROAD[j].x - ROAD[i].x) * f, z: ROAD[i].z + (ROAD[j].z - ROAD[i].z) * f }; };
+  const roadDeriv = (t) => { const { i, j } = roadSeg(t); return { x: (ROAD[j].x - ROAD[i].x) * ROAD_L, z: (ROAD[j].z - ROAD[i].z) * ROAD_L }; };
+  const roadZAt = zr;
 
-  // --- houses: three up the hill (north row, facing south), three down it (south row, facing north) ---
+  // --- houses: up the hill (inside the loop, facing the street), down it (backing onto the creek), and round the
+  // corner. `play` houses stand in the area and are solid; the rest are scenery past it ---
   const HOUSES = [
     // v1.312 (backlog D.55 step 4; docs/refs/northcliff.md gap 2, part one): the street's palette and its stucco and
     // fieldstone fronts. Two off-white stucco and two tan stucco, fieldstone at the corners and round the arched
     // entry, two or three front gables and arched upstairs windows; two red brick with slate-blue shutters. Brown and
-    // grey roofs. Today's sizes and places (part two, the real 15-18 m houses, is a design call).
-    { x: 24, z: -17, side: 'north', w: 10, brick: 0xb8a888, roof: 0x6a666c, look: 'tan' },
-    { x: 4, z: -18, side: 'north', w: 10, brick: 0xa86a52, roof: 0x74605f, look: 'brick' },
-    { x: -16, z: -17, side: 'north', w: 9, brick: 0xdcdad2, roof: 0x74605f, look: 'white' },
-    { x: 22, z: 18, side: 'south', w: 9, brick: 0xdcdad2, roof: 0x66626a, look: 'white' },
-    { x: 2, z: 19, side: 'south', w: 10, brick: 0xb0a080, roof: 0x7a6662, look: 'tan' },
-    { x: -17, z: 18, side: 'south', w: 9, brick: 0x9e604a, roof: 0x6a666c, look: 'brick' },
+    // grey roofs. v1.421: at real size (15-17 x 11 m, the fronts 13-17 m back from the kerb, lots about 30 m).
+    { x: -14, side: 'north', w: 16, brick: 0xdcdad2, roof: 0x74605f, look: 'white', play: true },   // the corner house
+    { x: 16, side: 'north', w: 17, brick: 0xa86a52, roof: 0x74605f, look: 'brick', play: true },
+    { x: 50, side: 'north', w: 15, brick: 0xb8a888, roof: 0x6a666c, look: 'tan' },
+    { x: 80, side: 'north', w: 16, brick: 0x9e604a, roof: 0x6a666c, look: 'brick' },
+    { x: -20, side: 'south', w: 15, brick: 0x9e604a, roof: 0x6a666c, look: 'brick', play: true },
+    { x: 8, side: 'south', w: 17, brick: 0xb0a080, roof: 0x7a6662, look: 'tan', play: true },
+    { x: 34, side: 'south', w: 14, brick: 0xdcdad2, roof: 0x66626a, look: 'white', play: true },
+    { x: 62, side: 'south', w: 16, brick: 0xb8a888, roof: 0x74605f, look: 'tan' },
+    { x: 90, side: 'south', w: 15, brick: 0xdcdad2, roof: 0x6a666c, look: 'white' },
+  ];
+  for (const h of HOUSES) h.z = h.side === 'north' ? zr(h.x) - 22.5 : zr(h.x) + 21.5;
+  // round the corner: the outside corner lot, and the west leg's houses either side (facing the road)
+  const CORNER_HOUSES = [
+    { x: -55, z: 21, face: 'north', w: 15, d: 11, brick: 0xb0a080, roof: 0x74605f, look: 'tan' },
+    { x: -62, z: -26, face: 'east', w: 11, d: 16, brick: 0xa86a52, roof: 0x6a666c, look: 'brick' },
+    { x: -62, z: -58, face: 'east', w: 11, d: 15, brick: 0xdcdad2, roof: 0x74605f, look: 'white' },
+    { x: -20, z: -60, face: 'west', w: 11, d: 16, brick: 0xb8a888, roof: 0x66626a, look: 'tan' },
   ];
   const NC_LOOK = {
     white: { rise: 3.2, gables: 3, arch: true, archWin: true, stone: [0xafa895, 0x9c8b7b], shutters: [0x4a4038, 0x3a3a36] },
     tan:   { rise: 3.2, gables: 2, arch: true, archWin: true, bay: -1, stone: [0xafa895, 0x9c8b7b], shutters: [0x3a3026, 0x4a4038] },
     brick: { rise: 3.0, gables: 1, shutters: [0x4c5a63] },
   };
-  const houseObs = HOUSES.map(h => sinkObs(buildSuburbanHouse(scene, {
-    x: h.x, z: h.z, width: h.w, depth: 8, brickColor: h.brick, roofColor: h.roof,
-    trimColor: h.look === 'brick' ? 0xf0ece4 : 0xe6e0d4,
-    faceDir: h.side === 'north' ? 'south' : 'north', detail: true, look: NC_LOOK[h.look],
-  })));
-  const houseCenters = HOUSES.map(h => ({ x: h.x, z: h.z, side: h.side }));
+  const house = (h, face, depth) => sinkObs(buildSuburbanHouse(scene, {
+    x: h.x, z: h.z, width: h.w, depth, brickColor: h.brick, roofColor: h.roof,
+    trimColor: h.look === 'brick' ? 0xf0ece4 : 0xe6e0d4, faceDir: face, detail: true, look: NC_LOOK[h.look],
+  }));
+  const houseObs = [];
+  for (const h of HOUSES) { const o = house(h, h.side === 'north' ? 'south' : 'north', 11); if (h.play) houseObs.push(o); }
+  for (const h of CORNER_HOUSES) house(h, h.face, h.d);   // scenery: not solid
+  const houseCenters = HOUSES.map(h => ({ x: h.x, z: h.z, side: h.side, play: !!h.play }));
+  const playHouses = houseCenters.filter(h => h.play);
   buildStreetRoad(scene, {
     point: roadPoint, deriv: roadDeriv, groundY, groundNormal, houseCenters,
     asphMat: new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.95, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-    ASPH: 3.45, bulb: { x: RB.x, z: RB.z, r: 6.3 }, T0: -0.12, NS: 170,
-    manholes: [[0.3, 0.8], [0.66, -0.7]], drains: [[0.18, -1], [0.52, 1], [0.84, -1]],
-    cracks: [[0.1, 5.2, 0.4], [0.44, 6.0, -0.3], [0.76, 5.0, 0.25]], patch: 0.56,
+    ASPH: 3.45, bulb: null, T0: 0, NS: 420,
+    manholes: [[0.3, 0.8], [0.45, -0.7]], drains: [[0.36, -1], [0.42, 1], [0.48, -1]],
+    cracks: [[0.33, 5.2, 0.4], [0.4, 6.0, -0.3], [0.47, 5.0, 0.25]], patch: 0.44,
   });
-  // driveways, from the house front to the road edge, laid on the slope in 2 m pieces
+  // driveways, from each south-leg house's front to the road edge, laid on the slope in 2 m pieces (one mesh)
   {
-    const dMat = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.95 });
+    const dMat = new THREE.MeshStandardMaterial({ color: 0xb8b4ac, roughness: 0.95 }), parts = [];
     for (const hc of houseCenters) {
-      const rz = roadZAt(hc.x), front = hc.side === 'north' ? hc.z + 4 : hc.z - 4;
+      const rz = roadZAt(hc.x), front = hc.side === 'north' ? hc.z + 5.5 : hc.z - 5.5;
       const edge = hc.side === 'north' ? rz - 4 : rz + 4;
       const z0 = Math.min(front, edge), z1 = Math.max(front, edge), n = Math.max(1, Math.ceil((z1 - z0) / 2)), st = (z1 - z0) / n;
       for (let s = 0; s < n; s++) {
-        const seg = new THREE.Mesh(new THREE.PlaneGeometry(4, st + 0.4), dMat);
-        layOnSlope(seg, hc.x, z0 + st * (s + 0.5), 0.018); seg.receiveShadow = true; scene.add(seg);
+        const seg = layOnSlope(new THREE.Mesh(new THREE.PlaneGeometry(4, st + 0.4)), hc.x, z0 + st * (s + 0.5), 0.018);
+        seg.updateMatrix(); parts.push({ geo: seg.geometry, m: seg.matrix.clone() });
       }
     }
+    const m = new THREE.Mesh(_houseMergeParts(parts), dMat); m.receiveShadow = true; scene.add(m);
   }
 
-  // --- anchors first, so the random yard cover keeps clear of them ---
+  // --- anchors first, so the random yard cover keeps clear of them. The keys are the old street's, so the matches,
+  // the Pickup Game and the crew's posts keep their names: "bulb" is now their base in the bend, on the corner house's
+  // side lawn off the west leg, where the corner house stands between it and the straight ---
   const P = (x, z) => new THREE.Vector3(x, 0, z);
   const ANCH = {
-    bulb_fort: [-30.5, 0], bulb_car_n: [-27.5, -5.8], bulb_car_s: [-24.5, 6.6],
-    yard_n1: [22, -28], yard_n2: [5, -29], yard_n3: [-15, -28],
-    yard_s1: [21, 28.5], yard_s2: [3, 29], yard_s3: [-16, 28.5],
-    creek_fort: [-6, 31.2],
-    road_e_n: [28, -3.2], road_e_s: [29, 4.8], road_mid_n: [-6, -6.5], road_mid_s: [12, 3.5],
-    road_w: [-18, 3.6],   // v1.131: the creek-fort defend's west attacker
-    cluster_bulb: [-31, 0], cluster_east: [34, 1], cluster_road: [-4, -2.5],   // v1.131: cluster_road, the defend's attackers
+    bulb_fort: [-34, -30.2], bulb_car_n: [-36.3, -38.4], bulb_car_s: [-43.3, -33.6],
+    yard_n1: [31, -34], yard_n2: [14, -35], yard_n3: [-29, -30],
+    yard_s1: [35, 28.6], yard_s2: [9, 29], yard_s3: [-20, 29.4],
+    creek_fort: [-6, 31.2], creek_w: [-33, 27],
+    road_e_n: [36, -7.4], road_e_s: [37, 2], road_mid_n: [6, -6.2], road_mid_s: [22, 2.6],
+    road_w: [-8, 4.8],   // v1.131: the creek-fort defend's west attacker
+    cluster_bulb: [-40.5, -36], cluster_east: [38, -2.8], cluster_road: [8, -1.4],   // v1.131: cluster_road, the defend's attackers
   };
+  const SPAWN_E = [39.5, -2.9];
   const keepClear = (x, z, r = 2.2) => Object.values(ANCH).some(([ax, az]) => Math.hypot(ax - x, az - z) < r)
-    || Math.hypot(x - 35, z - 1) < 3;   // the player's road_east spawn
+    || Math.hypot(x - SPAWN_E[0], z - SPAWN_E[1]) < 3;   // the player's road_east spawn
 
   const coverList = [], coverByHouse = [], bushObs = [], curbBins = [], driveCars = [];
-  // mailboxes at the foot of each driveway
-  for (const hc of houseCenters) {
+  // mailboxes at the foot of each driveway in the area
+  for (const hc of playHouses) {
     const rz = roadZAt(hc.x), dir = hc.side === 'north' ? -1 : 1;
     const mx = hc.x + (gameRandom() < 0.5 ? -2.3 : 2.3), mz = rz + dir * 4.6;
     bushObs.push(sinkObs(addMailbox(scene, mx, mz, { facing: hc.side === 'north' ? 0 : Math.PI }), mx, mz));
   }
   // bins out on trash day at half the houses (player cover, not AI cover, as Winnmark)
-  for (const hc of houseCenters) {
+  for (const hc of playHouses) {
     if (gameRandom() < 0.5) continue;
     const dir = hc.side === 'north' ? -1 : 1, bz = roadZAt(hc.x) + dir * 4.9, bx = hc.x + (gameRandom() < 0.5 ? 3.4 : -3.4);
     const facing = hc.side === 'north' ? Math.PI : 0;
     curbBins.push(sinkObs(addCurbsideBin(scene, bx - 0.4, bz, { variant: 'garbage', facing, detail: true }), bx - 0.4, bz));
     curbBins.push(sinkObs(addCurbsideBin(scene, bx + 0.4, bz, { variant: 'recycle', facing, detail: true }), bx + 0.4, bz));
   }
-  // backyard cover: 3–4 pieces a yard, spread wide (the yards are deep)
-  houseCenters.forEach((hc, i) => {
+  // backyard cover: 3–4 pieces a yard, spread wide
+  playHouses.forEach((hc, i) => {
     const back = hc.side === 'north' ? -1 : 1, yz = hc.z + back * 10.5;
     coverByHouse[i] = [];
     const n = 3 + Math.floor(gameRandom() * 2);
     for (let j = 0; j < n; j++) {
-      const cx = hc.x + rng(-6.5, 6.5), cz = yz + rng(-4, 3.5) * back;
-      if (keepClear(cx, cz) || Math.abs(cz) > 31.5) continue;
+      const cx = hc.x + rng(-8, 8), cz = yz + rng(-3.5, 2) * back;
+      if (keepClear(cx, cz) || cz < -39 || cz > 31.8 || cx > 41) continue;
       const k = gameRandom(), gy = groundY(cx, cz);
       let o;
       if (k < 0.4) o = sinkObs(addHomeDepotBox(scene, cx, cz, { w: rng(0.9, 1.3), h: rng(0.85, 1.1), d: rng(0.85, 1.1), facing: rng(-Math.PI, Math.PI), detail: true }), cx, cz);
@@ -190,31 +239,81 @@ function buildNorthcliffScene(variant, timeOfDay) {
   });
   // anchor cover for the yard anchors: one box beside each (so every yard anchor has something to hide behind)
   const anchorCover = {};
-  for (const [key, side] of [['yard_n1', -1], ['yard_n2', -1], ['yard_n3', -1], ['yard_s1', 1], ['yard_s2', 1], ['yard_s3', 1]]) {
+  for (const [key, side] of [['yard_n1', -1], ['yard_n2', -1], ['yard_n3', -1], ['yard_s1', 1], ['yard_s2', 1], ['yard_s3', 1], ['creek_w', 1]]) {
     const [ax, az] = ANCH[key], cz = az - side * 1.3;   // between the anchor and the road
     const o = sinkObs(addHomeDepotBox(scene, ax, cz, { w: 1.3, h: 1.05, d: 1.0, facing: 0, detail: true }), ax, cz);
     coverList.push(o); anchorCover[key] = o;
   }
-  // cars: about half the driveways (collision, not AI cover); two in the bulb and four along the kerb (AI cover)
+  // v1.421: board privacy fences on two back-yard lot lines (the guide: "board privacy fences close some back yards at
+  // the sides"), 1.8 m, stained; each 2.4 m panel on the ground under it. Solid to bodies, BBs and eyes.
+  const fenceObs = [];
+  {
+    const fMat = new THREE.MeshStandardMaterial({ color: 0x9a6a50, roughness: 0.9 }), parts = [];
+    const run = (x0, z0, x1, z1) => {
+      const len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / 2.4)), ang = Math.atan2(x1 - x0, z1 - z0);
+      for (let k = 0; k < n; k++) {
+        const xa = x0 + (x1 - x0) * k / n, za = z0 + (z1 - z0) * k / n, xb = x0 + (x1 - x0) * (k + 1) / n, zb = z0 + (z1 - z0) * (k + 1) / n;
+        const xc = (xa + xb) / 2, zc = (za + zb) / 2, gy = Math.min(groundY(xa, za), groundY(xb, zb));
+        const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), ang);
+        parts.push({ geo: new THREE.BoxGeometry(0.08, 1.8 + 0.4, len / n + 0.04), m: new THREE.Matrix4().compose(new THREE.Vector3(xc, gy + 0.7, zc), q, new THREE.Vector3(1, 1, 1)) });
+        parts.push({ geo: new THREE.BoxGeometry(0.14, 2.3, 0.14), m: new THREE.Matrix4().makeTranslation(xa, gy + 0.95, za) });
+        fenceObs.push({ minX: Math.min(xa, xb) - 0.06, maxX: Math.max(xa, xb) + 0.06, minZ: Math.min(za, zb) - 0.06, maxZ: Math.max(za, zb) + 0.06,
+          h: 1.8 + groundY(xc, zc) - gy, baseY: gy, surface: 'wood' });
+      }
+    };
+    run(-6, -16.6, 7.5, -19);     // across the side yard between the corner house and the next, front corner to front corner (a gate fence; flush, so no pocket)
+    // from the corner house's back corner along the lot line and up past both rows of the tree line: the uphill back
+    // yards are split, theirs behind the corner house and ours behind the next, so nobody meets round a back corner
+    run(-6, -27.4, 1, -31.5); run(1, -31.5, 1, -44.5);
+    run(-1, 25.6, -1, 32.6);      // below the street, between the tan house and the creek fort's yard
+    run(42.6, -40.5, 42.6, -8);   // the area's east edge, uphill of the road: a neighbour's board fence
+    run(42.6, 4.5, 42.6, 33);     // and downhill of it
+    const m = new THREE.Mesh(_houseMergeParts(parts), fMat); m.castShadow = m.receiveShadow = true; scene.add(m);
+  }
+  // v1.421: the corner house's side lawn is a planted bed, pine straw under azaleas and boxwoods (the guide: "a curved
+  // mulched bed"), from the house's west wall almost to the west leg's kerb. Too thick to walk through, low enough to see
+  // over (0.9 m): nobody hugs the house's west wall round its blind front corner; their side comes down the west leg,
+  // in sight across the bed from the corner house's front yard.
+  {
+    const bx0 = -36.4, bx1 = -22.4, bz0 = -27.2, bz1 = -16.6, spots = [];
+    for (let i = 0; i < 9; i++) spots.push({ x: bx0 + 1.6 + (bx1 - bx0 - 3.2) * i / 8, z: (bz0 + bz1) / 2, r: 4.4 });
+    addPineStraw(scene, spots, groundY, 0x7e6650);
+    const leaf = [[], []];
+    for (let i = 0; i < 14; i++) for (let j = 0; j < 4; j++) {
+      const x = bx0 + 0.6 + (bx1 - bx0 - 1.2) * (i + (j % 2) * 0.5) / 14 + rng(-0.3, 0.3), z = bz0 + 1.2 + (bz1 - bz0 - 2.4) * j / 3 + rng(-0.4, 0.4);
+      const w = rng(1.3, 1.8), h = rng(0.75, 0.95);
+      leaf[(i + j) % 3 ? 0 : 1].push({ geo: new THREE.SphereGeometry(0.5, 8, 6), m: new THREE.Matrix4().compose(new THREE.Vector3(x, groundY(x, z) + h * 0.45, z),
+        new THREE.Quaternion(), new THREE.Vector3(w, h, w * 0.9)) });
+    }
+    leaf.forEach((parts, k) => { const m = new THREE.Mesh(_houseMergeParts(parts), new THREE.MeshStandardMaterial({ color: k ? 0x4a6a34 : 0x3a5630, roughness: 1.0 })); m.castShadow = m.receiveShadow = true; scene.add(m); });
+    for (let z = bz0; z < bz1 - 1e-6; z += 1.06) {   // in strips down the slope, each 0.9 m over its own ground (eyes go over)
+      const z1 = Math.min(bz1, z + 1.06), gy = Math.min(groundY(bx0, z1), groundY(bx1, z1), groundY((bx0 + bx1) / 2, z1));
+      fenceObs.push({ minX: bx0, maxX: bx1, minZ: z, maxZ: z1, h: 0.9, baseY: gy, surface: 'soft', bedNC: true });
+    }
+  }
+  // cars: about half the driveways in the area (collision, not AI cover); two parked up the west leg at their base and
+  // three along the south leg's kerb (AI cover)
   const CAR_COLORS = [0x6a8aa8, 0x8a4030, 0xd8d8d4, 0x2a2a2e, 0x3a5a3a, 0xb09a6a, 0x2a3e6a];
   const pickColor = () => CAR_COLORS[Math.floor(gameRandom() * CAR_COLORS.length)];
-  for (const hc of houseCenters) {
+  for (const hc of playHouses) {
     if (gameRandom() < 0.45) continue;
     const dir = hc.side === 'north' ? -1 : 1, cz = roadZAt(hc.x) + dir * 7.6;
     driveCars.push(sinkObs(addCar(scene, hc.x, cz, { orientation: dir < 0 ? Math.PI / 2 : -Math.PI / 2, color: pickColor(), groundNormalFn: groundNormal, detail: true }), hc.x, cz));
   }
   const kerbCar = (x, z, orient) => { const o = sinkObs(addCar(scene, x, z, { orientation: orient, color: pickColor(), groundNormalFn: groundNormal, detail: true }), x, z); pushCarObs(coverList, o); return o; };
-  const bulbCarN = kerbCar(-27.5, -3.6, 0.15), bulbCarS = kerbCar(-24.5, 4.6, -0.2);
-  for (const [tx, side] of [[14, 1], [31, -1], [-8, -1]]) {   // side 1 is the north kerb (the road runs west)
-    const t = tAtX(tx), p = roadPoint(t), d = roadDeriv(t), l = Math.hypot(d.x, d.z), nx = -d.z / l, nz = d.x / l;
-    kerbCar(p.x + nx * side * 2.3, p.z + nz * side * 2.3, Math.atan2(-d.z, d.x));
+  const bulbCarN = kerbCar(-38.7, -36.4, Math.PI / 2), bulbCarS = kerbCar(-43.3, -30.2, Math.PI / 2);   // parked up the west leg, past the corner house's shadow line
+  for (const [tx, side] of [[20, 1], [29, -1], [-6, -1]]) {   // side 1 is the north kerb (the road runs west)
+    const dz = (zr(tx - 0.5) - zr(tx + 0.5)), l = Math.hypot(1, dz), nx = -dz / l, nz = -1 / l;   // the tangent runs west
+    kerbCar(tx + nx * side * 2.3, zr(tx) + nz * side * 2.3, Math.atan2(-dz, -1));
   }
-  // kid forts: one in the bulb facing the street, the twins' one on the creek bank facing up the hill
-  const bulbFort = seatFort(buildKidFort(scene, -28, 0, { faceDir: 'E', width: 3.6, depth: 2.2, detail: true }), -28, 0);
+  // kid forts: their base's on the corner house's side lawn facing down to the bend, the twins' one on the creek bank
+  // facing up the hill
+  const bulbFort = seatFort(buildKidFort(scene, -34, -28, { faceDir: 'S', width: 3.6, depth: 2.2, detail: true }), -34, -28);
   const creekFort = seatFort(buildKidFort(scene, -6, 29.4, { faceDir: 'N', width: 3.8, depth: 2.2, detail: true }), -6, 29.4);
   for (const w of [...bulbFort, ...creekFort]) coverList.push(w);
 
-  // --- trees: a wall round three sides, a line along the creek bank, big oaks in the yards ---
+  // --- trees: the back tree line, the woods past the west leg, the creek bank, yard trees, and the canopy past the
+  // area (scenery) ---
   const treeObs = [];
   // v1.313 (backlog D.55 step 5; docs/refs/northcliff.md gap 1): the street stands under tall loblollies. About 40 % of
   // the wall and creek-bank trees and half the yard oaks are pines (12-18 m trunks, the crown on top), picked by their
@@ -222,51 +321,66 @@ function buildNorthcliffScene(variant, timeOfDay) {
   // Pine straw lies under the yard pines and in a bed either side of each front walk, and the lawn is the canopy's
   // darker green.
   const ncStraw = [];
-  const tree = (x, z, o = {}, share = 0.4) => {
+  const tree = (x, z, o = {}, share = 0.4, solid = true) => {
     if ((Math.abs(Math.sin(x * 4.898 + z * 7.233) * 24634.6345) % 1) < share) {
       const h2 = Math.abs(Math.sin(x * 1.37 + z * 2.71) * 9182.3) % 1;
-      if (z > -34 && z < 33) ncStraw.push({ x, z, r: 2.6 + h2 });
+      if (z > -42 && z < 33) ncStraw.push({ x, z, r: 2.6 + h2 });
       o = { ...o, shape: 'loblolly', trunkH: 13 + 5 * h2, leafR: 3.0 + 0.8 * h2 };
     }
-    treeObs.push(addSuburbanTree(scene, x, z, { detail: true, baseY: groundY(x, z), ...o }));
+    const t = addSuburbanTree(scene, x, z, { detail: true, baseY: groundY(x, z), ...o });
+    if (solid) treeObs.push(t);
   };
-  const wall = (x1, z1, x2, z2, skip) => {
-    const len = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.floor(len / 3.2)), px = -(z2 - z1) / len, pz = (x2 - x1) / len;
+  const wall = (x1, z1, x2, z2, skip, solid = true) => {
+    const len = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.floor(len / 3.4)), px = -(z2 - z1) / len, pz = (x2 - x1) / len;
     for (let i = 0; i <= n; i++) {
       const bx = x1 + (x2 - x1) * i / n, bz = z1 + (z2 - z1) * i / n;
       if (skip && skip(bx, bz)) continue;
-      tree(bx + rng(-0.5, 0.5), bz + rng(-0.5, 0.5));
-      if (i < n) tree(bx + (x2 - x1) / n / 2 + px * 2.4, bz + (z2 - z1) / n / 2 + pz * 2.4);
+      tree(bx + rng(-0.5, 0.5), bz + rng(-0.5, 0.5), {}, 0.4, solid);
+      if (i < n) tree(bx + (x2 - x1) / n / 2 + px * 2.4, bz + (z2 - z1) / n / 2 + pz * 2.4, {}, 0.4, solid);
     }
   };
-  wall(-37, -35, 41, -35);                                 // the hilltop
-  wall(-37, 34, -37, -35);                                 // the west woods behind the bulb
-  wall(41, -35, 41, 34, (x, z) => Math.abs(z - 1) < 5.5);  // the east side, open where the road comes in
-  for (let x = -34; x <= 38; x += 5.5) tree(x + rng(-1, 1), 34.8 + rng(-0.4, 0.4), { trunkH: rng(4, 5.5), leafR: rng(2.2, 2.8) });   // the creek bank
-  for (const [x, z] of [[14, -27], [-5, -26], [-26, -24], [31, -26], [12, 26], [-7, 24], [-26, 22], [32, 25]]) {   // yard oaks
-    const xx = x + rng(-1.5, 1.5), zz = z + rng(-1.5, 1.5);
-    if (!keepClear(xx, zz, 2.6)) tree(xx, zz, { trunkH: rng(3.8, 5), leafR: rng(2.4, 3.0), trunkR: 0.42 }, 0.5);
+  const westLeg = (x) => Math.abs(x + 41) < 5.5;
+  wall(-50, -42.5, 44, -42.5, (x) => westLeg(x));                        // the back tree line up the hill
+  wall(-49.5, 12, -49.5, -42.5);                                           // the woods west of the west leg (its second row toward the road)
+  for (let x = -49.5; x <= 46; x += 5.5) tree(x + rng(-1, 1), 34.6 + rng(-0.4, 0.4), { trunkH: rng(4, 5.5), leafR: rng(2.2, 2.8) });   // the creek bank
+  for (const [x, z] of [[2, -32], [26, -36], [-4, -38], [-42, 10], [24, 27], [-12, 24], [-34, 18], [44, -16],
+                        [-22, -6.5], [29, 8.5], [-8, -8.8], [-46, -8]]) {   // yard trees and verge pines
+    const xx = x + rng(-1, 1), zz = z + rng(-1, 1);
+    if (!keepClear(xx, zz, 2.6)) tree(xx, zz, { trunkH: rng(3.8, 5), leafR: rng(2.4, 3.0), trunkR: 0.42 }, 0.55);
   }
-  for (const hc of houseCenters) for (const s of [-1, 1])     // v1.313: the beds either side of the front walk
-    ncStraw.push({ x: hc.x + s * 4.2, z: hc.z + (hc.side === 'north' ? 5.6 : -5.6), r: 1.9 });
+  // past the area (scenery, not solid): the canopy over the inside of the loop and along the leg east of the area
+  wall(-30, -50, 44, -50, null, false);
+  wall(48, -42, 120, -42, null, false);
+  wall(48, 31, 120, 31, null, false);
+  for (const hc of playHouses) for (const s of [-1, 1])     // v1.313: the beds either side of the front walk
+    ncStraw.push({ x: hc.x + s * 4.6, z: hc.z + (hc.side === 'north' ? 7 : -7), r: 2.1 });
   addPineStraw(scene, ncStraw, groundY, 0x8a7258);   // the guide's #9a8066, a shade down for the sun
-  for (const hc of houseCenters) for (const s of [-1, 1]) {   // a shrub either side of each front step
-    const bx = hc.x + s * 2.6, bz = hc.z + (hc.side === 'north' ? 4.6 : -4.6);
+  for (const hc of playHouses) for (const s of [-1, 1]) {   // a shrub either side of each front step
+    const bx = hc.x + s * 2.6, bz = hc.z + (hc.side === 'north' ? 6.1 : -6.1);
     bushObs.push(addBush(scene, bx, bz, 1.2, 0.8, 1.0, null, groundY(bx, bz), { detail: true }));
   }
 
-  // --- streetlamps on the grass between the houses ---
+  // --- streetlamps on the verges between the houses ---
   const lampObs = [];
-  for (const [x, side] of [[14, 1], [-6, -1], [-24, 1], [33, -1]]) {
+  for (const [x, side] of [[25, 1], [2, -1], [-20, 1], [39, -1]]) {
     const lz = roadZAt(x) + side * 5.1;
     const lamp = addStreetlamp(scene, x, lz, groundY, _night);
     if (lamp.userData.obstacles) lampObs.push(...lamp.userData.obstacles);
   }
+  // v1.429 (card fable/d51-northcliff; critic 3 Nov): two cars parked at the bend, one on the inside kerb of the west
+  // leg's foot and one on the outside of the turn, so their side has cover where the street turns. Their base is up
+  // the west leg behind the corner house, and a kid sent from it straight at your crew walked the corner house's back
+  // yard while your crew walked its front: the Twins 3v3 went 200 s with nobody meeting. The Twins 3v3 and the day
+  // Pickup Game (Michael: C, 3 Nov) send their side down the leg to these first. Fixed colours and placed last, so the
+  // street's random draws (yards, trees, cars) are the same as before.
+  const bendCar = (x, z, orient, color) => { const o = sinkObs(addCar(scene, x, z, { orientation: orient, color, groundNormalFn: groundNormal, detail: true }), x, z); pushCarObs(coverList, o); return o; };
+  const bendCarIn = bendCar(-37.9, -11, Math.PI / 2, 0x6a8aa8);
+  const bendCarOut = bendCar(-38.6, -1.4, Math.PI * 0.75, 0xb09a6a);
 
-  const bounds = { minX: -35, maxX: 39, minZ: -33, maxZ: 33 };
+  const bounds = { minX: -47, maxX: 42, minZ: -40, maxZ: 33 };
   const edge = [
-    { minX: -60, maxX: 60, minZ: 33.6, maxZ: 70, h: 6, baseY: -3, surface: 'hard' },   // the creek bank
-    { minX: 39.6, maxX: 70, minZ: -60, maxZ: 60, h: 6, baseY: 0, surface: 'hard' },    // past the east entry
+    { minX: -80, maxX: 130, minZ: 33.6, maxZ: 70, h: 12, baseY: -9, surface: 'hard' },   // the creek bank
+    { minX: 42.7, maxX: 130, minZ: -60, maxZ: 33.6, h: 12, baseY: -4, surface: 'hard' },  // the street on past the area
   ];
 
   const A = (key, cover) => ({ pos: P(ANCH[key][0], ANCH[key][1]), cover: cover || null });
@@ -274,25 +388,29 @@ function buildNorthcliffScene(variant, timeOfDay) {
     bulb_fort: A('bulb_fort', bulbFort[0]), bulb_car_n: A('bulb_car_n', bulbCarN), bulb_car_s: A('bulb_car_s', bulbCarS),
     yard_n1: A('yard_n1', anchorCover.yard_n1), yard_n2: A('yard_n2', anchorCover.yard_n2), yard_n3: A('yard_n3', anchorCover.yard_n3),
     yard_s1: A('yard_s1', anchorCover.yard_s1), yard_s2: A('yard_s2', anchorCover.yard_s2), yard_s3: A('yard_s3', anchorCover.yard_s3),
-    creek_fort: A('creek_fort', creekFort[0]),
+    creek_fort: A('creek_fort', creekFort[0]), creek_w: A('creek_w', anchorCover.creek_w),
     road_e_n: A('road_e_n'), road_e_s: A('road_e_s'), road_mid_n: A('road_mid_n'), road_mid_s: A('road_mid_s'),
     road_w: A('road_w'), cluster_road: A('cluster_road'),   // v1.131
     cluster_bulb: A('cluster_bulb'), cluster_east: A('cluster_east'),
+    // v1.429: the bend, behind its two cars on the side away from the street (kept out of ANCH, so keepClear's draws hold)
+    bend_n: { pos: P(-40, -12.4), cover: bendCarIn }, bend_s: { pos: P(-40, -9.4), cover: bendCarIn },
+    bend_w: { pos: P(-40.4, 0.2), cover: bendCarOut },
   };
   const playerSpawns = {
-    road_east:   { pos: P(35, 1), yaw: Math.PI / 2 },     // the east entry, facing west down the street (yaw 0 faces -z)
-    bulb_center: { pos: P(-31.5, 0), yaw: -Math.PI / 2 }, // behind the bulb fort, facing east
+    road_east:   { pos: P(SPAWN_E[0], SPAWN_E[1]), yaw: Math.PI / 2 },   // the area's east edge, facing west down the street (yaw 0 faces -z)
+    bulb_center: { pos: P(-41, -31), yaw: Math.PI },      // v1.421: their base up the west leg, facing down to the bend
     creek_fort:  { pos: P(-6, 30.4), yaw: 0 },            // v1.131: inside the twins' creek fort, facing up the hill
   };
   return {
     scene,
     spawn: playerSpawns.road_east.pos.clone(), spawnYaw: playerSpawns.road_east.yaw, bounds,
     cover: coverList,
-    obstacles: [...houseObs, ...treeObs, ...bushObs, ...coverList, ...curbBins, ...driveCars, ...lampObs, ...edge],
+    obstacles: [...houseObs, ...treeObs, ...bushObs, ...coverList, ...curbBins, ...driveCars, ...lampObs, ...fenceObs, ...edge],
     enemies: [],
     name: 'Northcliff Trace', scenarioName: '', desc: '',
     placements, playerSpawns, groundY,
-    teamBases: { player: { x: 34, z: 1 }, enemy: { x: -31, z: 0 } },
+    teamBases: { player: { x: 38, z: -3 }, enemy: { x: -41, z: -32 } },
+    fieldAdvance: true,   // v1.429: an advancing kid walks round the houses by the field (js/80-ai.js), not along them
   };
 }
 function buildNorthcliffSceneDefault(_v, tod) { return buildNorthcliffScene('default', tod); }

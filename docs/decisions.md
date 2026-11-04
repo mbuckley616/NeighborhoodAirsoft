@@ -24,12 +24,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Michael: **A) Gun batch 7, to 46**. (control room, 2026-11-04)
 
 - **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
-  With the other three at the bend (your C, 3 Nov), Fernando's high-yard nest still lands about 57 % of the tags on you
-  in a day 4v4 pickup (45 % on the old street), at 20-30 m and never two inside 16 s. The suite's under-two-thirds line
-  fails about one run in four by luck. (Full entry on auto/fable-d51-northcliff.)
-  - A) Accept about 57 %; the suite's line goes to under four-fifths. *(recommended)*
-  - B) Tone the nest down by day.
-  - C) No nest by day.
+  In a day 4v4 Pickup Game on Northcliff Trace, Fernando holds the high-yard nest with his AK, and the other three are at
+  the bend (your C, 3 Nov). On the real-size street he lands about 57 % of the tags on a player who walks at the
+  nearest kid. That is 53 of 93 hits over six 8-round runs, and the runs ranged from 5 of 15 to 11 of 14. On the old
+  street it was about 45 %.
+  His tags come at 20-30 m, which is in the guns' band, and never two inside 16 s. Most come as you walk the last
+  stretch of street before the bend, in view of the nest.
+  The `pickup-fernando` suite wants his share under two-thirds over 8 rounds. At 57 % that fails about one run in
+  four, so it can turn the card's CI red by luck alone. Starting the other three down the leg, nearer the bend,
+  didn't move it: 57 % again.
+  - A) **Accept about 57 %** *(recommended)*: the nest is meant to cover the bend. The suite's line goes to under
+    four-fifths over the same 8 rounds, which fails about 1 run in 25 at this share. It still catches the old fault,
+    where every hit was his.
+  - B) **Tone the nest down by day**: his spot moves back up the yard, so he covers the bend but not the last of the
+    street before it. Fewer tags from him, and a shorter view for the player to fear.
+  - C) **No nest by day**: by day Fernando plays the bend like the other three, and keeps the nest only at night.
   Michael: **A) Accept about 57 %**. (control room, 2026-11-04)
 
 - **Fernando's nest in a daytime Northcliff pickup game, now the street is real size (Fable, 2026-11-03, card fable/d51-northcliff)**
@@ -96,6 +105,26 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   an under part at once, which is the "far more varied" D.14 asked for. It is about a session's work for the slots, then
   one part a version.
   Michael: **A) Two new slots on the long guns, MUZZLE and STOCK**. (control room, 2026-11-02)
+
+- **Northcliff Trace at real scale (D.51): the west end of the street (deep-work session, 2026-11-02, card `fable/d51-northcliff`)**
+  You chose real scale for every map, so Northcliff Trace grows to its real length: the loop's south leg is about 130 m
+  between its corners (the game's street is 72 m), with houses of 15-18 m on 30 m lots. Each match still plays in a
+  fenced area about today's size, here the west part of the street. One thing your answers don't settle is the west end
+  (`docs/refs/northcliff.md`, item 3). Today the street ends in a bulb, and their side starts there in three matches and
+  in the Pickup Game. The real street doesn't end: at the west corner the loop bends north.
+
+  Measured today (`docs/devlog/v1.417.md`): the bulb looks straight down 70 m of open road to your start. In Mason's
+  Last Stand at night, every one of their kids can see your start and your crew's from the bulb, which breaks the
+  night rule you set for Lamplight on Bellfield. In both team matches the first shots come at 49-57 m, past the 40 m
+  the guns are tuned for.
+
+  - A) **Keep the bulb** at the west end, with the kid fort and the two cars as their base. It is what players know.
+    The night rule and the 40 m band then need new cover across the bulb's mouth: parked cars or a hedge.
+  - B) **Bend the road north at the west corner, as the real loop does** (recommended). The road leaves the area
+    northward, and their base moves into the bend: the fort on the corner lot's lawn, with the corner house between it
+    and the straight. That is what the pictures show. It also ends the straight lane that breaks the night rule and
+    pushes the first shots out, because the corner hides their start from the street.
+  Michael: **B) Bend the road north, as the real loop does**. (control room, 2026-11-02)
 
 - **Northcliff Trace at real scale (D.51): the west end of the street (deep-work session, 2026-11-02, card `fable/d51-northcliff`)**
   You chose real scale for every map, so Northcliff Trace grows to its real length: the loop's south leg is about 130 m

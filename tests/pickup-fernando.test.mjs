@@ -16,8 +16,12 @@ const build = await page.evaluate(() => {
   const ladder = SCENARIOS.northcliff_night_4v4.enemySetup.find(e => e.charId === 'fernando').weapon;
   const others = buildPickupScenario({ map: 'northcliff', size: 4, tod: 'day', lives: 3 }).enemySetup.filter(e => e.charId !== 'fernando')
     .every(e => e.weapon === SCENARIOS.northcliff_night_4v4.enemySetup.find(x => x.charId === e.charId).weapon);
-  return { day, night, moved, movedNight, ladder, others };
+  // v1.429 (Michael: C, 3 Nov): by day the other three go down the west leg to the bend's cars; by night the night match's spots
+  const spots = tod => buildPickupScenario({ map: 'northcliff', size: 4, tod, lives: 3 }).enemySetup.filter(e => !e.team && e.charId !== 'fernando').map(e => e.anchor).join();
+  return { day, night, moved, movedNight, ladder, others, dayTheirs: spots('day'), nightTheirs: spots('night') };
 });
+check('by day the other three take the bend (Michael: C, 3 Nov); by night the night match\'s spots up the leg',
+  build.dayTheirs === 'bend_n,bend_s,bend_w' && build.nightTheirs === 'bulb_car_n,bulb_car_s,bulb_fort', [build.dayTheirs, build.nightTheirs]);
 check('a Northcliff pickup 4v4 by day: Fernando in the high yard\'s nest, a defender, with his AK', build.day.anchor === 'yard_n3'
   && build.day.role === 'defender' && build.day.weapon === 'ak47', build.day);
 check('by night he keeps the rifle', build.night.anchor === 'yard_n3' && build.night.role === 'defender' && build.night.weapon === 'sniper', build.night);
@@ -42,19 +46,32 @@ for (let r = 0; r < 8; r++) {
   await g.scenario('pickup_game');
   rounds.push(await page.evaluate(() => {
     const P = Game.player, hits = [];
+    let last = null, side = 0;
     const orig = applyBBHit;
     window.applyBBHit = (bb, c) => { if (c === P && !(P._graceT > 0) && !P._goingHome) hits.push({ by: bb.enemyRef ? bb.enemyRef.charId : '?', t: +Game.scenario.roundTime.toFixed(1) }); return orig(bb, c); };
     try {
       for (let f = 0; f < 60 * 60 && Game.mode === 'scenario'; f++) {
         const foes = Game.scenario.enemies.filter(e => e.team !== 'player' && e.health > 0);
         const near = foes.sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z))[0];
-        if (near) { P.yaw = Math.atan2(-(near.pos.x - P.pos.x), -(near.pos.z - P.pos.z)); P.pitch = 0; }
-        Game.keys.KeyW = !!near && Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4;
+        // v1.421 (D.51, Northcliff at real scale): the street bends north at the west corner and the uphill yards are
+        // fenced, so you walk down the street to the bend (-28, -4) before you go straight at the nearest kid
+        // Fix-up (PR #235, CI red on 0f47abb: 5 hits in 8 minutes, all his): walking straight at a kid in their back
+        // yard behind the corner house (x < -6, z < -18) wedged you on the gate fence at z -17 for the rest of the
+        // round, and the line to the bend ran square into a post at (-16.3, -3.9). So that yard is reached by the bend
+        // and up the west leg, and a walker held still for a second steps sideways, as a player would.
+        const back = !!near && near.pos.z < -18 && near.pos.x < -6;
+        const bend = P.pos.x > -24 && near && (near.pos.x < -20 || back);
+        const leg = !bend && back && P.pos.z > -24;
+        const tx = bend ? -28 : leg ? -40 : near && near.pos.x, tz = bend ? -4 : leg ? -26 : near && near.pos.z;
+        if (near) { P.yaw = Math.atan2(-(tx - P.pos.x), -(tz - P.pos.z)); P.pitch = 0; }
+        Game.keys.KeyW = !!near && (bend || leg || Math.hypot(near.pos.x - P.pos.x, near.pos.z - P.pos.z) > 4);
         // v1.290 (D.48): tagged, you walk yourself home before you go at them again
         if (P._goingHome) { const st = Game.scenario.playerStart.pos; P.yaw = Math.atan2(-(st.x - P.pos.x), -(st.z - P.pos.z)); Game.keys.KeyW = true; }
+        if (f % 60 === 0) { if (Game.keys.KeyW && last && Math.hypot(P.pos.x - last.x, P.pos.z - last.z) < 0.5) side = 30; last = { x: P.pos.x, z: P.pos.z }; }
+        Game.keys.KeyD = side-- > 0;
         stepGame(1 / 60);
       }
-    } finally { window.applyBBHit = orig; Game.keys.KeyW = false; }
+    } finally { window.applyBBHit = orig; Game.keys.KeyW = false; Game.keys.KeyD = false; }
     return { hits, out: Game.mode !== 'scenario', t: +Game.scenario.roundTime.toFixed(1) };
   }));
 }
@@ -77,7 +94,10 @@ console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK (the criti
 // three separate fights. At his share (about 45%) a round of three is all his about one time in ten, so 8 rounds
 // failed a third of the time. The v1.221 fault was all three in one burst (0.2-0.4 s), so that is what is checked.
 check('no two lives go in one burst: every tag comes 2 s or more after the last (all three went in 0.2-0.4 s before v1.221)', ak.n > 0 && ak.minGap >= 2, { minGap: ak.minGap, allHis: ak.allHis });
-check('and he lands under two-thirds of the hits on you', ak.n > 0 && ak.byF / ak.n < 2 / 3, ak);
+// Fable d51-northcliff (Michael A, 4 Nov 2026): on the real-size street his nest covers the last stretch before the bend,
+// and he lands about 57% of the tags (53 of 93 over six 8-round runs; 45% on the old street), so under two-thirds failed
+// about one fair run in four. The line is four-fifths: about 1 run in 25 at his share, and an all-his round still fails.
+check('and he lands under four-fifths of the hits on you', ak.n > 0 && ak.byF / ak.n < 4 / 5, ak);
 check('and you last over 20 s on average (all three lives went by 14 s before v1.221)', ak.meanOut > 20, ak.meanOut);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

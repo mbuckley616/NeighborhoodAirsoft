@@ -281,10 +281,19 @@ function enterScenario(scenarioId) {
       });
       if (enemy) {
         if (perch) { enemy.perch = perch; enemy.pos.y = perch.y; }   // v1.138: see kidGroundY
+        // v1.421: on the ground under him from the first step, as kidGroundY puts him from the second: on a hill (Northcliff
+        // Trace at real scale) a kid left at y 0 for the first step showed the other side a sight line under a house
+        // standing up the slope, and they fired at that spot for three seconds
+        else if (typeof built.groundY === 'function') enemy.pos.y = built.groundY(spawnPos.x, spawnPos.z);
         enemy.startAt = { x: spawnPos.x, z: spawnPos.z, huddle: !!(joinsEnemyHuddle && !es.spawnAt) };   // v1.277: where he started
         if (es.climb === false) enemy.noClimb = true;                   // v1.143: stays on the ground (kidLadderStep)
         if (es.holdUntilLadder) enemy.holdUntilLadder = true;           // v1.165: no shot until a kid is on the ladder
         if (es.holdUntilNear) enemy.holdUntilNear = es.holdUntilNear;   // v1.316: no shot until a teammate is this close to you
+        if (es.holdNear) enemy.holdNear = es.holdNear;                  // v1.429: holds his spot until a foe is this close to it
+        // v1.431: a scenario's `enemyHoldNear` gives every kid of their side the same hold, the crew's fills included (the
+        // night match on Northcliff Trace at real scale: Haden, filling Mason's side, came down the west leg into a 54-57 m
+        // line from your crew's AK on the straight)
+        else if (sc.enemyHoldNear && esTeam === 'enemy') enemy.holdNear = sc.enemyHoldNear;
         if (es.vip) { enemy.vip = true; addVipCap(enemy.mesh, esTeam === 'player'); }   // v1.170
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
         if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
@@ -478,6 +487,7 @@ function enterScenario(scenarioId) {
   assignScenarioBBColors(Game.scenario.enemies);
   Game.scenario.cover = built.cover;
   Game.scenario.bounds = built.bounds;
+  Game.scenario.fieldAdvance = !!built.fieldAdvance;   // v1.429: advancing kids walk the field round houses (Northcliff)
   Game.scenario.groundY = built.groundY || null;   // v1.8: terrain fn (null = flat)
   Game.scenario.ladders = built.ladders || null;   // v1.138: climb zones (the treehouse ladder)
   Game.scenario.perches = built.perches || null;   // v1.143: what a kid who climbs a ladder holds (kidLadderStep)

@@ -34,11 +34,17 @@ const EDGE_BACKDROPS = {
     W: { from: 5, bands: [['trees', 30], ['shops', 12], ['road', 10], ['trees', 40]] },
     E: { from: 100, bands: [['trees', 20], ['lot', 40], ['shops', 30], ['road', 10], ['houses', 22], ['trees', 40]] },
   },
+  // v1.422 (D.51, card fable/d51-northcliff, step 4; docs/refs/northcliff.md item 8): the street at real scale (bounds
+  // x -47..42, z -40..33) has its own road from the east corner round the bend and up the west leg, and its own houses
+  // along the leg and round the corner. N: inside the loop, its two rows back to back, then the north leg ~150 m off and
+  // the ring past it. S: past the creek, the corridor's woods 30-40 m, then the far side's houses up its rise. W: past
+  // the west leg's own houses, woods. E: past the east leg, the ring's houses. The pool club and Stoneglen Close are
+  // 110-160 m past the east edge at real scale, past the day's fog: not drawn.
   buildNorthcliffScene: {
-    N: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    S: { from: 10, bands: [['trees', 10], ['houses', 22], ['trees', 30]] },          // past the creek
-    W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
-    E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
+    N: { from: 14, bands: [['trees', 10], ['houses', 22], ['trees', 14], ['houses', 22], ['trees', 12], ['road', 10], ['houses', 22], ['trees', 30]] },
+    S: { from: 7, bands: [['trees', 34], ['houses', 22], ['trees', 30]] },
+    W: { from: 26, bands: [['houses', 22], ['trees', 40]] },
+    E: { from: 92, bands: [['houses', 22], ['trees', 40]] },
   },
   // v1.316: the twins' course. N has its own bank, road and woods; the sides a tree band before the neighbours
   // (docs/refs/northcliff.md gap 9)

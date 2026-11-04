@@ -1671,6 +1671,10 @@ function updateEnemies(dt) {
         if (e._deployStuck > 1.0) {
           e._deployStuck = 0;
           e._deployBest = null;
+          // v1.431: a kid still holding his spot (holdNear) settles where the wedge left him, by his spot, instead of
+          // pushing on: on Northcliff at night Haden, boxed in 3 m short of his spot in their base, was handed to
+          // 'advancing', walked down the west leg and drew a 55-57 m first shot from your crew on the straight
+          if (e.holdNear && !e._holdFree) { e.state = 'hiding'; e.stateTime = 0; e.nextStateChange = 0.4 + gameRandom() * 0.6; break; }
           e.state = 'advancing';
           e.stateTime = 0;
           e.advanceCheckTimer = 0;
@@ -1696,11 +1700,24 @@ function updateEnemies(dt) {
         // v1.134 (Michael: B on the lot free-for-all): with every start hidden, a cautious kid (aggression under 0.45)
         // hid and peeked at nobody all round. In a free-for-all, 5 s without seeing anyone sends any skirmisher looking.
         const ffaRoam = Game.scenario.ffa && (e._unseenTime || 0) > 5;
+        // v1.429 (card fable/d51-northcliff): a kid set to hold his spot (`holdNear` metres on his enemySetup entry) stays
+        // in it until a foe comes that close to it or fires at him; from then on he plays as before, for the round. The
+        // Twins 3v3 at real scale: their side came down the west leg at once and the first rounds flew 52-61 m down the
+        // straight, past the guns' 10-40 m.
+        if (e.holdNear && !e._holdFree && ((e._underFire) || opposingCombatants(e).some(c => Math.hypot(c.pos.x - e.anchorPos.x, c.pos.z - e.anchorPos.z) < e.holdNear))) e._holdFree = true;
+        // v1.431: or once a kid of his own side is tagged (walking home or out): the fight has reached them, and he comes
+        // looking (as a bored kid does). On the night match Christian, a cautious shotgun at the back of their base, held
+        // all 120 s of a round with three of his side tagged, and freed but cautious he would still sit there.
+        // v1.434: also when he was already freed (a foe came near, a BB flew past) but not sent looking: Christian, freed at
+        // 10-14 s by your crew's leads, then sat out the round at the base with his side tagged (CI on 9d4f8b8: 2 m, 0 shots).
+        if (e.holdNear && !e._bored && Game.scenario.enemies.some(k => k !== e && combatantTeam(k) === combatantTeam(e) && (k.health <= 0 || k.state === 'retreating'))) {
+          e._holdFree = true; e._bored = true;
+        }
         const marchEligible = (
           e.role === 'attacker' ||
           (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam)) ||
           e._bored   // v1.152: a bored last kid comes looking
-        ) && e.weapon !== 'sniper' && e.role !== 'defender';
+        ) && e.weapon !== 'sniper' && e.role !== 'defender' && !(e.holdNear && !e._holdFree);
 
         if (marchEligible) {
           // v1.23: a kid can engage from here if they have a shot — meaning LOS
@@ -1916,6 +1933,26 @@ function updateEnemies(dt) {
           const d = Math.sqrt(dx*dx + dz*dz);
           // v1.152: on a route out of a pocket (kidPocketRoute), walk the field toward the target instead of the
           // straight push below, for up to 5 s; the engagement check further down still stops him once he has a shot.
+          // v1.429 (card fable/d51-northcliff; critic 3 Nov): on a map whose builder asks for it (Northcliff Trace at real
+          // scale), once a second a kid whose straight walk to his target runs into something solid within 30 m, and
+          // whose way round it by the field is 8 m or more longer than the straight line, takes that way for up to 4 s
+          // (the v1.152 route below). The Twins 3v3: their side walked the corner house's back yard and your crew its
+          // front yard, each pressed on the house toward the other, and nobody met in 200 s.
+          if (Game.scenario.fieldAdvance && !e._advRoute) {
+            e._fieldAdvT = (e._fieldAdvT || 0) - dt;
+            if (e._fieldAdvT <= 0) {
+              e._fieldAdvT = 1.0;
+              const gx = tgt.pos.x - e.pos.x, gz = tgt.pos.z - e.pos.z, gd = Math.hypot(gx, gz) || 1;
+              let blocked = false;
+              for (let t = 1; !blocked && t <= Math.min(gd - 1, 30); t += 0.5) if (collidesObstacles(e.pos.x + gx / gd * t, e.pos.z + gz / gd * t, 0.33)) blocked = true;
+              if (blocked) {
+                const F = kidFieldTo(tgt.pos.x, tgt.pos.z);
+                const i = Math.round((e.pos.x - F.b.minX) / LADDER_CELL), k = Math.round((e.pos.z - F.b.minZ) / LADDER_CELL);
+                const fd = (i >= 0 && k >= 0 && i < F.nx && k < F.nz) ? F.dist[i * F.nz + k] * LADDER_CELL : Infinity;
+                if (fd < Infinity && fd > gd + 8 && kidFieldNext(F, e.pos.x, e.pos.z)) e._advRoute = { F, until: (Game.scenario.aiClock || 0) + 4 };
+              }
+            }
+          }
           let routed = false;
           if (e._advRoute) {
             const w = (Game.scenario.aiClock || 0) < e._advRoute.until ? kidFieldNext(e._advRoute.F, e.pos.x, e.pos.z) : null;
