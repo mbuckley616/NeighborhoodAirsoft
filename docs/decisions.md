@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after gun batch 7 (builder, 2026-11-04)**
+  Gun batch 7 is done (v1.432-v1.440): the Double-Barrel, Derringer, Clear Bullpup, Auto Pistol, Drum Shotgun and the
+  Snub-Nose (the Magnum cut short, the batch's version). The shop has 46 guns (9 pistols, 7 shotguns, 11 rifles, 19
+  automatics). The play lane again has no ready item: every other open play item is a Fable card (the room list, recorded
+  voices), an open design, or waits on your look. What should it take next?
+  - A) **A third wave of homemade parts** *(recommended)*: a taped-on flashlight for the night matches, a rubber-band
+    bipod for the LMGs and snipers, a foam-noodle cheek pad, and the like, one or two a version, on the slots the long
+    guns already have.
+  - B) **Gun batch 8, toward 50**: four more (you name the kinds, or the builder picks; the automatics are the fullest
+    kind, so likely a pistol-calibre carbine, a second double-barrel, a cheap break-barrel rifle, a battery DMR).
+  - C) **Rest the play lane** until the Willow Bend card lands, then take what its playtest turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. You are at 46 of your 30-50 guns, so the parts are the thinner side again; the night matches have
+  no homemade light; and none of it touches the maps lane or a Fable card's areas.
+
 ## Answered
 
 - **What the play lane builds next, after the homemade wave (builder, 2026-11-03)**
