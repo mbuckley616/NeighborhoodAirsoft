@@ -110,6 +110,7 @@ function gunForegripZ(weapon) {
     case 'semishotgun': return 0.18;   // v1.328: its forend
     case 'spas':    return 0.18;   // v1.398: its pump
     case 'ksg':     return 0.16;   // v1.411: its pump
+    case 'double':  return 0.18;   // v1.432: its forend
     case 'm249':    return 0.20;   // v1.335: the handguard ahead of the box
     case 'm60':     return 0.22;   // v1.413: the M60's handguard, further out
     case 'ar':
@@ -340,6 +341,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.06, 0.10, new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.7 }), 0, 0.0, 0.0);   // the brass receiver
       box(0.045, 0.10, 0.16, wood, 0, -0.03, -0.12);     // the stock
       box(0.02, 0.06, 0.08, dark, 0, -0.06, -0.02);      // the lever loop
+      break;
+    }
+    case 'double': {   // v1.432 (D.85): two blued barrels side by side over a walnut forend, the walnut stock
+      const walnut = new THREE.MeshStandardMaterial({ color: 0x5b3820, roughness: 0.7 });
+      box(0.025, 0.025, 0.34, black, -0.0125, 0.01, 0.22);   // the barrels
+      box(0.025, 0.025, 0.34, black, 0.0125, 0.01, 0.22);
+      box(0.045, 0.03, 0.10, walnut, 0, -0.02, 0.18);       // the forend
+      box(0.04, 0.06, 0.24, walnut, 0, -0.03, -0.12);       // the stock
       break;
     }
     case 'ksg': {   // v1.411 (D.63): a stubby black bullpup, the barrel over two tubes, the pump, the body back to the butt

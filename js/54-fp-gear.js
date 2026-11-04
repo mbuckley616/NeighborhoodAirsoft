@@ -22,6 +22,7 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   spas:    { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.398: the shotgun's
+  double:  { barrelY: 0.040, sideX: 0.026, railZ: -0.22,  railLen: 0.07,  underY: 0.018, sightY: 0.043, sightZ: -0.07,  sightScale: 1.0 },   // v1.432: the rails and the under slot on the barrels ahead of the forend, the sight on the action
   ksg:     { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.411: the SPAS-12's
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
   sniper:  { barrelY: 0.032, sideX: 0.016, railZ: -0.19,  railLen: 0.11,  underY: 0.028, sightY: 0.040, sightZ: -0.04,  sightScale: 1.0 },
@@ -272,6 +273,7 @@ function buildToyScopeOptic() {
 // group.userData.accessories. Visibility/placement set by updateFPGunAccessory().
 function ensureFPGunAccessory(group, gunType) {
   if (group.userData.accessories) return group.userData.accessories;
+  const before = new Set(group.children);   // v1.432: the bare gun's own parts (a break-action's are already in place)
   const mount = FP_GUN_MOUNT[gunType] || FP_GUN_MOUNT.pistol;
   const cap = getGunAccessoryCap(gunType);   // v1.420: with the muzzle and stock slots
   const railMat = new THREE.MeshStandardMaterial({ color: 0x202024, roughness: 0.5, metalness: 0.6 });
@@ -429,6 +431,20 @@ function ensureFPGunAccessory(group, gunType) {
   const scopeOptic  = buildScopeOptic();  scopeOptic.visible  = false; sightAnchor.add(scopeOptic);
   const toyScopeOptic = buildToyScopeOptic(); toyScopeOptic.visible = false; sightAnchor.add(toyScopeOptic);   // v1.418
 
+  // v1.432 (D.85): on a break-action, whatever was bolted on ahead of the hinge (the rails, the under-barrel part, the
+  // muzzle part) moves onto the barrels, so it tips down with them when the gun is broken open
+  const brk = group.userData.breakPivot;
+  if (brk) {
+    group.updateWorldMatrix(true, true);
+    const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+    for (const o of [...group.children]) {
+      if (o === brk || before.has(o) || o === sightAnchor) continue;
+      const b = new THREE.Box3().setFromObject(o);
+      if (b.isEmpty()) continue;
+      b.applyMatrix4(inv);
+      if ((b.min.z + b.max.z) / 2 < brk.position.z) brk.attach(o);
+    }
+  }
   group.userData.accessories = { laserUnit, laserBeam, laserDot, laserEmitter: emitter, flashUnit, flashLight, flashTarget,
     railAnchors, sightAnchor, redDotOptic, scopeOptic, toyScopeOptic, underParts, muzzleParts, stockParts, gunGroup: group };
   return group.userData.accessories;
@@ -934,6 +950,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
+  else if (gunType === 'double')  mesh = buildFPDouble();        // v1.432
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414

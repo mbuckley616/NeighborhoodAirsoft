@@ -46,6 +46,7 @@ const MAG_GUN_FIT = {
   spare_mag_m60: 'm60',   // v1.413
   spare_mag_uzi: 'uzi',   // v1.414
   spare_mag_pumpsniper: 'pumpsniper',   // v1.416
+  spare_mag_double: 'double',   // v1.432
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -74,7 +75,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'lever',   // v1.412 (D.63 batch 6): the lever-action carbine
   'm60',   // v1.413 (D.63 batch 6): the belt-fed machine gun
   'uzi',   // v1.414 (D.63 batch 6): the burst SMG
-  'pumpsniper'];   // v1.416 (D.63 batch 6): the pump-action sniper
+  'pumpsniper',   // v1.416 (D.63 batch 6): the pump-action sniper
+  'double'];   // v1.432 (D.85 batch 7): the break-action double-barrel shotgun
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -111,6 +113,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm14') return Game.persist.owned.m14_mag_50 ? 50 : 30;   // v1.404: its box mag, or the long one
   if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
+  if (gunType === 'double') return Game.persist.owned.double_mag_54 ? 54 : 36;   // v1.432: its shell pouch, or the bandolier
   if (gunType === 'pumpsniper') return Game.persist.owned.pumpsniper_mag_30 ? 30 : 20;   // v1.416: its mag, or the long one
   if (gunType === 'uzi') return Game.persist.owned.uzi_mag_120 ? 120 : 60;   // v1.414: its stick mag, or the long one
   if (gunType === 'm60') return Game.persist.owned.m60_mag_1000 ? 1000 : 500;   // v1.413: its ammo can, or the big one
@@ -279,6 +282,7 @@ const GUN_ACCESSORY_CAP = {
   m60:      { sight: 1, rails: 2, under: 1 },  // v1.413: the M249's
   uzi:      { sight: 1, rails: 1 },            // v1.414: the MAC-10's
   pumpsniper: { sight: 1, rails: 2, under: 1 },  // v1.416: the sniper's
+  double:   { sight: 1, rails: 2, under: 1 },  // v1.432: the shotgun's, on the barrels
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 // v1.420 (D.83, Michael: A): the long guns without an under-barrel slot still have a muzzle and a stock
@@ -750,6 +754,14 @@ const GUN_MAGS = {
   // close together; a stick mag of 60 up the grip
   // v1.416 (backlog D.63, batch 6): the Pump Sniper, the sporting-goods-aisle spring sniper racked by a pump under the
   // barrel: a quicker second shot than the bolt guns' for a BB a little slower and shorter-reaching than the sniper's
+  // v1.432 (backlog D.85, batch 7): the Double-Barrel, a break-action shotgun: two barrels, a pull each, then break it
+  // open and drop two fresh shells in
+  double: {
+    displayName: 'Double-Barrel', baseCap: 36, price: 90, ownFlag: 'double',
+    blurb: 'A side-by-side break-action shotgun with a walnut stock, the kind somebody’s grandpa kept in the closet. Two barrels, three BBs each: pull once for the right barrel, again for the left, then break it open and drop two fresh shells in, which takes a while. Two quick shots up close hit harder than any pump, but then you’re standing there with it open.',
+    mags: [ { flag: 'double_mag_54', cap: 54, price: 14 } ],
+    spares: [ { key: 'spare_mag_double', label: 'Spare Shell Pouch (36)', price: 10 } ],
+  },
   pumpsniper: {
     displayName: 'Pump Sniper', baseCap: 20, price: 110, ownFlag: 'pumpsniper',
     blurb: 'A long black spring sniper off the sporting-goods aisle, with a ribbed green pump under the barrel where the bolt would be. Rack the pump for every shot: quicker than working a bolt, so the next shot comes sooner, but its BB is a little slower than the Spring Sniper Rifle\'s and starts to wander sooner. Lighter to carry, too. Twenty in the mag; a long mag holds thirty.',
@@ -794,7 +806,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper
+const GUN_ORDER = ['pistol','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1003,6 +1015,7 @@ function describeSlot(idx) {
       spare_mag_m60: 500,   // v1.413
       spare_mag_uzi: 60,   // v1.414
       spare_mag_pumpsniper: 20,   // v1.416
+      spare_mag_double: 36,   // v1.432
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1043,6 +1056,7 @@ function describeSlot(idx) {
       spare_mag_m60: 'Spare 500-rd M60 Can',   // v1.413
       spare_mag_uzi: 'Spare 60-rd Uzi Mag',   // v1.414
       spare_mag_pumpsniper: 'Spare 20-rd Pump Sniper Mag',   // v1.416
+      spare_mag_double: 'Spare 36-rd Shell Pouch',   // v1.432
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1248,6 +1262,7 @@ const GUN_WEIGHT = {
   lever: 7,                                               // v1.412: walnut and brass, lighter than the AR (8)
   m60: 17,                                                // v1.413: steel, the heaviest gun (the M249 15)
   uzi: 4,                                                 // v1.414: stamped steel, the MAC-10 (3) and the MP5 (5) between
+  double: 6.5,                                            // v1.432: steel barrels and walnut; the Spring Shotgun 6
   pumpsniper: 8,                                          // v1.416: a plastic stock and a pump, lighter than the sniper (10)
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
@@ -1283,6 +1298,7 @@ const MAG_WEIGHT = {
   spare_mag_m60: 3,   // v1.413: a full ammo can
   spare_mag_uzi: 0.5,   // v1.414
   spare_mag_pumpsniper: 1.0,   // v1.416: the sniper's
+  spare_mag_double: 0.8,   // v1.432: a pouch of shells
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1791,6 +1807,12 @@ GUN_SPECS.uzi = Object.assign({}, GUN_SPECS.mac10, { fireMode: 'semi', electric:
 // 20 m; the sniper 75 and 25, the Lever Gun 55 and 14), a touch wider (0.14, 0.12), and lighter on its feet than the
 // bolt guns (0.8; the sniper and L96 0.75); twenty in the mag
 GUN_SPECS.pumpsniper = Object.assign({}, GUN_SPECS.sniper, { weightClass: 'heavy', cockType: 'pump', cockTime: 0.75, muzzleVelocity: 68, baseSpread: 0.14, adsSpreadMult: 0.25, curveOnsetDistance: 20, curveStrengthMax: 7, playerSpeedMult: 0.8, displayName: 'Pump Sniper' });
+// v1.432 (D.85, batch 7): the Double-Barrel, a break-action: two barrels of three BBs each (the SPAS-12's three), a pull
+// apiece with nothing to work between them (`barrels`: the gun stays cocked for the second), then break it open and
+// drop two shells in, the longest re-cock of any shotgun (1.5 s; the Thunder Pump 1.05). A 33 m/s BB (the SPAS-12 34)
+// in a cloud between the SPAS-12's and the Spring Shotgun's (0.48; 0.42, 0.55), straight for 9 m; the Spring Shotgun's
+// walk (1.0)
+GUN_SPECS.double = Object.assign({}, GUN_SPECS.shotgun, { barrels: 2, cockType: 'break', cockTime: 1.5, pelletsPerShot: () => 3, muzzleVelocity: 33, baseSpread: 0.48, curveOnsetDistance: 9, displayName: 'Double-Barrel' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;
