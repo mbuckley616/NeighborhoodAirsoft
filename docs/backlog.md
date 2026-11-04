@@ -399,6 +399,14 @@ each builder works its own lane's items top-down and skips the other's. A new it
    `tests/gun-drumshotgun.test.mjs`). ~~The version~~ — done, v1.440 (the Snub-Nose, $110, last under PISTOLS: the Magnum
    with a stub barrel, its double-action CO2 cylinder of six, a 38 m/s BB that wanders at 5 m, 2 lb and a 1.14 walk;
    `tests/gun-snubnose.test.mjs`). Batch 7 is done: 46 guns.
+86. [play] A third wave of homemade workbench parts, in D.14's tone, one or two a version on the slots the long guns
+   already have: a taped-on flashlight for the night matches, a rubber-band bipod for the LMGs and snipers, a foam-noodle
+   cheek pad, and the like. Michael: **A, a third wave of homemade parts** on "What the play lane builds next, after gun
+   batch 7" (control room, 2026-11-04). Builder (play) takes it. ~~The taped-on flashlight~~ — done, v1.441 (the Taped-On
+   Flashlight, $7, 0.5 lb, under the barrel ahead of the off hand: a warm light at 2.2 out to 9 m (the Tactical's 3.4 and
+   14 m), no rail used, and a shot knocks it out for 0.2 s one time in four; `tests/homemade-light.test.mjs`). Next: the
+   rubber-band bipod (under the barrel; its effect while crouched or prone is the builder's to propose in decisions if
+   open), then the foam-noodle cheek pad (STOCK).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
