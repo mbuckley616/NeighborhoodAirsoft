@@ -22,6 +22,7 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   spas:    { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.398: the shotgun's
+  derringer: { barrelY: 0.030, sideX: 0.013, railZ: -0.035, railLen: 0.04, underY: 0.0, sightY: 0.050, sightZ: -0.035, sightScale: 0.7 },   // v1.433: the rail along the frame, the sight on the barrels' rib
   double:  { barrelY: 0.040, sideX: 0.026, railZ: -0.22,  railLen: 0.07,  underY: 0.018, sightY: 0.043, sightZ: -0.07,  sightScale: 1.0 },   // v1.432: the rails and the under slot on the barrels ahead of the forend, the sight on the action
   ksg:     { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.411: the SPAS-12's
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
@@ -951,6 +952,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'double')  mesh = buildFPDouble();        // v1.432
+  else if (gunType === 'derringer') mesh = buildFPDerringer();  // v1.433
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414

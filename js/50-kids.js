@@ -96,7 +96,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || !weapon;   // v1.168; v1.326; v1.399; v1.410
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || !weapon;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -341,6 +341,12 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.06, 0.10, new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.7 }), 0, 0.0, 0.0);   // the brass receiver
       box(0.045, 0.10, 0.16, wood, 0, -0.03, -0.12);     // the stock
       box(0.02, 0.06, 0.08, dark, 0, -0.06, -0.02);      // the lever loop
+      break;
+    }
+    case 'derringer': {   // v1.433 (D.85): a small nickel block of two barrels on a frame, a cream grip
+      const nickel = new THREE.MeshStandardMaterial({ color: 0xc4c7cc, roughness: 0.3, metalness: 0.75 });
+      box(0.03, 0.05, 0.10, nickel, 0, 0.015, 0.05);   // the barrel block over the frame
+      grip(new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.5 }));
       break;
     }
     case 'double': {   // v1.432 (D.85): two blued barrels side by side over a walnut forend, the walnut stock
