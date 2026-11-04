@@ -94,7 +94,10 @@ console.log(`   Fernando landed ${ak.byF} of ${ak.n} hits with the AK (the criti
 // three separate fights. At his share (about 45%) a round of three is all his about one time in ten, so 8 rounds
 // failed a third of the time. The v1.221 fault was all three in one burst (0.2-0.4 s), so that is what is checked.
 check('no two lives go in one burst: every tag comes 2 s or more after the last (all three went in 0.2-0.4 s before v1.221)', ak.n > 0 && ak.minGap >= 2, { minGap: ak.minGap, allHis: ak.allHis });
-check('and he lands under two-thirds of the hits on you', ak.n > 0 && ak.byF / ak.n < 2 / 3, ak);
+// Fable d51-northcliff (Michael A, 4 Nov 2026): on the real-size street his nest covers the last stretch before the bend,
+// and he lands about 57% of the tags (53 of 93 over six 8-round runs; 45% on the old street), so under two-thirds failed
+// about one fair run in four. The line is four-fifths: about 1 run in 25 at his share, and an all-his round still fails.
+check('and he lands under four-fifths of the hits on you', ak.n > 0 && ak.byF / ak.n < 4 / 5, ak);
 check('and you last over 20 s on average (all three lives went by 14 s before v1.221)', ak.meanOut > 20, ak.meanOut);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
