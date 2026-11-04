@@ -973,6 +973,7 @@ const Game = {
       spare_mag_m60: 0,           // v1.413 (D.63 batch 6)
       spare_mag_uzi: 0,           // v1.414 (D.63 batch 6)
       spare_mag_pumpsniper: 0,    // v1.416 (D.63 batch 6)
+      spare_mag_double: 0,        // v1.432 (D.85 batch 7)
     },
     equipped: {
       gun: 'pistol',

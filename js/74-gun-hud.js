@@ -288,7 +288,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.085, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'spas' || gunType === 'ksg') {   // v1.411: the KSG has the SPAS-12's bead; v1.398: the shotgun at the hip; aimed, the bead's top (y 0.060) on the reticle
+    } else if (gunType === 'spas' || gunType === 'ksg' || gunType === 'double') {   // v1.432: the Double-Barrel's bead on its rib at the SPAS-12's height;   // v1.411: the KSG has the SPAS-12's bead; v1.398: the shotgun at the hip; aimed, the bead's top (y 0.060) on the reticle
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.060, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -605,6 +605,7 @@ function updateLoadoutHud() {
                        : Game.gun.cockType === 'charge' ? 'pull the charging handle'
                        : Game.gun.cockType === 'bolt' ? 'cycle the bolt'
                        : Game.gun.cockType === 'lever' ? 'work the lever'   // v1.412
+                       : Game.gun.cockType === 'break' ? 'break it open and load two shells'   // v1.432
                        : 'rack the slide';
         hint = Game.gun.jammed ? 'Hold R to clear the jam.'
              : !Game.gun.cocked ? `Click & hold LMB to ${cockVerb}.`
@@ -668,6 +669,7 @@ function updateProgressBars() {
                      : Game.gun.cockType === 'charge' ? 'PULL CHARGING HANDLE'
                      : Game.gun.cockType === 'bolt'   ? 'CYCLE BOLT'
                      : Game.gun.cockType === 'lever'  ? 'WORK LEVER'   // v1.412
+                     : Game.gun.cockType === 'break'  ? 'BREAK OPEN · LOAD'   // v1.432
                      : 'RACK SLIDE';
       cockLabel.textContent = cockText;
     }
@@ -880,6 +882,7 @@ const RETICLE_SPECS = {
   shotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },
   spas:    { style: 'big_circle', baseGap: 16, ringR: 18, centerDot: 1.6 },   // v1.398: the shotgun's, a little tighter
   ksg:     { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.411: the shotgun's, a little wider
+  double:  { style: 'big_circle', baseGap: 18, ringR: 20, centerDot: 1.6 },   // v1.432: between the shotgun's and the SPAS-12's
   ar:      { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },
   sniper:  { style: 'fine_cross', baseGap: 6,  ringR: 0,  centerDot: 1.0 },
   pumpsniper: { style: 'fine_cross', baseGap: 7, ringR: 0,  centerDot: 1.1 },   // v1.416: the sniper's, a little wider

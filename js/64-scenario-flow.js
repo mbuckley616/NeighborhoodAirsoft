@@ -776,6 +776,8 @@ function startScenario(built) {
   Game.gun.semiRPM = spec.semiRPM || 0;
   Game.gun.gasFade = spec.gasFade || 0;   // v1.399: the Gas Pistol's gas cools as its mag empties
   Game.gun.burst = spec.burst || 0;   // v1.327
+  Game.gun.barrels = spec.barrels || 0;   // v1.432: the Double-Barrel's two
+  Game.gun._barrelsFired = 0;
   Game.gun._burstLeft = 0;
   Game.gun._jamIn = 0;   // v1.250: no burst carries a jam into the next match
   Game.gun.autoFireTimer = 0;
@@ -1166,6 +1168,7 @@ function endScenario(outcome) {
   Game.gun.cockReleasing = false;
   Game.gun.cockReleaseProgress = 0;
   Game.gun.cocked = true;
+  Game.gun._barrelsFired = 0;   // v1.432
   Game.gun.jammed = false;
   Game.gun.jamProgress = 0;
   Game.gun._successFlashTime = 0;
