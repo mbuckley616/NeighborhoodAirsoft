@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after gun batch 7 (builder, 2026-11-04)**
   Gun batch 7 is done (v1.432-v1.440): the Double-Barrel, Derringer, Clear Bullpup, Auto Pistol, Drum Shotgun and the
   Snub-Nose (the Magnum cut short, the batch's version). The shop has 46 guns (9 pistols, 7 shotguns, 11 rifles, 19
@@ -19,8 +21,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. You are at 46 of your 30-50 guns, so the parts are the thinner side again; the night matches have
   no homemade light; and none of it touches the maps lane or a Fable card's areas.
-
-## Answered
+  Michael: **A) A third wave of homemade parts**. (control room, 2026-11-04)
 
 - **What the play lane builds next, after the homemade wave (builder, 2026-11-03)**
   D.83's second homemade wave is done: the toy scope, the bungee sling, the soda-bottle silencer, the sock-padded stock
