@@ -1069,6 +1069,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_pumpsniper', name: 'Spare 20-rd Pump Sniper Mag' },   // v1.416
     { refId: 'spare_mag_double',  name: 'Spare 36-rd Shell Pouch' },   // v1.432
     { refId: 'spare_mag_derringer', name: 'Spare 20-BB Derringer Tin' },   // v1.433
+    { refId: 'spare_mag_autopistol', name: 'Spare 24-rd Auto Pistol Mag' },   // v1.438
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1345,7 +1346,7 @@ function renderBBsTab(c, between) {
 // under a header for each kind, and a row of chips over the list shows one kind or all of them. A gun's kind is its
 // entry here; a gun missing from it goes by its fire mode (automatic or rifle).
 const GUN_KINDS = [
-  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'derringer', 'sixshooter', 'boltpistol', 'epistol', 'gaspistol', 'magnum'] },   // v1.433: the Derringer after the Spring Pistol;   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last; v1.410: the Magnum after it
+  { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'derringer', 'sixshooter', 'boltpistol', 'epistol', 'autopistol', 'gaspistol', 'magnum'] },   // v1.438: the Auto Pistol after the Electric Pistol;   // v1.433: the Derringer after the Spring Pistol;   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last; v1.410: the Magnum after it
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'double', 'thunder', 'spas', 'ksg', 'semishotgun'] },   // v1.432: the Double-Barrel after the Spring Shotgun;   // v1.328; v1.398: the SPAS-12 before it; v1.411: the KSG after the SPAS-12
   { id: 'RIFLES', name: 'Rifles', guns: ['clearpup', 'ar', 'famas', 'lever', 'erifle', 'burst', 'm14', 'sniper', 'pumpsniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it; v1.404: the M14 before the sniper; v1.412: the Lever Gun after the FAMAS; v1.416: the Pump Sniper after the sniper
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'thompson', 'mac10', 'uzi', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249', 'm60'] },   // v1.414: the Uzi after the MAC-10; v1.413: the M60 last; v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.403: the Thompson after the Vector

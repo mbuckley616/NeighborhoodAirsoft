@@ -912,6 +912,7 @@ const RETICLE_SPECS = {
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
   famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's
   epistol: { style: 'ring_ticks', baseGap: 9,  ringR: 9,  centerDot: 1.4 },   // v1.326: the pistol's
+  autopistol: { style: 'ring_ticks', baseGap: 11, ringR: 11, centerDot: 1.4 },   // v1.438: the pistol's, wider for the spray
   thompson: { style: 'circle_cross', baseGap: 9, ringR: 8,  centerDot: 1.3 },   // v1.403: the MP5's, a little tighter
   gaspistol: { style: 'ring_ticks', baseGap: 8,  ringR: 8,  centerDot: 1.4 },   // v1.399: the pistol's, a little tighter
   magnum:  { style: 'ring_ticks', baseGap: 8, ringR: 8, centerDot: 1.4 },   // v1.410: the Six-Shooter's, a little tighter

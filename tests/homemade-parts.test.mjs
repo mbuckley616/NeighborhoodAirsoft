@@ -72,7 +72,7 @@ const geo = await page.evaluate(() => {
   return out;
 });
 const bad = geo.filter(r => Math.abs(r.foot) > 0.015 || Math.abs(r.cx) > 0.01 || r.len > 0.15);
-check(`on all ${geo.length} guns it sits on the top rail, centred`, geo.length === 43 && bad.length === 0, bad.length ? bad : geo.slice(0, 4));
+check(`on all ${geo.length} guns it sits on the top rail, centred`, geo.length === 44 && bad.length === 0, bad.length ? bad : geo.slice(0, 4));
 
 // --- in a match: aimed through it on the AR, against the 4× Scope and no sight
 const aim = (type) => page.evaluate(async (type) => {
@@ -268,8 +268,8 @@ check('the workbench: a click puts the silencer on the AR\'s muzzle, shown on th
 check('no muzzle part under the barrel or on a pistol, no under part on the muzzle; a foregrip and the silencer on the AR at once',
   !mz.cardboardUnder && !mz.onPistol && !mz.fgMuzzle && mz.fgUnder && mz.both.includes('foregrip') && mz.both.includes('soda_silencer'), mz);
 const mzLong = mz.geo.filter(r => !r.none);
-check('every long gun has the muzzle slot (the 25 with an under-barrel slot, the Double-Barrel since v1.432, the P90, the Vector, the AUG, the Thompson, the Tick-Tock and the Clear Bullpup (v1.437): 31), the 12 others none (the Derringer since v1.433)',
-  mzLong.length === 31 && mz.geo.filter(r => r.none).length === 12, mz.geo.map(r => r.gt + (r.none ? '-' : '+')));
+check('every long gun has the muzzle slot (the 25 with an under-barrel slot, the Double-Barrel since v1.432, the P90, the Vector, the AUG, the Thompson, the Tick-Tock and the Clear Bullpup (v1.437): 31), the 13 others none (the Derringer since v1.433)',
+  mzLong.length === 31 && mz.geo.filter(r => r.none).length === 13, mz.geo.map(r => r.gt + (r.none ? '-' : '+')));
 check('on every one the bottle\'s neck is taped over the muzzle (back 1-3 cm over it) and it runs 15-20 cm ahead, on the bore line',
   mzLong.every(r => r.back >= 0.01 && r.back <= 0.03 && r.ahead >= 0.15 && r.ahead <= 0.2 && Math.abs(r.x) < 0.002 && Math.abs(r.dy) < 0.002), mzLong);
 
@@ -350,7 +350,7 @@ check('the workbench: a Stock row on the AR and the P90, none on the pistol or t
   st.offered.length === 1 && /STOCK/.test(st.offered[0]) && st.mounted === 'Sock-Padded Stock' && st.meshShown && st.label.includes('Stock: Sock-Padded Stock'), st);
 check('the sock goes on no muzzle and no pistol', !st.onMuzzle && !st.onPistol, st);
 const stLong = mz.stockGeo.filter(r => !r.none);
-check('every long gun has the stock slot (31, v1.432: the Double-Barrel, v1.437: the Clear Bullpup), the 12 others none (v1.433: the Derringer)', stLong.length === 31 && mz.stockGeo.filter(r => r.none).length === 12, mz.stockGeo.map(r => r.gt + (r.none ? '-' : '+')));
+check('every long gun has the stock slot (31, v1.432: the Double-Barrel, v1.437: the Clear Bullpup), the 13 others none (v1.433: the Derringer, v1.438: the Auto Pistol)', stLong.length === 31 && mz.stockGeo.filter(r => r.none).length === 13, mz.stockGeo.map(r => r.gt + (r.none ? '-' : '+')));
 check('on every one the sock wraps the butt (4-8 mm proud on every side with its tape, its toe 0.4-2.5 cm past the end), 6-8 cm long, at most 8 cm wide and 17 cm tall',
   stLong.every(r => [r.side, r.top, r.bot].every(d => d >= 0.004 && d <= 0.008) && r.end >= 0.004 && r.end <= 0.025 && r.len >= 0.06 && r.len <= 0.08 && r.w <= 0.08 && r.h <= 0.17), stLong);
 

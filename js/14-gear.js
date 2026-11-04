@@ -48,6 +48,7 @@ const MAG_GUN_FIT = {
   spare_mag_pumpsniper: 'pumpsniper',   // v1.416
   spare_mag_double: 'double',   // v1.432
   spare_mag_derringer: 'derringer',   // v1.433
+  spare_mag_autopistol: 'autopistol',   // v1.438
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -79,7 +80,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'pumpsniper',   // v1.416 (D.63 batch 6): the pump-action sniper
   'double',   // v1.432 (D.85 batch 7): the break-action double-barrel shotgun
   'derringer',   // v1.433 (D.85 batch 7): the two-shot pocket pistol
-  'clearpup'];   // v1.437 (D.85 batch 7): the cheap clear battery bullpup
+  'clearpup',   // v1.437 (D.85 batch 7): the cheap clear battery bullpup
+  'autopistol'];   // v1.438 (D.85 batch 7): the battery machine pistol
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -116,6 +118,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm14') return Game.persist.owned.m14_mag_50 ? 50 : 30;   // v1.404: its box mag, or the long one
   if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
+  if (gunType === 'autopistol') return Game.persist.owned.autopistol_mag_50 ? 50 : 24;   // v1.438: its flush mag, or the long stick
   if (gunType === 'derringer') return Game.persist.owned.derringer_mag_30 ? 30 : 20;   // v1.433: its pocket tin, or the big tin
   if (gunType === 'double') return Game.persist.owned.double_mag_54 ? 54 : 36;   // v1.432: its shell pouch, or the bandolier
   if (gunType === 'pumpsniper') return Game.persist.owned.pumpsniper_mag_30 ? 30 : 20;   // v1.416: its mag, or the long one
@@ -288,6 +291,7 @@ const GUN_ACCESSORY_CAP = {
   pumpsniper: { sight: 1, rails: 2, under: 1 },  // v1.416: the sniper's
   double:   { sight: 1, rails: 2, under: 1 },  // v1.432: the shotgun's, on the barrels
   derringer: { sight: 1, rails: 1 },           // v1.433: a pistol's, the rail on the barrels
+  autopistol: { sight: 1, rails: 1 },          // v1.438: a pistol's
   clearpup: { sight: 1, rails: 1 },            // v1.437: the clear guns' one rail; a muzzle and a stock as a long gun
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
@@ -771,6 +775,14 @@ const GUN_MAGS = {
   // open and drop two fresh shells in
   // v1.433 (backlog D.85, batch 7): the Derringer, a two-shot pocket pistol: two barrels one over the other, a pull
   // each, then tip them up and drop two BBs in
+  // v1.438 (backlog D.85, batch 7): the Auto Pistol, a battery pistol with a switch on its side set to AUTO: the only
+  // pistol that sprays, and it empties its flush mag in two seconds, so the long stick mag sticking out of the grip
+  autopistol: {
+    displayName: 'Auto Pistol', baseCap: 24, price: 95, ownFlag: 'autopistol',
+    blurb: 'A black battery pistol with a switch on its side, and somebody flicked it to AUTO. Hold the trigger and it hoses twelve BBs a second, the only pistol that does, so the flush mag is gone in two seconds. The long stick mag hangs a hand below the grip; spare mags are cheap.',
+    mags: [ { flag: 'autopistol_mag_50', cap: 50, price: 12 } ],
+    spares: [ { key: 'spare_mag_autopistol', label: 'Spare Auto Pistol Mag (24)', price: 5 } ],
+  },
   derringer: {
     displayName: 'Derringer', baseCap: 20, price: 35, ownFlag: 'derringer',
     blurb: 'A tiny nickel-plated pocket pistol with a cream grip, two short barrels one on top of the other, the kind that came in a cap-gun set. Pull once for the top barrel, again for the bottom, then tip the barrels up and drop two BBs in. It fits in your hand and you run fastest with it, but the short barrels throw a slow BB that wanders early, so get close.',
@@ -827,7 +839,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1038,6 +1050,7 @@ function describeSlot(idx) {
       spare_mag_pumpsniper: 20,   // v1.416
       spare_mag_double: 36,   // v1.432
       spare_mag_derringer: 20,   // v1.433
+      spare_mag_autopistol: 24,   // v1.438
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1080,6 +1093,7 @@ function describeSlot(idx) {
       spare_mag_pumpsniper: 'Spare 20-rd Pump Sniper Mag',   // v1.416
       spare_mag_double: 'Spare 36-rd Shell Pouch',   // v1.432
       spare_mag_derringer: 'Spare 20-BB Derringer Tin',   // v1.433
+      spare_mag_autopistol: 'Spare 24-rd Auto Pistol Mag',   // v1.438
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1287,6 +1301,7 @@ const GUN_WEIGHT = {
   uzi: 4,                                                 // v1.414: stamped steel, the MAC-10 (3) and the MP5 (5) between
   double: 6.5,                                            // v1.432: steel barrels and walnut; the Spring Shotgun 6
   derringer: 1,                                           // v1.433: the lightest gun (the Spring Pistol 2)
+  autopistol: 2.5,                                        // v1.438: the Electric Pistol's, its battery in the grip
   clearpup: 3,                                            // v1.437: hollow plastic, as the clear automatics (2-4)
   pumpsniper: 8,                                          // v1.416: a plastic stock and a pump, lighter than the sniper (10)
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
@@ -1325,6 +1340,7 @@ const MAG_WEIGHT = {
   spare_mag_pumpsniper: 1.0,   // v1.416: the sniper's
   spare_mag_double: 0.8,   // v1.432: a pouch of shells
   spare_mag_derringer: 0.2,   // v1.433: a small tin
+  spare_mag_autopistol: 0.6,   // v1.438: the Electric Pistol's
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1848,6 +1864,10 @@ GUN_SPECS.derringer = Object.assign({}, GUN_SPECS.pistol, { barrels: 2, cockType
 // (the Electric Rifle 6), a soft BB (36 m/s; the AR 45) that starts to curve at 7 m (the AR 10) in a wider cone (0.38;
 // 0.28), a light gun with the clear guns' walk (1.1), and `semiJam`, the chance a pull jams after its BB (1 in 12)
 GUN_SPECS.clearpup = Object.assign({}, GUN_SPECS.erifle, { semiRPM: 240, muzzleVelocity: 36, baseSpread: 0.38, adsSpreadMult: 0.5, curveOnsetDistance: 7, curveStrengthMax: 22, weightClass: 'light', playerSpeedMult: 1.1, cockTime: 0.4, cockType: 'switch', semiJam: 1 / 12, displayName: 'Clear Bullpup' });
+// v1.438 (D.85, batch 7): the Auto Pistol, the Spring Pistol's frame on full auto: 12 BBs a second (the MAC-10 18),
+// the pistol's soft BB (33 m/s; the MAC-10 38) in a wider cone (0.48; the pistol 0.4) that starts to wander at 5 m, a
+// pistol's walk (1.13) and a slide racked on each new mag; 24 in its mag, so two seconds of trigger
+GUN_SPECS.autopistol = Object.assign({}, GUN_SPECS.pistol, { fireMode: 'auto', cyclicRPM: 720, muzzleVelocity: 33, baseSpread: 0.48, adsSpreadMult: 0.5, curveOnsetDistance: 5, curveStrengthMax: 18, playerSpeedMult: 1.13, displayName: 'Auto Pistol' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

@@ -393,7 +393,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
    two barrels of a BB, a pull each, then tip them up and load, 0.9 s; the lightest gun, the fastest walk;
    `tests/gun-derringer.test.mjs`). ~~The cheap clear bullpup~~ — done, v1.437 (the Clear Bullpup, $40, first under RIFLES: a
    see-through battery semi, a BB a pull up to 4 a second, a soft BB that curves at 7 m, and one pull in twelve it jams;
-   100 in its one mag; `tests/gun-clearpup.test.mjs`). Left: three more.
+   100 in its one mag; `tests/gun-clearpup.test.mjs`). ~~The auto pistol~~ — done, v1.438 (the Auto Pistol, $95, under PISTOLS:
+   a battery pistol on full auto, 12 a second, its 24 gone in two seconds; a long mag of 50; `tests/gun-autopistol.test.mjs`).
+   Left: two more.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

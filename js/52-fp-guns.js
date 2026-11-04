@@ -626,6 +626,33 @@ function buildFPElectricPistol() {
   group.userData.gunType = 'epistol';
   return group;
 }
+// v1.438 (backlog D.85, batch 7): the Auto Pistol, the spring pistol's frame, slide and sights in black, a long stick
+// mag out of the grip (its baseplate a hand below the battery cap), the selector on the left with its orange AUTO dot,
+// and a slotted compensator past the slide's end round the barrel and its orange tip.
+function buildFPAutoPistol() {
+  const group = buildFPGun();
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.6 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x3a3c40, roughness: 0.35, metalness: 0.6 });
+  const orange = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.5, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  const grip = group.getObjectByName('grip');
+  // the long mag: a black stick out of the grip's foot and its baseplate
+  add(new THREE.BoxGeometry(0.026, 0.075, 0.040), black, 0, -0.085, 0.002, grip).name = 'longMag';
+  add(new THREE.BoxGeometry(0.032, 0.008, 0.046), steel, 0, -0.124, 0.002, grip).name = 'magBase';
+  // the selector on the left over the grip, and its AUTO dot
+  add(new THREE.BoxGeometry(0.004, 0.010, 0.022), black, -0.021, 0.010, -0.005).name = 'selector';
+  add(new THREE.BoxGeometry(0.002, 0.004, 0.004), orange, -0.0235, 0.012, -0.013);
+  // the compensator past the slide, with its two top slots
+  add(new THREE.BoxGeometry(0.030, 0.030, 0.026), steel, 0, 0.040, -0.198).name = 'comp';
+  for (const z of [-0.192, -0.204]) add(new THREE.BoxGeometry(0.014, 0.003, 0.004), black, 0, 0.0555, z);
+  const tip = group.getObjectByName('tip'), barrel = group.getObjectByName('barrel');
+  barrel.position.z = -0.2085; tip.position.z = -0.2165;   // through the compensator, the orange tip in front of it
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.2025) < 1e-6) o.position.z = -0.2215; });   // the muzzle hole
+  // the front sight is the post at the slide's end
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.17) < 1e-6 && Math.abs(o.position.y - 0.067) < 1e-6) o.userData.frontSight = true; });
+  group.userData.gunType = 'autopistol';
+  return group;
+}
 // v1.399 (backlog D.63, Michael: A, batch 5): the Gas Pistol, a green-gas blowback pistol on the spring pistol's
 // frame, slide, sights and grip: a bare steel slide on a black frame, wooden panels either side of the grip, a hammer
 // behind the slide, and the gas mag's brass fill valve under the grip. Every shot the gas throws the slide back
@@ -2441,6 +2468,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'rattle')  mesh = buildFPRattle();
   else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
   else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
+  else if (gunType === 'autopistol') mesh = buildFPAutoPistol();   // v1.438
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
@@ -2530,6 +2558,7 @@ const FP_HANDS = {
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
   famas:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.004, -0.150], hw: 0.022, hh: 0.024 }, underHand: true },   // v1.325: the AR's grip, the handguard
   epistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.326: the pistol's
+  autopistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.019, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.438: the pistol's
   thompson: { r: { c: [0, -0.064, 0.055], rx: -0.25, gw: 0.014, gd: 0.017, up: -0.012 }, l: { kind: 'grip', c: [0, -0.050, -0.180], rx: 0, gw: 0.013, gd: 0.015, up: -0.005 } },   // v1.403: the wooden grip and front grip
   gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
   magnum:  { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.410: the Six-Shooter's
