@@ -355,6 +355,34 @@ function buildFPSemiShotgun() {
   return group;
 }
 
+// v1.439 (backlog D.85, batch 7): the Drum Shotgun, the Semi-Auto Shotgun's receiver, sights, grip and charging handle in
+// black, the side saddle gone, and a fat black drum under the receiver ahead of the grip, its wind-up key on the left
+// face and a clear window on the right with BBs behind it; the forend olive ahead of the drum.
+function buildFPDrumShotgun() {
+  const group = buildFPSemiShotgun();
+  const black = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.6, metalness: 0.15 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x55585e, roughness: 0.35, metalness: 0.6 });
+  const clear = new THREE.MeshStandardMaterial({ color: 0xdfe6ea, roughness: 0.2, transparent: true, opacity: 0.55 });
+  const bbMat = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 });
+  // the saddle and its shells come off the left of the receiver
+  for (const o of [...group.children]) if (o.isMesh && o.position.x < -0.024 && o.position.z > -0.1 && o.position.z < -0.03) group.remove(o);
+  for (const n of ['grip', 'stock']) { const o = group.getObjectByName(n); if (o) o.material = black; }
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.044, 18), black);
+  drum.rotation.z = Math.PI / 2; drum.position.set(0, -0.058, -0.075); drum.name = 'drum'; group.add(drum);
+  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.030, 0.020, 0.040), black);
+  neck.position.set(0, -0.006, -0.075); neck.name = 'drumNeck'; group.add(neck);
+  const key = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.026, 0.008), steel);
+  key.position.set(-0.026, -0.058, -0.075); key.name = 'drumKey'; group.add(key);
+  const win = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.030, 0.003, 14), clear);
+  win.rotation.z = Math.PI / 2; win.position.set(0.0235, -0.058, -0.075); win.name = 'drumWindow'; group.add(win);
+  for (let i = 0; i < 5; i++) {
+    const a = i / 5 * Math.PI * 2, bb = new THREE.Mesh(new THREE.SphereGeometry(0.006, 6, 5), bbMat);
+    bb.position.set(0.019, -0.058 + Math.sin(a) * 0.018, -0.075 + Math.cos(a) * 0.018); group.add(bb);
+  }
+  group.userData.gunType = 'drumshotgun';
+  return group;
+}
+
 function buildFPAR() {
   const group = new THREE.Group();
   const bodyMat    = new THREE.MeshStandardMaterial({ color: 0x1d1d22, roughness: 0.55, metalness: 0.25 });
@@ -2472,6 +2500,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
+  else if (gunType === 'drumshotgun') mesh = buildFPDrumShotgun();   // v1.439
   else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
   else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else if (gunType === 'p90')     mesh = buildFPP90();           // v1.346
@@ -2565,6 +2594,7 @@ const FP_HANDS = {
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
+  drumshotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.439: the Semi-Auto Shotgun's grip and forend
   m249:    { r: { c: [0, -0.050, 0.030], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.000, -0.21], hw: 0.025, hh: 0.018 }, underHand: true },   // v1.335: the AK's grip, the handguard ahead of the box
   m60:     { r: { c: [0, -0.050, 0.030], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.000, -0.21], hw: 0.025, hh: 0.018 }, underHand: true },   // v1.413: the M249's
 };

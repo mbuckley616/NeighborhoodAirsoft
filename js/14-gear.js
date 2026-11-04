@@ -49,6 +49,7 @@ const MAG_GUN_FIT = {
   spare_mag_double: 'double',   // v1.432
   spare_mag_derringer: 'derringer',   // v1.433
   spare_mag_autopistol: 'autopistol',   // v1.438
+  spare_mag_drumshotgun: 'drumshotgun',   // v1.439
 };
 
 // The canonical ordered list of gun types, and the subset the player owns.
@@ -81,7 +82,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'double',   // v1.432 (D.85 batch 7): the break-action double-barrel shotgun
   'derringer',   // v1.433 (D.85 batch 7): the two-shot pocket pistol
   'clearpup',   // v1.437 (D.85 batch 7): the cheap clear battery bullpup
-  'autopistol'];   // v1.438 (D.85 batch 7): the battery machine pistol
+  'autopistol',   // v1.438 (D.85 batch 7): the battery machine pistol
+  'drumshotgun'];   // v1.439 (D.85 batch 7): the full-auto drum shotgun
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -118,6 +120,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'm14') return Game.persist.owned.m14_mag_50 ? 50 : 30;   // v1.404: its box mag, or the long one
   if (gunType === 'thompson') return Game.persist.owned.thompson_mag_200 ? 200 : 100;   // v1.403: its drum, or the big drum
   if (gunType === 'gaspistol') return Game.persist.owned.gas_mag_25 ? 25 : 15;   // v1.399: a gas mag holds 15, the long one 25
+  if (gunType === 'drumshotgun') return Game.persist.owned.drumshotgun_mag_160 ? 160 : 100;   // v1.439: its drum, or the big drum
   if (gunType === 'autopistol') return Game.persist.owned.autopistol_mag_50 ? 50 : 24;   // v1.438: its flush mag, or the long stick
   if (gunType === 'derringer') return Game.persist.owned.derringer_mag_30 ? 30 : 20;   // v1.433: its pocket tin, or the big tin
   if (gunType === 'double') return Game.persist.owned.double_mag_54 ? 54 : 36;   // v1.432: its shell pouch, or the bandolier
@@ -292,11 +295,12 @@ const GUN_ACCESSORY_CAP = {
   double:   { sight: 1, rails: 2, under: 1 },  // v1.432: the shotgun's, on the barrels
   derringer: { sight: 1, rails: 1 },           // v1.433: a pistol's, the rail on the barrels
   autopistol: { sight: 1, rails: 1 },          // v1.438: a pistol's
+  drumshotgun: { sight: 1, rails: 2 },         // v1.439: the drum fills the under-barrel; a muzzle and a stock as a long gun
   clearpup: { sight: 1, rails: 1 },            // v1.437: the clear guns' one rail; a muzzle and a stock as a long gun
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 // v1.420 (D.83, Michael: A): the long guns without an under-barrel slot still have a muzzle and a stock
-const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1, clearpup: 1 };   // v1.437: the Clear Bullpup
+const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1, clearpup: 1, drumshotgun: 1 };   // v1.437: the Clear Bullpup; v1.439: the Drum Shotgun
 const HOMEMADE_SLOTS = ['under', 'muzzle', 'stock'];   // v1.420: the slots that take one homemade part each
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -665,6 +669,14 @@ const GUN_MAGS = {
     mags: [ { flag: 'burst_mag_150', cap: 150, price: 22 } ],
     spares: [ { key: 'spare_mag_burst', label: 'Spare Burst Rifle Mag (90)', price: 12 } ],
   },
+  // v1.439 (backlog D.85, batch 7): the Drum Shotgun, a battery shotgun on full auto fed from a drum under it: the
+  // only automatic shotgun, five clouds a second, so the drum (100 BBs, about forty clouds) goes in eight seconds held
+  drumshotgun: {
+    displayName: 'Drum Shotgun', baseCap: 100, price: 210, ownFlag: 'drumshotgun',
+    blurb: 'A black battery shotgun with a fat drum under it and a switch that says AUTO. Hold the trigger and it throws a cloud of two or three BBs five times a second, the only shotgun that does, but it is heavy, the BBs are slow, and the drum is gone in about eight seconds.',
+    mags: [ { flag: 'drumshotgun_mag_160', cap: 160, price: 22 } ],
+    spares: [ { key: 'spare_mag_drumshotgun', label: 'Spare Shotgun Drum (100)', price: 15 } ],
+  },
   // v1.328 (backlog D.63, batch 1): the semi-auto shotgun, the spring shotgun's cloud of BBs on every pull
   semishotgun: {
     displayName: 'Semi-Auto Shotgun', baseCap: 60, price: 160, ownFlag: 'semishotgun',
@@ -839,7 +851,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1051,6 +1063,7 @@ function describeSlot(idx) {
       spare_mag_double: 36,   // v1.432
       spare_mag_derringer: 20,   // v1.433
       spare_mag_autopistol: 24,   // v1.438
+      spare_mag_drumshotgun: 100,   // v1.439
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1094,6 +1107,7 @@ function describeSlot(idx) {
       spare_mag_double: 'Spare 36-rd Shell Pouch',   // v1.432
       spare_mag_derringer: 'Spare 20-BB Derringer Tin',   // v1.433
       spare_mag_autopistol: 'Spare 24-rd Auto Pistol Mag',   // v1.438
+      spare_mag_drumshotgun: 'Spare 100-BB Shotgun Drum',   // v1.439
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1302,6 +1316,7 @@ const GUN_WEIGHT = {
   double: 6.5,                                            // v1.432: steel barrels and walnut; the Spring Shotgun 6
   derringer: 1,                                           // v1.433: the lightest gun (the Spring Pistol 2)
   autopistol: 2.5,                                        // v1.438: the Electric Pistol's, its battery in the grip
+  drumshotgun: 9,                                         // v1.439: the drum and the battery; the Semi-Auto Shotgun 7
   clearpup: 3,                                            // v1.437: hollow plastic, as the clear automatics (2-4)
   pumpsniper: 8,                                          // v1.416: a plastic stock and a pump, lighter than the sniper (10)
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
@@ -1341,6 +1356,7 @@ const MAG_WEIGHT = {
   spare_mag_double: 0.8,   // v1.432: a pouch of shells
   spare_mag_derringer: 0.2,   // v1.433: a small tin
   spare_mag_autopistol: 0.6,   // v1.438: the Electric Pistol's
+  spare_mag_drumshotgun: 1.8,   // v1.439: a full drum
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1868,6 +1884,10 @@ GUN_SPECS.clearpup = Object.assign({}, GUN_SPECS.erifle, { semiRPM: 240, muzzleV
 // the pistol's soft BB (33 m/s; the MAC-10 38) in a wider cone (0.48; the pistol 0.4) that starts to wander at 5 m, a
 // pistol's walk (1.13) and a slide racked on each new mag; 24 in its mag, so two seconds of trigger
 GUN_SPECS.autopistol = Object.assign({}, GUN_SPECS.pistol, { fireMode: 'auto', cyclicRPM: 720, muzzleVelocity: 33, baseSpread: 0.48, adsSpreadMult: 0.5, curveOnsetDistance: 5, curveStrengthMax: 18, playerSpeedMult: 1.13, displayName: 'Auto Pistol' });
+// v1.439 (D.85, batch 7): the Drum Shotgun, the spring shotgun's cloud of two or three BBs on full auto: five clouds a
+// second (300 a minute), a slower BB (28 m/s; the shotgun 30) in its cone, a heavy gun's walk (0.9; the Semi-Auto
+// Shotgun 1.0) and a charging handle on each new drum
+GUN_SPECS.drumshotgun = Object.assign({}, GUN_SPECS.shotgun, { fireMode: 'auto', cyclicRPM: 300, muzzleVelocity: 28, weightClass: 'heavy', playerSpeedMult: 0.9, cockType: 'charge', cockTime: 0.7, displayName: 'Drum Shotgun' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

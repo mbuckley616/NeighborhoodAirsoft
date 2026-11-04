@@ -292,7 +292,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.060, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'semishotgun') {   // v1.328: the shotgun at the hip; aimed, the front post's tip (y 0.068) in the ghost ring
+    } else if (gunType === 'semishotgun' || gunType === 'drumshotgun') {   // v1.439: and the Drum Shotgun, on its sights; v1.328: the shotgun at the hip; aimed, the front post's tip (y 0.068) in the ghost ring
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.069, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -919,6 +919,7 @@ const RETICLE_SPECS = {
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
+  drumshotgun: { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.439: the shotgun's, wider
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider
   m60:     { style: 'circle_cross', baseGap: 15, ringR: 14, centerDot: 1.4 },   // v1.413: the M249's, a little wider still
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter

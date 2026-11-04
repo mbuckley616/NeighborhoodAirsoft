@@ -63,6 +63,7 @@ const FP_GUN_MOUNT = {
   erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
   burst:   { barrelY: 0.035, sideX: 0.028, railZ: -0.185, railLen: 0.10,  underY: 0.010, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.327: rails outside the round handguard
   semishotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.328: the shotgun's
+  drumshotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.439: the Semi-Auto Shotgun's
   m249:    { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.335: the optic on the feed cover
   m60:     { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.413: the M249's
 };
@@ -942,6 +943,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
+  else if (gunType === 'drumshotgun') mesh = buildFPDrumShotgun();   // v1.439
   else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
   else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else if (gunType === 'p90')     mesh = buildFPP90();           // v1.346
