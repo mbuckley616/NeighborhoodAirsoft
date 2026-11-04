@@ -391,7 +391,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
    (play) takes it. ~~The break-action shotgun~~ — done, v1.432 (the Double-Barrel, $90: two barrels of three BBs, a pull
    each, then break it open, 1.5 s; `tests/gun-double.test.mjs`). ~~The pocket pistol~~ — done, v1.433 (the Derringer, $35:
    two barrels of a BB, a pull each, then tip them up and load, 0.9 s; the lightest gun, the fastest walk;
-   `tests/gun-derringer.test.mjs`). Left: four more.
+   `tests/gun-derringer.test.mjs`). ~~The cheap clear bullpup~~ — done, v1.437 (the Clear Bullpup, $40, first under RIFLES: a
+   see-through battery semi, a BB a pull up to 4 a second, a soft BB that curves at 7 m, and one pull in twelve it jams;
+   100 in its one mag; `tests/gun-clearpup.test.mjs`). Left: three more.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

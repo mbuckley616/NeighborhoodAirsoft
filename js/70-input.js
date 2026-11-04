@@ -572,6 +572,8 @@ function onLmbDown() {
         }
         Game.lmbConsumed = true;
         if (Game.gun.ammo === 0) { Game.gun.cocked = false; Game.gun.cockProgress = 0; }
+        // v1.437 (D.85): a cheap electric semi may chew the BB it just fired and jam (the Clear Bullpup, 1 pull in 12)
+        else if (!Game.gun.jammed && (getGunSpec(Game.gun.type).semiJam || 0) > gameRandom()) { jamGun(); Game.gun._jams = (Game.gun._jams || 0) + 1; }
       } else if (Game.gun.barrels > 1 && ++Game.gun._barrelsFired < Game.gun.barrels && Game.gun.ammo > 0) {
         // v1.432 (D.85): a double-barrel stays cocked for its other barrel; a new pull fires it once the shot's lockout
         // is out (FIRE_LOCKOUT, doFire). Both fired, it is broken open like any re-cock.

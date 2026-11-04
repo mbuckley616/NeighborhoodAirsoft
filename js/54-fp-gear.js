@@ -49,6 +49,7 @@ const FP_GUN_MOUNT = {
   bucket:  { barrelY: 0.010, sideX: 0.030, railZ: -0.18,  railLen: 0.08,  underY: -0.028, sightY: 0.135, sightZ: -0.10, sightScale: 1.0 },
   boltpistol: { barrelY: 0.030, sideX: 0.016, railZ: -0.04, railLen: 0.06, underY: 0.03, sightY: 0.059, sightZ: -0.05, sightScale: 0.85 },
   // v1.250: the clear automatics (sights on the top rail or the receiver, a rail low on the side)
+  clearpup: { barrelY: 0.010, sideX: 0.028, railZ: -0.12, railLen: 0.07, underY: -0.028, sightY: 0.0595, sightZ: -0.05, sightScale: 0.9 },   // v1.437: the sprayer's, the rail further out
   sprayer: { barrelY: 0.010, sideX: 0.030, railZ: -0.10, railLen: 0.07, underY: -0.028, sightY: 0.0595, sightZ: -0.06, sightScale: 0.9 },
   ghost:   { barrelY: 0.010, sideX: 0.0275, railZ: -0.07, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.06, sightScale: 0.85 },
   ticktock: { barrelY: 0.010, sideX: 0.0275, railZ: -0.18, railLen: 0.09, underY: -0.028, sightY: 0.0595, sightZ: -0.08, sightScale: 1.0 },
@@ -930,6 +931,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'clearpup') mesh = buildFPClearBullpup();  // v1.437
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();

@@ -131,6 +131,7 @@ function gunForegripZ(weapon) {
     case 'uzi':     return 0.10;   // v1.414: under its front end
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
+    case 'clearpup': return 0.18;   // v1.437: the long clear body ahead of the grip
     case 'pistol':
     default:        return 0.10;
   }
@@ -372,9 +373,9 @@ function buildEnemyGunMesh(weapon) {
       grip();
       break;
     }
-    case 'sprayer': case 'ghost': case 'ticktock': case 'rattle': {   // v1.250: the clear automatics
+    case 'sprayer': case 'ghost': case 'ticktock': case 'rattle': case 'clearpup': {   // v1.250: the clear automatics (v1.437: and the Clear Bullpup)
       const clear = new THREE.MeshStandardMaterial({ color: 0xe9eef2, roughness: 0.2, transparent: true, opacity: 0.6 });
-      const L = { sprayer: 0.26, ghost: 0.2, ticktock: 0.46, rattle: 0.2 }[weapon];
+      const L = { sprayer: 0.26, ghost: 0.2, ticktock: 0.46, rattle: 0.2, clearpup: 0.44 }[weapon];
       box(0.05, 0.07, L, clear, 0, 0, L / 2 - 0.05);     // body + barrel
       box(0.025, 0.035, L * 0.6, dark, 0, 0, L / 2 - 0.05);   // the guts, seen through it
       box(0.03, 0.03, 0.02, _fpOrangeMat(), 0, 0.01, L - 0.04);   // orange tip

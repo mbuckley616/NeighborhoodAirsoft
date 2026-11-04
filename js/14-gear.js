@@ -78,7 +78,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'uzi',   // v1.414 (D.63 batch 6): the burst SMG
   'pumpsniper',   // v1.416 (D.63 batch 6): the pump-action sniper
   'double',   // v1.432 (D.85 batch 7): the break-action double-barrel shotgun
-  'derringer'];   // v1.433 (D.85 batch 7): the two-shot pocket pistol
+  'derringer',   // v1.433 (D.85 batch 7): the two-shot pocket pistol
+  'clearpup'];   // v1.437 (D.85 batch 7): the cheap clear battery bullpup
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -287,10 +288,11 @@ const GUN_ACCESSORY_CAP = {
   pumpsniper: { sight: 1, rails: 2, under: 1 },  // v1.416: the sniper's
   double:   { sight: 1, rails: 2, under: 1 },  // v1.432: the shotgun's, on the barrels
   derringer: { sight: 1, rails: 1 },           // v1.433: a pistol's, the rail on the barrels
+  clearpup: { sight: 1, rails: 1 },            // v1.437: the clear guns' one rail; a muzzle and a stock as a long gun
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 // v1.420 (D.83, Michael: A): the long guns without an under-barrel slot still have a muzzle and a stock
-const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1 };
+const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1, clearpup: 1 };   // v1.437: the Clear Bullpup
 const HOMEMADE_SLOTS = ['under', 'muzzle', 'stock'];   // v1.420: the slots that take one homemade part each
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -622,6 +624,13 @@ const GUN_MAGS = {
     blurb: 'A clear wind-up rifle. Dead on up close, but it ticks out two BBs a second, they drop off past about 25 metres, and about one burst in five it jams.',
     mags: [], spares: [],
   },
+  // v1.437 (backlog D.85, batch 7): the Clear Bullpup, a cheap see-through battery bullpup in the clear guns' line:
+  // one mag, nothing more sold for it, and about one pull in twelve it jams
+  clearpup: {
+    displayName: 'Clear Bullpup', baseCap: 100, price: 40, ownFlag: 'clearpup', cheap: true,
+    blurb: 'A see-through battery bullpup from the toy aisle, the mag behind the grip and the gearbox showing through the plastic. A BB every pull, four a second, and a long barrel for a cheap gun, but about one pull in twelve it chews a BB and jams: hold R to clear it.',
+    mags: [], spares: [],
+  },
   // v1.325 (backlog D.63, Michael: A, batch 1): the FAMAS, the spring rifle Michael grew up with. It shoots exactly as
   // the Spring Assault Rifle (Michael: "functionally identical"); only the gun in your hands is different.
   famas: {
@@ -818,7 +827,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','gaspistol','magnum','shotgun','double','thunder','spas','ksg','semishotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1278,6 +1287,7 @@ const GUN_WEIGHT = {
   uzi: 4,                                                 // v1.414: stamped steel, the MAC-10 (3) and the MP5 (5) between
   double: 6.5,                                            // v1.432: steel barrels and walnut; the Spring Shotgun 6
   derringer: 1,                                           // v1.433: the lightest gun (the Spring Pistol 2)
+  clearpup: 3,                                            // v1.437: hollow plastic, as the clear automatics (2-4)
   pumpsniper: 8,                                          // v1.416: a plastic stock and a pump, lighter than the sniper (10)
   thompson: 10,                                           // v1.403: steel and walnut, the heaviest SMG (the Vector 5.5)
 };
@@ -1834,6 +1844,10 @@ GUN_SPECS.double = Object.assign({}, GUN_SPECS.shotgun, { barrels: 2, cockType: 
 // slide 0.7). The short barrels throw the slowest pistol BB (27 m/s; the Spring Pistol 30) in a wide cone (0.45; 0.4)
 // that wanders after 3 m (4); the lightest gun, so the fastest walk in the game (1.18; the pistol 1.15)
 GUN_SPECS.derringer = Object.assign({}, GUN_SPECS.pistol, { barrels: 2, cockType: 'break', cockTime: 0.9, muzzleVelocity: 27, baseSpread: 0.45, adsSpreadMult: 0.45, curveOnsetDistance: 3, curveStrengthMax: 20, playerSpeedMult: 1.18, displayName: 'Derringer' });
+// v1.437 (D.85, batch 7): the Clear Bullpup, an electric semi on the clear guns' faults: a BB a pull up to 4 a second
+// (the Electric Rifle 6), a soft BB (36 m/s; the AR 45) that starts to curve at 7 m (the AR 10) in a wider cone (0.38;
+// 0.28), a light gun with the clear guns' walk (1.1), and `semiJam`, the chance a pull jams after its BB (1 in 12)
+GUN_SPECS.clearpup = Object.assign({}, GUN_SPECS.erifle, { semiRPM: 240, muzzleVelocity: 36, baseSpread: 0.38, adsSpreadMult: 0.5, curveOnsetDistance: 7, curveStrengthMax: 22, weightClass: 'light', playerSpeedMult: 1.1, cockTime: 0.4, cockType: 'switch', semiJam: 1 / 12, displayName: 'Clear Bullpup' });
 
 function getGunSpec(gunType) {
   return GUN_SPECS[gunType] || GUN_SPECS.pistol;

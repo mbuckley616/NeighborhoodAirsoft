@@ -2329,6 +2329,27 @@ function buildFPGhost() {
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, -0.022, -0.01, 0.085);
   return _clearGunFinish(group, M, 'ghost', knob);
 }
+// v1.437 (backlog D.85, batch 7): the Clear Bullpup, the clear guns' bullpup: a long see-through body with the gearbox
+// and the battery showing, the grip and trigger forward (the Bucket Gun's, as every clear gun), the clear mag behind the
+// grip with its BBs in it, a butt plate at the back, a long barrel and its orange tip, a milky carry rail along the top
+// with the rear notch and the front blade on it, and the power switch on the right flank, the cocking part.
+function buildFPClearBullpup() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.38), M.clear, 0, 0.01, -0.01).name = 'body';        // butt to front
+  _fpPart(group, new THREE.BoxGeometry(0.028, 0.04, 0.20), M.guts, 0, 0.01, 0.03).name = 'gearbox';        // the gearbox inside
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.03, 0.06), M.yellow, 0, 0.012, 0.135).name = 'battery';    // the battery in the butt
+  _fpPart(group, new THREE.BoxGeometry(0.058, 0.082, 0.012), M.dark, 0, 0.006, 0.186).name = 'buttpad';
+  _fpPart(group, new THREE.CylinderGeometry(0.011, 0.011, 0.14, 10), M.clear, 0, 0.02, -0.27, Math.PI / 2).name = 'barrel';
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), M.orange, 0, 0.02, -0.35, Math.PI / 2).name = 'tip';
+  _fpPart(group, new THREE.BoxGeometry(0.026, 0.10, 0.045), M.milky, 0, -0.075, 0.085, 0.12).name = 'mag';   // behind the grip
+  const bbMat = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 });
+  for (let i = 0; i < 4; i++) _fpPart(group, new THREE.SphereGeometry(0.0055, 6, 5), bbMat, 0, -0.04 - i * 0.02, 0.083 + i * 0.0025);
+  _fpPart(group, new THREE.BoxGeometry(0.02, 0.012, 0.26), M.milky, 0, 0.0535, -0.05).name = 'rail';         // carry rail
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), M.dark, 0, 0.0665, -0.17).userData.frontSight = true;   // front blade (tip y 0.0735)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), M.dark, 0, 0.0625, 0.06);                     // rear notch
+  const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), M.yellow, 0.031, 0.022, -0.06);     // power switch
+  return _clearGunFinish(group, M, 'clearpup', sw);
+}
 // Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Accurate up close, two BBs a second.
 function buildFPTickTock() {
   const group = new THREE.Group(), M = _clearGunMats();
@@ -2414,6 +2435,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'clearpup') mesh = buildFPClearBullpup();  // v1.437
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
@@ -2502,6 +2524,7 @@ const FP_HANDS = {
   boltpistol: { r: { c: [0, -0.061, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.236: the grip 4 mm up
   // v1.250: the clear automatics have the Bucket Gun's grip; the rifle's off hand under its handguard
   sprayer: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
+  clearpup: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.437: the clear guns' grip
   ghost:   { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   rattle:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },
