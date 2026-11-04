@@ -2083,6 +2083,71 @@ function buildFPLever() {
   return group;
 }
 
+// v1.432 (backlog D.85, Michael: A, batch 7): the Double-Barrel, a side-by-side break-action shotgun: a case-hardened
+// action, two blued barrels on a hinge at the action's front with a rib between them (the bead at its front, at the
+// spring shotgun's height, so the aimed picture is the SPAS-12's), a walnut forend under the barrels for the off hand,
+// the walnut wrist and stock, the top lever behind the action. Breaking it open tips the barrels down on the hinge
+// (`cockSwing`, read in updateHeldMesh) with the hand on the forend; the rails, the under-barrel part and the muzzle
+// part ride on the barrels (`breakPivot`, ensureFPGunAccessory).
+function buildFPDouble() {
+  const group = new THREE.Group();
+  const blued  = new THREE.MeshStandardMaterial({ color: 0x1a1d24, roughness: 0.4, metalness: 0.65 });
+  const action = new THREE.MeshStandardMaterial({ color: 0x5a5650, roughness: 0.45, metalness: 0.6 });
+  const walnut = new THREE.MeshStandardMaterial({ color: 0x5b3820, roughness: 0.7, metalness: 0.05 });
+  const dark   = new THREE.MeshStandardMaterial({ color: 0x0c0c0e, roughness: 0.7 });
+  const brass  = new THREE.MeshStandardMaterial({ color: 0xc8a24a, roughness: 0.35, metalness: 0.8 });
+  const orange = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (parent, geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; parent.add(m); return m; };
+  // the action (the receiver): the barrels lock into its front face
+  add(group, new THREE.BoxGeometry(0.050, 0.050, 0.14), action, 0, 0.015, -0.05).name = 'receiver';   // its back meets the wrist
+  add(group, new THREE.BoxGeometry(0.010, 0.006, 0.030), action, 0.006, 0.043, -0.012, 0.2).name = 'topLever';
+  // the hinge: everything forward of it tips down when it is broken open
+  const HZ = -0.12, HY = 0.0;
+  const pivot = new THREE.Group();
+  pivot.position.set(0, HY, HZ);
+  pivot.name = 'barrels';
+  pivot.userData.cockSwing = -0.55;   // the muzzles drop 32° at the full pull
+  group.add(pivot);
+  add(pivot, new THREE.CylinderGeometry(0.006, 0.006, 0.050, 10), action, 0, 0.004, 0).rotation.set(0, 0, Math.PI / 2);   // the hinge pin
+  const L = 0.22, z0 = -0.005 - L / 2;   // the barrels run from the action's face (z -0.125) to the muzzle (-0.345)
+  for (const x of [-0.0125, 0.0125]) {
+    const b = add(pivot, new THREE.CylinderGeometry(0.0120, 0.0120, L, 14), blued, x, 0.040 - HY, z0);
+    b.rotation.x = Math.PI / 2; b.name = 'barrel';
+    const tip = add(pivot, new THREE.CylinderGeometry(0.0125, 0.0125, 0.020, 12), orange, x, 0.040 - HY, z0 - L / 2 + 0.010);   // the orange tip at the muzzle
+    tip.rotation.x = Math.PI / 2;
+    const bore = add(pivot, new THREE.CircleGeometry(0.0075, 12), dark, x, 0.040 - HY, z0 - L / 2 - 0.0005);
+    bore.rotation.y = Math.PI;
+    // the brass of a shell, seen at the breech when it is open
+    const shell = add(pivot, new THREE.CylinderGeometry(0.0100, 0.0100, 0.004, 12), brass, x, 0.040 - HY, -0.004);
+    shell.rotation.x = Math.PI / 2;
+  }
+  add(pivot, new THREE.BoxGeometry(0.010, 0.006, L - 0.01), blued, 0, 0.0525 - HY, z0).name = 'rib';   // the rib between them
+  add(pivot, new THREE.BoxGeometry(0.028, 0.010, L - 0.02), blued, 0, 0.026 - HY, z0 + 0.005).name = 'underRib';
+  const bead = add(pivot, new THREE.SphereGeometry(0.005, 8, 6), brass, 0, 0.055 - HY, -0.205);   // 2 cm behind the muzzle
+  bead.userData.frontSight = true; bead.name = 'bead';
+  // the walnut forend under the barrels, where the off hand goes
+  const forend = add(pivot, new THREE.BoxGeometry(0.050, 0.026, 0.10), walnut, 0, 0.0145 - HY, -0.085);
+  forend.name = 'forend';
+  add(pivot, new THREE.BoxGeometry(0.012, 0.004, 0.020), action, 0, 0.0005 - HY, -0.06).name = 'forendLatch';
+  // the trigger guard and its two triggers, one a barrel
+  add(group, new THREE.BoxGeometry(0.030, 0.005, 0.050), dark, 0, -0.0315, -0.045);
+  add(group, new THREE.BoxGeometry(0.030, 0.024, 0.005), dark, 0, -0.020, -0.0675);
+  add(group, new THREE.BoxGeometry(0.030, 0.024, 0.005), dark, 0, -0.020, -0.0225);
+  for (const z of [-0.052, -0.038]) add(group, new THREE.BoxGeometry(0.010, 0.020, 0.005), action, 0, -0.016, z).name = 'trigger';
+  // the walnut wrist and stock, the spring shotgun's shape
+  const wrist = add(group, new THREE.BoxGeometry(0.034, 0.055, 0.08), walnut, 0, -0.025, 0.040, 0.18); wrist.name = 'wrist';
+  const stock = add(group, new THREE.BoxGeometry(0.038, 0.085, 0.14), walnut, 0, -0.005, 0.105, 0.18); stock.name = 'stock';
+  const pad = add(stock, new THREE.BoxGeometry(0.040, 0.087, 0.012), dark, 0, 0, 0.074); pad.name = 'buttpad';
+  group.position.set(0.13, -0.21, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [pivot];
+  group.userData.cockingOffset = 0;
+  group.userData.breakPivot = pivot;
+  group.userData.gunType = 'double';
+  Game.camera.add(group);
+  return group;
+}
 // v1.411 (backlog D.63, Michael: A, batch 6): the KSG, a bullpup pump shotgun on the spring shotgun's receiver,
 // barrel, pump and bead, all of it black: the one tube under the barrel becomes two side by side (the pump wraps them),
 // the wrist and sporting stock come off, a pistol grip goes behind the trigger guard, and a long boxy body runs back
@@ -2321,6 +2386,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'gaspistol') mesh = buildFPGasPistol();   // v1.399
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
+  else if (gunType === 'double')  mesh = buildFPDouble();        // v1.432
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
@@ -2377,6 +2443,7 @@ const FP_HANDS = {
   mac10:   { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },
   uzi:     { r: { c: [0, -0.040, -0.02], rx: 0,     gw: 0.015, gd: 0.022, up: -0.012 }, l: 'cup' },   // v1.414: the MAC-10's
   spas:    { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.020, hh: 0.022 } },   // v1.398: the Semi-Auto Shotgun's pistol grip, the shotgun's pump
+  double:  { r: { c: [0, -0.025, 0.047], rx: -0.55, gw: 0.017, gd: 0.022, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.027, -0.085], hw: 0.026, hh: 0.026 } },   // v1.432: the shotgun's wrist; the off hand round the forend and barrels, on the hinge
   ksg:     { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.022, hh: 0.022 } },   // v1.411: the SPAS-12's grip and pump
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },

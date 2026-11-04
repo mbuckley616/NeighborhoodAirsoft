@@ -26,7 +26,7 @@ const sh = await page.evaluate(() => {
 console.log('   SHOTGUNS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify({ k: sh.k, others: sh.others }));
 check('KSG: under SHOTGUNS after the SPAS-12, before the Semi-Auto Shotgun, with its picture, $150 from its page, in your hands; the page sells its spare shells',
-  JSON.stringify(sh.names) === '["Spring Shotgun","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun"]' && sh.pic && sh.paid === 150 && sh.equipped === 'ksg' && sh.spare, sh);
+  JSON.stringify(sh.names) === '["Spring Shotgun","Double-Barrel","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun"]' && sh.pic && sh.paid === 150 && sh.equipped === 'ksg' && sh.spare, sh);
 const [spring, thunder, spas] = sh.others;
 check('KSG: a spring pump with the Spring Shotgun\'s 2 or 3 BBs at 30 m/s; a wider cloud (0.62) and straight for less (7 m); the quickest pump (0.7 s) and the quickest walk (1.04) of the shotguns; the most shells (60)',
   sh.k.type === 'pump' && sh.k.mode === 'semi' && !sh.k.electric && JSON.stringify(sh.pellets) === '[2,3]' && sh.k.v === spring.v

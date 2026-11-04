@@ -572,7 +572,12 @@ function onLmbDown() {
         }
         Game.lmbConsumed = true;
         if (Game.gun.ammo === 0) { Game.gun.cocked = false; Game.gun.cockProgress = 0; }
+      } else if (Game.gun.barrels > 1 && ++Game.gun._barrelsFired < Game.gun.barrels && Game.gun.ammo > 0) {
+        // v1.432 (D.85): a double-barrel stays cocked for its other barrel; a new pull fires it once the shot's lockout
+        // is out (FIRE_LOCKOUT, doFire). Both fired, it is broken open like any re-cock.
+        Game.lmbConsumed = true;
       } else {
+        Game.gun._barrelsFired = 0;   // v1.432: breaking it open loads both barrels
         Game.gun.cocked = false;
         Game.gun.cockProgress = 0;
         // The current LMB-hold has been "used" for firing.
