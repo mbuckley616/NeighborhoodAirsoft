@@ -396,7 +396,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
    100 in its one mag; `tests/gun-clearpup.test.mjs`). ~~The auto pistol~~ — done, v1.438 (the Auto Pistol, $95, under PISTOLS:
    a battery pistol on full auto, 12 a second, its 24 gone in two seconds; a long mag of 50; `tests/gun-autopistol.test.mjs`). ~~The drum shotgun~~ — done, v1.439
    (the Drum Shotgun, $210, last under SHOTGUNS: full auto, five clouds of 2-3 BBs a second from a 100-BB drum, heavy;
-   `tests/gun-drumshotgun.test.mjs`). Left: one more.
+   `tests/gun-drumshotgun.test.mjs`). ~~The version~~ — done, v1.440 (the Snub-Nose, $110, last under PISTOLS: the Magnum
+   with a stub barrel, its double-action CO2 cylinder of six, a 38 m/s BB that wanders at 5 m, 2 lb and a 1.14 walk;
+   `tests/gun-snubnose.test.mjs`). Batch 7 is done: 46 guns.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

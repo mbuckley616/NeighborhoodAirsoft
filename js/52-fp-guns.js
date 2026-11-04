@@ -2064,6 +2064,26 @@ function buildFPMagnum() {
   group.userData.gunType = 'magnum';
   return group;
 }
+// v1.440 (backlog D.85, batch 7): the Snub-Nose, the Magnum's version: its frame, cylinder, hammer, rubber grip and
+// CO2 cap, but everything past the cylinder's face cut to a stub. A 5 cm barrel with a full-length shroud under it round
+// a short ejector rod, a short rib on top with the front ramp at its end, and the orange tip just past it. Double-action
+// as the Magnum (`doubleAction`, updateHeldMesh); aimed, the ramp's tip stands where the Magnum's blade does (y 0.056).
+function buildFPSnubNose() {
+  const group = buildFPMagnum();
+  // off with the long barrel, ejector rod, orange tip, blade, underlug and rib: everything forward of the cylinder
+  for (const o of group.children.slice()) if (o.isMesh && o.position.z < -0.08) group.remove(o);
+  const blued = new THREE.MeshStandardMaterial({ color: 0x2a2f37, roughness: 0.3, metalness: 0.8 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.CylinderGeometry(0.009, 0.009, 0.05, 10), blued, 0, 0.036, -0.092, Math.PI / 2).name = 'barrel';
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.018, 0.048), blued, 0, 0.025, -0.091).name = 'shroud';
+  _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.042, 8), blued, 0, 0.022, -0.089, Math.PI / 2).name = 'ejector';
+  _fpPart(group, new THREE.BoxGeometry(0.007, 0.006, 0.044), blued, 0, 0.0465, -0.09).name = 'rib';
+  _fpPart(group, new THREE.CylinderGeometry(0.0105, 0.0105, 0.012, 10), orange, 0, 0.036, -0.123, Math.PI / 2).name = 'tip';
+  const ramp = _fpPart(group, new THREE.BoxGeometry(0.004, 0.012, 0.012), blued, 0, 0.05, -0.108);   // the front ramp (tip y 0.056)
+  ramp.name = 'ramp'; ramp.userData.frontSight = true;
+  group.userData.gunType = 'snubnose';
+  return group;
+}
 // v1.416 (backlog D.63, Michael: A, batch 6): the Pump Sniper, a spring sniper racked by a pump, on the spring sniper's
 // stock, barrel and sights (so its aimed picture is the sniper's): the bolt and the folded bipod come off, the forend is
 // cut back to 12 cm, a tube runs under the barrel to the muzzle, and a ribbed olive pump rides on it where the support
@@ -2497,6 +2517,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
   else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
   else if (gunType === 'autopistol') mesh = buildFPAutoPistol();   // v1.438
+  else if (gunType === 'snubnose') mesh = buildFPSnubNose();   // v1.440
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
@@ -2591,6 +2612,7 @@ const FP_HANDS = {
   thompson: { r: { c: [0, -0.064, 0.055], rx: -0.25, gw: 0.014, gd: 0.017, up: -0.012 }, l: { kind: 'grip', c: [0, -0.050, -0.180], rx: 0, gw: 0.013, gd: 0.015, up: -0.005 } },   // v1.403: the wooden grip and front grip
   gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
   magnum:  { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.410: the Six-Shooter's
+  snubnose: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.440: the Magnum's
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend

@@ -7,7 +7,14 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-const GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol', 'famas', 'epistol', 'erifle', 'burst', 'semishotgun', 'clearpup', 'm249', 'l96', 'p90', 'vector', 'g36', 'aug', 'm4', 'svd', 'rpk', 'spas', 'gaspistol', 'thompson', 'm14', 'magnum', 'ksg', 'lever', 'm60', 'uzi', 'pumpsniper', 'double', 'derringer', 'autopistol', 'drumshotgun'];   // v1.439: the Drum Shotgun;   // v1.438: the Auto Pistol;   // v1.433: the Derringer; v1.416: the Pump Sniper; v1.414: the Uzi; v1.413: the M60; v1.412: the Lever Gun; v1.411: the KSG; v1.410: the Magnum; v1.399: the Gas Pistol; v1.396: the RPK; v1.395: the SVD; v1.373: the M4; v1.372: the AUG; v1.371: the G36C; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector
+const ALL_GUNS = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump', 'mac10', 'thunder', 'sixshooter', 'bucket', 'boltpistol', 'famas', 'epistol', 'erifle', 'burst', 'semishotgun', 'clearpup', 'm249', 'l96', 'p90', 'vector', 'g36', 'aug', 'm4', 'svd', 'rpk', 'spas', 'gaspistol', 'thompson', 'm14', 'magnum', 'ksg', 'lever', 'm60', 'uzi', 'pumpsniper', 'double', 'derringer', 'autopistol', 'drumshotgun', 'snubnose'];   // v1.440: the Snub-Nose;   // v1.439: the Drum Shotgun;   // v1.438: the Auto Pistol;   // v1.433: the Derringer; v1.416: the Pump Sniper; v1.414: the Uzi; v1.413: the M60; v1.412: the Lever Gun; v1.411: the KSG; v1.410: the Magnum; v1.399: the Gas Pistol; v1.396: the RPK; v1.395: the SVD; v1.373: the M4; v1.372: the AUG; v1.371: the G36C; v1.325: the FAMAS; v1.326: the electrics; v1.327: the Burst Rifle; v1.328: the Semi-Auto Shotgun; v1.335: the M249; v1.336: the L96; v1.346: the P90; v1.348: the Vector
+
+// The suite ran into the runner's 10-minute cap at 42 guns (it enters a match for each), so the guns from the Gas
+// Pistol on are checked by fp-hands-late.test.mjs, which runs this file with FP_HANDS_PART = 'late': only those guns'
+// hand checks. This file keeps the first 28 and every other check.
+const PART = globalThis.FP_HANDS_PART || 'main';
+const SPLIT = ALL_GUNS.indexOf('gaspistol');
+const GUNS = PART === 'late' ? ALL_GUNS.slice(SPLIT) : ALL_GUNS.slice(0, SPLIT);
 
 // Measures the held thing's hands in camera space. `root` is fpGun, fpLoader or fpMag.
 const probe = (which) => page.evaluate((which) => {
@@ -104,6 +111,8 @@ for (const gt of GUNS) {
     [hip.r.elbowNdcY, hip.l.elbowNdcY, aimed.r.elbowNdcY, aimed.l.elbowNdcY]);
 }
 
+if (PART === 'late') { check('no page errors', g.errs.length === 0, g.errs.slice(0, 3)); await g.close(); }
+else {
 // --- the shotgun's off hand rides the pump
 await setGun('shotgun');
 await g.scenario('bunratty_sean');
@@ -183,3 +192,4 @@ if (items.mag.held === 'spare_mag') {
 
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
+}

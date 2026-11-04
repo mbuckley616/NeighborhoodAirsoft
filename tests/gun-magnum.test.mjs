@@ -25,8 +25,8 @@ const sh = await page.evaluate(() => {
 });
 console.log('   PISTOLS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify({ m: sh.m, six: sh.six, gas: sh.gas }));
-check('Magnum: last under PISTOLS, after the Gas Pistol (the Derringer second since v1.433), with its picture and "Double-action CO2" in its line, $150 from its page, in your hands; the page sells spare shells',
-  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol","Magnum"]' && sh.pic && /Double-action CO2/.test(sh.rowText)
+check('Magnum: under PISTOLS after the Gas Pistol (the Derringer second since v1.433, the Auto Pistol since v1.438, the Snub-Nose after it since v1.440), with its picture and "Double-action CO2" in its line, $150 from its page, in your hands; the page sells spare shells',
+  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose"]' && sh.pic && /Double-action CO2/.test(sh.rowText)
   && sh.paid === 150 && sh.equipped === 'magnum' && sh.spare, sh);
 const { m, six, gas } = sh;
 check('Magnum: against the Six-Shooter and the Gas Pistol a faster BB (44 m/s), straight for longer (9 m), tighter; no cocking between pulls but the slowest cycle (2.5/s); no gas fade; the heaviest pistol and the slowest walk of them',
