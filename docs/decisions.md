@@ -24,15 +24,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Michael: **A) Gun batch 7, to 46**. (control room, 2026-11-04)
 
 - **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
-  With the other three at the bend (your C, 3 Nov), Fernando's high-yard nest still lands about 57 % of the tags on you
-  in a day 4v4 pickup (45 % on the old street), at 20-30 m and never two inside 16 s. The suite's under-two-thirds line
-  fails about one run in four by luck. (Full entry on auto/fable-d51-northcliff.)
-  - A) Accept about 57 %; the suite's line goes to under four-fifths. *(recommended)*
-  - B) Tone the nest down by day.
-  - C) No nest by day.
-  Michael: **A) Accept about 57 %**. (control room, 2026-11-04)
-
-- **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
   In a day 4v4 Pickup Game on Northcliff Trace, Fernando holds the high-yard nest with his AK, and the other three are at
   the bend (your C, 3 Nov). On the real-size street he lands about 57 % of the tags on a player who walks at the
   nearest kid. That is 53 of 93 hits over six 8-round runs, and the runs ranged from 5 of 15 to 11 of 14. On the old
