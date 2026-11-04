@@ -96,7 +96,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || !weapon;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || weapon === 'autopistol' || !weapon;   // v1.438;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -108,6 +108,7 @@ function gunForegripZ(weapon) {
     case 'pumpsniper': return 0.22;   // v1.416: its pump
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
+    case 'drumshotgun': return 0.20;   // v1.439: the forend ahead of the drum
     case 'spas':    return 0.18;   // v1.398: its pump
     case 'ksg':     return 0.16;   // v1.411: its pump
     case 'double':  return 0.18;   // v1.432: its forend
@@ -168,6 +169,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.16, dark, 0, -0.05, 0.16);      // pump fore-grip slung under
       box(0.05, 0.10, 0.09, wood, 0, -0.02, -0.05);      // wood stock wrist
       grip(wood);
+      break;
+    }
+    case 'drumshotgun': {   // v1.439 (D.85): the shotgun's block with its drum under it
+      box(0.05, 0.08, 0.42, black, 0, 0, 0.20);          // long receiver+barrel
+      box(0.045, 0.05, 0.12, dark, 0, -0.05, 0.26);      // forend
+      box(0.04, 0.12, 0.12, dark, 0, -0.10, 0.08);       // the drum
+      box(0.05, 0.08, 0.12, black, 0, -0.01, -0.07);     // stock
+      grip();
       break;
     }
     case 'ar':
@@ -387,6 +396,12 @@ function buildEnemyGunMesh(weapon) {
       box(0.02, 0.02, 0.26, black, 0, 0.02, 0.20);       // long barrel
       box(0.03, 0.01, 0.01, dark, 0.03, 0.02, -0.01);    // bolt knob
       grip(wood);
+      break;
+    }
+    case 'autopistol': {   // v1.438 (D.85): the pistol, and its long stick mag hanging out of the grip
+      box(0.05, 0.10, 0.25, black, 0, 0, 0.10);          // stubby slide/barrel
+      grip();
+      box(0.03, 0.12, 0.04, dark, 0, -0.17, 0);          // the long mag below the grip
       break;
     }
     case 'pistol':

@@ -56,12 +56,14 @@ const FP_GUN_MOUNT = {
   rattle:  { barrelY: 0.010, sideX: 0.030, railZ: -0.08, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.05, sightScale: 0.85 },
   famas:   { barrelY: 0.012, sideX: 0.022, railZ: -0.130, railLen: 0.08, underY: -0.020, sightY: 0.079, sightZ: -0.06, sightScale: 1.0 },   // v1.325: the optic on the carry handle
   epistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.326: the pistol's
+  autopistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.438: the pistol's
   thompson: { barrelY: 0.000, sideX: 0.018, railZ: -0.06, railLen: 0.06, underY: -0.020, sightY: 0.026, sightZ: -0.02, sightScale: 0.9 },   // v1.403: an optic on the receiver's top
   magnum:  { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },   // v1.410: the Six-Shooter's
   gaspistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.399: the pistol's
   erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
   burst:   { barrelY: 0.035, sideX: 0.028, railZ: -0.185, railLen: 0.10,  underY: 0.010, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.327: rails outside the round handguard
   semishotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.328: the shotgun's
+  drumshotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12, railLen: 0.07, underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.439: the Semi-Auto Shotgun's
   m249:    { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.335: the optic on the feed cover
   m60:     { barrelY: 0.022, sideX: 0.025, railZ: -0.21, railLen: 0.08, underY: -0.018, sightY: 0.054, sightZ: -0.08, sightScale: 1.0 },   // v1.413: the M249's
 };
@@ -937,9 +939,11 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'rattle')  mesh = buildFPRattle();
   else if (gunType === 'famas')   mesh = buildFPFamas();      // v1.325 (D.63)
   else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
+  else if (gunType === 'autopistol') mesh = buildFPAutoPistol();   // v1.438
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
+  else if (gunType === 'drumshotgun') mesh = buildFPDrumShotgun();   // v1.439
   else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
   else if (gunType === 'l96')     mesh = buildFPL96();           // v1.336
   else if (gunType === 'p90')     mesh = buildFPP90();           // v1.346
