@@ -26,7 +26,7 @@ const sh = await page.evaluate(() => {
 console.log('   PISTOLS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify(sh.d) + ' fastest other ' + sh.fastest + ' lightest other ' + sh.lightest);
 check('Derringer: under PISTOLS after the Spring Pistol, with its picture and "Break-action, 2 barrels" in its line, $35 from its page, in your hands; the page sells its spare tin',
-  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Gas Pistol","Magnum"]' && sh.pic && sh.line && sh.paid === 35 && sh.equipped === 'derringer' && sh.spare, sh);
+  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose"]' && sh.pic && sh.line && sh.paid === 35 && sh.equipped === 'derringer' && sh.spare, sh);
 check('Derringer: two barrels of a BB each, "break", 0.9 s to load; the slowest, widest pistol BB that wanders soonest; the lightest gun and the fastest walk; 20 in the tin',
   sh.d.barrels === 2 && sh.d.type === 'break' && sh.d.mode === 'semi' && JSON.stringify(sh.pellets) === '[1]' && sh.d.cock === 0.9
   && sh.pistols.every(p => sh.d.v < p.v && sh.d.base >= p.base && sh.d.straight < p.straight)

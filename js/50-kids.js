@@ -96,7 +96,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || weapon === 'autopistol' || !weapon;   // v1.438;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || weapon === 'autopistol' || weapon === 'snubnose' || !weapon;   // v1.440;   // v1.438;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -396,6 +396,13 @@ function buildEnemyGunMesh(weapon) {
       box(0.02, 0.02, 0.26, black, 0, 0.02, 0.20);       // long barrel
       box(0.03, 0.01, 0.01, dark, 0.03, 0.02, -0.01);    // bolt knob
       grip(wood);
+      break;
+    }
+    case 'snubnose': {   // v1.440 (D.85): the Magnum's cylinder and black grip, a stub of barrel and its short underlug
+      const blued = new THREE.MeshStandardMaterial({ color: 0x23272e, roughness: 0.35, metalness: 0.7 });
+      box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
+      box(0.025, 0.045, 0.08, blued, 0, 0.013, 0.06);    // the stub barrel and underlug
+      grip(dark);
       break;
     }
     case 'autopistol': {   // v1.438 (D.85): the pistol, and its long stick mag hanging out of the grip
