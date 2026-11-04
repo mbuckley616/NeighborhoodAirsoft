@@ -20,6 +20,9 @@ function doFire() {
   if (fpGun) fpGun.userData.kick = 1.0;
   updateAmmoHud();
   if (pelletsFired > 0 && Tutorial.active) Tutorial.notify('fired');
+  // v1.441 (D.86): the taped-on flashlight's loose batteries: now and then a shot knocks the light out for a blink
+  const tl = pelletsFired > 0 && getUnderPart(Game.persist.equipped.gun);
+  if (tl && tl.blinkChance && Math.random() < tl.blinkChance) { Game.gun._lightOutT = tl.blinkTime; Game.gun._blinks = (Game.gun._blinks || 0) + 1; }
   if (Game.gun._jamIn > 0 && --Game.gun._jamIn === 0 && Game.gun.ammo > 0) { jamGun(); Game.gun._jams = (Game.gun._jams || 0) + 1; }   // v1.250: the cheap gun's burst jams
 }
 
@@ -30,6 +33,14 @@ function updateGun(dt) {
   if (Game.held.swapBlock > 0) Game.held.swapBlock = Math.max(0, Game.held.swapBlock - dt);
 
   const held = describeSlot(Game.held.slotIdx);
+  // v1.441 (D.86): the taped-on flashlight goes dark while a blink lasts, then comes back
+  if (Game.gun._lightOutT > 0) Game.gun._lightOutT = Math.max(0, Game.gun._lightOutT - dt);
+  const tlm = fpGun && fpGun.userData.accessories && fpGun.userData.accessories.underParts && fpGun.userData.accessories.underParts.meshes.taped_light;
+  if (tlm) {
+    const out = Game.gun._lightOutT > 0;
+    tlm.userData.light.intensity = out ? 0 : ATTACHMENTS.taped_light.lightIntensity;
+    tlm.userData.beam.visible = !out;
+  }
 
   // === JAM unjamming (hold R while jammed) ===
   if (Game.gun.jammed) {

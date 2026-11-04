@@ -286,7 +286,7 @@ function ensureFPGunAccessory(group, gunType) {
   // v1.169: the under-barrel parts, measured off the bare gun before anything is bolted on (v1.420: the muzzle's too,
   // from the same measure, taken once before either is added)
   const bare = (cap.under || cap.muzzle) ? measureGunForUnder(group, mount) : null;
-  const underParts = cap.under ? buildUnderParts(group, mount, bare) : null;
+  const underParts = cap.under ? buildUnderParts(group, mount, bare, gunType) : null;   // v1.441: the kind, for the light
   const muzzleParts = cap.muzzle ? buildMuzzleParts(group, mount, bare) : null;
   const stockParts = cap.stock ? buildStockParts(group, measureGunForStock(group)) : null;   // v1.425: off the bare butt
 
@@ -582,7 +582,43 @@ function measureGunForUnder(group, mount) {
   });
   return { bottom: bottom === null ? mount.barrelY - 0.022 : bottom, frontZ, frontY };
 }
-function buildUnderParts(group, mount, measured) {
+// v1.441 (D.86): the lowest point of the gun's underside between two z's, on the centre line: anything there that
+// reaches up to within 3 cm of the bore (not your hands, not a part bolted on). Falls back to under the bore.
+function gunUndersideOver(group, mount, zFront, zBack) {
+  group.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  let bottom = null;
+  group.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.visible || o.userData.fpHand) return;
+    for (let p = o.parent; p && p !== group; p = p.parent) if (!p.visible || p.userData.fpHand) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+    if (b.min.x > 0.004 || b.max.x < -0.004 || b.max.z < zFront || b.min.z > zBack || b.max.y < mount.barrelY - 0.03) return;
+    if (bottom === null || b.min.y < bottom) bottom = b.min.y;
+  });
+  return bottom === null ? mount.barrelY - 0.022 : bottom;
+}
+// v1.441 (D.86): the front (most forward z, in the gun's own space) of your off hand on a kind of gun, measured once: on
+// the gun in hand when its hands are on, else on a spare build with them put on. null for a gun with no off hand to dodge.
+const _fpOffHandFront = {};
+function fpOffHandFrontZ(group, gunType) {
+  if (!gunType || !FP_HANDS[gunType] || FP_HANDS[gunType].l === 'cup') return null;
+  if (gunType in _fpOffHandFront) return _fpOffHandFront[gunType];
+  let g = group;
+  if (!(g.userData.fpHands && g.userData.fpHands.l && g.userData.fpHands.l[0])) {
+    g = buildBareGunMesh(gunType);
+    const n = _fpForearms.length; attachFpHands(g, gunType); _fpForearms.length = n;   // a spare: not re-dressed later
+  }
+  const hand = g.userData.fpHands && g.userData.fpHands.l && g.userData.fpHands.l[0];
+  if (!hand) return (_fpOffHandFront[gunType] = null);
+  g.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(g.matrixWorld).invert();
+  let front = new THREE.Box3().setFromObject(hand).applyMatrix4(inv).min.z;
+  const pump = FP_HANDS[gunType].l.on === 'pump' && (g.userData.cockingParts || [])[0];   // and ahead of the pump the hand works
+  if (pump) { const pb = new THREE.Box3().setFromObject(pump); if (!pb.isEmpty()) front = Math.min(front, pb.applyMatrix4(inv).min.z); }
+  return (_fpOffHandFront[gunType] = front);
+}
+function buildUnderParts(group, mount, measured, gunType) {
   const m = measured || measureGunForUnder(group, mount);
   const meshes = {};
   const z0 = mount.railZ, y0 = m.bottom;
@@ -653,6 +689,47 @@ function buildUnderParts(group, mount, measured) {
       hook.rotation.y = Math.PI / 2; hook.position.set(0, y0 - 0.004, zz); g.add(hook);
     }
     meshes.bungee_sling = g;
+  }
+  // v1.441 (D.86): the taped-on flashlight: a yellow plastic torch under the handguard, its black head forward, two
+  // bands of duct tape round it and the gun; a warm spotlight in its lens, lit only while the part shows
+  {
+    const g = new THREE.Group();
+    // it sits ahead of your off hand (measured on the gun with the hands on), its top on the gun's underside there
+    const r = 0.013, len = 0.095;
+    const hf = fpOffHandFrontZ(group, gunType);
+    const zBack = hf == null ? z0 + len / 2 : Math.min(z0 + len / 2, hf - 0.006);
+    const zc = zBack - len / 2;
+    const yTop = hf == null ? y0 : gunUndersideOver(group, mount, zBack - len - 0.024, zBack);
+    const yc = yTop - 0.0175;   // the head (1.65 cm round) just clears the gun
+    const yelMat = new THREE.MeshStandardMaterial({ color: 0xf2c418, roughness: 0.55, metalness: 0.05 });
+    const headMat = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.5, metalness: 0.2 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 14), yelMat);
+    body.rotation.x = Math.PI / 2; body.position.set(0, yc, zc); g.add(body);
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.0165, r, 0.022, 14), headMat);
+    head.rotation.x = -Math.PI / 2; head.position.set(0, yc, zc - len / 2 - 0.011); g.add(head);
+    const lensZ = zc - len / 2 - 0.0225;
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.0135, 0.0135, 0.002, 14), new THREE.MeshBasicMaterial({ color: 0xffe9a8 }));
+    lens.rotation.x = Math.PI / 2; lens.position.set(0, yc, lensZ); g.add(lens);
+    const button = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.004, 0.012), headMat);   // the slide switch, on the side
+    button.position.set(r, yc, zc + 0.02); g.add(button);
+    for (const dz of [-0.026, 0.026]) {   // the tape: round the torch and up round whatever of the gun is above it there
+      const bz = zc + dz;
+      const up = hf == null ? yTop : gunUndersideOver(group, mount, bz - 0.0045, bz + 0.0045);
+      const lo = yc - r - 0.004, hi = Math.max(yTop, up) + 0.008;
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.031, hi - lo, 0.009), tapeMat);
+      band.position.set(0, (hi + lo) / 2, bz); g.add(band);
+    }
+    const coneLen = 3.0, ang = Math.PI / 7;
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(Math.tan(ang) * coneLen, coneLen, 20, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.018, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    beam.rotation.x = Math.PI / 2; beam.position.set(0, yc, lensZ - coneLen / 2); g.add(beam);
+    const d = ATTACHMENTS.taped_light;
+    const light = new THREE.SpotLight(0xffd690, d.lightIntensity, d.lightRange, ang, 0.7, 1.0);
+    light.position.set(0, yc, lensZ - 0.004);
+    const target = new THREE.Object3D(); target.position.set(0, yc, lensZ - 4);
+    g.add(light); g.add(target); light.target = target;
+    g.userData.light = light; g.userData.beam = beam;
+    meshes.taped_light = g;
   }
   // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
   {
@@ -1048,11 +1125,16 @@ function shopModPic(aid, w, h) {
     if (acc.laserBeam) acc.laserBeam.visible = false;   // the beam and its dot would run out of the frame
     if (acc.laserDot) acc.laserDot.visible = false;
     if (acc.flashLight) acc.flashLight.intensity = 0;
+    const tl = acc.underParts && acc.underParts.meshes.taped_light;   // v1.441: its beam would run out of the frame
+    if (tl) { tl.userData.beam.visible = false; tl.userData.light.intensity = 0; }
     holder.rotation.set(a.slot === 'under' ? -0.32 : 0.22, Math.PI / 2 - 0.42, 0);
     holder.updateMatrixWorld(true);
     let part, fit;
     if (a.slot === 'sight') part = aid === 'scope' ? acc.scopeOptic : aid === 'toy_scope' ? acc.toyScopeOptic : acc.redDotOptic;   // v1.418
-    else if (a.slot === 'under') part = acc.underParts && acc.underParts.meshes[aid];
+    else if (a.slot === 'under') {
+      part = acc.underParts && acc.underParts.meshes[aid];
+      if (part && aid === 'taped_light') fit = part.children.filter(o => o.isMesh && o.visible);   // v1.441: not the beam
+    }
     else if (a.slot === 'muzzle') part = acc.muzzleParts && acc.muzzleParts.meshes[aid];   // v1.420
     else if (a.slot === 'stock') part = acc.stockParts && acc.stockParts.meshes[aid];   // v1.425
     else if (aid === 'flashlight') {   // framed on the body and lens, not the 4 m cone of its beam
