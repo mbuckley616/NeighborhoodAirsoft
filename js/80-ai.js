@@ -1708,7 +1708,9 @@ function updateEnemies(dt) {
         // v1.431: or once a kid of his own side is tagged (walking home or out): the fight has reached them, and he comes
         // looking (as a bored kid does). On the night match Christian, a cautious shotgun at the back of their base, held
         // all 120 s of a round with three of his side tagged, and freed but cautious he would still sit there.
-        if (e.holdNear && !e._holdFree && Game.scenario.enemies.some(k => k !== e && combatantTeam(k) === combatantTeam(e) && (k.health <= 0 || k.state === 'retreating'))) {
+        // v1.434: also when he was already freed (a foe came near, a BB flew past) but not sent looking: Christian, freed at
+        // 10-14 s by your crew's leads, then sat out the round at the base with his side tagged (CI on 9d4f8b8: 2 m, 0 shots).
+        if (e.holdNear && !e._bored && Game.scenario.enemies.some(k => k !== e && combatantTeam(k) === combatantTeam(e) && (k.health <= 0 || k.state === 'retreating'))) {
           e._holdFree = true; e._bored = true;
         }
         const marchEligible = (
