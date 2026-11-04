@@ -1704,10 +1704,13 @@ function updateEnemies(dt) {
         // in it until a foe comes that close to it or fires at him; from then on he plays as before, for the round. The
         // Twins 3v3 at real scale: their side came down the west leg at once and the first rounds flew 52-61 m down the
         // straight, past the guns' 10-40 m.
-        // v1.431: or once a kid of his own side is tagged (walking home or out): the fight has reached them. On the night
-        // match Christian, at the back of their base, held all 120 s of a round with three of his side tagged.
-        if (e.holdNear && !e._holdFree && ((e._underFire) || opposingCombatants(e).some(c => Math.hypot(c.pos.x - e.anchorPos.x, c.pos.z - e.anchorPos.z) < e.holdNear)
-          || Game.scenario.enemies.some(k => k !== e && combatantTeam(k) === combatantTeam(e) && (k.health <= 0 || k.state === 'retreating')))) e._holdFree = true;
+        if (e.holdNear && !e._holdFree && ((e._underFire) || opposingCombatants(e).some(c => Math.hypot(c.pos.x - e.anchorPos.x, c.pos.z - e.anchorPos.z) < e.holdNear))) e._holdFree = true;
+        // v1.431: or once a kid of his own side is tagged (walking home or out): the fight has reached them, and he comes
+        // looking (as a bored kid does). On the night match Christian, a cautious shotgun at the back of their base, held
+        // all 120 s of a round with three of his side tagged, and freed but cautious he would still sit there.
+        if (e.holdNear && !e._holdFree && Game.scenario.enemies.some(k => k !== e && combatantTeam(k) === combatantTeam(e) && (k.health <= 0 || k.state === 'retreating'))) {
+          e._holdFree = true; e._bored = true;
+        }
         const marchEligible = (
           e.role === 'attacker' ||
           (e.role === 'skirmisher' && (aggression >= 0.45 || ffaRoam)) ||

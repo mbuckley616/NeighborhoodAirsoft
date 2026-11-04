@@ -5,6 +5,23 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
+  In a day 4v4 Pickup Game on Northcliff Trace, Fernando holds the high-yard nest with his AK, and the other three are at
+  the bend (your C, 3 Nov). On the real-size street he lands about 57 % of the tags on a player who walks at the
+  nearest kid. That is 53 of 93 hits over six 8-round runs, and the runs ranged from 5 of 15 to 11 of 14. On the old
+  street it was about 45 %.
+  His tags come at 20-30 m, which is in the guns' band, and never two inside 16 s. Most come as you walk the last
+  stretch of street before the bend, in view of the nest.
+  The `pickup-fernando` suite wants his share under two-thirds over 8 rounds. At 57 % that fails about one run in
+  four, so it can turn the card's CI red by luck alone. Starting the other three down the leg, nearer the bend,
+  didn't move it: 57 % again.
+  - A) **Accept about 57 %** *(recommended)*: the nest is meant to cover the bend. The suite's line goes to under
+    four-fifths over the same 8 rounds, which fails about 1 run in 25 at this share. It still catches the old fault,
+    where every hit was his.
+  - B) **Tone the nest down by day**: his spot moves back up the yard, so he covers the bend but not the last of the
+    street before it. Fewer tags from him, and a shorter view for the player to fear.
+  - C) **No nest by day**: by day Fernando plays the bend like the other three, and keeps the nest only at night.
+
 - **What the play lane builds next, after the homemade wave (builder, 2026-11-03)**
   D.83's second homemade wave is done: the toy scope, the bungee sling, the soda-bottle silencer, the sock-padded stock
   and the taped-up long mag (v1.418-v1.428), with the new MUZZLE and STOCK slots on the 29 long guns. Crew jerseys
