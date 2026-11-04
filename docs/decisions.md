@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the homemade wave (builder, 2026-11-03)**
   D.83's second homemade wave is done: the toy scope, the bungee sling, the soda-bottle silencer, the sock-padded stock
   and the taped-up long mag (v1.418-v1.428), with the new MUZZLE and STOCK slots on the 29 long guns. Crew jerseys
@@ -19,8 +21,16 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. You asked for 30-50 guns (D.63) and the shop has 40; with the parts' slots now filled out, guns
   are the thinner side again, and both sit outside the open FREEZE's areas.
+  Michael: **A) Gun batch 7, to 46**. (control room, 2026-11-04)
 
-## Answered
+- **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
+  With the other three at the bend (your C, 3 Nov), Fernando's high-yard nest still lands about 57 % of the tags on you
+  in a day 4v4 pickup (45 % on the old street), at 20-30 m and never two inside 16 s. The suite's under-two-thirds line
+  fails about one run in four by luck. (Full entry on auto/fable-d51-northcliff.)
+  - A) Accept about 57 %; the suite's line goes to under four-fifths. *(recommended)*
+  - B) Tone the nest down by day.
+  - C) No nest by day.
+  Michael: **A) Accept about 57 %**. (control room, 2026-11-04)
 
 - **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
   In a day 4v4 Pickup Game on Northcliff Trace, Fernando holds the high-yard nest with his AK, and the other three are at
