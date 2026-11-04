@@ -22,6 +22,15 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Fernando's share of your tags in a daytime Northcliff pickup game, at real scale (Fable, card fable/d51-northcliff, 2026-11-04)**
+  With the other three at the bend (your C, 3 Nov), Fernando's high-yard nest still lands about 57 % of the tags on you
+  in a day 4v4 pickup (45 % on the old street), at 20-30 m and never two inside 16 s. The suite's under-two-thirds line
+  fails about one run in four by luck. (Full entry on auto/fable-d51-northcliff.)
+  - A) Accept about 57 %; the suite's line goes to under four-fifths. *(recommended)*
+  - B) Tone the nest down by day.
+  - C) No nest by day.
+  Michael: **A) Accept about 57 %**. (control room, 2026-11-04)
+
 - **Fernando's nest in a daytime Northcliff pickup game, now the street is real size (Fable, 2026-11-03, card fable/d51-northcliff)**
   In a daytime 4v4 Pickup Game on the real-size Northcliff (PR #235), Fernando lands 11-12 of 14 hits on a player who
   walks at the nearest kid: his nest sees down the street to the bend, and the other three sit 55 m up the west leg and
