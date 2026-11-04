@@ -418,14 +418,15 @@ check('Sock-Padded Stock: aimed, the cone a fifth tighter, standing and walking;
 check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk / KB.walk > 1.1 && KS.walk / KB.walk < 1.25, S3);
 
 check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
-await g2.close();
 
 // --- v1.426: the Taped-Up Long Mag: bought from the Mods tab as UNDER and measured under the handguard on the long guns
-// in the first page (with the bungee sling, above); its matches in a third fresh browser (as the stock's). On the AR,
+// in the first page (with the bungee sling, above); its matches in the stock's browser, after the stock's match. On the AR,
 // half as many BBs again in the mag (the HUD says so), a spare mag's swap and a speed loader's feed half as long again,
 // 1 lb in the weight. The same numbers bare, in a second match, to compare. (The off hand on it, on the MP5: fp-hands.)
-const g3 = await boot(); const page3 = g3.page;
-await g3.bedroom();
+// 4 Nov (CI red on auto/build, headless 3/4 and 5/5): a third fresh browser closed under its first match on CI's runner
+// twice running (as in b81fc4a, its shop visit before); here it passes. The long mag's two matches now run in the
+// stock's browser, which has already played one, so the suite opens two browsers, not three.
+const g3 = g2; const page3 = page2;
 console.log('   long mag:', JSON.stringify(lm));
 check('Taped-Up Long Mag: in the Mods tab as UNDER with its picture, bought for $18', lm.tag === 'UNDER' && lm.pic && lm.paid === 18, lm);
 check('Taped-Up Long Mag: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, hanging 14-17 cm, centred); the Uzi has no slot',
