@@ -584,6 +584,9 @@ function onLmbDown() {
         // Player must release and click again to start cocking.
         Game.lmbConsumed = true;
       }
+      // v1.436 (critic, 4 Nov): doFire drew the ammo panel before the gun was un-cocked here, so the status line kept
+      // reading READY · CLICK TO FIRE through the whole rack or break-open on every spring gun. Draw it again now.
+      updateAmmoHud();
     }
   } else if (heldSlot.kind === 'speed_loader') {
     // v1.49: continuous feed. Just enter feeding mode if there's anything to do;

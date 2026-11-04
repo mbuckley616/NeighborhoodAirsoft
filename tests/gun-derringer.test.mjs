@@ -46,14 +46,18 @@ const D = await page.evaluate(() => {
   for (let k = 0; k < 4; k++) {
     const first = pull(); const cockedAfterFirst = Game.gun.cocked;
     for (let i = 0; i < 20; i++) step();
+    const statusAfterFirst = document.getElementById('ammoStatus').textContent;
     const second = pull(); const cockedAfterSecond = Game.gun.cocked;
     for (let i = 0; i < 20; i++) step();
     const third = pull();
-    pairs.push({ first, second, third, cockedAfterFirst, cockedAfterSecond });
+    // v1.436 (critic, 4 Nov): the ammo panel's status line follows the gun: READY with a barrel still to fire, HOLD LMB
+    // TO RACK once both are fired, and still so while it is being loaded
+    const st = () => document.getElementById('ammoStatus').textContent;
+    pairs.push({ first, second, third, cockedAfterFirst, cockedAfterSecond, statusAfterFirst, status: st() });
     if (k === 0) { out.hint = (document.querySelector('#loadoutHint') || {}).textContent || document.body.textContent.match(/Click & hold LMB to [^.]*\./)?.[0] || ''; }
     let f = 0, maxSwing = 0;
     Game.mouseLMB = true; onLmbDown();
-    while (Game.gun.cockProgress < 0.95 && f < 600) { step(); f++; maxSwing = Math.max(maxSwing, pivot.rotation.x); }
+    while (Game.gun.cockProgress < 0.95 && f < 600) { step(); f++; maxSwing = Math.max(maxSwing, pivot.rotation.x); if (f === 20) pairs[k].statusLoading = st(); }
     up();
     while (!Game.gun.cocked && f < 900) { step(); f++; }
     for (let i = 0; i < 20; i++) step();
@@ -82,6 +86,9 @@ check('Derringer: its own first-person gun, 20 in the tin, two barrels in the bl
   D.mesh === 'derringer' && D.max === 20 && D.barrels === 2 && D.parts && D.rail && D.sightErrDeg < 0.6, D);
 check('Derringer: each time, two pulls fire a BB each with nothing worked between, and a third pull fires nothing until it is loaded',
   D.pairs.every(p => p.first === 1 && p.cockedAfterFirst && p.second === 1 && !p.cockedAfterSecond && p.third === 0), D.pairs);
+check('Derringer: the status line reads READY with a barrel to fire, then HOLD LMB TO RACK once both are fired and while it loads (v1.436)',
+  D.pairs.every(p => /^READY/.test(p.statusAfterFirst) && p.status === 'HOLD LMB TO RACK' && p.statusLoading === 'HOLD LMB TO RACK'),
+  D.pairs.map(p => [p.statusAfterFirst, p.status, p.statusLoading]));
 check('Derringer: the hint says to tip the barrels up', /tip the barrels up/.test(D.hint || ''), D.hint);
 check('Derringer: loading it takes 0.9 to 1.2 s; the barrels tip up 30° or more and are home after', D.ready.every(t => t >= 0.85 && t < 1.2) && D.swing.every(s => s.open >= 30 && Math.abs(s.shut) < 0.5), { ready: D.ready, swing: D.swing });
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
