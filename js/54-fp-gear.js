@@ -1321,6 +1321,21 @@ function projectWorkbenchLabels(w, h) {
     el.textContent = inst ? `${labelName}: ${ATTACHMENTS[inst.type].name}` : `${labelName}: empty`;
     el.className = 'wb-vp-label' + (inst ? '' : ' empty');
   });
+  // v1.435: the Stock label hangs under the butt, and on the guns seen nearly end-on with a deep handguard (the AR, the
+  // Electric Rifle, the MP5, the Semi-Auto Shotgun, the Bucket Gun) the butt projects 10-13 px under the Under label,
+  // so the two crossed. Its anchor and the Under one's are measured from different parts, so it is pushed clear on
+  // screen instead: just below any label it would cross, 2 px apart.
+  const si = WB.labelAnchors.findIndex(a => a.slot === 'stock');
+  const sEl = si >= 0 ? cont.children[si] : null;
+  if (sEl && sEl.style.display !== 'none') {
+    const box = (el) => { const x = parseFloat(el.style.left), y = parseFloat(el.style.top), bw = el.offsetWidth, bh = el.offsetHeight;
+      return { x0: x - bw / 2, x1: x + bw / 2, y0: y - bh / 2, y1: y + bh / 2, y, bh }; };
+    const others = [...cont.children].filter((el, i) => i !== si && el.style.display !== 'none').map(box).sort((a, b) => a.y - b.y);
+    for (const o of others) {
+      const s = box(sEl);
+      if (s.x0 < o.x1 && o.x0 < s.x1 && s.y0 < o.y1 && o.y0 < s.y1) sEl.style.top = (o.y1 + s.bh / 2 + 2) + 'px';
+    }
+  }
 }
 
 // Render the left gun list, right slot list, and locker.
