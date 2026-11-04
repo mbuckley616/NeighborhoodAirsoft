@@ -96,7 +96,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || !weapon;   // v1.168; v1.326; v1.399; v1.410
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || !weapon;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -131,6 +131,7 @@ function gunForegripZ(weapon) {
     case 'uzi':     return 0.10;   // v1.414: under its front end
     case 'thunder': return 0.18;   // v1.168: the pump, as the spring shotgun
     case 'bucket':  return 0.12;
+    case 'clearpup': return 0.18;   // v1.437: the long clear body ahead of the grip
     case 'pistol':
     default:        return 0.10;
   }
@@ -343,6 +344,12 @@ function buildEnemyGunMesh(weapon) {
       box(0.02, 0.06, 0.08, dark, 0, -0.06, -0.02);      // the lever loop
       break;
     }
+    case 'derringer': {   // v1.433 (D.85): a small nickel block of two barrels on a frame, a cream grip
+      const nickel = new THREE.MeshStandardMaterial({ color: 0xc4c7cc, roughness: 0.3, metalness: 0.75 });
+      box(0.03, 0.05, 0.10, nickel, 0, 0.015, 0.05);   // the barrel block over the frame
+      grip(new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.5 }));
+      break;
+    }
     case 'double': {   // v1.432 (D.85): two blued barrels side by side over a walnut forend, the walnut stock
       const walnut = new THREE.MeshStandardMaterial({ color: 0x5b3820, roughness: 0.7 });
       box(0.025, 0.025, 0.34, black, -0.0125, 0.01, 0.22);   // the barrels
@@ -366,9 +373,9 @@ function buildEnemyGunMesh(weapon) {
       grip();
       break;
     }
-    case 'sprayer': case 'ghost': case 'ticktock': case 'rattle': {   // v1.250: the clear automatics
+    case 'sprayer': case 'ghost': case 'ticktock': case 'rattle': case 'clearpup': {   // v1.250: the clear automatics (v1.437: and the Clear Bullpup)
       const clear = new THREE.MeshStandardMaterial({ color: 0xe9eef2, roughness: 0.2, transparent: true, opacity: 0.6 });
-      const L = { sprayer: 0.26, ghost: 0.2, ticktock: 0.46, rattle: 0.2 }[weapon];
+      const L = { sprayer: 0.26, ghost: 0.2, ticktock: 0.46, rattle: 0.2, clearpup: 0.44 }[weapon];
       box(0.05, 0.07, L, clear, 0, 0, L / 2 - 0.05);     // body + barrel
       box(0.025, 0.035, L * 0.6, dark, 0, 0, L / 2 - 0.05);   // the guts, seen through it
       box(0.03, 0.03, 0.02, _fpOrangeMat(), 0, 0.01, L - 0.04);   // orange tip

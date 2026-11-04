@@ -364,6 +364,10 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.13, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.069, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.05;
+    } else if (gunType === 'derringer') {   // v1.433: the Six-Shooter's hold; aimed, the blade's tip (y 0.058) on the reticle
+      hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
+      adsPos  = { x: 0.0,  y: -0.058, z: -0.25 };
+      hipRotY = 0.12; hipRotX = -0.05;
     } else if (gunType === 'sixshooter' || gunType === 'magnum') {   // v1.410: the Magnum has the Six-Shooter's sights
       hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
@@ -372,7 +376,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.149, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'sprayer' || gunType === 'ticktock') {   // v1.250: the clear automatics, held as the Bucket Gun
+    } else if (gunType === 'sprayer' || gunType === 'ticktock' || gunType === 'clearpup') {   // v1.250: the clear automatics, held as the Bucket Gun (v1.437: the Clear Bullpup's blade at the sprayer's height)
       hipPos  = { x: 0.14, y: -0.21, z: -0.30 };
       adsPos  = { x: 0.0,  y: gunType === 'ticktock' ? -0.0755 : -0.0735, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -605,7 +609,7 @@ function updateLoadoutHud() {
                        : Game.gun.cockType === 'charge' ? 'pull the charging handle'
                        : Game.gun.cockType === 'bolt' ? 'cycle the bolt'
                        : Game.gun.cockType === 'lever' ? 'work the lever'   // v1.412
-                       : Game.gun.cockType === 'break' ? 'break it open and load two shells'   // v1.432
+                       : Game.gun.cockType === 'break' ? (Game.gun.type === 'derringer' ? 'tip the barrels up and load two BBs' : 'break it open and load two shells')   // v1.432; v1.433: the Derringer's
                        : 'rack the slide';
         hint = Game.gun.jammed ? 'Hold R to clear the jam.'
              : !Game.gun.cocked ? `Click & hold LMB to ${cockVerb}.`
@@ -899,9 +903,11 @@ const RETICLE_SPECS = {
   uzi:     { style: 'circle_cross', baseGap: 10, ringR: 9,  centerDot: 1.3 },   // v1.414: tighter than the MAC-10's
   thunder: { style: 'big_circle', baseGap: 28, ringR: 30, centerDot: 1.6 },   // v1.168: wider than the spring shotgun
   sixshooter: { style: 'ring_ticks', baseGap: 9, ringR: 9, centerDot: 1.4 },
+  derringer: { style: 'ring_ticks', baseGap: 10, ringR: 10, centerDot: 1.4 },   // v1.433: the Spring Pistol's, a touch wider
   bucket:  { style: 'wide_ticks', baseGap: 14, ringR: 0,  centerDot: 1.5 },
   boltpistol: { style: 'fine_cross', baseGap: 7, ringR: 0, centerDot: 1.1 },
   sprayer: { style: 'wide_ticks', baseGap: 16, ringR: 0, centerDot: 1.5 },   // v1.250
+  clearpup: { style: 'wide_ticks', baseGap: 13, ringR: 0, centerDot: 1.4 },   // v1.437: the clear guns', a touch tighter
   ghost:   { style: 'circle_cross', baseGap: 10, ringR: 9, centerDot: 1.3 },
   ticktock: { style: 'dot_cross', baseGap: 8, ringR: 6, centerDot: 1.4 },
   famas:   { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.325: the AR's

@@ -72,7 +72,7 @@ const geo = await page.evaluate(() => {
   return out;
 });
 const bad = geo.filter(r => Math.abs(r.foot) > 0.015 || Math.abs(r.cx) > 0.01 || r.len > 0.15);
-check(`on all ${geo.length} guns it sits on the top rail, centred`, geo.length === 41 && bad.length === 0, bad.length ? bad : geo.slice(0, 4));
+check(`on all ${geo.length} guns it sits on the top rail, centred`, geo.length === 43 && bad.length === 0, bad.length ? bad : geo.slice(0, 4));
 
 // --- in a match: aimed through it on the AR, against the 4× Scope and no sight
 const aim = (type) => page.evaluate(async (type) => {
@@ -268,8 +268,8 @@ check('the workbench: a click puts the silencer on the AR\'s muzzle, shown on th
 check('no muzzle part under the barrel or on a pistol, no under part on the muzzle; a foregrip and the silencer on the AR at once',
   !mz.cardboardUnder && !mz.onPistol && !mz.fgMuzzle && mz.fgUnder && mz.both.includes('foregrip') && mz.both.includes('soda_silencer'), mz);
 const mzLong = mz.geo.filter(r => !r.none);
-check('every long gun has the muzzle slot (the 25 with an under-barrel slot, the Double-Barrel since v1.432, the P90, the Vector, the AUG, the Thompson and the Tick-Tock: 30), the 11 others none',
-  mzLong.length === 30 && mz.geo.filter(r => r.none).length === 11, mz.geo.map(r => r.gt + (r.none ? '-' : '+')));
+check('every long gun has the muzzle slot (the 25 with an under-barrel slot, the Double-Barrel since v1.432, the P90, the Vector, the AUG, the Thompson, the Tick-Tock and the Clear Bullpup (v1.437): 31), the 12 others none (the Derringer since v1.433)',
+  mzLong.length === 31 && mz.geo.filter(r => r.none).length === 12, mz.geo.map(r => r.gt + (r.none ? '-' : '+')));
 check('on every one the bottle\'s neck is taped over the muzzle (back 1-3 cm over it) and it runs 15-20 cm ahead, on the bore line',
   mzLong.every(r => r.back >= 0.01 && r.back <= 0.03 && r.ahead >= 0.15 && r.ahead <= 0.2 && Math.abs(r.x) < 0.002 && Math.abs(r.dy) < 0.002), mzLong);
 
@@ -350,7 +350,7 @@ check('the workbench: a Stock row on the AR and the P90, none on the pistol or t
   st.offered.length === 1 && /STOCK/.test(st.offered[0]) && st.mounted === 'Sock-Padded Stock' && st.meshShown && st.label.includes('Stock: Sock-Padded Stock'), st);
 check('the sock goes on no muzzle and no pistol', !st.onMuzzle && !st.onPistol, st);
 const stLong = mz.stockGeo.filter(r => !r.none);
-check('every long gun has the stock slot (30, v1.432: the Double-Barrel), the 11 others none', stLong.length === 30 && mz.stockGeo.filter(r => r.none).length === 11, mz.stockGeo.map(r => r.gt + (r.none ? '-' : '+')));
+check('every long gun has the stock slot (31, v1.432: the Double-Barrel, v1.437: the Clear Bullpup), the 12 others none (v1.433: the Derringer)', stLong.length === 31 && mz.stockGeo.filter(r => r.none).length === 12, mz.stockGeo.map(r => r.gt + (r.none ? '-' : '+')));
 check('on every one the sock wraps the butt (4-8 mm proud on every side with its tape, its toe 0.4-2.5 cm past the end), 6-8 cm long, at most 8 cm wide and 17 cm tall',
   stLong.every(r => [r.side, r.top, r.bot].every(d => d >= 0.004 && d <= 0.008) && r.end >= 0.004 && r.end <= 0.025 && r.len >= 0.06 && r.len <= 0.08 && r.w <= 0.08 && r.h <= 0.17), stLong);
 
@@ -418,14 +418,15 @@ check('Sock-Padded Stock: aimed, the cone a fifth tighter, standing and walking;
 check('Sock-Padded Stock: aimed, you walk 1.1-1.25 times as far in 2 s', KS.walk / KB.walk > 1.1 && KS.walk / KB.walk < 1.25, S3);
 
 check('no page errors (the stock\'s match)', g2.errs.length === 0, g2.errs);
-await g2.close();
 
 // --- v1.426: the Taped-Up Long Mag: bought from the Mods tab as UNDER and measured under the handguard on the long guns
-// in the first page (with the bungee sling, above); its matches in a third fresh browser (as the stock's). On the AR,
+// in the first page (with the bungee sling, above); its matches in the stock's browser, after the stock's match. On the AR,
 // half as many BBs again in the mag (the HUD says so), a spare mag's swap and a speed loader's feed half as long again,
 // 1 lb in the weight. The same numbers bare, in a second match, to compare. (The off hand on it, on the MP5: fp-hands.)
-const g3 = await boot(); const page3 = g3.page;
-await g3.bedroom();
+// 4 Nov (CI red on auto/build, headless 3/4 and 5/5): a third fresh browser closed under its first match on CI's runner
+// twice running (as in b81fc4a, its shop visit before); here it passes. The long mag's two matches now run in the
+// stock's browser, which has already played one, so the suite opens two browsers, not three.
+const g3 = g2; const page3 = page2;
 console.log('   long mag:', JSON.stringify(lm));
 check('Taped-Up Long Mag: in the Mods tab as UNDER with its picture, bought for $18', lm.tag === 'UNDER' && lm.pic && lm.paid === 18, lm);
 check('Taped-Up Long Mag: under the handguard on the AR, the Pump Sniper and the M60 (top within 1 cm, hanging 14-17 cm, centred); the Uzi has no slot',

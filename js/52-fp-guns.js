@@ -2083,6 +2083,55 @@ function buildFPLever() {
   return group;
 }
 
+// v1.433 (backlog D.85, Michael: A, batch 7): the Derringer, a two-shot pocket pistol: a nickel frame with its standing
+// breech, a barrel block of two barrels one over the other on a hinge at the breech's top (a rib and a front blade on
+// top, orange at both muzzles), a hammer spur and a rear notch behind, a spur trigger with no guard, and the
+// Six-Shooter's bird's-head grip in cream (so the hand holds it as it holds the Six-Shooter). Loading it tips the
+// barrels up on the hinge, the breech face swinging clear of the frame (`cockSwing`, updateHeldMesh).
+function buildFPDerringer() {
+  const group = new THREE.Group();
+  const nickel = new THREE.MeshStandardMaterial({ color: 0xc4c7cc, roughness: 0.35, metalness: 0.45 });
+  const steel  = new THREE.MeshStandardMaterial({ color: 0x5f636a, roughness: 0.35, metalness: 0.7 });
+  const dark   = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.7 });
+  const cream  = new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.45, metalness: 0.05 });
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.BoxGeometry(0.024, 0.052, 0.012), nickel, 0, 0.022, -0.006).name = 'breech';   // the standing breech
+  _fpPart(group, new THREE.BoxGeometry(0.020, 0.012, 0.058), nickel, 0, 0.002, -0.041).name = 'frame';    // the frame under the barrels
+  _fpPart(group, new THREE.BoxGeometry(0.010, 0.004, 0.006), dark, 0, 0.056, -0.004);                    // rear notch (top y 0.058)
+  const hammer = _fpPart(group, new THREE.BoxGeometry(0.008, 0.020, 0.010), steel, 0, 0.046, 0.006, -0.45);
+  hammer.userData.baseZ = hammer.position.z; hammer.name = 'hammer';
+  _fpPart(group, new THREE.BoxGeometry(0.006, 0.016, 0.006), steel, 0, -0.012, -0.022, 0.2).name = 'trigger';   // the spur trigger
+  // the hinge at the breech's top: the barrel block hangs ahead of it and tips up when it is loaded
+  const pivot = new THREE.Group();
+  pivot.position.set(0, 0.050, -0.012);
+  pivot.name = 'barrels';
+  pivot.userData.cockSwing = 0.6;   // the muzzles rise 34° at the full pull
+  group.add(pivot);
+  _fpPart(pivot, new THREE.CylinderGeometry(0.004, 0.004, 0.026, 8), steel, 0, 0, 0).rotation.z = Math.PI / 2;   // the hinge pin
+  _fpPart(pivot, new THREE.BoxGeometry(0.022, 0.042, 0.12), nickel, 0, -0.021, -0.06).name = 'block';
+  for (const y of [-0.011, -0.031]) {   // the top barrel and the bottom one
+    const tip = _fpPart(pivot, new THREE.CylinderGeometry(0.0085, 0.0085, 0.008, 12), orange, 0, y, -0.124, Math.PI / 2);
+    tip.name = 'barrel';
+    const bore = _fpPart(pivot, new THREE.CircleGeometry(0.0045, 10), dark, 0, y, -0.1285);
+    bore.rotation.y = Math.PI;
+  }
+  _fpPart(pivot, new THREE.BoxGeometry(0.008, 0.004, 0.115), nickel, 0, 0.002, -0.0615).name = 'rib';
+  const blade = _fpPart(pivot, new THREE.BoxGeometry(0.003, 0.006, 0.006), nickel, 0, 0.005, -0.112);   // tip y 0.058
+  blade.userData.frontSight = true; blade.name = 'blade';
+  // the Six-Shooter's bird's-head grip, in cream
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.06, 0.045), cream, 0, -0.0264, 0.0076, -0.38).name = 'grip';
+  _fpPart(group, new THREE.BoxGeometry(0.032, 0.036, 0.045), cream, 0, -0.0663, 0.0193, -0.05);
+  _fpPart(group, new THREE.CylinderGeometry(0.0225, 0.0225, 0.032, 14), cream, 0, -0.0843, 0.0197).rotation.z = Math.PI / 2;
+  group.position.set(0.16, -0.18, -0.32);
+  group.rotation.y = 0.12;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [hammer, pivot];
+  group.userData.cockingOffset = 0.008;
+  group.userData.breakPivot = pivot;
+  group.userData.gunType = 'derringer';
+  Game.camera.add(group);
+  return group;
+}
 // v1.432 (backlog D.85, Michael: A, batch 7): the Double-Barrel, a side-by-side break-action shotgun: a case-hardened
 // action, two blued barrels on a hinge at the action's front with a rib between them (the bead at its front, at the
 // spring shotgun's height, so the aimed picture is the SPAS-12's), a walnut forend under the barrels for the off hand,
@@ -2280,6 +2329,27 @@ function buildFPGhost() {
   _fpPart(group, new THREE.BoxGeometry(0.012, 0.012, 0.08), M.milky, -0.022, -0.01, 0.085);
   return _clearGunFinish(group, M, 'ghost', knob);
 }
+// v1.437 (backlog D.85, batch 7): the Clear Bullpup, the clear guns' bullpup: a long see-through body with the gearbox
+// and the battery showing, the grip and trigger forward (the Bucket Gun's, as every clear gun), the clear mag behind the
+// grip with its BBs in it, a butt plate at the back, a long barrel and its orange tip, a milky carry rail along the top
+// with the rear notch and the front blade on it, and the power switch on the right flank, the cocking part.
+function buildFPClearBullpup() {
+  const group = new THREE.Group(), M = _clearGunMats();
+  _fpPart(group, new THREE.BoxGeometry(0.055, 0.075, 0.38), M.clear, 0, 0.01, -0.01).name = 'body';        // butt to front
+  _fpPart(group, new THREE.BoxGeometry(0.028, 0.04, 0.20), M.guts, 0, 0.01, 0.03).name = 'gearbox';        // the gearbox inside
+  _fpPart(group, new THREE.BoxGeometry(0.03, 0.03, 0.06), M.yellow, 0, 0.012, 0.135).name = 'battery';    // the battery in the butt
+  _fpPart(group, new THREE.BoxGeometry(0.058, 0.082, 0.012), M.dark, 0, 0.006, 0.186).name = 'buttpad';
+  _fpPart(group, new THREE.CylinderGeometry(0.011, 0.011, 0.14, 10), M.clear, 0, 0.02, -0.27, Math.PI / 2).name = 'barrel';
+  _fpPart(group, new THREE.CylinderGeometry(0.014, 0.014, 0.02, 10), M.orange, 0, 0.02, -0.35, Math.PI / 2).name = 'tip';
+  _fpPart(group, new THREE.BoxGeometry(0.026, 0.10, 0.045), M.milky, 0, -0.075, 0.085, 0.12).name = 'mag';   // behind the grip
+  const bbMat = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: 0.5 });
+  for (let i = 0; i < 4; i++) _fpPart(group, new THREE.SphereGeometry(0.0055, 6, 5), bbMat, 0, -0.04 - i * 0.02, 0.083 + i * 0.0025);
+  _fpPart(group, new THREE.BoxGeometry(0.02, 0.012, 0.26), M.milky, 0, 0.0535, -0.05).name = 'rail';         // carry rail
+  _fpPart(group, new THREE.BoxGeometry(0.004, 0.014, 0.008), M.dark, 0, 0.0665, -0.17).userData.frontSight = true;   // front blade (tip y 0.0735)
+  _fpPart(group, new THREE.BoxGeometry(0.014, 0.006, 0.008), M.dark, 0, 0.0625, 0.06);                     // rear notch
+  const sw = _fpPart(group, new THREE.BoxGeometry(0.008, 0.014, 0.02), M.yellow, 0.031, 0.022, -0.06);     // power switch
+  return _clearGunFinish(group, M, 'clearpup', sw);
+}
 // Tick-Tock: a clear rifle wound like a clock, a long barrel, a stock. Accurate up close, two BBs a second.
 function buildFPTickTock() {
   const group = new THREE.Group(), M = _clearGunMats();
@@ -2365,6 +2435,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'clearpup') mesh = buildFPClearBullpup();  // v1.437
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
@@ -2387,6 +2458,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'double')  mesh = buildFPDouble();        // v1.432
+  else if (gunType === 'derringer') mesh = buildFPDerringer();  // v1.433
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
@@ -2447,10 +2519,12 @@ const FP_HANDS = {
   ksg:     { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', on: 'pump', c: [0, 0.025, 0], hw: 0.022, hh: 0.022 } },   // v1.411: the SPAS-12's grip and pump
   thunder: { r: { c: [0, -0.022, 0.057], rx: -0.55, gw: 0.018, gd: 0.024, up: -0.01 }, l: { kind: 'support', on: 'pump', c: [0, 0.014, 0], hw: 0.023, hh: 0.020 } },
   sixshooter: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },
+  derringer: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.433: the Six-Shooter's grip
   bucket:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 },  l: { kind: 'support', c: [0, 0.010, -0.19], hw: 0.030, hh: 0.0375 } },
   boltpistol: { r: { c: [0, -0.061, 0.005], rx: -0.20, gw: 0.018, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.236: the grip 4 mm up
   // v1.250: the clear automatics have the Bucket Gun's grip; the rifle's off hand under its handguard
   sprayer: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
+  clearpup: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },   // v1.437: the clear guns' grip
   ghost:   { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   rattle:  { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: 'cup' },
   ticktock: { r: { c: [0, -0.085, 0.000], rx: -0.20, gw: 0.019, gd: 0.025, up: 0.01 }, l: { kind: 'support', c: [0, 0.010, -0.31], hw: 0.025, hh: 0.025 } },

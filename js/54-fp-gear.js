@@ -22,6 +22,7 @@ const FP_GUN_MOUNT = {
   pistol:  { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },
   shotgun: { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },
   spas:    { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.398: the shotgun's
+  derringer: { barrelY: 0.030, sideX: 0.013, railZ: -0.035, railLen: 0.04, underY: 0.0, sightY: 0.050, sightZ: -0.035, sightScale: 0.7 },   // v1.433: the rail along the frame, the sight on the barrels' rib
   double:  { barrelY: 0.040, sideX: 0.026, railZ: -0.22,  railLen: 0.07,  underY: 0.018, sightY: 0.043, sightZ: -0.07,  sightScale: 1.0 },   // v1.432: the rails and the under slot on the barrels ahead of the forend, the sight on the action
   ksg:     { barrelY: 0.034, sideX: 0.016, railZ: -0.12,  railLen: 0.07,  underY: 0.018, sightY: 0.060, sightZ: -0.055, sightScale: 1.0 },   // v1.411: the SPAS-12's
   ar:      { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },
@@ -48,6 +49,7 @@ const FP_GUN_MOUNT = {
   bucket:  { barrelY: 0.010, sideX: 0.030, railZ: -0.18,  railLen: 0.08,  underY: -0.028, sightY: 0.135, sightZ: -0.10, sightScale: 1.0 },
   boltpistol: { barrelY: 0.030, sideX: 0.016, railZ: -0.04, railLen: 0.06, underY: 0.03, sightY: 0.059, sightZ: -0.05, sightScale: 0.85 },
   // v1.250: the clear automatics (sights on the top rail or the receiver, a rail low on the side)
+  clearpup: { barrelY: 0.010, sideX: 0.028, railZ: -0.12, railLen: 0.07, underY: -0.028, sightY: 0.0595, sightZ: -0.05, sightScale: 0.9 },   // v1.437: the sprayer's, the rail further out
   sprayer: { barrelY: 0.010, sideX: 0.030, railZ: -0.10, railLen: 0.07, underY: -0.028, sightY: 0.0595, sightZ: -0.06, sightScale: 0.9 },
   ghost:   { barrelY: 0.010, sideX: 0.0275, railZ: -0.07, railLen: 0.06, underY: -0.028, sightY: 0.0475, sightZ: -0.06, sightScale: 0.85 },
   ticktock: { barrelY: 0.010, sideX: 0.0275, railZ: -0.18, railLen: 0.09, underY: -0.028, sightY: 0.0595, sightZ: -0.08, sightScale: 1.0 },
@@ -929,6 +931,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'bucket')  mesh = buildFPBucket();
   else if (gunType === 'boltpistol') mesh = buildFPBoltPistol();
   else if (gunType === 'sprayer') mesh = buildFPSprayer();      // v1.250 (D.37)
+  else if (gunType === 'clearpup') mesh = buildFPClearBullpup();  // v1.437
   else if (gunType === 'ghost')   mesh = buildFPGhost();
   else if (gunType === 'ticktock') mesh = buildFPTickTock();
   else if (gunType === 'rattle')  mesh = buildFPRattle();
@@ -951,6 +954,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'magnum')  mesh = buildFPMagnum();        // v1.410
   else if (gunType === 'ksg')     mesh = buildFPKSG();           // v1.411
   else if (gunType === 'double')  mesh = buildFPDouble();        // v1.432
+  else if (gunType === 'derringer') mesh = buildFPDerringer();  // v1.433
   else if (gunType === 'lever')   mesh = buildFPLever();         // v1.412
   else if (gunType === 'm60')     mesh = buildFPM60();           // v1.413
   else if (gunType === 'uzi')     mesh = buildFPUzi();           // v1.414
@@ -1319,6 +1323,21 @@ function projectWorkbenchLabels(w, h) {
     el.textContent = inst ? `${labelName}: ${ATTACHMENTS[inst.type].name}` : `${labelName}: empty`;
     el.className = 'wb-vp-label' + (inst ? '' : ' empty');
   });
+  // v1.435: the Stock label hangs under the butt, and on the guns seen nearly end-on with a deep handguard (the AR, the
+  // Electric Rifle, the MP5, the Semi-Auto Shotgun, the Bucket Gun) the butt projects 10-13 px under the Under label,
+  // so the two crossed. Its anchor and the Under one's are measured from different parts, so it is pushed clear on
+  // screen instead: just below any label it would cross, 2 px apart.
+  const si = WB.labelAnchors.findIndex(a => a.slot === 'stock');
+  const sEl = si >= 0 ? cont.children[si] : null;
+  if (sEl && sEl.style.display !== 'none') {
+    const box = (el) => { const x = parseFloat(el.style.left), y = parseFloat(el.style.top), bw = el.offsetWidth, bh = el.offsetHeight;
+      return { x0: x - bw / 2, x1: x + bw / 2, y0: y - bh / 2, y1: y + bh / 2, y, bh }; };
+    const others = [...cont.children].filter((el, i) => i !== si && el.style.display !== 'none').map(box).sort((a, b) => a.y - b.y);
+    for (const o of others) {
+      const s = box(sEl);
+      if (s.x0 < o.x1 && o.x0 < s.x1 && s.y0 < o.y1 && o.y0 < s.y1) sEl.style.top = (o.y1 + s.bh / 2 + 2) + 'px';
+    }
+  }
 }
 
 // Render the left gun list, right slot list, and locker.
