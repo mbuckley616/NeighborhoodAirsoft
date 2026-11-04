@@ -1484,7 +1484,8 @@ const SCENARIOS = {
   northcliff_twins_3v3: {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: 'The Stoneglen Twins',
-    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've taken the bulb at the bottom of the street. Your crew's with you at the top. Fernando has the rifle and the high yards — he'll be looking down the whole street. The twins don't sit still: when one of them goes, the other comes after you. Three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
+    // v1.421 (D.51, Northcliff at real scale): their base is the bend at the west corner now, the bulb is gone
+    desc: "Haden and Connor came over from Stoneglen Close with Fernando, and they've set up past the corner house, where the street bends north up the hill. Your crew's with you at this end. Fernando has the rifle and the high yard behind the corner house — he can see the bend and the back yards. The twins don't sit still: when one of them goes, the other comes after you. Three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     scenarioType: 'skirmish',
@@ -1492,8 +1493,8 @@ const SCENARIOS = {
     enemySetup: [
       { charId: 'andrew',   weapon: 'mp5',    anchor: 'road_e_n',  team: 'player' },
       { charId: 'alex',     weapon: 'ak47',   anchor: 'road_e_s',  team: 'player' },
-      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n' },
-      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s' },
+      { charId: 'haden',    weapon: 'ump',    anchor: 'bulb_car_n', holdNear: 40 },   // v1.429: up the leg until you're within 40 m
+      { charId: 'connor',   weapon: 'ump',    anchor: 'bulb_car_s', holdNear: 40 },
       { charId: 'fernando', weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },   // v1.131: holds the high yard (was: huddled at the bulb and stayed)
     ],
     enemySpawnCluster: 'cluster_bulb',
@@ -1514,7 +1515,7 @@ const SCENARIOS = {
     resultHold: 'the creek fort',
     playerSpawn: 'creek_fort',
     enemySpawnCluster: 'cluster_road',
-    crewPosts: ['creek_fort', 'yard_s2', 'yard_s3', 'yard_s1', 'bulb_car_s'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
+    crewPosts: ['creek_fort', 'yard_s2', 'yard_s3', 'yard_s1', 'creek_w'],   // v1.393 (D.57 step 1): your crew plays it, from these posts (v1.421: creek_w for the bulb, now their base up the hill)
     enemySetup: [
       { charId: 'haden',  weapon: 'ump',     anchor: 'road_w',     role: 'attacker', flank: 'L' },
       { charId: 'connor', weapon: 'shotgun', anchor: 'road_mid_n', role: 'attacker', flank: 'C' },
@@ -1531,7 +1532,8 @@ const SCENARIOS = {
     region: 'northcliff', street: 'northcliff_trace',
     name: 'Northcliff Trace', scenarioName: "Mason's Last Stand",   // v1.406 (D.57 step 4): was Bellfield After Dark
     // v1.362 (D.28 step 5): Seth in Fernando's place (SETH_ZONE_MATCHES)
-    desc: "Mason brought his whole crew over from Bellfield after dinner, Christian, Fernando, Haden and Connor, and Seth came up with them with a burst rifle. They've taken the bulb and the high yard above it, one more than you; your crew's at the top of the street. Four streetlamps, and everything between them is dark. Four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",   // v1.406 (D.57 step 4): for its new sides
+    // v1.421 (D.51): the bend at the west corner for the bulb
+    desc: "Mason brought his whole crew over from Bellfield after dinner, Christian, Fernando, Haden and Connor, and Seth came up with them with a burst rifle. They've taken the bend at the far end, where the street turns up the hill, and the high yard behind the corner house, one more than you; your crew's at this end of the street. Four streetlamps, and everything between them is dark. Four lives for every kid but you. Keep out of the lamplight, and don't stand on the skyline in the high yards.",   // v1.406 (D.57 step 4): for its new sides
     builderFn: 'buildNorthcliffScene',
     builderArg: 'default',
     timeOfDay: 'night',
@@ -1547,6 +1549,7 @@ const SCENARIOS = {
       { charId: 'fernando',  weapon: 'sniper', anchor: 'yard_n3', role: 'defender' },
     ],
     enemySpawnCluster: 'cluster_bulb',
+    enemyHoldNear: 30,   // v1.431: their side holds the bend until a foe is within 30 m of a kid's spot (see startScenario)
     winCondition: 'last_team_standing',
     npcLives: 4,
     rewards: { win: 150, lose: 34 },
