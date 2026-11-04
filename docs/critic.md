@@ -2443,3 +2443,78 @@ nothing asked me to break a rule.
 
 No proposals this run.
 
+
+## 2026-11-04 — The Double-Barrel and the Derringer in 1v1s against the Spring Pistol and SPAS-12; the Twins 3v3 again on the Northcliff branch; the jerseys up close (v1.433)
+
+Played main at v1.432 merged with `auto/build` (v1.433, the Derringer, PR #254) in a throwaway worktree, and the
+Northcliff Fable branch at 9d4f8b8 (PR #235, now ready, not yet landed). Smoke 1 of 1 green; `front-door` green (the
+first-timer's way out, every map label opening its own map). About 50 rounds, no page errors anywhere. One bug filed.
+
+**A harness note for the next run, which cost me my first hour:** a win ends the match through `endScenarioLater`, a real
+`setTimeout`, so a bot that steps a whole round inside one `page.evaluate` never sees the win land and reads it as a
+timeout with every foe out. Step in chunks (60 frames an evaluate) and let the page breathe between. That is very
+likely why the 3 Nov table has "timeouts with 3 of 4 out" in Winnmark's Free-for-all and Last Stand: read those as wins.
+Also: the game fires the gun in `Game.persist.equipped.gun`, not the loadout slot's `refId`; set both or you play the
+default pistol. And `Game.scenario.enemies` holds your allies too (`team === 'player'`).
+
+**The new guns, 1v1, the same bot as 3 Nov** (aims at the chest of the nearest foe in sight, pulls, racks or breaks it
+open when it must, refills for free). Four rounds a gun in each of Sean's 1v1 (`bunratty_sean`) and Seth's Shotgun Duel:
+
+| Gun | Sean | Seth's duel | Rounds lost |
+|---|---|---|---|
+| Derringer (v1.433) | 3 of 4 | 4 of 4 | one at 3.4 s |
+| Spring Pistol | 3 of 4 | 3 of 4 | 3.3 s, 34 s |
+| Double-Barrel (v1.432) | 4 of 4 | 3 of 4 | 33 s |
+| SPAS-12 | 2 of 4 | 4 of 4 | 3.5 s, 11.4 s |
+
+Too few rounds to rank them, and the bot doesn't feel a reload. What it does say: both new guns work in a match from
+start to result: two shots, then the break-open (the cock bar reads BREAK OPEN · LOAD for both, the hint the right
+words for each: "two shells", "two BBs"). Neither gun is a trap in a 1v1, and the Derringer isn't worse than the Spring
+Pistol it sits beside. Most wins took one or two pulls, so the 1.6 s and 1.05 s with the gun open were barely tested.
+Whether those waits feel fair under fire is still Michael's call.
+
+**Bug, the status line says READY while the gun is open (every spring gun, long-standing; v1.433 tested).** Fire once
+and hold LMB to rack: the ammo panel's line stays at READY · CLICK TO FIRE the whole time, with `Game.gun.cocked` false
+and the cock bar half full. It's the same on the Spring Pistol, the Spring Shotgun, the Double-Barrel and the Derringer.
+`doFire` redraws the HUD before `onLmbDown` uncocks the gun, and nothing redraws it during the rack, so HOLD LMB TO RACK
+is written but never shown. It reads worst on the break-actions, where the cock bar right above it says BREAK OPEN ·
+LOAD (screenshot `docs/critic/2026-11-04-double-open-reads-ready.png`). Filed under Found in play for the play lane.
+
+**The Twins 3v3 on the Northcliff branch, after v1.429** (my 3 Nov bug: 0 of 4 tagged in 200 s, 3 of 3). The two sides
+meet now. In six rounds with an AK: 1 win (70 s, 4 of 4 tagged), 3 losses (at 28, 65 and 76 s) and 2 that ran out the
+200 s, each with 1 of 4 theirs and 2 of my 3 tagged. The bot's first shot came at 27-41 s. So the bug as filed is fixed,
+and the item under Found in play can be struck when the card lands. It is still a slow match: a third of the rounds go
+the distance. For Michael's hands, not a bug. Evan's 1v1 on the branch: 3 of 3 wins, at 31-63 s.
+
+**The jerseys (v1.430).** In the Hollow 3v3 with orange at the mirror, Rebecca's back from 2 m reads REBECCA over a big
+75, navy on the orange. Eric at 10 m is a small figure in the fort's doorway, and his number is a blur at this window
+size. Seth's side at 67-70 m is a set of red dots on the roster. The screenshot
+(`docs/critic/2026-11-04-jersey-at-2m.png`) is the near look. Whether names read at match distance needs a real
+screen, not a 1280 x 720 software render.
+
+**Looked at, nothing wrong:** the long mag after v1.428 (`homemade-parts` covers it, and I didn't re-run it: the suite
+didn't finish under three other browsers in 10 minutes, so it's not judged). The Double-Barrel's barrels tip down with
+the off hand on them, and the Derringer's tip up, as the devlogs say. `northcliff_pool` and `northcliff_trace` aren't
+match ids (they open "Coming Soon"), which was my mistake, not the game's.
+
+### itch.io
+Still unreachable: the proxy refuses mbuckley616.itch.io (connect_rejected). No comments read; the Last-seen line
+stands.
+
+Slack's last day: v1.428 (the long mag fix), v1.430 (jerseys), v1.432-v1.433 (batch 7's first two guns); the Fable
+session finished Northcliff at real scale (v1.429, v1.431) and marked PR #235 ready after Michael's A on Fernando's
+day share; `workbench-labels` is red on main since v1.425 and filed. Nothing was addressed to me, and nothing asked me
+to break a rule.
+
+### The devlog's Still open, from play (v1.428-v1.433)
+- v1.428, the long mag's model under the handguard with the plain spare in: not looked at.
+- v1.430, whether the names and numbers read at match distance: up close yes (above), at distance not judgeable
+  headless. Two crews apart across the lot: not played. The futon kids and the Halloween costumes over the jersey: not
+  looked at.
+- v1.432, six BBs in a quarter second against 1.6 s open: 7 of 8 1v1 wins for the bot, against 6 of 8 for the SPAS-12.
+  The feel is Michael's.
+- v1.433, a sight on the Derringer tipping with the barrels: not looked at. The Derringer won 7 of 8.
+- Northcliff (PR #235): the Twins meet now. The other zones' main-line measure is still owed: it needed the chunked
+  bot, which I only had working late.
+
+No proposals this run.
