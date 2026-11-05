@@ -61,6 +61,7 @@ const FP_GUN_MOUNT = {
   thompson: { barrelY: 0.000, sideX: 0.018, railZ: -0.06, railLen: 0.06, underY: -0.020, sightY: 0.026, sightZ: -0.02, sightScale: 0.9 },   // v1.403: an optic on the receiver's top
   magnum:  { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },   // v1.410: the Six-Shooter's
   snubnose: { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },   // v1.440: the Magnum's
+  longrev: { barrelY: 0.030, sideX: 0.015, railZ: -0.03, railLen: 0.05, underY: 0.018, sightY: 0.053, sightZ: -0.05, sightScale: 0.8 },   // v1.449: the Magnum's
   gaspistol: { barrelY: 0.030, sideX: 0.019, railZ: -0.115, railLen: 0.075, underY: 0.012, sightY: 0.052, sightZ: -0.075, sightScale: 0.85 },   // v1.399: the pistol's
   erifle:  { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.326: the AR's
   gascarbine: { barrelY: 0.035, sideX: 0.016, railZ: -0.185, railLen: 0.10,  underY: 0.018, sightY: 0.054, sightZ: -0.04,  sightScale: 1.0 },   // v1.446: the AR's
@@ -1096,6 +1097,7 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
   else if (gunType === 'autopistol') mesh = buildFPAutoPistol();   // v1.438
   else if (gunType === 'snubnose') mesh = buildFPSnubNose();   // v1.440
+  else if (gunType === 'longrev') mesh = buildFPLongRevolver();   // v1.449
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'gascarbine') mesh = buildFPGasCarbine();   // v1.446

@@ -29,6 +29,7 @@ const MAG_GUN_FIT = {
   spare_mag_gascarbine: 'gascarbine',   // v1.446
   spare_mag_breakbarrel: 'breakbarrel',   // v1.447
   spare_mag_dmr: 'dmr',   // v1.448
+  spare_mag_longrev: 'longrev',   // v1.449
   spare_mag_semishotgun: 'semishotgun',   // v1.328
   spare_mag_m249: 'm249',   // v1.335
   spare_mag_l96: 'l96',   // v1.336
@@ -91,7 +92,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'snubnose',   // v1.440 (D.85 batch 7): the Magnum's short-barrelled version
   'gascarbine',   // v1.446 (D.87 batch 8): the gas blowback pistol-calibre carbine
   'breakbarrel',   // v1.447 (D.87 batch 8): the cheap break-barrel spring air rifle
-  'dmr'];   // v1.448 (D.87 batch 8): the battery marksman rifle on the AR's frame
+  'dmr',   // v1.448 (D.87 batch 8): the battery marksman rifle on the AR's frame
+  'longrev'];   // v1.449 (D.87 batch 8): the long-barrelled single-action gas revolver
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -170,6 +172,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'thunder')    return Game.persist.owned.thunder_mag_50 ? 50 : 30;
   if (gunType === 'sixshooter') return 6;
   if (gunType === 'magnum')     return 6;   // v1.410: six shells in the cylinder, always
+  if (gunType === 'longrev')    return 6;   // v1.449: six shells, always
   if (gunType === 'snubnose')   return 6;   // v1.440: the Magnum's cylinder
   if (gunType === 'bucket')     return Game.persist.owned.bucket_mag_1000 ? 1000 : 600;
   if (gunType === 'boltpistol') return Game.persist.owned.boltpistol_mag_12 ? 12 : 8;
@@ -314,6 +317,7 @@ const GUN_ACCESSORY_CAP = {
   gaspistol: { sight: 1, rails: 1 },            // v1.399: the pistol's
   m14:      { sight: 1, rails: 2, under: 1 },  // v1.404: the sniper's
   magnum:   { sight: 1, rails: 1 },            // v1.410: the Six-Shooter's
+  longrev:  { sight: 1, rails: 1 },            // v1.449: the Magnum's
   snubnose: { sight: 1, rails: 1 },            // v1.440: the Magnum's
   ksg:      { sight: 1, rails: 2, under: 1 },  // v1.411: the shotgun's
   lever:    { sight: 1, rails: 2, under: 1 },  // v1.412: the sniper's
@@ -844,6 +848,14 @@ const GUN_MAGS = {
   // pistol that sprays, and it empties its flush mag in two seconds, so the long stick mag sticking out of the grip
   // v1.440 (backlog D.85, batch 7): the Snub-Nose, the batch's version: the Magnum with its barrel cut to two inches,
   // the same CO2 and double-action cylinder in a pocket-sized gun
+  // v1.449 (backlog D.87, batch 8): the Long Revolver, a single-action CO2 revolver with a long barrel: thumb the hammer
+  // for every shot, as the Six-Shooter, for the straightest BB of any revolver
+  longrev: {
+    displayName: 'Long Revolver', baseCap: 6, price: 170, ownFlag: 'longrev',
+    blurb: 'A stainless CO2 revolver with a long eight-inch barrel and a walnut grip, the one for tin cans off the fence. Single-action: thumb the hammer back for every shot, like the Six-Shooter, so it fires slower than the Magnum. But its BB flies faster and straighter than any other revolver\'s and the long barrel holds steady when you aim. Six shells; bring spares.',
+    mags: [],
+    spares: [ { key: 'spare_mag_longrev', label: 'Spare Long Revolver Shells (6)', price: 5 } ],
+  },
   snubnose: {
     displayName: 'Snub-Nose', baseCap: 6, price: 110, ownFlag: 'snubnose',
     blurb: 'The Magnum with its barrel sawn down to a stub: the same CO2 cylinder of six and the same long double-action pull, in a revolver half the weight. You walk nearly as fast as with the Derringer, but the short barrel throws a slower BB that wanders past five metres, so it is a gun for the side yard, not the street.',
@@ -912,7 +924,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','breakbarrel','erifle','gascarbine','burst','m14','dmr','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum; v1.446: the Gas Carbine after the Electric Rifle; v1.447: the Break-Barrel after the Lever Gun
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','longrev','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','breakbarrel','erifle','gascarbine','burst','m14','dmr','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum; v1.446: the Gas Carbine after the Electric Rifle; v1.447: the Break-Barrel after the Lever Gun
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1129,6 +1141,7 @@ function describeSlot(idx) {
       spare_mag_gascarbine: 30,   // v1.446
       spare_mag_breakbarrel: 30,   // v1.447
       spare_mag_dmr: 20,   // v1.448
+      spare_mag_longrev: 6,   // v1.449
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1177,6 +1190,7 @@ function describeSlot(idx) {
       spare_mag_gascarbine: 'Spare 30-rd Gas Carbine Mag',   // v1.446
       spare_mag_breakbarrel: 'Spare 30-BB Break-Barrel Tin',   // v1.447
       spare_mag_dmr: 'Spare 20-rd DMR Mag',   // v1.448
+      spare_mag_longrev: 'Spare 6-rd Long Revolver Shells',   // v1.449
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1388,6 +1402,7 @@ const GUN_WEIGHT = {
   double: 6.5,                                            // v1.432: steel barrels and walnut; the Spring Shotgun 6
   derringer: 1,                                           // v1.433: the lightest gun (the Spring Pistol 2)
   autopistol: 2.5,                                        // v1.438: the Electric Pistol's, its battery in the grip
+  longrev: 3.5,                                           // v1.449: the Magnum's steel, a longer barrel, no underlug
   snubnose: 2,                                            // v1.440: the Magnum (3.5) less its barrel and underlug
   drumshotgun: 9,                                         // v1.439: the drum and the battery; the Semi-Auto Shotgun 7
   clearpup: 3,                                            // v1.437: hollow plastic, as the clear automatics (2-4)
@@ -1434,6 +1449,7 @@ const MAG_WEIGHT = {
   spare_mag_gascarbine: 0.9,   // v1.446: a gas mag, heavier than a spring one
   spare_mag_breakbarrel: 0.2,   // v1.447: a small tin
   spare_mag_dmr: 0.6,   // v1.448: a short mag
+  spare_mag_longrev: 0.4,   // v1.449: the Magnum's speed loader
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1937,6 +1953,10 @@ GUN_SPECS.magnum = Object.assign({}, GUN_SPECS.sixshooter, { electric: true, dou
 // double-action pull (2.5 a second), but the short barrel gives a slower BB (38 m/s; the Magnum 44) that wanders past
 // 5 m (9) in a wider cone (0.40; 0.30), and it is light: 2 lb (3.5) and a quick walk (1.14; the Magnum 1.06, the
 // Derringer 1.18)
+// v1.449 (D.87, batch 8): the Long Revolver, the Six-Shooter's single action (thumb the hammer, 0.35 s) with CO2 and a
+// long barrel: the straightest revolver, and of the pistols only the Bolt Pistol beats it (48 m/s, the Magnum 44; straight for 12 m, the Magnum 9; a 0.22 cone, the Magnum
+// 0.30, aimed 0.26), fired slower than the Magnum's double action, a little slower to walk with (1.04; the Magnum 1.06)
+GUN_SPECS.longrev = Object.assign({}, GUN_SPECS.sixshooter, { muzzleVelocity: 48, curveOnsetDistance: 12, curveStrengthMax: 12, baseSpread: 0.22, adsSpreadMult: 0.26, cockTime: 0.35, weightClass: 'medium', playerSpeedMult: 1.04, displayName: 'Long Revolver' });
 GUN_SPECS.snubnose = Object.assign({}, GUN_SPECS.magnum, { muzzleVelocity: 38, curveOnsetDistance: 5, curveStrengthMax: 18, baseSpread: 0.40, adsSpreadMult: 0.4, weightClass: 'light', playerSpeedMult: 1.14, displayName: 'Snub-Nose' });
 // v1.411 (D.63, batch 6): the KSG, a bullpup pump: the Spring Shotgun's 2 or 3 BBs a pump at its 30 m/s, a wider
 // cloud from the short barrel (0.62, the Spring Shotgun 0.55, the SPAS-12 0.42), straight for 7 m (8), but the

@@ -2141,6 +2141,31 @@ function buildFPSnubNose() {
   group.userData.gunType = 'snubnose';
   return group;
 }
+// v1.449 (backlog D.87, batch 8): the Long Revolver, a single-action CO2 revolver on the Six-Shooter's frame, cylinder,
+// hammer and bird's-head grip (so the hammer comes back and the cylinder turns as you thumb it, as the Six-Shooter's):
+// stainless steel for the silver, a walnut grip, a brass CO2 cap under the butt, and everything forward of the cylinder
+// replaced by an eight-inch barrel (20 cm) with a half underlug round the ejector rod, a flat rib and the front blade
+// on the rib near the muzzle, its tip at the Six-Shooter's height (y 0.056).
+function buildFPLongRevolver() {
+  const group = buildFPSixShooter();
+  const stainless = new THREE.MeshStandardMaterial({ color: 0xd2d5da, roughness: 0.28, metalness: 0.8 });
+  const walnut = new THREE.MeshStandardMaterial({ color: 0x4e2c16, roughness: 0.7 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 });
+  _recolor(group, 0xb9bdc4, stainless);   // the frame, top strap, guard
+  _recolor(group, 0x7a4a24, walnut);      // the grip
+  for (const o of group.children.slice()) if (o.isMesh && o.position.z < -0.08) group.remove(o);   // the short barrel, rod, tip and blade
+  const orange = _fpOrangeMat();
+  _fpPart(group, new THREE.CylinderGeometry(0.0085, 0.0085, 0.20, 10), stainless, 0, 0.036, -0.167, Math.PI / 2).name = 'barrel';
+  _fpPart(group, new THREE.BoxGeometry(0.013, 0.016, 0.10), stainless, 0, 0.025, -0.115).name = 'underlug';
+  _fpPart(group, new THREE.CylinderGeometry(0.0045, 0.0045, 0.09, 8), stainless, 0, 0.022, -0.11, Math.PI / 2).name = 'ejector';
+  _fpPart(group, new THREE.BoxGeometry(0.006, 0.005, 0.19), stainless, 0, 0.0462, -0.165).name = 'rib';
+  _fpPart(group, new THREE.CylinderGeometry(0.0100, 0.0100, 0.016, 10), orange, 0, 0.036, -0.275, Math.PI / 2).name = 'tip';
+  const blade = _fpPart(group, new THREE.BoxGeometry(0.004, 0.0075, 0.012), stainless, 0, 0.0523, -0.255);   // its tip at y 0.056
+  blade.name = 'blade'; blade.userData.frontSight = true;
+  _fpPart(group, new THREE.CylinderGeometry(0.006, 0.006, 0.004, 10), brass, 0, -0.1085, 0.0197).name = 'co2Cap';
+  group.userData.gunType = 'longrev';
+  return group;
+}
 // v1.416 (backlog D.63, Michael: A, batch 6): the Pump Sniper, a spring sniper racked by a pump, on the spring sniper's
 // stock, barrel and sights (so its aimed picture is the sniper's): the bolt and the folded bipod come off, the forend is
 // cut back to 12 cm, a tube runs under the barrel to the muzzle, and a ribbed olive pump rides on it where the support
@@ -2635,6 +2660,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'epistol') mesh = buildFPElectricPistol();   // v1.326
   else if (gunType === 'autopistol') mesh = buildFPAutoPistol();   // v1.438
   else if (gunType === 'snubnose') mesh = buildFPSnubNose();   // v1.440
+  else if (gunType === 'longrev') mesh = buildFPLongRevolver();   // v1.449
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'gascarbine') mesh = buildFPGasCarbine();   // v1.446
@@ -2734,6 +2760,7 @@ const FP_HANDS = {
   gaspistol: { r: { c: [0, -0.0507, 0.0122], rx: -0.32, gw: 0.022, gd: 0.026, up: 0.012 },  l: 'cup' },   // v1.399: the pistol's, over the wooden panels
   magnum:  { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.410: the Six-Shooter's
   snubnose: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.440: the Magnum's
+  longrev: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.449: the Magnum's
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
   gascarbine: { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.446: the AR's
   dmr: { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.448: the AR's

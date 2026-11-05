@@ -421,7 +421,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
    spring air rifle, one shot then break the barrel to cock and load, 1.3 s; a 58 m/s BB straight for 16 m; an optic,
    one rail on the barrel, a muzzle and a stock; `tests/gun-breakbarrel.test.mjs`). ~~The battery DMR~~ — done, v1.448
    (the DMR, $240, under RIFLES after the M14: a tan battery marksman rifle on the AR's frame, 4 a second, a 63 m/s BB
-   straight for 20 m, a 20 mag, the M14's weight; `tests/gun-dmr.test.mjs`). Left: one more (likely a second revolver kind).
+   straight for 20 m, a 20 mag, the M14's weight; `tests/gun-dmr.test.mjs`). ~~The second revolver kind~~ — done, v1.449 (the Long Revolver, $170, last under PISTOLS: a
+   stainless single-action CO2 revolver with an eight-inch barrel, thumb the hammer each shot, a 48 m/s BB straight for
+   12 m, the straightest revolver; `tests/gun-longrev.test.mjs`). Batch 8 is done: 50 guns.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

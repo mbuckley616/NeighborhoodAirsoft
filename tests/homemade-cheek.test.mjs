@@ -47,7 +47,7 @@ console.log('   no slot:', geo.none.join(' '));
 check('on every gun with a stock slot (35, v1.446: the Gas Carbine, v1.447: the Break-Barrel, v1.448: the DMR) it lies on the centre line, 1.5 cm short of the butt, 11 cm long, sunk 1-1.2 cm over the comb',
   geo.rows.length === 35 && geo.rows.every(r => Math.abs(r.cx) < 0.002 && Math.abs(r.back - 0.015) < 0.001 && Math.abs(r.len - 0.11) < 0.002 && r.sink >= 0.01 && r.sink <= 0.012), geo.rows);
 check('two tape bands wrap it, over its top and 3 cm or more down the stock', geo.rows.every(r => r.bands === 2 && r.bandOver > 0 && r.bandBelow >= 0.03), geo.rows);
-check('the 14 guns with no stock slot have no stock parts', geo.none.length === 14 && geo.none.every(s => s.endsWith('-')), geo.none);
+check('the 15 guns with no stock slot (v1.449: the Long Revolver) have no stock parts', geo.none.length === 15 && geo.none.every(s => s.endsWith('-')), geo.none);
 
 // --- the workbench: it takes the stock slot, so it and the sock can't both be on
 const wb = await page.evaluate(() => {

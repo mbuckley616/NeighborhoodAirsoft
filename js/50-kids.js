@@ -96,7 +96,7 @@ function makeEnemyFromCharacter(charId, { pos, homeCover, scene, armorMult = 1, 
 // sensible support-hand grip point for that weapon, so the off-hand lands on the
 // handguard rather than in mid-air. Tuned to each silhouette in buildEnemyGunMesh.
 function isSmallGun(weapon) {
-  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || weapon === 'autopistol' || weapon === 'snubnose' || !weapon;   // v1.440;   // v1.438;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
+  return weapon === 'pistol' || weapon === 'mac10' || weapon === 'sixshooter' || weapon === 'boltpistol' || weapon === 'epistol' || weapon === 'gaspistol' || weapon === 'magnum' || weapon === 'derringer' || weapon === 'autopistol' || weapon === 'snubnose' || weapon === 'longrev' || !weapon;   // v1.449   // v1.440;   // v1.438;   // v1.433;   // v1.168; v1.326; v1.399; v1.410
 }
 function gunForegripZ(weapon) {
   switch (weapon) {
@@ -348,6 +348,13 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
       box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
       grip(dark);
+      break;
+    }
+    case 'longrev': {   // v1.449 (D.87): the Six-Shooter's shape in stainless, a long barrel, a walnut grip
+      const stainless = new THREE.MeshStandardMaterial({ color: 0xd2d5da, roughness: 0.3, metalness: 0.75 });
+      box(0.045, 0.05, 0.06, stainless, 0, 0.01, 0.0);   // cylinder
+      box(0.022, 0.03, 0.25, stainless, 0, 0.02, 0.14);  // the long barrel
+      grip(wood);
       break;
     }
     case 'breakbarrel': {   // v1.447 (D.87): a thin blued barrel over a beech forend, the spring tube, the beech stock
