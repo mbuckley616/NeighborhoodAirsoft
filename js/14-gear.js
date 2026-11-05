@@ -261,6 +261,10 @@ const ATTACHMENTS = {
   // stuffed and pulled over the butt of the stock. Aimed, your shots stay a fifth tighter and you walk quicker with the
   // gun up; the sock is a little more to carry.
   sock_stock: { id:'sock_stock', name:'Sock-Padded Stock', slot:'stock', price:8, weight:0.4, adsSteadyMult:0.8, adsWalkMult:1.2, desc:'A tube sock stuffed with another sock and pulled over the butt of the stock, taped at the cuff. It sits soft and steady on your shoulder: aimed, your shots stay a fifth tighter, and you can walk quicker with the gun up. It’s 0.4 lb more to carry. Sits on the stock of any long gun.' },
+  // v1.443 (D.86, Michael: A, a third wave of homemade parts): a length of pool noodle slit and pushed down over the top
+  // of the stock, taped on. It lifts your cheek to the sights, so the gun comes up to your eye quicker; the effect was
+  // left to the builder. It takes the stock slot, so it is a trade against the sock-padded stock.
+  noodle_pad: { id:'noodle_pad', name:'Foam-Noodle Cheek Pad', slot:'stock', price:5, weight:0.2, adsSpeedMult:1.25, desc:'A length of green pool noodle, slit down one side and pushed over the top of the stock, with a wrap of duct tape at each end. Your cheek lands on it right behind the sights, so the gun comes up to your eye a quarter quicker. It does nothing for your aim once you’re there. Sits on the stock of any long gun.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;

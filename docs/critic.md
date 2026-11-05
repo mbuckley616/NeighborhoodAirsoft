@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -2516,5 +2516,90 @@ to break a rule.
 - v1.433, a sight on the Derringer tipping with the barrels: not looked at. The Derringer won 7 of 8.
 - Northcliff (PR #235): the Twins meet now. The other zones' main-line measure is still owed: it needed the chunked
   bot, which I only had working late.
+
+No proposals this run.
+
+## 2026-11-05 — Batch 7's last four guns in three 1v1s; the taped light at night; the bipod crouched (v1.443)
+
+Played main at v1.443 (`auto/build` is level with it). Smoke 1 of 1 green. About 100 rounds with no page errors and no
+bugs filed.
+
+**The bot.** It's the 4 Nov bot, chunked at 60 frames an evaluate. It aims at the chest of the nearest foe in sight, and
+walks at the nearest one when none is in sight. It pulls, holds for full auto, racks when the gun is uncocked, holds R
+on a jam, and refills an empty mag for free. The free refill matters for the reading below. It skips the reload, so it
+flatters guns with a short mag and a high rate (the Auto Pistol empties in 2 s). One trap for the next run: `ar` is the
+**Spring** Assault Rifle, a spring gun that racks. All my "AR" rounds below are that gun, not an electric one.
+
+**The last four guns of batch 7, four rounds a gun in each of three 1v1s.** The 1v1s are Sean (`bunratty_sean`),
+Marcus at the lot (`lot_1v1_marcus`, new to this measure) and Seth's Shotgun Duel. The Spring Pistol is the baseline.
+
+| Gun | Sean | Marcus | Seth's duel | Wins | Losses at |
+|---|---|---|---|---|---|
+| Auto Pistol (v1.438) | 4 of 4 | 4 of 4 | 4 of 4 | 12 of 12 | — |
+| Drum Shotgun (v1.439) | 4 of 4 | 4 of 4 | 4 of 4 | 12 of 12 | — |
+| Clear Bullpup (v1.437) | 3 of 4 | 3 of 4 | 4 of 4 | 10 of 12 | 11.8 s, 7.5 s |
+| Spring Pistol | 2 of 4 | 2 of 4 | 4 of 4 | 8 of 12 | 11.6, 16.2, 9.5, 6.2 s |
+| Snub-Nose (v1.440) | 1 of 4 | 4 of 4 | 3 of 4 | 8 of 12 | 11.6, 11.4, 11.6, 31.4 s |
+
+All four new guns work in a match from BEGIN to the result card. The two full-autos never lost in 24 rounds, but the
+bot never paid for a reload, so read that as an upper bound, not a ranking. Whether the Auto Pistol at $95 is too much
+gun for a sidearm needs hands that reload.
+
+The Clear Bullpup jammed in 3 of 4 rounds at the lot. Each jam cost 121-184 frames (2.0-3.1 s) of holding R. One round
+was lost at 7.5 s with a jam in it. That is the price v1.437 meant, and at $40 it still won 10 of 12.
+
+The Snub-Nose lost three of its Sean rounds at 11.4-11.6 s. That is the moment Sean comes into sight (the bot's first
+sight of him was 11.2-11.4 s in the other guns' rounds). The Spring Pistol lost one round there too. A slow, wide BB
+loses the first exchange at that distance, which is the "side-yard gun, not a street one" the devlog promised. At the
+lot, where Marcus is close from the start, it won 4 of 4.
+
+**The Taped-On Flashlight against the Tactical, at night.** The Spring Assault Rifle went four rounds each in After Dark
+(`winnmark_night_prowl`) and Night Lane (`bunratty_night_lane`). The result was 3 of 8 with the taped light and 3 of 8
+with the Tactical. That is expected, since nothing in the AI sees your light and the bot doesn't need it. The blink
+fired 34 times over one four-round set of mostly short rounds. Whether 2.2 out to 9 m is enough light, and whether the
+blink reads as loose batteries, can't be judged headless.
+
+One thing for Michael's eyes, from the night picture with the light and the Foam-Noodle Cheek Pad both on: at the hip,
+the noodle is the brightest thing on the screen. It is a bright green block in the bottom-right corner, over the gun's
+stock and next to the ammo panel. The devlog says it shows "at the bottom right, past your hand", and so it does, but at
+night it is much brighter than the street (`docs/critic/2026-11-05-noodle-at-hip-night.png`). It hides once you are a
+quarter aimed, as built. That's a look, not a bug.
+
+**The Rubber-Band Bipod, crouched.** The bot crouched whenever a foe was in sight, eight rounds on the Spring Assault
+Rifle with the bipod and eight without (Sean and Marcus). It won 6 of 8 with the bipod and 7 of 8 without. At 1v1
+range the 0.6 cone doesn't show through a bot with perfect aim, and the slower aim-in doesn't either. In a picture
+crouched with the M249 in the Hollow's 3v3, the legs are out of frame at the hip. "Do the legs read as legs at the edge
+of the screen" has no answer at 1280 x 720: you don't see them.
+
+**After Dark runs long when Devon hides.** In 2 of 12 rounds the last kid was Devon, `hiding` at about (106, 51). One
+round ran out the 200 s and another was won at 159 s. The bot walks straight at the nearest kid and doesn't search, so
+this is mostly the bot. A player who has lost the sniper in the dark may meet the same thing. I'm not filing it.
+
+**Looked at, nothing wrong:** after a shot from the Spring Assault Rifle the ammo panel now reads HOLD LMB TO RACK at the
+result card (v1.436's fix, seen on every loss). The Auto Pistol at the hip in the lot is fine, and its long mag is below
+the frame. No page errors in any run.
+
+### itch.io
+Still unreachable: the proxy answers 403 for mbuckley616.itch.io. No comments read; the Last-seen line stands.
+
+Slack's last day: v1.434-v1.443 (Northcliff landed; v1.435-v1.436 fixed the workbench labels and my READY bug; the rest
+of batch 7; D.86's three homemade parts). The Fable session opened Willow Bend at real scale (draft PR #264, FREEZE
+#263) and waits on three answers. The builder asks what the play lane does next. Nothing was addressed to me, and
+nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.434-v1.443)
+- v1.434, a shotgun kid walking out of the base in the dark: not played (Northcliff's night match wasn't in this run).
+- v1.435, the Stock label under Under on five guns: not looked at.
+- v1.436: the status line is right after a shot (above).
+- v1.437, one jam in twelve for $40: three jams in four rounds at the lot, 2-3 s each, and still 10 of 12 won. It looks
+  fair from here; the feel is Michael's.
+- v1.438, two seconds of trigger: 12 of 12, but with free refills. Not judged.
+- v1.439, eight seconds of clouds at a 0.9 walk: 12 of 12. The walk never mattered in a 1v1 the bot fights standing.
+  A kid on loan with one: not played.
+- v1.440, the Snub-Nose against the Derringer and the Magnum: 8 of 12, the same as the Spring Pistol. It loses the
+  opening exchange at Sean's range (above). The Derringer won 7 of 8 on 4 Nov in two of the same matches.
+- v1.441, the light at 9 m and the blink: not judgeable headless (above).
+- v1.442, 0.6 crouched against the slower aim: no difference a bot can show; the legs aren't in the hip picture.
+- v1.443, a quarter quicker aiming in: not measured. The noodle's look at the hip at night is above.
 
 No proposals this run.

@@ -862,7 +862,7 @@ function measureGunForStock(group) {
     box.expandByPoint(new THREE.Vector3(b.min.x, b.min.y, Math.max(b.min.z, rearZ - LEN)));
     box.expandByPoint(new THREE.Vector3(b.max.x, b.max.y, rearZ));
   }
-  return { rearZ, box };
+  return { rearZ, box, boxes };   // v1.443: the boxes too, for the cheek pad's comb
 }
 // v1.425: the homemade stock parts, pulled over the butt as measured. Each its own group, hidden.
 function buildStockParts(group, m) {
@@ -892,6 +892,39 @@ function buildStockParts(group, m) {
     tape.position.set(cx, cy, zf + 0.005); g.add(tape);
     g.userData.rearZ = m.rearZ;
     meshes.sock_stock = g;
+  }
+  // v1.443 (D.86): the foam-noodle cheek pad: 11 cm of green pool noodle, its hole showing dark at each end, lying along
+  // the top of the stock from 1.5 cm short of the butt, sunk a third of its depth over the comb (it is slit and pushed
+  // down over it), with a duct-tape band round noodle and stock at each end. The comb is the top of the centre line's
+  // boxes along its length (the 5 cm butt box alone misses a comb that rises toward the grip).
+  {
+    const g = new THREE.Group();
+    const foamMat = new THREE.MeshStandardMaterial({ color: 0x6fd23a, roughness: 0.9 });
+    const holeMat = new THREE.MeshStandardMaterial({ color: 0x24401a, roughness: 1 });
+    const R = 0.017, LEN = 0.11, zBack = m.rearZ - 0.015, zFront = zBack - LEN, zc = (zBack + zFront) / 2;
+    let top = m.box.max.y, x0 = m.box.min.x, x1 = m.box.max.x;
+    const bxs = m.boxes || [];
+    for (const b of bxs) if (b.max.z > zFront && b.min.z < zBack) top = Math.max(top, b.max.y);
+    // a band wraps the stock down to the bottom of whatever reaches up near the comb at its z (not a grip below it)
+    const bandLow = (z) => { let lo = top - 0.03;
+      for (const b of bxs) if (b.min.z <= z && b.max.z >= z && b.max.y > top - 0.03) lo = Math.min(lo, b.min.y);
+      return Math.max(lo, top - 0.17); };
+    const cx = (x0 + x1) / 2, cy = top + R * 0.35;
+    const noodle = new THREE.Mesh(new THREE.CylinderGeometry(R, R, LEN, 16), foamMat);
+    noodle.rotation.x = Math.PI / 2; noodle.position.set(cx, cy, zc); g.add(noodle);
+    for (const z of [zBack + 0.0005, zFront - 0.0005]) {   // the hole down the middle, dark at each end
+      const hole = new THREE.Mesh(new THREE.CircleGeometry(R * 0.38, 12), holeMat);
+      hole.position.set(cx, cy, z); hole.rotation.y = z > zc ? 0 : Math.PI; g.add(hole);
+    }
+    const w = Math.max(2 * R, Math.min(0.07, x1 - x0)) + 0.004;
+    const bandTop = cy + R + 0.002;
+    for (const z of [zBack - 0.012, zFront + 0.012]) {
+      const bandBot = bandLow(z) - 0.002;
+      const band = new THREE.Mesh(new THREE.BoxGeometry(w, bandTop - bandBot, 0.012), tapeMat);
+      band.position.set(cx, (bandTop + bandBot) / 2, z); g.add(band);
+    }
+    g.userData.rearZ = m.rearZ; g.userData.comb = top;
+    meshes.noodle_pad = g;
   }
   for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.stockPart = k; group.add(meshes[k]); }
   return { meshes, rearZ: m.rearZ, box: m.box };

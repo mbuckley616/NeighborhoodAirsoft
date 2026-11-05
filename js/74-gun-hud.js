@@ -51,6 +51,16 @@ function updateGun(dt) {
     const bpm = fpGun && fpGun.userData.accessories && fpGun.userData.accessories.underParts && fpGun.userData.accessories.underParts.meshes.bipod;
     if (bpm && bpm.userData.k !== Game.gun._bipodK) setBipodLegs(bpm, Game.gun._bipodK);
   }
+  // v1.443 (D.86): the foam-noodle cheek pad sits where your cheek goes, so once the gun comes up to your eye it is under
+  // your face, not in front of it: hidden in first person from a quarter aimed (it filled the sight picture). The group
+  // stays visible (it is mounted); only its pieces go.
+  {
+    const npm = fpGun && fpGun.userData.accessories && fpGun.userData.accessories.stockParts && fpGun.userData.accessories.stockParts.meshes.noodle_pad;
+    if (npm) {
+      const show = (Game.player.ads || 0) < 0.25;
+      if (npm.userData.shown !== show) { npm.userData.shown = show; npm.children.forEach(o => { o.visible = show; }); }
+    }
+  }
   // === JAM unjamming (hold R while jammed) ===
   if (Game.gun.jammed) {
     if (Game.keys['KeyR']) {
