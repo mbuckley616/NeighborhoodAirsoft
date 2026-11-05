@@ -761,7 +761,7 @@ function buildUnderParts(group, mount, measured, gunType) {
       const pv = new THREE.Group(); pv.position.set(side * 0.0085, yPin, zc); g.add(pv);
       const leg = new THREE.Mesh(new THREE.BoxGeometry(t, L, w), woodMat);   // the wide face toward the side, as on a stirrer's edge-on hinge
       leg.position.set(0, -L / 2, 0); pv.add(leg);
-      const tip = new THREE.Mesh(new THREE.BoxGeometry(t + 0.001, 0.012, w + 0.001), bandMat);   // a rubber band on the foot
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(t + 0.0012, 0.011, w + 0.0012), bandMat);   // a rubber band on the foot
       tip.position.set(0, -L + 0.008, 0); pv.add(tip);
       pv.userData.side = side;
       legs.push(pv);
