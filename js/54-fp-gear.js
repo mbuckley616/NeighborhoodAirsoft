@@ -591,6 +591,7 @@ function gunUndersideOver(group, mount, zFront, zBack) {
   group.traverse(o => {
     if (!o.isMesh || !o.geometry || !o.visible || o.userData.fpHand) return;
     for (let p = o.parent; p && p !== group; p = p.parent) if (!p.visible || p.userData.fpHand) return;
+    if (o.material && o.material.transparent && o.material.depthWrite === false) return;   // v1.442: not a laser's or light's beam
     if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
     if (b.min.x > 0.004 || b.max.x < -0.004 || b.max.z < zFront || b.min.z > zBack || b.max.y < mount.barrelY - 0.03) return;
@@ -617,6 +618,11 @@ function fpOffHandFrontZ(group, gunType) {
   const pump = FP_HANDS[gunType].l.on === 'pump' && (g.userData.cockingParts || [])[0];   // and ahead of the pump the hand works
   if (pump) { const pb = new THREE.Box3().setFromObject(pump); if (!pb.isEmpty()) front = Math.min(front, pb.applyMatrix4(inv).min.z); }
   return (_fpOffHandFront[gunType] = front);
+}
+// v1.442 (D.86): the bipod's legs at k (0 folded along the barrel, 1 down and splayed); no allocation, called each frame
+function setBipodLegs(g, k) {
+  for (const pv of g.userData.legs) { pv.rotation.x = (1 - k) * g.userData.foldX; pv.rotation.z = pv.userData.side * k * g.userData.splay; }
+  g.userData.k = k;
 }
 function buildUnderParts(group, mount, measured, gunType) {
   const m = measured || measureGunForUnder(group, mount);
@@ -730,6 +736,41 @@ function buildUnderParts(group, mount, measured, gunType) {
     g.add(light); g.add(target); light.target = target;
     g.userData.light = light; g.userData.beam = beam;
     meshes.taped_light = g;
+  }
+  // v1.442 (D.86): the rubber-band bipod: a wooden clothespin taped under the gun ahead of your off hand, two paint
+  // stirrers hinged on it with rubber bands. Folded, the legs lie forward along the underside; crouched, updateGun swings
+  // them down and out (userData.legs, each a pivot group: rotation.x from userData.foldX to 0, rotation.z to ±userData.splay)
+  {
+    const g = new THREE.Group();
+    const L = 0.12, w = 0.02, t = 0.003;   // a paint stirrer: 2 cm wide, 3 mm thick, cut to 12 cm
+    const hf = fpOffHandFrontZ(group, gunType);
+    const zc = hf == null ? z0 : Math.min(z0, hf - 0.03);   // the clothespin's middle, just ahead of the off hand
+    const yGun = hf == null ? y0 : gunUndersideOver(group, mount, zc - 0.012, zc + 0.012);
+    // the hinge sits under the lowest point of the gun anywhere along the folded legs, so they lie clear of it
+    const yLow = hf == null ? y0 : Math.min(yGun, gunUndersideOver(group, mount, zc - L - 0.01, zc));
+    const yPin = yLow - 0.016;
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0xd9b98a, roughness: 0.9 });
+    const pinMat = new THREE.MeshStandardMaterial({ color: 0xc49a62, roughness: 0.85 });
+    const bandMat = new THREE.MeshStandardMaterial({ color: 0xc23a2c, roughness: 0.7 });
+    const clip = new THREE.Mesh(new THREE.BoxGeometry(0.012, Math.max(0.01, yGun - yPin + 0.004), 0.024), pinMat);   // the clothespin
+    clip.position.set(0, (yGun + yPin) / 2 - 0.002, zc); g.add(clip);
+    const tape = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 0.01), tapeMat);   // a band of tape round it and the gun
+    tape.position.set(0, yGun - 0.002, zc); g.add(tape);
+    const legs = [];
+    for (const side of [-1, 1]) {
+      const pv = new THREE.Group(); pv.position.set(side * 0.0085, yPin, zc); g.add(pv);
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(t, L, w), woodMat);   // the wide face toward the side, as on a stirrer's edge-on hinge
+      leg.position.set(0, -L / 2, 0); pv.add(leg);
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(t + 0.001, 0.012, w + 0.001), bandMat);   // a rubber band on the foot
+      tip.position.set(0, -L + 0.008, 0); pv.add(tip);
+      pv.userData.side = side;
+      legs.push(pv);
+    }
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.0095, 0.0018, 6, 14), bandMat);   // the band that is the hinge
+    band.rotation.y = Math.PI / 2; band.position.set(0, yPin, zc); g.add(band);
+    g.userData.legs = legs; g.userData.foldX = Math.PI / 2 - 0.06; g.userData.splay = 0.26;
+    setBipodLegs(g, 0);
+    meshes.bipod = g;
   }
   // PVC foregrip: a white pipe stub, a steel hose clamp at the top and a cap on the end
   {
@@ -1045,6 +1086,9 @@ function buildBareGunMesh(gunType) {
   else if (gunType === 'thompson') mesh = buildFPThompson();     // v1.403
   else if (gunType === 'm14')     mesh = buildFPM14();           // v1.404
   else mesh = buildFPGun();
+  // v1.442: the builders hang the gun on the camera, for the gun in hand; this one is for a picture, the workbench or a
+  // measure, so it comes off again (a spare left there showed in the match, and its parts' lights lit every shader)
+  if (mesh.parent) mesh.parent.remove(mesh);
   mesh.position.set(0, 0, 0);
   mesh.rotation.set(0, 0, 0);
   mesh.visible = true;

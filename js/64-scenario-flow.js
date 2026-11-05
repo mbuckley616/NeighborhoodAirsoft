@@ -807,6 +807,7 @@ function startScenario(built) {
   fillSpareMagsFromBag();   // v1.323 (B.14): the spare mags in your slots load next
   Game.gun.flipT = 0;
   Game.gun._rHeld = false;
+  Game.gun._bipodK = 0;   // v1.442 (D.86): the bipod's legs start folded
   // v1.50: then top off any equipped speed loaders from what's left in the bag
   // (mag gets first claim). Loaders are reusable — they arrive full each round.
   refillEquippedSpeedLoadersFromBag();

@@ -42,6 +42,15 @@ function updateGun(dt) {
     tlm.userData.beam.visible = !out;
   }
 
+  // v1.442 (D.86): the rubber-band bipod's legs swing down while you crouch (not in a slide), and back up when you stand
+  {
+    const bp = getUnderPart(Game.persist.equipped.gun);
+    const want = bp && bp.crouchSpreadMult && Game.player.crouching && !Game.player.sliding ? 1 : 0;
+    const k0 = Game.gun._bipodK || 0, step = dt / ((bp && bp.deployTime) || 0.25);
+    Game.gun._bipodK = want > k0 ? Math.min(1, k0 + step) : want < k0 ? Math.max(0, k0 - step) : k0;
+    const bpm = fpGun && fpGun.userData.accessories && fpGun.userData.accessories.underParts && fpGun.userData.accessories.underParts.meshes.bipod;
+    if (bpm && bpm.userData.k !== Game.gun._bipodK) setBipodLegs(bpm, Game.gun._bipodK);
+  }
   // === JAM unjamming (hold R while jammed) ===
   if (Game.gun.jammed) {
     if (Game.keys['KeyR']) {
