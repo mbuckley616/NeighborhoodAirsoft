@@ -411,6 +411,13 @@ each builder works its own lane's items top-down and skips the other's. A new it
    ~~The foam-noodle cheek pad~~ — done, v1.443 (the Foam-Noodle Cheek Pad, $5, 0.2 lb, STOCK: green pool noodle taped
    along the top of the stock, aiming in 1.25 times as quick and nothing else; in first person it hides from a quarter
    aimed, where it filled the sight picture; `tests/homemade-cheek.test.mjs`). The three named parts are done. What comes next ("and the like"): question in decisions, "What the play lane builds next, after the third homemade wave" (daily sweep, 5 Nov).
+87. [play] Gun batch 8, toward 50: four more guns in the backyard tone; the builder picks the kinds (the question
+   offered a pistol-calibre carbine, a cheap break-barrel rifle, a battery DMR and a second revolver). Michael: **B, gun
+   batch 8, toward 50** on "What the play lane builds next, after the third homemade wave" (control room, 2026-11-05).
+   Builder (play) takes it. ~~The pistol-calibre carbine~~ — done, v1.446 (the Gas Carbine, $175, under RIFLES after the
+   Electric Rifle: the Gas Pistol's green-gas blowback in a carbine on the AR's frame, a pull a shot at 5 a second, a
+   50 m/s BB straight for 13 m that fades to 85% over the mag, 6 lb and a 0.95 walk; `tests/gun-gascarbine.test.mjs`).
+   Left: three more (likely a cheap break-barrel rifle, a battery DMR and a second revolver kind).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

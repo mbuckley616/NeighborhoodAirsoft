@@ -26,6 +26,7 @@ const MAG_GUN_FIT = {
   spare_mag_famas: 'famas',   // v1.325 (D.63)
   spare_mag_epistol: 'epistol', spare_mag_erifle: 'erifle',   // v1.326
   spare_mag_burst: 'burst',   // v1.327
+  spare_mag_gascarbine: 'gascarbine',   // v1.446
   spare_mag_semishotgun: 'semishotgun',   // v1.328
   spare_mag_m249: 'm249',   // v1.335
   spare_mag_l96: 'l96',   // v1.336
@@ -85,7 +86,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'clearpup',   // v1.437 (D.85 batch 7): the cheap clear battery bullpup
   'autopistol',   // v1.438 (D.85 batch 7): the battery machine pistol
   'drumshotgun',   // v1.439 (D.85 batch 7): the full-auto drum shotgun
-  'snubnose'];   // v1.440 (D.85 batch 7): the Magnum's short-barrelled version
+  'snubnose',   // v1.440 (D.85 batch 7): the Magnum's short-barrelled version
+  'gascarbine'];   // v1.446 (D.87 batch 8): the gas blowback pistol-calibre carbine
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -109,6 +111,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'epistol') return Game.persist.owned.epistol_mag_30 ? 30 : 18;   // v1.326
   if (gunType === 'erifle') return Game.persist.owned.erifle_mag_60 ? 60 : 30;
   if (gunType === 'burst') return Game.persist.owned.burst_mag_150 ? 150 : 90;   // v1.327
+  if (gunType === 'gascarbine') return Game.persist.owned.gascarbine_mag_45 ? 45 : 30;   // v1.446: its gas mag, or the long one
   if (gunType === 'semishotgun') return Game.persist.owned.semishotgun_mag_90 ? 90 : 60;   // v1.328
   if (gunType === 'm249') return Game.persist.owned.m249_mag_1500 ? 1500 : 800;   // v1.335: its box
   if (gunType === 'l96') return Game.persist.owned.l96_mag_20 ? 20 : 10;   // v1.336
@@ -288,6 +291,7 @@ const GUN_ACCESSORY_CAP = {
   epistol: { sight: 1, rails: 1 },              // v1.326
   erifle:  { sight: 1, rails: 2, under: 1 },
   burst:   { sight: 1, rails: 2, under: 1 },   // v1.327
+  gascarbine: { sight: 1, rails: 2, under: 1 },   // v1.446: the AR's
   semishotgun: { sight: 1, rails: 2, under: 1 },   // v1.328
   m249:    { sight: 1, rails: 2, under: 1 },   // v1.335
   l96:     { sight: 1, rails: 2, under: 1 },   // v1.336: the sniper's
@@ -678,6 +682,15 @@ const GUN_MAGS = {
     mags: [ { flag: 'erifle_mag_60', cap: 60, price: 20 } ],
     spares: [ { key: 'spare_mag_erifle', label: 'Spare Electric Rifle Mag (30)', price: 10 } ],
   },
+  // v1.446 (backlog D.87, batch 8): the Gas Carbine, a pistol-calibre carbine: the Gas Pistol's green gas in a short
+  // rifle with a stock, so its BB flies faster and straighter than any pistol's, a pull a shot, the gas cooling as the
+  // mag empties
+  gascarbine: {
+    displayName: 'Gas Carbine', baseCap: 30, price: 175, ownFlag: 'gascarbine',
+    blurb: 'A green-gas carbine, the Gas Pistol\'s guts in a short olive rifle with a stock, and a brass fill valve on the bottom of its mag. Every pull fires and the gas kicks the charging handle back: five a second, a fast BB that stays straight longer than the Electric Rifle\'s. Like every gas gun it cools as the mag empties, so the last BBs fly slower. Lighter than the rifles, so you walk quicker.',
+    mags: [ { flag: 'gascarbine_mag_45', cap: 45, price: 18 } ],
+    spares: [ { key: 'spare_mag_gascarbine', label: 'Spare Gas Carbine Mag (30)', price: 10 } ],
+  },
   // v1.327 (backlog D.63, batch 1): the burst rifle, an electric M16 that fires three BBs a pull
   burst: {
     displayName: 'Burst Rifle', baseCap: 90, price: 210, ownFlag: 'burst',
@@ -875,7 +888,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','erifle','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','erifle','gascarbine','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum; v1.446: the Gas Carbine after the Electric Rifle
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1089,6 +1102,7 @@ function describeSlot(idx) {
       spare_mag_autopistol: 24,   // v1.438
       spare_mag_snubnose: 6,   // v1.440
       spare_mag_drumshotgun: 100,   // v1.439
+      spare_mag_gascarbine: 30,   // v1.446
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1134,6 +1148,7 @@ function describeSlot(idx) {
       spare_mag_autopistol: 'Spare 24-rd Auto Pistol Mag',   // v1.438
       spare_mag_snubnose: 'Spare 6-rd Snub-Nose Shells',   // v1.440
       spare_mag_drumshotgun: 'Spare 100-BB Shotgun Drum',   // v1.439
+      spare_mag_gascarbine: 'Spare 30-rd Gas Carbine Mag',   // v1.446
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1321,6 +1336,7 @@ const GUN_WEIGHT = {
   famas: 8,                                               // v1.325: the AR's weight
   epistol: 2.5, erifle: 8.5,                              // v1.326: a battery adds a little
   burst: 8.5,                                             // v1.327
+  gascarbine: 6,                                          // v1.446: a short carbine, the AR 8, the Gas Pistol 2.5
   semishotgun: 7,                                         // v1.328
   m249: 15,                                               // v1.335: the heaviest gun
   l96: 11,                                                // v1.336: the heavy spring and barrel
@@ -1385,6 +1401,7 @@ const MAG_WEIGHT = {
   spare_mag_autopistol: 0.6,   // v1.438: the Electric Pistol's
   spare_mag_snubnose: 0.4,   // v1.440: the Magnum's speed loader
   spare_mag_drumshotgun: 1.8,   // v1.439: a full drum
+  spare_mag_gascarbine: 0.9,   // v1.446: a gas mag, heavier than a spring one
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1813,6 +1830,11 @@ GUN_SPECS.epistol = Object.assign({}, GUN_SPECS.pistol, { electric: true, semiRP
 GUN_SPECS.erifle = Object.assign({}, GUN_SPECS.ar, { electric: true, semiRPM: 360, displayName: 'Electric Rifle' });
 // v1.327 (D.63, batch 1): the Burst Rifle. `burst`: a pull fires that many BBs at `cyclicRPM` (held or let go), then
 // the trigger wants letting go and pulling again; the next burst may start FIRE_LOCKOUT after the last BB. The AR's BB.
+// v1.446 (D.87, batch 8): the Gas Carbine, the Gas Pistol's pull-a-shot gas blowback in a carbine: 5 a second (the
+// Gas Pistol 4.5, the Electric Rifle 6), a fast BB (50 m/s; the AR 45, the Gas Pistol 40) straight for 13 m (the AR
+// 10, the M14 18), a little tighter (0.24; 0.28) and aimed 0.3, the gas cooling as the mag empties (the last BB at 85%;
+// the pistol's 80%), and lighter than the rifles, so a quicker walk (0.95; the AR 0.85)
+GUN_SPECS.gascarbine = Object.assign({}, GUN_SPECS.ar, { electric: true, gas: true, gasFade: 0.15, semiRPM: 300, muzzleVelocity: 50, curveOnsetDistance: 13, curveStrengthMax: 12, baseSpread: 0.24, adsSpreadMult: 0.3, weightClass: 'medium', playerSpeedMult: 0.95, displayName: 'Gas Carbine' });
 GUN_SPECS.burst = Object.assign({}, GUN_SPECS.ar, { electric: true, burst: 3, cyclicRPM: 720, playerSpeedMult: 0.83, displayName: 'Burst Rifle' });
 // v1.328 (D.63, batch 1): the Semi-Auto Shotgun, the spring shotgun's 2-3 BBs a pull with nothing to pump (electric,
 // 2.5 pulls a second at most); a new mag is racked with its charging handle

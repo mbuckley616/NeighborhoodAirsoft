@@ -117,6 +117,7 @@ function gunForegripZ(weapon) {
     case 'ar':
     case 'erifle':  // v1.326
     case 'burst':   // v1.327
+    case 'gascarbine':   // v1.446
     case 'ak47':    // handguard ahead of the mag
     case 'rpk':     return 0.16;   // v1.396: and the RPK's
     case 'famas':   return 0.15;   // v1.325: the bullpup's handguard, ahead of the grip
@@ -181,7 +182,8 @@ function buildEnemyGunMesh(weapon) {
     }
     case 'ar':
     case 'erifle':     // v1.326: the Electric Rifle in the kids' blocky style is the AR
-    case 'burst': {    // v1.327: and the Burst Rifle
+    case 'burst':      // v1.327: and the Burst Rifle
+    case 'gascarbine': {   // v1.446: and the Gas Carbine
       box(0.045, 0.07, 0.40, black, 0, 0, 0.18);         // long barrel/receiver
       box(0.05, 0.13, 0.07, black, 0, -0.10, 0.06);      // tall magazine
       box(0.035, 0.04, 0.10, black, 0, 0.06, 0.04);      // carry-handle/optic riser

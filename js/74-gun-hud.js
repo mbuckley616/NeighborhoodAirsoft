@@ -334,7 +334,7 @@ function updateHeldMesh(dt) {
       // via adsYCorr when a red-dot/scope is mounted, so this only affects irons.
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'famas' || gunType === 'erifle' || gunType === 'burst') {   // v1.325: the AR's poses (its post's tip is at the same height); v1.326: and the Electric Rifle's
+    } else if (gunType === 'famas' || gunType === 'erifle' || gunType === 'burst' || gunType === 'gascarbine') {   // v1.325: the AR's poses (its post's tip is at the same height); v1.326: and the Electric Rifle's
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -949,6 +949,7 @@ const RETICLE_SPECS = {
   snubnose: { style: 'ring_ticks', baseGap: 10, ringR: 10, centerDot: 1.4 },   // v1.440: the Magnum's, wider for the short barrel
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
+  gascarbine: { style: 'dot_cross', baseGap: 9, ringR: 6, centerDot: 1.6 },   // v1.446: the AR's, a little tighter
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   drumshotgun: { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.439: the shotgun's, wider
   m249:    { style: 'circle_cross', baseGap: 14, ringR: 13, centerDot: 1.4 },   // v1.335: the AK's, a little wider

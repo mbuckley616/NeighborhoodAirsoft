@@ -121,7 +121,7 @@ const burstShop = await page.evaluate(() => {
 });
 console.log('   RIFLES: ' + burstShop.names.join(' · '));
 check('Burst Rifle: under RIFLES after the Electric Rifle with its picture, $210 from its page, in your hands; the page says 3-round burst (v1.395: the SVD last; v1.404: the M14 after it; v1.416: the Pump Sniper after the sniper)',
-  JSON.stringify(burstShop.names) === '["Spring Assault Rifle","FAMAS","Lever Gun","Electric Rifle","Burst Rifle","M14","Spring Sniper Rifle","Pump Sniper","L96","SVD"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
+  JSON.stringify(burstShop.names) === '["Clear Bullpup","Spring Assault Rifle","FAMAS","Lever Gun","Electric Rifle","Gas Carbine","Burst Rifle","M14","Spring Sniper Rifle","Pump Sniper","L96","SVD"]' && burstShop.pic && burstShop.paid === 210 && burstShop.equipped === 'burst' && burstShop.says, burstShop);
 await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'burst' }; });
 await g.scenario('bunratty_sean');
 const B = await page.evaluate(() => {
@@ -206,7 +206,7 @@ const ssShop = await page.evaluate(() => {
 });
 console.log('   SHOTGUNS: ' + ssShop.names.join(' · '));
 check('Semi-Auto Shotgun: under SHOTGUNS last (v1.398: after the SPAS-12; v1.411: after the KSG) with its picture, $160 from its page, in your hands; the page says electric semi',
-  JSON.stringify(ssShop.names) === '["Spring Shotgun","Double-Barrel","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun"]' && ssShop.pic && ssShop.paid === 160 && ssShop.equipped === 'semishotgun' && ssShop.says, ssShop);
+  JSON.stringify(ssShop.names) === '["Spring Shotgun","Double-Barrel","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun","Drum Shotgun"]' && ssShop.pic && ssShop.paid === 160 && ssShop.equipped === 'semishotgun' && ssShop.says, ssShop);
 await page.evaluate(() => { Game.persist.bag = 2000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'semishotgun' }; });
 await g.scenario('bunratty_sean');
 const SS = await page.evaluate(() => {

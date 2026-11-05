@@ -738,6 +738,33 @@ function buildFPElectricRifle() {
   return group;
 }
 
+// v1.446 (backlog D.87, batch 8): the Gas Carbine, a pistol-calibre carbine on the spring rifle's frame (so its hands,
+// its rails and its sights are the AR's): an olive lower, grip and stock, a black gas mag with a brass fill valve on its
+// base, a bare steel barrel shroud over the AR's barrel, and a small brass gas plug on the right of the receiver. Every
+// shot the gas throws the charging handle back (`blowback`, as the Gas Pistol's slide).
+function buildFPGasCarbine() {
+  const group = buildFPAR();
+  const olive = new THREE.MeshStandardMaterial({ color: 0x4d5636, roughness: 0.65, metalness: 0.05 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x111113, roughness: 0.55, metalness: 0.2 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x9a9da3, roughness: 0.3, metalness: 0.8 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.8 });
+  _recolor(group, 0x1d1d22, olive);   // the lower, the magwell, the grip, the buffer and the stock
+  _recolor(group, 0x2848a0, black);   // a black gas mag, not the spring rifle's blue
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  const mag = group.getObjectByName('mag');
+  add(new THREE.CylinderGeometry(0.004, 0.004, 0.005, 8), brass, 0, -0.0612, 0.006, mag).name = 'gasValve';
+  // the steel shroud round the barrel ahead of the front sight, and the brass gas plug on the receiver's right
+  const shroud = add(new THREE.CylinderGeometry(0.0125, 0.0125, 0.09, 12), steel, 0, 0.045, -0.315);
+  shroud.rotation.x = Math.PI / 2; shroud.name = 'shroud';
+  for (const z of [-0.29, -0.315, -0.34]) add(new THREE.BoxGeometry(0.0255, 0.003, 0.006), black, 0, 0.045, z);
+  add(new THREE.CylinderGeometry(0.005, 0.005, 0.004, 8), brass, 0.0215, 0.038, -0.07).rotation.z = Math.PI / 2;
+  // the front post is the AR's
+  group.traverse(o => { if (o.isMesh && Math.abs(o.position.z + 0.245) < 1e-6 && Math.abs(o.position.y - 0.085) < 1e-6) o.userData.frontSight = true; });
+  group.userData.blowback = true;
+  group.userData.gunType = 'gascarbine';
+  return group;
+}
+
 // v1.327 (backlog D.63, batch 1): the Burst Rifle, an electric M16A2 on the spring rifle's receiver: the A2's fixed
 // stock where the AR's buffer tube and collapsing stock were, its round ribbed handguard round the AR's square one, no
 // vertical foregrip (the off hand holds the handguard), a grey mag, and a battery light by the selector.
@@ -2520,6 +2547,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'snubnose') mesh = buildFPSnubNose();   // v1.440
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
+  else if (gunType === 'gascarbine') mesh = buildFPGasCarbine();   // v1.446
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
   else if (gunType === 'drumshotgun') mesh = buildFPDrumShotgun();   // v1.439
   else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
@@ -2614,6 +2642,7 @@ const FP_HANDS = {
   magnum:  { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.410: the Six-Shooter's
   snubnose: { r: { c: [0, -0.045, 0.015], rx: -0.38, gw: 0.016, gd: 0.0225, up: 0.005 }, l: 'cup' },   // v1.440: the Magnum's
   erifle:  { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.326: the AR's
+  gascarbine: { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'grip', c: [0, -0.005, -0.21], rx: 0, gw: 0.014, gd: 0.013, up: -0.005 } },   // v1.446: the AR's
   burst:   { r: { c: [0, -0.055, 0.010], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.01 }, l: { kind: 'support', c: [0, 0.038, -0.19], hw: 0.0275, hh: 0.0275 }, underHand: true },   // v1.327: the round handguard
   semishotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.328: the pistol grip, the fixed forend
   drumshotgun: { r: { c: [0, -0.040, 0.012], rx: -0.35, gw: 0.017, gd: 0.017, up: -0.005 }, l: { kind: 'support', c: [0, 0.025, -0.22], hw: 0.020, hh: 0.022 }, underHand: true },   // v1.439: the Semi-Auto Shotgun's grip and forend

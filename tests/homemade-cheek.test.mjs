@@ -44,8 +44,8 @@ const geo = await page.evaluate(() => {
 });
 for (const r of geo.rows) console.log('  ', JSON.stringify(r));
 console.log('   no slot:', geo.none.join(' '));
-check('on every gun with a stock slot (32) it lies on the centre line, 1.5 cm short of the butt, 11 cm long, sunk 1-1.2 cm over the comb',
-  geo.rows.length === 32 && geo.rows.every(r => Math.abs(r.cx) < 0.002 && Math.abs(r.back - 0.015) < 0.001 && Math.abs(r.len - 0.11) < 0.002 && r.sink >= 0.01 && r.sink <= 0.012), geo.rows);
+check('on every gun with a stock slot (33, v1.446: the Gas Carbine) it lies on the centre line, 1.5 cm short of the butt, 11 cm long, sunk 1-1.2 cm over the comb',
+  geo.rows.length === 33 && geo.rows.every(r => Math.abs(r.cx) < 0.002 && Math.abs(r.back - 0.015) < 0.001 && Math.abs(r.len - 0.11) < 0.002 && r.sink >= 0.01 && r.sink <= 0.012), geo.rows);
 check('two tape bands wrap it, over its top and 3 cm or more down the stock', geo.rows.every(r => r.bands === 2 && r.bandOver > 0 && r.bandBelow >= 0.03), geo.rows);
 check('the 14 guns with no stock slot have no stock parts', geo.none.length === 14 && geo.none.every(s => s.endsWith('-')), geo.none);
 
