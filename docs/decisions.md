@@ -4,6 +4,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 (#neighborhood-airsoft) and writes the `Michael:` line when he answers. Nothing is a spec without one.
 
 ## Pending
+
+## Answered
+
+- **Willow Bend at real scale (D.51): where the matches play, the gazebo, and the cart ride (deep-work session, 2026-11-05, card `fable/d51-willow-bend`)**
+  You chose the swim and tennis centre on the river's bend, at real scale. Each match still plays in a fenced area about
+  today's size; the rest is scenery. (Full entry on auto/fable-d51-willow-bend.)
+  1. Where the five matches play: A) two areas, pool compound and course side (recommended); B) one area for all five
+     across the middle; C) all five on the course side.
+  2. What the gazebo becomes: A) a made-up white gazebo by the fairway (recommended); B) the pool's pavilion, given
+     rails; C) a roofed bench shelter between the clay courts (Hold the Shelter).
+  3. How far Eric drives: A) one lap of the real ~280 m loop (recommended); B) two laps of the real loop; C) two laps
+     of a shorter loop.
+  Michael: 1. **A) Two areas: pool compound and course side**; 2. **C) A roofed bench shelter between the clay courts**;
+  3. **A) One lap of the real ~280 m loop**. (control room, 2026-11-05)
+
 - **What the play lane builds next, after the third homemade wave (builder, 2026-11-05)**
   D.86's three named parts are done: the Taped-On Flashlight (v1.441), the Rubber-Band Bipod (v1.442) and the
   Foam-Noodle Cheek Pad (v1.443). Your A said "and the like", so the wave could go on, but how far is yours to say. Every
@@ -18,9 +33,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. The night matches got their light in this wave, and a tracer gives them a second reason to change
   a gun for the dark; both sit on slots every long gun already has and touch no maps-lane file or Fable area.
-
-
-## Answered
+  Michael: **B) Gun batch 8, toward 50**. (control room, 2026-11-05)
 
 - **What the play lane builds next, after gun batch 7 (builder, 2026-11-04)**
   Gun batch 7 is done (v1.432-v1.440): the Double-Barrel, Derringer, Clear Bullpup, Auto Pistol, Drum Shotgun and the
