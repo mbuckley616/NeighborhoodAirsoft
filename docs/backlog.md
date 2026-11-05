@@ -410,7 +410,7 @@ each builder works its own lane's items top-down and skips the other's. A new it
    `buildBareGunMesh` left its guns on the camera, and their lit flashlights slowed every match after; `tests/homemade-bipod.test.mjs`).
    ~~The foam-noodle cheek pad~~ — done, v1.443 (the Foam-Noodle Cheek Pad, $5, 0.2 lb, STOCK: green pool noodle taped
    along the top of the stock, aiming in 1.25 times as quick and nothing else; in first person it hides from a quarter
-   aimed, where it filled the sight picture; `tests/homemade-cheek.test.mjs`). The three named parts are done.
+   aimed, where it filled the sight picture; `tests/homemade-cheek.test.mjs`). The three named parts are done. What comes next ("and the like"): question in decisions, "What the play lane builds next, after the third homemade wave" (daily sweep, 5 Nov).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
