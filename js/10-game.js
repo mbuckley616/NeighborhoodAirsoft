@@ -978,6 +978,8 @@ const Game = {
       spare_mag_autopistol: 0,    // v1.438 (D.85 batch 7)
       spare_mag_snubnose: 0,      // v1.440 (D.85 batch 7)
       spare_mag_drumshotgun: 0,   // v1.439 (D.85 batch 7)
+      spare_mag_gascarbine: 0,    // v1.446 (D.87 batch 8)
+      spare_mag_breakbarrel: 0,   // v1.447 (D.87 batch 8)
     },
     equipped: {
       gun: 'pistol',

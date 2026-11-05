@@ -25,7 +25,7 @@ const sh = await page.evaluate(() => {
 console.log('   SHOTGUNS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify({ d: sh.d, others: sh.others }));
 check('Double-Barrel: under SHOTGUNS after the Spring Shotgun, with its picture and "Break-action, 2 barrels" in its line, $90 from its page, in your hands; the page sells its spare shell pouch',
-  JSON.stringify(sh.names) === '["Spring Shotgun","Double-Barrel","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun"]' && sh.pic && sh.line && sh.paid === 90 && sh.equipped === 'double' && sh.spare, sh);
+  JSON.stringify(sh.names) === '["Spring Shotgun","Double-Barrel","Thunder Pump","SPAS-12","KSG","Semi-Auto Shotgun","Drum Shotgun"]' && sh.pic && sh.line && sh.paid === 90 && sh.equipped === 'double' && sh.spare, sh);
 const [spring, thunder, spas] = sh.others;
 check('Double-Barrel: two barrels of three BBs at 33 m/s, a cloud between the SPAS-12\'s and the Spring Shotgun\'s, the longest re-cock of the shotguns (1.5 s, "break"), 36 in the pouch',
   sh.d.barrels === 2 && sh.d.type === 'break' && sh.d.mode === 'semi' && !sh.d.electric && JSON.stringify(sh.pellets) === '[3]'
