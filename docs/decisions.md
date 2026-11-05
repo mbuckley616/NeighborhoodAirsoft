@@ -4,20 +4,6 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 (#neighborhood-airsoft) and writes the `Michael:` line when he answers. Nothing is a spec without one.
 
 ## Pending
-- **What the play lane builds next, after the third homemade wave (builder, 2026-11-05)**
-  D.86's three named parts are done: the Taped-On Flashlight (v1.441), the Rubber-Band Bipod (v1.442) and the
-  Foam-Noodle Cheek Pad (v1.443). Your A said "and the like", so the wave could go on, but how far is yours to say. Every
-  other open play item is a Fable card (the room list, recorded voices), an open design, or waits on your look. What
-  should the play lane take next?
-  - A) **Two more homemade parts to close the wave** *(recommended)*: a glow-stick tracer on the MUZZLE (your BBs leave
-    a faint green streak at night, so you see where they go and so do the kids) and a tennis-ball grip on the UNDER slot
-    (a split ball pushed over the handguard: steadier on the move, a little heavier).
-  - B) **Gun batch 8, toward 50**: four more (you name the kinds, or the builder picks; likely a pistol-calibre carbine,
-    a cheap break-barrel rifle, a battery DMR and a second revolver).
-  - C) **Rest the play lane** until the Willow Bend card lands, then take what its playtest turns up.
-  - D) **Something else.** Reply with what you want next.
-  Recommendation: A. The night matches got their light in this wave, and a tracer gives them a second reason to change
-  a gun for the dark; both sit on slots every long gun already has and touch no maps-lane file or Fable area.
 
 ## Answered
 
@@ -50,8 +36,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
        fairway and the cart yard.
      - B) **Two laps of the real loop**: twice as long under fire; harder.
      - C) **Two laps of a shorter loop** round one court block (about 140 m a lap).
-  Michael: **1 A) Two areas; 2 C) A roofed bench shelter between the clay courts (Hold the Shelter); 3 A) One lap of
-  the real loop.** (control room, 2026-11-05)
+  Michael: 1. **A) Two areas: pool compound and course side**; 2. **C) A roofed bench shelter between the clay courts**;
+  3. **A) One lap of the real ~280 m loop**. (control room, 2026-11-05)
+
+- **What the play lane builds next, after the third homemade wave (builder, 2026-11-05)**
+  D.86's three named parts are done: the Taped-On Flashlight (v1.441), the Rubber-Band Bipod (v1.442) and the
+  Foam-Noodle Cheek Pad (v1.443). Your A said "and the like", so the wave could go on, but how far is yours to say. Every
+  other open play item is a Fable card (the room list, recorded voices), an open design, or waits on your look. What
+  should the play lane take next?
+  - A) **Two more homemade parts to close the wave** *(recommended)*: a glow-stick tracer on the MUZZLE (your BBs leave
+    a faint green streak at night, so you see where they go and so do the kids) and a tennis-ball grip on the UNDER slot
+    (a split ball pushed over the handguard: steadier on the move, a little heavier).
+  - B) **Gun batch 8, toward 50**: four more (you name the kinds, or the builder picks; likely a pistol-calibre carbine,
+    a cheap break-barrel rifle, a battery DMR and a second revolver).
+  - C) **Rest the play lane** until the Willow Bend card lands, then take what its playtest turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. The night matches got their light in this wave, and a tracer gives them a second reason to change
+  a gun for the dark; both sit on slots every long gun already has and touch no maps-lane file or Fable area.
+  Michael: **B) Gun batch 8, toward 50**. (control room, 2026-11-05)
 
 - **What the play lane builds next, after gun batch 7 (builder, 2026-11-04)**
   Gun batch 7 is done (v1.432-v1.440): the Double-Barrel, Derringer, Clear Bullpup, Auto Pistol, Drum Shotgun and the
