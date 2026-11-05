@@ -408,7 +408,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
    Rubber-Band Bipod, $9, 0.4 lb, under the barrel: two paint stirrers on a clothespin that swing down in 0.25 s while you
    crouch, the cone 0.6 as wide while they are down, aiming in 0.85 as quick; last run's `under-parts` crash was v1.441's:
    `buildBareGunMesh` left its guns on the camera, and their lit flashlights slowed every match after; `tests/homemade-bipod.test.mjs`).
-   Next: the foam-noodle cheek pad (STOCK).
+   ~~The foam-noodle cheek pad~~ — done, v1.443 (the Foam-Noodle Cheek Pad, $5, 0.2 lb, STOCK: green pool noodle taped
+   along the top of the stock, aiming in 1.25 times as quick and nothing else; in first person it hides from a quarter
+   aimed, where it filled the sight picture; `tests/homemade-cheek.test.mjs`). The three named parts are done.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
