@@ -27,6 +27,7 @@ const MAG_GUN_FIT = {
   spare_mag_epistol: 'epistol', spare_mag_erifle: 'erifle',   // v1.326
   spare_mag_burst: 'burst',   // v1.327
   spare_mag_gascarbine: 'gascarbine',   // v1.446
+  spare_mag_breakbarrel: 'breakbarrel',   // v1.447
   spare_mag_semishotgun: 'semishotgun',   // v1.328
   spare_mag_m249: 'm249',   // v1.335
   spare_mag_l96: 'l96',   // v1.336
@@ -87,7 +88,8 @@ const ALL_GUN_TYPES = ['pistol', 'shotgun', 'ar', 'sniper', 'ak47', 'mp5', 'ump'
   'autopistol',   // v1.438 (D.85 batch 7): the battery machine pistol
   'drumshotgun',   // v1.439 (D.85 batch 7): the full-auto drum shotgun
   'snubnose',   // v1.440 (D.85 batch 7): the Magnum's short-barrelled version
-  'gascarbine'];   // v1.446 (D.87 batch 8): the gas blowback pistol-calibre carbine
+  'gascarbine',   // v1.446 (D.87 batch 8): the gas blowback pistol-calibre carbine
+  'breakbarrel'];   // v1.447 (D.87 batch 8): the cheap break-barrel spring air rifle
 function getOwnedGunTypes() {
   return ALL_GUN_TYPES.filter(g => g === 'pistol' || Game.persist.owned[g]);
 }
@@ -112,6 +114,7 @@ function getMaxAmmoForGun(gunType) {
   if (gunType === 'erifle') return Game.persist.owned.erifle_mag_60 ? 60 : 30;
   if (gunType === 'burst') return Game.persist.owned.burst_mag_150 ? 150 : 90;   // v1.327
   if (gunType === 'gascarbine') return Game.persist.owned.gascarbine_mag_45 ? 45 : 30;   // v1.446: its gas mag, or the long one
+  if (gunType === 'breakbarrel') return Game.persist.owned.breakbarrel_mag_50 ? 50 : 30;   // v1.447: its BB tin, or the big tin
   if (gunType === 'semishotgun') return Game.persist.owned.semishotgun_mag_90 ? 90 : 60;   // v1.328
   if (gunType === 'm249') return Game.persist.owned.m249_mag_1500 ? 1500 : 800;   // v1.335: its box
   if (gunType === 'l96') return Game.persist.owned.l96_mag_20 ? 20 : 10;   // v1.336
@@ -292,6 +295,7 @@ const GUN_ACCESSORY_CAP = {
   erifle:  { sight: 1, rails: 2, under: 1 },
   burst:   { sight: 1, rails: 2, under: 1 },   // v1.327
   gascarbine: { sight: 1, rails: 2, under: 1 },   // v1.446: the AR's
+  breakbarrel: { sight: 1, rails: 1 },   // v1.447: an optic on the receiver, a rail on the barrel; a muzzle and a stock as a long gun
   semishotgun: { sight: 1, rails: 2, under: 1 },   // v1.328
   m249:    { sight: 1, rails: 2, under: 1 },   // v1.335
   l96:     { sight: 1, rails: 2, under: 1 },   // v1.336: the sniper's
@@ -320,7 +324,7 @@ const GUN_ACCESSORY_CAP = {
   thompson: { sight: 1, rails: 1 },             // v1.403: wood and steel, one side rail; its own front grip under the barrel
 };
 // v1.420 (D.83, Michael: A): the long guns without an under-barrel slot still have a muzzle and a stock
-const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1, clearpup: 1, drumshotgun: 1 };   // v1.437: the Clear Bullpup; v1.439: the Drum Shotgun
+const LONG_GUNS_NO_UNDER = { p90: 1, vector: 1, aug: 1, thompson: 1, ticktock: 1, clearpup: 1, drumshotgun: 1, breakbarrel: 1 };   // v1.437: the Clear Bullpup; v1.439: the Drum Shotgun
 const HOMEMADE_SLOTS = ['under', 'muzzle', 'stock'];   // v1.420: the slots that take one homemade part each
 function getGunAccessoryCap(gunType) {
   const c = GUN_ACCESSORY_CAP[gunType] || { sight: 1, rails: 1 };
@@ -691,6 +695,14 @@ const GUN_MAGS = {
     mags: [ { flag: 'gascarbine_mag_45', cap: 45, price: 18 } ],
     spares: [ { key: 'spare_mag_gascarbine', label: 'Spare Gas Carbine Mag (30)', price: 10 } ],
   },
+  // v1.447 (backlog D.87, batch 8): the Break-Barrel, a cheap spring air rifle: one shot, then break the barrel down to
+  // cock the spring and drop the next BB in; a stiff spring throws a fast, straight BB for the money
+  breakbarrel: {
+    displayName: 'Break-Barrel', baseCap: 30, price: 60, ownFlag: 'breakbarrel', cheap: true,
+    blurb: 'A beech-stocked spring air rifle from the farm store, the kind you get for your birthday before anything else. One shot, then break the barrel down over your knee to cock the spring and thumb the next BB in. It is slow, but the stiff spring throws a fast BB that stays straight longer than the AR\'s, for half its price. Its BBs come in a tin of 30.',
+    mags: [ { flag: 'breakbarrel_mag_50', cap: 50, price: 8 } ],
+    spares: [ { key: 'spare_mag_breakbarrel', label: 'Spare Break-Barrel Tin (30)', price: 4 } ],
+  },
   // v1.327 (backlog D.63, batch 1): the burst rifle, an electric M16 that fires three BBs a pull
   burst: {
     displayName: 'Burst Rifle', baseCap: 90, price: 210, ownFlag: 'burst',
@@ -888,7 +900,7 @@ const GUN_MAGS = {
     spares: [ { key: 'spare_mag_thompson', label: 'Spare Thompson Drum (100)', price: 16 } ],
   },
 };
-const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','erifle','gascarbine','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum; v1.446: the Gas Carbine after the Electric Rifle
+const GUN_ORDER = ['pistol','derringer','sixshooter','boltpistol','epistol','autopistol','gaspistol','magnum','snubnose','shotgun','double','thunder','spas','ksg','semishotgun','drumshotgun','clearpup','ar','famas','lever','breakbarrel','erifle','gascarbine','burst','m14','sniper','pumpsniper','l96','svd','rattle','sprayer','ghost','ticktock','bucket','mp5','ump','p90','vector','thompson','mac10','uzi','ak47','g36','m4','aug','rpk','m249','m60'];   // v1.250: the cheap automatics lead their kind; v1.335: the M249 last; v1.346: the P90 by the SMGs; v1.348: the Vector after it; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.398: the SPAS-12 before the Semi-Auto Shotgun; v1.399: the Gas Pistol after the Electric Pistol; v1.403: the Thompson after the Vector; v1.404: the M14 between the Burst Rifle and the sniper; v1.410: the Magnum after the Gas Pistol; v1.411: the KSG after the SPAS-12; v1.412: the Lever Gun after the FAMAS; v1.413: the M60 last; v1.414: the Uzi after the MAC-10; v1.416: the Pump Sniper after the sniper; v1.433: the Derringer after the Spring Pistol; v1.437: the Clear Bullpup leads the rifles; v1.438: the Auto Pistol after the Electric Pistol; v1.439: the Drum Shotgun ends the shotguns; v1.440: the Snub-Nose after the Magnum; v1.446: the Gas Carbine after the Electric Rifle; v1.447: the Break-Barrel after the Lever Gun
 
 // BB color cosmetics (purchasable; white owned by default).
 // v1.28g: BB color prices inflated 10x (cosmetic, but should feel like a real
@@ -1103,6 +1115,7 @@ function describeSlot(idx) {
       spare_mag_snubnose: 6,   // v1.440
       spare_mag_drumshotgun: 100,   // v1.439
       spare_mag_gascarbine: 30,   // v1.446
+      spare_mag_breakbarrel: 30,   // v1.447
     };
     const SPARE_MAG_LABEL = {
       spare_mag_10: 'Spare 10-rd Pistol Mag',
@@ -1149,6 +1162,7 @@ function describeSlot(idx) {
       spare_mag_snubnose: 'Spare 6-rd Snub-Nose Shells',   // v1.440
       spare_mag_drumshotgun: 'Spare 100-BB Shotgun Drum',   // v1.439
       spare_mag_gascarbine: 'Spare 30-rd Gas Carbine Mag',   // v1.446
+      spare_mag_breakbarrel: 'Spare 30-BB Break-Barrel Tin',   // v1.447
     };
     const cap = SPARE_MAG_CAP[slot.refId] || 10;
     const longIn = !!(Game.gun.spareLong || {})[idx];   // v1.428: the long mag you pulled sits in this pouch
@@ -1337,6 +1351,7 @@ const GUN_WEIGHT = {
   epistol: 2.5, erifle: 8.5,                              // v1.326: a battery adds a little
   burst: 8.5,                                             // v1.327
   gascarbine: 6,                                          // v1.446: a short carbine, the AR 8, the Gas Pistol 2.5
+  breakbarrel: 6.5,                                       // v1.447: beech and a steel spring tube; the Lever Gun 7
   semishotgun: 7,                                         // v1.328
   m249: 15,                                               // v1.335: the heaviest gun
   l96: 11,                                                // v1.336: the heavy spring and barrel
@@ -1402,6 +1417,7 @@ const MAG_WEIGHT = {
   spare_mag_snubnose: 0.4,   // v1.440: the Magnum's speed loader
   spare_mag_drumshotgun: 1.8,   // v1.439: a full drum
   spare_mag_gascarbine: 0.9,   // v1.446: a gas mag, heavier than a spring one
+  spare_mag_breakbarrel: 0.2,   // v1.447: a small tin
 };
 // Speed-loader weight scales gently with capacity.
 function speedLoaderWeight(tierId) {
@@ -1835,6 +1851,12 @@ GUN_SPECS.erifle = Object.assign({}, GUN_SPECS.ar, { electric: true, semiRPM: 36
 // 10, the M14 18), a little tighter (0.24; 0.28) and aimed 0.3, the gas cooling as the mag empties (the last BB at 85%;
 // the pistol's 80%), and lighter than the rifles, so a quicker walk (0.95; the AR 0.85)
 GUN_SPECS.gascarbine = Object.assign({}, GUN_SPECS.ar, { electric: true, gas: true, gasFade: 0.15, semiRPM: 300, muzzleVelocity: 50, curveOnsetDistance: 13, curveStrengthMax: 12, baseSpread: 0.24, adsSpreadMult: 0.3, weightClass: 'medium', playerSpeedMult: 0.95, displayName: 'Gas Carbine' });
+// v1.447 (D.87, batch 8): the Break-Barrel, a single-shot spring air rifle on the sniper's spec: every shot the barrel is
+// broken down to cock it and load a BB (`break`, one barrel), the slowest cycle of the rifles with the L96 (1.3 s; the sniper's bolt
+// 1.1, the Lever Gun 0.5). A stiff spring: a 58 m/s BB (the AR 45, the Lever Gun 55, the sniper 75) straight for 16 m
+// (the AR 10, the sniper 25) in a tight cone (0.16; the sniper 0.12), aimed 0.28; a light beech rifle, the Lever Gun's
+// walk (0.9)
+GUN_SPECS.breakbarrel = Object.assign({}, GUN_SPECS.sniper, { weightClass: 'medium', cockType: 'break', cockTime: 1.3, muzzleVelocity: 58, baseSpread: 0.16, adsSpreadMult: 0.28, curveOnsetDistance: 16, curveStrengthMax: 9, playerSpeedMult: 0.9, displayName: 'Break-Barrel' });
 GUN_SPECS.burst = Object.assign({}, GUN_SPECS.ar, { electric: true, burst: 3, cyclicRPM: 720, playerSpeedMult: 0.83, displayName: 'Burst Rifle' });
 // v1.328 (D.63, batch 1): the Semi-Auto Shotgun, the spring shotgun's 2-3 BBs a pull with nothing to pump (electric,
 // 2.5 pulls a second at most); a new mag is racked with its charging handle

@@ -2299,6 +2299,66 @@ function buildFPDouble() {
   Game.camera.add(group);
   return group;
 }
+// v1.447 (backlog D.87, batch 8): the Break-Barrel, a single-shot spring air rifle: a blued spring tube over a beech forend,
+// the beech wrist and stock, a trigger guard; a long thin barrel on a hinge at the tube's front, with a hooded front
+// post near the muzzle and a rear notch on the breech block. Cocking breaks the barrel down on the hinge (`cockSwing`,
+// as the Double-Barrel's) with the off hand on the forend behind it; a rail or a muzzle part rides on the barrel
+// (`breakPivot`).
+function buildFPBreakBarrel() {
+  const group = new THREE.Group();
+  const blued  = new THREE.MeshStandardMaterial({ color: 0x1b1e25, roughness: 0.4, metalness: 0.65 });
+  const beech  = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.65, metalness: 0.05 });
+  const dark   = new THREE.MeshStandardMaterial({ color: 0x0c0c0e, roughness: 0.7 });
+  const brass  = new THREE.MeshStandardMaterial({ color: 0xc8a24a, roughness: 0.35, metalness: 0.8 });
+  const orange = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.6, emissive: 0x331000, emissiveIntensity: 0.4 });
+  const add = (parent, geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; parent.add(m); return m; };
+  // the spring tube (the receiver), its end cap, and the beech forend under it
+  const tube = add(group, new THREE.CylinderGeometry(0.0155, 0.0155, 0.17, 14), blued, 0, 0.030, -0.055, Math.PI / 2);
+  tube.name = 'receiver';
+  add(group, new THREE.CylinderGeometry(0.0135, 0.0135, 0.012, 12), dark, 0, 0.030, 0.034, Math.PI / 2).name = 'endCap';
+  add(group, new THREE.BoxGeometry(0.036, 0.026, 0.115), beech, 0, 0.004, -0.085).name = 'forend';
+  // the trigger guard and the trigger
+  add(group, new THREE.BoxGeometry(0.026, 0.005, 0.050), dark, 0, -0.0295, -0.010);
+  add(group, new THREE.BoxGeometry(0.026, 0.020, 0.005), dark, 0, -0.020, -0.0335);
+  add(group, new THREE.BoxGeometry(0.008, 0.018, 0.005), brass, 0, -0.016, -0.010).name = 'trigger';
+  // the beech wrist and stock
+  const wrist = add(group, new THREE.BoxGeometry(0.032, 0.050, 0.08), beech, 0, -0.018, 0.050, 0.18); wrist.name = 'wrist';
+  const stock = add(group, new THREE.BoxGeometry(0.036, 0.080, 0.14), beech, 0, -0.006, 0.120, 0.18); stock.name = 'stock';
+  add(stock, new THREE.BoxGeometry(0.038, 0.082, 0.012), dark, 0, 0, 0.074).name = 'buttpad';
+  // the hinge at the tube's front: the breech block and everything forward of it tips down when it is broken
+  const HZ = -0.142, HY = 0.018;
+  const pivot = new THREE.Group();
+  pivot.position.set(0, HY, HZ);
+  pivot.name = 'barrels';
+  pivot.userData.cockSwing = -0.7;   // the muzzle drops 40 degrees at the full pull
+  group.add(pivot);
+  add(pivot, new THREE.CylinderGeometry(0.005, 0.005, 0.030, 10), blued, 0, 0, 0).rotation.set(0, 0, Math.PI / 2);   // the hinge pin
+  add(pivot, new THREE.BoxGeometry(0.026, 0.032, 0.030), blued, 0, 0.012, -0.012).name = 'breech';
+  const L = 0.30, zb = -0.027 - L / 2;   // the barrel runs from the breech block (z -0.169) to the muzzle (-0.469)
+  const barrel = add(pivot, new THREE.CylinderGeometry(0.0085, 0.0085, L, 12), blued, 0, 0.030 - HY, zb, Math.PI / 2);
+  barrel.name = 'barrel';
+  const tip = add(pivot, new THREE.CylinderGeometry(0.0095, 0.0095, 0.018, 12), orange, 0, 0.030 - HY, zb - L / 2 + 0.008, Math.PI / 2);
+  tip.name = 'tip';
+  add(pivot, new THREE.CircleGeometry(0.004, 10), dark, 0, 0.030 - HY, zb - L / 2 - 0.0015).rotation.y = Math.PI;   // the bore
+  // the brass of a loaded BB, seen at the breech when it is open
+  add(pivot, new THREE.SphereGeometry(0.003, 8, 6), brass, 0, 0.030 - HY, -0.028);
+  // the hooded front post near the muzzle (its tip at y 0.058) and the rear notch on the breech block
+  const post = add(pivot, new THREE.BoxGeometry(0.003, 0.023, 0.004), dark, 0, 0.0465 - HY, -0.30);   // down into the barrel
+  post.userData.frontSight = true; post.name = 'frontPost';
+  add(pivot, new THREE.BoxGeometry(0.018, 0.003, 0.016), blued, 0, 0.0595 - HY, -0.30).name = 'hood';
+  for (const x of [-0.0085, 0.0085]) add(pivot, new THREE.BoxGeometry(0.003, 0.016, 0.016), blued, x, 0.051 - HY, -0.30);
+  for (const x of [-0.006, 0.006]) add(pivot, new THREE.BoxGeometry(0.005, 0.012, 0.006), dark, x, 0.034, -0.012);   // the notch's two ears
+  group.position.set(0.12, -0.22, -0.30);
+  group.rotation.y = 0.10;
+  group.rotation.x = -0.05;
+  group.userData.cockingParts = [pivot];
+  group.userData.cockingOffset = 0;
+  group.userData.breakPivot = pivot;
+  group.userData.gunType = 'breakbarrel';
+  Game.camera.add(group);
+  return group;
+}
+
 // v1.411 (backlog D.63, Michael: A, batch 6): the KSG, a bullpup pump shotgun on the spring shotgun's receiver,
 // barrel, pump and bead, all of it black: the one tube under the barrel becomes two side by side (the pump wraps them),
 // the wrist and sporting stock come off, a pistol grip goes behind the trigger guard, and a long boxy body runs back
@@ -2548,6 +2608,7 @@ function getOrBuildFPGun(gunType) {
   else if (gunType === 'erifle')  mesh = buildFPElectricRifle();
   else if (gunType === 'burst')   mesh = buildFPBurstRifle();     // v1.327
   else if (gunType === 'gascarbine') mesh = buildFPGasCarbine();   // v1.446
+  else if (gunType === 'breakbarrel') mesh = buildFPBreakBarrel();   // v1.447
   else if (gunType === 'semishotgun') mesh = buildFPSemiShotgun();   // v1.328
   else if (gunType === 'drumshotgun') mesh = buildFPDrumShotgun();   // v1.439
   else if (gunType === 'm249')    mesh = buildFPM249();          // v1.335
@@ -2609,6 +2670,7 @@ const FP_HANDS = {
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
   lever:   { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 },   // v1.412: the sniper's stock and forend
             l: { kind: 'support', c: [0, 0.005, -0.215], hw: 0.019, hh: 0.020 }, underHand: true },
+  breakbarrel: { r: { c: [0, -0.040, 0.037], rx: -0.44, gw: 0.019, gd: 0.013, up: -0.004 }, l: { kind: 'support', c: [0, 0.016, -0.095], hw: 0.020, hh: 0.026 } },   // v1.447: the sniper's wrist; the off hand round the forend and the spring tube, behind the hinge
   ak47:    { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },
   rpk:     { r: { c: [0, -0.050, 0.020], rx: -0.25, gw: 0.016, gd: 0.015, up: -0.01 }, l: { kind: 'support', c: [0, 0.010, -0.18], hw: 0.020, hh: 0.020 }, underHand: true },   // v1.396: the AK's
   mp5:     { r: { c: [0, -0.041, 0.012], rx: -0.22, gw: 0.015, gd: 0.014, up: -0.012 }, l: { kind: 'support', c: [0, 0.008, -0.165], hw: 0.018, hh: 0.018 }, underHand: true },

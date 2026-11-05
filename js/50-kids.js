@@ -105,6 +105,7 @@ function gunForegripZ(weapon) {
     case 'svd':     return 0.26;   // v1.395: and the SVD's
     case 'm14':     return 0.22;   // v1.404: its long walnut forend
     case 'lever':   return 0.20;   // v1.412: its walnut forend
+    case 'breakbarrel': return 0.17;   // v1.447: its beech forend
     case 'pumpsniper': return 0.22;   // v1.416: its pump
     case 'shotgun': return 0.18;   // pump fore-grip
     case 'semishotgun': return 0.18;   // v1.328: its forend
@@ -345,6 +346,14 @@ function buildEnemyGunMesh(weapon) {
       box(0.045, 0.05, 0.06, blued, 0, 0.01, 0.0);       // cylinder
       box(0.025, 0.045, 0.21, blued, 0, 0.013, 0.12);    // barrel and underlug
       grip(dark);
+      break;
+    }
+    case 'breakbarrel': {   // v1.447 (D.87): a thin blued barrel over a beech forend, the spring tube, the beech stock
+      const beech = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.7 });
+      box(0.02, 0.02, 0.44, black, 0, 0.02, 0.26);        // the long thin barrel
+      box(0.035, 0.035, 0.16, dark, 0, 0.015, 0.02);      // the spring tube
+      box(0.04, 0.03, 0.12, beech, 0, -0.015, 0.08);      // the forend
+      box(0.04, 0.07, 0.24, beech, 0, -0.03, -0.14);      // the stock
       break;
     }
     case 'lever': {   // v1.412 (D.63): a cowboy carbine, a barrel over its tube, a brass receiver, a walnut stock, the lever loop

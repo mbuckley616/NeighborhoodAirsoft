@@ -1073,6 +1073,7 @@ function getAvailableSlotItems() {
     { refId: 'spare_mag_snubnose', name: 'Spare 6-rd Snub-Nose Shells' },   // v1.440
     { refId: 'spare_mag_drumshotgun', name: 'Spare 100-BB Shotgun Drum' },   // v1.439
     { refId: 'spare_mag_gascarbine', name: 'Spare 30-rd Gas Carbine Mag' },   // v1.446
+    { refId: 'spare_mag_breakbarrel', name: 'Spare 30-BB Break-Barrel Tin' },   // v1.447
   ];
   for (const def of SPARE_MAG_DEFS) {
     // v1.60: only surface mags that fit the CURRENTLY EQUIPPED gun. Showing every
@@ -1351,7 +1352,7 @@ function renderBBsTab(c, between) {
 const GUN_KINDS = [
   { id: 'PISTOLS', name: 'Pistols', guns: ['pistol', 'derringer', 'sixshooter', 'boltpistol', 'epistol', 'autopistol', 'gaspistol', 'magnum', 'snubnose'] },   // v1.440: the Snub-Nose after the Magnum;   // v1.438: the Auto Pistol after the Electric Pistol;   // v1.433: the Derringer after the Spring Pistol;   // v1.326: the electrics after their spring kin; v1.399: the Gas Pistol last; v1.410: the Magnum after it
   { id: 'SHOTGUNS', name: 'Shotguns', guns: ['shotgun', 'double', 'thunder', 'spas', 'ksg', 'semishotgun', 'drumshotgun'] },   // v1.439: the Drum Shotgun last;   // v1.432: the Double-Barrel after the Spring Shotgun;   // v1.328; v1.398: the SPAS-12 before it; v1.411: the KSG after the SPAS-12
-  { id: 'RIFLES', name: 'Rifles', guns: ['clearpup', 'ar', 'famas', 'lever', 'erifle', 'gascarbine', 'burst', 'm14', 'sniper', 'pumpsniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it; v1.404: the M14 before the sniper; v1.412: the Lever Gun after the FAMAS; v1.416: the Pump Sniper after the sniper; v1.446: the Gas Carbine after the Electric Rifle
+  { id: 'RIFLES', name: 'Rifles', guns: ['clearpup', 'ar', 'famas', 'lever', 'breakbarrel', 'erifle', 'gascarbine', 'burst', 'm14', 'sniper', 'pumpsniper', 'l96', 'svd'] },   // v1.325: the FAMAS by the AR; v1.336: the L96 after the sniper; v1.395: the SVD after it; v1.404: the M14 before the sniper; v1.412: the Lever Gun after the FAMAS; v1.416: the Pump Sniper after the sniper; v1.446: the Gas Carbine after the Electric Rifle; v1.447: the Break-Barrel after the Lever Gun
   { id: 'AUTOMATICS', name: 'Automatics', guns: ['rattle', 'sprayer', 'ghost', 'ticktock', 'bucket', 'mp5', 'ump', 'p90', 'vector', 'thompson', 'mac10', 'uzi', 'ak47', 'g36', 'm4', 'aug', 'rpk', 'm249', 'm60'] },   // v1.414: the Uzi after the MAC-10; v1.413: the M60 last; v1.250: the cheap clear ones first; v1.335: the M249 last; v1.346: the P90 after the UMP; v1.348: the Vector after the P90; v1.371: the G36C after the AK; v1.372: the AUG after it; v1.373: the M4 between them; v1.403: the Thompson after the Vector
 ];
 function gunKind(gt) {
@@ -1614,7 +1615,7 @@ function renderGunDetail(c, gt) {
 function gunBlurb(gt) {
   const s = getGunSpec(gt);
   // v1.168: the pump and the hammer read as themselves (the spring shotgun said "rack slide")
-  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : s.burst ? `${s.burst}-round burst, a pull at a time (electric)` : s.barrels ? `Break-action, ${s.barrels} barrels (a shot each, then break it open)` : s.doubleAction ? `Double-action CO2 (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.gas ? `Gas blowback (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.electric ? `Electric semi (a BB a pull, up to ${Math.round(s.semiRPM / 60)}/s${s.semiJam ? `, jams 1 pull in ${Math.round(1 / s.semiJam)}` : ''})` : (s.cockType === 'bolt' ? 'Bolt-action' : s.cockType === 'lever' ? 'Lever-action (work the lever)' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));   // v1.326: the electrics
+  const mode = s.fireMode === 'auto' ? `Full-auto (~${Math.round((s.cyclicRPM||600)/60)}/s)` : s.burst ? `${s.burst}-round burst, a pull at a time (electric)` : s.barrels ? `Break-action, ${s.barrels} barrels (a shot each, then break it open)` : s.doubleAction ? `Double-action CO2 (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.gas ? `Gas blowback (a BB a pull, up to ${(s.semiRPM / 60).toFixed(1)}/s)` : s.electric ? `Electric semi (a BB a pull, up to ${Math.round(s.semiRPM / 60)}/s${s.semiJam ? `, jams 1 pull in ${Math.round(1 / s.semiJam)}` : ''})` : (s.cockType === 'break' ? 'Break-barrel (break it to cock and load each BB)' : s.cockType === 'bolt' ? 'Bolt-action' : s.cockType === 'lever' ? 'Lever-action (work the lever)' : (s.cockType === 'charge' ? 'Semi (charging handle)' : s.cockType === 'pump' ? 'Pump-action' : s.cockType === 'hammer' ? 'Single-action (thumb the hammer)' : 'Semi (rack slide)'));   // v1.326: the electrics
   const weight = ({light:'Light, fast', medium:'Medium', heavy:'Heavy, slower', very_heavy:'Very heavy, slowest'})[s.weightClass] || 'Medium';
   return `${mode} · ${weight} · muzzle ${s.muzzleVelocity} m/s`;
 }

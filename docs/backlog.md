@@ -417,7 +417,10 @@ each builder works its own lane's items top-down and skips the other's. A new it
    Builder (play) takes it. ~~The pistol-calibre carbine~~ — done, v1.446 (the Gas Carbine, $175, under RIFLES after the
    Electric Rifle: the Gas Pistol's green-gas blowback in a carbine on the AR's frame, a pull a shot at 5 a second, a
    50 m/s BB straight for 13 m that fades to 85% over the mag, 6 lb and a 0.95 walk; `tests/gun-gascarbine.test.mjs`).
-   Left: three more (likely a cheap break-barrel rifle, a battery DMR and a second revolver kind).
+   ~~The cheap break-barrel rifle~~ — done, v1.447 (the Break-Barrel, $60, under RIFLES after the Lever Gun: a beech
+   spring air rifle, one shot then break the barrel to cock and load, 1.3 s; a 58 m/s BB straight for 16 m; an optic,
+   one rail on the barrel, a muzzle and a stock; `tests/gun-breakbarrel.test.mjs`). Left: two more (likely a battery
+   DMR and a second revolver kind).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->

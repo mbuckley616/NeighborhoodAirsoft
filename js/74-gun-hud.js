@@ -342,7 +342,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
-    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14' || gunType === 'lever' || gunType === 'pumpsniper') {   // v1.412: the Lever Gun's sights are the sniper's too; v1.416: and the Pump Sniper's   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
+    } else if (gunType === 'l96' || gunType === 'svd' || gunType === 'm14' || gunType === 'lever' || gunType === 'pumpsniper' || gunType === 'breakbarrel') {   // v1.412: the Lever Gun's sights are the sniper's too; v1.416: and the Pump Sniper's   // v1.336: the sniper's hold; aimed, the front post's tip (y 0.058) on the reticle (v1.395: and the SVD's; v1.404: the M14's)
       hipPos  = { x: 0.12, y: -0.22, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.27 };
       hipRotY = 0.10; hipRotX = -0.05;
@@ -639,7 +639,7 @@ function updateLoadoutHud() {
                        : Game.gun.cockType === 'charge' ? 'pull the charging handle'
                        : Game.gun.cockType === 'bolt' ? 'cycle the bolt'
                        : Game.gun.cockType === 'lever' ? 'work the lever'   // v1.412
-                       : Game.gun.cockType === 'break' ? (Game.gun.type === 'derringer' ? 'tip the barrels up and load two BBs' : 'break it open and load two shells')   // v1.432; v1.433: the Derringer's
+                       : Game.gun.cockType === 'break' ? (Game.gun.type === 'derringer' ? 'tip the barrels up and load two BBs' : Game.gun.type === 'breakbarrel' ? 'break the barrel and load a BB' : 'break it open and load two shells')   // v1.432; v1.433: the Derringer's
                        : 'rack the slide';
         hint = Game.gun.jammed ? 'Hold R to clear the jam.'
              : !Game.gun.cocked ? `Click & hold LMB to ${cockVerb}.`
@@ -957,6 +957,7 @@ const RETICLE_SPECS = {
   l96:     { style: 'fine_cross', baseGap: 5,  ringR: 0,  centerDot: 1.0 },   // v1.336: the sniper's, a little tighter
   m14:     { style: 'fine_cross', baseGap: 8,  ringR: 0,  centerDot: 1.2 },   // v1.404: the SVD's, a little wider
   lever:   { style: 'dot_cross',  baseGap: 9,  ringR: 6,  centerDot: 1.5 },   // v1.412: between the AR's and the sniper's
+  breakbarrel: { style: 'dot_cross', baseGap: 8, ringR: 5, centerDot: 1.4 },   // v1.447: the Lever Gun's, a little tighter
   svd:     { style: 'fine_cross', baseGap: 7,  ringR: 0,  centerDot: 1.1 },   // v1.395: the sniper's, a little wider
   rattle:  { style: 'wide_ticks', baseGap: 18, ringR: 0, centerDot: 1.5 },
 };
