@@ -3,6 +3,8 @@
 // start on the cart's back seat by the halfway hut with three lives and five kids posted; the loop is clear of everything
 // solid and inside the club; Eric drives two laps on his own (your keys change nothing) and that is a win; your view
 // turns with the cart; a tag costs a life and he drives on, the third loses; it sits after The Eighteenth.
+// v1.445 (D.51, Willow Bend at real scale; Michael: A, 5 Nov): one lap of the real ~260 m loop round the west clay
+// courts and down the fairway; the start, the loop, the turn, the finish and the win card are checked for it.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page, errs } = g;
 await g.bedroom();
@@ -34,13 +36,13 @@ const start = await page.evaluate(() => {
     yaw: +p.yaw.toFixed(2), lives: p.maxHits - p.hitsTaken, bounds: p.bounds,
     kids: Game.scenario.enemies.filter(e => e.health > 0 && e.team !== 'player').map(e => e.charId) };
 });
-check('you start on the back seat of Eric\'s cart by the halfway hut, looking up the cart path, three lives',
-  start.ride && start.inScene && start.eric && Math.abs(start.x - 5) < 0.1 && start.z > 18 && start.z < 21.5 && start.y > 0.3 &&
+check('you start on the back seat of Eric\'s cart on the path between the courts, looking north up it, three lives',
+  start.ride && start.inScene && start.eric && Math.abs(start.x + 26) < 0.1 && start.z > -31 && start.z < -27.5 && start.y > 0.3 &&
   Math.abs(start.yaw) < 0.05 && start.lives === 3 && start.bounds === null, start);
 check('five kids are posted round the course', start.kids.length === 5, start.kids);
 
 const loop = await page.evaluate(() => {
-  const R = Game.scenario.race, b = { minX: -40, maxX: 40, minZ: -28, maxZ: 29 };
+  const R = Game.scenario.race, b = Game.scenario.bounds;   // v1.445: the course area
   let blocked = 0, out = 0;
   for (let i = 0; i < R.xs.length; i++) {
     if (collidesObstacles(R.xs[i], R.zs[i], 0.7, 0.3)) blocked++;
@@ -48,7 +50,7 @@ const loop = await page.evaluate(() => {
   }
   return { n: R.xs.length, len: +R.len.toFixed(1), blocked, out };
 });
-check('the loop (about 100 m) runs clear of everything solid and inside the club', loop.blocked === 0 && loop.out === 0 && loop.len > 95 && loop.len < 115, loop);
+check('the loop (about 260 m) runs clear of everything solid and inside the course area', loop.blocked === 0 && loop.out === 0 && loop.len > 245 && loop.len < 285, loop);
 
 // your keys do nothing: the first 10 s with W/A/S/D held on and off goes as far as the same 10 s without (to the page's
 // own frames between the steps, under 1.5 m; S held half the time in the go-cart would cost far more)
@@ -58,15 +60,15 @@ const turned = await page.evaluate(() => ({ yaw: +Game.player.yaw.toFixed(2), x:
 await g.scenario('club_cart_ride');
 const noKeys = await ride(10, false);
 check('you can\'t steer or brake: your keys change nothing', Math.abs(withKeys.s - noKeys.s) < 1.5 && noKeys.s > 35, { withKeys, noKeys });
-check('your view turns with the cart round the corner (no mouse)', turned.yaw < -1.3 && turned.yaw > -1.8 && turned.x > 6, turned);
+check('your view turns with the cart round the corner into the yard (no mouse)', turned.yaw > 1.3 && turned.yaw < 1.8 && turned.x < -27, turned);
 
 const done = await ride(60, false);
-check('Eric drives two laps on his own and that is a win', done.mode !== 'scenario' && done.won && done.finish > 30 && done.finish < 60 && done.top <= 5.6, done);
+check('Eric drives once round on his own and that is a win', done.mode !== 'scenario' && done.won && done.finish > 45 && done.finish < 70 && done.top <= 5.6, done);
 const card = () => page.evaluate(() => ({ outcome: document.getElementById('outcomeText').textContent, flavor: document.getElementById('flavorText').textContent }));
 // v1.375 (Found in play, critic v1.372): the win read "The last one's out" with all five still in
 const winCard = await card();
-check('the win card says the laps are done and that you tagged none of the five, who are still in (v1.375)',
-  /TWO LAPS/.test(winCard.outcome) && /never tagged one/.test(winCard.flavor) && /Marcus/.test(winCard.flavor) && !/last one/i.test(winCard.flavor), winCard);
+check('the win card says the loop is done and that you tagged none of the five, who are still in (v1.375)',
+  /ROUND THE LOOP/.test(winCard.outcome) && /never tagged one/.test(winCard.flavor) && /Marcus/.test(winCard.flavor) && !/last one/i.test(winCard.flavor), winCard);
 
 await page.evaluate(() => { delete Game.persist.completed.club_cart_ride; });
 await g.scenario('club_cart_ride');

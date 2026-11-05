@@ -1877,19 +1877,21 @@ const SCENARIOS = {
   // ===================================================================
   // v1.157: WILLOW BEND COUNTRY CLUB (Horseshoe Bend) — the seventh zone (D.1, Michael: A, control room 4 Oct). A
   // made-up club next to Winnmark: the clubhouse and its veranda, the pool, the 18th green, the pond, the cart barn.
+  // v1.445 (D.51, card fable/d51-willow-bend): the swim and tennis centre on the river's bend at real scale. Pool's Closed
+  // and Night Swim play the pool area (builderArg 'pool'), the other three the course area ('course', 'ride').
   // ===================================================================
 
   // --- Opener: 1v1 with Brooke at the shut pool ---
   club_1v1_brooke: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: "Pool's Closed",
-    desc: "The club shut the pool for the season, so Brooke hopped the hedge. She's on the deck with her pistol, among the loungers and umbrellas, and you're down by the halfway hut. You can shoot across the water but you can't walk it, so the pool is a wall with a window in it. Come through a gap in the hedge, or round by the clubhouse. One hit each.",
+    desc: "The club shut the pools for the season, so Brooke hopped the fence. She's on the deck with her pistol, somewhere among the loungers, the umbrellas and the slide tower, and you're on the lawn below the pickleball courts. The fence is solid and taller than you; there are two gates in it from the courts' side. You can shoot across the water but you can't walk it, so each pool is a wall with a window in it. One hit each.",   // v1.445: the real centre
     builderFn: 'buildCountryClubScene',
-    builderArg: 'default',
+    builderArg: 'pool',
     scenarioType: 'skirmish',
-    playerSpawn: 'team_b',
+    playerSpawn: 'lawn_n',   // v1.445: the lawn's north end, by the courts
     enemySetup: [
-      { charId: 'brooke', weapon: 'pistol', anchor: 'a_pool_n', role: 'skirmisher' },
+      { charId: 'brooke', weapon: 'pistol', anchor: 'a_lounge', role: 'skirmisher' },   // v1.445
     ],
     winCondition: 'kill_all',
     rewards: { win: 60, lose: 14 },
@@ -1900,17 +1902,17 @@ const SCENARIOS = {
   club_eighteenth_3v3: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'The Eighteenth',
-    desc: "Seth, Marcus and Jamie came over the back fence from Winnmark and took the clubhouse: the veranda, the pool and the cart barn. Your crew's with you on the south lawn. The fairway's open apart from the willows and the pond, and the carts are the only cover on the green. Jamie will rush with the shotgun; Marcus likes the carts. Three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
+    desc: "Seth, Marcus and Jamie came down the course from Winnmark and took the cart yard, among the parked carts and the mowers by the barn. Your crew's with you on the tee at the bottom of the fairway. The fairway's open apart from a few big oaks and the bunkers by the green; the clay courts are fenced in chain-link you can see and shoot through but not walk through, with gates at the corners. Jamie will rush with the shotgun; Marcus likes the carts. Three lives for every kid but you, last team standing.",   // v1.445 (D.51): the real centre; v1.408 (D.57 step 4): your crew and the sides as built
     builderFn: 'buildCountryClubScene',
-    builderArg: 'default',
+    builderArg: 'course',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'sean',   weapon: 'mp5',     anchor: 'b_hut',     team: 'player' },
-      { charId: 'trey',   weapon: 'ak47',    anchor: 'b_putt',    team: 'player' },
-      { charId: 'seth',   weapon: 'ak47',    anchor: 'a_porch' },
-      { charId: 'marcus', weapon: 'ump',     anchor: 'a_barn' },
-      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_pool_n' },
+      { charId: 'sean',   weapon: 'mp5',     anchor: 'b_tee',     team: 'player' },   // v1.445: the course area's anchors
+      { charId: 'trey',   weapon: 'ak47',    anchor: 'b_path',    team: 'player' },
+      { charId: 'seth',   weapon: 'ak47',    anchor: 'a_yard' },
+      { charId: 'marcus', weapon: 'ump',     anchor: 'a_yard_e' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_yard_w' },
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',
@@ -1922,21 +1924,22 @@ const SCENARIOS = {
   // --- v1.364 (backlog D.72, Michael: B, 27 Oct): the ride-along, Eric drives a golf cart round the course, you shoot ---
   // Two laps of the loop up the cart path and round the fairway (the scene's rideLoop) on the cart's back seat while
   // five kids in the bunkers and the trees shoot at you. Three lives; a tag costs one and he drives on (the race's rule).
+  // v1.445 (D.51; Michael: A, 5 Nov): one lap of the real ~265 m loop round the clay courts and down the fairway.
   club_cart_ride: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'Cart Path Only',
-    desc: "Eric found the key in one of the carts by the barn, and he's driving. You're on the back seat with your gun, facing wherever you like. He takes it up the cart path, along the top of the fairway, down by the east fence and back along the south lawn, twice round, slowing for the corners. Marcus, Jamie, Trey, Brooke and Devon are dug into the bunkers and the trees along the way, and you're the only thing on the course that moves. You can't steer and you can't get off: just shoot. Three tags and you're out; make two laps with one left.",
+    desc: "Eric found the key in one of the carts in the yard by the barn, and he's driving. You're on the back seat with your gun, facing wherever you like. He takes it once round the long loop: up the path between the clay courts and the pickleball courts, west through the cart yard, down the whole fairway past the green and the big oaks, and back along the south of the courts, slowing for the corners. Marcus, Jamie, Trey, Brooke and Devon are dug into the bunkers, the trees, the yard and the courts along the way, and you're the only thing on the course that moves. You can't steer and you can't get off: just shoot. Three tags and you're out; make it round with one left.",   // v1.445: the real loop, once
     builderFn: 'buildCountryClubScene',
     builderArg: 'ride',
     scenarioType: 'race',
     ride: true,
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'marcus', weapon: 'ump',     anchor: 'ride_green_bunker', role: 'defender' },
-      { charId: 'jamie',  weapon: 'shotgun', anchor: 'ride_green',        role: 'defender' },
-      { charId: 'trey',   weapon: 'mp5',     anchor: 'ride_fairway',      role: 'defender' },
-      { charId: 'brooke', weapon: 'ump',     anchor: 'ride_willow',       role: 'defender' },
-      { charId: 'devon',  weapon: 'ar',      anchor: 'ride_barn',         role: 'defender' },
+      { charId: 'marcus', weapon: 'ump',     anchor: 'ride_yard',  role: 'defender' },   // v1.445: round the real loop
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'ride_court', role: 'defender' },
+      { charId: 'trey',   weapon: 'mp5',     anchor: 'ride_oak',   role: 'defender' },
+      { charId: 'brooke', weapon: 'ump',     anchor: 'ride_path',  role: 'defender' },
+      { charId: 'devon',  weapon: 'ar',      anchor: 'ride_green', role: 'defender' },
     ],
     winCondition: 'race_finish',
     rewards: { win: 120, lose: 28 },
@@ -1944,21 +1947,23 @@ const SCENARIOS = {
   },
 
   // --- v1.158: hold the gazebo for 90 s against a push from the clubhouse lawn ---
+  // v1.445 (D.51; Michael: C, 5 Nov): the real centre has no gazebo; it is the roofed bench shelter between the west
+  // block's two clay courts, and the match is Hold the Shelter (the id stays, for saves)
   club_defend_gazebo: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
-    name: 'Willow Bend Country Club', scenarioName: 'Hold the Gazebo',
-    desc: "Marcus, Jamie and Trey want the gazebo, and you're in it. Its rails come up to your waist on every side but the east, where the steps are. They come down from the clubhouse lawn: one along the pool deck and the stone wall, one straight across the putting green, one round by the pond and the halfway hut. A tagged kid walks back up the lawn and comes again. Crouch and the rails cover you; stand and you can see. Survive 90 seconds.",
+    name: 'Willow Bend Country Club', scenarioName: 'Hold the Shelter',
+    desc: "Marcus, Jamie and Trey want the bench shelter between the two clay courts, and you're in it. Its walls come up to your waist on the north, west and south; the east is open, the way in. The courts are fenced in chain-link: it stops a kid but not a BB, so they can shoot at you through it and you at them. They come at you from the fairway: one through the cart yard and in at the north gate, one straight across from the oaks, one round the south. A tagged kid walks back to the fairway and comes again. Crouch and the walls cover you; stand and you can see. Survive 90 seconds.",   // v1.445: the real centre
     builderFn: 'buildCountryClubScene',
-    builderArg: 'default',
+    builderArg: 'course',
     scenarioType: 'defend',
-    resultHold: 'the gazebo',
+    resultHold: 'the shelter',
     playerSpawn: 'gazebo',
     enemySpawnCluster: 'cluster_course',
-    crewPosts: ['b_gazebo', 'ride_willow', 'b_cart', 'b_wall', 'b_putt'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
+    crewPosts: ['sh_post_n', 'sh_post_s', 'sh_post_w', 'sh_post_e', 'sh_post_gw'],   // v1.393 (D.57 step 1): your crew plays it, from these posts; v1.445: round the shelter
     enemySetup: [
-      { charId: 'marcus', weapon: 'ump',     anchor: 'b_wall',  role: 'attacker', flank: 'L' },
-      { charId: 'jamie',  weapon: 'shotgun', anchor: 'b_putt',  role: 'attacker', flank: 'C' },
-      { charId: 'trey',   weapon: 'mp5',     anchor: 'b_hut',   role: 'attacker', flank: 'R' },
+      { charId: 'marcus', weapon: 'ump',     anchor: 'sh_yard',  role: 'attacker', flank: 'L' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'sh_fair',  role: 'attacker', flank: 'C' },
+      { charId: 'trey',   weapon: 'mp5',     anchor: 'sh_south', role: 'attacker', flank: 'R' },
     ],
     winCondition: 'survive_timer',
     timerSec: 90,
@@ -1970,20 +1975,20 @@ const SCENARIOS = {
   club_night_4v4: {
     region: 'horseshoe_bend', street: 'willow_bend_cc',
     name: 'Willow Bend Country Club', scenarioName: 'Night Swim',
-    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle on the veranda where he can see down the whole lawn. Your crew's by the halfway hut. The pool glows, so anyone on the deck is lit up; the course is dark past the lamp on the fairway. Four a side, four lives for every kid but you.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
+    desc: "The pool lights are on and nobody's swimming. Seth, Marcus and Jamie are back, and they've brought Devon, who's set up with the rifle behind the loungers on the far side of the deck, looking down it at the gates. Your crew's on the lawn by the pickleball courts, behind the fence. The pools glow, so anyone on the deck is lit up; the courts' lights are on; the lawn is dark. Two gates in the fence. Four a side, four lives for every kid but you.",   // v1.445 (D.51): the real centre; v1.408 (D.57 step 4): your crew and the sides as built
     builderFn: 'buildCountryClubScene',
-    builderArg: 'default',
+    builderArg: 'pool',
     timeOfDay: 'night',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'sean',   weapon: 'mp5',     anchor: 'b_hut',     team: 'player' },
-      { charId: 'trey',   weapon: 'ak47',    anchor: 'b_putt',    team: 'player' },
-      { charId: 'brooke', weapon: 'ump',     anchor: 'b_fairway', team: 'player' },
+      { charId: 'sean',   weapon: 'mp5',     anchor: 'b_lawn',    team: 'player' },   // v1.445: the pool area's anchors
+      { charId: 'trey',   weapon: 'ak47',    anchor: 'b_lawn_e',  team: 'player' },
+      { charId: 'brooke', weapon: 'ump',     anchor: 'b_planter', team: 'player' },
       { charId: 'seth',   weapon: 'ak47',    anchor: 'a_porch' },
-      { charId: 'marcus', weapon: 'ump',     anchor: 'a_barn' },
-      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_pool_n' },
-      { charId: 'devon',  weapon: 'sniper',  anchor: 'a_porch_e', role: 'defender' },
+      { charId: 'marcus', weapon: 'ump',     anchor: 'a_well' },
+      { charId: 'jamie',  weapon: 'shotgun', anchor: 'a_cabana' },
+      { charId: 'devon',  weapon: 'sniper',  anchor: 'a_deck_e',  role: 'defender' },   // v1.445: behind the loungers, on the west gates
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',

@@ -78,12 +78,8 @@ const EDGE_BACKDROPS = {
     W: { from: 7, bands: [['field', 26], ['trees', 8], ['houses', 22], ['trees', 40]] },
     E: { from: 7, bands: [['lot', 20], ['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
   },
-  buildCountryClubScene: {
-    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the clubhouse
-    S: { from: 7, bands: [['fairway', 40], ['trees', 12], ['houses', 22], ['trees', 40]] },
-    W: { from: 7, bands: [['fairway', 30], ['trees', 12], ['houses', 22], ['trees', 40]] },
-    E: { from: 7, bands: [['lot', 20], ['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
-  },
+  // v1.445 (D.51, card fable/d51-willow-bend): Willow Bend builds the whole swim and tennis centre, the course, the
+  // bank, the river and the far bank of its own on every side, so it takes no backdrop (as Winnmark)
   buildGroceryStoreScene: {
     skirt: 0x45464a,   // asphalt: only the front windows look out, onto the store's own lot
     sky: { side: 'S', d: 110, color: 0x9cc8ea },   // indoors the background is the store's beige, so the windows get a sky of their own

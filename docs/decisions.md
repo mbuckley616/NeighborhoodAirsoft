@@ -19,6 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Recommendation: A. The night matches got their light in this wave, and a tracer gives them a second reason to change
   a gun for the dark; both sit on slots every long gun already has and touch no maps-lane file or Fable area.
 
+## Answered
 
 - **Willow Bend at real scale (D.51): where the matches play, the gazebo, and the cart ride (deep-work session, 2026-11-05, card `fable/d51-willow-bend`)**
   You chose the swim and tennis centre on the river's bend, at real scale. It is much bigger than today's 80 x 57 m
@@ -49,8 +50,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
        fairway and the cart yard.
      - B) **Two laps of the real loop**: twice as long under fire; harder.
      - C) **Two laps of a shorter loop** round one court block (about 140 m a lap).
-
-## Answered
+  Michael: **1 A) Two areas; 2 C) A roofed bench shelter between the clay courts (Hold the Shelter); 3 A) One lap of
+  the real loop.** (control room, 2026-11-05)
 
 - **What the play lane builds next, after gun batch 7 (builder, 2026-11-04)**
   Gun batch 7 is done (v1.432-v1.440): the Double-Barrel, Derringer, Clear Bullpup, Auto Pistol, Drum Shotgun and the

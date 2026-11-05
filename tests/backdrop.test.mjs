@@ -8,9 +8,10 @@ import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
 
-// v1.338 (D.51 step 1): Winnmark builds its own surroundings on every side (tests/winnmark-real.test.mjs), so it has none
+// v1.338 (D.51 step 1): Winnmark builds its own surroundings on every side (tests/winnmark-real.test.mjs), so it has none;
+// v1.445 (D.51, Willow Bend at real scale): nor has the country club (tests/country-club.test.mjs)
 const FNS = ['buildBunrattyCourtScene', 'buildHollowScene', 'buildMarketLotScene', 'buildNorthcliffScene',
-  'buildTreehouseYardScene', 'buildBellfieldCourtScene', 'buildHighSchoolScene', 'buildCountryClubScene', 'buildGroceryStoreScene'];
+  'buildTreehouseYardScene', 'buildBellfieldCourtScene', 'buildHighSchoolScene', 'buildGroceryStoreScene'];
 const res = await page.evaluate((FNS) => {
   const out = {};
   for (const fn of FNS) for (const tod of ['day', 'night']) {
