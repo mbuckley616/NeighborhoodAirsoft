@@ -33,7 +33,10 @@ function fireBB() {
   // of it for the last BB
   const gasMult = Game.gun.gasFade ? 1 - Game.gun.gasFade * Math.max(0, Math.min(1, (Game.gun.maxAmmo - Game.gun.ammo) / Math.max(1, Game.gun.maxAmmo - 1))) : 1;
   // v1.425 (D.83): the sock-padded stock steadies the gun on your shoulder: aimed, the whole cone is a fifth tighter
-  const steady = 1 - Game.player.ads * (1 - underPartMult('adsSteadyMult'));
+  // v1.442 (D.86): crouched on the rubber-band bipod's legs, the whole cone tightens, as far as the legs are down
+  const bip = getUnderPart(Game.persist.equipped.gun);
+  const steady = (1 - Game.player.ads * (1 - underPartMult('adsSteadyMult'))) *
+    (bip && bip.crouchSpreadMult ? 1 - (Game.gun._bipodK || 0) * (1 - bip.crouchSpreadMult) : 1);
   for (let i = 0; i < pelletCount; i++) {
     const vel = forward.clone().multiplyScalar(Game.gun.muzzleVelocity * gasMult);
     // base velocity jitter (gun's intrinsic accuracy) + movement cone (sway).

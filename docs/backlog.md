@@ -404,12 +404,11 @@ each builder works its own lane's items top-down and skips the other's. A new it
    cheek pad, and the like. Michael: **A, a third wave of homemade parts** on "What the play lane builds next, after gun
    batch 7" (control room, 2026-11-04). Builder (play) takes it. ~~The taped-on flashlight~~ — done, v1.441 (the Taped-On
    Flashlight, $7, 0.5 lb, under the barrel ahead of the off hand: a warm light at 2.2 out to 9 m (the Tactical's 3.4 and
-   14 m), no rail used, and a shot knocks it out for 0.2 s one time in four; `tests/homemade-light.test.mjs`). Next: the
-   rubber-band bipod (under the barrel; its effect while crouched or prone is the builder's to propose in decisions if
-   open), then the foam-noodle cheek pad (STOCK). Bipod tried and reverted, 4 Nov (builder, play): two paint stirrers
-   folded flat ahead of the off hand that swing down while you crouch, crouched the cone 0.6 as wide, aiming in 0.85 as
-   quick; its own checks passed, but with it `under-parts` closed the browser at its second match's entry, twice running
-   alone (it passes on v1.441). Find what in the bipod build or `updateGun` does that before landing it.
+   14 m), no rail used, and a shot knocks it out for 0.2 s one time in four; `tests/homemade-light.test.mjs`). ~~The rubber-band bipod~~ — done, v1.442 (the
+   Rubber-Band Bipod, $9, 0.4 lb, under the barrel: two paint stirrers on a clothespin that swing down in 0.25 s while you
+   crouch, the cone 0.6 as wide while they are down, aiming in 0.85 as quick; last run's `under-parts` crash was v1.441's:
+   `buildBareGunMesh` left its guns on the camera, and their lit flashlights slowed every match after; `tests/homemade-bipod.test.mjs`).
+   Next: the foam-noodle cheek pad (STOCK).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
