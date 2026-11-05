@@ -24,8 +24,8 @@ const sh = await page.evaluate(() => {
 });
 console.log('   RIFLES: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify({ l: sh.l, ar: sh.ar, sniper: sh.sniper }));
-check('Lever Gun: under RIFLES after the FAMAS, before the Electric Rifle, with its picture and "Lever-action" in its line, $120 from its page, in your hands; the page sells its spare BBs',
-  sh.names[sh.names.indexOf('FAMAS') + 1] === 'Lever Gun' && sh.names[sh.names.indexOf('Lever Gun') + 1] === 'Electric Rifle' && sh.pic && /Lever-action/.test(sh.rowText)
+check('Lever Gun: under RIFLES after the FAMAS, before the Break-Barrel (v1.447), with its picture and "Lever-action" in its line, $120 from its page, in your hands; the page sells its spare BBs',
+  sh.names[sh.names.indexOf('FAMAS') + 1] === 'Lever Gun' && sh.names[sh.names.indexOf('Lever Gun') + 1] === 'Break-Barrel' && sh.pic && /Lever-action/.test(sh.rowText)
   && sh.paid === 120 && sh.equipped === 'lever' && sh.spare, sh);
 const { l, ar, sniper } = sh;
 check('Lever Gun: a spring gun worked by its lever every shot (0.5 s, the AR 0.55, the bolt 1.1); a BB faster and straighter than the AR\'s, slower than the sniper\'s (55 m/s, straight 14 m); tighter than the AR; a quicker walk and lighter than the AR; twelve in the tube',
