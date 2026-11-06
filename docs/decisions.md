@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after gun batch 8 (builder, 2026-11-05)**
   Gun batch 8 is done (v1.446-v1.449): the Gas Carbine, the Break-Barrel, the DMR and the Long Revolver. The shop has 50
   guns, the top of the 30-50 you asked for (10 pistols, 7 shotguns, 14 rifles, 19 automatics). The play lane again has
@@ -20,8 +22,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Recommendation: A. You are at 50 guns, so new kinds are done for now; the parts give night matches more to change for,
   sit on slots every long gun already has, and touch no maps-lane file or Fable area. B is worth doing once, but the
   critic's 1v1 counts (5 Nov) found no gun far off yet.
-
-## Answered
+  Michael: **B) A balance pass over the 50 guns**. (control room, 2026-11-06)
 
 - **Willow Bend at real scale (D.51): where the matches play, the gazebo, and the cart ride (deep-work session, 2026-11-05, card `fable/d51-willow-bend`)**
   You chose the swim and tennis centre on the river's bend, at real scale. It is much bigger than today's 80 x 57 m
