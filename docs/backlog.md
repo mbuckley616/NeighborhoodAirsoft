@@ -427,7 +427,9 @@ each builder works its own lane's items top-down and skips the other's. A new it
 88. [play] A balance pass over the 50 guns: a headless 1v1 round for every gun against the same kid, a table of wins,
    time to first tag and shots per tag, and the outliers tuned one at a time (each a version, its numbers in the
    devlog). Michael: **B, a balance pass over the 50 guns** on "What the play lane builds next, after gun batch 8"
-   (control room, 2026-11-06). Builder (play) takes it.
+   (control room, 2026-11-06). Builder (play) takes it. Step 1 done, v1.452 (`scripts/balance.mjs`, a bot 1v1 for every
+   gun against Sean and Marcus, 5 rounds each, and the first table in the devlog; twelve guns 10 of 10, the Derringer
+   1 of 10; next: why every racked gun loses all five at the lot (bot or guns), then the Rattle and Sprayer against Sean).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
