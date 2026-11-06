@@ -1123,7 +1123,9 @@ function buildCountryClubScene(variant, timeOfDay) {
     playerSpawns = {
       team_b: { pos: P(-80, -1.5), yaw: 0 },          // the tee, looking up the fairway
       team_a: { pos: P(-46, -74), yaw: Math.PI },
-      gazebo: { pos: P(-46.6, -26), yaw: -Math.PI / 2 },   // inside the shelter, facing out of its open east side
+      // v1.450: inside the shelter, facing west over its waist-high wall at the fairway the attackers come from (it faced
+      // out of the open east side, with all three attackers 175° behind: spawn-facing's >120° rule)
+      gazebo: { pos: P(-46.6, -26), yaw: Math.PI / 2 },
     };
     teamBases = { player: { x: -80, z: -1.5 }, enemy: { x: -46, z: -74 } };
     if (variant === 'ride') {
