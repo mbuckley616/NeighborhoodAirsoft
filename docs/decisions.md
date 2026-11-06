@@ -5,6 +5,22 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after gun batch 8 (builder, 2026-11-05)**
+  Gun batch 8 is done (v1.446-v1.449): the Gas Carbine, the Break-Barrel, the DMR and the Long Revolver. The shop has 50
+  guns, the top of the 30-50 you asked for (10 pistols, 7 shotguns, 14 rifles, 19 automatics). The play lane again has
+  no ready item: every other open play item is a Fable card (the room list, recorded voices), an open design, or waits
+  on your look. What should it take next?
+  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
+    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (a split
+    ball pushed over the handguard: steadier on the move, a little heavier), the pair offered last time.
+  - B) **A balance pass over the 50 guns**: a headless 1v1 round for every gun against the same kid, a table of wins,
+    time to first tag and shots per tag, and the outliers tuned one at a time (each a version, its numbers in the devlog).
+  - C) **Rest the play lane** until the Willow Bend card lands, then take what its playtest turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. You are at 50 guns, so new kinds are done for now; the parts give night matches more to change for,
+  sit on slots every long gun already has, and touch no maps-lane file or Fable area. B is worth doing once, but the
+  critic's 1v1 counts (5 Nov) found no gun far off yet.
+
 ## Answered
 
 - **Willow Bend at real scale (D.51): where the matches play, the gazebo, and the cart ride (deep-work session, 2026-11-05, card `fable/d51-willow-bend`)**

@@ -28,7 +28,7 @@ const sh = await page.evaluate(() => {
 console.log('   PISTOLS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify({ m: sh.m, mag: sh.mag, der: sh.der }));
 check('Snub-Nose: last under PISTOLS, after the Magnum, with its picture and "Double-action CO2" in its line, $110 from its page, in your hands; the page sells spare shells',
-  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose"]' && sh.pic && /Double-action CO2/.test(sh.rowText)
+  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose","Long Revolver"]' && sh.pic && /Double-action CO2/.test(sh.rowText)
   && sh.paid === 110 && sh.equipped === 'snubnose' && sh.spare, sh);
 const { m, mag, der } = sh;
 check('Snub-Nose: the Magnum\'s action (double-action CO2, 2.5 a pull a second, no fade, six in the cylinder), but a slower BB (38 m/s against 44), wandering sooner (5 m against 9) in a wider cone; 2 lb against 3.5, a walk between the Magnum\'s and the Derringer\'s, quicker than the Electric and Gas Pistols\'; a sight and a rail, nothing else',

@@ -28,7 +28,7 @@ const sh = await page.evaluate(() => {
 console.log('   PISTOLS: ' + sh.names.join(' · '));
 console.log('   specs ' + JSON.stringify(sh.a));
 check('Auto Pistol: under PISTOLS after the Electric Pistol, with its picture and "Full-auto (~12/s)" in its line, $95 from its page, in your hands; the page sells its spare mag (24) and a long mag of 50',
-  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose"]'
+  JSON.stringify(sh.names) === '["Spring Pistol","Derringer","Six-Shooter","Bolt Pistol","Electric Pistol","Auto Pistol","Gas Pistol","Magnum","Snub-Nose","Long Revolver"]'
   && sh.pic && sh.line && sh.paid === 95 && sh.equipped === 'autopistol' && sh.spare && JSON.stringify(sh.longMag) === '[50]' && sh.capLong === 50, sh);
 check('Auto Pistol: the only automatic pistol, 12 a second (the MAC-10 18), a BB a shot, slower than the MAC-10\'s and wider than any other pistol\'s; 24 in the mag (two seconds held); a pistol\'s weight and walk; a sight and a rail, nothing else',
   sh.a.mode === 'auto' && sh.pistols.every(p => p.mode !== 'auto') && sh.a.rpm === 720 && sh.mac10.rpm > sh.a.rpm && JSON.stringify(sh.pellets) === '[1]'

@@ -334,7 +334,7 @@ function updateHeldMesh(dt) {
       // via adsYCorr when a red-dot/scope is mounted, so this only affects irons.
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
-    } else if (gunType === 'famas' || gunType === 'erifle' || gunType === 'burst' || gunType === 'gascarbine') {   // v1.325: the AR's poses (its post's tip is at the same height); v1.326: and the Electric Rifle's
+    } else if (gunType === 'famas' || gunType === 'erifle' || gunType === 'burst' || gunType === 'gascarbine' || gunType === 'dmr') {   // v1.448: and the DMR's   // v1.325: the AR's poses (its post's tip is at the same height); v1.326: and the Electric Rifle's
       hipPos  = { x: 0.13, y: -0.20, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.087, z: -0.28 };
       hipRotY = 0.10; hipRotX = -0.04;
@@ -398,7 +398,7 @@ function updateHeldMesh(dt) {
       hipPos  = { x: 0.16, y: -0.18, z: -0.30 };
       adsPos  = { x: 0.0,  y: -0.058, z: -0.25 };
       hipRotY = 0.12; hipRotX = -0.05;
-    } else if (gunType === 'sixshooter' || gunType === 'magnum' || gunType === 'snubnose') {   // v1.410: the Magnum has the Six-Shooter's sights; v1.440: the Snub-Nose the Magnum's
+    } else if (gunType === 'sixshooter' || gunType === 'magnum' || gunType === 'snubnose' || gunType === 'longrev') {   // v1.449: and the Long Revolver's   // v1.410: the Magnum has the Six-Shooter's sights; v1.440: the Snub-Nose the Magnum's
       hipPos  = { x: 0.16, y: -0.18, z: -0.32 };
       adsPos  = { x: 0.0,  y: -0.056, z: -0.27 };
       hipRotY = 0.12; hipRotX = -0.05;
@@ -946,9 +946,11 @@ const RETICLE_SPECS = {
   thompson: { style: 'circle_cross', baseGap: 9, ringR: 8,  centerDot: 1.3 },   // v1.403: the MP5's, a little tighter
   gaspistol: { style: 'ring_ticks', baseGap: 8,  ringR: 8,  centerDot: 1.4 },   // v1.399: the pistol's, a little tighter
   magnum:  { style: 'ring_ticks', baseGap: 8, ringR: 8, centerDot: 1.4 },   // v1.410: the Six-Shooter's, a little tighter
+  longrev: { style: 'ring_ticks', baseGap: 7, ringR: 7, centerDot: 1.4 },   // v1.449: the Magnum's, tighter for the long barrel
   snubnose: { style: 'ring_ticks', baseGap: 10, ringR: 10, centerDot: 1.4 },   // v1.440: the Magnum's, wider for the short barrel
   erifle:  { style: 'dot_cross',  baseGap: 10, ringR: 6,  centerDot: 1.6 },   // v1.326: the AR's
   burst:   { style: 'circle_cross', baseGap: 11, ringR: 9, centerDot: 1.5 },   // v1.327
+  dmr: { style: 'dot_cross', baseGap: 7, ringR: 5, centerDot: 1.4 },   // v1.448: the AR's, tighter
   gascarbine: { style: 'dot_cross', baseGap: 9, ringR: 6, centerDot: 1.6 },   // v1.446: the AR's, a little tighter
   semishotgun: { style: 'big_circle', baseGap: 20, ringR: 22, centerDot: 1.6 },   // v1.328: the shotgun's
   drumshotgun: { style: 'big_circle', baseGap: 22, ringR: 24, centerDot: 1.6 },   // v1.439: the shotgun's, wider
