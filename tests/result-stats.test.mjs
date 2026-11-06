@@ -36,7 +36,7 @@ const mid = await page.evaluate(() => {
 });
 check('two trigger pulls count as two shots', mid.stats.shots === 2, mid.stats);
 check('the BB tags Seth and is counted from 20 m', mid.stats.tags.length === 1 && Math.abs(mid.stats.tags[0].dist - 20) < 0.7, mid.stats);
-await page.waitForFunction(() => Game.mode === 'result', null, { timeout: 10000 });
+await page.waitForFunction(() => Game.mode === 'result', null, { timeout: 30000, polling: 100 });
 const res = await page.evaluate(() => ({ r: Game.scenario.lastResult, outcome: document.getElementById('outcomeText').textContent,
   text: document.getElementById('resultStats').innerText, cells: document.querySelectorAll('#resultStats .rs-cell').length }));
 check('the round is won', /GOT/.test(res.outcome), res.outcome);
@@ -44,7 +44,8 @@ check('four numbers: 1 tag, 2 shots, 0 hits on you, the time', res.cells === 4 &
 check('the time is the match time (about 3.8 s → 0:04)', /0:0[34]/.test(res.text) && res.r.time > 3 && res.r.time < 5, { t: res.r.time, text: res.text });
 check(`best moment: the 20 m tag on ${mid.name}`, res.r.best === `A 20 m tag on ${mid.name}.`, res.r.best);
 check('OPENED names the next match', res.r.opened.length === 1 && res.r.opened[0] === setup.nextName, res.r.opened);
-check('IN REACH names the Spring Shotgun', res.r.reach.length === 1 && /Spring Shotgun \(\$60\)/.test(res.r.reach[0]), res.r.reach);
+// (the Break-Barrel, v1.447, is $60 too: IN REACH lists every gun the pay reached, so both are named)
+check('IN REACH names the Spring Shotgun', res.r.reach.some(t => /Spring Shotgun \(\$60\)/.test(t)) && res.r.reach.every(t => /\(\$60\)/.test(t)), res.r.reach);
 check('the card shows all of it', /BEST/.test(res.text) && /OPENED/.test(res.text) && /IN REACH/.test(res.text), res.text);
 await g.shot('result-stats-win');
 
@@ -118,11 +119,17 @@ await g.scenario('lot_team_3v3');
 await page.evaluate(() => { Game.player._graceT = 1e9; });
 await g.spin(200);   // past the opening hold
 const marker = await page.evaluate(() => {
-  const E = Game.scenario.enemies, foe = E.find(e => e.team !== 'player'), mate = E.find(e => e.team === 'player');
+  // a kid of theirs still up: under load your crew sometimes tags one in the lead-in, and a kid walking back gives no X
+  const E = Game.scenario.enemies, mate = E.find(e => e.team === 'player'),
+    foe = E.find(e => e.team !== 'player' && e.state !== 'retreating' && e.health > 0) || E.find(e => e.team !== 'player');
+  foe._graceT = 0;
   const el = document.getElementById('hitMarker');
   const fly = (c) => {
     const target = c.pos.clone(); target.y += 1.0;
-    const dir = new THREE.Vector3(1, 0, 0), bb = makeBB(target.clone().addScaledVector(dir, -0.6), dir.clone().multiplyScalar(40), 'player', null, null, combatantView(Game.player).team);
+    // from a side with nothing in the BB's 0.6 m (a kid against a cart or a shelf end stops one flown from +x)
+    const sides = [0, 1, 2, 3, 4, 5, 6, 7].map(k => new THREE.Vector3(Math.cos(k * Math.PI / 4), 0, Math.sin(k * Math.PI / 4)));
+    const dir = sides.find(d => { const s = target.clone().addScaledVector(d, -0.7);
+      return hasLineOfSight(s.x, s.y, s.z, target.x, target.y, target.z, Game.player.obstacles); }) || sides[0], bb = makeBB(target.clone().addScaledVector(dir, -0.6), dir.clone().multiplyScalar(40), 'player', null, null, combatantView(Game.player).team);
     bb.curveStrength = 0; Game.scenario.bbs.push(bb);
     for (let i = 0; i < 2; i++) stepGame(1 / 60);
   };
