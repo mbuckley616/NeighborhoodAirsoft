@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.88 balance pass: what the 1v1 table can tune (builder, 2026-11-06, backlog D.88)**
+  With the bot fixed (v1.454: it had fired every racked gun once a round), the table is flat against price: 40 of the
+  50 guns win 7-10 of 10. Twenty rounds each in both 1v1s for the ones that looked off: the Break-Barrel ($60) 37 of 40,
+  the dear rifles' rate; the KSG ($150) 24 of 40; the Thunder Pump ($75) 31 of 40; the Rattle Can ($25) 0 of 20 against
+  Sean and 14 of 20 at the lot. A tuning tried on the Break-Barrel, its aimed cone widened from 0.045 to 0.084 (wider
+  than the Lever Gun's), moved it 37 → 36 of 40, so it was left out: the bot aims perfectly and fires 0.25 s after it
+  sees him, so any gun whose first BB lands at 13-40 m wins, and the table can't see what a dearer gun buys (a steadier
+  hand, the hip, the walk, the parts). The Rattle Can losing every round to Sean's AK is what D.37 and D.56 made it
+  ("slow, wild and it jams"), so it was not tuned up.
+  - A) **Make the bot human, then measure again** *(recommended)*: an aim that wanders and settles (about a hand's
+    width at 20 m, tighter the longer it holds still), 0.4-0.6 s to react, a step out of cover; then tune the guns that
+    are still off their price, one a version as you asked.
+  - B) **Tune by price now**: the Break-Barrel $60 → $95 (beside the Bolt Pistol), the KSG $150 → $120; nothing else.
+  - C) **Stop the pass here**: the guns are close enough; the script stays for the next new gun.
+  - D) **Something else.** Reply with what you want.
+  Recommendation: A. B moves the prices on a measure that can't tell a $60 gun from a $240 one; A makes the table
+  read the way a player plays before anything is changed.
+
 ## Answered
 
 - **Hollins Ridge High at real scale (D.51): where the matches play, the portables, and the mural's mascot (deep-work session, 2026-11-06, card `fable/d51-hollins-ridge`)**
