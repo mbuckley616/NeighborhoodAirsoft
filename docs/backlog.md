@@ -424,6 +424,10 @@ each builder works its own lane's items top-down and skips the other's. A new it
    straight for 20 m, a 20 mag, the M14's weight; `tests/gun-dmr.test.mjs`). ~~The second revolver kind~~ — done, v1.449 (the Long Revolver, $170, last under PISTOLS: a
    stainless single-action CO2 revolver with an eight-inch barrel, thumb the hammer each shot, a 48 m/s BB straight for
    12 m, the straightest revolver; `tests/gun-longrev.test.mjs`). Batch 8 is done: 50 guns.
+88. [play] A balance pass over the 50 guns: a headless 1v1 round for every gun against the same kid, a table of wins,
+   time to first tag and shots per tag, and the outliers tuned one at a time (each a version, its numbers in the
+   devlog). Michael: **B, a balance pass over the 50 guns** on "What the play lane builds next, after gun batch 8"
+   (control room, 2026-11-06). Builder (play) takes it.
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
