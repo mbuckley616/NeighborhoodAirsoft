@@ -3,6 +3,10 @@
 // pin is locked on a new save and opens its scenarios once the school is cleared, the grounds hold what the answer
 // named, the pool and the pond stop a body but not a BB, every anchor, kid and the player start clear of obstacles,
 // and a round plays: kids move or fire, nobody wedges, the team round trades lives. As tests/high-school.test.mjs.
+// v1.445 (D.51, card fable/d51-willow-bend): the swim and tennis centre at real scale, in two areas. The grounds checks,
+// the water walks, the BB across the pool, the rail walk and the screenshots are rewritten for it (they pinned the old
+// club's coordinates); added: nothing past an area's edge is solid, Night Swim's starts see none of yours, and the draw
+// calls stay within the plan's 900.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
@@ -56,33 +60,55 @@ check('after the school the pin is live and lists every scenario, only the opene
 await g.shot('country-club-map');
 await page.evaluate(() => { delete Game.persist.completed[zoneCapstoneId('high_school')]; closeMap(); });
 
+const AREA = { club_1v1_brooke: 'pool', club_night_4v4: 'pool', club_eighteenth_3v3: 'course', club_defend_gazebo: 'course' };
 for (const id of ladder.ids.filter(id => id !== 'club_cart_ride')) {   // v1.364: the cart ride is tests/golf-cart's
   await g.scenario(id);
-  const start = await page.evaluate(() => {
+  const start = await page.evaluate((area) => {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);
     const sc = Game.scenario, p = Game.player;
     const kids = sc.enemies.map(e => ({ n: e.character?.name, t: e.team, x: +e.pos.x.toFixed(1), z: +e.pos.z.toFixed(1), stuck: inside(e.pos.x, e.pos.z) }));
-    const built = buildCountryClubScene('default', 'day');
+    const built = buildCountryClubScene(area, 'day');
     const badAnchors = Object.entries(built.placements).filter(([, a]) => inside(a.pos.x, a.pos.z)).map(([k]) => k);
-    const badSpawns = Object.entries(built.playerSpawns).filter(([, a]) => inside(a.pos.x, a.pos.z)).map(([k]) => k);
-    // what the grounds hold: the clubhouse front, the pool (16 x 7) and the pond as water, five carts, the cart barn
-    const obs = p.obstacles;
+    const badSpawns = Object.entries(built.playerSpawns).filter(([k]) => k !== 'gazebo' || area === 'course').filter(([, a]) => inside(a.pos.x, a.pos.z)).map(([k]) => k);
+    const obs = p.obstacles, B = sc.bounds;
     const water = obs.filter(o => o.surface === 'water' && o.bbPass && o.noStand);
-    const pool = water.some(o => Math.abs(o.maxX - o.minX - 17.2) < 0.01 && o.maxZ - o.minZ === 7);
-    const pond = water.some(o => o.shape === 'cylinder' && o.radius === 5);
+    // v1.445: the pool area: the L-shaped lap pool (25 x 14 with its 10 x 10 well), the free-form pool (two rounds), the
+    // brown fence (1.8 m, solid) with its piers; the course area: the shelter's three walls, the yard's carts, the barn
+    const lap = water.some(o => o.lapPool && o.maxX - o.minX === 25 && o.maxZ - o.minZ === 14);
+    const well = water.some(o => o.divingWell && o.maxX - o.minX === 10);
+    const freeForm = water.filter(o => o.freeForm && o.shape === 'cylinder').length;
+    const fence = obs.filter(o => o.surface === 'wood' && o.h === 1.8 && !o.bbPass).length;
+    const walls = obs.filter(o => o.shelterWall && o.h === 0.9).length;
     const carts = obs.filter(o => o.h === 1.2 && o.surface === 'metal').length;
-    const barn = obs.some(o => o.minX === 22 && o.maxX === 38 && o.h === 3.6);
-    // v1.158: the gazebo's six rails (0.9 m), and the defend's player inside it
-    const rails = obs.filter(o => o.gazeboRail && o.h === 0.9).length;
-    const inGazebo = Math.hypot(p.pos.x + 31, p.pos.z - 22) < 0.6;
-    return { kids, badAnchors, badSpawns, pool, pond, carts, barn, rails, inGazebo, player: inside(p.pos.x, p.pos.z),
-      scene: built.name, clubhouse: obs.some(o => o.maxZ === -30 && o.maxX - o.minX > 50) };
-  });
-  check(`${id}: every anchor and player spawn on the grounds is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
+    const barn = obs.some(o => o.minX === -58 && o.maxX === -34 && o.h === 5);
+    const inShelter = Math.hypot(p.pos.x + 46.6, p.pos.z + 26) < 0.6;
+    // nothing past the edge is solid: every obstacle but the edge walls reaches into the area
+    const past = obs.filter(o => !(o.baseY === -4 && o.h === 6) && !(o.maxX > B.minX - 1 && o.minX < B.maxX + 1 && o.maxZ > B.minZ - 1 && o.minZ < B.maxZ + 1)).length;
+    // draw calls in five views: your start, the area's four corners looking in
+    const calls = [];
+    const cx = (B.minX + B.maxX) / 2, cz = (B.minZ + B.maxZ) / 2;
+    for (const [x, z] of [[p.pos.x, p.pos.z], [B.minX + 3, B.minZ + 3], [B.maxX - 3, B.minZ + 3], [B.minX + 3, B.maxZ - 3], [B.maxX - 3, B.maxZ - 3]]) {
+      const yaw = Math.atan2(-(cx - x), -(cz - z));
+      Game.camera.position.set(x, 1.6, z); Game.camera.rotation.set(0, yaw, 0, 'YXZ'); Game.camera.updateMatrixWorld(true);
+      Game.renderer.render(Game.scene, Game.camera); calls.push(Game.renderer.info.render.calls);
+    }
+    // the night rule: no start of theirs has a line to yours or your crew's
+    let lines = 0;
+    if (sc.timeOfDay === 'night' || SCENARIOS[sc.active].timeOfDay === 'night') {
+      const foes = sc.enemies.filter(k => k.team !== 'player'), mine = [p, ...sc.enemies.filter(k => k.team === 'player')];
+      for (const f of foes) for (const m of mine) if ([0.95, 1.32].some(ty => hasLineOfSight(f.pos.x, 1.05, f.pos.z, m.pos.x, ty, m.pos.z, obs))) lines++;
+    }
+    return { kids, badAnchors, badSpawns, lap, well, freeForm, fence, walls, carts, barn, inShelter, past, calls, lines, player: inside(p.pos.x, p.pos.z), scene: built.name };
+  }, AREA[id]);
+  check(`${id}: every anchor and player spawn in its area is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
   check(`${id}: the player and every kid spawn clear of obstacles`, !start.player && start.kids.every(k => !k.stuck), start);
-  check(`${id}: the grounds have the clubhouse, the pool and the pond as water, five carts and the cart barn`,
-    start.clubhouse && start.pool && start.pond && start.carts === 5 && start.barn && start.rails === 6, start);
-  if (id === 'club_defend_gazebo') check(`${id}: the player starts inside the gazebo`, start.inGazebo, start);
+  if (AREA[id] === 'pool') check(`${id}: the pool area has the L-shaped lap pool and its well, the free-form pool and the brown fence`,
+    start.lap && start.well && start.freeForm === 2 && start.fence >= 6, start);
+  else check(`${id}: the course area has the shelter's three walls and the yard's carts`, start.walls === 3 && start.carts >= 8, start);
+  check(`${id}: nothing past the area's edge is solid (v1.445)`, start.past === 0, start.past);
+  check(`${id}: at most 900 draw calls in any of five views (v1.445)`, Math.max(...start.calls) <= 900, start.calls);
+  if (id === 'club_night_4v4') check(`${id}: at night no start of theirs has a line to yours or your crew's (v1.445)`, start.lines === 0, start.lines);
+  if (id === 'club_defend_gazebo') check(`${id}: the player starts inside the shelter`, start.inShelter, start);
   const r = await page.evaluate(() => {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
@@ -90,7 +116,7 @@ for (const id of ladder.ids.filter(id => id !== 'club_cart_ride')) {   // v1.364
     const st = kids.map(k => ({ run: 0, longest: 0, path: 0, mark: [k.pos.x, k.pos.z], minD: 1e9, wet: 0 }));
     const livesLost = t => kids.filter(k => k.team === t).reduce((a, k) => a + (k.maxLives - k.lives), 0);
     const wiped = () => ['enemy', 'player'].find(t => kids.filter(k => k.team === t).every(k => !npcInFight(k))) || null;
-    const inWater = (x, z) => (x > -32 && x < -16 && z > -15 && z < -8) || Math.hypot(x - 17, z - 13) < 5;
+    const inWater = (x, z) => (x > 5 && x < 30 && z > -21 && z < -7) || (x > 30 && x < 40 && z > -27 && z < -17) || Math.hypot(x - 11, z + 36) < 5.5 || Math.hypot(x - 19, z + 35) < 5;
     const scd = SCENARIOS[Game.scenario.active] || {}, team = scd.winCondition === 'last_team_standing';
     let f = 1;
     for (; f <= 120 * 60 && Game.mode === 'scenario'; f++) {
@@ -116,20 +142,19 @@ for (const id of ladder.ids.filter(id => id !== 'club_cart_ride')) {   // v1.364
   console.log(`  ${id}, ${r.secs} s:`, JSON.stringify(r));
   check(`${id}: kids fire`, r.shots > (r.team ? 10 : 2), r.shots);
   check(`${id}: every kid moves or fires`, r.kids.every(k => k.walked > 5 || k.fired > 0), r.kids);
-  check(`${id}: no kid ever stands in the pool or the pond`, r.kids.every(k => k.wet === 0), r.kids);
+  check(`${id}: no kid ever stands in a pool`, r.kids.every(k => k.wet === 0), r.kids);
   if (r.team) check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
     (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
-  // v1.158: the defend's attackers come down the lawn to within 10 m of the gazebo
-  else if (id === 'club_defend_gazebo') check(`${id}: an attacker comes down the lawn to within 10 m of the gazebo`,
-    Math.min(...r.kids.map(k => k.nearest)) < 10, r.kids);
+  else if (id === 'club_defend_gazebo') check(`${id}: an attacker comes across the fairway to within 15 m of the shelter`,
+    Math.min(...r.kids.filter(k => k.t !== 'player').map(k => k.nearest)) < 15, r.kids);
   else check(`${id}: Brooke comes off the pool deck to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
 
-// The water: the player walks at the pool and the pond and stops at the edge; a jump doesn't land him on it; a BB
-// fired across the pool at waist height flies over it.
+// The water: the player walks at the lap pool and stops at its edge; a jump doesn't land him on it; a BB fired across
+// it at waist height flies over it. The compound's fence stops a body and a BB.
 await g.scenario('club_1v1_brooke');
 const water = await page.evaluate(() => {
   for (const e of Game.scenario.enemies) e.health = 0;
@@ -140,47 +165,52 @@ const water = await page.evaluate(() => {
     Game.keys.KeyW = false;
     return { x: +P.pos.x.toFixed(2), z: +P.pos.z.toFixed(2), y: +P.pos.y.toFixed(2) };
   };
-  out.pool = walk(-24, -2.5, 0, 3, false);          // north from the deck's south side, at the pool's south edge (z -8)
-  out.poolJump = walk(-24, -2.5, 0, 3, true);
-  out.pond = walk(17, 24, 0, 3, false);             // north up the fairway at the pond (its south rim at z 18)
-  // a BB across the pool, west to east at 1 m, over the water's 16 m
-  Game.scenario.bbs.length = 0;
-  const bb = makeBB(new THREE.Vector3(-34, 1.0, -11.5), new THREE.Vector3(60, 0, 0), 'player');
-  bb.curveStrength = 0; Game.scenario.bbs.push(bb);
-  let flew = 0;
-  for (let i = 0; i < 120 && Game.scenario.bbs.includes(bb); i++) { updateBBs(1 / 200); if (bb.canDamage) flew = Math.max(flew, bb.pos.x); }
-  Game.scenario.bbs.length = 0;
-  out.bbX = +flew.toFixed(1);
+  out.pool = walk(19, -2.5, 0, 3, false);           // north from the deck below the lap pool, at its south edge (z -7)
+  out.poolJump = walk(19, -2.5, 0, 3, true);
+  out.fence = walk(-1.5, 0, -Math.PI / 2, 3, false); // east from the lawn at the compound's fence (x 0)
+  const shoot = (x, z, vx) => {
+    Game.scenario.bbs.length = 0;
+    const bb = makeBB(new THREE.Vector3(x, 1.0, z), new THREE.Vector3(vx, 0, 0), 'player');
+    bb.curveStrength = 0; Game.scenario.bbs.push(bb);
+    let flew = x;
+    for (let i = 0; i < 160 && Game.scenario.bbs.includes(bb); i++) { updateBBs(1 / 200); if (bb.canDamage) flew = Math.max(flew, bb.pos.x); }
+    Game.scenario.bbs.length = 0;
+    return +flew.toFixed(1);
+  };
+  out.bbPool = shoot(3, -14, 60);     // west to east across the lap pool's 25 m
+  out.bbFence = shoot(-6, 0, 60);     // at the fence from the lawn
   return out;
 });
 console.log('  water:', JSON.stringify(water));
-check('walking at the pool stops at its edge (z -8, plus the body radius)', water.pool.z > -8 && water.pool.z < -7.2, water.pool);
-check('jumping at the pool does not land you on the water', water.poolJump.z > -8 && water.poolJump.y < 0.2, water.poolJump);
-check('walking at the pond stops at its rim', Math.hypot(water.pond.x - 17, water.pond.z - 13) > 5, water.pond);
-check('a BB crosses the pool (x past -16)', water.bbX > -15, water);
+check('walking at the lap pool stops at its edge (z -7, plus the body radius)', water.pool.z > -7 && water.pool.z < -6.2, water.pool);
+check('jumping at the pool does not land you on the water', water.poolJump.z > -7 && water.poolJump.y < 0.2, water.poolJump);
+check('the compound fence stops a body', water.fence.x < 0, water.fence);
+check('a BB crosses the lap pool (x past 30)', water.bbPool > 30, water);
+check('a BB stops at the compound fence (v1.445)', water.bbFence < 0.5, water);
 
-// screenshots by eye: the pool from the deck's corner, the 18th green, the clubhouse front, the course from the south
+// screenshots by eye: the deck from the west gate, the porch, the pickleball courts, your start; the course
 const view = (x, z, yaw, y = 0) => page.evaluate(([x, z, yaw, y]) => { const p = Game.player; p.pos.set(x, y, z); p.yaw = yaw; stepGame(1 / 60); }, [x, z, yaw, y]);
-await view(-12, -3, Math.PI * 0.32); await g.shot('country-club-pool');
-await view(30, 4, Math.PI * 0.1); await g.shot('country-club-green');
-await view(2, -12, Math.PI * 0.1); await g.shot('country-club-front');
-await view(5.5, 27, 0.12); await g.shot('country-club-start');
-// v1.158: the gazebo's rails stop a body (the player walks west across it and stops at a rail), and the night match
+await view(2, -11, -Math.PI * 0.55); await g.shot('country-club-pool');
+await view(20, -12, Math.PI); await g.shot('country-club-front');
+await view(-12, 6, 0.1); await g.shot('country-club-start');
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+await g.scenario('club_defend_gazebo');
+// the shelter's walls stop a body (the player walks west across it and stops at its west wall)
 const rail = await page.evaluate(() => {
-  const P = Game.player; P.pos.set(-31, 0, 22); P.yaw = Math.PI / 2; P.pitch = 0;   // yaw π/2 faces -x, the west rail
+  for (const e of Game.scenario.enemies) e.health = 0;
+  const P = Game.player; P.pos.set(-46.6, 0, -26); P.yaw = Math.PI / 2; P.pitch = 0;   // yaw π/2 faces -x, the west wall
   for (let f = 0; f < 120; f++) { Game.keys.KeyW = true; stepGame(1 / 60); }
   Game.keys.KeyW = false;
   return { x: +P.pos.x.toFixed(2), z: +P.pos.z.toFixed(2) };
 });
-check('walking west inside the gazebo stops at its rail (inside r 2.6)', Math.hypot(rail.x + 31, rail.z - 22) < 2.6, rail);
+check('walking west inside the shelter stops at its wall (x -48.5)', rail.x > -48.5 && rail.x < -46.6, rail);
+await view(-46.6, -26, -Math.PI / 2); await g.shot('country-club-defend');
+await view(-80, -1.5, 0); await g.shot('country-club-green');
+await view(-100, -30, Math.PI / 2); await g.shot('country-club-river');
 await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
 await g.scenario('club_night_4v4');
 await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
-await view(5.5, 27, 0.12); await g.shot('country-club-night');
-await view(-12, -3, Math.PI * 0.32); await g.shot('country-club-night-pool');
-await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
-await g.scenario('club_defend_gazebo');
-await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; stepGame(1 / 60); });
-await g.shot('country-club-defend');
+await view(-12, 6, 0.1); await g.shot('country-club-night');
+await view(2, -11, -Math.PI * 0.55); await g.shot('country-club-night-pool');
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

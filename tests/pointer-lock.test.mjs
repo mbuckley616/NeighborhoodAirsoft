@@ -2,6 +2,7 @@
 // moves no one while the mouse is unlocked, so a test holding W stood still (country-club's pool walk on PR #41, 6 Oct:
 // the player never left (-24, -2.5)). g.scenario() now marks the lock taken. Here the page refuses every lock, and the
 // walk still reaches the pool's edge; with the flag cleared, the same walk goes nowhere, which is the CI failure.
+// v1.445 (D.51, Willow Bend at real scale): the walk is at the new lap pool's south edge (z -7), from (19, -2.5).
 import { boot, check } from './lib/game.mjs';
 const g = await boot(); const { page } = g;
 await g.bedroom();
@@ -15,7 +16,7 @@ const r = await page.evaluate(() => {
   for (const e of Game.scenario.enemies) e.health = 0;
   const P = Game.player;
   const walk = (secs) => {
-    P.pos.set(-24, 0, -2.5); P.yaw = 0; P.pitch = 0;
+    P.pos.set(19, 0, -2.5); P.yaw = 0; P.pitch = 0;
     for (let f = 0; f < secs * 60; f++) { Game.keys.KeyW = true; stepGame(1 / 60); }
     Game.keys.KeyW = false;
     return { x: +P.pos.x.toFixed(2), z: +P.pos.z.toFixed(2) };
@@ -32,6 +33,6 @@ const r = await page.evaluate(() => {
 console.log('  lock:', JSON.stringify(r));
 check('the page holds no real pointer lock', !r.real, r.real);
 check('g.scenario marks the lock taken anyway', r.flag && r.stillFlag, r);
-check('so walking at the pool reaches its edge (z -8, plus the body radius)', r.pool.z > -8 && r.pool.z < -7.2, r.pool);
+check('so walking at the pool reaches its edge (z -7, plus the body radius)', r.pool.z > -7 && r.pool.z < -6.2, r.pool);
 check('without the flag the same walk goes nowhere (the CI failure)', r.unlocked.z === -2.5, r.unlocked);
 await g.close();

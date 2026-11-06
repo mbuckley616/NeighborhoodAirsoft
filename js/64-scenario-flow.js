@@ -1339,7 +1339,7 @@ function endScenario(outcome) {
     const _in = foes.filter(e => e.health > 0).length, _out = foes.length - _in;
     const _tags = _out === 0 ? 'You never tagged one of them' : _out === foes.length ? `You tagged all ${foes.length} of them on the way` : `You tagged ${_out} of the ${foes.length} on the way`;
     if (outcome === 'win') {
-      outcomeEl.textContent = _race.ride ? 'TWO LAPS, YOU MADE IT' : 'YOU MADE IT DOWN';
+      outcomeEl.textContent = _race.ride ? (_race.laps === 1 ? 'ROUND THE LOOP, YOU MADE IT' : 'TWO LAPS, YOU MADE IT') : 'YOU MADE IT DOWN';   // v1.445: one lap at Willow Bend (D.51)
       outcomeEl.className = 'outcome win';
       flavorEl.textContent = _race.ride
         ? `Eric pulls the cart back up to the barn. ${_tags}, and ${_in ? joinNames(foes.filter(e => e.health > 0).map(e => e.name)) + ' still ' + (_in > 1 ? 'pop' : 'pops') + ' up out of the bunkers and the trees, waving' : 'nobody was left to wave you in'}. "Same time tomorrow?"`
@@ -1349,7 +1349,7 @@ function endScenario(outcome) {
       outcomeEl.textContent = "YOU'RE OUT";
       outcomeEl.className = 'outcome lose';
       flavorEl.textContent = _race.ride
-        ? `Eric stops the cart ${_race.s - _race.startS < _race.len ? 'before the first lap is done' : 'on the second lap'}. ${_tags}. ${allStr} climb out of the bunkers grinning. "Run it back?"`
+        ? `Eric stops the cart ${_race.laps === 1 ? "before he's round the loop" : _race.s - _race.startS < _race.len ? 'before the first lap is done' : 'on the second lap'}. ${_tags}. ${allStr} climb out of the bunkers grinning. "Run it back?"`
         : `You climb out of the cart with ${_left} m still to go. ${_tags}. ${allStr} come down off the lawns laughing. "Run it back?"`;
     }
   } else if (outcome === 'win') {

@@ -210,9 +210,9 @@ const SUMMER_TEXTS = [
   { id: 'school',     from: 'Seth',    after: 'northcliff_night_4v4',
     text: "school starts tmrw ugh. hollins ridge kids say the portables are theirs after the last bell. friday night im playing for them. bet ur crew cant take em" },   // v1.363: he's the other side now (was "lets go see")
   { id: 'pool',       from: 'Brooke',  after: 'school_night_4v4',
-    text: "the club shut the pool for the season. i know a gap in the hedge. bring a pistol" },
+    text: "the club shut the pools for the season. i know where to hop the fence. bring a pistol" },   // v1.445: the real fence
   { id: 'sethClub',   from: 'Seth',    after: 'club_defend_gazebo',   // v1.363
-    text: "night swim at the club tmrw. me marcus jamie and devon on the veranda. i got the ak. wear something dark" },
+    text: "night swim at the club tmrw. me marcus jamie and devon on the porch. i got the ak. wear something dark" },   // v1.445: the pool clubhouse's porch
   { id: 'store',      from: 'Eric',    after: 'club_night_4v4',
     text: "tylers dad is night manager at riverside market. tyler says we can get in before it opens. FOR REAL" },
   { id: 'last',       from: 'Seth',    after: 'store_night_4v4',

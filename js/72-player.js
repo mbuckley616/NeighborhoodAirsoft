@@ -209,7 +209,8 @@ function rideSetup(built) {
     const a = rideAt({ xs, zs, len }, i * RIDE.step - 2), b = rideAt({ xs, zs, len }, i * RIDE.step + 2);
     return Math.abs(Math.atan2(a.dx * b.dz - a.dz * b.dx, a.dx * b.dx + a.dz * b.dz));
   });
-  const R = { ride: true, xs, zs, len, turn, s: s0, startS: s0, finishS: s0 + RIDE.laps * len, v: RIDE.slow, d: 0,
+  const laps = built.rideLaps || RIDE.laps;   // v1.445 (D.51, Willow Bend at real scale; Michael: A, 5 Nov): a map's own lap count
+  const R = { ride: true, xs, zs, len, turn, s: s0, startS: s0, finishS: s0 + laps * len, laps, v: RIDE.slow, d: 0,
     gY: built.groundY, done: false, crashes: 0, topV: 0, lap: 1, mesh: buildGolfCartMesh() };
   built.scene.add(R.mesh);
   Game.player.bounds = null;   // the loop holds you, not the play box
@@ -245,7 +246,7 @@ function updateRide(dt) {
   const want = R.done ? 0 : sharp > 0.3 ? RIDE.slow : RIDE.fast;
   R.v = R.v < want ? Math.min(want, R.v + RIDE.accel * dt) : Math.max(want, R.v - RIDE.accel * 2 * dt);
   R.s += R.v * dt;
-  R.lap = Math.min(RIDE.laps, 1 + Math.floor((R.s - R.startS) / R.len));
+  R.lap = Math.min(R.laps, 1 + Math.floor((R.s - R.startS) / R.len));
   R.topV = Math.max(R.topV, R.v);
   // your view turns with the cart, as it would on its seat
   const a = rideAt(R, R.s), h = Math.atan2(-a.dx, -a.dz);

@@ -24,14 +24,34 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 ## Answered
 
 - **Willow Bend at real scale (D.51): where the matches play, the gazebo, and the cart ride (deep-work session, 2026-11-05, card `fable/d51-willow-bend`)**
-  You chose the swim and tennis centre on the river's bend, at real scale. Each match still plays in a fenced area about
-  today's size; the rest is scenery. (Full entry on auto/fable-d51-willow-bend.)
-  1. Where the five matches play: A) two areas, pool compound and course side (recommended); B) one area for all five
-     across the middle; C) all five on the course side.
-  2. What the gazebo becomes: A) a made-up white gazebo by the fairway (recommended); B) the pool's pavilion, given
-     rails; C) a roofed bench shelter between the clay courts (Hold the Shelter).
-  3. How far Eric drives: A) one lap of the real ~280 m loop (recommended); B) two laps of the real loop; C) two laps
-     of a shorter loop.
+  You chose the swim and tennis centre on the river's bend, at real scale. It is much bigger than today's 80 x 57 m
+  club: the fenced pool compound alone is 45 x 90 m with the pool clubhouse in its middle, the courts run 70 m west of
+  it, the cart yard is north of them, and the fairway and the wooded bank lie between the courts and the river. Each
+  match still plays in a fenced area about today's size, the rest is scenery. Measured today (`docs/devlog/v1.444.md`):
+  Night Swim breaks the night rule (six lines from the veranda to your start and your crew's) and opens at 46-48 m,
+  past the guns' 40 m; the rebuild fixes both whatever you pick below.
+
+  1. **Where the five matches play.**
+     - A) **Two areas** (recommended): Pool's Closed and Night Swim inside the pool compound, among the pools, the
+       deck and the clubhouse porch (the 1v1 across the lap pool; at night the pools glow and the court lights are on).
+       The Eighteenth, Hold the Gazebo and Cart Path Only on the course side: the clay courts, the cart path, the
+       fairway and the cart yard, with the wooded bank as the west edge. Each match keeps what its briefing is about.
+     - B) **One area for all five** across the centre's middle: the compound's west half, the pickleball courts and the
+       clay courts. Every match mixes pool, fence and courts; the fairway is only seen.
+     - C) **All five on the course side**: the courts, the fairway and the cart yard. The pools are seen through the
+       fence and are not played; Pool's Closed and Night Swim become course matches.
+  2. **What the gazebo becomes.** The real centre has no gazebo, and Hold the Gazebo is tuned to its waist-high rails.
+     - A) **A made-up white gazebo on the course by the fairway**, the same shape as today's (recommended): the match
+       and its name stay as they are; courses often have one.
+     - B) **The pool's pavilion**, 4 m square with a dark pyramid roof, given waist-high rails; the match becomes Hold
+       the Pavilion.
+     - C) **A roofed bench shelter between the clay courts**, in the chain-link; the match becomes Hold the Shelter.
+  3. **How far Eric drives.** Today's loop is about 100 m, twice round in 30-60 s. The real cart paths round a court
+     block and up the fairway make a loop of about 280 m.
+     - A) **One lap of the real loop** (recommended): about the same time on the cart as today, past the courts, the
+       fairway and the cart yard.
+     - B) **Two laps of the real loop**: twice as long under fire; harder.
+     - C) **Two laps of a shorter loop** round one court block (about 140 m a lap).
   Michael: 1. **A) Two areas: pool compound and course side**; 2. **C) A roofed bench shelter between the clay courts**;
   3. **A) One lap of the real ~280 m loop**. (control room, 2026-11-05)
 
