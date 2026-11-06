@@ -7,6 +7,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Answered
 
+- **Hollins Ridge High at real scale (D.51): where the matches play, the portables, and the mural's mascot (deep-work session, 2026-11-06, card `fable/d51-hollins-ridge`)**
+  The full question is on branch `auto/fable-d51-hollins-ridge` (step 0, `docs/devlog/v1.451.md`, draft PR #276).
+  1. Where the four matches play: A) three areas (front, west lot, stadium); B) two areas; C) one area.
+     Michael: **A) Three areas: front, west lot, stadium**. (2026-11-06, on the control room)
+  2. The portables, the court and the concession stand: A) keep four portables at the lot's north end; B) no portables,
+     rename the two matches; C) portables only for Hold the Portables.
+     Michael: **A) Keep four portables at the lot's north end**. (2026-11-06, on the control room)
+  3. The mural's made-up mascot: A) a ram (the Hollins Ridge Rams); B) a hawk; C) a fox.
+     Michael: **A) A ram (the Hollins Ridge Rams)** — his note names the real school's mascot and says the Rams could
+     work as well; the note stays off this public repo (no real mascot here). (2026-11-06, on the control room)
+
 - **What the play lane builds next, after gun batch 8 (builder, 2026-11-05)**
   Gun batch 8 is done (v1.446-v1.449): the Gas Carbine, the Break-Barrel, the DMR and the Long Revolver. The shop has 50
   guns, the top of the 30-50 you asked for (10 pistols, 7 shotguns, 14 rifles, 19 automatics). The play lane again has
