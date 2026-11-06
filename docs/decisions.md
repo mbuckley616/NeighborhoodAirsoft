@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.88 balance pass: what the 1v1 table can tune (builder, 2026-11-06, backlog D.88)**
   With the bot fixed (v1.454: it had fired every racked gun once a round), the table is flat against price: 40 of the
   50 guns win 7-10 of 10. Twenty rounds each in both 1v1s for the ones that looked off: the Break-Barrel ($60) 37 of 40,
@@ -22,8 +24,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want.
   Recommendation: A. B moves the prices on a measure that can't tell a $60 gun from a $240 one; A makes the table
   read the way a player plays before anything is changed.
-
-## Answered
+  Michael: **A) Make the bot human, then measure again**. (2026-11-06, on the control room)
 
 - **Hollins Ridge High at real scale (D.51): where the matches play, the portables, and the mural's mascot (deep-work session, 2026-11-06, card `fable/d51-hollins-ridge`)**
   The full question is on branch `auto/fable-d51-hollins-ridge` (step 0, `docs/devlog/v1.451.md`, draft PR #276).
