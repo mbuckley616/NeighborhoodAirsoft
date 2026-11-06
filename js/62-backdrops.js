@@ -72,12 +72,8 @@ const EDGE_BACKDROPS = {
     W: { from: 9, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
     E: { from: 8, street: { at: 0 }, bands: [['houses', 22], ['trees', 10], ['houses', 22], ['trees', 30]] },
   },
-  buildHighSchoolScene: {
-    N: { from: 17, bands: [['trees', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },  // behind the school
-    S: { from: 7, bands: [['field', 34], ['trees', 8], ['houses', 22], ['trees', 40]] },                   // the playing fields
-    W: { from: 7, bands: [['field', 26], ['trees', 8], ['houses', 22], ['trees', 40]] },
-    E: { from: 7, bands: [['lot', 20], ['road', 10], ['houses', 22], ['trees', 10], ['houses', 22], ['trees', 40]] },
-  },
+  // v1.453 (D.51, card fable/d51-hollins-ridge): Hollins Ridge builds the whole campus, the bank, Scott Rd and the houses
+  // and woods past it on every side, so it takes no backdrop (as Winnmark and Willow Bend)
   // v1.445 (D.51, card fable/d51-willow-bend): Willow Bend builds the whole swim and tennis centre, the course, the
   // bank, the river and the far bank of its own on every side, so it takes no backdrop (as Winnmark)
   buildGroceryStoreScene: {

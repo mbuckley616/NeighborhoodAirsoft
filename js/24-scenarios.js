@@ -1781,19 +1781,22 @@ const SCENARIOS = {
   // ===================================================================
   // v1.155: HOLLINS RIDGE HIGH (East Roswell) — the sixth zone (D.1, Michael: A, control room 4 Oct). A made-up
   // high school: the brick front and the staff row, six portables, the practice field, the home bleachers.
+  // v1.453 (D.51, card fable/d51-hollins-ridge): the whole campus at real scale, the matches in three areas (Michael: A,
+  // 6 Nov): After the Bell at the front entrance (builderArg 'front'), The Portables and Hold the Portables in the west
+  // lot with four portables at its north end ('lot'), Friday Night Lights in the stadium ('stadium'). The ids stay.
   // ===================================================================
 
   // --- Opener: 1v1 with Jordan after school (v1.190: was Tyler, from Wayt Road; the id stays for saves) ---
   school_1v1_tyler: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'After the Bell',
-    desc: "The last bell's gone and the grounds are empty. Jordan says the portables are his: six trailer classrooms in two rows, with gaps between them you can see straight down. You start at the end of the home bleachers. He's in among the portables with his pistol, and he knows every corner. Cross the field and you're in the open the whole way. One hit each.",
+    desc: "The last bell's gone and you're out the front doors. Jordan's waiting for you in the east lot, in among the cars with his pistol, and he knows every row. The circle drive and the flagpole's island are in the open between you; the guest parking on your right and the cars along the walk are the way round. One hit each.",   // v1.453: the front entrance
     builderFn: 'buildHighSchoolScene',
-    builderArg: 'default',
+    builderArg: 'front',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'jordan', weapon: 'pistol', anchor: 'a_port_e', role: 'skirmisher' },   // v1.190: was Tyler
+      { charId: 'jordan', weapon: 'pistol', anchor: 'a_lot', role: 'skirmisher' },   // v1.190: was Tyler; v1.453: the east lot
     ],
     winCondition: 'kill_all',
     rewards: { win: 55, lose: 13 },
@@ -1804,16 +1807,16 @@ const SCENARIOS = {
   school_portables_3v3: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'The Portables',
-    desc: "Caleb, Nathan and Sophie go to Hollins Ridge, and they've taken the school side: the doors, the staff cars and the portables. Your crew's with you at the bleachers. The field is wide open apart from the tackling sleds, so go round it: down past the concession stand to the portables, or along the cars. Nathan will sit back and pick; Sophie will come round the side. Three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
+    desc: "Caleb, Nathan and Sophie go to Hollins Ridge, and they've taken the portables: four trailer classrooms in a row at the top of the west lot, by the blue-roofed building. Your crew's with you at the bottom of the lot. Go up the rows of parked cars, not the open aisles. Nathan will sit back by the building and pick; Sophie will come down the side. Three lives for every kid but you, last team standing.",   // v1.408 (D.57 step 4); v1.453: the west lot
     builderFn: 'buildHighSchoolScene',
-    builderArg: 'default',
+    builderArg: 'lot',
     scenarioType: 'skirmish',
     playerSpawn: 'team_b',
     enemySetup: [
-      { charId: 'eric',     weapon: 'mp5',  anchor: 'b_bleach_w', team: 'player' },
-      { charId: 'rebecca',  weapon: 'ak47', anchor: 'b_stand',    team: 'player' },
+      { charId: 'eric',     weapon: 'mp5',  anchor: 'b_cars_w', team: 'player' },   // v1.453: the west lot's anchors
+      { charId: 'rebecca',  weapon: 'ak47', anchor: 'b_cars_e', team: 'player' },
       { charId: 'caleb',    weapon: 'ump',  anchor: 'a_port_e' },     // v1.190: the school's own kids (were Ryan, Mitchell, Priya)
-      { charId: 'nathan',   weapon: 'ak47', anchor: 'a_doors' },
+      { charId: 'nathan',   weapon: 'ak47', anchor: 'a_shed' },
       { charId: 'sophie',   weapon: 'mp5',  anchor: 'a_cars_e' },
     ],
     enemySpawnCluster: 'cluster_north',
@@ -1827,18 +1830,18 @@ const SCENARIOS = {
   school_defend_portables: {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Hold the Portables',
-    desc: "Caleb, Malik and Sophie want their portables back, and you're in the lane between the rows. They come across the field from the sleds: one round the north end by the container, one straight at you, one down past the court to the south row. A tagged kid walks back to the field and comes again. Every gap between two portables is a door they can come through, so don't watch just one. Survive 90 seconds.",
+    desc: "Caleb, Malik and Sophie want their portables back, and you're in the gap between the middle two. They come up the west lot from the bottom: one round the west end by the blue-roofed building, one straight up the middle aisle at you, one round the east end. A tagged kid walks back down the lot and comes again. Every gap between two portables is a door they can come through, so don't watch just one. Survive 90 seconds.",   // v1.453: the west lot
     builderFn: 'buildHighSchoolScene',
-    builderArg: 'default',
+    builderArg: 'lot',
     scenarioType: 'defend',
     resultHold: 'the portables',
     playerSpawn: 'portables',
     enemySpawnCluster: 'cluster_field',
-    crewPosts: ['a_port_gap', 'a_port_w', 'b_court', 'b_stand', 'a_port_e'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
+    crewPosts: ['hp_gap_w', 'hp_gap_e', 'hp_end_w', 'hp_end_e', 'hp_back'],   // v1.393 (D.57 step 1): your crew plays it, from these posts; v1.453: round the row
     enemySetup: [
-      { charId: 'caleb',  weapon: 'ump',     anchor: 'a_container', role: 'attacker', flank: 'L' },   // v1.190: were Marcus, Jamie, Trey
-      { charId: 'malik',  weapon: 'shotgun', anchor: 'a_port_e',    role: 'attacker', flank: 'C' },
-      { charId: 'sophie', weapon: 'mp5',     anchor: 'b_port_s',    role: 'attacker', flank: 'R' },
+      { charId: 'caleb',  weapon: 'ump',     anchor: 'hp_att_w', role: 'attacker', flank: 'L' },   // v1.190: were Marcus, Jamie, Trey
+      { charId: 'malik',  weapon: 'shotgun', anchor: 'hp_att_c', role: 'attacker', flank: 'C' },
+      { charId: 'sophie', weapon: 'mp5',     anchor: 'hp_att_e', role: 'attacker', flank: 'R' },
     ],
     winCondition: 'survive_timer',
     timerSec: 90,
@@ -1851,21 +1854,21 @@ const SCENARIOS = {
     region: 'east_roswell', street: 'hollins_ridge_high',
     name: 'Hollins Ridge High', scenarioName: 'Friday Night Lights',
     // v1.362 (D.28 step 5): Seth in Nathan's place (SETH_ZONE_MATCHES)
-    desc: "No game tonight, so the field's yours. Caleb and Sophie are back with Seth, who's carrying a P90 now, and they've brought Grant, who's set up with the rifle by the staff cars where he can see the whole field. Your crew's at the bleachers. Four lamps on the grounds and the school's lit windows; the portables are dark. Four a side, four lives for every kid but you. Stay off the field when you can, and out of the lamplight.",   // v1.408 (D.57 step 4): your crew and the sides as built, not the old allies
+    desc: "No game tonight, but somebody left the stadium lights on. Caleb and Sophie are on the field with Seth, who's carrying a P90 now, and they've brought Grant, who's set up with the rifle out on the turf where he can see both ends of the home stands. Your crew's with you in the concourse behind the stands. The way onto the track is round either end of the stands, out of the dark and into the floodlights. Four a side, four lives for every kid but you.",   // v1.408 (D.57 step 4); v1.453: the stadium
     builderFn: 'buildHighSchoolScene',
-    builderArg: 'default',
+    builderArg: 'stadium',
     timeOfDay: 'night',
     scenarioType: 'skirmish',
-    playerSpawn: 'stand',            // v1.177: behind the concession stand, out of the rifle's line (Owen's then, Grant's since v1.190)
-    allyDeploy: true,                // v1.179: Eric, Rebecca and Brooke walk from the stand to their posts
+    playerSpawn: 'stand',            // v1.177: out of the rifle's line (Owen's then, Grant's since v1.190); v1.453: the concourse behind the home stands
+    allyDeploy: true,                // v1.179: Eric, Rebecca and Brooke walk from the start to their posts
     enemySetup: [
-      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_bleach_w', team: 'player' },
-      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_port_s',   team: 'player' },   // v1.179: was b_stand, the start itself
-      { charId: 'brooke',   weapon: 'ump',    anchor: 'b_court',    team: 'player' },
-      { charId: 'caleb',    weapon: 'ump',    anchor: 'a_port_e' },   // v1.190: the school's own kids (were Ryan, Mitchell, Priya, Owen)
-      { charId: 'nathan',   weapon: 'ak47',   anchor: 'a_doors' },
-      { charId: 'sophie',   weapon: 'mp5',    anchor: 'a_cars_e' },
-      { charId: 'grant',    weapon: 'sniper', anchor: 'a_cars_w', role: 'defender' },
+      { charId: 'eric',     weapon: 'mp5',    anchor: 'b_gate_n',  team: 'player' },   // v1.453: the stadium's anchors
+      { charId: 'rebecca',  weapon: 'ak47',   anchor: 'b_gate_s',  team: 'player' },
+      { charId: 'brooke',   weapon: 'ump',    anchor: 'b_booth',   team: 'player' },
+      { charId: 'caleb',    weapon: 'ump',    anchor: 'st_north' },   // v1.190: the school's own kids (were Ryan, Mitchell, Priya, Owen)
+      { charId: 'nathan',   weapon: 'ak47',   anchor: 'st_mid' },
+      { charId: 'sophie',   weapon: 'mp5',    anchor: 'st_south' },
+      { charId: 'grant',    weapon: 'sniper', anchor: 'st_rifle', role: 'defender' },
     ],
     enemySpawnCluster: 'cluster_north',
     winCondition: 'last_team_standing',

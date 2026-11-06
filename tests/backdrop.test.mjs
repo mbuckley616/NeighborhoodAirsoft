@@ -10,8 +10,9 @@ await g.bedroom();
 
 // v1.338 (D.51 step 1): Winnmark builds its own surroundings on every side (tests/winnmark-real.test.mjs), so it has none;
 // v1.445 (D.51, Willow Bend at real scale): nor has the country club (tests/country-club.test.mjs)
+// v1.453 (D.51, Hollins Ridge at real scale): nor has the high school (tests/high-school.test.mjs)
 const FNS = ['buildBunrattyCourtScene', 'buildHollowScene', 'buildMarketLotScene', 'buildNorthcliffScene',
-  'buildTreehouseYardScene', 'buildBellfieldCourtScene', 'buildHighSchoolScene', 'buildGroceryStoreScene'];
+  'buildTreehouseYardScene', 'buildBellfieldCourtScene', 'buildGroceryStoreScene'];
 const res = await page.evaluate((FNS) => {
   const out = {};
   for (const fn of FNS) for (const tod of ['day', 'night']) {

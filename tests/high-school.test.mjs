@@ -3,6 +3,10 @@
 // locked on a new save and opens its scenarios once Northcliff is cleared, the grounds hold what the answer named,
 // every anchor, kid and the player start clear of obstacles, and a round plays: kids move or fire, nobody wedges, the
 // team round trades lives. The player is untaggable and stands at the spawn, as in northcliff.
+// v1.453 (D.51, card fable/d51-hollins-ridge): the campus at real scale, the matches in three areas (the front, the
+// west lot, the stadium). The grounds checks are per area now (they pinned the old six portables, the five bleacher
+// tiers, the field's goalposts and the school front at z -30); added: nothing past an area's edge is solid, and at most
+// 1100 draw calls in the area's views.
 import { boot, check } from './lib/game.mjs';
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
 await g.bedroom();
@@ -63,23 +67,35 @@ for (const id of ladder.ids) {
     const inside = (x, z) => collidesObstacles(x, z, 0.3);
     const sc = Game.scenario, p = Game.player;
     const kids = sc.enemies.map(e => ({ n: e.character?.name, t: e.team, x: +e.pos.x.toFixed(1), z: +e.pos.z.toFixed(1), stuck: inside(e.pos.x, e.pos.z) }));
-    const built = buildHighSchoolScene('default', 'day');
+    const arg = SCENARIOS[sc.active].builderArg, built = buildHighSchoolScene(arg, 'day');
     const badAnchors = Object.entries(built.placements).filter(([, a]) => inside(a.pos.x, a.pos.z)).map(([k]) => k);
     const badSpawns = Object.entries(built.playerSpawns).filter(([, a]) => inside(a.pos.x, a.pos.z)).map(([k]) => k);
-    // what the grounds hold: the six portables (11 x 7 m, 3.6 m), the five bleacher tiers, goalposts, the school front
-    const obs = p.obstacles;
+    // v1.453: what each area holds: the lot its four portables (11 x 7 m, 3.6 m) in a row; the stadium the home stands'
+    // twenty rows (1.2 m to 8 m, x -78..-62); the front the glass hall (14 x 6 m) and the flagpole on the circle's island
+    const obs = p.obstacles, B = sc.bounds;
     const portables = obs.filter(o => Math.abs(o.maxX - o.minX - 11) < 0.01 && Math.abs(o.maxZ - o.minZ - 7) < 0.01 && o.h === 3.6).length;
-    const tiers = obs.filter(o => o.minX === 8 && o.maxX === 32 && o.minZ >= 18.5 && o.maxZ <= 23.5).map(o => o.h);
-    const posts = obs.filter(o => o.h === 3.0 && o.maxX - o.minX < 0.4 && Math.abs(o.minZ + 1.16) < 0.01).length;
-    const inPortables = Math.abs(p.pos.x + 19) < 0.6 && Math.abs(p.pos.z - 1.5) < 0.6;
-    return { inPortables, night: SCENARIOS[sc.active].timeOfDay === 'night', kids, badAnchors, badSpawns, portables, tiers, posts, player: inside(p.pos.x, p.pos.z), feet: +p.pos.y.toFixed(2),
-      scene: built.name, school: obs.some(o => o.maxZ === -30 && o.maxX - o.minX > 80) };
+    const rows = obs.filter(o => o.minZ === -32 && o.maxZ === 32 && o.minX >= -78 && o.maxX <= -62 && o.maxX - o.minX < 0.81).map(o => +o.h.toFixed(2));
+    const hall = obs.some(o => o.minX === 193 && o.maxX === 207 && o.h === 9.5), pole = obs.some(o => o.shape === 'cylinder' && o.cx === 200 && o.h === 12);
+    const inPortables = Math.abs(p.pos.x + 4.25) < 0.6 && Math.abs(p.pos.z + 61) < 0.6;
+    // nothing past the edge is solid: every obstacle but the edge walls reaches into the area
+    const past = obs.filter(o => !(o.baseY === -4 && o.h === 6) && !(o.maxX > B.minX - 1 && o.minX < B.maxX + 1 && o.maxZ > B.minZ - 1 && o.minZ < B.maxZ + 1)).length;
+    const calls = [], cx = (B.minX + B.maxX) / 2, cz = (B.minZ + B.maxZ) / 2;
+    for (const [x, z] of [[p.pos.x, p.pos.z], [B.minX + 3, B.minZ + 3], [B.maxX - 3, B.minZ + 3], [B.minX + 3, B.maxZ - 3], [B.maxX - 3, B.maxZ - 3]]) {
+      const yaw = Math.atan2(-(cx - x), -(cz - z));
+      Game.camera.position.set(x, 1.6, z); Game.camera.rotation.set(0, yaw, 0, 'YXZ'); Game.camera.updateMatrixWorld(true);
+      Game.renderer.render(Game.scene, Game.camera); calls.push(Game.renderer.info.render.calls);
+    }
+    return { arg, inPortables, night: SCENARIOS[sc.active].timeOfDay === 'night', kids, badAnchors, badSpawns, portables, rows, hall, pole, past, calls, player: inside(p.pos.x, p.pos.z), feet: +p.pos.y.toFixed(2),
+      scene: built.name };
   });
   check(`${id}: every anchor and player spawn on the grounds is clear of obstacles`, !start.badAnchors.length && !start.badSpawns.length, start);
   check(`${id}: the player and every kid spawn clear of obstacles`, !start.player && start.kids.every(k => !k.stuck), start);
-  if (id === 'school_defend_portables') check(`${id}: the player starts in the lane between the portables`, start.inPortables, start);
-  check(`${id}: the grounds have six portables, five stepped bleacher tiers, two goalposts and the school front`,
-    start.portables === 6 && start.tiers.join() === '0.45,0.9,1.35,1.8,2.25' && start.posts === 2 && start.school, start);
+  if (id === 'school_defend_portables') check(`${id}: the player starts in the gap between the middle two portables`, start.inPortables, start);
+  if (start.arg === 'lot') check(`${id}: the west lot has its four portables`, start.portables === 4, start);
+  if (start.arg === 'stadium') check(`${id}: the home stands rise in twenty rows from 1.2 m to 8 m`, start.rows.length === 20 && start.rows[0] === 1.2 && start.rows[19] === 8.04, start.rows);
+  if (start.arg === 'front') check(`${id}: the front has the glass hall and the flagpole`, start.hall && start.pole, start);
+  check(`${id}: nothing past the area's edge is solid`, start.past === 0, start.past);
+  check(`${id}: at most 1100 draw calls in five views (the plan's budget)`, Math.max(...start.calls) <= 1100, start.calls);
   const r = await page.evaluate(() => {
     const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
     const kids = Game.scenario.enemies.slice(), fired = kids.map(() => 0);
@@ -122,31 +138,23 @@ for (const id of ladder.ids) {
   // v1.156 fix-up: or the round is decided, one side all out while the other side fired back at it
   if (r.team) check(`${id}: both sides lose lives, or one side is wiped out under fire (within 120 s)`,
     (r.lostEnemy > 0 && r.lostAlly > 0) || (r.wiped && r.kids.some(k => k.t === r.wiped && k.fired > 0)), r);
-  // v1.156: the defend's attackers cross the field to the portables (x < -8) and come within 6 m of the player
+  // v1.156: the defend's attackers come up to the portables and within 6 m of the player (v1.453: up the west lot)
   else if (id === 'school_defend_portables') check(`${id}: an attacker reaches the portables and closes on the player`,
-    r.kids.some(k => k.at[0] < -8 || k.nearest < 6) && Math.min(...r.kids.map(k => k.nearest)) < 6, r.kids);
-  else check(`${id}: Jordan (Tyler before v1.190) comes out of the portables to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
+    Math.min(...r.kids.map(k => k.nearest)) < 6, r.kids);
+  else check(`${id}: Jordan comes out of the east lot to find the player (within 20 m)`, r.kids[0].nearest < 20, r.kids);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
 
-// screenshots by eye: the field from the bleachers' east end, down the portables' gap, the school front
-await g.scenario('school_1v1_tyler');
-await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
+// screenshots by eye (v1.453): the front from the circle, the portables up the lot, the stands from the field at night
 const view = (x, z, yaw, y = 0) => page.evaluate(([x, z, yaw, y]) => { const p = Game.player; p.pos.set(x, y, z); p.yaw = yaw; stepGame(1 / 60); }, [x, z, yaw, y]);
-await view(36, 25, Math.PI * 0.2); await g.shot('high-school-field');
-await view(-23.7, 15, 0); await g.shot('high-school-portables');
-await view(14, -10, Math.PI * 0.25); await g.shot('high-school-front');
-await view(-6, 8, -Math.PI * 0.62); await g.shot('high-school-bleachers');
-// v1.156: the night match from the bleachers' west end, and the defend's start looking out at the field
-await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
-await g.scenario('school_night_4v4');
-await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
-await view(5, 26.5, -0.35); await g.shot('high-school-night');
-await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
-await g.scenario('school_defend_portables');
-await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; stepGame(1 / 60); });
-await g.shot('high-school-defend');
+for (const [id, x, z, yaw, name] of [['school_1v1_tyler', 200, 112, 0, 'high-school-front'], ['school_portables_3v3', -4, -38, 0, 'high-school-portables'],
+  ['school_night_4v4', -112, 6, -Math.PI / 2, 'high-school-night']]) {
+  await g.scenario(id);
+  await page.evaluate(() => { for (const e of Game.scenario.enemies) e.health = 0; });
+  await view(x, z, yaw); await g.shot(name);
+  await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); }); await g.spin(60);
+}
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
