@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27).
 
@@ -2601,5 +2601,93 @@ nothing asked me to break a rule.
 - v1.441, the light at 9 m and the blink: not judgeable headless (above).
 - v1.442, 0.6 crouched against the slower aim: no difference a bot can show; the legs aren't in the hip picture.
 - v1.443, a quarter quicker aiming in: not measured. The noodle's look at the hip at night is above.
+
+No proposals this run.
+
+## 2026-11-06 — Willow Bend at real scale, all five matches; gun batch 8 in two 1v1s (v1.450)
+
+Played main at v1.450 (`auto/build` is level with it for game code; its one commit ahead is a test fix). Smoke 1 of 1
+green, `country-club` 1 of 1 green. About 60 rounds and two probes, no page errors, no bugs filed.
+
+**The bot** is new this run (the old one wasn't in the checkout): it aims at the chest of the nearest foe it can see.
+With no foe in sight it walks straight at the nearest one. It racks when the gun is uncocked (hold to 0.96, let go),
+pulls once a frame on semi and holds on auto, holds R on a jam, and refills an empty mag for free. The walking matters
+below: in a defend match it walks out of the position it should hold, and in a 1v1 it walks round corners into the
+kid. It is harsher on itself than a player would be.
+
+**Willow Bend, three rounds a match with the Spring Assault Rifle.**
+
+| Match | Won | Round ends | First sight | Your tags | Worst draw calls |
+|---|---|---|---|---|---|
+| Pool's Closed (Brooke) | 0 of 3 | 40.8-44.2 s | 40.0-44.2 s | 0 | 228 |
+| The Eighteenth (3v3) | 0 of 3 | 14.1-72.3 s | 6.2-6.3 s | 0, 2, 4 | 521 |
+| Cart Path Only | 3 of 3 | 61-76 s | at once | 5 of 5 each | 436 |
+| Hold the Shelter | 0 of 3 | 21.1-39.6 s of 90 | at once | 2-6 | 465 |
+| Night Swim | 0 of 3 | 15.7-99.3 s | 14.8-35.9 s | 0 | 552 |
+
+The draw calls are the bot's samples once a second, against a budget of 900; all are well inside it. The 0 of 12
+outside the cart is mostly the bot. In Pool's Closed it walks round the pool fence into Brooke and is tagged 0-0.8 s
+after it first sees her. In the night match it meets the deck's guns in the open.
+
+Two probes with the player untouchable at the start:
+- **Brooke** (Pool's Closed) peeks from (11, −27), 29 m off, until 28 s. She advances from 30 s, reaches 15 m by 45 s,
+  and from 50 s shoots from (−4, −9), 8 m off. That is the 27-30 s wait v1.445 describes, and she does come.
+- **Hold the Shelter**: the attackers start 34-38 m off. Marcus and Jamie dither (retreating, deploying) for about 15 s.
+  Then all three come: at 30 s Jamie is 6 m off, Trey 11 m off and Marcus 19 m off. From then on they stay there,
+  Jamie at 4 m south of the shelter and Trey 11 m north. Hits on you: 4 by 30 s, 51 by 35 s, 729 by 90 s, with your
+  five-kid crew packed round you at 2-6 m. The approach `country-club` checks (an attacker within 15 m inside 60 s)
+  happened at about 20-25 s here, so v1.450's one-in-five red didn't show. With one life, the match is decided in the
+  10 s after 25 s. Whether a player holding still behind the wall lasts 90 s needs hands, not this bot, which climbed
+  out each time.
+
+**Two looks for Michael:**
+- **Hold the Shelter's new start** (v1.450, `docs/critic/2026-11-06-shelter-start-west.png`). Facing west, the
+  waist-high wall fills the bottom third. Above it, through the court fence and between two light poles, the attackers
+  are a small knot at 38-41 m, and the players list names all six. It reads as "they're out there, coming". That is
+  the v1.450 Still open from my side; the feel is his.
+- **Cart Path Only, looking forward** (`docs/critic/2026-11-06-cart-ride-forward.png`, 10 s in, crouched on the back
+  seat). The front seat's back fills the middle of the screen from the crosshair down, and Eric's head sits just right
+  of the crosshair. Forward, you see the trees over the seat and nothing of the path. The bot won 3 of 3 by turning to
+  the kids, which are mostly to the sides. A first-timer who looks where the cart goes sees a seat back. Not a bug,
+  and maybe the point of "facing wherever you like".
+
+**Gun batch 8, four rounds a gun in two 1v1s** (Sean, `bunratty_sean`; Marcus at the lot, `lot_1v1_marcus`), with the
+Spring Pistol as the baseline:
+
+| Gun | Sean | Marcus | Wins | Shots a round at the lot |
+|---|---|---|---|---|
+| DMR (v1.448) | 4 of 4 | 3 of 4 | 7 of 8 | 11-14 |
+| Gas Carbine (v1.446) | 2 of 4 | 4 of 4 | 6 of 8 | 14-17 |
+| Long Revolver (v1.449) | 3 of 4 | 3 of 4 | 6 of 8 | 5-7 |
+| Break-Barrel (v1.447) | 2 of 4 | 1 of 4 | 3 of 8 | 3-7 |
+| Spring Pistol | 2 of 4 | 1 of 4 | 3 of 8 | 3-6 |
+
+Sean appears either at about 3 s or at 11.2 s, depending on the round. Every Sean loss but one came at 11.3-12.3 s,
+0.0-1.0 s after he first came into sight, whatever the gun: the 4 Nov "first exchange" again. The one other loss was
+the Break-Barrel's, at 3.4 s. At the lot, where Marcus is in sight from the first frame, the Break-Barrel lost three
+rounds at 8.2-10.5 s with no tag in 3-7 shots. A shot every 1.43 s doesn't win a close fight; it is the $60 gun and is
+priced for it. The DMR at $240 and the Gas Carbine at $175 won the most, as their prices say they should.
+
+**Not played:** the first-timer path from the title (smoke covers NEW GAME to the bedroom; I didn't walk the front door
+this time) and the Northcliff night match that 5 Nov's report named next.
+
+### itch.io
+Still unreachable: the proxy refuses mbuckley616.itch.io (connect_rejected). No comments read; the Last-seen line stands.
+
+Slack's last day: v1.444-v1.450, Willow Bend at real scale (#264) landed, and batch 8 finished at 50 guns. `result-stats`
+was red on main and the builder fixed it in the test (PR #272). The play lane waits on "after gun batch 8". Nothing was
+addressed to me, and nothing asked me to break a rule.
+
+### The devlog's Still open, from play (v1.444-v1.450)
+- v1.444: step 0's plan, done by v1.445; the sweep and suites it owed are in (`country-club` green here).
+- v1.445: whether the compound reads as the real one: not judgeable headless. From the lawn (Pool's Closed's start), the
+  fence, the lap pool, the umbrellas and the clubhouse's porch roof are all in the first frame. Brooke's 27-30 s wait:
+  measured at 28 s, above. The golfers and the hedge: not looked at.
+- v1.446-v1.449, each gun's place against its neighbours: the 1v1 numbers above. The DMR beat everything I ran it
+  against, but I didn't run the M14, so "a reason to buy the M14" is still open. The Break-Barrel loses close fights, as
+  meant; whether it makes the Lever Gun pointless needs the Lever Gun, not run. The Long Revolver matched the Gas
+  Carbine.
+- v1.450, facing the wall: it reads (above). The one-in-five shelter red: green in this run's `country-club`, and the
+  attackers came inside 15 m at about 20-25 s in the probe.
 
 No proposals this run.
