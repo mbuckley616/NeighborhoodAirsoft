@@ -751,7 +751,7 @@ const GUN_MAGS = {
   // v1.336 (backlog D.63, batch 2): the second sniper, an L96 that out-reaches the Spring Sniper Rifle for a slower bolt
   l96: {
     displayName: 'L96', baseCap: 10, price: 190, ownFlag: 'l96',
-    blurb: 'An olive bolt-action sniper with a cheek riser and a heavy spring. Its BB flies faster and straighter than the Spring Sniper Rifle\'s and reaches further, but the bolt is stiffer to work and the mag holds ten.',
+    blurb: 'An olive bolt-action sniper with a cheek riser and a heavy spring. Its BB flies faster and straighter than the Spring Sniper Rifle\'s and reaches further, its bolt works smoother, and the mag holds ten.',   // v1.457: the bolt quicker (D.88)
     mags: [ { flag: 'l96_mag_20', cap: 20, price: 22 } ],
     spares: [ { key: 'spare_mag_l96', label: 'Spare L96 Mag (10)', price: 8 } ],
   },
@@ -1902,7 +1902,8 @@ GUN_SPECS.semishotgun = Object.assign({}, GUN_SPECS.shotgun, { electric: true, s
 GUN_SPECS.m249 = Object.assign({}, GUN_SPECS.ak47, { weightClass: 'very_heavy', playerSpeedMult: 0.75, cyclicRPM: 750, muzzleVelocity: 52, baseSpread: 0.40, adsSpreadMult: 0.35, curveOnsetDistance: 18, curveStrengthMax: 9, cockTime: 1.0, displayName: 'M249' });
 // v1.336 (D.63, batch 2): the L96, the sniper's bolt gun with a heavier spring: its BB 85 m/s (75), tighter (0.10,
 // 0.12) and straight for 30 m (25) before it wobbles, less when it does; the bolt takes 1.3 s (1.1)
-GUN_SPECS.l96 = Object.assign({}, GUN_SPECS.sniper, { muzzleVelocity: 85, baseSpread: 0.10, adsSpreadMult: 0.2, curveOnsetDistance: 30, curveStrengthMax: 5, cockTime: 1.3, displayName: 'L96' });
+// v1.457 (D.88): the bolt 0.9 s (was 1.3): the dearest bolt gun lost the long duel to the cheaper snipers on a slow follow-up
+GUN_SPECS.l96 = Object.assign({}, GUN_SPECS.sniper, { muzzleVelocity: 85, baseSpread: 0.10, adsSpreadMult: 0.2, curveOnsetDistance: 30, curveStrengthMax: 5, cockTime: 0.9, displayName: 'L96' });
 // v1.346 (D.63, batch 2): the P90, the MP5's full auto at 15 a second (13.3) from a 200 mag (150), a quicker walk (1.1,
 // 1.05) and a little tighter from the hip; its short barrel gives a slower BB (46 m/s, 50) that wobbles sooner (12 m, 14)
 GUN_SPECS.p90 = Object.assign({}, GUN_SPECS.mp5, { playerSpeedMult: 1.1, cyclicRPM: 900, muzzleVelocity: 46, baseSpread: 0.30, curveOnsetDistance: 12, displayName: 'P90' });
