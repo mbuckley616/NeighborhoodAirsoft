@@ -316,8 +316,8 @@ const l96Shop = await page.evaluate(() => {
 console.log('   RIFLES: ' + l96Shop.names.join(' · '));
 check('L96: under RIFLES right after the Spring Sniper Rifle (v1.395: the SVD after it; v1.416: the Pump Sniper between them), with its picture, $190 from its page, in your hands',
   l96Shop.names[l96Shop.names.indexOf('Spring Sniper Rifle') + 2] === 'L96' && l96Shop.names[l96Shop.names.indexOf('Spring Sniper Rifle') + 1] === 'Pump Sniper' && l96Shop.pic && l96Shop.paid === 190 && l96Shop.equipped === 'l96', l96Shop);
-check('L96: against the Spring Sniper Rifle a faster BB (85 m/s), tighter, straight further (30 m), a slower bolt (1.3 s); both semi bolt guns',
-  l96Shop.l96[0] === 85 && l96Shop.l96[0] > l96Shop.sniper[0] && l96Shop.l96[1] < l96Shop.sniper[1] && l96Shop.l96[2] > l96Shop.sniper[2] && l96Shop.l96[3] > l96Shop.sniper[3] && l96Shop.l96[4] === 'semi' && l96Shop.l96[5] === 'bolt', l96Shop);
+check('L96: against the Spring Sniper Rifle a faster BB (85 m/s), tighter, straight further (30 m), a quicker bolt (0.9 s, v1.457: was 1.3, D.88); both semi bolt guns',
+  l96Shop.l96[0] === 85 && l96Shop.l96[0] > l96Shop.sniper[0] && l96Shop.l96[1] < l96Shop.sniper[1] && l96Shop.l96[2] > l96Shop.sniper[2] && l96Shop.l96[3] === 0.9 && l96Shop.l96[3] < l96Shop.sniper[3] && l96Shop.l96[4] === 'semi' && l96Shop.l96[5] === 'bolt', l96Shop);
 await page.evaluate(() => { Game.persist.bag = 3000; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: 'l96' }; });
 await g.scenario('bunratty_sean');
 const LS = await page.evaluate(() => {
