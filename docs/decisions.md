@@ -5,6 +5,20 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.88 balance pass: what comes after the L96 (builder, 2026-11-07)**
+  v1.457 tuned the one clear outlier the table found: the L96 ($190) lost the long duel to the cheaper snipers, and with
+  a quicker bolt (1.3 → 0.9 s) it wins 35 of 60 there, was 4 of 20. Measured the same run, 20 rounds a match: the
+  Spring Sniper ($120) 29 of 60 and the Pump Sniper ($110) 32 of 60, within luck of each other; in Seth's Shotgun Duel
+  every shotgun won 3-5 of 5, and so did the pistol, MP5 and AK, so that match does not separate guns. What the table
+  still shows plainly is the automatics: the AK and M4 win 20 of 20 at 45 m and the light automatics own the corner
+  fight, because a held automatic is as steady as a tapped semi (no gun climbs; D.83's stock answer leaned on that too).
+  - A) Stop tuning here; keep `scripts/balance.mjs` to measure each new gun against the table.
+  - B) Give held automatics a climb (the aim walks up the longer the trigger is held, the stock and the sling ease it),
+    then measure again and tune from that table. (recommended: it is the one thing the table points at, and it gives
+    the sock-padded stock and the bipod something more to do; it changes how every automatic feels, so it is your call)
+  - C) Tune the near pairs by price instead: the Spring Sniper $120 → $100, under the Pump Sniper.
+  - D) Something else: say what.
+
 - **Hollins Ridge High at real scale (D.51): where the matches play, the portables, and the mural's mascot (deep-work session, 2026-11-06, card `fable/d51-hollins-ridge`)**
   You chose to rebuild the school around the stadium, the west lot and the gym dome, at real scale. The real campus is
   about 500 x 400 m: the stadium in the west, the big west lot between its home stands and the school, the white dome at
