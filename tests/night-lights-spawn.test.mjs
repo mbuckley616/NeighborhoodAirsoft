@@ -33,9 +33,10 @@ for (let r = 0; r < R; r++) {
 console.log('  start', JSON.stringify(first.start), `Owen ${first.owenDist} m, line blocked at ${first.blockedAt} m`);
 console.log('  tagged at', JSON.stringify(rounds.map(r => r.tag == null ? '-' : r.tag + ' ' + r.who)));
 const s = first.start;
-// the concession stand: x -6..0, z 18.5..23.5, 3 m tall
-check('the start is behind the concession stand (south of it, within its width)', s.x > -6 && s.x < 0 && s.z > 23.5 && s.z < 27, s);
-check("the stand blocks Owen's line to your head at the start", first.blockedAt != null && first.blockedAt < first.owenDist - 1, first);
+// v1.453 (D.51, card fable/d51-hollins-ridge): the match is in the stadium now; you start in the concourse behind the
+// home stands (x -78..-62, z -32..32, 8 m high), which stand between you and the field (was: behind the concession stand)
+check('the start is in the concourse behind the home stands', s.x > -62 && s.x < -48 && Math.abs(s.z) < 30, s);
+check("the stands block Grant's line to your head at the start", first.blockedAt != null && first.blockedAt < first.owenDist - 1, first);
 const tags = rounds.filter(r => r.tag != null);
 // v1.177 fix-up: counted inside 18 s, not 30. From 20 s on, Ryan and Priya have walked up and tag a player who stands
 // still, as they should: CI had 3 of 6 at 22.9-25.1 s, and 7 local runs had 0-3 of 6, every one at 20.7-27.5 s and none
@@ -46,7 +47,7 @@ check('nobody tags you before 10 s (the bleachers gave Owen 3.2 s)', tags.every(
 check('Grant (the rifle) does not tag a player standing at the start', rounds.every(r => r.who !== 'Grant'), rounds.map(r => r.who));
 // the day matches at the school keep the bleachers start
 const day = await page.evaluate(() => ['school_1v1_tyler', 'school_portables_3v3'].map(id => SCENARIOS[id].playerSpawn));
-check('After the Bell and The Portables still start at the bleachers (team_b)', day.every(k => k === 'team_b'), day);
+check('After the Bell and The Portables still start at their own team_b start', day.every(k => k === 'team_b'), day);
 // every briefing that gives a lives count matches what the kids and you get
 const lives = await page.evaluate(() => {
   const words = { one: 1, two: 2, three: 3, four: 4, five: 5 }, bad = [];
