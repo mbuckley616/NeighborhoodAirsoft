@@ -33,7 +33,21 @@ async function worker(sc, guns) {
       const REACT = 0.25;
       const B = window.__bot = { t: 0, shots: 0, see: null, reloadT: 0, tagT: null, hitT: null };
       const P = Game.player;
+      // v1.454: the game's own outcome, for a round that ends with no tag the bot's per-frame check saw
+      if (!window.__origEnd) { window.__origEnd = endScenario; endScenario = function (o) { if (window.__bot && __bot.outcome == null) __bot.outcome = o; return __origEnd.apply(this, arguments); }; }
+      B.outcome = null;
       if (!window.__origFire) { window.__origFire = doFire; doFire = function () { if (window.__bot) __bot.shots++; return __origFire.apply(this, arguments); }; }
+      // v1.454: hold-over. The BB falls under gravity less the hop-up's fading lift (78-bb-flight), so a chest aimed at
+      // 30 m is a BB at his feet; the bot pitches up the way a player learns to: solve the pitch whose BB, at this gun's
+      // speed (a gas gun's as its mag empties, fireBB), crosses his line at his chest height.
+      B.drop = (T) => { let y = 0, vy = 0; const h = 1 / 200; for (let t = 0; t < T; t += h) { vy += (8.5 * Math.max(0, 1 - t * 1.5) - 9.8) * h; y += vy * h; } return y; };
+      B.hold = (D, dy) => {
+        const g = Game.gun, gas = g.gasFade ? 1 - g.gasFade * Math.max(0, Math.min(1, (g.maxAmmo - g.ammo) / Math.max(1, g.maxAmmo - 1))) : 1;
+        const v = (g.muzzleVelocity || 30) * gas;
+        let p = Math.atan2(dy, D);
+        for (let k = 0; k < 4; k++) p = Math.atan2(dy - B.drop(D / (v * Math.cos(p))), D);
+        return p;
+      };
       B.press = () => { if (!Game.mouseLMB) { Game.mouseLMB = true; onLmbDown(); } };
       B.release = () => { if (Game.mouseLMB) { Game.mouseLMB = false; Game.lmbConsumed = false; onLmbUp(); } };
       B.step = () => {
@@ -49,7 +63,7 @@ async function worker(sc, guns) {
         if (tgt) {
           if (B.see === null) B.see = B.t;
           const dx = tgt.e.pos.x - cam.x, dz = tgt.e.pos.z - cam.z, dy = tgt.y - cam.y;
-          P.yaw = Math.atan2(-dx, -dz); P.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+          P.yaw = Math.atan2(-dx, -dz); P.pitch = B.hold(Math.hypot(dx, dz), dy);
           if (B.t - B.see < REACT) tgt = null;
         }
         const gun = Game.gun; P.adsTarget = 1;
@@ -62,8 +76,10 @@ async function worker(sc, guns) {
         else {
           Game.keys['KeyR'] = false;
           if (!gun.cocked) {
+            // v1.454: the pull that fired leaves the trigger held and spent (lmbConsumed), and the hammer or pump only
+            // comes back on a fresh pull: let go first. v1.452's bot held on, so every racked gun fired once a round.
             if (!gun.cockReleasing && gun.fireCooldown <= 0) {
-              if (gun.cockProgress >= 0.97) B.release(); else if (!Game.mouseLMB) { Game.lmbConsumed = false; B.press(); }
+              if (gun.cockProgress >= 0.97) B.release(); else if (Game.mouseLMB && Game.lmbConsumed) B.release(); else if (!Game.mouseLMB) { Game.lmbConsumed = false; B.press(); }
             }
           } else if (tgt) {
             if (gun.fireMode === 'auto') B.press(); else if (Game.mouseLMB) B.release(); else B.press();
@@ -83,7 +99,7 @@ async function worker(sc, guns) {
         return Game.mode;
       });
     }
-    const out = await page.evaluate(() => { Game.mouseLMB = false; Game.keys['KeyR'] = false; const B = __bot; return { t: +B.t.toFixed(2), see: B.see, tagT: B.tagT, hitT: B.hitT, tagShots: B.tagShots }; });
+    const out = await page.evaluate(() => { Game.mouseLMB = false; Game.keys['KeyR'] = false; const B = __bot; return { t: +B.t.toFixed(2), see: B.see, tagT: B.tagT, hitT: B.hitT, tagShots: B.tagShots, outcome: B.outcome }; });
     console.log(JSON.stringify({ sc, gt, ...out }));
   }
   await g.close();
@@ -112,7 +128,8 @@ const queue = jobs.slice();
 await Promise.all(Array.from({ length: +arg('workers', 4) }, async () => { while (queue.length) await run(queue.shift()); }));
 if (arg('out')) fs.writeFileSync(arg('out'), JSON.stringify(rows));
 const med = a => { a = a.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) / 2)] : null; };
-const won = r => r.tagT !== null && (r.hitT === null || r.tagT <= r.hitT);
+// v1.454: a round that ended with neither tag seen counts by the game's own outcome
+const won = r => r.tagT !== null ? (r.hitT === null || r.tagT <= r.hitT) : (r.hitT === null && r.outcome === 'win');
 console.log(`| Gun | ${MAPS.join(' | ')} | Wins | First sight to tag (s) | Shots to tag |`);
 console.log(`|---|${MAPS.map(() => '---|').join('')}---|---|---|`);
 for (const gt of guns) {

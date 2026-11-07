@@ -429,7 +429,7 @@ each builder works its own lane's items top-down and skips the other's. A new it
    devlog). Michael: **B, a balance pass over the 50 guns** on "What the play lane builds next, after gun batch 8"
    (control room, 2026-11-06). Builder (play) takes it. Step 1 done, v1.452 (`scripts/balance.mjs`, a bot 1v1 for every
    gun against Sean and Marcus, 5 rounds each, and the first table in the devlog; twelve guns 10 of 10, the Derringer
-   1 of 10; next: why every racked gun loses all five at the lot (bot or guns), then the Rattle and Sprayer against Sean).
+   1 of 10; next: why every racked gun loses all five at the lot (bot or guns), then the Rattle and Sprayer against Sean). Step 2 done, v1.454 (the bot let go of a spent trigger: it fired a racked gun once a round, which was the whole of the lot's 0-of-5s; hold-over for the BB's drop; the table again: the racked guns win 2-5 of 5 at the lot, the Rattle is the bottom at 3 of 10, 0 of 5 against Sean; next: the Rattle, then the Sprayer and the Spring Pistol against Sean, each `--rounds 20` before and after). Then (builder, 6 Nov, 20 rounds a match): the Break-Barrel 37 of 40, the KSG 24, the Thunder Pump 31, the Rattle Can 14 (0 of 20 against Sean, as D.37/D.56 made it); widening the Break-Barrel's cone moved it only 37 → 36, so it was not kept: the perfect-aim bot can't see what a dearer gun buys. Question in decisions, "D.88 balance pass: what the 1v1 table can tune" (A a human bot first, recommended; B prices; C stop).
 
 ## Found in play
 <!-- the critic appends here, one line each with the version and the steps -->
