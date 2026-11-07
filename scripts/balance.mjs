@@ -12,6 +12,13 @@
 //   node scripts/balance.mjs --guns dmr,m14 --rounds 20 --maps bunratty_sean
 //   node scripts/balance.mjs --out tests/tmp/bal.json
 //   node scripts/balance.mjs --perfect               v1.454's perfect-aim bot, to compare
+//   node scripts/balance.mjs --maps duel_trey --guns l96,sniper,pumpsniper --rounds 20
+//
+// v1.456 (D.88 step 4): neither default match is a long still duel, so the snipers could not be judged. `duel_trey` is
+// one: Trey on Overwatch with Seth taken out, Trey alone with his sniper as a defender on the front step across the
+// street, the bot 45 m east of him on the street with a clear line from the first frame. He holds his spot, hides
+// behind his planter and peeks, and shoots back; when only his head shows the bot shoots at that, and it does not step
+// out on first sight (it is in the open already).
 //
 // Prints a markdown table: wins in each match, all wins, the median seconds from first sight to the tag in a win, and
 // the median shots fired by then. Not a suite: it is for measuring before and after a tuning.
@@ -24,6 +31,8 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const MAPS = arg('maps', 'bunratty_sean,lot_1v1_marcus').split(',');
 const ROUNDS = +arg('rounds', 5);
 const HUMAN = !process.argv.includes('--perfect');   // v1.455: --perfect is v1.454's bot
+// v1.456: matches made here from a real one, for the measure only (the game never sees them)
+const DUELS = { duel_trey: { from: 'winnmark_sniper_overwatch', keep: 'trey', name: 'The Long Duel', head: true, still: true, at: [117.8, -1.0] } };
 
 async function worker(sc, guns) {
   const g = await boot(); const { page } = g;
@@ -34,8 +43,17 @@ async function worker(sc, guns) {
       Game.persist.owned[gt] = true; Game.persist.equipped.gun = gt; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: gt };
       Game.persist.bag = 9999;
     }, gt);
+    if (DUELS[sc]) await page.evaluate(([sc, d]) => {
+      if (SCENARIOS[sc]) return;
+      const base = SCENARIOS[d.from];
+      SCENARIOS[sc] = Object.assign({}, base, { scenarioName: d.name, enemySetup: base.enemySetup.filter(s => s.charId === d.keep) });
+    }, [sc, DUELS[sc]]);
     await g.scenario(sc);
-    await page.evaluate((HUMAN) => {
+    // v1.456: the duel's start is out on the street 45 m east of his step, both lines clear at every height by the BB's
+    // own raycast: from the match's own start (road_east) a car and a tree hide him, and the player is meant to walk to a
+    // line; and 6 m further south his muzzle line runs into the parked car 15 m in front of him
+    if (DUELS[sc] && DUELS[sc].at) await page.evaluate(([x, z]) => { const P = Game.player; P.pos.x = x; P.pos.z = z; P.pos.y = scenarioGroundY(x, z); if (P.vel) P.vel.set(0, 0, 0); }, DUELS[sc].at);
+    await page.evaluate(([HUMAN, HEAD, STILL]) => {
       // v1.455 (D.88, Michael: A, make the bot human): the reaction is 0.4-0.6 s, not 0.25 (HUMAN false keeps v1.454's)
       const REACT = HUMAN ? 0.4 + Math.random() * 0.2 : 0.25;
       const B = window.__bot = { t: 0, shots: 0, see: null, reloadT: 0, tagT: null, hitT: null,
@@ -44,6 +62,9 @@ async function worker(sc, guns) {
       // v1.454: the game's own outcome, for a round that ends with no tag the bot's per-frame check saw
       if (!window.__origEnd) { window.__origEnd = endScenario; endScenario = function (o) { if (window.__bot && __bot.outcome == null) __bot.outcome = o; return __origEnd.apply(this, arguments); }; }
       B.outcome = null;
+      // v1.456: his BBs too, so a round that runs out with no tag says whether he was shooting
+      B.foeShots = 0;
+      if (!window.__origEnemyBB) { window.__origEnemyBB = spawnEnemyBB; spawnEnemyBB = function () { if (window.__bot) __bot.foeShots++; return __origEnemyBB.apply(this, arguments); }; }
       if (!window.__origFire) { window.__origFire = doFire; doFire = function () { if (window.__bot) __bot.shots++; return __origFire.apply(this, arguments); }; }
       // v1.454: hold-over. The BB falls under gravity less the hop-up's fading lift (78-bb-flight), so a chest aimed at
       // 30 m is a BB at his feet; the bot pitches up the way a player learns to: solve the pitch whose BB, at this gun's
@@ -65,7 +86,10 @@ async function worker(sc, guns) {
         for (const e of Game.scenario.enemies) {
           if (e.team === 'player' || e.health <= 0 || e.state === 'retreating') continue;
           const v = combatantView(e), d = Math.hypot(e.pos.x - cam.x, e.pos.z - cam.z);
-          if (d < best && d < 70 && hasLineOfSight(cam.x, cam.y, cam.z, e.pos.x, v.chestY, e.pos.z, P.obstacles)) { best = d; tgt = { e, y: v.chestY }; }
+          if (!(d < best && d < 70)) continue;
+          if (hasLineOfSight(cam.x, cam.y, cam.z, e.pos.x, v.chestY, e.pos.z, P.obstacles)) { best = d; tgt = { e, y: v.chestY }; }
+          // v1.456: in a duel a kid behind a step or a wall shows only his head when he peeks, and a person shoots at that
+          else if (HEAD && hasLineOfSight(cam.x, cam.y, cam.z, e.pos.x, v.headY, e.pos.z, P.obstacles)) { best = d; tgt = { e, y: v.headY }; }
         }
         // turn to him first, so the pull below goes where he is; the first pull waits a reaction time after first sight
         if (tgt) {
@@ -82,7 +106,8 @@ async function worker(sc, guns) {
               B.acq = B.t; B.settleT = 0; B.ex = (Math.random() - 0.5) * 0.06; B.ey = (Math.random() - 0.5) * 0.04;
               B.yaw = yaw; B.pitch = pitch;
               // the first sighting: step out to the side for 0.3 s (from behind whatever he can see you round) and aim in
-              if (B.see === B.t) { B.stepT = 0.3; B.stepKey = Math.random() < 0.5 ? 'KeyA' : 'KeyD'; }
+              // (v1.456: not in a still duel, where it stands in the open from the start; a step there can take it behind a car)
+              if (B.see === B.t && !STILL) { B.stepT = 0.3; B.stepKey = Math.random() < 0.5 ? 'KeyA' : 'KeyD'; }
             }
             B.lastSeen = B.t; B.aimed = true;
             const dt = 1 / 60, amp = 0.005 + 0.025 * Math.exp(-B.settleT / 0.5), th = 0.3;
@@ -124,7 +149,7 @@ async function worker(sc, guns) {
         if (B.tagT === null && Game.scenario.enemies.some(e => e.team !== 'player' && (e.health <= 0 || e.state === 'retreating'))) { B.tagT = B.t; B.tagShots = B.shots; }
         if (B.hitT === null && P.hitsTaken > 0) B.hitT = B.t;
       };
-    }, HUMAN);
+    }, [HUMAN, !!(DUELS[sc] && DUELS[sc].head), !!(DUELS[sc] && DUELS[sc].still)]);
     // in chunks, so a win's own setTimeout can land between them; 150 s at most
     let mode = 'scenario';
     for (let T = 0; mode === 'scenario' && T < 150; T++) {
@@ -134,7 +159,7 @@ async function worker(sc, guns) {
         return Game.mode;
       });
     }
-    const out = await page.evaluate(() => { Game.mouseLMB = false; Game.keys['KeyR'] = Game.keys['KeyA'] = Game.keys['KeyD'] = false; const B = __bot; return { t: +B.t.toFixed(2), see: B.see, tagT: B.tagT, hitT: B.hitT, tagShots: B.tagShots, outcome: B.outcome }; });
+    const out = await page.evaluate(() => { Game.mouseLMB = false; Game.keys['KeyR'] = Game.keys['KeyA'] = Game.keys['KeyD'] = false; const B = __bot; return { t: +B.t.toFixed(2), see: B.see, tagT: B.tagT, hitT: B.hitT, tagShots: B.tagShots, shots: B.shots, foeShots: B.foeShots, outcome: B.outcome }; });
     console.log(JSON.stringify({ sc, gt, ...out }));
   }
   await g.close();
