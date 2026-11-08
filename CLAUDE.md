@@ -25,6 +25,8 @@ It is the lighter sibling of The Old Gates' setup: three routines, one Slack cha
   smoke set and the suites it adds or edits (`node tests/lib/select.mjs --base=main` shows which), a docs-only PR none; the
   one check to read on a PR is `gate`. Every suite runs once a week (Sunday 06:00 UTC), not after each merge, and on any
   branch when `check` is run by hand. The producer files each red of the weekly run in the backlog for the builder.
+- `server/matchmaker/` — the room list's matchmaker, a free Cloudflare Worker Michael deploys (v1.460; its README). Not shipped to
+  players; the game reads its address from `NET_MATCHMAKER_URL` in `94-pickup-online`, empty for codes only.
 - `scripts/parsecheck.mjs` syntax-checks every `js/` file and their concatenation. `node scripts/tag.mjs bump` chooses a session's
   version. `scripts/split.mjs` made the layout and `scripts/join.mjs` proves it and ports an old branch (below).
 

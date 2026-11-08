@@ -2379,6 +2379,9 @@
     line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 4px; }
   #modalScreen .nb-paper .pk-net-err { font-size: 16px; color: var(--nb-red); }
   #modalScreen .nb-paper .pk-net-privacy { font-size: 14px; opacity: 1; color: var(--nb-pencil); }
+  /* v1.460 (D.2 step 3): the room list, a room a line */
+  #modalBody .pk-room-list { display: flex; flex-direction: column; align-items: flex-start; }
+  #modalBody .pk-room { display: flex; align-items: center; gap: 8px; min-height: var(--nb-rule, 26px); }
   /* -- v1.286 (D.46): the map screen on paper. The map's drawing stays as it is, a printed map taped onto the page (a
      filled block); the header, the zone's name and count are written on the rules; each scenario card is a filled
      block three rules high, and the list (a whole number of rules tall) scrolls a whole rule at a time. -- */
