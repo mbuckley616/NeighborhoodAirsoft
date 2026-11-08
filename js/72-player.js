@@ -614,8 +614,8 @@ function updatePlayer(dt) {
     Game.player.pos.z
   );
   Game.camera.rotation.order = 'YXZ';
-  Game.camera.rotation.y = Game.player.yaw;
-  Game.camera.rotation.x = Game.player.pitch;
+  Game.camera.rotation.y = Game.player.yaw + (Game.gun._climbYaw || 0);   // v1.458 (D.88): a held automatic's climb, on top of your aim
+  Game.camera.rotation.x = Math.min(Math.PI / 2 - 0.02, Game.player.pitch + (Game.gun._climb || 0));
   // Slight roll while sliding for kinetic feel; sprint also rolls
   let roll = bobX * 0.08;
   if (Game.player.sliding) roll += 0.08;

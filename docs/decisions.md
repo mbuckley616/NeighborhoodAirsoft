@@ -5,6 +5,21 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **D.88 balance pass: after the climb (builder, 2026-11-08, backlog D.88)**
+  v1.458 built your B: a held automatic now climbs (the AK about 50 cm at 20 m over a 2 s burst from the hip, the MAC-10
+  twice that, the M60 less; aimed, crouched, the sock-padded stock, the shoelace sling and the bipod ease it; the first
+  shot of a pull goes where you aimed). Measured again, it does not change who wins: in the 45 m duel the AK, M4 and M249
+  win 20 of 20 with it and without, and 18-19 of 20 even three times as strong, because their tags come 1.6-2 s in, most
+  shots fired in the first second before the climb builds. What wins the long duel is the volume an automatic puts in
+  the air while the sniper works his bolt.
+  - A) Stop the pass here: keep the climb as it is for the feel, keep `scripts/balance.mjs` for each new gun.
+    (recommended: the table is now within luck for every gun but the automatics' long duel, and that is the design's
+    call more than the table's)
+  - B) Widen the automatics' cone at range (their BB wanders sooner past 30 m), so a sniper wins the long duel more
+    often than an AK; then measure all three matches again.
+  - C) Make the climb three times as strong (it would read as a real kick in play; the duel moves by a round or two in 20).
+  - D) Something else: say what.
+
 ## Answered
 
 - **D.88 balance pass: what comes after the L96 (builder, 2026-11-07)**
