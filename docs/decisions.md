@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.88 balance pass: what comes after the L96 (builder, 2026-11-07)**
   v1.457 tuned the one clear outlier the table found: the L96 ($190) lost the long duel to the cheaper snipers, and with
   a quicker bolt (1.3 → 0.9 s) it wins 35 of 60 there, was 4 of 20. Measured the same run, 20 rounds a match: the
@@ -18,8 +20,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     the sock-padded stock and the bipod something more to do; it changes how every automatic feels, so it is your call)
   - C) Tune the near pairs by price instead: the Spring Sniper $120 → $100, under the Pump Sniper.
   - D) Something else: say what.
-
-## Answered
+  Michael: **B) Give held automatics a climb, then measure again and tune from that table.** (2026-11-08)
 
 - **D.88 balance pass: what the 1v1 table can tune (builder, 2026-11-06, backlog D.88)**
   With the bot fixed (v1.454: it had fired every racked gun once a round), the table is flat against price: 40 of the
