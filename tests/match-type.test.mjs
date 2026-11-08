@@ -79,9 +79,12 @@ check("CLUTCH's card counts only you on your side (1V3), its briefing says why, 
 // In play: a turned match fields the crew; a CLUTCH match has them out from the first frame, BBs passing them
 await page.evaluate(() => { Game.persist.crew = CREW_ROSTER.slice(); });
 await g.scenario('hollow_attack_north_fort');
+// 8 Nov (builder, the weekly run red at 8.16 m): measured from where each kid started (`startAt`), not where he stands
+// now: the page's own frames run between BEGIN and this read, and under CI's load the one who sets off advancing had
+// walked 2-3 m from his start by then.
 const att = await page.evaluate(() => {
   const p = Game.player.pos, ours = Game.scenario.enemies.filter(e => e.team === 'player');
-  return { n: ours.length, live: ours.filter(e => e.health > 0).length, near: Math.max(...ours.map(e => Math.hypot(e.pos.x - p.x, e.pos.z - p.z))),
+  return { n: ours.length, live: ours.filter(e => e.health > 0).length, near: Math.max(...ours.map(e => { const s = e.startAt || e.pos; return Math.hypot(s.x - p.x, s.z - p.z); })),
     theirs: Game.scenario.enemies.filter(e => e.team !== 'player').length };
 });
 await g.spin(600);

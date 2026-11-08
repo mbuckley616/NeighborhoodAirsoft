@@ -46,6 +46,9 @@ const D = await page.evaluate(() => {
   let t = 0, inRate = 0;
   while (t < 180) {
     const a = Game.gun.ammo, n = pull(); t++;
+    // a pull that jams still fired its BB: count it before the jam is cleared (it was skipped, so 1-3 random jams in
+    // the 12 shots read 3.67-2.67 a second and the check failed about one run in three)
+    if (n > 0 && Game.gun.jammed) inRate++;
     if (Game.gun.jammed) { if (!statusJam) statusJam = document.getElementById('ammoStatus').textContent; Game.gun.jammed = false; Game.gun.cocked = true; Game.gun.ammo = Game.gun.maxAmmo; continue; }
     if (n > 0) inRate++;
   }
