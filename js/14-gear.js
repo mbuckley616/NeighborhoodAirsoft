@@ -249,7 +249,7 @@ const ATTACHMENTS = {
   // Each one is a trade: it buys one thing and costs another. (The cardboard's 0.68 is a fifth off the cone in degrees:
   // the jitter is in m/s, so a BB 15% slower would otherwise spread 1/0.85 wider.)
   taped_mag:  { id:'taped_mag', name:'Taped Twin Mag', slot:'under', price:22, weight:1.2, tapedMag:true, desc:'A second mag duct-taped upside down to the first. It comes loaded from your bag; press R to flip the pair over (0.6 s) and shoot the other one. It’s 1.2 lb more to carry. Long guns only.' },
-  sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, but the strap tugs when you aim: aiming in is slower. Long guns only.' },
+  sling:      { id:'sling', name:'Shoelace Sling', slot:'under', price:12, sprintDrainMult:0.8, adsSpeedMult:0.7, climbMult:0.75, desc:'Two shoelaces knotted into a strap. The gun rides on your shoulder, so a sprint lasts a quarter longer, and the strap holds an automatic down: it climbs a quarter less as you hold the trigger. But the strap tugs when you aim: aiming in is slower. Long guns only.' },   // v1.458 (D.88): climbMult
   // v1.419 (D.83): the second wave's sling, the shoelace one's opposite: it snaps the gun up, and bounces it as you walk
   bungee_sling: { id:'bungee_sling', name:'Bungee Sling', slot:'under', price:10, adsSpeedMult:1.35, moveSpreadMult:1.3, desc:'A bungee cord off the garage shelf, hooked under the barrel and back to the stock. It snaps the gun up to your eye, so aiming in is a third quicker, but it bounces as you walk: your shots spread wider on the move. Long guns only.' },
   // v1.426 (D.83, Michael: A, the taped mag goes under the barrel): a second mag's body taped onto the first, end to end,
@@ -272,7 +272,7 @@ const ATTACHMENTS = {
   // v1.425 (D.83, Michael: A, steadier when aimed, "as well as faster movement while aiming down sight"): a tube sock
   // stuffed and pulled over the butt of the stock. Aimed, your shots stay a fifth tighter and you walk quicker with the
   // gun up; the sock is a little more to carry.
-  sock_stock: { id:'sock_stock', name:'Sock-Padded Stock', slot:'stock', price:8, weight:0.4, adsSteadyMult:0.8, adsWalkMult:1.2, desc:'A tube sock stuffed with another sock and pulled over the butt of the stock, taped at the cuff. It sits soft and steady on your shoulder: aimed, your shots stay a fifth tighter, and you can walk quicker with the gun up. It’s 0.4 lb more to carry. Sits on the stock of any long gun.' },
+  sock_stock: { id:'sock_stock', name:'Sock-Padded Stock', slot:'stock', price:8, weight:0.4, adsSteadyMult:0.8, adsWalkMult:1.2, climbMult:0.7, desc:'A tube sock stuffed with another sock and pulled over the butt of the stock, taped at the cuff. It sits soft and steady on your shoulder: aimed, your shots stay a fifth tighter, an automatic climbs less as you hold the trigger, and you can walk quicker with the gun up. It’s 0.4 lb more to carry. Sits on the stock of any long gun.' },
   // v1.443 (D.86, Michael: A, a third wave of homemade parts): a length of pool noodle slit and pushed down over the top
   // of the stock, taped on. It lifts your cheek to the sights, so the gun comes up to your eye quicker; the effect was
   // left to the builder. It takes the stock slot, so it is a trade against the sock-padded stock.
