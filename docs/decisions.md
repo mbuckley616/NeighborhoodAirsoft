@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **D.88 balance pass: after the climb (builder, 2026-11-08, backlog D.88)**
   v1.458 built your B: a held automatic now climbs (the AK about 50 cm at 20 m over a 2 s burst from the hip, the MAC-10
   twice that, the M60 less; aimed, crouched, the sock-padded stock, the shoelace sling and the bipod ease it; the first
@@ -19,8 +21,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
     often than an AK; then measure all three matches again.
   - C) Make the climb three times as strong (it would read as a real kick in play; the duel moves by a round or two in 20).
   - D) Something else: say what.
-
-## Answered
+  Michael: **A) Stop the pass here: keep the climb as it is for the feel, keep `scripts/balance.mjs` for each new gun.** (2026-11-08)
 
 - **D.88 balance pass: what comes after the L96 (builder, 2026-11-07)**
   v1.457 tuned the one clear outlier the table found: the L96 ($190) lost the long duel to the cheaper snipers, and with
