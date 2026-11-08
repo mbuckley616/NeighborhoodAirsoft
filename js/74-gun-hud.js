@@ -24,6 +24,45 @@ function doFire() {
   const tl = pelletsFired > 0 && getUnderPart(Game.persist.equipped.gun);
   if (tl && tl.blinkChance && Math.random() < tl.blinkChance) { Game.gun._lightOutT = tl.blinkTime; Game.gun._blinks = (Game.gun._blinks || 0) + 1; }
   if (Game.gun._jamIn > 0 && --Game.gun._jamIn === 0 && Game.gun.ammo > 0) { jamGun(); Game.gun._jams = (Game.gun._jams || 0) + 1; }   // v1.250: the cheap gun's burst jams
+  if (pelletsFired > 0 && Game.gun.fireMode === 'auto') gunClimbKick();   // v1.458 (D.88): a held automatic climbs
+}
+
+// v1.458 (D.88, Michael: B, "give held automatics a climb"): every shot of an automatic kicks the aim up a little and a
+// little to one side, and the aim comes back down on its own: slowly while the trigger stays held (so a long burst walks
+// up and levels off), quickly once you let go. The first shot of a pull goes where you aimed, so a tapped automatic
+// shoots as before. Light guns with no real stock climb most, the heavy and the belt-fed least; aimed (the stock on your
+// shoulder) and crouched it climbs less, the sock-padded stock and the shoelace sling ease it, the bipod's legs nearly
+// stop it. The climb sits on top of where you point (`Game.gun._climb`/`_climbYaw`, added to the camera in
+// updatePlayer), so you pull down against it and it never moves your saved aim.
+const CLIMB_KICK = 0.003;          // radians a shot, heavy class at 600 a minute, hip, standing
+const CLIMB_SETTLE_HELD = 1.0;     // s: time constant of the aim's return while the trigger is held
+const CLIMB_SETTLE_FREE = 0.15;    // s: and once it is let go
+const CLIMB_MAX = 0.08;            // radians, the most it can climb
+const CLIMB_CLASS = { light: 1.6, medium: 1.25, heavy: 1.0, very_heavy: 0.7 };
+function gunClimbMult() {
+  const g = Game.gun, P = Game.player;
+  const spec = getGunSpec(g.type) || g;
+  let m = CLIMB_CLASS[spec.weightClass] || 1;
+  m *= Math.sqrt(600 / Math.max(60, spec.cyclicRPM || 600));   // a shot's kick; so a second's climb goes as the root of the rate
+  m *= 1 - 0.2 * (P.ads || 0);                 // shouldered and aimed
+  if (P.crouching) m *= 0.85;
+  m *= underPartMult('climbMult');             // the sock-padded stock, the shoelace sling
+  const up = getUnderPart(Game.persist.equipped.gun);
+  if (up && up.crouchSpreadMult) m *= 1 - 0.8 * (g._bipodK || 0);   // the bipod's legs, as far as they are down
+  return m;
+}
+function gunClimbKick() {
+  const g = Game.gun, k = CLIMB_KICK * gunClimbMult() * (0.7 + 0.6 * Math.random());
+  g._climb = Math.min(CLIMB_MAX, (g._climb || 0) + k);
+  g._climbYaw = Math.max(-CLIMB_MAX / 2, Math.min(CLIMB_MAX / 2, (g._climbYaw || 0) + (Math.random() - 0.5) * k * 0.8));
+}
+function settleGunClimb(dt) {
+  const g = Game.gun;
+  if (!g._climb && !g._climbYaw) return;
+  const held = Game.mouseLMB && g.fireMode === 'auto' && g.cocked && g.ammo > 0 && !g.jammed;
+  const f = Math.exp(-dt / (held ? CLIMB_SETTLE_HELD : CLIMB_SETTLE_FREE));
+  g._climb = (g._climb || 0) * f; g._climbYaw = (g._climbYaw || 0) * f;
+  if (Math.abs(g._climb) < 1e-5 && Math.abs(g._climbYaw) < 1e-5) g._climb = g._climbYaw = 0;
 }
 
 function updateGun(dt) {
@@ -100,6 +139,7 @@ function updateGun(dt) {
     }
   }
 
+  settleGunClimb(dt);   // v1.458 (D.88)
   // v1.292 (D.50): time since the gun's last shot, counted as the held stream counts its cycle (see onLmbDown)
   Game.gun._sinceShot = (Game.gun._sinceShot ?? 1e9) + dt;
   // === v1.20: AUTO-FIRE cycle ===

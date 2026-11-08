@@ -13,6 +13,8 @@
 //   node scripts/balance.mjs --out tests/tmp/bal.json
 //   node scripts/balance.mjs --perfect               v1.454's perfect-aim bot, to compare
 //   node scripts/balance.mjs --maps duel_trey --guns l96,sniper,pumpsniper --rounds 20
+//   node scripts/balance.mjs --noclimb               v1.458: with the held automatics' climb switched off
+//   node scripts/balance.mjs --climb 2               v1.458: the climb twice as strong (a measure, not the game)
 //
 // v1.456 (D.88 step 4): neither default match is a long still duel, so the snipers could not be judged. `duel_trey` is
 // one: Trey on Overwatch with Seth taken out, Trey alone with his sniper as a defender on the front step across the
@@ -31,13 +33,18 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const MAPS = arg('maps', 'bunratty_sean,lot_1v1_marcus').split(',');
 const ROUNDS = +arg('rounds', 5);
 const HUMAN = !process.argv.includes('--perfect');   // v1.455: --perfect is v1.454's bot
+// v1.458 (D.88, Michael: B): a held automatic climbs (74-gun-hud). The human bot pulls down against it as a person does,
+// a beat late (it sees the climb 0.15 s after it starts and takes back 80 % of it); the perfect bot takes back all of it
+// at once. --noclimb switches the climb off, to compare with the table before it.
+const NOCLIMB = process.argv.includes('--noclimb');
+const CLIMB_X = +arg('climb', 1);   // v1.458: --climb 2 tries the climb twice as strong, for the measure only
 // v1.456: matches made here from a real one, for the measure only (the game never sees them)
 const DUELS = { duel_trey: { from: 'winnmark_sniper_overwatch', keep: 'trey', name: 'The Long Duel', head: true, still: true, at: [117.8, -1.0] } };
 
 async function worker(sc, guns) {
   const g = await boot(); const { page } = g;
   await g.bedroom();
-  await page.evaluate(() => { Game.renderer.render = () => {}; });
+  await page.evaluate(([NOCLIMB, X]) => { Game.renderer.render = () => {}; if (NOCLIMB) gunClimbKick = () => {}; if (X !== 1) { const f = gunClimbMult; gunClimbMult = () => f() * X; } }, [NOCLIMB, CLIMB_X]);
   for (const gt of guns) for (let r = 0; r < ROUNDS; r++) {
     await page.evaluate(gt => {
       Game.persist.owned[gt] = true; Game.persist.equipped.gun = gt; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: gt };
@@ -57,7 +64,7 @@ async function worker(sc, guns) {
       // v1.455 (D.88, Michael: A, make the bot human): the reaction is 0.4-0.6 s, not 0.25 (HUMAN false keeps v1.454's)
       const REACT = HUMAN ? 0.4 + Math.random() * 0.2 : 0.25;
       const B = window.__bot = { t: 0, shots: 0, see: null, reloadT: 0, tagT: null, hitT: null,
-        acq: null, lastSeen: -9, settleT: 0, ex: 0, ey: 0, stepT: 0, lastPress: -9, aimed: !HUMAN };
+        acq: null, lastSeen: -9, settleT: 0, ex: 0, ey: 0, stepT: 0, lastPress: -9, aimed: !HUMAN, pullY: 0, pullX: 0 };
       const P = Game.player;
       // v1.454: the game's own outcome, for a round that ends with no tag the bot's per-frame check saw
       if (!window.__origEnd) { window.__origEnd = endScenario; endScenario = function (o) { if (window.__bot && __bot.outcome == null) __bot.outcome = o; return __origEnd.apply(this, arguments); }; }
@@ -96,7 +103,7 @@ async function worker(sc, guns) {
           if (B.see === null) B.see = B.t;
           const dx = tgt.e.pos.x - cam.x, dz = tgt.e.pos.z - cam.z, dy = tgt.y - cam.y;
           const yaw = Math.atan2(-dx, -dz), pitch = B.hold(Math.hypot(dx, dz), dy);
-          if (!HUMAN) { P.yaw = yaw; P.pitch = pitch; if (B.t - B.see < REACT) tgt = null; }
+          if (!HUMAN) { P.yaw = yaw - (Game.gun._climbYaw || 0); P.pitch = pitch - (Game.gun._climb || 0); if (B.t - B.see < REACT) tgt = null; }
           else {
             // v1.455: a human aim. Each sighting after half a second out of view is a fresh one: a new reaction, and the
             // flick lands off him. The aim wanders round where he is (a smooth random walk, 0.3 s to turn), widest on
@@ -116,7 +123,9 @@ async function worker(sc, guns) {
             B.ey += -B.ey * dt / th + amp * 0.7 * Math.sqrt(2 * dt / th) * n();
             const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
             B.yaw += wrap(yaw - B.yaw) * Math.min(1, dt / 0.1); B.pitch += (pitch - B.pitch) * Math.min(1, dt / 0.1);
-            P.yaw = B.yaw + B.ex; P.pitch = B.pitch + B.ey;
+            // v1.458: the pull-down against a held automatic's climb, 0.15 s late and 80 % of it
+            B.pullY += ((Game.gun._climb || 0) - B.pullY) * Math.min(1, dt / 0.15); B.pullX += ((Game.gun._climbYaw || 0) - B.pullX) * Math.min(1, dt / 0.15);
+            P.yaw = B.yaw + B.ex - 0.8 * B.pullX; P.pitch = B.pitch + B.ey - 0.8 * B.pullY;
             if (B.t - B.acq < REACT) tgt = null;
           }
         }
@@ -178,7 +187,7 @@ for (const sc of MAPS) for (let i = 0; i < guns.length; i += 10) jobs.push([sc, 
 const rows = [];
 const self = fileURLToPath(import.meta.url);
 const run = ([sc, gs]) => new Promise(res => {
-  const p = spawn(process.execPath, [self, '--worker', sc, gs, '--rounds', String(ROUNDS), ...(HUMAN ? [] : ['--perfect'])]);
+  const p = spawn(process.execPath, [self, '--worker', sc, gs, '--rounds', String(ROUNDS), ...(HUMAN ? [] : ['--perfect']), ...(NOCLIMB ? ['--noclimb'] : []), '--climb', String(CLIMB_X)]);
   let buf = '';
   p.stdout.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.startsWith('{')) rows.push(JSON.parse(l)); } });
   p.stderr.on('data', d => process.stderr.write(d));
