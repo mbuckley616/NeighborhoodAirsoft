@@ -39,6 +39,10 @@ check('on the title no cursor shows before the pad is used', t0.mode === 'title'
 await tap(B.DOWN);
 const t1 = await S();
 check('the pad touched on the title: the cursor shows, on something clickable, outlined', t1.shown && t1.hover && t1.outlined, t1);
+// v1.459 (D.2 step 3): NEW GAME is on the title's CAMPAIGN page
+const tc = await seek(s => s.hover === 'titleCampaignBtn', 'CAMPAIGN');
+check('the d-pad reaches CAMPAIGN on the title', tc.hover === 'titleCampaignBtn', tc.hover);
+await tap(B.A);
 const t2 = await seek(s => s.hover === 'startBtn', 'NEW GAME');
 check('the d-pad reaches NEW GAME', t2.hover === 'startBtn', t2.hover);
 await tap(B.A);

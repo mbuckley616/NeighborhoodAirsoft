@@ -17,6 +17,7 @@ document.getElementById('returnBtn').addEventListener('click', () => {
   if (Net.active && !Net.coop) netClose();   // v1.230 (D.2) (v1.381: a friend over stays over)
   cleanupScenarioScene();
   enterBedroom();
+  if (!Net.active && Net.fromTitle) { const to = Net.fromTitle; Net.fromTitle = null; if (to === 'new') { showTitleScreen(); return; } }   // v1.459: online with no summer ends on the title
   if (Net.active && Net.coop) coopHostHome();   // v1.381 (D.73): the host home, his friend's game follows
 });
 

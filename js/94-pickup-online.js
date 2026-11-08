@@ -305,6 +305,7 @@ const Net = {
   ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0, bagSaved: null, hudT: 0,
   makeTransport: null,   // set below to netPeerTransport
   coop: false, panel: null,   // v1.380 (D.73): a co-op link (95-coop), and which screen shows the link's state, the board's or the phone's
+  fromTitle: null,   // v1.459 (D.2 step 3): the online screen came from the title's ONLINE: 'save' (your summer loaded) or 'new'
 };
 function netVersion() { const v = document.querySelector('#titleScreen .version, .version'); return v ? v.textContent.trim() : '?'; }
 function netNewCode() { let s = ''; for (let i = 0; i < 4; i++) s += NET_CODE_LETTERS[Math.floor(gameRandom() * NET_CODE_LETTERS.length)]; return s; }
@@ -503,7 +504,7 @@ function netPanelHTML() {
   const busy = Net.phase === 'lobby', inRoom = busy && (Net.role === 'host' ? !!Net.code : !!Net.lobby);
   const status = Net.error ? `<div class="pk-net-err" id="netStatus">${NET_ERRORS[Net.error] || NET_ERRORS.net}</div>`
     : busy && !inRoom ? `<div class="pk-note" id="netStatus">${Net.role === 'host' ? 'Opening a room…' : 'Looking for the room…'}</div>` : '<div class="pk-note" id="netStatus"></div>';
-  const back = `<div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'LEAVE THE ROOM' : '◀ BACK TO THE BOARD'}</button></div>`;
+  const back = `<div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'LEAVE THE ROOM' : Net.fromTitle === 'new' ? '◀ BACK TO THE TITLE' : Net.fromTitle ? '◀ TO YOUR ROOM' : '◀ BACK TO THE BOARD'}</button></div>`;
   const privacy = `<div class="pk-note pk-net-privacy">Online play connects your computer straight to your friends’, so each of you can see the others’ internet address, as in any voice chat. A free public service (PeerJS) passes on the room code to start it. Play with friends you know.</div>`;
   if (inRoom) return `<div class="pk-board">${netRoomHTML()}${status}${privacy}${back}</div>`;
   return `<div class="pk-board">
@@ -511,8 +512,16 @@ function netPanelHTML() {
     <div class="pk-row"><div class="pk-label">Your name</div><div class="pk-btns"><input class="pk-input" id="netName" maxlength="14" value="${netCleanName(Net.name)}"${busy ? ' disabled' : ''}></div></div>
     <div class="pk-row"><div class="pk-label">Host</div><div class="pk-btns"><button class="pk-opt" id="netHostBtn"${busy ? ' disabled' : ''}>HOST A ROOM</button></div></div>
     <div class="pk-row"><div class="pk-label">Join</div><div class="pk-btns"><input class="pk-input" id="netJoinCode" maxlength="4" placeholder="CODE" autocomplete="off"${busy ? ' disabled' : ''}><button class="pk-opt" id="netJoinBtn"${busy ? ' disabled' : ''}>JOIN</button></div></div>
+    ${netCoopRowHTML(busy)}
     ${status}${privacy}${back}
   </div>`;
+}
+// v1.459 (D.2 step 3): co-op on the online screen: a friend over in your summer (95-coop's screen, as from the phone).
+// It needs a summer that saves, so a new kid from the title is told to start one from CAMPAIGN.
+function netCoopRowHTML(busy) {
+  const label = '<div class="pk-label">Co-op</div>';
+  if (Net.fromTitle === 'new') return `<div class="pk-row" id="netCoopRow">${label}<div class="pk-btns"><span class="pk-note" id="netCoopNote">Having a friend over needs a summer of your own: start one from CAMPAIGN on the title.</span></div></div>`;
+  return `<div class="pk-row" id="netCoopRow">${label}<div class="pk-btns"><button class="pk-opt" id="netCoopBtn"${busy ? ' disabled' : ''}>HAVE A FRIEND OVER ▶</button></div></div>`;
 }
 // The room: the code, the host's settings (buttons for him, words for a guest), the two sides and their kids
 function netRoomHTML() {
@@ -570,9 +579,12 @@ function renderNetPanel() {
   body.querySelectorAll('.pk-opt[data-grp]').forEach(b => b.addEventListener('click', () => netPanelClick(b.dataset.grp, b.dataset.val)));
   const start = body.querySelector('#netStartBtn');
   if (start) start.addEventListener('click', () => netStartRoom());
+  const coopBtn = body.querySelector('#netCoopBtn');   // v1.459: co-op from the online screen, the phone's own screen
+  if (coopBtn) coopBtn.addEventListener('click', () => { Net.fromTitle = null; openCoopPanel(); });
   body.querySelector('#netBackBtn').addEventListener('click', () => {
     if (Net.phase === 'lobby') netClose();
     Net.error = null;
+    if (Net.fromTitle) { closeModal(); return; }   // v1.459: the title's online screen has no board behind it (closeModal goes on)
     document.getElementById('modalTitle').textContent = 'Pickup Game';
     renderPickupBoard();
   });
@@ -590,11 +602,24 @@ function netPanelClick(grp, v) {
     netRoomChanged(false);
   }
 }
+// v1.459 (D.2 step 3, card fable/d2-room-list): the title's ONLINE. Your summer loads as CONTINUE loads it (your look,
+// your gun, the maps you have opened), and the online screen opens over your room. With no saved summer you go online as
+// a new kid and nothing is saved: closing the screen goes back to the title, and co-op waits for a summer of your own.
+function openOnlineFromTitle() {
+  initAudio();
+  let saved = hasSaveGame();
+  if (saved && !loadGame().ok) saved = false;   // a save that won't load is left alone, as CONTINUE leaves it
+  if (!saved) { Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST)); Game._saveEnabled = false; }
+  Net.fromTitle = saved ? 'save' : 'new';
+  enterBedroom();
+  openPickupBoard();
+  openNetPanel();
+}
 function openNetPanel() {
   try { const n = localStorage.getItem('na_online_name'); if (n) Net.name = netCleanName(n); } catch (e) {}
   Net.error = null;
   Net.panel = 'pickup';   // v1.380
-  document.getElementById('modalTitle').textContent = 'Pickup Game: Online';
+  document.getElementById('modalTitle').textContent = Net.fromTitle ? 'Online' : 'Pickup Game: Online';   // v1.459: from the title it is the game's online screen
   renderNetPanel();
 }
 function netOpen(role, code, coop = false) {   // v1.380 (D.73): `coop`, a friend coming over (95-coop)

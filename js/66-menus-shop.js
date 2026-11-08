@@ -18,6 +18,7 @@ function showModal(title, body) {
   exitPointerLock();
 }
 function closeModal() {
+  const titleOnline = Net.fromTitle && Net.phase !== 'matched' ? Net.fromTitle : null;   // v1.459 (D.2 step 3): not a match starting
   if (Net.phase === 'lobby') netClose();   // v1.230 (D.2): closing the board gives up the room
   document.getElementById('modalScreen').classList.remove('active');
   document.getElementById('modalCloseBtn').textContent = 'OK';   // reset (save menu may have changed it)
@@ -25,6 +26,8 @@ function closeModal() {
   document.querySelector('#modalScreen .modal-card').classList.add('nb-paper');   // v1.285 (D.46): back on paper after the phone
   Game.mode = Game.prevMode || 'bedroom';
   if (Game.mode === 'bedroom') showPauseHint();
+  // v1.459: the online screen the title opened, closed: your room with a summer, back to the title without one
+  if (titleOnline) { Net.fromTitle = null; if (titleOnline === 'new') showTitleScreen(); }
 }
 
 // === SAVE MENU (v1.37) === — opened from the bed. Saves immediately and shows
