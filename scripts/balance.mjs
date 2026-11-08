@@ -14,6 +14,7 @@
 //   node scripts/balance.mjs --perfect               v1.454's perfect-aim bot, to compare
 //   node scripts/balance.mjs --maps duel_trey --guns l96,sniper,pumpsniper --rounds 20
 //   node scripts/balance.mjs --noclimb               v1.458: with the held automatics' climb switched off
+//   node scripts/balance.mjs --climb 2               v1.458: the climb twice as strong (a measure, not the game)
 //
 // v1.456 (D.88 step 4): neither default match is a long still duel, so the snipers could not be judged. `duel_trey` is
 // one: Trey on Overwatch with Seth taken out, Trey alone with his sniper as a defender on the front step across the
@@ -36,13 +37,14 @@ const HUMAN = !process.argv.includes('--perfect');   // v1.455: --perfect is v1.
 // a beat late (it sees the climb 0.15 s after it starts and takes back 80 % of it); the perfect bot takes back all of it
 // at once. --noclimb switches the climb off, to compare with the table before it.
 const NOCLIMB = process.argv.includes('--noclimb');
+const CLIMB_X = +arg('climb', 1);   // v1.458: --climb 2 tries the climb twice as strong, for the measure only
 // v1.456: matches made here from a real one, for the measure only (the game never sees them)
 const DUELS = { duel_trey: { from: 'winnmark_sniper_overwatch', keep: 'trey', name: 'The Long Duel', head: true, still: true, at: [117.8, -1.0] } };
 
 async function worker(sc, guns) {
   const g = await boot(); const { page } = g;
   await g.bedroom();
-  await page.evaluate((NOCLIMB) => { Game.renderer.render = () => {}; if (NOCLIMB) gunClimbKick = () => {}; }, NOCLIMB);
+  await page.evaluate(([NOCLIMB, X]) => { Game.renderer.render = () => {}; if (NOCLIMB) gunClimbKick = () => {}; if (X !== 1) { const f = gunClimbMult; gunClimbMult = () => f() * X; } }, [NOCLIMB, CLIMB_X]);
   for (const gt of guns) for (let r = 0; r < ROUNDS; r++) {
     await page.evaluate(gt => {
       Game.persist.owned[gt] = true; Game.persist.equipped.gun = gt; Game.persist.loadoutSlots[0] = { kind: 'gun', refId: gt };
@@ -185,7 +187,7 @@ for (const sc of MAPS) for (let i = 0; i < guns.length; i += 10) jobs.push([sc, 
 const rows = [];
 const self = fileURLToPath(import.meta.url);
 const run = ([sc, gs]) => new Promise(res => {
-  const p = spawn(process.execPath, [self, '--worker', sc, gs, '--rounds', String(ROUNDS), ...(HUMAN ? [] : ['--perfect']), ...(NOCLIMB ? ['--noclimb'] : [])]);
+  const p = spawn(process.execPath, [self, '--worker', sc, gs, '--rounds', String(ROUNDS), ...(HUMAN ? [] : ['--perfect']), ...(NOCLIMB ? ['--noclimb'] : []), '--climb', String(CLIMB_X)]);
   let buf = '';
   p.stdout.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.startsWith('{')) rows.push(JSON.parse(l)); } });
   p.stderr.on('data', d => process.stderr.write(d));
