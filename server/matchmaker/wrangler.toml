@@ -1,0 +1,13 @@
+# v1.460 (backlog D.2 step 3): the matchmaker's Cloudflare Worker. Deploy with `npx wrangler deploy` from this folder
+# (README.md). No secrets: the free plan, one Durable Object kept in memory.
+name = "nbhd-airsoft-matchmaker"
+main = "worker.mjs"
+compatibility_date = "2025-06-01"
+
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Lobby"]

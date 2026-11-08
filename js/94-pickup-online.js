@@ -299,12 +299,20 @@ const NET_HOST_ID = 'net_p0';   // each person's CHARACTERS entry while a match 
 const NET_MAX_PEOPLE = 8;
 const NET_SIDES = ['A', 'B'];
 const NET_SIDE_NAMES = { A: 'Blue', B: 'Red' };
+// v1.460 (D.2 step 3, card fable/d2-room-list; Michael: B, 28 Oct): THE ROOM LIST'S ADDRESS, the one setting. The game's own
+// matchmaker (server/matchmaker/, a free Cloudflare Worker Michael deploys; its README says how) lists the rooms whose
+// hosts chose Listed. Empty, there is no list and the online screen joins by code only; nothing is fetched until
+// someone opens the online screen. Paste the Worker's address here, e.g. 'https://nbhd-airsoft-matchmaker.NAME.workers.dev'.
+const NET_MATCHMAKER_URL = '';
+const NET_MM_BEAT_SEC = 15, NET_MM_LIST_SEC = 10;   // a listed host's word, and the open list's refresh
 const Net = {
   active: false, role: null, phase: 'idle', tx: null, code: null, name: 'Friend', error: null,
   me: null, people: [], kids: { A: [], B: [] }, opts: null, lobby: null, roster: null, ents: new Map(), nextSlot: 1,
   ready: new Set(), localReady: false, begin: null, built: null, starts: null, sendT: 0, bagSaved: null, hudT: 0,
   makeTransport: null,   // set below to netPeerTransport
   coop: false, panel: null,   // v1.380 (D.73): a co-op link (95-coop), and which screen shows the link's state, the board's or the phone's
+  mm: { url: NET_MATCHMAKER_URL, listed: false, key: null, rooms: null, down: false, fetches: 0, timer: null, beatAt: 0, listAt: 0, listedCode: null },   // v1.460
+  fromTitle: null,   // v1.459 (D.2 step 3): the online screen came from the title's ONLINE: 'save' (your summer loaded) or 'new'
 };
 function netVersion() { const v = document.querySelector('#titleScreen .version, .version'); return v ? v.textContent.trim() : '?'; }
 function netNewCode() { let s = ''; for (let i = 0; i < 4; i++) s += NET_CODE_LETTERS[Math.floor(gameRandom() * NET_CODE_LETTERS.length)]; return s; }
@@ -503,17 +511,122 @@ function netPanelHTML() {
   const busy = Net.phase === 'lobby', inRoom = busy && (Net.role === 'host' ? !!Net.code : !!Net.lobby);
   const status = Net.error ? `<div class="pk-net-err" id="netStatus">${NET_ERRORS[Net.error] || NET_ERRORS.net}</div>`
     : busy && !inRoom ? `<div class="pk-note" id="netStatus">${Net.role === 'host' ? 'Opening a room…' : 'Looking for the room…'}</div>` : '<div class="pk-note" id="netStatus"></div>';
-  const back = `<div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'LEAVE THE ROOM' : '◀ BACK TO THE BOARD'}</button></div>`;
-  const privacy = `<div class="pk-note pk-net-privacy">Online play connects your computer straight to your friends’, so each of you can see the others’ internet address, as in any voice chat. A free public service (PeerJS) passes on the room code to start it. Play with friends you know.</div>`;
+  const back = `<div class="pk-row"><button class="pk-opt" id="netBackBtn">${busy ? 'LEAVE THE ROOM' : Net.fromTitle === 'new' ? '◀ BACK TO THE TITLE' : Net.fromTitle ? '◀ TO YOUR ROOM' : '◀ BACK TO THE BOARD'}</button></div>`;
+  const privacy = `<div class="pk-note pk-net-privacy">Online play connects your computer straight to your friends’, so each of you can see the others’ internet address, as in any voice chat. A free public service (PeerJS) passes on the room code to start it.${Net.mm.url ? ' A Listed room’s name and match show on the room list to anyone who opens it, and anyone can join it from there.' : ''} Play with friends you know.</div>`;   // v1.460
   if (inRoom) return `<div class="pk-board">${netRoomHTML()}${status}${privacy}${back}</div>`;
   return `<div class="pk-board">
     <div class="pk-note">Play friends over the internet, up to eight of you: teams on any map the host has opened, and kids from the street in every slot nobody takes. The host’s board sets the match. Nothing on the line: no pay, and your save is untouched.</div>
     <div class="pk-row"><div class="pk-label">Your name</div><div class="pk-btns"><input class="pk-input" id="netName" maxlength="14" value="${netCleanName(Net.name)}"${busy ? ' disabled' : ''}></div></div>
     <div class="pk-row"><div class="pk-label">Host</div><div class="pk-btns"><button class="pk-opt" id="netHostBtn"${busy ? ' disabled' : ''}>HOST A ROOM</button></div></div>
     <div class="pk-row"><div class="pk-label">Join</div><div class="pk-btns"><input class="pk-input" id="netJoinCode" maxlength="4" placeholder="CODE" autocomplete="off"${busy ? ' disabled' : ''}><button class="pk-opt" id="netJoinBtn"${busy ? ' disabled' : ''}>JOIN</button></div></div>
+    ${netRoomsRowHTML(busy)}
+    ${netCoopRowHTML(busy)}
     ${status}${privacy}${back}
   </div>`;
 }
+// v1.459 (D.2 step 3): co-op on the online screen: a friend over in your summer (95-coop's screen, as from the phone).
+// It needs a summer that saves, so a new kid from the title is told to start one from CAMPAIGN.
+function netCoopRowHTML(busy) {
+  const label = '<div class="pk-label">Co-op</div>';
+  if (Net.fromTitle === 'new') return `<div class="pk-row" id="netCoopRow">${label}<div class="pk-btns"><span class="pk-note" id="netCoopNote">Having a friend over needs a summer of your own: start one from CAMPAIGN on the title.</span></div></div>`;
+  return `<div class="pk-row" id="netCoopRow">${label}<div class="pk-btns"><button class="pk-opt" id="netCoopBtn"${busy ? ' disabled' : ''}>HAVE A FRIEND OVER ▶</button></div></div>`;
+}
+// v1.460 (D.2 step 3, card fable/d2-room-list): THE ROOM LIST. With no matchmaker address the screen says rooms are
+// joined by code; with one, the open rooms of hosts who chose Listed, newest first, each with a JOIN that does what JOIN
+// by code does. If the matchmaker can't be reached the screen says so and the codes work as ever.
+function netRoomsRowHTML(busy) {
+  const label = '<div class="pk-label">Open rooms</div>';
+  if (!Net.mm.url) return `<div class="pk-row" id="netRoomsRow">${label}<div class="pk-btns"><span class="pk-note" id="netRoomList">Rooms are joined by their code: the host reads it out to you.</span></div></div>`;
+  return `<div class="pk-row" id="netRoomsRow">${label}<div class="pk-btns"><div id="netRoomList" class="pk-room-list">${netRoomListHTML(busy)}</div></div></div>`;
+}
+function netRoomListHTML(busy) {
+  const mm = Net.mm, ver = netVersion();
+  if (mm.down) return '<span class="pk-note">Couldn’t reach the room list. Join by the code instead.</span>';
+  if (!mm.rooms) return '<span class="pk-note">Looking for rooms…</span>';
+  const rooms = mm.rooms.filter(r => r.code !== mm.listedCode);
+  if (!rooms.length) return '<span class="pk-note">No open rooms right now. Host one, or join by a code.</span>';
+  const esc = t => String(t || '').replace(/[^A-Za-z0-9 '’.&-]/g, '').slice(0, 32);   // the list is someone else's word: letters only on the page
+  const mapName = r => (PICKUP_MAPS.find(k => k.key === r.map) || { name: esc(r.mapName) || 'somewhere' }).name;
+  return rooms.map(r => {
+    const same = r.ver === ver, full = +r.people >= +r.max, size = Math.max(1, Math.min(4, Math.floor(+r.size) || 1));
+    return `<div class="pk-room" data-code="${r.code}"><span class="pk-room-what"><b>${netCleanName(r.host)}</b>’s room · ${size}v${size} on ${mapName(r)}${r.tod === 'night' ? ', after dark' : ''} · <span class="pk-count">${Math.floor(+r.people) || 0}/${Math.floor(+r.max) || 0}</span>${same ? '' : ' · another version'}</span>`
+      + ` <button class="pk-opt pk-room-join" data-code="${r.code}"${busy || !same || full ? ' disabled' : ''}>${full ? 'FULL' : 'JOIN'}</button></div>`;
+  }).join('');
+}
+function netBindRoomList(body) {
+  body.querySelectorAll('.pk-room-join').forEach(b => b.addEventListener('click', () => { if (!b.disabled) netJoin(b.dataset.code); }));
+}
+// Redraws only the list, so a code half typed in JOIN's box is left alone
+function netRenderRoomList() {
+  const el = document.getElementById('netRoomList');
+  if (!el || !Net.mm.url || Net.panel !== 'pickup' || !document.getElementById('modalScreen').classList.contains('active')) return;
+  el.innerHTML = netRoomListHTML(Net.phase === 'lobby');
+  netBindRoomList(el);
+}
+function netMmFetch(method, path, body, key) {
+  const url = Net.mm.url;
+  if (!url || typeof fetch !== 'function') return Promise.resolve(null);
+  Net.mm.fetches++;
+  const o = { method, headers: {}, cache: 'no-store', keepalive: method === 'DELETE' };
+  if (body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
+  if (key) o.headers['X-Room-Key'] = key;
+  return fetch(url.replace(/\/+$/, '') + path, o).then(r => r.ok ? r.json() : null).catch(() => null);
+}
+function netMmRefresh() {
+  Net.mm.listAt = Date.now();
+  return netMmFetch('GET', '/rooms').then(j => {
+    const ok = j && Array.isArray(j.rooms);
+    Net.mm.down = !ok;
+    Net.mm.rooms = ok ? j.rooms.filter(r => r && /^[A-Z]{4}$/.test(r.code)).slice(0, 50) : null;
+    netRenderRoomList();
+    return ok;
+  });
+}
+// A listed host's word: his room as it is now (who is in, the match he has set)
+function netMmBeat() {
+  const mm = Net.mm;
+  if (!mm.listed || Net.role !== 'host' || Net.coop || Net.phase !== 'lobby' || !Net.code) return Promise.resolve(false);
+  if (!mm.key) { const a = new Uint8Array(12); (window.crypto || { getRandomValues: x => x.map(() => Math.random() * 256) }).getRandomValues(a); mm.key = [...a].map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 24); }
+  const o = Net.opts || netHostOpts(), m = netMap(), host = Net.people.find(p => p.id === NET_HOST_ID);
+  const code = Net.code;
+  mm.beatAt = Date.now();
+  return netMmFetch('POST', '/rooms', { code, key: mm.key, host: host ? host.name : netCleanName(Net.name), map: m.key, mapName: m.name,
+    mode: 'teams', size: o.size, people: Net.people.filter(p => !p.gone).length, max: Math.min(NET_MAX_PEOPLE, pickupMaxSize(m) * 2), tod: o.tod, ver: netVersion() })
+    .then(j => {
+      const ok = !!(j && j.ok);
+      if (ok && mm.listed && Net.code === code && Net.phase === 'lobby') mm.listedCode = code;
+      if (mm.down !== !ok) { mm.down = !ok; const n = document.getElementById('netListedNote'); if (n) renderNetPanel(); }
+      return ok;
+    });
+}
+function netMmUnlist() {
+  const mm = Net.mm, code = mm.listedCode;
+  if (!code) return;
+  mm.listedCode = null;
+  netMmFetch('DELETE', '/rooms/' + code, null, mm.key);
+}
+function netMmSetListed(on) {
+  Net.mm.listed = !!on;
+  if (on) { netMmStart(); netMmBeat(); } else netMmUnlist();
+  renderNetPanel();
+}
+// One timer while it has work (the online screen up, or a listed room open), started by those and gone without them
+function netMmStart() {
+  const mm = Net.mm;
+  if (!mm.url) return;
+  if (!mm.timer) mm.timer = setInterval(netMmTick, 1000);
+  if (Net.panel === 'pickup' && !Net.active) netMmRefresh();
+}
+function netMmTick() {
+  const mm = Net.mm, now = Date.now();
+  const showing = Net.panel === 'pickup' && Game.mode === 'modal' && !Net.active && document.getElementById('modalScreen').classList.contains('active');
+  const hosting = mm.listed && Net.role === 'host' && !Net.coop;
+  if (hosting && Net.phase === 'lobby') { if (now - mm.beatAt >= NET_MM_BEAT_SEC * 1000) netMmBeat(); }
+  else if (mm.listedCode) netMmUnlist();   // a match started, or the room closed: off the list until it is back in the room
+  if (showing && now - mm.listAt >= NET_MM_LIST_SEC * 1000) netMmRefresh();
+  if (!showing && !hosting) { clearInterval(mm.timer); mm.timer = null; }
+}
+window.addEventListener('pagehide', () => netMmUnlist());   // the tab closed: the room comes off the list now, not in 45 s
 // The room: the code, the host's settings (buttons for him, words for a guest), the two sides and their kids
 function netRoomHTML() {
   const host = Net.role === 'host', o = Net.opts, m = netMap(), most = netMostOnASide();
@@ -530,6 +643,9 @@ function netRoomHTML() {
     html += row('When', btn('tod', 'day', 'Day', o.tod === 'day') + btn('tod', 'night', 'Night', o.tod === 'night'));
     html += row('Lives', PICKUP_LIVES.map(n => btn('lives', n, String(n), n === o.lives)).join(''));
     html += row('Clock', PICKUP_CLOCKS.map(n => btn('clock', n, n ? pickupClockText(n) : 'Off', n === o.clock)).join(''));
+    // v1.460 (D.2 step 3): on the room list or not; Private (only friends with the code) unless the host says otherwise
+    if (Net.mm.url) html += row('Who sees it', btn('listed', 0, 'Private', !Net.mm.listed) + btn('listed', 1, 'Listed', Net.mm.listed)
+      + ` <span class="pk-count" id="netListedNote">${Net.mm.listed ? (Net.mm.down ? 'the room list is down: friends join by the code' : 'on the room list') : 'friends join by the code'}</span>`, 'netListedRow');
   } else {
     html += `<div class="pk-note" id="netMatchNote">${o.size}v${o.size} on ${m.name}, ${o.tod === 'night' ? 'after dark' : 'in the afternoon'}, ${o.lives === 1 ? 'one life' : o.lives + ' lives'} each, ${o.clock ? pickupClockText(o.clock) + ' on the clock' : 'no clock'}.</div>`;
   }
@@ -570,9 +686,13 @@ function renderNetPanel() {
   body.querySelectorAll('.pk-opt[data-grp]').forEach(b => b.addEventListener('click', () => netPanelClick(b.dataset.grp, b.dataset.val)));
   const start = body.querySelector('#netStartBtn');
   if (start) start.addEventListener('click', () => netStartRoom());
+  netBindRoomList(body);   // v1.460
+  const coopBtn = body.querySelector('#netCoopBtn');   // v1.459: co-op from the online screen, the phone's own screen
+  if (coopBtn) coopBtn.addEventListener('click', () => { Net.fromTitle = null; openCoopPanel(); });
   body.querySelector('#netBackBtn').addEventListener('click', () => {
     if (Net.phase === 'lobby') netClose();
     Net.error = null;
+    if (Net.fromTitle) { closeModal(); return; }   // v1.459: the title's online screen has no board behind it (closeModal goes on)
     document.getElementById('modalTitle').textContent = 'Pickup Game';
     renderPickupBoard();
   });
@@ -584,17 +704,33 @@ function netPanelClick(grp, v) {
     if (Net.role === 'host') netToggleKid(meP.side, v); else netSend({ t: 'kid', id: v });
   } else if (grp === 'side') {
     if (Net.role === 'guest') netSend({ t: 'side', side: v });
+  } else if (grp === 'listed') {   // v1.460
+    if (Net.role === 'host') netMmSetListed(v === '1');
   } else if (Net.role === 'host') {
     pickupState[grp] = (grp === 'size' || grp === 'lives' || grp === 'clock') ? +v : v;
     if (grp === 'map') Net.kids = { A: [], B: [] };   // another street, other kids
     netRoomChanged(false);
   }
 }
+// v1.459 (D.2 step 3, card fable/d2-room-list): the title's ONLINE. Your summer loads as CONTINUE loads it (your look,
+// your gun, the maps you have opened), and the online screen opens over your room. With no saved summer you go online as
+// a new kid and nothing is saved: closing the screen goes back to the title, and co-op waits for a summer of your own.
+function openOnlineFromTitle() {
+  initAudio();
+  let saved = hasSaveGame();
+  if (saved && !loadGame().ok) saved = false;   // a save that won't load is left alone, as CONTINUE leaves it
+  if (!saved) { Game.persist = JSON.parse(JSON.stringify(DEFAULT_PERSIST)); Game._saveEnabled = false; }
+  Net.fromTitle = saved ? 'save' : 'new';
+  enterBedroom();
+  openPickupBoard();
+  openNetPanel();
+}
 function openNetPanel() {
   try { const n = localStorage.getItem('na_online_name'); if (n) Net.name = netCleanName(n); } catch (e) {}
   Net.error = null;
   Net.panel = 'pickup';   // v1.380
-  document.getElementById('modalTitle').textContent = 'Pickup Game: Online';
+  netMmStart();   // v1.460: the room list, fetched now (never at startup) and while the screen is up
+  document.getElementById('modalTitle').textContent = Net.fromTitle ? 'Online' : 'Pickup Game: Online';   // v1.459: from the title it is the game's online screen
   renderNetPanel();
 }
 function netOpen(role, code, coop = false) {   // v1.380 (D.73): `coop`, a friend coming over (95-coop)
@@ -640,6 +776,7 @@ function netClose() {
   Net.tx = null;
   if (tx) { try { tx.close(); } catch (e) {} }
   netVoiceStop(true);   // v1.370: and the browser's mic is let go
+  netMmUnlist(); Net.mm.listed = false;   // v1.460: a closed room comes off the list at once
   if (Net.bagSaved != null) { Game.persist.bag = Net.bagSaved; Net.bagSaved = null; }
   Object.assign(Net, { active: false, role: null, phase: 'idle', people: [], lobby: null, me: null, coop: false });
   coopReset();   // v1.380 (D.73): a friend who was over is gone

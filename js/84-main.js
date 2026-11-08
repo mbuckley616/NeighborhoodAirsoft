@@ -501,6 +501,27 @@ document.getElementById('settingsResetBtn').addEventListener('click', () => {
   });
   document.getElementById('newGameYesBtn').addEventListener('click', () => { showAsk(false); beginNewGame(); });
   document.getElementById('newGameNoBtn').addEventListener('click', () => showAsk(false));
+  // v1.459 (D.2 step 3, card fable/d2-room-list): the first page is CAMPAIGN / ONLINE / SETTINGS. CAMPAIGN turns to the
+  // page above (CONTINUE, NEW GAME, STORY), whose BACK turns back; ONLINE is the online screen in your room (94-pickup-online).
+  document.getElementById('titleCampaignBtn').addEventListener('click', () => showTitlePage('campaign'));
+  document.getElementById('titleBackBtn').addEventListener('click', () => { showAsk(false); showTitlePage('main'); });
+  document.getElementById('titleOnlineBtn').addEventListener('click', () => openOnlineFromTitle());
 })();
+// v1.459: which of the title's two pages shows
+function showTitlePage(page) {
+  document.getElementById('titleMain').style.display = page === 'campaign' ? 'none' : '';
+  document.getElementById('titleCampaign').style.display = page === 'campaign' ? '' : 'none';
+}
+// v1.459: back to the title from the room (ONLINE with no saved summer, closed again): the room stays built behind it,
+// and CAMPAIGN starts or loads a summer as it does after a reload
+function showTitleScreen() {
+  hideAllMenus();
+  exitPointerLock();
+  Game.mode = 'title';
+  document.getElementById('bedroomHud').style.display = 'none';
+  { const h = document.getElementById('pauseHint'); if (h) h.style.display = 'none'; }
+  showTitlePage('main');
+  document.getElementById('titleScreen').classList.add('active');
+}
 
 document.getElementById('mapCloseBtn').addEventListener('click', closeMap);

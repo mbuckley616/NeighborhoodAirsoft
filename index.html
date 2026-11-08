@@ -2305,6 +2305,7 @@
   #titleScreen .nb-paper .settings-open-btn { margin-top: calc(var(--nb-rule) + 4px) !important; width: 220px; font-size: 16px !important;
     background: var(--nb-paper) !important; }
   #titleScreen .nb-paper #newGameAsk { align-items: center; }
+  #titleScreen .title-sec { display: flex; flex-direction: column; align-items: center; }   /* v1.459 (D.2 step 3): the title's two pages */
   #titleScreen .nb-paper .new-game-ask-text { color: var(--nb-red); font-size: 17px; margin: 0; max-width: 380px; }
   #titleScreen .version { color: rgba(255,255,255,0.55); }
   #pauseMenu .modal-card.nb-paper, #forfeitAsk .modal-card.nb-paper { min-width: 360px; max-width: 440px; padding-right: 40px !important; }
@@ -2378,6 +2379,9 @@
     line-height: calc(var(--nb-rule) * 2) !important; position: relative; top: 4px; }
   #modalScreen .nb-paper .pk-net-err { font-size: 16px; color: var(--nb-red); }
   #modalScreen .nb-paper .pk-net-privacy { font-size: 14px; opacity: 1; color: var(--nb-pencil); }
+  /* v1.460 (D.2 step 3): the room list, a room a line */
+  #modalBody .pk-room-list { display: flex; flex-direction: column; align-items: flex-start; }
+  #modalBody .pk-room { display: flex; align-items: center; gap: 8px; min-height: var(--nb-rule, 26px); }
   /* -- v1.286 (D.46): the map screen on paper. The map's drawing stays as it is, a printed map taped onto the page (a
      filled block); the header, the zone's name and count are written on the rules; each scenario card is a filled
      block three rules high, and the list (a whole number of rules tall) scrolls a whole rule at a time. -- */
@@ -2679,6 +2683,15 @@
   <div class="title-page nb-paper">   <!-- v1.284 (D.46): the title on a notebook page -->
   <div class="title">NEIGHBORHOOD AIRSOFT</div>
   <div class="subtitle">SUMMER · 2003</div>
+  <!-- v1.459 (D.2 step 3, card fable/d2-room-list; Michael, 28 Sep: "Campaign ... and Online Multiplayer, and maybe a third
+       for Options/Settings"): the title's first page. CAMPAIGN turns to the old page (CONTINUE / NEW GAME / STORY),
+       ONLINE goes to your room with the online screen open, SETTINGS opens the settings as before. -->
+  <div class="title-sec" id="titleMain">
+    <button class="start-btn nb-btn" id="titleCampaignBtn">CAMPAIGN</button>
+    <button class="start-btn nb-btn" id="titleOnlineBtn">ONLINE</button>
+    <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
+  </div>
+  <div class="title-sec" id="titleCampaign" style="display:none;">
   <button class="start-btn nb-btn" id="continueBtn" style="display:none;">CONTINUE</button>
   <button class="start-btn nb-btn" id="startBtn">ENTER MIKE'S ROOM</button>
   <div id="newGameAsk" style="display:none;">   <!-- v1.218: NEW GAME over a save asks first -->
@@ -2686,8 +2699,9 @@
     <button class="start-btn nb-btn" id="newGameYesBtn">START OVER</button>
     <button class="start-btn nb-btn" id="newGameNoBtn">BACK</button>
   </div>
-  <button class="start-btn nb-btn settings-open-btn" id="titleSettingsBtn">SETTINGS</button>   <!-- v1.192 -->
   <button class="start-btn nb-btn settings-open-btn" id="titleStoryBtn">STORY</button>   <!-- v1.358 (D.77): the cards again -->
+  <button class="start-btn nb-btn settings-open-btn" id="titleBackBtn">◀ BACK</button>   <!-- v1.459 -->
+  </div>
   </div>
   <div class="version">v1.458</div>
 </div>
