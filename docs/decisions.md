@@ -5,6 +5,23 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
+- **What the play lane builds next, after the sort row (builder, 2026-11-09)**
+  v1.464 built your B: the Guns tab's sort row (shop order, price, rate, weight, owned first). The play lane has no ready
+  item again: the room list waits only on the matchmaker's deploy, recorded voices is a Fable card waiting for Start, and
+  every other open play item is done pending your look. What should it take next?
+  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
+    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (steadier on
+    the move, a little heavier). Each a version, measured with `scripts/balance.mjs` before it ships.
+  - B) **The same sort row on the Mods tab** (by slot, price, owned first), now that it lists 24 parts, homemade and
+    store-bought, in one column.
+  - C) **Rest the play lane** until you have played v1.458-v1.464 (the climb, the title, online, the sort row).
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It is the only offered work left that adds play rather than screens, both parts sit on slots every
+  long gun has, and neither touches a maps-lane file or a Fable area.
+  Michael: **B) The same sort row on the Mods tab**. (2026-11-09)
+
 - **The Portables: Owen waits out the opening at your start. Fix it there, or shorten the idle clock? (builder, 2026-11-09)**
   The critic (9 Nov, backlog Found in play): in The Portables (`school_portables_3v3`) your crew's Owen starts 1.2 m
   from you and hides and peeks there for 20-33 s with nobody in sight, while the rest push up the lot; in two of three
@@ -22,22 +39,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   Recommendation: B. The same wait has turned up at Night Swim, Price Check, Friday Night Lights and now here, each a
   start out of sight of the fight; B fixes any such start at once and touches nothing for a kid who is fighting. A is
   the smallest change if you'd rather keep it to this match.
-
-- **What the play lane builds next, after the sort row (builder, 2026-11-09)**
-  v1.464 built your B: the Guns tab's sort row (shop order, price, rate, weight, owned first). The play lane has no ready
-  item again: the room list waits only on the matchmaker's deploy, recorded voices is a Fable card waiting for Start, and
-  every other open play item is done pending your look. What should it take next?
-  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
-    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (steadier on
-    the move, a little heavier). Each a version, measured with `scripts/balance.mjs` before it ships.
-  - B) **The same sort row on the Mods tab** (by slot, price, owned first), now that it lists 24 parts, homemade and
-    store-bought, in one column.
-  - C) **Rest the play lane** until you have played v1.458-v1.464 (the climb, the title, online, the sort row).
-  - D) **Something else.** Reply with what you want next.
-  Recommendation: A. It is the only offered work left that adds play rather than screens, both parts sit on slots every
-  long gun has, and neither touches a maps-lane file or a Fable area.
-
-## Answered
+  Michael: **B) Every team match** — an ally who has had nobody in sight for his first 8 s goes looking. (2026-11-09)
 
 - **What the play lane builds next, after the balance pass (builder, 2026-11-09)**
   D.88 is closed at your A (8 Nov): the balance pass stopped after v1.458's climb, and `scripts/balance.mjs` stays to
