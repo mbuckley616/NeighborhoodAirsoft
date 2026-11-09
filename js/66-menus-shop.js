@@ -204,7 +204,7 @@ function closeMap() {
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
 const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
-let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL', gunSort: 'shop' };   // v1.240: gunKind; v1.464: gunSort
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL', gunSort: 'shop', modSort: 'shop' };   // v1.240: gunKind; v1.464: gunSort; v1.466: modSort
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
@@ -1682,10 +1682,35 @@ function gunBlurb(gt) {
 function renderAccessoriesTab(c) {
   c.appendChild(shopSectionHeader('Gun Mods',
     'Buy a copy per gun you want it on — each copy mounts on one gun at a time. Assign them at The Workbench (hall closet).'));
-  for (const aid in ATTACHMENTS) {
+  // v1.466 (decisions, Michael 9 Nov: B, "the same sort row on the Mods tab"): Sort: SHOP ORDER · SLOT · PRICE · OWNED
+  // FIRST, as the Guns tab's row (v1.464) in its look. By slot each slot gets a header, as each kind does on the Guns tab.
+  const sortRow = document.createElement('div');
+  sortRow.className = 'shop-gun-sorts shop-mod-sorts';
+  const sortLbl = document.createElement('span');
+  sortLbl.className = 'shop-gun-sort-label';
+  sortLbl.textContent = 'Sort:';
+  sortRow.appendChild(sortLbl);
+  for (const [id, label] of SHOP_MOD_SORTS) {
+    const b = document.createElement('div');
+    b.className = 'shop-gun-sort' + (shopState.modSort === id ? ' active' : '');
+    b.dataset.sort = id;
+    b.textContent = label;
+    b.addEventListener('click', () => { shopState.modSort = id; renderShop(); });
+    sortRow.appendChild(b);
+  }
+  c.appendChild(sortRow);
+  let lastSlot = null;
+  for (const aid of shopSortedMods(shopState.modSort)) {
     const a = ATTACHMENTS[aid];
     const owned = Game.persist.ownedEquipment.attachments[aid] || 0;
-    const slotTag = a.slot === 'sight' ? 'SIGHT' : a.slot === 'under' ? 'UNDER' : a.slot === 'muzzle' ? 'MUZZLE' : a.slot === 'stock' ? 'STOCK' : 'RAIL';   // v1.169, v1.420
+    const slotTag = shopModSlot(aid);   // v1.169, v1.420 (v1.466: one place)
+    if (shopState.modSort === 'slot' && slotTag !== lastSlot) {   // v1.466
+      const h = shopSectionHeader(SHOP_MOD_SLOT_NAMES[slotTag] || slotTag, '');
+      h.classList.add('shop-mod-slot-header');
+      h.dataset.slot = slotTag;
+      c.appendChild(h);
+      lastSlot = slotTag;
+    }
     const row = document.createElement('div');
     row.className = 'shop-item' + (owned ? ' owned' : '');
     row.innerHTML = `<div class="shop-item-icon">⊹</div>` +
@@ -1703,6 +1728,21 @@ function renderAccessoriesTab(c) {
     shopIconImg(row.firstElementChild, shopModPic(aid, 56, 56), a.name, { item: 'mod:' + aid });   // v1.211
     c.appendChild(row);
   }
+}
+
+// v1.466: the Mods tab's sort. Shop order is ATTACHMENTS' own; the others keep shop order between equals. Slot runs
+// sight, rail, under, muzzle, stock (top of the gun to the back); price low to high; parts you own a copy of first.
+const SHOP_MOD_SORTS = [['shop', 'SHOP ORDER'], ['slot', 'SLOT'], ['price', 'PRICE'], ['owned', 'OWNED FIRST']];
+const SHOP_MOD_SLOTS = ['SIGHT', 'RAIL', 'UNDER', 'MUZZLE', 'STOCK'];
+const SHOP_MOD_SLOT_NAMES = { SIGHT: 'Sights', RAIL: 'Rail', UNDER: 'Under the barrel', MUZZLE: 'Muzzle', STOCK: 'Stock' };
+function shopModSlot(aid) { const s = ATTACHMENTS[aid].slot; return s === 'sight' ? 'SIGHT' : s === 'under' ? 'UNDER' : s === 'muzzle' ? 'MUZZLE' : s === 'stock' ? 'STOCK' : 'RAIL'; }
+function shopSortedMods(sort) {
+  const key = sort === 'slot' ? aid => SHOP_MOD_SLOTS.indexOf(shopModSlot(aid))
+    : sort === 'price' ? aid => ATTACHMENTS[aid].price || 0
+    : sort === 'owned' ? aid => ((Game.persist.ownedEquipment.attachments[aid] || 0) > 0 ? 0 : 1)
+    : null;
+  return Object.keys(ATTACHMENTS).map((aid, i) => ({ aid, i, v: key ? key(aid) : 0 }))
+    .sort((a, b) => (a.v - b.v) || (a.i - b.i)).map(x => x.aid);
 }
 
 function renderEquipmentTab(c) {

@@ -156,5 +156,37 @@ await g.shot('workbench-kinds');
 await page.evaluate(() => { closeWorkbench(); openWorkbench(); });
 const w4 = await wb();
 check('workbench: closed and opened again, the sections are as you left them', JSON.stringify(w4.kinds) === JSON.stringify(w2.kinds), w4.kinds);
+
+// v1.466 (decisions, Michael 9 Nov: B): the same sort row on the Mods tab: SHOP ORDER · SLOT · PRICE · OWNED FIRST.
+await page.evaluate(() => { closeWorkbench && closeWorkbench(); Game.persist.cash = 1000; openShop();
+  [...document.querySelectorAll('#shopScreen .cat-tab')].find(e => e.textContent === 'Mods').click(); });
+const mods = () => page.evaluate(() => ({
+  links: [...document.querySelectorAll('#shopScreen .shop-mod-sorts .shop-gun-sort')].map(b => b.textContent + (b.classList.contains('active') ? '*' : '')),
+  heads: [...document.querySelectorAll('#shopScreen .shop-mod-slot-header')].map(h => h.dataset.slot),
+  rows: [...document.querySelectorAll('#shopScreen .shop-item')].map(r => ({ name: r.querySelector('.shop-item-name').firstChild.textContent.trim(),
+    slot: r.querySelector('.shop-slot-tag').textContent, price: +r.querySelector('.shop-item-price').textContent.slice(1), owned: !!r.querySelector('.shop-owned-tag') })),
+}));
+const modClick = id => page.evaluate(id => document.querySelector(`#shopScreen .shop-mod-sorts .shop-gun-sort[data-sort="${id}"]`).click(), id);
+const m0 = await mods();
+check('Mods tab: the sort row\'s four links, SHOP ORDER to start, no slot headers', JSON.stringify(m0.links) === JSON.stringify(['SHOP ORDER*', 'SLOT', 'PRICE', 'OWNED FIRST']) && m0.heads.length === 0 && m0.rows.length >= 15, { links: m0.links, n: m0.rows.length, heads: m0.heads });
+const nondesc = a => a.every((v, i) => i === 0 || a[i - 1] <= v);
+await modClick('slot');
+const m1 = await mods();
+const order = ['SIGHT', 'RAIL', 'UNDER', 'MUZZLE', 'STOCK'];
+check('Mods tab, SLOT: every part, grouped sight, rail, under, muzzle, stock, a header over each slot', m1.rows.length === m0.rows.length && nondesc(m1.rows.map(r => order.indexOf(r.slot))) &&
+  JSON.stringify(m1.heads) === JSON.stringify(order.filter(o => m1.rows.some(r => r.slot === o))), { heads: m1.heads, slots: m1.rows.map(r => r.slot) });
+await modClick('price');
+const m2 = await mods();
+check('Mods tab, PRICE: cheapest first, no headers', nondesc(m2.rows.map(r => r.price)) && m2.heads.length === 0 && m2.rows.length === m0.rows.length, m2.rows.map(r => r.price));
+await page.evaluate(() => { const ids = Object.keys(ATTACHMENTS); Game.persist.ownedEquipment.attachments[ids[ids.length - 1]] = 1; Game.persist.ownedEquipment.attachments[ids[5]] = 2; renderShop(); });
+const m2b = await mods();
+check('Mods tab: the sort holds through a buy or a re-draw', m2b.links.includes('PRICE*'), m2b.links);
+await modClick('owned');
+const m3 = await mods();
+const firstUnowned = m3.rows.findIndex(r => !r.owned);
+check('Mods tab, OWNED FIRST: the two owned parts lead, the rest in shop order behind them', firstUnowned === 2 && m3.rows.slice(2).every(r => !r.owned) &&
+  JSON.stringify(m3.rows.slice(2).map(r => r.name)) === JSON.stringify(m0.rows.map(r => r.name).filter(n => !m3.rows.slice(0, 2).some(o => o.name === n))), m3.rows.slice(0, 4));
+await g.shot('shop-mod-sort');
+
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
