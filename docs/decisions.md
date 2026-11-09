@@ -5,6 +5,23 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the balance pass (builder, 2026-11-09)**
+  D.88 is closed at your A (8 Nov): the balance pass stopped after v1.458's climb, and `scripts/balance.mjs` stays to
+  measure each new gun. The play lane has no ready item: D.2's room list landed (v1.459-v1.460) and waits only on the
+  matchmaker's deploy, recorded voices is a Fable card waiting for Start, and every other open play item is done pending
+  your look. What should it take next?
+  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
+    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (a split
+    ball pushed over the handguard: steadier on the move, a little heavier). Each a version, measured with the
+    balance script before it ships.
+  - B) **The shop's Guns tab at 50 guns**: a sort row over each kind's list (price, rate, weight, and "owned first"),
+    in the early-2000s site style, so Automatics' 19 and Rifles' 14 stay easy to compare (v1.240's kind tabs stay).
+  - C) **Rest the play lane** until you have played v1.458-v1.460 (the climb, the new title, online), then take what that
+    turns up.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. The pair has been offered three times and still fits: night matches gain a second reason to change
+  a gun for the dark, both sit on slots every long gun already has, and neither touches a maps-lane file or a Fable area.
+
 ## Answered
 
 - **D.88 balance pass: after the climb (builder, 2026-11-08, backlog D.88)**
