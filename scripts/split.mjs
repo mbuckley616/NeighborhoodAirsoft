@@ -38,6 +38,7 @@ export const CUTS = [
   ['20-characters.js',    'const CHARACTERS = {',                'play'],  // CHARACTERS, voice lines, TTS
   ['24-scenarios.js',     'const REGIONS = {',                   'maps'],  // REGIONS, the briefing helpers, SCENARIOS
   ['26-audio.js',         'function initAudio(',                 'play'],  // audio, Settings, music, sound effects
+  ['28-voice-clips.js',   'const VOICE_CLIPS = {',               'play'],  // v1.462: the recorded voices (scripts/voicepack.mjs writes it)
   ['30-bedroom.js',       'const MAP_TABLE_PX',                  'maps'],  // the map table's paper, buildBedroomScene
   ['32-street-kit.js',    'function buildSethBackyardScene(',    'maps'],  // Seth's backyard; houses, trees, props, cars, forts
   ['34-scene-kit.js',     'function _hashStringToSeed(',         'maps'],  // seeded layouts, day/night, streetlamps, kids' lights and lasers, buildStreetRoad
