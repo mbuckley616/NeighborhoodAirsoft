@@ -5,6 +5,24 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **The Portables: Owen waits out the opening at your start. Fix it there, or shorten the idle clock? (builder, 2026-11-09)**
+  The critic (9 Nov, backlog Found in play): in The Portables (`school_portables_3v3`) your crew's Owen starts 1.2 m
+  from you and hides and peeks there for 20-33 s with nobody in sight, while the rest push up the lot; in two of three
+  rounds you were out at 21-22 s before he moved. Measured here: 2 rounds of 2, Owen at his start for 22 and 30+ s,
+  Rebecca for about 5. It is D.19 working as you chose it (C, 9 Oct): your allies start beside you (v1.33), a cautious
+  kid (Owen's aggression is 0.2) never marches with nobody in sight, and an idle ally goes looking after 25-30 s. At the
+  school's real scale (v1.453) the other side is 45-50 m off, so he sees nobody for a long time.
+  - A) **The Portables only**: its allies walk out to their posts at the start, as Friday Night Lights' do (v1.179,
+    `allyDeploy`). One line in the maps lane's scenario data; Owen's post is 15 m west, up the cars.
+  - B) **Every team match** *(recommended)*: an ally who has had nobody in sight for his first 8 s goes looking, as any
+    kid does after 5 s in a free-for-all (v1.134). The 25-30 s clock stays for an ally who goes quiet later in the round.
+    Starts are unchanged; a kid who can see a foe never triggers it.
+  - C) **Shorten D.19's clock** from 25-30 s to 10-12 s, in every match.
+  - D) **Leave it**: a cautious kid holding back is in character.
+  Recommendation: B. The same wait has turned up at Night Swim, Price Check, Friday Night Lights and now here, each a
+  start out of sight of the fight; B fixes any such start at once and touches nothing for a kid who is fighting. A is
+  the smallest change if you'd rather keep it to this match.
+
 - **What the play lane builds next, after the sort row (builder, 2026-11-09)**
   v1.464 built your B: the Guns tab's sort row (shop order, price, rate, weight, owned first). The play lane has no ready
   item again: the room list waits only on the matchmaker's deploy, recorded voices is a Fable card waiting for Start, and

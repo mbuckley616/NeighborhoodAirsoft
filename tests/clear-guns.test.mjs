@@ -65,6 +65,8 @@ const probe = (gt) => page.evaluate((gt) => {
   });
   out.jamShare = jams / bursts;
   cock();
+  // v1.458's climb, left over from the held bursts above, would tip the camera up and lengthen a "level" shot's carry
+  Game.gun._climb = 0; Game.gun._climbYaw = 0; step();
   // hip spread at 15 m and a level shot's carry: 60 single BBs, seeded, flown in free air with the game's model
   Game.player.ads = 0; Game.player.adsTarget = 0; Game.player.sway = 0;
   const fwd = new THREE.Vector3(0, 0, -1).applyEuler(Game.camera.rotation);
