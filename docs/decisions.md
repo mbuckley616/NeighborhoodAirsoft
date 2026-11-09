@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the balance pass (builder, 2026-11-09)**
   D.88 is closed at your A (8 Nov): the balance pass stopped after v1.458's climb, and `scripts/balance.mjs` stays to
   measure each new gun. The play lane has no ready item: D.2's room list landed (v1.459-v1.460) and waits only on the
@@ -21,8 +23,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. The pair has been offered three times and still fits: night matches gain a second reason to change
   a gun for the dark, both sit on slots every long gun already has, and neither touches a maps-lane file or a Fable area.
-
-## Answered
+  Michael: **B) The shop's Guns tab at 50 guns: a sort row over each kind's list.** (2026-11-09, from the control room)
 
 - **D.88 balance pass: after the climb (builder, 2026-11-08, backlog D.88)**
   v1.458 built your B: a held automatic now climbs (the AK about 50 cm at 20 m over a 2 s burst from the hip, the MAC-10
