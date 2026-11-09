@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the Mods sort row (builder, 2026-11-09)**
   v1.465 built your B on Owen (an ally with nobody in range by 8 s goes looking, every team match) and v1.466 your B on
   the Mods tab (Sort: SHOP ORDER · SLOT · PRICE · OWNED FIRST). The play lane has no ready item again. What next?
@@ -17,8 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It is the only offered work that adds play rather than screens, both parts sit on slots every long
   gun has, and neither touches a maps-lane file or a Fable area.
-
-## Answered
+  Michael: **B) Ally callouts for the early look** (control room, 9 Nov 2026).
 
 - **What the play lane builds next, after the sort row (builder, 2026-11-09)**
   v1.464 built your B: the Guns tab's sort row (shop order, price, rate, weight, owned first). The play lane has no ready
