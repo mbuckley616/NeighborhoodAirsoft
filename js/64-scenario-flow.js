@@ -1147,6 +1147,7 @@ function endScenario(outcome) {
   { const ip = document.getElementById('interactPrompt'); if (ip) ip.style.display = 'none'; }   // v1.142: the ladder prompt
   // v1.21: cancel any in-flight TTS so finished-scenario taunts don't bleed into the result screen.
   try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) {}
+  voiceClipStop();   // v1.462 (D.9): and a recorded line
   document.getElementById('ammoHud').style.display = 'none';
   document.getElementById('healthHud').style.display = 'none';
   document.getElementById('stanceHud').style.display = 'none';

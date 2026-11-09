@@ -833,6 +833,76 @@ function voiceLineCatalog() {
 }
 function crewHomeSaid(l) { return String(l).replace(/[“”]/g, ''); }   // what a crew kid's line sounds like (the card's quotes off)
 
+// v1.462 (D.9 step 2): the clip player. When VOICE_CLIPS (js/28-voice-clips.js, written by scripts/voicepack.mjs) holds
+// this kid's reading of this line, and the words it was recorded with are still the line's, the clip plays through the
+// Web Audio graph: near, panned from where he stands and as loud as the browser voice would be there; over the walkie,
+// band-limited like a radio under the same static. Otherwise the browser voice says it, exactly as before. A clip is
+// decoded the first time it is said (never at startup) and kept; one that won't decode is spoken by the browser voice
+// that once and never tried again. Either voice cuts the other off, as the browser voice always cut itself off.
+const VOICE_CLIP = { log: [], live: null, buffers: new Map(), failed: new Set() };
+function voiceClipFind(charId, lineId, text, name) {
+  if (typeof VOICE_CLIPS === 'undefined' || !lineId) return null;
+  const key = voiceClipKey(charId, lineId, name), clip = key && VOICE_CLIPS[key];
+  if (!clip || clip.text !== text || VOICE_CLIP.failed.has(key) || !Game.audio?.ctx) return null;
+  return { key, clip };
+}
+function voiceClipStop() {
+  const l = VOICE_CLIP.live;
+  VOICE_CLIP.live = null;
+  if (l) try { l.stop(); } catch (e) {}
+}
+function voiceSpeechCancel() {   // before any line: the last one, clip or browser voice, stops
+  voiceClipStop();
+  try { if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); } catch (e) {}
+}
+function voiceClipBuffer(ctx, found) {
+  let p = VOICE_CLIP.buffers.get(found.key);
+  if (!p) {
+    const bin = atob(found.clip.b64), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    // the callbacks for older Safari; the promise newer browsers also return is caught too, or a bad clip is a page error
+    p = new Promise((res, rej) => { const r = ctx.decodeAudioData(bytes.buffer, res, rej); if (r && r.catch) r.catch(rej); });
+    VOICE_CLIP.buffers.set(found.key, p);
+  }
+  return p;
+}
+// plays a found clip; opts: { x, z } (near, panned) or { walkie: true }, `vol` 0..1 as the browser voice's volume,
+// `fallback` the browser voice if it won't decode. Returns at once; the sound starts when the clip is decoded.
+function voiceClipPlay(found, opts) {
+  const ctx = Game.audio.ctx;
+  voiceSpeechCancel();
+  const entry = { key: found.key, walkie: !!opts.walkie, at: +(Game.scenario?.roundTime || 0).toFixed(2), state: 'decoding' };
+  VOICE_CLIP.log.push(entry);
+  if (VOICE_CLIP.log.length > 64) VOICE_CLIP.log.shift();
+  const live = { stop: () => { entry.state = entry.state === 'playing' ? 'cut' : 'dropped'; if (live.src) live.src.stop(); } };
+  VOICE_CLIP.live = live;
+  voiceClipBuffer(ctx, found).then(buf => {
+    if (VOICE_CLIP.live !== live) return;   // another line came first
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf;
+    g.gain.value = Math.max(0, Math.min(1, opts.vol));
+    let head = src;
+    if (opts.walkie) {
+      const hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter();
+      hp.type = 'highpass'; hp.frequency.value = 350; lp.type = 'lowpass'; lp.frequency.value = 3000;
+      head = head.connect(hp).connect(lp);
+    } else if (ctx.createStereoPanner) {
+      const pn = ctx.createStereoPanner();
+      pn.pan.value = positionalAudio(opts.x, opts.z, 24).pan || 0;
+      head = head.connect(pn);
+    }
+    head.connect(g).connect(sfxOut());
+    src.onended = () => { if (VOICE_CLIP.live === live) VOICE_CLIP.live = null; if (entry.state === 'playing') entry.state = 'done'; };
+    live.src = src; entry.state = 'playing'; entry.sec = +buf.duration.toFixed(2);
+    src.start();
+  }).catch(() => {
+    VOICE_CLIP.failed.add(found.key); VOICE_CLIP.buffers.delete(found.key);
+    entry.state = 'failed';
+    if (VOICE_CLIP.live === live) { VOICE_CLIP.live = null; if (opts.fallback) opts.fallback(); }
+  });
+  return true;
+}
+
 // ---------------------------------------------------------------------
 // TTS speech queue (v1.21) — speechSynthesis with cooldowns + voice per NPC.
 // ---------------------------------------------------------------------
@@ -960,11 +1030,20 @@ function tryNpcSpeak(enemy, category, fill) {
     VOICE.walkieUntil = now + WALKIE_GAP;
     Game.scenario.squadReply = { name: enemy.name || enemy.character?.name, line: said, until: now + 3.5 };
     updateSquadHud();
-    walkieVoice(enemy, said);
+    walkieVoice(enemy, said, voiceClipFind(enemy.charId, lineId, line, fill && fill.name));   // v1.462: his clip, if recorded
     return true;
   }
-  if (typeof speechSynthesis === 'undefined') return true;
-
+  // v1.462 (D.9): his recorded reading of this line, panned from where he stands (no chirp: the clip itself has the
+  // direction the chirp was standing in for); the browser voice when there is none, or if it won't decode
+  const clip = voiceClipFind(enemy.charId, lineId, line, fill && fill.name);
+  if (clip) return voiceClipPlay(clip, { x: enemy.pos.x, z: enemy.pos.z, vol: VOICE_CLIP_GAIN * posVol, fallback: () => npcTts(enemy, said, posVol) });
+  npcTts(enemy, said, posVol);
+  return true;
+}
+const VOICE_CLIP_GAIN = 0.6;   // v1.462: a clip's loudness next to you (the sound-effects volume on top), as the browser voice's 0.5
+// v1.462: the browser voice saying a kid's line, split out of tryNpcSpeak unchanged (the clip player falls back to it)
+function npcTts(enemy, said, posVol) {
+  if (typeof speechSynthesis === 'undefined') return;
   try {
     // (3) Positional voice-marker chirp — short blip from the NPC's location.
     // Cheap: just a single-osc tone routed through the same panner pipeline as
@@ -972,7 +1051,7 @@ function tryNpcSpeak(enemy, category, fill) {
     playVoiceMarker(enemy.pos.x, enemy.pos.z);
 
     // Cancel anything previous so we don't queue up a backlog.
-    speechSynthesis.cancel();
+    voiceSpeechCancel();   // v1.462: a clip too
     const u = new SpeechSynthesisUtterance(said);
     const v = voiceForCharId(enemy.charId);
     if (v) u.voice = v;
@@ -995,7 +1074,6 @@ function tryNpcSpeak(enemy, category, fill) {
     u.volume = 0.5 * posVol * Settings.effects;   // v1.192: the effects volume
     speechSynthesis.speak(u);
   } catch (e) { /* TTS unavailable — ignore */ }
-  return true;
 }
 
 // v1.22: short positional chirp that prefixes a TTS line. The brain merges the

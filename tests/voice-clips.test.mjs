@@ -5,6 +5,12 @@
 //      words, and the kid is one who may say it; the noodle, the squad's walkie answers and the crew's lines in the
 //      room have theirs;
 //   3. headless rounds: every line in VOICE.log carries its id.
+// v1.462: the clip player, with a tiny generated clip (a WAV made here) under a kid's lines:
+//   4. the shipped VOICE_CLIPS is empty; with no clip the browser voice speaks; with one the clip plays and
+//      speechSynthesis is never asked; a clip whose words no longer match, or that won't decode, falls back to the
+//      browser voice; the cooldowns and the no-repeat memory hold with clips; the walkie, the noodle and an order's
+//      answer play theirs; the end of the round stops a clip.
+// speechSynthesis is silent in headless Chromium, so this tests the choice and the queue, not the sound.
 import fs from 'fs';
 import path from 'path';
 import { boot, check, ROOT } from './lib/game.mjs';
@@ -63,6 +69,101 @@ const log = await page.evaluate(() => {
 });
 console.log(`  ${log.length} lines said in 40 s of a team 3v3`);
 check('a round says something, and every line said has its id', log.length > 0 && log.every(e => e.ok), log.filter(e => !e.ok));
+
+// ---- 4. the clip player ----
+const wav = (() => {   // 0.3 s of a quiet 220 Hz tone, 8 kHz mono 16-bit
+  const n = 2400, b = Buffer.alloc(44 + n * 2);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVE', 8); b.write('fmt ', 12); b.writeUInt32LE(16, 16);
+  b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(16000, 28); b.writeUInt16LE(2, 32);
+  b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(Math.sin(i * 2 * Math.PI * 220 / 8000) * 3000), 44 + i * 2);
+  return b.toString('base64');
+})();
+const setup = await page.evaluate(() => {
+  window._spoke = [];
+  if (typeof speechSynthesis !== 'undefined') speechSynthesis.speak = u => window._spoke.push(u.text);
+  const S = Game.scenario, P = Game.player.pos;
+  const k = S.enemies.find(e => (e.team || 'enemy') !== 'player' && e.health > 0 && e.state !== 'retreating');
+  k.pos.x = P.x + 2; k.pos.z = P.z - 4;
+  window._k = k;
+  return { shipped: Object.keys(VOICE_CLIPS).length, ctx: !!Game.audio?.ctx, speech: typeof speechSynthesis !== 'undefined', kid: k.charId };
+});
+console.log('  ', JSON.stringify(setup));
+check('the game ships with VOICE_CLIPS empty', setup.shipped === 0, setup);
+check('headless Chromium has an audio context and speechSynthesis to spy on', setup.ctx && setup.speech, setup);
+// say a taunt now: the cooldowns cleared, the clock moved on
+const say = (cat = 'taunt') => page.evaluate(cat => {
+  const S = Game.scenario, k = window._k;
+  S.roundTime = (S.roundTime || 0) + 5; VOICE.globalCooldownUntil = 0; k._voiceCooldownUntil = 0;
+  const before = window._spoke.length, clips = VOICE_CLIP.log.length;
+  const ok = tryNpcSpeak(k, cat);
+  const last = VOICE.log.at(-1);
+  return { ok, tts: window._spoke.length - before, clip: VOICE_CLIP.log.length - clips, id: last.id, key: voiceClipKey(k.charId, last.id), line: last.line };
+}, cat);
+const none = await say();
+check('with no clip the browser voice speaks the line', none.ok && none.tts === 1 && none.clip === 0, none);
+// a clip under every taunt he can say
+const filled = await page.evaluate(b64 => {
+  const k = window._k, { own, band } = voiceLinePools(k.charId, 'taunt');
+  for (const l of [...own, ...band]) VOICE_CLIPS[voiceClipKey(k.charId, voiceLineIdFor(k.charId, 'taunt', l))] = { text: l, sec: 0.3, mime: 'audio/wav', b64 };
+  return Object.keys(VOICE_CLIPS).length;
+}, wav);
+const one = await say();
+await page.waitForFunction(() => ['playing', 'done'].includes(VOICE_CLIP.log.at(-1)?.state), null, { timeout: 20000 }).catch(() => {});
+const played = await page.evaluate(() => VOICE_CLIP.log.at(-1));
+console.log(`  ${filled} clips; said "${one.line}" as ${one.key}:`, JSON.stringify(played));
+check('with his clip the clip plays and speechSynthesis is never asked', one.ok && one.tts === 0 && one.clip === 1 && played.key === one.key, { one, played });
+check('the clip decodes and plays (0.3 s)', ['playing', 'done'].includes(played.state) && Math.abs(played.sec - 0.3) < 0.02, played);
+// the cooldowns and the no-repeat memory with clips
+const pace = await page.evaluate(() => {
+  const S = Game.scenario, k = window._k;
+  S.roundTime += 5; VOICE.globalCooldownUntil = 0; k._voiceCooldownUntil = 0;
+  const a = tryNpcSpeak(k, 'taunt'), b = tryNpcSpeak(k, 'taunt');
+  S.roundTime += 2; const c = tryNpcSpeak(k, 'taunt');
+  const lines = [];
+  for (let i = 0; i < 40; i++) { S.roundTime += 4.1; VOICE.globalCooldownUntil = 0; if (tryNpcSpeak(k, 'taunt')) lines.push(VOICE.log.at(-1).line); }
+  let rep = 0; for (let i = 1; i < lines.length; i++) if (lines[i] === lines[i - 1] || lines[i] === lines[i - 2]) rep++;
+  return { a, b, c, said: lines.length, rep, tts: window._spoke.length };
+});
+check('with clips a kid still waits 1.5 s after anyone and 4 s after himself', pace.a && !pace.b && !pace.c, pace);
+check('with clips 40 taunts 4.1 s apart are all said, none repeating the last two', pace.said === 40 && pace.rep === 0, pace);
+// stale words and a clip that won't decode fall back
+const stale = await page.evaluate(() => { for (const c of Object.values(VOICE_CLIPS)) c.text = c.text + ' (old take)'; return true; });
+const st = await say();
+check('a clip whose words no longer match the line is not played: the browser voice says it', st.tts === 1 && st.clip === 0, st);
+await page.evaluate(() => { for (const c of Object.values(VOICE_CLIPS)) { c.text = c.text.replace(' (old take)', ''); c.b64 = btoa('not a sound at all, just words'); } VOICE_CLIP.buffers.clear(); });
+const br = await say();
+await page.waitForFunction(() => VOICE_CLIP.log.at(-1)?.state === 'failed', null, { timeout: 20000 }).catch(() => {});
+const brOut = await page.evaluate(k => ({ state: VOICE_CLIP.log.at(-1).state, spoke: window._spoke.at(-1), failed: VOICE_CLIP.failed.has(k) }), br.key);
+check('a clip that will not decode falls back to the browser voice once, and is not tried again', br.clip === 1 && brOut.state === 'failed' && brOut.failed && brOut.spoke === br.line, { br, brOut });
+// the walkie, an order's answer and the noodle
+const others = await page.evaluate(b64 => {
+  const k = window._k, S = Game.scenario, out = {};
+  VOICE_CLIPS[voiceClipKey(k.charId, 'squad.push.1')] = { text: SQUAD_ORDERS.push.replies[0], sec: 0.3, mime: 'audio/wav', b64 };
+  VOICE_CLIPS[voiceClipKey(k.charId, 'noodle.2')] = { text: NOODLE_LINES[1], sec: 0.3, mime: 'audio/wav', b64 };
+  let n = VOICE_CLIP.log.length, t = window._spoke.length;
+  S.roundTime += 5; squadWalkieSay(k, SQUAD_ORDERS.push.replies[0], 'squad.push.1');
+  out.squad = { clip: VOICE_CLIP.log.length - n, walkie: VOICE_CLIP.log.at(-1).walkie, tts: window._spoke.length - t };
+  n = VOICE_CLIP.log.length; t = window._spoke.length;
+  S.roundTime += 5; kidSayLine(k, NOODLE_LINES[1], 'noodle.2');
+  out.noodle = { clip: VOICE_CLIP.log.length - n, tts: window._spoke.length - t, cool: k._voiceCooldownUntil > S.roundTime };
+  n = VOICE_CLIP.log.length; t = window._spoke.length;
+  S.roundTime += 5; kidSayLine(k, NOODLE_LINES[2], 'noodle.3');
+  out.noClip = { clip: VOICE_CLIP.log.length - n, tts: window._spoke.length - t };
+  return out;
+}, wav);
+check('an order’s answer plays his clip over the walkie; the noodle line plays his, and sets his cooldown', others.squad.clip === 1 && others.squad.walkie && others.squad.tts === 0 && others.noodle.clip === 1 && others.noodle.tts === 0 && others.noodle.cool, others);
+check('a noodle line he has no clip for is the browser voice', others.noClip.clip === 0 && others.noClip.tts === 1, others);
+await page.waitForFunction(() => ['playing', 'done'].includes(VOICE_CLIP.log.at(-1)?.state) || VOICE_CLIP.log.at(-1)?.state === 'failed', null, { timeout: 20000 }).catch(() => {});
+const end = await page.evaluate(() => {
+  const k = window._k;
+  VOICE_CLIPS[voiceClipKey(k.charId, 'noodle.4')] = { ...VOICE_CLIPS[voiceClipKey(k.charId, 'noodle.2')], text: NOODLE_LINES[3], sec: 3 };
+  Game.scenario.roundTime += 5; kidSayLine(k, NOODLE_LINES[3], 'noodle.4');
+  return VOICE_CLIP.log.at(-1).key;
+});
+await page.evaluate(() => endScenario('lose'));
+const ended = await page.evaluate(() => ({ live: VOICE_CLIP.live, state: VOICE_CLIP.log.at(-1).state }));
+check('the end of the round stops a clip', ended.live === null && ['cut', 'dropped'].includes(ended.state), { end, ended });
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();

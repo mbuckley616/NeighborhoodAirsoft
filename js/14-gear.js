@@ -1315,20 +1315,28 @@ function noodleStrike() {
   if (!wasOut) { const i = Math.floor(gameRandom() * NOODLE_LINES.length); kidSayLine(c, NOODLE_LINES[i], `noodle.${i + 1}`); }   // v1.461: and its id (D.9)
 }
 // a kid says a given line where he stands (as tryNpcSpeak, but this line, now)
-function kidSayLine(e, line) {
+// v1.462 (D.9): `lineId` its id in docs/voice_script.md: his recorded clip of it plays when there is one
+function kidSayLine(e, line, lineId) {
   e._lastLine = line;
-  if (typeof speechSynthesis === 'undefined') return;
+  const clip = voiceClipFind(e.charId || '', lineId, line);
+  if (!clip && typeof speechSynthesis === 'undefined') return;
   try {
     const { vol } = positionalAudio(e.pos.x, e.pos.z, 24);
     if (vol < 0.12) return;
+    const now = Game.scenario?.roundTime || 0;   // v1.268: on the round clock, as tryNpcSpeak's (v1.150)
+    if (clip) {
+      VOICE.globalCooldownUntil = now + 1.5;
+      e._voiceCooldownUntil = now + 4.0;
+      voiceClipPlay(clip, { x: e.pos.x, z: e.pos.z, vol: VOICE_CLIP_GAIN * vol, fallback: () => kidSayLine(e, line) });
+      return;
+    }
     playVoiceMarker(e.pos.x, e.pos.z);
-    speechSynthesis.cancel();
+    voiceSpeechCancel();   // v1.462: a clip too
     const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
     if (v) u.voice = v;
     u.rate = 1.15; u.pitch = 1.15;
     u.volume = 0.5 * vol * Settings.effects;
     speechSynthesis.speak(u);
-    const now = Game.scenario?.roundTime || 0;   // v1.268: on the round clock, as tryNpcSpeak's (v1.150)
     VOICE.globalCooldownUntil = now + 1.5;
     e._voiceCooldownUntil = now + 4.0;
   } catch (err) {}

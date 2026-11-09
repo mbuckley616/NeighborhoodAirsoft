@@ -1143,26 +1143,28 @@ function giveSquadOrder(key) {
   if (Tutorial.active) Tutorial.notify('ordered');   // v1.324 (D.61)
 }
 // a walkie line: heard wherever he is (no distance cut-off), a click of the talk button first
-function squadWalkieSay(e, line) {
+function squadWalkieSay(e, line, lineId) {   // v1.462: `lineId` for his recorded clip of it (D.9)
   // v1.268: the cooldowns on the round clock, as every other line's (v1.150); on wall time they ran a page's age
   // ahead of the round, and every kid in earshot went quiet for the round's first minutes after an order
   const now = Game.scenario?.roundTime || 0;
   VOICE.globalCooldownUntil = now + 1.5;
   e._voiceCooldownUntil = now + 4.0;
   VOICE.walkieUntil = now + WALKIE_GAP;
-  walkieVoice(e, line);
+  walkieVoice(e, line, voiceClipFind(e.charId || '', lineId, line));
 }
-function walkieVoice(e, line) {   // v1.268: the sound of a walkie line, split out of squadWalkieSay
+// v1.462 (D.9): `clip` (voiceClipFind) his recorded reading, played band-limited under the static, which runs the clip's length
+function walkieVoice(e, line, clip) {   // v1.268: the sound of a walkie line, split out of squadWalkieSay
   try {
     if (Game.audio?.ctx) {
       const ctx = Game.audio.ctx, t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
       o.type = 'square'; o.frequency.setValueAtTime(1400, t);
       g.gain.setValueAtTime(0.05 * Settings.effects, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.connect(g).connect(sfxOut()); o.start(t); o.stop(t + 0.07);
-      walkieStatic(ctx, t, walkieLineSeconds(line));   // v1.386 (D.80)
+      walkieStatic(ctx, t, clip && clip.clip.sec ? Math.min(6, clip.clip.sec + 0.1) : walkieLineSeconds(line));   // v1.386 (D.80)
     }
+    if (clip) { voiceClipPlay(clip, { walkie: true, vol: VOICE_CLIP_GAIN * 0.9, fallback: () => walkieVoice(e, line) }); return; }
     if (typeof speechSynthesis === 'undefined') return;
-    speechSynthesis.cancel();
+    voiceSpeechCancel();   // v1.462: a clip too
     const u = new SpeechSynthesisUtterance(line), v = voiceForCharId(e.charId || '');
     if (v) u.voice = v;
     u.rate = 1.15; u.pitch = 1.1;
