@@ -54,6 +54,72 @@ check('PISTOLS shows its ten', pis.groups.length === 1 && pis.groups[0].guns.len
 await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click());
 check('ALL shows the 50 again', (await read()).groups.reduce((n, x) => n + x.guns.length, 0) === 50);
 
+// v1.464 (backlog D.89, Michael 9 Nov: B): a sort row over the list: SHOP ORDER, PRICE, RATE, WEIGHT, OWNED FIRST. The kinds
+// keep their headers; the sort reorders each kind's guns, and by rate or weight the row shows its number.
+const sortRead = () => page.evaluate(() => {
+  const out = { sorts: [], active: null, groups: [] };
+  for (const el of document.querySelectorAll('#shopScreen .shop-gun-sort')) { out.sorts.push(el.textContent); if (el.classList.contains('active')) out.active = el.dataset.sort; }
+  const byName = Object.fromEntries(GUN_ORDER.map(gt => [GUN_MAGS[gt].displayName, gt]));
+  let cur = null;
+  for (const el of document.querySelectorAll('#shopItems > *')) {
+    if (el.classList.contains('shop-gun-kind-header')) { cur = { kind: el.dataset.kind, guns: [], vals: [] }; out.groups.push(cur); }
+    else if (el.classList.contains('shop-gun-row')) {
+      cur.guns.push(byName[el.querySelector('.shop-item-name').childNodes[0].textContent.trim()]);
+      const v = el.querySelector('.shop-gun-sort-val'); cur.vals.push(v ? v.textContent : null);
+    }
+  }
+  out.padReach = [...document.querySelectorAll('#shopScreen .shop-gun-sort')].every(el => getComputedStyle(el).cursor === 'pointer');
+  return out;
+});
+const sortBy = id => page.evaluate(id => document.querySelector(`#shopScreen .shop-gun-sort[data-sort="${id}"]`).click(), id);
+const s0 = await sortRead();
+check('a sort row: SHOP ORDER, PRICE, RATE, WEIGHT, OWNED FIRST; shop order to start, no numbers on the rows, a pad reaches each',
+  JSON.stringify(s0.sorts) === '["SHOP ORDER","PRICE","RATE","WEIGHT","OWNED FIRST"]' && s0.active === 'shop' && s0.padReach
+  && s0.groups.every(x => x.vals.every(v => v === null)), s0.sorts);
+const nums = await page.evaluate(() => Object.fromEntries(GUN_ORDER.map(gt => [gt, { price: GUN_MAGS[gt].price || 0, rate: shopGunRate(gt), lb: shopGunWeight(gt), owned: shopGunOwned(gt) }])));
+const monotone = (groups, f, dir) => groups.every(x => x.guns.every((gt, i) => i === 0 || dir * (f(gt) - f(x.guns[i - 1])) >= 0));
+const sameSets = (a, b) => a.length === b.length && a.every((x, i) => x.kind === b[i].kind && [...x.guns].sort().join() === [...b[i].guns].sort().join());
+await sortBy('price');
+const sp = await sortRead();
+console.log('   price: ' + JSON.stringify(sp.groups.map(x => x.guns)));
+check('PRICE: four headers as before, each kind its own guns, cheapest first', sp.active === 'price' && sameSets(sp.groups, all.groups.map(x => ({ kind: x.kind, guns: s0.groups.find(y => y.kind === x.kind).guns })))
+  && monotone(sp.groups, gt => nums[gt].price, 1), sp.groups.map(x => x.guns.map(gt => nums[gt].price)));
+check('PRICE: no second price under the name (it is on the right already)', sp.groups.every(x => x.vals.every(v => v === null)), sp.groups[3].vals);
+await sortBy('rate');
+const sr = await sortRead();
+console.log('   rate: ' + JSON.stringify(sr.groups.map(x => x.guns.map(gt => gt + ' ' + nums[gt].rate.toFixed(1)))));
+check('RATE: fastest first in each kind; the automatics led by a 10+ a second gun, a sniper last of the rifles', monotone(sr.groups, gt => nums[gt].rate, -1)
+  && nums[sr.groups[3].guns[0]].rate >= 10 && ['sniper', 'l96', 'svd', 'pumpsniper', 'breakbarrel'].includes(sr.groups[2].guns.at(-1)), sr.groups[2].guns);
+check('RATE: every rate is between 0.5 and 25 a second, and the row says "a second"', Object.values(nums).every(n => n.rate > 0.5 && n.rate < 25)
+  && sr.groups.every(x => x.vals.every(v => / a second$/.test(v))), Object.entries(nums).filter(([, n]) => !(n.rate > 0.5 && n.rate < 25)));
+await sortBy('weight');
+const sw = await sortRead();
+check('WEIGHT: lightest first in each kind, in pounds', monotone(sw.groups, gt => nums[gt].lb, 1) && sw.groups.every(x => x.vals.every(v => / lb$/.test(v)))
+  && Object.values(nums).every(n => n.lb > 0 && n.lb < 30), sw.groups.map(x => x.vals));
+await page.evaluate(() => { for (const gt of ['m60', 'thompson', 'svd']) Game.persist.owned[GUN_MAGS[gt].ownFlag] = true; renderShop(); });
+await sortBy('owned');
+const so = await sortRead();
+check('OWNED FIRST: the guns you own lead their kind (the M60 and Thompson the automatics, the SVD the rifles), the rest in shop order, no numbers',
+  JSON.stringify(so.groups[3].guns.slice(0, 2)) === '["thompson","m60"]' && so.groups[2].guns[0] === 'svd' && so.groups[0].guns[0] === 'pistol'
+  && JSON.stringify(so.groups[3].guns.slice(2)) === JSON.stringify(s0.groups[3].guns.filter(gt => gt !== 'thompson' && gt !== 'm60'))
+  && so.groups.every(x => x.vals.every(v => v === null)), so.groups[3].guns);
+await g.shot('shop-gun-sort-owned');
+await sortBy('price');
+await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-kind[data-kind="RIFLES"]').click());
+const sk = await sortRead();
+check('a kind chip and a sort together: RIFLES alone, by price', sk.active === 'price' && sk.groups.length === 1 && sk.groups[0].kind === 'RIFLES'
+  && sk.groups[0].guns.length === 14 && monotone(sk.groups, gt => nums[gt].price, 1), sk.groups.map(x => x.kind));
+await page.evaluate(() => document.querySelector('#shopScreen .shop-gun-row .shop-item-buy').click());
+await page.evaluate(() => document.querySelector('#shopScreen .shop-back-btn').click());
+const sb = await sortRead();
+check('details and back keep the sort', sb.active === 'price' && sb.groups[0].kind === 'RIFLES', sb.active);
+await g.shot('shop-gun-sort-rifles-price');
+await page.evaluate(() => { document.querySelector('#shopScreen .shop-gun-kind[data-kind="ALL"]').click(); });
+await page.evaluate(() => { for (const gt of ['m60', 'thompson', 'svd']) delete Game.persist.owned[GUN_MAGS[gt].ownFlag]; });
+await sortBy('shop');
+const sback = await sortRead();
+check('SHOP ORDER puts it back as it was', JSON.stringify(sback.groups.map(x => x.guns)) === JSON.stringify(s0.groups.map(x => x.guns)));
+
 // v1.329 (backlog D.64, Michael 22 Oct: "reconsider the workbench menu, and have collapsible sections by Gun Type"): the
 // workbench's gun list under the same kinds, each header folding its section; a section with a gun you own starts open
 await page.evaluate(() => {
