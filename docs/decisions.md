@@ -12,8 +12,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
     streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (steadier on
     the move, a little heavier). Each a version, measured with `scripts/balance.mjs` before it ships.
-  - B) **The same sort row on the Mods tab** (by slot, price, owned first), now that it holds 14 homemade parts and the
-    shop-bought ones in one list.
+  - B) **The same sort row on the Mods tab** (by slot, price, owned first), now that it lists 24 parts, homemade and
+    store-bought, in one column.
   - C) **Rest the play lane** until you have played v1.458-v1.464 (the climb, the title, online, the sort row).
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It is the only offered work left that adds play rather than screens, both parts sit on slots every
