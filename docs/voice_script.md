@@ -4,7 +4,7 @@ Every line the game can speak, by kid, for recording with VoiceStudio (backlog D
 **Generated** by `node scripts/voicescript.mjs` from the game’s own line tables: do not edit it by hand; change the
 lines in `js/` and run the script again. `tests/voice-clips.test.mjs` fails when this file and the game disagree.
 
-953 lines: 752 are one kid’s own (his section below), 201 are shared lines that any kid of a kind may say (the
+1034 lines: 818 are one kid’s own (his section below), 216 are shared lines that any kid of a kind may say (the
 last section).
 
 ## How a clip is named
@@ -55,6 +55,8 @@ so his own lines are most of what you hear from him.
 | `seth.taunt.3` | I see you back there! | teasing, across the yard |
 | `seth.taunt.4` | My yard, my rules! | teasing, across the yard |
 | `seth.taunt.5` | You're not even close, dude. | teasing, across the yard |
+| `seth.looking.1` | My yard. I'll go find 'em. | telling his side he is heading out to find them |
+| `seth.looking.2` | They're hiding from me. Going in! | telling his side he is heading out to find them |
 
 ### Trey (`trey`)
 
@@ -87,6 +89,8 @@ so his own lines are most of what you hear from him.
 | `trey.taunt.3` | Where'd you go? | teasing, across the yard |
 | `trey.taunt.4` | Scared? You should be. | teasing, across the yard |
 | `trey.taunt.5` | I could do this all day. | teasing, across the yard |
+| `trey.looking.1` | Boring! I'm going to get 'em. | telling his side he is heading out to find them |
+| `trey.looking.2` | Watch this, I'm going in. | telling his side he is heading out to find them |
 
 ### Brooke (`brooke`)
 
@@ -119,6 +123,8 @@ so his own lines are most of what you hear from him.
 | `brooke.taunt.3` | I can hear you breathing! | teasing, across the yard |
 | `brooke.taunt.4` | Come on, I'm bored! | teasing, across the yard |
 | `brooke.taunt.5` | You're gonna miss anyway. | teasing, across the yard |
+| `brooke.looking.1` | Fine, I'll go find them myself. | telling his side he is heading out to find them |
+| `brooke.looking.2` | Moving up. Try to keep up. | telling his side he is heading out to find them |
 
 ### Jamie (`jamie`)
 
@@ -147,6 +153,8 @@ so his own lines are most of what you hear from him.
 | `jamie.taunt.2` | Take your time, I'm fine. | teasing, across the yard |
 | `jamie.taunt.3` | You can come out, you know. | teasing, across the yard |
 | `jamie.taunt.4` | Nothing personal. | teasing, across the yard |
+| `jamie.looking.1` | I'll go have a look, okay? | telling his side he is heading out to find them |
+| `jamie.looking.2` | Moving up. I'll be careful. | telling his side he is heading out to find them |
 
 ### Marcus (`marcus`)
 
@@ -179,6 +187,8 @@ so his own lines are most of what you hear from him.
 | `marcus.taunt.3` | You're scared! | teasing, across the yard |
 | `marcus.taunt.4` | I'm coming through the yard! | teasing, across the yard |
 | `marcus.taunt.5` | Y'all have too many fences! | teasing, across the yard |
+| `marcus.looking.1` | Where they at? I'm going! | telling his side he is heading out to find them |
+| `marcus.looking.2` | Y'all wait here, I'm pushing! | telling his side he is heading out to find them |
 
 ### Devon (`devon`)
 
@@ -211,6 +221,8 @@ so his own lines are most of what you hear from him.
 | `devon.taunt.3` | I see everything. | teasing, across the yard |
 | `devon.taunt.4` | Every peek is a mistake. | teasing, across the yard |
 | `devon.taunt.5` | Go ahead, run for it. | teasing, across the yard |
+| `devon.looking.1` | No shot from here. Repositioning. | telling his side he is heading out to find them |
+| `devon.looking.2` | Moving up for a better angle. | telling his side he is heading out to find them |
 
 ### Tyler (`tyler`)
 
@@ -240,6 +252,8 @@ so his own lines are most of what you hear from him.
 | `tyler.taunt.2` | No rush, man. | teasing, across the yard |
 | `tyler.taunt.3` | Still hiding? Aight. | teasing, across the yard |
 | `tyler.taunt.4` | Come on, let's go already. | teasing, across the yard |
+| `tyler.looking.1` | Aight, I'm gonna go look. | telling his side he is heading out to find them |
+| `tyler.looking.2` | Aight, heading up. | telling his side he is heading out to find them |
 
 ### Garrett (`garrett`)
 
@@ -269,6 +283,8 @@ so his own lines are most of what you hear from him.
 | `garrett.taunt.2` | Is that all you got? | teasing, across the yard |
 | `garrett.taunt.3` | Take your time, man. | teasing, across the yard |
 | `garrett.taunt.4` | We've done this before. | teasing, across the yard |
+| `garrett.looking.1` | This is too easy. I'll go get 'em. | telling his side he is heading out to find them |
+| `garrett.looking.2` | Moving up. Don't wait for me. | telling his side he is heading out to find them |
 
 ### Sean (`sean`)
 
@@ -304,6 +320,8 @@ so his own lines are most of what you hear from him.
 | `sean.home.1` | I’ve been working on my aim. Don’t laugh. | relaxed, hanging out in Mike’s room |
 | `sean.home.2` | The AK’s loud, but nobody argues with it. | relaxed, hanging out in Mike’s room |
 | `sean.home.3` | Is there any more of that pizza? | relaxed, hanging out in Mike’s room |
+| `sean.looking.1` | Where IS everybody?! I'm going! | telling his side he is heading out to find them |
+| `sean.looking.2` | I'm going in, cover me! | telling his side he is heading out to find them |
 
 ### Nick (`nick`)
 
@@ -339,6 +357,8 @@ so his own lines are most of what you hear from him.
 | `nick.home.1` | You gotta keep moving, dude. That’s the whole secret. | relaxed, hanging out in Mike’s room |
 | `nick.home.2` | I’d sit in a bush all day with the AR if you let me. | relaxed, hanging out in Mike’s room |
 | `nick.home.3` | This futon is way comfier than it looks. | relaxed, hanging out in Mike’s room |
+| `nick.looking.1` | Nothing here. Keep moving. | telling his side he is heading out to find them |
+| `nick.looking.2` | I'll go take a look. Keep moving. | telling his side he is heading out to find them |
 
 ### Ryan (`ryan`)
 
@@ -371,6 +391,8 @@ so his own lines are most of what you hear from him.
 | `ryan.taunt.3` | Mitchell, cover me! | teasing, across the yard |
 | `ryan.taunt.4` | Open up, dude! | teasing, across the yard |
 | `ryan.taunt.5` | You can't watch both sides! | teasing, across the yard |
+| `ryan.looking.1` | I'm flanking! Be right back! | telling his side he is heading out to find them |
+| `ryan.looking.2` | Going around! I'll find 'em! | telling his side he is heading out to find them |
 
 ### Mitchell (`mitchell`)
 
@@ -403,6 +425,8 @@ so his own lines are most of what you hear from him.
 | `mitchell.taunt.3` | He'll show himself. | teasing, across the yard |
 | `mitchell.taunt.4` | Ryan, stop yelling. | teasing, across the yard |
 | `mitchell.taunt.5` | Still breathing out there? | teasing, across the yard |
+| `mitchell.looking.1` | No targets. Moving up. | telling his side he is heading out to find them |
+| `mitchell.looking.2` | I'll find a better spot. | telling his side he is heading out to find them |
 
 ### Joe (`joe`)
 
@@ -433,6 +457,8 @@ so his own lines are most of what you hear from him.
 | `joe.taunt.2` | I'm already moving. | teasing, across the yard |
 | `joe.taunt.3` | Can't keep up, huh? | teasing, across the yard |
 | `joe.taunt.4` | Still there? Okay. | teasing, across the yard |
+| `joe.looking.1` | Nobody in range. Moving up. | telling his side he is heading out to find them |
+| `joe.looking.2` | I'll go find 'em. Better gun anyway. | telling his side he is heading out to find them |
 
 ### Chris (`chris`)
 
@@ -463,6 +489,8 @@ so his own lines are most of what you hear from him.
 | `chris.taunt.2` | I'm coming right at you! | teasing, across the yard |
 | `chris.taunt.3` | Faster than you, man! | teasing, across the yard |
 | `chris.taunt.4` | Run, man, run! | teasing, across the yard |
+| `chris.looking.1` | Let's GO! I'm running up! | telling his side he is heading out to find them |
+| `chris.looking.2` | Too slow! I'm going after 'em! | telling his side he is heading out to find them |
 
 ### Owen (`owen`)
 
@@ -491,6 +519,8 @@ so his own lines are most of what you hear from him.
 | `owen.taunt.2` | Not moving. | teasing, across the yard |
 | `owen.taunt.3` | Come to me. | teasing, across the yard |
 | `owen.taunt.4` | Still here. Still waiting. | teasing, across the yard |
+| `owen.looking.1` | Hm. Nobody's coming. I'll go. | telling his side he is heading out to find them |
+| `owen.looking.2` | Fine. I'll go to them. | telling his side he is heading out to find them |
 
 ### Eric (`eric`)
 
@@ -525,6 +555,8 @@ so his own lines are most of what you hear from him.
 | `eric.home.1` | Again? I’m ready when you are. | relaxed, hanging out in Mike’s room |
 | `eric.home.2` | I’ve been reading the map. Seth’s crew always comes up the same side. | relaxed, hanging out in Mike’s room |
 | `eric.home.3` | Your TV’s tiny, man. | relaxed, hanging out in Mike’s room |
+| `eric.looking.1` | Can't see anything! I'm going! | telling his side he is heading out to find them |
+| `eric.looking.2` | I'm going up! Again! | telling his side he is heading out to find them |
 
 ### Rebecca (`rebecca`)
 
@@ -554,6 +586,8 @@ so his own lines are most of what you hear from him.
 | `rebecca.taunt.2` | You always go left. | teasing, across the yard |
 | `rebecca.taunt.3` | Still waiting. | teasing, across the yard |
 | `rebecca.taunt.4` | This again? | teasing, across the yard |
+| `rebecca.looking.1` | They're not coming. Predictable. Moving up. | telling his side he is heading out to find them |
+| `rebecca.looking.2` | I'll go find them. | telling his side he is heading out to find them |
 
 ### Andrew (`andrew`)
 
@@ -585,6 +619,8 @@ so his own lines are most of what you hear from him.
 | `andrew.taunt.3` | Let's go, buddy! | teasing, across the yard |
 | `andrew.taunt.4` | Alex, push with me! | teasing, across the yard |
 | `andrew.taunt.5` | Big yard, nowhere to hide! | teasing, across the yard |
+| `andrew.looking.1` | Nobody here! Going looking, buddy! | telling his side he is heading out to find them |
+| `andrew.looking.2` | I'll go find 'em! Thumbs up! | telling his side he is heading out to find them |
 
 ### Alex (`alex`)
 
@@ -619,6 +655,8 @@ so his own lines are most of what you hear from him.
 | `alex.home.1` | Andrew says hey. He still thinks you got lucky. | relaxed, hanging out in Mike’s room |
 | `alex.home.2` | Two lives each next time? I’m just saying. | relaxed, hanging out in Mike’s room |
 | `alex.home.3` | Whose turn is it on the computer? | relaxed, hanging out in Mike’s room |
+| `alex.looking.1` | Told you they'd hide. Going looking. | telling his side he is heading out to find them |
+| `alex.looking.2` | Moving up. They're definitely hiding. | telling his side he is heading out to find them |
 
 ### Evan (`evan`)
 
@@ -647,6 +685,8 @@ so his own lines are most of what you hear from him.
 | `evan.taunt.2` | You can come out! | teasing, across the yard |
 | `evan.taunt.3` | I'll give you a head start! | teasing, across the yard |
 | `evan.taunt.4` | Where'd you go, man? | teasing, across the yard |
+| `evan.looking.1` | I'll go find 'em. Good luck, guys! | telling his side he is heading out to find them |
+| `evan.looking.2` | Heading up, see you out there! | telling his side he is heading out to find them |
 
 ### Haden (`haden`)
 
@@ -678,6 +718,8 @@ so his own lines are most of what you hear from him.
 | `haden.taunt.3` | You're in OUR yard! | teasing, across the yard |
 | `haden.taunt.4` | Connor, cover me! | teasing, across the yard |
 | `haden.taunt.5` | I'm gonna get you! | teasing, across the yard |
+| `haden.looking.1` | CONNOR! I'm going up! | telling his side he is heading out to find them |
+| `haden.looking.2` | Going looking! Connor, come on! | telling his side he is heading out to find them |
 
 ### Connor (`connor`)
 
@@ -709,6 +751,8 @@ so his own lines are most of what you hear from him.
 | `connor.taunt.3` | This is OUR bunker! | teasing, across the yard |
 | `connor.taunt.4` | Come on, I dare you! | teasing, across the yard |
 | `connor.taunt.5` | Haden, where'd he go? | teasing, across the yard |
+| `connor.looking.1` | HADEN! I'm moving up! | telling his side he is heading out to find them |
+| `connor.looking.2` | I'm going! Haden, follow me! | telling his side he is heading out to find them |
 
 ### Mason (`mason`)
 
@@ -740,6 +784,8 @@ so his own lines are most of what you hear from him.
 | `mason.taunt.3` | I'm right here. | teasing, across the yard |
 | `mason.taunt.4` | No hiding. Let's go. | teasing, across the yard |
 | `mason.taunt.5` | Any time. | teasing, across the yard |
+| `mason.looking.1` | Nobody here. I'll move up. | telling his side he is heading out to find them |
+| `mason.looking.2` | Going up the field. Stay sharp. | telling his side he is heading out to find them |
 
 ### Christian (`christian`)
 
@@ -771,6 +817,8 @@ so his own lines are most of what you hear from him.
 | `christian.taunt.3` | Where are you? Come out! | teasing, across the yard |
 | `christian.taunt.4` | I'm gonna hit you this time! | teasing, across the yard |
 | `christian.taunt.5` | Hold still so I can hit you! | teasing, across the yard |
+| `christian.looking.1` | I can't wait anymore! Going! | telling his side he is heading out to find them |
+| `christian.looking.2` | Where are they?! I'm going to look! | telling his side he is heading out to find them |
 
 ### Fernando (`fernando`)
 
@@ -802,6 +850,8 @@ so his own lines are most of what you hear from him.
 | `fernando.taunt.3` | Keep moving, keep moving! | teasing, across the yard |
 | `fernando.taunt.4` | We've got you boxed in! | teasing, across the yard |
 | `fernando.taunt.5` | No way out, man. | teasing, across the yard |
+| `fernando.looking.1` | Diego, I'm going up. | telling his side he is heading out to find them |
+| `fernando.looking.2` | I'll go look. Diego, stay here. | telling his side he is heading out to find them |
 
 ### Diego (`diego`)
 
@@ -836,6 +886,8 @@ so his own lines are most of what you hear from him.
 | `diego.home.1` | Tch. Fernando wants a rematch. Let him wait. | relaxed, hanging out in Mike’s room |
 | `diego.home.2` | The MP5 eats BBs. Worth it. | relaxed, hanging out in Mike’s room |
 | `diego.home.3` | Don’t tell anyone I fell asleep on your futon. | relaxed, hanging out in Mike’s room |
+| `diego.looking.1` | Fernando, I'm moving. | telling his side he is heading out to find them |
+| `diego.looking.2` | Hm. Going for a look. | telling his side he is heading out to find them |
 
 ### Colin (`colin`)
 
@@ -865,6 +917,8 @@ so his own lines are most of what you hear from him.
 | `colin.taunt.2` | Run, dude, run! | teasing, across the yard |
 | `colin.taunt.3` | Can't hide from me! | teasing, across the yard |
 | `colin.taunt.4` | Diego would've ran already! | teasing, across the yard |
+| `colin.looking.1` | I'm going! Straight at 'em! | telling his side he is heading out to find them |
+| `colin.looking.2` | Can't see 'em! Running up! | telling his side he is heading out to find them |
 
 ### Jordan (`jordan`)
 
@@ -894,6 +948,8 @@ so his own lines are most of what you hear from him.
 | `jordan.taunt.2` | Come around the steps, man. | teasing, across the yard |
 | `jordan.taunt.3` | I'm in here somewhere, man. | teasing, across the yard |
 | `jordan.taunt.4` | Every portable looks the same, huh? | teasing, across the yard |
+| `jordan.looking.1` | I know a way round. Going. | telling his side he is heading out to find them |
+| `jordan.looking.2` | I'll go check the portables. | telling his side he is heading out to find them |
 
 ### Caleb (`caleb`)
 
@@ -923,6 +979,8 @@ so his own lines are most of what you hear from him.
 | `caleb.taunt.2` | Faster than you, dude! | teasing, across the yard |
 | `caleb.taunt.3` | I'm already behind you! | teasing, across the yard |
 | `caleb.taunt.4` | Race you to the fence! | teasing, across the yard |
+| `caleb.looking.1` | I'm going up! Almost there! | telling his side he is heading out to find them |
+| `caleb.looking.2` | Pushing up! Watch me! | telling his side he is heading out to find them |
 
 ### Nathan (`nathan`)
 
@@ -952,6 +1010,8 @@ so his own lines are most of what you hear from him.
 | `nathan.taunt.2` | I've done the math. | teasing, across the yard |
 | `nathan.taunt.3` | Don't cross the field. | teasing, across the yard |
 | `nathan.taunt.4` | You'll have to come to me. | teasing, across the yard |
+| `nathan.looking.1` | They should be ahead. Moving up. | telling his side he is heading out to find them |
+| `nathan.looking.2` | I've worked out where they are. Going. | telling his side he is heading out to find them |
 
 ### Sophie (`sophie`)
 
@@ -981,6 +1041,8 @@ so his own lines are most of what you hear from him.
 | `sophie.taunt.2` | Better check your corners. | teasing, across the yard |
 | `sophie.taunt.3` | You picked the wrong side. | teasing, across the yard |
 | `sophie.taunt.4` | I'm faster round the back. | teasing, across the yard |
+| `sophie.looking.1` | I'll go round the end. | telling his side he is heading out to find them |
+| `sophie.looking.2` | Moving up. I'll find a shot. | telling his side he is heading out to find them |
 
 ### Grant (`grant`)
 
@@ -1010,6 +1072,8 @@ so his own lines are most of what you hear from him.
 | `grant.taunt.2` | Nothing but grass out there. | teasing, across the yard |
 | `grant.taunt.3` | Come on across. | teasing, across the yard |
 | `grant.taunt.4` | I can see the whole field. | teasing, across the yard |
+| `grant.looking.1` | Huh. Leaving the cars. Just this once. | telling his side he is heading out to find them |
+| `grant.looking.2` | Nothing to shoot. Moving up. | telling his side he is heading out to find them |
 
 ### Malik (`malik`)
 
@@ -1039,6 +1103,8 @@ so his own lines are most of what you hear from him.
 | `malik.taunt.2` | Corners are my thing, man. | teasing, across the yard |
 | `malik.taunt.3` | Bring it in close. | teasing, across the yard |
 | `malik.taunt.4` | I'll be round the corner. | teasing, across the yard |
+| `malik.looking.1` | Too far for my shotgun. Going in. | telling his side he is heading out to find them |
+| `malik.looking.2` | I need to get close. Moving up. | telling his side he is heading out to find them |
 
 ## Shared lines
 
@@ -1095,6 +1161,11 @@ Said by any kid named in **Who**: record each under that kid’s id (`<kid>.<id>
 | `band.high_agg.allyDown.1` | They got {name}! Get 'em back! | a friend just went out ({name}: a friend’s name) |
 | `band.high_agg.allyDown.2` | {name}'s out! Come on, guys! | a friend just went out ({name}: a friend’s name) |
 | `band.high_agg.allyDown.3` | No way, {name}! Payback time! | a friend just went out ({name}: a friend’s name) |
+| `band.high_agg.looking.1` | Nobody here! I'm going after 'em! | telling his side he is heading out to find them |
+| `band.high_agg.looking.2` | I'm pushing up, come on! | telling his side he is heading out to find them |
+| `band.high_agg.looking.3` | Forget this, I'm going to find 'em! | telling his side he is heading out to find them |
+| `band.high_agg.looking.4` | Moving up! I'll find 'em! | telling his side he is heading out to find them |
+| `band.high_agg.looking.5` | They're hiding! I'm going in! | telling his side he is heading out to find them |
 
 ### `band.mid_agg`
 
@@ -1148,6 +1219,11 @@ Said by any kid named in **Who**: record each under that kid’s id (`<kid>.<id>
 | `band.mid_agg.allyDown.2` | {name}'s down! Watch out! | a friend just went out ({name}: a friend’s name) |
 | `band.mid_agg.allyDown.3` | Aw man, {name}'s out! | a friend just went out ({name}: a friend’s name) |
 | `band.mid_agg.allyDown.4` | We lost {name}! Careful! | a friend just went out ({name}: a friend’s name) |
+| `band.mid_agg.looking.1` | Can't see anyone. I'm moving up. | telling his side he is heading out to find them |
+| `band.mid_agg.looking.2` | I'll go find 'em. | telling his side he is heading out to find them |
+| `band.mid_agg.looking.3` | Heading up, see what's out there. | telling his side he is heading out to find them |
+| `band.mid_agg.looking.4` | Nothing here. Going looking. | telling his side he is heading out to find them |
+| `band.mid_agg.looking.5` | Moving up, I'll call it if I see 'em. | telling his side he is heading out to find them |
 
 ### `band.low_agg`
 
@@ -1200,6 +1276,11 @@ Said by any kid named in **Who**: record each under that kid’s id (`<kid>.<id>
 | `band.low_agg.allyDown.1` | {name}'s out. Careful. | a friend just went out ({name}: a friend’s name) |
 | `band.low_agg.allyDown.2` | We lost {name}. | a friend just went out ({name}: a friend’s name) |
 | `band.low_agg.allyDown.3` | They got {name}. Stay low. | a friend just went out ({name}: a friend’s name) |
+| `band.low_agg.looking.1` | Nothing from here. I'll move up. | telling his side he is heading out to find them |
+| `band.low_agg.looking.2` | Going for a look. | telling his side he is heading out to find them |
+| `band.low_agg.looking.3` | Moving up. Quietly. | telling his side he is heading out to find them |
+| `band.low_agg.looking.4` | Can't see them. Heading out. | telling his side he is heading out to find them |
+| `band.low_agg.looking.5` | I'll go take a look. | telling his side he is heading out to find them |
 
 ### `excuse`
 

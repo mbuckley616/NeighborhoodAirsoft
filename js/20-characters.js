@@ -566,6 +566,7 @@ const VOICE_LINES_DEFAULT = {
     playerOut:     ["I GOT HIM!! YES!", "Boom!! Got him! Did you see that?!", "YES! That's how it's done!", "Ha-ha! Got you, dude!!"],   // v1.256 (D.32)
     pressed:       ["Whoa! Okay, you wanna go?!", "He's shooting at me! Somebody help!", "Ha! Missed me!", "That was close! Get him!"],
     allyDown:      ["They got {name}! Get 'em back!", "{name}'s out! Come on, guys!", "No way, {name}! Payback time!"],
+    looking:       ["Nobody here! I'm going after 'em!", "I'm pushing up, come on!", "Forget this, I'm going to find 'em!", "Moving up! I'll find 'em!", "They're hiding! I'm going in!"],   // v1.467 (an ally's early look)
   },
   mid_agg: { // 0.4..0.65
     playerHit:     ["Got him!", "Hit!", "That's one.", "Tagged you!", "Nice, that landed.", "Got you, dude!"],
@@ -577,6 +578,7 @@ const VOICE_LINES_DEFAULT = {
     playerOut:     ["I got him!! I got him!", "Yes! Got him!", "Whoa, I actually got him!", "Got him! Nice!"],   // v1.256 (D.32)
     pressed:       ["Whoa, whoa! He's on me!", "That was close!", "I'm pinned, I'm pinned!", "Somebody help me out here!"],
     allyDown:      ["They got {name}!", "{name}'s down! Watch out!", "Aw man, {name}'s out!", "We lost {name}! Careful!"],
+    looking:       ["Can't see anyone. I'm moving up.", "I'll go find 'em.", "Heading up, see what's out there.", "Nothing here. Going looking.", "Moving up, I'll call it if I see 'em."],   // v1.467
   },
   low_agg: { // < 0.4
     playerHit:     ["Got him.", "Nice.", "Tagged.", "Yep. That's a hit.", "Saw you coming.", "Mm. Got you."],
@@ -588,6 +590,7 @@ const VOICE_LINES_DEFAULT = {
     playerOut:     ["Got him. That's it.", "And he's out.", "Clean hit. He's done.", "There we go. Got him."],   // v1.256 (D.32)
     pressed:       ["Taking fire.", "He's got me pinned.", "Close one.", "Staying down, he's on me."],
     allyDown:      ["{name}'s out. Careful.", "We lost {name}.", "They got {name}. Stay low."],
+    looking:       ["Nothing from here. I'll move up.", "Going for a look.", "Moving up. Quietly.", "Can't see them. Heading out.", "I'll go take a look."],   // v1.467
   },
 };
 
@@ -660,10 +663,11 @@ function npcHitCategory(c) {
 }
 // v1.256 (D.32): a line that waits for the voice cooldowns (a teammate's "they got Sean!" after Sean's own line),
 // tried once the cooldowns clear, unless `until` passes first
-function queueNpcLine(e, category, fill, delay, wait) {
+// v1.467: `walkie` waits for the walkie too (WALKIE_GAP), so two allies far off both get their line through
+function queueNpcLine(e, category, fill, delay, wait, walkie) {
   const now = Game.scenario?.roundTime || 0;
   VOICE.pending = (VOICE.pending || []).filter(q => q.e !== e);
-  VOICE.pending.push({ e, category, fill, at: now + delay, until: now + delay + wait });
+  VOICE.pending.push({ e, category, fill, at: now + delay, until: now + delay + wait, ...(walkie ? { walkie: true } : {}) });
 }
 function voiceStep() {
   if (!VOICE.pending || !VOICE.pending.length) return;
@@ -671,6 +675,8 @@ function voiceStep() {
   VOICE.pending = VOICE.pending.filter(q => {
     if (now > q.until || q.e.health <= 0 || q.e.state === 'retreating') return false;
     if (now < q.at || now < VOICE.globalCooldownUntil || (q.e._voiceCooldownUntil && now < q.e._voiceCooldownUntil)) return true;
+    // v1.467: out of earshot (tryNpcSpeak's cut) he waits for the walkie; beside you he needn't
+    if (q.walkie && now < VOICE.walkieUntil && positionalAudio(q.e.pos.x, q.e.pos.z, 24).vol < 0.12) return true;
     tryNpcSpeak(q.e, q.category, q.fill);   // one try once the cooldowns are clear: out of earshot, it goes unsaid
     return false;
   });
@@ -700,6 +706,44 @@ function notePressed(e, now) {
   if (gameRandom() < PRESSED_CHANCE) tryNpcSpeak(e, 'pressed');
 }
 
+// v1.467 (decisions, Michael: B, "ally callouts for the early look"): an ally of yours who goes looking at 8 s with
+// nobody in reach (v1.465, updateKidBoredom) says so: in earshot as any line, out of it over the walkie (D.10), so you
+// know your side has moved off. Each kid's own two, in his voice; the rest from his band's `looking` pool.
+const VOICE_LOOKING_OWN = {
+  seth:      ["My yard. I'll go find 'em.", "They're hiding from me. Going in!"],
+  trey:      ["Boring! I'm going to get 'em.", "Watch this, I'm going in."],
+  brooke:    ["Fine, I'll go find them myself.", "Moving up. Try to keep up."],
+  jamie:     ["I'll go have a look, okay?", "Moving up. I'll be careful."],
+  marcus:    ["Where they at? I'm going!", "Y'all wait here, I'm pushing!"],
+  devon:     ["No shot from here. Repositioning.", "Moving up for a better angle."],
+  tyler:     ["Aight, I'm gonna go look.", "Aight, heading up."],
+  garrett:   ["This is too easy. I'll go get 'em.", "Moving up. Don't wait for me."],
+  sean:      ["Where IS everybody?! I'm going!", "I'm going in, cover me!"],
+  nick:      ["Nothing here. Keep moving.", "I'll go take a look. Keep moving."],
+  ryan:      ["I'm flanking! Be right back!", "Going around! I'll find 'em!"],
+  mitchell:  ["No targets. Moving up.", "I'll find a better spot."],
+  joe:       ["Nobody in range. Moving up.", "I'll go find 'em. Better gun anyway."],
+  chris:     ["Let's GO! I'm running up!", "Too slow! I'm going after 'em!"],
+  owen:      ["Hm. Nobody's coming. I'll go.", "Fine. I'll go to them."],
+  eric:      ["Can't see anything! I'm going!", "I'm going up! Again!"],
+  rebecca:   ["They're not coming. Predictable. Moving up.", "I'll go find them."],
+  andrew:    ["Nobody here! Going looking, buddy!", "I'll go find 'em! Thumbs up!"],
+  alex:      ["Told you they'd hide. Going looking.", "Moving up. They're definitely hiding."],
+  evan:      ["I'll go find 'em. Good luck, guys!", "Heading up, see you out there!"],
+  haden:     ["CONNOR! I'm going up!", "Going looking! Connor, come on!"],
+  connor:    ["HADEN! I'm moving up!", "I'm going! Haden, follow me!"],
+  mason:     ["Nobody here. I'll move up.", "Going up the field. Stay sharp."],
+  christian: ["I can't wait anymore! Going!", "Where are they?! I'm going to look!"],
+  fernando:  ["Diego, I'm going up.", "I'll go look. Diego, stay here."],
+  diego:     ["Fernando, I'm moving.", "Hm. Going for a look."],
+  colin:     ["I'm going! Straight at 'em!", "Can't see 'em! Running up!"],
+  jordan:    ["I know a way round. Going.", "I'll go check the portables."],
+  caleb:     ["I'm going up! Almost there!", "Pushing up! Watch me!"],
+  nathan:    ["They should be ahead. Moving up.", "I've worked out where they are. Going."],
+  sophie:    ["I'll go round the end.", "Moving up. I'll find a shot."],
+  grant:     ["Huh. Leaving the cars. Just this once.", "Nothing to shoot. Moving up."],
+  malik:     ["Too far for my shotgun. Going in.", "I need to get close. Moving up."],
+};
 // v1.150: a kid on YOUR team (team 'player', not a free-for-all) is talking to you, not hunting you, so his
 // taunt timer draws from this pool instead. Shared by every ally.
 const VOICE_LINES_TEAMMATE = [
@@ -738,6 +782,7 @@ function voiceLinePools(charId, category) {
   if (category === 'infection') return { own: [], band: INFECTION_BARKS };
   if (category === 'teammate') return { own: [], band: VOICE_LINES_TEAMMATE };
   if (category.startsWith('excuse_')) return { own: VOICE_EXCUSES_OWN[charId] || [], band: VOICE_EXCUSES[category.slice(7)] || [], ownShare: EXCUSE_OWN_SHARE };   // v1.256; v1.397: his own
+  if (category === 'looking') return { own: VOICE_LOOKING_OWN[charId] || [], band: VOICE_LINES_DEFAULT[voiceBand(charId)]?.looking || [] };   // v1.467
   const own = VOICE_LINES[charId]?.[category] || [];
   const bandKey = voiceBand(charId);   // v1.256: shared with the excuses
   const band = VOICE_LINES_DEFAULT[bandKey]?.[category] || [];
@@ -810,7 +855,8 @@ const VOICE_SITUATION_TONE = {   // the tone a situation is read in (the script'
   playerOut: 'thrilled: he put someone out', pressed: 'under fire, rattled', allyDown: 'a friend just went out',
   excuse: 'whining, defensive: why that tag did not count', teammate: 'to a friend on his side, half whisper',
   infection: 'goofy zombie voice, playing tag', noodle: 'outraged and laughing: hit with a pool noodle',
-  squad: 'over a walkie, answering an order', home: 'relaxed, hanging out in Mike’s room',
+  squad: 'over a walkie, answering an order', looking: 'telling his side he is heading out to find them',   // v1.467
+  home: 'relaxed, hanging out in Mike’s room',
 };
 // every line the game can speak: [{id, situation, text, speakers: [charId] | null for every kid, name: true for {name}}]
 function voiceLineCatalog() {
@@ -818,6 +864,7 @@ function voiceLineCatalog() {
   const add = (id, situation, text, speakers) => out.push({ id, situation, text, speakers, ...(text.includes('{name}') ? { name: true } : {}) });
   for (const [kid, t] of Object.entries(VOICE_LINES)) for (const [cat, lines] of Object.entries(t)) lines.forEach((l, i) => add(voiceLineOwnId(kid, cat, i), cat, l, [kid]));
   for (const [kid, lines] of Object.entries(VOICE_EXCUSES_OWN)) lines.forEach((l, i) => add(voiceLineOwnId(kid, 'excuse_any', i), 'excuse', l, [kid]));
+  for (const [kid, lines] of Object.entries(VOICE_LOOKING_OWN)) lines.forEach((l, i) => add(voiceLineOwnId(kid, 'looking', i), 'looking', l, [kid]));   // v1.467
   if (typeof CREW_HOME_LINES !== 'undefined') for (const [kid, lines] of Object.entries(CREW_HOME_LINES)) lines.forEach((l, i) => add(`${kid}.home.${i + 1}`, 'home', crewHomeSaid(l), [kid]));
   for (const [b, t] of Object.entries(VOICE_LINES_DEFAULT)) {
     const who = kids.filter(k => voiceBand(k) === b);
