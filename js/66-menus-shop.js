@@ -204,7 +204,7 @@ function closeMap() {
 // activeTab drives the top category bar; view 'list' shows the tab's grid,
 // view 'gun' shows a single gun's detail page (mags + spares + attachment).
 const SHOP_TABS = ['Guns', 'Ammo', 'Gear', 'Mods', 'Clothes'];   // v1.197: Clothes (D.21)
-let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL' };   // v1.240: gunKind
+let shopState = { activeTab: 'Guns', view: 'list', detailGun: null, flash: null, gunKind: 'ALL', gunSort: 'shop' };   // v1.240: gunKind; v1.464: gunSort
 
 function openShop() {
   document.getElementById('shopScreen').classList.add('active');
@@ -1379,9 +1379,27 @@ function renderGunsTab(c) {
     chips.appendChild(chip);
   }
   c.appendChild(chips);
+  // v1.464 (backlog D.89, Michael 9 Nov: B, "a sort row over each kind's list"): SORT: SHOP ORDER, PRICE, RATE, WEIGHT,
+  // OWNED FIRST. Each kind keeps its header; the sort reorders the guns inside it, and by rate or weight the row shows its
+  // number (the price is already on the right of each row).
+  const sortRow = document.createElement('div');
+  sortRow.className = 'shop-gun-sorts';
+  const sortLbl = document.createElement('span');
+  sortLbl.className = 'shop-gun-sort-label';
+  sortLbl.textContent = 'Sort:';
+  sortRow.appendChild(sortLbl);
+  for (const [id, label] of SHOP_GUN_SORTS) {
+    const b = document.createElement('div');
+    b.className = 'shop-gun-sort' + (shopState.gunSort === id ? ' active' : '');
+    b.dataset.sort = id;
+    b.textContent = label;
+    b.addEventListener('click', () => { shopState.gunSort = id; renderShop(); });
+    sortRow.appendChild(b);
+  }
+  c.appendChild(sortRow);
   const equippedGun = Game.persist.equipped.gun;
   let lastKind = null;
-  for (const gt of GUN_ORDER) {
+  for (const gt of shopSortedGuns(shopState.gunSort)) {
     const cfg = GUN_MAGS[gt];
     if (!cfg) continue;
     const kind = gunKind(gt);
@@ -1407,8 +1425,9 @@ function renderGunsTab(c) {
     info.className = 'shop-item-info';
     const status = isEquipped ? '<span class="shop-eq-tag">EQUIPPED</span>' : (owned ? '<span class="shop-owned-tag">OWNED</span>' : '');
     const maxCap = gunMaxCapDisplay(gt);
+    const sortVal = shopGunSortValue(gt, shopState.gunSort);   // v1.464
     info.innerHTML = `<div class="shop-item-name">${cfg.displayName} ${status}</div>` +
-      `<div class="shop-item-desc">Capacity: up to ${maxCap} BBs · ${cfg.mags.length} mag upgrade${cfg.mags.length!==1?'s':''}, ${cfg.spares.length} spare${cfg.spares.length!==1?'s':''} available</div>`;
+      `<div class="shop-item-desc">${sortVal ? `<span class="shop-gun-sort-val">${sortVal}</span> · ` : ''}Capacity: up to ${maxCap} BBs · ${cfg.mags.length} mag upgrade${cfg.mags.length!==1?'s':''}, ${cfg.spares.length} spare${cfg.spares.length!==1?'s':''} available</div>`;
     row.appendChild(info);
     if (!owned) {
       const price = document.createElement('div');
@@ -1426,6 +1445,41 @@ function renderGunsTab(c) {
     info.addEventListener('click', () => { shopState.view = 'gun'; shopState.detailGun = gt; renderShop(); });
     c.appendChild(row);
   }
+}
+
+// v1.464 (D.89): the Guns tab's sort. Shop order is GUN_ORDER (kind by kind, cheap to dear as each gun was added);
+// the others reorder each kind's guns and keep shop order between equals. Price low to high; rate, the most BBs a
+// second the trigger gives (an automatic's cycle, an electric or gas semi's fastest pull, a burst gun's bursts, a racked
+// or broken-open gun's shots over its lockout and cocking), high to low; weight in pounds, light to heavy; owned guns first.
+const SHOP_GUN_SORTS = [['shop', 'SHOP ORDER'], ['price', 'PRICE'], ['rate', 'RATE'], ['weight', 'WEIGHT'], ['owned', 'OWNED FIRST']];
+function shopGunRate(gt) {
+  const s = getGunSpec(gt);
+  if (s.fireMode === 'auto') return (s.cyclicRPM || 600) / 60;
+  if (s.semiRPM) return s.semiRPM / 60;
+  if (s.burst) return s.burst / ((s.burst - 1) * 60 / (s.cyclicRPM || 600) + FIRE_LOCKOUT);   // a burst, then the lockout
+  if (s.barrels) return s.barrels / ((s.cockTime || 1) + s.barrels * FIRE_LOCKOUT);
+  return 1 / ((s.cockTime || 0.7) + FIRE_LOCKOUT);   // the shot's lockout, then the rack
+}
+function shopGunWeight(gt) {
+  if (GUN_WEIGHT[gt] != null) return GUN_WEIGHT[gt];
+  return ({ light: 2.5, medium: 5, heavy: 8, very_heavy: 10 })[getGunSpec(gt).weightClass] || 5;
+}
+function shopGunOwned(gt) { const cfg = GUN_MAGS[gt]; return gt === 'pistol' || !!(cfg && Game.persist.owned[cfg.ownFlag]); }
+function shopSortedGuns(sort) {
+  const key = sort === 'price' ? gt => GUN_MAGS[gt].price || 0
+    : sort === 'rate' ? gt => -shopGunRate(gt)
+    : sort === 'weight' ? gt => shopGunWeight(gt)
+    : sort === 'owned' ? gt => (shopGunOwned(gt) ? 0 : 1)
+    : null;
+  const guns = GUN_ORDER.filter(gt => GUN_MAGS[gt]);
+  const kindAt = id => GUN_KINDS.findIndex(k => k.id === id);
+  return guns.map((gt, i) => ({ gt, i, k: kindAt(gunKind(gt)), v: key ? key(gt) : 0 }))
+    .sort((a, b) => (a.k - b.k) || (a.v - b.v) || (a.i - b.i)).map(x => x.gt);
+}
+function shopGunSortValue(gt, sort) {
+  if (sort === 'rate') { const r = shopGunRate(gt); return (r >= 3 ? Math.round(r) : r.toFixed(1)) + ' a second'; }
+  if (sort === 'weight') return shopGunWeight(gt) + ' lb';
+  return '';
 }
 
 function gunMaxCapDisplay(gt) {
