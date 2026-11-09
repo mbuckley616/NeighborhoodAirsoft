@@ -10,11 +10,15 @@
 //      speechSynthesis is never asked; a clip whose words no longer match, or that won't decode, falls back to the
 //      browser voice; the cooldowns and the no-repeat memory hold with clips; the walkie, the noodle and an order's
 //      answer play theirs; the end of the round stops a clip.
+// v1.463: scripts/voicepack.mjs:
+//   5. a folder of WAVs (some well named, some not) packed with --raw into tests/tmp: the bad names are reported, the
+//      missing own lines counted, and the file it writes loads in the game and plays.
 // speechSynthesis is silent in headless Chromium, so this tests the choice and the queue, not the sound.
 import fs from 'fs';
 import path from 'path';
 import { boot, check, ROOT } from './lib/game.mjs';
 import { parseScript } from '../scripts/voicescript.mjs';
+import { spawnSync } from 'child_process';
 
 const script = parseScript(fs.readFileSync(path.join(ROOT, 'docs', 'voice_script.md'), 'utf8'));
 const g = await boot(process.env.SRC ? { src: process.env.SRC } : {}); const { page } = g;
@@ -164,6 +168,36 @@ const end = await page.evaluate(() => {
 await page.evaluate(() => endScenario('lose'));
 const ended = await page.evaluate(() => ({ live: VOICE_CLIP.live, state: VOICE_CLIP.log.at(-1).state }));
 check('the end of the round stops a clip', ended.live === null && ['cut', 'dropped'].includes(ended.state), { end, ended });
+
+// ---- 5. the packing script ----
+const dir = path.join(ROOT, 'tests', 'tmp', `voicepack.${process.pid}`), out = path.join(dir, 'clips.js');
+fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(path.join(dir, 'pack'), { recursive: true });
+const wavBuf = Buffer.from(wav, 'base64');
+const names = ['seth.taunt.1', 'seth.teammate.4', 'seth.band.mid_agg.taunt.2', 'seth.band.high_agg.taunt.2', 'seth.trey.taunt.1', 'nobody.taunt.1', 'seth.taunt.99'];
+for (const n of names) fs.writeFileSync(path.join(dir, 'pack', n + '.wav'), wavBuf);
+const run = spawnSync('node', [path.join(ROOT, 'scripts', 'voicepack.mjs'), path.join(dir, 'pack'), '--raw', '--out', out], { encoding: 'utf8' });
+const said = run.stdout + run.stderr;
+console.log(said.split('\n').filter(l => /clips read|MB|own lines|not taken|  [a-z]+\..*: /.test(l)).map(l => '    ' + l.slice(0, 150)).join('\n'));
+check('voicepack takes the three good names and reports the four bad ones', /3 clips read/.test(said) && /4 files were not taken/.test(said) &&
+  /seth does not say the high_agg lines/.test(said) && /that is trey’s line/.test(said) && /no kid "nobody"/.test(said) && /seth\.taunt\.99/.test(said) && run.status === 1, { status: run.status });
+check('it counts the kids’ own lines still missing', /1 of \d+ recorded/.test(said), { status: run.status });
+const packed = fs.existsSync(out) ? fs.readFileSync(out, 'utf8') : '';
+const loaded = await page.evaluate(src => {
+  const clips = new Function(src + '\nreturn VOICE_CLIPS;')();
+  for (const k of Object.keys(VOICE_CLIPS)) delete VOICE_CLIPS[k];
+  Object.assign(VOICE_CLIPS, clips); VOICE_CLIP.failed.clear(); VOICE_CLIP.buffers.clear();
+  return { keys: Object.keys(clips).sort(), text: clips['seth.taunt.1']?.text, sec: clips['seth.taunt.1']?.sec };
+}, packed);
+check('the file it writes loads, with the line’s words and length', loaded.keys.join() === 'seth.band.mid_agg.taunt.2,seth.taunt.1,seth.teammate.4' && loaded.sec === 0.3, loaded);
+const seth = await page.evaluate(() => {
+  const k = { charId: 'seth', pos: Game.player.pos.clone().add(new THREE.Vector3(2, 0, -3)) };
+  const t = window._spoke.length; kidSayLine(k, VOICE_LINES.seth.taunt[0], 'seth.taunt.1');
+  return { key: VOICE_CLIP.log.at(-1).key, tts: window._spoke.length - t };
+});
+await page.waitForFunction(() => ['playing', 'done', 'failed'].includes(VOICE_CLIP.log.at(-1)?.state), null, { timeout: 20000 }).catch(() => {});
+const sethState = await page.evaluate(() => VOICE_CLIP.log.at(-1).state);
+check('and Seth’s packed clip plays in the game', seth.key === 'seth.taunt.1' && seth.tts === 0 && ['playing', 'done'].includes(sethState), { seth, sethState });
+fs.rmSync(dir, { recursive: true, force: true });
 
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
