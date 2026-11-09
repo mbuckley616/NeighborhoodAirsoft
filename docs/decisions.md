@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the Mods sort row (builder, 2026-11-09)**
+  v1.465 built your B on Owen (an ally with nobody in range by 8 s goes looking, every team match) and v1.466 your B on
+  the Mods tab (Sort: SHOP ORDER · SLOT · PRICE · OWNED FIRST). The play lane has no ready item again. What next?
+  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
+    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (steadier on
+    the move, a little heavier). Each a version, measured with `scripts/balance.mjs` before it ships.
+  - B) **Ally callouts for the early look**: when an ally goes looking at 8 s he says so on the walkie ("Going up the
+    left", "I'll find 'em"), so you know your side has moved off. A few new lines per kid, in `docs/voice_script.md`.
+  - C) **Rest the play lane** until you have played v1.458-v1.466.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It is the only offered work that adds play rather than screens, both parts sit on slots every long
+  gun has, and neither touches a maps-lane file or a Fable area.
+
 ## Answered
 
 - **What the play lane builds next, after the sort row (builder, 2026-11-09)**
