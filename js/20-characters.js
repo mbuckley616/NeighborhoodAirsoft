@@ -773,6 +773,66 @@ function pickVoiceLine(charId, category, speaker) {
   return line;
 }
 
+// v1.461 (backlog D.9, recorded voices; Michael: A, 21 Oct): every line the game can speak has a stable id, the script
+// for VoiceStudio (docs/voice_script.md, written by scripts/voicescript.mjs from voiceLineCatalog) and the key a
+// recorded clip is filed under. An id is (speaker, situation, index from 1): a kid's own line is `<kid>.<situation>.<n>`
+// (`seth.taunt.3`, `seth.excuse.2`, `eric.home.1`); a line any kid may say is `<table>.<situation>.<n>`
+// (`band.high_agg.taunt.3`, `excuse.far.2`, `teammate.4`, `infection.1`, `noodle.5`, `squad.push.2`). Nothing said
+// changes: the ids are worked out from where a line sits in its table. A clip is one kid's reading of one line, so its
+// key is the line's id under the kid who says it (voiceClipKey), and a {name} line's clip adds the name (`@sean`).
+// An index moves if a line is put in above it; a clip carries its line's words and plays only while they still match.
+function voiceLineOwnId(charId, category, i) {
+  return `${charId}.${category.startsWith('excuse_') ? 'excuse' : category}.${i + 1}`;
+}
+function voiceLineSharedId(charId, category, i) {
+  if (category === 'infection' || category === 'teammate') return `${category}.${i + 1}`;
+  if (category.startsWith('excuse_')) return `excuse.${category.slice(7)}.${i + 1}`;
+  return `band.${voiceBand(charId)}.${category}.${i + 1}`;
+}
+// the id of a line pickVoiceLine just gave (charId, category), or null when it is from no table
+function voiceLineIdFor(charId, category, line) {
+  const { own, band } = voiceLinePools(charId, category);
+  let i = own.indexOf(line);
+  if (i >= 0) return voiceLineOwnId(charId, category, i);
+  i = band.indexOf(line);
+  return i >= 0 ? voiceLineSharedId(charId, category, i) : null;
+}
+// the key a kid's reading of a line is filed under: his own lines are already his, a shared line gets his id in front
+function voiceClipKey(charId, lineId, name) {
+  if (!charId || !lineId) return null;
+  const key = lineId.startsWith(charId + '.') ? lineId : `${charId}.${lineId}`;
+  const slug = name ? String(name).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  return slug ? `${key}@${slug}` : key;
+}
+const VOICE_SITUATION_TONE = {   // the tone a situation is read in (the script's column)
+  playerHit: 'pleased, quick: he just tagged someone', npcHit: 'caught: owning it, or groaning', playerSpotted: 'urgent, calling it out',
+  taunt: 'teasing, across the yard', roundStart: 'the game is on: loud and up', shotWhileOut: 'indignant: he is out and got shot anyway',
+  playerOut: 'thrilled: he put someone out', pressed: 'under fire, rattled', allyDown: 'a friend just went out',
+  excuse: 'whining, defensive: why that tag did not count', teammate: 'to a friend on his side, half whisper',
+  infection: 'goofy zombie voice, playing tag', noodle: 'outraged and laughing: hit with a pool noodle',
+  squad: 'over a walkie, answering an order', home: 'relaxed, hanging out in Mike’s room',
+};
+// every line the game can speak: [{id, situation, text, speakers: [charId] | null for every kid, name: true for {name}}]
+function voiceLineCatalog() {
+  const out = [], kids = Object.keys(CHARACTERS);
+  const add = (id, situation, text, speakers) => out.push({ id, situation, text, speakers, ...(text.includes('{name}') ? { name: true } : {}) });
+  for (const [kid, t] of Object.entries(VOICE_LINES)) for (const [cat, lines] of Object.entries(t)) lines.forEach((l, i) => add(voiceLineOwnId(kid, cat, i), cat, l, [kid]));
+  for (const [kid, lines] of Object.entries(VOICE_EXCUSES_OWN)) lines.forEach((l, i) => add(voiceLineOwnId(kid, 'excuse_any', i), 'excuse', l, [kid]));
+  if (typeof CREW_HOME_LINES !== 'undefined') for (const [kid, lines] of Object.entries(CREW_HOME_LINES)) lines.forEach((l, i) => add(`${kid}.home.${i + 1}`, 'home', crewHomeSaid(l), [kid]));
+  for (const [b, t] of Object.entries(VOICE_LINES_DEFAULT)) {
+    const who = kids.filter(k => voiceBand(k) === b);
+    for (const [cat, lines] of Object.entries(t)) lines.forEach((l, i) => add(`band.${b}.${cat}.${i + 1}`, cat, l, who));
+  }
+  for (const [why, lines] of Object.entries(VOICE_EXCUSES)) lines.forEach((l, i) => add(`excuse.${why}.${i + 1}`, 'excuse', l, null));
+  VOICE_LINES_TEAMMATE.forEach((l, i) => add(`teammate.${i + 1}`, 'teammate', l, null));
+  INFECTION_BARKS.forEach((l, i) => add(`infection.${i + 1}`, 'infection', l, null));
+  if (typeof NOODLE_LINES !== 'undefined') NOODLE_LINES.forEach((l, i) => add(`noodle.${i + 1}`, 'noodle', l, null));
+  if (typeof SQUAD_ORDERS !== 'undefined') for (const [k, o] of Object.entries(SQUAD_ORDERS)) o.replies.forEach((l, i) => add(`squad.${k}.${i + 1}`, 'squad', l, null));
+  if (typeof CREW_HOME_FALLBACK !== 'undefined') add('home.1', 'home', crewHomeSaid(CREW_HOME_FALLBACK), null);
+  return out;
+}
+function crewHomeSaid(l) { return String(l).replace(/[“”]/g, ''); }   // what a crew kid's line sounds like (the card's quotes off)
+
 // ---------------------------------------------------------------------
 // TTS speech queue (v1.21) — speechSynthesis with cooldowns + voice per NPC.
 // ---------------------------------------------------------------------
@@ -885,12 +945,13 @@ function tryNpcSpeak(enemy, category, fill) {
   const line = pickVoiceLine(enemy.charId, category, enemy);
   if (!line) return false;
   const said = fill && fill.name ? line.replace('{name}', fill.name) : line;   // v1.256 (the log keeps the pool's line)
+  const lineId = voiceLineIdFor(enemy.charId, category, line);   // v1.461 (D.9): its id in docs/voice_script.md
 
   // v1.150: the line counts as said from here: cooldowns and the log are set before the browser is asked
   // to speak, so headless Chromium (no voices, silent) and a real browser pace the kids the same way.
   VOICE.globalCooldownUntil = now + 1.5;
   enemy._voiceCooldownUntil = now + 4.0;
-  VOICE.log.push({ t: +now.toFixed(2), charId: enemy.charId, name: enemy.name || enemy.character?.name, category, line, said, ...(walkie ? { walkie: true } : {}) });
+  VOICE.log.push({ t: +now.toFixed(2), charId: enemy.charId, name: enemy.name || enemy.character?.name, category, line, said, id: lineId, ...(walkie ? { walkie: true } : {}) });
   if (VOICE.log.length > 64) VOICE.log.shift();
   if (walkie) {
     // v1.268 (D.10): over the walkie: the talk button's click, his voice flat and from nowhere, and the line on the

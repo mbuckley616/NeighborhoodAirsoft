@@ -83,12 +83,14 @@ const CREW_HOME_LINES = {
   alex:  ['“Andrew says hey. He still thinks you got lucky.”', '“Two lives each next time? I’m just saying.”', '“Whose turn is it on the computer?”'],
   diego: ['“Tch. Fernando wants a rematch. Let him wait.”', '“The MP5 eats BBs. Worth it.”', '“Don’t tell anyone I fell asleep on your futon.”'],
 };
+const CREW_HOME_FALLBACK = '“Hey.”';   // v1.461: named, so the voice script has it (id home.1)
 function crewHomeTalk(it) {
-  const lines = CREW_HOME_LINES[it.crewId] || ['“Hey.”'];
+  const own = CREW_HOME_LINES[it.crewId], lines = own || [CREW_HOME_FALLBACK];
   it.line = (it.line + 1) % lines.length;
   const name = (CHARACTERS[it.crewId] || {}).name || '';
   it.prompt = `${name}: ${lines[it.line]}`;
-  if (typeof kidSayLine === 'function') kidSayLine({ pos: it.pos, charId: it.crewId }, lines[it.line].replace(/[“”]/g, ''));
+  // v1.461 (D.9): the line's id, so a recorded clip of it can play
+  if (typeof kidSayLine === 'function') kidSayLine({ pos: it.pos, charId: it.crewId }, crewHomeSaid(lines[it.line]), own ? `${it.crewId}.home.${it.line + 1}` : 'home.1');
 }
 function buildBedroomScene() {
   const scene = new THREE.Scene();

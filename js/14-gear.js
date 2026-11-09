@@ -1312,7 +1312,7 @@ function noodleStrike() {
   applyBBHit({ owner: 'player', pos: at, spawnPos: Game.player.pos.clone(), noodle: true }, c);
   N.hits = N.hits || [];
   N.hits.push({ name: c.name, out: wasOut, t: +(Game.scenario.roundTime || 0).toFixed(2) });
-  if (!wasOut) kidSayLine(c, NOODLE_LINES[Math.floor(gameRandom() * NOODLE_LINES.length)]);
+  if (!wasOut) { const i = Math.floor(gameRandom() * NOODLE_LINES.length); kidSayLine(c, NOODLE_LINES[i], `noodle.${i + 1}`); }   // v1.461: and its id (D.9)
 }
 // a kid says a given line where he stands (as tryNpcSpeak, but this line, now)
 function kidSayLine(e, line) {

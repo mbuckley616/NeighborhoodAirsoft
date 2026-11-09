@@ -1136,9 +1136,9 @@ function giveSquadOrder(key) {
   const live = squadMates().filter(e => e.health > 0 && e.state !== 'retreating' && !e.vip);
   live.sort((a, b) => Math.hypot(a.pos.x - Game.player.pos.x, a.pos.z - Game.player.pos.z) - Math.hypot(b.pos.x - Game.player.pos.x, b.pos.z - Game.player.pos.z));
   const who = live[0];
-  const line = who ? O.replies[Math.floor(gameRandom() * O.replies.length)] : null;
+  const ri = who ? Math.floor(gameRandom() * O.replies.length) : -1, line = who ? O.replies[ri] : null;
   S.squadReply = who ? { name: who.name, line, until: (S.roundTime || 0) + 3.5 } : null;
-  if (who) squadWalkieSay(who, line);
+  if (who) squadWalkieSay(who, line, `squad.${key}.${ri + 1}`);   // v1.461: and its id (D.9)
   updateSquadHud();
   if (Tutorial.active) Tutorial.notify('ordered');   // v1.324 (D.61)
 }
