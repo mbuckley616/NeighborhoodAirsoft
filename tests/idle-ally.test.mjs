@@ -49,17 +49,40 @@ check('Night Swim: Sean walks over 10 m or keeps firing with a line', out.filter
 check('no ally of ours stays idle (no 2 m, no shot with a line) past 30 s', out.every(r => r.idleMax <= 30.05), out);
 check('nobody gets bored inside the first 25 s', out.every(r => r.boredAt == null || r.boredAt >= 25), out);
 
+// v1.465 (decisions, Michael: B on Owen's wait at The Portables): an ally who has had nobody in sight for his first 8 s
+// goes looking then, in every team match. Owen (aggression 0.2) started beside you and hid and peeked there 20-33 s.
+const EARLY = [];
+for (let i = 0; i < 2; i++) {
+  await g.scenario('school_portables_3v3');
+  EARLY.push(await page.evaluate(() => {
+    const kid = Game.scenario.enemies.find(e => e.charId === 'owen' && e.team === 'player');
+    if (!kid) return { missing: true };
+    const start = { x: kid.pos.x, z: kid.pos.z };
+    let lookAt = null, sawFirst = null, t = 0, at15 = 0;
+    for (let f = 0; f < 60 * 15 && Game.mode === 'scenario'; f++) {
+      stepGame(1 / 60); t += 1 / 60;
+      if (sawFirst == null && kid._inReachNow) sawFirst = t;
+      if (lookAt == null && kid._earlyLook) lookAt = t;
+    }
+    if (kid.health > 0) at15 = Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z);
+    return { lookAt: lookAt && +lookAt.toFixed(1), sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode };
+  }));
+}
+console.log('   portables owen:', JSON.stringify(EARLY));
+check('The Portables: Owen, nobody in sight, goes looking at 8 s (unless a foe came within his range first) and is over 4 m from his start by 15 s',
+  EARLY.every(r => !r.missing && (r.sawFirst != null && r.sawFirst < 8 ? r.lookAt == null : (r.lookAt >= 7.5 && r.lookAt < 8.5 && (r.at15 > 4 || r.mode !== 'scenario')))), EARLY);
+
 // A sniper ally and the VIP still hold: the lot's Brooke (sniper) is never marched by boredom, nor Protect Ryan's Ryan.
 // v1.275: Night Game's Brooke, the sniper this read, crosses to Seth's side now
 await g.scenario('lot_team_3v3');
 const H = await page.evaluate(() => {
   for (let f = 0; f < 60 * 45 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
-  return Game.scenario.enemies.filter(e => e.team === 'player' && (e.weapon === 'sniper' || e.vip || e.role === 'defender')).map(e => ({ n: e.charId, bored: !!e._boredCount }));
+  return Game.scenario.enemies.filter(e => e.team === 'player' && (e.weapon === 'sniper' || e.vip || e.role === 'defender')).map(e => ({ n: e.charId, bored: !!(e._boredCount || e._earlyLook) }));
 });
 await g.scenario('bunratty_vip');
 const V = await page.evaluate(() => {
   for (let f = 0; f < 60 * 45 && Game.mode === 'scenario'; f++) stepGame(1 / 60);
-  return Game.scenario.enemies.filter(e => e.vip).map(e => ({ n: e.charId, bored: !!e._boredCount }));
+  return Game.scenario.enemies.filter(e => e.vip).map(e => ({ n: e.charId, bored: !!(e._boredCount || e._earlyLook) }));
 }).catch(e => ({ err: String(e).slice(0, 120) }));
 console.log('   holders:', JSON.stringify(H), JSON.stringify(V));
 check('snipers and VIPs hold', H.length > 0 && H.every(k => !k.bored) && Array.isArray(V) && V.length > 0 && V.every(k => !k.bored), { H, V });

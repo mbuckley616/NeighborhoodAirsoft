@@ -795,6 +795,7 @@ function npcInFight(e) {
 // left: a cautious ally beside your start (Night Swim's Brooke, Night Game in the Woods' Rebecca) hid all round. Snipers,
 // defenders and VIPs still hold.
 const BORED_MOVE_M = 2;
+const ALLY_LOOK_AFTER_S = 8;   // v1.465
 function updateKidBoredom(e, dt) {
   const sc = Game.scenario;
   const wc = sc.winCondition || 'kill_all';
@@ -810,6 +811,27 @@ function updateKidBoredom(e, dt) {
     return;
   }
   if (e._boredAfter == null) e._boredAfter = 25 + gameRandom() * 5;
+  // v1.465 (decisions, Michael: B on Owen's wait at The Portables): an ally of yours who has had nobody in sight for his
+  // first ALLY_LOOK_AFTER_S seconds of the round goes looking then, in every team match, not after the 25-30 s clock
+  // above (which stays for an ally who goes quiet later). Owen (aggression 0.2) started beside you at The Portables and
+  // hid and peeked there for 20-33 s with the other side 45-50 m off. One look a round; a kid who saw a foe inside his
+  // gun's far range never takes it (Owen's pistol had a line from 3 s, but at 45-50 m, past its 30 m: `_inReachNow`).
+  if (ally && !e._earlyLookDone) {
+    if (e._inReachNow) e._earlyLookDone = true;
+    else if ((sc.roundTime || 0) >= ALLY_LOOK_AFTER_S) {
+      e._earlyLookDone = true;
+      if (!e._bored) {
+        e._bored = true;
+        e._earlyLook = true;
+        if (e.state === 'hiding' || e.state === 'peeking') {
+          e.state = 'advancing';
+          e.stateTime = 0;
+          e.advanceCheckTimer = 0;
+        }
+        return;
+      }
+    }
+  }
   if (Math.hypot(e.pos.x - e._boredAt.x, e.pos.z - e._boredAt.z) > BORED_MOVE_M) {
     e._boredAt.x = e.pos.x; e._boredAt.z = e.pos.z;
     e._boredT = 0;

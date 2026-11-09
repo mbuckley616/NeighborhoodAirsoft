@@ -1472,6 +1472,9 @@ function updateEnemies(dt) {
       e._hasLOSNow = losMem;
       // v1.134: seconds without a line to anyone, for the free-for-all roam below
       e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
+      // v1.465: a line to a foe inside his gun's far range, for the early look (updateKidBoredom): Owen's pistol had a line
+      // to the other side 45-50 m off at The Portables from 3 s, past its 30 m, and still nobody to shoot at
+      e._inReachNow = losMem && distToPlayer < ENGAGE_FAR;
     }
 
     // v1.152 (Michael: A, the critic's "last kid comes looking"): in team and kill-all rounds a cautious kid (aggression
