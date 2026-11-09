@@ -146,19 +146,32 @@ for (const id of IDS) {
 }
 // v1.187: Hold the Bulb Fort with the player taggable, standing in the fort and never firing: no tag in the
 // opening seconds (the attackers start 55 m off at the entry)
-const tagged = [];
+// Tests fix (maps builder, 9 Nov; backlog Found in play, v1.465): since D.57 the defend has five attackers, not three
+// (the crew's fills), and the 12 s line was red now and then on main: 12 rounds gave first tags at 11.8-42 s, the
+// 11.8 from Haden at 26 m after walking 27 m down the street with his MP5. That is the fight arriving, not an
+// opening-seconds loss, so the check is now what it meant: no tag inside 8 s, and the kid who tags you has come at
+// least 10 m down the street from the entry (x 32-34) to do it.
+const tagged = [], taggers = [];
 for (let i = 0; i < 3; i++) {
   await g.scenario('bellfield_defend_fort');
-  tagged.push(await page.evaluate(() => {
+  const r = await page.evaluate(() => {
+    let by = null; const orig = applyBBHit;
+    applyBBHit = function (bb, c) {
+      if (c === Game.player && !by && bb.enemyRef) by = { n: bb.enemyRef.character?.name, x: +bb.enemyRef.pos.x.toFixed(1), z: +bb.enemyRef.pos.z.toFixed(1) };
+      return orig.apply(this, arguments);
+    };
     let f = 1;
     for (; f <= 95 * 60 && Game.mode === 'scenario' && !(Game.player.hitsTaken > 0) && !Game.scenario.winByTimer; f++) stepGame(1 / 60);
-    return +((f - 1) / 60).toFixed(1);
-  }));
+    applyBBHit = orig;
+    return { t: +((f - 1) / 60).toFixed(1), by };
+  });
+  tagged.push(r.t); if (r.by) taggers.push(r.by);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
-console.log('  Hold the Bulb Fort, a player standing in the fort first tagged at (s):', JSON.stringify(tagged));
-check('Hold the Bulb Fort: a player standing still is not tagged in the first 12 s', tagged.every(t => t > 12), tagged);
+console.log('  Hold the Bulb Fort, a player standing in the fort first tagged at (s):', JSON.stringify(tagged), 'by', JSON.stringify(taggers));
+check('Hold the Bulb Fort: a player standing still is not tagged in the first 8 s', tagged.every(t => t > 8), tagged);
+check('Hold the Bulb Fort: whoever tags him has come 10 m or more down the street (x under 22)', taggers.every(b => b.x < 22), taggers);
 // v1.188: Lamplight on Bellfield with the player taggable, standing at the entry: nobody tags him in the opening seconds
 const nightTag = [];
 for (let i = 0; i < 3; i++) {
