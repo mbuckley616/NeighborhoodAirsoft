@@ -478,6 +478,7 @@ function enterScenario(scenarioId) {
 
   Scenes.scenarios[scenarioId] = built;
   Game.scenario.active = scenarioId;
+  Game.scenario.timeOfDay = _tod;   // v1.468: for the glow-stick tracer's streak and who sees it
   Game.scenario.enemies = built.enemies;
   // v1.41: within a single battle, give each ENEMY-team kid a distinct BB color
   // where the palette allows it, so you can read whose rounds are whose in a

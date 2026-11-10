@@ -841,6 +841,26 @@ function buildMuzzleParts(group, mount, measured) {
     g.userData.frontZ = zb - body - 0.016;
     meshes.soda_silencer = g;
   }
+  // v1.468 Glow-stick tracer: two green glow sticks along either side of the barrel's end, reaching 4 cm past the
+  // muzzle so the BB leaves between them, a band of tape round both just behind the muzzle
+  {
+    const g = new THREE.Group();
+    const glowMat = new THREE.MeshStandardMaterial({ color: 0x9dff7a, emissive: 0x5cff3a, emissiveIntensity: 1.3, roughness: 0.3, transparent: true, opacity: 0.92 });
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x2f7a2a, roughness: 0.6 });
+    const y = m.frontY + 0.004, len = 0.10, zc = m.frontZ + 0.06 - len / 2;   // from 6 cm behind the muzzle to 4 cm past it
+    for (const sx of [-1, 1]) {
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.0045, 0.0045, len, 10), glowMat);
+      stick.rotation.x = Math.PI / 2; stick.position.set(sx * 0.016, y, zc); stick.userData.glowStick = true; g.add(stick);
+      for (const ez of [zc - len / 2, zc + len / 2]) {
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0048, 0.0048, 0.006, 10), capMat);
+        cap.rotation.x = Math.PI / 2; cap.position.set(sx * 0.016, y, ez); g.add(cap);
+      }
+    }
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.026, 0.014), tapeMat);
+    band.position.set(0, m.frontY + 0.002, m.frontZ + 0.035); g.add(band);
+    g.userData.frontZ = zc - len / 2;
+    meshes.glow_tracer = g;
+  }
   for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.muzzlePart = k; group.add(meshes[k]); }
   return { meshes, frontZ: m.frontZ, frontY: m.frontY };
 }
