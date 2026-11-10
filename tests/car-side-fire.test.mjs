@@ -42,7 +42,7 @@ const r = await page.evaluate(() => {
       Game.scenario.bbs.length = 0;
     }
   }
-  window.makeBB = mk;
+  window.makeBB = mk; e.pendingBurst = [];   // v1.470: put back, as the round goes on under the next match's entry
   return { car: !!car, calls, held, bbs, near, intoCar, pctNear: +(near / Math.max(1, bbs) * 100).toFixed(2) };
 });
 console.log('  ' + JSON.stringify(r));
@@ -51,5 +51,34 @@ check('the kid fired', r.bbs > 1000, r.bbs);
 check('under 0.5% of BBs hit anything within 1.6 m', r.pctNear < 0.5, r);
 check('none of them into the car', r.intoCar === 0, r.intoCar);
 check('he still shoots (under 25% of pulls held)', r.held / r.calls < 0.25, { calls: r.calls, held: r.held });
+
+// v1.470 (Found in play, critic 10 Nov): Trey on Overwatch, Seth taken out, you standing on the street 45 m due east of
+// Trey's step. His eye line clears the sedan parked 15 m in front of him, his muzzle's did not, and the clear line cast
+// only its first 3 m: all 14 of his BBs in 40 s stopped in the car's cabin and none reached you. With an eye line the
+// muzzle's line is now cast to 3 m short of you (15 cm under it too, for the BB's sag): he lifts over the car, or holds
+// and moves to a spot where he can shoot.
+// Seth is left out of the match's setup (as scripts/balance.mjs's duel_trey does), then the setup is put back.
+await page.evaluate(() => { const S = SCENARIOS.winnmark_sniper_overwatch; window.__setup = S.enemySetup; S.enemySetup = S.enemySetup.filter(s => s.charId === 'trey'); });
+await g.scenario('winnmark_sniper_overwatch');
+await page.evaluate(() => { SCENARIOS.winnmark_sniper_overwatch.enemySetup = window.__setup; });
+const t = await page.evaluate(() => {
+  const sc = Game.scenario, trey = sc.enemies.find(k => k.charId === 'trey');
+  const P = Game.player; P.pos.x = trey.pos.x + 45; P.pos.z = trey.pos.z; P.pos.y = scenarioGroundY(P.pos.x, P.pos.z);
+  const at = { x: trey.pos.x, z: trey.pos.z }, mk = makeBB, hit = applyBBHit, shots = [];
+  window.makeBB = function (pos, vel, owner, ref) { const b = mk.apply(this, arguments); if (ref === trey) shots.push({ b, p0: pos.clone(), last: pos.clone() }); return b; };
+  let hits = 0;
+  window.applyBBHit = function (bb, c) { if (c === P) { if (bb.enemyRef === trey) hits++; return; } return hit.apply(this, arguments); };
+  for (let i = 0; i < 2400 && Game.mode === 'scenario'; i++) {
+    stepGame(1 / 60);
+    for (const s of shots) if (!s.done) { if (sc.bbs.includes(s.b)) s.last.copy(s.b.pos); else s.done = true; }
+  }
+  window.makeBB = mk; window.applyBBHit = hit;
+  const short = shots.filter(s => Math.hypot(s.last.x - s.p0.x, s.last.z - s.p0.z) < 20).length;
+  return { trey: [+at.x.toFixed(1), +at.z.toFixed(1)], now: [+trey.pos.x.toFixed(1), +trey.pos.z.toFixed(1)], shots: shots.length, short, hits };
+});
+console.log('    Trey on Overwatch, 45 m due east:', JSON.stringify(t));
+check('Overwatch, 45 m due east of Trey: he fires at you', t.shots >= 4, t);
+check('...and under a third of his BBs stop within 20 m of him (14 of 14 did, in the sedan 15 m out)', t.short / Math.max(1, t.shots) < 1 / 3, t);
+check('...and his BBs reach you', t.hits >= 2, t);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
