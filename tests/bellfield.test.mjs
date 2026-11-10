@@ -138,7 +138,24 @@ for (const id of IDS) {
   else if (r.defend) {
     check(`${id}: the timer runs out and the player holds (90 s)`, r.won && r.secs >= 89 && r.secs <= 91, r);
     check(`${id}: an attacker reaches the fort (within 5 m of the player)`, r.kids.some(k => k.t !== 'player' && k.minD < 5), r.kids);
-    check(`${id}: an attacker gets round to the fort's open back (x under -22.7)`, r.kids.some(k => k.t !== 'player' && k.minX < -22.7), r.kids);
+    // Tests fix (maps builder, 10 Nov; CI red on 860fb99): since D.57 four of your crew hold the fort beside you, and
+    // in about 1 round in 10 they keep every attacker off its back for all 90 s (locally the first one got round at
+    // 31-65 s in 9 of 10). So a round with nobody round the back plays one more, untaggable, and either counts.
+    let back = r.kids.filter(k => k.t !== 'player' && k.minX < -22.7).map(k => k.n), again = null;
+    if (!back.length) {
+      await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+      await g.spin(60);
+      await g.scenario(id);
+      again = await page.evaluate(() => {
+        const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
+        const kids = Game.scenario.enemies.filter(k => k.team !== 'player'), got = new Set();
+        for (let f = 1; f <= 91 * 60 && Game.mode === 'scenario'; f++) { stepGame(1 / 60); for (const k of kids) if (k.pos.x < -22.7) got.add(k.character?.name); }
+        applyBBHit = orig;
+        return [...got];
+      });
+      back = again;
+    }
+    check(`${id}: an attacker gets round to the fort's open back (x under -22.7; a second round if the first had none)`, back.length > 0, { back, again: again !== null, kids: r.kids });
   } else check(`${id}: Mason comes looking (within 15 m of the player in 60 s)`, r.nearest < 15, r.nearest);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
