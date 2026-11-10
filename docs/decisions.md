@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the ally callouts (builder, 2026-11-09)**
   v1.467 built your B: an ally sent looking at 8 s says so, beside you as his voice, far off over the walkie (two lines
   of his own per kid, five per band). The play lane has no ready item again. What next?
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - C) **Rest the play lane** until you have played v1.458-v1.467.
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It adds play rather than talk or screens, and touches no maps-lane file or Fable area.
-
-## Answered
+  Michael: **A) Two homemade parts: glow-stick tracer, tennis-ball grip** (control room, 9 Nov 2026).
 
 - **What the play lane builds next, after the Mods sort row (builder, 2026-11-09)**
   v1.465 built your B on Owen (an ally with nobody in range by 8 s goes looking, every team match) and v1.466 your B on
