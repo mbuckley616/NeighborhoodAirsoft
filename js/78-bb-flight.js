@@ -827,6 +827,10 @@ function updateKidBoredom(e, dt) {
           e.state = 'advancing';
           e.stateTime = 0;
           e.advanceCheckTimer = 0;
+          // v1.467 (decisions, Michael: B): a kid who leaves his spot says so, in earshot or over the walkie (tryNpcSpeak,
+          // D.10), once the voice cooldowns and the walkie clear (two allies sent the same frame speak one after the
+          // other), or not at all after 6 s; one already on the move says nothing
+          queueNpcLine(e, 'looking', null, 0, 6, true);
         }
         return;
       }

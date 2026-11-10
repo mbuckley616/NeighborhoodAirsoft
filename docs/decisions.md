@@ -5,6 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the ally callouts (builder, 2026-11-09)**
+  v1.467 built your B: an ally sent looking at 8 s says so, beside you as his voice, far off over the walkie (two lines
+  of his own per kid, five per band). The play lane has no ready item again. What next?
+  - A) **Two more homemade parts** *(recommended)*: the glow-stick tracer on the MUZZLE (your BBs leave a faint green
+    streak at night, so you see where they go and so do the kids) and the tennis-ball grip on the UNDER slot (steadier on
+    the move, a little heavier). Each a version, measured with `scripts/balance.mjs` before it ships.
+  - B) **Callouts for the late look too**: an ally whose 25-30 s idle clock sends him (D.19) says a `looking` line
+    instead of a general teammate line, so both ways of heading out sound the same.
+  - C) **Rest the play lane** until you have played v1.458-v1.467.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It adds play rather than talk or screens, and touches no maps-lane file or Fable area.
+
 ## Answered
 
 - **What the play lane builds next, after the Mods sort row (builder, 2026-11-09)**

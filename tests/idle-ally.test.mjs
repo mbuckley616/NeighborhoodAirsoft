@@ -58,6 +58,7 @@ for (let i = 0; i < 2; i++) {
     const kid = Game.scenario.enemies.find(e => e.charId === 'owen' && e.team === 'player');
     if (!kid) return { missing: true };
     const start = { x: kid.pos.x, z: kid.pos.z };
+    VOICE.log = [];   // v1.467: this round's lines only (the log runs on across rounds)
     let lookAt = null, sawFirst = null, t = 0, at15 = 0;
     for (let f = 0; f < 60 * 15 && Game.mode === 'scenario'; f++) {
       stepGame(1 / 60); t += 1 / 60;
@@ -65,12 +66,39 @@ for (let i = 0; i < 2; i++) {
       if (lookAt == null && kid._earlyLook) lookAt = t;
     }
     if (kid.health > 0) at15 = Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z);
-    return { lookAt: lookAt && +lookAt.toFixed(1), sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode };
+    // v1.467: the line he says as he goes (id from the `looking` tables)
+    const said = VOICE.log.filter(l => l.charId === 'owen' && l.category === 'looking').map(l => ({ t: l.t, id: l.id, line: l.said, walkie: !!l.walkie }));
+    return { lookAt: lookAt && +lookAt.toFixed(1), sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode, said };
   }));
 }
 console.log('   portables owen:', JSON.stringify(EARLY));
 check('The Portables: Owen, nobody in sight, goes looking at 8 s (unless a foe came within his range first) and is over 4 m from his start by 15 s',
   EARLY.every(r => !r.missing && (r.sawFirst != null && r.sawFirst < 8 ? r.lookAt == null : (r.lookAt >= 7.5 && r.lookAt < 8.5 && (r.at15 > 4 || r.mode !== 'scenario')))), EARLY);
+
+// v1.467 (decisions, Michael: B, ally callouts for the early look): Owen says he is going, once, within 6 s of leaving
+// (beside you, so in earshot: no walkie), with a line from his own or his band's `looking` table
+check('The Portables: Owen says one `looking` line within 6 s of going looking, in earshot',
+  EARLY.every(r => r.lookAt == null ? r.said.length === 0 : (r.said.length === 1 && r.said[0].t >= r.lookAt - 0.1 && r.said[0].t <= r.lookAt + 6.05 &&
+    /^(owen\.looking\.|band\.low_agg\.looking\.)\d$/.test(r.said[0].id) && !r.said[0].walkie)) && EARLY.some(r => r.said.length === 1), EARLY);
+// out of earshot it comes over the walkie and onto the squad box; two allies sent on one frame both speak, in turn
+const W = await page.evaluate(() => {
+  const S = Game.scenario, P = Game.player.pos;
+  const mates = S.enemies.filter(e => e.team === 'player' && e.health > 0 && !e.vip && e.weapon !== 'sniper').slice(0, 2);
+  mates.forEach((e, i) => {
+    e.pos.x = P.x + 60 + i * 5; e.pos.z = P.z + 40; e.state = 'hiding'; e._earlyLookDone = false; e._bored = false; e._earlyLook = false;
+    e._inReachNow = false; e._voiceCooldownUntil = 0; e._boredAt = { x: e.pos.x, z: e.pos.z };
+  });
+  S.roundTime = Math.max(S.roundTime || 0, 20); VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; VOICE.pending = [];
+  VOICE.log = [];
+  for (const e of mates) updateKidBoredom(e, 1 / 60);
+  for (let f = 0; f < 60 * 8; f++) { S.roundTime += 1 / 60; voiceStep(); }
+  const said = VOICE.log.filter(l => l.category === 'looking');
+  return { mates: mates.map(e => e.charId), states: mates.map(e => e.state), said: said.map(l => ({ c: l.charId, t: l.t, walkie: !!l.walkie, line: l.said })), reply: S.squadReply && S.squadReply.line };
+});
+console.log('   walkie:', JSON.stringify(W));
+check('out of earshot, both allies sent looking say so over the walkie, 4 s apart, and it shows on the squad box',
+  W.mates.length === 2 && W.said.length === 2 && W.said.every(l => l.walkie) && new Set(W.said.map(l => l.c)).size === 2 &&
+  W.said[1].t - W.said[0].t >= 3.9 && W.states.every(s => s === 'advancing') && W.said.some(l => l.line === W.reply), W);
 
 // A sniper ally and the VIP still hold: the lot's Brooke (sniper) is never marched by boredom, nor Protect Ryan's Ryan.
 // v1.275: Night Game's Brooke, the sniper this read, crosses to Seth's side now
