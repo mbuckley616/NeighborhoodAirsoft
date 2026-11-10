@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the tracer and the tennis ball (builder, 2026-11-10)**
+  v1.468-v1.469 built your A: the Glow-Stick Tracer on the MUZZLE (a green streak behind your BBs at night; a kid who sees
+  one within 35 m takes it as a sighting of you) and the Tennis-Ball Grip on the UNDER slot (a quarter tighter walking,
+  an automatic climbs 0.85 as far). The play lane has no ready item again. What next?
+  - A) **Callouts for the late look too** *(recommended)*: an ally whose 25-30 s idle clock sends him (D.19) says a
+    `looking` line, as the 8 s look does since v1.467, so both ways of heading out sound the same. Small, no new lines.
+  - B) **Kids carry homemade parts**: a few kids' guns show a part (Seth's taped mag, Devon's sock stock) and get its
+    effect, so the parts you buy are also what you meet.
+  - C) **Rest the play lane** until you have played v1.464-v1.469.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It finishes the callout you chose on v1.467 for the other way an ally leaves your side, and touches no
+  maps-lane file or Fable area. B is bigger and changes balance.
+
 ## Answered
 
 - **What the play lane builds next, after the ally callouts (builder, 2026-11-09)**
