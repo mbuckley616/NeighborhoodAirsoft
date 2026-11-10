@@ -138,7 +138,24 @@ for (const id of IDS) {
   else if (r.defend) {
     check(`${id}: the timer runs out and the player holds (90 s)`, r.won && r.secs >= 89 && r.secs <= 91, r);
     check(`${id}: an attacker reaches the fort (within 5 m of the player)`, r.kids.some(k => k.t !== 'player' && k.minD < 5), r.kids);
-    check(`${id}: an attacker gets round to the fort's open back (x under -22.7)`, r.kids.some(k => k.t !== 'player' && k.minX < -22.7), r.kids);
+    // Tests fix (maps builder, 10 Nov; CI red on 860fb99): since D.57 four of your crew hold the fort beside you, and
+    // in about 1 round in 10 they keep every attacker off its back for all 90 s (locally the first one got round at
+    // 31-65 s in 9 of 10). So a round with nobody round the back plays one more, untaggable, and either counts.
+    let back = r.kids.filter(k => k.t !== 'player' && k.minX < -22.7).map(k => k.n), again = null;
+    if (!back.length) {
+      await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
+      await g.spin(60);
+      await g.scenario(id);
+      again = await page.evaluate(() => {
+        const orig = applyBBHit; applyBBHit = (bb, who) => { if (who === Game.player) return; return orig(bb, who); };
+        const kids = Game.scenario.enemies.filter(k => k.team !== 'player'), got = new Set();
+        for (let f = 1; f <= 91 * 60 && Game.mode === 'scenario'; f++) { stepGame(1 / 60); for (const k of kids) if (k.pos.x < -22.7) got.add(k.character?.name); }
+        applyBBHit = orig;
+        return [...got];
+      });
+      back = again;
+    }
+    check(`${id}: an attacker gets round to the fort's open back (x under -22.7; a second round if the first had none)`, back.length > 0, { back, again: again !== null, kids: r.kids });
   } else check(`${id}: Mason comes looking (within 15 m of the player in 60 s)`, r.nearest < 15, r.nearest);
   check(`${id}: no kid is wedged in advancing for 4 s or more`, r.kids.every(k => k.wedged < 4), r.kids);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
@@ -146,19 +163,31 @@ for (const id of IDS) {
 }
 // v1.187: Hold the Bulb Fort with the player taggable, standing in the fort and never firing: no tag in the
 // opening seconds (the attackers start 55 m off at the entry)
-const tagged = [];
+// Tests fix (maps builder, 9 Nov; backlog Found in play, v1.465): since D.57 the defend has five attackers, not three
+// (the crew's fills), and the 12 s line was red now and then on main: 12 rounds gave first tags at 11.8-42 s, the
+// 11.8 from Haden at 26 m after walking 27 m down the street with his MP5. That is the fight arriving, not an
+// opening-seconds loss, so the check is now what it meant: no tag inside 8 s. (Not where the tagger stood: CI on
+// 8acb1ea had Fernando's AK tag at 23.6 s from x 26.7, near the entry, well past the opening.) Who tagged is logged.
+const tagged = [], taggers = [];
 for (let i = 0; i < 3; i++) {
   await g.scenario('bellfield_defend_fort');
-  tagged.push(await page.evaluate(() => {
+  const r = await page.evaluate(() => {
+    let by = null; const orig = applyBBHit;
+    applyBBHit = function (bb, c) {
+      if (c === Game.player && !by && bb.enemyRef) by = { n: bb.enemyRef.character?.name, x: +bb.enemyRef.pos.x.toFixed(1), z: +bb.enemyRef.pos.z.toFixed(1) };
+      return orig.apply(this, arguments);
+    };
     let f = 1;
     for (; f <= 95 * 60 && Game.mode === 'scenario' && !(Game.player.hitsTaken > 0) && !Game.scenario.winByTimer; f++) stepGame(1 / 60);
-    return +((f - 1) / 60).toFixed(1);
-  }));
+    applyBBHit = orig;
+    return { t: +((f - 1) / 60).toFixed(1), by };
+  });
+  tagged.push(r.t); if (r.by) taggers.push(r.by);
   await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('lose'); });
   await g.spin(60);
 }
-console.log('  Hold the Bulb Fort, a player standing in the fort first tagged at (s):', JSON.stringify(tagged));
-check('Hold the Bulb Fort: a player standing still is not tagged in the first 12 s', tagged.every(t => t > 12), tagged);
+console.log('  Hold the Bulb Fort, a player standing in the fort first tagged at (s):', JSON.stringify(tagged), 'by', JSON.stringify(taggers));
+check('Hold the Bulb Fort: a player standing still is not tagged in the first 8 s', tagged.every(t => t > 8), tagged);
 // v1.188: Lamplight on Bellfield with the player taggable, standing at the entry: nobody tags him in the opening seconds
 const nightTag = [];
 for (let i = 0; i < 3; i++) {
