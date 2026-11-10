@@ -130,19 +130,19 @@ check('the shotgun: the off hand is on the pump and slides back with it', pump.p
 await page.evaluate(() => endScenario('forfeit'));
 await page.waitForFunction(() => Game.mode !== 'scenario');
 
-// --- a PVC foregrip or a taped mag (twin or long) takes the off hand on the MP5; a sling leaves it on the handguard
+// --- a PVC foregrip, a taped mag (twin or long) or a tennis ball (v1.469) takes the off hand on the MP5; a sling leaves it on the handguard
 const U = {};
-for (const part of ['foregrip', 'taped_mag', 'long_mag', 'sling']) {   // v1.426: the long mag
+for (const part of ['foregrip', 'taped_mag', 'long_mag', 'tennis_grip', 'sling']) {   // v1.426: the long mag; v1.469: the tennis ball
   await setGun('mp5', part);
   await g.scenario('bunratty_sean');
   await g.spin(5);
   U[part] = await probe('gun');
-  if (part === 'foregrip') await g.shot('fp-hands-mp5-foregrip');
+  if (part === 'foregrip' || part === 'tennis_grip') await g.shot('fp-hands-mp5-' + part);
   await page.evaluate(() => endScenario('forfeit'));
   await page.waitForFunction(() => Game.mode !== 'scenario');
 }
 console.log('   mp5 under:', JSON.stringify(Object.fromEntries(Object.entries(U).map(([k, v]) => [k, { l: v.l.visible, under: v.under.visible, gap: v.under.contact }]))));
-for (const part of ['foregrip', 'taped_mag', 'long_mag']) {
+for (const part of ['foregrip', 'taped_mag', 'long_mag', 'tennis_grip']) {
   check(`the MP5 with a ${part}: the off hand is on it (gap under 3 mm), the handguard hand hidden`, U[part].under.visible && !U[part].l.visible && U[part].under.contact <= 0.003, U[part].under);
 }
 check('the MP5 with a sling: the off hand stays on the handguard', U.sling.l.visible && !U.sling.under.visible, U.sling.l);

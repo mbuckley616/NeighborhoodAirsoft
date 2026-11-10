@@ -788,6 +788,25 @@ function buildUnderParts(group, mount, measured, gunType) {
     clamp.rotation.x = Math.PI / 2; clamp.position.set(0, y0 - 0.006, z0); g.add(clamp);
     meshes.foregrip = g;
   }
+  // v1.469 Tennis-ball grip: a fuzzy yellow ball slit along its seam and pushed onto a fold of duct tape that wraps the
+  // handguard, so it hangs just under it where the off hand closes on it (as on the PVC foregrip), its white seam round it
+  {
+    const g = new THREE.Group();
+    const R = 0.015, by = y0 - 0.006 - R;   // the ball's centre: under a 6 mm fold of tape
+    const ballMat = new THREE.MeshStandardMaterial({ color: 0xd4ec3c, roughness: 1.0 });
+    const seamMat = new THREE.MeshStandardMaterial({ color: 0xf2f2e6, roughness: 0.9 });
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(R, 16, 12), ballMat);
+    ball.position.set(0, by, z0); ball.userData.tennisBall = true; g.add(ball);
+    const seam = new THREE.Mesh(new THREE.TorusGeometry(R * 1.01, 0.0011, 6, 24), seamMat);
+    seam.position.copy(ball.position); seam.rotation.set(0.5, 0.9, 0); g.add(seam);
+    const fold = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.02), tapeMat);   // the tape from the handguard into the slit
+    fold.position.set(0, y0 - 0.004, z0); g.add(fold);
+    for (const dz of [-1, 1]) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.008, 0.006), tapeMat);
+      band.position.set(0, y0 + 0.002, z0 + dz * 0.013); g.add(band);
+    }
+    meshes.tennis_grip = g;
+  }
   for (const k in meshes) { meshes[k].visible = false; meshes[k].userData.underPart = k; group.add(meshes[k]); }
   return { meshes, bottom: y0, frontZ: m.frontZ, frontY: m.frontY };
 }
