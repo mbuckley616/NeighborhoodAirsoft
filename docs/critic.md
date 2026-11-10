@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -2777,5 +2777,85 @@ question). No instructions aimed at the critic, and nothing that tried to redire
   list needs Michael's deploy.
 - v1.461-v1.463 (recorded voices). There are no clips yet, so I couldn't judge them.
 - v1.464 (the sort row). Works as above. The look is Michael's.
+
+No proposals this run.
+
+## 2026-11-10 — The Glow-Stick Tracer at night (Night Prowl, Night Swim); the 8 s ally look and its callouts at Price Check, After Hours at the Pool and Night Swim; Trey on Overwatch's parked car (v1.469)
+
+Played main at v1.469. `auto/build` has nothing ahead of main. Smoke passed (1 of 1); it covers NEW GAME → mirror →
+room, so I didn't play the first-timer path again by hand (it was walked end to end on 9 Nov). 23 bot rounds and 13
+probe rounds. No page errors in any of them. One bug filed.
+
+**The bot.** Rebuilt for this run. It racks the spring gun with a real hold and release, then fires with a click. It
+aims at the chest of the nearest foe within 40 m who can see it. Otherwise it walks at the nearest foe. It refills its
+mag when it runs dry: the loadout has no spare mag, so this is a shortcut and not the game's reload. A note for later
+runs: a win here comes through `endScenarioLater`'s 600 ms `setTimeout`. A loop that steps the game inside one
+`evaluate` never lets that timer fire, so the match stays `scenario` with every foe out. I count `sc.wonRound ===
+Game.roundSeq` as the win. One Night Prowl round looked like a hung match until I found this. It isn't a game bug.
+
+**The Glow-Stick Tracer (v1.468).** The part does what the devlog says. Every one of my shots with it drew a streak
+(25 of 25, 6 of 6 and so on), and none drew one without it. In Night Prowl, Seth and Devon logged 50-56 sightings each
+in a 25-shot round. Bot rounds alone can't judge the trade, though. At night my bot sees almost no one. First sight came
+at 15-29 s in Night Prowl and 12-78 s in Night Swim, and most rounds were decided after 1-13 shots:
+
+| Match | With the tracer | Bare |
+|---|---|---|
+| Night Prowl (`winnmark_night_prowl`, 1 life) | won 1 of 4, both out at 33 s; 1-6 shots a round | won 0 of 4; 2-4 shots a round |
+| Night Swim (`club_night_4v4`, crew 5 v 7) | won 0 of 3 (one lost, two still running at 150 s with 6 of 7 foes out) | won 1 of 3 (the crew took all 7) |
+
+So I ran a probe for the cost side. In Night Swim, at your start, I made you untaggable and stopped your crew firing.
+From 5 s you fire one shot a second at the nearest foe for 40 s, aimed a little wide. Three runs each:
+
+| | First hit on you | BBs fired at you | Hits | Foes on you (mean) |
+|---|---|---|---|---|
+| Tracer | 16.2, 16.4, 23.7 s | 410, 419, 463 | 133-276 | 2.3-3.4 |
+| Bare | 22.2, 25.4, 25.8 s | 123, 254, 309 | 86-198 | 2.6-3.5 |
+
+The other side saw the streak 324-358 times a run. With it they found you 2-9 s sooner and put about 1.5-3× as many
+BBs your way. The mean number of kids targeting you hardly moved, which fits the 3 s pull being small next to the fight
+coming to you anyway. That is the trade v1.468 describes, and it's a large one for a $6 part. Whether the streak helps
+you walk your shots in enough to pay for it is for a person with a mouse. My picture of the streak didn't come out: one
+shot, already gone; only the sticks' green glow shows at the muzzle.
+
+**The 8 s ally look and its callouts (v1.465, v1.467).** This was the Still open's own list of starts out of sight of
+the fight: Price Check, After Hours at the Pool and Night Swim (Friday Night Lights was measured on 9 Nov).
+- Owen left his start at 9.5 s in all 9 rounds, at all three maps. Mitchell left at 9.3-12.1 s. The others were moving
+  by 0.6-2.8 s anyway.
+- Every round had one or two `looking` lines and no more: "Fine. I'll go to them.", "Hm. Nobody's coming. I'll go.",
+  "I'll find a better spot.", "No targets. Moving up." They were heard in earshot, never over the walkie, because each
+  kid was still beside you.
+- At Price Check the second line always came at 11.27-11.28 s, 3.25 s after the first. At Night Swim the gap was
+  1.5 s. Two lines a round at the 8-11 s mark doesn't read as chatter in the log. How it sounds is for an ear.
+- Price Check was won 3 of 3 (40-88 s). After Hours at the Pool was lost 3 of 3 (33-74 s): the bot walked straight
+  into the far side's lit deck.
+
+**Trey on Overwatch, the parked car (v1.456's Still open).** I checked it in the real match: Seth taken out, you
+untaggable at four spots round Trey's step, 40 s each.
+- At 45 m due east (118.5, −8.8), Trey has an eye line to you and fires 14 BBs. All 14 stop 15 m out in the sedan on
+  the driveway in front of him: 0 hits. `docs/critic/2026-11-10-overwatch-car-line.png` is that spot. The crosshair is
+  on Trey, behind the car.
+- At 40 m, 10° off the line, he hit 9 of 14. At 35 m, −10° off, he hit 10 of 13.
+- At 50 m he had no eye line and fired once.
+
+So it's only the spots where the car sits in his muzzle line. It costs a player nothing, but it reads as a sniper
+wasting the round, which is what v1.456 warned of. Filed under Found in play (play lane: the clear-line check before a
+shot).
+
+**itch.io.** Still unreachable from the cloud: the egress proxy refused mbuckley616.itch.io (connect_rejected, and DNS
+fails for WebFetch). No comments read. The host has to be allowed in this routine's network settings before I can read
+them.
+
+**Slack.** Read the last day: v1.465-v1.469, the producer's posts, the maps builder's bellfield fix. Nothing was aimed
+at the critic, and no message tried to redirect a session.
+
+**The latest devlog entries' Still open, from my side.**
+- v1.465 (8 s look). Judged headless: it fires at 9.3-9.5 s at all three starts and leaves no ally idle. Whether 8 s
+  feels right is for play.
+- v1.466 (Mods sort row). Not replayed. Its suite covers the links. The look is Michael's.
+- v1.467 (callouts). One or two lines a round, 1.5-3.3 s apart, in earshot. How they sound needs a real browser voice.
+- v1.468 (tracer). The cost side is measured above: found 2-9 s sooner, about 1.5-3× the BBs. The benefit (walking
+  your shots in) needs eyes and a mouse. Online without the streak: not judged.
+- v1.469 (tennis grip). Not played. Its effect is a spread multiplier that the suite measures exactly. Whether the
+  off hand hiding the ball matters is Michael's eye; the suite's screenshot is `tests/out/fp-hands-mp5-tennis_grip.png`.
 
 No proposals this run.
