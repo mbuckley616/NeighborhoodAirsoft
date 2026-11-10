@@ -59,16 +59,17 @@ for (let i = 0; i < 2; i++) {
     if (!kid) return { missing: true };
     const start = { x: kid.pos.x, z: kid.pos.z };
     VOICE.log = [];   // v1.467: this round's lines only (the log runs on across rounds)
-    let lookAt = null, sawFirst = null, t = 0, at15 = 0;
+    let lookAt = null, sawFirst = null, t = 0, at15 = 0, from = null;
     for (let f = 0; f < 60 * 15 && Game.mode === 'scenario'; f++) {
+      const before = kid.state;
       stepGame(1 / 60); t += 1 / 60;
       if (sawFirst == null && kid._inReachNow) sawFirst = t;
-      if (lookAt == null && kid._earlyLook) lookAt = t;
+      if (lookAt == null && kid._earlyLook) { lookAt = t; from = before; }
     }
     if (kid.health > 0) at15 = Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z);
     // v1.467: the line he says as he goes (id from the `looking` tables)
     const said = VOICE.log.filter(l => l.charId === 'owen' && l.category === 'looking').map(l => ({ t: l.t, id: l.id, line: l.said, walkie: !!l.walkie }));
-    return { lookAt: lookAt && +lookAt.toFixed(1), sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode, said };
+    return { lookAt: lookAt && +lookAt.toFixed(1), from, sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode, said };
   }));
 }
 console.log('   portables owen:', JSON.stringify(EARLY));
@@ -76,10 +77,11 @@ check('The Portables: Owen, nobody in sight, goes looking at 8 s (unless a foe c
   EARLY.every(r => !r.missing && (r.sawFirst != null && r.sawFirst < 8 ? r.lookAt == null : (r.lookAt >= 7.5 && r.lookAt < 8.5 && (r.at15 > 4 || r.mode !== 'scenario')))), EARLY);
 
 // v1.467 (decisions, Michael: B, ally callouts for the early look): Owen says he is going, once, within 6 s of leaving
-// (beside you, so in earshot: no walkie), with a line from his own or his band's `looking` table
-check('The Portables: Owen says one `looking` line within 6 s of going looking, in earshot',
-  EARLY.every(r => r.lookAt == null ? r.said.length === 0 : (r.said.length === 1 && r.said[0].t >= r.lookAt - 0.1 && r.said[0].t <= r.lookAt + 6.05 &&
-    /^(owen\.looking\.|band\.low_agg\.looking\.)\d$/.test(r.said[0].id) && !r.said[0].walkie)) && EARLY.some(r => r.said.length === 1), EARLY);
+// (beside you, so in earshot: no walkie), with a line from his own or his band's `looking` table. v1.471 fix-up: only when
+// he leaves a spot (hiding or peeking); one already on the move at 8 s says nothing, by design (a round failed on that)
+check('The Portables: Owen says one `looking` line within 6 s of going looking from his spot, in earshot',
+  EARLY.every(r => r.lookAt == null || (r.from !== 'hiding' && r.from !== 'peeking') ? r.said.length === 0 : (r.said.length === 1 && r.said[0].t >= r.lookAt - 0.1 && r.said[0].t <= r.lookAt + 6.05 &&
+    /^(owen\.looking\.|band\.low_agg\.looking\.)\d$/.test(r.said[0].id) && !r.said[0].walkie)), EARLY);
 // out of earshot it comes over the walkie and onto the squad box; two allies sent on one frame both speak, in turn
 const W = await page.evaluate(() => {
   const S = Game.scenario, P = Game.player.pos;
@@ -99,6 +101,39 @@ console.log('   walkie:', JSON.stringify(W));
 check('out of earshot, both allies sent looking say so over the walkie, 4 s apart, and it shows on the squad box',
   W.mates.length === 2 && W.said.length === 2 && W.said.every(l => l.walkie) && new Set(W.said.map(l => l.c)).size === 2 &&
   W.said[1].t - W.said[0].t >= 3.9 && W.states.every(s => s === 'advancing') && W.said.some(l => l.line === W.reply), W);
+
+// v1.471 (decisions, Michael: A, callouts for the late look too): an ally the 25-30 s clock sends says a `looking` line as
+// he leaves his spot, as the 8 s look does, and no taunt; a kid of the other side the clock sends still taunts
+const L = await page.evaluate(() => {
+  const S = Game.scenario, P = Game.player.pos;
+  const prep = (e, x, z) => {
+    e.pos.x = x; e.pos.z = z; e.state = 'hiding'; e._earlyLookDone = true; e._bored = false; e._inReachNow = false;
+    e._voiceCooldownUntil = 0; e._boredAt = { x, z }; e._boredAfter = 25; e._boredT = 25.5;
+  };
+  const out = {};
+  for (const [key, x, z] of [['near', P.x + 3, P.z + 2], ['far', P.x + 60, P.z + 40]]) {
+    const mate = S.enemies.find(e => e.team === 'player' && e.health > 0 && !e.vip && e.weapon !== 'sniper' && e.role !== 'defender');
+    prep(mate, x, z);
+    S.roundTime = Math.max(S.roundTime || 0, 40) + 10; VOICE.globalCooldownUntil = 0; VOICE.walkieUntil = 0; VOICE.pending = []; VOICE.log = [];
+    updateKidBoredom(mate, 1 / 60);
+    const t0 = S.roundTime;
+    for (let f = 0; f < 60 * 8; f++) { S.roundTime += 1 / 60; voiceStep(); }
+    out[key] = { c: mate.charId, state: mate.state, bored: !!mate._bored, said: VOICE.log.filter(l => l.charId === mate.charId).map(l => ({ cat: l.category, id: l.id, dt: +(l.t - t0).toFixed(2), walkie: !!l.walkie })) };
+  }
+  // one already on the move says nothing
+  const mover = S.enemies.find(e => e.team === 'player' && e.health > 0 && !e.vip && e.weapon !== 'sniper' && e.role !== 'defender');
+  prep(mover, P.x + 3, P.z + 2); mover.state = 'flanking';
+  S.roundTime += 10; VOICE.globalCooldownUntil = 0; VOICE.pending = []; VOICE.log = [];
+  updateKidBoredom(mover, 1 / 60);
+  for (let f = 0; f < 60 * 8; f++) { S.roundTime += 1 / 60; voiceStep(); }
+  out.moving = { bored: !!mover._bored, said: VOICE.log.filter(l => l.charId === mover.charId).map(l => l.category) };
+  return out;
+});
+console.log('   late look:', JSON.stringify(L));
+check('the 25-30 s clock: an ally leaving his spot says one `looking` line (no taunt) within 6 s, in earshot beside you and over the walkie far off',
+  L.near.bored && L.near.state === 'advancing' && L.near.said.length === 1 && L.near.said[0].cat === 'looking' && !L.near.said[0].walkie && L.near.said[0].dt <= 6.05 &&
+  L.far.bored && L.far.said.length === 1 && L.far.said[0].cat === 'looking' && L.far.said[0].walkie && L.far.said[0].dt <= 6.05, L);
+check('the 25-30 s clock: an ally already on the move says nothing', L.moving.bored && L.moving.said.length === 0, L);
 
 // A sniper ally and the VIP still hold: the lot's Brooke (sniper) is never marched by boredom, nor Protect Ryan's Ryan.
 // v1.275: Night Game's Brooke, the sniper this read, crosses to Seth's side now

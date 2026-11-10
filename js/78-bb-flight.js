@@ -872,7 +872,11 @@ function updateKidBoredom(e, dt) {
   if (sideLeft > 2 && !ally && !e.crewFill) return;   // v1.184: an ally needn't be the last
   e._bored = true;
   e._boredCount = (e._boredCount || 0) + 1;
-  tryNpcSpeak(e, 'taunt');
+  // v1.471 (decisions, Michael: A, "callouts for the late look too"): an ally of yours sent by this clock says a `looking`
+  // line as he leaves his spot, the way the 8 s look does (v1.467): in earshot or over the walkie, within 6 s or not at
+  // all; one already on the move says nothing. Only the other side taunts here, as before.
+  if (!ally) tryNpcSpeak(e, 'taunt');
+  else if (e.state === 'hiding' || e.state === 'peeking') queueNpcLine(e, 'looking', null, 0, 6, true);
   if (e.state === 'hiding' || e.state === 'peeking') {
     e.state = 'advancing';
     e.stateTime = 0;
