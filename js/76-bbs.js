@@ -328,6 +328,13 @@ function spawnEnemyBB(enemy, targetPos) {
       const tdx = targetPos.x - muzzlePos.x, tdz = targetPos.z - muzzlePos.z;
       const flat = Math.hypot(tdx, tdz);
       const reach = Math.min(3.0, flat - 0.3);
+      // v1.470 (Found in play, critic 10 Nov): with an eye line on his target, the muzzle's line is cast out to 3 m short
+      // of the target, not only its first 3 m. Trey on Overwatch's eye line cleared the sedan 15 m in front of his step,
+      // his muzzle's didn't, and all 14 of his BBs in 40 s stopped in its cabin. The last 3 m stay out of it, so a kid still
+      // suppresses the wall you are behind; with no eye line (covering fire at a last-seen spot) nothing changes.
+      // Picket fences (`bbPass`) are left out of that far cast, as they are out of the eye line: a BB goes through them.
+      const farReach = enemy._hasLOSNow && flat - 3.0 > reach ? flat - 3.0 : 0;
+      const farObs = farReach ? obs.filter(o => !o.bbPass) : null;
       if (reach > 0.2) {
         let y = muzzlePos.y, clear = false;
         for (; y <= capY + 1e-6; y += 0.1) {
@@ -339,7 +346,13 @@ function spawnEnemyBB(enemy, targetPos) {
           // spread (6–12 cm up or down at 3 m), so a line that just skimmed a bin's
           // lip still put a share of shots into it (Sean in the Bunratty 2v2).
           if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach &&
-              raycastObstacles(muzzlePos.x, y - 0.1, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) { clear = true; break; }
+              raycastObstacles(muzzlePos.x, y - 0.1, muzzlePos.z, dx / dl, dy / dl, dz / dl, rayReach, obs) >= rayReach) {
+            if (!farReach) { clear = true; break; }
+            const farRay = farReach * dl / (flat || 1);
+            // and 15 cm under it: the BB's flight sags under the straight line (Trey's, 10 cm by the sedan 15 m out)
+            if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, farRay, farObs) >= farRay &&
+                raycastObstacles(muzzlePos.x, y - 0.15, muzzlePos.z, dx / dl, dy / dl, dz / dl, farRay, farObs) >= farRay) { clear = true; break; }
+          }
         }
         // can't see past it: hold fire. v1.112: and let go of the trigger, so an
         // auto's queued follow-ups don't each try the same blocked line again.
