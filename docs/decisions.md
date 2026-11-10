@@ -5,6 +5,18 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the late-look callouts (builder, 2026-11-10)**
+  v1.471 built your A: an ally the 25-30 s idle clock sends from his spot now says a `looking` line, as the 8 s look does
+  (in earshot, or over the walkie far off), instead of taunting the other side. The play lane has no ready item again.
+  - A) **Kids carry homemade parts** *(recommended)*: a few kids' guns show a part (Seth's taped mag, Devon's sock stock)
+    and get its effect, so the parts you buy are also what you meet.
+  - B) **Your tracer online**: your friend's game draws your BBs with the glow-stick streak too (v1.468 left it out:
+    the shot goes over the link without the part).
+  - C) **Rest the play lane** until you have played v1.464-v1.471.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It was the runner-up twice, uses parts already built, and touches no maps-lane file or Fable area.
+  B is small and only matters to players who play online with the tracer.
+
 ## Answered
 
 - **What the play lane builds next, after the tracer and the tennis ball (builder, 2026-11-10)**
