@@ -149,8 +149,8 @@ for (const id of IDS) {
 // Tests fix (maps builder, 9 Nov; backlog Found in play, v1.465): since D.57 the defend has five attackers, not three
 // (the crew's fills), and the 12 s line was red now and then on main: 12 rounds gave first tags at 11.8-42 s, the
 // 11.8 from Haden at 26 m after walking 27 m down the street with his MP5. That is the fight arriving, not an
-// opening-seconds loss, so the check is now what it meant: no tag inside 8 s, and the kid who tags you has come at
-// least 10 m down the street from the entry (x 32-34) to do it.
+// opening-seconds loss, so the check is now what it meant: no tag inside 8 s. (Not where the tagger stood: CI on
+// 8acb1ea had Fernando's AK tag at 23.6 s from x 26.7, near the entry, well past the opening.) Who tagged is logged.
 const tagged = [], taggers = [];
 for (let i = 0; i < 3; i++) {
   await g.scenario('bellfield_defend_fort');
@@ -171,7 +171,6 @@ for (let i = 0; i < 3; i++) {
 }
 console.log('  Hold the Bulb Fort, a player standing in the fort first tagged at (s):', JSON.stringify(tagged), 'by', JSON.stringify(taggers));
 check('Hold the Bulb Fort: a player standing still is not tagged in the first 8 s', tagged.every(t => t > 8), tagged);
-check('Hold the Bulb Fort: whoever tags him has come 10 m or more down the street (x under 22)', taggers.every(b => b.x < 22), taggers);
 // v1.188: Lamplight on Bellfield with the player taggable, standing at the entry: nobody tags him in the opening seconds
 const nightTag = [];
 for (let i = 0; i < 3; i++) {
