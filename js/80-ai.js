@@ -591,6 +591,8 @@ const THREAT_SWITCH_MARGIN = 4.0; // FFA: new target must be this much better (m
 const SHOT_AT_BONUS = 12.0;       // m-equiv attractiveness for "this combatant is shooting at me"
 const LOS_BONUS = 5.0;            // m-equiv attractiveness for "I can see this combatant"
 const FOCUS_BONUS = 8.0;          // m-equiv attractiveness for the team's shared focus target
+const TRACER_PULL_S = 3.0;        // v1.468: how long a kid who saw your tracer at night keeps turning to you
+const TRACER_FRESH_S = 0.3;       // v1.468: how long after seeing it he takes it as a fresh sighting of you
 
 function _combatantPos(c) { return c.pos; }
 function _combatantChestY(c) {
@@ -650,6 +652,8 @@ function threatScore(e, c) {
   let score = dist;
   // Being shot at by c is the strongest pull (survival-first).
   if (e._shotAtBy && e._shotAtBy.has && e._shotAtBy.has(c)) score -= SHOT_AT_BONUS;
+  // v1.468: a kid who just saw your glow-stick tracer at night turns to you as if you'd shot at him
+  else if (c === Game.player && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_PULL_S) score -= SHOT_AT_BONUS;
   // Prefer targets we can actually see (can't fight through a wall).
   if (_hasLOSTo(e, c)) score -= LOS_BONUS;
   // Allied focus-fire: the team's called target is more attractive.
@@ -1462,6 +1466,12 @@ function updateEnemies(dt) {
         e._lastSawPlayer = e.stateTime !== undefined ? aiNow() : 0;   // v1.176: simulated time
         e._lastSeenPos = { x: tgt.pos.x, y: tgt.pos.y, z: tgt.pos.z };
         e._lastSeenHeadUp = e._sightHead ? sightY - tgt.pos.y : null;   // v1.385: suppress the wall's top where his head was
+      } else if (tgt.isPlayer && e._tracerFrom && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_FRESH_S) {
+        // v1.468: he saw your glow-stick tracer's streak go by in the dark: he knows where it came from, as if he'd seen you
+        // there, so he answers it as he would a kid who just ducked (covering fire at that spot, a quick peek)
+        e._lastSawPlayer = e._tracerSawAt;
+        e._lastSeenPos = { x: e._tracerFrom.x, y: e._tracerFrom.y, z: e._tracerFrom.z };
+        e._lastSeenHeadUp = null;
       }
       // recentlySpotted = saw the player within the last RECENT_SPOT_WINDOW sec.
       // v1.36e: extended 1.8 → 3.2s so a kid who's seen you keeps pressuring the

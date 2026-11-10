@@ -277,6 +277,14 @@ const ATTACHMENTS = {
   // of the stock, taped on. It lifts your cheek to the sights, so the gun comes up to your eye quicker; the effect was
   // left to the builder. It takes the stock slot, so it is a trade against the sock-padded stock.
   noodle_pad: { id:'noodle_pad', name:'Foam-Noodle Cheek Pad', slot:'stock', price:5, weight:0.2, adsSpeedMult:1.25, desc:'A length of green pool noodle, slit down one side and pushed over the top of the stock, with a wrap of duct tape at each end. Your cheek lands on it right behind the sights, so the gun comes up to your eye a quarter quicker. It does nothing for your aim once you’re there. Sits on the stock of any long gun.' },
+  // v1.468 (Michael: A, two more homemade parts, 9 Nov 2026): two glow sticks cracked and taped along the end of the
+  // barrel, so every BB leaves through the light. At night your shots draw a faint green streak: you see where they go,
+  // and so does a kid who sees one go by (tracerSeen, 78-bb-flight): he knows where it came from. By day it barely shows.
+  glow_tracer: { id:'glow_tracer', name:'Glow-Stick Tracer', slot:'muzzle', price:6, weight:0.1, tracer:true, desc:'Two glow sticks, cracked and duct-taped along the end of the barrel, so every BB leaves through the green light. At night your shots draw a faint green streak, so you can see where they go. So can the kids: one who sees a streak go by in the dark knows where it came from. By day you can barely see it. Sits on the muzzle of any long gun.' },
+  // v1.469 (Michael: A, two more homemade parts, 9 Nov 2026): a tennis ball slit along its seam and pushed up over the
+  // handguard, taped on. Your off hand has something to squeeze: shots stay a quarter tighter while you walk and an
+  // automatic climbs a little less; the ball is a little to carry. The PVC foregrip steadies the walk more but weighs more.
+  tennis_grip: { id:'tennis_grip', name:'Tennis-Ball Grip', slot:'under', price:8, weight:0.3, moveSpreadMult:0.75, climbMult:0.85, desc:'An old tennis ball from the garage, slit along its seam and pushed up over the handguard, with a wrap of duct tape either side. Your off hand has something to squeeze: your shots stay a quarter tighter while you walk, and an automatic climbs a little less as you hold the trigger. It’s 0.3 lb more to carry. Long guns only.' },
 };
 
 // How many SIGHT (top) and RAIL (side) slots each gun has. Sight is always 1;

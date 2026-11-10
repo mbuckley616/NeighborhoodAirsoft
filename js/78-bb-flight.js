@@ -31,6 +31,7 @@ function updateBBs(dt) {
     bb.pos.y += bb.vel.y * dt;
     bb.pos.z += bb.vel.z * dt;
     bb.mesh.position.copy(bb.pos);
+    if (bb._streak) updateTracerStreak(bb);   // v1.468: the glow-stick tracer
 
     // v1.67: BB whistle. While the BB is airborne and near the player, maintain a
     // faint air-rush hiss panned + attenuated by distance. Only live (canDamage)
@@ -247,9 +248,11 @@ function updateBBs(dt) {
     if (!removed && bb.canDamage) {
       const NEAR_MISS_R2 = 2.5 * 2.5;
       const now = aiNow();   // v1.176: simulated time, not the wall clock
+      const tracerLook = bb._tracer && Game.scenario.timeOfDay === 'night';   // v1.468
       for (const e of Game.scenario.enemies) {
         if (e.health <= 0 || e.state === 'retreating') continue;
         if ((e.team || 'enemy') === bb.team) continue;       // own team's round
+        if (tracerLook) tracerSeen(e, bb, now);
         const dxm = bb.pos.x - e.pos.x, dzm = bb.pos.z - e.pos.z;
         const dym = bb.pos.y - ((e.pos.y || 0) + 1.0);       // ~chest height
         const d2m = dxm*dxm + dzm*dzm + dym*dym;
@@ -417,6 +420,24 @@ function applyBounce(bb, oldPos, hitAxis, bounceEnergy, o) {
   }
 }
 
+// v1.468 (Michael: A, two more homemade parts): a kid who sees your glow-stick tracer's streak go by at night knows
+// where it came from. A kid of another side within TRACER_SEE_R of the BB, with a clear line from his eyes to it, looks
+// at most every TRACER_LOOK_S; when he sees it he notes where you stood when you fired (updateEnemies takes it as a
+// sighting of you, threatScore as a pull toward you). By day nothing: he could see you anyway, and the streak barely shows.
+const TRACER_SEE_R = 35, TRACER_LOOK_S = 0.2;
+function tracerSeen(e, bb, now) {
+  if (e.behavior === 'tagger') return;
+  if (e._tracerLookAt != null && now - e._tracerLookAt < TRACER_LOOK_S) return;
+  const dx = bb.pos.x - e.pos.x, dz = bb.pos.z - e.pos.z;
+  if (dx * dx + dz * dz > TRACER_SEE_R * TRACER_SEE_R) return;
+  e._tracerLookAt = now;
+  const sY = (e.mesh && e.mesh.scaleY) ?? 1.0, eyeY = (e.pos.y || 0) + 1.35 * sY;
+  if (!hasLineOfSight(e.pos.x, eyeY, e.pos.z, bb.pos.x, bb.pos.y, bb.pos.z, Game.player.obstacles)) return;
+  e._tracerSawAt = now;
+  e._tracerFrom = bb._tracerFrom;
+  e._tracerSeen = (e._tracerSeen || 0) + 1;   // tests
+}
+
 // Stick the BB to the surface — pin to entry face and add to persistent list
 const STUCK_LIFETIME = 30.0;   // seconds
 const MAX_STUCK_BBS = 60;
@@ -444,6 +465,7 @@ function applyStick(bb, oldPos, hitAxis, o) {
     }
   }
   bb.mesh.position.copy(bb.pos);
+  if (bb._streak) bb._streak.visible = false;   // v1.468
   if (!bb.mesh._glow) bb.mesh.material.color.setHex(0xc8b878);
   bb.vel.set(0, 0, 0);
   bb.canDamage = false;

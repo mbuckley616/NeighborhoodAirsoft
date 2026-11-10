@@ -37,6 +37,7 @@ function fireBB() {
   const bip = getUnderPart(Game.persist.equipped.gun);
   const steady = (1 - Game.player.ads * (1 - underPartMult('adsSteadyMult'))) *
     (bip && bip.crouchSpreadMult ? 1 - (Game.gun._bipodK || 0) * (1 - bip.crouchSpreadMult) : 1);
+  const tracer = !!(getGunPart(Game.persist.equipped.gun, 'muzzle') || {}).tracer;   // v1.468
   for (let i = 0; i < pelletCount; i++) {
     const vel = forward.clone().multiplyScalar(Game.gun.muzzleVelocity * gasMult);
     // base velocity jitter (gun's intrinsic accuracy) + movement cone (sway).
@@ -48,6 +49,7 @@ function fireBB() {
     // Ship B: tag with the player's team (combatantView resolves it; 'player'
     // today, but reads a future Game.player.team if Ship C sets one).
     const bb = makeBB(pos.clone(), vel, 'player', null, null, combatantView(Game.player).team);
+    if (tracer) addTracerStreak(bb);   // v1.468: the glow-stick tracer
     Game.scenario.bbs.push(bb);
     if (Net.active) netShot(bb);   // v1.230 (D.2): the same shot flies in your friend's game
   }
@@ -428,6 +430,41 @@ function spawnBBMesh(pos, color, glow) {
   if (glow) m._glow = true;   // marker: tracer look + eligible for a pool light
   Game.scene.add(m);
   return m;
+}
+
+// v1.468 (Michael: A, two more homemade parts, 9 Nov 2026): the Glow-Stick Tracer's streak. A thin green cone rides
+// behind the BB, its wide end on the BB and its point up to TRACER_LEN back along the way it came; bright and unfogged at
+// night, barely there by day. It is a child of the BB's mesh, so it goes when the BB does; it hides once the BB has hit
+// something (updateTracerStreak, applyStick). Where the BB came from rides with it, for the kids who see it (tracerSeen).
+const TRACER_LEN = 1.4;
+let _tracerGeom = null, _tracerMatNight = null, _tracerMatDay = null;
+const _tracerUp = new THREE.Vector3(0, 1, 0), _tracerDir = new THREE.Vector3();
+function addTracerStreak(bb) {
+  if (!_tracerGeom) {
+    _tracerGeom = new THREE.ConeGeometry(0.02, 1, 6, 1, true);
+    _tracerGeom.translate(0, 0.5, 0);   // the wide end at the origin (the BB), the point at +1
+    _tracerMatNight = new THREE.MeshBasicMaterial({ color: 0x8dff6a, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, side: THREE.DoubleSide });
+    _tracerMatDay = new THREE.MeshBasicMaterial({ color: 0x8dff6a, transparent: true, opacity: 0.12, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  }
+  const night = Game.scenario && Game.scenario.timeOfDay === 'night';
+  const s = new THREE.Mesh(_tracerGeom, night ? _tracerMatNight : _tracerMatDay);
+  s.visible = false;   // shown from its first step, once it has a direction
+  s.userData.tracerStreak = true;
+  bb.mesh.add(s);
+  bb._streak = s;
+  bb._tracer = true;
+  bb._tracerFrom = { x: Game.player.pos.x, y: Game.player.pos.y, z: Game.player.pos.z };
+}
+// once a step from updateBBs, after the BB has moved
+function updateTracerStreak(bb) {
+  const s = bb._streak;
+  if (!bb.canDamage) { s.visible = false; return; }
+  const sp = bb.vel.length();
+  if (sp < 0.5) { s.visible = false; return; }
+  _tracerDir.copy(bb.vel).multiplyScalar(-1 / sp);
+  s.quaternion.setFromUnitVectors(_tracerUp, _tracerDir);
+  s.scale.set(1, Math.max(0.05, Math.min(TRACER_LEN, bb.pos.distanceTo(bb.spawnPos))), 1);
+  s.visible = true;
 }
 
 // v1.41: landed glow BBs keep a slightly dimmer emissive (still clearly lit).
