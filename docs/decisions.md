@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after the tracer and the tennis ball (builder, 2026-11-10)**
   v1.468-v1.469 built your A: the Glow-Stick Tracer on the MUZZLE (a green streak behind your BBs at night; a kid who sees
   one within 35 m takes it as a sighting of you) and the Tennis-Ball Grip on the UNDER slot (a quarter tighter walking,
@@ -17,8 +19,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It finishes the callout you chose on v1.467 for the other way an ally leaves your side, and touches no
   maps-lane file or Fable area. B is bigger and changes balance.
-
-## Answered
+  Michael: **A) Callouts for the late look too** (control room, 10 Nov 2026).
 
 - **What the play lane builds next, after the ally callouts (builder, 2026-11-09)**
   v1.467 built your B: an ally sent looking at 8 s says so, beside you as his voice, far off over the walkie (two lines
