@@ -1383,7 +1383,7 @@ function updateEnemies(dt) {
           }
           // Add a touch of dispersion that scales with how far into the burst we are.
           // Suppression bursts use a wider, looser spread (set in `spread`).
-          const burstSpread = (entry.spread != null ? entry.spread : 0.04) * (1 + k * 0.15);
+          const burstSpread = (entry.spread != null ? entry.spread : 0.04) * (1 + k * 0.15) * kidPartMult(e, 'climbMult');   // v1.472: the sock stock, the tennis ball
           target.x += (gameRandom() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
           target.y += (gameRandom() - 0.5) * burstSpread * 0.6;
           target.z += (gameRandom() - 0.5) * burstSpread * Math.max(2, distToPlayer * 0.4);
@@ -2288,6 +2288,7 @@ function updateEnemies(dt) {
           // cover you ducked behind. Disengaged kids keep the relaxed cadence.
           let recovery = (0.7 + gameRandom() * 0.9) / fireRate;
           if (e._recentlySpotted) recovery *= 0.45;
+          recovery *= kidPartMult(e, 'recoveryMult');   // v1.472 (D.93): Seth's taped twin mag, flipped instead of reloaded
           // v1.46: BOLT-ACTION SNIPER cadence. The shared recovery (even before
           // the recently-spotted ×0.45) lets a sniper fire ~0.7-1.6s apart, which
           // reads as a semi-auto and is brutally punishing from a kid who never

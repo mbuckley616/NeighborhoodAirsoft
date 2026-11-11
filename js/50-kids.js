@@ -441,6 +441,80 @@ function buildEnemyGunMesh(weapon) {
   return g;
 }
 
+// v1.472 (D.93, Michael: A): the homemade part a kid carries (KID_GUN_PARTS, 14-gear), in the kids' blocky style, placed
+// from the gun's own pieces: each piece's box in the gun's frame (barrel along +Z), its rotation ignored. The body is the
+// longest piece; the stock the piece furthest back; the mag a piece hanging under the body ahead of the grip.
+function kidGunPieceBoxes(pieces) {
+  const out = [];
+  for (const m of pieces) {
+    if (!m.isMesh || !m.geometry) continue;
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+    const b = m.geometry.boundingBox.clone().translate(m.position);
+    out.push({ m, b, cx: (b.min.x + b.max.x) / 2, cy: (b.min.y + b.max.y) / 2, cz: (b.min.z + b.max.z) / 2,
+      w: b.max.x - b.min.x, h: b.max.y - b.min.y, d: b.max.z - b.min.z });
+  }
+  return out;
+}
+function buildKidGunPart(type, pieces) {
+  const g = new THREE.Group();
+  g.userData.kidGunPart = type;
+  const boxes = kidGunPieceBoxes(pieces);
+  if (!boxes.length) return g;
+  const isGrip = p => Math.abs(p.cz) < 0.015 && Math.abs(p.cy + 0.08) < 0.015 && p.h < 0.13;
+  const body = boxes.reduce((a, p) => (p.d > a.d ? p : a));
+  const zMax = Math.max(...boxes.map(p => p.b.max.z)), zMin = Math.min(...boxes.map(p => p.b.min.z));
+  const tape = new THREE.MeshStandardMaterial({ color: 0x9a9ea3, roughness: 0.45, metalness: 0.2 });   // duct tape
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  if (type === 'taped_mag') {
+    // a second mag beside the first, the pair bound with two bands of tape
+    const mag = boxes.filter(p => !isGrip(p) && p !== body && p.b.max.y < body.cy && p.cz > 0.01 && p.h >= 0.07)
+      .sort((a, b) => b.h - a.h)[0];
+    const w = mag ? Math.min(mag.w, 0.05) : 0.045, h = mag ? mag.h : 0.12, d = mag ? Math.min(mag.d, 0.08) : 0.06;
+    const cx = mag ? mag.cx : 0, cy = mag ? mag.cy : -0.1, cz = mag ? mag.cz : 0.06;
+    const twin = add(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: 0.6 }), cx + w + 0.004, cy - 0.01, cz);
+    if (mag && mag.m.rotation.x) twin.rotation.x = mag.m.rotation.x;
+    for (const dy of [-0.25, 0.2]) {
+      const band = add(new THREE.BoxGeometry(w * 2 + 0.016, 0.018, d + 0.008), tape, cx + w / 2 + 0.002, cy + dy * h, cz);
+      if (mag && mag.m.rotation.x) band.rotation.x = mag.m.rotation.x;
+    }
+  } else if (type === 'sock_stock') {
+    // a white tube sock over the butt, its striped cuff taped on
+    const stock = boxes.filter(p => !isGrip(p)).reduce((a, p) => (p.cz < a.cz ? p : a));
+    const d = Math.min(0.09, stock.d * 0.8), z = stock.b.min.z + d / 2 - 0.006;
+    add(new THREE.BoxGeometry(stock.w + 0.016, stock.h + 0.016, d), new THREE.MeshStandardMaterial({ color: 0xece8de, roughness: 0.95 }), stock.cx, stock.cy, z);
+    add(new THREE.BoxGeometry(stock.w + 0.02, stock.h + 0.02, 0.012), new THREE.MeshStandardMaterial({ color: 0xb8322e, roughness: 0.9 }), stock.cx, stock.cy, z + d / 2 - 0.012);
+    add(new THREE.BoxGeometry(stock.w + 0.024, stock.h + 0.024, 0.014), tape, stock.cx, stock.cy, z + d / 2 + 0.002);
+  } else if (type === 'tennis_grip') {
+    // the yellow-green ball under the body's front half, a band of tape either side
+    const z = body.cz + body.d * 0.22, y = body.b.min.y - 0.026;
+    add(new THREE.SphereGeometry(0.032, 10, 8), new THREE.MeshStandardMaterial({ color: 0xd4e83a, roughness: 0.95 }), 0, y, z);
+    for (const dz of [-0.038, 0.038]) add(new THREE.BoxGeometry(body.w + 0.01, 0.012, 0.012), tape, 0, body.b.min.y - 0.002, z + dz);
+  } else if (type === 'glow_tracer') {
+    // two green glow sticks taped along the muzzle
+    const glow = new THREE.MeshBasicMaterial({ color: 0x8dff6a });
+    const y = body.cy, z = zMax - 0.04;
+    for (const sx of [-1, 1]) add(new THREE.BoxGeometry(0.012, 0.012, 0.09), glow, sx * (body.w / 2 + 0.008), y, z);
+    add(new THREE.BoxGeometry(body.w + 0.032, 0.022, 0.016), tape, 0, y, z);
+  }
+  g.userData.gunSpan = [zMin, zMax];
+  return g;
+}
+// put the kid's part on the gun he holds now (or take it off): e._gunPart is its type, read by kidPartMult (14-gear).
+// Not on a gun you lent him (v1.337), only on his own.
+function fitKidGunPart(e) {
+  const gg = e && e.mesh && e.mesh.gunGroup;
+  const lent = !!(e && e.crewLoan && e.weapon === e.crewLoan.gun);
+  const type = (e && !lent) ? kidGunPartType(e.charId, e.weapon) : null;
+  e._gunPart = type;
+  if (!gg) return;
+  if (gg.userData.kidPart) { gg.remove(gg.userData.kidPart); gg.userData.kidPart = null; }
+  if (!type) return;
+  const part = buildKidGunPart(type, gg.userData.gunParts || gg.children);
+  part.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  gg.add(part);
+  gg.userData.kidPart = part;
+}
+
 // ---------------------------------------------------------------------
 // KID CHARACTER (low-poly, blocky)
 // ---------------------------------------------------------------------

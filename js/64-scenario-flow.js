@@ -298,6 +298,7 @@ function enterScenario(scenarioId) {
         if (es.ctf) enemy.ctfRole = es.ctf;                                             // v1.189: 'run' goes for the flag
         if (es.crewFill) enemy.crewFill = true;                                         // v1.278: see updateKidBoredom
         if (es.crewLoan) enemy.crewLoan = { gun: enemy.weapon, own: CREW_GUNS[es.charId], bbs: 0, loaded: null };   // v1.337: your gun, your BBs
+        fitKidGunPart(enemy);   // v1.472 (D.93): a few kids carry a homemade part on their own gun
         if (enemy.behavior === 'tagger') {
           // Taggers don't flank or deploy from a huddle — they just chase from
           // wherever they spawned. Spread them so they don't stack.
