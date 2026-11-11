@@ -378,7 +378,9 @@ function spawnEnemyBB(enemy, targetPos) {
   // shotguns widen it.
   const accuracy = enemy.character?.accuracy ?? 0.5;
   const weaponSpreadMod = enemySpec.baseSpread / 0.4;   // pistol = 1.0 baseline
-  const baseSpread = (0.12 - accuracy * 0.08) * weaponSpreadMod;
+  // v1.472 (D.93): the homemade part on his gun: the sock-padded stock steadies every shot, the tennis ball the ones on the move
+  const partSpread = kidPartMult(enemy, 'spreadMult') * ((enemy._animSpeed || 0) > 0.5 ? kidPartMult(enemy, 'moveSpreadMult') : 1);
+  const baseSpread = (0.12 - accuracy * 0.08) * weaponSpreadMod * partSpread;
 
   // Multi-pellet support — shotgun-carrying kids spray 2-3 pellets per trigger pull
   const pelletCount = enemySpec.pelletsPerShot ? enemySpec.pelletsPerShot() : 1;
@@ -406,6 +408,7 @@ function spawnEnemyBB(enemy, targetPos) {
     }
     const vel = dir.multiplyScalar(enemySpec.muzzleVelocity * 0.9);
     const bb = makeBB(muzzlePos.clone(), vel, 'enemy', enemy, enemySpec, combatantView(enemy).team);
+    if (enemy._gunPart === 'glow_tracer') addTracerStreak(bb, true);   // v1.472 (D.93): Mason's glow sticks
     // Ship C: record who this shot was aimed at, so that combatant can detect
     // "I'm being shot at by <enemy>" and prioritize them (anti-tunnel-vision).
     bb.intendedTarget = enemy._targetRef || null;
@@ -452,7 +455,7 @@ function spawnBBMesh(pos, color, glow) {
 const TRACER_LEN = 1.4;
 let _tracerGeom = null, _tracerMatNight = null, _tracerMatDay = null;
 const _tracerUp = new THREE.Vector3(0, 1, 0), _tracerDir = new THREE.Vector3();
-function addTracerStreak(bb) {
+function addTracerStreak(bb, kidShot) {
   if (!_tracerGeom) {
     _tracerGeom = new THREE.ConeGeometry(0.02, 1, 6, 1, true);
     _tracerGeom.translate(0, 0.5, 0);   // the wide end at the origin (the BB), the point at +1
@@ -465,6 +468,7 @@ function addTracerStreak(bb) {
   s.userData.tracerStreak = true;
   bb.mesh.add(s);
   bb._streak = s;
+  if (kidShot) return;   // v1.472: a kid's streak is only to see; tracerSeen is the kids seeing yours
   bb._tracer = true;
   bb._tracerFrom = { x: Game.player.pos.x, y: Game.player.pos.y, z: Game.player.pos.z };
 }

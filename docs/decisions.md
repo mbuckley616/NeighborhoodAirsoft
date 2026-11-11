@@ -5,6 +5,19 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after the kids' homemade parts (builder, 2026-11-11)**
+  v1.472 built your A: Seth carries the Taped Twin Mag (his pause between pulls 0.85), Devon the Sock-Padded Stock (spread
+  0.8), Sean the Tennis-Ball Grip (0.75 on the move) and Mason the Glow-Stick Tracer (his BBs streak green), each on his own
+  long gun, none on a pistol or a gun you lent him. The play lane has no ready item again. What next?
+  - A) **Tracers online** *(recommended)*: your friend's game draws the glow-stick streak on your BBs and on Mason's
+    (v1.468 and v1.472 both left it to the host's game: the shot goes over the link without the part).
+  - B) **More kids carry parts**: four or five more kids each with one of the other homemade parts (the bungee sling, the
+    long mag, the noodle pad, the soda-bottle silencer, the bipod), the same rules as v1.472.
+  - C) **Rest the play lane** until you have played v1.468-v1.472.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It is small, closes what two versions left open, and touches no maps-lane file or Fable area. B adds
+  balance changes you have not felt yet from the first four.
+
 ## Answered
 
 - **What the play lane builds next, after the late-look callouts (builder, 2026-11-10)**

@@ -364,6 +364,7 @@ function crewKidOwnGun(e) {
   const fresh = buildEnemyGunMesh(L.own), parts = fresh.children.slice();
   for (const c of parts) gg.add(c);
   gg.userData.gunParts = parts;
+  fitKidGunPart(e);   // v1.472 (D.93): back on his own gun, his own part
 }
 const CREW_NAMED_ALLY = { bunratty_team_2v1: 'nick', bunratty_team_2v2: 'sean', bunratty_night_team_2v2: 'sean',
   winnmark_night_team_2v2: 'eric' };   // v1.407 (D.57 step 4): Seth Picks Teams, Eric beside you until he is in your crew

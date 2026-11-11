@@ -507,6 +507,34 @@ function getMatchMagSize(gunType) {
 function getReloadMult(gunType) {
   return (getUnderPart(gunType) || {}).reloadMult || 1;
 }
+// v1.472 (D.93, Michael: A, 11 Nov 2026): kids carry homemade parts. A few kids have one part on their own gun, shown on
+// it and doing its job, so the parts you buy are also what you meet. A kid's part goes on only where your part would (the
+// gun has that slot: no part on a pistol or a MAC-10) and only on his own gun, not on one you lent him. What each part
+// does in a kid's hands (kids aim and reload by the AI's cadence, not by your stats):
+//   taped_mag   - he flips the pair instead of reloading: his pause between pulls is 0.85 as long
+//   sock_stock  - steady on his shoulder: every shot's spread 0.8 (the stock's aimed steadiness), an automatic's string
+//                 wanders 0.7 as far (its climb)
+//   tennis_grip - his shots on the move stay a quarter tighter (0.75 while he walks), a string wanders 0.85 as far
+//   glow_tracer - his BBs leave the green streak (bright at night): you see where he is shooting from
+const KID_GUN_PARTS = { seth: 'taped_mag', devon: 'sock_stock', sean: 'tennis_grip', mason: 'glow_tracer' };
+const KID_PART_EFFECT = {
+  taped_mag:   { recoveryMult: 0.85 },
+  sock_stock:  { spreadMult: 0.8, climbMult: 0.7 },
+  tennis_grip: { moveSpreadMult: 0.75, climbMult: 0.85 },
+  glow_tracer: { tracer: true },
+};
+// the part a kid's gun carries, given the gun he holds (the part's type, or null)
+function kidGunPartType(charId, weapon) {
+  const type = KID_GUN_PARTS[charId];
+  const def = type && ATTACHMENTS[type];
+  if (!def || !weapon) return null;
+  return getGunAccessoryCap(weapon)[def.slot] ? type : null;
+}
+// one number from the part on a kid's gun (1 when there is none); e._gunPart is set by fitKidGunPart (50-kids)
+function kidPartMult(e, key) {
+  const fx = e && e._gunPart && KID_PART_EFFECT[e._gunPart];
+  return (fx && typeof fx[key] === 'number') ? fx[key] : 1;
+}
 // v1.418: the sight on a gun, and whether it is one you look through (the 4× scope, the toy scope): its scopeView or null
 function getMountedSight(gunType) {
   return getMountedAccessories(gunType).find(a => ATTACHMENTS[a.type] && ATTACHMENTS[a.type].slot === 'sight') || null;
