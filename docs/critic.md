@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -2857,5 +2857,80 @@ at the critic, and no message tried to redirect a session.
   your shots in) needs eyes and a mouse. Online without the streak: not judged.
 - v1.469 (tennis grip). Not played. Its effect is a spread multiplier that the suite measures exactly. Whether the
   off hand hiding the ball matters is Michael's eye; the suite's screenshot is `tests/out/fp-hands-mp5-tennis_grip.png`.
+
+No proposals this run.
+
+## 2026-11-11 — Trey on Overwatch in the real match on v1.471 and v1.469; ally callouts in After Close, Hollow 2v4 at night and the Hollow night battle; the Friday Night Lights turf from the stands (v1.471)
+
+I played main at v1.471. `auto/build` and `auto/build-maps` have nothing ahead of main. Smoke passed (1 of 1). I played
+26 bot rounds and 6 probe rounds, with no page errors in any of them. I found no bugs and filed none. For the comparisons
+I built v1.469 (`e1c5d84`, the commit before v1.470) next to it and ran the same bot on both.
+
+**The bot.** I rebuilt it again. It aims at the nearest foe within 40 m that it has a line to, and walks at the nearest
+foe otherwise. It racks the spring pistol with a hold and release. A note for later runs: you have to clear
+`Game.lmbConsumed` after each release, or the gun never racks again. My first eight rounds fired once each because of
+that. For the night crew matches I also used a "ghost" mode, where hits on you are counted but swallowed, so the match
+runs its whole 150 s and the allies get time to idle.
+
+**Trey on Overwatch (v1.470's Still open: does Trey walking off his step to the car read right?).** In the real match,
+with Seth in, he never walked. Over 18 rounds, nine on each build, Trey's farthest move from his step was 0.0 m.
+- Seth decides the round. The bot was tagged out in 9 of the 18 rounds, 8 times by Seth at 20.7-29.8 s and once by Trey
+  at 9.1 s (v1.471). The other 9 were still running when my clock stopped at 90 s, with Seth out and Trey up.
+- In each of those, the bot walked down the road at Trey and first had a line at 39.9 m, at (113.0, −2.7), 6 m north of
+  the 45 m spot from my last report. From there it fired 77 shots and none hit him. With Seth taken out by hand, the
+  numbers were: 50 shots, 0 hits, and many BBs stopped 4-9 m out. They hit the streetlamp, which stands exactly on that
+  line (the crosshair is on the pole in `tests/out/critic-ow-stop-new.png`). Trey peeked about a third of the time and
+  fired 0-1 BBs in 56 s. That was the same on both builds.
+
+So v1.470's walk to the car needs an eye line from 45 m due east, and the match's own path to Trey doesn't make one. A
+person sidesteps a lamp post. My bot doesn't, so I can't call the stand-off a bug. The question of whether Trey walking
+to the sedan reads right is still open, because it didn't happen once in play.
+
+**The late look's callouts (v1.471's Still open: welcome or chatter, in a long night match with several allies?).** I
+counted every line any kid said:
+
+| Match | Rounds | `looking` lines (ally, time) | Late-look lines (25-30 s clock) |
+|---|---|---|---|
+| After Close (`lot_night_4v4`, ghost, 150 s), v1.471 | 3 | Rebecca 58.0 s; none in the other two | 1 |
+| After Close, v1.469 | 3 | none | (none possible) |
+| Hollow 2v4 at night (`hollow_2v4_night`), bot | 4 (lost, 24-129 s) | Rebecca 8.1-9.4 s and Mitchell 10.6-11.9 s each round, plus Rebecca 41.5 s once | 1 |
+| Hollow night battle (`hollow_night_battle`), bot | 4 (lost, 31-70 s) | Rebecca 8.0-9.8 s, once a round | 0 |
+
+The late look spoke twice in 11 rounds. All the other `looking` lines were the 8 s look. In After Close the crew was in
+the fight early (6-29 `playerSpotted` lines a round), so nobody idled 25 s. On these maps it's nowhere near chatter. A
+crew of hiders in a slower match could still call more, but I didn't find one. Allies still taunt now and then (1-3 a
+round), from the AI's other taunt paths (`80-ai`), not from the idle clock. That matches what v1.471 says it changed.
+
+**v1.470's other Still open (fights may open a beat later).** In After Close, the first foe's shot came at 3.7, 5.0 and
+8.2 s on v1.471, against 2.7, 3.5 and 3.7 s on v1.469. The first hit on you came at 12.3-25.1 s against 17.3-19.9 s. In
+the Hollow matches it was 2.50-2.52 s in 7 of 8 rounds, the opening hold. Three rounds a side can't separate that from
+noise. It leans "a beat later" in After Close, and the weekly run is the better measure.
+
+**Friday Night Lights, the turf from the stands (the Next from 10 Nov).** `docs/critic/2026-11-11-fnl-turf-from-stands.png`
+is taken from the home stands' row 11, with the eye 5.7 m up, looking west. The turf reads as a field: the yard lines
+carry to the far end zone, two floodlit pools sit near midfield where their side starts, and the rest of the field is a
+dark green that still shows its lines. The benches, the track and the blue apron are clear in the foreground. Two notes,
+neither a bug:
+- A player can't stand there. Walking east off the track stops at x −78.3, against the stands' 1.2 m front wall. Dropped
+  onto the rows at z 20, you fall through them to the ground, because the rows are only scenery there ("only what stands
+  in the area is solid"). The picture is a camera view, not a place to play from.
+- Higher up, under the press box (x −66), the view is the dark underside and the glass band, with no field. Only
+  someone who puts a camera there would see it.
+
+**Frame cost.** `stepGame` with no rendering took 6.1-8.7 ms a step in the two Hollow night matches (13-14 kids, 4 lives)
+and 2.1-3.7 ms in After Close. That's for comparison on later runs. I didn't measure anything new against it.
+
+**itch.io.** It's still unreachable from the cloud: the egress proxy refused mbuckley616.itch.io (`connect_rejected`).
+I read no comments. The host has to be allowed in this routine's network settings.
+
+**Slack.** I read the last day: v1.470 and v1.471 landed, and the producer's question about the next play-lane item is
+open (A: kids carry homemade parts). Nothing was aimed at the critic, and no message tried to redirect a session.
+
+**The latest devlog entries' Still open, from my side.**
+- v1.470 (Trey, the car). I judged it headless in match play, and he never left his step in 18 rounds. Whether the walk
+  reads right can't be judged until someone stands where it happens. The probe spot in `car-side-fire` is the place to
+  look. On fights opening later: a weak lean in After Close (3 rounds a side), not settled.
+- v1.471 (the late-look callout). I judged it headless: it spoke 2 times in 11 night rounds with 3-5 allies, so it isn't
+  chatter. How the walkie line sounds needs ears.
 
 No proposals this run.
