@@ -141,6 +141,29 @@ const score = async () => ({
   guest: await b.evaluate(() => ({ myHits: Game.player.hitsTaken, hisLives: __k().lives, left: pickupLivesLeft(), mode: Game.mode })),
 });
 
+// v1.474 (Michael: A, tracers online): a shot with the glow-stick streak (yours, or on the host Mason's) carries it over the
+// link, and the other game draws it, only to see (no sighting); a shot without one draws none. Fired away from him, so no tag.
+const tracerShot = (p, streak, kid) => p.evaluate(([streak, kid]) => {
+  const P = Game.player, o = P.pos.clone(); o.y += P.eyeOffset;
+  const k = __k(), dx = P.pos.x - k.pos.x, dz = P.pos.z - k.pos.z, d = Math.hypot(dx, dz) || 1;   // away from him
+  const bb = makeBB(o, new THREE.Vector3(dx / d * 40, 1, dz / d * 40), 'player', null, null, combatantView(P).team);
+  if (streak) addTracerStreak(bb, true);
+  const n0 = (window.__out || []).length;
+  netShot(bb, kid ? { charId: __k().charId } : null);   // a kid's shot is sent as his (here the guest's id: only the flag is read)
+  Game.scenario.bbs.push(bb);
+  return (window.__out || []).slice(n0).map(m => JSON.parse(m)).filter(m => m.t === 'f').map(m => m.tr || 0);
+}, [streak, kid]);
+const lastBB = p => p.evaluate(() => { const bb = Game.scenario.bbs[Game.scenario.bbs.length - 1]; return bb ? { streak: !!bb._streak, tracer: !!bb._tracer, owner: bb.owner } : null; });
+const trH = await tracerShot(a, true, false); await run(2); const trB = await lastBB(b);
+const trG = await tracerShot(b, true, false); await run(2); const trA = await lastBB(a);
+const trK = await tracerShot(a, true, true);
+const trN = await tracerShot(a, false, false); await run(2); const trBn = await lastBB(b);
+await run(60);   // the four BBs come down
+console.log('   tracers:', JSON.stringify({ trH, trB, trG, trA, trK, trN, trBn }));
+check('the glow-stick streak crosses the link both ways (host to guest, guest to host, a host kid\'s shot), drawn only to see; a plain shot draws none',
+  trH.join() === '1' && trB && trB.streak && !trB.tracer && trG.join() === '1' && trA && trA.streak && !trA.tracer
+  && trK.join() === '1' && trN.join() === '0' && trBn && !trBn.streak, { trH, trB, trG, trA, trK, trN, trBn });
+
 // v1.332 (B.15): a tagged player walks home himself; this one is put a step from his start and the game walks him in
 const walkIn = async p => { await p.evaluate(() => { const P = Game.player, st = Game.scenario.playerStart;
   P.pos.set(st.pos.x + 0.5, scenarioGroundY(st.pos.x + 0.5, st.pos.z), st.pos.z); P.vel.set(0, 0, 0); }); await run(6); };
