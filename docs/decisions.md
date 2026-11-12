@@ -5,6 +5,10 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+_(none)_
+
+## Answered
+
 - **What the play lane builds next, after the kids' homemade parts (builder, 2026-11-11)**
   v1.472 built your A: Seth carries the Taped Twin Mag (his pause between pulls 0.85), Devon the Sock-Padded Stock (spread
   0.8), Sean the Tennis-Ball Grip (0.75 on the move) and Mason the Glow-Stick Tracer (his BBs streak green), each on his own
@@ -17,8 +21,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It is small, closes what two versions left open, and touches no maps-lane file or Fable area. B adds
   balance changes you have not felt yet from the first four.
-
-## Answered
+  Michael: **A) Tracers online** (control room, 12 Nov 2026).
 
 - **What the play lane builds next, after the late-look callouts (builder, 2026-11-10)**
   v1.471 built your A: an ally the 25-30 s idle clock sends from his spot now says a `looking` line, as the 8 s look does
