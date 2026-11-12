@@ -160,6 +160,29 @@ await H.evaluate(() => { spawnEnemyBB = window.__spawnEnemyBB; });
 console.log('   bluey’s tag', JSON.stringify(tag));
 check('Bluey’s shot at Trey tags him in the host’s game (a life gone), and Bluey’s game shows it as his tag', tag.treyNow < tag.treyBefore && /Trey/.test(tag.blueyTags), tag);
 
+// v1.475 (Michael: A, kids read a friend's streak): Bluey's glow-stick streak, by night, tells Brooke in the host's game
+// where he fired from, as the host's own does (v1.468); by day nothing. The shot goes 2 m wide of her, so it tags nobody.
+await H.evaluate(() => { window.__spawnEnemyBB = spawnEnemyBB; spawnEnemyBB = () => null; });
+const streakPast = async tod => {
+  await H.evaluate(tod => { Game.scenario.timeOfDay = tod; const b = Net.ents.get('brooke'); b._tracerSawAt = b._tracerFrom = b._tracerBy = null; }, tod);
+  await nextTo(R, 'brooke', 7); await run(3);
+  await R.evaluate(() => { const k = Net.ents.get('brooke'), P = Game.player, o = P.pos.clone(); o.y += P.eyeOffset;
+    const tx = k.pos.x, tz = k.pos.z + 2, dx = tx - o.x, dz = tz - o.z, d = Math.hypot(dx, dz);
+    const bb = makeBB(o, new THREE.Vector3(dx / d * 40, 0.5, dz / d * 40), 'player', null, null, combatantView(P).team);
+    addTracerStreak(bb, true); netShot(bb, null); Game.scenario.bbs.push(bb); });
+  await run(30);
+  return H.evaluate(() => { const b = Net.ents.get('brooke'), f = Net.ents.get('net_p1');
+    const r = { saw: b._tracerSawAt != null, byBluey: b._tracerBy === f, from: b._tracerFrom ? +Math.hypot(b._tracerFrom.x - f.pos.x, b._tracerFrom.z - f.pos.z).toFixed(2) : null };
+    if (r.saw) { const t0 = b._tracerSawAt; r.pull = threatScore(b, f); b._tracerSawAt = aiNow() - 10; r.pull = +(threatScore(b, f) - r.pull).toFixed(2); b._tracerSawAt = t0;
+      r.hostPull = (() => { const p = threatScore(b, Game.player); b._tracerSawAt = aiNow() - 10; const q = threatScore(b, Game.player); b._tracerSawAt = t0; return +(q - p).toFixed(2); })(); }
+    return r; });
+};
+const streakDay = await streakPast('day'), streakNight = await streakPast('night');
+await H.evaluate(() => { spawnEnemyBB = window.__spawnEnemyBB; });
+console.log('   bluey’s streak', JSON.stringify({ streakDay, streakNight }));
+check('Bluey’s glow-stick streak by night is a sighting of Bluey for Brooke in the host’s game (where he fired from, a pull to him, none to the host); by day none',
+  !streakDay.saw && streakNight.saw && streakNight.byBluey && streakNight.from < 1 && streakNight.pull > 0 && streakNight.hostPull === 0, { streakDay, streakNight });
+
 // The rest of their side out (the host's game, as from Bluey's gun): the win is the host's; Bluey takes home the pay (1B)
 await H.evaluate(() => { const f = Net.ents.get('net_p1');
   for (const e of Game.scenario.enemies) if (e.team !== 'player' && Game.mode === 'scenario') {

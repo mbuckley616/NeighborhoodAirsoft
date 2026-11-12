@@ -435,6 +435,7 @@ function tracerSeen(e, bb, now) {
   if (!hasLineOfSight(e.pos.x, eyeY, e.pos.z, bb.pos.x, bb.pos.y, bb.pos.z, Game.player.obstacles)) return;
   e._tracerSawAt = now;
   e._tracerFrom = bb._tracerFrom;
+  e._tracerBy = bb._tracerBy || Game.player;   // v1.475: whose streak it was (yours, or online a friend's)
   e._tracerSeen = (e._tracerSeen || 0) + 1;   // tests
 }
 

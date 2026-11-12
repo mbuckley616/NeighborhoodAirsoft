@@ -1209,7 +1209,12 @@ function netSpawnShot(m, k) {
   bb.curveDir.set(...cd);
   bb.curveStrength = Math.max(0, Math.min(60, +m.cs || 0));
   // v1.474 (Michael: A, tracers online, 12 Nov): the streak on his shot, only to see here: no kid takes it as a sighting
-  if (m.tr === 1) addTracerStreak(bb, true);
+  if (m.tr === 1) {
+    addTracerStreak(bb, true);
+    // v1.475 (Michael: A, kids read a friend's streak, 12 Nov): on the host, where the kids are run, a friend's streak is
+    // a sighting as yours is (v1.468): a kid of the other side who sees it go by at night knows where that friend fired from
+    if (Net.role === 'host' && k.remote) { bb._tracer = true; bb._tracerFrom = { x: k.pos.x, y: k.pos.y, z: k.pos.z }; bb._tracerBy = k; }
+  }
   Game.scenario.bbs.push(bb);
   // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): heard from where he is, as a kid's shot
   playShot(o[0], o[2]);

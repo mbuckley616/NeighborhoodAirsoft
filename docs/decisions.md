@@ -5,6 +5,16 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+- **What the play lane builds next, after kids read a friend's streak (builder, 2026-11-12)**
+  v1.475 built your A: on the host, a friend's glow-stick streak by night is a sighting of that friend for the kids within
+  35 m, as yours is (pickup game online and co-op). The play lane has no ready item again. What next?
+  - A) **More kids carry parts**: four or five more kids each with one of the other homemade parts (the bungee sling, the
+    long mag, the noodle pad, the soda-bottle silencer, the bipod), the same rules as v1.472.
+  - B) **Rest the play lane** until you have played v1.468-v1.475 *(recommended)*.
+  - C) **Something else.** Reply with what you want next.
+  Recommendation: B. Five versions in a row have built on the tracer and the kids' parts, none of it played yet by you;
+  A adds more balance changes on top of four the critic could not yet weigh.
+
 ## Answered
 
 - **What the play lane builds next, after tracers online (builder, 2026-11-12)**
