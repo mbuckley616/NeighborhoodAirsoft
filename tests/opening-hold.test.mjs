@@ -32,7 +32,6 @@ for (let i = 0; i < 5; i++) {
 console.log('  Two in the Yards, standing at spawn, 6 s x5:', JSON.stringify(yards));
 check('no kid BB before 2.5 s in any run', yards.every(r => r.firstBB == null || r.firstBB >= 2.5), yards.map(r => r.firstBB));
 check('the player is never hit before 2.5 s', yards.every(r => r.firstHit == null || r.firstHit >= 2.5), yards.map(r => r.firstHit));
-check('Devon still fires once the hold lifts (by 6 s) in most runs', yards.filter(r => r.firstBB != null).length >= 3, yards.map(r => r.firstBB));
 
 const others = {};
 for (const id of ['bunratty_sean', 'winnmark_night_prowl', 'hollow_full_auto_mayhem', 'bunratty_ffa']) {
@@ -42,5 +41,9 @@ for (const id of ['bunratty_sean', 'winnmark_night_prowl', 'hollow_full_auto_may
 }
 console.log('  other maps, standing at spawn, 6 s:', JSON.stringify(others));
 check('no kid BB before 2.5 s on the other maps', Object.values(others).every(r => r.firstBB == null || r.firstBB >= 2.5), others);
+// v1.473: the hold lifts. This was read off Devon at the yards' start, but every BB he fired there by 6 s went into the
+// lawn's crest, which hides your start from him (sight lines test the ground since v1.473): he holds now. The free-for-all
+// and Full-Auto Mayhem fire once the hold is over.
+check('kids fire once the hold lifts (by 6 s) on the free-for-all and Full-Auto Mayhem', others.bunratty_ffa.firstBB != null && others.hollow_full_auto_mayhem.firstBB != null, others);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
