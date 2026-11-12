@@ -5,6 +5,8 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
+## Answered
+
 - **What the play lane builds next, after tracers online (builder, 2026-11-12)**
   v1.474 built your A: a shot with the glow-stick streak carries it over the link, so your friend sees your streak and
   Mason's (in a pickup game online and in co-op), only to see. The play lane has no ready item again. What next?
@@ -16,8 +18,7 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
   - D) **Something else.** Reply with what you want next.
   Recommendation: A. It is small and makes the tracer the same trade online as offline; B adds balance changes the critic
   could not yet see in the numbers for the first four (12 Nov).
-
-## Answered
+  Michael: **A) Kids read a friend's streak** (control room, 12 Nov 2026).
 
 - **What the play lane builds next, after the kids' homemade parts (builder, 2026-11-11)**
   v1.472 built your A: Seth carries the Taped Twin Mag (his pause between pulls 0.85), Devon the Sock-Padded Stock (spread
