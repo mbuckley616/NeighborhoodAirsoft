@@ -351,7 +351,11 @@ function spawnEnemyBB(enemy, targetPos) {
             const farRay = farReach * dl / (flat || 1);
             // and 15 cm under it: the BB's flight sags under the straight line (Trey's, 10 cm by the sedan 15 m out)
             if (raycastObstacles(muzzlePos.x, y, muzzlePos.z, dx / dl, dy / dl, dz / dl, farRay, farObs) >= farRay &&
-                raycastObstacles(muzzlePos.x, y - 0.15, muzzlePos.z, dx / dl, dy / dl, dz / dl, farRay, farObs) >= farRay) { clear = true; break; }
+                raycastObstacles(muzzlePos.x, y - 0.15, muzzlePos.z, dx / dl, dy / dl, dz / dl, farRay, farObs) >= farRay &&
+                // v1.473 (Found in play, critic 12 Nov): and over the ground, 15 cm under it as well: a crest the eye line
+                // just clears still takes a BB that sags (Devon in Two in the Yards, every shot into the lawn 35 m out)
+                !terrainBlocksLine(muzzlePos.x, y, muzzlePos.z, muzzlePos.x + tdx * farReach / flat, y + dy * farReach / flat,
+                                   muzzlePos.z + tdz * farReach / flat, 0.15)) { clear = true; break; }
           }
         }
         // can't see past it: hold fire. v1.112: and let go of the trigger, so an

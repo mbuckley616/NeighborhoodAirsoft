@@ -17,7 +17,7 @@
 // (Currently cover items don't have this flag, but tall obstacles like houses,
 // fences, trees do block.)
 function hasLineOfSight(fromX, fromY, fromZ, toX, toY, toZ, obstacles) {
-  if (!obstacles) return true;
+  if (!obstacles) return !terrainBlocksLine(fromX, fromY, fromZ, toX, toY, toZ, 0);   // v1.473: the ground still counts
   const dx = toX - fromX, dy = toY - fromY, dz = toZ - fromZ;
   const segLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
   if (segLen < 1e-6) return true;
@@ -39,7 +39,36 @@ function hasLineOfSight(fromX, fromY, fromZ, toX, toY, toZ, obstacles) {
     const t = obsRayDist(o, fromX, fromY, fromZ, ux, uy, uz, segLen);
     if (t > 1e-4 && t < segLen - 1e-4) return false;
   }
+  // v1.473 (Found in play, critic 12 Nov): and the ground. A sight line tested only the obstacles, so over a hill's crest
+  // Devon in Two in the Yards "saw" a player the lawn hid entirely, and spent the round shooting into the grass 35 m out.
+  if (terrainBlocksLine(fromX, fromY, fromZ, toX, toY, toZ, 0)) return false;
   return true;
+}
+
+// v1.473: does the ground rise above the straight line from one point to another (less `under` metres)? Sampled every
+// 1.5 m, leaving out the first and last metre (the feet at each end). Flat maps (no groundY) answer no at once. The
+// heights come from a 1 m grid of the map's own groundY, filled as lines need it and kept for the round (Winnmark's
+// groundY costs ~1.5 us a call, and the kids test their lines every frame).
+function terrainBlocksLine(fromX, fromY, fromZ, toX, toY, toZ, under) {
+  const sc = Game.scenario, fn = sc && sc.groundY;
+  if (!fn) return false;
+  const dx = toX - fromX, dz = toZ - fromZ, flat = Math.hypot(dx, dz);
+  if (flat < 2.5) return false;
+  const n = Math.ceil(flat / 1.5);
+  for (let i = 1; i < n; i++) {
+    const t = i / n, d = t * flat;
+    if (d < 1 || d > flat - 1) continue;
+    if (losGroundAt(fromX + dx * t, fromZ + dz * t) > fromY + (toY - fromY) * t - (under || 0)) return true;
+  }
+  return false;
+}
+function losGroundAt(x, z) {
+  const sc = Game.scenario, fn = sc.groundY;
+  if (sc._losGroundFn !== fn) { sc._losGroundFn = fn; sc._losGround = new Map(); }
+  const M = sc._losGround, ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz;
+  const h = (a, b) => { const k = a * 65536 + b; let v = M.get(k); if (v === undefined) { v = fn(a, b); M.set(k, v); } return v; };
+  const h00 = h(ix, iz), h10 = h(ix + 1, iz), h01 = h(ix, iz + 1), h11 = h(ix + 1, iz + 1);
+  return (h00 * (1 - fx) + h10 * fx) * (1 - fz) + (h01 * (1 - fx) + h11 * fx) * fz;
 }
 
 // v1.73: FENCE-DETOUR WAYPOINT. NPCs path with a slide + perpendicular

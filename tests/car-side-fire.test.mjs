@@ -80,5 +80,37 @@ console.log('    Trey on Overwatch, 45 m due east:', JSON.stringify(t));
 check('Overwatch, 45 m due east of Trey: he fires at you', t.shots >= 4, t);
 check('...and under a third of his BBs stop within 20 m of him (14 of 14 did, in the sedan 15 m out)', t.short / Math.max(1, t.shots) < 1 / 3, t);
 check('...and his BBs reach you', t.hits >= 2, t);
+
+// v1.473 (Found in play, critic 12 Nov): Two in the Yards, Jamie out, you standing at your start on the road. Devon's
+// eye line and the clear line tested obstacles only, never the ground: from the back yards the lawn's crest hides you
+// entirely, and all 146 of his BBs in 8 rounds stopped in the grass 35 m out. Sight lines and the far cast now test the
+// ground too: at the start he holds (no line), and from a spot he can see he still shoots and hits.
+const yards = [];
+for (const spot of [null, [122, 20]]) {
+  await g.scenario('winnmark_two_in_the_yards');
+  yards.push(await page.evaluate((spot) => {
+    const sc = Game.scenario, P = Game.player; P.maxHits = 999;
+    const dev = sc.enemies.find(k => k.charId === 'devon'), jamie = sc.enemies.find(k => k.charId === 'jamie');
+    jamie.health = 0; jamie.pos.x -= 500;
+    const at = spot || [P.pos.x, P.pos.z], mk = makeBB, hit = applyBBHit, shots = [];
+    window.makeBB = function (pos, vel, owner, ref) { const b = mk.apply(this, arguments); if (ref === dev) shots.push({ b, last: pos.clone() }); return b; };
+    let hits = 0;
+    window.applyBBHit = function (bb, c) { if (c === P) { if (bb.enemyRef === dev && !bb._t473) { bb._t473 = 1; hits++; } return; } return hit.apply(this, arguments); };
+    for (let i = 0; i < 3600 && Game.mode === 'scenario'; i++) {
+      P.pos.x = at[0]; P.pos.z = at[1]; P.pos.y = scenarioGroundY(at[0], at[1]);
+      stepGame(1 / 60);
+      for (const s of shots) if (!s.done) { if (sc.bbs.includes(s.b)) s.last.copy(s.b.pos); else s.done = true; }
+    }
+    window.makeBB = mk; window.applyBBHit = hit;
+    // a BB that ended on the ground more than 4 m short of you
+    const inGrass = shots.filter(s => s.done && !s.b._t473 && Math.hypot(s.last.x - at[0], s.last.z - at[1]) > 4 &&
+      s.last.y - scenarioGroundY(s.last.x, s.last.z) < 0.3).length;
+    return { at: at.map(v => +v.toFixed(1)), devon: [+dev.pos.x.toFixed(1), +dev.pos.z.toFixed(1)], shots: shots.length, hits, inGrass };
+  }, spot));
+}
+console.log('    Two in the Yards, Devon:', JSON.stringify(yards));
+check('Two in the Yards, at your start: none of Devon\'s BBs end in the grass short of you (146 of 146 did)', yards[0].inGrass === 0, yards[0]);
+check('...in the open at (122, 20) he still shoots', yards[1].shots >= 4, yards[1]);
+check('...and hits you', yards[1].hits >= 2, yards[1]);
 check('no page errors', g.errs.length === 0, g.errs);
 await g.close();
