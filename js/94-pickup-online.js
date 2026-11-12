@@ -1194,6 +1194,7 @@ function netShot(bb, k) {
   if (Net.phase !== 'play') return;
   const m = { t: 'f', o: bb.pos.toArray().map(netR), v: bb.vel.toArray().map(netR), cd: bb.curveDir.toArray().map(netR),
     cs: netR(bb.curveStrength), co: netR(bb.curveOnsetDistance) };
+  if (bb._streak) m.tr = 1;   // v1.474: the glow-stick tracer (yours, v1.468, or Mason's, v1.472) streaks in his game too
   if (Net.role === 'host') { m.id = k ? k.charId : NET_HOST_ID; netSend(m); }
   else if (!k) netSend(m);
 }
@@ -1207,6 +1208,8 @@ function netSpawnShot(m, k) {
     { curveOnsetDistance: +m.co || 4, curveStrengthMax: 0 }, combatantTeam(k));
   bb.curveDir.set(...cd);
   bb.curveStrength = Math.max(0, Math.min(60, +m.cs || 0));
+  // v1.474 (Michael: A, tracers online, 12 Nov): the streak on his shot, only to see here: no kid takes it as a sighting
+  if (m.tr === 1) addTracerStreak(bb, true);
   Game.scenario.bbs.push(bb);
   // v1.332 (backlog B.15, Michael: "I did not hear audio of my brother's shots"): heard from where he is, as a kid's shot
   playShot(o[0], o[2]);

@@ -5,7 +5,17 @@ Questions for Michael and his answers. Agents add under Pending; the producer ca
 
 ## Pending
 
-_(none)_
+- **What the play lane builds next, after tracers online (builder, 2026-11-12)**
+  v1.474 built your A: a shot with the glow-stick streak carries it over the link, so your friend sees your streak and
+  Mason's (in a pickup game online and in co-op), only to see. The play lane has no ready item again. What next?
+  - A) **Kids read a friend's streak** *(recommended)*: on the host, a guest's glow-stick streak by night tells a kid
+    within 35 m where that friend fired from, as yours already does (v1.468). Small; online only; closes v1.474's open end.
+  - B) **More kids carry parts**: four or five more kids each with one of the other homemade parts (the bungee sling, the
+    long mag, the noodle pad, the soda-bottle silencer, the bipod), the same rules as v1.472.
+  - C) **Rest the play lane** until you have played v1.468-v1.474.
+  - D) **Something else.** Reply with what you want next.
+  Recommendation: A. It is small and makes the tracer the same trade online as offline; B adds balance changes the critic
+  could not yet see in the numbers for the first four (12 Nov).
 
 ## Answered
 
