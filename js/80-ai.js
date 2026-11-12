@@ -682,7 +682,8 @@ function threatScore(e, c) {
   // Being shot at by c is the strongest pull (survival-first).
   if (e._shotAtBy && e._shotAtBy.has && e._shotAtBy.has(c)) score -= SHOT_AT_BONUS;
   // v1.468: a kid who just saw your glow-stick tracer at night turns to you as if you'd shot at him
-  else if (c === Game.player && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_PULL_S) score -= SHOT_AT_BONUS;
+  // v1.475: or the friend online whose streak he saw (`_tracerBy`)
+  else if (c === (e._tracerBy || Game.player) && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_PULL_S) score -= SHOT_AT_BONUS;
   // Prefer targets we can actually see (can't fight through a wall).
   if (_hasLOSTo(e, c)) score -= LOS_BONUS;
   // Allied focus-fire: the team's called target is more attractive.
@@ -1495,7 +1496,7 @@ function updateEnemies(dt) {
         e._lastSawPlayer = e.stateTime !== undefined ? aiNow() : 0;   // v1.176: simulated time
         e._lastSeenPos = { x: tgt.pos.x, y: tgt.pos.y, z: tgt.pos.z };
         e._lastSeenHeadUp = e._sightHead ? sightY - tgt.pos.y : null;   // v1.385: suppress the wall's top where his head was
-      } else if (tgt.isPlayer && e._tracerFrom && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_FRESH_S) {
+      } else if (tgt.ref === (e._tracerBy || Game.player) && e._tracerFrom && e._tracerSawAt != null && aiNow() - e._tracerSawAt < TRACER_FRESH_S) {
         // v1.468: he saw your glow-stick tracer's streak go by in the dark: he knows where it came from, as if he'd seen you
         // there, so he answers it as he would a kid who just ducked (covering fire at that spot, a quick peek)
         e._lastSawPlayer = e._tracerSawAt;

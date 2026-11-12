@@ -160,8 +160,9 @@ const trK = await tracerShot(a, true, true);
 const trN = await tracerShot(a, false, false); await run(2); const trBn = await lastBB(b);
 await run(60);   // the four BBs come down
 console.log('   tracers:', JSON.stringify({ trH, trB, trG, trA, trK, trN, trBn }));
-check('the glow-stick streak crosses the link both ways (host to guest, guest to host, a host kid\'s shot), drawn only to see; a plain shot draws none',
-  trH.join() === '1' && trB && trB.streak && !trB.tracer && trG.join() === '1' && trA && trA.streak && !trA.tracer
+// v1.475 (Michael: A, kids read a friend's streak): in the host's game, where the kids are run, the guest's streak is a sighting
+check('the glow-stick streak crosses the link both ways (host to guest, guest to host, a host kid\'s shot), only to see in the guest\'s game, a sighting in the host\'s (v1.475); a plain shot draws none',
+  trH.join() === '1' && trB && trB.streak && !trB.tracer && trG.join() === '1' && trA && trA.streak && trA.tracer
   && trK.join() === '1' && trN.join() === '0' && trBn && !trBn.streak, { trH, trB, trG, trA, trK, trN, trBn });
 
 // v1.332 (B.15): a tagged player walks home himself; this one is put a step from his start and the game walks him in
