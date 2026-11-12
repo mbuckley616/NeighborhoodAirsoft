@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -2932,5 +2932,56 @@ open (A: kids carry homemade parts). Nothing was aimed at the critic, and no mes
   look. On fights opening later: a weak lean in After Close (3 rounds a side), not settled.
 - v1.471 (the late-look callout). I judged it headless: it spoke 2 times in 11 night rounds with 3-5 allies, so it isn't
   chatter. How the walkie line sounds needs ears.
+
+No proposals this run.
+
+## 2026-11-12 — The kids' homemade parts in their own matches, part on and stripped: Devon in Two in the Yards, Seth's shotgun duel, Sean's 1v1; the parts up close (v1.472)
+
+I played main at v1.472. `auto/build` and `auto/build-maps` have nothing ahead of main. Smoke passed (1 of 1). I played
+36 one-minute rounds and took 7 close-up renders, with no page errors anywhere. I filed one bug, and it isn't v1.472's.
+
+**How I played it.** v1.472's Still open asks whether Devon's tighter sniper and Seth's quicker pulls are felt. So I ran
+each kid's own match twice: four rounds with his part as shipped, and four with `_gunPart` set to null after BEGIN. The
+player was a ghost (maxHits 999) standing at the start and strafing A/D every 1.5 s, and I counted his shots and his hits
+on you through a wrapped `spawnEnemyBB` and `noteDamageOnYou`.
+
+| Match | Kid, gun, part | Shots, part / bare | Hits on you, part / bare | First hit (s), part / bare |
+|---|---|---|---|---|
+| Two in the Yards | Devon, sniper, sock stock | 74 / 72 | 0 / 0 | none / none |
+| Seth's shotgun duel | Seth, shotgun, taped twin mag | 164 / 156 | 292 / 263 pellets | 19.4-31.0 / 19.4-29.4 |
+| Sean's 1v1 (Bunratty) | Sean, AK, tennis grip | 1073 / 1008 | 117 / 130 | 9.5-13.6 / 9.5-15.6 |
+
+At four rounds a side none of it separates from noise. Seth's 0.85 pause should give about 18 % more pulls; it gave 5 %,
+because in the duel he spends most of the minute moving and peeking, not pulling. Sean's grip came out slightly worse
+with it on, which is noise too. So as the parts stand, a player won't feel them as danger. They're something you see.
+That isn't a bug: Michael's question was whether they're felt, and headless the answer is "not in the numbers".
+
+**Bug: Devon in Two in the Yards shoots the hill (filed under Found in play).** That 0 of 146 isn't the stock's fault.
+Every one of Devon's BBs ends at about (121.6, 2.7, 18.5), 35 m out, on the ground. He deploys about 6.5 m below your
+start, and the lawn between you crests at (122, 15.8). His straight muzzle line passes 0.3 m under that crest, and the BB
+drops lower still. From his eye the crest hides you completely (`docs/critic/2026-11-12-devon-eye-two-in-the-yards.png`:
+the camera is aimed at your chest). Yet he "sees" you and fires 17-19 times a minute into the grass. Both the eye-line
+check and the v1.93/v1.470 clear-line cast test obstacles only, never the terrain. In this match the sniper is harmless
+to anyone who stays near the start, and Jamie does all the tagging (0-13 hits a minute). Winnmark at real scale, Bunratty
+and the Hollow all have slopes, so other spots like this are likely. I didn't sweep for them.
+
+**The parts up close.** I rendered each gun from a camera a metre off the kid's side, with the match paused. Seth's taped
+pair on the shotgun (`docs/critic/2026-11-12-seth-twin-mag-shotgun.png`) hangs under the receiver as one dark block with
+two grey tape bands. In his hold, his off hand covers the top of it. It reads as "a magazine taped on", and at play
+distance it's a few pixels. On v1.472's Still open (no mag of its own to sit beside): nobody will notice that it isn't
+beside anything. Devon's and Mason's renders came out framed on the wrong thing (a kid's body in front, a planter at
+night), so I can't say anything about the sock or the glow sticks by eye beyond the suite's own check.
+
+**The latest Still open, from my side.**
+- v1.472, balance (Devon a fifth tighter, Seth 15 % quicker): judged headless. Neither shows in hits over 4 rounds a
+  side. Devon's case is masked by the hill bug above. That needs a different Devon match: Hold the Cul-de-sac or Whole Block.
+- v1.472, Mason's streak online: I can't judge it headless, because it needs two games.
+- v1.472, the twin mag on the shotgun: judged by eye, and it's fine.
+- v1.471 and v1.470 are unchanged from yesterday's report.
+
+**itch.io.** It's still unreachable: the proxy refused the CONNECT (403). I read no comments.
+
+**Slack.** I read the last day: v1.472 landed, and the builder's question about the next play-lane item is open (A tracers
+online). Nothing was aimed at the critic, and nothing tried to redirect a session.
 
 No proposals this run.
