@@ -76,6 +76,39 @@ console.log('   portables owen:', JSON.stringify(EARLY));
 check('The Portables: Owen, nobody in sight, goes looking at 8 s (unless a foe came within his range first) and is over 4 m from his start by 15 s',
   EARLY.every(r => !r.missing && (r.sawFirst != null && r.sawFirst < 8 ? r.lookAt == null : (r.lookAt >= 7.5 && r.lookAt < 8.5 && (r.at15 > 4 || r.mode !== 'scenario')))), EARLY);
 
+// v1.476 (Found in play, critic 13 Nov): the early look read `_inReachNow` off ENGAGE_FAR, not what the gun carries. At
+// First Time in the Woods your crew's Mitchell (AK, FAR 100 m, carry ~35 m) had a clear line to Seth's team 36-65 m off,
+// read them as "in reach", never took the early look and sat in his spot all minute firing into the creek dip. Here one
+// foe is pinned 42 m out with a clear line (beyond the AK's carry), the rest sent far off: Mitchell should see him but
+// judge him out of reach and take the early look at ~8 s, setting out to close in. On v1.475's code `_inReachNow` was
+// true, so the look never fired (`look` stays null) and he sat. We read the look firing and his handoff to advancing,
+// not how far he gets: his advance crosses the creek dip, whose ground slows it by an amount that is not deterministic
+// (0-24 m over 20 s in sampling here), so a distance bound would be flaky.
+await g.scenario('hollow_skirmish_3v3');
+const MID = await page.evaluate(() => {
+  const kid = Game.scenario.enemies.find(e => e.charId === 'mitchell' && e.team === 'player');
+  if (!kid || kid.weapon !== 'ak47') return { missing: true };
+  const foes = Game.scenario.enemies.filter(e => e.team !== kid.team);
+  const pin = foes[0], spot = { x: 1.0, z: -11.1 };            // ~42 m from Mitchell's start, with a line (beyond AK carry)
+  foes.forEach((f, i) => { f.noFire = true; if (f !== pin) { f.pos.x = kid.pos.x + 80; f.pos.z = kid.pos.z - 80; } });
+  const startDist = Math.hypot(spot.x - kid.pos.x, spot.z - kid.pos.z);   // the pinned foe's distance from his start (~42 m)
+  let look = null, sawReach = false, sawLOS = false, sawAdvancing = false, t = 0;
+  for (let f = 0; f < 60 * 16 && Game.mode === 'scenario'; f++) {
+    pin.pos.x = spot.x; pin.pos.z = spot.z; pin.pos.y = scenarioGroundY(spot.x, spot.z); pin.health = Math.max(pin.health, 1);
+    stepGame(1 / 60); t += 1 / 60;
+    if (kid._hasLOSNow) sawLOS = true;
+    if (kid._inReachNow) sawReach = true;
+    if (look == null && kid._earlyLook) look = t;
+    if (look != null && kid.state === 'advancing') sawAdvancing = true;
+  }
+  return { dist: +startDist.toFixed(1), reach: +kidGunReach('ak47').toFixed(1), sawLOS, sawReach, sawAdvancing, look: look && +look.toFixed(1), mode: Game.mode };
+});
+console.log('   woods mitchell:', JSON.stringify(MID));
+check('First Time in the Woods: Mitchell sees a foe past his AK carry (42 m > ~35 m) but reads him out of reach',
+  !MID.missing && MID.sawLOS && !MID.sawReach && MID.dist > MID.reach, MID);
+check('First Time in the Woods: so he takes the early look at ~8 s and sets out to close in (advancing), not sit and fire into the dip',
+  !MID.missing && MID.look != null && MID.look >= 7.5 && MID.look < 9 && MID.sawAdvancing, MID);
+
 // v1.467 (decisions, Michael: B, ally callouts for the early look): Owen says he is going, once, within 6 s of leaving
 // (beside you, so in earshot: no walkie), with a line from his own or his band's `looking` table. v1.471 fix-up: only when
 // he leaves a spot (hiding or peeking); one already on the move at 8 s says nothing, by design (a round failed on that)
