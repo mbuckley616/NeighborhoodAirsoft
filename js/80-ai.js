@@ -656,6 +656,20 @@ function _hasLOSTo(e, c) {
   return !!v && aiSightY(e, v) != null;
 }
 
+// v1.476 (Found in play, critic 13 Nov): how far a kid's gun carries, in metres: a level shot from his 1.05 m muzzle at
+// his 0.9 of the gun's muzzle speed, under the flight's gravity and hop-up lift (updateBBs), with no curve, to where it
+// reaches the ground. Kids aim straight at you, so past this their BBs fall short. Mitchell's AK carries 35 m and its
+// engage table said 50: at First Time in the Woods he sat at 36-65 m all minute and put 250 BBs in the creek dip.
+const _kidReach = {};
+function kidGunReach(weapon) {
+  if (_kidReach[weapon] != null) return _kidReach[weapon];
+  const spec = GUN_SPECS[weapon] || GUN_SPECS.pistol;
+  const v = spec.muzzleVelocity * 0.9, dt = 1 / 200;
+  let y = 1.05, vy = 0, age = 0;
+  while (y > 0 && age < 4) { age += dt; vy += (8.5 * Math.max(0, 1 - age * 1.5) - 9.8) * dt; y += vy * dt; }
+  return (_kidReach[weapon] = v * age);
+}
+
 // v1.385 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind, and wait
 // for them to almost touch the wall before I shoot them"): every sight test ran from the muzzle to the target's CHEST,
 // so a player standing behind a fort wall or a log pile chest-high, head and gun over it, was invisible: the kid kept
@@ -1514,7 +1528,14 @@ function updateEnemies(dt) {
       e._unseenTime = losMem ? 0 : (e._unseenTime || 0) + dt;
       // v1.465: a line to a foe inside his gun's far range, for the early look (updateKidBoredom): Owen's pistol had a line
       // to the other side 45-50 m off at The Portables from 3 s, past its 30 m, and still nobody to shoot at
-      e._inReachNow = losMem && distToPlayer < ENGAGE_FAR;
+      // v1.476 (Found in play, critic 13 Nov): for the AK, bounded by what the gun actually carries, not its ENGAGE_FAR.
+      // The AK is the "aggressive ranged" gun and its FAR is set to 100 m, but its BBs reach only about 35 m from a kid's
+      // muzzle. At First Time in the Woods your crew's Mitchell (AK) read the other side 36-65 m off as "in reach", never
+      // took the early look, sat in his spot all minute and emptied 250 BBs into the creek dip. With the real carry he
+      // finds nobody there he can hit and goes looking at 8 s. Other guns keep their tuned FAR, which encodes an intended
+      // engagement range near their carry (the pistol peppers to 30 m though its BBs land at ~19, Owen's early look on it).
+      const reachFar = e.weapon === 'ak47' ? Math.min(ENGAGE_FAR, kidGunReach(e.weapon)) : ENGAGE_FAR;
+      e._inReachNow = losMem && distToPlayer < reachFar;
     }
 
     // v1.152 (Michael: A, the critic's "last kid comes looking"): in team and kill-all rounds a cautious kid (aggression
