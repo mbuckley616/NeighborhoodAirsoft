@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -2983,5 +2983,73 @@ night), so I can't say anything about the sock or the glow sticks by eye beyond 
 
 **Slack.** I read the last day: v1.472 landed, and the builder's question about the next play-lane item is open (A tracers
 online). Nothing was aimed at the critic, and nothing tried to redirect a session.
+
+No proposals this run.
+
+## 2026-11-13 — The hills after v1.473: Bunratty Pincer, the Hollow 3v3, Northcliff's creek defend and twins 3v3, Whole Block, each against the build before it (v1.475)
+
+I played main at v1.475. `auto/build` and `auto/build-maps` have nothing ahead of main. Smoke passed (1 of 1). I played
+30 one-minute rounds over five sloped-map matches and had no page errors in any of them. I filed one bug, and it isn't
+new. I took no screenshots: nothing here reads in a picture.
+
+**How I played it.** v1.473's Still open asks whether fights open later on the hills now that kids can't see over a
+crest. So I ran the same five matches on v1.475 and on the build just before v1.473 (main at v1.472, exported to a
+scratch folder), two rounds each, side by side. The player was a ghost (maxHits 999) standing at the start. I counted
+every kid BB, where it ended, and whether it landed on the ground short of its own target (under 80 % of the way). At
+the moment of the shot I also sampled the terrain along the straight line from the muzzle to the target's chest, every
+metre, to see whether he was firing at someone the ground hid.
+
+| Match | Shots at the moment the ground hid the target, before → v1.475 | First kid shot (s), before / v1.475 | First hit on you (s), before → v1.475 | Kid shots / hits on you per minute, before → v1.475 |
+|---|---|---|---|---|
+| Hollow 3v3 (`hollow_skirmish_3v3`) | 25 → 2 (Sean's AK 21 → 0) | 2.4 / 2.3-3.3 | none either build | 529-538 → 427-468 / 0 → 0-1 |
+| Bunratty Pincer | 4 → 0 | 4.1-4.6 / 3.8-4.0 | 19.7, 20.6 → 18.9, 30.5 | 356-382 → 227-231 / 209-241 → 112-133 |
+| Northcliff, defend the creek | not sampled | 2.3 / 2.4 | 15.1, 19.0 → 10.3, 11.1 | 1030-1469 → 1110-1331 / 550-645 → 307-610 |
+| Northcliff twins 3v3 | 0 → 3 | 12.6 / 12.7 | none either build | 92-168 → 128-236 / 0 → 0 |
+| Whole Block | 1 → 0 | 2.4-2.6 / 2.4 | 17.1, 17.2 → 13.5, 15.4 | 183-212 → 199-215 / 119-157 → 144-149 |
+
+So the fix holds on the hills it wasn't written for. Sean on the Hollow's north slope had been firing a fifth of his AK
+at kids the ground hid. Now he doesn't. The few shots that still count as "hidden" on v1.475 (Eric, Ryan, Connor) clear
+the crest by centimetres in the game's own 1.5 m test against my 1 m one, so I'm not calling them anything.
+
+**Do fights open later?** Not where it matters. The first kid shot is within half a second of the old build everywhere.
+The first hit on a standing player came no later on three maps, and earlier on Northcliff's creek defend (10-11 s
+against 15-19 s), which is noise at two rounds. The one real change is Bunratty Pincer. With you standing at the start,
+the kids fired about 38 % fewer BBs and landed about half as many (112-133 hits against 209-241). Joe on the hill
+accounts for most of it (124-134 shots against 233-250). Two rounds is thin, though, and in a second sampling run Joe
+fired 133 on v1.475 against 52 on the old build, so treat it as "Pincer may be a little softer at the start". A player
+won't notice it as "late". Worth Michael's feel, not a bug.
+
+**Bug (not new, the same on the old build): your crew's Mitchell hoses the Hollow 3v3 from his fort with an AK whose BBs
+can't reach.** Filed under Found in play. In `hollow_skirmish_3v3` your crew's Mitchell (team `player`, AK-47) starts
+at about (2.5, 30.2), goes to `hiding`, and doesn't move a centimetre all minute: he moved 0.0 m in both rounds. He fires
+252-293 BBs a minute at Seth's team 36-65 m off, and lands 3-5 of them. Of his BBs I traced landing short, every one comes
+down 34-35 m out, in the creek dip at about (0, -3.5). His line is clear, at about 1.1 m above the ground the whole way, so
+it's the BB's drop and not a crest. The old build did the same: 288 shots, 119 short. The cause is the AK's `ENGAGE_NEAR`
+of 50 m (80-ai), which is longer than the BB's real reach from a kid's crouched muzzle (about 35 m here), so he reads
+himself as "in full range" and never pushes. Unreliable BBs are the brief, but a teammate who stands still and fires a
+quarter of a thousand BBs into the creek isn't a teammate. On a 5-life grind it leaves the player's side a kid short.
+Steps: `g.scenario('hollow_skirmish_3v3')`, find `Mitchell` in `Game.scenario.enemies`, wrap `spawnEnemyBB` and
+`applyBBHit`, and step 3600 frames.
+
+Devon in Whole Block, where the last report wanted to judge his sock stock away from the yards' hill: he fires 20-21 BBs
+a minute in both builds and lands 1. His first shot at 2.5 s is at you 64 m off, and it comes down 50 m out. Same story
+as Mitchell: a sniper's 100 m `ENGAGE_NEAR` against a BB that dies at about 50 m. So v1.472's tighter stock still can't
+show in hits from his start. It would want a match where Devon is inside 50 m of you.
+
+**First-timer.** NEW GAME → mirror → bedroom: the room tour's note lists Phone, Computer, Bed and Map table, and the
+labels for Map, Shop and Pickup Game are on screen. No errors.
+
+**Frame cost.** It's fine: 0.8-4.6 ms per `stepGame` on the software renderer's page. The busiest was the Hollow 3v3
+with about 500 BBs a minute in the air.
+
+**The latest Still open, from my side.**
+- v1.473, a sniper with nothing to see waits for you: seen in Two in the Yards on 12 Nov. Not replayed here.
+- v1.473, fights opening later on hilly maps: judged headless, above. Not later. Pincer may be softer at the start.
+- v1.474 and v1.475, the streak online and the host's kids reading a friend's streak: not judgeable headless. They need two real games at night.
+
+**itch.io.** It's still unreachable: the host doesn't resolve from this session (ENOTFOUND). I read no comments.
+
+**Slack.** I read the last day: v1.473-v1.475 landed, and Michael chose B (rest the play lane until he has played
+v1.468-v1.475). Nothing was aimed at the critic, and nothing tried to redirect a session.
 
 No proposals this run.
