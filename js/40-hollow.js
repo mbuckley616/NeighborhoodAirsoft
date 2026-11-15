@@ -809,6 +809,26 @@ function buildHollowScene(variant, timeOfDay) {
       list.push({ minX: cx - bwW / 2 - 0.04, maxX: cx + bwW / 2 + 0.04, minZ: bwZ - bwT / 2 - 0.04, maxZ: bwZ + bwT / 2 + 0.04,
                   h: wallH, surface: 'hard', baseY: 0, blastWall: true });
     }
+    // v1.477 (Found in play, the weekly run's fort-spawn red, 15 Nov): in Take the North Fort, the day attack (variant
+    // 'south_fort_attack') a stack of pallets stands on the south fort's floor just north-east of your start. Standing
+    // still at the start you were tagged inside 12 s in about 1 round in 6, some before 6 s, nearly all by the east
+    // creek's defender (20, 3) firing through the right-front window or the doorway at you and the crew beside you: from
+    // there the fort's front shows almost its whole floor. The stack is out of the walk from your start to the doorway
+    // and off the crew's starts beside you (x 1.7, z ±2), and too tall to stand on. Not in the night attack: its east creek defender's AK
+    // doesn't reach the fort, and there your crew's walk round the stack let Seth's middle line tag you sooner.
+    if (o.spawnStack) {
+      const sx0 = cx - 1.15, sx1 = cx + 0.2, sz0 = backZ + facing * 2.55, sz1 = backZ + facing * 1.75;   // (0.85..2.2, 30.45..31.25): 0.75 m off your start, findClearSpawn's margin
+      const minZ = Math.min(sz0, sz1), maxZ = Math.max(sz0, sz1), stackH = 1.9, n = 12, ph = stackH / n;
+      for (let i = 0; i < n; i++) {   // flat pallets, a little out of line, dark slats showing between
+        const jx = ((i * 37) % 5 - 2) * 0.02, jz = ((i * 53) % 5 - 2) * 0.02;
+        const pl = new THREE.Mesh(new THREE.BoxGeometry(sx1 - sx0 - 0.06, ph - 0.03, maxZ - minZ - 0.06), i % 3 ? palletMat : plywoodMat);
+        pl.position.set((sx0 + sx1) / 2 + jx, ph * (i + 0.5), (minZ + maxZ) / 2 + jz);
+        pl.castShadow = pl.receiveShadow = true; grp.add(pl);
+      }
+      const core = new THREE.Mesh(new THREE.BoxGeometry(sx1 - sx0 - 0.14, stackH, maxZ - minZ - 0.14), palletMatDark);
+      core.position.set((sx0 + sx1) / 2, stackH / 2, (minZ + maxZ) / 2); grp.add(core);
+      list.push({ minX: sx0, maxX: sx1, minZ, maxZ, h: stackH, surface: 'hard', baseY: 0, noStand: true });
+    }
     // Asymmetric extra: Team A gets a tire stack out front; Team B a lean-to.
     if (o.frontTires) {
       for (let i = 0; i < 3; i++) {
@@ -853,7 +873,8 @@ function buildHollowScene(variant, timeOfDay) {
   // Team B fort — SOUTH end (z≈30), front/port faces NORTH (-z toward midfield),
   // BLUE flag, ramp on the RIGHT (v1.259: the lean-to is gone).
   // v1.345 (B.17): in Hold the South Fort (variant 'south_fort_walls') it has the blast wall and the taller merlons.
-  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1, walls: variant === 'south_fort_walls' }));
+  fortObs.push(...addFort(2, 30, { facing: -1, flagColor: 0x2e6da4, lookoutSide: 1, walls: variant === 'south_fort_walls',
+    spawnStack: variant === 'south_fort_attack' }));   // v1.477: the day attack's pallet stack by your start
 
   // ===================================================================
   // ANCHORS & SPAWNS

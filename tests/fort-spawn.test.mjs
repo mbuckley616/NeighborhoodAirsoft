@@ -23,6 +23,18 @@ for (const id of ['hollow_attack_north_fort', 'hollow_attack_north_fort_night'])
   }
   console.log(`  ${id}: tagged at ${JSON.stringify(rows[id].map(r => r.tag))}`);
 }
+// v1.477 (the weekly run's red, 15 Nov): Tyler at the east creek post fired from (20.2, 2.25, 3.2) through the right-front
+// window and the doorway; a pallet stack on the fort floor north-east of the start now stands in that line.
+await g.scenario('hollow_attack_north_fort');
+const stack = await page.evaluate(() => {
+  const p = Game.player, st = p.obstacles.find(o => o.noStand && o.h === 1.9 && o.minX > 0.5 && o.maxZ < p.pos.z);
+  const pts = [[0.9, 0], [1.2, -0.2], [1.2, 0.2], [1.45, 0]].map(([dy, dx]) => [p.pos.x + dx, p.pos.y + dy, p.pos.z]);
+  const blocked = pts.filter(([x, y, z]) => !hasLineOfSight(20.2, 2.25, 3.2, x, y, z, st ? [st] : [])).length;
+  return { found: !!st, blocked, of: pts.length };
+});
+await page.evaluate(() => { if (Game.mode === 'scenario') endScenario('forfeit'); enterBedroom(); });
+await g.spin(3);
+check('the pallet stack by the start is in every line from the east creek post to the player', stack.found && stack.blocked === stack.of, stack);
 const all = Object.values(rows).flat();
 const s = all[0].start;
 // south fort: centre (2, 30), 7 m wide, front wall at z 27 (the port), back wall at z 33

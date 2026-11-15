@@ -1245,7 +1245,8 @@ const SCENARIOS = {
     name: 'Chattahoochee River', scenarioName: 'Take the North Fort',   // v1.406 (D.57 step 4): was Storm the North Fort
     desc: "Seth's crew got to the north fort first and dug in, with a sniper up on the lookout covering the whole approach and the rest spread across the front and side windows. You're coming up from the south end with your crew, so you can't trade in the open: use the pallet clusters and the creek line, peel them off one angle at a time, and clear the fort.",   // v1.406 (D.57 step 4): for its new sides
     builderFn: 'buildHollowScene',
-    builderArg: 'default',
+    builderArg: 'south_fort_attack',   // v1.477: the pallet stack by your start (fort-spawn)
+    seedArg: 'default',                // the woods as before
     scenarioType: 'attack',
     playerSpawn: 'team_b',
     crewPosts: ['b_fort', 'ffa_6', 'ffa_7', 'b_center', 'b_left'],   // v1.393 (D.57 step 1): your crew plays it, from these posts
