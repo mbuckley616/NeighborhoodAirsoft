@@ -1493,6 +1493,12 @@ function updateEnemies(dt) {
     // it stays the old PUSH behaviour.
     const isRangedAuto = (e.weapon === 'ak47' || e.weapon === 'ar');
     const fireHoldDist = isRangedAuto ? ENGAGE_NEAR : ENGAGE_PUSH;
+    // v1.478 (Found in play, critic 16 Nov): what his gun reaches (v1.476: the AK's carry, about 35 m; every other gun its
+    // FAR). A bored AK kid going looking (the early look or the late clock) closes to it before he settles in to fire:
+    // at First Time in the Woods your crew's Mitchell took the 8 s look and was back in `hiding` 0.15 s later, the AK's
+    // 50 m fire-hold and 100 m commit taking Seth's team 47 m off as a shot, and sat out the minute firing into the dip.
+    const reachFar = e.weapon === 'ak47' ? Math.min(ENGAGE_FAR, kidGunReach(e.weapon)) : ENGAGE_FAR;
+    const lookingPastReach = e._bored && e.weapon === 'ak47' && distToPlayer >= reachFar;
     const insideFireHold = distToPlayer <= fireHoldDist;
 
     // v1.23: SPOTTED MEMORY. Track when this kid last had a clear line to the
@@ -1534,7 +1540,6 @@ function updateEnemies(dt) {
       // took the early look, sat in his spot all minute and emptied 250 BBs into the creek dip. With the real carry he
       // finds nobody there he can hit and goes looking at 8 s. Other guns keep their tuned FAR, which encodes an intended
       // engagement range near their carry (the pistol peppers to 30 m though its BBs land at ~19, Owen's early look on it).
-      const reachFar = e.weapon === 'ak47' ? Math.min(ENGAGE_FAR, kidGunReach(e.weapon)) : ENGAGE_FAR;
       e._inReachNow = losMem && distToPlayer < reachFar;
     }
 
@@ -1798,7 +1803,8 @@ function updateEnemies(dt) {
           // otherwise they push toward the last-known position. v1.74: ranged autos
           // use the wider fire-hold band here too (insideFireHold) so an AK gunner
           // keeps stringing bursts at the cover you ducked behind from range.
-          const canEngageNow = hasShotFromHere || (e._recentlySpotted && insideFireHold && !inLongRange);
+          // v1.478: a bored AK kid with the foe past his carry has no shot from here: he keeps closing
+          const canEngageNow = !lookingPastReach && (hasShotFromHere || (e._recentlySpotted && insideFireHold && !inLongRange));
           // v1.387 (D.81): camping or fallen back under heavy fire, he stays in his cover rather than marching out
           if (!canEngageNow && !(e._underFire && e._underFire.kind !== 'push')) {
             // Either can't see the player, or they're farther than this weapon
@@ -2219,7 +2225,9 @@ function updateEnemies(dt) {
             if (e._holdSpot) {
               if ((Game.scenario.roundTime || 0) > e._holdSpot.until || Math.hypot(e.pos.x - e._holdSpot.x, e.pos.z - e._holdSpot.z) > 1.5) e._holdSpot = null;
             }
-            const commitEngage = losNow && newDist < ENGAGE_FAR && pushSatisfied && !e._holdSpot &&
+            // v1.478: a bored AK kid going looking commits only inside his carry (was the AK's 100 m FAR)
+            const commitFar = e._bored && e.weapon === 'ak47' ? reachFar : ENGAGE_FAR;
+            const commitEngage = losNow && newDist < commitFar && pushSatisfied && !e._holdSpot &&
               (!usingBound || newDist < ENGAGE_NEAR);
             if (commitEngage) {
               e.homeCover = e._boundCover || null;   // hold at the cover we bounded to
