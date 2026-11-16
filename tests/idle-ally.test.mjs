@@ -59,9 +59,14 @@ for (let i = 0; i < 2; i++) {
     if (!kid) return { missing: true };
     const start = { x: kid.pos.x, z: kid.pos.z };
     VOICE.log = [];   // v1.467: this round's lines only (the log runs on across rounds)
-    let lookAt = null, sawFirst = null, t = 0, at15 = 0, from = null;
+    let lookAt = null, sawFirst = null, t = 0, at15 = 0, from = null, voiceClear = false;
     for (let f = 0; f < 60 * 15 && Game.mode === 'scenario'; f++) {
       const before = kid.state;
+      // v1.478 fix-up: whether the voices were ever clear for him in his 6 s (other kids' lines hold the global cooldown;
+      // a round where they held it the whole window, to 16.3 s, failed here on the old build too, 2 of 10). Read before
+      // the step: a line said in it sets the cooldowns again.
+      const now = (Game.scenario.roundTime || 0) + 1 / 30;   // the step's voiceStep reads the clock a frame on
+      if (lookAt != null && t <= lookAt + 6 && now >= (VOICE.globalCooldownUntil || 0) && !(kid._voiceCooldownUntil > now)) voiceClear = true;
       stepGame(1 / 60); t += 1 / 60;
       if (sawFirst == null && kid._inReachNow) sawFirst = t;
       if (lookAt == null && kid._earlyLook) { lookAt = t; from = before; }
@@ -69,7 +74,7 @@ for (let i = 0; i < 2; i++) {
     if (kid.health > 0) at15 = Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z);
     // v1.467: the line he says as he goes (id from the `looking` tables)
     const said = VOICE.log.filter(l => l.charId === 'owen' && l.category === 'looking').map(l => ({ t: l.t, id: l.id, line: l.said, walkie: !!l.walkie }));
-    return { lookAt: lookAt && +lookAt.toFixed(1), from, sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode, said };
+    return { lookAt: lookAt && +lookAt.toFixed(1), from, voiceClear, sawFirst: sawFirst && +sawFirst.toFixed(1), at15: +at15.toFixed(1), state: kid.state, mode: Game.mode, said };
   }));
 }
 console.log('   portables owen:', JSON.stringify(EARLY));
@@ -97,7 +102,7 @@ const MID = await page.evaluate(() => {
     pin.pos.x = spot.x; pin.pos.z = spot.z; pin.pos.y = scenarioGroundY(spot.x, spot.z); pin.health = Math.max(pin.health, 1);
     stepGame(1 / 60); t += 1 / 60;
     if (kid._hasLOSNow) sawLOS = true;
-    if (kid._inReachNow) sawReach = true;
+    if (look == null && kid._inReachNow) sawReach = true;   // v1.478: from his start; after the look he closes in (v1.478)
     if (look == null && kid._earlyLook) look = t;
     if (look != null && kid.state === 'advancing') sawAdvancing = true;
   }
@@ -111,9 +116,10 @@ check('First Time in the Woods: so he takes the early look at ~8 s and sets out 
 
 // v1.467 (decisions, Michael: B, ally callouts for the early look): Owen says he is going, once, within 6 s of leaving
 // (beside you, so in earshot: no walkie), with a line from his own or his band's `looking` table. v1.471 fix-up: only when
-// he leaves a spot (hiding or peeking); one already on the move at 8 s says nothing, by design (a round failed on that)
+// he leaves a spot (hiding or peeking); one already on the move at 8 s says nothing, by design (a round failed on that).
+// v1.478 fix-up: and "within 6 s or not at all": if the other kids' voices never cleared for him in those 6 s, nothing
 check('The Portables: Owen says one `looking` line within 6 s of going looking from his spot, in earshot',
-  EARLY.every(r => r.lookAt == null || (r.from !== 'hiding' && r.from !== 'peeking') ? r.said.length === 0 : (r.said.length === 1 && r.said[0].t >= r.lookAt - 0.1 && r.said[0].t <= r.lookAt + 6.05 &&
+  EARLY.every(r => r.lookAt == null || (r.from !== 'hiding' && r.from !== 'peeking') ? r.said.length === 0 : (!r.voiceClear && r.said.length === 0) || (r.said.length === 1 && r.said[0].t >= r.lookAt - 0.1 && r.said[0].t <= r.lookAt + 6.05 &&
     /^(owen\.looking\.|band\.low_agg\.looking\.)\d$/.test(r.said[0].id) && !r.said[0].walkie)), EARLY);
 // out of earshot it comes over the walkie and onto the squad box; two allies sent on one frame both speak, in turn
 const W = await page.evaluate(() => {
@@ -182,5 +188,38 @@ const V = await page.evaluate(() => {
 }).catch(e => ({ err: String(e).slice(0, 120) }));
 console.log('   holders:', JSON.stringify(H), JSON.stringify(V));
 check('snipers and VIPs hold', H.length > 0 && H.every(k => !k.bored) && Array.isArray(V) && V.length > 0 && V.every(k => !k.bored), { H, V });
+
+// v1.478 (Found in play, critic 16 Nov): the look itself didn't hold. In the real match (nobody pinned) Mitchell took the
+// early look at ~7.9 s and was back in `hiding` 0.15 s later: the AK's 50 m fire-hold and 100 m commit took Seth's team
+// 47 m off as a shot, and his first string with a line ended the look (`spawnEnemyBB`). He moved 0.4 m all minute in 3
+// rounds of 4. Now a bored AK kid closes to his carry before he settles in, and a shot past it doesn't end his look.
+// Read: whether he ever settles back (looking ended) with his target still past his carry, and how far he gets by 20 s.
+const WOODS = [];
+for (let i = 0; i < 2; i++) {
+  await g.scenario('hollow_skirmish_3v3');
+  WOODS.push(await page.evaluate(() => {
+    const kid = Game.scenario.enemies.find(e => e.charId === 'mitchell' && e.team === 'player');
+    if (!kid || kid.weapon !== 'ak47') return { missing: true };
+    const reach = kidGunReach('ak47'), start = { x: kid.pos.x, z: kid.pos.z };
+    let look = null, settledPast = null, far = 0, t = 0, wasBored = false;
+    for (let f = 0; f < 60 * 20 && Game.mode === 'scenario'; f++) {
+      stepGame(1 / 60); t += 1 / 60;
+      if (look == null && kid._earlyLook) look = t;
+      // his look ending while every foe he could be fighting is past what his BBs reach
+      if (wasBored && !kid._bored && kid.health > 0 && settledPast == null) {
+        const near = Math.min(...Game.scenario.enemies.filter(e => e.team !== kid.team && e.health > 0).map(e => Math.hypot(e.pos.x - kid.pos.x, e.pos.z - kid.pos.z)));
+        if (near > reach + 1) settledPast = { t: +t.toFixed(2), near: +near.toFixed(1) };
+      }
+      wasBored = !!kid._bored;
+      if (kid.health > 0) far = Math.max(far, Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z));
+    }
+    return { look: look && +look.toFixed(1), settledPast, far: +far.toFixed(1), mode: Game.mode };
+  }));
+}
+console.log('   woods mitchell, real match:', JSON.stringify(WOODS));
+check('First Time in the Woods (real match): Mitchell\'s early look does not end while every foe is past his AK carry',
+  WOODS.every(r => !r.missing && r.look != null && r.settledPast == null), WOODS);
+check('First Time in the Woods (real match): he leaves his spot, over 4 m out by 20 s (was 0.4 m)',
+  WOODS.every(r => !r.missing && (r.far > 4 || r.mode !== 'scenario')), WOODS);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
