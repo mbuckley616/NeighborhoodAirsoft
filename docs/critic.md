@@ -3,7 +3,7 @@
 Daily playtest reports from the critic routine: headless play of the latest build plus the itch.io comments.
 Newest entry at the bottom. Old entries are never rewritten.
 
-Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
+Last itch comment seen: none yet — itch.io unreachable from the cloud session (2026-09-28, 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-05, 2026-10-06, 2026-10-07, 2026-10-08, 2026-10-09, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-19, 2026-10-20, 2026-10-21, 2026-10-22, 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-02, 2026-11-03, 2026-11-05, 2026-11-06, 2026-11-09, 2026-11-10, 2026-11-11, 2026-11-12, 2026-11-13, 2026-11-16); the July 2026 "cant go outside" comment in backlog A.1 predates this file.
 
 Covered so far: new-game bedroom → map (2026-09-28); winnmark_tutorial, bunratty_sean, bunratty_night_lane, bunratty_night_team_2v2 (lasers only), hollow_skirmish_3v3 (2026-09-28); winnmark_defend_treehouse, winnmark_defend_culdesac, winnmark_night_prowl, winnmark_two_in_the_yards, bunratty_infection, bunratty_brothers, hollow_defend_south_fort, hollow_attack_north_fort, hollow_full_auto_mayhem (AI watched, not played) (2026-09-29); winnmark_whole_block, bunratty_pincer, hollow_juggernaut, hollow_big_battle, winnmark_sniper_overwatch, hollow_infection_night (2026-09-30); new-save mirror → bedroom → front door, all five lot_* scenarios, winnmark_last_stand, winnmark_team_3v3, bunratty_team_4v4, hollow_attack_north_fort(_night), hollow_defend_south_fort_night (2026-10-01); all four northcliff_* scenarios, lot_ffa's hidden starts (v1.134), the Loadout screen's kid (2026-10-02); all four store_* scenarios, stoneglen_hold_treehouse, club_defend_gazebo, school_defend_portables (2026-10-05); bunratty_vip, lot_vip_night, school_1v1_tyler, school_portables_3v3, club_1v1_brooke, club_eighteenth_3v3, the four v1.168 guns against bunratty_sean, the Bucket Gun with a taped mag in hollow_skirmish_3v3 (2026-10-06); bunratty_vip and lot_vip_night again (v1.172 anchors, v1.175 dumpster), school_night_4v4, club_night_4v4, northcliff_night_4v4 (sniper opening only), new-game bedroom prompt (2026-10-07); bunratty_storm_the_court, winnmark_seth_shotgun_duel, bunratty_team_2v4, school_night_lights, bunratty_vip (2026-10-08); bunratty_storm_the_court and bunratty_vip after v1.180, stoneglen_treehouse, hollow_night_battle, hollow_2v4_night, the briefings' lives against `playerLives` (2026-10-09); bellfield_ctf, bellfield_1v1_mason, bellfield_defend_fort, school_portables_3v3 (2026-10-12); bellfield_ctf after v1.191, the v1.201 pickup game 4v4 on northcliff, country_club and store by day and night, bellfield_night_4v4, bellfield_3v3, new-game bedroom prompts (2026-10-13); the 14 and 15 Oct entries list theirs; last_saturday after v1.251, store_night_4v4 with squad orders, store_1v1_tyler with the pool noodle, lot_1v1_marcus with the Rattle Can, squad orders measured in hollow_skirmish_3v3 and store_night_4v4, new game → front door → map (2026-10-16); the 19 Oct entry lists its; hollow_defend_south_fort from the floor and the v1.259 deck, bunratty_vip after v1.272 (held, pushed, and flanking Priya), store_price_check_3v3, hollow_ffa and bunratty_ffa after v1.265–v1.267, bellfield_night_4v4 after v1.266, the crew build's club_eighteenth_3v3 (2026-10-20); with the crew a first time through gives: hollow_full_auto_mayhem, school_night_4v4, store_night_4v4, bunratty_vip after v1.282, bellfield_ctf after v1.280 to its 5:00 clock, hollow_skirmish_3v3 with no crew (the "Not yet" fill), new game → bedroom prompt (2026-10-21); winnmark_night_team_2v2 first time and replayed after it is won (and the other Winnmark team matches' sides on a replay), the New teammate card (Eric), last_saturday and bunratty_vip and bellfield_ctf for the walk home and the 3 s grace, hollow_attack_north_fort, winnmark_two_in_the_yards, the attack huddle's starts in the eight biggest team matches (2026-10-22); new game → winnmark_tutorial → winnmark_seth_house → winnmark_squad_basics on the real BB count, Squad Basics replayed and retried on an empty loader, pool_1v1_christian with the Spring Pistol and the Electric Rifle, pool_night_3v3 with the Semi-Auto Shotgun, hollow_defend_south_fort after v1.319, the eight "N a side" briefings against the first-time crew, the body looking down (2026-10-26); hollow_defend_south_fort after v1.345 crouched and standing, stoneglen_hold_treehouse, bellfield_3v3 with the M249, P90, Vector and L96, bellfield_night_4v4 and bunratty_team_2v2's briefing in Halloween season, the base flag at the start of all 33 team matches, new game → bedroom prompt (2026-10-27); the title's CAMPAIGN / ONLINE path, the shop's sort row, Hollins Ridge at real scale: school_1v1_tyler, school_portables_3v3, school_defend_portables, school_night_4v4 (2026-11-09).
 
@@ -3051,5 +3051,62 @@ with about 500 BBs a minute in the air.
 
 **Slack.** I read the last day: v1.473-v1.475 landed, and Michael chose B (rest the play lane until he has played
 v1.468-v1.475). Nothing was aimed at the critic, and nothing tried to redirect a session.
+
+No proposals this run.
+
+## 2026-11-16 — Mitchell after v1.476 in the Hollow 3v3; the pallet stack in Take the North Fort; Hold the Doors and You and Nick for the first time (v1.477)
+
+I played main at v1.477. `auto/build` and `auto/build-maps` have nothing ahead of main. Smoke passed (4 of 4). Over
+about 40 rounds in four matches I had no page errors. I filed one bug, and it is v1.476's own fix not reaching the live
+match.
+
+**Bug: v1.476's early look fires for Mitchell, and is undone in a fifth of a second.** First Time in the Woods
+(`hollow_skirmish_3v3`), the player a ghost at the start, three one-minute rounds. In every round `_earlyLook` sets at
+7.8-7.9 s, so the reach bound does what the devlog says. But Mitchell still moves 0.0-0.4 m all minute, fires 262-292 BBs
+and lands 3-6, the same as on v1.475 (252-293 and 3-5). 72-92 % of his shots are at targets 35-65 m off, past the AK's
+~35 m carry. A frame-by-frame trace of his state shows why. The look puts him in `advancing` at 7.87-7.90 s; 0.12-0.15 s
+later he is back in `hiding`, because the combat loop still sees a foe 47-48 m off with a line, inside the AK's
+`ENGAGE_NEAR`/`ENGAGE_FAR`, and goes to cover to shoot. His first shot with a line then clears `_bored`
+(`spawnEnemyBB`, 76-bbs, the v1.152 "a shot with a line is not boredom" rule). In one round he was already `shooting`
+when the look fired, so his state was never changed at all. The new `idle-ally` case passes because its one foe is pinned
+and the rest are sent far off; in the real match the foe is right there at 47 m. So the fix bounded the wrong number: the
+early look's test reads the carry, but the shoot-or-push decision still reads the 50/100 m table. Steps:
+`g.scenario('hollow_skirmish_3v3')`, maxHits 999, log Mitchell's `state` and `_bored` each frame from 6.5 to 11 s, and
+count his `spawnEnemyBB` calls and their target distance over 3600 frames. Filed under Found in play.
+
+**Take the North Fort (`hollow_attack_north_fort`), v1.477's stack.** Standing still at the start (0.5, 32.04) for 18 s,
+20 rounds: 0 tagged. The devlog's 2 of 30 (Seth up the middle) didn't turn up in my 20, which fits 1 in 15-25. As for how
+it reads: from the start, facing yaw 0, the stack fills the right side of the view as a wall of planks, and one of your
+crew stands about 2 m ahead of you in the doorway, which hides most of the field
+(`docs/critic/2026-11-16-north-fort-start-view.png`). It reads like part of the fort, not a prop. Whether that's right
+is Michael's look.
+
+**Hold the Doors (`lot_defend_store`), first time.** A standing bot with the Spring Pistol at the start, five rounds:
+lost every one at 29-52 s of the 90, tagged by Marcus (pistol, about 22 m) four times and Tyler (shotgun, 6 m) once,
+with Chris, Ryan and Mitchell alongside. The card ("They got through. Jamie, Tyler, Devon, and Marcus take the doors")
+and the damage report (chest, Tyler, Spring Shotgun, 6 m, 0:39) match what happened. My bot can't rack a spring gun well,
+so these say little about difficulty. Frame cost was 8.8-19.6 ms worst per `stepGame` alone. With three browsers running
+at once it reached 320-370 ms, which is the machine, not the game.
+
+**You and Nick (`bunratty_team_2v1`), first time.** You, Nick (AR) and Christian (pistol) against Mitchell (AK) and Ryan.
+One life. Standing at the start, 12 rounds: tagged at 3.2 and 3.6 s in 2, at 11-17 s in 3, and 44-141 s or not at all in
+the rest. Every tag was Mitchell. The early ones came from about (17-18, 1-3), 36 m, just after the 2.5 s opening hold.
+Walking at the brothers, 3 of 3 were tagged at 3.1-5.9 s, also by Mitchell at 36 m. That is an AK at the very end of its
+carry winning a coin toss, which is the brief's unreliable BB, so I'm not filing it. But in a one-life match a
+first-timer who walks out loses it in 4 s 1 time in 2 or more. Worth Michael's feel.
+
+**First-timer.** NEW GAME → mirror → bedroom: the room tour lists Phone, Computer, Bed and Map table. No errors.
+
+**The latest Still open, from my side.**
+- v1.476, other guns' FAR past their carry (AR, UMP/MP5, sniper): not judged. The AK bug above suggests the same fix
+  on them would also need the fire decision, not only the look.
+- v1.476, whether the AK ally's push reads right in a live match: judged headless, above. There is no push.
+- v1.477, Seth's middle line: 0 of 20 standing rounds. That doesn't contradict 1 in 15-25.
+- v1.477, how the stack reads from the start: screenshot above. It needs Michael's eyes.
+
+**itch.io.** It's still unreachable: the host doesn't resolve from this session (ENOTFOUND). I read no comments.
+
+**Slack.** I read the last day: v1.477 landed, both builders have empty queues, and the play lane rests (Michael's B).
+Nothing was aimed at the critic, and nothing tried to redirect a session.
 
 No proposals this run.
