@@ -272,7 +272,8 @@ function spawnEnemyBB(enemy, targetPos) {
   // v1.152: a shot with a line on his target is not boredom: the clock restarts and a bored kid settles back in.
   // v1.478 (Found in play, critic 16 Nov): for the AK, only a shot at a foe his BBs reach (`_inReachNow`, v1.476): Mitchell's
   // first string at Seth's team 47 m off, past his ~35 m carry, ended the early look 0.15 s after it began
-  if (enemy._hasLOSNow && (enemy.weapon !== 'ak47' || enemy._inReachNow)) { enemy._boredT = 0; enemy._bored = false; }
+  // v1.479: and for the AR, UMP and MP5 (kidCarryBounded)
+  if (enemy._hasLOSNow && (!kidCarryBounded(enemy.weapon) || enemy._inReachNow)) { enemy._boredT = 0; enemy._bored = false; }
   // Muzzle height: when shooting, the enemy may be lifted above their cover by
   // updateEnemies (so they shoot OVER the cover, not into it). We mirror that
   // here by adding the current mesh.group.position.y to the base muzzle height.

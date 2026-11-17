@@ -669,6 +669,13 @@ function kidGunReach(weapon) {
   while (y > 0 && age < 4) { age += dt; vy += (8.5 * Math.max(0, 1 - age * 1.5) - 9.8) * dt; y += vy * dt; }
   return (_kidReach[weapon] = v * age);
 }
+// v1.479 (Found in play, critic 17 Nov): the guns whose engage table reaches well past what they carry from a kid's
+// muzzle, so their reach is bounded by kidGunReach (v1.476 and v1.478 did it for the AK alone). Owen's AR on the 18th
+// (FAR 60 m, carry 28 m) put 85-100 % of his shots past his carry and landed none; his UMP at Bellfield (FAR 50, carry
+// 30) 60-71 %. The MP5 shares the UMP's table. The pistol, shotgun and MAC-10 keep their FAR (near their carry, and the
+// pistol's peppering is what Owen's early look at The Portables was tuned on); the sniper never goes looking.
+const KID_CARRY_BOUNDED = new Set(['ak47', 'ar', 'ump', 'mp5']);
+function kidCarryBounded(weapon) { return KID_CARRY_BOUNDED.has(weapon); }
 
 // v1.385 (B.20, Michael 28 Oct: "I can simply stand and stare at enemies as they approach a wall I am behind, and wait
 // for them to almost touch the wall before I shoot them"): every sight test ran from the muzzle to the target's CHEST,
@@ -1497,8 +1504,10 @@ function updateEnemies(dt) {
     // FAR). A bored AK kid going looking (the early look or the late clock) closes to it before he settles in to fire:
     // at First Time in the Woods your crew's Mitchell took the 8 s look and was back in `hiding` 0.15 s later, the AK's
     // 50 m fire-hold and 100 m commit taking Seth's team 47 m off as a shot, and sat out the minute firing into the dip.
-    const reachFar = e.weapon === 'ak47' ? Math.min(ENGAGE_FAR, kidGunReach(e.weapon)) : ENGAGE_FAR;
-    const lookingPastReach = e._bored && e.weapon === 'ak47' && distToPlayer >= reachFar;
+    // v1.479: and the AR, UMP and MP5 too (kidCarryBounded)
+    const carryBound = kidCarryBounded(e.weapon);
+    const reachFar = carryBound ? Math.min(ENGAGE_FAR, kidGunReach(e.weapon)) : ENGAGE_FAR;
+    const lookingPastReach = e._bored && carryBound && distToPlayer >= reachFar;
     const insideFireHold = distToPlayer <= fireHoldDist;
 
     // v1.23: SPOTTED MEMORY. Track when this kid last had a clear line to the
@@ -2226,7 +2235,7 @@ function updateEnemies(dt) {
               if ((Game.scenario.roundTime || 0) > e._holdSpot.until || Math.hypot(e.pos.x - e._holdSpot.x, e.pos.z - e._holdSpot.z) > 1.5) e._holdSpot = null;
             }
             // v1.478: a bored AK kid going looking commits only inside his carry (was the AK's 100 m FAR)
-            const commitFar = e._bored && e.weapon === 'ak47' ? reachFar : ENGAGE_FAR;
+            const commitFar = e._bored && carryBound ? reachFar : ENGAGE_FAR;   // v1.479: and the AR, UMP and MP5
             const commitEngage = losNow && newDist < commitFar && pushSatisfied && !e._holdSpot &&
               (!usingBound || newDist < ENGAGE_NEAR);
             if (commitEngage) {
