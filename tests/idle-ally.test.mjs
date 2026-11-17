@@ -221,5 +221,39 @@ check('First Time in the Woods (real match): Mitchell\'s early look does not end
   WOODS.every(r => !r.missing && r.look != null && r.settledPast == null), WOODS);
 check('First Time in the Woods (real match): he leaves his spot, over 4 m out by 20 s (was 0.4 m)',
   WOODS.every(r => !r.missing && (r.far > 4 || r.mode !== 'scenario')), WOODS);
+
+// v1.479 (Found in play, critic 17 Nov): the AR, UMP and MP5 read their FAR the way the AK did before v1.476 and v1.478.
+// On Willow Bend's 18th your crew's Owen (an AR: FAR 60 m, carry ~28 m) put 85-100 % of his shots past his carry from his
+// spot and moved 0-9 m a minute. Now those three guns are bounded by their carry as the AK is (kidCarryBounded). The
+// same reads as the woods above: his look doesn't end with every foe past his carry, and he gets out from his start.
+const EIGHTEENTH = [];
+for (let i = 0; i < 2; i++) {
+  await g.scenario('club_eighteenth_3v3');
+  EIGHTEENTH.push(await page.evaluate(() => {
+    const kid = Game.scenario.enemies.find(e => e.charId === 'owen' && e.team === 'player');
+    if (!kid || kid.weapon !== 'ar') return { missing: true, w: kid && kid.weapon };
+    const reach = kidGunReach('ar'), start = { x: kid.pos.x, z: kid.pos.z };
+    let look = null, settledPast = null, far = 0, t = 0, wasBored = false;
+    for (let f = 0; f < 60 * 30 && Game.mode === 'scenario'; f++) {
+      stepGame(1 / 60); t += 1 / 60;
+      if (look == null && kid._earlyLook) look = t;
+      if (wasBored && !kid._bored && kid.health > 0 && settledPast == null) {
+        const near = Math.min(...Game.scenario.enemies.filter(e => e.team !== kid.team && e.health > 0).map(e => Math.hypot(e.pos.x - kid.pos.x, e.pos.z - kid.pos.z)));
+        if (near > reach + 1) settledPast = { t: +t.toFixed(2), near: +near.toFixed(1) };
+      }
+      wasBored = !!kid._bored;
+      if (kid.health > 0) far = Math.max(far, Math.hypot(kid.pos.x - start.x, kid.pos.z - start.z));
+    }
+    return { reach: +reach.toFixed(1), look: look && +look.toFixed(1), settledPast, far: +far.toFixed(1), mode: Game.mode };
+  }));
+}
+console.log('   eighteenth owen, real match:', JSON.stringify(EIGHTEENTH));
+const BOUNDED = await page.evaluate(() => ['ak47', 'ar', 'ump', 'mp5', 'pistol', 'shotgun', 'mac10', 'sniper'].map(w => kidCarryBounded(w)));
+check('the AK, AR, UMP and MP5 are bounded by their carry; the pistol, shotgun, MAC-10 and sniper keep their FAR',
+  BOUNDED.join() === 'true,true,true,true,false,false,false,false', BOUNDED);
+check('the 18th (real match): Owen\'s AR look does not end while every foe is past his carry',
+  EIGHTEENTH.every(r => !r.missing && r.settledPast == null), EIGHTEENTH);
+check('the 18th (real match): he leaves his spot, over 12 m out by 30 s (was 0-9 m a minute)',
+  EIGHTEENTH.every(r => !r.missing && (r.far > 12 || r.mode !== 'scenario')), EIGHTEENTH);
 check('no page errors', g.errs.length === 0, g.errs.slice(0, 3));
 await g.close();
