@@ -103,7 +103,8 @@ const MID = await page.evaluate(() => {
     stepGame(1 / 60); t += 1 / 60;
     if (kid._hasLOSNow) sawLOS = true;
     if (look == null && kid._inReachNow) sawReach = true;   // v1.478: from his start; after the look he closes in (v1.478)
-    if (look == null && kid._earlyLook) look = t;
+    // v1.479 fix-up: the round's clock, not frames counted here: under load the page ran frames before this loop (look 7.4 s once)
+    if (look == null && kid._earlyLook) look = Game.scenario.roundTime || t;
     if (look != null && kid.state === 'advancing') sawAdvancing = true;
   }
   return { dist: +startDist.toFixed(1), reach: +kidGunReach('ak47').toFixed(1), sawLOS, sawReach, sawAdvancing, look: look && +look.toFixed(1), mode: Game.mode };
@@ -206,7 +207,8 @@ for (let i = 0; i < 2; i++) {
       stepGame(1 / 60); t += 1 / 60;
       if (look == null && kid._earlyLook) look = t;
       // his look ending while every foe he could be fighting is past what his BBs reach
-      if (wasBored && !kid._bored && kid.health > 0 && settledPast == null) {
+      // v1.479: not a tag (a kid with lives walks back `retreating` at health 1, and the tag ends his look: 6 of 8 rounds on the 18th)
+      if (wasBored && !kid._bored && kid.health > 0 && kid.state !== 'retreating' && settledPast == null) {
         const near = Math.min(...Game.scenario.enemies.filter(e => e.team !== kid.team && e.health > 0).map(e => Math.hypot(e.pos.x - kid.pos.x, e.pos.z - kid.pos.z)));
         if (near > reach + 1) settledPast = { t: +t.toFixed(2), near: +near.toFixed(1) };
       }
@@ -237,7 +239,8 @@ for (let i = 0; i < 2; i++) {
     for (let f = 0; f < 60 * 30 && Game.mode === 'scenario'; f++) {
       stepGame(1 / 60); t += 1 / 60;
       if (look == null && kid._earlyLook) look = t;
-      if (wasBored && !kid._bored && kid.health > 0 && settledPast == null) {
+      // v1.479: not a tag (a kid with lives walks back `retreating` at health 1, and the tag ends his look: 6 of 8 rounds on the 18th)
+      if (wasBored && !kid._bored && kid.health > 0 && kid.state !== 'retreating' && settledPast == null) {
         const near = Math.min(...Game.scenario.enemies.filter(e => e.team !== kid.team && e.health > 0).map(e => Math.hypot(e.pos.x - kid.pos.x, e.pos.z - kid.pos.z)));
         if (near > reach + 1) settledPast = { t: +t.toFixed(2), near: +near.toFixed(1) };
       }
